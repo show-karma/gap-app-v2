@@ -46,9 +46,6 @@ const API_SPEC_URL = "https://gapapi.karmahq.xyz/v2/docs/json";
 const FIRECRAWL_SCRAPE_URL =
   process.env.FIRECRAWL_SCRAPE_URL || "https://api.firecrawl.dev/v1/scrape";
 const FIRECRAWL_API_KEY = process.env.FIRECRAWL_API_KEY || "";
-const SDK_README_PATH = path.resolve(__dirname, "../../karma-gap-sdk/readme.md");
-const SDK_README_FALLBACK_URL =
-  "https://raw.githubusercontent.com/show-karma/karma-gap-sdk/main/readme.md";
 const DOCS_SITE_URL = "https://docs.gap.karmahq.xyz";
 const DOCS_SITEMAP_URL = `${DOCS_SITE_URL}/sitemap-pages.xml`;
 const DOCS_CATEGORY_ORDER = [
@@ -361,13 +358,6 @@ interface SitemapEntry {
   lastModified: string;
   changeFrequency: string;
   priority: string;
-}
-
-interface SdkReadmeData {
-  content: string;
-  source: string;
-  sourcePath: string;
-  lastUpdated: string;
 }
 
 interface DocsPage {
@@ -1316,42 +1306,6 @@ function extractKnowledgeArticles(): KnowledgeArticle[] {
   return articles.sort((a, b) => a.title.localeCompare(b.title));
 }
 
-async function readSdkReadme(): Promise<SdkReadmeData | null> {
-  try {
-    const content = fs.readFileSync(SDK_README_PATH, "utf-8");
-    return {
-      content,
-      source: "https://github.com/show-karma/karma-gap-sdk",
-      sourcePath: toProjectRelative(SDK_README_PATH),
-      lastUpdated: getLastUpdatedForFile(SDK_README_PATH),
-    };
-  } catch {
-    // Fallback to remote README when the SDK submodule is not initialized in this worktree.
-  }
-
-  try {
-    const response = await fetch(SDK_README_FALLBACK_URL, {
-      headers: { "User-Agent": "Karma-LLMS-Generator/1.0" },
-      signal: AbortSignal.timeout(15_000),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Remote SDK README fetch failed (${response.status})`);
-    }
-
-    const content = await response.text();
-    return {
-      content,
-      source: "https://github.com/show-karma/karma-gap-sdk",
-      sourcePath: SDK_README_FALLBACK_URL,
-      lastUpdated: BUILD_TIMESTAMP,
-    };
-  } catch (error) {
-    console.warn(`SDK README unavailable, skipping SDK section: ${(error as Error).message}`);
-    return null;
-  }
-}
-
 function categorizeDocsPage(pagePath: string): string {
   if (pagePath === "" || pagePath === "/") return "Overview";
   if (pagePath.startsWith("/overview")) return "Overview";
@@ -1588,7 +1542,7 @@ function sitemapUrlToLabel(url: string): string {
 function generateSitemapSection(
   lines: string[],
   sitemapEntries: SitemapEntry[],
-  options?: { excludeKnowledgeArticles?: boolean }
+  options?: { excludeKnowledgeArticles?: boolean; excludeUrls?: Set<string> }
 ): void {
   lines.push("## Site URL Index");
 
@@ -1603,6 +1557,9 @@ function generateSitemapSection(
         return true;
       }
     });
+  }
+  if (options?.excludeUrls?.size) {
+    filteredEntries = filteredEntries.filter((entry) => !options.excludeUrls!.has(entry.url));
   }
 
   const sortedEntries = filteredEntries.sort((a, b) => {
@@ -1674,12 +1631,6 @@ function generateLlmsTxt(
     `- [API Documentation](${API_DOCS_URL}): REST API docs for projects, communities, grants, and attestations`
   );
   lines.push(`- [OpenAPI JSON](${API_SPEC_URL})`);
-  lines.push(
-    `- [Karma GAP SDK (npm)](https://www.npmjs.com/package/@show-karma/karma-gap-sdk): TypeScript SDK`
-  );
-  lines.push(
-    `- [Karma GAP SDK (GitHub)](https://github.com/show-karma/karma-gap-sdk): source and examples`
-  );
   lines.push("");
 
   // Documentation: product guides from docs.gap.karmahq.xyz
@@ -1691,8 +1642,16 @@ function generateLlmsTxt(
     lines.push("");
   }
 
-  // Site URL Index: top-level pages only (exclude /knowledge/* articles)
-  generateSitemapSection(lines, sitemapEntries, { excludeKnowledgeArticles: true });
+  // Site URL Index: top-level pages only (exclude /knowledge/* articles and landing page URLs)
+  const landingPageUrls = new Set([
+    ...landingPages.map((page) => page.url),
+    `${SITE_URL}/funding-map`,
+    `${SITE_URL}/knowledge`,
+  ]);
+  generateSitemapSection(lines, sitemapEntries, {
+    excludeKnowledgeArticles: true,
+    excludeUrls: landingPageUrls,
+  });
 
   // Optional: flat list of KB articles (no nested categories)
   lines.push("## Optional");
@@ -1713,15 +1672,12 @@ function generateLlmsTxt(
   }
 
   lines.push(`- [Ethereum Attestation Service](https://attest.org)`);
-  lines.push(`- [Privacy Policy](${SITE_URL}/privacy-policy)`);
-  lines.push(`- [Terms and Conditions](${SITE_URL}/terms-and-conditions)`);
 
   return lines.join("\n");
 }
 
 function generateLlmsFullTxt(
   articles: KnowledgeArticle[],
-  sdkReadme: SdkReadmeData | null,
   landingPages: LandingPageContent[],
   sitemapEntries: SitemapEntry[],
   docsPages: DocsPage[]
@@ -1754,9 +1710,6 @@ function generateLlmsFullTxt(
   lines.push("- Landing Pages");
   lines.push("- Supported Networks");
   lines.push("- Developer Docs");
-  if (sdkReadme?.content) {
-    lines.push("- Karma GAP SDK Documentation");
-  }
   if (docsPages.length > 0) {
     lines.push("- Documentation");
   }
@@ -1800,25 +1753,7 @@ function generateLlmsFullTxt(
   lines.push(
     "- Public reads are available for key listing endpoints (projects, communities, grants)"
   );
-  lines.push(
-    `- [Karma GAP SDK (npm)](https://www.npmjs.com/package/@show-karma/karma-gap-sdk): TypeScript SDK`
-  );
-  lines.push(
-    `- [Karma GAP SDK (GitHub)](https://github.com/show-karma/karma-gap-sdk): source and examples`
-  );
   lines.push("");
-
-  // --- SDK Documentation (full content) ---
-  if (sdkReadme?.content) {
-    lines.push("## Karma GAP SDK Documentation");
-    lines.push("");
-    const downshifted = sdkReadme.content.replace(
-      /^(#{1,4}) /gm,
-      (_, hashes: string) => "#".repeat(hashes.length + 2) + " "
-    );
-    lines.push(downshifted.trim());
-    lines.push("");
-  }
 
   // --- Documentation: full content from docs.gap.karmahq.xyz ---
   if (docsPages.length > 0) {
@@ -1862,8 +1797,12 @@ function generateLlmsFullTxt(
   }
   lines.push("");
 
-  // --- Site URL Index ---
-  generateSitemapSection(lines, sitemapEntries);
+  // --- Site URL Index (exclude URLs already covered in Landing Pages / Key Platform Pages) ---
+  const fullCoveredUrls = new Set([
+    ...landingPages.map((page) => page.url),
+    ...STATIC_PAGES.map((page) => `${SITE_URL}${page.path}`),
+  ]);
+  generateSitemapSection(lines, sitemapEntries, { excludeUrls: fullCoveredUrls });
 
   // --- Knowledge Base: full articles (optional/secondary content) ---
   const orderedCategories = ["Core Concepts", "Capabilities", "Project Profiles", "Uncategorized"];
@@ -1909,24 +1848,16 @@ async function main() {
   const articles = extractKnowledgeArticles();
   const landingPages = await extractLandingPages();
   const sitemapEntries = await fetchSitemapEntries();
-  const sdkReadme = await readSdkReadme();
   const docsPages = await extractDocsPages();
 
   console.info(`Found ${articles.length} knowledge articles`);
   console.info(`Landing pages extracted: ${landingPages.length}`);
   console.info(`Sitemap entries: ${sitemapEntries.length}`);
   console.info(`Landing extraction sources: ${landingPages.map((page) => page.source).join(", ")}`);
-  console.info(`SDK README: ${sdkReadme?.content ? "loaded" : "skipped"}`);
   console.info(`Docs pages extracted: ${docsPages.length}`);
 
   const llmsTxt = generateLlmsTxt(articles, landingPages, sitemapEntries, docsPages);
-  const llmsFullTxt = generateLlmsFullTxt(
-    articles,
-    sdkReadme,
-    landingPages,
-    sitemapEntries,
-    docsPages
-  );
+  const llmsFullTxt = generateLlmsFullTxt(articles, landingPages, sitemapEntries, docsPages);
 
   fs.mkdirSync(OUTPUT_DIR, { recursive: true });
   fs.writeFileSync(path.join(OUTPUT_DIR, "llms.txt"), llmsTxt, "utf-8");
@@ -2039,7 +1970,7 @@ export {
   DOCS_CATEGORY_ORDER,
 };
 
-export type { KnowledgeArticle, LandingPageContent, SitemapEntry, SdkReadmeData, DocsPage };
+export type { KnowledgeArticle, LandingPageContent, SitemapEntry, DocsPage };
 
 if (require.main === module) {
   main().catch((error) => {

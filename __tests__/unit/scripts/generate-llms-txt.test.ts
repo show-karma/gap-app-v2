@@ -2,7 +2,6 @@ import type {
   DocsPage,
   KnowledgeArticle,
   LandingPageContent,
-  SdkReadmeData,
   SitemapEntry,
 } from "../../../scripts/generate-llms-txt";
 import {
@@ -1038,19 +1037,13 @@ describe("generateLlmsTxt", () => {
 
 describe("generateLlmsFullTxt", () => {
   const articles = [makeArticle()];
-  const sdkReadme: SdkReadmeData = {
-    content: "# Karma GAP SDK\n\nSDK for attestations.",
-    source: "github",
-    sourcePath: "karma-gap-sdk/readme.md",
-    lastUpdated: "2024-01-01T00:00:00Z",
-  };
   const landingPages = [makeLandingPage()];
   const sitemapEntries = [makeSitemapEntry()];
 
   let output: string;
 
   beforeAll(() => {
-    output = generateLlmsFullTxt(articles, sdkReadme, landingPages, sitemapEntries, []);
+    output = generateLlmsFullTxt(articles, landingPages, sitemapEntries, []);
   });
 
   it("starts with H1 using PROJECT_NAME", () => {
@@ -1085,14 +1078,9 @@ describe("generateLlmsFullTxt", () => {
     expect(output).toContain("## Developer Docs");
   });
 
-  it("includes SDK documentation when available", () => {
-    expect(output).toContain("## Karma GAP SDK Documentation");
-    expect(output).toContain("SDK for attestations");
-  });
-
-  it("omits SDK section when sdk is null", () => {
-    const noSdk = generateLlmsFullTxt(articles, null, landingPages, sitemapEntries, []);
-    expect(noSdk).not.toContain("## Karma GAP SDK Documentation");
+  it("does not include SDK references", () => {
+    expect(output).not.toContain("Karma GAP SDK");
+    expect(output).not.toContain("karma-gap-sdk");
   });
 
   it("has Knowledge Base sections", () => {
@@ -1370,7 +1358,7 @@ describe("generateLlmsFullTxt with docs pages", () => {
   ];
 
   it("includes ## Documentation section with full content", () => {
-    const output = generateLlmsFullTxt(articles, null, landingPages, sitemapEntries, docsPages);
+    const output = generateLlmsFullTxt(articles, landingPages, sitemapEntries, docsPages);
     expect(output).toContain("## Documentation");
     expect(output).toContain("### Overview");
     expect(output).toContain("### For Builders");
@@ -1379,23 +1367,23 @@ describe("generateLlmsFullTxt with docs pages", () => {
   });
 
   it("includes Documentation in Table of Contents", () => {
-    const output = generateLlmsFullTxt(articles, null, landingPages, sitemapEntries, docsPages);
+    const output = generateLlmsFullTxt(articles, landingPages, sitemapEntries, docsPages);
     const toc = output.split("## Table of Contents")[1].split("## ")[0];
     expect(toc).toContain("- Documentation");
   });
 
   it("omits Documentation section when no docs pages", () => {
-    const output = generateLlmsFullTxt(articles, null, landingPages, sitemapEntries, []);
+    const output = generateLlmsFullTxt(articles, landingPages, sitemapEntries, []);
     expect(output).not.toContain("## Documentation");
   });
 
   it("includes inline content from docs pages", () => {
-    const output = generateLlmsFullTxt(articles, null, landingPages, sitemapEntries, docsPages);
+    const output = generateLlmsFullTxt(articles, landingPages, sitemapEntries, docsPages);
     expect(output).toContain("comprehensive information about their work");
   });
 
   it("strips duplicate H1 from docs content", () => {
-    const output = generateLlmsFullTxt(articles, null, landingPages, sitemapEntries, docsPages);
+    const output = generateLlmsFullTxt(articles, landingPages, sitemapEntries, docsPages);
     // The H1 "# How Does It Work" should be stripped since the #### title already shows it
     const docSection = output.split("## Documentation")[1].split("## ")[0];
     expect(docSection).not.toMatch(/^# How Does It Work$/m);
