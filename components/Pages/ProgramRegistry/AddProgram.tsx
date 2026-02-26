@@ -672,7 +672,7 @@ export default function AddProgram({
                     render={({ field, fieldState }) => (
                       <div className="flex w-full flex-col gap-1">
                         <label htmlFor="admin-emails" className={labelStyle}>
-                          Admin Emails *
+                          Admin Emails (optional)
                         </label>
                         <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
                           Applicants will reply to these emails

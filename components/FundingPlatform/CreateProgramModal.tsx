@@ -344,14 +344,12 @@ export function CreateProgramModal({
               control={control}
               render={({ field, fieldState }) => (
                 <div className="flex w-full flex-col gap-1">
-                  <Label htmlFor="admin-emails">
-                    Admin Emails <span className="text-destructive">*</span>
-                  </Label>
+                  <Label htmlFor="admin-emails">Admin Emails (optional)</Label>
                   <p className="text-xs text-muted-foreground mb-1">
                     Applicants will reply to these email addresses when responding to notifications
                   </p>
                   <MultiEmailInput
-                    emails={field.value}
+                    emails={field.value || []}
                     onChange={field.onChange}
                     placeholder="Enter admin email"
                     disabled={isSubmitting}
