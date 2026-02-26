@@ -108,6 +108,7 @@ export const PAGES = {
   },
   STATS: `/stats`,
   SUMUP_CONFIG: `/admin/sumup`,
+  FOUNDATIONS: `/foundations`,
   FUNDERS: `/funders`,
   SEEDS: `/seeds`,
   SEEDS_FUND: `/seeds/fund`,
