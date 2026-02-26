@@ -211,7 +211,8 @@ export function ProgramScoresUpload({
                 key={buildCompositeProgramId(program.programId, program.chainID)}
                 value={buildCompositeProgramId(program.programId, program.chainID)}
               >
-                {program.metadata?.title || program.programId} (Chain: {program.chainID})
+                {program.metadata?.title || program.programId}
+                {program.chainID != null ? ` (Chain: ${program.chainID})` : " (Off-chain)"}
               </option>
             ))}
           </select>

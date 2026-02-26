@@ -68,11 +68,11 @@ export const buildCompositeProgramId = (
 export const parseCompositeProgramKey = (
   value: string
 ): { programId: string; chainID: number | null } => {
-  const parts = value.split("_");
-  if (parts.length === 2) {
-    const chainID = parseInt(parts[1], 10);
+  const lastUnderscore = value.lastIndexOf("_");
+  if (lastUnderscore > 0) {
+    const chainID = parseInt(value.substring(lastUnderscore + 1), 10);
     if (!Number.isNaN(chainID)) {
-      return { programId: parts[0], chainID };
+      return { programId: value.substring(0, lastUnderscore), chainID };
     }
   }
   return { programId: value, chainID: null };
