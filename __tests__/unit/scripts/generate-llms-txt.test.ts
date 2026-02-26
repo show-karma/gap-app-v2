@@ -1092,6 +1092,11 @@ describe("generateLlmsFullTxt", () => {
     expect(output).toContain("## Site URL Index");
   });
 
+  it("excludes knowledge article URLs from Site URL Index", () => {
+    const siteUrlSection = output.split("## Site URL Index")[1]?.split("## ")[0] || "";
+    expect(siteUrlSection).not.toContain("/knowledge/grant-accountability");
+  });
+
   it("includes landing page full text (not just descriptions)", () => {
     // The full text should appear in the output under Landing Pages
     expect(output).toContain("Builders share progress");
@@ -1179,7 +1184,7 @@ describe("cleanDocsMarkdown", () => {
   it("removes empty markdown links", () => {
     const input = "Some text [](https://example.com/anchor) more text";
     const result = cleanDocsMarkdown(input);
-    expect(result).toBe("Some text  more text");
+    expect(result).toBe("Some text more text");
     expect(result).not.toContain("[](");
   });
 
@@ -1215,6 +1220,58 @@ describe("cleanDocsMarkdown", () => {
 
   it("trims whitespace", () => {
     expect(cleanDocsMarkdown("  content  ")).toBe("content");
+  });
+
+  it("removes Gitbook copy button + chevron-down artifacts", () => {
+    const input = "copy Copy chevron-down\n- How to guides\nSome content";
+    const result = cleanDocsMarkdown(input);
+    expect(result).not.toContain("copy Copy chevron-down");
+    expect(result).toContain("Some content");
+  });
+
+  it("removes plain-text Previous/Next navigation", () => {
+    const input = "Content\nPrevious Why Karma  Next Supported Networks\nMore";
+    const result = cleanDocsMarkdown(input);
+    expect(result).not.toContain("Previous");
+    expect(result).not.toContain("Next Supported");
+  });
+
+  it("removes trailing Previous-only navigation", () => {
+    const input = "Content\nPrevious CeloPG - Proof of Impact\nMore";
+    const result = cleanDocsMarkdown(input);
+    expect(result).not.toContain("Previous CeloPG");
+  });
+
+  it("removes Gitbook breadcrumb navigation lines", () => {
+    const input = "copy Copy chevron-down\n- How to guides \n- For Builders\nAdd Grant to Project";
+    const result = cleanDocsMarkdown(input);
+    expect(result).not.toContain("How to guides");
+    expect(result).not.toContain("For Builders");
+    expect(result).toContain("Add Grant to Project");
+  });
+
+  it("removes breadcrumbs for all known categories", () => {
+    for (const crumb of [
+      "How to guides",
+      "Overview",
+      "For Builders",
+      "For Grant Managers",
+      "For Reviewers",
+      "For Community Members",
+      "Partners",
+      "Filecoin",
+    ]) {
+      expect(cleanDocsMarkdown(`- ${crumb}`)).toBe("");
+    }
+  });
+
+  it("removes deprecated v1 API references", () => {
+    const input =
+      "API DOCS (v2) \nAPI DOCS (v1)  - The v1 APIs are deprecated. We recommend using v2 APIs where possible.\nContact us";
+    const result = cleanDocsMarkdown(input);
+    expect(result).not.toContain("v1");
+    expect(result).toContain("API DOCS (v2)");
+    expect(result).toContain("Contact us");
   });
 });
 

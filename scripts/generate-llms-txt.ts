@@ -1320,20 +1320,38 @@ function categorizeDocsPage(pagePath: string): string {
 }
 
 function cleanDocsMarkdown(markdown: string): string {
-  return markdown
-    .replace(/\{%\s*hint\s+style=["'](\w+)["']\s*%\}/g, "**$1:**")
-    .replace(/\{%\s*endhint\s*%\}/g, "")
-    .replace(/arrow-up-right/g, "")
-    .replace(/arrow-down-right/g, "")
-    .replace(/chevron-left/g, "")
-    .replace(/chevron-right/g, "")
-    .replace(/\bhashtag\s*/gi, "")
-    .replace(/\[]\([^)]*\)/g, "")
-    .replace(/^circle-(?:info|check|warning|exclamation)\s*$/gm, "")
-    .replace(/^\[Previous[^\]]*]\([^)]*\)\s*\[Next[^\]]*]\([^)]*\)\s*$/gm, "")
-    .replace(/^Last updated\s+\d+\s+\w+\s+ago\s*$/gm, "")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
+  return (
+    markdown
+      .replace(/\{%\s*hint\s+style=["'](\w+)["']\s*%\}/g, "**$1:**")
+      .replace(/\{%\s*endhint\s*%\}/g, "")
+      .replace(/arrow-up-right/g, "")
+      .replace(/arrow-down-right/g, "")
+      .replace(/chevron-left/g, "")
+      .replace(/chevron-right/g, "")
+      .replace(/\bhashtag\s*/gi, "")
+      .replace(/\[]\([^)]*\)/g, "")
+      .replace(/^circle-(?:info|check|warning|exclamation)\s*$/gm, "")
+      // Gitbook UI artifact: copy button + collapsible section header
+      .replace(/^copy\s+Copy\s+chevron-down\s*$/gm, "")
+      // Gitbook navigation: markdown link form
+      .replace(/^\[Previous[^\]]*]\([^)]*\)\s*\[Next[^\]]*]\([^)]*\)\s*$/gm, "")
+      // Gitbook navigation: plain text form (from Firecrawl rendering)
+      .replace(/^Previous\s+.+?\s{2,}Next\s+.+$/gm, "")
+      .replace(/^Previous\s+.+$/gm, "")
+      .replace(/^Next\s+.+$/gm, "")
+      // Gitbook breadcrumb/sidebar navigation lines
+      .replace(
+        /^-\s+(?:How to guides|Overview|For Builders|For Grant Managers|For Reviewers|For Community Members|Partners|Filecoin)\s*$/gm,
+        ""
+      )
+      // Deprecated v1 API reference (plain text or markdown link form)
+      .replace(/^(?:\[)?API DOCS \(v1\).*deprecated.*$/gim, "")
+      .replace(/^Last updated\s+\d+\s+\w+\s+ago\s*$/gm, "")
+      // Collapse orphan double spaces left by stripped markdown links (within lines only)
+      .replace(/ {2,}/g, " ")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim()
+  );
 }
 
 function docsPageTitle(pagePath: string, extractedTitle: string): string {
@@ -1716,7 +1734,6 @@ function generateLlmsFullTxt(
   if (docsPages.length > 0) {
     lines.push("- Documentation");
   }
-  lines.push("- Key Platform Pages");
   lines.push("- Site URL Index");
   for (const category of ["Core Concepts", "Capabilities", "Project Profiles", "Uncategorized"]) {
     const count = (grouped[category] || []).length;
@@ -1781,6 +1798,11 @@ function generateLlmsFullTxt(
           if (h1Match && sentenceOverlap(h1Match[1], page.title) >= 0.5) {
             body = body.slice(h1Match[0].length).trim();
           }
+          // Strip leading plain-text line that duplicates the title
+          const firstLine = body.split("\n")[0];
+          if (firstLine && sentenceOverlap(firstLine.trim(), page.title) >= 0.8) {
+            body = body.slice(firstLine.length).trim();
+          }
           // Downshift headings: docs are at H4 level, so ## becomes #####
           body = body.replace(
             /^(#{1,4}) /gm,
@@ -1793,19 +1815,15 @@ function generateLlmsFullTxt(
     }
   }
 
-  // --- Key Platform Pages ---
-  lines.push("## Key Platform Pages");
-  for (const page of STATIC_PAGES) {
-    lines.push(`- [${page.title}](${SITE_URL}${page.path})`);
-  }
-  lines.push("");
-
-  // --- Site URL Index (exclude URLs already covered in Landing Pages / Key Platform Pages) ---
+  // --- Site URL Index (exclude URLs already covered in Landing Pages / Knowledge Base) ---
   const fullCoveredUrls = new Set([
     ...landingPages.map((page) => page.url),
     ...STATIC_PAGES.map((page) => `${SITE_URL}${page.path}`),
   ]);
-  generateSitemapSection(lines, sitemapEntries, { excludeUrls: fullCoveredUrls });
+  generateSitemapSection(lines, sitemapEntries, {
+    excludeUrls: fullCoveredUrls,
+    excludeKnowledgeArticles: true,
+  });
 
   // --- Knowledge Base: full articles (optional/secondary content) ---
   const orderedCategories = ["Core Concepts", "Capabilities", "Project Profiles", "Uncategorized"];
