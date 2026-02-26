@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { CreateTrackModal } from "@/components/Pages/Communities/Tracks/CreateTrackModal";
+import { buildCompositeProgramId } from "@/components/Pages/ProgramRegistry/programUtils";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
@@ -300,16 +301,8 @@ export const TracksAdminPage = ({
                   .filter((program) => program.programId)
                   .map((program) => (
                     <option
-                      key={
-                        program.chainID != null
-                          ? `${program.programId}_${program.chainID}`
-                          : program.programId
-                      }
-                      value={
-                        program.chainID != null
-                          ? `${program.programId}_${program.chainID}`
-                          : program.programId
-                      }
+                      key={buildCompositeProgramId(program.programId, program.chainID)}
+                      value={buildCompositeProgramId(program.programId, program.chainID)}
                     >
                       {program.metadata?.title}
                     </option>
