@@ -6,6 +6,7 @@ import type { MilestoneCompletedFormData } from "@/components/Forms/GrantMilesto
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useOwnerStore, useProjectStore } from "@/store";
+import { useShareDialogStore } from "@/store/modals/shareDialog";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import fetchData from "@/utilities/fetchData";
@@ -17,6 +18,7 @@ import { PAGES } from "@/utilities/pages";
 import { retryUntilConditionMet } from "@/utilities/retries";
 import { sanitizeInput, sanitizeObject } from "@/utilities/sanitize";
 import { getProjectById } from "@/utilities/sdk";
+import { SHARE_TEXTS } from "@/utilities/share/text";
 import { useOffChainRevoke } from "./useOffChainRevoke";
 import { useSetupChainAndWallet } from "./useSetupChainAndWallet";
 import { useWallet } from "./useWallet";
@@ -87,6 +89,7 @@ export const useMilestone = () => {
   const router = useRouter();
   const { isProjectOwner } = useProjectStore();
   const { isOwner: isContractOwner } = useOwnerStore();
+  const { openShareDialog } = useShareDialogStore();
   const _isOnChainAuthorized = isProjectOwner || isContractOwner;
   const { performOffChainRevoke } = useOffChainRevoke();
   const { setupChainAndWallet } = useSetupChainAndWallet();
@@ -622,11 +625,25 @@ export const useMilestone = () => {
           ).then(async () => {
             showSuccess(`Completed ${milestone.title} milestone successfully!`);
 
-            // Send outputs and deliverables data
+            // Open the share dialog with confetti FIRST, before any async work
+            const grantTitle = grantInstance?.details?.title || milestone.title;
+            const slugOrUid = (project?.details?.slug || project?.uid) as string;
+            openShareDialog({
+              modalShareText:
+                "You did it! Another milestone down, more impact ahead. Your onchain trail is growing — keep stacking progress.",
+              modalShareSecondText: " ",
+              shareText: SHARE_TEXTS.MILESTONE_COMPLETED(grantTitle, slugOrUid, grantInstance.uid),
+            });
+
+            // Send outputs and deliverables data (fire-and-forget, swallows errors)
             await sendOutputsAndDeliverables(milestone.uid, data);
 
             refetch();
-            router.push(PAGES.PROJECT.UPDATES(project?.details?.slug || project?.uid || ""));
+
+            // Let the share dialog render before any route transition
+            setTimeout(() => {
+              router.push(PAGES.PROJECT.UPDATES(slugOrUid));
+            }, 250);
           });
         });
     } catch (error) {
@@ -771,7 +788,22 @@ export const useMilestone = () => {
       }
       // Show final success message after all chains processed
       showSuccess("Milestone completed successfully!");
-      router.push(PAGES.PROJECT.UPDATES(project?.details?.slug || project?.uid || ""));
+
+      // Open the share dialog with confetti before navigating
+      const slugOrUid = (project?.details?.slug || project?.uid) as string;
+      const grantTitle = milestone.mergedGrants?.[0]?.grantTitle || milestone.title;
+      const grantUid = milestone.mergedGrants?.[0]?.grantUID || milestone.refUID;
+      openShareDialog({
+        modalShareText:
+          "You did it! Another milestone down, more impact ahead. Your onchain trail is growing — keep stacking progress.",
+        modalShareSecondText: " ",
+        shareText: SHARE_TEXTS.MILESTONE_COMPLETED(grantTitle, slugOrUid, grantUid),
+      });
+
+      // Let the share dialog render before any route transition
+      setTimeout(() => {
+        router.push(PAGES.PROJECT.UPDATES(slugOrUid));
+      }, 250);
     } catch (error) {
       showError("There was an error completing the milestone");
       errorManager("Error completing milestone", error, {
