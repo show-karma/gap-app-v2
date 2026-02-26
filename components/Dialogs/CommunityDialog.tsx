@@ -4,7 +4,7 @@ import { Dialog, Transition } from "@headlessui/react";
 import { ChevronRightIcon, PlusIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Community, nullRef } from "@show-karma/karma-gap-sdk";
-import { type FC, Fragment, type ReactNode, useEffect, useState } from "react";
+import { type FC, Fragment, type ReactNode, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useAccount } from "wagmi";
 import { z } from "zod";
@@ -57,17 +57,22 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
   createCommuninity,
   refreshCommunities,
 }) => {
-  const dataToUpdate = {
-    description: createCommuninity?.details?.description || "",
-    name: createCommuninity?.details?.name || "",
-    imageURL: createCommuninity?.details?.imageURL || "",
-    slug: createCommuninity?.details?.slug || "",
-  };
+  const dataToUpdate = useMemo(
+    () => ({
+      description: createCommuninity?.details?.description || "",
+      name: createCommuninity?.details?.name || "",
+      imageURL: createCommuninity?.details?.imageURL || "",
+      slug: createCommuninity?.details?.slug || "",
+    }),
+    [createCommuninity]
+  );
 
   const [isOpen, setIsOpen] = useState(false);
   // When true, form data resets on open; when false, preserve existing form data
   // (e.g., after a failed transaction so the user can retry without re-entering data)
   const [shouldResetOnOpen, setShouldResetOnOpen] = useState(true);
+  const [description, setDescription] = useState(dataToUpdate?.description || "");
+  const [selectedChain, setSelectedChain] = useState(appNetwork[0].id);
 
   function closeModal() {
     setIsOpen(false);
@@ -96,7 +101,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
       setDescription(dataToUpdate?.description || "");
       setSelectedChain(appNetwork[0].id);
     }
-  }, [isOpen, shouldResetOnOpen]);
+  }, [isOpen, shouldResetOnOpen, dataToUpdate, reset, setDescription]);
 
   const { address, chain } = useAccount();
   const { switchChainAsync } = useWallet();
@@ -217,9 +222,6 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
   const onSubmit = async (data: SchemaType) => {
     await createCommunity(data); // Call the createCommunity function
   };
-
-  const [description, setDescription] = useState(dataToUpdate?.description || "");
-  const [selectedChain, setSelectedChain] = useState(appNetwork[0].id);
 
   return (
     <>
