@@ -207,10 +207,18 @@ export type InvoiceStatus = "not_submitted" | "submitted" | "received" | "paid";
 
 export type MilestonePaymentStatus = "unpaid" | "pending" | "awaiting_signatures" | "disbursed";
 
+export enum MilestoneLifecycleStatus {
+  PENDING = "pending",
+  COMPLETED = "completed",
+  VERIFIED = "verified",
+  /** Computed client-side when pending + past due date; never from API */
+  PAST_DUE = "past_due",
+}
+
 export interface CommunityPayoutInvoiceInfo {
   milestoneLabel: string;
   milestoneUID: string | null;
-  milestoneStatus: string | null;
+  milestoneStatus: MilestoneLifecycleStatus | null;
   milestoneDueDate: string | null;
   milestoneStatusUpdatedAt: string | null;
   invoiceStatus: InvoiceStatus;
