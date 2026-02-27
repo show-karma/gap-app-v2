@@ -89,7 +89,61 @@ export const usePermissions = (options: PermissionOptions = {}) => {
 
       const permissionsService = new PermissionsService();
 
-      // Check specific program permission
+      // Get user's reviewer programs (check before generic permission so
+      // useIsReviewer(programId) correctly evaluates the reviewer role)
+      if (role === "reviewer") {
+        try {
+          const programs = (await permissionsService.getReviewerPrograms()) || [];
+
+          // When a specific programId is provided, check if the user is a
+          // reviewer for that program rather than just any program.
+          const hasPermission = programId
+            ? programs.some((p) => {
+                const pid = p.programId;
+                if (!pid) return false;
+                const normalizedPid = pid.toLowerCase();
+                const normalizedTarget = programId.toLowerCase();
+                // Match exact ID or ID with chain suffix (e.g. "id_chainId")
+                return (
+                  normalizedPid === normalizedTarget ||
+                  normalizedTarget.startsWith(`${normalizedPid}_`) ||
+                  normalizedPid.startsWith(`${normalizedTarget}_`)
+                );
+              })
+            : programs.length > 0;
+
+          return {
+            hasPermission,
+            permissions: ["read", "comment"],
+            programs,
+          };
+        } catch (error) {
+          if (axios.isAxiosError(error)) {
+            if (error.response?.status === 401) {
+              console.error(
+                "Authentication error: Please reconnect your wallet to view reviewer programs"
+              );
+            } else if (error.response?.status === 403) {
+              console.error("Access denied: You don't have permission to view reviewer programs");
+            } else if (error.code === "ECONNABORTED") {
+              console.error("Request timeout: Unable to fetch reviewer programs. Please try again");
+            } else {
+              console.error(
+                `Error fetching reviewer programs (${error.response?.status || "network error"}): ${error.message}`
+              );
+            }
+          } else {
+            console.error("Error fetching reviewer programs:", error);
+          }
+          return {
+            hasPermission: false,
+            permissions: [],
+            programs: [],
+          };
+        }
+      }
+
+      // Check specific program permission (non-reviewer role checks)
       if (programId) {
         try {
           const response = await permissionsService.checkPermission({ programId, action });
@@ -114,42 +168,6 @@ export const usePermissions = (options: PermissionOptions = {}) => {
             }
           } else {
             console.error("Error checking permission:", error);
-          }
-          return {
-            hasPermission: false,
-            permissions: [],
-            programs: [],
-          };
-        }
-      }
-
-      // Get user's reviewer programs
-      if (role === "reviewer") {
-        try {
-          const programs = (await permissionsService.getReviewerPrograms()) || [];
-
-          return {
-            hasPermission: programs.length > 0,
-            permissions: ["read", "comment"],
-            programs,
-          };
-        } catch (error) {
-          if (axios.isAxiosError(error)) {
-            if (error.response?.status === 401) {
-              console.error(
-                "Authentication error: Please reconnect your wallet to view reviewer programs"
-              );
-            } else if (error.response?.status === 403) {
-              console.error("Access denied: You don't have permission to view reviewer programs");
-            } else if (error.code === "ECONNABORTED") {
-              console.error("Request timeout: Unable to fetch reviewer programs. Please try again");
-            } else {
-              console.error(
-                `Error fetching reviewer programs (${error.response?.status || "network error"}): ${error.message}`
-              );
-            }
-          } else {
-            console.error("Error fetching reviewer programs:", error);
           }
           return {
             hasPermission: false,
