@@ -7,6 +7,8 @@ import { layoutTheme } from "@/src/helper/theme";
 import type { Community } from "@/types/v2/community";
 import { communityColors } from "@/utilities/communityColors";
 import { cn } from "@/utilities/tailwind";
+import { getWhitelabelBySlug } from "@/utilities/whitelabel-config";
+import { useWhitelabel } from "@/utilities/whitelabel-context";
 
 const AdminCommunityHeader = ({ community }: { community: Community }) => {
   return (
@@ -42,24 +44,26 @@ const AdminCommunityHeader = ({ community }: { community: Community }) => {
 const NormalCommunityHeader = ({ community }: { community: Community }) => {
   const _pathname = usePathname();
   const _params = useParams();
+  const { isWhitelabel, communitySlug } = useWhitelabel();
+
+  const wlConfig = communitySlug ? getWhitelabelBySlug(communitySlug) : null;
+  const logoBg =
+    wlConfig?.theme?.logoBackground ??
+    communityColors[(community as Community)?.uid?.toLowerCase() || "black"] ??
+    "#000000";
 
   return (
     <div
       className={cn(
         layoutTheme.padding,
-        "py-0 flex flex-col gap-4 justify-between items-start mt-4 sm:px-3 md:px-4 px-6 border-b border-gray-200 dark:border-gray-800"
+        isWhitelabel
+          ? "py-0 flex flex-col gap-4 justify-between items-start pt-6 sm:px-3 md:px-4 px-6 border-b border-gray-200 dark:border-gray-800"
+          : "py-0 flex flex-col gap-4 justify-between items-start mt-4 sm:px-3 md:px-4 px-6 border-b border-gray-200 dark:border-gray-800"
       )}
     >
       <div className="flex flex-row gap-4 flex-wrap max-lg:flex-col justify-between items-center w-full">
         <div className="flex h-max flex-1 flex-row items-center justify-start gap-3 ">
-          <div
-            className="p-3 rounded-xl"
-            style={{
-              backgroundColor:
-                communityColors[(community as Community)?.uid?.toLowerCase() || "black"] ||
-                "#000000",
-            }}
-          >
+          <div className="p-3 rounded-xl" style={{ backgroundColor: logoBg }}>
             <div className="flex justify-center border border-white rounded-full p-2">
               <Image
                 alt={(community as Community)?.details?.name || "Community"}

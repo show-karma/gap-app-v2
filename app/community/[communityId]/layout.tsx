@@ -7,18 +7,22 @@ import { envVars } from "@/utilities/enviromentVars";
 import { DEFAULT_DESCRIPTION, DEFAULT_TITLE, SITE_URL, twitterMeta } from "@/utilities/meta";
 import { pagesOnRoot } from "@/utilities/pagesOnRoot";
 import { getCommunityDetails } from "@/utilities/queries/v2/getCommunityData";
+import { getWhitelabelContext } from "@/utilities/whitelabel-server";
 
 type Params = Promise<{
   communityId: string;
 }>;
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { communityId } = await params;
+  const { isWhitelabel, config: wlConfig } = await getWhitelabelContext();
 
   const community = await getCommunityDetails(communityId);
   const communityName = community?.details?.name || communityId;
 
   const dynamicMetadata = {
-    title: `${PROJECT_NAME} - ${communityName} community grants`,
+    title: isWhitelabel
+      ? `${communityName} Grants`
+      : `${PROJECT_NAME} - ${communityName} community grants`,
     description: `View the list of grants issued by ${communityName} and the grantee updates.`,
   };
 
@@ -27,29 +31,33 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
     dynamicMetadata.description = `Looks like no one's started this community. Create it now to launch programs, fund projects, and track progress, all in one place.`;
   }
 
+  const siteUrl = isWhitelabel && wlConfig ? `https://${wlConfig.domain}` : SITE_URL;
+  const ogImageBase = isWhitelabel && wlConfig ? `https://${wlConfig.domain}` : envVars.VERCEL_URL;
+  const canonical = isWhitelabel ? "/" : `/community/${communityId}`;
+
   return {
     title: dynamicMetadata.title || DEFAULT_TITLE,
     description: dynamicMetadata.description || DEFAULT_DESCRIPTION,
     alternates: {
-      canonical: `/community/${communityId}`,
+      canonical,
     },
     twitter: {
       creator: twitterMeta.creator,
       site: twitterMeta.site,
       images: [
         {
-          url: `${envVars.VERCEL_URL}/api/metadata/communities/${communityId}`,
+          url: `${ogImageBase}/api/metadata/communities/${communityId}`,
           alt: dynamicMetadata.title || DEFAULT_TITLE,
         },
       ],
     },
     openGraph: {
-      url: SITE_URL,
+      url: siteUrl,
       title: dynamicMetadata.title || DEFAULT_TITLE,
       description: dynamicMetadata.description || DEFAULT_DESCRIPTION,
       images: [
         {
-          url: `${envVars.VERCEL_URL}/api/metadata/communities/${communityId}`,
+          url: `${ogImageBase}/api/metadata/communities/${communityId}`,
           alt: dynamicMetadata.title || DEFAULT_TITLE,
         },
       ],

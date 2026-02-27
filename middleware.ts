@@ -3,9 +3,54 @@ import { NextResponse } from "next/server";
 import { chosenCommunities } from "./utilities/chosenCommunities";
 import { redirectToGov, shouldRedirectToGov } from "./utilities/redirectHelpers";
 import { hasForbiddenChars, sanitizeCommunitySlug } from "./utilities/sanitize";
+import { getWhitelabelByDomain } from "./utilities/whitelabel-config";
+
+const WHITELABEL_ALLOWED_SUFFIXES = [
+  "/impact",
+  "/updates",
+  "/financials",
+  "/funding-opportunities",
+  "/karma-ai",
+];
 
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
+
+  // --- Whitelabel domain handling (must run before all other logic) ---
+  const hostname = request.headers.get("host") || "";
+  const whitelabel = getWhitelabelByDomain(hostname);
+
+  if (whitelabel) {
+    const { communitySlug } = whitelabel;
+
+    // Allow root or known community sub-paths only
+    const isRoot = path === "/" || path === "";
+    const isAllowedSubPath = WHITELABEL_ALLOWED_SUFFIXES.some(
+      (suffix) => path === suffix || path.startsWith(`${suffix}/`)
+    );
+
+    if (!isRoot && !isAllowedSubPath) {
+      return NextResponse.redirect(new URL("/", request.url));
+    }
+
+    // Rewrite: prepend /community/<slug> to path
+    const rewrittenPath = isRoot
+      ? `/community/${communitySlug}`
+      : `/community/${communitySlug}${path}`;
+
+    const url = request.nextUrl.clone();
+    url.pathname = rewrittenPath;
+
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set("x-is-whitelabel", "true");
+    requestHeaders.set("x-community-slug", communitySlug);
+
+    return NextResponse.rewrite(url, {
+      request: { headers: requestHeaders },
+    });
+  }
+
+  // --- Standard karmahq.xyz logic below ---
 
   // Redirect frontend-nextjs routes to gov.karmahq.xyz
   if (shouldRedirectToGov(path)) {

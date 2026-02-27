@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams, usePathname, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
+import { useCommunityBasePath } from "@/hooks/useCommunityBasePath";
 import { useFundingOpportunitiesCount } from "@/hooks/useFundingOpportunitiesCount";
 import { useCommunityPrograms } from "@/hooks/usePrograms";
 import { PAGES } from "@/utilities/pages";
@@ -88,6 +89,7 @@ export const CommunityPageNavigator = () => {
   const communityId = params.communityId as string;
   const pathname = usePathname();
   const programId = searchParams.get("programId");
+  const basePath = useCommunityBasePath();
 
   // Check if we're on an admin page early to avoid unnecessary data fetching
   const isAdminPage = pathname.includes("/manage");
@@ -122,24 +124,29 @@ export const CommunityPageNavigator = () => {
 
   return (
     <div className="flex flex-row max-md:flex-col flex-wrap pt-8 border-b border-gray-200 dark:border-zinc-700 justify-start items-center gap-6 h-max">
-      {visibleNavigationItems.map(({ id, path, title, Icon, isActive, showNewTag }) => (
-        <Link
-          key={id}
-          href={getPathWithProgramId(programId, path(communityId))}
-          className={cn(baseLinkStyle, isActive(pathname) ? activeLinkStyle : inactiveLinkStyle)}
-        >
-          <Icon
-            className={cn(
-              "w-6 h-6 transition-colors duration-200",
-              isActive(pathname)
-                ? "text-gray-900 dark:text-white"
-                : "text-gray-500 dark:text-zinc-400"
-            )}
-          />
-          {title(community?.details?.name || "")}
-          {showNewTag ? <NewTag /> : null}
-        </Link>
-      ))}
+      {visibleNavigationItems.map(({ id, path, title, Icon, isActive, showNewTag }) => {
+        const fullPath = path(communityId);
+        const href =
+          basePath === "" ? fullPath.replace(`/community/${communityId}`, "") || "/" : fullPath;
+        return (
+          <Link
+            key={id}
+            href={getPathWithProgramId(programId, href)}
+            className={cn(baseLinkStyle, isActive(pathname) ? activeLinkStyle : inactiveLinkStyle)}
+          >
+            <Icon
+              className={cn(
+                "w-6 h-6 transition-colors duration-200",
+                isActive(pathname)
+                  ? "text-gray-900 dark:text-white"
+                  : "text-gray-500 dark:text-zinc-400"
+              )}
+            />
+            {title(community?.details?.name || "")}
+            {showNewTag ? <NewTag /> : null}
+          </Link>
+        );
+      })}
     </div>
   );
 };
