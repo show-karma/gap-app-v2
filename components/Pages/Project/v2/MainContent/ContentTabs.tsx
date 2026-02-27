@@ -38,7 +38,7 @@ interface ContentTabsProps {
 /**
  * ContentTabs provides tab navigation for the project profile page.
  *
- * Desktop: Updates, About, Funding, Impact, Team, Contact (if authorized)
+ * Desktop: Updates, About, Funding, Impact, Contact (if authorized)
  * Mobile: Support (first, mobile-only), Updates, About, Funding, Impact, Team
  *
  * Support tab (mobile only) shows Donate, Endorse, Subscribe, and Quick Links.

@@ -107,7 +107,7 @@ export function ProjectHeader({ project, isVerified = false, className }: Projec
                 {/* Name with verification badge and social links - spread apart */}
                 <div className="flex flex-row items-center justify-between flex-1 min-w-0 flex-wrap">
                   <h1
-                    className="text-xl font-semibold leading-tight lg:text-2xl text-neutral-900 dark:text-white tracking-tight"
+                    className="text-xl font-semibold leading-tight lg:text-2xl text-foreground tracking-tight"
                     data-testid="project-title"
                   >
                     <Balancer>
@@ -132,7 +132,7 @@ export function ProjectHeader({ project, isVerified = false, className }: Projec
                         href={social.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white transition-colors"
+                        className="text-muted-foreground hover:text-foreground transition-colors"
                         aria-label={`Visit ${social.name}`}
                         data-testid="social-link"
                       >
@@ -145,7 +145,7 @@ export function ProjectHeader({ project, isVerified = false, className }: Projec
                           className="h-5 w-5 text-blue-800 hover:text-blue-900 dark:text-blue-200 dark:hover:text-blue-100 cursor-pointer transition-colors"
                           data-testid="custom-links-trigger"
                         />
-                        <div className="absolute right-0 top-6 mt-1 w-48 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+                        <div className="absolute right-0 top-6 mt-1 w-48 bg-popover border rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
                           <div className="py-2">
                             {customLinks.map((link, index) => (
                               <a
@@ -153,7 +153,7 @@ export function ProjectHeader({ project, isVerified = false, className }: Projec
                                 href={ensureProtocol(link.url)}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="block px-4 py-2 text-sm text-gray-700 dark:text-neutral-300 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors duration-150"
+                                className="block px-4 py-2 text-sm text-popover-foreground hover:bg-accent transition-colors duration-150"
                                 data-testid="custom-link"
                               >
                                 {link.name || link.url}
@@ -177,7 +177,7 @@ export function ProjectHeader({ project, isVerified = false, className }: Projec
                     href={social.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white transition-colors"
+                    className="text-muted-foreground hover:text-foreground transition-colors"
                     aria-label={`Visit ${social.name}`}
                     data-testid="social-link"
                   >
@@ -190,7 +190,7 @@ export function ProjectHeader({ project, isVerified = false, className }: Projec
                       className="h-5 w-5 text-blue-800 hover:text-blue-900 dark:text-blue-200 dark:hover:text-blue-100 cursor-pointer transition-colors"
                       data-testid="custom-links-trigger-mobile"
                     />
-                    <div className="absolute right-0 top-6 mt-1 w-48 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+                    <div className="absolute right-0 top-6 mt-1 w-48 bg-popover border rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
                       <div className="py-2">
                         {customLinks.map((link, index) => (
                           <a
@@ -198,7 +198,7 @@ export function ProjectHeader({ project, isVerified = false, className }: Projec
                             href={ensureProtocol(link.url)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="block px-4 py-2 text-sm text-gray-700 dark:text-neutral-300 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors duration-150"
+                            className="block px-4 py-2 text-sm text-popover-foreground hover:bg-accent transition-colors duration-150"
                             data-testid="custom-link"
                           >
                             {link.name || link.url}
@@ -223,7 +223,7 @@ export function ProjectHeader({ project, isVerified = false, className }: Projec
                     <a
                       href={`${PAGES.PROJECT.ABOUT(projectId)}?scrollTo=description`}
                       onClick={handleReadMoreClick}
-                      className="mt-2 inline-block text-sm font-semibold text-neutral-900 hover:text-neutral-700 dark:text-white dark:hover:text-neutral-200 underline underline-offset-2 cursor-pointer"
+                      className="mt-2 inline-block text-sm font-semibold text-foreground hover:text-muted-foreground underline underline-offset-2 cursor-pointer"
                       data-testid="read-more-button"
                     >
                       Read More
@@ -236,11 +236,9 @@ export function ProjectHeader({ project, isVerified = false, className }: Projec
             {/* Stage indicator */}
             {stageLabel && (
               <div className="flex flex-row items-center gap-2" data-testid="project-stage">
-                <RocketIcon className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
-                <span className="text-sm text-neutral-500 dark:text-neutral-400">Stage</span>
-                <span className="text-sm font-semibold text-neutral-900 dark:text-white">
-                  {stageLabel}
-                </span>
+                <RocketIcon className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Stage</span>
+                <span className="text-sm font-semibold text-foreground">{stageLabel}</span>
               </div>
             )}
           </div>

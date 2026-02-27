@@ -133,13 +133,10 @@ export function AboutContent({ project, className }: AboutContentProps) {
   return (
     <div className={cn("flex flex-col gap-8", className)} data-testid="about-content">
       {/* Doc-style card */}
-      <div
-        className="rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 overflow-hidden"
-        style={{ boxShadow: "inset 0 2px 8px rgba(0,0,0,0.04), inset 0 0 0 0px transparent" }}
-      >
+      <div className="rounded-xl border border-neutral-200 dark:border-neutral-700 bg-background overflow-hidden shadow-inner">
         {activeSections.map((section, index) => (
           <Fragment key={section.key}>
-            {index > 0 && <div className="h-px bg-neutral-100 dark:bg-neutral-800 mx-10" />}
+            {index > 0 && <div className="h-px bg-border dark:bg-neutral-800 mx-10" />}
             <AboutSection
               icon={section.icon}
               title={section.title}

@@ -13,7 +13,7 @@ export function ContentTabsSkeleton({ className }: ContentTabsSkeletonProps) {
   return (
     <div
       className={cn(
-        "flex flex-row items-center gap-1 p-1 rounded-lg bg-neutral-100 dark:bg-neutral-800 overflow-x-auto",
+        "flex flex-row items-center gap-1 p-1 rounded-lg bg-muted overflow-x-auto",
         className
       )}
       data-testid="content-tabs-skeleton"

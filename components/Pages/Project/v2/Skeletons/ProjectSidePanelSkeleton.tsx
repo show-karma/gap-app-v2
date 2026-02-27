@@ -6,7 +6,7 @@ interface ProjectSidePanelSkeletonProps {
 }
 
 function SeparatorSkeleton() {
-  return <div className="h-px w-full bg-neutral-200 dark:bg-neutral-700" />;
+  return <div className="h-px w-full bg-border" />;
 }
 
 function ActionSectionSkeleton() {
@@ -34,16 +34,16 @@ function ActionSectionSkeleton() {
 export function ProjectSidePanelSkeleton({ className }: ProjectSidePanelSkeletonProps) {
   return (
     <aside
-      className={cn("hidden lg:flex flex-col gap-4 w-[360px] shrink-0", className)}
+      className={cn("hidden lg:flex flex-col gap-4 w-[400px] shrink-0", className)}
       data-testid="project-side-panel-skeleton"
     >
       {/* Post an update button */}
       <Skeleton className="h-12 w-full rounded-lg" />
 
       {/* Outer card: profile + actions */}
-      <div className="flex flex-col rounded-xl border border-neutral-200 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800/50 shadow-sm overflow-hidden">
+      <div className="flex flex-col rounded-xl border bg-secondary shadow-sm gap-2 p-2">
         {/* Inner white profile card */}
-        <div className="flex flex-col gap-4 p-6 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-700">
+        <div className="flex flex-col gap-4 p-6 rounded-lg border bg-white dark:bg-neutral-900">
           <div className="flex flex-row items-start justify-between">
             <Skeleton className="h-16 w-16 rounded-full" />
             <Skeleton className="h-5 w-14" />
@@ -65,7 +65,7 @@ export function ProjectSidePanelSkeleton({ className }: ProjectSidePanelSkeleton
         </div>
 
         {/* Actions */}
-        <div className="flex flex-col gap-8 p-8">
+        <div className="flex flex-col gap-8 p-6">
           <ActionSectionSkeleton />
           <SeparatorSkeleton />
           <ActionSectionSkeleton />
@@ -86,7 +86,7 @@ export function ProjectSidePanelSkeleton({ className }: ProjectSidePanelSkeleton
       </div>
 
       {/* Quick Links Card */}
-      <div className="flex flex-col gap-4 p-8 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 shadow-sm">
+      <div className="flex flex-col gap-4 p-8 rounded-xl border bg-secondary shadow-sm">
         <Skeleton className="h-6 w-24" />
         <div className="flex flex-col gap-2">
           {Array.from({ length: 3 }, (_, i) => (
@@ -95,7 +95,7 @@ export function ProjectSidePanelSkeleton({ className }: ProjectSidePanelSkeleton
                 <Skeleton className="h-4 w-4 rounded" />
                 <Skeleton className="h-4 w-24" />
               </div>
-              {i < 2 && <div className="h-px w-full bg-neutral-200 dark:bg-neutral-700" />}
+              {i < 2 && <div className="h-px w-full bg-border" />}
             </div>
           ))}
         </div>

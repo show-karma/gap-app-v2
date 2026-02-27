@@ -74,16 +74,11 @@ export function QuickLinksCard({ project, className }: QuickLinksCardProps) {
 
   return (
     <div
-      className={cn(
-        "flex flex-col gap-4 p-8 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-secondary shadow-sm",
-        className
-      )}
+      className={cn("flex flex-col gap-4 p-8 rounded-xl border bg-secondary shadow-sm", className)}
       data-testid="quick-links-card"
     >
       {/* Header */}
-      <span className="text-xl font-semibold text-neutral-900 dark:text-white tracking-tight">
-        Quick links
-      </span>
+      <span className="text-xl font-semibold text-foreground tracking-tight">Quick links</span>
 
       {/* Links */}
       <div className="flex flex-col gap-2">
@@ -91,11 +86,11 @@ export function QuickLinksCard({ project, className }: QuickLinksCardProps) {
           const isLast = index === links.length - 1;
           const itemContent = (
             <>
-              <div className="flex flex-row items-center gap-2 py-2 text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white transition-colors">
+              <div className="flex flex-row items-center gap-2 py-2 text-muted-foreground hover:text-foreground transition-colors">
                 {link.icon}
                 <span className="text-sm font-medium">{link.label}</span>
               </div>
-              {!isLast && <div className="h-px w-full bg-neutral-200 dark:bg-neutral-700" />}
+              {!isLast && <div className="h-px w-full bg-border" />}
             </>
           );
 

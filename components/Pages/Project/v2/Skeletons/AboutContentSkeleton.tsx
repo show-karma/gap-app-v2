@@ -37,17 +37,17 @@ export function AboutContentSkeleton({ className }: AboutContentSkeletonProps) {
   return (
     <div className={cn("flex flex-col gap-8", className)} data-testid="about-content-skeleton">
       {/* Doc-style card */}
-      <div className="rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 overflow-hidden">
+      <div className="rounded-xl border bg-background overflow-hidden">
         {Array.from({ length: sectionCount }, (_, i) => (
           <div key={i}>
-            {i > 0 && <div className="h-px bg-neutral-100 dark:bg-neutral-800 mx-10" />}
+            {i > 0 && <div className="h-px bg-border mx-10" />}
             <SectionSkeleton />
           </div>
         ))}
       </div>
 
       {/* Team section skeleton */}
-      <div className="flex flex-col gap-4 p-6 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900">
+      <div className="flex flex-col gap-4 p-6 rounded-xl border bg-background">
         <Skeleton className="h-5 w-16" />
         <div className="flex flex-row gap-4 flex-wrap">
           <Skeleton className="h-12 w-48 rounded-lg" />

@@ -96,14 +96,10 @@ export function SubscribeSection({ project, className }: SubscribeSectionProps) 
       {/* Header */}
       <div className="flex flex-col gap-1">
         <div className="flex flex-row items-center gap-2">
-          <MailsIcon className="h-6 w-6 text-neutral-700 dark:text-neutral-300" />
-          <span className="text-xl font-semibold text-neutral-900 dark:text-white tracking-tight">
-            Stay updated
-          </span>
+          <MailsIcon className="h-6 w-6 text-foreground" />
+          <span className="text-xl font-semibold text-foreground tracking-tight">Stay updated</span>
         </div>
-        <p className="text-sm text-neutral-500 dark:text-neutral-400">
-          Get project updates in your inbox
-        </p>
+        <p className="text-sm text-muted-foreground">Get project updates in your inbox</p>
       </div>
 
       {/* Stay Updated Form */}
@@ -120,7 +116,7 @@ export function SubscribeSection({ project, className }: SubscribeSectionProps) 
             {...register("name")}
             aria-invalid={!!errors.name}
             aria-describedby={errors.name ? "subscribe-name-error" : undefined}
-            className="w-full bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700 rounded-lg shadow-sm"
+            className="w-full bg-background rounded-lg shadow-sm"
             data-testid="subscribe-name-input"
           />
           {errors.name && (
@@ -148,7 +144,7 @@ export function SubscribeSection({ project, className }: SubscribeSectionProps) 
             aria-required="true"
             aria-invalid={!!errors.email}
             aria-describedby={errors.email ? "subscribe-email-error" : undefined}
-            className="w-full bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700 rounded-lg shadow-sm"
+            className="w-full bg-background rounded-lg shadow-sm"
             data-testid="subscribe-email-input"
           />
           {errors.email && (
@@ -168,7 +164,7 @@ export function SubscribeSection({ project, className }: SubscribeSectionProps) 
           type="submit"
           disabled={isLoading}
           isLoading={isLoading}
-          className="bg-neutral-900 hover:bg-neutral-800 text-white dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100 rounded-lg px-3"
+          className="bg-foreground hover:bg-foreground/90 text-background rounded-lg px-3"
           data-testid="subscribe-button"
         >
           Subscribe

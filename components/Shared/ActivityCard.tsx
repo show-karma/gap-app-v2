@@ -10,6 +10,8 @@ import type {
 import type { FC } from "react";
 import { useOwnerStore, useProjectStore } from "@/store";
 import type { ConversionGrantUpdate, ProjectUpdate, UnifiedMilestone } from "@/types/v2/roadmap";
+import { EndorsementCard } from "./ActivityCard/EndorsementCard";
+import { FundingReceivedCard } from "./ActivityCard/FundingReceivedCard";
 import { MilestoneCard } from "./ActivityCard/MilestoneCard";
 import { ProjectUpdateCard } from "./ActivityCard/ProjectUpdateCard";
 import { UpdateCard } from "./ActivityCard/UpdateCard";
@@ -33,7 +35,9 @@ type ActivityType =
       data: SdkUpdateType;
       index: number;
     }
-  | { type: "milestone"; data: UnifiedMilestone };
+  | { type: "milestone"; data: UnifiedMilestone }
+  | { type: "fundingReceived"; data: UnifiedMilestone; projectId?: string }
+  | { type: "endorsement"; data: UnifiedMilestone };
 
 interface ActivityCardProps {
   activity: ActivityType;
@@ -41,7 +45,14 @@ interface ActivityCardProps {
 }
 
 export const containerClassName =
-  "border bg-white dark:bg-zinc-800 border-gray-300 dark:border-zinc-400 rounded-xl gap-0 flex flex-col items-start justify-start";
+  "border bg-background rounded-xl gap-0 flex flex-col items-start justify-start";
+
+/**
+ * Get the activity type string from the SDK update type
+ */
+const getSdkUpdateType = (update: SdkUpdateType): string => {
+  return update.type;
+};
 
 export const ActivityCard: FC<ActivityCardProps> = ({ activity, isAuthorized = false }) => {
   const isOwner = useOwnerStore((state) => state.isOwner);
@@ -65,6 +76,14 @@ export const ActivityCard: FC<ActivityCardProps> = ({ activity, isAuthorized = f
             index={activity.index}
             isAuthorized={isAuthenticatedUser}
           />
+        </div>
+      ) : activity.type === "fundingReceived" ? (
+        <div className={containerClassName}>
+          <FundingReceivedCard milestone={activity.data} projectId={activity.projectId} />
+        </div>
+      ) : activity.type === "endorsement" ? (
+        <div className={containerClassName}>
+          <EndorsementCard milestone={activity.data} />
         </div>
       ) : (
         <MilestoneCard milestone={activity.data} isAuthorized={isAuthenticatedUser} />

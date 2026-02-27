@@ -1,96 +1,14 @@
 "use client";
 
-import {
-  ArrowLeftToLine,
-  BadgeCheck,
-  CircleDollarSign,
-  ExternalLink,
-  Goal,
-  Rss,
-} from "lucide-react";
-import Link from "next/link";
+import { ArrowLeftToLine, BadgeCheck, CircleDollarSign, Goal, Rss } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useMemo } from "react";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
 import { ActivityCard, containerClassName } from "@/components/Shared/ActivityCard";
-import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
-import { Button } from "@/components/ui/button";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
-import formatCurrency from "@/utilities/formatCurrency";
 import { cn } from "@/utilities/tailwind";
 import type { ActivityFilterType, SortOption } from "./ActivityFilters";
-
-/**
- * Flag icon component matching Figma design.
- * Uses currentColor to inherit text color from parent.
- */
-function FlagIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="13"
-      height="14"
-      viewBox="0 0 13 14"
-      fill="none"
-      className={className}
-    >
-      <path
-        d="M3.64355 0C4.71352 0 5.59584 0.360795 6.33691 0.657227C7.10508 0.964491 7.73258 1.20796 8.47363 1.20801C9.29455 1.20801 9.80279 1.07065 10.082 0.958984C10.222 0.903005 10.3086 0.852176 10.3506 0.824219C10.3703 0.811056 10.3809 0.802358 10.3828 0.800781C10.3821 0.801285 10.3799 0.803002 10.377 0.805664C10.375 0.80744 10.372 0.80973 10.3691 0.8125L10.3613 0.820312C10.5758 0.608171 10.8968 0.545585 11.1758 0.661133C11.4559 0.777213 11.6386 1.05031 11.6387 1.35352V8.59863C11.6386 8.79733 11.5594 8.98837 11.4189 9.12891L10.8887 8.59863C11.3722 9.08214 11.4146 9.12579 11.418 9.12988V9.13086L11.416 9.13281C11.4149 9.13376 11.4132 9.13468 11.4121 9.13574C11.4098 9.13803 11.4069 9.14105 11.4043 9.14355C11.3989 9.14868 11.3924 9.15506 11.3857 9.16113C11.3721 9.17354 11.3552 9.18824 11.3359 9.2041C11.2969 9.23624 11.2461 9.27508 11.1826 9.31738C11.0547 9.40263 10.8756 9.50288 10.6387 9.59766C10.1632 9.78774 9.46333 9.95312 8.47363 9.95312C7.40377 9.95308 6.52129 9.59231 5.78027 9.2959C5.01198 8.98858 4.38474 8.74512 3.64355 8.74512C2.8225 8.74513 2.31434 8.88149 2.03516 8.99316C2.01494 9.00125 1.9965 9.0107 1.97852 9.01855V12.8252C1.97842 13.2393 1.64267 13.5752 1.22852 13.5752C0.814388 13.5752 0.478614 13.2393 0.478516 12.8252V1.35352C0.478584 1.15482 0.557811 0.963809 0.698242 0.823242L1.22852 1.35352C0.738079 0.863079 0.7016 0.825419 0.699219 0.822266H0.700195L0.701172 0.820312C0.702214 0.819283 0.703913 0.817554 0.705078 0.816406C0.707329 0.814209 0.710322 0.81198 0.712891 0.80957C0.718321 0.80439 0.724658 0.798174 0.731445 0.791992C0.745141 0.779545 0.761872 0.76499 0.78125 0.749023C0.820377 0.716802 0.871839 0.678225 0.935547 0.635742C1.06342 0.550506 1.2416 0.450251 1.47852 0.355469C1.95401 0.165308 2.65357 1.23127e-05 3.64355 0ZM3.64355 1.5C2.8225 1.50001 2.31434 1.63637 2.03516 1.74805C2.01503 1.75611 1.99644 1.76564 1.97852 1.77344V7.43848C2.40821 7.32598 2.95567 7.24513 3.64355 7.24512C4.7135 7.24512 5.59585 7.60592 6.33691 7.90234C7.10508 8.20961 7.73258 8.45308 8.47363 8.45312C9.29455 8.45312 9.80279 8.31577 10.082 8.2041C10.1023 8.19599 10.1206 8.1856 10.1387 8.17773V2.51367C9.70898 2.62614 9.16146 2.70801 8.47363 2.70801C7.40365 2.70796 6.52134 2.34623 5.78027 2.0498C5.01199 1.74249 4.38473 1.5 3.64355 1.5Z"
-        fill="currentColor"
-      />
-    </svg>
-  );
-}
-
-/**
- * Thunder/lightning bolt icon for Project Activity.
- * Matches the design specification for activity updates.
- */
-function ThunderIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-    </svg>
-  );
-}
-
-/**
- * Money bag icon for Grant Update.
- * Outlined style to match other icons.
- */
-function MoneyBagIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <path d="M9.5 2h5l-2.5 4-2.5-4z" />
-      <path d="M12 6c-5 0-8 4-8 8 0 5 4 8 8 8s8-3 8-8c0-4-3-8-8-8z" />
-      <path d="M12 11v6" />
-      <path d="M9.5 14h5" />
-    </svg>
-  );
-}
 
 interface ActivityFeedProps {
   milestones: UnifiedMilestone[];
@@ -141,37 +59,8 @@ function getActivityTypeLabel(type: string): string {
     case "grant":
     case "milestone":
     default:
-      return "Milestone";
+      return "Milestone created";
   }
-}
-
-/**
- * Format grant amount using the same logic as Grant Overview.
- * Handles amounts like "10000 USDC" or plain numbers.
- * Returns null if amount is missing, empty, or zero.
- */
-function formatGrantAmount(amount?: string): string | null {
-  if (!amount) return null;
-
-  // Handle amounts with currency suffix (e.g., "10000 USDC")
-  const parts = amount.split(" ");
-  const numericPart = parts[0]?.replace(",", "");
-  const currencySuffix = parts.length > 1 ? parts.slice(1).join(" ") : null;
-
-  const numAmount = Number(numericPart);
-  if (isNaN(numAmount) || numAmount === 0) return null;
-
-  // Format the number using the same utility as Grant Overview
-  if (numAmount < 1000) {
-    const formatted = new Intl.NumberFormat("en-US", {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 2,
-    }).format(numAmount);
-    return currencySuffix ? `${formatted} ${currencySuffix}` : formatted;
-  }
-
-  const formattedNum = formatCurrency(numAmount);
-  return currencySuffix ? `${formattedNum} ${currencySuffix}` : formattedNum;
 }
 
 /**
@@ -255,7 +144,7 @@ export function ActivityFeed({
   if (sortedMilestones.length === 0) {
     return (
       <div
-        className={cn("text-center py-12 text-neutral-500 dark:text-neutral-400", className)}
+        className={cn("text-center py-12 text-muted-foreground", className)}
         data-testid="activity-feed-empty"
       >
         No activities to display
@@ -266,7 +155,7 @@ export function ActivityFeed({
   return (
     <div className={cn("relative", className)} data-testid="activity-feed">
       {/* Timeline line - centered under icons (w-6=24px, so center at 12px on desktop, w-5=20px so 10px on mobile) */}
-      <div className="absolute left-[11px] max-lg:left-[9px] top-2 bottom-0 w-0.5 bg-neutral-200 dark:bg-zinc-700" />
+      <div className="absolute left-[11px] max-lg:left-[9px] top-2 bottom-0 w-0.5 bg-border" />
 
       {/* Timeline items */}
       <div className="flex flex-col gap-12 pb-12">
@@ -282,24 +171,26 @@ export function ActivityFeed({
                   "absolute left-0 top-0 w-6 h-6 max-lg:w-5 max-lg:h-5 rounded-full border flex items-center justify-center",
                   // Shared border for all types: foreground at 10% opacity
                   "border-foreground/10",
+                  // 2px outline that matches page background for separation from timeline
+                  "ring-2 ring-white dark:ring-zinc-900",
                   // Funding (grant_received) - emerald, matches Funds filter badge
                   milestone.type === "grant_received" &&
-                    "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400",
+                    "bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400",
                   // Updates (grant_update, activity, update, project) - violet, matches Updates filter badge
                   (milestone.type === "grant_update" ||
                     milestone.type === "activity" ||
                     milestone.type === "update" ||
                     milestone.type === "project") &&
-                    "bg-violet-50 text-violet-600 dark:bg-violet-950/50 dark:text-violet-400",
+                    "bg-violet-50 text-violet-600 dark:bg-violet-950 dark:text-violet-400",
                   // Endorsements - pink, matches Endorsements filter badge
                   milestone.type === "endorsement" &&
-                    "bg-pink-50 text-pink-500 dark:bg-pink-950/50 dark:text-pink-400",
+                    "bg-pink-50 text-pink-500 dark:bg-pink-950 dark:text-pink-400",
                   // Standalone milestones - indigo
                   milestone.type === "milestone" &&
-                    "bg-indigo-50 text-indigo-600 dark:bg-indigo-950/50 dark:text-indigo-400",
+                    "bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400",
                   // Grant milestones (sub-milestones) - blue
                   (milestone.type === "grant" || milestone.type === "impact") &&
-                    "bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400"
+                    "bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-400"
                 )}
                 data-testid="timeline-icon"
               >
@@ -390,73 +281,34 @@ export function ActivityFeed({
                 )}
               </div>
 
-              {/* Endorsement comment - shown below header when present */}
-              {milestone.type === "endorsement" && milestone.endorsement?.comment && (
-                <p className="text-sm text-muted-foreground italic mt-1">
-                  "{milestone.endorsement.comment}"
-                </p>
-              )}
-
-              {/* Grant Received card */}
-              {milestone.type === "grant_received" && milestone.grantReceived && (
-                <div className={cn(containerClassName, "p-6 gap-4")}>
-                  {/* Amount */}
-                  {(() => {
-                    const formattedAmount = formatGrantAmount(milestone.grantReceived.amount);
-                    return formattedAmount ? (
-                      <p className="text-2xl font-medium text-foreground tabular-nums">
-                        {formattedAmount}
-                      </p>
-                    ) : null;
-                  })()}
-
-                  {/* Heading: "Funds received from [avatar] Community name" */}
-                  <div className="flex flex-row items-center gap-2 flex-wrap">
-                    <span className="text-lg font-semibold text-foreground">
-                      Funds received from
-                    </span>
-                    <ProfilePicture
-                      imageURL={milestone.grantReceived.communityImage}
-                      name={milestone.grantReceived.communityName || "Community"}
-                      size="24"
-                      className="h-6 w-6 min-w-6 min-h-6 rounded-full"
-                      alt={milestone.grantReceived.communityName || "Community"}
-                    />
-                    <span className="text-lg font-semibold text-foreground">
-                      {milestone.grantReceived.communityName || "Community"}
-                    </span>
-                  </div>
-
-                  {/* View grant button */}
-                  {projectId && milestone.grantReceived.grantUID && (
-                    <Button variant="outline" size="sm" asChild>
-                      <Link
-                        href={`/project/${projectId}/funding/${milestone.grantReceived.grantUID}`}
-                      >
-                        View grant <ExternalLink className="w-3.5 h-3.5" />
-                      </Link>
-                    </Button>
-                  )}
-                </div>
-              )}
-
-              {/* Activity Card - skip for endorsement as the header contains all info */}
-              {milestone.type !== "grant_received" && milestone.type !== "endorsement" && (
-                <ActivityCard
-                  activity={{
-                    type: "milestone",
-                    data: milestone,
-                  }}
-                  isAuthorized={isAuthorized}
-                />
-              )}
+              {/* Activity Card for all types */}
+              <ActivityCard
+                activity={
+                  milestone.type === "grant_received"
+                    ? {
+                        type: "fundingReceived",
+                        data: milestone,
+                        projectId,
+                      }
+                    : milestone.type === "endorsement"
+                      ? {
+                          type: "endorsement",
+                          data: milestone,
+                        }
+                      : {
+                          type: "milestone",
+                          data: milestone,
+                        }
+                }
+                isAuthorized={isAuthorized}
+              />
             </div>
           );
         })}
       </div>
 
       {/* Timeline end dot - aligned with line */}
-      <div className="absolute left-[9px] max-lg:left-[8px] bottom-0 w-1.5 h-1.5 rounded-full bg-neutral-300 dark:bg-neutral-600" />
+      <div className="absolute left-[9px] max-lg:left-[8px] bottom-0 w-1.5 h-1.5 rounded-full bg-border" />
     </div>
   );
 }

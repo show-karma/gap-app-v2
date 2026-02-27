@@ -29,7 +29,7 @@ interface MobileProfileContentProps {
  * Separator component for dividing sections
  */
 function Separator() {
-  return <div className="h-px w-full bg-neutral-200 dark:bg-neutral-700" />;
+  return <div className="h-px w-full bg-border" />;
 }
 
 /**
@@ -97,7 +97,7 @@ export function MobileProfileContent({
       )}
 
       {/* Actions Card - Same content as side panel */}
-      <div className="flex flex-col gap-8 p-6 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-secondary">
+      <div className="flex flex-col gap-8 p-6 rounded-xl border bg-secondary">
         {showDonateSection && (
           <>
             <DonateSection project={project} />

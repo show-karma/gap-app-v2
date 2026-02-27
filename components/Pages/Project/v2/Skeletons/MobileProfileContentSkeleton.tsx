@@ -6,7 +6,7 @@ interface MobileProfileContentSkeletonProps {
 }
 
 function SeparatorSkeleton() {
-  return <div className="h-px w-full bg-neutral-200 dark:bg-neutral-700" />;
+  return <div className="h-px w-full bg-border" />;
 }
 
 function ActionSectionSkeleton() {
@@ -41,7 +41,7 @@ export function MobileProfileContentSkeleton({ className }: MobileProfileContent
       <Skeleton className="h-12 w-full rounded-lg" />
 
       {/* Actions Card */}
-      <div className="flex flex-col gap-8 p-6 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800/50">
+      <div className="flex flex-col gap-8 p-6 rounded-xl border bg-background">
         <ActionSectionSkeleton />
         <SeparatorSkeleton />
         <ActionSectionSkeleton />
@@ -50,7 +50,7 @@ export function MobileProfileContentSkeleton({ className }: MobileProfileContent
       </div>
 
       {/* Quick Links */}
-      <div className="flex flex-col gap-4 p-6 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800">
+      <div className="flex flex-col gap-4 p-6 rounded-xl border bg-background">
         <Skeleton className="h-6 w-24" />
         <div className="flex flex-col gap-2">
           {Array.from({ length: 3 }, (_, i) => (
@@ -59,7 +59,7 @@ export function MobileProfileContentSkeleton({ className }: MobileProfileContent
                 <Skeleton className="h-4 w-4 rounded" />
                 <Skeleton className="h-4 w-24" />
               </div>
-              {i < 2 && <div className="h-px w-full bg-neutral-200 dark:bg-neutral-700" />}
+              {i < 2 && <div className="h-px w-full bg-border" />}
             </div>
           ))}
         </div>

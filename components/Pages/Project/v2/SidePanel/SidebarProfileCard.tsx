@@ -99,7 +99,7 @@ export function SidebarProfileCard({ project, isVerified, className }: SidebarPr
             : "0 1px 2px rgba(0,0,0,0.04)",
       }}
       className={cn(
-        "flex flex-col gap-4 p-6 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 will-change-transform",
+        "flex flex-col gap-4 p-6 rounded-lg border bg-background dark:bg-secondary will-change-transform",
         className
       )}
       data-testid="sidebar-profile-card"
@@ -183,7 +183,7 @@ export function SidebarProfileCard({ project, isVerified, className }: SidebarPr
         {customLinks.length > 0 && (
           <div className="relative group">
             <GlobeIcon className="h-4 w-4 text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200 cursor-pointer transition-colors" />
-            <div className="absolute left-0 top-6 mt-1 w-48 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+            <div className="absolute left-0 top-6 mt-1 w-48 bg-white dark:bg-neutral-800 border rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
               <div className="py-2">
                 {customLinks.map((link, index) => (
                   <a

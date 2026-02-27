@@ -34,7 +34,7 @@ function ActivityItemSkeleton() {
       </div>
 
       {/* Activity Card */}
-      <div className="border bg-white dark:bg-neutral-800 border-gray-300 dark:border-neutral-400 rounded-xl p-6 gap-3 flex flex-col">
+      <div className="border bg-background rounded-xl p-6 gap-3 flex flex-col">
         {/* Title row */}
         <div className="flex flex-row gap-3 items-start justify-between w-full">
           <div className="flex flex-row gap-3 items-center w-full">
@@ -70,7 +70,7 @@ export function ActivityFeedSkeleton({ className, itemCount = 4 }: ActivityFeedS
   return (
     <div className={cn("relative", className)} data-testid="activity-feed-skeleton">
       {/* Timeline line */}
-      <div className="absolute left-[11px] max-lg:left-[9px] top-2 bottom-0 w-0.5 bg-neutral-200 dark:bg-neutral-700" />
+      <div className="absolute left-[11px] max-lg:left-[9px] top-2 bottom-0 w-0.5 bg-border" />
 
       {/* Timeline items */}
       <div className="flex flex-col gap-6">
@@ -80,7 +80,7 @@ export function ActivityFeedSkeleton({ className, itemCount = 4 }: ActivityFeedS
       </div>
 
       {/* Timeline end dot */}
-      <div className="absolute left-[10px] max-lg:left-[8px] bottom-0 w-1.5 h-1.5 rounded-full bg-neutral-300 dark:bg-neutral-600" />
+      <div className="absolute left-[10px] max-lg:left-[8px] bottom-0 w-1.5 h-1.5 rounded-full bg-muted-foreground/30" />
     </div>
   );
 }
