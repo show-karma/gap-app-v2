@@ -11,7 +11,7 @@ import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 
 export type ContentTab =
-  | "profile"
+  | "support"
   | "updates"
   | "about"
   | "funding"
@@ -38,11 +38,11 @@ interface ContentTabsProps {
 /**
  * ContentTabs provides tab navigation for the project profile page.
  *
- * Desktop: Updates, About, Funding, Impact, Team, Contact Info (if authorized)
- * Mobile: Profile (first), Updates, About, Funding, Impact, Team
+ * Desktop: Updates, About, Funding, Impact, Team, Contact (if authorized)
+ * Mobile: Support (first, mobile-only), Updates, About, Funding, Impact, Team
  *
- * Profile tab (mobile only) shows project info, stats, actions, quick links.
- * Profile and Updates share the same URL - switching is handled via onTabChange.
+ * Support tab (mobile only) shows Donate, Endorse, Subscribe, and Quick Links.
+ * Profile card is always visible above the tabs on mobile.
  */
 export function ContentTabs({
   activeTab,
@@ -68,8 +68,8 @@ export function ContentTabs({
     isProjectOwner || isProjectAdmin || isContractOwner || (!isPermissionsLoading && isSuperAdmin);
 
   const baseTabs: TabConfig[] = [
-    // Profile tab - mobile only, no href (uses onTabChange)
-    { value: "profile", label: "Profile", mobileOnly: true },
+    // Support tab - mobile only, no href (uses onTabChange)
+    { value: "support", label: "Support", mobileOnly: true },
     { value: "updates", label: "Updates", href: PAGES.PROJECT.OVERVIEW(projectId) },
     { value: "about", label: "About", href: PAGES.PROJECT.ABOUT(projectId) },
     {
@@ -87,7 +87,7 @@ export function ContentTabs({
         ...baseTabs,
         {
           value: "contact-info",
-          label: "Contact Info",
+          label: "Contact",
           href: PAGES.PROJECT.CONTACT_INFO(projectId),
         },
       ]
@@ -95,7 +95,7 @@ export function ContentTabs({
 
   const tabClassName = (isActive: boolean) =>
     cn(
-      "relative px-6 py-3 text-base font-medium transition-colors whitespace-nowrap",
+      "relative px-3 py-2 text-sm lg:px-6 lg:py-3 lg:text-base font-medium transition-colors whitespace-nowrap",
       "text-muted-foreground hover:text-foreground",
       isActive && "text-foreground",
       "after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5",
@@ -115,8 +115,8 @@ export function ContentTabs({
     >
       {tabs.map((tab) => {
         const isActive = activeTab === tab.value;
-        // On desktop, when activeTab is "profile" (which is hidden), Updates should appear active
-        const isActiveOnDesktop = tab.value === "updates" && activeTab === "profile";
+        // On desktop, when activeTab is "support" (which is hidden), Updates should appear active
+        const isActiveOnDesktop = tab.value === "updates" && activeTab === "support";
         // For mobile-only tabs or tabs without href, use button
         const isMobileOnlyTab = tab.mobileOnly;
 

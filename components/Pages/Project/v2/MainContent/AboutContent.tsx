@@ -10,7 +10,7 @@ import {
   MapPin,
   Target,
 } from "lucide-react";
-import type { ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import type { Project } from "@/types/v2/project";
 import { cn } from "@/utilities/tailwind";
@@ -28,53 +28,27 @@ interface AboutSectionProps {
   testId: string;
 }
 
-/**
- * AboutSection displays a single section with an icon, title, and markdown content.
- */
 function AboutSection({ icon, title, content, testId }: AboutSectionProps) {
-  // Generate an id from the testId for anchor links (e.g., "about-section-description" -> "description")
   const sectionId = testId.replace("about-section-", "");
 
   return (
-    <div
-      id={sectionId}
-      className="flex flex-col gap-3 p-6 rounded-xl border border-border bg-card scroll-mt-64"
-      data-testid={testId}
-    >
-      <div className="flex items-center gap-3">
-        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 text-primary">
-          {icon}
-        </div>
+    <div id={sectionId} className="px-10 py-9 scroll-mt-64" data-testid={testId}>
+      <div className="flex items-center gap-3 mb-5">
+        <span className="text-muted-foreground">{icon}</span>
         <h3 className="text-lg font-semibold text-foreground">{title}</h3>
       </div>
-      <div className="pl-[52px]">
-        <MarkdownPreview
-          source={content}
-          className="text-sm text-muted-foreground leading-relaxed"
-        />
-      </div>
+      <MarkdownPreview source={content} className="text-sm text-muted-foreground leading-relaxed" />
     </div>
   );
 }
 
 /**
- * AboutContent displays the project's detailed information:
- * - Description
- * - Mission
- * - Problem
- * - Solution
- * - Business Model
- * - Path to Success
- * - Location of Impact
- * - Total Funds Raised
- * - Team Members (at the bottom)
- *
- * This component renders the content for the "About" tab on the project profile page.
+ * AboutContent displays project details as a single doc-style card.
+ * All sections live inside one white card with separators between them.
  */
 export function AboutContent({ project, className }: AboutContentProps) {
   const details = project?.details;
 
-  // Define all possible sections with their metadata
   const sections: Array<{
     key: string;
     icon: ReactNode;
@@ -140,10 +114,8 @@ export function AboutContent({ project, className }: AboutContentProps) {
     },
   ];
 
-  // Filter out sections that don't have content
   const activeSections = sections.filter((section) => section.content?.trim());
 
-  // Check if there's any content to display
   if (activeSections.length === 0) {
     return (
       <div
@@ -159,21 +131,27 @@ export function AboutContent({ project, className }: AboutContentProps) {
   }
 
   return (
-    <div className={cn("flex flex-col gap-4", className)} data-testid="about-content">
-      {activeSections.map((section) => (
-        <AboutSection
-          key={section.key}
-          icon={section.icon}
-          title={section.title}
-          content={section.content!}
-          testId={section.testId}
-        />
-      ))}
-
-      {/* Team Content at the bottom */}
-      <div className="mt-4">
-        <TeamContent />
+    <div className={cn("flex flex-col gap-8", className)} data-testid="about-content">
+      {/* Doc-style card */}
+      <div
+        className="rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 overflow-hidden"
+        style={{ boxShadow: "inset 0 2px 8px rgba(0,0,0,0.04), inset 0 0 0 0px transparent" }}
+      >
+        {activeSections.map((section, index) => (
+          <Fragment key={section.key}>
+            {index > 0 && <div className="h-px bg-neutral-100 dark:bg-neutral-800 mx-10" />}
+            <AboutSection
+              icon={section.icon}
+              title={section.title}
+              content={section.content!}
+              testId={section.testId}
+            />
+          </Fragment>
+        ))}
       </div>
+
+      {/* Team at the bottom */}
+      <TeamContent />
     </div>
   );
 }

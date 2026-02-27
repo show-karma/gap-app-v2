@@ -157,7 +157,7 @@ export const UpdateCard: FC<UpdateCardProps> = ({ update, index, isAuthorized })
     <div className="flex flex-col gap-0 w-full">
       {/* Grants Related Section */}
       {/* Show grants related if they exist */}
-      <div className="flex flex-col gap-3 w-full px-5 py-4">
+      <div className="flex flex-col gap-3 w-full px-6 py-6">
         <div className="flex flex-col gap-3 w-full">
           {/* Activity Pill with Due Date and Status */}{" "}
           <ActivityStatusHeader

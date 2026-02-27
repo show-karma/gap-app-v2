@@ -1,11 +1,21 @@
 "use client";
 
-import { ArrowLeftToLine } from "lucide-react";
+import {
+  ArrowLeftToLine,
+  BadgeCheck,
+  CircleDollarSign,
+  ExternalLink,
+  Goal,
+  Rss,
+} from "lucide-react";
+import Link from "next/link";
+import { useParams } from "next/navigation";
 import { useMemo } from "react";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
-import { ActivityCard } from "@/components/Shared/ActivityCard";
+import { ActivityCard, containerClassName } from "@/components/Shared/ActivityCard";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
+import { Button } from "@/components/ui/button";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import formatCurrency from "@/utilities/formatCurrency";
 import { cn } from "@/utilities/tailwind";
@@ -178,14 +188,18 @@ export function ActivityFeed({
   activeFilters = [],
   className,
 }: ActivityFeedProps) {
+  const params = useParams();
+  const projectId = params?.projectId as string | undefined;
   // Map filter types to milestone types
   const getFilteredTypes = (filters: ActivityFilterType[]): string[] => {
     const typeMap: Record<ActivityFilterType, string[]> = {
-      funding: ["grant", "grant_received"],
-      updates: ["activity", "grant_update", "update"],
-      blog: ["project"], // Using project type for blog-like updates
-      socials: ["impact"], // Using impact type for social-like updates
-      other: ["milestone"],
+      funding: ["grant_received"],
+      milestones: ["grant", "milestone"],
+      updates: ["grant_update", "project", "update", "activity"],
+      endorsements: ["endorsement"],
+      blog: [],
+      socials: [],
+      other: ["impact"],
     };
 
     return filters.flatMap((filter) => typeMap[filter]);
@@ -255,7 +269,7 @@ export function ActivityFeed({
       <div className="absolute left-[11px] max-lg:left-[9px] top-2 bottom-0 w-0.5 bg-neutral-200 dark:bg-zinc-700" />
 
       {/* Timeline items */}
-      <div className="flex flex-col gap-12">
+      <div className="flex flex-col gap-12 pb-12">
         {sortedMilestones.map((milestone, index) => {
           // Create unique key combining type, uid, and index to handle duplicate uids
           const uniqueKey = `${milestone.type}-${milestone.uid}-${index}`;
@@ -266,77 +280,74 @@ export function ActivityFeed({
               <div
                 className={cn(
                   "absolute left-0 top-0 w-6 h-6 max-lg:w-5 max-lg:h-5 rounded-full border flex items-center justify-center",
-                  // Grant Received - emerald/green
+                  // Shared border for all types: foreground at 10% opacity
+                  "border-foreground/10",
+                  // Funding (grant_received) - emerald, matches Funds filter badge
                   milestone.type === "grant_received" &&
-                    "border-emerald-100 bg-emerald-50 text-emerald-600 dark:border-emerald-900/30 dark:bg-emerald-950/30 dark:text-emerald-400",
-                  // Grant Update - green (#DCFAE6 ~ green-100)
-                  milestone.type === "grant_update" &&
-                    "border-green-200 bg-green-100 text-green-600 dark:border-green-900/30 dark:bg-green-950/30 dark:text-green-400",
-                  // Project Activity (activity, update, project) - blue (#EFF4FF ~ blue-50)
-                  (milestone.type === "activity" ||
+                    "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400",
+                  // Updates (grant_update, activity, update, project) - violet, matches Updates filter badge
+                  (milestone.type === "grant_update" ||
+                    milestone.type === "activity" ||
                     milestone.type === "update" ||
                     milestone.type === "project") &&
-                    "border-blue-100 bg-blue-50 text-blue-600 dark:border-blue-900/30 dark:bg-blue-950/30 dark:text-blue-400",
-                  // Default (Milestone, Impact, Grant) - orange
-                  milestone.type !== "grant_received" &&
-                    milestone.type !== "grant_update" &&
-                    milestone.type !== "activity" &&
-                    milestone.type !== "update" &&
-                    milestone.type !== "project" &&
-                    "border-orange-100 bg-orange-50 text-orange-600 dark:border-orange-900/30 dark:bg-orange-950/30 dark:text-orange-400"
+                    "bg-violet-50 text-violet-600 dark:bg-violet-950/50 dark:text-violet-400",
+                  // Endorsements - pink, matches Endorsements filter badge
+                  milestone.type === "endorsement" &&
+                    "bg-pink-50 text-pink-500 dark:bg-pink-950/50 dark:text-pink-400",
+                  // Standalone milestones - indigo
+                  milestone.type === "milestone" &&
+                    "bg-indigo-50 text-indigo-600 dark:bg-indigo-950/50 dark:text-indigo-400",
+                  // Grant milestones (sub-milestones) - blue
+                  (milestone.type === "grant" || milestone.type === "impact") &&
+                    "bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400"
                 )}
                 data-testid="timeline-icon"
               >
                 {milestone.type === "grant_received" ? (
-                  <ArrowLeftToLine className="w-3.5 h-3.5 max-lg:w-3 max-lg:h-3" />
-                ) : milestone.type === "grant_update" ? (
-                  <MoneyBagIcon className="w-3.5 h-3.5 max-lg:w-3 max-lg:h-3" />
-                ) : milestone.type === "activity" ||
+                  <CircleDollarSign className="w-3.5 h-3.5 max-lg:w-3 max-lg:h-3" />
+                ) : milestone.type === "grant_update" ||
+                  milestone.type === "activity" ||
                   milestone.type === "update" ||
                   milestone.type === "project" ? (
-                  <ThunderIcon className="w-3.5 h-3.5 max-lg:w-3 max-lg:h-3" />
+                  <Rss className="w-3.5 h-3.5 max-lg:w-3 max-lg:h-3" />
+                ) : milestone.type === "endorsement" ? (
+                  <BadgeCheck className="w-3.5 h-3.5 max-lg:w-3 max-lg:h-3" />
                 ) : (
-                  <FlagIcon className="w-3.5 h-3.5 max-lg:w-3 max-lg:h-3" />
+                  <Goal className="w-3.5 h-3.5 max-lg:w-3 max-lg:h-3" />
                 )}
               </div>
 
               {/* Status Text, Due Date, and Posted By */}
               <div className="flex flex-col gap-1 lg:flex-row lg:items-center lg:justify-between lg:gap-2 mb-3">
-                {/* Grant Received - special format */}
-                {milestone.type === "grant_received" && milestone.grantReceived ? (
+                {/* Endorsement - special format */}
+                {milestone.type === "endorsement" && milestone.endorsement ? (
                   <>
-                    {/* Left side: Amount + Grant Received from + Community */}
                     <div className="flex flex-row items-center gap-1.5 lg:gap-2 flex-wrap">
-                      {(() => {
-                        const formattedAmount = formatGrantAmount(milestone.grantReceived.amount);
-                        return formattedAmount ? (
-                          <span className="text-xs lg:text-sm font-semibold text-foreground">
-                            {formattedAmount}
-                          </span>
-                        ) : null;
-                      })()}
                       <span className="text-xs lg:text-sm font-semibold text-foreground">
-                        Grant Received
+                        Endorsed by
                       </span>
-                      <span className="text-xs lg:text-sm font-semibold text-muted-foreground">
-                        from
-                      </span>
-                      <ProfilePicture
-                        imageURL={milestone.grantReceived.communityImage}
-                        name={milestone.grantReceived.communityName || "Community"}
-                        size="20"
+                      <EthereumAddressToENSAvatar
+                        address={milestone.endorsement.endorsedBy}
                         className="h-5 w-5 lg:h-6 lg:w-6 min-w-5 min-h-5 lg:min-w-6 lg:min-h-6 rounded-full"
-                        alt={milestone.grantReceived.communityName || "Community"}
                       />
                       <span className="text-xs lg:text-sm font-semibold text-foreground">
-                        {milestone.grantReceived.communityName ||
-                          milestone.grantReceived.grantTitle}
+                        <EthereumAddressToENSName address={milestone.endorsement.endorsedBy} />
                       </span>
                     </div>
-
-                    {/* Right side: Date only */}
                     <div className="flex flex-row items-center gap-1.5 lg:gap-2 text-xs lg:text-sm font-medium leading-5 text-muted-foreground">
                       <span>{formatDisplayDate(milestone.createdAt)}</span>
+                    </div>
+                  </>
+                ) : /* Grant Received - match milestone header format */
+                milestone.type === "grant_received" ? (
+                  <>
+                    <div className="flex flex-row items-center gap-1.5 lg:gap-2 flex-wrap">
+                      <span className="text-xs lg:text-sm font-semibold text-foreground">
+                        Funding received
+                      </span>
+                    </div>
+                    <div className="flex flex-row items-center gap-1.5 lg:gap-2 text-xs lg:text-sm font-medium leading-5 text-muted-foreground">
+                      <span>Posted {formatDisplayDate(milestone.createdAt)}</span>
                     </div>
                   </>
                 ) : (
@@ -379,8 +390,58 @@ export function ActivityFeed({
                 )}
               </div>
 
-              {/* Activity Card - skip for grant_received as the header contains all info */}
-              {milestone.type !== "grant_received" && (
+              {/* Endorsement comment - shown below header when present */}
+              {milestone.type === "endorsement" && milestone.endorsement?.comment && (
+                <p className="text-sm text-muted-foreground italic mt-1">
+                  "{milestone.endorsement.comment}"
+                </p>
+              )}
+
+              {/* Grant Received card */}
+              {milestone.type === "grant_received" && milestone.grantReceived && (
+                <div className={cn(containerClassName, "p-6 gap-4")}>
+                  {/* Amount */}
+                  {(() => {
+                    const formattedAmount = formatGrantAmount(milestone.grantReceived.amount);
+                    return formattedAmount ? (
+                      <p className="text-2xl font-medium text-foreground tabular-nums">
+                        {formattedAmount}
+                      </p>
+                    ) : null;
+                  })()}
+
+                  {/* Heading: "Funds received from [avatar] Community name" */}
+                  <div className="flex flex-row items-center gap-2 flex-wrap">
+                    <span className="text-lg font-semibold text-foreground">
+                      Funds received from
+                    </span>
+                    <ProfilePicture
+                      imageURL={milestone.grantReceived.communityImage}
+                      name={milestone.grantReceived.communityName || "Community"}
+                      size="24"
+                      className="h-6 w-6 min-w-6 min-h-6 rounded-full"
+                      alt={milestone.grantReceived.communityName || "Community"}
+                    />
+                    <span className="text-lg font-semibold text-foreground">
+                      {milestone.grantReceived.communityName || "Community"}
+                    </span>
+                  </div>
+
+                  {/* View grant button */}
+                  {projectId && milestone.grantReceived.grantUID && (
+                    <Button variant="outline" size="sm" asChild>
+                      <Link
+                        href={`/project/${projectId}/funding/${milestone.grantReceived.grantUID}`}
+                      >
+                        View grant <ExternalLink className="w-3.5 h-3.5" />
+                      </Link>
+                    </Button>
+                  )}
+                </div>
+              )}
+
+              {/* Activity Card - skip for endorsement as the header contains all info */}
+              {milestone.type !== "grant_received" && milestone.type !== "endorsement" && (
                 <ActivityCard
                   activity={{
                     type: "milestone",
@@ -395,7 +456,7 @@ export function ActivityFeed({
       </div>
 
       {/* Timeline end dot - aligned with line */}
-      <div className="absolute left-[10px] max-lg:left-[8px] bottom-0 w-1.5 h-1.5 rounded-full bg-neutral-300 dark:bg-zinc-600" />
+      <div className="absolute left-[9px] max-lg:left-[8px] bottom-0 w-1.5 h-1.5 rounded-full bg-neutral-300 dark:bg-neutral-600" />
     </div>
   );
 }

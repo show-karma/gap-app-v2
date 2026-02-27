@@ -26,9 +26,9 @@ const Preview = dynamic(() => import("@uiw/react-markdown-preview"), {
 });
 
 export const MarkdownPreview: typeof Preview = (props) => {
-  const { theme: currentTheme } = useTheme();
+  const { theme } = useTheme();
   return (
-    <div className="preview w-full max-w-full" data-color-mode={currentTheme}>
+    <div className="preview w-full max-w-full" data-color-mode={theme}>
       <Preview
         className={cn("wmdeMarkdown", styles.wmdeMarkdown, props.className)}
         rehypePlugins={[
@@ -38,7 +38,7 @@ export const MarkdownPreview: typeof Preview = (props) => {
         remarkPlugins={[remarkGfm, remarkBreaks]}
         style={{
           backgroundColor: "transparent",
-          color: currentTheme === "dark" ? "white" : "rgb(36, 41, 47)",
+          color: "currentColor",
           width: "100%",
           maxWidth: "100%",
         }}
@@ -46,7 +46,7 @@ export const MarkdownPreview: typeof Preview = (props) => {
           p: ({ children }) => <span className={props.className}>{children}</span>,
           code: ({ children }) => (
             <code
-              className={cn("bg-zinc-600 dark:bg-gray-800 p-2 rounded-md", props.className)}
+              className={cn("bg-neutral-600 dark:bg-neutral-800 p-2 rounded-md", props.className)}
               style={{
                 display: "block",
                 overflow: "auto",

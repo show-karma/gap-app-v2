@@ -256,7 +256,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
 
     return (
       <div className={cn(containerClassName, "flex flex-col gap-1 w-full")}>
-        <div className={"w-full flex-col flex gap-2 px-5 py-4"}>
+        <div className={"w-full flex-col flex gap-2 px-6 py-6"}>
           {/* UPDATE label - matches Figma design for nested milestone updates */}
           <div className="flex flex-row items-center gap-2">
             <p className="text-xs font-medium text-muted-foreground tracking-wide">UPDATE</p>
@@ -438,13 +438,13 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
       {/* Main Milestone Card */}
       <div className={cn(containerClassName, "flex flex-col w-full")}>
         {/* Grants Related Section */}
-        <div className="flex flex-col gap-3 w-full px-5 py-4">
+        <div className="flex flex-col gap-3 w-full px-6 py-6">
           <div className="flex flex-col gap-3 w-full">
             {/* Community/Grant Badge - only shown for grant milestones */}
             {type === "grant" && <GrantAssociation milestone={milestone} />}
 
             {/* Title */}
-            <p className="text-xl font-bold text-[#101828] dark:text-zinc-100">{title}</p>
+            <p className="text-xl font-semibold text-[#101828] dark:text-zinc-100">{title}</p>
           </div>
 
           {/* Description */}
@@ -499,8 +499,8 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
           {!isCompleting && (completionReason || completionProof || completionDeliverables) && (
             <div className="relative flex flex-row items-center justify-between gap-2 flex-wrap">
               {/* Timeline badge - vertically centered relative to header row, aligned with main timeline */}
-              <div className="absolute -left-[73px] max-lg:-left-[69px] top-1/2 -translate-y-1/2 w-6 h-6 max-lg:w-5 max-lg:h-5 flex items-center justify-center z-10 bg-orange-50 dark:bg-orange-900/30 rounded-full">
-                <div className="w-[3px] h-[3px] rounded-full bg-orange-400" />
+              <div className="absolute -left-[73px] max-lg:-left-[69px] top-1/2 -translate-y-1/2 w-6 h-6 max-lg:w-5 max-lg:h-5 flex items-center justify-center z-10 bg-blue-50 dark:bg-blue-900/30 rounded-full">
+                <div className="w-[3px] h-[3px] rounded-full bg-blue-400" />
               </div>
               {/* Left side: Activity type label and Due date */}
               <div className="flex flex-row items-center gap-2.5 flex-wrap">
