@@ -30,6 +30,7 @@ const defaultParams = {
   payoutAddress: "0x1234567890123456789012345678901234567890",
   network: "base",
   targetAsset: "USDC",
+  donorEmail: "test@example.com",
   provider: OnrampProvider.STRIPE,
 };
 
@@ -58,6 +59,7 @@ describe("useOnramp", () => {
         sessionToken: "cs_test_123",
         sessionId: "session-123",
         donationUid: "donation-456",
+        pollingToken: "polling-token-789",
         expiresAt: "2024-01-01T00:00:00Z",
       };
 
@@ -79,6 +81,7 @@ describe("useOnramp", () => {
       expect(result.current.session).toEqual({
         clientSecret: "cs_test_123",
         donationUid: "donation-456",
+        pollingToken: "polling-token-789",
       });
       expect(result.current.error).toBeNull();
       expect(mockDonationsService.createOnrampSession).toHaveBeenCalledWith({
@@ -90,6 +93,7 @@ describe("useOnramp", () => {
         network: "base",
         targetAsset: "USDC",
         donorAddress: undefined,
+        donorEmail: "test@example.com",
       });
     });
 
@@ -182,6 +186,7 @@ describe("useOnramp", () => {
         sessionToken: "cs_test_123",
         sessionId: "session-123",
         donationUid: "donation-456",
+        pollingToken: "polling-token-789",
         expiresAt: "2024-01-01T00:00:00Z",
       };
 
@@ -218,6 +223,7 @@ describe("useOnramp", () => {
         sessionToken: "cs_test_123",
         sessionId: "session-123",
         donationUid: "donation-456",
+        pollingToken: "polling-token-789",
         expiresAt: "2024-01-01T00:00:00Z",
       };
 
@@ -255,6 +261,7 @@ describe("useOnramp", () => {
         sessionToken: "cs_test_123",
         sessionId: "session-123",
         donationUid: "donation-456",
+        pollingToken: "polling-token-789",
         expiresAt: "2024-01-01T00:00:00Z",
       };
 
@@ -267,6 +274,7 @@ describe("useOnramp", () => {
             payoutAddress: "0x1234567890123456789012345678901234567890",
             network: "base",
             targetAsset: "USDC",
+            donorEmail: "test@example.com",
             // provider not specified
           }),
         { wrapper: createWrapper() }

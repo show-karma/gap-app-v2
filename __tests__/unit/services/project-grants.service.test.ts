@@ -20,12 +20,14 @@ jest.mock("@/components/Utilities/errorManager", () => ({
 // Mock fetchData utility - the service now uses fetchData instead of api-client directly
 jest.mock("@/utilities/fetchData");
 
+import { errorManager } from "@/components/Utilities/errorManager";
 // Import the service AFTER all mocks are set up
 import { getProjectGrants } from "@/services/project-grants.service";
 // Import the mocked module to get access to the mock function
 import fetchData from "@/utilities/fetchData";
 
 const mockFetchData = fetchData as jest.MockedFunction<typeof fetchData>;
+const mockErrorManager = errorManager as jest.MockedFunction<typeof errorManager>;
 
 describe("project-grants.service", () => {
   beforeEach(() => {
@@ -80,6 +82,7 @@ describe("project-grants.service", () => {
       const result = await getProjectGrants("test-project");
 
       expect(result).toEqual([]);
+      expect(mockErrorManager).not.toHaveBeenCalled();
     });
 
     it("should return empty array on error", async () => {
@@ -88,6 +91,7 @@ describe("project-grants.service", () => {
       const result = await getProjectGrants("nonexistent-project");
 
       expect(result).toEqual([]);
+      expect(mockErrorManager).not.toHaveBeenCalled();
     });
 
     it("should return empty array on API error", async () => {
@@ -96,6 +100,13 @@ describe("project-grants.service", () => {
       const result = await getProjectGrants("test-project");
 
       expect(result).toEqual([]);
+      expect(mockErrorManager).toHaveBeenCalledWith(
+        "Project Grants API Error: Server error",
+        "Server error",
+        {
+          context: "project-grants.service",
+        }
+      );
     });
 
     it("should call correct endpoint for project slug", async () => {

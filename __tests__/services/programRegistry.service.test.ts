@@ -53,7 +53,6 @@ describe("ProgramRegistryService", () => {
         title: "Test Program",
         description: "Test Description",
         shortDescription: "Short description",
-        anyoneCanJoin: false,
         programBudget: 100000,
         startsAt: new Date("2024-01-01"),
         endsAt: new Date("2024-12-31"),
@@ -85,15 +84,16 @@ describe("ProgramRegistryService", () => {
         type: "program",
         tags: ["karma-gap", "grant-program-registry"],
         communityRef: [mockCommunity.uid],
-        anyoneCanJoin: false,
+        anyoneCanJoin: true,
+        invoiceRequired: false,
       });
     });
 
     describe("anyoneCanJoin option", () => {
-      it("should default anyoneCanJoin to false when no options provided", () => {
+      it("should default anyoneCanJoin to true when no options provided", () => {
         const metadata = ProgramRegistryService.buildProgramMetadata(mockFormData, mockCommunity);
 
-        expect(metadata.anyoneCanJoin).toBe(false);
+        expect(metadata.anyoneCanJoin).toBe(true);
       });
 
       it("should set anyoneCanJoin to false when explicitly passed as false", () => {
@@ -112,22 +112,22 @@ describe("ProgramRegistryService", () => {
         expect(metadata.anyoneCanJoin).toBe(true);
       });
 
-      it("should default anyoneCanJoin to false when options object is empty", () => {
+      it("should default anyoneCanJoin to true when options object is empty", () => {
         const metadata = ProgramRegistryService.buildProgramMetadata(
           mockFormData,
           mockCommunity,
           {}
         );
 
-        expect(metadata.anyoneCanJoin).toBe(false);
+        expect(metadata.anyoneCanJoin).toBe(true);
       });
 
-      it("should default anyoneCanJoin to false when options.anyoneCanJoin is undefined", () => {
+      it("should default anyoneCanJoin to true when options.anyoneCanJoin is undefined", () => {
         const metadata = ProgramRegistryService.buildProgramMetadata(mockFormData, mockCommunity, {
           anyoneCanJoin: undefined,
         });
 
-        expect(metadata.anyoneCanJoin).toBe(false);
+        expect(metadata.anyoneCanJoin).toBe(true);
       });
     });
 

@@ -54,13 +54,14 @@ export const authorizationService = {
     );
 
     if (error || !response) {
-      if (error) {
-        errorManager("Failed to fetch user permissions", error, {
-          context: "authorization.service.getPermissions",
-          params,
-        });
-      }
-      return DEFAULT_GUEST_PERMISSIONS;
+      errorManager("Failed to fetch user permissions", error || new Error("Empty response"), {
+        context: "authorization.service.getPermissions",
+        params,
+      });
+      // Throw so React Query retries (up to 2x) and keeps isLoading=true during retries.
+      // Previously returned DEFAULT_GUEST_PERMISSIONS, which React Query cached as "success"
+      // for 5 minutes — causing persistent "Access Denied" even after the API recovered.
+      throw error || new Error("Failed to fetch permissions: empty response");
     }
 
     const primaryRole = isValidRole(response.roles.primaryRole)

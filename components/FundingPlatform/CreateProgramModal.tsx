@@ -73,6 +73,7 @@ export function CreateProgramModal({
       budget: undefined,
       adminEmails: [],
       financeEmails: [],
+      invoiceRequired: false,
     },
   });
 
@@ -94,7 +95,7 @@ export function CreateProgramModal({
 
     setIsSubmitting(true);
     try {
-      // Build metadata using service (defaults to anyoneCanJoin: false for admin-created programs)
+      // Build metadata using service (defaults to anyoneCanJoin: true)
       const metadata = ProgramRegistryService.buildProgramMetadata(
         data as CreateProgramFormData,
         community
@@ -343,14 +344,12 @@ export function CreateProgramModal({
               control={control}
               render={({ field, fieldState }) => (
                 <div className="flex w-full flex-col gap-1">
-                  <Label htmlFor="admin-emails">
-                    Admin Emails <span className="text-destructive">*</span>
-                  </Label>
+                  <Label htmlFor="admin-emails">Admin Emails (optional)</Label>
                   <p className="text-xs text-muted-foreground mb-1">
                     Applicants will reply to these email addresses when responding to notifications
                   </p>
                   <MultiEmailInput
-                    emails={field.value}
+                    emails={field.value || []}
                     onChange={field.onChange}
                     placeholder="Enter admin email"
                     disabled={isSubmitting}
@@ -380,6 +379,46 @@ export function CreateProgramModal({
                     error={fieldState.error?.message}
                   />
                 </div>
+              )}
+            />
+
+            {/* Invoice Required */}
+            <Controller
+              name="invoiceRequired"
+              control={control}
+              render={({ field, fieldState }) => (
+                <fieldset>
+                  <legend className="text-sm font-semibold text-gray-700 mb-2">
+                    Require invoices for milestones <span className="text-red-500">*</span>
+                  </legend>
+                  <div className="flex items-center gap-6">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="invoiceRequired"
+                        checked={field.value === true}
+                        onChange={() => field.onChange(true)}
+                        disabled={isSubmitting}
+                        className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-sm">Yes</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="invoiceRequired"
+                        checked={field.value === false}
+                        onChange={() => field.onChange(false)}
+                        disabled={isSubmitting}
+                        className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-sm">No</span>
+                    </label>
+                  </div>
+                  {fieldState.error?.message && (
+                    <p className="text-red-500 text-sm mt-1">{fieldState.error.message}</p>
+                  )}
+                </fieldset>
               )}
             />
 

@@ -290,6 +290,7 @@ describe("queryKeys", () => {
           sortBy: "noOfGrants",
           sortOrder: "asc",
           limit: 25,
+          hasPayoutAddress: true,
         };
         const key = QUERY_KEYS.PROJECT.EXPLORER_INFINITE(params);
         expect(key[0]).toBe("projects-explorer-infinite");
@@ -297,6 +298,7 @@ describe("queryKeys", () => {
         expect(key[2]).toBe("noOfGrants");
         expect(key[3]).toBe("asc");
         expect(key[4]).toBe(25);
+        expect(key[5]).toBe(true);
       });
 
       it("should use default values when params are not provided", () => {
@@ -306,6 +308,7 @@ describe("queryKeys", () => {
         expect(key[2]).toBe("updatedAt"); // default sortBy
         expect(key[3]).toBe("desc"); // default sortOrder
         expect(key[4]).toBe(50); // default limit
+        expect(key[5]).toBe(false); // default hasPayoutAddress
       });
 
       it("should handle undefined search", () => {
@@ -319,7 +322,13 @@ describe("queryKeys", () => {
       it("should return as const tuple", () => {
         const key = QUERY_KEYS.PROJECT.EXPLORER_INFINITE({ search: "test" });
         expect(Array.isArray(key)).toBe(true);
-        expect(key.length).toBe(5);
+        expect(key.length).toBe(6);
+      });
+
+      it("should generate different keys for hasPayoutAddress filter", () => {
+        const key1 = QUERY_KEYS.PROJECT.EXPLORER_INFINITE({ hasPayoutAddress: false });
+        const key2 = QUERY_KEYS.PROJECT.EXPLORER_INFINITE({ hasPayoutAddress: true });
+        expect(key1).not.toEqual(key2);
       });
 
       it("should generate different keys for different search queries", () => {

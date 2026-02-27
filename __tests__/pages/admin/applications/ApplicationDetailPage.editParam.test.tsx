@@ -11,7 +11,7 @@ import type { IFundingApplication } from "@/types/funding-platform";
 
 // Helper function that mirrors the canEditApplication logic in the page
 const canEditApplication = (app: IFundingApplication) => {
-  const restrictedStatuses = ["under_review", "approved"];
+  const restrictedStatuses = ["approved"];
   return !restrictedStatuses.includes(app.status.toLowerCase());
 };
 
@@ -37,17 +37,15 @@ describe("ApplicationDetailPage - Edit URL Parameter", () => {
       expect(canEditApplication(app)).toBe(false);
     });
 
-    it("should return false for under_review applications", () => {
+    it("should return true for under_review applications", () => {
       const app = { status: "under_review" } as IFundingApplication;
-      expect(canEditApplication(app)).toBe(false);
+      expect(canEditApplication(app)).toBe(true);
     });
 
     it("should handle case-insensitive status comparison", () => {
       const approvedUppercase = { status: "APPROVED" } as IFundingApplication;
-      const underReviewMixed = { status: "Under_Review" } as IFundingApplication;
 
       expect(canEditApplication(approvedUppercase)).toBe(false);
-      expect(canEditApplication(underReviewMixed)).toBe(false);
     });
   });
 
@@ -87,12 +85,12 @@ describe("ApplicationDetailPage - Edit URL Parameter", () => {
       expect(result.current.isEditModalOpen).toBe(false);
     });
 
-    it("should NOT open edit modal when edit=true but application cannot be edited (under_review)", () => {
+    it("should open edit modal when edit=true and application is under_review", () => {
       const application = { status: "under_review" } as IFundingApplication;
 
       const { result } = renderHook(() => useEditModalAutoOpen(true, application, true));
 
-      expect(result.current.isEditModalOpen).toBe(false);
+      expect(result.current.isEditModalOpen).toBe(true);
     });
 
     it("should NOT open edit modal when edit=true but user has no access", () => {

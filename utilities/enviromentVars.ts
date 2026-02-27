@@ -6,9 +6,6 @@ export const envVars = {
   NEXT_PUBLIC_ENV: process.env.NEXT_PUBLIC_ENV,
   NEXT_PUBLIC_KARMA_API: "https://api.karmahq.xyz/api",
   NEXT_PUBLIC_GAP_INDEXER_URL: process.env.NEXT_PUBLIC_GAP_INDEXER_URL as string,
-  NEXT_PUBLIC_IPFS_SPONSOR_URL: isDev
-    ? `${process.env.NEXT_PUBLIC_GAP_INDEXER_URL}/ipfs`
-    : "https://gapapi.karmahq.xyz/ipfs",
   RPC: {
     MAINNET: process.env.NEXT_PUBLIC_RPC_MAINNET as string,
     OPTIMISM: process.env.NEXT_PUBLIC_RPC_OPTIMISM as string,
@@ -24,7 +21,6 @@ export const envVars = {
     SCROLL: process.env.NEXT_PUBLIC_RPC_SCROLL as string,
   },
   PROJECT_ID: process.env.NEXT_PUBLIC_PROJECT_ID || "",
-  IPFS_TOKEN: process.env.NEXT_PUBLIC_IPFS_TOKEN || "",
   ANON_KARMA_URL: "https://anon.karmahq.xyz",
   PROFILE_ID: isDev
     ? "0x418102f570483423fc7d431e0efd1cc5d49f2b3fe4c85cb7d837bcfa83e7db03"

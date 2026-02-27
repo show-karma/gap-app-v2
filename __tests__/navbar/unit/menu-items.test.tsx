@@ -152,11 +152,10 @@ describe("Menu Items Configuration", () => {
       expect(allProjectsItem?.href).toBe(PAGES.PROJECTS_EXPLORER);
     });
 
-    it('should contain "Most Grants" item with query parameters', () => {
-      const mostGrantsItem = exploreItems.projects.find((item) => item.title === "Most Grants");
-      expect(mostGrantsItem).toBeDefined();
-      expect(mostGrantsItem?.href).toContain("sortBy=noOfGrants");
-      expect(mostGrantsItem?.href).toContain("sortOrder=desc");
+    it('should contain "Raising Funds" item with hasPayoutAddress filter', () => {
+      const raisingFundsItem = exploreItems.projects.find((item) => item.title === "Raising Funds");
+      expect(raisingFundsItem).toBeDefined();
+      expect(raisingFundsItem?.href).toContain("hasPayoutAddress=true");
     });
 
     it('should contain "Most Active" item with query parameters', () => {

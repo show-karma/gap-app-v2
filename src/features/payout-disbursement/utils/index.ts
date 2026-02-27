@@ -1,6 +1,7 @@
 export {
   calculateDisbursementProgress,
   calculateRemainingBalance,
+  formatDisplayAmount,
   formatTokenAmount,
   fromSmallestUnit,
   getDefaultDecimals,

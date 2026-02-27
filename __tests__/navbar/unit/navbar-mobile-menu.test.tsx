@@ -130,7 +130,7 @@ describe("NavbarMobileMenu", () => {
         // Explore section renders as subsections
         expect(screen.getByText("Explore Projects")).toBeInTheDocument();
         // Quick actions appear instead
-        expect(screen.getByText("My projects")).toBeInTheDocument();
+        expect(screen.getByText("Dashboard")).toBeInTheDocument();
       });
     });
 

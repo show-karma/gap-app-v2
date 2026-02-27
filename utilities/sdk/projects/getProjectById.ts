@@ -1,8 +1,8 @@
 import type { Project } from "@show-karma/karma-gap-sdk/core/class/entities/Project";
 import type { Hex } from "viem";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { getDefaultGapChainId, getGapClient } from "@/hooks/useGap";
 import { zeroUID } from "@/utilities/commons";
+import { getDefaultGapChainId, getGapClient } from "@/utilities/gapClient";
 
 export const getProjectById = async (projectId: string): Promise<Project | undefined> => {
   try {

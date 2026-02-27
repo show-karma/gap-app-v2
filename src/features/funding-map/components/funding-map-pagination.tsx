@@ -132,10 +132,10 @@ function ResultInfo({
     return (
       <button
         type="button"
-        className="text-sm font-medium text-primary hover:underline"
+        className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors"
         onClick={onShowAll}
       >
-        Show all programs
+        Show all funding opportunities
       </button>
     );
   }

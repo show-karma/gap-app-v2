@@ -60,6 +60,14 @@ jest.mock("next-themes", () => ({
   ),
 }));
 
+jest.mock("@/components/AgentChat/AgentChatBubble", () => ({
+  AgentChatBubble: () => <div data-testid="agent-chat-bubble" />,
+}));
+
+jest.mock("@/src/features/api-keys/components/api-key-management-modal", () => ({
+  ApiKeyManagementModal: () => <div data-testid="api-key-management-modal" />,
+}));
+
 describe("RootLayout", () => {
   it("renders all components correctly", () => {
     render(<RootLayout>Test Content</RootLayout>);
@@ -75,6 +83,8 @@ describe("RootLayout", () => {
     expect(screen.getByTestId("footer")).toBeInTheDocument();
     expect(screen.getByTestId("privy-provider")).toBeInTheDocument();
     expect(screen.getByTestId("theme-provider")).toBeInTheDocument();
+    expect(screen.getByTestId("agent-chat-bubble")).toBeInTheDocument();
+    expect(screen.getByTestId("api-key-management-modal")).toBeInTheDocument();
   });
 
   it("renders children content", () => {

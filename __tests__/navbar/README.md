@@ -289,7 +289,7 @@ describe('Navbar', () => {
       permissions: fixture.permissions
     });
     
-    expect(screen.getByText('My projects')).toBeInTheDocument();
+    expect(screen.getByText('Dashboard')).toBeInTheDocument();
   });
 });
 ```
@@ -330,10 +330,10 @@ describe('Permission-based visibility', () => {
       
       const { expectedElements } = fixture;
       
-      if (expectedElements.admin) {
-        expect(screen.getByText('Admin')).toBeInTheDocument();
+      if (expectedElements.managePrograms) {
+        expect(screen.getByText('Manage Programs')).toBeInTheDocument();
       } else {
-        expect(screen.queryByText('Admin')).not.toBeInTheDocument();
+        expect(screen.queryByText('Manage Programs')).not.toBeInTheDocument();
       }
     });
   });
@@ -475,4 +475,3 @@ When adding new navbar features:
 **Phase 1: Foundation & Test Infrastructure** ✅ Complete
 
 Ready for Phase 2: Unit Tests
-

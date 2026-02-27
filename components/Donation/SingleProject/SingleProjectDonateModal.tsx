@@ -228,21 +228,13 @@ export const SingleProjectDonateModal = React.memo<SingleProjectDonateModalProps
 
             {paymentMethod === PaymentMethod.FIAT && (
               <>
-                {!authenticated ? (
-                  <div className="space-y-4">
-                    <p className="text-sm text-gray-500 dark:text-gray-400 py-2">
-                      You need to login to proceed with card payment.
-                    </p>
-                    <Button onClick={login} className="w-full bg-brand-blue hover:bg-blue-600">
-                      Login to Continue
-                    </Button>
-                  </div>
-                ) : fiatPayoutConfig.address && fiatPayoutConfig.isSupported ? (
+                {fiatPayoutConfig.address && fiatPayoutConfig.isSupported ? (
                   <OnrampFlow
                     projectUid={project.uid}
                     payoutAddress={fiatPayoutConfig.address}
                     chainId={fiatPayoutConfig.chainId}
                     initialAmount={amount}
+                    isAuthenticated={authenticated}
                     onDonationComplete={onClose}
                   />
                 ) : configuredChainIds.length > 0 ? (

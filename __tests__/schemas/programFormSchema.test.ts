@@ -3,11 +3,16 @@
  * @description Tests for the Zod schema validation used in program forms
  */
 
-import { createProgramSchema } from "@/schemas/programFormSchema";
+import { createProgramSchema, updateProgramSchema } from "@/schemas/programFormSchema";
 
 const validEmails = {
   adminEmails: ["admin@example.com"],
   financeEmails: ["finance@example.com"],
+};
+
+const validBase = {
+  ...validEmails,
+  invoiceRequired: false,
 };
 
 describe("createProgramSchema", () => {
@@ -18,7 +23,7 @@ describe("createProgramSchema", () => {
         description: "Test description",
         shortDescription: "Short desc",
         dates: {},
-        ...validEmails,
+        ...validBase,
       });
 
       expect(result.success).toBe(true);
@@ -58,7 +63,7 @@ describe("createProgramSchema", () => {
         description: "Test description",
         shortDescription: "Short desc",
         dates: {},
-        ...validEmails,
+        ...validBase,
       });
 
       expect(result.success).toBe(true);
@@ -70,7 +75,7 @@ describe("createProgramSchema", () => {
         description: "Test description",
         shortDescription: "Short desc",
         dates: {},
-        ...validEmails,
+        ...validBase,
       });
 
       expect(result.success).toBe(true);
@@ -84,7 +89,7 @@ describe("createProgramSchema", () => {
         description: "This is a valid description",
         shortDescription: "Short desc",
         dates: {},
-        ...validEmails,
+        ...validBase,
       });
 
       expect(result.success).toBe(true);
@@ -110,7 +115,7 @@ describe("createProgramSchema", () => {
         description: "abc",
         shortDescription: "Short desc",
         dates: {},
-        ...validEmails,
+        ...validBase,
       });
 
       expect(result.success).toBe(true);
@@ -124,7 +129,7 @@ describe("createProgramSchema", () => {
         description: "Test description",
         shortDescription: "Short description",
         dates: {},
-        ...validEmails,
+        ...validBase,
       });
 
       expect(result.success).toBe(true);
@@ -166,7 +171,7 @@ describe("createProgramSchema", () => {
         description: "Test description",
         shortDescription: "a".repeat(100),
         dates: {},
-        ...validEmails,
+        ...validBase,
       });
 
       expect(result.success).toBe(true);
@@ -178,7 +183,7 @@ describe("createProgramSchema", () => {
         description: "Test description",
         shortDescription: "a",
         dates: {},
-        ...validEmails,
+        ...validBase,
       });
 
       expect(result.success).toBe(true);
@@ -195,7 +200,7 @@ describe("createProgramSchema", () => {
           startsAt: new Date("2024-06-01"),
           endsAt: new Date("2024-12-31"),
         },
-        ...validEmails,
+        ...validBase,
       });
 
       expect(result.success).toBe(true);
@@ -207,7 +212,7 @@ describe("createProgramSchema", () => {
         description: "Test description",
         shortDescription: "Short desc",
         dates: {},
-        ...validEmails,
+        ...validBase,
       });
 
       expect(result.success).toBe(true);
@@ -221,7 +226,7 @@ describe("createProgramSchema", () => {
         dates: {
           startsAt: new Date("2024-06-01"),
         },
-        ...validEmails,
+        ...validBase,
       });
 
       expect(result.success).toBe(true);
@@ -235,7 +240,7 @@ describe("createProgramSchema", () => {
         dates: {
           endsAt: new Date("2024-12-31"),
         },
-        ...validEmails,
+        ...validBase,
       });
 
       expect(result.success).toBe(true);
@@ -270,7 +275,7 @@ describe("createProgramSchema", () => {
           startsAt: sameDate,
           endsAt: sameDate,
         },
-        ...validEmails,
+        ...validBase,
       });
 
       expect(result.success).toBe(true);
@@ -285,7 +290,7 @@ describe("createProgramSchema", () => {
         shortDescription: "Short desc",
         dates: {},
         budget: 100000,
-        ...validEmails,
+        ...validBase,
       });
 
       expect(result.success).toBe(true);
@@ -297,7 +302,7 @@ describe("createProgramSchema", () => {
         description: "Test description",
         shortDescription: "Short desc",
         dates: {},
-        ...validEmails,
+        ...validBase,
       });
 
       expect(result.success).toBe(true);
@@ -310,7 +315,7 @@ describe("createProgramSchema", () => {
         shortDescription: "Short desc",
         dates: {},
         budget: 0,
-        ...validEmails,
+        ...validBase,
       });
 
       expect(result.success).toBe(true);
@@ -343,7 +348,7 @@ describe("createProgramSchema", () => {
         shortDescription: "Short desc",
         dates: {},
         budget: "100000",
-        ...validEmails,
+        ...validBase,
       });
 
       expect(result.success).toBe(true);
@@ -379,6 +384,7 @@ describe("createProgramSchema", () => {
         budget: 100000,
         adminEmails: ["admin@example.com"],
         financeEmails: ["finance@example.com"],
+        invoiceRequired: false,
       });
 
       expect(result.success).toBe(true);
@@ -398,7 +404,7 @@ describe("createProgramSchema", () => {
         description: "abc",
         shortDescription: "a",
         dates: {},
-        ...validEmails,
+        ...validBase,
       });
 
       expect(result.success).toBe(true);
@@ -406,21 +412,31 @@ describe("createProgramSchema", () => {
   });
 
   describe("adminEmails validation", () => {
-    it("should require at least one admin email", () => {
+    it("should allow empty admin email list", () => {
       const result = createProgramSchema.safeParse({
         name: "Test Program",
         description: "Test description",
         shortDescription: "Short desc",
+        invoiceRequired: false,
         dates: {},
         adminEmails: [],
         financeEmails: ["finance@example.com"],
       });
 
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        const emailError = result.error.errors.find((err) => err.path.includes("adminEmails"));
-        expect(emailError?.message).toBe("At least one admin email is required");
-      }
+      expect(result.success).toBe(true);
+    });
+
+    it("should allow omitting admin emails", () => {
+      const result = createProgramSchema.safeParse({
+        name: "Test Program",
+        description: "Test description",
+        shortDescription: "Short desc",
+        invoiceRequired: false,
+        dates: {},
+        financeEmails: ["finance@example.com"],
+      });
+
+      expect(result.success).toBe(true);
     });
 
     it("should reject invalid email addresses", () => {
@@ -444,6 +460,7 @@ describe("createProgramSchema", () => {
         dates: {},
         adminEmails: ["admin1@example.com", "admin2@example.com"],
         financeEmails: ["finance@example.com"],
+        invoiceRequired: false,
       });
 
       expect(result.success).toBe(true);
@@ -487,11 +504,70 @@ describe("createProgramSchema", () => {
         description: "Test description",
         shortDescription: "Short desc",
         dates: {},
-        ...validEmails,
+        ...validBase,
         financeEmails: ["finance@example.com"],
       });
 
       expect(result.success).toBe(true);
     });
+  });
+});
+
+describe("updateProgramSchema", () => {
+  it("should allow empty admin emails when finance emails are provided", () => {
+    const result = updateProgramSchema.safeParse({
+      name: "Test Program",
+      description: "Test description",
+      shortDescription: "Short desc",
+      invoiceRequired: false,
+      dates: {},
+      adminEmails: [],
+      financeEmails: ["finance@example.com"],
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("should allow omitting admin emails", () => {
+    const result = updateProgramSchema.safeParse({
+      name: "Test Program",
+      description: "Test description",
+      shortDescription: "Short desc",
+      invoiceRequired: false,
+      dates: {},
+      financeEmails: ["finance@example.com"],
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("should reject invalid admin email format when provided", () => {
+    const result = updateProgramSchema.safeParse({
+      name: "Test Program",
+      description: "Test description",
+      shortDescription: "Short desc",
+      dates: {},
+      adminEmails: ["not-an-email"],
+      financeEmails: ["finance@example.com"],
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("should still require at least one finance email", () => {
+    const result = updateProgramSchema.safeParse({
+      name: "Test Program",
+      description: "Test description",
+      shortDescription: "Short desc",
+      dates: {},
+      adminEmails: [],
+      financeEmails: [],
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const financeError = result.error.errors.find((err) => err.path.includes("financeEmails"));
+      expect(financeError?.message).toBe("At least one finance email is required");
+    }
   });
 });

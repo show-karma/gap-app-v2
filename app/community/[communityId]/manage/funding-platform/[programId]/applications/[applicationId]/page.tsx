@@ -240,9 +240,9 @@ export default function ApplicationDetailPage() {
   // Helper function to check if editing is allowed
   // NOTE: This is a UI-only check. The backend API MUST enforce these same restrictions
   // to prevent unauthorized edits. The backend should reject edit requests for applications
-  // with status 'under_review' or 'approved' regardless of client-side checks.
+  // with status 'approved' regardless of client-side checks.
   const canEditApplication = (app: IFundingApplication) => {
-    const restrictedStatuses = ["under_review", "approved"];
+    const restrictedStatuses = ["approved"];
     return !restrictedStatuses.includes(app.status.toLowerCase());
   };
 

@@ -25,6 +25,7 @@ export const PAGES = {
   },
   MY_PROJECTS: `/my-projects`,
   MY_REVIEWS: `/my-reviews`,
+  DASHBOARD: `/dashboard`,
   // REVIEWER routes now point to MANAGE (unified RBAC-based routes)
   REVIEWER: {
     DASHBOARD: (community: string) => `/community/${community}/manage/funding-platform`,
@@ -72,6 +73,7 @@ export const PAGES = {
     COMMUNITY_STATS: `/admin/communities/stats`,
     PROJECTS: `/admin/projects`,
     PAYOUTS: (community: string) => `/community/${community}/manage/payouts`,
+    CONTROL_CENTER: (community: string) => `/community/${community}/manage/control-center`,
     KYC_SETTINGS: (community: string) => `/community/${community}/manage/kyc-settings`,
     PROGRAM_SCORES: (community: string) => `/community/${community}/manage/program-scores`,
     PROJECT_MILESTONES: (community: string, projectId: string, programId: string) =>
@@ -106,6 +108,7 @@ export const PAGES = {
   },
   STATS: `/stats`,
   SUMUP_CONFIG: `/admin/sumup`,
+  FOUNDATIONS: `/foundations`,
   FUNDERS: `/funders`,
   SEEDS: `/seeds`,
   SEEDS_FUND: `/seeds/fund`,

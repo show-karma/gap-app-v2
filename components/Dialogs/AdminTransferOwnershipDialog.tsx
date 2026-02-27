@@ -85,7 +85,6 @@ export const AdminTransferOwnershipDialog: FC = () => {
           error: "Failed to request ownership transfer.",
         }
       );
-      console.error(error);
     }
   };
 

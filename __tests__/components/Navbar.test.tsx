@@ -100,7 +100,7 @@ describe("Navbar", () => {
       render(<Navbar />);
 
       const nav = screen.getByRole("navigation");
-      expect(nav).toHaveClass("z-10");
+      expect(nav).toHaveClass("z-50");
     });
 
     it("should have full width styling", () => {
@@ -257,7 +257,7 @@ describe("Navbar", () => {
         "min-w-min",
         "border-b",
         "border-border",
-        "z-10",
+        "z-50",
         "fixed",
         "top-0",
         "left-0",

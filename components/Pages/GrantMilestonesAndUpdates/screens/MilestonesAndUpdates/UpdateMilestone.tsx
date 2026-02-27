@@ -75,10 +75,11 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
   cancelEditing,
 }) => {
   const [isUpdating, setIsUpdating] = useState(false);
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useIsCommunityAdmin();
-  const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
+  const isAuthorized = isProjectOwner || isProjectAdmin || isContractOwner || isCommunityAdmin;
   return isUpdating || isEditing ? (
     <MilestoneUpdateForm
       milestone={milestone}

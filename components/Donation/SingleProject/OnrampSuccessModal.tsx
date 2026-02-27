@@ -13,6 +13,7 @@ interface OnrampSuccessModalProps {
   network: string;
   donationUid: string | null;
   chainId: number;
+  pollingToken?: string | null;
   onClose: () => void;
 }
 
@@ -103,7 +104,7 @@ function ProgressStepper({
 }
 
 export const OnrampSuccessModal = React.memo<OnrampSuccessModalProps>(
-  ({ sessionData, network, donationUid, chainId, onClose }) => {
+  ({ sessionData, network, donationUid, chainId, pollingToken, onClose }) => {
     const txDetails = sessionData.transaction_details;
 
     const {
@@ -114,6 +115,7 @@ export const OnrampSuccessModal = React.memo<OnrampSuccessModalProps>(
     } = useDonationPolling({
       donationUid,
       chainId,
+      pollingToken,
     });
 
     // Polled backend status takes precedence when available.
@@ -229,7 +231,9 @@ export const OnrampSuccessModal = React.memo<OnrampSuccessModalProps>(
 
           <div className="p-6 pt-10 space-y-6">
             <div className="text-center">
-              <h2 id="onramp-success-title" className="sr-only">{title}</h2>
+              <h2 id="onramp-success-title" className="sr-only">
+                {title}
+              </h2>
               {formattedFiatAmount && (
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {formattedFiatAmount}

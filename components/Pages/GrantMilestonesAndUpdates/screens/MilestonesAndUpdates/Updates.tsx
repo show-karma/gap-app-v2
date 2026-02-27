@@ -173,7 +173,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
 
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isCommunityAdmin = useIsCommunityAdmin();
-  const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
+  const isAuthorized = isProjectOwner || isProjectAdmin || isContractOwner || isCommunityAdmin;
 
   // V2: verified is an array of verifications
   const [isVerified, setIsVerified] = useState<boolean>(
@@ -247,7 +247,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
               <img className="h-4 w-4" alt="Update" src="/icons/alert-message-white.svg" />
               <p className="text-xs font-bold text-white">UPDATE</p>
             </div>
-            {isVerified && !isAuthorized && (
+            {isVerified && (
               <VerifiedBadge
                 verifications={milestone.verified}
                 title={`${milestone.title} - Reviews`}
@@ -291,53 +291,57 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
               ) : null}
 
               <div className="flex flex-1 flex-row items-center justify-end">
-                {isAuthorized ? (
-                  <div className="flex w-max flex-row items-center gap-2">
-                    <MilestoneVerificationSection
-                      milestone={milestone}
-                      title={`${milestone.title} - Reviews`}
-                      isVerified={isVerified}
-                      verifications={milestone.verified}
-                      onVerified={markAsVerified}
-                    />
-                    <ExternalLink
-                      type="button"
-                      className="flex flex-row gap-2 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent"
-                      href={shareOnX(
-                        SHARE_TEXTS.MILESTONE_COMPLETED(
-                          grant?.details?.title as string,
-                          (project?.details?.slug || project?.uid) as string,
-                          grant?.uid as string
-                        )
-                      )}
-                    >
-                      <ShareIcon className="h-5 w-5" />
-                    </ExternalLink>
-                    <Button
-                      type="button"
-                      className="flex flex-row gap-2 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent"
-                      onClick={() => handleEditing(true)}
-                    >
-                      <PencilSquareIcon className="h-5 w-5" />
-                    </Button>
-                    <DeleteDialog
-                      deleteFunction={undoMilestoneCompletion}
-                      isLoading={isDeleting}
-                      title={
-                        <p className="font-normal">
-                          Are you sure you want to revoke the completion of <b>{milestone.title}</b>
-                          ?
-                        </p>
-                      }
-                      buttonElement={{
-                        text: "",
-                        icon: <TrashIcon className="h-5 w-5" />,
-                        styleClass:
-                          "bg-transparent p-0 w-max h-max text-gray-600 dark:text-zinc-100 hover:bg-transparent",
-                      }}
-                    />
-                  </div>
-                ) : null}
+                <div className="flex w-max flex-row items-center gap-2">
+                  <MilestoneVerificationSection
+                    milestone={milestone}
+                    title={`${milestone.title} - Reviews`}
+                    isVerified={isVerified}
+                    verifications={milestone.verified}
+                    onVerified={markAsVerified}
+                    programId={grant?.programId ?? grant?.details?.programId}
+                    communityUID={grant?.communityUID}
+                  />
+                  {isAuthorized ? (
+                    <>
+                      <ExternalLink
+                        type="button"
+                        className="flex flex-row gap-2 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent"
+                        href={shareOnX(
+                          SHARE_TEXTS.MILESTONE_COMPLETED(
+                            grant?.details?.title as string,
+                            (project?.details?.slug || project?.uid) as string,
+                            grant?.uid as string
+                          )
+                        )}
+                      >
+                        <ShareIcon className="h-5 w-5" />
+                      </ExternalLink>
+                      <Button
+                        type="button"
+                        className="flex flex-row gap-2 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent"
+                        onClick={() => handleEditing(true)}
+                      >
+                        <PencilSquareIcon className="h-5 w-5" />
+                      </Button>
+                      <DeleteDialog
+                        deleteFunction={undoMilestoneCompletion}
+                        isLoading={isDeleting}
+                        title={
+                          <p className="font-normal">
+                            Are you sure you want to revoke the completion of{" "}
+                            <b>{milestone.title}</b>?
+                          </p>
+                        }
+                        buttonElement={{
+                          text: "",
+                          icon: <TrashIcon className="h-5 w-5" />,
+                          styleClass:
+                            "bg-transparent p-0 w-max h-max text-gray-600 dark:text-zinc-100 hover:bg-transparent",
+                        }}
+                      />
+                    </>
+                  ) : null}
+                </div>
               </div>
             </div>
           </div>

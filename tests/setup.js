@@ -110,18 +110,18 @@ jest.mock("next/navigation", () => ({
 
 // Mock Privy authentication
 jest.mock("@privy-io/react-auth", () => ({
-  usePrivy: () => ({
+  usePrivy: jest.fn(() => ({
     ready: true,
     authenticated: false,
     login: jest.fn(),
     logout: jest.fn(),
     user: null,
     getAccessToken: jest.fn(),
-  }),
-  useWallets: () => ({
+  })),
+  useWallets: jest.fn(() => ({
     wallets: [],
     ready: true,
-  }),
+  })),
   useLogin: () => ({
     login: jest.fn(),
   }),
@@ -133,11 +133,11 @@ jest.mock("@privy-io/react-auth", () => ({
 
 // Mock Wagmi
 jest.mock("wagmi", () => ({
-  useAccount: () => ({
+  useAccount: jest.fn(() => ({
     address: undefined,
     isConnected: false,
     connector: null,
-  }),
+  })),
   useChainId: () => 1,
   useBalance: () => ({
     data: undefined,

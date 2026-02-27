@@ -4,7 +4,7 @@ import "@testing-library/jest-dom";
 
 // Mock child components
 jest.mock("@/src/components/shared/logo", () => ({
-  Logo: () => <div data-testid="logo">Karma GAP</div>,
+  Logo: () => <div data-testid="logo">Karma</div>,
 }));
 
 jest.mock("@/src/components/footer/newsletter", () => ({
@@ -96,10 +96,10 @@ describe("Footer", () => {
       expect(screen.getByText("Guide")).toBeInTheDocument();
     });
 
-    it("should render SDK Docs link", () => {
+    it("should render API Docs link", () => {
       render(<Footer />);
 
-      expect(screen.getByText("SDK Docs")).toBeInTheDocument();
+      expect(screen.getByText("API Docs")).toBeInTheDocument();
     });
 
     it("should render Governance link", () => {
@@ -364,7 +364,7 @@ describe("Footer", () => {
     it("should render all navigation links as clickable", () => {
       render(<Footer />);
 
-      const navLinks = ["For Builders", "For Funders", "Blog", "Guide", "SDK Docs", "Governance"];
+      const navLinks = ["For Builders", "For Funders", "Blog", "Guide", "API Docs", "Governance"];
 
       navLinks.forEach((linkText) => {
         const link = screen.getByText(linkText);

@@ -409,7 +409,7 @@ describe("Authentication Flow Integration Tests", () => {
       });
 
       // Verify authenticated content (may appear in multiple places)
-      const myProjectsElements = screen.getAllByText("My projects");
+      const myProjectsElements = screen.getAllByText("Dashboard");
       expect(myProjectsElements.length).toBeGreaterThan(0);
       const logoutElements = screen.getAllByText("Log out");
       expect(logoutElements.length).toBeGreaterThan(0);

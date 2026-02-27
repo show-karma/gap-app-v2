@@ -316,6 +316,7 @@ export const ManagePrograms = () => {
                   setProgramToEdit(null);
                 }}
                 refreshPrograms={refreshPrograms}
+                isAdmin
               />
             </div>
           ) : (

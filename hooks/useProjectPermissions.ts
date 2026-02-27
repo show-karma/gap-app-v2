@@ -1,11 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
+import { ethers } from "ethers";
 import { useEffect, useMemo } from "react";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjectStore } from "@/store";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
-import { getRPCClient } from "@/utilities/rpcClient";
+import { getRPCUrlByChainId } from "@/utilities/rpcClient";
 import { useProjectInstance } from "./useProjectInstance";
 
 interface ProjectPermissionsResult {
@@ -30,17 +31,21 @@ export const useProjectPermissions = () => {
     }
 
     try {
-      const rpcClient = await getRPCClient(projectInstance.chainID);
+      const rpcUrl = getRPCUrlByChainId(projectInstance.chainID);
+      if (!rpcUrl) {
+        return { isProjectOwner: false, isProjectAdmin: false };
+      }
+      const rpcProvider = new ethers.JsonRpcProvider(rpcUrl);
 
       const [isOwnerResult, isAdminResult] = await Promise.all([
-        projectInstance?.isOwner(rpcClient as any, address).catch((error) => {
+        projectInstance?.isOwner(rpcProvider, address).catch((error) => {
           errorManager(
             `Error checking owner permissions for user ${address} on project ${projectId}`,
             error
           );
           return false;
         }),
-        projectInstance?.isAdmin(rpcClient as any, address).catch((error) => {
+        projectInstance?.isAdmin(rpcProvider, address).catch((error) => {
           errorManager(
             `Error checking admin permissions for user ${address} on project ${projectId}`,
             error

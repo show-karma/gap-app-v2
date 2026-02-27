@@ -34,11 +34,16 @@ export const checkSlugExists = async (slug: string): Promise<boolean> => {
 };
 
 export const getProject = async (projectIdOrSlug: string): Promise<ProjectResponse | null> => {
-  const [projectData, error, , _status] = await fetchData<ProjectResponse>(
+  const [projectData, error, , status] = await fetchData<ProjectResponse>(
     INDEXER.V2.PROJECTS.GET(projectIdOrSlug)
   );
 
   if (error) {
+    // Unknown slugs are expected on public routes and should not create Sentry noise.
+    if (status === 404) {
+      return null;
+    }
+
     errorManager(`Project API Error: ${error}`, error, {
       context: "project.service",
     });

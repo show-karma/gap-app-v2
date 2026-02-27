@@ -13,9 +13,11 @@ import {
   useFundingApplications,
   useProgramConfig,
 } from "@/hooks/useFundingPlatform";
+import { useKycBatchStatusesByAppRef, useKycConfig } from "@/hooks/useKycStatus";
 import { useMilestoneReviewers } from "@/hooks/useMilestoneReviewers";
 import { useProgramReviewers } from "@/hooks/useProgramReviewers";
 import type { IApplicationFilters } from "@/services/fundingPlatformService";
+import { useProgramPrompts } from "@/src/features/prompt-management";
 import type { IFundingApplication } from "@/types/funding-platform";
 import formatCurrency from "@/utilities/formatCurrency";
 import { getAIColumnVisibility } from "../helper/getAIColumnVisibility";
@@ -23,6 +25,7 @@ import { ApplicationList } from "./ApplicationList";
 
 interface IApplicationListWithAPIProps {
   programId: string; // May be in format "programId" or "programId_chainId"
+  communityId: string;
   onApplicationSelect?: (application: IFundingApplication) => void;
   onApplicationHover?: (applicationId: string) => void;
   showStatusActions?: boolean;
@@ -33,6 +36,7 @@ interface IApplicationListWithAPIProps {
 
 const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
   programId,
+  communityId,
   onApplicationSelect,
   onApplicationHover,
   showStatusActions = false,
@@ -102,8 +106,9 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
 
   const { exportApplications, isExporting } = useApplicationExport(programId, isAdmin);
 
-  // Fetch program config to determine AI column visibility
+  // Fetch program config and prompts to determine AI column visibility
   const { config } = useProgramConfig(programId);
+  const { data: promptsData } = useProgramPrompts(programId);
 
   // Fetch reviewers for the program
   const {
@@ -117,10 +122,29 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
     isError: isMilestoneReviewersError,
   } = useMilestoneReviewers(programId);
 
-  // Determine column visibility based on configured prompts
+  // Determine column visibility based on config, prompts, or application data
   const { showAIScoreColumn, showInternalAIScoreColumn } = useMemo(
-    () => getAIColumnVisibility(config?.formSchema),
-    [config?.formSchema]
+    () => getAIColumnVisibility(config?.formSchema, promptsData, applications),
+    [config?.formSchema, promptsData, applications]
+  );
+
+  // KYC: Collect unique reference numbers from loaded applications
+  const referenceNumbers = useMemo(
+    () => [...new Set(applications.map((app) => app.referenceNumber).filter(Boolean))].sort(),
+    [applications]
+  );
+
+  // KYC: Fetch config and batch statuses in parallel (no waterfall)
+  const { isEnabled: isKycEnabled } = useKycConfig(communityId, {
+    enabled: !!communityId,
+  });
+
+  const { statuses: kycStatuses, isLoading: isLoadingKycStatuses } = useKycBatchStatusesByAppRef(
+    communityId,
+    referenceNumbers,
+    {
+      enabled: !!communityId && referenceNumbers.length > 0,
+    }
   );
 
   // Sync filters and sorting with URL
@@ -459,6 +483,9 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
           isProgramReviewersError={isProgramReviewersError}
           isLoadingMilestoneReviewers={isLoadingMilestoneReviewers}
           isMilestoneReviewersError={isMilestoneReviewersError}
+          isKycEnabled={isKycEnabled}
+          kycStatuses={kycStatuses}
+          isLoadingKycStatuses={isLoadingKycStatuses}
         />
       </InfiniteScroll>
     </div>

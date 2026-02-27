@@ -495,7 +495,7 @@ describe("Modal Integration Tests", () => {
 
       // Other navigation should still work
       const drawer = screen.getByRole("dialog");
-      const myProjectsLink = within(drawer).getByText("My projects");
+      const myProjectsLink = within(drawer).getByText("Dashboard");
       expect(myProjectsLink).toBeInTheDocument();
     });
   });

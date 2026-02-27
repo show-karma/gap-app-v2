@@ -12,6 +12,7 @@ interface UseCommunityAdminAccessResult {
     isCommunityAdmin: boolean;
     isOwner: boolean;
     isSuperAdmin: boolean;
+    isRbacCommunityAdmin: boolean;
   };
 }
 
@@ -37,27 +38,32 @@ interface UseCommunityAdminAccessResult {
 export const useCommunityAdminAccess = (communityId?: string): UseCommunityAdminAccessResult => {
   const { isCommunityAdmin, isLoading: isCheckingAdmin } = useIsCommunityAdmin(communityId);
   const { isOwner, isOwnerLoading } = useOwnerStore();
-  const { authenticated } = useAuth();
+  const { authenticated, ready } = useAuth();
   const { data: permissions, isLoading: isPermissionsLoading } = usePermissionsQuery(
-    {},
+    communityId ? { communityId } : {},
     { enabled: authenticated }
   );
   const isSuperAdmin = permissions?.roles.roles.includes(Role.SUPER_ADMIN) ?? false;
+  const isRbacCommunityAdmin = permissions?.isCommunityAdmin ?? false;
 
   // Memoize computed values
   const hasAccess = useMemo(
-    () => isCommunityAdmin || isOwner || isSuperAdmin,
-    [isCommunityAdmin, isOwner, isSuperAdmin]
+    () => isCommunityAdmin || isOwner || isSuperAdmin || isRbacCommunityAdmin,
+    [isCommunityAdmin, isOwner, isSuperAdmin, isRbacCommunityAdmin]
   );
 
+  // Auth-state-aware loading: when Privy hasn't initialized or the user is authenticated
+  // but queries haven't started yet (RQ v5 disabled queries return isLoading=false),
+  // we must report loading=true to prevent a flash of "Access Denied".
+  const isAuthSettling = !ready || (ready && authenticated && !permissions);
   const isLoading = useMemo(
-    () => isCheckingAdmin || isPermissionsLoading || isOwnerLoading,
-    [isCheckingAdmin, isPermissionsLoading, isOwnerLoading]
+    () => isAuthSettling || isCheckingAdmin || isPermissionsLoading || isOwnerLoading,
+    [isAuthSettling, isCheckingAdmin, isPermissionsLoading, isOwnerLoading]
   );
 
   const checks = useMemo(
-    () => ({ isCommunityAdmin, isOwner, isSuperAdmin }),
-    [isCommunityAdmin, isOwner, isSuperAdmin]
+    () => ({ isCommunityAdmin, isOwner, isSuperAdmin, isRbacCommunityAdmin }),
+    [isCommunityAdmin, isOwner, isSuperAdmin, isRbacCommunityAdmin]
   );
 
   return {

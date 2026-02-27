@@ -28,7 +28,12 @@ import {
 } from "@/components/ui/select";
 import { useAdminCommunities } from "@/hooks/useAdminCommunities";
 import { useAuth } from "@/hooks/useAuth";
-import { getCommunities } from "@/services/communities.service";
+import {
+  type CommunityAdmin,
+  type CommunityAdminsBatchStatus,
+  getCommunities,
+  getCommunityAdminsBatch,
+} from "@/services/communities.service";
 import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
 import { Role } from "@/src/core/rbac/types";
 import { layoutTheme } from "@/src/helper/theme";
@@ -37,27 +42,26 @@ import { useCommunitiesStore } from "@/store/communities";
 import type { Community } from "@/types/v2/community";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
-import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
-import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 
 const ADMINS_COLLAPSED_COUNT = 3;
 
-interface CommunityAdmin {
-  id: string;
-  admins: Array<{
-    user: {
-      id: string;
-    };
-  }>;
-}
-
 interface CommunitiesData {
   communities: Community[];
   admins: CommunityAdmin[];
 }
+
+const getAdminsBatchStatusMessage = (status: CommunityAdminsBatchStatus): string => {
+  if (status === "community_not_found") {
+    return "Admin data unavailable: community not found in the indexer.";
+  }
+  if (status === "subgraph_unavailable") {
+    return "Admin data unavailable: subgraph is temporarily unavailable.";
+  }
+  return "";
+};
 
 export default function CommunitiesToAdminPage() {
   const [allCommunities, setAllCommunities] = useState<Community[]>([]);
@@ -97,33 +101,32 @@ export default function CommunitiesToAdminPage() {
     const result = await getCommunities({ limit: 1000 });
     result.sort((a, b) => (a.details?.name || a.uid).localeCompare(b.details?.name || b.uid));
 
-    const fetchPromises = result.map(async (community) => {
-      try {
-        const [data, error] = await fetchData(
-          INDEXER.COMMUNITY.ADMINS(community.uid),
-          "GET",
-          {},
-          {},
-          {},
-          false
-        );
+    const userAdminCommunityUidSet = new Set(
+      userAdminCommunities.map((community) => community.uid)
+    );
+    const communityUids = isSuperAdminOrOwner
+      ? result.map((community) => community.uid)
+      : result
+          .filter((community) => userAdminCommunityUidSet.has(community.uid))
+          .map((community) => community.uid);
 
-        if (!data) return { id: community.uid, admins: [] };
-        if (error) throw Error(error);
+    if (communityUids.length === 0) {
+      setAllCommunities([]);
+      setCommunityAdmins([]);
+      return { communities: [], admins: [] };
+    }
 
-        return data;
-      } catch {
-        return { id: community.uid, admins: [] };
-      }
-    });
-    const communityAdmins = await Promise.all(fetchPromises);
+    const communityAdmins = await getCommunityAdminsBatch(communityUids);
+
+    setAllCommunities(result || []);
+    setCommunityAdmins(communityAdmins || []);
     return { communities: result, admins: communityAdmins };
-  }, []);
+  }, [isSuperAdminOrOwner, userAdminCommunities]);
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["communities", "admins"],
     queryFn: fetchCommunitiesData,
-    enabled: hasAccess,
+    enabled: hasAccess && authenticated,
     staleTime: 1000 * 60 * 5, // 5 minutes
     refetchOnWindowFocus: false,
     refetchOnMount: false,
@@ -144,11 +147,30 @@ export default function CommunitiesToAdminPage() {
     if (isSuperAdminOrOwner) {
       return allCommunities;
     } else if (hasAdminCommunities) {
-      const userAdminUids = new Set(userAdminCommunities.map((c) => c.uid));
-      return allCommunities.filter((c) => userAdminUids.has(c.uid));
+      const userAdminUids = new Set(userAdminCommunities.map((community) => community.uid));
+      return allCommunities.filter((community) => userAdminUids.has(community.uid));
     }
     return [];
   }, [allCommunities, isSuperAdminOrOwner, hasAdminCommunities, userAdminCommunities]);
+
+  const communityAdminsById = useMemo(
+    () =>
+      new Map(
+        communityAdmins.map((communityAdmin) => [
+          communityAdmin.id,
+          {
+            ...communityAdmin,
+            admins: communityAdmin.status === "ok" ? communityAdmin.admins : [],
+          },
+        ])
+      ),
+    [communityAdmins]
+  );
+
+  const userAdminCommunitiesSet = useMemo(
+    () => new Set(userAdminCommunities.map((community) => community.uid)),
+    [userAdminCommunities]
+  );
 
   // Get unique networks from communities
   const availableNetworks = useMemo(() => {
@@ -367,16 +389,13 @@ export default function CommunitiesToAdminPage() {
             {displayedCommunities.length ? (
               <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                 {displayedCommunities.map((community) => {
-                  const matchingCommunityAdmin = communityAdmins.find(
-                    (admin) => admin.id === community.uid
-                  );
+                  const matchingCommunityAdmin = communityAdminsById.get(community.uid);
+                  const adminBatchStatus = matchingCommunityAdmin?.status;
                   // Safely format community UID as hex address
                   const communityId = formatAdminAddress(community.uid);
 
                   // Check if user is admin of this specific community
-                  const isAdminOfThisCommunity = userAdminCommunities.some(
-                    (userCommunity) => userCommunity.uid === community.uid
-                  );
+                  const isAdminOfThisCommunity = userAdminCommunitiesSet.has(community.uid);
 
                   const canManageAdmins = isSuperAdminOrOwner || isAdminOfThisCommunity;
 
@@ -455,11 +474,13 @@ export default function CommunitiesToAdminPage() {
                         <div className="flex items-center justify-between mb-2">
                           <p className="text-xs text-gray-500 dark:text-gray-400">
                             Admins{" "}
-                            {matchingCommunityAdmin && matchingCommunityAdmin.admins.length > 0 && (
-                              <span className="text-gray-400">
-                                ({matchingCommunityAdmin.admins.length})
-                              </span>
-                            )}
+                            {adminBatchStatus === "ok" &&
+                              matchingCommunityAdmin &&
+                              matchingCommunityAdmin.admins.length > 0 && (
+                                <span className="text-gray-400">
+                                  ({matchingCommunityAdmin.admins.length})
+                                </span>
+                              )}
                           </p>
                           {canManageAdmins && (
                             <AddAdmin
@@ -470,7 +491,11 @@ export default function CommunitiesToAdminPage() {
                           )}
                         </div>
                         <div className="space-y-2">
-                          {matchingCommunityAdmin && matchingCommunityAdmin.admins.length > 0 ? (
+                          {adminBatchStatus && adminBatchStatus !== "ok" ? (
+                            <p className="text-xs text-amber-700 dark:text-amber-300 italic">
+                              {getAdminsBatchStatusMessage(adminBatchStatus)}
+                            </p>
+                          ) : matchingCommunityAdmin && matchingCommunityAdmin.admins.length > 0 ? (
                             <>
                               {(expandedAdmins.has(community.uid)
                                 ? matchingCommunityAdmin.admins
@@ -498,7 +523,9 @@ export default function CommunitiesToAdminPage() {
                                   type="button"
                                   onClick={() => toggleAdminExpansion(community.uid)}
                                   aria-expanded={expandedAdmins.has(community.uid)}
-                                  aria-label={`${expandedAdmins.has(community.uid) ? "Collapse" : "Expand"} admin list for ${community.details?.name || community.uid}`}
+                                  aria-label={`${
+                                    expandedAdmins.has(community.uid) ? "Collapse" : "Expand"
+                                  } admin list for ${community.details?.name || community.uid}`}
                                   className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 mt-1"
                                 >
                                   {expandedAdmins.has(community.uid) ? (

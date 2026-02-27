@@ -17,7 +17,7 @@ const navigationLinks = [
   { label: "For Funders", href: PAGES.FUNDERS },
   { label: "Blog", href: SOCIALS.PARAGRAPH },
   { label: "Guide", href: SOCIALS.DOCS },
-  { label: "SDK Docs", href: karmaLinks.githubSDK },
+  { label: "API Docs", href: karmaLinks.apiDocs },
   { label: "Governance", href: karmaLinks.website },
 ];
 

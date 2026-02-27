@@ -1,28 +1,34 @@
 "use client";
 
 import { useMemo } from "react";
-import type { Hex } from "viem";
-import { useAccount } from "wagmi";
 import { useDonationHistory } from "@/hooks/donation/useDonationHistory";
+import { useAuth } from "@/hooks/useAuth";
 import { DonationHistoryList, DonationHistorySkeleton } from "./components/DonationHistoryList";
 
 export default function DonationsPage() {
-  const { address } = useAccount();
-  const { data: donations, isLoading, error } = useDonationHistory(address as Hex | undefined);
+  const { authenticated, ready } = useAuth();
+  const { data: donations, isLoading, error } = useDonationHistory({ enabled: authenticated });
 
   const completedCount = useMemo(() => {
     if (!donations) return 0;
     return donations.filter((d) => d.status === "completed").length;
   }, [donations]);
 
-  if (!address) {
+  if (!ready) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-3xl">
+        <h1 className="text-2xl font-semibold mb-6 dark:text-zinc-100">My Donations</h1>
+        <DonationHistorySkeleton />
+      </div>
+    );
+  }
+
+  if (!authenticated) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-3xl">
         <h1 className="text-2xl font-semibold mb-6 dark:text-zinc-100">My Donations</h1>
         <div className="text-center py-12 bg-gray-50 dark:bg-zinc-800/50 rounded-lg border border-gray-200 dark:border-zinc-700">
-          <p className="text-gray-600 dark:text-zinc-400">
-            Please connect your wallet to view your donations
-          </p>
+          <p className="text-gray-600 dark:text-zinc-400">Please log in to view your donations</p>
         </div>
       </div>
     );

@@ -7,7 +7,7 @@ import { LaunchProblem } from "@/src/features/seeds/components/launch/launch-pro
 import { LaunchUseCases } from "@/src/features/seeds/components/launch/launch-use-cases";
 
 export const metadata: Metadata = {
-  title: "Karma Seeds - Raise Funds Without Launching a Token | Karma GAP",
+  title: "Karma Seeds - Raise Funds Without Launching a Token",
   description:
     "Raise funds from your community without launching a token. Karma Seeds let you build community and stay focused on building.",
   openGraph: {

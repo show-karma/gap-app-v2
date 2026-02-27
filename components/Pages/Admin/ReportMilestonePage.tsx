@@ -1,117 +1,86 @@
 "use client";
-import { ChevronLeftIcon } from "@heroicons/react/20/solid";
 import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
-import { ChevronDownIcon, ChevronUpDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";
-import { useQuery } from "@tanstack/react-query";
-import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useQueryState } from "nuqs";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { toast } from "react-hot-toast";
+import { useMemo } from "react";
 import { useAccount } from "wagmi";
+import { PendingVerificationTable } from "@/components/Pages/Admin/PendingVerificationTable";
+import { StatsGrid } from "@/components/Pages/Admin/StatsGrid";
+import { StatsTable } from "@/components/Pages/Admin/StatsTable";
 import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown";
 import { Button } from "@/components/Utilities/Button";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { Skeleton } from "@/components/Utilities/Skeleton";
-import TablePagination from "@/components/Utilities/TablePagination";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useAuth } from "@/hooks/useAuth";
 import { useReviewerPrograms } from "@/hooks/usePermissions";
+import { itemsPerPage, useReportPageData } from "@/hooks/useReportPageData";
 import {
   useIsReviewerType,
   usePermissionContext,
 } from "@/src/core/rbac/context/permission-context";
 import { ReviewerType } from "@/src/core/rbac/types";
 import type { Community } from "@/types/v2/community";
-import { downloadCommunityReport } from "@/utilities/downloadReports";
-import { useSigner } from "@/utilities/eas-wagmi-utils";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { defaultMetadata } from "@/utilities/meta";
-import { PAGES } from "@/utilities/pages";
-import { validateProgramIdentifiers } from "@/utilities/validators";
-
-interface Report {
-  _id: {
-    $oid: string;
-  };
-  grantUid: string;
-  grantTitle: string;
-  projectUid: string;
-  projectTitle: string;
-  programId?: string;
-  totalMilestones: number;
-  pendingMilestones: number;
-  completedMilestones: number;
-  isGrantCompleted?: boolean;
-  proofOfWorkLinks: string[];
-  evaluations: Evaluation[] | null | undefined;
-  projectSlug: string;
-}
-
-interface Evaluation {
-  _id: string;
-  rating: number;
-  reasons: string[];
-}
-
-type MilestoneCompletion = Pick<
-  Report,
-  "totalMilestones" | "pendingMilestones" | "completedMilestones" | "isGrantCompleted"
->;
-
-interface ReportAPIResponse {
-  data: Report[];
-  pageInfo: {
-    totalItems: number;
-    page: number;
-    pageLimit: number;
-  };
-  uniqueProjectCount: number;
-  stats: {
-    totalGrants: number;
-    totalProjectsWithMilestones: number;
-    totalMilestones: number;
-    totalCompletedMilestones: number;
-    totalPendingMilestones: number;
-    percentageProjectsWithMilestones: number;
-    percentageCompletedMilestones: number;
-    percentagePendingMilestones: number;
-    proofOfWorkLinks: string[];
-  };
-}
 
 export const metadata = defaultMetadata;
 
-const fetchReports = async (
-  communityId: string,
-  page: number,
-  pageLimit: number,
-  sortBy = "totalMilestones",
-  sortOrder = "desc",
-  selectedProgramIds: string[] = []
-) => {
-  // Normalize programIds (remove chainId suffix if present) before sending to API
-  const normalizedProgramIds = selectedProgramIds.map((id) =>
-    id.includes("_") ? id.split("_")[0] : id
+function MilestonesReportSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-52 rounded-lg" />
+          <Skeleton className="h-4 w-80 rounded" />
+        </div>
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-10 w-32 rounded-md" />
+          <Skeleton className="h-10 w-44 rounded-md" />
+        </div>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[...Array(8)].map((_, i) => (
+          <div
+            key={i}
+            className="flex items-center gap-4 p-4 rounded-xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50"
+          >
+            <Skeleton className="h-10 w-10 rounded-lg flex-shrink-0" />
+            <div className="flex-1 space-y-1.5">
+              <Skeleton className="h-7 w-16 rounded" />
+              <Skeleton className="h-3.5 w-28 rounded" />
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="rounded-xl border border-gray-200 dark:border-zinc-700 overflow-hidden bg-white dark:bg-zinc-900">
+        <div className="bg-gray-50 dark:bg-zinc-800/50 border-b border-gray-200 dark:border-zinc-700">
+          <div className="flex items-center h-11 px-4 gap-6">
+            <Skeleton className="h-3 w-20 rounded" />
+            <Skeleton className="h-3 w-16 rounded" />
+            <Skeleton className="h-3 w-10 rounded" />
+            <Skeleton className="h-3 w-12 rounded" />
+            <Skeleton className="h-3 w-16 rounded" />
+            <Skeleton className="h-3 w-14 rounded" />
+          </div>
+        </div>
+        {[...Array(10)].map((_, i) => (
+          <div
+            key={i}
+            className="flex items-center gap-6 px-4 h-14 border-b border-gray-100 dark:border-zinc-800 last:border-b-0"
+          >
+            <Skeleton className="h-4 w-36 rounded" />
+            <Skeleton className="h-4 w-28 rounded" />
+            <Skeleton className="h-4 w-10 rounded" />
+            <Skeleton className="h-4 w-10 rounded" />
+            <Skeleton className="h-4 w-10 rounded" />
+            <Skeleton className="h-8 w-16 rounded-md" />
+          </div>
+        ))}
+      </div>
+    </div>
   );
-  const queryProgramIds = normalizedProgramIds.join(",");
-  const encodedProgramIds = encodeURIComponent(queryProgramIds);
-  const [data]: any = await fetchData(
-    `${INDEXER.COMMUNITY.REPORT.GET(
-      communityId as string
-    )}?limit=${pageLimit}&page=${page}&sort=${sortBy}&sortOrder=${sortOrder}${
-      queryProgramIds ? `&programIds=${encodedProgramIds}` : ""
-    }`
-  );
-  return data || [];
-};
-
-const itemsPerPage = 50;
-
-const skeletonArray = Array.from({ length: 12 }, (_, index) => index);
+}
 
 interface ReportMilestonePageProps {
   community: Community;
@@ -121,563 +90,121 @@ interface ReportMilestonePageProps {
 export const ReportMilestonePage = ({ community, grantPrograms }: ReportMilestonePageProps) => {
   const params = useParams();
   const communityId = params.communityId as string;
-  const { address, isConnected } = useAccount();
+  const { isConnected } = useAccount();
   const { authenticated: isAuth } = useAuth();
-  const {
-    hasAccess,
-    isLoading: isLoadingAdminAccess,
-    checks,
-  } = useCommunityAdminAccess(community?.uid);
-
-  // Use RBAC to check milestone reviewer status
+  const { hasAccess, isLoading: isLoadingAdminAccess } = useCommunityAdminAccess(community?.uid);
   const isMilestoneReviewer = useIsReviewerType(ReviewerType.MILESTONE);
-  // Get RBAC context for loading state and reviewer access (context-aware)
   const { isLoading: isLoadingRbac, isReviewer } = usePermissionContext();
-  // Get programs where user is a reviewer (for filtering dropdown)
   const { programs: reviewerPrograms, isLoading: isLoadingReviewerPrograms } =
     useReviewerPrograms();
 
-  // With the new RBAC system, program-level filtering is handled at the API level
-  // All authorized users (admins, staff, owners, milestone reviewers) see all programs
-  // The authorization check in isAuthorized ensures only valid users can access this page
-
   const isAuthorized = useMemo(() => {
-    if (!isConnected || !isAuth) {
-      return false;
-    }
-
-    // Admins, staff and contract owners have full access
-    if (hasAccess) {
-      return true;
-    }
-
-    // Milestone reviewers have access via RBAC (context-aware: checks community/program level)
+    if (!isConnected || !isAuth) return false;
+    if (hasAccess) return true;
     return isMilestoneReviewer || isReviewer;
   }, [isConnected, isAuth, hasAccess, isMilestoneReviewer, isReviewer]);
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const [sortBy, setSortBy] = useState("totalMilestones");
-  const [sortOrder, setSortOrder] = useState("desc");
-  const [selectedProgramIds, setSelectedProgramIds] = useQueryState("programIds", {
-    defaultValue: [] as string[],
-    serialize: (value) => {
-      // Normalize programIds (remove chainId suffix if present) before serializing to URL
-      const normalized = value?.map((id) => (id.includes("_") ? id.split("_")[0] : id)) ?? [];
-      return normalized.join(",");
-    },
-    parse: (value) => {
-      // Normalize programIds when reading from URL (remove chainId suffix if present)
-      if (!value) return null;
-      return value.split(",").map((id) => (id.includes("_") ? id.split("_")[0] : id));
-    },
-  });
-
-  // Get the set of program IDs the user is a reviewer for (normalized)
-  const reviewerProgramIds = useMemo(() => {
-    if (!reviewerPrograms || reviewerPrograms.length === 0) return new Set<string>();
-    return new Set(
-      reviewerPrograms.map((p) => {
-        // Normalize programId (remove chainId suffix if present)
-        const id = p.programId;
-        return id.includes("_") ? id.split("_")[0] : id;
-      })
-    );
-  }, [reviewerPrograms]);
-
-  const programOptions = useMemo(() => {
-    const allPrograms = grantPrograms
-      .filter(
-        (program): program is typeof program & { programId: string } =>
-          typeof program.programId === "string" && program.programId.length > 0
-      )
-      .map((program) => {
-        // Use normalized programId (without chainId suffix)
-        const value = program.programId;
-        const title = program.metadata?.title?.trim();
-        // Show program name and programId (without chainId)
-        const label = title ? `${title} (${value})` : value;
-        return { value, label };
-      });
-
-    // Admins, staff, and contract owners see all programs
-    // Reviewers only see programs they are assigned to
-    if (hasAccess) {
-      return allPrograms;
-    }
-
-    // For reviewers, filter to only show their assigned programs
-    return allPrograms.filter((program) => reviewerProgramIds.has(program.value));
-  }, [grantPrograms, hasAccess, reviewerProgramIds]);
-
-  const valueToLabelMap = useMemo(() => {
-    return new Map(programOptions.map(({ value, label }) => [value, label]));
-  }, [programOptions]);
-
-  const labelToValueMap = useMemo(() => {
-    return new Map(programOptions.map(({ value, label }) => [label, value]));
-  }, [programOptions]);
-
-  // Validate and sanitize program IDs from query parameters
-  const normalizedProgramIds = useMemo(() => {
-    const ids = selectedProgramIds ?? [];
-
-    if (ids.length === 0) {
-      return [];
-    }
-
-    // Normalize programIds (remove chainId suffix if present)
-    const normalizedIds = ids.map((id) => (id.includes("_") ? id.split("_")[0] : id));
-
-    // Validate all program IDs (after normalization)
-    const validation = validateProgramIdentifiers(normalizedIds);
-
-    // Log errors if any invalid IDs found
-    if (validation.errors.length > 0) {
-      console.error("Invalid program IDs detected:", validation.errors);
-      // Show a warning to the user about invalid IDs
-      validation.errors.forEach(({ id, error }) => {
-        console.warn(`Invalid program ID '${id}': ${error}`);
-      });
-    }
-
-    // Return normalized programIds (without chainId suffix)
-    return validation.validIds.map(({ programId }) => programId);
-  }, [selectedProgramIds]);
-
-  // Show warning when invalid program IDs are detected
-  useEffect(() => {
-    const ids = selectedProgramIds ?? [];
-    if (ids.length > 0) {
-      const validation = validateProgramIdentifiers(ids);
-      if (validation.errors.length > 0) {
-        toast.error(`Invalid program IDs detected and filtered out. Please check the URL.`, {
-          duration: 5000,
-        });
-      }
-    }
-  }, [selectedProgramIds]);
-
-  const selectedProgramLabels = useMemo(() => {
-    return normalizedProgramIds.map((id) => valueToLabelMap.get(id) ?? id);
-  }, [normalizedProgramIds, valueToLabelMap]);
-
-  const programLabels = useMemo(() => programOptions.map(({ label }) => label), [programOptions]);
-
-  // For reviewers (non-admins), automatically filter by their programs if no explicit filter is set
-  // This ensures reviewers only see grants from programs they have access to
-  const effectiveProgramIds = useMemo(() => {
-    // If user has explicit filter selection, use that
-    if (normalizedProgramIds.length > 0) {
-      // For reviewers, ensure they can only filter by their assigned programs
-      if (!hasAccess && reviewerProgramIds.size > 0) {
-        return normalizedProgramIds.filter((id) => reviewerProgramIds.has(id));
-      }
-      return normalizedProgramIds;
-    }
-
-    // If no filter and user is a reviewer (not admin), auto-filter by their programs
-    if (!hasAccess && reviewerProgramIds.size > 0) {
-      return Array.from(reviewerProgramIds);
-    }
-
-    // Admins/staff/owners see all programs by default
-    return normalizedProgramIds;
-  }, [normalizedProgramIds, hasAccess, reviewerProgramIds]);
-
-  const { data, isLoading } = useQuery<ReportAPIResponse>({
-    queryKey: [
-      "reportMilestones",
-      communityId,
-      currentPage,
-      sortBy,
-      sortOrder,
-      effectiveProgramIds,
-    ],
-    queryFn: async () =>
-      fetchReports(communityId, currentPage, itemsPerPage, sortBy, sortOrder, effectiveProgramIds),
-    enabled: Boolean(communityId) && isAuthorized,
-  });
-
-  const pageInfo = data?.pageInfo;
-  const reports = data?.data;
-
-  const totalItems: any = pageInfo?.totalItems || 0;
-
-  const _signer = useSigner();
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
-
-  const handleSort = (newSort: string) => {
-    if (newSort === sortBy) {
-      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-    } else {
-      setSortBy(newSort);
-      setSortOrder("desc");
-    }
-    setCurrentPage(1);
-  };
-
-  const isFullyCompleted = useCallback((report: MilestoneCompletion) => {
-    const allMilestonesComplete =
-      report.totalMilestones > 0 &&
-      report.pendingMilestones === 0 &&
-      report.completedMilestones === report.totalMilestones;
-
-    const grantCompleted = report.isGrantCompleted === true;
-
-    return allMilestonesComplete || grantCompleted;
-  }, []);
-
-  interface StatCardProps {
-    title: string;
-    value: string;
-  }
-
-  function StatCard({ title, value }: StatCardProps) {
-    return (
-      <div className="bg-white dark:bg-zinc-800 p-4 rounded-lg shadow">
-        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">{title}</h3>
-        <p className="text-2xl font-semibold text-blue-600 dark:text-blue-400">{value}</p>
-      </div>
-    );
-  }
-
-  // Show loading while checking permissions (includes RBAC, admin access, and reviewer programs)
   const isCheckingPermissions = isLoadingRbac || isLoadingAdminAccess || isLoadingReviewerPrograms;
 
+  const reportData = useReportPageData({
+    communityId,
+    grantPrograms,
+    hasAccess,
+    isAuthorized,
+    reviewerPrograms: reviewerPrograms ?? [],
+  });
+
   if (isCheckingPermissions) {
+    return <MilestonesReportSkeleton />;
+  }
+
+  if (!isAuthorized) {
     return (
-      <div className="container mx-auto mt-4 flex items-center justify-center min-h-[400px]">
-        <div className="flex flex-col items-center gap-4">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
-          <p className="text-gray-500 dark:text-gray-400">Checking permissions...</p>
-        </div>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          {MESSAGES.ADMIN.NOT_AUTHORIZED(community?.details?.name || communityId || "")}
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto mt-4 flex gap-8 flex-row max-lg:flex-col-reverse w-full">
-      {isAuthorized ? (
-        <div className="w-full flex flex-col gap-6">
-          <div className="w-full flex flex-row items-center justify-between">
-            <Link href={PAGES.ADMIN.ROOT(communityId)}>
-              <Button className="flex flex-row items-center gap-2 px-4 py-2 bg-transparent text-black dark:text-white dark:bg-transparent hover:bg-transparent rounded-md transition-all ease-in-out duration-200">
-                <ChevronLeftIcon className="h-5 w-5" />
-                Return to admin page
-              </Button>
-            </Link>
-          </div>
-
-          <section className="flex flex-col gap-4">
-            <div className="flex flex-row justify-between items-center">
-              <h1 className="text-2xl font-bold">Milestones Report</h1>
-              <div className="flex items-center gap-4">
-                <Button
-                  onClick={() => {
-                    downloadCommunityReport({
-                      communityId,
-                      sortBy,
-                      selectedProgramIds:
-                        normalizedProgramIds.length > 0 ? normalizedProgramIds : undefined,
-                    });
-                  }}
-                  className="flex items-center gap-2 py-3"
-                >
-                  <ArrowDownTrayIcon className="h-5 w-5" />
-                  Download Report
-                </Button>
-                <SearchDropdown
-                  list={programLabels}
-                  onSelectFunction={(label: string) =>
-                    setSelectedProgramIds((previous) => {
-                      setCurrentPage(1);
-                      const programId = labelToValueMap.get(label) ?? label;
-                      const current = Array.isArray(previous) ? [...previous] : [];
-                      if (current.includes(programId)) {
-                        return current.filter((item) => item !== programId);
-                      }
-                      current.push(programId);
-                      return current;
-                    })
-                  }
-                  cleanFunction={() => {
-                    setSelectedProgramIds([]);
-                  }}
-                  prefixUnselected="All"
-                  type={"Grant Programs"}
-                  selected={selectedProgramLabels}
-                  showCount={true}
-                />
-              </div>
-            </div>
-            <div className="mb-2 grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 w-full">
-              {isLoading ? (
-                [...Array(8)].map((_, index) => (
-                  <div key={index} className="bg-white dark:bg-zinc-800 p-4 rounded-lg shadow">
-                    <Skeleton className="h-4 w-3/4 mb-2" />
-                    <Skeleton className="h-6 w-1/2" />
-                  </div>
-                ))
-              ) : (
-                <>
-                  <StatCard title="Total Grants" value={`${data?.stats?.totalGrants}`} />
-                  <StatCard
-                    title="Total projects with Milestones"
-                    value={`${data?.stats?.totalProjectsWithMilestones}`}
-                  />
-                  <StatCard
-                    title="% of project who added Milestones"
-                    value={`${data?.stats?.percentageProjectsWithMilestones?.toFixed(2) || 0}%`}
-                  />
-                  <StatCard title="Total Milestones" value={`${data?.stats?.totalMilestones}`} />
-                  <StatCard
-                    title="Total Completed Milestones"
-                    value={`${data?.stats?.totalCompletedMilestones}`}
-                  />
-                  <StatCard
-                    title="Total Pending Milestones"
-                    value={`${data?.stats?.totalPendingMilestones}`}
-                  />
-                  <StatCard
-                    title="Milestones Completion %"
-                    value={`${data?.stats?.percentageCompletedMilestones?.toFixed(2) || 0}%`}
-                  />
-                  <StatCard
-                    title="Milestones Pending %"
-                    value={`${data?.stats?.percentagePendingMilestones?.toFixed(2) || 0}%`}
-                  />
-                </>
-              )}
-            </div>
-          </section>
-
-          <div className="flex flex-col justify-center w-full max-w-full overflow-x-auto rounded-md border">
-            <table className="pt-3 min-w-full divide-y dark:bg-zinc-900 divide-gray-300 dark:divide-zinc-800 dark:text-white">
-              <thead>
-                <tr className="border-b transition-colors text-gray-500 dark:text-gray-200 hover:bg-muted/50 data-[state=selected]:bg-muted">
-                  <th scope="col" className="h-12 px-4 text-left align-middle font-medium">
-                    <button
-                      className="flex flex-row gap-2 items-center p-0 bg-transparent text-zinc-700 dark:text-zinc-200"
-                      onClick={() => handleSort("grantTitle")}
-                    >
-                      Grant Title
-                      {sortBy === "grantTitle" ? (
-                        sortOrder === "asc" ? (
-                          <ChevronUpIcon className="h-4 w-4" />
-                        ) : (
-                          <ChevronDownIcon className="h-4 w-4" />
-                        )
-                      ) : (
-                        <ChevronUpDownIcon className="h-4 w-4" />
-                      )}
-                    </button>
-                  </th>
-                  <th scope="col" className="h-12 px-4 text-left align-middle font-medium">
-                    <button
-                      className="flex flex-row gap-2 items-center p-0 bg-transparent text-zinc-700 dark:text-zinc-200"
-                      onClick={() => handleSort("projectTitle")}
-                    >
-                      Project
-                      {sortBy === "projectTitle" ? (
-                        sortOrder === "asc" ? (
-                          <ChevronUpIcon className="h-4 w-4" />
-                        ) : (
-                          <ChevronDownIcon className="h-4 w-4" />
-                        )
-                      ) : (
-                        <ChevronUpDownIcon className="h-4 w-4" />
-                      )}
-                    </button>
-                  </th>
-                  <th scope="col" className="h-12 px-4 text-left align-middle font-medium">
-                    <button
-                      className="flex flex-row gap-2 items-center p-0 bg-transparent text-zinc-700 dark:text-zinc-200"
-                      onClick={() => handleSort("totalMilestones")}
-                    >
-                      Total Milestones
-                      {sortBy === "totalMilestones" ? (
-                        sortOrder === "asc" ? (
-                          <ChevronUpIcon className="h-4 w-4" />
-                        ) : (
-                          <ChevronDownIcon className="h-4 w-4" />
-                        )
-                      ) : (
-                        <ChevronUpDownIcon className="h-4 w-4" />
-                      )}
-                    </button>
-                  </th>
-                  <th scope="col" className="h-12 px-4 text-left align-middle font-medium">
-                    <button
-                      className="flex flex-row gap-2 items-center p-0 bg-transparent text-zinc-700 dark:text-zinc-200"
-                      onClick={() => handleSort("pendingMilestones")}
-                    >
-                      Pending Milestones
-                      {sortBy === "pendingMilestones" ? (
-                        sortOrder === "asc" ? (
-                          <ChevronUpIcon className="h-4 w-4" />
-                        ) : (
-                          <ChevronDownIcon className="h-4 w-4" />
-                        )
-                      ) : (
-                        <ChevronUpDownIcon className="h-4 w-4" />
-                      )}
-                    </button>
-                  </th>
-                  <th scope="col" className="h-12 px-4 text-left align-middle font-medium">
-                    <button
-                      className="flex flex-row gap-2 items-center p-0 bg-transparent text-zinc-700 dark:text-zinc-200"
-                      onClick={() => handleSort("completedMilestones")}
-                    >
-                      Completed Milestones
-                      {sortBy === "completedMilestones" ? (
-                        sortOrder === "asc" ? (
-                          <ChevronUpIcon className="h-4 w-4" />
-                        ) : (
-                          <ChevronDownIcon className="h-4 w-4" />
-                        )
-                      ) : (
-                        <ChevronUpDownIcon className="h-4 w-4" />
-                      )}
-                    </button>
-                  </th>
-                  <th scope="col" className="h-12 px-4 text-left align-middle font-medium">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="px-4 divide-y divide-gray-200 dark:divide-zinc-800">
-                {isLoading
-                  ? skeletonArray.map((index) => {
-                      return (
-                        <tr key={index}>
-                          <td className="px-4 py-2 font-medium h-16">
-                            <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4" />
-                          </td>
-                          <td className="px-4 py-2">
-                            <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4" />
-                          </td>
-                          <td className="px-4 py-2">
-                            {" "}
-                            <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4 w-14" />
-                          </td>
-                          <td className="px-4 py-2">
-                            <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4 w-14" />
-                          </td>
-                          <td className="px-4 py-2">
-                            <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4 w-14" />
-                          </td>
-                          <td className="px-4 py-2">
-                            <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4 w-20" />
-                          </td>
-                        </tr>
-                      );
-                    })
-                  : reports?.map((report, index) => {
-                      return (
-                        <tr
-                          key={index}
-                          className={`
-                          dark:text-zinc-300 text-gray-900 px-4 py-4
-                          ${isFullyCompleted(report) ? "bg-green-200 dark:bg-green-500" : ""}
-                        `}
-                        >
-                          <td className="px-4 py-2 font-medium h-16 max-w-[220px]">
-                            <ExternalLink
-                              href={PAGES.PROJECT.GRANT(report.projectSlug, report.grantUid)}
-                              className="max-w-max w-full line-clamp-2 underline"
-                            >
-                              {report.grantTitle}
-                            </ExternalLink>
-                          </td>
-                          <td className="px-4 py-2 max-w-[220px]">
-                            <ExternalLink
-                              href={PAGES.PROJECT.OVERVIEW(report.projectSlug)}
-                              className="max-w-full line-clamp-2 underline w-max"
-                            >
-                              {report.projectTitle}
-                            </ExternalLink>
-                          </td>
-                          <td className="px-4 py-2 max-w-[220px]">
-                            <Link
-                              href={`${PAGES.PROJECT.GRANT(
-                                report.projectUid,
-                                report.grantUid
-                              )}/milestones-and-updates#all`}
-                              className="text-blue-600 hover:text-blue-800 underline"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              {report.totalMilestones}
-                            </Link>
-                          </td>
-                          <td className="px-4 py-2 max-w-[220px]">
-                            <Link
-                              href={`${PAGES.PROJECT.GRANT(
-                                report.projectUid,
-                                report.grantUid
-                              )}/milestones-and-updates#pending`}
-                              className="text-blue-600 hover:text-blue-800 underline"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              {report.pendingMilestones}
-                            </Link>
-                          </td>
-                          <td className="px-4 py-2 max-w-[220px]">
-                            <Link
-                              href={`${PAGES.PROJECT.GRANT(
-                                report.projectSlug,
-                                report.grantUid
-                              )}/milestones-and-updates#completed`}
-                              className="text-blue-600 hover:text-blue-800 underline"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              {report.completedMilestones}
-                            </Link>
-                          </td>
-                          <td className="px-4 py-2">
-                            {report.programId && (
-                              <Link
-                                href={PAGES.REVIEWER.FUNDING_PLATFORM.MILESTONES(
-                                  communityId,
-                                  report.programId.includes("_")
-                                    ? report.programId.split("_")[0]
-                                    : report.programId,
-                                  report.projectUid
-                                )}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              >
-                                <Button className="py-2 px-4 text-sm">Review</Button>
-                              </Link>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-              </tbody>
-            </table>
-            <div className="dark:bg-zinc-900 flex flex-col pb-4 items-end">
-              <div className="w-full">
-                <TablePagination
-                  currentPage={currentPage}
-                  setCurrentPage={handlePageChange}
-                  postsPerPage={itemsPerPage}
-                  totalPosts={totalItems}
-                />
-              </div>
-            </div>
-          </div>
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Milestones Report</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            Track milestone progress across all grant programs
+          </p>
         </div>
-      ) : (
-        <div className="flex w-full items-center justify-center">
-          <p>{MESSAGES.ADMIN.NOT_AUTHORIZED(community?.details?.name || communityId || "")}</p>
+        <div className="flex items-center gap-3">
+          <Button onClick={reportData.handleExportCSV} className="flex items-center gap-2 py-2.5">
+            <ArrowDownTrayIcon className="h-4 w-4" />
+            Export CSV
+          </Button>
+          <SearchDropdown
+            list={reportData.programLabels}
+            onSelectFunction={reportData.handleProgramSelect}
+            cleanFunction={reportData.handleProgramClear}
+            prefixUnselected="All"
+            type="Grant Programs"
+            selected={reportData.selectedProgramLabels}
+            showCount={true}
+          />
         </div>
-      )}
+      </div>
+
+      <StatsGrid stats={reportData.stats} isLoading={reportData.isStatsLoading} />
+
+      <Tabs
+        value={reportData.activeTab}
+        onValueChange={(value) =>
+          reportData.setActiveTab(value as "pending-verification" | "stats")
+        }
+      >
+        <TabsList>
+          <TabsTrigger value="pending-verification">
+            Pending Verification
+            {reportData.pendingTotalItems > 0 && (
+              <span className="ml-2 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-medium rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 tabular-nums">
+                {reportData.pendingTotalItems}
+              </span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="stats">Stats</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="pending-verification">
+          <PendingVerificationTable
+            milestones={reportData.pendingMilestones}
+            isLoading={reportData.isPendingLoading}
+            error={reportData.pendingError}
+            communityId={communityId}
+            page={reportData.pendingPage}
+            onPageChange={reportData.setPendingPage}
+            totalItems={reportData.pendingTotalItems}
+            onSwitchToStats={() => reportData.setActiveTab("stats")}
+            itemsPerPage={itemsPerPage}
+          />
+        </TabsContent>
+
+        <TabsContent value="stats">
+          <StatsTable
+            reports={reportData.reports}
+            isLoading={reportData.isStatsLoading}
+            error={reportData.statsError}
+            communityId={communityId}
+            sortBy={reportData.sortBy}
+            sortOrder={reportData.sortOrder}
+            onSort={reportData.handleSort}
+            page={reportData.statsPage}
+            onPageChange={reportData.setStatsPage}
+            totalItems={reportData.totalItems}
+            itemsPerPage={itemsPerPage}
+            isFullyCompleted={reportData.isFullyCompleted}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

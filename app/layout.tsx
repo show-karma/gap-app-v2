@@ -12,6 +12,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { ThemeProvider } from "next-themes";
 import { Suspense } from "react";
 import { Toaster } from "react-hot-toast";
+import { AgentChatBubble } from "@/components/AgentChat/AgentChatBubble";
 import { ContributorProfileDialog } from "@/components/Dialogs/ContributorProfileDialog";
 import { OnboardingDialog } from "@/components/Dialogs/OnboardingDialog";
 import { ProgressBarWrapper } from "@/components/ProgressBarWrapper";
@@ -21,6 +22,7 @@ import { PermissionsProvider } from "@/components/Utilities/PermissionsProvider"
 import PrivyProviderWrapper from "@/components/Utilities/PrivyProviderWrapper";
 import { Footer } from "@/src/components/footer/footer";
 import { Navbar } from "@/src/components/navbar/navbar";
+import { ApiKeyManagementModal } from "@/src/features/api-keys/components/api-key-management-modal";
 
 export const metadata = defaultMetadata;
 
@@ -72,6 +74,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Suspense fallback={null}>
               <ContributorProfileDialog />
             </Suspense>
+            <Suspense fallback={null}>
+              <ApiKeyManagementModal />
+            </Suspense>
             <OnboardingDialog />
             <ProgressBarWrapper />
             <div className="min-h-screen flex flex-col justify-between h-full text-gray-700 bg-white dark:bg-black dark:text-white">
@@ -83,6 +88,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </div>
               <Footer />
             </div>
+            <AgentChatBubble />
           </PrivyProviderWrapper>
           <SpeedInsights />
         </ThemeProvider>

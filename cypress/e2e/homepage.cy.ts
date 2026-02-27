@@ -51,15 +51,15 @@ describe("Homepage", () => {
     // "For Builders" and "For Funders" are only visible when NOT logged in
     // These may not appear if the auth state loads as logged in
     // Check for either the logged-out navigation (For Builders/Funders)
-    // OR the logged-in navigation (My projects button)
+    // OR the logged-in navigation (Dashboard button)
     cy.get("nav").then(($nav) => {
       // Check if we have the logged-out state (For Builders visible)
-      // or logged-in state (My projects visible)
+      // or logged-in state (Dashboard visible)
       const hasForBuilders = $nav.find('button:contains("For Builders")').length > 0;
-      const hasMyProjects = $nav.find('a:contains("My projects")').length > 0;
+      const hasDashboard = $nav.find('a:contains("Dashboard")').length > 0;
 
       // At least one navigation pattern should be present
-      expect(hasForBuilders || hasMyProjects).to.be.true;
+      expect(hasForBuilders || hasDashboard).to.be.true;
 
       if (hasForBuilders) {
         // Logged out state - verify all dropdowns
@@ -67,9 +67,8 @@ describe("Homepage", () => {
         cy.contains("button", "For Funders").should("be.visible");
       } else {
         // Logged in state - verify user navigation
-        cy.contains("a", "My projects").should("be.visible");
+        cy.contains("a", "Dashboard").should("be.visible");
       }
     });
   });
 });
-

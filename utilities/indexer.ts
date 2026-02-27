@@ -94,6 +94,7 @@ export const INDEXER = {
         sortOrder?: "asc" | "desc";
         includeStats?: boolean;
         excludeTestProjects?: boolean;
+        hasPayoutAddress?: boolean;
       }) => {
         const queryParams = new URLSearchParams();
         if (params?.q) queryParams.set("q", params.q);
@@ -103,6 +104,7 @@ export const INDEXER = {
         if (params?.sortOrder) queryParams.set("sortOrder", params.sortOrder);
         if (params?.includeStats) queryParams.set("includeStats", "true");
         if (params?.excludeTestProjects) queryParams.set("excludeTestProjects", "true");
+        if (params?.hasPayoutAddress) queryParams.set("hasPayoutAddress", "true");
         const query = queryParams.toString();
         return `/v2/projects${query ? `?${query}` : ""}`;
       },
@@ -122,6 +124,8 @@ export const INDEXER = {
       `/v2/search?q=${encodeURIComponent(query)}&limit=${limit}`,
     FUNDING_DETAILS: (programId: string, chainId: number) =>
       `/v2/program/funding-details?programId=${programId}&chainId=${chainId}`,
+    COMMUNITY_PROGRAM_METRICS: (communityIdOrSlug: string) =>
+      `/v2/communities/${communityIdOrSlug}/metrics`,
     FUNDING_PROGRAMS: {
       BY_COMMUNITY: (communityId: string) => `/v2/funding-program-configs/community/${communityId}`,
       GET: (programId: string) => `/v2/funding-program-configs/${programId}`,
@@ -264,6 +268,9 @@ export const INDEXER = {
           limit?: number;
           programId?: string;
           status?: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
+          agreementStatus?: "signed" | "not_signed";
+          invoiceStatus?: "all_received" | "needs_invoices" | "has_invoices";
+          search?: string;
           sortBy?:
             | "project_title"
             | "grant_title"
@@ -278,6 +285,9 @@ export const INDEXER = {
         if (options?.limit) params.set("limit", options.limit.toString());
         if (options?.programId) params.set("programId", options.programId);
         if (options?.status) params.set("status", options.status);
+        if (options?.agreementStatus) params.set("agreementStatus", options.agreementStatus);
+        if (options?.invoiceStatus) params.set("invoiceStatus", options.invoiceStatus);
+        if (options?.search) params.set("search", options.search);
         if (options?.sortBy) params.set("sortBy", options.sortBy);
         if (options?.sortOrder) params.set("sortOrder", options.sortOrder);
         const query = params.toString();
@@ -289,6 +299,14 @@ export const INDEXER = {
       BY_COMMUNITY: (communityUID: string) => `/v2/payout-config/community/${communityUID}`,
       BY_GRANT: (grantUID: string) => `/v2/payout-config/grant/${grantUID}`,
       DELETE: (grantUID: string) => `/v2/payout-config/grant/${grantUID}`,
+    },
+    GRANT_AGREEMENTS: {
+      TOGGLE: (grantUID: string) => `/v2/grant-agreements/${grantUID}`,
+      BY_GRANT: (grantUID: string) => `/v2/grant-agreements/${grantUID}`,
+    },
+    MILESTONE_INVOICES: {
+      BATCH_SAVE: (grantUID: string) => `/v2/milestone-invoices/${grantUID}`,
+      BY_GRANT: (grantUID: string) => `/v2/milestone-invoices/grant/${grantUID}`,
     },
   },
   PROGRAMS: {
@@ -341,12 +359,7 @@ export const INDEXER = {
       GET: (projectUID: string) => `/projects/${projectUID}/regions`,
     },
     IMPACT_INDICATORS: {
-      GET: (projectUID: string) => `/projects/${projectUID}/indicators/data/all`,
       SEND: (projectUID: string) => `/projects/${projectUID}/indicators/data`,
-    },
-    PAYOUT_ADDRESS: {
-      UPDATE: (projectUID: string) => `/projects/${projectUID}/payout-address`,
-      GET: (projectUID: string) => `/projects/${projectUID}/payout-address`,
     },
     CHAIN_PAYOUT_ADDRESS: {
       UPDATE: (projectId: string) => `/v2/projects/${projectId}/chain-payout-address`,
@@ -358,7 +371,6 @@ export const INDEXER = {
   },
   MILESTONE: {
     IMPACT_INDICATORS: {
-      GET: (milestoneUID: string) => `/grants/milestones/${milestoneUID}/indicators/data`,
       SEND: (milestoneUID: string) => `/grants/milestones/${milestoneUID}/indicators/data`,
     },
   },
@@ -378,14 +390,15 @@ export const INDEXER = {
     GET_BY_ID: (regionId: string) => `/v2/regions/${regionId}`,
   },
   INDICATORS: {
-    CREATE_OR_UPDATE: () => `/indicators`,
-    DELETE: (indicatorId: string) => `/indicators/${indicatorId}`,
-    UNLINKED: () => `/indicators/unlinked`,
-    BY_TIMERANGE: (projectUID: string, params: Record<string, number>) =>
-      `/projects/${projectUID}/indicator-dashboard-metrics?${Object.entries(params)
-        .map(([key, value]) => `${key}=${value}`)
-        .join("&")}`,
+    UNLINKED: (search?: string) => {
+      const params = new URLSearchParams();
+      if (search) params.set("search", search);
+      const query = params.toString();
+      return `/v2/indicators/unlinked${query ? `?${query}` : ""}`;
+    },
     V2: {
+      CREATE_OR_UPDATE: () => `/v2/indicators`,
+      DELETE: (indicatorId: string) => `/v2/indicators/${indicatorId}`,
       LIST: (params?: {
         communityUID?: string;
         programId?: number;
@@ -445,6 +458,16 @@ export const INDEXER = {
         const query = queryParams.toString();
         return `/v2/indicators/projects/${projectUID}${query ? `?${query}` : ""}`;
       },
+      DASHBOARD_METRICS: (
+        projectUID: string,
+        params?: { period?: "30d" | "90d" | "180d" | "1y" }
+      ) => {
+        const queryParams = new URLSearchParams();
+        if (params?.period) queryParams.set("period", params.period);
+        const query = queryParams.toString();
+        return `/v2/indicators/projects/${projectUID}/dashboard-metrics${query ? `?${query}` : ""}`;
+      },
+      MILESTONE_INDICATORS: (milestoneUID: string) => `/v2/indicators/milestones/${milestoneUID}`,
       COMMUNITY_AGGREGATE: (
         communityUID: string,
         params?: {
@@ -555,6 +578,8 @@ export const INDEXER = {
     },
     REPORT: {
       GET: (communityIdOrSlug: string) => `/communities/${communityIdOrSlug}/report`,
+      PENDING_VERIFICATION: (communityIdOrSlug: string) =>
+        `/v2/communities/${communityIdOrSlug}/milestones/pending-verification`,
     },
     PROGRAMS: (communityIdOrSlug: string) => `/communities/${communityIdOrSlug}/programs`,
     ALL_PROGRAMS_IMPACT_AGGREGATE: (communityIdOrSlug: string) =>
@@ -596,16 +621,9 @@ export const INDEXER = {
     PAGE_HEADER_STATS: (communityIdOrSlug: string) =>
       `/communities/${communityIdOrSlug}/page-header-stats`,
     GLOBAL_STATS: () => `/v2/communities/stats`,
+    ADMINS_BATCH: () => `/communities/admins/batch`,
     ADMINS: (communityIdOrSlug: string) => `/communities/${communityIdOrSlug}/admins`,
     BATCH_UPDATE: (idOrSlug: string) => `/communities/${idOrSlug}/batch-update`,
-    INDICATORS: {
-      COMMUNITY: {
-        LIST: (communityId: string) => `/communities/${communityId}/impact-indicators`,
-      },
-      CATEGORY: {
-        LIST: (categoryId: string) => `/category/${categoryId}/impact-indicators`,
-      },
-    },
     PROJECT_UPDATES: (communityIdOrSlug: string) =>
       `/v2/communities/${communityIdOrSlug}/project-updates`,
     CONFIG: {
@@ -630,14 +648,21 @@ export const INDEXER = {
       `/projects/${idOrSlug}/update/contact/${contactId}`,
     DELETE: (idOrSlug: string) => `/projects/${idOrSlug}/delete/contact`,
   },
+  API_KEYS: {
+    GET: "/v2/user/api-keys",
+    CREATE: "/v2/user/api-keys",
+    REVOKE: "/v2/user/api-keys",
+  },
   KYC: {
     GET_STATUS: (projectUID: string, communityUID: string) =>
       `/v2/projects/${projectUID}/communities/${communityUID}/kyc-status`,
     GET_STATUS_BY_APP_REF: (referenceNumber: string) =>
       `/v2/funding-applications/${referenceNumber}/kyc-status`,
     GET_CONFIG: (communityIdOrSlug: string) => `/v2/communities/${communityIdOrSlug}/kyc-config`,
-    GET_BATCH_STATUSES: (communityUID: string) =>
-      `/v2/communities/${communityUID}/kyc-batch-status`,
+    GET_BATCH_STATUSES: (communityIdOrSlug: string) =>
+      `/v2/communities/${communityIdOrSlug}/kyc/batch-status/by-project-uid`,
+    GET_BATCH_STATUSES_BY_APP_REF: (communityIdOrSlug: string) =>
+      `/v2/communities/${communityIdOrSlug}/kyc/batch-status/by-application-reference`,
     GET_FORM_URL: (communityIdOrSlug: string) =>
       `/v2/communities/${communityIdOrSlug}/kyc-form-url`,
   },

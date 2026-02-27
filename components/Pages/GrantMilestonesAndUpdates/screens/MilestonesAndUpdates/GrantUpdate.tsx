@@ -204,7 +204,7 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({ title, description, index, d
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isCommunityAdmin = useIsCommunityAdmin();
 
-  const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
+  const isAuthorized = isProjectOwner || isProjectAdmin || isContractOwner || isCommunityAdmin;
 
   const [isVerified, setIsVerified] = useState<boolean>(
     Array.isArray(update?.verified) && update.verified.length > 0

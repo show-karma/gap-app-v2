@@ -327,7 +327,7 @@ body * {
     --accent: 0 0% 96%;
     --accent-foreground: 0 0% 9%;
     --destructive: 0 72% 51%;
-    --destructive-foreground: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
     --border: 0 0% 90%;
     --input: 0 0% 90%;
     --ring: 0 0% 4%;
@@ -387,7 +387,7 @@ body * {
     --accent: 0 0% 9%;
     --accent-foreground: 0 0% 96%;
     --destructive: 357 41% 44%;
-    --destructive-foreground: 357 41% 44%;
+    --destructive-foreground: 0 0% 100%;
     --border: 0 0% 16%;
     --input: 0 0% 16%;
     --ring: 0 0% 98%;

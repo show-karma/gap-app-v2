@@ -170,6 +170,27 @@ export function calculateRemainingBalance(
 }
 
 /**
+ * Format a human-readable number string with locale-aware thousands separators.
+ *
+ * Unlike {@link formatTokenAmount}, this operates on amounts already in human-readable
+ * form (e.g., "1500") rather than raw blockchain units (e.g., "1500000000").
+ *
+ * @param amount - Human-readable amount string (e.g., "1500.50")
+ * @param maxDecimals - Maximum fraction digits to display. Defaults to 2
+ * @returns Formatted string with thousands separators (e.g., "1,500.5")
+ *
+ * @example
+ * formatDisplayAmount("1500") // "1,500"
+ * formatDisplayAmount("1234.5678", 4) // "1,234.5678"
+ */
+export function formatDisplayAmount(amount: string, maxDecimals = 2): string {
+  const sanitized = amount.replace(/[,\u00A0]/g, "");
+  const num = parseFloat(sanitized);
+  if (Number.isNaN(num)) return "0";
+  return num.toLocaleString(undefined, { maximumFractionDigits: maxDecimals });
+}
+
+/**
  * Gets the default decimals for a known token symbol, or returns the default.
  *
  * @param tokenSymbol - Token symbol (e.g., "USDC", "ETH")

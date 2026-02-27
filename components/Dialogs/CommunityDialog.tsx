@@ -4,7 +4,7 @@ import { Dialog, Transition } from "@headlessui/react";
 import { ChevronRightIcon, PlusIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Community, nullRef } from "@show-karma/karma-gap-sdk";
-import { type FC, Fragment, type ReactNode, useState } from "react";
+import { type FC, Fragment, type ReactNode, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useAccount } from "wagmi";
 import { z } from "zod";
@@ -57,17 +57,26 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
   createCommuninity,
   refreshCommunities,
 }) => {
-  const dataToUpdate = {
-    description: createCommuninity?.details?.description || "",
-    name: createCommuninity?.details?.name || "",
-    imageURL: createCommuninity?.details?.imageURL || "",
-    slug: createCommuninity?.details?.slug || "",
-  };
+  const dataToUpdate = useMemo(
+    () => ({
+      description: createCommuninity?.details?.description || "",
+      name: createCommuninity?.details?.name || "",
+      imageURL: createCommuninity?.details?.imageURL || "",
+      slug: createCommuninity?.details?.slug || "",
+    }),
+    [createCommuninity]
+  );
 
   const [isOpen, setIsOpen] = useState(false);
+  // When true, form data resets on open; when false, preserve existing form data
+  // (e.g., after a failed transaction so the user can retry without re-entering data)
+  const [shouldResetOnOpen, setShouldResetOnOpen] = useState(true);
+  const [description, setDescription] = useState(dataToUpdate?.description || "");
+  const [selectedChain, setSelectedChain] = useState(appNetwork[0].id);
 
   function closeModal() {
     setIsOpen(false);
+    setShouldResetOnOpen(true);
   }
 
   function openModal() {
@@ -77,12 +86,22 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm<SchemaType>({
     resolver: zodResolver(schema),
     mode: "onChange",
     defaultValues: dataToUpdate,
   });
+
+  // Reset form when modal opens fresh (not after a failed transaction)
+  useEffect(() => {
+    if (isOpen && shouldResetOnOpen) {
+      reset(dataToUpdate);
+      setDescription(dataToUpdate?.description || "");
+      setSelectedChain(appNetwork[0].id);
+    }
+  }, [isOpen, shouldResetOnOpen, dataToUpdate, reset, setDescription]);
 
   const { address, chain } = useAccount();
   const { switchChainAsync } = useWallet();
@@ -135,7 +154,8 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
         slug: data.slug as string,
       });
 
-      // Close modal before attestation (Privy popups will appear during attest)
+      // Close modal before attestation (Privy wallet popups will appear during attest
+      // and conflict with the modal overlay)
       closeModal();
 
       await newCommunity
@@ -164,6 +184,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
                   showSuccess("Community created!");
                   // Brief delay to show success, then close
                   setTimeout(() => {
+                    setShouldResetOnOpen(true);
                     dismiss();
                   }, 1500);
                 }
@@ -191,6 +212,9 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
           error: "Failed to create community. Please try again.",
         }
       );
+      // Reopen modal with preserved form data so user can retry
+      setShouldResetOnOpen(false);
+      openModal();
     } finally {
       setIsLoading(false);
     }
@@ -200,9 +224,6 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
     await createCommunity(data); // Call the createCommunity function
   };
 
-  const [description, setDescription] = useState(dataToUpdate?.description || "");
-  const [selectedChain, setSelectedChain] = useState(appNetwork[0].id);
-
   return (
     <>
       <Button onClick={openModal} className={cn(buttonElement.styleClass)}>
@@ -211,7 +232,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
         {buttonElement.iconSide === "right" && buttonElement.icon}
       </Button>
       <Transition appear show={isOpen} as={Fragment}>
-        <Dialog as="div" className="relative z-10" onClose={closeModal}>
+        <Dialog as="div" className="relative z-10" onClose={isLoading ? () => {} : closeModal}>
           <Transition.Child
             as={Fragment}
             enter="ease-out duration-300"
@@ -245,7 +266,8 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
                   <button
                     type="button"
                     className="top-6 absolute right-6 hover:opacity-75 transition-all ease-in-out duration-200 dark:text-zinc-100"
-                    onClick={closeModal}
+                    onClick={isLoading ? () => {} : closeModal}
+                    disabled={isLoading}
                   >
                     <XMarkIcon className="w-5 h-5" />
                   </button>

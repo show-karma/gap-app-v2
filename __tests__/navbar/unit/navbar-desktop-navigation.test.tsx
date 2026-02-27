@@ -356,7 +356,7 @@ describe("NavbarDesktopNavigation", () => {
 
       // When logged in, For Builders/Funders dropdowns are replaced with direct action buttons
       // and only Explore dropdown remains
-      expect(screen.getByRole("link", { name: /my projects/i })).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: /dashboard/i })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /explore/i })).toBeInTheDocument();
     });
   });

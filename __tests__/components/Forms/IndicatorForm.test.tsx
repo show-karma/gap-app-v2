@@ -175,7 +175,7 @@ describe("IndicatorForm", () => {
 
       await waitFor(() => {
         expect(mockFetchData).toHaveBeenCalledWith(
-          INDEXER.INDICATORS.CREATE_OR_UPDATE(),
+          INDEXER.INDICATORS.V2.CREATE_OR_UPDATE(),
           "POST",
           expect.objectContaining({
             name: "Test Indicator",
@@ -266,7 +266,7 @@ describe("IndicatorForm", () => {
 
       await waitFor(() => {
         expect(mockFetchData).toHaveBeenCalledWith(
-          INDEXER.INDICATORS.CREATE_OR_UPDATE(),
+          INDEXER.INDICATORS.V2.CREATE_OR_UPDATE(),
           "POST",
           expect.objectContaining({
             indicatorId: "indicator-123",
@@ -498,7 +498,7 @@ describe("IndicatorForm", () => {
 
       await waitFor(() => {
         expect(mockFetchData).toHaveBeenCalledWith(
-          INDEXER.INDICATORS.CREATE_OR_UPDATE(),
+          INDEXER.INDICATORS.V2.CREATE_OR_UPDATE(),
           "POST",
           expect.objectContaining({
             programs: [{ programId: "program-1", chainID: 1 }],
@@ -647,7 +647,7 @@ describe("IndicatorForm", () => {
 
       await waitFor(() => {
         expect(mockFetchData).toHaveBeenCalledWith(
-          INDEXER.INDICATORS.CREATE_OR_UPDATE(),
+          INDEXER.INDICATORS.V2.CREATE_OR_UPDATE(),
           "POST",
           expect.objectContaining({
             communityUID: "community-123",

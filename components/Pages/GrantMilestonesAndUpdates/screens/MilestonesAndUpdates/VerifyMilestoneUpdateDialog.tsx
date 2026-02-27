@@ -10,11 +10,11 @@ import { z } from "zod";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
-import { useAuth } from "@/hooks/useAuth";
+import { useCanVerifyMilestone } from "@/hooks/useCanVerifyMilestone";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useProjectStore } from "@/store";
 import type { GrantMilestone } from "@/types/v2/grant";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
@@ -25,6 +25,8 @@ type VerifyMilestoneUpdateDialogProps = {
   milestone: GrantMilestone;
   onVerified: () => void;
   isVerified: boolean;
+  programId?: string;
+  communityUID?: string;
 };
 
 const schema = z.object({
@@ -37,6 +39,8 @@ export const VerifyMilestoneUpdateDialog: FC<VerifyMilestoneUpdateDialogProps> =
   milestone,
   onVerified,
   isVerified,
+  programId,
+  communityUID,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -163,15 +167,8 @@ export const VerifyMilestoneUpdateDialog: FC<VerifyMilestoneUpdateDialogProps> =
       setIsStepper(false);
     }
   };
-  const { authenticated: isAuth } = useAuth();
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
-  const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const verifyPermission = () => {
-    if (!isAuth) return false;
-    return isContractOwner || !isProjectAdmin;
-  };
-  const ableToVerify = verifyPermission();
-  if (hasVerifiedThis || !ableToVerify) return null;
+  const { canVerify } = useCanVerifyMilestone(programId, communityUID);
+  if (hasVerifiedThis || !canVerify) return null;
 
   return (
     <>
