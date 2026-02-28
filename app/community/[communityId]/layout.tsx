@@ -67,6 +67,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 
 export default async function Layout(props: { children: React.ReactNode; params: Params }) {
   const { communityId } = await props.params;
+  const { isWhitelabel } = await getWhitelabelContext();
 
   const { children } = props;
 
@@ -78,6 +79,15 @@ export default async function Layout(props: { children: React.ReactNode; params:
 
   if (!community) {
     return <CommunityNotFound communityId={communityId} />;
+  }
+
+  // Whitelabel domains use their own navbar — skip CommunityHeader
+  if (isWhitelabel) {
+    return (
+      <div className="flex w-full h-full max-w-full flex-col justify-start max-lg:flex-col">
+        <CommunityContentWrapper>{children}</CommunityContentWrapper>
+      </div>
+    );
   }
 
   return (

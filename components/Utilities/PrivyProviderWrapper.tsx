@@ -4,6 +4,7 @@ import { PrivyProvider } from "@privy-io/react-auth";
 import { WagmiProvider } from "@privy-io/wagmi";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { PROJECT_NAME } from "@/constants/brand";
+import type { TenantConfig } from "@/src/infrastructure/types/tenant";
 import { envVars } from "@/utilities/enviromentVars";
 import { appNetwork } from "@/utilities/network";
 import { queryClient } from "@/utilities/query-client";
@@ -17,9 +18,13 @@ export { queryClient };
 
 interface PrivyProviderWrapperProps {
   children: React.ReactNode;
+  tenantConfig?: TenantConfig | null;
 }
 
-export default function PrivyProviderWrapper({ children }: PrivyProviderWrapperProps) {
+export default function PrivyProviderWrapper({
+  children,
+  tenantConfig,
+}: PrivyProviderWrapperProps) {
   const privyAppId = envVars.PRIVY_APP_ID;
 
   if (!privyAppId) {
@@ -28,8 +33,18 @@ export default function PrivyProviderWrapper({ children }: PrivyProviderWrapperP
     );
   }
 
-  // Determine the default chain based on environment
   const defaultChain = appNetwork[0];
+
+  // Tenant-aware Privy appearance
+  const accentColor = tenantConfig?.theme?.colors?.primary || "#1de9b6";
+  const logo = tenantConfig?.assets?.logo
+    ? tenantConfig.assets.logo.startsWith("http")
+      ? tenantConfig.assets.logo
+      : `https://karmahq.xyz${tenantConfig.assets.logo}`
+    : "https://karmahq.xyz/logo/karma-logo-light.svg";
+  const landingHeader = tenantConfig
+    ? `Connect to ${tenantConfig.name}`
+    : `Connect to ${PROJECT_NAME}`;
 
   return (
     <PrivyProvider
@@ -37,9 +52,9 @@ export default function PrivyProviderWrapper({ children }: PrivyProviderWrapperP
       config={{
         appearance: {
           theme: "light",
-          accentColor: "#1de9b6",
-          logo: "https://karmahq.xyz/logo/karma-logo-light.svg",
-          landingHeader: `Connect to ${PROJECT_NAME}`,
+          accentColor: accentColor as `#${string}`,
+          logo,
+          landingHeader,
           showWalletLoginFirst: false,
           walletList: ["detected_wallets", "metamask", "rainbow", "rabby_wallet", "wallet_connect"],
         },

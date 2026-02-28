@@ -29,6 +29,7 @@ const createRequest = (path: string) =>
   ({
     nextUrl: { pathname: path },
     url: `http://localhost${path}`,
+    headers: new Headers({ host: "localhost" }),
   }) as NextRequest;
 
 describe("middleware dashboard redirects", () => {

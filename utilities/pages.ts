@@ -22,6 +22,17 @@ export const PAGES = {
     UPDATES: (community: string) => `/community/${community}/updates`,
     FINANCIALS: (community: string) => `/community/${community}/financials`,
     RECEIVEPROJECTUPDATES: (community: string) => `/community/${community}/receive-project-updates`,
+    PROGRAMS: (community: string) => `/community/${community}/programs`,
+    PROGRAM_DETAIL: (community: string, programId: string) =>
+      `/community/${community}/programs/${programId}`,
+    PROGRAM_APPLY: (community: string, programId: string) =>
+      `/community/${community}/programs/${programId}/apply`,
+    APPLICATIONS: (community: string) => `/community/${community}/applications`,
+    APPLICATION_DETAIL: (community: string, applicationId: string) =>
+      `/community/${community}/applications/${applicationId}`,
+    MY_APPLICATIONS: (community: string) => `/community/${community}/my-applications`,
+    BROWSE_APPLICATIONS: (community: string) => `/community/${community}/browse-applications`,
+    CLAIM_FUNDS: (community: string) => `/community/${community}/claim-funds`,
   },
   MY_PROJECTS: `/my-projects`,
   MY_REVIEWS: `/my-reviews`,

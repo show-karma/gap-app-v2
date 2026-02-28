@@ -20,15 +20,31 @@ import { OrganizationJsonLd } from "@/components/Seo/OrganizationJsonLd";
 import HotjarAnalytics from "@/components/Utilities/HotjarAnalytics";
 import { PermissionsProvider } from "@/components/Utilities/PermissionsProvider";
 import PrivyProviderWrapper from "@/components/Utilities/PrivyProviderWrapper";
-import { QueryOnlyProvider } from "@/components/Utilities/QueryOnlyProvider";
+import { TenantStoreInitializer } from "@/components/Utilities/TenantStoreInitializer";
 import { Footer } from "@/src/components/footer/footer";
+import { WhitelabelFooter } from "@/src/components/footer/whitelabel-footer";
 import { Navbar } from "@/src/components/navbar/navbar";
+import { WhitelabelNavbar } from "@/src/components/navbar/whitelabel-navbar";
 import { ApiKeyManagementModal } from "@/src/features/api-keys/components/api-key-management-modal";
 import { WhitelabelProvider } from "@/utilities/whitelabel-context";
 import { getWhitelabelContext } from "@/utilities/whitelabel-server";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { isWhitelabel, config } = await getWhitelabelContext();
+  const { isWhitelabel, config, tenantConfig } = await getWhitelabelContext();
+
+  if (isWhitelabel && tenantConfig) {
+    return {
+      title: {
+        default: tenantConfig.seo.title,
+        template: `%s | ${tenantConfig.name}`,
+      },
+      description: tenantConfig.seo.description,
+      keywords: tenantConfig.seo.keywords,
+      metadataBase: config?.domain ? new URL(`https://${config.domain}`) : undefined,
+      alternates: { canonical: "/" },
+      icons: { icon: tenantConfig.assets.favicon },
+    };
+  }
 
   if (isWhitelabel && config) {
     return {
@@ -56,12 +72,27 @@ export const viewport: Viewport = {
   ],
 };
 
+const toasterConfig = {
+  position: "top-right" as const,
+  toastOptions: {
+    className: "toast-content",
+    style: {
+      maxWidth: "500px",
+      wordWrap: "break-word" as const,
+      overflowWrap: "anywhere" as const,
+      wordBreak: "break-word" as const,
+    },
+    duration: 4000,
+  },
+  containerStyle: { top: 20, right: 20 },
+};
+
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const { isWhitelabel, communitySlug, config } = await getWhitelabelContext();
+  const { isWhitelabel, communitySlug, tenantConfig } = await getWhitelabelContext();
 
   const themeStyle =
-    isWhitelabel && config?.theme?.primaryColor
-      ? ({ "--primary": config.theme.primaryColor } as React.CSSProperties)
+    isWhitelabel && tenantConfig?.theme?.colors?.primary
+      ? ({ "--primary": tenantConfig.theme.colors.primary } as React.CSSProperties)
       : undefined;
 
   return (
@@ -79,77 +110,49 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           enableSystem={true}
           disableTransitionOnChange
         >
-          {isWhitelabel ? (
-            <QueryOnlyProvider>
-              <WhitelabelProvider isWhitelabel={isWhitelabel} communitySlug={communitySlug}>
-                <Toaster
-                  position="top-right"
-                  toastOptions={{
-                    className: "toast-content",
-                    style: {
-                      maxWidth: "500px",
-                      wordWrap: "break-word",
-                      overflowWrap: "anywhere",
-                      wordBreak: "break-word",
-                    },
-                    duration: 4000,
-                  }}
-                  containerStyle={{
-                    top: 20,
-                    right: 20,
-                  }}
-                />
-                <ProgressBarWrapper />
-                <div className="min-h-screen flex flex-col justify-between h-full text-gray-700 bg-white dark:bg-black dark:text-white">
-                  <div className="flex flex-col w-full h-full">
-                    {children}
-                    <Analytics />
-                  </div>
+          <PrivyProviderWrapper tenantConfig={isWhitelabel ? tenantConfig : null}>
+            <WhitelabelProvider
+              isWhitelabel={isWhitelabel}
+              communitySlug={communitySlug}
+              tenantConfig={tenantConfig ?? null}
+            >
+              {isWhitelabel && tenantConfig && (
+                <TenantStoreInitializer tenant={tenantConfig}>
+                  <></>
+                </TenantStoreInitializer>
+              )}
+              {!isWhitelabel && <PermissionsProvider />}
+              <Toaster {...toasterConfig} />
+              {!isWhitelabel && (
+                <>
+                  <Suspense fallback={null}>
+                    <ContributorProfileDialog />
+                  </Suspense>
+                  <Suspense fallback={null}>
+                    <ApiKeyManagementModal />
+                  </Suspense>
+                  <OnboardingDialog />
+                </>
+              )}
+              <ProgressBarWrapper />
+              <div className="min-h-screen flex flex-col justify-between h-full text-gray-700 bg-white dark:bg-black dark:text-white">
+                <div className="flex flex-col w-full h-full">
+                  {isWhitelabel ? (
+                    <WhitelabelNavbar />
+                  ) : (
+                    <>
+                      <Navbar />
+                      <div className="h-[80px]" />
+                    </>
+                  )}
+                  {children}
+                  <Analytics />
                 </div>
-              </WhitelabelProvider>
-            </QueryOnlyProvider>
-          ) : (
-            <PrivyProviderWrapper>
-              <WhitelabelProvider isWhitelabel={isWhitelabel} communitySlug={communitySlug}>
-                <PermissionsProvider />
-                <Toaster
-                  position="top-right"
-                  toastOptions={{
-                    className: "toast-content",
-                    style: {
-                      maxWidth: "500px",
-                      wordWrap: "break-word",
-                      overflowWrap: "anywhere",
-                      wordBreak: "break-word",
-                    },
-                    duration: 4000,
-                  }}
-                  containerStyle={{
-                    top: 20,
-                    right: 20,
-                  }}
-                />
-                <Suspense fallback={null}>
-                  <ContributorProfileDialog />
-                </Suspense>
-                <Suspense fallback={null}>
-                  <ApiKeyManagementModal />
-                </Suspense>
-                <OnboardingDialog />
-                <ProgressBarWrapper />
-                <div className="min-h-screen flex flex-col justify-between h-full text-gray-700 bg-white dark:bg-black dark:text-white">
-                  <div className="flex flex-col w-full h-full">
-                    <Navbar />
-                    <div className="h-[80px]" />
-                    {children}
-                    <Analytics />
-                  </div>
-                  <Footer />
-                </div>
-                <AgentChatBubble />
-              </WhitelabelProvider>
-            </PrivyProviderWrapper>
-          )}
+                {isWhitelabel ? <WhitelabelFooter /> : <Footer />}
+              </div>
+              {!isWhitelabel && <AgentChatBubble />}
+            </WhitelabelProvider>
+          </PrivyProviderWrapper>
           <SpeedInsights />
         </ThemeProvider>
         {!isWhitelabel && <OrganizationJsonLd />}

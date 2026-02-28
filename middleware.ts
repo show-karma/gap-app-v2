@@ -5,14 +5,6 @@ import { redirectToGov, shouldRedirectToGov } from "./utilities/redirectHelpers"
 import { hasForbiddenChars, sanitizeCommunitySlug } from "./utilities/sanitize";
 import { getWhitelabelByDomain } from "./utilities/whitelabel-config";
 
-const WHITELABEL_ALLOWED_SUFFIXES = [
-  "/impact",
-  "/updates",
-  "/financials",
-  "/funding-opportunities",
-  "/karma-ai",
-];
-
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
@@ -21,19 +13,10 @@ export async function middleware(request: NextRequest) {
   const whitelabel = getWhitelabelByDomain(hostname);
 
   if (whitelabel) {
-    const { communitySlug } = whitelabel;
-
-    // Allow root or known community sub-paths only
+    const { communitySlug, tenantId } = whitelabel;
     const isRoot = path === "/" || path === "";
-    const isAllowedSubPath = WHITELABEL_ALLOWED_SUFFIXES.some(
-      (suffix) => path === suffix || path.startsWith(`${suffix}/`)
-    );
 
-    if (!isRoot && !isAllowedSubPath) {
-      return NextResponse.redirect(new URL("/", request.url));
-    }
-
-    // Rewrite: prepend /community/<slug> to path
+    // Rewrite ALL paths — prepend /community/<slug>
     const rewrittenPath = isRoot
       ? `/community/${communitySlug}`
       : `/community/${communitySlug}${path}`;
@@ -44,6 +27,7 @@ export async function middleware(request: NextRequest) {
     const requestHeaders = new Headers(request.headers);
     requestHeaders.set("x-is-whitelabel", "true");
     requestHeaders.set("x-community-slug", communitySlug);
+    requestHeaders.set("x-tenant-id", tenantId || communitySlug);
 
     return NextResponse.rewrite(url, {
       request: { headers: requestHeaders },
