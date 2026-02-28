@@ -88,7 +88,7 @@ export function ApplicationDetailsClient({
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["wl-public-application-details", communityId, referenceNumber],
     queryFn: async () => {
-      const [res, err, , status] = await fetchData<PublicApplicationResponse>(
+      const [res, err, , status] = await fetchData<Application>(
         `/v2/funding-applications/${referenceNumber}`,
         "GET",
         {},
@@ -100,7 +100,7 @@ export function ApplicationDetailsClient({
         return { application: null, isPrivate: true };
       }
       if (err) throw new Error(err);
-      return res as PublicApplicationResponse;
+      return { application: res, isPrivate: false } as PublicApplicationResponse;
     },
     staleTime: 1000 * 60 * 5,
   });
