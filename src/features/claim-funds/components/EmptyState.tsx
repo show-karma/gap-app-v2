@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { formatAddressForDisplay } from "@/utilities/donations/helpers";
 import { cn } from "@/utilities/tailwind";
 
 interface EmptyStateProps {
@@ -15,10 +16,7 @@ interface EmptyStateProps {
   compact?: boolean;
 }
 
-function truncateAddress(address: string): string {
-  if (address.length <= 10) return address;
-  return `${address.slice(0, 6)}...${address.slice(-4)}`;
-}
+const truncateAddress = (address: string) => formatAddressForDisplay(address, 6, 4);
 
 function EmptyStateComponent({
   connectedAddress,

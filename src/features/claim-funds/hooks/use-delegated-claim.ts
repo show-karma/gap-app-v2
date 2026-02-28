@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { createWalletClient, custom, getAddress, hexToSignature } from "viem";
 import type { ClaimGrantsConfig } from "@/src/infrastructure/types/tenant";
+import { formatAddressForDisplay } from "@/utilities/donations/helpers";
 import { sanitizeErrorMessage } from "../lib/error-messages";
 import { buildClaimTypedData, CLAIM_CAMPAIGNS_ABI, uuidToBytes16 } from "../lib/hedgey-contract";
 import {
@@ -50,10 +51,7 @@ export interface UseDelegatedClaimReturn {
 
 const SIGNATURE_EXPIRY_SECONDS = 3600;
 
-function truncateAddress(address: string): string {
-  if (address.length <= 10) return address;
-  return `${address.slice(0, 6)}...${address.slice(-4)}`;
-}
+const truncateAddress = (address: string) => formatAddressForDisplay(address, 6, 4);
 
 export function useDelegatedClaim(
   communityId: string,

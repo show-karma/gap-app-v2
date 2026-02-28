@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { formatAddressForDisplay } from "@/utilities/donations/helpers";
 import { cn } from "@/utilities/tailwind";
 import { formatTokenAmount } from "../lib/hedgey-contract";
 import type { ClaimCampaign } from "../providers/types";
@@ -30,10 +31,7 @@ interface CampaignCardProps {
   overrideDisplayName?: string;
 }
 
-function truncateAddress(address: string): string {
-  if (address.length <= 10) return address;
-  return `${address.slice(0, 6)}...${address.slice(-4)}`;
-}
+const truncateAddress = (address: string) => formatAddressForDisplay(address, 6, 4);
 
 function formatUnixTimestamp(timestamp: number): string {
   return new Date(timestamp * 1000).toLocaleDateString(undefined, {

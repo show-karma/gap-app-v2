@@ -22,11 +22,9 @@ import { useEligibility } from "@/src/features/claim-funds/hooks/use-eligibility
 import type { ClaimCampaign } from "@/src/features/claim-funds/providers/types";
 import { getTenantConfig } from "@/src/infrastructure/config/tenant-config";
 import { isKnownTenant, type TenantId } from "@/src/infrastructure/types/tenant";
+import { formatAddressForDisplay } from "@/utilities/donations/helpers";
 
-function truncateAddress(address: string): string {
-  if (address.length <= 10) return address;
-  return `${address.slice(0, 6)}...${address.slice(-4)}`;
-}
+const truncateAddress = (address: string) => formatAddressForDisplay(address, 6, 4);
 
 function ClaimFundsContent() {
   const params = useParams();
