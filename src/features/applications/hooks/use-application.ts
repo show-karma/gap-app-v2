@@ -31,7 +31,7 @@ export function useApplication(
         throw new Error("Application ID is required");
       }
       const [response, fetchError] = await fetchData<Application>(
-        `/v2/communities/${communityId}/applications/${applicationId}`
+        `/v2/funding-applications/${applicationId}`
       );
       if (fetchError || !response) throw new Error(fetchError ?? "Application not found");
       return response;

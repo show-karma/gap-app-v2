@@ -75,7 +75,7 @@ export function useApplicationAccess(
       }
       try {
         const [response, fetchError] = await fetchData<ApplicationAccessInfo>(
-          `/v2/communities/${communityId}/applications/${referenceNumber}/access`
+          `/v2/funding-applications/${referenceNumber}/access`
         );
         if (fetchError || !response) {
           throw new Error(fetchError ?? "Failed to check access");

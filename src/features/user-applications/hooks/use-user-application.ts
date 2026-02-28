@@ -1,11 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
-import fetchData from "@/utilities/fetchData";
 import type { Application } from "@/types/whitelabel-entities";
+import fetchData from "@/utilities/fetchData";
 import type { UseUserApplicationReturn } from "../types";
 
 export function useUserApplication(
   applicationId: string | null,
-  communityId: string,
+  communityId: string
 ): UseUserApplicationReturn {
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["wl-user-application", communityId, applicationId],
@@ -15,8 +15,8 @@ export function useUserApplication(
       }
 
       const [res, err] = await fetchData<Application>(
-        `/v2/applications/${applicationId}`,
-        "GET",
+        `/v2/funding-applications/${applicationId}`,
+        "GET"
       );
       if (err) throw new Error(err);
       if (!res) throw new Error("Application not found");

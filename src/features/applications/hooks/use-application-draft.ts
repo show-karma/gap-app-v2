@@ -23,7 +23,7 @@ export function useApplicationDraft(communityId: string): UseApplicationDraftRet
     }) => {
       if (applicationId) {
         const [response, error] = await fetchData<Application>(
-          `/v2/communities/${communityId}/applications/${applicationId}`,
+          `/v2/funding-applications/${applicationId}`,
           "PUT",
           { data }
         );
@@ -31,7 +31,7 @@ export function useApplicationDraft(communityId: string): UseApplicationDraftRet
         return response;
       }
       const [response, error] = await fetchData<Application>(
-        `/v2/communities/${communityId}/applications`,
+        `/v2/funding-applications/${programId}`,
         "POST",
         { programId, data, applicantEmail }
       );
@@ -51,10 +51,7 @@ export function useApplicationDraft(communityId: string): UseApplicationDraftRet
 
   const deleteDraftMutation = useMutation({
     mutationFn: async (applicationId: string) => {
-      const [, error] = await fetchData(
-        `/v2/communities/${communityId}/applications/${applicationId}`,
-        "DELETE"
-      );
+      const [, error] = await fetchData(`/v2/funding-applications/${applicationId}`, "DELETE");
       if (error) throw new Error(error);
     },
     onSuccess: () => {

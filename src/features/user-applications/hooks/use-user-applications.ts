@@ -1,17 +1,12 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import fetchData from "@/utilities/fetchData";
 import type { Application } from "@/types/whitelabel-entities";
+import fetchData from "@/utilities/fetchData";
 import { useUserApplicationsStore } from "../lib/store";
-import type {
-  UserApplicationsResponse,
-  UseUserApplicationsReturn,
-} from "../types";
+import type { UserApplicationsResponse, UseUserApplicationsReturn } from "../types";
 
-export function useUserApplications(
-  communityId: string,
-): UseUserApplicationsReturn {
+export function useUserApplications(communityId: string): UseUserApplicationsReturn {
   const queryClient = useQueryClient();
   const { address } = useAuth();
 
@@ -45,18 +40,15 @@ export function useUserApplications(
   const { data, isLoading, error, refetch } = useQuery({
     queryKey,
     queryFn: async (): Promise<UserApplicationsResponse> => {
-      const statusParam =
-        filters.status === "all" ? "" : `&status=${filters.status}`;
+      const statusParam = filters.status === "all" ? "" : `&status=${filters.status}`;
       const searchParam = filters.searchQuery
         ? `&search=${encodeURIComponent(filters.searchQuery)}`
         : "";
-      const programParam = filters.programId
-        ? `&programId=${filters.programId}`
-        : "";
+      const programParam = filters.programId ? `&programId=${filters.programId}` : "";
 
       const [res, err] = await fetchData<UserApplicationsResponse>(
-        `/v2/applications/community/${communityId}/my-applications?page=${pagination.page}&limit=${pagination.limit}${statusParam}${searchParam}${programParam}`,
-        "GET",
+        `/v2/funding-applications/user/my-applications?communitySlug=${communityId}&page=${pagination.page}&limit=${pagination.limit}${statusParam}${searchParam}${programParam}`,
+        "GET"
       );
       if (err) throw new Error(err);
       return res as UserApplicationsResponse;
@@ -90,21 +82,18 @@ export function useUserApplications(
         pagination.limit,
       ];
 
-      const statusParam =
-        filters.status === "all" ? "" : `&status=${filters.status}`;
+      const statusParam = filters.status === "all" ? "" : `&status=${filters.status}`;
       const searchParam = filters.searchQuery
         ? `&search=${encodeURIComponent(filters.searchQuery)}`
         : "";
-      const programParam = filters.programId
-        ? `&programId=${filters.programId}`
-        : "";
+      const programParam = filters.programId ? `&programId=${filters.programId}` : "";
 
       queryClient.prefetchQuery({
         queryKey: nextPageKey,
         queryFn: async () => {
           const [res, err] = await fetchData<UserApplicationsResponse>(
-            `/v2/applications/community/${communityId}/my-applications?page=${pagination.page + 1}&limit=${pagination.limit}${statusParam}${searchParam}${programParam}`,
-            "GET",
+            `/v2/funding-applications/user/my-applications?communitySlug=${communityId}&page=${pagination.page + 1}&limit=${pagination.limit}${statusParam}${searchParam}${programParam}`,
+            "GET"
           );
           if (err) throw new Error(err);
           return res;

@@ -39,7 +39,7 @@ export function usePublicApplications({
       if (filters?.limit) queryParams.set("limit", String(filters.limit));
 
       const queryString = queryParams.toString();
-      const url = `/v2/communities/${communityId}/programs/${programId}/applications${queryString ? `?${queryString}` : ""}`;
+      const url = `/v2/funding-applications/program/${programId}${queryString ? `?${queryString}` : ""}`;
 
       const [response, fetchError] = await fetchData<
         Application[] | { applications: Application[]; message?: string }

@@ -52,7 +52,7 @@ export function usePublicApplicationsInfinite({
         if (filters?.status) queryParams.set("status", filters.status);
         if (filters?.search) queryParams.set("search", filters.search);
 
-        const url = `/v2/communities/${communityId}/programs/${programId}/applications?${queryParams.toString()}`;
+        const url = `/v2/funding-applications/program/${programId}?${queryParams.toString()}`;
 
         const [response, fetchError, pageInfo] = await fetchData<
           | Application[]

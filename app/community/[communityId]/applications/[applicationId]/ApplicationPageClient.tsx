@@ -1,24 +1,14 @@
 "use client";
 
-import {
-  ArrowLeft,
-  Calendar,
-  Edit,
-  ExternalLink,
-  RefreshCw,
-} from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { ArrowLeft, Calendar, Edit, ExternalLink, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { cn } from "@/utilities/tailwind";
-import { formatDate } from "@/utilities/formatDate";
-import fetchData from "@/utilities/fetchData";
-import type {
-  Application,
-  ApplicationStatus,
-  FundingProgram,
-} from "@/types/whitelabel-entities";
 import { useAuth } from "@/hooks/useAuth";
+import type { Application, ApplicationStatus, FundingProgram } from "@/types/whitelabel-entities";
+import fetchData from "@/utilities/fetchData";
+import { formatDate } from "@/utilities/formatDate";
+import { cn } from "@/utilities/tailwind";
 
 interface ApplicationPageClientProps {
   communityId: string;
@@ -54,10 +44,7 @@ const editableStatuses: ApplicationStatus[] = [
   "resubmitted",
 ];
 
-export function ApplicationPageClient({
-  communityId,
-  applicationId,
-}: ApplicationPageClientProps) {
+export function ApplicationPageClient({ communityId, applicationId }: ApplicationPageClientProps) {
   const { address } = useAuth();
 
   // Fetch application
@@ -70,8 +57,8 @@ export function ApplicationPageClient({
     queryKey: ["wl-application-detail", communityId, applicationId],
     queryFn: async () => {
       const [res, err] = await fetchData<Application>(
-        `/v2/applications/${applicationId}`,
-        "GET",
+        `/v2/funding-applications/${applicationId}`,
+        "GET"
       );
       if (err) throw new Error(err);
       if (!res) throw new Error("Application not found");
@@ -86,7 +73,7 @@ export function ApplicationPageClient({
     queryFn: async () => {
       const [res, err] = await fetchData<FundingProgram>(
         `/v2/funding-program-configs/${application!.programId}`,
-        "GET",
+        "GET"
       );
       if (err) throw new Error(err);
       return res as FundingProgram;
@@ -97,9 +84,7 @@ export function ApplicationPageClient({
 
   const isOwner = useMemo(() => {
     if (!address || !application) return false;
-    return (
-      application.ownerAddress?.toLowerCase() === address.toLowerCase()
-    );
+    return application.ownerAddress?.toLowerCase() === address.toLowerCase();
   }, [address, application]);
 
   const canEdit = useMemo(() => {
@@ -119,9 +104,7 @@ export function ApplicationPageClient({
       <div className="container px-4 py-8">
         <div className="flex flex-col items-center justify-center rounded-xl border border-border py-24">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-          <p className="mt-4 text-muted-foreground">
-            Loading application details...
-          </p>
+          <p className="mt-4 text-muted-foreground">Loading application details...</p>
         </div>
       </div>
     );
@@ -136,9 +119,7 @@ export function ApplicationPageClient({
             {error ? "Error loading application" : "Application not found"}
           </h2>
           <p className="mb-6 text-muted-foreground">
-            {error instanceof Error
-              ? error.message
-              : "The application could not be found."}
+            {error instanceof Error ? error.message : "The application could not be found."}
           </p>
           <div className="flex gap-3">
             {error && (
@@ -186,12 +167,9 @@ export function ApplicationPageClient({
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex flex-col gap-2">
             <h1 className="text-3xl font-bold text-foreground">
-              Application for{" "}
-              {programLoading ? "..." : programName}
+              Application for {programLoading ? "..." : programName}
             </h1>
-            <p className="text-muted-foreground">
-              Reference: {application.referenceNumber}
-            </p>
+            <p className="text-muted-foreground">Reference: {application.referenceNumber}</p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
             {isOwner && canEdit && (
@@ -215,7 +193,7 @@ export function ApplicationPageClient({
             <span
               className={cn(
                 "inline-flex items-center rounded-full px-3 py-1 text-sm font-medium",
-                getStatusColor(application.status),
+                getStatusColor(application.status)
               )}
             >
               {formatStatusLabel(application.status)}
@@ -223,9 +201,7 @@ export function ApplicationPageClient({
           </div>
           <div>
             <p className="mb-1 text-sm text-muted-foreground">Application ID</p>
-            <p className="font-mono text-foreground">
-              {application.referenceNumber}
-            </p>
+            <p className="font-mono text-foreground">{application.referenceNumber}</p>
           </div>
           <div>
             <p className="mb-1 text-sm text-muted-foreground">Last submission</p>
@@ -234,9 +210,7 @@ export function ApplicationPageClient({
           <div>
             <p className="mb-1 text-sm text-muted-foreground">Deadline</p>
             <p className="text-foreground">
-              {program?.metadata.endsAt
-                ? formatDate(program.metadata.endsAt)
-                : "N/A"}
+              {program?.metadata.endsAt ? formatDate(program.metadata.endsAt) : "N/A"}
             </p>
           </div>
         </div>
@@ -245,26 +219,24 @@ export function ApplicationPageClient({
       {/* Application Details */}
       <div className="rounded-xl border border-border">
         <div className="border-b border-border p-4">
-          <h2 className="text-xl font-semibold text-foreground">
-            Application Details
-          </h2>
+          <h2 className="text-xl font-semibold text-foreground">Application Details</h2>
         </div>
         <div className="space-y-6 p-6">
           {displayData.length === 0 ? (
-            <p className="text-muted-foreground">
-              No application data available.
-            </p>
+            <p className="text-muted-foreground">No application data available.</p>
           ) : (
             displayData.map(([key, value]) => (
               <div key={key}>
                 <p className="mb-1 text-sm text-muted-foreground">
-                  {key
-                    .replace(/([A-Z])/g, " $1")
-                    .replace(/^./, (str) => str.toUpperCase())}
+                  {key.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase())}
                 </p>
                 <div className="text-foreground">
                   {typeof value === "boolean" ? (
-                    value ? "Yes" : "No"
+                    value ? (
+                      "Yes"
+                    ) : (
+                      "No"
+                    )
                   ) : Array.isArray(value) ? (
                     <div className="flex flex-wrap gap-2">
                       {value.map((item, index) => (
@@ -294,9 +266,7 @@ export function ApplicationPageClient({
       {application.statusHistory && application.statusHistory.length > 0 && (
         <div className="rounded-xl border border-border">
           <div className="border-b border-border p-4">
-            <h2 className="text-lg font-semibold text-foreground">
-              Status History
-            </h2>
+            <h2 className="text-lg font-semibold text-foreground">Status History</h2>
           </div>
           <div className="space-y-3 p-4">
             {application.statusHistory.map((entry, index) => (
@@ -309,9 +279,7 @@ export function ApplicationPageClient({
                     {formatStatusLabel(entry.status as ApplicationStatus)}
                   </p>
                   {entry.reason && (
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {entry.reason}
-                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">{entry.reason}</p>
                   )}
                 </div>
                 <span className="flex shrink-0 items-center gap-1 text-sm text-muted-foreground">

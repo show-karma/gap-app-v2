@@ -72,7 +72,7 @@ export function usePostApprovalSubmit(
   const submitMutation = useMutation({
     mutationFn: async (postApprovalData: Record<string, unknown>) => {
       const [response, fetchError] = await fetchData<Application>(
-        `/v2/communities/${communityId}/applications/${referenceNumber}/post-approval`,
+        `/v2/funding-applications/${referenceNumber}/post-approval`,
         "PUT",
         { postApprovalData }
       );

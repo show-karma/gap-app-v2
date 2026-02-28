@@ -26,7 +26,7 @@ export function useEditApplication(
   const saveDraftMutation = useMutation({
     mutationFn: async (dataToSave: Record<string, unknown>) => {
       const [response, fetchError] = await fetchData<Application>(
-        `/v2/communities/${communityId}/applications/${applicationId}`,
+        `/v2/funding-applications/${applicationId}`,
         "PUT",
         { data: dataToSave }
       );
@@ -54,7 +54,7 @@ export function useEditApplication(
       const body: Record<string, unknown> = { data: dataToSubmit };
       if (aiEvaluation) body.aiEvaluation = aiEvaluation;
       const [response, fetchError] = await fetchData<Application>(
-        `/v2/communities/${communityId}/applications/${applicationId}`,
+        `/v2/funding-applications/${applicationId}`,
         "PUT",
         body
       );

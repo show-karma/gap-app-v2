@@ -30,7 +30,7 @@ export function useApplicationSubmit(communityId: string): UseApplicationSubmitR
       if (accessCode) body.accessCode = accessCode;
 
       const [response, fetchError] = await fetchData<Application>(
-        `/v2/communities/${communityId}/applications`,
+        `/v2/funding-applications/${programId}`,
         "POST",
         body
       );

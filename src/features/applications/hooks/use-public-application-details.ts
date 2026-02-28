@@ -31,7 +31,7 @@ export function usePublicApplicationDetails({
       }
 
       const [response, fetchError] = await fetchData<Application & { message?: string }>(
-        `/v2/communities/${communityId}/applications/${referenceNumber}/public`
+        `/v2/funding-applications/${referenceNumber}`
       );
 
       if (fetchError) {

@@ -1,19 +1,16 @@
 "use client";
 
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { Lock, RefreshCw, Search, X } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
-import { useInfiniteQuery } from "@tanstack/react-query";
-import { cn } from "@/utilities/tailwind";
-import { formatDate } from "@/utilities/formatDate";
-import fetchData from "@/utilities/fetchData";
 import type { ProgramWithConfig } from "@/features/programs/hooks/use-programs-with-config";
 import { useProgramsWithConfig } from "@/features/programs/hooks/use-programs-with-config";
-import type {
-  Application,
-  ApplicationStatus,
-} from "@/types/whitelabel-entities";
+import type { Application, ApplicationStatus } from "@/types/whitelabel-entities";
+import fetchData from "@/utilities/fetchData";
+import { formatDate } from "@/utilities/formatDate";
+import { cn } from "@/utilities/tailwind";
 
 interface BrowseApplicationsClientProps {
   communityId: string;
@@ -61,11 +58,7 @@ function getProjectTitle(app: Application): string {
   const data = app.applicationData;
   for (const [key, value] of Object.entries(data)) {
     const nk = normalizeFieldKey(key);
-    if (
-      nk.includes("projectname") ||
-      nk.includes("projecttitle") ||
-      nk.includes("title")
-    ) {
+    if (nk.includes("projectname") || nk.includes("projecttitle") || nk.includes("title")) {
       if (typeof value === "string" && value.trim().length > 0) {
         return value.trim();
       }
@@ -74,9 +67,7 @@ function getProjectTitle(app: Application): string {
   return app.referenceNumber;
 }
 
-function getRequestedAmount(
-  applicationData: Record<string, unknown>,
-): string | null {
+function getRequestedAmount(applicationData: Record<string, unknown>): string | null {
   const preferredKeys = new Set([
     "requestedamount",
     "amountrequested",
@@ -110,16 +101,10 @@ function getRequestedAmount(
   return null;
 }
 
-function getCategoryTag(
-  applicationData: Record<string, unknown>,
-): string | null {
+function getCategoryTag(applicationData: Record<string, unknown>): string | null {
   for (const [key, value] of Object.entries(applicationData ?? {})) {
     const nk = normalizeFieldKey(key);
-    if (
-      nk.includes("category") ||
-      nk.includes("track") ||
-      nk.includes("projecttype")
-    ) {
+    if (nk.includes("category") || nk.includes("track") || nk.includes("projecttype")) {
       if (typeof value === "string" && value.trim().length > 0) {
         return value.trim();
       }
@@ -149,17 +134,12 @@ const ApplicationCardMemo = memo(function ApplicationCardInner({
   communityId: string;
 }) {
   const projectName = getProjectTitle(application);
-  const requestedAmount = getRequestedAmount(
-    application.applicationData ?? {},
-  );
+  const requestedAmount = getRequestedAmount(application.applicationData ?? {});
   const categoryTag = getCategoryTag(application.applicationData ?? {});
   const hasUpdates =
-    Boolean(application.updatedAt) &&
-    application.updatedAt !== application.createdAt;
+    Boolean(application.updatedAt) && application.updatedAt !== application.createdAt;
   const dateLabel = hasUpdates ? "Updated" : "Submitted";
-  const dateValue = formatDate(
-    hasUpdates ? application.updatedAt : application.createdAt,
-  );
+  const dateValue = formatDate(hasUpdates ? application.updatedAt : application.createdAt);
 
   return (
     <Link
@@ -174,7 +154,7 @@ const ApplicationCardMemo = memo(function ApplicationCardInner({
           <span
             className={cn(
               "inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-xs font-medium",
-              getStatusColor(application.status),
+              getStatusColor(application.status)
             )}
           >
             {formatStatusLabel(application.status)}
@@ -194,15 +174,11 @@ const ApplicationCardMemo = memo(function ApplicationCardInner({
           <div className="space-y-1 text-sm text-muted-foreground">
             {requestedAmount && (
               <p>
-                Requested:{" "}
-                <span className="font-medium text-foreground">
-                  {requestedAmount}
-                </span>
+                Requested: <span className="font-medium text-foreground">{requestedAmount}</span>
               </p>
             )}
             <p>
-              {dateLabel}:{" "}
-              <span className="font-medium text-foreground">{dateValue}</span>
+              {dateLabel}: <span className="font-medium text-foreground">{dateValue}</span>
             </p>
           </div>
         </div>
@@ -232,33 +208,26 @@ function LoadingSkeleton() {
   );
 }
 
-export function BrowseApplicationsClient({
-  communityId,
-}: BrowseApplicationsClientProps) {
+export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClientProps) {
   const searchParams = useSearchParams();
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
-  const { programs, isLoading: isProgramsLoading } =
-    useProgramsWithConfig(communityId);
+  const { programs, isLoading: isProgramsLoading } = useProgramsWithConfig(communityId);
 
   const [selectedProgramId, setSelectedProgramId] = useState<string>(
-    () => searchParams.get("programId") || "",
+    () => searchParams.get("programId") || ""
   );
-  const [statusFilter, setStatusFilter] = useState<ApplicationStatus | "all">(
-    () => {
-      const s = searchParams.get("status");
-      if (
-        s &&
-        ["pending", "under_review", "revision_requested", "approved", "rejected"].includes(s)
-      ) {
-        return s as ApplicationStatus;
-      }
-      return "all";
-    },
-  );
-  const [searchInput, setSearchInput] = useState(
-    () => searchParams.get("search") || "",
-  );
+  const [statusFilter, setStatusFilter] = useState<ApplicationStatus | "all">(() => {
+    const s = searchParams.get("status");
+    if (
+      s &&
+      ["pending", "under_review", "revision_requested", "approved", "rejected"].includes(s)
+    ) {
+      return s as ApplicationStatus;
+    }
+    return "all";
+  });
+  const [searchInput, setSearchInput] = useState(() => searchParams.get("search") || "");
   const [debouncedSearch, setDebouncedSearch] = useState(searchInput);
 
   // Debounce search input
@@ -267,60 +236,46 @@ export function BrowseApplicationsClient({
     return () => clearTimeout(timer);
   }, [searchInput]);
 
-  const selectedProgram = programs.find(
-    (p) => p.programId === selectedProgramId,
-  );
+  const selectedProgram = programs.find((p) => p.programId === selectedProgramId);
   const hasPrivateApplicationsSetting =
-    selectedProgram?.applicationConfig?.formSchema?.settings
-      ?.privateApplications;
+    selectedProgram?.applicationConfig?.formSchema?.settings?.privateApplications;
 
-  const {
-    data,
-    isLoading,
-    error,
-    refetch,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useInfiniteQuery<ApplicationsPageData>({
-    queryKey: [
-      "wl-browse-applications",
-      communityId,
-      selectedProgramId,
-      statusFilter,
-      debouncedSearch,
-    ],
-    queryFn: async ({ pageParam }) => {
-      const page = pageParam as number;
-      const statusParam =
-        statusFilter === "all" ? "" : `&status=${statusFilter}`;
-      const searchParam = debouncedSearch
-        ? `&search=${encodeURIComponent(debouncedSearch)}`
-        : "";
+  const { data, isLoading, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useInfiniteQuery<ApplicationsPageData>({
+      queryKey: [
+        "wl-browse-applications",
+        communityId,
+        selectedProgramId,
+        statusFilter,
+        debouncedSearch,
+      ],
+      queryFn: async ({ pageParam }) => {
+        const page = pageParam as number;
+        const statusParam = statusFilter === "all" ? "" : `&status=${statusFilter}`;
+        const searchParam = debouncedSearch ? `&search=${encodeURIComponent(debouncedSearch)}` : "";
 
-      const [res, err] = await fetchData<ApplicationsPageData>(
-        `/v2/applications/community/${communityId}/program/${selectedProgramId}/public?page=${page}&limit=100${statusParam}${searchParam}`,
-        "GET",
-        {},
-        {},
-        {},
-        false,
-      );
-      if (err) throw new Error(err);
-      return res as ApplicationsPageData;
-    },
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => {
-      if (lastPage.pagination.page < lastPage.pagination.totalPages) {
-        return lastPage.pagination.page + 1;
-      }
-      return undefined;
-    },
-    enabled: !!selectedProgramId && !hasPrivateApplicationsSetting,
-  });
+        const [res, err] = await fetchData<ApplicationsPageData>(
+          `/v2/funding-applications/program/${selectedProgramId}?page=${page}&limit=100${statusParam}${searchParam}`,
+          "GET",
+          {},
+          {},
+          {},
+          false
+        );
+        if (err) throw new Error(err);
+        return res as ApplicationsPageData;
+      },
+      initialPageParam: 1,
+      getNextPageParam: (lastPage) => {
+        if (lastPage.pagination.page < lastPage.pagination.totalPages) {
+          return lastPage.pagination.page + 1;
+        }
+        return undefined;
+      },
+      enabled: !!selectedProgramId && !hasPrivateApplicationsSetting,
+    });
 
-  const applications =
-    data?.pages.flatMap((page) => page.applications) || [];
+  const applications = data?.pages.flatMap((page) => page.applications) || [];
   const totalCount = data?.pages[0]?.pagination.total ?? 0;
 
   const handleClearFilters = useCallback(() => {
@@ -342,7 +297,7 @@ export function BrowseApplicationsClient({
           fetchNextPage();
         }
       },
-      { rootMargin: "100px", threshold: 0.1 },
+      { rootMargin: "100px", threshold: 0.1 }
     );
 
     observer.observe(currentRef);
@@ -357,7 +312,10 @@ export function BrowseApplicationsClient({
       <div className="rounded-xl border border-border p-4 sm:p-5">
         <div className="flex flex-col gap-4 lg:flex-row">
           <div className="w-full lg:w-[320px]">
-            <label htmlFor="program-select" className="mb-1 block text-sm font-medium text-foreground">
+            <label
+              htmlFor="program-select"
+              className="mb-1 block text-sm font-medium text-foreground"
+            >
               Funding Program
             </label>
             <select
@@ -376,7 +334,10 @@ export function BrowseApplicationsClient({
           </div>
 
           <div className="flex-1">
-            <label htmlFor="search-input" className="mb-1 block text-sm font-medium text-foreground">
+            <label
+              htmlFor="search-input"
+              className="mb-1 block text-sm font-medium text-foreground"
+            >
               Search
             </label>
             <div className="relative">
@@ -404,16 +365,17 @@ export function BrowseApplicationsClient({
           </div>
 
           <div className="w-full sm:w-56 lg:w-52">
-            <label htmlFor="status-select" className="mb-1 block text-sm font-medium text-foreground">
+            <label
+              htmlFor="status-select"
+              className="mb-1 block text-sm font-medium text-foreground"
+            >
               Status
             </label>
             <select
               id="status-select"
               value={statusFilter}
               disabled={!selectedProgramId}
-              onChange={(e) =>
-                setStatusFilter(e.target.value as ApplicationStatus | "all")
-              }
+              onChange={(e) => setStatusFilter(e.target.value as ApplicationStatus | "all")}
               className="h-12 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
             >
               {statusOptions.map((option) => (
@@ -444,13 +406,11 @@ export function BrowseApplicationsClient({
         hasPrivateApplicationsSetting ? (
           <div className="rounded-xl border-2 border-dashed border-border py-12 text-center">
             <Lock className="mx-auto mb-4 h-16 w-16 text-muted-foreground" />
-            <h3 className="mb-2 text-xl font-semibold text-foreground">
-              Private Applications
-            </h3>
+            <h3 className="mb-2 text-xl font-semibold text-foreground">Private Applications</h3>
             <p className="mx-auto max-w-md text-muted-foreground">
-              {selectedProgram?.name || "This program"} has configured their
-              applications to be private. Application details are only visible
-              to program administrators and applicants.
+              {selectedProgram?.name || "This program"} has configured their applications to be
+              private. Application details are only visible to program administrators and
+              applicants.
             </p>
           </div>
         ) : (
@@ -528,9 +488,7 @@ export function BrowseApplicationsClient({
         )
       ) : (
         <div className="rounded-xl border-2 border-dashed border-border py-10 text-center">
-          <h3 className="mb-2 text-xl font-semibold text-foreground">
-            Choose a Program
-          </h3>
+          <h3 className="mb-2 text-xl font-semibold text-foreground">Choose a Program</h3>
           <p className="text-muted-foreground">
             Choose a funding program to browse public applications.
           </p>

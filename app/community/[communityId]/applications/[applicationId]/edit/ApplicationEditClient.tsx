@@ -1,17 +1,17 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, ArrowLeft, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
-import fetchData from "@/utilities/fetchData";
-import { formatDate } from "@/utilities/formatDate";
 import type {
   Application,
   ApplicationQuestion,
   ApplicationStatus,
   FundingProgram,
 } from "@/types/whitelabel-entities";
+import fetchData from "@/utilities/fetchData";
+import { formatDate } from "@/utilities/formatDate";
 
 interface ApplicationEditClientProps {
   communityId: string;
@@ -25,10 +25,7 @@ const editableStatuses: ApplicationStatus[] = [
   "resubmitted",
 ];
 
-export function ApplicationEditClient({
-  communityId,
-  applicationId,
-}: ApplicationEditClientProps) {
+export function ApplicationEditClient({ communityId, applicationId }: ApplicationEditClientProps) {
   const router = useRouter();
 
   // Fetch application
@@ -41,17 +38,15 @@ export function ApplicationEditClient({
     queryKey: ["wl-application-edit", communityId, applicationId],
     queryFn: async () => {
       const [res, err] = await fetchData<Application>(
-        `/v2/applications/${applicationId}`,
-        "GET",
+        `/v2/funding-applications/${applicationId}`,
+        "GET"
       );
       if (err) throw new Error(err);
       if (!res) throw new Error("Application not found");
 
       // Only allow editing for certain statuses
       if (!editableStatuses.includes(res.status)) {
-        throw new Error(
-          `Application with status "${res.status}" cannot be edited`,
-        );
+        throw new Error(`Application with status "${res.status}" cannot be edited`);
       }
 
       return res;
@@ -65,7 +60,7 @@ export function ApplicationEditClient({
     queryFn: async () => {
       const [res, err] = await fetchData<FundingProgram>(
         `/v2/funding-program-configs/${application!.programId}`,
-        "GET",
+        "GET"
       );
       if (err) throw new Error(err);
       return res as FundingProgram;
@@ -80,9 +75,7 @@ export function ApplicationEditClient({
     ? new Date(program.metadata.endsAt) < new Date()
     : false;
   const isRevision = application?.status === "revision_requested";
-  const isDisabled =
-    !program?.applicationConfig?.isEnabled ||
-    (isDeadlinePassed && !isRevision);
+  const isDisabled = !program?.applicationConfig?.isEnabled || (isDeadlinePassed && !isRevision);
 
   // Loading
   if (isLoading) {
@@ -102,9 +95,7 @@ export function ApplicationEditClient({
       <div className="container px-4 py-8">
         <div className="flex flex-col items-center rounded-xl border border-border py-12 text-center">
           <AlertTriangle className="mb-4 h-12 w-12 text-yellow-500" />
-          <h2 className="mb-2 text-xl font-semibold text-foreground">
-            Cannot Edit Application
-          </h2>
+          <h2 className="mb-2 text-xl font-semibold text-foreground">Cannot Edit Application</h2>
           <p className="mb-6 text-muted-foreground">
             {appError instanceof Error
               ? appError.message
@@ -131,8 +122,7 @@ export function ApplicationEditClient({
     );
   }
 
-  const programName =
-    program?.name || program?.metadata?.title || "Program";
+  const programName = program?.name || program?.metadata?.title || "Program";
 
   return (
     <div className="container px-4 py-8">
@@ -168,8 +158,7 @@ export function ApplicationEditClient({
         </h1>
         {application.status === "revision_requested" && (
           <p className="text-muted-foreground">
-            Your application requires revisions. Please review the feedback and
-            update accordingly.
+            Your application requires revisions. Please review the feedback and update accordingly.
           </p>
         )}
       </div>
@@ -180,17 +169,11 @@ export function ApplicationEditClient({
           <p className="mb-1 font-semibold text-orange-700 dark:text-orange-400">
             Revision Required
           </p>
-          {application.statusHistory?.find(
-            (s) => s.status === "revision_requested",
-          )?.reason && (
+          {application.statusHistory?.find((s) => s.status === "revision_requested")?.reason && (
             <div className="space-y-1 text-sm text-orange-600 dark:text-orange-500">
               <p className="font-medium">Reason for revision:</p>
               <p>
-                {
-                  application.statusHistory.find(
-                    (s) => s.status === "revision_requested",
-                  )?.reason
-                }
+                {application.statusHistory.find((s) => s.status === "revision_requested")?.reason}
               </p>
             </div>
           )}
@@ -200,47 +183,45 @@ export function ApplicationEditClient({
       {/* Application Data Display */}
       <div className="rounded-xl border border-border">
         <div className="border-b border-border p-4">
-          <h2 className="text-xl font-semibold text-foreground">
-            Application Form
-          </h2>
+          <h2 className="text-xl font-semibold text-foreground">Application Form</h2>
         </div>
         <div className="space-y-6 p-6">
-          {Object.entries(application.applicationData || {}).map(
-            ([key, value]) => (
-              <div key={key}>
-                <p className="mb-1 text-sm text-muted-foreground">
-                  {key
-                    .replace(/([A-Z])/g, " $1")
-                    .replace(/^./, (str) => str.toUpperCase())}
-                </p>
-                <div className="text-foreground">
-                  {typeof value === "boolean" ? (
-                    value ? "Yes" : "No"
-                  ) : Array.isArray(value) ? (
-                    <div className="flex flex-wrap gap-2">
-                      {value.map((item, index) => (
-                        <span
-                          key={`${key}-${index}`}
-                          className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium"
-                        >
-                          {String(item)}
-                        </span>
-                      ))}
-                    </div>
-                  ) : typeof value === "object" && value !== null ? (
-                    <pre className="overflow-x-auto rounded-lg bg-muted p-3 text-sm">
-                      {JSON.stringify(value, null, 2)}
-                    </pre>
+          {Object.entries(application.applicationData || {}).map(([key, value]) => (
+            <div key={key}>
+              <p className="mb-1 text-sm text-muted-foreground">
+                {key.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase())}
+              </p>
+              <div className="text-foreground">
+                {typeof value === "boolean" ? (
+                  value ? (
+                    "Yes"
                   ) : (
-                    <p className="whitespace-pre-wrap">{String(value)}</p>
-                  )}
-                </div>
+                    "No"
+                  )
+                ) : Array.isArray(value) ? (
+                  <div className="flex flex-wrap gap-2">
+                    {value.map((item, index) => (
+                      <span
+                        key={`${key}-${index}`}
+                        className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium"
+                      >
+                        {String(item)}
+                      </span>
+                    ))}
+                  </div>
+                ) : typeof value === "object" && value !== null ? (
+                  <pre className="overflow-x-auto rounded-lg bg-muted p-3 text-sm">
+                    {JSON.stringify(value, null, 2)}
+                  </pre>
+                ) : (
+                  <p className="whitespace-pre-wrap">{String(value)}</p>
+                )}
               </div>
-            ),
-          )}
+            </div>
+          ))}
           <p className="text-sm text-muted-foreground">
-            Full editing capabilities (form editing and resubmission) will be
-            available when the application form component is ported.
+            Full editing capabilities (form editing and resubmission) will be available when the
+            application form component is ported.
           </p>
         </div>
       </div>

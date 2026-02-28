@@ -41,7 +41,7 @@ export function useTeamMembers(
         throw new Error("Reference number is required");
       }
       const [response, fetchError] = await fetchData<ApplicationTeamMember[]>(
-        `/v2/communities/${communityId}/applications/${referenceNumber}/team-members`
+        `/v2/funding-applications/${referenceNumber}/team-members`
       );
       if (fetchError) throw new Error(fetchError);
       return response ?? [];
@@ -63,7 +63,7 @@ export function useTeamMembers(
         throw new Error("Reference number is required");
       }
       const [response, fetchError] = await fetchData<ApplicationTeamMember>(
-        `/v2/communities/${communityId}/applications/${referenceNumber}/team-members`,
+        `/v2/funding-applications/${referenceNumber}/team-members`,
         "POST",
         { memberEmail, memberName }
       );
@@ -84,7 +84,7 @@ export function useTeamMembers(
         throw new Error("Reference number is required");
       }
       const [, fetchError] = await fetchData(
-        `/v2/communities/${communityId}/applications/${referenceNumber}/team-members/${memberAddress}`,
+        `/v2/funding-applications/${referenceNumber}/team-members/${memberAddress}`,
         "DELETE"
       );
       if (fetchError) throw new Error(fetchError);

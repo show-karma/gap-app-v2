@@ -1,5 +1,6 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import {
   AlertCircle,
   ArrowLeft,
@@ -11,15 +12,10 @@ import {
   RefreshCw,
 } from "lucide-react";
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
-import { cn } from "@/utilities/tailwind";
-import { formatDate } from "@/utilities/formatDate";
+import type { Application, ApplicationStatus, FundingProgram } from "@/types/whitelabel-entities";
 import fetchData from "@/utilities/fetchData";
-import type {
-  Application,
-  ApplicationStatus,
-  FundingProgram,
-} from "@/types/whitelabel-entities";
+import { formatDate } from "@/utilities/formatDate";
+import { cn } from "@/utilities/tailwind";
 
 interface ApplicationDetailsClientProps {
   communityId: string;
@@ -51,11 +47,7 @@ function formatStatusLabel(status: ApplicationStatus): string {
 function getProjectTitle(app: Application): string {
   for (const [key, value] of Object.entries(app.applicationData)) {
     const nk = key.toLowerCase().replace(/[\s_-]/g, "");
-    if (
-      nk.includes("projectname") ||
-      nk.includes("projecttitle") ||
-      nk.includes("title")
-    ) {
+    if (nk.includes("projectname") || nk.includes("projecttitle") || nk.includes("title")) {
       if (typeof value === "string" && value.trim().length > 0) {
         return value.trim();
       }
@@ -92,21 +84,16 @@ export function ApplicationDetailsClient({
   communityId,
   referenceNumber,
 }: ApplicationDetailsClientProps) {
-  const {
-    data,
-    isLoading,
-    error,
-    refetch,
-  } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["wl-public-application-details", communityId, referenceNumber],
     queryFn: async () => {
       const [res, err, , status] = await fetchData<PublicApplicationResponse>(
-        `/v2/applications/community/${communityId}/public/${referenceNumber}`,
+        `/v2/funding-applications/${referenceNumber}`,
         "GET",
         {},
         {},
         {},
-        false,
+        false
       );
       if (status === 403) {
         return { application: null, isPrivate: true };
@@ -130,7 +117,7 @@ export function ApplicationDetailsClient({
         {},
         {},
         {},
-        false,
+        false
       );
       if (err) throw new Error(err);
       return res as FundingProgram;
@@ -145,9 +132,7 @@ export function ApplicationDetailsClient({
       <div className="mx-auto max-w-6xl px-4 py-8">
         <div className="flex flex-col items-center justify-center rounded-xl border border-border py-24">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-          <p className="mt-4 text-muted-foreground">
-            Loading application details...
-          </p>
+          <p className="mt-4 text-muted-foreground">Loading application details...</p>
         </div>
       </div>
     );
@@ -184,12 +169,10 @@ export function ApplicationDetailsClient({
       <div className="mx-auto max-w-2xl px-4 py-8">
         <div className="flex flex-col items-center rounded-xl border border-border py-12 text-center">
           <Lock className="mb-4 h-16 w-16 text-yellow-500" />
-          <h2 className="mb-2 text-xl font-semibold text-foreground">
-            Private Application
-          </h2>
+          <h2 className="mb-2 text-xl font-semibold text-foreground">Private Application</h2>
           <p className="mb-6 text-muted-foreground">
-            This application is private and cannot be viewed publicly. Only
-            authorized users can access this application.
+            This application is private and cannot be viewed publicly. Only authorized users can
+            access this application.
           </p>
           <Link
             href={`/community/${communityId}/browse-applications`}
@@ -208,12 +191,10 @@ export function ApplicationDetailsClient({
       <div className="mx-auto max-w-2xl px-4 py-8">
         <div className="flex flex-col items-center rounded-xl border border-border py-12 text-center">
           <FileText className="mb-4 h-16 w-16 text-muted-foreground" />
-          <h2 className="mb-2 text-xl font-semibold text-foreground">
-            Application Not Found
-          </h2>
+          <h2 className="mb-2 text-xl font-semibold text-foreground">Application Not Found</h2>
           <p className="mb-6 text-muted-foreground">
-            The application you're looking for could not be found. It may have
-            been removed or the reference number might be incorrect.
+            The application you're looking for could not be found. It may have been removed or the
+            reference number might be incorrect.
           </p>
           <Link
             href={`/community/${communityId}/browse-applications`}
@@ -228,7 +209,7 @@ export function ApplicationDetailsClient({
 
   const projectName = getProjectTitle(application);
   const publicFields = Object.entries(application.applicationData || {}).filter(
-    ([key]) => !isSensitiveField(key),
+    ([key]) => !isSensitiveField(key)
   );
   const programName =
     program?.name || program?.metadata?.title || `Program ${application.programId}`;
@@ -248,16 +229,12 @@ export function ApplicationDetailsClient({
       <div className="rounded-xl border border-border p-6">
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <h1 className="mb-2 text-2xl font-bold text-foreground">
-              {projectName}
-            </h1>
+            <h1 className="mb-2 text-2xl font-bold text-foreground">{projectName}</h1>
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-2 text-foreground">
                 <Building2 className="h-4 w-4" />
                 {programLoading ? (
-                  <span className="text-sm text-muted-foreground">
-                    Loading program...
-                  </span>
+                  <span className="text-sm text-muted-foreground">Loading program...</span>
                 ) : (
                   <span className="font-medium">{programName}</span>
                 )}
@@ -284,7 +261,7 @@ export function ApplicationDetailsClient({
           <span
             className={cn(
               "inline-flex shrink-0 items-center rounded-full px-3 py-1 text-sm font-medium",
-              getStatusColor(application.status),
+              getStatusColor(application.status)
             )}
           >
             {formatStatusLabel(application.status)}
@@ -296,19 +273,19 @@ export function ApplicationDetailsClient({
       {publicFields.length > 0 && (
         <div className="rounded-xl border border-border">
           <div className="border-b border-border p-4">
-            <h2 className="text-lg font-semibold text-foreground">
-              Application Details
-            </h2>
+            <h2 className="text-lg font-semibold text-foreground">Application Details</h2>
           </div>
           <div className="space-y-4 p-4">
             {publicFields.map(([key, value]) => (
               <div key={key}>
-                <p className="mb-1 text-sm text-muted-foreground">
-                  {formatLabel(key)}
-                </p>
+                <p className="mb-1 text-sm text-muted-foreground">{formatLabel(key)}</p>
                 <div className="text-foreground">
                   {typeof value === "boolean" ? (
-                    value ? "Yes" : "No"
+                    value ? (
+                      "Yes"
+                    ) : (
+                      "No"
+                    )
                   ) : Array.isArray(value) ? (
                     <div className="flex flex-wrap gap-2">
                       {value.map((item, index) => (
@@ -338,9 +315,7 @@ export function ApplicationDetailsClient({
       {application.statusHistory && application.statusHistory.length > 0 && (
         <div className="rounded-xl border border-border">
           <div className="border-b border-border p-4">
-            <h2 className="text-lg font-semibold text-foreground">
-              Status History
-            </h2>
+            <h2 className="text-lg font-semibold text-foreground">Status History</h2>
           </div>
           <div className="space-y-3 p-4">
             {application.statusHistory.map((entry, index) => (
@@ -353,9 +328,7 @@ export function ApplicationDetailsClient({
                     {formatStatusLabel(entry.status as ApplicationStatus)}
                   </p>
                   {entry.reason && (
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {entry.reason}
-                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">{entry.reason}</p>
                   )}
                 </div>
                 <span className="shrink-0 text-sm text-muted-foreground">
