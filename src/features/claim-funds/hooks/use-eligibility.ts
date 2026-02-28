@@ -8,6 +8,9 @@ import { type EligibilityProgress, fetchEligibilities } from "../services/eligib
 import type { ClaimEligibility } from "../types";
 import { useClaimProvider } from "./use-claim-provider";
 
+const EMPTY_ELIGIBILITIES = new Map<string, ClaimEligibility>();
+const EMPTY_CAMPAIGNS: ClaimCampaign[] = [];
+
 export interface UseEligibilityReturn {
   eligibilities: Map<string, ClaimEligibility>;
   eligibleCampaigns: ClaimCampaign[];
@@ -49,8 +52,8 @@ export function useEligibility(
   });
 
   return {
-    eligibilities: data?.eligibilities ?? new Map(),
-    eligibleCampaigns: data?.eligibleCampaigns ?? [],
+    eligibilities: data?.eligibilities ?? EMPTY_ELIGIBILITIES,
+    eligibleCampaigns: data?.eligibleCampaigns ?? EMPTY_CAMPAIGNS,
     isLoading,
     error: error instanceof Error ? error : error ? new Error(String(error)) : null,
     refetch,

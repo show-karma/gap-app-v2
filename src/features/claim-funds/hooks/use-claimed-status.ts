@@ -11,6 +11,8 @@ import {
 import { getPublicClient } from "../lib/viem-clients";
 import type { ClaimCampaign } from "../providers/types";
 
+const EMPTY_MAP = new Map<string, boolean>();
+
 export interface UseClaimedStatusesReturn {
   claimedStatuses: Map<string, boolean>;
   isLoading: boolean;
@@ -26,27 +28,21 @@ async function fetchClaimedStatuses(
   const results = new Map<string, boolean>();
   const publicClient = getPublicClient(networkName);
 
-  const promises = campaigns.map(async (campaign) => {
-    try {
-      const contractAddress =
-        (campaign.contractAddress as `0x${string}`) ?? DEFAULT_CLAIM_CONTRACT_ADDRESS;
+  const calls = campaigns.map((campaign) => ({
+    address: (campaign.contractAddress as `0x${string}`) ?? DEFAULT_CLAIM_CONTRACT_ADDRESS,
+    abi: CLAIM_CAMPAIGNS_ABI,
+    functionName: "claimed" as const,
+    args: [uuidToBytes16(campaign.id), walletAddress as `0x${string}`],
+  }));
 
-      const claimed = await publicClient.readContract({
-        address: contractAddress,
-        abi: CLAIM_CAMPAIGNS_ABI,
-        functionName: "claimed",
-        args: [uuidToBytes16(campaign.id), walletAddress as `0x${string}`],
-      });
-
-      return { campaignId: campaign.id, claimed: claimed as boolean };
-    } catch {
-      return { campaignId: campaign.id, claimed: false };
-    }
+  const multicallResults = await publicClient.multicall({
+    contracts: calls,
+    allowFailure: true,
   });
 
-  const statuses = await Promise.all(promises);
-  for (const { campaignId, claimed } of statuses) {
-    results.set(campaignId, claimed);
+  for (let i = 0; i < campaigns.length; i++) {
+    const result = multicallResults[i];
+    results.set(campaigns[i].id, result.status === "success" ? (result.result as boolean) : false);
   }
 
   return results;
@@ -80,7 +76,7 @@ export function useClaimedStatuses(
   });
 
   return {
-    claimedStatuses: data ?? new Map(),
+    claimedStatuses: data ?? EMPTY_MAP,
     isLoading,
     error: error instanceof Error ? error : error ? new Error(String(error)) : null,
     refetch,
