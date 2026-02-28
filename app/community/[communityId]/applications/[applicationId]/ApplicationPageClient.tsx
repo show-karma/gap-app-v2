@@ -5,6 +5,7 @@ import { ArrowLeft, Calendar, Edit, ExternalLink, RefreshCw } from "lucide-react
 import Link from "next/link";
 import { useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { CommentTimeline } from "@/src/features/application-comments/components/CommentTimeline";
 import type { Application, ApplicationStatus, FundingProgram } from "@/types/whitelabel-entities";
 import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
@@ -262,35 +263,13 @@ export function ApplicationPageClient({ communityId, applicationId }: Applicatio
         </div>
       </div>
 
-      {/* Status History */}
-      {application.statusHistory && application.statusHistory.length > 0 && (
-        <div className="rounded-xl border border-border">
-          <div className="border-b border-border p-4">
-            <h2 className="text-lg font-semibold text-foreground">Status History</h2>
-          </div>
-          <div className="space-y-3 p-4">
-            {application.statusHistory.map((entry, index) => (
-              <div
-                key={`status-${index}`}
-                className="flex items-start gap-3 rounded-lg bg-muted/50 p-3"
-              >
-                <div className="flex-1">
-                  <p className="font-medium text-foreground">
-                    {formatStatusLabel(entry.status as ApplicationStatus)}
-                  </p>
-                  {entry.reason && (
-                    <p className="mt-1 text-sm text-muted-foreground">{entry.reason}</p>
-                  )}
-                </div>
-                <span className="flex shrink-0 items-center gap-1 text-sm text-muted-foreground">
-                  <Calendar className="h-3 w-3" />
-                  {formatDate(entry.timestamp)}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* Comments & Activity */}
+      <CommentTimeline
+        applicationId={applicationId}
+        statusHistory={application.statusHistory || []}
+        currentUserAddress={address || undefined}
+        communityId={communityId}
+      />
     </div>
   );
 }

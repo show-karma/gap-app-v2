@@ -12,6 +12,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import Link from "next/link";
+import { PublicComments } from "@/src/features/application-comments/components/PublicComments";
 import type { Application, ApplicationStatus, FundingProgram } from "@/types/whitelabel-entities";
 import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
@@ -339,6 +340,9 @@ export function ApplicationDetailsClient({
           </div>
         </div>
       )}
+
+      {/* Public Comments */}
+      <PublicComments referenceNumber={referenceNumber} />
     </div>
   );
 }
