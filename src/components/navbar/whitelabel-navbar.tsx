@@ -1,11 +1,18 @@
 "use client";
 
+import { LogIn, LogOut } from "lucide-react";
 import Image from "next/image";
 import { Fragment, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
 import { Link } from "@/src/components/navigation/Link";
 import type { NavDropdown, NavItem } from "@/src/infrastructure/types/tenant";
 import { useTenantSafe } from "@/store/tenant";
 import { cn } from "@/utilities/tailwind";
+
+function truncateAddress(address: string) {
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+}
 
 function isDropdown(item: NavItem): item is NavDropdown {
   return "items" in item;
@@ -19,6 +26,7 @@ interface SocialLinkItem {
 
 export function WhitelabelNavbar() {
   const tenant = useTenantSafe();
+  const { authenticate: login, logout, ready, authenticated, address } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
@@ -120,7 +128,7 @@ export function WhitelabelNavbar() {
             <div className="flex items-center justify-end w-full gap-1">
               <span className="text-xs text-zinc-500 dark:text-zinc-400">Powered by</span>
               <Image
-                src="/images/karma-logo-white.svg"
+                src="/logo/karma-logo-light.svg"
                 alt="Karma"
                 width={40}
                 height={20}
@@ -142,6 +150,19 @@ export function WhitelabelNavbar() {
           <Link href="/browse-applications" className="text-zinc-600 dark:text-zinc-200 text-base">
             Applications
           </Link>
+          {authenticated && (
+            <Link href="/my-applications" className="text-zinc-600 dark:text-zinc-200 text-base">
+              My Applications
+            </Link>
+          )}
+          {tenant.navigation?.claimFundsHref && (
+            <Link
+              href={tenant.navigation.claimFundsHref}
+              className="text-zinc-600 dark:text-zinc-200 text-base"
+            >
+              Claim Funds
+            </Link>
+          )}
           {tenant.navigation?.items?.map((item, index) => (
             <Fragment key={item.label ?? `nav-${index}`}>
               {isDropdown(item) ? (
@@ -227,6 +248,24 @@ export function WhitelabelNavbar() {
               )}
             </div>
           )}
+
+          {/* Auth buttons */}
+          {ready &&
+            (authenticated && address ? (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-zinc-600 dark:text-zinc-300 font-mono">
+                  {truncateAddress(address)}
+                </span>
+                <Button variant="ghost" size="sm" onClick={logout}>
+                  <LogOut className="w-4 h-4" />
+                </Button>
+              </div>
+            ) : (
+              <Button size="sm" onClick={login}>
+                <LogIn className="w-4 h-4 mr-1" />
+                Sign in
+              </Button>
+            ))}
         </div>
 
         {/* Mobile menu toggle */}
@@ -265,6 +304,24 @@ export function WhitelabelNavbar() {
           >
             Applications
           </Link>
+          {authenticated && (
+            <Link
+              href="/my-applications"
+              className="block text-zinc-700 dark:text-zinc-200"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              My Applications
+            </Link>
+          )}
+          {tenant.navigation?.claimFundsHref && (
+            <Link
+              href={tenant.navigation.claimFundsHref}
+              className="block text-zinc-700 dark:text-zinc-200"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Claim Funds
+            </Link>
+          )}
           {tenant.navigation?.items?.map((item, index) => (
             <Fragment key={item.label ?? `mobile-nav-${index}`}>
               {isDropdown(item) ? (
@@ -295,6 +352,28 @@ export function WhitelabelNavbar() {
               )}
             </Fragment>
           ))}
+
+          {/* Mobile auth */}
+          {ready && (
+            <div className="pt-3 border-t border-zinc-200 dark:border-zinc-700">
+              {authenticated && address ? (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-zinc-600 dark:text-zinc-300 font-mono">
+                    {truncateAddress(address)}
+                  </span>
+                  <Button variant="ghost" size="sm" onClick={logout}>
+                    <LogOut className="w-4 h-4 mr-1" />
+                    Sign out
+                  </Button>
+                </div>
+              ) : (
+                <Button className="w-full" size="sm" onClick={login}>
+                  <LogIn className="w-4 h-4 mr-1" />
+                  Sign in
+                </Button>
+              )}
+            </div>
+          )}
         </div>
       )}
     </nav>

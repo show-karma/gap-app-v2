@@ -13,13 +13,29 @@ export async function middleware(request: NextRequest) {
   const whitelabel = getWhitelabelByDomain(hostname);
 
   if (whitelabel) {
+    // Skip static asset paths that live in /public subdirectories.
+    // The middleware matcher already excludes root-level files (e.g. /favicon.ico)
+    // and /_next, but not subdirectory assets like /images/, /logo/, /tenants/.
+    if (/^\/(images|logo|tenants|icons|shared|fonts)\//i.test(path)) {
+      return NextResponse.next();
+    }
+
     const { communitySlug, tenantId } = whitelabel;
     const isRoot = path === "/" || path === "";
 
+    // Strip existing /community/<slug> prefix to avoid double-prefixing.
+    // Components generate hrefs like `/community/optimism/programs/123` which
+    // would otherwise become `/community/optimism/community/optimism/programs/123`.
+    const communityPrefix = `/community/${communitySlug}`;
+    const normalizedPath = path.startsWith(communityPrefix)
+      ? path.slice(communityPrefix.length) || "/"
+      : path;
+    const normalizedIsRoot = normalizedPath === "/" || normalizedPath === "";
+
     // Rewrite ALL paths — prepend /community/<slug>
-    const rewrittenPath = isRoot
+    const rewrittenPath = normalizedIsRoot
       ? `/community/${communitySlug}`
-      : `/community/${communitySlug}${path}`;
+      : `/community/${communitySlug}${normalizedPath}`;
 
     const url = request.nextUrl.clone();
     url.pathname = rewrittenPath;

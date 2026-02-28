@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronRight } from "lucide-react";
-import Link from "next/link";
+import { Link } from "@/src/components/navigation/Link";
 import type { FundingProgram } from "@/types/whitelabel-entities";
 import { ProgramDetailsCard } from "./ProgramDetailsCard";
 
@@ -31,8 +31,7 @@ export function ProgramDetailsSidebar({
 }: ProgramDetailsSidebarProps) {
   const programId = program.programId;
   const hasFormConfig = !!program.applicationConfig?.formSchema;
-  const isPrivate =
-    program.applicationConfig?.formSchema?.settings?.privateApplications;
+  const isPrivate = program.applicationConfig?.formSchema?.settings?.privateApplications;
 
   const programBudget = program.metadata?.programBudget;
   const fundingMin = program.metadata?.minGrantSize;
@@ -50,7 +49,7 @@ export function ProgramDetailsSidebar({
     !!endsAt;
 
   const applyUrl = `/community/${communityId}/programs/${programId}/apply`;
-  const applicationsUrl = `/community/${communityId}/programs/${programId}/applications`;
+  const applicationsUrl = `/browse-applications?programId=${programId}`;
 
   return (
     <aside
@@ -59,9 +58,7 @@ export function ProgramDetailsSidebar({
     >
       <div className="rounded-xl bg-transparent p-0 shadow-none ring-0 md:p-8 md:shadow-sm md:ring-1 md:ring-border">
         {/* Apply Section */}
-        <h2 className="mb-4 hidden text-3xl font-semibold text-muted-foreground md:block">
-          Apply
-        </h2>
+        <h2 className="mb-4 hidden text-3xl font-semibold text-muted-foreground md:block">Apply</h2>
         <div className="flex flex-row gap-2">
           <Link
             href={isEnabled ? applyUrl : "#"}
@@ -73,9 +70,7 @@ export function ProgramDetailsSidebar({
               disabled={!isEnabled}
               className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {isEnabled
-                ? "Apply now"
-                : getProgramDisabledReason(program) || "Application closed"}
+              {isEnabled ? "Apply now" : getProgramDisabledReason(program) || "Application closed"}
               <ChevronRight className="h-4 w-4" aria-hidden="true" />
             </button>
           </Link>

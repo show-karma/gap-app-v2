@@ -21,6 +21,19 @@ interface PrivyProviderWrapperProps {
   tenantConfig?: TenantConfig | null;
 }
 
+/**
+ * Privy SDK requires HTTPS for all hostnames except localhost/127.0.0.1.
+ * For local whitelabel dev on custom hostnames (e.g. test-wl.local),
+ * we skip Privy and render with QueryClientProvider only (no auth).
+ */
+function isPrivyCompatible(): boolean {
+  if (typeof window === "undefined") return true;
+  const { protocol, hostname } = window.location;
+  if (protocol === "https:" || protocol === "chrome-extension:") return true;
+  if (hostname === "localhost" || hostname === "127.0.0.1") return true;
+  return false;
+}
+
 export default function PrivyProviderWrapper({
   children,
   tenantConfig,
@@ -31,6 +44,11 @@ export default function PrivyProviderWrapper({
     throw new Error(
       "NEXT_PUBLIC_PRIVY_APP_ID is not defined. Please set it in your environment variables."
     );
+  }
+
+  // On non-HTTPS custom hostnames, Privy throws. Render without auth for local testing.
+  if (!isPrivyCompatible()) {
+    return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
   }
 
   const defaultChain = appNetwork[0];
