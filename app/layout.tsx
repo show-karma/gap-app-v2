@@ -26,6 +26,7 @@ import { WhitelabelFooter } from "@/src/components/footer/whitelabel-footer";
 import { Navbar } from "@/src/components/navbar/navbar";
 import { WhitelabelNavbar } from "@/src/components/navbar/whitelabel-navbar";
 import { ApiKeyManagementModal } from "@/src/features/api-keys/components/api-key-management-modal";
+import { toHslToken } from "@/utilities/whitelabel-config";
 import { WhitelabelProvider } from "@/utilities/whitelabel-context";
 import { getWhitelabelContext } from "@/utilities/whitelabel-server";
 
@@ -88,11 +89,19 @@ const toasterConfig = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const { isWhitelabel, communitySlug, tenantConfig } = await getWhitelabelContext();
+  const { isWhitelabel, communitySlug, config, tenantConfig } = await getWhitelabelContext();
+
+  const tenantPrimaryToken = tenantConfig?.theme?.colors?.primary
+    ? (toHslToken(tenantConfig.theme.colors.primary) ?? tenantConfig.theme.colors.primary)
+    : null;
+  const configPrimaryToken = config?.theme?.primaryColor
+    ? toHslToken(config.theme.primaryColor)
+    : null;
+  const primaryToken = tenantPrimaryToken ?? configPrimaryToken;
 
   const themeStyle =
-    isWhitelabel && tenantConfig?.theme?.colors?.primary
-      ? ({ "--primary": tenantConfig.theme.colors.primary } as React.CSSProperties)
+    isWhitelabel && primaryToken
+      ? ({ "--primary": primaryToken } as React.CSSProperties)
       : undefined;
 
   return (
@@ -114,12 +123,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <WhitelabelProvider
               isWhitelabel={isWhitelabel}
               communitySlug={communitySlug}
+              config={config}
               tenantConfig={tenantConfig ?? null}
             >
               {isWhitelabel && tenantConfig && (
-                <TenantStoreInitializer tenant={tenantConfig}>
-                  <></>
-                </TenantStoreInitializer>
+                <TenantStoreInitializer tenant={tenantConfig}>{null}</TenantStoreInitializer>
               )}
               {!isWhitelabel && <PermissionsProvider />}
               <Toaster {...toasterConfig} />

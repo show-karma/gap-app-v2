@@ -7,7 +7,6 @@ import { layoutTheme } from "@/src/helper/theme";
 import type { Community } from "@/types/v2/community";
 import { communityColors } from "@/utilities/communityColors";
 import { cn } from "@/utilities/tailwind";
-import { getWhitelabelBySlug } from "@/utilities/whitelabel-config";
 import { useWhitelabel } from "@/utilities/whitelabel-context";
 
 const AdminCommunityHeader = ({ community }: { community: Community }) => {
@@ -44,11 +43,9 @@ const AdminCommunityHeader = ({ community }: { community: Community }) => {
 const NormalCommunityHeader = ({ community }: { community: Community }) => {
   const _pathname = usePathname();
   const _params = useParams();
-  const { isWhitelabel, communitySlug } = useWhitelabel();
-
-  const wlConfig = communitySlug ? getWhitelabelBySlug(communitySlug) : null;
+  const { isWhitelabel, config } = useWhitelabel();
   const logoBg =
-    wlConfig?.theme?.logoBackground ??
+    config?.theme?.logoBackground ??
     communityColors[(community as Community)?.uid?.toLowerCase() || "black"] ??
     "#000000";
 

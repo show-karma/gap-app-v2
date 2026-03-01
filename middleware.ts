@@ -21,7 +21,6 @@ export async function middleware(request: NextRequest) {
     }
 
     const { communitySlug, tenantId } = whitelabel;
-    const isRoot = path === "/" || path === "";
 
     // Strip existing /community/<slug> prefix to avoid double-prefixing.
     // Components generate hrefs like `/community/optimism/programs/123` which
@@ -44,6 +43,7 @@ export async function middleware(request: NextRequest) {
     requestHeaders.set("x-is-whitelabel", "true");
     requestHeaders.set("x-community-slug", communitySlug);
     requestHeaders.set("x-tenant-id", tenantId || communitySlug);
+    requestHeaders.set("x-whitelabel-domain", whitelabel.domain);
 
     return NextResponse.rewrite(url, {
       request: { headers: requestHeaders },

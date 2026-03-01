@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import { getTenantConfig } from "@/src/infrastructure/config/tenant-config";
 import type { TenantConfig } from "@/src/infrastructure/types/tenant";
 import { isKnownTenant } from "@/src/infrastructure/types/tenant";
-import { getWhitelabelBySlug, type WhitelabelDomain } from "./whitelabel-config";
+import { getWhitelabelByDomain, type WhitelabelDomain } from "./whitelabel-config";
 
 export interface WhitelabelContext {
   isWhitelabel: boolean;
@@ -14,9 +14,12 @@ export interface WhitelabelContext {
 export async function getWhitelabelContext(): Promise<WhitelabelContext> {
   const headersList = await headers();
   const isWhitelabel = headersList.get("x-is-whitelabel") === "true";
-  const communitySlug = headersList.get("x-community-slug");
-  const tenantId = headersList.get("x-tenant-id");
-  const config = communitySlug ? getWhitelabelBySlug(communitySlug) : null;
+  const incomingCommunitySlug = headersList.get("x-community-slug");
+  const whitelabelDomain = headersList.get("x-whitelabel-domain") ?? headersList.get("host") ?? "";
+  const config = isWhitelabel ? getWhitelabelByDomain(whitelabelDomain) : null;
+
+  const communitySlug = config?.communitySlug ?? incomingCommunitySlug;
+  const tenantId = config?.tenantId ?? headersList.get("x-tenant-id") ?? communitySlug;
 
   let tenantConfig: TenantConfig | null = null;
   if (isWhitelabel && tenantId) {

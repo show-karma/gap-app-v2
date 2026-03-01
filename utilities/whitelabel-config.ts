@@ -9,8 +9,7 @@ export interface WhitelabelDomain {
   };
 }
 
-export const WHITELABEL_DOMAINS: WhitelabelDomain[] = [
-  // Optimism
+const DEFAULT_WHITELABEL_DOMAINS: WhitelabelDomain[] = [
   {
     domain: "app.opgrants.io",
     communitySlug: "optimism",
@@ -25,7 +24,6 @@ export const WHITELABEL_DOMAINS: WhitelabelDomain[] = [
     name: "Optimism (Test)",
     theme: { primaryColor: "#FF0420" },
   },
-  // Polygon
   {
     domain: "founders.polygon.technology",
     communitySlug: "polygon",
@@ -40,7 +38,6 @@ export const WHITELABEL_DOMAINS: WhitelabelDomain[] = [
     name: "Polygon (Test)",
     theme: { primaryColor: "#8247E5" },
   },
-  // Scroll
   {
     domain: "grantsapp.scroll.io",
     communitySlug: "scroll",
@@ -48,7 +45,6 @@ export const WHITELABEL_DOMAINS: WhitelabelDomain[] = [
     name: "Scroll",
     theme: { primaryColor: "#EBC28E" },
   },
-  // Filecoin
   {
     domain: "grants.filecoin.io",
     communitySlug: "filecoin",
@@ -65,13 +61,136 @@ export const WHITELABEL_DOMAINS: WhitelabelDomain[] = [
   },
 ];
 
-export function getWhitelabelByDomain(hostname: string): WhitelabelDomain | null {
-  const normalizedHost = hostname.split(":")[0].toLowerCase();
-  return WHITELABEL_DOMAINS.find((d) => d.domain === normalizedHost) ?? null;
+function parseExtraWhitelabelDomainsFromEnv(): WhitelabelDomain[] {
+  const rawExtraDomains = process.env.WHITELABEL_EXTRA_DOMAINS_JSON;
+  if (!rawExtraDomains) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(rawExtraDomains) as unknown;
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed.flatMap((entry) => {
+      if (!entry || typeof entry !== "object") {
+        return [];
+      }
+
+      const record = entry as Record<string, unknown>;
+      const domain = typeof record.domain === "string" ? record.domain.trim().toLowerCase() : "";
+      const communitySlug =
+        typeof record.communitySlug === "string" ? record.communitySlug.trim() : "";
+      const tenantId = typeof record.tenantId === "string" ? record.tenantId.trim() : undefined;
+      const name = typeof record.name === "string" ? record.name.trim() : "";
+
+      if (!domain || !communitySlug || !name) {
+        return [];
+      }
+
+      const themeRecord =
+        record.theme && typeof record.theme === "object"
+          ? (record.theme as Record<string, unknown>)
+          : null;
+
+      const primaryColor =
+        typeof themeRecord?.primaryColor === "string" ? themeRecord.primaryColor : undefined;
+      const logoBackground =
+        typeof themeRecord?.logoBackground === "string" ? themeRecord.logoBackground : undefined;
+
+      return [
+        {
+          domain,
+          communitySlug,
+          tenantId,
+          name,
+          theme:
+            primaryColor || logoBackground
+              ? {
+                  primaryColor,
+                  logoBackground,
+                }
+              : undefined,
+        },
+      ];
+    });
+  } catch {
+    return [];
+  }
 }
 
-export function getWhitelabelBySlug(slug: string): WhitelabelDomain | null {
-  return WHITELABEL_DOMAINS.find((d) => d.communitySlug === slug) ?? null;
+export const WHITELABEL_DOMAINS: WhitelabelDomain[] = [
+  ...DEFAULT_WHITELABEL_DOMAINS,
+  ...parseExtraWhitelabelDomainsFromEnv(),
+];
+
+export function getWhitelabelByDomain(hostname: string): WhitelabelDomain | null {
+  const normalizedHost = hostname.split(":")[0]?.toLowerCase();
+  return WHITELABEL_DOMAINS.find((d) => d.domain.toLowerCase() === normalizedHost) ?? null;
+}
+
+const HSL_TOKEN_PATTERN = /^\d{1,3}\s+\d{1,3}%\s+\d{1,3}%$/;
+
+function hexToHslToken(hex: string): string | null {
+  const normalizedHex = hex.replace("#", "").trim();
+
+  const isShortHex = normalizedHex.length === 3;
+  const isLongHex = normalizedHex.length === 6;
+  if (!isShortHex && !isLongHex) return null;
+
+  const fullHex = isShortHex
+    ? normalizedHex
+        .split("")
+        .map((char) => `${char}${char}`)
+        .join("")
+    : normalizedHex;
+
+  const r = Number.parseInt(fullHex.slice(0, 2), 16) / 255;
+  const g = Number.parseInt(fullHex.slice(2, 4), 16) / 255;
+  const b = Number.parseInt(fullHex.slice(4, 6), 16) / 255;
+
+  if ([r, g, b].some(Number.isNaN)) return null;
+
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const delta = max - min;
+
+  let h = 0;
+  if (delta !== 0) {
+    if (max === r) {
+      h = ((g - b) / delta) % 6;
+    } else if (max === g) {
+      h = (b - r) / delta + 2;
+    } else {
+      h = (r - g) / delta + 4;
+    }
+    h *= 60;
+    if (h < 0) h += 360;
+  }
+
+  const l = (max + min) / 2;
+  const s = delta === 0 ? 0 : delta / (1 - Math.abs(2 * l - 1));
+
+  const hue = Math.round(h);
+  const saturation = Math.round(s * 100);
+  const lightness = Math.round(l * 100);
+
+  return `${hue} ${saturation}% ${lightness}%`;
+}
+
+export function toHslToken(color: string): string | null {
+  const normalizedColor = color.trim();
+
+  if (HSL_TOKEN_PATTERN.test(normalizedColor)) {
+    return normalizedColor;
+  }
+
+  if (normalizedColor.startsWith("#")) {
+    return hexToHslToken(normalizedColor);
+  }
+
+  return null;
 }
 
 export function isWhitelabelDomain(hostname: string): boolean {

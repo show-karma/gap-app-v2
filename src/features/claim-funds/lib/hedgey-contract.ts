@@ -1,4 +1,3 @@
-import { parse as uuidParse } from "uuid";
 import { toHex } from "viem";
 
 /**
@@ -137,8 +136,23 @@ export function getHedgeyContractAddress(networkName: string): `0x${string}` {
  * Convert a UUID string to bytes16 hex format for contract calls
  */
 export function uuidToBytes16(uuid: string): `0x${string}` {
-  const parsed = uuidParse(uuid);
-  return toHex(new Uint8Array(parsed));
+  const normalized = uuid.trim().toLowerCase();
+  const isUuidV4Like = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(
+    normalized
+  );
+
+  if (!isUuidV4Like) {
+    throw new Error(`Invalid UUID format: ${uuid}`);
+  }
+
+  const hex = normalized.replace(/-/g, "");
+  const bytes = new Uint8Array(16);
+
+  for (let i = 0; i < 16; i++) {
+    bytes[i] = Number.parseInt(hex.slice(i * 2, i * 2 + 2), 16);
+  }
+
+  return toHex(bytes);
 }
 
 /**

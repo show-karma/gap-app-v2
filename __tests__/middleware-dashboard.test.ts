@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import { middleware } from "@/middleware";
+import { WHITELABEL_DOMAINS } from "@/utilities/whitelabel-config";
 
 jest.mock("next/server", () => {
   const actual = jest.requireActual("next/server");
@@ -10,6 +11,11 @@ jest.mock("next/server", () => {
         const headers = new Headers();
         headers.set("location", url.toString());
         return { headers, status };
+      },
+      rewrite: (url: URL) => {
+        const headers = new Headers();
+        headers.set("x-middleware-rewrite", url.toString());
+        return { headers, status: 200 };
       },
       next: () => ({ headers: new Headers(), status: 200 }),
     },
@@ -25,12 +31,21 @@ jest.mock("@/utilities/chosenCommunities", () => ({
   chosenCommunities: () => [],
 }));
 
-const createRequest = (path: string) =>
-  ({
-    nextUrl: { pathname: path },
-    url: `http://localhost${path}`,
-    headers: new Headers({ host: "localhost" }),
-  }) as NextRequest;
+const createRequest = (path: string) => createRequestWithHost(path, "localhost");
+const primaryWhitelabel = WHITELABEL_DOMAINS[0];
+
+const createRequestWithHost = (path: string, host: string) => {
+  const requestUrl = new URL(`http://${host}${path}`);
+
+  return {
+    nextUrl: {
+      pathname: path,
+      clone: () => new URL(requestUrl.toString()),
+    },
+    headers: new Headers({ host }),
+    url: requestUrl.toString(),
+  } as NextRequest;
+};
 
 describe("middleware dashboard redirects", () => {
   it("redirects /my-projects to /dashboard#projects", async () => {
@@ -54,6 +69,36 @@ describe("middleware dashboard redirects", () => {
   it("does not redirect /admin routes", async () => {
     const response = await middleware(createRequest("/admin/settings"));
 
+    expect(response?.headers.get("location")).toBeNull();
+  });
+
+  it("rewrites whitelabel /project routes to community project routes", async () => {
+    if (!primaryWhitelabel) {
+      throw new Error("No whitelabel domain configured for middleware tests.");
+    }
+
+    const response = await middleware(
+      createRequestWithHost("/project/test-project", primaryWhitelabel.domain)
+    );
+
+    expect(response?.headers.get("x-middleware-rewrite")).toBe(
+      `http://${primaryWhitelabel.domain}/community/${primaryWhitelabel.communitySlug}/project/test-project`
+    );
+    expect(response?.headers.get("location")).toBeNull();
+  });
+
+  it("rewrites other whitelabel paths instead of redirecting", async () => {
+    if (!primaryWhitelabel) {
+      throw new Error("No whitelabel domain configured for middleware tests.");
+    }
+
+    const response = await middleware(
+      createRequestWithHost("/admin/settings", primaryWhitelabel.domain)
+    );
+
+    expect(response?.headers.get("x-middleware-rewrite")).toBe(
+      `http://${primaryWhitelabel.domain}/community/${primaryWhitelabel.communitySlug}/admin/settings`
+    );
     expect(response?.headers.get("location")).toBeNull();
   });
 });
