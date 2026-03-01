@@ -1,14 +1,7 @@
 "use client";
 
 import type { LucideIcon } from "lucide-react";
-import {
-  FileText,
-  Globe,
-  MessageCircle,
-  MessageSquare,
-  Send,
-  Twitter,
-} from "lucide-react";
+import { FileText, Globe, MessageCircle, MessageSquare, Send, Twitter } from "lucide-react";
 import Link from "next/link";
 
 interface SocialLinksData {
@@ -39,12 +32,15 @@ interface SocialLinksProps {
   socialLinks?: SocialLinksData;
 }
 
+function normalizeUrl(url: string): string {
+  if (/^https?:\/\//i.test(url)) return url;
+  return `https://${url}`;
+}
+
 export function SocialLinks({ socialLinks }: SocialLinksProps) {
   if (!socialLinks) return null;
 
-  const visibleLinks = SOCIAL_NETWORKS.filter(
-    (network) => socialLinks[network.key],
-  );
+  const visibleLinks = SOCIAL_NETWORKS.filter((network) => socialLinks[network.key]);
 
   if (visibleLinks.length === 0) return null;
 
@@ -53,7 +49,7 @@ export function SocialLinks({ socialLinks }: SocialLinksProps) {
       {visibleLinks.map(({ key, icon: Icon, label }) => (
         <Link
           key={key}
-          href={socialLinks[key]!}
+          href={normalizeUrl(socialLinks[key]!)}
           target="_blank"
           rel="noopener noreferrer"
           aria-label={`Visit ${label}`}

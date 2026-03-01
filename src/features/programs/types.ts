@@ -1,7 +1,4 @@
-import type {
-  FundingProgram,
-  ProgramFilters,
-} from "@/types/whitelabel-entities";
+import type { FundingProgram, ProgramFilters } from "@/types/whitelabel-entities";
 
 // UI State types
 export interface ProgramsUIState {
@@ -26,6 +23,7 @@ export interface ProgramListProps {
   loading?: boolean;
   error?: Error | null;
   viewMode?: "grid" | "list";
+  onRetry?: () => void;
   onApply?: (programId: string) => void;
   onViewDetails?: (programId: string) => void;
 }

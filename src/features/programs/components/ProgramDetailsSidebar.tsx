@@ -60,28 +60,26 @@ export function ProgramDetailsSidebar({
         {/* Apply Section */}
         <h2 className="mb-4 hidden text-3xl font-semibold text-muted-foreground md:block">Apply</h2>
         <div className="flex flex-row gap-2">
-          <Link
-            href={isEnabled ? applyUrl : "#"}
-            aria-disabled={!isEnabled}
-            className={`flex-1 ${!isEnabled ? "pointer-events-none opacity-50" : ""}`}
-          >
-            <button
-              type="button"
-              disabled={!isEnabled}
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+          {isEnabled ? (
+            <Link
+              href={applyUrl}
+              className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
             >
-              {isEnabled ? "Apply now" : getProgramDisabledReason(program) || "Application closed"}
+              Apply now
               <ChevronRight className="h-4 w-4" aria-hidden="true" />
-            </button>
-          </Link>
+            </Link>
+          ) : (
+            <span className="flex flex-1 cursor-not-allowed items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 font-semibold text-primary-foreground opacity-50">
+              {getProgramDisabledReason(program) || "Application closed"}
+              <ChevronRight className="h-4 w-4" aria-hidden="true" />
+            </span>
+          )}
           {hasFormConfig && !isPrivate ? (
-            <Link href={applicationsUrl} className="flex-1">
-              <button
-                type="button"
-                className="w-full rounded-lg border border-primary px-4 py-2.5 font-medium text-primary transition-colors hover:bg-primary/10"
-              >
-                View applications
-              </button>
+            <Link
+              href={applicationsUrl}
+              className="flex flex-1 items-center justify-center rounded-lg border border-primary px-4 py-2.5 font-medium text-primary transition-colors hover:bg-primary/10"
+            >
+              View applications
             </Link>
           ) : null}
         </div>

@@ -1,12 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
-import fetchData from "@/utilities/fetchData";
 import type { FundingProgram, ProgramFilters } from "@/types/whitelabel-entities";
+import fetchData from "@/utilities/fetchData";
 import { useProgramsStore } from "../lib/store";
 import type { UseProgramsReturn } from "../types";
 
 export function usePrograms(
   communityId: string,
-  initialFilters?: ProgramFilters,
+  initialFilters?: ProgramFilters
 ): UseProgramsReturn {
   const { filters: storeFilters, setFilters } = useProgramsStore();
   const filters = { ...initialFilters, ...storeFilters };
@@ -14,13 +14,18 @@ export function usePrograms(
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["wl-programs", communityId, filters],
     queryFn: async () => {
+      const params = new URLSearchParams();
+      params.set("page", String(filters.page || 1));
+      params.set("limit", String(filters.limit || 20));
+      if (filters.status) params.set("status", filters.status);
+      if (filters.search) params.set("search", filters.search);
       const [res, err] = await fetchData<FundingProgram[]>(
-        `/v2/funding-program-configs/community/${communityId}?page=${filters.page || 1}&limit=${filters.limit || 20}`,
+        `/v2/funding-program-configs/community/${communityId}?${params.toString()}`,
         "GET",
         {},
         {},
         {},
-        true,
+        true
       );
       if (err) throw new Error(err);
       return res;

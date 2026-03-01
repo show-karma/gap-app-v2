@@ -43,10 +43,6 @@ export function CommentTimeline({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  if (!canViewComments) {
-    return null;
-  }
-
   // Combine comments with status history for unified timeline
   const timelineItems = useMemo(() => {
     const items = [
@@ -60,6 +56,10 @@ export function CommentTimeline({
       return dateA - dateB;
     });
   }, [comments, statusHistory]);
+
+  if (!canViewComments) {
+    return null;
+  }
 
   const handleSubmit = async () => {
     if (!newComment.trim() || isSubmitting) return;
@@ -157,7 +157,10 @@ export function CommentTimeline({
                     );
                   }
                   return (
-                    <div key={`status-${item.timestamp}`} data-testid={`timeline-item-status-${index}`}>
+                    <div
+                      key={`status-${item.timestamp}`}
+                      data-testid={`timeline-item-status-${index}`}
+                    >
                       <StatusChangeItem status={item} />
                     </div>
                   );

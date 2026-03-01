@@ -8,14 +8,8 @@ import { usePrograms } from "@/features/programs/hooks/use-programs";
 export default function ProgramsPage() {
   const { communityId } = useParams<{ communityId: string }>();
 
-  const {
-    programs,
-    loading,
-    error,
-    filters,
-    setFilters,
-    totalCount,
-  } = usePrograms(communityId);
+  const { programs, loading, error, filters, setFilters, totalCount, refetch } =
+    usePrograms(communityId);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
@@ -27,11 +21,7 @@ export default function ProgramsPage() {
       </div>
 
       <div className="mb-6">
-        <ProgramFilters
-          filters={filters}
-          onChange={setFilters}
-          totalCount={totalCount}
-        />
+        <ProgramFilters filters={filters} onChange={setFilters} totalCount={totalCount} />
       </div>
 
       <ProgramList
@@ -39,6 +29,7 @@ export default function ProgramsPage() {
         communityId={communityId}
         loading={loading}
         error={error}
+        onRetry={refetch}
       />
     </div>
   );

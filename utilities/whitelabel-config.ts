@@ -63,18 +63,10 @@ export const WHITELABEL_DOMAINS: WhitelabelDomain[] = [
     name: "Filecoin PGF",
     theme: { primaryColor: "#0090ff" },
   },
-  // Local development
-  {
-    domain: "test-wl.local",
-    communitySlug: "optimism",
-    tenantId: "optimism",
-    name: "Test Optimism",
-    theme: { primaryColor: "#FF0420" },
-  },
 ];
 
 export function getWhitelabelByDomain(hostname: string): WhitelabelDomain | null {
-  const normalizedHost = hostname.split(":")[0];
+  const normalizedHost = hostname.split(":")[0].toLowerCase();
   return WHITELABEL_DOMAINS.find((d) => d.domain === normalizedHost) ?? null;
 }
 

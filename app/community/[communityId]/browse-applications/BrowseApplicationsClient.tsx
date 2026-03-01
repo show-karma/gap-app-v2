@@ -426,7 +426,7 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
             ) : error ? (
               <div className="rounded-xl border border-border p-8 text-center">
                 <p className="mb-4 text-red-600 dark:text-red-400">
-                  Error: {error instanceof Error ? error.message : "Failed to load"}
+                  Something went wrong while loading applications. Please try again.
                 </p>
                 <button
                   type="button"

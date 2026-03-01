@@ -58,18 +58,32 @@ interface UrlRendererProps {
   value: string;
 }
 
+function isSafeUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "https:" || parsed.protocol === "http:";
+  } catch {
+    return false;
+  }
+}
+
 export function UrlRenderer({ label, value }: UrlRendererProps) {
+  const safe = isSafeUrl(value);
   return (
     <div className="space-y-1">
       <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{label}</p>
-      <a
-        href={value}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-sm text-primary hover:underline"
-      >
-        {value}
-      </a>
+      {safe ? (
+        <a
+          href={value}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-sm text-primary hover:underline"
+        >
+          {value}
+        </a>
+      ) : (
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">{value}</p>
+      )}
     </div>
   );
 }

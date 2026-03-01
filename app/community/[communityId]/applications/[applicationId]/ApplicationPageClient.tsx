@@ -239,16 +239,22 @@ export function ApplicationPageClient({ communityId, applicationId }: Applicatio
                       "No"
                     )
                   ) : Array.isArray(value) ? (
-                    <div className="flex flex-wrap gap-2">
-                      {value.map((item, index) => (
-                        <span
-                          key={`${key}-${index}`}
-                          className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium"
-                        >
-                          {String(item)}
-                        </span>
-                      ))}
-                    </div>
+                    value.some((item) => typeof item === "object" && item !== null) ? (
+                      <pre className="overflow-x-auto rounded-lg bg-muted p-3 text-sm">
+                        {JSON.stringify(value, null, 2)}
+                      </pre>
+                    ) : (
+                      <div className="flex flex-wrap gap-2">
+                        {value.map((item, index) => (
+                          <span
+                            key={`${key}-${index}`}
+                            className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium"
+                          >
+                            {String(item)}
+                          </span>
+                        ))}
+                      </div>
+                    )
                   ) : typeof value === "object" && value !== null ? (
                     <pre className="overflow-x-auto rounded-lg bg-muted p-3 text-sm">
                       {JSON.stringify(value, null, 2)}

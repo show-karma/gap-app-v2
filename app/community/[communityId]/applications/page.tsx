@@ -13,7 +13,8 @@ export default function UserApplicationsPage() {
 
   useEffect(() => {
     router.replace(`/community/${params.communityId}/my-applications`);
-  }, [params.communityId, router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- router is stable but creates new ref each render
+  }, [params.communityId]);
 
   return (
     <div className="flex min-h-[60vh] items-center justify-center">
