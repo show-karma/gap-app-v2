@@ -2,7 +2,7 @@
 
 import { BanknotesIcon } from "@heroicons/react/24/outline";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { Button } from "@/components/ui/button";
@@ -56,6 +56,14 @@ export function ControlCenterPage() {
     | "COMPLETED"
     | undefined;
   const kycFilter = searchParams.get("kycStatus") || undefined;
+  const filterSignature = JSON.stringify({
+    selectedProgramId,
+    agreementFilter,
+    invoiceFilter,
+    disbursementFilter,
+    kycFilter,
+    searchQuery,
+  });
 
   // Local state
   const [localSearch, setLocalSearch] = useState(searchQuery);
@@ -118,6 +126,25 @@ export function ControlCenterPage() {
     },
     [searchParams]
   );
+
+  const previousFilterSignature = useRef(filterSignature);
+
+  // Safety net: whenever any filter changes, force page back to 1.
+  // This covers cases where a child component updates query params directly.
+  useEffect(() => {
+    if (previousFilterSignature.current === filterSignature) {
+      return;
+    }
+
+    previousFilterSignature.current = filterSignature;
+
+    if (currentPage === 1) {
+      return;
+    }
+
+    const query = createQueryString({ page: "1" });
+    router.replace(`${pathname}?${query}`);
+  }, [createQueryString, currentPage, filterSignature, pathname, router]);
 
   // ─── Data fetching (extracted hook) ───────────────────────────────────────
 
@@ -613,6 +640,7 @@ export function ControlCenterPage() {
       {selectedGrants.size > 0 && (
         <div className="fixed bottom-6 right-6 z-40 animate-in slide-in-from-bottom-4 fade-in duration-300">
           <button
+            type="button"
             onClick={handleOpenDisbursementModal}
             className="flex items-center gap-3 px-6 py-4 bg-brand-blue hover:bg-brand-blue/80 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 text-base font-semibold"
           >
