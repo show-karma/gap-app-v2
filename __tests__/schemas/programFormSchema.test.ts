@@ -514,7 +514,7 @@ describe("createProgramSchema", () => {
 });
 
 describe("updateProgramSchema", () => {
-  it("should allow empty admin emails when finance emails are provided", () => {
+  it("should require at least one admin email", () => {
     const result = updateProgramSchema.safeParse({
       name: "Test Program",
       description: "Test description",
@@ -525,16 +525,34 @@ describe("updateProgramSchema", () => {
       financeEmails: ["finance@example.com"],
     });
 
-    expect(result.success).toBe(true);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const adminError = result.error.errors.find((err) => err.path.includes("adminEmails"));
+      expect(adminError?.message).toBe("At least one admin email is required");
+    }
   });
 
-  it("should allow omitting admin emails", () => {
+  it("should reject omitting admin emails", () => {
     const result = updateProgramSchema.safeParse({
       name: "Test Program",
       description: "Test description",
       shortDescription: "Short desc",
       invoiceRequired: false,
       dates: {},
+      financeEmails: ["finance@example.com"],
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("should accept valid admin emails when provided", () => {
+    const result = updateProgramSchema.safeParse({
+      name: "Test Program",
+      description: "Test description",
+      shortDescription: "Short desc",
+      invoiceRequired: false,
+      dates: {},
+      adminEmails: ["admin@example.com"],
       financeEmails: ["finance@example.com"],
     });
 
@@ -560,7 +578,7 @@ describe("updateProgramSchema", () => {
       description: "Test description",
       shortDescription: "Short desc",
       dates: {},
-      adminEmails: [],
+      adminEmails: ["admin@example.com"],
       financeEmails: [],
     });
 
