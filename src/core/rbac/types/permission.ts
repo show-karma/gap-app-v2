@@ -51,3 +51,19 @@ export function isValidPermission(permission: string): permission is Permission 
 }
 
 export type PermissionString = Permission | "*" | `${string}:*`;
+
+/**
+ * Returns true if the pattern grants the given permission.
+ * Supports:
+ *  - `"*"` — global wildcard (grants everything)
+ *  - `"resource:*"` — resource wildcard (grants all actions on that resource)
+ *  - exact `Permission` value — only grants that specific permission
+ */
+export function permissionMatches(pattern: PermissionString, permission: Permission): boolean {
+  if (pattern === "*") return true;
+  if (pattern.endsWith(":*")) {
+    const prefix = pattern.slice(0, -1); // "community:*" → "community:"
+    return permission.startsWith(prefix);
+  }
+  return pattern === permission;
+}
