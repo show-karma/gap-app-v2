@@ -2,7 +2,7 @@ import { getTenantForExclusiveDomain } from "../config/domain-constants";
 import { getDomainMappingBySlug, isSharedSubdomain } from "../config/domain-mapping";
 import type { TenantDetectionRequest, TenantId } from "../types/tenant";
 
-function extractCommunityFromPath(pathname: string): TenantId | null {
+export function extractCommunityFromPath(pathname: string): TenantId | null {
   if (!pathname) return null;
   const firstSegment = pathname.split("/").filter(Boolean)[0];
   if (!firstSegment) return null;
