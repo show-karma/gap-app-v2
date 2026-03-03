@@ -666,4 +666,8 @@ export const INDEXER = {
     GET_FORM_URL: (communityIdOrSlug: string) =>
       `/v2/communities/${communityIdOrSlug}/kyc-form-url`,
   },
+  USERS: {
+    RESOLVE_EMAIL: `/v2/user/resolve-email`,
+    PROFILES: (addresses: string) => `/v2/user/profiles?addresses=${addresses}`,
+  },
 };
