@@ -255,7 +255,9 @@ export function BulkPayoutImportPanel({
 
             <p className="text-sm text-gray-600 dark:text-zinc-400">
               Matching priority: grantUID, projectUID, projectSlug/projectURL, then projectName.
-              Ambiguous or invalid rows are blocked until fixed.
+              Name/slug matching applies to the currently loaded page only; for other pages use
+              grantUID + projectUID (included in the template). Ambiguous or invalid rows are
+              blocked until fixed.
             </p>
 
             {mode === "upload" ? (

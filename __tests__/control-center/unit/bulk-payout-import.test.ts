@@ -491,6 +491,67 @@ describe("bulkPayoutImport utilities", () => {
     });
   });
 
+  describe("pagination-limited matching", () => {
+    // The BulkPayoutImportPanel receives only the current page's data (e.g. 25 of 485 rows).
+    // Name/slug matching is limited to these loaded rows. Direct UID pairs bypass this.
+    const pageOneRows: TableRow[] = [tableRows[0]]; // Only Alpha Project loaded
+
+    it("name match fails for projects not on the current page", () => {
+      const rows = [
+        {
+          rowNumber: 2,
+          grantUID: "",
+          projectUID: "",
+          projectSlug: "",
+          projectName: "Beta Project", // exists but not in pageOneRows
+          payoutAddress: "0x1111111111111111111111111111111111111111",
+          amount: "100",
+        },
+      ];
+      const validated = validateAndMatchImportRows(rows, pageOneRows);
+      expect(validated[0].status).toBe("invalid");
+      expect(validated[0].errors).toContain("Project name not found");
+    });
+
+    it("direct UID pair still works for off-page projects", () => {
+      const rows = [
+        {
+          rowNumber: 2,
+          grantUID: "grant-beta-1",
+          projectUID: "project-beta",
+          projectSlug: "",
+          projectName: "",
+          payoutAddress: "0x1111111111111111111111111111111111111111",
+          amount: "100",
+        },
+      ];
+      const validated = validateAndMatchImportRows(rows, pageOneRows);
+      expect(validated[0].status).toBe("valid");
+      expect(validated[0].target).toMatchObject({
+        grantUID: "grant-beta-1",
+        projectUID: "project-beta",
+        matchedBy: "direct_uid_pair",
+      });
+    });
+
+    it("slug match fails for projects not on the current page", () => {
+      const rows = [
+        {
+          rowNumber: 2,
+          grantUID: "",
+          projectUID: "",
+          projectSlug: "beta-project",
+          projectName: "",
+          payoutAddress: "0x1111111111111111111111111111111111111111",
+          amount: "100",
+        },
+      ];
+      const validated = validateAndMatchImportRows(rows, pageOneRows);
+      expect(validated[0].status).toBe("invalid");
+      expect(validated[0].errors).toContain("Project slug/url not found");
+    });
+  });
+
   describe("summarizeSaveResponse", () => {
     const makeGrantConfig = (grantUID: string) => ({
       id: "id-1",
