@@ -24,7 +24,6 @@ export function DialogTypeSection({ program }: DialogTypeSectionProps) {
       return <VcFundSection program={program} />;
     case "rfp":
       return <RfpSection program={program} />;
-    case "grant":
     default:
       return null;
   }
@@ -179,7 +178,7 @@ function AcceleratorSection({ program }: { program: FundingProgramResponse }) {
         <DetailRow label="Stage" value={<span className="capitalize">{meta.stage}</span>} />
       )}
       {meta.equity && <DetailRow label="Equity" value={meta.equity} />}
-      {meta.funding && (
+      {meta.funding && !Number.isNaN(Number(meta.funding.amount)) && (
         <DetailRow label="Funding" value={`$${formatCurrency(Number(meta.funding.amount))}`} />
       )}
       {meta.programDuration && (
@@ -188,7 +187,12 @@ function AcceleratorSection({ program }: { program: FundingProgramResponse }) {
           value={`${meta.programDuration} ${meta.programDuration === 1 ? "month" : "months"}`}
         />
       )}
-      {meta.batchSize && <DetailRow label="Batch Size" value={`${meta.batchSize} companies`} />}
+      {meta.batchSize && (
+        <DetailRow
+          label="Batch Size"
+          value={`${meta.batchSize} ${meta.batchSize === 1 ? "company" : "companies"}`}
+        />
+      )}
       {meta.location && <DetailRow label="Location" value={meta.location} />}
       {meta.applicationDeadline && (
         <DetailRow
@@ -251,7 +255,7 @@ function RfpSection({ program }: { program: FundingProgramResponse }) {
   return (
     <SectionCard label="RFP Details">
       <DetailRow label="Issuing Organization" value={meta.issuingOrganization} />
-      {meta.budget && (
+      {meta.budget && !Number.isNaN(Number(meta.budget.amount)) && (
         <DetailRow label="Budget" value={`$${formatCurrency(Number(meta.budget.amount))}`} />
       )}
       {meta.scope && <DetailRow label="Scope" value={meta.scope} />}

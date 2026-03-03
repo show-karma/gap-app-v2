@@ -52,9 +52,8 @@ export function FundingMapFilters({ totalCount = 0 }: FundingMapFiltersProps) {
   // Build result count text based on selected type
   const singleSelectedType =
     filters.selectedTypes.length === 1 ? (filters.selectedTypes[0] as OpportunityType) : null;
-  const resultLabel = singleSelectedType
-    ? OPPORTUNITY_TYPE_LABELS[singleSelectedType].toLowerCase()
-    : null;
+  const typeLabel = singleSelectedType ? OPPORTUNITY_TYPE_LABELS[singleSelectedType] : null;
+  const resultLabel = typeLabel ? typeLabel.toLowerCase() : null;
 
   return (
     <div className="flex w-full flex-wrap items-center justify-between gap-2 rounded-xl border border-border p-3">

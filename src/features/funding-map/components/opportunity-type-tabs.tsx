@@ -35,11 +35,7 @@ export function OpportunityTypeTabs() {
   }
 
   return (
-    <div
-      className="flex flex-wrap items-center gap-1.5"
-      role="tablist"
-      aria-label="Filter by opportunity type"
-    >
+    <div className="flex flex-wrap items-center gap-1.5">
       <TypeChip
         label="All"
         count={isError ? undefined : totalCount}
@@ -93,8 +89,7 @@ function TypeChip({
   return (
     <button
       type="button"
-      role="tab"
-      aria-selected={isActive}
+      aria-pressed={isActive}
       className={cn(
         "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors cursor-pointer",
         "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",

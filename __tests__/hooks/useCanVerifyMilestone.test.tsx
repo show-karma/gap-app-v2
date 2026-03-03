@@ -1,7 +1,7 @@
 import { renderHook } from "@testing-library/react";
-import { useCanVerifyMilestone } from "@/hooks/useCanVerifyMilestone";
-import { useAuth } from "@/hooks/useAuth";
 import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
+import { useAuth } from "@/hooks/useAuth";
+import { useCanVerifyMilestone } from "@/hooks/useCanVerifyMilestone";
 import { useIsReviewer } from "@/hooks/usePermissions";
 import { useOwnerStore, useProjectStore } from "@/store";
 
@@ -28,14 +28,16 @@ const mockUseIsReviewer = useIsReviewer as unknown as jest.Mock;
 const mockUseOwnerStore = useOwnerStore as unknown as jest.Mock;
 const mockUseProjectStore = useProjectStore as unknown as jest.Mock;
 
-function setupMocks(overrides: {
-  authenticated?: boolean;
-  isOwner?: boolean;
-  isProjectAdmin?: boolean;
-  isProjectOwner?: boolean;
-  isCommunityAdmin?: boolean;
-  isReviewer?: boolean;
-} = {}) {
+function setupMocks(
+  overrides: {
+    authenticated?: boolean;
+    isOwner?: boolean;
+    isProjectAdmin?: boolean;
+    isProjectOwner?: boolean;
+    isCommunityAdmin?: boolean;
+    isReviewer?: boolean;
+  } = {}
+) {
   const {
     authenticated = true,
     isOwner = false,
@@ -46,9 +48,7 @@ function setupMocks(overrides: {
   } = overrides;
 
   mockUseAuth.mockReturnValue({ authenticated });
-  mockUseOwnerStore.mockImplementation((selector: (s: any) => any) =>
-    selector({ isOwner })
-  );
+  mockUseOwnerStore.mockImplementation((selector: (s: any) => any) => selector({ isOwner }));
   mockUseProjectStore.mockImplementation((selector: (s: any) => any) =>
     selector({ isProjectAdmin, isProjectOwner })
   );

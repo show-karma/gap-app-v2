@@ -69,14 +69,15 @@ export function HackathonFields({
           control={control}
           render={({ field }) => (
             <div className="flex w-full flex-col gap-1">
-              <label htmlFor="hackathon-reg-deadline" className={labelStyle}>
+              <span id="hackathon-reg-deadline-label" className={labelStyle}>
                 Registration Deadline
-              </label>
+              </span>
               <DateTimePicker
                 selected={field.value}
                 onSelect={(date: Date | undefined) => field.onChange(date)}
                 placeholder="Pick a date"
                 timeMode="end"
+                aria-labelledby="hackathon-reg-deadline-label"
               />
             </div>
           )}

@@ -2,6 +2,16 @@ import { z } from "zod";
 import { MESSAGES } from "@/utilities/messages";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
 
+/**
+ * Preprocessor for optional numeric fields.
+ * z.coerce.number().optional() coerces "" to 0 instead of undefined.
+ * This handles empty strings and undefined correctly by converting them to undefined.
+ */
+const optionalNumber = z.preprocess(
+  (val) => (val === "" || val === undefined || val === null ? undefined : Number(val)),
+  z.number().optional()
+);
+
 export const OPPORTUNITY_TYPE_OPTIONS = [
   { value: "grant", label: "Grant" },
   { value: "hackathon", label: "Hackathon" },
@@ -14,19 +24,19 @@ export const OPPORTUNITY_TYPE_OPTIONS = [
 // --- Type-specific metadata sub-schemas ---
 export const hackathonMetadataSchema = z
   .object({
-    location: z.string().min(1, "Location is required").or(z.literal("")),
+    location: z.string().optional().or(z.literal("")),
     tracks: z.string().optional().or(z.literal("")),
-    prizePool: z.coerce.number().optional(),
+    prizePool: optionalNumber,
     prizeCurrency: z.string().optional().or(z.literal("USD")),
     registrationDeadline: z.date().optional(),
-    teamSizeMin: z.coerce.number().optional(),
-    teamSizeMax: z.coerce.number().optional(),
+    teamSizeMin: optionalNumber,
+    teamSizeMax: optionalNumber,
   })
   .optional();
 
 export const bountyMetadataSchema = z
   .object({
-    rewardAmount: z.coerce.number().min(1, "Reward amount is required"),
+    rewardAmount: optionalNumber,
     rewardCurrency: z.string().optional().or(z.literal("USD")),
     difficulty: z.enum(["beginner", "intermediate", "advanced"]).optional(),
     skills: z.string().optional().or(z.literal("")),
@@ -38,10 +48,10 @@ export const acceleratorMetadataSchema = z
   .object({
     stage: z.enum(["pre-seed", "seed", "series-a"]).optional(),
     equity: z.string().optional().or(z.literal("")),
-    fundingAmount: z.coerce.number().optional(),
+    fundingAmount: optionalNumber,
     fundingCurrency: z.string().optional().or(z.literal("USD")),
-    programDuration: z.coerce.number().optional(),
-    batchSize: z.coerce.number().optional(),
+    programDuration: optionalNumber,
+    batchSize: optionalNumber,
     location: z.string().optional().or(z.literal("")),
   })
   .optional();
@@ -49,8 +59,8 @@ export const acceleratorMetadataSchema = z
 export const vcFundMetadataSchema = z
   .object({
     stage: z.enum(["pre-seed", "seed", "series-a", "series-b+"]).optional(),
-    checkSizeMin: z.coerce.number().optional(),
-    checkSizeMax: z.coerce.number().optional(),
+    checkSizeMin: optionalNumber,
+    checkSizeMax: optionalNumber,
     checkSizeCurrency: z.string().optional().or(z.literal("USD")),
     thesis: z.string().optional().or(z.literal("")),
     portfolio: z.string().optional().or(z.literal("")),
@@ -61,8 +71,8 @@ export const vcFundMetadataSchema = z
 
 export const rfpMetadataSchema = z
   .object({
-    issuingOrganization: z.string().min(1, "Issuing organization is required"),
-    budgetAmount: z.coerce.number().optional(),
+    issuingOrganization: z.string().optional().or(z.literal("")),
+    budgetAmount: optionalNumber,
     budgetCurrency: z.string().optional().or(z.literal("USD")),
     scope: z.string().optional().or(z.literal("")),
     requirements: z.string().optional().or(z.literal("")),
@@ -187,7 +197,7 @@ export const createProgramSchema = z
       .max(100, { message: "Short description must be at most 100 characters" })
       .optional()
       .or(z.literal("")),
-    amountDistributed: z.coerce.number().optional(),
+    amountDistributed: optionalNumber,
     description: z
       .string({
         required_error: MESSAGES.REGISTRY.FORM.DESCRIPTION,
@@ -195,11 +205,11 @@ export const createProgramSchema = z
       .min(3, {
         message: MESSAGES.REGISTRY.FORM.DESCRIPTION,
       }),
-    networkToCreate: z.coerce.number().optional(),
-    budget: z.coerce.number().optional(),
-    minGrantSize: z.coerce.number().optional(),
-    maxGrantSize: z.coerce.number().optional(),
-    grantsToDate: z.coerce.number().optional(),
+    networkToCreate: optionalNumber,
+    budget: optionalNumber,
+    minGrantSize: optionalNumber,
+    maxGrantSize: optionalNumber,
+    grantsToDate: optionalNumber,
     categories: z.array(z.string()),
     organizations: z.array(z.string()),
     ecosystems: z.array(z.string()),

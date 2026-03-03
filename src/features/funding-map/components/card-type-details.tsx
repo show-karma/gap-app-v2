@@ -24,7 +24,6 @@ export function CardTypeDetails({ program }: CardTypeDetailsProps) {
       return <VcFundCardDetails program={program} />;
     case "rfp":
       return <RfpCardDetails program={program} />;
-    case "grant":
     default:
       return null;
   }
@@ -118,11 +117,13 @@ function AcceleratorCardDetails({ program }: { program: FundingProgramResponse }
           {meta.equity} equity
         </Badge>
       )}
-      {meta.funding && (
-        <Badge variant="outline" className="rounded-full text-xs font-normal">
-          Up to ${formatCurrency(Number(meta.funding.amount))}
-        </Badge>
-      )}
+      {meta.funding &&
+        !Number.isNaN(Number(meta.funding.amount)) &&
+        Number(meta.funding.amount) > 0 && (
+          <Badge variant="outline" className="rounded-full text-xs font-normal">
+            Up to ${formatCurrency(Number(meta.funding.amount))}
+          </Badge>
+        )}
     </div>
   );
 }
@@ -166,11 +167,13 @@ function RfpCardDetails({ program }: { program: FundingProgramResponse }) {
           {meta.issuingOrganization}
         </Badge>
       )}
-      {meta.budget && (
-        <Badge variant="outline" className="rounded-full text-xs font-normal">
-          Budget: ${formatCurrency(Number(meta.budget.amount))}
-        </Badge>
-      )}
+      {meta.budget &&
+        !Number.isNaN(Number(meta.budget.amount)) &&
+        Number(meta.budget.amount) > 0 && (
+          <Badge variant="outline" className="rounded-full text-xs font-normal">
+            Budget: ${formatCurrency(Number(meta.budget.amount))}
+          </Badge>
+        )}
       {program.deadline && (
         <Badge variant="outline" className="rounded-full text-xs font-normal">
           Due {formatDate(program.deadline, "UTC", "MMM D, YYYY")}

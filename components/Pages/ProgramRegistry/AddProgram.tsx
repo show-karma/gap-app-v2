@@ -20,7 +20,6 @@ import { DateTimePicker } from "@/components/Utilities/DateTimePicker";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MultiEmailInput } from "@/components/Utilities/MultiEmailInput";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useAuth } from "@/hooks/useAuth";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
@@ -33,7 +32,6 @@ import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { appNetwork } from "@/utilities/network";
 import { PAGES } from "@/utilities/pages";
-import { urlRegex } from "@/utilities/regexs/urlRegex";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { cn } from "@/utilities/tailwind";
 import { registryHelper } from "./helper";
@@ -93,17 +91,15 @@ export default function AddProgram({
     watch,
     setValue,
     control,
-    formState: { errors, isSubmitting, isValid },
+    formState: { errors, isSubmitting },
   } = useForm<ProgramFormData>({
     resolver: zodResolver(createProgramSchema),
     reValidateMode: "onChange",
     mode: "onChange",
     defaultValues: {
-      opportunityType: (programToEdit as any)?.type ?? "grant",
-      deadline: (programToEdit as any)?.deadline
-        ? new Date((programToEdit as any).deadline)
-        : undefined,
-      submissionUrl: (programToEdit as any)?.submissionUrl ?? "",
+      opportunityType: programToEdit?.type ?? "grant",
+      deadline: programToEdit?.deadline ? new Date(programToEdit.deadline) : undefined,
+      submissionUrl: programToEdit?.submissionUrl ?? "",
       name: programToEdit?.metadata?.title,
       description: programToEdit?.metadata?.description,
       shortDescription: programToEdit?.metadata?.shortDescription || "",
@@ -204,7 +200,6 @@ export default function AddProgram({
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
   const { setupChainAndWallet } = useSetupChainAndWallet();
-  const { changeStepperStep, setIsStepper } = useAttestationToast();
 
   // Metadata is constructed inline rather than via ProgramRegistryService.buildProgramMetadata()
   // because this form has significantly more fields (social links, categories, ecosystems, etc.)
@@ -385,12 +380,16 @@ export default function AddProgram({
     return {};
   };
 
-  const buildTopLevelFields = (data: ProgramFormData) => ({
-    ...(data.opportunityType !== "grant" ? { type: data.opportunityType } : {}),
-    ...(data.deadline ? { deadline: data.deadline.toISOString() } : {}),
-    ...(data.submissionUrl ? { submissionUrl: data.submissionUrl } : {}),
-    ...buildTypedMetadata(data),
-  });
+  const buildTopLevelFields = (data: ProgramFormData) => {
+    const isGrant = data.opportunityType === "grant";
+    return {
+      ...(isGrant ? {} : { type: data.opportunityType }),
+      // deadline and submissionUrl only apply to non-grant types
+      ...(!isGrant && data.deadline ? { deadline: data.deadline.toISOString() } : {}),
+      ...(!isGrant && data.submissionUrl ? { submissionUrl: data.submissionUrl } : {}),
+      ...buildTypedMetadata(data),
+    };
+  };
   const createProgram = async (data: ProgramFormData) => {
     setIsLoading(true);
     try {
@@ -430,8 +429,8 @@ export default function AddProgram({
         }
       );
       router.push(PAGES.REGISTRY.ROOT);
-    } catch (error: any) {
-      const errorMessage = error.message;
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       if (errorMessage?.includes("already exists")) {
         toast.error("A program with this name already exists");
       } else {
@@ -473,12 +472,11 @@ export default function AddProgram({
         return;
       }
 
-      const { walletSigner } = setup;
-
       const metadata = sanitizeObject({
         ...buildMetadata(data),
         status: data.status,
       });
+      const topLevelFields = buildTopLevelFields(data);
 
       // Always use V2 update endpoint (off-chain)
       // All programs now use V2, regardless of whether they were originally created on-chain
@@ -487,14 +485,15 @@ export default function AddProgram({
         throw new Error("Program ID not found. Cannot update program.");
       }
 
-      // Use V2 update endpoint
-      await ProgramRegistryService.updateProgram(programIdToUpdate, metadata);
+      // Use V2 update endpoint with both metadata and type-specific fields
+      await ProgramRegistryService.updateProgram(programIdToUpdate, metadata, topLevelFields);
       toast.success("Program updated successfully!");
       await refreshPrograms?.().then(() => {
         backTo?.();
       });
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      toast.error(errorMessage);
       errorManager(
         MESSAGES.PROGRAM_REGISTRY.EDIT.ERROR(data.name),
         error,
@@ -568,15 +567,12 @@ export default function AddProgram({
                 name="opportunityType"
                 control={control}
                 render={({ field }) => (
-                  <div
-                    role="radiogroup"
-                    aria-labelledby="opportunity-type-label"
-                    className="flex flex-wrap gap-2"
-                  >
+                  <div className="flex flex-wrap gap-2">
                     {OPPORTUNITY_TYPE_OPTIONS.map((opt) => (
                       <button
                         key={opt.value}
                         type="button"
+                        aria-pressed={field.value === opt.value}
                         className={cn(
                           "rounded-lg border px-4 py-2 text-sm font-medium transition-colors cursor-pointer",
                           field.value === opt.value
@@ -769,6 +765,7 @@ export default function AddProgram({
                   Description *
                 </label>
                 <textarea
+                  id="program-description"
                   className={cn(inputStyle, "bg-transparent min-h-[120px] max-h-[360px]")}
                   value={watch("description")}
                   onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>

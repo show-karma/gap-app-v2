@@ -3,7 +3,7 @@
 import { createParser, parseAsBoolean, parseAsInteger, parseAsString, useQueryState } from "nuqs";
 import { useCallback, useMemo } from "react";
 import { FUNDING_MAP_PAGE_SIZE } from "../constants/filter-options";
-import type { FetchFundingProgramsParams } from "../types/funding-program";
+import type { FetchFundingProgramsParams, OpportunityType } from "../types/funding-program";
 
 /**
  * Encode special characters for URL storage
@@ -53,7 +53,7 @@ export interface FundingFilters {
   /** Organization filter - stores type:id format */
   organizationFilter: OrganizationFilterValue | null;
   /** Selected opportunity types */
-  selectedTypes: string[];
+  selectedTypes: OpportunityType[];
 }
 
 /**
@@ -157,7 +157,7 @@ export function useFundingFilters() {
       grantTypes,
       onlyOnKarma,
       organizationFilter,
-      selectedTypes,
+      selectedTypes: selectedTypes as OpportunityType[],
     }),
     [
       page,
@@ -187,10 +187,7 @@ export function useFundingFilters() {
       onlyOnKarma: onlyOnKarma || undefined,
       communityUid: organizationFilter?.type === "community" ? organizationFilter.id : undefined,
       organization: organizationFilter?.type === "organization" ? organizationFilter.id : undefined,
-      type:
-        selectedTypes.length > 0
-          ? (selectedTypes as FetchFundingProgramsParams["type"])
-          : undefined,
+      type: selectedTypes.length > 0 ? (selectedTypes as OpportunityType[]) : undefined,
     }),
     [
       page,
@@ -230,13 +227,13 @@ export function useFundingFilters() {
 
   // Set selected opportunity types, resetting page
   const setSelectedTypes = useCallback(
-    (value: string[]) => updateFilterAndResetPage(setSelectedTypesRaw, value),
+    (value: OpportunityType[]) => updateFilterAndResetPage(setSelectedTypesRaw, value as string[]),
     [updateFilterAndResetPage, setSelectedTypesRaw]
   );
 
   // Toggle a single opportunity type
   const toggleType = useCallback(
-    (value: string) => toggleArrayFilter(selectedTypes, setSelectedTypesRaw, value),
+    (value: OpportunityType) => toggleArrayFilter(selectedTypes, setSelectedTypesRaw, value),
     [selectedTypes, setSelectedTypesRaw, toggleArrayFilter]
   );
 

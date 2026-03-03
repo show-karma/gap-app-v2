@@ -592,27 +592,29 @@ function DialogContentInner({ program }: { program: FundingProgramResponse }) {
             </a>
           )}
 
-          {isOnKarma ? (
-            <CommunityApplyButton program={program} isActive={isActive} />
-          ) : (
-            fallbackApplyUrl && (
-              <Button
-                asChild
-                size="sm"
-                disabled={!isActive}
-                className={cn("gap-1.5 ml-auto", !isActive && "pointer-events-none opacity-50")}
-              >
-                <Link
-                  href={isActive ? fallbackApplyUrl : ""}
-                  target="_blank"
-                  rel="noopener noreferrer"
+          {/* Only show bottom Apply if no submissionUrl was already rendered above */}
+          {!(isNonGrant && program.submissionUrl) &&
+            (isOnKarma ? (
+              <CommunityApplyButton program={program} isActive={isActive} />
+            ) : (
+              fallbackApplyUrl && (
+                <Button
+                  asChild
+                  size="sm"
+                  disabled={!isActive}
+                  className={cn("gap-1.5 ml-auto", !isActive && "pointer-events-none opacity-50")}
                 >
-                  Apply
-                  <ChevronRight className="h-4 w-4" />
-                </Link>
-              </Button>
-            )
-          )}
+                  <Link
+                    href={isActive ? fallbackApplyUrl : ""}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Apply
+                    <ChevronRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+              )
+            ))}
         </div>
       </div>
 
