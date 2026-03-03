@@ -3,7 +3,7 @@
  * @description Tests for the Zod schema validation used in program forms
  */
 
-import { createProgramSchema } from "@/schemas/programFormSchema";
+import { createProgramSchema, updateProgramSchema } from "@/schemas/programFormSchema";
 
 const validEmails = {
   adminEmails: ["admin@example.com"],
@@ -412,21 +412,31 @@ describe("createProgramSchema", () => {
   });
 
   describe("adminEmails validation", () => {
-    it("should require at least one admin email", () => {
+    it("should allow empty admin email list", () => {
       const result = createProgramSchema.safeParse({
         name: "Test Program",
         description: "Test description",
         shortDescription: "Short desc",
+        invoiceRequired: false,
         dates: {},
         adminEmails: [],
         financeEmails: ["finance@example.com"],
       });
 
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        const emailError = result.error.errors.find((err) => err.path.includes("adminEmails"));
-        expect(emailError?.message).toBe("At least one admin email is required");
-      }
+      expect(result.success).toBe(true);
+    });
+
+    it("should allow omitting admin emails", () => {
+      const result = createProgramSchema.safeParse({
+        name: "Test Program",
+        description: "Test description",
+        shortDescription: "Short desc",
+        invoiceRequired: false,
+        dates: {},
+        financeEmails: ["finance@example.com"],
+      });
+
+      expect(result.success).toBe(true);
     });
 
     it("should reject invalid email addresses", () => {
@@ -500,5 +510,82 @@ describe("createProgramSchema", () => {
 
       expect(result.success).toBe(true);
     });
+  });
+});
+
+describe("updateProgramSchema", () => {
+  it("should require at least one admin email", () => {
+    const result = updateProgramSchema.safeParse({
+      name: "Test Program",
+      description: "Test description",
+      shortDescription: "Short desc",
+      invoiceRequired: false,
+      dates: {},
+      adminEmails: [],
+      financeEmails: ["finance@example.com"],
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const adminError = result.error.errors.find((err) => err.path.includes("adminEmails"));
+      expect(adminError?.message).toBe("At least one admin email is required");
+    }
+  });
+
+  it("should reject omitting admin emails", () => {
+    const result = updateProgramSchema.safeParse({
+      name: "Test Program",
+      description: "Test description",
+      shortDescription: "Short desc",
+      invoiceRequired: false,
+      dates: {},
+      financeEmails: ["finance@example.com"],
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("should accept valid admin emails when provided", () => {
+    const result = updateProgramSchema.safeParse({
+      name: "Test Program",
+      description: "Test description",
+      shortDescription: "Short desc",
+      invoiceRequired: false,
+      dates: {},
+      adminEmails: ["admin@example.com"],
+      financeEmails: ["finance@example.com"],
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("should reject invalid admin email format when provided", () => {
+    const result = updateProgramSchema.safeParse({
+      name: "Test Program",
+      description: "Test description",
+      shortDescription: "Short desc",
+      dates: {},
+      adminEmails: ["not-an-email"],
+      financeEmails: ["finance@example.com"],
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("should still require at least one finance email", () => {
+    const result = updateProgramSchema.safeParse({
+      name: "Test Program",
+      description: "Test description",
+      shortDescription: "Short desc",
+      dates: {},
+      adminEmails: ["admin@example.com"],
+      financeEmails: [],
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const financeError = result.error.errors.find((err) => err.path.includes("financeEmails"));
+      expect(financeError?.message).toBe("At least one finance email is required");
+    }
   });
 });

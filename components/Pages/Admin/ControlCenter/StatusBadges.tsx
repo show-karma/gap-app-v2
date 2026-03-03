@@ -6,6 +6,7 @@ import type {
   CommunityPayoutInvoiceInfo,
   InvoiceStatus,
 } from "@/src/features/payout-disbursement";
+import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 
 export function AgreementBadge({ agreement }: { agreement: CommunityPayoutAgreementInfo | null }) {
@@ -27,15 +28,7 @@ export function AgreementBadge({ agreement }: { agreement: CommunityPayoutAgreem
         </TooltipTrigger>
         {isSigned && agreement?.signedAt && (
           <TooltipContent side="top">
-            <p className="text-xs">
-              Signed on{" "}
-              {new Date(agreement.signedAt).toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-                timeZone: "UTC",
-              })}
-            </p>
+            <p className="text-xs">Signed on {formatDate(agreement.signedAt, "UTC")}</p>
           </TooltipContent>
         )}
       </Tooltip>

@@ -75,7 +75,7 @@ We’re actively working on **gasless transactions**, so soon you’ll be able t
 
 export function FAQ() {
   return (
-    <section className={cn(marketingLayoutTheme.padding, "py-16 w-full")}>
+    <section className={cn(marketingLayoutTheme.padding, "pt-8 pb-16 w-full")}>
       <SectionContainer>
         <div className="flex flex-col items-start gap-4 mb-10 max-w-4xl mx-auto">
           <Badge variant="secondary">FAQs</Badge>
@@ -101,24 +101,18 @@ export function FAQ() {
             </div>
 
             <div className="flex items-center md:flex-row flex-col gap-4">
-              <ExternalLink href={SOCIALS.TELEGRAM}>
-                <Button
-                  variant="default"
-                  className="px-4 py-2.5 text-sm font-medium bg-foreground text-background hover:bg-foreground/90 border-0 shadow"
-                >
+              <Button variant="outline" asChild>
+                <ExternalLink href={SOCIALS.TELEGRAM}>
                   <MessageCircleMore className="w-4 h-4" />
                   Ask in Telegram
-                </Button>
-              </ExternalLink>
-              <ExternalLink href={SOCIALS.DISCORD}>
-                <Button
-                  variant="default"
-                  className="px-4 py-2.5 text-sm font-medium bg-foreground text-background hover:bg-foreground/90 border-0 shadow"
-                >
+                </ExternalLink>
+              </Button>
+              <Button variant="outline" asChild>
+                <ExternalLink href={SOCIALS.DISCORD}>
                   <MessageCircleMore className="w-4 h-4" />
                   Ask in Discord
-                </Button>
-              </ExternalLink>
+                </ExternalLink>
+              </Button>
             </div>
           </div>
         </div>

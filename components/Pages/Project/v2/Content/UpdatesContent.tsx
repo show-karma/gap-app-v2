@@ -5,11 +5,7 @@ import { Suspense, useCallback, useMemo } from "react";
 import { useProjectProfile } from "@/hooks/v2/useProjectProfile";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { ActivityFeed } from "../MainContent/ActivityFeed";
-import {
-  ActivityFilters,
-  type ActivityFilterType,
-  type SortOption,
-} from "../MainContent/ActivityFilters";
+import { ActivityFilters, type ActivityFilterType } from "../MainContent/ActivityFilters";
 import { ActivityFeedSkeleton } from "../Skeletons";
 
 interface UpdatesContentProps {
@@ -37,14 +33,9 @@ export function UpdatesContent({ className }: UpdatesContentProps) {
     return filterParam.split(",") as ActivityFilterType[];
   }, [searchParams]);
 
-  const sortBy = useMemo(() => {
-    const sortParam = searchParams.get("sort");
-    return (sortParam === "oldest" ? "oldest" : "newest") as SortOption;
-  }, [searchParams]);
-
   // Update URL when filters change
   const updateURL = useCallback(
-    (newFilters: ActivityFilterType[], newSort: SortOption) => {
+    (newFilters: ActivityFilterType[]) => {
       const params = new URLSearchParams(searchParams.toString());
 
       // Update filter param
@@ -53,13 +44,7 @@ export function UpdatesContent({ className }: UpdatesContentProps) {
       } else {
         params.delete("filter");
       }
-
-      // Update sort param (only if not default)
-      if (newSort !== "newest") {
-        params.set("sort", newSort);
-      } else {
-        params.delete("sort");
-      }
+      params.delete("sort");
 
       const newURL = params.toString() ? `?${params.toString()}` : window.location.pathname;
       router.replace(newURL, { scroll: false });
@@ -72,14 +57,7 @@ export function UpdatesContent({ className }: UpdatesContentProps) {
       const newFilters = activeFilters.includes(filter)
         ? activeFilters.filter((f) => f !== filter)
         : [...activeFilters, filter];
-      updateURL(newFilters, sortBy);
-    },
-    [activeFilters, sortBy, updateURL]
-  );
-
-  const handleSortChange = useCallback(
-    (newSort: SortOption) => {
-      updateURL(activeFilters, newSort);
+      updateURL(newFilters);
     },
     [activeFilters, updateURL]
   );
@@ -91,8 +69,6 @@ export function UpdatesContent({ className }: UpdatesContentProps) {
     <div className={className} data-testid="updates-content">
       {/* Filters */}
       <ActivityFilters
-        sortBy={sortBy}
-        onSortChange={handleSortChange}
         activeFilters={activeFilters}
         onFilterToggle={handleFilterToggle}
         milestonesCount={milestonesCount}
@@ -108,7 +84,6 @@ export function UpdatesContent({ className }: UpdatesContentProps) {
             <ActivityFeed
               milestones={allUpdates}
               isAuthorized={isAuthorized}
-              sortBy={sortBy}
               activeFilters={activeFilters}
             />
           </Suspense>

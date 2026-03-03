@@ -94,6 +94,7 @@ export const INDEXER = {
         sortOrder?: "asc" | "desc";
         includeStats?: boolean;
         excludeTestProjects?: boolean;
+        hasPayoutAddress?: boolean;
       }) => {
         const queryParams = new URLSearchParams();
         if (params?.q) queryParams.set("q", params.q);
@@ -103,6 +104,7 @@ export const INDEXER = {
         if (params?.sortOrder) queryParams.set("sortOrder", params.sortOrder);
         if (params?.includeStats) queryParams.set("includeStats", "true");
         if (params?.excludeTestProjects) queryParams.set("excludeTestProjects", "true");
+        if (params?.hasPayoutAddress) queryParams.set("hasPayoutAddress", "true");
         const query = queryParams.toString();
         return `/v2/projects${query ? `?${query}` : ""}`;
       },
@@ -664,5 +666,9 @@ export const INDEXER = {
       `/v2/communities/${communityIdOrSlug}/kyc/batch-status/by-application-reference`,
     GET_FORM_URL: (communityIdOrSlug: string) =>
       `/v2/communities/${communityIdOrSlug}/kyc-form-url`,
+  },
+  USERS: {
+    RESOLVE_EMAIL: `/v2/user/resolve-email`,
+    PROFILES: (addresses: string) => `/v2/user/profiles?addresses=${addresses}`,
   },
 };

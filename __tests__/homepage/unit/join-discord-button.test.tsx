@@ -20,21 +20,20 @@ jest.mock("@/utilities/socials", () => ({
 }));
 
 describe("JoinDiscordButton Component", () => {
-  it("should render button with correct text", () => {
+  it("should render link with correct text", () => {
     renderWithProviders(<JoinDiscordButton />);
 
-    const button = screen.getByRole("button", { name: /Join Discord/i });
-    expect(button).toBeInTheDocument();
+    const link = screen.getByRole("link", { name: /Join Discord/i });
+    expect(link).toBeInTheDocument();
   });
 
   it("should apply correct styling classes", () => {
     renderWithProviders(<JoinDiscordButton />);
 
-    const button = screen.getByRole("button", { name: /Join Discord/i });
-    expect(button).toHaveClass("px-6");
-    expect(button).toHaveClass("py-2.5");
-    expect(button).toHaveClass("text-sm");
-    expect(button).toHaveClass("font-medium");
+    const link = screen.getByRole("link", { name: /Join Discord/i });
+    expect(link).toHaveClass("border");
+    expect(link).toHaveClass("text-sm");
+    expect(link).toHaveClass("font-medium");
   });
 
   it("should render as an external link", () => {

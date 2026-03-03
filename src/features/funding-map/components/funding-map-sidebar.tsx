@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { PAGES } from "@/utilities/pages";
+import { FundingMapAgentCard } from "./funding-map-agent-card";
 
 export function FundingMapSidebar() {
   const ProjectDialog = useMemo(
@@ -26,6 +27,7 @@ export function FundingMapSidebar() {
 
   return (
     <aside className="flex w-full flex-col gap-6 rounded-2xl lg:w-80 lg:shrink-0">
+      <FundingMapAgentCard />
       {/* Newsletter & Submit Program Section */}
       <div className="flex bg-background border border-border flex-col items-start gap-5 rounded-xl p-5">
         <Bell className="h-5 w-5 text-muted-foreground" />

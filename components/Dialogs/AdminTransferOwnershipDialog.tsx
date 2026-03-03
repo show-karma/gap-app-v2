@@ -4,24 +4,21 @@ import { Dialog, Transition } from "@headlessui/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FC, Fragment, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { isAddress } from "viem";
 import { useAccount } from "wagmi";
 import { z } from "zod";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
+import { communityAdminsService } from "@/services/community-admins.service";
 import { adminTransferOwnership } from "@/services/project.service";
 import { useProjectStore } from "@/store";
 import { useAdminTransferOwnershipModalStore } from "@/store/modals/adminTransferOwnership";
-import { sanitizeInput } from "@/utilities/sanitize";
 import { Button } from "../Utilities/Button";
 import { errorManager } from "../Utilities/errorManager";
 
 const schema = z.object({
-  newOwner: z
+  email: z
     .string()
-    .min(1, { message: "Address is required" })
-    .refine((value) => isAddress(value), {
-      message: "Invalid address. Address should be a valid Ethereum address.",
-    }),
+    .min(1, { message: "Email is required" })
+    .email({ message: "Invalid email address" }),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -61,9 +58,9 @@ export const AdminTransferOwnershipDialog: FC = () => {
     if (!project) return;
     startAttestation("Transferring ownership...");
     try {
-      const sanitizedAddress = sanitizeInput(data.newOwner);
+      const newOwnerAddress = await communityAdminsService.resolveEmailToWallet(data.email);
 
-      await adminTransferOwnership(project.uid, project.chainID, sanitizedAddress);
+      await adminTransferOwnership(project.uid, project.chainID, newOwnerAddress);
 
       await refreshProject();
       showSuccess(
@@ -73,19 +70,18 @@ export const AdminTransferOwnershipDialog: FC = () => {
     } catch (error: any) {
       showError("Failed to request ownership transfer.");
       errorManager(
-        `Error requesting ownership transfer from ${project.owner} to ${data.newOwner}`,
+        `Error requesting ownership transfer from ${project.owner} to ${data.email}`,
         error,
         {
           address: address,
           project: project?.details?.slug || project?.uid,
           oldOwner: project?.owner,
-          newOwner: data.newOwner,
+          newOwnerEmail: data.email,
         },
         {
           error: "Failed to request ownership transfer.",
         }
       );
-      console.error(error);
     }
   };
 
@@ -124,18 +120,17 @@ export const AdminTransferOwnershipDialog: FC = () => {
                 </Dialog.Title>
                 <form onSubmit={handleSubmit(onSubmit)} className="mt-8">
                   <div className="flex flex-col gap-2">
-                    <label htmlFor="newOwner" className={labelStyle}>
-                      New Owner Address
+                    <label htmlFor="newOwnerEmail" className={labelStyle}>
+                      New Owner Email
                     </label>
                     <input
                       className={inputStyle}
-                      type="text"
-                      id="newOwner"
-                      {...register("newOwner")}
+                      type="email"
+                      id="newOwnerEmail"
+                      placeholder="newowner@example.com"
+                      {...register("email")}
                     />
-                    {errors.newOwner && (
-                      <p className="text-red-500 text-sm">{errors.newOwner.message}</p>
-                    )}
+                    {errors.email && <p className="text-red-500 text-sm">{errors.email.message}</p>}
                   </div>
                   <div className="flex flex-row gap-4 mt-10 justify-end">
                     <Button

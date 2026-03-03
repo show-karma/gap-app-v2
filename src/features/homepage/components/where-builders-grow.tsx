@@ -22,13 +22,9 @@ export function WhereBuildersGrow() {
               aria-hidden="true"
             />
             <div className="relative z-0">
-              <CreateProjectButton styleClass="h-auto px-5 py-3 text-sm font-medium w-max bg-primary text-primary-foreground hover:bg-primary/90 border-0 shadow" />
+              <CreateProjectButton styleClass="w-max px-6 py-[9.5px]" />
             </div>
-            <Button
-              variant="outline"
-              className="h-auto px-5 py-3 text-sm font-medium border border-black/15 bg-white/10 hover:bg-white/20 relative z-0 backdrop-blur-sm"
-              asChild
-            >
+            <Button variant="outline" size="lg" className="relative z-0" asChild>
               <Link href={PAGES.FUNDERS}>Grow your ecosystem</Link>
             </Button>
           </div>

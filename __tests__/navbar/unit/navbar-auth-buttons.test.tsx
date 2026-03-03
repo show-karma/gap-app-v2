@@ -74,8 +74,8 @@ describe("NavbarAuthButtons", () => {
 
       const signInButton = screen.getByText("Sign in");
       expect(signInButton).toHaveClass("bg-secondary");
-      // Button uses shadow-sm class from variant="secondary"
-      expect(signInButton).toHaveClass("shadow-sm");
+      // Button uses shadow-secondary-button class from variant="secondary"
+      expect(signInButton).toHaveClass("shadow-secondary-button");
     });
 
     it("should be keyboard accessible", async () => {
@@ -354,7 +354,7 @@ describe("NavbarAuthButtons", () => {
       const signInButton = screen.getByText("Sign in");
 
       // Hover state is defined by hover: classes from variant="secondary"
-      expect(signInButton).toHaveClass("hover:bg-secondary/80");
+      expect(signInButton).toHaveClass("hover:bg-secondary/70");
     });
 
     it("should show hover state on contact sales button", () => {

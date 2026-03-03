@@ -3,20 +3,21 @@
  * Types match the real types from @/src/features/payout-disbursement.
  */
 
-import type {
+import {
   AggregatedDisbursementStatus,
-  CommunityPayoutAgreementInfo,
-  CommunityPayoutDisbursementInfo,
-  CommunityPayoutGrantInfo,
-  CommunityPayoutInvoiceInfo,
-  CommunityPayoutItem,
-  CommunityPayoutProjectInfo,
-  CommunityPayoutsResponse,
-  PaginationInfo,
-  PayoutDisbursement,
+  type CommunityPayoutAgreementInfo,
+  type CommunityPayoutDisbursementInfo,
+  type CommunityPayoutGrantInfo,
+  type CommunityPayoutInvoiceInfo,
+  type CommunityPayoutItem,
+  type CommunityPayoutProjectInfo,
+  type CommunityPayoutsResponse,
+  MilestoneLifecycleStatus,
+  type PaginationInfo,
+  type PayoutDisbursement,
   PayoutDisbursementStatus,
-  PayoutGrantConfig,
-  TokenTotal,
+  type PayoutGrantConfig,
+  type TokenTotal,
 } from "@/src/features/payout-disbursement";
 
 // ---- Community ----
@@ -85,7 +86,7 @@ export function createMockDisbursement(
     payoutAddress: "0x1234567890abcdef1234567890abcdef12345678",
     milestoneBreakdown: null,
     paidAllocationIds: [],
-    status: "DISBURSED" as PayoutDisbursementStatus,
+    status: PayoutDisbursementStatus.DISBURSED,
     executedAt: "2024-06-15T10:00:00Z",
     createdBy: "0xAdmin1234567890abcdef1234567890abcdef",
     createdAt: "2024-06-15T09:00:00Z",
@@ -128,6 +129,9 @@ export function createMockInvoice(
   return {
     milestoneLabel: "Milestone 1",
     milestoneUID: "milestone-uid-1",
+    milestoneStatus: null,
+    milestoneDueDate: null,
+    milestoneStatusUpdatedAt: null,
     invoiceStatus: "received" as const,
     invoiceReceivedAt: "2024-06-10T00:00:00Z",
     invoiceReceivedBy: null,
@@ -146,7 +150,7 @@ export function createMockDisbursementInfo(
   return {
     totalDisbursed: "5000",
     totalsByToken: [createMockTokenTotal()],
-    status: "IN_PROGRESS" as AggregatedDisbursementStatus,
+    status: AggregatedDisbursementStatus.IN_PROGRESS,
     history: [createMockDisbursement()],
     ...overrides,
   };
@@ -273,11 +277,12 @@ export function createMultiplePayoutItems(count: number): CommunityPayoutItem[] 
                 }),
               ]
             : [],
-        status: (i === 0
-          ? "NOT_STARTED"
-          : i === count - 1
-            ? "COMPLETED"
-            : "IN_PROGRESS") as AggregatedDisbursementStatus,
+        status:
+          i === 0
+            ? AggregatedDisbursementStatus.NOT_STARTED
+            : i === count - 1
+              ? AggregatedDisbursementStatus.COMPLETED
+              : AggregatedDisbursementStatus.IN_PROGRESS,
         history:
           i === 0
             ? []
@@ -285,7 +290,10 @@ export function createMultiplePayoutItems(count: number): CommunityPayoutItem[] 
                 createMockDisbursement({
                   id: `disbursement-${i}`,
                   grantUID: `grant-uid-${i + 1}`,
-                  status: (i === count - 1 ? "DISBURSED" : "PENDING") as PayoutDisbursementStatus,
+                  status:
+                    i === count - 1
+                      ? PayoutDisbursementStatus.DISBURSED
+                      : PayoutDisbursementStatus.PENDING,
                 }),
               ],
       }),

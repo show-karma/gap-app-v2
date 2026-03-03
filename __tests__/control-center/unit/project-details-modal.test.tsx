@@ -17,8 +17,11 @@ let mockSavePending = false;
 jest.mock("@/src/features/payout-disbursement", () => {
   const React = require("react");
   const actual = jest.requireActual("@/src/features/payout-disbursement/types/payout-disbursement");
+  const utils = jest.requireActual("@/src/features/payout-disbursement/utils/format-token-amount");
   return {
     ...actual,
+    formatDisplayAmount: utils.formatDisplayAmount,
+    fromSmallestUnit: utils.fromSmallestUnit,
     useToggleAgreement: jest.fn(() => ({
       mutate: mockToggleMutate,
       isPending: mockTogglePending,
@@ -49,10 +52,11 @@ import {
   ProjectDetailsModal,
   type ProjectDetailsModalGrant,
 } from "@/components/Pages/Admin/ControlCenter/ProjectDetailsModal";
-import type {
-  CommunityPayoutAgreementInfo,
-  CommunityPayoutInvoiceInfo,
-  TokenTotal,
+import {
+  type CommunityPayoutAgreementInfo,
+  type CommunityPayoutInvoiceInfo,
+  MilestoneLifecycleStatus,
+  type TokenTotal,
 } from "@/src/features/payout-disbursement/types/payout-disbursement";
 import { createMockAgreement, createMockInvoice } from "../fixtures";
 
@@ -329,24 +333,283 @@ describe("ProjectDetailsModal", () => {
 
     it("shows empty state when no invoices", () => {
       renderModal({ milestoneInvoices: [] });
-      expect(screen.getByText(/no milestone invoices configured/i)).toBeInTheDocument();
+      expect(screen.getByText(/no milestones configured/i)).toBeInTheDocument();
     });
+  });
 
-    it("shows invoice status badges", () => {
+  describe("Milestone status column", () => {
+    it("renders milestone status badge with correct label", () => {
       renderModal({
-        invoiceRequired: true,
         milestoneInvoices: [
-          createMockInvoice({ invoiceStatus: "received" }),
           createMockInvoice({
-            milestoneLabel: "Milestone 2",
-            milestoneUID: "ms-2",
-            invoiceStatus: "not_submitted",
+            milestoneLabel: "MS Completed",
+            milestoneUID: "ms-c",
+            milestoneStatus: MilestoneLifecycleStatus.COMPLETED,
+          }),
+          createMockInvoice({
+            milestoneLabel: "MS Verified",
+            milestoneUID: "ms-v",
+            milestoneStatus: MilestoneLifecycleStatus.VERIFIED,
           }),
         ],
       });
 
+      expect(screen.getByText("Completed")).toBeInTheDocument();
+      expect(screen.getByText("Verified")).toBeInTheDocument();
+    });
+
+    it("shows 'Pending' when milestoneStatus is null", () => {
+      renderModal({
+        milestoneInvoices: [
+          createMockInvoice({
+            milestoneLabel: "MS Null",
+            milestoneUID: "ms-null",
+            milestoneStatus: null,
+            milestoneDueDate: null,
+          }),
+        ],
+      });
+
+      expect(screen.getByText("Pending")).toBeInTheDocument();
+    });
+
+    it("shows 'Past due' when status is pending and dueDate is in the past", () => {
+      renderModal({
+        milestoneInvoices: [
+          createMockInvoice({
+            milestoneLabel: "MS Overdue",
+            milestoneUID: "ms-overdue",
+            milestoneStatus: MilestoneLifecycleStatus.PENDING,
+            milestoneDueDate: "2020-01-01T00:00:00Z",
+          }),
+        ],
+      });
+
+      expect(screen.getByText("Past due")).toBeInTheDocument();
+    });
+
+    it("does not show 'Past due' when status is completed even with past dueDate", () => {
+      renderModal({
+        milestoneInvoices: [
+          createMockInvoice({
+            milestoneLabel: "MS Done",
+            milestoneUID: "ms-done",
+            milestoneStatus: MilestoneLifecycleStatus.COMPLETED,
+            milestoneDueDate: "2020-01-01T00:00:00Z",
+          }),
+        ],
+      });
+
+      expect(screen.getByText("Completed")).toBeInTheDocument();
+      expect(screen.queryByText("Past due")).not.toBeInTheDocument();
+    });
+
+    it("falls back to 'Pending' config when milestoneStatus is null", () => {
+      renderModal({
+        milestoneInvoices: [
+          createMockInvoice({
+            milestoneLabel: "MS Null Status",
+            milestoneUID: "ms-null-status",
+            milestoneStatus: null,
+          }),
+        ],
+      });
+
+      // Null status falls back to pending config
+      expect(screen.getByText("Pending")).toBeInTheDocument();
+    });
+
+    it("shows completion date in tooltip for completed milestone on hover", async () => {
+      const user = userEvent.setup();
+      renderModal({
+        milestoneInvoices: [
+          createMockInvoice({
+            milestoneLabel: "MS Comp",
+            milestoneUID: "ms-comp",
+            milestoneStatus: MilestoneLifecycleStatus.COMPLETED,
+            milestoneStatusUpdatedAt: "2024-07-10T00:00:00Z",
+          }),
+        ],
+      });
+
+      await user.hover(screen.getByText("Completed"));
+      const tooltip = await screen.findByRole("tooltip");
+      expect(tooltip).toHaveTextContent(/Completed on.*Jul 10, 2024/);
+    });
+
+    it("shows verification date in tooltip for verified milestone on hover", async () => {
+      const user = userEvent.setup();
+      renderModal({
+        milestoneInvoices: [
+          createMockInvoice({
+            milestoneLabel: "MS Ver",
+            milestoneUID: "ms-ver",
+            milestoneStatus: MilestoneLifecycleStatus.VERIFIED,
+            milestoneStatusUpdatedAt: "2024-08-15T00:00:00Z",
+          }),
+        ],
+      });
+
+      await user.hover(screen.getByText("Verified"));
+      const tooltip = await screen.findByRole("tooltip");
+      expect(tooltip).toHaveTextContent(/Verified on.*Aug 15, 2024/);
+    });
+
+    it("shows due date in tooltip for past due milestone on hover", async () => {
+      const user = userEvent.setup();
+      renderModal({
+        milestoneInvoices: [
+          createMockInvoice({
+            milestoneLabel: "MS Late",
+            milestoneUID: "ms-late",
+            milestoneStatus: MilestoneLifecycleStatus.PENDING,
+            milestoneDueDate: "2020-06-01T00:00:00Z",
+          }),
+        ],
+      });
+
+      await user.hover(screen.getByText("Past due"));
+      const tooltip = await screen.findByRole("tooltip");
+      expect(tooltip).toHaveTextContent(/Due.*Jun 1, 2020/);
+    });
+
+    it("shows created and due dates in tooltip for pending milestone on hover", async () => {
+      const user = userEvent.setup();
+      renderModal({
+        milestoneInvoices: [
+          createMockInvoice({
+            milestoneLabel: "MS Pend",
+            milestoneUID: "ms-pend",
+            milestoneStatus: MilestoneLifecycleStatus.PENDING,
+            milestoneStatusUpdatedAt: "2024-01-15T00:00:00Z",
+            milestoneDueDate: "2030-12-31T00:00:00Z",
+          }),
+        ],
+      });
+
+      await user.hover(screen.getByText("Pending"));
+      const tooltip = await screen.findByRole("tooltip");
+      expect(tooltip).toHaveTextContent(/Created.*Jan 15, 2024/);
+      expect(tooltip).toHaveTextContent(/Due.*Dec 31, 2030/);
+    });
+
+    it("shows alert icon with 'not verified yet' tooltip for completed milestone", async () => {
+      const user = userEvent.setup();
+      renderModal({
+        milestoneInvoices: [
+          createMockInvoice({
+            milestoneLabel: "MS Comp Alert",
+            milestoneUID: "ms-comp-alert",
+            milestoneStatus: MilestoneLifecycleStatus.COMPLETED,
+          }),
+        ],
+      });
+
+      // The alert icon should be present next to the completed badge
+      const alertIcon = document.querySelector("svg.text-amber-500");
+      expect(alertIcon).toBeInTheDocument();
+
+      // Hover on the alert icon to see the tooltip
+      await user.hover(alertIcon as Element);
+      const tooltip = await screen.findByRole("tooltip", {}, { timeout: 3000 });
+      expect(tooltip).toHaveTextContent("The milestone has not been verified yet");
+    });
+
+    it("does not show alert icon for verified milestone", () => {
+      renderModal({
+        milestoneInvoices: [
+          createMockInvoice({
+            milestoneLabel: "MS Ver No Alert",
+            milestoneUID: "ms-ver-no-alert",
+            milestoneStatus: MilestoneLifecycleStatus.VERIFIED,
+          }),
+        ],
+      });
+
+      // No amber alert icon should be present for verified milestones
+      const alertIcon = document.querySelector("svg.text-amber-500");
+      expect(alertIcon).not.toBeInTheDocument();
+    });
+
+    it("does not show alert icon for pending milestone", () => {
+      renderModal({
+        milestoneInvoices: [
+          createMockInvoice({
+            milestoneLabel: "MS Pend No Alert",
+            milestoneUID: "ms-pend-no-alert",
+            milestoneStatus: MilestoneLifecycleStatus.PENDING,
+          }),
+        ],
+      });
+
+      const alertIcon = document.querySelector("svg.text-amber-500");
+      expect(alertIcon).not.toBeInTheDocument();
+    });
+  });
+
+  describe("Invoice status column", () => {
+    it("shows 'Invoice received' badge when invoice status is 'received'", () => {
+      renderModal({
+        invoiceRequired: true,
+        milestoneInvoices: [
+          createMockInvoice({
+            milestoneLabel: "MS Recv",
+            milestoneUID: "ms-recv",
+            invoiceStatus: "received",
+          }),
+        ],
+      });
+
+      expect(screen.getByText("Invoice received")).toBeInTheDocument();
+      // "Received" column header is still present
       expect(screen.getByText("Received")).toBeInTheDocument();
+    });
+
+    it("shows 'Invoice received' badge when invoice status is 'paid'", () => {
+      renderModal({
+        invoiceRequired: true,
+        milestoneInvoices: [
+          createMockInvoice({
+            milestoneLabel: "MS Paid",
+            milestoneUID: "ms-paid",
+            invoiceStatus: "paid",
+          }),
+        ],
+      });
+
+      expect(screen.getByText("Invoice received")).toBeInTheDocument();
+    });
+
+    it("shows 'Not submitted' badge when invoice status is 'not_submitted'", () => {
+      renderModal({
+        invoiceRequired: true,
+        milestoneInvoices: [
+          createMockInvoice({
+            milestoneLabel: "MS NotSub",
+            milestoneUID: "ms-notsub",
+            invoiceStatus: "not_submitted",
+            invoiceReceivedAt: null,
+          }),
+        ],
+      });
+
       expect(screen.getByText("Not submitted")).toBeInTheDocument();
+    });
+
+    it("does not show invoice status column when invoiceRequired is false", () => {
+      renderModal({
+        invoiceRequired: false,
+        milestoneInvoices: [
+          createMockInvoice({
+            milestoneLabel: "MS NoInv",
+            milestoneUID: "ms-noinv",
+            invoiceStatus: "received",
+          }),
+        ],
+      });
+
+      // The "Invoice Status" header should not be present
+      expect(screen.queryByText("Invoice Status")).not.toBeInTheDocument();
     });
   });
 

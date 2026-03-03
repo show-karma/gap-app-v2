@@ -13,7 +13,7 @@ interface ProgramFilterProps {
 export const ProgramFilter = ({ defaultProgramSelected, onChange }: ProgramFilterProps) => {
   const { communityId } = useParams();
 
-  const { data, isLoading } = useCommunityPrograms(communityId as string);
+  const { data } = useCommunityPrograms(communityId as string);
   const programs = data?.map((program) => ({
     title: program.metadata?.title || "",
     value: program.programId || "", // Use programId only (backend handles composite format internally)
@@ -57,14 +57,24 @@ export const ProgramFilter = ({ defaultProgramSelected, onChange }: ProgramFilte
         id="filter-by-programs"
         list={programs || []}
         onSelectFunction={(value: string) => {
-          onChange?.(value) || changeSelectedProgramIdQuery(value);
+          if (onChange) {
+            onChange(value);
+            return;
+          }
+          changeSelectedProgramIdQuery(value);
         }}
         type={"Programs"}
         selected={selectedProgram ? [selectedProgram.title as string] : []}
         prefixUnselected="All"
         buttonClassname="w-full max-w-full"
         isMultiple={false}
-        cleanFunction={() => onChange?.(null) || changeSelectedProgramIdQuery(null)}
+        cleanFunction={() => {
+          if (onChange) {
+            onChange(null);
+            return;
+          }
+          changeSelectedProgramIdQuery(null);
+        }}
       />
     </div>
   );
