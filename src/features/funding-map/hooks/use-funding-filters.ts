@@ -52,6 +52,8 @@ export interface FundingFilters {
   onlyOnKarma: boolean;
   /** Organization filter - stores type:id format */
   organizationFilter: OrganizationFilterValue | null;
+  /** Selected opportunity types */
+  selectedTypes: string[];
 }
 
 /**
@@ -97,6 +99,11 @@ export function useFundingFilters() {
   const [onlyOnKarma, setOnlyOnKarma] = useQueryState(
     "onlyOnKarma",
     parseAsBoolean.withDefault(true).withOptions({ clearOnDefault: true })
+  );
+
+  const [selectedTypes, setSelectedTypesRaw] = useQueryState(
+    "type",
+    parseAsCommaSeparatedArray.withDefault([]).withOptions({ clearOnDefault: true })
   );
 
   // Organization filter - stores as "community:uid" or "organization:name"
@@ -150,6 +157,7 @@ export function useFundingFilters() {
       grantTypes,
       onlyOnKarma,
       organizationFilter,
+      selectedTypes,
     }),
     [
       page,
@@ -161,6 +169,7 @@ export function useFundingFilters() {
       grantTypes,
       onlyOnKarma,
       organizationFilter,
+      selectedTypes,
     ]
   );
 
@@ -178,6 +187,10 @@ export function useFundingFilters() {
       onlyOnKarma: onlyOnKarma || undefined,
       communityUid: organizationFilter?.type === "community" ? organizationFilter.id : undefined,
       organization: organizationFilter?.type === "organization" ? organizationFilter.id : undefined,
+      type:
+        selectedTypes.length > 0
+          ? (selectedTypes as FetchFundingProgramsParams["type"])
+          : undefined,
     }),
     [
       page,
@@ -189,6 +202,7 @@ export function useFundingFilters() {
       grantTypes,
       onlyOnKarma,
       organizationFilter,
+      selectedTypes,
     ]
   );
 
@@ -214,6 +228,18 @@ export function useFundingFilters() {
     [updateFilterAndResetPage]
   );
 
+  // Set selected opportunity types, resetting page
+  const setSelectedTypes = useCallback(
+    (value: string[]) => updateFilterAndResetPage(setSelectedTypesRaw, value),
+    [updateFilterAndResetPage, setSelectedTypesRaw]
+  );
+
+  // Toggle a single opportunity type
+  const toggleType = useCallback(
+    (value: string) => toggleArrayFilter(selectedTypes, setSelectedTypesRaw, value),
+    [selectedTypes, setSelectedTypesRaw, toggleArrayFilter]
+  );
+
   // Reset all filters to defaults (keeps current page)
   const resetFilters = useCallback(() => {
     setSearch("");
@@ -224,6 +250,7 @@ export function useFundingFilters() {
     setGrantTypes([]);
     setOnlyOnKarma(true);
     setOrganizationFilterRaw("");
+    setSelectedTypesRaw([]);
   }, [
     setSearch,
     setStatus,
@@ -233,6 +260,7 @@ export function useFundingFilters() {
     setGrantTypes,
     setOnlyOnKarma,
     setOrganizationFilterRaw,
+    setSelectedTypesRaw,
   ]);
 
   return {
@@ -250,12 +278,14 @@ export function useFundingFilters() {
     setGrantTypes: (value: string[]) => updateFilterAndResetPage(setGrantTypes, value),
     setOnlyOnKarma: (value: boolean) => updateFilterAndResetPage(setOnlyOnKarma, value),
     setOrganizationFilter,
+    setSelectedTypes,
 
     // Toggle helpers for array filters
     toggleCategory: (value: string) => toggleArrayFilter(categories, setCategories, value),
     toggleEcosystem: (value: string) => toggleArrayFilter(ecosystems, setEcosystems, value),
     toggleNetwork: (value: string) => toggleArrayFilter(networks, setNetworks, value),
     toggleGrantType: (value: string) => toggleArrayFilter(grantTypes, setGrantTypes, value),
+    toggleType,
 
     // Reset all
     resetFilters,

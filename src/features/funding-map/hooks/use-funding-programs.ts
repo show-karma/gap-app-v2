@@ -15,6 +15,7 @@ export const fundingProgramsKeys = {
   details: () => [...fundingProgramsKeys.all, "detail"] as const,
   detail: (programId: string) => [...fundingProgramsKeys.details(), programId] as const,
   organizationFilters: () => [...fundingProgramsKeys.all, "organizationFilters"] as const,
+  typeCounts: () => [...fundingProgramsKeys.all, "typeCounts"] as const,
 };
 
 /**
@@ -54,6 +55,18 @@ export function useFundingProgramByCompositeId(compositeId: string | null) {
     queryFn: () => fundingProgramsService.getById(parsed!.programId),
     enabled: Boolean(parsed),
     staleTime: 5 * 60 * 1000,
+  });
+}
+
+/**
+ * Hook to fetch opportunity type counts for the type tabs
+ */
+export function useTypeCounts() {
+  return useQuery({
+    queryKey: fundingProgramsKeys.typeCounts(),
+    queryFn: () => fundingProgramsService.getTypeCounts(),
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
   });
 }
 

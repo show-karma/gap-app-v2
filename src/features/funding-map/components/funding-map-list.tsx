@@ -10,6 +10,7 @@ import { FundingMapCardSkeleton } from "./funding-map-card-skeleton";
 import { FundingMapFilters } from "./funding-map-filters";
 import { FundingMapPagination } from "./funding-map-pagination";
 import { FundingProgramDetailsDialog } from "./funding-program-details-dialog";
+import { OpportunityTypeTabs } from "./opportunity-type-tabs";
 
 /**
  * Extract MongoDB _id as string - handles both V2 API (string) and legacy ({ $oid: string }) formats
@@ -66,6 +67,7 @@ export function FundingMapList() {
   return (
     <section className="flex min-w-0 flex-1 flex-col gap-6">
       <FundingMapFilters totalCount={totalCount} />
+      <OpportunityTypeTabs />
 
       {isLoading && <FundingMapListSkeleton />}
 
@@ -150,6 +152,7 @@ function hasActiveFilters(filters: ReturnType<typeof useFundingFilters>["filters
     filters.networks.length > 0 ||
     filters.grantTypes.length > 0 ||
     !filters.onlyOnKarma ||
-    filters.organizationFilter !== null
+    filters.organizationFilter !== null ||
+    filters.selectedTypes.length > 0
   );
 }

@@ -17,8 +17,10 @@ import {
   FUNDING_MAP_CATEGORIES,
   FUNDING_MAP_GRANT_TYPES,
   FUNDING_MAP_STATUSES,
+  OPPORTUNITY_TYPE_LABELS,
 } from "../constants/filter-options";
 import { useFundingFilters } from "../hooks/use-funding-filters";
+import type { OpportunityType } from "../types/funding-program";
 import { OnKarmaBadge } from "./on-karma-badge";
 
 interface FundingMapFiltersProps {
@@ -44,7 +46,15 @@ export function FundingMapFilters({ totalCount = 0 }: FundingMapFiltersProps) {
     filters.status !== "Active" ||
     filters.categories.length > 0 ||
     filters.grantTypes.length > 0 ||
-    !filters.onlyOnKarma;
+    !filters.onlyOnKarma ||
+    filters.selectedTypes.length > 0;
+
+  // Build result count text based on selected type
+  const singleSelectedType =
+    filters.selectedTypes.length === 1 ? (filters.selectedTypes[0] as OpportunityType) : null;
+  const resultLabel = singleSelectedType
+    ? OPPORTUNITY_TYPE_LABELS[singleSelectedType].toLowerCase()
+    : null;
 
   return (
     <div className="flex w-full flex-wrap items-center justify-between gap-2 rounded-xl border border-border p-3">
@@ -290,7 +300,8 @@ export function FundingMapFilters({ totalCount = 0 }: FundingMapFiltersProps) {
       </div>
 
       <div className="text-sm text-muted-foreground px-2">
-        {totalCount} {totalCount === 1 ? "result" : "results"}
+        {totalCount} {resultLabel ? `${resultLabel} ` : ""}
+        {totalCount === 1 ? "result" : "results"}
       </div>
     </div>
   );

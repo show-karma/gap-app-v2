@@ -8,7 +8,6 @@ import type { SubmitHandler } from "react-hook-form";
 import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
-import { z } from "zod";
 import { CommunitiesSelect } from "@/components/CommunitiesSelect";
 import { Telegram2Icon, WebsiteIcon } from "@/components/Icons";
 import { BlogIcon } from "@/components/Icons/Blog";
@@ -41,144 +40,16 @@ import { registryHelper } from "./helper";
 import type { GrantProgram } from "./ProgramList";
 import { SearchDropdown } from "./SearchDropdown";
 import { StatusDropdown } from "./StatusDropdown";
+import { createProgramSchema, OPPORTUNITY_TYPE_OPTIONS, type ProgramFormData } from "./schema";
+import { AcceleratorFields } from "./TypeFields/AcceleratorFields";
+import { BountyFields } from "./TypeFields/BountyFields";
+import { HackathonFields } from "./TypeFields/HackathonFields";
+import { RfpFields } from "./TypeFields/RfpFields";
+import { VcFundFields } from "./TypeFields/VcFundFields";
 
 const labelStyle = "text-sm font-bold text-brand-gray dark:text-zinc-100";
 const inputStyle =
   "mt-1 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100";
-
-const createProgramSchema = z.object({
-  name: z
-    .string()
-    .min(3, { message: MESSAGES.REGISTRY.FORM.NAME.MIN })
-    .max(50, { message: MESSAGES.REGISTRY.FORM.NAME.MAX }),
-  dates: z
-    .object({
-      endsAt: z.date().optional(),
-      startsAt: z.date().optional(),
-    })
-    .refine(
-      (data) => {
-        if (!data.endsAt || !data.startsAt) return true;
-        const endsAt = data.endsAt.getTime() / 1000;
-        const startsAt = data.startsAt.getTime() / 1000;
-        return startsAt ? startsAt <= endsAt : true;
-      },
-      {
-        message: "Start date must be before the end date",
-        path: ["startsAt"],
-      }
-    ),
-  website: z
-    .string()
-    .refine((value) => urlRegex.test(value), {
-      message: "Please enter a valid URL",
-    })
-    .optional()
-    .or(z.literal("")),
-  twitter: z
-    .string()
-    .refine((value) => urlRegex.test(value), {
-      message: "Please enter a valid URL",
-    })
-    .optional()
-    .or(z.literal("")),
-  discord: z
-    .string()
-    .refine((value) => urlRegex.test(value), {
-      message: "Please enter a valid URL",
-    })
-    .optional()
-    .or(z.literal("")),
-  orgWebsite: z
-    .string()
-    .refine((value) => urlRegex.test(value), {
-      message: "Please enter a valid URL",
-    })
-    .optional()
-    .or(z.literal("")),
-  blog: z
-    .string()
-    .refine((value) => urlRegex.test(value), {
-      message: "Please enter a valid URL",
-    })
-    .optional()
-    .or(z.literal("")),
-  forum: z
-    .string()
-    .refine((value) => urlRegex.test(value), {
-      message: "Please enter a valid URL",
-    })
-    .optional()
-    .or(z.literal("")),
-  grantsSite: z.string().refine((value) => urlRegex.test(value), {
-    message: "Please enter a valid URL",
-  }),
-  bugBounty: z
-    .string()
-    .refine((value) => urlRegex.test(value), {
-      message: "Please enter a valid URL",
-    })
-    .optional()
-    .or(z.literal("")),
-  telegram: z
-    .string()
-    .refine((value) => urlRegex.test(value), {
-      message: "Please enter a valid URL",
-    })
-    .optional()
-    .or(z.literal("")),
-  facebook: z
-    .string()
-    .refine((value) => urlRegex.test(value), {
-      message: "Please enter a valid URL",
-    })
-    .optional()
-    .or(z.literal("")),
-  instagram: z
-    .string()
-    .refine((value) => urlRegex.test(value), {
-      message: "Please enter a valid URL",
-    })
-    .optional()
-    .or(z.literal("")),
-  shortDescription: z
-    .string()
-    .max(100, { message: "Short description must be at most 100 characters" })
-    .optional()
-    .or(z.literal("")),
-  amountDistributed: z.coerce.number().optional(),
-  description: z
-    .string({
-      required_error: MESSAGES.REGISTRY.FORM.DESCRIPTION,
-    })
-    .min(3, {
-      message: MESSAGES.REGISTRY.FORM.DESCRIPTION,
-    }),
-  networkToCreate: z.coerce.number().optional(),
-  budget: z.coerce.number().optional(),
-  minGrantSize: z.coerce.number().optional(),
-  maxGrantSize: z.coerce.number().optional(),
-  grantsToDate: z.coerce.number().optional(),
-  categories: z.array(z.string()),
-  organizations: z.array(z.string()),
-  ecosystems: z.array(z.string()),
-  networks: z.array(z.string()),
-  grantTypes: z.array(z.string()),
-  platformsUsed: z.array(z.string()),
-  communityRef: z.array(z.string()),
-  anyoneCanJoin: z.boolean(),
-  status: z.string().optional().or(z.literal("Active")),
-  adminEmails: z
-    .array(z.string().email({ message: "Invalid email address" }))
-    .optional()
-    .default([]),
-  financeEmails: z
-    .array(z.string().email({ message: "Invalid email address" }))
-    .optional()
-    .default([]),
-});
-
-type ProgramFormData = z.infer<typeof createProgramSchema>;
 
 export default function AddProgram({
   programToEdit,
@@ -228,6 +99,11 @@ export default function AddProgram({
     reValidateMode: "onChange",
     mode: "onChange",
     defaultValues: {
+      opportunityType: (programToEdit as any)?.type ?? "grant",
+      deadline: (programToEdit as any)?.deadline
+        ? new Date((programToEdit as any).deadline)
+        : undefined,
+      submissionUrl: (programToEdit as any)?.submissionUrl ?? "",
       name: programToEdit?.metadata?.title,
       description: programToEdit?.metadata?.description,
       shortDescription: programToEdit?.metadata?.shortDescription || "",
@@ -273,6 +149,24 @@ export default function AddProgram({
       status: programToEdit?.metadata?.status || "Active",
       adminEmails: programToEdit?.metadata?.adminEmails || [],
       financeEmails: programToEdit?.metadata?.financeEmails || [],
+      hackathonMeta: {
+        location: "",
+        tracks: "",
+        prizeCurrency: "USD",
+      },
+      bountyMeta: {
+        rewardCurrency: "USD",
+      },
+      acceleratorMeta: {
+        fundingCurrency: "USD",
+      },
+      vcFundMeta: {
+        checkSizeCurrency: "USD",
+      },
+      rfpMeta: {
+        issuingOrganization: "",
+        budgetCurrency: "USD",
+      },
     },
   });
 
@@ -360,6 +254,143 @@ export default function AddProgram({
     adminEmails: data.adminEmails,
     financeEmails: data.financeEmails,
   });
+
+  const buildTypedMetadata = (data: ProgramFormData) => {
+    const type = data.opportunityType;
+    if (type === "hackathon" && data.hackathonMeta) {
+      const m = data.hackathonMeta;
+      const tracks = m.tracks
+        ? m.tracks
+            .split(",")
+            .map((t) => t.trim())
+            .filter(Boolean)
+        : undefined;
+      return {
+        hackathonMetadata: {
+          startDate: data.dates.startsAt?.toISOString() ?? "",
+          endDate: data.dates.endsAt?.toISOString() ?? "",
+          location: m.location || "",
+          ...(tracks && tracks.length > 0 ? { tracks } : {}),
+          ...(m.prizePool
+            ? {
+                prizes: [
+                  {
+                    amount: m.prizePool,
+                    currency: m.prizeCurrency || "USD",
+                  },
+                ],
+              }
+            : {}),
+          ...(m.registrationDeadline
+            ? { registrationDeadline: m.registrationDeadline.toISOString() }
+            : {}),
+          ...(m.teamSizeMin || m.teamSizeMax
+            ? { teamSize: { min: m.teamSizeMin || 1, max: m.teamSizeMax || 5 } }
+            : {}),
+        },
+      };
+    }
+    if (type === "bounty" && data.bountyMeta) {
+      const m = data.bountyMeta;
+      const skills = m.skills
+        ? m.skills
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : undefined;
+      return {
+        bountyMetadata: {
+          reward: {
+            amount: m.rewardAmount || 0,
+            currency: m.rewardCurrency || "USD",
+          },
+          ...(m.difficulty ? { difficulty: m.difficulty } : {}),
+          ...(skills && skills.length > 0 ? { skills } : {}),
+          ...(m.platform ? { platform: m.platform } : {}),
+        },
+      };
+    }
+    if (type === "accelerator" && data.acceleratorMeta) {
+      const m = data.acceleratorMeta;
+      return {
+        acceleratorMetadata: {
+          ...(m.stage ? { stage: m.stage } : {}),
+          ...(m.equity ? { equity: m.equity } : {}),
+          ...(m.fundingAmount
+            ? {
+                funding: {
+                  amount: m.fundingAmount,
+                  currency: m.fundingCurrency || "USD",
+                },
+              }
+            : {}),
+          ...(m.programDuration ? { programDuration: m.programDuration } : {}),
+          ...(m.batchSize ? { batchSize: m.batchSize } : {}),
+          ...(m.location ? { location: m.location } : {}),
+          ...(data.deadline ? { applicationDeadline: data.deadline.toISOString() } : {}),
+        },
+      };
+    }
+    if (type === "vc_fund" && data.vcFundMeta) {
+      const m = data.vcFundMeta;
+      const portfolio = m.portfolio
+        ? m.portfolio
+            .split(",")
+            .map((p) => p.trim())
+            .filter(Boolean)
+        : undefined;
+      return {
+        vcFundMetadata: {
+          ...(m.stage ? { stage: m.stage } : {}),
+          ...(m.checkSizeMin || m.checkSizeMax
+            ? {
+                checkSize: {
+                  min: m.checkSizeMin || 0,
+                  max: m.checkSizeMax || 0,
+                  currency: m.checkSizeCurrency || "USD",
+                },
+              }
+            : {}),
+          ...(m.thesis ? { thesis: m.thesis } : {}),
+          ...(portfolio && portfolio.length > 0 ? { portfolio } : {}),
+          ...(m.contactMethod ? { contactMethod: m.contactMethod } : {}),
+          ...(m.activelyInvesting !== undefined ? { activelyInvesting: m.activelyInvesting } : {}),
+        },
+      };
+    }
+    if (type === "rfp" && data.rfpMeta) {
+      const m = data.rfpMeta;
+      const requirements = m.requirements
+        ? m.requirements
+            .split("\n")
+            .map((r) => r.trim())
+            .filter(Boolean)
+        : undefined;
+      return {
+        rfpMetadata: {
+          issuingOrganization: m.issuingOrganization || "",
+          ...(m.budgetAmount
+            ? {
+                budget: {
+                  amount: m.budgetAmount,
+                  currency: m.budgetCurrency || "USD",
+                },
+              }
+            : {}),
+          ...(m.scope ? { scope: m.scope } : {}),
+          ...(requirements && requirements.length > 0 ? { requirements } : {}),
+        },
+      };
+    }
+    return {};
+  };
+
+  const buildTopLevelFields = (data: ProgramFormData) => ({
+    ...(data.opportunityType !== "grant" ? { type: data.opportunityType } : {}),
+    ...(data.deadline ? { deadline: data.deadline.toISOString() } : {}),
+    ...(data.submissionUrl ? { submissionUrl: data.submissionUrl } : {}),
+    ...buildTypedMetadata(data),
+  });
   const createProgram = async (data: ProgramFormData) => {
     setIsLoading(true);
     try {
@@ -370,6 +401,7 @@ export default function AddProgram({
       const chainSelected = data.networkToCreate;
 
       const metadata = { ...buildMetadata(data), status: "Active" };
+      const topLevelFields = buildTopLevelFields(data);
 
       // Use V2 endpoint - owner comes from JWT session
       const [_request, error] = await fetchData(
@@ -378,6 +410,7 @@ export default function AddProgram({
         {
           chainId: chainSelected,
           metadata,
+          ...topLevelFields,
         },
         {},
         {},
@@ -388,9 +421,9 @@ export default function AddProgram({
       }
       toast.success(
         <p className="text-left">
-          You have successfully created the grant program.
+          You have successfully submitted the funding opportunity.
           <br />
-          We will review and approve the program shortly.
+          We will review and approve it shortly.
         </p>,
         {
           duration: 20000,
@@ -515,17 +548,92 @@ export default function AddProgram({
             <h1 className="text-2xl font-semibold text-black dark:text-white font-body">
               {programToEdit
                 ? `Update ${programToEdit.metadata?.title} program`
-                : "Add your program to onchain registry"}
+                : "Submit a Funding Opportunity"}
             </h1>
             <p className="text-base text-black dark:text-white">
               {programToEdit
                 ? ""
-                : "Add your program to the registry and attract high quality builders."}
+                : "Add your funding opportunity to the registry and attract high quality builders."}
             </p>
           </div>
         </div>
         <form onSubmit={handleSubmit(onSubmit)} className="gap-4 rounded-lg w-full flex-col flex">
           <div className="flex flex-col w-full gap-6">
+            {/* Opportunity Type Selector */}
+            <div className="flex flex-col w-full gap-3">
+              <span id="opportunity-type-label" className={labelStyle}>
+                Opportunity Type *
+              </span>
+              <Controller
+                name="opportunityType"
+                control={control}
+                render={({ field }) => (
+                  <div
+                    role="radiogroup"
+                    aria-labelledby="opportunity-type-label"
+                    className="flex flex-wrap gap-2"
+                  >
+                    {OPPORTUNITY_TYPE_OPTIONS.map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        className={cn(
+                          "rounded-lg border px-4 py-2 text-sm font-medium transition-colors cursor-pointer",
+                          field.value === opt.value
+                            ? "border-[#004EEB] bg-[#004EEB]/10 text-[#004EEB]"
+                            : "border-gray-200 bg-white text-gray-700 hover:border-gray-300 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+                        )}
+                        onClick={() => field.onChange(opt.value)}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              />
+            </div>
+
+            {/* Deadline & Submission URL (for non-grant types) */}
+            {watch("opportunityType") !== "grant" && (
+              <div className="grid grid-cols-2 max-sm:grid-cols-1 gap-4">
+                <Controller
+                  name="deadline"
+                  control={control}
+                  render={({ field }) => (
+                    <div className="flex w-full flex-col gap-2">
+                      <div className={labelStyle}>
+                        Deadline{" "}
+                        <span className="font-normal text-gray-500 dark:text-gray-400 ml-1">
+                          (optional)
+                        </span>
+                      </div>
+                      <DateTimePicker
+                        selected={field.value}
+                        onSelect={(date: Date | undefined) => field.onChange(date)}
+                        placeholder="Select deadline"
+                        timeMode="end"
+                      />
+                    </div>
+                  )}
+                />
+                <div className="flex w-full flex-col gap-1">
+                  <label htmlFor="submission-url" className={labelStyle}>
+                    Submission URL{" "}
+                    <span className="font-normal text-gray-500 dark:text-gray-400 ml-1">
+                      (optional)
+                    </span>
+                  </label>
+                  <input
+                    id="submission-url"
+                    className={inputStyle}
+                    placeholder="Ex: https://apply.example.com"
+                    {...register("submissionUrl")}
+                  />
+                  <p className="text-base text-red-400">{errors.submissionUrl?.message}</p>
+                </div>
+              </div>
+            )}
+
             <div className="flex flex-col w-full gap-6 border-b border-b-[#98A2B3] pb-10">
               <div className="grid grid-cols-2 max-sm:grid-cols-1 gap-4">
                 <div className="flex w-full flex-col gap-1">
@@ -562,9 +670,13 @@ export default function AddProgram({
                       <div className="flex w-full flex-col gap-2">
                         <div className={labelStyle}>
                           Start date{" "}
-                          <span className="font-normal text-gray-500 dark:text-gray-400 ml-1">
-                            (optional)
-                          </span>
+                          {watch("opportunityType") === "hackathon" ? (
+                            "*"
+                          ) : (
+                            <span className="font-normal text-gray-500 dark:text-gray-400 ml-1">
+                              (optional)
+                            </span>
+                          )}
                         </div>
                         <DateTimePicker
                           selected={field.value}
@@ -599,9 +711,13 @@ export default function AddProgram({
                       <div className="flex w-full flex-col gap-2">
                         <div className={labelStyle}>
                           End date{" "}
-                          <span className="font-normal text-gray-500 dark:text-gray-400 ml-1">
-                            (optional)
-                          </span>
+                          {watch("opportunityType") === "hackathon" ? (
+                            "*"
+                          ) : (
+                            <span className="font-normal text-gray-500 dark:text-gray-400 ml-1">
+                              (optional)
+                            </span>
+                          )}
                         </div>
                         <DateTimePicker
                           selected={field.value}
@@ -664,6 +780,54 @@ export default function AddProgram({
                 />
                 <p className="text-base text-red-400">{errors.description?.message}</p>
               </div>
+
+              {/* Type-Specific Fields */}
+              {watch("opportunityType") === "hackathon" && (
+                <HackathonFields
+                  register={register}
+                  control={control}
+                  errors={errors}
+                  labelStyle={labelStyle}
+                  inputStyle={inputStyle}
+                />
+              )}
+              {watch("opportunityType") === "bounty" && (
+                <BountyFields
+                  register={register}
+                  control={control}
+                  errors={errors}
+                  labelStyle={labelStyle}
+                  inputStyle={inputStyle}
+                />
+              )}
+              {watch("opportunityType") === "accelerator" && (
+                <AcceleratorFields
+                  register={register}
+                  control={control}
+                  errors={errors}
+                  labelStyle={labelStyle}
+                  inputStyle={inputStyle}
+                />
+              )}
+              {watch("opportunityType") === "vc_fund" && (
+                <VcFundFields
+                  register={register}
+                  control={control}
+                  errors={errors}
+                  labelStyle={labelStyle}
+                  inputStyle={inputStyle}
+                />
+              )}
+              {watch("opportunityType") === "rfp" && (
+                <RfpFields
+                  register={register}
+                  control={control}
+                  errors={errors}
+                  labelStyle={labelStyle}
+                  inputStyle={inputStyle}
+                />
+              )}
+
               {isAdmin && (
                 <div className="grid grid-cols-2 max-sm:grid-cols-1 gap-4">
                   <Controller

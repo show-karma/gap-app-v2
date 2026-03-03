@@ -7,6 +7,7 @@ import type {
   OrganizationFiltersResponse,
   PaginatedFundingPrograms,
   PaginatedFundingProgramsResponse,
+  TypeCount,
 } from "../types/funding-program";
 import { buildQueryString } from "../utils/mappers";
 
@@ -93,6 +94,19 @@ export const fundingProgramsService = {
       programId: id,
       chainId: defaultChainId,
     };
+  },
+
+  /**
+   * Fetch type counts for opportunity type tabs
+   */
+  async getTypeCounts(): Promise<TypeCount[]> {
+    const [response, error] = await fetchData<TypeCount[]>(INDEXER.V2.REGISTRY.GET_TYPES);
+
+    if (error) {
+      throw new Error(error);
+    }
+
+    return response || [];
   },
 
   /**

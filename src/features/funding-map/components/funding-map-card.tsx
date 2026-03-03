@@ -6,12 +6,14 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
-import type { FundingProgramResponse } from "../types/funding-program";
+import type { FundingProgramResponse, OpportunityType } from "../types/funding-program";
 import { formatBudgetValue } from "../utils/format-budget";
 import { isValidImageUrl } from "../utils/image-utils";
+import { CardTypeDetails } from "./card-type-details";
 import { FundingMapDescription } from "./funding-map-description";
 import { GrantTypeBadges } from "./grant-type-badges";
 import { OnKarmaBadge } from "./on-karma-badge";
+import { OpportunityTypeBadge } from "./opportunity-type-badge";
 
 interface FundingMapCardProps {
   program: FundingProgramResponse;
@@ -47,6 +49,8 @@ export function FundingMapCard({
 }: FundingMapCardProps & { className?: string }) {
   const router = useRouter();
   const { metadata, isOnKarma, communities } = program;
+  const opportunityType: OpportunityType = program.type ?? "grant";
+  const isNonGrant = opportunityType !== "grant";
 
   const title = metadata?.title;
   const description = metadata?.description;
@@ -128,6 +132,11 @@ export function FundingMapCard({
           {isOnKarma && <OnKarmaBadge showTooltip={true} />}
         </div>
         <div className="flex flex-col gap-1">
+          {isNonGrant && (
+            <div className="mb-0.5">
+              <OpportunityTypeBadge type={opportunityType} />
+            </div>
+          )}
           <h3 className="text-lg font-semibold text-foreground">{title}</h3>
           {(validCommunities.length > 0 || fallbackName) && (
             <div className="flex flex-wrap items-center gap-1.5">
@@ -156,6 +165,7 @@ export function FundingMapCard({
             </div>
           )}
         </div>
+        {isNonGrant && <CardTypeDetails program={program} />}
         {!hideDescription && <FundingMapDescription description={description ?? ""} />}
       </div>
 

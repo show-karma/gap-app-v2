@@ -47,11 +47,14 @@ import type {
   FundingProgramCommunity,
   FundingProgramMetadata,
   FundingProgramResponse,
+  OpportunityType,
 } from "../types/funding-program";
 import { formatBudgetValue } from "../utils/format-budget";
 import { FUNDING_PLATFORM_DOMAINS } from "../utils/funding-platform-domains";
 import { isValidImageUrl } from "../utils/image-utils";
+import { DialogTypeSection } from "./dialog-type-sections";
 import { GrantTypeBadges } from "./grant-type-badges";
+import { OpportunityTypeBadge } from "./opportunity-type-badge";
 
 interface FundingProgramDetailsDialogProps {
   program: FundingProgramResponse | null;
@@ -361,6 +364,8 @@ export function FundingProgramDetailsDialog({
 
 function DialogContentInner({ program }: { program: FundingProgramResponse }) {
   const { metadata, isOnKarma, communities, programId } = program;
+  const opportunityType: OpportunityType = program.type ?? "grant";
+  const isNonGrant = opportunityType !== "grant";
   const title = metadata?.title;
   const description = metadata?.description;
   const grantTypes = metadata?.grantTypes?.filter(
@@ -407,6 +412,7 @@ function DialogContentInner({ program }: { program: FundingProgramResponse }) {
           {/* Top row: On Karma badge + Social links */}
           <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
             <div className="flex flex-wrap items-center gap-2">
+              {isNonGrant && <OpportunityTypeBadge type={opportunityType} />}
               {isOnKarma && (
                 <Badge
                   variant="secondary"
@@ -508,6 +514,19 @@ function DialogContentInner({ program }: { program: FundingProgramResponse }) {
           </DialogDescription>
         )}
 
+        {/* Type-Specific Details */}
+        {isNonGrant && <DialogTypeSection program={program} />}
+
+        {/* Submit/Apply via submissionUrl for non-grant types */}
+        {isNonGrant && program.submissionUrl && (
+          <Button asChild size="sm" className="gap-1.5 w-fit">
+            <Link href={program.submissionUrl} target="_blank" rel="noopener noreferrer">
+              Apply
+              <ExternalLink className="h-3.5 w-3.5" />
+            </Link>
+          </Button>
+        )}
+
         {/* Info Cards Grid */}
         {hasInfoCards && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
@@ -601,7 +620,7 @@ function DialogContentInner({ program }: { program: FundingProgramResponse }) {
       {programId && (
         <div className="border-t border-border px-6 py-4 bg-muted/30">
           <p className="text-sm text-muted-foreground">
-            Are you the manager of this grant program?{" "}
+            Are you the manager of this {isNonGrant ? "program" : "grant program"}?{" "}
             <a
               href={`https://tally.so/r/3qB1PY?program_id=${programId}&program_name=karma`}
               target="_blank"
