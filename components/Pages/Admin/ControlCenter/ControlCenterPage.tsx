@@ -543,6 +543,7 @@ export function ControlCenterPage() {
       />
 
       <BulkPayoutImportPanel
+        communityUID={community?.uid ?? ""}
         tableRows={paginatedData}
         onApplyConfigs={handleApplyBulkConfigs}
         isApplying={saveBulkImportMutation.isPending}

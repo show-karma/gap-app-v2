@@ -1,14 +1,16 @@
 "use client";
 
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/20/solid";
+import { useMutation } from "@tanstack/react-query";
 import Papa from "papaparse";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { FileUpload } from "@/components/Utilities/FileUpload";
 import type {
   PayoutConfigItem,
   SavePayoutConfigResponse,
 } from "@/src/features/payout-disbursement";
+import { validateBulkImportRows } from "@/src/features/payout-disbursement/services/payout-disbursement.service";
 import { cn } from "@/utilities/tailwind";
 import {
   buildPayoutConfigItems,
@@ -16,12 +18,14 @@ import {
   parseImportRecords,
   summarizeSaveResponse,
   toErrorReport,
-  validateAndMatchImportRows,
+  type ValidatedImportRow,
+  validateFieldFormats,
 } from "./bulkPayoutImport";
 import type { TableRow } from "./ControlCenterTable";
 
 interface BulkPayoutImportPanelProps {
-  tableRows: TableRow[];
+  communityUID: string;
+  tableRows?: TableRow[];
   onApplyConfigs: (configs: PayoutConfigItem[]) => Promise<SavePayoutConfigResponse>;
   isApplying: boolean;
 }
@@ -43,6 +47,7 @@ function toCsvValue(value: string): string {
 }
 
 export function BulkPayoutImportPanel({
+  communityUID,
   tableRows,
   onApplyConfigs,
   isApplying,
@@ -54,10 +59,35 @@ export function BulkPayoutImportPanel({
   const [fatalErrors, setFatalErrors] = useState<string[]>([]);
   const [draftRows, setDraftRows] = useState<ImportDraftRow[]>([]);
 
-  const validatedRows = useMemo(
-    () => validateAndMatchImportRows(draftRows, tableRows),
-    [draftRows, tableRows]
+  const formatValidatedRows = useMemo(
+    () => (draftRows.length > 0 ? validateFieldFormats(draftRows) : []),
+    [draftRows]
   );
+
+  const validateMutation = useMutation({
+    mutationFn: (rows: ImportDraftRow[]) => validateBulkImportRows(communityUID, rows),
+  });
+
+  useEffect(() => {
+    if (draftRows.length === 0 || fatalErrors.length > 0) {
+      validateMutation.reset();
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      validateMutation.mutate(draftRows);
+    }, 300);
+
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftRows, communityUID, fatalErrors.length]);
+
+  const validatedRows: ValidatedImportRow[] =
+    validateMutation.data && !validateMutation.isPending
+      ? (validateMutation.data as ValidatedImportRow[])
+      : formatValidatedRows;
+  const isValidating = validateMutation.isPending;
+
   const validRows = useMemo(
     () => validatedRows.filter((row) => row.status === "valid"),
     [validatedRows]
@@ -122,7 +152,7 @@ export function BulkPayoutImportPanel({
       "payoutAddress",
       "amount",
     ].join(",");
-    const rows = tableRows.map((row) =>
+    const rows = (tableRows ?? []).map((row) =>
       [
         row.grantUid,
         row.projectUid,
@@ -178,6 +208,7 @@ export function BulkPayoutImportPanel({
         setPasteValue("");
         setDraftRows([]);
         setFatalErrors([]);
+        validateMutation.reset();
       }
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Failed to apply import";
@@ -258,9 +289,8 @@ export function BulkPayoutImportPanel({
 
             <p className="text-sm text-gray-600 dark:text-zinc-400">
               Matching priority: grantUID, projectUID, projectSlug/projectURL, then projectName.
-              Name/slug matching applies to the currently loaded page only; for other pages use
-              grantUID + projectUID (included in the template). Ambiguous or invalid rows are
-              blocked until fixed.
+              Matching runs against all community grants. Ambiguous or invalid rows are blocked
+              until fixed.
             </p>
 
             {mode === "upload" ? (
@@ -307,6 +337,14 @@ export function BulkPayoutImportPanel({
                   <p>Total rows: {validatedRows.length}</p>
                   <p className="text-green-700 dark:text-green-400">Valid: {validRows.length}</p>
                   <p className="text-red-700 dark:text-red-400">Invalid: {invalidRows.length}</p>
+                  {isValidating && (
+                    <p className="text-blue-600 dark:text-blue-400 mt-1">Validating matches...</p>
+                  )}
+                  {validateMutation.isError && (
+                    <p className="text-red-600 dark:text-red-400 mt-1">
+                      Validation failed. Showing format checks only.
+                    </p>
+                  )}
                 </div>
 
                 {invalidRows.length > 0 && (
@@ -440,6 +478,7 @@ export function BulkPayoutImportPanel({
                       setPasteValue("");
                       setDraftRows([]);
                       setFatalErrors([]);
+                      validateMutation.reset();
                     }}
                     className="px-4 py-2 rounded-md text-sm font-medium border border-gray-300 dark:border-zinc-700 text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-900"
                     disabled={isApplying}
