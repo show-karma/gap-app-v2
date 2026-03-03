@@ -12,12 +12,15 @@ import {
   CreateDisbursementModal,
   type GrantDisbursementInfo,
   getPaidAllocationIds,
+  type PayoutConfigItem,
   PayoutConfigurationModal,
   PayoutHistoryDrawer,
+  useSavePayoutConfig,
 } from "@/src/features/payout-disbursement";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
+import { BulkPayoutImportPanel } from "./BulkPayoutImportPanel";
 import type { TableRow } from "./ControlCenterTable";
 import { ControlCenterTable } from "./ControlCenterTable";
 import { FilterToolbar } from "./FilterToolbar";
@@ -26,6 +29,7 @@ import { useControlCenterData } from "./useControlCenterData";
 
 // ─── Main component ──────────────────────────────────────────────────────────
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: This page intentionally orchestrates URL state, data-loading guards, and modal coordination in one container component.
 export function ControlCenterPage() {
   const router = useRouter();
   const pathname = usePathname();
@@ -184,6 +188,21 @@ export function ControlCenterPage() {
     currentPage,
     itemsPerPage,
   });
+
+  const saveBulkImportMutation = useSavePayoutConfig();
+
+  const handleApplyBulkConfigs = useCallback(
+    async (configs: PayoutConfigItem[]) => {
+      if (!community?.uid) {
+        throw new Error("Community UID not available");
+      }
+      return saveBulkImportMutation.mutateAsync({
+        communityUID: community.uid,
+        configs,
+      });
+    },
+    [community?.uid, saveBulkImportMutation]
+  );
 
   // ─── URL param handlers ──────────────────────────────────────────────────
 
@@ -383,6 +402,15 @@ export function ControlCenterPage() {
 
   if (!authReady || isLoadingCommunity || !community || loadingAdmin || isLoadingPayouts) {
     const skeletonCols = 9;
+    const skeletonColumnKeys = Array.from(
+      { length: skeletonCols },
+      (_, colNumber) => `skeleton-col-${colNumber + 1}`
+    );
+    const skeletonRowKeys = Array.from(
+      { length: 6 },
+      (_, rowNumber) => `skeleton-row-${rowNumber + 1}`
+    );
+
     return (
       <div className="my-4 flex flex-col gap-6 w-full">
         <div className="flex flex-col gap-1 px-4">
@@ -406,22 +434,22 @@ export function ControlCenterPage() {
             <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-800">
               <thead>
                 <tr className="bg-gray-50 dark:bg-zinc-900">
-                  {Array.from({ length: skeletonCols }).map((_, i) => (
-                    <th key={i} className="h-11 px-4">
+                  {skeletonColumnKeys.map((columnKey) => (
+                    <th key={columnKey} className="h-11 px-4">
                       <Skeleton className="h-3 w-16" />
                     </th>
                   ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-zinc-800 bg-white dark:bg-zinc-950">
-                {Array.from({ length: 6 }).map((_, rowIdx) => (
-                  <tr key={rowIdx}>
-                    {Array.from({ length: skeletonCols }).map((_, colIdx) => (
-                      <td key={colIdx} className="px-4 py-3">
+                {skeletonRowKeys.map((rowKey) => (
+                  <tr key={rowKey}>
+                    {skeletonColumnKeys.map((columnKey, columnIndex) => (
+                      <td key={`${rowKey}-${columnKey}`} className="px-4 py-3">
                         <Skeleton
                           className={cn(
                             "h-4",
-                            colIdx === 0 ? "w-4" : colIdx === 1 ? "w-32" : "w-20"
+                            columnIndex === 0 ? "w-4" : columnIndex === 1 ? "w-32" : "w-20"
                           )}
                         />
                       </td>
@@ -512,6 +540,12 @@ export function ControlCenterPage() {
         onClearAll={handleClearFilters}
         itemsPerPage={itemsPerPage}
         onItemsPerPageChange={handleItemsPerPageChange}
+      />
+
+      <BulkPayoutImportPanel
+        tableRows={paginatedData}
+        onApplyConfigs={handleApplyBulkConfigs}
+        isApplying={saveBulkImportMutation.isPending}
       />
 
       {/* Table */}
