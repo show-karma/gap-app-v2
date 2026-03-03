@@ -3,9 +3,11 @@
 import { AlertCircle, ArrowLeft, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { ProgramByline } from "@/features/programs/components/ProgramByline";
 import { ProgramDetailsSidebar } from "@/features/programs/components/ProgramDetailsSidebar";
 import { useProgram } from "@/features/programs/hooks/use-program";
+import { PermissionProvider } from "@/src/core/rbac/context/permission-context";
 
 function isProgramEnabled(program: {
   applicationConfig: { isEnabled: boolean; formSchema?: unknown } | null;
@@ -17,17 +19,13 @@ function isProgramEnabled(program: {
     ? new Date(program.metadata.endsAt) < new Date()
     : false;
   const now = new Date();
-  const startsAt = program.metadata?.startsAt
-    ? new Date(program.metadata.startsAt)
-    : null;
-  const endsAt = program.metadata?.endsAt
-    ? new Date(program.metadata.endsAt)
-    : null;
+  const startsAt = program.metadata?.startsAt ? new Date(program.metadata.startsAt) : null;
+  const endsAt = program.metadata?.endsAt ? new Date(program.metadata.endsAt) : null;
   const isOpen = startsAt && endsAt ? now >= startsAt && now <= endsAt : true;
   return hasFormConfig && isEnabled && isOpen && !isDeadlinePassed;
 }
 
-export default function ProgramDetailPage() {
+function ProgramDetailContent() {
   const { communityId, programId } = useParams<{
     communityId: string;
     programId: string;
@@ -98,8 +96,7 @@ export default function ProgramDetailPage() {
   }
 
   const isEnabled = isProgramEnabled(program);
-  const description =
-    program.metadata?.description || "No description available";
+  const description = program.metadata?.description || "No description available";
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
@@ -142,19 +139,26 @@ export default function ProgramDetailPage() {
             </div>
           ) : null}
 
-          {/* Description */}
-          <div className="prose prose-sm max-w-none dark:prose-invert">
-            <p className="whitespace-pre-wrap text-foreground">{description}</p>
-          </div>
+          {/* Description — rendered as markdown to preserve formatting */}
+          <MarkdownPreview source={description} />
         </div>
 
         {/* Sidebar */}
-        <ProgramDetailsSidebar
-          program={program}
-          communityId={communityId}
-          isEnabled={isEnabled}
-        />
+        <ProgramDetailsSidebar program={program} communityId={communityId} isEnabled={isEnabled} />
       </div>
     </div>
+  );
+}
+
+export default function ProgramDetailPage() {
+  const { communityId, programId } = useParams<{
+    communityId: string;
+    programId: string;
+  }>();
+
+  return (
+    <PermissionProvider resourceContext={{ communityId, programId }}>
+      <ProgramDetailContent />
+    </PermissionProvider>
   );
 }

@@ -8,13 +8,15 @@ import type { ApplicationComment, UsePublicCommentingReturn } from "../types";
 
 interface UsePublicCommentingOptions {
   referenceNumber: string;
+  communityId: string;
   enabled?: boolean;
 }
 
-const QUERY_KEY_PREFIX = "public-application-comments";
+const QUERY_KEY_PREFIX = "wl-public-comments";
 
 export function usePublicCommenting({
   referenceNumber,
+  communityId,
   enabled = true,
 }: UsePublicCommentingOptions): UsePublicCommentingReturn {
   const { address, authenticated } = useAuth();
@@ -25,7 +27,11 @@ export function usePublicCommenting({
     return address.toLowerCase();
   }, [address]);
 
-  const queryKey = useMemo(() => [QUERY_KEY_PREFIX, referenceNumber], [referenceNumber]);
+  // communityId scopes the key to prevent cross-tenant cache collisions
+  const queryKey = useMemo(
+    () => [QUERY_KEY_PREFIX, communityId, referenceNumber],
+    [communityId, referenceNumber]
+  );
 
   const {
     data: comments = [],
@@ -55,8 +61,9 @@ export function usePublicCommenting({
   const deleteCommentMutation = useMutation({
     mutationFn: (commentId: string) => CommentsService.deleteComment(commentId),
     onSuccess: (_, commentId) => {
-      queryClient.setQueryData<ApplicationComment[]>(queryKey, (old) =>
-        old?.filter((c) => c.id !== commentId) ?? []
+      queryClient.setQueryData<ApplicationComment[]>(
+        queryKey,
+        (old) => old?.filter((c) => c.id !== commentId) ?? []
       );
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey }),

@@ -267,7 +267,15 @@ export function AIEvaluationDisplay({
 }: AIEvaluationDisplayProps) {
   if (!isEnabled) return null;
 
-  const isGrowthGrants = programName?.toLowerCase().includes("growth grants") || false;
+  // P1-18: Single programType discriminator — replaces dual isAuditGrants/isGrowthGrants flags
+  const lowerName = programName?.toLowerCase() ?? "";
+  const programType = lowerName.includes("audit grants")
+    ? "audit"
+    : lowerName.includes("growth grants")
+      ? "growth"
+      : "generic";
+  const isGrowthGrants = programType === "growth";
+  const isAuditGrants = programType === "audit";
 
   return (
     <div
@@ -327,20 +335,82 @@ export function AIEvaluationDisplay({
               "reviewer_confidence",
             ]);
 
+            // P1-18: getDecisionColor for color-coded decision text
+            const getDecisionColor = (value: string) => {
+              const val = value.toLowerCase();
+              if (val === "reject" || val === "rejected" || val === "low")
+                return "text-red-600 dark:text-red-400";
+              if (
+                val === "accept" ||
+                val === "accepted" ||
+                val === "approve" ||
+                val === "approved" ||
+                val === "high"
+              )
+                return "text-green-600 dark:text-green-400";
+              if (val === "pending" || val === "review" || val === "medium")
+                return "text-yellow-600 dark:text-yellow-400";
+              return "text-gray-700 dark:text-gray-300";
+            };
+
+            // P1-18: audit-grants label remapping
+            const getDecisionDisplay = (value: string) => {
+              if (!isAuditGrants) return value.toUpperCase();
+              const decisionMap: Record<string, string> = {
+                PASS: "High",
+                NO_PASS: "Medium",
+                REJECT: "Low",
+              };
+              return decisionMap[value.toUpperCase()] ?? value.toUpperCase();
+            };
+
+            // P1-17: evaluation_status color chip
+            const getEvalStatusColor = (status: string) => {
+              const s = status.toLowerCase();
+              if (s === "complete" || s === "completed")
+                return "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400";
+              if (s === "incomplete" || s === "failed")
+                return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
+              return "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400";
+            };
+
             return (
               <div className="space-y-4">
                 {(evalData.final_score !== undefined || evalData.score !== undefined) && (
-                  <ScoreDisplay
-                    score={(evalData.final_score as number) || (evalData.score as number) || 0}
-                    isGrowthGrants={isGrowthGrants}
-                  />
+                  <>
+                    <ScoreDisplay
+                      score={(evalData.final_score as number) || (evalData.score as number) || 0}
+                      isGrowthGrants={isGrowthGrants}
+                    />
+                    {/* P1-17: evaluation_status chip before decision block */}
+                    {!isGrowthGrants && evalData.evaluation_status && (
+                      <div className="mt-1">
+                        <span
+                          className={cn(
+                            "inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium",
+                            getEvalStatusColor(String(evalData.evaluation_status))
+                          )}
+                        >
+                          {String(evalData.evaluation_status).charAt(0).toUpperCase() +
+                            String(evalData.evaluation_status).slice(1)}
+                        </span>
+                      </div>
+                    )}
+                  </>
                 )}
 
                 {evalData.decision ? (
-                  <div className="pb-3 border-b">
-                    <h4 className="text-sm font-medium mb-2">Decision</h4>
-                    <p className="text-lg font-semibold">
-                      {String(evalData.decision).toUpperCase()}
+                  <div className="pb-3 border-b border-zinc-200 dark:border-zinc-700">
+                    <h4 className="text-sm font-medium mb-2">
+                      {isAuditGrants ? "Probability of approval" : "Decision"}
+                    </h4>
+                    <p
+                      className={cn(
+                        "text-lg font-semibold",
+                        getDecisionColor(String(evalData.decision))
+                      )}
+                    >
+                      {getDecisionDisplay(String(evalData.decision))}
                     </p>
                   </div>
                 ) : null}

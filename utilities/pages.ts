@@ -30,6 +30,8 @@ export const PAGES = {
     APPLICATIONS: (community: string) => `/community/${community}/applications`,
     APPLICATION_DETAIL: (community: string, applicationId: string) =>
       `/community/${community}/applications/${applicationId}`,
+    APPLICATION_SUCCESS: (community: string, applicationId: string) =>
+      `/community/${community}/applications/${applicationId}/success`,
     MY_APPLICATIONS: (community: string) => `/community/${community}/my-applications`,
     BROWSE_APPLICATIONS: (community: string) => `/community/${community}/browse-applications`,
     CLAIM_FUNDS: (community: string) => `/community/${community}/claim-funds`,

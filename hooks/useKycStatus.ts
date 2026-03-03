@@ -31,8 +31,9 @@ const isApplicationReference = (identifier: string): boolean =>
 
 export const KYC_QUERY_KEYS = {
   all: ["kyc"] as const,
+  // communityUID is first to prevent cross-tenant cache collisions
   status: (projectUID: string, communityUID: string) =>
-    [...KYC_QUERY_KEYS.all, "status", projectUID, communityUID] as const,
+    [...KYC_QUERY_KEYS.all, "status", communityUID, projectUID] as const,
   statusByAppRef: (referenceNumber: string) =>
     [...KYC_QUERY_KEYS.all, "status-by-app-ref", referenceNumber] as const,
   config: (communityIdOrSlug: string) =>
@@ -358,9 +359,15 @@ export const useKycFormUrl = () => {
       return data;
     },
     onSuccess: (_, variables) => {
-      // Invalidate single status query
+      // Invalidate single project status query (key variant 1)
       queryClient.invalidateQueries({
         queryKey: KYC_QUERY_KEYS.status(variables.projectUID, variables.communityIdOrSlug),
+      });
+      // Invalidate all app-ref status queries (key variant 2) — the application reference
+      // is generated server-side by this mutation, so we can't target a specific ref
+      queryClient.invalidateQueries({
+        queryKey: [...KYC_QUERY_KEYS.all, "status-by-app-ref"],
+        exact: false,
       });
       // Also invalidate batch statuses that might contain this project
       queryClient.invalidateQueries({

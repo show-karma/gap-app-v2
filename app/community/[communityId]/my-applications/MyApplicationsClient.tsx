@@ -1,23 +1,22 @@
 "use client";
 
 import { RefreshCw, Search } from "lucide-react";
-import { useMemo } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { useMemo, useState } from "react";
+import { useProgramsWithConfig } from "@/features/programs/hooks/use-programs-with-config";
 import { ApplicationsFilters } from "@/features/user-applications/components/ApplicationsFilters";
 import { ApplicationsList } from "@/features/user-applications/components/ApplicationsList";
 import { useUserApplications } from "@/features/user-applications/hooks/use-user-applications";
-import { useProgramsWithConfig } from "@/features/programs/hooks/use-programs-with-config";
+import { useAuth } from "@/hooks/useAuth";
+import { ApplicationLookupModal } from "@/src/features/application-lookup/components/ApplicationLookupModal";
 
 interface MyApplicationsClientProps {
   communityId: string;
 }
 
-export function MyApplicationsClient({
-  communityId,
-}: MyApplicationsClientProps) {
+export function MyApplicationsClient({ communityId }: MyApplicationsClientProps) {
   const { address, isConnected } = useAuth();
-  const { programs, isLoading: isProgramsLoading } =
-    useProgramsWithConfig(communityId);
+  const [isLookupOpen, setIsLookupOpen] = useState(false);
+  const { programs, isLoading: isProgramsLoading } = useProgramsWithConfig(communityId);
 
   const {
     applications,
@@ -46,16 +45,14 @@ export function MyApplicationsClient({
   const stats = useMemo(() => {
     return {
       total: applications.length,
-      pending: applications.filter(
-        (a) => a.status === "pending" || a.status === "resubmitted",
-      ).length,
+      pending: applications.filter((a) => a.status === "pending" || a.status === "resubmitted")
+        .length,
       approved: applications.filter((a) => a.status === "approved").length,
     };
   }, [applications]);
 
   const hasNoApplications = stats.total === 0;
-  const hasNoFilters =
-    filters.status === "all" && !filters.programId && !filters.searchQuery;
+  const hasNoFilters = filters.status === "all" && !filters.programId && !filters.searchQuery;
   const shouldShowLookup = hasNoApplications && hasNoFilters && !isLoading;
 
   // Not connected
@@ -63,9 +60,7 @@ export function MyApplicationsClient({
     return (
       <div className="container px-4 py-8">
         <div className="flex flex-col items-center justify-center rounded-xl border border-border py-16 text-center">
-          <h2 className="mb-2 text-xl font-semibold text-foreground">
-            Connect Your Wallet
-          </h2>
+          <h2 className="mb-2 text-xl font-semibold text-foreground">Connect Your Wallet</h2>
           <p className="text-muted-foreground">
             Please connect your wallet to view your applications.
           </p>
@@ -77,9 +72,7 @@ export function MyApplicationsClient({
   return (
     <div className="container px-4 py-8">
       <div className="mb-8">
-        <h1 className="mb-2 text-3xl font-bold text-foreground">
-          My Applications
-        </h1>
+        <h1 className="mb-2 text-3xl font-bold text-foreground">My Applications</h1>
         <p className="text-muted-foreground">
           Track and manage all your funding applications in one place.
         </p>
@@ -145,16 +138,12 @@ export function MyApplicationsClient({
             communityId={communityId}
             isLoading={isLoading}
             emptyMessage={
-              filters.status !== "all" ||
-              filters.programId ||
-              filters.searchQuery
+              filters.status !== "all" || filters.programId || filters.searchQuery
                 ? "No applications match your filters"
                 : "No applications found"
             }
             emptyDescription={
-              filters.status !== "all" ||
-              filters.programId ||
-              filters.searchQuery
+              filters.status !== "all" || filters.programId || filters.searchQuery
                 ? "Try adjusting your filters to see more results."
                 : "You haven't submitted any applications yet."
             }
@@ -163,7 +152,11 @@ export function MyApplicationsClient({
 
         {/* Can't find your application? Card */}
         {shouldShowLookup && (
-          <div className="rounded-xl border-2 border-border p-6 text-center">
+          <button
+            type="button"
+            onClick={() => setIsLookupOpen(true)}
+            className="w-full rounded-xl border-2 border-border p-6 text-center transition-colors hover:bg-muted/50"
+          >
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
               <Search className="h-6 w-6 text-muted-foreground" />
             </div>
@@ -171,11 +164,17 @@ export function MyApplicationsClient({
               Can't find your application?
             </h3>
             <p className="mb-4 text-sm text-muted-foreground">
-              If you logged in with a different wallet or email, you can look up
-              your application to find the correct credential to use.
+              If you logged in with a different wallet or email, you can look up your application to
+              find the correct credential to use.
             </p>
-          </div>
+          </button>
         )}
+
+        <ApplicationLookupModal
+          isOpen={isLookupOpen}
+          onClose={() => setIsLookupOpen(false)}
+          communitySlug={communityId}
+        />
 
         {/* Pagination */}
         {applications.length > 0 && pagination.totalPages > 1 && (
@@ -193,9 +192,7 @@ export function MyApplicationsClient({
             </span>
             <button
               type="button"
-              onClick={() =>
-                setPage(Math.min(pagination.totalPages, pagination.page + 1))
-              }
+              onClick={() => setPage(Math.min(pagination.totalPages, pagination.page + 1))}
               disabled={pagination.page >= pagination.totalPages}
               className="rounded-lg border border-border px-3 py-1.5 text-sm text-foreground transition-colors hover:bg-muted disabled:opacity-50"
             >

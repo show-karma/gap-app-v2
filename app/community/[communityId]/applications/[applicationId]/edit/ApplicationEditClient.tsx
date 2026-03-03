@@ -3,82 +3,43 @@
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, ArrowLeft, RefreshCw } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import type {
-  Application,
-  ApplicationQuestion,
-  ApplicationStatus,
-  FundingProgram,
-} from "@/types/whitelabel-entities";
+import type { Application, FundingProgram } from "@/types/whitelabel-entities";
 import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
 
 interface ApplicationEditClientProps {
   communityId: string;
-  applicationId: string;
+  application: Application;
 }
 
-const editableStatuses: ApplicationStatus[] = [
-  "pending",
-  "revision_requested",
-  "rejected",
-  "resubmitted",
-];
-
-export function ApplicationEditClient({ communityId, applicationId }: ApplicationEditClientProps) {
-  const router = useRouter();
-
-  // Fetch application
+export function ApplicationEditClient({ communityId, application }: ApplicationEditClientProps) {
+  // Fetch program details
   const {
-    data: application,
-    isLoading: appLoading,
-    error: appError,
+    data: program,
+    isLoading: programLoading,
+    error: programError,
     refetch,
   } = useQuery({
-    queryKey: ["wl-application-edit", communityId, applicationId],
-    queryFn: async () => {
-      const [res, err] = await fetchData<Application>(
-        `/v2/funding-applications/${applicationId}`,
-        "GET"
-      );
-      if (err) throw new Error(err);
-      if (!res) throw new Error("Application not found");
-
-      // Only allow editing for certain statuses
-      if (!editableStatuses.includes(res.status)) {
-        throw new Error(`Application with status "${res.status}" cannot be edited`);
-      }
-
-      return res;
-    },
-    staleTime: 1000 * 60 * 5,
-  });
-
-  // Fetch program
-  const { data: program, isLoading: programLoading } = useQuery({
-    queryKey: ["wl-program-for-edit", application?.programId],
+    queryKey: ["application", "program", application.programId],
     queryFn: async () => {
       const [res, err] = await fetchData<FundingProgram>(
-        `/v2/funding-program-configs/${application!.programId}`,
+        `/v2/funding-program-configs/${application.programId}`,
         "GET"
       );
       if (err) throw new Error(err);
       return res as FundingProgram;
     },
-    enabled: !!application?.programId,
     staleTime: 1000 * 60 * 10,
   });
-
-  const isLoading = appLoading || programLoading;
 
   const isDeadlinePassed = program?.metadata.endsAt
     ? new Date(program.metadata.endsAt) < new Date()
     : false;
-  const isRevision = application?.status === "revision_requested";
+  const isRevision = application.status === "revision_requested";
   const isDisabled = !program?.applicationConfig?.isEnabled || (isDeadlinePassed && !isRevision);
 
   // Loading
-  if (isLoading) {
+  if (programLoading) {
     return (
       <div className="container px-4 py-8">
         <div className="flex flex-col items-center justify-center rounded-xl border border-border py-24">
@@ -89,17 +50,17 @@ export function ApplicationEditClient({ communityId, applicationId }: Applicatio
     );
   }
 
-  // Error
-  if (appError || !application) {
+  // Program fetch error (non-blocking — show edit form anyway)
+  if (programError) {
     return (
       <div className="container px-4 py-8">
         <div className="flex flex-col items-center rounded-xl border border-border py-12 text-center">
           <AlertTriangle className="mb-4 h-12 w-12 text-yellow-500" />
-          <h2 className="mb-2 text-xl font-semibold text-foreground">Cannot Edit Application</h2>
+          <h2 className="mb-2 text-xl font-semibold text-foreground">Could Not Load Program</h2>
           <p className="mb-6 text-muted-foreground">
-            {appError instanceof Error
-              ? appError.message
-              : "The application could not be found or cannot be edited."}
+            {programError instanceof Error
+              ? programError.message
+              : "Failed to load program details."}
           </p>
           <div className="flex gap-3">
             <button
@@ -146,7 +107,7 @@ export function ApplicationEditClient({ communityId, applicationId }: Applicatio
       {/* Header */}
       <div className="mb-8">
         <Link
-          href={`/community/${communityId}/applications/${applicationId}`}
+          href={`/community/${communityId}/applications/${application.referenceNumber}`}
           className="mb-4 inline-flex items-center gap-2 text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />

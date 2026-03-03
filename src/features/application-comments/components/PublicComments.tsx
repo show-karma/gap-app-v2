@@ -12,10 +12,15 @@ import { PublicCommentItem } from "./PublicCommentItem";
 
 interface PublicCommentsProps {
   referenceNumber: string;
+  communityId: string;
   enabled?: boolean;
 }
 
-export function PublicComments({ referenceNumber, enabled = true }: PublicCommentsProps) {
+export function PublicComments({
+  referenceNumber,
+  communityId,
+  enabled = true,
+}: PublicCommentsProps) {
   const {
     comments,
     isLoading,
@@ -28,7 +33,7 @@ export function PublicComments({ referenceNumber, enabled = true }: PublicCommen
     canDeleteComment,
     isAddingComment,
     isDeletingComment,
-  } = usePublicCommenting({ referenceNumber, enabled });
+  } = usePublicCommenting({ referenceNumber, communityId, enabled });
 
   const [commentValue, setCommentValue] = useState("");
 

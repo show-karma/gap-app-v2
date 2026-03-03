@@ -1,19 +1,19 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Calendar, Edit, ExternalLink, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { CommentTimeline } from "@/src/features/application-comments/components/CommentTimeline";
+import { ApplicationStatusHistory } from "@/src/features/applications/components/ApplicationStatusHistory";
 import type { Application, ApplicationStatus, FundingProgram } from "@/types/whitelabel-entities";
-import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 
 interface ApplicationPageClientProps {
   communityId: string;
-  applicationId: string;
+  application: Application;
+  program: FundingProgram | null;
 }
 
 function getStatusColor(status: ApplicationStatus): string {
@@ -45,43 +45,12 @@ const editableStatuses: ApplicationStatus[] = [
   "resubmitted",
 ];
 
-export function ApplicationPageClient({ communityId, applicationId }: ApplicationPageClientProps) {
-  const { address } = useAuth();
-
-  // Fetch application
-  const {
-    data: application,
-    isLoading,
-    error,
-    refetch,
-  } = useQuery({
-    queryKey: ["wl-application-detail", communityId, applicationId],
-    queryFn: async () => {
-      const [res, err] = await fetchData<Application>(
-        `/v2/funding-applications/${applicationId}`,
-        "GET"
-      );
-      if (err) throw new Error(err);
-      if (!res) throw new Error("Application not found");
-      return res;
-    },
-    staleTime: 1000 * 60 * 5,
-  });
-
-  // Fetch program
-  const { data: program, isLoading: programLoading } = useQuery({
-    queryKey: ["wl-program-for-app", application?.programId],
-    queryFn: async () => {
-      const [res, err] = await fetchData<FundingProgram>(
-        `/v2/funding-program-configs/${application!.programId}`,
-        "GET"
-      );
-      if (err) throw new Error(err);
-      return res as FundingProgram;
-    },
-    enabled: !!application?.programId,
-    staleTime: 1000 * 60 * 10,
-  });
+export function ApplicationPageClient({
+  communityId,
+  application,
+  program,
+}: ApplicationPageClientProps) {
+  const { address, authenticated } = useAuth();
 
   const isOwner = useMemo(() => {
     if (!address || !application) return false;
@@ -89,7 +58,6 @@ export function ApplicationPageClient({ communityId, applicationId }: Applicatio
   }, [address, application]);
 
   const canEdit = useMemo(() => {
-    if (!application) return false;
     if (!editableStatuses.includes(application.status)) return false;
     if (program?.metadata.endsAt) {
       const isDeadlinePassed = new Date(program.metadata.endsAt) < new Date();
@@ -98,52 +66,6 @@ export function ApplicationPageClient({ communityId, applicationId }: Applicatio
     }
     return true;
   }, [application, program]);
-
-  // Loading
-  if (isLoading) {
-    return (
-      <div className="container px-4 py-8">
-        <div className="flex flex-col items-center justify-center rounded-xl border border-border py-24">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-          <p className="mt-4 text-muted-foreground">Loading application details...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Error
-  if (error || !application) {
-    return (
-      <div className="container px-4 py-8">
-        <div className="flex flex-col items-center rounded-xl border border-border py-12 text-center">
-          <h2 className="mb-2 text-xl font-semibold text-foreground">
-            {error ? "Error loading application" : "Application not found"}
-          </h2>
-          <p className="mb-6 text-muted-foreground">
-            {error instanceof Error ? error.message : "The application could not be found."}
-          </p>
-          <div className="flex gap-3">
-            {error && (
-              <button
-                type="button"
-                onClick={() => refetch()}
-                className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-              >
-                <RefreshCw className="h-4 w-4" />
-                Try Again
-              </button>
-            )}
-            <Link
-              href={`/community/${communityId}/my-applications`}
-              className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-muted"
-            >
-              Back to My Applications
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   const programName =
     program?.name || program?.metadata?.title || `Program ${application.programId}`;
@@ -167,9 +89,7 @@ export function ApplicationPageClient({ communityId, applicationId }: Applicatio
 
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex flex-col gap-2">
-            <h1 className="text-3xl font-bold text-foreground">
-              Application for {programLoading ? "..." : programName}
-            </h1>
+            <h1 className="text-3xl font-bold text-foreground">Application for {programName}</h1>
             <p className="text-muted-foreground">Reference: {application.referenceNumber}</p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
@@ -269,13 +189,21 @@ export function ApplicationPageClient({ communityId, applicationId }: Applicatio
         </div>
       </div>
 
-      {/* Comments & Activity */}
-      <CommentTimeline
-        applicationId={applicationId}
-        statusHistory={application.statusHistory || []}
-        currentUserAddress={address || undefined}
-        communityId={communityId}
-      />
+      {/* Comments & Activity
+       * Authenticated users see the full CommentTimeline (comments + status history).
+       * Public / unauthenticated users see only the ApplicationStatusHistory.
+       * P1-12: conditional timeline based on auth state.
+       */}
+      {authenticated ? (
+        <CommentTimeline
+          applicationId={application.referenceNumber}
+          statusHistory={application.statusHistory || []}
+          currentUserAddress={address || undefined}
+          communityId={communityId}
+        />
+      ) : (
+        <ApplicationStatusHistory statusHistory={application.statusHistory || []} />
+      )}
     </div>
   );
 }

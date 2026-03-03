@@ -338,7 +338,7 @@ export function ApplicationDetailsClient({
       )}
 
       {/* Public Comments */}
-      <PublicComments referenceNumber={referenceNumber} />
+      <PublicComments referenceNumber={referenceNumber} communityId={communityId} />
     </div>
   );
 }

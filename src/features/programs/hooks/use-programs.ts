@@ -11,12 +11,16 @@ export function usePrograms(
   const { filters: storeFilters, setFilters } = useProgramsStore();
   const filters = { ...initialFilters, ...storeFilters };
 
-  const { data, isLoading, error, refetch } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery<{
+    programs: FundingProgram[];
+    limit: number;
+  }>({
     queryKey: ["wl-programs", communityId, filters],
     queryFn: async () => {
+      const limit = filters.limit || 20;
       const params = new URLSearchParams();
       params.set("page", String(filters.page || 1));
-      params.set("limit", String(filters.limit || 20));
+      params.set("limit", String(limit));
       if (filters.status) params.set("status", filters.status);
       if (filters.search) params.set("search", filters.search);
       const [res, err] = await fetchData<FundingProgram[]>(
@@ -28,20 +32,24 @@ export function usePrograms(
         true
       );
       if (err) throw new Error(err);
-      return res;
+      return { programs: res ?? [], limit };
     },
     staleTime: 5 * 60 * 1000,
     enabled: !!communityId,
   });
 
+  const programs = data?.programs ?? [];
+  const limit = data?.limit ?? (filters.limit || 20);
+
   return {
-    programs: data || [],
+    programs,
     loading: isLoading,
     error: error as Error | null,
     filters,
     setFilters,
     refetch,
-    hasMore: false,
-    totalCount: data?.length || 0,
+    // If we received exactly `limit` items, there may be more pages
+    hasMore: programs.length >= limit,
+    totalCount: programs.length,
   };
 }
