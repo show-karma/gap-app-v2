@@ -2,6 +2,8 @@ import {
   buildPayoutConfigItems,
   extractProjectSlug,
   parseImportRecords,
+  summarizeSaveResponse,
+  toErrorReport,
   validateAndMatchImportRows,
 } from "@/components/Pages/Admin/ControlCenter/bulkPayoutImport";
 import type { TableRow } from "@/components/Pages/Admin/ControlCenter/ControlCenterTable";
@@ -222,5 +224,301 @@ describe("bulkPayoutImport utilities", () => {
         totalGrantAmount: "250",
       },
     ]);
+  });
+
+  describe("parseImportRecords fatal errors", () => {
+    it("returns fatal error for empty CSV", () => {
+      const parsed = parseImportRecords([]);
+      expect(parsed.rows).toHaveLength(0);
+      expect(parsed.fatalErrors).toContain(
+        "CSV appears empty. Include a header row and at least one data row."
+      );
+    });
+
+    it("returns fatal error for header-only CSV", () => {
+      const parsed = parseImportRecords([["projectName", "payoutAddress", "amount"]]);
+      expect(parsed.rows).toHaveLength(0);
+      expect(parsed.fatalErrors).toContain(
+        "CSV appears empty. Include a header row and at least one data row."
+      );
+    });
+
+    it("returns fatal error when payoutAddress column is missing", () => {
+      const parsed = parseImportRecords([
+        ["projectName", "amount"],
+        ["Alpha Project", "100"],
+      ]);
+      expect(parsed.rows).toHaveLength(0);
+      expect(parsed.fatalErrors).toContain("Missing payout address column");
+    });
+
+    it("returns fatal error when amount column is missing", () => {
+      const parsed = parseImportRecords([
+        ["projectName", "payoutAddress"],
+        ["Alpha Project", "0x1111111111111111111111111111111111111111"],
+      ]);
+      expect(parsed.rows).toHaveLength(0);
+      expect(parsed.fatalErrors).toContain("Missing amount column");
+    });
+
+    it("returns fatal error when all identifier columns are missing", () => {
+      const parsed = parseImportRecords([
+        ["payoutAddress", "amount"],
+        ["0x1111111111111111111111111111111111111111", "100"],
+      ]);
+      expect(parsed.rows).toHaveLength(0);
+      expect(parsed.fatalErrors).toContain(
+        "Missing identifier column. Add one of: grantUID, projectUID, projectSlug/projectURL, projectName."
+      );
+    });
+
+    it("skips blank data rows", () => {
+      const parsed = parseImportRecords([
+        ["projectName", "payoutAddress", "amount"],
+        ["Alpha Project", "0x1111111111111111111111111111111111111111", "100"],
+        ["", "", ""],
+        ["Beta Project", "0x2222222222222222222222222222222222222222", "200"],
+      ]);
+      expect(parsed.fatalErrors).toEqual([]);
+      expect(parsed.rows).toHaveLength(2);
+    });
+
+    it("returns fatal error when all data rows are blank", () => {
+      const parsed = parseImportRecords([
+        ["projectName", "payoutAddress", "amount"],
+        ["", "", ""],
+        ["", "", ""],
+      ]);
+      expect(parsed.fatalErrors).toContain(
+        "No data rows found. Add at least one row below the header."
+      );
+    });
+  });
+
+  describe("validation edge cases", () => {
+    it("resolves unique project name to single grant", () => {
+      const rows = [
+        {
+          rowNumber: 2,
+          grantUID: "",
+          projectUID: "",
+          projectSlug: "",
+          projectName: "Alpha Project",
+          payoutAddress: "0x1111111111111111111111111111111111111111",
+          amount: "100",
+        },
+      ];
+      const validated = validateAndMatchImportRows(rows, tableRows);
+      expect(validated[0].status).toBe("valid");
+      expect(validated[0].target).toMatchObject({
+        grantUID: "grant-alpha",
+        projectUID: "project-alpha",
+        matchedBy: "project_name",
+      });
+    });
+
+    it("resolves project by slug", () => {
+      const rows = [
+        {
+          rowNumber: 2,
+          grantUID: "",
+          projectUID: "",
+          projectSlug: "alpha-project",
+          projectName: "",
+          payoutAddress: "0x1111111111111111111111111111111111111111",
+          amount: "100",
+        },
+      ];
+      const validated = validateAndMatchImportRows(rows, tableRows);
+      expect(validated[0].status).toBe("valid");
+      expect(validated[0].target).toMatchObject({
+        grantUID: "grant-alpha",
+        projectUID: "project-alpha",
+        matchedBy: "project_slug",
+      });
+    });
+
+    it("flags missing payout address", () => {
+      const rows = [
+        {
+          rowNumber: 2,
+          grantUID: "grant-alpha",
+          projectUID: "",
+          projectSlug: "",
+          projectName: "",
+          payoutAddress: "",
+          amount: "100",
+        },
+      ];
+      const validated = validateAndMatchImportRows(rows, tableRows);
+      expect(validated[0].status).toBe("invalid");
+      expect(validated[0].errors).toContain("Missing payout address");
+    });
+
+    it("flags missing amount", () => {
+      const rows = [
+        {
+          rowNumber: 2,
+          grantUID: "grant-alpha",
+          projectUID: "",
+          projectSlug: "",
+          projectName: "",
+          payoutAddress: "0x1111111111111111111111111111111111111111",
+          amount: "",
+        },
+      ];
+      const validated = validateAndMatchImportRows(rows, tableRows);
+      expect(validated[0].status).toBe("invalid");
+      expect(validated[0].errors).toContain("Missing amount");
+    });
+
+    it("flags amount with too many decimal places", () => {
+      const rows = [
+        {
+          rowNumber: 2,
+          grantUID: "grant-alpha",
+          projectUID: "",
+          projectSlug: "",
+          projectName: "",
+          payoutAddress: "0x1111111111111111111111111111111111111111",
+          amount: "1.1234567890123456789",
+        },
+      ];
+      const validated = validateAndMatchImportRows(rows, tableRows);
+      expect(validated[0].status).toBe("invalid");
+      expect(validated[0].errors).toContain("Amount must use up to 18 decimal places");
+    });
+
+    it("flags unknown project name", () => {
+      const rows = [
+        {
+          rowNumber: 2,
+          grantUID: "",
+          projectUID: "",
+          projectSlug: "",
+          projectName: "NonExistentProject999",
+          payoutAddress: "0x1111111111111111111111111111111111111111",
+          amount: "100",
+        },
+      ];
+      const validated = validateAndMatchImportRows(rows, tableRows);
+      expect(validated[0].status).toBe("invalid");
+      expect(validated[0].errors).toContain("Project name not found");
+    });
+
+    it("flags row with no identifiers at all", () => {
+      const rows = [
+        {
+          rowNumber: 2,
+          grantUID: "",
+          projectUID: "",
+          projectSlug: "",
+          projectName: "",
+          payoutAddress: "0x1111111111111111111111111111111111111111",
+          amount: "100",
+        },
+      ];
+      const validated = validateAndMatchImportRows(rows, tableRows);
+      expect(validated[0].status).toBe("invalid");
+      expect(validated[0].errors).toContain(
+        "Provide at least one identifier (grant UID, project UID, slug/url, or name)"
+      );
+    });
+  });
+
+  describe("extractProjectSlug edge cases", () => {
+    it("returns empty string for empty input", () => {
+      expect(extractProjectSlug("")).toBe("");
+    });
+
+    it("extracts slug from URL with /projects/ path", () => {
+      expect(extractProjectSlug("https://example.com/projects/my-project")).toBe("my-project");
+    });
+
+    it("treats plain text as slug directly", () => {
+      expect(extractProjectSlug("my-project")).toBe("my-project");
+    });
+
+    it("strips leading/trailing slashes from plain slug", () => {
+      expect(extractProjectSlug("/my-project/")).toBe("my-project");
+    });
+  });
+
+  describe("toErrorReport", () => {
+    it("reports fatal errors", () => {
+      const report = toErrorReport([], ["Missing payout address column"]);
+      expect(report).toContain("Fatal errors:");
+      expect(report).toContain("- Missing payout address column");
+    });
+
+    it("reports row-level errors", () => {
+      const validated = validateAndMatchImportRows(
+        [
+          {
+            rowNumber: 2,
+            grantUID: "",
+            projectUID: "",
+            projectSlug: "",
+            projectName: "NonExistentProject999",
+            payoutAddress: "bad",
+            amount: "-1",
+          },
+        ],
+        tableRows
+      );
+      const report = toErrorReport(validated, []);
+      expect(report).toContain("Row errors:");
+      expect(report).toContain("Row 2:");
+    });
+
+    it("reports no errors when all rows valid", () => {
+      const validated = validateAndMatchImportRows(
+        [
+          {
+            rowNumber: 2,
+            grantUID: "grant-alpha",
+            projectUID: "project-alpha",
+            projectSlug: "",
+            projectName: "",
+            payoutAddress: "0x1111111111111111111111111111111111111111",
+            amount: "100",
+          },
+        ],
+        tableRows
+      );
+      const report = toErrorReport(validated, []);
+      expect(report).toBe("No errors.");
+    });
+  });
+
+  describe("summarizeSaveResponse", () => {
+    const makeGrantConfig = (grantUID: string) => ({
+      id: "id-1",
+      grantUID,
+      projectUID: "p1",
+      communityUID: "c1",
+      payoutAddress: null,
+      totalGrantAmount: null,
+      tokenAddress: null,
+    });
+
+    it("counts successes and failures", () => {
+      const result = summarizeSaveResponse({
+        success: [makeGrantConfig("g1")] as never[],
+        failed: [
+          { grantUID: "g2", error: "fail" },
+          { grantUID: "g3", error: "fail" },
+        ],
+      });
+      expect(result).toEqual({ successCount: 1, failedCount: 2 });
+    });
+
+    it("handles all-success response", () => {
+      const result = summarizeSaveResponse({
+        success: [makeGrantConfig("g1")] as never[],
+        failed: [],
+      });
+      expect(result).toEqual({ successCount: 1, failedCount: 0 });
+    });
   });
 });
