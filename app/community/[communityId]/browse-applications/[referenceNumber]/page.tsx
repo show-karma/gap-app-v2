@@ -1,14 +1,11 @@
-"use client";
+import { permanentRedirect } from "next/navigation";
 
-import { useParams } from "next/navigation";
-import { ApplicationDetailsClient } from "./ApplicationDetailsClient";
+type Props = {
+  params: Promise<{ communityId: string; referenceNumber: string }>;
+};
 
-export default function ApplicationDetailsPage() {
-  const params = useParams<{ communityId: string; referenceNumber: string }>();
-  return (
-    <ApplicationDetailsClient
-      communityId={params.communityId}
-      referenceNumber={params.referenceNumber}
-    />
-  );
+// Stable URL consolidation: /browse-applications/:ref → /applications/:ref (308)
+export default async function ApplicationDetailsPage({ params }: Props) {
+  const { communityId, referenceNumber } = await params;
+  permanentRedirect(`/community/${communityId}/applications/${referenceNumber}`);
 }

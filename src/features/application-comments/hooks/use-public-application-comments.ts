@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { wlQueryKeys } from "@/src/lib/query-keys";
 import { CommentsService } from "../api/comments-service";
 import type { ApplicationComment } from "../types";
 
@@ -13,6 +14,7 @@ interface UsePublicApplicationCommentsReturn {
 
 export function usePublicApplicationComments(
   referenceNumber: string,
+  communityId: string,
   enabled: boolean
 ): UsePublicApplicationCommentsReturn {
   const {
@@ -21,7 +23,7 @@ export function usePublicApplicationComments(
     error,
     refetch,
   } = useQuery({
-    queryKey: ["public-application-comments", referenceNumber],
+    queryKey: wlQueryKeys.comments.public(referenceNumber, communityId),
     queryFn: () => CommentsService.getPublicComments(referenceNumber),
     enabled: enabled && !!referenceNumber,
     staleTime: 1000 * 60 * 2,

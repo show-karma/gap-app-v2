@@ -42,11 +42,12 @@ export function useMilestoneCompletions({
   } = useQuery({
     queryKey: ["milestone-completions", communityId, referenceNumber],
     queryFn: async () => {
-      const [response, fetchError] = await fetchData<MilestoneCompletion[]>(
-        `/v2/funding-applications/${referenceNumber}/milestone-completions`
-      );
+      const [response, fetchError] = await fetchData<
+        MilestoneCompletion[] | { data: MilestoneCompletion[] }
+      >(`/v2/funding-applications/${referenceNumber}/milestone-completions`);
       if (fetchError) throw new Error(fetchError);
-      return response ?? [];
+      if (!response) return [];
+      return Array.isArray(response) ? response : (response.data ?? []);
     },
     enabled: enabled && !!referenceNumber,
   });

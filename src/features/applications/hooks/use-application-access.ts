@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 
 export class ApplicationAccessError extends Error {
   constructor(
@@ -31,7 +32,14 @@ export class ApplicationAccessError extends Error {
   }
 }
 
-type ApplicationAccessRole = "OWNER" | "ADMIN" | "REVIEWER" | "TEAM_MEMBER" | "NONE";
+type ApplicationAccessRole =
+  | "SUPER_ADMIN"
+  | "COMMUNITY_ADMIN"
+  | "PROGRAM_REVIEWER"
+  | "MILESTONE_REVIEWER"
+  | "APPLICANT"
+  | "GUEST"
+  | "NONE";
 
 interface ApplicationAccessInfo {
   canView: boolean;
@@ -73,38 +81,22 @@ export function useApplicationAccess(
       if (!referenceNumber) {
         throw ApplicationAccessError.unknown("Reference number is required");
       }
-      try {
-        const [response, fetchError] = await fetchData<ApplicationAccessInfo>(
-          `/v2/funding-applications/${referenceNumber}/access`
-        );
-        if (fetchError || !response) {
-          throw new Error(fetchError ?? "Failed to check access");
+      const [response, fetchError, , httpStatus] = await fetchData<ApplicationAccessInfo>(
+        INDEXER.V2.FUNDING_APPLICATIONS.ACCESS(referenceNumber)
+      );
+      if (fetchError || !response) {
+        if (httpStatus === 401 || httpStatus === 403) {
+          throw ApplicationAccessError.auth("Authentication required or access denied");
         }
-        return response;
-      } catch (err) {
-        if (err instanceof Error) {
-          const message = err.message.toLowerCase();
-          if (
-            message.includes("network") ||
-            message.includes("fetch") ||
-            message.includes("timeout")
-          ) {
-            throw ApplicationAccessError.network("Failed to connect to the server", err);
-          }
-          if (
-            message.includes("401") ||
-            message.includes("403") ||
-            message.includes("unauthorized") ||
-            message.includes("forbidden")
-          ) {
-            throw ApplicationAccessError.auth("Authentication required or access denied", err);
-          }
-          if (message.includes("404") || message.includes("not found")) {
-            throw ApplicationAccessError.notFound("Application not found", err);
-          }
+        if (httpStatus === 404) {
+          throw ApplicationAccessError.notFound("Application not found");
         }
-        throw ApplicationAccessError.unknown("An unexpected error occurred", err);
+        if (!httpStatus || httpStatus === 0 || httpStatus >= 500) {
+          throw ApplicationAccessError.network("Failed to connect to the server");
+        }
+        throw ApplicationAccessError.unknown(fetchError ?? "Failed to check access");
       }
+      return response;
     },
     enabled: !!referenceNumber && enabled && ready,
     staleTime: 1000 * 30,

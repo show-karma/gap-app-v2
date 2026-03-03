@@ -1,19 +1,24 @@
 import { useQuery } from "@tanstack/react-query";
-import fetchData from "@/utilities/fetchData";
+import { useAuth } from "@/hooks/useAuth";
+import { wlQueryKeys } from "@/src/lib/query-keys";
 import type { FundingProgram } from "@/types/whitelabel-entities";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 
 export function useProgramsList(communityId: string | undefined) {
+  const { address } = useAuth();
+
   return useQuery({
-    queryKey: ["wl-programs-list", communityId],
+    queryKey: wlQueryKeys.programs.list(communityId ?? "", address ?? null),
     queryFn: async () => {
       if (!communityId) return [];
       const [res, err] = await fetchData<FundingProgram[]>(
-        `/v2/funding-program-configs/community/${communityId}?status=active&limit=100`,
+        INDEXER.V2.FUNDING_PROGRAMS.BY_COMMUNITY_ACTIVE(communityId),
         "GET",
         {},
         {},
         {},
-        true,
+        true
       );
       if (err) throw new Error(err);
       return res;

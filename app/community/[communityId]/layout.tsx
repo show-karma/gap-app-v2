@@ -1,7 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+import { cache } from "react";
 import { CommunityContentWrapper } from "@/components/Community/CommunityContentWrapper";
 import CommunityHeader from "@/components/Community/Header";
 import { CommunityNotFound } from "@/components/Pages/Communities/CommunityNotFound";
+import { WhitelabelJsonLd } from "@/components/Seo/WhitelabelJsonLd";
 import { PROJECT_NAME } from "@/constants/brand";
 import { envVars } from "@/utilities/enviromentVars";
 import { DEFAULT_DESCRIPTION, DEFAULT_TITLE, SITE_URL, twitterMeta } from "@/utilities/meta";
@@ -9,12 +11,28 @@ import { pagesOnRoot } from "@/utilities/pagesOnRoot";
 import { getCommunityDetails } from "@/utilities/queries/v2/getCommunityData";
 import { getWhitelabelContext } from "@/utilities/whitelabel-server";
 
+// Deduplicate across generateMetadata, generateViewport, and Layout per request
+const getCachedContext = cache(getWhitelabelContext);
+
 type Params = Promise<{
   communityId: string;
 }>;
+
+export async function generateViewport(): Promise<Viewport> {
+  const { isWhitelabel, tenantConfig, config } = await getCachedContext();
+  if (!isWhitelabel) return {};
+  const primary = tenantConfig?.theme?.colors?.primary ?? config?.theme?.primaryColor ?? "#000000";
+  return {
+    themeColor: [
+      { media: "(prefers-color-scheme: light)", color: primary },
+      { media: "(prefers-color-scheme: dark)", color: "#000000" },
+    ],
+  };
+}
+
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { communityId } = await params;
-  const { isWhitelabel, config: wlConfig } = await getWhitelabelContext();
+  const { isWhitelabel, config: wlConfig } = await getCachedContext();
 
   const community = await getCommunityDetails(communityId);
   const communityName = community?.details?.name || communityId;
@@ -67,7 +85,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 
 export default async function Layout(props: { children: React.ReactNode; params: Params }) {
   const { communityId } = await props.params;
-  const { isWhitelabel } = await getWhitelabelContext();
+  const { isWhitelabel, tenantConfig, config } = await getCachedContext();
 
   const { children } = props;
 
@@ -83,10 +101,16 @@ export default async function Layout(props: { children: React.ReactNode; params:
 
   // Whitelabel domains use their own navbar — skip CommunityHeader
   if (isWhitelabel) {
+    const canonicalUrl = config ? `https://${config.domain}` : undefined;
     return (
-      <div className="flex w-full h-full max-w-full flex-col justify-start max-lg:flex-col">
-        <CommunityContentWrapper>{children}</CommunityContentWrapper>
-      </div>
+      <>
+        {tenantConfig && canonicalUrl && (
+          <WhitelabelJsonLd tenant={tenantConfig} url={canonicalUrl} />
+        )}
+        <div className="flex w-full h-full max-w-full flex-col justify-start max-lg:flex-col">
+          <CommunityContentWrapper>{children}</CommunityContentWrapper>
+        </div>
+      </>
     );
   }
 

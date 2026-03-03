@@ -42,7 +42,7 @@ export interface FundingProgramMetadata {
   platformsUsed?: string[];
   anyoneCanJoin?: boolean;
   invoiceRequired?: boolean;
-  status: string;
+  status?: string;
   communityRef?: string[];
   adminEmails?: string[];
   financeEmails?: string[];

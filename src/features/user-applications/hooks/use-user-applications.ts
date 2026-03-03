@@ -6,7 +6,7 @@ import fetchData from "@/utilities/fetchData";
 import { useUserApplicationsStore } from "../lib/store";
 import type { UserApplicationsResponse, UseUserApplicationsReturn } from "../types";
 
-export function useUserApplications(communityId: string): UseUserApplicationsReturn {
+export function useUserApplications(communitySlug: string): UseUserApplicationsReturn {
   const queryClient = useQueryClient();
   const { address } = useAuth();
 
@@ -28,7 +28,7 @@ export function useUserApplications(communityId: string): UseUserApplicationsRet
 
   const queryKey = [
     "wl-user-applications",
-    communityId,
+    communitySlug,
     address,
     filters,
     sortBy,
@@ -47,14 +47,14 @@ export function useUserApplications(communityId: string): UseUserApplicationsRet
       const programParam = filters.programId ? `&programId=${filters.programId}` : "";
 
       const [res, err] = await fetchData<UserApplicationsResponse>(
-        `/v2/funding-applications/user/my-applications?communitySlug=${communityId}&page=${pagination.page}&limit=${pagination.limit}${statusParam}${searchParam}${programParam}`,
+        `/v2/funding-applications/user/my-applications?communitySlug=${communitySlug}&page=${pagination.page}&limit=${pagination.limit}${statusParam}${searchParam}${programParam}`,
         "GET"
       );
       if (err) throw new Error(err);
       return res as UserApplicationsResponse;
     },
     staleTime: 1000 * 60 * 2,
-    enabled: !!communityId && !!address,
+    enabled: !!communitySlug && !!address,
   });
 
   // Update store with query results
@@ -73,7 +73,7 @@ export function useUserApplications(communityId: string): UseUserApplicationsRet
     if (data && pagination.page < pagination.totalPages) {
       const nextPageKey = [
         "wl-user-applications",
-        communityId,
+        communitySlug,
         address,
         filters,
         sortBy,
@@ -92,7 +92,7 @@ export function useUserApplications(communityId: string): UseUserApplicationsRet
         queryKey: nextPageKey,
         queryFn: async () => {
           const [res, err] = await fetchData<UserApplicationsResponse>(
-            `/v2/funding-applications/user/my-applications?communitySlug=${communityId}&page=${pagination.page + 1}&limit=${pagination.limit}${statusParam}${searchParam}${programParam}`,
+            `/v2/funding-applications/user/my-applications?communitySlug=${communitySlug}&page=${pagination.page + 1}&limit=${pagination.limit}${statusParam}${searchParam}${programParam}`,
             "GET"
           );
           if (err) throw new Error(err);
@@ -109,7 +109,7 @@ export function useUserApplications(communityId: string): UseUserApplicationsRet
     filters,
     sortBy,
     sortOrder,
-    communityId,
+    communitySlug,
     queryClient,
     address,
   ]);

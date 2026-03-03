@@ -1,4 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
+import { notFound } from "next/navigation";
 import { CommunityGrants } from "@/components/CommunityGrants";
 import type { MaturityStageOptions, SortByOptions } from "@/types";
 import { pagesOnRoot } from "@/utilities/pagesOnRoot";
@@ -32,9 +33,8 @@ export default async function Page(props: Props) {
     .map((cat) => cat.name)
     .sort((a, b) => a.localeCompare(b, "en"));
 
-  // Layout handles notFound, but TypeScript needs this check
   if (!communityDetails) {
-    return null;
+    notFound();
   }
 
   const defaultSortBy = "milestones" as SortByOptions;

@@ -2,6 +2,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
+import { applicationKeys } from "@/src/lib/query-keys";
 import type { Application } from "@/types/whitelabel-entities";
 import fetchData from "@/utilities/fetchData";
 import type { ApplicationFormData, UseApplicationDraftReturn } from "../types";
@@ -38,14 +39,8 @@ export function useApplicationDraft(communityId: string): UseApplicationDraftRet
       if (error || !response) throw new Error(error ?? "Failed to create draft");
       return response;
     },
-    onSuccess: (application) => {
-      queryClient.invalidateQueries({
-        queryKey: ["applications", application.programId],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["application", application.referenceNumber],
-      });
-      queryClient.invalidateQueries({ queryKey: ["user-applications"] });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: applicationKeys.all });
     },
   });
 
