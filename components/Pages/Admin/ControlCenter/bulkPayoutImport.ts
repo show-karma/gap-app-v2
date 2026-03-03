@@ -78,13 +78,9 @@ function findColumnIndex(headers: string[], aliases: readonly string[]): number 
   const normalizedHeaders = headers.map((header) => normalizeHeader(header));
   for (const alias of aliases) {
     const normalizedAlias = normalizeHeader(alias);
-    const exactIndex = normalizedHeaders.indexOf(normalizedAlias);
-    if (exactIndex !== -1) {
-      return exactIndex;
-    }
-    const containsIndex = normalizedHeaders.findIndex((header) => header.includes(normalizedAlias));
-    if (containsIndex !== -1) {
-      return containsIndex;
+    const index = normalizedHeaders.indexOf(normalizedAlias);
+    if (index !== -1) {
+      return index;
     }
   }
   return -1;
@@ -126,7 +122,11 @@ export function extractProjectSlug(input: string): string {
 
   const projectMatch = value.match(/\/(?:project|projects)\/([^/?#]+)/i);
   if (projectMatch?.[1]) {
-    return decodeURIComponent(projectMatch[1]).trim().toLowerCase();
+    try {
+      return decodeURIComponent(projectMatch[1]).trim().toLowerCase();
+    } catch {
+      return projectMatch[1].trim().toLowerCase();
+    }
   }
 
   return value.replace(/^\/+|\/+$/g, "").toLowerCase();

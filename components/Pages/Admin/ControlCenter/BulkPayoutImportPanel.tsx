@@ -193,6 +193,8 @@ export function BulkPayoutImportPanel({
         <button
           type="button"
           onClick={() => setIsExpanded((prev) => !prev)}
+          aria-expanded={isExpanded}
+          aria-controls="bulk-import-content"
           className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-gray-50 dark:hover:bg-zinc-900 transition-colors rounded-lg"
         >
           <div>
@@ -213,6 +215,7 @@ export function BulkPayoutImportPanel({
         </button>
 
         <div
+          id="bulk-import-content"
           className={cn(
             "transition-all duration-200 overflow-hidden border-t border-gray-200 dark:border-zinc-800",
             isExpanded ? "max-h-[1200px]" : "max-h-0 border-t-0"

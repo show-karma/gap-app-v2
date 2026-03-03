@@ -7,6 +7,7 @@ import {
   validateAndMatchImportRows,
 } from "@/components/Pages/Admin/ControlCenter/bulkPayoutImport";
 import type { TableRow } from "@/components/Pages/Admin/ControlCenter/ControlCenterTable";
+import type { PayoutGrantConfig } from "@/src/features/payout-disbursement";
 
 const tableRows: TableRow[] = [
   {
@@ -64,6 +65,20 @@ describe("bulkPayoutImport utilities", () => {
       grantUID: "grant-alpha",
       payoutAddress: "0x1111111111111111111111111111111111111111",
       amount: "123.45",
+    });
+  });
+
+  it("does not confuse projectUID column with projectName alias", () => {
+    const parsed = parseImportRecords([
+      ["projectUID", "payoutAddress", "amount"],
+      ["project-alpha", "0x1111111111111111111111111111111111111111", "50"],
+    ]);
+
+    expect(parsed.fatalErrors).toEqual([]);
+    expect(parsed.rows).toHaveLength(1);
+    expect(parsed.rows[0]).toMatchObject({
+      projectUID: "project-alpha",
+      projectName: "",
     });
   });
 
@@ -442,6 +457,10 @@ describe("bulkPayoutImport utilities", () => {
     it("strips leading/trailing slashes from plain slug", () => {
       expect(extractProjectSlug("/my-project/")).toBe("my-project");
     });
+
+    it("handles malformed percent-encoding without crashing", () => {
+      expect(extractProjectSlug("/project/%E0%A4%A")).toBe("%e0%a4%a");
+    });
   });
 
   describe("toErrorReport", () => {
@@ -553,7 +572,7 @@ describe("bulkPayoutImport utilities", () => {
   });
 
   describe("summarizeSaveResponse", () => {
-    const makeGrantConfig = (grantUID: string) => ({
+    const makeGrantConfig = (grantUID: string): PayoutGrantConfig => ({
       id: "id-1",
       grantUID,
       projectUID: "p1",
@@ -561,11 +580,17 @@ describe("bulkPayoutImport utilities", () => {
       payoutAddress: null,
       totalGrantAmount: null,
       tokenAddress: null,
+      chainID: null,
+      milestoneAllocations: null,
+      createdBy: "test",
+      updatedBy: null,
+      createdAt: "2024-01-01T00:00:00Z",
+      updatedAt: "2024-01-01T00:00:00Z",
     });
 
     it("counts successes and failures", () => {
       const result = summarizeSaveResponse({
-        success: [makeGrantConfig("g1")] as never[],
+        success: [makeGrantConfig("g1")],
         failed: [
           { grantUID: "g2", error: "fail" },
           { grantUID: "g3", error: "fail" },
@@ -576,7 +601,7 @@ describe("bulkPayoutImport utilities", () => {
 
     it("handles all-success response", () => {
       const result = summarizeSaveResponse({
-        success: [makeGrantConfig("g1")] as never[],
+        success: [makeGrantConfig("g1")],
         failed: [],
       });
       expect(result).toEqual({ successCount: 1, failedCount: 0 });
