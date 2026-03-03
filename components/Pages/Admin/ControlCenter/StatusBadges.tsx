@@ -1,10 +1,11 @@
 "use client";
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import type {
-  CommunityPayoutAgreementInfo,
-  CommunityPayoutInvoiceInfo,
-  InvoiceStatus,
+import {
+  type CommunityPayoutAgreementInfo,
+  type CommunityPayoutInvoiceInfo,
+  type InvoiceStatus,
+  MilestoneLifecycleStatus,
 } from "@/src/features/payout-disbursement";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
@@ -38,7 +39,8 @@ export function AgreementBadge({ agreement }: { agreement: CommunityPayoutAgreem
 
 export function PendingDisbursalBadge({ invoices }: { invoices: CommunityPayoutInvoiceInfo[] }) {
   const pendingItems = invoices.filter(
-    (inv) => inv.milestoneStatus === "verified" && inv.paymentStatus === "unpaid"
+    (inv) =>
+      inv.milestoneStatus === MilestoneLifecycleStatus.VERIFIED && inv.paymentStatus === "unpaid"
   );
 
   if (pendingItems.length === 0) return null;

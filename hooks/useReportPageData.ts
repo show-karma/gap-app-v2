@@ -114,9 +114,19 @@ export function useReportPageData({
   );
 
   // Reviewer filter: milestone reviewers default to "mine", admins default to "all"
-  const [reviewerFilter, setReviewerFilter] = useState<ReviewerFilterMode>(
-    isMilestoneReviewer && !hasAccess ? "mine" : "all"
-  );
+  const [reviewerFilter, setReviewerFilter] = useState<ReviewerFilterMode>("all");
+  const [hasInitializedFilter, setHasInitializedFilter] = useState(false);
+
+  // Reactively update filter when RBAC resolves (isMilestoneReviewer/hasAccess may load after mount)
+  useEffect(() => {
+    if (hasInitializedFilter) return;
+    if (isMilestoneReviewer && !hasAccess) {
+      setReviewerFilter("mine");
+      setHasInitializedFilter(true);
+    } else if (hasAccess) {
+      setHasInitializedFilter(true);
+    }
+  }, [isMilestoneReviewer, hasAccess, hasInitializedFilter]);
 
   const effectiveReviewerAddress = useMemo(() => {
     if (reviewerFilter === "mine" && currentUserAddress) {

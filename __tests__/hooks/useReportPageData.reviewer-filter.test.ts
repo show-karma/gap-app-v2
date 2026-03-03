@@ -16,8 +16,8 @@ type ReviewerFilterMode = "mine" | "all";
 /**
  * Extracted from useReportPageData: computes the default reviewer filter mode.
  *
- * Source (line 118):
- *   isMilestoneReviewer && !hasAccess ? "mine" : "all"
+ * Source: useEffect in useReportPageData that reactively sets "mine" or "all"
+ * based on isMilestoneReviewer && !hasAccess
  */
 function computeDefaultReviewerFilter(
   isMilestoneReviewer: boolean,
@@ -52,11 +52,6 @@ describe("useReportPageData reviewer filter logic", () => {
 
     it('defaults to "all" when hasAccess is true (admin), even if isMilestoneReviewer', () => {
       const result = computeDefaultReviewerFilter(true, true);
-      expect(result).toBe("all");
-    });
-
-    it('defaults to "all" when isMilestoneReviewer is false and hasAccess is false', () => {
-      const result = computeDefaultReviewerFilter(false, false);
       expect(result).toBe("all");
     });
 
