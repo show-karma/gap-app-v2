@@ -62,7 +62,7 @@ interface ReportAPIResponse {
   };
 }
 
-export type { Report, ReportAPIResponse, TabId };
+export type { Report, ReportAPIResponse, ReviewerFilterMode, TabId };
 
 export const itemsPerPage = 50;
 
@@ -78,12 +78,16 @@ const programIdsQueryOptions = {
   },
 };
 
+type ReviewerFilterMode = "mine" | "all";
+
 interface UseReportPageDataOptions {
   communityId: string;
   grantPrograms: GrantProgram[];
   hasAccess: boolean;
   isAuthorized: boolean;
   reviewerPrograms: Array<{ programId: string }>;
+  currentUserAddress?: string;
+  isMilestoneReviewer?: boolean;
 }
 
 export function useReportPageData({
@@ -92,6 +96,8 @@ export function useReportPageData({
   hasAccess,
   isAuthorized,
   reviewerPrograms,
+  currentUserAddress,
+  isMilestoneReviewer = false,
 }: UseReportPageDataOptions) {
   const [activeTab, setActiveTab] = useQueryState<TabId>("tab", {
     defaultValue: "pending-verification",
@@ -106,6 +112,18 @@ export function useReportPageData({
     "programIds",
     programIdsQueryOptions
   );
+
+  // Reviewer filter: milestone reviewers default to "mine", admins default to "all"
+  const [reviewerFilter, setReviewerFilter] = useState<ReviewerFilterMode>(
+    isMilestoneReviewer && !hasAccess ? "mine" : "all"
+  );
+
+  const effectiveReviewerAddress = useMemo(() => {
+    if (reviewerFilter === "mine" && currentUserAddress) {
+      return currentUserAddress;
+    }
+    return undefined;
+  }, [reviewerFilter, currentUserAddress]);
 
   const reviewerProgramIds = useMemo(() => {
     if (!reviewerPrograms || reviewerPrograms.length === 0) return new Set<string>();
@@ -212,6 +230,7 @@ export function useReportPageData({
     page: pendingPage,
     pageLimit: itemsPerPage,
     programIds: effectiveProgramIds,
+    reviewerAddress: effectiveReviewerAddress,
     enabled: isAuthorized,
   });
 
@@ -265,6 +284,11 @@ export function useReportPageData({
     setPendingPage(1);
   }, [setSelectedProgramIds]);
 
+  const handleReviewerFilterChange = useCallback((mode: ReviewerFilterMode) => {
+    setReviewerFilter(mode);
+    setPendingPage(1);
+  }, []);
+
   const isFullyCompleted = useCallback((report: MilestoneCompletion) => {
     const allMilestonesComplete =
       report.totalMilestones > 0 &&
@@ -299,5 +323,7 @@ export function useReportPageData({
     programLabels,
     selectedProgramLabels,
     isFullyCompleted,
+    reviewerFilter,
+    handleReviewerFilterChange,
   };
 }

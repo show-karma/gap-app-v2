@@ -36,6 +36,44 @@ export function AgreementBadge({ agreement }: { agreement: CommunityPayoutAgreem
   );
 }
 
+export function PendingDisbursalBadge({ invoices }: { invoices: CommunityPayoutInvoiceInfo[] }) {
+  const pendingItems = invoices.filter(
+    (inv) => inv.milestoneStatus === "verified" && inv.paymentStatus === "unpaid"
+  );
+
+  if (pendingItems.length === 0) return null;
+
+  const count = pendingItems.length;
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 cursor-default">
+            <span className="h-1.5 w-1.5 rounded-full bg-amber-500 dark:bg-amber-400" />
+            {count} pending disbursal
+          </span>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="max-w-xs">
+          <div className="space-y-0.5 text-xs">
+            <p className="font-medium">
+              {count} verified {count === 1 ? "milestone" : "milestones"} awaiting disbursal
+            </p>
+            {pendingItems.slice(0, 5).map((item) => (
+              <p key={item.milestoneUID || item.milestoneLabel} className="text-muted-foreground">
+                {item.milestoneLabel}
+              </p>
+            ))}
+            {pendingItems.length > 5 && (
+              <p className="text-muted-foreground">+{pendingItems.length - 5} more</p>
+            )}
+          </div>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
 export function ProgressCell({
   invoices,
   paidMilestoneCount,
