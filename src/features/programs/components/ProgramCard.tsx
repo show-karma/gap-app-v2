@@ -1,8 +1,15 @@
 "use client";
 
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, MoreVertical } from "lucide-react";
 import Link from "next/link";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { FundingProgram } from "@/types/whitelabel-entities";
+import { PAGES } from "@/utilities/pages";
 
 interface ProgramCardProps {
   program: FundingProgram;
@@ -17,11 +24,26 @@ interface ProgramStatusInfo {
 }
 
 const STATUS_CONFIG: Record<ProgramStatusType, ProgramStatusInfo> = {
-  open: { label: "Open for Applications", className: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" },
-  closed: { label: "Applications Closed", className: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300" },
-  "coming-soon": { label: "Coming Soon", className: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" },
-  "deadline-passed": { label: "Deadline Passed", className: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400" },
-  "not-configured": { label: "Not Yet Available", className: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400" },
+  open: {
+    label: "Open for Applications",
+    className: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+  },
+  closed: {
+    label: "Applications Closed",
+    className: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
+  },
+  "coming-soon": {
+    label: "Coming Soon",
+    className: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
+  },
+  "deadline-passed": {
+    label: "Deadline Passed",
+    className: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
+  },
+  "not-configured": {
+    label: "Not Yet Available",
+    className: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
+  },
 };
 
 function getProgramStatus(program: FundingProgram): ProgramStatusType {
@@ -94,11 +116,19 @@ function formatDateRange(startsAt?: string, endsAt?: string): string {
   if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) return "Ongoing";
 
   if (startDate.getFullYear() !== endDate.getFullYear()) {
-    const fmt = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" });
+    const fmt = new Intl.DateTimeFormat("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
     return `${fmt.format(startDate)} - ${fmt.format(endDate)}`;
   }
   const fmtNoYear = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" });
-  const fmtYear = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" });
+  const fmtYear = new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
   return `${fmtNoYear.format(startDate)} - ${fmtYear.format(endDate)}`;
 }
 
@@ -112,33 +142,74 @@ export function ProgramCard({ program, communityId }: ProgramCardProps) {
   const isApplyDisabled = !isProgramEnabled(program);
   const disabledReason = getProgramDisabledReason(program);
 
-  const programDetailsURL = `/community/${communityId}/programs/${program.programId}`;
+  const hasFormConfig = !!program.applicationConfig?.formSchema;
+  const isPrivate = program.applicationConfig?.formSchema?.settings?.privateApplications ?? false;
+  const hasDonationRound = program.applicationConfig?.formSchema?.settings?.donationRound ?? false;
+
+  const programDetailsURL = PAGES.COMMUNITY.PROGRAM_DETAIL(communityId, program.programId);
   const description =
     program.metadata?.shortDescription ||
     program.metadata?.description ||
     "No description available";
 
   return (
-    <Link
-      href={programDetailsURL}
-      className="group flex h-full w-full flex-col gap-4 rounded-xl border border-border p-6 transition-all hover:shadow-lg"
-    >
-      {/* Header: Status Badge */}
-      <div className="flex items-center justify-end gap-2">
+    // <article> with a primary link overlay on the title — avoids nested anchors (WCAG 1.3.1).
+    // Donate button and dropdown sit above the overlay via relative z-10.
+    <article className="group relative flex h-full w-full flex-col gap-4 rounded-xl border border-border p-6 transition-all hover:shadow-lg">
+      {/* Header: Status Badge + isolated interactive actions */}
+      <div className="flex items-center justify-between gap-2">
         <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${statusInfo.className}`}>
           {statusInfo.label}
         </span>
+
+        {/* Interactive elements above link overlay so they receive their own click events */}
+        <div className="relative z-10 flex items-center gap-2">
+          {hasDonationRound && (
+            <Link
+              href={PAGES.COMMUNITY.DONATE_PROGRAM(communityId, program.programId)}
+              className="rounded-lg bg-primary px-3 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+            >
+              Donate
+            </Link>
+          )}
+
+          {hasFormConfig && !isPrivate && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  aria-label="More options"
+                  className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+                >
+                  <MoreVertical className="h-4 w-4" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <Link
+                    href={`${PAGES.COMMUNITY.BROWSE_APPLICATIONS(communityId)}?programId=${program.programId}`}
+                  >
+                    View All Applications
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
       </div>
 
-      {/* Program Title */}
+      {/* Program Title — primary card link stretches across entire card via ::after overlay */}
       <h3 className="text-xl font-semibold transition-all group-hover:opacity-80">
-        {program.metadata?.title || program.name}
+        <Link
+          href={programDetailsURL}
+          className="after:absolute after:inset-0 after:content-[''] hover:no-underline"
+        >
+          {program.metadata?.title || program.name}
+        </Link>
       </h3>
 
       {/* Description */}
-      <p className="grow text-sm text-muted-foreground line-clamp-3">
-        {description}
-      </p>
+      <p className="grow text-sm text-muted-foreground line-clamp-3">{description}</p>
 
       {/* Metadata */}
       <div className="flex flex-col border-t border-border pt-4">
@@ -153,9 +224,7 @@ export function ProgramCard({ program, communityId }: ProgramCardProps) {
             <div className="border-t border-border" />
             <div className="flex items-center justify-between py-3">
               <p className="text-sm text-muted-foreground">Available Funding</p>
-              <p className="text-base font-bold text-primary">
-                {formattedFundingAmount}
-              </p>
+              <p className="text-base font-bold text-primary">{formattedFundingAmount}</p>
             </div>
           </>
         ) : null}
@@ -170,10 +239,8 @@ export function ProgramCard({ program, communityId }: ProgramCardProps) {
 
       {/* Helper text for disabled state */}
       {isApplyDisabled && disabledReason ? (
-        <p className="text-center text-xs text-muted-foreground">
-          {disabledReason}
-        </p>
+        <p className="text-center text-xs text-muted-foreground">{disabledReason}</p>
       ) : null}
-    </Link>
+    </article>
   );
 }
