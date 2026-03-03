@@ -32,14 +32,11 @@ export function ReadMoreModal({
       const el = clampedRef.current;
       if (!el) return;
 
-      const previewWrapper = el.querySelector(".preview") as HTMLElement;
-      if (!previewWrapper) return;
-
-      const original = previewWrapper.className;
-      previewWrapper.className = original.replace(/line-clamp-\d+/g, "");
-      const naturalHeight = previewWrapper.scrollHeight;
-      previewWrapper.className = original;
-      const clampedHeight = previewWrapper.clientHeight;
+      // The clamp is on `el` itself — compare scrollHeight vs clientHeight directly
+      el.classList.remove(...clampClass.split(" "));
+      const naturalHeight = el.scrollHeight;
+      el.classList.add(...clampClass.split(" "));
+      const clampedHeight = el.clientHeight;
 
       setIsClamped(naturalHeight > clampedHeight);
     };
@@ -54,8 +51,7 @@ export function ReadMoreModal({
     let observer: ResizeObserver | null = null;
     if (el && typeof ResizeObserver !== "undefined") {
       observer = new ResizeObserver(checkClamping);
-      const pw = el.querySelector(".preview");
-      if (pw) observer.observe(pw);
+      observer.observe(el);
     }
 
     return () => {
@@ -66,8 +62,8 @@ export function ReadMoreModal({
 
   return (
     <>
-      <div ref={clampedRef}>
-        <MarkdownPreview source={content} className={`${clampClass} ${previewClassName}`} />
+      <div ref={clampedRef} className={`${clampClass} ${previewClassName} overflow-hidden`}>
+        <MarkdownPreview source={content} />
         {isClamped && (
           <button
             type="button"

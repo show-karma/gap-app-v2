@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertTriangle, LogIn } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
@@ -8,13 +9,16 @@ import { useAuth } from "@/hooks/useAuth";
 interface AccessDeniedProps {
   title?: string;
   message?: string;
+  returnUrl?: string;
 }
 
 export function AccessDenied({
   title = "Access Denied",
   message = "You don't have permission to view this page.",
+  returnUrl = "/",
 }: AccessDeniedProps) {
   const { authenticated, login } = useAuth();
+  const router = useRouter();
 
   return (
     <div className="container py-16 flex items-center justify-center min-h-[60vh]">
@@ -30,11 +34,12 @@ export function AccessDenied({
           <p className="text-muted-foreground mb-8">{message}</p>
 
           <Button
+            type="button"
             onClick={() => {
               if (!authenticated) {
                 login();
               } else {
-                window.location.href = "/";
+                router.push(returnUrl);
               }
             }}
           >

@@ -420,23 +420,34 @@ const tenantSeo: Partial<Record<TenantId, TenantSeo>> = {
   },
   scroll: {
     title: "Scroll Grants",
-    description: "Apply for grants from the Scroll ecosystem.",
+    description:
+      "Apply for grants from the Scroll ecosystem. Browse open funding programs, submit applications, and track your grant status.",
     keywords: ["scroll", "grants", "funding", "zk rollup", "ethereum", "blockchain", "web3"],
   },
   karma: {
     title: "Karma Funding Platform",
-    description: "Explore open funding rounds across blockchain communities.",
-    keywords: ["karma", "grants", "funding", "blockchain", "web3", "ecosystem"],
+    description:
+      "Explore open funding rounds across blockchain communities. Apply for grants, track applications, and manage your funding.",
+    keywords: [
+      "karma",
+      "grants",
+      "funding",
+      "blockchain",
+      "web3",
+      "ecosystem",
+      "grantee accountability",
+    ],
   },
   celopg: {
     title: "Celo Public Goods",
-    description: "Apply for public goods funding from the Celo Public Goods ecosystem.",
+    description:
+      "Apply for public goods funding from the Celo Public Goods ecosystem. Browse open programs and submit applications.",
     keywords: ["celo", "public goods", "grants", "funding", "blockchain", "web3"],
   },
   filecoin: {
     title: "Filecoin Community Grants",
     description:
-      "Apply for grants from the Filecoin community. Browse ProPGF and RetroPGF programs.",
+      "Apply for grants from the Filecoin community. Browse ProPGF and RetroPGF programs, submit applications, and track your grant status.",
     keywords: ["filecoin", "grants", "funding", "decentralized storage", "blockchain", "web3"],
   },
 };

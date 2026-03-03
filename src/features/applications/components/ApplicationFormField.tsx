@@ -274,17 +274,23 @@ export function ApplicationFormField({
               </div>
             );
 
-          case "radio":
+          case "radio": {
+            const radioLabelId = `${question.id}-label`;
             return (
               <div className="flex flex-col gap-2" data-field-id={question.id}>
-                <Label>
+                <Label id={radioLabelId}>
                   {question.label}
                   {question.required && <span className="text-destructive ml-0.5">*</span>}
                 </Label>
                 {question.description && (
                   <FieldDescription source={question.description as string} />
                 )}
-                <div className="space-y-2">
+                <div
+                  role="radiogroup"
+                  aria-labelledby={radioLabelId}
+                  aria-required={question.required}
+                  className="space-y-2"
+                >
                   {question.options?.map((option) => (
                     <label key={option.value} className="flex items-center gap-2 cursor-pointer">
                       <input
@@ -303,6 +309,7 @@ export function ApplicationFormField({
                 {error && <p className="text-sm text-destructive">{error}</p>}
               </div>
             );
+          }
 
           default:
             return <div />;

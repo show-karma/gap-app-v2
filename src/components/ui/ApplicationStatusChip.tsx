@@ -6,6 +6,7 @@ import { cn } from "@/utilities/tailwind";
 interface ApplicationStatusChipProps {
   status: string;
   size?: "sm" | "md" | "lg";
+  variant?: "flat" | "bordered" | "solid";
   onlyShowApproved?: boolean;
   className?: string;
 }
@@ -62,6 +63,7 @@ function formatStatus(status: string): string {
 export function ApplicationStatusChip({
   status,
   size = "md",
+  variant = "flat",
   onlyShowApproved = false,
   className,
 }: ApplicationStatusChipProps) {
@@ -69,11 +71,19 @@ export function ApplicationStatusChip({
     return null;
   }
 
+  const variantClass =
+    variant === "bordered"
+      ? "border border-current bg-transparent"
+      : variant === "solid"
+        ? "border-transparent"
+        : "border-transparent"; // flat is default
+
   return (
     <Badge
       variant="outline"
       className={cn(
-        "border-transparent font-medium capitalize",
+        "font-medium capitalize",
+        variantClass,
         getStatusStyle(status),
         SIZE_CLASSES[size],
         className

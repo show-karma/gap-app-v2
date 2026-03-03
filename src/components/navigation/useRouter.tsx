@@ -16,8 +16,8 @@ export interface EnhancedRouter {
 
 export function useRouter(): EnhancedRouter {
   const nextRouter = useNextRouter();
-  const params = useParams<{ community: string }>();
-  const community = params.community;
+  const params = useParams<{ communityId: string }>();
+  const community = params.communityId;
 
   const isExternalUrl = useCallback((url: string): boolean => {
     return url.startsWith("http://") || url.startsWith("https://");

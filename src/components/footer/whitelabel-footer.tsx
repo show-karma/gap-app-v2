@@ -1,8 +1,11 @@
 "use client";
 
 import Image from "next/image";
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 
 export function WhitelabelFooter() {
+  const [, copy] = useCopyToClipboard();
+
   return (
     <footer className="w-full flex-col gap-4 flex items-center justify-center py-3 mb-8">
       <a
@@ -27,9 +30,18 @@ export function WhitelabelFooter() {
           className="block dark:hidden"
         />
       </a>
-      <p className="text-md text-center text-zinc-600 dark:text-zinc-400">
-        Building transparent funding infrastructure for ecosystems.
-      </p>
+      <div className="flex flex-col justify-center items-center gap-0">
+        <p className="text-md text-center text-zinc-600 dark:text-zinc-400">
+          Building transparent funding infrastructure for ecosystems.
+        </p>
+        <button
+          type="button"
+          className="text-sm text-blue-500 font-medium cursor-pointer hover:underline"
+          onClick={() => copy("info@karmahq.xyz")}
+        >
+          info@karmahq.xyz
+        </button>
+      </div>
     </footer>
   );
 }
