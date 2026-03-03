@@ -23,7 +23,7 @@ export interface UseEligibilityReturn {
 export function useEligibility(
   campaigns: ClaimCampaign[],
   walletAddress: string | undefined,
-  communityId: string,
+  tenantId: string,
   claimGrants: ClaimGrantsConfig | undefined
 ): UseEligibilityReturn {
   const provider = useClaimProvider(claimGrants);
@@ -44,7 +44,7 @@ export function useEligibility(
   }, [campaigns, walletAddress]);
 
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ["claim-eligibility", provider?.id ?? "none", communityId, walletAddress ?? ""],
+    queryKey: ["claim-eligibility", provider?.id ?? "none", tenantId, walletAddress ?? ""],
     queryFn,
     enabled: isEnabled,
     staleTime: 5 * 60 * 1000,

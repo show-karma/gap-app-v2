@@ -63,7 +63,7 @@ interface SignatureVariables {
 }
 
 export function useDelegatedClaim(
-  communityId: string,
+  tenantId: string,
   claimGrants: ClaimGrantsConfig | undefined
 ): UseDelegatedClaimReturn {
   const provider = useClaimProvider(claimGrants);
@@ -122,8 +122,8 @@ export function useDelegatedClaim(
         transport: custom(ethereum),
       });
 
-      toast("Please sign the authorization in your wallet", {
-        icon: "\u270F\uFE0F",
+      toast.loading("Please sign the authorization in your wallet...", {
+        id: "signature-request",
       });
 
       const signature = await walletClient.signTypedData({
@@ -146,7 +146,9 @@ export function useDelegatedClaim(
     },
     onSuccess: (data) => {
       setPendingClaim(data);
-      toast.success("Signature obtained! You can now submit the claim transaction.");
+      toast.success("Signature obtained! You can now submit the claim transaction.", {
+        id: "signature-request",
+      });
     },
     onError: (err, variables) => {
       const errorMsg = err instanceof Error ? err.message : "Failed to get signature";
@@ -164,7 +166,7 @@ export function useDelegatedClaim(
         toastMsg = "You rejected the signature request.";
       }
 
-      toast.error(toastMsg);
+      toast.error(toastMsg, { id: "signature-request" });
     },
   });
 
@@ -233,7 +235,7 @@ export function useDelegatedClaim(
         id: "delegated-tx",
       });
       queryClient.invalidateQueries({
-        queryKey: ["claim-eligibility", providerId, communityId, claimerAddress],
+        queryKey: ["claim-eligibility", providerId, tenantId, claimerAddress],
       });
       queryClient.invalidateQueries({
         queryKey: ["claimed-statuses"],

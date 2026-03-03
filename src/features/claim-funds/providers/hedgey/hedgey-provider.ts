@@ -19,10 +19,18 @@ export class HedgeyProvider implements ClaimProvider {
   }
 
   async fetchCampaigns(): Promise<ClaimCampaign[]> {
+    const envCampaignIds = process.env.NEXT_PUBLIC_HEDGEY_CAMPAIGN_IDS
+      ? process.env.NEXT_PUBLIC_HEDGEY_CAMPAIGN_IDS.split(",")
+          .map((id) => id.trim())
+          .filter(Boolean)
+      : undefined;
+
+    const campaignIdsFilter = this.testCampaignIds ?? envCampaignIds;
+
     const hedgeyCampaigns = await fetchCampaignsByNetwork(this.config.networkName);
 
-    const filteredCampaigns = this.testCampaignIds
-      ? hedgeyCampaigns.filter((c) => this.testCampaignIds!.includes(c.id))
+    const filteredCampaigns = campaignIdsFilter?.length
+      ? hedgeyCampaigns.filter((c) => campaignIdsFilter.includes(c.id))
       : hedgeyCampaigns;
 
     return filteredCampaigns.map((campaign) => this.mapHedgeyCampaignToClaimCampaign(campaign));

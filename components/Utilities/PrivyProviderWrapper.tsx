@@ -10,6 +10,17 @@ import { appNetwork } from "@/utilities/network";
 import { queryClient } from "@/utilities/query-client";
 import { privyConfig } from "@/utilities/wagmi/privy-config";
 
+// Security policy — explicit review required before adding or removing methods/wallets
+const LOGIN_METHODS = ["email", "google", "wallet", "farcaster"] as const;
+const WALLET_LIST = [
+  "detected_wallets",
+  "metamask",
+  "rainbow",
+  "rabby_wallet",
+  "wallet_connect",
+  "safe",
+] as const;
+
 /**
  * @deprecated Import from `@/utilities/query-client` instead.
  * This re-export exists only for backwards compatibility and will be removed in a future version.
@@ -30,7 +41,8 @@ function isPrivyCompatible(): boolean {
   if (typeof window === "undefined") return true;
   const { protocol, hostname } = window.location;
   if (protocol === "https:" || protocol === "chrome-extension:") return true;
-  if (hostname === "localhost" || hostname === "127.0.0.1") return true;
+  if (hostname === "localhost" || hostname === "127.0.0.1" || hostname.endsWith(".localhost"))
+    return true;
   return false;
 }
 
@@ -41,8 +53,13 @@ export default function PrivyProviderWrapper({
   const privyAppId = envVars.PRIVY_APP_ID;
 
   if (!privyAppId) {
-    throw new Error(
+    console.error(
       "NEXT_PUBLIC_PRIVY_APP_ID is not defined. Please set it in your environment variables."
+    );
+    return (
+      <QueryClientProvider client={queryClient}>
+        <WagmiProvider config={privyConfig}>{children}</WagmiProvider>
+      </QueryClientProvider>
     );
   }
 
@@ -74,14 +91,14 @@ export default function PrivyProviderWrapper({
           logo,
           landingHeader,
           showWalletLoginFirst: false,
-          walletList: ["detected_wallets", "metamask", "rainbow", "rabby_wallet", "wallet_connect"],
+          walletList: [...WALLET_LIST],
         },
         embeddedWallets: {
           ethereum: {
             createOnLogin: "users-without-wallets",
           },
         },
-        loginMethods: ["email", "google", "wallet"],
+        loginMethods: [...LOGIN_METHODS],
         defaultChain: defaultChain,
         supportedChains: appNetwork,
         externalWallets: {

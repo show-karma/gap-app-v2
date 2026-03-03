@@ -1,3 +1,8 @@
+// P2-22: gap-app-v2 is single-indexer by design — all tenants share
+// envVars.NEXT_PUBLIC_GAP_INDEXER_URL. No per-tenant indexerUrl override
+// is needed. If this changes, implement getIndexerUrl(tenantId) here and
+// thread it as the 8th param of fetchData() in affected hooks.
+import { getHedgeyContractAddress } from "@/src/features/claim-funds/lib/hedgey-contract";
 import { getTenantTheme } from "../theme/config";
 import type {
   ClaimGrantsConfig,
@@ -11,14 +16,6 @@ import type {
 
 function getHedgeyNetwork(defaultNetwork: string): string {
   return process.env.NEXT_PUBLIC_HEDGEY_NETWORK || defaultNetwork;
-}
-
-function getHedgeyContractAddress(networkName: string): string {
-  const contracts: Record<string, string> = {
-    optimism: "0x1bb64AF7FE05fc69c740609267d2AbE3e119Ef82",
-    sepolia: "0x1bb64AF7FE05fc69c740609267d2AbE3e119Ef82",
-  };
-  return contracts[networkName] || contracts.optimism;
 }
 
 function getClaimGrantsConfigForTenant(tenantId: TenantId): ClaimGrantsConfig {
@@ -343,10 +340,19 @@ const tenantNavigation: Record<TenantId, TenantNavigation> = {
 };
 
 const tenantContent: Partial<Record<TenantId, TenantContent>> = {
+  optimism: {
+    openFundingRoundsTitle: "Open Funding Rounds",
+  },
+  arbitrum: {
+    openFundingRoundsTitle: "Open Funding Rounds",
+  },
+  celo: {
+    openFundingRoundsTitle: "Open Funding Rounds",
+  },
   polygon: {
     heroHeading: "Accelerate your project on Polygon",
     heroDescription:
-      "Connect with funding opportunities, technical resources, and strategic partnerships designed to help payments-focused founders scale.",
+      "Connect with funding opportunities, technical resources, and strategic partnerships designed to help payments-focused founders scale. From prediction market tools to cross-border payment solutions, we provide tailored support for builders driving real-world adoption.",
     heroStats: [
       { value: "1B POL", label: "Foundation treasury for ecosystem growth" },
       { value: "Multiple Programs", label: "Funding, partnerships & technical support" },
@@ -356,6 +362,27 @@ const tenantContent: Partial<Record<TenantId, TenantContent>> = {
     openFundingRoundsTitle: "",
   },
   scroll: { subtitle: "Community Funding Platform", openFundingRoundsTitle: "Open Funding Rounds" },
+  karma: {
+    openFundingRoundsTitle: "Open Funding Rounds",
+  },
+  celopg: {
+    openFundingRoundsTitle: "Open Funding Rounds",
+  },
+  "regen-coordination": {
+    openFundingRoundsTitle: "Open Funding Rounds",
+  },
+  "localism-fund": {
+    openFundingRoundsTitle: "Open Funding Rounds",
+  },
+  filecoin: {
+    openFundingRoundsTitle: "Open Funding Rounds",
+  },
+  "for-the-world": {
+    openFundingRoundsTitle: "Open Funding Rounds",
+  },
+  default: {
+    openFundingRoundsTitle: "Open Funding Rounds",
+  },
 };
 
 function getDefaultSeo(tenantName: string): TenantSeo {
@@ -381,7 +408,8 @@ const tenantSeo: Partial<Record<TenantId, TenantSeo>> = {
   },
   celo: {
     title: "Celo Grants Council",
-    description: "Apply for grants from the Celo ecosystem.",
+    description:
+      "Apply for grants from the Celo ecosystem. Browse open funding programs, submit applications, and track your grant status.",
     keywords: ["celo", "grants", "funding", "mobile-first", "blockchain", "web3"],
   },
   polygon: {

@@ -13,7 +13,7 @@ export interface UseCampaignsReturn {
 }
 
 export function useCampaigns(
-  communityId: string,
+  tenantId: string,
   claimGrants: ClaimGrantsConfig | undefined
 ): UseCampaignsReturn {
   const provider = useClaimProvider(claimGrants);
@@ -26,7 +26,7 @@ export function useCampaigns(
     error,
     refetch,
   } = useQuery({
-    queryKey: ["claim-campaigns", provider?.id ?? "none", communityId],
+    queryKey: ["claim-campaigns", provider?.id ?? "none", tenantId],
     queryFn: async () => {
       if (!provider) {
         return [];

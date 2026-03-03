@@ -2,7 +2,7 @@
 
 import { useWallets } from "@privy-io/react-auth";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { createWalletClient, custom } from "viem";
 import type { ClaimGrantsConfig } from "@/src/infrastructure/types/tenant";
@@ -34,7 +34,7 @@ interface ClaimVariables {
 }
 
 export function useClaimTransaction(
-  communityId: string,
+  tenantId: string,
   claimGrants: ClaimGrantsConfig | undefined
 ): UseClaimTransactionReturn {
   const provider = useClaimProvider(claimGrants);
@@ -43,6 +43,15 @@ export function useClaimTransaction(
 
   const [isConfirming, setIsConfirming] = useState(false);
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>(undefined);
+  const isClaimingRef = useRef(false);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   const providerId = provider?.id ?? "none";
 
@@ -102,7 +111,7 @@ export function useClaimTransaction(
     onSuccess: () => {
       toast.success("Your tokens have been claimed!", { id: "claim-tx" });
       queryClient.invalidateQueries({
-        queryKey: ["claim-eligibility", providerId, communityId, wallets[0]?.address ?? ""],
+        queryKey: ["claim-eligibility", providerId, tenantId, wallets[0]?.address ?? ""],
       });
       queryClient.invalidateQueries({
         queryKey: ["claimed-statuses"],
@@ -113,17 +122,19 @@ export function useClaimTransaction(
       toast.error(message, { id: "claim-tx" });
     },
     onSettled: () => {
+      isClaimingRef.current = false;
       setIsConfirming(false);
     },
   });
 
   const claim = useCallback(
     (campaignId: string, eligibility: ClaimEligibility, contractAddress: `0x${string}`) => {
-      if (mutation.isPending) return;
+      if (isClaimingRef.current || mutation.isPending) return;
       if (!wallets[0]?.address) {
         toast.error("Please connect your wallet to claim");
         return;
       }
+      isClaimingRef.current = true;
       mutation.mutate({ campaignId, eligibility, contractAddress });
     },
     [mutation, wallets]
