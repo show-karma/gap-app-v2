@@ -164,6 +164,9 @@ export default function AddProgram({
             prizeCurrency: programToEdit.hackathonMetadata.prizes?.[0]?.currency ?? "USD",
             teamSizeMin: programToEdit.hackathonMetadata.teamSize?.min,
             teamSizeMax: programToEdit.hackathonMetadata.teamSize?.max,
+            registrationDeadline: programToEdit.hackathonMetadata.registrationDeadline
+              ? new Date(programToEdit.hackathonMetadata.registrationDeadline)
+              : undefined,
           }
         : { prizeCurrency: "USD" },
       bountyMeta: programToEdit?.bountyMetadata
