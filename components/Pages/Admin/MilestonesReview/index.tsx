@@ -546,13 +546,9 @@ function MilestonesReviewPageContent({
                 <p className="text-sm text-red-700 dark:text-red-300 mb-3">
                   Failed to load linked application data.
                 </p>
-                <button
-                  type="button"
-                  onClick={() => refetchFundingApplication()}
-                  className="px-3 py-1.5 text-sm font-medium rounded-md bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50 transition-colors"
-                >
+                <Button variant="secondary" onClick={() => refetchFundingApplication()}>
                   Retry
-                </button>
+                </Button>
               </div>
             ) : referenceNumber ? (
               <CommentsAndActivity

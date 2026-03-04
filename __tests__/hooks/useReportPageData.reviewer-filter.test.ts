@@ -55,7 +55,7 @@ describe("useReportPageData reviewer filter logic", () => {
       expect(result).toBe("all");
     });
 
-    it('defaults to "all" when both isMilestoneReviewer and hasAccess are false', () => {
+    it('defaults to "all" when isMilestoneReviewer is false and hasAccess is false', () => {
       const result = computeDefaultReviewerFilter(false, false);
       expect(result).toBe("all");
     });

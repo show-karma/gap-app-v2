@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useQueryState } from "nuqs";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { usePendingVerificationMilestones } from "@/hooks/usePendingVerificationMilestones";
@@ -113,19 +113,22 @@ export function useReportPageData({
   );
 
   // Reviewer filter: milestone reviewers default to "mine", admins default to "all"
-  const [reviewerFilter, setReviewerFilter] = useState<ReviewerFilterMode>("all");
-  const [hasInitializedFilter, setHasInitializedFilter] = useState(false);
+  const [reviewerFilter, setReviewerFilter] = useState<ReviewerFilterMode>(() =>
+    isMilestoneReviewer && !hasAccess ? "mine" : "all"
+  );
+  const hasUserSelectedFilter = useRef(false);
 
-  // Reactively update filter when RBAC resolves (isMilestoneReviewer/hasAccess may load after mount)
+  // Sync reviewerFilter when isMilestoneReviewer/hasAccess resolve after mount
   useEffect(() => {
-    if (hasInitializedFilter) return;
-    if (isMilestoneReviewer && !hasAccess) {
-      setReviewerFilter("mine");
-      setHasInitializedFilter(true);
-    } else if (hasAccess) {
-      setHasInitializedFilter(true);
-    }
-  }, [isMilestoneReviewer, hasAccess, hasInitializedFilter]);
+    if (hasUserSelectedFilter.current) return;
+    const computed: ReviewerFilterMode = isMilestoneReviewer && !hasAccess ? "mine" : "all";
+    setReviewerFilter(computed);
+  }, [isMilestoneReviewer, hasAccess]);
+
+  // Reset user's manual filter selection when context changes
+  useEffect(() => {
+    hasUserSelectedFilter.current = false;
+  }, [communityId, currentUserAddress]);
 
   const effectiveReviewerAddress = useMemo(() => {
     if (reviewerFilter === "mine" && currentUserAddress) {
@@ -294,6 +297,7 @@ export function useReportPageData({
   }, [setSelectedProgramIds]);
 
   const handleReviewerFilterChange = useCallback((mode: ReviewerFilterMode) => {
+    hasUserSelectedFilter.current = true;
     setReviewerFilter(mode);
     setPendingPage(1);
   }, []);

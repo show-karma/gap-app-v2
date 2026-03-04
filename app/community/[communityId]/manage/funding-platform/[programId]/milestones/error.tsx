@@ -18,7 +18,7 @@ export default function MilestonesError({
         </div>
         <h1 className="text-xl font-semibold text-foreground">Something went wrong</h1>
         <p className="text-sm text-muted-foreground">
-          We encountered an error loading milestones. Please try again.
+          We encountered an error loading the milestones page. Please try again.
         </p>
         {error.digest ? (
           <p className="text-xs text-muted-foreground">Error ID: {error.digest}</p>
