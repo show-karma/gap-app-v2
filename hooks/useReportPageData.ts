@@ -11,7 +11,6 @@ import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { validateProgramIdentifiers } from "@/utilities/validators";
 
 type TabId = "pending-verification" | "stats";
-type ReviewerFilterMode = "mine" | "all";
 
 interface Report {
   _id: {
@@ -63,7 +62,7 @@ interface ReportAPIResponse {
   };
 }
 
-export type { Report, ReportAPIResponse, ReviewerFilterMode, TabId };
+export type { Report, ReportAPIResponse, TabId };
 
 export const itemsPerPage = 50;
 
@@ -112,30 +111,25 @@ export function useReportPageData({
     programIdsQueryOptions
   );
 
-  // Reviewer filter: milestone reviewers default to "mine", admins default to "all"
-  const [reviewerFilter, setReviewerFilter] = useState<ReviewerFilterMode>(() =>
-    isMilestoneReviewer && !hasAccess ? "mine" : "all"
+  // Reviewer filter: address-based. Reviewers default to own address, admins to "all" (undefined).
+  const [selectedReviewerAddress, setSelectedReviewerAddress] = useState<string | undefined>(() =>
+    isMilestoneReviewer && !hasAccess ? currentUserAddress : undefined
   );
   const hasUserSelectedFilter = useRef(false);
 
-  // Sync reviewerFilter when isMilestoneReviewer/hasAccess resolve after mount
+  // Sync selectedReviewerAddress when isMilestoneReviewer/hasAccess resolve after mount
   useEffect(() => {
     if (hasUserSelectedFilter.current) return;
-    const computed: ReviewerFilterMode = isMilestoneReviewer && !hasAccess ? "mine" : "all";
-    setReviewerFilter(computed);
-  }, [isMilestoneReviewer, hasAccess]);
+    const computed = isMilestoneReviewer && !hasAccess ? currentUserAddress : undefined;
+    setSelectedReviewerAddress(computed);
+  }, [isMilestoneReviewer, hasAccess, currentUserAddress]);
 
   // Reset user's manual filter selection when context changes
   useEffect(() => {
     hasUserSelectedFilter.current = false;
   }, [communityId, currentUserAddress]);
 
-  const effectiveReviewerAddress = useMemo(() => {
-    if (reviewerFilter === "mine" && currentUserAddress) {
-      return currentUserAddress;
-    }
-    return undefined;
-  }, [reviewerFilter, currentUserAddress]);
+  const effectiveReviewerAddress = selectedReviewerAddress;
 
   const reviewerProgramIds = useMemo(() => {
     if (!reviewerPrograms || reviewerPrograms.length === 0) return new Set<string>();
@@ -296,9 +290,9 @@ export function useReportPageData({
     setPendingPage(1);
   }, [setSelectedProgramIds]);
 
-  const handleReviewerFilterChange = useCallback((mode: ReviewerFilterMode) => {
+  const handleReviewerAddressChange = useCallback((address: string | undefined) => {
     hasUserSelectedFilter.current = true;
-    setReviewerFilter(mode);
+    setSelectedReviewerAddress(address);
     setPendingPage(1);
   }, []);
 
@@ -336,7 +330,8 @@ export function useReportPageData({
     programLabels,
     selectedProgramLabels,
     isFullyCompleted,
-    reviewerFilter,
-    handleReviewerFilterChange,
+    selectedReviewerAddress,
+    handleReviewerAddressChange,
+    effectiveProgramIds,
   };
 }
