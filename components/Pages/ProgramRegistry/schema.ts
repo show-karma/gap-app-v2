@@ -22,9 +22,11 @@ export const OPPORTUNITY_TYPE_OPTIONS = [
 ] as const;
 
 // --- Type-specific metadata sub-schemas ---
+// Fields that are conditionally required (enforced in superRefine for the active type)
+// use .default("") instead of .optional() to avoid schema/validation contradiction.
 export const hackathonMetadataSchema = z
   .object({
-    location: z.string().optional(),
+    location: z.string().default(""),
     tracks: z.string().optional(),
     prizePool: optionalNumber,
     prizeCurrency: z.string().optional(),
@@ -71,7 +73,7 @@ export const vcFundMetadataSchema = z
 
 export const rfpMetadataSchema = z
   .object({
-    issuingOrganization: z.string().optional(),
+    issuingOrganization: z.string().default(""),
     budgetAmount: optionalNumber,
     budgetCurrency: z.string().optional(),
     scope: z.string().optional(),
