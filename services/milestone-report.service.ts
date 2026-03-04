@@ -46,13 +46,17 @@ export const milestoneReportService = {
     communityId: string,
     page: number,
     pageLimit: number,
-    programIds: string[] = []
+    programIds: string[] = [],
+    reviewerAddress?: string
   ): Promise<PendingVerificationAPIResponse> {
     const queryProgramIds = programIds.join(",");
     const encodedProgramIds = encodeURIComponent(queryProgramIds);
-    const url = `${INDEXER.COMMUNITY.REPORT.PENDING_VERIFICATION(communityId)}?limit=${pageLimit}&page=${page}${
+    let url = `${INDEXER.COMMUNITY.REPORT.PENDING_VERIFICATION(communityId)}?limit=${pageLimit}&page=${page}${
       queryProgramIds ? `&programIds=${encodedProgramIds}` : ""
     }`;
+    if (reviewerAddress) {
+      url += `&reviewerAddress=${encodeURIComponent(reviewerAddress)}`;
+    }
 
     const [data, error] = await fetchData<PendingVerificationAPIResponse>(url);
     if (error) throw new Error(String(error));

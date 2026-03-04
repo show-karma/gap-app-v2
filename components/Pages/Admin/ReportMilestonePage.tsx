@@ -14,7 +14,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useAuth } from "@/hooks/useAuth";
 import { useReviewerPrograms } from "@/hooks/usePermissions";
-import { itemsPerPage, useReportPageData } from "@/hooks/useReportPageData";
+import {
+  itemsPerPage,
+  type ReviewerFilterMode,
+  useReportPageData,
+} from "@/hooks/useReportPageData";
 import {
   useIsReviewerType,
   usePermissionContext,
@@ -23,6 +27,7 @@ import { ReviewerType } from "@/src/core/rbac/types";
 import type { Community } from "@/types/v2/community";
 import { MESSAGES } from "@/utilities/messages";
 import { defaultMetadata } from "@/utilities/meta";
+import { cn } from "@/utilities/tailwind";
 
 export const metadata = defaultMetadata;
 
@@ -90,7 +95,7 @@ interface ReportMilestonePageProps {
 export const ReportMilestonePage = ({ community, grantPrograms }: ReportMilestonePageProps) => {
   const params = useParams();
   const communityId = params.communityId as string;
-  const { isConnected } = useAccount();
+  const { isConnected, address } = useAccount();
   const { authenticated: isAuth } = useAuth();
   const { hasAccess, isLoading: isLoadingAdminAccess } = useCommunityAdminAccess(community?.uid);
   const isMilestoneReviewer = useIsReviewerType(ReviewerType.MILESTONE);
@@ -112,6 +117,8 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
     hasAccess,
     isAuthorized,
     reviewerPrograms: reviewerPrograms ?? [],
+    currentUserAddress: address,
+    isMilestoneReviewer,
   });
 
   if (isCheckingPermissions) {
@@ -155,6 +162,38 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
       </div>
 
       <StatsGrid stats={reportData.stats} isLoading={reportData.isStatsLoading} />
+
+      {isMilestoneReviewer && (
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-500 dark:text-zinc-400">Show:</span>
+          <div className="inline-flex rounded-md border border-gray-200 dark:border-zinc-700">
+            <button
+              onClick={() => reportData.handleReviewerFilterChange("mine")}
+              aria-pressed={reportData.reviewerFilter === "mine"}
+              className={cn(
+                "px-3 py-1.5 text-sm font-medium rounded-l-md transition-colors",
+                reportData.reviewerFilter === "mine"
+                  ? "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                  : "text-gray-600 hover:bg-gray-50 dark:text-zinc-400 dark:hover:bg-zinc-800"
+              )}
+            >
+              My Milestones
+            </button>
+            <button
+              onClick={() => reportData.handleReviewerFilterChange("all")}
+              aria-pressed={reportData.reviewerFilter === "all"}
+              className={cn(
+                "px-3 py-1.5 text-sm font-medium rounded-r-md transition-colors border-l border-gray-200 dark:border-zinc-700",
+                reportData.reviewerFilter === "all"
+                  ? "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                  : "text-gray-600 hover:bg-gray-50 dark:text-zinc-400 dark:hover:bg-zinc-800"
+              )}
+            >
+              All Milestones
+            </button>
+          </div>
+        </div>
+      )}
 
       <Tabs
         value={reportData.activeTab}

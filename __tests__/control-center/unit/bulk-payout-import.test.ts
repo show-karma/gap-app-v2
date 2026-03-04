@@ -4,49 +4,9 @@ import {
   parseImportRecords,
   summarizeSaveResponse,
   toErrorReport,
-  validateAndMatchImportRows,
+  validateFieldFormats,
 } from "@/components/Pages/Admin/ControlCenter/bulkPayoutImport";
-import type { TableRow } from "@/components/Pages/Admin/ControlCenter/ControlCenterTable";
 import type { PayoutGrantConfig } from "@/src/features/payout-disbursement";
-
-const tableRows: TableRow[] = [
-  {
-    grantUid: "grant-alpha",
-    projectUid: "project-alpha",
-    projectName: "Alpha Project",
-    projectSlug: "alpha-project",
-    grantName: "Alpha Grant",
-    grantProgramId: "program-1",
-    grantChainId: 10,
-    projectChainId: 10,
-    currentPayoutAddress: "0x1111111111111111111111111111111111111111",
-    currentAmount: "100",
-  },
-  {
-    grantUid: "grant-beta-1",
-    projectUid: "project-beta",
-    projectName: "Beta Project",
-    projectSlug: "beta-project",
-    grantName: "Beta Grant 1",
-    grantProgramId: "program-1",
-    grantChainId: 10,
-    projectChainId: 10,
-    currentPayoutAddress: "0x2222222222222222222222222222222222222222",
-    currentAmount: "200",
-  },
-  {
-    grantUid: "grant-beta-2",
-    projectUid: "project-beta",
-    projectName: "Beta Project",
-    projectSlug: "beta-project",
-    grantName: "Beta Grant 2",
-    grantProgramId: "program-1",
-    grantChainId: 10,
-    projectChainId: 10,
-    currentPayoutAddress: "0x3333333333333333333333333333333333333333",
-    currentAmount: "300",
-  },
-];
 
 describe("bulkPayoutImport utilities", () => {
   it("extracts slug from project URL", () => {
@@ -82,132 +42,9 @@ describe("bulkPayoutImport utilities", () => {
     });
   });
 
-  it("validates direct UID pair when pair exists", () => {
-    const rows = [
-      {
-        rowNumber: 2,
-        grantUID: "grant-alpha",
-        projectUID: "project-alpha",
-        projectSlug: "",
-        projectName: "",
-        payoutAddress: "0x1111111111111111111111111111111111111111",
-        amount: "500",
-      },
-    ];
-    const validated = validateAndMatchImportRows(rows, tableRows);
-    expect(validated[0].status).toBe("valid");
-    expect(validated[0].target).toMatchObject({
-      grantUID: "grant-alpha",
-      projectUID: "project-alpha",
-      matchedBy: "direct_uid_pair",
-    });
-  });
-
-  it("accepts direct UID pair when row is not in current page payload", () => {
-    const rows = [
-      {
-        rowNumber: 2,
-        grantUID: "grant-off-page",
-        projectUID: "project-off-page",
-        projectSlug: "",
-        projectName: "",
-        payoutAddress: "0x1111111111111111111111111111111111111111",
-        amount: "500",
-      },
-    ];
-    const validated = validateAndMatchImportRows(rows, tableRows);
-    expect(validated[0].status).toBe("valid");
-    expect(validated[0].target).toMatchObject({
-      grantUID: "grant-off-page",
-      projectUID: "project-off-page",
-      matchedBy: "direct_uid_pair",
-    });
-  });
-
-  it("rejects direct UID pair when grant/project mismatch", () => {
-    const rows = [
-      {
-        rowNumber: 2,
-        grantUID: "grant-alpha",
-        projectUID: "project-beta",
-        projectSlug: "",
-        projectName: "",
-        payoutAddress: "0x1111111111111111111111111111111111111111",
-        amount: "500",
-      },
-    ];
-
-    const validated = validateAndMatchImportRows(rows, tableRows);
-    expect(validated[0].status).toBe("invalid");
-    expect(validated[0].errors).toContain("Grant UID and project UID do not match");
-  });
-
-  it("flags ambiguous project-name-only match", () => {
-    const rows = [
-      {
-        rowNumber: 2,
-        grantUID: "",
-        projectUID: "",
-        projectSlug: "",
-        projectName: "Beta Project",
-        payoutAddress: "0x1111111111111111111111111111111111111111",
-        amount: "100",
-      },
-    ];
-    const validated = validateAndMatchImportRows(rows, tableRows);
-    expect(validated[0].status).toBe("invalid");
-    expect(validated[0].errors.join(" ")).toContain("Ambiguous match");
-  });
-
-  it("flags invalid address and amount", () => {
-    const rows = [
-      {
-        rowNumber: 2,
-        grantUID: "grant-alpha",
-        projectUID: "",
-        projectSlug: "",
-        projectName: "",
-        payoutAddress: "invalid-address",
-        amount: "-100",
-      },
-    ];
-    const validated = validateAndMatchImportRows(rows, tableRows);
-    expect(validated[0].status).toBe("invalid");
-    expect(validated[0].errors).toEqual(
-      expect.arrayContaining(["Invalid payout address", "Amount must be greater than 0"])
-    );
-  });
-
-  it("flags duplicate mapped grant rows", () => {
-    const rows = [
-      {
-        rowNumber: 2,
-        grantUID: "grant-alpha",
-        projectUID: "",
-        projectSlug: "",
-        projectName: "",
-        payoutAddress: "0x1111111111111111111111111111111111111111",
-        amount: "100",
-      },
-      {
-        rowNumber: 3,
-        grantUID: "grant-alpha",
-        projectUID: "",
-        projectSlug: "",
-        projectName: "",
-        payoutAddress: "0x1111111111111111111111111111111111111111",
-        amount: "200",
-      },
-    ];
-    const validated = validateAndMatchImportRows(rows, tableRows);
-    expect(validated[0].status).toBe("valid");
-    expect(validated[1].status).toBe("invalid");
-    expect(validated[1].errors.join(" ")).toContain("Duplicate mapping");
-  });
-
-  it("builds save payload from valid rows only", () => {
-    const rows = validateAndMatchImportRows(
-      [
+  describe("validateFieldFormats", () => {
+    it("marks valid row with correct format", () => {
+      const validated = validateFieldFormats([
         {
           rowNumber: 2,
           grantUID: "grant-alpha",
@@ -215,22 +52,144 @@ describe("bulkPayoutImport utilities", () => {
           projectSlug: "",
           projectName: "",
           payoutAddress: "0x1111111111111111111111111111111111111111",
-          amount: "250",
+          amount: "500",
         },
+      ]);
+      expect(validated[0].status).toBe("valid");
+      expect(validated[0].errors).toEqual([]);
+      expect(validated[0].target).toBeNull();
+    });
+
+    it("flags invalid address and amount", () => {
+      const validated = validateFieldFormats([
         {
-          rowNumber: 3,
-          grantUID: "",
+          rowNumber: 2,
+          grantUID: "grant-alpha",
           projectUID: "",
           projectSlug: "",
-          projectName: "Unknown Project",
-          payoutAddress: "0x1111111111111111111111111111111111111111",
-          amount: "300",
+          projectName: "",
+          payoutAddress: "invalid-address",
+          amount: "-100",
         },
-      ],
-      tableRows
-    );
+      ]);
+      expect(validated[0].status).toBe("invalid");
+      expect(validated[0].errors).toEqual(
+        expect.arrayContaining(["Invalid payout address", "Amount must be greater than 0"])
+      );
+    });
 
-    const configs = buildPayoutConfigItems(rows);
+    it("flags missing payout address", () => {
+      const validated = validateFieldFormats([
+        {
+          rowNumber: 2,
+          grantUID: "grant-alpha",
+          projectUID: "",
+          projectSlug: "",
+          projectName: "",
+          payoutAddress: "",
+          amount: "100",
+        },
+      ]);
+      expect(validated[0].status).toBe("invalid");
+      expect(validated[0].errors).toContain("Missing payout address");
+    });
+
+    it("flags missing amount", () => {
+      const validated = validateFieldFormats([
+        {
+          rowNumber: 2,
+          grantUID: "grant-alpha",
+          projectUID: "",
+          projectSlug: "",
+          projectName: "",
+          payoutAddress: "0x1111111111111111111111111111111111111111",
+          amount: "",
+        },
+      ]);
+      expect(validated[0].status).toBe("invalid");
+      expect(validated[0].errors).toContain("Missing amount");
+    });
+
+    it("flags amount with too many decimal places", () => {
+      const validated = validateFieldFormats([
+        {
+          rowNumber: 2,
+          grantUID: "grant-alpha",
+          projectUID: "",
+          projectSlug: "",
+          projectName: "",
+          payoutAddress: "0x1111111111111111111111111111111111111111",
+          amount: "1.1234567890123456789",
+        },
+      ]);
+      expect(validated[0].status).toBe("invalid");
+      expect(validated[0].errors).toContain("Amount must use up to 18 decimal places");
+    });
+
+    it("accepts valid amount with 18 decimal places", () => {
+      const validated = validateFieldFormats([
+        {
+          rowNumber: 2,
+          grantUID: "grant-alpha",
+          projectUID: "",
+          projectSlug: "",
+          projectName: "",
+          payoutAddress: "0x1111111111111111111111111111111111111111",
+          amount: "1.123456789012345678",
+        },
+      ]);
+      expect(validated[0].status).toBe("valid");
+    });
+
+    it("flags zero amount", () => {
+      const validated = validateFieldFormats([
+        {
+          rowNumber: 2,
+          grantUID: "grant-alpha",
+          projectUID: "",
+          projectSlug: "",
+          projectName: "",
+          payoutAddress: "0x1111111111111111111111111111111111111111",
+          amount: "0",
+        },
+      ]);
+      expect(validated[0].status).toBe("invalid");
+      expect(validated[0].errors).toContain("Amount must be greater than 0");
+    });
+  });
+
+  it("builds save payload from valid rows only", () => {
+    const configs = buildPayoutConfigItems([
+      {
+        rowNumber: 2,
+        grantUID: "grant-alpha",
+        projectUID: "project-alpha",
+        projectSlug: "",
+        projectName: "",
+        payoutAddress: "0x1111111111111111111111111111111111111111",
+        amount: "250",
+        status: "valid",
+        errors: [],
+        target: {
+          grantUID: "grant-alpha",
+          projectUID: "project-alpha",
+          matchedBy: "direct_uid_pair",
+        },
+      },
+      {
+        rowNumber: 3,
+        grantUID: "",
+        projectUID: "",
+        projectSlug: "",
+        projectName: "Unknown Project",
+        payoutAddress: "0x1111111111111111111111111111111111111111",
+        amount: "300",
+        status: "invalid",
+        errors: ["Project name not found"],
+        target: null,
+      },
+    ]);
+
     expect(configs).toEqual([
       {
         grantUID: "grant-alpha",
@@ -310,137 +269,6 @@ describe("bulkPayoutImport utilities", () => {
     });
   });
 
-  describe("validation edge cases", () => {
-    it("resolves unique project name to single grant", () => {
-      const rows = [
-        {
-          rowNumber: 2,
-          grantUID: "",
-          projectUID: "",
-          projectSlug: "",
-          projectName: "Alpha Project",
-          payoutAddress: "0x1111111111111111111111111111111111111111",
-          amount: "100",
-        },
-      ];
-      const validated = validateAndMatchImportRows(rows, tableRows);
-      expect(validated[0].status).toBe("valid");
-      expect(validated[0].target).toMatchObject({
-        grantUID: "grant-alpha",
-        projectUID: "project-alpha",
-        matchedBy: "project_name",
-      });
-    });
-
-    it("resolves project by slug", () => {
-      const rows = [
-        {
-          rowNumber: 2,
-          grantUID: "",
-          projectUID: "",
-          projectSlug: "alpha-project",
-          projectName: "",
-          payoutAddress: "0x1111111111111111111111111111111111111111",
-          amount: "100",
-        },
-      ];
-      const validated = validateAndMatchImportRows(rows, tableRows);
-      expect(validated[0].status).toBe("valid");
-      expect(validated[0].target).toMatchObject({
-        grantUID: "grant-alpha",
-        projectUID: "project-alpha",
-        matchedBy: "project_slug",
-      });
-    });
-
-    it("flags missing payout address", () => {
-      const rows = [
-        {
-          rowNumber: 2,
-          grantUID: "grant-alpha",
-          projectUID: "",
-          projectSlug: "",
-          projectName: "",
-          payoutAddress: "",
-          amount: "100",
-        },
-      ];
-      const validated = validateAndMatchImportRows(rows, tableRows);
-      expect(validated[0].status).toBe("invalid");
-      expect(validated[0].errors).toContain("Missing payout address");
-    });
-
-    it("flags missing amount", () => {
-      const rows = [
-        {
-          rowNumber: 2,
-          grantUID: "grant-alpha",
-          projectUID: "",
-          projectSlug: "",
-          projectName: "",
-          payoutAddress: "0x1111111111111111111111111111111111111111",
-          amount: "",
-        },
-      ];
-      const validated = validateAndMatchImportRows(rows, tableRows);
-      expect(validated[0].status).toBe("invalid");
-      expect(validated[0].errors).toContain("Missing amount");
-    });
-
-    it("flags amount with too many decimal places", () => {
-      const rows = [
-        {
-          rowNumber: 2,
-          grantUID: "grant-alpha",
-          projectUID: "",
-          projectSlug: "",
-          projectName: "",
-          payoutAddress: "0x1111111111111111111111111111111111111111",
-          amount: "1.1234567890123456789",
-        },
-      ];
-      const validated = validateAndMatchImportRows(rows, tableRows);
-      expect(validated[0].status).toBe("invalid");
-      expect(validated[0].errors).toContain("Amount must use up to 18 decimal places");
-    });
-
-    it("flags unknown project name", () => {
-      const rows = [
-        {
-          rowNumber: 2,
-          grantUID: "",
-          projectUID: "",
-          projectSlug: "",
-          projectName: "NonExistentProject999",
-          payoutAddress: "0x1111111111111111111111111111111111111111",
-          amount: "100",
-        },
-      ];
-      const validated = validateAndMatchImportRows(rows, tableRows);
-      expect(validated[0].status).toBe("invalid");
-      expect(validated[0].errors).toContain("Project name not found");
-    });
-
-    it("flags row with no identifiers at all", () => {
-      const rows = [
-        {
-          rowNumber: 2,
-          grantUID: "",
-          projectUID: "",
-          projectSlug: "",
-          projectName: "",
-          payoutAddress: "0x1111111111111111111111111111111111111111",
-          amount: "100",
-        },
-      ];
-      const validated = validateAndMatchImportRows(rows, tableRows);
-      expect(validated[0].status).toBe("invalid");
-      expect(validated[0].errors).toContain(
-        "Provide at least one identifier (grant UID, project UID, slug/url, or name)"
-      );
-    });
-  });
-
   describe("extractProjectSlug edge cases", () => {
     it("returns empty string for empty input", () => {
       expect(extractProjectSlug("")).toBe("");
@@ -471,103 +299,36 @@ describe("bulkPayoutImport utilities", () => {
     });
 
     it("reports row-level errors", () => {
-      const validated = validateAndMatchImportRows(
-        [
-          {
-            rowNumber: 2,
-            grantUID: "",
-            projectUID: "",
-            projectSlug: "",
-            projectName: "NonExistentProject999",
-            payoutAddress: "bad",
-            amount: "-1",
-          },
-        ],
-        tableRows
-      );
+      const validated = validateFieldFormats([
+        {
+          rowNumber: 2,
+          grantUID: "",
+          projectUID: "",
+          projectSlug: "",
+          projectName: "SomeProject",
+          payoutAddress: "bad",
+          amount: "-1",
+        },
+      ]);
       const report = toErrorReport(validated, []);
       expect(report).toContain("Row errors:");
       expect(report).toContain("Row 2:");
     });
 
     it("reports no errors when all rows valid", () => {
-      const validated = validateAndMatchImportRows(
-        [
-          {
-            rowNumber: 2,
-            grantUID: "grant-alpha",
-            projectUID: "project-alpha",
-            projectSlug: "",
-            projectName: "",
-            payoutAddress: "0x1111111111111111111111111111111111111111",
-            amount: "100",
-          },
-        ],
-        tableRows
-      );
+      const validated = validateFieldFormats([
+        {
+          rowNumber: 2,
+          grantUID: "grant-alpha",
+          projectUID: "project-alpha",
+          projectSlug: "",
+          projectName: "",
+          payoutAddress: "0x1111111111111111111111111111111111111111",
+          amount: "100",
+        },
+      ]);
       const report = toErrorReport(validated, []);
       expect(report).toBe("No errors.");
-    });
-  });
-
-  describe("pagination-limited matching", () => {
-    // The BulkPayoutImportPanel receives only the current page's data (e.g. 25 of 485 rows).
-    // Name/slug matching is limited to these loaded rows. Direct UID pairs bypass this.
-    const pageOneRows: TableRow[] = [tableRows[0]]; // Only Alpha Project loaded
-
-    it("name match fails for projects not on the current page", () => {
-      const rows = [
-        {
-          rowNumber: 2,
-          grantUID: "",
-          projectUID: "",
-          projectSlug: "",
-          projectName: "Beta Project", // exists but not in pageOneRows
-          payoutAddress: "0x1111111111111111111111111111111111111111",
-          amount: "100",
-        },
-      ];
-      const validated = validateAndMatchImportRows(rows, pageOneRows);
-      expect(validated[0].status).toBe("invalid");
-      expect(validated[0].errors).toContain("Project name not found");
-    });
-
-    it("direct UID pair still works for off-page projects", () => {
-      const rows = [
-        {
-          rowNumber: 2,
-          grantUID: "grant-beta-1",
-          projectUID: "project-beta",
-          projectSlug: "",
-          projectName: "",
-          payoutAddress: "0x1111111111111111111111111111111111111111",
-          amount: "100",
-        },
-      ];
-      const validated = validateAndMatchImportRows(rows, pageOneRows);
-      expect(validated[0].status).toBe("valid");
-      expect(validated[0].target).toMatchObject({
-        grantUID: "grant-beta-1",
-        projectUID: "project-beta",
-        matchedBy: "direct_uid_pair",
-      });
-    });
-
-    it("slug match fails for projects not on the current page", () => {
-      const rows = [
-        {
-          rowNumber: 2,
-          grantUID: "",
-          projectUID: "",
-          projectSlug: "beta-project",
-          projectName: "",
-          payoutAddress: "0x1111111111111111111111111111111111111111",
-          amount: "100",
-        },
-      ];
-      const validated = validateAndMatchImportRows(rows, pageOneRows);
-      expect(validated[0].status).toBe("invalid");
-      expect(validated[0].errors).toContain("Project slug/url not found");
     });
   });
 

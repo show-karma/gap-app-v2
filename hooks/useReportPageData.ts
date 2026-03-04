@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useQueryState } from "nuqs";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { usePendingVerificationMilestones } from "@/hooks/usePendingVerificationMilestones";
@@ -11,6 +11,7 @@ import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { validateProgramIdentifiers } from "@/utilities/validators";
 
 type TabId = "pending-verification" | "stats";
+type ReviewerFilterMode = "mine" | "all";
 
 interface Report {
   _id: {
@@ -62,7 +63,7 @@ interface ReportAPIResponse {
   };
 }
 
-export type { Report, ReportAPIResponse, TabId };
+export type { Report, ReportAPIResponse, ReviewerFilterMode, TabId };
 
 export const itemsPerPage = 50;
 
@@ -84,6 +85,8 @@ interface UseReportPageDataOptions {
   hasAccess: boolean;
   isAuthorized: boolean;
   reviewerPrograms: Array<{ programId: string }>;
+  currentUserAddress?: string;
+  isMilestoneReviewer?: boolean;
 }
 
 export function useReportPageData({
@@ -92,6 +95,8 @@ export function useReportPageData({
   hasAccess,
   isAuthorized,
   reviewerPrograms,
+  currentUserAddress,
+  isMilestoneReviewer = false,
 }: UseReportPageDataOptions) {
   const [activeTab, setActiveTab] = useQueryState<TabId>("tab", {
     defaultValue: "pending-verification",
@@ -106,6 +111,31 @@ export function useReportPageData({
     "programIds",
     programIdsQueryOptions
   );
+
+  // Reviewer filter: milestone reviewers default to "mine", admins default to "all"
+  const [reviewerFilter, setReviewerFilter] = useState<ReviewerFilterMode>(() =>
+    isMilestoneReviewer && !hasAccess ? "mine" : "all"
+  );
+  const hasUserSelectedFilter = useRef(false);
+
+  // Sync reviewerFilter when isMilestoneReviewer/hasAccess resolve after mount
+  useEffect(() => {
+    if (hasUserSelectedFilter.current) return;
+    const computed: ReviewerFilterMode = isMilestoneReviewer && !hasAccess ? "mine" : "all";
+    setReviewerFilter(computed);
+  }, [isMilestoneReviewer, hasAccess]);
+
+  // Reset user's manual filter selection when context changes
+  useEffect(() => {
+    hasUserSelectedFilter.current = false;
+  }, [communityId, currentUserAddress]);
+
+  const effectiveReviewerAddress = useMemo(() => {
+    if (reviewerFilter === "mine" && currentUserAddress) {
+      return currentUserAddress;
+    }
+    return undefined;
+  }, [reviewerFilter, currentUserAddress]);
 
   const reviewerProgramIds = useMemo(() => {
     if (!reviewerPrograms || reviewerPrograms.length === 0) return new Set<string>();
@@ -212,6 +242,7 @@ export function useReportPageData({
     page: pendingPage,
     pageLimit: itemsPerPage,
     programIds: effectiveProgramIds,
+    reviewerAddress: effectiveReviewerAddress,
     enabled: isAuthorized,
   });
 
@@ -265,6 +296,12 @@ export function useReportPageData({
     setPendingPage(1);
   }, [setSelectedProgramIds]);
 
+  const handleReviewerFilterChange = useCallback((mode: ReviewerFilterMode) => {
+    hasUserSelectedFilter.current = true;
+    setReviewerFilter(mode);
+    setPendingPage(1);
+  }, []);
+
   const isFullyCompleted = useCallback((report: MilestoneCompletion) => {
     const allMilestonesComplete =
       report.totalMilestones > 0 &&
@@ -299,5 +336,7 @@ export function useReportPageData({
     programLabels,
     selectedProgramLabels,
     isFullyCompleted,
+    reviewerFilter,
+    handleReviewerFilterChange,
   };
 }
