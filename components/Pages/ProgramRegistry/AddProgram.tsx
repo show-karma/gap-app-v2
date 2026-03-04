@@ -155,24 +155,59 @@ export default function AddProgram({
       status: programToEdit?.metadata?.status || "Active",
       adminEmails: programToEdit?.metadata?.adminEmails || [],
       financeEmails: programToEdit?.metadata?.financeEmails || [],
-      hackathonMeta: {
-        location: "",
-        tracks: "",
-        prizeCurrency: "USD",
-      },
-      bountyMeta: {
-        rewardCurrency: "USD",
-      },
-      acceleratorMeta: {
-        fundingCurrency: "USD",
-      },
-      vcFundMeta: {
-        checkSizeCurrency: "USD",
-      },
-      rfpMeta: {
-        issuingOrganization: "",
-        budgetCurrency: "USD",
-      },
+      hackathonMeta: programToEdit?.hackathonMetadata
+        ? {
+            location: programToEdit.hackathonMetadata.location ?? "",
+            tracks: programToEdit.hackathonMetadata.tracks?.join(", ") ?? "",
+            prizePool: Number(programToEdit.hackathonMetadata.prizes?.[0]?.amount) || undefined,
+            prizeCurrency: programToEdit.hackathonMetadata.prizes?.[0]?.currency ?? "USD",
+            teamSizeMin: programToEdit.hackathonMetadata.teamSize?.min,
+            teamSizeMax: programToEdit.hackathonMetadata.teamSize?.max,
+          }
+        : { prizeCurrency: "USD" },
+      bountyMeta: programToEdit?.bountyMetadata
+        ? {
+            rewardAmount: Number(programToEdit.bountyMetadata.reward?.amount) || undefined,
+            rewardCurrency: programToEdit.bountyMetadata.reward?.currency ?? "USD",
+            difficulty: programToEdit.bountyMetadata.difficulty,
+            skills: programToEdit.bountyMetadata.skills?.join(", ") ?? "",
+            platform: programToEdit.bountyMetadata.platform ?? "",
+          }
+        : { rewardCurrency: "USD" },
+      acceleratorMeta: programToEdit?.acceleratorMetadata
+        ? {
+            stage: programToEdit.acceleratorMetadata.stage,
+            equity: programToEdit.acceleratorMetadata.equity ?? "",
+            fundingAmount: Number(programToEdit.acceleratorMetadata.funding?.amount) || undefined,
+            fundingCurrency: programToEdit.acceleratorMetadata.funding?.currency ?? "USD",
+            programDuration: programToEdit.acceleratorMetadata.programDuration,
+            batchSize: programToEdit.acceleratorMetadata.batchSize,
+            location: programToEdit.acceleratorMetadata.location ?? "",
+          }
+        : { fundingCurrency: "USD" },
+      vcFundMeta: programToEdit?.vcFundMetadata
+        ? {
+            stage: programToEdit.vcFundMetadata.stage,
+            checkSizeMin: programToEdit.vcFundMetadata.checkSize?.min,
+            checkSizeMax: programToEdit.vcFundMetadata.checkSize?.max,
+            checkSizeCurrency: programToEdit.vcFundMetadata.checkSize?.currency ?? "USD",
+            thesis: programToEdit.vcFundMetadata.thesis ?? "",
+            portfolio: Array.isArray(programToEdit.vcFundMetadata.portfolio)
+              ? programToEdit.vcFundMetadata.portfolio.join(", ")
+              : (programToEdit.vcFundMetadata.portfolio ?? ""),
+            contactMethod: programToEdit.vcFundMetadata.contactMethod,
+            activelyInvesting: programToEdit.vcFundMetadata.activelyInvesting,
+          }
+        : { checkSizeCurrency: "USD" },
+      rfpMeta: programToEdit?.rfpMetadata
+        ? {
+            issuingOrganization: programToEdit.rfpMetadata.issuingOrganization ?? "",
+            budgetAmount: Number(programToEdit.rfpMetadata.budget?.amount) || undefined,
+            budgetCurrency: programToEdit.rfpMetadata.budget?.currency ?? "USD",
+            scope: programToEdit.rfpMetadata.scope ?? "",
+            requirements: programToEdit.rfpMetadata.requirements?.join("\n") ?? "",
+          }
+        : { budgetCurrency: "USD" },
     }),
     [programToEdit]
   );

@@ -24,10 +24,10 @@ export const OPPORTUNITY_TYPE_OPTIONS = [
 // --- Type-specific metadata sub-schemas ---
 export const hackathonMetadataSchema = z
   .object({
-    location: z.string().optional().or(z.literal("")),
-    tracks: z.string().optional().or(z.literal("")),
+    location: z.string().optional(),
+    tracks: z.string().optional(),
     prizePool: optionalNumber,
-    prizeCurrency: z.string().optional().or(z.literal("USD")),
+    prizeCurrency: z.string().optional(),
     registrationDeadline: z.date().optional(),
     teamSizeMin: optionalNumber,
     teamSizeMax: optionalNumber,
@@ -37,22 +37,22 @@ export const hackathonMetadataSchema = z
 export const bountyMetadataSchema = z
   .object({
     rewardAmount: optionalNumber,
-    rewardCurrency: z.string().optional().or(z.literal("USD")),
+    rewardCurrency: z.string().optional(),
     difficulty: z.enum(["beginner", "intermediate", "advanced"]).optional(),
-    skills: z.string().optional().or(z.literal("")),
-    platform: z.string().optional().or(z.literal("")),
+    skills: z.string().optional(),
+    platform: z.string().optional(),
   })
   .optional();
 
 export const acceleratorMetadataSchema = z
   .object({
     stage: z.enum(["pre-seed", "seed", "series-a"]).optional(),
-    equity: z.string().optional().or(z.literal("")),
+    equity: z.string().optional(),
     fundingAmount: optionalNumber,
-    fundingCurrency: z.string().optional().or(z.literal("USD")),
+    fundingCurrency: z.string().optional(),
     programDuration: optionalNumber,
     batchSize: optionalNumber,
-    location: z.string().optional().or(z.literal("")),
+    location: z.string().optional(),
   })
   .optional();
 
@@ -61,9 +61,9 @@ export const vcFundMetadataSchema = z
     stage: z.enum(["pre-seed", "seed", "series-a", "series-b+"]).optional(),
     checkSizeMin: optionalNumber,
     checkSizeMax: optionalNumber,
-    checkSizeCurrency: z.string().optional().or(z.literal("USD")),
-    thesis: z.string().optional().or(z.literal("")),
-    portfolio: z.string().optional().or(z.literal("")),
+    checkSizeCurrency: z.string().optional(),
+    thesis: z.string().optional(),
+    portfolio: z.string().optional(),
     contactMethod: z.enum(["email", "form", "intro-only"]).optional(),
     activelyInvesting: z.boolean().optional(),
   })
@@ -71,11 +71,11 @@ export const vcFundMetadataSchema = z
 
 export const rfpMetadataSchema = z
   .object({
-    issuingOrganization: z.string().optional().or(z.literal("")),
+    issuingOrganization: z.string().optional(),
     budgetAmount: optionalNumber,
-    budgetCurrency: z.string().optional().or(z.literal("USD")),
-    scope: z.string().optional().or(z.literal("")),
-    requirements: z.string().optional().or(z.literal("")),
+    budgetCurrency: z.string().optional(),
+    scope: z.string().optional(),
+    requirements: z.string().optional(),
   })
   .optional();
 
@@ -244,7 +244,7 @@ export const createProgramSchema = z
           path: ["dates", "endsAt"],
         });
       }
-      if (!data.hackathonMeta?.location) {
+      if (!data.hackathonMeta?.location?.trim()) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: "Location is required for hackathons",
@@ -253,7 +253,7 @@ export const createProgramSchema = z
       }
     }
     if (data.opportunityType === "bounty") {
-      if (!data.bountyMeta?.rewardAmount) {
+      if (data.bountyMeta?.rewardAmount == null || data.bountyMeta.rewardAmount <= 0) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: "Reward amount is required for bounties",
@@ -262,7 +262,7 @@ export const createProgramSchema = z
       }
     }
     if (data.opportunityType === "rfp") {
-      if (!data.rfpMeta?.issuingOrganization) {
+      if (!data.rfpMeta?.issuingOrganization?.trim()) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: "Issuing organization is required for RFPs",

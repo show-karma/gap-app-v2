@@ -61,7 +61,6 @@ export function HackathonFields({
             id="hackathon-prize-currency"
             className={inputStyle}
             placeholder="USD"
-            defaultValue="USD"
             {...register("hackathonMeta.prizeCurrency")}
           />
         </div>
