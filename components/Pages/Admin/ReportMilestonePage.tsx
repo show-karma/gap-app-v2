@@ -132,7 +132,9 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
 
   useEffect(() => {
     if (isReviewersError) {
-      toast.error("Failed to load reviewers. The filter may be incomplete.");
+      toast.error("Failed to load reviewers. The filter may be incomplete.", {
+        id: "reviewers-load-error",
+      });
     }
   }, [isReviewersError]);
 

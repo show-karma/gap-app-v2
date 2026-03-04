@@ -53,7 +53,7 @@ export function useCommunityMilestoneReviewers(programIds: string[]) {
   const firstError = queries.find((q) => q.error)?.error as Error | undefined;
   const isError = Boolean(firstError);
 
-  const dataKey = queries.map((q) => q.dataUpdatedAt).join(",");
+  const dataKey = useMemo(() => queries.map((q) => q.dataUpdatedAt).join(","), [queries]);
 
   const reviewers = useMemo(() => {
     if (isError) return [];
