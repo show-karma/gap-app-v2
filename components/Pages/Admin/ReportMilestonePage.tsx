@@ -118,9 +118,13 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
     isMilestoneReviewer,
   });
 
-  const { reviewers, isLoading: isLoadingReviewers } = useCommunityMilestoneReviewers(
-    reportData.effectiveProgramIds
-  );
+  const reviewerProgramIds = useMemo(() => {
+    if (!isAuthorized || reportData.activeTab !== "pending-verification") return [];
+    return reportData.effectiveProgramIds;
+  }, [isAuthorized, reportData.activeTab, reportData.effectiveProgramIds]);
+
+  const { reviewers, isLoading: isLoadingReviewers } =
+    useCommunityMilestoneReviewers(reviewerProgramIds);
 
   if (isCheckingPermissions) {
     return <MilestonesReportSkeleton />;

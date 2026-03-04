@@ -81,44 +81,41 @@ export function ReviewerFilterDropdown({
           )}
           <CommandEmpty className="px-4 py-2">No reviewers found.</CommandEmpty>
           <CommandGroup>
-            <CommandItem>
-              <button
-                type="button"
-                onClick={() => {
-                  onSelect(undefined);
-                  setOpen(false);
-                }}
-                className="w-full my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-between py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900 bg-transparent border-none text-left"
-              >
-                <span className="font-semibold">All Reviewers</span>
-                <CheckIcon
-                  className={cn("h-4 w-4 min-w-4 min-h-4 text-black dark:text-white", {
-                    invisible: selectedAddress != null,
-                  })}
-                />
-              </button>
+            <CommandItem
+              value="all-reviewers"
+              onSelect={() => {
+                onSelect(undefined);
+                setOpen(false);
+              }}
+              className="my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-between py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900 text-left"
+            >
+              <span className="font-semibold">All Reviewers</span>
+              <CheckIcon
+                className={cn("h-4 w-4 min-w-4 min-h-4 text-black dark:text-white", {
+                  invisible: selectedAddress != null,
+                })}
+              />
             </CommandItem>
             {reviewers.map((reviewer) => {
               const isSelected =
                 selectedAddress?.toLowerCase() === reviewer.publicAddress.toLowerCase();
               const label = getReviewerLabel(reviewer, currentUserAddress);
               return (
-                <CommandItem key={reviewer.publicAddress} value={label}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onSelect(reviewer.publicAddress);
-                      setOpen(false);
-                    }}
-                    className="w-full my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-between py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900 bg-transparent border-none text-left"
-                  >
-                    <span>{label}</span>
-                    <CheckIcon
-                      className={cn("h-4 w-4 min-w-4 min-h-4 text-black dark:text-white", {
-                        invisible: !isSelected,
-                      })}
-                    />
-                  </button>
+                <CommandItem
+                  key={reviewer.publicAddress}
+                  value={label}
+                  onSelect={() => {
+                    onSelect(reviewer.publicAddress);
+                    setOpen(false);
+                  }}
+                  className="my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-between py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900 text-left"
+                >
+                  <span>{label}</span>
+                  <CheckIcon
+                    className={cn("h-4 w-4 min-w-4 min-h-4 text-black dark:text-white", {
+                      invisible: !isSelected,
+                    })}
+                  />
                 </CommandItem>
               );
             })}

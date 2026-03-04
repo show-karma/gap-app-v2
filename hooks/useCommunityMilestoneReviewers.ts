@@ -19,8 +19,11 @@ export function useCommunityMilestoneReviewers(programIds: string[]) {
   });
 
   const isLoading = queries.some((q) => q.isLoading);
+  const firstError = queries.find((q) => q.error)?.error as Error | undefined;
+  const isError = Boolean(firstError);
 
   const reviewers = useMemo(() => {
+    if (isError) return [];
     const seen = new Map<string, CommunityReviewer>();
 
     for (const query of queries) {
@@ -41,7 +44,7 @@ export function useCommunityMilestoneReviewers(programIds: string[]) {
     return Array.from(seen.values()).sort((a, b) =>
       (a.name || a.publicAddress).localeCompare(b.name || b.publicAddress)
     );
-  }, [queries]);
+  }, [queries, isError]);
 
-  return { reviewers, isLoading };
+  return { reviewers, isLoading, isError, error: firstError ?? null };
 }
