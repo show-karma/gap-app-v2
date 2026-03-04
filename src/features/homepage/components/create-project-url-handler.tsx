@@ -1,12 +1,11 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { useProjectCreateModalStore } from "@/store/modals/projectCreate";
 
 export function CreateProjectUrlHandler() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const { openProjectCreateModal } = useProjectCreateModalStore();
 
   useEffect(() => {
@@ -15,9 +14,9 @@ export function CreateProjectUrlHandler() {
 
       const url = new URL(window.location.href);
       url.searchParams.delete("action");
-      router.replace(url.pathname + url.search, { scroll: false });
+      window.history.replaceState(null, "", url.pathname + url.search);
     }
-  }, [searchParams, openProjectCreateModal, router]);
+  }, [searchParams, openProjectCreateModal]);
 
   return null;
 }
