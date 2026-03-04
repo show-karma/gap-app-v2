@@ -3,7 +3,7 @@
 import { CheckIcon } from "@heroicons/react/24/solid";
 import * as Popover from "@radix-ui/react-popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "cmdk";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ChevronDown } from "@/components/Icons/ChevronDown";
 import type { CommunityReviewer } from "@/hooks/useCommunityMilestoneReviewers";
 import { cn } from "@/utilities/tailwind";
@@ -41,14 +41,14 @@ export function ReviewerFilterDropdown({
 }: ReviewerFilterDropdownProps) {
   const [open, setOpen] = useState(false);
 
-  const selectedLabel = (() => {
+  const selectedLabel = useMemo(() => {
     if (!selectedAddress) return "All Reviewers";
     const match = reviewers.find(
       (r) => r.publicAddress.toLowerCase() === selectedAddress.toLowerCase()
     );
     if (!match) return truncateAddress(selectedAddress);
     return getReviewerLabel(match, currentUserAddress);
-  })();
+  }, [selectedAddress, reviewers, currentUserAddress]);
 
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>

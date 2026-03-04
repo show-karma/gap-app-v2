@@ -9,6 +9,37 @@ export interface CommunityReviewer {
   email: string;
 }
 
+interface ReviewerInput {
+  publicAddress?: string;
+  name: string;
+  email: string;
+}
+
+export function deduplicateAndSortReviewers(
+  queryResults: Array<ReviewerInput[] | undefined>
+): CommunityReviewer[] {
+  const seen = new Map<string, CommunityReviewer>();
+
+  for (const data of queryResults) {
+    if (!data) continue;
+    for (const reviewer of data) {
+      if (!reviewer.publicAddress) continue;
+      const address = reviewer.publicAddress.toLowerCase();
+      if (!seen.has(address)) {
+        seen.set(address, {
+          publicAddress: reviewer.publicAddress,
+          name: reviewer.name,
+          email: reviewer.email,
+        });
+      }
+    }
+  }
+
+  return Array.from(seen.values()).sort((a, b) =>
+    (a.name || a.publicAddress).localeCompare(b.name || b.publicAddress)
+  );
+}
+
 export function useCommunityMilestoneReviewers(programIds: string[]) {
   const queries = useQueries({
     queries: programIds.map((programId) => ({
@@ -24,26 +55,7 @@ export function useCommunityMilestoneReviewers(programIds: string[]) {
 
   const reviewers = useMemo(() => {
     if (isError) return [];
-    const seen = new Map<string, CommunityReviewer>();
-
-    for (const query of queries) {
-      if (!query.data) continue;
-      for (const reviewer of query.data) {
-        if (!reviewer.publicAddress) continue;
-        const address = reviewer.publicAddress.toLowerCase();
-        if (!seen.has(address)) {
-          seen.set(address, {
-            publicAddress: reviewer.publicAddress,
-            name: reviewer.name,
-            email: reviewer.email,
-          });
-        }
-      }
-    }
-
-    return Array.from(seen.values()).sort((a, b) =>
-      (a.name || a.publicAddress).localeCompare(b.name || b.publicAddress)
-    );
+    return deduplicateAndSortReviewers(queries.map((q) => q.data));
   }, [queries, isError]);
 
   return { reviewers, isLoading, isError, error: firstError ?? null };

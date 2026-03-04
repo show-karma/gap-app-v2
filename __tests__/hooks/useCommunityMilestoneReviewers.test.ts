@@ -1,53 +1,10 @@
 /**
- * Tests for the useCommunityMilestoneReviewers hook logic.
- *
- * Since the hook wraps useQueries, we test the deduplication and sorting
- * logic by extracting it into a pure function.
+ * Tests for the deduplicateAndSortReviewers helper exported from
+ * useCommunityMilestoneReviewers. Tests the real function directly.
  */
+import { deduplicateAndSortReviewers } from "@/hooks/useCommunityMilestoneReviewers";
 
-interface CommunityReviewer {
-  publicAddress: string;
-  name: string;
-  email: string;
-}
-
-interface MilestoneReviewer {
-  publicAddress?: string;
-  name: string;
-  email: string;
-}
-
-/**
- * Extracted deduplication and sorting logic from useCommunityMilestoneReviewers.
- * Takes arrays of reviewer data (one per program) and returns a deduplicated,
- * sorted list of community reviewers.
- */
-function deduplicateAndSortReviewers(
-  queryResults: Array<MilestoneReviewer[] | undefined>
-): CommunityReviewer[] {
-  const seen = new Map<string, CommunityReviewer>();
-
-  for (const data of queryResults) {
-    if (!data) continue;
-    for (const reviewer of data) {
-      if (!reviewer.publicAddress) continue;
-      const address = reviewer.publicAddress.toLowerCase();
-      if (!seen.has(address)) {
-        seen.set(address, {
-          publicAddress: reviewer.publicAddress,
-          name: reviewer.name,
-          email: reviewer.email,
-        });
-      }
-    }
-  }
-
-  return Array.from(seen.values()).sort((a, b) =>
-    (a.name || a.publicAddress).localeCompare(b.name || b.publicAddress)
-  );
-}
-
-describe("useCommunityMilestoneReviewers deduplication logic", () => {
+describe("deduplicateAndSortReviewers", () => {
   it("returns empty array when no query results", () => {
     expect(deduplicateAndSortReviewers([])).toEqual([]);
   });
@@ -73,7 +30,6 @@ describe("useCommunityMilestoneReviewers deduplication logic", () => {
     const result = deduplicateAndSortReviewers([program1, program2]);
 
     expect(result).toHaveLength(3);
-    // Should keep the first occurrence
     const alice = result.find((r) => r.publicAddress === "0xABC");
     expect(alice?.name).toBe("Alice");
     expect(alice?.email).toBe("alice@test.com");
