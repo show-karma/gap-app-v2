@@ -7,8 +7,8 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: isCI,
   retries: isCI ? 2 : 1,
-  workers: isCI ? 1 : undefined,
-  reporter: isCI ? "github" : "html",
+  workers: isCI ? 4 : undefined,
+  reporter: isCI ? [["github"], ["html", { open: "never" }]] : "html",
   outputDir: "./test-results",
 
   use: {
@@ -34,7 +34,7 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: "cross-env NEXT_PUBLIC_E2E_AUTH_BYPASS=true pnpm run dev",
+    command: isCI ? "pnpm start" : "cross-env NEXT_PUBLIC_E2E_AUTH_BYPASS=true pnpm run dev",
     url: "http://localhost:3000",
     reuseExistingServer: !isCI,
     timeout: 120_000,
