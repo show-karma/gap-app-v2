@@ -11,7 +11,14 @@ import { getOpportunityTypeConfig } from "../utils/opportunity-type-config";
 
 export function OpportunityTypeTabs() {
   const { filters, setSelectedTypes } = useFundingFilters();
-  const { data: typeCounts, isLoading, isError, refetch } = useTypeCounts();
+  const {
+    data: typeCounts,
+    isLoading,
+    isError,
+    refetch,
+  } = useTypeCounts({
+    onlyOnKarma: filters.onlyOnKarma || undefined,
+  });
   const containerRef = useRef<HTMLDivElement>(null);
 
   const isAllSelected = filters.selectedTypes.length === 0;

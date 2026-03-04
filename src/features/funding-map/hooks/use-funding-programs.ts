@@ -15,7 +15,8 @@ export const fundingProgramsKeys = {
   details: () => [...fundingProgramsKeys.all, "detail"] as const,
   detail: (programId: string) => [...fundingProgramsKeys.details(), programId] as const,
   organizationFilters: () => [...fundingProgramsKeys.all, "organizationFilters"] as const,
-  typeCounts: () => [...fundingProgramsKeys.all, "typeCounts"] as const,
+  typeCounts: (options?: { onlyOnKarma?: boolean }) =>
+    [...fundingProgramsKeys.all, "typeCounts", options] as const,
 };
 
 /**
@@ -61,10 +62,10 @@ export function useFundingProgramByCompositeId(compositeId: string | null) {
 /**
  * Hook to fetch opportunity type counts for the type tabs
  */
-export function useTypeCounts() {
+export function useTypeCounts(options?: { onlyOnKarma?: boolean }) {
   return useQuery({
-    queryKey: fundingProgramsKeys.typeCounts(),
-    queryFn: () => fundingProgramsService.getTypeCounts(),
+    queryKey: fundingProgramsKeys.typeCounts(options),
+    queryFn: () => fundingProgramsService.getTypeCounts(options),
     staleTime: 10 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
   });

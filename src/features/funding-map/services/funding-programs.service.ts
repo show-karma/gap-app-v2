@@ -99,8 +99,15 @@ export const fundingProgramsService = {
   /**
    * Fetch type counts for opportunity type tabs
    */
-  async getTypeCounts(): Promise<TypeCount[]> {
-    const [response, error] = await fetchData<TypeCount[]>(INDEXER.V2.REGISTRY.GET_TYPES);
+  async getTypeCounts(options?: { onlyOnKarma?: boolean }): Promise<TypeCount[]> {
+    const params = new URLSearchParams();
+    if (options?.onlyOnKarma) {
+      params.set("onlyOnKarma", "true");
+    }
+    const qs = params.toString();
+    const url = qs ? `${INDEXER.V2.REGISTRY.GET_TYPES}?${qs}` : INDEXER.V2.REGISTRY.GET_TYPES;
+
+    const [response, error] = await fetchData<TypeCount[]>(url);
 
     if (error) {
       throw new Error(error);
