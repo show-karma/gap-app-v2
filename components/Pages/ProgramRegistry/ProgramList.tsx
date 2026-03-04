@@ -17,7 +17,11 @@ import { DiscussionIcon } from "@/components/Icons/Discussion";
 import { OrganizationIcon } from "@/components/Icons/Organization";
 import { Button } from "@/components/Utilities/Button";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import type { FundingProgramResponse } from "@/src/features/funding-map/types/funding-program";
+import { OPPORTUNITY_TYPE_SINGULAR_LABELS } from "@/src/features/funding-map/constants/filter-options";
+import type {
+  FundingProgramResponse,
+  OpportunityType,
+} from "@/src/features/funding-map/types/funding-program";
 import { formatDate } from "@/utilities/formatDate";
 import { ReadMore } from "@/utilities/ReadMore";
 import { registryHelper } from "./helper";
@@ -355,17 +359,27 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms, selectProgram
         id: "Types",
         cell: (info) => {
           const grant = info.row.original;
+          const typeLabel = grant.type
+            ? OPPORTUNITY_TYPE_SINGULAR_LABELS[grant.type as OpportunityType]
+            : null;
+          const legacyTypes = grant.metadata?.grantTypes ?? [];
 
           return (
             <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
-              {grant.metadata?.grantTypes?.map((type, index) => (
-                <span
-                  key={index}
-                  className="mr-1 inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-600/20"
-                >
-                  {type}
+              {typeLabel ? (
+                <span className="mr-1 inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-600/20">
+                  {typeLabel}
                 </span>
-              ))}
+              ) : (
+                legacyTypes.map((type, index) => (
+                  <span
+                    key={index}
+                    className="mr-1 inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-600/20"
+                  >
+                    {type}
+                  </span>
+                ))
+              )}
             </div>
           );
         },

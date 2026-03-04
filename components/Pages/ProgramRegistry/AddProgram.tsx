@@ -123,7 +123,9 @@ export default function AddProgram({
           : undefined,
       },
       amountDistributed: programToEdit?.metadata?.amountDistributedToDate as number | undefined,
-      budget: programToEdit?.metadata?.programBudget as number | undefined,
+      budget: programToEdit?.metadata?.programBudget
+        ? Number(String(programToEdit.metadata.programBudget).replace(/[^0-9.]/g, "")) || undefined
+        : undefined,
       minGrantSize: programToEdit?.metadata?.minGrantSize as number | undefined,
       maxGrantSize: programToEdit?.metadata?.maxGrantSize as number | undefined,
       grantsToDate: programToEdit?.metadata?.grantsToDate as number | undefined,
@@ -160,7 +162,11 @@ export default function AddProgram({
         ? {
             location: programToEdit.hackathonMetadata.location ?? "",
             tracks: programToEdit.hackathonMetadata.tracks?.join(", ") ?? "",
-            prizePool: Number(programToEdit.hackathonMetadata.prizes?.[0]?.amount) || undefined,
+            prizePool:
+              programToEdit.hackathonMetadata.prizes?.reduce(
+                (sum, p) => sum + (Number(p.amount) || 0),
+                0
+              ) || undefined,
             prizeCurrency: programToEdit.hackathonMetadata.prizes?.[0]?.currency ?? "USD",
             teamSizeMin: programToEdit.hackathonMetadata.teamSize?.min,
             teamSizeMax: programToEdit.hackathonMetadata.teamSize?.max,
