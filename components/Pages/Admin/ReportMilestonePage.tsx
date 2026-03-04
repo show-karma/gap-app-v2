@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import { useMemo } from "react";
 import { useAccount } from "wagmi";
 import { PendingVerificationTable } from "@/components/Pages/Admin/PendingVerificationTable";
+import { ReviewerFilterDropdown } from "@/components/Pages/Admin/ReviewerFilterDropdown";
 import { StatsGrid } from "@/components/Pages/Admin/StatsGrid";
 import { StatsTable } from "@/components/Pages/Admin/StatsTable";
 import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
@@ -13,12 +14,9 @@ import { Skeleton } from "@/components/Utilities/Skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useAuth } from "@/hooks/useAuth";
+import { useCommunityMilestoneReviewers } from "@/hooks/useCommunityMilestoneReviewers";
 import { useReviewerPrograms } from "@/hooks/usePermissions";
-import {
-  itemsPerPage,
-  type ReviewerFilterMode,
-  useReportPageData,
-} from "@/hooks/useReportPageData";
+import { itemsPerPage, useReportPageData } from "@/hooks/useReportPageData";
 import {
   useIsReviewerType,
   usePermissionContext,
@@ -27,7 +25,6 @@ import { ReviewerType } from "@/src/core/rbac/types";
 import type { Community } from "@/types/v2/community";
 import { MESSAGES } from "@/utilities/messages";
 import { defaultMetadata } from "@/utilities/meta";
-import { cn } from "@/utilities/tailwind";
 
 export const metadata = defaultMetadata;
 
@@ -121,6 +118,10 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
     isMilestoneReviewer,
   });
 
+  const { reviewers, isLoading: isLoadingReviewers } = useCommunityMilestoneReviewers(
+    reportData.effectiveProgramIds
+  );
+
   if (isCheckingPermissions) {
     return <MilestonesReportSkeleton />;
   }
@@ -163,38 +164,6 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
 
       <StatsGrid stats={reportData.stats} isLoading={reportData.isStatsLoading} />
 
-      {isMilestoneReviewer && (
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-500 dark:text-zinc-400">Show:</span>
-          <div className="inline-flex rounded-md border border-gray-200 dark:border-zinc-700">
-            <button
-              onClick={() => reportData.handleReviewerFilterChange("mine")}
-              aria-pressed={reportData.reviewerFilter === "mine"}
-              className={cn(
-                "px-3 py-1.5 text-sm font-medium rounded-l-md transition-colors",
-                reportData.reviewerFilter === "mine"
-                  ? "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-                  : "text-gray-600 hover:bg-gray-50 dark:text-zinc-400 dark:hover:bg-zinc-800"
-              )}
-            >
-              My Milestones
-            </button>
-            <button
-              onClick={() => reportData.handleReviewerFilterChange("all")}
-              aria-pressed={reportData.reviewerFilter === "all"}
-              className={cn(
-                "px-3 py-1.5 text-sm font-medium rounded-r-md transition-colors border-l border-gray-200 dark:border-zinc-700",
-                reportData.reviewerFilter === "all"
-                  ? "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-                  : "text-gray-600 hover:bg-gray-50 dark:text-zinc-400 dark:hover:bg-zinc-800"
-              )}
-            >
-              All Milestones
-            </button>
-          </div>
-        </div>
-      )}
-
       <Tabs
         value={reportData.activeTab}
         onValueChange={(value) =>
@@ -210,10 +179,20 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
               </span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="stats">Stats</TabsTrigger>
+          <TabsTrigger value="stats">All Milestones</TabsTrigger>
         </TabsList>
 
         <TabsContent value="pending-verification">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-sm text-gray-500 dark:text-zinc-400">Reviewer:</span>
+            <ReviewerFilterDropdown
+              reviewers={reviewers}
+              isLoading={isLoadingReviewers}
+              selectedAddress={reportData.selectedReviewerAddress}
+              onSelect={reportData.handleReviewerAddressChange}
+              currentUserAddress={address}
+            />
+          </div>
           <PendingVerificationTable
             milestones={reportData.pendingMilestones}
             isLoading={reportData.isPendingLoading}
@@ -222,8 +201,9 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
             page={reportData.pendingPage}
             onPageChange={reportData.setPendingPage}
             totalItems={reportData.pendingTotalItems}
-            onSwitchToStats={() => reportData.setActiveTab("stats")}
             itemsPerPage={itemsPerPage}
+            selectedReviewerAddress={reportData.selectedReviewerAddress}
+            currentUserAddress={address}
           />
         </TabsContent>
 
