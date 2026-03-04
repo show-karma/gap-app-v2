@@ -45,6 +45,7 @@ import { useWallet } from "@/hooks/useWallet";
 import { checkSlugExists, getProject } from "@/services/project.service";
 import { searchProjects } from "@/services/project-search.service";
 import { useProjectStore } from "@/store";
+import { useProjectCreateModalStore } from "@/store/modals/projectCreate";
 import { useProjectEditModalStore } from "@/store/modals/projectEdit";
 import { useSimilarProjectsModalStore } from "@/store/modals/similarProjects";
 import { useOwnerStore } from "@/store/owner";
@@ -219,16 +220,16 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const [_logoUploadProgress, setLogoUploadProgress] = useState(0);
   const [tempLogoKey, setTempLogoKey] = useState<string | null>(null);
 
-  // Modal state management - use edit store or local state based on mode
+  // Modal state management - use edit store or create store based on mode
   const { isProjectEditModalOpen, setIsProjectEditModalOpen } = useProjectEditModalStore();
+  const { isProjectCreateModalOpen, setIsProjectCreateModalOpen } = useProjectCreateModalStore();
 
-  const [localIsOpen, setLocalIsOpen] = useState(false);
   // Track if we should open modal after login completes
   const [pendingOpenAfterLogin, setPendingOpenAfterLogin] = useState(false);
 
   // Determine which modal state to use
-  const isOpen = useEditModalStore ? isProjectEditModalOpen : localIsOpen;
-  const setIsOpen = useEditModalStore ? setIsProjectEditModalOpen : setLocalIsOpen;
+  const isOpen = useEditModalStore ? isProjectEditModalOpen : isProjectCreateModalOpen;
+  const setIsOpen = useEditModalStore ? setIsProjectEditModalOpen : setIsProjectCreateModalOpen;
 
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [step, setStep] = useState(0);
