@@ -53,10 +53,13 @@ export function useCommunityMilestoneReviewers(programIds: string[]) {
   const firstError = queries.find((q) => q.error)?.error as Error | undefined;
   const isError = Boolean(firstError);
 
+  const dataKey = queries.map((q) => q.dataUpdatedAt).join(",");
+
   const reviewers = useMemo(() => {
     if (isError) return [];
     return deduplicateAndSortReviewers(queries.map((q) => q.data));
-  }, [queries, isError]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dataKey, isError]);
 
   return { reviewers, isLoading, isError, error: firstError ?? null };
 }

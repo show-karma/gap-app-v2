@@ -1,26 +1,8 @@
 /**
  * Tests for PendingVerificationTable empty state logic.
- *
- * We extract and test the getEmptyStateMessage function directly,
- * since the component itself has complex dependencies.
  */
 
-function getEmptyStateMessage(
-  selectedReviewerAddress?: string,
-  currentUserAddress?: string
-): string {
-  if (
-    selectedReviewerAddress &&
-    currentUserAddress &&
-    selectedReviewerAddress.toLowerCase() === currentUserAddress.toLowerCase()
-  ) {
-    return "All your assigned milestones are verified";
-  }
-  if (selectedReviewerAddress) {
-    return "All milestones assigned to this reviewer are verified";
-  }
-  return "All milestones are verified";
-}
+import { getEmptyStateMessage } from "@/components/Pages/Admin/PendingVerificationTable";
 
 describe("PendingVerificationTable empty state", () => {
   const userAddress = "0x1234567890abcdef1234567890abcdef12345678";

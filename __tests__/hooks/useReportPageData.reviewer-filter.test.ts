@@ -1,27 +1,12 @@
 /**
  * Tests for the reviewer filter logic in useReportPageData.
  *
- * The hook now uses address-based filtering instead of binary "mine"/"all" mode.
- * selectedReviewerAddress is `string | undefined` where:
+ * The hook uses address-based filtering where:
  *   - undefined = "All Reviewers"
  *   - string = specific reviewer's address
- *
- * We extract and test the core logic functions.
  */
 
-/**
- * Extracted from useReportPageData: computes the default selected reviewer address.
- *
- * Milestone reviewers without admin access default to their own address.
- * Everyone else defaults to undefined (all reviewers).
- */
-function computeDefaultReviewerAddress(
-  isMilestoneReviewer: boolean,
-  hasAccess: boolean,
-  currentUserAddress?: string
-): string | undefined {
-  return isMilestoneReviewer && !hasAccess ? currentUserAddress : undefined;
-}
+import { computeDefaultReviewerAddress } from "@/hooks/useReportPageData";
 
 describe("useReportPageData reviewer filter logic (address-based)", () => {
   const testAddress = "0x1234567890abcdef1234567890abcdef12345678";
@@ -50,21 +35,6 @@ describe("useReportPageData reviewer filter logic (address-based)", () => {
     it("returns undefined when reviewer has no address", () => {
       const result = computeDefaultReviewerAddress(true, false, undefined);
       expect(result).toBeUndefined();
-    });
-  });
-
-  describe("effective reviewer address", () => {
-    it("passes selectedReviewerAddress directly to the query", () => {
-      // In the new implementation, effectiveReviewerAddress = selectedReviewerAddress
-      const selectedReviewerAddress: string | undefined = testAddress;
-      const effectiveReviewerAddress = selectedReviewerAddress;
-      expect(effectiveReviewerAddress).toBe(testAddress);
-    });
-
-    it("passes undefined when no reviewer is selected (all reviewers)", () => {
-      const selectedReviewerAddress: string | undefined = undefined;
-      const effectiveReviewerAddress = selectedReviewerAddress;
-      expect(effectiveReviewerAddress).toBeUndefined();
     });
   });
 

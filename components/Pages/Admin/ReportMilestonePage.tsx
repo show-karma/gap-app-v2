@@ -1,7 +1,8 @@
 "use client";
 import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
 import { useParams } from "next/navigation";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
+import { toast } from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { PendingVerificationTable } from "@/components/Pages/Admin/PendingVerificationTable";
 import { ReviewerFilterDropdown } from "@/components/Pages/Admin/ReviewerFilterDropdown";
@@ -123,8 +124,17 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
     return reportData.effectiveProgramIds;
   }, [isAuthorized, reportData.activeTab, reportData.effectiveProgramIds]);
 
-  const { reviewers, isLoading: isLoadingReviewers } =
-    useCommunityMilestoneReviewers(reviewerProgramIds);
+  const {
+    reviewers,
+    isLoading: isLoadingReviewers,
+    isError: isReviewersError,
+  } = useCommunityMilestoneReviewers(reviewerProgramIds);
+
+  useEffect(() => {
+    if (isReviewersError) {
+      toast.error("Failed to load reviewers. The filter may be incomplete.");
+    }
+  }, [isReviewersError]);
 
   if (isCheckingPermissions) {
     return <MilestonesReportSkeleton />;

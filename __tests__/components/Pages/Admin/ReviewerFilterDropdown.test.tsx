@@ -1,34 +1,14 @@
-import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
+import { getReviewerLabel } from "@/components/Pages/Admin/ReviewerFilterDropdown";
+import type { CommunityReviewer } from "@/hooks/useCommunityMilestoneReviewers";
+import { formatAddressForDisplay } from "@/utilities/donations/helpers";
 
 /**
  * Tests for ReviewerFilterDropdown helper functions.
  *
  * The component uses Radix Popover + cmdk which require complex DOM setup.
- * We extract and test the pure logic functions instead.
+ * We import and test the pure logic functions instead.
  */
-
-function truncateAddress(address: string): string {
-  if (address.length <= 10) return address;
-  return `${address.slice(0, 6)}...${address.slice(-4)}`;
-}
-
-interface CommunityReviewer {
-  publicAddress: string;
-  name: string;
-  email: string;
-}
-
-function getReviewerLabel(reviewer: CommunityReviewer, currentUserAddress?: string): string {
-  const name = reviewer.name || truncateAddress(reviewer.publicAddress);
-  if (
-    currentUserAddress &&
-    reviewer.publicAddress.toLowerCase() === currentUserAddress.toLowerCase()
-  ) {
-    return `${name} (You)`;
-  }
-  return name;
-}
 
 function getSelectedLabel(
   selectedAddress: string | undefined,
@@ -39,19 +19,19 @@ function getSelectedLabel(
   const match = reviewers.find(
     (r) => r.publicAddress.toLowerCase() === selectedAddress.toLowerCase()
   );
-  if (!match) return truncateAddress(selectedAddress);
+  if (!match) return formatAddressForDisplay(selectedAddress);
   return getReviewerLabel(match, currentUserAddress);
 }
 
 describe("ReviewerFilterDropdown logic", () => {
-  describe("truncateAddress", () => {
+  describe("formatAddressForDisplay", () => {
     it("truncates long addresses", () => {
       const address = "0x1234567890abcdef1234567890abcdef12345678";
-      expect(truncateAddress(address)).toBe("0x1234...5678");
+      expect(formatAddressForDisplay(address)).toBe("0x1234...5678");
     });
 
     it("does not truncate short strings", () => {
-      expect(truncateAddress("0x123456")).toBe("0x123456");
+      expect(formatAddressForDisplay("0x123456")).toBe("0x123456");
     });
   });
 
