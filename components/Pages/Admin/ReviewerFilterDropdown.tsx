@@ -6,6 +6,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "
 import { useMemo, useState } from "react";
 import { ChevronDown } from "@/components/Icons/ChevronDown";
 import type { CommunityReviewer } from "@/hooks/useCommunityMilestoneReviewers";
+import { formatAddressForDisplay } from "@/utilities/donations/helpers";
 import { cn } from "@/utilities/tailwind";
 
 interface ReviewerFilterDropdownProps {
@@ -16,13 +17,8 @@ interface ReviewerFilterDropdownProps {
   currentUserAddress?: string;
 }
 
-function truncateAddress(address: string): string {
-  if (address.length <= 10) return address;
-  return `${address.slice(0, 6)}...${address.slice(-4)}`;
-}
-
-function getReviewerLabel(reviewer: CommunityReviewer, currentUserAddress?: string): string {
-  const name = reviewer.name || truncateAddress(reviewer.publicAddress);
+export function getReviewerLabel(reviewer: CommunityReviewer, currentUserAddress?: string): string {
+  const name = reviewer.name || formatAddressForDisplay(reviewer.publicAddress);
   if (
     currentUserAddress &&
     reviewer.publicAddress.toLowerCase() === currentUserAddress.toLowerCase()
@@ -46,17 +42,18 @@ export function ReviewerFilterDropdown({
     const match = reviewers.find(
       (r) => r.publicAddress.toLowerCase() === selectedAddress.toLowerCase()
     );
-    if (!match) return truncateAddress(selectedAddress);
+    if (!match) return formatAddressForDisplay(selectedAddress);
     return getReviewerLabel(match, currentUserAddress);
   }, [selectedAddress, reviewers, currentUserAddress]);
 
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
       <Popover.Trigger
+        aria-label="Filter by reviewer"
         className={cn(
           "min-w-40 max-w-max justify-between flex flex-row cursor-default rounded-md",
           "bg-white dark:bg-zinc-800 dark:text-zinc-100 py-2.5 px-4",
-          "text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300",
+          "text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-zinc-600",
           "focus:outline-none focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6"
         )}
         disabled={isLoading}
@@ -103,7 +100,7 @@ export function ReviewerFilterDropdown({
               return (
                 <CommandItem
                   key={reviewer.publicAddress}
-                  value={label}
+                  value={`${label} ${reviewer.publicAddress}`}
                   onSelect={() => {
                     onSelect(reviewer.publicAddress);
                     setOpen(false);

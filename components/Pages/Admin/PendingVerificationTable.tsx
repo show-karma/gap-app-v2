@@ -23,7 +23,7 @@ interface PendingVerificationTableProps {
   currentUserAddress?: string;
 }
 
-function getEmptyStateMessage(
+export function getEmptyStateMessage(
   selectedReviewerAddress?: string,
   currentUserAddress?: string
 ): string {

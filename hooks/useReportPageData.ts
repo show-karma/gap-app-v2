@@ -88,6 +88,14 @@ interface UseReportPageDataOptions {
   isMilestoneReviewer?: boolean;
 }
 
+export function computeDefaultReviewerAddress(
+  isMilestoneReviewer: boolean,
+  hasAccess: boolean,
+  currentUserAddress?: string
+): string | undefined {
+  return isMilestoneReviewer && !hasAccess ? currentUserAddress : undefined;
+}
+
 export function useReportPageData({
   communityId,
   grantPrograms,
@@ -113,14 +121,18 @@ export function useReportPageData({
 
   // Reviewer filter: address-based. Reviewers default to own address, admins to "all" (undefined).
   const [selectedReviewerAddress, setSelectedReviewerAddress] = useState<string | undefined>(() =>
-    isMilestoneReviewer && !hasAccess ? currentUserAddress : undefined
+    computeDefaultReviewerAddress(isMilestoneReviewer, hasAccess, currentUserAddress)
   );
   const hasUserSelectedFilter = useRef(false);
 
   // Sync selectedReviewerAddress when isMilestoneReviewer/hasAccess resolve after mount
   useEffect(() => {
     if (hasUserSelectedFilter.current) return;
-    const computed = isMilestoneReviewer && !hasAccess ? currentUserAddress : undefined;
+    const computed = computeDefaultReviewerAddress(
+      isMilestoneReviewer,
+      hasAccess,
+      currentUserAddress
+    );
     setSelectedReviewerAddress(computed);
   }, [isMilestoneReviewer, hasAccess, currentUserAddress]);
 

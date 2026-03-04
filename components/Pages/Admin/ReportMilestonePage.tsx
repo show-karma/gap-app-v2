@@ -1,7 +1,8 @@
 "use client";
 import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
 import { useParams } from "next/navigation";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
+import { toast } from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { PendingVerificationTable } from "@/components/Pages/Admin/PendingVerificationTable";
 import { ReviewerFilterDropdown } from "@/components/Pages/Admin/ReviewerFilterDropdown";
@@ -25,6 +26,7 @@ import { ReviewerType } from "@/src/core/rbac/types";
 import type { Community } from "@/types/v2/community";
 import { MESSAGES } from "@/utilities/messages";
 import { defaultMetadata } from "@/utilities/meta";
+import { normalizeProgramId } from "@/utilities/normalizeProgramId";
 
 export const metadata = defaultMetadata;
 
@@ -118,13 +120,36 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
     isMilestoneReviewer,
   });
 
+  const allProgramIds = useMemo(
+    () =>
+      grantPrograms
+        .filter(
+          (p): p is typeof p & { programId: string } =>
+            typeof p.programId === "string" && p.programId.length > 0
+        )
+        .map((p) => normalizeProgramId(p.programId)),
+    [grantPrograms]
+  );
+
   const reviewerProgramIds = useMemo(() => {
     if (!isAuthorized || reportData.activeTab !== "pending-verification") return [];
-    return reportData.effectiveProgramIds;
-  }, [isAuthorized, reportData.activeTab, reportData.effectiveProgramIds]);
+    const ids = reportData.effectiveProgramIds;
+    return ids.length > 0 ? ids : allProgramIds;
+  }, [isAuthorized, reportData.activeTab, reportData.effectiveProgramIds, allProgramIds]);
 
-  const { reviewers, isLoading: isLoadingReviewers } =
-    useCommunityMilestoneReviewers(reviewerProgramIds);
+  const {
+    reviewers,
+    isLoading: isLoadingReviewers,
+    isError: isReviewersError,
+  } = useCommunityMilestoneReviewers(reviewerProgramIds);
+
+  useEffect(() => {
+    if (isReviewersError) {
+      toast.error("Failed to load reviewers. The filter may be incomplete.", {
+        id: "reviewers-load-error",
+      });
+    }
+  }, [isReviewersError]);
 
   if (isCheckingPermissions) {
     return <MilestonesReportSkeleton />;
