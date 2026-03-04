@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback, useRef } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/utilities/tailwind";
 import { OPPORTUNITY_TYPES } from "../constants/filter-options";
@@ -10,7 +11,8 @@ import { getOpportunityTypeConfig } from "../utils/opportunity-type-config";
 
 export function OpportunityTypeTabs() {
   const { filters, setSelectedTypes } = useFundingFilters();
-  const { data: typeCounts, isLoading, isError } = useTypeCounts();
+  const { data: typeCounts, isLoading, isError, refetch } = useTypeCounts();
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const isAllSelected = filters.selectedTypes.length === 0;
 
@@ -30,19 +32,46 @@ export function OpportunityTypeTabs() {
     }
   };
 
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+    const container = containerRef.current;
+    if (!container) return;
+    const buttons = Array.from(
+      container.querySelectorAll<HTMLButtonElement>("button[aria-pressed]")
+    );
+    const currentIndex = buttons.indexOf(e.target as HTMLButtonElement);
+    if (currentIndex === -1) return;
+    e.preventDefault();
+    const nextIndex =
+      e.key === "ArrowRight"
+        ? (currentIndex + 1) % buttons.length
+        : (currentIndex - 1 + buttons.length) % buttons.length;
+    buttons[nextIndex].focus();
+  }, []);
+
   if (isLoading) {
     return <OpportunityTypeTabsSkeleton />;
   }
 
+  // Index of the active button (0 = All, 1+ = individual types)
+  const activeIndex = isAllSelected ? 0 : OPPORTUNITY_TYPES.indexOf(filters.selectedTypes[0]) + 1;
+
   return (
-    <div className="flex flex-wrap items-center gap-1.5">
+    <div
+      ref={containerRef}
+      className="flex flex-wrap items-center gap-1.5"
+      role="toolbar"
+      aria-label="Filter by opportunity type"
+    >
       <TypeChip
         label="All"
         count={isError ? undefined : totalCount}
         isActive={isAllSelected}
         onClick={() => handleTypeClick(null)}
+        tabIndex={activeIndex === 0 ? 0 : -1}
+        onKeyDown={handleKeyDown}
       />
-      {OPPORTUNITY_TYPES.map((type) => {
+      {OPPORTUNITY_TYPES.map((type, idx) => {
         const config = getOpportunityTypeConfig(type);
         const Icon = config.icon;
         const count = isError ? undefined : getCount(type);
@@ -58,9 +87,23 @@ export function OpportunityTypeTabs() {
             activeColorClass={config.colorClass}
             activeBgClass={config.bgClass}
             activeBorderClass={config.borderClass}
+            tabIndex={activeIndex === idx + 1 ? 0 : -1}
+            onKeyDown={handleKeyDown}
           />
         );
       })}
+      {isError && (
+        <span className="flex items-center gap-1 text-xs text-destructive">
+          Failed to load counts
+          <button
+            type="button"
+            className="underline hover:no-underline cursor-pointer"
+            onClick={() => refetch()}
+          >
+            Retry
+          </button>
+        </span>
+      )}
     </div>
   );
 }
@@ -74,6 +117,8 @@ interface TypeChipProps {
   activeColorClass?: string;
   activeBgClass?: string;
   activeBorderClass?: string;
+  tabIndex?: number;
+  onKeyDown?: (e: React.KeyboardEvent) => void;
 }
 
 function TypeChip({
@@ -85,11 +130,15 @@ function TypeChip({
   activeColorClass,
   activeBgClass,
   activeBorderClass,
+  tabIndex = 0,
+  onKeyDown,
 }: TypeChipProps) {
   return (
     <button
       type="button"
       aria-pressed={isActive}
+      tabIndex={tabIndex}
+      onKeyDown={onKeyDown}
       className={cn(
         "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors cursor-pointer",
         "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",

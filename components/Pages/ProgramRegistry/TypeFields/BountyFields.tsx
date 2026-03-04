@@ -1,6 +1,7 @@
 "use client";
 
 import { Controller } from "react-hook-form";
+import { Input } from "@/components/ui/input";
 import type { TypeFieldsProps } from "./types";
 
 export function BountyFields({
@@ -18,7 +19,7 @@ export function BountyFields({
           <label htmlFor="bounty-reward" className={labelStyle}>
             Reward Amount *
           </label>
-          <input
+          <Input
             id="bounty-reward"
             className={inputStyle}
             placeholder="e.g. 5000"
@@ -31,7 +32,7 @@ export function BountyFields({
           <label htmlFor="bounty-currency" className={labelStyle}>
             Reward Currency
           </label>
-          <input
+          <Input
             id="bounty-currency"
             className={inputStyle}
             placeholder="USD"
@@ -67,7 +68,7 @@ export function BountyFields({
           <label htmlFor="bounty-skills" className={labelStyle}>
             Skills (comma-separated)
           </label>
-          <input
+          <Input
             id="bounty-skills"
             className={inputStyle}
             placeholder="e.g. Solidity, React, Rust"
@@ -78,7 +79,7 @@ export function BountyFields({
           <label htmlFor="bounty-platform" className={labelStyle}>
             Platform
           </label>
-          <input
+          <Input
             id="bounty-platform"
             className={inputStyle}
             placeholder="e.g. Gitcoin, Superteam Earn"

@@ -1,5 +1,3 @@
-"use client";
-
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/utilities/tailwind";
 import type { OpportunityType } from "../types/funding-program";

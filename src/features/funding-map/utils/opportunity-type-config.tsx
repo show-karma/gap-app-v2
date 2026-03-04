@@ -1,5 +1,3 @@
-"use client";
-
 import { Award, Briefcase, FileText, Landmark, Rocket, Trophy } from "lucide-react";
 import type { OpportunityType } from "../types/funding-program";
 

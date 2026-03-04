@@ -1,5 +1,6 @@
 "use client";
 
+import { Input } from "@/components/ui/input";
 import { cn } from "@/utilities/tailwind";
 import type { TypeFieldsProps } from "./types";
 
@@ -12,7 +13,7 @@ export function RfpFields({ register, errors, labelStyle, inputStyle }: TypeFiel
           <label htmlFor="rfp-org" className={labelStyle}>
             Issuing Organization *
           </label>
-          <input
+          <Input
             id="rfp-org"
             className={inputStyle}
             placeholder="e.g. Ethereum Foundation"
@@ -24,7 +25,7 @@ export function RfpFields({ register, errors, labelStyle, inputStyle }: TypeFiel
           <label htmlFor="rfp-budget" className={labelStyle}>
             Budget Amount
           </label>
-          <input
+          <Input
             id="rfp-budget"
             className={inputStyle}
             placeholder="e.g. 500000"

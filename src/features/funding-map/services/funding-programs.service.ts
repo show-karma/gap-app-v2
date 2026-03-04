@@ -106,7 +106,11 @@ export const fundingProgramsService = {
       throw new Error(error);
     }
 
-    return response || [];
+    if (!response) {
+      throw new Error("Failed to fetch type counts");
+    }
+
+    return response;
   },
 
   /**

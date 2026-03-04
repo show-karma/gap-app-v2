@@ -3,7 +3,7 @@ import { ChevronLeftIcon } from "@heroicons/react/24/solid";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { SubmitHandler } from "react-hook-form";
 import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -20,6 +20,7 @@ import { DateTimePicker } from "@/components/Utilities/DateTimePicker";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MultiEmailInput } from "@/components/Utilities/MultiEmailInput";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
@@ -75,6 +76,7 @@ export default function AddProgram({
     });
 
   const [allCommunities, setAllCommunities] = useState<Community[]>([]);
+  const typeSelectorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchCommunitiesData = async () => {
@@ -85,18 +87,26 @@ export default function AddProgram({
     if (allCommunities.length === 0) fetchCommunitiesData();
   }, [allCommunities]);
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-    setValue,
-    control,
-    formState: { errors, isSubmitting },
-  } = useForm<ProgramFormData>({
-    resolver: zodResolver(createProgramSchema),
-    reValidateMode: "onChange",
-    mode: "onChange",
-    defaultValues: {
+  const handleTypeSelectorKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+    const container = typeSelectorRef.current;
+    if (!container) return;
+    const buttons = Array.from(
+      container.querySelectorAll<HTMLButtonElement>("button[aria-pressed]")
+    );
+    const currentIndex = buttons.indexOf(e.target as HTMLButtonElement);
+    if (currentIndex === -1) return;
+    e.preventDefault();
+    const nextIndex =
+      e.key === "ArrowRight"
+        ? (currentIndex + 1) % buttons.length
+        : (currentIndex - 1 + buttons.length) % buttons.length;
+    buttons[nextIndex].focus();
+  }, []);
+
+  // Extract defaultValues to a stable memoized reference
+  const formDefaultValues = useMemo(
+    () => ({
       opportunityType: programToEdit?.type ?? "grant",
       deadline: programToEdit?.deadline ? new Date(programToEdit.deadline) : undefined,
       submissionUrl: programToEdit?.submissionUrl ?? "",
@@ -163,7 +173,22 @@ export default function AddProgram({
         issuingOrganization: "",
         budgetCurrency: "USD",
       },
-    },
+    }),
+    [programToEdit]
+  );
+
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    control,
+    formState: { errors, isSubmitting },
+  } = useForm<ProgramFormData>({
+    resolver: zodResolver(createProgramSchema),
+    reValidateMode: "onChange",
+    mode: "onChange",
+    defaultValues: formDefaultValues,
   });
 
   const onChangeGeneric = (
@@ -567,14 +592,22 @@ export default function AddProgram({
                 name="opportunityType"
                 control={control}
                 render={({ field }) => (
-                  <div className="flex flex-wrap gap-2">
+                  <div
+                    ref={typeSelectorRef}
+                    className="flex flex-wrap gap-2"
+                    role="toolbar"
+                    aria-label="Select opportunity type"
+                  >
                     {OPPORTUNITY_TYPE_OPTIONS.map((opt) => (
                       <button
                         key={opt.value}
                         type="button"
                         aria-pressed={field.value === opt.value}
+                        tabIndex={field.value === opt.value ? 0 : -1}
+                        onKeyDown={handleTypeSelectorKeyDown}
                         className={cn(
                           "rounded-lg border px-4 py-2 text-sm font-medium transition-colors cursor-pointer",
+                          "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                           field.value === opt.value
                             ? "border-[#004EEB] bg-[#004EEB]/10 text-[#004EEB]"
                             : "border-gray-200 bg-white text-gray-700 hover:border-gray-300 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
@@ -619,7 +652,7 @@ export default function AddProgram({
                       (optional)
                     </span>
                   </label>
-                  <input
+                  <Input
                     id="submission-url"
                     className={inputStyle}
                     placeholder="Ex: https://apply.example.com"
@@ -636,7 +669,7 @@ export default function AddProgram({
                   <label htmlFor="program-name" className={labelStyle}>
                     Program name *
                   </label>
-                  <input
+                  <Input
                     id="program-name"
                     className={inputStyle}
                     placeholder="Ex: Builder Growth Program"
@@ -648,7 +681,7 @@ export default function AddProgram({
                   <label htmlFor="program-grants-site" className={labelStyle}>
                     Program website *
                   </label>
-                  <input
+                  <Input
                     id="program-grants-site"
                     className={inputStyle}
                     placeholder="Ex: https://program.xyz/"
@@ -746,7 +779,7 @@ export default function AddProgram({
                 <label htmlFor="program-short-description" className={labelStyle}>
                   One-line Description
                 </label>
-                <input
+                <Input
                   id="program-short-description"
                   className={inputStyle}
                   placeholder="Brief description (max 100 characters)"
@@ -1000,7 +1033,7 @@ export default function AddProgram({
                 <label htmlFor="program-budget" className={labelStyle}>
                   Program budget
                 </label>
-                <input
+                <Input
                   id="program-budget"
                   className={inputStyle}
                   placeholder="Ex: 100500"
@@ -1013,7 +1046,7 @@ export default function AddProgram({
                 <label htmlFor="program-amount-distributed" className={labelStyle}>
                   Amount distributed to date
                 </label>
-                <input
+                <Input
                   id="program-amount-distributed"
                   className={inputStyle}
                   placeholder="Ex: 804150"
@@ -1026,7 +1059,7 @@ export default function AddProgram({
                 <label htmlFor="program-grants-issued" className={labelStyle}>
                   Grants issued to date
                 </label>
-                <input
+                <Input
                   id="program-grants-issued"
                   type="number"
                   className={inputStyle}
@@ -1039,7 +1072,7 @@ export default function AddProgram({
                 <label htmlFor="program-min-grant-size" className={labelStyle}>
                   Min Grant size
                 </label>
-                <input
+                <Input
                   type="number"
                   id="program-min-grant-size"
                   className={inputStyle}
@@ -1052,7 +1085,7 @@ export default function AddProgram({
                 <label htmlFor="program-max-grant-size" className={labelStyle}>
                   Max Grant size
                 </label>
-                <input
+                <Input
                   type="number"
                   id="program-max-grant-size"
                   className={inputStyle}
@@ -1071,7 +1104,7 @@ export default function AddProgram({
                   <div className="h-full w-max absolute flex justify-center items-center mx-3">
                     <Twitter2Icon className="text-zinc-500 w-4 h-4" />
                   </div>
-                  <input
+                  <Input
                     id="program-twitter"
                     className={cn(inputStyle, "pl-10 mt-0")}
                     placeholder="Ex: https://x.com/program"
@@ -1088,7 +1121,7 @@ export default function AddProgram({
                   <div className="h-full w-max absolute flex justify-center items-center mx-3">
                     <Discord2Icon className="text-zinc-500 w-4 h-4" />
                   </div>
-                  <input
+                  <Input
                     id="program-discord"
                     className={cn(inputStyle, "pl-10 mt-0")}
                     placeholder="Ex: https://discord.gg/program"
@@ -1105,7 +1138,7 @@ export default function AddProgram({
                   <div className="h-full w-max absolute flex justify-center items-center mx-3">
                     <BlogIcon className="text-zinc-500 w-4 h-4" />
                   </div>
-                  <input
+                  <Input
                     id="program-blog"
                     className={cn(inputStyle, "pl-10 mt-0")}
                     placeholder="Ex: https://blog.program.co/program"
@@ -1122,7 +1155,7 @@ export default function AddProgram({
                   <div className="h-full w-max absolute flex justify-center items-center mx-3">
                     <DiscussionIcon className="text-zinc-500 w-4 h-4" />
                   </div>
-                  <input
+                  <Input
                     className={cn(inputStyle, "pl-10 mt-0")}
                     id="program-forum"
                     placeholder="Ex: https://forum.program.co/program"
@@ -1139,7 +1172,7 @@ export default function AddProgram({
                   <div className="h-full w-max absolute flex justify-center items-center mx-3">
                     <OrganizationIcon className="text-zinc-500 w-4 h-4" />
                   </div>
-                  <input
+                  <Input
                     className={cn(inputStyle, "pl-10 mt-0")}
                     placeholder="Ex: https://org.program.co/program"
                     id="program-org"
@@ -1156,7 +1189,7 @@ export default function AddProgram({
                   <div className="h-full w-max absolute flex justify-center items-center mx-3">
                     <WebsiteIcon className="text-zinc-500 w-4 h-4" />
                   </div>
-                  <input
+                  <Input
                     className={cn(inputStyle, "pl-10 mt-0")}
                     placeholder="Ex: https://program.xyz"
                     id="program-bug-bounty"
@@ -1174,7 +1207,7 @@ export default function AddProgram({
                   <div className="h-full w-max absolute flex justify-center items-center mx-3">
                     <Telegram2Icon className="text-zinc-500 w-4 h-4" />
                   </div>
-                  <input
+                  <Input
                     className={cn(inputStyle, "pl-10 mt-0")}
                     placeholder="Ex: https://t.me/yourusername"
                     id="program-telegram"
@@ -1191,7 +1224,7 @@ export default function AddProgram({
                   <div className="h-full w-max absolute flex justify-center items-center mx-3">
                     <WebsiteIcon className="text-zinc-500 w-4 h-4" />
                   </div>
-                  <input
+                  <Input
                     className={cn(inputStyle, "pl-10 mt-0")}
                     placeholder="Ex: https://facebook.com/program"
                     id="program-facebook"
@@ -1208,7 +1241,7 @@ export default function AddProgram({
                   <div className="h-full w-max absolute flex justify-center items-center mx-3">
                     <WebsiteIcon className="text-zinc-500 w-4 h-4" />
                   </div>
-                  <input
+                  <Input
                     className={cn(inputStyle, "pl-10 mt-0")}
                     placeholder="Ex: https://instagram.com/program"
                     id="program-instagram"

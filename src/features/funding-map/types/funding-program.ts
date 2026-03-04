@@ -69,7 +69,7 @@ export interface RfpMetadata {
  * Type count from the /types endpoint
  */
 export interface TypeCount {
-  type: string;
+  type: OpportunityType;
   count: number;
   activeCount: number;
 }

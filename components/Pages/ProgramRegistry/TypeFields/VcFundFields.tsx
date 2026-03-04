@@ -2,6 +2,7 @@
 
 import { Controller } from "react-hook-form";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/utilities/tailwind";
 import type { TypeFieldsProps } from "./types";
 
@@ -37,7 +38,7 @@ export function VcFundFields({ register, control, labelStyle, inputStyle }: Type
           <label htmlFor="vc-check-min" className={labelStyle}>
             Min Check Size
           </label>
-          <input
+          <Input
             id="vc-check-min"
             className={inputStyle}
             placeholder="e.g. 100000"
@@ -49,7 +50,7 @@ export function VcFundFields({ register, control, labelStyle, inputStyle }: Type
           <label htmlFor="vc-check-max" className={labelStyle}>
             Max Check Size
           </label>
-          <input
+          <Input
             id="vc-check-max"
             className={inputStyle}
             placeholder="e.g. 2000000"
@@ -74,7 +75,7 @@ export function VcFundFields({ register, control, labelStyle, inputStyle }: Type
           <label htmlFor="vc-portfolio" className={labelStyle}>
             Portfolio Companies (comma-separated)
           </label>
-          <input
+          <Input
             id="vc-portfolio"
             className={inputStyle}
             placeholder="e.g. Uniswap, Aave, Compound"

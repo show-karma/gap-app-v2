@@ -2,6 +2,7 @@
 
 import { Controller } from "react-hook-form";
 import { DateTimePicker } from "@/components/Utilities/DateTimePicker";
+import { Input } from "@/components/ui/input";
 import type { TypeFieldsProps } from "./types";
 
 export function HackathonFields({
@@ -19,7 +20,7 @@ export function HackathonFields({
           <label htmlFor="hackathon-location" className={labelStyle}>
             Location *
           </label>
-          <input
+          <Input
             id="hackathon-location"
             className={inputStyle}
             placeholder="e.g. Virtual, San Francisco, Istanbul"
@@ -31,7 +32,7 @@ export function HackathonFields({
           <label htmlFor="hackathon-tracks" className={labelStyle}>
             Tracks (comma-separated)
           </label>
-          <input
+          <Input
             id="hackathon-tracks"
             className={inputStyle}
             placeholder="e.g. DeFi, NFT, Infrastructure"
@@ -44,7 +45,7 @@ export function HackathonFields({
           <label htmlFor="hackathon-prize-pool" className={labelStyle}>
             Total Prize Pool
           </label>
-          <input
+          <Input
             id="hackathon-prize-pool"
             className={inputStyle}
             placeholder="e.g. 50000"
@@ -56,7 +57,7 @@ export function HackathonFields({
           <label htmlFor="hackathon-prize-currency" className={labelStyle}>
             Prize Currency
           </label>
-          <input
+          <Input
             id="hackathon-prize-currency"
             className={inputStyle}
             placeholder="USD"
@@ -88,7 +89,7 @@ export function HackathonFields({
           <label htmlFor="hackathon-team-min" className={labelStyle}>
             Min Team Size
           </label>
-          <input
+          <Input
             id="hackathon-team-min"
             className={inputStyle}
             placeholder="e.g. 1"
@@ -100,7 +101,7 @@ export function HackathonFields({
           <label htmlFor="hackathon-team-max" className={labelStyle}>
             Max Team Size
           </label>
-          <input
+          <Input
             id="hackathon-team-max"
             className={inputStyle}
             placeholder="e.g. 5"

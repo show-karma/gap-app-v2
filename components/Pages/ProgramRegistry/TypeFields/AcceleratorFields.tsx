@@ -1,6 +1,7 @@
 "use client";
 
 import { Controller } from "react-hook-form";
+import { Input } from "@/components/ui/input";
 import type { TypeFieldsProps } from "./types";
 
 export function AcceleratorFields({ register, control, labelStyle, inputStyle }: TypeFieldsProps) {
@@ -34,7 +35,7 @@ export function AcceleratorFields({ register, control, labelStyle, inputStyle }:
           <label htmlFor="accelerator-equity" className={labelStyle}>
             Equity Requirement
           </label>
-          <input
+          <Input
             id="accelerator-equity"
             className={inputStyle}
             placeholder="e.g. 7%"
@@ -45,7 +46,7 @@ export function AcceleratorFields({ register, control, labelStyle, inputStyle }:
           <label htmlFor="accelerator-location" className={labelStyle}>
             Location
           </label>
-          <input
+          <Input
             id="accelerator-location"
             className={inputStyle}
             placeholder="e.g. Remote, New York"
@@ -58,7 +59,7 @@ export function AcceleratorFields({ register, control, labelStyle, inputStyle }:
           <label htmlFor="accelerator-funding" className={labelStyle}>
             Funding Amount
           </label>
-          <input
+          <Input
             id="accelerator-funding"
             className={inputStyle}
             placeholder="e.g. 150000"
@@ -70,7 +71,7 @@ export function AcceleratorFields({ register, control, labelStyle, inputStyle }:
           <label htmlFor="accelerator-duration" className={labelStyle}>
             Program Duration (months)
           </label>
-          <input
+          <Input
             id="accelerator-duration"
             className={inputStyle}
             placeholder="e.g. 3"
@@ -82,7 +83,7 @@ export function AcceleratorFields({ register, control, labelStyle, inputStyle }:
           <label htmlFor="accelerator-batch-size" className={labelStyle}>
             Batch Size
           </label>
-          <input
+          <Input
             id="accelerator-batch-size"
             className={inputStyle}
             placeholder="e.g. 10"

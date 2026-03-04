@@ -5,6 +5,19 @@ import { useCallback, useMemo } from "react";
 import { FUNDING_MAP_PAGE_SIZE } from "../constants/filter-options";
 import type { FetchFundingProgramsParams, OpportunityType } from "../types/funding-program";
 
+const VALID_OPPORTUNITY_TYPES = new Set<string>([
+  "grant",
+  "hackathon",
+  "bounty",
+  "accelerator",
+  "vc_fund",
+  "rfp",
+]);
+
+function isValidOpportunityType(value: string): value is OpportunityType {
+  return VALID_OPPORTUNITY_TYPES.has(value);
+}
+
 /**
  * Encode special characters for URL storage
  * Newlines and other control characters aren't preserved in URL params by default
@@ -157,7 +170,7 @@ export function useFundingFilters() {
       grantTypes,
       onlyOnKarma,
       organizationFilter,
-      selectedTypes: selectedTypes as OpportunityType[],
+      selectedTypes: selectedTypes.filter(isValidOpportunityType),
     }),
     [
       page,
@@ -187,7 +200,7 @@ export function useFundingFilters() {
       onlyOnKarma: onlyOnKarma || undefined,
       communityUid: organizationFilter?.type === "community" ? organizationFilter.id : undefined,
       organization: organizationFilter?.type === "organization" ? organizationFilter.id : undefined,
-      type: selectedTypes.length > 0 ? (selectedTypes as OpportunityType[]) : undefined,
+      type: selectedTypes.length > 0 ? selectedTypes.filter(isValidOpportunityType) : undefined,
     }),
     [
       page,

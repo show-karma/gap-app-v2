@@ -153,6 +153,6 @@ function hasActiveFilters(filters: ReturnType<typeof useFundingFilters>["filters
     filters.grantTypes.length > 0 ||
     !filters.onlyOnKarma ||
     filters.organizationFilter !== null ||
-    filters.selectedTypes.length > 0
+    (filters.selectedTypes?.length ?? 0) > 0
   );
 }
