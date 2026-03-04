@@ -29,6 +29,7 @@ interface UsePendingVerificationMilestonesOptions {
   page: number;
   pageLimit: number;
   programIds?: string[];
+  reviewerAddress?: string;
   enabled?: boolean;
 }
 
@@ -37,12 +38,24 @@ export const usePendingVerificationMilestones = ({
   page,
   pageLimit,
   programIds = [],
+  reviewerAddress,
   enabled = true,
 }: UsePendingVerificationMilestonesOptions) => {
   const query = useQuery<PendingVerificationAPIResponse>({
-    queryKey: QUERY_KEYS.COMMUNITY.PENDING_VERIFICATION(communityId, page, programIds),
+    queryKey: QUERY_KEYS.COMMUNITY.PENDING_VERIFICATION(
+      communityId,
+      page,
+      programIds,
+      reviewerAddress
+    ),
     queryFn: () =>
-      milestoneReportService.getPendingVerification(communityId, page, pageLimit, programIds),
+      milestoneReportService.getPendingVerification(
+        communityId,
+        page,
+        pageLimit,
+        programIds,
+        reviewerAddress
+      ),
     enabled: Boolean(communityId) && enabled,
   });
 

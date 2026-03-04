@@ -81,7 +81,9 @@ export const MilestoneVerificationSection: FC<MilestoneVerificationSectionProps>
 
   // Extract grant context for permission checks
   const grantContext =
-    "source" in milestone ? (milestone as UnifiedMilestone).source.grantMilestone?.grant : undefined;
+    "source" in milestone
+      ? (milestone as UnifiedMilestone).source.grantMilestone?.grant
+      : undefined;
   const derivedProgramId = programId ?? grantContext?.details?.programId;
   const derivedCommunityUID = communityUID ?? grantContext?.community?.uid;
 
