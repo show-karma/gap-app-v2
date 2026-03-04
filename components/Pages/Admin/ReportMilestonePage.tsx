@@ -169,6 +169,7 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
           <div className="inline-flex rounded-md border border-gray-200 dark:border-zinc-700">
             <button
               onClick={() => reportData.handleReviewerFilterChange("mine")}
+              aria-pressed={reportData.reviewerFilter === "mine"}
               className={cn(
                 "px-3 py-1.5 text-sm font-medium rounded-l-md transition-colors",
                 reportData.reviewerFilter === "mine"
@@ -180,6 +181,7 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
             </button>
             <button
               onClick={() => reportData.handleReviewerFilterChange("all")}
+              aria-pressed={reportData.reviewerFilter === "all"}
               className={cn(
                 "px-3 py-1.5 text-sm font-medium rounded-r-md transition-colors border-l border-gray-200 dark:border-zinc-700",
                 reportData.reviewerFilter === "all"

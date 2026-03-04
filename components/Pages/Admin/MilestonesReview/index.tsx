@@ -143,8 +143,12 @@ function MilestonesReviewPageContent({
   const projectUID = data?.project?.uid;
 
   // Fetch funding application data by project UID (must be before any returns)
-  const { application: fundingApplication, isLoading: isLoadingFundingApp } =
-    useFundingApplicationByProjectUID(projectUID || "");
+  const {
+    application: fundingApplication,
+    isLoading: isLoadingFundingApp,
+    error: fundingApplicationError,
+    refetch: refetchFundingApplication,
+  } = useFundingApplicationByProjectUID(projectUID || "");
 
   // Memoize reference number: prefer funding application, fallback to milestone completion data
   const referenceNumber = useMemo(() => {
@@ -536,6 +540,19 @@ function MilestonesReviewPageContent({
                   <div className="h-4 w-3/4 bg-gray-100 dark:bg-zinc-800 rounded animate-pulse" />
                   <div className="h-4 w-1/2 bg-gray-100 dark:bg-zinc-800 rounded animate-pulse" />
                 </div>
+              </div>
+            ) : fundingApplicationError && !referenceNumber ? (
+              <div className="p-4 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10">
+                <p className="text-sm text-red-700 dark:text-red-300 mb-3">
+                  Failed to load linked application data.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => refetchFundingApplication()}
+                  className="px-3 py-1.5 text-sm font-medium rounded-md bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50 transition-colors"
+                >
+                  Retry
+                </button>
               </div>
             ) : referenceNumber ? (
               <CommentsAndActivity

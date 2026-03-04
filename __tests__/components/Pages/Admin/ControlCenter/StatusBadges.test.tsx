@@ -200,7 +200,7 @@ describe("PendingDisbursalBadge", () => {
 
     render(<PendingDisbursalBadge invoices={invoices} />);
 
-    const badge = screen.getByText(/pending disbursal/).closest("span");
+    const badge = screen.getByText(/pending disbursal/).closest("button");
     expect(badge).toHaveClass("bg-amber-100");
     expect(badge).toHaveClass("text-amber-700");
   });

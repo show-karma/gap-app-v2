@@ -11,6 +11,7 @@ import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { validateProgramIdentifiers } from "@/utilities/validators";
 
 type TabId = "pending-verification" | "stats";
+type ReviewerFilterMode = "mine" | "all";
 
 interface Report {
   _id: {
@@ -77,8 +78,6 @@ const programIdsQueryOptions = {
     return value.split(",").map(normalizeProgramId);
   },
 };
-
-type ReviewerFilterMode = "mine" | "all";
 
 interface UseReportPageDataOptions {
   communityId: string;
