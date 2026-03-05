@@ -66,6 +66,7 @@ export async function middleware(request: NextRequest) {
       "impact",
       "karma-ai",
       "manage",
+      "projects",
       "updates",
     ]);
 
@@ -154,6 +155,7 @@ export async function middleware(request: NextRequest) {
         "impact",
         "karma-ai",
         "manage",
+        "projects",
         "updates",
       ]);
 

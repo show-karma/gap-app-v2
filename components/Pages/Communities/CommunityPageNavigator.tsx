@@ -44,7 +44,7 @@ const NAVIGATION_ITEMS: readonly NavigationItem[] = [
   },
   {
     id: "community-projects",
-    path: (communityId: string) => PAGES.COMMUNITY.ALL_GRANTS(communityId),
+    path: (communityId: string) => PAGES.COMMUNITY.PROJECTS(communityId),
     title: (communityName: string) => `View ${communityName} community projects`,
     Icon: SquareUser,
     isActive: (pathname: string) =>
