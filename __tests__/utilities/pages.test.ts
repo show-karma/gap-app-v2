@@ -43,13 +43,6 @@ describe("PAGES constants", () => {
     });
   });
 
-  describe("COMMUNITY.MY_APPLICATIONS", () => {
-    it("returns correct path format", () => {
-      const result = PAGES.COMMUNITY.MY_APPLICATIONS("optimism");
-      expect(result).toBe("/community/optimism/my-applications");
-    });
-  });
-
   describe("COMMUNITY.ALL_GRANTS", () => {
     it("returns base path without programId", () => {
       const result = PAGES.COMMUNITY.ALL_GRANTS("optimism");

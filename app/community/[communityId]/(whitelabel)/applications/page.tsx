@@ -1,11 +1,7 @@
-import { permanentRedirect } from "next/navigation";
+import { redirect } from "next/navigation";
 
-type Props = {
-  params: Promise<{ communityId: string }>;
-};
-
-// Stable URL consolidation: /applications → /my-applications (308)
-export default async function UserApplicationsPage({ params }: Props) {
-  const { communityId } = await params;
-  permanentRedirect(`/community/${communityId}/my-applications`);
+// /applications → /dashboard
+// Primary redirect handled by middleware. This is a fallback for direct access.
+export default async function UserApplicationsPage() {
+  redirect("/dashboard");
 }

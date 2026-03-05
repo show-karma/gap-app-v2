@@ -89,7 +89,8 @@ const toasterConfig = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const { isWhitelabel, communitySlug, config, tenantConfig } = await getWhitelabelContext();
+  const { isWhitelabel, isUmbrella, communitySlug, config, tenantConfig } =
+    await getWhitelabelContext();
 
   const tenantPrimaryToken = tenantConfig?.theme?.colors?.primary
     ? (toHslToken(tenantConfig.theme.colors.primary) ?? tenantConfig.theme.colors.primary)
@@ -122,6 +123,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <PrivyProviderWrapper tenantConfig={isWhitelabel ? tenantConfig : null}>
             <WhitelabelProvider
               isWhitelabel={isWhitelabel}
+              isUmbrella={isUmbrella}
               communitySlug={communitySlug}
               config={config}
               tenantConfig={tenantConfig ?? null}

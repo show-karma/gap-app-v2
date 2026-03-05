@@ -18,16 +18,18 @@ export type CustomLinkProps = Omit<LinkProps, "href"> &
 
 export const Link = forwardRef<HTMLAnchorElement, CustomLinkProps>(
   ({ href, useBuilder = true, disabled = false, className, communityFallback, ...props }, ref) => {
-    const { isWhitelabel, communitySlug } = useWhitelabel();
+    const { isWhitelabel, isUmbrella, communitySlug } = useWhitelabel();
     let urlBuilded = useUrlBuilder(href, communityFallback, useBuilder);
 
     // In whitelabel mode, strip /community/<slug> prefix so URLs stay clean.
     // Components may generate hrefs like `/community/optimism/programs/123`
-    // via PAGES.COMMUNITY — normalize to `/programs/123`.
+    // via PAGES.COMMUNITY — normalize to `/programs/123` (domained) or
+    // `/<slug>/programs/123` (umbrella).
     if (isWhitelabel && communitySlug) {
       const prefix = `/community/${communitySlug}`;
       if (urlBuilded.startsWith(prefix)) {
-        urlBuilded = urlBuilded.slice(prefix.length) || "/";
+        const rest = urlBuilded.slice(prefix.length) || "/";
+        urlBuilded = isUmbrella ? `/${communitySlug}${rest}` : rest;
       }
     }
 

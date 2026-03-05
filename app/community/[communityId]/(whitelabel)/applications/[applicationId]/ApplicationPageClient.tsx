@@ -78,13 +78,13 @@ export function ApplicationPageClient({
         <Link
           href={
             isOwner
-              ? `/community/${communityId}/my-applications`
+              ? `/dashboard`
               : `/community/${communityId}/browse-applications?programId=${application.programId}`
           }
           className="mb-4 inline-flex items-center gap-2 text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
-          {isOwner ? "Back to My Applications" : "Back to Browse Applications"}
+          {isOwner ? "Back to Dashboard" : "Back to Browse Applications"}
         </Link>
 
         <div className="flex flex-wrap items-start justify-between gap-3">

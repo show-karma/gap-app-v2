@@ -4,6 +4,7 @@ export interface DomainInfo {
   domain: string;
   isProduction: boolean;
   isShared: boolean;
+  isUmbrella?: boolean;
   tenantId?: TenantId;
 }
 
@@ -27,8 +28,15 @@ export const DOMAIN_CONFIGS: DomainInfo[] = [
   { domain: "testapp.opgrants.io", isProduction: false, isShared: false, tenantId: "optimism" },
   { domain: "karmahq.xyz", isProduction: true, isShared: true },
   { domain: "staging.karmahq.xyz", isProduction: false, isShared: true },
-  { domain: "app.karmahq.xyz", isProduction: true, isShared: true },
-  { domain: "testapp.karmahq.xyz", isProduction: false, isShared: true },
+  { domain: "app.karmahq.xyz", isProduction: true, isShared: true, isUmbrella: true },
+  { domain: "testapp.karmahq.xyz", isProduction: false, isShared: true, isUmbrella: true },
+  { domain: "app.localhost", isProduction: false, isShared: true, isUmbrella: true },
+  {
+    domain: "gap-app-v2-git-feat-whitelabel-community-pages-karma-devs.vercel.app",
+    isProduction: false,
+    isShared: true,
+    isUmbrella: true,
+  },
 ];
 
 export function getDomainInfo(hostname: string): DomainInfo | undefined {
@@ -56,6 +64,11 @@ export function getTenantForExclusiveDomain(hostname: string): TenantId | null {
 
 export function getSharedDomains(): string[] {
   return DOMAIN_CONFIGS.filter((config) => config.isShared).map((config) => config.domain);
+}
+
+export function isUmbrellaDomain(hostname: string): boolean {
+  const domainInfo = getDomainInfo(hostname);
+  return domainInfo?.isUmbrella === true;
 }
 
 export function getExclusiveDomainsForTenant(tenantId: TenantId): string[] {

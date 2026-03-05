@@ -236,7 +236,7 @@ export function ApplicationFormClient({
   };
 
   const handleCancel = () => {
-    router.push(toPath(PAGES.COMMUNITY.MY_APPLICATIONS(communityId)));
+    router.push(toPath(PAGES.DASHBOARD));
   };
 
   if (isGated && isValidatingUrlCode) {

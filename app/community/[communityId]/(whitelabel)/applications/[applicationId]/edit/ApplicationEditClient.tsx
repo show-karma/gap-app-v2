@@ -72,10 +72,10 @@ export function ApplicationEditClient({ communityId, application }: ApplicationE
               Try Again
             </button>
             <Link
-              href={`/community/${communityId}/my-applications`}
+              href={`/dashboard`}
               className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-muted"
             >
-              Back to My Applications
+              Back to Dashboard
             </Link>
           </div>
         </div>

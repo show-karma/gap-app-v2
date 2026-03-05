@@ -1,5 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { isUmbrellaDomain } from "./src/infrastructure/config/domain-constants";
+import { isKnownTenant } from "./src/infrastructure/types/tenant";
 import { chosenCommunities } from "./utilities/chosenCommunities";
 import { redirectToGov, shouldRedirectToGov } from "./utilities/redirectHelpers";
 import { hasForbiddenChars, sanitizeCommunitySlug } from "./utilities/sanitize";
@@ -36,12 +38,17 @@ export async function middleware(request: NextRequest) {
     const normalizedPath = path;
     const normalizedIsRoot = normalizedPath === "/" || normalizedPath === "";
 
-    // In whitelabel mode, /programs/* should redirect to the homepage.
-    // The homepage already shows funding opportunities, so direct program
-    // browsing paths are not needed.
+    // /programs → homepage (already shows funding opportunities)
     if (normalizedPath.startsWith("/programs")) {
       const url = request.nextUrl.clone();
       url.pathname = "/";
+      return NextResponse.redirect(url);
+    }
+
+    // /applications → /dashboard
+    if (normalizedPath === "/applications" || normalizedPath === "/my-applications") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/dashboard";
       return NextResponse.redirect(url);
     }
 
@@ -59,7 +66,6 @@ export async function middleware(request: NextRequest) {
       "impact",
       "karma-ai",
       "manage",
-      "my-applications",
       "updates",
     ]);
 
@@ -93,6 +99,92 @@ export async function middleware(request: NextRequest) {
     return NextResponse.rewrite(url, {
       request: { headers: requestHeaders },
     });
+  }
+
+  // --- Umbrella whitelabel (app.karmahq.xyz/<slug>) ---
+  if (isUmbrellaDomain(hostname)) {
+    const segments = path.split("/").filter(Boolean);
+    const slug = segments[0];
+
+    if (!slug) {
+      return NextResponse.redirect(new URL("/funding-map", request.url));
+    }
+
+    if (isKnownTenant(slug)) {
+      const effectivePath = "/" + segments.slice(1).join("/") || "/";
+      const slugPrefix = `/${slug}`;
+
+      // Skip static assets under /<slug>/images/...
+      if (/^\/(images|logo|tenants|icons|shared|fonts)\//i.test(effectivePath)) {
+        return NextResponse.next();
+      }
+
+      // Strip /community/<slug> prefix: /<slug>/community/<slug>/x → /<slug>/x
+      const communityPrefix = `/community/${slug}`;
+      if (effectivePath.startsWith(communityPrefix)) {
+        const cleanPath = effectivePath.slice(communityPrefix.length) || "/";
+        const url = request.nextUrl.clone();
+        url.pathname = `${slugPrefix}${cleanPath}`;
+        return NextResponse.redirect(url);
+      }
+
+      // Redirect /programs to tenant root
+      if (effectivePath.startsWith("/programs")) {
+        const url = request.nextUrl.clone();
+        url.pathname = slugPrefix;
+        return NextResponse.redirect(url);
+      }
+
+      // /<slug>/applications or /<slug>/my-applications → /<slug>/dashboard
+      if (effectivePath === "/applications" || effectivePath === "/my-applications") {
+        const url = request.nextUrl.clone();
+        url.pathname = `${slugPrefix}/dashboard`;
+        return NextResponse.redirect(url);
+      }
+
+      // Check if community sub-route
+      const communitySubRoutes = new Set([
+        "admin",
+        "applications",
+        "browse-applications",
+        "claim-funds",
+        "donate",
+        "financials",
+        "funding-opportunities",
+        "impact",
+        "karma-ai",
+        "manage",
+        "updates",
+      ]);
+
+      const firstSegment = effectivePath.split("/")[1] || "";
+      const effectiveIsRoot = effectivePath === "/" || effectivePath === "";
+      const isCommunityRoute = effectiveIsRoot || communitySubRoutes.has(firstSegment);
+
+      const requestHeaders = new Headers(request.headers);
+      requestHeaders.set("x-is-whitelabel", "true");
+      requestHeaders.set("x-is-umbrella", "true");
+      requestHeaders.set("x-community-slug", slug);
+      requestHeaders.set("x-tenant-id", slug);
+      requestHeaders.set("x-whitelabel-domain", hostname);
+
+      if (!isCommunityRoute) {
+        // Top-level route (e.g., /<slug>/dashboard, /<slug>/project/abc)
+        const url = request.nextUrl.clone();
+        url.pathname = effectivePath;
+        return NextResponse.rewrite(url, { request: { headers: requestHeaders } });
+      }
+
+      // Community sub-route → rewrite to /community/<slug>/<route>
+      const rewrittenPath = effectiveIsRoot
+        ? `/community/${slug}/funding-opportunities`
+        : `/community/${slug}${effectivePath}`;
+      const url = request.nextUrl.clone();
+      url.pathname = rewrittenPath;
+      return NextResponse.rewrite(url, { request: { headers: requestHeaders } });
+    }
+
+    // Not a known tenant — fall through to standard logic
   }
 
   // --- Standard karmahq.xyz logic below ---
