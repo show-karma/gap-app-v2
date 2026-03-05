@@ -378,8 +378,7 @@ export default function AddProgram({
         backTo?.();
       });
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      toast.error(errorMessage);
+      toast.error(MESSAGES.PROGRAM_REGISTRY.EDIT.ERROR(data.name));
       errorManager(
         MESSAGES.PROGRAM_REGISTRY.EDIT.ERROR(data.name),
         error,
