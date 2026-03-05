@@ -208,8 +208,8 @@ export const buildTypedMetadata = (data: ProgramFormData): Record<string, unknow
         ...(m.registrationDeadline
           ? { registrationDeadline: m.registrationDeadline.toISOString() }
           : {}),
-        ...(m.teamSizeMin || m.teamSizeMax
-          ? { teamSize: { min: m.teamSizeMin || 1, max: m.teamSizeMax || 5 } }
+        ...(m.teamSizeMin != null || m.teamSizeMax != null
+          ? { teamSize: { min: m.teamSizeMin ?? 1, max: m.teamSizeMax ?? 5 } }
           : {}),
       },
     };
@@ -225,7 +225,7 @@ export const buildTypedMetadata = (data: ProgramFormData): Record<string, unknow
     return {
       bountyMetadata: {
         reward: {
-          amount: m.rewardAmount || 0,
+          amount: m.rewardAmount ?? 0,
           currency: m.rewardCurrency || "USD",
         },
         ...(m.difficulty ? { difficulty: m.difficulty } : {}),
@@ -266,11 +266,11 @@ export const buildTypedMetadata = (data: ProgramFormData): Record<string, unknow
     return {
       vcFundMetadata: {
         ...(m.stage ? { stage: m.stage } : {}),
-        ...(m.checkSizeMin || m.checkSizeMax
+        ...(m.checkSizeMin != null || m.checkSizeMax != null
           ? {
               checkSize: {
-                min: m.checkSizeMin || 0,
-                max: m.checkSizeMax || 0,
+                min: m.checkSizeMin ?? 0,
+                max: m.checkSizeMax ?? 0,
                 currency: m.checkSizeCurrency || "USD",
               },
             }
