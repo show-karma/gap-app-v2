@@ -87,11 +87,19 @@ const NormalCommunityHeader = ({ community }: { community: Community }) => {
 };
 // Paths where the CommunityHeader (with tabs) should appear in whitelabel mode.
 // Whitelabel-native pages (programs, applications, etc.) have their own layout.
-const WHITELABEL_TAB_PATHS = ["/funding-opportunities", "/updates", "/impact", "/financials"];
+const WHITELABEL_TAB_PATHS = [
+  "/funding-opportunities",
+  "/updates",
+  "/impact",
+  "/financials",
+  "/projects",
+];
 
 function isWhitelabelTabPage(pathname: string): boolean {
   // Root "/" is the funding-opportunities landing page in whitelabel
   if (pathname === "/" || pathname === "") return true;
+  // In umbrella mode, pathname is /<slug>/projects etc.
+  // Check whether any tab path appears as a suffix.
   return WHITELABEL_TAB_PATHS.some((p) => pathname.includes(p));
 }
 
