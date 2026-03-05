@@ -236,6 +236,8 @@ export default function AddProgram({
     defaultValues: formDefaultValues,
   });
 
+  const opportunityType = watch("opportunityType");
+
   const onChangeGeneric = (
     value: string,
     fieldName:
@@ -413,16 +415,16 @@ export default function AddProgram({
             {programToEdit ? (
               <Button
                 onClick={backTo}
-                className="flex flex-row gap-2 bg-transparent hover:bg-transparent text-[#004EEB] text-sm p-0"
+                className="flex flex-row gap-2 bg-transparent hover:bg-transparent text-primary text-sm p-0"
               >
                 <ChevronLeftIcon className="w-4 h-4" />
-                <p className="border-b border-b-[#004EEB]">Back to Manage Programs</p>
+                <p className="border-b border-b-primary">Back to Manage Programs</p>
               </Button>
             ) : (
               <Link href={PAGES.REGISTRY.ROOT}>
-                <Button className="flex flex-row gap-2 bg-transparent hover:bg-transparent text-[#004EEB] text-sm p-0">
+                <Button className="flex flex-row gap-2 bg-transparent hover:bg-transparent text-primary text-sm p-0">
                   <ChevronLeftIcon className="w-4 h-4" />
-                  <p className="border-b border-b-[#004EEB]">Back to programs</p>
+                  <p className="border-b border-b-primary">Back to programs</p>
                 </Button>
               </Link>
             )}
@@ -468,7 +470,7 @@ export default function AddProgram({
                           "rounded-lg border px-4 py-2 text-sm font-medium transition-colors cursor-pointer",
                           "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                           field.value === opt.value
-                            ? "border-[#004EEB] bg-[#004EEB]/10 text-[#004EEB]"
+                            ? "border-primary bg-primary/10 text-primary"
                             : "border-gray-200 bg-white text-gray-700 hover:border-gray-300 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
                         )}
                         onClick={() => field.onChange(opt.value)}
@@ -482,7 +484,7 @@ export default function AddProgram({
             </div>
 
             {/* Deadline & Submission URL (for non-grant types) */}
-            {watch("opportunityType") !== "grant" && (
+            {opportunityType !== "grant" && (
               <div className="grid grid-cols-2 max-sm:grid-cols-1 gap-4">
                 <Controller
                   name="deadline"
@@ -558,7 +560,7 @@ export default function AddProgram({
                       <div className="flex w-full flex-col gap-2">
                         <div className={labelStyle}>
                           Start date{" "}
-                          {watch("opportunityType") === "hackathon" ? (
+                          {opportunityType === "hackathon" ? (
                             "*"
                           ) : (
                             <span className="font-normal text-gray-500 dark:text-gray-400 ml-1">
@@ -599,7 +601,7 @@ export default function AddProgram({
                       <div className="flex w-full flex-col gap-2">
                         <div className={labelStyle}>
                           End date{" "}
-                          {watch("opportunityType") === "hackathon" ? (
+                          {opportunityType === "hackathon" ? (
                             "*"
                           ) : (
                             <span className="font-normal text-gray-500 dark:text-gray-400 ml-1">
@@ -671,7 +673,7 @@ export default function AddProgram({
               </div>
 
               {/* Type-Specific Fields */}
-              {watch("opportunityType") === "hackathon" && (
+              {opportunityType === "hackathon" && (
                 <HackathonFields
                   register={register}
                   control={control}
@@ -680,7 +682,7 @@ export default function AddProgram({
                   inputStyle={inputStyle}
                 />
               )}
-              {watch("opportunityType") === "bounty" && (
+              {opportunityType === "bounty" && (
                 <BountyFields
                   register={register}
                   control={control}
@@ -689,7 +691,7 @@ export default function AddProgram({
                   inputStyle={inputStyle}
                 />
               )}
-              {watch("opportunityType") === "accelerator" && (
+              {opportunityType === "accelerator" && (
                 <AcceleratorFields
                   register={register}
                   control={control}
@@ -698,7 +700,7 @@ export default function AddProgram({
                   inputStyle={inputStyle}
                 />
               )}
-              {watch("opportunityType") === "vc_fund" && (
+              {opportunityType === "vc_fund" && (
                 <VcFundFields
                   register={register}
                   control={control}
@@ -707,7 +709,7 @@ export default function AddProgram({
                   inputStyle={inputStyle}
                 />
               )}
-              {watch("opportunityType") === "rfp" && (
+              {opportunityType === "rfp" && (
                 <RfpFields
                   register={register}
                   control={control}

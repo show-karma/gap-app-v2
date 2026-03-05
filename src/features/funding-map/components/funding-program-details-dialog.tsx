@@ -520,7 +520,15 @@ function DialogContentInner({ program }: { program: FundingProgramResponse }) {
         {/* Submit/Apply via submissionUrl for non-grant types */}
         {isNonGrant && program.submissionUrl && (
           <Button asChild size="sm" className="gap-1.5 w-fit">
-            <Link href={program.submissionUrl} target="_blank" rel="noopener noreferrer">
+            <Link
+              href={
+                program.submissionUrl.startsWith("http")
+                  ? program.submissionUrl
+                  : `https://${program.submissionUrl}`
+              }
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               Apply
               <ExternalLink className="h-3.5 w-3.5" />
             </Link>

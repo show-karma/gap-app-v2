@@ -117,7 +117,7 @@ function HackathonSection({ program }: { program: FundingProgramResponse }) {
 
 function BountySection({ program }: { program: FundingProgramResponse }) {
   const meta = program.bountyMetadata;
-  if (!meta) return null;
+  if (!meta?.reward) return null;
 
   const rewardAmount =
     typeof meta.reward.amount === "string" ? Number(meta.reward.amount) : meta.reward.amount;
@@ -179,7 +179,10 @@ function AcceleratorSection({ program }: { program: FundingProgramResponse }) {
       )}
       {meta.equity && <DetailRow label="Equity" value={meta.equity} />}
       {meta.funding && !Number.isNaN(Number(meta.funding.amount)) && (
-        <DetailRow label="Funding" value={`$${formatCurrency(Number(meta.funding.amount))}`} />
+        <DetailRow
+          label="Funding"
+          value={`${meta.funding.currency === "USD" ? "$" : ""}${formatCurrency(Number(meta.funding.amount))}${meta.funding.currency !== "USD" ? ` ${meta.funding.currency}` : ""}`}
+        />
       )}
       {meta.programDuration && (
         <DetailRow

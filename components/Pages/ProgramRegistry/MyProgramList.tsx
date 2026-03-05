@@ -21,13 +21,12 @@ import { DiscussionIcon } from "@/components/Icons/Discussion";
 import { OrganizationIcon } from "@/components/Icons/Organization";
 import { Button } from "@/components/Utilities/Button";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { OPPORTUNITY_TYPE_SINGULAR_LABELS } from "@/src/features/funding-map/constants/filter-options";
-import type { OpportunityType } from "@/src/features/funding-map/types/funding-program";
 import { formatDate } from "@/utilities/formatDate";
 import { ReadMore } from "@/utilities/ReadMore";
 import { shortAddress } from "@/utilities/shortAddress";
 import { registryHelper } from "./helper";
 import type { GrantProgram } from "./ProgramList";
+import { ProgramTypeBadges } from "./ProgramTypeBadges";
 
 interface MyProgramListProps {
   grantPrograms: GrantProgram[];
@@ -441,27 +440,10 @@ export const MyProgramList: FC<MyProgramListProps> = ({
         id: "Types",
         cell: (info) => {
           const grant = info.row.original;
-          const typeLabel = grant.type
-            ? OPPORTUNITY_TYPE_SINGULAR_LABELS[grant.type as OpportunityType]
-            : null;
-          const legacyTypes = grant.metadata?.grantTypes ?? [];
 
           return (
             <div className="whitespace-nowrap max-w-[220px] flex flex-row flex-wrap gap-1 px-3 py-5 text-sm text-black dark:text-zinc-300">
-              {typeLabel ? (
-                <span className="mr-1 inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-600/20">
-                  {typeLabel}
-                </span>
-              ) : (
-                legacyTypes.map((type, index) => (
-                  <span
-                    key={index}
-                    className="mr-1 inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-600/20"
-                  >
-                    {type}
-                  </span>
-                ))
-              )}
+              <ProgramTypeBadges type={grant.type} legacyTypes={grant.metadata?.grantTypes ?? []} />
             </div>
           );
         },

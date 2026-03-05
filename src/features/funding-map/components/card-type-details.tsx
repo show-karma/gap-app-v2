@@ -61,7 +61,7 @@ function HackathonCardDetails({ program }: { program: FundingProgramResponse }) 
 
 function BountyCardDetails({ program }: { program: FundingProgramResponse }) {
   const meta = program.bountyMetadata;
-  if (!meta) return null;
+  if (!meta?.reward) return null;
 
   const rewardAmount =
     typeof meta.reward.amount === "string" ? Number(meta.reward.amount) : meta.reward.amount;
@@ -121,7 +121,9 @@ function AcceleratorCardDetails({ program }: { program: FundingProgramResponse }
         !Number.isNaN(Number(meta.funding.amount)) &&
         Number(meta.funding.amount) > 0 && (
           <Badge variant="outline" className="rounded-full text-xs font-normal">
-            Up to ${formatCurrency(Number(meta.funding.amount))}
+            Up to {meta.funding.currency === "USD" ? "$" : ""}
+            {formatCurrency(Number(meta.funding.amount))}
+            {meta.funding.currency !== "USD" ? ` ${meta.funding.currency}` : ""}
           </Badge>
         )}
     </div>
