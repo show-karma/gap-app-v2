@@ -95,17 +95,21 @@ const WHITELABEL_TAB_PATHS = [
   "/projects",
 ];
 
-function isWhitelabelTabPage(pathname: string): boolean {
-  // Root "/" is the funding-opportunities landing page in whitelabel
+function isWhitelabelTabPage(
+  pathname: string,
+  isUmbrella: boolean,
+  communitySlug: string | null
+): boolean {
+  // Root "/" is the funding-opportunities landing page in domained whitelabel
   if (pathname === "/" || pathname === "") return true;
-  // In umbrella mode, pathname is /<slug>/projects etc.
-  // Check whether any tab path appears as a suffix.
+  // In umbrella mode, the root is /<slug> (e.g., /polygon)
+  if (isUmbrella && communitySlug && pathname === `/${communitySlug}`) return true;
   return WHITELABEL_TAB_PATHS.some((p) => pathname.includes(p));
 }
 
 export default function CommunityHeader({ community }: { community: Community }) {
   const pathname = usePathname();
-  const { isWhitelabel } = useWhitelabel();
+  const { isWhitelabel, isUmbrella, communitySlug } = useWhitelabel();
   const isAdminPage = pathname.includes("/manage");
   const isReviewerPage = pathname.includes("/reviewer");
   const isDonatePage = pathname.includes("/donate");
@@ -119,7 +123,7 @@ export default function CommunityHeader({ community }: { community: Community })
     return null;
   }
   // In whitelabel mode, only show the header on community tab pages
-  if (isWhitelabel && !isWhitelabelTabPage(pathname)) {
+  if (isWhitelabel && !isWhitelabelTabPage(pathname, isUmbrella, communitySlug)) {
     return null;
   }
   return <NormalCommunityHeader community={community} />;
