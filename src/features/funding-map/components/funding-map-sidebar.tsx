@@ -5,10 +5,13 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
+import { useMixpanel } from "@/hooks/useMixpanel";
 import { PAGES } from "@/utilities/pages";
 import { FundingMapAgentCard } from "./funding-map-agent-card";
 
 export function FundingMapSidebar() {
+  const { mixpanel } = useMixpanel("karma");
+
   const ProjectDialog = useMemo(
     () =>
       dynamic(
@@ -52,7 +55,15 @@ export function FundingMapSidebar() {
           <CopyPlus className="h-5 w-5 text-muted-foreground" />
           <p className="font-medium text-foreground">Funding opportunity not listed?</p>
           <Button variant="outline" className="w-fit shadow-sm" asChild>
-            <Link href={PAGES.REGISTRY.ADD_PROGRAM} prefetch>
+            <Link
+              href={PAGES.REGISTRY.ADD_PROGRAM}
+              prefetch
+              onClick={() => {
+                mixpanel.reportEvent({
+                  event: "funding-map:submit-program-click",
+                });
+              }}
+            >
               Submit a program
             </Link>
           </Button>
@@ -73,13 +84,23 @@ export function FundingMapSidebar() {
             donations.
           </p>
         </div>
-        <ProjectDialog
-          buttonElement={{
-            text: "Create a profile",
-            styleClass:
-              "w-fit shadow-sm border border-input bg-background hover:bg-accent text-accent-foreground rounded-md",
+        {/* biome-ignore lint/a11y/useKeyWithClickEvents: tracking wrapper delegates to inner button */}
+        {/* biome-ignore lint/a11y/noStaticElementInteractions: tracking wrapper only */}
+        <span
+          onClick={() => {
+            mixpanel.reportEvent({
+              event: "funding-map:create-profile-click",
+            });
           }}
-        />
+        >
+          <ProjectDialog
+            buttonElement={{
+              text: "Create a profile",
+              styleClass:
+                "w-fit shadow-sm border border-input bg-background hover:bg-accent text-accent-foreground rounded-md",
+            }}
+          />
+        </span>
       </div>
     </aside>
   );
