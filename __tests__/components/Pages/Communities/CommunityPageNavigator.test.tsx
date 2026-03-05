@@ -28,6 +28,7 @@ jest.mock("@/utilities/pages", () => ({
     COMMUNITY: {
       FUNDING_OPPORTUNITIES: (id: string) => `/community/${id}/funding-opportunities`,
       ALL_GRANTS: (id: string) => `/community/${id}`,
+      PROJECTS: (id: string) => `/community/${id}/projects`,
       UPDATES: (id: string) => `/community/${id}/updates`,
       IMPACT: (id: string) => `/community/${id}/impact`,
       FINANCIALS: (id: string) => `/community/${id}/financials`,
@@ -133,7 +134,7 @@ describe("CommunityPageNavigator", () => {
         "href",
         "/community/test-community/funding-opportunities"
       );
-      expect(grantsLink).toHaveAttribute("href", "/community/test-community");
+      expect(grantsLink).toHaveAttribute("href", "/community/test-community/projects");
       expect(updatesLink).toHaveAttribute("href", "/community/test-community/updates");
       expect(impactLink).toHaveAttribute("href", "/community/test-community/impact");
     });
