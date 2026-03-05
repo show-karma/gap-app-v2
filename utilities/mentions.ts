@@ -43,31 +43,11 @@ export function insertMention(
 
   if (atIndex === -1) return currentContent;
 
-  const mentionToken = `@${reviewer.name}`;
+  const mentionToken = `@[${reviewer.name}](email:${reviewer.email})`;
   const before = currentContent.slice(0, atIndex);
   const after = currentContent.slice(cursorPosition);
 
   return `${before}${mentionToken} ${after}`;
-}
-
-/**
- * Resolves clean @Name tokens to the full @[Name](email:...) format
- * using a name→email mapping. Sort by name length descending to avoid
- * partial replacements (e.g. @John before @John Doe).
- */
-export function resolveMentionsForSubmit(
-  content: string,
-  mentionsMap: Map<string, string>
-): string {
-  if (!content || mentionsMap.size === 0) return content;
-
-  const entries = Array.from(mentionsMap.entries()).sort((a, b) => b[0].length - a[0].length);
-
-  let resolved = content;
-  for (const [name, email] of entries) {
-    resolved = resolved.replaceAll(`@${name}`, `@[${name}](email:${email})`);
-  }
-  return resolved;
 }
 
 /**

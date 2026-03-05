@@ -2,7 +2,7 @@
 
 import { type RefObject, useCallback, useRef, useState } from "react";
 import { getCaretCoordinates } from "@/utilities/getCaretCoordinates";
-import { insertMention, resolveMentionsForSubmit } from "@/utilities/mentions";
+import { insertMention } from "@/utilities/mentions";
 
 interface MentionReviewer {
   name: string;
@@ -29,7 +29,6 @@ export function useMentionEditor(options: UseMentionEditorOptions = {}) {
   const [caretPosition, setCaretPosition] = useState<CaretPosition | null>(null);
   const cursorPositionRef = useRef(0);
   const savedFilterTextRef = useRef("");
-  const mentionsMapRef = useRef(new Map<string, string>());
 
   const computeCaretPosition = useCallback(
     (atIndex: number) => {
@@ -78,7 +77,7 @@ export function useMentionEditor(options: UseMentionEditorOptions = {}) {
 
       const textAfterAt = newContent.slice(lastAtIndex + 1);
 
-      if (textAfterAt.includes("\n") || textAfterAt.includes(" ")) {
+      if (textAfterAt.includes("\n") || textAfterAt.startsWith("[")) {
         setIsAutocompleteOpen(false);
         setFilterText("");
         return;
@@ -102,7 +101,6 @@ export function useMentionEditor(options: UseMentionEditorOptions = {}) {
 
   const handleSelectReviewer = useCallback(
     (reviewer: MentionReviewer, currentContent: string, onChange: (value: string) => void) => {
-      mentionsMapRef.current.set(reviewer.name, reviewer.email);
       const newContent = insertMention(
         currentContent,
         cursorPositionRef.current,
@@ -134,7 +132,6 @@ export function useMentionEditor(options: UseMentionEditorOptions = {}) {
 
   const handleInvitedReviewer = useCallback(
     (reviewer: MentionReviewer, currentContent: string, onChange: (value: string) => void) => {
-      mentionsMapRef.current.set(reviewer.name, reviewer.email);
       const savedFilter = savedFilterTextRef.current;
       const newContent = insertMention(
         currentContent,
@@ -184,10 +181,6 @@ export function useMentionEditor(options: UseMentionEditorOptions = {}) {
     [selectedIndex, handleSelectReviewer, handleOpenInviteModal, handleCloseAutocomplete]
   );
 
-  const resolveContent = useCallback((content: string) => {
-    return resolveMentionsForSubmit(content, mentionsMapRef.current);
-  }, []);
-
   return {
     isAutocompleteOpen,
     filterText,
@@ -201,6 +194,5 @@ export function useMentionEditor(options: UseMentionEditorOptions = {}) {
     handleCloseInviteModal,
     handleInvitedReviewer,
     handleKeyDown,
-    resolveContent,
   };
 }

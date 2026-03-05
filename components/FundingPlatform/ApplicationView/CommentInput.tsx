@@ -104,10 +104,7 @@ const CommentInput: FC<CommentInputProps> = ({
 
     setIsSubmitting(true);
     try {
-      const resolved = enableMentions
-        ? mentionEditor.resolveContent(content.trim())
-        : content.trim();
-      await onSubmit(resolved);
+      await onSubmit(content.trim());
       setContent("");
     } catch {
       // Error handling delegated to parent
