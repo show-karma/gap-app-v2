@@ -88,14 +88,17 @@ export const CommunityPageNavigator = () => {
   const searchParams = useSearchParams();
   const communityId = params.communityId as string;
   const rawPathname = usePathname();
-  const { isWhitelabel } = useWhitelabel();
+  const { isWhitelabel, isUmbrella, communitySlug } = useWhitelabel();
   const programId = searchParams.get("programId");
-  // In whitelabel mode, the middleware rewrites "/" to "/community/<slug>/funding-opportunities"
-  // but usePathname() still returns "/". Normalize so tab highlighting works correctly.
-  const pathname =
-    isWhitelabel && (rawPathname === "/" || rawPathname === "")
-      ? "/funding-opportunities"
-      : rawPathname;
+  // In whitelabel mode, the middleware rewrites the root to /community/<slug>/funding-opportunities
+  // but usePathname() still returns "/" (domained) or "/<slug>" (umbrella).
+  // Normalize so tab highlighting works correctly.
+  const isWhitelabelRoot =
+    isWhitelabel &&
+    (rawPathname === "/" ||
+      rawPathname === "" ||
+      (isUmbrella && communitySlug && rawPathname === `/${communitySlug}`));
+  const pathname = isWhitelabelRoot ? "/funding-opportunities" : rawPathname;
 
   // Check if we're on an admin page early to avoid unnecessary data fetching
   const isAdminPage = pathname.includes("/manage");
