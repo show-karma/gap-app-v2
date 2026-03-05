@@ -7,10 +7,8 @@ import type { Grant } from "@/types/v2/grant";
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
 import { rewriteHeadingsToLevel } from "@/utilities/markdown";
-import { SITE_URL } from "@/utilities/meta";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
-import { useWhitelabel } from "@/utilities/whitelabel-context";
 import { GrantPercentage } from "./Pages/Project/Grants/components/GrantPercentage";
 import { TrackTags } from "./TrackTags";
 import { MarkdownPreview } from "./Utilities/MarkdownPreview";
@@ -215,16 +213,11 @@ export const GrantCard = ({
   actionSlot,
   cardClassName,
 }: GrantCardProps) => {
-  const { isWhitelabel } = useWhitelabel();
   const projectPath = PAGES.PROJECT.OVERVIEW(grant.project?.details?.slug || grant.refUID || "");
-  const href = isWhitelabel ? `${SITE_URL}${projectPath}` : projectPath;
 
   return (
     <Link
-      href={href}
-      prefetch={!isWhitelabel}
-      target={isWhitelabel ? "_blank" : undefined}
-      rel={isWhitelabel ? "noopener noreferrer" : undefined}
+      href={projectPath}
       className={cn(
         "flex h-full w-full max-w-[620px] max-sm:w-[320px] relative rounded-2xl border border-zinc-200 p-2 transition-all duration-300 ease-in-out hover:opacity-80",
         cardClassName
