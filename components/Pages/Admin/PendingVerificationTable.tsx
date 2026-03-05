@@ -1,10 +1,10 @@
 import { CheckCircleIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
-import Link from "next/link";
 import { Button } from "@/components/Utilities/Button";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import TablePagination from "@/components/Utilities/TablePagination";
 import type { PendingVerificationMilestone } from "@/hooks/usePendingVerificationMilestones";
+import { Link } from "@/src/components/navigation/Link";
 import { normalizeProgramId } from "@/utilities/normalizeProgramId";
 import { PAGES } from "@/utilities/pages";
 

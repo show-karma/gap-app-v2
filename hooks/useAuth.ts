@@ -11,6 +11,7 @@ import { TokenManager } from "@/utilities/auth/token-manager";
 import { PAGES } from "@/utilities/pages";
 import { queryClient } from "@/utilities/query-client";
 import { privyConfig } from "@/utilities/wagmi/privy-config";
+import { useWhitelabel } from "@/utilities/whitelabel-context";
 
 /**
  * Initial delay (in ms) before first auth status check.
@@ -115,6 +116,7 @@ export const useAuth = () => {
   const pathname = usePathname();
 
   const { isConnected } = useAccount();
+  const { isWhitelabel } = useWhitelabel();
 
   const { wallets } = useWallets();
   const primaryWallet = wallets[0];
@@ -143,8 +145,10 @@ export const useAuth = () => {
   useEffect(() => {
     // Detect login: was not authenticated, now authenticated
     if (!prevAuthRef.current && authenticated) {
-      // Only redirect if we're on the default landing page
-      if (pathname === "/") {
+      // Only redirect if we're on the default landing page.
+      // In whitelabel mode, "/" is the community homepage (funding opportunities),
+      // not a generic landing page — don't redirect away from it.
+      if (pathname === "/" && !isWhitelabel) {
         const redirectUrl = getPostLoginRedirect();
         if (redirectUrl) {
           router.push(redirectUrl);

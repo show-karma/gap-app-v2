@@ -1,8 +1,34 @@
 import { useQuery } from "@tanstack/react-query";
-import type { FundingProgram, ProgramFilters } from "@/types/whitelabel-entities";
+import { useMemo } from "react";
+import type { FundingProgram, ProgramFilters, ProgramStatus } from "@/types/whitelabel-entities";
 import fetchData from "@/utilities/fetchData";
 import { useProgramsStore } from "../lib/store";
 import type { UseProgramsReturn } from "../types";
+
+function matchesStatus(program: FundingProgram, status: ProgramStatus): boolean {
+  const now = new Date();
+  const endsAt = program.metadata?.endsAt ? new Date(program.metadata.endsAt) : null;
+  const startsAt = program.metadata?.startsAt ? new Date(program.metadata.startsAt) : null;
+  const isEnabled = program.applicationConfig?.isEnabled ?? false;
+  const hasDeadlinePassed = !!endsAt && now > endsAt;
+  const isUpcoming = !!startsAt && now < startsAt;
+
+  switch (status) {
+    case "ended":
+      // A program is "ended" if its deadline has passed, or if applications are
+      // closed (isEnabled=false) and it's not an upcoming program.
+      return hasDeadlinePassed || (!isEnabled && !isUpcoming);
+    case "upcoming":
+      return isUpcoming;
+    case "active":
+      // A program is only "active" if it's within its date range AND accepting
+      // applications (isEnabled). Programs with closed applications should not
+      // appear in the active list.
+      return !hasDeadlinePassed && !isUpcoming && isEnabled;
+    default:
+      return true;
+  }
+}
 
 export function usePrograms(
   communityId: string,
@@ -15,16 +41,11 @@ export function usePrograms(
     programs: FundingProgram[];
     limit: number;
   }>({
-    queryKey: ["wl-programs", communityId, filters],
+    queryKey: ["wl-programs", communityId],
     queryFn: async () => {
       const limit = filters.limit || 20;
-      const params = new URLSearchParams();
-      params.set("page", String(filters.page || 1));
-      params.set("limit", String(limit));
-      if (filters.status) params.set("status", filters.status);
-      if (filters.search) params.set("search", filters.search);
       const [res, err] = await fetchData<FundingProgram[]>(
-        `/v2/funding-program-configs/community/${communityId}?${params.toString()}`,
+        `/v2/funding-program-configs/community/${communityId}`,
         "GET",
         {},
         {},
@@ -38,8 +59,25 @@ export function usePrograms(
     enabled: !!communityId,
   });
 
-  const programs = data?.programs ?? [];
+  const allPrograms = data?.programs ?? [];
   const limit = data?.limit ?? (filters.limit || 20);
+
+  const programs = useMemo(() => {
+    let result = allPrograms;
+    if (filters.status) {
+      result = result.filter((p) => matchesStatus(p, filters.status!));
+    }
+    if (filters.search) {
+      const term = filters.search.toLowerCase();
+      result = result.filter(
+        (p) =>
+          p.metadata?.title?.toLowerCase().includes(term) ||
+          p.metadata?.description?.toLowerCase().includes(term) ||
+          p.name?.toLowerCase().includes(term)
+      );
+    }
+    return result;
+  }, [allPrograms, filters.status, filters.search]);
 
   return {
     programs,
@@ -48,7 +86,6 @@ export function usePrograms(
     filters,
     setFilters,
     refetch,
-    // If we received exactly `limit` items, there may be more pages
     hasMore: programs.length >= limit,
     totalCount: programs.length,
   };

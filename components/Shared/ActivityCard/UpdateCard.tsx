@@ -5,9 +5,9 @@ import type {
   IProjectMilestoneResponse,
   IProjectUpdate,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import Link from "next/link";
 import type { FC } from "react";
 import { useUpdateActions } from "@/hooks/useUpdateActions";
+import { Link } from "@/src/components/navigation/Link";
 import { useProjectStore } from "@/store";
 import type { ConversionGrantUpdate } from "@/types/v2/roadmap";
 import { formatDate } from "@/utilities/formatDate";

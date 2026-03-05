@@ -148,9 +148,3 @@ export interface TenantConfig {
   communityUID?: string;
   claimGrants: ClaimGrantsConfig;
 }
-
-export interface TenantDetectionRequest {
-  headers: {
-    get(name: string): string | null;
-  };
-}

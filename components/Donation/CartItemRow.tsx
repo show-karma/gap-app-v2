@@ -1,8 +1,8 @@
 "use client";
 import { TrashIcon } from "@heroicons/react/24/outline";
-import Link from "next/link";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 import type { SupportedToken } from "@/constants/supportedTokens";
+import { Link } from "@/src/components/navigation/Link";
 import { PAGES } from "@/utilities/pages";
 import { BalanceDisplay } from "./BalanceDisplay";
 import { PayoutAddressDisplay } from "./PayoutAddressDisplay";

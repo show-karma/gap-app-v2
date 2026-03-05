@@ -1,36 +1,35 @@
-import { FundingOpportunities } from "@/components/CommunityGrants/FundingOpportunities";
-import { pagesOnRoot } from "@/utilities/pagesOnRoot";
-import { getCommunityDetails } from "@/utilities/queries/v2/getCommunityData";
-import { getFundingOpportunities } from "@/utilities/queries/v2/getFundingOpportunities";
+"use client";
 
-type Props = {
-  params: Promise<{
-    communityId: string;
-  }>;
-};
+import { useParams } from "next/navigation";
+import { ProgramFilters } from "@/features/programs/components/program-filters";
+import { ProgramList } from "@/features/programs/components/program-list";
+import { usePrograms } from "@/features/programs/hooks/use-programs";
 
-export default async function FundingOpportunitiesPage(props: Props) {
-  const { communityId } = await props.params;
+export default function FundingOpportunitiesPage() {
+  const { communityId } = useParams<{ communityId: string }>();
 
-  if (pagesOnRoot.includes(communityId)) {
-    return undefined;
-  }
-
-  const communityDetails = await getCommunityDetails(communityId);
-
-  if (!communityDetails) {
-    return null;
-  }
-
-  // Use community UID for the API filter (communityRef stores UIDs, not slugs)
-  const fundingOpportunities = await getFundingOpportunities(communityDetails.uid);
+  const { programs, loading, error, filters, setFilters, totalCount, refetch } =
+    usePrograms(communityId);
 
   return (
-    <div className="-my-4 flex flex-col w-full max-w-full py-2">
-      <FundingOpportunities
-        communityUid={communityDetails.uid}
-        communitySlug={communityId}
-        initialData={fundingOpportunities}
+    <div className="flex flex-col gap-5">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-foreground">Funding Opportunities</h1>
+        <p className="mt-2 text-muted-foreground">
+          Browse available funding programs and apply for grants.
+        </p>
+      </div>
+
+      <div className="mb-6">
+        <ProgramFilters filters={filters} onChange={setFilters} totalCount={totalCount} />
+      </div>
+
+      <ProgramList
+        programs={programs}
+        communityId={communityId}
+        loading={loading}
+        error={error}
+        onRetry={refetch}
       />
     </div>
   );

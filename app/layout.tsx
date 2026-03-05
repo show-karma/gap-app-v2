@@ -129,7 +129,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               {isWhitelabel && tenantConfig && (
                 <TenantStoreInitializer tenant={tenantConfig}>{null}</TenantStoreInitializer>
               )}
-              {!isWhitelabel && <PermissionsProvider />}
+              <PermissionsProvider />
               <Toaster {...toasterConfig} />
               {!isWhitelabel && (
                 <>

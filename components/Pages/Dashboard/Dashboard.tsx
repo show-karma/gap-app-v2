@@ -13,7 +13,9 @@ import { useStaff } from "@/src/core/rbac/hooks/use-staff-bridge";
 import { layoutTheme } from "@/src/helper/theme";
 import { PAGES } from "@/utilities/pages";
 import { fetchMyProjects } from "@/utilities/sdk/projects/fetchMyProjects";
+import { useWhitelabel } from "@/utilities/whitelabel-context";
 import { AdminSection } from "./AdminSection/AdminSection";
+import { ApplicationsSection } from "./ApplicationsSection/ApplicationsSection";
 import { DashboardEmptyState } from "./DashboardEmptyState";
 import { DashboardHeader } from "./DashboardHeader";
 import { DashboardLoading } from "./DashboardLoading";
@@ -24,6 +26,7 @@ import { SuperAdminSection } from "./SuperAdminSection/SuperAdminSection";
 export function Dashboard() {
   const router = useRouter();
   const { authenticated, address, ready } = useAuth();
+  const { isWhitelabel, communitySlug } = useWhitelabel();
   const {
     isRegistryAdmin,
     isLoading: isPermissionsLoading,
@@ -68,10 +71,13 @@ export function Dashboard() {
 
   useEffect(() => {
     if (!ready || authenticated) return;
+    // In whitelabel mode, "/" is the community homepage — not a login page.
+    // Don't redirect; let the dashboard show its own unauthenticated state.
+    if (isWhitelabel) return;
 
     setPostLoginRedirect(`${PAGES.DASHBOARD}${window.location.hash}`);
     router.replace(PAGES.HOME);
-  }, [authenticated, ready, router]);
+  }, [authenticated, ready, router, isWhitelabel]);
 
   useEffect(() => {
     if (!ready || isLoading || !window.location.hash) return;
@@ -97,6 +103,7 @@ export function Dashboard() {
             </p>
           </div>
         ) : null}
+        {communitySlug ? <ApplicationsSection communitySlug={communitySlug} /> : null}
         <ProjectsSection
           projects={projects}
           isLoading={isLoadingProjects}

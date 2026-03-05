@@ -16,14 +16,14 @@ export function WhitelabelFooter() {
       >
         <span className="text-zinc-600 dark:text-zinc-400">Powered by</span>
         <Image
-          src="/logo/karma-logo-light.svg"
+          src="/images/karma-logo-dark.svg"
           alt="Karma"
           width={60}
           height={20}
           className="hidden dark:block"
         />
         <Image
-          src="/images/karma-logo-dark.svg"
+          src="/logo/karma-logo-light.svg"
           alt="Karma"
           width={60}
           height={20}

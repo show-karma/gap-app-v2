@@ -6,6 +6,7 @@ import type { ComponentProps, Ref } from "react";
 import { forwardRef } from "react";
 import { useUrlBuilder } from "@/hooks/use-url-builder";
 import { cn } from "@/utilities/tailwind";
+import { useWhitelabel } from "@/utilities/whitelabel-context";
 
 export type CustomLinkProps = Omit<LinkProps, "href"> &
   Omit<ComponentProps<"a">, "href"> & {
@@ -17,7 +18,18 @@ export type CustomLinkProps = Omit<LinkProps, "href"> &
 
 export const Link = forwardRef<HTMLAnchorElement, CustomLinkProps>(
   ({ href, useBuilder = true, disabled = false, className, communityFallback, ...props }, ref) => {
-    const urlBuilded = useUrlBuilder(href, communityFallback, useBuilder);
+    const { isWhitelabel, communitySlug } = useWhitelabel();
+    let urlBuilded = useUrlBuilder(href, communityFallback, useBuilder);
+
+    // In whitelabel mode, strip /community/<slug> prefix so URLs stay clean.
+    // Components may generate hrefs like `/community/optimism/programs/123`
+    // via PAGES.COMMUNITY — normalize to `/programs/123`.
+    if (isWhitelabel && communitySlug) {
+      const prefix = `/community/${communitySlug}`;
+      if (urlBuilded.startsWith(prefix)) {
+        urlBuilded = urlBuilded.slice(prefix.length) || "/";
+      }
+    }
 
     if (disabled) {
       return (

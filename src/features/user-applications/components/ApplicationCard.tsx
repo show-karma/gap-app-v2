@@ -1,10 +1,10 @@
 "use client";
 
 import { Calendar, FileText } from "lucide-react";
-import Link from "next/link";
-import { cn } from "@/utilities/tailwind";
-import { formatDate } from "@/utilities/formatDate";
+import { Link } from "@/src/components/navigation/Link";
 import type { Application, ApplicationStatus } from "@/types/whitelabel-entities";
+import { formatDate } from "@/utilities/formatDate";
+import { cn } from "@/utilities/tailwind";
 
 function getStatusColor(status: ApplicationStatus): string {
   switch (status) {
@@ -27,9 +27,7 @@ function getStatusColor(status: ApplicationStatus): string {
 }
 
 function formatStatusLabel(status: ApplicationStatus): string {
-  return status
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (l) => l.toUpperCase());
+  return status.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
 }
 
 function getProjectTitle(application: Application): string {
@@ -54,13 +52,9 @@ interface ApplicationCardProps {
   communityId: string;
 }
 
-export function ApplicationCard({
-  application,
-  communityId,
-}: ApplicationCardProps) {
+export function ApplicationCard({ application, communityId }: ApplicationCardProps) {
   const projectTitle = getProjectTitle(application);
-  const isSubmitted =
-    application.status === "pending" || application.status === "resubmitted";
+  const isSubmitted = application.status === "pending" || application.status === "resubmitted";
 
   return (
     <Link
@@ -70,17 +64,13 @@ export function ApplicationCard({
       <div className="flex h-full min-h-[200px] flex-col rounded-xl border border-border bg-card p-5 transition-shadow hover:shadow-lg">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <h3 className="line-clamp-2 text-lg font-semibold text-foreground">
-              {projectTitle}
-            </h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {application.referenceNumber}
-            </p>
+            <h3 className="line-clamp-2 text-lg font-semibold text-foreground">{projectTitle}</h3>
+            <p className="mt-1 text-sm text-muted-foreground">{application.referenceNumber}</p>
           </div>
           <span
             className={cn(
               "inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
-              getStatusColor(application.status),
+              getStatusColor(application.status)
             )}
           >
             {formatStatusLabel(application.status)}
@@ -99,8 +89,7 @@ export function ApplicationCard({
           <div className="flex items-center gap-1 text-sm text-muted-foreground">
             <Calendar className="h-4 w-4" />
             <span>
-              {isSubmitted ? "Submitted" : "Created"}{" "}
-              {formatDate(application.createdAt)}
+              {isSubmitted ? "Submitted" : "Created"} {formatDate(application.createdAt)}
             </span>
           </div>
           <div className="flex items-center gap-1 text-sm font-medium text-primary">

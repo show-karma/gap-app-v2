@@ -22,18 +22,63 @@ export async function middleware(request: NextRequest) {
 
     const { communitySlug, tenantId } = whitelabel;
 
-    // Strip existing /community/<slug> prefix to avoid double-prefixing.
-    // Components generate hrefs like `/community/optimism/programs/123` which
-    // would otherwise become `/community/optimism/community/optimism/programs/123`.
+    // In whitelabel mode, URLs should never show /community/<slug> in the browser.
+    // If a component generates an href like `/community/optimism/programs/123`,
+    // redirect to the clean path `/programs/123` so the browser URL stays clean.
     const communityPrefix = `/community/${communitySlug}`;
-    const normalizedPath = path.startsWith(communityPrefix)
-      ? path.slice(communityPrefix.length) || "/"
-      : path;
+    if (path.startsWith(communityPrefix)) {
+      const cleanPath = path.slice(communityPrefix.length) || "/";
+      const url = request.nextUrl.clone();
+      url.pathname = cleanPath;
+      return NextResponse.redirect(url);
+    }
+
+    const normalizedPath = path;
     const normalizedIsRoot = normalizedPath === "/" || normalizedPath === "";
 
-    // Rewrite ALL paths — prepend /community/<slug>
+    // In whitelabel mode, /programs/* should redirect to the homepage.
+    // The homepage already shows funding opportunities, so direct program
+    // browsing paths are not needed.
+    if (normalizedPath.startsWith("/programs")) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/";
+      return NextResponse.redirect(url);
+    }
+
+    // Paths that exist under /community/[communityId]/ and should be rewritten.
+    // All other paths (e.g. /project/..., /funding-map, /donations) are top-level
+    // routes — pass them through with whitelabel headers but no rewrite.
+    const communitySubRoutes = new Set([
+      "admin",
+      "applications",
+      "browse-applications",
+      "claim-funds",
+      "donate",
+      "financials",
+      "funding-opportunities",
+      "impact",
+      "karma-ai",
+      "manage",
+      "my-applications",
+      "updates",
+    ]);
+
+    const firstSegment = normalizedPath.split("/")[1] || "";
+    const isCommunityRoute = normalizedIsRoot || communitySubRoutes.has(firstSegment);
+
+    if (!isCommunityRoute) {
+      // Top-level route — pass through with whitelabel headers, no rewrite.
+      const requestHeaders = new Headers(request.headers);
+      requestHeaders.set("x-is-whitelabel", "true");
+      requestHeaders.set("x-community-slug", communitySlug);
+      requestHeaders.set("x-tenant-id", tenantId || communitySlug);
+      requestHeaders.set("x-whitelabel-domain", whitelabel.domain);
+      return NextResponse.next({ request: { headers: requestHeaders } });
+    }
+
+    // Rewrite community sub-routes — prepend /community/<slug>
     const rewrittenPath = normalizedIsRoot
-      ? `/community/${communitySlug}`
+      ? `/community/${communitySlug}/funding-opportunities`
       : `/community/${communitySlug}${normalizedPath}`;
 
     const url = request.nextUrl.clone();

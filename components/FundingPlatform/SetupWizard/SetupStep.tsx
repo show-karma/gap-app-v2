@@ -1,9 +1,9 @@
 "use client";
 
 import { CheckCircleIcon, ExclamationCircleIcon } from "@heroicons/react/24/solid";
-import Link from "next/link";
 import { Button } from "@/components/Utilities/Button";
 import type { SetupStep as SetupStepType } from "@/hooks/useProgramSetupProgress";
+import { Link } from "@/src/components/navigation/Link";
 import { cn } from "@/utilities/tailwind";
 
 interface SetupStepProps {

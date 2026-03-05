@@ -99,25 +99,17 @@ export default async function Layout(props: { children: React.ReactNode; params:
     return <CommunityNotFound communityId={communityId} />;
   }
 
-  // Whitelabel domains use their own navbar — skip CommunityHeader
-  if (isWhitelabel) {
-    const canonicalUrl = config ? `https://${config.domain}` : undefined;
-    return (
-      <>
-        {tenantConfig && canonicalUrl && (
-          <WhitelabelJsonLd tenant={tenantConfig} url={canonicalUrl} />
-        )}
-        <div className="flex w-full h-full max-w-full flex-col justify-start max-lg:flex-col">
-          <CommunityContentWrapper>{children}</CommunityContentWrapper>
-        </div>
-      </>
-    );
-  }
+  const canonicalUrl = isWhitelabel && config ? `https://${config.domain}` : undefined;
 
   return (
-    <div className="flex w-full h-full max-w-full flex-col justify-start max-lg:flex-col">
-      <CommunityHeader community={community} />
-      <CommunityContentWrapper>{children}</CommunityContentWrapper>
-    </div>
+    <>
+      {isWhitelabel && tenantConfig && canonicalUrl && (
+        <WhitelabelJsonLd tenant={tenantConfig} url={canonicalUrl} />
+      )}
+      <div className="flex w-full h-full max-w-full flex-col justify-start max-lg:flex-col">
+        <CommunityHeader community={community} />
+        <CommunityContentWrapper>{children}</CommunityContentWrapper>
+      </div>
+    </>
   );
 }

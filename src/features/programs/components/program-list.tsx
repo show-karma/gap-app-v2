@@ -1,9 +1,57 @@
 "use client";
 
 import { AlertCircle, FileText, RefreshCw } from "lucide-react";
+import { FundingMapCard } from "@/src/features/funding-map/components/funding-map-card";
+import type { FundingProgramResponse } from "@/src/features/funding-map/types/funding-program";
+import type { FundingProgram } from "@/types/whitelabel-entities";
+import { PAGES } from "@/utilities/pages";
 import type { ProgramListProps } from "../types";
-import { ProgramCard } from "./ProgramCard";
 import { ProgramCardSkeleton } from "./ProgramCardSkeleton";
+
+function toFundingProgramResponse(p: FundingProgram): FundingProgramResponse {
+  return {
+    _id: p.programId,
+    programId: p.programId,
+    chainID: p.chainID,
+    metadata: p.metadata,
+    isOnKarma: true,
+    isValid: true,
+    createdAt: "",
+    updatedAt: "",
+  };
+}
+
+type ProgramStatus = "open" | "closed" | "coming-soon" | "deadline-passed";
+
+const STATUS_STYLES: Record<ProgramStatus, { label: string; className: string }> = {
+  open: {
+    label: "Open",
+    className: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+  },
+  closed: {
+    label: "Closed",
+    className: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
+  },
+  "coming-soon": {
+    label: "Coming Soon",
+    className: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
+  },
+  "deadline-passed": {
+    label: "Ended",
+    className: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
+  },
+};
+
+function getProgramStatus(program: FundingProgram): ProgramStatus {
+  const now = new Date();
+  const startsAt = program.metadata?.startsAt ? new Date(program.metadata.startsAt) : null;
+  const endsAt = program.metadata?.endsAt ? new Date(program.metadata.endsAt) : null;
+
+  if (endsAt && now > endsAt) return "deadline-passed";
+  if (startsAt && now < startsAt) return "coming-soon";
+  if (program.metadata?.status === "inactive") return "closed";
+  return "open";
+}
 
 const SKELETON_KEYS = ["sk-1", "sk-2", "sk-3", "sk-4", "sk-5", "sk-6"];
 
@@ -72,9 +120,22 @@ export function ProgramList({
         data-testid="programs-grid"
         className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
       >
-        {programs.map((program) => (
-          <ProgramCard key={program.programId} program={program} communityId={communityId} />
-        ))}
+        {programs.map((program) => {
+          const status = getProgramStatus(program);
+          const { label, className } = STATUS_STYLES[status];
+          return (
+            <FundingMapCard
+              key={program.programId}
+              program={toFundingProgramResponse(program)}
+              href={PAGES.COMMUNITY.PROGRAM_DETAIL(communityId, program.programId)}
+              statusSlot={
+                <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${className}`}>
+                  {label}
+                </span>
+              }
+            />
+          );
+        })}
       </div>
     );
   }
@@ -82,9 +143,22 @@ export function ProgramList({
   // List view
   return (
     <div data-testid="programs-list" className="space-y-4">
-      {programs.map((program) => (
-        <ProgramCard key={program.programId} program={program} communityId={communityId} />
-      ))}
+      {programs.map((program) => {
+        const status = getProgramStatus(program);
+        const { label, className } = STATUS_STYLES[status];
+        return (
+          <FundingMapCard
+            key={program.programId}
+            program={toFundingProgramResponse(program)}
+            href={PAGES.COMMUNITY.PROGRAM_DETAIL(communityId, program.programId)}
+            statusSlot={
+              <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${className}`}>
+                {label}
+              </span>
+            }
+          />
+        );
+      })}
     </div>
   );
 }

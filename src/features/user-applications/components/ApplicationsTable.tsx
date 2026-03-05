@@ -1,10 +1,10 @@
 "use client";
 
 import { Edit, Eye, FileText } from "lucide-react";
-import Link from "next/link";
-import { cn } from "@/utilities/tailwind";
-import { formatDate } from "@/utilities/formatDate";
+import { Link } from "@/src/components/navigation/Link";
 import type { Application, ApplicationStatus } from "@/types/whitelabel-entities";
+import { formatDate } from "@/utilities/formatDate";
+import { cn } from "@/utilities/tailwind";
 import type { UserApplicationsSortBy } from "../types";
 
 interface ApplicationsTableProps {
@@ -37,9 +37,7 @@ function getStatusColor(status: ApplicationStatus): string {
 }
 
 function formatStatusLabel(status: ApplicationStatus): string {
-  return status
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (l) => l.toUpperCase());
+  return status.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
 }
 
 const columns: Array<{
@@ -76,12 +74,8 @@ export function ApplicationsTable({
     return (
       <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-16">
         <FileText className="mb-4 h-12 w-12 text-muted-foreground" />
-        <h3 className="text-lg font-semibold text-foreground">
-          {emptyMessage}
-        </h3>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {emptyDescription}
-        </p>
+        <h3 className="text-lg font-semibold text-foreground">{emptyMessage}</h3>
+        <p className="mt-1 text-sm text-muted-foreground">{emptyDescription}</p>
       </div>
     );
   }
@@ -96,16 +90,12 @@ export function ApplicationsTable({
                 {col.sortable ? (
                   <button
                     type="button"
-                    onClick={() =>
-                      onSort(col.key as UserApplicationsSortBy)
-                    }
+                    onClick={() => onSort(col.key as UserApplicationsSortBy)}
                     className="flex items-center gap-1 hover:text-foreground"
                   >
                     {col.label}
                     {sortBy === col.key && (
-                      <span className="text-xs">
-                        {sortOrder === "asc" ? "\u2191" : "\u2193"}
-                      </span>
+                      <span className="text-xs">{sortOrder === "asc" ? "\u2191" : "\u2193"}</span>
                     )}
                   </button>
                 ) : (
@@ -119,26 +109,20 @@ export function ApplicationsTable({
           {applications.map((app) => (
             <tr key={app.referenceNumber} className="hover:bg-muted/30">
               <td className="px-4 py-3">
-                <p className="font-medium text-foreground">
-                  {app.referenceNumber}
-                </p>
+                <p className="font-medium text-foreground">{app.referenceNumber}</p>
               </td>
-              <td className="px-4 py-3 text-muted-foreground">
-                {app.programTitle || "Program"}
-              </td>
+              <td className="px-4 py-3 text-muted-foreground">{app.programTitle || "Program"}</td>
               <td className="px-4 py-3">
                 <span
                   className={cn(
                     "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
-                    getStatusColor(app.status),
+                    getStatusColor(app.status)
                   )}
                 >
                   {formatStatusLabel(app.status)}
                 </span>
               </td>
-              <td className="px-4 py-3 text-muted-foreground">
-                {formatDate(app.createdAt)}
-              </td>
+              <td className="px-4 py-3 text-muted-foreground">{formatDate(app.createdAt)}</td>
               <td className="px-4 py-3">
                 <div className="flex gap-2">
                   <Link

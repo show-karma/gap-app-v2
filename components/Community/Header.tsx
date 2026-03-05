@@ -54,8 +54,8 @@ const NormalCommunityHeader = ({ community }: { community: Community }) => {
       className={cn(
         layoutTheme.padding,
         isWhitelabel
-          ? "py-0 flex flex-col gap-4 justify-between items-start pt-6 sm:px-3 md:px-4 px-6 border-b border-gray-200 dark:border-gray-800"
-          : "py-0 flex flex-col gap-4 justify-between items-start mt-4 sm:px-3 md:px-4 px-6 border-b border-gray-200 dark:border-gray-800"
+          ? "py-0 flex flex-col gap-4 justify-between items-start pt-6 border-b border-gray-200 dark:border-gray-800"
+          : "py-0 flex flex-col gap-4 justify-between items-start mt-4 border-b border-gray-200 dark:border-gray-800"
       )}
     >
       <div className="flex flex-row gap-4 flex-wrap max-lg:flex-col justify-between items-center w-full">
@@ -85,8 +85,19 @@ const NormalCommunityHeader = ({ community }: { community: Community }) => {
     </div>
   );
 };
+// Paths where the CommunityHeader (with tabs) should appear in whitelabel mode.
+// Whitelabel-native pages (programs, applications, etc.) have their own layout.
+const WHITELABEL_TAB_PATHS = ["/funding-opportunities", "/updates", "/impact", "/financials"];
+
+function isWhitelabelTabPage(pathname: string): boolean {
+  // Root "/" is the funding-opportunities landing page in whitelabel
+  if (pathname === "/" || pathname === "") return true;
+  return WHITELABEL_TAB_PATHS.some((p) => pathname.includes(p));
+}
+
 export default function CommunityHeader({ community }: { community: Community }) {
   const pathname = usePathname();
+  const { isWhitelabel } = useWhitelabel();
   const isAdminPage = pathname.includes("/manage");
   const isReviewerPage = pathname.includes("/reviewer");
   const isDonatePage = pathname.includes("/donate");
@@ -97,6 +108,10 @@ export default function CommunityHeader({ community }: { community: Community })
     return null;
   }
   if (isDonatePage) {
+    return null;
+  }
+  // In whitelabel mode, only show the header on community tab pages
+  if (isWhitelabel && !isWhitelabelTabPage(pathname)) {
     return null;
   }
   return <NormalCommunityHeader community={community} />;

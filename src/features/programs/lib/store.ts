@@ -12,7 +12,7 @@ interface ProgramsStore extends ProgramsUIState {
 
 const initialState: ProgramsUIState = {
   selectedProgram: null,
-  filters: {},
+  filters: { status: "active" },
   viewMode: "grid",
   isFilterPanelOpen: false,
 };
@@ -23,8 +23,8 @@ export const useProgramsStore = create<ProgramsStore>((set) => ({
   setSelectedProgram: (program) => set({ selectedProgram: program }),
 
   setFilters: (filters) =>
-    set((state) => ({
-      filters: { ...state.filters, ...filters },
+    set(() => ({
+      filters,
     })),
 
   toggleViewMode: () =>

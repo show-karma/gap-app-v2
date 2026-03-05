@@ -22,6 +22,8 @@ interface FundingMapCardProps {
   hideDescription?: boolean;
   /** Hide the categories section */
   hideCategories?: boolean;
+  /** Optional element rendered next to the OnKarma badge in the top-right */
+  statusSlot?: React.ReactNode;
 }
 
 /**
@@ -43,6 +45,7 @@ export function FundingMapCard({
   href,
   hideDescription = false,
   hideCategories = false,
+  statusSlot,
   className,
 }: FundingMapCardProps & { className?: string }) {
   const router = useRouter();
@@ -125,7 +128,10 @@ export function FundingMapCard({
               )}
             </div>
           )}
-          {isOnKarma && <OnKarmaBadge showTooltip={true} />}
+          <div className="flex items-center gap-1.5">
+            {statusSlot}
+            {isOnKarma && <OnKarmaBadge showTooltip={true} />}
+          </div>
         </div>
         <div className="flex flex-col gap-1">
           <h3 className="text-lg font-semibold text-foreground">{title}</h3>

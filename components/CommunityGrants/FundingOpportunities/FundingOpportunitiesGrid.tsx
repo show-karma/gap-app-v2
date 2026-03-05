@@ -4,14 +4,15 @@ import { FundingMapCard } from "@/src/features/funding-map/components/funding-ma
 import type { FundingProgramResponse } from "@/src/features/funding-map/types/funding-program";
 import { FUNDING_PLATFORM_DOMAINS } from "@/src/features/funding-map/utils/funding-platform-domains";
 import { envVars } from "@/utilities/enviromentVars";
-import { FUNDING_PLATFORM_PAGES } from "@/utilities/pages";
+import { FUNDING_PLATFORM_PAGES, PAGES } from "@/utilities/pages";
+import { useWhitelabel } from "@/utilities/whitelabel-context";
 
 interface FundingOpportunitiesGridProps {
   programs: FundingProgramResponse[];
   communitySlug: string;
 }
 
-const getProgramPageUrl = (communitySlug: string, programId: string): string => {
+const getExternalProgramPageUrl = (communitySlug: string, programId: string): string => {
   const exclusiveDomain =
     FUNDING_PLATFORM_DOMAINS[communitySlug as keyof typeof FUNDING_PLATFORM_DOMAINS];
   const domain = exclusiveDomain
@@ -27,17 +28,18 @@ export const FundingOpportunitiesGrid = ({
   programs,
   communitySlug,
 }: FundingOpportunitiesGridProps) => {
+  const { isWhitelabel } = useWhitelabel();
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
       {programs.map((program) => {
         const programId = program.programId || program._id?.toString();
-        return (
-          <FundingMapCard
-            key={programId}
-            program={program}
-            href={programId ? getProgramPageUrl(communitySlug, programId) : undefined}
-          />
-        );
+        const href = programId
+          ? isWhitelabel
+            ? PAGES.COMMUNITY.PROGRAM_DETAIL(communitySlug, programId)
+            : getExternalProgramPageUrl(communitySlug, programId)
+          : undefined;
+        return <FundingMapCard key={programId} program={program} href={href} />;
       })}
     </div>
   );

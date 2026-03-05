@@ -12,9 +12,9 @@ import {
   Square2StackIcon,
   TagIcon,
 } from "@heroicons/react/24/outline";
-import Link from "next/link";
 import { useMemo } from "react";
 import { Button } from "@/components/Utilities/Button";
+import { Link } from "@/src/components/navigation/Link";
 import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
 import { Permission } from "@/src/core/rbac/types/permission";
 import type { Community } from "@/types/v2/community";

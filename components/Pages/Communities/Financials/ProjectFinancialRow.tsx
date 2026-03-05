@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
+import { Link } from "@/src/components/navigation/Link";
 import type { ProjectFinancialStatus } from "@/types/financials";
 import formatCurrency from "@/utilities/formatCurrency";
 import { PAGES } from "@/utilities/pages";

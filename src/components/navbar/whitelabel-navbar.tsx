@@ -1,9 +1,8 @@
 "use client";
 
-import { ChevronDown, Copy, ExternalLink, LogIn, LogOut, Menu, X } from "lucide-react";
+import { ChevronDown, ExternalLink, Menu, X } from "lucide-react";
 import Image from "next/image";
-import { Fragment, useCallback, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Fragment, useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,10 +14,9 @@ import { Link } from "@/src/components/navigation/Link";
 import type { NavDropdown, NavItem } from "@/src/infrastructure/types/tenant";
 import { useTenantSafe } from "@/store/tenant";
 import { cn } from "@/utilities/tailwind";
-
-function truncateAddress(address: string) {
-  return `${address.slice(0, 6)}...${address.slice(-4)}`;
-}
+import { NavbarAuthButtons } from "./navbar-auth-buttons";
+import { NavbarPermissionsProvider } from "./navbar-permissions-context";
+import { NavbarUserMenu } from "./navbar-user-menu";
 
 function isDropdown(item: NavItem): item is NavDropdown {
   return "items" in item;
@@ -32,16 +30,8 @@ interface SocialLinkItem {
 
 export function WhitelabelNavbar() {
   const tenant = useTenantSafe();
-  const { authenticate: login, logout, ready, authenticated, address } = useAuth();
+  const { authenticated } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [copied, setCopied] = useState(false);
-
-  const copyAddress = useCallback(() => {
-    if (!address) return;
-    navigator.clipboard.writeText(address).catch(() => {});
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }, [address]);
 
   if (!tenant) {
     return (
@@ -144,14 +134,14 @@ export function WhitelabelNavbar() {
             <div className="flex w-full items-center justify-end gap-1">
               <span className="text-xs text-zinc-500 dark:text-zinc-400">Powered by</span>
               <Image
-                src="/logo/karma-logo-light.svg"
+                src="/images/karma-logo-dark.svg"
                 alt="Karma"
                 width={40}
                 height={20}
                 className="hidden dark:block"
               />
               <Image
-                src="/images/karma-logo-dark.svg"
+                src="/logo/karma-logo-light.svg"
                 alt="Karma"
                 width={40}
                 height={20}
@@ -166,10 +156,10 @@ export function WhitelabelNavbar() {
           {/* My Applications - first when authenticated (matching reference) */}
           {authenticated && (
             <Link
-              href="/my-applications"
+              href="/dashboard"
               className="rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-white"
             >
-              My Applications
+              Dashboard
             </Link>
           )}
           <Link
@@ -285,50 +275,14 @@ export function WhitelabelNavbar() {
           {/* Separator */}
           <div className="mx-2 h-6 w-px bg-zinc-200 dark:bg-zinc-700" />
 
-          {/* Auth / Wallet */}
-          {ready &&
-            (authenticated && address ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="inline-flex items-center gap-2 rounded-full bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700">
-                    <span className="h-2 w-2 rounded-full bg-green-500" />
-                    <span className="font-mono text-xs">{truncateAddress(address)}</span>
-                    <ChevronDown className="h-3.5 w-3.5" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="min-w-[200px]">
-                  <DropdownMenuItem onClick={copyAddress} className="cursor-pointer">
-                    <Copy className="mr-2 h-4 w-4" />
-                    {copied ? "Copied!" : "Copy Address"}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={logout}
-                    className="cursor-pointer text-red-600 focus:text-red-600 dark:text-red-400 dark:focus:text-red-400"
-                  >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Sign Out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <Button size="sm" onClick={login} className="rounded-full px-4">
-                <LogIn className="mr-1.5 h-4 w-4" />
-                Sign in
-              </Button>
-            ))}
+          {/* Auth — reuse main app components */}
+          <NavbarPermissionsProvider>
+            {authenticated ? <NavbarUserMenu /> : <NavbarAuthButtons />}
+          </NavbarPermissionsProvider>
         </div>
 
-        {/* Mobile: wallet + menu toggle */}
+        {/* Mobile: menu toggle */}
         <div className="flex items-center gap-2 lg:hidden">
-          {ready && authenticated && address && (
-            <button
-              onClick={copyAddress}
-              className="inline-flex items-center gap-1.5 rounded-full bg-zinc-100 px-3 py-1.5 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
-            >
-              <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
-              <span className="font-mono">{truncateAddress(address)}</span>
-            </button>
-          )}
           <button
             className="rounded-lg p-2 text-zinc-600 transition-colors hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -345,11 +299,11 @@ export function WhitelabelNavbar() {
           <div className="space-y-1">
             {authenticated && (
               <Link
-                href="/my-applications"
+                href="/dashboard"
                 className="block rounded-lg px-3 py-2.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
                 onClick={() => setIsMenuOpen(false)}
               >
-                My Applications
+                Dashboard
               </Link>
             )}
             <Link
@@ -460,36 +414,12 @@ export function WhitelabelNavbar() {
             )}
           </div>
 
-          {/* Mobile auth */}
-          {ready && (
-            <div className="mt-3 border-t border-zinc-200 pt-3 dark:border-zinc-700">
-              {authenticated && address ? (
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/20"
-                  onClick={() => {
-                    logout();
-                    setIsMenuOpen(false);
-                  }}
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sign Out
-                </Button>
-              ) : (
-                <Button
-                  className="w-full rounded-full"
-                  size="sm"
-                  onClick={() => {
-                    login();
-                    setIsMenuOpen(false);
-                  }}
-                >
-                  <LogIn className="mr-1.5 h-4 w-4" />
-                  Sign in
-                </Button>
-              )}
-            </div>
-          )}
+          {/* Mobile auth — reuse main app components */}
+          <div className="mt-3 border-t border-zinc-200 pt-3 dark:border-zinc-700">
+            <NavbarPermissionsProvider>
+              {authenticated ? <NavbarUserMenu /> : <NavbarAuthButtons />}
+            </NavbarPermissionsProvider>
+          </div>
         </div>
       )}
     </nav>

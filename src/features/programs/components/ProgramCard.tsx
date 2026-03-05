@@ -1,13 +1,13 @@
 "use client";
 
 import { ChevronRight, MoreVertical } from "lucide-react";
-import Link from "next/link";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Link } from "@/src/components/navigation/Link";
 import type { FundingProgram } from "@/types/whitelabel-entities";
 import { PAGES } from "@/utilities/pages";
 

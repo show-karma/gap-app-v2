@@ -1,14 +1,14 @@
 "use client";
 import { ChartLine, DollarSign, LandPlot, SquareUser, Wallet } from "lucide-react";
-import Link from "next/link";
 import { useParams, usePathname, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
-import { useCommunityBasePath } from "@/hooks/useCommunityBasePath";
 import { useFundingOpportunitiesCount } from "@/hooks/useFundingOpportunitiesCount";
 import { useCommunityPrograms } from "@/hooks/usePrograms";
+import { Link } from "@/src/components/navigation/Link";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
+import { useWhitelabel } from "@/utilities/whitelabel-context";
 
 const activeLinkStyle =
   "text-gray-900 dark:text-white border-b-4 border-b-gray-900 dark:border-b-white";
@@ -87,9 +87,15 @@ export const CommunityPageNavigator = () => {
   const params = useParams();
   const searchParams = useSearchParams();
   const communityId = params.communityId as string;
-  const pathname = usePathname();
+  const rawPathname = usePathname();
+  const { isWhitelabel } = useWhitelabel();
   const programId = searchParams.get("programId");
-  const basePath = useCommunityBasePath();
+  // In whitelabel mode, the middleware rewrites "/" to "/community/<slug>/funding-opportunities"
+  // but usePathname() still returns "/". Normalize so tab highlighting works correctly.
+  const pathname =
+    isWhitelabel && (rawPathname === "/" || rawPathname === "")
+      ? "/funding-opportunities"
+      : rawPathname;
 
   // Check if we're on an admin page early to avoid unnecessary data fetching
   const isAdminPage = pathname.includes("/manage");
@@ -125,9 +131,7 @@ export const CommunityPageNavigator = () => {
   return (
     <div className="flex flex-row max-md:flex-col flex-wrap pt-8 border-b border-gray-200 dark:border-zinc-700 justify-start items-center gap-6 h-max">
       {visibleNavigationItems.map(({ id, path, title, Icon, isActive, showNewTag }) => {
-        const fullPath = path(communityId);
-        const href =
-          basePath === "" ? fullPath.replace(`/community/${communityId}`, "") || "/" : fullPath;
+        const href = path(communityId);
         return (
           <Link
             key={id}
