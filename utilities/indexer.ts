@@ -303,6 +303,7 @@ export const INDEXER = {
     },
     PAYOUT_CONFIG: {
       SAVE: "/v2/payout-config",
+      VALIDATE_BULK_IMPORT: "/v2/payout-config/bulk-import/validate",
       BY_COMMUNITY: (communityUID: string) => `/v2/payout-config/community/${communityUID}`,
       BY_GRANT: (grantUID: string) => `/v2/payout-config/grant/${grantUID}`,
       DELETE: (grantUID: string) => `/v2/payout-config/grant/${grantUID}`,
@@ -672,5 +673,9 @@ export const INDEXER = {
       `/v2/communities/${communityIdOrSlug}/kyc/batch-status/by-application-reference`,
     GET_FORM_URL: (communityIdOrSlug: string) =>
       `/v2/communities/${communityIdOrSlug}/kyc-form-url`,
+  },
+  USERS: {
+    RESOLVE_EMAIL: `/v2/user/resolve-email`,
+    PROFILES: (addresses: string) => `/v2/user/profiles?addresses=${addresses}`,
   },
 };

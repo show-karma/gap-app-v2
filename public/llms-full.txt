@@ -39,25 +39,40 @@ Join Discord
 ### For Funders
 
 From intake to impact, Karma gives you the tools to fund smarter, track progress transparently, and maximize the ROI of every funded project.
+- Arbitrum
+- Gitcoin
+- Celo
+- Polygon
+- Filecoin
+- Optimism
+- Octant
+- Celo Public Goods
+- Scroll
+- Lisk
+- Public Nouns
+- Livepeer
+- Regen Coordination
+- Good Dollar
 Proven expertise in ecosystem funding
 We've powered some of the largest onchain funding programs, helping ecosystems distribute capital transparently, measure outcomes, and grow faster.
+for growth and impact
 Whether you're running applications, tracking milestones, or measuring impact, each module works independently and seamlessly together. Launch fast, adapt easily, and scale your ecosystem with confidence.
-Application Evaluation
-Smarter decisions with AI-powered evaluation
+Application Evaluation Smarter decisions with AI-powered evaluation
 Leverage AI to evaluate grant applications at scale. Get instant scoring, risk assessments, and funding recommendations based on historical performance, cross-ecosystem reputation, and proposal quality—so you can review and approve funding with confidence.
-Public Registry
-One place for all projects and their progress
+Public Registry One place for all projects and their progress
 A public registry of every project in your ecosystem with complete visibility into funding, milestones, and updates. Track project progress in real-time as grantees submit milestone updates with proof of work.
-Impact
-Measure what matters with real-time insights
+Impact Measure what matters with real-time insights
 Track project metrics automatically through GitHub, Dune, and custom integrations. Apply the industry-leading 'Common Approach' framework to measure impact, evaluate performance in real time, and continuously improve your funding program.
-Distribution
-Funding methods to meet your needs
+Distribution Funding methods to meet your needs
 Support projects smarter: issue direct grants with AI-driven evaluations and milestone-based funding, then scale impact with our retro funding platform.
+“ Karma isn't just software, they're a true partner. Their AI-driven evaluations cut review time dramatically. Their platform fits our needs perfectly and their team ships features at lightning speed.
+Optimism
 Over the past 10 months, Celo has leveraged Karma's platform to track 400+ projects, 850+ grants and 3600+ milestones, moving from fragmented tracking to a unified onchain project registry and funding funnel to simplify impact measurement and grow their ecosystem.
 Meet your dedicated success partner who will guide you through setup, onboarding, and best practices.
 We’ll help you set up your community space, enable whitelabel branding, and deploy the onchain modules you need — all tailored to your workflow.
 Design your funding program, set evaluation criteria, and go live. Start receiving applications and funding projects within 48 hours.
+scale when you're ready
+Pro
 
 ### Projects
 
@@ -102,41 +117,24 @@ through transparent funding, accountability, and impact measurement.
 
 #### Why Karma
 
-##### Problem
-
+A brief introduction to why we are building Karma and Grantee Accountability Protocol
+Problem
 Grant programs in the crypto ecosystem lack a standardized method for grantees to publish progress updates and milestones, leading to several issues:
-
-**Limited Accessibility**: Currently, it is challenging for grant managers and the community to easily access and track project progress and milestones, as information is scattered across forums and external links.
-
-**Reputation Portability**: Grantees who apply for grants from multiple organizations struggle to establish and carry their reputation consistently across the ecosystem. This is particularly difficult for individuals who are new to the ecosystem and need opportunities to showcase their work and build their reputation.
-
-**Inadequate Data Structure**: The absence of structured data that can be accessed in a permissionless manner hampers the development of applications and analytical tools for evaluating grant impact and builder reputation.
-
-##### Solution
-
-To address the aforementioned problems, we built [GAP](https://gap.karmahq.xyz/) (Grantee Accountability Protocol) where grant teams can post information about the grant and grantees can post milestones and progress updates onchain. This solves a number of problems explained below
-
-**Onchain Reporting**: Grantees will utilize the protocol to self-report their progress and milestones directly on the blockchain through [EAS](https://attest.org/) (Ethereum Attestation Service). Leveraging the existing support for EAS schemas, we defined schemas tailored to various reporting needs.
-
-**Universal data access**: By storing all grant-related data onchain, we eliminate the need for manual searching and external links. We built an interface for grantees and grant teams to interact with the protocol. Communities are not obligated to use this interface but are welcome to build their own interface to present this information in interesting ways.
-
-**Enhanced Reputation Building**: Our protocol enables the linking of team member profiles to specific projects. This feature empowers team members to build and showcase their reputation for their contributions. Additionally, this reputation can be carried over to other DAOs, opening opportunities for involvement in various areas of DAO governance or similar initiatives.
-
-**Grant Farming**: It is well known in the ecosystem that there are teams who simply try to get grants and either don’t fully execute or do it with no goal of making the project a success. Having better visibility can help community and grant admins evaluate teams before issuing grants.
-
-**Facilitating Novel Applications**: With comprehensive on-chain data available, the protocol encourages the development of innovative applications. Few applications we can think of that can be built on top of this protocol are:
-
-- Grantee reputation systems
-
-- Project impact analysis tools
-
-- Signaling for future grants
-
-- Auto monitor milestones and progress updates and alert the community
-
-- Endorsing teams and team members working on projects
-
-[NextHow does it work?](https://docs.gap.karmahq.xyz/overview/how-does-it-work)
+Limited Accessibility : Currently, it is challenging for grant managers and the community to easily access and track project progress and milestones, as information is scattered across forums and external links.
+Reputation Portability : Grantees who apply for grants from multiple organizations struggle to establish and carry their reputation consistently across the ecosystem. This is particularly difficult for individuals who are new to the ecosystem and need opportunities to showcase their work and build their reputation.
+Inadequate Data Structure : The absence of structured data that can be accessed in a permissionless manner hampers the development of applications and analytical tools for evaluating grant impact and builder reputation.
+Solution
+To address the aforementioned problems, we built GAP (Grantee Accountability Protocol) where grant teams can post information about the grant and grantees can post milestones and progress updates onchain. This solves a number of problems explained below
+Onchain Reporting : Grantees will utilize the protocol to self-report their progress and milestones directly on the blockchain through EAS (Ethereum Attestation Service). Leveraging the existing support for EAS schemas, we defined schemas tailored to various reporting needs.
+Universal data access : By storing all grant-related data onchain, we eliminate the need for manual searching and external links. We built an interface for grantees and grant teams to interact with the protocol. Communities are not obligated to use this interface but are welcome to build their own interface to present this information in interesting ways.
+Enhanced Reputation Building : Our protocol enables the linking of team member profiles to specific projects. This feature empowers team members to build and showcase their reputation for their contributions. Additionally, this reputation can be carried over to other DAOs, opening opportunities for involvement in various areas of DAO governance or similar initiatives.
+Grant Farming : It is well known in the ecosystem that there are teams who simply try to get grants and either don’t fully execute or do it with no goal of making the project a success. Having better visibility can help community and grant admins evaluate teams before issuing grants.
+Facilitating Novel Applications : With comprehensive on-chain data available, the protocol encourages the development of innovative applications. Few applications we can think of that can be built on top of this protocol are:
+Grantee reputation systems
+Project impact analysis tools
+Signaling for future grants
+Auto monitor milestones and progress updates and alert the community
+Endorsing teams and team members working on projects
 
 #### How does it work?
 

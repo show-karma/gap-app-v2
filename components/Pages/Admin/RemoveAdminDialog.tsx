@@ -37,10 +37,19 @@ type RemoveAdminDialogProps = {
   UUID: `0x${string}`;
   chainid: number;
   Admin: `0x${string}`;
+  adminName?: string;
+  adminEmail?: string;
   fetchAdmins: () => void;
 };
 
-export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({ UUID, chainid, Admin, fetchAdmins }) => {
+export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
+  UUID,
+  chainid,
+  Admin,
+  adminName,
+  adminEmail,
+  fetchAdmins,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const { address } = useAccount();
   function closeModal() {
@@ -202,7 +211,21 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({ UUID, chainid, Admin, 
                     <div className="w-full px-2 py-4 sm:px-0">
                       <div className="flex w-full flex-col gap-2">
                         <div className={labelStyle}>Admin</div>
-                        <div>{Admin}</div>
+                        <div className="flex flex-col gap-1">
+                          {adminName && (
+                            <span className="text-sm font-medium text-gray-900 dark:text-zinc-100">
+                              {adminName}
+                            </span>
+                          )}
+                          {adminEmail && (
+                            <span className="text-sm text-gray-600 dark:text-zinc-300">
+                              {adminEmail}
+                            </span>
+                          )}
+                          <span className="text-xs font-mono text-gray-500 dark:text-zinc-400 break-all">
+                            {Admin}
+                          </span>
+                        </div>
                       </div>
                     </div>
 

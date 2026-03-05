@@ -25,6 +25,7 @@ import Pagination from "@/components/Utilities/Pagination";
 import { useAuth } from "@/hooks/useAuth";
 import { ProgramRegistryService } from "@/services/programRegistry.service";
 import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
+import { Role } from "@/src/core/rbac/types/role";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
@@ -85,7 +86,8 @@ export const ManagePrograms = () => {
 
   const isRegistryAdmin = permissions?.isRegistryAdmin ?? false;
   const isProgramCreator = permissions?.isProgramCreator ?? false;
-  const isAllowed = Boolean(address) && (isRegistryAdmin || isProgramCreator) && isAuth;
+  const isStaff = permissions?.roles?.roles.includes(Role.SUPER_ADMIN) ?? false;
+  const isAllowed = Boolean(address) && (isRegistryAdmin || isProgramCreator || isStaff) && isAuth;
 
   const [tab, setTab] = useQueryState("tab", {
     defaultValue: defaultTab || "pending",
@@ -161,7 +163,7 @@ export const ManagePrograms = () => {
         grantTypes: selectedGrantTypes.length ? selectedGrantTypes.join(",") : undefined,
         sortField: sortField as "createdAt" | "updatedAt" | "name" | "programId",
         sortOrder: sortOrder as "asc" | "desc",
-        owners: address && !isRegistryAdmin ? address : undefined,
+        owners: address && !(isRegistryAdmin || isStaff) ? address : undefined,
       });
 
       const [res, error] = await fetchData(url);
@@ -195,6 +197,7 @@ export const ManagePrograms = () => {
       isPermissionsLoading,
       isRegistryAdmin,
       isProgramCreator,
+      isStaff,
       selectedEcosystems,
       selectedGrantTypes,
       selectedNetworks,
@@ -341,7 +344,7 @@ export const ManagePrograms = () => {
                       color: tab === "pending" ? "black" : "gray",
                     }}
                   >
-                    {isRegistryAdmin ? "Pending" : "Waiting for approval"}
+                    {isRegistryAdmin || isStaff ? "Pending" : "Waiting for approval"}
                   </Button>
                   <Button
                     className="bg-transparent text-black"
@@ -438,7 +441,7 @@ export const ManagePrograms = () => {
                     <div className="mt-8 flow-root">
                       <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
                         <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-                          {isRegistryAdmin ? (
+                          {isRegistryAdmin || isStaff ? (
                             <ManageProgramList
                               approveOrReject={approveOrReject}
                               grantPrograms={grantPrograms}

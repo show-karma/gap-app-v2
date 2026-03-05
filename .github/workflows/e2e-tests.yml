@@ -15,8 +15,8 @@ env:
   NEXT_PUBLIC_GAP_INDEXER_URL: https://gapstagapi.karmahq.xyz
 
 jobs:
-  cypress:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+  e2e-tests:
+    runs-on: ubuntu-latest
     timeout-minutes: 30
 
     steps:

@@ -217,16 +217,16 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
         return;
       }
 
-      if (!memberToRemove.publicAddress) {
-        toast.error("This reviewer is still being provisioned. Refresh and try again.");
+      if (!memberToRemove.email) {
+        toast.error("Reviewer email not available. Please refresh and try again.");
         return;
       }
 
       try {
         if (memberToRemove.role === "program") {
-          await removeProgramReviewer(memberToRemove.publicAddress);
+          await removeProgramReviewer(memberToRemove.email);
         } else if (memberToRemove.role === "milestone") {
-          await removeMilestoneReviewer(memberToRemove.publicAddress);
+          await removeMilestoneReviewer(memberToRemove.email);
         } else {
           toast.error(`Unknown reviewer role: ${memberToRemove.role}`);
         }

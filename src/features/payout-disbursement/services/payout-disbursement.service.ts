@@ -381,6 +381,77 @@ export const getPayoutConfigByGrant = async (
 };
 
 /**
+ * Validate bulk import rows against all community grants via backend matching
+ */
+export const validateBulkImportRows = async (
+  communityUID: string,
+  rows: Array<{
+    rowNumber: number;
+    grantUID: string;
+    projectUID: string;
+    projectSlug: string;
+    projectName: string;
+    payoutAddress: string;
+    amount: string;
+  }>
+): Promise<
+  Array<{
+    rowNumber: number;
+    grantUID: string;
+    projectUID: string;
+    projectSlug: string;
+    projectName: string;
+    payoutAddress: string;
+    amount: string;
+    status: "valid" | "invalid";
+    errors: string[];
+    target: {
+      grantUID: string;
+      projectUID: string;
+      matchedBy: string;
+    } | null;
+  }>
+> => {
+  try {
+    const [data, error] = await fetchData<{
+      rows: Array<{
+        rowNumber: number;
+        grantUID: string;
+        projectUID: string;
+        projectSlug: string;
+        projectName: string;
+        payoutAddress: string;
+        amount: string;
+        status: "valid" | "invalid";
+        errors: string[];
+        target: {
+          grantUID: string;
+          projectUID: string;
+          matchedBy: string;
+        } | null;
+      }>;
+    }>(
+      INDEXER.V2.PAYOUT_CONFIG.VALIDATE_BULK_IMPORT,
+      "POST",
+      { communityUID, rows },
+      {},
+      {},
+      true,
+      false
+    );
+
+    if (error || !data) {
+      throw new Error(error || "Failed to validate bulk import");
+    }
+
+    return data.rows;
+  } catch (error: unknown) {
+    errorManager("Error validating bulk import", error);
+    throw new Error(`Failed to validate bulk import: ${getErrorMessage(error)}`);
+  }
+};
+
+/**
  * Delete payout config for a grant
  */
 export const deletePayoutConfig = async (grantUID: string): Promise<void> => {

@@ -167,15 +167,15 @@ describe("ReviewerManagementTab", () => {
     expect(roleTabProps.members[0].id).toBe("program-reviewer@example.com");
   });
 
-  it("blocks remove when wallet address is not available yet", async () => {
+  it("blocks remove when reviewer email is not available", async () => {
     const removeProgramReviewer = jest.fn().mockResolvedValue(undefined);
     mockCan.mockReturnValue(true);
     mockUseProgramReviewers.mockReturnValue(
       createReviewersHookResult(
         [
           {
-            name: "Email Reviewer",
-            email: "reviewer@example.com",
+            name: "No Email Reviewer",
+            email: "",
             telegram: "reviewer",
             assignedAt: "2024-01-01T00:00:00Z",
           },
@@ -191,16 +191,16 @@ describe("ReviewerManagementTab", () => {
     };
 
     await act(async () => {
-      await roleTabProps.onRemove("program-reviewer@example.com");
+      await roleTabProps.onRemove("program-no-email-reviewer-2024-01-01T00:00:00Z");
     });
 
     expect(removeProgramReviewer).not.toHaveBeenCalled();
     expect(mockToast.error).toHaveBeenCalledWith(
-      "This reviewer is still being provisioned. Refresh and try again."
+      "Reviewer email not available. Please refresh and try again."
     );
   });
 
-  it("removes reviewers using wallet address from member data", async () => {
+  it("removes reviewers using email from member data", async () => {
     const removeProgramReviewer = jest.fn().mockResolvedValue(undefined);
     mockCan.mockReturnValue(true);
     mockUseProgramReviewers.mockReturnValue(
@@ -229,8 +229,6 @@ describe("ReviewerManagementTab", () => {
       await roleTabProps.onRemove(roleTabProps.members[0].id);
     });
 
-    expect(removeProgramReviewer).toHaveBeenCalledWith(
-      "0x1234567890123456789012345678901234567890"
-    );
+    expect(removeProgramReviewer).toHaveBeenCalledWith("wallet@example.com");
   });
 });

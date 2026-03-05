@@ -16,7 +16,7 @@ import type { KycStatusResponse } from "@/types/kyc";
 import { formatAddressForDisplay } from "@/utilities/donations/helpers";
 import { cn } from "@/utilities/tailwind";
 import { SortIcon } from "./ControlCenterColumns";
-import { AgreementBadge, ProgressCell } from "./StatusBadges";
+import { AgreementBadge, PendingDisbursalBadge, ProgressCell } from "./StatusBadges";
 
 export interface TableRow {
   grantUid: string;
@@ -151,11 +151,14 @@ const ControlCenterTableRow = memo(function ControlCenterTableRow({
 
       {/* Progress */}
       <td className="px-4 py-3 text-left">
-        <ProgressCell
-          invoices={invoices}
-          paidMilestoneCount={paidMilestoneCount}
-          invoiceRequired={invoiceRequired}
-        />
+        <div className="space-y-1">
+          <ProgressCell
+            invoices={invoices}
+            paidMilestoneCount={paidMilestoneCount}
+            invoiceRequired={invoiceRequired}
+          />
+          <PendingDisbursalBadge invoices={invoices} />
+        </div>
       </td>
 
       {/* Total Grant */}

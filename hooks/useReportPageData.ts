@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useQueryState } from "nuqs";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { usePendingVerificationMilestones } from "@/hooks/usePendingVerificationMilestones";
@@ -84,6 +84,16 @@ interface UseReportPageDataOptions {
   hasAccess: boolean;
   isAuthorized: boolean;
   reviewerPrograms: Array<{ programId: string }>;
+  currentUserAddress?: string;
+  isMilestoneReviewer?: boolean;
+}
+
+export function computeDefaultReviewerAddress(
+  isMilestoneReviewer: boolean,
+  hasAccess: boolean,
+  currentUserAddress?: string
+): string | undefined {
+  return isMilestoneReviewer && !hasAccess ? currentUserAddress : undefined;
 }
 
 export function useReportPageData({
@@ -92,6 +102,8 @@ export function useReportPageData({
   hasAccess,
   isAuthorized,
   reviewerPrograms,
+  currentUserAddress,
+  isMilestoneReviewer = false,
 }: UseReportPageDataOptions) {
   const [activeTab, setActiveTab] = useQueryState<TabId>("tab", {
     defaultValue: "pending-verification",
@@ -106,6 +118,30 @@ export function useReportPageData({
     "programIds",
     programIdsQueryOptions
   );
+
+  // Reviewer filter: address-based. Reviewers default to own address, admins to "all" (undefined).
+  const [selectedReviewerAddress, setSelectedReviewerAddress] = useState<string | undefined>(() =>
+    computeDefaultReviewerAddress(isMilestoneReviewer, hasAccess, currentUserAddress)
+  );
+  const hasUserSelectedFilter = useRef(false);
+
+  // Sync selectedReviewerAddress when isMilestoneReviewer/hasAccess resolve after mount
+  useEffect(() => {
+    if (hasUserSelectedFilter.current) return;
+    const computed = computeDefaultReviewerAddress(
+      isMilestoneReviewer,
+      hasAccess,
+      currentUserAddress
+    );
+    setSelectedReviewerAddress(computed);
+  }, [isMilestoneReviewer, hasAccess, currentUserAddress]);
+
+  // Reset user's manual filter selection when context changes
+  useEffect(() => {
+    hasUserSelectedFilter.current = false;
+  }, [communityId, currentUserAddress]);
+
+  const effectiveReviewerAddress = selectedReviewerAddress;
 
   const reviewerProgramIds = useMemo(() => {
     if (!reviewerPrograms || reviewerPrograms.length === 0) return new Set<string>();
@@ -212,6 +248,7 @@ export function useReportPageData({
     page: pendingPage,
     pageLimit: itemsPerPage,
     programIds: effectiveProgramIds,
+    reviewerAddress: effectiveReviewerAddress,
     enabled: isAuthorized,
   });
 
@@ -265,6 +302,12 @@ export function useReportPageData({
     setPendingPage(1);
   }, [setSelectedProgramIds]);
 
+  const handleReviewerAddressChange = useCallback((address: string | undefined) => {
+    hasUserSelectedFilter.current = true;
+    setSelectedReviewerAddress(address);
+    setPendingPage(1);
+  }, []);
+
   const isFullyCompleted = useCallback((report: MilestoneCompletion) => {
     const allMilestonesComplete =
       report.totalMilestones > 0 &&
@@ -299,5 +342,8 @@ export function useReportPageData({
     programLabels,
     selectedProgramLabels,
     isFullyCompleted,
+    selectedReviewerAddress,
+    handleReviewerAddressChange,
+    effectiveProgramIds,
   };
 }
