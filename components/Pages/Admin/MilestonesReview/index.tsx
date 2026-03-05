@@ -563,6 +563,7 @@ function MilestonesReviewPageContent({
                 }))}
                 communityId={communityId}
                 currentUserAddress={address}
+                programId={parsedProgramId}
               />
             ) : (
               <div className="p-4 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">

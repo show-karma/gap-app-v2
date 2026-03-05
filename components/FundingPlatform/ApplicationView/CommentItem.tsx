@@ -14,6 +14,7 @@ import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { Spinner } from "@/components/Utilities/Spinner";
 import type { ApplicationComment } from "@/types/funding-platform";
+import { renderMentionsAsMarkdown } from "@/utilities/mentions";
 import { cn } from "@/utilities/tailwind";
 
 interface CommentItemProps {
@@ -265,7 +266,7 @@ const CommentItem: FC<CommentItemProps> = ({
             ) : (
               <div className={cn("text-sm", comment.isDeleted && "opacity-60")}>
                 <MarkdownPreview
-                  source={comment.content}
+                  source={renderMentionsAsMarkdown(comment.content)}
                   className={cn("text-sm", comment.isDeleted && "line-through")}
                 />
               </div>
