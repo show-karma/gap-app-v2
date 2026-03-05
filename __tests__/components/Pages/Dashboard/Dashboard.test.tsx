@@ -44,6 +44,7 @@ jest.mock("@/src/core/rbac/hooks/use-staff-bridge", () => ({
 
 jest.mock("next/navigation", () => ({
   useRouter: jest.fn(),
+  useParams: jest.fn(() => ({})),
 }));
 
 jest.mock("@/components/EthereumAddressToENSAvatar", () => ({
