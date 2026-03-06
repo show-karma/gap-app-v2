@@ -27,25 +27,30 @@ export function FundingMapSearch() {
   const { mixpanel } = useMixpanel("karma");
   const [inputValue, setInputValue] = useState(filters.search);
   const setSearchRef = useRef(setSearch);
+  const reportEventRef = useRef(mixpanel.reportEvent);
   const previousQueryRef = useRef(filters.search);
 
   useEffect(() => {
     setSearchRef.current = setSearch;
   }, [setSearch]);
 
+  useEffect(() => {
+    reportEventRef.current = mixpanel.reportEvent;
+  }, [mixpanel.reportEvent]);
+
   const debouncedSetSearch = useRef(
     debounce((value: string) => {
       setSearchRef.current(value);
 
       if (value) {
-        mixpanel.reportEvent({
+        reportEventRef.current({
           event: "funding-map:search",
           properties: {
             queryLength: value.length,
           },
         });
       } else if (previousQueryRef.current) {
-        mixpanel.reportEvent({
+        reportEventRef.current({
           event: "funding-map:search-clear",
           properties: {
             previousQueryLength: previousQueryRef.current.length,
@@ -64,6 +69,7 @@ export function FundingMapSearch() {
 
   useEffect(() => {
     setInputValue(filters.search);
+    previousQueryRef.current = filters.search;
   }, [filters.search]);
 
   const handleInputChange = useCallback(

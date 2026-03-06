@@ -399,6 +399,9 @@ export function FundingProgramDetailsDialog({
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen) {
       hasTrackedOpenRef.current = false;
+      if (cardClickedRef) {
+        cardClickedRef.current = false;
+      }
     }
     if (!newOpen && program) {
       mixpanel.reportEvent({
