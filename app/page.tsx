@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { CreateProjectUrlHandler } from "@/src/features/homepage/components/create-project-url-handler";
 import { FAQ } from "@/src/features/homepage/components/faq";
 import { Hero } from "@/src/features/homepage/components/hero";
 import { HowItWorks } from "@/src/features/homepage/components/how-it-works";
@@ -29,6 +30,9 @@ const HorizontalLine = ({ className }: { className?: string }) => {
 export default function Index() {
   return (
     <main className="flex w-full flex-col flex-1 items-center bg-background">
+      <Suspense>
+        <CreateProjectUrlHandler />
+      </Suspense>
       <div className="flex w-full max-w-[1920px] justify-center items-center flex-1 flex-col gap-2">
         <Hero />
         <HorizontalLine className="max-w-full" />

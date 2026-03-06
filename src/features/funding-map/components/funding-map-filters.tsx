@@ -2,7 +2,7 @@
 
 import * as Popover from "@radix-ui/react-popover";
 import { Check, ChevronDown, X } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useMixpanel } from "@/hooks/useMixpanel";
 import { cn } from "@/utilities/tailwind";
 import {
   FUNDING_MAP_CATEGORIES,
@@ -39,6 +40,8 @@ export function FundingMapFilters({ totalCount = 0 }: FundingMapFiltersProps) {
     toggleGrantType,
     resetFilters,
   } = useFundingFilters();
+  const { mixpanel } = useMixpanel("karma");
+  const { categories, grantTypes, status, onlyOnKarma } = filters;
 
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [typeOpen, setTypeOpen] = useState(false);
@@ -60,6 +63,75 @@ export function FundingMapFilters({ totalCount = 0 }: FundingMapFiltersProps) {
     : null;
   const resultLabel = typeLabel ? typeLabel.toLowerCase() : null;
 
+  const handleKarmaToggle = useCallback(() => {
+    const newValue = !onlyOnKarma;
+    setOnlyOnKarma(newValue);
+    mixpanel.reportEvent({
+      event: "funding-map:filter-karma-toggle",
+      properties: { onlyOnKarma: newValue, resultCount: totalCount },
+    });
+  }, [onlyOnKarma, setOnlyOnKarma, mixpanel, totalCount]);
+
+  const handleStatusChange = useCallback(
+    (value: string) => {
+      setStatus(value);
+      mixpanel.reportEvent({
+        event: "funding-map:filter-status",
+        properties: { status: value, resultCount: totalCount },
+      });
+    },
+    [setStatus, mixpanel, totalCount]
+  );
+
+  const handleCategoryToggle = useCallback(
+    (category: string) => {
+      const isSelected = categories.includes(category);
+      toggleCategory(category);
+      mixpanel.reportEvent({
+        event: "funding-map:filter-category",
+        properties: {
+          category,
+          selected: !isSelected,
+          totalCategoriesSelected: isSelected ? categories.length - 1 : categories.length + 1,
+          resultCount: totalCount,
+        },
+      });
+    },
+    [categories, toggleCategory, mixpanel, totalCount]
+  );
+
+  const handleGrantTypeToggle = useCallback(
+    (grantType: string) => {
+      const isSelected = grantTypes.includes(grantType);
+      toggleGrantType(grantType);
+      mixpanel.reportEvent({
+        event: "funding-map:filter-grant-type",
+        properties: {
+          grantType,
+          selected: !isSelected,
+          totalGrantTypesSelected: isSelected ? grantTypes.length - 1 : grantTypes.length + 1,
+          resultCount: totalCount,
+        },
+      });
+    },
+    [grantTypes, toggleGrantType, mixpanel, totalCount]
+  );
+
+  const handleClearFilters = useCallback(() => {
+    mixpanel.reportEvent({
+      event: "funding-map:filters-clear",
+      properties: {
+        clearedFilters: {
+          status,
+          categories,
+          grantTypes,
+          onlyOnKarma,
+        },
+      },
+    });
+    resetFilters();
+  }, [status, categories, grantTypes, onlyOnKarma, resetFilters, mixpanel]);
+
   return (
     <div className="flex w-full flex-wrap items-center justify-between gap-2 rounded-xl border border-border p-3">
       <div className="flex flex-wrap items-center gap-2">
@@ -73,13 +145,13 @@ export function FundingMapFilters({ totalCount = 0 }: FundingMapFiltersProps) {
           role="button"
           aria-label="Toggle only on Karma"
           aria-pressed={filters.onlyOnKarma}
-          onClick={() => setOnlyOnKarma(!filters.onlyOnKarma)}
+          onClick={handleKarmaToggle}
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " ") {
               if (e.key === " ") {
                 e.preventDefault();
               }
-              setOnlyOnKarma(!filters.onlyOnKarma);
+              handleKarmaToggle();
             }
           }}
         >
@@ -95,7 +167,7 @@ export function FundingMapFilters({ totalCount = 0 }: FundingMapFiltersProps) {
           <OnKarmaBadge />
         </Badge>
 
-        <Select value={filters.status} onValueChange={setStatus}>
+        <Select value={filters.status} onValueChange={handleStatusChange}>
           <SelectTrigger
             className={cn(
               "h-8 w-auto gap-1 rounded-lg px-2.5 text-sm shadow-sm hover:bg-accent hover:text-accent-foreground",
@@ -171,7 +243,7 @@ export function FundingMapFilters({ totalCount = 0 }: FundingMapFiltersProps) {
                         type="button"
                         key={`selected-${category}`}
                         className="flex w-full items-center gap-2 cursor-pointer rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
-                        onClick={() => toggleCategory(category)}
+                        onClick={() => handleCategoryToggle(category)}
                       >
                         <div
                           className={cn(
@@ -194,7 +266,7 @@ export function FundingMapFilters({ totalCount = 0 }: FundingMapFiltersProps) {
                     type="button"
                     key={`all-${category}`}
                     className="flex w-full items-center gap-2 cursor-pointer rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
-                    onClick={() => toggleCategory(category)}
+                    onClick={() => handleCategoryToggle(category)}
                   >
                     <div
                       className={cn(
@@ -268,7 +340,7 @@ export function FundingMapFilters({ totalCount = 0 }: FundingMapFiltersProps) {
                     type="button"
                     key={type}
                     className="flex w-full items-center gap-2 cursor-pointer rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
-                    onClick={() => toggleGrantType(type)}
+                    onClick={() => handleGrantTypeToggle(type)}
                   >
                     <div
                       className={cn(
@@ -295,7 +367,7 @@ export function FundingMapFilters({ totalCount = 0 }: FundingMapFiltersProps) {
             variant="ghost"
             size="sm"
             className="h-8 gap-1 px-2 text-muted-foreground hover:text-foreground"
-            onClick={resetFilters}
+            onClick={handleClearFilters}
           >
             <X className="h-3 w-3" />
             Clear

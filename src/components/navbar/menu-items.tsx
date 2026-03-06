@@ -84,7 +84,7 @@ export const exploreItems: ExploreItems = {
       title: "All projects",
     },
     {
-      href: `${PAGES.PROJECTS_EXPLORER}?hasPayoutAddress=true`,
+      href: `${PAGES.PROJECTS_EXPLORER}?raisingFunds=true`,
       icon: BanknoteArrowDown,
       title: "Raising Funds",
     },

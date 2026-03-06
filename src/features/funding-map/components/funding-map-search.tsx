@@ -5,6 +5,7 @@ import debounce from "lodash.debounce";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { useMixpanel } from "@/hooks/useMixpanel";
 import { cn } from "@/utilities/tailwind";
 import { useFundingFilters } from "../hooks/use-funding-filters";
 
@@ -23,15 +24,41 @@ const QUICK_SEARCH_CATEGORIES = [
 
 export function FundingMapSearch() {
   const { filters, setSearch, toggleCategory } = useFundingFilters();
+  const { mixpanel } = useMixpanel("karma");
   const [inputValue, setInputValue] = useState(filters.search);
   const setSearchRef = useRef(setSearch);
+  const reportEventRef = useRef(mixpanel.reportEvent);
+  const previousQueryRef = useRef(filters.search);
 
   useEffect(() => {
     setSearchRef.current = setSearch;
   }, [setSearch]);
 
+  useEffect(() => {
+    reportEventRef.current = mixpanel.reportEvent;
+  }, [mixpanel.reportEvent]);
+
   const debouncedSetSearch = useRef(
-    debounce((value: string) => setSearchRef.current(value), SEARCH_DEBOUNCE_MS)
+    debounce((value: string) => {
+      setSearchRef.current(value);
+
+      if (value) {
+        reportEventRef.current({
+          event: "funding-map:search",
+          properties: {
+            queryLength: value.length,
+          },
+        });
+      } else if (previousQueryRef.current) {
+        reportEventRef.current({
+          event: "funding-map:search-clear",
+          properties: {
+            previousQueryLength: previousQueryRef.current.length,
+          },
+        });
+      }
+      previousQueryRef.current = value;
+    }, SEARCH_DEBOUNCE_MS)
   ).current;
 
   useEffect(() => {
@@ -42,6 +69,7 @@ export function FundingMapSearch() {
 
   useEffect(() => {
     setInputValue(filters.search);
+    previousQueryRef.current = filters.search;
   }, [filters.search]);
 
   const handleInputChange = useCallback(
@@ -50,6 +78,22 @@ export function FundingMapSearch() {
       debouncedSetSearch(value);
     },
     [debouncedSetSearch]
+  );
+
+  const handleCategoryClick = useCallback(
+    (tag: string) => {
+      const isSelected = filters.categories.includes(tag);
+      toggleCategory(tag);
+      mixpanel.reportEvent({
+        event: "funding-map:quick-category-click",
+        properties: {
+          category: tag,
+          selected: !isSelected,
+          totalSelected: isSelected ? filters.categories.length - 1 : filters.categories.length + 1,
+        },
+      });
+    },
+    [filters.categories, toggleCategory, mixpanel]
   );
 
   return (
@@ -91,7 +135,7 @@ export function FundingMapSearch() {
                   filters.categories.includes(tag) &&
                     "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
                 )}
-                onClick={() => toggleCategory(tag)}
+                onClick={() => handleCategoryClick(tag)}
               >
                 {tag}
               </Badge>

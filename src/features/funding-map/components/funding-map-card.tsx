@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import type { KeyboardEvent } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { useMixpanel } from "@/hooks/useMixpanel";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 import type { FundingProgramResponse, OpportunityType } from "../types/funding-program";
@@ -24,6 +25,10 @@ interface FundingMapCardProps {
   hideDescription?: boolean;
   /** Hide the categories section */
   hideCategories?: boolean;
+  /** Position of the card in the grid (0-indexed) */
+  cardPosition?: number;
+  /** Current page number */
+  page?: number;
 }
 
 /**
@@ -45,9 +50,12 @@ export function FundingMapCard({
   href,
   hideDescription = false,
   hideCategories = false,
+  cardPosition,
+  page,
   className,
 }: FundingMapCardProps & { className?: string }) {
   const router = useRouter();
+  const { mixpanel } = useMixpanel("karma");
   const { metadata, isOnKarma, communities } = program;
   const opportunityType: OpportunityType = program.type ?? "grant";
   const isNonGrant = opportunityType !== "grant";
@@ -73,6 +81,18 @@ export function FundingMapCard({
   const formattedBudget = formatBudgetValue(budget);
 
   const handleClick = () => {
+    mixpanel.reportEvent({
+      event: "funding-map:card-click",
+      properties: {
+        programId: program.programId,
+        programTitle: title,
+        organization: fallbackName || validCommunities.map((c) => c.name).join(", "),
+        isOnKarma,
+        isActive: !hasEnded && metadata?.status !== "inactive",
+        cardPosition,
+        page,
+      },
+    });
     if (href) {
       router.push(href);
     } else {
