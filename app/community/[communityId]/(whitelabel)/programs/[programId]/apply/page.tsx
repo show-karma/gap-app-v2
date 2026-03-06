@@ -1,4 +1,4 @@
-import { AlertTriangle, FileQuestion } from "lucide-react";
+import { AlertTriangle, ArrowLeft, FileQuestion } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { cache } from "react";
@@ -100,6 +100,14 @@ export default async function ApplicationApplyPage({ params }: PageProps) {
 
   return (
     <div className="flex flex-col gap-5">
+      <Link
+        href={PAGES.COMMUNITY.PROGRAM_DETAIL(communityId, programId)}
+        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-fit"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Back to program
+      </Link>
+
       {/* Closed applications banner */}
       {isDisabled && (
         <div className="mb-6 rounded-lg border border-yellow-200 bg-yellow-50 p-4 dark:border-yellow-800 dark:bg-yellow-900/20">

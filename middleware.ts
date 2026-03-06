@@ -38,8 +38,9 @@ export async function middleware(request: NextRequest) {
     const normalizedPath = path;
     const normalizedIsRoot = normalizedPath === "/" || normalizedPath === "";
 
-    // /programs → homepage (already shows funding opportunities)
-    if (normalizedPath.startsWith("/programs")) {
+    // /programs (listing) → homepage (already shows funding opportunities)
+    // But allow /programs/<id> through so detail pages work.
+    if (normalizedPath === "/programs") {
       const url = request.nextUrl.clone();
       url.pathname = "/";
       return NextResponse.redirect(url);
@@ -130,8 +131,8 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(url);
       }
 
-      // Redirect /programs to tenant root
-      if (effectivePath.startsWith("/programs")) {
+      // Redirect /programs (listing) to tenant root, but allow /programs/<id> through
+      if (effectivePath === "/programs") {
         const url = request.nextUrl.clone();
         url.pathname = slugPrefix;
         return NextResponse.redirect(url);

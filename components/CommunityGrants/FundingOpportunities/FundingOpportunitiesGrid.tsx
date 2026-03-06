@@ -28,19 +28,18 @@ export const FundingOpportunitiesGrid = ({
   programs,
   communitySlug,
 }: FundingOpportunitiesGridProps) => {
-  const { isWhitelabel, isUmbrella } = useWhitelabel();
+  const { isWhitelabel } = useWhitelabel();
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
       {programs.map((program) => {
-        const programId = program.programId || program._id?.toString();
+        const programId = program.programId || program._id?.toString() || program.id;
         let href: string | undefined;
         if (programId) {
           if (isWhitelabel) {
-            // Build a whitelabel-friendly path directly (no /community/<slug> prefix)
-            // because FundingMapCard uses router.push which doesn't go through Link stripping.
-            const programPath = `/programs/${programId}`;
-            href = isUmbrella ? `/${communitySlug}${programPath}` : programPath;
+            // In whitelabel mode, use the standard PAGES path — the custom Link
+            // component inside FundingMapCard handles stripping /community/<slug>.
+            href = PAGES.COMMUNITY.PROGRAM_DETAIL(communitySlug, programId);
           } else {
             href = getExternalProgramPageUrl(communitySlug, programId);
           }
