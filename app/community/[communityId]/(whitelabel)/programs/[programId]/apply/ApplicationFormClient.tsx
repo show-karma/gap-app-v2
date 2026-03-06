@@ -42,7 +42,7 @@ export function ApplicationFormClient({
 }: ApplicationFormClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { isWhitelabel, communitySlug } = useWhitelabel();
+  const { isWhitelabel, isUmbrella, communitySlug } = useWhitelabel();
 
   const { submit } = useApplicationSubmit(communityId);
 
@@ -50,7 +50,8 @@ export function ApplicationFormClient({
   const toPath = (path: string) => {
     if (!isWhitelabel || !communitySlug) return path;
     const prefix = `/community/${communitySlug}`;
-    return path.startsWith(prefix) ? path.slice(prefix.length) || "/" : path;
+    const stripped = path.startsWith(prefix) ? path.slice(prefix.length) || "/" : path;
+    return isUmbrella ? `/${communitySlug}${stripped}` : stripped;
   };
 
   // Safe RBAC fallback: isStaff ?? false — PermissionProvider may not be mounted yet
