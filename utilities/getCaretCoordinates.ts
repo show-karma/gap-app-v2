@@ -91,8 +91,8 @@ export function getCaretCoordinates(
   } catch {
     return { top: 0, left: 0 };
   } finally {
-    if (div?.parentNode) {
-      div.parentNode.removeChild(div);
+    if (div) {
+      div.remove();
     }
   }
 }
