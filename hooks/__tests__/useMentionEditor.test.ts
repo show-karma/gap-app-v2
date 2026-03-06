@@ -91,10 +91,7 @@ describe("useMentionEditor", () => {
       const onChange = jest.fn();
 
       act(() => {
-        result.current.handleContentChange(
-          "Hello @[Alice](wallet:0x1234567890abcdef1234567890abcdef12345678)",
-          onChange
-        );
+        result.current.handleContentChange("Hello @[Alice](email:alice@example.com)", onChange);
       });
 
       expect(result.current.isAutocompleteOpen).toBe(false);
