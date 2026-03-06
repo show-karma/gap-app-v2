@@ -1,19 +1,21 @@
 "use client";
 
-import { ArrowLeft, Calendar, Edit, ExternalLink, RefreshCw } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { ArrowLeft, Calendar, Edit, RefreshCw } from "lucide-react";
 import { useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Link } from "@/src/components/navigation/Link";
 import { CommentTimeline } from "@/src/features/application-comments/components/CommentTimeline";
 import { ApplicationStatusHistory } from "@/src/features/applications/components/ApplicationStatusHistory";
 import type { Application, ApplicationStatus, FundingProgram } from "@/types/whitelabel-entities";
+import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
+import { INDEXER } from "@/utilities/indexer";
 import { cn } from "@/utilities/tailwind";
 
 interface ApplicationPageClientProps {
   communityId: string;
-  application: Application;
-  program: FundingProgram | null;
+  applicationId: string;
 }
 
 function getStatusColor(status: ApplicationStatus): string {
@@ -45,12 +47,74 @@ const editableStatuses: ApplicationStatus[] = [
   "resubmitted",
 ];
 
-export function ApplicationPageClient({
-  communityId,
-  application,
-  program,
-}: ApplicationPageClientProps) {
+function ApplicationSkeleton() {
+  return (
+    <div className="flex flex-col gap-5 animate-pulse">
+      <div className="h-6 w-40 rounded bg-muted" />
+      <div className="h-10 w-3/4 rounded bg-muted" />
+      <div className="rounded-xl border border-border p-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
+          {Array.from({ length: 4 }, (_, i) => `skeleton-meta-${i}`).map((key) => (
+            <div key={key} className="space-y-2">
+              <div className="h-4 w-20 rounded bg-muted" />
+              <div className="h-5 w-32 rounded bg-muted" />
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="rounded-xl border border-border p-6">
+        <div className="space-y-6">
+          {Array.from({ length: 3 }, (_, i) => `skeleton-field-${i}`).map((key) => (
+            <div key={key} className="space-y-2">
+              <div className="h-4 w-24 rounded bg-muted" />
+              <div className="h-5 w-full rounded bg-muted" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function ApplicationPageClient({ communityId, applicationId }: ApplicationPageClientProps) {
   const { address, authenticated } = useAuth();
+
+  const {
+    data: application,
+    isLoading: isAppLoading,
+    error: appError,
+    refetch: refetchApp,
+  } = useQuery({
+    queryKey: ["funding-application", applicationId],
+    queryFn: async () => {
+      const [res, err] = await fetchData<Application>(
+        `/v2/funding-applications/${applicationId}`,
+        "GET"
+      );
+      if (err) throw new Error(err);
+      return res as Application;
+    },
+    enabled: !!authenticated,
+    staleTime: 1000 * 60 * 2,
+  });
+
+  const { data: program } = useQuery({
+    queryKey: ["funding-program-config", application?.programId],
+    queryFn: async () => {
+      const [res, err] = await fetchData<FundingProgram>(
+        INDEXER.V2.FUNDING_PROGRAMS.GET(application!.programId),
+        "GET",
+        {},
+        {},
+        {},
+        true
+      );
+      if (err) return null;
+      return res;
+    },
+    enabled: !!application?.programId,
+    staleTime: 10 * 60 * 1000,
+  });
 
   const isOwner = useMemo(() => {
     if (!address || !application) return false;
@@ -58,6 +122,7 @@ export function ApplicationPageClient({
   }, [address, application]);
 
   const canEdit = useMemo(() => {
+    if (!application) return false;
     if (!editableStatuses.includes(application.status)) return false;
     if (program?.metadata.endsAt) {
       const isDeadlinePassed = new Date(program.metadata.endsAt) < new Date();
@@ -66,6 +131,28 @@ export function ApplicationPageClient({
     }
     return true;
   }, [application, program]);
+
+  if (isAppLoading || !authenticated) {
+    return <ApplicationSkeleton />;
+  }
+
+  if (appError || !application) {
+    return (
+      <div className="flex flex-col items-center justify-center rounded-xl border border-border py-16">
+        <p className="mb-4 text-red-600 dark:text-red-400">
+          {appError ? "Failed to load application details." : "Application not found."}
+        </p>
+        <button
+          type="button"
+          onClick={() => refetchApp()}
+          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+        >
+          <RefreshCw className="h-4 w-4" />
+          Try Again
+        </button>
+      </div>
+    );
+  }
 
   const programName =
     program?.name || program?.metadata?.title || `Program ${application.programId}`;
@@ -189,11 +276,7 @@ export function ApplicationPageClient({
         </div>
       </div>
 
-      {/* Comments & Activity
-       * Authenticated users see the full CommentTimeline (comments + status history).
-       * Public / unauthenticated users see only the ApplicationStatusHistory.
-       * P1-12: conditional timeline based on auth state.
-       */}
+      {/* Comments & Activity */}
       {authenticated ? (
         <CommentTimeline
           applicationId={application.referenceNumber}

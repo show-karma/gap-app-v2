@@ -9,10 +9,29 @@ import { formatDate } from "@/utilities/formatDate";
 
 interface ApplicationEditClientProps {
   communityId: string;
-  application: Application;
+  applicationId: string;
 }
 
-export function ApplicationEditClient({ communityId, application }: ApplicationEditClientProps) {
+export function ApplicationEditClient({ communityId, applicationId }: ApplicationEditClientProps) {
+  // Fetch application details (requires auth)
+  const {
+    data: application,
+    isLoading: appLoading,
+    error: appError,
+    refetch: refetchApp,
+  } = useQuery({
+    queryKey: ["funding-application", applicationId],
+    queryFn: async () => {
+      const [res, err] = await fetchData<Application>(
+        `/v2/funding-applications/${applicationId}`,
+        "GET"
+      );
+      if (err) throw new Error(err);
+      return res as Application;
+    },
+    staleTime: 1000 * 60 * 2,
+  });
+
   // Fetch program details
   const {
     data: program,
@@ -20,31 +39,65 @@ export function ApplicationEditClient({ communityId, application }: ApplicationE
     error: programError,
     refetch,
   } = useQuery({
-    queryKey: ["application", "program", application.programId],
+    queryKey: ["application", "program", application?.programId],
     queryFn: async () => {
       const [res, err] = await fetchData<FundingProgram>(
-        `/v2/funding-program-configs/${application.programId}`,
+        `/v2/funding-program-configs/${application!.programId}`,
         "GET"
       );
       if (err) throw new Error(err);
       return res as FundingProgram;
     },
     staleTime: 1000 * 60 * 10,
+    enabled: !!application?.programId,
   });
 
   const isDeadlinePassed = program?.metadata.endsAt
     ? new Date(program.metadata.endsAt) < new Date()
     : false;
-  const isRevision = application.status === "revision_requested";
+  const isRevision = application?.status === "revision_requested";
   const isDisabled = !program?.applicationConfig?.isEnabled || (isDeadlinePassed && !isRevision);
 
   // Loading
-  if (programLoading) {
+  if (appLoading || programLoading) {
     return (
       <div className="flex flex-col gap-5">
         <div className="flex flex-col items-center justify-center rounded-xl border border-border py-24">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
           <p className="mt-4 text-muted-foreground">Loading application...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Application fetch error
+  if (appError || !application) {
+    return (
+      <div className="flex flex-col gap-5">
+        <div className="flex flex-col items-center rounded-xl border border-border py-12 text-center">
+          <AlertTriangle className="mb-4 h-12 w-12 text-yellow-500" />
+          <h2 className="mb-2 text-xl font-semibold text-foreground">
+            {appError ? "Could Not Load Application" : "Application Not Found"}
+          </h2>
+          <p className="mb-6 text-muted-foreground">
+            {appError instanceof Error ? appError.message : "Failed to load application details."}
+          </p>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => refetchApp()}
+              className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Try Again
+            </button>
+            <Link
+              href={`/dashboard`}
+              className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-muted"
+            >
+              Back to Dashboard
+            </Link>
+          </div>
         </div>
       </div>
     );

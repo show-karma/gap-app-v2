@@ -1,34 +1,17 @@
-import { notFound } from "next/navigation";
-import type { Application, ApplicationStatus } from "@/types/whitelabel-entities";
-import fetchData from "@/utilities/fetchData";
+import type { Metadata } from "next";
 import { ApplicationEditClient } from "./ApplicationEditClient";
 
-const EDITABLE_STATUSES: ApplicationStatus[] = [
-  "pending",
-  "revision_requested",
-  "rejected",
-  "resubmitted",
-];
-
-export default async function ApplicationEditPage({
-  params,
-}: {
+interface PageProps {
   params: Promise<{ communityId: string; applicationId: string }>;
-}) {
+}
+
+export const metadata: Metadata = {
+  title: "Edit Application",
+  robots: { index: false },
+};
+
+export default async function ApplicationEditPage({ params }: PageProps) {
   const { communityId, applicationId } = await params;
 
-  const [application] = await fetchData<Application>(
-    `/v2/funding-applications/${applicationId}`,
-    "GET",
-    {},
-    {},
-    {},
-    false
-  );
-
-  if (!application || !EDITABLE_STATUSES.includes(application.status)) {
-    notFound();
-  }
-
-  return <ApplicationEditClient communityId={communityId} application={application} />;
+  return <ApplicationEditClient communityId={communityId} applicationId={applicationId} />;
 }
