@@ -74,7 +74,10 @@ export function FundingMapSidebar() {
         </div>
       </div>
 
-      {/* Create Profile Card */}
+      {/* Create Profile Card — onClickCapture used because ProjectDialog renders
+         its own button internally; we can't pass onClick to it directly. The capture
+         handler only fires analytics and does not interfere with keyboard/screen-reader
+         interaction, which is handled by the inner button. */}
       <div
         className="flex flex-col gap-5 rounded-xl p-5"
         onClickCapture={() => {
