@@ -11,7 +11,7 @@ import {
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useMemo } from "react";
-import { FundingPlatformContent } from "@/app/community/[communityId]/manage/funding-platform/page";
+import { NoProgramsEmptyState } from "@/components/FundingPlatform/NoProgramsEmptyState";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useFundingPrograms } from "@/hooks/useFundingPlatform";
 import type { Community } from "@/types/v2/community";
@@ -342,8 +342,21 @@ export function DashboardOverview({ community }: { community: Community }) {
         </div>
       )}
 
-      {/* When no programs, show the full funding platform view */}
-      {(!programs || programs.length === 0) && <FundingPlatformContent />}
+      {/* Empty state */}
+      {(!programs || programs.length === 0) && (
+        <NoProgramsEmptyState
+          title="Create your first program"
+          className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-700"
+          action={
+            <Link
+              href={`${PAGES.ADMIN.FUNDING_PLATFORM(slug)}?create=true`}
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors"
+            >
+              Create your first program
+            </Link>
+          }
+        />
+      )}
     </div>
   );
 }
