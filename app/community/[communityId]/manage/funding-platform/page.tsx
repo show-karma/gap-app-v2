@@ -42,7 +42,7 @@ import { getProgramApplyUrl } from "@/utilities/fundingPlatformUrls";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 
-function FundingPlatformContent() {
+export function FundingPlatformContent() {
   const { communityId } = useParams() as { communityId: string };
   const router = useRouter();
   const searchParams = useSearchParams();
