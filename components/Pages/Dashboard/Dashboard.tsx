@@ -5,6 +5,8 @@ import { AlertTriangle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import type { Hex } from "viem";
+import { useProgramsWithConfig } from "@/features/programs/hooks/use-programs-with-config";
+import { useUserApplications } from "@/features/user-applications/hooks/use-user-applications";
 import { setPostLoginRedirect, useAuth } from "@/hooks/useAuth";
 import { useDashboardAdmin } from "@/hooks/useDashboardAdmin";
 import { useReviewerPrograms } from "@/hooks/usePermissions";
@@ -38,6 +40,8 @@ export function Dashboard() {
 
   const userAddress = address as Hex | undefined;
 
+  // Start all data fetches eagerly — don't wait for RBAC to finish.
+  // These hooks use `enabled` guards internally so they're safe to call early.
   const {
     data: projects = [],
     isLoading: isLoadingProjects,
@@ -51,6 +55,10 @@ export function Dashboard() {
   });
 
   const { communities: adminCommunities, isLoading: isAdminLoading } = useDashboardAdmin();
+
+  // Fetch applications + programs eagerly so they start in parallel with RBAC
+  const applicationsHook = useUserApplications(communitySlug ?? undefined);
+  const { programs } = useProgramsWithConfig(communitySlug ?? "");
 
   const hasProjects = projects.length > 0;
   const showReviews = hasReviewerPrograms;
@@ -103,7 +111,11 @@ export function Dashboard() {
             </p>
           </div>
         ) : null}
-        <ApplicationsSection communitySlug={communitySlug ?? undefined} />
+        <ApplicationsSection
+          communitySlug={communitySlug ?? undefined}
+          applicationsHook={applicationsHook}
+          programs={programs}
+        />
         <ProjectsSection
           projects={projects}
           isLoading={isLoadingProjects}

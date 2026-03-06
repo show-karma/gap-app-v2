@@ -3,10 +3,10 @@
 import { useQueries } from "@tanstack/react-query";
 import { RefreshCw, Search } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useProgramsWithConfig } from "@/features/programs/hooks/use-programs-with-config";
+import type { ProgramWithConfig } from "@/features/programs/hooks/use-programs-with-config";
 import { ApplicationsFilters } from "@/features/user-applications/components/ApplicationsFilters";
 import { ApplicationsList } from "@/features/user-applications/components/ApplicationsList";
-import { useUserApplications } from "@/features/user-applications/hooks/use-user-applications";
+import type { UseUserApplicationsReturn } from "@/features/user-applications/types";
 import { ApplicationLookupModal } from "@/src/features/application-lookup/components/ApplicationLookupModal";
 import type { Application, FundingProgram } from "@/types/whitelabel-entities";
 import { chosenCommunities } from "@/utilities/chosenCommunities";
@@ -21,14 +21,19 @@ interface CommunityInfo {
 
 interface ApplicationsSectionProps {
   communitySlug?: string;
+  applicationsHook: UseUserApplicationsReturn;
+  programs: ProgramWithConfig[];
 }
 
-export function ApplicationsSection({ communitySlug }: ApplicationsSectionProps) {
+export function ApplicationsSection({
+  communitySlug,
+  applicationsHook,
+  programs,
+}: ApplicationsSectionProps) {
   const [isLookupOpen, setIsLookupOpen] = useState(false);
-  const { programs } = useProgramsWithConfig(communitySlug ?? "");
 
   const { applications, filters, pagination, isLoading, error, setFilters, setPage, refresh } =
-    useUserApplications(communitySlug);
+    applicationsHook;
 
   // When no communitySlug, fetch program configs to resolve community info per application
   const uniqueProgramIds = useMemo(() => {
