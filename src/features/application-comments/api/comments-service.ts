@@ -10,17 +10,14 @@ export class CommentsService {
       `/v2/applications/${applicationId}/comments`,
       "GET"
     );
-    if (error) throw new Error(error);
+    if (error) return [];
     return data?.comments ?? [];
   }
 
   /**
    * Create a new comment on an application
    */
-  static async createComment(
-    applicationId: string,
-    content: string
-  ): Promise<ApplicationComment> {
+  static async createComment(applicationId: string, content: string): Promise<ApplicationComment> {
     const [data, error] = await fetchData<{ comment: ApplicationComment }>(
       `/v2/applications/${applicationId}/comments`,
       "POST",

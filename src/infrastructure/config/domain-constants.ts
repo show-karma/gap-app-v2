@@ -31,6 +31,7 @@ export const DOMAIN_CONFIGS: DomainInfo[] = [
   { domain: "app.karmahq.xyz", isProduction: true, isShared: true, isUmbrella: true },
   { domain: "testapp.karmahq.xyz", isProduction: false, isShared: true, isUmbrella: true },
   { domain: "app.localhost", isProduction: false, isShared: true, isUmbrella: true },
+  { domain: "localhost", isProduction: false, isShared: true, isUmbrella: true },
 ];
 
 export function getDomainInfo(hostname: string): DomainInfo | undefined {
