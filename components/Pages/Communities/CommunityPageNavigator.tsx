@@ -117,8 +117,9 @@ export const CommunityPageNavigator = () => {
 
   const visibleNavigationItems = useMemo(() => {
     return NAVIGATION_ITEMS.filter((item) => {
-      // Hide funding opportunities tab if there are no opportunities
-      if (item.id === "funding-opportunities" && fundingOpportunitiesCount === 0) {
+      // In whitelabel/umbrella mode, always show funding opportunities (it's the landing page)
+      // In normal mode, hide it if there are no opportunities
+      if (item.id === "funding-opportunities" && fundingOpportunitiesCount === 0 && !isWhitelabel) {
         return false;
       }
       // Hide financials tab if there are no programs
@@ -127,7 +128,7 @@ export const CommunityPageNavigator = () => {
       }
       return true;
     });
-  }, [fundingOpportunitiesCount, programsCount]);
+  }, [fundingOpportunitiesCount, programsCount, isWhitelabel]);
 
   if (isAdminPage) return null;
 
