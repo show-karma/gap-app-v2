@@ -75,7 +75,14 @@ export function FundingMapSidebar() {
       </div>
 
       {/* Create Profile Card */}
-      <div className="flex flex-col gap-5 rounded-xl p-5">
+      <div
+        className="flex flex-col gap-5 rounded-xl p-5"
+        onClickCapture={() => {
+          mixpanel.reportEvent({
+            event: "funding-map:create-profile-click",
+          });
+        }}
+      >
         <CircleUser className="h-5 w-5 text-muted-foreground" />
         <div className="flex flex-col gap-3">
           <p className="font-medium text-foreground">Create your project profile</p>
@@ -84,23 +91,13 @@ export function FundingMapSidebar() {
             donations.
           </p>
         </div>
-        {/* biome-ignore lint/a11y/useKeyWithClickEvents: tracking wrapper delegates to inner button */}
-        {/* biome-ignore lint/a11y/noStaticElementInteractions: tracking wrapper only */}
-        <span
-          onClick={() => {
-            mixpanel.reportEvent({
-              event: "funding-map:create-profile-click",
-            });
+        <ProjectDialog
+          buttonElement={{
+            text: "Create a profile",
+            styleClass:
+              "w-fit shadow-sm border border-input bg-background hover:bg-accent text-accent-foreground rounded-md",
           }}
-        >
-          <ProjectDialog
-            buttonElement={{
-              text: "Create a profile",
-              styleClass:
-                "w-fit shadow-sm border border-input bg-background hover:bg-accent text-accent-foreground rounded-md",
-            }}
-          />
-        </span>
+        />
       </div>
     </aside>
   );

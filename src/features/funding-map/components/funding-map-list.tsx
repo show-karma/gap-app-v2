@@ -100,7 +100,7 @@ export function FundingMapList() {
         event: "funding-map:empty-results",
         properties: {
           activeFilters: {
-            search: filters.search,
+            searchLength: filters.search.length,
             status: filters.status,
             categories: filters.categories,
             grantTypes: filters.grantTypes,
@@ -109,7 +109,8 @@ export function FundingMapList() {
         },
       });
     }
-  }, [isLoading, isError, programs.length, filters, mixpanel]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading, isError, programs.length, filters]);
 
   // Track load errors
   useEffect(() => {
@@ -117,9 +118,9 @@ export function FundingMapList() {
       mixpanel.reportEvent({
         event: "funding-map:load-error",
         properties: {
-          errorMessage: error.message,
+          errorType: error.name,
           activeFilters: {
-            search: filters.search,
+            searchLength: filters.search.length,
             status: filters.status,
             categories: filters.categories,
             grantTypes: filters.grantTypes,
@@ -128,7 +129,8 @@ export function FundingMapList() {
         },
       });
     }
-  }, [isError, error, filters, mixpanel]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isError, error, filters]);
 
   return (
     <section className="flex min-w-0 flex-1 flex-col gap-6">

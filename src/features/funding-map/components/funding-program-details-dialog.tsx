@@ -292,6 +292,7 @@ function SocialLinks({
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-center w-8 h-8 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
+            aria-label={link.label}
             title={link.label}
             onClick={() => onLinkClick?.(link.label, href)}
           >
@@ -366,10 +367,12 @@ export function FundingProgramDetailsDialog({
 }: FundingProgramDetailsDialogProps) {
   const { mixpanel } = useMixpanel("karma");
   const openTimeRef = useRef<number>(0);
+  const hasTrackedOpenRef = useRef(false);
 
   // Track details-open when dialog opens with a program
   useEffect(() => {
-    if (open && program) {
+    if (open && program && !hasTrackedOpenRef.current) {
+      hasTrackedOpenRef.current = true;
       openTimeRef.current = Date.now();
       const source = cardClickedRef?.current ? "card_click" : "direct_url";
       if (cardClickedRef) {
@@ -394,6 +397,9 @@ export function FundingProgramDetailsDialog({
   }, [open, program, mixpanel, cardClickedRef]);
 
   const handleOpenChange = (newOpen: boolean) => {
+    if (!newOpen) {
+      hasTrackedOpenRef.current = false;
+    }
     if (!newOpen && program) {
       mixpanel.reportEvent({
         event: "funding-map:details-close",

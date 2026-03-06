@@ -38,6 +38,7 @@ export function FundingMapFilters({ totalCount = 0 }: FundingMapFiltersProps) {
     resetFilters,
   } = useFundingFilters();
   const { mixpanel } = useMixpanel("karma");
+  const { categories, grantTypes, status, onlyOnKarma } = filters;
 
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [typeOpen, setTypeOpen] = useState(false);
@@ -49,13 +50,13 @@ export function FundingMapFilters({ totalCount = 0 }: FundingMapFiltersProps) {
     !filters.onlyOnKarma;
 
   const handleKarmaToggle = useCallback(() => {
-    const newValue = !filters.onlyOnKarma;
+    const newValue = !onlyOnKarma;
     setOnlyOnKarma(newValue);
     mixpanel.reportEvent({
       event: "funding-map:filter-karma-toggle",
       properties: { onlyOnKarma: newValue, resultCount: totalCount },
     });
-  }, [filters.onlyOnKarma, setOnlyOnKarma, mixpanel, totalCount]);
+  }, [onlyOnKarma, setOnlyOnKarma, mixpanel, totalCount]);
 
   const handleStatusChange = useCallback(
     (value: string) => {
@@ -70,40 +71,36 @@ export function FundingMapFilters({ totalCount = 0 }: FundingMapFiltersProps) {
 
   const handleCategoryToggle = useCallback(
     (category: string) => {
-      const isSelected = filters.categories.includes(category);
+      const isSelected = categories.includes(category);
       toggleCategory(category);
       mixpanel.reportEvent({
         event: "funding-map:filter-category",
         properties: {
           category,
           selected: !isSelected,
-          totalCategoriesSelected: isSelected
-            ? filters.categories.length - 1
-            : filters.categories.length + 1,
+          totalCategoriesSelected: isSelected ? categories.length - 1 : categories.length + 1,
           resultCount: totalCount,
         },
       });
     },
-    [filters.categories, toggleCategory, mixpanel, totalCount]
+    [categories, toggleCategory, mixpanel, totalCount]
   );
 
   const handleGrantTypeToggle = useCallback(
     (grantType: string) => {
-      const isSelected = filters.grantTypes.includes(grantType);
+      const isSelected = grantTypes.includes(grantType);
       toggleGrantType(grantType);
       mixpanel.reportEvent({
         event: "funding-map:filter-grant-type",
         properties: {
           grantType,
           selected: !isSelected,
-          totalGrantTypesSelected: isSelected
-            ? filters.grantTypes.length - 1
-            : filters.grantTypes.length + 1,
+          totalGrantTypesSelected: isSelected ? grantTypes.length - 1 : grantTypes.length + 1,
           resultCount: totalCount,
         },
       });
     },
-    [filters.grantTypes, toggleGrantType, mixpanel, totalCount]
+    [grantTypes, toggleGrantType, mixpanel, totalCount]
   );
 
   const handleClearFilters = useCallback(() => {
@@ -111,15 +108,15 @@ export function FundingMapFilters({ totalCount = 0 }: FundingMapFiltersProps) {
       event: "funding-map:filters-clear",
       properties: {
         clearedFilters: {
-          status: filters.status,
-          categories: filters.categories,
-          grantTypes: filters.grantTypes,
-          onlyOnKarma: filters.onlyOnKarma,
+          status,
+          categories,
+          grantTypes,
+          onlyOnKarma,
         },
       },
     });
     resetFilters();
-  }, [filters, resetFilters, mixpanel]);
+  }, [status, categories, grantTypes, onlyOnKarma, resetFilters, mixpanel]);
 
   return (
     <div className="flex w-full flex-wrap items-center justify-between gap-2 rounded-xl border border-border p-3">
@@ -255,7 +252,7 @@ export function FundingMapFilters({ totalCount = 0 }: FundingMapFiltersProps) {
                     type="button"
                     key={`all-${category}`}
                     className="flex w-full items-center gap-2 cursor-pointer rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
-                    onClick={() => toggleCategory(category)}
+                    onClick={() => handleCategoryToggle(category)}
                   >
                     <div
                       className={cn(

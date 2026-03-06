@@ -41,14 +41,15 @@ export function FundingMapSearch() {
         mixpanel.reportEvent({
           event: "funding-map:search",
           properties: {
-            query: value,
             queryLength: value.length,
           },
         });
       } else if (previousQueryRef.current) {
         mixpanel.reportEvent({
           event: "funding-map:search-clear",
-          properties: { previousQuery: previousQueryRef.current },
+          properties: {
+            previousQueryLength: previousQueryRef.current.length,
+          },
         });
       }
       previousQueryRef.current = value;

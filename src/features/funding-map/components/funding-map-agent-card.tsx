@@ -25,11 +25,16 @@ export function FundingMapAgentCard() {
   const [, copyToClipboard] = useCopyToClipboard();
   const { mixpanel } = useMixpanel("karma");
 
-  const handleCopy = (tab: string) => {
-    copyToClipboard(AGENT_PROMPT).catch(() => {});
+  const handleCopy = async (tab: string) => {
+    let success = true;
+    try {
+      await copyToClipboard(AGENT_PROMPT);
+    } catch {
+      success = false;
+    }
     mixpanel.reportEvent({
       event: "funding-map:agent-prompt-copy",
-      properties: { tab },
+      properties: { tab, success },
     });
   };
 
