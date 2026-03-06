@@ -23,7 +23,7 @@ export function useApplicationSubmit(communityId: string): UseApplicationSubmitR
     }) => {
       const body: Record<string, unknown> = {
         programId,
-        data,
+        applicationData: data,
         applicantEmail,
       };
       if (aiEvaluation) body.aiEvaluation = aiEvaluation;
