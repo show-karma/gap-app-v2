@@ -141,7 +141,7 @@ describe("useMentionEditor", () => {
   describe("handleSelectReviewer", () => {
     const reviewer = {
       name: "Alice",
-      walletAddress: "0x1234567890abcdef1234567890abcdef12345678",
+      email: "alice@example.com",
     };
 
     it("should insert the mention and close autocomplete", () => {
@@ -162,7 +162,7 @@ describe("useMentionEditor", () => {
       expect(result.current.isAutocompleteOpen).toBe(false);
       expect(result.current.filterText).toBe("");
       expect(onChange).toHaveBeenLastCalledWith(
-        expect.stringContaining("@[Alice](wallet:0x1234567890abcdef1234567890abcdef12345678)")
+        expect.stringContaining("@[Alice](email:alice@example.com)")
       );
     });
 

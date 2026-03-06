@@ -106,8 +106,9 @@ const CommentInput: FC<CommentInputProps> = ({
     try {
       await onSubmit(content.trim());
       setContent("");
-    } catch {
-      // Error handling delegated to parent
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      console.error(`[CommentInput] Failed to submit comment: ${message}`);
     } finally {
       setIsSubmitting(false);
     }

@@ -15,21 +15,20 @@ describe("parseMentions", () => {
   });
 
   it("should parse a single mention", () => {
-    const content = "Hello @[Alice](wallet:0x1234567890abcdef1234567890abcdef12345678)!";
+    const content = "Hello @[Alice](email:alice@example.com)!";
     const result = parseMentions(content);
 
     expect(result).toHaveLength(1);
     expect(result[0]).toEqual({
       displayName: "Alice",
-      walletAddress: "0x1234567890abcdef1234567890abcdef12345678",
-      raw: "@[Alice](wallet:0x1234567890abcdef1234567890abcdef12345678)",
+      email: "alice@example.com",
+      raw: "@[Alice](email:alice@example.com)",
     });
   });
 
   it("should parse multiple mentions", () => {
     const content =
-      "@[Alice](wallet:0x1234567890abcdef1234567890abcdef12345678) and " +
-      "@[Bob](wallet:0xabcdefabcdefabcdefabcdefabcdefabcdefabcd) reviewed this";
+      "@[Alice](email:alice@example.com) and " + "@[Bob](email:bob@example.com) reviewed this";
     const result = parseMentions(content);
 
     expect(result).toHaveLength(2);
@@ -37,24 +36,22 @@ describe("parseMentions", () => {
     expect(result[1].displayName).toBe("Bob");
   });
 
-  it("should lowercase wallet addresses", () => {
-    const content = "@[Alice](wallet:0xABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCD)";
+  it("should preserve email addresses as-is", () => {
+    const content = "@[Alice](email:Alice@Example.com)";
     const result = parseMentions(content);
 
-    expect(result[0].walletAddress).toBe("0xabcdefabcdefabcdefabcdefabcdefabcdefabcd");
+    expect(result[0].email).toBe("Alice@Example.com");
   });
 
   it("should not match malformed mention tokens", () => {
-    // Missing wallet: prefix
-    expect(parseMentions("@[Alice](0x1234567890abcdef1234567890abcdef12345678)")).toEqual([]);
-    // Incomplete wallet address (too short)
-    expect(parseMentions("@[Alice](wallet:0x1234)")).toEqual([]);
+    // Missing email: prefix
+    expect(parseMentions("@[Alice](alice@example.com)")).toEqual([]);
     // Missing brackets
-    expect(parseMentions("@Alice(wallet:0x1234567890abcdef1234567890abcdef12345678)")).toEqual([]);
+    expect(parseMentions("@Alice(email:alice@example.com)")).toEqual([]);
   });
 
   it("should handle mentions with spaces in display names", () => {
-    const content = "@[Alice Wonderland](wallet:0x1234567890abcdef1234567890abcdef12345678)";
+    const content = "@[Alice Wonderland](email:alice@example.com)";
     const result = parseMentions(content);
 
     expect(result).toHaveLength(1);
@@ -62,7 +59,7 @@ describe("parseMentions", () => {
   });
 
   it("should preserve the raw token in the result", () => {
-    const token = "@[Alice](wallet:0x1234567890abcdef1234567890abcdef12345678)";
+    const token = "@[Alice](email:alice@example.com)";
     const content = `Check with ${token} about this`;
     const result = parseMentions(content);
 
@@ -70,7 +67,7 @@ describe("parseMentions", () => {
   });
 
   it("should handle content with only a mention token", () => {
-    const content = "@[Alice](wallet:0x1234567890abcdef1234567890abcdef12345678)";
+    const content = "@[Alice](email:alice@example.com)";
     const result = parseMentions(content);
 
     expect(result).toHaveLength(1);
@@ -80,21 +77,21 @@ describe("parseMentions", () => {
 describe("insertMention", () => {
   const reviewer = {
     name: "Alice",
-    walletAddress: "0x1234567890abcdef1234567890abcdef12345678",
+    email: "alice@example.com",
   };
 
   it("should insert a mention at the end of content where @ was typed", () => {
     const content = "Hello @Al";
     const result = insertMention(content, content.length, reviewer, "Al");
 
-    expect(result).toBe("Hello @[Alice](wallet:0x1234567890abcdef1234567890abcdef12345678) ");
+    expect(result).toBe("Hello @[Alice](email:alice@example.com) ");
   });
 
   it("should insert a mention when @ is at the start of content", () => {
     const content = "@Al";
     const result = insertMention(content, content.length, reviewer, "Al");
 
-    expect(result).toBe("@[Alice](wallet:0x1234567890abcdef1234567890abcdef12345678) ");
+    expect(result).toBe("@[Alice](email:alice@example.com) ");
   });
 
   it("should return content unchanged when no @ is found", () => {
@@ -119,9 +116,7 @@ describe("insertMention", () => {
     const cursorPosition = 9; // right after "@Al"
     const result = insertMention(content, cursorPosition, reviewer, "Al");
 
-    expect(result).toBe(
-      "Hello @[Alice](wallet:0x1234567890abcdef1234567890abcdef12345678)  some trailing text"
-    );
+    expect(result).toBe("Hello @[Alice](email:alice@example.com)  some trailing text");
   });
 
   it("should add a trailing space after the mention token", () => {
@@ -150,16 +145,14 @@ describe("renderMentionsAsMarkdown", () => {
   });
 
   it("should convert a single mention to bold markdown", () => {
-    const content = "Hello @[Alice](wallet:0x1234567890abcdef1234567890abcdef12345678)!";
+    const content = "Hello @[Alice](email:alice@example.com)!";
     const result = renderMentionsAsMarkdown(content);
 
     expect(result).toBe("Hello **@Alice**!");
   });
 
   it("should convert multiple mentions to bold markdown", () => {
-    const content =
-      "@[Alice](wallet:0x1234567890abcdef1234567890abcdef12345678) and " +
-      "@[Bob](wallet:0xabcdefabcdefabcdefabcdefabcdefabcdefabcd)";
+    const content = "@[Alice](email:alice@example.com) and " + "@[Bob](email:bob@example.com)";
     const result = renderMentionsAsMarkdown(content);
 
     expect(result).toBe("**@Alice** and **@Bob**");
@@ -171,15 +164,14 @@ describe("renderMentionsAsMarkdown", () => {
   });
 
   it("should handle mentions with spaces in display names", () => {
-    const content =
-      "Check with @[Alice Wonderland](wallet:0x1234567890abcdef1234567890abcdef12345678)";
+    const content = "Check with @[Alice Wonderland](email:alice@example.com)";
     const result = renderMentionsAsMarkdown(content);
 
     expect(result).toBe("Check with **@Alice Wonderland**");
   });
 
   it("should preserve surrounding text", () => {
-    const content = "Before @[Alice](wallet:0x1234567890abcdef1234567890abcdef12345678) after";
+    const content = "Before @[Alice](email:alice@example.com) after";
     const result = renderMentionsAsMarkdown(content);
 
     expect(result).toBe("Before **@Alice** after");

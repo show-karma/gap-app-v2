@@ -53,35 +53,46 @@ export function getCaretCoordinates(
   element: HTMLTextAreaElement,
   position: number
 ): CaretCoordinates {
-  const div = document.createElement("div");
-  div.id = "mention-caret-mirror";
-  document.body.appendChild(div);
-
-  const style = div.style;
-  const computed = window.getComputedStyle(element);
-
-  style.whiteSpace = "pre-wrap";
-  style.wordWrap = "break-word";
-  style.position = "absolute";
-  style.visibility = "hidden";
-  style.overflow = "hidden";
-
-  for (const prop of TEXTAREA_PROPERTIES) {
-    style.setProperty(prop, computed.getPropertyValue(prop));
+  if (typeof document === "undefined") {
+    return { top: 0, left: 0 };
   }
 
-  div.textContent = element.value.substring(0, position);
+  let div: HTMLDivElement | null = null;
+  try {
+    div = document.createElement("div");
+    div.id = "mention-caret-mirror";
+    document.body.appendChild(div);
 
-  const span = document.createElement("span");
-  span.textContent = element.value.substring(position) || "\u200b";
-  div.appendChild(span);
+    const style = div.style;
+    const computed = window.getComputedStyle(element);
 
-  const coordinates: CaretCoordinates = {
-    top: span.offsetTop - element.scrollTop,
-    left: span.offsetLeft - element.scrollLeft,
-  };
+    style.whiteSpace = "pre-wrap";
+    style.wordWrap = "break-word";
+    style.position = "absolute";
+    style.visibility = "hidden";
+    style.overflow = "hidden";
 
-  document.body.removeChild(div);
+    for (const prop of TEXTAREA_PROPERTIES) {
+      style.setProperty(prop, computed.getPropertyValue(prop));
+    }
 
-  return coordinates;
+    div.textContent = element.value.substring(0, position);
+
+    const span = document.createElement("span");
+    span.textContent = element.value.substring(position) || "\u200b";
+    div.appendChild(span);
+
+    const coordinates: CaretCoordinates = {
+      top: span.offsetTop - element.scrollTop,
+      left: span.offsetLeft - element.scrollLeft,
+    };
+
+    return coordinates;
+  } catch {
+    return { top: 0, left: 0 };
+  } finally {
+    if (div?.parentNode) {
+      div.parentNode.removeChild(div);
+    }
+  }
 }

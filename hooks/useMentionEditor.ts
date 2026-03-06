@@ -48,13 +48,6 @@ export function useMentionEditor(options: UseMentionEditorOptions = {}) {
       const maxLeft = containerRect.width - dropdownWidth;
       const finalLeft = Math.max(0, Math.min(rawLeft, maxLeft));
 
-      console.debug("[mention-caret] final position:", {
-        top: rawTop,
-        left: finalLeft,
-        rawLeft,
-        maxLeft,
-      });
-
       setCaretPosition({ top: rawTop, left: finalLeft });
     },
     [editorRef]
