@@ -111,7 +111,7 @@ export function useFundingFilters() {
 
   const [onlyOnKarma, setOnlyOnKarma] = useQueryState(
     "onlyOnKarma",
-    parseAsBoolean.withDefault(true).withOptions({ clearOnDefault: true })
+    parseAsBoolean.withDefault(false).withOptions({ clearOnDefault: true })
   );
 
   const [selectedTypes, setSelectedTypesRaw] = useQueryState(
@@ -258,7 +258,7 @@ export function useFundingFilters() {
     setEcosystems([]);
     setNetworks([]);
     setGrantTypes([]);
-    setOnlyOnKarma(true);
+    setOnlyOnKarma(false);
     setOrganizationFilterRaw("");
     setSelectedTypesRaw([]);
   }, [

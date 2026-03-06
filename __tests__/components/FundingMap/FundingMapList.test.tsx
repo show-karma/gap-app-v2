@@ -15,10 +15,6 @@ jest.mock("@/src/features/funding-map/components/funding-program-details-dialog"
   FundingProgramDetailsDialog: jest.fn(() => <div data-testid="funding-program-details-dialog" />),
 }));
 
-jest.mock("@/src/features/funding-map/components/opportunity-type-tabs", () => ({
-  OpportunityTypeTabs: jest.fn(() => <div data-testid="opportunity-type-tabs" />),
-}));
-
 jest.mock("@/src/features/funding-map/hooks/use-funding-programs", () => ({
   useFundingPrograms: jest.fn(() => ({
     data: { programs: [], count: 0 },
@@ -51,7 +47,7 @@ jest.mock("@/src/features/funding-map/hooks/use-funding-filters", () => ({
       ecosystems: [],
       networks: [],
       grantTypes: [],
-      onlyOnKarma: true, // new default
+      onlyOnKarma: false,
       organizationFilter: null,
       selectedTypes: [],
     },
@@ -70,7 +66,7 @@ describe("FundingMapList empty state", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("shows 'try adjusting your filters' when onlyOnKarma is toggled off", async () => {
+  it("shows 'try adjusting your filters' when onlyOnKarma is toggled on", async () => {
     const { useFundingFilters } = await import(
       "@/src/features/funding-map/hooks/use-funding-filters"
     );
@@ -86,7 +82,7 @@ describe("FundingMapList empty state", () => {
         ecosystems: [],
         networks: [],
         grantTypes: [],
-        onlyOnKarma: false,
+        onlyOnKarma: true,
         organizationFilter: null,
         selectedTypes: [],
       },

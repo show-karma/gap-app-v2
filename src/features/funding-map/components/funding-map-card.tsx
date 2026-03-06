@@ -14,7 +14,6 @@ import { CardTypeDetails } from "./card-type-details";
 import { FundingMapDescription } from "./funding-map-description";
 import { GrantTypeBadges } from "./grant-type-badges";
 import { OnKarmaBadge } from "./on-karma-badge";
-import { OpportunityTypeBadge } from "./opportunity-type-badge";
 
 interface FundingMapCardProps {
   program: FundingProgramResponse;
@@ -127,7 +126,7 @@ export function FundingMapCard({
     >
       <div className="flex flex-col gap-4 mb-4 flex-1">
         <div className="flex w-full flex-row items-center justify-between gap-2">
-          {(formattedBudget || (grantTypes && grantTypes.length > 0)) && (
+          {(formattedBudget || isNonGrant || (grantTypes && grantTypes.length > 0)) && (
             <div className="flex items-center rounded-[10px] bg-secondary p-0.5 max-w-full overflow-hidden">
               {formattedBudget && (
                 <Badge
@@ -138,25 +137,19 @@ export function FundingMapCard({
                   <span className="truncate max-w-[120px]">{formattedBudget}</span>
                 </Badge>
               )}
-              {grantTypes && grantTypes.length > 0 && (
-                <GrantTypeBadges
-                  types={grantTypes}
-                  showLabels="conditional"
-                  variant="secondary"
-                  iconSize="sm"
-                  className="gap-0.5"
-                />
-              )}
+              <GrantTypeBadges
+                types={grantTypes ?? []}
+                showLabels="conditional"
+                variant="secondary"
+                iconSize="sm"
+                className="gap-0.5"
+                opportunityType={opportunityType}
+              />
             </div>
           )}
           {isOnKarma && <OnKarmaBadge showTooltip={true} />}
         </div>
         <div className="flex flex-col gap-1">
-          {isNonGrant && (
-            <div className="mb-0.5">
-              <OpportunityTypeBadge type={opportunityType} />
-            </div>
-          )}
           <h3 className="text-lg font-semibold text-foreground">{title}</h3>
           {(validCommunities.length > 0 || fallbackName) && (
             <div className="flex flex-wrap items-center gap-1.5">
