@@ -16,13 +16,17 @@ import { useMixpanel } from "@/hooks/useMixpanel";
 import { cn } from "@/utilities/tailwind";
 import {
   FUNDING_MAP_CATEGORIES,
-  FUNDING_MAP_GRANT_TYPES,
   FUNDING_MAP_STATUSES,
   OPPORTUNITY_TYPE_LABELS,
   OPPORTUNITY_TYPE_SINGULAR_LABELS,
+  UNIFIED_TYPE_OPTIONS,
+  type UnifiedTypeOption,
 } from "../constants/filter-options";
 import { useFundingFilters } from "../hooks/use-funding-filters";
+import { useTypeCounts } from "../hooks/use-funding-programs";
 import type { OpportunityType } from "../types/funding-program";
+import { getGrantTypeConfig } from "../utils/grant-type-config";
+import { getOpportunityTypeConfig } from "../utils/opportunity-type-config";
 import { OnKarmaBadge } from "./on-karma-badge";
 
 interface FundingMapFiltersProps {
@@ -36,21 +40,29 @@ export function FundingMapFilters({ totalCount = 0 }: FundingMapFiltersProps) {
     setOnlyOnKarma,
     setCategories,
     setGrantTypes,
+    setSelectedTypes,
     toggleCategory,
     toggleGrantType,
+    toggleType,
     resetFilters,
   } = useFundingFilters();
   const { mixpanel } = useMixpanel("karma");
   const { categories, grantTypes, status, onlyOnKarma } = filters;
 
+  const { data: typeCounts } = useTypeCounts({
+    onlyOnKarma: filters.onlyOnKarma || undefined,
+  });
+
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [typeOpen, setTypeOpen] = useState(false);
+
+  const totalTypeSelections = filters.selectedTypes.length + filters.grantTypes.length;
 
   const hasActiveFilters =
     filters.status !== "Active" ||
     filters.categories.length > 0 ||
     filters.grantTypes.length > 0 ||
-    !filters.onlyOnKarma ||
+    filters.onlyOnKarma ||
     filters.selectedTypes.length > 0;
 
   // Build result count text based on selected type, using singular when count is 1
@@ -62,6 +74,12 @@ export function FundingMapFilters({ totalCount = 0 }: FundingMapFiltersProps) {
       : OPPORTUNITY_TYPE_LABELS[singleSelectedType]
     : null;
   const resultLabel = typeLabel ? typeLabel.toLowerCase() : null;
+
+  const getTypeCount = (type: string): number | undefined => {
+    if (!typeCounts) return undefined;
+    const found = typeCounts.find((tc) => tc.type === type);
+    return found?.count;
+  };
 
   const handleKarmaToggle = useCallback(() => {
     const newValue = !onlyOnKarma;
@@ -100,22 +118,29 @@ export function FundingMapFilters({ totalCount = 0 }: FundingMapFiltersProps) {
     [categories, toggleCategory, mixpanel, totalCount]
   );
 
-  const handleGrantTypeToggle = useCallback(
-    (grantType: string) => {
-      const isSelected = grantTypes.includes(grantType);
-      toggleGrantType(grantType);
+  const handleUnifiedTypeToggle = useCallback(
+    (option: (typeof UNIFIED_TYPE_OPTIONS)[number]) => {
+      if (option.filterTarget === "type") {
+        toggleType(option.value as OpportunityType);
+      } else {
+        toggleGrantType(option.value);
+      }
       mixpanel.reportEvent({
-        event: "funding-map:filter-grant-type",
+        event: "funding-map:filter-type",
         properties: {
-          grantType,
-          selected: !isSelected,
-          totalGrantTypesSelected: isSelected ? grantTypes.length - 1 : grantTypes.length + 1,
+          type: option.value,
+          filterTarget: option.filterTarget,
           resultCount: totalCount,
         },
       });
     },
-    [grantTypes, toggleGrantType, mixpanel, totalCount]
+    [toggleType, toggleGrantType, mixpanel, totalCount]
   );
+
+  const handleClearTypes = useCallback(() => {
+    setSelectedTypes([]);
+    setGrantTypes([]);
+  }, [setSelectedTypes, setGrantTypes]);
 
   const handleClearFilters = useCallback(() => {
     mixpanel.reportEvent({
@@ -126,11 +151,40 @@ export function FundingMapFilters({ totalCount = 0 }: FundingMapFiltersProps) {
           categories,
           grantTypes,
           onlyOnKarma,
+          selectedTypes: filters.selectedTypes,
         },
       },
     });
     resetFilters();
-  }, [status, categories, grantTypes, onlyOnKarma, resetFilters, mixpanel]);
+  }, [status, categories, grantTypes, onlyOnKarma, filters.selectedTypes, resetFilters, mixpanel]);
+
+  const isUnifiedOptionSelected = (option: (typeof UNIFIED_TYPE_OPTIONS)[number]) => {
+    if (option.filterTarget === "type") {
+      return filters.selectedTypes.includes(option.value as OpportunityType);
+    }
+    return filters.grantTypes.includes(option.value);
+  };
+
+  const OPPORTUNITY_TO_GRANT_TYPE: Partial<Record<OpportunityType, string>> = {
+    hackathon: "Hackathons",
+    bounty: "Bounties",
+    accelerator: "Accelerators",
+  };
+
+  const getTypeOptionIcon = (option: UnifiedTypeOption): React.ReactNode => {
+    if (option.filterTarget === "type") {
+      const grantTypeName = OPPORTUNITY_TO_GRANT_TYPE[option.value as OpportunityType];
+      if (grantTypeName) {
+        const grantConfig = getGrantTypeConfig(grantTypeName, { iconSize: "sm" });
+        return grantConfig?.icon ?? null;
+      }
+      const config = getOpportunityTypeConfig(option.value as OpportunityType);
+      const Icon = config.icon;
+      return <Icon className={cn("h-3.5 w-3.5", config.colorClass)} />;
+    }
+    const config = getGrantTypeConfig(option.value, { iconSize: "sm" });
+    return config?.icon ?? null;
+  };
 
   return (
     <div className="flex w-full flex-wrap items-center justify-between gap-2 rounded-xl border border-border p-3">
@@ -295,32 +349,32 @@ export function FundingMapFilters({ totalCount = 0 }: FundingMapFiltersProps) {
                 variant="outline"
                 className={cn(
                   "h-8 w-auto gap-1.5 text-sm font-normal shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground",
-                  filters.grantTypes.length > 0
+                  totalTypeSelections > 0
                     ? "rounded-l-lg rounded-r-none px-2.5"
                     : "rounded-lg px-2.5"
                 )}
               >
                 <span
                   className={cn(
-                    filters.grantTypes.length > 0 ? "text-foreground" : "text-muted-foreground"
+                    totalTypeSelections > 0 ? "text-foreground" : "text-muted-foreground"
                   )}
                 >
-                  Type
+                  Types
                 </span>
-                {filters.grantTypes.length > 0 ? (
+                {totalTypeSelections > 0 ? (
                   <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-medium">
-                    {filters.grantTypes.length}
+                    {totalTypeSelections}
                   </span>
                 ) : (
                   <ChevronDown className="h-4 w-4 opacity-50" />
                 )}
               </Button>
             </Popover.Trigger>
-            {filters.grantTypes.length > 0 && (
+            {totalTypeSelections > 0 && (
               <button
                 type="button"
                 className="flex h-8 w-8 items-center justify-center rounded-r-lg border border-l-0 border-input bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground cursor-pointer"
-                onClick={() => setGrantTypes([])}
+                onClick={handleClearTypes}
                 aria-label="Clear type filters"
               >
                 <X className="h-3 w-3" />
@@ -331,32 +385,82 @@ export function FundingMapFilters({ totalCount = 0 }: FundingMapFiltersProps) {
             <Popover.Content
               align="start"
               sideOffset={4}
-              className="z-50 w-56 rounded-md border border-border bg-popover text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
+              className="z-50 w-64 rounded-md border border-border bg-popover text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
             >
               <div className="max-h-80 overflow-y-auto p-1">
-                {/* Full list of all items */}
-                {FUNDING_MAP_GRANT_TYPES.map((type) => (
-                  <button
-                    type="button"
-                    key={type}
-                    className="flex w-full items-center gap-2 cursor-pointer rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
-                    onClick={() => handleGrantTypeToggle(type)}
-                  >
-                    <div
-                      className={cn(
-                        "flex h-4 w-4 items-center justify-center rounded border",
-                        filters.grantTypes.includes(type)
-                          ? "border-primary bg-primary"
-                          : "border-border"
-                      )}
-                    >
-                      {filters.grantTypes.includes(type) && (
-                        <Check className="h-3 w-3 text-primary-foreground" />
-                      )}
-                    </div>
-                    <span>{type}</span>
-                  </button>
-                ))}
+                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                  Opportunity Types
+                </div>
+                {UNIFIED_TYPE_OPTIONS.filter((o) => o.section === "opportunityTypes").map(
+                  (option) => {
+                    const count = getTypeCount(option.value);
+                    return (
+                      <button
+                        type="button"
+                        key={option.value}
+                        className="flex w-full items-center gap-2 cursor-pointer rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
+                        onClick={() => handleUnifiedTypeToggle(option)}
+                      >
+                        <div
+                          className={cn(
+                            "flex h-4 w-4 items-center justify-center rounded border",
+                            isUnifiedOptionSelected(option)
+                              ? "border-primary bg-primary"
+                              : "border-border"
+                          )}
+                        >
+                          {isUnifiedOptionSelected(option) && (
+                            <Check className="h-3 w-3 text-primary-foreground" />
+                          )}
+                        </div>
+                        {getTypeOptionIcon(option)}
+                        <span className="flex-1 text-left">{option.label}</span>
+                        {count !== undefined && (
+                          <span className="text-xs text-muted-foreground tabular-nums">
+                            ({count})
+                          </span>
+                        )}
+                      </button>
+                    );
+                  }
+                )}
+                <div className="-mx-1 my-1 h-px bg-muted" />
+                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                  Funding Mechanisms
+                </div>
+                {UNIFIED_TYPE_OPTIONS.filter((o) => o.section === "fundingMechanisms").map(
+                  (option) => {
+                    const count = getTypeCount(option.value);
+                    return (
+                      <button
+                        type="button"
+                        key={option.value}
+                        className="flex w-full items-center gap-2 cursor-pointer rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
+                        onClick={() => handleUnifiedTypeToggle(option)}
+                      >
+                        <div
+                          className={cn(
+                            "flex h-4 w-4 items-center justify-center rounded border",
+                            isUnifiedOptionSelected(option)
+                              ? "border-primary bg-primary"
+                              : "border-border"
+                          )}
+                        >
+                          {isUnifiedOptionSelected(option) && (
+                            <Check className="h-3 w-3 text-primary-foreground" />
+                          )}
+                        </div>
+                        {getTypeOptionIcon(option)}
+                        <span className="flex-1 text-left">{option.label}</span>
+                        {count !== undefined && (
+                          <span className="text-xs text-muted-foreground tabular-nums">
+                            ({count})
+                          </span>
+                        )}
+                      </button>
+                    );
+                  }
+                )}
               </div>
             </Popover.Content>
           </Popover.Portal>
