@@ -1,36 +1,30 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, ArrowLeft, RefreshCw } from "lucide-react";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 import { Link } from "@/src/components/navigation/Link";
+import { useIsFundingPlatformAdmin } from "@/src/core/rbac";
+import { ApplicationForm } from "@/src/features/applications/components/ApplicationForm";
+import {
+  transformDataForDisplay,
+  transformDataForSubmission,
+  transformFormSchemaToQuestions,
+} from "@/src/features/applications/lib/form-utils";
+import type { ApplicationFormData } from "@/src/features/applications/types";
 import type { Application, FundingProgram } from "@/types/whitelabel-entities";
 import fetchData from "@/utilities/fetchData";
-import { formatDate } from "@/utilities/formatDate";
 
 interface ApplicationEditClientProps {
   communityId: string;
-  applicationId: string;
+  application: Application;
 }
 
-export function ApplicationEditClient({ communityId, applicationId }: ApplicationEditClientProps) {
-  // Fetch application details (requires auth)
-  const {
-    data: application,
-    isLoading: appLoading,
-    error: appError,
-    refetch: refetchApp,
-  } = useQuery({
-    queryKey: ["funding-application", applicationId],
-    queryFn: async () => {
-      const [res, err] = await fetchData<Application>(
-        `/v2/funding-applications/${applicationId}`,
-        "GET"
-      );
-      if (err) throw new Error(err);
-      return res as Application;
-    },
-    staleTime: 1000 * 60 * 2,
-  });
+export function ApplicationEditClient({ communityId, application }: ApplicationEditClientProps) {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const isAdmin = useIsFundingPlatformAdmin();
 
   // Fetch program details
   const {
@@ -39,27 +33,67 @@ export function ApplicationEditClient({ communityId, applicationId }: Applicatio
     error: programError,
     refetch,
   } = useQuery({
-    queryKey: ["application", "program", application?.programId],
+    queryKey: ["application", "program", application.programId],
     queryFn: async () => {
       const [res, err] = await fetchData<FundingProgram>(
-        `/v2/funding-program-configs/${application!.programId}`,
+        `/v2/funding-program-configs/${application.programId}`,
         "GET"
       );
       if (err) throw new Error(err);
       return res as FundingProgram;
     },
     staleTime: 1000 * 60 * 10,
-    enabled: !!application?.programId,
   });
 
   const isDeadlinePassed = program?.metadata.endsAt
     ? new Date(program.metadata.endsAt) < new Date()
     : false;
-  const isRevision = application?.status === "revision_requested";
-  const isDisabled = !program?.applicationConfig?.isEnabled || (isDeadlinePassed && !isRevision);
+  const isRevision = application.status === "revision_requested";
+  // Admins can always edit; owners are blocked by deadline/config
+  const isDisabled =
+    !isAdmin && (!program?.applicationConfig?.isEnabled || (isDeadlinePassed && !isRevision));
+
+  const updateMutation = useMutation({
+    mutationFn: async (applicationData: Record<string, unknown>) => {
+      const [res, err] = await fetchData<Application>(
+        `/v2/funding-applications/${application.referenceNumber}`,
+        "PUT",
+        { applicationData }
+      );
+      if (err) throw new Error(err);
+      return res;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["application", application.referenceNumber],
+      });
+      toast.success(
+        isRevision ? "Application resubmitted for review" : "Application updated successfully"
+      );
+      router.push(`/community/${communityId}/applications/${application.referenceNumber}`);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to update application");
+    },
+  });
+
+  const formSchema = program?.applicationConfig?.formSchema;
+  const questions = formSchema ? transformFormSchemaToQuestions(formSchema) : [];
+
+  const initialData = formSchema
+    ? (transformDataForDisplay(
+        application.applicationData as Record<string, unknown>,
+        questions
+      ) as ApplicationFormData)
+    : undefined;
+
+  const handleSubmit = async (data: ApplicationFormData) => {
+    const submissionData = transformDataForSubmission(data, questions);
+    await updateMutation.mutateAsync(submissionData);
+  };
 
   // Loading
-  if (appLoading || programLoading) {
+  if (programLoading) {
     return (
       <div className="flex flex-col gap-5">
         <div className="flex flex-col items-center justify-center rounded-xl border border-border py-24">
@@ -70,40 +104,7 @@ export function ApplicationEditClient({ communityId, applicationId }: Applicatio
     );
   }
 
-  // Application fetch error
-  if (appError || !application) {
-    return (
-      <div className="flex flex-col gap-5">
-        <div className="flex flex-col items-center rounded-xl border border-border py-12 text-center">
-          <AlertTriangle className="mb-4 h-12 w-12 text-yellow-500" />
-          <h2 className="mb-2 text-xl font-semibold text-foreground">
-            {appError ? "Could Not Load Application" : "Application Not Found"}
-          </h2>
-          <p className="mb-6 text-muted-foreground">
-            {appError instanceof Error ? appError.message : "Failed to load application details."}
-          </p>
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={() => refetchApp()}
-              className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-            >
-              <RefreshCw className="h-4 w-4" />
-              Try Again
-            </button>
-            <Link
-              href={`/dashboard`}
-              className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-muted"
-            >
-              Back to Dashboard
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Program fetch error (non-blocking — show edit form anyway)
+  // Program fetch error
   if (programError) {
     return (
       <div className="flex flex-col gap-5">
@@ -125,10 +126,10 @@ export function ApplicationEditClient({ communityId, applicationId }: Applicatio
               Try Again
             </button>
             <Link
-              href={`/dashboard`}
+              href={`/community/${communityId}/applications/${application.referenceNumber}`}
               className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-muted"
             >
-              Back to Dashboard
+              Back to Application
             </Link>
           </div>
         </div>
@@ -142,7 +143,7 @@ export function ApplicationEditClient({ communityId, applicationId }: Applicatio
     <div className="flex flex-col gap-5">
       {/* Warning Banner */}
       {isDisabled && (
-        <div className="mb-6 flex items-center gap-3 rounded-xl border border-yellow-300 bg-yellow-50 p-4 dark:border-yellow-800 dark:bg-yellow-900/20">
+        <div className="flex items-center gap-3 rounded-xl border border-yellow-300 bg-yellow-50 p-4 dark:border-yellow-800 dark:bg-yellow-900/20">
           <AlertTriangle className="h-5 w-5 shrink-0 text-yellow-600" />
           <div>
             <p className="font-semibold text-yellow-700 dark:text-yellow-400">
@@ -158,7 +159,7 @@ export function ApplicationEditClient({ communityId, applicationId }: Applicatio
       )}
 
       {/* Header */}
-      <div className="mb-8">
+      <div>
         <Link
           href={`/community/${communityId}/applications/${application.referenceNumber}`}
           className="mb-4 inline-flex items-center gap-2 text-muted-foreground hover:text-foreground"
@@ -170,7 +171,7 @@ export function ApplicationEditClient({ communityId, applicationId }: Applicatio
         <h1 className="mb-2 text-3xl font-bold text-foreground">
           Edit Application for {programName}
         </h1>
-        {application.status === "revision_requested" && (
+        {isRevision && (
           <p className="text-muted-foreground">
             Your application requires revisions. Please review the feedback and update accordingly.
           </p>
@@ -178,8 +179,8 @@ export function ApplicationEditClient({ communityId, applicationId }: Applicatio
       </div>
 
       {/* Revision Request Banner */}
-      {application.status === "revision_requested" && (
-        <div className="mb-6 rounded-xl border border-orange-300 bg-orange-50 p-4 dark:border-orange-800 dark:bg-orange-900/20">
+      {isRevision && (
+        <div className="rounded-xl border border-orange-300 bg-orange-50 p-4 dark:border-orange-800 dark:bg-orange-900/20">
           <p className="mb-1 font-semibold text-orange-700 dark:text-orange-400">
             Revision Required
           </p>
@@ -194,51 +195,27 @@ export function ApplicationEditClient({ communityId, applicationId }: Applicatio
         </div>
       )}
 
-      {/* Application Data Display */}
-      <div className="rounded-xl border border-border">
-        <div className="border-b border-border p-4">
-          <h2 className="text-xl font-semibold text-foreground">Application Form</h2>
-        </div>
-        <div className="space-y-6 p-6">
-          {Object.entries(application.applicationData || {}).map(([key, value]) => (
-            <div key={key}>
-              <p className="mb-1 text-sm text-muted-foreground">
-                {key.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase())}
-              </p>
-              <div className="text-foreground">
-                {typeof value === "boolean" ? (
-                  value ? (
-                    "Yes"
-                  ) : (
-                    "No"
-                  )
-                ) : Array.isArray(value) ? (
-                  <div className="flex flex-wrap gap-2">
-                    {value.map((item, index) => (
-                      <span
-                        key={`${key}-${index}`}
-                        className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium"
-                      >
-                        {String(item)}
-                      </span>
-                    ))}
-                  </div>
-                ) : typeof value === "object" && value !== null ? (
-                  <pre className="overflow-x-auto rounded-lg bg-muted p-3 text-sm">
-                    {JSON.stringify(value, null, 2)}
-                  </pre>
-                ) : (
-                  <p className="whitespace-pre-wrap">{String(value)}</p>
-                )}
-              </div>
-            </div>
-          ))}
-          <p className="text-sm text-muted-foreground">
-            Full editing capabilities (form editing and resubmission) will be available when the
-            application form component is ported.
+      {/* Application Form */}
+      {questions.length > 0 && initialData ? (
+        <ApplicationForm
+          programId={application.programId}
+          questions={questions}
+          formSchema={formSchema}
+          initialData={initialData}
+          onSubmit={handleSubmit}
+          onCancel={() =>
+            router.push(`/community/${communityId}/applications/${application.referenceNumber}`)
+          }
+          isDisabled={isDisabled}
+          programName={programName}
+        />
+      ) : (
+        <div className="rounded-xl border border-border p-6 text-center">
+          <p className="text-muted-foreground">
+            No form configuration found for this program. The application cannot be edited.
           </p>
         </div>
-      </div>
+      )}
     </div>
   );
 }

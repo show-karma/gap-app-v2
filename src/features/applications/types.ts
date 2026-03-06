@@ -15,7 +15,6 @@ export interface ApplicationFormState {
   errors: ApplicationFormErrors;
   isValid: boolean;
   isDirty: boolean;
-  currentStep: number;
 }
 
 export interface UseApplicationSubmitReturn {

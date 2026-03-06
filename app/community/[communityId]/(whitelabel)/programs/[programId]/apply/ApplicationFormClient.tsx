@@ -26,7 +26,6 @@ interface ApplicationFormClientProps {
   programId: string;
   questions: ApplicationQuestion[];
   formSchema?: IFormSchema;
-  multiStep?: boolean;
   isDisabled?: boolean;
   programName?: string;
 }
@@ -36,7 +35,6 @@ export function ApplicationFormClient({
   programId,
   questions,
   formSchema,
-  multiStep,
   isDisabled = false,
   programName,
 }: ApplicationFormClientProps) {
@@ -197,7 +195,8 @@ export function ApplicationFormClient({
       } catch {
         // Ignore
       }
-      router.push(toPath(PAGES.COMMUNITY.APPLICATION_SUCCESS(communityId, application.id)));
+      const appId = application.referenceNumber || application.id;
+      router.push(toPath(PAGES.COMMUNITY.APPLICATION_SUCCESS(communityId, appId)));
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Failed to submit application";
 
@@ -285,7 +284,6 @@ export function ApplicationFormClient({
         onSubmit={handleSubmit}
         onCancel={handleCancel}
         isDisabled={effectiveDisabled}
-        multiStep={multiStep}
         programName={programName}
       />
 

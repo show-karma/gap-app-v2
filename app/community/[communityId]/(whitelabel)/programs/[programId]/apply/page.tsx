@@ -137,7 +137,6 @@ export default async function ApplicationApplyPage({ params }: PageProps) {
         programId={programId}
         questions={questions}
         formSchema={formSchema}
-        multiStep={questions.length > 10}
         isDisabled={isDisabled}
         programName={program.name}
       />

@@ -1,21 +1,24 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Calendar, Edit, RefreshCw } from "lucide-react";
+import { ArrowLeft, Edit, ExternalLink } from "lucide-react";
 import { useMemo } from "react";
+import { ApplicationDataView } from "@/components/FundingPlatform/ApplicationView/ApplicationTab/ApplicationDataView";
 import { useAuth } from "@/hooks/useAuth";
 import { Link } from "@/src/components/navigation/Link";
+import { useIsFundingPlatformAdmin } from "@/src/core/rbac";
+import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
+import { Role } from "@/src/core/rbac/types/role";
 import { CommentTimeline } from "@/src/features/application-comments/components/CommentTimeline";
 import { ApplicationStatusHistory } from "@/src/features/applications/components/ApplicationStatusHistory";
+import type { IFundingApplication, ProgramWithFormSchema } from "@/types/funding-platform";
 import type { Application, ApplicationStatus, FundingProgram } from "@/types/whitelabel-entities";
-import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
-import { INDEXER } from "@/utilities/indexer";
 import { cn } from "@/utilities/tailwind";
 
 interface ApplicationPageClientProps {
   communityId: string;
-  applicationId: string;
+  application: Application;
+  program: FundingProgram | null;
 }
 
 function getStatusColor(status: ApplicationStatus): string {
@@ -47,82 +50,22 @@ const editableStatuses: ApplicationStatus[] = [
   "resubmitted",
 ];
 
-function ApplicationSkeleton() {
-  return (
-    <div className="flex flex-col gap-5 animate-pulse">
-      <div className="h-6 w-40 rounded bg-muted" />
-      <div className="h-10 w-3/4 rounded bg-muted" />
-      <div className="rounded-xl border border-border p-6">
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
-          {Array.from({ length: 4 }, (_, i) => `skeleton-meta-${i}`).map((key) => (
-            <div key={key} className="space-y-2">
-              <div className="h-4 w-20 rounded bg-muted" />
-              <div className="h-5 w-32 rounded bg-muted" />
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="rounded-xl border border-border p-6">
-        <div className="space-y-6">
-          {Array.from({ length: 3 }, (_, i) => `skeleton-field-${i}`).map((key) => (
-            <div key={key} className="space-y-2">
-              <div className="h-4 w-24 rounded bg-muted" />
-              <div className="h-5 w-full rounded bg-muted" />
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export function ApplicationPageClient({ communityId, applicationId }: ApplicationPageClientProps) {
+export function ApplicationPageClient({
+  communityId,
+  application,
+  program,
+}: ApplicationPageClientProps) {
   const { address, authenticated } = useAuth();
-
-  const {
-    data: application,
-    isLoading: isAppLoading,
-    error: appError,
-    refetch: refetchApp,
-  } = useQuery({
-    queryKey: ["funding-application", applicationId],
-    queryFn: async () => {
-      const [res, err] = await fetchData<Application>(
-        `/v2/funding-applications/${applicationId}`,
-        "GET"
-      );
-      if (err) throw new Error(err);
-      return res as Application;
-    },
-    enabled: !!authenticated,
-    staleTime: 1000 * 60 * 2,
-  });
-
-  const { data: program } = useQuery({
-    queryKey: ["funding-program-config", application?.programId],
-    queryFn: async () => {
-      const [res, err] = await fetchData<FundingProgram>(
-        INDEXER.V2.FUNDING_PROGRAMS.GET(application!.programId),
-        "GET",
-        {},
-        {},
-        {},
-        true
-      );
-      if (err) return null;
-      return res;
-    },
-    enabled: !!application?.programId,
-    staleTime: 10 * 60 * 1000,
-  });
+  const isAdmin = useIsFundingPlatformAdmin();
+  const { hasRoleOrHigher, isReviewer } = usePermissionContext();
+  const isAdminOrReviewer = hasRoleOrHigher(Role.MILESTONE_REVIEWER) || isReviewer;
 
   const isOwner = useMemo(() => {
     if (!address || !application) return false;
     return application.ownerAddress?.toLowerCase() === address.toLowerCase();
   }, [address, application]);
 
-  const canEdit = useMemo(() => {
-    if (!application) return false;
+  const canOwnerEdit = useMemo(() => {
     if (!editableStatuses.includes(application.status)) return false;
     if (program?.metadata.endsAt) {
       const isDeadlinePassed = new Date(program.metadata.endsAt) < new Date();
@@ -132,31 +75,12 @@ export function ApplicationPageClient({ communityId, applicationId }: Applicatio
     return true;
   }, [application, program]);
 
-  if (isAppLoading || !authenticated) {
-    return <ApplicationSkeleton />;
-  }
-
-  if (appError || !application) {
-    return (
-      <div className="flex flex-col items-center justify-center rounded-xl border border-border py-16">
-        <p className="mb-4 text-red-600 dark:text-red-400">
-          {appError ? "Failed to load application details." : "Application not found."}
-        </p>
-        <button
-          type="button"
-          onClick={() => refetchApp()}
-          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-        >
-          <RefreshCw className="h-4 w-4" />
-          Try Again
-        </button>
-      </div>
-    );
-  }
+  // Admins can edit anytime (except approved), owners follow deadline rules
+  const showEditButton =
+    (isAdmin && application.status !== "approved") || (isOwner && canOwnerEdit);
 
   const programName =
     program?.name || program?.metadata?.title || `Program ${application.programId}`;
-  const displayData = Object.entries(application.applicationData || {});
 
   return (
     <div className="flex flex-col gap-5">
@@ -180,7 +104,7 @@ export function ApplicationPageClient({ communityId, applicationId }: Applicatio
             <p className="text-muted-foreground">Reference: {application.referenceNumber}</p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            {isOwner && canEdit && (
+            {showEditButton && (
               <Link
                 href={`/community/${communityId}/applications/${application.referenceNumber}/edit`}
                 className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
@@ -224,59 +148,39 @@ export function ApplicationPageClient({ communityId, applicationId }: Applicatio
         </div>
       </div>
 
+      {/* Admin/Reviewer Banner */}
+      {isAdminOrReviewer && application.status !== "approved" && (
+        <div className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-950/30">
+          <p className="text-sm text-blue-700 dark:text-blue-300">
+            Want to approve or reject this application?{" "}
+            <Link
+              href={`/community/${communityId}/manage/funding-platform/${application.programId}/applications/${application.referenceNumber}`}
+              className="inline-flex items-center gap-1 font-medium underline hover:no-underline"
+            >
+              Go to Admin Panel <ExternalLink className="h-3 w-3" />
+            </Link>
+          </p>
+        </div>
+      )}
+
       {/* Application Details */}
       <div className="rounded-xl border border-border">
         <div className="border-b border-border p-4">
           <h2 className="text-xl font-semibold text-foreground">Application Details</h2>
         </div>
-        <div className="space-y-6 p-6">
-          {displayData.length === 0 ? (
-            <p className="text-muted-foreground">No application data available.</p>
-          ) : (
-            displayData.map(([key, value]) => (
-              <div key={key}>
-                <p className="mb-1 text-sm text-muted-foreground">
-                  {key.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase())}
-                </p>
-                <div className="text-foreground">
-                  {typeof value === "boolean" ? (
-                    value ? (
-                      "Yes"
-                    ) : (
-                      "No"
-                    )
-                  ) : Array.isArray(value) ? (
-                    value.some((item) => typeof item === "object" && item !== null) ? (
-                      <pre className="overflow-x-auto rounded-lg bg-muted p-3 text-sm">
-                        {JSON.stringify(value, null, 2)}
-                      </pre>
-                    ) : (
-                      <div className="flex flex-wrap gap-2">
-                        {value.map((item, index) => (
-                          <span
-                            key={`${key}-${index}`}
-                            className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium"
-                          >
-                            {String(item)}
-                          </span>
-                        ))}
-                      </div>
-                    )
-                  ) : typeof value === "object" && value !== null ? (
-                    <pre className="overflow-x-auto rounded-lg bg-muted p-3 text-sm">
-                      {JSON.stringify(value, null, 2)}
-                    </pre>
-                  ) : (
-                    <p className="whitespace-pre-wrap">{String(value)}</p>
-                  )}
-                </div>
-              </div>
-            ))
-          )}
+        <div className="p-6">
+          <ApplicationDataView
+            application={application as unknown as IFundingApplication}
+            program={program as unknown as ProgramWithFormSchema}
+          />
         </div>
       </div>
 
-      {/* Comments & Activity */}
+      {/* Comments & Activity
+       * Authenticated users see the full CommentTimeline (comments + status history).
+       * Public / unauthenticated users see only the ApplicationStatusHistory.
+       * P1-12: conditional timeline based on auth state.
+       */}
       {authenticated ? (
         <CommentTimeline
           applicationId={application.referenceNumber}

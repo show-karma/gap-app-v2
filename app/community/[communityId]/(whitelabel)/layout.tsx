@@ -1,5 +1,6 @@
+import { layoutTheme } from "@/src/helper/theme";
+import { cn } from "@/utilities/tailwind";
+
 export default function WhitelabelLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="w-full max-w-full px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">{children}</div>
-  );
+  return <div className={cn(layoutTheme.padding, "w-full max-w-full")}>{children}</div>;
 }

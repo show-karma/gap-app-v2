@@ -1,14 +1,13 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import type { ApplicationQuestion } from "@/types/whitelabel-entities";
 import { buildDynamicSchema } from "../lib/zod-schema-builder";
 import type { ApplicationFormData } from "../types";
 
 interface UseApplicationFormOptions {
-  multiStep?: boolean;
   initialData?: ApplicationFormData;
 }
 
@@ -32,8 +31,6 @@ export function useApplicationForm(
     defaultValues: options?.initialData || {},
     mode: "onBlur",
   });
-
-  const [currentStep, setCurrentStep] = useState(0);
 
   useEffect(() => {
     if (options?.initialData && Object.keys(options.initialData).length > 0) {
@@ -74,29 +71,7 @@ export function useApplicationForm(
 
   const resetForm = useCallback(() => {
     reset({});
-    setCurrentStep(0);
   }, [reset]);
-
-  const nextStep = useCallback(() => {
-    if (options?.multiStep) {
-      setCurrentStep((prev) => prev + 1);
-    }
-  }, [options?.multiStep]);
-
-  const previousStep = useCallback(() => {
-    if (options?.multiStep) {
-      setCurrentStep((prev) => Math.max(0, prev - 1));
-    }
-  }, [options?.multiStep]);
-
-  const goToStep = useCallback(
-    (step: number) => {
-      if (options?.multiStep) {
-        setCurrentStep(Math.max(0, step));
-      }
-    },
-    [options?.multiStep]
-  );
 
   return {
     control,
@@ -116,7 +91,6 @@ export function useApplicationForm(
       ),
       isValid,
       isDirty,
-      currentStep,
     },
 
     updateField,
@@ -124,9 +98,5 @@ export function useApplicationForm(
     validateForm,
     setFormData,
     resetForm,
-
-    nextStep,
-    previousStep,
-    goToStep,
   };
 }

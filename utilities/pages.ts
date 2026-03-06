@@ -24,7 +24,7 @@ export const PAGES = {
     UPDATES: (community: string) => `/community/${community}/updates`,
     FINANCIALS: (community: string) => `/community/${community}/financials`,
     RECEIVEPROJECTUPDATES: (community: string) => `/community/${community}/receive-project-updates`,
-    PROGRAMS: (community: string) => `/community/${community}/programs`,
+    PROGRAMS: (community: string) => `/community/${community}/funding-opportunities`,
     PROGRAM_DETAIL: (community: string, programId: string) =>
       `/community/${community}/programs/${programId}`,
     PROGRAM_APPLY: (community: string, programId: string) =>

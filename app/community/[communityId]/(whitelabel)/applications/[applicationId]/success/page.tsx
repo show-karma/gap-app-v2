@@ -19,14 +19,7 @@ interface PageProps {
 // P1-09: React.cache() deduplicates the fetch between generateMetadata and the page component
 const getApplicationDetails = cache(async (applicationId: string): Promise<Application | null> => {
   try {
-    const [data] = await fetchData<Application>(
-      `/v2/funding-applications/${applicationId}`,
-      "GET",
-      {},
-      {},
-      {},
-      false
-    );
+    const [data] = await fetchData<Application>(`/v2/funding-applications/${applicationId}`, "GET");
     return data;
   } catch {
     return null;
@@ -50,6 +43,8 @@ export default async function ApplicationSuccessPage({ params }: PageProps) {
   const { communityId, applicationId } = await params;
   const application = await getApplicationDetails(applicationId); // cache HIT — no second fetch
 
+  const referenceNumber = application?.referenceNumber ?? applicationId;
+
   const templateVariables: Record<string, string> = { applicationId };
   if (application) {
     templateVariables.referenceNumber = application.referenceNumber ?? "";
@@ -67,17 +62,10 @@ export default async function ApplicationSuccessPage({ params }: PageProps) {
 
         <div className="mb-8 rounded-lg border bg-card p-8">
           <div className="space-y-4">
-            {application?.referenceNumber ? (
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Reference Number</p>
-                <p className="font-mono text-lg">{application.referenceNumber}</p>
-              </div>
-            ) : (
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Application ID</p>
-                <p className="font-mono text-lg">{applicationId}</p>
-              </div>
-            )}
+            <div>
+              <p className="text-sm text-muted-foreground mb-1">Reference Number</p>
+              <p className="font-mono text-lg">{referenceNumber}</p>
+            </div>
 
             {application && (
               <>
@@ -113,7 +101,7 @@ export default async function ApplicationSuccessPage({ params }: PageProps) {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href={PAGES.COMMUNITY.APPLICATIONS(communityId)}
+              href={PAGES.DASHBOARD}
               className="inline-flex items-center justify-center rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
             >
               My submissions

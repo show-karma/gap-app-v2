@@ -10,6 +10,8 @@ import {
   Sparkles,
 } from "lucide-react";
 import type React from "react";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/utilities/tailwind";
 
 export type AIEvaluationData = string | Record<string, unknown>;
@@ -32,6 +34,12 @@ function ScoreDisplay({ score, isGrowthGrants }: { score: number; isGrowthGrants
     return "text-red-600";
   };
 
+  const getScoreBarColor = (s: number) => {
+    if (s > 7) return "bg-green-500";
+    if (s >= 4) return "bg-yellow-500";
+    return "bg-red-500";
+  };
+
   const getScoreIcon = (s: number) => {
     if (s > 7) return <Check className="w-5 h-5 text-green-500" />;
     if (s >= 4) return <Info className="w-5 h-5 text-primary" />;
@@ -42,6 +50,12 @@ function ScoreDisplay({ score, isGrowthGrants }: { score: number; isGrowthGrants
     if (s > 7) return "High";
     if (s >= 4) return "Medium";
     return "Low";
+  };
+
+  const getChipVariant = (s: number) => {
+    if (s > 7) return "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400";
+    if (s >= 4) return "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400";
+    return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
   };
 
   return (
@@ -56,12 +70,8 @@ function ScoreDisplay({ score, isGrowthGrants }: { score: number; isGrowthGrants
         {isGrowthGrants && (
           <span
             className={cn(
-              "text-xs px-2 py-0.5 rounded-full",
-              score > 7
-                ? "bg-green-100 text-green-700"
-                : score >= 4
-                  ? "bg-yellow-100 text-yellow-700"
-                  : "bg-red-100 text-red-700"
+              "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold",
+              getChipVariant(score)
             )}
           >
             {getProbabilityLevel(score)}
@@ -72,14 +82,73 @@ function ScoreDisplay({ score, isGrowthGrants }: { score: number; isGrowthGrants
       {!isGrowthGrants && (
         <div className="w-full bg-zinc-200 dark:bg-zinc-700 rounded-full h-2">
           <div
-            className={cn(
-              "h-2 rounded-full transition-all",
-              score > 7 ? "bg-green-500" : score >= 4 ? "bg-yellow-500" : "bg-red-500"
-            )}
+            className={cn("h-2 rounded-full transition-all", getScoreBarColor(score))}
             style={{ width: `${score * 10}%` }}
           />
         </div>
       )}
+    </div>
+  );
+}
+
+function DecisionDisplay({
+  decision,
+  isAuditGrants,
+}: {
+  decision: string;
+  isAuditGrants: boolean;
+}) {
+  const getDecisionColor = (value: string) => {
+    const val = value.toLowerCase();
+    if (val === "reject" || val === "rejected" || val === "low")
+      return "text-red-600 dark:text-red-400";
+    if (
+      val === "accept" ||
+      val === "accepted" ||
+      val === "approve" ||
+      val === "approved" ||
+      val === "high"
+    )
+      return "text-green-600 dark:text-green-400";
+    if (val === "pending" || val === "review" || val === "medium")
+      return "text-yellow-600 dark:text-yellow-400";
+    return "text-foreground";
+  };
+
+  const getDecisionDisplay = (value: string) => {
+    if (!isAuditGrants) return value.toUpperCase();
+    const upperValue = value.toUpperCase();
+    switch (upperValue) {
+      case "PASS":
+        return "High";
+      case "NO_PASS":
+        return "Medium";
+      case "REJECT":
+        return "Low";
+      default:
+        return upperValue;
+    }
+  };
+
+  return (
+    <div className="pb-3 border-b">
+      <h4 className="text-sm font-medium mb-2">
+        {isAuditGrants ? "Probability of approval" : "Decision"}
+      </h4>
+      <p className={cn("text-lg font-semibold", getDecisionColor(decision))}>
+        {getDecisionDisplay(decision)}
+      </p>
+    </div>
+  );
+}
+
+function DisqualificationReason({ reason }: { reason: string }) {
+  return (
+    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+      <h4 className="text-sm font-medium mb-2 text-red-700 dark:text-red-400">
+        Disqualification Reason
+      </h4>
+      <p className="text-sm text-red-600 dark:text-red-300">{reason}</p>
     </div>
   );
 }
@@ -157,16 +226,16 @@ function ImprovementRecommendations({
     impact?: string;
   }>;
 }) {
-  const getPriorityColor = (priority: string) => {
+  const getPriorityVariant = (priority: string) => {
     switch (priority.toLowerCase()) {
       case "high":
-        return "bg-red-100 text-red-700";
+        return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
       case "medium":
-        return "bg-yellow-100 text-yellow-700";
+        return "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400";
       case "low":
-        return "bg-blue-100 text-blue-700";
+        return "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400";
       default:
-        return "bg-zinc-100 text-zinc-700";
+        return "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400";
     }
   };
 
@@ -180,14 +249,16 @@ function ImprovementRecommendations({
             className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-3 border border-zinc-200 dark:border-zinc-600"
           >
             {rec.priority && (
-              <span
-                className={cn(
-                  "text-xs px-2 py-0.5 rounded-full inline-block mb-2",
-                  getPriorityColor(rec.priority)
-                )}
-              >
-                {rec.priority.toUpperCase()}
-              </span>
+              <div className="mb-2">
+                <span
+                  className={cn(
+                    "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold",
+                    getPriorityVariant(rec.priority)
+                  )}
+                >
+                  {rec.priority.toUpperCase()}
+                </span>
+              </div>
             )}
             {rec.recommendation && (
               <p className="text-sm text-zinc-700 dark:text-zinc-300 mb-2">{rec.recommendation}</p>
@@ -204,6 +275,32 @@ function ImprovementRecommendations({
   );
 }
 
+function StatusChip({ status }: { status: string }) {
+  const getStatusVariant = (s: string) => {
+    switch (s?.toLowerCase()) {
+      case "complete":
+      case "completed":
+        return "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400";
+      case "incomplete":
+      case "failed":
+        return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
+      default:
+        return "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400";
+    }
+  };
+
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold",
+        getStatusVariant(status)
+      )}
+    >
+      {status?.charAt(0).toUpperCase() + status?.slice(1)}
+    </span>
+  );
+}
+
 function parseEvaluation(evaluationStr: AIEvaluationData): GenericJSON | null {
   try {
     if (typeof evaluationStr === "object" && evaluationStr !== null) {
@@ -217,21 +314,28 @@ function parseEvaluation(evaluationStr: AIEvaluationData): GenericJSON | null {
 
 function renderValue(value: unknown, depth = 0): React.ReactNode {
   if (value === null || value === undefined) {
-    return <span className="text-zinc-400">null</span>;
+    return <span className="text-muted-foreground">null</span>;
   }
   if (typeof value === "string") {
+    if (value.includes("\n")) {
+      return (
+        <div className="text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap text-sm leading-relaxed">
+          {value}
+        </div>
+      );
+    }
     return <span className="text-zinc-700 dark:text-zinc-300">{value}</span>;
   }
   if (typeof value === "number" || typeof value === "boolean") {
     return <span className="text-primary">{String(value)}</span>;
   }
   if (Array.isArray(value)) {
-    if (value.length === 0) return <span className="text-zinc-400">[]</span>;
+    if (value.length === 0) return <span className="text-muted-foreground">[]</span>;
     return (
       <div className={depth > 0 ? "ml-4" : ""}>
         {value.map((item, index) => (
           <div key={index} className="flex items-start gap-2 my-1">
-            <span className="text-zinc-400 select-none">&bull;</span>
+            <span className="text-muted-foreground select-none">&bull;</span>
             {renderValue(item, depth + 1)}
           </div>
         ))}
@@ -240,7 +344,7 @@ function renderValue(value: unknown, depth = 0): React.ReactNode {
   }
   if (typeof value === "object") {
     const entries = Object.entries(value as Record<string, unknown>);
-    if (entries.length === 0) return <span className="text-zinc-400">{"{}"}</span>;
+    if (entries.length === 0) return <span className="text-muted-foreground">{"{}"}</span>;
     return (
       <div className={depth > 0 ? "ml-4" : ""}>
         {entries.map(([key, val]) => (
@@ -254,7 +358,189 @@ function renderValue(value: unknown, depth = 0): React.ReactNode {
       </div>
     );
   }
-  return <span className="text-zinc-500 dark:text-zinc-400">{String(value)}</span>;
+  return <span className="text-muted-foreground">{String(value)}</span>;
+}
+
+function EvaluationDisplay({ data, programName }: { data: GenericJSON; programName?: string }) {
+  const lowerName = programName?.toLowerCase() ?? "";
+  const isAuditGrants = lowerName.includes("audit grants");
+  const isGrowthGrants = lowerName.includes("growth grants");
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- generic JSON from API
+  const evalData = data as Record<string, any>;
+  const renderedFields = new Set<string>();
+
+  return (
+    <div className="space-y-4">
+      {(evalData.final_score !== undefined || evalData.score !== undefined) && (
+        <>
+          <ScoreDisplay
+            score={evalData.final_score || evalData.score || 0}
+            isGrowthGrants={isGrowthGrants}
+          />
+          {!isGrowthGrants && evalData.evaluation_status && (
+            <div className="mt-2">
+              <StatusChip status={String(evalData.evaluation_status)} />
+            </div>
+          )}
+          {(() => {
+            renderedFields.add("final_score");
+            renderedFields.add("score");
+            renderedFields.add("evaluation_status");
+            return null;
+          })()}
+        </>
+      )}
+
+      {evalData.decision && (
+        <>
+          <DecisionDisplay decision={String(evalData.decision)} isAuditGrants={isAuditGrants} />
+          {(() => {
+            renderedFields.add("decision");
+            return null;
+          })()}
+        </>
+      )}
+
+      {evalData.disqualification_reason && (
+        <>
+          <DisqualificationReason reason={String(evalData.disqualification_reason)} />
+          {(() => {
+            renderedFields.add("disqualification_reason");
+            return null;
+          })()}
+        </>
+      )}
+
+      {evalData.evaluation_summary && (
+        <>
+          <EvaluationSummary
+            summary={
+              evalData.evaluation_summary as {
+                strengths?: string[];
+                concerns?: string[];
+                risk_factors?: string[];
+              }
+            }
+          />
+          {(() => {
+            renderedFields.add("evaluation_summary");
+            return null;
+          })()}
+        </>
+      )}
+
+      {evalData.improvement_recommendations?.length ? (
+        <>
+          <ImprovementRecommendations
+            recommendations={
+              evalData.improvement_recommendations as Array<{
+                priority?: string;
+                recommendation?: string;
+                impact?: string;
+              }>
+            }
+          />
+          {(() => {
+            renderedFields.add("improvement_recommendations");
+            return null;
+          })()}
+        </>
+      ) : null}
+
+      {evalData.additional_notes && (
+        <>
+          <div className="bg-zinc-100 dark:bg-zinc-800 rounded-lg p-3">
+            <h4 className="text-sm font-medium mb-2">Additional Notes</h4>
+            <p className="text-sm text-zinc-700 dark:text-zinc-300">
+              {String(evalData.additional_notes)}
+            </p>
+          </div>
+          {(() => {
+            renderedFields.add("additional_notes");
+            return null;
+          })()}
+        </>
+      )}
+
+      {evalData.reviewer_confidence && (
+        <>
+          <p className="text-xs text-muted-foreground">
+            Reviewer Confidence:{" "}
+            {String(evalData.reviewer_confidence).charAt(0).toUpperCase() +
+              String(evalData.reviewer_confidence).slice(1)}
+          </p>
+          {(() => {
+            renderedFields.add("reviewer_confidence");
+            return null;
+          })()}
+        </>
+      )}
+
+      {/* Feedback field — render with whitespace preserved */}
+      {evalData.feedback && (
+        <>
+          <div className="rounded-lg border p-3">
+            <h4 className="text-sm font-medium mb-2">Feedback</h4>
+            <div className="text-sm text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap leading-relaxed">
+              {String(evalData.feedback)}
+            </div>
+          </div>
+          {(() => {
+            renderedFields.add("feedback");
+            return null;
+          })()}
+        </>
+      )}
+
+      {/* Applicant guidance — styled as a tip box */}
+      {evalData.applicant_guidance && (
+        <>
+          <div className="rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 p-3">
+            <h4 className="text-sm font-medium mb-2 text-blue-700 dark:text-blue-400">
+              Applicant Guidance
+            </h4>
+            <p className="text-sm text-blue-700 dark:text-blue-300 leading-relaxed">
+              {String(evalData.applicant_guidance)}
+            </p>
+          </div>
+          {(() => {
+            renderedFields.add("applicant_guidance");
+            return null;
+          })()}
+        </>
+      )}
+
+      {/* Title field — skip rendering as generic since it's shown in the header context */}
+      {(() => {
+        renderedFields.add("title");
+        return null;
+      })()}
+
+      {/* Generic rendering for any remaining fields */}
+      <div className="space-y-2">
+        {Object.entries(evalData).map(([key, value]) => {
+          if (renderedFields.has(key)) return null;
+          return (
+            <div key={key} className="py-2">
+              <h5 className="text-sm font-bold text-zinc-600 dark:text-zinc-400 capitalize mb-1">
+                {key.replace(/_/g, " ")}
+              </h5>
+              <div className="text-sm">{renderValue(value)}</div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Footer disclaimer */}
+      <div className="pt-3 border-t">
+        <p className="text-sm text-muted-foreground">
+          This AI-generated review is for guidance only and may not be fully accurate. You can
+          proceed with submission at your discretion.
+        </p>
+      </div>
+    </div>
+  );
 }
 
 export function AIEvaluationDisplay({
@@ -267,30 +553,19 @@ export function AIEvaluationDisplay({
 }: AIEvaluationDisplayProps) {
   if (!isEnabled) return null;
 
-  // P1-18: Single programType discriminator — replaces dual isAuditGrants/isGrowthGrants flags
-  const lowerName = programName?.toLowerCase() ?? "";
-  const programType = lowerName.includes("audit grants")
-    ? "audit"
-    : lowerName.includes("growth grants")
-      ? "growth"
-      : "generic";
-  const isGrowthGrants = programType === "growth";
-  const isAuditGrants = programType === "audit";
-
   return (
-    <div
-      className={cn("rounded-lg border bg-card shadow-sm", className)}
-      data-testid="ai-evaluation-card"
-    >
-      <div className="flex flex-col gap-1 p-4 pb-2">
+    <Card className={cn("shadow-sm", className)} data-testid="ai-evaluation-card">
+      <CardHeader className="pb-2">
         <div className="flex items-start gap-2">
           <Sparkles className="w-5 h-5 text-primary animate-pulse" />
-          <h3 className="text-sm font-semibold">AI Evaluation Feedback</h3>
+          <CardTitle className="text-sm">AI Evaluation Feedback</CardTitle>
         </div>
-        <p className="text-xs text-zinc-500">Real-time feedback to help improve your application</p>
-      </div>
+        <CardDescription className="text-xs">
+          Real-time feedback to help improve your application
+        </CardDescription>
+      </CardHeader>
 
-      <div className="p-4 pt-0" data-testid="ai-evaluation-content">
+      <CardContent data-testid="ai-evaluation-content">
         {hasError ? (
           <div
             className="flex flex-col items-center justify-center py-8"
@@ -306,8 +581,8 @@ export function AIEvaluationDisplay({
             className="flex flex-col items-center justify-center py-8"
             data-testid="ai-evaluation-loading"
           >
-            <Loader2 className="w-8 h-8 animate-spin mb-2 text-zinc-400" />
-            <p className="text-sm text-zinc-500">Analyzing your application...</p>
+            <Loader2 className="w-8 h-8 animate-spin mb-2 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">Analyzing your application...</p>
           </div>
         ) : evaluation ? (
           (() => {
@@ -321,192 +596,17 @@ export function AIEvaluationDisplay({
                 </div>
               );
             }
-
-            const evalData = parsed as Record<string, unknown>;
-            const KNOWN_FIELDS = new Set([
-              "final_score",
-              "score",
-              "evaluation_status",
-              "decision",
-              "disqualification_reason",
-              "evaluation_summary",
-              "improvement_recommendations",
-              "additional_notes",
-              "reviewer_confidence",
-            ]);
-
-            // P1-18: getDecisionColor for color-coded decision text
-            const getDecisionColor = (value: string) => {
-              const val = value.toLowerCase();
-              if (val === "reject" || val === "rejected" || val === "low")
-                return "text-red-600 dark:text-red-400";
-              if (
-                val === "accept" ||
-                val === "accepted" ||
-                val === "approve" ||
-                val === "approved" ||
-                val === "high"
-              )
-                return "text-green-600 dark:text-green-400";
-              if (val === "pending" || val === "review" || val === "medium")
-                return "text-yellow-600 dark:text-yellow-400";
-              return "text-gray-700 dark:text-gray-300";
-            };
-
-            // P1-18: audit-grants label remapping
-            const getDecisionDisplay = (value: string) => {
-              if (!isAuditGrants) return value.toUpperCase();
-              const decisionMap: Record<string, string> = {
-                PASS: "High",
-                NO_PASS: "Medium",
-                REJECT: "Low",
-              };
-              return decisionMap[value.toUpperCase()] ?? value.toUpperCase();
-            };
-
-            // P1-17: evaluation_status color chip
-            const getEvalStatusColor = (status: string) => {
-              const s = status.toLowerCase();
-              if (s === "complete" || s === "completed")
-                return "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400";
-              if (s === "incomplete" || s === "failed")
-                return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
-              return "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400";
-            };
-
-            return (
-              <div className="space-y-4">
-                {(evalData.final_score !== undefined || evalData.score !== undefined) && (
-                  <>
-                    <ScoreDisplay
-                      score={(evalData.final_score as number) || (evalData.score as number) || 0}
-                      isGrowthGrants={isGrowthGrants}
-                    />
-                    {/* P1-17: evaluation_status chip before decision block */}
-                    {!isGrowthGrants && evalData.evaluation_status && (
-                      <div className="mt-1">
-                        <span
-                          className={cn(
-                            "inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium",
-                            getEvalStatusColor(String(evalData.evaluation_status))
-                          )}
-                        >
-                          {String(evalData.evaluation_status).charAt(0).toUpperCase() +
-                            String(evalData.evaluation_status).slice(1)}
-                        </span>
-                      </div>
-                    )}
-                  </>
-                )}
-
-                {evalData.decision ? (
-                  <div className="pb-3 border-b border-zinc-200 dark:border-zinc-700">
-                    <h4 className="text-sm font-medium mb-2">
-                      {isAuditGrants ? "Probability of approval" : "Decision"}
-                    </h4>
-                    <p
-                      className={cn(
-                        "text-lg font-semibold",
-                        getDecisionColor(String(evalData.decision))
-                      )}
-                    >
-                      {getDecisionDisplay(String(evalData.decision))}
-                    </p>
-                  </div>
-                ) : null}
-
-                {evalData.disqualification_reason ? (
-                  <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
-                    <h4 className="text-sm font-medium mb-2 text-red-700 dark:text-red-400">
-                      Disqualification Reason
-                    </h4>
-                    <p className="text-sm text-red-600 dark:text-red-300">
-                      {String(evalData.disqualification_reason)}
-                    </p>
-                  </div>
-                ) : null}
-
-                {evalData.evaluation_summary ? (
-                  <EvaluationSummary
-                    summary={
-                      evalData.evaluation_summary as {
-                        strengths?: string[];
-                        concerns?: string[];
-                        risk_factors?: string[];
-                      }
-                    }
-                  />
-                ) : null}
-
-                {(
-                  evalData.improvement_recommendations as
-                    | Array<{
-                        priority?: string;
-                        recommendation?: string;
-                        impact?: string;
-                      }>
-                    | undefined
-                )?.length ? (
-                  <ImprovementRecommendations
-                    recommendations={
-                      evalData.improvement_recommendations as Array<{
-                        priority?: string;
-                        recommendation?: string;
-                        impact?: string;
-                      }>
-                    }
-                  />
-                ) : null}
-
-                {evalData.additional_notes ? (
-                  <div className="bg-zinc-100 dark:bg-zinc-800 rounded-lg p-3">
-                    <h4 className="text-sm font-medium mb-2">Additional Notes</h4>
-                    <p className="text-sm text-zinc-700 dark:text-zinc-300">
-                      {String(evalData.additional_notes)}
-                    </p>
-                  </div>
-                ) : null}
-
-                {evalData.reviewer_confidence ? (
-                  <p className="text-xs text-zinc-400">
-                    Reviewer Confidence:{" "}
-                    {String(evalData.reviewer_confidence).charAt(0).toUpperCase() +
-                      String(evalData.reviewer_confidence).slice(1)}
-                  </p>
-                ) : null}
-
-                <div className="space-y-2">
-                  {Object.entries(evalData).map(([key, value]) => {
-                    if (KNOWN_FIELDS.has(key)) return null;
-                    return (
-                      <div key={key} className="py-2">
-                        <h5 className="text-sm font-bold text-zinc-600 dark:text-zinc-400 capitalize mb-1">
-                          {key.replace(/_/g, " ")}
-                        </h5>
-                        <div className="text-sm">{renderValue(value)}</div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <div className="pt-3 border-t">
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                    This AI-generated review is for guidance only and may not be fully accurate. You
-                    can proceed with submission at your discretion.
-                  </p>
-                </div>
-              </div>
-            );
+            return <EvaluationDisplay data={parsed} programName={programName} />;
           })()
         ) : (
           <div className="text-center py-8">
-            <Info className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
-            <p className="text-sm text-zinc-500">
+            <Info className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
+            <p className="text-sm text-muted-foreground">
               Start filling out your application to receive AI feedback
             </p>
           </div>
         )}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

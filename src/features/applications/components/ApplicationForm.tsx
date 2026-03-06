@@ -35,7 +35,6 @@ interface ApplicationFormProps {
   programId: string;
   questions: ApplicationQuestion[];
   formSchema?: IFormSchema;
-  multiStep?: boolean;
   initialData?: ApplicationFormData;
   onSubmit: (
     data: ApplicationFormData,
@@ -53,7 +52,6 @@ export function ApplicationForm({
   programId,
   questions,
   formSchema,
-  multiStep = false,
   initialData,
   onSubmit,
   onCancel,
@@ -69,12 +67,11 @@ export function ApplicationForm({
     formState,
     validateForm,
     setFormData,
-    goToStep,
     control,
     handleSubmit: formHandleSubmit,
     watch,
     trigger,
-  } = useApplicationForm(questions, { multiStep, initialData });
+  } = useApplicationForm(questions, { initialData });
 
   const pendingSubmitRef = useRef(false);
   const authPersistenceKey = useMemo(
@@ -160,15 +157,6 @@ export function ApplicationForm({
     const errorFieldIndex = questions.findIndex((q) => formState.errors[q.id]);
     if (errorFieldIndex === -1) return;
     const firstErrorField = questions[errorFieldIndex];
-
-    if (multiStep) {
-      const errorStep = Math.floor(errorFieldIndex / 5);
-      if (errorStep !== formState.currentStep) {
-        goToStep(errorStep);
-        setTimeout(() => scrollToFirstError(), 100);
-        return;
-      }
-    }
 
     let element = document.querySelector(`[data-field-id="${firstErrorField.id}"]`);
 
@@ -310,22 +298,7 @@ export function ApplicationForm({
     await handleScore();
   };
 
-  const sections = useMemo(
-    () =>
-      multiStep
-        ? questions.reduce((acc, question, index) => {
-            const sectionIndex = Math.floor(index / 5);
-            if (!acc[sectionIndex]) {
-              acc[sectionIndex] = [];
-            }
-            acc[sectionIndex].push(question);
-            return acc;
-          }, [] as ApplicationQuestion[][])
-        : [questions],
-    [multiStep, questions]
-  );
-
-  const currentQuestions = multiStep ? sections[formState.currentStep] || [] : questions;
+  const currentQuestions = questions;
 
   return (
     <div className="w-full max-w-full" data-testid="application-form-container">
