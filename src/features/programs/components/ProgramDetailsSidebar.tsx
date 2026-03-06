@@ -49,7 +49,7 @@ export function ProgramDetailsSidebar({
     !!endsAt;
 
   const applyUrl = `/community/${communityId}/programs/${programId}/apply`;
-  const applicationsUrl = `/browse-applications?programId=${programId}`;
+  const applicationsUrl = `/community/${communityId}/browse-applications?programId=${programId}`;
 
   return (
     <aside

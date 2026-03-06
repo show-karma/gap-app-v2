@@ -1,8 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { cache } from "react";
-import { CommunityContentWrapper } from "@/components/Community/CommunityContentWrapper";
-import CommunityHeader from "@/components/Community/Header";
-import { CommunityNotFound } from "@/components/Pages/Communities/CommunityNotFound";
 import { WhitelabelJsonLd } from "@/components/Seo/WhitelabelJsonLd";
 import { PROJECT_NAME } from "@/constants/brand";
 import { envVars } from "@/utilities/enviromentVars";
@@ -93,12 +90,6 @@ export default async function Layout(props: { children: React.ReactNode; params:
     return undefined;
   }
 
-  const community = await getCommunityDetails(communityId);
-
-  if (!community) {
-    return <CommunityNotFound communityId={communityId} />;
-  }
-
   const canonicalUrl = isWhitelabel && config ? `https://${config.domain}` : undefined;
 
   return (
@@ -106,10 +97,7 @@ export default async function Layout(props: { children: React.ReactNode; params:
       {isWhitelabel && tenantConfig && canonicalUrl && (
         <WhitelabelJsonLd tenant={tenantConfig} url={canonicalUrl} />
       )}
-      <div className="flex w-full h-full max-w-full flex-col justify-start max-lg:flex-col">
-        <CommunityHeader community={community} />
-        <CommunityContentWrapper>{children}</CommunityContentWrapper>
-      </div>
+      {children}
     </>
   );
 }
