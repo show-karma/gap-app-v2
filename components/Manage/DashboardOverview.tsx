@@ -7,11 +7,11 @@ import {
   CurrencyDollarIcon,
   ExclamationTriangleIcon,
   FlagIcon,
-  FolderOpenIcon,
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useMemo } from "react";
+import { NoProgramsEmptyState } from "@/components/FundingPlatform/NoProgramsEmptyState";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useFundingPrograms } from "@/hooks/useFundingPlatform";
 import type { Community } from "@/types/v2/community";
@@ -344,18 +344,18 @@ export function DashboardOverview({ community }: { community: Community }) {
 
       {/* Empty state */}
       {(!programs || programs.length === 0) && (
-        <div className="text-center py-12 bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-700">
-          <FolderOpenIcon className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-            Create your first program
-          </h3>
-          <Link
-            href={`${PAGES.ADMIN.FUNDING_PLATFORM(slug)}?create=true`}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors"
-          >
-            Create your first program
-          </Link>
-        </div>
+        <NoProgramsEmptyState
+          title="Create your first program"
+          className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-700"
+          action={
+            <Link
+              href={`${PAGES.ADMIN.FUNDING_PLATFORM(slug)}?create=true`}
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors"
+            >
+              Create your first program
+            </Link>
+          }
+        />
       )}
     </div>
   );
