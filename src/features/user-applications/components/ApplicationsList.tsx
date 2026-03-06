@@ -6,19 +6,17 @@ import { ApplicationCard } from "./ApplicationCard";
 
 interface ApplicationsListProps {
   applications: Application[];
-  communityId: string;
+  communityId?: string;
   isLoading?: boolean;
   emptyMessage?: string;
   emptyDescription?: string;
+  showCommunity?: boolean;
 }
 
 function LoadingSkeleton() {
   const skeletonKeys = ["sk-1", "sk-2", "sk-3", "sk-4", "sk-5", "sk-6"];
   return (
-    <div
-      className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
-      data-testid="loading"
-    >
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3" data-testid="loading">
       {skeletonKeys.map((key) => (
         <div
           key={key}
@@ -42,6 +40,7 @@ export function ApplicationsList({
   isLoading,
   emptyMessage = "No applications found",
   emptyDescription = "You haven't submitted any applications yet.",
+  showCommunity = false,
 }: ApplicationsListProps) {
   if (isLoading) {
     return <LoadingSkeleton />;
@@ -51,26 +50,20 @@ export function ApplicationsList({
     return (
       <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-16">
         <FileText className="mb-4 h-12 w-12 text-muted-foreground" />
-        <h3 className="text-lg font-semibold text-foreground">
-          {emptyMessage}
-        </h3>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {emptyDescription}
-        </p>
+        <h3 className="text-lg font-semibold text-foreground">{emptyMessage}</h3>
+        <p className="mt-1 text-sm text-muted-foreground">{emptyDescription}</p>
       </div>
     );
   }
 
   return (
-    <div
-      className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
-      data-testid="applications-grid"
-    >
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3" data-testid="applications-grid">
       {applications.map((application) => (
         <ApplicationCard
           key={application.referenceNumber}
           application={application}
           communityId={communityId}
+          showCommunity={showCommunity}
         />
       ))}
     </div>

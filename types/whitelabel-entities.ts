@@ -245,6 +245,9 @@ export interface Application {
   postApprovalSubmittedAt?: string;
   postApprovalUpdatedAt?: string;
   postApprovalCompleted?: boolean;
+  communitySlug?: string;
+  communityName?: string;
+  communityImage?: string;
 }
 
 export interface User {

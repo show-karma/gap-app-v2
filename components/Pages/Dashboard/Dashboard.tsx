@@ -103,7 +103,7 @@ export function Dashboard() {
             </p>
           </div>
         ) : null}
-        {communitySlug ? <ApplicationsSection communitySlug={communitySlug} /> : null}
+        <ApplicationsSection communitySlug={communitySlug ?? undefined} />
         <ProjectsSection
           projects={projects}
           isLoading={isLoadingProjects}

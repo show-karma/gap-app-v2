@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueries } from "@tanstack/react-query";
 import { RefreshCw, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useProgramsWithConfig } from "@/features/programs/hooks/use-programs-with-config";
@@ -7,17 +8,84 @@ import { ApplicationsFilters } from "@/features/user-applications/components/App
 import { ApplicationsList } from "@/features/user-applications/components/ApplicationsList";
 import { useUserApplications } from "@/features/user-applications/hooks/use-user-applications";
 import { ApplicationLookupModal } from "@/src/features/application-lookup/components/ApplicationLookupModal";
+import type { Application, FundingProgram } from "@/types/whitelabel-entities";
+import { chosenCommunities } from "@/utilities/chosenCommunities";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+
+interface CommunityInfo {
+  slug: string;
+  name: string;
+  image?: string;
+}
 
 interface ApplicationsSectionProps {
-  communitySlug: string;
+  communitySlug?: string;
 }
 
 export function ApplicationsSection({ communitySlug }: ApplicationsSectionProps) {
   const [isLookupOpen, setIsLookupOpen] = useState(false);
-  const { programs } = useProgramsWithConfig(communitySlug);
+  const { programs } = useProgramsWithConfig(communitySlug ?? "");
 
   const { applications, filters, pagination, isLoading, error, setFilters, setPage, refresh } =
     useUserApplications(communitySlug);
+
+  // When no communitySlug, fetch program configs to resolve community info per application
+  const uniqueProgramIds = useMemo(() => {
+    if (communitySlug) return [];
+    return [...new Set(applications.map((a) => a.programId))];
+  }, [applications, communitySlug]);
+
+  const programQueries = useQueries({
+    queries: uniqueProgramIds.map((programId) => ({
+      queryKey: ["funding-program-config", programId],
+      queryFn: async () => {
+        const [res, err] = await fetchData<FundingProgram>(
+          INDEXER.V2.FUNDING_PROGRAMS.GET(programId),
+          "GET",
+          {},
+          {},
+          {},
+          true
+        );
+        if (err) return null;
+        return res;
+      },
+      staleTime: 10 * 60 * 1000,
+    })),
+  });
+
+  const enrichedApplications = useMemo((): Application[] => {
+    if (communitySlug) return applications;
+
+    const knownCommunities = chosenCommunities(true);
+    const communityMap = new Map<string, CommunityInfo>();
+
+    for (let i = 0; i < uniqueProgramIds.length; i++) {
+      const program = programQueries[i]?.data;
+      if (program?.communitySlug && !communityMap.has(uniqueProgramIds[i])) {
+        const known = knownCommunities.find((c) => c.slug === program.communitySlug);
+        communityMap.set(uniqueProgramIds[i], {
+          slug: program.communitySlug,
+          name: known?.name || program.communitySlug,
+          image: known?.imageURL.light,
+        });
+      }
+    }
+
+    if (communityMap.size === 0) return applications;
+
+    return applications.map((app) => {
+      const info = communityMap.get(app.programId);
+      if (!info) return app;
+      return {
+        ...app,
+        communitySlug: app.communitySlug || info.slug,
+        communityName: app.communityName || info.name,
+        communityImage: app.communityImage || info.image,
+      };
+    });
+  }, [applications, communitySlug, uniqueProgramIds, programQueries]);
 
   const handleResetFilters = () => {
     setFilters({
@@ -30,12 +98,13 @@ export function ApplicationsSection({ communitySlug }: ApplicationsSectionProps)
 
   const stats = useMemo(() => {
     return {
-      total: applications.length,
-      pending: applications.filter((a) => a.status === "pending" || a.status === "resubmitted")
-        .length,
-      approved: applications.filter((a) => a.status === "approved").length,
+      total: enrichedApplications.length,
+      pending: enrichedApplications.filter(
+        (a) => a.status === "pending" || a.status === "resubmitted"
+      ).length,
+      approved: enrichedApplications.filter((a) => a.status === "approved").length,
     };
-  }, [applications]);
+  }, [enrichedApplications]);
 
   const hasNoApplications = stats.total === 0;
   const hasNoFilters = filters.status === "all" && !filters.programId && !filters.searchQuery;
@@ -96,9 +165,10 @@ export function ApplicationsSection({ communitySlug }: ApplicationsSectionProps)
         </div>
       ) : (
         <ApplicationsList
-          applications={applications}
+          applications={enrichedApplications}
           communityId={communitySlug}
           isLoading={isLoading}
+          showCommunity={!communitySlug}
           emptyMessage={
             filters.status !== "all" || filters.programId || filters.searchQuery
               ? "No applications match your filters"
@@ -113,7 +183,7 @@ export function ApplicationsSection({ communitySlug }: ApplicationsSectionProps)
       )}
 
       {/* Can't find your application? Card */}
-      {shouldShowLookup && (
+      {shouldShowLookup && communitySlug && (
         <button
           type="button"
           onClick={() => setIsLookupOpen(true)}
@@ -132,11 +202,13 @@ export function ApplicationsSection({ communitySlug }: ApplicationsSectionProps)
         </button>
       )}
 
-      <ApplicationLookupModal
-        isOpen={isLookupOpen}
-        onClose={() => setIsLookupOpen(false)}
-        communitySlug={communitySlug}
-      />
+      {communitySlug && (
+        <ApplicationLookupModal
+          isOpen={isLookupOpen}
+          onClose={() => setIsLookupOpen(false)}
+          communitySlug={communitySlug}
+        />
+      )}
 
       {/* Pagination */}
       {applications.length > 0 && pagination.totalPages > 1 && (

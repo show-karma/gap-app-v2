@@ -67,10 +67,17 @@ export default async function ApplicationSuccessPage({ params }: PageProps) {
 
         <div className="mb-8 rounded-lg border bg-card p-8">
           <div className="space-y-4">
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Application ID</p>
-              <p className="font-mono text-lg">{applicationId}</p>
-            </div>
+            {application?.referenceNumber ? (
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">Reference Number</p>
+                <p className="font-mono text-lg">{application.referenceNumber}</p>
+              </div>
+            ) : (
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">Application ID</p>
+                <p className="font-mono text-lg">{applicationId}</p>
+              </div>
+            )}
 
             {application && (
               <>
@@ -106,17 +113,19 @@ export default async function ApplicationSuccessPage({ params }: PageProps) {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href={PAGES.DASHBOARD}
+              href={PAGES.COMMUNITY.APPLICATIONS(communityId)}
               className="inline-flex items-center justify-center rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
             >
-              Go to Dashboard
+              My submissions
             </Link>
-            <Link
-              href={PAGES.COMMUNITY.PROGRAMS(communityId)}
-              className="inline-flex items-center justify-center rounded-lg border border-border px-6 py-2.5 text-sm font-semibold transition-colors hover:bg-muted"
-            >
-              Browse programs
-            </Link>
+            {application?.programId && (
+              <Link
+                href={PAGES.COMMUNITY.PROGRAM_APPLY(communityId, application.programId)}
+                className="inline-flex items-center justify-center rounded-lg border border-border px-6 py-2.5 text-sm font-semibold transition-colors hover:bg-muted"
+              >
+                Back to form
+              </Link>
+            )}
           </div>
         </div>
       </div>

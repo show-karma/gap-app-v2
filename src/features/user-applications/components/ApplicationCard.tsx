@@ -1,6 +1,7 @@
 "use client";
 
 import { Calendar, FileText } from "lucide-react";
+import Image from "next/image";
 import { Link } from "@/src/components/navigation/Link";
 import type { Application, ApplicationStatus } from "@/types/whitelabel-entities";
 import { formatDate } from "@/utilities/formatDate";
@@ -49,19 +50,50 @@ function getProjectTitle(application: Application): string {
 
 interface ApplicationCardProps {
   application: Application;
-  communityId: string;
+  communityId?: string;
+  showCommunity?: boolean;
 }
 
-export function ApplicationCard({ application, communityId }: ApplicationCardProps) {
+export function ApplicationCard({
+  application,
+  communityId,
+  showCommunity = false,
+}: ApplicationCardProps) {
   const projectTitle = getProjectTitle(application);
   const isSubmitted = application.status === "pending" || application.status === "resubmitted";
+  const effectiveCommunityId = communityId || application.communitySlug;
+
+  const communityLabel = application.communityName || application.communitySlug;
+  const pillLabel = communityLabel || application.programTitle;
+  const pillImage = communityLabel ? application.communityImage : undefined;
 
   return (
     <Link
-      href={`/community/${communityId}/applications/${application.referenceNumber}`}
+      href={
+        effectiveCommunityId
+          ? `/community/${effectiveCommunityId}/applications/${application.referenceNumber}`
+          : `/dashboard`
+      }
       className="block h-full"
     >
       <div className="flex h-full min-h-[200px] flex-col rounded-xl border border-border bg-card p-5 transition-shadow hover:shadow-lg">
+        {showCommunity && pillLabel && (
+          <div className="mb-3">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/50 px-2.5 py-1">
+              {pillImage && (
+                <Image
+                  src={pillImage}
+                  alt={pillLabel}
+                  width={16}
+                  height={16}
+                  className="h-4 w-4 shrink-0 rounded-full object-cover"
+                />
+              )}
+              <span className="text-xs font-medium text-muted-foreground">{pillLabel}</span>
+            </span>
+          </div>
+        )}
+
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <h3 className="line-clamp-2 text-lg font-semibold text-foreground">{projectTitle}</h3>

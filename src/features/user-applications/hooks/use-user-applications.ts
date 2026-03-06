@@ -6,7 +6,7 @@ import fetchData from "@/utilities/fetchData";
 import { useUserApplicationsStore } from "../lib/store";
 import type { UserApplicationsResponse, UseUserApplicationsReturn } from "../types";
 
-export function useUserApplications(communitySlug: string): UseUserApplicationsReturn {
+export function useUserApplications(communitySlug?: string): UseUserApplicationsReturn {
   const queryClient = useQueryClient();
   const { address } = useAuth();
 
@@ -46,15 +46,17 @@ export function useUserApplications(communitySlug: string): UseUserApplicationsR
         : "";
       const programParam = filters.programId ? `&programId=${filters.programId}` : "";
 
+      const communityParam = communitySlug ? `&communitySlug=${communitySlug}` : "";
+
       const [res, err] = await fetchData<UserApplicationsResponse>(
-        `/v2/funding-applications/user/my-applications?communitySlug=${communitySlug}&page=${pagination.page}&limit=${pagination.limit}${statusParam}${searchParam}${programParam}`,
+        `/v2/funding-applications/user/my-applications?page=${pagination.page}&limit=${pagination.limit}${communityParam}${statusParam}${searchParam}${programParam}`,
         "GET"
       );
       if (err) throw new Error(err);
       return res as UserApplicationsResponse;
     },
     staleTime: 1000 * 60 * 2,
-    enabled: !!communitySlug && !!address,
+    enabled: !!address,
   });
 
   // Update store with query results
@@ -88,11 +90,13 @@ export function useUserApplications(communitySlug: string): UseUserApplicationsR
         : "";
       const programParam = filters.programId ? `&programId=${filters.programId}` : "";
 
+      const communityParam = communitySlug ? `&communitySlug=${communitySlug}` : "";
+
       queryClient.prefetchQuery({
         queryKey: nextPageKey,
         queryFn: async () => {
           const [res, err] = await fetchData<UserApplicationsResponse>(
-            `/v2/funding-applications/user/my-applications?communitySlug=${communitySlug}&page=${pagination.page + 1}&limit=${pagination.limit}${statusParam}${searchParam}${programParam}`,
+            `/v2/funding-applications/user/my-applications?page=${pagination.page + 1}&limit=${pagination.limit}${communityParam}${statusParam}${searchParam}${programParam}`,
             "GET"
           );
           if (err) throw new Error(err);
