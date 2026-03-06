@@ -37,7 +37,7 @@ const MentionAutocomplete: FC<MentionAutocompleteProps> = ({
   onSelect,
   onInviteNew,
 }) => {
-  const { data: reviewers, isLoading } = useMilestoneReviewers(programId);
+  const { data: reviewers, isLoading, isError, error, refetch } = useMilestoneReviewers(programId);
 
   const filteredReviewers = useMemo(() => {
     if (!reviewers) return [];
@@ -71,6 +71,19 @@ const MentionAutocomplete: FC<MentionAutocompleteProps> = ({
           {isLoading ? (
             <div className="flex items-center justify-center py-4">
               <Spinner className="h-4 w-4" />
+            </div>
+          ) : isError ? (
+            <div className="px-3 py-3 text-center">
+              <p className="text-sm text-red-500">
+                {error instanceof Error ? error.message : "Failed to load reviewers"}
+              </p>
+              <button
+                type="button"
+                onClick={() => refetch()}
+                className="mt-1 text-xs text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                Retry
+              </button>
             </div>
           ) : (
             <>

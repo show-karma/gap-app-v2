@@ -179,6 +179,30 @@ describe("useMentionEditor", () => {
       expect(lastCall).toContain("@[Alice]");
       expect(lastCall).not.toContain("@Bob");
     });
+
+    it("should replace only @filter and preserve text after cursor when mention is mid-sentence", () => {
+      const { result } = renderHook(() => useMentionEditor());
+      const onChange = jest.fn();
+
+      // Simulate typing "Hello @Al world" with cursor at position 11 (after "@Al")
+      // Since there's no editorRef, cursorPositionRef falls back to newContent.length
+      // So we simulate the scenario by typing "Hello @Al" first (cursor at end)
+      act(() => {
+        result.current.handleContentChange("Hello @Al", onChange);
+      });
+      expect(result.current.isAutocompleteOpen).toBe(true);
+      expect(result.current.filterText).toBe("Al");
+
+      // Select the reviewer with the full content including " world" after cursor
+      act(() => {
+        result.current.handleSelectReviewer(reviewer, "Hello @Al world", onChange);
+      });
+
+      const lastCall = onChange.mock.calls[onChange.mock.calls.length - 1][0];
+      expect(lastCall).toContain("@[Alice](email:alice@example.com)");
+      expect(lastCall).toContain("world");
+      expect(lastCall).not.toContain("@Al");
+    });
   });
 
   describe("handleCloseAutocomplete", () => {

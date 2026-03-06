@@ -59,16 +59,19 @@ export function useMentionEditor(options: UseMentionEditorOptions = {}) {
 
       if (!enabled) return;
 
-      cursorPositionRef.current = newContent.length;
+      const textarea = editorRef?.current?.querySelector("textarea");
+      const cursorPos = textarea?.selectionStart ?? newContent.length;
+      cursorPositionRef.current = cursorPos;
 
-      const lastAtIndex = newContent.lastIndexOf("@");
+      const textBeforeCursor = newContent.slice(0, cursorPos);
+      const lastAtIndex = textBeforeCursor.lastIndexOf("@");
       if (lastAtIndex === -1) {
         setIsAutocompleteOpen(false);
         setFilterText("");
         return;
       }
 
-      const textAfterAt = newContent.slice(lastAtIndex + 1);
+      const textAfterAt = newContent.slice(lastAtIndex + 1, cursorPos);
 
       if (textAfterAt.includes("\n") || textAfterAt.startsWith("[")) {
         setIsAutocompleteOpen(false);
@@ -87,9 +90,8 @@ export function useMentionEditor(options: UseMentionEditorOptions = {}) {
       setFilterText(textAfterAt);
       setSelectedIndex(0);
       setIsAutocompleteOpen(true);
-      cursorPositionRef.current = newContent.length;
     },
-    [enabled, computeCaretPosition]
+    [enabled, editorRef, computeCaretPosition]
   );
 
   const handleSelectReviewer = useCallback(

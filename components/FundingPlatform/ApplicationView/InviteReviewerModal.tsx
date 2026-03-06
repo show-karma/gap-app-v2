@@ -74,11 +74,12 @@ const InviteReviewerModal: FC<InviteReviewerModalProps> = ({
   const handleOpenChange = useCallback(
     (open: boolean) => {
       if (!open) {
+        if (isAdding) return;
         reset();
         onClose();
       }
     },
-    [reset, onClose]
+    [reset, onClose, isAdding]
   );
 
   return (
