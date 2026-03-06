@@ -45,6 +45,10 @@ export interface TimelineContainerProps {
   onVersionClick?: (versionId: string) => void;
   /** Whether data is loading */
   isLoading?: boolean;
+  /** Program ID for mention autocomplete */
+  programId?: string;
+  /** Whether to enable @mention autocomplete */
+  enableMentions?: boolean;
 }
 
 type TimelineItem = {
@@ -110,6 +114,8 @@ export const TimelineContainer: FC<TimelineContainerProps> = ({
   onCommentDelete,
   onVersionClick,
   isLoading = false,
+  programId,
+  enableMentions = false,
 }) => {
   // Combine comments, status history, and version history into a unified timeline
   const timelineItems = useMemo(() => {
@@ -372,6 +378,8 @@ export const TimelineContainer: FC<TimelineContainerProps> = ({
                         currentUserAddress={currentUserAddress}
                         onEdit={onCommentEdit ? handleEditComment : undefined}
                         onDelete={onCommentDelete ? handleDeleteComment : undefined}
+                        programId={programId}
+                        enableMentions={enableMentions}
                       />
                     ) : item.type === "version" ? (
                       renderVersionItem(item.data as IApplicationVersion)

@@ -102,6 +102,8 @@ export const DiscussionTab: FC<DiscussionTabProps> = ({
         onCommentDelete={onCommentDelete}
         onVersionClick={onVersionClick}
         isLoading={isLoading}
+        programId={programId}
+        enableMentions={enableMentions}
       />
     </div>
   );

@@ -23,6 +23,8 @@ interface CommentsSectionProps {
   onVersionClick?: (versionId: string) => void;
   isLoading: boolean;
   formSchema?: IFormSchema; // Optional: for mapping field IDs to labels
+  programId?: string;
+  enableMentions?: boolean;
 }
 
 const CommentsSection: FC<CommentsSectionProps> = ({
@@ -40,6 +42,8 @@ const CommentsSection: FC<CommentsSectionProps> = ({
   onVersionClick,
   isLoading,
   formSchema,
+  programId,
+  enableMentions = false,
 }) => {
   return (
     <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
@@ -58,6 +62,8 @@ const CommentsSection: FC<CommentsSectionProps> = ({
         onVersionClick={onVersionClick}
         isLoading={isLoading}
         formSchema={formSchema}
+        programId={programId}
+        enableMentions={enableMentions}
       />
     </div>
   );

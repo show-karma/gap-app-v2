@@ -461,6 +461,8 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
                         currentUserAddress={currentUserAddress}
                         onEdit={onCommentEdit ? handleEditComment : undefined}
                         onDelete={onCommentDelete ? handleDeleteComment : undefined}
+                        programId={programId}
+                        enableMentions={enableMentions}
                       />
                     ) : item.type === "version" ? (
                       renderVersionItem(item.data as IApplicationVersion)
