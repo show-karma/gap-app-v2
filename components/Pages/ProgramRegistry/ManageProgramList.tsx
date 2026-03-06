@@ -26,6 +26,7 @@ import { ReadMore } from "@/utilities/ReadMore";
 import { shortAddress } from "@/utilities/shortAddress";
 import { registryHelper } from "./helper";
 import type { GrantProgram } from "./ProgramList";
+import { ProgramTypeBadges } from "./ProgramTypeBadges";
 
 interface ManageProgramListProps {
   grantPrograms: GrantProgram[];
@@ -505,14 +506,7 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
 
           return (
             <div className="whitespace-nowrap max-w-[220px] flex flex-row flex-wrap gap-1 px-3 py-5 text-sm text-black dark:text-zinc-300">
-              {grant.metadata?.grantTypes?.map((type, index) => (
-                <span
-                  key={index}
-                  className="mr-1 inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-600/20"
-                >
-                  {type}
-                </span>
-              ))}
+              <ProgramTypeBadges type={grant.type} legacyTypes={grant.metadata?.grantTypes ?? []} />
             </div>
           );
         },

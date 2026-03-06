@@ -15,6 +15,10 @@ jest.mock("@/src/features/funding-map/components/funding-program-details-dialog"
   FundingProgramDetailsDialog: jest.fn(() => <div data-testid="funding-program-details-dialog" />),
 }));
 
+jest.mock("@/src/features/funding-map/components/opportunity-type-tabs", () => ({
+  OpportunityTypeTabs: jest.fn(() => <div data-testid="opportunity-type-tabs" />),
+}));
+
 jest.mock("@/src/features/funding-map/hooks/use-funding-programs", () => ({
   useFundingPrograms: jest.fn(() => ({
     data: { programs: [], count: 0 },
@@ -25,6 +29,12 @@ jest.mock("@/src/features/funding-map/hooks/use-funding-programs", () => ({
   useFundingProgramByCompositeId: jest.fn(() => ({
     data: null,
     isLoading: false,
+  })),
+  useTypeCounts: jest.fn(() => ({
+    data: [],
+    isLoading: false,
+    isError: false,
+    refetch: jest.fn(),
   })),
 }));
 
@@ -43,6 +53,7 @@ jest.mock("@/src/features/funding-map/hooks/use-funding-filters", () => ({
       grantTypes: [],
       onlyOnKarma: true, // new default
       organizationFilter: null,
+      selectedTypes: [],
     },
   })),
 }));
@@ -77,6 +88,7 @@ describe("FundingMapList empty state", () => {
         grantTypes: [],
         onlyOnKarma: false,
         organizationFilter: null,
+        selectedTypes: [],
       },
     });
 

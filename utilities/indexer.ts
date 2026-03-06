@@ -202,6 +202,7 @@ export const INDEXER = {
       GET_ALL: "/v2/program-registry/search",
       GET_BY_ID: (programId: string) => `/v2/program-registry/${programId}`,
       GET_FILTERS: "/v2/program-registry/filters",
+      GET_TYPES: "/v2/program-registry/types",
     },
     TRACKS: {
       LIST: (communityUID: string, includeArchived?: boolean) => {

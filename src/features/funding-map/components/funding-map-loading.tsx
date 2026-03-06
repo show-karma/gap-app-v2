@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FundingMapCardSkeleton } from "./funding-map-card-skeleton";
+import { OpportunityTypeTabsSkeleton } from "./opportunity-type-tabs";
 
 function SearchSkeleton() {
   return (
@@ -42,6 +43,7 @@ function ListSkeleton() {
   return (
     <section className="flex min-w-0 flex-1 flex-col gap-6">
       <FiltersSkeleton />
+      <OpportunityTypeTabsSkeleton />
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {Array.from({ length: 6 }).map((_, i) => (
