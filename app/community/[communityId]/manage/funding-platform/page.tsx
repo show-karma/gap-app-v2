@@ -18,7 +18,6 @@ import {
   ClipboardDocumentListIcon,
   PlusIcon,
 } from "@heroicons/react/24/solid";
-import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -36,17 +35,20 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import { useFundingPrograms } from "@/hooks/useFundingPlatform";
 import { useReviewerPrograms } from "@/hooks/usePermissions";
 import { type FundingProgram, fundingPlatformService } from "@/services/fundingPlatformService";
+import { Link } from "@/src/components/navigation/Link";
 import { AdminOnly, FundingPlatformGuard, useIsFundingPlatformAdmin } from "@/src/core/rbac";
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
 import { getProgramApplyUrl } from "@/utilities/fundingPlatformUrls";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
+import { useWhitelabel } from "@/utilities/whitelabel-context";
 
 function FundingPlatformContent() {
   const { communityId } = useParams() as { communityId: string };
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { isWhitelabel } = useWhitelabel();
 
   const isAdmin = useIsFundingPlatformAdmin();
 
@@ -660,7 +662,11 @@ function FundingPlatformContent() {
                       {isAdmin ? "Settings" : "Config"}
                     </Link>
                     <Link
-                      href={getProgramApplyUrl(communityId, program.programId)}
+                      href={getProgramApplyUrl(
+                        communityId,
+                        program.programId,
+                        isWhitelabel ? window.location.origin : undefined
+                      )}
                       target="_blank"
                       rel="noopener noreferrer"
                       title="View public application form"

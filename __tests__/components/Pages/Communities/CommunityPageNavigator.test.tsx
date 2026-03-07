@@ -5,11 +5,13 @@ import { CommunityPageNavigator } from "@/components/Pages/Communities/Community
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import { useFundingOpportunitiesCount } from "@/hooks/useFundingOpportunitiesCount";
 import { useCommunityPrograms } from "@/hooks/usePrograms";
+import { useWhitelabel } from "@/utilities/whitelabel-context";
 
 // Mock hooks
 jest.mock("@/hooks/communities/useCommunityDetails");
 jest.mock("@/hooks/useFundingOpportunitiesCount");
 jest.mock("@/hooks/usePrograms");
+jest.mock("@/utilities/whitelabel-context");
 
 // Mock next/navigation
 const mockUseParams = jest.fn();
@@ -28,6 +30,7 @@ jest.mock("@/utilities/pages", () => ({
     COMMUNITY: {
       FUNDING_OPPORTUNITIES: (id: string) => `/community/${id}/funding-opportunities`,
       ALL_GRANTS: (id: string) => `/community/${id}`,
+      PROJECTS: (id: string) => `/community/${id}/projects`,
       UPDATES: (id: string) => `/community/${id}/updates`,
       IMPACT: (id: string) => `/community/${id}/impact`,
       FINANCIALS: (id: string) => `/community/${id}/financials`,
@@ -53,6 +56,7 @@ const mockUseFundingOpportunitiesCount = useFundingOpportunitiesCount as jest.Mo
 const mockUseCommunityPrograms = useCommunityPrograms as jest.MockedFunction<
   typeof useCommunityPrograms
 >;
+const mockUseWhitelabel = useWhitelabel as jest.MockedFunction<typeof useWhitelabel>;
 
 describe("CommunityPageNavigator", () => {
   let queryClient: QueryClient;
@@ -72,6 +76,12 @@ describe("CommunityPageNavigator", () => {
     jest.clearAllMocks();
 
     // Default mocks
+    mockUseWhitelabel.mockReturnValue({
+      isWhitelabel: false,
+      isUmbrella: false,
+      communitySlug: null,
+      config: null,
+    } as any);
     mockUseParams.mockReturnValue({ communityId: "test-community" });
     mockUsePathname.mockReturnValue("/community/test-community");
     mockUseSearchParams.mockReturnValue({
@@ -133,7 +143,7 @@ describe("CommunityPageNavigator", () => {
         "href",
         "/community/test-community/funding-opportunities"
       );
-      expect(grantsLink).toHaveAttribute("href", "/community/test-community");
+      expect(grantsLink).toHaveAttribute("href", "/community/test-community/projects");
       expect(updatesLink).toHaveAttribute("href", "/community/test-community/updates");
       expect(impactLink).toHaveAttribute("href", "/community/test-community/impact");
     });
@@ -395,6 +405,40 @@ describe("CommunityPageNavigator", () => {
 
       expect(screen.getByText("Funding opportunities")).toBeInTheDocument();
       expect(screen.getByTestId("dollar-sign-icon")).toBeInTheDocument();
+    });
+
+    it("should always show funding opportunities tab in whitelabel mode even when count is 0", () => {
+      mockUseWhitelabel.mockReturnValue({
+        isWhitelabel: true,
+        isUmbrella: false,
+        communitySlug: "test-community",
+        config: null,
+      } as any);
+      mockUseFundingOpportunitiesCount.mockReturnValue({
+        data: 0,
+        isLoading: false,
+      } as any);
+
+      render(<CommunityPageNavigator />, { wrapper });
+
+      expect(screen.getByText("Funding opportunities")).toBeInTheDocument();
+    });
+
+    it("should always show funding opportunities tab in umbrella mode even when count is 0", () => {
+      mockUseWhitelabel.mockReturnValue({
+        isWhitelabel: true,
+        isUmbrella: true,
+        communitySlug: "test-community",
+        config: null,
+      } as any);
+      mockUseFundingOpportunitiesCount.mockReturnValue({
+        data: 0,
+        isLoading: false,
+      } as any);
+
+      render(<CommunityPageNavigator />, { wrapper });
+
+      expect(screen.getByText("Funding opportunities")).toBeInTheDocument();
     });
 
     it("should show funding opportunities tab when count is undefined (loading)", () => {

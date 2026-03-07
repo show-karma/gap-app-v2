@@ -1,10 +1,10 @@
 import { Calendar, Coins } from "lucide-react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import type { KeyboardEvent } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { useMixpanel } from "@/hooks/useMixpanel";
+import Link from "@/src/components/navigation/Link";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 import type { FundingProgramResponse, OpportunityType } from "../types/funding-program";
@@ -25,6 +25,8 @@ interface FundingMapCardProps {
   hideDescription?: boolean;
   /** Hide the categories section */
   hideCategories?: boolean;
+  /** Optional element rendered next to the OnKarma badge in the top-right */
+  statusSlot?: React.ReactNode;
   /** Position of the card in the grid (0-indexed) */
   cardPosition?: number;
   /** Current page number */
@@ -50,11 +52,11 @@ export function FundingMapCard({
   href,
   hideDescription = false,
   hideCategories = false,
+  statusSlot,
   cardPosition,
   page,
   className,
 }: FundingMapCardProps & { className?: string }) {
-  const router = useRouter();
   const { mixpanel } = useMixpanel("karma");
   const { metadata, isOnKarma, communities } = program;
   const opportunityType: OpportunityType = program.type ?? "grant";
@@ -93,16 +95,11 @@ export function FundingMapCard({
         page,
       },
     });
-    if (href) {
-      router.push(href);
-    } else {
-      onClick?.();
-    }
+    onClick?.();
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key === "Enter" || event.key === " ") {
-      // Prevent Space from scrolling the page
       if (event.key === " ") {
         event.preventDefault();
       }
@@ -110,21 +107,15 @@ export function FundingMapCard({
     }
   };
 
-  return (
-    <Card
-      className={cn(
-        "flex flex-col justify-between border-border p-6 shadow-sm transition-shadow hover:shadow-md cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-        // Enforce full height to match carousel stretch
-        "h-full",
-        isPendingReview(program) && "ring-1 ring-gray-200",
-        className
-      )}
-      onClick={handleClick}
-      onKeyDown={handleKeyDown}
-      tabIndex={0}
-      role="button"
-      aria-label={`View funding program: ${title ?? "Untitled program"}`}
-    >
+  const cardClassName = cn(
+    "flex flex-col justify-between border-border p-6 shadow-sm transition-shadow hover:shadow-md cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+    "h-full",
+    isPendingReview(program) && "ring-1 ring-gray-200",
+    className
+  );
+
+  const cardContent = (
+    <>
       <div className="flex flex-col gap-4 mb-4 flex-1">
         <div className="flex w-full flex-row items-center justify-between gap-2">
           {(formattedBudget || (grantTypes && grantTypes.length > 0)) && (
@@ -149,7 +140,10 @@ export function FundingMapCard({
               )}
             </div>
           )}
-          {isOnKarma && <OnKarmaBadge showTooltip={true} />}
+          <div className="flex items-center gap-1.5">
+            {statusSlot}
+            {isOnKarma && <OnKarmaBadge showTooltip={true} />}
+          </div>
         </div>
         <div className="flex flex-col gap-1">
           {isNonGrant && (
@@ -225,6 +219,34 @@ export function FundingMapCard({
           </div>
         )}
       </div>
+    </>
+  );
+
+  if (href) {
+    return (
+      <Link href={href} className="no-underline" tabIndex={-1}>
+        <Card
+          className={cardClassName}
+          onClick={handleClick}
+          tabIndex={0}
+          aria-label={`View funding program: ${title ?? "Untitled program"}`}
+        >
+          {cardContent}
+        </Card>
+      </Link>
+    );
+  }
+
+  return (
+    <Card
+      className={cardClassName}
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
+      tabIndex={0}
+      role="button"
+      aria-label={`View funding program: ${title ?? "Untitled program"}`}
+    >
+      {cardContent}
     </Card>
   );
 }

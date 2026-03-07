@@ -1,11 +1,12 @@
 "use client";
 
 import { ChevronRightIcon, HomeIcon } from "@heroicons/react/24/outline";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo } from "react";
+import { Link } from "@/src/components/navigation/Link";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
+import { useWhitelabel } from "@/utilities/whitelabel-context";
 
 /** Human-readable labels for URL path segments */
 const SEGMENT_LABELS: Record<string, string> = {
@@ -34,7 +35,15 @@ interface Crumb {
 }
 
 export function ManageBreadcrumbs({ communitySlug }: { communitySlug: string }) {
-  const pathname = usePathname();
+  const rawPathname = usePathname();
+  const { isWhitelabel } = useWhitelabel();
+  // In whitelabel mode, usePathname() returns "/manage/..." but the crumb logic
+  // needs the full "/community/<slug>/manage/..." form for prefix matching.
+  const communityPrefix = `/community/${communitySlug}`;
+  const pathname =
+    isWhitelabel && !rawPathname.startsWith(communityPrefix)
+      ? `${communityPrefix}${rawPathname}`
+      : rawPathname;
 
   const crumbs = useMemo((): Crumb[] => {
     const managePrefix = PAGES.ADMIN.ROOT(communitySlug);

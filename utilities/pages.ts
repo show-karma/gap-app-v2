@@ -11,6 +11,8 @@ export const PAGES = {
   COMMUNITY: {
     ALL_GRANTS: (community: string, programId?: string) =>
       `/community/${community}${programId ? `?programId=${programId}` : ""}`,
+    PROJECTS: (community: string, programId?: string) =>
+      `/community/${community}/projects${programId ? `?programId=${programId}` : ""}`,
     FUNDING_OPPORTUNITIES: (community: string) => `/community/${community}/funding-opportunities`,
     IMPACT: (community: string) => `/community/${community}/impact`,
     DONATE: (community: string) => `/community/${community}/donate`,
@@ -22,6 +24,18 @@ export const PAGES = {
     UPDATES: (community: string) => `/community/${community}/updates`,
     FINANCIALS: (community: string) => `/community/${community}/financials`,
     RECEIVEPROJECTUPDATES: (community: string) => `/community/${community}/receive-project-updates`,
+    PROGRAMS: (community: string) => `/community/${community}/funding-opportunities`,
+    PROGRAM_DETAIL: (community: string, programId: string) =>
+      `/community/${community}/programs/${programId}`,
+    PROGRAM_APPLY: (community: string, programId: string) =>
+      `/community/${community}/programs/${programId}/apply`,
+    APPLICATIONS: (community: string) => `/community/${community}/applications`,
+    APPLICATION_DETAIL: (community: string, applicationId: string) =>
+      `/community/${community}/applications/${applicationId}`,
+    APPLICATION_SUCCESS: (community: string, applicationId: string) =>
+      `/community/${community}/applications/${applicationId}/success`,
+    BROWSE_APPLICATIONS: (community: string) => `/community/${community}/browse-applications`,
+    CLAIM_FUNDS: (community: string) => `/community/${community}/claim-funds`,
   },
   MY_PROJECTS: `/my-projects`,
   MY_REVIEWS: `/my-reviews`,

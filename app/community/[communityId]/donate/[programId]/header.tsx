@@ -1,9 +1,9 @@
 "use client";
 import { ChevronRightIcon } from "@heroicons/react/20/solid";
 import Image from "next/image";
-import Link from "next/link";
 import pluralize from "pluralize";
 import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
+import { Link } from "@/src/components/navigation/Link";
 import { useDonationCart } from "@/store";
 import type { Community } from "@/types/v2/community";
 import { communityColors } from "@/utilities/communityColors";

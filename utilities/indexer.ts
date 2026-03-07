@@ -128,6 +128,8 @@ export const INDEXER = {
       `/v2/communities/${communityIdOrSlug}/metrics`,
     FUNDING_PROGRAMS: {
       BY_COMMUNITY: (communityId: string) => `/v2/funding-program-configs/community/${communityId}`,
+      BY_COMMUNITY_ACTIVE: (communityId: string, limit = 100) =>
+        `/v2/funding-program-configs/community/${communityId}?status=active&limit=${limit}`,
       GET: (programId: string) => `/v2/funding-program-configs/${programId}`,
       LIST: (community?: string) =>
         `/v2/funding-program-configs${community ? `?community=${community}` : ""}`,
@@ -162,6 +164,11 @@ export const INDEXER = {
       VERSIONS_TIMELINE: (referenceNumber: string) =>
         `/v2/funding-applications/${referenceNumber}/versions/timeline`,
       REVIEWERS: (applicationId: string) => `/v2/funding-applications/${applicationId}/reviewers`,
+      ACCESS: (referenceNumber: string) => `/v2/funding-applications/${referenceNumber}/access`,
+      MY_APPLICATIONS: (communitySlug: string) =>
+        `/v2/funding-applications/user/my-applications?communitySlug=${communitySlug}`,
+      MILESTONE_COMPLETIONS: (referenceNumber: string) =>
+        `/v2/funding-applications/${referenceNumber}/milestone-completions`,
     },
     AUTH: {
       PERMISSIONS: (params?: {

@@ -1,5 +1,4 @@
 "use client";
-import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -14,6 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCommunityGrants } from "@/hooks/useCommunityGrants";
 import { useCommunityRegions } from "@/hooks/useCommunityRegions";
 import { useCommunityProjectsV2 } from "@/hooks/v2/useCommunityProjects";
+import { Link } from "@/src/components/navigation/Link";
 import type { CommunityProject } from "@/types/v2/community";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
