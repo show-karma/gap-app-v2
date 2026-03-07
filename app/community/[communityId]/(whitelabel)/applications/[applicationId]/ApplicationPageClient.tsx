@@ -8,7 +8,7 @@ import { Link } from "@/src/components/navigation/Link";
 import { useIsFundingPlatformAdmin } from "@/src/core/rbac";
 import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
 import { Role } from "@/src/core/rbac/types/role";
-import { CommentTimeline } from "@/src/features/application-comments/components/CommentTimeline";
+import { PublicComments } from "@/src/features/application-comments/components/PublicComments";
 import { ApplicationStatusHistory } from "@/src/features/applications/components/ApplicationStatusHistory";
 import type { IFundingApplication, ProgramWithFormSchema } from "@/types/funding-platform";
 import type { Application, ApplicationStatus, FundingProgram } from "@/types/whitelabel-entities";
@@ -55,7 +55,7 @@ export function ApplicationPageClient({
   application,
   program,
 }: ApplicationPageClientProps) {
-  const { address, authenticated } = useAuth();
+  const { address } = useAuth();
   const isAdmin = useIsFundingPlatformAdmin();
   const { hasRoleOrHigher, isReviewer } = usePermissionContext();
   const isAdminOrReviewer = hasRoleOrHigher(Role.MILESTONE_REVIEWER) || isReviewer;
@@ -176,20 +176,12 @@ export function ApplicationPageClient({
         </div>
       </div>
 
-      {/* Comments & Activity
-       * Authenticated users see the full CommentTimeline (comments + status history).
-       * Public / unauthenticated users see only the ApplicationStatusHistory.
-       * P1-12: conditional timeline based on auth state.
-       */}
-      {authenticated ? (
-        <CommentTimeline
-          applicationId={application.referenceNumber}
-          statusHistory={application.statusHistory || []}
-          currentUserAddress={address || undefined}
-          communityId={communityId}
-        />
-      ) : (
-        <ApplicationStatusHistory statusHistory={application.statusHistory || []} />
+      {/* Status History — always visible */}
+      <ApplicationStatusHistory statusHistory={application.statusHistory || []} />
+
+      {/* Public Comments — shown when the program has "Show comments on public page" enabled */}
+      {program?.applicationConfig?.formSchema?.settings?.showCommentsOnPublicPage && (
+        <PublicComments referenceNumber={application.referenceNumber} communityId={communityId} />
       )}
     </div>
   );
