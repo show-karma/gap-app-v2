@@ -3,6 +3,7 @@
 import { Bot, CircleUser, Copy } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
+import { useMixpanel } from "@/hooks/useMixpanel";
 import { cn } from "@/utilities/tailwind";
 
 const SKILLS_URL = "https://github.com/show-karma/skills";
@@ -22,8 +23,22 @@ const stepNumberClass = cn(
 
 export function FundingMapAgentCard() {
   const [, copyToClipboard] = useCopyToClipboard();
+  const { mixpanel } = useMixpanel("karma");
 
-  const codeBlock = (
+  const handleCopy = async (tab: string) => {
+    let success = true;
+    try {
+      await copyToClipboard(AGENT_PROMPT);
+    } catch {
+      success = false;
+    }
+    mixpanel.reportEvent({
+      event: "funding-map:agent-prompt-copy",
+      properties: { tab, success },
+    });
+  };
+
+  const codeBlock = (tab: string) => (
     <div className="flex items-start justify-between gap-2 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2.5">
       <code className="break-words font-mono text-sm leading-relaxed text-emerald-400">
         Read{" "}
@@ -39,7 +54,7 @@ export function FundingMapAgentCard() {
       </code>
       <button
         type="button"
-        onClick={() => copyToClipboard(AGENT_PROMPT)}
+        onClick={() => handleCopy(tab)}
         className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-zinc-700 hover:text-zinc-200"
         aria-label="Copy to clipboard"
       >
@@ -50,7 +65,15 @@ export function FundingMapAgentCard() {
 
   return (
     <div className="flex flex-col gap-4 rounded-xl border border-border bg-background p-5">
-      <Tabs defaultValue="human">
+      <Tabs
+        defaultValue="human"
+        onValueChange={(tab) => {
+          mixpanel.reportEvent({
+            event: "funding-map:agent-tab-click",
+            properties: { tab },
+          });
+        }}
+      >
         <TabsList className="grid w-full grid-cols-2 gap-1 rounded-full bg-muted p-1">
           <TabsTrigger value="human" className={pillTriggerClass}>
             <CircleUser className="mr-1.5 h-3.5 w-3.5" />
@@ -65,7 +88,7 @@ export function FundingMapAgentCard() {
         <TabsContent value="human" className="mt-4">
           <div className="flex flex-col gap-4">
             <h3 className="text-sm font-semibold text-foreground">Send Your AI Agent to Karma</h3>
-            {codeBlock}
+            {codeBlock("human")}
             <ol className="flex flex-col gap-2.5">
               <li className="flex items-start gap-2.5">
                 <span className={stepNumberClass}>1</span>
@@ -92,7 +115,7 @@ export function FundingMapAgentCard() {
         <TabsContent value="agent" className="mt-4">
           <div className="flex flex-col gap-4">
             <h3 className="text-sm font-semibold text-foreground">Find Funding with Karma</h3>
-            {codeBlock}
+            {codeBlock("agent")}
             <ol className="flex flex-col gap-2.5">
               <li className="flex items-start gap-2.5">
                 <span className={stepNumberClass}>1</span>

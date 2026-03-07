@@ -1,7 +1,51 @@
+import type { OpportunityType } from "../types/funding-program";
+
 /**
  * Filter options for the funding map
  * Extracted from components/Pages/ProgramRegistry/helper.ts
  */
+
+/**
+ * All opportunity types in display order
+ */
+export const OPPORTUNITY_TYPES: readonly OpportunityType[] = [
+  "grant",
+  "hackathon",
+  "bounty",
+  "accelerator",
+  "vc_fund",
+  "rfp",
+] as const;
+
+/**
+ * Human-readable labels for each opportunity type
+ */
+export const OPPORTUNITY_TYPE_LABELS: Record<OpportunityType, string> = {
+  grant: "Grants",
+  hackathon: "Hackathons",
+  bounty: "Bounties",
+  accelerator: "Accelerators",
+  vc_fund: "VC Funds",
+  rfp: "RFPs",
+};
+
+/**
+ * Singular labels for each opportunity type
+ */
+export const OPPORTUNITY_TYPE_SINGULAR_LABELS: Record<OpportunityType, string> = {
+  grant: "Grant",
+  hackathon: "Hackathon",
+  bounty: "Bounty",
+  accelerator: "Accelerator",
+  vc_fund: "VC Fund",
+  rfp: "RFP",
+};
+
+export const BOUNTY_DIFFICULTY_LEVELS = ["beginner", "intermediate", "advanced"] as const;
+
+export const ACCELERATOR_STAGES = ["pre-seed", "seed", "series-a"] as const;
+
+export const VC_FUND_STAGES = ["pre-seed", "seed", "series-a", "series-b+"] as const;
 
 export const FUNDING_MAP_NETWORKS = [
   "Aleo",

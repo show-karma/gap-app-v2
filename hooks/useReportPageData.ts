@@ -224,7 +224,8 @@ export function useReportPageData({
       statsPage,
       sortBy,
       sortOrder,
-      effectiveProgramIds
+      effectiveProgramIds,
+      effectiveReviewerAddress
     ),
     queryFn: () =>
       milestoneReportService.getReport(
@@ -233,7 +234,8 @@ export function useReportPageData({
         itemsPerPage,
         sortBy,
         sortOrder,
-        effectiveProgramIds
+        effectiveProgramIds,
+        effectiveReviewerAddress
       ),
     enabled: Boolean(communityId) && isAuthorized,
   });
@@ -306,6 +308,7 @@ export function useReportPageData({
     hasUserSelectedFilter.current = true;
     setSelectedReviewerAddress(address);
     setPendingPage(1);
+    setStatsPage(1);
   }, []);
 
   const isFullyCompleted = useCallback((report: MilestoneCompletion) => {

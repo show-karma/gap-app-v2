@@ -132,10 +132,10 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
   );
 
   const reviewerProgramIds = useMemo(() => {
-    if (!isAuthorized || reportData.activeTab !== "pending-verification") return [];
+    if (!isAuthorized) return [];
     const ids = reportData.effectiveProgramIds;
     return ids.length > 0 ? ids : allProgramIds;
-  }, [isAuthorized, reportData.activeTab, reportData.effectiveProgramIds, allProgramIds]);
+  }, [isAuthorized, reportData.effectiveProgramIds, allProgramIds]);
 
   const {
     reviewers,
@@ -211,17 +211,18 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
           <TabsTrigger value="stats">All Milestones</TabsTrigger>
         </TabsList>
 
+        <div className="flex items-center gap-2 my-4">
+          <span className="text-sm text-gray-500 dark:text-zinc-400">Reviewer:</span>
+          <ReviewerFilterDropdown
+            reviewers={reviewers}
+            isLoading={isLoadingReviewers}
+            selectedAddress={reportData.selectedReviewerAddress}
+            onSelect={reportData.handleReviewerAddressChange}
+            currentUserAddress={address}
+          />
+        </div>
+
         <TabsContent value="pending-verification">
-          <div className="flex items-center gap-2 mb-4">
-            <span className="text-sm text-gray-500 dark:text-zinc-400">Reviewer:</span>
-            <ReviewerFilterDropdown
-              reviewers={reviewers}
-              isLoading={isLoadingReviewers}
-              selectedAddress={reportData.selectedReviewerAddress}
-              onSelect={reportData.handleReviewerAddressChange}
-              currentUserAddress={address}
-            />
-          </div>
           <PendingVerificationTable
             milestones={reportData.pendingMilestones}
             isLoading={reportData.isPendingLoading}

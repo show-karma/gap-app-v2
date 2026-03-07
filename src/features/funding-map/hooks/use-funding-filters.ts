@@ -3,7 +3,20 @@
 import { createParser, parseAsBoolean, parseAsInteger, parseAsString, useQueryState } from "nuqs";
 import { useCallback, useMemo } from "react";
 import { FUNDING_MAP_PAGE_SIZE } from "../constants/filter-options";
-import type { FetchFundingProgramsParams } from "../types/funding-program";
+import type { FetchFundingProgramsParams, OpportunityType } from "../types/funding-program";
+
+const VALID_OPPORTUNITY_TYPES = new Set<string>([
+  "grant",
+  "hackathon",
+  "bounty",
+  "accelerator",
+  "vc_fund",
+  "rfp",
+]);
+
+function isValidOpportunityType(value: string): value is OpportunityType {
+  return VALID_OPPORTUNITY_TYPES.has(value);
+}
 
 /**
  * Encode special characters for URL storage
@@ -52,6 +65,8 @@ export interface FundingFilters {
   onlyOnKarma: boolean;
   /** Organization filter - stores type:id format */
   organizationFilter: OrganizationFilterValue | null;
+  /** Selected opportunity types */
+  selectedTypes: OpportunityType[];
 }
 
 /**
@@ -97,6 +112,11 @@ export function useFundingFilters() {
   const [onlyOnKarma, setOnlyOnKarma] = useQueryState(
     "onlyOnKarma",
     parseAsBoolean.withDefault(true).withOptions({ clearOnDefault: true })
+  );
+
+  const [selectedTypes, setSelectedTypesRaw] = useQueryState(
+    "type",
+    parseAsCommaSeparatedArray.withDefault([]).withOptions({ clearOnDefault: true })
   );
 
   // Organization filter - stores as "community:uid" or "organization:name"
@@ -150,6 +170,7 @@ export function useFundingFilters() {
       grantTypes,
       onlyOnKarma,
       organizationFilter,
+      selectedTypes: selectedTypes.filter(isValidOpportunityType),
     }),
     [
       page,
@@ -161,6 +182,7 @@ export function useFundingFilters() {
       grantTypes,
       onlyOnKarma,
       organizationFilter,
+      selectedTypes,
     ]
   );
 
@@ -178,6 +200,7 @@ export function useFundingFilters() {
       onlyOnKarma: onlyOnKarma || undefined,
       communityUid: organizationFilter?.type === "community" ? organizationFilter.id : undefined,
       organization: organizationFilter?.type === "organization" ? organizationFilter.id : undefined,
+      type: selectedTypes.length > 0 ? selectedTypes.filter(isValidOpportunityType) : undefined,
     }),
     [
       page,
@@ -189,6 +212,7 @@ export function useFundingFilters() {
       grantTypes,
       onlyOnKarma,
       organizationFilter,
+      selectedTypes,
     ]
   );
 
@@ -214,6 +238,18 @@ export function useFundingFilters() {
     [updateFilterAndResetPage]
   );
 
+  // Set selected opportunity types, resetting page
+  const setSelectedTypes = useCallback(
+    (value: OpportunityType[]) => updateFilterAndResetPage(setSelectedTypesRaw, value as string[]),
+    [updateFilterAndResetPage, setSelectedTypesRaw]
+  );
+
+  // Toggle a single opportunity type
+  const toggleType = useCallback(
+    (value: OpportunityType) => toggleArrayFilter(selectedTypes, setSelectedTypesRaw, value),
+    [selectedTypes, setSelectedTypesRaw, toggleArrayFilter]
+  );
+
   // Reset all filters to defaults (keeps current page)
   const resetFilters = useCallback(() => {
     setSearch("");
@@ -224,6 +260,7 @@ export function useFundingFilters() {
     setGrantTypes([]);
     setOnlyOnKarma(true);
     setOrganizationFilterRaw("");
+    setSelectedTypesRaw([]);
   }, [
     setSearch,
     setStatus,
@@ -233,6 +270,7 @@ export function useFundingFilters() {
     setGrantTypes,
     setOnlyOnKarma,
     setOrganizationFilterRaw,
+    setSelectedTypesRaw,
   ]);
 
   return {
@@ -250,12 +288,14 @@ export function useFundingFilters() {
     setGrantTypes: (value: string[]) => updateFilterAndResetPage(setGrantTypes, value),
     setOnlyOnKarma: (value: boolean) => updateFilterAndResetPage(setOnlyOnKarma, value),
     setOrganizationFilter,
+    setSelectedTypes,
 
     // Toggle helpers for array filters
     toggleCategory: (value: string) => toggleArrayFilter(categories, setCategories, value),
     toggleEcosystem: (value: string) => toggleArrayFilter(ecosystems, setEcosystems, value),
     toggleNetwork: (value: string) => toggleArrayFilter(networks, setNetworks, value),
     toggleGrantType: (value: string) => toggleArrayFilter(grantTypes, setGrantTypes, value),
+    toggleType,
 
     // Reset all
     resetFilters,

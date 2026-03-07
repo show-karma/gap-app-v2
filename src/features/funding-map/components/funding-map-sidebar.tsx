@@ -5,10 +5,13 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
+import { useMixpanel } from "@/hooks/useMixpanel";
 import { PAGES } from "@/utilities/pages";
 import { FundingMapAgentCard } from "./funding-map-agent-card";
 
 export function FundingMapSidebar() {
+  const { mixpanel } = useMixpanel("karma");
+
   const ProjectDialog = useMemo(
     () =>
       dynamic(
@@ -52,7 +55,15 @@ export function FundingMapSidebar() {
           <CopyPlus className="h-5 w-5 text-muted-foreground" />
           <p className="font-medium text-foreground">Funding opportunity not listed?</p>
           <Button variant="outline" className="w-fit shadow-sm" asChild>
-            <Link href={PAGES.REGISTRY.ADD_PROGRAM} prefetch>
+            <Link
+              href={PAGES.REGISTRY.ADD_PROGRAM}
+              prefetch
+              onClick={() => {
+                mixpanel.reportEvent({
+                  event: "funding-map:submit-program-click",
+                });
+              }}
+            >
               Submit a program
             </Link>
           </Button>
@@ -63,8 +74,18 @@ export function FundingMapSidebar() {
         </div>
       </div>
 
-      {/* Create Profile Card */}
-      <div className="flex flex-col gap-5 rounded-xl p-5">
+      {/* Create Profile Card — onClickCapture used because ProjectDialog renders
+         its own button internally; we can't pass onClick to it directly. The capture
+         handler only fires analytics and does not interfere with keyboard/screen-reader
+         interaction, which is handled by the inner button. */}
+      <div
+        className="flex flex-col gap-5 rounded-xl p-5"
+        onClickCapture={() => {
+          mixpanel.reportEvent({
+            event: "funding-map:create-profile-click",
+          });
+        }}
+      >
         <CircleUser className="h-5 w-5 text-muted-foreground" />
         <div className="flex flex-col gap-3">
           <p className="font-medium text-foreground">Create your project profile</p>
