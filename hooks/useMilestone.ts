@@ -6,6 +6,7 @@ import type { MilestoneCompletedFormData } from "@/components/Forms/GrantMilesto
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useOwnerStore, useProjectStore } from "@/store";
+import { useShareDialogStore } from "@/store/modals/shareDialog";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import fetchData from "@/utilities/fetchData";
@@ -17,7 +18,7 @@ import { PAGES } from "@/utilities/pages";
 import { retryUntilConditionMet } from "@/utilities/retries";
 import { sanitizeInput, sanitizeObject } from "@/utilities/sanitize";
 import { getProjectById } from "@/utilities/sdk";
-import { useGap } from "./useGap";
+import { SHARE_TEXTS } from "@/utilities/share/text";
 import { useOffChainRevoke } from "./useOffChainRevoke";
 import { useSetupChainAndWallet } from "./useSetupChainAndWallet";
 import { useWallet } from "./useWallet";
@@ -72,7 +73,6 @@ export const useMilestone = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
-  const { gap } = useGap();
   const {
     startAttestation,
     showLoading,
@@ -89,6 +89,7 @@ export const useMilestone = () => {
   const router = useRouter();
   const { isProjectOwner } = useProjectStore();
   const { isOwner: isContractOwner } = useOwnerStore();
+  const { openShareDialog } = useShareDialogStore();
   const _isOnChainAuthorized = isProjectOwner || isContractOwner;
   const { performOffChainRevoke } = useOffChainRevoke();
   const { setupChainAndWallet } = useSetupChainAndWallet();
@@ -360,17 +361,6 @@ export const useMilestone = () => {
             itemCount
           );
 
-          // Switch chain if needed
-          const setup = await setupChainAndWallet({
-            targetChainId: chainId,
-            currentChainId: chain?.id,
-            switchChainAsync,
-          });
-
-          if (!setup) {
-            throw new Error("Failed to switch chain or connect wallet");
-          }
-
           const fetchedProject = await getProjectById(project!.details?.slug || "");
           if (!fetchedProject) {
             throw new Error("Failed to fetch project data");
@@ -432,22 +422,75 @@ export const useMilestone = () => {
       } else {
         // Handle single milestone completion revocation
         showLoading("Undoing milestone completion...");
-
-        const setup = await setupChainAndWallet({
-          targetChainId: milestone.chainID,
-          currentChainId: chain?.id,
-          switchChainAsync,
-        });
-
-        if (!setup) {
-          throw new Error("Failed to switch chain or connect wallet");
-        }
-
-        const { gapClient } = setup;
-        const fetchedProject = await gapClient.fetch.projectById(project?.uid);
+        const fetchedProject = await getProjectById(project?.uid || "");
 
         if (!fetchedProject) {
           throw new Error("Failed to fetch project data");
+        }
+
+        const isProjectMilestone = milestone.type === "milestone" || milestone.type === "project";
+
+        if (isProjectMilestone) {
+          const projectIdOrSlug = project?.details?.slug || project?.uid;
+          if (!projectIdOrSlug) {
+            throw new Error("Project identifier not found");
+          }
+
+          const projectRecipient = fetchedProject.recipient;
+          const fetchedObjectives = await getProjectObjectives(
+            projectIdOrSlug,
+            fetchedProject.uid,
+            projectRecipient,
+            fetchedProject.chainID
+          );
+
+          const objective = fetchedObjectives.find(
+            (item) => item.uid.toLowerCase() === milestone.uid.toLowerCase()
+          );
+
+          if (!objective) {
+            throw new Error("Project milestone not found");
+          }
+
+          if (!objective.completed?.uid) {
+            throw new Error("Milestone is not completed");
+          }
+
+          const checkIfProjectCompletionExists = async (callbackFn?: () => void) => {
+            await retryUntilConditionMet(
+              async () => {
+                const refreshedObjectives = await getProjectObjectives(
+                  projectIdOrSlug,
+                  fetchedProject.uid,
+                  projectRecipient,
+                  fetchedProject.chainID
+                );
+
+                const refreshedObjective = refreshedObjectives.find(
+                  (item) => item.uid.toLowerCase() === milestone.uid.toLowerCase()
+                );
+
+                return !refreshedObjective?.completed;
+              },
+              async () => {
+                callbackFn?.();
+              }
+            );
+          };
+
+          await performOffChainRevoke({
+            uid: objective.completed.uid as `0x${string}`,
+            chainID: objective.chainID || fetchedProject.chainID,
+          });
+
+          await checkIfProjectCompletionExists(() => {
+            changeStepperStep("indexed");
+          }).then(() => {
+            showSuccess(MESSAGES.MILESTONES.COMPLETE.UNDO.SUCCESS);
+            refetch();
+          });
+
+          return;
         }
 
         const grantInstance = fetchedProject.grants.find(
@@ -582,11 +625,25 @@ export const useMilestone = () => {
           ).then(async () => {
             showSuccess(`Completed ${milestone.title} milestone successfully!`);
 
-            // Send outputs and deliverables data
+            // Open the share dialog with confetti FIRST, before any async work
+            const grantTitle = grantInstance?.details?.title || milestone.title;
+            const slugOrUid = (project?.details?.slug || project?.uid) as string;
+            openShareDialog({
+              modalShareText:
+                "You did it! Another milestone down, more impact ahead. Your onchain trail is growing — keep stacking progress.",
+              modalShareSecondText: " ",
+              shareText: SHARE_TEXTS.MILESTONE_COMPLETED(grantTitle, slugOrUid, grantInstance.uid),
+            });
+
+            // Send outputs and deliverables data (fire-and-forget, swallows errors)
             await sendOutputsAndDeliverables(milestone.uid, data);
 
             refetch();
-            router.push(PAGES.PROJECT.UPDATES(project?.details?.slug || project?.uid || ""));
+
+            // Let the share dialog render before any route transition
+            setTimeout(() => {
+              router.push(PAGES.PROJECT.UPDATES(slugOrUid));
+            }, 250);
           });
         });
     } catch (error) {
@@ -731,7 +788,22 @@ export const useMilestone = () => {
       }
       // Show final success message after all chains processed
       showSuccess("Milestone completed successfully!");
-      router.push(PAGES.PROJECT.UPDATES(project?.details?.slug || project?.uid || ""));
+
+      // Open the share dialog with confetti before navigating
+      const slugOrUid = (project?.details?.slug || project?.uid) as string;
+      const grantTitle = milestone.mergedGrants?.[0]?.grantTitle || milestone.title;
+      const grantUid = milestone.mergedGrants?.[0]?.grantUID || milestone.refUID;
+      openShareDialog({
+        modalShareText:
+          "You did it! Another milestone down, more impact ahead. Your onchain trail is growing — keep stacking progress.",
+        modalShareSecondText: " ",
+        shareText: SHARE_TEXTS.MILESTONE_COMPLETED(grantTitle, slugOrUid, grantUid),
+      });
+
+      // Let the share dialog render before any route transition
+      setTimeout(() => {
+        router.push(PAGES.PROJECT.UPDATES(slugOrUid));
+      }, 250);
     } catch (error) {
       showError("There was an error completing the milestone");
       errorManager("Error completing milestone", error, {

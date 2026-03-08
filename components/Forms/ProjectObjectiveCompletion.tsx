@@ -13,6 +13,7 @@ import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
 import { useProjectStore } from "@/store";
+import { useShareDialogStore } from "@/store/modals/shareDialog";
 import fetchData from "@/utilities/fetchData";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { INDEXER } from "@/utilities/indexer";
@@ -21,6 +22,7 @@ import { PAGES } from "@/utilities/pages";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
 import { sanitizeInput } from "@/utilities/sanitize";
 import { getProjectById } from "@/utilities/sdk";
+import { SHARE_TEXTS } from "@/utilities/share/text";
 import { cn } from "@/utilities/tailwind";
 import { Button } from "../Utilities/Button";
 import { errorManager } from "../Utilities/errorManager";
@@ -97,6 +99,7 @@ export const ProjectObjectiveCompletionForm = ({
 
   const [noProofCheckbox, setNoProofCheckbox] = useState(false);
   const router = useRouter();
+  const { openShareDialog } = useShareDialogStore();
 
   const { refetch } = useProjectUpdates(projectId as string);
 
@@ -183,9 +186,10 @@ export const ProjectObjectiveCompletionForm = ({
           }
           while (retries > 0) {
             fetchedObjectives = await getProjectObjectives(projectId);
-            const isCompleted = fetchedObjectives.find(
+            const matchedObjective = fetchedObjectives.find(
               (item) => item.uid.toLowerCase() === objectiveUID.toLowerCase()
-            )?.completed;
+            );
+            const isCompleted = matchedObjective?.completed;
 
             if (isCompleted) {
               retries = 0;
@@ -193,7 +197,20 @@ export const ProjectObjectiveCompletionForm = ({
               showSuccess(MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.SUCCESS);
               await refetch();
               handleCompleting(false);
-              router.push(PAGES.PROJECT.UPDATES(project?.details?.slug || project?.uid || ""));
+
+              const slugOrUid = project?.details?.slug || project?.uid || "";
+              const milestoneTitle = matchedObjective?.data?.title || "Milestone";
+              openShareDialog({
+                modalShareText:
+                  "You did it! Another milestone down, more impact ahead. Your onchain trail is growing — keep stacking progress.",
+                modalShareSecondText: " ",
+                shareText: SHARE_TEXTS.MILESTONE_COMPLETED(milestoneTitle, slugOrUid, ""),
+              });
+
+              setTimeout(() => {
+                router.push(PAGES.PROJECT.UPDATES(slugOrUid));
+              }, 250);
+              return;
             }
             retries -= 1;
             // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
