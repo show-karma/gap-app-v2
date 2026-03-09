@@ -203,3 +203,36 @@ export function toHslToken(color: string): string | null {
 export function isWhitelabelDomain(hostname: string): boolean {
   return getWhitelabelByDomain(hostname) !== null;
 }
+
+/**
+ * Find the whitelabel domain for a community slug, matching production/staging environment.
+ *
+ * Used to redirect old umbrella URLs (e.g. app.karmahq.xyz/optimism)
+ * to the tenant's whitelabel domain (e.g. app.opgrants.io).
+ */
+export function getWhitelabelDomainForSlug(slug: string, isProduction: boolean): string | null {
+  // Import is avoided — use the DOMAIN_CONFIGS to check isProduction for each whitelabel domain.
+  // WHITELABEL_DOMAINS already has the slug→domain mapping.
+  // We need to pick the right one based on environment.
+  const candidates = WHITELABEL_DOMAINS.filter(
+    (d) => d.communitySlug === slug && !d.domain.includes("localhost")
+  );
+
+  if (candidates.length === 0) return null;
+
+  // If only one candidate, return it regardless of environment
+  if (candidates.length === 1) return candidates[0].domain;
+
+  // Multiple candidates — pick by name convention (test/staging vs production)
+  // Staging domains typically have "test" or "staging" in the name or domain
+  const isStaging = (d: WhitelabelDomain) =>
+    d.domain.includes("test") ||
+    d.name.toLowerCase().includes("test") ||
+    d.name.toLowerCase().includes("staging");
+
+  const match = isProduction
+    ? candidates.find((d) => !isStaging(d))
+    : candidates.find((d) => isStaging(d));
+
+  return (match ?? candidates[0]).domain;
+}

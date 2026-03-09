@@ -85,31 +85,8 @@ const NormalCommunityHeader = ({ community }: { community: Community }) => {
     </div>
   );
 };
-// Paths where the CommunityHeader (with tabs) should appear in whitelabel mode.
-// Whitelabel-native pages (programs, applications, etc.) have their own layout.
-const WHITELABEL_TAB_PATHS = [
-  "/funding-opportunities",
-  "/updates",
-  "/impact",
-  "/financials",
-  "/projects",
-];
-
-function isWhitelabelTabPage(
-  pathname: string,
-  isUmbrella: boolean,
-  communitySlug: string | null
-): boolean {
-  // Root "/" is the funding-opportunities landing page in domained whitelabel
-  if (pathname === "/" || pathname === "") return true;
-  // In umbrella mode, the root is /<slug> (e.g., /polygon)
-  if (isUmbrella && communitySlug && pathname === `/${communitySlug}`) return true;
-  return WHITELABEL_TAB_PATHS.some((p) => pathname.includes(p));
-}
-
 export default function CommunityHeader({ community }: { community: Community }) {
   const pathname = usePathname();
-  const { isWhitelabel, isUmbrella, communitySlug } = useWhitelabel();
   const isAdminPage = pathname.includes("/manage");
   const isReviewerPage = pathname.includes("/reviewer");
   const isDonatePage = pathname.includes("/donate");
@@ -122,9 +99,7 @@ export default function CommunityHeader({ community }: { community: Community })
   if (isDonatePage) {
     return null;
   }
-  // In whitelabel mode, only show the header on community tab pages
-  if (isWhitelabel && !isWhitelabelTabPage(pathname, isUmbrella, communitySlug)) {
-    return null;
-  }
+  // The (with-header) route group layout renders this component — if we're here, show it.
+  // Pages that don't need the header belong in other route groups (e.g., (whitelabel)).
   return <NormalCommunityHeader community={community} />;
 }

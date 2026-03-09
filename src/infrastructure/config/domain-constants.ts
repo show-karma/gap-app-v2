@@ -4,8 +4,9 @@ export interface DomainInfo {
   domain: string;
   isProduction: boolean;
   isShared: boolean;
-  isUmbrella?: boolean;
   tenantId?: TenantId;
+  /** Former umbrella domains — redirect /<slug>/path to the tenant's whitelabel domain. */
+  isLegacyUmbrella?: boolean;
 }
 
 export const DOMAIN_CONFIGS: DomainInfo[] = [
@@ -28,10 +29,10 @@ export const DOMAIN_CONFIGS: DomainInfo[] = [
   { domain: "testapp.opgrants.io", isProduction: false, isShared: false, tenantId: "optimism" },
   { domain: "karmahq.xyz", isProduction: true, isShared: true },
   { domain: "staging.karmahq.xyz", isProduction: false, isShared: true },
-  { domain: "app.karmahq.xyz", isProduction: true, isShared: true, isUmbrella: true },
-  { domain: "testapp.karmahq.xyz", isProduction: false, isShared: true, isUmbrella: true },
-  { domain: "app.localhost", isProduction: false, isShared: true, isUmbrella: true },
-  { domain: "localhost", isProduction: false, isShared: true, isUmbrella: true },
+  { domain: "app.karmahq.xyz", isProduction: true, isShared: true, isLegacyUmbrella: true },
+  { domain: "testapp.karmahq.xyz", isProduction: false, isShared: true, isLegacyUmbrella: true },
+  { domain: "app.localhost", isProduction: false, isShared: true, isLegacyUmbrella: true },
+  { domain: "localhost", isProduction: false, isShared: true, isLegacyUmbrella: true },
 ];
 
 export function getDomainInfo(hostname: string): DomainInfo | undefined {
@@ -59,11 +60,6 @@ export function getTenantForExclusiveDomain(hostname: string): TenantId | null {
 
 export function getSharedDomains(): string[] {
   return DOMAIN_CONFIGS.filter((config) => config.isShared).map((config) => config.domain);
-}
-
-export function isUmbrellaDomain(hostname: string): boolean {
-  const domainInfo = getDomainInfo(hostname);
-  return domainInfo?.isUmbrella === true;
 }
 
 export function getExclusiveDomainsForTenant(tenantId: TenantId): string[] {

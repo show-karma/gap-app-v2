@@ -228,6 +228,58 @@ export const useKycBatchStatuses = (
 };
 
 /**
+ * Hook to fetch batch KYC statuses publicly (no auth required)
+ */
+export const useKycBatchStatusesPublic = (
+  communityUID: string | undefined,
+  projectUIDs: string[],
+  options?: { enabled?: boolean }
+) => {
+  const query = useQuery<Map<string, KycStatusResponse | null>>({
+    queryKey: [...KYC_QUERY_KEYS.batchStatuses(communityUID || "", projectUIDs), "public"],
+    queryFn: async () => {
+      if (!communityUID || projectUIDs.length === 0) {
+        return new Map();
+      }
+
+      const [data, error] = await fetchData<KycBatchStatusResponse>(
+        INDEXER.KYC.GET_BATCH_STATUSES_PUBLIC(communityUID),
+        "POST",
+        { projectUIDs },
+        {},
+        {},
+        false
+      );
+
+      if (error) {
+        throw new Error(error);
+      }
+
+      const statusMap = new Map<string, KycStatusResponse | null>();
+      if (data?.statuses) {
+        Object.entries(data.statuses).forEach(([projectUID, status]) => {
+          statusMap.set(projectUID, status);
+        });
+      }
+
+      return statusMap;
+    },
+    enabled: options?.enabled !== false && !!communityUID && projectUIDs.length > 0,
+    staleTime: KYC_STATUS_STALE_TIME,
+  });
+
+  return {
+    statuses: query.data ?? EMPTY_KYC_STATUS_MAP,
+    isLoading: query.isLoading,
+    isFetching: query.isFetching,
+    error: query.error,
+    isError: query.isError,
+    refetch: query.refetch,
+    getStatus: (projectUID: string) => query.data?.get(projectUID) ?? null,
+  };
+};
+
+/**
  * Hook to fetch batch KYC statuses for multiple funding applications in a community.
  *
  * Optimized for infinite scroll: uses delta-fetching to only request new

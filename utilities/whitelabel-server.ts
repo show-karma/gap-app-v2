@@ -6,16 +6,14 @@ import { getWhitelabelByDomain, type WhitelabelDomain } from "./whitelabel-confi
 
 export interface WhitelabelContext {
   isWhitelabel: boolean;
-  isUmbrella: boolean;
   communitySlug: string | null;
   config: WhitelabelDomain | null;
   tenantConfig: TenantConfig | null;
 }
 
 /**
- * Build a redirect path that respects the current whitelabel/umbrella context.
- * In umbrella mode, community sub-routes get `/<slug>` prefix; top-level routes
- * also get `/<slug>` prefix. In domained mode, `/community/<slug>` is stripped.
+ * Build a redirect path that respects the current whitelabel context.
+ * In domained whitelabel mode, `/community/<slug>` is stripped.
  * In normal mode, the path is returned as-is.
  */
 export function buildWhitelabelRedirectPath(path: string, ctx: WhitelabelContext): string {
@@ -24,16 +22,12 @@ export function buildWhitelabelRedirectPath(path: string, ctx: WhitelabelContext
   const prefix = `/community/${ctx.communitySlug}`;
   const stripped = path.startsWith(prefix) ? path.slice(prefix.length) || "/" : path;
 
-  if (ctx.isUmbrella) {
-    return `/${ctx.communitySlug}${stripped}`;
-  }
   return stripped;
 }
 
 export async function getWhitelabelContext(): Promise<WhitelabelContext> {
   const headersList = await headers();
   const isWhitelabel = headersList.get("x-is-whitelabel") === "true";
-  const isUmbrella = headersList.get("x-is-umbrella") === "true";
   const incomingCommunitySlug = headersList.get("x-community-slug");
   const whitelabelDomain = headersList.get("x-whitelabel-domain") ?? headersList.get("host") ?? "";
   const config = isWhitelabel ? getWhitelabelByDomain(whitelabelDomain) : null;
@@ -48,5 +42,5 @@ export async function getWhitelabelContext(): Promise<WhitelabelContext> {
       : getTenantConfig("karma", communitySlug || tenantId);
   }
 
-  return { isWhitelabel, isUmbrella, communitySlug, config, tenantConfig };
+  return { isWhitelabel, communitySlug, config, tenantConfig };
 }

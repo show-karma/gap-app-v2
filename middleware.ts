@@ -1,11 +1,11 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { isUmbrellaDomain } from "./src/infrastructure/config/domain-constants";
+import { getDomainInfo } from "./src/infrastructure/config/domain-constants";
 import { isKnownTenant } from "./src/infrastructure/types/tenant";
 import { chosenCommunities } from "./utilities/chosenCommunities";
 import { redirectToGov, shouldRedirectToGov } from "./utilities/redirectHelpers";
 import { hasForbiddenChars, sanitizeCommunitySlug } from "./utilities/sanitize";
-import { getWhitelabelByDomain } from "./utilities/whitelabel-config";
+import { getWhitelabelByDomain, getWhitelabelDomainForSlug } from "./utilities/whitelabel-config";
 
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
@@ -104,92 +104,32 @@ export async function middleware(request: NextRequest) {
     });
   }
 
-  // --- Umbrella whitelabel (app.karmahq.xyz/<slug>) ---
-  if (isUmbrellaDomain(hostname)) {
+  // --- Legacy umbrella domain redirect (app.karmahq.xyz/<slug>/...) ---
+  // These domains previously served all tenants via URL path prefixes.
+  // Now redirect to the tenant's whitelabel domain or the main site.
+  const domainInfo = getDomainInfo(hostname);
+  if (domainInfo?.isLegacyUmbrella) {
     const segments = path.split("/").filter(Boolean);
     const slug = segments[0];
 
-    if (!slug) {
-      return NextResponse.redirect(new URL("/funding-map", request.url));
+    if (slug && isKnownTenant(slug)) {
+      const whitelabelDomain = getWhitelabelDomainForSlug(slug, domainInfo.isProduction);
+      const restPath = "/" + segments.slice(1).join("/") || "/";
+
+      if (whitelabelDomain) {
+        // Tenant has a whitelabel domain — redirect there
+        const protocol = request.nextUrl.protocol;
+        return NextResponse.redirect(new URL(`${protocol}//${whitelabelDomain}${restPath}`), 301);
+      }
+
+      // No whitelabel domain — redirect to main site at /community/<slug>/path
+      const mainDomain = domainInfo.isProduction ? "karmahq.xyz" : "staging.karmahq.xyz";
+      const protocol = request.nextUrl.protocol;
+      return NextResponse.redirect(
+        new URL(`${protocol}//${mainDomain}/community/${slug}${restPath}`),
+        301
+      );
     }
-
-    if (isKnownTenant(slug)) {
-      const effectivePath = "/" + segments.slice(1).join("/") || "/";
-      const slugPrefix = `/${slug}`;
-
-      // Skip static assets under /<slug>/images/...
-      if (/^\/(images|logo|tenants|icons|shared|fonts)\//i.test(effectivePath)) {
-        return NextResponse.next();
-      }
-
-      // Strip /community/<slug> prefix: /<slug>/community/<slug>/x → /<slug>/x
-      const communityPrefix = `/community/${slug}`;
-      if (effectivePath.startsWith(communityPrefix)) {
-        const cleanPath = effectivePath.slice(communityPrefix.length) || "/";
-        const url = request.nextUrl.clone();
-        url.pathname = `${slugPrefix}${cleanPath}`;
-        return NextResponse.redirect(url);
-      }
-
-      // Redirect /programs (listing) to tenant root (which shows funding opportunities)
-      if (effectivePath === "/programs") {
-        const url = request.nextUrl.clone();
-        url.pathname = slugPrefix;
-        return NextResponse.redirect(url);
-      }
-
-      // /<slug>/applications or /<slug>/my-applications → /<slug>/dashboard
-      if (effectivePath === "/applications" || effectivePath === "/my-applications") {
-        const url = request.nextUrl.clone();
-        url.pathname = `${slugPrefix}/dashboard`;
-        return NextResponse.redirect(url);
-      }
-
-      // Check if community sub-route
-      const communitySubRoutes = new Set([
-        "admin",
-        "applications",
-        "browse-applications",
-        "claim-funds",
-        "donate",
-        "financials",
-        "funding-opportunities",
-        "impact",
-        "karma-ai",
-        "manage",
-        "programs",
-        "projects",
-        "updates",
-      ]);
-
-      const firstSegment = effectivePath.split("/")[1] || "";
-      const effectiveIsRoot = effectivePath === "/" || effectivePath === "";
-      const isCommunityRoute = effectiveIsRoot || communitySubRoutes.has(firstSegment);
-
-      const requestHeaders = new Headers(request.headers);
-      requestHeaders.set("x-is-whitelabel", "true");
-      requestHeaders.set("x-is-umbrella", "true");
-      requestHeaders.set("x-community-slug", slug);
-      requestHeaders.set("x-tenant-id", slug);
-      requestHeaders.set("x-whitelabel-domain", hostname);
-
-      if (!isCommunityRoute) {
-        // Top-level route (e.g., /<slug>/dashboard, /<slug>/project/abc)
-        const url = request.nextUrl.clone();
-        url.pathname = effectivePath;
-        return NextResponse.rewrite(url, { request: { headers: requestHeaders } });
-      }
-
-      // Community sub-route → rewrite to /community/<slug>/<route>
-      const rewrittenPath = effectiveIsRoot
-        ? `/community/${slug}/funding-opportunities`
-        : `/community/${slug}${effectivePath}`;
-      const url = request.nextUrl.clone();
-      url.pathname = rewrittenPath;
-      return NextResponse.rewrite(url, { request: { headers: requestHeaders } });
-    }
-
-    // Not a known tenant — fall through to standard logic
   }
 
   // --- Standard karmahq.xyz logic below ---

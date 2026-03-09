@@ -1,11 +1,12 @@
 "use client";
-import { ChartLine, DollarSign, LandPlot, SquareUser, Wallet } from "lucide-react";
+import { ChartLine, DollarSign, FileSearch, LandPlot, SquareUser, Wallet } from "lucide-react";
 import { useParams, usePathname, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import { useFundingOpportunitiesCount } from "@/hooks/useFundingOpportunitiesCount";
 import { useCommunityPrograms } from "@/hooks/usePrograms";
 import { Link } from "@/src/components/navigation/Link";
+import { FINANCIALS_ENABLED_COMMUNITIES } from "@/utilities/community-flags";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { useWhitelabel } from "@/utilities/whitelabel-context";
@@ -43,6 +44,13 @@ const NAVIGATION_ITEMS: readonly NavigationItem[] = [
     isActive: (pathname: string) => pathname.includes("/funding-opportunities"),
   },
   {
+    id: "browse-applications",
+    path: (communityId: string) => PAGES.COMMUNITY.BROWSE_APPLICATIONS(communityId),
+    title: () => "Browse applications",
+    Icon: FileSearch,
+    isActive: (pathname: string) => pathname.includes("/browse-applications"),
+  },
+  {
     id: "community-projects",
     path: (communityId: string) => PAGES.COMMUNITY.PROJECTS(communityId),
     title: (communityName: string) => `View ${communityName} community projects`,
@@ -53,6 +61,7 @@ const NAVIGATION_ITEMS: readonly NavigationItem[] = [
       !pathname.includes("/updates") &&
       !pathname.includes("/donate") &&
       !pathname.includes("/funding-opportunities") &&
+      !pathname.includes("/browse-applications") &&
       !pathname.includes("/financials"),
   },
   {
@@ -88,16 +97,11 @@ export const CommunityPageNavigator = () => {
   const searchParams = useSearchParams();
   const communityId = params.communityId as string;
   const rawPathname = usePathname();
-  const { isWhitelabel, isUmbrella, communitySlug } = useWhitelabel();
+  const { isWhitelabel } = useWhitelabel();
   const programId = searchParams.get("programId");
   // In whitelabel mode, the middleware rewrites the root to /community/<slug>/funding-opportunities
-  // but usePathname() still returns "/" (domained) or "/<slug>" (umbrella).
-  // Normalize so tab highlighting works correctly.
-  const isWhitelabelRoot =
-    isWhitelabel &&
-    (rawPathname === "/" ||
-      rawPathname === "" ||
-      (isUmbrella && communitySlug && rawPathname === `/${communitySlug}`));
+  // but usePathname() still returns "/". Normalize so tab highlighting works correctly.
+  const isWhitelabelRoot = isWhitelabel && (rawPathname === "/" || rawPathname === "");
   const pathname = isWhitelabelRoot ? "/funding-opportunities" : rawPathname;
 
   // Check if we're on an admin page early to avoid unnecessary data fetching
@@ -115,20 +119,26 @@ export const CommunityPageNavigator = () => {
   });
   const programsCount = programs?.length ?? 0;
 
+  const isFinancialsEnabled = FINANCIALS_ENABLED_COMMUNITIES.includes(communityId);
+
   const visibleNavigationItems = useMemo(() => {
     return NAVIGATION_ITEMS.filter((item) => {
-      // In whitelabel/umbrella mode, always show funding opportunities (it's the landing page)
+      // In whitelabel mode, always show funding opportunities (it's the landing page)
       // In normal mode, hide it if there are no opportunities
       if (item.id === "funding-opportunities" && fundingOpportunitiesCount === 0 && !isWhitelabel) {
         return false;
       }
-      // Hide financials tab if there are no programs
-      if (item.id === "financials" && programsCount === 0) {
+      // Show browse applications if the community has at least one program (live or ended)
+      if (item.id === "browse-applications" && programsCount === 0) {
+        return false;
+      }
+      // Show financials only for enabled communities with programs
+      if (item.id === "financials" && (!isFinancialsEnabled || programsCount === 0)) {
         return false;
       }
       return true;
     });
-  }, [fundingOpportunitiesCount, programsCount, isWhitelabel]);
+  }, [fundingOpportunitiesCount, programsCount, isWhitelabel, isFinancialsEnabled]);
 
   if (isAdminPage) return null;
 

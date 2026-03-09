@@ -6,7 +6,6 @@ import type { WhitelabelDomain } from "./whitelabel-config";
 
 interface WhitelabelContextValue {
   isWhitelabel: boolean;
-  isUmbrella: boolean;
   communitySlug: string | null;
   config: WhitelabelDomain | null;
   tenantConfig: TenantConfig | null;
@@ -14,7 +13,6 @@ interface WhitelabelContextValue {
 
 const WhitelabelCtx = createContext<WhitelabelContextValue>({
   isWhitelabel: false,
-  isUmbrella: false,
   communitySlug: null,
   config: null,
   tenantConfig: null,
@@ -22,16 +20,13 @@ const WhitelabelCtx = createContext<WhitelabelContextValue>({
 
 export function WhitelabelProvider({
   isWhitelabel,
-  isUmbrella,
   communitySlug,
   config,
   tenantConfig,
   children,
 }: WhitelabelContextValue & { children: React.ReactNode }) {
   return (
-    <WhitelabelCtx.Provider
-      value={{ isWhitelabel, isUmbrella, communitySlug, config, tenantConfig }}
-    >
+    <WhitelabelCtx.Provider value={{ isWhitelabel, communitySlug, config, tenantConfig }}>
       {children}
     </WhitelabelCtx.Provider>
   );
