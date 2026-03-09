@@ -171,6 +171,42 @@ export const setupRpcIntercepts = (ownerAddress?: string): void => {
     // the presence of a `method` field, because other POST requests (Privy
     // analytics, Stripe, etc.) may also have a `method` field in their body.
     const body = req.body;
+
+    // Handle batch JSON-RPC requests (array of requests).
+    // ethers.js / viem may batch multiple calls into a single POST with an
+    // array body. In that case body is an array and body.jsonrpc is undefined.
+    if (Array.isArray(body)) {
+      const results = body.map((item: { jsonrpc?: string; id?: number; method?: string; params?: unknown[] }) => {
+        if (item.jsonrpc !== "2.0") return item;
+
+        if (item.method === "eth_chainId") {
+          return { jsonrpc: "2.0", id: item.id, result: "0xa" };
+        }
+        if (item.method === "eth_blockNumber") {
+          return { jsonrpc: "2.0", id: item.id, result: "0x1000000" };
+        }
+        if (item.method === "net_version") {
+          return { jsonrpc: "2.0", id: item.id, result: "10" };
+        }
+        if (item.method === "eth_call") {
+          const callData: string = (item.params?.[0] as { data?: string })?.data || "";
+          const containsOwner =
+            normalizedOwner && callData.toLowerCase().includes(normalizedOwner);
+          return {
+            jsonrpc: "2.0",
+            id: item.id,
+            result: containsOwner ? ABI_ENCODED_TRUE : ABI_ENCODED_FALSE,
+          };
+        }
+        if (item.method?.startsWith("eth_") || item.method?.startsWith("net_")) {
+          return { jsonrpc: "2.0", id: item.id, result: ABI_ENCODED_FALSE };
+        }
+        return { jsonrpc: "2.0", id: item.id, result: ABI_ENCODED_FALSE };
+      });
+      req.reply({ statusCode: 200, body: results });
+      return;
+    }
+
     if (body?.jsonrpc !== "2.0") return;
 
     const method = body.method;
