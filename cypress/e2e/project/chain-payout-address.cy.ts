@@ -93,6 +93,39 @@ describe("Chain Payout Address Modal", () => {
         body: [],
       });
     }).as("getProjectMembers");
+
+    // Mock project sub-resource endpoints with properly shaped empty responses.
+    // The catch-all returns [] which crashes endpoints expecting object shapes.
+    cy.intercept("GET", `**/projects/${TEST_PROJECT_SLUG}/grants`, {
+      statusCode: 200,
+      body: [],
+    }).as("getProjectGrants");
+
+    cy.intercept("GET", `**/projects/${TEST_PROJECT_SLUG}/updates`, {
+      statusCode: 200,
+      body: {
+        projectUpdates: [],
+        projectMilestones: [],
+        grantMilestones: [],
+        grantUpdates: [],
+      },
+    }).as("getProjectUpdates");
+
+    cy.intercept("GET", `**/projects/${TEST_PROJECT_SLUG}/impacts`, {
+      statusCode: 200,
+      body: [],
+    }).as("getProjectImpacts");
+
+    cy.intercept("GET", `**/projects/${TEST_PROJECT_SLUG}/contacts`, {
+      statusCode: 200,
+      body: [],
+    }).as("getProjectContacts");
+
+    // Mock user profile endpoint
+    cy.intercept("GET", "**/user/*", {
+      statusCode: 200,
+      body: [],
+    }).as("getUserProfiles");
   });
 
   describe("Enable Donations Button", () => {
