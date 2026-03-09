@@ -13,8 +13,8 @@ import {
   ProjectDetails,
 } from "@show-karma/karma-gap-sdk";
 import debounce from "lodash.debounce";
-import { useRouter } from "next/navigation";
-import { type FC, Fragment, type ReactNode, useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { type FC, Fragment, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { type Hex, isAddress, zeroHash } from "viem";
 import { useAccount } from "wagmi";
@@ -441,6 +441,23 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       openModal();
     }
   }, [isAuth, pendingOpenAfterLogin]);
+
+  // Auto-open modal from URL query param (?action=create-project)
+  const searchParams = useSearchParams();
+  const hasHandledUrlAction = useRef(false);
+  useEffect(() => {
+    if (
+      !useEditModalStore &&
+      !hasHandledUrlAction.current &&
+      searchParams.get("action") === "create-project"
+    ) {
+      hasHandledUrlAction.current = true;
+      openModal();
+      const url = new URL(window.location.href);
+      url.searchParams.delete("action");
+      window.history.replaceState(null, "", url.pathname + url.search);
+    }
+  }, [searchParams, useEditModalStore]);
 
   const validateCustomLinks = () => {
     return customLinks.some((link) => !link.name.trim() || !link.url.trim());
