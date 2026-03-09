@@ -41,11 +41,6 @@ jest.mock("@/src/features/program-registry/services/program-registry.service", (
   },
 }));
 
-// Also mock the re-export shim
-jest.mock("@/services/programRegistry.service", () =>
-  jest.requireActual("@/src/features/program-registry/services/program-registry.service")
-);
-
 jest.mock("@/utilities/fetchData", () => ({
   __esModule: true,
   default: jest.fn(),

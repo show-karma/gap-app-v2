@@ -3,7 +3,10 @@
  * @description Tests for the Zod schema validation used in program forms
  */
 
-import { createProgramSchema, updateProgramSchema } from "@/schemas/programFormSchema";
+import {
+  createProgramSchema,
+  updateProgramSchema,
+} from "@/src/features/program-registry/schemas/admin-form";
 
 const validEmails = {
   adminEmails: ["admin@example.com"],
@@ -368,6 +371,38 @@ describe("createProgramSchema", () => {
       });
 
       expect(result.success).toBe(false);
+    });
+
+    it("should treat empty string budget as undefined, not 0", () => {
+      const result = createProgramSchema.safeParse({
+        name: "Test Program",
+        description: "Test description",
+        shortDescription: "Short desc",
+        dates: {},
+        budget: "",
+        ...validBase,
+      });
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.budget).toBeUndefined();
+      }
+    });
+
+    it("should treat null budget as undefined", () => {
+      const result = createProgramSchema.safeParse({
+        name: "Test Program",
+        description: "Test description",
+        shortDescription: "Short desc",
+        dates: {},
+        budget: null,
+        ...validBase,
+      });
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.budget).toBeUndefined();
+      }
     });
   });
 

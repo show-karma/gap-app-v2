@@ -15,17 +15,17 @@ import { ManageProgramList } from "@/components/Pages/ProgramRegistry/ManageProg
 import { MyProgramList } from "@/components/Pages/ProgramRegistry/MyProgramList";
 import { ProgramDetailsDialog } from "@/components/Pages/ProgramRegistry/ProgramDetailsDialog";
 import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
-import {
-  getProgramIdForUrl,
-  normalizeGrantTypesArray,
-} from "@/components/Pages/ProgramRegistry/programUtils";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import Pagination from "@/components/Utilities/Pagination";
 import { useAuth } from "@/hooks/useAuth";
-import { ProgramRegistryService } from "@/services/programRegistry.service";
 import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
 import { Role } from "@/src/core/rbac/types/role";
+import { ProgramRegistryService } from "@/src/features/program-registry/services/program-registry.service";
+import {
+  getProgramIdForUrl,
+  normalizeGrantTypesArray,
+} from "@/src/features/program-registry/utils/program-utils";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";

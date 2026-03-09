@@ -47,11 +47,6 @@ jest.mock("@/src/features/program-registry/services/program-registry.service", (
   },
 }));
 
-// Also mock the re-export shim so any direct imports work
-jest.mock("@/services/programRegistry.service", () =>
-  jest.requireActual("@/src/features/program-registry/services/program-registry.service")
-);
-
 jest.mock("react-hot-toast", () => ({
   __esModule: true,
   default: {

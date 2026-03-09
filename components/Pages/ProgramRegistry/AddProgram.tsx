@@ -25,7 +25,16 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { getCommunities } from "@/services/communities.service";
-import { ProgramRegistryService } from "@/services/programRegistry.service";
+import {
+  createProgramSchema,
+  OPPORTUNITY_TYPE_OPTIONS,
+  type ProgramFormData,
+} from "@/src/features/program-registry/schemas/public-form";
+import { ProgramRegistryService } from "@/src/features/program-registry/services/program-registry.service";
+import {
+  buildMetadata,
+  buildTopLevelFields,
+} from "@/src/features/program-registry/utils/program-utils";
 import type { Community } from "@/types/v2/community";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
 import { MESSAGES } from "@/utilities/messages";
@@ -35,10 +44,8 @@ import { sanitizeObject } from "@/utilities/sanitize";
 import { cn } from "@/utilities/tailwind";
 import { registryHelper } from "./helper";
 import type { GrantProgram } from "./ProgramList";
-import { buildMetadata, buildTopLevelFields } from "./programUtils";
 import { SearchDropdown } from "./SearchDropdown";
 import { StatusDropdown } from "./StatusDropdown";
-import { createProgramSchema, OPPORTUNITY_TYPE_OPTIONS, type ProgramFormData } from "./schema";
 import { AcceleratorFields } from "./TypeFields/AcceleratorFields";
 import { BountyFields } from "./TypeFields/BountyFields";
 import { HackathonFields } from "./TypeFields/HackathonFields";

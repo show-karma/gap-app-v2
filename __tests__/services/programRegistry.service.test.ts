@@ -5,9 +5,9 @@
  */
 
 import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
-import { ProgramRegistryService } from "@/services/programRegistry.service";
+import { ProgramRegistryService } from "@/src/features/program-registry/services/program-registry.service";
+import type { CreateProgramFormData } from "@/src/features/program-registry/types";
 import type { CommunityDetails } from "@/types/community";
-import type { CreateProgramFormData } from "@/types/program-registry";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
