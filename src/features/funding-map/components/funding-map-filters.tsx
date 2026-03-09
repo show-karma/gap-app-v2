@@ -2,7 +2,7 @@
 
 import * as Popover from "@radix-ui/react-popover";
 import { Check, ChevronDown, X } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,6 +29,10 @@ import type { OpportunityType } from "../types/funding-program";
 import { getGrantTypeConfig } from "../utils/grant-type-config";
 import { getOpportunityTypeConfig } from "../utils/opportunity-type-config";
 import { OnKarmaBadge } from "./on-karma-badge";
+
+function getStatusCount(tc: { count: number; activeCount: number }, status: string): number {
+  return status === "Inactive" ? tc.count - tc.activeCount : tc.activeCount;
+}
 
 function getTypeOptionIcon(option: UnifiedTypeOption): React.ReactNode {
   if (option.filterTarget === "type") {
@@ -91,11 +95,14 @@ export function FundingMapFilters({ totalCount = 0 }: FundingMapFiltersProps) {
     : null;
   const resultLabel = typeLabel ? typeLabel.toLowerCase() : null;
 
-  const getTypeCount = (type: string): number | undefined => {
-    if (!typeCounts) return undefined;
-    const found = typeCounts.find((tc) => tc.type === type);
-    return found?.count;
-  };
+  const typeCountMap = useMemo(() => {
+    if (!typeCounts) return null;
+    const map = new Map<string, number>();
+    for (const tc of typeCounts) {
+      map.set(tc.type, getStatusCount(tc, filters.status));
+    }
+    return map;
+  }, [typeCounts, filters.status]);
 
   const handleKarmaToggle = useCallback(() => {
     const newValue = !onlyOnKarma;
@@ -388,7 +395,7 @@ export function FundingMapFilters({ totalCount = 0 }: FundingMapFiltersProps) {
                 </div>
                 {UNIFIED_TYPE_OPTIONS.filter((o) => o.section === "opportunityTypes").map(
                   (option) => {
-                    const count = getTypeCount(option.value);
+                    const count = typeCountMap?.get(option.value);
                     return (
                       <button
                         type="button"
@@ -426,7 +433,7 @@ export function FundingMapFilters({ totalCount = 0 }: FundingMapFiltersProps) {
                 </div>
                 {UNIFIED_TYPE_OPTIONS.filter((o) => o.section === "fundingMechanisms").map(
                   (option) => {
-                    const count = getTypeCount(option.value);
+                    const count = typeCountMap?.get(option.value);
                     return (
                       <button
                         type="button"
