@@ -148,6 +148,8 @@ export const useAuth = () => {
           router.push(redirectUrl);
           clearPostLoginRedirect();
         } else {
+          const searchParams = new URLSearchParams(window.location.search);
+          if (searchParams.get("action") === "create-project") return;
           router.push(PAGES.DASHBOARD);
         }
       }
@@ -292,7 +294,9 @@ export const useAuth = () => {
     if (typeof window !== "undefined" && !authenticated) {
       const existingRedirect = getPostLoginRedirect();
       if (!existingRedirect) {
-        setPostLoginRedirect(`${window.location.pathname}${window.location.hash}`);
+        setPostLoginRedirect(
+          `${window.location.pathname}${window.location.search}${window.location.hash}`
+        );
       }
     }
 

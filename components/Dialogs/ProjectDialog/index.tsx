@@ -45,7 +45,6 @@ import { useWallet } from "@/hooks/useWallet";
 import { checkSlugExists, getProject } from "@/services/project.service";
 import { searchProjects } from "@/services/project-search.service";
 import { useProjectStore } from "@/store";
-import { useProjectCreateModalStore } from "@/store/modals/projectCreate";
 import { useProjectEditModalStore } from "@/store/modals/projectEdit";
 import { useSimilarProjectsModalStore } from "@/store/modals/similarProjects";
 import { useOwnerStore } from "@/store/owner";
@@ -156,6 +155,7 @@ type ProjectDialogProps = {
   projectToUpdate?: ProjectResponse;
   previousContacts?: Contact[];
   useEditModalStore?: boolean; // New prop to control which modal state to use
+  defaultOpen?: boolean; // When true, start with the modal open (used by URL handler)
 };
 
 export const ProjectDialog: FC<ProjectDialogProps> = ({
@@ -168,6 +168,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   projectToUpdate,
   previousContacts,
   useEditModalStore = false, // Default to false for create mode
+  defaultOpen = false, // Start with the modal open (used by URL handler)
 }) => {
   const dataToUpdate = useMemo(() => {
     if (!projectToUpdate) return undefined;
@@ -220,22 +221,21 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const [_logoUploadProgress, setLogoUploadProgress] = useState(0);
   const [tempLogoKey, setTempLogoKey] = useState<string | null>(null);
 
-  // Modal state management - use edit store or create store based on mode
+  // Modal state management - edit mode uses Zustand store, create mode uses local state
   const { isProjectEditModalOpen, setIsProjectEditModalOpen } = useProjectEditModalStore();
-  const { isProjectCreateModalOpen, setIsProjectCreateModalOpen } = useProjectCreateModalStore();
+  const [localIsOpen, setLocalIsOpen] = useState(defaultOpen);
 
   // Track if we should open modal after login completes
   const [pendingOpenAfterLogin, setPendingOpenAfterLogin] = useState(false);
 
-  // Determine which modal state to use
-  const isOpen = useEditModalStore ? isProjectEditModalOpen : isProjectCreateModalOpen;
-  const setIsOpen = useEditModalStore ? setIsProjectEditModalOpen : setIsProjectCreateModalOpen;
+  const isOpen = useEditModalStore ? isProjectEditModalOpen : localIsOpen;
+  const setIsOpen = useEditModalStore ? setIsProjectEditModalOpen : setLocalIsOpen;
 
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [step, setStep] = useState(0);
   const isOwner = useOwnerStore((state) => state.isOwner);
   const { isConnected, address } = useAccount();
-  const { authenticated: isAuth, login } = useAuth();
+  const { authenticated: isAuth, login, ready } = useAuth();
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
   const [isLoading, setIsLoading] = useState(false);
@@ -426,13 +426,14 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
 
   // Handle unauthenticated user trying to open modal
   useEffect(() => {
+    if (!ready) return;
     if (isOpen && !isAuth) {
       // Set flag to re-open modal after login completes
       setPendingOpenAfterLogin(true);
       login?.();
       closeModal();
     }
-  }, [isOpen, isAuth, closeModal, login]);
+  }, [isOpen, isAuth, ready, closeModal, login]);
 
   // Re-open modal after successful login if user was trying to create project
   useEffect(() => {
