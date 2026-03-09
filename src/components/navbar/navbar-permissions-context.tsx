@@ -89,9 +89,9 @@ export function NavbarPermissionsProvider({ children }: NavbarPermissionsProvide
     const isProgramCreator = permissions?.isProgramCreator ?? false;
     const isRegistryAdmin = permissions?.isRegistryAdmin ?? false;
     const hasAdminAccess = !isPermissionsLoading && (isStaff || isOwner || isCommunityAdmin);
-    // User can access Manage Programs if they are registry admin OR have created programs
+    // User can access Manage Programs if they are registry admin, program creator, or staff
     const isRegistryAllowed =
-      !isPermissionsLoading && (isRegistryAdmin || isProgramCreator) && isLoggedIn;
+      !isPermissionsLoading && (isRegistryAdmin || isProgramCreator || isStaff) && isLoggedIn;
 
     return {
       isLoggedIn,
