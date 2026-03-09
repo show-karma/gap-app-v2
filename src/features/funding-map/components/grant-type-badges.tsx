@@ -4,6 +4,7 @@ import { Badge, type badgeVariants } from "@/components/ui/badge";
 import { cn } from "@/utilities/tailwind";
 import { OPPORTUNITY_TO_GRANT_TYPE } from "../constants/filter-options";
 import type { OpportunityType } from "../types/funding-program";
+import { ICON_SIZES } from "../utils/grant-type-config";
 import { getOpportunityTypeConfig } from "../utils/opportunity-type-config";
 import { GrantTypeBadge } from "./grant-type-badge";
 
@@ -107,7 +108,7 @@ const OpportunityTypePill = React.memo(function OpportunityTypePill({
         config.borderClass
       )}
     >
-      <Icon className="h-3 w-3" strokeWidth={strokeWidth} />
+      <Icon className={ICON_SIZES[iconSize ?? "xs"]} strokeWidth={strokeWidth} />
       {showLabel && <span>{config.singularLabel}</span>}
     </Badge>
   );
