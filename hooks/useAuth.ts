@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import type { Hex } from "viem";
 import { useAccount } from "wagmi";
+import { useProjectCreateModalStore } from "@/store/modals/projectCreate";
 import { getCypressMockAuthState } from "@/utilities/auth/cypress-auth";
 import { TokenManager } from "@/utilities/auth/token-manager";
 import { PAGES } from "@/utilities/pages";
@@ -142,7 +143,9 @@ export const useAuth = () => {
     // Detect login: was not authenticated, now authenticated
     if (!prevAuthRef.current && authenticated) {
       // Only redirect if we're on the default landing page
-      if (pathname === "/") {
+      // Skip redirect if create project modal is open (user triggered login from the modal)
+      const isCreateModalOpen = useProjectCreateModalStore.getState().isProjectCreateModalOpen;
+      if (pathname === "/" && !isCreateModalOpen) {
         const redirectUrl = getPostLoginRedirect();
         if (redirectUrl) {
           router.push(redirectUrl);
