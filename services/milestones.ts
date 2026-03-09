@@ -171,6 +171,24 @@ export async function updateMilestoneVerification(
 }
 
 /**
+ * Edit request payload for milestone definitions
+ */
+export interface MilestoneEditData {
+  title?: string;
+  description?: string;
+  endsAt?: number;
+  startsAt?: number;
+  priority?: number;
+}
+
+/**
+ * Edit a milestone definition via the indexer API
+ */
+export async function editMilestone(milestoneUID: string, data: MilestoneEditData): Promise<void> {
+  await apiClient.put(`/v2/milestones/${milestoneUID}`, data);
+}
+
+/**
  * Attest milestone completion as a program reviewer (backend creates on-chain attestation)
  */
 export async function attestMilestoneCompletionAsReviewer(

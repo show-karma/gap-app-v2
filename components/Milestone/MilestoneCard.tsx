@@ -1,6 +1,7 @@
 "use client";
 import dynamic from "next/dynamic";
 import Image from "next/image";
+import { useParams } from "next/navigation";
 import { useState } from "react";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
@@ -53,6 +54,8 @@ interface MilestoneCardProps {
 }
 
 export const MilestoneCard = ({ milestone, isAuthorized }: MilestoneCardProps) => {
+  const params = useParams();
+  const projectId = params.projectId as string | undefined;
   const [isCompleting, setIsCompleting] = useState(false);
 
   const handleCompleting = (isCompleting: boolean) => {
@@ -198,6 +201,7 @@ export const MilestoneCard = ({ milestone, isAuthorized }: MilestoneCardProps) =
               milestone={milestone}
               completeFn={handleCompleting}
               alreadyCompleted={!!completed}
+              projectId={projectId}
             />
           ) : null}
         </div>

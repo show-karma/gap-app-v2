@@ -1,12 +1,18 @@
 "use client";
 import { Menu, Transition } from "@headlessui/react";
 import { CheckCircleIcon, EllipsisVerticalIcon, TrashIcon } from "@heroicons/react/24/outline";
+import dynamic from "next/dynamic";
 import { Fragment } from "react";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { Button } from "@/components/Utilities/Button";
 import { useMilestone } from "@/hooks/useMilestone";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { cn } from "@/utilities/tailwind";
+
+const MilestoneEditDialog = dynamic(
+  () => import("./MilestoneEditDialog").then((mod) => mod.MilestoneEditDialog),
+  { ssr: false }
+);
 
 // Common button styling
 const buttonClassName = `group border-none ring-none font-normal bg-transparent dark:bg-transparent text-gray-900 dark:text-zinc-100 hover:bg-white dark:hover:bg-zinc-800 dark:hover:opacity-75 hover:opacity-75 flex w-full items-start justify-start rounded-md px-2 py-2 text-sm flex-row gap-2`;
@@ -15,14 +21,19 @@ interface GrantMilestoneOptionsMenuProps {
   milestone: UnifiedMilestone;
   completeFn: (completeState: boolean) => void;
   alreadyCompleted: boolean;
+  projectId?: string;
 }
 
 export const GrantMilestoneOptionsMenu = ({
   milestone,
   completeFn,
   alreadyCompleted,
+  projectId,
 }: GrantMilestoneOptionsMenuProps) => {
   const { isDeleting, multiGrantDelete } = useMilestone();
+
+  // Milestone is pending (editable) if not completed
+  const isPending = !alreadyCompleted;
 
   // Wrap the multiGrantDelete function to ensure it returns void
   const handleDelete = async () => {
@@ -48,6 +59,15 @@ export const GrantMilestoneOptionsMenu = ({
           className="absolute right-0 mt-2 w-48 origin-top-right divide-y divide-gray-100 rounded-md bg-white dark:bg-zinc-800 shadow-lg ring-1 ring-black/5 focus:outline-none z-50"
         >
           <div className="flex flex-col gap-1 px-1 py-1">
+            {isPending && projectId ? (
+              <Menu.Item>
+                <MilestoneEditDialog
+                  milestone={milestone}
+                  projectId={projectId}
+                  buttonClassName={buttonClassName}
+                />
+              </Menu.Item>
+            ) : null}
             <Menu.Item>
               <Button
                 className={buttonClassName}
