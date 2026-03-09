@@ -100,6 +100,14 @@ export class TokenManager {
       return TokenManager.getServerToken();
     }
 
+    // Cypress E2E auth bypass: return mock token from localStorage
+    if (
+      process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS === "true" &&
+      (window as Window & { Cypress?: unknown }).Cypress
+    ) {
+      return localStorage.getItem("privy:token");
+    }
+
     // Return cached token if still valid
     if (TokenManager.cachedToken && Date.now() < TokenManager.cacheExpiry) {
       return TokenManager.cachedToken;

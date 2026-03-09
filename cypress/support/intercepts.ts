@@ -114,6 +114,91 @@ export const waitForGrants = (): void => {
   cy.wait("@getProjectGrants", { timeout: 15000 });
 };
 
+/**
+ * ABI-encoded `true` (bool) — used as the return value for eth_call
+ * responses that should return true (e.g., isOwner, isAdmin).
+ */
+const ABI_ENCODED_TRUE =
+  "0x0000000000000000000000000000000000000000000000000000000000000001";
+
+/**
+ * ABI-encoded `false` (bool).
+ */
+const ABI_ENCODED_FALSE =
+  "0x0000000000000000000000000000000000000000000000000000000000000000";
+
+/**
+ * Intercept blockchain JSON-RPC calls (eth_call, eth_chainId, etc.)
+ * so E2E tests don't need real RPC connectivity.
+ *
+ * @param ownerAddress - Address to treat as the contract/project owner.
+ *   When an `eth_call` includes this address in its `data` field, the
+ *   response will return `true` (ABI-encoded). All other `eth_call`s
+ *   return `false`.
+ */
+export const setupRpcIntercepts = (ownerAddress?: string): void => {
+  // Normalize for hex comparison (lowercase, no 0x, no zero-padding)
+  const normalizedOwner = ownerAddress?.toLowerCase().replace("0x", "");
+
+  cy.intercept("POST", "**", (req) => {
+    // Only intercept JSON-RPC requests (ethers.js / viem)
+    const body = req.body;
+    if (!body?.jsonrpc && !body?.method) return;
+
+    const method = body.method;
+
+    if (method === "eth_chainId") {
+      req.reply({
+        statusCode: 200,
+        body: { jsonrpc: "2.0", id: body.id, result: "0xa" }, // Optimism (10)
+      });
+      return;
+    }
+
+    if (method === "eth_blockNumber") {
+      req.reply({
+        statusCode: 200,
+        body: { jsonrpc: "2.0", id: body.id, result: "0x1000000" },
+      });
+      return;
+    }
+
+    if (method === "net_version") {
+      req.reply({
+        statusCode: 200,
+        body: { jsonrpc: "2.0", id: body.id, result: "10" },
+      });
+      return;
+    }
+
+    if (method === "eth_call") {
+      // Check if the call data contains the owner address (isOwner/isAdmin checks)
+      const callData: string = body.params?.[0]?.data || "";
+      const containsOwner =
+        normalizedOwner && callData.toLowerCase().includes(normalizedOwner);
+
+      req.reply({
+        statusCode: 200,
+        body: {
+          jsonrpc: "2.0",
+          id: body.id,
+          result: containsOwner ? ABI_ENCODED_TRUE : ABI_ENCODED_FALSE,
+        },
+      });
+      return;
+    }
+
+    // For any other JSON-RPC method, let it pass through or return a generic success
+    if (method?.startsWith("eth_") || method?.startsWith("net_")) {
+      req.reply({
+        statusCode: 200,
+        body: { jsonrpc: "2.0", id: body.id, result: ABI_ENCODED_FALSE },
+      });
+      return;
+    }
+  }).as("rpcCalls");
+};
+
 // Add to Cypress namespace
 declare global {
   namespace Cypress {

@@ -8,40 +8,56 @@
  * - Save/update operations
  * - Authorization checks
  *
- * IMPORTANT: These tests require actual Privy authentication mocking which
- * is not currently supported. The cy.login() command sets localStorage values
- * but Privy uses React context internally, so the frontend never recognizes
- * the user as authenticated. These tests are skipped in CI until proper
- * authentication mocking is implemented.
- *
- * TODO: Implement proper Privy test mode or authentication mocking
- * @see https://docs.privy.io/guide/testing
+ * Auth is handled via the NEXT_PUBLIC_E2E_AUTH_BYPASS mechanism:
+ * cy.login() sets localStorage mock state, and useAuth() reads it
+ * when running under Cypress. Blockchain RPC calls (isOwner, isAdmin)
+ * are intercepted via setupRpcIntercepts().
  */
 
-import { setupCommonIntercepts, waitForPageLoad } from "../../support/intercepts";
+import { setupCommonIntercepts, setupRpcIntercepts, waitForPageLoad } from "../../support/intercepts";
 
-// Skip in CI - requires real Privy authentication which cannot be mocked via localStorage
-const isCI = Cypress.env("CI") === "true" || Cypress.env("CI") === true;
-const describeOrSkip = isCI ? describe.skip : describe;
-
-describeOrSkip("Chain Payout Address Modal", () => {
+describe("Chain Payout Address Modal", () => {
   // Test data
   const TEST_PROJECT_SLUG = "test-project";
+  const MOCK_REGULAR_ADDRESS = "0x1234567890123456789012345678901234567890";
   const VALID_ADDRESS = "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed";
-  const VALID_ADDRESS_2 = "0x1234567890123456789012345678901234567890";
+  const VALID_ADDRESS_2 = MOCK_REGULAR_ADDRESS;
 
-  // Mock project data
+  // Mock project data (includes fields needed by both the frontend and the SDK)
   const mockProject = {
-    uid: "0xTESTPROJECT123",
+    uid: "0xabc123def456789000000000000000000000000000000000000000000000dead",
     chainID: 10,
-    owner: "0x1234567890123456789012345678901234567890",
+    owner: MOCK_REGULAR_ADDRESS,
+    recipient: MOCK_REGULAR_ADDRESS,
+    attester: MOCK_REGULAR_ADDRESS,
+    refUID: "0x0000000000000000000000000000000000000000000000000000000000000000",
+    revoked: false,
+    revocationTime: 0,
+    createdAt: Math.floor(Date.now() / 1000),
     chainPayoutAddress: null,
+    data: { project: true },
     details: {
+      uid: "0xabc123def456789000000000000000000000000000000000000000000000beef",
       title: "Test Project",
       slug: TEST_PROJECT_SLUG,
       description: "A test project",
+      data: {
+        title: "Test Project",
+        slug: TEST_PROJECT_SLUG,
+        description: "A test project",
+        links: [],
+        tags: [],
+      },
+      chainID: 10,
     },
     members: [],
+    grants: [],
+    impacts: [],
+    endorsements: [],
+    updates: [],
+    pointers: [],
+    communities: [],
+    external: { gitcoin: [], oso: [], github: [], network_addresses: [], divvi_wallets: [] },
   };
 
   const mockProjectWithAddresses = {
@@ -54,6 +70,8 @@ describeOrSkip("Chain Payout Address Modal", () => {
 
   beforeEach(() => {
     setupCommonIntercepts();
+    // Intercept blockchain RPC calls so ownership checks work without real nodes
+    setupRpcIntercepts(MOCK_REGULAR_ADDRESS);
 
     // Mock project API response
     cy.intercept("GET", `**/projects/${TEST_PROJECT_SLUG}`, (req) => {
@@ -82,7 +100,7 @@ describeOrSkip("Chain Payout Address Modal", () => {
           statusCode: 200,
           body: {
             ...mockProject,
-            owner: "0x1234567890123456789012345678901234567890", // matches regular user
+            owner: MOCK_REGULAR_ADDRESS, // matches regular user
           },
         });
       }).as("getProjectOwner");
@@ -103,7 +121,7 @@ describeOrSkip("Chain Payout Address Modal", () => {
           statusCode: 200,
           body: {
             ...mockProjectWithAddresses,
-            owner: "0x1234567890123456789012345678901234567890",
+            owner: MOCK_REGULAR_ADDRESS,
           },
         });
       }).as("getProjectWithAddresses");
@@ -131,7 +149,7 @@ describeOrSkip("Chain Payout Address Modal", () => {
           statusCode: 200,
           body: {
             ...mockProject,
-            owner: "0x1234567890123456789012345678901234567890",
+            owner: MOCK_REGULAR_ADDRESS,
           },
         });
       }).as("getProjectOwner");
@@ -156,7 +174,7 @@ describeOrSkip("Chain Payout Address Modal", () => {
           statusCode: 200,
           body: {
             ...mockProject,
-            owner: "0x1234567890123456789012345678901234567890",
+            owner: MOCK_REGULAR_ADDRESS,
           },
         });
       }).as("getProjectOwner");
@@ -228,7 +246,7 @@ describeOrSkip("Chain Payout Address Modal", () => {
           statusCode: 200,
           body: {
             ...mockProject,
-            owner: "0x1234567890123456789012345678901234567890",
+            owner: MOCK_REGULAR_ADDRESS,
           },
         });
       }).as("getProjectOwner");
@@ -296,7 +314,7 @@ describeOrSkip("Chain Payout Address Modal", () => {
           statusCode: 200,
           body: {
             ...mockProject,
-            owner: "0x1234567890123456789012345678901234567890",
+            owner: MOCK_REGULAR_ADDRESS,
           },
         });
       }).as("getProjectOwner");
@@ -319,7 +337,7 @@ describeOrSkip("Chain Payout Address Modal", () => {
           statusCode: 200,
           body: {
             ...mockProject,
-            owner: "0x1234567890123456789012345678901234567890",
+            owner: MOCK_REGULAR_ADDRESS,
             chainPayoutAddress: { "10": VALID_ADDRESS },
           },
         });
@@ -391,7 +409,7 @@ describeOrSkip("Chain Payout Address Modal", () => {
           statusCode: 200,
           body: {
             ...mockProjectWithAddresses,
-            owner: "0x1234567890123456789012345678901234567890",
+            owner: MOCK_REGULAR_ADDRESS,
           },
         });
       }).as("getProjectWithAddresses");
@@ -420,7 +438,7 @@ describeOrSkip("Chain Payout Address Modal", () => {
           statusCode: 200,
           body: {
             ...mockProjectWithAddresses,
-            owner: "0x1234567890123456789012345678901234567890",
+            owner: MOCK_REGULAR_ADDRESS,
           },
         });
       }).as("getProjectWithAddresses");
@@ -443,7 +461,7 @@ describeOrSkip("Chain Payout Address Modal", () => {
           statusCode: 200,
           body: {
             ...mockProjectWithAddresses,
-            owner: "0x1234567890123456789012345678901234567890",
+            owner: MOCK_REGULAR_ADDRESS,
           },
         });
       }).as("getProjectWithAddresses");
