@@ -121,10 +121,22 @@ export const waitForGrants = (): void => {
  * so later (more specific) intercepts take priority over this catch-all.
  */
 export const setupIndexerCatchAll = (): void => {
+  // Catch-all for GET requests — return empty array (most endpoints return lists)
   cy.intercept("GET", "https://gapstagapi.karmahq.xyz/**", {
     statusCode: 200,
-    body: {},
+    body: [],
   }).as("indexerCatchAll");
+
+  // Catch-all for POST/PUT/PATCH requests to the indexer
+  cy.intercept("POST", "https://gapstagapi.karmahq.xyz/**", {
+    statusCode: 200,
+    body: { success: true },
+  }).as("indexerCatchAllPost");
+
+  cy.intercept("PUT", "https://gapstagapi.karmahq.xyz/**", {
+    statusCode: 200,
+    body: { success: true },
+  }).as("indexerCatchAllPut");
 };
 
 /**
@@ -154,9 +166,12 @@ export const setupRpcIntercepts = (ownerAddress?: string): void => {
   const normalizedOwner = ownerAddress?.toLowerCase().replace("0x", "");
 
   cy.intercept("POST", "**", (req) => {
-    // Only intercept JSON-RPC requests (ethers.js / viem)
+    // Only intercept JSON-RPC 2.0 requests (ethers.js / viem).
+    // IMPORTANT: We must check for jsonrpc === "2.0" specifically, not just
+    // the presence of a `method` field, because other POST requests (Privy
+    // analytics, Stripe, etc.) may also have a `method` field in their body.
     const body = req.body;
-    if (!body?.jsonrpc && !body?.method) return;
+    if (body?.jsonrpc !== "2.0") return;
 
     const method = body.method;
 
