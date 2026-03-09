@@ -249,6 +249,16 @@ export const UNIFIED_TYPE_OPTIONS: readonly UnifiedTypeOption[] = [
   },
 ] as const;
 
+/**
+ * Maps opportunity types to their equivalent grant type display names.
+ * Used for badge deduplication and icon resolution.
+ */
+export const OPPORTUNITY_TO_GRANT_TYPE: Partial<Record<OpportunityType, string>> = {
+  hackathon: "Hackathons",
+  bounty: "Bounties",
+  accelerator: "Accelerators",
+};
+
 export const FUNDING_MAP_STATUSES = ["Active", "Inactive"] as const;
 
 export const FUNDING_MAP_SORT_OPTIONS = [

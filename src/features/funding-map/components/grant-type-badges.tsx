@@ -1,6 +1,7 @@
 import type { VariantProps } from "class-variance-authority";
 import { Badge, type badgeVariants } from "@/components/ui/badge";
 import { cn } from "@/utilities/tailwind";
+import { OPPORTUNITY_TO_GRANT_TYPE } from "../constants/filter-options";
 import type { OpportunityType } from "../types/funding-program";
 import { getOpportunityTypeConfig } from "../utils/opportunity-type-config";
 import { GrantTypeBadge } from "./grant-type-badge";
@@ -20,11 +21,6 @@ interface GrantTypeBadgesProps {
  * When showLabels is 'conditional', labels are only shown if there's a single type.
  * When opportunityType is non-grant, prepends an opportunity type badge.
  */
-const OPPORTUNITY_TO_GRANT_TYPE: Partial<Record<OpportunityType, string>> = {
-  hackathon: "Hackathons",
-  bounty: "Bounties",
-  accelerator: "Accelerators",
-};
 
 export function GrantTypeBadges({
   types,

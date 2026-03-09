@@ -674,39 +674,39 @@ function DialogContentInner({ program }: { program: FundingProgramResponse }) {
           )}
 
           {program.submissionUrl ? (
-            <Button
-              asChild
-              size="sm"
-              disabled={!isActive}
-              className={cn("gap-1.5 ml-auto", !isActive && "pointer-events-none opacity-50")}
-            >
-              <Link
-                href={
-                  isActive
-                    ? program.submissionUrl.startsWith("http")
+            isActive ? (
+              <Button asChild size="sm" className="gap-1.5 ml-auto">
+                <Link
+                  href={
+                    program.submissionUrl.startsWith("http")
                       ? program.submissionUrl
                       : `https://${program.submissionUrl}`
-                    : ""
-                }
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => {
-                  mixpanel.reportEvent({
-                    event: "funding-map:apply-click",
-                    properties: {
-                      programId,
-                      programTitle: title,
-                      isOnKarma,
-                      isActive,
-                      applyType: "submission_url",
-                    },
-                  });
-                }}
-              >
+                  }
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => {
+                    mixpanel.reportEvent({
+                      event: "funding-map:apply-click",
+                      properties: {
+                        programId,
+                        programTitle: title,
+                        isOnKarma,
+                        isActive,
+                        applyType: "submission_url",
+                      },
+                    });
+                  }}
+                >
+                  Apply
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </Link>
+              </Button>
+            ) : (
+              <Button size="sm" disabled className="gap-1.5 ml-auto">
                 Apply
                 <ExternalLink className="h-3.5 w-3.5" />
-              </Link>
-            </Button>
+              </Button>
+            )
           ) : isOnKarma ? (
             <CommunityApplyButton
               program={program}
@@ -726,15 +726,11 @@ function DialogContentInner({ program }: { program: FundingProgramResponse }) {
               }}
             />
           ) : (
-            fallbackApplyUrl && (
-              <Button
-                asChild
-                size="sm"
-                disabled={!isActive}
-                className={cn("gap-1.5 ml-auto", !isActive && "pointer-events-none opacity-50")}
-              >
+            fallbackApplyUrl &&
+            (isActive ? (
+              <Button asChild size="sm" className="gap-1.5 ml-auto">
                 <Link
-                  href={isActive ? fallbackApplyUrl : ""}
+                  href={fallbackApplyUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => {
@@ -754,7 +750,12 @@ function DialogContentInner({ program }: { program: FundingProgramResponse }) {
                   <ChevronRight className="h-4 w-4" />
                 </Link>
               </Button>
-            )
+            ) : (
+              <Button size="sm" disabled className="gap-1.5 ml-auto">
+                Apply
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            ))
           )}
         </div>
       </div>

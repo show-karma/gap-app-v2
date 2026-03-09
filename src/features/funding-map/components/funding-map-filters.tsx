@@ -17,6 +17,7 @@ import { cn } from "@/utilities/tailwind";
 import {
   FUNDING_MAP_CATEGORIES,
   FUNDING_MAP_STATUSES,
+  OPPORTUNITY_TO_GRANT_TYPE,
   OPPORTUNITY_TYPE_LABELS,
   OPPORTUNITY_TYPE_SINGULAR_LABELS,
   UNIFIED_TYPE_OPTIONS,
@@ -28,6 +29,21 @@ import type { OpportunityType } from "../types/funding-program";
 import { getGrantTypeConfig } from "../utils/grant-type-config";
 import { getOpportunityTypeConfig } from "../utils/opportunity-type-config";
 import { OnKarmaBadge } from "./on-karma-badge";
+
+function getTypeOptionIcon(option: UnifiedTypeOption): React.ReactNode {
+  if (option.filterTarget === "type") {
+    const grantTypeName = OPPORTUNITY_TO_GRANT_TYPE[option.value as OpportunityType];
+    if (grantTypeName) {
+      const grantConfig = getGrantTypeConfig(grantTypeName, { iconSize: "sm" });
+      return grantConfig?.icon ?? null;
+    }
+    const config = getOpportunityTypeConfig(option.value as OpportunityType);
+    const Icon = config.icon;
+    return <Icon className={cn("h-3.5 w-3.5", config.colorClass)} />;
+  }
+  const config = getGrantTypeConfig(option.value, { iconSize: "sm" });
+  return config?.icon ?? null;
+}
 
 interface FundingMapFiltersProps {
   totalCount?: number;
@@ -163,27 +179,6 @@ export function FundingMapFilters({ totalCount = 0 }: FundingMapFiltersProps) {
       return filters.selectedTypes.includes(option.value as OpportunityType);
     }
     return filters.grantTypes.includes(option.value);
-  };
-
-  const OPPORTUNITY_TO_GRANT_TYPE: Partial<Record<OpportunityType, string>> = {
-    hackathon: "Hackathons",
-    bounty: "Bounties",
-    accelerator: "Accelerators",
-  };
-
-  const getTypeOptionIcon = (option: UnifiedTypeOption): React.ReactNode => {
-    if (option.filterTarget === "type") {
-      const grantTypeName = OPPORTUNITY_TO_GRANT_TYPE[option.value as OpportunityType];
-      if (grantTypeName) {
-        const grantConfig = getGrantTypeConfig(grantTypeName, { iconSize: "sm" });
-        return grantConfig?.icon ?? null;
-      }
-      const config = getOpportunityTypeConfig(option.value as OpportunityType);
-      const Icon = config.icon;
-      return <Icon className={cn("h-3.5 w-3.5", config.colorClass)} />;
-    }
-    const config = getGrantTypeConfig(option.value, { iconSize: "sm" });
-    return config?.icon ?? null;
   };
 
   return (
