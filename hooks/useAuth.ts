@@ -148,10 +148,8 @@ export const useAuth = () => {
           router.push(redirectUrl);
           clearPostLoginRedirect();
         } else {
-          if (sessionStorage.getItem("createProjectPending")) {
-            sessionStorage.removeItem("createProjectPending");
-            return;
-          }
+          const searchParams = new URLSearchParams(window.location.search);
+          if (searchParams.get("action") === "create-project") return;
           router.push(PAGES.DASHBOARD);
         }
       }
