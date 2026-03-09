@@ -107,7 +107,7 @@ const OpportunityTypePill = React.memo(function OpportunityTypePill({
         config.borderClass
       )}
     >
-      <Icon className="h-3 w-3" />
+      <Icon className="h-3 w-3" strokeWidth={strokeWidth} />
       {showLabel && <span>{config.singularLabel}</span>}
     </Badge>
   );

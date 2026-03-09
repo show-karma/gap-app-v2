@@ -392,6 +392,7 @@ export function FundingMapFilters({ totalCount = 0 }: FundingMapFiltersProps) {
                     return (
                       <button
                         type="button"
+                        aria-pressed={isUnifiedOptionSelected(option)}
                         key={option.value}
                         className="flex w-full items-center gap-2 cursor-pointer rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
                         onClick={() => handleUnifiedTypeToggle(option)}
@@ -429,6 +430,7 @@ export function FundingMapFilters({ totalCount = 0 }: FundingMapFiltersProps) {
                     return (
                       <button
                         type="button"
+                        aria-pressed={isUnifiedOptionSelected(option)}
                         key={option.value}
                         className="flex w-full items-center gap-2 cursor-pointer rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
                         onClick={() => handleUnifiedTypeToggle(option)}
