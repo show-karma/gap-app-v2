@@ -12,7 +12,7 @@ const ProjectDialog = dynamic(
 function clearActionParam() {
   const url = new URL(window.location.href);
   url.searchParams.delete("action");
-  window.history.replaceState(null, "", url.pathname + url.search);
+  window.history.replaceState(null, "", url.pathname + url.search + url.hash);
 }
 
 export function CreateProjectUrlHandler() {
