@@ -28,8 +28,6 @@ import { getCommunities } from "@/services/communities.service";
 import { ProgramRegistryService } from "@/services/programRegistry.service";
 import type { Community } from "@/types/v2/community";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { appNetwork } from "@/utilities/network";
 import { PAGES } from "@/utilities/pages";
@@ -284,26 +282,15 @@ export default function AddProgram({
         return;
       }
       const chainSelected = data.networkToCreate;
+      if (!chainSelected) {
+        toast.error("Please select a network");
+        return;
+      }
 
       const metadata = { ...buildMetadata(data), status: "Active" };
       const topLevelFields = buildTopLevelFields(data);
 
-      // Use V2 endpoint - owner comes from JWT session
-      const [_request, error] = await fetchData(
-        INDEXER.REGISTRY.V2.CREATE,
-        "POST",
-        {
-          chainId: chainSelected,
-          metadata,
-          ...topLevelFields,
-        },
-        {},
-        {},
-        true
-      );
-      if (error) {
-        throw new Error(error);
-      }
+      await ProgramRegistryService.createProgram(address!, chainSelected, metadata, topLevelFields);
       toast.success(
         <p className="text-left">
           You have successfully submitted the funding opportunity.

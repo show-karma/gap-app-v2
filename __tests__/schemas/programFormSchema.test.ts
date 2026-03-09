@@ -412,7 +412,7 @@ describe("createProgramSchema", () => {
   });
 
   describe("adminEmails validation", () => {
-    it("should allow empty admin email list", () => {
+    it("should require at least one admin email", () => {
       const result = createProgramSchema.safeParse({
         name: "Test Program",
         description: "Test description",
@@ -423,10 +423,14 @@ describe("createProgramSchema", () => {
         financeEmails: ["finance@example.com"],
       });
 
-      expect(result.success).toBe(true);
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        const adminError = result.error.errors.find((err) => err.path.includes("adminEmails"));
+        expect(adminError?.message).toBe("At least one admin email is required");
+      }
     });
 
-    it("should allow omitting admin emails", () => {
+    it("should reject omitting admin emails", () => {
       const result = createProgramSchema.safeParse({
         name: "Test Program",
         description: "Test description",
@@ -436,7 +440,7 @@ describe("createProgramSchema", () => {
         financeEmails: ["finance@example.com"],
       });
 
-      expect(result.success).toBe(true);
+      expect(result.success).toBe(false);
     });
 
     it("should reject invalid email addresses", () => {

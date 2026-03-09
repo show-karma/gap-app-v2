@@ -23,7 +23,6 @@ import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
-import { sanitizeObject } from "@/utilities/sanitize";
 import { cn } from "@/utilities/tailwind";
 import { PAGE_HEADER_CONTENT, PageHeader } from "../PageHeader";
 
@@ -70,31 +69,6 @@ function buildFormValuesFromMetadata(metadata: GrantProgram["metadata"]) {
     financeEmails: metadata.financeEmails || [],
     invoiceRequired: metadata.invoiceRequired ?? false,
   };
-}
-
-/**
- * Helper function to build metadata object for API update
- */
-function buildUpdateMetadata(
-  formData: UpdateProgramFormSchema,
-  existingMetadata: GrantProgram["metadata"]
-) {
-  const updatedFields = {
-    title: formData.name,
-    description: formData.description,
-    shortDescription: formData.shortDescription,
-    programBudget: formData.budget,
-    startsAt: formData.dates.startsAt,
-    endsAt: formData.dates.endsAt,
-    adminEmails: formData.adminEmails,
-    financeEmails: formData.financeEmails,
-    invoiceRequired: formData.invoiceRequired ?? false,
-  };
-
-  return sanitizeObject({
-    ...existingMetadata,
-    ...updatedFields,
-  });
 }
 
 export function ProgramDetailsTab({
@@ -300,7 +274,7 @@ export function ProgramDetailsTab({
 
     setIsLoading(true);
     try {
-      const metadata = buildUpdateMetadata(data, program!.metadata);
+      const metadata = ProgramRegistryService.buildUpdateMetadata(data, program!.metadata);
 
       // Use V2 update endpoint
       await ProgramRegistryService.updateProgram(programIdToUpdate, metadata);
