@@ -31,6 +31,16 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     // Always log caught errors for debugging (especially useful for E2E test failures)
     console.error("ErrorBoundary caught an error:", error, errorInfo);
 
+    // Expose error on window for E2E test debugging (Cypress can read this)
+    if (typeof window !== "undefined") {
+      (
+        window as Window & { __LAST_ERROR_BOUNDARY__?: { message: string; stack?: string } }
+      ).__LAST_ERROR_BOUNDARY__ = {
+        message: error.message,
+        stack: error.stack,
+      };
+    }
+
     // Call optional error callback
     if (this.props.onError) {
       this.props.onError(error, errorInfo);
