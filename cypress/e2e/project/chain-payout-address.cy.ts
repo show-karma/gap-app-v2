@@ -14,7 +14,7 @@
  * are intercepted via setupRpcIntercepts().
  */
 
-import { setupCommonIntercepts, setupRpcIntercepts, waitForPageLoad } from "../../support/intercepts";
+import { setupCommonIntercepts, setupIndexerCatchAll, setupRpcIntercepts, waitForPageLoad } from "../../support/intercepts";
 
 describe("Chain Payout Address Modal", () => {
   // Test data
@@ -69,6 +69,9 @@ describe("Chain Payout Address Modal", () => {
   };
 
   beforeEach(() => {
+    // Catch-all FIRST: prevent any request from reaching the real staging indexer.
+    // Specific intercepts registered below take priority (Cypress uses LIFO matching).
+    setupIndexerCatchAll();
     setupCommonIntercepts();
     // Intercept blockchain RPC calls so ownership checks work without real nodes
     setupRpcIntercepts(MOCK_REGULAR_ADDRESS);

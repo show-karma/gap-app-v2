@@ -115,6 +115,19 @@ export const waitForGrants = (): void => {
 };
 
 /**
+ * Intercept ALL requests to the GAP indexer API so no request leaks
+ * to the real staging server (which may be behind Cloudflare protection).
+ * Register this BEFORE specific intercepts — Cypress uses LIFO matching,
+ * so later (more specific) intercepts take priority over this catch-all.
+ */
+export const setupIndexerCatchAll = (): void => {
+  cy.intercept("GET", "https://gapstagapi.karmahq.xyz/**", {
+    statusCode: 200,
+    body: {},
+  }).as("indexerCatchAll");
+};
+
+/**
  * ABI-encoded `true` (bool) — used as the return value for eth_call
  * responses that should return true (e.g., isOwner, isAdmin).
  */
