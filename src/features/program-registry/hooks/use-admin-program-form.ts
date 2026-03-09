@@ -1,6 +1,7 @@
 "use client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { useCallback, useEffect, useMemo } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
@@ -56,9 +57,10 @@ export function buildFormValuesFromMetadata(
       startsAt: metadata.startsAt ? new Date(metadata.startsAt) : undefined,
       endsAt: metadata.endsAt ? new Date(metadata.endsAt) : undefined,
     },
-    budget: metadata.programBudget
-      ? Number.parseFloat(metadata.programBudget.toString())
-      : undefined,
+    budget:
+      metadata.programBudget != null
+        ? Number.parseFloat(metadata.programBudget.toString())
+        : undefined,
     adminEmails: metadata.adminEmails || [],
     financeEmails: metadata.financeEmails || [],
     invoiceRequired: metadata.invoiceRequired ?? false,
@@ -68,7 +70,6 @@ export function buildFormValuesFromMetadata(
 export function useAdminProgramForm(config: UseAdminProgramFormConfig) {
   const { address, isConnected } = useAccount();
   const { authenticated: isAuth, login } = useAuth();
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isUpdate = config.mode === "update";
   const readOnly = isUpdate && config.readOnly === true;
@@ -83,8 +84,6 @@ export function useAdminProgramForm(config: UseAdminProgramFormConfig) {
   // Optimized watched values for the fields component
   const shortDescription = useWatch({ control, name: "shortDescription" });
   const startDate = useWatch({ control, name: "dates.startsAt" });
-
-  const isDisabled = useMemo(() => isSubmitting || readOnly, [isSubmitting, readOnly]);
 
   // Populate form from existing program metadata (update mode)
   useEffect(() => {
@@ -114,11 +113,78 @@ export function useAdminProgramForm(config: UseAdminProgramFormConfig) {
         field.onChange(undefined);
       },
     }),
-    [isDisabled, watch, setValue]
+    [watch, setValue]
   );
 
+  const mutation = useMutation({
+    mutationFn: async (data: AdminProgramFormSchema) => {
+      if (config.mode === "create") {
+        if (!config.community) {
+          throw new Error("Failed to load community data");
+        }
+        const metadata = ProgramRegistryService.buildProgramMetadata(
+          data as CreateProgramFormData,
+          config.community
+        );
+        return ProgramRegistryService.createProgram(address!, config.community.chainID, metadata);
+      }
+      if (readOnly) {
+        throw new Error("You don't have permission to edit this program");
+      }
+      if (!config.existingProgram) {
+        throw new Error("Program data not loaded");
+      }
+      const metadata = ProgramRegistryService.buildUpdateMetadata(
+        data,
+        config.existingProgram.metadata
+      );
+      await ProgramRegistryService.updateProgram(config.programId, metadata);
+      return undefined;
+    },
+    onSuccess: (result) => {
+      if (config.mode === "create") {
+        toast.success("Program created successfully!", { duration: 3000 });
+        reset();
+        config.onSuccess?.({ programId: result?.programId });
+      } else {
+        toast.success("Program updated successfully!");
+        config.onSuccess?.();
+      }
+    },
+    onError: (error: unknown, data) => {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage?.includes("already exists")) {
+        toast.error("A program with this name already exists");
+      } else if (
+        errorMessage === "Failed to load community data" ||
+        errorMessage === "You don't have permission to edit this program" ||
+        errorMessage === "Program data not loaded"
+      ) {
+        toast.error(errorMessage);
+      } else {
+        const msg =
+          config.mode === "create"
+            ? MESSAGES.PROGRAM_REGISTRY.CREATE.ERROR(data.name)
+            : MESSAGES.PROGRAM_REGISTRY.EDIT.ERROR(data.name);
+        errorManager(msg, error, {
+          address,
+          programName: data.name,
+          mode: config.mode,
+        });
+        toast.error(
+          config.mode === "create"
+            ? "Failed to create program. Please try again."
+            : `Failed to update program: ${errorMessage}`
+        );
+      }
+    },
+  });
+
+  const isSubmitting = mutation.isPending;
+  const isDisabled = useMemo(() => isSubmitting || readOnly, [isSubmitting, readOnly]);
+
   const onSubmit = useCallback(
-    async (data: AdminProgramFormSchema) => {
+    (data: AdminProgramFormSchema) => {
       if (!isConnected || !isAuth) {
         login?.();
         return;
@@ -127,64 +193,9 @@ export function useAdminProgramForm(config: UseAdminProgramFormConfig) {
         toast.error("Wallet address is required");
         return;
       }
-
-      setIsSubmitting(true);
-      try {
-        if (config.mode === "create") {
-          if (!config.community) {
-            toast.error("Failed to load community data");
-            return;
-          }
-          const metadata = ProgramRegistryService.buildProgramMetadata(
-            data as CreateProgramFormData,
-            config.community
-          );
-          const result = await ProgramRegistryService.createProgram(
-            address,
-            config.community.chainID,
-            metadata
-          );
-          toast.success("Program created successfully!", { duration: 3000 });
-          reset();
-          config.onSuccess?.({ programId: result?.programId });
-        } else {
-          if (readOnly) {
-            toast.error("You don't have permission to edit this program");
-            return;
-          }
-          if (!config.existingProgram) {
-            toast.error("Program data not loaded");
-            return;
-          }
-          const metadata = ProgramRegistryService.buildUpdateMetadata(
-            data,
-            config.existingProgram.metadata
-          );
-          await ProgramRegistryService.updateProgram(config.programId, metadata);
-          toast.success("Program updated successfully!");
-          config.onSuccess?.();
-        }
-      } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        if (errorMessage?.includes("already exists")) {
-          toast.error("A program with this name already exists");
-        } else {
-          const msg =
-            config.mode === "create"
-              ? MESSAGES.PROGRAM_REGISTRY.CREATE.ERROR(data.name)
-              : MESSAGES.PROGRAM_REGISTRY.EDIT.ERROR(data.name);
-          errorManager(msg, error, { address, data });
-          toast.error(
-            config.mode === "create"
-              ? "Failed to create program. Please try again."
-              : `Failed to update program: ${errorMessage}`
-          );
-        }
-      } finally {
-        setIsSubmitting(false);
-      }
+      mutation.mutate(data);
     },
-    [config, address, isConnected, isAuth, login, readOnly, reset]
+    [address, isConnected, isAuth, login, mutation]
   );
 
   return {

@@ -29,7 +29,10 @@ export const baseProgramFields = {
         path: ["startsAt"],
       }
     ),
-  budget: z.coerce.number().min(0, { message: "Budget must be a positive number" }).optional(),
+  budget: z.preprocess(
+    (val) => (val === "" || val === undefined || val === null ? undefined : Number(val)),
+    z.number().min(0, { message: "Budget must be a positive number" }).optional()
+  ),
   invoiceRequired: z.boolean({ required_error: "Please select whether invoices are required" }),
 };
 

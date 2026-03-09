@@ -163,9 +163,13 @@ export const createProgramSchema = z
       })
       .optional()
       .or(z.literal("")),
-    grantsSite: z.string().refine((value) => urlRegex.test(value), {
-      message: "Please enter a valid URL",
-    }),
+    grantsSite: z
+      .string()
+      .refine((value) => urlRegex.test(value), {
+        message: "Please enter a valid URL",
+      })
+      .optional()
+      .or(z.literal("")),
     bugBounty: z
       .string()
       .refine((value) => urlRegex.test(value), {

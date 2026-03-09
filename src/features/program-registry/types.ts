@@ -60,8 +60,7 @@ export interface ProgramCreationResult {
 
 export interface ProgramApprovalRequest {
   programId: string;
-  chainId: number;
-  isValid: "accepted" | "rejected";
+  isValid: "accepted" | "rejected" | "pending";
 }
 
 export interface CreateProgramFormData {

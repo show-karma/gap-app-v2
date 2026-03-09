@@ -143,6 +143,14 @@ export function ProgramDetailsTab({
   }
 
   if (!program) {
+    // If we don't have a chainId yet (waiting for programConfig to load), show loading
+    if (!effectiveChainId && !initialProgram) {
+      return (
+        <div className="flex items-center justify-center py-8">
+          <Spinner />
+        </div>
+      );
+    }
     return (
       <div className="flex flex-col items-center justify-center py-8">
         <p className="text-sm text-muted-foreground mb-4">Program not found.</p>
