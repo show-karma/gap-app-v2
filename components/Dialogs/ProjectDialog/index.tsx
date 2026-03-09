@@ -156,6 +156,7 @@ type ProjectDialogProps = {
   previousContacts?: Contact[];
   useEditModalStore?: boolean; // New prop to control which modal state to use
   defaultOpen?: boolean; // When true, start with the modal open (used by URL handler)
+  onClose?: () => void; // Called when the modal is closed
 };
 
 export const ProjectDialog: FC<ProjectDialogProps> = ({
@@ -169,6 +170,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   previousContacts,
   useEditModalStore = false, // Default to false for create mode
   defaultOpen = false, // Start with the modal open (used by URL handler)
+  onClose,
 }) => {
   const dataToUpdate = useMemo(() => {
     if (!projectToUpdate) return undefined;
@@ -419,6 +421,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     setIsOpen(false);
     // Reset the flag so next time the modal opens, it starts fresh
     setShouldResetOnOpen(true);
+    onClose?.();
   }
   function openModal() {
     setIsOpen(true);
