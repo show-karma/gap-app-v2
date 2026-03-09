@@ -1,14 +1,5 @@
 "use client";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { Controller, useForm } from "react-hook-form";
-import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
-import { DatePicker } from "@/components/Utilities/DatePicker";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
-import { MultiEmailInput } from "@/components/Utilities/MultiEmailInput";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -17,16 +8,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
-import { useAuth } from "@/hooks/useAuth";
-import { type CreateProgramFormSchema, createProgramSchema } from "@/schemas/programFormSchema";
-import { ProgramRegistryService } from "@/services/programRegistry.service";
-import type { CreateProgramFormData } from "@/types/program-registry";
-import { formatDate } from "@/utilities/formatDate";
-import { MESSAGES } from "@/utilities/messages";
+import { AdminProgramFormFields } from "@/src/features/program-registry/components/admin-program-form-fields";
+import { useAdminProgramForm } from "@/src/features/program-registry/hooks/use-admin-program-form";
 import { PAGES } from "@/utilities/pages";
 
 interface CreateProgramModalProps {
@@ -43,14 +28,31 @@ export function CreateProgramModal({
   onSuccess,
 }: CreateProgramModalProps) {
   const router = useRouter();
-  const { address, isConnected } = useAccount();
-  const { authenticated: isAuth, login } = useAuth();
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const {
     data: community,
     isLoading: isLoadingCommunity,
     error: communityError,
   } = useCommunityDetails(communityId);
+
+  const {
+    form,
+    onSubmit,
+    isSubmitting,
+    isDisabled,
+    shortDescription,
+    startDate,
+    createDatePickerProps,
+  } = useAdminProgramForm({
+    mode: "create",
+    community,
+    onSuccess: (result) => {
+      onSuccess();
+      onClose();
+      if (result.programId) {
+        router.push(PAGES.MANAGE.FUNDING_PLATFORM.SETUP(communityId, result.programId));
+      }
+    },
+  });
 
   const {
     register,
@@ -59,87 +61,13 @@ export function CreateProgramModal({
     setValue,
     control,
     formState: { errors },
-    reset,
-  } = useForm<CreateProgramFormSchema>({
-    resolver: zodResolver(createProgramSchema),
-    defaultValues: {
-      name: "",
-      description: "",
-      shortDescription: "",
-      dates: {
-        startsAt: undefined,
-        endsAt: undefined,
-      },
-      budget: undefined,
-      adminEmails: [],
-      financeEmails: [],
-      invoiceRequired: false,
-    },
-  });
-
-  const onSubmit = async (data: CreateProgramFormSchema) => {
-    if (!isConnected || !isAuth) {
-      login?.();
-      return;
-    }
-
-    if (!community) {
-      toast.error("Failed to load community data");
-      return;
-    }
-
-    if (!address) {
-      toast.error("Wallet address is required");
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      // Build metadata using service (defaults to anyoneCanJoin: true)
-      const metadata = ProgramRegistryService.buildProgramMetadata(
-        data as CreateProgramFormData,
-        community
-      );
-
-      // Create program using service
-      const result = await ProgramRegistryService.createProgram(
-        address,
-        community.chainID,
-        metadata
-      );
-
-      toast.success("Program created successfully!", { duration: 3000 });
-      reset();
-      onSuccess();
-      onClose();
-
-      // Navigate to setup wizard if we have a programId
-      if (result?.programId) {
-        router.push(PAGES.MANAGE.FUNDING_PLATFORM.SETUP(communityId, result.programId));
-      }
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      if (errorMessage?.includes("already exists")) {
-        toast.error("A program with this name already exists");
-      } else {
-        errorManager(MESSAGES.PROGRAM_REGISTRY.CREATE.ERROR(data.name), error, {
-          address,
-          data,
-        });
-        toast.error("Failed to create program. Please try again.");
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  } = form;
 
   return (
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
-        if (!open && !isSubmitting) {
-          onClose();
-        }
+        if (!open && !isSubmitting) onClose();
       }}
     >
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -169,258 +97,17 @@ export function CreateProgramModal({
           </div>
         ) : (
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {/* Program Name */}
-            <div className="flex w-full flex-col gap-1">
-              <Label htmlFor="program-name">
-                Program Name <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="program-name"
-                placeholder="Ex: Builder Growth Program"
-                {...register("name")}
-                disabled={isSubmitting}
-              />
-              {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
-            </div>
-
-            {/* Program Description */}
-            <Controller
-              name="description"
+            <AdminProgramFormFields
               control={control}
-              render={({ field: { onChange, onBlur, value }, fieldState }) => (
-                <MarkdownEditor
-                  label="Program Description"
-                  placeholder="Please provide a description of this program"
-                  value={value || ""}
-                  onChange={onChange}
-                  onBlur={onBlur}
-                  error={fieldState.error?.message}
-                  isRequired
-                  isDisabled={isSubmitting}
-                  id="program-description"
-                  height={200}
-                  minHeight={150}
-                />
-              )}
+              register={register}
+              errors={errors}
+              watch={watch}
+              setValue={setValue}
+              isDisabled={isDisabled}
+              shortDescription={shortDescription}
+              startDate={startDate}
+              createDatePickerProps={createDatePickerProps}
             />
-
-            {/* Short Description */}
-            <Controller
-              name="shortDescription"
-              control={control}
-              render={({ field: { onChange, onBlur, value }, fieldState }) => (
-                <div className="flex w-full flex-col gap-1">
-                  <MarkdownEditor
-                    label="Program Short Description"
-                    description="100 characters max"
-                    placeholder="Brief description (max 100 characters)"
-                    value={value || ""}
-                    onChange={(val) => {
-                      if (val.length <= 100) {
-                        onChange(val);
-                      }
-                    }}
-                    onBlur={onBlur}
-                    error={fieldState.error?.message}
-                    isRequired
-                    isDisabled={isSubmitting}
-                    id="short-description"
-                    height={120}
-                    minHeight={100}
-                  />
-                  <p className="text-xs text-muted-foreground text-right">
-                    {value?.length || 0}/100
-                  </p>
-                </div>
-              )}
-            />
-
-            {/* Dates */}
-            <div className="grid grid-cols-2 gap-4">
-              <Controller
-                name="dates.startsAt"
-                control={control}
-                render={({ field, formState }) => (
-                  <div className="flex w-full flex-col gap-2">
-                    <Label>Start Date (optional)</Label>
-                    <DatePicker
-                      selected={field.value}
-                      onSelect={(date) => {
-                        const currentValue = watch("dates.startsAt");
-                        if (currentValue && formatDate(date) === formatDate(currentValue)) {
-                          setValue("dates.startsAt", undefined, {
-                            shouldValidate: true,
-                          });
-                          field.onChange(undefined);
-                        } else {
-                          setValue("dates.startsAt", date, {
-                            shouldValidate: true,
-                          });
-                          field.onChange(date);
-                        }
-                      }}
-                      placeholder="Pick a date"
-                      buttonClassName="w-full text-base"
-                      clearButtonFn={() => {
-                        setValue("dates.startsAt", undefined, {
-                          shouldValidate: true,
-                        });
-                        field.onChange(undefined);
-                      }}
-                    />
-                    {formState.errors.dates?.startsAt && (
-                      <p className="text-sm text-destructive">
-                        {formState.errors.dates.startsAt.message}
-                      </p>
-                    )}
-                  </div>
-                )}
-              />
-
-              <Controller
-                name="dates.endsAt"
-                control={control}
-                render={({ field, formState }) => (
-                  <div className="flex w-full flex-col gap-2">
-                    <Label>End Date (optional)</Label>
-                    <DatePicker
-                      selected={field.value}
-                      onSelect={(date) => {
-                        const currentValue = watch("dates.endsAt");
-                        if (currentValue && formatDate(date) === formatDate(currentValue)) {
-                          setValue("dates.endsAt", undefined, {
-                            shouldValidate: true,
-                          });
-                          field.onChange(undefined);
-                        } else {
-                          setValue("dates.endsAt", date, {
-                            shouldValidate: true,
-                          });
-                          field.onChange(date);
-                        }
-                      }}
-                      minDate={watch("dates.startsAt")}
-                      placeholder="Pick a date"
-                      buttonClassName="w-full text-base"
-                      clearButtonFn={() => {
-                        setValue("dates.endsAt", undefined, {
-                          shouldValidate: true,
-                        });
-                        field.onChange(undefined);
-                      }}
-                    />
-                    {formState.errors.dates?.endsAt && (
-                      <p className="text-sm text-destructive">
-                        {formState.errors.dates.endsAt.message}
-                      </p>
-                    )}
-                  </div>
-                )}
-              />
-            </div>
-
-            {/* Budget */}
-            <div className="flex w-full flex-col gap-1">
-              <Label htmlFor="program-budget">Program Budget (optional)</Label>
-              <Input
-                id="program-budget"
-                type="number"
-                min="0"
-                step="1"
-                placeholder="Ex: 100000"
-                {...register("budget")}
-                disabled={isSubmitting}
-              />
-              {errors.budget && <p className="text-sm text-destructive">{errors.budget.message}</p>}
-            </div>
-
-            {/* Admin Emails */}
-            <Controller
-              name="adminEmails"
-              control={control}
-              render={({ field, fieldState }) => (
-                <div className="flex w-full flex-col gap-1">
-                  <Label htmlFor="admin-emails">
-                    Admin Emails <span className="text-destructive">*</span>
-                  </Label>
-                  <p className="text-xs text-muted-foreground mb-1">
-                    Applicants will reply to these email addresses when responding to notifications
-                  </p>
-                  <MultiEmailInput
-                    emails={field.value || []}
-                    onChange={field.onChange}
-                    placeholder="Enter admin email"
-                    disabled={isSubmitting}
-                    error={fieldState.error?.message}
-                  />
-                </div>
-              )}
-            />
-
-            {/* Finance Emails */}
-            <Controller
-              name="financeEmails"
-              control={control}
-              render={({ field, fieldState }) => (
-                <div className="flex w-full flex-col gap-1">
-                  <Label htmlFor="finance-emails">
-                    Finance Emails <span className="text-destructive">*</span>
-                  </Label>
-                  <p className="text-xs text-muted-foreground mb-1">
-                    Finance team will be notified when milestones are verified
-                  </p>
-                  <MultiEmailInput
-                    emails={field.value}
-                    onChange={field.onChange}
-                    placeholder="Enter finance email"
-                    disabled={isSubmitting}
-                    error={fieldState.error?.message}
-                  />
-                </div>
-              )}
-            />
-
-            {/* Invoice Required */}
-            <Controller
-              name="invoiceRequired"
-              control={control}
-              render={({ field, fieldState }) => (
-                <fieldset>
-                  <legend className="text-sm font-semibold text-gray-700 mb-2">
-                    Require invoices for milestones <span className="text-red-500">*</span>
-                  </legend>
-                  <div className="flex items-center gap-6">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="invoiceRequired"
-                        checked={field.value === true}
-                        onChange={() => field.onChange(true)}
-                        disabled={isSubmitting}
-                        className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
-                      />
-                      <span className="text-sm">Yes</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="invoiceRequired"
-                        checked={field.value === false}
-                        onChange={() => field.onChange(false)}
-                        disabled={isSubmitting}
-                        className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
-                      />
-                      <span className="text-sm">No</span>
-                    </label>
-                  </div>
-                  {fieldState.error?.message && (
-                    <p className="text-red-500 text-sm mt-1">{fieldState.error.message}</p>
-                  )}
-                </fieldset>
-              )}
-            />
-
-            {/* Actions */}
             <DialogFooter>
               <Button variant="secondary" onClick={onClose} disabled={isSubmitting}>
                 Cancel

@@ -30,3 +30,6 @@ export const updateProgramSchema = z.object({
 
 export type CreateProgramFormSchema = z.infer<typeof createProgramSchema>;
 export type UpdateProgramFormSchema = z.infer<typeof updateProgramSchema>;
+
+/** Unified type alias — create and update schemas share the same shape. */
+export type AdminProgramFormSchema = CreateProgramFormSchema;
