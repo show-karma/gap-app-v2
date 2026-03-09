@@ -434,7 +434,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       // Set flag to re-open modal after login completes
       setPendingOpenAfterLogin(true);
       login?.();
-      closeModal();
+      setIsOpen(false);
     }
   }, [isOpen, isAuth, ready, closeModal, login]);
 
