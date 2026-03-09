@@ -1,4 +1,5 @@
 import type { VariantProps } from "class-variance-authority";
+import React from "react";
 import { Badge, type badgeVariants } from "@/components/ui/badge";
 import { cn } from "@/utilities/tailwind";
 import { OPPORTUNITY_TO_GRANT_TYPE } from "../constants/filter-options";
@@ -67,7 +68,7 @@ export function GrantTypeBadges({
   );
 }
 
-function OpportunityTypePill({
+const OpportunityTypePill = React.memo(function OpportunityTypePill({
   type,
   showLabel,
   variant,
@@ -110,4 +111,4 @@ function OpportunityTypePill({
       {showLabel && <span>{config.singularLabel}</span>}
     </Badge>
   );
-}
+});

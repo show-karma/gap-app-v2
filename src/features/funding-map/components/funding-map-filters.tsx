@@ -65,7 +65,7 @@ export function FundingMapFilters({ totalCount = 0 }: FundingMapFiltersProps) {
   const { mixpanel } = useMixpanel("karma");
   const { categories, grantTypes, status, onlyOnKarma } = filters;
 
-  const { data: typeCounts } = useTypeCounts({
+  const { data: typeCounts, isError: typeCountsError } = useTypeCounts({
     onlyOnKarma: filters.onlyOnKarma || undefined,
   });
 
@@ -455,6 +455,9 @@ export function FundingMapFilters({ totalCount = 0 }: FundingMapFiltersProps) {
                       </button>
                     );
                   }
+                )}
+                {typeCountsError && (
+                  <div className="px-2 py-1.5 text-xs text-destructive">Failed to load counts</div>
                 )}
               </div>
             </Popover.Content>

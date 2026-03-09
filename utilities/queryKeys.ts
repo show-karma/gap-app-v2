@@ -119,7 +119,16 @@ export const QUERY_KEYS = {
       sortOrder: string,
       programIds: string[],
       reviewerAddress?: string
-    ) => ["reportMilestones", communityId, page, sortBy, sortOrder, programIds, reviewerAddress] as const,
+    ) =>
+      [
+        "reportMilestones",
+        communityId,
+        page,
+        sortBy,
+        sortOrder,
+        programIds,
+        reviewerAddress,
+      ] as const,
     PENDING_VERIFICATION: (
       communityId: string,
       page: number,
