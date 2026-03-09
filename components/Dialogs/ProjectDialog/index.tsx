@@ -426,13 +426,12 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
 
   // Handle unauthenticated user trying to open modal
   useEffect(() => {
-    if (isOpen && !isAuth) {
-      // Set flag to re-open modal after login completes
+    if (isOpen && !isAuth && !pendingOpenAfterLogin) {
+      // Keep modal state open in the store so useAuth skips dashboard redirect
       setPendingOpenAfterLogin(true);
       login?.();
-      closeModal();
     }
-  }, [isOpen, isAuth, closeModal, login]);
+  }, [isOpen, isAuth, pendingOpenAfterLogin, login]);
 
   // Re-open modal after successful login if user was trying to create project
   useEffect(() => {
