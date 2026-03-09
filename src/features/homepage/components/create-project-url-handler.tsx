@@ -16,6 +16,7 @@ export function CreateProjectUrlHandler() {
   useEffect(() => {
     if (searchParams.get("action") === "create-project") {
       setShouldOpen(true);
+      sessionStorage.setItem("createProjectPending", "1");
 
       const url = new URL(window.location.href);
       url.searchParams.delete("action");
