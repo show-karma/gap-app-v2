@@ -81,7 +81,12 @@ export default async function RootLayout(props: {
 
   // Prefetch all critical data in parallel with error handling
   // Failures are logged but don't break the page - client hooks will fetch as fallback
-  await safePrefetchProjectData(queryClient, projectId);
+  // Skip prefetch during E2E tests — the staging API may be behind Cloudflare,
+  // and a server-side prefetch failure gets cached by React Query, preventing
+  // client-side refetch (which Cypress CAN intercept).
+  if (process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS !== "true") {
+    await safePrefetchProjectData(queryClient, projectId);
+  }
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
