@@ -57,7 +57,6 @@ import { FUNDING_PLATFORM_DOMAINS } from "../utils/funding-platform-domains";
 import { isValidImageUrl } from "../utils/image-utils";
 import { DialogTypeSection } from "./dialog-type-sections";
 import { GrantTypeBadges } from "./grant-type-badges";
-import { OpportunityTypeBadge } from "./opportunity-type-badge";
 
 interface FundingProgramDetailsDialogProps {
   program: FundingProgramResponse | null;
@@ -488,7 +487,6 @@ function DialogContentInner({ program }: { program: FundingProgramResponse }) {
           {/* Top row: On Karma badge + Social links */}
           <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
             <div className="flex flex-wrap items-center gap-2">
-              {isNonGrant && <OpportunityTypeBadge type={opportunityType} />}
               {isOnKarma && (
                 <Badge
                   variant="secondary"
@@ -516,15 +514,18 @@ function DialogContentInner({ program }: { program: FundingProgramResponse }) {
           </DialogTitle>
 
           {/* Grant Types + Categories */}
-          {((grantTypes && grantTypes.length > 0) || (categories && categories.length > 0)) && (
+          {(isNonGrant ||
+            (grantTypes && grantTypes.length > 0) ||
+            (categories && categories.length > 0)) && (
             <div className="flex flex-wrap items-center gap-1.5">
-              {grantTypes && grantTypes.length > 0 && (
+              {(isNonGrant || (grantTypes && grantTypes.length > 0)) && (
                 <GrantTypeBadges
-                  types={grantTypes}
+                  types={grantTypes ?? []}
                   showLabels={true}
                   variant="secondary"
                   iconSize="sm"
                   className="gap-1.5"
+                  opportunityType={opportunityType}
                 />
               )}
               {categories?.map((category) => (
@@ -601,24 +602,6 @@ function DialogContentInner({ program }: { program: FundingProgramResponse }) {
         {/* Type-Specific Details */}
         {isNonGrant && <DialogTypeSection program={program} />}
 
-        {/* Submit/Apply via submissionUrl for non-grant types */}
-        {isNonGrant && program.submissionUrl && (
-          <Button asChild size="sm" className="gap-1.5 w-fit">
-            <Link
-              href={
-                program.submissionUrl.startsWith("http")
-                  ? program.submissionUrl
-                  : `https://${program.submissionUrl}`
-              }
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Apply
-              <ExternalLink className="h-3.5 w-3.5" />
-            </Link>
-          </Button>
-        )}
-
         {/* Info Cards Grid */}
         {hasInfoCards && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
@@ -690,57 +673,90 @@ function DialogContentInner({ program }: { program: FundingProgramResponse }) {
             </a>
           )}
 
-          {/* Only show bottom Apply if no submissionUrl was already rendered above */}
-          {!(isNonGrant && program.submissionUrl) &&
-            (isOnKarma ? (
-              <CommunityApplyButton
-                program={program}
-                isActive={isActive}
-                onApplyClick={(applyType, communityName) => {
-                  mixpanel.reportEvent({
-                    event: "funding-map:apply-click",
-                    properties: {
-                      programId,
-                      programTitle: title,
-                      isOnKarma,
-                      isActive,
-                      communityName,
-                      applyType,
-                    },
-                  });
-                }}
-              />
-            ) : (
-              fallbackApplyUrl && (
-                <Button
-                  asChild
-                  size="sm"
-                  disabled={!isActive}
-                  className={cn("gap-1.5 ml-auto", !isActive && "pointer-events-none opacity-50")}
+          {program.submissionUrl ? (
+            isActive ? (
+              <Button asChild size="sm" className="gap-1.5 ml-auto">
+                <Link
+                  href={
+                    program.submissionUrl.startsWith("http")
+                      ? program.submissionUrl
+                      : `https://${program.submissionUrl}`
+                  }
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => {
+                    mixpanel.reportEvent({
+                      event: "funding-map:apply-click",
+                      properties: {
+                        programId,
+                        programTitle: title,
+                        isOnKarma,
+                        isActive,
+                        applyType: "submission_url",
+                      },
+                    });
+                  }}
                 >
-                  <Link
-                    href={isActive ? fallbackApplyUrl : ""}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => {
-                      mixpanel.reportEvent({
-                        event: "funding-map:apply-click",
-                        properties: {
-                          programId,
-                          programTitle: title,
-                          isOnKarma,
-                          isActive,
-                          applyType: "external",
-                        },
-                      });
-                    }}
-                  >
-                    Apply
-                    <ChevronRight className="h-4 w-4" />
-                  </Link>
-                </Button>
-              )
-            ))}
+                  Apply
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </Link>
+              </Button>
+            ) : (
+              <Button size="sm" disabled className="gap-1.5 ml-auto">
+                Apply
+                <ExternalLink className="h-3.5 w-3.5" />
+              </Button>
+            )
+          ) : isOnKarma ? (
+            <CommunityApplyButton
+              program={program}
+              isActive={isActive}
+              onApplyClick={(applyType, communityName) => {
+                mixpanel.reportEvent({
+                  event: "funding-map:apply-click",
+                  properties: {
+                    programId,
+                    programTitle: title,
+                    isOnKarma,
+                    isActive,
+                    communityName,
+                    applyType,
+                  },
+                });
+              }}
+            />
+          ) : (
+            fallbackApplyUrl &&
+            (isActive ? (
+              <Button asChild size="sm" className="gap-1.5 ml-auto">
+                <Link
+                  href={fallbackApplyUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => {
+                    mixpanel.reportEvent({
+                      event: "funding-map:apply-click",
+                      properties: {
+                        programId,
+                        programTitle: title,
+                        isOnKarma,
+                        isActive,
+                        applyType: "external",
+                      },
+                    });
+                  }}
+                >
+                  Apply
+                  <ChevronRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            ) : (
+              <Button size="sm" disabled className="gap-1.5 ml-auto">
+                Apply
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            ))
+          )}
         </div>
       </div>
 
