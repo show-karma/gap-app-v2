@@ -201,12 +201,63 @@ export const FUNDING_MAP_CATEGORIES = [
 
 export const FUNDING_MAP_GRANT_TYPES = [
   "Direct Grants",
-  "Bounties",
   "Retro Funding",
   "Quadratic Funding",
-  "Hackathons",
-  "Accelerators",
 ] as const;
+
+/**
+ * Unified type options combining opportunity types and funding mechanisms.
+ * "Bounties", "Hackathons", and "Accelerators" are removed from mechanisms
+ * because they're already covered by opportunity types.
+ */
+export interface UnifiedTypeOption {
+  label: string;
+  value: string;
+  filterTarget: "type" | "grantType";
+  section: "opportunityTypes" | "fundingMechanisms";
+}
+
+export const UNIFIED_TYPE_OPTIONS: readonly UnifiedTypeOption[] = [
+  { label: "Grants", value: "grant", filterTarget: "type", section: "opportunityTypes" },
+  { label: "Hackathons", value: "hackathon", filterTarget: "type", section: "opportunityTypes" },
+  { label: "Bounties", value: "bounty", filterTarget: "type", section: "opportunityTypes" },
+  {
+    label: "Accelerators",
+    value: "accelerator",
+    filterTarget: "type",
+    section: "opportunityTypes",
+  },
+  { label: "VC Funds", value: "vc_fund", filterTarget: "type", section: "opportunityTypes" },
+  { label: "RFPs", value: "rfp", filterTarget: "type", section: "opportunityTypes" },
+  {
+    label: "Direct Grants",
+    value: "Direct Grants",
+    filterTarget: "grantType",
+    section: "fundingMechanisms",
+  },
+  {
+    label: "Retro Funding",
+    value: "Retro Funding",
+    filterTarget: "grantType",
+    section: "fundingMechanisms",
+  },
+  {
+    label: "Quadratic Funding",
+    value: "Quadratic Funding",
+    filterTarget: "grantType",
+    section: "fundingMechanisms",
+  },
+] as const;
+
+/**
+ * Maps opportunity types to their equivalent grant type display names.
+ * Used for badge deduplication and icon resolution.
+ */
+export const OPPORTUNITY_TO_GRANT_TYPE: Partial<Record<OpportunityType, string>> = {
+  hackathon: "Hackathons",
+  bounty: "Bounties",
+  accelerator: "Accelerators",
+};
 
 export const FUNDING_MAP_STATUSES = ["Active", "Inactive"] as const;
 
