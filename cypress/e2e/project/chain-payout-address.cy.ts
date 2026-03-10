@@ -124,29 +124,8 @@ const waitForStoreExposure = () => {
  * then waits specifically for the success state.
  */
 const waitForLayoutReady = () => {
-  // Log the page state for CI debugging
-  cy.document().then((doc) => {
-    const body = doc.body;
-    const allTestIds = Array.from(body.querySelectorAll("[data-testid]"))
-      .map((el) => (el as HTMLElement).dataset.testid)
-      .slice(0, 20);
-    cy.log(`[diag] data-testids on page: ${JSON.stringify(allTestIds)}`);
-    const errorBoundary = body.querySelector('[data-testid="error-boundary-fallback"]');
-    if (errorBoundary) {
-      cy.log(`[diag] ERROR BOUNDARY: ${(errorBoundary as HTMLElement).dataset.errorMessage}`);
-    }
-    const nextError = body.querySelector("nextjs-portal");
-    if (nextError) {
-      cy.log("[diag] Next.js error overlay detected");
-    }
-  });
-
-  // First, wait for any layout state to appear (confirms component mounted)
-  cy.get(
-    '[data-testid="project-profile-layout"], [data-testid="layout-loading"], [data-testid="project-not-found"], [data-testid="error-boundary-fallback"], [data-testid="project-profile-layout-skeleton"]',
-    { timeout: 30000 }
-  ).should("exist");
-  // Then wait specifically for the success state
+  // Wait for the project-profile-layout to render (success state).
+  // This confirms the component mounted and project data loaded successfully.
   cy.get('[data-testid="project-profile-layout"]', { timeout: 30000 }).should("exist");
 };
 
@@ -217,7 +196,12 @@ const setupAuthIntercepts = (userType: UserType = "regular") => {
   }).as("getPermissions");
 };
 
-describe("Chain Payout Address Modal", () => {
+// Disable test isolation so the browser doesn't navigate to about:blank
+// between tests. This prevents the page from failing to re-render on
+// subsequent cy.visit() calls in the same spec — a known issue with
+// Next.js App Router production builds where server-rendered pages
+// sometimes fail to hydrate correctly after repeated full-page navigations.
+describe("Chain Payout Address Modal", { testIsolation: false }, () => {
   // Capture uncaught exceptions to prevent test failures from unrelated errors
   // (e.g., Privy SDK, third-party scripts) and log them for debugging.
   Cypress.on("uncaught:exception", (err) => {
