@@ -2,6 +2,7 @@
 
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { type FC, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -98,6 +99,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
   setIsUpdating: parentSetIsUpdating,
 }) => {
   const _selectedProject = useProjectStore((state) => state.project);
+  const queryClient = useQueryClient();
   const [isSubmitLoading, setIsSubmitLoading] = useState(false);
   const { chain, address } = useAccount();
   const { switchChainAsync } = useWallet();
@@ -316,6 +318,9 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
 
                 // Send outputs and deliverables data
                 await sendOutputsAndDeliverables(milestone.uid, data);
+                await queryClient.invalidateQueries({
+                  queryKey: ["milestoneImpactAnswers", milestone.uid],
+                });
 
                 afterSubmit?.();
                 openDialog();
@@ -429,6 +434,9 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
 
                 // Send outputs and deliverables data
                 await sendOutputsAndDeliverables(milestone.uid, data);
+                await queryClient.invalidateQueries({
+                  queryKey: ["milestoneImpactAnswers", milestone.uid],
+                });
 
                 closeShareDialog();
                 PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
