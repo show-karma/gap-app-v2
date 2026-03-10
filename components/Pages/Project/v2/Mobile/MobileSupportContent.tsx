@@ -52,7 +52,7 @@ export function MobileSupportContent({ project, className }: MobileSupportConten
       {isAuthorized && (
         <Button
           onClick={() => setIsProgressModalOpen(true)}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center justify-center gap-2 py-5"
+          className="w-full bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg flex items-center justify-center gap-2 py-5"
           data-testid="post-update-button-mobile"
         >
           <PenLine className="h-4 w-4" />

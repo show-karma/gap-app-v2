@@ -26,9 +26,9 @@ const Preview = dynamic(() => import("@uiw/react-markdown-preview"), {
 });
 
 export const MarkdownPreview: typeof Preview = (props) => {
-  const { theme } = useTheme();
+  const { resolvedTheme } = useTheme();
   return (
-    <div className="preview w-full max-w-full" data-color-mode={theme}>
+    <div className="preview w-full max-w-full" data-color-mode={resolvedTheme ?? "light"}>
       <Preview
         className={cn("wmdeMarkdown", styles.wmdeMarkdown, props.className)}
         rehypePlugins={[
@@ -46,7 +46,7 @@ export const MarkdownPreview: typeof Preview = (props) => {
           p: ({ children }) => <span className={props.className}>{children}</span>,
           code: ({ children }) => (
             <code
-              className={cn("bg-neutral-600 dark:bg-neutral-800 p-2 rounded-md", props.className)}
+              className={cn("bg-neutral-200 dark:bg-neutral-800 p-2 rounded-md", props.className)}
               style={{
                 display: "block",
                 overflow: "auto",

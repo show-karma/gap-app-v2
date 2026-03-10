@@ -2,7 +2,7 @@
 
 import { GlobeIcon, RocketIcon } from "lucide-react";
 import { useParams, usePathname, useRouter } from "next/navigation";
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Balancer from "react-wrap-balancer";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
@@ -48,6 +48,45 @@ export function ProjectHeader({ project, isVerified = false, className }: Projec
   const pathname = usePathname();
   const projectId = params?.projectId as string;
   const socials = useProjectSocials(project?.details?.links);
+
+  const [desktopLinksOpen, setDesktopLinksOpen] = useState(false);
+  const [mobileLinksOpen, setMobileLinksOpen] = useState(false);
+  const desktopLinksRef = useRef<HTMLDivElement>(null);
+  const mobileLinksRef = useRef<HTMLDivElement>(null);
+
+  const closeAllDropdowns = useCallback(() => {
+    setDesktopLinksOpen(false);
+    setMobileLinksOpen(false);
+  }, []);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      const target = event.target as Node;
+      if (
+        desktopLinksOpen &&
+        desktopLinksRef.current &&
+        !desktopLinksRef.current.contains(target)
+      ) {
+        setDesktopLinksOpen(false);
+      }
+      if (mobileLinksOpen && mobileLinksRef.current && !mobileLinksRef.current.contains(target)) {
+        setMobileLinksOpen(false);
+      }
+    }
+
+    function handleEscapeKey(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        closeAllDropdowns();
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscapeKey);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscapeKey);
+    };
+  }, [desktopLinksOpen, mobileLinksOpen, closeAllDropdowns]);
 
   // Get custom links (links with name property that aren't standard socials)
   const customLinks = useMemo<CustomLink[]>(() => {
@@ -140,27 +179,40 @@ export function ProjectHeader({ project, isVerified = false, className }: Projec
                       </a>
                     ))}
                     {customLinks.length > 0 && (
-                      <div className="relative group">
-                        <GlobeIcon
-                          className="h-5 w-5 text-blue-800 hover:text-blue-900 dark:text-blue-200 dark:hover:text-blue-100 cursor-pointer transition-colors"
+                      <div className="relative" ref={desktopLinksRef}>
+                        <button
+                          type="button"
+                          onClick={() => setDesktopLinksOpen((prev) => !prev)}
+                          aria-label="Custom links"
+                          aria-haspopup="menu"
+                          aria-expanded={desktopLinksOpen}
+                          className="inline-flex items-center justify-center rounded-md p-1 text-blue-800 hover:text-blue-900 dark:text-blue-200 dark:hover:text-blue-100 cursor-pointer transition-colors"
                           data-testid="custom-links-trigger"
-                        />
-                        <div className="absolute right-0 top-6 mt-1 w-48 bg-popover border rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
-                          <div className="py-2">
-                            {customLinks.map((link, index) => (
-                              <a
-                                key={link.url || index}
-                                href={ensureProtocol(link.url)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="block px-4 py-2 text-sm text-popover-foreground hover:bg-accent transition-colors duration-150"
-                                data-testid="custom-link"
-                              >
-                                {link.name || link.url}
-                              </a>
-                            ))}
+                        >
+                          <GlobeIcon className="h-5 w-5" />
+                        </button>
+                        {desktopLinksOpen && (
+                          <div
+                            role="menu"
+                            className="absolute right-0 top-8 mt-1 w-48 bg-popover border rounded-lg shadow-lg z-10"
+                          >
+                            <div className="py-2">
+                              {customLinks.map((link, index) => (
+                                <a
+                                  key={link.url || index}
+                                  href={ensureProtocol(link.url)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  role="menuitem"
+                                  className="block px-4 py-2 text-sm text-popover-foreground hover:bg-accent transition-colors duration-150"
+                                  data-testid="custom-link"
+                                >
+                                  {link.name || link.url}
+                                </a>
+                              ))}
+                            </div>
                           </div>
-                        </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -185,27 +237,40 @@ export function ProjectHeader({ project, isVerified = false, className }: Projec
                   </a>
                 ))}
                 {customLinks.length > 0 && (
-                  <div className="relative group">
-                    <GlobeIcon
-                      className="h-5 w-5 text-blue-800 hover:text-blue-900 dark:text-blue-200 dark:hover:text-blue-100 cursor-pointer transition-colors"
+                  <div className="relative" ref={mobileLinksRef}>
+                    <button
+                      type="button"
+                      onClick={() => setMobileLinksOpen((prev) => !prev)}
+                      aria-label="Custom links"
+                      aria-haspopup="menu"
+                      aria-expanded={mobileLinksOpen}
+                      className="inline-flex items-center justify-center rounded-md p-1 text-blue-800 hover:text-blue-900 dark:text-blue-200 dark:hover:text-blue-100 cursor-pointer transition-colors"
                       data-testid="custom-links-trigger-mobile"
-                    />
-                    <div className="absolute right-0 top-6 mt-1 w-48 bg-popover border rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
-                      <div className="py-2">
-                        {customLinks.map((link, index) => (
-                          <a
-                            key={link.url || index}
-                            href={ensureProtocol(link.url)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="block px-4 py-2 text-sm text-popover-foreground hover:bg-accent transition-colors duration-150"
-                            data-testid="custom-link"
-                          >
-                            {link.name || link.url}
-                          </a>
-                        ))}
+                    >
+                      <GlobeIcon className="h-5 w-5" />
+                    </button>
+                    {mobileLinksOpen && (
+                      <div
+                        role="menu"
+                        className="absolute right-0 top-8 mt-1 w-48 bg-popover border rounded-lg shadow-lg z-10"
+                      >
+                        <div className="py-2">
+                          {customLinks.map((link, index) => (
+                            <a
+                              key={link.url || index}
+                              href={ensureProtocol(link.url)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              role="menuitem"
+                              className="block px-4 py-2 text-sm text-popover-foreground hover:bg-accent transition-colors duration-150"
+                              data-testid="custom-link"
+                            >
+                              {link.name || link.url}
+                            </a>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 )}
               </div>

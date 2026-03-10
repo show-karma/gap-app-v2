@@ -208,7 +208,16 @@ export function calculateProfileStats(
   );
   const endorsementsCount = uniqueEndorsers.size;
   const grantsCount = grants.length;
-  const lastUpdate = updates.length > 0 ? new Date(updates[0].createdAt) : undefined;
+  const lastUpdate =
+    updates.length > 0
+      ? new Date(
+          updates.reduce((latest, item) =>
+            new Date(item.createdAt).getTime() > new Date(latest.createdAt).getTime()
+              ? item
+              : latest
+          ).createdAt
+        )
+      : undefined;
 
   // Calculate completion rate (only count actual milestones, not updates/impacts)
   const totalMilestones = countActualMilestones(updates);

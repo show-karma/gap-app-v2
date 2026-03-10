@@ -1,11 +1,11 @@
 "use client";
 
-import { ArrowLeftToLine, BadgeCheck, CircleDollarSign, Goal, Rss } from "lucide-react";
+import { BadgeCheck, CircleDollarSign, Goal, Rss } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useMemo } from "react";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
-import { ActivityCard, containerClassName } from "@/components/Shared/ActivityCard";
+import { ActivityCard } from "@/components/Shared/ActivityCard";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { cn } from "@/utilities/tailwind";
 import type { ActivityFilterType, SortOption } from "./ActivityFilters";

@@ -34,7 +34,7 @@ function Separator() {
  * - Main card with Donate, Endorse, Subscribe sections
  * - Separate Quick links card
  *
- * Width: 324px (fixed)
+ * Width: 400px (fixed)
  * Visibility: Desktop only (lg: breakpoint)
  * Matches Figma design with neutral colors and 12px border radius
  */

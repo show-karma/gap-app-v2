@@ -47,13 +47,6 @@ interface ActivityCardProps {
 export const containerClassName =
   "border bg-background rounded-xl gap-0 flex flex-col items-start justify-start";
 
-/**
- * Get the activity type string from the SDK update type
- */
-const getSdkUpdateType = (update: SdkUpdateType): string => {
-  return update.type;
-};
-
 export const ActivityCard: FC<ActivityCardProps> = ({ activity, isAuthorized = false }) => {
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);

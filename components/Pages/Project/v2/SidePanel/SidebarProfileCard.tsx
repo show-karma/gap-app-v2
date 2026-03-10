@@ -2,7 +2,7 @@
 
 import { ArrowUpRight, CopyCheck, GlobeIcon, Share } from "lucide-react";
 import { useParams, usePathname, useRouter } from "next/navigation";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 import { Button } from "@/components/ui/button";
@@ -49,6 +49,31 @@ export function SidebarProfileCard({ project, isVerified, className }: SidebarPr
   const cardRef = useRef<HTMLDivElement>(null);
   const [tilt, setTilt] = useState({ rotateX: 0, rotateY: 0, scale: 1 });
   const [copied, setCopied] = useState(false);
+  const [isCustomLinksOpen, setIsCustomLinksOpen] = useState(false);
+  const customLinksRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isCustomLinksOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsCustomLinksOpen(false);
+      }
+    };
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (customLinksRef.current && !customLinksRef.current.contains(e.target as Node)) {
+        setIsCustomLinksOpen(false);
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isCustomLinksOpen]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     const card = cardRef.current;
@@ -63,10 +88,14 @@ export function SidebarProfileCard({ project, isVerified, className }: SidebarPr
     setTilt({ rotateX: 0, rotateY: 0, scale: 1 });
   }, []);
 
-  const handleShare = () => {
-    navigator.clipboard.writeText(window.location.href).catch(() => {});
-    setCopied(true);
-    setTimeout(() => setCopied(false), 3000);
+  const handleShare = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 3000);
+    } catch {
+      // Clipboard write failed — do not show "Copied"
+    }
   };
 
   const handleReadMoreClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -91,15 +120,12 @@ export function SidebarProfileCard({ project, isVerified, className }: SidebarPr
         transform: `perspective(75rem) rotateX(${tilt.rotateX}deg) rotateY(${tilt.rotateY}deg) scale(${tilt.scale}) translateZ(0)`,
         transition:
           tilt.scale === 1
-            ? "transform 500ms linear(0, 0.931 13.8%, 1.196 21.4%, 1.343 29.8%, 1.378 36%, 1.365 43.2%, 1.059 78%, 1), box-shadow 400ms ease-out"
-            : "transform 500ms linear(0, 0.708 15.2%, 0.927 23.6%, 1.067 33%, 1.12 41%, 1.13 50.2%, 1.019 83.2%, 1), box-shadow 400ms ease-out",
-        boxShadow:
-          tilt.scale > 1
-            ? "0 20px 40px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.08)"
-            : "0 1px 2px rgba(0,0,0,0.04)",
+            ? "transform 500ms linear(0, 0.931 13.8%, 1.196 21.4%, 1.343 29.8%, 1.378 36%, 1.365 43.2%, 1.059 78%, 1)"
+            : "transform 500ms linear(0, 0.708 15.2%, 0.927 23.6%, 1.067 33%, 1.12 41%, 1.13 50.2%, 1.019 83.2%, 1)",
       }}
       className={cn(
-        "flex flex-col gap-4 p-6 rounded-lg border bg-background dark:bg-secondary will-change-transform",
+        "flex flex-col gap-4 p-6 rounded-lg border bg-background dark:bg-secondary will-change-transform transition-shadow duration-300",
+        tilt.scale > 1 ? "shadow-lg" : "shadow-sm",
         className
       )}
       data-testid="sidebar-profile-card"
@@ -132,7 +158,7 @@ export function SidebarProfileCard({ project, isVerified, className }: SidebarPr
 
       {/* Project name + verification badge */}
       <h2
-        className="text-xl font-semibold text-neutral-900 dark:text-white leading-tight"
+        className="text-xl font-semibold text-foreground leading-tight"
         data-testid="sidebar-project-title"
       >
         {project?.details?.title}
@@ -149,13 +175,13 @@ export function SidebarProfileCard({ project, isVerified, className }: SidebarPr
         <div data-testid="sidebar-project-description">
           <MarkdownPreview
             source={displayDescription}
-            className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed"
+            className="text-sm text-muted-foreground leading-relaxed"
           />
           {shouldTruncate && (
             <a
               href={`${PAGES.PROJECT.ABOUT(projectId)}?scrollTo=description`}
               onClick={handleReadMoreClick}
-              className="mt-1 inline-flex items-center gap-0.5 text-sm font-semibold text-neutral-900 dark:text-white underline underline-offset-2 cursor-pointer"
+              className="mt-1 inline-flex items-center gap-0.5 text-sm font-semibold text-foreground underline underline-offset-2 cursor-pointer"
               data-testid="sidebar-read-more"
             >
               Read More
@@ -173,7 +199,7 @@ export function SidebarProfileCard({ project, isVerified, className }: SidebarPr
             href={social.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200 transition-colors"
+            className="text-muted-foreground hover:text-foreground transition-colors"
             aria-label={`Visit ${social.name}`}
             data-testid="sidebar-social-link"
           >
@@ -181,24 +207,39 @@ export function SidebarProfileCard({ project, isVerified, className }: SidebarPr
           </a>
         ))}
         {customLinks.length > 0 && (
-          <div className="relative group">
-            <GlobeIcon className="h-4 w-4 text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200 cursor-pointer transition-colors" />
-            <div className="absolute left-0 top-6 mt-1 w-48 bg-white dark:bg-neutral-800 border rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
-              <div className="py-2">
-                {customLinks.map((link, index) => (
-                  <a
-                    key={link.url || index}
-                    href={ensureProtocol(link.url)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block px-4 py-2 text-sm text-gray-700 dark:text-neutral-300 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors"
-                    data-testid="sidebar-custom-link"
-                  >
-                    {link.name || link.url}
-                  </a>
-                ))}
+          <div className="relative" ref={customLinksRef}>
+            <button
+              type="button"
+              onClick={() => setIsCustomLinksOpen((prev) => !prev)}
+              aria-label="Custom links"
+              aria-haspopup="menu"
+              aria-expanded={isCustomLinksOpen}
+              className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
+            >
+              <GlobeIcon className="h-4 w-4" />
+            </button>
+            {isCustomLinksOpen && (
+              <div
+                role="menu"
+                className="absolute left-0 top-6 mt-1 w-48 bg-popover border rounded-lg shadow-lg z-10"
+              >
+                <div className="py-2">
+                  {customLinks.map((link, index) => (
+                    <a
+                      key={link.url || index}
+                      href={ensureProtocol(link.url)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      role="menuitem"
+                      className="block px-4 py-2 text-sm text-popover-foreground hover:bg-accent transition-colors"
+                      data-testid="sidebar-custom-link"
+                    >
+                      {link.name || link.url}
+                    </a>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         )}
       </div>

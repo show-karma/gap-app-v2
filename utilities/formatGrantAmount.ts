@@ -12,7 +12,7 @@ export function formatGrantAmount(amount?: string): string | null {
   const currencySuffix = parts.length > 1 ? parts.slice(1).join(" ") : null;
 
   const numAmount = Number(numericPart);
-  if (isNaN(numAmount) || numAmount === 0) return null;
+  if (Number.isNaN(numAmount) || numAmount === 0) return null;
 
   if (numAmount < 1000) {
     const formatted = new Intl.NumberFormat("en-US", {

@@ -5,6 +5,7 @@ import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 import { Button } from "@/components/ui/button";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { formatGrantAmount } from "@/utilities/formatGrantAmount";
+import { PAGES } from "@/utilities/pages";
 
 interface FundingReceivedCardProps {
   milestone: UnifiedMilestone;
@@ -46,7 +47,7 @@ export const FundingReceivedCard: FC<FundingReceivedCardProps> = ({ milestone, p
       {/* View grant button */}
       {projectId && grantUID && (
         <Button variant="outline" size="sm" asChild className="w-full sm:w-auto">
-          <Link href={`/project/${projectId}/funding/${grantUID}`}>
+          <Link href={PAGES.PROJECT.GRANT(projectId, grantUID)}>
             View grant <ExternalLink className="w-3.5 h-3.5" />
           </Link>
         </Button>

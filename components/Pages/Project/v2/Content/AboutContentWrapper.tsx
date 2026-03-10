@@ -12,13 +12,13 @@ import { AboutContent } from "../MainContent/AboutContent";
 export function AboutContentWrapper() {
   const { projectId } = useParams();
   const searchParams = useSearchParams();
+  const scrollTo = searchParams.get("scrollTo");
   const { project, isLoading } = useProjectProfile(projectId as string);
 
   // Handle smooth scroll to section based on query parameter
   useEffect(() => {
     if (!project || isLoading) return;
 
-    const scrollTo = searchParams.get("scrollTo");
     if (scrollTo) {
       // Wait for content to render, then smooth scroll
       const timeoutId = setTimeout(() => {
@@ -33,7 +33,7 @@ export function AboutContentWrapper() {
 
       return () => clearTimeout(timeoutId);
     }
-  }, [project, isLoading, searchParams]);
+  }, [project, isLoading, scrollTo]);
 
   if (isLoading || !project) {
     return <div className="animate-pulse text-gray-500">Loading about...</div>;
