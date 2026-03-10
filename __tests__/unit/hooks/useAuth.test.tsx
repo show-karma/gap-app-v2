@@ -55,7 +55,6 @@ jest.mock("@/utilities/auth/token-manager", () => ({
   TokenManager: {
     getToken: (...args: unknown[]) => mockGetToken(...args),
     setPrivyInstance: jest.fn(),
-    clearTokens: jest.fn(),
     clearCache: (...args: unknown[]) => mockClearCache(...args),
   },
 }));

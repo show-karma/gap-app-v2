@@ -1,5 +1,4 @@
 "use client";
-import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useMemo } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
@@ -8,6 +7,7 @@ import { ProjectCartButton } from "@/components/Donation/ProjectCartButton";
 import { ShoppingCartIcon as ShoppingCartIconCustom } from "@/components/Icons/ShoppingCartIcon";
 import { useCommunityProjectsPaginated } from "@/hooks/useCommunityProjectsPaginated";
 import useMediaQuery from "@/hooks/useMediaQuery";
+import { Link } from "@/src/components/navigation/Link";
 import { useDonationCart } from "@/store";
 import type { CommunityProjects } from "@/types/v2/community";
 import { projectToGrant } from "@/utilities/adapters/v2/projectToGrant";

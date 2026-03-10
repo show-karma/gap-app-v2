@@ -1,7 +1,6 @@
 import { ChevronDownIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as Accordion from "@radix-ui/react-accordion";
-import Link from "next/link";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -12,6 +11,7 @@ import { SearchWithValueDropdown } from "@/components/Pages/Communities/Impact/S
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useIndicators } from "@/hooks/useIndicators";
+import { Link } from "@/src/components/navigation/Link";
 import type { Category, ImpactIndicator, ImpactSegment } from "@/types/impactMeasurement";
 import type { Community } from "@/types/v2/community";
 import fetchData from "@/utilities/fetchData";

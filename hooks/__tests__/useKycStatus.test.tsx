@@ -411,7 +411,7 @@ describe("KYC Hooks", () => {
   describe("KYC_QUERY_KEYS", () => {
     it("should generate correct status query key", () => {
       const key = KYC_QUERY_KEYS.status("project-123", "community-456");
-      expect(key).toEqual(["kyc", "status", "project-123", "community-456"]);
+      expect(key).toEqual(["kyc", "status", "community-456", "project-123"]);
     });
 
     it("should generate correct config query key", () => {

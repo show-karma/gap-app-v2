@@ -71,7 +71,7 @@ export function formatTokenAmount(
     defaultMaxFractionDigits = 2;
   }
 
-  return num.toLocaleString(options?.locale, {
+  return num.toLocaleString(options?.locale ?? "en-US", {
     maximumFractionDigits: options?.maximumFractionDigits ?? defaultMaxFractionDigits,
     minimumFractionDigits: options?.minimumFractionDigits ?? 0,
   });
@@ -166,7 +166,7 @@ export function calculateRemainingBalance(
   }
 
   const remaining = Math.max(0, approvedNum - disbursedNum);
-  return remaining.toLocaleString(undefined, { maximumFractionDigits: 2 });
+  return remaining.toLocaleString("en-US", { maximumFractionDigits: 2 });
 }
 
 /**
@@ -187,7 +187,7 @@ export function formatDisplayAmount(amount: string, maxDecimals = 2): string {
   const sanitized = amount.replace(/[,\u00A0]/g, "");
   const num = parseFloat(sanitized);
   if (Number.isNaN(num)) return "0";
-  return num.toLocaleString(undefined, { maximumFractionDigits: maxDecimals });
+  return num.toLocaleString("en-US", { maximumFractionDigits: maxDecimals });
 }
 
 /**

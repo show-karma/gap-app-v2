@@ -1,12 +1,12 @@
 "use client";
 import { ChevronLeftIcon } from "@heroicons/react/24/outline";
-import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { CommunityImpactCharts } from "@/components/Pages/Communities/Impact/ImpactCharts";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useCommunityAdminAccess, useCommunityDetails } from "@/hooks/communities";
+import { Link } from "@/src/components/navigation/Link";
 import { defaultMetadata } from "@/utilities/meta";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";

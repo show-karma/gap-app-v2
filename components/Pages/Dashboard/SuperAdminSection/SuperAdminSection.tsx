@@ -1,6 +1,6 @@
 import { ShieldCheck } from "lucide-react";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Link } from "@/src/components/navigation/Link";
 import { PAGES } from "@/utilities/pages";
 
 export function SuperAdminSection() {
