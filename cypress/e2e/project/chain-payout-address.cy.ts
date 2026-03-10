@@ -130,10 +130,25 @@ const waitForLayoutReady = () => {
 };
 
 /**
+ * Wait for ALL project data API calls to complete.
+ * useProjectProfile aggregates isLoading from project, grants, updates,
+ * and impacts — all four must resolve before the layout shows the success state.
+ * Without this wait, the component may stay in loading state when
+ * setProjectOwnerViaStore tries to assert on project-profile-layout.
+ */
+const waitForProjectData = () => {
+  cy.wait(
+    ["@getProjectV2", "@getProjectGrants", "@getProjectUpdates", "@getProjectImpacts"],
+    { timeout: 15000 }
+  );
+};
+
+/**
  * Set project ownership flag via the exposed Zustand store,
  * then wait for the layout to be fully rendered.
  */
 const setProjectOwnerViaStore = () => {
+  waitForProjectData();
   waitForStoreExposure();
   cy.window().then((win) => {
     const stores = (win as unknown as Window & { __E2E_STORES__: Record<string, (v: boolean) => void> }).__E2E_STORES__;
@@ -148,6 +163,7 @@ const setProjectOwnerViaStore = () => {
  * then wait for the layout to be fully rendered.
  */
 const setStaffViaStore = () => {
+  waitForProjectData();
   waitForStoreExposure();
   cy.window().then((win) => {
     const stores = (win as unknown as Window & { __E2E_STORES__: Record<string, (v: boolean) => void> }).__E2E_STORES__;
@@ -196,12 +212,7 @@ const setupAuthIntercepts = (userType: UserType = "regular") => {
   }).as("getPermissions");
 };
 
-// Disable test isolation so the browser doesn't navigate to about:blank
-// between tests. This prevents the page from failing to re-render on
-// subsequent cy.visit() calls in the same spec — a known issue with
-// Next.js App Router production builds where server-rendered pages
-// sometimes fail to hydrate correctly after repeated full-page navigations.
-describe("Chain Payout Address Modal", { testIsolation: false }, () => {
+describe("Chain Payout Address Modal", () => {
   // Capture uncaught exceptions to prevent test failures from unrelated errors
   // (e.g., Privy SDK, third-party scripts) and log them for debugging.
   Cypress.on("uncaught:exception", (err) => {
@@ -293,10 +304,6 @@ describe("Chain Payout Address Modal", { testIsolation: false }, () => {
 
       visitProject("regular");
       waitForPageLoad();
-
-      // Wait for project API call to confirm intercepts are matching
-      cy.wait("@getProjectOwner", { timeout: 15000 });
-
       setProjectOwnerViaStore();
 
       cy.get('[data-testid="enable-donations-button"]', { timeout: 15000 }).should("be.visible");
