@@ -7,10 +7,10 @@ import {
   sendEmailToGrantees,
 } from "../services/emailGranteesService";
 
-export function useGranteeEmails(programId: string) {
+export function useGranteeEmails(programId: string, statuses?: string[]) {
   return useQuery({
-    queryKey: ["grantee-emails", programId],
-    queryFn: () => getGranteeEmails(programId),
+    queryKey: ["grantee-emails", programId, statuses],
+    queryFn: () => getGranteeEmails(programId, statuses),
     enabled: !!programId,
   });
 }

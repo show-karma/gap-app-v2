@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { type DropdownItem, MultiSelectDropdown } from "@/components/Utilities/MultiSelectDropdown";
 import { Spinner } from "@/components/Utilities/Spinner";
 import type { FundingProgram } from "@/services/fundingPlatformService";
 import { useGranteeEmails, useSendEmailToGrantees } from "./hooks/useEmailGrantees";
@@ -27,6 +28,36 @@ function deduplicateEmails(emails: GranteeEmail[]): string[] {
   }, []);
 }
 
+const APPLICATION_STATUS_ITEMS: DropdownItem[] = [
+  { id: "pending", label: "Pending" },
+  { id: "under_review", label: "Under Review" },
+  { id: "approved", label: "Approved" },
+  { id: "in_progress", label: "In Progress" },
+  { id: "rejected", label: "Rejected" },
+  { id: "revision_requested", label: "Revision Requested" },
+  { id: "resubmitted", label: "Resubmitted" },
+  { id: "withdrawn", label: "Withdrawn" },
+];
+
+function statusLabel(value: string): string {
+  return APPLICATION_STATUS_ITEMS.find((s) => s.id === value)?.label || value;
+}
+
+function emptyRecipientsMessage(
+  granteeEmails: GranteeEmail[] | undefined,
+  selectedStatuses: string[]
+): string {
+  if (granteeEmails && granteeEmails.length === 0) {
+    if (selectedStatuses.length === 0) {
+      return "No statuses selected. Select at least one status above to fetch grantee emails.";
+    }
+    const labels = selectedStatuses.map(statusLabel).join(", ");
+    const suffix = selectedStatuses.length === 1 ? "" : "es";
+    return `No grantees with email addresses found for ${labels} status${suffix}.`;
+  }
+  return "No recipients selected. Add emails manually or select a program with grantees.";
+}
+
 interface EmailGranteesComposerProps {
   programs: FundingProgram[];
 }
@@ -38,6 +69,10 @@ export function EmailGranteesComposer({ programs }: EmailGranteesComposerProps) 
   const [selectedProgramId, setSelectedProgramId] = useState(
     () => searchParams.get("programId") || ""
   );
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>(() => {
+    const fromUrl = searchParams.get("statuses");
+    return fromUrl ? fromUrl.split(",") : ["approved"];
+  });
   const [recipients, setRecipients] = useState<string[]>([]);
   const [manualEmail, setManualEmail] = useState("");
   const [subject, setSubject] = useState("");
@@ -50,12 +85,22 @@ export function EmailGranteesComposer({ programs }: EmailGranteesComposerProps) 
     isLoading: isLoadingEmails,
     isError: isEmailsError,
     refetch: refetchEmails,
-  } = useGranteeEmails(selectedProgramId);
+  } = useGranteeEmails(selectedProgramId, selectedStatuses);
 
   const sendEmailMutation = useSendEmailToGrantees();
 
   // Track previous program to auto-populate recipients only on program change
   const prevProgramRef = useRef<string | null>(null);
+
+  function updateSearchParam(key: string, value: string | undefined) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (value) {
+      params.set(key, value);
+    } else {
+      params.delete(key);
+    }
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }
 
   function handleProgramChange(programId: string) {
     setSelectedProgramId(programId);
@@ -63,13 +108,14 @@ export function EmailGranteesComposer({ programs }: EmailGranteesComposerProps) 
     if (!programId) {
       prevProgramRef.current = null;
     }
-    const params = new URLSearchParams(searchParams.toString());
-    if (programId) {
-      params.set("programId", programId);
-    } else {
-      params.delete("programId");
-    }
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    updateSearchParam("programId", programId || undefined);
+  }
+
+  function handleStatusChange(newStatuses: string[]) {
+    setSelectedStatuses(newStatuses);
+    updateSearchParam("statuses", newStatuses.length > 0 ? newStatuses.join(",") : undefined);
+    setRecipients([]);
+    prevProgramRef.current = null;
   }
 
   function resetToAllGrantees() {
@@ -158,6 +204,20 @@ export function EmailGranteesComposer({ programs }: EmailGranteesComposerProps) 
         </select>
       </div>
 
+      {/* Application Status Filter */}
+      {selectedProgramId && (
+        <div className="rounded-xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-6">
+          <MultiSelectDropdown
+            label="Application Status Filter"
+            items={APPLICATION_STATUS_ITEMS}
+            selectedIds={selectedStatuses}
+            onChange={handleStatusChange}
+            placeholder="Select statuses..."
+            searchPlaceholder="Search statuses..."
+          />
+        </div>
+      )}
+
       {/* Recipients Section */}
       {selectedProgramId && (
         <div className="rounded-xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-6">
@@ -231,9 +291,7 @@ export function EmailGranteesComposer({ programs }: EmailGranteesComposerProps) 
                 </div>
               ) : (
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                  {granteeEmails && granteeEmails.length === 0
-                    ? "No approved grantees with email addresses found for this program."
-                    : "No recipients selected. Add emails manually or select a program with grantees."}
+                  {emptyRecipientsMessage(granteeEmails, selectedStatuses)}
                 </p>
               )}
 
