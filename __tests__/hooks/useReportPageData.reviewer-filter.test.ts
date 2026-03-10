@@ -1,167 +1,99 @@
 /**
  * Tests for the reviewer filter logic in useReportPageData.
  *
- * The hook has heavy dependencies (React Query, nuqs, usePendingVerificationMilestones)
- * that make direct hook rendering brittle. Instead, we extract and test the core
- * logic functions that determine:
- *   1. The default reviewer filter mode based on user role
- *   2. The effective reviewer address based on filter mode
- *   3. The handleReviewerFilterChange callback behavior
- *
- * This follows the same pattern as useIsReviewer.test.tsx which tests extracted logic.
+ * The hook uses address-based filtering where:
+ *   - undefined = "All Reviewers"
+ *   - string = specific reviewer's address
  */
 
-type ReviewerFilterMode = "mine" | "all";
+import { computeDefaultReviewerAddress } from "@/hooks/useReportPageData";
 
-/**
- * Extracted from useReportPageData: computes the default reviewer filter mode.
- *
- * Source: useEffect in useReportPageData that reactively sets "mine" or "all"
- * based on isMilestoneReviewer && !hasAccess
- */
-function computeDefaultReviewerFilter(
-  isMilestoneReviewer: boolean,
-  hasAccess: boolean
-): ReviewerFilterMode {
-  return isMilestoneReviewer && !hasAccess ? "mine" : "all";
-}
+describe("useReportPageData reviewer filter logic (address-based)", () => {
+  const testAddress = "0x1234567890abcdef1234567890abcdef12345678";
 
-/**
- * Extracted from useReportPageData: computes the effective reviewer address.
- *
- * Source (lines 121-126):
- *   if (reviewerFilter === "mine" && currentUserAddress) return currentUserAddress;
- *   return undefined;
- */
-function computeEffectiveReviewerAddress(
-  reviewerFilter: ReviewerFilterMode,
-  currentUserAddress?: string
-): string | undefined {
-  if (reviewerFilter === "mine" && currentUserAddress) {
-    return currentUserAddress;
-  }
-  return undefined;
-}
-
-describe("useReportPageData reviewer filter logic", () => {
-  describe("computeDefaultReviewerFilter", () => {
-    it('defaults to "mine" when isMilestoneReviewer is true and hasAccess is false', () => {
-      const result = computeDefaultReviewerFilter(true, false);
-      expect(result).toBe("mine");
-    });
-
-    it('defaults to "all" when hasAccess is true (admin), even if isMilestoneReviewer', () => {
-      const result = computeDefaultReviewerFilter(true, true);
-      expect(result).toBe("all");
-    });
-
-    it('defaults to "all" when isMilestoneReviewer is false and hasAccess is false', () => {
-      const result = computeDefaultReviewerFilter(false, false);
-      expect(result).toBe("all");
-    });
-
-    it('defaults to "all" when hasAccess is true and isMilestoneReviewer is false', () => {
-      const result = computeDefaultReviewerFilter(false, true);
-      expect(result).toBe("all");
-    });
-  });
-
-  describe("computeEffectiveReviewerAddress", () => {
-    const testAddress = "0x1234567890abcdef1234567890abcdef12345678";
-
-    it('returns the address when filter is "mine" and address is provided', () => {
-      const result = computeEffectiveReviewerAddress("mine", testAddress);
+  describe("computeDefaultReviewerAddress", () => {
+    it("defaults to user address when isMilestoneReviewer is true and hasAccess is false", () => {
+      const result = computeDefaultReviewerAddress(true, false, testAddress);
       expect(result).toBe(testAddress);
     });
 
-    it('returns undefined when filter is "all"', () => {
-      const result = computeEffectiveReviewerAddress("all", testAddress);
+    it("defaults to undefined when hasAccess is true (admin), even if isMilestoneReviewer", () => {
+      const result = computeDefaultReviewerAddress(true, true, testAddress);
       expect(result).toBeUndefined();
     });
 
-    it('returns undefined when filter is "mine" but no address is provided', () => {
-      const result = computeEffectiveReviewerAddress("mine", undefined);
+    it("defaults to undefined when isMilestoneReviewer is false", () => {
+      const result = computeDefaultReviewerAddress(false, false, testAddress);
       expect(result).toBeUndefined();
     });
 
-    it('returns undefined when filter is "mine" and address is empty string', () => {
-      const result = computeEffectiveReviewerAddress("mine", "");
+    it("defaults to undefined when hasAccess is true and isMilestoneReviewer is false", () => {
+      const result = computeDefaultReviewerAddress(false, true, testAddress);
       expect(result).toBeUndefined();
     });
 
-    it('returns undefined when filter is "all" and address is undefined', () => {
-      const result = computeEffectiveReviewerAddress("all", undefined);
+    it("returns undefined when reviewer has no address", () => {
+      const result = computeDefaultReviewerAddress(true, false, undefined);
       expect(result).toBeUndefined();
     });
   });
 
-  describe("handleReviewerFilterChange behavior", () => {
-    /**
-     * Simulates the handleReviewerFilterChange callback from the hook:
-     *   setReviewerFilter(mode);
-     *   setPendingPage(1);
-     *
-     * We track calls to verify the state transitions.
-     */
-    it("updates the filter mode and resets pending page to 1", () => {
-      let reviewerFilter: ReviewerFilterMode = "all";
+  describe("handleReviewerAddressChange behavior", () => {
+    it("updates the selected address and resets pending page to 1", () => {
+      let selectedReviewerAddress: string | undefined;
       let pendingPage = 3;
 
-      const setReviewerFilter = (mode: ReviewerFilterMode) => {
-        reviewerFilter = mode;
-      };
-      const setPendingPage = (page: number) => {
-        pendingPage = page;
-      };
-
-      // Simulate handleReviewerFilterChange
-      const handleReviewerFilterChange = (mode: ReviewerFilterMode) => {
-        setReviewerFilter(mode);
-        setPendingPage(1);
-      };
-
-      handleReviewerFilterChange("mine");
-      expect(reviewerFilter).toBe("mine");
-      expect(pendingPage).toBe(1);
-    });
-
-    it('can switch from "mine" back to "all"', () => {
-      let reviewerFilter: ReviewerFilterMode = "mine";
-      let pendingPage = 5;
-
-      const handleReviewerFilterChange = (mode: ReviewerFilterMode) => {
-        reviewerFilter = mode;
+      const handleReviewerAddressChange = (address: string | undefined) => {
+        selectedReviewerAddress = address;
         pendingPage = 1;
       };
 
-      handleReviewerFilterChange("all");
-      expect(reviewerFilter).toBe("all");
+      handleReviewerAddressChange(testAddress);
+      expect(selectedReviewerAddress).toBe(testAddress);
       expect(pendingPage).toBe(1);
+    });
+
+    it("can switch to undefined (all reviewers)", () => {
+      let selectedReviewerAddress: string | undefined = testAddress;
+      let pendingPage = 5;
+
+      const handleReviewerAddressChange = (address: string | undefined) => {
+        selectedReviewerAddress = address;
+        pendingPage = 1;
+      };
+
+      handleReviewerAddressChange(undefined);
+      expect(selectedReviewerAddress).toBeUndefined();
+      expect(pendingPage).toBe(1);
+    });
+
+    it("can switch between different reviewer addresses", () => {
+      let selectedReviewerAddress: string | undefined = testAddress;
+      const otherAddress = "0xabcdef1234567890abcdef1234567890abcdef12";
+
+      const handleReviewerAddressChange = (address: string | undefined) => {
+        selectedReviewerAddress = address;
+      };
+
+      handleReviewerAddressChange(otherAddress);
+      expect(selectedReviewerAddress).toBe(otherAddress);
     });
   });
 
-  describe("integration: default filter drives effective address", () => {
-    const address = "0xABCDEF";
-
+  describe("integration: default address drives effective address", () => {
     it("reviewer-only user defaults to seeing their own milestones", () => {
-      const filter = computeDefaultReviewerFilter(true, false);
-      const effectiveAddress = computeEffectiveReviewerAddress(filter, address);
-      expect(filter).toBe("mine");
-      expect(effectiveAddress).toBe(address);
+      const defaultAddress = computeDefaultReviewerAddress(true, false, testAddress);
+      expect(defaultAddress).toBe(testAddress);
     });
 
     it("admin user defaults to seeing all milestones", () => {
-      const filter = computeDefaultReviewerFilter(true, true);
-      const effectiveAddress = computeEffectiveReviewerAddress(filter, address);
-      expect(filter).toBe("all");
-      expect(effectiveAddress).toBeUndefined();
+      const defaultAddress = computeDefaultReviewerAddress(true, true, testAddress);
+      expect(defaultAddress).toBeUndefined();
     });
 
     it("non-reviewer, non-admin user defaults to seeing all milestones", () => {
-      const filter = computeDefaultReviewerFilter(false, false);
-      const effectiveAddress = computeEffectiveReviewerAddress(filter, address);
-      expect(filter).toBe("all");
-      expect(effectiveAddress).toBeUndefined();
+      const defaultAddress = computeDefaultReviewerAddress(false, false, testAddress);
+      expect(defaultAddress).toBeUndefined();
     });
   });
 });

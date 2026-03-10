@@ -1,7 +1,6 @@
 "use client";
 
 import { ArrowLeftIcon } from "@heroicons/react/24/solid";
-import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -36,6 +35,7 @@ import {
   useProgramConfig,
 } from "@/hooks/useFundingPlatform";
 import { useKycConfig, useKycStatus } from "@/hooks/useKycStatus";
+import { Link } from "@/src/components/navigation/Link";
 import {
   AdminOnly,
   FundingPlatformGuard,

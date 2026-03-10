@@ -8,6 +8,12 @@ on:
   schedule:
     - cron: '0 4 * * *'  # Nightly at 4 AM UTC
 
+env:
+  NEXT_PUBLIC_E2E_AUTH_BYPASS: true
+  NEXT_PUBLIC_PRIVY_APP_ID: ${{ secrets.NEXT_PUBLIC_PRIVY_APP_ID }}
+  NEXT_PUBLIC_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_PROJECT_ID }}
+  NEXT_PUBLIC_GAP_INDEXER_URL: https://gapstagapi.karmahq.xyz
+
 jobs:
   e2e-tests:
     runs-on: ubuntu-latest
@@ -45,10 +51,6 @@ jobs:
         run: pnpm run build
         env:
           NODE_ENV: production
-          NEXT_PUBLIC_E2E_AUTH_BYPASS: true
-          NEXT_PUBLIC_PRIVY_APP_ID: ${{ secrets.NEXT_PUBLIC_PRIVY_APP_ID }}
-          NEXT_PUBLIC_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_PROJECT_ID }}
-          NEXT_PUBLIC_GAP_INDEXER_URL: https://gapstagapi.karmahq.xyz
 
       - name: Cache Cypress binary
         uses: actions/cache@v4
@@ -61,17 +63,13 @@ jobs:
       - name: Install Cypress binary
         run: pnpm exec cypress install
 
-      - name: Run E2E tests
+      - name: Run Cypress E2E tests
         run: pnpm run e2e:ci
         env:
           NODE_ENV: production
-          NEXT_PUBLIC_E2E_AUTH_BYPASS: true
           CYPRESS_BASE_URL: http://localhost:3000
           CYPRESS_VIDEO: false
           CYPRESS_CI: true
-          NEXT_PUBLIC_PRIVY_APP_ID: ${{ secrets.NEXT_PUBLIC_PRIVY_APP_ID }}
-          NEXT_PUBLIC_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_PROJECT_ID }}
-          NEXT_PUBLIC_GAP_INDEXER_URL: https://gapstagapi.karmahq.xyz
 
       - name: Upload Cypress screenshots
         if: failure()
@@ -91,15 +89,90 @@ jobs:
           retention-days: 7
           if-no-files-found: ignore
 
+  playwright:
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Cache Next.js build
+        uses: actions/cache@v4
+        with:
+          path: |
+            .next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/pnpm-lock.yaml') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx', '!node_modules/**') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('**/pnpm-lock.yaml') }}-
+            ${{ runner.os }}-nextjs-
+
+      - name: Build application
+        run: pnpm run build
+        env:
+          NODE_ENV: production
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install chromium --with-deps
+
+      - name: Run Playwright E2E tests
+        run: pnpm exec playwright test --config e2e/playwright.config.ts --project=chromium
+        env:
+          CI: true
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: e2e/playwright-report
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Upload Playwright screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-screenshots
+          path: e2e/test-results
+          retention-days: 7
+          if-no-files-found: ignore
+
+  report:
+    if: always() && github.event_name == 'pull_request'
+    needs: [e2e-tests, playwright]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
       - name: Comment PR with E2E test results
-        if: always() && github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const body = '${{ job.status }}' === 'success'
-              ? `## ✅ E2E Tests Passed!\n\nAll end-to-end tests completed successfully.`
-              : `## ❌ E2E Tests Failed\n\nSome E2E tests failed. Please check the workflow logs and artifacts for details.\n\n**Artifacts available:**\n- Screenshots (on failure)\n- Videos (on failure)`;
+            const e2eStatus = '${{ needs.e2e-tests.result }}';
+            const playwrightStatus = '${{ needs.playwright.result }}';
+            const allPassed = e2eStatus === 'success' && playwrightStatus === 'success';
+
+            const icon = (status) => status === 'success' ? '✅' : status === 'skipped' ? '⏭️' : '❌';
+
+            const body = allPassed
+              ? `## ✅ E2E Tests Passed!\n\nAll end-to-end tests completed successfully.\n\n| Suite | Status |\n|-------|--------|\n| E2E (Cypress) | ${icon(e2eStatus)} ${e2eStatus} |\n| Playwright | ${icon(playwrightStatus)} ${playwrightStatus} |`
+              : `## ❌ E2E Tests Failed\n\nSome E2E tests failed. Check the workflow logs and artifacts for details.\n\n| Suite | Status |\n|-------|--------|\n| E2E (Cypress) | ${icon(e2eStatus)} ${e2eStatus} |\n| Playwright | ${icon(playwrightStatus)} ${playwrightStatus} |\n\n**Artifacts available on failure:** screenshots, videos (Cypress), report + traces (Playwright)`;
 
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,

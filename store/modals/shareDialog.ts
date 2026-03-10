@@ -21,7 +21,7 @@ export const useShareDialogStore = create<ShareDialogState>((set) => ({
   shareButtonText: undefined,
   shareText: "",
   modalShareSecondText: undefined,
-  openShareDialog: (params) =>
+  openShareDialog: (params) => {
     set({
       isOpen: true,
       modalShareText: params.modalShareText,
@@ -33,7 +33,8 @@ export const useShareDialogStore = create<ShareDialogState>((set) => ({
                       Your dedication and hard work have paid off, and we
                       couldn't be prouder of your progress. Keep up the
                       fantastic work!`,
-    }),
+    });
+  },
   closeShareDialog: () =>
     set({
       isOpen: false,

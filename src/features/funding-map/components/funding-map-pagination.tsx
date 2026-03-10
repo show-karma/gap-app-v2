@@ -1,7 +1,9 @@
 "use client";
 
 import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
+import { useCallback } from "react";
 import { Button } from "@/components/ui/button";
+import { useMixpanel } from "@/hooks/useMixpanel";
 import { DOTS, usePagination } from "@/hooks/usePagination";
 import { FUNDING_MAP_PAGE_SIZE } from "../constants/filter-options";
 import { useFundingFilters } from "../hooks/use-funding-filters";
@@ -12,8 +14,34 @@ interface FundingMapPaginationProps {
 
 export function FundingMapPagination({ totalCount }: FundingMapPaginationProps) {
   const { filters, setPage, setOnlyOnKarma } = useFundingFilters();
+  const { mixpanel } = useMixpanel("karma");
   const currentPage = filters.page;
   const totalPages = Math.ceil(totalCount / FUNDING_MAP_PAGE_SIZE);
+
+  const trackPagination = useCallback(
+    (action: "prev" | "next" | "goto", toPage: number) => {
+      mixpanel.reportEvent({
+        event: "funding-map:pagination",
+        properties: {
+          action,
+          fromPage: currentPage,
+          toPage,
+          totalPages,
+          totalResults: totalCount,
+        },
+      });
+      setPage(toPage);
+    },
+    [mixpanel, currentPage, totalPages, totalCount, setPage]
+  );
+
+  const handleShowAll = useCallback(() => {
+    mixpanel.reportEvent({
+      event: "funding-map:show-all-programs",
+      properties: { previousResultCount: totalCount },
+    });
+    setOnlyOnKarma(false);
+  }, [mixpanel, totalCount, setOnlyOnKarma]);
 
   const paginationRange = usePagination({
     currentPage,
@@ -29,7 +57,7 @@ export function FundingMapPagination({ totalCount }: FundingMapPaginationProps) 
       <div className="flex w-full flex-col items-center justify-center gap-2 py-12">
         <ResultInfo
           onlyOnKarma={filters.onlyOnKarma}
-          onShowAll={() => setOnlyOnKarma(false)}
+          onShowAll={handleShowAll}
           resultText={`Showing ${totalCount} result${totalCount !== 1 ? "s" : ""}`}
         />
       </div>
@@ -41,7 +69,7 @@ export function FundingMapPagination({ totalCount }: FundingMapPaginationProps) 
       <div className="flex flex-col gap-1 max-md:items-center">
         <ResultInfo
           onlyOnKarma={filters.onlyOnKarma}
-          onShowAll={() => setOnlyOnKarma(false)}
+          onShowAll={handleShowAll}
           resultText={`Showing ${startResult}-${endResult} of ${totalCount} results`}
         />
       </div>
@@ -52,7 +80,7 @@ export function FundingMapPagination({ totalCount }: FundingMapPaginationProps) 
           size="sm"
           className="h-8 gap-1 px-2"
           disabled={currentPage === 1}
-          onClick={() => setPage(currentPage - 1)}
+          onClick={() => trackPagination("prev", currentPage - 1)}
         >
           <ChevronLeft className="h-4 w-4" />
           <span className="max-sm:hidden">Previous</span>
@@ -78,7 +106,7 @@ export function FundingMapPagination({ totalCount }: FundingMapPaginationProps) 
               key={pageNumber}
               page={pageNumber}
               isActive={currentPage === pageNumber}
-              onClick={() => setPage(pageNumber)}
+              onClick={() => trackPagination("goto", pageNumber)}
             />
           );
         })}
@@ -88,7 +116,7 @@ export function FundingMapPagination({ totalCount }: FundingMapPaginationProps) 
           size="sm"
           className="h-8 gap-1 px-2"
           disabled={currentPage === totalPages}
-          onClick={() => setPage(currentPage + 1)}
+          onClick={() => trackPagination("next", currentPage + 1)}
         >
           <span className="max-sm:hidden">Next</span>
           <ChevronRight className="h-4 w-4" />

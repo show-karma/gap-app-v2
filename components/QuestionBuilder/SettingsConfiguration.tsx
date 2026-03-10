@@ -17,6 +17,7 @@ import { type SettingsConfigFormData, settingsConfigSchema } from "@/schemas/set
 import type { FormSchema } from "@/types/question-builder";
 import { formatDate } from "@/utilities/formatDate";
 import { getBrowseApplicationsUrl, getGatedApplyUrl } from "@/utilities/fundingPlatformUrls";
+import { useWhitelabel } from "@/utilities/whitelabel-context";
 import { PAGE_HEADER_CONTENT, PageHeader } from "../FundingPlatform/PageHeader";
 import { PlaceholderReference } from "../FundingPlatform/PlaceholderReference";
 import { ExternalLink } from "../Utilities/ExternalLink";
@@ -68,13 +69,16 @@ export function SettingsConfiguration({
   isEnrollmentPending = false,
 }: SettingsConfigurationProps) {
   const { communityId } = useParams() as { communityId: string };
+  const { isWhitelabel } = useWhitelabel();
+  const whitelabelOrigin =
+    isWhitelabel && typeof window !== "undefined" ? window.location.origin : undefined;
   const [copied, setCopied] = useState(false);
 
   const handleCopyGatedUrl = async () => {
     const accessCodeValue = watch("accessCode");
     if (!accessCodeValue || !programId) return;
 
-    const url = getGatedApplyUrl(communityId, programId, accessCodeValue);
+    const url = getGatedApplyUrl(communityId, programId, accessCodeValue, whitelabelOrigin);
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
@@ -422,7 +426,7 @@ export function SettingsConfiguration({
                     <div className="flex flex-row items-center space-x-2">
                       <ExternalLink
                         className="underline text-blue-500"
-                        href={getBrowseApplicationsUrl(communityId, programId)}
+                        href={getBrowseApplicationsUrl(communityId, programId, whitelabelOrigin)}
                       >
                         Browse All Applications
                       </ExternalLink>

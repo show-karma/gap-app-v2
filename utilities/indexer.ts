@@ -128,6 +128,8 @@ export const INDEXER = {
       `/v2/communities/${communityIdOrSlug}/metrics`,
     FUNDING_PROGRAMS: {
       BY_COMMUNITY: (communityId: string) => `/v2/funding-program-configs/community/${communityId}`,
+      BY_COMMUNITY_ACTIVE: (communityId: string, limit = 100) =>
+        `/v2/funding-program-configs/community/${communityId}?status=active&limit=${limit}`,
       GET: (programId: string) => `/v2/funding-program-configs/${programId}`,
       LIST: (community?: string) =>
         `/v2/funding-program-configs${community ? `?community=${community}` : ""}`,
@@ -162,6 +164,11 @@ export const INDEXER = {
       VERSIONS_TIMELINE: (referenceNumber: string) =>
         `/v2/funding-applications/${referenceNumber}/versions/timeline`,
       REVIEWERS: (applicationId: string) => `/v2/funding-applications/${applicationId}/reviewers`,
+      ACCESS: (referenceNumber: string) => `/v2/funding-applications/${referenceNumber}/access`,
+      MY_APPLICATIONS: (communitySlug: string) =>
+        `/v2/funding-applications/user/my-applications?communitySlug=${communitySlug}`,
+      MILESTONE_COMPLETIONS: (referenceNumber: string) =>
+        `/v2/funding-applications/${referenceNumber}/milestone-completions`,
     },
     AUTH: {
       PERMISSIONS: (params?: {
@@ -202,6 +209,7 @@ export const INDEXER = {
       GET_ALL: "/v2/program-registry/search",
       GET_BY_ID: (programId: string) => `/v2/program-registry/${programId}`,
       GET_FILTERS: "/v2/program-registry/filters",
+      GET_TYPES: "/v2/program-registry/types",
     },
     TRACKS: {
       LIST: (communityUID: string, includeArchived?: boolean) => {
@@ -293,11 +301,45 @@ export const INDEXER = {
         const query = params.toString();
         return `/v2/communities/${communityUID}/payouts${query ? `?${query}` : ""}`;
       },
+      COMMUNITY_PAYOUTS_PUBLIC: (
+        communityUID: string,
+        options?: {
+          page?: number;
+          limit?: number;
+          programId?: string;
+          status?: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
+          agreementStatus?: "signed" | "not_signed";
+          invoiceStatus?: "all_received" | "needs_invoices" | "has_invoices";
+          search?: string;
+          sortBy?:
+            | "project_title"
+            | "grant_title"
+            | "payout_amount"
+            | "disbursed_amount"
+            | "status";
+          sortOrder?: "asc" | "desc";
+        }
+      ) => {
+        const params = new URLSearchParams();
+        if (options?.page) params.set("page", options.page.toString());
+        if (options?.limit) params.set("limit", options.limit.toString());
+        if (options?.programId) params.set("programId", options.programId);
+        if (options?.status) params.set("status", options.status);
+        if (options?.agreementStatus) params.set("agreementStatus", options.agreementStatus);
+        if (options?.invoiceStatus) params.set("invoiceStatus", options.invoiceStatus);
+        if (options?.search) params.set("search", options.search);
+        if (options?.sortBy) params.set("sortBy", options.sortBy);
+        if (options?.sortOrder) params.set("sortOrder", options.sortOrder);
+        const query = params.toString();
+        return `/v2/communities/${communityUID}/payouts/public${query ? `?${query}` : ""}`;
+      },
     },
     PAYOUT_CONFIG: {
       SAVE: "/v2/payout-config",
       VALIDATE_BULK_IMPORT: "/v2/payout-config/bulk-import/validate",
       BY_COMMUNITY: (communityUID: string) => `/v2/payout-config/community/${communityUID}`,
+      BY_COMMUNITY_PUBLIC: (communityUID: string) =>
+        `/v2/payout-config/community/${communityUID}/public`,
       BY_GRANT: (grantUID: string) => `/v2/payout-config/grant/${grantUID}`,
       DELETE: (grantUID: string) => `/v2/payout-config/grant/${grantUID}`,
     },
@@ -662,6 +704,8 @@ export const INDEXER = {
     GET_CONFIG: (communityIdOrSlug: string) => `/v2/communities/${communityIdOrSlug}/kyc-config`,
     GET_BATCH_STATUSES: (communityIdOrSlug: string) =>
       `/v2/communities/${communityIdOrSlug}/kyc/batch-status/by-project-uid`,
+    GET_BATCH_STATUSES_PUBLIC: (communityIdOrSlug: string) =>
+      `/v2/communities/${communityIdOrSlug}/kyc/batch-status/by-project-uid/public`,
     GET_BATCH_STATUSES_BY_APP_REF: (communityIdOrSlug: string) =>
       `/v2/communities/${communityIdOrSlug}/kyc/batch-status/by-application-reference`,
     GET_FORM_URL: (communityIdOrSlug: string) =>

@@ -1,6 +1,8 @@
 "use client";
 
 import { AlertCircle, Search } from "lucide-react";
+import { useEffect, useRef } from "react";
+import { useMixpanel } from "@/hooks/useMixpanel";
 import { FUNDING_MAP_PAGE_SIZE } from "../constants/filter-options";
 import { useFundingFilters } from "../hooks/use-funding-filters";
 import { useFundingProgramByCompositeId, useFundingPrograms } from "../hooks/use-funding-programs";
@@ -28,6 +30,30 @@ function getProgramId(program: FundingProgramResponse): string {
 export function FundingMapList() {
   const { apiParams, filters, programId, setProgramId } = useFundingFilters();
   const { data, isLoading, isError, error } = useFundingPrograms(apiParams);
+  const { mixpanel } = useMixpanel("karma");
+  const hasTrackedPageView = useRef(false);
+
+  // Page-view tracking (fires once on mount)
+  useEffect(() => {
+    if (hasTrackedPageView.current) return;
+    hasTrackedPageView.current = true;
+    const urlParams = new URLSearchParams(window.location.search);
+    mixpanel.reportEvent({
+      event: "funding-map:page-view",
+      properties: {
+        referrer: document.referrer,
+        hasFiltersInUrl: urlParams.toString().length > 0,
+        initialFilters: {
+          search: filters.search,
+          status: filters.status,
+          categories: filters.categories,
+          grantTypes: filters.grantTypes,
+          onlyOnKarma: filters.onlyOnKarma,
+        },
+      },
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Fetch program from URL if programId is set
   const {
@@ -49,7 +75,11 @@ export function FundingMapList() {
   // Use program from URL query, or find from list as fallback
   const selectedProgram = programFromUrl ?? null;
 
+  // Track card clicks via ref flag for details-open source detection
+  const cardClickedRef = useRef(false);
+
   const handleProgramClick = (program: FundingProgramResponse) => {
+    cardClickedRef.current = true;
     // Use programId (preferred), or MongoDB _id as fallback for programs without programId
     // MongoDB _id is unique across the collection
     const id = program.programId || getProgramId(program);
@@ -62,6 +92,45 @@ export function FundingMapList() {
       setProgramId("");
     }
   };
+
+  // Track empty results
+  useEffect(() => {
+    if (!isLoading && !isError && programs.length === 0) {
+      mixpanel.reportEvent({
+        event: "funding-map:empty-results",
+        properties: {
+          activeFilters: {
+            searchLength: filters.search.length,
+            status: filters.status,
+            categories: filters.categories,
+            grantTypes: filters.grantTypes,
+            onlyOnKarma: filters.onlyOnKarma,
+          },
+        },
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading, isError, programs.length, filters]);
+
+  // Track load errors
+  useEffect(() => {
+    if (isError && error) {
+      mixpanel.reportEvent({
+        event: "funding-map:load-error",
+        properties: {
+          errorType: error.name,
+          activeFilters: {
+            searchLength: filters.search.length,
+            status: filters.status,
+            categories: filters.categories,
+            grantTypes: filters.grantTypes,
+            onlyOnKarma: filters.onlyOnKarma,
+          },
+        },
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isError, error, filters]);
 
   return (
     <section className="flex min-w-0 flex-1 flex-col gap-6">
@@ -78,11 +147,13 @@ export function FundingMapList() {
       {!isLoading && !isError && programs.length > 0 && (
         <div className="flex flex-col gap-6">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {programs.map((program) => (
+            {programs.map((program, index) => (
               <FundingMapCard
                 key={getProgramId(program)}
                 program={program}
                 onClick={() => handleProgramClick(program)}
+                cardPosition={index}
+                page={filters.page}
               />
             ))}
           </div>
@@ -96,6 +167,7 @@ export function FundingMapList() {
         onOpenChange={handleDialogClose}
         isLoading={isProgramLoading}
         isNotFound={isProgramNotFound}
+        cardClickedRef={cardClickedRef}
       />
     </section>
   );
@@ -149,7 +221,8 @@ function hasActiveFilters(filters: ReturnType<typeof useFundingFilters>["filters
     filters.ecosystems.length > 0 ||
     filters.networks.length > 0 ||
     filters.grantTypes.length > 0 ||
-    !filters.onlyOnKarma ||
-    filters.organizationFilter !== null
+    filters.onlyOnKarma ||
+    filters.organizationFilter !== null ||
+    (filters.selectedTypes?.length ?? 0) > 0
   );
 }

@@ -5,6 +5,8 @@ import { AlertTriangle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import type { Hex } from "viem";
+import { useProgramsWithConfig } from "@/features/programs/hooks/use-programs-with-config";
+import { useUserApplications } from "@/features/user-applications/hooks/use-user-applications";
 import { setPostLoginRedirect, useAuth } from "@/hooks/useAuth";
 import { useDashboardAdmin } from "@/hooks/useDashboardAdmin";
 import { useReviewerPrograms } from "@/hooks/usePermissions";
@@ -13,7 +15,9 @@ import { useStaff } from "@/src/core/rbac/hooks/use-staff-bridge";
 import { layoutTheme } from "@/src/helper/theme";
 import { PAGES } from "@/utilities/pages";
 import { fetchMyProjects } from "@/utilities/sdk/projects/fetchMyProjects";
+import { useWhitelabel } from "@/utilities/whitelabel-context";
 import { AdminSection } from "./AdminSection/AdminSection";
+import { ApplicationsSection } from "./ApplicationsSection/ApplicationsSection";
 import { DashboardEmptyState } from "./DashboardEmptyState";
 import { DashboardHeader } from "./DashboardHeader";
 import { DashboardLoading } from "./DashboardLoading";
@@ -24,6 +28,7 @@ import { SuperAdminSection } from "./SuperAdminSection/SuperAdminSection";
 export function Dashboard() {
   const router = useRouter();
   const { authenticated, address, ready } = useAuth();
+  const { isWhitelabel, communitySlug } = useWhitelabel();
   const {
     isRegistryAdmin,
     isLoading: isPermissionsLoading,
@@ -35,6 +40,8 @@ export function Dashboard() {
 
   const userAddress = address as Hex | undefined;
 
+  // Start all data fetches eagerly — don't wait for RBAC to finish.
+  // These hooks use `enabled` guards internally so they're safe to call early.
   const {
     data: projects = [],
     isLoading: isLoadingProjects,
@@ -48,6 +55,10 @@ export function Dashboard() {
   });
 
   const { communities: adminCommunities, isLoading: isAdminLoading } = useDashboardAdmin();
+
+  // Fetch applications + programs eagerly so they start in parallel with RBAC
+  const applicationsHook = useUserApplications(communitySlug ?? undefined);
+  const { programs } = useProgramsWithConfig(communitySlug ?? "");
 
   const hasProjects = projects.length > 0;
   const showReviews = hasReviewerPrograms;
@@ -68,10 +79,13 @@ export function Dashboard() {
 
   useEffect(() => {
     if (!ready || authenticated) return;
+    // In whitelabel mode, "/" is the community homepage — not a login page.
+    // Don't redirect; let the dashboard show its own unauthenticated state.
+    if (isWhitelabel) return;
 
     setPostLoginRedirect(`${PAGES.DASHBOARD}${window.location.hash}`);
     router.replace(PAGES.HOME);
-  }, [authenticated, ready, router]);
+  }, [authenticated, ready, router, isWhitelabel]);
 
   useEffect(() => {
     if (!ready || isLoading || !window.location.hash) return;
@@ -97,6 +111,11 @@ export function Dashboard() {
             </p>
           </div>
         ) : null}
+        <ApplicationsSection
+          communitySlug={communitySlug ?? undefined}
+          applicationsHook={applicationsHook}
+          programs={programs}
+        />
         <ProjectsSection
           projects={projects}
           isLoading={isLoadingProjects}

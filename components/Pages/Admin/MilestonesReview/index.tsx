@@ -1,7 +1,6 @@
 "use client";
 
 import { ArrowLeftIcon, ChevronLeftIcon, ExclamationTriangleIcon } from "@heroicons/react/20/solid";
-import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
 import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
@@ -12,6 +11,7 @@ import { useFundingApplicationByProjectUID } from "@/hooks/useFundingApplication
 import { useMilestoneCompletionVerification } from "@/hooks/useMilestoneCompletionVerification";
 import { useProjectGrantMilestones } from "@/hooks/useProjectGrantMilestones";
 import type { GrantMilestoneWithCompletion } from "@/services/milestones";
+import { Link } from "@/src/components/navigation/Link";
 import {
   PermissionProvider,
   useIsReviewer,

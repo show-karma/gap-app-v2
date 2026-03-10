@@ -71,6 +71,7 @@ const config: Config = {
   globalSetup: "./tests/global.js",
   setupFilesAfterEnv: ["./tests/setup.js", "./__tests__/navbar/setup.ts"],
   testMatch: ["**/?(*.)+(spec|test).[jt]s?(x)"],
+  testPathIgnorePatterns: ["/node_modules/", "/.next/", "<rootDir>/e2e/"],
 
   // Reduce memory usage
   maxWorkers: "50%",

@@ -30,6 +30,7 @@ import { useSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { PAGES } from "@/utilities/pages";
+import { LoadingManagePrograms } from "./Loading/ManagePrograms";
 import { LoadingProgramTable } from "./Loading/Programs";
 import { SearchDropdown } from "./SearchDropdown";
 
@@ -309,7 +310,9 @@ export const ManagePrograms = () => {
             </Link>
           </div>
         )}
-        {isAllowed ? (
+        {isPermissionsLoading ? (
+          <LoadingManagePrograms />
+        ) : isAllowed ? (
           isEditing ? (
             <div className="w-full">
               <AddProgram

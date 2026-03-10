@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
+import { Link } from "@/src/components/navigation/Link";
 import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
 import { useOwnerStore } from "@/store/owner";
 import { PAGES } from "@/utilities/pages";
