@@ -344,8 +344,9 @@ describe("Chain Payout Address Modal", () => {
 
       cy.get('[data-testid="enable-donations-button"]').click();
 
-      cy.get('[role="dialog"]').should("be.visible");
-      cy.get('[role="dialog"]').should("contain", "Set Payout Addresses");
+      // Use data-state to target the Radix Dialog, not the chatbot widget
+      cy.get('[role="dialog"][data-state="open"]').should("be.visible");
+      cy.get('[role="dialog"][data-state="open"]').should("contain", "Set Payout Addresses");
     });
   });
 
@@ -366,9 +367,10 @@ describe("Chain Payout Address Modal", () => {
 
       cy.get('[data-testid="enable-donations-button"]').click();
 
-      cy.get('[role="dialog"]').should("contain", "Optimism");
-      cy.get('[role="dialog"]').should("contain", "Base");
-      cy.get('[role="dialog"]').should("contain", "Arbitrum");
+      // viem chain names: "OP Mainnet", "Arbitrum One", "Base"
+      cy.get('[role="dialog"][data-state="open"]').should("contain", "OP Mainnet");
+      cy.get('[role="dialog"][data-state="open"]').should("contain", "Base");
+      cy.get('[role="dialog"][data-state="open"]').should("contain", "Arbitrum One");
     });
 
     it("should display chain icons", () => {
@@ -378,7 +380,7 @@ describe("Chain Payout Address Modal", () => {
 
       cy.get('[data-testid="enable-donations-button"]').click();
 
-      cy.get('[role="dialog"] img').should("have.length.at.least", 1);
+      cy.get('[role="dialog"][data-state="open"] img').should("have.length.at.least", 1);
     });
 
     it("should have input fields for each chain", () => {
@@ -388,7 +390,7 @@ describe("Chain Payout Address Modal", () => {
 
       cy.get('[data-testid="enable-donations-button"]').click();
 
-      cy.get('[role="dialog"] input[type="text"]').should("have.length.at.least", 1);
+      cy.get('[role="dialog"][data-state="open"] input[type="text"]').should("have.length.at.least", 1);
     });
 
     it("should close modal when clicking Cancel", () => {
@@ -397,11 +399,11 @@ describe("Chain Payout Address Modal", () => {
       setProjectOwnerViaStore();
 
       cy.get('[data-testid="enable-donations-button"]').click();
-      cy.get('[role="dialog"]').should("be.visible");
+      cy.get('[role="dialog"][data-state="open"]').should("be.visible");
 
-      cy.get('[role="dialog"]').contains("button", "Cancel").click();
+      cy.get('[role="dialog"][data-state="open"]').contains("button", "Cancel").click();
 
-      cy.get('[role="dialog"]').should("not.exist");
+      cy.get('[role="dialog"][data-state="open"]').should("not.exist");
     });
 
     it("should close modal when clicking X button", () => {
@@ -410,11 +412,11 @@ describe("Chain Payout Address Modal", () => {
       setProjectOwnerViaStore();
 
       cy.get('[data-testid="enable-donations-button"]').click();
-      cy.get('[role="dialog"]').should("be.visible");
+      cy.get('[role="dialog"][data-state="open"]').should("be.visible");
 
       cy.get('[data-testid="modal-close-button"]').click();
 
-      cy.get('[role="dialog"]').should("not.exist");
+      cy.get('[role="dialog"][data-state="open"]').should("not.exist");
     });
   });
 
@@ -435,9 +437,11 @@ describe("Chain Payout Address Modal", () => {
 
       cy.get('[data-testid="enable-donations-button"]').click();
 
-      cy.get('[role="dialog"] input[type="text"]').first().type("invalid-address");
+      // Short input triggers "Address must be 42 characters" (length check is first)
+      cy.get('[role="dialog"][data-state="open"] input[type="text"]').first().type("invalid-address");
 
-      cy.get('[role="dialog"]').should("contain", "Invalid");
+      // Validation is debounced (300ms) — Cypress retries automatically
+      cy.get('[role="dialog"][data-state="open"]').should("contain", "42 characters");
     });
 
     it("should show validation error for address without 0x prefix", () => {
@@ -447,9 +451,11 @@ describe("Chain Payout Address Modal", () => {
 
       cy.get('[data-testid="enable-donations-button"]').click();
 
-      cy.get('[role="dialog"] input[type="text"]').first().type("1234567890123456789012345678901234567890");
+      // 42-char string without 0x prefix to trigger the prefix validation
+      cy.get('[role="dialog"][data-state="open"] input[type="text"]').first()
+        .type("xx5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed");
 
-      cy.get('[role="dialog"]').should("contain", "0x");
+      cy.get('[role="dialog"][data-state="open"]').should("contain", "0x");
     });
 
     it("should show checkmark for valid address", () => {
@@ -459,9 +465,9 @@ describe("Chain Payout Address Modal", () => {
 
       cy.get('[data-testid="enable-donations-button"]').click();
 
-      cy.get('[role="dialog"] input[type="text"]').first().clear().type(VALID_ADDRESS);
+      cy.get('[role="dialog"][data-state="open"] input[type="text"]').first().clear().type(VALID_ADDRESS);
 
-      cy.get('[role="dialog"] svg.text-green-500').should("exist");
+      cy.get('[role="dialog"][data-state="open"] svg.text-green-500').should("exist");
     });
 
     it("should disable Save button when there are validation errors", () => {
@@ -471,9 +477,9 @@ describe("Chain Payout Address Modal", () => {
 
       cy.get('[data-testid="enable-donations-button"]').click();
 
-      cy.get('[role="dialog"] input[type="text"]').first().type("invalid");
+      cy.get('[role="dialog"][data-state="open"] input[type="text"]').first().type("invalid");
 
-      cy.get('[role="dialog"]').contains("button", "Save").should("be.disabled");
+      cy.get('[role="dialog"][data-state="open"]').contains("button", "Save").should("be.disabled");
     });
   });
 
@@ -495,7 +501,18 @@ describe("Chain Payout Address Modal", () => {
         });
       }).as("updateChainPayoutAddress");
 
-      // Mock project refresh after save
+      visitProject("regular");
+      waitForPageLoad();
+      setProjectOwnerViaStore();
+
+      cy.get('[data-testid="enable-donations-button"]').click();
+
+      cy.get('[role="dialog"][data-state="open"] input[type="text"]').first().clear().type(VALID_ADDRESS);
+
+      cy.get('[role="dialog"][data-state="open"] svg.text-green-500').should("exist");
+
+      // Register post-save GET intercept AFTER initial load so LIFO doesn't
+      // serve the updated data during the first page visit.
       cy.intercept("GET", `**/projects/${TEST_PROJECT_SLUG}`, (req) => {
         req.reply({
           statusCode: 200,
@@ -507,21 +524,11 @@ describe("Chain Payout Address Modal", () => {
         });
       }).as("getProject");
 
-      visitProject("regular");
-      waitForPageLoad();
-      setProjectOwnerViaStore();
-
-      cy.get('[data-testid="enable-donations-button"]').click();
-
-      cy.get('[role="dialog"] input[type="text"]').first().clear().type(VALID_ADDRESS);
-
-      cy.get('[role="dialog"] svg.text-green-500').should("exist");
-
-      cy.get('[role="dialog"]').contains("button", "Save").click();
+      cy.get('[role="dialog"][data-state="open"]').contains("button", "Save").click();
 
       cy.wait("@updateChainPayoutAddress");
 
-      cy.get('[role="dialog"]').should("not.exist");
+      cy.get('[role="dialog"][data-state="open"]').should("not.exist");
 
       cy.get('[role="status"]').should("contain", "success");
     });
@@ -530,7 +537,8 @@ describe("Chain Payout Address Modal", () => {
       cy.intercept("PUT", `**/v2/projects/*/chain-payout-address`, (req) => {
         req.reply({
           statusCode: 403,
-          body: { error: "Access denied" },
+          // fetchData reads err.response.data.message, not .error
+          body: { message: "Access denied" },
         });
       }).as("updateChainPayoutAddressFail");
 
@@ -540,18 +548,18 @@ describe("Chain Payout Address Modal", () => {
 
       cy.get('[data-testid="enable-donations-button"]').click();
 
-      cy.get('[role="dialog"] input[type="text"]').first().clear().type(VALID_ADDRESS);
+      cy.get('[role="dialog"][data-state="open"] input[type="text"]').first().clear().type(VALID_ADDRESS);
 
-      cy.get('[role="dialog"] svg.text-green-500').should("exist");
+      cy.get('[role="dialog"][data-state="open"] svg.text-green-500').should("exist");
 
-      cy.get('[role="dialog"]').contains("button", "Save").click();
+      cy.get('[role="dialog"][data-state="open"]').contains("button", "Save").click();
 
       cy.wait("@updateChainPayoutAddressFail");
 
-      cy.get('[role="dialog"]').should("be.visible");
+      cy.get('[role="dialog"][data-state="open"]').should("be.visible");
 
-      cy.get('[role="dialog"] .bg-red-600').should("be.visible");
-      cy.get('[role="dialog"] .bg-red-600').should("contain", "Access denied");
+      cy.get('[role="dialog"][data-state="open"] [role="alert"]').should("be.visible");
+      cy.get('[role="dialog"][data-state="open"] [role="alert"]').should("contain", "Access denied");
     });
 
     it("should show 'No changes to save' when nothing changed", () => {
@@ -566,11 +574,12 @@ describe("Chain Payout Address Modal", () => {
       waitForPageLoad();
       setProjectOwnerViaStore();
 
-      // Open from menu since Enable Donations won't show
-      cy.get('[data-testid="project-options-menu"]').click();
+      // Open from menu since Enable Donations won't show.
+      // Filter to visible to avoid desktop+mobile duplicate.
+      cy.get('[data-testid="project-options-menu"]').filter(':visible').first().click();
       cy.contains("Set Payout Address").click();
 
-      cy.get('[role="dialog"]').contains("button", "Update").click();
+      cy.get('[role="dialog"][data-state="open"]').contains("button", "Update").click();
 
       cy.get('[role="status"]').should("contain", "No changes");
     });
@@ -589,7 +598,7 @@ describe("Chain Payout Address Modal", () => {
       waitForPageLoad();
       setProjectOwnerViaStore();
 
-      cy.get('[data-testid="project-options-menu"]').click();
+      cy.get('[data-testid="project-options-menu"]').filter(':visible').first().click();
 
       cy.contains("Set Payout Address").should("be.visible");
     });
@@ -606,13 +615,14 @@ describe("Chain Payout Address Modal", () => {
       waitForPageLoad();
       setProjectOwnerViaStore();
 
-      cy.get('[data-testid="project-options-menu"]').click();
+      cy.get('[data-testid="project-options-menu"]').filter(':visible').first().click();
       cy.contains("Set Payout Address").click();
 
-      cy.get('[role="dialog"]').should("be.visible");
-      cy.get('[role="dialog"]').should("contain", "Manage Payout Addresses");
+      cy.get('[role="dialog"][data-state="open"]').should("be.visible");
+      cy.get('[role="dialog"][data-state="open"]').should("contain", "Manage Payout Addresses");
 
-      cy.get('[role="dialog"] input[type="text"]').first().should("have.value", VALID_ADDRESS);
+      // Chain 10 (OP Mainnet) has VALID_ADDRESS set in mockProjectWithAddresses
+      cy.get('[role="dialog"][data-state="open"] #address-10').should("have.value", VALID_ADDRESS);
     });
 
     it("should NOT show Set Payout Address in menu for non-authorized users", () => {
@@ -660,7 +670,7 @@ describe("Chain Payout Address Modal", () => {
       waitForPageLoad();
       setStaffViaStore();
 
-      cy.get('[data-testid="project-options-menu"]').click();
+      cy.get('[data-testid="project-options-menu"]').filter(':visible').first().click();
       cy.contains("Set Payout Address").should("be.visible");
     });
   });

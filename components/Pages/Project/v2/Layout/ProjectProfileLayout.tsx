@@ -1,11 +1,23 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { ProgressDialog } from "@/components/Dialogs/ProgressDialog";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { ShareDialog } from "@/components/Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/ShareDialog";
+
+// Lazy-load ShareDialog because js-confetti (a heavy canvas library) is imported
+// at the module level. Eagerly loading it in the main layout chunk can block
+// client-side hydration in some environments (e.g., Cypress Electron).
+const ShareDialog = dynamic(
+  () =>
+    import(
+      "@/components/Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/ShareDialog"
+    ).then((mod) => mod.ShareDialog),
+  { ssr: false }
+);
+
 import { EndorsementDialog } from "@/components/Pages/Project/Impact/EndorsementDialog";
 import { IntroDialog } from "@/components/Pages/Project/IntroDialog";
 import {
