@@ -32,9 +32,28 @@ const waitForStoreExposure = () => {
  * clear diagnostics when the component fails to reach the success state.
  */
 const waitForLayoutReady = () => {
+  // Log the page state for CI debugging
+  cy.document().then((doc) => {
+    const body = doc.body;
+    const allTestIds = Array.from(body.querySelectorAll("[data-testid]"))
+      .map((el) => (el as HTMLElement).dataset.testid)
+      .slice(0, 20);
+    cy.log(`[diag] data-testids on page: ${JSON.stringify(allTestIds)}`);
+    // Check for error boundary fallback
+    const errorBoundary = body.querySelector('[data-testid="error-boundary-fallback"]');
+    if (errorBoundary) {
+      cy.log(`[diag] ERROR BOUNDARY: ${(errorBoundary as HTMLElement).dataset.errorMessage}`);
+    }
+    // Check for Next.js error overlay
+    const nextError = body.querySelector("nextjs-portal");
+    if (nextError) {
+      cy.log("[diag] Next.js error overlay detected");
+    }
+  });
+
   // First, wait for any layout state to appear (confirms component mounted)
   cy.get(
-    '[data-testid="project-profile-layout"], [data-testid="layout-loading"], [data-testid="project-not-found"]',
+    '[data-testid="project-profile-layout"], [data-testid="layout-loading"], [data-testid="project-not-found"], [data-testid="error-boundary-fallback"], [data-testid="project-profile-layout-skeleton"]',
     { timeout: 30000 }
   ).should("exist");
   // Then wait specifically for the success state
@@ -67,6 +86,40 @@ const setStaffViaStore = () => {
     stores.setIsOwnerLoading(false);
   });
   waitForLayoutReady();
+};
+
+/**
+ * Visit a project page with authentication set via onBeforeLoad.
+ * This ensures localStorage auth state is set on the correct origin
+ * BEFORE the page JavaScript reads it, avoiding the about:blank
+ * localStorage origin mismatch.
+ */
+const visitProjectPageAsUser = (
+  url: string,
+  userType: "regular" | "admin" = "regular"
+) => {
+  const address =
+    userType === "admin"
+      ? "0xADMIN4567890123456789012345678901234567890"
+      : "0x1234567890123456789012345678901234567890";
+  const token = `mock-token-${userType}`;
+
+  cy.visit(url, {
+    onBeforeLoad(win) {
+      win.localStorage.setItem(
+        "privy:auth_state",
+        JSON.stringify({
+          authenticated: true,
+          user: {
+            id: `did:privy:${address}`,
+            wallet: { address, chainId: 10 },
+          },
+          ready: true,
+        })
+      );
+      win.localStorage.setItem("privy:token", token);
+    },
+  });
 };
 
 describe("Chain Payout Address Modal", () => {
@@ -131,6 +184,13 @@ describe("Chain Payout Address Modal", () => {
   };
 
   beforeEach(() => {
+    // Clear all browser storage to ensure clean state between tests.
+    // Next.js App Router may cache route data in sessionStorage which
+    // can prevent full re-renders on subsequent cy.visit() calls.
+    cy.clearAllLocalStorage();
+    cy.clearAllSessionStorage();
+    cy.clearAllCookies();
+
     // Catch-all FIRST (lowest priority in Cypress LIFO matching).
     // Prevents unhandled requests from reaching the real staging indexer
     // (behind Cloudflare). Specific intercepts registered after this
@@ -269,7 +329,7 @@ describe("Chain Payout Address Modal", () => {
         });
       }).as("getProjectOwner");
 
-      cy.visit(`/project/${TEST_PROJECT_SLUG}`);
+      visitProjectPageAsUser(`/project/${TEST_PROJECT_SLUG}`, "regular");
       waitForPageLoad();
       setProjectOwnerViaStore();
 
