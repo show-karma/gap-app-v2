@@ -137,6 +137,22 @@ jest.mock("@/store/modals/progress", () => ({
   }),
 }));
 
+// Mock SidebarProfileCard
+jest.mock("../SidePanel/SidebarProfileCard", () => ({
+  SidebarProfileCard: ({ project }: any) => (
+    <div data-testid="sidebar-profile-card">{project?.details?.title}</div>
+  ),
+}));
+
+// Mock ui/button to avoid shadcn dependencies
+jest.mock("@/components/ui/button", () => ({
+  Button: ({ children, onClick, className, ...props }: any) => (
+    <button onClick={onClick} className={className} {...props}>
+      {children}
+    </button>
+  ),
+}));
+
 // Mock community admin store
 jest.mock("@/store/communityAdmin", () => ({
   useCommunityAdminStore: () => ({
@@ -495,7 +511,7 @@ describe("ProjectSidePanel", () => {
       render(<ProjectSidePanel project={mockProject} />);
 
       const sidePanel = screen.getByTestId("project-side-panel");
-      expect(sidePanel).toHaveClass("w-[324px]");
+      expect(sidePanel).toHaveClass("w-[400px]");
     });
   });
 

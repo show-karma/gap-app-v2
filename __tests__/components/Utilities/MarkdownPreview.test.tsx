@@ -3,7 +3,7 @@ import "@testing-library/jest-dom";
 
 // Mock next-themes
 jest.mock("next-themes", () => ({
-  useTheme: () => ({ theme: "light" }),
+  useTheme: () => ({ resolvedTheme: "light" }),
 }));
 
 // Mock CSS module
@@ -70,7 +70,7 @@ describe("MarkdownPreview", () => {
     it("code element has base styling classes", () => {
       render(<MarkdownPreview source="```js\nconst x = 1;\n```" />);
       const code = document.querySelector("code");
-      expect(code).toHaveClass("bg-zinc-600");
+      expect(code).toHaveClass("bg-neutral-200");
       expect(code).toHaveClass("p-2");
       expect(code).toHaveClass("rounded-md");
     });

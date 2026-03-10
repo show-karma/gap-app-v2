@@ -53,7 +53,7 @@ export function CommentMarkdownInput({
   );
 
   return (
-    // biome-ignore lint/a11y/noStaticElementInteractions: wrapper div for MDEditor with Ctrl+Enter handler
+    // biome-ignore lint/a11y/noStaticElementInteractions: MDEditor wrapper needs keyDown for Cmd+Enter submit
     <div
       data-color-mode={mounted ? colorMode : "light"}
       className={cn(

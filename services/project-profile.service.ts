@@ -101,21 +101,49 @@ export function transformGrantsToMilestones(grants: Grant[]): UnifiedMilestone[]
 }
 
 /**
- * Combines milestones, impacts, and grants into a unified activity list.
+ * Transforms endorsements into unified milestone format for timeline items.
+ *
+ * @param endorsements - Array of project endorsements
+ * @returns Array of UnifiedMilestone items with type "endorsement"
+ */
+export function transformEndorsementsToMilestones(
+  endorsements: Array<{ uid: string; endorsedBy: string; comment?: string; createdAt: string }>
+): UnifiedMilestone[] {
+  return endorsements.map((e) => ({
+    uid: `endorsement-${e.uid}`,
+    type: "endorsement" as const,
+    title: "Endorsement",
+    createdAt: e.createdAt,
+    completed: false,
+    chainID: 0,
+    refUID: e.uid,
+    source: {},
+    endorsement: {
+      endorsedBy: e.endorsedBy,
+      comment: e.comment,
+    },
+  }));
+}
+
+/**
+ * Combines milestones, impacts, grants, and endorsements into a unified activity list.
  *
  * @param milestones - Array of milestones from useProjectUpdates
  * @param impacts - Array of impacts from useProjectImpacts
  * @param grants - Optional array of grants for "Grant Received" items
+ * @param endorsements - Optional array of project endorsements
  * @returns Combined array of UnifiedMilestone items
  */
 export function combineUpdatesAndImpacts(
   milestones: UnifiedMilestone[],
   impacts: ProjectImpact[],
-  grants: Grant[] = []
+  grants: Grant[] = [],
+  endorsements: Array<{ uid: string; endorsedBy: string; comment?: string; createdAt: string }> = []
 ): UnifiedMilestone[] {
   const impactItems = transformImpactsToMilestones(impacts);
   const grantItems = transformGrantsToMilestones(grants);
-  return [...milestones, ...impactItems, ...grantItems];
+  const endorsementItems = transformEndorsementsToMilestones(endorsements);
+  return [...milestones, ...impactItems, ...grantItems, ...endorsementItems];
 }
 
 /**
@@ -180,7 +208,16 @@ export function calculateProfileStats(
   );
   const endorsementsCount = uniqueEndorsers.size;
   const grantsCount = grants.length;
-  const lastUpdate = updates.length > 0 ? new Date(updates[0].createdAt) : undefined;
+  const lastUpdate =
+    updates.length > 0
+      ? new Date(
+          updates.reduce((latest, item) =>
+            new Date(item.createdAt).getTime() > new Date(latest.createdAt).getTime()
+              ? item
+              : latest
+          ).createdAt
+        )
+      : undefined;
 
   // Calculate completion rate (only count actual milestones, not updates/impacts)
   const totalMilestones = countActualMilestones(updates);
@@ -211,7 +248,13 @@ export function aggregateProjectProfileData(
   milestones: UnifiedMilestone[],
   impacts: ProjectImpact[]
 ): ProjectProfileData {
-  const allUpdates = combineUpdatesAndImpacts(milestones, impacts, grants);
+  const endorsements = (project?.endorsements || []) as Array<{
+    uid: string;
+    endorsedBy: string;
+    comment?: string;
+    createdAt: string;
+  }>;
+  const allUpdates = combineUpdatesAndImpacts(milestones, impacts, grants, endorsements);
   const milestonesCount = countActualMilestones(allUpdates);
   const completedCount = countCompletedMilestones(allUpdates);
   const isVerified = determineProjectVerification(grants);
@@ -256,15 +299,19 @@ export function sortActivities(
  */
 export function getActivityFilterType(milestone: UnifiedMilestone): ActivityFilterType {
   switch (milestone.type) {
-    case "grant":
-    case "grant_update":
     case "grant_received":
       return "funding";
-    case "project":
+    case "grant":
     case "milestone":
+      return "milestones";
+    case "grant_update":
+      return "updates";
+    case "project":
     case "update":
     case "activity":
       return "updates";
+    case "endorsement":
+      return "endorsements";
     case "impact":
       return "other";
     default:

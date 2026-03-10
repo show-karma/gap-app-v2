@@ -19,10 +19,15 @@ interface SendEmailResponse {
   failedCount: number;
 }
 
-export async function getGranteeEmails(programId: string): Promise<GranteeEmail[]> {
-  const [data, error] = await fetchData<{ emails: GranteeEmail[] }>(
-    `/v2/email-grantees/program/${programId}/emails`
-  );
+export async function getGranteeEmails(
+  programId: string,
+  statuses?: string[]
+): Promise<GranteeEmail[]> {
+  let url = `/v2/email-grantees/program/${programId}/emails`;
+  if (statuses && statuses.length > 0) {
+    url += `?status=${statuses.join(",")}`;
+  }
+  const [data, error] = await fetchData<{ emails: GranteeEmail[] }>(url);
   if (error) throw new Error(error);
   if (!data || !Array.isArray(data.emails)) {
     throw new Error("Invalid response: expected emails array");

@@ -308,6 +308,9 @@ importers:
       react-virtualized:
         specifier: ^9.22.5
         version: 9.22.6(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      react-wrap-balancer:
+        specifier: ^1.1.1
+        version: 1.1.1(react@19.2.1)
       rehype-external-links:
         specifier: ^3.0.0
         version: 3.0.0
@@ -11236,6 +11239,11 @@ packages:
     peerDependencies:
       react: ^16.3.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
       react-dom: ^16.3.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+
+  react-wrap-balancer@1.1.1:
+    resolution: {integrity: sha512-AB+l7FPRWl6uZ28VcJ8skkwLn2+UC62bjiw8tQUrZPlEWDVnR9MG0lghyn7EyxuJSsFEpht4G+yh2WikEqQ/5Q==}
+    peerDependencies:
+      react: '>=16.8.0 || ^17.0.0 || ^18'
 
   react@19.2.1:
     resolution: {integrity: sha512-DGrYcCWK7tvYMnWh79yrPHt+vdx9tY+1gPZa7nJQtO/p8bLTDaHp4dzwEhQB7pZ4Xe3ok4XKuEPrVuc+wlpkmw==}
@@ -29304,6 +29312,10 @@ snapshots:
       react: 19.2.1
       react-dom: 19.2.1(react@19.2.1)
       react-lifecycles-compat: 3.0.4
+
+  react-wrap-balancer@1.1.1(react@19.2.1):
+    dependencies:
+      react: 19.2.1
 
   react@19.2.1: {}
 
