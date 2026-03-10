@@ -13,7 +13,10 @@ import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useGap } from "@/hooks/useGap";
-import { useMilestoneImpactAnswers } from "@/hooks/useMilestoneImpactAnswers";
+import {
+  MILESTONE_IMPACT_QUERY_KEY,
+  useMilestoneImpactAnswers,
+} from "@/hooks/useMilestoneImpactAnswers";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
@@ -319,7 +322,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
                 // Send outputs and deliverables data
                 await sendOutputsAndDeliverables(milestone.uid, data);
                 await queryClient.invalidateQueries({
-                  queryKey: ["milestoneImpactAnswers", milestone.uid],
+                  queryKey: [MILESTONE_IMPACT_QUERY_KEY, milestone.uid],
                 });
 
                 afterSubmit?.();
@@ -435,7 +438,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
                 // Send outputs and deliverables data
                 await sendOutputsAndDeliverables(milestone.uid, data);
                 await queryClient.invalidateQueries({
-                  queryKey: ["milestoneImpactAnswers", milestone.uid],
+                  queryKey: [MILESTONE_IMPACT_QUERY_KEY, milestone.uid],
                 });
 
                 closeShareDialog();
