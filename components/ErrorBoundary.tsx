@@ -28,6 +28,16 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
+    // Expose error on window for E2E test debugging
+    if (typeof window !== "undefined") {
+      (
+        window as Window & { __LAST_ERROR_BOUNDARY__?: { message: string; stack?: string } }
+      ).__LAST_ERROR_BOUNDARY__ = {
+        message: error.message,
+        stack: error.stack,
+      };
+    }
+
     if (this.props.onError) {
       this.props.onError(error, errorInfo);
     }

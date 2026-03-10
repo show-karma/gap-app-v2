@@ -165,6 +165,17 @@ describe("Chain Payout Address Modal", () => {
       cy.visit(`/project/${TEST_PROJECT_SLUG}`);
       waitForPageLoad();
 
+      // Diagnostic: capture ErrorBoundary crash details for CI debugging
+      // eslint-disable-next-line cypress/no-unnecessary-waiting
+      cy.wait(5000);
+      cy.window().then((win) => {
+        const err = (win as Window & { __LAST_ERROR_BOUNDARY__?: { message: string; stack?: string } }).__LAST_ERROR_BOUNDARY__;
+        if (err) {
+          console.log("[E2E DEBUG] ErrorBoundary error:", err.message);
+          console.log("[E2E DEBUG] Stack:", err.stack?.split("\n").slice(0, 8).join("\n"));
+        }
+      });
+
       // Button should be visible for project owner
       cy.get('[data-testid="enable-donations-button"]', { timeout: 15000 }).should("be.visible");
       cy.get('[data-testid="enable-donations-button"]').should("contain", "Set up payout address");
