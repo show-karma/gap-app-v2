@@ -162,46 +162,8 @@ describe("Chain Payout Address Modal", () => {
         });
       }).as("getProjectOwner");
 
-      // Capture console.error calls BEFORE page loads — React always logs
-      // to console.error when an ErrorBoundary catches a render error.
-      // This works regardless of Next.js build cache.
-      cy.on("window:before:load", (win) => {
-        const origError = win.console.error;
-        (win as Window & { __consoleErrors?: string[] }).__consoleErrors = [];
-        win.console.error = (...args: unknown[]) => {
-          (win as Window & { __consoleErrors?: string[] }).__consoleErrors?.push(
-            args.map((a) => (a instanceof Error ? `${a.message}\n${a.stack}` : String(a))).join(" ")
-          );
-          origError.apply(win.console, args);
-        };
-      });
-
       cy.visit(`/project/${TEST_PROJECT_SLUG}`);
       waitForPageLoad();
-
-      // Wait for async rendering to complete
-      // eslint-disable-next-line cypress/no-unnecessary-waiting
-      cy.wait(5000);
-
-      // If ErrorBoundary fallback is visible in DOM, dump captured console errors
-      cy.get("body").then(($body) => {
-        const hasErrorBoundary =
-          $body.find(".bg-red-50, [class*='bg-red']").length > 0 ||
-          $body.text().includes("Unable to load project") ||
-          $body.text().includes("Something went wrong");
-
-        if (hasErrorBoundary) {
-          cy.window().then((win) => {
-            const errors = (win as Window & { __consoleErrors?: string[] }).__consoleErrors || [];
-            const errorText = errors.length > 0
-              ? errors.slice(0, 5).join("\n---\n")
-              : "(no console.error calls captured)";
-            throw new Error(
-              `ErrorBoundary visible in DOM. Captured console.error calls:\n${errorText}`
-            );
-          });
-        }
-      });
 
       // Button should be visible for project owner
       cy.get('[data-testid="enable-donations-button"]', { timeout: 15000 }).should("be.visible");
