@@ -90,7 +90,7 @@ export default function CommunitiesToAdminPage() {
     {},
     { enabled: authenticated }
   );
-  const isSuperAdmin = permissions?.roles.roles.includes(Role.SUPER_ADMIN) ?? false;
+  const isSuperAdmin = permissions?.roles?.roles?.includes(Role.SUPER_ADMIN) ?? false;
   const { communities: userAdminCommunities, isLoading: isLoadingUserCommunities } =
     useCommunitiesStore();
 

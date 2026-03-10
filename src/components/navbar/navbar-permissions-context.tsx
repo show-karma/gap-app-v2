@@ -83,7 +83,7 @@ export function NavbarPermissionsProvider({ children }: NavbarPermissionsProvide
   const isOwner = useOwnerStore((state) => state.isOwner);
 
   const value = useMemo<NavbarPermissionsContextValue>(() => {
-    const isStaff = permissions?.roles.roles.includes(Role.SUPER_ADMIN) ?? false;
+    const isStaff = permissions?.roles?.roles?.includes(Role.SUPER_ADMIN) ?? false;
     const isCommunityAdmin = permissions?.isCommunityAdmin ?? false;
     const isReviewer = permissions?.isReviewer ?? false;
     const isProgramCreator = permissions?.isProgramCreator ?? false;

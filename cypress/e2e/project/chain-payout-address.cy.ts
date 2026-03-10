@@ -165,32 +165,6 @@ describe("Chain Payout Address Modal", () => {
       cy.visit(`/project/${TEST_PROJECT_SLUG}`);
       waitForPageLoad();
 
-      // Wait for content to load and check for errors
-      // eslint-disable-next-line cypress/no-unnecessary-waiting
-      cy.wait(3000);
-      cy.get("body").then(($body) => {
-        const text = $body.text();
-        if (text.includes("Unable to load project")) {
-          // ErrorBoundary triggered - extract the error for debugging
-          cy.window().then((win) => {
-            const err = (win as Window & { __LAST_ERROR_BOUNDARY__?: { message: string; stack?: string } }).__LAST_ERROR_BOUNDARY__;
-            if (err) {
-              // console.log appears in Cypress terminal output (cy.log does NOT)
-              console.log("[E2E DEBUG] ErrorBoundary error:", err.message);
-              console.log("[E2E DEBUG] Stack:", err.stack?.split("\n").slice(0, 5).join("\n"));
-            } else {
-              console.log("[E2E DEBUG] ErrorBoundary triggered but no error captured on window");
-            }
-          });
-        }
-        if (text.includes("Project Not Found")) {
-          console.log("[E2E DEBUG] Project Not Found page is showing");
-        }
-        if ($body.find("[data-testid='layout-loading']").length > 0) {
-          console.log("[E2E DEBUG] Loading skeleton is still showing after 3s");
-        }
-      });
-
       // Button should be visible for project owner
       cy.get('[data-testid="enable-donations-button"]', { timeout: 15000 }).should("be.visible");
       cy.get('[data-testid="enable-donations-button"]').should("contain", "Set up payout address");
