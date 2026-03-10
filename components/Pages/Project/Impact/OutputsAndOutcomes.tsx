@@ -310,7 +310,8 @@ export const OutputsAndOutcomes = () => {
             const form = forms.find((f) => f.id === item.id);
             const lastUpdated = filteredOutputs
               .find((subItem) => item.id === subItem.id)
-              ?.datapoints?.sort(
+              ?.datapoints?.filter((dp) => dp.value !== 0 && dp.value !== "0")
+              .sort(
                 (a, b) =>
                   new Date(b.endDate || new Date().toISOString()).getTime() -
                   new Date(a.endDate || new Date().toISOString()).getTime()
@@ -342,7 +343,7 @@ export const OutputsAndOutcomes = () => {
                     <div className="flex flex-row gap-2 items-center">
                       {lastUpdated ? (
                         <span className="text-sm text-gray-500 dark:text-zinc-400">
-                          Last updated {formatDate(new Date(lastUpdated), "UTC")}
+                          Last activity {formatDate(new Date(lastUpdated), "UTC")}
                         </span>
                       ) : null}
                       {autosyncedIndicators.find((i) => i.name === item.name) && (

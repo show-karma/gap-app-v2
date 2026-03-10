@@ -258,7 +258,7 @@ export const UniqueUsersSection = ({ datapoints, indicatorName }: UniqueUsersSec
               </Title>
               {selectedDp && (
                 <span className="text-xs text-gray-400 dark:text-zinc-500">
-                  Last updated: {formatDate(new Date(selectedDp.endDate), "UTC")}
+                  Last activity: {formatDate(new Date(selectedDp.endDate), "UTC")}
                 </span>
               )}
             </div>
