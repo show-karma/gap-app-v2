@@ -16,6 +16,7 @@ interface DatePickerProps {
   buttonClassName?: string;
   clearButtonClassName?: string;
   clearButtonFn?: () => void;
+  ariaLabel?: string;
 }
 
 export const DatePicker = ({
@@ -28,6 +29,7 @@ export const DatePicker = ({
   buttonClassName,
   clearButtonClassName,
   clearButtonFn,
+  ariaLabel,
 }: DatePickerProps) => {
   return (
     <div className={className}>
@@ -38,6 +40,7 @@ export const DatePicker = ({
               "w-max text-sm flex-row flex gap-2 items-center bg-white dark:bg-zinc-800 px-4 py-2 rounded-md border border-gray-200 dark:border-zinc-700",
               buttonClassName
             )}
+            aria-label={ariaLabel}
           >
             {selected ? formatDate(selected) : <span>{placeholder}</span>}
             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />

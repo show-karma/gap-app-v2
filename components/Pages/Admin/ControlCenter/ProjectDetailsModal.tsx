@@ -573,6 +573,7 @@ export function ProjectDetailsModal({
                       maxDate={new Date()}
                       placeholder="Pick a date"
                       buttonClassName="h-6 text-xs px-2 py-0.5 bg-white dark:bg-zinc-900"
+                      ariaLabel="Set agreement signed date"
                     />
                     {toggleAgreementMutation.isPending && (
                       <span className="text-[11px] text-gray-400 dark:text-zinc-500 animate-pulse">
