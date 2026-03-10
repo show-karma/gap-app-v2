@@ -258,9 +258,9 @@ describe("KarmaProfileLinkInput Component", () => {
         expect(screen.getByText("Test Project")).toBeInTheDocument();
       });
 
-      // Find and click the clear button (X icon button)
-      const clearButton = screen.getByRole("button");
-      fireEvent.click(clearButton);
+      // Find and click the Remove button on the selected project card
+      const removeButton = screen.getByTestId("remove-project-button");
+      fireEvent.click(removeButton);
 
       // Verify selection is cleared
       await waitFor(() => {
