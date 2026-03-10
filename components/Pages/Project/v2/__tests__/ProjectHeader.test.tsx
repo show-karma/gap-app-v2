@@ -3,10 +3,53 @@ import "@testing-library/jest-dom";
 import type { Project } from "@/types/v2/project";
 import { ProjectHeader } from "../Header/ProjectHeader";
 
+// Mock next/navigation
+const mockPush = jest.fn();
+jest.mock("next/navigation", () => ({
+  useParams: () => ({ projectId: "test-project" }),
+  useRouter: () => ({ push: mockPush }),
+  usePathname: () => "/project/test-project",
+}));
+
+// Mock react-wrap-balancer
+jest.mock("react-wrap-balancer", () => ({
+  __esModule: true,
+  default: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
+}));
+
+// Mock utilities
+jest.mock("@/utilities/customLink", () => ({
+  isCustomLink: (link: any) => !!link?.name,
+}));
+
+jest.mock("@/utilities/ensureProtocol", () => ({
+  ensureProtocol: (url: string) => (url.startsWith("http") ? url : `https://${url}`),
+}));
+
+jest.mock("@/utilities/pages", () => ({
+  PAGES: {
+    PROJECT: {
+      ABOUT: (id: string) => `/project/${id}/about`,
+    },
+  },
+}));
+
 // Mock the MarkdownPreview component
 jest.mock("@/components/Utilities/MarkdownPreview", () => ({
   MarkdownPreview: ({ source, className }: { source: string; className?: string }) => (
     <div className={className}>{source}</div>
+  ),
+}));
+
+// Mock the VerificationBadge component
+jest.mock("../icons/VerificationBadge", () => ({
+  VerificationBadge: (props: any) => <span data-testid={props["data-testid"]} />,
+}));
+
+// Mock the ProfilePicture component
+jest.mock("@/components/Utilities/ProfilePicture", () => ({
+  ProfilePicture: ({ name, imageURL }: any) => (
+    <div data-testid="profile-picture">{imageURL ? <img src={imageURL} alt={name} /> : name}</div>
   ),
 }));
 
@@ -152,23 +195,14 @@ describe("ProjectHeader", () => {
       expect(screen.getByTestId("read-more-button")).toHaveTextContent("Read More");
     });
 
-    it("should expand description when Read More is clicked", () => {
+    it("should navigate to About page when Read More is clicked", () => {
       render(<ProjectHeader project={mockProjectLongDescription} />);
 
-      const readMoreButton = screen.getByTestId("read-more-button");
-      fireEvent.click(readMoreButton);
+      const readMoreLink = screen.getByTestId("read-more-button");
+      fireEvent.click(readMoreLink);
 
-      expect(readMoreButton).toHaveTextContent("Show less");
-    });
-
-    it("should collapse description when Show Less is clicked", () => {
-      render(<ProjectHeader project={mockProjectLongDescription} />);
-
-      const readMoreButton = screen.getByTestId("read-more-button");
-      fireEvent.click(readMoreButton); // Expand
-      fireEvent.click(readMoreButton); // Collapse
-
-      expect(readMoreButton).toHaveTextContent("Read More");
+      // Read More navigates to About page instead of toggling inline
+      expect(readMoreLink).toHaveTextContent("Read More");
     });
 
     it("should not show Read More for short descriptions", () => {

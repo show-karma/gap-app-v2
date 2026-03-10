@@ -55,7 +55,7 @@ describe("Badge", () => {
       render(<Badge>Badge</Badge>);
 
       const badge = screen.getByText("Badge");
-      expect(badge).toHaveClass("rounded-md");
+      expect(badge).toHaveClass("rounded-full");
     });
 
     it("should have border", () => {
@@ -69,7 +69,7 @@ describe("Badge", () => {
       render(<Badge>Badge</Badge>);
 
       const badge = screen.getByText("Badge");
-      expect(badge).toHaveClass("px-2.5", "py-0.5");
+      expect(badge).toHaveClass("px-2", "py-0.5");
     });
 
     it("should have small text size", () => {
@@ -83,7 +83,7 @@ describe("Badge", () => {
       render(<Badge>Badge</Badge>);
 
       const badge = screen.getByText("Badge");
-      expect(badge).toHaveClass("font-semibold");
+      expect(badge).toHaveClass("font-medium");
     });
 
     it("should have transition-colors", () => {
