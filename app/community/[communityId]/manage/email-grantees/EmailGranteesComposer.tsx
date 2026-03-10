@@ -6,6 +6,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { Spinner } from "@/components/Utilities/Spinner";
 import type { FundingProgram } from "@/services/fundingPlatformService";
 import fetchData from "@/utilities/fetchData";
@@ -316,26 +317,16 @@ export function EmailGranteesComposer({ programs }: EmailGranteesComposerProps) 
               />
             </div>
 
-            <div>
-              <label
-                htmlFor="email-body"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-              >
-                Message
-                <span className="ml-1 text-xs font-normal text-gray-400">
-                  (supports markdown: **bold**, *italic*, [links](url))
-                </span>
-              </label>
-              <textarea
-                id="email-body"
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
-                placeholder="Write your message here..."
-                rows={10}
-                maxLength={50000}
-                className="w-full rounded-lg border border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-4 py-3 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none resize-y"
-              />
-            </div>
+            <MarkdownEditor
+              label="Message"
+              value={body}
+              onChange={(val) => setBody(val)}
+              placeholder="Write your message here..."
+              height={300}
+              minHeight={200}
+              maxLength={50000}
+              showCharacterCount
+            />
           </div>
 
           <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200 dark:border-zinc-700">
