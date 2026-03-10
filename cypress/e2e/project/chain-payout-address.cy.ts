@@ -165,14 +165,22 @@ describe("Chain Payout Address Modal", () => {
       cy.visit(`/project/${TEST_PROJECT_SLUG}`);
       waitForPageLoad();
 
-      // Diagnostic: capture ErrorBoundary crash details for CI debugging
+      // Diagnostic: if ErrorBoundary caught an error, fail fast with the actual error message.
+      // This is needed because the ErrorBoundary hides the real error behind a generic fallback.
       // eslint-disable-next-line cypress/no-unnecessary-waiting
       cy.wait(5000);
       cy.window().then((win) => {
         const err = (win as Window & { __LAST_ERROR_BOUNDARY__?: { message: string; stack?: string } }).__LAST_ERROR_BOUNDARY__;
         if (err) {
-          console.log("[E2E DEBUG] ErrorBoundary error:", err.message);
-          console.log("[E2E DEBUG] Stack:", err.stack?.split("\n").slice(0, 8).join("\n"));
+          // Throw with the actual error message so it appears in Cypress test results
+          throw new Error(`ErrorBoundary caught: ${err.message}\nStack: ${err.stack?.split("\n").slice(0, 5).join("\n")}`);
+        }
+      });
+      // Also check for error boundary fallback text in the DOM
+      cy.get("body").then(($body) => {
+        const text = $body.text();
+        if (text.includes("Something went wrong")) {
+          throw new Error(`ErrorBoundary fallback visible in DOM. Page text includes: "${text.substring(0, 500)}"`);
         }
       });
 
