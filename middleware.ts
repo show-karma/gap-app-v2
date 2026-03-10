@@ -116,7 +116,16 @@ export async function middleware(request: NextRequest) {
       );
     }
 
-    // No tenant slug or unknown slug — redirect to main site preserving the path
+    if (slug) {
+      // Unknown slug — treat as community slug and redirect to /community/<slug>/path
+      const restPath = `/${segments.slice(1).join("/")}` || "/";
+      return NextResponse.redirect(
+        new URL(`${protocol}//${mainDomain}/community/${slug}${restPath}`),
+        301
+      );
+    }
+
+    // No slug (root path) — redirect to main site homepage
     return NextResponse.redirect(new URL(`${protocol}//${mainDomain}${path}`), 301);
   }
 
