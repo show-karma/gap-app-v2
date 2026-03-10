@@ -2,8 +2,10 @@
 
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
 import { zodResolver } from "@hookform/resolvers/zod";
+
 import type { IMilestoneCompleted } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { usePathname, useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { type FC, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useAccount } from "wagmi";
@@ -13,7 +15,10 @@ import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useGap } from "@/hooks/useGap";
-import { useMilestoneImpactAnswers } from "@/hooks/useMilestoneImpactAnswers";
+import {
+  MILESTONE_IMPACT_QUERY_KEY,
+  useMilestoneImpactAnswers,
+} from "@/hooks/useMilestoneImpactAnswers";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
@@ -22,7 +27,10 @@ import { useOwnerStore, useProjectStore } from "@/store";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import type { GrantMilestone } from "@/types/v2/grant";
 import fetchData from "@/utilities/fetchData";
-import { sendMilestoneImpactAnswers } from "@/utilities/impact/milestoneImpactAnswers";
+import {
+  deleteMilestoneImpactAnswers,
+  sendMilestoneImpactAnswers,
+} from "@/utilities/impact/milestoneImpactAnswers";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
@@ -96,6 +104,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
   setIsUpdating: parentSetIsUpdating,
 }) => {
   const _selectedProject = useProjectStore((state) => state.project);
+  const queryClient = useQueryClient();
   const [isSubmitLoading, setIsSubmitLoading] = useState(false);
   const { chain, address } = useAccount();
   const { switchChainAsync } = useWallet();
@@ -230,12 +239,20 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
         }
       }
 
-      // Send deliverables data if any
-      if (data.deliverables && data.deliverables.length > 0) {
+      // Delete removed metrics: compare initial indicators with submitted ones
+      if (milestoneImpactData && milestoneImpactData.length > 0) {
+        const submittedIds = new Set(
+          (data.outputs || [])
+            .filter((o) => o.outputId && o.value !== undefined && o.value !== "")
+            .map((o) => o.outputId)
+        );
+        const removals = milestoneImpactData
+          .filter((metric) => metric.id && metric.hasData && !submittedIds.has(metric.id))
+          .map((metric) => deleteMilestoneImpactAnswers(milestoneUID, metric.id));
+        await Promise.all(removals);
       }
     } catch (error) {
       console.error("Error sending outputs and deliverables:", error);
-      // Don't throw - we don't want to fail the milestone completion if outputs fail
     }
   };
 
@@ -307,6 +324,9 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
 
                 // Send outputs and deliverables data
                 await sendOutputsAndDeliverables(milestone.uid, data);
+                await queryClient.invalidateQueries({
+                  queryKey: [MILESTONE_IMPACT_QUERY_KEY, milestone.uid],
+                });
 
                 const targetPath = PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
                   (project?.details?.slug || project?.uid) as string,
@@ -425,6 +445,9 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
 
                 // Send outputs and deliverables data
                 await sendOutputsAndDeliverables(milestone.uid, data);
+                await queryClient.invalidateQueries({
+                  queryKey: [MILESTONE_IMPACT_QUERY_KEY, milestone.uid],
+                });
 
                 closeShareDialog();
                 PAGES.PROJECT.SCREENS.SELECTED_SCREEN(

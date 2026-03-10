@@ -125,10 +125,48 @@ describe("Funding Platform - Question Builder Regression", () => {
 
     cy.login({ userType: "admin" });
 
+    // Stub ALL external JSON-RPC calls to prevent useContractOwner from hanging.
+    // ManageLayoutShell blocks on isOwnerLoading (default: true). The hook makes
+    // eth_call via ethers JsonRpcProvider. We must return valid JSON-RPC responses
+    // matching each method so ethers doesn't retry or throw.
+    cy.intercept("POST", /https?:\/\/(?!localhost)/, (req) => {
+      const body = req.body;
+      const id = body?.id ?? 1;
+      const method = body?.method;
+
+      let result: string;
+      if (method === "eth_chainId") {
+        result = "0xa"; // chain 10 = Optimism
+      } else {
+        result = "0x" + "0".repeat(64); // zero address for eth_call etc.
+      }
+
+      req.reply({
+        statusCode: 200,
+        body: { jsonrpc: "2.0", id, result },
+      });
+    });
+
     cy.intercept("GET", "**/v2/auth/permissions**", {
       statusCode: 200,
       body: permissionsResponse,
     }).as("getPermissions");
+
+    // Community details - required by ManageLayoutShell to render children
+    // Community details - required by ManageLayoutShell to render children.
+    // Use a regex to precisely match /v2/communities/optimism (with optional query params)
+    // without matching subpaths like /v2/communities/optimism/grants.
+    cy.intercept("GET", new RegExp(`/v2/communities/${communityId}(\\?.*)?$`), {
+      statusCode: 200,
+      body: {
+        uid: "community-optimism-uid",
+        details: {
+          name: "Optimism",
+          slug: communityId,
+          description: "Optimism community",
+        },
+      },
+    }).as("getCommunityDetails");
 
     cy.intercept("GET", `**/v2/funding-program-configs/community/${communityId}**`, (req) => {
       req.reply({
@@ -179,6 +217,12 @@ describe("Funding Platform - Question Builder Regression", () => {
     );
 
     waitForPageLoad();
+
+    // Wait for critical API calls before checking UI.
+    // ManageLayoutShell blocks on: community details, permissions, contract owner loading.
+    cy.wait("@getCommunityDetails", { timeout: 15000 });
+    cy.wait("@getPermissions", { timeout: 15000 });
+
     waitForQuestionBuilderReady();
 
     // Initial state has 2 fields
@@ -212,6 +256,8 @@ describe("Funding Platform - Question Builder Regression", () => {
       `/community/${communityId}/manage/funding-platform/${programId}/question-builder?tab=build`
     );
     waitForPageLoad();
+    cy.wait("@getCommunityDetails", { timeout: 15000 });
+    cy.wait("@getPermissions", { timeout: 15000 });
     waitForQuestionBuilderReady();
 
     // Step 6: form should not be empty

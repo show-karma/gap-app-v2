@@ -10,12 +10,12 @@ import { z } from "zod";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
-import { useAuth } from "@/hooks/useAuth";
+import { useCanVerifyMilestone } from "@/hooks/useCanVerifyMilestone";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { getProjectGrants } from "@/services/project-grants.service";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useProjectStore } from "@/store";
 import type { GrantUpdate } from "@/types/v2/grant";
 import fetchData from "@/utilities/fetchData";
 import { getSDKGrantInstance } from "@/utilities/grant-helpers";
@@ -27,6 +27,8 @@ type VerifyGrantUpdateDialogProps = {
   grantUpdate: GrantUpdate;
   onVerified: () => void;
   isVerified: boolean;
+  programId?: string;
+  communityUID?: string;
 };
 
 const schema = z.object({
@@ -39,6 +41,8 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
   grantUpdate,
   onVerified,
   isVerified,
+  programId,
+  communityUID,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -174,17 +178,10 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
       setIsStepper(false);
     }
   };
-  const { authenticated: isAuth } = useAuth();
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
-  const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const verifyPermission = () => {
-    if (!isAuth) return false;
-    return isContractOwner || !isProjectAdmin;
-  };
-  const ableToVerify = verifyPermission();
+  const { canVerify } = useCanVerifyMilestone(programId, communityUID);
 
   // Hide if already verified or user doesn't have permission
-  if (isVerified || !ableToVerify) return null;
+  if (isVerified || !canVerify) return null;
 
   return (
     <>

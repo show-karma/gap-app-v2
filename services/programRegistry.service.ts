@@ -199,10 +199,18 @@ export class ProgramRegistryService {
 
   /**
    * Update a program (V2 endpoint)
+   * @param programId - The program ID to update
+   * @param metadata - The program metadata
+   * @param topLevelFields - Optional top-level fields (type, deadline, submissionUrl, typed metadata)
    */
-  static async updateProgram(programId: string, metadata: ProgramMetadata): Promise<void> {
+  static async updateProgram(
+    programId: string,
+    metadata: ProgramMetadata,
+    topLevelFields?: Record<string, unknown>
+  ): Promise<void> {
     const request = {
       metadata,
+      ...topLevelFields,
     };
 
     const [, updateError] = await fetchData(

@@ -2,8 +2,8 @@
 
 import { BanknoteArrowDown, Rocket, Users } from "lucide-react";
 import dynamic from "next/dynamic";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Link } from "@/src/components/navigation/Link";
 import { PAGES } from "@/utilities/pages";
 
 const ProjectDialog = dynamic(

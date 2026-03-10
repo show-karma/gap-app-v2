@@ -1,8 +1,8 @@
 import { ChevronRightIcon } from "@heroicons/react/24/solid";
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 import type { CommunityWithStats } from "@/hooks/useCommunities";
+import { Link } from "@/src/components/navigation/Link";
 import { PAGES } from "@/utilities/pages";
 
 interface CommunityCardProps {

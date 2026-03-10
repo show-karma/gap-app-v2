@@ -1,6 +1,6 @@
 "use client";
-import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
+import { Link } from "@/src/components/navigation/Link";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 
