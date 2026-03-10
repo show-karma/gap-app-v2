@@ -154,7 +154,7 @@ jobs:
 
   report:
     if: always() && github.event_name == 'pull_request'
-    needs: [cypress, playwright]
+    needs: [e2e-tests, playwright]
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -164,15 +164,15 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const cypressStatus = '${{ needs.cypress.result }}';
+            const e2eStatus = '${{ needs.e2e-tests.result }}';
             const playwrightStatus = '${{ needs.playwright.result }}';
-            const allPassed = cypressStatus === 'success' && playwrightStatus === 'success';
+            const allPassed = e2eStatus === 'success' && playwrightStatus === 'success';
 
             const icon = (status) => status === 'success' ? '✅' : status === 'skipped' ? '⏭️' : '❌';
 
             const body = allPassed
-              ? `## ✅ E2E Tests Passed!\n\nAll end-to-end tests completed successfully.\n\n| Suite | Status |\n|-------|--------|\n| Cypress | ${icon(cypressStatus)} ${cypressStatus} |\n| Playwright | ${icon(playwrightStatus)} ${playwrightStatus} |`
-              : `## ❌ E2E Tests Failed\n\nSome E2E tests failed. Check the workflow logs and artifacts for details.\n\n| Suite | Status |\n|-------|--------|\n| Cypress | ${icon(cypressStatus)} ${cypressStatus} |\n| Playwright | ${icon(playwrightStatus)} ${playwrightStatus} |\n\n**Artifacts available on failure:** screenshots, videos (Cypress), report + traces (Playwright)`;
+              ? `## ✅ E2E Tests Passed!\n\nAll end-to-end tests completed successfully.\n\n| Suite | Status |\n|-------|--------|\n| E2E (Cypress) | ${icon(e2eStatus)} ${e2eStatus} |\n| Playwright | ${icon(playwrightStatus)} ${playwrightStatus} |`
+              : `## ❌ E2E Tests Failed\n\nSome E2E tests failed. Check the workflow logs and artifacts for details.\n\n| Suite | Status |\n|-------|--------|\n| E2E (Cypress) | ${icon(e2eStatus)} ${e2eStatus} |\n| Playwright | ${icon(playwrightStatus)} ${playwrightStatus} |\n\n**Artifacts available on failure:** screenshots, videos (Cypress), report + traces (Playwright)`;
 
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
