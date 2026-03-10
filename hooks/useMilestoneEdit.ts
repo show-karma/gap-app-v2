@@ -1,23 +1,6 @@
-"use client";
-
 import type { IMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/Milestone";
-import type { AttestationWithTx } from "@show-karma/karma-gap-sdk/core/class/types/attestations";
 import { useState } from "react";
 import { useAccount } from "wagmi";
-
-/**
- * Extended milestone interface with edit() method.
- * The edit() method is available in karma-gap-sdk feat/edit-milestones branch
- * and will be included in the next SDK release. It revokes the current
- * attestation and re-attests with updated data.
- */
-interface EditableMilestone {
-  edit(
-    signer: unknown,
-    newData: Partial<IMilestone>,
-    callback?: Function
-  ): Promise<AttestationWithTx>;
-}
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
@@ -131,7 +114,7 @@ export const useMilestoneEdit = () => {
           const sanitizedData = sanitizeObject(newData);
 
           for (const milestoneInstance of milestoneInstances) {
-            const result = await (milestoneInstance as unknown as EditableMilestone).edit(
+            const result = await milestoneInstance.edit(
               walletSigner,
               sanitizedData,
               changeStepperStep
@@ -200,11 +183,7 @@ export const useMilestoneEdit = () => {
 
         const sanitizedData = sanitizeObject(newData);
 
-        const result = await (milestoneInstance as unknown as EditableMilestone).edit(
-          walletSigner,
-          sanitizedData,
-          changeStepperStep
-        );
+        const result = await milestoneInstance.edit(walletSigner, sanitizedData, changeStepperStep);
 
         changeStepperStep("indexing");
 
