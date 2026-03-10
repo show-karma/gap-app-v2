@@ -181,7 +181,12 @@ export function ApplicationPageClient({
 
       {/* Public Comments — shown when the program has "Show comments on public page" enabled */}
       {program?.applicationConfig?.formSchema?.settings?.showCommentsOnPublicPage && (
-        <PublicComments referenceNumber={application.referenceNumber} communityId={communityId} />
+        <PublicComments
+          referenceNumber={application.referenceNumber}
+          communityId={communityId}
+          programId={application.programId}
+          isAdmin={isAdmin}
+        />
       )}
     </div>
   );

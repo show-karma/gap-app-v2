@@ -62,6 +62,8 @@ export interface CommentInputProps {
   placeholder?: string;
   disabled?: boolean;
   isLoading?: boolean;
+  programId?: string;
+  isAdmin?: boolean;
 }
 
 export interface UsePublicCommentingReturn {
