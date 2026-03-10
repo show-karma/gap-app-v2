@@ -11,7 +11,7 @@ on:
 jobs:
   e2e-tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
 
     steps:
       - name: Checkout code
@@ -61,17 +61,32 @@ jobs:
       - name: Install Cypress binary
         run: pnpm exec cypress install
 
-      - name: Run E2E tests
-        run: pnpm run e2e:ci
+      - name: Start application server
+        run: pnpm start &
         env:
           NODE_ENV: production
           NEXT_PUBLIC_E2E_AUTH_BYPASS: true
-          CYPRESS_BASE_URL: http://localhost:3000
-          CYPRESS_VIDEO: false
-          CYPRESS_CI: true
           NEXT_PUBLIC_PRIVY_APP_ID: ${{ secrets.NEXT_PUBLIC_PRIVY_APP_ID }}
           NEXT_PUBLIC_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_PROJECT_ID }}
           NEXT_PUBLIC_GAP_INDEXER_URL: https://gapstagapi.karmahq.xyz
+
+      - name: Wait for server
+        run: npx wait-on http://localhost:3000 --timeout 60000
+
+      - name: Run project E2E tests
+        run: pnpm exec cypress run --e2e --spec "cypress/e2e/project/**/*.cy.ts"
+        env:
+          CYPRESS_BASE_URL: http://localhost:3000
+          CYPRESS_VIDEO: false
+          CYPRESS_CI: true
+
+      - name: Run remaining E2E tests
+        if: success() || failure()
+        run: pnpm exec cypress run --e2e --spec "cypress/e2e/homepage.cy.ts,cypress/e2e/karma-gap-patron.cy.ts,cypress/e2e/my-projects.cy.ts,cypress/e2e/projects.cy.ts,cypress/e2e/community/**/*.cy.ts,cypress/e2e/donation/**/*.cy.ts,cypress/e2e/funding-map/**/*.cy.ts,cypress/e2e/funding-platform/**/*.cy.ts,cypress/e2e/navbar/**/*.cy.ts"
+        env:
+          CYPRESS_BASE_URL: http://localhost:3000
+          CYPRESS_VIDEO: false
+          CYPRESS_CI: true
 
       - name: Upload Cypress screenshots
         if: failure()
