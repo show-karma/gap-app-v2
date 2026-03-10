@@ -9,18 +9,110 @@
  * - Authorization checks
  *
  * Auth is handled via the NEXT_PUBLIC_E2E_AUTH_BYPASS mechanism:
- * cy.login() sets localStorage mock state, and useAuth() reads it
- * when running under Cypress. Blockchain RPC calls (isOwner, isAdmin)
- * are intercepted via setupRpcIntercepts().
+ * localStorage is set on the correct origin via cy.visit({ onBeforeLoad }),
+ * and useAuth() reads it when running under Cypress. Blockchain RPC calls
+ * (isOwner, isAdmin) are intercepted via setupRpcIntercepts().
  */
 
 import { setupIndexerCatchAll, setupRpcIntercepts, waitForPageLoad } from "../../support/intercepts";
+import type { UserType } from "../../support/auth-commands";
+
+// Test data
+const TEST_PROJECT_SLUG = "test-project";
+const MOCK_REGULAR_ADDRESS = "0x1234567890123456789012345678901234567890";
+const MOCK_ADMIN_ADDRESS = "0xADMIN4567890123456789012345678901234567890";
+const VALID_ADDRESS = "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed";
+const VALID_ADDRESS_2 = MOCK_REGULAR_ADDRESS;
+
+const MOCK_USERS: Record<"regular" | "admin", { address: string; token: string }> = {
+  regular: { address: MOCK_REGULAR_ADDRESS, token: "mock-token-regular" },
+  admin: { address: MOCK_ADMIN_ADDRESS, token: "mock-token-admin" },
+};
+
+// Mock project data (includes fields needed by both the frontend and the SDK)
+const mockProject = {
+  uid: "0xabc123def456789000000000000000000000000000000000000000000000dead",
+  chainID: 10,
+  owner: MOCK_REGULAR_ADDRESS,
+  recipient: MOCK_REGULAR_ADDRESS,
+  attester: MOCK_REGULAR_ADDRESS,
+  refUID: "0x0000000000000000000000000000000000000000000000000000000000000000",
+  revoked: false,
+  revocationTime: 0,
+  createdAt: Math.floor(Date.now() / 1000),
+  chainPayoutAddress: null,
+  data: { project: true },
+  details: {
+    uid: "0xabc123def456789000000000000000000000000000000000000000000000beef",
+    title: "Test Project",
+    slug: TEST_PROJECT_SLUG,
+    description: "A test project",
+    data: {
+      title: "Test Project",
+      slug: TEST_PROJECT_SLUG,
+      description: "A test project",
+      links: [],
+      tags: [],
+    },
+    chainID: 10,
+  },
+  members: [],
+  grants: [],
+  impacts: [],
+  endorsements: [],
+  updates: [],
+  pointers: [],
+  communities: [],
+  external: { gitcoin: [], oso: [], github: [], network_addresses: [], divvi_wallets: [] },
+};
+
+const mockProjectWithAddresses = {
+  ...mockProject,
+  chainPayoutAddress: {
+    "10": VALID_ADDRESS,
+    "42161": VALID_ADDRESS_2,
+  },
+};
+
+/**
+ * Visit a project page with optional authentication.
+ *
+ * Sets localStorage auth state via onBeforeLoad (correct origin),
+ * and adds a cache-busting query param to force a fresh server render
+ * on every visit (prevents Next.js Full Route Cache from reusing
+ * stale RSC payloads between tests).
+ */
+const visitProject = (
+  userType?: "regular" | "admin"
+) => {
+  const cacheBust = `_t=${Date.now()}`;
+  const url = `/project/${TEST_PROJECT_SLUG}?${cacheBust}`;
+
+  if (userType) {
+    const { address, token } = MOCK_USERS[userType];
+    cy.visit(url, {
+      onBeforeLoad(win) {
+        win.localStorage.setItem(
+          "privy:auth_state",
+          JSON.stringify({
+            authenticated: true,
+            user: {
+              id: `did:privy:${address}`,
+              wallet: { address, chainId: 10 },
+            },
+            ready: true,
+          })
+        );
+        win.localStorage.setItem("privy:token", token);
+      },
+    });
+  } else {
+    cy.visit(url);
+  }
+};
 
 /**
  * Wait for E2EStoreExposer to hydrate and expose store setters.
- * The component is mounted in the project server layout (outside the
- * dynamically-imported ProjectProfileLayout), so it renders as soon
- * as the page hydrates — no need to wait for a specific testid.
  */
 const waitForStoreExposure = () => {
   cy.window({ timeout: 30000 }).should("have.property", "__E2E_STORES__");
@@ -28,8 +120,8 @@ const waitForStoreExposure = () => {
 
 /**
  * Wait for the ProjectProfileLayout to finish loading and render the
- * full project page. Checks all possible layout states to provide
- * clear diagnostics when the component fails to reach the success state.
+ * full project page. First waits for ANY layout state to appear,
+ * then waits specifically for the success state.
  */
 const waitForLayoutReady = () => {
   // Log the page state for CI debugging
@@ -39,12 +131,10 @@ const waitForLayoutReady = () => {
       .map((el) => (el as HTMLElement).dataset.testid)
       .slice(0, 20);
     cy.log(`[diag] data-testids on page: ${JSON.stringify(allTestIds)}`);
-    // Check for error boundary fallback
     const errorBoundary = body.querySelector('[data-testid="error-boundary-fallback"]');
     if (errorBoundary) {
       cy.log(`[diag] ERROR BOUNDARY: ${(errorBoundary as HTMLElement).dataset.errorMessage}`);
     }
-    // Check for Next.js error overlay
     const nextError = body.querySelector("nextjs-portal");
     if (nextError) {
       cy.log("[diag] Next.js error overlay detected");
@@ -89,116 +179,66 @@ const setStaffViaStore = () => {
 };
 
 /**
- * Visit a project page with authentication set via onBeforeLoad.
- * This ensures localStorage auth state is set on the correct origin
- * BEFORE the page JavaScript reads it, avoiding the about:blank
- * localStorage origin mismatch.
+ * Register auth-related API intercepts so requests don't leak
+ * to the real server. This replaces the intercept registration
+ * previously done by cy.login().
  */
-const visitProjectPageAsUser = (
-  url: string,
-  userType: "regular" | "admin" = "regular"
-) => {
-  const address =
-    userType === "admin"
-      ? "0xADMIN4567890123456789012345678901234567890"
-      : "0x1234567890123456789012345678901234567890";
-  const token = `mock-token-${userType}`;
+const setupAuthIntercepts = (userType: UserType = "regular") => {
+  const isAdmin = userType === "admin";
 
-  cy.visit(url, {
-    onBeforeLoad(win) {
-      win.localStorage.setItem(
-        "privy:auth_state",
-        JSON.stringify({
-          authenticated: true,
-          user: {
-            id: `did:privy:${address}`,
-            wallet: { address, chainId: 10 },
-          },
-          ready: true,
-        })
-      );
-      win.localStorage.setItem("privy:token", token);
+  cy.intercept("GET", "**/auth/staff/authorized", {
+    statusCode: isAdmin ? 200 : 403,
+    body: isAdmin ? { authorized: true } : { error: "Not authorized" },
+  }).as("checkStaff");
+
+  cy.intercept("GET", "**/grantees/*/communities/admin", {
+    statusCode: 200,
+    body: [],
+  }).as("getCommunityAdmin");
+
+  cy.intercept("GET", "**/v2/funding-program-configs/my-reviewer-programs", {
+    statusCode: 200,
+    body: [],
+  }).as("getReviewerPrograms");
+
+  const roles = isAdmin ? ["SUPER_ADMIN"] : ["GUEST"];
+  cy.intercept("GET", "**/v2/auth/permissions**", {
+    statusCode: 200,
+    body: {
+      roles: { primaryRole: roles[0], roles, reviewerTypes: [] },
+      permissions: [],
+      resourceContext: {},
+      isCommunityAdmin: isAdmin,
+      isProgramAdmin: isAdmin,
+      isReviewer: false,
+      isRegistryAdmin: isAdmin,
+      isProgramCreator: isAdmin,
     },
-  });
+  }).as("getPermissions");
 };
 
 describe("Chain Payout Address Modal", () => {
   // Capture uncaught exceptions to prevent test failures from unrelated errors
   // (e.g., Privy SDK, third-party scripts) and log them for debugging.
   Cypress.on("uncaught:exception", (err) => {
-    // Log the error so CI output captures it
     Cypress.log({ name: "uncaught:exception", message: err.message });
-    // Return false to prevent Cypress from failing the test
     return false;
   });
 
-  // Test data
-  const TEST_PROJECT_SLUG = "test-project";
-  const MOCK_REGULAR_ADDRESS = "0x1234567890123456789012345678901234567890";
-  const VALID_ADDRESS = "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed";
-  const VALID_ADDRESS_2 = MOCK_REGULAR_ADDRESS;
-
-  // Mock project data (includes fields needed by both the frontend and the SDK)
-  const mockProject = {
-    uid: "0xabc123def456789000000000000000000000000000000000000000000000dead",
-    chainID: 10,
-    owner: MOCK_REGULAR_ADDRESS,
-    recipient: MOCK_REGULAR_ADDRESS,
-    attester: MOCK_REGULAR_ADDRESS,
-    refUID: "0x0000000000000000000000000000000000000000000000000000000000000000",
-    revoked: false,
-    revocationTime: 0,
-    createdAt: Math.floor(Date.now() / 1000),
-    chainPayoutAddress: null,
-    data: { project: true },
-    details: {
-      uid: "0xabc123def456789000000000000000000000000000000000000000000000beef",
-      title: "Test Project",
-      slug: TEST_PROJECT_SLUG,
-      description: "A test project",
-      data: {
-        title: "Test Project",
-        slug: TEST_PROJECT_SLUG,
-        description: "A test project",
-        links: [],
-        tags: [],
-      },
-      chainID: 10,
-    },
-    members: [],
-    grants: [],
-    impacts: [],
-    endorsements: [],
-    updates: [],
-    pointers: [],
-    communities: [],
-    external: { gitcoin: [], oso: [], github: [], network_addresses: [], divvi_wallets: [] },
-  };
-
-  const mockProjectWithAddresses = {
-    ...mockProject,
-    chainPayoutAddress: {
-      "10": VALID_ADDRESS,
-      "42161": VALID_ADDRESS_2,
-    },
-  };
-
   beforeEach(() => {
     // Clear all browser storage to ensure clean state between tests.
-    // Next.js App Router may cache route data in sessionStorage which
-    // can prevent full re-renders on subsequent cy.visit() calls.
     cy.clearAllLocalStorage();
     cy.clearAllSessionStorage();
     cy.clearAllCookies();
 
     // Catch-all FIRST (lowest priority in Cypress LIFO matching).
-    // Prevents unhandled requests from reaching the real staging indexer
-    // (behind Cloudflare). Specific intercepts registered after this
-    // take priority because Cypress uses last-registered-wins matching.
     setupIndexerCatchAll();
 
     // Intercept blockchain RPC calls so ownership checks work without real nodes
     setupRpcIntercepts(MOCK_REGULAR_ADDRESS);
+
+    // Auth API intercepts (prevents requests from hitting the real server)
+    setupAuthIntercepts("regular");
 
     // Mock project API response.
     // The frontend service uses /v2/projects/{slug} while the SDK uses /projects/{slug}.
@@ -219,15 +259,12 @@ describe("Chain Payout Address Modal", () => {
     }).as("getProjectV2");
 
     // Mock project members/admin check
-    cy.intercept("GET", `**/projects/${TEST_PROJECT_SLUG}/members`, (req) => {
-      req.reply({
-        statusCode: 200,
-        body: [],
-      });
+    cy.intercept("GET", `**/projects/${TEST_PROJECT_SLUG}/members`, {
+      statusCode: 200,
+      body: [],
     }).as("getProjectMembers");
 
     // Mock project sub-resource endpoints with properly shaped empty responses.
-    // The catch-all returns [] which crashes endpoints expecting object shapes.
     cy.intercept("GET", `**/projects/${TEST_PROJECT_SLUG}/grants`, {
       statusCode: 200,
       body: [],
@@ -262,80 +299,61 @@ describe("Chain Payout Address Modal", () => {
 
   describe("Enable Donations Button", () => {
     it("should show Enable Donations button when user is project owner and no addresses configured", () => {
-      cy.login({ userType: "regular" });
-
-      // Mock as project owner
+      // Override project mock — owner matches regular user
       cy.intercept("GET", `**/projects/${TEST_PROJECT_SLUG}`, (req) => {
         req.reply({
           statusCode: 200,
-          body: {
-            ...mockProject,
-            owner: MOCK_REGULAR_ADDRESS, // matches regular user
-          },
+          body: { ...mockProject, owner: MOCK_REGULAR_ADDRESS },
         });
       }).as("getProjectOwner");
 
-      cy.visit(`/project/${TEST_PROJECT_SLUG}`);
+      visitProject("regular");
       waitForPageLoad();
 
-      // Wait for critical API calls to confirm intercepts are matching
+      // Wait for project API call to confirm intercepts are matching
       cy.wait("@getProjectOwner", { timeout: 15000 });
 
       setProjectOwnerViaStore();
 
-      // Button should be visible for project owner
       cy.get('[data-testid="enable-donations-button"]', { timeout: 15000 }).should("be.visible");
       cy.get('[data-testid="enable-donations-button"]').should("contain", "Set up payout address");
     });
 
     it("should NOT show Enable Donations button when addresses are already configured", () => {
-      cy.login({ userType: "regular" });
-
       cy.intercept("GET", `**/projects/${TEST_PROJECT_SLUG}`, (req) => {
         req.reply({
           statusCode: 200,
-          body: {
-            ...mockProjectWithAddresses,
-            owner: MOCK_REGULAR_ADDRESS,
-          },
+          body: { ...mockProjectWithAddresses, owner: MOCK_REGULAR_ADDRESS },
         });
       }).as("getProjectWithAddresses");
 
-      cy.visit(`/project/${TEST_PROJECT_SLUG}`);
+      visitProject("regular");
       waitForPageLoad();
 
-      // Button should NOT be visible when addresses exist
       cy.get('[data-testid="enable-donations-button"]').should("not.exist");
     });
 
     it("should NOT show Enable Donations button for non-authorized users", () => {
-      // Not logged in
-      cy.visit(`/project/${TEST_PROJECT_SLUG}`);
+      visitProject(); // No auth
       waitForPageLoad();
 
       cy.get('[data-testid="enable-donations-button"]').should("not.exist");
     });
 
     it("should open modal when Enable Donations button is clicked", () => {
-      cy.login({ userType: "regular" });
-
       cy.intercept("GET", `**/projects/${TEST_PROJECT_SLUG}`, (req) => {
         req.reply({
           statusCode: 200,
-          body: {
-            ...mockProject,
-            owner: MOCK_REGULAR_ADDRESS,
-          },
+          body: { ...mockProject, owner: MOCK_REGULAR_ADDRESS },
         });
       }).as("getProjectOwner");
 
-      visitProjectPageAsUser(`/project/${TEST_PROJECT_SLUG}`, "regular");
+      visitProject("regular");
       waitForPageLoad();
       setProjectOwnerViaStore();
 
       cy.get('[data-testid="enable-donations-button"]').click();
 
-      // Modal should be visible
       cy.get('[role="dialog"]').should("be.visible");
       cy.get('[role="dialog"]').should("contain", "Set Payout Addresses");
     });
@@ -343,56 +361,48 @@ describe("Chain Payout Address Modal", () => {
 
   describe("Set Payout Address Modal", () => {
     beforeEach(() => {
-      cy.login({ userType: "regular" });
-
       cy.intercept("GET", `**/projects/${TEST_PROJECT_SLUG}`, (req) => {
         req.reply({
           statusCode: 200,
-          body: {
-            ...mockProject,
-            owner: MOCK_REGULAR_ADDRESS,
-          },
+          body: { ...mockProject, owner: MOCK_REGULAR_ADDRESS },
         });
       }).as("getProjectOwner");
     });
 
     it("should display all supported chains", () => {
-      cy.visit(`/project/${TEST_PROJECT_SLUG}`);
+      visitProject("regular");
       waitForPageLoad();
       setProjectOwnerViaStore();
 
       cy.get('[data-testid="enable-donations-button"]').click();
 
-      // Check for common chain names
       cy.get('[role="dialog"]').should("contain", "Optimism");
       cy.get('[role="dialog"]').should("contain", "Base");
       cy.get('[role="dialog"]').should("contain", "Arbitrum");
     });
 
     it("should display chain icons", () => {
-      cy.visit(`/project/${TEST_PROJECT_SLUG}`);
+      visitProject("regular");
       waitForPageLoad();
       setProjectOwnerViaStore();
 
       cy.get('[data-testid="enable-donations-button"]').click();
 
-      // Check that chain icons are loaded
       cy.get('[role="dialog"] img').should("have.length.at.least", 1);
     });
 
     it("should have input fields for each chain", () => {
-      cy.visit(`/project/${TEST_PROJECT_SLUG}`);
+      visitProject("regular");
       waitForPageLoad();
       setProjectOwnerViaStore();
 
       cy.get('[data-testid="enable-donations-button"]').click();
 
-      // Each chain should have an input
       cy.get('[role="dialog"] input[type="text"]').should("have.length.at.least", 1);
     });
 
     it("should close modal when clicking Cancel", () => {
-      cy.visit(`/project/${TEST_PROJECT_SLUG}`);
+      visitProject("regular");
       waitForPageLoad();
       setProjectOwnerViaStore();
 
@@ -405,7 +415,7 @@ describe("Chain Payout Address Modal", () => {
     });
 
     it("should close modal when clicking X button", () => {
-      cy.visit(`/project/${TEST_PROJECT_SLUG}`);
+      visitProject("regular");
       waitForPageLoad();
       setProjectOwnerViaStore();
 
@@ -420,103 +430,82 @@ describe("Chain Payout Address Modal", () => {
 
   describe("Form Validation", () => {
     beforeEach(() => {
-      cy.login({ userType: "regular" });
-
       cy.intercept("GET", `**/projects/${TEST_PROJECT_SLUG}`, (req) => {
         req.reply({
           statusCode: 200,
-          body: {
-            ...mockProject,
-            owner: MOCK_REGULAR_ADDRESS,
-          },
+          body: { ...mockProject, owner: MOCK_REGULAR_ADDRESS },
         });
       }).as("getProjectOwner");
     });
 
     it("should show validation error for invalid address format", () => {
-      cy.visit(`/project/${TEST_PROJECT_SLUG}`);
+      visitProject("regular");
       waitForPageLoad();
       setProjectOwnerViaStore();
 
       cy.get('[data-testid="enable-donations-button"]').click();
 
-      // Enter invalid address
       cy.get('[role="dialog"] input[type="text"]').first().type("invalid-address");
 
-      // Should show validation error (Cypress auto-retries until assertion passes)
       cy.get('[role="dialog"]').should("contain", "Invalid");
     });
 
     it("should show validation error for address without 0x prefix", () => {
-      cy.visit(`/project/${TEST_PROJECT_SLUG}`);
+      visitProject("regular");
       waitForPageLoad();
       setProjectOwnerViaStore();
 
       cy.get('[data-testid="enable-donations-button"]').click();
 
-      // Enter address without 0x
       cy.get('[role="dialog"] input[type="text"]').first().type("1234567890123456789012345678901234567890");
 
-      // Cypress auto-retries until assertion passes
       cy.get('[role="dialog"]').should("contain", "0x");
     });
 
     it("should show checkmark for valid address", () => {
-      cy.visit(`/project/${TEST_PROJECT_SLUG}`);
+      visitProject("regular");
       waitForPageLoad();
       setProjectOwnerViaStore();
 
       cy.get('[data-testid="enable-donations-button"]').click();
 
-      // Enter valid address
       cy.get('[role="dialog"] input[type="text"]').first().clear().type(VALID_ADDRESS);
 
-      // Should show checkmark (CheckIcon) - Cypress auto-retries until assertion passes
       cy.get('[role="dialog"] svg.text-green-500').should("exist");
     });
 
     it("should disable Save button when there are validation errors", () => {
-      cy.visit(`/project/${TEST_PROJECT_SLUG}`);
+      visitProject("regular");
       waitForPageLoad();
       setProjectOwnerViaStore();
 
       cy.get('[data-testid="enable-donations-button"]').click();
 
-      // Enter invalid address
       cy.get('[role="dialog"] input[type="text"]').first().type("invalid");
 
-      // Save button should be disabled - Cypress auto-retries until assertion passes
       cy.get('[role="dialog"]').contains("button", "Save").should("be.disabled");
     });
   });
 
   describe("Save Operations", () => {
     beforeEach(() => {
-      cy.login({ userType: "regular" });
-
       cy.intercept("GET", `**/projects/${TEST_PROJECT_SLUG}`, (req) => {
         req.reply({
           statusCode: 200,
-          body: {
-            ...mockProject,
-            owner: MOCK_REGULAR_ADDRESS,
-          },
+          body: { ...mockProject, owner: MOCK_REGULAR_ADDRESS },
         });
       }).as("getProjectOwner");
     });
 
     it("should save addresses successfully", () => {
-      // Mock the update endpoint
       cy.intercept("PUT", `**/v2/projects/*/chain-payout-address`, (req) => {
         req.reply({
           statusCode: 200,
-          body: {
-            chainPayoutAddress: req.body.chainPayoutAddresses,
-          },
+          body: { chainPayoutAddress: req.body.chainPayoutAddresses },
         });
       }).as("updateChainPayoutAddress");
 
-      // Mock project refresh
+      // Mock project refresh after save
       cy.intercept("GET", `**/projects/${TEST_PROJECT_SLUG}`, (req) => {
         req.reply({
           statusCode: 200,
@@ -528,64 +517,49 @@ describe("Chain Payout Address Modal", () => {
         });
       }).as("getProjectRefreshed");
 
-      cy.visit(`/project/${TEST_PROJECT_SLUG}`);
+      visitProject("regular");
       waitForPageLoad();
       setProjectOwnerViaStore();
 
       cy.get('[data-testid="enable-donations-button"]').click();
 
-      // Enter valid address
       cy.get('[role="dialog"] input[type="text"]').first().clear().type(VALID_ADDRESS);
 
-      // Wait for validation to complete before clicking Save
       cy.get('[role="dialog"] svg.text-green-500').should("exist");
 
-      // Click Save
       cy.get('[role="dialog"]').contains("button", "Save").click();
 
-      // Wait for API call
       cy.wait("@updateChainPayoutAddress");
 
-      // Modal should close
       cy.get('[role="dialog"]').should("not.exist");
 
-      // Should show success toast
       cy.get('[role="status"]').should("contain", "success");
     });
 
     it("should show error message on save failure", () => {
-      // Mock the update endpoint to fail
       cy.intercept("PUT", `**/v2/projects/*/chain-payout-address`, (req) => {
         req.reply({
           statusCode: 403,
-          body: {
-            error: "Access denied",
-          },
+          body: { error: "Access denied" },
         });
       }).as("updateChainPayoutAddressFail");
 
-      cy.visit(`/project/${TEST_PROJECT_SLUG}`);
+      visitProject("regular");
       waitForPageLoad();
       setProjectOwnerViaStore();
 
       cy.get('[data-testid="enable-donations-button"]').click();
 
-      // Enter valid address
       cy.get('[role="dialog"] input[type="text"]').first().clear().type(VALID_ADDRESS);
 
-      // Wait for validation to complete before clicking Save
       cy.get('[role="dialog"] svg.text-green-500').should("exist");
 
-      // Click Save
       cy.get('[role="dialog"]').contains("button", "Save").click();
 
-      // Wait for API call
       cy.wait("@updateChainPayoutAddressFail");
 
-      // Modal should stay open
       cy.get('[role="dialog"]').should("be.visible");
 
-      // Should show error message at top of modal
       cy.get('[role="dialog"] .bg-red-600').should("be.visible");
       cy.get('[role="dialog"] .bg-red-600').should("contain", "Access denied");
     });
@@ -594,14 +568,11 @@ describe("Chain Payout Address Modal", () => {
       cy.intercept("GET", `**/projects/${TEST_PROJECT_SLUG}`, (req) => {
         req.reply({
           statusCode: 200,
-          body: {
-            ...mockProjectWithAddresses,
-            owner: MOCK_REGULAR_ADDRESS,
-          },
+          body: { ...mockProjectWithAddresses, owner: MOCK_REGULAR_ADDRESS },
         });
       }).as("getProjectWithAddresses");
 
-      cy.visit(`/project/${TEST_PROJECT_SLUG}`);
+      visitProject("regular");
       waitForPageLoad();
       setProjectOwnerViaStore();
 
@@ -609,80 +580,65 @@ describe("Chain Payout Address Modal", () => {
       cy.get('[data-testid="project-options-menu"]').click();
       cy.contains("Set Payout Address").click();
 
-      // Don't change anything, just click Save
       cy.get('[role="dialog"]').contains("button", "Update").click();
 
-      // Should show toast about no changes
       cy.get('[role="status"]').should("contain", "No changes");
     });
   });
 
   describe("Menu Access", () => {
     it("should show Set Payout Address in options menu for project owner", () => {
-      cy.login({ userType: "regular" });
-
       cy.intercept("GET", `**/projects/${TEST_PROJECT_SLUG}`, (req) => {
         req.reply({
           statusCode: 200,
-          body: {
-            ...mockProjectWithAddresses,
-            owner: MOCK_REGULAR_ADDRESS,
-          },
+          body: { ...mockProjectWithAddresses, owner: MOCK_REGULAR_ADDRESS },
         });
       }).as("getProjectWithAddresses");
 
-      cy.visit(`/project/${TEST_PROJECT_SLUG}`);
+      visitProject("regular");
       waitForPageLoad();
       setProjectOwnerViaStore();
 
-      // Open options menu
       cy.get('[data-testid="project-options-menu"]').click();
 
-      // Should have Set Payout Address option
       cy.contains("Set Payout Address").should("be.visible");
     });
 
     it("should open modal from menu", () => {
-      cy.login({ userType: "regular" });
-
       cy.intercept("GET", `**/projects/${TEST_PROJECT_SLUG}`, (req) => {
         req.reply({
           statusCode: 200,
-          body: {
-            ...mockProjectWithAddresses,
-            owner: MOCK_REGULAR_ADDRESS,
-          },
+          body: { ...mockProjectWithAddresses, owner: MOCK_REGULAR_ADDRESS },
         });
       }).as("getProjectWithAddresses");
 
-      cy.visit(`/project/${TEST_PROJECT_SLUG}`);
+      visitProject("regular");
       waitForPageLoad();
       setProjectOwnerViaStore();
 
       cy.get('[data-testid="project-options-menu"]').click();
       cy.contains("Set Payout Address").click();
 
-      // Modal should open with existing addresses pre-filled
       cy.get('[role="dialog"]').should("be.visible");
       cy.get('[role="dialog"]').should("contain", "Manage Payout Addresses");
 
-      // First input should have the existing address
       cy.get('[role="dialog"] input[type="text"]').first().should("have.value", VALID_ADDRESS);
     });
 
     it("should NOT show Set Payout Address in menu for non-authorized users", () => {
-      // Not logged in
-      cy.visit(`/project/${TEST_PROJECT_SLUG}`);
+      visitProject(); // No auth
       waitForPageLoad();
 
-      // Menu should not be visible for unauthorized users
       cy.get('[data-testid="project-options-menu"]').should("not.exist");
     });
   });
 
   describe("Staff Access", () => {
     it("should allow staff to see and use Enable Donations button", () => {
-      cy.login({ userType: "admin" });
+      // Override auth intercepts for admin
+      setupAuthIntercepts("admin");
+      // Override RPC intercepts for admin address
+      setupRpcIntercepts(MOCK_ADMIN_ADDRESS);
 
       cy.intercept("GET", `**/projects/${TEST_PROJECT_SLUG}`, (req) => {
         req.reply({
@@ -691,16 +647,17 @@ describe("Chain Payout Address Modal", () => {
         });
       }).as("getProject");
 
-      cy.visit(`/project/${TEST_PROJECT_SLUG}`);
+      visitProject("admin");
       waitForPageLoad();
       setStaffViaStore();
 
-      // Staff should see the button even if not owner
       cy.get('[data-testid="enable-donations-button"]').should("be.visible");
     });
 
     it("should allow staff to access Set Payout Address from menu", () => {
-      cy.login({ userType: "admin" });
+      // Override auth intercepts for admin
+      setupAuthIntercepts("admin");
+      setupRpcIntercepts(MOCK_ADMIN_ADDRESS);
 
       cy.intercept("GET", `**/projects/${TEST_PROJECT_SLUG}`, (req) => {
         req.reply({
@@ -709,7 +666,7 @@ describe("Chain Payout Address Modal", () => {
         });
       }).as("getProjectWithAddresses");
 
-      cy.visit(`/project/${TEST_PROJECT_SLUG}`);
+      visitProject("admin");
       waitForPageLoad();
       setStaffViaStore();
 
