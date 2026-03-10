@@ -52,14 +52,23 @@ export function EmailGranteesComposer({ programs }: EmailGranteesComposerProps) 
         `/v2/email-grantees/program/${selectedProgramId}/emails`
       );
       if (error) throw new Error(error);
-      return data?.emails ?? [];
+      if (!data || !Array.isArray(data.emails)) {
+        throw new Error("Invalid response: expected emails array");
+      }
+      return data.emails;
     },
     enabled: !!selectedProgramId,
   });
 
+  // Track previous program to auto-populate recipients only on program change
+  const prevProgramRef = useRef<string | null>(null);
+
   const handleProgramChange = useCallback((programId: string) => {
     setSelectedProgramId(programId);
     setRecipients([]);
+    if (!programId) {
+      prevProgramRef.current = null;
+    }
   }, []);
 
   const handleEmailsFetched = useCallback(() => {
@@ -67,9 +76,6 @@ export function EmailGranteesComposer({ programs }: EmailGranteesComposerProps) 
       setRecipients(deduplicateEmails(granteeEmails));
     }
   }, [granteeEmails]);
-
-  // Auto-populate recipients when grantee emails load for a new program
-  const prevProgramRef = useRef<string | null>(null);
   useEffect(() => {
     if (granteeEmails && prevProgramRef.current !== selectedProgramId) {
       prevProgramRef.current = selectedProgramId;
@@ -89,13 +95,15 @@ export function EmailGranteesComposer({ programs }: EmailGranteesComposerProps) 
       toast.error("Please enter a valid email address");
       return;
     }
-    if (recipients.includes(trimmed)) {
-      toast.error("This email is already in the list");
-      return;
-    }
-    setRecipients((prev) => [...prev, trimmed]);
+    setRecipients((prev) => {
+      if (prev.includes(trimmed)) {
+        toast.error("This email is already in the list");
+        return prev;
+      }
+      return [...prev, trimmed];
+    });
     setManualEmail("");
-  }, [manualEmail, recipients]);
+  }, [manualEmail]);
 
   const sendEmailMutation = useMutation({
     mutationFn: async () => {
