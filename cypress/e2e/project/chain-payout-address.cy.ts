@@ -27,7 +27,17 @@ const waitForStoreExposure = () => {
 };
 
 /**
- * Set project ownership flag via the exposed Zustand store.
+ * Wait for the ProjectProfileLayout to finish loading and render the
+ * full project page (not just the dynamic-import skeleton or loading state).
+ * This ensures API data has been fetched and the component is interactive.
+ */
+const waitForLayoutReady = () => {
+  cy.get('[data-testid="project-profile-layout"]', { timeout: 30000 }).should("exist");
+};
+
+/**
+ * Set project ownership flag via the exposed Zustand store,
+ * then wait for the layout to be fully rendered.
  */
 const setProjectOwnerViaStore = () => {
   waitForStoreExposure();
@@ -36,12 +46,12 @@ const setProjectOwnerViaStore = () => {
     stores.setIsProjectOwner(true);
     stores.setIsOwnerLoading(false);
   });
+  waitForLayoutReady();
 };
 
 /**
- * Set staff/owner flags via the exposed Zustand store.
- * For staff (admin) tests, we set isOwner=true so the donate section
- * renders without depending on the permissions query timing.
+ * Set staff/owner flags via the exposed Zustand store,
+ * then wait for the layout to be fully rendered.
  */
 const setStaffViaStore = () => {
   waitForStoreExposure();
@@ -50,6 +60,7 @@ const setStaffViaStore = () => {
     stores.setIsOwner(true);
     stores.setIsOwnerLoading(false);
   });
+  waitForLayoutReady();
 };
 
 describe("Chain Payout Address Modal", () => {
