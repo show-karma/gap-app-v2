@@ -8,6 +8,7 @@ import type {
   UnifiedMilestone,
   UpdatesApiResponse,
 } from "@/types/v2/roadmap";
+import { parseChainId } from "@/utilities/parseChainId";
 import { queryClient } from "@/utilities/query-client";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 
@@ -115,7 +116,11 @@ const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMilestone[
       milestoneAny.data?.attester ||
       milestoneAny.data?.recipient ||
       "";
-    const chainID = parseInt(milestone.chainId, 10) || 0;
+    const chainID =
+      parseChainId(milestone.chainId) ||
+      parseChainId(milestoneAny?.grant?.chainID) ||
+      parseChainId(milestoneAny?.grant?.chainId) ||
+      0;
 
     // Extract dueDate with fallbacks - API may pass raw data with endsAt
     let milestoneEndsAt: number | undefined;
@@ -218,11 +223,15 @@ const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMilestone[
   });
 
   // Convert grant updates to unified format
-  data.grantUpdates?.forEach((update: GrantUpdateWithDetails, index: number) => {
-    const grantInfo = update.grant;
-    const chainID = update.chainId || 0;
-    // Extract recipient with fallbacks - API may include additional fields
+  data.grantUpdates?.forEach((update: GrantUpdateWithDetails) => {
+    // Extract recipient and chain details with fallbacks - API may include additional fields
     const updateAny = update as any;
+    const grantInfo = update.grant;
+    const chainID =
+      parseChainId(update.chainId) ||
+      parseChainId(updateAny?.grant?.chainID) ||
+      parseChainId(updateAny?.grant?.chainId) ||
+      0;
 
     const updateRecipient =
       update.recipient ||

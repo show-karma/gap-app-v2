@@ -2,6 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import type { ImpactIndicatorWithData } from "@/types/impactMeasurement";
 import { getMilestoneImpactAnswers } from "@/utilities/impact";
 
+export const MILESTONE_IMPACT_QUERY_KEY = "milestoneImpactAnswers";
+
 interface UseMilestoneImpactAnswersProps {
   milestoneUID?: string;
 }
@@ -11,7 +13,7 @@ interface UseMilestoneImpactAnswersProps {
  */
 export const useMilestoneImpactAnswers = ({ milestoneUID }: UseMilestoneImpactAnswersProps) => {
   return useQuery<ImpactIndicatorWithData[]>({
-    queryKey: ["milestoneImpactAnswers", milestoneUID],
+    queryKey: [MILESTONE_IMPACT_QUERY_KEY, milestoneUID],
     queryFn: () => {
       if (!milestoneUID) {
         throw new Error("Milestone UID is required");

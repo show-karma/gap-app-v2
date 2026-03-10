@@ -4,7 +4,7 @@ import * as Popover from "@radix-ui/react-popover";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { type IProjectUpdate, ProjectUpdate } from "@show-karma/karma-gap-sdk";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { FC } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { SubmitHandler } from "react-hook-form";
@@ -247,6 +247,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   const { setupChainAndWallet } = useSetupChainAndWallet();
   const project = useProjectStore((state) => state.project);
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const editId = propEditId || searchParams.get("editId");
   const [isEditMode, setIsEditMode] = useState(false);
@@ -653,9 +654,9 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
               );
               afterSubmit?.();
               setTimeout(() => {
+                const updatesPath = PAGES.PROJECT.UPDATES(projectSlug || projectUid);
                 dismiss();
-                router.push(PAGES.PROJECT.UPDATES(projectSlug || projectUid));
-                router.refresh();
+
                 // Only show share dialog for new activities, not edits
                 if (!isEditMode) {
                   openShareDialog({
@@ -666,6 +667,13 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                       (project?.details?.slug || project?.uid) as string
                     ),
                   });
+                }
+
+                // Let the share dialog render before any route transition.
+                if (pathname !== updatesPath) {
+                  setTimeout(() => {
+                    router.push(updatesPath);
+                  }, 250);
                 }
               }, 1500);
             } else {

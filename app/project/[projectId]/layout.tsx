@@ -2,7 +2,11 @@
 
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 import type { Metadata } from "next";
+<<<<<<< fix/test-suite-cleanup
 import { E2EStoreExposer } from "@/components/Utilities/E2EStoreExposer";
+=======
+import { ProjectShareDialogMount } from "@/components/Pages/Project/ProjectShareDialogMount";
+>>>>>>> main
 import { layoutTheme } from "@/src/helper/theme";
 import { generateProjectOverviewMetadata } from "@/utilities/metadata/projectMetadata";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
@@ -98,7 +102,11 @@ export default async function RootLayout(props: {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
+<<<<<<< fix/test-suite-cleanup
       <E2EStoreExposer />
+=======
+      <ProjectShareDialogMount />
+>>>>>>> main
       <div className={layoutTheme.padding}>{children}</div>
     </HydrationBoundary>
   );

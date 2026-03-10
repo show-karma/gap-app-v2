@@ -89,6 +89,8 @@ export interface TenantNavigation {
     poweredBy?: boolean;
   };
   items: NavItem[];
+  /** Whether to show the top-level "Applications" link in the navbar. Defaults to true. */
+  showBrowseApplications?: boolean;
   claimFundsHref?: string;
   socialLinks?: {
     twitter?: string;

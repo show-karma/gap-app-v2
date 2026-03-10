@@ -13,6 +13,32 @@ const mockSaveMutate = jest.fn();
 let mockTogglePending = false;
 let mockSavePending = false;
 
+// Mock the DatePicker component to avoid Radix Popover portal issues in JSDOM
+jest.mock("@/components/Utilities/DatePicker", () => ({
+  DatePicker: ({
+    selected,
+    onSelect,
+    ariaLabel,
+    placeholder,
+  }: {
+    selected?: Date;
+    onSelect: (date: Date) => void;
+    ariaLabel?: string;
+    placeholder?: string;
+  }) => {
+    const React = require("react");
+    return React.createElement(
+      "button",
+      {
+        "aria-label": ariaLabel,
+        "data-testid": "date-picker-trigger",
+        onClick: () => onSelect(new Date("2024-06-15T00:00:00")),
+      },
+      selected ? selected.toLocaleDateString() : (placeholder ?? "Pick a date")
+    );
+  },
+}));
+
 // Mock the payout-disbursement module at the test file level
 jest.mock("@/src/features/payout-disbursement", () => {
   const React = require("react");
@@ -199,12 +225,8 @@ describe("ProjectDetailsModal", () => {
         }),
       });
 
-      const dateInput = screen.getByLabelText(/set agreement signed date/i);
-      // fireEvent.change is more reliable for date inputs than userEvent.type
-      await user.clear(dateInput);
-      // Simulate picking a date by typing into the input
-      const { fireEvent } = require("@testing-library/react");
-      fireEvent.change(dateInput, { target: { value: "2024-06-15" } });
+      const datePickerButton = screen.getByLabelText(/set agreement signed date/i);
+      await user.click(datePickerButton);
 
       expect(mockToggleMutate).toHaveBeenCalledTimes(1);
       expect(mockToggleMutate).toHaveBeenCalledWith(

@@ -5,6 +5,7 @@ import { useParams, usePathname, useRouter, useSearchParams } from "next/navigat
 import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { ProgressDialog } from "@/components/Dialogs/ProgressDialog";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ShareDialog } from "@/components/Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/ShareDialog";
 import { EndorsementDialog } from "@/components/Pages/Project/Impact/EndorsementDialog";
 import { IntroDialog } from "@/components/Pages/Project/IntroDialog";
 import {
@@ -17,6 +18,7 @@ import { useContributorProfileModalStore } from "@/store/modals/contributorProfi
 import { useEndorsementStore } from "@/store/modals/endorsement";
 import { useIntroModalStore } from "@/store/modals/intro";
 import { useProgressModalStore } from "@/store/modals/progress";
+import { useShareDialogStore } from "@/store/modals/shareDialog";
 import { cn } from "@/utilities/tailwind";
 import { EndorsementsListDialog } from "../EndorsementsListDialog";
 import { ProjectHeader } from "../Header/ProjectHeader";
@@ -101,6 +103,7 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
   const { isEndorsementOpen } = useEndorsementStore();
   const { isIntroModalOpen } = useIntroModalStore();
   const { isProgressModalOpen } = useProgressModalStore();
+  const { isOpen: isShareDialogOpen } = useShareDialogStore();
   const { openModal: openContributorProfileModal } = useContributorProfileModalStore();
   const [isEndorsementsListOpen, setIsEndorsementsListOpen] = useState(false);
 
@@ -245,6 +248,7 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
       {isEndorsementOpen && <EndorsementDialog />}
       {isIntroModalOpen && <IntroDialog />}
       {isProgressModalOpen && <ProgressDialog />}
+      {isShareDialogOpen && <ShareDialog />}
       <EndorsementsListDialog
         open={isEndorsementsListOpen}
         onOpenChange={setIsEndorsementsListOpen}
