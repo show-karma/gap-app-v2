@@ -53,17 +53,17 @@ const DEFAULT_WHITELABEL_DOMAINS: WhitelabelDomain[] = [
     theme: { primaryColor: "#EBC28E" },
   },
   {
-    domain: "grants.filecoin.io",
+    domain: "app.filpgf.io",
     communitySlug: "filecoin",
     tenantId: "filecoin",
     name: "Filecoin",
     theme: { primaryColor: "#0090ff" },
   },
   {
-    domain: "app.filpgf.io",
+    domain: "grants.filecoin.io",
     communitySlug: "filecoin",
     tenantId: "filecoin",
-    name: "Filecoin PGF",
+    name: "Filecoin (Legacy)",
     theme: { primaryColor: "#0090ff" },
   },
 ];

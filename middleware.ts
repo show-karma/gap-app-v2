@@ -148,10 +148,30 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  const communityMatch = path.match(/^\/([^/]+)(?:\/.*)?$/);
+  // --- Redirect /<slug> to whitelabel domain if one exists ---
+  // e.g. karmahq.xyz/optimism → app.opgrants.io
+  const communityMatch = path.match(/^\/([^/]+)(\/.*)?$/);
 
   if (communityMatch) {
     const communityId = communityMatch[1];
+    const restOfCommunityPath = communityMatch[2] || "/";
+
+    // Check if this slug has a whitelabel domain and redirect there
+    if (domainInfo?.isShared && isKnownTenant(communityId)) {
+      const whitelabelDomain = getWhitelabelDomainForSlug(
+        communityId,
+        domainInfo.isProduction
+      );
+      if (whitelabelDomain) {
+        const protocol = request.nextUrl.protocol;
+        return NextResponse.redirect(
+          new URL(`${protocol}//${whitelabelDomain}${restOfCommunityPath}`),
+          301
+        );
+      }
+    }
+
+    // No whitelabel — fall back to /community/<slug> rewrite for chosen communities
     const communities = chosenCommunities();
     const isChosenCommunity = communities.some(
       (community) =>
