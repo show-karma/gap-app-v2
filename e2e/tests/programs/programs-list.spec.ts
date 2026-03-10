@@ -55,14 +55,23 @@ test.describe("Programs List", () => {
   });
 
   test("T1-10: program card click navigates to detail page", async ({ page, withApiMocks }) => {
-    await withApiMocks();
+    const mockProgram = {
+      programId: "test-program-001",
+      chainID: 10,
+      name: "Test Grants Program",
+      metadata: { title: "Test Grants Program", description: "A test program" },
+      applicationConfig: { isEnabled: true },
+      isOnKarma: true,
+      communities: [{ uid: "optimism", name: "Optimism" }],
+    };
+    await withApiMocks({
+      "**/v2/funding-program-configs/community/optimism**": mockJson([mockProgram]),
+    });
     await page.goto("/community/optimism/funding-opportunities");
     await waitForPageReady(page);
-    // Community funding-opportunities page SSR-fetches real programs from the indexer.
-    // Verify that at least one program card renders with a link to a program detail page.
+    // Verify that a program card renders with a link containing /programs/
     const programCard = page.locator('[aria-label^="View funding program"]').first();
     await expect(programCard).toBeVisible({ timeout: 30000 });
-    // Verify the card's parent link has an href containing /programs/
     const cardLink = programCard.locator("xpath=ancestor::a[1]");
     const href = await cardLink.getAttribute("href");
     expect(href).toBeTruthy();
@@ -70,16 +79,26 @@ test.describe("Programs List", () => {
   });
 
   test("T1-11: program detail page loads with program info", async ({ page, withApiMocks }) => {
-    await withApiMocks();
+    const mockProgram = {
+      programId: "test-program-002",
+      chainID: 10,
+      name: "Detail Grants Program",
+      metadata: { title: "Detail Grants Program", description: "A detail test program" },
+      applicationConfig: { isEnabled: true },
+      isOnKarma: true,
+      communities: [{ uid: "optimism", name: "Optimism" }],
+    };
+    await withApiMocks({
+      "**/v2/funding-program-configs/community/optimism**": mockJson([mockProgram]),
+    });
     await page.goto("/community/optimism/funding-opportunities");
     await waitForPageReady(page);
-    // Find the first program card and verify it has meaningful content
+    // Find the program card and verify it has meaningful content
     const programCard = page.locator('[aria-label^="View funding program"]').first();
     await expect(programCard).toBeVisible({ timeout: 30000 });
-    // Verify the card displays a program title (non-empty text content)
     const ariaLabel = await programCard.getAttribute("aria-label");
     expect(ariaLabel).toBeTruthy();
-    expect(ariaLabel).not.toBe("View funding program: Untitled program");
+    expect(ariaLabel).toContain("Detail Grants Program");
   });
 
   test("T1-12: empty programs shows empty state", async ({ page, withApiMocks }) => {
