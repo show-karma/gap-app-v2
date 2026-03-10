@@ -221,19 +221,19 @@ export function getWhitelabelDomainForSlug(slug: string, isProduction: boolean):
 
   if (candidates.length === 0) return null;
 
-  // If only one candidate, return it regardless of environment
-  if (candidates.length === 1) return candidates[0].domain;
-
-  // Multiple candidates — pick by name convention (test/staging vs production)
-  // Staging domains typically have "test" or "staging" in the name or domain
-  const isStaging = (d: WhitelabelDomain) =>
+  // Classify candidates by environment convention.
+  // Staging domains typically have "test" or "staging" in the name or domain.
+  const isStagingDomain = (d: WhitelabelDomain) =>
     d.domain.includes("test") ||
     d.name.toLowerCase().includes("test") ||
     d.name.toLowerCase().includes("staging");
 
   const match = isProduction
-    ? candidates.find((d) => !isStaging(d))
-    : candidates.find((d) => isStaging(d));
+    ? candidates.find((d) => !isStagingDomain(d))
+    : candidates.find((d) => isStagingDomain(d));
 
-  return (match ?? candidates[0]).domain;
+  // Return null when no environment-matching domain exists.
+  // This prevents staging traffic from being sent to a production domain
+  // (e.g. testapp.karmahq.xyz/filecoin → grants.filecoin.io → fil.org/grants).
+  return match?.domain ?? null;
 }
