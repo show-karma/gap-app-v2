@@ -2,6 +2,7 @@
 
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { errorManager } from "@/components/Utilities/errorManager";
@@ -32,7 +33,12 @@ interface EmailGranteesComposerProps {
 }
 
 export function EmailGranteesComposer({ programs }: EmailGranteesComposerProps) {
-  const [selectedProgramId, setSelectedProgramId] = useState("");
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [selectedProgramId, setSelectedProgramId] = useState(
+    () => searchParams.get("programId") || ""
+  );
   const [recipients, setRecipients] = useState<string[]>([]);
   const [manualEmail, setManualEmail] = useState("");
   const [subject, setSubject] = useState("");
@@ -69,7 +75,14 @@ export function EmailGranteesComposer({ programs }: EmailGranteesComposerProps) 
     if (!programId) {
       prevProgramRef.current = null;
     }
-  }, []);
+    const params = new URLSearchParams(searchParams.toString());
+    if (programId) {
+      params.set("programId", programId);
+    } else {
+      params.delete("programId");
+    }
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [searchParams, pathname, router]);
 
   const handleEmailsFetched = useCallback(() => {
     if (granteeEmails) {
@@ -97,7 +110,7 @@ export function EmailGranteesComposer({ programs }: EmailGranteesComposerProps) 
     }
     setRecipients((prev) => {
       if (prev.includes(trimmed)) {
-        toast.error("This email is already in the list");
+        toast.error("This email is already in the list", { id: "duplicate-email" });
         return prev;
       }
       return [...prev, trimmed];
@@ -340,7 +353,7 @@ export function EmailGranteesComposer({ programs }: EmailGranteesComposerProps) 
             >
               {sendEmailMutation.isPending ? (
                 <>
-                  <Spinner />
+                  <Spinner className="w-4 h-4" />
                   Sending...
                 </>
               ) : (
