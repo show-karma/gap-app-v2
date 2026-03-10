@@ -165,6 +165,19 @@ describe("Chain Payout Address Modal", () => {
       cy.visit(`/project/${TEST_PROJECT_SLUG}`);
       waitForPageLoad();
 
+      // If ErrorBoundary caught a render error, surface the actual error message
+      // so CI screenshots and logs show what crashed instead of a generic fallback
+      cy.get("body", { timeout: 15000 }).then(($body) => {
+        const errorBoundary = $body.find('[data-testid="error-boundary-fallback"]');
+        if (errorBoundary.length > 0) {
+          const errorMsg = errorBoundary.attr("data-error-message") || "(no message)";
+          const bodyText = $body.text().substring(0, 500);
+          throw new Error(
+            `ErrorBoundary caught a render error: ${errorMsg}\nPage text: ${bodyText}`
+          );
+        }
+      });
+
       // Button should be visible for project owner
       cy.get('[data-testid="enable-donations-button"]', { timeout: 15000 }).should("be.visible");
       cy.get('[data-testid="enable-donations-button"]').should("contain", "Set up payout address");

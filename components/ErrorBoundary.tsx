@@ -52,7 +52,11 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
       // Default fallback UI
       return (
-        <div className="p-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+        <div
+          className="p-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800"
+          data-testid="error-boundary-fallback"
+          data-error-message={this.state.error?.message}
+        >
           <h3 className="text-sm font-medium text-red-800 dark:text-red-400 mb-2">
             Something went wrong
           </h3>
