@@ -181,27 +181,36 @@ describe("useMentionEditor", () => {
     });
 
     it("should replace only @filter and preserve text after cursor when mention is mid-sentence", () => {
-      const { result } = renderHook(() => useMentionEditor());
+      const editor = document.createElement("div");
+      const textarea = document.createElement("textarea");
+      editor.appendChild(textarea);
+
+      const { result } = renderHook(() =>
+        useMentionEditor({ editorRef: { current: editor } })
+      );
       const onChange = jest.fn();
 
-      // Simulate typing "Hello @Al world" with cursor at position 11 (after "@Al")
-      // Since there's no editorRef, cursorPositionRef falls back to newContent.length
-      // So we simulate the scenario by typing "Hello @Al" first (cursor at end)
+      // Simulate typing "Hello @Al world" with cursor at position 9 (after "@Al")
       act(() => {
-        result.current.handleContentChange("Hello @Al", onChange);
+        textarea.value = "Hello @Al world";
+        textarea.selectionStart = 9;
+        textarea.selectionEnd = 9;
+        result.current.handleContentChange("Hello @Al world", onChange);
       });
       expect(result.current.isAutocompleteOpen).toBe(true);
       expect(result.current.filterText).toBe("Al");
 
-      // Select the reviewer with the full content including " world" after cursor
+      // Select the reviewer — should replace @Al but preserve " world"
       act(() => {
+        textarea.selectionStart = 9;
+        textarea.selectionEnd = 9;
         result.current.handleSelectReviewer(reviewer, "Hello @Al world", onChange);
       });
 
       const lastCall = onChange.mock.calls[onChange.mock.calls.length - 1][0];
       expect(lastCall).toContain("@[Alice](email:alice@example.com)");
       expect(lastCall).toContain("world");
-      expect(lastCall).not.toContain("@Al");
+      expect(lastCall).not.toContain("@Al ");
     });
   });
 
@@ -217,6 +226,85 @@ describe("useMentionEditor", () => {
 
       act(() => {
         result.current.handleCloseAutocomplete();
+      });
+
+      expect(result.current.isAutocompleteOpen).toBe(false);
+      expect(result.current.filterText).toBe("");
+    });
+  });
+
+  describe("handleKeyDown", () => {
+    const reviewers = [
+      { name: "Alice", email: "alice@example.com" },
+      { name: "Bob", email: "bob@example.com" },
+    ];
+
+    it("should select a reviewer on Enter", () => {
+      const { result } = renderHook(() => useMentionEditor());
+      const onChange = jest.fn();
+
+      // Open autocomplete
+      act(() => {
+        result.current.handleContentChange("Hello @Al", onChange);
+      });
+      expect(result.current.isAutocompleteOpen).toBe(true);
+
+      // Press Enter on first item (selectedIndex defaults to 0)
+      act(() => {
+        result.current.handleKeyDown("Enter", reviewers, false, "Hello @Al", onChange);
+      });
+
+      expect(result.current.isAutocompleteOpen).toBe(false);
+      const lastCall = onChange.mock.calls[onChange.mock.calls.length - 1][0];
+      expect(lastCall).toContain("@[Alice](email:alice@example.com)");
+    });
+
+    it("should navigate down with ArrowDown", () => {
+      const { result } = renderHook(() => useMentionEditor());
+      const onChange = jest.fn();
+
+      act(() => {
+        result.current.handleContentChange("@", onChange);
+      });
+
+      // Initial selectedIndex is 0, ArrowDown should move to 1
+      act(() => {
+        result.current.handleKeyDown("ArrowDown", reviewers, false, "@", onChange);
+      });
+      expect(result.current.selectedIndex).toBe(1);
+    });
+
+    it("should navigate up with ArrowUp", () => {
+      const { result } = renderHook(() => useMentionEditor());
+      const onChange = jest.fn();
+
+      act(() => {
+        result.current.handleContentChange("@", onChange);
+      });
+
+      // Move down first, then up
+      act(() => {
+        result.current.handleKeyDown("ArrowDown", reviewers, false, "@", onChange);
+      });
+      expect(result.current.selectedIndex).toBe(1);
+
+      act(() => {
+        result.current.handleKeyDown("ArrowUp", reviewers, false, "@", onChange);
+      });
+      expect(result.current.selectedIndex).toBe(0);
+    });
+
+    it("should close autocomplete on Escape", () => {
+      const { result } = renderHook(() => useMentionEditor());
+      const onChange = jest.fn();
+
+      act(() => {
+        result.current.handleContentChange("Hello @", onChange);
+      });
+      expect(result.current.isAutocompleteOpen).toBe(true);
+
+      act(() => {
+        result.current.handleKeyDown("Escape", reviewers, false, "Hello @", onChange);
       });
 
       expect(result.current.isAutocompleteOpen).toBe(false);

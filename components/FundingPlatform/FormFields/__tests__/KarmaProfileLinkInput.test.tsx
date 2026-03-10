@@ -184,8 +184,8 @@ describe("KarmaProfileLinkInput Component", () => {
       const input = screen.getByPlaceholderText("Search for your project...");
 
       await act(async () => {
+        input.focus();
         fireEvent.change(input, { target: { value: "test" } });
-        fireEvent.focus(input);
         jest.advanceTimersByTime(600);
       });
 
@@ -210,8 +210,8 @@ describe("KarmaProfileLinkInput Component", () => {
       const input = screen.getByPlaceholderText("Search for your project...");
 
       await act(async () => {
+        input.focus();
         fireEvent.change(input, { target: { value: "test" } });
-        fireEvent.focus(input);
         jest.advanceTimersByTime(600);
       });
 
@@ -239,8 +239,8 @@ describe("KarmaProfileLinkInput Component", () => {
       const input = screen.getByPlaceholderText("Search for your project...");
 
       await act(async () => {
+        input.focus();
         fireEvent.change(input, { target: { value: "test" } });
-        fireEvent.focus(input);
         jest.advanceTimersByTime(600);
       });
 

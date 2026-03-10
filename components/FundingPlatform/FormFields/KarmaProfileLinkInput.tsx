@@ -96,6 +96,9 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
     projects,
     isLoading: isSearching,
     isFetching,
+    isError: isSearchError,
+    error: searchError,
+    refetch: refetchSearch,
   } = useProjectSearch(debouncedQuery, {
     enabled: debouncedQuery.length >= SEARCH_CONSTANTS.MIN_QUERY_LENGTH,
   });
@@ -137,9 +140,15 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
     };
   }, [isDropdownOpen]);
 
-  // Open dropdown when search completes
+  // Open dropdown when search completes (only if field still has focus)
   useEffect(() => {
-    if (debouncedQuery.length >= SEARCH_CONSTANTS.MIN_QUERY_LENGTH && !isSearching && !isFetching) {
+    const hasFocusWithin = containerRef.current?.contains(document.activeElement) ?? false;
+    if (
+      hasFocusWithin &&
+      debouncedQuery.length >= SEARCH_CONSTANTS.MIN_QUERY_LENGTH &&
+      !isSearching &&
+      !isFetching
+    ) {
       setIsDropdownOpen(true);
       setFocusedIndex(-1); // Reset focus when new results arrive
     }
@@ -320,6 +329,20 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
                         aria-hidden="true"
                       />
                       <span className="sr-only">Loading search results...</span>
+                    </div>
+                  ) : isSearchError ? (
+                    <div className="py-4 px-4 text-center text-sm text-red-600 dark:text-red-400">
+                      <p>Failed to search projects</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        {searchError?.message || "An unexpected error occurred"}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => refetchSearch()}
+                        className="mt-2 text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                      >
+                        Retry
+                      </button>
                     </div>
                   ) : projects.length === 0 ? (
                     <div className="py-4 text-center text-sm text-gray-500 dark:text-gray-400">

@@ -94,11 +94,16 @@ export function useMentionEditor(options: UseMentionEditorOptions = {}) {
     [enabled, editorRef, computeCaretPosition]
   );
 
+  const getCurrentCursorPosition = useCallback(() => {
+    const textarea = editorRef?.current?.querySelector("textarea");
+    return textarea?.selectionStart ?? cursorPositionRef.current;
+  }, [editorRef]);
+
   const handleSelectReviewer = useCallback(
     (reviewer: MentionReviewer, currentContent: string, onChange: (value: string) => void) => {
       const newContent = insertMention(
         currentContent,
-        cursorPositionRef.current,
+        getCurrentCursorPosition(),
         reviewer,
         filterText
       );
@@ -106,7 +111,7 @@ export function useMentionEditor(options: UseMentionEditorOptions = {}) {
       setIsAutocompleteOpen(false);
       setFilterText("");
     },
-    [filterText]
+    [filterText, getCurrentCursorPosition]
   );
 
   const handleCloseAutocomplete = useCallback(() => {
@@ -130,7 +135,7 @@ export function useMentionEditor(options: UseMentionEditorOptions = {}) {
       const savedFilter = savedFilterTextRef.current;
       const newContent = insertMention(
         currentContent,
-        cursorPositionRef.current,
+        getCurrentCursorPosition(),
         reviewer,
         savedFilter
       );
@@ -139,7 +144,7 @@ export function useMentionEditor(options: UseMentionEditorOptions = {}) {
       setIsAutocompleteOpen(false);
       setFilterText("");
     },
-    []
+    [getCurrentCursorPosition]
   );
 
   const handleKeyDown = useCallback(
