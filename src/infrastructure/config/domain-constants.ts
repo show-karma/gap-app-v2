@@ -32,7 +32,7 @@ export const DOMAIN_CONFIGS: DomainInfo[] = [
   { domain: "app.karmahq.xyz", isProduction: true, isShared: true, isLegacyUmbrella: true },
   { domain: "testapp.karmahq.xyz", isProduction: false, isShared: true, isLegacyUmbrella: true },
   { domain: "app.localhost", isProduction: false, isShared: true, isLegacyUmbrella: true },
-  { domain: "localhost", isProduction: false, isShared: true, isLegacyUmbrella: true },
+  { domain: "localhost", isProduction: false, isShared: true },
 ];
 
 export function getDomainInfo(hostname: string): DomainInfo | undefined {
