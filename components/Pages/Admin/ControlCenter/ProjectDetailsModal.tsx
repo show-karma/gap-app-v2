@@ -361,7 +361,9 @@ export function ProjectDetailsModal({
         {
           grantUID: grant.grantUid,
           signed: true,
-          signedAt: date.toISOString(),
+          signedAt: new Date(
+            Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
+          ).toISOString(),
         },
         {
           onSuccess: () => {
@@ -537,7 +539,7 @@ export function ProjectDetailsModal({
                   <div className="flex items-center gap-1.5">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
                     <span className="text-xs font-medium text-emerald-700 dark:text-emerald-400">
-                      Signed {agreementDate ? formatDate(agreementDate) : ""}
+                      Signed {agreementDate ? formatDate(agreementDate, "UTC") : ""}
                     </span>
                     {agreement?.signedBy && (
                       <span
