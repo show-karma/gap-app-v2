@@ -298,12 +298,20 @@ const tenantNavigation: Record<TenantId, TenantNavigation> = {
     header: { title: "Filecoin Community", shouldHaveTitle: true, poweredBy: true },
     items: [
       {
-        label: "Programs",
+        label: "ProPGF",
         items: [
-          { label: "ProPGF", href: "https://filpgf.io/propgf/", isExternal: true },
-          { label: "RetroPGF", href: "https://www.fil-retropgf.io/", isExternal: true },
+          { label: "Overview", href: "https://filpgf.io/propgf", isExternal: true },
+          { label: "Grants", href: "https://karmahq.xyz/community/filecoin", isExternal: true },
+          { label: "Applications", href: "/community/filecoin/browse-applications" },
+          {
+            label: "Payout process",
+            href: "https://docs.google.com/document/d/1WIyL8zj1ToTEVujRvCV6E4mlle5srwLP3DhEarWn3Ug/edit?usp=sharing",
+            isExternal: true,
+          },
+          { label: "Financials", href: "/community/filecoin/financials" },
         ],
       },
+      { label: "RetroPGF", href: "https://www.fil-retropgf.io/", isExternal: true },
       {
         label: "More",
         items: [
