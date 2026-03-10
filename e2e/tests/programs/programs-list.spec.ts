@@ -55,33 +55,45 @@ test.describe("Programs List", () => {
   });
 
   test("T1-10: program card click navigates to detail page", async ({ page, withApiMocks }) => {
-    await withApiMocks();
-    // Navigate directly to the funding opportunities page
+    const mockProgram = {
+      programId: "test-program-001",
+      chainID: 10,
+      name: "Test Grants Program",
+      metadata: { title: "Test Grants Program", description: "A test program" },
+      applicationConfig: { isEnabled: true },
+    };
+    await withApiMocks({
+      "**/v2/funding-program-configs/community/optimism**": mockJson([mockProgram]),
+    });
     await page.goto("/community/optimism/funding-opportunities");
     await waitForPageReady(page);
-    // Wait for funding program cards to load (client-side fetch from real API)
     const programCard = page.locator('[aria-label^="View funding program"]').first();
     await expect(programCard).toBeVisible({ timeout: 30000 });
     const beforeUrl = page.url();
     await programCard.click();
     await waitForPageReady(page);
-    // URL should have changed to the program detail page
     expect(page.url()).not.toBe(beforeUrl);
     expect(page.url()).toContain("/programs/");
   });
 
   test("T1-11: program detail page loads with program info", async ({ page, withApiMocks }) => {
-    await withApiMocks();
-    // Navigate directly to the funding opportunities page
+    const mockProgram = {
+      programId: "test-program-002",
+      chainID: 10,
+      name: "Detail Grants Program",
+      metadata: { title: "Detail Grants Program", description: "A detail test program" },
+      applicationConfig: { isEnabled: true },
+    };
+    await withApiMocks({
+      "**/v2/funding-program-configs/community/optimism**": mockJson([mockProgram]),
+    });
     await page.goto("/community/optimism/funding-opportunities");
     await waitForPageReady(page);
-    // Wait for funding program cards to load (client-side fetch from real API)
     const programCard = page.locator('[aria-label^="View funding program"]').first();
     await expect(programCard).toBeVisible({ timeout: 30000 });
     await programCard.click();
     await waitForPageReady(page);
-    // The program detail page should show program info with an Apply section
-    await expect(page.locator("body")).toContainText(/Apply|Back to programs|by\s+Optimism/i, {
+    await expect(page.locator("body")).toContainText(/Apply|Back to programs|Detail Grants/i, {
       timeout: 15000,
     });
   });
