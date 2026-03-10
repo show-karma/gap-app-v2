@@ -3,7 +3,7 @@
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { watchAccount } from "@wagmi/core";
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Hex } from "viem";
 import { useAccount } from "wagmi";
 import { useProjectCreateModalStore } from "@/store/modals/projectCreate";
@@ -121,7 +121,15 @@ export const useAuth = () => {
 
   const { wallets } = useWallets();
   const primaryWallet = wallets[0];
-  const cypressMockAuthState = useMemo(() => getCypressMockAuthState(), [ready, authenticated]);
+  // Track client-side hydration so getCypressMockAuthState() re-evaluates after SSR.
+  // During SSR, window is undefined so the check returns null. Without isClient,
+  // useMemo caches the SSR result when Privy's ready/authenticated haven't changed yet.
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => setIsClient(true), []);
+  const cypressMockAuthState = useMemo(
+    () => getCypressMockAuthState(),
+    [ready, authenticated, isClient]
+  );
   const isCypressMockAuthenticated = Boolean(cypressMockAuthState?.authenticated);
   const cypressMockAddress = cypressMockAuthState?.user?.wallet?.address as Hex | undefined;
   const address = (primaryWallet?.address as Hex | undefined) || cypressMockAddress;
