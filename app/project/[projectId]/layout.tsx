@@ -15,6 +15,13 @@ type Params = Promise<{
 }>;
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
+  // Skip server-side API calls during E2E tests — the staging API may be
+  // unreachable from CI, causing generateMetadata to hang and block the
+  // entire page from loading (120s timeout).
+  if (process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS === "true") {
+    return { title: "Project" };
+  }
+
   const awaitedParams = await params;
   const { projectId } = awaitedParams;
 
