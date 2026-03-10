@@ -125,10 +125,36 @@ describe("Funding Platform - Question Builder Regression", () => {
 
     cy.login({ userType: "admin" });
 
+    // Stub Ethereum JSON-RPC calls used by useContractOwner (checks contract ownership).
+    // Without this stub the RPC request to the blockchain node can hang, keeping
+    // isOwnerLoading=true in ManageLayoutShell and blocking children from rendering.
+    // Use a broad pattern to cover any RPC provider (public, Alchemy, Infura, etc.).
+    const rpcStubBody = {
+      statusCode: 200,
+      body: { jsonrpc: "2.0", id: 1, result: "0x" + "0".repeat(64) },
+    };
+    cy.intercept("POST", "https://mainnet.optimism.io**", rpcStubBody);
+    cy.intercept("POST", "https://*.g.alchemy.com/**", rpcStubBody);
+    cy.intercept("POST", "https://*.infura.io/**", rpcStubBody);
+    cy.intercept("POST", "https://*.quiknode.pro/**", rpcStubBody);
+
     cy.intercept("GET", "**/v2/auth/permissions**", {
       statusCode: 200,
       body: permissionsResponse,
     }).as("getPermissions");
+
+    // Community details - required by ManageLayoutShell to render children
+    cy.intercept("GET", `**/v2/communities/${communityId}`, {
+      statusCode: 200,
+      body: {
+        uid: "community-optimism-uid",
+        details: {
+          name: "Optimism",
+          slug: communityId,
+          description: "Optimism community",
+        },
+      },
+    }).as("getCommunityDetails");
 
     cy.intercept("GET", `**/v2/funding-program-configs/community/${communityId}**`, (req) => {
       req.reply({

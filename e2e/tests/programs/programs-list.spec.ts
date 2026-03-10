@@ -19,7 +19,7 @@ test.describe("Programs List", () => {
     await waitForPageReady(page);
     // The community page SSR-fetches real data from the indexer.
     // Verify the heading and that at least one project card renders.
-    await expect(page.getByText("Optimism")).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText("Optimism").first()).toBeVisible({ timeout: 15000 });
     // The "View community projects" tab shows real projects
     const projectCards = page
       .locator("[class*='card'], [class*='Card'], article, [data-testid]")
@@ -32,7 +32,7 @@ test.describe("Programs List", () => {
     await page.goto("/community/optimism");
     await waitForPageReady(page);
     // Community page loads with real programs — verify the page structure
-    await expect(page.getByText("Optimism")).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText("Optimism").first()).toBeVisible({ timeout: 15000 });
     // The "Funding opportunities" tab appears after client-side count fetch
     await expect(page.getByText("Funding opportunities")).toBeVisible({ timeout: 15000 });
   });
@@ -60,7 +60,7 @@ test.describe("Programs List", () => {
     await page.goto("/community/optimism/funding-opportunities");
     await waitForPageReady(page);
     // Wait for funding program cards to load (client-side fetch from real API)
-    const programCard = page.locator('[role="button"][aria-label^="View funding program"]').first();
+    const programCard = page.locator('[aria-label^="View funding program"]').first();
     await expect(programCard).toBeVisible({ timeout: 30000 });
     const beforeUrl = page.url();
     await programCard.click();
@@ -76,7 +76,7 @@ test.describe("Programs List", () => {
     await page.goto("/community/optimism/funding-opportunities");
     await waitForPageReady(page);
     // Wait for funding program cards to load (client-side fetch from real API)
-    const programCard = page.locator('[role="button"][aria-label^="View funding program"]').first();
+    const programCard = page.locator('[aria-label^="View funding program"]').first();
     await expect(programCard).toBeVisible({ timeout: 30000 });
     await programCard.click();
     await waitForPageReady(page);
