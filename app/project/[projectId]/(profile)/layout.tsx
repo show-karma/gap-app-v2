@@ -2,9 +2,12 @@
 
 import dynamic from "next/dynamic";
 import type { ReactNode } from "react";
+// In E2E builds, skip dynamic() to avoid chunk-loading issues in Cypress.
+// The compile-time flag is inlined, so the unused branch is tree-shaken.
+import { ProjectProfileLayout as DirectLayout } from "@/components/Pages/Project/v2/Layout/ProjectProfileLayout";
 import { ProjectProfileLayoutSkeleton } from "@/components/Pages/Project/v2/Skeletons";
 
-const ProjectProfileLayout = dynamic(
+const DynamicLayout = dynamic(
   () =>
     import("@/components/Pages/Project/v2/Layout/ProjectProfileLayout").then(
       (mod) => mod.ProjectProfileLayout
@@ -13,6 +16,9 @@ const ProjectProfileLayout = dynamic(
     loading: () => <ProjectProfileLayoutSkeleton />,
   }
 );
+
+const ProjectProfileLayout =
+  process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS === "true" ? DirectLayout : DynamicLayout;
 
 interface ProfileLayoutProps {
   children: ReactNode;
