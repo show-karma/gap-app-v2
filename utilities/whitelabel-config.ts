@@ -11,6 +11,13 @@ export interface WhitelabelDomain {
 
 const DEFAULT_WHITELABEL_DOMAINS: WhitelabelDomain[] = [
   {
+    domain: "localhost",
+    communitySlug: "filecoin",
+    tenantId: "filecoin",
+    name: "Filecoin (Local)",
+    theme: { primaryColor: "#0090ff" },
+  },
+  {
     domain: "optimism.localhost",
     communitySlug: "optimism",
     tenantId: "optimism",
