@@ -169,21 +169,21 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
     );
   }
 
-  // Loading state
+  // Loading state — matches ProjectProfileLayoutSkeleton structure
   if (isLoading || !project) {
     return (
       <div className="flex flex-col gap-6 w-full" data-testid="layout-loading">
         {/* Mobile: Profile card skeleton */}
         <div className="lg:hidden">
-          <div className="flex flex-col gap-4 p-6 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900">
+          <div className="flex flex-col gap-4 p-6 rounded-lg border border-border bg-background">
             <div className="flex flex-row items-start justify-between">
-              <div className="h-16 w-16 rounded-full bg-neutral-200 dark:bg-neutral-700 animate-pulse" />
-              <div className="h-8 w-20 rounded-lg bg-neutral-200 dark:bg-neutral-700 animate-pulse" />
+              <div className="h-16 w-16 rounded-full bg-muted animate-pulse" />
+              <div className="h-8 w-20 rounded-lg bg-muted animate-pulse" />
             </div>
-            <div className="h-6 w-3/4 rounded bg-neutral-200 dark:bg-neutral-700 animate-pulse" />
+            <div className="h-6 w-3/4 rounded bg-muted animate-pulse" />
             <div className="flex flex-col gap-2">
-              <div className="h-4 w-full rounded bg-neutral-200 dark:bg-neutral-700 animate-pulse" />
-              <div className="h-4 w-2/3 rounded bg-neutral-200 dark:bg-neutral-700 animate-pulse" />
+              <div className="h-4 w-full rounded bg-muted animate-pulse" />
+              <div className="h-4 w-2/3 rounded bg-muted animate-pulse" />
             </div>
           </div>
         </div>
@@ -206,7 +206,7 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
               <ContentTabsSkeleton />
             </div>
             <div className="flex-1">
-              <div className="animate-pulse bg-gray-100 dark:bg-neutral-800 rounded-xl h-96" />
+              <div className="animate-pulse bg-muted rounded-xl h-96" />
             </div>
           </div>
         </div>
