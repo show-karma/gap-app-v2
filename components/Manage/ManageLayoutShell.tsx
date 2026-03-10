@@ -24,9 +24,10 @@ export function ManageLayoutShell({ children }: { children: React.ReactNode }) {
   } = usePermissionContext();
   const { isOwner, isOwnerLoading } = useOwnerStore();
 
-  // Expose Zustand store setters for E2E tests when running under Cypress
+  // Expose Zustand store setters for E2E tests.
+  // Uses the compile-time NEXT_PUBLIC_E2E_AUTH_BYPASS flag.
   useEffect(() => {
-    if (typeof window !== "undefined" && (window as Window & { Cypress?: unknown }).Cypress) {
+    if (process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS === "true" && typeof window !== "undefined") {
       (window as Window & { __E2E_STORES__?: Record<string, unknown> }).__E2E_STORES__ = {
         ...((window as Window & { __E2E_STORES__?: Record<string, unknown> }).__E2E_STORES__ || {}),
         setIsOwner: useOwnerStore.getState().setIsOwner,

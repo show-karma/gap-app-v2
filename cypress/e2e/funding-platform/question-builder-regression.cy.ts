@@ -17,7 +17,7 @@ import { waitForPageLoad } from "../../support/intercepts";
  * via the exposed Zustand store, bypassing the RPC ownership check.
  */
 const unblockOwnerLoading = () => {
-  cy.window({ timeout: 10000 }).should("have.property", "__E2E_STORES__").then((win) => {
+  cy.window({ timeout: 30000 }).should("have.property", "__E2E_STORES__").then((win) => {
     const stores = (win as unknown as Window & { __E2E_STORES__: Record<string, (v: boolean) => void> }).__E2E_STORES__;
     stores.setIsOwnerLoading(false);
   });

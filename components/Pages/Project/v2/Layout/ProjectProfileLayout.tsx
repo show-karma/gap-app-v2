@@ -121,9 +121,11 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
   // Initialize project permissions in store (for authorization checks in ContentTabs)
   useProjectPermissions();
 
-  // Expose Zustand store setters for E2E tests when running under Cypress
+  // Expose Zustand store setters for E2E tests.
+  // Uses the compile-time NEXT_PUBLIC_E2E_AUTH_BYPASS flag (inlined at build time)
+  // so the code is tree-shaken in non-E2E production builds.
   useEffect(() => {
-    if (typeof window !== "undefined" && (window as Window & { Cypress?: unknown }).Cypress) {
+    if (process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS === "true" && typeof window !== "undefined") {
       (window as Window & { __E2E_STORES__?: Record<string, unknown> }).__E2E_STORES__ = {
         setIsProjectOwner: useProjectStore.getState().setIsProjectOwner,
         setIsProjectAdmin: useProjectStore.getState().setIsProjectAdmin,

@@ -17,13 +17,27 @@
 import { setupIndexerCatchAll, setupRpcIntercepts, waitForPageLoad } from "../../support/intercepts";
 
 /**
+ * Wait for the ProjectProfileLayout to hydrate and expose store setters.
+ * The layout sets window.__E2E_STORES__ in a useEffect when
+ * NEXT_PUBLIC_E2E_AUTH_BYPASS is enabled at build time.
+ * We first wait for the layout's data-testid to confirm hydration,
+ * then wait for the stores object to appear.
+ */
+const waitForStoreExposure = () => {
+  // Wait for the layout component to be mounted (loading or fully loaded)
+  cy.get('[data-testid="project-profile-layout"], [data-testid="layout-loading"]', {
+    timeout: 30000,
+  }).should("exist");
+  // Wait for the useEffect to set __E2E_STORES__
+  cy.window({ timeout: 30000 }).should("have.property", "__E2E_STORES__");
+};
+
+/**
  * Set project ownership flag via the exposed Zustand store.
- * The layout component exposes store setters on window.__E2E_STORES__
- * when running under Cypress, allowing tests to bypass the complex
- * SDK/RPC ownership verification chain.
  */
 const setProjectOwnerViaStore = () => {
-  cy.window({ timeout: 10000 }).should("have.property", "__E2E_STORES__").then((win) => {
+  waitForStoreExposure();
+  cy.window().then((win) => {
     const stores = (win as unknown as Window & { __E2E_STORES__: Record<string, (v: boolean) => void> }).__E2E_STORES__;
     stores.setIsProjectOwner(true);
     stores.setIsOwnerLoading(false);
@@ -36,7 +50,8 @@ const setProjectOwnerViaStore = () => {
  * renders without depending on the permissions query timing.
  */
 const setStaffViaStore = () => {
-  cy.window({ timeout: 10000 }).should("have.property", "__E2E_STORES__").then((win) => {
+  waitForStoreExposure();
+  cy.window().then((win) => {
     const stores = (win as unknown as Window & { __E2E_STORES__: Record<string, (v: boolean) => void> }).__E2E_STORES__;
     stores.setIsOwner(true);
     stores.setIsOwnerLoading(false);
