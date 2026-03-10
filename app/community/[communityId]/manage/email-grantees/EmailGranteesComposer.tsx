@@ -90,7 +90,7 @@ export function EmailGranteesComposer({ programs }: EmailGranteesComposerProps) 
   const addManualEmail = useCallback(() => {
     const trimmed = manualEmail.trim().toLowerCase();
     if (!trimmed) return;
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
     if (!emailRegex.test(trimmed)) {
       toast.error("Please enter a valid email address");
       return;
