@@ -1,15 +1,13 @@
 "use client";
 
-import { XMarkIcon } from "@heroicons/react/24/outline";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { Spinner } from "@/components/Utilities/Spinner";
 import type { FundingProgram } from "@/services/fundingPlatformService";
-import fetchData from "@/utilities/fetchData";
+import { useGranteeEmails, useSendEmailToGrantees } from "./hooks/useEmailGrantees";
 
 interface GranteeEmail {
   email: string;
@@ -52,25 +50,14 @@ export function EmailGranteesComposer({ programs }: EmailGranteesComposerProps) 
     isLoading: isLoadingEmails,
     isError: isEmailsError,
     refetch: refetchEmails,
-  } = useQuery({
-    queryKey: ["grantee-emails", selectedProgramId],
-    queryFn: async () => {
-      const [data, error] = await fetchData<{ emails: GranteeEmail[] }>(
-        `/v2/email-grantees/program/${selectedProgramId}/emails`
-      );
-      if (error) throw new Error(error);
-      if (!data || !Array.isArray(data.emails)) {
-        throw new Error("Invalid response: expected emails array");
-      }
-      return data.emails;
-    },
-    enabled: !!selectedProgramId,
-  });
+  } = useGranteeEmails(selectedProgramId);
+
+  const sendEmailMutation = useSendEmailToGrantees();
 
   // Track previous program to auto-populate recipients only on program change
   const prevProgramRef = useRef<string | null>(null);
 
-  const handleProgramChange = useCallback((programId: string) => {
+  function handleProgramChange(programId: string) {
     setSelectedProgramId(programId);
     setRecipients([]);
     if (!programId) {
@@ -83,13 +70,14 @@ export function EmailGranteesComposer({ programs }: EmailGranteesComposerProps) 
       params.delete("programId");
     }
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-  }, [searchParams, pathname, router]);
+  }
 
-  const handleEmailsFetched = useCallback(() => {
+  function resetToAllGrantees() {
     if (granteeEmails) {
       setRecipients(deduplicateEmails(granteeEmails));
     }
-  }, [granteeEmails]);
+  }
+
   useEffect(() => {
     if (granteeEmails && prevProgramRef.current !== selectedProgramId) {
       prevProgramRef.current = selectedProgramId;
@@ -97,11 +85,11 @@ export function EmailGranteesComposer({ programs }: EmailGranteesComposerProps) 
     }
   }, [granteeEmails, selectedProgramId]);
 
-  const removeRecipient = useCallback((email: string) => {
+  function removeRecipient(email: string) {
     setRecipients((prev) => prev.filter((r) => r !== email));
-  }, []);
+  }
 
-  const addManualEmail = useCallback(() => {
+  function addManualEmail() {
     const trimmed = manualEmail.trim().toLowerCase();
     if (!trimmed) return;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -117,41 +105,31 @@ export function EmailGranteesComposer({ programs }: EmailGranteesComposerProps) 
       return [...prev, trimmed];
     });
     setManualEmail("");
-  }, [manualEmail]);
+  }
 
-  const sendEmailMutation = useMutation({
-    mutationFn: async () => {
-      const [data, error] = await fetchData<{
-        success: boolean;
-        sentCount: number;
-        failedCount: number;
-      }>("/v2/email-grantees/send", "POST", {
+  function handleSendEmail() {
+    const confirmed = window.confirm(
+      `Are you sure you want to send this email to ${recipients.length} recipient${recipients.length === 1 ? "" : "s"}?`
+    );
+    if (!confirmed) return;
+
+    sendEmailMutation.mutate(
+      {
         programId: selectedProgramId,
         recipients,
         subject,
         body,
-      });
-      if (error) throw new Error(error);
-      return data;
-    },
-    onSuccess: (data) => {
-      if (data?.success) {
-        toast.success(
-          `Email sent successfully to ${data.sentCount} recipient${data.sentCount === 1 ? "" : "s"}`
-        );
-        setSubject("");
-        setBody("");
-      } else {
-        toast.error(
-          `Sent to ${data?.sentCount} recipient${data?.sentCount === 1 ? "" : "s"}, ${data?.failedCount} failed`
-        );
+      },
+      {
+        onSuccess: (data) => {
+          if (data.success) {
+            setSubject("");
+            setBody("");
+          }
+        },
       }
-    },
-    onError: (error: Error) => {
-      errorManager("Failed to send email to grantees", error);
-      toast.error(error.message || "Failed to send email");
-    },
-  });
+    );
+  }
 
   const canSend = selectedProgramId && recipients.length > 0 && subject.trim() && body.trim();
 
@@ -195,7 +173,7 @@ export function EmailGranteesComposer({ programs }: EmailGranteesComposerProps) 
             {granteeEmails && granteeEmails.length > 0 && (
               <button
                 type="button"
-                onClick={handleEmailsFetched}
+                onClick={resetToAllGrantees}
                 className="text-sm text-primary-600 dark:text-primary-400 hover:underline"
               >
                 Reset to all grantees
@@ -245,7 +223,7 @@ export function EmailGranteesComposer({ programs }: EmailGranteesComposerProps) 
                           className="flex-shrink-0 text-primary-500 hover:text-primary-700 dark:hover:text-primary-200"
                           aria-label={`Remove ${email}`}
                         >
-                          <XMarkIcon className="w-4 h-4" />
+                          <X className="w-4 h-4" />
                         </button>
                       </div>
                     );
@@ -339,7 +317,7 @@ export function EmailGranteesComposer({ programs }: EmailGranteesComposerProps) 
             <button
               type="button"
               disabled={!canSend || sendEmailMutation.isPending}
-              onClick={() => sendEmailMutation.mutate()}
+              onClick={handleSendEmail}
               className="rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {sendEmailMutation.isPending ? (
