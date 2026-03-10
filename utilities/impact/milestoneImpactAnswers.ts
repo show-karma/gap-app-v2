@@ -82,23 +82,20 @@ export const sendMilestoneImpactAnswers = async (
 export const deleteMilestoneImpactAnswers = async (
   milestoneUID: string,
   indicatorId: string
-): Promise<boolean> => {
-  try {
-    const [, error] = await fetchData(
-      INDEXER.MILESTONE.IMPACT_INDICATORS.SEND(milestoneUID),
-      "POST",
-      {
-        indicatorId,
-        data: [],
-      }
-    );
-
-    if (error) {
-      return false;
+): Promise<void> => {
+  const [, error] = await fetchData(
+    INDEXER.MILESTONE.IMPACT_INDICATORS.SEND(milestoneUID),
+    "POST",
+    {
+      indicatorId,
+      data: [],
     }
-    return true;
-  } catch {
-    return false;
+  );
+
+  if (error) {
+    throw new Error(
+      `Failed to delete milestone impact answers for milestoneUID=${milestoneUID} indicatorId=${indicatorId}: ${error}`
+    );
   }
 };
 

@@ -234,13 +234,14 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
       // Delete removed metrics: compare initial indicators with submitted ones
       if (milestoneImpactData && milestoneImpactData.length > 0) {
         const submittedIds = new Set(
-          (data.outputs || []).map((o) => o.outputId).filter(Boolean)
+          (data.outputs || [])
+            .filter((o) => o.outputId && o.value !== undefined && o.value !== "")
+            .map((o) => o.outputId)
         );
-        for (const metric of milestoneImpactData) {
-          if (metric.id && metric.hasData && !submittedIds.has(metric.id)) {
-            await deleteMilestoneImpactAnswers(milestoneUID, metric.id);
-          }
-        }
+        const removals = milestoneImpactData
+          .filter((metric) => metric.id && metric.hasData && !submittedIds.has(metric.id))
+          .map((metric) => deleteMilestoneImpactAnswers(milestoneUID, metric.id));
+        await Promise.all(removals);
       }
     } catch (error) {
       console.error("Error sending outputs and deliverables:", error);
