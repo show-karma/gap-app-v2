@@ -21,7 +21,10 @@ import { useOwnerStore, useProjectStore } from "@/store";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import type { GrantMilestone } from "@/types/v2/grant";
 import fetchData from "@/utilities/fetchData";
-import { sendMilestoneImpactAnswers } from "@/utilities/impact/milestoneImpactAnswers";
+import {
+  deleteMilestoneImpactAnswers,
+  sendMilestoneImpactAnswers,
+} from "@/utilities/impact/milestoneImpactAnswers";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
@@ -228,12 +231,19 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
         }
       }
 
-      // Send deliverables data if any
-      if (data.deliverables && data.deliverables.length > 0) {
+      // Delete removed metrics: compare initial indicators with submitted ones
+      if (milestoneImpactData && milestoneImpactData.length > 0) {
+        const submittedIds = new Set(
+          (data.outputs || []).map((o) => o.outputId).filter(Boolean)
+        );
+        for (const metric of milestoneImpactData) {
+          if (metric.id && metric.hasData && !submittedIds.has(metric.id)) {
+            await deleteMilestoneImpactAnswers(milestoneUID, metric.id);
+          }
+        }
       }
     } catch (error) {
       console.error("Error sending outputs and deliverables:", error);
-      // Don't throw - we don't want to fail the milestone completion if outputs fail
     }
   };
 
