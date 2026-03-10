@@ -51,10 +51,7 @@ export interface UseUserApplicationsReturn {
   isLoading: boolean;
   error: Error | null;
   setFilters: (filters: Partial<UserApplicationsFilters>) => void;
-  setSort: (
-    sortBy: UserApplicationsSortBy,
-    sortOrder?: UserApplicationsSortOrder,
-  ) => void;
+  setSort: (sortBy: UserApplicationsSortBy, sortOrder?: UserApplicationsSortOrder) => void;
   setPage: (page: number) => void;
   setPageSize: (size: number) => void;
   refresh: () => void;

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import fetchData from "@/utilities/fetchData";
 import type { FundingProgram } from "@/types/whitelabel-entities";
+import fetchData from "@/utilities/fetchData";
 import type { UseProgramReturn } from "../types";
 
 export function useProgram(programId: string): UseProgramReturn {
@@ -13,7 +13,7 @@ export function useProgram(programId: string): UseProgramReturn {
         {},
         {},
         {},
-        true,
+        true
       );
       if (err) throw new Error(err);
       return res;

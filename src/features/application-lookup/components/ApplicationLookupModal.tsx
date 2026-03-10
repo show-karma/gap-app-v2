@@ -27,8 +27,7 @@ export function ApplicationLookupModal({
   communitySlug,
   communityName,
 }: ApplicationLookupModalProps) {
-  const { lookupApplication, result, error, isLoading, reset } =
-    useApplicationLookup();
+  const { lookupApplication, result, error, isLoading, reset } = useApplicationLookup();
 
   const handleClose = () => {
     reset();
@@ -41,28 +40,19 @@ export function ApplicationLookupModal({
         <DialogHeader>
           <DialogTitle>Find Your Application</DialogTitle>
           <DialogDescription>
-            Enter your application reference number to find which credential you
-            used
+            Enter your application reference number to find which credential you used
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
           {!result && !error && (
-            <ApplicationLookupForm
-              onSubmit={lookupApplication}
-              isLoading={isLoading}
-            />
+            <ApplicationLookupForm onSubmit={lookupApplication} isLoading={isLoading} />
           )}
 
-          {error && (
-            <ApplicationNotFound error={error} communityName={communityName} />
-          )}
+          {error && <ApplicationNotFound error={error} communityName={communityName} />}
 
           {result && (
-            <ApplicationFoundResult
-              result={result}
-              currentCommunitySlug={communitySlug}
-            />
+            <ApplicationFoundResult result={result} currentCommunitySlug={communitySlug} />
           )}
 
           {(result || error) && (

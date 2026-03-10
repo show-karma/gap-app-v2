@@ -5,11 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import type { ProgramStatus } from "@/types/whitelabel-entities";
 import type { ProgramFiltersProps } from "../types";
 
-export function ProgramFilters({
-  filters,
-  onChange,
-  totalCount,
-}: ProgramFiltersProps) {
+export function ProgramFilters({ filters, onChange, totalCount }: ProgramFiltersProps) {
   const [searchValue, setSearchValue] = useState(filters.search || "");
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -51,7 +47,7 @@ export function ProgramFilters({
   };
 
   const activeFiltersCount = Object.keys(filters).filter(
-    (key) => filters[key as keyof typeof filters] !== undefined,
+    (key) => filters[key as keyof typeof filters] !== undefined
   ).length;
 
   const hasActiveFilters = activeFiltersCount > 0;

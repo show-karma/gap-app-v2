@@ -30,8 +30,7 @@ export function useApplicationLookup(): UseApplicationLookupReturn {
     if (!validateReferenceNumber(referenceNumber)) {
       setError({
         type: "invalid_format",
-        message:
-          "Invalid reference number format. Expected format: APP-XXXXXXXX-XXXXXX",
+        message: "Invalid reference number format. Expected format: APP-XXXXXXXX-XXXXXX",
       });
       return;
     }
@@ -69,8 +68,7 @@ export function useApplicationLookup(): UseApplicationLookupReturn {
     } catch {
       setError({
         type: "network_error",
-        message:
-          "Unable to lookup application. Please check your connection and try again.",
+        message: "Unable to lookup application. Please check your connection and try again.",
       });
     } finally {
       setIsLoading(false);

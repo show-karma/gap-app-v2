@@ -31,9 +31,7 @@ export function ApplicationsFilters({
   onReset,
 }: ApplicationsFiltersProps) {
   const [searchValue, setSearchValue] = useState(filters.searchQuery || "");
-  const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(
-    null,
-  );
+  const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
 
   // Debounce search input
   useEffect(() => {
@@ -55,10 +53,7 @@ export function ApplicationsFilters({
   }, [filters.searchQuery]);
 
   const hasActiveFilters =
-    filters.status !== "all" ||
-    filters.programId ||
-    filters.searchQuery ||
-    filters.dateRange;
+    filters.status !== "all" || filters.programId || filters.searchQuery || filters.dateRange;
 
   return (
     <div className="space-y-4">

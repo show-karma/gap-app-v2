@@ -11,7 +11,8 @@ interface ProgramDetailsCardProps {
 
 function formatCurrencyValue(amount?: string | number): string {
   if (amount === undefined || amount === null || amount === "") return "TBD";
-  const num = typeof amount === "number" ? amount : Number.parseFloat(String(amount).replace(/,/g, ""));
+  const num =
+    typeof amount === "number" ? amount : Number.parseFloat(String(amount).replace(/,/g, ""));
   if (Number.isNaN(num) || num === 0) return "TBD";
   return new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -101,9 +102,7 @@ export function ProgramDetailsCard({
         {showBudget ? (
           <div>
             <p className="mb-1 text-sm text-muted-foreground">Program Budget</p>
-            <p className="text-lg font-bold text-primary">
-              {formatCurrencyValue(programBudget)}
-            </p>
+            <p className="text-lg font-bold text-primary">{formatCurrencyValue(programBudget)}</p>
           </div>
         ) : null}
 

@@ -13,9 +13,7 @@ export function ApplicationFoundResult({
   currentCommunitySlug,
 }: ApplicationFoundResultProps) {
   const isCommunityMismatch =
-    result.communitySlug &&
-    currentCommunitySlug &&
-    result.communitySlug !== currentCommunitySlug;
+    result.communitySlug && currentCommunitySlug && result.communitySlug !== currentCommunitySlug;
 
   const hasEmail = Boolean(result.maskedEmail);
   const hasWallet = Boolean(result.maskedWallet);
@@ -50,9 +48,7 @@ export function ApplicationFoundResult({
                 </p>
                 <div className="mt-1 flex items-center gap-2">
                   <CreditCard className="h-4 w-4 text-muted-foreground" />
-                  <code className="font-mono text-sm">
-                    {result.maskedWallet}
-                  </code>
+                  <code className="font-mono text-sm">{result.maskedWallet}</code>
                 </div>
               </div>
             )}
@@ -64,9 +60,7 @@ export function ApplicationFoundResult({
                 </p>
                 <div className="mt-1 flex items-center gap-2">
                   <Mail className="h-4 w-4 text-muted-foreground" />
-                  <code className="font-mono text-sm">
-                    {result.maskedEmail}
-                  </code>
+                  <code className="font-mono text-sm">{result.maskedEmail}</code>
                 </div>
               </div>
             )}
@@ -95,9 +89,8 @@ export function ApplicationFoundResult({
                 </p>
                 <p className="mt-1 text-xs text-blue-700 dark:text-blue-300">
                   This application belongs to{" "}
-                  <span className="font-semibold">{result.communityName}</span>.
-                  Make sure you&apos;re on the correct community site to access
-                  it.
+                  <span className="font-semibold">{result.communityName}</span>. Make sure
+                  you&apos;re on the correct community site to access it.
                 </p>
               </div>
             </div>
@@ -105,8 +98,7 @@ export function ApplicationFoundResult({
         )}
 
         <div className="mt-3 text-xs text-green-700 dark:text-green-300">
-          <span className="font-medium">Reference:</span>{" "}
-          {result.referenceNumber}
+          <span className="font-medium">Reference:</span> {result.referenceNumber}
         </div>
       </div>
     </div>

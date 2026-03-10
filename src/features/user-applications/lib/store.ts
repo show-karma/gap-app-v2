@@ -28,17 +28,10 @@ const initialState: UserApplicationsState = {
 };
 
 interface UserApplicationsStore extends UserApplicationsState {
-  setApplications: (
-    applications: UserApplicationsState["applications"],
-  ) => void;
+  setApplications: (applications: UserApplicationsState["applications"]) => void;
   setFilters: (filters: Partial<UserApplicationsFilters>) => void;
-  setSort: (
-    sortBy: UserApplicationsSortBy,
-    sortOrder?: UserApplicationsSortOrder,
-  ) => void;
-  setPagination: (
-    pagination: Partial<UserApplicationsState["pagination"]>,
-  ) => void;
+  setSort: (sortBy: UserApplicationsSortBy, sortOrder?: UserApplicationsSortOrder) => void;
+  setPagination: (pagination: Partial<UserApplicationsState["pagination"]>) => void;
   setPage: (page: number) => void;
   setPageSize: (size: number) => void;
   setLoading: (isLoading: boolean) => void;
@@ -47,50 +40,44 @@ interface UserApplicationsStore extends UserApplicationsState {
   reset: () => void;
 }
 
-export const useUserApplicationsStore = create<UserApplicationsStore>(
-  (set) => ({
-    ...initialState,
+export const useUserApplicationsStore = create<UserApplicationsStore>((set) => ({
+  ...initialState,
 
-    setApplications: (applications) => set({ applications }),
+  setApplications: (applications) => set({ applications }),
 
-    setFilters: (filters) =>
-      set((state) => ({
-        filters: { ...state.filters, ...filters },
-        pagination: { ...state.pagination, page: 1 },
-      })),
+  setFilters: (filters) =>
+    set((state) => ({
+      filters: { ...state.filters, ...filters },
+      pagination: { ...state.pagination, page: 1 },
+    })),
 
-    setSort: (sortBy, sortOrder) =>
-      set((state) => ({
-        sortBy,
-        sortOrder:
-          sortOrder ??
-          (state.sortBy === sortBy && state.sortOrder === "asc"
-            ? "desc"
-            : "asc"),
-      })),
+  setSort: (sortBy, sortOrder) =>
+    set((state) => ({
+      sortBy,
+      sortOrder:
+        sortOrder ?? (state.sortBy === sortBy && state.sortOrder === "asc" ? "desc" : "asc"),
+    })),
 
-    setPagination: (pagination) =>
-      set((state) => ({
-        pagination: { ...state.pagination, ...pagination },
-      })),
+  setPagination: (pagination) =>
+    set((state) => ({
+      pagination: { ...state.pagination, ...pagination },
+    })),
 
-    setPage: (page) =>
-      set((state) => ({
-        pagination: { ...state.pagination, page },
-      })),
+  setPage: (page) =>
+    set((state) => ({
+      pagination: { ...state.pagination, page },
+    })),
 
-    setPageSize: (limit) =>
-      set((state) => ({
-        pagination: { ...state.pagination, limit, page: 1 },
-      })),
+  setPageSize: (limit) =>
+    set((state) => ({
+      pagination: { ...state.pagination, limit, page: 1 },
+    })),
 
-    setLoading: (isLoading) => set({ isLoading }),
+  setLoading: (isLoading) => set({ isLoading }),
 
-    setError: (error) => set({ error }),
+  setError: (error) => set({ error }),
 
-    setSelectedApplicationId: (selectedApplicationId) =>
-      set({ selectedApplicationId }),
+  setSelectedApplicationId: (selectedApplicationId) => set({ selectedApplicationId }),
 
-    reset: () => set(initialState),
-  }),
-);
+  reset: () => set(initialState),
+}));

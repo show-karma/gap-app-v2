@@ -52,9 +52,7 @@ export function StatusChangeItem({ status }: StatusChangeItemProps) {
               <span className="text-xs text-muted-foreground">Status Changed</span>
             </div>
 
-            {status.reason && (
-              <p className="text-sm text-muted-foreground mb-2">{status.reason}</p>
-            )}
+            {status.reason && <p className="text-sm text-muted-foreground mb-2">{status.reason}</p>}
 
             <div className="flex items-center gap-4 text-xs text-muted-foreground">
               <div className="flex items-center gap-1">

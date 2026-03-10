@@ -5,38 +5,29 @@ interface ProgramBudgetBadgeProps {
   currency?: string;
 }
 
-function formatBudgetWithCurrency(
-  budget: string | number,
-  currency?: string,
-): string | null {
+function formatBudgetWithCurrency(budget: string | number, currency?: string): string | null {
   if (!budget) return null;
-  const numericValue =
-    typeof budget === "number" ? budget : Number.parseFloat(budget);
+  const numericValue = typeof budget === "number" ? budget : Number.parseFloat(budget);
   if (Number.isNaN(numericValue) || numericValue === 0) return null;
 
   const currencySymbol = currency?.toUpperCase() || "USD";
 
   if (numericValue >= 1_000_000) {
     const millions = numericValue / 1_000_000;
-    const formatted =
-      millions % 1 === 0 ? millions.toString() : millions.toFixed(1);
+    const formatted = millions % 1 === 0 ? millions.toString() : millions.toFixed(1);
     return `${formatted}m in ${currencySymbol}`;
   }
 
   if (numericValue >= 1_000) {
     const thousands = numericValue / 1_000;
-    const formatted =
-      thousands % 1 === 0 ? thousands.toString() : thousands.toFixed(1);
+    const formatted = thousands % 1 === 0 ? thousands.toString() : thousands.toFixed(1);
     return `${formatted}k in ${currencySymbol}`;
   }
 
   return `${numericValue.toLocaleString("en-US")} in ${currencySymbol}`;
 }
 
-export function ProgramBudgetBadge({
-  budget,
-  currency,
-}: ProgramBudgetBadgeProps) {
+export function ProgramBudgetBadge({ budget, currency }: ProgramBudgetBadgeProps) {
   if (!budget) return null;
 
   const formattedBudget = formatBudgetWithCurrency(budget, currency);

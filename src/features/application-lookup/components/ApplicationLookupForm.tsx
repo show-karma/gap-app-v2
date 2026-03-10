@@ -10,10 +10,7 @@ interface ApplicationLookupFormProps {
   isLoading: boolean;
 }
 
-export function ApplicationLookupForm({
-  onSubmit,
-  isLoading,
-}: ApplicationLookupFormProps) {
+export function ApplicationLookupForm({ onSubmit, isLoading }: ApplicationLookupFormProps) {
   const [referenceNumber, setReferenceNumber] = useState("");
 
   const handleSubmit = (e: FormEvent) => {
@@ -38,16 +35,11 @@ export function ApplicationLookupForm({
           autoFocus
         />
         <p className="text-xs text-muted-foreground">
-          Enter the reference number you received when you submitted your
-          application
+          Enter the reference number you received when you submitted your application
         </p>
       </div>
 
-      <Button
-        type="submit"
-        className="w-full"
-        disabled={!referenceNumber.trim() || isLoading}
-      >
+      <Button type="submit" className="w-full" disabled={!referenceNumber.trim() || isLoading}>
         {isLoading ? "Looking up..." : "Find Application"}
       </Button>
     </form>

@@ -57,8 +57,9 @@ export function useApplicationComments({
     mutationFn: ({ commentId, content }: { commentId: string; content: string }) =>
       CommentsService.editComment(commentId, content),
     onSuccess: (updatedComment) => {
-      queryClient.setQueryData<ApplicationComment[]>(queryKey, (old) =>
-        old?.map((c) => (c.id === updatedComment.id ? updatedComment : c)) ?? []
+      queryClient.setQueryData<ApplicationComment[]>(
+        queryKey,
+        (old) => old?.map((c) => (c.id === updatedComment.id ? updatedComment : c)) ?? []
       );
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey }),
@@ -67,8 +68,9 @@ export function useApplicationComments({
   const deleteCommentMutation = useMutation({
     mutationFn: (commentId: string) => CommentsService.deleteComment(commentId),
     onSuccess: (_, commentId) => {
-      queryClient.setQueryData<ApplicationComment[]>(queryKey, (old) =>
-        old?.filter((c) => c.id !== commentId) ?? []
+      queryClient.setQueryData<ApplicationComment[]>(
+        queryKey,
+        (old) => old?.filter((c) => c.id !== commentId) ?? []
       );
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey }),
