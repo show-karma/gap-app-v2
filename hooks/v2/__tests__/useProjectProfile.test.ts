@@ -27,6 +27,7 @@ const mockGrants = [
     chainID: 1,
     refUID: "0x9999" as `0x${string}`,
     recipient: "0xabcd" as `0x${string}`,
+    createdAt: "2024-01-05T10:00:00Z",
   },
 ];
 
@@ -108,14 +109,16 @@ describe("useProjectProfile", () => {
       expect(result.current.isVerified).toBe(true);
     });
 
-    it("should combine milestones, impacts, and grants into allUpdates", () => {
+    it("should combine milestones, impacts, grants, and endorsements into allUpdates", () => {
       const { result } = renderHook(() => useProjectProfile("test-project"));
 
-      // allUpdates should include milestones, impacts, and grant_received items
-      expect(result.current.allUpdates).toHaveLength(3);
+      // allUpdates should include milestones, impacts, grant_received items, and endorsements
+      expect(result.current.allUpdates).toHaveLength(5);
       expect(result.current.allUpdates[0].type).toBe("milestone");
       expect(result.current.allUpdates[1].type).toBe("impact");
       expect(result.current.allUpdates[2].type).toBe("grant_received");
+      expect(result.current.allUpdates[3].type).toBe("endorsement");
+      expect(result.current.allUpdates[4].type).toBe("endorsement");
     });
 
     it("should count completed milestones", () => {
@@ -129,7 +132,7 @@ describe("useProjectProfile", () => {
 
       expect(result.current.stats.grantsCount).toBe(1);
       expect(result.current.stats.endorsementsCount).toBe(2);
-      expect(result.current.stats.lastUpdate).toEqual(new Date("2024-01-10T10:00:00Z"));
+      expect(result.current.stats.lastUpdate).toEqual(new Date("2024-01-15T10:00:00Z"));
     });
   });
 
