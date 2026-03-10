@@ -28,10 +28,16 @@ const waitForStoreExposure = () => {
 
 /**
  * Wait for the ProjectProfileLayout to finish loading and render the
- * full project page (not just the dynamic-import skeleton or loading state).
- * This ensures API data has been fetched and the component is interactive.
+ * full project page. Checks all possible layout states to provide
+ * clear diagnostics when the component fails to reach the success state.
  */
 const waitForLayoutReady = () => {
+  // First, wait for any layout state to appear (confirms component mounted)
+  cy.get(
+    '[data-testid="project-profile-layout"], [data-testid="layout-loading"], [data-testid="project-not-found"]',
+    { timeout: 30000 }
+  ).should("exist");
+  // Then wait specifically for the success state
   cy.get('[data-testid="project-profile-layout"]', { timeout: 30000 }).should("exist");
 };
 
@@ -211,6 +217,10 @@ describe("Chain Payout Address Modal", () => {
 
       cy.visit(`/project/${TEST_PROJECT_SLUG}`);
       waitForPageLoad();
+
+      // Wait for critical API calls to confirm intercepts are matching
+      cy.wait("@getProjectOwner", { timeout: 15000 });
+
       setProjectOwnerViaStore();
 
       // Button should be visible for project owner
