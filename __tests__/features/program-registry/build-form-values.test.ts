@@ -1,5 +1,5 @@
-import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { buildFormValuesFromMetadata } from "@/src/features/program-registry/hooks/use-admin-program-form";
+import type { GrantProgram } from "@/src/features/program-registry/types";
 
 describe("buildFormValuesFromMetadata", () => {
   const baseMetadata: GrantProgram["metadata"] = {

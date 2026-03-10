@@ -1,6 +1,6 @@
 import { registryHelper } from "@/components/Pages/ProgramRegistry/helper";
-import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import type { ProgramFormData } from "../schemas/public-form";
+import type { GrantProgram } from "../types";
 
 /**
  * Extract MongoDB _id as string - handles both V2 API (string) and legacy ({ $oid: string }) formats

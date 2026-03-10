@@ -1,10 +1,14 @@
-import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import type { Community } from "@/types/v2/community";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { sanitizeObject } from "@/utilities/sanitize";
 import type { UpdateProgramFormSchema } from "../schemas/admin-form";
-import type { CreateProgramFormData, ProgramCreationResult, ProgramMetadata } from "../types";
+import type {
+  CreateProgramFormData,
+  GrantProgram,
+  ProgramCreationResult,
+  ProgramMetadata,
+} from "../types";
 
 /**
  * Program Registry Service

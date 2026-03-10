@@ -5,7 +5,6 @@ import { useCallback, useEffect, useMemo } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
-import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAuth } from "@/hooks/useAuth";
 import type { Community } from "@/types/v2/community";
@@ -13,7 +12,7 @@ import { formatDate } from "@/utilities/formatDate";
 import { MESSAGES } from "@/utilities/messages";
 import { type AdminProgramFormSchema, createProgramSchema } from "../schemas/admin-form";
 import { ProgramRegistryService } from "../services/program-registry.service";
-import type { CreateProgramFormData } from "../types";
+import type { CreateProgramFormData, GrantProgram } from "../types";
 
 type CreateModeConfig = {
   mode: "create";

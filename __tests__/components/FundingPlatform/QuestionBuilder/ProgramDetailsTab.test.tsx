@@ -10,8 +10,8 @@ import type React from "react";
 import { ProgramDetailsTab } from "@/components/FundingPlatform/QuestionBuilder/ProgramDetailsTab";
 import "@testing-library/jest-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { ProgramRegistryService } from "@/src/features/program-registry/services/program-registry.service";
+import type { GrantProgram } from "@/src/features/program-registry/types";
 
 // Mock dependencies
 jest.mock("wagmi", () => ({

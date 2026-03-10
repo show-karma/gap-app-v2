@@ -4,9 +4,8 @@
  * covering business logic, error handling, and response parsing
  */
 
-import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { ProgramRegistryService } from "@/src/features/program-registry/services/program-registry.service";
-import type { CreateProgramFormData } from "@/src/features/program-registry/types";
+import type { CreateProgramFormData, GrantProgram } from "@/src/features/program-registry/types";
 import type { CommunityDetails } from "@/types/community";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
