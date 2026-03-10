@@ -135,10 +135,13 @@ const waitForLayoutReady = () => {
  * and impacts — all four must resolve before the layout shows the success state.
  * Without this wait, the component may stay in loading state when
  * setProjectOwnerViaStore tries to assert on project-profile-layout.
+ *
+ * IMPORTANT: All tests must use "@getProject" as the alias for their project
+ * intercept (even when overriding the mock data), so this wait works consistently.
  */
 const waitForProjectData = () => {
   cy.wait(
-    ["@getProjectV2", "@getProjectGrants", "@getProjectUpdates", "@getProjectImpacts"],
+    ["@getProject", "@getProjectGrants", "@getProjectUpdates", "@getProjectImpacts"],
     { timeout: 15000 }
   );
 };
@@ -238,20 +241,14 @@ describe("Chain Payout Address Modal", () => {
     // Mock project API response.
     // The frontend service uses /v2/projects/{slug} while the SDK uses /projects/{slug}.
     // The pattern **/projects/{slug} matches both.
+    // IMPORTANT: Tests that need different mock data should override this with the
+    // SAME alias "@getProject" so that waitForProjectData() can wait for it.
     cy.intercept("GET", `**/projects/${TEST_PROJECT_SLUG}`, (req) => {
       req.reply({
         statusCode: 200,
         body: mockProject,
       });
     }).as("getProject");
-
-    // Also intercept the v2-specific endpoint explicitly for clarity
-    cy.intercept("GET", `**/v2/projects/${TEST_PROJECT_SLUG}`, (req) => {
-      req.reply({
-        statusCode: 200,
-        body: mockProject,
-      });
-    }).as("getProjectV2");
 
     // Mock project members/admin check
     cy.intercept("GET", `**/projects/${TEST_PROJECT_SLUG}/members`, {
@@ -260,7 +257,9 @@ describe("Chain Payout Address Modal", () => {
     }).as("getProjectMembers");
 
     // Mock project sub-resource endpoints with properly shaped empty responses.
-    cy.intercept("GET", `**/projects/${TEST_PROJECT_SLUG}/grants`, {
+    // Grants uses a wildcard (*) for the project identifier because useProjectGrants
+    // re-fetches with project.uid (a hex string) after the initial slug-based fetch.
+    cy.intercept("GET", "**/projects/*/grants", {
       statusCode: 200,
       body: [],
     }).as("getProjectGrants");
@@ -300,7 +299,7 @@ describe("Chain Payout Address Modal", () => {
           statusCode: 200,
           body: { ...mockProject, owner: MOCK_REGULAR_ADDRESS },
         });
-      }).as("getProjectOwner");
+      }).as("getProject");
 
       visitProject("regular");
       waitForPageLoad();
@@ -316,7 +315,7 @@ describe("Chain Payout Address Modal", () => {
           statusCode: 200,
           body: { ...mockProjectWithAddresses, owner: MOCK_REGULAR_ADDRESS },
         });
-      }).as("getProjectWithAddresses");
+      }).as("getProject");
 
       visitProject("regular");
       waitForPageLoad();
@@ -337,7 +336,7 @@ describe("Chain Payout Address Modal", () => {
           statusCode: 200,
           body: { ...mockProject, owner: MOCK_REGULAR_ADDRESS },
         });
-      }).as("getProjectOwner");
+      }).as("getProject");
 
       visitProject("regular");
       waitForPageLoad();
@@ -357,7 +356,7 @@ describe("Chain Payout Address Modal", () => {
           statusCode: 200,
           body: { ...mockProject, owner: MOCK_REGULAR_ADDRESS },
         });
-      }).as("getProjectOwner");
+      }).as("getProject");
     });
 
     it("should display all supported chains", () => {
@@ -426,7 +425,7 @@ describe("Chain Payout Address Modal", () => {
           statusCode: 200,
           body: { ...mockProject, owner: MOCK_REGULAR_ADDRESS },
         });
-      }).as("getProjectOwner");
+      }).as("getProject");
     });
 
     it("should show validation error for invalid address format", () => {
@@ -485,7 +484,7 @@ describe("Chain Payout Address Modal", () => {
           statusCode: 200,
           body: { ...mockProject, owner: MOCK_REGULAR_ADDRESS },
         });
-      }).as("getProjectOwner");
+      }).as("getProject");
     });
 
     it("should save addresses successfully", () => {
@@ -506,7 +505,7 @@ describe("Chain Payout Address Modal", () => {
             chainPayoutAddress: { "10": VALID_ADDRESS },
           },
         });
-      }).as("getProjectRefreshed");
+      }).as("getProject");
 
       visitProject("regular");
       waitForPageLoad();
@@ -561,7 +560,7 @@ describe("Chain Payout Address Modal", () => {
           statusCode: 200,
           body: { ...mockProjectWithAddresses, owner: MOCK_REGULAR_ADDRESS },
         });
-      }).as("getProjectWithAddresses");
+      }).as("getProject");
 
       visitProject("regular");
       waitForPageLoad();
@@ -584,7 +583,7 @@ describe("Chain Payout Address Modal", () => {
           statusCode: 200,
           body: { ...mockProjectWithAddresses, owner: MOCK_REGULAR_ADDRESS },
         });
-      }).as("getProjectWithAddresses");
+      }).as("getProject");
 
       visitProject("regular");
       waitForPageLoad();
@@ -601,7 +600,7 @@ describe("Chain Payout Address Modal", () => {
           statusCode: 200,
           body: { ...mockProjectWithAddresses, owner: MOCK_REGULAR_ADDRESS },
         });
-      }).as("getProjectWithAddresses");
+      }).as("getProject");
 
       visitProject("regular");
       waitForPageLoad();
@@ -655,7 +654,7 @@ describe("Chain Payout Address Modal", () => {
           statusCode: 200,
           body: mockProjectWithAddresses,
         });
-      }).as("getProjectWithAddresses");
+      }).as("getProject");
 
       visitProject("admin");
       waitForPageLoad();
