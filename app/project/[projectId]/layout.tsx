@@ -2,6 +2,7 @@
 
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 import type { Metadata } from "next";
+import { ProjectShareDialogMount } from "@/components/Pages/Project/ProjectShareDialogMount";
 import { layoutTheme } from "@/src/helper/theme";
 import { generateProjectOverviewMetadata } from "@/utilities/metadata/projectMetadata";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
@@ -85,6 +86,7 @@ export default async function RootLayout(props: {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
+      <ProjectShareDialogMount />
       <div className={layoutTheme.padding}>{children}</div>
     </HydrationBoundary>
   );

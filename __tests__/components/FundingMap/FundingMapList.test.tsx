@@ -26,6 +26,12 @@ jest.mock("@/src/features/funding-map/hooks/use-funding-programs", () => ({
     data: null,
     isLoading: false,
   })),
+  useTypeCounts: jest.fn(() => ({
+    data: [],
+    isLoading: false,
+    isError: false,
+    refetch: jest.fn(),
+  })),
 }));
 
 jest.mock("@/src/features/funding-map/hooks/use-funding-filters", () => ({
@@ -41,8 +47,9 @@ jest.mock("@/src/features/funding-map/hooks/use-funding-filters", () => ({
       ecosystems: [],
       networks: [],
       grantTypes: [],
-      onlyOnKarma: true, // new default
+      onlyOnKarma: false,
       organizationFilter: null,
+      selectedTypes: [],
     },
   })),
 }));
@@ -59,7 +66,7 @@ describe("FundingMapList empty state", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("shows 'try adjusting your filters' when onlyOnKarma is toggled off", async () => {
+  it("shows 'try adjusting your filters' when onlyOnKarma is toggled on", async () => {
     const { useFundingFilters } = await import(
       "@/src/features/funding-map/hooks/use-funding-filters"
     );
@@ -75,8 +82,9 @@ describe("FundingMapList empty state", () => {
         ecosystems: [],
         networks: [],
         grantTypes: [],
-        onlyOnKarma: false,
+        onlyOnKarma: true,
         organizationFilter: null,
+        selectedTypes: [],
       },
     });
 

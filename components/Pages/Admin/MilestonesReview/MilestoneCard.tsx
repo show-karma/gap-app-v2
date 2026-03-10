@@ -42,8 +42,8 @@ export function MilestoneCard({
   isDeleting = false,
 }: MilestoneCardProps) {
   const useOnChainData = useMemo(
-    () => !!milestone.completionDetails?.description,
-    [milestone.completionDetails?.description]
+    () => milestone.completionDetails !== null,
+    [milestone.completionDetails]
   );
 
   const completionData = useMemo(

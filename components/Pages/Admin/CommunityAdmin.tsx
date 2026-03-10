@@ -9,7 +9,6 @@ import {
 } from "@heroicons/react/24/solid";
 import { useQuery } from "@tanstack/react-query";
 import { blo } from "blo";
-import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { isAddress } from "viem";
 import CommunityStats from "@/components/CommunityStats";
@@ -34,6 +33,8 @@ import {
   getCommunities,
   getCommunityAdminsBatch,
 } from "@/services/communities.service";
+import { communityAdminsService } from "@/services/community-admins.service";
+import { Link } from "@/src/components/navigation/Link";
 import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
 import { Role } from "@/src/core/rbac/types";
 import { layoutTheme } from "@/src/helper/theme";
@@ -141,6 +142,25 @@ export default function CommunitiesToAdminPage() {
     setAllCommunities(data.communities || []);
     setCommunityAdmins(data.admins || []);
   }, [data]);
+
+  // Collect all unique admin addresses for profile lookup
+  const allAdminAddresses = useMemo(() => {
+    const addresses = new Set<string>();
+    communityAdmins.forEach((ca) => {
+      ca.admins.forEach((admin) => {
+        addresses.add(admin.user.id.toLowerCase());
+      });
+    });
+    return Array.from(addresses);
+  }, [communityAdmins]);
+
+  const { data: adminProfiles } = useQuery({
+    queryKey: ["adminProfiles", allAdminAddresses],
+    queryFn: () => communityAdminsService.getUserProfiles(allAdminAddresses),
+    enabled: allAdminAddresses.length > 0,
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+  });
 
   // Filter communities based on user role
   const baseCommunities = useMemo(() => {
@@ -500,24 +520,43 @@ export default function CommunitiesToAdminPage() {
                               {(expandedAdmins.has(community.uid)
                                 ? matchingCommunityAdmin.admins
                                 : matchingCommunityAdmin.admins.slice(0, ADMINS_COLLAPSED_COUNT)
-                              ).map((admin, index) => (
-                                <div
-                                  className="flex items-center justify-between gap-2 p-2 bg-gray-50 dark:bg-zinc-800 rounded"
-                                  key={index}
-                                >
-                                  <span className="text-xs font-mono text-gray-700 dark:text-gray-300 break-all">
-                                    {admin.user.id}
-                                  </span>
-                                  {canManageAdmins && (
-                                    <RemoveAdmin
-                                      UUID={communityId}
-                                      chainid={community.chainID}
-                                      Admin={formatAdminAddress(admin.user.id)}
-                                      fetchAdmins={handleRefetch}
-                                    />
-                                  )}
-                                </div>
-                              ))}
+                              ).map((admin, index) => {
+                                const profile = adminProfiles?.get(admin.user.id.toLowerCase());
+                                return (
+                                  <div
+                                    className="flex items-center justify-between gap-2 p-2 bg-gray-50 dark:bg-zinc-800 rounded"
+                                    key={index}
+                                  >
+                                    <div className="flex flex-col gap-0.5 min-w-0">
+                                      {profile ? (
+                                        <>
+                                          {profile.name && (
+                                            <span className="text-xs font-medium text-gray-900 dark:text-gray-100 truncate">
+                                              {profile.name}
+                                            </span>
+                                          )}
+                                          <span className="text-xs text-gray-600 dark:text-gray-400 truncate">
+                                            {profile.email}
+                                          </span>
+                                        </>
+                                      ) : null}
+                                      <span className="text-xs font-mono text-gray-500 dark:text-gray-500 break-all">
+                                        {admin.user.id}
+                                      </span>
+                                    </div>
+                                    {canManageAdmins && (
+                                      <RemoveAdmin
+                                        UUID={communityId}
+                                        chainid={community.chainID}
+                                        Admin={formatAdminAddress(admin.user.id)}
+                                        adminName={profile?.name}
+                                        adminEmail={profile?.email}
+                                        fetchAdmins={handleRefetch}
+                                      />
+                                    )}
+                                  </div>
+                                );
+                              })}
                               {matchingCommunityAdmin.admins.length > ADMINS_COLLAPSED_COUNT && (
                                 <button
                                   type="button"

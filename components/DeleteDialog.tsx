@@ -3,6 +3,8 @@ import { Dialog, Transition } from "@headlessui/react";
 import { PlusIcon } from "@heroicons/react/24/solid";
 /* eslint-disable @next/next/no-img-element */
 import { type FC, Fragment, type ReactNode, useState } from "react";
+import toast from "react-hot-toast";
+import { errorManager } from "@/components/Utilities/errorManager";
 import { cn } from "@/utilities/tailwind";
 import { Button } from "./ui/button";
 
@@ -61,8 +63,9 @@ export const DeleteDialog: FC<DeleteDialogProps> = ({
       await deleteFunction();
       afterFunction?.();
       closeModal();
-    } catch (error) {
-      console.error("Delete operation failed:", error);
+    } catch (error: unknown) {
+      errorManager("Delete operation failed", error);
+      toast.error("Operation failed. Please try again.");
     }
   };
 

@@ -18,8 +18,16 @@ jest.mock("@/src/components/footer/footer", () => ({
   Footer: () => <footer data-testid="footer" />,
 }));
 
+jest.mock("@/src/components/footer/whitelabel-footer", () => ({
+  WhitelabelFooter: () => <footer data-testid="whitelabel-footer" />,
+}));
+
 jest.mock("@/src/components/navbar/navbar", () => ({
   Navbar: () => <header data-testid="header" />,
+}));
+
+jest.mock("@/src/components/navbar/whitelabel-navbar", () => ({
+  WhitelabelNavbar: () => <header data-testid="whitelabel-navbar" />,
 }));
 
 jest.mock("react-hot-toast", () => ({
@@ -68,9 +76,34 @@ jest.mock("@/src/features/api-keys/components/api-key-management-modal", () => (
   ApiKeyManagementModal: () => <div data-testid="api-key-management-modal" />,
 }));
 
+jest.mock("@/utilities/whitelabel-context", () => ({
+  WhitelabelProvider: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="whitelabel-provider">{children}</div>
+  ),
+}));
+
+jest.mock("@/components/Utilities/TenantStoreInitializer", () => ({
+  TenantStoreInitializer: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="tenant-store-initializer">{children}</div>
+  ),
+}));
+
+jest.mock("@/components/Seo/OrganizationJsonLd", () => ({
+  OrganizationJsonLd: () => <div data-testid="organization-json-ld" />,
+}));
+
+jest.mock("@/utilities/whitelabel-server", () => ({
+  getWhitelabelContext: jest.fn().mockResolvedValue({
+    isWhitelabel: false,
+    communitySlug: null,
+    tenantConfig: null,
+  }),
+}));
+
 describe("RootLayout", () => {
-  it("renders all components correctly", () => {
-    render(<RootLayout>Test Content</RootLayout>);
+  it("renders all components correctly", async () => {
+    const jsx = await RootLayout({ children: <>Test Content</> });
+    render(jsx);
 
     expect(screen.getByTestId("speed-insights")).toBeInTheDocument();
     expect(screen.getByTestId("analytics")).toBeInTheDocument();
@@ -87,13 +120,15 @@ describe("RootLayout", () => {
     expect(screen.getByTestId("api-key-management-modal")).toBeInTheDocument();
   });
 
-  it("renders children content", () => {
-    render(<RootLayout>Test Content</RootLayout>);
+  it("renders children content", async () => {
+    const jsx = await RootLayout({ children: <>Test Content</> });
+    render(jsx);
     expect(screen.getByText("Test Content")).toBeInTheDocument();
   });
 
-  it("has the correct HTML structure", () => {
-    render(<RootLayout>Test Content</RootLayout>);
+  it("has the correct HTML structure", async () => {
+    const jsx = await RootLayout({ children: <>Test Content</> });
+    render(jsx);
 
     const body = screen.getByText("Test Content").closest("body");
     expect(body).toBeInTheDocument();

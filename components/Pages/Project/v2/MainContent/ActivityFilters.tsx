@@ -17,10 +17,10 @@ import { cn } from "@/utilities/tailwind";
 export type { ActivityFilterType, SortOption } from "@/types/v2/project-profile.types";
 
 interface ActivityFiltersProps {
-  sortBy: SortOption;
-  onSortChange: (sort: SortOption) => void;
   activeFilters: ActivityFilterType[];
   onFilterToggle: (filter: ActivityFilterType) => void;
+  sortBy?: SortOption;
+  onSortChange?: (sort: SortOption) => void;
   counts?: Partial<Record<ActivityFilterType, number>>;
   milestonesCount?: number;
   completedCount?: number;
@@ -40,16 +40,16 @@ const FILTER_CONFIG: Partial<Record<ActivityFilterType, { icon: LucideIcon; icon
   };
 
 /**
- * ActivityFilters provides sorting and filtering controls for the activity feed.
+ * ActivityFilters provides filtering controls for the activity feed.
  * Includes:
  * - Sort dropdown (Newest/Oldest)
  * - Filter pills with icon + label + count chip (Figma design)
  */
 export function ActivityFilters({
-  sortBy,
-  onSortChange,
   activeFilters,
   onFilterToggle,
+  sortBy,
+  onSortChange,
   counts = {},
   milestonesCount = 0,
   completedCount = 0,
@@ -163,19 +163,21 @@ export function ActivityFilters({
         </div>
 
         {/* Sort Dropdown */}
-        <Select value={sortBy} onValueChange={(value) => onSortChange(value as SortOption)}>
-          <SelectTrigger className="w-[140px]" data-testid="sort-select">
-            <SelectValue placeholder="Sort by" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="newest" data-testid="sort-newest">
-              Newest first
-            </SelectItem>
-            <SelectItem value="oldest" data-testid="sort-oldest">
-              Oldest first
-            </SelectItem>
-          </SelectContent>
-        </Select>
+        {sortBy && onSortChange && (
+          <Select value={sortBy} onValueChange={(value) => onSortChange(value as SortOption)}>
+            <SelectTrigger className="w-[140px]" data-testid="sort-select">
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest" data-testid="sort-newest">
+                Newest first
+              </SelectItem>
+              <SelectItem value="oldest" data-testid="sort-oldest">
+                Oldest first
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        )}
       </div>
     </div>
   );

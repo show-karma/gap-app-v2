@@ -213,12 +213,11 @@ export const GrantCard = ({
   actionSlot,
   cardClassName,
 }: GrantCardProps) => {
-  const href = PAGES.PROJECT.OVERVIEW(grant.project?.details?.slug || grant.refUID || "");
+  const projectPath = PAGES.PROJECT.OVERVIEW(grant.project?.details?.slug || grant.refUID || "");
 
   return (
     <Link
-      href={href}
-      prefetch={false}
+      href={projectPath}
       className={cn(
         "flex h-full w-full max-w-[620px] max-sm:w-[320px] relative rounded-2xl border border-zinc-200 p-2 transition-all duration-300 ease-in-out hover:opacity-80",
         cardClassName

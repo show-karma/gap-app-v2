@@ -7,9 +7,9 @@ import formatCurrency from "@/utilities/formatCurrency";
 export function formatGrantAmount(amount?: string): string | null {
   if (!amount) return null;
 
-  const parts = amount.split(" ");
-  const numericPart = parts[0]?.replace(",", "");
-  const currencySuffix = parts.length > 1 ? parts.slice(1).join(" ") : null;
+  const [rawNumericPart, ...currencyParts] = amount.trim().split(/\s+/);
+  const numericPart = rawNumericPart?.replace(/,/g, "");
+  const currencySuffix = currencyParts.length > 0 ? currencyParts.join(" ") : null;
 
   const numAmount = Number(numericPart);
   if (Number.isNaN(numAmount) || numAmount === 0) return null;

@@ -2,7 +2,7 @@
 import { Dialog, Transition } from "@headlessui/react";
 import { ProjectEndorsement } from "@show-karma/karma-gap-sdk";
 import type { IProjectEndorsement } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { type FC, Fragment, useState } from "react";
 import { useAccount } from "wagmi";
 /* eslint-disable @next/next/no-img-element */
@@ -40,13 +40,15 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
   const { address } = useAccount();
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const router = useRouter();
+  const pathname = usePathname();
   const { data: contactsInfo } = useContactInfo(project?.uid, true);
 
   function closeModal() {
     setIsOpen(false);
   }
 
-  const { startAttestation, changeStepperStep, showSuccess, dismiss } = useAttestationToast();
+  const { startAttestation, changeStepperStep, showSuccess, showError, dismiss } =
+    useAttestationToast();
 
   const { openShareDialog } = useShareDialogStore();
 
@@ -129,10 +131,11 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
 
             showSuccess("Endorsement added!");
             setTimeout(() => {
-              dismiss();
-              router.push(
-                PAGES.PROJECT.OVERVIEW((project.details?.slug || project?.uid) as string)
+              const targetPath = PAGES.PROJECT.OVERVIEW(
+                (project.details?.slug || project?.uid) as string
               );
+
+              dismiss();
               openShareDialog({
                 modalShareText: `Well played! Project ${project?.details?.title} now has your epic endorsement 🎯🐉!`,
                 shareText: SHARE_TEXTS.PROJECT_ENDORSEMENT(
@@ -141,7 +144,13 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
                 ),
                 modalShareSecondText: ` `,
               });
-              router.refresh();
+
+              // Let the share dialog render before any route transition.
+              if (pathname !== targetPath) {
+                setTimeout(() => {
+                  router.push(targetPath);
+                }, 250);
+              }
             }, 1500);
           }
           retries -= 1;
@@ -151,7 +160,7 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
       });
       closeModal();
     } catch (error: unknown) {
-      dismiss();
+      showError("Failed to create endorsement. Please try again.");
       errorManager(`Error of user ${address} endorsing project ${project?.uid}`, error, {
         projectUID: project?.uid,
         address,

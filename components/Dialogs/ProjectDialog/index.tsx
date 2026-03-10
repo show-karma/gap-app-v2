@@ -13,8 +13,8 @@ import {
   ProjectDetails,
 } from "@show-karma/karma-gap-sdk";
 import debounce from "lodash.debounce";
-import { useRouter } from "next/navigation";
-import { type FC, Fragment, type ReactNode, useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { type FC, Fragment, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { type Hex, isAddress, zeroHash } from "viem";
 import { useAccount } from "wagmi";
@@ -45,6 +45,7 @@ import { useWallet } from "@/hooks/useWallet";
 import { checkSlugExists, getProject } from "@/services/project.service";
 import { searchProjects } from "@/services/project-search.service";
 import { useProjectStore } from "@/store";
+import { useProjectCreateModalStore } from "@/store/modals/projectCreate";
 import { useProjectEditModalStore } from "@/store/modals/projectEdit";
 import { useSimilarProjectsModalStore } from "@/store/modals/similarProjects";
 import { useOwnerStore } from "@/store/owner";
@@ -219,16 +220,16 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const [_logoUploadProgress, setLogoUploadProgress] = useState(0);
   const [tempLogoKey, setTempLogoKey] = useState<string | null>(null);
 
-  // Modal state management - use edit store or local state based on mode
+  // Modal state management - use edit store or create store based on mode
   const { isProjectEditModalOpen, setIsProjectEditModalOpen } = useProjectEditModalStore();
+  const { isProjectCreateModalOpen, setIsProjectCreateModalOpen } = useProjectCreateModalStore();
 
-  const [localIsOpen, setLocalIsOpen] = useState(false);
   // Track if we should open modal after login completes
   const [pendingOpenAfterLogin, setPendingOpenAfterLogin] = useState(false);
 
   // Determine which modal state to use
-  const isOpen = useEditModalStore ? isProjectEditModalOpen : localIsOpen;
-  const setIsOpen = useEditModalStore ? setIsProjectEditModalOpen : setLocalIsOpen;
+  const isOpen = useEditModalStore ? isProjectEditModalOpen : isProjectCreateModalOpen;
+  const setIsOpen = useEditModalStore ? setIsProjectEditModalOpen : setIsProjectCreateModalOpen;
 
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [step, setStep] = useState(0);
@@ -425,13 +426,12 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
 
   // Handle unauthenticated user trying to open modal
   useEffect(() => {
-    if (isOpen && !isAuth) {
-      // Set flag to re-open modal after login completes
+    if (isOpen && !isAuth && !pendingOpenAfterLogin) {
+      // Keep modal state open in the store so useAuth skips dashboard redirect
       setPendingOpenAfterLogin(true);
       login?.();
-      closeModal();
     }
-  }, [isOpen, isAuth, closeModal, login]);
+  }, [isOpen, isAuth, pendingOpenAfterLogin, login]);
 
   // Re-open modal after successful login if user was trying to create project
   useEffect(() => {
@@ -440,6 +440,23 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       openModal();
     }
   }, [isAuth, pendingOpenAfterLogin]);
+
+  // Auto-open modal from URL query param (?action=create-project)
+  const searchParams = useSearchParams();
+  const hasHandledUrlAction = useRef(false);
+  useEffect(() => {
+    if (
+      !useEditModalStore &&
+      !hasHandledUrlAction.current &&
+      searchParams.get("action") === "create-project"
+    ) {
+      hasHandledUrlAction.current = true;
+      openModal();
+      const url = new URL(window.location.href);
+      url.searchParams.delete("action");
+      window.history.replaceState(null, "", url.pathname + url.search);
+    }
+  }, [searchParams, useEditModalStore]);
 
   const validateCustomLinks = () => {
     return customLinks.some((link) => !link.name.trim() || !link.url.trim());
@@ -691,9 +708,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       }
 
       // Use the gasless signer from setupChainAndWallet
-      closeModal();
-
-      // Attest first (Privy popups appear here), then show progress modal
+      // Keep modal open while submitting so users don't lose context/data.
       await project.attest(signer as any, changeStepperStep).then(async (res) => {
         showLoading("Indexing project...");
         let retries = 1000;
@@ -803,9 +818,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       const fetchedProject = await getProjectById(projectToUpdate.uid);
       if (!fetchedProject) return;
 
-      // Close modal before update (Privy popups will appear during updateProject)
-      closeModal();
-
       // Promote temporary logo to permanent before project update
       let finalImageURL = data.profilePicture || "";
       if (tempLogoKey) {
@@ -862,7 +874,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         walletSigner,
         gapClient,
         changeStepperStep,
-        () => {}, // No-op since modal is already closed
+        closeModal,
         () => {}, // setIsStepper - no-op, managed by toast hook
         startAttestation,
         showSuccess
@@ -1562,7 +1574,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
 
       {isOpen && (
         <Transition appear show={true} as={Fragment}>
-          <Dialog as="div" className="relative z-[100]" onClose={closeModal}>
+          <Dialog as="div" className="relative z-[100]" onClose={isLoading ? () => {} : closeModal}>
             <Transition.Child
               as={Fragment}
               enter="ease-out duration-300"
@@ -1597,6 +1609,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                       type="button"
                       className="top-6 absolute right-6 hover:opacity-75 transition-all ease-in-out duration-200 dark:text-zinc-100"
                       onClick={closeModal}
+                      disabled={isLoading}
                     >
                       <XMarkIcon className="w-5 h-5" />
                     </button>

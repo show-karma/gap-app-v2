@@ -49,10 +49,10 @@ export function useMilestoneReviewers(programId: string) {
     },
   });
 
-  // Mutation for removing a milestone reviewer
+  // Mutation for removing a milestone reviewer by email
   const removeMutation = useMutation({
-    mutationFn: async (publicAddress: string) => {
-      return milestoneReviewersService.removeReviewer(programId, publicAddress);
+    mutationFn: async (email: string) => {
+      return milestoneReviewersService.removeReviewer(programId, email);
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({

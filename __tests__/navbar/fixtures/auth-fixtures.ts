@@ -311,7 +311,7 @@ export const authFixtures: AuthFixture[] = [
       myProjects: true,
       review: false,
       admin: false,
-      managePrograms: false,
+      managePrograms: true,
     },
   },
 
@@ -461,7 +461,7 @@ export const authFixtures: AuthFixture[] = [
       myProjects: true,
       review: false,
       admin: false,
-      managePrograms: false,
+      managePrograms: true,
     },
   },
 

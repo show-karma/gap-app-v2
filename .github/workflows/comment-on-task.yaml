@@ -4,7 +4,7 @@ on:
 
 jobs:
   create-comment-in-asana-task-job:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ubuntu-latest
     name: Create a comment in Asana Task
     steps:
       - name: Create a comment

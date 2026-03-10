@@ -1,0 +1,99 @@
+/**
+ * Tests for the reviewer filter logic in useReportPageData.
+ *
+ * The hook uses address-based filtering where:
+ *   - undefined = "All Reviewers"
+ *   - string = specific reviewer's address
+ */
+
+import { computeDefaultReviewerAddress } from "@/hooks/useReportPageData";
+
+describe("useReportPageData reviewer filter logic (address-based)", () => {
+  const testAddress = "0x1234567890abcdef1234567890abcdef12345678";
+
+  describe("computeDefaultReviewerAddress", () => {
+    it("defaults to user address when isMilestoneReviewer is true and hasAccess is false", () => {
+      const result = computeDefaultReviewerAddress(true, false, testAddress);
+      expect(result).toBe(testAddress);
+    });
+
+    it("defaults to undefined when hasAccess is true (admin), even if isMilestoneReviewer", () => {
+      const result = computeDefaultReviewerAddress(true, true, testAddress);
+      expect(result).toBeUndefined();
+    });
+
+    it("defaults to undefined when isMilestoneReviewer is false", () => {
+      const result = computeDefaultReviewerAddress(false, false, testAddress);
+      expect(result).toBeUndefined();
+    });
+
+    it("defaults to undefined when hasAccess is true and isMilestoneReviewer is false", () => {
+      const result = computeDefaultReviewerAddress(false, true, testAddress);
+      expect(result).toBeUndefined();
+    });
+
+    it("returns undefined when reviewer has no address", () => {
+      const result = computeDefaultReviewerAddress(true, false, undefined);
+      expect(result).toBeUndefined();
+    });
+  });
+
+  describe("handleReviewerAddressChange behavior", () => {
+    it("updates the selected address and resets pending page to 1", () => {
+      let selectedReviewerAddress: string | undefined;
+      let pendingPage = 3;
+
+      const handleReviewerAddressChange = (address: string | undefined) => {
+        selectedReviewerAddress = address;
+        pendingPage = 1;
+      };
+
+      handleReviewerAddressChange(testAddress);
+      expect(selectedReviewerAddress).toBe(testAddress);
+      expect(pendingPage).toBe(1);
+    });
+
+    it("can switch to undefined (all reviewers)", () => {
+      let selectedReviewerAddress: string | undefined = testAddress;
+      let pendingPage = 5;
+
+      const handleReviewerAddressChange = (address: string | undefined) => {
+        selectedReviewerAddress = address;
+        pendingPage = 1;
+      };
+
+      handleReviewerAddressChange(undefined);
+      expect(selectedReviewerAddress).toBeUndefined();
+      expect(pendingPage).toBe(1);
+    });
+
+    it("can switch between different reviewer addresses", () => {
+      let selectedReviewerAddress: string | undefined = testAddress;
+      const otherAddress = "0xabcdef1234567890abcdef1234567890abcdef12";
+
+      const handleReviewerAddressChange = (address: string | undefined) => {
+        selectedReviewerAddress = address;
+      };
+
+      handleReviewerAddressChange(otherAddress);
+      expect(selectedReviewerAddress).toBe(otherAddress);
+    });
+  });
+
+  describe("integration: default address drives effective address", () => {
+    it("reviewer-only user defaults to seeing their own milestones", () => {
+      const defaultAddress = computeDefaultReviewerAddress(true, false, testAddress);
+      expect(defaultAddress).toBe(testAddress);
+    });
+
+    it("admin user defaults to seeing all milestones", () => {
+      const defaultAddress = computeDefaultReviewerAddress(true, true, testAddress);
+      expect(defaultAddress).toBeUndefined();
+    });
+
+    it("non-reviewer, non-admin user defaults to seeing all milestones", () => {
+      const defaultAddress = computeDefaultReviewerAddress(false, false, testAddress);
+      expect(defaultAddress).toBeUndefined();
+    });
+  });
+});

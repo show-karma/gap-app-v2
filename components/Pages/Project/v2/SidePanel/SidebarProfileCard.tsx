@@ -2,6 +2,7 @@
 
 import { ArrowUpRight, CopyCheck, GlobeIcon, Share } from "lucide-react";
 import { useParams, usePathname, useRouter } from "next/navigation";
+import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";

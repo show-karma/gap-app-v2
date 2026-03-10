@@ -89,7 +89,6 @@ export const GrantMilestoneCompletionForm = ({
       handleCompleting(false);
     } catch (error) {
       // Don't close the form if there was an error
-      console.error("Error completing milestone:", error);
     } finally {
       setIsCompleting(false);
     }
