@@ -42,6 +42,8 @@ interface NavItem {
   matchSegment: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
+  /** If true, only visible to community admins (not program admins) */
+  communityAdminOnly?: boolean;
 }
 
 interface NavGroup {
@@ -82,6 +84,7 @@ const NAV_GROUPS: NavGroup[] = [
         matchSegment: "email-grantees",
         label: "Email Grantees",
         icon: EnvelopeIcon,
+        communityAdminOnly: true,
       },
     ],
   },
@@ -190,13 +193,22 @@ export function ManageSidebar({ communityId, community }: ManageSidebarProps) {
 
   const visibleGroups = useMemo(() => {
     if (isLoading || (!hasAdminAccess && !hasReviewerAccess)) return [];
-    if (hasAdminAccess) return NAV_GROUPS;
+    if (hasAdminAccess) {
+      // Program admins see everything except communityAdminOnly items
+      if (!isCommunityAdmin) {
+        return NAV_GROUPS.map((group) => ({
+          ...group,
+          items: group.items.filter((item) => !item.communityAdminOnly),
+        })).filter((group) => group.items.length > 0);
+      }
+      return NAV_GROUPS;
+    }
     // Reviewer-only: filter to allowed items
     return NAV_GROUPS.map((group) => ({
       ...group,
       items: group.items.filter((item) => REVIEWER_SEGMENTS.has(item.matchSegment)),
     })).filter((group) => group.items.length > 0);
-  }, [isLoading, hasAdminAccess, hasReviewerAccess]);
+  }, [isLoading, hasAdminAccess, hasReviewerAccess, isCommunityAdmin]);
 
   const sidebarContent = (
     <div className="flex flex-col h-full">
