@@ -17,18 +17,12 @@
 import { setupIndexerCatchAll, setupRpcIntercepts, waitForPageLoad } from "../../support/intercepts";
 
 /**
- * Wait for the ProjectProfileLayout to hydrate and expose store setters.
- * The layout sets window.__E2E_STORES__ in a useEffect when
- * NEXT_PUBLIC_E2E_AUTH_BYPASS is enabled at build time.
- * We first wait for the layout's data-testid to confirm hydration,
- * then wait for the stores object to appear.
+ * Wait for E2EStoreExposer to hydrate and expose store setters.
+ * The component is mounted in the project server layout (outside the
+ * dynamically-imported ProjectProfileLayout), so it renders as soon
+ * as the page hydrates — no need to wait for a specific testid.
  */
 const waitForStoreExposure = () => {
-  // Wait for the layout component to be mounted (loading or fully loaded)
-  cy.get('[data-testid="project-profile-layout"], [data-testid="layout-loading"]', {
-    timeout: 30000,
-  }).should("exist");
-  // Wait for the useEffect to set __E2E_STORES__
   cy.window({ timeout: 30000 }).should("have.property", "__E2E_STORES__");
 };
 

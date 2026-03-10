@@ -13,7 +13,6 @@ import {
 } from "@/components/Pages/Project/ProjectOptionsMenu";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useProjectProfile } from "@/hooks/v2/useProjectProfile";
-import { useOwnerStore, useProjectStore } from "@/store";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
 import { useEndorsementStore } from "@/store/modals/endorsement";
 import { useIntroModalStore } from "@/store/modals/intro";
@@ -120,19 +119,6 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
 
   // Initialize project permissions in store (for authorization checks in ContentTabs)
   useProjectPermissions();
-
-  // Expose Zustand store setters for E2E tests.
-  // Set during render (not useEffect) to ensure availability immediately.
-  // The compile-time NEXT_PUBLIC_E2E_AUTH_BYPASS flag is inlined at build time,
-  // so this code is dead-code-eliminated in non-E2E production builds.
-  if (process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS === "true" && typeof window !== "undefined") {
-    (window as Window & { __E2E_STORES__?: Record<string, unknown> }).__E2E_STORES__ = {
-      setIsProjectOwner: useProjectStore.getState().setIsProjectOwner,
-      setIsProjectAdmin: useProjectStore.getState().setIsProjectAdmin,
-      setIsOwner: useOwnerStore.getState().setIsOwner,
-      setIsOwnerLoading: useOwnerStore.getState().setIsOwnerLoading,
-    };
-  }
 
   // Get team count from project
   const teamCount = project

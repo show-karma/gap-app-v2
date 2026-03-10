@@ -2,6 +2,7 @@
 
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 import type { Metadata } from "next";
+import { E2EStoreExposer } from "@/components/Utilities/E2EStoreExposer";
 import { layoutTheme } from "@/src/helper/theme";
 import { generateProjectOverviewMetadata } from "@/utilities/metadata/projectMetadata";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
@@ -90,6 +91,7 @@ export default async function RootLayout(props: {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
+      <E2EStoreExposer />
       <div className={layoutTheme.padding}>{children}</div>
     </HydrationBoundary>
   );
