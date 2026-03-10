@@ -2,8 +2,10 @@
 
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
 import { zodResolver } from "@hookform/resolvers/zod";
+
+import type { IMilestoneCompleted } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { usePathname, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
 import { type FC, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useAccount } from "wagmi";
@@ -114,6 +116,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
   const _isAuthorized = isProjectOwner || isProjectAdmin || isContractOwner || isCommunityAdmin;
   const { openShareDialog, closeShareDialog } = useShareDialogStore();
   const router = useRouter();
+  const pathname = usePathname();
 
   // Fetch existing milestone impact data to populate the form
   const { data: milestoneImpactData } = useMilestoneImpactAnswers({
@@ -325,18 +328,23 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
                   queryKey: [MILESTONE_IMPACT_QUERY_KEY, milestone.uid],
                 });
 
+                const targetPath = PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
+                  (project?.details?.slug || project?.uid) as string,
+                  grantInstance.uid,
+                  "milestones-and-updates"
+                );
+
                 afterSubmit?.();
                 openDialog();
                 cancelEditing(false);
                 parentSetIsUpdating?.(false);
-                router.push(
-                  PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
-                    project?.uid as string,
-                    grantInstance.uid,
-                    "milestones-and-updates"
-                  )
-                );
-                router.refresh();
+
+                // Let the share dialog render before any route transition.
+                if (pathname !== targetPath) {
+                  setTimeout(() => {
+                    router.push(targetPath);
+                  }, 250);
+                }
               }
               retries -= 1;
               // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
