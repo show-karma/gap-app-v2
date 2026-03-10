@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { Skeleton } from "@/components/ui/skeleton";
+import { HEADING_AS_BOLD_COMPONENTS } from "../utils/markdown-heading-components";
 
 interface FundingMapDescriptionProps {
   description: string;
@@ -24,6 +25,7 @@ const MarkdownContent = dynamic(
         <mod.MarkdownPreview
           source={description}
           className="text-sm text-muted-foreground line-clamp-3"
+          components={HEADING_AS_BOLD_COMPONENTS}
         />
       ),
     })),
