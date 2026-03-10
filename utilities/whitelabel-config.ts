@@ -214,8 +214,9 @@ export function getWhitelabelDomainForSlug(slug: string, isProduction: boolean):
   // Import is avoided — use the DOMAIN_CONFIGS to check isProduction for each whitelabel domain.
   // WHITELABEL_DOMAINS already has the slug→domain mapping.
   // We need to pick the right one based on environment.
+  const normalizedSlug = slug.toLowerCase();
   const candidates = WHITELABEL_DOMAINS.filter(
-    (d) => d.communitySlug === slug && !d.domain.includes("localhost")
+    (d) => d.communitySlug.toLowerCase() === normalizedSlug && !d.domain.includes("localhost")
   );
 
   if (candidates.length === 0) return null;

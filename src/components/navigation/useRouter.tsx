@@ -19,6 +19,16 @@ export function useRouter(): EnhancedRouter {
   const params = useParams<{ communityId: string }>();
   const community = params.communityId;
 
+  // Capture stable method references from the router object.
+  // The nextRouter object itself is a new reference every render,
+  // but its methods (push, replace, etc.) are stable.
+  const nextPush = nextRouter.push;
+  const nextReplace = nextRouter.replace;
+  const nextPrefetch = nextRouter.prefetch;
+  const nextBack = nextRouter.back;
+  const nextForward = nextRouter.forward;
+  const nextRefresh = nextRouter.refresh;
+
   const isExternalUrl = useCallback((url: string): boolean => {
     return url.startsWith("http://") || url.startsWith("https://");
   }, []);
@@ -34,36 +44,36 @@ export function useRouter(): EnhancedRouter {
 
   const push = useCallback(
     (href: string, options?: { scroll?: boolean }) => {
-      nextRouter.push(buildInternalUrl(href), options);
+      nextPush(buildInternalUrl(href), options);
     },
-    [nextRouter, buildInternalUrl]
+    [nextPush, buildInternalUrl]
   );
 
   const replace = useCallback(
     (href: string, options?: { scroll?: boolean }) => {
-      nextRouter.replace(buildInternalUrl(href), options);
+      nextReplace(buildInternalUrl(href), options);
     },
-    [nextRouter, buildInternalUrl]
+    [nextReplace, buildInternalUrl]
   );
 
   const prefetch = useCallback(
     (href: string) => {
-      nextRouter.prefetch(buildInternalUrl(href));
+      nextPrefetch(buildInternalUrl(href));
     },
-    [nextRouter, buildInternalUrl]
+    [nextPrefetch, buildInternalUrl]
   );
 
   return useMemo(
     () => ({
       push,
       replace,
-      back: nextRouter.back,
-      forward: nextRouter.forward,
-      refresh: nextRouter.refresh,
+      back: nextBack,
+      forward: nextForward,
+      refresh: nextRefresh,
       prefetch,
       _nextRouter: nextRouter,
     }),
-    [push, replace, nextRouter, prefetch]
+    [push, replace, nextBack, nextForward, nextRefresh, prefetch, nextRouter]
   );
 }
 

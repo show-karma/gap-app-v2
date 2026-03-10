@@ -2,7 +2,15 @@ import { z } from "zod";
 import type { ApplicationQuestion } from "@/types/whitelabel-entities";
 
 const MAX_PATTERN_LENGTH = 500;
-const DANGEROUS_PATTERN_CHARS = /(\+\+|\*\*|\{\d+,\d*\}\{|\(\?[^)]*\)\+)/;
+
+/**
+ * Detects regex patterns vulnerable to catastrophic backtracking (ReDoS).
+ *
+ * Catches: nested quantifiers (e.g. (a+)+, (a*)*), adjacent quantifiers (++, **),
+ * quantified groups followed by quantifiers, and overlapping alternation with quantifiers.
+ */
+const DANGEROUS_PATTERN_CHARS =
+  /(\+\+|\*\*|\*\+|\+\*|\{\d+,\d*\}\{|\{\d+,\d*\}\+|\{\d+,\d*\}\*|\([^)]*[+*][^)]*\)[+*{]|([+*])\s*\2)/;
 
 function isSafePattern(pattern: string): boolean {
   if (pattern.length > MAX_PATTERN_LENGTH) {

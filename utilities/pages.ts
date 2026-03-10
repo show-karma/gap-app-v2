@@ -128,6 +128,30 @@ export const PAGES = {
   SEEDS_FUND: `/seeds/fund`,
 };
 
+/**
+ * First path segments under /community/[communityId]/ that should be rewritten
+ * in whitelabel mode. Derived from PAGES.COMMUNITY route definitions and
+ * filesystem route directories. This is the single source of truth — used by
+ * middleware.ts to decide which paths get the /community/<slug> prefix.
+ */
+export const COMMUNITY_SUB_ROUTE_SEGMENTS: ReadonlySet<string> = new Set([
+  // From PAGES.COMMUNITY
+  "applications",
+  "browse-applications",
+  "claim-funds",
+  "donate",
+  "financials",
+  "funding-opportunities",
+  "impact",
+  "programs",
+  "projects",
+  "updates",
+  // Direct route directories under /community/[communityId]/
+  "admin",
+  "karma-ai",
+  "manage",
+]);
+
 export const FUNDING_PLATFORM_PAGES = (tenantId: string, _domain?: string) => {
   const sharedDomain = envVars.isDev
     ? `${FUNDING_PLATFORM_DOMAINS.shared.dev}/${tenantId}`

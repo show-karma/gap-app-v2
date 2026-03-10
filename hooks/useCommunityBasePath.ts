@@ -11,7 +11,16 @@ import { useWhitelabel } from "@/utilities/whitelabel-context";
 export function useCommunityBasePath(): string {
   const { isWhitelabel } = useWhitelabel();
   const params = useParams();
-  const communityId = params.communityId as string | undefined;
+  const rawCommunityId = params?.communityId;
+
+  // communityId may be a string, string[] (catch-all), or undefined.
+  // Normalise to a single string or null.
+  const communityId =
+    typeof rawCommunityId === "string" && rawCommunityId.length > 0
+      ? rawCommunityId
+      : Array.isArray(rawCommunityId) && rawCommunityId.length > 0
+        ? rawCommunityId[0]
+        : null;
 
   if (isWhitelabel) {
     return "";

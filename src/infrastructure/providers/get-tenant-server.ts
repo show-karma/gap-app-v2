@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import React from "react";
 import fetchData from "@/utilities/fetchData";
+import { getWhitelabelByDomain } from "@/utilities/whitelabel-config";
 import { getTenantConfig } from "../config/tenant-config";
 import type { TenantConfig } from "../types/tenant";
 import { isKnownTenant } from "../types/tenant";
@@ -22,8 +23,13 @@ const serverCache = typeof React.cache === "function" ? React.cache : (fn: unkno
 
 export const getTenantServer = serverCache(async (): Promise<GetTenantServerResult> => {
   const headersList = await headers();
-  const tenantIdHeader = headersList.get("x-tenant-id") || "karma";
-  const communitySlug = headersList.get("x-community-slug") || undefined;
+  const host = headersList.get("host") ?? "";
+  const whitelabelConfig = getWhitelabelByDomain(host);
+
+  // Resolve tenant and community from the host domain rather than
+  // trusting client-supplied headers which can be spoofed.
+  const tenantIdHeader = whitelabelConfig?.tenantId || whitelabelConfig?.communitySlug || "karma";
+  const communitySlug = whitelabelConfig?.communitySlug || undefined;
 
   if (isKnownTenant(tenantIdHeader)) {
     const config = getTenantConfig(tenantIdHeader, communitySlug);
