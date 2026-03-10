@@ -122,18 +122,17 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
   useProjectPermissions();
 
   // Expose Zustand store setters for E2E tests.
-  // Uses the compile-time NEXT_PUBLIC_E2E_AUTH_BYPASS flag (inlined at build time)
-  // so the code is tree-shaken in non-E2E production builds.
-  useEffect(() => {
-    if (process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS === "true" && typeof window !== "undefined") {
-      (window as Window & { __E2E_STORES__?: Record<string, unknown> }).__E2E_STORES__ = {
-        setIsProjectOwner: useProjectStore.getState().setIsProjectOwner,
-        setIsProjectAdmin: useProjectStore.getState().setIsProjectAdmin,
-        setIsOwner: useOwnerStore.getState().setIsOwner,
-        setIsOwnerLoading: useOwnerStore.getState().setIsOwnerLoading,
-      };
-    }
-  }, []);
+  // Set during render (not useEffect) to ensure availability immediately.
+  // The compile-time NEXT_PUBLIC_E2E_AUTH_BYPASS flag is inlined at build time,
+  // so this code is dead-code-eliminated in non-E2E production builds.
+  if (process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS === "true" && typeof window !== "undefined") {
+    (window as Window & { __E2E_STORES__?: Record<string, unknown> }).__E2E_STORES__ = {
+      setIsProjectOwner: useProjectStore.getState().setIsProjectOwner,
+      setIsProjectAdmin: useProjectStore.getState().setIsProjectAdmin,
+      setIsOwner: useOwnerStore.getState().setIsOwner,
+      setIsOwnerLoading: useOwnerStore.getState().setIsOwnerLoading,
+    };
+  }
 
   // Get team count from project
   const teamCount = project

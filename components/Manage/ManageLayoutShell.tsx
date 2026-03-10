@@ -1,7 +1,6 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useEffect } from "react";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import { Link } from "@/src/components/navigation/Link";
@@ -25,16 +24,14 @@ export function ManageLayoutShell({ children }: { children: React.ReactNode }) {
   const { isOwner, isOwnerLoading } = useOwnerStore();
 
   // Expose Zustand store setters for E2E tests.
-  // Uses the compile-time NEXT_PUBLIC_E2E_AUTH_BYPASS flag.
-  useEffect(() => {
-    if (process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS === "true" && typeof window !== "undefined") {
-      (window as Window & { __E2E_STORES__?: Record<string, unknown> }).__E2E_STORES__ = {
-        ...((window as Window & { __E2E_STORES__?: Record<string, unknown> }).__E2E_STORES__ || {}),
-        setIsOwner: useOwnerStore.getState().setIsOwner,
-        setIsOwnerLoading: useOwnerStore.getState().setIsOwnerLoading,
-      };
-    }
-  }, []);
+  // Set during render (not useEffect) to ensure availability immediately.
+  if (process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS === "true" && typeof window !== "undefined") {
+    (window as Window & { __E2E_STORES__?: Record<string, unknown> }).__E2E_STORES__ = {
+      ...((window as Window & { __E2E_STORES__?: Record<string, unknown> }).__E2E_STORES__ || {}),
+      setIsOwner: useOwnerStore.getState().setIsOwner,
+      setIsOwnerLoading: useOwnerStore.getState().setIsOwnerLoading,
+    };
+  }
 
   const hasManageAccess =
     isCommunityAdmin || isProgramAdmin || isReviewer || isRegistryAdmin || isOwner;
