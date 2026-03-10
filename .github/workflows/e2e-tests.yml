@@ -130,7 +130,7 @@ jobs:
         run: pnpm exec playwright install chromium --with-deps
 
       - name: Run Playwright E2E tests
-        run: cross-env NEXT_PUBLIC_E2E_AUTH_BYPASS=true pnpm exec playwright test --config e2e/playwright.config.ts --project=chromium
+        run: pnpm exec playwright test --config e2e/playwright.config.ts --project=chromium
         env:
           CI: true
 
