@@ -188,9 +188,11 @@ export function WhitelabelNavbar() {
                 Dashboard
               </Link>
             )}
-            <Link href={"/browse-applications"} className={navStyles.desktopLink}>
-              Applications
-            </Link>
+            {tenant.navigation?.showBrowseApplications !== false && (
+              <Link href={"/browse-applications"} className={navStyles.desktopLink}>
+                Applications
+              </Link>
+            )}
 
             {/* Tenant nav items with Claim Funds inserted before "More" dropdown */}
             {tenant.navigation?.items?.map((item, index) => {
@@ -316,13 +318,15 @@ export function WhitelabelNavbar() {
                   Dashboard
                 </Link>
               )}
-              <Link
-                href={"/browse-applications"}
-                className={navStyles.mobileLink}
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Applications
-              </Link>
+              {tenant.navigation?.showBrowseApplications !== false && (
+                <Link
+                  href={"/browse-applications"}
+                  className={navStyles.mobileLink}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Applications
+                </Link>
+              )}
 
               {tenant.navigation?.items?.map((item, index) => {
                 const isMoreDropdown = isDropdown(item) && item.label === "More";

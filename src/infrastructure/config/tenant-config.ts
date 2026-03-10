@@ -296,6 +296,7 @@ const tenantNavigation: Record<TenantId, TenantNavigation> = {
   },
   filecoin: {
     header: { title: "Filecoin Community", shouldHaveTitle: true, poweredBy: true },
+    showBrowseApplications: false,
     items: [
       {
         label: "ProPGF",
