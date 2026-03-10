@@ -476,6 +476,9 @@ describe("createProgramSchema", () => {
       });
 
       expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.errors.some((err) => err.path[0] === "adminEmails")).toBe(true);
+      }
     });
 
     it("should reject invalid email addresses", () => {
@@ -582,6 +585,9 @@ describe("updateProgramSchema", () => {
     });
 
     expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.errors.some((err) => err.path[0] === "adminEmails")).toBe(true);
+    }
   });
 
   it("should accept valid admin emails when provided", () => {

@@ -57,10 +57,13 @@ export function buildFormValuesFromMetadata(
       startsAt: metadata.startsAt ? new Date(metadata.startsAt) : undefined,
       endsAt: metadata.endsAt ? new Date(metadata.endsAt) : undefined,
     },
-    budget:
-      metadata.programBudget != null
-        ? Number.parseFloat(metadata.programBudget.toString())
-        : undefined,
+    budget: (() => {
+      if (metadata.programBudget == null) return undefined;
+      const str = String(metadata.programBudget).trim();
+      if (str === "") return undefined;
+      const parsed = Number.parseFloat(str);
+      return Number.isNaN(parsed) ? undefined : parsed;
+    })(),
     adminEmails: metadata.adminEmails || [],
     financeEmails: metadata.financeEmails || [],
     invoiceRequired: metadata.invoiceRequired ?? false,

@@ -194,10 +194,11 @@ export class ProgramRegistryService {
   ): Promise<ProgramCreationResult> {
     // V2 endpoint expects: { chainId, metadata, ...topLevelFields }
     // owner comes from JWT session
+    // Spread topLevelFields first so reserved keys (chainId, metadata) cannot be overwritten
     const request = {
+      ...topLevelFields,
       chainId,
       metadata,
-      ...topLevelFields,
     };
 
     const [createResponse, createError] = await fetchData(
@@ -242,9 +243,10 @@ export class ProgramRegistryService {
     metadata: ProgramMetadata,
     topLevelFields?: Record<string, unknown>
   ): Promise<void> {
+    // Spread topLevelFields first so reserved key (metadata) cannot be overwritten
     const request = {
-      metadata,
       ...topLevelFields,
+      metadata,
     };
 
     const [, updateError] = await fetchData(

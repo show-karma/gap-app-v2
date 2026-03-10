@@ -460,6 +460,36 @@ describe("ProgramRegistryService", () => {
       );
     });
 
+    it("should not allow topLevelFields to overwrite chainId or metadata", async () => {
+      const mockResponse = { programId: "program-789", isValid: true };
+      (fetchData as jest.Mock).mockResolvedValue([mockResponse, null]);
+
+      const maliciousTopLevelFields = {
+        chainId: 9999,
+        metadata: { title: "hacked" },
+        type: "hackathon",
+      };
+      await ProgramRegistryService.createProgram(
+        mockOwner,
+        mockChainId,
+        mockMetadata,
+        maliciousTopLevelFields
+      );
+
+      expect(fetchData).toHaveBeenCalledWith(
+        INDEXER.REGISTRY.V2.CREATE,
+        "POST",
+        {
+          chainId: mockChainId,
+          metadata: mockMetadata,
+          type: "hackathon",
+        },
+        {},
+        {},
+        true
+      );
+    });
+
     it("should work without topLevelFields", async () => {
       const mockResponse = { programId: "program-456", isValid: true };
       (fetchData as jest.Mock).mockResolvedValue([mockResponse, null]);

@@ -46,6 +46,20 @@ describe("buildFormValuesFromMetadata", () => {
     expect(result?.budget).toBeUndefined();
   });
 
+  it("should set budget to undefined when programBudget is empty string", () => {
+    const metadata = { ...baseMetadata, programBudget: "" };
+    const result = buildFormValuesFromMetadata(metadata as unknown as GrantProgram["metadata"]);
+
+    expect(result?.budget).toBeUndefined();
+  });
+
+  it("should set budget to undefined when programBudget is non-numeric string", () => {
+    const metadata = { ...baseMetadata, programBudget: "not-a-number" };
+    const result = buildFormValuesFromMetadata(metadata as unknown as GrantProgram["metadata"]);
+
+    expect(result?.budget).toBeUndefined();
+  });
+
   it("should set budget to undefined when programBudget is undefined", () => {
     const metadata = { ...baseMetadata, programBudget: undefined };
     const result = buildFormValuesFromMetadata(metadata);

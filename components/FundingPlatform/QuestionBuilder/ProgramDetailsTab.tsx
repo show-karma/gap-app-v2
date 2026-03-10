@@ -1,6 +1,6 @@
 "use client";
 import { DocumentTextIcon } from "@heroicons/react/24/solid";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { Button } from "@/components/ui/button";
@@ -34,6 +34,7 @@ export function ProgramDetailsTab({
   const [isLoadingProgram, setIsLoadingProgram] = useState(!initialProgram);
   const [program, setProgram] = useState<GrantProgram | null>(initialProgram || null);
   const [programError, setProgramError] = useState<string | null>(null);
+  const fetchNonceRef = useRef(0);
 
   // Fetch program data if not provided via props
   const fetchProgram = useCallback(async () => {
@@ -41,18 +42,19 @@ export function ProgramDetailsTab({
       setIsLoadingProgram(false);
       return;
     }
+    const nonce = ++fetchNonceRef.current;
     try {
       setIsLoadingProgram(true);
       setProgramError(null);
       const [data, error] = await fetchData(
         INDEXER.REGISTRY.FIND_BY_ID(programId, effectiveChainId)
       );
+      if (nonce !== fetchNonceRef.current) return;
       if (error) throw new Error(error);
-      if (data) {
-        const programData = Array.isArray(data) ? data[0] : data;
-        setProgram(programData as GrantProgram | null);
-      }
+      const programData = data ? (Array.isArray(data) ? data[0] : data) : null;
+      setProgram(programData as GrantProgram | null);
     } catch (error: unknown) {
+      if (nonce !== fetchNonceRef.current) return;
       const errorMessage = error instanceof Error ? error.message : "Failed to load program data";
       setProgramError(errorMessage);
       errorManager("Failed to load program data", error, {
@@ -60,7 +62,9 @@ export function ProgramDetailsTab({
         chainId: effectiveChainId,
       });
     } finally {
-      setIsLoadingProgram(false);
+      if (nonce === fetchNonceRef.current) {
+        setIsLoadingProgram(false);
+      }
     }
   }, [programId, effectiveChainId]);
 
@@ -80,12 +84,14 @@ export function ProgramDetailsTab({
   // Refetch after successful update
   const refetchProgramData = useCallback(async () => {
     if (!effectiveChainId) return;
+    const nonce = ++fetchNonceRef.current;
     try {
       const [data, error] = await fetchData(
         INDEXER.REGISTRY.FIND_BY_ID(programId, effectiveChainId)
       );
-      if (!error && data) {
-        const programData = Array.isArray(data) ? data[0] : data;
+      if (nonce !== fetchNonceRef.current) return;
+      if (!error) {
+        const programData = data ? (Array.isArray(data) ? data[0] : data) : null;
         setProgram(programData as GrantProgram | null);
       }
     } catch {
