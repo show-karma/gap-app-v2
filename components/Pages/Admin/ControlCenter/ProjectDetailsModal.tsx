@@ -13,6 +13,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { KycStatusBadge } from "@/components/KycStatusIcon";
+import { DatePicker } from "@/components/Utilities/DatePicker";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -222,7 +223,7 @@ export function ProjectDetailsModal({
     Record<string, { invoiceReceivedAt?: string | null; milestoneUID?: string | null }>
   >({});
   const [localAgreementSigned, setLocalAgreementSigned] = useState(false);
-  const [agreementDate, setAgreementDate] = useState<string>("");
+  const [agreementDate, setAgreementDate] = useState<Date | undefined>(undefined);
   const [confirmingUnsign, setConfirmingUnsign] = useState(false);
 
   const [, copyToClipboard] = useCopyToClipboard();
@@ -233,7 +234,7 @@ export function ProjectDetailsModal({
   useEffect(() => {
     if (grant) {
       setLocalAgreementSigned(agreement?.signed === true);
-      setAgreementDate(agreement?.signedAt ? agreement.signedAt.split("T")[0] : "");
+      setAgreementDate(agreement?.signedAt ? new Date(agreement.signedAt) : undefined);
       setMilestoneEdits({});
       setConfirmingUnsign(false);
     }
@@ -351,16 +352,18 @@ export function ProjectDetailsModal({
   }, [confirmingUnsign]);
 
   const handleSignAgreement = useCallback(
-    (dateOverride?: string) => {
+    (dateOverride?: Date) => {
       if (!grant) return;
-      const date = dateOverride ?? (agreementDate || todayLocal);
+      const date = dateOverride ?? agreementDate ?? new Date();
       if (!agreementDate) setAgreementDate(date);
       setLocalAgreementSigned(true);
       toggleAgreementMutation.mutate(
         {
           grantUID: grant.grantUid,
           signed: true,
-          signedAt: new Date(`${date}T00:00:00Z`).toISOString(),
+          signedAt: new Date(
+            Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
+          ).toISOString(),
         },
         {
           onSuccess: () => {
@@ -373,7 +376,7 @@ export function ProjectDetailsModal({
         }
       );
     },
-    [grant?.grantUid, agreementDate, todayLocal]
+    [grant?.grantUid, agreementDate]
   ); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleUnsignAgreement = useCallback(() => {
@@ -385,7 +388,7 @@ export function ProjectDetailsModal({
       { grantUID: grant.grantUid, signed: false },
       {
         onSuccess: () => {
-          setAgreementDate("");
+          setAgreementDate(undefined);
           toast.success("Agreement marked as not signed");
         },
         onError: () => {
@@ -536,7 +539,7 @@ export function ProjectDetailsModal({
                   <div className="flex items-center gap-1.5">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
                     <span className="text-xs font-medium text-emerald-700 dark:text-emerald-400">
-                      Signed {agreementDate ? formatDate(`${agreementDate}T00:00:00Z`, "UTC") : ""}
+                      Signed {agreementDate ? formatDate(agreementDate, "UTC") : ""}
                     </span>
                     {agreement?.signedBy && (
                       <span
@@ -561,21 +564,16 @@ export function ProjectDetailsModal({
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs text-gray-400 dark:text-zinc-500">Not signed</span>
                     <span className="text-[10px] text-gray-300 dark:text-zinc-600">—</span>
-                    <Input
-                      type="date"
-                      max={todayLocal}
-                      value={agreementDate}
-                      onChange={(e) => {
-                        const newDate = e.target.value;
-                        setAgreementDate(newDate);
-                        if (newDate) {
-                          handleSignAgreement(newDate);
-                        }
+                    <DatePicker
+                      selected={agreementDate}
+                      onSelect={(date) => {
+                        setAgreementDate(date);
+                        handleSignAgreement(date);
                       }}
-                      disabled={toggleAgreementMutation.isPending}
-                      className="h-6 text-xs w-[130px] bg-white dark:bg-zinc-900"
-                      aria-label="Set agreement signed date"
-                      title="Set a date to mark the agreement as signed"
+                      maxDate={new Date()}
+                      placeholder="Pick a date"
+                      buttonClassName="h-6 text-xs px-2 py-0.5 bg-white dark:bg-zinc-900"
+                      ariaLabel="Set agreement signed date"
                     />
                     {toggleAgreementMutation.isPending && (
                       <span className="text-[11px] text-gray-400 dark:text-zinc-500 animate-pulse">
