@@ -49,20 +49,32 @@ export function EmailGranteesComposer({ programs }: EmailGranteesComposerProps) 
     setRecipients([]);
   }, []);
 
+  const deduplicateEmails = useCallback((emails: GranteeEmail[]): string[] => {
+    const seen = new Set<string>();
+    return emails.reduce<string[]>((acc, g) => {
+      const normalized = g.email.trim().toLowerCase();
+      if (normalized && !seen.has(normalized)) {
+        seen.add(normalized);
+        acc.push(normalized);
+      }
+      return acc;
+    }, []);
+  }, []);
+
   const handleEmailsFetched = useCallback(() => {
-    if (granteeEmails && granteeEmails.length > 0) {
-      setRecipients(granteeEmails.map((g) => g.email));
+    if (granteeEmails) {
+      setRecipients(deduplicateEmails(granteeEmails));
     }
-  }, [granteeEmails]);
+  }, [granteeEmails, deduplicateEmails]);
 
   // Auto-populate recipients when grantee emails load for a new program
   const prevProgramRef = useRef<string | null>(null);
   useEffect(() => {
-    if (granteeEmails && granteeEmails.length > 0 && prevProgramRef.current !== selectedProgramId) {
+    if (granteeEmails && prevProgramRef.current !== selectedProgramId) {
       prevProgramRef.current = selectedProgramId;
-      setRecipients(granteeEmails.map((g) => g.email));
+      setRecipients(deduplicateEmails(granteeEmails));
     }
-  }, [granteeEmails, selectedProgramId]);
+  }, [granteeEmails, selectedProgramId, deduplicateEmails]);
 
   const removeRecipient = useCallback((email: string) => {
     setRecipients((prev) => prev.filter((r) => r !== email));
@@ -223,7 +235,11 @@ export function EmailGranteesComposer({ programs }: EmailGranteesComposerProps) 
 
               {/* Add manual email */}
               <div className="flex gap-2">
+                <label htmlFor="manual-recipient" className="sr-only">
+                  Add recipient email
+                </label>
                 <input
+                  id="manual-recipient"
                   type="email"
                   value={manualEmail}
                   onChange={(e) => setManualEmail(e.target.value)}

@@ -1,6 +1,8 @@
 "use client";
 
 import { AlertTriangle, RefreshCw } from "lucide-react";
+import { useEffect } from "react";
+import { errorManager } from "@/components/Utilities/errorManager";
 import { Link } from "@/src/components/navigation/Link";
 
 export default function EmailGranteesError({
@@ -10,6 +12,10 @@ export default function EmailGranteesError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  useEffect(() => {
+    errorManager(`Email Grantees page error: ${error.message}`, error);
+  }, [error]);
+
   return (
     <div className="mx-auto max-w-xl px-4 py-12">
       <div className="flex flex-col items-center gap-4 rounded-xl border border-border p-8 text-center">
