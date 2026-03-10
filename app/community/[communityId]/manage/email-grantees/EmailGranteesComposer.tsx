@@ -4,6 +4,7 @@ import { XMarkIcon } from "@heroicons/react/24/outline";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
+import { errorManager } from "@/components/Utilities/errorManager";
 import { Spinner } from "@/components/Utilities/Spinner";
 import type { FundingProgram } from "@/services/fundingPlatformService";
 import fetchData from "@/utilities/fetchData";
@@ -12,6 +13,18 @@ interface GranteeEmail {
   email: string;
   projectName: string;
   referenceNumber?: string;
+}
+
+function deduplicateEmails(emails: GranteeEmail[]): string[] {
+  const seen = new Set<string>();
+  return emails.reduce<string[]>((acc, g) => {
+    const normalized = g.email.trim().toLowerCase();
+    if (normalized && !seen.has(normalized)) {
+      seen.add(normalized);
+      acc.push(normalized);
+    }
+    return acc;
+  }, []);
 }
 
 interface EmailGranteesComposerProps {
@@ -49,23 +62,11 @@ export function EmailGranteesComposer({ programs }: EmailGranteesComposerProps) 
     setRecipients([]);
   }, []);
 
-  const deduplicateEmails = useCallback((emails: GranteeEmail[]): string[] => {
-    const seen = new Set<string>();
-    return emails.reduce<string[]>((acc, g) => {
-      const normalized = g.email.trim().toLowerCase();
-      if (normalized && !seen.has(normalized)) {
-        seen.add(normalized);
-        acc.push(normalized);
-      }
-      return acc;
-    }, []);
-  }, []);
-
   const handleEmailsFetched = useCallback(() => {
     if (granteeEmails) {
       setRecipients(deduplicateEmails(granteeEmails));
     }
-  }, [granteeEmails, deduplicateEmails]);
+  }, [granteeEmails]);
 
   // Auto-populate recipients when grantee emails load for a new program
   const prevProgramRef = useRef<string | null>(null);
@@ -74,7 +75,7 @@ export function EmailGranteesComposer({ programs }: EmailGranteesComposerProps) 
       prevProgramRef.current = selectedProgramId;
       setRecipients(deduplicateEmails(granteeEmails));
     }
-  }, [granteeEmails, selectedProgramId, deduplicateEmails]);
+  }, [granteeEmails, selectedProgramId]);
 
   const removeRecipient = useCallback((email: string) => {
     setRecipients((prev) => prev.filter((r) => r !== email));
@@ -119,12 +120,13 @@ export function EmailGranteesComposer({ programs }: EmailGranteesComposerProps) 
         setSubject("");
         setBody("");
       } else {
-        toast.success(
+        toast.error(
           `Sent to ${data?.sentCount} recipient${data?.sentCount === 1 ? "" : "s"}, ${data?.failedCount} failed`
         );
       }
     },
     onError: (error: Error) => {
+      errorManager("Failed to send email to grantees", error);
       toast.error(error.message || "Failed to send email");
     },
   });
@@ -203,7 +205,9 @@ export function EmailGranteesComposer({ programs }: EmailGranteesComposerProps) 
               {recipients.length > 0 ? (
                 <div className="flex flex-wrap gap-2 mb-4">
                   {recipients.map((email) => {
-                    const grantee = granteeEmails?.find((g) => g.email === email);
+                    const grantee = granteeEmails?.find(
+                      (g) => g.email.trim().toLowerCase() === email
+                    );
                     return (
                       <div
                         key={email}
