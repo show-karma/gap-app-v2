@@ -5,7 +5,7 @@
  * Having a dedicated module for the queryClient:
  * - Reduces coupling between components and providers
  * - Allows hooks to access queryClient without importing from UI components
- * - Makes testing easier by allowing mock injection
+ * - Makes testing easier by allowing test-double injection
  */
 import { QueryClient } from "@tanstack/react-query";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";

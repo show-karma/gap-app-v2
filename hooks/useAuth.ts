@@ -6,11 +6,13 @@ import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import type { Hex } from "viem";
 import { useAccount } from "wagmi";
+import { useProjectCreateModalStore } from "@/store/modals/projectCreate";
 import { getCypressMockAuthState } from "@/utilities/auth/cypress-auth";
 import { TokenManager } from "@/utilities/auth/token-manager";
 import { PAGES } from "@/utilities/pages";
 import { queryClient } from "@/utilities/query-client";
 import { privyConfig } from "@/utilities/wagmi/privy-config";
+import { useWhitelabel } from "@/utilities/whitelabel-context";
 
 /**
  * Initial delay (in ms) before first auth status check.
@@ -115,6 +117,7 @@ export const useAuth = () => {
   const pathname = usePathname();
 
   const { isConnected } = useAccount();
+  const { isWhitelabel } = useWhitelabel();
 
   const { wallets } = useWallets();
   const primaryWallet = wallets[0];
@@ -127,6 +130,8 @@ export const useAuth = () => {
   const prevAuthRef = useRef(authenticated);
   const prevUserIdRef = useRef<string | undefined>(user?.id);
   const authFailureCount = useRef(0);
+  // Snapshot of wallet addresses captured at auth time (security: use ref, not live array)
+  const walletsSnapshotRef = useRef<string[]>([]);
 
   /**
    * AUTH STATE CHANGE DETECTION
@@ -141,8 +146,12 @@ export const useAuth = () => {
   useEffect(() => {
     // Detect login: was not authenticated, now authenticated
     if (!prevAuthRef.current && authenticated) {
-      // Only redirect if we're on the default landing page
-      if (pathname === "/") {
+      // Only redirect if we're on the default landing page.
+      // In whitelabel mode, "/" is the community homepage (funding opportunities),
+      // not a generic landing page — don't redirect away from it.
+      // Skip redirect if create project modal is open (user triggered login from the modal)
+      const isCreateModalOpen = useProjectCreateModalStore.getState().isProjectCreateModalOpen;
+      if (pathname === "/" && !isWhitelabel && !isCreateModalOpen) {
         const redirectUrl = getPostLoginRedirect();
         if (redirectUrl) {
           router.push(redirectUrl);
@@ -180,11 +189,21 @@ export const useAuth = () => {
     prevUserIdRef.current = user?.id;
   }, [authenticated, user?.id, logout]);
 
-  // Initialize TokenManager with Privy synchronously
-  // This must happen before any API calls are made, so we do it outside useEffect
-  if (ready) {
-    TokenManager.setPrivyInstance({ getAccessToken });
-  }
+  // Snapshot wallet addresses at auth time for secure wallet-switch detection (P2-06)
+  useEffect(() => {
+    if (authenticated && wallets.length > 0) {
+      walletsSnapshotRef.current = wallets.map((w) => w.address.toLowerCase());
+    } else if (!authenticated) {
+      walletsSnapshotRef.current = [];
+    }
+  }, [authenticated, wallets]);
+
+  // Initialize TokenManager with Privy inside useEffect
+  useEffect(() => {
+    if (ready) {
+      TokenManager.setPrivyInstance({ getAccessToken });
+    }
+  }, [ready, getAccessToken]);
 
   // Auto-login after logout completes
   useEffect(() => {
@@ -274,11 +293,12 @@ export const useAuth = () => {
 
         if (!newAddress) return;
 
-        // Get all linked wallet addresses from Privy
-        const linkedAddresses = wallets.map((w) => w.address.toLowerCase());
+        // Use snapshotted wallet addresses from auth time (not live array)
+        // to prevent a race where Privy updates its state before we check
+        const linkedAddresses = walletsSnapshotRef.current;
 
         // If the new address is NOT in the linked wallets, log out
-        if (!linkedAddresses.includes(newAddress)) {
+        if (linkedAddresses.length > 0 && !linkedAddresses.includes(newAddress)) {
           logout();
         }
       },
@@ -286,7 +306,7 @@ export const useAuth = () => {
 
     // Cleanup watcher on unmount
     return () => unwatch();
-  }, [ready, authenticated, wallets, logout]);
+  }, [ready, authenticated, logout]);
 
   const adaptedLogin = useCallback(async () => {
     if (typeof window !== "undefined" && !authenticated) {
@@ -312,15 +332,21 @@ export const useAuth = () => {
     return isConnected && authenticated;
   }, [isCypressMockAuthenticated, isConnected, authenticated]);
 
+  const effectiveReady = isCypressMockAuthenticated ? true : ready;
+  // Include embedded wallets in isConnected (Privy embedded wallets may not register with wagmi)
+  const effectiveIsConnected = isCypressMockAuthenticated
+    ? true
+    : isConnected || wallets.length > 0;
+
   return {
     // Core authentication (Privy handles everything)
     authenticate: adaptedLogin, // Just use Privy's login
     disconnect: logout, // Just use Privy's logout
 
     // State from Privy
-    ready: isCypressMockAuthenticated ? true : ready,
+    ready: effectiveReady,
     authenticated: connectedAndAuth,
-    isConnected: isCypressMockAuthenticated ? true : isConnected,
+    isConnected: effectiveIsConnected,
     user,
     address,
     primaryWallet,
@@ -331,5 +357,9 @@ export const useAuth = () => {
     logout,
     getAccessToken,
     connectWallet, // Connect wallet without full login
+
+    // Compat shims for callers migrating from usePrivyAuth
+    isAuthenticated: connectedAndAuth,
+    isReady: effectiveReady,
   };
 };

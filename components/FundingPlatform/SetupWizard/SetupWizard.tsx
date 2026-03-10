@@ -1,13 +1,13 @@
 "use client";
 
 import { ArrowLeftIcon, CheckCircleIcon, RocketLaunchIcon } from "@heroicons/react/24/solid";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/ui/button";
 import { useProgramConfig } from "@/hooks/useFundingPlatform";
 import type { SetupProgress } from "@/hooks/useProgramSetupProgress";
+import { Link } from "@/src/components/navigation/Link";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { SetupStep } from "./SetupStep";

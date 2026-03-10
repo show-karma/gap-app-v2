@@ -43,10 +43,10 @@ export const MarkdownPreview: typeof Preview = (props) => {
           maxWidth: "100%",
         }}
         components={{
-          p: ({ children }) => <span className={props.className}>{children}</span>,
-          code: ({ children }) => (
+          p: ({ children }) => <p className="mb-2">{children}</p>,
+          code: ({ children, className: langClass }) => (
             <code
-              className={cn("bg-zinc-600 dark:bg-gray-800 p-2 rounded-md", props.className)}
+              className={cn("bg-zinc-600 dark:bg-gray-800 p-2 rounded-md", langClass)}
               style={{
                 display: "block",
                 overflow: "auto",

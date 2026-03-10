@@ -8,12 +8,12 @@ import {
   ExclamationTriangleIcon,
   FlagIcon,
 } from "@heroicons/react/24/outline";
-import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useMemo } from "react";
 import { NoProgramsEmptyState } from "@/components/FundingPlatform/NoProgramsEmptyState";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useFundingPrograms } from "@/hooks/useFundingPlatform";
+import { Link } from "@/src/components/navigation/Link";
 import type { Community } from "@/types/v2/community";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";

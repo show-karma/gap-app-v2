@@ -1,11 +1,126 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { getDomainInfo } from "./src/infrastructure/config/domain-constants";
+import { isKnownTenant } from "./src/infrastructure/types/tenant";
 import { chosenCommunities } from "./utilities/chosenCommunities";
+import { COMMUNITY_SUB_ROUTE_SEGMENTS } from "./utilities/pages";
 import { redirectToGov, shouldRedirectToGov } from "./utilities/redirectHelpers";
 import { hasForbiddenChars, sanitizeCommunitySlug } from "./utilities/sanitize";
+import { getWhitelabelByDomain, getWhitelabelDomainForSlug } from "./utilities/whitelabel-config";
 
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
+
+  // --- Whitelabel domain handling (must run before all other logic) ---
+  const hostname = request.headers.get("host") || "";
+  const whitelabel = getWhitelabelByDomain(hostname);
+
+  if (whitelabel) {
+    // Skip static asset paths that live in /public subdirectories.
+    // The middleware matcher already excludes root-level files (e.g. /favicon.ico)
+    // and /_next, but not subdirectory assets like /images/, /logo/, /tenants/.
+    if (/^\/(images|logo|tenants|icons|shared|fonts)\//i.test(path)) {
+      return NextResponse.next();
+    }
+
+    const { communitySlug, tenantId } = whitelabel;
+
+    // In whitelabel mode, URLs should never show /community/<slug> in the browser.
+    // If a component generates an href like `/community/optimism/programs/123`,
+    // redirect to the clean path `/programs/123` so the browser URL stays clean.
+    const communityPrefix = `/community/${communitySlug}`;
+    if (path.startsWith(communityPrefix)) {
+      const cleanPath = path.slice(communityPrefix.length) || "/";
+      const url = request.nextUrl.clone();
+      url.pathname = cleanPath;
+      return NextResponse.redirect(url);
+    }
+
+    const normalizedPath = path;
+    const normalizedIsRoot = normalizedPath === "/" || normalizedPath === "";
+
+    // /programs (listing) → homepage (which shows funding opportunities)
+    // But allow /programs/<id> through so detail pages work.
+    if (normalizedPath === "/programs") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/";
+      return NextResponse.redirect(url);
+    }
+
+    // /applications → /dashboard
+    if (normalizedPath === "/applications" || normalizedPath === "/my-applications") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/dashboard";
+      return NextResponse.redirect(url);
+    }
+
+    // Paths that exist under /community/[communityId]/ and should be rewritten.
+    // All other paths (e.g. /project/..., /funding-map, /donations) are top-level
+    // routes — pass them through with whitelabel headers but no rewrite.
+    const firstSegment = normalizedPath.split("/")[1] || "";
+    const isCommunityRoute = normalizedIsRoot || COMMUNITY_SUB_ROUTE_SEGMENTS.has(firstSegment);
+
+    if (!isCommunityRoute) {
+      // Top-level route — pass through with whitelabel headers, no rewrite.
+      const requestHeaders = new Headers(request.headers);
+      requestHeaders.set("x-is-whitelabel", "true");
+      requestHeaders.set("x-community-slug", communitySlug);
+      requestHeaders.set("x-tenant-id", tenantId || communitySlug);
+      requestHeaders.set("x-whitelabel-domain", whitelabel.domain);
+      return NextResponse.next({ request: { headers: requestHeaders } });
+    }
+
+    // Rewrite community sub-routes — prepend /community/<slug>
+    const rewrittenPath = normalizedIsRoot
+      ? `/community/${communitySlug}/funding-opportunities`
+      : `/community/${communitySlug}${normalizedPath}`;
+
+    const url = request.nextUrl.clone();
+    url.pathname = rewrittenPath;
+
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set("x-is-whitelabel", "true");
+    requestHeaders.set("x-community-slug", communitySlug);
+    requestHeaders.set("x-tenant-id", tenantId || communitySlug);
+    requestHeaders.set("x-whitelabel-domain", whitelabel.domain);
+
+    return NextResponse.rewrite(url, {
+      request: { headers: requestHeaders },
+    });
+  }
+
+  // --- Legacy umbrella domain redirect (app.karmahq.xyz/<slug>/...) ---
+  // These domains previously served all tenants via URL path prefixes.
+  // Now redirect to the tenant's whitelabel domain or the main site.
+  const domainInfo = getDomainInfo(hostname);
+  if (domainInfo?.isLegacyUmbrella) {
+    const segments = path.split("/").filter(Boolean);
+    const slug = segments[0];
+
+    const mainDomain = domainInfo.isProduction ? "karmahq.xyz" : "staging.karmahq.xyz";
+    const protocol = request.nextUrl.protocol;
+
+    if (slug && isKnownTenant(slug)) {
+      const whitelabelDomain = getWhitelabelDomainForSlug(slug, domainInfo.isProduction);
+      const restPath = `/${segments.slice(1).join("/")}` || "/";
+
+      if (whitelabelDomain) {
+        // Tenant has a whitelabel domain — redirect there
+        return NextResponse.redirect(new URL(`${protocol}//${whitelabelDomain}${restPath}`), 301);
+      }
+
+      // No whitelabel domain — redirect to main site at /community/<slug>/path
+      return NextResponse.redirect(
+        new URL(`${protocol}//${mainDomain}/community/${slug}${restPath}`),
+        301
+      );
+    }
+
+    // No tenant slug or unknown slug — redirect to main site preserving the path
+    return NextResponse.redirect(new URL(`${protocol}//${mainDomain}${path}`), 301);
+  }
+
+  // --- Standard karmahq.xyz logic below ---
 
   // Redirect frontend-nextjs routes to gov.karmahq.xyz
   if (shouldRedirectToGov(path)) {
@@ -33,10 +148,30 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  const communityMatch = path.match(/^\/([^/]+)(?:\/.*)?$/);
+  // --- Redirect /<slug> to whitelabel domain if one exists ---
+  // e.g. karmahq.xyz/optimism → app.opgrants.io
+  const communityMatch = path.match(/^\/([^/]+)(\/.*)?$/);
 
   if (communityMatch) {
     const communityId = communityMatch[1];
+    const restOfCommunityPath = communityMatch[2] || "/";
+
+    // Check if this slug has a whitelabel domain and redirect there
+    if (domainInfo?.isShared && isKnownTenant(communityId)) {
+      const whitelabelDomain = getWhitelabelDomainForSlug(
+        communityId,
+        domainInfo.isProduction
+      );
+      if (whitelabelDomain) {
+        const protocol = request.nextUrl.protocol;
+        return NextResponse.redirect(
+          new URL(`${protocol}//${whitelabelDomain}${restOfCommunityPath}`),
+          301
+        );
+      }
+    }
+
+    // No whitelabel — fall back to /community/<slug> rewrite for chosen communities
     const communities = chosenCommunities();
     const isChosenCommunity = communities.some(
       (community) =>

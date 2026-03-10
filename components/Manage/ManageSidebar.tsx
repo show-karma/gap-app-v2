@@ -14,15 +14,16 @@ import {
   TagIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useFundingPrograms } from "@/hooks/useFundingPlatform";
+import { Link } from "@/src/components/navigation/Link";
 import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
 import { Role } from "@/src/core/rbac/types";
 import type { Community } from "@/types/v2/community";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
+import { useWhitelabel } from "@/utilities/whitelabel-context";
 
 const ROLE_LABELS: Partial<Record<Role, string>> = {
   [Role.SUPER_ADMIN]: "Super Admin",
@@ -160,12 +161,21 @@ function useSidebarCounts(communityId: string) {
 }
 
 export function ManageSidebar({ communityId, community }: ManageSidebarProps) {
-  const pathname = usePathname();
+  const rawPathname = usePathname();
+  const { isWhitelabel } = useWhitelabel();
   const { roles, isCommunityAdmin, isProgramAdmin, isReviewer, isLoading } = usePermissionContext();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const badgeCounts = useSidebarCounts(communityId);
 
   const slug = community?.details?.slug || communityId;
+  // In whitelabel mode, usePathname() returns the browser URL (e.g. "/manage/...")
+  // but route matching uses PAGES.ADMIN.ROOT(slug) = "/community/<slug>/manage/...".
+  // Normalize by prepending the community prefix so active-state logic works.
+  const communityPrefix = `/community/${slug}`;
+  const pathname =
+    isWhitelabel && !rawPathname.startsWith(communityPrefix)
+      ? `${communityPrefix}${rawPathname}`
+      : rawPathname;
 
   const hasAdminAccess = isCommunityAdmin || isProgramAdmin;
   const hasReviewerAccess = isReviewer;

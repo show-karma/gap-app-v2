@@ -1,7 +1,7 @@
 "use client";
-import Link from "next/link";
 import { useEffect } from "react";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { Link } from "@/src/components/navigation/Link";
 import { getDetailedErrorInfo } from "@/utilities/donations/errorMessages";
 
 /**

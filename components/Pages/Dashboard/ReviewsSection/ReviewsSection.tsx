@@ -1,11 +1,11 @@
 "use client";
 
 import { AlertTriangle, ArrowRight, Eye } from "lucide-react";
-import Link from "next/link";
 import { useMemo } from "react";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 import { useReviewerPrograms } from "@/hooks/usePermissions";
 import type { FundingProgram } from "@/services/fundingPlatformService";
+import { Link } from "@/src/components/navigation/Link";
 import { PAGES } from "@/utilities/pages";
 
 interface CommunityWithPrograms extends FundingProgram {
