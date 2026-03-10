@@ -12,6 +12,17 @@
 
 import { waitForPageLoad } from "../../support/intercepts";
 
+/**
+ * Unblock ManageLayoutShell rendering by setting isOwnerLoading=false
+ * via the exposed Zustand store, bypassing the RPC ownership check.
+ */
+const unblockOwnerLoading = () => {
+  cy.window({ timeout: 10000 }).should("have.property", "__E2E_STORES__").then((win) => {
+    const stores = (win as unknown as Window & { __E2E_STORES__: Record<string, (v: boolean) => void> }).__E2E_STORES__;
+    stores.setIsOwnerLoading(false);
+  });
+};
+
 describe("Funding Platform - Question Builder Regression", () => {
   const communityId = "optimism";
   const programId = "1045";
@@ -205,6 +216,7 @@ describe("Funding Platform - Question Builder Regression", () => {
     );
 
     waitForPageLoad();
+    unblockOwnerLoading();
     waitForQuestionBuilderReady();
 
     // Initial state has 2 fields
@@ -238,6 +250,7 @@ describe("Funding Platform - Question Builder Regression", () => {
       `/community/${communityId}/manage/funding-platform/${programId}/question-builder?tab=build`
     );
     waitForPageLoad();
+    unblockOwnerLoading();
     waitForQuestionBuilderReady();
 
     // Step 6: form should not be empty
