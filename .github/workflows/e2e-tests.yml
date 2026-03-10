@@ -69,7 +69,18 @@ jobs:
           NODE_ENV: production
 
       - name: Wait for server
-        run: npx wait-on http://localhost:3000 --timeout 60000
+        run: |
+          timeout=120
+          elapsed=0
+          until curl -s http://localhost:3000 > /dev/null 2>&1; do
+            if [ $elapsed -ge $timeout ]; then
+              echo "Server did not start within ${timeout}s"
+              exit 1
+            fi
+            sleep 2
+            elapsed=$((elapsed + 2))
+          done
+          echo "Server is ready after ${elapsed}s"
 
       - name: Run project E2E tests
         run: pnpm exec cypress run --e2e --spec "cypress/e2e/project/**/*.cy.ts"
