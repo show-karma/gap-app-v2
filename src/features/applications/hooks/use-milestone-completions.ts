@@ -42,7 +42,14 @@ export function useMilestoneCompletions({
     queryFn: async () => {
       const [response, fetchError] = await fetchData<
         MilestoneCompletion[] | { data: MilestoneCompletion[] }
-      >(`/v2/funding-applications/${referenceNumber}/milestone-completions`);
+      >(
+        `/v2/funding-applications/${referenceNumber}/milestone-completions`,
+        "GET",
+        {},
+        {},
+        {},
+        false
+      );
       if (fetchError) throw new Error(fetchError);
       if (!response) return [];
       return Array.isArray(response) ? response : (response.data ?? []);
