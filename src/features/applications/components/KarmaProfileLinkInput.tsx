@@ -8,17 +8,15 @@ import { Controller, useWatch } from "react-hook-form";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SEARCH_CONSTANTS } from "@/constants/search";
 import { useProjectSearch } from "@/hooks/useProjectSearch";
 import type { SearchProjectResult } from "@/services/unified-search.service";
 import type { ApplicationQuestion } from "@/types/whitelabel-entities";
 import { envVars } from "@/utilities/enviromentVars";
 import type { ApplicationFormData } from "../types";
 
-const DEBOUNCE_DELAY_MS = 500;
-const MIN_SEARCH_CHARS = 3;
-
 function AddProjectLink() {
-  const href = `${envVars.VERCEL_URL || "https://app.karmahq.xyz"}?action=create-project`;
+  const href = `${envVars.VERCEL_URL || "https://www.karmahq.xyz"}?action=create-project`;
 
   return (
     <a
@@ -75,19 +73,19 @@ export const KarmaProfileLinkInput: React.FC<KarmaProfileLinkInputProps> = ({
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedQuery(searchQuery);
-    }, DEBOUNCE_DELAY_MS);
+    }, SEARCH_CONSTANTS.DEBOUNCE_DELAY_MS);
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
   const isWaitingForDebounce =
-    searchQuery.length >= MIN_SEARCH_CHARS && searchQuery !== debouncedQuery;
+    searchQuery.length >= SEARCH_CONSTANTS.MIN_QUERY_LENGTH && searchQuery !== debouncedQuery;
 
   const {
     projects = [],
     isLoading: isSearching,
     isFetching,
   } = useProjectSearch(debouncedQuery, {
-    enabled: debouncedQuery.length >= MIN_SEARCH_CHARS,
+    enabled: debouncedQuery.length >= SEARCH_CONSTANTS.MIN_QUERY_LENGTH,
   });
 
   const isLoadingSearch = isWaitingForDebounce || ((isSearching || isFetching) && !selectedProject);
@@ -122,7 +120,7 @@ export const KarmaProfileLinkInput: React.FC<KarmaProfileLinkInputProps> = ({
   }, [isDropdownOpen]);
 
   useEffect(() => {
-    if (debouncedQuery.length >= MIN_SEARCH_CHARS && !isSearching && !isFetching) {
+    if (debouncedQuery.length >= SEARCH_CONSTANTS.MIN_QUERY_LENGTH && !isSearching && !isFetching) {
       setIsDropdownOpen(true);
     }
   }, [projects, debouncedQuery, isSearching, isFetching]);
@@ -218,7 +216,7 @@ export const KarmaProfileLinkInput: React.FC<KarmaProfileLinkInputProps> = ({
                   }}
                   onFocus={() => {
                     setHasUserInteracted(true);
-                    if (debouncedQuery.length >= MIN_SEARCH_CHARS) {
+                    if (debouncedQuery.length >= SEARCH_CONSTANTS.MIN_QUERY_LENGTH) {
                       setIsDropdownOpen(true);
                     }
                   }}
@@ -289,11 +287,11 @@ export const KarmaProfileLinkInput: React.FC<KarmaProfileLinkInputProps> = ({
                   ) : projects.length === 0 ? (
                     <div>
                       <div className="py-6 text-center text-sm text-zinc-500">
-                        {debouncedQuery.length < MIN_SEARCH_CHARS
-                          ? `Type at least ${MIN_SEARCH_CHARS} characters to search`
+                        {debouncedQuery.length < SEARCH_CONSTANTS.MIN_QUERY_LENGTH
+                          ? `Type at least ${SEARCH_CONSTANTS.MIN_QUERY_LENGTH} characters to search`
                           : "No projects found"}
                       </div>
-                      {debouncedQuery.length >= MIN_SEARCH_CHARS && <AddProjectLink />}
+                      {debouncedQuery.length >= SEARCH_CONSTANTS.MIN_QUERY_LENGTH && <AddProjectLink />}
                     </div>
                   ) : (
                     <div>
