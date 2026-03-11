@@ -30,7 +30,7 @@ function AddProjectLink() {
         <Plus className="w-5 h-5 text-primary" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="font-medium text-primary">+ Add project</p>
+        <p className="font-medium text-primary">Add project</p>
         <p className="text-xs text-zinc-500">Create a new project on Karma</p>
       </div>
       <ExternalLink className="w-4 h-4 text-zinc-400 flex-shrink-0" />
