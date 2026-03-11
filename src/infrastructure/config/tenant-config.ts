@@ -302,8 +302,46 @@ const tenantNavigation: Record<TenantId, TenantNavigation> = {
         label: "ProPGF",
         items: [
           { label: "Overview", href: "https://filpgf.io/propgf", isExternal: true },
-          { label: "Grants", href: "https://karmahq.xyz/community/filecoin", isExternal: true },
-          { label: "Applications", href: "/community/filecoin/browse-applications" },
+          {
+            label: "Grants",
+            items: [
+              {
+                label: "Batch 1",
+                href: "https://app.filpgf.io/projects?programId=1013",
+                isExternal: true,
+              },
+              {
+                label: "Batch 2",
+                href: "https://app.filpgf.io/projects?programId=992",
+                isExternal: true,
+              },
+              {
+                label: "Batch 2 - Pods Track",
+                href: "https://app.filpgf.io/projects?programId=1039",
+                isExternal: true,
+              },
+            ],
+          },
+          {
+            label: "Applications",
+            items: [
+              {
+                label: "Batch 1",
+                href: "https://app.filpgf.io/browse-applications?programId=1013",
+                isExternal: true,
+              },
+              {
+                label: "Batch 2",
+                href: "https://app.filpgf.io/browse-applications?programId=992",
+                isExternal: true,
+              },
+              {
+                label: "Batch 2 - Pods Track",
+                href: "https://app.filpgf.io/browse-applications?programId=1039",
+                isExternal: true,
+              },
+            ],
+          },
           {
             label: "Payout process",
             href: "https://docs.google.com/document/d/1WIyL8zj1ToTEVujRvCV6E4mlle5srwLP3DhEarWn3Ug/edit?usp=sharing",

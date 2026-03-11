@@ -7,6 +7,9 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -213,22 +216,46 @@ export function WhitelabelNavbar() {
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="start" className="min-w-[180px]">
-                        {item.items.map((dropdownItem) => (
-                          <DropdownMenuItem key={dropdownItem.label} asChild>
-                            {dropdownItem.isExternal ? (
-                              <a
-                                href={dropdownItem.href}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center justify-between"
-                              >
-                                {dropdownItem.label}
-                              </a>
-                            ) : (
-                              <Link href={dropdownItem.href}>{dropdownItem.label}</Link>
-                            )}
-                          </DropdownMenuItem>
-                        ))}
+                        {item.items.map((dropdownItem) =>
+                          dropdownItem.items ? (
+                            <DropdownMenuSub key={dropdownItem.label}>
+                              <DropdownMenuSubTrigger>{dropdownItem.label}</DropdownMenuSubTrigger>
+                              <DropdownMenuSubContent className="min-w-[200px]">
+                                {dropdownItem.items.map((subItem) => (
+                                  <DropdownMenuItem key={subItem.label} asChild>
+                                    {subItem.isExternal ? (
+                                      <a
+                                        href={subItem.href}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center justify-between"
+                                      >
+                                        {subItem.label}
+                                      </a>
+                                    ) : (
+                                      <Link href={subItem.href}>{subItem.label}</Link>
+                                    )}
+                                  </DropdownMenuItem>
+                                ))}
+                              </DropdownMenuSubContent>
+                            </DropdownMenuSub>
+                          ) : (
+                            <DropdownMenuItem key={dropdownItem.label} asChild>
+                              {dropdownItem.isExternal ? (
+                                <a
+                                  href={dropdownItem.href}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center justify-between"
+                                >
+                                  {dropdownItem.label}
+                                </a>
+                              ) : (
+                                <Link href={dropdownItem.href ?? "#"}>{dropdownItem.label}</Link>
+                              )}
+                            </DropdownMenuItem>
+                          )
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   ) : "isExternal" in item && item.isExternal ? (
@@ -347,7 +374,35 @@ export function WhitelabelNavbar() {
                           {item.label}
                         </span>
                         {item.items.map((dropdownItem) =>
-                          dropdownItem.isExternal ? (
+                          dropdownItem.items ? (
+                            <div key={dropdownItem.label} className="space-y-0.5">
+                              <span className="block px-3 pl-6 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                                {dropdownItem.label}
+                              </span>
+                              {dropdownItem.items.map((subItem) =>
+                                subItem.isExternal ? (
+                                  <a
+                                    key={subItem.label}
+                                    href={subItem.href}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center justify-between rounded-lg px-3 py-2 pl-9 text-sm text-zinc-600 transition-colors hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                                  >
+                                    {subItem.label}
+                                  </a>
+                                ) : (
+                                  <Link
+                                    key={subItem.label}
+                                    href={subItem.href}
+                                    className="block rounded-lg px-3 py-2 pl-9 text-sm text-zinc-600 transition-colors hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                                    onClick={() => setIsMenuOpen(false)}
+                                  >
+                                    {subItem.label}
+                                  </Link>
+                                )
+                              )}
+                            </div>
+                          ) : dropdownItem.isExternal ? (
                             <a
                               key={dropdownItem.label}
                               href={dropdownItem.href}
@@ -360,7 +415,7 @@ export function WhitelabelNavbar() {
                           ) : (
                             <Link
                               key={dropdownItem.label}
-                              href={dropdownItem.href}
+                              href={dropdownItem.href ?? "#"}
                               className={navStyles.mobileSubItem}
                               onClick={() => setIsMenuOpen(false)}
                             >
