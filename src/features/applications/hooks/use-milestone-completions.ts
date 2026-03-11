@@ -22,13 +22,11 @@ interface MilestoneCompletionPayload {
 }
 
 interface UseMilestoneCompletionsOptions {
-  communityId: string;
   referenceNumber: string;
   enabled?: boolean;
 }
 
 export function useMilestoneCompletions({
-  communityId,
   referenceNumber,
   enabled = true,
 }: UseMilestoneCompletionsOptions) {
@@ -40,7 +38,7 @@ export function useMilestoneCompletions({
     error,
     refetch,
   } = useQuery({
-    queryKey: ["milestone-completions", communityId, referenceNumber],
+    queryKey: ["milestone-completions", referenceNumber],
     queryFn: async () => {
       const [response, fetchError] = await fetchData<
         MilestoneCompletion[] | { data: MilestoneCompletion[] }
@@ -65,7 +63,7 @@ export function useMilestoneCompletions({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["milestone-completions", communityId, referenceNumber],
+        queryKey: ["milestone-completions", referenceNumber],
       });
     },
   });
@@ -83,7 +81,7 @@ export function useMilestoneCompletions({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["milestone-completions", communityId, referenceNumber],
+        queryKey: ["milestone-completions", referenceNumber],
       });
     },
   });
