@@ -9,6 +9,8 @@ import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
+import { queryClient } from "@/utilities/query-client";
+import { createProjectQueryPredicate } from "@/utilities/queryKeys";
 import { retryUntilConditionMet } from "@/utilities/retries";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { getProjectById } from "@/utilities/sdk";
@@ -34,17 +36,53 @@ export const useMilestoneEdit = () => {
     showChainProgress,
   } = useAttestationToast();
   const project = useProjectStore((state) => state.project);
+  const projectSlug = project?.details?.slug || "";
   const { refetch: refetchGrants } = useProjectGrants(project?.uid || "");
+
+  const invalidateAllProjectQueries = async () => {
+    // refetchGrants invalidates by UID; also invalidate by slug
+    // so the Updates tab (which uses slug from URL) gets fresh data
+    if (projectSlug) {
+      await queryClient.invalidateQueries({
+        predicate: createProjectQueryPredicate(projectSlug),
+      });
+    }
+  };
 
   const { setupChainAndWallet } = useSetupChainAndWallet();
 
+  const editStepCallbackRef = { current: 0 };
+
+  const createEditStepCallback = () => {
+    editStepCallbackRef.current = 0;
+    return (status: string) => {
+      if (status === "preparing") {
+        editStepCallbackRef.current++;
+        const step = editStepCallbackRef.current;
+        if (step === 1) {
+          changeStepperStep("Step 1/2: Creating updated milestone...");
+        } else if (step === 2) {
+          changeStepperStep("Step 2/2: Revoking old milestone...");
+        }
+        return;
+      }
+      if (status === "confirmed" && editStepCallbackRef.current === 1) {
+        changeStepperStep("Step 1/2: Milestone created, awaiting confirmation...");
+        return;
+      }
+      if (status === "confirmed" && editStepCallbackRef.current === 2) {
+        changeStepperStep("Step 2/2: Revoking old milestone...");
+        return;
+      }
+      changeStepperStep(status);
+    };
+  };
+
   const editMilestone = async (milestone: UnifiedMilestone, newData: MilestoneEditData) => {
     setIsEditing(true);
-    startAttestation("Editing milestone...");
+    startAttestation("Step 1/2: Creating updated milestone...");
 
     try {
-      changeStepperStep("preparing");
-
       const isMultiGrant = milestone.mergedGrants && milestone.mergedGrants.length > 1;
 
       if (isMultiGrant) {
@@ -114,11 +152,8 @@ export const useMilestoneEdit = () => {
           const sanitizedData = sanitizeObject(newData);
 
           for (const milestoneInstance of milestoneInstances) {
-            const result = await milestoneInstance.edit(
-              walletSigner,
-              sanitizedData,
-              changeStepperStep
-            );
+            const editCallback = createEditStepCallback();
+            const result = await milestoneInstance.edit(walletSigner, sanitizedData, editCallback);
 
             changeStepperStep("indexing");
             const txHash = result?.tx?.[0]?.hash;
@@ -144,9 +179,10 @@ export const useMilestoneEdit = () => {
           );
         }
 
+        await invalidateAllProjectQueries();
         showSuccess("Milestone edited successfully!");
       } else {
-        showLoading("Editing milestone...");
+        showLoading("Step 1/2: Creating updated milestone...");
 
         const setup = await setupChainAndWallet({
           targetChainId: milestone.chainID,
@@ -183,7 +219,8 @@ export const useMilestoneEdit = () => {
 
         const sanitizedData = sanitizeObject(newData);
 
-        const result = await milestoneInstance.edit(walletSigner, sanitizedData, changeStepperStep);
+        const editCallback = createEditStepCallback();
+        const result = await milestoneInstance.edit(walletSigner, sanitizedData, editCallback);
 
         changeStepperStep("indexing");
 
@@ -207,6 +244,7 @@ export const useMilestoneEdit = () => {
           }
         );
 
+        await invalidateAllProjectQueries();
         showSuccess("Milestone edited successfully!");
       }
     } catch (error) {

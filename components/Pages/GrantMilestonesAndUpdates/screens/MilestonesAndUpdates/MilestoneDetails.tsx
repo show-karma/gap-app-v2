@@ -7,6 +7,7 @@ import type { GrantMilestone } from "@/types/v2/grant";
 import { formatDate, normalizeTimestamp } from "@/utilities/formatDate";
 import { ReadMore } from "@/utilities/ReadMore";
 import { MilestoneDelete } from "./MilestoneDelete";
+import { MilestoneEdit } from "./MilestoneEdit";
 import { Updates } from "./Updates";
 
 /**
@@ -160,6 +161,7 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({ milestone, index }
             </div>
             <div className="flex flex-row items-center justify-start gap-2">
               <MilestoneDateStatus milestone={milestone} />
+              {isAuthorized && !isCompleted ? <MilestoneEdit milestone={milestone} /> : null}
               {isAuthorized ? <MilestoneDelete milestone={milestone} /> : null}
             </div>
           </div>

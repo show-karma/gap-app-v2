@@ -452,21 +452,17 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
                 </Badge>
               )}
 
-              {/* Current status and completion badge grouped */}
               {(type === "milestone" || type === "grant") && (
-                <div className="flex flex-row items-center gap-2 flex-wrap">
-                  <span className="text-xs font-medium text-muted-foreground">Current status</span>
-                  <Badge
-                    variant="secondary"
-                    className={cn(
-                      completed
-                        ? "text-emerald-700 bg-emerald-50 hover:bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-950 dark:hover:bg-emerald-950"
-                        : "bg-orange-50 hover:bg-orange-50 text-orange-700 dark:bg-orange-950 dark:hover:bg-orange-950 dark:text-orange-300"
-                    )}
-                  >
-                    {completed ? "Completed" : "Pending"}
-                  </Badge>
-                </div>
+                <Badge
+                  variant="secondary"
+                  className={cn(
+                    completed
+                      ? "text-emerald-700 bg-emerald-50 hover:bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-950 dark:hover:bg-emerald-950"
+                      : "bg-orange-50 hover:bg-orange-50 text-orange-700 dark:bg-orange-950 dark:hover:bg-orange-950 dark:text-orange-300"
+                  )}
+                >
+                  {completed ? "Completed" : "Pending"}
+                </Badge>
               )}
             </div>
           </div>

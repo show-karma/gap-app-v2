@@ -234,10 +234,6 @@ export function ApplicationFormClient({
     }
   };
 
-  const handleCancel = () => {
-    router.push(toPath(PAGES.DASHBOARD));
-  };
-
   if (isGated && isValidatingUrlCode) {
     return (
       <div className="flex flex-col items-center justify-center py-16 px-4">
@@ -281,7 +277,6 @@ export function ApplicationFormClient({
         questions={questions}
         formSchema={formSchema}
         onSubmit={handleSubmit}
-        onCancel={handleCancel}
         isDisabled={effectiveDisabled}
         programName={programName}
       />
