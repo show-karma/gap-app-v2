@@ -164,8 +164,7 @@ describe("useMilestoneEdit", () => {
     });
 
     // Verify the attestation flow was initiated
-    expect(mockStartAttestation).toHaveBeenCalledWith("Editing milestone...");
-    expect(mockChangeStepperStep).toHaveBeenCalledWith("preparing");
+    expect(mockStartAttestation).toHaveBeenCalledWith("Step 1/2: Creating updated milestone...");
 
     // Verify flow completes (either success or handled error)
     expect(mockDismiss).toHaveBeenCalled();
