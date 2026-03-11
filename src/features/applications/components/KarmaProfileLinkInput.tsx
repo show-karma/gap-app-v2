@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, Search, X } from "lucide-react";
+import { ExternalLink, Loader2, Plus, Search, X } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import type { Control, FieldPath } from "react-hook-form";
@@ -11,10 +11,34 @@ import { Label } from "@/components/ui/label";
 import { useProjectSearch } from "@/hooks/useProjectSearch";
 import type { SearchProjectResult } from "@/services/unified-search.service";
 import type { ApplicationQuestion } from "@/types/whitelabel-entities";
+import { envVars } from "@/utilities/enviromentVars";
 import type { ApplicationFormData } from "../types";
 
 const DEBOUNCE_DELAY_MS = 500;
 const MIN_SEARCH_CHARS = 3;
+
+function AddProjectLink() {
+  const href = `${envVars.VERCEL_URL}?action=create-project`;
+
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      data-testid="add-project-link"
+      className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-accent text-left w-full"
+    >
+      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+        <Plus className="w-5 h-5 text-primary" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="font-medium text-primary">Add project</p>
+        <p className="text-xs text-zinc-500">Create a new project on Karma</p>
+      </div>
+      <ExternalLink className="w-4 h-4 text-zinc-400 flex-shrink-0" />
+    </a>
+  );
+}
 
 interface KarmaProfileLinkInputProps {
   control: Control<ApplicationFormData>;
@@ -98,10 +122,10 @@ export const KarmaProfileLinkInput: React.FC<KarmaProfileLinkInputProps> = ({
   }, [isDropdownOpen]);
 
   useEffect(() => {
-    if (projects.length > 0 && debouncedQuery.length >= MIN_SEARCH_CHARS) {
+    if (debouncedQuery.length >= MIN_SEARCH_CHARS && !isSearching && !isFetching) {
       setIsDropdownOpen(true);
     }
-  }, [projects, debouncedQuery]);
+  }, [projects, debouncedQuery, isSearching, isFetching]);
 
   const handleSelectProject = useCallback(
     (project: SearchProjectResult, onChange: (value: string) => void) => {
@@ -194,7 +218,7 @@ export const KarmaProfileLinkInput: React.FC<KarmaProfileLinkInputProps> = ({
                   }}
                   onFocus={() => {
                     setHasUserInteracted(true);
-                    if (projects.length > 0 && debouncedQuery.length >= MIN_SEARCH_CHARS) {
+                    if (debouncedQuery.length >= MIN_SEARCH_CHARS) {
                       setIsDropdownOpen(true);
                     }
                   }}
@@ -239,15 +263,23 @@ export const KarmaProfileLinkInput: React.FC<KarmaProfileLinkInputProps> = ({
                       {selectedProject.details?.slug || selectedProject.uid}
                     </p>
                   </div>
+                  {!disabled && (
+                    <button
+                      type="button"
+                      data-testid="remove-project-button"
+                      onClick={() => handleClear(field.onChange)}
+                      className="text-sm text-destructive hover:text-destructive/80 font-medium transition-colors flex-shrink-0"
+                    >
+                      Remove
+                    </button>
+                  )}
                 </div>
               )}
 
               {isDropdownOpen && hasUserInteracted && (
                 <div
                   ref={dropdownRef}
-                  role="listbox"
                   id={listboxId}
-                  aria-label="Project search results"
                   className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto"
                 >
                   {isSearching || isFetching ? (
@@ -255,39 +287,45 @@ export const KarmaProfileLinkInput: React.FC<KarmaProfileLinkInputProps> = ({
                       <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
                     </div>
                   ) : projects.length === 0 ? (
-                    <div className="py-6 text-center text-sm text-zinc-500">
-                      {debouncedQuery.length < MIN_SEARCH_CHARS
-                        ? `Type at least ${MIN_SEARCH_CHARS} characters to search`
-                        : "No projects found"}
+                    <div>
+                      <div className="py-6 text-center text-sm text-zinc-500">
+                        {debouncedQuery.length < MIN_SEARCH_CHARS
+                          ? `Type at least ${MIN_SEARCH_CHARS} characters to search`
+                          : "No projects found"}
+                      </div>
+                      {debouncedQuery.length >= MIN_SEARCH_CHARS && <AddProjectLink />}
                     </div>
                   ) : (
-                    <div className="py-1">
-                      {projects.map((project: SearchProjectResult, index: number) => (
-                        <button
-                          key={project.uid}
-                          id={getOptionId(index)}
-                          type="button"
-                          role="option"
-                          aria-selected={activeIndex === index}
-                          onClick={() => handleSelectProject(project, field.onChange)}
-                          onMouseEnter={() => setActiveIndex(index)}
-                          className={`w-full flex items-center gap-3 px-4 py-3 transition-colors text-left ${
-                            activeIndex === index ? "bg-accent" : "hover:bg-accent"
-                          }`}
-                        >
-                          <div className="w-10 h-10 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center flex-shrink-0 text-sm font-medium">
-                            {(project.details?.title?.[0] || "P").toUpperCase()}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium truncate">
-                              {project.details?.title || "Untitled Project"}
-                            </p>
-                            <p className="text-xs text-zinc-500 truncate">
-                              {project.details?.slug || `${project.uid.slice(0, 10)}...`}
-                            </p>
-                          </div>
-                        </button>
-                      ))}
+                    <div>
+                      <div role="listbox" aria-label="Project search results" className="py-1">
+                        {projects.map((project: SearchProjectResult, index: number) => (
+                          <button
+                            key={project.uid}
+                            id={getOptionId(index)}
+                            type="button"
+                            role="option"
+                            aria-selected={activeIndex === index}
+                            onClick={() => handleSelectProject(project, field.onChange)}
+                            onMouseEnter={() => setActiveIndex(index)}
+                            className={`w-full flex items-center gap-3 px-4 py-3 transition-colors text-left ${
+                              activeIndex === index ? "bg-accent" : "hover:bg-accent"
+                            }`}
+                          >
+                            <div className="w-10 h-10 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center flex-shrink-0 text-sm font-medium">
+                              {(project.details?.title?.[0] || "P").toUpperCase()}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium truncate">
+                                {project.details?.title || "Untitled Project"}
+                              </p>
+                              <p className="text-xs text-zinc-500 truncate">
+                                {project.details?.slug || `${project.uid.slice(0, 10)}...`}
+                              </p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                      <AddProjectLink />
                     </div>
                   )}
                 </div>
