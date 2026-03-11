@@ -50,6 +50,52 @@ require("@/__tests__/utils/msw/setup");
 // Increase timeout for slower tests
 jest.setTimeout(30000);
 
+// Suppress noisy React warnings during tests (act() warnings, async component warnings, etc.)
+// These are framework-level warnings that don't indicate test issues.
+const originalConsoleError = console.error;
+const originalConsoleWarn = console.warn;
+
+const SUPPRESSED_ERROR_PATTERNS = [
+  /not wrapped in act/,
+  /A suspended resource finished loading inside a test/,
+  /A component suspended inside an `act` scope/,
+  /Received .* for a non-boolean attribute/,
+  /is an async Client Component/,
+  /Feature Flags unavailable/,
+  /Invalid prop .* supplied to `React\.Fragment`/,
+  /You provided a `value` prop to a form field without an `onChange` handler/,
+  /Not implemented: navigation/,
+  /Unknown event handler property/,
+  /was suspended by an uncached promise/,
+  /React does not recognize the .* prop on a DOM element/,
+  /Received NaN for the .* attribute/,
+  /Query data cannot be undefined/,
+];
+
+const SUPPRESSED_WARN_PATTERNS = [
+  /Failed to get chain ID from window\.ethereum/,
+  /Headless UI has polyfilled/,
+  /Missing `Description` or `aria-describedby/,
+  /NEXT_PUBLIC_RPC_MAINNET is not set/,
+  /timers APIs are not replaced with fake timers/,
+];
+
+console.error = (...args) => {
+  const message = args.map((a) => (typeof a === "string" ? a : a?.message || String(a))).join(" ");
+  if (SUPPRESSED_ERROR_PATTERNS.some((pattern) => pattern.test(message))) {
+    return;
+  }
+  originalConsoleError.apply(console, args);
+};
+
+console.warn = (...args) => {
+  const message = args.map((a) => (typeof a === "string" ? a : a?.message || String(a))).join(" ");
+  if (SUPPRESSED_WARN_PATTERNS.some((pattern) => pattern.test(message))) {
+    return;
+  }
+  originalConsoleWarn.apply(console, args);
+};
+
 // Mock window.matchMedia
 Object.defineProperty(window, "matchMedia", {
   writable: true,

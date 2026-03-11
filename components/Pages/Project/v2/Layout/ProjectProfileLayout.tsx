@@ -1,11 +1,23 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useParams, usePathname, useSearchParams } from "next/navigation";
 import { type ReactNode, useEffect, useState } from "react";
 import { ProgressDialog } from "@/components/Dialogs/ProgressDialog";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { ShareDialog } from "@/components/Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/ShareDialog";
+
+// Lazy-load ShareDialog because js-confetti (a heavy canvas library) is imported
+// at the module level. Eagerly loading it in the main layout chunk can block
+// client-side hydration in some environments (e.g., Cypress Electron).
+const ShareDialog = dynamic(
+  () =>
+    import(
+      "@/components/Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/ShareDialog"
+    ).then((mod) => mod.ShareDialog),
+  { ssr: false }
+);
+
 import { EndorsementDialog } from "@/components/Pages/Project/Impact/EndorsementDialog";
 import { IntroDialog } from "@/components/Pages/Project/IntroDialog";
 import {
@@ -215,18 +227,7 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
   }
 
   return (
-    <ErrorBoundary
-      fallback={
-        <div className="p-6 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-          <h3 className="text-lg font-medium text-red-800 dark:text-red-400 mb-2">
-            Unable to load project
-          </h3>
-          <p className="text-sm text-red-700 dark:text-red-300">
-            Something went wrong while loading the project profile. Please try refreshing the page.
-          </p>
-        </div>
-      }
-    >
+    <ErrorBoundary>
       {/* Dialogs */}
       {isEndorsementOpen && <EndorsementDialog />}
       {isIntroModalOpen && <IntroDialog />}

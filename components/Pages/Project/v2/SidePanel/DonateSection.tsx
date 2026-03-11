@@ -39,7 +39,7 @@ export function useDonationVisibility(project: Project): boolean {
     {},
     { enabled: authenticated }
   );
-  const isSuperAdmin = permissions?.roles.roles.includes(Role.SUPER_ADMIN) ?? false;
+  const isSuperAdmin = permissions?.roles?.roles?.includes(Role.SUPER_ADMIN) ?? false;
 
   const canSetPayoutAddress =
     isProjectOwner ||
@@ -84,7 +84,7 @@ export function DonateSection({ project, className }: DonateSectionProps) {
     {},
     { enabled: authenticated }
   );
-  const isSuperAdmin = permissions?.roles.roles.includes(Role.SUPER_ADMIN) ?? false;
+  const isSuperAdmin = permissions?.roles?.roles?.includes(Role.SUPER_ADMIN) ?? false;
 
   // Can set payout address: project member/owner/admin/staff
   const canSetPayoutAddress =

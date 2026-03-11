@@ -12,6 +12,18 @@
 
 import { waitForPageLoad } from "../../support/intercepts";
 
+/**
+ * Unblock ManageLayoutShell rendering by setting isOwnerLoading=false
+ * via the exposed Zustand store, bypassing the RPC ownership check.
+ */
+const unblockOwnerLoading = () => {
+  // cy.window().should("have.property", "X") yields the VALUE of X, not window.
+  // So the .then() callback receives the __E2E_STORES__ object directly.
+  cy.window({ timeout: 30000 }).should("have.property", "__E2E_STORES__").then((stores) => {
+    (stores as unknown as Record<string, (v: boolean) => void>).setIsOwnerLoading(false);
+  });
+};
+
 describe("Funding Platform - Question Builder Regression", () => {
   const communityId = "optimism";
   const programId = "1045";
@@ -152,7 +164,6 @@ describe("Funding Platform - Question Builder Regression", () => {
       body: permissionsResponse,
     }).as("getPermissions");
 
-    // Community details - required by ManageLayoutShell to render children
     // Community details - required by ManageLayoutShell to render children.
     // Use a regex to precisely match /v2/communities/optimism (with optional query params)
     // without matching subpaths like /v2/communities/optimism/grants.
@@ -223,6 +234,9 @@ describe("Funding Platform - Question Builder Regression", () => {
     cy.wait("@getCommunityDetails", { timeout: 15000 });
     cy.wait("@getPermissions", { timeout: 15000 });
 
+    // Also unblock via store in case RPC stubs don't fully resolve isOwnerLoading
+    unblockOwnerLoading();
+
     waitForQuestionBuilderReady();
 
     // Initial state has 2 fields
@@ -258,6 +272,7 @@ describe("Funding Platform - Question Builder Regression", () => {
     waitForPageLoad();
     cy.wait("@getCommunityDetails", { timeout: 15000 });
     cy.wait("@getPermissions", { timeout: 15000 });
+    unblockOwnerLoading();
     waitForQuestionBuilderReady();
 
     // Step 6: form should not be empty

@@ -50,7 +50,7 @@ export function ProjectSidePanel({ project, isVerified, className }: ProjectSide
     {},
     { enabled: authenticated }
   );
-  const isSuperAdmin = permissions?.roles.roles.includes(Role.SUPER_ADMIN) ?? false;
+  const isSuperAdmin = permissions?.roles?.roles?.includes(Role.SUPER_ADMIN) ?? false;
 
   const isAuthorized =
     isOwner || isProjectAdmin || isProjectOwner || (!isPermissionsLoading && isSuperAdmin);

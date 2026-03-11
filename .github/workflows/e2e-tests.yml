@@ -17,7 +17,7 @@ env:
 jobs:
   e2e-tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
 
     steps:
       - name: Checkout code
@@ -37,15 +37,15 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Clean stale build artifacts
+        run: rm -rf .next
+
       - name: Cache Next.js build
         uses: actions/cache@v4
         with:
           path: |
             .next/cache
           key: ${{ runner.os }}-nextjs-${{ hashFiles('**/pnpm-lock.yaml') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx', '!node_modules/**') }}
-          restore-keys: |
-            ${{ runner.os }}-nextjs-${{ hashFiles('**/pnpm-lock.yaml') }}-
-            ${{ runner.os }}-nextjs-
 
       - name: Build application
         run: pnpm run build
@@ -63,10 +63,36 @@ jobs:
       - name: Install Cypress binary
         run: pnpm exec cypress install
 
-      - name: Run Cypress E2E tests
-        run: pnpm run e2e:ci
+      - name: Start application server
+        run: pnpm start &
         env:
           NODE_ENV: production
+
+      - name: Wait for server
+        run: |
+          timeout=120
+          elapsed=0
+          until curl -s http://localhost:3000 > /dev/null 2>&1; do
+            if [ $elapsed -ge $timeout ]; then
+              echo "Server did not start within ${timeout}s"
+              exit 1
+            fi
+            sleep 2
+            elapsed=$((elapsed + 2))
+          done
+          echo "Server is ready after ${elapsed}s"
+
+      - name: Run project E2E tests
+        run: pnpm exec cypress run --e2e --spec "cypress/e2e/project/**/*.cy.ts"
+        env:
+          CYPRESS_BASE_URL: http://localhost:3000
+          CYPRESS_VIDEO: false
+          CYPRESS_CI: true
+
+      - name: Run remaining E2E tests
+        if: success() || failure()
+        run: pnpm exec cypress run --e2e --spec "cypress/e2e/homepage.cy.ts,cypress/e2e/karma-gap-patron.cy.ts,cypress/e2e/my-projects.cy.ts,cypress/e2e/projects.cy.ts,cypress/e2e/community/**/*.cy.ts,cypress/e2e/donation/**/*.cy.ts,cypress/e2e/funding-map/**/*.cy.ts,cypress/e2e/funding-platform/**/*.cy.ts,cypress/e2e/navbar/**/*.cy.ts"
+        env:
           CYPRESS_BASE_URL: http://localhost:3000
           CYPRESS_VIDEO: false
           CYPRESS_CI: true

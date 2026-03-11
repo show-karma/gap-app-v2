@@ -63,7 +63,7 @@ export function ContentTabs({
     {},
     { enabled: authenticated }
   );
-  const isSuperAdmin = permissions?.roles.roles.includes(Role.SUPER_ADMIN) ?? false;
+  const isSuperAdmin = permissions?.roles?.roles?.includes(Role.SUPER_ADMIN) ?? false;
   const canViewContactInfo =
     isProjectOwner || isProjectAdmin || isContractOwner || (!isPermissionsLoading && isSuperAdmin);
 
