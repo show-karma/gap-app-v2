@@ -30,8 +30,8 @@ function AddProjectLink() {
         <PlusIcon className="w-5 h-5 text-blue-500" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="font-medium text-blue-500">Add project</p>
-        <p className="text-xs text-gray-500 dark:text-gray-400">Create a new project on Karma</p>
+        <p className="font-medium text-blue-500">+ Add project</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400">Create a new project on Karma GAP</p>
       </div>
       <ArrowTopRightOnSquareIcon className="w-4 h-4 text-gray-400 flex-shrink-0" />
     </a>
