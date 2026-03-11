@@ -26,11 +26,11 @@ function AddProjectLink() {
       data-testid="add-project-link"
       className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-gray-100 dark:hover:bg-zinc-700 text-left w-full"
     >
-      <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
-        <PlusIcon className="w-5 h-5 text-blue-500" />
+      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+        <PlusIcon className="w-5 h-5 text-primary" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="font-medium text-blue-500">+ Add project</p>
+        <p className="font-medium text-primary">+ Add project</p>
         <p className="text-xs text-gray-500 dark:text-gray-400">Create a new project on Karma</p>
       </div>
       <ArrowTopRightOnSquareIcon className="w-4 h-4 text-gray-400 flex-shrink-0" />
@@ -337,7 +337,7 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
                       <button
                         type="button"
                         onClick={() => retrySearch()}
-                        className="mt-2 text-sm text-blue-500 hover:underline"
+                        className="mt-2 text-sm text-primary hover:underline"
                       >
                         Retry
                       </button>
