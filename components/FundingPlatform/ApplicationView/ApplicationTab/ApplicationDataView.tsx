@@ -144,16 +144,16 @@ export const ApplicationDataView: FC<ApplicationDataViewProps> = ({
     );
   };
 
+  const { applicationData } = application;
   const dataToRender = useMemo(() => {
-    const data = application.applicationData;
-    if (!excludeMilestones || !data) return data;
+    if (!excludeMilestones || !applicationData) return applicationData;
     return Object.fromEntries(
-      Object.entries(data).filter(([_, value]) => {
+      Object.entries(applicationData).filter(([_, value]) => {
         if (!Array.isArray(value) || value.length === 0) return true;
         return !(typeof value[0] === "object" && value[0] !== null && "title" in value[0]);
       })
     );
-  }, [application.applicationData, excludeMilestones]);
+  }, [applicationData, excludeMilestones]);
 
   if (!dataToRender || Object.keys(dataToRender).length === 0) {
     return (

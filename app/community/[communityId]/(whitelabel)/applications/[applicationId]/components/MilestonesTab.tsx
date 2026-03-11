@@ -1,6 +1,7 @@
 "use client";
 
 import { MilestoneCompletionEditor } from "@/src/features/applications/components/MilestoneCompletionEditor";
+import { formatFieldLabel } from "@/src/features/applications/lib/milestone-utils";
 import type { Application, MilestoneData } from "@/types/whitelabel-entities";
 
 interface MilestonesTabProps {
@@ -37,7 +38,7 @@ export function MilestonesTab({ application, isOwner }: MilestonesTabProps) {
         <div key={fieldLabel} className="rounded-xl border border-border">
           <div className="border-b border-border p-4">
             <h2 className="text-xl font-semibold text-foreground">
-              {fieldLabel.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase())}
+              {formatFieldLabel(fieldLabel)}
             </h2>
           </div>
           <div className="p-6">

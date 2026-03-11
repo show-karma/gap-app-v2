@@ -51,7 +51,9 @@ const editableStatuses: ApplicationStatus[] = [
   "resubmitted",
 ];
 
-function isMilestoneArray(value: unknown): boolean {
+function isMilestoneArray(
+  value: unknown
+): value is Array<{ title: string; [key: string]: unknown }> {
   return (
     Array.isArray(value) &&
     value.length > 0 &&
