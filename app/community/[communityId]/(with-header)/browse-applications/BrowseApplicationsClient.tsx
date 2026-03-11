@@ -95,20 +95,31 @@ function getRequestedAmount(applicationData: Record<string, unknown>): string | 
       if (!Number.isNaN(num) && num > 0) {
         return `$${num.toLocaleString()}`;
       }
-      return value;
+      if (value.trim().length <= 50) {
+        return value;
+      }
     }
   }
   return null;
 }
 
 function getCategoryTag(applicationData: Record<string, unknown>): string | null {
+  const MAX_TAG_LENGTH = 60;
   for (const [key, value] of Object.entries(applicationData ?? {})) {
     const nk = normalizeFieldKey(key);
     if (nk.includes("category") || nk.includes("track") || nk.includes("projecttype")) {
-      if (typeof value === "string" && value.trim().length > 0) {
+      if (
+        typeof value === "string" &&
+        value.trim().length > 0 &&
+        value.trim().length <= MAX_TAG_LENGTH
+      ) {
         return value.trim();
       }
-      if (Array.isArray(value) && typeof value[0] === "string") {
+      if (
+        Array.isArray(value) &&
+        typeof value[0] === "string" &&
+        value[0].trim().length <= MAX_TAG_LENGTH
+      ) {
         return value[0].trim();
       }
     }
