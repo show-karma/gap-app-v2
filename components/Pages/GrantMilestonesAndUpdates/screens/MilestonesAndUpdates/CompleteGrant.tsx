@@ -6,9 +6,9 @@ import type { FC } from "react";
 import { useEffect, useState } from "react";
 import type { Hex } from "viem";
 import { useAccount } from "wagmi";
-import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { Button } from "@/components/ui/button";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useTracksForProgram } from "@/hooks/useTracks";
@@ -398,12 +398,7 @@ export const GrantCompletion: FC = () => {
           )}
 
           <div className="flex w-full flex-row-reverse">
-            <Button
-              onClick={() => onSubmit()}
-              className="flex w-max flex-row bg-[#17B26A] text-white hover:bg-[#17B26A]"
-              disabled={isLoading}
-              isLoading={isLoading}
-            >
+            <Button onClick={() => onSubmit()} size="xl" disabled={isLoading} isLoading={isLoading}>
               Mark grant as complete
             </Button>
           </div>

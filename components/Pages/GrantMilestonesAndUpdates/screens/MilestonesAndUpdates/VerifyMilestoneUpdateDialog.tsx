@@ -7,8 +7,8 @@ import { type FC, Fragment, useState } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
 import { useAccount } from "wagmi";
 import { z } from "zod";
-import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { Button } from "@/components/ui/button";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useCanVerifyMilestone } from "@/hooks/useCanVerifyMilestone";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
@@ -221,15 +221,12 @@ export const VerifyMilestoneUpdateDialog: FC<VerifyMilestoneUpdateDialogProps> =
                       <p className="text-base text-red-400">{errors.comment?.message}</p>
                     </div>
                     <div className="flex flex-row gap-4 justify-end">
-                      <Button
-                        className="text-zinc-900 hover:bg-transparent text-base bg-transparent border-black border dark:text-zinc-100 dark:border-zinc-100 hover:opacity-75 disabled:hover:bg-transparent disabled:hover:text-zinc-900"
-                        onClick={closeModal}
-                        disabled={isLoading}
-                      >
+                      <Button variant="outline" size="xl" onClick={closeModal} disabled={isLoading}>
                         Cancel
                       </Button>
                       <Button
-                        className="text-white text-base bg-blue-600 border-black  hover:bg-blue-600 hover:text-white"
+                        size="xl"
+                        className="bg-blue-600 text-white hover:bg-blue-600/90"
                         disabled={isLoading}
                         isLoading={isLoading}
                         type="submit"
