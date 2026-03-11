@@ -18,7 +18,7 @@ const DEBOUNCE_DELAY_MS = 500;
 const MIN_SEARCH_CHARS = 3;
 
 function AddProjectLink() {
-  const href = `${envVars.VERCEL_URL}?action=create-project`;
+  const href = `${envVars.VERCEL_URL || "https://app.karmahq.xyz"}?action=create-project`;
 
   return (
     <a

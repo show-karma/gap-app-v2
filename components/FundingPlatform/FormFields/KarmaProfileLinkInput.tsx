@@ -16,7 +16,7 @@ import { cn } from "@/utilities/tailwind";
 import { PROJECT_UID_REGEX } from "@/utilities/validation";
 
 function AddProjectLink() {
-  const href = `${envVars.VERCEL_URL}?action=create-project`;
+  const href = `${envVars.VERCEL_URL || "https://app.karmahq.xyz"}?action=create-project`;
 
   return (
     <a
