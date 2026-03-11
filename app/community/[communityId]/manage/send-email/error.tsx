@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { Link } from "@/src/components/navigation/Link";
 
-export default function EmailGranteesError({
+export default function SendEmailError({
   error,
   reset,
 }: {
@@ -13,7 +13,7 @@ export default function EmailGranteesError({
   reset: () => void;
 }) {
   useEffect(() => {
-    errorManager(`Email Grantees page error: ${error.message}`, error);
+    errorManager(`Send Email page error: ${error.message}`, error);
   }, [error]);
 
   return (
@@ -24,7 +24,7 @@ export default function EmailGranteesError({
         </div>
         <h1 className="text-xl font-semibold text-foreground">Something went wrong</h1>
         <p className="text-sm text-muted-foreground">
-          We encountered an error loading the Email Grantees page. Please try again.
+          We encountered an error loading the Send Email page. Please try again.
         </p>
         {error.digest ? (
           <p className="text-xs text-muted-foreground">Error ID: {error.digest}</p>

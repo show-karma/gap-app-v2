@@ -80,9 +80,9 @@ const NAV_GROUPS: NavGroup[] = [
         icon: ArrowTrendingUpIcon,
       },
       {
-        href: PAGES.ADMIN.EMAIL_GRANTEES,
-        matchSegment: "email-grantees",
-        label: "Email Grantees",
+        href: PAGES.ADMIN.SEND_EMAIL,
+        matchSegment: "send-email",
+        label: "Send Email",
         icon: EnvelopeIcon,
         communityAdminOnly: true,
       },

@@ -5,7 +5,7 @@ import {
   getGranteeEmails,
   type SendEmailParams,
   sendEmailToGrantees,
-} from "../services/emailGranteesService";
+} from "../services/sendEmailService";
 
 export function useGranteeEmails(programId: string, statuses?: string[]) {
   return useQuery({
