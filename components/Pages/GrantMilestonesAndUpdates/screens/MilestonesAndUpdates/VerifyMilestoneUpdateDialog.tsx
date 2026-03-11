@@ -226,7 +226,7 @@ export const VerifyMilestoneUpdateDialog: FC<VerifyMilestoneUpdateDialogProps> =
                       </Button>
                       <Button
                         size="xl"
-                        className="bg-blue-600 text-white hover:bg-blue-600/90"
+                        className="bg-brand-blue text-white hover:bg-brand-blue/90"
                         disabled={isLoading}
                         isLoading={isLoading}
                         type="submit"
