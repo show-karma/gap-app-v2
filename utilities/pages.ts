@@ -90,7 +90,7 @@ export const PAGES = {
     CONTROL_CENTER: (community: string) => `/community/${community}/manage/control-center`,
     KYC_SETTINGS: (community: string) => `/community/${community}/manage/kyc-settings`,
     PROGRAM_SCORES: (community: string) => `/community/${community}/manage/program-scores`,
-    EMAIL_GRANTEES: (community: string) => `/community/${community}/manage/email-grantees`,
+    SEND_EMAIL: (community: string) => `/community/${community}/manage/send-email`,
     PROJECT_MILESTONES: (community: string, projectId: string, programId: string) =>
       `/community/${community}/manage/${projectId}/milestones?programIds=${programId}`,
   },
