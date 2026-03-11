@@ -1,9 +1,9 @@
 "use client";
 
 import { CheckCircle2, Flag, Send } from "lucide-react";
-import Link from "next/link";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 import { Badge } from "@/components/ui/badge";
+import { Link } from "@/src/components/navigation/Link";
 import type { ProjectWithGrantsResponse } from "@/types/v2/project";
 import { PAGES } from "@/utilities/pages";
 import { computeProjectPendingActions } from "../utils/pending-actions";

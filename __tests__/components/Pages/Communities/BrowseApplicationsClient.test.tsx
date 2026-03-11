@@ -1,0 +1,217 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import type { ReactNode } from "react";
+import { BrowseApplicationsClient } from "@/app/community/[communityId]/(with-header)/browse-applications/BrowseApplicationsClient";
+
+// --- Mocks ---
+
+const mockRouterReplace = jest.fn();
+const mockRouterPush = jest.fn();
+
+jest.mock("next/navigation", () => ({
+  useRouter: () => ({
+    push: mockRouterPush,
+    replace: mockRouterReplace,
+    prefetch: jest.fn(),
+    back: jest.fn(),
+    pathname: "/community/test-community/browse-applications",
+  }),
+  usePathname: () => "/community/test-community/browse-applications",
+  useSearchParams: () => new URLSearchParams(),
+  useParams: () => ({ communityId: "test-community" }),
+  notFound: jest.fn(),
+  redirect: jest.fn(),
+}));
+
+jest.mock("@/features/programs/hooks/use-programs-with-config", () => ({
+  useProgramsWithConfig: jest.fn(() => ({
+    programs: [
+      {
+        programId: "program-abc",
+        chainID: 1,
+        name: "Test Grant Program",
+        applicationConfig: {
+          formSchema: { fields: [] },
+        },
+      },
+      {
+        programId: "program-xyz",
+        chainID: 1,
+        name: "Another Program",
+        applicationConfig: {
+          formSchema: { fields: [] },
+        },
+      },
+    ],
+    isLoading: false,
+    error: null,
+    refetch: jest.fn(),
+  })),
+}));
+
+jest.mock("@/utilities/fetchData", () => ({
+  __esModule: true,
+  default: jest.fn(() =>
+    Promise.resolve([
+      {
+        applications: [],
+        pagination: { total: 0, page: 1, limit: 100, totalPages: 0 },
+      },
+      null,
+    ])
+  ),
+}));
+
+jest.mock("@/src/components/navigation/Link", () => ({
+  Link: ({ children, href, ...props }: { children: ReactNode; href: string }) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
+}));
+
+jest.mock("@/utilities/formatDate", () => ({
+  formatDate: (d: string) => d,
+}));
+
+jest.mock("lucide-react", () => ({
+  Lock: (props: Record<string, unknown>) => <svg data-testid="lock-icon" {...props} />,
+  RefreshCw: (props: Record<string, unknown>) => <svg data-testid="refresh-icon" {...props} />,
+  Search: (props: Record<string, unknown>) => <svg data-testid="search-icon" {...props} />,
+  X: (props: Record<string, unknown>) => <svg data-testid="x-icon" {...props} />,
+}));
+
+// --- Helpers ---
+
+function createWrapper() {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+    },
+  });
+  return function Wrapper({ children }: { children: ReactNode }) {
+    return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+  };
+}
+
+// --- Tests ---
+
+describe("BrowseApplicationsClient - URL sync on filter change", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("updates the URL with programId when a program is selected", async () => {
+    const user = userEvent.setup();
+    render(<BrowseApplicationsClient communityId="test-community" />, {
+      wrapper: createWrapper(),
+    });
+
+    const programSelect = screen.getByLabelText("Funding Program");
+    await user.selectOptions(programSelect, "program-abc");
+
+    // The component should call router.replace with the programId in the URL
+    expect(mockRouterReplace).toHaveBeenCalledWith(
+      expect.stringContaining("programId=program-abc"),
+      expect.anything()
+    );
+  });
+
+  it("updates the URL with status when status filter changes", async () => {
+    const user = userEvent.setup();
+    render(<BrowseApplicationsClient communityId="test-community" />, {
+      wrapper: createWrapper(),
+    });
+
+    // First select a program so the status filter is enabled
+    const programSelect = screen.getByLabelText("Funding Program");
+    await user.selectOptions(programSelect, "program-abc");
+
+    mockRouterReplace.mockClear();
+
+    const statusSelect = screen.getByLabelText("Status");
+    await user.selectOptions(statusSelect, "approved");
+
+    expect(mockRouterReplace).toHaveBeenCalledWith(
+      expect.stringContaining("status=approved"),
+      expect.anything()
+    );
+  });
+
+  it("updates the URL with search term when the user types in the search box", async () => {
+    const user = userEvent.setup();
+    render(<BrowseApplicationsClient communityId="test-community" />, {
+      wrapper: createWrapper(),
+    });
+
+    // First select a program so the search input is enabled
+    const programSelect = screen.getByLabelText("Funding Program");
+    await user.selectOptions(programSelect, "program-abc");
+
+    mockRouterReplace.mockClear();
+
+    const searchInput = screen.getByLabelText("Search");
+    await user.type(searchInput, "my project");
+
+    // The component should update the URL with the search param
+    // (may be debounced, so we check that it was called at some point)
+    expect(mockRouterReplace).toHaveBeenCalledWith(
+      expect.stringContaining("search="),
+      expect.anything()
+    );
+  });
+
+  it("reflects combined filter state in the URL", async () => {
+    const user = userEvent.setup();
+    render(<BrowseApplicationsClient communityId="test-community" />, {
+      wrapper: createWrapper(),
+    });
+
+    const programSelect = screen.getByLabelText("Funding Program");
+    await user.selectOptions(programSelect, "program-abc");
+
+    const statusSelect = screen.getByLabelText("Status");
+    await user.selectOptions(statusSelect, "pending");
+
+    // The last call to replace should include both programId and status
+    expect(mockRouterReplace).toHaveBeenCalled();
+    const lastCall = mockRouterReplace.mock.calls[mockRouterReplace.mock.calls.length - 1][0];
+    expect(lastCall).toContain("programId=program-abc");
+    expect(lastCall).toContain("status=pending");
+  });
+
+  it("removes status param from URL when reset to 'all'", async () => {
+    const user = userEvent.setup();
+    render(<BrowseApplicationsClient communityId="test-community" />, {
+      wrapper: createWrapper(),
+    });
+
+    const programSelect = screen.getByLabelText("Funding Program");
+    await user.selectOptions(programSelect, "program-abc");
+
+    const statusSelect = screen.getByLabelText("Status");
+    await user.selectOptions(statusSelect, "approved");
+    await user.selectOptions(statusSelect, "all");
+
+    expect(mockRouterReplace).toHaveBeenCalled();
+    const lastCall = mockRouterReplace.mock.calls[mockRouterReplace.mock.calls.length - 1][0];
+    expect(lastCall).not.toContain("status=");
+  });
+
+  it("removes programId from URL when program is deselected", async () => {
+    const user = userEvent.setup();
+    render(<BrowseApplicationsClient communityId="test-community" />, {
+      wrapper: createWrapper(),
+    });
+
+    const programSelect = screen.getByLabelText("Funding Program");
+    await user.selectOptions(programSelect, "program-abc");
+    // Deselect by choosing the placeholder option
+    await user.selectOptions(programSelect, "");
+
+    expect(mockRouterReplace).toHaveBeenCalled();
+    const lastCall = mockRouterReplace.mock.calls[mockRouterReplace.mock.calls.length - 1][0];
+    expect(lastCall).not.toContain("programId=");
+  });
+});

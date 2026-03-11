@@ -6,6 +6,7 @@ import {
   Bars3Icon,
   ChartBarIcon,
   CurrencyDollarIcon,
+  EnvelopeIcon,
   FlagIcon,
   GlobeAltIcon,
   HomeIcon,
@@ -14,15 +15,16 @@ import {
   TagIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useFundingPrograms } from "@/hooks/useFundingPlatform";
+import { Link } from "@/src/components/navigation/Link";
 import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
 import { Role } from "@/src/core/rbac/types";
 import type { Community } from "@/types/v2/community";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
+import { useWhitelabel } from "@/utilities/whitelabel-context";
 
 const ROLE_LABELS: Partial<Record<Role, string>> = {
   [Role.SUPER_ADMIN]: "Super Admin",
@@ -40,6 +42,8 @@ interface NavItem {
   matchSegment: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
+  /** If true, only visible to community admins (not program admins) */
+  communityAdminOnly?: boolean;
 }
 
 interface NavGroup {
@@ -74,6 +78,13 @@ const NAV_GROUPS: NavGroup[] = [
         matchSegment: "program-scores",
         label: "Program Scores",
         icon: ArrowTrendingUpIcon,
+      },
+      {
+        href: PAGES.ADMIN.SEND_EMAIL,
+        matchSegment: "send-email",
+        label: "Send Email",
+        icon: EnvelopeIcon,
+        communityAdminOnly: true,
       },
     ],
   },
@@ -160,12 +171,21 @@ function useSidebarCounts(communityId: string) {
 }
 
 export function ManageSidebar({ communityId, community }: ManageSidebarProps) {
-  const pathname = usePathname();
+  const rawPathname = usePathname();
+  const { isWhitelabel } = useWhitelabel();
   const { roles, isCommunityAdmin, isProgramAdmin, isReviewer, isLoading } = usePermissionContext();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const badgeCounts = useSidebarCounts(communityId);
 
   const slug = community?.details?.slug || communityId;
+  // In whitelabel mode, usePathname() returns the browser URL (e.g. "/manage/...")
+  // but route matching uses PAGES.ADMIN.ROOT(slug) = "/community/<slug>/manage/...".
+  // Normalize by prepending the community prefix so active-state logic works.
+  const communityPrefix = `/community/${slug}`;
+  const pathname =
+    isWhitelabel && !rawPathname.startsWith(communityPrefix)
+      ? `${communityPrefix}${rawPathname}`
+      : rawPathname;
 
   const hasAdminAccess = isCommunityAdmin || isProgramAdmin;
   const hasReviewerAccess = isReviewer;
@@ -173,13 +193,22 @@ export function ManageSidebar({ communityId, community }: ManageSidebarProps) {
 
   const visibleGroups = useMemo(() => {
     if (isLoading || (!hasAdminAccess && !hasReviewerAccess)) return [];
-    if (hasAdminAccess) return NAV_GROUPS;
+    if (hasAdminAccess) {
+      // Program admins see everything except communityAdminOnly items
+      if (!isCommunityAdmin) {
+        return NAV_GROUPS.map((group) => ({
+          ...group,
+          items: group.items.filter((item) => !item.communityAdminOnly),
+        })).filter((group) => group.items.length > 0);
+      }
+      return NAV_GROUPS;
+    }
     // Reviewer-only: filter to allowed items
     return NAV_GROUPS.map((group) => ({
       ...group,
       items: group.items.filter((item) => REVIEWER_SEGMENTS.has(item.matchSegment)),
     })).filter((group) => group.items.length > 0);
-  }, [isLoading, hasAdminAccess, hasReviewerAccess]);
+  }, [isLoading, hasAdminAccess, hasReviewerAccess, isCommunityAdmin]);
 
   const sidebarContent = (
     <div className="flex flex-col h-full">

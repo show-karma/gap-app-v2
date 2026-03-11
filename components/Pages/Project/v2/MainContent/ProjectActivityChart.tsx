@@ -252,8 +252,8 @@ export function ProjectActivityChart({ className, embedded = false }: ProjectAct
   const chartContent = (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-zinc-100">Project Activity</h3>
+      <div className="flex items-center justify-between mb-5">
+        <h3 className="text-base text-muted-foreground">Project Activity</h3>
       </div>
 
       {/* Chart - explicit dimensions prevent Recharts 0-dimension warning */}

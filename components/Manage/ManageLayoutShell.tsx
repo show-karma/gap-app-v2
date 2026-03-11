@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
+import { Link } from "@/src/components/navigation/Link";
 import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
 import { useOwnerStore } from "@/store/owner";
 import { PAGES } from "@/utilities/pages";
@@ -22,6 +22,16 @@ export function ManageLayoutShell({ children }: { children: React.ReactNode }) {
     isLoading: permissionsLoading,
   } = usePermissionContext();
   const { isOwner, isOwnerLoading } = useOwnerStore();
+
+  // Expose Zustand store setters for E2E tests.
+  // Set during render (not useEffect) to ensure availability immediately.
+  if (process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS === "true" && typeof window !== "undefined") {
+    (window as Window & { __E2E_STORES__?: Record<string, unknown> }).__E2E_STORES__ = {
+      ...((window as Window & { __E2E_STORES__?: Record<string, unknown> }).__E2E_STORES__ || {}),
+      setIsOwner: useOwnerStore.getState().setIsOwner,
+      setIsOwnerLoading: useOwnerStore.getState().setIsOwnerLoading,
+    };
+  }
 
   const hasManageAccess =
     isCommunityAdmin || isProgramAdmin || isReviewer || isRegistryAdmin || isOwner;

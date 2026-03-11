@@ -5,8 +5,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import type { Hex } from "viem";
 import { useAccount } from "wagmi";
-import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { Button } from "@/components/ui/button";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useAuth } from "@/hooks/useAuth";
 import { useGap } from "@/hooks/useGap";
@@ -317,7 +317,8 @@ export const MilestonesScreen: React.FC = () => {
 
           <Button
             onClick={createMilestone}
-            className="flex items-center gap-2 text-brand-blue bg-indigo-50 dark:bg-indigo-900 dark:text-indigo-50 hover:bg-indigo-50 hover:dark:bg-indigo-900 px-4 py-2 rounded-md hover:opacity-90"
+            size="xl"
+            className="bg-brand-blue text-white hover:bg-brand-blue/90"
           >
             Add Milestones
             <PlusIcon className="h-4 w-4" />

@@ -40,7 +40,7 @@ export async function retry<T>(
 export const retryUntilConditionMet = async (
   conditionFn: () => Promise<boolean>,
   callbackFn?: () => void,
-  maxRetries: number = 1000,
+  maxRetries: number = 200,
   delay: number = 1500
 ) => {
   let retries = maxRetries;
@@ -57,4 +57,7 @@ export const retryUntilConditionMet = async (
     retries -= 1;
     await new Promise((resolve) => setTimeout(resolve, delay));
   }
+  throw new Error(
+    "Condition was not met after maximum retries. The operation may not have completed successfully."
+  );
 };

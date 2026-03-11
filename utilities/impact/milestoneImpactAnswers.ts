@@ -75,6 +75,31 @@ export const sendMilestoneImpactAnswers = async (
 };
 
 /**
+ * Deletes all datapoints for a specific indicator on a milestone.
+ * Sends an empty data array which triggers the backend to delete existing datapoints
+ * without creating new ones.
+ */
+export const deleteMilestoneImpactAnswers = async (
+  milestoneUID: string,
+  indicatorId: string
+): Promise<void> => {
+  const [, error] = await fetchData(
+    INDEXER.MILESTONE.IMPACT_INDICATORS.SEND(milestoneUID),
+    "POST",
+    {
+      indicatorId,
+      data: [],
+    }
+  );
+
+  if (error) {
+    throw new Error(
+      `Failed to delete milestone impact answers for milestoneUID=${milestoneUID} indicatorId=${indicatorId}: ${error}`
+    );
+  }
+};
+
+/**
  * Transform V2 milestone indicators response to ImpactIndicatorWithData[]
  */
 function transformMilestoneIndicators(response: {

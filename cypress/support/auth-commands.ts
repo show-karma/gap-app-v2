@@ -120,6 +120,34 @@ Cypress.Commands.add("login", (options = {}) => {
       body: userType === "reviewer" ? [{ id: "test-program" }] : [],
     });
   }).as("getReviewerPrograms");
+
+  // Intercept RBAC permissions endpoint
+  const rolesByUserType: Record<UserType, string[]> = {
+    admin: ["SUPER_ADMIN"],
+    "community-admin": ["COMMUNITY_ADMIN"],
+    reviewer: ["REVIEWER"],
+    regular: ["GUEST"],
+  };
+  const roles = rolesByUserType[userType];
+  cy.intercept("GET", "**/v2/auth/permissions**", (req) => {
+    req.reply({
+      statusCode: 200,
+      body: {
+        roles: {
+          primaryRole: roles[0],
+          roles,
+          reviewerTypes: userType === "reviewer" ? ["GRANT_REVIEWER"] : [],
+        },
+        permissions: [],
+        resourceContext: {},
+        isCommunityAdmin: userType === "community-admin" || userType === "admin",
+        isProgramAdmin: userType === "admin",
+        isReviewer: userType === "reviewer",
+        isRegistryAdmin: userType === "admin",
+        isProgramCreator: userType === "admin",
+      },
+    });
+  }).as("getPermissions");
 });
 
 Cypress.Commands.add("logout", () => {

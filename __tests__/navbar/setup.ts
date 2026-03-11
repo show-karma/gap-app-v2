@@ -405,9 +405,7 @@ jest.mock("@/components/Utilities/ProfilePicture", () => ({
  * Mock error manager
  */
 jest.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: jest.fn((message, error) => {
-    console.error(message, error);
-  }),
+  errorManager: jest.fn(),
 }));
 
 /**

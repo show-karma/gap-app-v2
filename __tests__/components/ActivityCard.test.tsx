@@ -140,7 +140,7 @@ describe("ActivityCard", () => {
     it("should have container with border styling", () => {
       const { container } = render(<ActivityCard activity={mockUpdate} />);
 
-      const updateContainer = container.querySelector(".border.bg-white.dark\\:bg-zinc-800");
+      const updateContainer = container.querySelector(".border.bg-background");
       expect(updateContainer).toBeInTheDocument();
     });
 
@@ -166,13 +166,13 @@ describe("ActivityCard", () => {
       expect(screen.getByTestId("milestone-title")).toHaveTextContent("Test Milestone");
     });
 
-    it("should not have update container styling for milestone", () => {
+    it("should not have update container wrapping for milestone (MilestoneCard renders its own container)", () => {
       const { container } = render(<ActivityCard activity={mockMilestone} />);
 
-      const updateContainer = container.querySelector(
-        ".border.bg-white.dark\\:bg-zinc-800.rounded-xl"
-      );
-      expect(updateContainer).not.toBeInTheDocument();
+      // MilestoneCard is rendered directly without the containerClassName wrapper
+      // The outer div only has "flex flex-col w-full"
+      const outerDiv = container.firstChild as HTMLElement;
+      expect(outerDiv).toHaveClass("flex", "flex-col", "w-full");
     });
   });
 
@@ -284,9 +284,7 @@ describe("ActivityCard", () => {
     it("should apply container class name to update wrapper", () => {
       const { container } = render(<ActivityCard activity={mockUpdate} />);
 
-      const updateContainer = container.querySelector(
-        ".border.border-gray-300.dark\\:border-zinc-400"
-      );
+      const updateContainer = container.querySelector(".border.bg-background.rounded-xl");
       expect(updateContainer).toBeInTheDocument();
     });
 
@@ -306,17 +304,17 @@ describe("ActivityCard", () => {
   });
 
   describe("Dark Mode Support", () => {
-    it("should have dark mode background for update card", () => {
+    it("should have background class for update card", () => {
       const { container } = render(<ActivityCard activity={mockUpdate} />);
 
-      const updateContainer = container.querySelector(".dark\\:bg-zinc-800");
+      const updateContainer = container.querySelector(".bg-background");
       expect(updateContainer).toBeInTheDocument();
     });
 
-    it("should have dark mode border for update card", () => {
+    it("should have border class for update card", () => {
       const { container } = render(<ActivityCard activity={mockUpdate} />);
 
-      const updateContainer = container.querySelector(".dark\\:border-zinc-400");
+      const updateContainer = container.querySelector(".border");
       expect(updateContainer).toBeInTheDocument();
     });
   });

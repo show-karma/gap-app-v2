@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/utilities/tailwind";
 import { OPPORTUNITY_TYPES } from "../constants/filter-options";
@@ -8,6 +8,10 @@ import { useFundingFilters } from "../hooks/use-funding-filters";
 import { useTypeCounts } from "../hooks/use-funding-programs";
 import type { OpportunityType } from "../types/funding-program";
 import { getOpportunityTypeConfig } from "../utils/opportunity-type-config";
+
+function getStatusCount(tc: { count: number; activeCount: number }, status: string): number {
+  return status === "Inactive" ? tc.count - tc.activeCount : tc.activeCount;
+}
 
 export function OpportunityTypeTabs() {
   const { filters, setSelectedTypes } = useFundingFilters();
@@ -23,13 +27,17 @@ export function OpportunityTypeTabs() {
 
   const isAllSelected = filters.selectedTypes.length === 0;
 
-  const getCount = (type: OpportunityType): number | undefined => {
-    if (!typeCounts) return undefined;
-    const found = typeCounts.find((tc) => tc.type === type);
-    return found?.count;
-  };
-
-  const totalCount = typeCounts?.reduce((sum, tc) => sum + tc.count, 0);
+  const { countsByType, totalCount } = useMemo(() => {
+    if (!typeCounts) return { countsByType: null, totalCount: undefined };
+    const map = new Map<string, number>();
+    let total = 0;
+    for (const tc of typeCounts) {
+      const c = getStatusCount(tc, filters.status);
+      map.set(tc.type, c);
+      total += c;
+    }
+    return { countsByType: map, totalCount: total };
+  }, [typeCounts, filters.status]);
 
   const handleTypeClick = (type: OpportunityType | null) => {
     if (type === null) {
@@ -81,7 +89,7 @@ export function OpportunityTypeTabs() {
       {OPPORTUNITY_TYPES.map((type, idx) => {
         const config = getOpportunityTypeConfig(type);
         const Icon = config.icon;
-        const count = isError ? undefined : getCount(type);
+        const count = isError ? undefined : countsByType?.get(type);
 
         return (
           <TypeChip

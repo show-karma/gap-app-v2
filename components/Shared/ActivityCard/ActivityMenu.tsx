@@ -26,7 +26,7 @@ export const ActivityMenu = ({
   deleteTitle = "Are you sure you want to delete this item?",
   activityType,
 }: ActivityMenuProps) => {
-  const buttonClassName = `group shadow-none justify-center items-center flex h-max border-none ring-none font-normal bg-transparent dark:bg-transparent text-gray-900 dark:text-zinc-100 hover:bg-white dark:hover:bg-zinc-800 dark:hover:opacity-75 hover:opacity-75 flex w-full items-start justify-start rounded-md px-2 py-2 text-sm flex-row gap-2`;
+  const buttonClassName = `group shadow-none justify-center items-center flex h-max border-none ring-none font-normal bg-transparent text-foreground hover:bg-background hover:opacity-75 flex w-full items-start justify-start rounded-md px-2 py-2 text-sm flex-row gap-2`;
 
   // Determine which activities can be edited
   const canActuallyEdit =
@@ -43,7 +43,7 @@ export const ActivityMenu = ({
       {/* Share Button */}
       {canShare && onShare && (
         <Button
-          className="flex flex-row gap-1 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent hover:opacity-75"
+          className="flex flex-row gap-1 bg-transparent text-sm font-semibold text-muted-foreground hover:bg-transparent hover:opacity-75"
           onClick={onShare}
         >
           <ShareIcon className="h-5 w-5" />
@@ -53,7 +53,7 @@ export const ActivityMenu = ({
       {/* Edit Button - only for ProjectUpdate and ProjectImpact */}
       {canActuallyEdit && onEdit && (
         <Button
-          className="flex flex-row gap-1 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent hover:opacity-75"
+          className="flex flex-row gap-1 bg-transparent text-sm font-semibold text-muted-foreground hover:bg-transparent hover:opacity-75"
           onClick={onEdit}
         >
           <PencilSquareIcon className="h-5 w-5" />

@@ -3,6 +3,7 @@
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useMemo } from "react";
 import { useProjectProfile } from "@/hooks/v2/useProjectProfile";
+import { getActivityFilterType } from "@/services/project-profile.service";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { ActivityFeed } from "../MainContent/ActivityFeed";
 import { ActivityFilters, type ActivityFilterType } from "../MainContent/ActivityFilters";
@@ -25,6 +26,16 @@ export function UpdatesContent({ className }: UpdatesContentProps) {
   const router = useRouter();
 
   const { allUpdates, milestonesCount, completedCount } = useProjectProfile(projectId as string);
+
+  // Count items per filter category for badge counters
+  const counts = useMemo(() => {
+    if (!allUpdates) return {} as Partial<Record<ActivityFilterType, number>>;
+    return allUpdates.reduce<Partial<Record<ActivityFilterType, number>>>((acc, item) => {
+      const filterType = getActivityFilterType(item);
+      acc[filterType] = (acc[filterType] ?? 0) + 1;
+      return acc;
+    }, {});
+  }, [allUpdates]);
 
   // Read filter and sort state from URL
   const activeFilters = useMemo(() => {
@@ -71,6 +82,7 @@ export function UpdatesContent({ className }: UpdatesContentProps) {
       <ActivityFilters
         activeFilters={activeFilters}
         onFilterToggle={handleFilterToggle}
+        counts={counts}
         milestonesCount={milestonesCount}
         completedCount={completedCount}
       />

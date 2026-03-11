@@ -1,6 +1,13 @@
 import { errorManager } from "@/components/Utilities/errorManager";
 import type { FundingProgram } from "@/services/fundingPlatformService";
 
+/** Minimal structural type accepted by program-check utilities — satisfied by both FundingProgram variants. */
+interface ProgramLike {
+  applicationConfig?: { isEnabled?: boolean; formSchema?: unknown } | null;
+  metadata?: { endsAt?: string; startsAt?: string; title?: string };
+  name?: string;
+}
+
 /**
  * Program Status Types and Interfaces
  * Aligned with gap-whitelabel-app rules for consistency
@@ -64,7 +71,7 @@ export function isProgramOpen(startsAt: string | undefined, endsAt: string | und
  * @param program - The funding program to check
  * @returns true if the program is accepting applications
  */
-export function isProgramEnabled(program: FundingProgram): boolean {
+export function isProgramEnabled(program: ProgramLike): boolean {
   const isEnabled = program.applicationConfig?.isEnabled ?? false;
   const hasFormConfig = !!program.applicationConfig?.formSchema;
   const isApplicationDeadlinePassed = program.metadata?.endsAt
@@ -84,7 +91,7 @@ export function isProgramEnabled(program: FundingProgram): boolean {
  * Returns status type, label, color, dot color, and endsSoon flag for UI display.
  * Rules aligned with gap-whitelabel-app for consistency across apps.
  */
-export function getProgramStatusInfo(program: FundingProgram): ProgramStatusInfo {
+export function getProgramStatusInfo(program: ProgramLike): ProgramStatusInfo {
   const isEnabled = program.applicationConfig?.isEnabled ?? false;
   const hasFormConfig = !!program.applicationConfig?.formSchema;
   const isApplicationDeadlinePassed = program.metadata?.endsAt

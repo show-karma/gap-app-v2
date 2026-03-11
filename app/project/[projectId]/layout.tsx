@@ -2,6 +2,8 @@
 
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 import type { Metadata } from "next";
+import { ProjectShareDialogMount } from "@/components/Pages/Project/ProjectShareDialogMount";
+import { E2EStoreExposer } from "@/components/Utilities/E2EStoreExposer";
 import { layoutTheme } from "@/src/helper/theme";
 import { generateProjectOverviewMetadata } from "@/utilities/metadata/projectMetadata";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
@@ -14,6 +16,13 @@ type Params = Promise<{
 }>;
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
+  // Skip server-side API calls during E2E tests — the staging API may be
+  // unreachable from CI, causing generateMetadata to hang and block the
+  // entire page from loading (120s timeout).
+  if (process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS === "true") {
+    return { title: "Project" };
+  }
+
   const awaitedParams = await params;
   const { projectId } = awaitedParams;
 
@@ -81,10 +90,17 @@ export default async function RootLayout(props: {
 
   // Prefetch all critical data in parallel with error handling
   // Failures are logged but don't break the page - client hooks will fetch as fallback
-  await safePrefetchProjectData(queryClient, projectId);
+  // Skip prefetch during E2E tests — the staging API may be behind Cloudflare,
+  // and a server-side prefetch failure gets cached by React Query, preventing
+  // client-side refetch (which Cypress CAN intercept).
+  if (process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS !== "true") {
+    await safePrefetchProjectData(queryClient, projectId);
+  }
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
+      <E2EStoreExposer />
+      <ProjectShareDialogMount />
       <div className={layoutTheme.padding}>{children}</div>
     </HydrationBoundary>
   );

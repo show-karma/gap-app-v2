@@ -3,10 +3,10 @@
 import { Listbox } from "@headlessui/react";
 import { ChevronUpDownIcon } from "@heroicons/react/24/outline";
 import * as Slider from "@radix-ui/react-slider";
-import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/Utilities/Button";
+import { Link } from "@/src/components/navigation/Link";
 import fetchData from "@/utilities/fetchData";
 import formatCurrency from "@/utilities/formatCurrency";
 import { INDEXER } from "@/utilities/indexer";

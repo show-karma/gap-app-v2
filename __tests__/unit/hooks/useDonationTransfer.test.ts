@@ -128,6 +128,8 @@ describe("useDonationTransfer", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // Suppress expected console.error from error-path tests
+    jest.spyOn(console, "error").mockImplementation(() => {});
 
     // Setup default mocks
     (wagmi.useAccount as jest.Mock).mockReturnValue({
@@ -174,6 +176,9 @@ describe("useDonationTransfer", () => {
   });
 
   afterEach(() => {
+    // Restore console.error spy before clearing mocks
+    (console.error as jest.Mock)?.mockRestore?.();
+
     // Reset all mocks to prevent state accumulation
     jest.clearAllMocks();
 

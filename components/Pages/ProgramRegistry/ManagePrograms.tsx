@@ -87,7 +87,7 @@ export const ManagePrograms = () => {
 
   const isRegistryAdmin = permissions?.isRegistryAdmin ?? false;
   const isProgramCreator = permissions?.isProgramCreator ?? false;
-  const isStaff = permissions?.roles?.roles.includes(Role.SUPER_ADMIN) ?? false;
+  const isStaff = permissions?.roles?.roles?.includes(Role.SUPER_ADMIN) ?? false;
   const isAllowed = Boolean(address) && (isRegistryAdmin || isProgramCreator || isStaff) && isAuth;
 
   const [tab, setTab] = useQueryState("tab", {
