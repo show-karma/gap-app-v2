@@ -31,7 +31,7 @@ function AddProjectLink() {
       </div>
       <div className="flex-1 min-w-0">
         <p className="font-medium text-primary">+ Add project</p>
-        <p className="text-xs text-zinc-500">Create a new project on Karma GAP</p>
+        <p className="text-xs text-zinc-500">Create a new project on Karma</p>
       </div>
       <ExternalLink className="w-4 h-4 text-zinc-400 flex-shrink-0" />
     </a>
@@ -84,6 +84,8 @@ export const KarmaProfileLinkInput: React.FC<KarmaProfileLinkInputProps> = ({
     projects = [],
     isLoading: isSearching,
     isFetching,
+    isError: isSearchError,
+    refetch: retrySearch,
   } = useProjectSearch(debouncedQuery, {
     enabled: debouncedQuery.length >= SEARCH_CONSTANTS.MIN_QUERY_LENGTH,
   });
@@ -120,10 +122,15 @@ export const KarmaProfileLinkInput: React.FC<KarmaProfileLinkInputProps> = ({
   }, [isDropdownOpen]);
 
   useEffect(() => {
-    if (debouncedQuery.length >= SEARCH_CONSTANTS.MIN_QUERY_LENGTH && !isSearching && !isFetching) {
+    if (
+      debouncedQuery.length >= SEARCH_CONSTANTS.MIN_QUERY_LENGTH &&
+      !isSearching &&
+      !isFetching &&
+      !selectedProject
+    ) {
       setIsDropdownOpen(true);
     }
-  }, [projects, debouncedQuery, isSearching, isFetching]);
+  }, [projects, debouncedQuery, isSearching, isFetching, selectedProject]);
 
   const handleSelectProject = useCallback(
     (project: SearchProjectResult, onChange: (value: string) => void) => {
@@ -283,6 +290,17 @@ export const KarmaProfileLinkInput: React.FC<KarmaProfileLinkInputProps> = ({
                   {isSearching || isFetching ? (
                     <div className="flex items-center justify-center py-6">
                       <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
+                    </div>
+                  ) : isSearchError ? (
+                    <div className="py-4 text-center">
+                      <p className="text-sm text-destructive">Failed to search projects</p>
+                      <button
+                        type="button"
+                        onClick={() => retrySearch()}
+                        className="mt-2 text-sm text-primary hover:underline"
+                      >
+                        Retry
+                      </button>
                     </div>
                   ) : projects.length === 0 ? (
                     <div>
