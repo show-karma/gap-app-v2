@@ -2,7 +2,7 @@
 
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { Lock, RefreshCw, Search, X } from "lucide-react";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import type { ProgramWithConfig } from "@/features/programs/hooks/use-programs-with-config";
 import { useProgramsWithConfig } from "@/features/programs/hooks/use-programs-with-config";
@@ -210,6 +210,8 @@ function LoadingSkeleton() {
 
 export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClientProps) {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const { programs, isLoading: isProgramsLoading } = useProgramsWithConfig(communityId);
@@ -235,6 +237,22 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
     const timer = setTimeout(() => setDebouncedSearch(searchInput), 500);
     return () => clearTimeout(timer);
   }, [searchInput]);
+
+  // Sync filter state to URL
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (selectedProgramId) {
+      params.set("programId", selectedProgramId);
+    }
+    if (statusFilter !== "all") {
+      params.set("status", statusFilter);
+    }
+    if (searchInput) {
+      params.set("search", searchInput);
+    }
+    const query = params.toString();
+    router.replace(`${pathname}${query ? `?${query}` : ""}`, { scroll: false });
+  }, [selectedProgramId, statusFilter, searchInput, pathname, router]);
 
   const selectedProgram = programs.find((p) => p.programId === selectedProgramId);
   const hasPrivateApplicationsSetting =
