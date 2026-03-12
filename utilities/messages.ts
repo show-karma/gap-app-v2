@@ -234,6 +234,10 @@ export const MESSAGES = {
         ERROR: "There was an error undoing the rejection.",
       },
     },
+    EDIT: {
+      SUCCESS: "Milestone edited successfully!",
+      ERROR: "There was an error editing the milestone.",
+    },
     UPDATE_COMPLETION: {
       SUCCESS: "The milestone completion has been updated!",
       ERROR: "There was an error updating the milestone completion.",

@@ -9,7 +9,6 @@ interface MilestoneRendererProps {
   label: string;
   value: MilestoneData[];
   fieldLabel: string;
-  communityId: string;
   referenceNumber: string;
 }
 
@@ -17,7 +16,6 @@ export function MilestoneRenderer({
   label,
   value,
   fieldLabel,
-  communityId,
   referenceNumber,
 }: MilestoneRendererProps) {
   return (
@@ -26,7 +24,6 @@ export function MilestoneRenderer({
       <MilestoneDisplay
         milestones={value}
         fieldLabel={fieldLabel}
-        communityId={communityId}
         referenceNumber={referenceNumber}
       />
     </div>

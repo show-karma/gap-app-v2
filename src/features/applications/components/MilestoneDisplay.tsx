@@ -9,18 +9,15 @@ import { formatFieldLabel, isMarkdownContent, MILESTONE_CORE_FIELDS } from "../l
 interface MilestoneDisplayProps {
   milestones: MilestoneData[];
   fieldLabel: string;
-  communityId: string;
   referenceNumber: string;
 }
 
 export function MilestoneDisplay({
   milestones,
   fieldLabel,
-  communityId,
   referenceNumber,
 }: MilestoneDisplayProps) {
   const { isLoading, getCompletion } = useMilestoneCompletions({
-    communityId,
     referenceNumber,
     enabled: true,
   });

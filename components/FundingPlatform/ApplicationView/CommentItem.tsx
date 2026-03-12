@@ -9,12 +9,19 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { format, isValid, parseISO } from "date-fns";
-import React, { type FC, useState } from "react";
+import React, { type FC, useCallback, useMemo, useRef, useState } from "react";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { useMentionEditor } from "@/hooks/useMentionEditor";
+import { useMilestoneReviewers } from "@/hooks/useMilestoneReviewers";
 import type { ApplicationComment } from "@/types/funding-platform";
+import { renderMentionsAsMarkdown } from "@/utilities/mentions";
 import { cn } from "@/utilities/tailwind";
+import InviteReviewerModal from "./InviteReviewerModal";
+import MentionAutocomplete from "./MentionAutocomplete";
+
+const MENTION_KEYS = new Set(["ArrowDown", "ArrowUp", "Enter", "Escape"]);
 
 interface CommentItemProps {
   comment: ApplicationComment;
@@ -22,6 +29,8 @@ interface CommentItemProps {
   currentUserAddress?: string;
   onEdit?: (commentId: string, newContent: string) => Promise<void>;
   onDelete?: (commentId: string) => Promise<void>;
+  programId?: string;
+  enableMentions?: boolean;
 }
 
 const CommentItem: FC<CommentItemProps> = ({
@@ -30,10 +39,73 @@ const CommentItem: FC<CommentItemProps> = ({
   currentUserAddress,
   onEdit,
   onDelete,
+  programId,
+  enableMentions = false,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(comment.content);
   const [isUpdating, setIsUpdating] = useState(false);
+  const editContainerRef = useRef<HTMLDivElement>(null);
+
+  const mentionsEnabled = enableMentions && !!programId;
+
+  const mentionEditor = useMentionEditor({
+    enabled: mentionsEnabled && isEditing,
+    editorRef: editContainerRef,
+  });
+
+  const { data: reviewers } = useMilestoneReviewers(mentionsEnabled ? (programId ?? "") : "");
+
+  const filteredReviewers = useMemo(() => {
+    if (!reviewers) return [];
+    if (!mentionEditor.filterText) return reviewers;
+    const lower = mentionEditor.filterText.toLowerCase();
+    return reviewers.filter(
+      (r) => r.name.toLowerCase().includes(lower) || r.email.toLowerCase().includes(lower)
+    );
+  }, [reviewers, mentionEditor.filterText]);
+
+  const mentionItems = useMemo(
+    () => filteredReviewers.map((r) => ({ name: r.name, email: r.email })),
+    [filteredReviewers]
+  );
+
+  const handleEditContentChange = useCallback(
+    (value: string) => {
+      if (mentionsEnabled) {
+        mentionEditor.handleContentChange(value, setEditContent);
+      } else {
+        setEditContent(value);
+      }
+    },
+    [mentionsEnabled, mentionEditor]
+  );
+
+  const handleEditMentionSelect = useCallback(
+    (reviewer: { name: string; email: string }) => {
+      mentionEditor.handleSelectReviewer(reviewer, editContent, setEditContent);
+    },
+    [mentionEditor, editContent]
+  );
+
+  const handleEditInvited = useCallback(
+    (reviewer: { name: string; email: string }) => {
+      mentionEditor.handleInvitedReviewer(reviewer, editContent, setEditContent);
+    },
+    [mentionEditor, editContent]
+  );
+
+  const handleEditKeyDownCapture = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (!mentionEditor.isAutocompleteOpen || !MENTION_KEYS.has(e.key)) {
+        return;
+      }
+      e.preventDefault();
+      e.stopPropagation();
+      mentionEditor.handleKeyDown(e.key, mentionItems, isAdmin, editContent, setEditContent);
+    },
+    [mentionEditor, mentionItems, isAdmin, editContent]
+  );
 
   // Update editContent when comment changes to handle optimistic updates
   React.useEffect(() => {
@@ -209,15 +281,38 @@ const CommentItem: FC<CommentItemProps> = ({
           <div className="mt-2">
             {isEditing ? (
               <div className="space-y-2">
-                <MarkdownEditor
-                  value={editContent}
-                  onChange={setEditContent}
-                  height={200}
-                  minHeight={150}
-                  disabled={isUpdating}
-                  placeholderText="Edit your comment (Markdown supported)..."
-                  className="text-sm"
-                />
+                <div
+                  ref={editContainerRef}
+                  className="relative w-full"
+                  onKeyDownCapture={mentionsEnabled ? handleEditKeyDownCapture : undefined}
+                >
+                  <MarkdownEditor
+                    value={editContent}
+                    onChange={handleEditContentChange}
+                    height={200}
+                    minHeight={150}
+                    disabled={isUpdating}
+                    placeholderText={
+                      mentionsEnabled
+                        ? "Edit your comment... Use @ to mention reviewers."
+                        : "Edit your comment (Markdown supported)..."
+                    }
+                    className="text-sm"
+                  />
+                  {mentionsEnabled && programId && (
+                    <MentionAutocomplete
+                      programId={programId}
+                      isOpen={mentionEditor.isAutocompleteOpen}
+                      filterText={mentionEditor.filterText}
+                      isAdmin={isAdmin}
+                      selectedIndex={mentionEditor.selectedIndex}
+                      caretPosition={mentionEditor.caretPosition}
+                      onSelect={handleEditMentionSelect}
+                      onInviteNew={mentionEditor.handleOpenInviteModal}
+                      onClose={mentionEditor.handleCloseAutocomplete}
+                    />
+                  )}
+                </div>
                 <div className="flex items-center space-x-2">
                   <button
                     onClick={handleSaveEdit}
@@ -261,11 +356,19 @@ const CommentItem: FC<CommentItemProps> = ({
                     Cancel
                   </button>
                 </div>
+                {mentionsEnabled && programId && (
+                  <InviteReviewerModal
+                    programId={programId}
+                    isOpen={mentionEditor.isInviteModalOpen}
+                    onClose={mentionEditor.handleCloseInviteModal}
+                    onInvited={handleEditInvited}
+                  />
+                )}
               </div>
             ) : (
               <div className={cn("text-sm", comment.isDeleted && "opacity-60")}>
                 <MarkdownPreview
-                  source={comment.content}
+                  source={renderMentionsAsMarkdown(comment.content)}
                   className={cn("text-sm", comment.isDeleted && "line-through")}
                 />
               </div>

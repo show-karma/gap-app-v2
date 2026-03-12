@@ -60,6 +60,7 @@ export const MilestoneCard = ({ milestone, isAuthorized }: MilestoneCardProps) =
   };
 
   const { title, description, completed, type } = milestone;
+  const editHistory = milestone.source.grantMilestone?.milestone.editHistory;
 
   // Fetch milestone impact data (outputs/metrics) if milestone is completed
   const { data: milestoneImpactData } = useMilestoneImpactAnswers({
@@ -183,6 +184,14 @@ export const MilestoneCard = ({ milestone, isAuthorized }: MilestoneCardProps) =
             >
               {getStatusText()}
             </p>
+            {editHistory && editHistory.length > 0 ? (
+              <span
+                className="px-2 py-0.5 rounded-full text-xs bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300"
+                title={`Edited ${editHistory.length} ${editHistory.length === 1 ? "time" : "times"}. Last edited ${new Date(editHistory[editHistory.length - 1].editedAt).toLocaleDateString()}`}
+              >
+                Edited
+              </span>
+            ) : null}
           </div>
 
           {isAuthorized && type === "project" && projectMilestone ? (

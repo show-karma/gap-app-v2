@@ -45,7 +45,7 @@ function getMilestoneAttester(milestone: UnifiedMilestone): string | undefined {
  * Note: "impact" type should display as "Milestone" to match staging behavior,
  * where project impacts are shown as milestones with the title "Project Impact".
  */
-function getActivityTypeLabel(type: string): string {
+function getActivityTypeLabel(type: string, milestone?: UnifiedMilestone): string {
   switch (type) {
     case "grant_update":
       return "Grant Update";
@@ -58,8 +58,11 @@ function getActivityTypeLabel(type: string): string {
     case "impact":
     case "grant":
     case "milestone":
-    default:
+    default: {
+      const editHistory = milestone?.source.grantMilestone?.milestone.editHistory;
+      if (editHistory && editHistory.length > 0) return "Milestone edited";
       return "Milestone created";
+    }
   }
 }
 
@@ -246,7 +249,7 @@ export function ActivityFeed({
                     {/* Left side: Status and Due Date */}
                     <div className="flex flex-row items-center gap-1.5 lg:gap-2 flex-wrap">
                       <span className="text-xs lg:text-sm font-semibold text-foreground">
-                        {getActivityTypeLabel(milestone.type)}
+                        {getActivityTypeLabel(milestone.type, milestone)}
                       </span>
                       {isValidTimestamp(milestone.endsAt) && (
                         <span className="text-xs lg:text-sm font-semibold text-muted-foreground">
