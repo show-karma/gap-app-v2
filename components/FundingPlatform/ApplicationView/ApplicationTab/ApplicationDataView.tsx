@@ -4,6 +4,7 @@ import type { FC, JSX } from "react";
 import { useMemo } from "react";
 import { KarmaProjectLink } from "@/components/FundingPlatform/shared/KarmaProjectLink";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
+import { VideoPreview } from "@/src/features/judge-agent/components/video-preview";
 import type {
   IFundingApplication,
   IMilestoneData,
@@ -12,6 +13,25 @@ import type {
 import { createFieldLabelsMap, createFieldTypeMap } from "@/utilities/form-schema-helpers";
 import { formatDate } from "@/utilities/formatDate";
 import { PROJECT_UID_REGEX } from "@/utilities/validation";
+
+const VIDEO_FIELD_PATTERNS = ["video", "demo", "youtube", "loom"];
+
+function isVideoUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    if (url.hostname.includes("youtube.com") || url.hostname === "youtu.be") return true;
+    if (url.hostname.includes("loom.com")) return true;
+    if (/\.(mp4|webm|mov|avi)(\?.*)?$/i.test(url.pathname)) return true;
+  } catch {
+    // not a valid URL
+  }
+  return false;
+}
+
+function isVideoField(fieldKey: string): boolean {
+  const normalized = fieldKey.toLowerCase().replace(/[\s_-]+/g, "");
+  return VIDEO_FIELD_PATTERNS.some((p) => normalized.includes(p));
+}
 
 export interface ApplicationDataViewProps {
   application: IFundingApplication;
@@ -129,6 +149,25 @@ export const ApplicationDataView: FC<ApplicationDataViewProps> = ({ application,
       PROJECT_UID_REGEX.test(value)
     ) {
       return <KarmaProjectLink uid={value} />;
+    }
+
+    // Video fields: render with video preview
+    if (typeof value === "string" && fieldKey && isVideoField(fieldKey) && isVideoUrl(value)) {
+      return (
+        <div className="space-y-2">
+          <div className="max-w-lg">
+            <VideoPreview url={value} />
+          </div>
+          <a
+            href={value}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-blue-600 dark:text-blue-400 hover:underline break-all"
+          >
+            {value}
+          </a>
+        </div>
+      );
     }
 
     // Default: render as markdown

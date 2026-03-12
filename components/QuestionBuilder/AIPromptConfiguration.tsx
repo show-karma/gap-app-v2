@@ -12,6 +12,7 @@ import type { FormSchema } from "@/types/question-builder";
 import { TabContent } from "../Utilities/Tabs/TabContent";
 import { Tabs } from "../Utilities/Tabs/Tabs";
 import { TabTrigger } from "../Utilities/Tabs/TabTrigger";
+import { JudgingCriteriaEditor } from "./JudgingCriteriaEditor";
 
 const DEFAULT_AI_MODEL = "gpt-4o";
 
@@ -33,7 +34,17 @@ interface AIPromptConfigurationProps {
   readOnly?: boolean;
 }
 
-function PromptTabs({ programId, readOnly }: { programId: string; readOnly: boolean }) {
+function PromptTabs({
+  programId,
+  readOnly,
+  schema,
+  onUpdate,
+}: {
+  programId: string;
+  readOnly: boolean;
+  schema: FormSchema;
+  onUpdate?: (s: FormSchema) => void;
+}) {
   // Fetch prompts from the new API
   const {
     data: promptsData,
@@ -104,6 +115,16 @@ function PromptTabs({ programId, readOnly }: { programId: string; readOnly: bool
           legacyPromptId={promptsData?.legacyPromptIds.internal}
           readOnly={readOnly}
         />
+        <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">
+            Demo Judging Criteria
+          </h3>
+          <JudgingCriteriaEditor
+            schema={schema}
+            onUpdate={readOnly ? undefined : onUpdate}
+            readOnly={readOnly}
+          />
+        </div>
       </TabContent>
     </>
   );
@@ -205,115 +226,120 @@ export function AIPromptConfiguration({
         icon={CpuChipIcon}
       />
       <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-        <div className="space-y-6">
-          {/* Prompt Management Section */}
-          {programId && (
-            <div className="border-b border-gray-200 dark:border-gray-700 pb-6 mb-6">
-              <Tabs defaultTab="external">
-                <PromptTabs programId={programId} readOnly={readOnly} />
-              </Tabs>
-            </div>
-          )}
+        <Tabs defaultTab="external">
+          <div className="space-y-6">
+            {/* Prompt Management Section */}
+            {programId && (
+              <div className="border-b border-gray-200 dark:border-gray-700 pb-6 mb-6">
+                <PromptTabs
+                  programId={programId}
+                  readOnly={readOnly}
+                  schema={schema}
+                  onUpdate={onUpdate}
+                />
+              </div>
+            )}
 
-          {/* Legacy Configuration (kept for backwards compatibility) */}
-          <div className="pt-4 border-t border-gray-200 dark:border-gray-600">
-            <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">
-              Legacy Settings
-            </h4>
+            {/* Legacy Configuration (kept for backwards compatibility) */}
+            <div className="pt-4 border-t border-gray-200 dark:border-gray-600">
+              <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">
+                Legacy Settings
+              </h4>
 
-            {/* AI Model Selection */}
-            <div className="mb-4">
-              <label
-                htmlFor="ai-model"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-              >
-                Default AI Model *
-              </label>
-              <select
-                id="ai-model"
-                {...register("aiModel")}
-                disabled={readOnly || isLoadingModels}
-                className={`w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 ${readOnly || isLoadingModels ? "opacity-50 cursor-not-allowed" : ""}`}
-              >
-                {isLoadingModels ? (
-                  <option value="">Loading models...</option>
-                ) : (
-                  availableModels.map((model) => (
-                    <option key={model} value={model}>
-                      {model}
-                    </option>
-                  ))
+              {/* AI Model Selection */}
+              <div className="mb-4">
+                <label
+                  htmlFor="ai-model"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
+                  Default AI Model *
+                </label>
+                <select
+                  id="ai-model"
+                  {...register("aiModel")}
+                  disabled={readOnly || isLoadingModels}
+                  className={`w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 ${readOnly || isLoadingModels ? "opacity-50 cursor-not-allowed" : ""}`}
+                >
+                  {isLoadingModels ? (
+                    <option value="">Loading models...</option>
+                  ) : (
+                    availableModels.map((model) => (
+                      <option key={model} value={model}>
+                        {model}
+                      </option>
+                    ))
+                  )}
+                </select>
+                {errors.aiModel && (
+                  <p className="text-red-500 text-sm mt-1">{errors.aiModel.message}</p>
                 )}
-              </select>
-              {errors.aiModel && (
-                <p className="text-red-500 text-sm mt-1">{errors.aiModel.message}</p>
-              )}
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                This model is used for legacy configurations. New prompts use their own model
-                selection.
-              </p>
-            </div>
-
-            {/* Real-time Evaluation Toggle */}
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="flex items-center">
-                  <input
-                    id="enable-realtime-eval"
-                    {...register("enableRealTimeEvaluation")}
-                    type="checkbox"
-                    disabled={readOnly}
-                    className={`rounded border-gray-300 text-blue-600 focus:ring-blue-500 ${readOnly ? "opacity-50 cursor-not-allowed" : ""}`}
-                  />
-                  <label
-                    htmlFor="enable-realtime-eval"
-                    className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300"
-                  >
-                    Enable Real-time Evaluation
-                  </label>
-                </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-6">
-                  Provide instant feedback to applicants as they complete form fields.
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  This model is used for legacy configurations. New prompts use their own model
+                  selection.
                 </p>
               </div>
-            </div>
-          </div>
 
-          {/* Configuration Summary */}
-          {schema.aiConfig && (
-            <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mt-4">
-              <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
-                Current Configuration
-              </h4>
-              <dl className="text-xs space-y-1">
-                <div className="flex justify-between">
-                  <dt className="text-gray-600 dark:text-gray-400">Model:</dt>
-                  <dd className="text-gray-900 dark:text-white font-mono">
-                    {schema.aiConfig.aiModel}
-                  </dd>
+              {/* Real-time Evaluation Toggle */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center">
+                    <input
+                      id="enable-realtime-eval"
+                      {...register("enableRealTimeEvaluation")}
+                      type="checkbox"
+                      disabled={readOnly}
+                      className={`rounded border-gray-300 text-blue-600 focus:ring-blue-500 ${readOnly ? "opacity-50 cursor-not-allowed" : ""}`}
+                    />
+                    <label
+                      htmlFor="enable-realtime-eval"
+                      className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300"
+                    >
+                      Enable Real-time Evaluation
+                    </label>
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-6">
+                    Provide instant feedback to applicants as they complete form fields.
+                  </p>
                 </div>
-                <div className="flex justify-between">
-                  <dt className="text-gray-600 dark:text-gray-400">Real-time Evaluation:</dt>
-                  <dd className="text-gray-900 dark:text-white">
-                    {schema.aiConfig.enableRealTimeEvaluation ? "Enabled" : "Disabled"}
-                  </dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt className="text-gray-600 dark:text-gray-400">Langfuse Prompt:</dt>
-                  <dd className="text-gray-900 dark:text-white font-mono text-xs">
-                    {schema.aiConfig.langfusePromptId || "Default from registry"}
-                  </dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt className="text-gray-600 dark:text-gray-400">Internal Prompt:</dt>
-                  <dd className="text-gray-900 dark:text-white font-mono text-xs">
-                    {schema.aiConfig.internalLangfusePromptId || "Not configured"}
-                  </dd>
-                </div>
-              </dl>
+              </div>
             </div>
-          )}
-        </div>
+
+            {/* Configuration Summary */}
+            {schema.aiConfig && (
+              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mt-4">
+                <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
+                  Current Configuration
+                </h4>
+                <dl className="text-xs space-y-1">
+                  <div className="flex justify-between">
+                    <dt className="text-gray-600 dark:text-gray-400">Model:</dt>
+                    <dd className="text-gray-900 dark:text-white font-mono">
+                      {schema.aiConfig.aiModel}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between">
+                    <dt className="text-gray-600 dark:text-gray-400">Real-time Evaluation:</dt>
+                    <dd className="text-gray-900 dark:text-white">
+                      {schema.aiConfig.enableRealTimeEvaluation ? "Enabled" : "Disabled"}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between">
+                    <dt className="text-gray-600 dark:text-gray-400">Langfuse Prompt:</dt>
+                    <dd className="text-gray-900 dark:text-white font-mono text-xs">
+                      {schema.aiConfig.langfusePromptId || "Default from registry"}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between">
+                    <dt className="text-gray-600 dark:text-gray-400">Internal Prompt:</dt>
+                    <dd className="text-gray-900 dark:text-white font-mono text-xs">
+                      {schema.aiConfig.internalLangfusePromptId || "Not configured"}
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+            )}
+          </div>
+        </Tabs>
       </div>
     </div>
   );

@@ -5,6 +5,7 @@ import type { IFundingApplication, ProgramWithFormSchema } from "@/types/funding
 import { AIEvaluationDisplay } from "../AIEvaluation";
 import AIEvaluationButton from "../AIEvaluationButton";
 import { InternalAIEvaluationDisplay } from "../InternalAIEvaluation";
+import { VideoEvaluationDisplay } from "../VideoEvaluation";
 import { type AIAnalysisSubTabId, AIAnalysisSubTabs } from "./AIAnalysisSubTabs";
 import { EmptyEvaluationState } from "./EmptyEvaluationState";
 
@@ -49,7 +50,7 @@ export const AIAnalysisTab: FC<AIAnalysisTabProps> = ({
       <div className="flex items-center justify-between gap-4">
         <AIAnalysisSubTabs activeTab={activeSubTab} onTabChange={setActiveSubTab} />
 
-        {/* Run button for current tab - only shown if user can run evaluations */}
+        {/* Run button for current tab */}
         {canRunEvaluation && (
           <AIEvaluationButton
             referenceNumber={referenceNumber}
@@ -74,16 +75,26 @@ export const AIAnalysisTab: FC<AIAnalysisTabProps> = ({
             description="Run an AI evaluation to get automated feedback visible to the applicant."
           />
         )
-      ) : hasInternalEvaluation ? (
-        <InternalAIEvaluationDisplay
-          evaluation={application.internalAIEvaluation?.evaluation || null}
-          programName={program?.name}
-        />
       ) : (
-        <EmptyEvaluationState
-          title="No Internal Evaluation Yet"
-          description="Run an internal AI evaluation for reviewer-only insights and analysis."
-        />
+        <div className="space-y-8">
+          {/* Internal AI Evaluation */}
+          {hasInternalEvaluation ? (
+            <InternalAIEvaluationDisplay
+              evaluation={application.internalAIEvaluation?.evaluation || null}
+              programName={program?.name}
+            />
+          ) : (
+            <EmptyEvaluationState
+              title="No Internal Evaluation Yet"
+              description="Run an internal AI evaluation for reviewer-only insights and analysis."
+            />
+          )}
+
+          {/* Video & Demo Review — always shown in internal tab */}
+          <div className="border-t border-gray-200 dark:border-gray-700 pt-8">
+            <VideoEvaluationDisplay application={application} />
+          </div>
+        </div>
       )}
     </div>
   );

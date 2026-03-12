@@ -13,19 +13,19 @@ export interface AIAnalysisSubTabsProps {
   onTabChange: (tab: AIAnalysisSubTabId) => void;
 }
 
-const tabs: { id: AIAnalysisSubTabId; label: string; icon: typeof SunIcon; description: string }[] =
+const tabs: { id: AIAnalysisSubTabId; label: string; shortLabel: string; icon: typeof SunIcon }[] =
   [
     {
       id: "external",
       label: "External Evaluation",
+      shortLabel: "External",
       icon: SunIcon,
-      description: "Visible to applicants",
     },
     {
       id: "internal",
       label: "Internal Evaluation",
+      shortLabel: "Internal",
       icon: LockClosedIcon,
-      description: "Reviewer only",
     },
   ];
 
@@ -59,7 +59,7 @@ export const AIAnalysisSubTabs: FC<AIAnalysisSubTabsProps> = ({ activeTab, onTab
               )}
             />
             <span className="hidden sm:inline">{tab.label}</span>
-            <span className="sm:hidden">{tab.id === "external" ? "External" : "Internal"}</span>
+            <span className="sm:hidden">{tab.shortLabel}</span>
           </button>
         );
       })}

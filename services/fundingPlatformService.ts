@@ -658,7 +658,24 @@ export const fundingApplicationsAPI = {
     const response = await apiClient.post(
       `/v2/funding-applications/${referenceNumber}/evaluate-internal`,
       {},
-      { timeout: 90000 }
+      { timeout: 300000 }
+    );
+    return response.data;
+  },
+
+  /**
+   * Run video/demo evaluation on an application using Gemini judge agent.
+   * Extracts video URL from application data, evaluates with Gemini, and saves result.
+   */
+  async runVideoEvaluation(referenceNumber: string): Promise<{
+    success: boolean;
+    referenceNumber: string;
+    result: any;
+  }> {
+    const response = await apiClient.post(
+      `/v2/judge-agent/evaluate-video/${referenceNumber}`,
+      {},
+      { timeout: 180000 }
     );
     return response.data;
   },

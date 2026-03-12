@@ -146,6 +146,29 @@ export interface IFundingApplication {
     promptId?: string;
     evaluatedAt?: string | Date;
   };
+  videoEvaluation?: {
+    projectName?: string;
+    tldr?: string;
+    scores?: Array<{
+      criterionId: string;
+      criterionName: string;
+      score: number;
+      maxScore: number;
+      reasoning: string;
+      evidence: string[];
+    }>;
+    totalScore?: number;
+    maxPossibleScore?: number;
+    weightedScore?: number;
+    summary?: string;
+    strengths?: string[];
+    weaknesses?: string[];
+    recommendations?: string[];
+    completenessFlag?: string;
+    videoAnalysis?: string;
+    evaluatedAt?: string;
+    githubInsights?: any;
+  };
   appReviewers?: string[]; // Array of program reviewer addresses assigned to this application
   milestoneReviewers?: string[]; // Array of milestone reviewer addresses assigned to this application
   postApprovalCompleted?: boolean; // Indicates if post-approval form has been completed
