@@ -165,7 +165,7 @@ export function JudgingCriteriaEditor({
         <p className="text-xs text-gray-500 dark:text-gray-400">
           Customize the system prompt sent to Gemini. Use placeholders: {`{{hackathon}}`},{" "}
           {`{{criteria}}`}, {`{{submission}}`}, {`{{github}}`}, {`{{karma_project}}`},{" "}
-          {`{{application_data}}`}, {`{{process}}`}.
+          {`{{application_data}}`}.
         </p>
         {showPromptEditor &&
           (isLoadingPrompt ? (
