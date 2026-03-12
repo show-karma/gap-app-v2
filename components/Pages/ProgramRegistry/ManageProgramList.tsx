@@ -78,6 +78,11 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
                 >
                   {grant?.metadata?.title}
                 </button>
+                {grant.metadata?.deactivationReason === "stale_no_end_date" ? (
+                  <span className="inline-flex items-center rounded-md bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20 dark:bg-amber-900/30 dark:text-amber-400 dark:ring-amber-500/30">
+                    Auto-pending: no end date (stale 90+ days)
+                  </span>
+                ) : null}
                 <div className="flex flex-row gap-1 w-full">
                   {grant.metadata?.socialLinks?.grantsSite ? (
                     <ExternalLink
