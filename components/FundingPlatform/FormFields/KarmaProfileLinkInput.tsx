@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  ArrowTopRightOnSquareIcon,
-  MagnifyingGlassIcon,
-  PlusIcon,
-  XMarkIcon,
-} from "@heroicons/react/24/solid";
+import { MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import debounce from "lodash.debounce";
 import { type FC, useEffect, useMemo, useRef, useState } from "react";
 import type { Control, FieldError, FieldErrorsImpl, Merge } from "react-hook-form";
@@ -16,7 +11,6 @@ import { useProject } from "@/hooks/useProject";
 import { useProjectSearch } from "@/hooks/useProjectSearch";
 import type { SearchProjectResult } from "@/services/unified-search.service";
 import type { IFormField } from "@/types/funding-platform";
-import { envVars } from "@/utilities/enviromentVars";
 import { cn } from "@/utilities/tailwind";
 import { PROJECT_UID_REGEX } from "@/utilities/validation";
 
@@ -29,20 +23,6 @@ interface KarmaProfileLinkInputProps {
   error?: FieldError | Merge<FieldError, FieldErrorsImpl<any>>;
   isLoading?: boolean;
 }
-
-const AddProjectLink: FC = () => (
-  <a
-    href={`${envVars.VERCEL_URL}?action=create-project`}
-    target="_blank"
-    rel="noopener noreferrer"
-    data-testid="add-project-link"
-    className="flex items-center gap-2 px-4 py-3 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-  >
-    <PlusIcon className="w-4 h-4" />
-    <span>Add project</span>
-    <ArrowTopRightOnSquareIcon className="w-3 h-3 ml-auto" />
-  </a>
-);
 
 export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
   field,
@@ -96,9 +76,6 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
     projects,
     isLoading: isSearching,
     isFetching,
-    isError: isSearchError,
-    error: searchError,
-    refetch: refetchSearch,
   } = useProjectSearch(debouncedQuery, {
     enabled: debouncedQuery.length >= SEARCH_CONSTANTS.MIN_QUERY_LENGTH,
   });
@@ -140,19 +117,13 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
     };
   }, [isDropdownOpen]);
 
-  // Open dropdown when search completes (only if field still has focus)
+  // Open dropdown when search results arrive
   useEffect(() => {
-    const hasFocusWithin = containerRef.current?.contains(document.activeElement) ?? false;
-    if (
-      hasFocusWithin &&
-      debouncedQuery.length >= SEARCH_CONSTANTS.MIN_QUERY_LENGTH &&
-      !isSearching &&
-      !isFetching
-    ) {
+    if (projects.length > 0 && debouncedQuery.length >= SEARCH_CONSTANTS.MIN_QUERY_LENGTH) {
       setIsDropdownOpen(true);
       setFocusedIndex(-1); // Reset focus when new results arrive
     }
-  }, [projects, debouncedQuery, isSearching, isFetching]);
+  }, [projects, debouncedQuery]);
 
   const handleInputChange = (value: string) => {
     setSearchQuery(value);
@@ -244,7 +215,10 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
                   value={searchQuery}
                   onChange={(e) => handleInputChange(e.target.value)}
                   onFocus={() => {
-                    if (debouncedQuery.length >= SEARCH_CONSTANTS.MIN_QUERY_LENGTH) {
+                    if (
+                      projects.length > 0 &&
+                      debouncedQuery.length >= SEARCH_CONSTANTS.MIN_QUERY_LENGTH
+                    ) {
                       setIsDropdownOpen(true);
                     }
                   }}
@@ -289,17 +263,6 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
                       {displayProject.details?.slug || displayProject.uid}
                     </p>
                   </div>
-                  {!isLoading && (
-                    <button
-                      type="button"
-                      data-testid="remove-project-button"
-                      onClick={() => handleClear(onChange)}
-                      className="flex items-center gap-1 text-xs text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 transition-colors flex-shrink-0"
-                    >
-                      <XMarkIcon className="w-3 h-3" />
-                      <span>Remove</span>
-                    </button>
-                  )}
                 </div>
               )}
 
@@ -320,6 +283,8 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
                 <div
                   ref={dropdownRef}
                   id={listboxId}
+                  role="listbox"
+                  aria-label="Search results"
                   className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto"
                 >
                   {isSearching || isFetching ? (
@@ -330,28 +295,14 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
                       />
                       <span className="sr-only">Loading search results...</span>
                     </div>
-                  ) : isSearchError ? (
-                    <div className="py-4 px-4 text-center text-sm text-red-600 dark:text-red-400">
-                      <p>Failed to search projects</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        {searchError?.message || "An unexpected error occurred"}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => refetchSearch()}
-                        className="mt-2 text-xs text-blue-600 dark:text-blue-400 hover:underline"
-                      >
-                        Retry
-                      </button>
-                    </div>
                   ) : projects.length === 0 ? (
-                    <div className="py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                    <div className="py-6 text-center text-sm text-gray-500 dark:text-gray-400">
                       {debouncedQuery.length < SEARCH_CONSTANTS.MIN_QUERY_LENGTH
                         ? `Type at least ${SEARCH_CONSTANTS.MIN_QUERY_LENGTH} characters to search`
                         : "No projects found"}
                     </div>
                   ) : (
-                    <div className="py-1" role="listbox" aria-label="Search results">
+                    <div className="py-1">
                       {projects.map((project, index) => (
                         <button
                           key={project.uid}
@@ -385,13 +336,6 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
                       ))}
                     </div>
                   )}
-                  {!isSearching &&
-                    !isFetching &&
-                    debouncedQuery.length >= SEARCH_CONSTANTS.MIN_QUERY_LENGTH && (
-                      <div className="border-t border-gray-200 dark:border-zinc-700">
-                        <AddProjectLink />
-                      </div>
-                    )}
                 </div>
               )}
 
