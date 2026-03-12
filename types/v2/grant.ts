@@ -92,6 +92,12 @@ export interface GrantMilestone {
   updatedAt?: string;
   /** V2: Array of verification attestations */
   verified: Verification[];
+  /** Edit history entries tracking previous versions */
+  editHistory?: Array<{
+    previousUID: string;
+    editedAt: string;
+    editedBy: string;
+  }>;
   // Additional fields for compatibility
   id?: string;
   schemaUID?: string;
