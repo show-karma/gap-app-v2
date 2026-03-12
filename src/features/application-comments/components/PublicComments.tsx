@@ -14,12 +14,16 @@ interface PublicCommentsProps {
   referenceNumber: string;
   communityId: string;
   enabled?: boolean;
+  programId?: string;
+  isAdmin?: boolean;
 }
 
 export function PublicComments({
   referenceNumber,
   communityId,
   enabled = true,
+  programId,
+  isAdmin = false,
 }: PublicCommentsProps) {
   const {
     comments,
@@ -93,6 +97,8 @@ export function PublicComments({
               placeholder="Share your thoughts on this application..."
               disabled={!canComment}
               isLoading={isAddingComment}
+              programId={programId}
+              isAdmin={isAdmin}
             />
           </div>
         ) : (

@@ -16,6 +16,7 @@ interface CommentsAndActivityProps {
   }>;
   communityId: string;
   currentUserAddress?: string;
+  programId?: string;
 }
 
 export function CommentsAndActivity({
@@ -23,6 +24,7 @@ export function CommentsAndActivity({
   statusHistory,
   communityId,
   currentUserAddress,
+  programId,
 }: CommentsAndActivityProps) {
   const { comments, isLoading, createCommentAsync, editCommentAsync, deleteCommentAsync } =
     useApplicationComments(referenceNumber);
@@ -83,6 +85,8 @@ export function CommentsAndActivity({
         onCommentEdit={handleCommentEdit}
         onCommentDelete={handleCommentDelete}
         onVersionClick={undefined}
+        programId={programId}
+        enableMentions={!!programId}
       />
     </div>
   );

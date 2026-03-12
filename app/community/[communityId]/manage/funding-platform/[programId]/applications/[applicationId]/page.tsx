@@ -502,6 +502,8 @@ export default function ApplicationDetailPage() {
                         onCommentDelete={handleCommentDelete}
                         onVersionClick={handleVersionClick}
                         isLoading={isLoadingComments}
+                        programId={programId}
+                        enableMentions
                       />
                     </TabPanel>
                   ),
