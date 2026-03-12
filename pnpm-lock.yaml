@@ -308,9 +308,6 @@ importers:
       react-virtualized:
         specifier: ^9.22.5
         version: 9.22.6(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
-      react-wrap-balancer:
-        specifier: ^1.1.1
-        version: 1.1.1(react@19.2.1)
       rehype-external-links:
         specifier: ^3.0.0
         version: 3.0.0
@@ -498,6 +495,9 @@ importers:
       postcss:
         specifier: ^8.4.24
         version: 8.5.6
+      react-wrap-balancer:
+        specifier: ^1.1.1
+        version: 1.1.1(react@19.2.1)
       start-server-and-test:
         specifier: ^2.0.8
         version: 2.1.0

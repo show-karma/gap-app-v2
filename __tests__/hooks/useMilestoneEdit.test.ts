@@ -51,7 +51,7 @@ jest.mock("@/hooks/useGap", () => ({
   }),
 }));
 
-jest.mock("@/hooks/useSetupChainAndWallet", () => ({
+jest.mock("../../hooks/useSetupChainAndWallet", () => ({
   useSetupChainAndWallet: () => ({
     setupChainAndWallet: mockSetupChainAndWallet,
   }),
@@ -171,16 +171,51 @@ describe("useMilestoneEdit", () => {
     expect(result.current.isEditing).toBe(false);
   });
 
-  it("shows error toast on failure", async () => {
+  it("shows error toast on failure and re-throws", async () => {
     mockSetupChainAndWallet.mockResolvedValue(null);
 
     const { result } = renderHook(() => useMilestoneEdit());
 
-    await act(async () => {
-      await result.current.editMilestone(mockMilestone, { title: "Updated MVP" });
-    });
+    await expect(
+      act(async () => {
+        await result.current.editMilestone(mockMilestone, { title: "Updated MVP" });
+      })
+    ).rejects.toThrow();
 
     expect(mockShowError).toHaveBeenCalledWith("There was an error editing the milestone");
+  });
+
+  it("throws when milestone instance lacks edit method", async () => {
+    // Override to return milestone without edit method
+    mockSetupChainAndWallet.mockResolvedValue({
+      gapClient: {
+        fetch: {
+          projectById: jest.fn().mockResolvedValue({
+            grants: [
+              {
+                uid: "grant-001",
+                milestones: [
+                  {
+                    uid: "milestone-001",
+                    title: "Build MVP",
+                    chainID: 10,
+                  },
+                ],
+              },
+            ],
+          }),
+        },
+      },
+      walletSigner: { address: "0xabc" },
+    });
+
+    const { result } = renderHook(() => useMilestoneEdit());
+
+    await expect(
+      act(async () => {
+        await result.current.editMilestone(mockMilestone, { title: "Updated MVP" });
+      })
+    ).rejects.toThrow();
   });
 
   it("sets isEditing to false after completion", async () => {

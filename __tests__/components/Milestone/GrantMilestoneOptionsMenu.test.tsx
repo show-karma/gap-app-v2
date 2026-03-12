@@ -88,7 +88,7 @@ describe("GrantMilestoneOptionsMenu", () => {
     );
 
     // Open menu
-    await user.click(screen.getByRole("button", { name: "" }));
+    await user.click(screen.getByRole("button", { name: "Open milestone actions" }));
 
     expect(screen.getByText("Edit")).toBeInTheDocument();
     expect(screen.getByText("Mark as Complete")).toBeInTheDocument();
@@ -105,7 +105,7 @@ describe("GrantMilestoneOptionsMenu", () => {
       />
     );
 
-    await user.click(screen.getByRole("button", { name: "" }));
+    await user.click(screen.getByRole("button", { name: "Open milestone actions" }));
 
     expect(screen.queryByText("Edit")).not.toBeInTheDocument();
     expect(screen.getByText("Mark as Complete")).toBeInTheDocument();
@@ -121,7 +121,7 @@ describe("GrantMilestoneOptionsMenu", () => {
       />
     );
 
-    await user.click(screen.getByRole("button", { name: "" }));
+    await user.click(screen.getByRole("button", { name: "Open milestone actions" }));
     await user.click(screen.getByText("Edit"));
 
     expect(screen.getByTestId("milestone-edit-dialog")).toBeInTheDocument();
@@ -138,7 +138,7 @@ describe("GrantMilestoneOptionsMenu", () => {
       />
     );
 
-    await user.click(screen.getByRole("button", { name: "" }));
+    await user.click(screen.getByRole("button", { name: "Open milestone actions" }));
     const completeButton = screen.getByText("Mark as Complete").closest("button");
     expect(completeButton).toBeDisabled();
   });
@@ -153,7 +153,19 @@ describe("GrantMilestoneOptionsMenu", () => {
       />
     );
 
-    await user.click(screen.getByRole("button", { name: "" }));
+    await user.click(screen.getByRole("button", { name: "Open milestone actions" }));
     expect(screen.getByText("Delete")).toBeInTheDocument();
+  });
+
+  it("has accessible aria-label on the menu button", () => {
+    render(
+      <GrantMilestoneOptionsMenu
+        milestone={mockPendingMilestone}
+        completeFn={mockCompleteFn}
+        alreadyCompleted={false}
+      />
+    );
+
+    expect(screen.getByRole("button", { name: "Open milestone actions" })).toBeInTheDocument();
   });
 });

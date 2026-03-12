@@ -2,7 +2,7 @@
 
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/Utilities/Button";
@@ -29,7 +29,10 @@ const editMilestoneSchema = z.object({
   description: z.string().max(5000, "Description must be less than 5000 characters").optional(),
   endsAt: z.string().optional(),
   startsAt: z.string().optional(),
-  priority: z.coerce.number().min(0).max(10).optional(),
+  priority: z.preprocess(
+    (v) => (v === "" ? undefined : v),
+    z.coerce.number().min(0).max(10).optional()
+  ),
 });
 
 type EditMilestoneFormData = z.infer<typeof editMilestoneSchema>;
@@ -57,6 +60,13 @@ export const MilestoneEditDialog = ({ milestone, isOpen, onClose }: MilestoneEdi
   const { isEditing, editMilestone } = useMilestoneEdit();
   const [error, setError] = useState<string | null>(null);
 
+  const handleOpenChange = useCallback(
+    (open: boolean) => {
+      if (!open) onClose();
+    },
+    [onClose]
+  );
+
   const grantMilestone = milestone.source.grantMilestone?.milestone;
 
   const {
@@ -79,9 +89,9 @@ export const MilestoneEditDialog = ({ milestone, isOpen, onClose }: MilestoneEdi
     try {
       const editData: MilestoneEditData = {
         title: data.title.trim(),
-        description: data.description?.trim() || milestone.description || "",
-        endsAt: dateInputToUnix(data.endsAt) ?? milestone.endsAt ?? 0,
-        startsAt: dateInputToUnix(data.startsAt) ?? milestone.startsAt,
+        description: data.description?.trim() || undefined,
+        endsAt: dateInputToUnix(data.endsAt),
+        startsAt: dateInputToUnix(data.startsAt),
         priority: data.priority,
       };
 
@@ -93,7 +103,7 @@ export const MilestoneEditDialog = ({ milestone, isOpen, onClose }: MilestoneEdi
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">

@@ -243,4 +243,39 @@ describe("MilestoneEditDialog", () => {
     expect(screen.getByText("Due Date")).toBeInTheDocument();
     expect(screen.getByText("Priority (0-10)")).toBeInTheDocument();
   });
+
+  it("sends undefined for cleared description instead of falling back", async () => {
+    const user = userEvent.setup();
+    render(
+      <MilestoneEditDialog milestone={mockPendingMilestone} isOpen={true} onClose={mockOnClose} />
+    );
+
+    const descInput = screen.getByTestId("milestone-description");
+    await user.clear(descInput);
+    await user.click(screen.getByText("Save Changes"));
+
+    await waitFor(() => {
+      expect(mockEditMilestone).toHaveBeenCalledWith(
+        mockPendingMilestone,
+        expect.objectContaining({
+          description: undefined,
+        })
+      );
+    });
+  });
+
+  it("sends undefined for cleared dates instead of falling back", async () => {
+    const user = userEvent.setup();
+    render(
+      <MilestoneEditDialog milestone={mockPendingMilestone} isOpen={true} onClose={mockOnClose} />
+    );
+
+    await user.click(screen.getByText("Save Changes"));
+
+    await waitFor(() => {
+      const callArgs = mockEditMilestone.mock.calls[0][1];
+      // description cleared should be undefined, not fall back to original
+      expect(callArgs.title).toBe("Build MVP");
+    });
+  });
 });

@@ -150,10 +150,18 @@ export const useMilestoneEdit = () => {
           }
 
           const sanitizedData = sanitizeObject(newData);
+          const editedUIDs: string[] = [];
 
           for (const milestoneInstance of milestoneInstances) {
+            if (!("edit" in milestoneInstance) || typeof milestoneInstance.edit !== "function") {
+              throw new Error("Milestone instance does not support editing");
+            }
             const editCallback = createEditStepCallback();
             const result = await milestoneInstance.edit(walletSigner, sanitizedData, editCallback);
+
+            if (result?.uids?.length) {
+              editedUIDs.push(...result.uids);
+            }
 
             changeStepperStep("indexing");
             const txHash = result?.tx?.[0]?.hash;
@@ -168,7 +176,7 @@ export const useMilestoneEdit = () => {
               if (!fetchedGrants?.length) return false;
               const foundMilestones = fetchedGrants
                 .flatMap((g) => g.milestones || [])
-                .filter((m) => milestoneUIDs.includes(m.uid));
+                .filter((m) => editedUIDs.includes(m.uid));
               return foundMilestones.some(
                 (m) => m.title === sanitizedData.title || !sanitizedData.title
               );
@@ -219,8 +227,14 @@ export const useMilestoneEdit = () => {
 
         const sanitizedData = sanitizeObject(newData);
 
+        if (!("edit" in milestoneInstance) || typeof milestoneInstance.edit !== "function") {
+          throw new Error("Milestone instance does not support editing");
+        }
+
         const editCallback = createEditStepCallback();
         const result = await milestoneInstance.edit(walletSigner, sanitizedData, editCallback);
+
+        const editedUIDs: string[] = result?.uids?.length ? [...result.uids] : [];
 
         changeStepperStep("indexing");
 
@@ -234,9 +248,12 @@ export const useMilestoneEdit = () => {
             const { data: fetchedGrants } = await refetchGrants();
             if (!fetchedGrants?.length) return false;
             const foundGrant = fetchedGrants.find((g) => g.uid === milestone.refUID);
-            const fetchedMilestone = foundGrant?.milestones?.find(
-              (m) => m.title === (sanitizedData.title || milestone.title)
-            );
+            if (!foundGrant) return false;
+            const fetchedMilestone = editedUIDs.length
+              ? foundGrant.milestones?.find((m) => editedUIDs.includes(m.uid))
+              : foundGrant.milestones?.find(
+                  (m) => m.title === (sanitizedData.title || milestone.title)
+                );
             return !!fetchedMilestone;
           },
           async () => {
@@ -252,6 +269,7 @@ export const useMilestoneEdit = () => {
       errorManager("Error editing milestone", error, {
         milestoneData: milestone,
       });
+      throw error;
     } finally {
       setIsEditing(false);
       dismiss();
