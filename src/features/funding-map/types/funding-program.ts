@@ -119,6 +119,8 @@ export interface FundingProgramMetadata {
   anyoneCanJoin?: boolean;
   invoiceRequired?: boolean;
   status?: string;
+  deactivationReason?: string;
+  deactivatedAt?: string;
   communityRef?: string[];
   adminEmails?: string[];
   financeEmails?: string[];
