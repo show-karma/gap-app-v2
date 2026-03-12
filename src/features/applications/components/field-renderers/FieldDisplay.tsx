@@ -16,7 +16,6 @@ interface FieldDisplayProps {
   label: string;
   value: unknown;
   fieldLabel: string;
-  communityId: string;
   referenceNumber: string;
   fieldType?: string;
 }
@@ -62,7 +61,6 @@ export function FieldDisplay({
   label,
   value,
   fieldLabel,
-  communityId,
   referenceNumber,
   fieldType,
 }: FieldDisplayProps) {
@@ -79,7 +77,6 @@ export function FieldDisplay({
           label={label}
           value={value as unknown as MilestoneData[]}
           fieldLabel={fieldLabel}
-          communityId={communityId}
           referenceNumber={referenceNumber}
         />
       );

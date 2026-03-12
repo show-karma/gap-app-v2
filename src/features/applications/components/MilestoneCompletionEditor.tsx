@@ -13,7 +13,6 @@ import { formatFieldLabel, isMarkdownContent, MILESTONE_CORE_FIELDS } from "../l
 interface MilestoneCompletionEditorProps {
   milestones: MilestoneData[];
   fieldLabel: string;
-  communityId: string;
   referenceNumber: string;
   isEditable: boolean;
 }
@@ -21,7 +20,6 @@ interface MilestoneCompletionEditorProps {
 export function MilestoneCompletionEditor({
   milestones,
   fieldLabel,
-  communityId,
   referenceNumber,
   isEditable,
 }: MilestoneCompletionEditorProps) {
@@ -34,7 +32,6 @@ export function MilestoneCompletionEditor({
     getCompletion,
     hasCompletion,
   } = useMilestoneCompletions({
-    communityId,
     referenceNumber,
     enabled: true,
   });

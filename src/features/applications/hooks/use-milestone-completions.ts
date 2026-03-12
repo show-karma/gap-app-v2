@@ -1,34 +1,22 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import fetchData from "@/utilities/fetchData";
-
-interface MilestoneCompletion {
-  id: string;
-  milestoneFieldLabel: string;
-  milestoneTitle: string;
-  completionText: string;
-  isVerified: boolean;
-  verifiedBy?: string;
-  verificationComment?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface MilestoneCompletionPayload {
-  milestoneFieldLabel: string;
-  milestoneTitle: string;
-  completionText: string;
-}
+import type {
+  MilestoneCompletion,
+  MilestoneCompletionPayload,
+} from "../services/milestone-completion.service";
+import {
+  createMilestoneCompletion,
+  getMilestoneCompletions,
+  updateMilestoneCompletion,
+} from "../services/milestone-completion.service";
 
 interface UseMilestoneCompletionsOptions {
-  communityId: string;
   referenceNumber: string;
   enabled?: boolean;
 }
 
 export function useMilestoneCompletions({
-  communityId,
   referenceNumber,
   enabled = true,
 }: UseMilestoneCompletionsOptions) {
@@ -40,50 +28,27 @@ export function useMilestoneCompletions({
     error,
     refetch,
   } = useQuery({
-    queryKey: ["milestone-completions", communityId, referenceNumber],
-    queryFn: async () => {
-      const [response, fetchError] = await fetchData<
-        MilestoneCompletion[] | { data: MilestoneCompletion[] }
-      >(`/v2/funding-applications/${referenceNumber}/milestone-completions`);
-      if (fetchError) throw new Error(fetchError);
-      if (!response) return [];
-      return Array.isArray(response) ? response : (response.data ?? []);
-    },
+    queryKey: ["milestone-completions", referenceNumber],
+    queryFn: () => getMilestoneCompletions(referenceNumber),
     enabled: enabled && !!referenceNumber,
   });
 
   const createCompletion = useMutation({
-    mutationFn: async (payload: MilestoneCompletionPayload) => {
-      const [response, fetchError] = await fetchData<MilestoneCompletion>(
-        `/v2/funding-applications/${referenceNumber}/milestone-completions`,
-        "POST",
-        payload
-      );
-      if (fetchError || !response)
-        throw new Error(fetchError ?? "Failed to create milestone completion");
-      return response;
-    },
+    mutationFn: (payload: MilestoneCompletionPayload) =>
+      createMilestoneCompletion(referenceNumber, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["milestone-completions", communityId, referenceNumber],
+        queryKey: ["milestone-completions", referenceNumber],
       });
     },
   });
 
   const updateCompletion = useMutation({
-    mutationFn: async (payload: MilestoneCompletionPayload) => {
-      const [response, fetchError] = await fetchData<MilestoneCompletion>(
-        `/v2/funding-applications/${referenceNumber}/milestone-completions`,
-        "PUT",
-        payload
-      );
-      if (fetchError || !response)
-        throw new Error(fetchError ?? "Failed to update milestone completion");
-      return response;
-    },
+    mutationFn: (payload: MilestoneCompletionPayload) =>
+      updateMilestoneCompletion(referenceNumber, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["milestone-completions", communityId, referenceNumber],
+        queryKey: ["milestone-completions", referenceNumber],
       });
     },
   });

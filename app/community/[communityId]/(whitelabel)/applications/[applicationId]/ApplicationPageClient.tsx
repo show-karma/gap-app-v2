@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowLeft, Edit, ExternalLink } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { ApplicationDataView } from "@/components/FundingPlatform/ApplicationView/ApplicationTab/ApplicationDataView";
 import { useAuth } from "@/hooks/useAuth";
 import { Link } from "@/src/components/navigation/Link";
@@ -14,6 +14,7 @@ import type { IFundingApplication, ProgramWithFormSchema } from "@/types/funding
 import type { Application, ApplicationStatus, FundingProgram } from "@/types/whitelabel-entities";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
+import { MilestonesTab } from "./components/MilestonesTab";
 
 interface ApplicationPageClientProps {
   communityId: string;
@@ -50,6 +51,18 @@ const editableStatuses: ApplicationStatus[] = [
   "resubmitted",
 ];
 
+function isMilestoneArray(
+  value: unknown
+): value is Array<{ title: string; [key: string]: unknown }> {
+  return (
+    Array.isArray(value) &&
+    value.length > 0 &&
+    typeof value[0] === "object" &&
+    value[0] !== null &&
+    "title" in value[0]
+  );
+}
+
 export function ApplicationPageClient({
   communityId,
   application,
@@ -81,6 +94,19 @@ export function ApplicationPageClient({
 
   const programName =
     program?.name || program?.metadata?.title || `Program ${application.programId}`;
+
+  // Check if application has milestone fields
+  const hasMilestones = useMemo(
+    () => Object.values(application.applicationData).some(isMilestoneArray),
+    [application.applicationData]
+  );
+
+  // Show tabs when application is approved and has milestones
+  const shouldShowTabs = application.status === "approved" && hasMilestones;
+
+  const [activeTab, setActiveTab] = useState<"details" | "milestones">(
+    shouldShowTabs ? "milestones" : "details"
+  );
 
   return (
     <div className="flex flex-col gap-5">
@@ -163,18 +189,53 @@ export function ApplicationPageClient({
         </div>
       )}
 
-      {/* Application Details */}
-      <div className="rounded-xl border border-border">
-        <div className="border-b border-border p-4">
-          <h2 className="text-xl font-semibold text-foreground">Application Details</h2>
+      {/* Tab Bar — only for approved applications with milestones */}
+      {shouldShowTabs && (
+        <div className="border-b border-border">
+          <nav className="-mb-px flex space-x-8">
+            <button
+              onClick={() => setActiveTab("details")}
+              className={cn(
+                "py-2 px-1 border-b-2 font-medium text-sm",
+                activeTab === "details"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
+              )}
+            >
+              Application Details
+            </button>
+            <button
+              onClick={() => setActiveTab("milestones")}
+              className={cn(
+                "py-2 px-1 border-b-2 font-medium text-sm",
+                activeTab === "milestones"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
+              )}
+            >
+              Milestones
+            </button>
+          </nav>
         </div>
-        <div className="p-6">
-          <ApplicationDataView
-            application={application as unknown as IFundingApplication}
-            program={program as unknown as ProgramWithFormSchema}
-          />
+      )}
+
+      {/* Tab Content */}
+      {shouldShowTabs && activeTab === "milestones" ? (
+        <MilestonesTab application={application} isOwner={isOwner} />
+      ) : (
+        <div className="rounded-xl border border-border">
+          <div className="border-b border-border p-4">
+            <h2 className="text-xl font-semibold text-foreground">Application Details</h2>
+          </div>
+          <div className="p-6">
+            <ApplicationDataView
+              application={application as unknown as IFundingApplication}
+              program={program as unknown as ProgramWithFormSchema}
+              excludeMilestones={shouldShowTabs}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Status History — always visible */}
       <ApplicationStatusHistory statusHistory={application.statusHistory || []} />
