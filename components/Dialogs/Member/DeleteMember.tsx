@@ -62,7 +62,14 @@ export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({ memberAddress 
       const member = fetchedProject.members.find(
         (item) => item.recipient.toLowerCase() === memberAddress.toLowerCase()
       );
-      if (!member) throw new Error("Member not found");
+      if (!member) {
+        // Ghost member: attestation already revoked in V1, clean up V2 data
+        await fetchData(INDEXER.ATTESTATION_LISTENER(project.uid, project.chainID), "POST", {});
+        await refreshProject();
+        showSuccess("Member removed successfully");
+        closeModal();
+        return;
+      }
       // Helper function to check if member was removed
       const checkIfMemberRemoved = async () => {
         let retries = 1000;
