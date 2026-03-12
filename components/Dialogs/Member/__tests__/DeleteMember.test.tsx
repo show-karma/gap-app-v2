@@ -274,6 +274,33 @@ describe("DeleteMemberDialog", () => {
       expect(mockShowError).not.toHaveBeenCalled();
     });
 
+    it("should show error when ghost member V2 cleanup fails", async () => {
+      const sdkProjectWithoutGhostMember = {
+        uid: PROJECT_UID,
+        chainID: 42220,
+        members: [
+          {
+            uid: "0xd90a079c20d16e2d099fbfd8cc0dd5be40142527394dab33e20bdbcaf36a5aed",
+            recipient: PROJECT_OWNER_ADDRESS,
+            chainID: 42220,
+            revoke: jest.fn(),
+            schema: { uid: "0xb4186a24" },
+          },
+        ],
+      };
+
+      mockGetProjectById.mockResolvedValue(sdkProjectWithoutGhostMember);
+      mockFetchData.mockResolvedValue([null, new Error("API error")]);
+
+      await openDialogAndConfirm(GHOST_MEMBER_ADDRESS);
+
+      await waitFor(() => {
+        expect(mockShowError).toHaveBeenCalled();
+      });
+
+      expect(mockShowSuccess).not.toHaveBeenCalled();
+    });
+
     it("should successfully remove a member that exists in both V1 and V2 data", async () => {
       // SETUP: Normal case — member exists in both V1 (SDK) and V2
       const mockRevoke = jest.fn().mockResolvedValue({

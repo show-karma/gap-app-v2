@@ -64,7 +64,12 @@ export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({ memberAddress 
       );
       if (!member) {
         // Ghost member: attestation already revoked in V1, clean up V2 data
-        await fetchData(INDEXER.ATTESTATION_LISTENER(project.uid, project.chainID), "POST", {});
+        const [, error] = await fetchData(
+          INDEXER.ATTESTATION_LISTENER(project.uid, project.chainID),
+          "POST",
+          {}
+        );
+        if (error) throw new Error("Failed to clean up ghost member data");
         await refreshProject();
         showSuccess("Member removed successfully");
         closeModal();
