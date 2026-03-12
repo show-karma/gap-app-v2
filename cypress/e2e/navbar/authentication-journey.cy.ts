@@ -4,12 +4,14 @@
  */
 
 import {
+  setupIndexerCatchAll,
   setupCommonIntercepts,
   waitForPageLoad,
 } from "../../support/intercepts";
 
 describe("Navbar Authentication Journey", () => {
   beforeEach(() => {
+    setupIndexerCatchAll();
     setupCommonIntercepts();
   });
 
