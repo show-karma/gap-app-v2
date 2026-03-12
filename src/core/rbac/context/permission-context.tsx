@@ -2,7 +2,6 @@
 
 import { usePrivy } from "@privy-io/react-auth";
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from "react";
-import { useAccount } from "wagmi";
 import { getCypressMockAuthState } from "@/utilities/auth/cypress-auth";
 import { usePermissionsQuery } from "../hooks/use-permissions";
 import { hasAllPermissions, hasAnyPermission, hasPermission } from "../policies";
@@ -54,7 +53,6 @@ interface PermissionProviderProps {
 
 export function PermissionProvider({ children, resourceContext = {} }: PermissionProviderProps) {
   const { authenticated, ready } = usePrivy();
-  const { isConnected } = useAccount();
   // Track client-side hydration so getCypressMockAuthState() is re-evaluated
   // after SSR. During SSR, window is undefined so the check returns null.
   // Without this, useMemo caches the SSR result and never re-checks on the client
@@ -67,7 +65,7 @@ export function PermissionProvider({ children, resourceContext = {} }: Permissio
   );
   const isCypressMockAuthenticated = Boolean(cypressMockAuthState?.authenticated);
 
-  const isAuthenticated = isCypressMockAuthenticated || (ready && authenticated && isConnected);
+  const isAuthenticated = isCypressMockAuthenticated || (ready && authenticated);
 
   const { data, isLoading, isError } = usePermissionsQuery(resourceContext, {
     enabled: isAuthenticated,

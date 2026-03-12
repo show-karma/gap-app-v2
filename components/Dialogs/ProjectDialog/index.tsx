@@ -234,8 +234,13 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [step, setStep] = useState(0);
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const { isConnected, address } = useAccount();
-  const { authenticated: isAuth, login } = useAuth();
+  const { isConnected: wagmiIsConnected, address: wagmiAddress } = useAccount();
+  const {
+    authenticated: isAuth,
+    login,
+    isConnected: authIsConnected,
+    address: authAddress,
+  } = useAuth();
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
   const [isLoading, setIsLoading] = useState(false);
@@ -244,6 +249,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const { gap } = useGap();
   const { openSimilarProjectsModal, isSimilarProjectsModalOpen } = useSimilarProjectsModalStore();
   const { setupChainAndWallet, smartWalletAddress } = useSetupChainAndWallet();
+  // Resolve address: wagmi (external wallet) > useAuth (Privy wallets) > smartWalletAddress (embedded wallet for social login)
+  const address = wagmiAddress || authAddress || (smartWalletAddress as `0x${string}` | undefined);
+  const isConnected = wagmiIsConnected || authIsConnected || !!smartWalletAddress;
   const { startAttestation, showLoading, showSuccess, showError, dismiss, changeStepperStep } =
     useAttestationToast();
   const [_walletSigner, setWalletSigner] = useState<any>(null);
@@ -542,11 +550,15 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     try {
       setIsLoading(true);
       startAttestation("Creating project...");
-      if (!isConnected || !isAuth) {
+      if (!isAuth) {
         login?.();
+        setIsLoading(false);
+        dismiss();
         return;
       }
       if (!address || !gap) {
+        setIsLoading(false);
+        dismiss();
         return;
       }
 
@@ -782,7 +794,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     try {
       setIsLoading(true);
       startAttestation("Updating project...");
-      if (!isConnected || !isAuth) {
+      if (!isAuth) {
         login?.();
         return;
       }

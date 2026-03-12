@@ -15,6 +15,12 @@ export interface MockAuthState {
     wallet?: {
       address: string;
     };
+    farcaster?: {
+      fid: number;
+      username: string | null;
+      displayName: string | null;
+      pfp: string | null;
+    };
   };
 }
 
@@ -525,7 +531,46 @@ export const authFixtures: AuthFixture[] = [
     },
   },
 
-  // 15. Loading State
+  // 15. Farcaster Authenticated User (no wallet)
+  {
+    name: "farcaster-authenticated",
+    description: "User authenticated via Farcaster with no browser-connectable wallet",
+    authState: {
+      ready: true,
+      authenticated: true,
+      isConnected: false,
+      // No address — Farcaster-linked wallet is not browser-connectable
+      user: {
+        id: "did:privy:farcaster-user-123",
+        farcaster: {
+          fid: 12345,
+          username: "testfcuser",
+          displayName: "Test FC User",
+          pfp: "https://example.com/fc-avatar.png",
+        },
+      },
+    },
+    permissions: {
+      communities: [],
+      reviewerPrograms: [],
+      isStaff: false,
+      isOwner: false,
+      isProgramCreator: false,
+      isRegistryAdmin: false,
+    },
+    expectedElements: {
+      signIn: false,
+      contactSales: false,
+      resources: false,
+      userMenu: true,
+      myProjects: true,
+      review: false,
+      admin: false,
+      managePrograms: false,
+    },
+  },
+
+  // 16. Loading State
   // Note: Even during loading, mobile menu shows Sign in/Contact sales because authenticated=false
   {
     name: "loading",

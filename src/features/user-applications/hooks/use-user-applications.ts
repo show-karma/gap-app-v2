@@ -8,7 +8,7 @@ import type { UserApplicationsResponse, UseUserApplicationsReturn } from "../typ
 
 export function useUserApplications(communitySlug?: string): UseUserApplicationsReturn {
   const queryClient = useQueryClient();
-  const { address } = useAuth();
+  const { address, authenticated } = useAuth();
 
   const {
     applications,
@@ -56,7 +56,7 @@ export function useUserApplications(communitySlug?: string): UseUserApplications
       return res as UserApplicationsResponse;
     },
     staleTime: 1000 * 60 * 2,
-    enabled: !!address,
+    enabled: !!authenticated,
   });
 
   // Update store with query results

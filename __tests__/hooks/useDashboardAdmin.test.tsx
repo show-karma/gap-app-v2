@@ -107,6 +107,45 @@ describe("useDashboardAdmin", () => {
     });
   });
 
+  it("enables the query for Farcaster users with no wallet address", async () => {
+    mockUseAuth.mockReturnValue({ authenticated: true, address: undefined });
+
+    const communities: Community[] = [
+      {
+        uid: "0xcommunity1" as `0x${string}`,
+        chainID: 10,
+        details: { name: "Optimism", slug: "optimism", imageURL: "logo.png" },
+      },
+    ];
+
+    mockFetchData.mockResolvedValueOnce([{ communities }, null, null, 200]).mockResolvedValueOnce([
+      {
+        communityUID: "0xcommunity1",
+        totalPrograms: 1,
+        enabledPrograms: 1,
+        totalApplications: 1,
+        approvedApplications: 0,
+        rejectedApplications: 0,
+        pendingApplications: 1,
+        revisionRequestedApplications: 0,
+        underReviewApplications: 0,
+      },
+      null,
+      null,
+      200,
+    ]);
+
+    const { result } = renderHook(() => useDashboardAdmin(), { wrapper: createWrapper() });
+
+    // Farcaster users are authenticated via JWT but have no wallet address.
+    // The API uses JWT auth, not wallet address, so the query should fire.
+    await waitFor(() => {
+      expect(result.current.communities.length).toBe(1);
+    });
+
+    expect(mockFetchData).toHaveBeenCalled();
+  });
+
   it("deduplicates communities on multiple chains by slug and aggregates metrics", async () => {
     const communities: Community[] = [
       {

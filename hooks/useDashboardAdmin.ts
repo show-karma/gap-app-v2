@@ -75,7 +75,7 @@ export function useDashboardAdmin() {
 
   const query = useQuery({
     queryKey: ["dashboardAdmin", address],
-    enabled: Boolean(address && authenticated),
+    enabled: Boolean(authenticated),
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       const communities = await fetchAdminCommunities();

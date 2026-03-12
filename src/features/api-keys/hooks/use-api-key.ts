@@ -9,11 +9,11 @@ export const apiKeyKeys = {
   user: (address: string) => [...apiKeyKeys.all, address] as const,
 } as const;
 
-export function useApiKey(address: string | undefined) {
+export function useApiKey(address: string | undefined, authenticated: boolean = !!address) {
   return useQuery({
     queryKey: address ? apiKeyKeys.user(address) : apiKeyKeys.all,
     queryFn: () => apiKeyService.get(),
-    enabled: !!address,
+    enabled: authenticated,
     staleTime: 1000 * 60 * 5,
   });
 }

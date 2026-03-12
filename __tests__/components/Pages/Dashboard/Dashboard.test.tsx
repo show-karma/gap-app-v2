@@ -243,6 +243,37 @@ describe("Dashboard", () => {
     expect(screen.queryByText("Create your first project")).not.toBeInTheDocument();
   });
 
+  describe("Farcaster user (no wallet address)", () => {
+    beforeEach(() => {
+      // Farcaster user: authenticated but no wallet address
+      setupAuth({ authenticated: true, address: undefined, ready: true });
+    });
+
+    it("should render dashboard content instead of being stuck on loading", () => {
+      render(<Dashboard />, { wrapper: createWrapper() });
+
+      // Farcaster users have no wallet address but are authenticated.
+      // The dashboard should NOT be permanently stuck on the loading skeleton.
+      expect(screen.getByText(/Welcome back/i)).toBeInTheDocument();
+    });
+
+    it("should not show loading skeleton when authenticated without address", () => {
+      const { container } = render(<Dashboard />, { wrapper: createWrapper() });
+
+      // Should NOT show loading skeletons — the user is authenticated
+      expect(container.querySelectorAll(".animate-pulse").length).toBe(0);
+    });
+
+    it("should enable the projects query for Farcaster users", () => {
+      render(<Dashboard />, { wrapper: createWrapper() });
+
+      // The projects useQuery call should have `enabled: true` even without an address.
+      // The API uses JWT auth, not wallet address.
+      const queryOptions = mockUseQuery.mock.calls[0][0];
+      expect(queryOptions.enabled).toBe(true);
+    });
+  });
+
   it("shows permissions error warning when RBAC fails", () => {
     setupPermissions({ isGuestDueToError: true });
 

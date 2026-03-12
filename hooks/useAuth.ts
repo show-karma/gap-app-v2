@@ -324,21 +324,31 @@ export const useAuth = () => {
       }
     }
 
-    // If authenticated but wallet not connected, force logout first
-    if (!isConnected && authenticated) {
+    // If authenticated but wallet not connected, only force re-login when
+    // the user has a wallet-based login (wallets present). Farcaster and other
+    // non-wallet login methods legitimately have no browser-connectable wallet.
+    if (!isConnected && authenticated && wallets.length > 0) {
       shouldLoginAfterLogout.current = true;
       await logout();
       return;
     }
-    login();
-  }, [isConnected, authenticated, logout, login]);
+    // Don't call Privy's login() when already authenticated (e.g. Farcaster users
+    // with no wallet). Calling login() on an authenticated user triggers a
+    // "already logged in" warning and does nothing useful.
+    if (!authenticated) {
+      login();
+    }
+  }, [isConnected, authenticated, wallets.length, logout, login]);
 
   const connectedAndAuth = useMemo(() => {
     if (isCypressMockAuthenticated) {
       return true;
     }
-    return isConnected && authenticated;
-  }, [isCypressMockAuthenticated, isConnected, authenticated]);
+    // Privy authenticated is sufficient to be "logged in".
+    // Some login methods (e.g., Farcaster) don't provide a browser-connectable wallet,
+    // so requiring isConnected would incorrectly gate the logged-in status.
+    return authenticated;
+  }, [isCypressMockAuthenticated, authenticated]);
 
   const effectiveReady = isCypressMockAuthenticated ? true : ready;
   // Include embedded wallets in isConnected (Privy embedded wallets may not register with wagmi)

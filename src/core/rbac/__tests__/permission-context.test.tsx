@@ -117,6 +117,69 @@ describe("PermissionProvider", () => {
     expect(result.current.isGuestDueToError).toBe(false);
   });
 
+  describe("Farcaster login (no browser-connectable wallet)", () => {
+    /**
+     * Farcaster users authenticate via Privy but have no browser-connectable wallet.
+     * The permission query should still fire — wallet connectivity is orthogonal to RBAC.
+     */
+    it("enables permissions query when Privy is authenticated without wallet connection", () => {
+      mockUsePrivy.mockReturnValue({
+        ready: true,
+        authenticated: true,
+      });
+
+      mockUseAccount.mockReturnValue({
+        isConnected: false,
+        isConnecting: false,
+        isReconnecting: false,
+      });
+
+      renderHook(() => usePermissionContext(), { wrapper });
+
+      // Permissions query should be enabled for Farcaster users
+      // even though no wallet is connected in the browser
+      expect(mockUsePermissionsQuery).toHaveBeenCalledWith({}, { enabled: true });
+    });
+
+    it("loads permissions for Farcaster users without wallet connection", () => {
+      mockUsePrivy.mockReturnValue({
+        ready: true,
+        authenticated: true,
+      });
+
+      mockUseAccount.mockReturnValue({
+        isConnected: false,
+        isConnecting: false,
+        isReconnecting: false,
+      });
+
+      mockUsePermissionsQuery.mockReturnValue({
+        data: {
+          roles: {
+            primaryRole: Role.COMMUNITY_ADMIN,
+            roles: [Role.COMMUNITY_ADMIN],
+            reviewerTypes: [],
+          },
+          permissions: [Permission.PROGRAM_VIEW],
+          resourceContext: {},
+          isCommunityAdmin: true,
+          isProgramAdmin: false,
+          isReviewer: false,
+          isRegistryAdmin: false,
+          isProgramCreator: false,
+        },
+        isLoading: false,
+        isError: false,
+      });
+
+      const { result } = renderHook(() => usePermissionContext(), { wrapper });
+
+      expect(result.current.isLoading).toBe(false);
+      expect(result.current.isCommunityAdmin).toBe(true);
+      expect(result.current.can(Permission.PROGRAM_VIEW)).toBe(true);
+    });
+  });
+
   describe("Wagmi initialization race condition", () => {
     it("reports isLoading=true when Privy is ready+authenticated but Wagmi is still connecting", () => {
       mockUsePrivy.mockReturnValue({

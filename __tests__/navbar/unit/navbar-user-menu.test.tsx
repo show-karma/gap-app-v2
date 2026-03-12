@@ -351,6 +351,44 @@ describe("NavbarUserMenu", () => {
     });
   });
 
+  describe("Farcaster User (no wallet)", () => {
+    it("should show Farcaster display name instead of undefined address", async () => {
+      const authFixture = getAuthFixture("farcaster-authenticated");
+      const user = userEvent.setup();
+
+      renderWithProviders(<NavbarUserMenu />, {
+        mockUseAuth: createMockUseAuth(authFixture.authState),
+        mockPermissions: createMockPermissions(authFixture.permissions),
+      });
+
+      // Click avatar to open menu
+      const trigger = screen.getByRole("menubar").querySelector("[data-radix-collection-item]");
+      if (trigger) await user.click(trigger);
+
+      // Should NOT show "undefined...undefined" or "No wallet connected"
+      expect(screen.queryByText(/undefined/i)).not.toBeInTheDocument();
+      expect(screen.queryByText("No wallet connected")).not.toBeInTheDocument();
+    });
+
+    it("should display Farcaster username when no wallet address is available", async () => {
+      const authFixture = getAuthFixture("farcaster-authenticated");
+      const user = userEvent.setup();
+
+      renderWithProviders(<NavbarUserMenu />, {
+        mockUseAuth: createMockUseAuth(authFixture.authState),
+        mockPermissions: createMockPermissions(authFixture.permissions),
+      });
+
+      // Click avatar to open menu
+      const trigger = screen.getByRole("menubar").querySelector("[data-radix-collection-item]");
+      if (trigger) await user.click(trigger);
+
+      // Should show the Farcaster identity (may appear in both trigger and dropdown)
+      const farcasterElements = screen.getAllByText(/testfcuser|Test FC User/i);
+      expect(farcasterElements.length).toBeGreaterThan(0);
+    });
+  });
+
   describe("Separators/Sections", () => {
     it("should render horizontal separators between sections", async () => {
       await setupAuthAndOpenMenu("authenticated-basic");

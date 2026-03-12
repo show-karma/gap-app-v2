@@ -19,6 +19,13 @@ export const compareAllWallets = (user: User, address: string): boolean => {
       wallets.push(account.address);
       return;
     }
+    if (account.type === "farcaster") {
+      const ownerAddress = (account as unknown as { ownerAddress?: string }).ownerAddress;
+      if (ownerAddress && isAddress(ownerAddress)) {
+        wallets.push(ownerAddress);
+      }
+      return;
+    }
     if (account.type === "cross_app") {
       const crossAppWallets: WalletLike[] = (account.embeddedWallets as WalletLike[]).concat(
         account.smartWallets as WalletLike[]
