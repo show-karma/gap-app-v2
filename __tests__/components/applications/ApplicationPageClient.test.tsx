@@ -82,7 +82,10 @@ describe("ApplicationPageClient", () => {
     jest.clearAllMocks();
     mockUseAuth.mockReturnValue({
       address: "0x1234567890123456789012345678901234567890",
-      user: { id: "did:privy:user-1" },
+      user: {
+        id: "did:privy:user-1",
+        linkedAccounts: [{ type: "wallet", address: "0x1234567890123456789012345678901234567890" }],
+      },
       authenticated: true,
       ready: true,
     });
@@ -129,6 +132,7 @@ describe("ApplicationPageClient", () => {
             username: "testfcuser",
             displayName: "Test FC User",
           },
+          linkedAccounts: [{ type: "farcaster", fid: 12345 }],
         },
         authenticated: true,
         ready: true,

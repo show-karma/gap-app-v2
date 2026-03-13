@@ -11,8 +11,8 @@ import { renderWithProviders, screen } from "../utils/test-helpers";
 
 describe("Test Infrastructure Verification", () => {
   describe("Auth Fixtures", () => {
-    it("should have all 15 auth fixtures", () => {
-      expect(authFixtures).toHaveLength(15);
+    it("should have all 16 auth fixtures", () => {
+      expect(authFixtures).toHaveLength(16);
     });
 
     it("should get fixture by name", () => {

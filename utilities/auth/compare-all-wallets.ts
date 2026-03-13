@@ -8,6 +8,7 @@ type WalletLike = { address: string };
  * including standard wallets, smart wallets, and cross-app embedded wallets.
  */
 export const compareAllWallets = (user: User, address: string): boolean => {
+  if (!user.linkedAccounts) return false;
   const wallets: string[] = [];
 
   user.linkedAccounts.forEach((account: LinkedAccountWithMetadata) => {

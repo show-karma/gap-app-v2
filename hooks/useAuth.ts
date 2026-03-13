@@ -324,10 +324,15 @@ export const useAuth = () => {
       }
     }
 
-    // If authenticated but wallet not connected, only force re-login when
-    // the user has a wallet-based login (wallets present). Farcaster and other
-    // non-wallet login methods legitimately have no browser-connectable wallet.
-    if (!isConnected && authenticated && wallets.length > 0) {
+    // If authenticated but wallet not connected via wagmi, force re-login only when
+    // the user has external wallets (not embedded). Embedded wallets (from Privy)
+    // may not register with wagmi, so treat wallets.length > 0 as effectively connected.
+    if (
+      !isConnected &&
+      authenticated &&
+      wallets.length > 0 &&
+      !wallets.some((w) => w.walletClientType === "privy")
+    ) {
       shouldLoginAfterLogout.current = true;
       await logout();
       return;

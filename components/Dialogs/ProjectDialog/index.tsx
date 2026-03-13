@@ -556,7 +556,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         dismiss();
         return;
       }
-      if (!address || !gap) {
+      if (!gap) {
         setIsLoading(false);
         dismiss();
         return;
@@ -578,12 +578,22 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
 
       const { gapClient, walletSigner: signer, chainId } = setup;
 
+      // Resolve address after setup — Farcaster users get smartWalletAddress from setupChainAndWallet
+      const resolvedAddress = (data.recipient || smartWalletAddress || address) as
+        | `0x${string}`
+        | undefined;
+      if (!resolvedAddress) {
+        setIsLoading(false);
+        dismiss();
+        return;
+      }
+
       const project = new Project({
         data: {
           project: true,
         },
         schema: gapClient.findSchema("Project"),
-        recipient: (data.recipient || smartWalletAddress || address) as Hex,
+        recipient: resolvedAddress as Hex,
         uid: nullRef,
       });
 
@@ -596,7 +606,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       const { chainID, ...rest } = data;
       const newProjectInfo: NewProjectData = {
         ...rest,
-        members: [(data.recipient || smartWalletAddress || address) as Hex],
+        members: [resolvedAddress as Hex],
         links: [
           {
             type: "twitter",
@@ -798,9 +808,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         login?.();
         return;
       }
-      if (!address) {
-        throw new Error("Address not found");
-      }
       if (!projectToUpdate) {
         throw new Error("Project to update not found");
       }
@@ -826,6 +833,11 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       }
 
       const { gapClient, walletSigner, chainId } = setup;
+
+      // Resolve address after setup — Farcaster users get smartWalletAddress from setupChainAndWallet
+      if (!smartWalletAddress && !address) {
+        throw new Error("Address not found");
+      }
       const shouldRefresh = dataToUpdate.title === data.title;
       const fetchedProject = await getProjectById(projectToUpdate.uid);
       if (!fetchedProject) return;
