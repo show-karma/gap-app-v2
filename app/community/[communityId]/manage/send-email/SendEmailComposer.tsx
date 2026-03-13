@@ -283,59 +283,56 @@ export function SendEmailComposer({ programs }: SendEmailComposerProps) {
   const canSend = selectedProgramId && recipients.length > 0 && subject.trim() && body.trim();
 
   return (
-    <div className="flex flex-col xl:flex-row gap-6">
-      {/* Left panel: Program & filters */}
-      <div className="w-full xl:w-80 2xl:w-96 flex-shrink-0">
-        <div className="xl:sticky xl:top-6 space-y-4">
-          {/* Program selection */}
-          <div className="rounded-xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm overflow-hidden">
-            <div className="px-5 py-4 border-b border-gray-100 dark:border-zinc-800">
-              <div className="flex items-center gap-2">
-                <Filter className="w-4 h-4 text-gray-400 dark:text-zinc-500" />
-                <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
-                  Program & Filters
-                </h2>
-              </div>
-            </div>
-            <div className="p-5 space-y-4">
-              <div>
-                <label
-                  htmlFor="program-select"
-                  className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-1.5"
-                >
-                  Program
-                </label>
-                <select
-                  id="program-select"
-                  value={selectedProgramId}
-                  onChange={(e) => handleProgramChange(e.target.value)}
-                  className="w-full rounded-lg border border-gray-200 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3.5 py-2.5 text-sm text-gray-900 dark:text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 focus:outline-none transition-shadow"
-                >
-                  <option value="">Choose a program...</option>
-                  {programs.map((program) => (
-                    <option key={program.programId} value={program.programId}>
-                      {program.metadata?.title || program.name || program.programId}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {selectedProgramId && (
-                <MultiSelectDropdown
-                  label="Application Status"
-                  items={APPLICATION_STATUS_ITEMS}
-                  selectedIds={selectedStatuses}
-                  onChange={handleStatusChange}
-                  placeholder="Select statuses..."
-                  searchPlaceholder="Search statuses..."
-                />
-              )}
-            </div>
+    <div className="flex flex-col gap-6">
+      {/* Program & Filters bar */}
+      <div className="rounded-xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm">
+        <div className="px-5 py-4 border-b border-gray-100 dark:border-zinc-800">
+          <div className="flex items-center gap-2">
+            <Filter className="w-4 h-4 text-gray-400 dark:text-zinc-500" />
+            <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
+              Program & Filters
+            </h2>
           </div>
+        </div>
+        <div className="p-5 flex flex-col sm:flex-row gap-4">
+          <div className="flex-1 min-w-0">
+            <label
+              htmlFor="program-select"
+              className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-1.5"
+            >
+              Program
+            </label>
+            <select
+              id="program-select"
+              value={selectedProgramId}
+              onChange={(e) => handleProgramChange(e.target.value)}
+              className="w-full rounded-lg border border-gray-200 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3.5 py-2.5 text-sm text-gray-900 dark:text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 focus:outline-none transition-shadow"
+            >
+              <option value="">Choose a program...</option>
+              {programs.map((program) => (
+                <option key={program.programId} value={program.programId}>
+                  {program.metadata?.title || program.name || program.programId}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {selectedProgramId && (
+            <div className="flex-1 min-w-0">
+              <MultiSelectDropdown
+                label="Application Status"
+                items={APPLICATION_STATUS_ITEMS}
+                selectedIds={selectedStatuses}
+                onChange={handleStatusChange}
+                placeholder="Select statuses..."
+                searchPlaceholder="Search statuses..."
+              />
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Right panel: Compose area */}
+      {/* Compose area */}
       <div className="flex-1 min-w-0">
         {!selectedProgramId ? (
           <div className="flex flex-col items-center justify-center py-20 text-center rounded-xl border border-dashed border-gray-300 dark:border-zinc-600 bg-gray-50/50 dark:bg-zinc-800/30">
@@ -346,11 +343,11 @@ export function SendEmailComposer({ programs }: SendEmailComposerProps) {
               Select a program to get started
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs">
-              Choose a funding program from the panel on the left, then compose your email.
+              Choose a funding program, then compose your email.
             </p>
           </div>
         ) : (
-          <div className="rounded-xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm overflow-hidden flex flex-col">
+          <div className="rounded-xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm flex flex-col">
             {/* Recipients "To" row */}
             <div className="px-5 py-4 border-b border-gray-100 dark:border-zinc-800">
               <div className="flex items-start gap-3">
