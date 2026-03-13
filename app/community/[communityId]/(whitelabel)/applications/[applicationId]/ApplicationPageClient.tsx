@@ -4,6 +4,7 @@ import { ArrowLeft, Edit, ExternalLink } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ApplicationDataView } from "@/components/FundingPlatform/ApplicationView/ApplicationTab/ApplicationDataView";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsOwner } from "@/hooks/useIsOwner";
 import { Link } from "@/src/components/navigation/Link";
 import { useIsFundingPlatformAdmin } from "@/src/core/rbac";
 import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
@@ -68,15 +69,21 @@ export function ApplicationPageClient({
   application,
   program,
 }: ApplicationPageClientProps) {
-  const { address } = useAuth();
+  const { user } = useAuth();
   const isAdmin = useIsFundingPlatformAdmin();
   const { hasRoleOrHigher, isReviewer } = usePermissionContext();
   const isAdminOrReviewer = hasRoleOrHigher(Role.MILESTONE_REVIEWER) || isReviewer;
 
+  const isWalletOwner = useIsOwner(application?.ownerAddress ?? "");
   const isOwner = useMemo(() => {
-    if (!address || !application) return false;
-    return application.ownerAddress?.toLowerCase() === address.toLowerCase();
-  }, [address, application]);
+    if (!application) return false;
+    if (isWalletOwner) return true;
+    // Privy userId ownership as safety net (for edge cases)
+    if (user?.id && application.userId && user.id === application.userId) {
+      return true;
+    }
+    return false;
+  }, [isWalletOwner, user?.id, application]);
 
   const canOwnerEdit = useMemo(() => {
     if (!editableStatuses.includes(application.status)) return false;

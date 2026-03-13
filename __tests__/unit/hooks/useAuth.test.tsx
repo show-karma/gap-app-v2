@@ -21,11 +21,11 @@ const mockUsePrivy = jest.fn();
 const mockUseWallets = jest.fn();
 const mockUseAccount = jest.fn();
 const mockGetToken = jest.fn();
-
 // Override global mocks for per-test control
 jest.mock("@privy-io/react-auth", () => ({
   usePrivy: () => mockUsePrivy(),
   useWallets: () => mockUseWallets(),
+  useCreateWallet: () => ({ createWallet: jest.fn() }),
 }));
 
 jest.mock("wagmi", () => ({
@@ -293,6 +293,83 @@ describe("Cache invalidation on logout", () => {
     // Clean up non-wagmi keys
     localStorage.removeItem("app-preference");
     localStorage.removeItem("privy:token");
+  });
+});
+
+describe("useAuth - Farcaster login (no browser-connectable wallet)", () => {
+  /**
+   * Farcaster login scenario:
+   * - Privy authenticates the user via Farcaster (SIWF)
+   * - The Farcaster account may link a wallet, but it's NOT browser-connectable
+   * - createOnLogin: "users-without-wallets" sees the linked wallet and does NOT create an embedded one
+   * - Result: authenticated=true, but wallets=[] and isConnected=false
+   * - The user should STILL appear logged in because Privy says they're authenticated
+   */
+  const wrapper = ({ children }: { children: ReactNode }) => <>{children}</>;
+
+  const mockFarcasterUser = {
+    id: "did:privy:farcaster-user-123",
+    farcaster: { fid: 12345, username: "testuser" },
+    // Privy links the Farcaster wallet on the user object, but it's not in useWallets()
+    wallet: { address: "0xFARCASTER000000000000000000000000000001" },
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+
+    // Privy reports authenticated after Farcaster QR scan success
+    mockUsePrivy.mockReturnValue({
+      ready: true,
+      authenticated: true,
+      user: mockFarcasterUser,
+      login: mockLogin,
+      logout: mockLogout,
+      getAccessToken: mockGetAccessToken,
+    });
+
+    // useWallets returns EMPTY — the Farcaster-linked wallet is not browser-connectable,
+    // and no embedded wallet was created (createOnLogin: "users-without-wallets" skipped it)
+    mockUseWallets.mockReturnValue({
+      wallets: [],
+    });
+
+    // Wagmi has no connected wallet
+    mockUseAccount.mockReturnValue({
+      address: undefined,
+      isConnected: false,
+      isConnecting: false,
+      isDisconnected: true,
+    });
+  });
+
+  it("should report authenticated when Privy says authenticated even without a browser wallet", () => {
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    // Farcaster login succeeded — Privy authenticated=true
+    // Even though no wallet is connected in the browser, the user IS logged in
+    expect(result.current.authenticated).toBe(true);
+    expect(result.current.ready).toBe(true);
+  });
+
+  it("should report authenticated when embedded wallet is eventually created", () => {
+    const { result, rerender } = renderHook(() => useAuth(), { wrapper });
+
+    // Initially: authenticated but no wallets
+    expect(result.current.authenticated).toBe(true);
+
+    // Later: Privy creates an embedded wallet (e.g., if config changes to "all-users")
+    const mockEmbeddedWallet = {
+      address: "0xEMBEDDED0000000000000000000000000000001",
+      chainId: "eip155:10",
+      walletClientType: "privy",
+    };
+    mockUseWallets.mockReturnValue({ wallets: [mockEmbeddedWallet] });
+
+    rerender();
+
+    expect(result.current.authenticated).toBe(true);
+    expect(result.current.isConnected).toBe(true);
+    expect(result.current.address).toBe("0xEMBEDDED0000000000000000000000000000001");
   });
 });
 

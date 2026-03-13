@@ -70,7 +70,7 @@ const _formatAddress = (addr: string) => {
 
 export function NavbarMobileMenu() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { authenticate: login, logout } = useAuth();
+  const { authenticate: login, logout, user } = useAuth();
   const { theme: currentTheme, setTheme: changeCurrentTheme } = useTheme();
   const toggleTheme = () => {
     changeCurrentTheme(currentTheme === "light" ? "dark" : "light");
@@ -127,12 +127,24 @@ export function NavbarMobileMenu() {
             onClick={() => openProfileModal({ isGlobal: true })}
             aria-label="Open profile"
           >
-            <EthereumAddressToENSAvatar
-              address={address}
-              className="h-8 w-8 min-h-8 min-w-8 max-h-8 max-w-8 rounded-full"
-            />
+            {user?.farcaster?.pfp ? (
+              <img
+                src={user.farcaster.pfp}
+                alt="Farcaster avatar"
+                className="h-8 w-8 min-h-8 min-w-8 max-h-8 max-w-8 rounded-full"
+              />
+            ) : (
+              <EthereumAddressToENSAvatar
+                address={address}
+                className="h-8 w-8 min-h-8 min-w-8 max-h-8 max-w-8 rounded-full"
+              />
+            )}
             {profile?.data?.name ? (
               <span className="text-sm text-muted-foreground px-2">{profile?.data?.name}</span>
+            ) : user?.farcaster ? (
+              <span className="text-sm text-muted-foreground px-2">
+                {user.farcaster.displayName || user.farcaster.username}
+              </span>
             ) : (
               <EthereumAddressToENSName
                 address={address}

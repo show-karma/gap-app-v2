@@ -50,7 +50,7 @@ export function Dashboard() {
   } = useQuery({
     queryKey: ["myProjects", userAddress],
     queryFn: () => fetchMyProjects(userAddress),
-    enabled: Boolean(userAddress && authenticated),
+    enabled: Boolean(authenticated),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -94,7 +94,7 @@ export function Dashboard() {
     element?.scrollIntoView({ behavior: "smooth" });
   }, [isLoading, ready, showReviews, showAdmin, showSuperAdmin]);
 
-  if (!authenticated || !userAddress || isLoading) {
+  if (!authenticated || isLoading) {
     return <DashboardLoading />;
   }
 

@@ -65,13 +65,27 @@ describe("useApiKey", () => {
     expect(mockApiKeyService.get).toHaveBeenCalledTimes(1);
   });
 
-  it("should not fetch when address is undefined", () => {
-    const { result } = renderHook(() => useApiKey(undefined), {
+  it("should not fetch when address is undefined and not authenticated", () => {
+    const { result } = renderHook(() => useApiKey(undefined, false), {
       wrapper: createWrapper(),
     });
 
     expect(result.current.fetchStatus).toBe("idle");
     expect(mockApiKeyService.get).not.toHaveBeenCalled();
+  });
+
+  it("should fetch for Farcaster users with no wallet address", async () => {
+    // Farcaster users are authenticated via JWT but have no wallet address.
+    // The API uses JWT auth, not wallet address, so the query should fire.
+    const mockData = { apiKey: null };
+    mockApiKeyService.get.mockResolvedValue(mockData);
+
+    const { result } = renderHook(() => useApiKey(undefined, true), {
+      wrapper: createWrapper(),
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(mockApiKeyService.get).toHaveBeenCalledTimes(1);
   });
 });
 
