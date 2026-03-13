@@ -21,8 +21,7 @@ import HotjarAnalytics from "@/components/Utilities/HotjarAnalytics";
 import { PermissionsProvider } from "@/components/Utilities/PermissionsProvider";
 import PrivyProviderWrapper from "@/components/Utilities/PrivyProviderWrapper";
 import { TenantStoreInitializer } from "@/components/Utilities/TenantStoreInitializer";
-import { Footer } from "@/src/components/footer/footer";
-import { WhitelabelFooter } from "@/src/components/footer/whitelabel-footer";
+import { FooterSwitcher } from "@/src/components/footer/footer-switcher";
 import { Navbar } from "@/src/components/navbar/navbar";
 import { WhitelabelNavbar } from "@/src/components/navbar/whitelabel-navbar";
 import { ApiKeyManagementModal } from "@/src/features/api-keys/components/api-key-management-modal";
@@ -150,13 +149,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   ) : (
                     <>
                       <Navbar />
-                      <div className="h-[80px]" />
+                      <div className="h-16" />
                     </>
                   )}
                   {children}
                   <Analytics />
                 </div>
-                {isWhitelabel ? <WhitelabelFooter /> : <Footer />}
+                <FooterSwitcher isWhitelabel={isWhitelabel} />
               </div>
               {!isWhitelabel && <AgentChatBubble />}
             </WhitelabelProvider>
