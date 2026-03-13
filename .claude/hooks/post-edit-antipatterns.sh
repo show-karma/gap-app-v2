@@ -102,14 +102,8 @@ case "$FILE_PATH" in
 esac
 
 if [ -n "$ISSUES" ]; then
-  cat <<HOOKJSON
-{
-  "hookSpecificOutput": {
-    "hookEventName": "PostToolUse",
-    "additionalContext": "Anti-pattern check found issues in $FILE_PATH:$ISSUES\nPlease fix these before continuing."
-  }
-}
-HOOKJSON
+  jq -n --arg fp "$FILE_PATH" --arg issues "$ISSUES" \
+    '{hookSpecificOutput: {hookEventName: "PostToolUse", additionalContext: ("Anti-pattern check found issues in " + $fp + ":" + $issues + "\nPlease fix these before continuing.")}}'
 fi
 
 exit 0

@@ -53,17 +53,8 @@ if [ "${LINT_EXIT:-0}" -ne 0 ]; then
   ERRORS=$(echo "$LINT_OUTPUT" | grep -E "^(error|warning|×|✖)" | head -20)
 
   if [ -n "$ERRORS" ]; then
-    # Escape for JSON
-    ESCAPED_ERRORS=$(echo "$ERRORS" | jq -Rs .)
-
-    cat <<HOOKJSON
-{
-  "hookSpecificOutput": {
-    "hookEventName": "PostToolUse",
-    "additionalContext": "Biome found issues in $FILE_PATH:\n$ERRORS\nPlease fix these lint errors."
-  }
-}
-HOOKJSON
+    jq -n --arg fp "$FILE_PATH" --arg errors "$ERRORS" \
+      '{hookSpecificOutput: {hookEventName: "PostToolUse", additionalContext: ("Biome found issues in " + $fp + ":\n" + $errors + "\nPlease fix these lint errors.")}}'
     exit 0
   fi
 fi

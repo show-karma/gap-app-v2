@@ -46,15 +46,5 @@ if [ "${TEST_EXIT:-0}" -ne 0 ]; then
 fi
 
 # Tests passed - allow the commit
-cat <<HOOKJSON
-{
-  "hookSpecificOutput": {
-    "hookEventName": "PreToolUse",
-    "decision": {
-      "permissionDecision": "allow",
-      "permissionDecisionReason": "All tests passed"
-    }
-  }
-}
-HOOKJSON
+jq -n '{hookSpecificOutput: {hookEventName: "PreToolUse", decision: {permissionDecision: "allow", permissionDecisionReason: "All tests passed"}}}'
 exit 0
