@@ -114,15 +114,15 @@ export function NavbarUserMenu() {
           <MenubarMenu>
             <MenubarTrigger className="cursor-pointer p-0 rounded-full data-[state=open]:opacity-90">
               <div className="flex items-center rounded-full border border-border p-1">
-                {address ? (
-                  <EthereumAddressToENSAvatar
-                    address={address}
-                    className="h-8 w-8 min-h-8 min-w-8 max-h-8 max-w-8 rounded-full"
-                  />
-                ) : user?.farcaster?.pfp ? (
+                {user?.farcaster?.pfp ? (
                   <img
                     src={user.farcaster.pfp}
                     alt="Farcaster avatar"
+                    className="h-8 w-8 min-h-8 min-w-8 max-h-8 max-w-8 rounded-full"
+                  />
+                ) : address ? (
+                  <EthereumAddressToENSAvatar
+                    address={address}
                     className="h-8 w-8 min-h-8 min-w-8 max-h-8 max-w-8 rounded-full"
                   />
                 ) : (
@@ -132,15 +132,15 @@ export function NavbarUserMenu() {
                   <span className="text-sm text-muted-foreground hidden xl:inline px-2">
                     {profile?.data?.name}
                   </span>
+                ) : user?.farcaster ? (
+                  <span className="text-sm text-muted-foreground hidden xl:inline px-2">
+                    {user.farcaster.displayName || user.farcaster.username}
+                  </span>
                 ) : address ? (
                   <EthereumAddressToENSName
                     address={address}
                     className="text-sm text-muted-foreground hidden xl:inline px-2"
                   />
-                ) : user?.farcaster ? (
-                  <span className="text-sm text-muted-foreground hidden xl:inline px-2">
-                    {user.farcaster.displayName || user.farcaster.username}
-                  </span>
                 ) : null}
               </div>
             </MenubarTrigger>
@@ -155,15 +155,15 @@ export function NavbarUserMenu() {
                   }}
                 >
                   <div className="flex flex-row items-center gap-2 justify-between w-full">
-                    {address ? (
+                    {user?.farcaster ? (
+                      <span className={menuStyles.itemText}>@{user.farcaster.username}</span>
+                    ) : address ? (
                       <>
                         <span className="text-sm break-all max-w-40 text-muted-foreground font-medium">
                           {address}
                         </span>
                         <Copy className={menuStyles.itemIcon} />
                       </>
-                    ) : user?.farcaster ? (
-                      <span className={menuStyles.itemText}>@{user.farcaster.username}</span>
                     ) : (
                       <span className={menuStyles.itemText}>No wallet connected</span>
                     )}

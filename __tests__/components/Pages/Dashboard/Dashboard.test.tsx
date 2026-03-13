@@ -243,6 +243,39 @@ describe("Dashboard", () => {
     expect(screen.queryByText("Create your first project")).not.toBeInTheDocument();
   });
 
+  describe("Farcaster user with embedded wallet", () => {
+    beforeEach(() => {
+      mockUseAuth.mockReturnValue({
+        authenticated: true,
+        address: "0xEMBEDDED000000000000000000000000CAFE",
+        ready: true,
+        user: {
+          id: "did:privy:fc-user",
+          farcaster: {
+            fid: 12345,
+            username: "testfcuser",
+            displayName: "Test FC User",
+            pfp: "https://example.com/fc-avatar.png",
+          },
+        },
+      });
+      mockUseContributorProfile.mockReturnValue({ profile: null });
+    });
+
+    it("should show Farcaster display name instead of embedded wallet address", () => {
+      render(<Dashboard />, { wrapper: createWrapper() });
+
+      expect(screen.getByText(/Test FC User/)).toBeInTheDocument();
+    });
+
+    it("should show Farcaster avatar instead of blockie", () => {
+      const { container } = render(<Dashboard />, { wrapper: createWrapper() });
+
+      const fcAvatar = container.querySelector('img[src="https://example.com/fc-avatar.png"]');
+      expect(fcAvatar).toBeInTheDocument();
+    });
+  });
+
   describe("Farcaster user (no wallet address)", () => {
     beforeEach(() => {
       // Farcaster user: authenticated but no wallet address

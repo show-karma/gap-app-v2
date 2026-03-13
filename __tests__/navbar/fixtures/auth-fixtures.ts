@@ -570,7 +570,50 @@ export const authFixtures: AuthFixture[] = [
     },
   },
 
-  // 16. Loading State
+  // 16. Farcaster Authenticated User WITH embedded wallet
+  {
+    name: "farcaster-with-embedded-wallet",
+    description:
+      "User authenticated via Farcaster who also has an embedded wallet (address resolved)",
+    authState: {
+      ready: true,
+      authenticated: true,
+      isConnected: true,
+      address: "0xEMBEDDED0000000000000000000000000000CAFE",
+      user: {
+        id: "did:privy:farcaster-embedded-user",
+        wallet: {
+          address: "0xEMBEDDED0000000000000000000000000000CAFE",
+        },
+        farcaster: {
+          fid: 67890,
+          username: "fcwithwallet",
+          displayName: "FC With Wallet",
+          pfp: "https://example.com/fc-embedded-avatar.png",
+        },
+      },
+    },
+    permissions: {
+      communities: [],
+      reviewerPrograms: [],
+      isStaff: false,
+      isOwner: false,
+      isProgramCreator: false,
+      isRegistryAdmin: false,
+    },
+    expectedElements: {
+      signIn: false,
+      contactSales: false,
+      resources: false,
+      userMenu: true,
+      myProjects: true,
+      review: false,
+      admin: false,
+      managePrograms: false,
+    },
+  },
+
+  // 17. Loading State
   // Note: Even during loading, mobile menu shows Sign in/Contact sales because authenticated=false
   {
     name: "loading",

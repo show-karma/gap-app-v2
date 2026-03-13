@@ -3,6 +3,7 @@
 import type { Hex } from "viem";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
+import { useAuth } from "@/hooks/useAuth";
 import { useContributorProfile } from "@/hooks/useContributorProfile";
 
 interface DashboardHeaderProps {
@@ -10,12 +11,19 @@ interface DashboardHeaderProps {
 }
 
 export function DashboardHeader({ address }: DashboardHeaderProps) {
+  const { user } = useAuth();
   const { profile } = useContributorProfile(address);
   const displayName = profile?.data?.name;
 
   return (
     <div className="flex items-center gap-4">
-      {address ? (
+      {user?.farcaster?.pfp ? (
+        <img
+          src={user.farcaster.pfp}
+          alt="Farcaster avatar"
+          className="h-12 w-12 min-h-12 min-w-12 rounded-full border border-border"
+        />
+      ) : address ? (
         <EthereumAddressToENSAvatar
           address={address}
           className="h-12 w-12 min-h-12 min-w-12 rounded-full border border-border"
@@ -29,6 +37,8 @@ export function DashboardHeader({ address }: DashboardHeaderProps) {
           Welcome back
           {displayName ? (
             <span className="ml-1">, {displayName}</span>
+          ) : user?.farcaster ? (
+            <span className="ml-1">, {user.farcaster.displayName || user.farcaster.username}</span>
           ) : address ? (
             <span className="ml-1">
               , <EthereumAddressToENSName address={address} />
