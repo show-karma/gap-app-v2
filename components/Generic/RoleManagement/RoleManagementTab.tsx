@@ -4,6 +4,7 @@ import {
   CheckIcon,
   DocumentDuplicateIcon,
   EnvelopeIcon,
+  PencilIcon,
   PlusIcon,
   UserIcon,
   XMarkIcon,
@@ -15,12 +16,9 @@ import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
-import { getMemberRole, getRoleLabel, getRoleShortLabel } from "./helpers";
+import { getMemberRoles, getRoleShortLabel } from "./helpers";
 import type { RoleFieldConfig, RoleManagementConfig, RoleMember, RoleOption } from "./types";
 
-/**
- * Props for RoleManagementTab component
- */
 interface RoleManagementTabProps {
   config: RoleManagementConfig;
   members: RoleMember[];
@@ -29,15 +27,17 @@ interface RoleManagementTabProps {
   onAdd?: (data: Record<string, string>) => Promise<void>;
   onRemove?: (memberId: string) => Promise<void>;
   onRefresh?: () => void;
-  // Multi-role support (optional)
   roleOptions?: RoleOption[];
+  // Multi-role checkbox support
+  selectedRoles?: string[];
+  onRolesChange?: (roles: string[]) => void;
+  // Edit roles support
+  onEditRoles?: (memberId: string, roles: string[]) => Promise<void>;
+  // Legacy single-role support (backward compatibility)
   selectedRole?: string;
   onRoleChange?: (role: string) => void;
 }
 
-/**
- * Generic role management tab component
- */
 export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
   config,
   members,
@@ -47,6 +47,9 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
   onRemove,
   onRefresh,
   roleOptions,
+  selectedRoles,
+  onRolesChange,
+  onEditRoles,
   selectedRole,
   onRoleChange,
 }) => {
@@ -56,15 +59,20 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [showAddForm, setShowAddForm] = useState(false);
   const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
+  const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
+  const [editRoles, setEditRoles] = useState<string[]>([]);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
 
-  // Get the active config based on selected role if roleOptions provided
+  // Determine if we're using multi-role checkboxes or single-role radio
+  const useCheckboxMode = Boolean(selectedRoles && onRolesChange);
+
   const activeConfig = useMemo(() => {
+    if (useCheckboxMode) return config;
     return roleOptions && selectedRole
       ? roleOptions.find((opt) => opt.value === selectedRole)?.config || config
       : config;
-  }, [roleOptions, selectedRole, config]);
+  }, [roleOptions, selectedRole, config, useCheckboxMode]);
 
-  // Initialize form data with empty values
   useEffect(() => {
     const initialData: Record<string, string> = {};
     activeConfig.fields.forEach((field) => {
@@ -85,7 +93,6 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
       }
     }
 
-    // Built-in validations based on type
     if (field.type === "email" && value) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(value)) {
@@ -115,13 +122,18 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
       }
     });
 
+    // Validate at least one role is selected
+    if (useCheckboxMode && selectedRoles && selectedRoles.length === 0) {
+      errors._roles = "Select at least one reviewer type";
+      isValid = false;
+    }
+
     setFormErrors(errors);
     return isValid;
-  }, [activeConfig.fields, formData, validateField]);
+  }, [activeConfig.fields, formData, validateField, useCheckboxMode, selectedRoles]);
 
   const handleFieldChange = useCallback((fieldName: string, value: string) => {
     setFormData((prev) => ({ ...prev, [fieldName]: value }));
-    // Clear error when user starts typing
     setFormErrors((prev) => {
       if (prev[fieldName]) {
         return { ...prev, [fieldName]: "" };
@@ -129,6 +141,27 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
       return prev;
     });
   }, []);
+
+  const handleRoleCheckboxChange = useCallback(
+    (roleValue: string, checked: boolean) => {
+      if (!onRolesChange || !selectedRoles) return;
+      const newRoles = checked
+        ? [...selectedRoles, roleValue]
+        : selectedRoles.filter((r) => r !== roleValue);
+      onRolesChange(newRoles);
+      // Clear role error when user selects a role
+      if (newRoles.length > 0) {
+        setFormErrors((prev) => {
+          if (prev._roles) {
+            const { _roles: _, ...rest } = prev;
+            return rest;
+          }
+          return prev;
+        });
+      }
+    },
+    [onRolesChange, selectedRoles]
+  );
 
   const handleAdd = useCallback(async () => {
     if (!validateForm()) {
@@ -138,9 +171,7 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
     setIsAddingMember(true);
     try {
       await onAdd?.(formData);
-      // Only reset form if onAdd succeeds (doesn't throw)
 
-      // Reset form
       const resetData: Record<string, string> = {};
       activeConfig.fields.forEach((field) => {
         resetData[field.name] = "";
@@ -149,8 +180,10 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
       setFormErrors({});
       setShowAddForm(false);
 
-      // Reset role selection to first option if using multi-role
-      if (roleOptions && roleOptions.length > 0 && onRoleChange) {
+      // Reset role selection
+      if (useCheckboxMode && onRolesChange) {
+        onRolesChange(["program"]);
+      } else if (roleOptions && roleOptions.length > 0 && onRoleChange) {
         onRoleChange(roleOptions[0].value);
       }
 
@@ -158,9 +191,6 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
         onRefresh();
       }
     } catch (error) {
-      console.error("Error adding member:", error);
-
-      // Provide more specific error messages based on error type
       let errorMessage = "Failed to add member. Please try again.";
 
       if (error && typeof error === "object" && "response" in error) {
@@ -176,39 +206,41 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
         errorMessage = error.message;
       }
 
-      // Display error to user via console (parent component should handle toast)
       console.error("Add member error:", errorMessage);
-
-      // Keep form data and stay open on error so user can retry
     } finally {
       setIsAddingMember(false);
     }
-  }, [validateForm, onAdd, activeConfig.fields, roleOptions, onRoleChange, onRefresh, formData]);
+  }, [
+    validateForm,
+    onAdd,
+    activeConfig.fields,
+    roleOptions,
+    onRoleChange,
+    onRolesChange,
+    onRefresh,
+    formData,
+    useCheckboxMode,
+  ]);
 
   const handleCancelAdd = useCallback(() => {
     setShowAddForm(false);
     setFormErrors({});
-    // Reset role selection to first option if using multi-role
-    if (roleOptions && roleOptions.length > 0 && onRoleChange) {
+    if (useCheckboxMode && onRolesChange) {
+      onRolesChange(["program"]);
+    } else if (roleOptions && roleOptions.length > 0 && onRoleChange) {
       onRoleChange(roleOptions[0].value);
     }
-  }, [roleOptions, onRoleChange]);
+  }, [roleOptions, onRoleChange, onRolesChange, useCheckboxMode]);
 
   const handleRemove = useCallback(
     async (memberId: string) => {
-      // Find member and extract role information for better UX in confirmation dialog
       const member = members.find((m) => m.id === memberId);
       const memberName = member?.name || "this member";
-      const memberRole = getMemberRole(member);
+      const roles = getMemberRoles(member);
+      const rolesText =
+        roles.length > 0 ? ` (${roles.map((r) => getRoleShortLabel(r)).join(" & ")})` : "";
 
-      // Build confirmation message with role badge if available
-      let confirmMessage = `Are you sure you want to remove ${memberName}`;
-      if (memberRole) {
-        confirmMessage += ` (${getRoleLabel(memberRole)})`;
-      }
-      confirmMessage += "?";
-
-      if (!confirm(confirmMessage)) {
+      if (!confirm(`Are you sure you want to remove ${memberName}${rolesText}?`)) {
         return;
       }
 
@@ -220,9 +252,6 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
           onRefresh();
         }
       } catch (error) {
-        console.error("Error removing member:", error);
-
-        // Provide more specific error messages
         let errorMessage = "Failed to remove member. Please try again.";
 
         if (error && typeof error === "object" && "response" in error) {
@@ -236,7 +265,6 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
           errorMessage = error.message;
         }
 
-        // Log detailed error (parent component should handle toast)
         console.error("Remove member error:", errorMessage);
       } finally {
         setRemovingMemberId(null);
@@ -245,11 +273,57 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
     [onRemove, onRefresh, members]
   );
 
+  const handleStartEdit = useCallback(
+    (memberId: string) => {
+      const member = members.find((m) => m.id === memberId);
+      if (member) {
+        setEditingMemberId(memberId);
+        setEditRoles([...getMemberRoles(member)]);
+      }
+    },
+    [members]
+  );
+
+  const handleCancelEdit = useCallback(() => {
+    setEditingMemberId(null);
+    setEditRoles([]);
+  }, []);
+
+  const handleSaveEdit = useCallback(async () => {
+    if (!editingMemberId || !onEditRoles) return;
+
+    if (editRoles.length === 0) {
+      const member = members.find((m) => m.id === editingMemberId);
+      if (
+        !confirm(`No roles selected. This will remove ${member?.name || "this member"}. Continue?`)
+      ) {
+        return;
+      }
+    }
+
+    setIsSavingEdit(true);
+    try {
+      await onEditRoles(editingMemberId, editRoles);
+      setEditingMemberId(null);
+      setEditRoles([]);
+      if (onRefresh) {
+        onRefresh();
+      }
+    } catch (error) {
+      console.error("Error updating roles:", error);
+    } finally {
+      setIsSavingEdit(false);
+    }
+  }, [editingMemberId, editRoles, onEditRoles, onRefresh, members]);
+
+  const handleEditRoleToggle = useCallback((roleValue: string, checked: boolean) => {
+    setEditRoles((prev) => (checked ? [...prev, roleValue] : prev.filter((r) => r !== roleValue)));
+  }, []);
+
   const getMemberDisplayValue = useCallback((member: RoleMember, fieldName: string): string => {
     const value = member[fieldName];
-    if (!value) return "";
+    if (!value || typeof value !== "string") return "";
 
-    // Format wallet addresses
     if (fieldName === "publicAddress" || fieldName === "walletAddress") {
       return `${value.slice(0, 6)}...${value.slice(-4)}`;
     }
@@ -315,33 +389,58 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
       {showAddForm && canManage && (
         <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
           <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-4">
-            Add New {activeConfig.roleDisplayName}
+            Add New Reviewer
           </h4>
 
-          {/* Role Selector (if multi-role support enabled) */}
-          {roleOptions && roleOptions.length > 0 && onRoleChange && selectedRole && (
+          {/* Role Selector */}
+          {roleOptions && roleOptions.length > 0 && (
             <div className="mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
               <div className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                Select Type
+                Reviewer Type
               </div>
-              <div className="flex flex-wrap gap-4">
-                {roleOptions.map((option) => (
-                  <label key={option.value} className="flex items-center cursor-pointer">
-                    <input
-                      type="radio"
-                      name="roleType"
-                      value={option.value}
-                      checked={selectedRole === option.value}
-                      onChange={(e) => onRoleChange(e.target.value)}
-                      disabled={isAddingMember}
-                      className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500 disabled:opacity-50"
-                    />
-                    <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">
-                      {option.label}
-                    </span>
-                  </label>
-                ))}
-              </div>
+              {useCheckboxMode ? (
+                <div className="flex flex-wrap gap-4">
+                  {roleOptions.map((option) => (
+                    <label key={option.value} className="flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        value={option.value}
+                        checked={selectedRoles?.includes(option.value) ?? false}
+                        onChange={(e) => handleRoleCheckboxChange(option.value, e.target.checked)}
+                        disabled={isAddingMember}
+                        className="h-4 w-4 rounded text-blue-600 border-gray-300 focus:ring-blue-500 disabled:opacity-50"
+                      />
+                      <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                        {option.label}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-4">
+                  {roleOptions.map((option) => (
+                    <label key={option.value} className="flex items-center cursor-pointer">
+                      <input
+                        type="radio"
+                        name="roleType"
+                        value={option.value}
+                        checked={selectedRole === option.value}
+                        onChange={(e) => onRoleChange?.(e.target.value)}
+                        disabled={isAddingMember}
+                        className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500 disabled:opacity-50"
+                      />
+                      <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                        {option.label}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              )}
+              {formErrors._roles && (
+                <p className="mt-2 text-xs text-red-600 dark:text-red-400" role="alert">
+                  {formErrors._roles}
+                </p>
+              )}
             </div>
           )}
 
@@ -444,127 +543,195 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
           </div>
         ) : (
           <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-            {members.map((member) => (
-              <li key={member.id} className="px-6 py-4 bg-white dark:bg-gray-800">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center space-x-3">
-                      <div className="flex-shrink-0">
-                        <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                          <UserIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+            {members.map((member) => {
+              const memberRoles = getMemberRoles(member);
+              const isEditing = editingMemberId === member.id;
+
+              return (
+                <li key={member.id} className="px-6 py-4 bg-white dark:bg-gray-800">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center space-x-3">
+                        <div className="flex-shrink-0">
+                          <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                            <UserIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex flex-col space-y-1">
-                          {/* Display all information clearly */}
-
-                          {/* Name - Primary display with role badge */}
-                          {member.name && (
-                            <div className="flex items-center space-x-2">
-                              <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                {member.name}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-col space-y-1">
+                            {/* Name with role badges */}
+                            {member.name && (
+                              <div className="flex items-center space-x-2 flex-wrap">
+                                <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                  {member.name}
+                                </div>
+                                {!isEditing &&
+                                  memberRoles.map((role) => (
+                                    <span
+                                      key={role}
+                                      className={cn(
+                                        "inline-flex items-center px-2 py-0.5 rounded text-xs font-medium",
+                                        role === "program"
+                                          ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                                          : "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
+                                      )}
+                                    >
+                                      {getRoleShortLabel(role)}
+                                    </span>
+                                  ))}
                               </div>
-                              {getMemberRole(member) && (
-                                <span
-                                  className={cn(
-                                    "inline-flex items-center px-2 py-0.5 rounded text-xs font-medium",
-                                    getMemberRole(member) === "program"
-                                      ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
-                                      : "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
-                                  )}
-                                >
-                                  {getRoleShortLabel(getMemberRole(member))}
-                                </span>
-                              )}
-                            </div>
-                          )}
+                            )}
 
-                          {/* Email (login identifier) and Telegram on same line */}
-                          {(member.email || member.telegram) && (
-                            <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                              {member.email && (
-                                <span className="flex items-center space-x-1">
-                                  <EnvelopeIcon className="h-3.5 w-3.5 text-gray-400 dark:text-gray-500" />
-                                  <span>{member.email}</span>
-                                </span>
-                              )}
-                              {member.email && member.telegram && (
-                                <span className="mx-2 text-gray-400 dark:text-gray-500">|</span>
-                              )}
-                              {member.telegram && (
-                                <span className="flex items-center space-x-1">
-                                  <TelegramIcon className="h-4 w-4" />
-                                  <span>
-                                    {member.telegram?.[0] === "@" ? "" : "@"}
-                                    {member.telegram}
+                            {/* Inline edit form for roles */}
+                            {isEditing && roleOptions && (
+                              <div className="flex items-center space-x-4 py-1">
+                                {roleOptions.map((option) => (
+                                  <label
+                                    key={option.value}
+                                    className="flex items-center cursor-pointer"
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={editRoles.includes(option.value)}
+                                      onChange={(e) =>
+                                        handleEditRoleToggle(option.value, e.target.checked)
+                                      }
+                                      disabled={isSavingEdit}
+                                      className="h-4 w-4 rounded text-blue-600 border-gray-300 focus:ring-blue-500 disabled:opacity-50"
+                                    />
+                                    <span className="ml-1.5 text-sm text-gray-700 dark:text-gray-300">
+                                      {option.label}
+                                    </span>
+                                  </label>
+                                ))}
+                                <div className="flex items-center space-x-1">
+                                  <button
+                                    onClick={handleSaveEdit}
+                                    disabled={isSavingEdit}
+                                    className="p-1 rounded text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 disabled:opacity-50"
+                                    aria-label="Save role changes"
+                                  >
+                                    {isSavingEdit ? (
+                                      <Spinner className="h-4 w-4" />
+                                    ) : (
+                                      <CheckIcon className="h-4 w-4" />
+                                    )}
+                                  </button>
+                                  <button
+                                    onClick={handleCancelEdit}
+                                    disabled={isSavingEdit}
+                                    className="p-1 rounded text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
+                                    aria-label="Cancel editing"
+                                  >
+                                    <XMarkIcon className="h-4 w-4" />
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Email and Telegram */}
+                            {(member.email || member.telegram) && (
+                              <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                                {member.email && (
+                                  <span className="flex items-center space-x-1">
+                                    <EnvelopeIcon className="h-3.5 w-3.5 text-gray-400 dark:text-gray-500" />
+                                    <span>{member.email}</span>
                                   </span>
-                                </span>
-                              )}
-                            </div>
-                          )}
-
-                          {/* Wallet address (secondary, auto-generated) */}
-                          {(member.publicAddress || member.walletAddress) && (
-                            <div className="flex items-center text-xs text-gray-400 dark:text-gray-500">
-                              <span className="mr-1">Wallet:</span>
-                              <button
-                                onClick={() =>
-                                  handleCopyAddress(
-                                    member.publicAddress || member.walletAddress || ""
-                                  )
-                                }
-                                className="flex items-center space-x-1 hover:text-gray-600 dark:hover:text-gray-300 transition-colors group"
-                                title="Click to copy wallet address"
-                              >
-                                <span>
-                                  {getMemberDisplayValue(
-                                    member,
-                                    member.publicAddress ? "publicAddress" : "walletAddress"
-                                  )}
-                                </span>
-                                {copiedAddress ===
-                                (member.publicAddress || member.walletAddress) ? (
-                                  <CheckIcon className="h-3 w-3 text-green-500" />
-                                ) : (
-                                  <DocumentDuplicateIcon className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                                 )}
-                              </button>
-                            </div>
-                          )}
+                                {member.email && member.telegram && (
+                                  <span className="mx-2 text-gray-400 dark:text-gray-500">|</span>
+                                )}
+                                {member.telegram && (
+                                  <span className="flex items-center space-x-1">
+                                    <TelegramIcon className="h-4 w-4" />
+                                    <span>
+                                      {member.telegram?.[0] === "@" ? "" : "@"}
+                                      {member.telegram}
+                                    </span>
+                                  </span>
+                                )}
+                              </div>
+                            )}
 
-                          {/* Added date */}
-                          {member.assignedAt && (
-                            <div className="text-xs text-gray-400 dark:text-gray-500">
-                              Added {formatDate(member.assignedAt)}
-                            </div>
-                          )}
+                            {/* Wallet address */}
+                            {(member.publicAddress || member.walletAddress) && (
+                              <div className="flex items-center text-xs text-gray-400 dark:text-gray-500">
+                                <span className="mr-1">Wallet:</span>
+                                <button
+                                  onClick={() =>
+                                    handleCopyAddress(
+                                      (member.publicAddress || member.walletAddress) as string
+                                    )
+                                  }
+                                  className="flex items-center space-x-1 hover:text-gray-600 dark:hover:text-gray-300 transition-colors group"
+                                  title="Click to copy wallet address"
+                                >
+                                  <span>
+                                    {getMemberDisplayValue(
+                                      member,
+                                      member.publicAddress ? "publicAddress" : "walletAddress"
+                                    )}
+                                  </span>
+                                  {copiedAddress ===
+                                  (member.publicAddress || member.walletAddress) ? (
+                                    <CheckIcon className="h-3 w-3 text-green-500" />
+                                  ) : (
+                                    <DocumentDuplicateIcon className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                  )}
+                                </button>
+                              </div>
+                            )}
+
+                            {/* Added date */}
+                            {member.assignedAt && (
+                              <div className="text-xs text-gray-400 dark:text-gray-500">
+                                Added {formatDate(member.assignedAt)}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
+                    {canManage && !isEditing && (
+                      <div className="flex items-center space-x-1 ml-4">
+                        {onEditRoles && roleOptions && (
+                          <button
+                            onClick={() => handleStartEdit(member.id)}
+                            aria-label={`Edit roles for ${member.name || member.id}`}
+                            className={cn(
+                              "p-2 rounded-md",
+                              "text-gray-400 hover:text-blue-600 dark:text-gray-500 dark:hover:text-blue-400",
+                              "hover:bg-gray-100 dark:hover:bg-gray-800",
+                              "transition-colors duration-200"
+                            )}
+                          >
+                            <PencilIcon className="h-5 w-5" aria-hidden="true" />
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleRemove(member.id)}
+                          disabled={removingMemberId === member.id}
+                          aria-label={`Remove ${member.name || member.id}`}
+                          className={cn(
+                            "p-2 rounded-md",
+                            "text-gray-400 hover:text-red-600 dark:text-gray-500 dark:hover:text-red-400",
+                            "hover:bg-gray-100 dark:hover:bg-gray-800",
+                            "disabled:opacity-50 disabled:cursor-not-allowed",
+                            "transition-colors duration-200"
+                          )}
+                        >
+                          {removingMemberId === member.id ? (
+                            <Spinner className="h-5 w-5" aria-hidden="true" />
+                          ) : (
+                            <XMarkIcon className="h-5 w-5" aria-hidden="true" />
+                          )}
+                        </button>
+                      </div>
+                    )}
                   </div>
-                  {canManage && (
-                    <button
-                      onClick={() => handleRemove(member.id)}
-                      disabled={removingMemberId === member.id}
-                      aria-label={`Remove ${config.roleDisplayName.toLowerCase()} ${member.name || member.publicAddress || member.id}`}
-                      className={cn(
-                        "ml-4 p-2 rounded-md",
-                        "text-gray-400 hover:text-red-600 dark:text-gray-500 dark:hover:text-red-400",
-                        "hover:bg-gray-100 dark:hover:bg-gray-800",
-                        "disabled:opacity-50 disabled:cursor-not-allowed",
-                        "transition-colors duration-200"
-                      )}
-                    >
-                      {removingMemberId === member.id ? (
-                        <Spinner className="h-5 w-5" aria-hidden="true" />
-                      ) : (
-                        <XMarkIcon className="h-5 w-5" aria-hidden="true" />
-                      )}
-                    </button>
-                  )}
-                </div>
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>
