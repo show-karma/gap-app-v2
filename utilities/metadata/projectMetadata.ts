@@ -138,7 +138,7 @@ export const generateProjectFundingMetadata = (
     projectId,
     title: `${projectTitle} Grants`,
     description: `View funding and grants for ${projectTitle} on ${PROJECT_NAME}.`,
-    canonicalPath: `/project/${projectId}/grants`,
+    canonicalPath: `/project/${projectId}/funding`,
   });
 };
 
@@ -166,8 +166,8 @@ export const generateGrantOverviewMetadata = (
     title: `${grantTitle} Grant Overview | ${projectTitle}`,
     description: cleanMarkdownForPlainText(getGrantDescription(grant), 160),
     canonicalPath: grantUid
-      ? `/project/${projectId}/grants/${grantUid}`
-      : `/project/${projectId}/grants`,
+      ? `/project/${projectId}/funding/${grantUid}`
+      : `/project/${projectId}/funding`,
   });
 };
 
@@ -184,8 +184,8 @@ export const generateGrantMilestonesMetadata = (
     title: `${projectTitle} - Milestones and Updates for ${grantTitle}`,
     description: `View all milestones and updates by ${projectTitle} for ${grantTitle} grant.`,
     canonicalPath: grantUid
-      ? `/project/${projectId}/grants/${grantUid}/milestones`
-      : `/project/${projectId}/grants`,
+      ? `/project/${projectId}/funding/${grantUid}/milestones-and-updates`
+      : `/project/${projectId}/funding`,
   });
 };
 
@@ -202,8 +202,8 @@ export const generateGrantImpactCriteriaMetadata = (
     title: `Impact Criteria for ${grantTitle} Grant | ${projectTitle}`,
     description: `Impact criteria defined by ${projectTitle} for ${grantTitle} grant.`,
     canonicalPath: grantUid
-      ? `/project/${projectId}/grants/${grantUid}/impact-criteria`
-      : `/project/${projectId}/grants`,
+      ? `/project/${projectId}/funding/${grantUid}/impact-criteria`
+      : `/project/${projectId}/funding`,
   });
 };
 
