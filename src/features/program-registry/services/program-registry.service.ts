@@ -1,11 +1,14 @@
-import type {
-  CreateProgramFormData,
-  ProgramCreationResult,
-  ProgramMetadata,
-} from "@/types/program-registry";
 import type { Community } from "@/types/v2/community";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
+import { sanitizeObject } from "@/utilities/sanitize";
+import type { UpdateProgramFormSchema } from "../schemas/admin-form";
+import type {
+  CreateProgramFormData,
+  GrantProgram,
+  ProgramCreationResult,
+  ProgramMetadata,
+} from "../types";
 
 /**
  * Program Registry Service
@@ -17,6 +20,7 @@ export class ProgramRegistryService {
    * Build program metadata from form data and community.
    * Default: anyoneCanJoin = true (open enrollment).
    * Both admin (CreateProgramModal) and public (AddProgram) forms now explicitly pass the value.
+   * Includes adminEmails and financeEmails from form data.
    */
   static buildProgramMetadata(
     formData: CreateProgramFormData,
@@ -60,7 +64,35 @@ export class ProgramRegistryService {
       communityRef: [community.uid], // Use community UID (hex address), not slug
       anyoneCanJoin: options?.anyoneCanJoin ?? true, // Default to open enrollment
       invoiceRequired: formData.invoiceRequired ?? false,
+      adminEmails: formData.adminEmails,
+      financeEmails: formData.financeEmails,
     };
+  }
+
+  /**
+   * Build metadata object for API update from form data and existing metadata.
+   * Merges form changes into existing program metadata.
+   */
+  static buildUpdateMetadata(
+    formData: UpdateProgramFormSchema,
+    existingMetadata: GrantProgram["metadata"]
+  ): ProgramMetadata {
+    const updatedFields = {
+      title: formData.name,
+      description: formData.description,
+      shortDescription: formData.shortDescription,
+      programBudget: formData.budget,
+      startsAt: formData.dates.startsAt,
+      endsAt: formData.dates.endsAt,
+      adminEmails: formData.adminEmails,
+      financeEmails: formData.financeEmails,
+      invoiceRequired: formData.invoiceRequired ?? false,
+    };
+
+    return sanitizeObject({
+      ...existingMetadata,
+      ...updatedFields,
+    }) as ProgramMetadata;
   }
 
   /**
@@ -153,15 +185,22 @@ export class ProgramRegistryService {
 
   /**
    * Create a program (V2 endpoint)
+   * @param _owner - Owner address (used for JWT session, not sent in body)
+   * @param chainId - Chain ID for the program
+   * @param metadata - Program metadata
+   * @param topLevelFields - Optional top-level fields (type, deadline, submissionUrl, typed metadata)
    */
   static async createProgram(
     _owner: string,
     chainId: number,
-    metadata: ProgramMetadata
+    metadata: ProgramMetadata | Record<string, unknown>,
+    topLevelFields?: Record<string, unknown>
   ): Promise<ProgramCreationResult> {
-    // V2 endpoint expects: { chainId, metadata }
+    // V2 endpoint expects: { chainId, metadata, ...topLevelFields }
     // owner comes from JWT session
+    // Spread topLevelFields first so reserved keys (chainId, metadata) cannot be overwritten
     const request = {
+      ...topLevelFields,
       chainId,
       metadata,
     };
@@ -208,9 +247,10 @@ export class ProgramRegistryService {
     metadata: ProgramMetadata,
     topLevelFields?: Record<string, unknown>
   ): Promise<void> {
+    // Spread topLevelFields first so reserved key (metadata) cannot be overwritten
     const request = {
-      metadata,
       ...topLevelFields,
+      metadata,
     };
 
     const [, updateError] = await fetchData(

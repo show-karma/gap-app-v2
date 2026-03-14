@@ -1,100 +1,25 @@
 "use client";
 import { DocumentTextIcon } from "@heroicons/react/24/solid";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Controller, useForm, useWatch } from "react-hook-form";
-import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
-import { DateTimePicker } from "@/components/Utilities/DateTimePicker";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
-import { MultiEmailInput } from "@/components/Utilities/MultiEmailInput";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useAuth } from "@/hooks/useAuth";
 import { useProgramConfig } from "@/hooks/useFundingPlatform";
-import { type UpdateProgramFormSchema, updateProgramSchema } from "@/schemas/programFormSchema";
-import { ProgramRegistryService } from "@/services/programRegistry.service";
+import { AdminProgramFormFields } from "@/src/features/program-registry/components/admin-program-form-fields";
+import { useAdminProgramForm } from "@/src/features/program-registry/hooks/use-admin-program-form";
+import { ProgramRegistryService } from "@/src/features/program-registry/services/program-registry.service";
 import fetchData from "@/utilities/fetchData";
-import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
-import { MESSAGES } from "@/utilities/messages";
-import { sanitizeObject } from "@/utilities/sanitize";
-import { cn } from "@/utilities/tailwind";
 import { PAGE_HEADER_CONTENT, PageHeader } from "../PageHeader";
 
 interface ProgramDetailsTabProps {
   programId: string;
-  chainId?: number; // Optional - V2 endpoints use programId only
+  chainId?: number;
   readOnly?: boolean;
   /** Pre-loaded program data from parent - skips V1 registry fetch when provided */
   initialProgram?: GrantProgram | null;
-}
-
-// Constants
-const SHORT_DESCRIPTION_MAX_LENGTH = 100;
-const DATE_PICKER_BUTTON_CLASS = "w-full text-base";
-
-/**
- * Helper component for ARIA live region error announcements
- */
-function AriaLiveError({ error }: { error?: { message?: string } }) {
-  if (!error?.message) return null;
-  return (
-    <div aria-live="polite" aria-atomic="true" className="sr-only">
-      {`Error: ${error.message}`}
-    </div>
-  );
-}
-
-/**
- * Helper function to build form values from program metadata
- */
-function buildFormValuesFromMetadata(metadata: GrantProgram["metadata"]) {
-  if (!metadata) return null;
-
-  return {
-    name: metadata.title || "",
-    description: metadata.description || "",
-    shortDescription: metadata.shortDescription || "",
-    dates: {
-      startsAt: metadata.startsAt ? new Date(metadata.startsAt) : undefined,
-      endsAt: metadata.endsAt ? new Date(metadata.endsAt) : undefined,
-    },
-    budget: metadata.programBudget ? parseFloat(metadata.programBudget.toString()) : undefined,
-    adminEmails: metadata.adminEmails || [],
-    financeEmails: metadata.financeEmails || [],
-    invoiceRequired: metadata.invoiceRequired ?? false,
-  };
-}
-
-/**
- * Helper function to build metadata object for API update
- */
-function buildUpdateMetadata(
-  formData: UpdateProgramFormSchema,
-  existingMetadata: GrantProgram["metadata"]
-) {
-  const updatedFields = {
-    title: formData.name,
-    description: formData.description,
-    shortDescription: formData.shortDescription,
-    programBudget: formData.budget,
-    startsAt: formData.dates.startsAt,
-    endsAt: formData.dates.endsAt,
-    adminEmails: formData.adminEmails,
-    financeEmails: formData.financeEmails,
-    invoiceRequired: formData.invoiceRequired ?? false,
-  };
-
-  return sanitizeObject({
-    ...existingMetadata,
-    ...updatedFields,
-  });
 }
 
 export function ProgramDetailsTab({
@@ -103,17 +28,97 @@ export function ProgramDetailsTab({
   readOnly = false,
   initialProgram,
 }: ProgramDetailsTabProps) {
-  // If chainId is not provided, try to fetch from program config
   const { data: programConfig } = useProgramConfig(programId);
   const effectiveChainId = chainId ?? programConfig?.chainID;
-  const { address, isConnected } = useAccount();
-  const { authenticated: isAuth, login } = useAuth();
 
-  const [isLoading, setIsLoading] = useState(false);
-  // Skip loading state if initialProgram is provided
   const [isLoadingProgram, setIsLoadingProgram] = useState(!initialProgram);
   const [program, setProgram] = useState<GrantProgram | null>(initialProgram || null);
   const [programError, setProgramError] = useState<string | null>(null);
+  const fetchNonceRef = useRef(0);
+
+  // Fetch program data if not provided via props
+  const fetchProgram = useCallback(async () => {
+    if (!effectiveChainId) {
+      setIsLoadingProgram(false);
+      return;
+    }
+    const nonce = ++fetchNonceRef.current;
+    try {
+      setIsLoadingProgram(true);
+      setProgramError(null);
+      const [data, error] = await fetchData(
+        INDEXER.REGISTRY.FIND_BY_ID(programId, effectiveChainId)
+      );
+      if (nonce !== fetchNonceRef.current) return;
+      if (error) throw new Error(error);
+      const programData = data ? (Array.isArray(data) ? data[0] : data) : null;
+      setProgram(programData as GrantProgram | null);
+    } catch (error: unknown) {
+      if (nonce !== fetchNonceRef.current) return;
+      const errorMessage = error instanceof Error ? error.message : "Failed to load program data";
+      setProgramError(errorMessage);
+      errorManager("Failed to load program data", error, {
+        programId,
+        chainId: effectiveChainId,
+      });
+    } finally {
+      if (nonce === fetchNonceRef.current) {
+        setIsLoadingProgram(false);
+      }
+    }
+  }, [programId, effectiveChainId]);
+
+  useEffect(() => {
+    if (initialProgram) {
+      setProgram(initialProgram);
+      setIsLoadingProgram(false);
+      return;
+    }
+    if (programId && effectiveChainId) {
+      fetchProgram();
+    } else {
+      setIsLoadingProgram(false);
+    }
+  }, [programId, effectiveChainId, fetchProgram, initialProgram]);
+
+  // Refetch after successful update
+  const refetchProgramData = useCallback(async () => {
+    if (!effectiveChainId) return;
+    const nonce = ++fetchNonceRef.current;
+    try {
+      const [data, error] = await fetchData(
+        INDEXER.REGISTRY.FIND_BY_ID(programId, effectiveChainId)
+      );
+      if (nonce !== fetchNonceRef.current) return;
+      if (!error) {
+        const programData = data ? (Array.isArray(data) ? data[0] : data) : null;
+        setProgram(programData as GrantProgram | null);
+      }
+    } catch {
+      // Non-critical: silently ignore refetch failures
+    }
+  }, [programId, effectiveChainId]);
+
+  const programIdToUpdate = programId || ProgramRegistryService.extractProgramId(program!);
+
+  const {
+    form,
+    onSubmit,
+    isSubmitting,
+    isDisabled,
+    isDirty,
+    shortDescription,
+    startDate,
+    createDatePickerProps,
+  } = useAdminProgramForm({
+    mode: "update",
+    programId: programIdToUpdate || programId,
+    existingProgram: program,
+    readOnly,
+    onSuccess: () => {
+      refetchProgramData();
+    },
+  });
 
   const {
     register,
@@ -121,209 +126,8 @@ export function ProgramDetailsTab({
     watch,
     setValue,
     control,
-    formState: { errors, isSubmitting, isDirty },
-    reset,
-  } = useForm<UpdateProgramFormSchema>({
-    resolver: zodResolver(updateProgramSchema),
-    defaultValues: {
-      name: "",
-      description: "",
-      shortDescription: "",
-      dates: {
-        startsAt: undefined,
-        endsAt: undefined,
-      },
-      budget: undefined,
-      adminEmails: [],
-      financeEmails: [],
-    },
-  });
-
-  // Optimize watched values to prevent unnecessary re-renders
-  const shortDescription = useWatch({ control, name: "shortDescription" });
-  const startDate = useWatch({ control, name: "dates.startsAt" });
-
-  // Memoize disabled state calculation
-  const isDisabled = useMemo(
-    () => isSubmitting || isLoading || readOnly,
-    [isSubmitting, isLoading, readOnly]
-  );
-
-  // Helper to process and update program data
-  const processProgramData = useCallback(
-    (data: unknown) => {
-      const programData = Array.isArray(data) ? data[0] : data;
-      if (!programData) {
-        // Handle empty array or undefined data
-        setProgram(null);
-        return;
-      }
-      setProgram(programData as GrantProgram);
-      const formValues = buildFormValuesFromMetadata((programData as GrantProgram).metadata);
-      if (formValues) {
-        reset(formValues);
-      }
-    },
-    [reset]
-  );
-
-  // Fetch program data
-  const fetchProgram = useCallback(async () => {
-    if (!effectiveChainId) {
-      setIsLoadingProgram(false);
-      return;
-    }
-    try {
-      setIsLoadingProgram(true);
-      setProgramError(null);
-      const [data, error] = await fetchData(
-        INDEXER.REGISTRY.FIND_BY_ID(programId, effectiveChainId)
-      );
-      if (error) {
-        throw new Error(error);
-      }
-      if (data) {
-        processProgramData(data);
-      }
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to load program data";
-      setProgramError(errorMessage);
-      errorManager("Failed to load program data", error, { programId, chainId: effectiveChainId });
-    } finally {
-      setIsLoadingProgram(false);
-    }
-  }, [programId, effectiveChainId, processProgramData]);
-
-  // Initialize form and program state with initial program data if provided
-  useEffect(() => {
-    if (initialProgram) {
-      setProgram(initialProgram);
-      setIsLoadingProgram(false);
-      const formValues = buildFormValuesFromMetadata(initialProgram.metadata);
-      if (formValues) {
-        reset(formValues);
-      }
-    }
-  }, [initialProgram, reset]);
-
-  useEffect(() => {
-    // Skip fetch if initialProgram was provided
-    if (initialProgram) {
-      return;
-    }
-    if (programId && effectiveChainId) {
-      fetchProgram();
-    } else {
-      // Don't leave in loading state if programId/chainId is missing
-      setIsLoadingProgram(false);
-    }
-  }, [programId, effectiveChainId, fetchProgram, initialProgram]);
-
-  // Validate submission prerequisites
-  const validateSubmissionPrerequisites = useCallback((): string | null => {
-    if (readOnly) {
-      return "You don't have permission to edit this program";
-    }
-    if (!isConnected || !isAuth) {
-      login?.();
-      return "Authentication required";
-    }
-    if (!address) {
-      return "Wallet address is required";
-    }
-    if (!program) {
-      return "Program data not loaded";
-    }
-    return null;
-  }, [readOnly, isConnected, isAuth, login, address, program]);
-
-  // Refetch program data after update
-  const refetchProgramData = useCallback(async () => {
-    if (!effectiveChainId) return;
-    try {
-      const [updatedData, updateError] = await fetchData(
-        INDEXER.REGISTRY.FIND_BY_ID(programId, effectiveChainId)
-      );
-
-      if (updateError) {
-        return;
-      }
-
-      if (updatedData) {
-        processProgramData(updatedData);
-      }
-    } catch {
-      // Error refetching program data - ignore silently
-    }
-  }, [programId, effectiveChainId, processProgramData]);
-
-  // Helper function to create date picker props (memoized to prevent recreation)
-  const createDatePickerProps = useCallback(
-    (fieldName: "startsAt" | "endsAt", field: { onChange: (value: Date | undefined) => void }) => ({
-      onSelect: (date: Date | undefined) => {
-        if (isDisabled) return;
-        const currentValue = watch(`dates.${fieldName}`);
-        if (currentValue && date && formatDate(date) === formatDate(currentValue)) {
-          setValue(`dates.${fieldName}`, undefined, { shouldValidate: true });
-          field.onChange(undefined);
-        } else {
-          setValue(`dates.${fieldName}`, date, { shouldValidate: true });
-          field.onChange(date);
-        }
-      },
-      clearButtonFn: () => {
-        setValue(`dates.${fieldName}`, undefined, { shouldValidate: true });
-        field.onChange(undefined);
-      },
-    }),
-    [isDisabled, watch, setValue]
-  );
-
-  const onSubmit = async (data: UpdateProgramFormSchema) => {
-    const validationError = validateSubmissionPrerequisites();
-    if (validationError) {
-      toast.error(validationError);
-      return;
-    }
-
-    // V2 uses programId (domain identifier), not MongoDB _id
-    const programIdToUpdate = programId || ProgramRegistryService.extractProgramId(program!);
-    if (!programIdToUpdate) {
-      errorManager("Program missing ID", new Error("Program ID not found"), {
-        programId,
-        chainId: effectiveChainId,
-        programKeys: Object.keys(program!),
-      });
-      toast.error("Program ID not found. Cannot update program.");
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const metadata = buildUpdateMetadata(data, program!.metadata);
-
-      // Use V2 update endpoint
-      await ProgramRegistryService.updateProgram(programIdToUpdate, metadata);
-
-      toast.success("Program updated successfully!");
-      await refetchProgramData();
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      if (errorMessage.includes("already exists")) {
-        toast.error("A program with this name already exists");
-      } else {
-        errorManager(MESSAGES.PROGRAM_REGISTRY.EDIT.ERROR(data.name), error, {
-          address,
-          data,
-          programId,
-          chainId: effectiveChainId,
-        });
-        toast.error(`Failed to update program: ${errorMessage}`);
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    formState: { errors },
+  } = form;
 
   if (isLoadingProgram) {
     return (
@@ -345,6 +149,14 @@ export function ProgramDetailsTab({
   }
 
   if (!program) {
+    // If we don't have a chainId yet (waiting for programConfig to load), show loading
+    if (!effectiveChainId && !initialProgram) {
+      return (
+        <div className="flex items-center justify-center py-8">
+          <Spinner />
+        </div>
+      );
+    }
     return (
       <div className="flex flex-col items-center justify-center py-8">
         <p className="text-sm text-muted-foreground mb-4">Program not found.</p>
@@ -361,246 +173,17 @@ export function ProgramDetailsTab({
           icon={DocumentTextIcon}
         />
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          {/* Program Name */}
-          <div className="flex w-full flex-col gap-1">
-            <Label htmlFor="program-name">
-              Program Name <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="program-name"
-              placeholder="Ex: Builder Growth Program"
-              {...register("name")}
-              disabled={isDisabled}
-              aria-invalid={errors.name ? "true" : "false"}
-              aria-describedby={errors.name ? "program-name-error" : undefined}
-            />
-            {errors.name && (
-              <p id="program-name-error" className="text-sm text-destructive" role="alert">
-                {errors.name.message}
-              </p>
-            )}
-            <AriaLiveError error={errors.name} />
-          </div>
-
-          {/* Program Description */}
-          <Controller
-            name="description"
+          <AdminProgramFormFields
             control={control}
-            render={({ field: { onChange, onBlur, value }, fieldState }) => (
-              <div className="flex w-full flex-col gap-1">
-                <MarkdownEditor
-                  label="Program Description"
-                  placeholder="Please provide a description of this program"
-                  value={value || ""}
-                  onChange={onChange}
-                  onBlur={onBlur}
-                  error={fieldState.error?.message}
-                  isRequired
-                  isDisabled={isDisabled}
-                  id="program-description"
-                  height={200}
-                  minHeight={150}
-                />
-                <AriaLiveError error={fieldState.error} />
-              </div>
-            )}
+            register={register}
+            errors={errors}
+            watch={watch}
+            setValue={setValue}
+            isDisabled={isDisabled}
+            shortDescription={shortDescription}
+            startDate={startDate}
+            createDatePickerProps={createDatePickerProps}
           />
-
-          {/* Short Description */}
-          <div className="flex w-full flex-col gap-1">
-            <Label htmlFor="short-description">
-              Program Short Description <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="short-description"
-              placeholder="Brief description (max 100 characters)"
-              maxLength={SHORT_DESCRIPTION_MAX_LENGTH}
-              disabled={isDisabled}
-              {...register("shortDescription")}
-            />
-            <div className="flex justify-between">
-              <AriaLiveError error={errors.shortDescription} />
-              <p id="short-description-count" className="text-xs text-muted-foreground text-right">
-                {shortDescription?.length || 0}/{SHORT_DESCRIPTION_MAX_LENGTH}
-              </p>
-            </div>
-          </div>
-
-          {/* Dates */}
-          <div className="grid grid-cols-2 gap-4">
-            <Controller
-              name="dates.startsAt"
-              control={control}
-              render={({ field, formState }) => {
-                const datePickerProps = createDatePickerProps("startsAt", field);
-                return (
-                  <div className="flex w-full flex-col gap-2">
-                    <Label htmlFor="start-date">Start Date (optional)</Label>
-                    <DateTimePicker
-                      selected={field.value}
-                      onSelect={datePickerProps.onSelect}
-                      timeMode="start"
-                      placeholder="Pick a date (UTC)"
-                      buttonClassName={cn(
-                        DATE_PICKER_BUTTON_CLASS,
-                        isDisabled && "opacity-50 cursor-not-allowed"
-                      )}
-                      clearButtonFn={datePickerProps.clearButtonFn}
-                    />
-                    {formState.errors.dates?.startsAt && (
-                      <p className="text-sm text-destructive" role="alert">
-                        {formState.errors.dates.startsAt.message}
-                      </p>
-                    )}
-                    <AriaLiveError error={formState.errors.dates?.startsAt} />
-                  </div>
-                );
-              }}
-            />
-
-            <Controller
-              name="dates.endsAt"
-              control={control}
-              render={({ field, formState }) => {
-                const datePickerProps = createDatePickerProps("endsAt", field);
-                return (
-                  <div className="flex w-full flex-col gap-2">
-                    <Label htmlFor="end-date">End Date (optional)</Label>
-                    <DateTimePicker
-                      selected={field.value}
-                      onSelect={datePickerProps.onSelect}
-                      timeMode="end"
-                      minDate={startDate}
-                      placeholder="Pick a date (UTC)"
-                      buttonClassName={cn(
-                        DATE_PICKER_BUTTON_CLASS,
-                        isDisabled && "opacity-50 cursor-not-allowed"
-                      )}
-                      clearButtonFn={datePickerProps.clearButtonFn}
-                    />
-                    {formState.errors.dates?.endsAt && (
-                      <p className="text-sm text-destructive" role="alert">
-                        {formState.errors.dates.endsAt.message}
-                      </p>
-                    )}
-                    <AriaLiveError error={formState.errors.dates?.endsAt} />
-                  </div>
-                );
-              }}
-            />
-          </div>
-
-          {/* Budget */}
-          <div className="flex w-full flex-col gap-1">
-            <Label htmlFor="program-budget">Program Budget (optional)</Label>
-            <Input
-              id="program-budget"
-              type="number"
-              min="0"
-              step="1"
-              placeholder="Ex: 100000"
-              {...register("budget")}
-              disabled={isDisabled}
-              aria-invalid={errors.budget ? "true" : "false"}
-              aria-describedby={errors.budget ? "program-budget-error" : undefined}
-            />
-            {errors.budget && (
-              <p id="program-budget-error" className="text-sm text-destructive" role="alert">
-                {errors.budget.message}
-              </p>
-            )}
-            <AriaLiveError error={errors.budget} />
-          </div>
-
-          {/* Admin Emails */}
-          <Controller
-            name="adminEmails"
-            control={control}
-            render={({ field, fieldState }) => (
-              <div className="flex w-full flex-col gap-1">
-                <Label htmlFor="admin-emails">
-                  Admin Emails <span className="text-destructive">*</span>
-                </Label>
-                <p className="text-xs text-muted-foreground mb-1">
-                  Applicants will reply to these email addresses when responding to notifications
-                </p>
-                <MultiEmailInput
-                  emails={field.value || []}
-                  onChange={field.onChange}
-                  placeholder="Enter admin email"
-                  disabled={isDisabled}
-                  error={fieldState.error?.message}
-                />
-                <AriaLiveError error={fieldState.error} />
-              </div>
-            )}
-          />
-
-          {/* Finance Emails */}
-          <Controller
-            name="financeEmails"
-            control={control}
-            render={({ field, fieldState }) => (
-              <div className="flex w-full flex-col gap-1">
-                <Label htmlFor="finance-emails">
-                  Finance Emails <span className="text-destructive">*</span>
-                </Label>
-                <p className="text-xs text-muted-foreground mb-1">
-                  Finance team will be notified when milestones are verified
-                </p>
-                <MultiEmailInput
-                  emails={field.value || []}
-                  onChange={field.onChange}
-                  placeholder="Enter finance email"
-                  disabled={isDisabled}
-                  error={fieldState.error?.message}
-                />
-                <AriaLiveError error={fieldState.error} />
-              </div>
-            )}
-          />
-
-          {/* Invoice Required */}
-          <Controller
-            name="invoiceRequired"
-            control={control}
-            render={({ field, fieldState }) => (
-              <fieldset>
-                <legend className="text-sm font-semibold text-gray-700 mb-2">
-                  Require invoices for milestones <span className="text-red-500">*</span>
-                </legend>
-                <div className="flex items-center gap-6">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="invoiceRequired"
-                      checked={field.value === true}
-                      onChange={() => field.onChange(true)}
-                      disabled={isDisabled}
-                      className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="text-sm">Yes</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="invoiceRequired"
-                      checked={field.value === false}
-                      onChange={() => field.onChange(false)}
-                      disabled={isDisabled}
-                      className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="text-sm">No</span>
-                  </label>
-                </div>
-                {fieldState.error?.message && (
-                  <p className="text-red-500 text-sm mt-1">{fieldState.error.message}</p>
-                )}
-              </fieldset>
-            )}
-          />
-
-          {/* Actions */}
           <div className="flex justify-end gap-3 pt-4">
             {readOnly ? (
               <TooltipProvider>
@@ -618,11 +201,7 @@ export function ProgramDetailsTab({
                 </Tooltip>
               </TooltipProvider>
             ) : (
-              <Button
-                type="submit"
-                disabled={!isDirty || isSubmitting || isLoading}
-                isLoading={isSubmitting || isLoading}
-              >
+              <Button type="submit" disabled={!isDirty || isSubmitting} isLoading={isSubmitting}>
                 Save Changes
               </Button>
             )}

@@ -10,10 +10,6 @@ import Papa from "papaparse";
 import { useCallback, useState } from "react";
 import toast from "react-hot-toast";
 import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
-import {
-  buildCompositeProgramId,
-  parseCompositeProgramKey,
-} from "@/components/Pages/ProgramRegistry/programUtils";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { FileUpload } from "@/components/Utilities/FileUpload";
 import { Button } from "@/components/ui/button";
@@ -22,6 +18,10 @@ import {
   type ProgramScoreUploadResult,
   programScoresService,
 } from "@/services/programScoresService";
+import {
+  buildCompositeProgramId,
+  parseCompositeProgramKey,
+} from "@/src/features/program-registry/utils/program-utils";
 import { cn } from "@/utilities/tailwind";
 
 interface ProgramScoresUploadProps {

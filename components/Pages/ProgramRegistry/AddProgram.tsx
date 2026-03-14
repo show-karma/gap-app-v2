@@ -25,11 +25,18 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { getCommunities } from "@/services/communities.service";
-import { ProgramRegistryService } from "@/services/programRegistry.service";
+import {
+  createProgramSchema,
+  OPPORTUNITY_TYPE_OPTIONS,
+  type ProgramFormData,
+} from "@/src/features/program-registry/schemas/public-form";
+import { ProgramRegistryService } from "@/src/features/program-registry/services/program-registry.service";
+import {
+  buildMetadata,
+  buildTopLevelFields,
+} from "@/src/features/program-registry/utils/program-utils";
 import type { Community } from "@/types/v2/community";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { appNetwork } from "@/utilities/network";
 import { PAGES } from "@/utilities/pages";
@@ -37,10 +44,8 @@ import { sanitizeObject } from "@/utilities/sanitize";
 import { cn } from "@/utilities/tailwind";
 import { registryHelper } from "./helper";
 import type { GrantProgram } from "./ProgramList";
-import { buildMetadata, buildTopLevelFields } from "./programUtils";
 import { SearchDropdown } from "./SearchDropdown";
 import { StatusDropdown } from "./StatusDropdown";
-import { createProgramSchema, OPPORTUNITY_TYPE_OPTIONS, type ProgramFormData } from "./schema";
 import { AcceleratorFields } from "./TypeFields/AcceleratorFields";
 import { BountyFields } from "./TypeFields/BountyFields";
 import { HackathonFields } from "./TypeFields/HackathonFields";
@@ -284,26 +289,15 @@ export default function AddProgram({
         return;
       }
       const chainSelected = data.networkToCreate;
+      if (!chainSelected) {
+        toast.error("Please select a network");
+        return;
+      }
 
       const metadata = { ...buildMetadata(data), status: "Active" };
       const topLevelFields = buildTopLevelFields(data);
 
-      // Use V2 endpoint - owner comes from JWT session
-      const [_request, error] = await fetchData(
-        INDEXER.REGISTRY.V2.CREATE,
-        "POST",
-        {
-          chainId: chainSelected,
-          metadata,
-          ...topLevelFields,
-        },
-        {},
-        {},
-        true
-      );
-      if (error) {
-        throw new Error(error);
-      }
+      await ProgramRegistryService.createProgram(address!, chainSelected, metadata, topLevelFields);
       toast.success(
         <p className="text-left">
           You have successfully submitted the funding opportunity.

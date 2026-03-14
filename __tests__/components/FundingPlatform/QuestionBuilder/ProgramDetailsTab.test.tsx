@@ -10,8 +10,8 @@ import type React from "react";
 import { ProgramDetailsTab } from "@/components/FundingPlatform/QuestionBuilder/ProgramDetailsTab";
 import "@testing-library/jest-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
-import { ProgramRegistryService } from "@/services/programRegistry.service";
+import { ProgramRegistryService } from "@/src/features/program-registry/services/program-registry.service";
+import type { GrantProgram } from "@/src/features/program-registry/types";
 
 // Mock dependencies
 jest.mock("wagmi", () => ({
@@ -22,9 +22,21 @@ jest.mock("@/hooks/useAuth", () => ({
   useAuth: jest.fn(),
 }));
 
-jest.mock("@/services/programRegistry.service", () => ({
+jest.mock("@/src/features/program-registry/services/program-registry.service", () => ({
   ProgramRegistryService: {
     extractProgramId: jest.fn(),
+    buildUpdateMetadata: jest.fn().mockImplementation((formData: any, existingMeta: any) => ({
+      ...existingMeta,
+      title: formData.name,
+      description: formData.description,
+      shortDescription: formData.shortDescription,
+      programBudget: formData.budget,
+      startsAt: formData.dates?.startsAt,
+      endsAt: formData.dates?.endsAt,
+      adminEmails: formData.adminEmails,
+      financeEmails: formData.financeEmails,
+      invoiceRequired: formData.invoiceRequired ?? false,
+    })),
     updateProgram: jest.fn(),
   },
 }));
@@ -762,11 +774,12 @@ describe("ProgramDetailsTab", () => {
       const submitButton = screen.getByRole("button", { name: /save changes/i });
       await user.click(submitButton);
 
-      // Button should show loading state (disabled)
+      // Button should be replaced by spinner when isLoading is true
+      // The Button component replaces children with Spinner when isLoading=true
       await waitFor(
         () => {
-          const buttonAfterClick = screen.getByRole("button", { name: /save changes/i });
-          expect(buttonAfterClick).toBeDisabled();
+          const buttonAfterClick = screen.queryByRole("button", { name: /save changes/i });
+          expect(buttonAfterClick).not.toBeInTheDocument();
         },
         { timeout: 2000 }
       );
@@ -794,7 +807,7 @@ describe("ProgramDetailsTab", () => {
       await user.click(submitButton);
 
       expect(mockLogin).toHaveBeenCalled();
-      expect(toast.error).toHaveBeenCalledWith("Authentication required");
+      expect(ProgramRegistryService.updateProgram).not.toHaveBeenCalled();
     });
 
     it("should prompt login if wallet not connected", async () => {
@@ -817,7 +830,7 @@ describe("ProgramDetailsTab", () => {
       await user.click(submitButton);
 
       expect(mockLogin).toHaveBeenCalled();
-      expect(toast.error).toHaveBeenCalledWith("Authentication required");
+      expect(ProgramRegistryService.updateProgram).not.toHaveBeenCalled();
     });
 
     it("should prevent submission in read-only mode", async () => {
