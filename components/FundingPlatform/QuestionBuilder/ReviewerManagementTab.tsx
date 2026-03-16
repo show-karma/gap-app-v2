@@ -157,7 +157,7 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
           id: key,
           publicAddress: reviewer.publicAddress,
           name: reviewer.name,
-          email: reviewer.email,
+          email: reviewer.email.trim(),
           telegram: reviewer.telegram || "",
           assignedAt: reviewer.assignedAt,
           roles: ["program"],
@@ -179,7 +179,7 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
           id: key,
           publicAddress: reviewer.publicAddress,
           name: reviewer.name,
-          email: reviewer.email,
+          email: reviewer.email.trim(),
           telegram: reviewer.telegram || "",
           assignedAt: reviewer.assignedAt,
           roles: ["milestone"],
@@ -190,17 +190,15 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
     return Array.from(emailToMember.values());
   }, [programReviewers, milestoneReviewers]);
 
-  // Add reviewer to selected roles (supports adding to both at once)
+  // Add reviewer to selected roles sequentially to avoid partial state on failure
   const handleAdd = useCallback(
     async (data: Record<string, string>) => {
-      const promises: Promise<unknown>[] = [];
       if (selectedRoles.includes("program")) {
-        promises.push(addProgramReviewer(data));
+        await addProgramReviewer(data);
       }
       if (selectedRoles.includes("milestone")) {
-        promises.push(addMilestoneReviewer(data));
+        await addMilestoneReviewer(data);
       }
-      await Promise.all(promises);
     },
     [selectedRoles, addProgramReviewer, addMilestoneReviewer]
   );
@@ -242,7 +240,10 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
       }
 
       const currentRoles = member.roles || [];
-      const typedNewRoles = newRoles as ReviewerRole[];
+      const validRoles: ReviewerRole[] = ["program", "milestone"];
+      const typedNewRoles = newRoles.filter((r): r is ReviewerRole =>
+        validRoles.includes(r as ReviewerRole)
+      );
 
       // If no roles selected, remove entirely
       if (typedNewRoles.length === 0) {
@@ -253,7 +254,6 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
       const rolesToAdd = typedNewRoles.filter((r) => !currentRoles.includes(r));
       const rolesToRemove = currentRoles.filter((r) => !typedNewRoles.includes(r));
 
-      const promises: Promise<unknown>[] = [];
       const reviewerData = {
         name: member.name,
         email: member.email,
@@ -262,21 +262,19 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
 
       for (const role of rolesToAdd) {
         if (role === "program") {
-          promises.push(addProgramReviewer(reviewerData));
-        } else {
-          promises.push(addMilestoneReviewer(reviewerData));
+          await addProgramReviewer(reviewerData);
+        } else if (role === "milestone") {
+          await addMilestoneReviewer(reviewerData);
         }
       }
 
       for (const role of rolesToRemove) {
         if (role === "program") {
-          promises.push(removeProgramReviewer(member.email));
-        } else {
-          promises.push(removeMilestoneReviewer(member.email));
+          await removeProgramReviewer(member.email);
+        } else if (role === "milestone") {
+          await removeMilestoneReviewer(member.email);
         }
       }
-
-      await Promise.all(promises);
     },
     [
       members,
