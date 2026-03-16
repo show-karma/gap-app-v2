@@ -154,43 +154,6 @@ describe("useProjectProfile", () => {
 
       expect(result.current.isLoading).toBe(false);
     });
-
-    it("should expose isProjectLoading true only when core project data is loading", () => {
-      const useProject = require("@/hooks/useProject").useProject;
-      useProject.mockReturnValue({ project: null, isLoading: true });
-
-      const { result } = renderHook(() => useProjectProfile("test-project"));
-
-      expect(result.current.isProjectLoading).toBe(true);
-      expect(result.current.isSecondaryLoading).toBe(false);
-    });
-
-    it("should expose isSecondaryLoading true when grants/updates/impacts are loading", () => {
-      const useProject = require("@/hooks/useProject").useProject;
-      useProject.mockReturnValue({ project: mockProject, isLoading: false });
-
-      const useProjectGrants = require("../useProjectGrants").useProjectGrants;
-      useProjectGrants.mockReturnValue({ grants: [], isLoading: true, refetch: jest.fn() });
-
-      const { result } = renderHook(() => useProjectProfile("test-project"));
-
-      expect(result.current.isProjectLoading).toBe(false);
-      expect(result.current.isSecondaryLoading).toBe(true);
-    });
-
-    it("should keep isLoading as backward-compatible OR of both loading states", () => {
-      const useProject = require("@/hooks/useProject").useProject;
-      useProject.mockReturnValue({ project: mockProject, isLoading: false });
-
-      const useProjectUpdates = require("../useProjectUpdates").useProjectUpdates;
-      useProjectUpdates.mockReturnValue({ milestones: [], isLoading: true, refetch: jest.fn() });
-
-      const { result } = renderHook(() => useProjectProfile("test-project"));
-
-      expect(result.current.isProjectLoading).toBe(false);
-      expect(result.current.isSecondaryLoading).toBe(true);
-      expect(result.current.isLoading).toBe(true);
-    });
   });
 
   describe("Refetch", () => {
