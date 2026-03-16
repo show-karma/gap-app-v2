@@ -97,11 +97,38 @@ export default async function RootLayout(props: {
     await safePrefetchProjectData(queryClient, projectId);
   }
 
+  const projectData = queryClient.getQueryData<Awaited<ReturnType<typeof getProjectCachedData>>>(
+    QUERY_KEYS.PROJECT.DETAILS(projectId)
+  );
+
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
       <E2EStoreExposer />
       <ProjectShareDialogMount />
-      <div className={layoutTheme.padding}>{children}</div>
+      <div className={layoutTheme.padding}>
+        {projectData && (
+          <div id="ssr-lcp-shell" aria-hidden="true">
+            <div className="flex items-center gap-4 py-4">
+              {projectData.details?.logoUrl && (
+                <img
+                  src={projectData.details.logoUrl}
+                  alt=""
+                  width={64}
+                  height={64}
+                  className="rounded-full"
+                />
+              )}
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-neutral-100">
+                {projectData.details?.title}
+              </h1>
+            </div>
+            <style>{`[data-testid="project-profile-layout"] ~ #ssr-lcp-shell,
+#ssr-lcp-shell:has(~ [data-testid="project-profile-layout"]),
+#ssr-lcp-shell:has(~ [data-testid="project-profile-layout-skeleton"]) { display: none; }`}</style>
+          </div>
+        )}
+        {children}
+      </div>
     </HydrationBoundary>
   );
 }
