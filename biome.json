@@ -179,7 +179,7 @@
       }
     },
     {
-      "includes": ["**/components/Seo/**"],
+      "includes": ["**/components/Seo/**", "**/app/solutions/**"],
       "linter": {
         "rules": {
           "security": {

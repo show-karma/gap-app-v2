@@ -36,6 +36,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/knowledge/project-profiles-software-vs-nonsoftware",
     "/knowledge/onchain-project-profiles",
     "/knowledge/how-funders-use-project-profiles",
+    "/solutions",
     "/privacy-policy",
     "/terms-and-conditions",
   ];

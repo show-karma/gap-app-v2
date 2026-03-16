@@ -64,3 +64,6 @@ public/funders.md
 public/projects.md
 public/communities.md
 public/knowledge/*.md
+
+# AEO audit results (generated per-run)
+scripts/aeo/*-results.json

@@ -1,10 +1,39 @@
 import type { Metadata } from "next";
+import { FAQPageJsonLd } from "@/components/Seo/FAQPageJsonLd";
 import { LaunchCTA } from "@/src/features/seeds/components/launch/launch-cta";
 import { LaunchFAQ } from "@/src/features/seeds/components/launch/launch-faq";
 import { LaunchHero } from "@/src/features/seeds/components/launch/launch-hero";
 import { LaunchHowTo } from "@/src/features/seeds/components/launch/launch-how-to";
 import { LaunchProblem } from "@/src/features/seeds/components/launch/launch-problem";
 import { LaunchUseCases } from "@/src/features/seeds/components/launch/launch-use-cases";
+
+const seedsFaqs = [
+  {
+    question: "What exactly are Karma Seeds?",
+    answer:
+      "Karma Seeds are ERC-20 tokens that represent $1 contributions to your project. For every dollar a supporter contributes, they receive one Seed. The funds go directly to your treasury address. Seeds are designed as receipts of support, not speculative tokens.",
+  },
+  {
+    question: "What are the fees?",
+    answer:
+      "There's a small platform fee that goes to Karma. The rest goes directly to your treasury address. No hidden costs, no ongoing fees.",
+  },
+  {
+    question: "How do I receive the funds?",
+    answer:
+      "When you launch Seeds, you specify a treasury wallet address. All contributions go directly to that address. You have full control. You can use any wallet address you control, including a multisig or DAO treasury.",
+  },
+  {
+    question: "Do I have any obligations to Seed holders?",
+    answer:
+      "Seeds come with no built-in obligations. They're receipts of support, not governance tokens or equity. However, many projects choose to reward their Seed holders with early access, rev share, or token allocations later.",
+  },
+  {
+    question: "What if I want to launch a real token later?",
+    answer:
+      "Seeds are designed to be compatible with future token launches. You can use your Seed holder list to reward early supporters through early access, rev share, or token allocations. Seeds keep your options open.",
+  },
+];
 
 export const metadata: Metadata = {
   title: "Karma Seeds - Raise Funds Without Launching a Token",
@@ -35,6 +64,7 @@ export const metadata: Metadata = {
 export default function SeedsPage() {
   return (
     <main className="flex w-full flex-col flex-1 items-center bg-background seeds-noise overflow-hidden">
+      <FAQPageJsonLd faqs={seedsFaqs} />
       {/* Decorative background blobs */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
         <div className="seeds-blob seeds-float absolute -top-32 -left-32 w-96 h-96 bg-seeds-300/10 dark:bg-seeds-300/5 blur-3xl" />

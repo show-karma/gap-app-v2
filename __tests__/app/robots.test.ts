@@ -71,8 +71,12 @@ describe("robots", () => {
       expect(result.sitemap).toContain(`${SITE_URL}/sitemaps/communities/sitemap.xml`);
     });
 
-    it("should list exactly 3 sitemaps", () => {
-      expect(result.sitemap).toHaveLength(3);
+    it("should reference the solutions sitemap", () => {
+      expect(result.sitemap).toContain(`${SITE_URL}/sitemaps/solutions/sitemap.xml`);
+    });
+
+    it("should list exactly 4 sitemaps", () => {
+      expect(result.sitemap).toHaveLength(4);
     });
   });
 
