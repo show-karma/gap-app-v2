@@ -9,7 +9,6 @@ import {
 } from "@heroicons/react/24/solid";
 import { useQuery } from "@tanstack/react-query";
 import { blo } from "blo";
-import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { isAddress } from "viem";
 import CommunityStats from "@/components/CommunityStats";
@@ -35,6 +34,7 @@ import {
   getCommunityAdminsBatch,
 } from "@/services/communities.service";
 import { communityAdminsService } from "@/services/community-admins.service";
+import { Link } from "@/src/components/navigation/Link";
 import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
 import { Role } from "@/src/core/rbac/types";
 import { layoutTheme } from "@/src/helper/theme";
@@ -90,7 +90,7 @@ export default function CommunitiesToAdminPage() {
     {},
     { enabled: authenticated }
   );
-  const isSuperAdmin = permissions?.roles.roles.includes(Role.SUPER_ADMIN) ?? false;
+  const isSuperAdmin = permissions?.roles?.roles?.includes(Role.SUPER_ADMIN) ?? false;
   const { communities: userAdminCommunities, isLoading: isLoadingUserCommunities } =
     useCommunitiesStore();
 

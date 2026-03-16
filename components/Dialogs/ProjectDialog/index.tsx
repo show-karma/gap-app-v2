@@ -13,8 +13,8 @@ import {
   ProjectDetails,
 } from "@show-karma/karma-gap-sdk";
 import debounce from "lodash.debounce";
-import { useRouter } from "next/navigation";
-import { type FC, Fragment, type ReactNode, useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { type FC, Fragment, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { type Hex, isAddress, zeroHash } from "viem";
 import { useAccount } from "wagmi";
@@ -234,8 +234,13 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [step, setStep] = useState(0);
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const { isConnected, address } = useAccount();
-  const { authenticated: isAuth, login } = useAuth();
+  const { isConnected: wagmiIsConnected, address: wagmiAddress } = useAccount();
+  const {
+    authenticated: isAuth,
+    login,
+    isConnected: authIsConnected,
+    address: authAddress,
+  } = useAuth();
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
   const [isLoading, setIsLoading] = useState(false);
@@ -244,6 +249,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const { gap } = useGap();
   const { openSimilarProjectsModal, isSimilarProjectsModalOpen } = useSimilarProjectsModalStore();
   const { setupChainAndWallet, smartWalletAddress } = useSetupChainAndWallet();
+  // Resolve address: wagmi (external wallet) > useAuth (Privy wallets) > smartWalletAddress (embedded wallet for social login)
+  const address = wagmiAddress || authAddress || (smartWalletAddress as `0x${string}` | undefined);
+  const isConnected = wagmiIsConnected || authIsConnected || !!smartWalletAddress;
   const { startAttestation, showLoading, showSuccess, showError, dismiss, changeStepperStep } =
     useAttestationToast();
   const [_walletSigner, setWalletSigner] = useState<any>(null);
@@ -426,13 +434,12 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
 
   // Handle unauthenticated user trying to open modal
   useEffect(() => {
-    if (isOpen && !isAuth) {
-      // Set flag to re-open modal after login completes
+    if (isOpen && !isAuth && !pendingOpenAfterLogin) {
+      // Keep modal state open in the store so useAuth skips dashboard redirect
       setPendingOpenAfterLogin(true);
       login?.();
-      closeModal();
     }
-  }, [isOpen, isAuth, closeModal, login]);
+  }, [isOpen, isAuth, pendingOpenAfterLogin, login]);
 
   // Re-open modal after successful login if user was trying to create project
   useEffect(() => {
@@ -441,6 +448,23 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       openModal();
     }
   }, [isAuth, pendingOpenAfterLogin]);
+
+  // Auto-open modal from URL query param (?action=create-project)
+  const searchParams = useSearchParams();
+  const hasHandledUrlAction = useRef(false);
+  useEffect(() => {
+    if (
+      !useEditModalStore &&
+      !hasHandledUrlAction.current &&
+      searchParams.get("action") === "create-project"
+    ) {
+      hasHandledUrlAction.current = true;
+      openModal();
+      const url = new URL(window.location.href);
+      url.searchParams.delete("action");
+      window.history.replaceState(null, "", url.pathname + url.search);
+    }
+  }, [searchParams, useEditModalStore]);
 
   const validateCustomLinks = () => {
     return customLinks.some((link) => !link.name.trim() || !link.url.trim());
@@ -526,11 +550,15 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     try {
       setIsLoading(true);
       startAttestation("Creating project...");
-      if (!isConnected || !isAuth) {
+      if (!isAuth) {
         login?.();
+        setIsLoading(false);
+        dismiss();
         return;
       }
-      if (!address || !gap) {
+      if (!gap) {
+        setIsLoading(false);
+        dismiss();
         return;
       }
 
@@ -550,12 +578,22 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
 
       const { gapClient, walletSigner: signer, chainId } = setup;
 
+      // Resolve address after setup — Farcaster users get smartWalletAddress from setupChainAndWallet
+      const resolvedAddress = (data.recipient || smartWalletAddress || address) as
+        | `0x${string}`
+        | undefined;
+      if (!resolvedAddress) {
+        setIsLoading(false);
+        dismiss();
+        return;
+      }
+
       const project = new Project({
         data: {
           project: true,
         },
         schema: gapClient.findSchema("Project"),
-        recipient: (data.recipient || smartWalletAddress || address) as Hex,
+        recipient: resolvedAddress as Hex,
         uid: nullRef,
       });
 
@@ -568,7 +606,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       const { chainID, ...rest } = data;
       const newProjectInfo: NewProjectData = {
         ...rest,
-        members: [(data.recipient || smartWalletAddress || address) as Hex],
+        members: [resolvedAddress as Hex],
         links: [
           {
             type: "twitter",
@@ -766,12 +804,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     try {
       setIsLoading(true);
       startAttestation("Updating project...");
-      if (!isConnected || !isAuth) {
+      if (!isAuth) {
         login?.();
         return;
-      }
-      if (!address) {
-        throw new Error("Address not found");
       }
       if (!projectToUpdate) {
         throw new Error("Project to update not found");
@@ -798,6 +833,11 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       }
 
       const { gapClient, walletSigner, chainId } = setup;
+
+      // Resolve address after setup — Farcaster users get smartWalletAddress from setupChainAndWallet
+      if (!smartWalletAddress && !address) {
+        throw new Error("Address not found");
+      }
       const shouldRefresh = dataToUpdate.title === data.title;
       const fetchedProject = await getProjectById(projectToUpdate.uid);
       if (!fetchedProject) return;

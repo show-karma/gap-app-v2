@@ -12,6 +12,10 @@ export interface StickyCommentInputProps {
   placeholder?: string;
   /** Whether the user is an admin */
   isAdmin?: boolean;
+  /** Program ID for mention autocomplete */
+  programId?: string;
+  /** Whether to enable @mention autocomplete */
+  enableMentions?: boolean;
 }
 
 /**
@@ -23,6 +27,8 @@ export const StickyCommentInput: FC<StickyCommentInputProps> = ({
   disabled = false,
   placeholder,
   isAdmin = false,
+  programId,
+  enableMentions = false,
 }) => {
   const defaultPlaceholder = isAdmin
     ? "Add an admin comment..."
@@ -34,6 +40,9 @@ export const StickyCommentInput: FC<StickyCommentInputProps> = ({
         onSubmit={onSubmit}
         disabled={disabled}
         placeholder={placeholder || defaultPlaceholder}
+        programId={programId}
+        enableMentions={enableMentions}
+        isAdmin={isAdmin}
       />
     </div>
   );

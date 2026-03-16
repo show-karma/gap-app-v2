@@ -1,6 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import { useRouter } from "next/navigation";
+import type { ReactNode } from "react";
 import { Dashboard } from "@/components/Pages/Dashboard/Dashboard";
 import { setPostLoginRedirect, useAuth } from "@/hooks/useAuth";
 import { useContributorProfile } from "@/hooks/useContributorProfile";
@@ -44,6 +45,7 @@ jest.mock("@/src/core/rbac/hooks/use-staff-bridge", () => ({
 
 jest.mock("next/navigation", () => ({
   useRouter: jest.fn(),
+  useParams: jest.fn(() => ({})),
 }));
 
 jest.mock("@/components/EthereumAddressToENSAvatar", () => ({
@@ -58,6 +60,23 @@ jest.mock("@/components/EthereumAddressToENSName", () => ({
 
 jest.mock("@/components/Dialogs/ProjectDialog/index", () => ({
   ProjectDialog: () => <button type="button">Create Project</button>,
+}));
+
+jest.mock("@/features/user-applications/hooks/use-user-applications", () => ({
+  useUserApplications: jest.fn(() => ({
+    applications: [],
+    filters: { status: "all", programId: null, searchQuery: "" },
+    sortBy: "createdAt",
+    sortOrder: "desc",
+    pagination: { page: 1, totalPages: 1, limit: 10 },
+    isLoading: false,
+    error: null,
+    setFilters: jest.fn(),
+    setSort: jest.fn(),
+    setPage: jest.fn(),
+    setPageSize: jest.fn(),
+    refresh: jest.fn(),
+  })),
 }));
 
 const mockUseQuery = useQuery as unknown as jest.Mock;
@@ -102,6 +121,15 @@ const setupPermissions = ({ isGuestDueToError = false }: { isGuestDueToError?: b
   });
 };
 
+const createWrapper = () => {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  );
+};
+
 describe("Dashboard", () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -129,7 +157,7 @@ describe("Dashboard", () => {
     mockUseRouter.mockReturnValue({ replace });
     setupAuth({ authenticated: false, address: undefined, ready: true });
 
-    const { container } = render(<Dashboard />);
+    const { container } = render(<Dashboard />, { wrapper: createWrapper() });
 
     await waitFor(() => {
       expect(mockSetPostLoginRedirect).toHaveBeenCalledWith("/dashboard");
@@ -140,7 +168,7 @@ describe("Dashboard", () => {
   });
 
   it("renders DashboardHeader when authenticated", () => {
-    render(<Dashboard />);
+    render(<Dashboard />, { wrapper: createWrapper() });
 
     expect(screen.getByText(/Welcome back/i)).toBeInTheDocument();
     expect(screen.getByTestId("ens-avatar")).toBeInTheDocument();
@@ -155,7 +183,7 @@ describe("Dashboard", () => {
       refetch: jest.fn(),
     });
 
-    render(<Dashboard />);
+    render(<Dashboard />, { wrapper: createWrapper() });
 
     expect(screen.getByText("Create your first project")).toBeInTheDocument();
   });
@@ -169,7 +197,7 @@ describe("Dashboard", () => {
       refetch: jest.fn(),
     });
 
-    render(<Dashboard />);
+    render(<Dashboard />, { wrapper: createWrapper() });
 
     expect(screen.getByText("My Projects")).toBeInTheDocument();
     expect(screen.getByText(/No projects yet/i)).toBeInTheDocument();
@@ -184,7 +212,7 @@ describe("Dashboard", () => {
       refetch: jest.fn(),
     });
 
-    render(<Dashboard />);
+    render(<Dashboard />, { wrapper: createWrapper() });
 
     expect(screen.queryByText("Create your first project")).not.toBeInTheDocument();
   });
@@ -197,7 +225,7 @@ describe("Dashboard", () => {
       error: null,
     });
 
-    render(<Dashboard />);
+    render(<Dashboard />, { wrapper: createWrapper() });
 
     expect(screen.queryByText("Create your first project")).not.toBeInTheDocument();
   });
@@ -210,15 +238,79 @@ describe("Dashboard", () => {
       error: null,
     });
 
-    render(<Dashboard />);
+    render(<Dashboard />, { wrapper: createWrapper() });
 
     expect(screen.queryByText("Create your first project")).not.toBeInTheDocument();
+  });
+
+  describe("Farcaster user with embedded wallet", () => {
+    beforeEach(() => {
+      mockUseAuth.mockReturnValue({
+        authenticated: true,
+        address: "0xEMBEDDED000000000000000000000000CAFE",
+        ready: true,
+        user: {
+          id: "did:privy:fc-user",
+          farcaster: {
+            fid: 12345,
+            username: "testfcuser",
+            displayName: "Test FC User",
+            pfp: "https://example.com/fc-avatar.png",
+          },
+        },
+      });
+      mockUseContributorProfile.mockReturnValue({ profile: null });
+    });
+
+    it("should show Farcaster display name instead of embedded wallet address", () => {
+      render(<Dashboard />, { wrapper: createWrapper() });
+
+      expect(screen.getByText(/Test FC User/)).toBeInTheDocument();
+    });
+
+    it("should show Farcaster avatar instead of blockie", () => {
+      const { container } = render(<Dashboard />, { wrapper: createWrapper() });
+
+      const fcAvatar = container.querySelector('img[src="https://example.com/fc-avatar.png"]');
+      expect(fcAvatar).toBeInTheDocument();
+    });
+  });
+
+  describe("Farcaster user (no wallet address)", () => {
+    beforeEach(() => {
+      // Farcaster user: authenticated but no wallet address
+      setupAuth({ authenticated: true, address: undefined, ready: true });
+    });
+
+    it("should render dashboard content instead of being stuck on loading", () => {
+      render(<Dashboard />, { wrapper: createWrapper() });
+
+      // Farcaster users have no wallet address but are authenticated.
+      // The dashboard should NOT be permanently stuck on the loading skeleton.
+      expect(screen.getByText(/Welcome back/i)).toBeInTheDocument();
+    });
+
+    it("should not show loading skeleton when authenticated without address", () => {
+      const { container } = render(<Dashboard />, { wrapper: createWrapper() });
+
+      // Should NOT show loading skeletons — the user is authenticated
+      expect(container.querySelectorAll(".animate-pulse").length).toBe(0);
+    });
+
+    it("should enable the projects query for Farcaster users", () => {
+      render(<Dashboard />, { wrapper: createWrapper() });
+
+      // The projects useQuery call should have `enabled: true` even without an address.
+      // The API uses JWT auth, not wallet address.
+      const queryOptions = mockUseQuery.mock.calls[0][0];
+      expect(queryOptions.enabled).toBe(true);
+    });
   });
 
   it("shows permissions error warning when RBAC fails", () => {
     setupPermissions({ isGuestDueToError: true });
 
-    render(<Dashboard />);
+    render(<Dashboard />, { wrapper: createWrapper() });
 
     expect(screen.getByText(/couldn.t verify your permissions/i)).toBeInTheDocument();
   });
@@ -232,7 +324,7 @@ describe("Dashboard", () => {
       refetch: jest.fn(),
     });
 
-    render(<Dashboard />);
+    render(<Dashboard />, { wrapper: createWrapper() });
 
     expect(screen.getByText("My Projects")).toBeInTheDocument();
     expect(screen.getByText(/Unable to load your projects/i)).toBeInTheDocument();
@@ -248,7 +340,7 @@ describe("Dashboard", () => {
       refetch: jest.fn(),
     });
 
-    render(<Dashboard />);
+    render(<Dashboard />, { wrapper: createWrapper() });
 
     expect(screen.queryByText("Create your first project")).not.toBeInTheDocument();
   });

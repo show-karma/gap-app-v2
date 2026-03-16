@@ -11,6 +11,11 @@ jest.mock("@/components/Utilities/MarkdownPreview", () => ({
   ),
 }));
 
+// Mock TeamContent to avoid loading external dependencies
+jest.mock("../TeamContent/TeamContent", () => ({
+  TeamContent: () => <div data-testid="team-content">Team Content Mock</div>,
+}));
+
 const createMockProject = (
   details: Partial<{
     title: string;
@@ -234,9 +239,9 @@ describe("AboutContent", () => {
 
       render(<AboutContent project={project} />);
 
-      // Check that icon container exists with proper styling classes
+      // Check that icon container (span with text-muted-foreground) exists
       const section = screen.getByTestId("about-section-description");
-      const iconContainer = section.querySelector(".w-10.h-10");
+      const iconContainer = section.querySelector(".text-muted-foreground");
       expect(iconContainer).toBeInTheDocument();
     });
   });

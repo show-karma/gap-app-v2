@@ -223,7 +223,8 @@ export type UnifiedMilestone = {
     | "activity"
     | "grant_update"
     | "milestone"
-    | "grant_received";
+    | "grant_received"
+    | "endorsement";
   title: string;
   description?: string;
   completed:
@@ -266,5 +267,10 @@ export type UnifiedMilestone = {
     communityImage?: string;
     grantTitle?: string;
     grantUID: string;
+  };
+  /** Endorsement info for endorsement type items */
+  endorsement?: {
+    endorsedBy: string;
+    comment?: string;
   };
 };

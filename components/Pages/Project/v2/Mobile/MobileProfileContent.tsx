@@ -29,7 +29,7 @@ interface MobileProfileContentProps {
  * Separator component for dividing sections
  */
 function Separator() {
-  return <div className="h-px w-full bg-neutral-200 dark:bg-zinc-700" />;
+  return <div className="h-px w-full bg-border" />;
 }
 
 /**
@@ -61,7 +61,7 @@ export function MobileProfileContent({
     {},
     { enabled: authenticated }
   );
-  const isSuperAdmin = permissions?.roles.roles.includes(Role.SUPER_ADMIN) ?? false;
+  const isSuperAdmin = permissions?.roles?.roles?.includes(Role.SUPER_ADMIN) ?? false;
 
   const isAuthorized =
     isOwner || isProjectAdmin || isProjectOwner || (!isPermissionsLoading && isSuperAdmin);
@@ -97,7 +97,7 @@ export function MobileProfileContent({
       )}
 
       {/* Actions Card - Same content as side panel */}
-      <div className="flex flex-col gap-8 p-6 rounded-xl border border-neutral-200 dark:border-zinc-700 bg-neutral-100 dark:bg-zinc-800/50">
+      <div className="flex flex-col gap-8 p-6 rounded-xl border bg-secondary">
         {showDonateSection && (
           <>
             <DonateSection project={project} />

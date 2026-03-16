@@ -4,6 +4,7 @@ import type { Community } from "@/types/v2/community";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { PAGES } from "@/utilities/pages";
+import { useWhitelabel } from "@/utilities/whitelabel-context";
 
 interface AdminCommunitiesResponse {
   communities: Community[];
@@ -70,10 +71,11 @@ const fetchCommunityMetrics = async (communityId: string): Promise<CommunityMetr
 
 export function useDashboardAdmin() {
   const { authenticated, address } = useAuth();
+  const { isWhitelabel, communitySlug: whitelabelSlug } = useWhitelabel();
 
   const query = useQuery({
     queryKey: ["dashboardAdmin", address],
-    enabled: Boolean(address && authenticated),
+    enabled: Boolean(authenticated),
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       const communities = await fetchAdminCommunities();
@@ -97,7 +99,10 @@ export function useDashboardAdmin() {
           chainID: community.chainID,
           activeProgramsCount: metrics?.enabledPrograms ?? metrics?.totalPrograms ?? 0,
           pendingApplicationsCount: metrics?.pendingApplications ?? 0,
-          manageUrl: PAGES.ADMIN.ROOT(community.details.slug),
+          manageUrl:
+            isWhitelabel && community.details.slug === whitelabelSlug
+              ? "/manage"
+              : PAGES.ADMIN.ROOT(community.details.slug),
         };
       });
 

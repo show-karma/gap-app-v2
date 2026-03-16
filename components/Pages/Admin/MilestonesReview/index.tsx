@@ -1,7 +1,6 @@
 "use client";
 
 import { ArrowLeftIcon, ChevronLeftIcon, ExclamationTriangleIcon } from "@heroicons/react/20/solid";
-import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
 import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
@@ -12,6 +11,7 @@ import { useFundingApplicationByProjectUID } from "@/hooks/useFundingApplication
 import { useMilestoneCompletionVerification } from "@/hooks/useMilestoneCompletionVerification";
 import { useProjectGrantMilestones } from "@/hooks/useProjectGrantMilestones";
 import type { GrantMilestoneWithCompletion } from "@/services/milestones";
+import { Link } from "@/src/components/navigation/Link";
 import {
   PermissionProvider,
   useIsReviewer,
@@ -563,6 +563,7 @@ function MilestonesReviewPageContent({
                 }))}
                 communityId={communityId}
                 currentUserAddress={address}
+                programId={parsedProgramId}
               />
             ) : (
               <div className="p-4 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">

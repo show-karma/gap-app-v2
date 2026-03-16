@@ -11,6 +11,8 @@ export const PAGES = {
   COMMUNITY: {
     ALL_GRANTS: (community: string, programId?: string) =>
       `/community/${community}${programId ? `?programId=${programId}` : ""}`,
+    PROJECTS: (community: string, programId?: string) =>
+      `/community/${community}/projects${programId ? `?programId=${programId}` : ""}`,
     FUNDING_OPPORTUNITIES: (community: string) => `/community/${community}/funding-opportunities`,
     IMPACT: (community: string) => `/community/${community}/impact`,
     DONATE: (community: string) => `/community/${community}/donate`,
@@ -22,6 +24,18 @@ export const PAGES = {
     UPDATES: (community: string) => `/community/${community}/updates`,
     FINANCIALS: (community: string) => `/community/${community}/financials`,
     RECEIVEPROJECTUPDATES: (community: string) => `/community/${community}/receive-project-updates`,
+    PROGRAMS: (community: string) => `/community/${community}/funding-opportunities`,
+    PROGRAM_DETAIL: (community: string, programId: string) =>
+      `/community/${community}/programs/${programId}`,
+    PROGRAM_APPLY: (community: string, programId: string) =>
+      `/community/${community}/programs/${programId}/apply`,
+    APPLICATIONS: (community: string) => `/community/${community}/applications`,
+    APPLICATION_DETAIL: (community: string, applicationId: string) =>
+      `/community/${community}/applications/${applicationId}`,
+    APPLICATION_SUCCESS: (community: string, applicationId: string) =>
+      `/community/${community}/applications/${applicationId}/success`,
+    BROWSE_APPLICATIONS: (community: string) => `/community/${community}/browse-applications`,
+    CLAIM_FUNDS: (community: string) => `/community/${community}/claim-funds`,
   },
   MY_PROJECTS: `/my-projects`,
   MY_REVIEWS: `/my-reviews`,
@@ -76,6 +90,7 @@ export const PAGES = {
     CONTROL_CENTER: (community: string) => `/community/${community}/manage/control-center`,
     KYC_SETTINGS: (community: string) => `/community/${community}/manage/kyc-settings`,
     PROGRAM_SCORES: (community: string) => `/community/${community}/manage/program-scores`,
+    SEND_EMAIL: (community: string) => `/community/${community}/manage/send-email`,
     PROJECT_MILESTONES: (community: string, projectId: string, programId: string) =>
       `/community/${community}/manage/${projectId}/milestones?programIds=${programId}`,
   },
@@ -113,6 +128,30 @@ export const PAGES = {
   SEEDS: `/seeds`,
   SEEDS_FUND: `/seeds/fund`,
 };
+
+/**
+ * First path segments under /community/[communityId]/ that should be rewritten
+ * in whitelabel mode. Derived from PAGES.COMMUNITY route definitions and
+ * filesystem route directories. This is the single source of truth — used by
+ * middleware.ts to decide which paths get the /community/<slug> prefix.
+ */
+export const COMMUNITY_SUB_ROUTE_SEGMENTS: ReadonlySet<string> = new Set([
+  // From PAGES.COMMUNITY
+  "applications",
+  "browse-applications",
+  "claim-funds",
+  "donate",
+  "financials",
+  "funding-opportunities",
+  "impact",
+  "programs",
+  "projects",
+  "updates",
+  // Direct route directories under /community/[communityId]/
+  "admin",
+  "karma-ai",
+  "manage",
+]);
 
 export const FUNDING_PLATFORM_PAGES = (tenantId: string, _domain?: string) => {
   const sharedDomain = envVars.isDev

@@ -19,7 +19,14 @@ export type SortOption = "newest" | "oldest";
 /**
  * Filter types for activity feed categorization.
  */
-export type ActivityFilterType = "funding" | "updates" | "blog" | "socials" | "other";
+export type ActivityFilterType =
+  | "funding"
+  | "milestones"
+  | "updates"
+  | "endorsements"
+  | "blog"
+  | "socials"
+  | "other";
 
 /**
  * Activity filter option for UI display.
@@ -34,7 +41,9 @@ export interface ActivityFilterOption {
  */
 export const ACTIVITY_FILTER_OPTIONS: ActivityFilterOption[] = [
   { value: "funding", label: "Funding" },
-  { value: "updates", label: "Product updates" },
+  { value: "milestones", label: "Milestones" },
+  { value: "updates", label: "Updates" },
+  { value: "endorsements", label: "Endorsements" },
   { value: "blog", label: "Blog" },
   { value: "socials", label: "Socials" },
   { value: "other", label: "Other" },

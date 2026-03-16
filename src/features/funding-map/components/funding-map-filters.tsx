@@ -390,81 +390,38 @@ export function FundingMapFilters({ totalCount = 0 }: FundingMapFiltersProps) {
               className="z-50 w-64 rounded-md border border-border bg-popover text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
             >
               <div className="max-h-80 overflow-y-auto p-1">
-                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
-                  Opportunity Types
-                </div>
-                {UNIFIED_TYPE_OPTIONS.filter((o) => o.section === "opportunityTypes").map(
-                  (option) => {
-                    const count = typeCountMap?.get(option.value);
-                    return (
-                      <button
-                        type="button"
-                        aria-pressed={isUnifiedOptionSelected(option)}
-                        key={option.value}
-                        className="flex w-full items-center gap-2 cursor-pointer rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
-                        onClick={() => handleUnifiedTypeToggle(option)}
-                      >
-                        <div
-                          className={cn(
-                            "flex h-4 w-4 items-center justify-center rounded border",
-                            isUnifiedOptionSelected(option)
-                              ? "border-primary bg-primary"
-                              : "border-border"
-                          )}
-                        >
-                          {isUnifiedOptionSelected(option) && (
-                            <Check className="h-3 w-3 text-primary-foreground" />
-                          )}
-                        </div>
-                        {getTypeOptionIcon(option)}
-                        <span className="flex-1 text-left">{option.label}</span>
-                        {count !== undefined && (
-                          <span className="text-xs text-muted-foreground tabular-nums">
-                            ({count})
-                          </span>
+                {UNIFIED_TYPE_OPTIONS.map((option) => {
+                  const count = typeCountMap?.get(option.value);
+                  return (
+                    <button
+                      type="button"
+                      aria-pressed={isUnifiedOptionSelected(option)}
+                      key={option.value}
+                      className="flex w-full items-center gap-2 cursor-pointer rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
+                      onClick={() => handleUnifiedTypeToggle(option)}
+                    >
+                      <div
+                        className={cn(
+                          "flex h-4 w-4 items-center justify-center rounded border",
+                          isUnifiedOptionSelected(option)
+                            ? "border-primary bg-primary"
+                            : "border-border"
                         )}
-                      </button>
-                    );
-                  }
-                )}
-                <div className="-mx-1 my-1 h-px bg-muted" />
-                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
-                  Funding Mechanisms
-                </div>
-                {UNIFIED_TYPE_OPTIONS.filter((o) => o.section === "fundingMechanisms").map(
-                  (option) => {
-                    const count = typeCountMap?.get(option.value);
-                    return (
-                      <button
-                        type="button"
-                        aria-pressed={isUnifiedOptionSelected(option)}
-                        key={option.value}
-                        className="flex w-full items-center gap-2 cursor-pointer rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
-                        onClick={() => handleUnifiedTypeToggle(option)}
                       >
-                        <div
-                          className={cn(
-                            "flex h-4 w-4 items-center justify-center rounded border",
-                            isUnifiedOptionSelected(option)
-                              ? "border-primary bg-primary"
-                              : "border-border"
-                          )}
-                        >
-                          {isUnifiedOptionSelected(option) && (
-                            <Check className="h-3 w-3 text-primary-foreground" />
-                          )}
-                        </div>
-                        {getTypeOptionIcon(option)}
-                        <span className="flex-1 text-left">{option.label}</span>
-                        {count !== undefined && (
-                          <span className="text-xs text-muted-foreground tabular-nums">
-                            ({count})
-                          </span>
+                        {isUnifiedOptionSelected(option) && (
+                          <Check className="h-3 w-3 text-primary-foreground" />
                         )}
-                      </button>
-                    );
-                  }
-                )}
+                      </div>
+                      {getTypeOptionIcon(option)}
+                      <span className="flex-1 text-left">{option.label}</span>
+                      {count !== undefined && (
+                        <span className="text-xs text-muted-foreground tabular-nums">
+                          ({count})
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
                 {typeCountsError && (
                   <div className="px-2 py-1.5 text-xs text-destructive">Failed to load counts</div>
                 )}

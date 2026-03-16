@@ -43,7 +43,7 @@ export const useCommunityAdminAccess = (communityId?: string): UseCommunityAdmin
     communityId ? { communityId } : {},
     { enabled: authenticated }
   );
-  const isSuperAdmin = permissions?.roles.roles.includes(Role.SUPER_ADMIN) ?? false;
+  const isSuperAdmin = permissions?.roles?.roles?.includes(Role.SUPER_ADMIN) ?? false;
   const isRbacCommunityAdmin = permissions?.isCommunityAdmin ?? false;
 
   // Memoize computed values

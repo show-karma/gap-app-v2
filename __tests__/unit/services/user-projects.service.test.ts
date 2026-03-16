@@ -79,11 +79,13 @@ describe("User Projects Service (V2)", () => {
       expect(result[0].details.title).toBe("Test Project 1");
     });
 
-    it("should return empty array when no address provided", async () => {
+    it("should fetch projects even when no address provided (JWT auth)", async () => {
+      (fetchData as jest.Mock).mockResolvedValue([mockPaginatedResponse, null]);
+
       const result = await fetchMyProjects(undefined);
 
-      expect(fetchData).not.toHaveBeenCalled();
-      expect(result).toEqual([]);
+      expect(fetchData).toHaveBeenCalled();
+      expect(result).toHaveLength(2);
     });
 
     it("should throw when fetch fails", async () => {

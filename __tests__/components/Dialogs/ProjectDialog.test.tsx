@@ -157,6 +157,7 @@ jest.mock("@privy-io/react-auth", () => ({
     logout: jest.fn(),
   }),
   PrivyProvider: ({ children }: any) => children,
+  useCreateWallet: () => ({ createWallet: jest.fn() }),
 }));
 
 jest.mock("@/hooks/useAttestationToast", () => ({

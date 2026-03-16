@@ -315,10 +315,7 @@ export function FundingContent({ project, className }: FundingContentProps) {
       </div>
 
       {/* Grants grid */}
-      <div
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-        data-testid="grants-list"
-      >
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 auto-rows-fr" data-testid="grants-list">
         {sortedGrants.map((grant) => (
           <GrantCard
             key={grant.uid}

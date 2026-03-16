@@ -1,7 +1,7 @@
 "use client";
 
 import { AlertTriangle, RefreshCw } from "lucide-react";
-import Link from "next/link";
+import { Link } from "@/src/components/navigation/Link";
 
 export default function DashboardError({
   error,

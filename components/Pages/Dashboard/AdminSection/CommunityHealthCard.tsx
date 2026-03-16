@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 import { Button } from "@/components/ui/button";
 import type { DashboardAdminCommunity } from "@/hooks/useDashboardAdmin";
+import { Link } from "@/src/components/navigation/Link";
 
 interface CommunityHealthCardProps {
   community: DashboardAdminCommunity;

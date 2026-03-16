@@ -64,7 +64,7 @@ describe("Permission-Based Access", () => {
       cy.visit("/");
       waitForPageLoad();
 
-      cy.url().should("eq", Cypress.config("baseUrl") + "/");
+      cy.location("pathname").should("eq", "/");
       cy.get("body").should("be.visible");
     });
 

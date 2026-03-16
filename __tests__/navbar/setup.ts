@@ -178,6 +178,7 @@ jest.mock("@privy-io/react-auth", () => ({
     wallets: [],
   })),
   PrivyProvider: ({ children }: { children: any }) => children,
+  useCreateWallet: jest.fn(() => ({ createWallet: jest.fn() })),
 }));
 
 /**
@@ -405,9 +406,7 @@ jest.mock("@/components/Utilities/ProfilePicture", () => ({
  * Mock error manager
  */
 jest.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: jest.fn((message, error) => {
-    console.error(message, error);
-  }),
+  errorManager: jest.fn(),
 }));
 
 /**

@@ -16,9 +16,14 @@ import { PROJECT_UID_REGEX } from "@/utilities/validation";
 export interface ApplicationDataViewProps {
   application: IFundingApplication;
   program?: ProgramWithFormSchema;
+  excludeMilestones?: boolean;
 }
 
-export const ApplicationDataView: FC<ApplicationDataViewProps> = ({ application, program }) => {
+export const ApplicationDataView: FC<ApplicationDataViewProps> = ({
+  application,
+  program,
+  excludeMilestones,
+}) => {
   // Resolve form schema from program object (handles both direct formSchema and nested applicationConfig.formSchema)
   const programAny = program as Record<string, unknown> | null | undefined;
   const formSchema =
@@ -139,7 +144,16 @@ export const ApplicationDataView: FC<ApplicationDataViewProps> = ({ application,
     );
   };
 
-  const dataToRender = application.applicationData;
+  const { applicationData } = application;
+  const dataToRender = useMemo(() => {
+    if (!excludeMilestones || !applicationData) return applicationData;
+    return Object.fromEntries(
+      Object.entries(applicationData).filter(([_, value]) => {
+        if (!Array.isArray(value) || value.length === 0) return true;
+        return !(typeof value[0] === "object" && value[0] !== null && "title" in value[0]);
+      })
+    );
+  }, [applicationData, excludeMilestones]);
 
   if (!dataToRender || Object.keys(dataToRender).length === 0) {
     return (

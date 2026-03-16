@@ -101,7 +101,7 @@ export function FundingMapSearch() {
       <div className="flex w-full max-w-xl flex-col gap-8">
         <div className="flex flex-col items-center justify-center gap-4">
           <h1 className="text-center text-3xl font-semibold tracking-tight lg:text-4xl">
-            {`Find funding for your project`}
+            {`Find funding opportunities`}
           </h1>
 
           <div className="relative w-full">

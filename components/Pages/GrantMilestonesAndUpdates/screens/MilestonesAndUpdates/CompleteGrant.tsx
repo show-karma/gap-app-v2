@@ -1,16 +1,15 @@
 "use client";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import type { FC } from "react";
 import { useEffect, useState } from "react";
 import type { Hex } from "viem";
 import { useAccount } from "wagmi";
-import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { Button } from "@/components/ui/button";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
-import { useGap } from "@/hooks/useGap";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useTracksForProgram } from "@/hooks/useTracks";
 import { useWallet } from "@/hooks/useWallet";
@@ -18,6 +17,7 @@ import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { getProjectGrants } from "@/services/project-grants.service";
 import { useProjectStore } from "@/store";
 import { useGrantStore } from "@/store/grant";
+import { useShareDialogStore } from "@/store/modals/shareDialog";
 import type { Grant } from "@/types/v2/grant";
 import fetchData from "@/utilities/fetchData";
 import { isFundingProgramGrant } from "@/utilities/funding-programs";
@@ -26,6 +26,7 @@ import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { getCommunityDetails } from "@/utilities/queries/v2/community";
 import { sanitizeObject } from "@/utilities/sanitize";
+import { SHARE_TEXTS } from "@/utilities/share/text";
 import { FundingProgramFields } from "./CompletionRequirements/FundingProgramFields";
 import { TrackExplanations } from "./CompletionRequirements/TrackExplanations";
 
@@ -55,6 +56,7 @@ export const GrantCompletion: FC = () => {
 
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
 
   const { chain, address } = useAccount();
   const { switchChainAsync } = useWallet();
@@ -64,7 +66,7 @@ export const GrantCompletion: FC = () => {
 
   const { startAttestation, changeStepperStep, setIsStepper, showSuccess, showError } =
     useAttestationToast();
-  const { gap } = useGap();
+  const { openShareDialog } = useShareDialogStore();
 
   // Check if grant is from a funding program (by community or grant name)
   useEffect(() => {
@@ -204,15 +206,30 @@ export const GrantCompletion: FC = () => {
             if (completedGrant?.completed) {
               changeStepperStep("indexed");
               showSuccess(MESSAGES.GRANT.MARK_AS_COMPLETE.SUCCESS);
-              await refetchGrants().then(() => {
-                router.push(
-                  PAGES.PROJECT.GRANT(
-                    project?.details?.slug || (project?.uid as Hex),
-                    completedGrant?.uid as Hex
-                  )
-                );
-                router.refresh();
+
+              const targetPath = PAGES.PROJECT.GRANT(
+                project?.details?.slug || (project?.uid as Hex),
+                completedGrant?.uid as Hex
+              );
+
+              await refetchGrants();
+              openShareDialog({
+                modalShareText: `Grant completed for ${completedGrant.details?.title}!`,
+                modalShareSecondText: `Huge milestone unlocked. Your completion is now public and verifiable onchain.`,
+                shareText: SHARE_TEXTS.GRANT_COMPLETED(
+                  completedGrant.details?.title || "your grant",
+                  (project?.details?.slug || project?.uid) as string,
+                  completedGrant.uid
+                ),
               });
+
+              // Let the share dialog render before any route transition.
+              if (pathname !== targetPath) {
+                setTimeout(() => {
+                  router.push(targetPath);
+                }, 250);
+              }
+
               return; // Exit function on success
             }
 
@@ -381,12 +398,7 @@ export const GrantCompletion: FC = () => {
           )}
 
           <div className="flex w-full flex-row-reverse">
-            <Button
-              onClick={() => onSubmit()}
-              className="flex w-max flex-row bg-[#17B26A] text-white hover:bg-[#17B26A]"
-              disabled={isLoading}
-              isLoading={isLoading}
-            >
+            <Button onClick={() => onSubmit()} size="xl" disabled={isLoading} isLoading={isLoading}>
               Mark grant as complete
             </Button>
           </div>

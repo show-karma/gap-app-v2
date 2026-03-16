@@ -21,9 +21,11 @@ import { safeGetWalletClient } from "@/utilities/wallet-helpers";
  */
 function didUserLoginWithEmailOrSocial(user: User | null): boolean {
   if (!user) return false;
-  // Check linked accounts for email or Google OAuth
+  // Check linked accounts for email, Google OAuth, or Farcaster
+  // Farcaster users get an embedded wallet via createOnLogin: "users-without-wallets"
   return user.linkedAccounts.some(
-    (account) => account.type === "email" || account.type === "google_oauth"
+    (account) =>
+      account.type === "email" || account.type === "google_oauth" || account.type === "farcaster"
   );
 }
 

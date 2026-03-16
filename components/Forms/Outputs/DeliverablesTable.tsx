@@ -2,8 +2,8 @@
 
 import { TrashIcon } from "@heroicons/react/24/solid";
 import type { FieldErrors, UseFormRegister } from "react-hook-form";
-import { Button } from "@/components/Utilities/Button";
 import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/utilities/tailwind";
 
 interface DeliverableField {
@@ -52,7 +52,8 @@ export const DeliverablesTable = ({
           <Button
             type="button"
             onClick={onAdd}
-            className="text-sm bg-brand-blue text-white px-3 py-1.5"
+            size="xl"
+            className="bg-brand-blue text-white hover:bg-brand-blue/90"
           >
             Add Deliverable
           </Button>
@@ -143,7 +144,8 @@ export const DeliverablesTable = ({
               <Button
                 type="button"
                 onClick={onAdd}
-                className="text-sm bg-brand-blue text-white px-3 py-1.5"
+                size="xl"
+                className="bg-brand-blue text-white hover:bg-brand-blue/90"
               >
                 Add more deliverables
               </Button>

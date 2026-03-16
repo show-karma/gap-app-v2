@@ -1,6 +1,6 @@
 "use client";
 
-import { MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/24/solid";
+import { ArrowTopRightOnSquareIcon, MagnifyingGlassIcon, PlusIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import debounce from "lodash.debounce";
 import { type FC, useEffect, useMemo, useRef, useState } from "react";
 import type { Control, FieldError, FieldErrorsImpl, Merge } from "react-hook-form";
@@ -11,8 +11,32 @@ import { useProject } from "@/hooks/useProject";
 import { useProjectSearch } from "@/hooks/useProjectSearch";
 import type { SearchProjectResult } from "@/services/unified-search.service";
 import type { IFormField } from "@/types/funding-platform";
+import { envVars } from "@/utilities/enviromentVars";
 import { cn } from "@/utilities/tailwind";
 import { PROJECT_UID_REGEX } from "@/utilities/validation";
+
+function AddProjectLink() {
+  const href = `${envVars.VERCEL_URL || "https://www.karmahq.xyz"}?action=create-project`;
+
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      data-testid="add-project-link"
+      className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-gray-100 dark:hover:bg-zinc-700 text-left w-full"
+    >
+      <div className="w-10 h-10 rounded-full bg-[rgb(var(--color-primary))]/10 flex items-center justify-center flex-shrink-0">
+        <PlusIcon className="w-5 h-5 text-[rgb(var(--color-primary))]" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="font-medium text-[rgb(var(--color-primary))]">Add project</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400">Create a new project on Karma</p>
+      </div>
+      <ArrowTopRightOnSquareIcon className="w-4 h-4 text-gray-400 flex-shrink-0" />
+    </a>
+  );
+}
 
 interface KarmaProfileLinkInputProps {
   field: IFormField;
@@ -76,6 +100,8 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
     projects,
     isLoading: isSearching,
     isFetching,
+    isError: isSearchError,
+    refetch: retrySearch,
   } = useProjectSearch(debouncedQuery, {
     enabled: debouncedQuery.length >= SEARCH_CONSTANTS.MIN_QUERY_LENGTH,
   });
@@ -117,13 +143,18 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
     };
   }, [isDropdownOpen]);
 
-  // Open dropdown when search results arrive
+  // Open dropdown when search completes
   useEffect(() => {
-    if (projects.length > 0 && debouncedQuery.length >= SEARCH_CONSTANTS.MIN_QUERY_LENGTH) {
+    if (
+      debouncedQuery.length >= SEARCH_CONSTANTS.MIN_QUERY_LENGTH &&
+      !isSearching &&
+      !isFetching &&
+      !selectedProject
+    ) {
       setIsDropdownOpen(true);
       setFocusedIndex(-1); // Reset focus when new results arrive
     }
-  }, [projects, debouncedQuery]);
+  }, [projects, debouncedQuery, isSearching, isFetching, selectedProject]);
 
   const handleInputChange = (value: string) => {
     setSearchQuery(value);
@@ -215,10 +246,7 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
                   value={searchQuery}
                   onChange={(e) => handleInputChange(e.target.value)}
                   onFocus={() => {
-                    if (
-                      projects.length > 0 &&
-                      debouncedQuery.length >= SEARCH_CONSTANTS.MIN_QUERY_LENGTH
-                    ) {
+                    if (debouncedQuery.length >= SEARCH_CONSTANTS.MIN_QUERY_LENGTH) {
                       setIsDropdownOpen(true);
                     }
                   }}
@@ -263,6 +291,16 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
                       {displayProject.details?.slug || displayProject.uid}
                     </p>
                   </div>
+                  {!isLoading && (
+                    <button
+                      type="button"
+                      data-testid="remove-project-button"
+                      onClick={() => handleClear(onChange)}
+                      className="text-sm text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 font-medium transition-colors flex-shrink-0"
+                    >
+                      Remove
+                    </button>
+                  )}
                 </div>
               )}
 
@@ -283,8 +321,6 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
                 <div
                   ref={dropdownRef}
                   id={listboxId}
-                  role="listbox"
-                  aria-label="Search results"
                   className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto"
                 >
                   {isSearching || isFetching ? (
@@ -295,45 +331,64 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
                       />
                       <span className="sr-only">Loading search results...</span>
                     </div>
+                  ) : isSearchError ? (
+                    <div className="py-4 text-center">
+                      <p className="text-sm text-red-500 dark:text-red-400">Failed to search projects</p>
+                      <button
+                        type="button"
+                        onClick={() => retrySearch()}
+                        className="mt-2 text-sm text-[rgb(var(--color-primary))] hover:underline"
+                      >
+                        Retry
+                      </button>
+                    </div>
                   ) : projects.length === 0 ? (
-                    <div className="py-6 text-center text-sm text-gray-500 dark:text-gray-400">
-                      {debouncedQuery.length < SEARCH_CONSTANTS.MIN_QUERY_LENGTH
-                        ? `Type at least ${SEARCH_CONSTANTS.MIN_QUERY_LENGTH} characters to search`
-                        : "No projects found"}
+                    <div>
+                      <div className="py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                        {debouncedQuery.length < SEARCH_CONSTANTS.MIN_QUERY_LENGTH
+                          ? `Type at least ${SEARCH_CONSTANTS.MIN_QUERY_LENGTH} characters to search`
+                          : "No projects found"}
+                      </div>
+                      {debouncedQuery.length >= SEARCH_CONSTANTS.MIN_QUERY_LENGTH && (
+                        <AddProjectLink />
+                      )}
                     </div>
                   ) : (
-                    <div className="py-1">
-                      {projects.map((project, index) => (
-                        <button
-                          key={project.uid}
-                          id={`${listboxId}-option-${index}`}
-                          role="option"
-                          aria-selected={focusedIndex === index}
-                          type="button"
-                          onClick={() => handleSelectProject(project, onChange)}
-                          className={cn(
-                            "w-full flex items-center gap-3 px-4 py-3 transition-colors text-left",
-                            focusedIndex === index
-                              ? "bg-gray-100 dark:bg-zinc-700"
-                              : "hover:bg-gray-100 dark:hover:bg-zinc-700"
-                          )}
-                        >
-                          <ProfilePicture
-                            imageURL={project.details?.logoUrl}
-                            name={project.uid || ""}
-                            className="w-10 h-10 flex-shrink-0"
-                            alt={project.details?.title || "Project"}
-                          />
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-gray-900 dark:text-white truncate">
-                              {project.details?.title || `${project.uid.slice(0, 10)}...`}
-                            </p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                              {project.details?.slug || `${project.uid.slice(0, 10)}...`}
-                            </p>
-                          </div>
-                        </button>
-                      ))}
+                    <div>
+                      <div role="listbox" aria-label="Search results" className="py-1">
+                        {projects.map((project, index) => (
+                          <button
+                            key={project.uid}
+                            id={`${listboxId}-option-${index}`}
+                            role="option"
+                            aria-selected={focusedIndex === index}
+                            type="button"
+                            onClick={() => handleSelectProject(project, onChange)}
+                            className={cn(
+                              "w-full flex items-center gap-3 px-4 py-3 transition-colors text-left",
+                              focusedIndex === index
+                                ? "bg-gray-100 dark:bg-zinc-700"
+                                : "hover:bg-gray-100 dark:hover:bg-zinc-700"
+                            )}
+                          >
+                            <ProfilePicture
+                              imageURL={project.details?.logoUrl}
+                              name={project.uid || ""}
+                              className="w-10 h-10 flex-shrink-0"
+                              alt={project.details?.title || "Project"}
+                            />
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-gray-900 dark:text-white truncate">
+                                {project.details?.title || `${project.uid.slice(0, 10)}...`}
+                              </p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                                {project.details?.slug || `${project.uid.slice(0, 10)}...`}
+                              </p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                      <AddProjectLink />
                     </div>
                   )}
                 </div>

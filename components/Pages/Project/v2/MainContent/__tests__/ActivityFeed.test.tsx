@@ -1,6 +1,11 @@
 import { render, screen } from "@testing-library/react";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 
+// Mock next/navigation
+jest.mock("next/navigation", () => ({
+  useParams: () => ({ projectId: "test-project" }),
+}));
+
 // Mock ActivityCard to avoid complex import chain
 jest.mock("@/components/Shared/ActivityCard", () => ({
   ActivityCard: () => <div data-testid="activity-card" />,
@@ -53,18 +58,18 @@ describe("ActivityFeed - Activity Type Labels", () => {
     ...overrides,
   });
 
-  it("should display 'Milestone' for type 'milestone'", () => {
+  it("should display 'Milestone created' for type 'milestone'", () => {
     const milestones = [createMilestone("milestone")];
     render(<ActivityFeed milestones={milestones} />);
 
-    expect(screen.getByText("Milestone")).toBeInTheDocument();
+    expect(screen.getByText("Milestone created")).toBeInTheDocument();
   });
 
-  it("should display 'Milestone' for type 'grant'", () => {
+  it("should display 'Milestone created' for type 'grant'", () => {
     const milestones = [createMilestone("grant")];
     render(<ActivityFeed milestones={milestones} />);
 
-    expect(screen.getByText("Milestone")).toBeInTheDocument();
+    expect(screen.getByText("Milestone created")).toBeInTheDocument();
   });
 
   it("should display 'Project Activity' for type 'activity'", () => {
@@ -88,16 +93,15 @@ describe("ActivityFeed - Activity Type Labels", () => {
     expect(screen.getByText("Grant Update")).toBeInTheDocument();
   });
 
-  it("should display 'Milestone' for type 'impact'", () => {
-    // Note: Impact type displays as "Milestone" per getActivityTypeLabel implementation
-    // This matches the staging behavior where project impacts are shown as milestones
+  it("should display 'Milestone created' for type 'impact'", () => {
+    // Note: Impact type displays as "Milestone created" per getActivityTypeLabel implementation
     const milestones = [createMilestone("impact")];
     render(<ActivityFeed milestones={milestones} />);
 
-    expect(screen.getByText("Milestone")).toBeInTheDocument();
+    expect(screen.getByText("Milestone created")).toBeInTheDocument();
   });
 
-  it("should display 'Grant Received' for type 'grant_received'", () => {
+  it("should display 'Funding received' for type 'grant_received'", () => {
     const milestones = [
       createMilestone("grant_received", {
         grantReceived: {
@@ -110,7 +114,7 @@ describe("ActivityFeed - Activity Type Labels", () => {
     ];
     render(<ActivityFeed milestones={milestones} />);
 
-    expect(screen.getByText("Grant Received")).toBeInTheDocument();
+    expect(screen.getByText("Funding received")).toBeInTheDocument();
   });
 
   it("should show empty state when no milestones", () => {
