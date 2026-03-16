@@ -10,10 +10,12 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import type React from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { DeleteDialog } from "@/components/DeleteDialog";
 import { TelegramIcon } from "@/components/Icons";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 import { getMemberRoles, getRoleShortLabel } from "./helpers";
@@ -62,6 +64,11 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
   const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
   const [editRoles, setEditRoles] = useState<string[]>([]);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [removeDialogMemberId, setRemoveDialogMemberId] = useState<string | null>(null);
+  const [showEmptyRolesDialog, setShowEmptyRolesDialog] = useState(false);
+  const [, copy] = useCopyToClipboard();
+  const membersRef = useRef(members);
+  membersRef.current = members;
 
   // Determine if we're using multi-role checkboxes or single-role radio
   const useCheckboxMode = Boolean(selectedRoles && onRolesChange);
@@ -206,7 +213,7 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
         errorMessage = error.message;
       }
 
-      console.error("Add member error:", errorMessage);
+      setFormErrors({ _general: errorMessage });
     } finally {
       setIsAddingMember(false);
     }
@@ -232,57 +239,32 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
     }
   }, [roleOptions, onRoleChange, onRolesChange, useCheckboxMode]);
 
-  const handleRemove = useCallback(
-    async (memberId: string) => {
-      const member = members.find((m) => m.id === memberId);
-      const memberName = member?.name || "this member";
-      const roles = getMemberRoles(member);
-      const rolesText =
-        roles.length > 0 ? ` (${roles.map((r) => getRoleShortLabel(r)).join(" & ")})` : "";
+  const handleRemoveClick = useCallback((memberId: string) => {
+    setRemoveDialogMemberId(memberId);
+  }, []);
 
-      if (!confirm(`Are you sure you want to remove ${memberName}${rolesText}?`)) {
-        return;
+  const handleRemoveConfirm = useCallback(async () => {
+    if (!removeDialogMemberId) return;
+
+    setRemovingMemberId(removeDialogMemberId);
+    try {
+      await onRemove?.(removeDialogMemberId);
+      if (onRefresh) {
+        onRefresh();
       }
+    } finally {
+      setRemovingMemberId(null);
+      setRemoveDialogMemberId(null);
+    }
+  }, [removeDialogMemberId, onRemove, onRefresh]);
 
-      setRemovingMemberId(memberId);
-      try {
-        await onRemove?.(memberId);
-
-        if (onRefresh) {
-          onRefresh();
-        }
-      } catch (error) {
-        let errorMessage = "Failed to remove member. Please try again.";
-
-        if (error && typeof error === "object" && "response" in error) {
-          const apiError = error as { response?: { status?: number; data?: { message?: string } } };
-          if (apiError.response?.status === 401 || apiError.response?.status === 403) {
-            errorMessage = "You don't have permission to remove members.";
-          } else if (apiError.response?.status === 404) {
-            errorMessage = "Member not found. It may have already been removed.";
-          }
-        } else if (error instanceof Error && error.message) {
-          errorMessage = error.message;
-        }
-
-        console.error("Remove member error:", errorMessage);
-      } finally {
-        setRemovingMemberId(null);
-      }
-    },
-    [onRemove, onRefresh, members]
-  );
-
-  const handleStartEdit = useCallback(
-    (memberId: string) => {
-      const member = members.find((m) => m.id === memberId);
-      if (member) {
-        setEditingMemberId(memberId);
-        setEditRoles([...getMemberRoles(member)]);
-      }
-    },
-    [members]
-  );
+  const handleStartEdit = useCallback((memberId: string) => {
+    const member = membersRef.current.find((m) => m.id === memberId);
+    if (member) {
+      setEditingMemberId(memberId);
+      setEditRoles([...getMemberRoles(member)]);
+    }
+  }, []);
 
   const handleCancelEdit = useCallback(() => {
     setEditingMemberId(null);
@@ -293,12 +275,8 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
     if (!editingMemberId || !onEditRoles) return;
 
     if (editRoles.length === 0) {
-      const member = members.find((m) => m.id === editingMemberId);
-      if (
-        !confirm(`No roles selected. This will remove ${member?.name || "this member"}. Continue?`)
-      ) {
-        return;
-      }
+      setShowEmptyRolesDialog(true);
+      return;
     }
 
     setIsSavingEdit(true);
@@ -309,12 +287,27 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
       if (onRefresh) {
         onRefresh();
       }
-    } catch (error) {
-      console.error("Error updating roles:", error);
     } finally {
       setIsSavingEdit(false);
     }
-  }, [editingMemberId, editRoles, onEditRoles, onRefresh, members]);
+  }, [editingMemberId, editRoles, onEditRoles, onRefresh]);
+
+  const handleEmptyRolesConfirm = useCallback(async () => {
+    if (!editingMemberId || !onEditRoles) return;
+
+    setShowEmptyRolesDialog(false);
+    setIsSavingEdit(true);
+    try {
+      await onEditRoles(editingMemberId, []);
+      setEditingMemberId(null);
+      setEditRoles([]);
+      if (onRefresh) {
+        onRefresh();
+      }
+    } finally {
+      setIsSavingEdit(false);
+    }
+  }, [editingMemberId, onEditRoles, onRefresh]);
 
   const handleEditRoleToggle = useCallback((roleValue: string, checked: boolean) => {
     setEditRoles((prev) => (checked ? [...prev, roleValue] : prev.filter((r) => r !== roleValue)));
@@ -331,15 +324,16 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
     return value;
   }, []);
 
-  const handleCopyAddress = useCallback(async (address: string) => {
-    try {
-      await navigator.clipboard.writeText(address);
-      setCopiedAddress(address);
-      setTimeout(() => setCopiedAddress(null), 2000);
-    } catch (error) {
-      console.error("Failed to copy address:", error);
-    }
-  }, []);
+  const handleCopyAddress = useCallback(
+    async (address: string) => {
+      const success = await copy(address, "Address copied to clipboard");
+      if (success) {
+        setCopiedAddress(address);
+        setTimeout(() => setCopiedAddress(null), 2000);
+      }
+    },
+    [copy]
+  );
 
   if (isLoading) {
     return (
@@ -709,7 +703,7 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
                           </button>
                         )}
                         <button
-                          onClick={() => handleRemove(member.id)}
+                          onClick={() => handleRemoveClick(member.id)}
                           disabled={removingMemberId === member.id}
                           aria-label={`Remove ${member.name || member.id}`}
                           className={cn(
@@ -735,6 +729,32 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
           </ul>
         )}
       </section>
+
+      {/* Remove confirmation dialog */}
+      <DeleteDialog
+        title={`Are you sure you want to remove ${
+          membersRef.current.find((m) => m.id === removeDialogMemberId)?.name || "this member"
+        }?`}
+        deleteFunction={handleRemoveConfirm}
+        isLoading={removingMemberId !== null}
+        buttonElement={null}
+        externalIsOpen={removeDialogMemberId !== null}
+        externalSetIsOpen={(isOpen) => {
+          if (!isOpen) setRemoveDialogMemberId(null);
+        }}
+      />
+
+      {/* Empty roles confirmation dialog */}
+      <DeleteDialog
+        title={`No roles selected. This will remove ${
+          membersRef.current.find((m) => m.id === editingMemberId)?.name || "this member"
+        }. Continue?`}
+        deleteFunction={handleEmptyRolesConfirm}
+        isLoading={isSavingEdit}
+        buttonElement={null}
+        externalIsOpen={showEmptyRolesDialog}
+        externalSetIsOpen={setShowEmptyRolesDialog}
+      />
     </div>
   );
 };

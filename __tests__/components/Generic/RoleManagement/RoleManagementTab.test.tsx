@@ -4,6 +4,34 @@ import "@testing-library/jest-dom";
 import { RoleManagementTab } from "@/components/Generic/RoleManagement/RoleManagementTab";
 import type { RoleManagementConfig, RoleOption } from "@/components/Generic/RoleManagement/types";
 
+const mockCopy = jest.fn().mockResolvedValue(true);
+jest.mock("@/hooks/useCopyToClipboard", () => ({
+  useCopyToClipboard: () => [null, mockCopy],
+}));
+
+const mockDeleteDialog = jest.fn();
+jest.mock("@/components/DeleteDialog", () => ({
+  DeleteDialog: (props: Record<string, unknown>) => {
+    mockDeleteDialog(props);
+    return props.externalIsOpen ? (
+      <div data-testid="delete-dialog">
+        <button
+          data-testid="delete-dialog-confirm"
+          onClick={() => (props.deleteFunction as () => Promise<void>)()}
+        >
+          Confirm
+        </button>
+        <button
+          data-testid="delete-dialog-cancel"
+          onClick={() => (props.externalSetIsOpen as (v: boolean) => void)(false)}
+        >
+          Cancel
+        </button>
+      </div>
+    ) : null;
+  },
+}));
+
 jest.mock("@/components/Utilities/Spinner", () => ({
   Spinner: ({ className }: { className?: string }) => (
     <div data-testid="spinner" className={className} />
@@ -350,6 +378,43 @@ describe("RoleManagementTab", () => {
       expect(screen.queryByLabelText("Save role changes")).not.toBeInTheDocument();
     });
 
+    it("uses DeleteDialog instead of confirm() when removing with zero roles", async () => {
+      const user = userEvent.setup();
+      const onEditRoles = jest.fn().mockResolvedValue(undefined);
+      const members = [
+        {
+          id: "alice@example.com",
+          name: "Alice",
+          email: "alice@example.com",
+          roles: ["program" as const],
+        },
+      ];
+
+      render(
+        <RoleManagementTab
+          config={defaultConfig}
+          members={members}
+          canManage
+          roleOptions={roleOptions}
+          selectedRoles={["program"]}
+          onRolesChange={jest.fn()}
+          onEditRoles={onEditRoles}
+          onRefresh={jest.fn()}
+        />
+      );
+
+      await user.click(screen.getByLabelText("Edit roles for Alice"));
+
+      // Uncheck the only checked role
+      const checkedCheckbox = screen.getByRole("checkbox", { checked: true });
+      await user.click(checkedCheckbox);
+
+      // Click save - should show DeleteDialog, not browser confirm()
+      await user.click(screen.getByLabelText("Save role changes"));
+
+      expect(screen.getByTestId("delete-dialog")).toBeInTheDocument();
+    });
+
     it("hides role badges and action buttons while editing", async () => {
       const user = userEvent.setup();
       const members = [
@@ -380,6 +445,76 @@ describe("RoleManagementTab", () => {
       // Edit/remove buttons should be hidden during edit
       expect(screen.queryByLabelText("Edit roles for Alice")).not.toBeInTheDocument();
       expect(screen.queryByLabelText("Remove Alice")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("remove confirmation", () => {
+    it("uses DeleteDialog instead of confirm() for removal", async () => {
+      const user = userEvent.setup();
+      const onRemove = jest.fn().mockResolvedValue(undefined);
+      const members = [
+        {
+          id: "alice@example.com",
+          name: "Alice",
+          email: "alice@example.com",
+          roles: ["program" as const],
+        },
+      ];
+
+      render(
+        <RoleManagementTab
+          config={defaultConfig}
+          members={members}
+          canManage
+          onRemove={onRemove}
+          roleOptions={roleOptions}
+          selectedRoles={["program"]}
+          onRolesChange={jest.fn()}
+        />
+      );
+
+      await user.click(screen.getByLabelText("Remove Alice"));
+
+      // Should show DeleteDialog
+      expect(screen.getByTestId("delete-dialog")).toBeInTheDocument();
+
+      // Confirm the deletion
+      await user.click(screen.getByTestId("delete-dialog-confirm"));
+
+      expect(onRemove).toHaveBeenCalledWith("alice@example.com");
+    });
+  });
+
+  describe("clipboard", () => {
+    it("uses useCopyToClipboard hook instead of raw navigator.clipboard", async () => {
+      const user = userEvent.setup();
+      const members = [
+        {
+          id: "alice@example.com",
+          name: "Alice",
+          email: "alice@example.com",
+          publicAddress: "0x1234567890abcdef1234567890abcdef12345678",
+          roles: ["program" as const],
+        },
+      ];
+
+      render(
+        <RoleManagementTab
+          config={defaultConfig}
+          members={members}
+          roleOptions={roleOptions}
+          selectedRoles={["program"]}
+          onRolesChange={jest.fn()}
+        />
+      );
+
+      const copyButton = screen.getByTitle("Click to copy wallet address");
+      await user.click(copyButton);
+
+      expect(mockCopy).toHaveBeenCalledWith(
+        "0x1234567890abcdef1234567890abcdef12345678",
+        "Address copied to clipboard"
+      );
     });
   });
 });
