@@ -1,3 +1,4 @@
+import { PAGES } from "@/utilities/pages";
 import type { SolutionPage } from "./types";
 
 export const sizeBudgetSolutions: SolutionPage[] = [
@@ -54,7 +55,7 @@ export const sizeBudgetSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Start Managing Your Program for Free",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     datePublished: "2026-03-16",
     idealFor: [
       "Community DAOs distributing micro-grants under $500K",
@@ -73,7 +74,7 @@ export const sizeBudgetSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "See How Small Programs Use Karma",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     steps: [
       {
@@ -187,7 +188,7 @@ export const sizeBudgetSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Set Up Your Program Today",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     datePublished: "2026-03-16",
     idealFor: [
       "Protocol foundations running seasonal grant rounds",
@@ -206,7 +207,7 @@ export const sizeBudgetSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "See Portfolio Management Features",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     steps: [
       {
@@ -325,7 +326,7 @@ export const sizeBudgetSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Launch Your Large-Scale Program",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     datePublished: "2026-03-16",
     idealFor: [
       "Layer-1 blockchain foundations with multi-million dollar grant pools",
@@ -344,7 +345,7 @@ export const sizeBudgetSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Request a Demo for Large Programs",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     steps: [
       {
@@ -463,7 +464,7 @@ export const sizeBudgetSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Explore Enterprise Solutions",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     datePublished: "2026-03-16",
     idealFor: [
       "Large corporations running branded grant and CSR programs",
@@ -482,7 +483,7 @@ export const sizeBudgetSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Schedule an Enterprise Demo",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     steps: [
       {
@@ -595,7 +596,7 @@ export const sizeBudgetSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Get Started for Free",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     datePublished: "2026-03-16",
     idealFor: [
       "Family foundations with one or two staff members",
@@ -614,7 +615,7 @@ export const sizeBudgetSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "See How Small Foundations Use Karma",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     steps: [
       {
@@ -728,7 +729,7 @@ export const sizeBudgetSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Start Managing Your Programs",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     datePublished: "2026-03-16",
     idealFor: [
       "Regional foundations managing 5-15 active grant programs",
@@ -747,7 +748,7 @@ export const sizeBudgetSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Explore Multi-Program Features",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     steps: [
       {
@@ -860,7 +861,7 @@ export const sizeBudgetSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Launch Your First Program",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     datePublished: "2026-03-16",
     idealFor: [
       "Web3 startups launching their first ecosystem grant round",
@@ -879,7 +880,7 @@ export const sizeBudgetSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "See Startup Grant Program Examples",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     steps: [
       {
@@ -987,7 +988,7 @@ export const sizeBudgetSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Start Building Your Foundation",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     datePublished: "2026-03-16",
     idealFor: [
       "Newly registered charitable foundations seeking operational tools",
@@ -1006,7 +1007,7 @@ export const sizeBudgetSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Read the New Foundation Setup Guide",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     steps: [
       {
@@ -1115,7 +1116,7 @@ export const sizeBudgetSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Modernize Your Grant Management",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     datePublished: "2026-03-16",
     idealFor: [
       "Established foundations replacing outdated grant management systems",
@@ -1134,7 +1135,7 @@ export const sizeBudgetSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "See the Modernization Roadmap",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     steps: [
       {
@@ -1253,7 +1254,7 @@ export const sizeBudgetSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Try Karma for Free",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     datePublished: "2026-03-16",
     idealFor: [
       "Budget-conscious nonprofits seeking professional grant tools",
@@ -1272,7 +1273,7 @@ export const sizeBudgetSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Compare Karma Pricing to Alternatives",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     steps: [
       {

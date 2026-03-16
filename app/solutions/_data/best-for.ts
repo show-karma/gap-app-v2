@@ -1,3 +1,4 @@
+import { PAGES } from "@/utilities/pages";
 import type { SolutionPage } from "./types";
 
 export const bestForSolutions: SolutionPage[] = [
@@ -45,7 +46,7 @@ export const bestForSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Compare Karma to other grant platforms",
-      href: "/solutions/karma-vs-submittable-grant-management",
+      href: PAGES.SOLUTIONS.DETAIL("karma-vs-submittable-grant-management"),
     },
     steps: [
       {
@@ -137,7 +138,7 @@ export const bestForSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "See how Karma works for your grant program",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
   },
   {
     slug: "best-grant-management-software-foundations",
@@ -182,7 +183,7 @@ export const bestForSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "See pricing and plans for foundations",
-      href: "/pricing",
+      href: PAGES.FOUNDATIONS,
     },
     steps: [
       {
@@ -274,7 +275,7 @@ export const bestForSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Explore how Karma works for foundations",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
   },
   {
     slug: "best-grant-management-software-nonprofits",
@@ -318,7 +319,7 @@ export const bestForSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "See how nonprofits use Karma to win more grants",
-      href: "/case-studies",
+      href: PAGES.FOUNDATIONS,
     },
     steps: [
       {
@@ -405,7 +406,7 @@ export const bestForSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Start managing your grants with Karma",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
   },
   {
     slug: "best-grant-management-software-daos",
@@ -450,7 +451,7 @@ export const bestForSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "See which DAOs use Karma",
-      href: "/case-studies",
+      href: PAGES.FOUNDATIONS,
     },
     steps: [
       {
@@ -537,7 +538,7 @@ export const bestForSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Set up your DAO grant program on Karma",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
   },
   {
     slug: "best-grant-management-software-universities",
@@ -582,7 +583,7 @@ export const bestForSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Request a demo for your research office",
-      href: "/contact",
+      href: PAGES.FOUNDATIONS,
     },
     steps: [
       {
@@ -674,7 +675,7 @@ export const bestForSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Learn how Karma works for universities",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
   },
   {
     slug: "best-grant-management-software-small-foundations",
@@ -718,7 +719,7 @@ export const bestForSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Start for free with no credit card",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     steps: [
       {
@@ -805,7 +806,7 @@ export const bestForSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Get started with Karma for free",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
   },
   {
     slug: "best-grant-management-software-community-foundations",
@@ -850,7 +851,7 @@ export const bestForSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "See whitelabel branding options",
-      href: "/pricing",
+      href: PAGES.FOUNDATIONS,
     },
     steps: [
       {
@@ -937,7 +938,7 @@ export const bestForSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "See how Karma works for community foundations",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
   },
   {
     slug: "best-grant-management-software-corporate-giving",
@@ -982,7 +983,7 @@ export const bestForSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Request a corporate demo",
-      href: "/contact",
+      href: PAGES.FOUNDATIONS,
     },
     steps: [
       {
@@ -1074,7 +1075,7 @@ export const bestForSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Explore Karma for corporate giving",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
   },
   {
     slug: "best-ai-grant-management-software",
@@ -1118,7 +1119,7 @@ export const bestForSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "See how AI review works in Karma",
-      href: "/features",
+      href: PAGES.FOUNDATIONS,
     },
     steps: [
       {
@@ -1210,7 +1211,7 @@ export const bestForSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Try AI-powered grant management with Karma",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
   },
   {
     slug: "best-free-grant-management-software",
@@ -1254,7 +1255,7 @@ export const bestForSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Compare free vs. premium features",
-      href: "/pricing",
+      href: PAGES.FOUNDATIONS,
     },
     steps: [
       {
@@ -1346,6 +1347,6 @@ export const bestForSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Start managing grants for free with Karma",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
   },
 ];

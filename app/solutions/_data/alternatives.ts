@@ -1,3 +1,4 @@
+import { PAGES } from "@/utilities/pages";
 import type { SolutionPage } from "./types";
 
 export const alternativesSolutions: SolutionPage[] = [
@@ -55,7 +56,7 @@ export const alternativesSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Compare for yourself — start managing grants with Karma today",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Grant-making organizations evaluating new software",
       "Foundations comparing enterprise vs modern platforms",
@@ -73,7 +74,7 @@ export const alternativesSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Compare Features",
-      href: "/solutions/grant-management-software-comparison#comparison",
+      href: `${PAGES.SOLUTIONS.DETAIL("grant-management-software-comparison")}#comparison`,
     },
     datePublished: "2026-03-15",
     comparisonTable: {
@@ -177,7 +178,7 @@ export const alternativesSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Leave the spreadsheets behind — try Karma for free",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Small grant programs outgrowing manual tracking",
       "Program managers tired of version control issues",
@@ -195,7 +196,7 @@ export const alternativesSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Start Free Migration",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     datePublished: "2026-03-15",
     comparisonTable: {
@@ -306,7 +307,7 @@ export const alternativesSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Try Karma as your grant management platform",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Grant programs needing post-award milestone tracking",
       "Organizations seeking transparent public reporting",
@@ -324,7 +325,7 @@ export const alternativesSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Switch to Karma",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     datePublished: "2026-03-15",
     comparisonTable: {
@@ -436,7 +437,7 @@ export const alternativesSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Start managing your grant program with Karma",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Grant-making foundations and organizations",
       "DAOs and protocols distributing ecosystem funds",
@@ -454,7 +455,7 @@ export const alternativesSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Switch to Karma",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     datePublished: "2026-03-15",
     comparisonTable: {
@@ -570,7 +571,7 @@ export const alternativesSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Experience modern grant management with Karma",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Foundations seeking faster implementation timelines",
       "Growing grant programs that need enterprise features without enterprise costs",
@@ -588,7 +589,7 @@ export const alternativesSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Start Free Migration",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     datePublished: "2026-03-15",
     comparisonTable: {
@@ -699,7 +700,7 @@ export const alternativesSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Discover modern grant management with Karma",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Community foundations modernizing their grant processes",
       "Corporate giving programs seeking transparent reporting",
@@ -717,7 +718,7 @@ export const alternativesSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Switch to Karma",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     datePublished: "2026-03-15",
     comparisonTable: {
@@ -829,7 +830,7 @@ export const alternativesSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Try Karma — modern grant management without the lock-in",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Foundations looking to escape vendor lock-in",
       "Organizations frustrated with Blackbaud's ecosystem requirements",
@@ -847,7 +848,7 @@ export const alternativesSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Compare Features",
-      href: "/solutions/alternative-to-blackbaud-grantmaking#comparison",
+      href: `${PAGES.SOLUTIONS.DETAIL("alternative-to-blackbaud-grantmaking")}#comparison`,
     },
     datePublished: "2026-03-15",
     comparisonTable: {
@@ -959,7 +960,7 @@ export const alternativesSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Get started with Karma — no lengthy setup required",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Organizations tired of lengthy implementation timelines",
       "Grant programs that need to launch quickly",
@@ -977,7 +978,7 @@ export const alternativesSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Start Free Migration",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     datePublished: "2026-03-15",
     comparisonTable: {
@@ -1089,7 +1090,7 @@ export const alternativesSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Manage your entire grant lifecycle with Karma",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Grant programs needing post-award tracking capabilities",
       "Organizations managing grantee milestones and deliverables",
@@ -1107,7 +1108,7 @@ export const alternativesSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Switch to Karma",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     datePublished: "2026-03-15",
     comparisonTable: {
@@ -1223,7 +1224,7 @@ export const alternativesSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "See how Karma elevates your grant program",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Good Grants users wanting AI-assisted evaluation",
       "Foundations seeking verifiable proof of grant impact",
@@ -1241,7 +1242,7 @@ export const alternativesSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Compare Features",
-      href: "/solutions/alternative-to-good-grants#comparison",
+      href: `${PAGES.SOLUTIONS.DETAIL("alternative-to-good-grants")}#comparison`,
     },
     datePublished: "2026-03-15",
     comparisonTable: {

@@ -1,3 +1,4 @@
+import { PAGES } from "@/utilities/pages";
 import type { SolutionPage } from "./types";
 
 export const useCasesSolutions: SolutionPage[] = [
@@ -54,7 +55,7 @@ export const useCasesSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Streamline Your Applications",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Grant program managers handling 50+ applications per round",
       "Foundations transitioning from spreadsheets to structured workflows",
@@ -72,7 +73,7 @@ export const useCasesSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "See How Applications Work",
-      href: "/solutions/how-it-works",
+      href: PAGES.FOUNDATIONS,
     },
     datePublished: "2026-03-16",
     steps: [
@@ -152,7 +153,7 @@ export const useCasesSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Automate Your Reviews",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Programs receiving 100+ applications per funding round",
       "Review committees struggling with inconsistent scoring",
@@ -170,7 +171,7 @@ export const useCasesSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Explore AI Review Features",
-      href: "/solutions/ai-grant-review",
+      href: PAGES.SOLUTIONS.DETAIL("ai-grant-review"),
     },
     datePublished: "2026-03-16",
     steps: [
@@ -249,7 +250,7 @@ export const useCasesSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Start Tracking Milestones",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Program managers overseeing 20+ active funded projects",
       "Foundations requiring verifiable proof of grantee delivery",
@@ -267,7 +268,7 @@ export const useCasesSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Learn About Onchain Attestations",
-      href: "/solutions/onchain-attestation-grants",
+      href: PAGES.FOUNDATIONS,
     },
     datePublished: "2026-03-16",
     steps: [
@@ -347,7 +348,7 @@ export const useCasesSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Manage Your Portfolio",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Foundations managing 50+ concurrent grants across multiple programs",
       "DAO treasuries overseeing ecosystem funding allocations",
@@ -365,7 +366,7 @@ export const useCasesSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "View Portfolio Dashboard Demo",
-      href: "/solutions/grant-program-dashboard",
+      href: PAGES.FOUNDATIONS,
     },
     datePublished: "2026-03-16",
     steps: [
@@ -444,7 +445,7 @@ export const useCasesSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Improve Accountability",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "DAO grant programs accountable to token-holder governance",
       "Foundations seeking verifiable proof of grantee delivery",
@@ -462,7 +463,7 @@ export const useCasesSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "See Accountability in Action",
-      href: "/solutions/onchain-attestation-grants",
+      href: PAGES.FOUNDATIONS,
     },
     datePublished: "2026-03-16",
     steps: [
@@ -542,7 +543,7 @@ export const useCasesSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Reduce Admin Overhead",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Small program teams managing large portfolios with limited staff",
       "Grant managers spending more time on admin than strategy",
@@ -560,7 +561,7 @@ export const useCasesSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Calculate Your Time Savings",
-      href: "/solutions/roi-calculator",
+      href: PAGES.FOUNDATIONS,
     },
     datePublished: "2026-03-16",
     steps: [
@@ -640,7 +641,7 @@ export const useCasesSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Scale Your Program",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Grant programs growing beyond 30 active projects",
       "Small teams managing portfolios that outpace their headcount",
@@ -658,7 +659,7 @@ export const useCasesSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "See Scaling Case Studies",
-      href: "/solutions/case-studies",
+      href: PAGES.FOUNDATIONS,
     },
     datePublished: "2026-03-16",
     steps: [
@@ -737,7 +738,7 @@ export const useCasesSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Make Your Program Transparent",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "DAO-funded grant programs accountable to token-holder communities",
       "Public foundations required to demonstrate fund usage transparently",
@@ -755,7 +756,7 @@ export const useCasesSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Explore Public Dashboard Features",
-      href: "/solutions/grant-program-dashboard",
+      href: PAGES.FOUNDATIONS,
     },
     datePublished: "2026-03-16",
     steps: [
@@ -834,7 +835,7 @@ export const useCasesSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Make Smarter Decisions",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Program managers seeking evidence-based funding allocation",
       "Foundations transitioning from intuition-based to data-driven decisions",
@@ -852,7 +853,7 @@ export const useCasesSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "See Analytics in Action",
-      href: "/solutions/grant-program-dashboard",
+      href: PAGES.FOUNDATIONS,
     },
     datePublished: "2026-03-16",
     steps: [
@@ -932,7 +933,7 @@ export const useCasesSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Generate Impact Reports",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Programs required to demonstrate impact to governance bodies",
       "Foundations reporting outcomes to donors and board members",
@@ -950,7 +951,7 @@ export const useCasesSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "View Sample Impact Report",
-      href: "/solutions/impact-reporting-demo",
+      href: PAGES.FOUNDATIONS,
     },
     datePublished: "2026-03-16",
     steps: [

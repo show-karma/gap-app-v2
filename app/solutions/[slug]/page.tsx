@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { FAQPageJsonLd } from "@/components/Seo/FAQPageJsonLd";
+import { SoftwareApplicationJsonLd } from "@/components/Seo/SoftwareApplicationJsonLd";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SectionContainer } from "@/src/components/shared/section-container";
@@ -18,8 +19,13 @@ export function generateStaticParams() {
   }));
 }
 
-export function generateMetadata({ params }: { params: { slug: string } }): Metadata {
-  const solution = getSolutionBySlug(params.slug);
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const solution = getSolutionBySlug(slug);
   if (!solution) return {};
 
   return customMetadata({
@@ -88,41 +94,6 @@ const badgeClassName = cn(
 const HorizontalLine = ({ className }: { className?: string }) => (
   <hr className={cn("w-full h-[1px] bg-border max-w-[75%]", className)} />
 );
-
-/**
- * SoftwareApplication JSON-LD for grant management software rich results.
- * Uses static data only (no user input) — same safe pattern as OrganizationJsonLd.tsx.
- */
-function SoftwareApplicationJsonLd() {
-  const schema = {
-    "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    name: "Karma",
-    applicationCategory: "BusinessApplication",
-    applicationSubCategory: "Grant Management Software",
-    operatingSystem: "Web",
-    offers: {
-      "@type": "Offer",
-      price: "0",
-      priceCurrency: "USD",
-      description: "Free tier available",
-    },
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: "4.8",
-      ratingCount: "200",
-      bestRating: "5",
-    },
-    url: SITE_URL,
-  };
-
-  return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
-    />
-  );
-}
 
 /**
  * WebPage JSON-LD with datePublished for freshness signals.
@@ -200,16 +171,17 @@ function HowToJsonLd({
   );
 }
 
-export default function SolutionPage({ params }: { params: { slug: string } }) {
-  const solution = getSolutionBySlug(params.slug);
+export default async function SolutionPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const solution = getSolutionBySlug(slug);
   if (!solution) notFound();
 
-  const relatedSolutions = getRelatedSolutions(params.slug);
+  const relatedSolutions = getRelatedSolutions(slug);
   const secondaryCta = solution.secondaryCta ?? {
     text: "See how it works",
     href: solution.ctaHref,
   };
-  const category = getCategoryFromSlug(params.slug);
+  const category = getCategoryFromSlug(slug);
 
   const badgeLabel =
     category === "audience"

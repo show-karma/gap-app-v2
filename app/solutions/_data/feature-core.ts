@@ -1,3 +1,4 @@
+import { PAGES } from "@/utilities/pages";
 import type { SolutionPage } from "./types";
 
 export const featureCoreSolutions: SolutionPage[] = [
@@ -55,7 +56,7 @@ export const featureCoreSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Start Reviewing Grants Faster",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Foundation program managers reviewing 200+ applications per round",
       "DAO governance leads managing ecosystem grant programs",
@@ -73,7 +74,7 @@ export const featureCoreSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Book a Demo",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     datePublished: "2026-03-16",
     steps: [
@@ -153,7 +154,7 @@ export const featureCoreSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Start Tracking Milestones Onchain",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Grant program managers overseeing 50+ active grants with deliverables",
       "DAO treasury managers requiring transparent proof of grantee progress",
@@ -171,7 +172,7 @@ export const featureCoreSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Watch a Walkthrough",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     datePublished: "2026-03-16",
     steps: [
@@ -250,7 +251,7 @@ export const featureCoreSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "See Your Portfolio Clearly",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Foundation executives needing portfolio-level visibility across programs",
       "Program managers tracking 20+ active grants simultaneously",
@@ -268,7 +269,7 @@ export const featureCoreSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Explore Features",
-      href: "/solutions",
+      href: PAGES.SOLUTIONS.ROOT,
     },
     datePublished: "2026-03-16",
     steps: [
@@ -348,7 +349,7 @@ export const featureCoreSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Automate Your Grant Intake",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Grant operations teams processing 100+ applications per funding round",
       "Program coordinators spending hours on manual data entry and routing",
@@ -366,7 +367,7 @@ export const featureCoreSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Book a Demo",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     datePublished: "2026-03-16",
     steps: [
@@ -445,7 +446,7 @@ export const featureCoreSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Screen Applicants Automatically",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Grant programs receiving 30-50% ineligible applications per round",
       "Operations teams wanting to free reviewer time for qualified applicants only",
@@ -463,7 +464,7 @@ export const featureCoreSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Watch a Walkthrough",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     datePublished: "2026-03-16",
     steps: [
@@ -543,7 +544,7 @@ export const featureCoreSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Unlock Program Analytics",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Program managers spending days compiling quarterly reports manually",
       "Foundation leadership needing real-time visibility into program performance",
@@ -561,7 +562,7 @@ export const featureCoreSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Explore Features",
-      href: "/solutions",
+      href: PAGES.SOLUTIONS.ROOT,
     },
     datePublished: "2026-03-16",
     steps: [
@@ -641,7 +642,7 @@ export const featureCoreSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Track Grant Payments Transparently",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Treasury managers needing real-time visibility into fund disbursements",
       "Grant programs processing milestone-based payments across multiple chains",
@@ -659,7 +660,7 @@ export const featureCoreSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Book a Demo",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     datePublished: "2026-03-16",
     steps: [
@@ -739,7 +740,7 @@ export const featureCoreSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Unify Your Grant Programs",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Foundations operating three or more grant programs simultaneously",
       "Organizations scaling from a single program to a multi-program portfolio",
@@ -757,7 +758,7 @@ export const featureCoreSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Watch a Walkthrough",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     datePublished: "2026-03-16",
     steps: [
@@ -836,7 +837,7 @@ export const featureCoreSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Automate Grantee Follow-Up",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Program managers spending 10+ hours weekly chasing grantees for updates",
       "Grant programs with 50+ active grants and recurring milestone deadlines",
@@ -854,7 +855,7 @@ export const featureCoreSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Explore Features",
-      href: "/solutions",
+      href: PAGES.SOLUTIONS.ROOT,
     },
     datePublished: "2026-03-16",
     steps: [
@@ -934,7 +935,7 @@ export const featureCoreSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Streamline Your Applications",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Grant programs replacing fragmented Google Forms and spreadsheet workflows",
       "Organizations processing 100+ applications per funding round",
@@ -952,7 +953,7 @@ export const featureCoreSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Book a Demo",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     datePublished: "2026-03-16",
     steps: [

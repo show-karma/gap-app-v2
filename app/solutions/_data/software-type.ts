@@ -1,3 +1,4 @@
+import { PAGES } from "@/utilities/pages";
 import type { SolutionPage } from "./types";
 
 export const softwareTypeSolutions: SolutionPage[] = [
@@ -55,7 +56,7 @@ export const softwareTypeSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Launch your cloud-based grant program",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Foundations with distributed teams working across multiple offices or time zones",
       "Grant programs onboarding external reviewers who need quick, frictionless access",
@@ -73,7 +74,7 @@ export const softwareTypeSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "See how whitelabel deployment works",
-      href: "/solutions/whitelabel-grant-management",
+      href: PAGES.SOLUTIONS.DETAIL("whitelabel-grant-management"),
     },
     datePublished: "2026-03-15",
     steps: [
@@ -152,7 +153,7 @@ export const softwareTypeSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Automate your grant workflows today",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Grant programs spending excessive staff time on repetitive administrative tasks",
       "Teams managing 50 or more active grants who need to scale without adding headcount",
@@ -170,7 +171,7 @@ export const softwareTypeSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Learn how AI-powered review works",
-      href: "/solutions/ai-grant-review",
+      href: PAGES.SOLUTIONS.DETAIL("ai-grant-review"),
     },
     datePublished: "2026-03-15",
     steps: [
@@ -250,7 +251,7 @@ export const softwareTypeSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Digitize your grant program",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Foundations transitioning from paper forms, PDFs, and email-based grant workflows",
       "Grant programs with grantees who need simple, non-technical submission interfaces",
@@ -268,7 +269,7 @@ export const softwareTypeSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "See the full grant lifecycle in action",
-      href: "/solutions/grant-lifecycle-management-software",
+      href: PAGES.SOLUTIONS.DETAIL("grant-lifecycle-management-software"),
     },
     datePublished: "2026-03-15",
     steps: [
@@ -347,7 +348,7 @@ export const softwareTypeSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Put your grant program online",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Distributed teams coordinating grant programs across multiple time zones",
       "Programs with external part-time reviewers who need lightweight browser access",
@@ -365,7 +366,7 @@ export const softwareTypeSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Explore cloud-based deployment options",
-      href: "/solutions/cloud-grant-management-software",
+      href: PAGES.SOLUTIONS.DETAIL("cloud-grant-management-software"),
     },
     datePublished: "2026-03-15",
     steps: [
@@ -445,7 +446,7 @@ export const softwareTypeSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Manage your full grant lifecycle",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Foundations needing end-to-end visibility from application intake to final impact reporting",
       "Programs using separate tools for different grant phases and losing data between handoffs",
@@ -463,7 +464,7 @@ export const softwareTypeSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Learn about milestone tracking",
-      href: "/solutions/grant-tracking-software",
+      href: PAGES.SOLUTIONS.DETAIL("grant-tracking-software"),
     },
     datePublished: "2026-03-15",
     steps: [
@@ -542,7 +543,7 @@ export const softwareTypeSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Start tracking your grants",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Program officers who need real-time visibility into grant portfolio health",
       "Funders managing milestone-based disbursements tied to verified deliverables",
@@ -560,7 +561,7 @@ export const softwareTypeSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "See how disbursement tracking works",
-      href: "/solutions/grant-disbursement-software",
+      href: PAGES.SOLUTIONS.DETAIL("grant-disbursement-software"),
     },
     datePublished: "2026-03-15",
     steps: [
@@ -641,7 +642,7 @@ export const softwareTypeSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Explore the complete platform",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Foundations looking to consolidate multiple point solutions into one grant management platform",
       "Organizations that need whitelabel deployment with their own branding and domain",
@@ -659,7 +660,7 @@ export const softwareTypeSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Request a whitelabel demo",
-      href: "/solutions/whitelabel-grant-management",
+      href: PAGES.SOLUTIONS.DETAIL("whitelabel-grant-management"),
     },
     datePublished: "2026-03-15",
     steps: [
@@ -738,7 +739,7 @@ export const softwareTypeSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Manage your grant disbursements",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Funders tying disbursements to verified milestone completions for accountability",
       "Finance teams needing clear audit trails linking payments to specific deliverables",
@@ -756,7 +757,7 @@ export const softwareTypeSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Learn about milestone-based tracking",
-      href: "/solutions/grant-tracking-software",
+      href: PAGES.SOLUTIONS.DETAIL("grant-tracking-software"),
     },
     datePublished: "2026-03-15",
     steps: [
@@ -835,7 +836,7 @@ export const softwareTypeSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Improve your grant review process",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Foundations seeking consistent, unbiased evaluation processes across multiple reviewers",
       "Programs with external review panels that need structured rubrics and role-based access",
@@ -853,7 +854,7 @@ export const softwareTypeSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "See how automation speeds up workflows",
-      href: "/solutions/automated-grant-management-software",
+      href: PAGES.SOLUTIONS.DETAIL("automated-grant-management-software"),
     },
     datePublished: "2026-03-15",
     steps: [
@@ -933,7 +934,7 @@ export const softwareTypeSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Strengthen your M&E process",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Foundations needing to demonstrate measurable impact to boards and external stakeholders",
       "International development funders requiring CIDS-aligned standardized impact reporting",
@@ -951,7 +952,7 @@ export const softwareTypeSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Explore full lifecycle management",
-      href: "/solutions/grant-lifecycle-management-software",
+      href: PAGES.SOLUTIONS.DETAIL("grant-lifecycle-management-software"),
     },
     datePublished: "2026-03-15",
     steps: [

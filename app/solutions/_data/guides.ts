@@ -1,3 +1,4 @@
+import { PAGES } from "@/utilities/pages";
 import type { SolutionPage } from "./types";
 
 export const guidesSolutions: SolutionPage[] = [
@@ -55,7 +56,7 @@ export const guidesSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Try Karma for Your Grant Program",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Grant program managers evaluating new management tools",
       "Operations leads building a software shortlist for their team",
@@ -72,7 +73,7 @@ export const guidesSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Start Your Evaluation",
-      href: "/solutions",
+      href: PAGES.SOLUTIONS.ROOT,
     },
     datePublished: "2026-03-15",
     steps: [
@@ -157,7 +158,7 @@ export const guidesSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Explore Karma for Grant Management",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Procurement teams evaluating grant management platforms",
       "Program directors preparing software purchase proposals",
@@ -174,7 +175,7 @@ export const guidesSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Download Checklist",
-      href: "/solutions",
+      href: PAGES.SOLUTIONS.ROOT,
     },
     datePublished: "2026-03-15",
     steps: [
@@ -263,7 +264,7 @@ export const guidesSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "See How Karma Delivers ROI",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Program managers building a business case for new tools",
       "Finance directors evaluating software investment returns",
@@ -280,7 +281,7 @@ export const guidesSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Get the Full Guide",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     datePublished: "2026-03-15",
     steps: [
@@ -367,7 +368,7 @@ export const guidesSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Start Your Migration to Karma",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Small program teams outgrowing their spreadsheet-based tracking",
       "Operations managers planning a migration to structured tools",
@@ -384,7 +385,7 @@ export const guidesSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Download Checklist",
-      href: "/solutions",
+      href: PAGES.SOLUTIONS.ROOT,
     },
     datePublished: "2026-03-15",
     steps: [
@@ -468,7 +469,7 @@ export const guidesSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Get Started with Karma",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Implementation project leads planning a rollout timeline",
       "Program managers preparing their team for a new tool",
@@ -485,7 +486,7 @@ export const guidesSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Get the Full Guide",
-      href: "/solutions",
+      href: PAGES.SOLUTIONS.ROOT,
     },
     datePublished: "2026-03-15",
     steps: [
@@ -570,7 +571,7 @@ export const guidesSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Put Best Practices into Action with Karma",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Program managers looking to improve grantee completion rates",
       "Grant coordinators establishing repeatable management processes",
@@ -587,7 +588,7 @@ export const guidesSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Download Checklist",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     datePublished: "2026-03-15",
     steps: [
@@ -672,7 +673,7 @@ export const guidesSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Launch Your Grant Program on Karma",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "First-time grant program creators designing from scratch",
       "DAO governance teams launching their first funding round",
@@ -689,7 +690,7 @@ export const guidesSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Get the Full Guide",
-      href: "/solutions",
+      href: PAGES.SOLUTIONS.ROOT,
     },
     datePublished: "2026-03-15",
     steps: [
@@ -774,7 +775,7 @@ export const guidesSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Build Better Evaluation with Karma",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Program managers designing their first evaluation rubric",
       "Review committee leads improving scoring consistency",
@@ -791,7 +792,7 @@ export const guidesSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Start Your Evaluation",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     datePublished: "2026-03-15",
     steps: [
@@ -876,7 +877,7 @@ export const guidesSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Track Milestones Effectively with Karma",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Program managers designing milestone structures for new grants",
       "Grant coordinators improving accountability frameworks",
@@ -893,7 +894,7 @@ export const guidesSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Download Checklist",
-      href: "/solutions",
+      href: PAGES.SOLUTIONS.ROOT,
     },
     datePublished: "2026-03-15",
     steps: [
@@ -978,7 +979,7 @@ export const guidesSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Streamline Your Reporting with Karma",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Program managers building reporting workflows from scratch",
       "Foundation teams preparing board-level grant reports",
@@ -995,7 +996,7 @@ export const guidesSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Get the Full Guide",
-      href: "/solutions",
+      href: PAGES.SOLUTIONS.ROOT,
     },
     datePublished: "2026-03-15",
     steps: [

@@ -1,3 +1,4 @@
+import { PAGES } from "@/utilities/pages";
 import type { SolutionPage } from "./types";
 
 export const grantManagementForSolutions: SolutionPage[] = [
@@ -25,7 +26,7 @@ export const grantManagementForSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "See how nonprofit organizations use Karma",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     steps: [
       {
@@ -95,7 +96,7 @@ export const grantManagementForSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Start Managing Nonprofit Grants with Karma",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
   },
   {
     slug: "grant-management-for-daos",
@@ -121,7 +122,7 @@ export const grantManagementForSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "See how DAO organizations use Karma",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     steps: [
       {
@@ -192,7 +193,7 @@ export const grantManagementForSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Launch Your DAO Grants Program on Karma",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
   },
   {
     slug: "grant-management-for-universities",
@@ -218,7 +219,7 @@ export const grantManagementForSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "See how university research offices use Karma",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     steps: [
       {
@@ -288,7 +289,7 @@ export const grantManagementForSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Modernize University Grant Management with Karma",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
   },
   {
     slug: "grant-management-for-government",
@@ -314,7 +315,7 @@ export const grantManagementForSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "See how government agencies use Karma",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     steps: [
       {
@@ -385,7 +386,7 @@ export const grantManagementForSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Bring Accountability to Government Grant Programs",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
   },
   {
     slug: "grant-management-for-healthcare",
@@ -411,7 +412,7 @@ export const grantManagementForSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "See how healthcare organizations use Karma",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     steps: [
       {
@@ -481,7 +482,7 @@ export const grantManagementForSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Streamline Healthcare Grant Management with Karma",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
   },
   {
     slug: "grant-management-for-education",
@@ -507,7 +508,7 @@ export const grantManagementForSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "See how education organizations use Karma",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     steps: [
       {
@@ -578,7 +579,7 @@ export const grantManagementForSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Transform Education Grant Management with Karma",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
   },
   {
     slug: "grant-management-for-arts-culture",
@@ -604,7 +605,7 @@ export const grantManagementForSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "See how arts and culture organizations use Karma",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     steps: [
       {
@@ -674,7 +675,7 @@ export const grantManagementForSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Elevate Arts Grant Management with Karma",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
   },
   {
     slug: "grant-management-for-environmental",
@@ -700,7 +701,7 @@ export const grantManagementForSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "See how environmental organizations use Karma",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     steps: [
       {
@@ -772,7 +773,7 @@ export const grantManagementForSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Power Environmental Grant Programs with Karma",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
   },
   {
     slug: "grant-management-for-social-impact",
@@ -799,7 +800,7 @@ export const grantManagementForSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "See how social impact organizations use Karma",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     steps: [
       {
@@ -869,7 +870,7 @@ export const grantManagementForSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Prove Social Impact with Karma Grant Management",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
   },
   {
     slug: "grant-management-for-international-development",
@@ -895,7 +896,7 @@ export const grantManagementForSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "See how international development organizations use Karma",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     steps: [
       {
@@ -967,6 +968,6 @@ export const grantManagementForSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Scale International Development Grants with Karma",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
   },
 ];

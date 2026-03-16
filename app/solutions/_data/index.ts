@@ -23,7 +23,13 @@ const allSolutions: SolutionPage[] = [
   ...sizeBudgetSolutions,
 ];
 
-const solutionsBySlug = new Map<string, SolutionPage>(allSolutions.map((s) => [s.slug, s]));
+const solutionsBySlug = new Map<string, SolutionPage>();
+for (const solution of allSolutions) {
+  if (solutionsBySlug.has(solution.slug)) {
+    throw new Error(`Duplicate solution slug: "${solution.slug}"`);
+  }
+  solutionsBySlug.set(solution.slug, solution);
+}
 
 export function getAllSolutions(): SolutionPage[] {
   return allSolutions;

@@ -1,3 +1,4 @@
+import { PAGES } from "@/utilities/pages";
 import type { SolutionPage } from "./types";
 
 export const featureAdvancedSolutions: SolutionPage[] = [
@@ -54,7 +55,7 @@ export const featureAdvancedSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Start Tracking Proof of Work",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Research grant administrators at universities",
       "Web3 ecosystem fund managers overseeing developer grants",
@@ -71,7 +72,7 @@ export const featureAdvancedSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Book a Demo",
-      href: "/solutions",
+      href: PAGES.SOLUTIONS.ROOT,
     },
     datePublished: "2026-03-16",
     steps: [
@@ -151,7 +152,7 @@ export const featureAdvancedSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Streamline Your Review Process",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Grant program managers coordinating large reviewer panels",
       "DAO governance teams evaluating community proposals",
@@ -168,7 +169,7 @@ export const featureAdvancedSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Watch a Walkthrough",
-      href: "/solutions",
+      href: PAGES.SOLUTIONS.ROOT,
     },
     datePublished: "2026-03-16",
     steps: [
@@ -247,7 +248,7 @@ export const featureAdvancedSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Design Your Grant Workflow",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Program managers running multi-stage grant evaluation processes",
       "Web3 ecosystem funds with unique governance approval requirements",
@@ -264,7 +265,7 @@ export const featureAdvancedSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Explore Features",
-      href: "/solutions",
+      href: PAGES.SOLUTIONS.ROOT,
     },
     datePublished: "2026-03-16",
     steps: [
@@ -344,7 +345,7 @@ export const featureAdvancedSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Get Budget Visibility Now",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Web3 ecosystem fund managers tracking crypto and fiat disbursements",
       "Grant program finance officers at philanthropic foundations",
@@ -361,7 +362,7 @@ export const featureAdvancedSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "See Pricing",
-      href: "/solutions",
+      href: PAGES.SOLUTIONS.ROOT,
     },
     datePublished: "2026-03-16",
     steps: [
@@ -440,7 +441,7 @@ export const featureAdvancedSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Start Measuring Impact",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Foundation program directors reporting to boards of trustees",
       "Web3 ecosystem funds demonstrating ROI to token holders",
@@ -457,7 +458,7 @@ export const featureAdvancedSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Schedule a Call",
-      href: "/solutions",
+      href: PAGES.SOLUTIONS.ROOT,
     },
     datePublished: "2026-03-16",
     steps: [
@@ -537,7 +538,7 @@ export const featureAdvancedSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Enable Performance Scoring",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Grant program managers making repeat funding decisions",
       "DAO governance participants evaluating community contributors",
@@ -554,7 +555,7 @@ export const featureAdvancedSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Book a Demo",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     datePublished: "2026-03-16",
     steps: [
@@ -633,7 +634,7 @@ export const featureAdvancedSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Create Your First Board Report",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Foundation program directors preparing quarterly board presentations",
       "DAO operations leads reporting to governance councils",
@@ -650,7 +651,7 @@ export const featureAdvancedSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Watch a Walkthrough",
-      href: "/solutions",
+      href: PAGES.SOLUTIONS.ROOT,
     },
     datePublished: "2026-03-16",
     steps: [
@@ -729,7 +730,7 @@ export const featureAdvancedSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Browse Program Templates",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "First-time grant program managers launching their inaugural round",
       "Web3 protocols setting up ecosystem development funds",
@@ -747,7 +748,7 @@ export const featureAdvancedSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Explore Features",
-      href: "/solutions",
+      href: PAGES.SOLUTIONS.ROOT,
     },
     datePublished: "2026-03-16",
     steps: [
@@ -827,7 +828,7 @@ export const featureAdvancedSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Automate Compliance Monitoring",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Grant program compliance officers at government agencies",
       "Web3 foundation operations teams managing large grantee portfolios",
@@ -844,7 +845,7 @@ export const featureAdvancedSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Schedule a Call",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     datePublished: "2026-03-16",
     steps: [
@@ -923,7 +924,7 @@ export const featureAdvancedSolutions: SolutionPage[] = [
       },
     ],
     ctaText: "Simplify Grant Agreements",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Grant program administrators managing high-volume agreement workflows",
       "Legal and compliance teams at philanthropic foundations",
@@ -940,7 +941,7 @@ export const featureAdvancedSolutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "See Pricing",
-      href: "/solutions",
+      href: PAGES.SOLUTIONS.ROOT,
     },
     datePublished: "2026-03-16",
     steps: [

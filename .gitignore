@@ -65,5 +65,6 @@ public/projects.md
 public/communities.md
 public/knowledge/*.md
 
-# AEO audit results (generated per-run)
-scripts/aeo/*-results.json
+# Audit results (generated per-run)
+scripts/.aeo-results/
+scripts/.lighthouse-results/

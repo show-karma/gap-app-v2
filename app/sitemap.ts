@@ -1,5 +1,7 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/utilities/meta";
+import { PAGES } from "@/utilities/pages";
+import { getAllSlugs } from "./solutions/_data";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const staticPages = [
@@ -36,15 +38,27 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/knowledge/project-profiles-software-vs-nonsoftware",
     "/knowledge/onchain-project-profiles",
     "/knowledge/how-funders-use-project-profiles",
+    PAGES.FOUNDATIONS,
     "/solutions",
     "/privacy-policy",
     "/terms-and-conditions",
   ];
 
-  return staticPages.map((path) => ({
+  const solutionPages = getAllSlugs().map((slug) => `/solutions/${slug}`);
+
+  const allPages = [...staticPages, ...solutionPages];
+
+  return allPages.map((path) => ({
     url: `${SITE_URL}${path}`,
     lastModified: new Date().toISOString(),
     changeFrequency: path === "" ? "daily" : "weekly",
-    priority: path === "" ? 1 : path.startsWith("/knowledge") ? 0.7 : 0.8,
+    priority:
+      path === ""
+        ? 1
+        : path.startsWith("/solutions/")
+          ? 0.8
+          : path.startsWith("/knowledge")
+            ? 0.7
+            : 0.8,
   }));
 }

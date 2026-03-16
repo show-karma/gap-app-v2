@@ -1,3 +1,4 @@
+import { PAGES } from "@/utilities/pages";
 import type { SolutionPage } from "./types";
 
 export const industryWeb3Solutions: SolutionPage[] = [
@@ -54,7 +55,7 @@ export const industryWeb3Solutions: SolutionPage[] = [
       },
     ],
     ctaText: "Start managing your Web3 grants with Karma",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Web3 foundation grant program managers",
       "DAO treasury stewards allocating ecosystem funds",
@@ -71,7 +72,7 @@ export const industryWeb3Solutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "See how Web3 ecosystems use Karma",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     datePublished: "2026-03-16",
     steps: [
@@ -151,7 +152,7 @@ export const industryWeb3Solutions: SolutionPage[] = [
       },
     ],
     ctaText: "Launch your ecosystem grant program on Karma",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "L1 and L2 foundation grant managers",
       "DAO governance contributors overseeing treasury grants",
@@ -168,7 +169,7 @@ export const industryWeb3Solutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Explore blockchain ecosystem solutions",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     datePublished: "2026-03-16",
     steps: [
@@ -247,7 +248,7 @@ export const industryWeb3Solutions: SolutionPage[] = [
       },
     ],
     ctaText: "Fund your DeFi ecosystem with Karma",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "DeFi protocol grant committee members",
       "Protocol governance delegates managing treasury allocations",
@@ -264,7 +265,7 @@ export const industryWeb3Solutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Learn how DeFi protocols use Karma",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     datePublished: "2026-03-16",
     steps: [
@@ -344,7 +345,7 @@ export const industryWeb3Solutions: SolutionPage[] = [
       },
     ],
     ctaText: "Bring accountability to your open source grants",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Open source foundation program managers",
       "Corporate sponsors funding open source development",
@@ -361,7 +362,7 @@ export const industryWeb3Solutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "See open source grant management in action",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     datePublished: "2026-03-16",
     steps: [
@@ -440,7 +441,7 @@ export const industryWeb3Solutions: SolutionPage[] = [
       },
     ],
     ctaText: "Start tracking public goods impact with Karma",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Public goods funding round organizers",
       "Retroactive public goods grant committees",
@@ -457,7 +458,7 @@ export const industryWeb3Solutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Discover how public goods funders use Karma",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     datePublished: "2026-03-16",
     steps: [
@@ -537,7 +538,7 @@ export const industryWeb3Solutions: SolutionPage[] = [
       },
     ],
     ctaText: "Manage your climate tech grants with Karma",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Climate tech foundation program managers",
       "Government agencies funding clean energy research",
@@ -554,7 +555,7 @@ export const industryWeb3Solutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "See how climate funders track impact with Karma",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     datePublished: "2026-03-16",
     steps: [
@@ -634,7 +635,7 @@ export const industryWeb3Solutions: SolutionPage[] = [
       },
     ],
     ctaText: "Fund emerging market projects with confidence",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "International development organizations managing regional grants",
       "Impact-focused foundations funding emerging market projects",
@@ -651,7 +652,7 @@ export const industryWeb3Solutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Learn how emerging market funders use Karma",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     datePublished: "2026-03-16",
     steps: [
@@ -730,7 +731,7 @@ export const industryWeb3Solutions: SolutionPage[] = [
       },
     ],
     ctaText: "Bring structure to your research grants",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Research funding agencies managing multi-discipline portfolios",
       "University grant offices tracking sponsored research",
@@ -747,7 +748,7 @@ export const industryWeb3Solutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "See how research funders use Karma",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     datePublished: "2026-03-16",
     steps: [
@@ -827,7 +828,7 @@ export const industryWeb3Solutions: SolutionPage[] = [
       },
     ],
     ctaText: "Elevate your fellowship program with Karma",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Fellowship program directors managing large cohorts",
       "Mentors seeking structured evaluation workflows",
@@ -844,7 +845,7 @@ export const industryWeb3Solutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "Explore fellowship program solutions",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     datePublished: "2026-03-16",
     steps: [
@@ -924,7 +925,7 @@ export const industryWeb3Solutions: SolutionPage[] = [
       },
     ],
     ctaText: "Run your accelerator on Karma",
-    ctaHref: "/foundations",
+    ctaHref: PAGES.FOUNDATIONS,
     idealFor: [
       "Accelerator program directors managing fast-paced cohorts",
       "Startup mentors seeking structured feedback workflows",
@@ -941,7 +942,7 @@ export const industryWeb3Solutions: SolutionPage[] = [
     },
     secondaryCta: {
       text: "See accelerator program solutions",
-      href: "/foundations",
+      href: PAGES.FOUNDATIONS,
     },
     datePublished: "2026-03-16",
     steps: [
