@@ -98,7 +98,7 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
   }, [inviteCode, hasOpenedInviteModal, openContributorProfileModal]);
 
   // Use unified hook for all project profile data
-  const { project, isLoading, isError, isVerified, stats } = useProjectProfile(projectId as string);
+  const { project, isProjectLoading, isLoading, isError, isVerified, stats } = useProjectProfile(projectId as string);
 
   // Initialize project permissions in store (for authorization checks in ContentTabs)
   useProjectPermissions();
@@ -182,7 +182,7 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
   }
 
   // Loading state — matches ProjectProfileLayoutSkeleton structure
-  if (isLoading || !project) {
+  if (isProjectLoading || !project) {
     return (
       <div className="flex flex-col gap-6 w-full" data-testid="layout-loading">
         {/* Mobile: Profile card skeleton */}
