@@ -221,6 +221,45 @@ describe("ReviewerManagementTab", () => {
       expect(props.members[1].roles).toEqual(["milestone"]);
     });
 
+    it("skips reviewers with undefined email without throwing", () => {
+      mockCan.mockReturnValue(true);
+      mockUseProgramReviewers.mockReturnValue(
+        createReviewersHookResult([
+          {
+            name: "No Email",
+            email: undefined,
+            telegram: "",
+            assignedAt: "2024-01-01T00:00:00Z",
+          },
+          {
+            name: "Has Email",
+            email: "valid@example.com",
+            telegram: "",
+            assignedAt: "2024-01-01T00:00:00Z",
+          },
+        ])
+      );
+      mockUseMilestoneReviewers.mockReturnValue(
+        createReviewersHookResult([
+          {
+            name: "Also No Email",
+            email: undefined,
+            telegram: "",
+            assignedAt: "2024-01-02T00:00:00Z",
+          },
+        ])
+      );
+
+      render(<ReviewerManagementTab programId="program-1" />);
+
+      const props = mockRoleManagementTab.mock.calls.at(-1)?.[0] as {
+        members: Array<{ id: string; roles?: string[] }>;
+      };
+
+      expect(props.members).toHaveLength(1);
+      expect(props.members[0].id).toBe("valid@example.com");
+    });
+
     it("merges case-insensitively by email", () => {
       mockCan.mockReturnValue(true);
       mockUseProgramReviewers.mockReturnValue(
@@ -384,39 +423,79 @@ describe("ReviewerManagementTab", () => {
       expect(removeMilestoneReviewer).toHaveBeenCalledWith("alice@example.com");
     });
 
-    it("blocks remove when reviewer email is not available", async () => {
-      const removeProgramReviewer = jest.fn().mockResolvedValue(undefined);
+    it("excludes reviewers with empty email from members list", () => {
       mockCan.mockReturnValue(true);
       mockUseProgramReviewers.mockReturnValue(
-        createReviewersHookResult(
-          [
-            {
-              name: "No Email Reviewer",
-              email: "",
-              telegram: "reviewer",
-              assignedAt: "2024-01-01T00:00:00Z",
-            },
-          ],
-          { removeReviewer: removeProgramReviewer }
-        )
+        createReviewersHookResult([
+          {
+            name: "No Email Reviewer",
+            email: "",
+            telegram: "reviewer",
+            assignedAt: "2024-01-01T00:00:00Z",
+          },
+        ])
       );
 
       render(<ReviewerManagementTab programId="program-1" />);
 
       const props = mockRoleManagementTab.mock.calls.at(-1)?.[0] as {
         members: Array<{ id: string }>;
+      };
+
+      expect(props.members).toHaveLength(0);
+    });
+
+    it("shows error when trying to remove a non-existent member", async () => {
+      mockCan.mockReturnValue(true);
+      mockUseProgramReviewers.mockReturnValue(createReviewersHookResult());
+
+      render(<ReviewerManagementTab programId="program-1" />);
+
+      const props = mockRoleManagementTab.mock.calls.at(-1)?.[0] as {
         onRemove: (memberId: string) => Promise<void>;
       };
 
       await act(async () => {
-        // The merged member ID is the lowercased email, which is empty string
-        await props.onRemove(props.members[0].id);
+        await props.onRemove("nonexistent@example.com");
       });
 
-      expect(removeProgramReviewer).not.toHaveBeenCalled();
       expect(mockToast.error).toHaveBeenCalledWith(
-        "Reviewer email not available. Please refresh and try again."
+        "Reviewer not found. Please refresh and try again."
       );
+    });
+  });
+
+  describe("remove error propagation", () => {
+    it("propagates errors from remove mutations instead of swallowing them", async () => {
+      const removeError = new Error("Network failure");
+      const removeProgramReviewer = jest.fn().mockRejectedValue(removeError);
+      mockCan.mockReturnValue(true);
+      mockUseProgramReviewers.mockReturnValue(
+        createReviewersHookResult(
+          [
+            {
+              name: "Alice",
+              email: "alice@example.com",
+              telegram: "alice",
+              assignedAt: "2024-01-01T00:00:00Z",
+            },
+          ],
+          { removeReviewer: removeProgramReviewer }
+        )
+      );
+      mockUseMilestoneReviewers.mockReturnValue(createReviewersHookResult());
+
+      render(<ReviewerManagementTab programId="program-1" />);
+
+      const props = mockRoleManagementTab.mock.calls.at(-1)?.[0] as {
+        onRemove: (memberId: string) => Promise<void>;
+      };
+
+      await expect(
+        act(async () => {
+          await props.onRemove("alice@example.com");
+        })
+      ).rejects.toThrow("Network failure");
     });
   });
 

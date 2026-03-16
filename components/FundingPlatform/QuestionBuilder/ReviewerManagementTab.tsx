@@ -144,6 +144,7 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
     const emailToMember = new Map<string, RoleMember>();
 
     for (const reviewer of programReviewers) {
+      if (!reviewer.email) continue;
       const key = reviewer.email.trim().toLowerCase();
       const existing = emailToMember.get(key);
       if (existing) {
@@ -165,6 +166,7 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
     }
 
     for (const reviewer of milestoneReviewers) {
+      if (!reviewer.email) continue;
       const key = reviewer.email.trim().toLowerCase();
       const existing = emailToMember.get(key);
       if (existing) {
@@ -217,19 +219,15 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
         return;
       }
 
-      try {
-        const promises: Promise<unknown>[] = [];
-        const roles = memberToRemove.roles || [];
-        if (roles.includes("program")) {
-          promises.push(removeProgramReviewer(memberToRemove.email));
-        }
-        if (roles.includes("milestone")) {
-          promises.push(removeMilestoneReviewer(memberToRemove.email));
-        }
-        await Promise.all(promises);
-      } catch {
-        // Error handling is done in the mutations
+      const promises: Promise<unknown>[] = [];
+      const roles = memberToRemove.roles || [];
+      if (roles.includes("program")) {
+        promises.push(removeProgramReviewer(memberToRemove.email));
       }
+      if (roles.includes("milestone")) {
+        promises.push(removeMilestoneReviewer(memberToRemove.email));
+      }
+      await Promise.all(promises);
     },
     [members, removeProgramReviewer, removeMilestoneReviewer]
   );
