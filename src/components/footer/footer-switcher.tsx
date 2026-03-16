@@ -1,12 +1,13 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { PAGES } from "@/utilities/pages";
 import { Footer } from "./footer";
 import { WhitelabelFooter } from "./whitelabel-footer";
 
 /** Routes that use the in-app sidebar layout — suppress the marketing footer. */
 function isAppRoute(pathname: string): boolean {
-  return pathname.includes("/manage");
+  return pathname.includes("/manage/") || pathname.endsWith("/manage");
 }
 
 function MinimalFooter() {
@@ -16,7 +17,7 @@ function MinimalFooter() {
         <span>© {new Date().getFullYear()} Karma. All rights reserved.</span>
         <div className="flex items-center gap-4">
           <a
-            href="https://gap.karmahq.xyz/terms"
+            href={PAGES.TERMS_AND_CONDITIONS}
             target="_blank"
             rel="noopener noreferrer"
             className="hover:text-foreground transition-colors"
@@ -24,7 +25,7 @@ function MinimalFooter() {
             Terms
           </a>
           <a
-            href="https://gap.karmahq.xyz/privacy-policy"
+            href={PAGES.PRIVACY_POLICY}
             target="_blank"
             rel="noopener noreferrer"
             className="hover:text-foreground transition-colors"

@@ -181,19 +181,6 @@ module.exports = {
   				DEFAULT: 'hsl(var(--primary))',
   				foreground: 'hsl(var(--primary-foreground))'
   			},
-  			boxShadow: {
-  				'tremor-input': '0 1px 2px 0 rgb(0 0 0 / 0.05)',
-  				'tremor-card': '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
-  				'tremor-dropdown': '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
-  				'dark-tremor-input': '0 1px 2px 0 rgb(0 0 0 / 0.05)',
-  				'dark-tremor-card': '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
-  				'dark-tremor-dropdown': '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)'
-  			},
-  			borderRadius: {
-  				'tremor-small': '0.375rem',
-  				'tremor-default': '0.5rem',
-  				'tremor-full': '9999px'
-  			},
   			background: 'hsl(var(--background))',
   			foreground: {
   				DEFAULT: 'hsl(var(--foreground))',
@@ -279,7 +266,18 @@ module.exports = {
   		boxShadow: {
   			'primary-button': '0 1px 2px 0 rgba(0, 0, 0, 0.08), 0 2px 8px 0 rgba(46, 209, 168, 0.15), inset 0 2px 0 0 rgba(255, 255, 255, 0.15), inset 0 -2px 2px 0 rgba(0, 0, 0, 0.08)',
   			'outline-button': '0 1px 2px 0 rgba(0, 0, 0, 0.08), inset 0 2px 0 0 rgba(255, 255, 255, 0.15), inset 0 -2px 2px 0 rgba(0, 0, 0, 0.04)',
-  			'secondary-button': '0 1px 2px 0 rgba(0, 0, 0, 0.08), inset 0 2px 0 0 rgba(255, 255, 255, 0.15), inset 0 -2px 2px 0 rgba(0, 0, 0, 0.05)'
+  			'secondary-button': '0 1px 2px 0 rgba(0, 0, 0, 0.08), inset 0 2px 0 0 rgba(255, 255, 255, 0.15), inset 0 -2px 2px 0 rgba(0, 0, 0, 0.05)',
+  			'tremor-input': '0 1px 2px 0 rgb(0 0 0 / 0.05)',
+  			'tremor-card': '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
+  			'tremor-dropdown': '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+  			'dark-tremor-input': '0 1px 2px 0 rgb(0 0 0 / 0.05)',
+  			'dark-tremor-card': '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
+  			'dark-tremor-dropdown': '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)'
+  		},
+  		borderRadius: {
+  			'tremor-small': '0.375rem',
+  			'tremor-default': '0.5rem',
+  			'tremor-full': '9999px'
   		}
   	}
   },

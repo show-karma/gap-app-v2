@@ -41,7 +41,7 @@ export function ManageLayoutShell({ children }: { children: React.ReactNode }) {
     return (
       <div className="flex w-full min-h-[60vh]">
         {/* Sidebar skeleton */}
-        <div className="hidden lg:block w-64 flex-shrink-0 border-r border-gray-200 dark:border-zinc-700 p-4">
+        <div className="hidden md:block w-64 flex-shrink-0 border-r border-gray-200 dark:border-zinc-700 p-4">
           <Skeleton className="h-12 w-full rounded-lg mb-6" />
           <div className="space-y-2">
             {[1, 2, 3, 4, 5, 6].map((i) => (
