@@ -645,3 +645,11 @@ body .react-hot-toast * {
   border-color: inherit;
   box-shadow: none;
 }
+
+/* SSR LCP shell — auto-hide when client component mounts */
+[data-testid="project-profile-layout"] ~ #ssr-lcp-shell,
+[data-testid="layout-loading"] ~ #ssr-lcp-shell,
+#ssr-lcp-shell:has(~ [data-testid="project-profile-layout"]),
+#ssr-lcp-shell:has(~ [data-testid="layout-loading"]) {
+  display: none;
+}
