@@ -1,6 +1,6 @@
 import { createMockCommunity } from "../../data/communities";
 import { expect, mockJson, test } from "../../fixtures";
-import { waitForPageReady } from "../../helpers/navigation";
+import { GOTO_OPTIONS, waitForPageReady } from "../../helpers/navigation";
 
 test.describe("Wallet Security", () => {
   test("T1-31: compareAllWallets prevents address mismatch", async ({
@@ -13,7 +13,7 @@ test.describe("Wallet Security", () => {
     await withApiMocks({
       "**/v2/communities/optimism": mockJson(community),
     });
-    await page.goto("/community/optimism");
+    await page.goto("/community/optimism", GOTO_OPTIONS);
     await waitForPageReady(page);
     // Verify the page loads with the authenticated user's address
     await expect(page.locator("body")).toBeVisible();
@@ -25,7 +25,7 @@ test.describe("Wallet Security", () => {
     await withApiMocks({
       "**/v2/communities/optimism": mockJson(community),
     });
-    await page.goto("/community/optimism");
+    await page.goto("/community/optimism", GOTO_OPTIONS);
     await waitForPageReady(page);
     // Try to tamper with localStorage address
     await page.evaluate(() => {
@@ -45,7 +45,7 @@ test.describe("Wallet Security", () => {
     await withApiMocks({
       "**/v2/communities/optimism": mockJson(community),
     });
-    await page.goto("/community/optimism");
+    await page.goto("/community/optimism", GOTO_OPTIONS);
     await waitForPageReady(page);
     await expect(page.locator("body")).toBeVisible();
   });
