@@ -4,20 +4,20 @@ import type { SolutionPage } from "./types";
 export const sizeBudgetSolutions: SolutionPage[] = [
   {
     slug: "grant-management-under-500k",
-    title: "Grant Management for Programs Under $500K",
+    title: "Grant Management Under 500K Programs",
     metaDescription:
       "Manage grant programs under $500K with Karma. Free to start, easy setup, and built for small programs needing milestone tracking.",
-    heading: "Grant Management for Programs Under $500K",
-    tldr: "Karma gives small grant programs under $500K a free, lightweight platform to track milestones, collect grantee updates, and report on impact without spreadsheets or complex enterprise tools.",
+    heading: "Grant Management Under 500K: A Free Platform for Small Programs",
+    tldr: "Grant management under 500K no longer means choosing between costly software and messy spreadsheets. Karma gives small programs a free, lightweight platform to track milestones, collect grantee updates, and report on impact.",
     problem: {
-      heading: "Grant Management Under $500K Deserves Better Than Spreadsheets",
+      heading: "Grant Management Under 500K Deserves Better Than Spreadsheets",
       description:
-        "Small programs under $500K face a tough choice. They pick between costly software or messy spreadsheets. Expensive tools target large foundations with big budgets. Spreadsheets lose context fast. Updates get buried in long email threads. No single place exists to check grantee progress. Teams waste hours chasing status updates. They should spend that time supporting projects instead. Small teams also lack training resources for complex tools. Manual tracking grows harder with each new grantee.",
+        "Small programs under $500K face a tough choice between costly software and messy spreadsheets. Expensive tools target large foundations with big budgets. However, spreadsheets lose context fast as programs grow. Updates get buried in long email threads every week. Therefore, no single place exists to check grantee progress. Teams waste hours chasing status updates manually. In addition, small teams lack training resources for complex tools. Manual tracking grows harder with each new grantee. As a result, staff spend time on administration instead of supporting projects. Furthermore, reporting becomes a painful process without proper structure.",
     },
     solution: {
-      heading: "A Free Platform Built for Grant Management Under $500K",
+      heading: "A Free Platform Built for Grant Management Under 500K",
       description:
-        "Karma offers a purpose-built platform for programs under $500K. You start for free and set up your program in minutes. Invite grantees and track milestones from one dashboard. Grantees submit structured updates your team can see. Your community sees those updates too. This removes the need for status emails. It also removes manual reports. Your team spends time on impact, not administration. You also get on-chain records for every milestone. These records prove progress to donors and stakeholders.",
+        "Karma offers a purpose-built platform for programs under $500K. You start for free and set up your program in minutes. Specifically, you invite grantees and track milestones from one dashboard. Grantees submit structured updates your team reviews easily. Moreover, your community sees those updates too for full transparency. This removes the need for status emails completely. In addition, it eliminates manual reports from your workflow. Your team spends time on impact, not administration. Furthermore, you get on-chain records for every milestone completed. These records prove progress to donors and stakeholders clearly.",
     },
     capabilities: [
       "Free tier with no upfront cost for small programs",
@@ -33,42 +33,52 @@ export const sizeBudgetSolutions: SolutionPage[] = [
       {
         question: "Is Karma really free for small programs?",
         answer:
-          "Yes. Karma lets you start for free. No paid plan is required. You get milestone tracking and grantee updates at zero cost. Community dashboards come included too. There are no hidden fees or trial limits. Run your full program on the free tier. Keep it free for as long as you need.",
+          "Yes. Karma lets you start for free with no paid plan required. You get milestone tracking and grantee updates at zero cost. Moreover, community dashboards come included on every account. There are no hidden fees or trial limits to worry about. Run your full program on the free tier confidently. In addition, keep it free for as long as you need. Most small programs never need to upgrade at all. Therefore, your budget goes to grants instead of software.",
       },
       {
         question: "How long does it take to set up a program?",
         answer:
-          "Most teams finish setup in under 30 minutes. You create your program and define milestones. Then you invite grantees. The guided workflow handles the details for you. Pre-built templates speed things up. These templates help teams new to grant management. You can launch on the same day you sign up.",
+          "Most teams finish setup in under 30 minutes. You create your program and define milestones quickly. Then you invite grantees with a single link. The guided workflow handles the details for you automatically. Furthermore, pre-built templates speed things up significantly. These templates help teams new to grant management. In addition, you can launch on the same day you sign up. Therefore, there is no waiting period to start tracking progress.",
       },
       {
         question: "Can I switch from spreadsheets without losing data?",
         answer:
-          "Yes. You onboard grantees and begin tracking right away. You can enter historical data by hand. You can also import it in bulk. Your program history stays intact. Move at your own pace. Active grants keep running during the switch. No data gets lost in the process.",
+          "Yes. You onboard grantees and begin tracking right away. Specifically, you can enter historical data by hand if needed. You can also import it in bulk for larger datasets. Moreover, your program history stays intact throughout the process. Move at your own pace without any pressure. Active grants keep running during the switch seamlessly. In addition, no data gets lost during the transition. Therefore, the switch feels smooth for your entire team.",
       },
       {
         question: "What kind of support is available for small programs?",
         answer:
-          "Karma provides documentation and guided wizards. Community forums offer peer support too. The platform works as self-service for most teams. You can launch without direct support. The Karma team answers questions if you need help. Response times stay short for all users. Small programs get the same support as larger ones.",
+          "Karma provides documentation and guided wizards for every step. In addition, community forums offer peer support from other users. The platform works as self-service for most teams easily. However, you can launch without direct support if you prefer. The Karma team answers questions when you need help. Furthermore, response times stay short for all users regardless of plan. Small programs get the same support as larger ones. Therefore, no one gets left behind on the free tier.",
       },
       {
         question: "Can my grantees see their own progress?",
         answer:
-          "Yes. Each grantee gets their own dashboard. They view milestones and submit updates there. They also track their progress over time. This self-service approach cuts back-and-forth messages. Grantees stay on top of deliverables. They do not need reminders from your team. Everyone saves time with this setup.",
+          "Yes. Each grantee gets their own personal dashboard. They view milestones and submit updates there directly. Moreover, they track their progress over time with clear visuals. This self-service approach cuts back-and-forth messages significantly. As a result, grantees stay on top of deliverables independently. They do not need reminders from your team anymore. Furthermore, everyone saves time with this streamlined setup. The dashboard updates in real time after each submission.",
       },
       {
         question: "What reports can I share with stakeholders?",
         answer:
-          "Karma builds impact reports from your milestone data. You share these with board members and donors. Community leaders can see them too. Reports update in real time. Grantee milestones feed the data automatically. You can also export data for presentations. No manual compilation is needed.",
+          "Karma builds impact reports from your milestone data automatically. You share these with board members and donors easily. Moreover, community leaders can view them through public dashboards. Reports update in real time as grantees complete milestones. Furthermore, grantee milestones feed the data without manual input. You can also export data for presentations in multiple formats. In addition, no manual compilation is needed for any report. Therefore, your reporting process takes minutes instead of hours.",
       },
       {
         question: "Does Karma work for programs with fewer than 10 grantees?",
         answer:
-          "Yes. Karma works well for any program size. Fund 3 grantees or 50 with equal ease. Small portfolios get the same tracking tools. Reporting features work at every scale. You never pay for features you skip. The platform fits your needs from day one.",
+          "Yes. Karma works well for any program size without limits. Fund 3 grantees or 50 with equal ease on the platform. Moreover, small portfolios get the same tracking tools as large ones. Reporting features work at every scale automatically. In addition, you never pay for features you do not use. The platform fits your needs from day one completely. Therefore, even micro-programs benefit from structured tracking. Furthermore, you scale up whenever your program grows naturally.",
       },
       {
         question: "How does on-chain verification help small programs?",
         answer:
-          "On-chain attestations create a tamper-proof record. Each milestone approval gets its own record. This builds trust with donors and community members. Small programs gain credibility through verifiable proof. Donors check records without asking your team. The feature costs nothing extra on any tier. It adds a layer of trust most tools lack.",
+          "On-chain attestations create a tamper-proof record for every milestone. Each milestone approval gets its own permanent record automatically. Therefore, this builds trust with donors and community members effectively. Small programs gain credibility through verifiable proof of progress. Moreover, donors check records without asking your team for updates. The feature costs nothing extra on any tier of the platform. Furthermore, it adds a layer of trust most tools simply lack. As a result, your program stands out among competitors.",
+      },
+      {
+        question: "Can I customize milestone templates for my program?",
+        answer:
+          "Yes. Karma offers pre-built templates for common grant structures. However, you can also create custom templates from scratch easily. Each program uses its own milestone framework independently. Moreover, you adjust templates as your program evolves over time. Clone existing templates and modify them in minutes. Furthermore, different grantees can follow different milestone paths. This flexibility makes the platform fit your exact needs. Therefore, your milestones match your program goals perfectly.",
+      },
+      {
+        question: "How do I invite grantees to join the platform?",
+        answer:
+          "Send invitation links directly from the Karma dashboard. Grantees click the link and self-onboard in minutes easily. Moreover, they create their own profiles without your help. Each grantee sets up milestones through a guided process. Furthermore, bulk invitations let you onboard entire cohorts at once. No manual account creation falls on your staff at all. In addition, grantees start submitting updates the same day they join. Therefore, your program gets moving without administrative delays.",
       },
     ],
     ctaText: "Start Managing Your Program for Free",
@@ -153,20 +163,20 @@ export const sizeBudgetSolutions: SolutionPage[] = [
   },
   {
     slug: "grant-management-500k-2m",
-    title: "Grant Management for $500K-$2M Programs",
+    title: "Grant Management 500K 2M Program Guide",
     metaDescription:
       "Manage $500K-$2M grant programs with Karma. Track milestones, coordinate reviewers, and generate impact reports for growing programs.",
-    heading: "Grant Management for $500K-$2M Programs",
-    tldr: "Karma helps mid-range grant programs between $500K and $2M coordinate reviewers, track grantee milestones at scale, and produce impact reports without stitching together multiple tools.",
+    heading: "Grant Management 500K 2M: Scale Your Growing Program With Confidence",
+    tldr: "Grant management 500K 2M programs need tools that match their growing complexity. Karma helps mid-range programs coordinate reviewers, track milestones at scale, and produce impact reports without stitching together multiple tools.",
     problem: {
-      heading: "Grant Management for $500K-$2M Programs Outgrows Basic Tools",
+      heading: "Grant Management 500K 2M Programs Outgrow Basic Tools Fast",
       description:
-        "Programs in the $500K to $2M range hit an awkward middle ground. Spreadsheets buckle under dozens of grantees. Enterprise platforms charge too much for unneeded features. Coordinating multiple reviewers becomes a manual headache. Tracking milestones for 20 to 100 active grants drains your team. Producing impact reports takes days of data gathering. Errors creep in from scattered data sources. Teams lose confidence in their own numbers. Decision-makers struggle to act on stale information.",
+        "Programs in the $500K to $2M range hit an awkward middle ground. Spreadsheets buckle under dozens of active grantees quickly. However, enterprise platforms charge too much for features you do not need. Coordinating multiple reviewers becomes a manual headache every round. Moreover, tracking milestones for 20 to 100 active grants drains your team. Producing impact reports takes days of tedious data gathering. In addition, errors creep in from scattered data sources constantly. Teams lose confidence in their own numbers as a result. Furthermore, decision-makers struggle to act on stale information. Therefore, programs at this scale need purpose-built tools urgently.",
     },
     solution: {
-      heading: "Purpose-Built Tools for $500K-$2M Grant Management",
+      heading: "Purpose-Built Tools for Grant Management 500K 2M Programs",
       description:
-        "Karma scales to meet your needs between $500K and $2M. Assign reviewers to specific grants easily. Track milestones across your full portfolio. Generate reports that show real impact in a few clicks. The platform handles coordination overhead for you. Your team focuses on supporting grantees instead. You make better funding decisions with clear data. Dashboards update in real time as grantees report progress. Your stakeholders always see the latest numbers.",
+        "Karma scales to meet your needs between $500K and $2M effectively. Assign reviewers to specific grants with clear workflow tools. Moreover, track milestones across your full portfolio from one dashboard. Generate reports that show real impact in just a few clicks. Furthermore, the platform handles coordination overhead for you automatically. Your team focuses on supporting grantees instead of chasing updates. In addition, you make better funding decisions with clear, current data. Dashboards update in real time as grantees report their progress. Therefore, your stakeholders always see the latest numbers without delays.",
     },
     capabilities: [
       "Multi-reviewer assignment and workflow management",
@@ -182,42 +192,52 @@ export const sizeBudgetSolutions: SolutionPage[] = [
       {
         question: "How does Karma handle multiple reviewers?",
         answer:
-          "You assign reviewers to individual grants or categories. Each reviewer gets a dedicated dashboard. The system tracks activity across teams and time zones. No grant falls through the cracks. You see which reviewers carry the heaviest load. Reassign work in a few clicks to keep things balanced. Large panels run smoothly with this setup.",
+          "You assign reviewers to individual grants or categories directly. Each reviewer gets a dedicated dashboard for their work. Moreover, the system tracks activity across teams and time zones automatically. No grant falls through the cracks with this approach. Furthermore, you see which reviewers carry the heaviest load clearly. Reassign work in a few clicks to keep things balanced. In addition, large panels run smoothly with built-in coordination tools. Therefore, your review process stays on schedule at all times. Reviewer performance data helps you plan for future rounds.",
       },
       {
         question: "Can I track milestones across all grantees in one view?",
         answer:
-          "Yes. Karma shows portfolio-level dashboards for all active grants. You spot which grantees need attention at a glance. Filter by status, program, or reviewer to drill down. Catch delays before they grow into bigger problems. The dashboard updates as grantees submit new data. You never need to compile status reports by hand. One view gives you everything you need.",
+          "Yes. Karma shows portfolio-level dashboards for all active grants. You spot which grantees need attention at a glance instantly. Moreover, filter by status, program, or reviewer to drill down. Catch delays before they grow into bigger problems for your team. Furthermore, the dashboard updates as grantees submit new data automatically. You never need to compile status reports by hand anymore. In addition, one view gives you everything you need for decisions. Therefore, your team saves hours every week on monitoring tasks.",
       },
       {
         question: "What kind of reports can I generate?",
         answer:
-          "Karma builds impact reports from milestone and progress data. You share these reports with stakeholders directly. Make them public if you prefer. Export data in multiple formats for custom analysis. Customize report templates for your organization. Reports refresh as grantees complete milestones. Your numbers stay current at all times.",
+          "Karma builds impact reports from milestone and progress data automatically. You share these reports with stakeholders directly through the platform. Moreover, make them public if you prefer open transparency. Export data in multiple formats for custom analysis needs. Furthermore, customize report templates for your specific organization. Reports refresh as grantees complete their milestones in real time. In addition, your numbers stay current at all times without manual work. Therefore, board meetings run smoother with always-fresh data available.",
       },
       {
         question: "Is there a cost for programs at this scale?",
         answer:
-          "Karma starts free for all program sizes. Optional features unlock as your needs grow. The core platform supports mid-range programs fully. Run reviewer workflows on the free tier. Milestone tracking costs nothing at any scale. You only pay if you choose premium add-ons. Most mid-range programs find the free tier sufficient.",
+          "Karma starts free for all program sizes without restrictions. Optional features unlock as your needs grow over time. Moreover, the core platform supports mid-range programs fully from day one. Run reviewer workflows on the free tier without limits. Furthermore, milestone tracking costs nothing at any scale on the platform. You only pay if you choose premium add-ons specifically. In addition, most mid-range programs find the free tier sufficient for operations. Therefore, your budget stays focused on funding grantees instead of software.",
       },
       {
         question: "How does Karma handle different milestone structures across grants?",
         answer:
-          "Each grant can have its own milestone framework. All grants still roll up into portfolio views. Create reusable templates for common structures. Define custom milestones per grant when needed. Switch between templates without losing data. This flexibility lets you run diverse programs together. Your reporting stays consistent across all structures.",
+          "Each grant can have its own milestone framework and timeline. However, all grants still roll up into portfolio views seamlessly. Create reusable templates for common structures to save time. Moreover, define custom milestones per grant when needed for flexibility. Switch between templates without losing any existing data. Furthermore, this flexibility lets you run diverse programs together easily. Your reporting stays consistent across all structures automatically. In addition, templates speed up setup for each new funding round. Therefore, managing varied programs feels simple instead of overwhelming.",
       },
       {
         question: "Can I onboard dozens of grantees at once?",
         answer:
-          "Yes. Karma supports bulk invitations for large cohorts. Grantees self-onboard through a guided process. They set up milestones and submit updates right away. Your team saves hours over manual onboarding. Each grantee picks their own login details. No account creation falls on your staff. The whole cohort can start on the same day.",
+          "Yes. Karma supports bulk invitations for large cohorts efficiently. Grantees self-onboard through a guided process in minutes. Moreover, they set up milestones and submit updates right away. Your team saves hours over manual onboarding for each cohort. Furthermore, each grantee picks their own login details independently. No account creation falls on your staff at any point. In addition, the whole cohort can start on the same day easily. Therefore, new funding rounds launch faster than ever before.",
       },
       {
         question: "How do I monitor reviewer workload and performance?",
         answer:
-          "Karma tracks reviewer activity across all assigned grants. You see how many grants each reviewer handles. Spot bottlenecks and reassign work quickly. This keeps reviews moving and prevents backlogs. Performance data helps you plan future reviewer needs. You also track average review completion times. These metrics improve your program over time.",
+          "Karma tracks reviewer activity across all assigned grants continuously. You see how many grants each reviewer handles at a glance. Moreover, spot bottlenecks and reassign work quickly when delays appear. This keeps reviews moving and prevents backlogs from forming. Furthermore, performance data helps you plan future reviewer needs accurately. You also track average review completion times per reviewer. In addition, these metrics improve your program with every cycle. Therefore, your review process gets stronger over time naturally.",
       },
       {
         question: "What happens if we grow beyond $2M?",
         answer:
-          "Karma grows with your program at every stage. Add multi-program dashboards and advanced analytics when ready. Whitelabel branding becomes available too. No migration or re-setup is needed at all. Your data and processes carry forward seamlessly. The upgrade takes minutes, not weeks. Your team keeps working without interruption.",
+          "Karma grows with your program at every stage seamlessly. Add multi-program dashboards and advanced analytics when you need them. Moreover, whitelabel branding becomes available for larger operations too. No migration or re-setup is needed at all during the upgrade. Furthermore, your data and processes carry forward automatically. The upgrade takes minutes, not weeks or months of work. In addition, your team keeps working without any interruption. Therefore, growth never forces a painful platform switch on your organization.",
+      },
+      {
+        question: "How does on-chain verification benefit mid-range programs?",
+        answer:
+          "On-chain attestations create tamper-proof records for every milestone. Stakeholders verify approvals independently without asking your team. Moreover, this builds trust with donors who fund your programs. Mid-range programs gain credibility that spreadsheets cannot provide. Furthermore, the feature costs nothing extra on any tier. Auditors appreciate the immutable records for compliance purposes. In addition, verified milestones attract more funding in future rounds. Therefore, on-chain verification becomes a competitive advantage for your program.",
+      },
+      {
+        question: "Can I compare performance across funding rounds?",
+        answer:
+          "Yes. Karma tracks data across multiple rounds within each program. You compare cohort performance side by side with built-in tools. Moreover, identify trends that improve your selection criteria over time. Historical data helps you set better milestones for future rounds. Furthermore, stakeholders see measurable improvement across your program cycles. Export comparison data for board presentations in multiple formats. In addition, round-over-round analytics reveal what strategies work best. Therefore, each funding round performs better than the last one.",
       },
     ],
     ctaText: "Set Up Your Program Today",
@@ -307,20 +327,20 @@ export const sizeBudgetSolutions: SolutionPage[] = [
   },
   {
     slug: "grant-management-over-2m",
-    title: "Grant Management for Programs Over $2M",
+    title: "Grant Management Over 2M Programs",
     metaDescription:
       "Manage large grant programs over $2M with Karma. Multi-program support, advanced reporting, and on-chain verification at scale.",
-    heading: "Grant Management for Programs Over $2M",
-    tldr: "Karma supports large grant programs exceeding $2M with multi-program management, advanced analytics, structured reviewer workflows, and on-chain milestone verification for maximum accountability.",
+    heading: "Grant Management Over 2M: Enterprise-Grade Tools for Large Programs",
+    tldr: "Grant management over 2M requires accountability at scale. Karma supports large programs with multi-program dashboards, advanced analytics, structured reviewer workflows, and on-chain milestone verification.",
     problem: {
-      heading: "Grant Management Over $2M Demands Accountability at Scale",
+      heading: "Grant Management Over 2M Demands Accountability at Scale",
       description:
-        "Programs distributing over $2M involve dozens or hundreds of grants. Multiple funding rounds add layers of work. Complex reviewer panels make coordination hard. Stakeholders expect detailed, timely reports on every dollar. A missed milestone at this scale damages trust and credibility. Most tools need months of setup to handle the volume. Dedicated administrators drain budgets meant for grantees. Your team spends more time on operations than strategy. Reporting backlogs grow with every new funding round.",
+        "Programs distributing over $2M involve dozens or hundreds of grants. Multiple funding rounds add layers of operational work each quarter. However, complex reviewer panels make coordination extremely hard. Stakeholders expect detailed, timely reports on every dollar distributed. Moreover, a missed milestone at this scale damages trust and credibility fast. Most tools need months of setup to handle the volume required. In addition, dedicated administrators drain budgets meant for grantees directly. Your team spends more time on operations than on strategy. Furthermore, reporting backlogs grow with every new funding round added. Therefore, large programs need purpose-built infrastructure to succeed.",
     },
     solution: {
-      heading: "Scalable Infrastructure for Grant Management Over $2M",
+      heading: "Scalable Infrastructure for Grant Management Over 2M",
       description:
-        "Karma provides infrastructure for large programs over $2M. Run multiple programs from a single dashboard. Coordinate large reviewer panels with clear assignments. Use on-chain attestations for immutable records of every approval. Advanced analytics give you real-time visibility into program health. Your team focuses on strategy instead of operations. Deploy in days, not months. Stakeholders trust the verifiable data you share with them. Every dollar gets the accountability it deserves.",
+        "Karma provides infrastructure for large programs distributing over $2M. Run multiple programs from a single unified dashboard easily. Moreover, coordinate large reviewer panels with clear assignments and tracking. Use on-chain attestations for immutable records of every approval. Furthermore, advanced analytics give you real-time visibility into program health. Your team focuses on strategy instead of daily operations. In addition, deploy in days rather than months of configuration. Stakeholders trust the verifiable data you share with them confidently. Therefore, every dollar gets the accountability it truly deserves.",
     },
     capabilities: [
       "Multi-program management from a unified dashboard",
@@ -336,42 +356,52 @@ export const sizeBudgetSolutions: SolutionPage[] = [
       {
         question: "Can I manage multiple programs with different structures?",
         answer:
-          "Yes. Each program gets its own milestone frameworks and reviewer panels. You manage them all from one organizational dashboard. Run diverse funding initiatives at the same time. No need to juggle separate tools. Cross-program visibility keeps everything connected. Switch between programs in a single click. Your team stays organized across the full portfolio.",
+          "Yes. Each program gets its own milestone frameworks and reviewer panels. You manage them all from one organizational dashboard seamlessly. Moreover, run diverse funding initiatives at the same time easily. No need to juggle separate tools for different programs. Furthermore, cross-program visibility keeps everything connected and organized. Switch between programs in a single click from the dashboard. In addition, your team stays organized across the full portfolio. Therefore, managing complexity becomes simple with the right structure.",
       },
       {
         question: "How does on-chain verification work for large programs?",
         answer:
-          "Karma records an attestation on-chain for each milestone approval. This creates a tamper-proof record anyone can verify. Stakeholders check records on their own. They do not need to rely on your reports alone. This immutable audit trail adds credibility. Traditional tools cannot match this level of trust. Every approval gets a permanent, public record.",
+          "Karma records an attestation on-chain for each milestone approval. This creates a tamper-proof record anyone can verify independently. Moreover, stakeholders check records on their own without your help. They do not need to rely on your reports alone anymore. Furthermore, this immutable audit trail adds credibility to your program. Traditional tools cannot match this level of trust at all. In addition, every approval gets a permanent, public record automatically. Therefore, accountability scales with your program size effortlessly.",
       },
       {
         question: "What analytics are available for programs at this scale?",
         answer:
-          "Karma tracks milestone completion rates and grantee performance trends. Reviewer activity data shows panel efficiency. You see program-level impact metrics on custom dashboards. Export data for deeper analysis in your preferred tools. Surface the KPIs your stakeholders care about most. Compare performance across funding rounds easily. These insights help you improve every cycle.",
+          "Karma tracks milestone completion rates and grantee performance trends. Reviewer activity data shows panel efficiency across programs. Moreover, you see program-level impact metrics on custom dashboards. Export data for deeper analysis in your preferred tools easily. Furthermore, surface the KPIs your stakeholders care about most. Compare performance across funding rounds with built-in analytics. In addition, these insights help you improve every cycle measurably. Therefore, data-driven decisions replace guesswork at every level.",
       },
       {
         question: "Is there dedicated support for large programs?",
         answer:
-          "Yes. Large programs get dedicated onboarding support. Your team gets priority help when needed. You work directly with Karma specialists. They understand multi-program portfolio challenges. You get guidance through setup and daily operations. Support continues long after your initial launch. Your program never outgrows the help available.",
+          "Yes. Large programs get dedicated onboarding support from specialists. Your team gets priority help whenever questions arise. Moreover, you work directly with Karma team members who understand scale. They know multi-program portfolio challenges from real experience. Furthermore, you get guidance through setup and daily operations alike. Support continues long after your initial launch completes. In addition, your program never outgrows the help available to you. Therefore, enterprise-level service comes standard for large programs.",
       },
       {
         question: "How does Karma handle multiple funding rounds?",
         answer:
-          "Karma supports multiple rounds within a single program. Each round gets its own grantee cohort and milestones. Review cycles stay separate for clean tracking. Track progress across rounds side by side. Compare outcomes between cohorts with built-in tools. Generate aggregate reports showing program growth over time. Each round builds on the data from previous ones.",
+          "Karma supports multiple rounds within a single program easily. Each round gets its own grantee cohort and milestones separately. Moreover, review cycles stay separate for clean tracking purposes. Track progress across rounds side by side on the dashboard. Furthermore, compare outcomes between cohorts with built-in tools. Generate aggregate reports showing program growth over time automatically. In addition, each round builds on the data from previous ones. Therefore, your program improves measurably with every new round.",
       },
       {
         question: "Can we integrate Karma with our existing financial systems?",
         answer:
-          "Yes. Karma offers full API access for your tools. Connect financial systems and reporting platforms. Link your internal dashboards for live data. Automate data flows to keep systems in sync. This reduces manual data entry significantly. Consistency improves across your whole stack. Your finance team gets the data they need automatically.",
+          "Yes. Karma offers full API access for your integration needs. Connect financial systems and reporting platforms directly. Moreover, link your internal dashboards for live data feeds. Automate data flows to keep all systems in sync automatically. Furthermore, this reduces manual data entry significantly across teams. Consistency improves across your whole technology stack as a result. In addition, your finance team gets the data they need automatically. Therefore, integration eliminates duplicate work and data mismatches.",
       },
       {
         question: "How fast can we deploy Karma for a large program?",
         answer:
-          "Most large programs go live within days to weeks. Dedicated support speeds up configuration. Team onboarding runs in parallel with setup. This beats the 3 to 12 months typical enterprise tools require. You start tracking milestones almost right away. Grantees begin submitting updates within the first week. Your program runs at full speed much sooner.",
+          "Most large programs go live within days to a few weeks. Dedicated support speeds up configuration significantly for you. Moreover, team onboarding runs in parallel with platform setup. This beats the 3 to 12 months typical enterprise tools require. Furthermore, you start tracking milestones almost right away after launch. Grantees begin submitting updates within the first week easily. In addition, your program runs at full speed much sooner. Therefore, faster deployment means faster impact for your grantees.",
       },
       {
         question: "What security measures protect our program data?",
         answer:
-          "Karma uses role-based access controls for every program. Each team member sees only what they need. On-chain attestations provide an independent verification layer. Data encryption protects information in transit and at rest. Audit trails track every action taken on the platform. These measures meet strict compliance requirements. Your program data stays safe at all times.",
+          "Karma uses role-based access controls for every program strictly. Each team member sees only what they need for their role. Moreover, on-chain attestations provide an independent verification layer. Data encryption protects information in transit and at rest. Furthermore, audit trails track every action taken on the platform. These measures meet strict compliance requirements for large programs. In addition, your program data stays safe and private at all times. Therefore, security scales with your program without extra configuration.",
+      },
+      {
+        question: "How does Karma handle stakeholder reporting for large portfolios?",
+        answer:
+          "Karma generates stakeholder reports from live milestone data automatically. Dashboards update in real time as grantees report progress. Moreover, export reports in multiple formats for different stakeholder needs. Public transparency portals give community members direct access to results. Furthermore, customize report templates for each stakeholder group specifically. Board members get different views than community observers do. In addition, reports require no manual compilation from your team. Therefore, stakeholders always see current, accurate program data.",
+      },
+      {
+        question: "Can we run pilot programs before full enterprise deployment?",
+        answer:
+          "Yes. Many large organizations start with a single program pilot. You evaluate the platform with real data and live workflows. Moreover, your team tests every feature in a production environment. Expand to more programs once the pilot proves clear value. Furthermore, no extra setup or migration is needed to scale up. The pilot data carries forward into full deployment automatically. In addition, most pilots convert to full rollouts within weeks. Therefore, you reduce risk while proving value to stakeholders.",
       },
     ],
     ctaText: "Launch Your Large-Scale Program",
@@ -464,17 +494,17 @@ export const sizeBudgetSolutions: SolutionPage[] = [
     title: "Enterprise Grant Management Platform",
     metaDescription:
       "Enterprise grant management with Karma. Whitelabel options, multi-program portfolios, and on-chain verification for grants at scale.",
-    heading: "Enterprise Grant Management Platform",
-    tldr: "Karma offers enterprise-grade grant management with whitelabel branding, multi-program portfolios, advanced reporting, role-based access, and on-chain verification for organizations that need full control at scale.",
+    heading: "Enterprise Grant Management: Full Control at Scale With Karma",
+    tldr: "Enterprise grant management requires whitelabel branding, multi-program portfolios, advanced reporting, and role-based access. Karma delivers all of this with on-chain verification for organizations that need full control at scale.",
     problem: {
       heading: "Enterprise Grant Management Needs Control Without Complexity",
       description:
-        "Enterprise organizations face unique grant program challenges. Multiple programs span different teams with strict compliance needs. Brand consistency matters across every grantee touchpoint. Traditional platforms need lengthy procurement cycles. Expensive implementations demand dedicated IT support for months. Programs that need funding decisions now cannot wait six months. Every delay costs real money and lost opportunities. Teams grow frustrated with slow, rigid enterprise tools.",
+        "Enterprise organizations face unique grant program challenges daily. Multiple programs span different teams with strict compliance needs. Moreover, brand consistency matters across every grantee touchpoint. Traditional platforms need lengthy procurement cycles to deploy. Furthermore, expensive implementations demand dedicated IT support for months. Programs that need funding decisions now cannot wait six months. In addition, every delay costs real money and lost opportunities for grantees. Teams grow frustrated with slow, rigid enterprise tools quickly. Therefore, organizations need enterprise grant management that deploys fast. Meanwhile, security and compliance requirements cannot be compromised at all.",
     },
     solution: {
-      heading: "Enterprise Grant Management with Rapid Deployment",
+      heading: "Enterprise Grant Management With Rapid Deployment",
       description:
-        "Karma delivers enterprise grant management without long deployment timelines. Whitelabel the platform with your branding in days. Manage programs with role-based access across all teams. Produce compliance-ready reports with a few clicks. Use on-chain attestations for verifiable accountability. Auditors and stakeholders trust the immutable record. Deploy in days, not months. Your team starts working on real programs right away. No IT backlog stands in your way.",
+        "Karma delivers enterprise grant management without long deployment timelines. Whitelabel the platform with your branding in just days. Moreover, manage programs with role-based access across all your teams. Produce compliance-ready reports with just a few clicks easily. Furthermore, use on-chain attestations for verifiable accountability at every level. Auditors and stakeholders trust the immutable record completely. In addition, deploy in days rather than months of procurement work. Your team starts working on real programs right away. Therefore, no IT backlog stands in your way anymore. Meanwhile, security and compliance remain fully protected throughout.",
     },
     capabilities: [
       "Whitelabel branding with custom domains and themes",
@@ -490,42 +520,52 @@ export const sizeBudgetSolutions: SolutionPage[] = [
       {
         question: "What does the whitelabel option include?",
         answer:
-          "Whitelabel covers custom branding and your logo. You set your own colors and custom domain. Karma branding disappears from the grantee experience. You also customize email templates and notifications. Grantees see the platform as your own product. Every touchpoint matches your brand identity. This builds trust with grantees and stakeholders.",
+          "Whitelabel covers custom branding including your logo and colors. You set your own custom domain for the platform. Moreover, Karma branding disappears from the grantee experience completely. You also customize email templates and all notifications. Furthermore, grantees see the platform as your own product entirely. Every touchpoint matches your brand identity consistently. In addition, this builds trust with grantees and stakeholders effectively. Therefore, your organization maintains full brand control throughout.",
       },
       {
         question: "How does role-based access work?",
         answer:
-          "You assign roles like program admin, reviewer, and observer. Each role carries specific permissions per program. Team members only access what they need. This granular control supports compliance requirements. It also prevents unauthorized changes. You add or remove roles in a few clicks. Audit trails record every permission change.",
+          "You assign roles like program admin, reviewer, and observer. Each role carries specific permissions per program precisely. Moreover, team members only access what they need for their work. This granular control supports compliance requirements effectively. Furthermore, it prevents unauthorized changes across all programs. You add or remove roles in a few clicks instantly. In addition, audit trails record every permission change automatically. Therefore, your security posture stays strong at all times. Compliance teams appreciate this level of access control.",
       },
       {
         question: "Can Karma integrate with our existing systems?",
         answer:
-          "Yes. Karma provides full API access for your workflows. Connect financial systems and reporting tools. Link internal dashboards for live data. Build automated pipelines that keep systems in sync. The API supports data export and programmatic control. Your IT team can start building integrations on day one. Documentation covers every endpoint clearly.",
+          "Yes. Karma provides full API access for your integration workflows. Connect financial systems and reporting tools directly to the platform. Moreover, link internal dashboards for live data feeds automatically. Build automated pipelines that keep all systems in sync. Furthermore, the API supports data export and programmatic control fully. Your IT team can start building integrations on day one. In addition, documentation covers every endpoint clearly and thoroughly. Therefore, integration fits your existing technology stack seamlessly.",
       },
       {
         question: "How quickly can we deploy?",
         answer:
-          "Most enterprise deployments go live within days. Whitelabel setup follows a structured process. Team onboarding runs alongside configuration. Dedicated support guides you through every step. This beats months that traditional enterprise software needs. Your first program can launch in the same week. No lengthy procurement process slows you down.",
+          "Most enterprise deployments go live within days, not months. Whitelabel setup follows a structured and efficient process. Moreover, team onboarding runs alongside platform configuration simultaneously. Dedicated support guides you through every step of deployment. Furthermore, this beats the months that traditional enterprise software requires. Your first program can launch in the same week easily. In addition, no lengthy procurement process slows you down at all. Therefore, you start managing grants faster than competitors expect.",
       },
       {
         question: "Is on-chain verification suitable for compliance?",
         answer:
-          "On-chain attestations create immutable, timestamped records. Each milestone approval gets its own record on-chain. This provides an independent audit trail for compliance. Many organizations use these alongside internal controls. Auditors trust the verifiable, tamper-proof data. No one can alter records after the fact. This meets strict accountability standards.",
+          "On-chain attestations create immutable, timestamped records permanently. Each milestone approval gets its own record on-chain automatically. Moreover, this provides an independent audit trail for compliance teams. Many organizations use these alongside internal controls successfully. Furthermore, auditors trust the verifiable, tamper-proof data completely. No one can alter records after they are created. In addition, this meets strict accountability standards across industries. Therefore, on-chain verification strengthens your compliance posture significantly.",
       },
       {
         question: "How does Karma handle multi-region deployments?",
         answer:
-          "Karma supports teams across regions from one platform. Role-based access lets you segment programs by geography. Each regional team sees only their assigned programs. Central leadership retains full portfolio visibility. Time zone differences do not affect workflow. Teams collaborate across borders smoothly. One dashboard connects your entire global operation.",
+          "Karma supports teams across regions from one unified platform. Role-based access lets you segment programs by geography precisely. Moreover, each regional team sees only their assigned programs specifically. Central leadership retains full portfolio visibility across all regions. Furthermore, time zone differences do not affect workflow at all. Teams collaborate across borders smoothly and efficiently. In addition, one dashboard connects your entire global operation together. Therefore, managing international programs feels simple instead of overwhelming.",
       },
       {
         question: "What level of support do enterprise clients receive?",
         answer:
-          "Enterprise clients get dedicated onboarding specialists. Your team receives training materials and hands-on guidance. Priority support means faster response times. Support staff understand large-scale program challenges. They help with configuration and ongoing operations. Regular check-ins keep your programs running smoothly. You always have a direct contact at Karma.",
+          "Enterprise clients get dedicated onboarding specialists for setup. Your team receives training materials and hands-on guidance directly. Moreover, priority support means faster response times for every request. Support staff understand large-scale program challenges from experience. Furthermore, they help with configuration and ongoing operations alike. Regular check-ins keep your programs running smoothly over time. In addition, you always have a direct contact at Karma. Therefore, enterprise-level service continues long after initial deployment ends.",
       },
       {
         question: "Can we run a pilot before a full enterprise rollout?",
         answer:
-          "Yes. Many organizations start with a single program pilot. You evaluate the platform with real data and workflows. Your team tests every feature in a live environment. Expand to more programs once the pilot proves value. No extra setup or migration is needed to scale. The pilot data carries forward into full deployment. Most pilots convert to full rollouts within weeks.",
+          "Yes. Many organizations start with a single program pilot first. You evaluate the platform with real data and live workflows. Moreover, your team tests every feature in a production environment. Expand to more programs once the pilot proves clear value. Furthermore, no extra setup or migration is needed to scale up. The pilot data carries forward into full deployment automatically. In addition, most pilots convert to full rollouts within just weeks. Therefore, you prove value before committing to a full rollout.",
+      },
+      {
+        question: "How does Karma protect sensitive enterprise data?",
+        answer:
+          "Karma encrypts all data in transit and at rest securely. Role-based access controls restrict visibility to authorized users only. Moreover, on-chain attestations add an independent verification layer. Audit trails log every action taken on the platform completely. Furthermore, regular security updates protect against emerging threats continuously. Dedicated enterprise support monitors your deployment proactively for issues. In addition, compliance-ready features meet strict industry standards fully. Therefore, your sensitive program data stays protected at all times.",
+      },
+      {
+        question: "Can we customize workflows for different programs?",
+        answer:
+          "Yes. Each program supports its own milestone frameworks and review processes. Configure different reviewer panels for each program specifically. Moreover, set custom reporting cadences that match each program cycle. Notification templates adapt to each program's branding and needs. Furthermore, grantee onboarding flows vary by program when required. This flexibility supports diverse funding initiatives under one roof. In addition, central dashboards still unify all programs for oversight. Therefore, customization and consistency coexist without compromise.",
       },
     ],
     ctaText: "Explore Enterprise Solutions",
@@ -610,20 +650,20 @@ export const sizeBudgetSolutions: SolutionPage[] = [
   },
   {
     slug: "small-foundation-grant-management",
-    title: "Grant Management for Small Foundations",
+    title: "Small Foundation Grant Management Tools",
     metaDescription:
       "Grant management for small foundations. Free to start, simple to use, and built for lean teams managing grants without IT overhead.",
-    heading: "Grant Management for Small Foundations",
-    tldr: "Karma helps small foundations manage their grant portfolios with a free, easy-to-use platform that handles milestone tracking, grantee updates, and impact reporting without requiring technical staff.",
+    heading: "Small Foundation Grant Management: Free Tools for Lean Teams",
+    tldr: "Small foundation grant management no longer requires enterprise budgets or dedicated IT staff. Karma helps small foundations manage grant portfolios with a free platform that handles milestone tracking, grantee updates, and impact reporting.",
     problem: {
       heading: "Small Foundation Grant Management Should Not Require Enterprise Budgets",
       description:
-        "Small foundations run on lean teams of one or two people. They handle the entire grant lifecycle with limited resources. Enterprise software costs far more than their budgets allow. Complex tools demand dedicated administrators they cannot hire. The result is a default to spreadsheets and email chains. Grantee progress gets lost in the shuffle. Impact reports fall short of what boards expect. Small teams deserve tools that match their real needs. They should not pay enterprise prices for basic features.",
+        "Small foundations run on lean teams of one or two people. They handle the entire grant lifecycle with very limited resources. However, enterprise software costs far more than their budgets allow. Complex tools demand dedicated administrators they simply cannot hire. As a result, teams default to spreadsheets and email chains. Moreover, grantee progress gets lost in the shuffle every week. Impact reports fall short of what boards expect consistently. Furthermore, small teams deserve tools that match their real needs. They should not pay enterprise prices for basic management features. Therefore, a better approach exists for small foundation grant management.",
     },
     solution: {
       heading: "Professional Small Foundation Grant Management at No Cost",
       description:
-        "Karma gives small foundations professional grant management tools for free. Set up programs quickly and track grantee milestones with ease. Produce impact reports that impress your board and donors. The platform works for lean teams by design. There is no learning curve to slow you down. No IT dependency blocks your progress. Grantees update their own milestones directly. Your board gets polished reports without extra work from you.",
+        "Karma gives small foundations professional grant management tools for free. Set up programs quickly and track grantee milestones with ease. Moreover, produce impact reports that impress your board and donors. The platform works for lean teams by design from day one. Furthermore, there is no learning curve to slow you down. No IT dependency blocks your progress at any step. In addition, grantees update their own milestones directly through the platform. Your board gets polished reports without extra work from you. Therefore, small foundation grant management becomes efficient and professional.",
     },
     capabilities: [
       "Free tier ideal for small foundation budgets",
@@ -639,42 +679,52 @@ export const sizeBudgetSolutions: SolutionPage[] = [
       {
         question: "Do I need technical staff to use Karma?",
         answer:
-          "No. Karma works for non-technical users from the start. Setting up programs needs no coding at all. Inviting grantees takes a few clicks. Generating reports happens automatically. A single program manager runs everything alone. Guided workflows handle each step clearly. You never need outside technical help.",
+          "No. Karma works for non-technical users from the very start. Setting up programs needs no coding knowledge at all. Moreover, inviting grantees takes just a few clicks. Generating reports happens automatically from milestone data. Furthermore, a single program manager runs everything alone easily. Guided workflows handle each step clearly and simply. In addition, you never need outside technical help for anything. Therefore, lean teams manage programs without hiring IT staff.",
       },
       {
         question: "Can I share progress reports with my board?",
         answer:
-          "Yes. Karma builds impact summaries and milestone reports for board meetings. Share them directly with board members. Send them to donors too. Export reports as PDFs or share direct links. Public dashboards also give real-time visibility. Board members check progress on their own schedule. Your prep time for meetings drops dramatically.",
+          "Yes. Karma builds impact summaries and milestone reports for meetings. Share them directly with board members through the platform. Moreover, send them to donors with a single link too. Export reports as PDFs or share direct dashboard links easily. Furthermore, public dashboards give real-time visibility to stakeholders. Board members check progress on their own schedule conveniently. In addition, your prep time for meetings drops dramatically. Therefore, board reporting becomes effortless instead of stressful.",
       },
       {
         question: "How does Karma compare to enterprise tools for small foundations?",
         answer:
-          "Karma provides core features small foundations need at zero cost. You get milestone tracking and grantee reporting. Impact dashboards come standard too. There is no deployment time needed. No training budget is required either. You save thousands over enterprise platform licensing. Your budget goes to grants, not software fees.",
+          "Karma provides core features small foundations actually need at zero cost. You get milestone tracking and grantee reporting immediately. Moreover, impact dashboards come standard on every account. There is no deployment time needed to get started. Furthermore, no training budget is required for your team. You save thousands over enterprise platform licensing fees yearly. In addition, your budget goes to grants instead of software fees. Therefore, small foundations get professional tools without enterprise pricing.",
       },
       {
         question: "What if our foundation grows beyond a small portfolio?",
         answer:
-          "Karma scales with your foundation as it grows. Add reviewer workflows when your team expands. Turn on advanced analytics when you need deeper insights. Whitelabel branding becomes available too. No migration or data loss happens during upgrades. Your processes carry forward to the next stage. Growth never forces you onto a new platform.",
+          "Karma scales with your foundation as it grows naturally. Add reviewer workflows when your team expands its capacity. Moreover, turn on advanced analytics when you need deeper insights. Whitelabel branding becomes available for larger operations too. Furthermore, no migration or data loss happens during upgrades at all. Your processes carry forward to the next stage seamlessly. In addition, growth never forces you onto a completely new platform. Therefore, you invest in one tool that lasts for the long term.",
       },
       {
         question: "Can donors see how their funds are being used?",
         answer:
-          "Yes. Public dashboards show donors real-time grantee progress. On-chain attestations verify that funds reach their purpose. This builds trust with current donors. It attracts prospective donors too. Donors check progress anytime they want. They never need to ask your team for updates. Transparency becomes automatic, not a chore.",
+          "Yes. Public dashboards show donors real-time grantee progress clearly. On-chain attestations verify that funds reach their stated purpose. Moreover, this builds trust with current donors through transparency. It also attracts prospective donors who value accountability. Furthermore, donors check progress anytime they want independently. They never need to ask your team for status updates. In addition, transparency becomes automatic rather than a manual chore. Therefore, donor relationships strengthen with every completed milestone.",
       },
       {
         question: "How long does it take to set up our first program?",
         answer:
-          "Most small foundations finish setup in under 30 minutes. The guided workflow walks you through each step. Pre-built templates match common foundation grant structures. You can invite grantees on the same day. Start tracking milestones right away. No waiting period or approval process exists. Your program goes live when you say so.",
+          "Most small foundations finish setup in under 30 minutes easily. The guided workflow walks you through each step clearly. Moreover, pre-built templates match common foundation grant structures perfectly. You can invite grantees on the same day you register. Furthermore, start tracking milestones right away after setup completes. No waiting period or approval process exists at any point. In addition, your program goes live when you say so. Therefore, you launch faster than any enterprise tool allows.",
       },
       {
         question: "Is our grantee data secure on the platform?",
         answer:
-          "Yes. Karma protects data with encryption in transit and at rest. Role-based access controls limit who sees information. On-chain attestations add a tamper-proof verification layer. Your foundation data stays safe and private. Regular security updates keep protections current. No action is needed from your team to stay secure. The platform handles security for you.",
+          "Yes. Karma protects data with encryption in transit and at rest. Role-based access controls limit who sees sensitive information. Moreover, on-chain attestations add a tamper-proof verification layer. Your foundation data stays safe and private at all times. Furthermore, regular security updates keep protections current automatically. No action is needed from your team to stay secure. In addition, the platform handles security entirely for you behind the scenes. Therefore, data protection requires zero effort from small teams.",
       },
       {
         question: "Can we customize the milestone templates?",
         answer:
-          "Yes. Start with pre-built templates or create your own. Each program can use different milestone structures. Customize reporting cadences to match your board schedule. Templates save time when you launch new programs later. Clone a template and adjust it in minutes. Your milestones fit your program, not the other way around.",
+          "Yes. Start with pre-built templates or create your own easily. Each program can use different milestone structures independently. Moreover, customize reporting cadences to match your board schedule. Templates save time when you launch new programs in the future. Furthermore, clone a template and adjust it in just minutes. Your milestones fit your program rather than the other way around. In addition, different grantees can follow different milestone paths. Therefore, flexibility makes the platform work for any foundation structure.",
+      },
+      {
+        question: "How does Karma help with donor communications?",
+        answer:
+          "Karma generates reports you share directly with donors in minutes. Public dashboards give donors self-service access to program progress. Moreover, on-chain verification lets donors confirm milestones independently. This reduces the number of donor inquiries your team handles. Furthermore, milestone completion updates flow to dashboards automatically. You spend less time compiling donor communications manually. In addition, professional reports strengthen your donor relationships significantly. Therefore, donor management becomes a strength instead of a burden.",
+      },
+      {
+        question: "How does small foundation grant management reduce overhead costs?",
+        answer:
+          "Small foundations eliminate expensive software licenses by using free tools. Karma replaces spreadsheets and email chains with one unified platform. Moreover, automated milestone tracking cuts hours of manual follow-up each week. Staff members spend their time on grants instead of administrative tasks. Furthermore, self-service grantee updates remove back-and-forth communication entirely. Built-in reporting saves the cost of hiring consultants for board presentations. In addition, guided setup means your team skips paid training sessions completely. Therefore, small foundation grant management with Karma keeps overhead low and impact high.",
       },
     ],
     ctaText: "Get Started for Free",
@@ -759,20 +809,20 @@ export const sizeBudgetSolutions: SolutionPage[] = [
   },
   {
     slug: "mid-size-foundation-grant-management",
-    title: "Grant Management for Mid-Size Foundations",
+    title: "Mid Size Foundation Grant Management",
     metaDescription:
       "Grant management for mid-size foundations. Coordinate reviewers, track multiple programs, and generate impact reports that scale.",
-    heading: "Grant Management for Mid-Size Foundations",
-    tldr: "Karma supports mid-size foundations managing multiple programs with reviewer coordination, portfolio-level tracking, impact analytics, and the flexibility to scale as your foundation grows.",
+    heading: "Mid Size Foundation Grant Management: Multi-Program Tools That Scale",
+    tldr: "Mid size foundation grant management requires tools that handle multiple programs and reviewer teams. Karma supports mid-size foundations with reviewer coordination, portfolio-level tracking, and impact analytics that scale as you grow.",
     problem: {
-      heading: "Mid-Size Foundation Grant Management Outgrows Basic Tools Fast",
+      heading: "Mid Size Foundation Grant Management Outgrows Basic Tools Fast",
       description:
-        "Mid-size foundations start with simple tools and quickly outgrow them. Programs multiply and reviewer teams expand fast. Coordinating updates across programs becomes unsustainable. Tracking milestones in spreadsheets leads to missed deadlines. Errors pile up without anyone noticing them. Producing cross-program reports takes days of manual work. The foundation needs structure but lacks the enterprise budget. Staff members juggle too many tasks at once. Important details slip through the cracks every week.",
+        "Mid-size foundations start with simple tools and quickly outgrow them. Programs multiply and reviewer teams expand fast every year. However, coordinating updates across programs becomes unsustainable over time. Tracking milestones in spreadsheets leads to missed deadlines frequently. Moreover, errors pile up without anyone noticing until it is too late. Producing cross-program reports takes days of manual work each quarter. Furthermore, the foundation needs structure but lacks the enterprise budget. Staff members juggle too many tasks at once daily. In addition, important details slip through the cracks every single week. Therefore, mid-size foundation grant management demands purpose-built tools urgently.",
     },
     solution: {
-      heading: "Structured Mid-Size Foundation Grant Management That Grows With You",
+      heading: "Structured Mid Size Foundation Grant Management That Grows With You",
       description:
-        "Karma bridges the gap between basic tools and enterprise systems. Manage multiple programs from one dashboard. Coordinate reviewers with clear assignments and workload tracking. Get portfolio-level visibility into grantee progress at a glance. As your foundation grows, add whitelabel branding and advanced analytics. No migration is needed at any stage. Your team stops juggling tools and starts focusing on impact. Every program stays organized from day one.",
+        "Karma bridges the gap between basic tools and enterprise systems perfectly. Manage multiple programs from one dashboard with clear visibility. Moreover, coordinate reviewers with clear assignments and workload tracking. Get portfolio-level visibility into grantee progress at a single glance. Furthermore, as your foundation grows, add whitelabel branding and analytics. No migration is needed at any stage of your growth. In addition, your team stops juggling tools and starts focusing on impact. Every program stays organized from day one onward. Therefore, mid-size foundation grant management becomes structured and scalable.",
     },
     capabilities: [
       "Multi-program management with distinct configurations",
@@ -788,42 +838,52 @@ export const sizeBudgetSolutions: SolutionPage[] = [
       {
         question: "Can I run programs with different structures on Karma?",
         answer:
-          "Yes. Each program gets its own milestone templates and reviewer panels. You manage everything from one foundation dashboard. Run a research track alongside a community track. Each track keeps its own workflow and rules. This flexibility makes multi-program management easy. Switch between programs in a single click. No forced structure limits your options.",
+          "Yes. Each program gets its own milestone templates and reviewer panels. You manage everything from one foundation dashboard seamlessly. Moreover, run a research track alongside a community track easily. Each track keeps its own workflow and rules independently. Furthermore, this flexibility makes multi-program management simple and effective. Switch between programs in a single click from the dashboard. In addition, no forced structure limits your options at all. Therefore, diverse programs coexist under one unified platform.",
       },
       {
         question: "How does reviewer coordination work?",
         answer:
-          "Assign reviewers to specific programs or grants directly. Each reviewer gets a personal dashboard for their work. You monitor reviewer activity across the whole portfolio. Workload data helps you keep reviews balanced. This prevents bottlenecks before they start. Reassign grants in a few clicks when needed. Your review process stays on schedule at all times.",
+          "Assign reviewers to specific programs or grants directly from the dashboard. Each reviewer gets a personal dashboard for their assigned work. Moreover, you monitor reviewer activity across the whole portfolio clearly. Workload data helps you keep reviews balanced across the team. Furthermore, this prevents bottlenecks before they start causing delays. Reassign grants in a few clicks whenever adjustments are needed. In addition, your review process stays on schedule at all times. Therefore, reviewer coordination becomes a strength instead of a headache.",
       },
       {
         question: "What happens as our foundation grows?",
         answer:
-          "Karma scales with your foundation at every stage. Start with core features today. Add whitelabel branding or API integrations later. No migration or data loss occurs when you upgrade. The processes you build today carry forward. Your team keeps working without interruption. Growth never forces a painful platform switch.",
+          "Karma scales with your foundation at every stage of growth. Start with core features today and expand later freely. Moreover, add whitelabel branding or API integrations when you need them. No migration or data loss occurs when you upgrade your plan. Furthermore, the processes you build today carry forward automatically. Your team keeps working without any interruption during growth. In addition, growth never forces a painful platform switch on you. Therefore, your investment in Karma pays off for the long term.",
       },
       {
         question: "Can stakeholders see program progress?",
         answer:
-          "Yes. Public dashboards show stakeholders real-time grantee progress. Donors and community members see milestones as they complete. These dashboards build trust with every update. They reduce ad-hoc reporting requests too. Your team fields fewer status inquiries. Stakeholders get answers on their own schedule. Transparency becomes a feature, not a burden.",
+          "Yes. Public dashboards show stakeholders real-time grantee progress clearly. Donors and community members see milestones as they complete. Moreover, these dashboards build trust with every update published. They also reduce ad-hoc reporting requests from stakeholders significantly. Furthermore, your team fields fewer status inquiries from external parties. Stakeholders get answers on their own schedule conveniently. In addition, transparency becomes a built-in feature rather than a burden. Therefore, stakeholder communication improves dramatically with minimal effort.",
       },
       {
         question: "How does Karma compare to building custom internal tools?",
         answer:
-          "Custom tools need engineering resources and months of development. Karma provides multi-program management out of the box. Analytics and reporting come ready to use. Most foundations find it faster and cheaper to deploy. You skip ongoing maintenance costs entirely. Updates and improvements arrive automatically. Your team focuses on grants, not software bugs.",
+          "Custom tools need engineering resources and months of development time. However, Karma provides multi-program management out of the box immediately. Analytics and reporting come ready to use from day one. Moreover, most foundations find it faster and cheaper to deploy Karma. You skip ongoing maintenance costs entirely with a managed platform. Furthermore, updates and improvements arrive automatically without your effort. Your team focuses on grants instead of debugging software issues. In addition, Karma evolves based on feedback from thousands of programs. Therefore, you get better tools than most custom builds can deliver.",
       },
       {
         question: "Can we track cross-program impact metrics?",
         answer:
-          "Yes. Karma aggregates milestone data across all your programs. You compare performance between programs side by side. Identify trends that span your whole portfolio. Generate portfolio-level impact reports for board meetings. This cross-program view helps you allocate resources better. Spot high-performing programs and learn from them. Data drives your decisions, not guesswork.",
+          "Yes. Karma aggregates milestone data across all your programs automatically. You compare performance between programs side by side with ease. Moreover, identify trends that span your whole portfolio of grants. Generate portfolio-level impact reports for board meetings quickly. Furthermore, this cross-program view helps you allocate resources better. Spot high-performing programs and learn from their approaches directly. In addition, data drives your decisions instead of guesswork or intuition. Therefore, every program benefits from insights across the entire portfolio.",
       },
       {
         question: "How do we onboard our existing reviewer team?",
         answer:
-          "Invite reviewers through the platform with a single link. Each reviewer creates their account in minutes. They see assigned grants right away after signing up. The interface needs no prior training to use. Most teams complete onboarding within a single day. Reviewers start approving milestones immediately. The transition from old tools feels smooth and natural.",
+          "Invite reviewers through the platform with a single invitation link. Each reviewer creates their account in just a few minutes. Moreover, they see assigned grants right away after signing up. The interface needs no prior training or documentation to use. Furthermore, most teams complete onboarding within a single business day. Reviewers start approving milestones immediately after joining the platform. In addition, the transition from old tools feels smooth and natural. Therefore, your reviewer team adopts Karma without friction or resistance.",
       },
       {
         question: "What reporting formats does Karma support?",
         answer:
-          "Karma generates web-based dashboards and exportable PDF reports. Raw data exports give you full flexibility. Share live dashboard links with board members. Export milestone data to CSV for custom analysis. Reports update as grantees submit new progress. No manual refresh or compilation is needed. Your data stays current at all times.",
+          "Karma generates web-based dashboards and exportable PDF reports. Raw data exports give you full flexibility for custom analysis. Moreover, share live dashboard links with board members directly. Export milestone data to CSV for use in external tools. Furthermore, reports update as grantees submit new progress automatically. No manual refresh or compilation is needed for any report. In addition, your data stays current at all times without effort. Therefore, reporting formats cover every stakeholder need you have.",
+      },
+      {
+        question: "How does Karma handle compliance for mid-size foundations?",
+        answer:
+          "On-chain attestations create immutable records for every milestone approval. Audit trails track all actions taken on the platform automatically. Moreover, role-based access controls limit who can view or change data. These features support compliance requirements for regulated foundations. Furthermore, export compliance reports in formats auditors prefer easily. The platform maintains a complete history of all program activity. In addition, no records can be altered after creation for data integrity. Therefore, compliance becomes built-in rather than an afterthought.",
+      },
+      {
+        question: "Can we migrate from spreadsheets gradually?",
+        answer:
+          "Yes. Start new programs on Karma while keeping existing spreadsheets running. Migrate programs one at a time at your own comfortable pace. Moreover, import historical data when you are ready for each program. No big-bang migration is required at any point in the process. Furthermore, teams see the benefits firsthand before committing to full adoption. This gradual approach reduces risk and builds team confidence steadily. In addition, your data stays safe throughout the entire transition. Therefore, the switch happens naturally as teams prefer the better experience.",
       },
     ],
     ctaText: "Start Managing Your Programs",
@@ -908,20 +968,20 @@ export const sizeBudgetSolutions: SolutionPage[] = [
   },
   {
     slug: "startup-grant-management",
-    title: "Grant Management for Startups & Early-Stage Programs",
+    title: "Startup Grant Management Platform",
     metaDescription:
       "Grant management for startups and early-stage programs. Free, fast setup, built for teams launching their first grant program.",
-    heading: "Grant Management for Startups and Early-Stage Programs",
-    tldr: "Karma helps startups and early-stage organizations launch their first grant programs with a free platform that takes minutes to set up and requires no dedicated operations staff.",
+    heading: "Startup Grant Management: Launch Your First Program in Minutes",
+    tldr: "Startup grant management does not require months of setup or expensive software. Karma helps startups and early-stage organizations launch their first grant programs with a free platform that takes minutes to configure.",
     problem: {
       heading: "Startup Grant Management Cannot Wait Months to Launch",
       description:
-        "Startups that want to run grant programs face a bootstrapping problem. They need to distribute funds and track outcomes fast. No dedicated grants team exists to handle operations. There is zero budget for expensive software licenses. Every hour on administration takes away from the core mission. Evaluating enterprise tools wastes weeks startups cannot spare. The team needs results now, not after a long procurement cycle. Speed matters more than anything at this stage.",
+        "Startups that want to run grant programs face a bootstrapping problem. They need to distribute funds and track outcomes fast. However, no dedicated grants team exists to handle daily operations. There is zero budget for expensive software licenses at this stage. Moreover, every hour on administration takes away from the core mission. Evaluating enterprise tools wastes weeks startups cannot spare at all. Furthermore, the team needs results now rather than after a procurement cycle. Speed matters more than anything at the startup stage. In addition, first impressions with grantees set the tone for the program. Therefore, startup grant management must launch quickly and look professional.",
     },
     solution: {
       heading: "Launch Startup Grant Management in Minutes, Not Months",
       description:
-        "Karma removes every barrier to startup grant management. Sign up for free and create your program in under an hour. Define milestones and invite grantees right away. Start tracking progress from day one. The platform provides structure so your team focuses on great grantees. Public dashboards build credibility from your very first round. On-chain records prove your program takes accountability seriously. Your community sees a professional operation from the start.",
+        "Karma removes every barrier to startup grant management completely. Sign up for free and create your program in under an hour. Moreover, define milestones and invite grantees right away without delays. Start tracking progress from day one of your program. Furthermore, the platform provides structure so your team focuses on great grantees. Public dashboards build credibility from your very first round. In addition, on-chain records prove your program takes accountability seriously. Your community sees a professional operation from the start immediately. Therefore, startup grant management becomes fast, free, and credible.",
     },
     capabilities: [
       "Free to start with no minimum commitment",
@@ -937,42 +997,47 @@ export const sizeBudgetSolutions: SolutionPage[] = [
       {
         question: "Can I launch a grant program with no prior experience?",
         answer:
-          "Yes. Karma provides templates and guided setup for newcomers. No grants management experience is needed at all. The platform suggests milestone structures for common grant types. Start with a proven framework. Customize it as you learn what works. The guided process covers every key decision. You launch a professional program on your first try.",
+          "Yes. Karma provides templates and guided setup for complete newcomers. No grants management experience is needed at all to start. Moreover, the platform suggests milestone structures for common grant types. Start with a proven framework that works right away. Furthermore, customize it as you learn what works for your program. The guided process covers every key decision you face. In addition, you launch a professional program on your very first try. Therefore, experience becomes optional rather than a requirement.",
       },
       {
         question: "Is there a minimum program size to use Karma?",
         answer:
-          "No. Karma supports programs of any size. Fund 1 grant or 100 with equal ease. There is no minimum budget or grantee count. The platform adapts to your exact needs. You never face unnecessary complexity for a small program. Start small and grow at your own pace. The free tier covers everything you need.",
+          "No. Karma supports programs of any size without restrictions. Fund 1 grant or 100 with equal ease on the platform. Moreover, there is no minimum budget or grantee count required. The platform adapts to your exact needs automatically. Furthermore, you never face unnecessary complexity for a small program. Start small and grow at your own pace comfortably. In addition, the free tier covers everything you need for any size. Therefore, program size never limits your ability to use Karma.",
       },
       {
         question: "What if our program grows quickly?",
         answer:
-          "Karma scales with you at every stage. Start with the free tier today. Add reviewers or multiple programs later. No migration or re-setup is ever needed. Your data and processes carry forward automatically. The platform handles growth without skipping a beat. Your team keeps working the same way at any scale.",
+          "Karma scales with you at every stage of growth seamlessly. Start with the free tier today for your initial launch. Moreover, add reviewers or multiple programs later when needed. No migration or re-setup is ever needed during scaling. Furthermore, your data and processes carry forward automatically at all times. The platform handles growth without skipping a beat. In addition, your team keeps working the same way at any scale. Therefore, rapid growth becomes exciting rather than stressful.",
       },
       {
         question: "Do our grantees need to learn the platform?",
         answer:
-          "The grantee experience takes just minutes to learn. Grantees receive an invitation link by email. They submit milestone updates through a simple form. They see their own progress on a clean dashboard. Most grantees complete their first update within minutes. No training session or manual is needed. The interface guides them through every step.",
+          "The grantee experience takes just minutes to learn fully. Grantees receive an invitation link by email from you. Moreover, they submit milestone updates through a simple guided form. They see their own progress on a clean dashboard clearly. Furthermore, most grantees complete their first update within minutes. No training session or manual is needed for grantees at all. In addition, the interface guides them through every step naturally. Therefore, grantee onboarding requires zero effort from your team.",
       },
       {
         question: "How does Karma help us look credible as a new program?",
         answer:
-          "Public dashboards show professionalism from day one. Community members see your program structure and track record. On-chain records provide independent proof of milestone completions. This credibility matters for startups building a reputation. Donors and sponsors trust verifiable data. Your program stands out among less organized competitors. Credibility attracts better grantees and more funding.",
+          "Public dashboards show professionalism from day one of your program. Community members see your program structure and track record clearly. Moreover, on-chain records provide independent proof of milestone completions. This credibility matters greatly for startups building a reputation. Furthermore, donors and sponsors trust verifiable data over promises. Your program stands out among less organized competitors immediately. In addition, credibility attracts better grantees and more funding over time. Therefore, Karma turns a new program into a trusted operation.",
       },
       {
         question: "Can we use Karma for hackathon follow-up grants?",
         answer:
-          "Yes. Many teams use Karma for post-hackathon builder grants. Set up a program in minutes after the event ends. Invite winning teams with a single link. Track their milestones and share progress with sponsors. The public dashboard shows sponsors where funds go. On-chain records verify every milestone approval. Sponsors see the impact of their investment clearly.",
+          "Yes. Many teams use Karma for post-hackathon builder grants successfully. Set up a program in minutes right after the event ends. Moreover, invite winning teams with a single invitation link easily. Track their milestones and share progress with sponsors directly. Furthermore, the public dashboard shows sponsors where funds go transparently. On-chain records verify every milestone approval automatically. In addition, sponsors see the impact of their investment clearly. Therefore, hackathon grants become structured and accountable from the start.",
       },
       {
         question: "What happens if we decide to pause or end our program?",
         answer:
-          "Your data stays safe even if you pause. Grantee records and milestone history remain in the system. You restart or launch a new program anytime you want. There are no penalties for pausing your program. No data gets lost during a pause. Your track record stays visible on public dashboards. Come back whenever your team is ready.",
+          "Your data stays safe even if you pause for any reason. Grantee records and milestone history remain in the system permanently. Moreover, you restart or launch a new program anytime you want. There are no penalties for pausing your program at any point. Furthermore, no data gets lost or deleted during a pause. Your track record stays visible on public dashboards continuously. In addition, come back whenever your team is ready to resume. Therefore, pausing is risk-free and fully reversible.",
       },
       {
         question: "How do we attract grantees to our first program?",
         answer:
-          "Share your public Karma dashboard link with potential grantees. The professional interface shows your program is well organized. On-chain verification proves you take accountability seriously. These signals help attract quality applicants. Post the link on social media and community channels. Grantees see exactly what milestones you track. A clear structure draws serious builders to your program.",
+          "Share your public Karma dashboard link with potential grantees directly. The professional interface shows your program is well organized. Moreover, on-chain verification proves you take accountability seriously. These signals help attract quality applicants to your program. Furthermore, post the link on social media and community channels broadly. Grantees see exactly what milestones you track and expect. In addition, a clear structure draws serious builders to your program. Therefore, your first program attracts top talent from the start.",
+      },
+      {
+        question: "Can Karma help us manage our program budget?",
+        answer:
+          "Karma tracks milestone completions that tie to funding disbursements. You see which grantees meet expectations and which need support. Moreover, progress data helps you decide where to allocate remaining funds. The dashboard gives you a clear picture of program spending. Furthermore, on-chain records create an audit trail for every approval. Stakeholders verify that funds reach their intended purpose easily. In addition, structured tracking prevents budget overruns before they happen. Therefore, budget management becomes data-driven instead of guesswork.",
       },
     ],
     ctaText: "Launch Your First Program",
@@ -1055,17 +1120,17 @@ export const sizeBudgetSolutions: SolutionPage[] = [
     title: "Grant Management for New Foundations",
     metaDescription:
       "Grant management for new foundations. Start free, set up fast, and build transparent grantee relationships from day one with Karma.",
-    heading: "Grant Management for Newly Established Foundations",
-    tldr: "Karma helps newly established foundations set up professional grant management from day one with a free platform that provides structure, transparency, and credibility without requiring prior experience.",
+    heading: "Grant Management for New Foundations: Build Credibility From Day One",
+    tldr: "Grant management for new foundations starts with the right tools from day one. Karma provides a free platform with structure, transparency, and on-chain verification so new foundations build credibility without requiring prior experience.",
     problem: {
       heading: "Grant Management for New Foundations Needs Structure From Day One",
       description:
-        "New foundations face a cold-start problem from the beginning. They must prove credibility to donors before having a track record. Building trust with grantees takes time they may not have. Operational processes must work from the very first grant. Starting with spreadsheets creates debt that grows harder to fix. Investing in expensive software before proving the model feels premature. New teams lack the experience to evaluate complex tools. Every wrong decision costs time and donor confidence.",
+        "New foundations face a cold-start problem from the very beginning. They must prove credibility to donors before having a track record. Moreover, building trust with grantees takes time they may not have. Operational processes must work from the very first grant distributed. However, starting with spreadsheets creates debt that grows harder to fix. Furthermore, investing in expensive software before proving the model feels premature. New teams lack the experience to evaluate complex tools properly. In addition, every wrong decision costs time and donor confidence significantly. Therefore, grant management for new foundations demands simple, proven solutions. Meanwhile, the tools must look professional to build external trust.",
     },
     solution: {
       heading: "Professional Grant Management for New Foundations at Zero Cost",
       description:
-        "Karma lets new foundations start with professional-grade tools for free. Structured milestone tracking keeps programs organized from day one. Public dashboards give your foundation instant credibility with donors. On-chain verification proves accountability before you have a long track record. Good habits start early with the right platform. The platform grows with you as your operations expand. You look established from your very first grant round. Donors see a professional operation, not a startup experiment.",
+        "Karma lets new foundations start with professional-grade tools for free. Structured milestone tracking keeps programs organized from day one completely. Moreover, public dashboards give your foundation instant credibility with donors. On-chain verification proves accountability before you build a long track record. Furthermore, good operational habits start early with the right platform. The platform grows with you as your operations expand over time. In addition, you look established from your very first grant round. Donors see a professional operation rather than a startup experiment. Therefore, grant management for new foundations becomes achievable and credible.",
     },
     capabilities: [
       "Free to start with no upfront investment",
@@ -1081,42 +1146,52 @@ export const sizeBudgetSolutions: SolutionPage[] = [
       {
         question: "We have never run a grant program before. Can we still use Karma?",
         answer:
-          "Yes. Karma works for first-time program operators. The guided setup walks you through each step clearly. Milestone templates help you start with best practices. No grants management experience is needed at all. You learn as you go with built-in guidance. The platform prevents common beginner mistakes. Your first program runs like a professional operation.",
+          "Yes. Karma works perfectly for first-time program operators. The guided setup walks you through each step clearly and simply. Moreover, milestone templates help you start with proven best practices. No grants management experience is needed at all to begin. Furthermore, you learn as you go with built-in guidance at every stage. The platform prevents common beginner mistakes automatically. In addition, your first program runs like a professional operation. Therefore, lack of experience never holds you back from launching.",
       },
       {
         question: "How does Karma help us build credibility?",
         answer:
-          "Public dashboards show donors your accountability in real time. On-chain attestations create verifiable proof of milestones. This matters most for new foundations without a track record. Independent verification builds trust faster than reports alone. Donors check your progress on their own. Your credibility grows with every completed milestone. The proof speaks for itself without extra effort from you.",
+          "Public dashboards show donors your accountability in real time. On-chain attestations create verifiable proof of every milestone completed. Moreover, this matters most for new foundations without a track record. Independent verification builds trust faster than reports alone can. Furthermore, donors check your progress on their own anytime they want. Your credibility grows with every completed milestone automatically. In addition, the proof speaks for itself without extra effort from you. Therefore, new foundations build trust from their very first grant.",
       },
       {
         question: "What if we are not sure how to structure our program?",
         answer:
-          "Karma provides templates for common grant program structures. Start with a template and customize it over time. The platform offers guidance on milestone design. It also suggests reporting cadences that work well. You build a solid operational foundation from the start. Experiment with different structures at no cost. Adjust your approach as you learn what works.",
+          "Karma provides templates for common grant program structures built in. Start with a template and customize it over time as needed. Moreover, the platform offers guidance on milestone design specifically. It also suggests reporting cadences that work well for new programs. Furthermore, you build a solid operational foundation from the very start. Experiment with different structures at no cost or risk. In addition, adjust your approach as you learn what works best. Therefore, uncertainty about structure never prevents you from launching.",
       },
       {
         question: "Can we start small and scale later?",
         answer:
-          "Yes. Many foundations begin with a single small program. Karma supports this growth path naturally. Your data and processes carry forward as you add programs. No migration or disruption happens when you expand. Add reviewer workflows when your team grows. Turn on advanced features as your needs evolve. The platform never holds you back.",
+          "Yes. Many foundations begin with a single small program first. Karma supports this growth path naturally and seamlessly. Moreover, your data and processes carry forward as you add programs. No migration or disruption happens when you expand your operations. Furthermore, add reviewer workflows when your team grows its capacity. Turn on advanced features as your needs evolve over time. In addition, the platform never holds you back from growing further. Therefore, starting small leads to sustainable growth over time.",
       },
       {
         question: "How do we demonstrate impact to potential donors?",
         answer:
-          "Karma's public dashboards show concrete evidence of outcomes. Donors see milestone completions in real time. Grantee progress updates flow to dashboards automatically. On-chain verification records add an extra layer of proof. These tools help new foundations build credibility quickly. Donors trust what they can verify on their own. Your impact story tells itself through live data.",
+          "Karma's public dashboards show concrete evidence of program outcomes. Donors see milestone completions in real time as they happen. Moreover, grantee progress updates flow to dashboards automatically and constantly. On-chain verification records add an extra layer of credible proof. Furthermore, these tools help new foundations build credibility very quickly. Donors trust what they can verify on their own independently. In addition, your impact story tells itself through live data continuously. Therefore, demonstrating impact requires no extra work from your team.",
       },
       {
         question: "Do we need any technical skills to get started?",
         answer:
-          "No. Karma requires zero technical knowledge to use. The guided setup handles all configuration for you. A non-technical founder creates a program in under 30 minutes. No coding or IT support is needed. No database experience is required either. The platform does the technical work behind the scenes. You focus on your mission, not on software.",
+          "No. Karma requires zero technical knowledge to use effectively. The guided setup handles all configuration for you automatically. Moreover, a non-technical founder creates a program in under 30 minutes. No coding or IT support is needed at any stage. Furthermore, no database experience is required for any feature. The platform does the technical work behind the scenes silently. In addition, you focus on your mission rather than on software issues. Therefore, technical skills never limit your ability to manage grants.",
       },
       {
         question: "How do we invite our first grantees?",
         answer:
-          "Send invitation links from the Karma dashboard directly. Grantees self-onboard through a guided process. They set up profiles and submit updates right away. You do not create accounts for them manually. Each grantee manages their own information. The onboarding takes less than five minutes per grantee. Your first cohort gets started on the same day you invite them.",
+          "Send invitation links from the Karma dashboard directly to grantees. Grantees self-onboard through a guided process in minutes easily. Moreover, they set up profiles and submit updates right away. You do not create accounts for them manually at all. Furthermore, each grantee manages their own information independently. The onboarding takes less than five minutes per grantee typically. In addition, your first cohort starts on the same day you invite them. Therefore, grantee onboarding requires minimal effort from your team.",
       },
       {
         question: "What makes Karma better than starting with spreadsheets?",
         answer:
-          "Spreadsheets lack structure and lose context fast. They cannot provide public dashboards or on-chain verification. Karma gives you milestone tracking and impact reports from day one. You avoid the painful migration that comes later. Starting with the right tool saves months of rework. Your data stays organized from the very beginning. Donors see professionalism, not a patchwork of files.",
+          "Spreadsheets lack structure and lose context fast as programs grow. They cannot provide public dashboards or on-chain verification at all. Moreover, Karma gives you milestone tracking and impact reports from day one. You avoid the painful migration that inevitably comes later with spreadsheets. Furthermore, starting with the right tool saves months of future rework. Your data stays organized from the very beginning of operations. In addition, donors see professionalism rather than a patchwork of files. Therefore, Karma sets the right foundation for long-term success.",
+      },
+      {
+        question: "How does Karma help with board reporting for new foundations?",
+        answer:
+          "Karma generates board-ready reports from your milestone data automatically. Share these reports with board members through direct links easily. Moreover, dashboards update in real time as grantees report progress. Board members access reports on their own schedule conveniently. Furthermore, no manual compilation is needed for any board meeting. Professional reports build board confidence in your new foundation. In addition, export data in multiple formats for board presentations. Therefore, board reporting becomes a strength from your very first meeting.",
+      },
+      {
+        question: "Can we track multiple types of grants on the platform?",
+        answer:
+          "Yes. Each program supports its own milestone structures and workflows. Run research grants alongside community grants on one platform. Moreover, create different templates for each grant type you offer. Grantees follow the milestones specific to their grant category. Furthermore, portfolio dashboards show progress across all grant types together. This flexibility lets new foundations experiment with different approaches. In addition, switch between grant types from a single unified dashboard. Therefore, managing diverse grants stays simple and organized throughout.",
       },
     ],
     ctaText: "Start Building Your Foundation",
@@ -1199,17 +1274,17 @@ export const sizeBudgetSolutions: SolutionPage[] = [
     title: "Grant Management for Established Foundations",
     metaDescription:
       "Grant management for established foundations. Replace legacy tools with Karma for better reporting and on-chain verification.",
-    heading: "Grant Management for Established Foundations",
-    tldr: "Karma helps established foundations modernize their grant management with better reporting, on-chain verification, and transparent grantee dashboards, without disrupting existing programs.",
+    heading: "Grant Management for Established Foundations: Modernize Without Disruption",
+    tldr: "Grant management for established foundations often stalls on legacy tools. Karma helps established foundations modernize with better reporting, on-chain verification, and transparent dashboards without disrupting existing programs.",
     problem: {
       heading: "Grant Management for Established Foundations Stalls on Legacy Tools",
       description:
-        "Established foundations often rely on legacy systems built five years ago. Reports now need hours of manual compilation from scattered sources. Grantee updates arrive in inconsistent formats that slow reviews. Public transparency demands effort legacy tools cannot support. Switching systems feels risky for active programs. Migration threatens to disrupt ongoing grants and relationships. Staff members resist change when current tools feel familiar. The cost of doing nothing grows larger every quarter.",
+        "Established foundations often rely on legacy systems built many years ago. Reports now need hours of manual compilation from scattered sources. Moreover, grantee updates arrive in inconsistent formats that slow reviews. Public transparency demands effort legacy tools simply cannot support. However, switching systems feels risky for active programs in progress. Furthermore, migration threatens to disrupt ongoing grants and grantee relationships. Staff members resist change when current tools feel familiar and safe. In addition, the cost of doing nothing grows larger every single quarter. Therefore, grant management for established foundations needs a gradual modernization path. Meanwhile, active programs must continue running without any interruption.",
     },
     solution: {
-      heading: "Modernize Established Foundation Grant Management Without Disruption",
+      heading: "Modernize Grant Management for Established Foundations Without Disruption",
       description:
-        "Karma lets established foundations modernize step by step. Start new programs on Karma while legacy systems keep running. Gain improvements in reporting and grantee communication right away. Transparency dashboards give stakeholders real-time visibility. On-chain attestations add verifiable accountability legacy tools lack. Your team adopts the platform at its own pace. No active programs face disruption during the transition. The results speak for themselves as teams see the difference.",
+        "Karma lets established foundations modernize step by step at their pace. Start new programs on Karma while legacy systems keep running smoothly. Moreover, gain improvements in reporting and grantee communication right away. Transparency dashboards give stakeholders real-time visibility into programs. Furthermore, on-chain attestations add verifiable accountability legacy tools lack. Your team adopts the platform at its own comfortable pace. In addition, no active programs face disruption during the gradual transition. The results speak for themselves as teams see the clear difference. Therefore, grant management for established foundations improves without risk.",
     },
     capabilities: [
       "Incremental adoption alongside existing legacy systems",
@@ -1225,42 +1300,52 @@ export const sizeBudgetSolutions: SolutionPage[] = [
       {
         question: "Can we use Karma alongside our existing tools?",
         answer:
-          "Yes. Many foundations adopt Karma one program at a time. Continue existing programs on legacy tools. Run new programs on Karma in parallel. There is no requirement to migrate everything at once. This approach lets you evaluate with real workflows. Your team sees the benefits before committing fully. The transition happens naturally over time.",
+          "Yes. Many foundations adopt Karma one program at a time gradually. Continue existing programs on legacy tools without any changes. Moreover, run new programs on Karma in parallel from day one. There is no requirement to migrate everything at once whatsoever. Furthermore, this approach lets you evaluate with real live workflows. Your team sees the benefits before committing to full adoption. In addition, the transition happens naturally over time without pressure. Therefore, risk stays low while benefits become clear immediately.",
       },
       {
         question: "How does Karma improve over our current reporting?",
         answer:
-          "Karma automates report generation from structured milestone data. You get real-time dashboards instead of manual compilations. Reports stay consistent from standardized grantee updates. The time savings add up fast during board reporting season. Your team reclaims hours every month. Stakeholders get fresher data than before. The quality of your reporting jumps immediately.",
+          "Karma automates report generation from structured milestone data directly. You get real-time dashboards instead of manual compilations every quarter. Moreover, reports stay consistent because grantee updates follow standardized formats. The time savings add up fast during board reporting season especially. Furthermore, your team reclaims hours every month on reporting tasks. Stakeholders get fresher data than legacy tools can provide. In addition, the quality of your reporting jumps immediately after switching. Therefore, better reporting becomes the first visible benefit of modernization.",
       },
       {
         question: "Is migration from our current system complex?",
         answer:
-          "No. Karma makes onboarding easy at any stage. Start fresh with new programs today. Import existing grantee data when you are ready. Most foundations begin new programs on Karma first. Legacy programs transition as they come up for renewal. No big-bang migration is needed at any point. You move at a pace that works for your team.",
+          "No. Karma makes onboarding easy at any stage of your transition. Start fresh with new programs today without touching legacy data. Moreover, import existing grantee data when you are ready for each program. Most foundations begin new programs on Karma first as a pilot. Furthermore, legacy programs transition as they come up for natural renewal. No big-bang migration is needed at any point in the process. In addition, you move at a pace that works for your specific team. Therefore, migration complexity stays as low as you want it.",
       },
       {
         question: "Can we whitelabel the platform?",
         answer:
-          "Yes. Whitelabel options present Karma under your own branding. Custom domains, logos, and color themes maintain brand consistency. This matters for foundations with established reputations. Grantees see your brand at every touchpoint. Email notifications carry your branding too. The platform becomes an extension of your organization. No one sees third-party branding.",
+          "Yes. Whitelabel options present Karma under your own branding completely. Custom domains, logos, and color themes maintain brand consistency throughout. Moreover, this matters greatly for foundations with established reputations. Grantees see your brand at every touchpoint on the platform. Furthermore, email notifications carry your branding and visual identity too. The platform becomes an extension of your organization seamlessly. In addition, no one sees third-party branding at any point. Therefore, your brand integrity stays fully protected during modernization.",
       },
       {
         question: "How does Karma handle historical program data?",
         answer:
-          "Import historical grantee and milestone data for complete records. Karma supports bulk data import for large datasets. The team helps you map existing data structures during setup. Run historical reports alongside current program analytics. Your full track record lives in one place. Compare past and present performance side by side. No data gets left behind in the old system.",
+          "Import historical grantee and milestone data for complete program records. Karma supports bulk data import for large existing datasets easily. Moreover, the team helps you map existing data structures during initial setup. Run historical reports alongside current program analytics seamlessly. Furthermore, your full track record lives in one unified place. Compare past and present performance side by side with built-in tools. In addition, no data gets left behind in the old legacy system. Therefore, historical continuity remains intact throughout the transition.",
       },
       {
         question: "Will our existing grantees need retraining?",
         answer:
-          "No. The grantee interface is simple and self-explanatory. Grantees receive an invitation and start submitting in minutes. Most grantees find Karma easier than previous tools. No formal training sessions are needed. Each grantee learns by doing. The guided interface handles every step. Your grantees will thank you for the upgrade.",
+          "No. The grantee interface is simple and fully self-explanatory. Grantees receive an invitation and start submitting updates in minutes. Moreover, most grantees find Karma easier than their previous tools. No formal training sessions are needed for any grantee at all. Furthermore, each grantee learns by doing through the guided interface. The platform handles every step with clear instructions and prompts. In addition, your grantees will likely thank you for the upgrade. Therefore, grantee adoption happens smoothly without resistance or frustration.",
       },
       {
         question: "How does on-chain verification benefit established foundations?",
         answer:
-          "On-chain attestations add an independent audit trail to programs. Stakeholders verify milestone approvals on their own. They do not rely on your reports alone. This builds extra trust for large public fund managers. The feature complements your existing compliance documentation. Auditors appreciate the tamper-proof records. Your foundation gains credibility that legacy tools cannot provide.",
+          "On-chain attestations add an independent audit trail to all programs. Stakeholders verify milestone approvals on their own without your help. Moreover, they do not need to rely on your internal reports alone. This builds extra trust for large public fund managers significantly. Furthermore, the feature complements your existing compliance documentation perfectly. Auditors appreciate the tamper-proof records for their reviews. In addition, your foundation gains credibility that legacy tools simply cannot provide. Therefore, on-chain verification becomes a differentiator for established organizations.",
       },
       {
         question: "Can we run a pilot program before full migration?",
         answer:
-          "Yes. Start with one new program as a pilot on Karma. Evaluate reporting and grantee experience firsthand. Your team tests every feature in a live environment. Expand to more programs once the pilot proves value. Most foundations complete full migration within six months. No extra setup is needed to scale from the pilot. Your pilot data carries forward into the full deployment.",
+          "Yes. Start with one new program as a pilot on Karma first. Evaluate reporting and grantee experience firsthand with real data. Moreover, your team tests every feature in a live production environment. Expand to more programs once the pilot proves clear value. Furthermore, most foundations complete full migration within about six months. No extra setup is needed to scale from the pilot onwards. In addition, your pilot data carries forward into the full deployment. Therefore, pilots reduce risk while proving value to all stakeholders.",
+      },
+      {
+        question: "How does Karma handle compliance for established foundations?",
+        answer:
+          "Karma creates immutable on-chain records for every milestone approval. Role-based access controls ensure proper data governance across teams. Moreover, audit trails track every action taken on the platform automatically. Export compliance reports in formats your auditors prefer easily. Furthermore, the platform maintains complete history of all program activity. These features meet strict compliance requirements for regulated foundations. In addition, no records can change after creation, ensuring data integrity. Therefore, compliance becomes stronger with Karma than with legacy tools.",
+      },
+      {
+        question: "What is the total cost of modernization with Karma?",
+        answer:
+          "Karma's core platform starts free with no licensing fees required. Premium features like whitelabel branding cost a fraction of legacy tools. Moreover, no implementation consultants or months of setup are needed. You avoid the typical $30K to $100K modernization price tag completely. Furthermore, incremental adoption spreads any costs over time naturally. Your team handles the transition without external contractors or specialists. In addition, the savings go directly back into funding more grants. Therefore, modernization pays for itself through reduced operational overhead.",
       },
     ],
     ctaText: "Modernize Your Grant Management",
@@ -1353,17 +1438,17 @@ export const sizeBudgetSolutions: SolutionPage[] = [
     title: "Affordable Grant Management Software",
     metaDescription:
       "Affordable grant management software, free to start. Milestone tracking, grantee reporting, and impact dashboards with no licensing fees.",
-    heading: "Affordable Grant Management Software",
-    tldr: "Karma is a grant management platform that is free to start and offers milestone tracking, grantee reporting, and impact dashboards without the expensive licensing fees of traditional grant management software.",
+    heading: "Affordable Grant Management Software: Professional Tools at Zero Cost",
+    tldr: "Affordable grant management software should not mean basic features. Karma offers a free platform with milestone tracking, grantee reporting, and impact dashboards without the expensive licensing fees of traditional tools.",
     problem: {
       heading: "Affordable Grant Management Software Is Hard to Find",
       description:
-        "Most grant management software charges thousands per year. Organizations pay before they track their first milestone. Limited budgets force teams onto spreadsheets and manual processes. The organizations that need affordable tools most get priced out. Per-user fees add up quickly as teams grow. Reviewer panels make costs climb even faster. Budget-conscious programs deserve better than costly platforms. They also deserve better than chaotic spreadsheets.",
+        "Most grant management software charges thousands per year upfront. Organizations pay before they track their very first milestone. Moreover, limited budgets force teams onto spreadsheets and manual processes. The organizations that need affordable tools most get priced out quickly. Furthermore, per-user fees add up fast as teams grow their operations. Reviewer panels make costs climb even faster than expected. In addition, budget-conscious programs deserve better than costly platforms. They also deserve better than chaotic spreadsheet workflows. Therefore, finding affordable grant management software feels nearly impossible. Meanwhile, organizations waste resources evaluating tools they cannot afford.",
     },
     solution: {
       heading: "Karma Delivers Affordable Grant Management Software for Every Budget",
       description:
-        "Karma provides affordable grant management software that starts free. You get milestone tracking and grantee self-service updates at no cost. Reviewer workflows and impact reporting come included too. There are no per-user fees or minimum commitments. Optional premium features like whitelabel branding unlock when needed. The core platform stays open to organizations of every size. Your budget goes to grants, not software licenses. Every dollar you save funds another grantee.",
+        "Karma provides affordable grant management software that starts completely free. You get milestone tracking and grantee self-service updates at no cost. Moreover, reviewer workflows and impact reporting come included on every account. There are no per-user fees or minimum commitments required whatsoever. Furthermore, optional premium features like whitelabel branding unlock when needed. The core platform stays open to organizations of every size. In addition, your budget goes to grants instead of software licenses. Every dollar you save funds another grantee's project directly. Therefore, affordable grant management software becomes a reality with Karma.",
     },
     capabilities: [
       "Free tier with full milestone tracking and reporting",
@@ -1379,42 +1464,52 @@ export const sizeBudgetSolutions: SolutionPage[] = [
       {
         question: "What is included in the free tier?",
         answer:
-          "The free tier covers program setup and milestone tracking. Grantee updates and reviewer workflows come included. You also get impact dashboards and on-chain attestations. There are no feature gates on essential tools. Run a complete program without spending a dollar. Most organizations never need to upgrade. The free tier handles everything a typical program requires.",
+          "The free tier covers program setup and full milestone tracking. Grantee updates and reviewer workflows come included at no cost. Moreover, you also get impact dashboards and on-chain attestations standard. There are no feature gates on essential grant management tools. Furthermore, run a complete program without spending a single dollar. Most organizations never need to upgrade beyond the free tier. In addition, the free tier handles everything a typical program requires. Therefore, affordable grant management software starts at literally zero cost.",
       },
       {
         question: "Are there hidden costs or per-user fees?",
         answer:
-          "No. Karma does not charge per-user fees at any level. The free tier is genuinely free with no surprises. You will not face overage fees as your team grows. Forced upgrades never happen on the platform. All pricing details appear publicly and clearly. You know exactly what you pay before you commit. There are no surprise invoices at the end of the month.",
+          "No. Karma does not charge per-user fees at any level whatsoever. The free tier is genuinely free with no hidden surprises. Moreover, you will not face overage fees as your team grows. Forced upgrades never happen on the platform at any point. Furthermore, all pricing details appear publicly and clearly on the website. You know exactly what you pay before you commit to anything. In addition, there are no surprise invoices at the end of any month. Therefore, pricing transparency defines the Karma experience completely.",
       },
       {
         question: "How does Karma keep its pricing so low?",
         answer:
-          "Karma runs on efficient infrastructure for a broad community. Core features stay free because most organizations get full value. Optional premium services fund advanced capabilities. This model aligns platform growth with user success. The more organizations Karma helps, the stronger the platform becomes. Low costs attract more users and better feedback. Everyone benefits from this approach.",
+          "Karma runs on efficient infrastructure serving a broad community. Core features stay free because most organizations get full value. Moreover, optional premium services fund advanced capabilities sustainably. This model aligns platform growth with user success directly. Furthermore, the more organizations Karma helps, the stronger the platform becomes. Low costs attract more users and generate better feedback consistently. In addition, everyone benefits from this community-driven approach to pricing. Therefore, affordability improves as the platform grows over time.",
       },
       {
         question: "What if I need premium features later?",
         answer:
-          "Add premium features like whitelabel branding or API access anytime. Your existing data and programs stay intact during upgrades. No migration is needed at any point. Changes take effect right away after you upgrade. You never experience downtime when adding capabilities. Switch back if you change your mind. The platform stays flexible as your needs evolve.",
+          "Add premium features like whitelabel branding or API access anytime. Your existing data and programs stay completely intact during upgrades. Moreover, no migration is needed at any point in the process. Changes take effect right away after you upgrade your account. Furthermore, you never experience downtime when adding new capabilities. Switch back if you change your mind about any feature. In addition, the platform stays flexible as your needs evolve continuously. Therefore, upgrading feels seamless rather than disruptive to operations.",
       },
       {
         question: "Can Karma replace our paid grant management software?",
         answer:
-          "For many organizations, yes. Karma covers milestone tracking and reporting. Grantee management tools come standard too. Evaluate the free tier against your current tools. Many organizations eliminate paid licenses after switching. The savings go directly back into funding grants. Your program budget grows without extra fundraising effort.",
+          "For many organizations, yes it can replace paid software entirely. Karma covers milestone tracking and comprehensive reporting fully. Moreover, grantee management tools come standard on every account. Evaluate the free tier against your current tools directly. Furthermore, many organizations eliminate paid licenses after switching to Karma. The savings go directly back into funding more grants. In addition, your program budget grows without extra fundraising effort needed. Therefore, replacing paid software becomes a practical decision with Karma.",
       },
       {
         question: "Is the free tier limited in the number of grantees or programs?",
         answer:
-          "The free tier supports programs of any size generously. Track dozens of grantees and milestones without hitting limits. Most small and mid-size programs never need to upgrade. The platform grows with you naturally. No artificial pressure pushes you to pay. You upgrade only when premium features add real value. The free tier covers more than most teams expect.",
+          "The free tier supports programs of any size very generously. Track dozens of grantees and milestones without hitting any limits. Moreover, most small and mid-size programs never need to upgrade. The platform grows with you naturally as your program expands. Furthermore, no artificial pressure pushes you to pay for more features. You upgrade only when premium features add real measurable value. In addition, the free tier covers more than most teams initially expect. Therefore, generous limits make the platform truly affordable for everyone.",
       },
       {
         question: "How does affordable pricing affect platform quality?",
         answer:
-          "Affordable does not mean basic at all. Karma offers the same core features expensive platforms charge thousands for. On-chain attestations come standard. Reviewer workflows and impact dashboards come standard too. You get enterprise-grade tools at a fraction of the typical cost. Quality stays high because the platform serves thousands of programs. Every user benefits from continuous improvement.",
+          "Affordable does not mean basic or low quality at all. Karma offers the same core features that expensive platforms charge thousands for. Moreover, on-chain attestations come standard on every account tier. Reviewer workflows and impact dashboards come standard too. Furthermore, you get enterprise-grade tools at a fraction of typical cost. Quality stays high because the platform serves thousands of active programs. In addition, every user benefits from continuous improvement and updates. Therefore, affordability and quality coexist perfectly on the Karma platform.",
       },
       {
         question: "Can nonprofits and volunteer-run groups use Karma?",
         answer:
-          "Yes. Karma works well for nonprofits and volunteer organizations. The free tier removes financial barriers entirely. No budget approval or procurement process is needed. Your team can launch a program today. No spending authorization is required to start. Volunteers manage programs alongside their other commitments. The platform saves time for teams with limited hours.",
+          "Yes. Karma works exceptionally well for nonprofits and volunteer organizations. The free tier removes financial barriers entirely for every team. Moreover, no budget approval or procurement process is needed to start. Your team can launch a program today without spending anything. Furthermore, no spending authorization is required from leadership at all. Volunteers manage programs alongside their other time commitments easily. In addition, the platform saves time for teams with limited available hours. Therefore, volunteer-run groups find Karma particularly valuable for their needs.",
+      },
+      {
+        question: "How does Karma compare to other affordable options?",
+        answer:
+          "Most affordable alternatives sacrifice features to keep prices low. Karma includes milestone tracking, reporting, and on-chain verification free. Moreover, reviewer workflows come standard instead of requiring paid upgrades. Public dashboards build transparency without custom development costs. Furthermore, the platform scales without forcing expensive tier upgrades. Competitors often limit free tiers to trial periods or basic features. In addition, Karma offers a genuine long-term free option with no catches. Therefore, Karma provides the best value among affordable grant management tools.",
+      },
+      {
+        question: "What happens if our organization's budget increases?",
+        answer:
+          "Your Karma setup grows with your budget naturally over time. Add premium features like whitelabel branding when your budget allows. Moreover, expand to multiple programs without any platform changes needed. The core free features remain available regardless of your budget size. Furthermore, premium features unlock additional capabilities without disrupting existing work. You control exactly when and how much you invest in upgrades. In addition, no forced upgrades happen based on your organization's budget level. Therefore, Karma remains affordable at every stage of growth.",
       },
     ],
     ctaText: "Try Karma for Free",
