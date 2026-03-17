@@ -10,14 +10,14 @@ export const softwareTypeSolutions: SolutionPage[] = [
     heading: "Cloud-Based Grant Management Software",
     tldr: "Cloud-based grant management software lets funders and grantees collaborate from anywhere without installing desktop tools. Karma delivers a fully cloud-native platform with onchain attestations, milestone tracking, and AI-assisted review so your grant program stays transparent and accessible around the clock.",
     problem: {
-      heading: "Legacy Desktop Tools Create Silos and Slow Down Grant Programs",
+      heading: "Why Teams Struggle Without Cloud Grant Management Software",
       description:
-        "Traditional grant management relies on locally installed software, spreadsheets shared over email, and siloed databases that only a few team members can access. When program officers travel, change devices, or onboard new reviewers, productivity stalls. Version conflicts, data duplication, and lack of real-time visibility make it difficult to track how funds are being used or whether milestones are on schedule. These friction points erode trust between funders and grantees and make audits unnecessarily painful.",
+        "Traditional grant management relies on desktop tools and emailed spreadsheets. Only a few team members can access siloed databases at any time. Program officers lose productivity when they travel or switch devices. New reviewers wait days for software installs and VPN access. Version conflicts cause data duplication across the team. Funders cannot see real-time milestone progress or fund usage. These bottlenecks erode trust and make audits painfully slow.",
     },
     solution: {
-      heading: "A Cloud-Native Platform Built for Transparency and Collaboration",
+      heading: "Karma Delivers Cloud Grant Management Software Built for Transparency",
       description:
-        "Karma is purpose-built as a cloud-first grant management platform. Every action, from application submission to milestone completion, is recorded with onchain attestations that anyone can independently verify. Program managers access real-time portfolio dashboards from any browser, reviewers evaluate proposals with AI-powered scoring assistance, and grantees update progress through a simple web interface. Because Karma is cloud-based, there is nothing to install, no VPN to configure, and no manual backups to worry about. Whitelabel options let foundations deploy their own branded portal while leveraging Karma's infrastructure, and CIDS-aligned reporting ensures your data meets international development standards.",
+        "Karma is a cloud grant management software platform built from the ground up. Every action is recorded with onchain attestations anyone can verify. Program managers open real-time dashboards from any browser. Reviewers score proposals with AI-powered assistance on any device. Grantees update progress through a simple web interface. Whitelabel options let foundations deploy a branded portal on Karma infrastructure. CIDS-aligned reporting keeps your data aligned with international standards.",
     },
     capabilities: [
       "Browser-based access from any device with no software installation required",
@@ -27,32 +27,48 @@ export const softwareTypeSolutions: SolutionPage[] = [
       "Milestone tracking with structured deliverables and evidence-based completion verification",
       "Whitelabel deployment so foundations can run a branded grant portal on Karma's infrastructure",
       "CIDS-aligned reporting for standardized impact measurement across grant programs",
+      "Role-based access controls so each team member sees only what they need",
     ],
     faqs: [
       {
         question: "Do I need to install anything to use Karma?",
         answer:
-          "No. Karma runs entirely in the browser, so there is nothing to download, install, or configure on your local machine. Program managers, reviewers, and grantees all access the platform through a standard web URL. No desktop software, browser plugins, VPN connections, or IT provisioning steps are required to get started.",
+          "No. Karma runs entirely in the browser. You do not download or install any software. Program managers, reviewers, and grantees all reach the platform through a web URL. No desktop apps, browser plugins, or VPN connections are needed. You can start working within minutes of creating your account.",
       },
       {
         question: "How does Karma ensure data integrity in the cloud?",
         answer:
-          "Karma records key grant actions as onchain attestations using the Ethereum Attestation Service. These records are immutable and publicly verifiable, providing a significantly stronger integrity guarantee than traditional database backups alone. Even if internal systems experience disruptions or outages, the onchain record remains independently accessible and tamper-proof for auditors, stakeholders, and external reviewers.",
+          "Karma records key grant actions as onchain attestations. These records are immutable and publicly verifiable. They provide stronger integrity than traditional database backups alone. Even during system disruptions, the onchain record stays accessible. Auditors and stakeholders can check it without relying on internal systems.",
       },
       {
         question: "Can I brand the platform with my foundation's identity?",
         answer:
-          "Yes. Karma offers whitelabel deployment that lets you fully customize the portal with your logo, colors, domain name, and overall visual identity. Your grantees and reviewers interact with a seamlessly branded experience that reflects your organization at every touchpoint, while Karma handles all hosting, software updates, and infrastructure management behind the scenes.",
+          "Yes. Karma offers whitelabel deployment for full portal customization. You add your logo, colors, and domain name. Grantees and reviewers see only your brand throughout their experience. Karma handles hosting, updates, and infrastructure behind the scenes. Your team focuses on grants, not server management.",
       },
       {
         question: "Is Karma suitable for large grant portfolios?",
         answer:
-          "Yes. The platform is specifically designed for programs managing dozens to hundreds of active grants simultaneously without any performance degradation. Portfolio dashboards aggregate milestone progress, disbursement status, and reviewer feedback across your entire program in real time, ensuring you maintain full visibility and operational control regardless of how many grants you currently oversee.",
+          "Yes. The platform handles dozens to hundreds of active grants without slowdowns. Portfolio dashboards aggregate milestone progress and disbursement status in real time. You maintain full visibility regardless of portfolio size. Teams scale their programs without adding extra administrative overhead.",
       },
       {
         question: "How does Karma handle data security in the cloud?",
         answer:
-          "Karma uses industry-standard encryption for data in transit and at rest, combined with role-based access controls that limit who can view or modify specific grant information. Onchain attestations add a tamper-proof verification layer, ensuring that critical records remain independently verifiable even outside the platform, which strengthens security beyond what traditional database protections alone can offer.",
+          "Karma uses industry-standard encryption for data in transit and at rest. Role-based access controls limit who can view or change specific grant data. Onchain attestations add a tamper-proof verification layer. Critical records stay verifiable even outside the platform. This approach strengthens security beyond what traditional databases offer alone.",
+      },
+      {
+        question: "Can I access cloud grant management software from my phone?",
+        answer:
+          "Yes. Karma works on any device with a modern web browser. You can review grant status, approve milestones, and check dashboards from your phone or tablet. The interface adapts to smaller screens automatically. No mobile app download is required.",
+      },
+      {
+        question: "How fast can our team get started with cloud-based grant management?",
+        answer:
+          "Most teams set up their first program within a day. You configure evaluation criteria, milestone templates, and branding through the web dashboard. Then you invite reviewers and grantees by sharing a link. No IT provisioning or server setup is involved. Your cloud grant portal is live as soon as you finish configuration.",
+      },
+      {
+        question: "Does Karma offer uptime guarantees for cloud availability?",
+        answer:
+          "Karma is engineered for continuous availability around the clock. The platform runs on reliable cloud infrastructure with built-in redundancy. Grantees can submit updates and reviewers can complete evaluations at any hour. You do not need to schedule work around maintenance windows or downtime.",
       },
     ],
     ctaText: "Launch your cloud-based grant program",
@@ -108,14 +124,14 @@ export const softwareTypeSolutions: SolutionPage[] = [
     heading: "Automated Grant Management Software",
     tldr: "Automated grant management software eliminates repetitive manual tasks like application sorting, review assignment, and status reporting. Karma automates key steps in the grant lifecycle with AI-powered proposal review, structured milestone verification, and onchain attestations that create audit trails without extra administrative effort.",
     problem: {
-      heading: "Manual Processes Drain Resources and Introduce Errors",
+      heading: "Why Teams Need Automated Grant Management Software",
       description:
-        "Grant programs that rely on manual workflows spend enormous amounts of staff time on tasks that do not require human judgment: copying data between spreadsheets, chasing grantees for status updates, formatting reports for board presentations, and reconciling disbursement records. Each manual handoff introduces the risk of transcription errors, missed deadlines, and inconsistent evaluation criteria. As programs scale, these inefficiencies compound, forcing teams to choose between thoroughness and speed.",
+        "Manual grant workflows drain staff time on tasks that need no human judgment. Teams copy data between spreadsheets and chase grantees for status updates. Report formatting for board presentations takes days of effort. Each manual handoff risks transcription errors and missed deadlines. Reviewers apply criteria inconsistently without structured tools. As programs grow, these inefficiencies multiply and force teams to sacrifice quality for speed.",
     },
     solution: {
-      heading: "Intelligent Automation That Keeps Humans in Control",
+      heading: "Karma Provides Automated Grant Management Software That Keeps Humans in Control",
       description:
-        "Karma automates the administrative burden of grant management while keeping program officers in the decision seat. AI-powered review assists evaluators by surfacing key proposal details and suggesting consistency scores, but final decisions remain with your team. Milestone tracking automatically prompts grantees to submit evidence of completion and flags overdue deliverables. Every significant action is recorded as an onchain attestation, creating a tamper-proof audit trail without anyone needing to maintain a separate log. Portfolio dashboards aggregate data automatically, so reporting to stakeholders takes minutes instead of days. CIDS-aligned templates standardize impact reporting across your entire program.",
+        "Karma automates the administrative burden of grant programs. AI-powered review surfaces key proposal details and suggests consistency scores. Your team still makes every final funding decision. Automated milestone tracking prompts grantees to submit evidence on time. The platform flags overdue deliverables before they become major problems. Every action creates an onchain attestation for a tamper-proof audit trail. Portfolio dashboards aggregate data so stakeholder reporting takes minutes, not days.",
     },
     capabilities: [
       "AI-powered proposal review that highlights key details and flags inconsistencies for evaluators",
@@ -124,32 +140,49 @@ export const softwareTypeSolutions: SolutionPage[] = [
       "Portfolio dashboards with auto-aggregated metrics for instant stakeholder reporting",
       "Structured evaluation workflows that enforce consistent scoring criteria across all reviewers",
       "CIDS-aligned reporting templates that standardize impact measurement automatically",
+      "Automated notification rules that alert teams about deadlines and status changes",
+      "Configurable workflow triggers that adapt automation to each program's needs",
     ],
     faqs: [
       {
         question: "Does automation mean the AI makes grant decisions?",
         answer:
-          "No. Karma's AI assists reviewers by surfacing relevant information and flagging inconsistencies, but all funding decisions are made by your program team. Automation handles administrative tasks like deadline reminders, data aggregation, audit trail creation, and report formatting, freeing your staff to focus on the high-value judgment calls that require human expertise and institutional knowledge.",
+          "No. Karma's AI assists reviewers by surfacing relevant details and flagging issues. All funding decisions stay with your program team. Automation handles reminders, data aggregation, and report formatting. Your staff focuses on high-value judgment calls instead of repetitive tasks.",
       },
       {
-        question: "How much time can automation save our grant program?",
+        question: "How much time can automated grant management software save?",
         answer:
-          "Programs typically reduce administrative overhead significantly by eliminating manual data entry, report compilation, and status chasing. The exact savings depend on your program size and current workflow complexity, but teams managing 50 or more active grants often reclaim several staff hours per week that can be redirected to higher-value activities like grantee support and strategic planning.",
+          "Teams typically cut administrative overhead by eliminating manual data entry and status chasing. Programs with 50 or more active grants often reclaim several staff hours per week. That time goes back to grantee support and strategic planning. Exact savings depend on your program size and current workflow.",
       },
       {
         question: "Can I customize which parts of the workflow are automated?",
         answer:
-          "Yes. Karma's automation is modular, so you can enable or disable individual features independently based on your needs. AI-assisted review, automated milestone tracking, onchain attestations, and notification rules can each be configured separately, allowing your team to adopt automation incrementally and at a pace that matches your organization's comfort level with each capability.",
+          "Yes. Karma's automation is modular. You enable or disable features based on your needs. AI-assisted review, milestone tracking, and notification rules each work independently. Your team can adopt automation at its own pace.",
       },
       {
         question: "What happens if an automated check flags something incorrectly?",
         answer:
-          "All automated flags are surfaced as suggestions for human review rather than treated as final decisions. Program officers can override any automated assessment and adjust the underlying criteria as needed. The system incorporates these manual corrections over time to improve the relevance, accuracy, and contextual awareness of future suggestions, so false flags decrease with continued use.",
+          "All automated flags appear as suggestions for human review. Program officers can override any assessment and adjust criteria. The system learns from manual corrections over time. False flags decrease with continued use. Your team always has the final say.",
       },
       {
         question: "How does automated reporting work for stakeholder updates?",
         answer:
-          "Karma continuously aggregates milestone progress, disbursement data, and reviewer activity into real-time portfolio dashboards. When you need a stakeholder report, the data is already compiled, current, and ready to share. You can export CIDS-aligned reports in minutes instead of spending days manually gathering information from spreadsheets, emails, and multiple disconnected data sources.",
+          "Karma aggregates milestone progress and disbursement data into real-time dashboards. The data is always compiled and current. You export CIDS-aligned reports in minutes. No more gathering information from spreadsheets and email threads. Stakeholders get accurate updates on demand.",
+      },
+      {
+        question: "Is automated grant management software hard to set up?",
+        answer:
+          "Not at all. You configure automation rules through a simple web interface. Most teams finish setup within a few hours. Karma provides templates for common grant workflows. You can adjust rules anytime as your program evolves.",
+      },
+      {
+        question: "Can automation handle multi-stage grant programs?",
+        answer:
+          "Yes. Karma supports automation across every grant lifecycle stage. Intake, review, milestone tracking, and closeout each have configurable automation rules. The platform moves grants through stages based on your defined triggers. Complex multi-phase programs run smoothly without manual intervention at each step.",
+      },
+      {
+        question: "How does automation improve evaluation consistency?",
+        answer:
+          "Structured workflows enforce the same scoring criteria for every reviewer. AI-powered tools highlight the same proposal details each time. This removes variation caused by reviewer fatigue or different reading styles. Programs see more consistent scores across their entire application pool.",
       },
     ],
     ctaText: "Automate your grant workflows today",
@@ -205,14 +238,14 @@ export const softwareTypeSolutions: SolutionPage[] = [
     heading: "Digital Grant Management Solution",
     tldr: "A digital grant management solution replaces paper forms, email chains, and disconnected spreadsheets with a unified online platform. Karma provides a complete digital environment where applications, reviews, milestones, disbursements, and impact reports live in one place, backed by onchain attestations for trust and transparency.",
     problem: {
-      heading: "Paper-Based and Fragmented Processes Undermine Grant Programs",
+      heading: "Why Grant Programs Need a Digital Grant Management Solution",
       description:
-        "Many grant programs still rely on a patchwork of tools: PDF application forms submitted by email, review scores tracked in spreadsheets, milestone updates buried in inboxes, and financial records maintained in separate accounting software. This fragmentation means no single person has a complete picture of program health. Information gets lost between handoffs, grantees submit the same data multiple times in different formats, and leadership lacks the real-time visibility needed to make strategic decisions about fund allocation.",
+        "Many grant programs still rely on paper forms and disconnected tools. Teams email PDF applications and track review scores in spreadsheets. Milestone updates get buried in crowded inboxes. Financial records live in separate accounting software. No single person sees the complete picture of program health. Information falls through the cracks between handoffs. Grantees submit the same data multiple times in different formats.",
     },
     solution: {
-      heading: "One Digital Platform for the Entire Grant Lifecycle",
+      heading: "Karma Is the Digital Grant Management Solution That Replaces Fragmented Tools",
       description:
-        "Karma replaces fragmented tools with a single digital solution that covers every stage of the grant lifecycle. Grantees submit applications through structured online forms, reviewers evaluate proposals using AI-assisted scoring, and program managers track progress through real-time dashboards. Milestone completion is verified through evidence submission and recorded as onchain attestations, creating a permanent digital record that replaces paper audit trails. Whitelabel options let you present a branded digital experience to your community, and CIDS-aligned reporting ensures your digital records meet international standards for development impact measurement.",
+        "Karma replaces scattered tools with one digital grant management solution. Grantees submit applications through structured online forms. Reviewers evaluate proposals with AI-assisted scoring for consistency. Program managers track progress through real-time dashboards. Milestone completion gets verified through evidence submission and recorded onchain. Whitelabel options let you present a branded digital experience. CIDS-aligned reporting keeps your records aligned with international standards.",
     },
     capabilities: [
       "Structured digital application forms that replace PDF and email-based submission workflows",
@@ -222,32 +255,48 @@ export const softwareTypeSolutions: SolutionPage[] = [
       "Real-time portfolio dashboards replacing manual report compilation",
       "Whitelabel portals for a branded digital experience under your foundation's identity",
       "CIDS-aligned digital reporting for standardized impact data across all grants",
+      "Historical data import so past grants appear alongside active ones in your dashboard",
     ],
     faqs: [
       {
         question: "How difficult is it to transition from paper-based processes to Karma?",
         answer:
-          "Karma is designed for straightforward adoption with minimal disruption to your existing team and workflows. The platform uses familiar web interfaces that require no specialized training, and most teams complete onboarding within a few days. Existing grant data can be imported to maintain historical continuity, and grantees typically need nothing beyond a brief walkthrough of the digital submission process.",
+          "Karma uses familiar web interfaces that need no special training. Most teams finish onboarding within a few days. You can import existing grant data to keep historical records. Grantees only need a brief walkthrough of the submission process. The transition causes minimal disruption to your workflow.",
       },
       {
-        question: "Can grantees who are not technical use the platform?",
+        question: "Can grantees who are not technical use this digital grant management solution?",
         answer:
-          "Yes. The grantee-facing interface is designed to be intuitive and accessible to users of all technical backgrounds and experience levels. Submitting applications, uploading milestone evidence, and viewing reviewer feedback all work through simple web forms that are accessible from any modern browser on both desktop and mobile devices without requiring any technical knowledge.",
+          "Yes. The grantee interface is simple and intuitive. Submitting applications and uploading milestone evidence work through basic web forms. Everything runs in a standard browser on desktop or mobile. No technical knowledge is required to participate.",
       },
       {
         question: "How does going digital improve accountability?",
         answer:
-          "Every action in Karma is timestamped and, for key milestones, recorded as onchain attestations on a public blockchain. This creates an immutable audit trail that is far more reliable and tamper-resistant than paper records. Authorized stakeholders can access this information in real time rather than waiting for periodic reviews, manual report compilation, or scheduled audit cycles.",
+          "Every action in Karma carries a timestamp. Key milestones get recorded as onchain attestations on a public blockchain. This creates an immutable audit trail far more reliable than paper. Stakeholders access this information in real time. They do not wait for periodic reviews or manual report cycles.",
       },
       {
         question: "What happens to our existing paper-based grant records?",
         answer:
-          "You can import historical grant data into Karma to maintain full continuity with your existing program records and institutional knowledge. Once imported, past grants appear alongside active ones in your portfolio dashboard, giving you a unified digital view of your entire program history that supports both day-to-day management and long-term reporting and trend analysis.",
+          "You can import historical grant data into Karma. Past grants appear alongside active ones in your portfolio dashboard. This gives you a unified digital view of your entire program history. The imported data supports day-to-day management and long-term trend analysis.",
       },
       {
         question: "Can we run a branded digital portal for our grantees?",
         answer:
-          "Yes. Karma's whitelabel deployment lets your foundation present a fully branded digital portal with your own logo, color scheme, custom domain name, and tailored navigation. Grantees and reviewers interact exclusively with your brand identity throughout their entire experience, while Karma handles all hosting, infrastructure, ongoing security updates, and software maintenance behind the scenes.",
+          "Yes. Whitelabel deployment lets you customize the portal with your logo, colors, and domain. Grantees and reviewers see only your brand identity. Karma handles hosting, security updates, and software maintenance. Your team stays focused on grant outcomes.",
+      },
+      {
+        question: "How does a digital solution reduce errors compared to paper processes?",
+        answer:
+          "Digital forms enforce required fields and validation rules. Data flows directly between stages without manual re-entry. This eliminates transcription mistakes common with paper workflows. Automated checks catch missing information before submissions are finalized. Your team spends less time correcting errors.",
+      },
+      {
+        question: "Can I track the full history of a grant digitally?",
+        answer:
+          "Yes. Every grant has a complete digital timeline in Karma. You see the original application, every review score, all milestone submissions, and final reports in one place. Onchain attestations anchor key events to verifiable timestamps. No paper filing cabinets needed.",
+      },
+      {
+        question: "Does this digital grant management solution work for international programs?",
+        answer:
+          "Yes. Karma is a web-based platform accessible from anywhere in the world. Grantees in any country can submit applications and milestone evidence. CIDS-aligned reporting meets international development standards. The platform handles distributed teams across multiple time zones.",
       },
     ],
     ctaText: "Digitize your grant program",
@@ -303,14 +352,14 @@ export const softwareTypeSolutions: SolutionPage[] = [
     heading: "Online Grant Management System",
     tldr: "An online grant management system lets distributed teams run every aspect of a grant program through the web. Karma provides a fully online system where funders, reviewers, and grantees collaborate in real time with milestone tracking, AI-powered review, and onchain attestations ensuring transparency at every step.",
     problem: {
-      heading: "Distributed Teams Cannot Effectively Manage Grants Through Email and Spreadsheets",
+      heading: "Why Distributed Teams Need an Online Grant Management System",
       description:
-        "Modern grant programs often involve teams spread across multiple time zones, external reviewers who work part-time, and grantees in dozens of countries. Trying to coordinate this distributed workflow through email threads, shared drives, and offline spreadsheets leads to constant communication breakdowns. Reviewers work from outdated versions of evaluation rubrics, program managers cannot see real-time status across the portfolio, and grantees lack a single place to check their obligations and deadlines. The result is delayed disbursements, missed milestones, and frustrated stakeholders.",
+        "Modern grant programs span multiple time zones and countries. External reviewers often work part-time with limited availability. Email threads and shared drives cause constant communication breakdowns. Reviewers work from outdated evaluation rubrics without realizing it. Program managers cannot see real-time status across the portfolio. Grantees lack one place to check deadlines and obligations. The result is delayed payments, missed milestones, and frustrated stakeholders.",
     },
     solution: {
-      heading: "A Fully Online System Where Everyone Stays in Sync",
+      heading: "Karma Is the Online Grant Management System That Keeps Everyone in Sync",
       description:
-        "Karma gives every participant in your grant program a single online destination. Grantees submit applications and milestone updates, reviewers access proposals and record evaluations, and program managers monitor the entire portfolio through dashboards, all from any web browser. AI-powered review tools help evaluators work faster without sacrificing thoroughness. Onchain attestations record key decisions and milestone completions as verifiable public records, so trust does not depend on a single institution's database. The system is always online, always current, and accessible to authorized users regardless of location or time zone.",
+        "Karma gives every participant a single online grant management system to work from. Grantees submit applications and milestone updates through their browser. Reviewers access proposals and record evaluations from any device. Program managers monitor the entire portfolio through real-time dashboards. AI-powered review tools help evaluators work faster and more consistently. Onchain attestations record key decisions as verifiable public records. The system stays current and accessible regardless of location or time zone.",
     },
     capabilities: [
       "Fully browser-based workflows for funders, reviewers, and grantees with no downloads required",
@@ -319,32 +368,49 @@ export const softwareTypeSolutions: SolutionPage[] = [
       "Onchain attestations creating verifiable records accessible to all authorized stakeholders",
       "Milestone tracking with deadline visibility and automated progress notifications",
       "Portfolio dashboards aggregating status across all active grants in real time",
+      "Role-based access that gives each participant exactly the right level of permissions",
+      "Timezone-aware notifications so global teams never miss important deadlines",
     ],
     faqs: [
       {
-        question: "Can external reviewers access the system without a full account?",
+        question: "Can external reviewers access the online grant management system easily?",
         answer:
-          "Reviewers can be onboarded with specific roles that limit their access to only the proposals they are assigned to evaluate. The invitation process is straightforward and requires only a web browser with no software installation, lengthy registration forms, or IT provisioning steps. Reviewers can begin evaluating proposals within minutes of receiving their invitation link.",
+          "Yes. Reviewers get onboarded with specific roles through a simple invitation link. They only see the proposals assigned to them. No software installation or lengthy registration is needed. Reviewers start evaluating proposals within minutes of accepting their invite.",
       },
       {
-        question: "How does the system handle different time zones?",
+        question: "How does the online system handle different time zones?",
         answer:
-          "All deadlines and timestamps are clearly displayed with appropriate timezone context, and notifications are delivered through the platform regardless of location. Because everything runs online in real time, team members in any time zone can pick up exactly where others left off without waiting for file transfers, email replies, or manual synchronization of offline spreadsheets.",
+          "All deadlines display with appropriate timezone context. Notifications reach participants regardless of location. Team members in any time zone pick up where others left off. No one waits for file transfers or email replies. The platform keeps everyone synchronized automatically.",
       },
       {
-        question: "Is the system available 24/7?",
+        question: "Is the online grant management system available 24/7?",
         answer:
-          "Yes. Karma is a cloud-hosted platform engineered for continuous availability around the clock, every day of the year without scheduled downtime. Grantees can submit progress updates, reviewers can complete evaluations, and program managers can check portfolio status at any time without needing to schedule around system maintenance windows, office hours, or regional availability constraints.",
+          "Yes. Karma runs around the clock every day of the year. Grantees submit updates at any hour. Reviewers complete evaluations on their own schedule. Program managers check portfolio status whenever they need it. No maintenance windows block access.",
       },
       {
         question: "What internet bandwidth is required?",
         answer:
-          "Karma is a lightweight web application that performs well on standard broadband connections and does not require high bandwidth or specialized hardware to operate effectively. This makes the platform accessible to grantees and reviewers in regions with moderate internet infrastructure, ensuring that connectivity limitations do not create barriers to participation in your grant program.",
+          "Karma is a lightweight web application that runs well on standard broadband. It does not need high bandwidth or special hardware. Grantees in regions with moderate internet can participate fully. Connectivity limitations do not block access to the platform.",
       },
       {
-        question: "How do you ensure data consistency when multiple users work simultaneously?",
+        question: "How do you ensure data consistency when multiple users work at once?",
         answer:
-          "Karma handles concurrent access through real-time data synchronization, so changes made by one user are immediately visible to others working in the same program. Milestone approvals and review submissions are recorded as onchain attestations with authoritative timestamps, which prevents conflicting updates, duplicate actions, or data inconsistencies across distributed teams working in different locations.",
+          "Karma synchronizes data in real time across all users. Changes one person makes appear instantly for others. Milestone approvals and review submissions get onchain attestation timestamps. This prevents conflicting updates and duplicate actions. Distributed teams always see the same current information.",
+      },
+      {
+        question: "Can I manage multiple grant programs in one online system?",
+        answer:
+          "Yes. You create and manage separate grant programs within a single Karma account. Each program has its own criteria, milestones, and branding. Portfolio dashboards aggregate data across all programs at once. You get organizational-level visibility without switching between tools.",
+      },
+      {
+        question: "How does an online system improve collaboration between funders and grantees?",
+        answer:
+          "Grantees see their deadlines, submit evidence, and track feedback in one place. Funders review progress and approve milestones through the same platform. Both sides share a single source of truth. This removes the back-and-forth of email-based communication. Everyone stays aligned on expectations and status.",
+      },
+      {
+        question: "What security measures protect data in the online system?",
+        answer:
+          "Karma uses encryption for data in transit and at rest. Role-based access controls limit visibility to authorized users. Onchain attestations create tamper-proof records of key actions. The platform follows industry-standard security practices. Your grant data stays protected at every layer.",
       },
     ],
     ctaText: "Put your grant program online",
@@ -400,14 +466,14 @@ export const softwareTypeSolutions: SolutionPage[] = [
     heading: "Full Lifecycle Grant Management Software",
     tldr: "Grant lifecycle management software covers every stage from application intake through final impact reporting. Karma provides end-to-end lifecycle coverage with structured milestones, AI-assisted review, onchain attestations at each phase transition, and portfolio dashboards that give funders a complete view of their program from start to finish.",
     problem: {
-      heading: "Disconnected Tools for Different Grant Phases Create Gaps in Oversight",
+      heading: "Why You Need Grant Lifecycle Management Software to Close Oversight Gaps",
       description:
-        "Most grant programs use one tool for applications, another for financial tracking, a spreadsheet for milestone monitoring, and yet another for final reporting. Each phase transition is a potential point of failure where data is lost, context is dropped, or accountability breaks down. When a program officer needs to understand the full history of a grant, from the original proposal through every milestone to the final impact report, they must piece together information from multiple systems. This fragmentation makes it nearly impossible to learn from past grants or demonstrate cumulative impact to stakeholders.",
+        "Most grant programs use different tools for each phase. Applications go to one system and financial tracking to another. Teams monitor milestones in spreadsheets and write final reports elsewhere. Each phase transition risks lost data and dropped context. Program officers piece together grant history from multiple systems. This fragmentation makes it hard to learn from past grants. Stakeholders cannot see cumulative impact across the portfolio.",
     },
     solution: {
-      heading: "One Platform That Spans the Entire Grant Lifecycle",
+      heading: "Karma Grant Lifecycle Management Software Covers Every Stage",
       description:
-        "Karma is designed around the grant lifecycle as a continuous process rather than a series of disconnected phases. Applications flow into structured project profiles. Approved grants transition into milestone-tracked active projects where grantees submit evidence of progress. AI-powered review assists evaluators at the intake stage, and the same structured evaluation framework carries through to milestone verification. Every phase transition is recorded as an onchain attestation, creating a verifiable chain of custody from first application to final impact report. CIDS-aligned reporting templates ensure that impact data is captured consistently across the entire lifecycle and across all grants in your portfolio.",
+        "Karma treats the grant lifecycle as one continuous process. Applications flow into structured project profiles automatically. Approved grants transition into milestone-tracked active projects. AI-powered review assists evaluators at intake and carries through to milestone checks. Every phase transition gets recorded as an onchain attestation. This creates a verifiable chain from first application to final impact report. CIDS-aligned templates capture consistent impact data across all lifecycle stages.",
     },
     capabilities: [
       "End-to-end coverage from application intake through milestones to final impact reporting",
@@ -417,32 +483,48 @@ export const softwareTypeSolutions: SolutionPage[] = [
       "Portfolio dashboards showing lifecycle stage distribution across all active grants",
       "CIDS-aligned reporting that captures standardized impact data throughout the grant lifecycle",
       "Historical grant data that helps program officers learn from past funding decisions",
+      "Continuation grant support that links related records across multiple funding rounds",
     ],
     faqs: [
       {
         question: "What stages of the grant lifecycle does Karma cover?",
         answer:
-          "Karma covers application submission and intake, proposal review and evaluation, funding decisions, milestone definition and tracking, progress reporting, impact measurement, and final closeout reporting. Each stage is connected within a single platform so data flows continuously without manual re-entry, giving you a complete and auditable record from the first application to the final outcome report.",
+          "Karma covers application intake, proposal review, funding decisions, milestone tracking, progress reporting, and final closeout. Each stage connects within a single platform. Data flows between stages without manual re-entry. You get a complete auditable record from first application to final outcome.",
       },
       {
         question: "Can I customize the lifecycle stages for my program?",
         answer:
-          "Yes. While Karma provides a standard lifecycle framework out of the box, you can configure milestone structures, review criteria, reporting requirements, and phase transition rules to match your program's specific process. This flexibility ensures the platform adapts to how your team actually works rather than imposing a rigid structure that does not fit your needs.",
+          "Yes. Karma provides a standard lifecycle framework you can adjust. You configure milestone structures, review criteria, and phase transition rules. The platform adapts to how your team works. You do not need to force your process into a rigid structure.",
       },
       {
-        question: "How does lifecycle tracking improve grant outcomes?",
+        question: "How does grant lifecycle management software improve outcomes?",
         answer:
-          "By maintaining a continuous record from application through to final impact, program officers can identify meaningful patterns across their portfolio. They can see which types of projects consistently hit milestones, where delays typically occur, and what proposal characteristics correlate with successful outcomes. These data-driven insights directly improve future funding decisions, program design, and grantee support strategies.",
+          "A continuous record from application to impact reveals patterns across your portfolio. You see which project types hit milestones consistently. You identify where delays typically occur. These insights improve future funding decisions and program design. Data-driven learning strengthens every subsequent grant round.",
       },
       {
         question: "Can I view the complete history of any individual grant?",
         answer:
-          "Yes. Every grant in Karma has a full timeline showing its journey from initial application through each milestone, review decision, and phase transition to final closeout. Onchain attestations anchor key events to independently verifiable timestamps, so you can trace the entire history of any grant with complete confidence in the accuracy and integrity of the record.",
+          "Yes. Every grant has a full timeline in Karma. You trace the journey from application through each milestone and review decision. Onchain attestations anchor key events to verifiable timestamps. The complete history is accurate and tamper-proof.",
       },
       {
         question: "How does Karma handle grants that span multiple funding rounds?",
         answer:
-          "Karma fully supports continuation grants and multi-phase funding by linking related grant records across successive funding rounds. Program officers can view the cumulative history of a grantee's work over time, track how outcomes from earlier phases informed subsequent funding decisions, and generate comprehensive reports that span the full duration of long-running, multi-round initiatives.",
+          "Karma links related grant records across successive funding rounds. Program officers view the cumulative history of a grantee over time. You track how earlier outcomes informed later funding decisions. Comprehensive reports span the full duration of multi-round initiatives.",
+      },
+      {
+        question: "Does lifecycle management software help with audit preparation?",
+        answer:
+          "Yes. Every phase transition creates an onchain attestation with a verifiable timestamp. Auditors trace the full grant journey without requesting internal documents. The immutable record shows who approved what and when. Audit preparation time drops significantly with this built-in trail.",
+      },
+      {
+        question: "Can I compare lifecycle performance across different grant programs?",
+        answer:
+          "Yes. Portfolio dashboards show lifecycle stage distribution across all your programs. You compare which programs move grants through stages faster. You spot bottlenecks in specific phases. CIDS-aligned data makes cross-program comparisons meaningful and consistent.",
+      },
+      {
+        question: "How does Karma handle the transition from review to active project?",
+        answer:
+          "Approved grants automatically transition into milestone-tracked active projects. The evaluation data carries forward into the project profile. Grantees see their approved milestones and deadlines immediately. No manual setup is needed between the review and tracking phases.",
       },
     ],
     ctaText: "Manage your full grant lifecycle",
@@ -498,14 +580,14 @@ export const softwareTypeSolutions: SolutionPage[] = [
     heading: "Grant Tracking Software",
     tldr: "Grant tracking software gives funders real-time visibility into where every dollar goes and whether grantees are delivering on their commitments. Karma provides milestone-level tracking, portfolio dashboards, and onchain attestations so you always know the status of your grants without chasing updates through email.",
     problem: {
-      heading: "Funders Lack Real-Time Visibility Into Grant Progress",
+      heading: "Why Funders Need Dedicated Grant Tracking Software",
       description:
-        "Without dedicated tracking software, program officers rely on periodic email updates from grantees to understand project status. These updates arrive in inconsistent formats, on unpredictable schedules, and with varying levels of detail. When board members or stakeholders ask about the overall health of a grant portfolio, staff scramble to compile data from multiple sources. By the time a report is assembled, the information is already outdated. Worst of all, struggling projects often go unnoticed until it is too late to intervene, because there is no system flagging missed milestones or delayed deliverables.",
+        "Without grant tracking software, program officers rely on email updates from grantees. These updates arrive in inconsistent formats on unpredictable schedules. Staff scramble to compile data when stakeholders ask about portfolio health. Reports become outdated before they are even finished. Struggling projects go unnoticed until intervention is too late. No system flags missed milestones or delayed deliverables automatically. Teams waste hours chasing information instead of supporting grantees.",
     },
     solution: {
-      heading: "Real-Time Grant Tracking With Verifiable Milestone Records",
+      heading: "Karma Grant Tracking Software Delivers Real-Time Milestone Visibility",
       description:
-        "Karma replaces ad hoc status updates with structured milestone tracking. Each grant is broken into specific deliverables with deadlines, and grantees submit evidence of completion through the platform. Program managers see progress across the entire portfolio through real-time dashboards that highlight on-track, at-risk, and overdue grants at a glance. Every milestone completion is recorded as an onchain attestation, providing an independent verification layer that does not depend on self-reporting alone. AI-powered review tools help evaluators assess milestone evidence efficiently, and CIDS-aligned reporting templates ensure tracking data can be aggregated into standardized impact reports.",
+        "Karma replaces ad hoc status updates with structured grant tracking software. Each grant breaks into specific deliverables with clear deadlines. Grantees submit evidence of completion directly through the platform. Real-time dashboards highlight on-track, at-risk, and overdue grants at a glance. Every milestone completion gets recorded as an onchain attestation for independent verification. AI-powered tools help evaluators review evidence efficiently. CIDS-aligned templates turn tracking data into standardized impact reports.",
     },
     capabilities: [
       "Milestone-level progress tracking with evidence submission for each deliverable",
@@ -514,32 +596,50 @@ export const softwareTypeSolutions: SolutionPage[] = [
       "Automated notifications when milestones are approaching or overdue",
       "AI-assisted milestone evidence review for faster and more consistent evaluation",
       "CIDS-aligned data capture for standardized tracking across your grant portfolio",
+      "Filterable views by grant status, type, time period, or custom tags",
+      "Disbursement tracking linked directly to verified milestone completions",
     ],
     faqs: [
       {
-        question: "How does Karma track milestone progress?",
+        question: "How does grant tracking software monitor milestone progress?",
         answer:
-          "Each grant is structured into milestones with clearly defined deliverables and deadlines. Grantees submit evidence such as reports, links, or documents when they complete a milestone. Program managers then review and approve these completions, and each approval is permanently recorded as an onchain attestation that serves as independently verifiable documentation of the deliverable's completion.",
+          "Each grant has milestones with defined deliverables and deadlines. Grantees submit evidence like reports, links, or documents upon completion. Program managers review and approve these submissions. Each approval gets permanently recorded as an onchain attestation. This creates independently verifiable proof of every deliverable.",
       },
       {
         question: "Can I see the status of all my grants in one view?",
         answer:
-          "Yes. Karma's portfolio dashboard provides a consolidated view of all active grants, showing milestone progress, disbursement status, and overall program health at a glance. You can filter the view by grant status, grant type, time period, or custom tags to quickly locate specific information and identify grants that need attention or intervention.",
+          "Yes. Karma's portfolio dashboard shows all active grants in a single view. You see milestone progress, disbursement status, and program health at a glance. Filters let you sort by grant status, type, or time period. You quickly spot grants that need attention without digging through emails.",
       },
       {
         question: "What happens when a grantee misses a milestone deadline?",
         answer:
-          "The platform flags overdue milestones prominently in the portfolio dashboard and can send automated notifications to both the grantee and the responsible program manager. This early warning system helps your team identify emerging issues quickly and intervene proactively before small delays compound into major problems that could jeopardize overall project outcomes and deliverables.",
+          "The platform flags overdue milestones in the portfolio dashboard immediately. Automated notifications alert both the grantee and the program manager. This early warning helps your team intervene before small delays become major problems. You catch issues weeks earlier than with manual tracking.",
       },
       {
-        question: "How are the onchain tracking records different from a regular database?",
+        question: "How are onchain tracking records different from a regular database?",
         answer:
-          "Onchain attestations are recorded on a public blockchain, which means they cannot be altered, backdated, or deleted after the fact by anyone. This provides an independent verification layer that stakeholders, external auditors, and the public can check without needing to rely on Karma's internal database alone, adding credibility and tamper-resistance to your tracking records.",
+          "Onchain attestations live on a public blockchain. No one can alter, backdate, or delete them. Stakeholders and auditors verify records independently of Karma's database. This adds credibility and tamper-resistance to your tracking records. External parties trust the data without needing internal access.",
       },
       {
-        question: "Can I track both financial disbursements and project deliverables together?",
+        question: "Can I track both financial disbursements and project deliverables?",
         answer:
-          "Yes. Karma links milestone completion directly to disbursement eligibility, so you can see exactly how fund releases align with actual project progress. Portfolio dashboards display both financial allocation and deliverable status side by side, making it straightforward to verify that payments correspond to verified work and that no disbursements have been made prematurely.",
+          "Yes. Karma links milestone completion to disbursement eligibility. You see how fund releases align with actual progress. Dashboards display financial allocation and deliverable status side by side. This makes it simple to verify that payments match verified work.",
+      },
+      {
+        question: "How does grant tracking software help with board reporting?",
+        answer:
+          "Portfolio dashboards aggregate all tracking data in real time. You generate board-ready reports in minutes, not days. Reports show milestone completion rates, at-risk grants, and fund utilization. No manual data compilation is needed. Boards get accurate, current information every time.",
+      },
+      {
+        question: "Can I set up custom tracking criteria for different grant types?",
+        answer:
+          "Yes. Each grant program can have its own milestone structures and tracking requirements. You define what evidence grantees must submit for each type of deliverable. Custom tags and categories help you organize and filter your portfolio. The tracking adapts to your program, not the other way around.",
+      },
+      {
+        question:
+          "Does the grant tracking software support early intervention for at-risk projects?",
+        answer:
+          "Yes. The dashboard highlights at-risk grants based on deadline proximity and submission patterns. You spot warning signs before milestones are officially overdue. Automated alerts keep your team informed of emerging issues. Early intervention improves project outcomes and protects your investment.",
       },
     ],
     ctaText: "Start tracking your grants",
@@ -595,14 +695,14 @@ export const softwareTypeSolutions: SolutionPage[] = [
     heading: "Complete Grant Management Platform",
     tldr: "A grant management platform brings together every tool a funder needs into a single unified environment. Karma is a complete platform combining application management, AI-powered review, milestone tracking, disbursement oversight, portfolio analytics, onchain attestations, whitelabel deployment, and CIDS-aligned impact reporting.",
     problem: {
-      heading: "Cobbling Together Point Solutions Creates Complexity Without Solving Core Problems",
+      heading: "Why You Need a Unified Grant Management Platform Instead of Point Solutions",
       description:
-        "Many grant programs assemble their technology stack from a collection of point solutions: a form builder for applications, a project management tool for tracking, an accounting system for disbursements, and a business intelligence tool for reporting. Each tool solves one problem but creates integration challenges. Data must be manually transferred between systems, staff need training on multiple platforms, and the total cost of ownership exceeds what a purpose-built solution would require. Despite all this investment, the fundamental problem remains: no single system provides a complete, trustworthy record of the grant program.",
+        "Many grant programs cobble together separate tools for each function. They use a form builder for applications and a project tool for tracking. An accounting system handles disbursements and a BI tool covers reporting. Each tool solves one problem but creates integration headaches. Staff transfer data manually between systems and train on multiple platforms. Total cost often exceeds what a purpose-built grant management platform would require. Despite all this investment, no single system provides a complete trustworthy record.",
     },
     solution: {
-      heading: "A Purpose-Built Platform That Replaces Your Entire Grant Tool Stack",
+      heading: "Karma Is the Grant Management Platform Built to Replace Your Entire Tool Stack",
       description:
-        "Karma is not a point solution adapted for grants; it is a platform built specifically for grant management from the ground up. Applications, reviews, milestones, disbursements, and impact reports all live in one system. AI-powered review assists evaluators without replacing their judgment. Onchain attestations provide a trust layer that no amount of database security can replicate, because the records exist independently on a public blockchain. Portfolio dashboards give leadership instant visibility without waiting for manual report compilation. Whitelabel deployment lets foundations present their own brand while leveraging a battle-tested infrastructure. And CIDS-aligned reporting ensures your platform produces data that meets the standards expected by international development stakeholders.",
+        "Karma is a grant management platform built for grants from the ground up. Applications, reviews, milestones, and impact reports all live in one system. AI-powered review assists evaluators without replacing their judgment. Onchain attestations create a trust layer that database security alone cannot match. Portfolio dashboards give leadership instant visibility without manual report compilation. Whitelabel deployment lets foundations present their own brand. CIDS-aligned reporting produces data that meets international development standards.",
     },
     capabilities: [
       "Unified application intake, review, and approval workflows in a single platform",
@@ -612,33 +712,48 @@ export const softwareTypeSolutions: SolutionPage[] = [
       "Onchain attestations creating an immutable, publicly verifiable record of grant activity",
       "Whitelabel deployment with custom branding, domain, and portal configuration",
       "CIDS-aligned impact reporting for standardized measurement across your entire portfolio",
+      "Multi-program management within a single organizational account",
     ],
     faqs: [
       {
-        question: "Can Karma replace all the separate tools we currently use for grant management?",
+        question: "Can a grant management platform replace all our separate tools?",
         answer:
-          "For most grant programs, yes. Karma covers application intake, review and evaluation, milestone tracking, progress reporting, and impact measurement in a single unified platform. Programs with specialized accounting or compliance requirements may still use dedicated financial systems alongside Karma for those specific functions, but the core grant management workflow from application to impact is fully covered.",
+          "For most programs, yes. Karma covers application intake, review, milestone tracking, and impact measurement in one place. Programs with specialized accounting needs may keep dedicated financial systems. But the core grant workflow from application to impact is fully covered by the platform.",
       },
       {
-        question: "How does the whitelabel option work?",
+        question: "How does the whitelabel option work on this grant management platform?",
         answer:
-          "Whitelabel deployment lets you run a grant portal under your own brand, including your logo, color scheme, typography, and custom domain. The portal runs entirely on Karma's infrastructure, so your team gets the full platform's functionality without needing to manage servers, apply software updates, or handle security patches. Your grantees see only your brand throughout their entire experience.",
+          "Whitelabel deployment lets you run a portal under your own brand. You add your logo, colors, and custom domain. The portal runs on Karma infrastructure with no servers to manage. Your grantees see only your brand throughout their experience. Karma handles updates and security behind the scenes.",
       },
       {
-        question:
-          "What makes this different from general project management tools adapted for grants?",
+        question: "What makes this platform different from general project management tools?",
         answer:
-          "Karma is built specifically for the grant use case from the ground up rather than adapted from another domain. Features like onchain attestations for verifiable trust, AI-powered proposal review, CIDS-aligned impact reporting, and milestone-based fund disbursement tracking are purpose-built for grant management workflows rather than retrofitted from generic project management or CRM concepts.",
+          "Karma is purpose-built for grant management from the ground up. Onchain attestations, AI-powered proposal review, and CIDS-aligned impact reporting are native features. Milestone-based disbursement tracking fits grant workflows specifically. These are not retrofitted from generic project management or CRM tools.",
       },
       {
-        question: "How does Karma handle multiple grant programs within one organization?",
+        question: "How does the platform handle multiple grant programs?",
         answer:
-          "Program managers can create and manage multiple distinct grant programs within a single Karma account. Each program can have its own review criteria, milestone structures, branding, and reporting templates, while portfolio dashboards aggregate data across all programs simultaneously for organizational-level visibility, cross-program comparison, and consolidated reporting to leadership and board members.",
+          "You create and manage multiple programs within a single account. Each program has its own review criteria, milestones, and branding. Portfolio dashboards aggregate data across all programs at once. Leadership gets organizational-level visibility and cross-program comparison in one view.",
       },
       {
-        question: "Is Karma suitable for both small and large grant programs?",
+        question: "Is the grant management platform suitable for both small and large programs?",
         answer:
-          "Yes. The platform scales smoothly from programs managing a handful of grants to those overseeing hundreds of active projects across multiple funding rounds. The same core features, including AI-powered review, milestone tracking, and onchain attestations, work effectively at any scale, and portfolio dashboards become increasingly valuable as your program size and complexity grow.",
+          "Yes. Karma scales from a handful of grants to hundreds of active projects. AI-powered review, milestone tracking, and onchain attestations work at any scale. Portfolio dashboards become more valuable as your program grows. You do not outgrow the platform as your portfolio expands.",
+      },
+      {
+        question: "How much does it cost compared to using multiple separate tools?",
+        answer:
+          "A unified grant management platform typically costs less than maintaining several point solutions. You eliminate integration overhead and reduce staff training time. One subscription replaces multiple tool licenses. Teams save additional hours by avoiding manual data transfers between systems.",
+      },
+      {
+        question: "Can I migrate existing grant data into the platform?",
+        answer:
+          "Yes. Karma supports importing historical grant records. Past grants appear alongside active ones in your dashboard. You maintain full program continuity during the transition. The import process preserves your institutional knowledge and reporting history.",
+      },
+      {
+        question: "How does the platform ensure data stays trustworthy?",
+        answer:
+          "Onchain attestations record key grant actions on a public blockchain. These records cannot be altered or deleted after creation. Stakeholders verify them independently without internal access. This trust layer goes beyond what any traditional database security can provide. Your data integrity is verifiable by anyone.",
       },
     ],
     ctaText: "Explore the complete platform",
@@ -694,14 +809,14 @@ export const softwareTypeSolutions: SolutionPage[] = [
     heading: "Grant Disbursement and Payment Software",
     tldr: "Grant disbursement software helps funders manage when and how funds are released to grantees. Karma ties disbursements to verified milestone completions, records every payment event as an onchain attestation, and provides portfolio-level dashboards showing fund allocation across your entire grant program.",
     problem: {
-      heading: "Disconnected Disbursement Processes Lead to Accountability Gaps",
+      heading: "Why Funders Need Dedicated Grant Disbursement Software",
       description:
-        "In many grant programs, disbursement decisions happen outside the system that tracks project progress. A program officer checks a spreadsheet, confirms a milestone was met based on an email update, then requests payment through a separate financial system. This disconnection means there is no verifiable link between milestone completion and fund release. When auditors or stakeholders ask why a particular payment was made, reconstructing the justification requires digging through emails, meeting notes, and multiple databases. Overpayments, premature releases, and undocumented advances are common consequences of this fragmented approach.",
+        "In many programs, disbursement decisions happen outside the tracking system. A program officer checks a spreadsheet and confirms a milestone via email. Then they request payment through a separate financial system. No verifiable link exists between milestone completion and fund release. Auditors must dig through emails and meeting notes to justify payments. Overpayments and premature releases happen often with this fragmented approach. Teams lack real-time visibility into how much has been spent versus what remains.",
     },
     solution: {
-      heading: "Milestone-Linked Disbursements With Onchain Payment Records",
+      heading: "Karma Grant Disbursement Software Links Payments to Verified Milestones",
       description:
-        "Karma connects disbursement decisions directly to verified milestone completions. When a grantee submits evidence that a deliverable is complete and a reviewer approves it, the milestone status updates automatically and the platform can flag the grant as eligible for the next tranche of funding. Every disbursement event is recorded as an onchain attestation, creating an immutable record that links the payment to the specific milestone it was released for. Portfolio dashboards show fund allocation across all active grants, making it straightforward to see how much has been disbursed, how much remains, and whether payments align with actual progress. CIDS-aligned reporting ensures disbursement data feeds into standardized impact reports.",
+        "Karma connects disbursement decisions directly to verified milestones. When a grantee submits completion evidence and a reviewer approves it, the status updates automatically. The platform flags grants eligible for the next funding tranche. Every disbursement event gets recorded as an onchain attestation linked to its milestone. Portfolio dashboards show fund allocation across all active grants in real time. You see what has been disbursed, what remains, and whether payments match progress. CIDS-aligned reporting feeds disbursement data into standardized impact reports.",
     },
     capabilities: [
       "Milestone-linked disbursement tracking that ties payments to verified deliverable completion",
@@ -710,32 +825,49 @@ export const softwareTypeSolutions: SolutionPage[] = [
       "Automated eligibility flagging when milestones are verified and grants qualify for next payment",
       "AI-assisted milestone review to help evaluators verify deliverables before disbursement approval",
       "CIDS-aligned financial reporting that standardizes disbursement data across your program",
+      "Flexible payment schedules that support quarterly, milestone-based, or hybrid models",
+      "Cash flow visibility that helps prevent over-commitment of available funds",
     ],
     faqs: [
       {
-        question: "Does Karma process the actual payments?",
+        question: "Does grant disbursement software process the actual payments?",
         answer:
-          "Karma tracks disbursement decisions and records them as onchain attestations, but the actual fund transfer is handled through your existing payment infrastructure and banking systems. The platform provides verified milestone data, reviewer approvals, and complete justification records that your finance team uses to release funds through whichever payment channels your organization already has in place.",
+          "Karma tracks disbursement decisions and records them as onchain attestations. The actual fund transfer uses your existing banking systems. The platform provides verified milestone data and reviewer approvals. Your finance team releases funds through your current payment channels. Karma gives them the justification records they need.",
       },
       {
         question: "How does milestone-linked disbursement reduce risk?",
         answer:
-          "By requiring verified milestone completion before flagging a grant as eligible for payment, you ensure funds are only released when there is documented and reviewed evidence of actual progress. This significantly reduces the risk of paying for incomplete work and creates a clear, auditable trail that directly links every payment to specific verified deliverables and the reviewer approvals that authorized them.",
+          "Grants only become eligible for payment after verified milestone completion. This ensures funds go out only when documented progress exists. The auditable trail links every payment to specific deliverables. Your team avoids paying for incomplete work. Risk of premature or unjustified releases drops significantly.",
       },
       {
         question: "Can I set different disbursement schedules for different grants?",
         answer:
-          "Yes. Each grant can have its own unique milestone structure and corresponding disbursement schedule tailored to the project's needs. Some grants might release funds quarterly after scheduled progress reviews, while others tie each individual payment to a specific deliverable. Karma's flexible milestone framework supports both approaches as well as hybrid disbursement models.",
+          "Yes. Each grant has its own milestone structure and payment schedule. Some grants release funds quarterly after progress reviews. Others tie each payment to a specific deliverable. Karma supports both approaches and hybrid models. You tailor the schedule to each project's needs.",
       },
       {
         question: "How do stakeholders verify that disbursements were justified?",
         answer:
-          "Each disbursement is recorded as an onchain attestation that is permanently linked to the specific milestone evidence and reviewer approval that triggered it. Auditors and external stakeholders can independently verify these records directly on the blockchain without needing access to Karma's internal database, providing a credible and tamper-proof external source of truth for every payment made.",
+          "Each disbursement links to an onchain attestation with milestone evidence and reviewer approval. Auditors verify these records directly on the blockchain. They do not need access to Karma's internal database. This provides a tamper-proof external source of truth for every payment.",
       },
       {
-        question: "Can I track total fund allocation across my entire grant portfolio?",
+        question: "Can I track total fund allocation across my entire portfolio?",
         answer:
-          "Yes. Karma's portfolio dashboards display comprehensive fund allocation data across all active grants, including total amounts disbursed, amounts remaining, and upcoming payment obligations tied to pending milestones. This gives program managers and finance teams a clear, real-time picture of cash flow that helps prevent over-commitment of available funds and supports accurate financial planning.",
+          "Yes. Portfolio dashboards show total amounts disbursed, amounts remaining, and upcoming obligations. You see cash flow across all active grants in real time. This helps prevent over-commitment of available funds. Finance teams use the data for accurate budget planning.",
+      },
+      {
+        question: "How does grant disbursement software help with financial audits?",
+        answer:
+          "Every disbursement creates an immutable onchain record. Auditors trace payments to verified milestones without requesting internal documents. The blockchain-anchored trail shows exactly when and why each payment was approved. Audit preparation time drops from weeks to hours. Your finance team spends less time on compliance paperwork.",
+      },
+      {
+        question: "Can I see which grants are due for their next payment?",
+        answer:
+          "Yes. The dashboard highlights grants with recently verified milestones awaiting disbursement. You see upcoming payment obligations across your portfolio. Automated flags alert your finance team when grants become eligible. No one has to manually track payment timelines.",
+      },
+      {
+        question: "Does the software support multi-tranche funding arrangements?",
+        answer:
+          "Yes. You define as many funding tranches as each grant needs. Each tranche links to specific milestones that must be verified before release. The platform tracks progress toward each tranche independently. You get a clear view of the full funding timeline for every grant.",
       },
     ],
     ctaText: "Manage your grant disbursements",
@@ -791,14 +923,14 @@ export const softwareTypeSolutions: SolutionPage[] = [
     heading: "Grant Review and Evaluation Software",
     tldr: "Grant review and evaluation software helps funders assess proposals consistently, efficiently, and transparently. Karma provides AI-powered review assistance, structured evaluation rubrics, reviewer assignment workflows, and onchain attestations that create a verifiable record of every evaluation decision.",
     problem: {
-      heading: "Inconsistent Reviews Undermine Trust in Funding Decisions",
+      heading: "Why Inconsistent Reviews Demand Better Grant Review Software",
       description:
-        "Grant review is one of the most critical and most error-prone parts of the funding process. Reviewers bring different backgrounds, read proposals at different levels of depth, and apply criteria inconsistently. When multiple reviewers evaluate the same proposal, their scores can vary wildly based on interpretation rather than substance. Without structured evaluation tools, bias creeps in, strong proposals get overlooked, and weaker ones advance because they were better formatted. After decisions are made, it is difficult to explain or defend the reasoning to unsuccessful applicants or to stakeholders questioning how funds were allocated.",
+        "Grant review is one of the most error-prone parts of the funding process. Reviewers bring different backgrounds and apply criteria inconsistently. Scores for the same proposal can vary wildly between evaluators. Without structured tools, bias creeps into decisions. Strong proposals get overlooked while weaker ones advance on formatting alone. After decisions are made, teams struggle to explain the reasoning. Unsuccessful applicants and stakeholders question how funds were allocated.",
     },
     solution: {
-      heading: "AI-Assisted Review With Structured Rubrics and Verifiable Records",
+      heading: "Karma Grant Review Software Brings AI-Assisted Evaluation and Verifiable Records",
       description:
-        "Karma brings structure and intelligence to the review process. AI-powered review tools analyze proposals and surface key information, flag potential issues, and suggest preliminary scores based on your configured criteria. Human reviewers then make final assessments using structured rubrics that ensure every proposal is evaluated on the same dimensions. The platform manages reviewer assignment so evaluators only see the proposals assigned to them and conflicts of interest can be managed. Every evaluation is recorded as an onchain attestation, creating a permanent, verifiable record of who reviewed what, what scores were given, and what feedback was provided. This transparency makes it possible to audit the review process and demonstrate fairness to all stakeholders.",
+        "Karma brings structure and intelligence to grant review software. AI-powered tools analyze proposals and surface key information for reviewers. They flag potential issues and suggest preliminary scores based on your criteria. Human reviewers make final assessments using structured rubrics. The platform manages reviewer assignment and conflict of interest controls. Every evaluation gets recorded as an onchain attestation. This creates a permanent, verifiable record of scores, feedback, and decisions.",
     },
     capabilities: [
       "AI-powered proposal analysis that surfaces key information and flags potential issues for reviewers",
@@ -807,32 +939,49 @@ export const softwareTypeSolutions: SolutionPage[] = [
       "Onchain attestations recording every evaluation decision for transparent, auditable review history",
       "Aggregated reviewer feedback and scoring summaries for efficient decision-making",
       "Portfolio-level review analytics showing evaluation throughput, score distributions, and reviewer activity",
+      "Conflict of interest controls that prevent reviewers from evaluating affiliated organizations",
+      "Configurable feedback sharing so applicants can receive constructive comments",
     ],
     faqs: [
       {
-        question: "How does AI assist the review process without replacing human judgment?",
+        question: "How does AI assist the grant review process without replacing human judgment?",
         answer:
-          "Karma's AI analyzes proposal content to extract key details, check for completeness, and suggest preliminary scores based on your configured evaluation criteria. Reviewers use this analysis as a helpful starting point but retain full authority to make all final scoring decisions themselves. The AI helps your review team work faster and more consistently across large application pools without making any independent funding decisions.",
+          "Karma's AI extracts key details and checks proposals for completeness. It suggests preliminary scores based on your evaluation criteria. Reviewers use this as a starting point but make all final decisions. The AI helps teams work faster across large application pools. No independent funding decisions come from the AI.",
       },
       {
-        question: "Can I configure my own evaluation criteria?",
+        question: "Can I configure my own evaluation criteria in the grant review software?",
         answer:
-          "Yes. You define the rubric dimensions, scoring scales, weighting, and descriptors for each criterion in your program. Every reviewer sees and applies the same criteria, which is essential for consistent evaluation across your team. You can also update and refine these criteria between funding rounds as your program evolves, your priorities shift, or you incorporate lessons learned.",
+          "Yes. You define rubric dimensions, scoring scales, and weighting for each criterion. Every reviewer sees and applies the same criteria. This ensures consistent evaluation across your team. You update criteria between funding rounds as your program evolves.",
       },
       {
         question: "How does Karma help manage reviewer conflicts of interest?",
         answer:
-          "Program managers have full control over which proposals are assigned to which reviewers, allowing you to ensure that evaluators never review proposals from organizations they are personally or professionally affiliated with. All assignment records and any conflict declarations are maintained as part of the evaluation audit trail, so conflict of interest management decisions are fully documented and verifiable.",
+          "Program managers control which proposals go to which reviewers. You ensure evaluators never review affiliated organizations. Assignment records and conflict declarations stay in the audit trail. All conflict management decisions are fully documented and verifiable.",
       },
       {
         question: "Can applicants see reviewer feedback?",
         answer:
-          "This is fully configurable based on your program's policies and preferences. You can choose to share anonymized reviewer feedback with applicants, share only aggregate scores without detailed comments, or keep all review details entirely internal. Many programs find that sharing constructive feedback significantly improves the quality and competitiveness of future applications from returning applicants.",
+          "This is fully configurable. You can share anonymized feedback, aggregate scores only, or keep everything internal. Many programs share constructive feedback to improve future applications. You decide what level of transparency fits your program's policies.",
       },
       {
         question: "How do onchain records improve review transparency?",
         answer:
-          "By recording evaluations as onchain attestations, Karma creates a permanent record that cannot be altered or backdated after the fact by anyone. This allows stakeholders and auditors to independently verify that reviews were conducted on time, that scores were recorded at specific timestamps, and that final funding decisions followed directly from the documented evaluation process rather than undisclosed factors.",
+          "Evaluations recorded as onchain attestations cannot be altered or backdated. Stakeholders verify that reviews happened on time with specific scores. Auditors confirm that funding decisions followed the documented process. This level of transparency builds trust with applicants and donors alike.",
+      },
+      {
+        question: "How does grant review software speed up evaluation cycles?",
+        answer:
+          "AI pre-analysis reduces the time each reviewer spends per proposal. Structured rubrics eliminate debate about what criteria to apply. Parallel reviewer assignment lets multiple evaluators work at once. Aggregated score summaries help decision-makers act faster. Programs cut review cycle times significantly.",
+      },
+      {
+        question: "Can the software handle high application volumes?",
+        answer:
+          "Yes. AI-assisted triage helps teams manage hundreds of applications efficiently. The system distributes proposals across your reviewer pool automatically. Dashboard analytics show evaluation throughput in real time. You identify bottlenecks and balance workloads before they cause delays.",
+      },
+      {
+        question: "How do I ensure reviewers apply criteria consistently?",
+        answer:
+          "Structured rubrics display the same criteria and descriptors for every reviewer. AI-suggested scores provide a calibration reference point. Score distribution analytics flag when individual reviewers drift from the group. These tools work together to maintain consistency across your full evaluation team.",
       },
     ],
     ctaText: "Improve your grant review process",
@@ -888,14 +1037,14 @@ export const softwareTypeSolutions: SolutionPage[] = [
     heading: "Grant Monitoring and Evaluation Software",
     tldr: "Grant monitoring and evaluation (M&E) software helps funders track whether grants are achieving their intended outcomes and measure long-term impact. Karma provides structured milestone monitoring, CIDS-aligned evaluation frameworks, onchain attestations for evidence integrity, and portfolio dashboards that aggregate outcome data across your entire program.",
     problem: {
-      heading: "Most Grant Programs Cannot Demonstrate Whether Their Funding Creates Impact",
+      heading: "Why Funders Need Grant Monitoring and Evaluation Software to Prove Impact",
       description:
-        "Monitoring and evaluation is often treated as an afterthought in grant management. Programs collect output data, like the number of events held or reports published, but struggle to measure whether those outputs translate into real outcomes. M&E frameworks are defined in proposal documents but rarely enforced consistently during implementation. Grantees submit final reports with self-assessed impact claims that cannot be independently verified. When funders try to aggregate impact data across their portfolio, they find that every grantee has reported in a different format with different indicators. The result is that funders cannot credibly answer the question their stakeholders care most about: is our money making a difference?",
+        "Most programs treat monitoring and evaluation as an afterthought. Teams collect output data like event counts but struggle to measure real outcomes. M&E frameworks from proposals rarely get enforced during implementation. Grantees submit final reports with self-assessed impact claims no one can verify. Every grantee reports in a different format with different indicators. Funders cannot aggregate data across their portfolio. They cannot credibly answer whether their funding makes a difference.",
     },
     solution: {
-      heading: "Evidence-Based M&E With Standardized Frameworks and Verifiable Records",
+      heading: "Karma Grant Monitoring and Evaluation Software Delivers Evidence-Based Impact Data",
       description:
-        "Karma integrates monitoring and evaluation into the ongoing grant management process rather than treating it as a separate end-of-project exercise. Milestones are structured with specific, measurable outcomes from the start, and grantees submit evidence of achievement throughout the project lifecycle. AI-powered review helps evaluators assess whether submitted evidence credibly supports claimed outcomes. Every verified outcome is recorded as an onchain attestation, creating a tamper-proof record of what was actually achieved. CIDS-aligned reporting frameworks ensure that impact data is captured using standardized indicators, making it possible to aggregate and compare results across grants, programs, and even organizations. Portfolio dashboards provide real-time M&E analytics, showing which grants are delivering outcomes and where intervention may be needed.",
+        "Karma integrates monitoring and evaluation into ongoing grant management. Milestones include specific, measurable outcomes from the start. Grantees submit evidence of achievement throughout the project lifecycle. AI-powered review helps evaluators assess whether evidence supports claimed outcomes. Every verified outcome gets an onchain attestation as a tamper-proof record. CIDS-aligned frameworks capture impact data with standardized indicators. Portfolio dashboards show which grants deliver outcomes and where teams should intervene.",
     },
     capabilities: [
       "Structured milestone monitoring with outcome-focused deliverables defined at grant inception",
@@ -905,32 +1054,49 @@ export const softwareTypeSolutions: SolutionPage[] = [
       "Portfolio-level M&E dashboards aggregating outcome data across programs and funding rounds",
       "Longitudinal tracking that connects grant outputs to measurable outcomes over time",
       "Whitelabel M&E portals for foundations that want branded impact reporting for stakeholders",
+      "Cross-program impact aggregation using standardized indicators for organizational reporting",
     ],
     faqs: [
       {
         question: "What is CIDS-aligned reporting and why does it matter?",
         answer:
-          "CIDS stands for the Centre for International Development Studies framework for standardizing how development impact is measured and reported across organizations. CIDS-aligned reporting means your grant program captures impact data using internationally recognized indicators and formats, making it possible to compare results across programs, demonstrate credible impact to global stakeholders, and contribute to sector-wide knowledge about what interventions work.",
+          "CIDS is a framework for standardizing development impact measurement. CIDS-aligned reporting captures data using internationally recognized indicators. This makes it possible to compare results across programs and organizations. You demonstrate credible impact to global stakeholders. Your data contributes to sector-wide knowledge about effective interventions.",
       },
       {
-        question: "How does Karma differ from standalone M&E tools?",
+        question:
+          "How does grant monitoring and evaluation software differ from standalone M&E tools?",
         answer:
-          "Most standalone M&E tools are disconnected from the grant management process, requiring manual data entry and separate workflows that create additional administrative burden. Karma integrates M&E directly into milestone tracking and ongoing grant oversight, so monitoring data is collected naturally as part of routine project management rather than as an extra reporting obligation layered on top of existing grantee and staff responsibilities.",
+          "Standalone M&E tools require separate workflows and manual data entry. Karma integrates M&E directly into milestone tracking. Monitoring data gets collected as part of routine project management. Grantees do not face extra reporting obligations. Your team avoids the administrative burden of maintaining two separate systems.",
       },
       {
         question: "Can I use Karma for both real-time monitoring and post-project evaluation?",
         answer:
-          "Yes. The platform supports ongoing milestone monitoring throughout the active grant period and also captures comprehensive final impact data at project completion. Portfolio dashboards let you view both real-time progress on current grants and historical outcomes from completed projects, giving you a complete picture of program effectiveness that spans active and closed initiatives.",
+          "Yes. The platform supports ongoing milestone monitoring during the active grant period. It also captures final impact data at project completion. Dashboards show real-time progress and historical outcomes together. You get a complete picture of program effectiveness across all initiatives.",
       },
       {
         question: "How do onchain attestations improve M&E credibility?",
         answer:
-          "When outcomes are recorded as onchain attestations, they become independently verifiable records that cannot be retroactively modified, backdated, or deleted by any party. This means stakeholders, external auditors, donors, and the public can confirm that specific outcomes were verified at specific times by identified reviewers, adding a layer of institutional credibility that self-reported data alone cannot provide.",
+          "Onchain attestation records cannot be modified, backdated, or deleted. Stakeholders and auditors verify outcomes independently at any time. They confirm who verified what and exactly when. This credibility layer goes beyond what self-reported data can provide. Donors and the public trust the verified results.",
       },
       {
         question: "Can I aggregate impact data across multiple grant programs?",
         answer:
-          "Yes. Because Karma uses standardized CIDS-aligned indicators across all programs, impact data from different thematic areas and funding rounds can be aggregated into comprehensive portfolio-level and organization-level reports. This is particularly valuable for foundations running multiple grant programs that need to demonstrate cumulative impact across their entire funding portfolio to donors, boards, and public stakeholders.",
+          "Yes. Karma uses standardized CIDS-aligned indicators across all programs. Impact data from different thematic areas aggregates into portfolio-level reports. You demonstrate cumulative impact across your entire funding portfolio. This is especially valuable for foundations reporting to donors and boards.",
+      },
+      {
+        question: "How does this software help grantees report outcomes more easily?",
+        answer:
+          "Grantees submit outcome evidence through structured forms in the same platform they use daily. No separate M&E system or extra login is needed. Clear milestone definitions tell grantees exactly what to submit. The process fits into their existing workflow naturally. Reporting burden stays low while data quality stays high.",
+      },
+      {
+        question: "Can I track long-term outcomes beyond the grant period?",
+        answer:
+          "Yes. Longitudinal tracking connects grant outputs to measurable outcomes over time. You follow how results develop after the funding period ends. Historical data stays accessible in your portfolio dashboard. This helps you understand which interventions produce lasting impact.",
+      },
+      {
+        question: "How does M&E software support learning and program improvement?",
+        answer:
+          "Aggregated outcome data reveals patterns across your portfolio. You see which grant types produce the strongest results. You identify common challenges that slow progress. These insights directly improve future program design and funding decisions. Each grant round benefits from lessons learned in previous ones.",
       },
     ],
     ctaText: "Strengthen your M&E process",
