@@ -84,7 +84,9 @@ describe("Project Layout SSR LCP Shell", () => {
 
   describe("when project data is available", () => {
     const mockProject = createMockProject();
-    beforeEach(() => { mockGetProjectCachedData.mockResolvedValue(mockProject); });
+    beforeEach(() => {
+      mockGetProjectCachedData.mockResolvedValue(mockProject);
+    });
 
     it("renders project title as an h1 in the SSR shell", async () => {
       await renderLayout();
@@ -107,13 +109,11 @@ describe("Project Layout SSR LCP Shell", () => {
       expect(shell).toHaveAttribute("aria-hidden", "true");
     });
 
-    it("includes a style tag to hide shell when client mounts", async () => {
+    it("does not include an inline style tag (CSS moved to globals.css)", async () => {
       await renderLayout();
       const shell = document.getElementById("ssr-lcp-shell");
       const styleTag = shell!.querySelector("style");
-      expect(styleTag).not.toBeNull();
-      expect(styleTag!.textContent).toContain("project-profile-layout");
-      expect(styleTag!.textContent).toContain("display: none");
+      expect(styleTag).toBeNull();
     });
 
     it("renders the SSR shell inside the HydrationBoundary", async () => {
@@ -150,7 +150,9 @@ describe("Project Layout SSR LCP Shell", () => {
   });
 
   describe("when project data is not available", () => {
-    beforeEach(() => { mockGetProjectCachedData.mockRejectedValue(new Error("Not found")); });
+    beforeEach(() => {
+      mockGetProjectCachedData.mockRejectedValue(new Error("Not found"));
+    });
 
     it("does not render the SSR shell", async () => {
       await renderLayout();

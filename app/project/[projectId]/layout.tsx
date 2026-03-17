@@ -1,7 +1,6 @@
-/* eslint-disable @next/next/no-img-element */
-
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 import type { Metadata } from "next";
+import Image from "next/image";
 import { ProjectShareDialogMount } from "@/components/Pages/Project/ProjectShareDialogMount";
 import { E2EStoreExposer } from "@/components/Utilities/E2EStoreExposer";
 import { layoutTheme } from "@/src/helper/theme";
@@ -110,7 +109,7 @@ export default async function RootLayout(props: {
           <div id="ssr-lcp-shell" aria-hidden="true">
             <div className="flex items-center gap-4 py-4">
               {projectData.details?.logoUrl && (
-                <img
+                <Image
                   src={projectData.details.logoUrl}
                   alt=""
                   width={64}
@@ -122,9 +121,6 @@ export default async function RootLayout(props: {
                 {projectData.details?.title}
               </h1>
             </div>
-            <style>{`[data-testid="project-profile-layout"] ~ #ssr-lcp-shell,
-#ssr-lcp-shell:has(~ [data-testid="project-profile-layout"]),
-#ssr-lcp-shell:has(~ [data-testid="project-profile-layout-skeleton"]) { display: none; }`}</style>
           </div>
         )}
         {children}
