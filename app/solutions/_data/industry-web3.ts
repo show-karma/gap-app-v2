@@ -6,7 +6,7 @@ export const industryWeb3Solutions: SolutionPage[] = [
     slug: "grant-management-for-web3",
     title: "Grant Management for Web3 | Karma",
     metaDescription:
-      "Manage Web3 grants with onchain attestations, milestone tracking, and transparent accountability. Karma brings trust and efficiency to Web3 grant programs.",
+      "Simplify grant management for web3 with onchain attestations, milestone tracking, and transparent accountability. Karma brings trust to Web3 programs.",
     heading: "Grant Management for Web3 with Onchain Proof",
     tldr: "Grant management for web3 works best with onchain attestations via EAS. Karma offers milestone-based disbursements and cross-ecosystem reputation tracking. As a result, grant programs fund builders with full transparency.",
     problem: {
@@ -129,7 +129,7 @@ export const industryWeb3Solutions: SolutionPage[] = [
     slug: "grant-management-for-blockchain-ecosystems",
     title: "Grant Management for Blockchain Ecosystems",
     metaDescription:
-      "Streamline blockchain ecosystem grants with onchain attestations, transparent milestone tracking, and grantee reputation. Purpose-built for L1s and L2s.",
+      "Karma streamlines grant management for blockchain ecosystems with onchain attestations, milestone tracking, and grantee reputation. Built for L1s and L2s.",
     heading: "Grant Management for Blockchain Ecosystems with Onchain Proof",
     tldr: "Grant management for blockchain ecosystems requires unified tooling and onchain proof. Karma helps foundations and DAOs run transparent programs with structured milestone reviews and reputation tracking.",
     problem: {
@@ -252,7 +252,7 @@ export const industryWeb3Solutions: SolutionPage[] = [
     slug: "grant-management-for-defi-protocols",
     title: "Grant Management for DeFi Protocols",
     metaDescription:
-      "Run transparent DeFi grant programs with onchain milestone tracking, EAS attestations, and builder reputation. Grow your protocol with accountable funding.",
+      "Karma powers grant management for defi protocols with onchain milestone tracking, EAS attestations, and builder reputation. Grow your protocol transparently.",
     heading: "Grant Management for DeFi Protocols with Verifiable Outcomes",
     tldr: "Grant management for defi protocols requires verifiable proof of delivery. Karma attests every milestone, review, and disbursement onchain so protocols fund integrations, audits, and tooling with full transparency.",
     problem: {
@@ -375,7 +375,7 @@ export const industryWeb3Solutions: SolutionPage[] = [
     slug: "grant-management-for-open-source",
     title: "Grant Management for Open Source | Karma",
     metaDescription:
-      "Track open source grants with milestone-based accountability, transparent reviews, and verifiable delivery records. Keep funders and maintainers aligned.",
+      "Karma simplifies grant management for open source with milestone-based accountability, transparent reviews, and verifiable delivery for every project.",
     heading: "Grant Management for Open Source with Clear Milestones",
     tldr: "Grant management for open source requires structured tracking and transparent reviews. Karma helps funding organizations track grants with milestones and verifiable delivery records so maintainers stay accountable.",
     problem: {
@@ -498,7 +498,7 @@ export const industryWeb3Solutions: SolutionPage[] = [
     slug: "grant-management-for-public-goods",
     title: "Grant Management for Public Goods | Karma",
     metaDescription:
-      "Manage public goods grants with onchain attestations, transparent milestone tracking, and community-driven reviews. Prove impact with verifiable data.",
+      "Karma enables grant management for public goods with onchain attestations, transparent milestone tracking, and community-driven reviews. Prove real impact.",
     heading: "Grant Management for Public Goods with Verifiable Impact",
     tldr: "Grant management for public goods demands proof of real impact. Karma empowers funders to track outcomes with onchain attestations, community-driven reviews, and transparent milestone tracking for the commons.",
     problem: {
@@ -621,7 +621,7 @@ export const industryWeb3Solutions: SolutionPage[] = [
     slug: "grant-management-for-climate-tech",
     title: "Grant Management for Climate Tech | Karma",
     metaDescription:
-      "Track climate tech grants with milestone accountability, impact measurement, and transparent reporting. Ensure funded projects deliver real outcomes.",
+      "Karma delivers grant management for climate tech with milestone accountability, impact measurement, and transparent reporting. Ensure funded projects deliver.",
     heading: "Grant Management for Climate Tech with Impact Tracking",
     tldr: "Grant management for climate tech needs structured impact measurement. Karma helps funders track grants with milestones, impact-focused reviews, and transparent reporting so every grant drives measurable climate progress.",
     problem: {
@@ -744,7 +744,7 @@ export const industryWeb3Solutions: SolutionPage[] = [
     slug: "grant-management-for-emerging-markets",
     title: "Grant Management for Emerging Markets",
     metaDescription:
-      "Manage emerging market grants with milestone tracking, transparent accountability, and verifiable delivery. Fund high-impact projects with confidence.",
+      "Karma powers grant management for emerging markets with milestone tracking, transparent accountability, and verifiable delivery. Fund high-impact projects.",
     heading: "Grant Management for Emerging Markets with Local Reviewers",
     tldr: "Grant management for emerging markets faces unique accountability gaps. Karma helps organizations track grant delivery with structured milestones, local reviewer networks, and transparent reporting across regions.",
     problem: {
@@ -867,7 +867,7 @@ export const industryWeb3Solutions: SolutionPage[] = [
     slug: "grant-management-for-research-grants",
     title: "Grant Management for Research Grants",
     metaDescription:
-      "Track research grants with structured milestone reviews, expert evaluations, and transparent reporting. Keep researchers accountable and funders informed.",
+      "Karma streamlines grant management for research grants with structured milestone reviews, expert evaluations, and transparent reporting. Keep funders informed.",
     heading: "Grant Management for Research Grants with Expert Reviews",
     tldr: "Grant management for research grants requires structured milestone reviews and expert evaluation. Karma helps funders track progress with transparent reporting so funded research delivers measurable outcomes.",
     problem: {
@@ -990,7 +990,7 @@ export const industryWeb3Solutions: SolutionPage[] = [
     slug: "grant-management-for-fellowship-programs",
     title: "Grant Management for Fellowship Programs",
     metaDescription:
-      "Manage fellowship programs with milestone tracking, mentor reviews, and transparent reporting. Support fellows from onboarding through completion.",
+      "Karma simplifies grant management for fellowship programs with milestone tracking, mentor reviews, and transparent reporting. Support fellows end to end.",
     heading: "Grant Management for Fellowship Programs with Mentor Reviews",
     tldr: "Grant management for fellowship programs needs scalable tracking and mentor-driven reviews. Karma helps programs track fellow progress with structured milestones and transparent reporting for effective outcomes.",
     problem: {
@@ -1113,7 +1113,7 @@ export const industryWeb3Solutions: SolutionPage[] = [
     slug: "grant-management-for-accelerators",
     title: "Grant Management for Accelerators | Karma",
     metaDescription:
-      "Run accelerator programs with milestone-based tracking, mentor evaluations, and demo day readiness dashboards. Move fast without losing accountability.",
+      "Karma enables grant management for accelerators with milestone-based tracking, mentor evaluations, and demo day readiness dashboards. Stay accountable at speed.",
     heading: "Grant Management for Accelerators with Sprint-Based Tracking",
     tldr: "Grant management for accelerators must keep pace with tight timelines. Karma provides sprint-based tracking, structured mentor evaluations, and cohort-wide dashboards so every team stays accountable from day one through demo day.",
     problem: {

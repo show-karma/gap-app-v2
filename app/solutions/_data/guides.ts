@@ -6,7 +6,7 @@ export const guidesSolutions: SolutionPage[] = [
     slug: "how-to-choose-grant-management-software",
     title: "How to Choose Grant Management Software",
     metaDescription:
-      "Learn what to look for in grant management software. Compare features, evaluate workflows, and find the right tool for your program.",
+      "Learn how to choose grant management software by comparing features, evaluating workflows, and finding the right tool for your program.",
     heading: "Learn How to Choose Grant Management Software the Right Way",
     tldr: "Understanding how to choose grant management software saves your team time and money. Centralize applications, automate milestone tracking, and gain real-time visibility into grantee progress. Prioritize tools that match your program's scale and offer transparent reporting.",
     problem: {
@@ -129,7 +129,7 @@ export const guidesSolutions: SolutionPage[] = [
     slug: "grant-management-software-buying-guide",
     title: "Grant Management Software Buying Guide",
     metaDescription:
-      "A complete buying guide for grant management software. Compare pricing, must-have features, and key questions to ask vendors.",
+      "Use this grant management software buying guide to compare pricing, must-have features, and key questions to ask vendors before you buy.",
     heading: "Your Complete Grant Management Software Buying Guide",
     tldr: "This grant management software buying guide helps you avoid costly mistakes. Define your workflow requirements, set a budget range, and build a shortlist based on must-have features like milestone tracking, reviewer management, and reporting.",
     problem: {
@@ -257,7 +257,7 @@ export const guidesSolutions: SolutionPage[] = [
     slug: "grant-management-software-roi",
     title: "Grant Management Software ROI Explained",
     metaDescription:
-      "Understand the real ROI of grant management software. Calculate time savings, reduce overhead, and measure impact on your program.",
+      "Measure grant management software ROI with clear frameworks. Calculate time savings, reduce overhead, and quantify impact on your program.",
     heading: "How to Measure Grant Management Software ROI",
     tldr: "Grant management software ROI comes from three channels: reduced admin time with 30 to 50 percent savings, improved grantee completion rates through better tracking, and stronger stakeholder confidence through transparent reporting. Most programs recoup their investment within three to six months.",
     problem: {
@@ -380,7 +380,7 @@ export const guidesSolutions: SolutionPage[] = [
     slug: "switching-from-spreadsheets-to-grant-management",
     title: "Switching from Spreadsheets to Grant Management",
     metaDescription:
-      "Ready to move beyond spreadsheets for grant management? Learn how to migrate data, onboard your team, and avoid common pitfalls.",
+      "A practical guide to switching from spreadsheets to grant management software. Learn how to migrate data, onboard your team, and avoid pitfalls.",
     heading: "A Complete Guide to Switching from Spreadsheets to Grant Management Software",
     tldr: "Switching from spreadsheets to grant management software requires three steps: cleaning your existing data, choosing a tool that matches your current workflow, and onboarding your team step by step. The biggest risk is trying to change your process and your tools at the same time.",
     problem: {
@@ -506,7 +506,7 @@ export const guidesSolutions: SolutionPage[] = [
     slug: "grant-management-software-implementation-guide",
     title: "Grant Management Software Implementation Guide",
     metaDescription:
-      "A practical implementation guide for grant management software. Learn phases, timelines, common mistakes, and how to ensure adoption.",
+      "Follow this grant management software implementation guide covering phases, timelines, common mistakes, and how to ensure team adoption.",
     heading: "Your Grant Management Software Implementation Guide for Success",
     tldr: "This grant management software implementation guide covers four phases: preparation where you map workflows, configuration where you set up the tool, pilot where you test with real grants, and rollout where you expand to the full team. Most failures come from skipping the preparation phase.",
     problem: {
@@ -752,7 +752,7 @@ export const guidesSolutions: SolutionPage[] = [
     slug: "grant-program-setup-guide",
     title: "Grant Program Setup Guide for New Programs",
     metaDescription:
-      "Step-by-step guide to setting up a grant program. Define objectives, design your process, set evaluation criteria, and launch.",
+      "Follow this grant program setup guide to define objectives, design your process, set evaluation criteria, and launch with confidence.",
     heading: "The Complete Grant Program Setup Guide for First-Time Organizers",
     tldr: "This grant program setup guide covers five core decisions: what you fund and why, how much and how you disburse, what good applications look like, how you track progress through milestones, and how you measure success with program metrics.",
     problem: {
@@ -875,7 +875,7 @@ export const guidesSolutions: SolutionPage[] = [
     slug: "grant-evaluation-criteria-guide",
     title: "Grant Evaluation Criteria Guide for Programs",
     metaDescription:
-      "Learn how to define effective grant evaluation criteria. Build scoring rubrics, reduce reviewer bias, and make consistent decisions.",
+      "Use this grant evaluation criteria guide to build scoring rubrics, reduce reviewer bias, and make consistent funding decisions.",
     heading: "A Practical Grant Evaluation Criteria Guide for Better Decisions",
     tldr: "This grant evaluation criteria guide shows you how to build scoring rubrics with four to six weighted criteria tied to your program objectives. Define what each score means with real examples, then calibrate reviewers before they start evaluating live applications.",
     problem: {
@@ -998,7 +998,7 @@ export const guidesSolutions: SolutionPage[] = [
     slug: "grant-milestone-best-practices",
     title: "Grant Milestone Best Practices Guide",
     metaDescription:
-      "Learn how to define, track, and verify grant milestones. Practical frameworks for milestone structures that improve accountability.",
+      "Apply grant milestone best practices to define, track, and verify progress. Practical frameworks for milestone structures that improve accountability.",
     heading: "Proven Grant Milestone Best Practices for Accountability",
     tldr: "Grant milestone best practices start with making milestones specific, verifiable, and time-bound. Define three to five milestones per grant, each with clear acceptance criteria. Link payments to milestone completion to align incentives, and track velocity as a leading indicator of health.",
     problem: {
@@ -1122,7 +1122,7 @@ export const guidesSolutions: SolutionPage[] = [
     slug: "grant-reporting-best-practices",
     title: "Grant Reporting Best Practices Guide",
     metaDescription:
-      "Master grant reporting with practical best practices. Build reports that satisfy stakeholders, demonstrate impact, and improve programs.",
+      "Apply grant reporting best practices to build reports that satisfy stakeholders, demonstrate impact, and continuously improve your programs.",
     heading: "Essential Grant Reporting Best Practices for Every Program",
     tldr: "Grant reporting best practices start before the first grant gets funded. Define your key metrics upfront, collect data as milestones complete, automate report building wherever possible, and tailor each report format to its specific audience.",
     problem: {

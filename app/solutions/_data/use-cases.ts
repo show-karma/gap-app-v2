@@ -6,7 +6,7 @@ export const useCasesSolutions: SolutionPage[] = [
     slug: "streamline-grant-applications",
     title: "Streamline Grant Applications Fast",
     metaDescription:
-      "Simplify your grant application process with structured submissions, automated validation, and centralized tracking. Reduce time-to-funding with Karma.",
+      "Streamline grant applications with Karma. Structured submissions, automated validation, and centralized tracking reduce time-to-funding for every program.",
     heading: "How to Streamline Grant Applications for Your Program",
     tldr: "Teams that streamline grant applications replace scattered spreadsheets and email threads with one platform. Applicants submit structured proposals. Reviewers score them with AI assistance. Program managers track every application from submission to approval.",
     problem: {
@@ -135,7 +135,7 @@ export const useCasesSolutions: SolutionPage[] = [
     slug: "automate-grant-reviews",
     title: "Automate Grant Reviews with AI",
     metaDescription:
-      "Speed up grant reviews with AI-powered scoring, structured rubrics, and reviewer assignment. Cut review cycles from weeks to days with Karma.",
+      "Automate grant reviews with Karma using AI-powered scoring, structured rubrics, and smart reviewer assignment. Cut review cycles from weeks to days.",
     heading: "Automate Grant Reviews for Faster Decisions",
     tldr: "Teams that automate grant reviews cut review cycles from weeks to days. Karma's AI review engine scores applications against your criteria. It assigns reviewers automatically and provides structured evaluation workflows.",
     problem: {
@@ -264,7 +264,7 @@ export const useCasesSolutions: SolutionPage[] = [
     slug: "track-grant-milestones",
     title: "Track Grant Milestones in Real Time",
     metaDescription:
-      "Monitor grant milestones with onchain attestations, real-time dashboards, and automated progress alerts. Keep every funded project accountable with Karma.",
+      "Track grant milestones with Karma using onchain attestations, real-time dashboards, and automated progress alerts. Keep every funded project accountable.",
     heading: "How to Track Grant Milestones Effectively",
     tldr: "Teams that track grant milestones define deliverables at the grant level and monitor progress in real time. Karma records completions as onchain attestations. This creates a permanent and verifiable record of grantee delivery.",
     problem: {
@@ -393,7 +393,7 @@ export const useCasesSolutions: SolutionPage[] = [
     slug: "manage-grant-portfolios",
     title: "Manage Grant Portfolios at Scale",
     metaDescription:
-      "Manage hundreds of grants in one dashboard with milestone tracking, impact metrics, and portfolio-level reporting. Scale grant management with Karma.",
+      "Manage grant portfolios at scale with Karma. One dashboard for milestone tracking, impact metrics, and portfolio-level reporting across hundreds of grants.",
     heading: "How to Manage Grant Portfolios at Scale",
     tldr: "Teams that manage grant portfolios use a single dashboard to oversee hundreds of grants. Karma tracks milestone progress across all funded projects. It generates portfolio-level reports for stakeholders and governance bodies.",
     problem: {
@@ -522,7 +522,7 @@ export const useCasesSolutions: SolutionPage[] = [
     slug: "improve-grant-accountability",
     title: "Improve Grant Accountability Now",
     metaDescription:
-      "Strengthen grant accountability with onchain attestations, milestone verification, and transparent progress tracking. Build trust with Karma.",
+      "Improve grant accountability with Karma using onchain attestations, milestone verification, and transparent progress tracking. Build lasting stakeholder trust.",
     heading: "How to Improve Grant Accountability with Verification",
     tldr: "Teams that improve grant accountability record every milestone, review, and approval as an onchain attestation. Stakeholders verify what got funded, what got delivered, and when, without relying on self-reported claims alone.",
     problem: {
@@ -651,7 +651,7 @@ export const useCasesSolutions: SolutionPage[] = [
     slug: "reduce-grant-admin-overhead",
     title: "Reduce Grant Admin Overhead by Half",
     metaDescription:
-      "Cut grant admin time in half with automated reviews, milestone tracking, and reporting. Spend less time on paperwork, more on impact with Karma.",
+      "Reduce grant admin overhead by half with Karma. Automated reviews, milestone tracking, and reporting free your team to focus on impact, not paperwork.",
     heading: "How to Reduce Grant Admin Overhead with Automation",
     tldr: "Teams that reduce grant admin overhead automate the repetitive parts of grant management. Karma handles application processing, review coordination, milestone follow-ups, and reporting. Program teams focus on strategy and grantee support instead.",
     problem: {
@@ -899,7 +899,7 @@ export const useCasesSolutions: SolutionPage[] = [
     slug: "transparent-grant-management",
     title: "Transparent Grant Management Tools",
     metaDescription:
-      "Run transparent grant programs with public dashboards, onchain attestations, and verifiable milestone records. Build community trust with Karma.",
+      "Karma enables transparent grant management with public dashboards, onchain attestations, and verifiable milestone records. Build lasting community trust.",
     heading: "How to Achieve Transparent Grant Management",
     tldr: "Teams that adopt transparent grant management show stakeholders exactly how funds flow. Karma provides public dashboards, onchain attestations, and open milestone records. Community members and governance bodies see results without asking.",
     problem: {
@@ -1028,7 +1028,7 @@ export const useCasesSolutions: SolutionPage[] = [
     slug: "data-driven-grant-decisions",
     title: "Data Driven Grant Decisions Made Easy",
     metaDescription:
-      "Make smarter grant decisions with portfolio analytics, grantee track records, and historical performance data. Move beyond gut instinct with Karma.",
+      "Make data driven grant decisions with Karma using portfolio analytics, grantee track records, and historical performance data. Move beyond gut instinct.",
     heading: "How to Make Data Driven Grant Decisions",
     tldr: "Teams that make data driven grant decisions rely on evidence, not intuition. Karma provides historical grantee performance, portfolio analytics, and milestone completion trends. Program managers allocate funds based on proof.",
     problem: {
@@ -1157,7 +1157,7 @@ export const useCasesSolutions: SolutionPage[] = [
     slug: "grant-impact-reporting",
     title: "Grant Impact Reporting with Verified Data",
     metaDescription:
-      "Generate grant impact reports with verified milestone data, portfolio metrics, and CIDS-compatible exports. Prove your program's value with Karma.",
+      "Simplify grant impact reporting with Karma. Verified milestone data, portfolio metrics, and CIDS-compatible exports prove your program's value to stakeholders.",
     heading: "How to Simplify Grant Impact Reporting",
     tldr: "Teams that streamline grant impact reporting turn verified milestone data into comprehensive reports. Karma generates CIDS-compatible exports, stakeholder summaries, and governance presentations backed by onchain-verified delivery records.",
     problem: {

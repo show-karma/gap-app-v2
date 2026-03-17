@@ -6,7 +6,7 @@ export const softwareTypeSolutions: SolutionPage[] = [
     slug: "cloud-grant-management-software",
     title: "Cloud Grant Management Software",
     metaDescription:
-      "Manage grants from anywhere with Karma cloud-based software. Onchain transparency, milestone tracking, and AI-powered review in one platform.",
+      "Karma is cloud grant management software with onchain transparency, milestone tracking, and AI-powered review. Manage grants from anywhere in one platform.",
     heading: "Cloud Grant Management Software for Modern Funders",
     tldr: "Cloud grant management software lets funders and grantees work from anywhere. No desktop tools or VPN access are needed. Karma delivers a fully cloud-native platform with onchain attestations. It also includes milestone tracking and AI-assisted review. Your grant program stays transparent and accessible around the clock.",
     problem: {
@@ -130,7 +130,7 @@ export const softwareTypeSolutions: SolutionPage[] = [
     slug: "automated-grant-management-software",
     title: "Automated Grant Management Software",
     metaDescription:
-      "Automate grant workflows with Karma. AI-powered review, milestone tracking, and onchain attestations reduce manual work and improve accountability.",
+      "Karma is automated grant management software with AI-powered review, milestone tracking, and onchain attestations. Reduce manual work and boost accountability.",
     heading: "Automated Grant Management Software That Saves Time",
     tldr: "Automated grant management software removes repetitive manual tasks from your workflow. It handles application sorting, review assignment, and status reporting. Karma automates key steps in the grant lifecycle with AI-powered review. Onchain attestations create audit trails with no extra effort from your team.",
     problem: {
@@ -254,7 +254,7 @@ export const softwareTypeSolutions: SolutionPage[] = [
     slug: "digital-grant-management-solution",
     title: "Digital Grant Management Solution",
     metaDescription:
-      "Replace paper-based grant processes with Karma's digital solution. Milestone tracking, onchain records, and AI review in a single platform.",
+      "Karma is a digital grant management solution that replaces paper-based processes with milestone tracking, onchain records, and AI review in one platform.",
     heading: "Digital Grant Management Solution for Modern Programs",
     tldr: "A digital grant management solution replaces paper forms and email chains entirely. It also removes disconnected spreadsheets from your workflow. Karma provides a complete digital workspace for grants. Applications, reviews, milestones, and impact reports all live in one place. Onchain attestations back every action with trust and transparency.",
     problem: {
@@ -378,7 +378,7 @@ export const softwareTypeSolutions: SolutionPage[] = [
     slug: "online-grant-management-system",
     title: "Online Grant Management System",
     metaDescription:
-      "Run your entire grant program online with Karma. Manage applications to impact reports through a browser with onchain transparency built in.",
+      "Karma is an online grant management system for running your entire program from applications to impact reports with onchain transparency built in.",
     heading: "Online Grant Management System for Distributed Teams",
     tldr: "An online grant management system lets distributed teams run grants through the web. Karma provides a fully online system for funders, reviewers, and grantees. They collaborate in real time with milestone tracking and AI-powered review. Onchain attestations ensure transparency at every step of the process.",
     problem: {
@@ -502,7 +502,7 @@ export const softwareTypeSolutions: SolutionPage[] = [
     slug: "grant-lifecycle-management-software",
     title: "Grant Lifecycle Management Software",
     metaDescription:
-      "Manage every grant lifecycle stage with Karma. From intake to impact reporting, track progress with milestones and onchain attestations.",
+      "Karma is grant lifecycle management software covering intake to impact reporting. Track progress with milestones and onchain attestations at every stage.",
     heading: "Grant Lifecycle Management Software for Every Stage",
     tldr: "Grant lifecycle management software covers every stage from application intake through final impact reporting. Karma provides end-to-end lifecycle coverage with structured milestones and AI-assisted review. Onchain attestations mark each phase transition with verifiable proof. Portfolio dashboards give funders a complete view from start to finish.",
     problem: {
@@ -621,7 +621,7 @@ export const softwareTypeSolutions: SolutionPage[] = [
     slug: "grant-tracking-software",
     title: "Grant Tracking Software for Funders",
     metaDescription:
-      "Track every grant in your portfolio with Karma. Milestone progress, disbursements, and grantee activity in real-time dashboards with onchain records.",
+      "Karma is grant tracking software for funders. Monitor milestone progress, disbursements, and grantee activity in real-time dashboards with onchain records.",
     heading: "Grant Tracking Software for Real-Time Visibility",
     tldr: "Grant tracking software shows funders where every dollar goes and whether grantees deliver. Karma provides milestone-level tracking and portfolio dashboards for complete oversight. Onchain attestations keep records trustworthy and tamper-proof. You always know grant status without chasing email updates.",
     problem: {
@@ -870,7 +870,7 @@ export const softwareTypeSolutions: SolutionPage[] = [
     slug: "grant-disbursement-software",
     title: "Grant Disbursement Software for Funders",
     metaDescription:
-      "Manage grant disbursements with Karma. Tie payments to verified milestones, track fund allocation, and record every disbursement onchain.",
+      "Karma is grant disbursement software that ties payments to verified milestones, tracks fund allocation, and records every disbursement onchain for transparency.",
     heading: "Grant Disbursement Software That Links Payments to Milestones",
     tldr: "Grant disbursement software helps funders control when and why funds go out. Karma ties each payment to a verified milestone with clear evidence. It records every disbursement as an onchain attestation for transparency. Portfolio dashboards show fund allocation across your entire program at a glance.",
     problem: {
@@ -994,7 +994,7 @@ export const softwareTypeSolutions: SolutionPage[] = [
     slug: "grant-review-software",
     title: "Grant Review Software for Fair Evaluation",
     metaDescription:
-      "Streamline grant reviews with Karma's AI-powered evaluation tools. Consistent scoring, structured rubrics, and onchain records for faster reviews.",
+      "Karma is grant review software with AI-powered evaluation, consistent scoring, structured rubrics, and onchain records. Cut review cycles from weeks to days.",
     heading: "Grant Review Software for Consistent Evaluation",
     tldr: "Grant review software helps funders assess proposals with consistency and speed. Karma provides AI-powered review assistance and structured evaluation rubrics. Reviewer assignment workflows keep the process organized and fair. Onchain attestations create a verifiable record of every evaluation decision made.",
     problem: {
@@ -1118,7 +1118,7 @@ export const softwareTypeSolutions: SolutionPage[] = [
     slug: "grant-monitoring-evaluation-software",
     title: "Grant Monitoring Evaluation Software",
     metaDescription:
-      "Monitor grant outcomes and evaluate impact with Karma. CIDS-aligned reporting, milestone tracking, and onchain attestations for evidence-based programs.",
+      "Karma is grant monitoring evaluation software with CIDS-aligned reporting, milestone tracking, and onchain attestations for evidence-based grant programs.",
     heading: "Grant Monitoring Evaluation Software for Impact-Driven Programs",
     tldr: "Grant monitoring evaluation software tracks whether grants reach their goals and measures long-term impact. Karma provides structured milestone monitoring and CIDS-aligned frameworks for standardized measurement. Onchain attestations protect evidence integrity across the board. Portfolio dashboards pull outcome data from your entire program for analysis.",
     problem: {

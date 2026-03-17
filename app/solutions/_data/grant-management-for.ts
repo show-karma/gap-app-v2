@@ -6,7 +6,7 @@ export const grantManagementForSolutions: SolutionPage[] = [
     slug: "grant-management-for-nonprofits",
     title: "Grant Management for Nonprofits | Karma",
     metaDescription:
-      "Streamline nonprofit grant management with AI-powered reviews, milestone tracking, and transparent reporting. Reduce admin overhead and focus on your mission.",
+      "Discover grant management for nonprofits with AI-powered reviews, milestone tracking, and transparent reporting. Reduce admin overhead and focus on mission.",
     heading: "Simplify Grant Management for Nonprofits with Karma",
     tldr: "Grant management for nonprofits becomes simple with Karma. The platform handles AI-assisted application review, milestone-based fund release, and onchain transparency. Your team builds donor trust while spending less time on admin work.",
     datePublished: "2026-03-16",
@@ -129,7 +129,7 @@ export const grantManagementForSolutions: SolutionPage[] = [
     slug: "grant-management-for-daos",
     title: "Grant Management for DAOs | Karma",
     metaDescription:
-      "Manage DAO grants with onchain milestone tracking, AI-powered proposal review, and transparent fund disbursement. Built for decentralized governance workflows.",
+      "Explore grant management for DAOs with onchain milestone tracking, AI-powered proposal review, and transparent fund disbursement for governance workflows.",
     heading: "Streamline Grant Management for DAOs with Karma",
     tldr: "Grant management for DAOs gains structure with Karma. The platform combines community-driven review, milestone-based payouts, and full onchain accountability. Your treasury allocations deliver maximum impact with complete transparency.",
     datePublished: "2026-03-16",
@@ -252,7 +252,7 @@ export const grantManagementForSolutions: SolutionPage[] = [
     slug: "grant-management-for-universities",
     title: "Grant Management for Universities | Karma",
     metaDescription:
-      "Simplify university grant management with AI-powered reviews, milestone tracking, and transparent fund allocation for research offices.",
+      "Simplify grant management for universities with AI-powered reviews, milestone tracking, and transparent fund allocation for research offices.",
     heading: "Modern Grant Management for Universities and Research Teams",
     tldr: "Grant management for universities becomes streamlined with Karma. The platform handles multi-level proposal review, milestone verification, and audit-ready reporting. Research offices manage entire grant cycles from one dashboard.",
     datePublished: "2026-03-16",
@@ -370,7 +370,7 @@ export const grantManagementForSolutions: SolutionPage[] = [
     slug: "grant-management-for-government",
     title: "Grant Management for Government | Karma",
     metaDescription:
-      "Manage government grants with AI-powered reviews, milestone-based disbursement, and onchain audit trails for transparent compliance.",
+      "Streamline grant management for government with AI-powered reviews, milestone-based disbursement, and onchain audit trails for compliance.",
     heading: "Accountable Grant Management for Government Agencies",
     tldr: "Grant management for government agencies gains full accountability with Karma. The platform ensures public trust through AI-assisted review, milestone-based disbursement, and audit records no one can alter.",
     datePublished: "2026-03-16",
@@ -493,7 +493,7 @@ export const grantManagementForSolutions: SolutionPage[] = [
     slug: "grant-management-for-healthcare",
     title: "Grant Management for Healthcare | Karma",
     metaDescription:
-      "Manage healthcare grants with milestone tracking, AI-powered reviews, and transparent fund allocation for health systems and foundations.",
+      "Optimize grant management for healthcare with milestone tracking, AI-powered reviews, and transparent fund allocation for health systems.",
     heading: "Trusted Grant Management for Healthcare Organizations",
     tldr: "Grant management for healthcare organizations runs smoothly on Karma. The platform handles research and community health grants with structured milestone tracking. AI-assisted review and transparent reporting satisfy compliance and funding bodies.",
     datePublished: "2026-03-16",
@@ -616,7 +616,7 @@ export const grantManagementForSolutions: SolutionPage[] = [
     slug: "grant-management-for-education",
     title: "Grant Management for Education | Karma",
     metaDescription:
-      "Manage education grants with AI-powered application review, milestone tracking, and transparent fund allocation for schools and foundations.",
+      "Improve grant management for education with AI-powered application review, milestone tracking, and transparent fund allocation for schools.",
     heading: "Effective Grant Management for Education Organizations",
     tldr: "Grant management for education organizations becomes effective with Karma. The platform handles application review, milestone-based funding, and transparent reporting. Education foundations connect grant investments to real student outcomes.",
     datePublished: "2026-03-16",
@@ -740,7 +740,7 @@ export const grantManagementForSolutions: SolutionPage[] = [
     slug: "grant-management-for-arts-culture",
     title: "Grant Management for Arts Culture | Karma",
     metaDescription:
-      "Manage arts and culture grants with AI-powered reviews, milestone tracking, and transparent reporting for arts councils and foundations.",
+      "Enhance grant management for arts culture with AI-powered reviews, milestone tracking, and transparent reporting for councils and foundations.",
     heading: "Flexible Grant Management for Arts Culture Organizations",
     tldr: "Grant management for arts culture thrives on Karma. The platform empowers arts councils and creative funds with AI-assisted review and flexible milestone tracking. Transparent accountability demonstrates the real impact of arts investment.",
     datePublished: "2026-03-16",
@@ -863,7 +863,7 @@ export const grantManagementForSolutions: SolutionPage[] = [
     slug: "grant-management-for-environmental",
     title: "Grant Management for Environmental Orgs",
     metaDescription:
-      "Manage environmental grants with milestone tracking, AI-powered reviews, and onchain transparency for conservation and climate programs.",
+      "Advance grant management for environmental programs with milestone tracking, AI-powered reviews, and onchain transparency for conservation.",
     heading: "Verified Grant Management for Environmental Organizations",
     tldr: "Grant management for environmental organizations delivers verified outcomes with Karma. The platform handles conservation, climate, and sustainability grants with milestone-based funding. AI-assisted review and onchain proof demonstrate measurable environmental results.",
     datePublished: "2026-03-16",
@@ -988,7 +988,7 @@ export const grantManagementForSolutions: SolutionPage[] = [
     slug: "grant-management-for-social-impact",
     title: "Grant Management for Social Impact | Karma",
     metaDescription:
-      "Manage social impact grants with AI-powered reviews, milestone tracking, and onchain transparency. Prove outcomes with verifiable data.",
+      "Strengthen grant management for social impact with AI-powered reviews, milestone tracking, and onchain transparency to prove outcomes.",
     heading: "Outcome-Driven Grant Management for Social Impact",
     tldr: "Grant management for social impact focuses on verified outcomes with Karma. The platform tracks real community change through milestone-based funding and AI-assisted review. Onchain transparency gives funders proof that investments create lasting social change.",
     datePublished: "2026-03-16",
@@ -1113,7 +1113,7 @@ export const grantManagementForSolutions: SolutionPage[] = [
     slug: "grant-management-for-international-development",
     title: "Grant Management for International Development",
     metaDescription:
-      "Manage international development grants with milestone tracking, AI-powered reviews, and onchain transparency for NGOs and agencies.",
+      "Scale grant management for international development with milestone tracking, AI-powered reviews, and onchain transparency for NGOs.",
     heading: "Scalable Grant Management for International Development Programs",
     tldr: "Grant management for international development scales across borders with Karma. The platform delivers cross-border accountability through AI-assisted review and milestone-based disbursement. Onchain transparency works across diverse partners and geographies.",
     datePublished: "2026-03-16",

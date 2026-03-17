@@ -95,6 +95,21 @@ const HorizontalLine = ({ className }: { className?: string }) => (
   <hr className={cn("w-full h-[1px] bg-border max-w-[75%]", className)} />
 );
 
+/** Split a long text block into paragraphs of ~3 sentences each for readability. */
+function splitIntoParagraphs(text: string): string[] {
+  const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+  const paragraphs: string[] = [];
+  for (let i = 0; i < sentences.length; i += 3) {
+    paragraphs.push(
+      sentences
+        .slice(i, i + 3)
+        .join("")
+        .trim()
+    );
+  }
+  return paragraphs.filter(Boolean);
+}
+
 /**
  * WebPage JSON-LD with datePublished for freshness signals.
  * Uses static data only (no user input) — same safe pattern as OrganizationJsonLd.tsx.
@@ -361,10 +376,15 @@ export default async function SolutionPage({ params }: { params: Promise<{ slug:
                 <span className="text-foreground">{solution.problem.heading}</span>
               </h2>
             </div>
-            <div className="bg-secondary rounded-2xl p-8 w-full">
-              <p className="text-muted-foreground font-medium text-sm leading-[20px]">
-                {solution.problem.description}
-              </p>
+            <div className="bg-secondary rounded-2xl p-8 w-full flex flex-col gap-4">
+              {splitIntoParagraphs(solution.problem.description).map((para) => (
+                <p
+                  key={para.slice(0, 40)}
+                  className="text-muted-foreground font-medium text-sm leading-[20px]"
+                >
+                  {para}
+                </p>
+              ))}
             </div>
           </SectionContainer>
         </section>
@@ -380,15 +400,20 @@ export default async function SolutionPage({ params }: { params: Promise<{ slug:
               <h2 className={cn("section-title", "text-left", "w-full")}>
                 <span className="text-foreground">{solution.solution.heading}</span>
               </h2>
-              <p
-                className={cn(
-                  "text-muted-foreground font-normal text-left",
-                  "text-[20px] leading-[30px]",
-                  "w-full"
-                )}
-              >
-                {solution.solution.description}
-              </p>
+              <div className="flex flex-col gap-4 w-full">
+                {splitIntoParagraphs(solution.solution.description).map((para) => (
+                  <p
+                    key={para.slice(0, 40)}
+                    className={cn(
+                      "text-muted-foreground font-normal text-left",
+                      "text-[20px] leading-[30px]",
+                      "w-full"
+                    )}
+                  >
+                    {para}
+                  </p>
+                ))}
+              </div>
             </div>
 
             {/* Capabilities as a 2-col card grid */}
@@ -561,9 +586,16 @@ export default async function SolutionPage({ params }: { params: Promise<{ slug:
                   <h3 className="text-foreground font-semibold text-lg leading-[120%] tracking-[-0.02em]">
                     {faq.question}
                   </h3>
-                  <p className="text-muted-foreground font-medium text-sm leading-[20px]">
-                    {faq.answer}
-                  </p>
+                  <div className="flex flex-col gap-3">
+                    {splitIntoParagraphs(faq.answer).map((para) => (
+                      <p
+                        key={para.slice(0, 40)}
+                        className="text-muted-foreground font-medium text-sm leading-[20px]"
+                      >
+                        {para}
+                      </p>
+                    ))}
+                  </div>
                 </div>
               ))}
             </div>

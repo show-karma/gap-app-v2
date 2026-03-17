@@ -6,7 +6,7 @@ export const sizeBudgetSolutions: SolutionPage[] = [
     slug: "grant-management-under-500k",
     title: "Grant Management Under 500K Programs",
     metaDescription:
-      "Manage grant programs under $500K with Karma. Free to start, easy setup, and built for small programs needing milestone tracking.",
+      "Karma simplifies grant management under 500K with free setup, milestone tracking, and transparent reporting. Built for small programs on lean budgets.",
     heading: "Grant Management Under 500K: A Free Platform for Small Programs",
     tldr: "Grant management under 500K no longer means choosing between costly software and messy spreadsheets. Karma gives small programs a free, lightweight platform to track milestones, collect grantee updates, and report on impact.",
     problem: {
@@ -165,7 +165,7 @@ export const sizeBudgetSolutions: SolutionPage[] = [
     slug: "grant-management-500k-2m",
     title: "Grant Management 500K 2M Program Guide",
     metaDescription:
-      "Manage $500K-$2M grant programs with Karma. Track milestones, coordinate reviewers, and generate impact reports for growing programs.",
+      "Karma powers grant management 500K 2M programs with milestone tracking, reviewer coordination, and impact reports. Scale your growing program with confidence.",
     heading: "Grant Management 500K 2M: Scale Your Growing Program With Confidence",
     tldr: "Grant management 500K 2M programs need tools that match their growing complexity. Karma helps mid-range programs coordinate reviewers, track milestones at scale, and produce impact reports without stitching together multiple tools.",
     problem: {
@@ -329,7 +329,7 @@ export const sizeBudgetSolutions: SolutionPage[] = [
     slug: "grant-management-over-2m",
     title: "Grant Management Over 2M Programs",
     metaDescription:
-      "Manage large grant programs over $2M with Karma. Multi-program support, advanced reporting, and on-chain verification at scale.",
+      "Karma delivers grant management over 2M with multi-program dashboards, advanced reporting, and on-chain verification. Enterprise-grade tools at scale.",
     heading: "Grant Management Over 2M: Enterprise-Grade Tools for Large Programs",
     tldr: "Grant management over 2M requires accountability at scale. Karma supports large programs with multi-program dashboards, advanced analytics, structured reviewer workflows, and on-chain milestone verification.",
     problem: {
@@ -652,7 +652,7 @@ export const sizeBudgetSolutions: SolutionPage[] = [
     slug: "small-foundation-grant-management",
     title: "Small Foundation Grant Management Tools",
     metaDescription:
-      "Grant management for small foundations. Free to start, simple to use, and built for lean teams managing grants without IT overhead.",
+      "Karma offers small foundation grant management that is free to start, simple to use, and built for lean teams managing grants without IT overhead.",
     heading: "Small Foundation Grant Management: Free Tools for Lean Teams",
     tldr: "Small foundation grant management no longer requires enterprise budgets or dedicated IT staff. Karma helps small foundations manage grant portfolios with a free platform that handles milestone tracking, grantee updates, and impact reporting.",
     problem: {
@@ -811,7 +811,7 @@ export const sizeBudgetSolutions: SolutionPage[] = [
     slug: "mid-size-foundation-grant-management",
     title: "Mid Size Foundation Grant Management",
     metaDescription:
-      "Grant management for mid-size foundations. Coordinate reviewers, track multiple programs, and generate impact reports that scale.",
+      "Karma delivers mid size foundation grant management with reviewer coordination, multi-program tracking, and impact reports that scale with your needs.",
     heading: "Mid Size Foundation Grant Management: Multi-Program Tools That Scale",
     tldr: "Mid size foundation grant management requires tools that handle multiple programs and reviewer teams. Karma supports mid-size foundations with reviewer coordination, portfolio-level tracking, and impact analytics that scale as you grow.",
     problem: {
@@ -970,7 +970,7 @@ export const sizeBudgetSolutions: SolutionPage[] = [
     slug: "startup-grant-management",
     title: "Startup Grant Management Platform",
     metaDescription:
-      "Grant management for startups and early-stage programs. Free, fast setup, built for teams launching their first grant program.",
+      "Karma offers startup grant management that is free, fast to set up, and built for early-stage teams launching their first grant program with confidence.",
     heading: "Startup Grant Management: Launch Your First Program in Minutes",
     tldr: "Startup grant management does not require months of setup or expensive software. Karma helps startups and early-stage organizations launch their first grant programs with a free platform that takes minutes to configure.",
     problem: {

@@ -6,7 +6,7 @@ export const alternativesSolutions: SolutionPage[] = [
     slug: "grant-management-software-comparison",
     title: "Grant Management Software Comparison",
     metaDescription:
-      "Compare top grant management platforms side by side. See how features, pricing, and transparency tools stack up to find the right fit for your program.",
+      "A detailed grant management software comparison showing how Karma's AI reviews, onchain tracking, and free tier stack up against traditional platforms.",
     heading: "Grant Management Software Comparison: Find the Right Platform for Your Program",
     tldr: "A grant management software comparison helps you pick the best tool for your program. Karma stands out with AI-powered reviews, onchain transparency, and milestone tracking. You can start free and scale as your program grows.",
     problem: {
@@ -149,7 +149,7 @@ export const alternativesSolutions: SolutionPage[] = [
     slug: "grant-management-software-vs-spreadsheets",
     title: "Grant Management Software vs Spreadsheets",
     metaDescription:
-      "Discover why spreadsheets fall short for grant management. Learn how dedicated software like Karma improves tracking, reporting, and accountability.",
+      "Grant management software vs spreadsheets: see why Karma outperforms sheets with AI reviews, milestone tracking, and real-time reporting for your program.",
     heading: "Grant Management Software vs Spreadsheets: Why You Should Upgrade Now",
     tldr: "Grant management software vs spreadsheets is a common debate for growing programs. Spreadsheets work for small grants but fail as programs scale. Karma provides structured workflows, automated tracking, and transparent reporting.",
     problem: {
@@ -300,7 +300,7 @@ export const alternativesSolutions: SolutionPage[] = [
     slug: "alternative-to-submittable",
     title: "Best Alternative to Submittable for Grants",
     metaDescription:
-      "Looking for a Submittable alternative? Karma offers AI-powered reviews, onchain milestone tracking, and transparent grant management — free to start.",
+      "Karma is the best alternative to Submittable for grants with AI-powered reviews, onchain milestone tracking, and transparent management — free to start.",
     heading: "Karma: The Best Alternative to Submittable for Grant Management",
     tldr: "Finding the right alternative to Submittable matters for grant-focused teams. Karma offers outcome tracking, AI-assisted reviews, and onchain transparency. The free tier makes it easy for programs of any size to get started.",
     problem: {
@@ -451,7 +451,7 @@ export const alternativesSolutions: SolutionPage[] = [
     slug: "alternative-to-instrumentl",
     title: "Best Alternative to Instrumentl for Funders",
     metaDescription:
-      "Exploring alternatives to Instrumentl? Karma provides end-to-end grant management with AI reviews, milestone tracking, and onchain transparency.",
+      "Karma is the best alternative to Instrumentl for funders, providing end-to-end grant management with AI reviews, milestone tracking, and onchain transparency.",
     heading: "Karma: The Best Alternative to Instrumentl for Grant Makers",
     tldr: "Finding the right alternative to Instrumentl depends on which side of grants you manage. Instrumentl helps seekers find funding, while Karma helps funders manage and track programs with AI tools and onchain transparency.",
     problem: {
@@ -606,7 +606,7 @@ export const alternativesSolutions: SolutionPage[] = [
     slug: "alternative-to-fluxx",
     title: "Best Alternative to Fluxx for Grants",
     metaDescription:
-      "Considering alternatives to Fluxx? Karma delivers modern grant management with AI-powered reviews, onchain transparency, and no lengthy implementation.",
+      "Karma is the top alternative to Fluxx for grants, with AI-powered reviews, onchain transparency, and fast setup — no lengthy implementation needed.",
     heading: "Karma: The Best Alternative to Fluxx for Grant Management",
     tldr: "Finding the right alternative to Fluxx matters for growing foundations. Karma provides AI-powered reviews, onchain milestone tracking, and a streamlined setup. You skip lengthy timelines and enterprise pricing entirely.",
     problem: {
@@ -757,7 +757,7 @@ export const alternativesSolutions: SolutionPage[] = [
     slug: "alternative-to-foundant",
     title: "Best Alternative to Foundant for Grants",
     metaDescription:
-      "Looking for a Foundant alternative? Karma offers AI-assisted reviews, blockchain-verified milestones, and transparent grant tracking — free to start.",
+      "Karma is the best alternative to Foundant, offering AI-assisted reviews, blockchain-verified milestones, and transparent grant tracking — free to start today.",
     heading: "Karma: The Best Alternative to Foundant for Grant Programs",
     tldr: "Choosing the right alternative to Foundant helps foundations modernize their grant process. Karma offers AI-powered evaluation, onchain milestone tracking, and a free tier that removes barriers to getting started quickly.",
     problem: {
@@ -908,7 +908,7 @@ export const alternativesSolutions: SolutionPage[] = [
     slug: "alternative-to-blackbaud-grantmaking",
     title: "Alternative to Blackbaud Grantmaking",
     metaDescription:
-      "Evaluating Blackbaud Grantmaking alternatives? Karma offers AI-driven reviews, onchain accountability, and fast setup without enterprise contracts.",
+      "Karma is the best alternative to Blackbaud Grantmaking, with AI-driven reviews, onchain accountability, and fast setup — no enterprise contracts required.",
     heading: "Karma: The Best Alternative to Blackbaud Grantmaking for Foundations",
     tldr: "Finding the right alternative to Blackbaud grantmaking helps foundations escape vendor lock-in. Karma provides AI-powered reviews, onchain milestone verification, and lightweight setup without buying into an entire software ecosystem.",
     problem: {
@@ -1059,7 +1059,7 @@ export const alternativesSolutions: SolutionPage[] = [
     slug: "alternative-to-smartsimple",
     title: "Best Alternative to SmartSimple for Grants",
     metaDescription:
-      "Exploring SmartSimple alternatives? Karma provides AI-powered grant reviews, blockchain-verified milestones, and intuitive UX — no complex setup.",
+      "Karma is the best alternative to SmartSimple, providing AI-powered grant reviews, blockchain-verified milestones, and intuitive UX without complex setup.",
     heading: "Karma: The Best Alternative to SmartSimple for Grant Management",
     tldr: "Choosing the right alternative to SmartSimple saves foundations months of setup time. Karma offers ease of use, AI-assisted evaluation, and onchain transparency. You get operational faster without sacrificing any real capability.",
     problem: {
@@ -1210,7 +1210,7 @@ export const alternativesSolutions: SolutionPage[] = [
     slug: "alternative-to-surveymonkey-apply",
     title: "Alternative to SurveyMonkey Apply for Grants",
     metaDescription:
-      "Looking for a SurveyMonkey Apply alternative? Karma goes beyond application intake with AI reviews, milestone tracking, and onchain transparency.",
+      "Karma is the best alternative to SurveyMonkey Apply, going beyond intake with AI reviews, onchain milestone tracking, and full grant lifecycle management.",
     heading: "Karma: The Best Alternative to SurveyMonkey Apply for Grant Programs",
     tldr: "Choosing the right alternative to SurveyMonkey Apply unlocks full grant lifecycle management. Karma extends beyond intake with AI-assisted evaluation, milestone tracking, and onchain transparency for true program accountability.",
     problem: {
@@ -1365,7 +1365,7 @@ export const alternativesSolutions: SolutionPage[] = [
     slug: "alternative-to-good-grants",
     title: "Best Alternative to Good Grants Today",
     metaDescription:
-      "Considering Good Grants alternatives? Karma adds AI-powered reviews, onchain milestone verification, and transparent reporting to grant management.",
+      "Karma is the best alternative to Good Grants, adding AI-powered reviews, onchain milestone verification, and transparent reporting to your grant program.",
     heading: "Karma: The Best Alternative to Good Grants for Grant Management",
     tldr: "Finding the right alternative to Good Grants helps growing programs scale with confidence. Karma builds on similar ease of use while adding AI-powered reviews, onchain milestone tracking, and public transparency features.",
     problem: {

@@ -6,7 +6,7 @@ export const featureAdvancedSolutions: SolutionPage[] = [
     slug: "proof-of-work-tracking",
     title: "Proof of Work Tracking for Grant Projects",
     metaDescription:
-      "Track proof of work for grant-funded projects with Karma. Verify deliverables onchain, automate milestone reviews, and build funder trust.",
+      "Enable proof of work tracking for grant-funded projects with Karma. Verify deliverables onchain, automate milestone reviews, and build funder trust.",
     heading: "Proof of Work Tracking for Every Grant-Funded Project",
     tldr: "Karma provides proof of work tracking so grant programs verify every deliverable onchain. Every milestone, update, and submission stays transparent. Funders always know what grantees accomplished and when they delivered.",
     problem: {
@@ -129,7 +129,7 @@ export const featureAdvancedSolutions: SolutionPage[] = [
     slug: "grant-reviewer-assignment",
     title: "Grant Reviewer Assignment and Management",
     metaDescription:
-      "Assign and manage grant reviewers with Karma. Streamline peer review workflows, balance workloads, and ensure fair evaluations for every application.",
+      "Simplify grant reviewer assignment with Karma. Streamline peer review workflows, balance workloads, and ensure fair evaluations for every application.",
     heading: "Simplify Grant Reviewer Assignment for Your Program",
     tldr: "Karma streamlines grant reviewer assignment so programs distribute applications fairly. You track review progress and ensure every proposal gets expert evaluation.",
     problem: {
@@ -365,7 +365,7 @@ export const featureAdvancedSolutions: SolutionPage[] = [
     slug: "grant-budget-tracking",
     title: "Grant Budget Tracking in Real Time",
     metaDescription:
-      "Track grant budgets in real time with Karma. Monitor fund allocation, disbursements, and spending across all grantees from one dashboard.",
+      "Streamline grant budget tracking with Karma. Monitor fund allocation, disbursements, and spending across all grantees from one real-time dashboard.",
     heading: "Grant Budget Tracking Across Every Program in Real Time",
     tldr: "Karma provides grant budget tracking with real-time visibility into allocations, disbursements, and remaining funds. You know exactly where every dollar goes and how much runway remains.",
     problem: {
@@ -483,7 +483,7 @@ export const featureAdvancedSolutions: SolutionPage[] = [
     slug: "grant-impact-measurement",
     title: "Grant Impact Measurement and Reporting",
     metaDescription:
-      "Measure and report grant impact with Karma. Collect outcome data, generate impact reports, and demonstrate ROI to stakeholders.",
+      "Automate grant impact measurement with Karma. Collect outcome data, generate detailed impact reports, and demonstrate program ROI to your stakeholders.",
     heading: "Grant Impact Measurement That Proves Real-World Results",
     tldr: "Karma enables grant impact measurement that goes beyond tracking deliverables. You collect outcome data from grantees, aggregate results, and generate reports that demonstrate real-world results to stakeholders.",
     problem: {
@@ -601,7 +601,7 @@ export const featureAdvancedSolutions: SolutionPage[] = [
     slug: "grantee-performance-scoring",
     title: "Grantee Performance Scoring and Ranking",
     metaDescription:
-      "Score and rank grantee performance with Karma. Use data-driven evaluations to identify top performers and make better funding decisions.",
+      "Automate grantee performance scoring with Karma. Use data-driven evaluations to identify top performers and make smarter funding decisions every round.",
     heading: "Grantee Performance Scoring with Data-Driven Rankings",
     tldr: "Karma turns grant program data into grantee performance scoring that drives action. You identify top performers, flag those needing support, and make funding decisions based on evidence.",
     problem: {
@@ -719,7 +719,7 @@ export const featureAdvancedSolutions: SolutionPage[] = [
     slug: "grant-board-reporting",
     title: "Grant Board Reporting and Stakeholder Dashboards",
     metaDescription:
-      "Generate board-ready grant reports with Karma. Create dashboards showing program health, grantee progress, and fund utilization.",
+      "Simplify grant board reporting with Karma. Generate board-ready dashboards showing program health, grantee progress, and fund utilization at a glance.",
     heading: "Grant Board Reporting That Keeps Stakeholders Informed",
     tldr: "Karma transforms your program data into grant board reporting that impresses stakeholders. You show exactly how funds flow, which projects deliver, and what impact the program creates.",
     problem: {
@@ -837,7 +837,7 @@ export const featureAdvancedSolutions: SolutionPage[] = [
     slug: "grant-program-templates",
     title: "Grant Program Templates for Faster Launches",
     metaDescription:
-      "Launch grant programs faster with Karma pre-built templates. Choose proven structures, customize them, and start accepting applications in minutes.",
+      "Launch faster with grant program templates from Karma. Choose proven structures, customize workflows, and start accepting applications in minutes.",
     heading: "Grant Program Templates That Get You Running Fast",
     tldr: "Karma offers grant program templates based on proven structures from successful programs. Pick a template, customize it, and go from zero to accepting applications in minutes.",
     problem: {
@@ -956,7 +956,7 @@ export const featureAdvancedSolutions: SolutionPage[] = [
     slug: "grant-compliance-monitoring",
     title: "Grant Compliance Monitoring and Tracking",
     metaDescription:
-      "Monitor grant compliance with Karma. Track reporting deadlines, verify deliverables, and ensure grantees meet obligations automatically.",
+      "Automate grant compliance monitoring with Karma. Track reporting deadlines, verify deliverables, and ensure grantees meet all obligations on schedule.",
     heading: "Grant Compliance Monitoring That Catches Issues Early",
     tldr: "Karma automates grant compliance monitoring so program managers spend less time chasing grantees. You track reporting deadlines, verify submissions, and flag non-compliance before it becomes a problem.",
     problem: {
@@ -1074,7 +1074,7 @@ export const featureAdvancedSolutions: SolutionPage[] = [
     slug: "grant-document-signing",
     title: "Grant Document Signing for Grant Agreements",
     metaDescription:
-      "Streamline grant agreements with digital document signing on Karma. Send, sign, and track contracts without leaving the platform.",
+      "Simplify grant document signing with Karma. Send, sign, and track grant agreements and contracts digitally without ever leaving the platform.",
     heading: "Grant Document Signing Built Into Your Workflow",
     tldr: "Karma integrates grant document signing directly into the grant management workflow. You send agreements, collect signatures, and track signing status without switching tools or chasing email.",
     problem: {

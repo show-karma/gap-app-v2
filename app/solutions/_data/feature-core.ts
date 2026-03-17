@@ -6,7 +6,7 @@ export const featureCoreSolutions: SolutionPage[] = [
     slug: "ai-grant-review",
     title: "AI Grant Review: Faster Application Evaluation",
     metaDescription:
-      "Evaluate grant applications faster with AI-powered review. Karma automates scoring, flags risks, and helps reviewers make better funding decisions.",
+      "Speed up your AI grant review process with Karma. Automate application scoring, flag risks instantly, and help reviewers make better funding decisions.",
     heading: "Scale Your Program With AI Grant Review",
     tldr: "AI grant review helps your team evaluate applications faster and more consistently. Karma reduces review time by up to 80% while improving decision quality across your entire portfolio.",
     problem: {
@@ -135,7 +135,7 @@ export const featureCoreSolutions: SolutionPage[] = [
     slug: "grant-milestone-tracking",
     title: "Grant Milestone Tracking: Onchain Verification",
     metaDescription:
-      "Track and verify grant milestones with onchain attestations. Karma provides transparent, tamper-proof milestone tracking for grant programs of any size.",
+      "Simplify grant milestone tracking with Karma. Verify deliverables onchain, get tamper-proof attestations, and keep grant programs of any size on schedule.",
     heading: "Transparent Grant Milestone Tracking With Onchain Proof",
     tldr: "Grant milestone tracking on Karma stays transparent and verifiable. Every milestone completion records as an onchain attestation, giving funders confidence that their capital drives real results.",
     problem: {
@@ -264,7 +264,7 @@ export const featureCoreSolutions: SolutionPage[] = [
     slug: "grant-portfolio-dashboard",
     title: "Grant Portfolio Dashboard: Real-Time Monitoring",
     metaDescription:
-      "Monitor your entire grant portfolio in one real-time dashboard. Track funding allocation, grantee progress, and program outcomes with Karma's analytics.",
+      "Use Karma's grant portfolio dashboard to monitor funding allocation, grantee progress, and program outcomes in real time from a single view.",
     heading: "Monitor Everything With a Grant Portfolio Dashboard",
     tldr: "A grant portfolio dashboard from Karma gives program managers one live view of every grant, milestone, and payment. You get real-time data instead of stale quarterly reports.",
     problem: {
@@ -388,7 +388,7 @@ export const featureCoreSolutions: SolutionPage[] = [
     slug: "automated-grant-intake",
     title: "Automated Grant Intake: Streamline Processing",
     metaDescription:
-      "Automate grant application intake and processing. Karma eliminates manual data entry, validates submissions, and routes applications to reviewers.",
+      "Streamline automated grant intake with Karma. Eliminate manual data entry, validate submissions instantly, and route applications to the right reviewers.",
     heading: "Streamline Your Automated Grant Intake Process",
     tldr: "Automated grant intake from Karma handles everything from submission and validation to reviewer assignment. You eliminate hours of manual data entry and routing for every funding round.",
     problem: {
@@ -512,7 +512,7 @@ export const featureCoreSolutions: SolutionPage[] = [
     slug: "grant-eligibility-screening",
     title: "Grant Eligibility Screening: Auto Qualification",
     metaDescription:
-      "Screen grant applicants automatically against your eligibility criteria. Karma filters unqualified applications before they reach reviewers, saving time.",
+      "Automate grant eligibility screening with Karma. Filter unqualified applications against your criteria before they reach reviewers, saving hours each round.",
     heading: "Automate Grant Eligibility Screening Before Review",
     tldr: "Grant eligibility screening on Karma checks every application against your criteria automatically. Reviewers only spend time on qualified applicants while others get clear feedback.",
     problem: {
@@ -641,7 +641,7 @@ export const featureCoreSolutions: SolutionPage[] = [
     slug: "grant-reporting-analytics",
     title: "Grant Reporting Analytics: Data-Driven Insights",
     metaDescription:
-      "Generate grant reports and analytics effortlessly. Karma turns program data into actionable insights with real-time dashboards and exportable reports.",
+      "Power your grant reporting analytics with Karma. Turn program data into actionable insights using real-time dashboards and exportable reports for stakeholders.",
     heading: "Get Clear Grant Reporting Analytics for Your Program",
     tldr: "Grant reporting analytics from Karma turn raw program data into clear reports. Program managers get the insights they need to optimize funding and satisfy stakeholders.",
     problem: {
@@ -765,7 +765,7 @@ export const featureCoreSolutions: SolutionPage[] = [
     slug: "grant-payment-tracking",
     title: "Grant Payment Tracking: Monitor Disbursements",
     metaDescription:
-      "Track grant payments and disbursements in real time. Karma provides full visibility into fund flow with milestone-linked payments and onchain records.",
+      "Simplify grant payment tracking with Karma. Get full visibility into disbursements, milestone-linked payments, and onchain fund flow records in real time.",
     heading: "Full Visibility With Grant Payment Tracking",
     tldr: "Grant payment tracking on Karma gives programs full visibility into fund flow. You link disbursements to verified milestones so funders know exactly where capital goes.",
     problem: {
@@ -894,7 +894,7 @@ export const featureCoreSolutions: SolutionPage[] = [
     slug: "multi-program-grant-management",
     title: "Multi Program Grant Management: One Platform",
     metaDescription:
-      "Manage multiple grant programs from a single platform. Karma unifies applications, reviews, milestones, and payments across all your funding initiatives.",
+      "Centralize multi program grant management with Karma. Unify applications, reviews, milestones, and payments across all your funding initiatives in one place.",
     heading: "Simplify Multi Program Grant Management Today",
     tldr: "Multi program grant management on Karma lets you run all programs from one platform. You share tools and data while keeping each program independent.",
     problem: {
@@ -1018,7 +1018,7 @@ export const featureCoreSolutions: SolutionPage[] = [
     slug: "automated-grantee-reminders",
     title: "Automated Grantee Reminders: Stay on Track",
     metaDescription:
-      "Send automated reminders to grantees for milestone updates and deadlines. Karma keeps projects on track without manual follow-up from program managers.",
+      "Set up automated grantee reminders with Karma. Send milestone update and deadline notifications that keep projects on track without manual follow-up.",
     heading: "Keep Projects Moving With Automated Grantee Reminders",
     tldr: "Automated grantee reminders from Karma notify grantees about upcoming milestones, overdue updates, and pending actions. Program managers stop spending hours chasing people for status reports.",
     problem: {
@@ -1142,7 +1142,7 @@ export const featureCoreSolutions: SolutionPage[] = [
     slug: "grant-application-management",
     title: "Grant Application Management: Full Workflow",
     metaDescription:
-      "Manage grant applications from submission to decision. Karma provides a complete workflow for intake, review, approval, and applicant communication.",
+      "Streamline grant application management with Karma. Handle the full workflow from submission to decision, including intake, review, and approval tracking.",
     heading: "End-to-End Grant Application Management in One Place",
     tldr: "Grant application management on Karma takes applications from submission through review, approval, and onboarding. You replace the patchwork of forms, spreadsheets, and email threads.",
     problem: {
