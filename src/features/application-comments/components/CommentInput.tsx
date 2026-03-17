@@ -2,8 +2,8 @@
 
 import { Send } from "lucide-react";
 import { useCallback, useMemo, useRef } from "react";
-import MentionAutocomplete from "@/components/FundingPlatform/ApplicationView/MentionAutocomplete";
 import InviteReviewerModal from "@/components/FundingPlatform/ApplicationView/InviteReviewerModal";
+import MentionAutocomplete from "@/components/FundingPlatform/ApplicationView/MentionAutocomplete";
 import { Button } from "@/components/ui/button";
 import { useMentionEditor } from "@/hooks/useMentionEditor";
 import { useMilestoneReviewers } from "@/hooks/useMilestoneReviewers";
