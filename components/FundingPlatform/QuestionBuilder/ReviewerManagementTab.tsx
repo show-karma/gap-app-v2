@@ -190,15 +190,17 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
     return Array.from(emailToMember.values());
   }, [programReviewers, milestoneReviewers]);
 
-  // Add reviewer to selected roles sequentially to avoid partial state on failure
+  // Add reviewer to all selected roles in parallel, then refetch once
   const handleAdd = useCallback(
     async (data: Record<string, string>) => {
+      const promises: Promise<unknown>[] = [];
       if (selectedRoles.includes("program")) {
-        await addProgramReviewer(data);
+        promises.push(addProgramReviewer(data));
       }
       if (selectedRoles.includes("milestone")) {
-        await addMilestoneReviewer(data);
+        promises.push(addMilestoneReviewer(data));
       }
+      await Promise.all(promises);
     },
     [selectedRoles, addProgramReviewer, addMilestoneReviewer]
   );
@@ -286,9 +288,8 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
     ]
   );
 
-  const handleRefresh = useCallback(() => {
-    refetchProgramReviewers();
-    refetchMilestoneReviewers();
+  const handleRefresh = useCallback(async () => {
+    await Promise.all([refetchProgramReviewers(), refetchMilestoneReviewers()]);
   }, [refetchProgramReviewers, refetchMilestoneReviewers]);
 
   const isLoadingReviewers = isLoadingProgramReviewers || isLoadingMilestoneReviewers;

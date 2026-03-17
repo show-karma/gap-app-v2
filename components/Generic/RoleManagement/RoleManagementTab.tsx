@@ -28,7 +28,7 @@ interface RoleManagementTabProps {
   canManage?: boolean;
   onAdd?: (data: Record<string, string>) => Promise<void>;
   onRemove?: (memberId: string) => Promise<void>;
-  onRefresh?: () => void;
+  onRefresh?: () => void | Promise<void>;
   roleOptions?: RoleOption[];
   // Multi-role checkbox support
   selectedRoles?: string[];
@@ -195,7 +195,7 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
       }
 
       if (onRefresh) {
-        onRefresh();
+        await onRefresh();
       }
     } catch (error) {
       let errorMessage = "Failed to add member. Please try again.";
@@ -250,7 +250,7 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
     try {
       await onRemove?.(removeDialogMemberId);
       if (onRefresh) {
-        onRefresh();
+        await onRefresh();
       }
     } finally {
       setRemovingMemberId(null);
@@ -285,7 +285,7 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
       setEditingMemberId(null);
       setEditRoles([]);
       if (onRefresh) {
-        onRefresh();
+        await onRefresh();
       }
     } finally {
       setIsSavingEdit(false);
@@ -302,7 +302,7 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
       setEditingMemberId(null);
       setEditRoles([]);
       if (onRefresh) {
-        onRefresh();
+        await onRefresh();
       }
     } finally {
       setIsSavingEdit(false);
