@@ -20,9 +20,6 @@
   font-display: swap;
 }
 
-body * {
-  @apply transition-colors duration-500;
-}
 * {
   @apply font-body;
 }
