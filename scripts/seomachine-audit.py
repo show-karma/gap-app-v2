@@ -83,7 +83,7 @@ def extract_text_content(html):
         elif el.name == 'a' and el.get('href', '').startswith('/'):
             pass  # internal links counted separately
 
-    content = '\n'.join(lines)
+    content = '\n'.join(lines).strip()
 
     # Count links
     internal_links = len(main.find_all('a', href=re.compile(r'^/')))

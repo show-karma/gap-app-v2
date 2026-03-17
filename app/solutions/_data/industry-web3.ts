@@ -12,12 +12,12 @@ export const industryWeb3Solutions: SolutionPage[] = [
     problem: {
       heading: "Why grant management for Web3 fails without onchain proof",
       description:
-        "Web3 ecosystems hand out millions in grants each quarter. Most programs still track progress with spreadsheets and manual check-ins. Grant recipients often vanish after receiving funds. Milestones go unverified because no one owns the follow-up process. Communities cannot tell if their treasury money produced real results. Without onchain proof, the same low-performing teams keep winning grants across ecosystems.",
+        "Web3 groups give out millions in grants each quarter. Most programs still use sheets and manual check-ins. Grant winners often vanish after they get funds. No one checks if milestones get done. The community cannot tell if their money led to real results. Without onchain proof, weak teams keep winning grants across many chains.",
     },
     solution: {
       heading: "How Karma solves grant management for Web3 with onchain attestations",
       description:
-        "Karma brings accountability to Web3 funding through onchain attestations via EAS. Every milestone, review, and payment lives on the blockchain as a permanent record. Program managers track progress in real time from a single dashboard. Reviewers evaluate deliverables against clear criteria. The broader community can verify that grant funds drive real impact. This approach makes grant management for Web3 transparent and trustworthy.",
+        "Karma adds trust to Web3 funding through onchain proofs via EAS. Every milestone, review, and payment lives on the blockchain for good. Program managers track progress in real time from one dashboard. Reviewers check work against clear criteria. The whole community can confirm that grant funds drive real impact. This makes Web3 grant programs open and honest.",
     },
     capabilities: [
       "Onchain milestone attestations via EAS for verifiable grant outcomes",
@@ -33,42 +33,42 @@ export const industryWeb3Solutions: SolutionPage[] = [
       {
         question: "How does Karma use onchain attestations for grant management?",
         answer:
-          "Karma leverages the Ethereum Attestation Service (EAS) to record every key event in the grant lifecycle as an onchain attestation. When a grantee submits a milestone, a reviewer approves it, or funds are disbursed, each action is attested onchain. This creates an immutable, publicly verifiable record that any community member can audit.",
+          "Karma uses the Ethereum Attestation Service (EAS) to record every key grant event onchain. When a grantee submits a milestone, a reviewer approves it, or funds go out, each action gets an onchain proof. This creates a lasting public record that any member can check. No one can change or erase these records after the fact.",
       },
       {
         question: "Which blockchains does Karma support?",
         answer:
-          "Karma supports multiple EVM-compatible chains including Ethereum, Optimism, Arbitrum, Base, and others. Grant programs can operate on the chain that best fits their ecosystem while still benefiting from cross-chain reputation data. This multi-chain flexibility means ecosystems are never locked into a single network and can expand coverage as new chains launch.",
+          "Karma works on many EVM chains like Ethereum, Optimism, Arbitrum, and Base. Grant programs can run on the chain that fits their needs. They still get cross-chain data on grantee track records. This means you never get locked into one network. You can add new chains as your program grows.",
       },
       {
         question: "Can grantee reputation carry across different Web3 ecosystems?",
         answer:
-          "Yes. Because attestations are recorded onchain, grantee performance history is portable across ecosystems. A builder who successfully delivers for one grant program builds a verifiable track record that other programs can reference when evaluating new applications. This cross-ecosystem transparency rewards consistent performers and helps grant committees make better funding decisions.",
+          "Yes. All proofs live onchain, so grantee history travels across groups. A builder who ships for one grant program builds a record others can check. New programs can review past work before they fund a team. This rewards strong builders and helps grant groups make smarter choices. It also pushes weak teams to do better or drop out.",
       },
       {
         question: "How does Karma handle milestone-based disbursements?",
         answer:
-          "Program managers define milestones with clear deliverables and acceptance criteria. As grantees submit work and reviewers approve milestones, funds can be released incrementally. This ensures accountability at every stage rather than distributing all funds upfront, reducing the risk of abandoned projects and encouraging consistent progress throughout the entire grant period. The milestone-gated approach also gives program managers natural checkpoints to assess whether continued funding is warranted.",
+          "Program managers set milestones with clear goals and pass/fail rules. As grantees submit work and reviewers approve it, funds go out step by step. Teams do not get all the money up front. This cuts the risk of dropped projects. It also keeps teams on track the whole time. Managers get natural check-ins to decide if the work deserves more funding.",
       },
       {
         question: "What reporting tools does Karma offer for Web3 grant programs?",
         answer:
-          "Karma provides real-time dashboards showing program-wide progress, fund utilization, and milestone completion rates. Program managers can generate reports for governance proposals, community updates, and internal reviews. All data is backed by onchain attestations, making reports independently verifiable by any stakeholder or community member. This transparency eliminates the trust gap that often exists between grant programs and the communities they serve.",
+          "Karma shows live dashboards with program progress, fund use, and milestone rates. Program managers can make reports for votes, updates, and reviews. All data links back to onchain proofs. Any member can verify the numbers on their own. This closes the trust gap between grant programs and the people they serve. Reports take minutes to build, not days.",
       },
       {
         question: "How long does it take to set up a Web3 grant program on Karma?",
         answer:
-          "Most teams launch their first grant program within a few days. You start by creating milestone templates and evaluation rubrics. Then you invite reviewers and open applications. Karma handles the onchain attestation setup automatically. No smart contract deployment is needed from your side.",
+          "Most teams launch their first grant program in a few days. You start by making milestone templates and scoring guides. Then you invite reviewers and open the intake form. Karma handles the onchain setup on its own. You do not need to deploy any smart contracts. The whole process takes less effort than setting up a shared spreadsheet.",
       },
       {
         question: "Does Karma work with existing DAO governance tools?",
         answer:
-          "Yes. Karma produces verifiable onchain data that governance platforms can reference. Token holders can check attestation records directly on the blockchain. Program managers can export reports for Snapshot proposals or forum discussions. This makes it easy to include grant outcomes in governance decisions.",
+          "Yes. Karma creates onchain data that any DAO tool can read. Token holders can check proof records right on the blockchain. Program managers can export reports for Snapshot votes or forum posts. This makes it simple to include grant results in votes. DAO members get the hard facts they need to make good choices.",
       },
       {
         question: "What happens if a grantee misses a milestone deadline?",
         answer:
-          "Program managers receive alerts when deadlines pass without a submission. They can then reach out to the grantee or pause future disbursements. The missed deadline is visible on the program dashboard. This early warning system helps managers intervene before small delays become major problems.",
+          "Program managers get alerts when a deadline passes with no update. They can then reach out to the grantee or pause future payments. The missed deadline shows up on the program dashboard for all to see. This early warning helps managers step in before small delays turn into big problems. Quick action keeps the whole program on track.",
       },
     ],
     ctaText: "Start managing your Web3 grants with Karma",
@@ -125,12 +125,12 @@ export const industryWeb3Solutions: SolutionPage[] = [
     problem: {
       heading: "Grant management for blockchain ecosystems lacks unified tooling",
       description:
-        "L1 and L2 foundations spend large treasuries on grants every quarter. Most teams juggle separate tools for applications, reviews, payments, and reporting. This fragmented approach makes it hard to measure grant program ROI. Token holders demand accountability but cannot see how funds drive growth. Developer adoption and user activity go untracked. Program managers waste hours stitching together data from different platforms.",
+        "L1 and L2 groups spend large sums on grants each quarter. Most teams use separate tools for intake, reviews, payments, and reports. This split setup makes it hard to measure results. Token holders want proof but cannot see how funds drive growth. No one tracks new dev signups or user numbers. Program managers waste hours pulling data from many platforms.",
     },
     solution: {
       heading: "Unified grant management for blockchain ecosystems with onchain proof",
       description:
-        "Karma gives blockchain ecosystems one platform to manage the full grant lifecycle. Teams handle applications, reviews, and payments in a single place. Every approval and disbursement is recorded as an EAS attestation. Token holders get a transparent, onchain record of program outcomes. Ecosystem leaders track how grants drive developer growth and user activity. This unified approach replaces fragmented tooling with clear accountability.",
+        "Karma gives blockchain groups one platform for the full grant cycle. Teams handle intake, reviews, and payments in one place. Every approval and payment gets an EAS onchain proof. Token holders see a clear, public record of results. Leaders track how grants drive dev growth and user gains. One unified tool replaces the scattered mess of old workflows.",
     },
     capabilities: [
       "End-to-end grant lifecycle management from application to completion",
@@ -146,42 +146,42 @@ export const industryWeb3Solutions: SolutionPage[] = [
       {
         question: "How does Karma help blockchain foundations track grant program impact?",
         answer:
-          "Karma provides dashboards that connect grant milestones to ecosystem metrics. Foundations can see which grants are progressing, which are stalled, and how funded projects contribute to ecosystem growth. All milestone completions are attested onchain, so the data is verifiable and trustworthy. This visibility helps foundations make informed decisions about follow-on funding and program direction.",
+          "Karma shows dashboards that link grant milestones to growth numbers. Groups can see which grants move forward and which stall. They also see how funded projects help the whole chain grow. All milestone data lives onchain, so anyone can verify it. This clear view helps leaders decide where to put the next round of funds. It also shows which grant types give the best returns.",
       },
       {
         question: "Can Karma support grants across multiple chains in one ecosystem?",
         answer:
-          "Yes. Blockchain ecosystems that span multiple chains or rollups can manage all their grants from a single Karma instance. The platform supports multi-chain attestations and can track grantee activity across different networks within the same ecosystem. This unified view eliminates the need to juggle separate tools for each chain in your network.",
+          "Yes. Groups that span many chains or rollups can run all grants from one Karma setup. The platform supports proofs on many chains at once. It tracks grantee work across different networks in the same system. You no longer need a separate tool for each chain. One view covers your whole network of funded projects.",
       },
       {
         question: "How does the community reviewer system work?",
         answer:
-          "Grant programs can designate community reviewers who evaluate milestone submissions against predefined criteria. Reviews are recorded as onchain attestations, ensuring that the evaluation process is transparent and that reviewer contributions are publicly acknowledged. This decentralized approach to evaluation builds community trust and distributes the review workload across qualified participants. Reviewers can be added or rotated between funding rounds to maintain evaluation quality and prevent reviewer fatigue.",
+          "Grant programs pick community reviewers who check milestone work against set rules. Each review gets an onchain proof. This keeps the process open and gives reviewers public credit. Spreading reviews across many people builds trust. It also keeps the load light for each person. You can swap reviewers between rounds to keep things fresh and fair.",
       },
       {
         question: "Is Karma suitable for DAO-governed grant programs?",
         answer:
-          "Absolutely. Karma is designed with DAO governance in mind. The platform provides the transparency and verifiable data that token holders need to make informed decisions about grant program funding, renewals, and strategic direction. Onchain attestations ensure every decision is auditable, aligning perfectly with the accountability standards that DAO communities expect from their treasury programs.",
+          "Yes. Karma fits DAO needs from the ground up. Token holders get the clear, proven data they need to vote on grants. They can check fund use, renewals, and next steps. Onchain proofs make every choice easy to audit. This matches the high bar that DAO groups set for how their treasury gets spent. No trust gaps remain when data lives on the chain.",
       },
       {
         question: "How does Karma help with ecosystem growth reporting?",
         answer:
-          "Karma links grant milestones to ecosystem growth metrics such as developer activity, TVL changes, and user adoption. Foundation teams can generate reports showing how grant-funded projects contribute to overall ecosystem health. This data-driven approach helps justify continued treasury allocations and demonstrates program value to token holders and governance participants. Over time, the accumulated data reveals which grant categories generate the strongest ecosystem returns.",
+          "Karma links grant milestones to growth numbers like dev counts, TVL shifts, and new users. Teams can make reports that show how funded projects help the whole chain. This data-first approach helps justify more treasury spending. It proves program value to token holders and voters. Over time, the numbers show which grant types bring the best returns. Leaders use these trends to plan future rounds.",
       },
       {
         question: "How does Karma handle grant applications for blockchain ecosystems?",
         answer:
-          "Karma provides customizable application forms for each grant category. Applicants fill out structured proposals with clear deliverables. Reviewers score applications using predefined rubrics. The entire intake process stays in one platform, so nothing falls through the cracks. This replaces the scattered spreadsheets and forum posts most foundations use today.",
+          "Karma offers custom intake forms for each grant type. Teams fill out clear proposals with set goals. Reviewers score each one using defined guides. The full intake stays in one platform. Nothing slips through the cracks. This replaces the messy sheets and forum posts that most groups use today. It saves hours of admin work each round.",
       },
       {
         question: "Can Karma track grants across multiple rollups in one ecosystem?",
         answer:
-          "Yes. Many blockchain ecosystems span several rollups or sidechains. Karma tracks grants across all of them from a single dashboard. Attestations record which chain each grant operates on. Program managers get a unified view without switching between tools. This cross-chain visibility is essential for ecosystems growing beyond a single network.",
+          "Yes. Many blockchain groups span several rollups or sidechains. Karma tracks grants across all of them from one dashboard. Each proof records which chain the grant runs on. Managers see everything without switching tools. This cross-chain view helps groups that grow beyond a single network. It keeps all grant data in one clean place.",
       },
       {
         question: "How do token holders verify grant outcomes on Karma?",
         answer:
-          "Every milestone approval and fund release is attested onchain via EAS. Token holders can check these records directly on a block explorer. They can also view program dashboards that summarize outcomes in plain language. This transparency builds community trust and supports informed governance votes.",
+          "Every milestone approval and fund release gets an onchain proof via EAS. Token holders can check these records on a block explorer any time. They can also view dashboards that sum up results in plain terms. This builds trust in the community and helps people vote with real facts. No one needs to take the program team at their word.",
       },
     ],
     ctaText: "Launch your ecosystem grant program on Karma",
@@ -238,12 +238,12 @@ export const industryWeb3Solutions: SolutionPage[] = [
     problem: {
       heading: "Grant management for DeFi protocols lacks delivery verification",
       description:
-        "DeFi protocols fund integrations, tooling, security audits, and ecosystem growth. Most grant committees cannot verify if funded projects ship working code. Builders face unclear expectations about what counts as a completed deliverable. Communities have no way to check if treasury funds improved protocol security. Current tools offer no standard evaluation framework. This lack of verification wastes treasury resources and frustrates token holders.",
+        "DeFi protocols fund new hooks, tooling, audits, and growth. Most grant groups cannot prove that funded teams ship real code. Builders face vague rules about what counts as done. The community has no way to check if funds made the protocol safer. No tool offers a standard scoring system. This lack of proof wastes money and upsets token holders.",
     },
     solution: {
       heading: "How Karma enables grant management for DeFi protocols with verifiable outcomes",
       description:
-        "Karma gives DeFi protocols a structured platform for grant management. Every deliverable ties to a clear milestone with defined acceptance criteria. Reviewers evaluate submissions and record approvals as onchain EAS attestations. Protocol teams see which grants drive adoption and which fall short. Builders earn portable reputation based on verified delivery. This approach brings accountability to DeFi protocol funding programs.",
+        "Karma gives DeFi protocols a clear system for grants. Every task ties to a milestone with set pass/fail rules. Reviewers check work and record approvals as onchain EAS proofs. The team sees which grants drive growth and which lag behind. Builders earn a portable track record from proven work. This brings real proof to DeFi funding programs.",
     },
     capabilities: [
       "Protocol-specific milestone templates for integrations, audits, and tooling grants",
@@ -259,42 +259,42 @@ export const industryWeb3Solutions: SolutionPage[] = [
       {
         question: "How does Karma handle technical milestone reviews for DeFi grants?",
         answer:
-          "Karma supports structured review workflows where designated reviewers evaluate technical deliverables against predefined acceptance criteria. Reviews are recorded as onchain attestations, creating a verifiable record that the grant committee, protocol governance, and the broader community can reference. This structured approach ensures consistent quality standards across all funded projects and gives builders clear expectations about what constitutes an approved deliverable.",
+          "Karma uses a step-by-step review flow. Chosen reviewers check each item against set rules. Every review gets an onchain proof that the grant group, voters, and the public can see. This keeps quality the same across all funded projects. Builders know what counts as approved work before they start. The clear rules save time for both reviewers and builders.",
       },
       {
         question: "Can builders use their Karma reputation across multiple DeFi protocols?",
         answer:
-          "Yes. Since all attestations are recorded onchain via EAS, a builder who delivers successfully for one protocol builds a portable reputation that any other protocol can verify. This helps grant committees identify proven builders and reduces the risk of funding unproven teams. Builders are incentivized to deliver quality work knowing their track record follows them across the ecosystem.",
+          "Yes. All proofs live onchain via EAS. A builder who ships well for one protocol builds a record that any other protocol can check. This helps grant groups find proven talent fast. It also cuts the risk of funding unknown teams. Builders know their track record follows them, so they push to do great work every time.",
       },
       {
         question: "How does Karma support grant program governance?",
         answer:
-          "Karma provides transparent, onchain data that governance participants need to evaluate grant program performance. Token holders can see which grants were funded, what milestones were achieved, and how funds were utilized, all backed by verifiable attestations. This level of transparency makes it straightforward for governance to approve program renewals and allocate future budgets with confidence.",
+          "Karma gives voters clear, onchain data to judge grant results. Token holders see which grants got funded and what got done. They also see how each dollar left the treasury. Every fact links to a proof on the chain. This makes it easy for voters to renew programs and set budgets. No one needs to guess or trust a report at face value.",
       },
       {
         question: "What types of DeFi grants can Karma manage?",
         answer:
-          "Karma supports any DeFi grant category including protocol integrations, security audits, developer tooling, documentation, community building, and analytics dashboards. Each category can have its own milestone templates and evaluation criteria, ensuring that reviewers assess deliverables using standards appropriate to the specific type of contribution. This configurability means protocols can launch new grant tracks without reworking their entire evaluation framework.",
+          "Karma handles any DeFi grant type. This includes hooks, audits, dev tools, docs, community work, and dashboards. Each type gets its own milestone guides and scoring rules. Reviewers judge work using standards that fit the task. Protocols can add new grant tracks without changing the rest of their setup. This keeps things simple as the program grows.",
       },
       {
         question: "How does Karma track fund utilization for DeFi treasury grants?",
         answer:
-          "Karma provides transparent fund tracking from initial treasury allocation through milestone-gated releases. Protocol teams can see exactly how much has been disbursed, how much remains, and which milestones triggered each payment. This end-to-end visibility helps governance participants verify that treasury funds are being deployed effectively and responsibly, strengthening community confidence in the protocol's financial stewardship.",
+          "Karma tracks funds from the first budget vote through each milestone payout. Teams see how much went out, how much remains, and which milestone triggered each payment. This full view helps voters confirm that money flows to the right places. It builds trust in how the protocol spends its treasury. Every payment links to an onchain proof for easy checks.",
       },
       {
         question: "Can DeFi protocols use Karma for security audit grants?",
         answer:
-          "Yes. Security audit grants have unique requirements like code review deliverables and vulnerability reports. Karma lets you create audit-specific milestone templates with tailored criteria. Reviewers with security expertise evaluate each submission. The verified audit record stays onchain for the community to reference.",
+          "Yes. Audit grants have special needs like code review tasks and bug reports. Karma lets you make audit-specific milestone guides with custom rules. Reviewers who know security check each item. The verified audit record stays onchain for the public to see. This gives the community real proof that funded audits got done right.",
       },
       {
         question: "How does Karma help DeFi protocols attract better grant applicants?",
         answer:
-          "Builders can see clear milestone expectations before they apply. They know exactly what reviewers will evaluate. Top builders prefer programs with structured processes because it reduces ambiguity. Over time, your protocol builds a reputation for running a fair and transparent grant program. This attracts higher-quality applicants to each funding round.",
+          "Builders see clear goals before they apply. They know what reviewers will check. Top builders prefer programs with set rules because it cuts guesswork. Over time, your protocol builds a name for running a fair grant program. This draws better teams to each funding round. Strong programs attract strong builders in a positive cycle.",
       },
       {
         question: "Does Karma support grants denominated in protocol tokens?",
         answer:
-          "Karma tracks milestone-gated disbursements regardless of the payment token. Protocol teams can structure grants in their native token, stablecoins, or a mix. The platform records each disbursement event as an onchain attestation. This flexibility lets protocols fund builders in whatever denomination fits their treasury strategy.",
+          "Karma tracks payouts no matter what token you use. Teams can set up grants in their native token, stablecoins, or a blend. Each payout event gets an onchain proof. This freedom lets protocols fund builders in whatever coin fits their plan. It works the same whether you pay in ETH, USDC, or your own token.",
       },
     ],
     ctaText: "Fund your DeFi ecosystem with Karma",
@@ -351,12 +351,12 @@ export const industryWeb3Solutions: SolutionPage[] = [
     problem: {
       heading: "Grant management for open source projects lacks structured tracking",
       description:
-        "Open source projects receive grants from foundations, corporations, and community treasuries. Funders send money and hope for the best. Maintainers submit long reports that few people read. No one tracks whether a funded feature actually shipped. Quality standards vary wildly between projects and funders. This ad hoc approach makes it hard for funders to justify continued investment in open source work.",
+        "Open source projects get grants from many sources. Funders send money and hope for the best. Builders submit long reports that few people read. No one checks if a funded feature ever shipped. Quality bars change from project to project. This loose approach makes it hard for funders to keep paying for open source work.",
     },
     solution: {
       heading: "How Karma improves grant management for open source with clear milestones",
       description:
-        "Karma gives open source funding programs a structured framework for accountability. Projects define clear milestones tied to feature releases or documentation updates. Reviewers evaluate each milestone against agreed criteria. The full history of submissions and reviews stays visible to all stakeholders. Funders see exactly what they pay for. Maintainers earn recognition through verified grant management for open source delivery.",
+        "Karma gives open source funders a clear system for tracking results. Projects set milestones tied to feature launches or doc updates. Reviewers check each milestone against agreed rules. The full history of work and reviews stays visible to everyone. Funders see what they paid for. Builders earn credit through verified open source grant delivery.",
     },
     capabilities: [
       "Milestone-based grant tracking tailored for open source delivery cycles",
@@ -372,37 +372,37 @@ export const industryWeb3Solutions: SolutionPage[] = [
       {
         question: "How does Karma help open source funders track grant delivery?",
         answer:
-          "Karma provides a structured milestone system where each grant is broken into deliverables with clear acceptance criteria. Reviewers evaluate submissions, and the entire review history is recorded transparently. Funders can see exactly which milestones have been completed, which are in progress, and which are overdue, enabling timely intervention when projects fall behind schedule.",
+          "Karma breaks each grant into tasks with clear pass/fail rules. Reviewers check each item, and the full review history stays open to all. Funders see which tasks are done, in progress, or late. They can step in early when a project falls behind. This keeps small delays from turning into wasted grants. Everyone stays on the same page from start to finish.",
       },
       {
         question: "Can Karma handle different types of open source grants?",
         answer:
-          "Yes. Karma supports configurable milestone templates and evaluation criteria, so you can manage grants for new feature development, maintenance and bug fixes, documentation, security audits, or community building, each with appropriate review standards. This flexibility ensures that every grant type receives the evaluation rigor it deserves without forcing a one-size-fits-all approach.",
+          "Yes. Karma lets you set custom milestone guides and scoring rules. You can manage grants for new features, bug fixes, docs, audits, or outreach. Each type gets review standards that fit the work. This means every grant gets the right level of scrutiny. You do not force one rigid process on every kind of project.",
       },
       {
         question: "How do maintainers benefit from using Karma?",
         answer:
-          "Maintainers build a verified track record of grant delivery that is visible to all potential funders. Clear milestones set expectations upfront, reducing ambiguity. The structured review process ensures maintainers receive timely feedback on their submissions rather than waiting weeks for informal check-ins. Over time, this portable reputation helps maintainers secure future funding more easily.",
+          "Builders earn a verified record that all funders can see. Clear milestones set goals up front and cut guesswork. The review process gives builders fast feedback instead of weeks of silence. Over time, this record helps builders land more grants with less effort. Strong past work speaks louder than any pitch deck.",
       },
       {
         question: "Does Karma integrate with existing open source workflows?",
         answer:
-          "Karma is designed to complement existing development workflows. Maintainers continue using their preferred tools for development and submit milestone updates through Karma. The platform focuses on the accountability and review layer without disrupting how teams build software, ensuring adoption is lightweight and frictionless for developers already managing complex toolchains. This separation of concerns means teams can adopt Karma without changing their existing development processes.",
+          "Karma fits right into how teams already work. Builders keep using their favorite dev tools. They just submit milestone updates through Karma. The platform handles reviews and tracking without changing how teams write code. Devs do not need to learn a new toolchain. Teams can start using Karma in a day without changing their current process.",
       },
       {
         question: "How does Karma support multi-funder open source projects?",
         answer:
-          "Open source projects often receive grants from multiple funders at once. Karma tracks milestones per funding source. Each funder sees clear updates on their specific grant outcomes. Maintainers manage all obligations from one dashboard. Program managers generate funder-specific reports without duplicated effort.",
+          "Open source projects often get grants from many funders at once. Karma tracks milestones for each funding source. Each funder sees clear updates on their own grant results. Builders manage all tasks from one dashboard. Program managers make funder-specific reports without extra work. This saves time and keeps every funder in the loop.",
       },
       {
         question: "Can Karma track maintenance grants alongside feature grants?",
         answer:
-          "Yes. Maintenance work has different deliverables than new feature development. Karma lets you create separate milestone templates for each grant type. Bug fix grants might track issue resolution counts. Feature grants might track code merges and user adoption. Each category gets the evaluation criteria it deserves.",
+          "Yes. Bug fix work looks different from new feature work. Karma lets you make separate guides for each grant type. Bug fix grants can track issues closed. Feature grants can track code merges and new users. Each type gets its own scoring rules. This keeps reviews fair and on target for every kind of work.",
       },
       {
         question: "How does Karma help open source projects attract more funding?",
         answer:
-          "Maintainers build a verified track record with every completed milestone. Funders can review this history before making new grants. A strong delivery record signals reliability to potential sponsors. Over time, consistent performers attract more and larger grants. This creates a positive cycle that rewards teams who deliver on their commitments.",
+          "Builders grow their verified record with each done milestone. Funders can check this history before making new grants. A strong record shows sponsors that a team delivers. Over time, good teams attract bigger grants. This creates a loop that rewards those who keep their word. The data does the talking in every new funding round.",
       },
     ],
     ctaText: "Bring accountability to your open source grants",
@@ -459,12 +459,12 @@ export const industryWeb3Solutions: SolutionPage[] = [
     problem: {
       heading: "Grant management for public goods lacks proof of impact",
       description:
-        "Public goods funding has grown through quadratic funding, retroactive grants, and direct allocations. Proving that funded projects deliver real public value remains a core challenge. Self-reported impact metrics are unreliable and hard to verify. No standard framework exists for evaluating public goods outcomes. Funders struggle to tell high-impact projects from low-impact ones. This erodes donor confidence and makes sustained funding difficult.",
+        "Public goods funding has grown through many channels. Proving that funded projects give real public value remains hard. Self-reported numbers are often wrong and tough to verify. No standard system exists for judging public goods results. Funders cannot tell great projects from weak ones. This hurts donor trust and makes it hard to keep funding going.",
     },
     solution: {
       heading: "How Karma strengthens grant management for public goods with verifiable impact",
       description:
-        "Karma helps public goods funders track and verify grant outcomes with onchain attestations. Every milestone and review is recorded via EAS as a permanent, public record. Community reviewers assess deliverables against predefined impact criteria. Builders who deliver consistently earn portable reputation scores. Funders use this data to identify top-performing teams. This makes grant management for public goods transparent and evidence-based.",
+        "Karma helps public goods funders track and prove grant results with onchain proofs. Every milestone and review lives on the chain as a lasting public record. Community reviewers check work against set impact rules. Builders who deliver well earn a portable score. Funders use this data to find top teams. This makes public goods grants open and based on hard facts.",
     },
     capabilities: [
       "Onchain impact attestations creating verifiable records of public goods delivery",
@@ -480,42 +480,42 @@ export const industryWeb3Solutions: SolutionPage[] = [
       {
         question: "How does Karma help prove public goods impact?",
         answer:
-          "Karma records every milestone completion and review as an onchain attestation via EAS. This creates a verifiable, tamper-proof record of what each funded project delivered. Community reviewers evaluate deliverables against predefined impact criteria, so the assessment is structured rather than arbitrary. Funders and donors can independently verify outcomes without relying on self-reported data.",
+          "Karma records every done milestone and review as an onchain proof via EAS. This makes a lasting record that no one can change. Community reviewers check work against set impact rules. The review process follows a clear plan, not random gut feelings. Funders and donors can verify results on their own. They never need to rely on what teams say about themselves.",
       },
       {
         question: "Can Karma integrate with quadratic funding or retroactive grants?",
         answer:
-          "Karma focuses on post-funding accountability and milestone tracking. It complements quadratic funding rounds, retroactive grants, and direct allocations by providing structured delivery tracking and impact verification after funds are distributed. Programs can use Karma data to inform future funding decisions, creating a feedback loop that rewards high-performing projects with better access to subsequent rounds.",
+          "Karma focuses on what happens after grants go out. It adds milestone tracking and impact checks to any funding model. This works with quadratic rounds, retro grants, and direct gifts. Programs use Karma data to shape future funding picks. Teams that deliver well get better access to the next round. This creates a loop that rewards real results over promises.",
       },
       {
         question: "How does cross-program reputation work for public goods builders?",
         answer:
-          "Because attestations are recorded onchain, builders who deliver across multiple public goods programs accumulate a portable reputation. Funders can review a builder's entire history of verified deliveries before making new funding decisions, rewarding teams with a track record of genuine impact. This cross-program visibility helps the ecosystem channel resources toward consistently effective contributors.",
+          "All proofs live onchain. Builders who deliver across many programs build a portable score over time. Funders can review a team's full history before they fund them again. Teams with proven impact get noticed first. This helps the whole system send money to people who get things done. Strong builders rise to the top across every program they join.",
       },
       {
         question: "Who can be a community reviewer?",
         answer:
-          "Program managers configure reviewer pools based on their needs. Reviewers can be domain experts, community members, or designated evaluators. All reviews are attested onchain, making the evaluation process transparent and holding reviewers accountable for their assessments. Programs can rotate reviewers across rounds to maintain fresh perspectives and prevent evaluation fatigue.",
+          "Program managers choose who reviews grants. Reviewers can be experts, community members, or chosen judges. All reviews get onchain proofs. This keeps the process open and holds reviewers to their scores. Programs can swap reviewers between rounds to keep views fresh. This prevents burnout and keeps review quality high over time.",
       },
       {
         question: "How does Karma handle impact measurement for diverse public goods?",
         answer:
-          "Karma supports configurable impact criteria tailored to different public goods categories. Program managers define the metrics that matter most for their funding goals. Developer tooling grants use different criteria than education or environmental projects. This flexibility keeps impact assessment meaningful regardless of the domain.",
+          "Karma lets you set impact rules for each public goods type. Program managers pick the metrics that matter most for their goals. Dev tool grants use different rules than learning or green projects. This keeps scoring useful no matter the topic. You never force one set of rules on every kind of project.",
       },
       {
         question: "Can Karma help public goods funders run retroactive grant rounds?",
         answer:
-          "Yes. Retroactive grants reward past contributions. Karma tracks verified delivery history that funders can reference when evaluating retroactive applications. Builders with strong attestation records stand out in retroactive rounds. This data-driven approach removes guesswork from rewarding past impact.",
+          "Yes. Retro grants reward past work. Karma keeps a verified history that funders check when they review retro bids. Builders with strong records stand out right away. This data-first approach cuts guesswork from retro funding. Funders can see real proof of past impact in seconds, not hours of research.",
       },
       {
         question: "How do donors verify that public goods grants delivered results?",
         answer:
-          "All milestone completions and reviews are attested onchain via EAS. Donors can check these records on a block explorer at any time. Program dashboards also summarize outcomes in a clear, readable format. This dual-layer transparency gives donors confidence that their contributions created real public value.",
+          "All done milestones and reviews get onchain proofs via EAS. Donors check these records on a block explorer at any time. Program dashboards also show results in a simple format. This two-layer openness gives donors trust that their money made a real difference. No faith required when the proof lives on the public chain.",
       },
       {
         question: "Does Karma support community voting on public goods grant outcomes?",
         answer:
-          "Karma focuses on structured reviewer evaluations rather than open voting. Program managers select qualified community reviewers for each grant category. These reviewers assess deliverables against clear criteria. This approach produces more reliable impact assessments than broad popularity votes. Programs can still use voting tools alongside Karma for funding allocation decisions.",
+          "Karma uses expert reviews, not open voting. Program managers pick skilled reviewers for each grant type. These reviewers judge work against clear rules. This gives more stable results than broad votes. Programs can still use voting tools next to Karma for funding choices. The two systems work well side by side.",
       },
     ],
     ctaText: "Start tracking public goods impact with Karma",
@@ -572,12 +572,12 @@ export const industryWeb3Solutions: SolutionPage[] = [
     problem: {
       heading: "Grant management for climate tech needs better outcome measurement",
       description:
-        "Climate tech funding is growing fast, but measuring real environmental outcomes is hard. Funders support projects from carbon removal to renewable energy infrastructure. Most rely on self-reported updates with no standard verification. Grant committees cannot compare outcomes across different projects. Follow-on funding decisions happen without solid data. This gap between funding and verified impact erodes confidence in climate grant programs.",
+        "Climate tech funding grows fast, but proving real green results is hard. Funders back projects from carbon removal to clean energy builds. Most rely on self-reported updates with no way to check them. Grant groups cannot compare results across different projects. Follow-on funding happens without solid data. This gap between money and proof hurts trust in climate grant programs.",
     },
     solution: {
       heading: "How Karma delivers grant management for climate tech with impact verification",
       description:
-        "Karma gives climate tech funders a structured platform to track outcomes. Projects define milestones tied to specific environmental deliverables. Expert reviewers evaluate each milestone against predefined criteria. The full history of progress and reviews stays transparent and accessible. Program managers see clear dashboards showing which projects deliver measurable climate impact. Grant management for climate tech becomes data-driven instead of faith-based.",
+        "Karma gives climate tech funders a clear system to track results. Projects set milestones tied to green goals. Expert reviewers check each milestone against set rules. The full history of progress and reviews stays open to all. Program managers see dashboards that show which projects drive real climate impact. Climate grants become data-driven, not based on hope.",
     },
     capabilities: [
       "Climate-specific milestone templates for research, deployment, and scaling grants",
@@ -593,42 +593,42 @@ export const industryWeb3Solutions: SolutionPage[] = [
       {
         question: "How does Karma help measure climate tech grant impact?",
         answer:
-          "Karma structures each grant around milestones with clear, measurable deliverables. Reviewers evaluate submissions against criteria that program managers define, such as research quality, prototype performance, or emissions metrics. The full review history is recorded transparently, giving funders a verified record of what each grant produced and enabling meaningful comparison across funded projects.",
+          "Karma builds each grant around milestones with clear, measured goals. Reviewers check work against rules that managers set. These might include research quality, test results, or carbon data. The full review history stays open for all to see. Funders get a proven record of what each grant produced. They can compare results across all funded projects in one view.",
       },
       {
         question: "Can Karma handle different types of climate tech grants?",
         answer:
-          "Yes. Karma supports configurable milestone templates and evaluation criteria, so you can manage early-stage research grants, hardware prototype funding, deployment grants, and scaling investments, each with appropriate milestones and review standards. This flexibility ensures every climate tech category receives evaluation tailored to its unique deliverables and timelines. Program managers can adjust templates as new climate tech categories emerge without restructuring their entire grant program.",
+          "Yes. Karma lets you set custom milestones and scoring rules for each type. You can manage research grants, hardware funding, rollout grants, and growth funds. Each type gets its own review standards. This makes sure every climate tech class gets a fair check. Managers can add new grant types as the field grows without changing their whole setup.",
       },
       {
         question: "How does Karma support funder reporting?",
         answer:
-          "Karma provides program-wide dashboards and transparent delivery records that funders can use for internal reporting, board updates, and stakeholder communication. All milestone data and reviewer evaluations are accessible in one place, reducing the overhead of compiling grant program reports. This centralized approach saves program managers significant time during quarterly and annual reporting cycles.",
+          "Karma shows program-wide dashboards and clear delivery records. Funders use these for board updates and team reports. All milestone data and review scores sit in one place. This cuts the time spent pulling reports together. Managers save hours each quarter. The clean format makes it easy to share results with any group that asks.",
       },
       {
         question: "Is Karma suitable for government climate grant programs?",
         answer:
-          "Karma provides the structured accountability and transparent reporting that government-funded programs require. Milestone tracking, reviewer evaluations, and comprehensive audit trails align with the compliance and reporting needs of public funding agencies. The platform's verifiable records simplify the documentation requirements that government grant programs must satisfy for regulatory oversight. Structured audit trails and milestone histories align with the transparency standards that public funding agencies expect from their grantees.",
+          "Karma gives the clear tracking and open reports that public programs need. Milestone checks, reviews, and full audit trails match what agencies require. The platform's records make it simple to meet documentation rules. Managers spend less time on paperwork. Audit trails and milestone logs match the standards that public agencies expect. This helps both new and long-running programs stay in line.",
       },
       {
         question: "How does Karma track environmental outcomes across funded projects?",
         answer:
-          "Karma allows program managers to define climate-specific evaluation criteria. These include carbon reduction metrics, energy efficiency benchmarks, and deployment milestones. Expert reviewers assess each project against these criteria. The aggregated data gives a program-wide view of environmental outcomes. This helps funders show measurable climate impact to stakeholders.",
+          "Karma lets managers set green-focused scoring rules. These can include carbon cuts, energy savings, and rollout goals. Expert reviewers check each project against these rules. The combined data gives a full-program view of green results. Funders show real climate impact to boards and donors. The numbers prove the program works, not just claims.",
       },
       {
         question: "Can Karma handle grants for early-stage climate research?",
         answer:
-          "Yes. Early-stage research grants have different milestones than deployment grants. Karma lets you create research-specific templates with criteria like paper submissions and data collection targets. Reviewers with scientific expertise evaluate each milestone. This ensures research grants get fair and relevant assessments.",
+          "Yes. Early research grants need different milestones than rollout grants. Karma lets you build research guides with rules like paper drafts and data goals. Reviewers with science skills check each milestone. This means research grants get fair, relevant reviews. The right experts judge the right work every time.",
       },
       {
         question: "How does Karma help climate funders compare projects across categories?",
         answer:
-          "Karma standardizes milestone tracking across all grant categories. Program managers can view progress for research, prototype, and scaling grants side by side. Each category uses its own evaluation criteria, but the dashboard format stays consistent. This makes it easy to spot which projects lead and which need attention.",
+          "Karma uses one format for milestone tracking across all grant types. Managers view research, prototype, and growth grants side by side. Each type keeps its own scoring rules. The dashboard layout stays the same for easy reading. This makes it simple to spot leaders and those who need help. Quick scans save managers hours of report digging.",
       },
       {
         question: "Does Karma support compliance reporting for government climate grants?",
         answer:
-          "Yes. Government grants often require detailed audit trails and structured reporting. Karma records every milestone submission, review, and decision in a transparent history. Program managers export this data for compliance reports. The structured format aligns with the documentation standards that public agencies expect.",
+          "Yes. Government grants often require full audit trails and formal reports. Karma records every submission, review, and choice in a clear history. Managers export this data for compliance files. The format lines up with what public agencies expect. This saves weeks of manual work at each reporting cycle. All the records stay in one place, ready to export.",
       },
     ],
     ctaText: "Manage your climate tech grants with Karma",
@@ -685,12 +685,12 @@ export const industryWeb3Solutions: SolutionPage[] = [
     problem: {
       heading: "Grant management for emerging markets faces unique accountability gaps",
       description:
-        "Organizations funding projects in emerging markets face distinct challenges. Geographic distance separates funders from grantees by thousands of miles. Limited local infrastructure makes verification difficult. Regulatory requirements vary across countries and regions. Traditional tools assume centralized, well-connected teams. Without robust tracking, funders cannot tell strong performers from weak ones. Promising projects lose funding simply because they lack verifiable progress records.",
+        "Groups that fund projects in new markets face unique hurdles. Funders sit thousands of miles from grantees. Local systems make it hard to verify work. Rules change from country to country. Most tools assume teams are close and well-linked. Without good tracking, funders cannot tell strong teams from weak ones. Good projects lose money just because they lack proof of progress.",
     },
     solution: {
       heading: "How Karma enables grant management for emerging markets with local reviewers",
       description:
-        "Karma provides a central platform for managing grants across distributed regions. Grantees submit milestone updates from anywhere in the world. Local reviewers evaluate deliverables with firsthand regional context. Program managers get a unified view of progress across all funded projects. Transparent records give global donors confidence that funds drive real impact. This approach makes grant management for emerging markets reliable and scalable.",
+        "Karma offers one platform for grants across many regions. Grantees submit updates from anywhere in the world. Local reviewers check work with on-the-ground context. Program managers see all projects in one view. Clear records give global donors trust that funds drive real impact. This makes grants in new markets both steady and able to scale.",
     },
     capabilities: [
       "Milestone tracking designed for distributed, cross-border grant programs",
@@ -706,42 +706,42 @@ export const industryWeb3Solutions: SolutionPage[] = [
       {
         question: "How does Karma support grant programs operating across multiple countries?",
         answer:
-          "Karma provides a single platform where program managers can track all grants regardless of grantee location. Milestones, reviews, and progress data are centralized in one dashboard, while local reviewers can evaluate deliverables with the regional context needed for fair assessment. This unified approach eliminates the fragmentation that typically plagues multi-country grant programs.",
+          "Karma puts all grants in one platform no matter where teams work. Milestones, reviews, and progress data live in one dashboard. Local reviewers check work with the context of their region. This cuts the chaos that comes with multi-country grant programs. Managers see the full picture without switching tools. Every team gets a fair review based on local facts.",
       },
       {
         question: "How does Karma help with donor reporting for emerging market programs?",
         answer:
-          "Karma maintains transparent records of every milestone submission and review. Program managers can generate comprehensive reports showing fund utilization, milestone completion rates, and overall program progress. This structured data simplifies reporting to institutional donors, foundations, and government agencies, reducing the weeks of manual effort that report compilation typically requires. Program managers can filter reports by region, grant category, or time period to match specific donor reporting requirements.",
+          "Karma keeps clear records of every milestone and review. Managers can build full reports that show fund use, done rates, and program progress. This makes donor reports much easier to pull together. It cuts weeks of manual work down to hours. Managers filter reports by region, grant type, or time frame. Each donor gets the exact data they need in the format they want.",
       },
       {
         question: "Can local reviewers participate in the evaluation process?",
         answer:
-          "Yes. Program managers can designate local experts and community members as reviewers. These reviewers evaluate milestone submissions with firsthand knowledge of local conditions, ensuring that deliverables are assessed fairly and with appropriate context. This localized review approach provides insights that remote evaluators would miss and builds trust within grantee communities.",
+          "Yes. Managers can pick local experts and community members as reviewers. These people check milestone work with local knowledge that remote staff would miss. This means fair reviews that fit the real context on the ground. It also builds trust within grantee groups. Local voices add depth that no remote review can match.",
       },
       {
         question: "How does Karma handle connectivity challenges in emerging markets?",
         answer:
-          "Karma is designed with lightweight submission workflows that minimize bandwidth requirements. Grantees can submit milestone updates with text descriptions and supporting documentation without needing constant high-speed connectivity. The platform focuses on structured data capture that works reliably across varying infrastructure conditions common in emerging market regions. This practical design ensures that connectivity limitations do not prevent grantees from submitting timely milestone updates.",
+          "Karma uses a light workflow that needs little bandwidth. Grantees submit milestone updates with text and files. They do not need fast, steady internet access. The platform captures key data in a simple format that works on slow links. This means grantees in remote areas can still submit on time. Weak internet does not stop teams from keeping their records current.",
       },
       {
         question: "Can Karma support programs with diverse regulatory requirements?",
         answer:
-          "Yes. Karma lets program managers set up country-specific milestone templates. Evaluation criteria adapt to local regulations and compliance needs. The platform maintains a unified program-wide view for global oversight. This balance between local compliance and global visibility suits organizations operating across multiple jurisdictions.",
+          "Yes. Karma lets managers build milestone guides for each country. Scoring rules adapt to local laws and compliance needs. The platform still gives one global view for oversight. This balance of local rules and global vision fits groups that work across many regions. You get both detail and the big picture in one tool.",
       },
       {
         question: "How does Karma help emerging market grantees build credibility?",
         answer:
-          "Every completed milestone creates a verified delivery record for the grantee. Over time, grantees build a portable track record visible to all funders. Strong performers stand out when applying for future grants. This levels the playing field for teams in regions that lack traditional credentialing systems.",
+          "Every done milestone adds to a verified record for the grantee. Over time, teams build a portable track record that all funders can see. Strong teams stand out when they apply for new grants. This helps teams in regions without formal credential systems. Their work speaks for itself, backed by hard proof.",
       },
       {
         question: "Can Karma handle grants in multiple currencies?",
         answer:
-          "Karma tracks milestone-gated disbursements regardless of the currency used. Program managers record payments in local currencies, USD, or crypto tokens. The platform focuses on verifying delivery, not processing payments. This flexibility works for organizations funding across diverse economic contexts.",
+          "Karma tracks payouts no matter what money type you use. Managers record payments in local cash, USD, or crypto. The platform checks delivery, not payment details. This works for groups that fund across many countries and money systems. You pick the payment method that fits each region best.",
       },
       {
         question: "How do global donors use Karma to monitor emerging market programs?",
         answer:
-          "Donors access program dashboards showing milestone completion rates and fund utilization. Local reviewer evaluations give donors ground-level insight without traveling. All data is structured and exportable for board reports. This remote visibility helps donors stay informed and make timely funding decisions.",
+          "Donors view dashboards with done rates and fund use data. Local reviewer scores give ground-level insight without travel. All data exports for board reports in clean formats. This remote view helps donors stay informed without flying out. They can make smart funding choices from their desk. Timely data means faster, better decisions for everyone.",
       },
     ],
     ctaText: "Fund emerging market projects with confidence",
@@ -798,12 +798,12 @@ export const industryWeb3Solutions: SolutionPage[] = [
     problem: {
       heading: "Grant management for research grants suffers from slow feedback loops",
       description:
-        "Research grants often span months or years with little structured oversight. Funders receive infrequent progress reports that are hard to evaluate. Principal investigators juggle multiple grants with different reporting formats. Reviewers lack standard criteria for assessing research progress. Program managers cannot spot at-risk projects until it is too late. This leads to delayed milestones, wasted funds, and difficulty justifying program renewals.",
+        "Research grants often span months or years with little oversight. Funders get rare progress reports that are hard to judge. Lead researchers juggle many grants with different report formats. Reviewers lack standard rules for scoring research progress. Managers cannot spot risky projects until it is too late. This leads to delays, wasted funds, and hard talks at renewal time.",
     },
     solution: {
       heading: "How Karma transforms grant management for research grants with expert reviews",
       description:
-        "Karma brings structure to research funding by breaking long projects into reviewable milestones. Investigators submit updates against clear deliverables on a regular schedule. Expert reviewers evaluate progress using standardized criteria. Program managers see real-time dashboards showing every project's health. The platform shortens feedback loops and surfaces problems early. This structured grant management for research grants helps funders demonstrate program value.",
+        "Karma adds structure to research funding. It breaks long projects into smaller review steps. Teams submit updates against clear goals on a set schedule. Expert reviewers score progress using standard rules. Managers see live dashboards that show each project's health. The platform speeds up feedback and spots problems early. This helps funders prove their program works.",
     },
     capabilities: [
       "Research-specific milestone templates for publications, data, prototypes, and experiments",
@@ -819,42 +819,42 @@ export const industryWeb3Solutions: SolutionPage[] = [
       {
         question: "How does Karma handle long-term research grants?",
         answer:
-          "Karma supports multi-year grant structures by breaking research projects into sequential milestones. Each milestone has its own timeline, deliverables, and review criteria. Program managers can track progress across the full grant duration and intervene early when projects fall behind schedule. This structured approach prevents long periods of silence between funding and final delivery.",
+          "Karma handles multi-year grants by breaking them into ordered milestones. Each milestone has its own timeline, goals, and review rules. Managers track progress across the full grant period. They can step in early when projects fall behind. This prevents long gaps of silence between funding and final results. Regular check-ins keep both sides on the same page.",
       },
       {
         question: "Can Karma support peer review for research milestones?",
         answer:
-          "Yes. Program managers can configure reviewer pools with domain experts who evaluate research deliverables against standardized rubrics. Multiple reviewers can assess the same milestone, and all reviews are recorded transparently to maintain evaluation integrity. This multi-reviewer approach mirrors academic peer review while adding structured accountability that traditional processes lack. The recorded evaluation history also helps program managers identify the most effective reviewers for future grant cycles.",
+          "Yes. Managers set up reviewer pools with domain experts. These experts check research work against standard scoring guides. More than one reviewer can score the same milestone. All reviews stay open and on record. This mirrors peer review but adds structure that old systems lack. Over time, managers learn which reviewers give the most useful feedback for future rounds.",
       },
       {
         question: "How does Karma help with institutional reporting?",
         answer:
-          "Karma maintains a complete, structured record of every milestone submission, reviewer evaluation, and program decision. This data can be used for institutional audits, board reports, and stakeholder updates without requiring program managers to manually compile information from scattered sources. The centralized record saves significant administrative time during reporting periods and ensures that no milestone data is lost between the scattered communication channels that research teams typically rely on.",
+          "Karma keeps a full record of every milestone, review, and program choice. Managers use this data for audits, board reports, and team updates. They never need to pull facts from scattered email chains. The central record saves hours of admin work each report cycle. No milestone data gets lost between tools. Everything sits in one place, ready to export.",
       },
       {
         question: "Is Karma suitable for managing grants across multiple research disciplines?",
         answer:
-          "Yes. Karma supports configurable milestone templates and evaluation criteria, so a single funding organization can manage grants across different disciplines, each with appropriate deliverables and review standards, from a unified platform. This cross-discipline flexibility makes it ideal for foundations and agencies funding diverse research portfolios. Program managers can compare progress across disciplines using a consistent framework while respecting the unique deliverables of each field.",
+          "Yes. Karma lets you set custom milestones and scoring rules for each field. One funding group can manage grants across many areas. Each field gets its own review standards. Managers compare progress across fields using one dashboard. The format stays the same, but the scoring fits each domain. This works well for groups that fund a wide range of research.",
       },
       {
         question: "How do researchers benefit from using Karma?",
         answer:
-          "Researchers get clear expectations upfront through structured milestones. They receive timely feedback from expert reviewers instead of waiting months. Their verified delivery record strengthens future grant applications. The structured feedback loop helps them stay on track and fix issues early.",
+          "Researchers get clear goals up front through set milestones. They get fast feedback from expert reviewers instead of waiting months. Their verified record makes future grant bids stronger. The steady feedback loop helps them stay on track. They fix issues early before small problems grow. This makes the whole grant process less stressful for research teams.",
       },
       {
         question: "Can Karma manage grants across different research disciplines at once?",
         answer:
-          "Yes. A single funding organization can manage grants across biology, computer science, social science, and more. Each discipline gets its own milestone templates and evaluation rubrics. The unified dashboard lets program managers compare progress across all fields. This cross-discipline view is ideal for foundations with diverse research portfolios.",
+          "Yes. One funding group can manage grants across biology, computer science, social science, and more. Each field gets its own milestone guides and scoring rules. The shared dashboard lets managers compare progress across all fields. This cross-field view fits groups with a wide range of funded research. It keeps things simple even as the program grows.",
       },
       {
         question: "How does Karma help with multi-year research grant renewals?",
         answer:
-          "Karma maintains a complete record of milestone delivery over the full grant period. When renewal decisions come up, program managers reference verified progress data. This removes guesswork from renewal discussions. Strong performers can point to their delivery history. Funders make renewal decisions based on evidence, not just proposals.",
+          "Karma keeps a full record of all milestone work over the grant period. When renewal talks come up, managers check verified progress data. This takes guesswork out of the process. Strong teams point to their delivery history as proof. Funders renew grants based on evidence, not just new proposals. The data makes the case for or against renewal clear.",
       },
       {
         question: "Does Karma support collaborative research grants with multiple investigators?",
         answer:
-          "Yes. Collaborative grants involve multiple investigators who each own different milestones. Karma lets program managers assign milestones to specific team members. Each investigator submits their own updates. Reviewers evaluate each component independently. The program manager sees the full picture from one dashboard.",
+          "Yes. Joint grants involve many researchers who each own different tasks. Karma lets managers assign milestones to specific team members. Each person submits their own updates. Reviewers check each part on its own. The program manager sees the full picture from one dashboard. This keeps large teams in sync without constant meetings.",
       },
     ],
     ctaText: "Bring structure to your research grants",
@@ -911,12 +911,12 @@ export const industryWeb3Solutions: SolutionPage[] = [
     problem: {
       heading: "Grant management for fellowship programs lacks scalable tracking",
       description:
-        "Fellowship programs invest heavily in individuals but lack tools to track progress at scale. Program managers rely on check-ins and self-reported updates that vary in quality. Mentors give feedback informally with no structured record. Reporting on program outcomes takes weeks of compiling scattered data. Promising fellows slip through the cracks in large cohorts. Underperforming fellows continue unnoticed until it is too late to help.",
+        "Fellowship programs invest in people but lack tools to track progress at scale. Managers rely on check-ins and self-reports that vary in quality. Mentors give feedback by chat or email with no clear record. Reports take weeks to pull from scattered data. Good fellows slip through the cracks in large groups. Weak fellows go unnoticed until it is too late to help them.",
     },
     solution: {
       heading: "How Karma improves grant management for fellowship programs with mentor reviews",
       description:
-        "Karma gives fellowship programs a structured framework for tracking every fellow. Fellows submit milestone updates tied to program-defined deliverables. Mentors provide structured evaluations using clear criteria. Program managers see cohort-wide dashboards showing who thrives and who needs support. The platform records each fellow's complete journey. This makes grant management for fellowship programs scalable and transparent.",
+        "Karma gives fellowship programs a clear system for tracking each fellow. Fellows submit milestone updates tied to program goals. Mentors give reviews using set scoring rules. Managers see a dashboard that shows who thrives and who needs help. The platform records each fellow's full path from start to finish. This makes fellowship tracking easy to scale and open to all.",
     },
     capabilities: [
       "Fellowship-specific milestone templates for learning goals, projects, and deliverables",
@@ -932,42 +932,42 @@ export const industryWeb3Solutions: SolutionPage[] = [
       {
         question: "How does Karma help manage large fellowship cohorts?",
         answer:
-          "Karma provides cohort-wide dashboards that let program managers see every fellow's progress at a glance. Automated alerts surface fellows who are behind on milestones, so managers can intervene early. Mentors submit structured reviews through the platform, ensuring consistent evaluation across the entire cohort. This visibility prevents promising fellows from slipping through the cracks in large programs.",
+          "Karma shows a full dashboard for the whole cohort at a glance. Auto alerts flag fellows who fall behind on milestones. Managers can step in early before small issues grow. Mentors submit reviews through the platform using set scoring rules. This keeps reviews steady across the whole group. No fellow gets lost in a large cohort.",
       },
       {
         question: "Can mentors provide feedback through Karma?",
         answer:
-          "Yes. Mentors are assigned as reviewers and evaluate fellow milestones using structured criteria defined by the program. All feedback is recorded in the platform, creating a comprehensive record of each fellow's development journey that both the fellow and program managers can reference. This structured approach ensures mentorship is consistent, documented, and actionable throughout the program.",
+          "Yes. Mentors act as reviewers and score fellow milestones using rules the program sets. All feedback stays in the platform as a full record. Both fellows and managers can look back at any review. This keeps mentorship steady, written down, and useful from start to finish. Fellows know exactly where they stand at all times.",
       },
       {
         question: "How does Karma support program outcome reporting?",
         answer:
-          "Karma maintains structured records of every milestone submission, mentor review, and fellow achievement. Program managers can generate reports showing completion rates, milestone quality scores, and overall program health. This data simplifies reporting to sponsors, boards, and institutional stakeholders, reducing the weeks of manual compilation that typically precede each reporting deadline.",
+          "Karma keeps records of every milestone, mentor review, and fellow win. Managers can build reports showing done rates, quality scores, and program health. This data makes sponsor and board reports much faster to create. It cuts weeks of manual work down to hours. Sponsors get clear facts about what the program achieved. The numbers tell the story without extra effort.",
       },
       {
         question: "Can Karma handle recurring fellowship programs with multiple cohorts?",
         answer:
-          "Yes. Karma supports multi-cohort management, so programs can run successive cohorts with consistent milestone structures. Historical data from previous cohorts helps program managers refine the fellowship experience and benchmark new cohort performance against past results. This longitudinal view makes it easy to demonstrate program improvement over time to sponsors. Program managers can identify which milestone structures and mentorship approaches produce the best fellow outcomes across successive cohorts.",
+          "Yes. Karma supports multi-cohort tracking. Programs run new groups with the same milestone structure each time. Past data helps managers refine the program and compare new groups to older ones. This long-term view shows sponsors how the program grows over time. Managers spot which methods lead to the best fellow results. Each cohort builds on lessons from the one before it.",
       },
       {
         question: "How does Karma help identify at-risk fellows early?",
         answer:
-          "Karma tracks milestone submission patterns and mentor review scores across the cohort. Automated alerts notify managers when fellows miss deadlines or score below thresholds. Managers can provide targeted support before small setbacks become dropouts. This early warning system improves cohort completion rates.",
+          "Karma tracks submission patterns and mentor scores across the group. Auto alerts tell managers when fellows miss dates or score low. Managers give focused help before small issues become dropouts. This early warning system lifts completion rates for the whole group. Quick action keeps fellows from falling too far behind to catch up.",
       },
       {
         question: "Can Karma track both individual and group milestones in a fellowship?",
         answer:
-          "Yes. Some fellowships include group projects alongside individual deliverables. Karma lets program managers create both types of milestones. Individual milestones track personal growth goals. Group milestones track collaborative project outcomes. Mentors can evaluate each type with different criteria.",
+          "Yes. Some programs mix group projects with solo tasks. Karma lets managers create both types of milestones. Solo milestones track personal growth goals. Group milestones track shared project results. Mentors score each type with its own rules. This covers every kind of work a fellowship might include.",
       },
       {
         question: "How does Karma help fellows after the program ends?",
         answer:
-          "Each fellow leaves the program with a verified record of completed milestones. This record serves as proof of skills and achievements for future opportunities. Alumni can reference their fellowship track record when applying to jobs or further programs. Program managers can also track alumni outcomes over time to measure long-term program impact.",
+          "Each fellow leaves with a verified record of done milestones. This record proves skills and wins for future jobs or programs. Alumni point to their track record when they apply for new roles. Program managers can track alumni results over time to gauge long-term impact. The data shows sponsors that the program creates lasting value beyond the cohort end date.",
       },
       {
         question: "Does Karma support fellowship programs with external partners?",
         answer:
-          "Yes. Many fellowships involve external mentors, partner organizations, or guest reviewers. Karma lets program managers invite external participants as reviewers. Partners see only the milestones and fellows assigned to them. This keeps the program organized while giving partners structured access to the evaluation process.",
+          "Yes. Many programs use outside mentors, partner groups, or guest reviewers. Karma lets managers invite outside people as reviewers. Partners see only the fellows and milestones linked to them. This keeps things tidy while giving partners clear access to the review process. It works well for programs that span many groups and skill areas.",
       },
     ],
     ctaText: "Elevate your fellowship program with Karma",
@@ -1024,12 +1024,12 @@ export const industryWeb3Solutions: SolutionPage[] = [
     problem: {
       heading: "Grant management for accelerators struggles with fast timelines",
       description:
-        "Accelerator programs run on compressed timelines where teams must hit milestones weekly. Program managers juggle 10 to 30 teams at once, each at a different stage. Mentor feedback lives in scattered meetings and messages with no structured record. By demo day, no one can clearly show which teams made the most progress. Without structured tracking, the accelerator depends on individual manager heroics. Promising teams get overlooked while struggling ones miss the help they need.",
+        "Accelerator programs run on tight timelines. Teams must hit goals every week. Managers juggle 10 to 30 teams at once, each at a different stage. Mentor feedback sits in scattered chats with no clear record. By demo day, no one can show which teams grew the most. Without good tracking, the program depends on one person's memory. Strong teams get missed while weak ones skip the help they need.",
     },
     solution: {
       heading: "How Karma powers grant management for accelerators with sprint-based tracking",
       description:
-        "Karma adapts to the rapid pace of accelerator programs with lightweight milestone tracking. Teams submit weekly progress updates against clear checkpoints. Mentors provide structured evaluations through the platform. Program managers see a real-time dashboard with every team's trajectory. The platform captures each team's full arc from kickoff through demo day. This makes grant management for accelerators organized and data-driven.",
+        "Karma matches the fast pace of accelerator programs. It uses light milestone tracking that fits weekly sprints. Teams submit quick updates against clear checkpoints. Mentors give reviews through the platform. Managers see a live dashboard with every team's path. The platform records each team's full arc from day one to demo day. This keeps the program neat and driven by real data.",
     },
     capabilities: [
       "Sprint-based milestone templates aligned with accelerator program schedules",
@@ -1045,42 +1045,42 @@ export const industryWeb3Solutions: SolutionPage[] = [
       {
         question: "How does Karma handle the fast pace of accelerator programs?",
         answer:
-          "Karma supports sprint-based milestone structures that align with weekly or biweekly accelerator cadences. Teams submit brief, focused updates against predefined checkpoints, and mentors provide quick structured evaluations. The system is designed for speed without sacrificing the accountability data that program managers need to keep every team on track throughout the program.",
+          "Karma uses sprint-based milestones that match weekly or biweekly rhythms. Teams submit short, focused updates against set checkpoints. Mentors give quick reviews using clear scoring rules. The system moves fast without losing the data managers need. Every team stays on track from week one to the final demo. Speed and structure work hand in hand.",
       },
       {
         question: "Can Karma help prepare for demo day?",
         answer:
-          "Karma tracks cumulative milestone performance across the program, giving managers a data-driven view of each team's readiness. Program managers can see which teams have consistently hit milestones, received strong mentor evaluations, and demonstrated measurable progress, helping prioritize demo day preparation and investor introductions. This objective readiness scoring removes guesswork from the demo day selection process.",
+          "Karma tracks total milestone scores across the program. Managers see which teams hit goals, earned strong reviews, and showed real progress. This helps set the demo day lineup and plan investor intros. The scores take guesswork out of the process. Teams that did the best work rise to the top on their own. Data picks the presenters, not gut feelings.",
       },
       {
         question: "How do mentors participate in the platform?",
         answer:
-          "Mentors are assigned to teams and evaluate milestone submissions using structured criteria. All feedback is recorded in the platform, creating a comprehensive record of mentorship interactions. This helps program managers understand which mentor relationships are most productive and ensures feedback is actionable and tracked. Mentors benefit from having a clear record of their contributions across cohorts.",
+          "Mentors get assigned to teams and score milestone work using set rules. All feedback stays in the platform as a full record. Managers learn which mentor pairs work best. Feedback stays useful and tracked from start to finish. Mentors also get a clear record of their own work across cohorts. This helps both sides get the most out of every session.",
       },
       {
         question: "Can Karma support multiple accelerator cohorts?",
         answer:
-          "Yes. Karma supports multi-cohort management with consistent milestone structures across program cycles. Historical data from previous cohorts enables program managers to benchmark performance, refine the curriculum, and demonstrate program improvement to sponsors over time. Cross-cohort analytics help identify which program elements drive the strongest team outcomes. This continuous improvement loop helps accelerators demonstrate increasing value to sponsors and investors with each successive program cycle.",
+          "Yes. Karma handles many cohorts with the same milestone setup each time. Past data lets managers compare groups, refine the program, and show sponsors how things improve. Cross-cohort numbers reveal which parts of the program drive the best results. This loop of steady gains helps the program grow in value with each round. Sponsors see real proof that the program gets better over time.",
       },
       {
         question: "How does Karma help with investor and sponsor reporting?",
         answer:
-          "Karma maintains structured records of team progress, mentor evaluations, and milestone outcomes. Program managers compile reports showing cohort-wide metrics and team trajectories. This turns weeks of manual reporting work into a streamlined workflow. Sponsors and investors receive clear, data-backed updates.",
+          "Karma keeps records of team progress, mentor scores, and milestone results. Managers build reports with cohort-wide numbers and team paths. This turns weeks of manual report work into a fast flow. Sponsors and investors get clear, fact-backed updates. Every claim links to real data from the program. No more spending days on slide decks before sponsor calls.",
       },
       {
         question: "Can Karma handle accelerators with different track formats?",
         answer:
-          "Yes. Some accelerators run multiple tracks like fintech, healthtech, and climate. Karma lets you create separate milestone templates for each track. Teams in different tracks get relevant checkpoints and evaluation criteria. Program managers see all tracks in one unified dashboard. This keeps things organized without forcing a single format on diverse cohorts.",
+          "Yes. Some programs run tracks like fintech, health, and climate. Karma lets you build separate milestone guides for each track. Teams get checkpoints that fit their field. Managers see all tracks in one dashboard. This stays neat without forcing one format on diverse groups. Each track runs its own way while the big picture stays clear.",
       },
       {
         question: "How does Karma help accelerators select demo day presenters?",
         answer:
-          "Karma tracks cumulative milestone performance and mentor scores for every team. Program managers can rank teams by objective progress data. This removes bias from the demo day selection process. Teams that consistently hit milestones and earn strong reviews rise to the top. The data makes it easy to justify selection decisions to stakeholders.",
+          "Karma tracks total milestone scores and mentor marks for every team. Managers rank teams by clear progress data. This cuts bias from the demo day picks. Teams that hit goals and earn strong reviews rise to the top. The data makes it easy to explain picks to sponsors. Everyone can see why each team earned its spot on stage.",
       },
       {
         question: "Does Karma support remote and hybrid accelerator programs?",
         answer:
-          "Yes. Remote and hybrid programs need structured tracking even more than in-person ones. Karma captures milestone submissions and mentor feedback regardless of location. Program managers monitor distributed teams from a single real-time dashboard. This keeps accountability consistent whether teams work in person, remotely, or across time zones.",
+          "Yes. Remote and hybrid programs need good tracking even more than in-person ones. Karma captures milestone work and mentor feedback no matter where teams sit. Managers watch all teams from one live dashboard. This keeps everyone on the same page across time zones. The system works the same for local, remote, and mixed teams. Distance does not weaken the review process.",
       },
     ],
     ctaText: "Run your accelerator on Karma",

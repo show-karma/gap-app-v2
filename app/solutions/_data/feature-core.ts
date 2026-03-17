@@ -12,12 +12,12 @@ export const featureCoreSolutions: SolutionPage[] = [
     problem: {
       heading: "Why AI Grant Review Beats Manual Evaluation Every Time",
       description:
-        "Most grant programs still review applications by hand. Reviewers read hundreds of proposals each round and burn out fast. Scoring criteria drift as fatigue sets in across long sessions. Top evaluators leave because the workload crushes them. Delayed decisions frustrate applicants who wait weeks for answers. Programs miss high-impact projects buried in the pile.",
+        "Most grant programs still review applications by hand. Reviewers read hundreds of proposals each round. They burn out fast. Scoring criteria drift as fatigue grows. Top evaluators quit because the workload crushes them. Delayed decisions frustrate applicants for weeks. Programs miss high-impact projects buried in the pile. Manual review also blocks fast funding cycles. Each round takes longer than the last.",
     },
     solution: {
       heading: "Smarter AI Grant Review That Scales With Your Program",
       description:
-        "Karma brings AI grant review to your evaluation workflow. The system pre-screens applications against your criteria in seconds. It generates clear summaries and flags risks automatically. Reviewers focus only on shortlisted proposals that need human judgment. Every AI-assisted score stays transparent and auditable. Your funding decisions remain credible at any scale.",
+        "Karma brings AI grant review to your workflow. The system pre-screens applications in seconds. It checks each one against your criteria. It then builds clear summaries and flags risks. Reviewers focus only on shortlisted proposals. Every AI score stays transparent and auditable. Your funding decisions stay credible at any scale. You keep full control over the final call. The AI handles the heavy lifting for you.",
     },
     capabilities: [
       "AI-generated application summaries with key metrics extracted automatically",
@@ -33,42 +33,42 @@ export const featureCoreSolutions: SolutionPage[] = [
       {
         question: "Does the AI make the final funding decision?",
         answer:
-          "No. Karma's AI helps reviewers by pre-screening, summarizing, and scoring applications. Human reviewers always make the final call. The AI boosts your team's capacity without removing human judgment. This keeps accountability intact. It also cuts the time reviewers spend on routine triage work.",
+          "No. Karma's AI helps reviewers by pre-screening and scoring. It also summarizes each application. Human reviewers always make the final call. The AI boosts your team's output. It does not remove human judgment. This keeps accountability intact. It also cuts the time reviewers spend on triage. Your team stays in charge of every decision.",
       },
       {
         question: "How does AI grant review handle bias in evaluations?",
         answer:
-          "The AI applies your scoring rubric the same way for every application. This removes the drift that happens when reviewers get tired. You can audit AI scores at any time. You can also adjust rubric weights to keep evaluations fair. Consistent scoring matters most with large applicant pools.",
+          "The AI applies your scoring rubric the same way every time. This removes the drift that tired reviewers cause. You can audit AI scores at any time. You can also adjust rubric weights easily. Fair scoring matters most with large pools. The AI never gets tired or distracted. It treats the first application like the last.",
       },
       {
         question: "Can I customize the review criteria for different grant programs?",
         answer:
-          "Yes. Each grant program on Karma gets its own scoring rubric and review workflow. The AI adapts to your specific requirements. You can weight criteria differently per program. You can add custom evaluation dimensions. You can also adjust thresholds to match your funding priorities.",
+          "Yes. Each grant program on Karma gets its own rubric. It also gets its own review workflow. The AI adapts to your needs. You weight criteria differently per program. You add custom evaluation dimensions too. You also adjust thresholds to match your goals. Changes take effect right away for new reviews.",
       },
       {
         question: "How much faster is AI-assisted review compared to manual review?",
         answer:
-          "Programs using Karma see a 60-80% drop in time per application. Reviewers focus on the 20-30% that need deep evaluation. The AI handles initial screening and scoring for the rest. This efficiency gain grows as your program scales. Larger rounds benefit the most from automated pre-screening.",
+          "Programs using Karma see a 60-80% drop in review time. Reviewers focus on the 20-30% that need deep evaluation. The AI screens and scores the rest. This gain grows as your program scales. Larger rounds benefit the most from automation. A 500-application round takes days, not weeks. Your team handles more volume with less effort.",
       },
       {
         question: "What is the ROI of using AI for grant review?",
         answer:
-          "Most organizations save significant reviewer hours in the first round. Programs with 200+ applications often recover platform costs through labor savings alone. You also get faster decisions and more consistent scores. Reviewer retention improves because burnout drops. The ROI compounds with each funding cycle.",
+          "Most groups save major reviewer hours in round one. Programs with 200+ applications often recover costs fast. Labor savings alone cover the platform fee. You also get faster decisions and steady scores. Reviewers stay longer because burnout drops. The ROI grows with each funding cycle. Teams report more output with fewer resources.",
       },
       {
         question: "How does Karma protect the privacy of grant applications?",
         answer:
-          "Karma stores application data securely with role-based access controls. Only assigned reviewers see the applications in their queue. The AI processes data within your program's boundaries. No application content trains external models. You control who sees what at every stage of the review process.",
+          "Karma stores application data with strict access controls. Only assigned reviewers see their queued applications. The AI processes data within your program only. No application content trains outside models. You control who sees what at every stage. Data stays private throughout the review. Your applicants' details never leave the platform.",
       },
       {
         question: "Can I use AI grant review for retroactive funding rounds?",
         answer:
-          "Yes. Karma supports retroactive funding evaluations alongside standard grant rounds. You define the scoring rubric for past work just like you would for proposals. The AI screens submissions against your criteria. Reviewers then evaluate the shortlist. This works well for ecosystem reward programs and retroactive public goods funding.",
+          "Yes. Karma supports retroactive funding rounds too. You define a scoring rubric for past work. The AI screens those submissions against your criteria. Reviewers then evaluate the shortlist. This works well for ecosystem reward programs. It also fits retroactive public goods funding. You use the same tools for both types of rounds.",
       },
       {
         question: "What happens if a reviewer disagrees with the AI score?",
         answer:
-          "Reviewers can override any AI-generated score. The system logs the override with the reviewer's rationale. This feedback helps improve future scoring accuracy. Disagreements between reviewers also get flagged for discussion. The final decision always rests with your human evaluation team.",
+          "Reviewers can override any AI score. The system logs every override with a reason. This feedback helps improve future scoring. Reviewer disagreements also get flagged for discussion. The final call always stays with your human team. Overrides do not break the audit trail. The full history stays visible for program managers.",
       },
     ],
     ctaText: "Start Reviewing Grants Faster",
@@ -126,12 +126,12 @@ export const featureCoreSolutions: SolutionPage[] = [
     problem: {
       heading: "Why Grant Milestone Tracking Breaks Down for Most Programs",
       description:
-        "Most programs lack a reliable way to verify grantee progress. Updates arrive through scattered emails and Google Docs. Program managers chase grantees for status reports every week. Grantees submit vague updates with no proof of work. Funders cannot see whether their capital drives real results. This erodes trust and makes continued funding hard to justify.",
+        "Most programs lack a good way to verify grantee progress. Updates arrive through scattered emails and docs. Program managers chase grantees for reports each week. Grantees submit vague updates with no proof. Funders cannot see if their capital drives results. This erodes trust over time. It makes future funding hard to justify. Teams spend more time tracking than helping grantees succeed.",
     },
     solution: {
       heading: "Smarter Grant Milestone Tracking With Onchain Proof",
       description:
-        "Karma makes grant milestone tracking transparent and verifiable. Every grant gets clear milestones with deliverables and deadlines. Grantees submit evidence directly through the platform. Reviewers verify completions and record decisions onchain via EAS. The entire history stays publicly auditable. No more chasing updates or trusting unverifiable claims.",
+        "Karma makes milestone tracking transparent and verifiable. Every grant gets clear milestones with deadlines. Grantees submit evidence right through the platform. Reviewers verify work and record decisions onchain. The entire history stays publicly auditable. You stop chasing updates or trusting vague claims. The onchain record proves every completion. Funders see real proof of progress at any time.",
     },
     capabilities: [
       "Structured milestone definitions with deliverables, deadlines, and acceptance criteria",
@@ -147,42 +147,42 @@ export const featureCoreSolutions: SolutionPage[] = [
       {
         question: "What does onchain milestone tracking actually mean?",
         answer:
-          "Karma creates an attestation on the Ethereum Attestation Service when a reviewer verifies a milestone. This is a cryptographic record on the blockchain. It proves the milestone was completed at a specific time. No one can alter or delete it. Anyone can verify the attestation using the public blockchain record.",
+          "Karma creates an attestation on EAS when a reviewer verifies a milestone. This creates a cryptographic record on the blockchain. It proves the milestone finished at a set time. No one can alter or delete this record. Anyone can verify it using the public blockchain. The record stays permanent and tamper-proof. This gives funders hard evidence of grantee progress.",
       },
       {
         question: "Do grantees need crypto wallets to use milestone tracking?",
         answer:
-          "Grantees need a wallet for onchain features. Karma supports multiple wallet providers and keeps the process simple. The blockchain parts work behind the scenes. Grantees focus on their deliverables, not on crypto mechanics. Wallet setup takes under two minutes with guided onboarding.",
+          "Grantees need a wallet for onchain features. Karma supports many wallet providers. The setup process stays simple and fast. The blockchain parts work behind the scenes. Grantees focus on their deliverables, not crypto. Wallet setup takes under two minutes. A guided flow walks them through each step.",
       },
       {
         question: "Can milestone payments be automated based on completion?",
         answer:
-          "Yes. Karma releases funds automatically once a reviewer verifies a milestone. This creates a clear incentive for timely delivery. It removes manual payment delays. Grantees get paid promptly when they deliver verified work. The payment link stays recorded onchain for full auditability.",
+          "Yes. Karma releases funds once a reviewer verifies a milestone. This creates a clear push for timely delivery. It removes manual payment delays. Grantees get paid fast when they deliver. The payment record stays onchain for full auditing. No one needs to chase finance for approvals. The whole process runs hands-free after setup.",
       },
       {
         question: "How do reviewers verify milestone completions?",
         answer:
-          "Reviewers receive submissions with attached evidence like documents and demos. They approve, request changes, or reject based on predefined criteria. Karma records the review decision onchain for transparency. Reviewers can add comments to help grantees improve. The full history stays accessible to program managers.",
+          "Reviewers get submissions with evidence attached. This includes documents, demos, and links. They approve, request changes, or reject the work. Karma records the decision onchain for transparency. Reviewers add comments to help grantees improve. The full history stays open to program managers. Every action creates a clear audit trail.",
       },
       {
         question: "Can I track milestones across multiple grant programs?",
         answer:
-          "Yes. Karma shows a unified view of milestones across all your programs. You see which grantees are on track at a glance. You also spot who falls behind schedule quickly. Cross-program analytics help identify patterns. This data helps you optimize future program design.",
+          "Yes. Karma shows all milestones across your programs in one view. You see which grantees stay on track at a glance. You also spot who falls behind fast. Cross-program data helps you find patterns. This helps you improve future program design. You never lose sight of any active grant.",
       },
       {
         question: "What evidence can grantees submit for milestone verification?",
         answer:
-          "Grantees can upload documents, screenshots, demo links, and code repositories. They can also add written descriptions of their work. The platform stores all evidence alongside the milestone record. Reviewers see everything in one place. This makes verification fast and thorough.",
+          "Grantees upload documents, screenshots, and demo links. They also share code repos and written descriptions. The platform stores all evidence with the milestone record. Reviewers see everything in one place. This makes checking work fast and thorough. No evidence gets lost in email threads. All files stay linked to the right milestone.",
       },
       {
         question: "How does grant milestone tracking help with funder reporting?",
         answer:
-          "Every verified milestone becomes a data point in your program reports. Funders see real progress instead of self-reported narratives. The onchain record adds credibility to every claim. You can generate milestone reports with one click. This saves hours of manual reporting each quarter.",
+          "Every verified milestone adds a data point to your reports. Funders see real progress, not self-reported stories. The onchain record adds proof to every claim. You generate milestone reports with one click. This saves hours of manual work each quarter. Your reports tell a story backed by hard data. Stakeholders trust numbers they can verify themselves.",
       },
       {
         question: "Can grantees update milestones after the initial plan is set?",
         answer:
-          "Yes. Program managers can approve milestone modifications when project scope changes. The system logs every change with a timestamp. Original milestones and updates both stay visible. This flexibility helps programs adapt without losing accountability. Reviewers see the full change history before making decisions.",
+          "Yes. Program managers approve milestone changes when scope shifts. The system logs every change with a timestamp. Original milestones and updates both stay visible. This helps programs adapt without losing accountability. Reviewers see the full change history before deciding. No edits happen in secret. The audit trail covers every update.",
       },
     ],
     ctaText: "Start Tracking Milestones Onchain",
@@ -240,12 +240,12 @@ export const featureCoreSolutions: SolutionPage[] = [
     problem: {
       heading: "Why Most Teams Lack a Real Grant Portfolio Dashboard",
       description:
-        "Program managers juggle spreadsheets and disconnected tools daily. They piece together grant performance from emails and shared drives. Funders wait months for reports that arrive already outdated. No one can course-correct when grantees fall behind schedule. Funding allocation turns into guesswork without live data. Stakeholder reporting becomes a painful manual chore every quarter.",
+        "Program managers juggle spreadsheets and loose tools daily. They piece together grant data from emails and drives. Funders wait months for stale reports. No one can act fast when grantees fall behind. Funding choices turn into guesswork without live data. Stakeholder reports take days to build each quarter. This wastes skilled staff time on data entry. Key insights stay buried in scattered files.",
     },
     solution: {
       heading: "A Grant Portfolio Dashboard That Updates in Real Time",
       description:
-        "Karma gives you a grant portfolio dashboard with live data from every program. You see which grantees are on track at a glance. Funding allocation, milestones, and payments all appear in one view. Funders access portfolio performance without waiting for manual reports. Every data point links back to onchain attestations. The numbers you share with stakeholders are always verifiable.",
+        "Karma gives you a portfolio dashboard with live data. You see which grantees stay on track at a glance. Funding, milestones, and payments appear in one view. Funders check performance without waiting for reports. Every data point links to onchain attestations. The numbers you share stay verifiable at all times. You spot problems early and act fast. No more guessing about program health.",
     },
     capabilities: [
       "Unified portfolio view across all grant programs with drill-down into individual grants",
@@ -261,42 +261,42 @@ export const featureCoreSolutions: SolutionPage[] = [
       {
         question: "What data does the grant portfolio dashboard show?",
         answer:
-          "The dashboard shows funding allocation, milestone completion rates, and grantee progress. You see disbursed, committed, and remaining capital in one view. You can drill down from the portfolio level to individual grants. All data updates in real time as activity happens. You always see the current state of your programs.",
+          "The dashboard shows funding, milestones, and grantee progress. You see spent, committed, and remaining capital at once. You drill down from portfolio level to single grants. All data updates live as activity happens. You always see the current state of things. Custom filters let you focus on what matters most. Every metric links back to verifiable onchain data.",
       },
       {
         question: "Can funders and stakeholders access the dashboard?",
         answer:
-          "Yes. Karma supports role-based access for external stakeholders. You give funders and board members read-only views. You control what each group can see. Stakeholders can bookmark views and get scheduled email summaries. They never need to ask you for a status update again.",
+          "Yes. Karma supports role-based access for outsiders. You give funders and board members read-only views. You control what each group can see. They bookmark views and get email summaries on schedule. They never need to ask you for updates again. This saves your team hours of back-and-forth each month.",
       },
       {
         question: "How is the dashboard data different from a spreadsheet report?",
         answer:
-          "Spreadsheet reports are snapshots that go stale immediately. Karma's dashboard updates in real time as activity happens. The data comes from onchain attestations, so it is verifiable. This removes the manual effort of compiling reports. Stakeholders always see current, trustworthy information.",
+          "Spreadsheet reports go stale right away. Karma's dashboard updates live as activity happens. The data comes from onchain attestations. That makes it verifiable by anyone. This removes manual report building. Stakeholders always see current, trustworthy numbers. You stop spending days on data that ages fast.",
       },
       {
         question: "Can I export data from the dashboard?",
         answer:
-          "Yes. You export portfolio data in multiple formats for reports or analysis. Exports include onchain verification metadata for independent checks. You can schedule recurring exports or generate them on demand. Saved templates speed up regular reporting. Your team spends minutes instead of hours on stakeholder deliverables.",
+          "Yes. You export portfolio data in many formats. Exports include onchain proof for outside checks. You schedule recurring exports or build them on demand. Saved templates speed up regular reporting. Your team spends minutes, not hours, on reports. Every export links data to its onchain source.",
       },
       {
         question: "Is the portfolio dashboard suitable for small grant programs?",
         answer:
-          "Yes. The dashboard works well for programs managing ten to twenty grants. Real-time visibility saves time regardless of portfolio size. Small programs often benefit most from structured stakeholder reporting. You only pay for the features you use. The platform grows with your program as it scales.",
+          "Yes. The dashboard works well for ten to twenty grants. Live data saves time at any portfolio size. Small programs often gain the most from structured reports. You only pay for what you use. The platform grows with your program over time. Setup takes minutes, not weeks.",
       },
       {
         question: "How does the dashboard handle multiple funding rounds?",
         answer:
-          "Karma tracks each funding round separately within the same dashboard. You compare performance across rounds with side-by-side metrics. Historical data stays accessible for trend analysis. This helps you spot patterns and improve future rounds. You never lose visibility into past program activity.",
+          "Karma tracks each funding round in the same dashboard. You compare rounds side by side with clear metrics. Past data stays ready for trend checks. This helps you spot patterns and improve next time. You keep full sight of every past round. Lessons from old rounds shape better future programs.",
       },
       {
         question: "Can I set alerts for underperforming grants?",
         answer:
-          "Yes. You configure alert thresholds for milestone delays and low activity. Karma notifies you when grants fall behind schedule. You act early before small issues become big problems. Alerts go to program managers via email or in-platform notifications. This proactive monitoring saves time compared to manual check-ins.",
+          "Yes. You set alert rules for delays and low activity. Karma tells you when grants fall behind. You act early before small issues grow large. Alerts reach you by email or in the platform. This saves time over manual check-ins. You catch risks before they hurt your program.",
       },
       {
         question: "Does the dashboard support custom KPIs?",
         answer:
-          "Yes. You define custom metrics that matter to your organization. Karma tracks them alongside standard indicators like completion rates. Custom KPIs appear on your dashboard and in exported reports. This flexibility lets you measure what your stakeholders care about most. Setup takes just a few minutes per metric.",
+          "Yes. You define custom metrics that matter to you. Karma tracks them next to standard numbers like completion rates. Custom KPIs show on your dashboard and in exports. This lets you measure what stakeholders care about. Setup takes just a few minutes per metric. You adjust KPIs as your goals change over time.",
       },
     ],
     ctaText: "See Your Portfolio Clearly",
@@ -354,12 +354,12 @@ export const featureCoreSolutions: SolutionPage[] = [
     problem: {
       heading: "Why Automated Grant Intake Beats Manual Processing",
       description:
-        "Every funding round starts the same way. Applications flood in through forms, emails, and portals. Someone checks each one for completeness by hand. Data entry errors creep into tracking systems. Operations staff burn out on repetitive tasks they could automate. The entire funding cycle slows down because intake is a bottleneck.",
+        "Every funding round starts the same way. Applications flood in from forms, emails, and portals. Someone checks each one by hand for completeness. Data entry errors creep into tracking systems. Staff burn out on tasks they could automate. The whole funding cycle slows because intake blocks it. This delay pushes back review timelines for everyone. Good projects wait longer to get funded.",
     },
     solution: {
       heading: "Automated Grant Intake From Submission to Reviewer Queue",
       description:
-        "Karma delivers automated grant intake from the moment someone applies. The platform validates each submission against your requirements. Incomplete applications trigger requests for missing information. Complete ones route to the right reviewer pool automatically. The entire intake pipeline runs without manual work. You keep full visibility and override control at every step.",
+        "Karma automates grant intake from the moment someone applies. The platform checks each submission against your rules. It flags gaps and asks for missing details. Complete applications route to the right reviewers. The whole intake pipeline runs without manual work. You keep full control and can override any step. Applications move faster from inbox to review queue. Your team focuses on decisions, not data entry.",
     },
     capabilities: [
       "Customizable application forms with conditional fields and validation rules",
@@ -375,42 +375,42 @@ export const featureCoreSolutions: SolutionPage[] = [
       {
         question: "Can I customize the grant application form for each program?",
         answer:
-          "Yes. Each program gets its own form with custom fields and conditional logic. You build it once and Karma handles the rest. Validation, routing, and notifications all run automatically. You can duplicate forms across programs to save setup time. This cuts launch effort for new funding rounds significantly.",
+          "Yes. Each program gets its own form with custom fields. You add conditional logic to show the right questions. Build it once and Karma handles the rest. Checks, routing, and alerts all run on their own. You copy forms across programs to save setup time. This cuts the effort to launch new rounds. You can edit forms any time without starting over.",
       },
       {
         question: "What happens when an application is incomplete?",
         answer:
-          "Karma spots missing information and notifies the applicant right away. The application stays pending until all required fields are filled. Incomplete submissions never reach your reviewers. Applicants see exactly what they need to fix. This automated follow-up improves completion rates compared to manual outreach.",
+          "Karma spots missing details and alerts the applicant fast. The application stays pending until all fields get filled. Bad submissions never reach your reviewers. Applicants see exactly what to fix. This auto follow-up raises completion rates. You stop wasting reviewer time on half-done forms. Applicants fix issues in minutes, not days.",
       },
       {
         question: "How does automated routing work?",
         answer:
-          "You define rules based on grant category, amount, or geographic focus. Karma routes validated applications to the matching reviewer pool. You can override any assignment manually. The system improves routing suggestions over time. Rules scale from simple to complex based on your needs.",
+          "You set rules based on grant type, amount, or region. Karma sends valid applications to the right reviewer pool. You can override any assignment by hand. The system learns and improves routing over time. Rules scale from simple to complex as you need. This keeps applications moving without manual sorting.",
       },
       {
         question: "Can I import applications from other platforms?",
         answer:
-          "Yes. Karma supports batch import from spreadsheets and other tools. The import process validates each application against your requirements. It flags issues that need manual attention. You keep all your data during the transition. This makes consolidating applications from multiple sources straightforward.",
+          "Yes. Karma supports batch import from spreadsheets and other tools. The import checks each application against your rules. It flags issues that need a human look. You keep all your data during the switch. Merging applications from many sources stays simple. No data gets lost in the move.",
       },
       {
         question: "How much does automated grant intake cost?",
         answer:
-          "Automated intake comes included in all Karma plans. There are no per-application fees. The system works the same for fifty or five thousand applications. Pricing scales with your program's broader needs. Contact our team for a custom quote based on your volume.",
+          "Automated intake comes with all Karma plans. There are no per-application fees. The system works the same for fifty or five thousand entries. Pricing scales with your broader program needs. Contact our team for a custom quote. You pay for the platform, not per submission. This keeps costs steady as your volume grows.",
       },
       {
         question: "How does automated intake handle duplicate applications?",
         answer:
-          "Karma checks every submission against existing applications in your system. It flags potential duplicates based on applicant identity and proposal content. Program managers review flagged entries and decide how to proceed. This prevents the same project from consuming multiple review slots. Duplicate detection runs automatically on every submission.",
+          "Karma checks every submission against your current pool. It flags likely copies based on identity and content. Program managers review flagged entries and decide next steps. This stops one project from taking multiple review slots. The check runs on every new submission. You catch repeats before reviewers waste time on them.",
       },
       {
         question: "Can applicants save and resume their application later?",
         answer:
-          "Yes. Applicants can save their progress and return to finish later. Karma stores partial submissions securely. Applicants pick up right where they left off. This reduces abandonment rates for longer application forms. The platform sends reminders to applicants with unfinished drafts.",
+          "Yes. Applicants save their progress and come back later. Karma stores partial submissions safely. They pick up right where they left off. This cuts drop-off rates for longer forms. The platform sends reminders about unfinished drafts. More applicants complete their forms as a result.",
       },
       {
         question: "Does automated intake work for rolling admissions?",
         answer:
-          "Yes. The intake system processes applications in real time. It works for both round-based and rolling admission programs. Each submission gets validated and routed the moment it arrives. There is no batch processing delay. Applicants receive instant confirmation that their submission was received.",
+          "Yes. The intake system handles applications in real time. It works for both round-based and rolling programs. Each submission gets checked and routed on arrival. There is no batch delay. Applicants get instant proof that their form went through. This keeps your pipeline moving around the clock.",
       },
     ],
     ctaText: "Automate Your Grant Intake",
@@ -468,12 +468,12 @@ export const featureCoreSolutions: SolutionPage[] = [
     problem: {
       heading: "Without Grant Eligibility Screening, Reviewers Waste Hours",
       description:
-        "About 30-50% of applications fail basic eligibility in most programs. Reviewers still open, read, and reject them by hand. This wastes hours of skilled evaluator time every round. Applicants wait weeks for rejections that could have been instant. The entire funding cycle slows down unnecessarily. Everyone involved gets frustrated by the inefficiency.",
+        "About 30-50% of applications fail basic rules in most programs. Reviewers still open, read, and reject them by hand. This wastes hours of skilled evaluator time each round. Applicants wait weeks for rejections that could come in seconds. The whole funding cycle slows down for no reason. Everyone gets frustrated by this waste. That time could go toward reviewing strong proposals instead.",
     },
     solution: {
       heading: "Grant Eligibility Screening That Works Instantly",
       description:
-        "Karma automates grant eligibility screening for every submission. You define criteria like organization type, geography, and funding caps. The platform screens each application the moment it arrives. Eligible ones move to review right away. Ineligible applicants get clear feedback on what they missed. Your reviewers never waste time on unqualified submissions.",
+        "Karma screens every submission for eligibility on arrival. You set rules for org type, location, and funding caps. The platform checks each application right away. Eligible ones move to review in seconds. Others get clear feedback on what they missed. Your reviewers never waste time on bad fits. This frees them to focus on strong proposals. The whole review cycle speeds up as a result.",
     },
     capabilities: [
       "Rule-based eligibility engine supporting boolean logic, ranges, and conditional criteria",
@@ -489,42 +489,42 @@ export const featureCoreSolutions: SolutionPage[] = [
       {
         question: "What types of eligibility criteria can I define?",
         answer:
-          "Karma supports criteria for organization type, geography, funding amount, and grant history. You can add technical requirements and custom fields too. Criteria combine with AND/OR logic for complex rules. You set different criteria per funding track within the same program. This targeted screening keeps each track focused on the right applicants.",
+          "Karma supports rules for org type, location, funding, and history. You add technical needs and custom fields too. Rules combine with AND/OR logic for complex setups. You set different rules per funding track in one program. This keeps each track focused on the right applicants. You update rules any time without breaking past checks.",
       },
       {
         question: "Can applicants see why they were screened out?",
         answer:
-          "Yes. Applicants receive specific feedback about which requirements they missed. This helps them improve future submissions. It also reduces support inquiries to your team. You control how much detail applicants see. Transparency builds trust in your program's fairness.",
+          "Yes. Applicants get specific feedback on what they missed. This helps them fix future submissions. It also cuts support questions to your team. You control how much detail they see. Clear feedback builds trust in your program. Applicants feel respected even when they do not qualify.",
       },
       {
         question: "What if an applicant is borderline eligible?",
         answer:
-          "Program managers can override any automated screening decision. The override gets logged for audit purposes. Borderline applications get flagged for manual review instead of auto-rejection. You can also set up soft criteria that warn instead of reject. This gives you flexibility while keeping full accountability.",
+          "Program managers can override any screening decision. The system logs every override for audit records. Borderline applications get flagged for manual review. They do not face auto-rejection. You also set soft rules that warn instead of reject. This gives you room to flex while keeping accountability. Edge cases get the human attention they need.",
       },
       {
         question: "Does eligibility screening work for rolling applications or just rounds?",
         answer:
-          "It works for both. The screening engine processes submissions in real time. Applicants get instant feedback no matter when they apply. Eligible applications route to review immediately. There is no batch processing delay. This works the same for round-based, rolling, and hybrid programs.",
+          "It works for both. The engine checks submissions in real time. Applicants get instant feedback no matter when they apply. Eligible ones route to review right away. There is no batch delay. Round-based, rolling, and hybrid programs all work the same. You never need to wait for a batch run to finish.",
       },
       {
         question: "Can I update eligibility criteria mid-round?",
         answer:
-          "Yes. Changes apply to new submissions by default. You can optionally re-screen existing applications against updated criteria. The system tracks which version applied to each application. This versioning supports full auditability. You can always explain why a decision was made.",
+          "Yes. Changes apply to new submissions right away. You can also re-screen old applications against new rules. The system tracks which version applied to each one. This versioning supports full audit trails. You can always explain why a decision happened. No changes apply retroactively unless you choose so.",
       },
       {
         question: "How does eligibility screening reduce reviewer workload?",
         answer:
-          "The system filters out unqualified applications before reviewers see them. Programs typically remove 30-50% of submissions this way. Reviewers spend their time on proposals that meet your standards. This cuts review cycles significantly. Your evaluation team focuses on quality instead of quantity.",
+          "The system filters out bad fits before reviewers see them. Programs typically remove 30-50% of submissions this way. Reviewers spend time only on proposals that pass your bar. This cuts review cycles by weeks. Your evaluation team focuses on quality, not volume. Fewer applications per reviewer means better decisions overall.",
       },
       {
         question: "Can I screen for past grant performance?",
         answer:
-          "Yes. Karma checks applicant history across your programs. You see if an applicant completed prior milestones or missed deadlines. This track record data informs eligibility decisions automatically. Repeat applicants with strong histories get flagged positively. This rewards reliable grantees and protects your funding.",
+          "Yes. Karma checks applicant history across your programs. You see if they completed past milestones or missed deadlines. This track record shapes eligibility checks on its own. Strong repeat applicants get a positive flag. This rewards reliable grantees. It also protects your funding from repeat poor performers.",
       },
       {
         question: "Does screening work for programs with multiple funding tracks?",
         answer:
-          "Yes. Each funding track within a program can have its own eligibility rules. An applicant might qualify for one track but not another. Karma screens against the specific track the applicant selected. You manage all tracks from one interface. This keeps multi-track programs organized and fair.",
+          "Yes. Each funding track gets its own eligibility rules. An applicant might qualify for one track but not another. Karma screens against the specific track they picked. You manage all tracks from one interface. This keeps multi-track programs organized and fair. One dashboard shows status across every track.",
       },
     ],
     ctaText: "Screen Applicants Automatically",
@@ -582,12 +582,12 @@ export const featureCoreSolutions: SolutionPage[] = [
     problem: {
       heading: "Grant Reporting Analytics Are Missing From Most Programs",
       description:
-        "Program managers spend days compiling reports from scattered sources. Quarterly updates are outdated before anyone reads them. Boards ask questions the data cannot answer. Programs lack the structure to support real analysis. Teams cannot course-correct during a funding round without live data. Impact measurement stays narrative instead of numbers-driven.",
+        "Program managers spend days building reports from scattered sources. Quarterly updates go stale before anyone reads them. Boards ask questions the data cannot answer. Programs lack the structure for real analysis. Teams cannot act during a round without live data. Impact stays a story instead of hard numbers. This gap hurts trust with funders and stakeholders alike.",
     },
     solution: {
       heading: "Grant Reporting Analytics That Run on Autopilot",
       description:
-        "Karma structures your grant reporting analytics from day one. Reporting becomes a byproduct of normal operations. Program managers access real-time dashboards that answer questions instantly. They generate formatted reports for stakeholders in a few clicks. Onchain attestations back every data point. Your reports stay verifiable and tamper-proof without extra effort.",
+        "Karma structures your reporting from day one. Reports build themselves as your team works. Program managers open live dashboards that answer questions fast. They create formatted reports in a few clicks. Onchain attestations back every data point. Your reports stay verifiable without extra work. Stakeholders get numbers they can trust. You spend minutes on tasks that once took days.",
     },
     capabilities: [
       "Real-time analytics dashboards covering funding, milestones, grantee performance, and outcomes",
@@ -603,42 +603,42 @@ export const featureCoreSolutions: SolutionPage[] = [
       {
         question: "What metrics does Karma track for grant programs?",
         answer:
-          "Karma tracks funding allocation, milestone completion rates, and grantee activity. It also monitors reviewer throughput and application volumes. You define custom KPIs that match your goals. All metrics update in real time as activity happens. You get a living picture of program health instead of stale snapshots.",
+          "Karma tracks funding, milestone rates, and grantee activity. It also monitors reviewer speed and application volume. You define custom KPIs that match your goals. All metrics update live as activity happens. You get a living view of program health. No more stale snapshots. The data stays current around the clock.",
       },
       {
         question: "Can I create custom reports for different stakeholders?",
         answer:
-          "Yes. You configure different report templates for each audience. Board members get high-level summaries. Program managers get detailed operational views. Community reports show public transparency data. Templates are reusable across reporting periods. Setup is a one-time effort that pays off every quarter.",
+          "Yes. You set up report templates for each audience. Board members get high-level summaries. Program managers get detailed views. Community reports show public data. Templates work across all reporting periods. You set them up once and reuse them each quarter. This saves hours of formatting every cycle.",
       },
       {
         question: "How does onchain data improve reporting accuracy?",
         answer:
-          "Milestone completions and program events live as onchain attestations. This makes every data point cryptographically verifiable. Stakeholders trust the numbers because no one can alter them. Any metric traces back to its onchain source. This audit trail satisfies rigorous compliance requirements.",
+          "Milestone completions live as onchain attestations. This makes every data point verifiable by anyone. Stakeholders trust the numbers because no one can change them. Any metric traces back to its onchain source. This audit trail meets strict compliance needs. Your reports carry built-in proof of accuracy.",
       },
       {
         question: "Can I compare performance across multiple grant programs?",
         answer:
-          "Yes. Karma supports cross-program comparison out of the box. You benchmark programs by completion rate and funding efficiency. Side-by-side metrics help leadership allocate resources wisely. You spot best practices from top-performing programs quickly. Custom KPIs work across comparisons too.",
+          "Yes. Karma compares programs side by side right away. You rank programs by completion rate and funding speed. These metrics help leaders split resources wisely. You spot best practices from top programs fast. Custom KPIs work across comparisons too. This helps you double down on what works best.",
       },
       {
         question: "What is the ROI of switching to automated grant reporting?",
         answer:
-          "Most organizations save several days per quarter on manual reports. Real-time data improves decision-making during active rounds. Compliance documentation stays audit-ready at all times. Stakeholders stay informed without chasing your team. The compounding effect of better decisions often exceeds the direct time savings.",
+          "Most groups save several days per quarter on reports. Live data helps you make better choices during rounds. Compliance docs stay audit-ready at all times. Stakeholders stay informed without chasing your team. Better decisions over time add up to major savings. The ROI grows with each funding cycle you run.",
       },
       {
         question: "How quickly can I generate a stakeholder report?",
         answer:
-          "You generate a full report in under a minute. Select a template, choose the date range, and export. Karma pulls all data from your live dashboard. No manual data collection is needed. Scheduled reports can also deliver automatically to stakeholder inboxes.",
+          "You build a full report in under a minute. Pick a template, choose the date range, and export. Karma pulls all data from your live dashboard. You skip manual data collection entirely. Scheduled reports also land in stakeholder inboxes on time. One click replaces hours of manual work.",
       },
       {
         question: "Does Karma support impact measurement beyond financial metrics?",
         answer:
-          "Yes. You track custom outcome metrics alongside standard financial data. This includes developer activity, community growth, or any KPI you define. Grantees report outcomes through the same milestone workflow. Impact data flows into your reports automatically. This helps you tell a complete story to funders and boards.",
+          "Yes. You track custom outcomes next to standard money data. This covers developer activity, community growth, or any KPI. Grantees report outcomes through the same milestone flow. Impact data flows into your reports on its own. This helps you tell a full story to funders and boards. Numbers and narrative come together in one place.",
       },
       {
         question: "Can I visualize trends across multiple funding rounds?",
         answer:
-          "Yes. Karma shows trend charts across weeks, months, and funding rounds. You see how completion rates and funding efficiency change over time. Pattern detection helps you improve future program design. Historical data stays accessible for as long as you need it. Trend views are exportable for external presentations.",
+          "Yes. Karma shows trend charts across weeks, months, and rounds. You see how completion rates and speed change over time. Patterns help you improve future program design. Past data stays ready for as long as you need it. You export trend views for outside meetings. Visual charts make complex data easy to grasp.",
       },
     ],
     ctaText: "Unlock Program Analytics",
@@ -696,12 +696,12 @@ export const featureCoreSolutions: SolutionPage[] = [
     problem: {
       heading: "Why Grant Payment Tracking Fails Without the Right Tools",
       description:
-        "Programs struggle to track where funds go after allocation. Payments flow through multiple channels with no central record. Teams reconcile disbursements manually in spreadsheets. There is no clear link between payments and the work they funded. Grantees face delays with no visibility into when money arrives. Funders lose trust when they cannot trace their capital to results.",
+        "Programs struggle to track where funds go after allocation. Payments flow through many channels with no central record. Teams match payments to work by hand in spreadsheets. There is no clear link between money and results. Grantees face delays with no clue when funds arrive. Funders lose trust when they cannot trace capital. This lack of clarity slows down the whole funding cycle.",
     },
     solution: {
       heading: "Grant Payment Tracking Linked to Verified Milestones",
       description:
-        "Karma connects grant payment tracking to every milestone in your program. Each disbursement links to the verified work it funds. Program managers see real-time payment status across all grants. Grantees know exactly when to expect their funds. Funders trace capital from allocation through to delivered results. Onchain records make every transaction permanently auditable.",
+        "Karma ties every payment to a verified milestone. Each payout links to the work it funds. Program managers see live payment status across all grants. Grantees know exactly when to expect money. Funders trace capital from start to delivered results. Onchain records make every transaction auditable forever. No payment happens without proof of work behind it.",
     },
     capabilities: [
       "Real-time payment status tracking across all grants and programs",
@@ -717,42 +717,42 @@ export const featureCoreSolutions: SolutionPage[] = [
       {
         question: "How does milestone-linked payment work?",
         answer:
-          "You assign a funding amount to each milestone when setting up a grant. Karma queues the payment automatically when a reviewer verifies the milestone. Funds flow only to verified work. The payment link stays recorded onchain. This creates permanent proof of every disbursement.",
+          "You assign a funding amount to each milestone at setup. Karma queues the payment when a reviewer verifies work. Funds flow only to verified milestones. The payment record stays onchain forever. This creates permanent proof of every payout. No money moves without a verified deliverable behind it.",
       },
       {
         question: "Can grantees see when they will be paid?",
         answer:
-          "Yes. Grantees access a payment portal with upcoming and pending disbursements. They see the verification status of each milestone. This helps them plan project budgets with confidence. Payment visibility reduces support requests significantly. Grantees always know where their submissions stand.",
+          "Yes. Grantees open a payment portal with all due dates. They see the status of each milestone check. This helps them plan budgets with confidence. Clear timelines cut support requests by a lot. Grantees always know where things stand. They stop asking your team when money will arrive.",
       },
       {
         question: "Does Karma support both crypto and fiat payments?",
         answer:
-          "Karma supports onchain payments across Ethereum, Optimism, Arbitrum, and more. You can also track fiat disbursements alongside onchain transactions. This gives you a unified view of all fund flows. Your tracking stays complete regardless of payment method. The hybrid approach works for programs using mixed disbursement channels.",
+          "Karma supports onchain payments on Ethereum, Optimism, Arbitrum, and more. You also track fiat payouts next to onchain ones. This gives you one view of all fund flows. Your tracking stays complete no matter the method. The hybrid setup works for programs with mixed channels. You see every payment in one dashboard.",
       },
       {
         question: "How does payment tracking help with compliance?",
         answer:
-          "Every payment links to a verified milestone with a full audit trail. You demonstrate to auditors that funds went to verified work. Onchain records serve as tamper-proof evidence. Compliance preparation time drops significantly. Your documentation stays audit-ready at all times.",
+          "Every payment links to a verified milestone with full records. You show auditors that funds went to real work. Onchain records serve as tamper-proof evidence. Compliance prep time drops by a large margin. Your docs stay audit-ready at all times. You answer auditor questions in minutes, not days.",
       },
       {
         question: "Can I set spending limits or payment caps per grant?",
         answer:
-          "Yes. You define funding caps and per-milestone amounts for each grant. Karma enforces limits automatically and alerts you before overpayment. Budget controls also work at the program level. This prevents accidental overspending across your portfolio. You maintain financial discipline without manual checks.",
+          "Yes. You set funding caps and per-milestone amounts for each grant. Karma enforces limits and alerts you before overpaying. Budget controls also work at the program level. This stops accidental overspending across your portfolio. You keep financial discipline without manual checks. Alerts fire before any limit gets crossed.",
       },
       {
         question: "How does Karma handle payment delays or disputes?",
         answer:
-          "The platform flags delayed payments in your dashboard automatically. You see which disbursements are overdue and why. Grantees can raise payment inquiries through the platform. Program managers resolve disputes with full transaction history visible. Every action and resolution gets logged for accountability.",
+          "The platform flags delayed payments in your dashboard right away. You see which payouts run late and why. Grantees raise payment questions through the platform. Managers resolve disputes with full history visible. Every action and fix gets logged for accountability. Nothing falls through the cracks.",
       },
       {
         question: "Can I track payments across multiple blockchain networks?",
         answer:
-          "Yes. Karma supports multi-chain payment tracking natively. You monitor disbursements across Ethereum, Optimism, Arbitrum, and other networks. All transactions appear in one unified dashboard. Cross-chain reporting works automatically. This simplifies treasury management for programs funding across ecosystems.",
+          "Yes. Karma tracks payments across chains out of the box. You monitor payouts on Ethereum, Optimism, Arbitrum, and more. All transactions show in one dashboard. Cross-chain reports build on their own. This makes treasury work simple for multi-chain programs. You stop switching between block explorers.",
       },
       {
         question: "What reports can I generate from payment data?",
         answer:
-          "You generate financial summaries, disbursement timelines, and burn rate reports. Reports link every payment to its verified milestone. You export data for external auditors or board presentations. Scheduled reports deliver to stakeholders automatically. All financial data stays backed by onchain proof.",
+          "You build summaries, payout timelines, and burn rate reports. Reports link every payment to its verified milestone. You export data for auditors or board meetings. Scheduled reports reach stakeholders on their own. All numbers stay backed by onchain proof. You create a full financial picture in minutes.",
       },
     ],
     ctaText: "Track Grant Payments Transparently",
@@ -810,12 +810,12 @@ export const featureCoreSolutions: SolutionPage[] = [
     problem: {
       heading: "Multi-Program Grant Management Fails With Scattered Tools",
       description:
-        "Organizations running several grant programs end up with a different tool for each. Reviewers toggle between disconnected systems daily. Program managers cannot compare performance across initiatives. Operations teams maintain duplicate workflows doing the same thing. Data stays siloed and institutional knowledge fragments. Launching a new program means starting from scratch every time.",
+        "Groups running several grant programs use a different tool for each. Reviewers switch between systems all day long. Program managers cannot compare results across efforts. Teams maintain duplicate workflows for the same tasks. Data stays siloed and knowledge splits apart. Starting a new program means building from scratch each time. This wastes time and money at every level.",
     },
     solution: {
       heading: "Multi-Program Grant Management on One Unified Platform",
       description:
-        "Karma brings multi-program grant management into a single platform. Every program keeps its own configuration and workflows. They all share common infrastructure for applications, milestones, and payments. Program managers get full autonomy over their initiatives. Leadership gets cross-program visibility instantly. Launching a new program takes minutes using proven templates.",
+        "Karma runs all your grant programs on one platform. Every program keeps its own setup and workflows. They share tools for applications, milestones, and payments. Program managers run their own efforts freely. Leaders see across all programs at once. Starting a new program takes minutes with templates. You stop rebuilding the same tools for each effort.",
     },
     capabilities: [
       "Independent program configurations for applications, review criteria, and workflows",
@@ -831,42 +831,42 @@ export const featureCoreSolutions: SolutionPage[] = [
       {
         question: "Can each program have its own application form and review process?",
         answer:
-          "Yes. Every program gets fully independent configuration. This includes application forms, eligibility criteria, and review rubrics. Programs share platform infrastructure but run independently. You clone configurations from existing programs as templates. This saves significant setup time when launching new initiatives.",
+          "Yes. Every program gets its own full setup. This covers application forms, rules, and review rubrics. Programs share the platform but run on their own. You clone setups from existing programs as templates. This saves big setup time for new launches. Each program stays separate while sharing one home.",
       },
       {
         question: "Can reviewers work across multiple programs?",
         answer:
-          "Yes. You assign reviewers to multiple programs with different roles in each. A reviewer can lead evaluation in one program and assist in another. Permissions adjust per program automatically. Reviewers see all their assignments in one unified dashboard. This maximizes your evaluator pool without duplicate accounts.",
+          "Yes. You assign reviewers to many programs with different roles. A reviewer can lead one program and assist in another. Access adjusts per program on its own. Reviewers see all tasks in one dashboard. This stretches your evaluator pool without extra accounts. You get more coverage with the same team.",
       },
       {
         question: "How does cross-program reporting work?",
         answer:
-          "Karma aggregates data across all programs for leadership. You compare funding allocation and completion rates at the org level. Drill down into individual programs for detailed analysis. Cross-program reports export easily for stakeholders. This helps you identify best practices and allocate resources wisely.",
+          "Karma pulls data from all programs into one view for leaders. You compare funding and completion rates at the org level. Drill into single programs for detailed numbers. Cross-program reports export fast for stakeholders. This helps you find best practices and spend wisely. You see the big picture and the details in one place.",
       },
       {
         question: "How quickly can I launch a new grant program?",
         answer:
-          "You launch a new program in minutes using a template. Customize the configuration, add reviewers, and open applications. No technical deployment or setup overhead is needed. Organizations that spent weeks on setup now finish in under an hour. The platform infrastructure handles everything behind the scenes.",
+          "You launch a new program in minutes with a template. Adjust the setup, add reviewers, and open applications. No technical deployment or overhead stands in the way. Groups that spent weeks on setup now finish in an hour. The platform handles everything behind the scenes. You go from idea to live program the same day.",
       },
       {
         question: "Is multi-program management suitable for small organizations?",
         answer:
-          "Yes. Even two or three programs benefit from unified infrastructure. You eliminate duplicate tools and processes immediately. Cross-program visibility starts from day one. The platform grows with your ambitions. You avoid painful migrations as your funding portfolio expands.",
+          "Yes. Even two or three programs gain from shared tools. You cut duplicate work and processes right away. Cross-program sight starts from day one. The platform grows with your goals. You dodge painful moves as your portfolio gets bigger. Starting small costs nothing extra.",
       },
       {
         question: "How does Karma handle programs with different funding currencies?",
         answer:
-          "Each program can use its own funding currency or token. Karma tracks payments across multiple chains and currencies. Portfolio-level reporting normalizes amounts for comparison. This works for organizations funding across different blockchain ecosystems. Treasury managers see a unified view regardless of payment diversity.",
+          "Each program can use its own currency or token. Karma tracks payments across many chains and currencies. Portfolio reports adjust amounts for easy comparison. This works for groups funding across blockchain ecosystems. Treasury managers see one clean view of all payments. Mixed currencies never block your reporting.",
       },
       {
         question: "Can I move grantees between programs?",
         answer:
-          "Yes. Grantee profiles persist across your organization. You can invite existing grantees to new programs without re-onboarding. Their track record from prior programs stays visible. This helps you reward reliable grantees with new opportunities. Cross-program grantee history informs better funding decisions.",
+          "Yes. Grantee profiles live across your whole org. You invite existing grantees to new programs with no re-onboarding. Their past track record stays visible to reviewers. This helps you reward reliable grantees with new chances. Cross-program history leads to better funding choices. Good grantees stand out across all your programs.",
       },
       {
         question: "How do permissions work across multiple programs?",
         answer:
-          "Karma supports role-based access at both organization and program levels. Organization admins see everything across all programs. Program managers control only their assigned initiatives. Reviewers access only their queued applications. This layered permission model scales cleanly as your portfolio grows.",
+          "Karma controls access at both org and program levels. Org admins see everything across all programs. Program managers control only their own efforts. Reviewers see only their queued applications. This layered model scales well as your portfolio grows. You add programs without reworking access rules.",
       },
     ],
     ctaText: "Unify Your Grant Programs",
@@ -924,12 +924,12 @@ export const featureCoreSolutions: SolutionPage[] = [
     problem: {
       heading: "Without Automated Grantee Reminders, Teams Burn Out",
       description:
-        "Chasing grantees for updates consumes the most time in grant management. Program managers send dozens of follow-up emails every week. They track responses in spreadsheets that go stale fast. Silent grantees force escalation to leadership. This repetitive work scales linearly with your portfolio size. It becomes the biggest operational bottleneck as programs grow.",
+        "Chasing grantees for updates eats the most time in grants. Program managers send dozens of follow-ups each week. They track replies in spreadsheets that go stale fast. Silent grantees force issues up to leadership. This work grows with your portfolio size. It turns into the biggest bottleneck as programs scale. Your best staff spend their time on emails, not strategy.",
     },
     solution: {
       heading: "Automated Grantee Reminders That Escalate Smartly",
       description:
-        "Karma sends automated grantee reminders based on milestone schedules and response history. Reminders escalate gradually from friendly nudges to formal notices. The system adapts to each grantee's responsiveness. Program managers see a dashboard of who responded and who needs attention. Your team focuses only on cases that require personal outreach. Everyone else stays on track automatically.",
+        "Karma sends reminders based on milestones and response history. Reminders grow from friendly nudges to formal notices over time. The system adapts to each grantee's reply habits. Managers see who replied and who needs a personal touch. Your team focuses only on cases that need direct contact. Everyone else stays on track on their own. This frees up hours every single week.",
     },
     capabilities: [
       "Configurable reminder schedules for milestones, updates, and deadlines",
@@ -945,42 +945,42 @@ export const featureCoreSolutions: SolutionPage[] = [
       {
         question: "What types of reminders does Karma send?",
         answer:
-          "Karma sends reminders for upcoming deadlines and overdue submissions. It also covers pending update requests and custom events you define. Each type has its own schedule and escalation rules. You preview the full sequence for any grantee. This ensures the right message reaches them at the right time.",
+          "Karma sends reminders for deadlines and overdue items. It also covers pending requests and custom events you set. Each type has its own schedule and escalation rules. You preview the full sequence for any grantee. The right message reaches them at the right time. You never send a reminder too early or too late.",
       },
       {
         question: "Can I customize the reminder messages?",
         answer:
-          "Yes. Each program gets its own templates with custom messaging and tone. You set different templates for each escalation level. Templates support dynamic fields like grantee name and deadline. You preview how messages render before activating them. This keeps your communications professional and accurate.",
+          "Yes. Each program gets its own message templates and tone. You set different templates for each escalation level. Templates use dynamic fields like name and deadline. You preview how messages look before turning them on. This keeps your words professional and on point. You adjust wording any time without rebuilding flows.",
       },
       {
         question: "Will grantees get overwhelmed with too many reminders?",
         answer:
-          "No. Karma includes frequency caps and quiet hours. You set the maximum reminders per week and allowed sending hours. The sequence stops automatically when a grantee responds. It resumes only when the next action is due. Grantees can also set their own notification preferences.",
+          "No. Karma includes frequency caps and quiet hours. You set the max reminders per week and sending windows. The sequence stops when a grantee responds. It starts again only when the next task comes due. Grantees also pick their own alert settings. No one gets buried in repeat messages.",
       },
       {
         question: "How do I know which grantees need personal follow-up?",
         answer:
-          "The dashboard highlights grantees who ignored multiple automated reminders. You focus personal outreach on the few who genuinely need it. Response history and escalation status give you full context. You stop wasting time on grantees who are already on track. This targeted approach saves hours every week.",
+          "The dashboard flags grantees who skipped multiple reminders. You focus personal outreach on the few who truly need it. Response history and escalation status give you full context. You stop chasing grantees who already stay on track. This targeted approach saves hours every week. Your energy goes where it matters most.",
       },
       {
         question: "Can reminders be sent through channels other than email?",
         answer:
-          "Karma supports in-platform notifications alongside email. Grantees choose their preferred channel in notification settings. The system tracks delivery and engagement across all channels. Program managers see which channels get the best response rates. This data helps you optimize your communication strategy.",
+          "Karma supports in-app alerts alongside email. Grantees pick their preferred channel in settings. The system tracks delivery and clicks across all channels. Managers see which channels get the best replies. This data helps you improve how you reach grantees. You learn what works and do more of it.",
       },
       {
         question: "How do automated reminders improve milestone completion rates?",
         answer:
-          "Programs using Karma's reminders see completion rates rise by 20-30% on average. Grantees receive timely nudges before deadlines pass. Early reminders prevent overdue submissions from piling up. The graduated escalation catches stragglers before they fall too far behind. This keeps your entire portfolio moving forward consistently.",
+          "Programs using Karma's reminders see 20-30% higher completion rates. Grantees get timely nudges before deadlines pass. Early reminders stop overdue items from stacking up. The step-by-step escalation catches stragglers in time. This keeps your whole portfolio moving forward steadily. Better follow-up leads to better outcomes for everyone.",
       },
       {
         question: "Can I pause reminders for specific grantees?",
         answer:
-          "Yes. You pause reminders for individual grantees at any time. This is useful when a project faces legitimate delays. The pause logs the reason for audit purposes. You resume the sequence whenever the grantee is ready. This flexibility respects real-world project challenges.",
+          "Yes. You pause reminders for any grantee at any time. This helps when a project faces real delays. The pause logs the reason for audit records. You restart the sequence when the grantee is ready. This respects real-world project challenges. You stay flexible without losing accountability.",
       },
       {
         question: "Do reminders work for programs with irregular milestone schedules?",
         answer:
-          "Yes. Karma triggers reminders based on each milestone's specific deadline. Irregular schedules work the same as regular ones. The system adapts to each grantee's unique timeline. You do not need uniform milestone intervals across your portfolio. This flexibility supports diverse project types within the same program.",
+          "Yes. Karma sends reminders based on each milestone's own deadline. Odd schedules work the same as regular ones. The system adapts to each grantee's unique timeline. You do not need even intervals across your portfolio. This supports many project types in one program. Every grantee gets reminders that match their plan.",
       },
     ],
     ctaText: "Automate Grantee Follow-Up",
@@ -1038,12 +1038,12 @@ export const featureCoreSolutions: SolutionPage[] = [
     problem: {
       heading: "Grant Application Management Falls Apart With Disconnected Tools",
       description:
-        "Most programs piece together workflows from Google Forms, spreadsheets, and email. Applications fall through the cracks between these systems. Applicants get inconsistent updates about their status. Program managers have no single view of where things stand. Tracking breaks down as application volume grows. Scaling this patchwork approach is not possible.",
+        "Most programs patch workflows from Google Forms, spreadsheets, and email. Applications fall through cracks between these systems. Applicants get mixed updates about their status. Managers have no single view of where things stand. Tracking breaks down as volume grows. You cannot scale this patchwork approach. Each new round adds more confusion and lost submissions.",
     },
     solution: {
       heading: "Complete Grant Application Management in One Platform",
       description:
-        "Karma handles grant application management from submission through funding decision. Applicants submit through structured forms with built-in validation. Applications flow through configurable review stages automatically. Reviewers evaluate proposals in a purpose-built interface. Every status change gets logged and communicated to applicants. Approved applications transition into active grants with milestones ready to go.",
+        "Karma manages applications from submission to funding decision. Applicants use structured forms with built-in checks. Applications flow through review stages on their own. Reviewers evaluate proposals in a focused interface. Every status change gets logged and sent to applicants. Approved ones turn into active grants with milestones set. The whole pipeline lives in one place from start to finish.",
     },
     capabilities: [
       "Configurable multi-stage application workflows from submission to funding decision",
@@ -1059,42 +1059,42 @@ export const featureCoreSolutions: SolutionPage[] = [
       {
         question: "How many stages can a grant application workflow have?",
         answer:
-          "As many as your program needs. Common setups include submission, screening, expert review, and final decision. You add, remove, or rename stages to match your process. Each stage gets its own reviewers and automation rules. Conditional branches route applications based on category or score.",
+          "As many as your program needs. Common setups include submission, screening, expert review, and final decision. You add, remove, or rename stages freely. Each stage gets its own reviewers and rules. Branches route applications by category or score. You design the exact flow your team requires.",
       },
       {
         question: "Can applicants check the status of their application?",
         answer:
-          "Yes. Applicants log in to see their application's current stage. They see whether any action is needed from them. Automated emails notify them at each stage transition. This self-service view cuts status inquiry emails dramatically. Your team stops answering the same questions repeatedly.",
+          "Yes. Applicants log in to see their current stage. They see if any action falls on them. Auto emails notify them at each stage change. This self-service view cuts status inquiry emails by a lot. Your team stops answering the same questions over and over. Applicants feel informed throughout the whole process.",
       },
       {
         question: "How does Karma handle rejected applications?",
         answer:
-          "Rejected applicants get automated notifications with optional feedback. You control whether to share detailed comments or a general notice. Rejected applicants can be invited to reapply in future rounds. This maintains engagement with promising candidates. It also gives applicants clear guidance for improving future proposals.",
+          "Rejected applicants get auto alerts with optional feedback. You choose to share detailed comments or a short note. You can invite rejected applicants to try again next round. This keeps promising candidates engaged with your program. It also gives them clear tips for stronger future proposals. No applicant leaves without knowing where they stand.",
       },
       {
         question: "What happens after an application is approved?",
         answer:
-          "Approved applications become active grants automatically. Milestones and payment schedules carry over from the proposal. Grantees onboard into milestone tracking without manual re-entry. They receive guidance on how to submit updates. This seamless handoff saves hours of administrative work per grant.",
+          "Approved applications turn into active grants right away. Milestones and payment schedules carry over from the proposal. Grantees start milestone tracking with no manual re-entry. They get guidance on how to submit updates. This smooth handoff saves hours of admin work per grant. No data gets typed twice.",
       },
       {
         question: "Can I reopen or reconsider a declined application?",
         answer:
-          "Yes. Program managers move applications between stages at any time. You can reopen declined applications for reconsideration. All transitions get logged for audit purposes. This flexibility helps when new funding opens up. The full decision history stays visible throughout.",
+          "Yes. Program managers move applications between stages any time. You reopen declined applications for a second look. All transitions get logged for audit records. This helps when new funding opens up later. The full decision history stays visible throughout. No past action gets hidden or lost.",
       },
       {
         question: "How does the pipeline view help program managers?",
         answer:
-          "The pipeline view shows every application organized by status. You see bottlenecks at a glance. Bulk actions let you move groups of applications together. Filters narrow the view by category, score, or reviewer. This visual overview replaces spreadsheet tracking entirely.",
+          "The pipeline view shows every application by status. You spot bottlenecks at a glance. Bulk actions let you move groups of applications at once. Filters narrow the view by topic, score, or reviewer. This visual layout replaces spreadsheet tracking completely. You manage hundreds of applications from one screen.",
       },
       {
         question: "Can I customize applicant communications at each stage?",
         answer:
-          "Yes. Each stage transition triggers an automated message using your templates. You control the content, tone, and branding. Dynamic fields insert applicant-specific details automatically. This keeps communication consistent across hundreds of applications. Applicants feel informed without your team sending individual emails.",
+          "Yes. Each stage change sends an auto message using your templates. You control the content, tone, and branding. Dynamic fields add applicant details on their own. This keeps messages steady across hundreds of applications. Applicants feel informed without your team writing emails. You set it up once and it runs every round.",
       },
       {
         question: "How does reviewer workload balancing work?",
         answer:
-          "Karma distributes applications across reviewers based on current workload. No single reviewer gets overloaded while others sit idle. You set maximum assignments per reviewer per round. The system tracks review progress in real time. Program managers intervene only when workload imbalances appear.",
+          "Karma spreads applications across reviewers by current load. No single reviewer gets buried while others sit idle. You set max assignments per reviewer per round. The system tracks review progress live. Managers step in only when loads tilt out of balance. Every reviewer gets a fair share of the work.",
       },
     ],
     ctaText: "Streamline Your Applications",

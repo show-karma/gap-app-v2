@@ -12,12 +12,12 @@ export const guidesSolutions: SolutionPage[] = [
     problem: {
       heading: "How to Choose Grant Management Software Without Wasting Time and Budget",
       description:
-        "Grant programs often pick software that looks great in a demo but fails in daily use. Many tools lack milestone tracking or force rigid workflows on your team. Some offer no way to verify grantee progress at all. Teams revert to spreadsheets within months and lose both money and momentum. Without a clear framework, programs cycle through tools without solving the core problem. That core problem is end-to-end visibility from application to completion.",
+        "Grant programs often pick tools that look great in demos. Those tools fail in daily use. Many lack milestone tracking. Others force rigid steps on your team. Some have no way to check grantee progress. Teams go back to sheets within months. They lose both money and time. Without a clear plan, programs swap tools but never fix the real issue. That issue is full view from start to finish.",
     },
     solution: {
       heading: "A Practical Framework for How to Choose Grant Management Software",
       description:
-        "Start by mapping your current workflow from intake to close-out. Identify where bottlenecks and manual work slow your team down. Then evaluate tools against those specific pain points. Key criteria include configurable rubrics, automated milestone verification, and grantee portals. Look for integration with your existing payment and communication tools. Karma provides these capabilities with on-chain transparency for programs that value accountability.",
+        "Start by mapping your workflow from intake to close-out. Find where delays and manual work slow your team. Then test tools against those pain points. Look for custom rubrics and auto milestone checks. Grantee portals save time too. Make sure the tool works with your payment setup. Karma offers these features with on-chain proof for teams that value trust.",
     },
     capabilities: [
       "Customizable application intake forms and evaluation criteria",
@@ -33,37 +33,37 @@ export const guidesSolutions: SolutionPage[] = [
       {
         question: "What features matter most in grant management software?",
         answer:
-          "Milestone tracking with verification tops the list. Configurable evaluation workflows come next. Reporting dashboards round out the essentials. These features solve the biggest pain points in grant programs. You need to know if grantees deliver on time. You need fair, consistent funding decisions. You need clear outcomes for stakeholders.",
+          "Milestone tracking with proof tops the list. Custom review workflows come next. Reporting dashboards round out the basics. These features fix the biggest pain points. You need to know if grantees ship on time. You need fair, steady funding choices. You need clear results for backers.",
       },
       {
         question: "How do I know if my program is big enough to need dedicated software?",
         answer:
-          "Most programs benefit from dedicated tools after 10 active grants. Multiple reviewers also push you past the spreadsheet threshold. The need grows faster if you require audit trails or public accountability. Spreadsheets cannot provide verifiable records. Even smaller programs save hours each week with the right tool.",
+          "Most programs need real tools after 10 active grants. More than one reviewer also makes sheets too hard. The need grows fast if you need audit trails. Sheets cannot give you proof you can check. Even small programs save hours each week with the right tool.",
       },
       {
         question: "Should I choose cloud-based or self-hosted grant management software?",
         answer:
-          "Cloud-based solutions work best for most programs. They eliminate maintenance overhead and update automatically. Self-hosted options only make sense with strict data residency rules. You also need dedicated IT staff for self-hosted infrastructure. Most modern grant programs choose cloud for faster setup and lower total cost.",
+          "Cloud tools work best for most programs. They cut upkeep work and update on their own. Self-hosted only makes sense with strict data rules. You also need IT staff to run your own setup. Most grant programs pick cloud for faster launch and lower cost.",
       },
       {
         question: "How long does it typically take to evaluate and select a tool?",
         answer:
-          "Plan for two to four weeks. Spend the first week mapping your workflow and requirements. Use the second week to demo three to five tools. Then run a pilot with your top choice using real data. Rushing this process leads to poor-fit tools. A structured timeline saves months of regret later.",
+          "Plan for two to four weeks. Spend week one mapping your workflow and needs. Use week two to demo three to five tools. Then test your top pick with real data. Rushing leads to bad-fit tools. A clear timeline saves months of regret.",
       },
       {
         question: "How do I get stakeholder buy-in for new grant management software?",
         answer:
-          "Show a side-by-side comparison of manual costs versus projected savings. Quantify hours spent on spreadsheet tracking and email follow-ups. Include the cost of report compilation. Highlight risk factors like data loss and audit gaps. Leadership teams approve once they see concrete time and cost savings.",
+          "Show a side-by-side view of manual costs versus savings. Count hours spent on sheet tracking and email follow-ups. Add the cost of building reports by hand. Point out risks like data loss and audit gaps. Leaders approve once they see real time and cost savings.",
       },
       {
         question: "What is the biggest mistake teams make when choosing grant management software?",
         answer:
-          "Teams often pick based on a single demo or a peer recommendation. They skip the workflow mapping step entirely. This means they choose tools that look impressive but miss their actual needs. Always evaluate against your specific pain points first. Feature checklists alone do not predict a good fit.",
+          "Teams often pick based on one demo or a friend's tip. They skip mapping their workflow. This means they choose tools that look great but miss real needs. Always test against your own pain points first. Feature lists alone do not predict a good fit.",
       },
       {
         question: "Can I switch grant management software later if my first choice does not work?",
         answer:
-          "Yes, but switching costs are real. You lose time on data migration and team retraining. That is why the pilot phase matters so much. Test with real data before you commit long-term. Also confirm data export options before signing any contract. A clean exit clause protects your program.",
+          "Yes, but switching costs are real. You lose time moving data and training the team again. That is why the pilot phase matters so much. Test with real data before you commit long-term. Check data export options before signing any deal. A clean exit clause protects your program.",
       },
     ],
     ctaText: "Try Karma for Your Grant Program",
@@ -125,12 +125,12 @@ export const guidesSolutions: SolutionPage[] = [
     problem: {
       heading: "A Grant Management Software Buying Guide Prevents Costly Regret",
       description:
-        "Many organizations buy grant tools based on a single demo or a peer recommendation. They skip evaluating fit for their specific needs. This creates shelfware: expensive tools that sit unused. The market ranges from simple trackers to full-suite platforms. Without knowing where your needs fall, you risk overspending on enterprise features. Or you pick a lightweight tool that cannot scale with your program.",
+        "Many groups buy grant tools after one demo or a tip from a peer. They skip checking if the tool fits their needs. This creates waste: pricey tools that sit unused. The market ranges from simple trackers to full platforms. Without knowing your needs, you may overspend on big features. Or you pick a light tool that cannot grow with you.",
     },
     solution: {
       heading: "Follow This Grant Management Software Buying Guide to Minimize Risk",
       description:
-        "Structure your purchase in four phases. First, audit your workflow and document every step from application to close-out. Second, sort requirements into must-have, nice-to-have, and not needed. Third, request demos focused on your must-have items only. Fourth, run a time-boxed pilot with real data before committing. Karma offers straightforward onboarding that lets you test with live grant programs. You can validate fit before making a long-term commitment.",
+        "Plan your purchase in four phases. First, map your workflow from start to finish. Second, sort needs into must-have, nice-to-have, and not needed. Third, ask for demos that focus on your must-haves only. Fourth, run a short pilot with real data before you commit. Karma offers simple setup that lets you test with live grants. You can check the fit before making a long-term choice.",
     },
     capabilities: [
       "End-to-end grant lifecycle management from intake to close-out",
@@ -146,37 +146,37 @@ export const guidesSolutions: SolutionPage[] = [
       {
         question: "What is the typical price range for grant management software?",
         answer:
-          "Simple tracking tools start around $50 to $200 per month. Mid-tier platforms run $200 to $1,000 per month. Enterprise solutions can exceed $2,000 per month. The right price depends on grant volume, user count, and required features. Many platforms offer free tiers or trials so you can test before buying.",
+          "Simple tracking tools cost $50 to $200 per month. Mid-range platforms run $200 to $1,000 per month. Big solutions can top $2,000 per month. The right price depends on grant count, users, and features. Many platforms offer free tiers or trials. You can test before you buy.",
       },
       {
         question: "What questions should I ask during a vendor demo?",
         answer:
-          "Ask the vendor to walk through your exact process. Find out how milestone verification works. Ask what reporting looks like for your stakeholders. Learn how grantees submit updates in the tool. Check what happens when your program scales past its current size. Also ask about data export and switching costs.",
+          "Ask the vendor to walk through your exact process. Find out how milestone checks work. Ask what reports look like for your backers. Learn how grantees send updates in the tool. Check what happens when your program grows past its current size. Also ask about data export and the cost to switch.",
       },
       {
         question: "How do I build a business case for purchasing grant management software?",
         answer:
-          "Calculate the hours your team spends on manual tracking and follow-ups. Multiply by fully loaded hourly rates. Most programs spend 15 to 30 hours per week on tasks that software automates. Add the cost of errors, missed milestones, and delayed reports. The return on investment case usually writes itself once you quantify the manual work.",
+          "Count the hours your team spends on manual tracking and follow-ups. Multiply by full hourly rates. Most programs spend 15 to 30 hours per week on tasks that tools can handle. Add the cost of errors, missed goals, and late reports. The payback case writes itself once you add up the manual work.",
       },
       {
         question: "Should I buy best-of-breed or an all-in-one platform?",
         answer:
-          "Best-of-breed tools focused on grants typically outperform generic project management tools. Look for platforms that excel at grant lifecycle management. Strong API support lets you connect with accounting and communication tools. This approach gives you specialized quality without losing integration flexibility.",
+          "Tools built just for grants often beat generic project tools. Look for platforms that do grant tracking really well. Strong API support lets you link to accounting and chat tools. This gives you top quality without losing the power to connect.",
       },
       {
         question: "How do I negotiate pricing with grant management software vendors?",
         answer:
-          "Start by requesting annual pricing for 15 to 25 percent savings. Ask about nonprofit or grant program discounts that vendors may not advertise. Request a pilot period before committing long-term. If you manage multiple programs, ask for volume pricing. Always confirm what the base price includes versus paid add-ons.",
+          "Start by asking for yearly pricing to save 15 to 25 percent. Ask about deals for nonprofits or grant programs. Vendors may not list these. Request a trial period before you sign long-term. If you run many programs, ask for bulk pricing. Always check what the base price covers versus paid extras.",
       },
       {
         question: "What red flags should I watch for when evaluating grant management vendors?",
         answer:
-          "Watch out for vendors who refuse a pilot period. Avoid tools that lock your data with no export option. Be wary of long-term contracts without exit clauses. If a vendor cannot demo your specific workflow, that is a warning sign. Also check if the platform has active development or if updates stopped months ago.",
+          "Watch out for vendors who refuse a trial period. Avoid tools that lock your data with no export. Be careful with long deals that lack exit clauses. If a vendor cannot demo your exact workflow, that is a red flag. Also check if the platform still gets updates. Stale tools are a risk.",
       },
       {
         question: "How do I compare grant management software options side by side?",
         answer:
-          "Create a scoring matrix based on your must-have requirements. Rate each tool on a simple scale after the demo. Include factors like ease of use, setup time, and support quality. Weight the scores based on your priorities. This structured comparison prevents decision fatigue and keeps the team aligned.",
+          "Build a scoring chart based on your must-have needs. Rate each tool on a simple scale after the demo. Include ease of use, setup time, and support quality. Weight the scores based on what matters most to you. This clear method stops choice fatigue and keeps the team aligned.",
       },
     ],
     ctaText: "Explore Karma for Grant Management",
@@ -243,12 +243,12 @@ export const guidesSolutions: SolutionPage[] = [
     problem: {
       heading: "Grant Management Software ROI Is Hard to Justify Without Concrete Numbers",
       description:
-        "Program managers know they need better tools. But they struggle to make the case to leadership. The cost of manual grant work hides in scattered hours across team members. Invisible delays and missed opportunities never get measured. Without concrete ROI data, software purchases get pushed aside. Meanwhile, the team keeps burning hours on spreadsheet updates and email follow-ups.",
+        "Program managers know they need better tools. But they struggle to prove it to leaders. The cost of manual work hides in hours spread across the team. No one tracks the delays or missed chances. Without real ROI numbers, tool purchases get pushed aside. The team keeps burning hours on sheet updates and email follow-ups.",
     },
     solution: {
       heading: "A Clear Framework to Calculate Grant Management Software ROI",
       description:
-        "Calculate ROI across three dimensions. First, measure direct time savings on application processing, status updates, and reporting. Most teams save 15 to 25 hours per week. Second, track completion rate improvements from structured milestone tracking. Programs typically see 20 to 40 percent higher grantee completion rates. Third, factor in stakeholder value from automated, real-time reporting. Karma adds a fourth dimension with on-chain transparency that builds trust with funders.",
+        "Measure ROI in three ways. First, count direct time saved on apps, status updates, and reports. Most teams save 15 to 25 hours per week. Second, track how many more grantees finish their work. Programs often see 20 to 40 percent higher rates. Third, factor in the value of live reports for backers. Karma adds a fourth win: on-chain proof that builds trust with funders.",
     },
     capabilities: [
       "Automated status tracking that eliminates manual check-ins",
@@ -264,37 +264,37 @@ export const guidesSolutions: SolutionPage[] = [
       {
         question: "How long does it take to see ROI from grant management software?",
         answer:
-          "Most programs see measurable time savings within the first month. Automated tracking tasks deliver value immediately. Full ROI, including better completion rates, typically appears within three to six months. Programs managing more than 25 active grants see results even faster. The volume of manual work eliminated scales with program size.",
+          "Most programs see clear time savings in the first month. Auto tracking tasks add value right away. Full ROI shows up in three to six months. This includes better finish rates. Programs with more than 25 grants see results even faster. The more manual work you cut, the bigger the gains.",
       },
       {
         question: "What are the hidden costs of not using grant management software?",
         answer:
-          "Staff time on admin tasks instead of strategic work is the biggest hidden cost. Poor communication drives grantee attrition. Missed milestones go undetected until final reporting. You lose the ability to demonstrate program impact to stakeholders. Institutional knowledge also disappears when processes live in spreadsheets that only one person understands.",
+          "Staff time on admin tasks is the biggest hidden cost. Your team does busywork instead of big-picture planning. Poor updates drive grantees away. Missed goals go unseen until the final report. You lose the power to show impact to backers. Key knowledge also vanishes when only one person knows the sheets.",
       },
       {
         question: "How do I measure the impact of grant management software after adoption?",
         answer:
-          "Track three metrics before and after adoption. Measure average hours per week on grant administration. Monitor grantee milestone completion rates. Time how long stakeholder reports take to produce. These capture the core value drivers. Also survey your team and grantees on satisfaction for engagement insights.",
+          "Track three metrics before and after you adopt the tool. Measure hours per week spent on grant admin. Watch grantee milestone finish rates. Time how long reports take to build. These capture the core value. Also survey your team and grantees on how happy they are.",
       },
       {
         question: "What is the average payback period for grant management software?",
         answer:
-          "For most mid-size programs with 15 to 50 active grants, the payback period is two to four months. Divide the annual software cost by the value of hours saved per month. Include indirect savings like reduced attrition and faster reporting. Larger programs see payback even sooner due to compounding automation gains.",
+          "For mid-size programs with 15 to 50 active grants, payback takes two to four months. Divide the yearly tool cost by the value of hours saved per month. Add indirect savings like less turnover and faster reports. Bigger programs see payback even sooner. The gains from cutting manual work stack up fast.",
       },
       {
         question: "How do I present ROI data to leadership to secure budget approval?",
         answer:
-          "Frame the conversation around the cost of inaction. Calculate weekly hours spent on manual tracking. Multiply by loaded hourly rates to show the dollar figure. Highlight the gap between current completion rates and industry benchmarks. Include one or two examples of missed milestones. Leadership responds best to dollar figures and risk reduction.",
+          "Frame the talk around the cost of doing nothing. Count weekly hours spent on manual tracking. Multiply by hourly rates to show the dollar amount. Show the gap between your finish rates and the norm. Include one or two cases of missed goals. Leaders respond best to dollar amounts and lower risk.",
       },
       {
         question: "Does grant management software ROI improve over time?",
         answer:
-          "Yes, ROI typically grows each quarter. Your team gets faster with the tool. You automate more workflows as you learn the platform. Historical data improves decision-making in future rounds. Reporting gets easier as your data set grows. Most programs report their highest ROI in the second year of use.",
+          "Yes, ROI tends to grow each quarter. Your team gets faster with the tool. You set up more auto workflows as you learn it. Past data helps you make better choices in future rounds. Reports get easier as your data grows. Most programs see their highest ROI in the second year.",
       },
       {
         question: "How do I calculate the cost of manual grant management?",
         answer:
-          "Start by listing every recurring admin task your team performs weekly. Track how many hours each task takes over two weeks. Multiply total hours by each team member's fully loaded hourly rate. Add indirect costs like delayed reports and missed follow-ups. This total is your baseline cost of doing nothing.",
+          "Start by listing every admin task your team does each week. Track how many hours each task takes over two weeks. Multiply total hours by each person's full hourly rate. Add hidden costs like late reports and missed follow-ups. This total is your baseline cost of doing nothing.",
       },
     ],
     ctaText: "See How Karma Delivers ROI",
@@ -356,12 +356,12 @@ export const guidesSolutions: SolutionPage[] = [
     problem: {
       heading: "Why Switching from Spreadsheets to Grant Management Tools Becomes Urgent",
       description:
-        "Spreadsheets work fine for five to ten grants with a single manager. But they break down fast as programs grow. Version control becomes a nightmare with multiple editors. There is no way to track milestone progress without manual updates. Reporting takes hours of copy-pasting across tabs. Institutional knowledge disappears when a team member leaves. The breaking point usually arrives around 15 to 20 active grants.",
+        "Sheets work fine for five to ten grants with one manager. But they break down fast as programs grow. Version control turns into a mess with many editors. You cannot track milestone progress without manual updates. Reports take hours of copy-pasting across tabs. Key knowledge is lost when a team member leaves. The break point usually hits around 15 to 20 active grants.",
     },
     solution: {
       heading: "A Phased Plan for Switching from Spreadsheets to Grant Management Software",
       description:
-        "Do not try to migrate everything at once. Start with your active grants only. Leave historical data in spreadsheets for reference. Map your spreadsheet columns to fields in the new tool so nothing gets lost. Run both systems in parallel for one grant cycle to build confidence. Then expand to new applications and import historical data if needed. Karma's intuitive interface makes this transition smooth and addresses the biggest spreadsheet gap: knowing if grantees deliver.",
+        "Do not try to move all your data at once. Start with active grants only. Leave old data in sheets for now. Map your sheet columns to fields in the new tool. This way, nothing gets lost. Run both systems side by side for one grant cycle. Then add new apps and import old data if needed. Karma's simple design makes this switch smooth. It fixes the biggest sheet gap: knowing if grantees deliver.",
     },
     capabilities: [
       "Structured data fields that replace fragile spreadsheet columns",
@@ -378,39 +378,39 @@ export const guidesSolutions: SolutionPage[] = [
         question:
           "How long does it take to migrate from spreadsheets to grant management software?",
         answer:
-          "Expect one to two weeks for data migration and initial setup. Then plan a two to four week parallel run using both systems. The total transition takes four to six weeks. Migrate active grants first and handle historical data separately. This keeps the initial effort small and manageable.",
+          "Expect one to two weeks for data moves and setup. Then plan two to four weeks running both systems. The full switch takes four to six weeks. Move active grants first. Handle old data on its own. This keeps the first effort small and easy to manage.",
       },
       {
         question: "What data should I migrate first?",
         answer:
-          "Start with active grants only. Move grantee information, current milestone status, and upcoming deadlines. Do not try to migrate years of history upfront. Once your team feels comfortable, backfill historical records if needed. This approach reduces migration risk and gets you productive faster.",
+          "Start with active grants only. Move grantee info, current milestone status, and coming due dates. Do not try to move years of history first. Once your team feels at ease, add old records if needed. This cuts risk and gets you up and running faster.",
       },
       {
         question:
           "How do I get my team to actually use the new tool instead of going back to spreadsheets?",
         answer:
-          "Involve the team in tool selection so they feel ownership. Start with the workflow that causes the most spreadsheet pain. Make the new tool the single source of truth by stopping spreadsheet updates on a firm date. If one person keeps a shadow spreadsheet, it undermines adoption for everyone.",
+          "Involve the team in picking the tool so they feel ownership. Start with the workflow that causes the most sheet pain. Make the new tool the one source of truth. Set a firm date to stop sheet updates. If one person keeps a side sheet, it hurts adoption for all.",
       },
       {
         question: "Will I lose flexibility by moving to structured software?",
         answer:
-          "Good grant tools offer more flexibility for grant-specific workflows than spreadsheets. You gain structured milestone tracking and automated notifications. Multi-user collaboration improves dramatically. The only flexibility you lose is ad-hoc layouts. Those ad-hoc layouts usually cause inconsistency problems rather than helping.",
+          "Good grant tools are more flexible for grant workflows than sheets. You gain clear milestone tracking and auto alerts. Teamwork across users gets much better. The only thing you lose is custom layouts. Those custom layouts usually cause more problems than they solve.",
       },
       {
         question: "How do I clean my spreadsheet data before migrating?",
         answer:
-          "Standardize column headers and remove duplicate entries first. Make sure every grant has a unique identifier. Use consistent status labels across all records. Flag records with missing dates or vague status values for manual review. Most teams find that 20 to 30 percent of their data needs cleanup before import.",
+          "First, make column headers the same and remove copies. Make sure every grant has a unique ID. Use the same status labels across all records. Flag any records with missing dates or vague status for review. Most teams find 20 to 30 percent of their data needs cleanup before import.",
       },
       {
         question:
           "What if my team resists switching from spreadsheets to grant management software?",
         answer:
-          "Resistance usually comes from fear of learning something new. Show the team exactly how much time they spend on spreadsheet tasks each week. Let resistant members try the new tool on one small workflow first. Once they see time savings firsthand, most resistance fades. Champion users can help bring others on board.",
+          "Push-back usually comes from fear of learning something new. Show the team how much time they spend on sheet tasks each week. Let those who resist try the new tool on one small task first. Once they see the time savings, most push-back fades. Early fans can help bring others on board.",
       },
       {
         question: "Can I keep using spreadsheets for some tasks after switching?",
         answer:
-          "Yes, but limit spreadsheet use to ad-hoc analysis only. Your grant management tool should be the single source of truth for all active grant data. Maintaining parallel systems creates confusion and defeats the purpose. Use spreadsheets for one-off reporting or brainstorming, not for tracking grants.",
+          "Yes, but only use sheets for quick, one-time work. Your grant tool should be the one source of truth for all active grants. Running two systems causes confusion and beats the purpose. Use sheets for one-off reports or brainstorms. Never use them to track grants.",
       },
     ],
     ctaText: "Start Your Migration to Karma",
@@ -472,12 +472,12 @@ export const guidesSolutions: SolutionPage[] = [
     problem: {
       heading: "Why Your Grant Management Software Implementation Guide Matters More Than the Tool",
       description:
-        "Software implementation failures rarely come from the tool itself. Teams fail because they skip workflow mapping. They try to launch everything at once. They underinvest in training. They change their process and tools at the same time. In grant management, the stakes run higher. A botched rollout disrupts active grantee relationships. It can also delay funding decisions during the transition.",
+        "Tool launches rarely fail because of the tool itself. Teams fail because they skip workflow mapping. They try to launch all at once. They do not invest enough in training. They change their process and tools at the same time. In grant work, the stakes are higher. A bad launch hurts active grantee ties. It can also delay funding choices during the switch.",
     },
     solution: {
       heading: "A Four-Phase Grant Management Software Implementation Guide",
       description:
-        "Phase 1 covers preparation in weeks one and two. Document your workflow, identify top pain points, and define success metrics. Phase 2 handles configuration in weeks two and three. Mirror your existing workflow first and resist optimizing yet. Phase 3 runs the pilot in weeks three through five. Test three to five active grants with your most adaptable team members. Phase 4 is rollout in weeks five through eight. Expand to the full team with structured training. Karma's straightforward setup means configuration takes days, not weeks.",
+        "Phase 1 is prep work in weeks one and two. Map your workflow, find top pain points, and set success goals. Phase 2 is setup in weeks two and three. Mirror your current workflow first. Do not try to improve it yet. Phase 3 is the pilot in weeks three through five. Test three to five grants with your most flexible team members. Phase 4 is rollout in weeks five through eight. Expand to the full team with hands-on training. Karma's simple setup takes days, not weeks.",
     },
     capabilities: [
       "Quick initial configuration matching existing workflows",
@@ -493,37 +493,37 @@ export const guidesSolutions: SolutionPage[] = [
       {
         question: "How long does a typical implementation take?",
         answer:
-          "Small to mid-size programs need four to eight weeks from kickoff to full adoption. Larger programs with complex workflows may take eight to twelve weeks. The most common mistake is rushing. Teams that skip preparation often restart from scratch. That makes the process take longer overall.",
+          "Small to mid-size programs need four to eight weeks to fully adopt. Larger programs may take eight to twelve weeks. The most common mistake is rushing. Teams that skip prep often restart from scratch. That makes the whole process take longer.",
       },
       {
         question: "Who should be on the implementation team?",
         answer:
-          "You need a project lead, usually the program manager. Add one person from each user group like reviewers and grantee-facing staff. Include someone with access to your existing data. An executive sponsor helps remove organizational blockers. This mix covers all perspectives during setup.",
+          "You need a project lead. This is usually the program manager. Add one person from each user group. Include reviewers and grantee-facing staff. Add someone with access to your current data. A senior sponsor helps remove blockers. This mix covers all views during setup.",
       },
       {
         question: "What are the most common implementation mistakes?",
         answer:
-          "The top three mistakes are redesigning your process during tool setup, launching to everyone without a pilot, and underestimating data cleanup. Change one thing at a time. Always test with a small group first. Your spreadsheet data is messier than you think. A fourth mistake is skipping success metrics, which makes it impossible to evaluate the result.",
+          "The top three mistakes are changing your process during setup, launching to all users without a pilot, and not cleaning data first. Change one thing at a time. Always test with a small group first. Your sheet data is messier than you think. A fourth mistake is skipping success metrics. Without them you cannot judge the result.",
       },
       {
         question: "How do I handle resistance from team members who prefer the old way?",
         answer:
-          "Acknowledge that the transition takes effort. Show how the new tool eliminates their most-hated tasks. Include resistant members in the pilot phase. Let them shape the configuration instead of having it imposed. Most resistance fades once people experience the time savings firsthand.",
+          "Agree that the switch takes effort. Show how the new tool removes their most-hated tasks. Include those who resist in the pilot phase. Let them help shape the setup instead of forcing it on them. Most push-back fades once people see the time savings for real.",
       },
       {
         question: "Should I implement all features at once or roll them out gradually?",
         answer:
-          "Always roll out gradually. Start with the core workflow: intake, basic tracking, and milestones. Once the team gets comfortable, add reporting and advanced features. This prevents overwhelm. It also lets you use feedback to shape how you configure advanced capabilities.",
+          "Always roll out step by step. Start with the core workflow: intake, basic tracking, and milestones. Once the team feels at ease, add reports and extra features. This stops them from feeling swamped. It also lets you use feedback to shape how you set up new features.",
       },
       {
         question: "How do I measure whether the implementation was successful?",
         answer:
-          "Define success metrics before you start. Common metrics include time spent on admin tasks, user adoption rate, and grantee satisfaction scores. Compare these against your baseline after one full grant cycle. If admin time dropped and adoption exceeds 80 percent, your implementation succeeded.",
+          "Set success metrics before you start. Common ones are time spent on admin tasks, user uptake rate, and grantee happiness scores. Compare these to your baseline after one full grant cycle. If admin time dropped and uptake tops 80 percent, your launch worked.",
       },
       {
         question: "What should I do if the pilot reveals major problems with the tool?",
         answer:
-          "First, separate tool problems from process problems. Many pilot issues come from poor configuration, not bad software. Adjust settings and retest for one more week. If core functionality truly does not work for your needs, cut your losses early. It costs less to switch tools during a pilot than after full rollout.",
+          "First, split tool problems from process problems. Many pilot issues come from poor setup, not bad software. Change settings and retest for one more week. If the core features truly do not work for you, cut your losses early. Switching tools during a pilot costs far less than after a full launch.",
       },
     ],
     ctaText: "Get Started with Karma",
@@ -585,12 +585,12 @@ export const guidesSolutions: SolutionPage[] = [
     problem: {
       heading: "Without Grant Management Best Practices, Good Intentions Fail",
       description:
-        "Many grant programs fund promising projects that never deliver results. The root causes follow predictable patterns. Vague deliverables make verification impossible. Infrequent check-ins let problems grow unchecked. Reactive management only catches failures after deadlines pass. Reporting focuses on activity rather than real impact. These are not failures of funding judgment. They are failures of management practice that the right approach can fix.",
+        "Many grant programs fund great projects that never deliver. The root causes follow clear patterns. Vague goals make it hard to check work. Rare check-ins let problems grow unseen. Reactive teams only catch failures after deadlines pass. Reports focus on actions, not real impact. These are not failures of funding judgment. They are failures of practice that the right approach can fix.",
     },
     solution: {
       heading: "Five Grant Management Best Practices That Improve Outcomes",
       description:
-        "First, define clear, verifiable milestones at the start of every grant. Second, set a regular check-in cadence and stick to it. Biweekly works for most programs. Third, track leading indicators like milestone progress rate and communication responsiveness. Fourth, make grantee updates public by default to create positive accountability. Fifth, build your reporting workflow alongside your grant process from day one. Karma supports these grant management best practices with milestone verification, public profiles, and built-in reporting.",
+        "First, set clear, provable milestones at the start of every grant. Second, set a regular check-in rhythm and stick to it. Every two weeks works for most programs. Third, track early signals like progress rate and reply speed. Fourth, make grantee updates public by default. This creates good pressure. Fifth, build your reporting workflow from day one. Karma supports these best practices with milestone proof, public profiles, and built-in reports.",
     },
     capabilities: [
       "Structured milestone definitions with acceptance criteria",
@@ -606,42 +606,42 @@ export const guidesSolutions: SolutionPage[] = [
       {
         question: "What is the single most impactful grant management practice?",
         answer:
-          "Breaking grants into verifiable milestones with clear acceptance criteria has the biggest impact. This one practice sets expectations upfront. It creates natural check-in points. It makes progress measurable. It gives you early warning when a project goes off track. Programs that adopt milestone-based management see higher completion rates consistently.",
+          "Breaking grants into provable milestones has the biggest impact. This one practice sets clear goals upfront. It creates natural check-in points. It makes progress easy to measure. It warns you early when a project goes off track. Programs that use milestone-based tracking see higher finish rates every time.",
       },
       {
         question: "How often should I check in with grantees?",
         answer:
-          "Biweekly check-ins work for most programs. Use weekly check-ins for short grants under three months or grants that fall behind. Monthly is the minimum but often too slow to catch problems. The format matters as much as the frequency. Use structured updates with specific questions about milestone progress.",
+          "Every two weeks works for most programs. Use weekly check-ins for short grants under three months. Also use weekly ones for grants that fall behind. Monthly is the minimum but often too slow to catch problems. The format matters as much as the timing. Use planned updates with clear questions about milestone progress.",
       },
       {
         question: "How do I handle underperforming grantees?",
         answer:
-          "Address issues early and directly. Reach out within 48 hours when a grantee misses a milestone or goes silent. Follow a clear escalation path: informal check-in, formal warning, revised timeline, then funding pause. Document everything along the way. Most underperformance stems from scope issues that you can resolve if caught early.",
+          "Address issues early and head on. Reach out within 48 hours when a grantee misses a goal or goes quiet. Follow a clear path: casual check-in, formal warning, new timeline, then funding pause. Write down each step along the way. Most poor results come from scope issues you can fix if caught early.",
       },
       {
         question: "How do I demonstrate program impact to stakeholders?",
         answer:
-          "Build impact measurement into your grant design from the start. Define outcome metrics at the program level before funding any grants. Track both outputs like deliverables completed and outcomes like adoption and community impact. Automated reporting tools compile this data continuously so you always have current numbers ready.",
+          "Build impact tracking into your grant design from the start. Set outcome metrics at the program level before funding any grants. Track both outputs like finished work and outcomes like user growth and community impact. Auto reporting tools compile this data nonstop. You always have fresh numbers ready.",
       },
       {
         question: "How do I scale grant management practices as my program grows?",
         answer:
-          "Standardize before you scale. Document your milestone templates, evaluation rubrics, and communication cadences. Automate repetitive tasks like status reminders and report compilation. Add reviewers incrementally and calibrate them against existing standards. Programs that standardize before scaling avoid quality drops during rapid growth.",
+          "Set clear standards before you scale. Write down your milestone templates, scoring rubrics, and check-in schedules. Automate repeat tasks like status reminders and report building. Add reviewers one by one and train them on current standards. Programs that set rules before scaling avoid quality drops during fast growth.",
       },
       {
         question: "What leading indicators predict grant success or failure?",
         answer:
-          "Three leading indicators matter most. Milestone completion velocity tells you if a project is on pace. Communication responsiveness shows engagement level. Early milestone quality predicts later deliverable quality. Track these weekly across your portfolio. Intervene when any indicator trends downward for two consecutive check-ins.",
+          "Three early signals matter most. Milestone finish speed tells you if a project is on pace. Reply speed shows how engaged the team is. Early milestone quality predicts later work quality. Track these weekly across your grants. Step in when any signal trends down for two check-ins in a row.",
       },
       {
         question: "How do I create a grant management playbook for my team?",
         answer:
-          "Start by documenting your current processes in simple step-by-step format. Include milestone templates, check-in questions, and escalation procedures. Add examples of good and poor milestone submissions. Keep the playbook under 10 pages. Review and update it after every funding round based on lessons learned.",
+          "Start by writing down your current steps in simple order. Include milestone templates, check-in questions, and next steps for issues. Add examples of good and bad milestone work. Keep the playbook under 10 pages. Review and update it after every funding round based on what you learned.",
       },
       {
         question: "How do grant management best practices differ for small vs. large programs?",
         answer:
-          "Small programs can rely on personal relationships and informal check-ins. Large programs need structured templates and automated reminders. The core practices remain the same: clear milestones, regular check-ins, and transparent reporting. The difference is in how much you automate. Programs with over 20 grants should automate every repeatable task.",
+          "Small programs can rely on personal ties and casual check-ins. Large programs need set templates and auto reminders. The core practices stay the same: clear milestones, regular check-ins, and open reports. The gap is in how much you automate. Programs with over 20 grants should automate every repeat task.",
       },
     ],
     ctaText: "Put Best Practices into Action with Karma",
@@ -703,12 +703,12 @@ export const guidesSolutions: SolutionPage[] = [
     problem: {
       heading: "Starting a Grant Program Setup Without a Framework Wastes Resources",
       description:
-        "New grant programs often launch before critical decisions get made. Teams jump straight to building application forms without defining evaluation criteria. They announce funding without establishing milestone requirements. They review applications without a rubric. The result is inconsistent decisions and grantee confusion. Operational problems compound with each funding round. Starting over damages credibility with applicants and wastes months of effort.",
+        "New grant programs often launch before key choices are made. Teams jump to building forms without setting scoring rules. They announce funding without milestone needs in place. They review apps without a rubric. The result is uneven choices and grantee confusion. Problems grow with each funding round. Starting over hurts trust with applicants and wastes months of work.",
     },
     solution: {
       heading: "A Structured Grant Program Setup Guide for First-Time Organizers",
       description:
-        "Begin with your objectives: what specific outcomes do you want to create? Work backward from there. Design evaluation criteria that match your goals. Build application forms that collect only what reviewers need. Define three to five milestones per grant that map to your objectives. Set up your reporting cadence before accepting the first application. Karma helps you operationalize this grant program setup with configurable forms, rubrics, and milestone templates you can reuse across rounds.",
+        "Start with your goals: what results do you want to create? Work backward from there. Design scoring rules that match your goals. Build forms that collect only what reviewers need. Set three to five milestones per grant tied to your goals. Set up your reporting schedule before taking the first app. Karma helps you run this setup with custom forms, rubrics, and milestone templates you can reuse across rounds.",
     },
     capabilities: [
       "Configurable application forms tailored to program objectives",
@@ -724,37 +724,37 @@ export const guidesSolutions: SolutionPage[] = [
       {
         question: "What budget do I need to start a grant program?",
         answer:
-          "There is no minimum budget to start. The structure should match the scale. Programs under $50,000 work with simple milestones and lightweight processes. Programs above $100,000 benefit from formal rubrics and dedicated tools. Operational overhead should never exceed 15 to 20 percent of total program funds.",
+          "There is no minimum budget to start. The setup should match the scale. Programs under $50,000 work with simple milestones and light steps. Programs above $100,000 gain from formal rubrics and real tools. Running costs should never top 15 to 20 percent of total program funds.",
       },
       {
         question: "How many grants should I fund in my first round?",
         answer:
-          "Start small with five to ten grants in your first round. This gives you enough volume to learn what works. You will discover gaps in your evaluation criteria and milestone definitions. These gaps are much easier to fix with a small cohort. Scale up in later rounds based on what you learn.",
+          "Start small with five to ten grants in your first round. This gives you enough volume to learn what works. You will find gaps in your scoring rules and milestone plans. These gaps are much easier to fix with a small group. Scale up in later rounds based on what you learn.",
       },
       {
         question: "How do I attract quality applicants?",
         answer:
-          "Clarity attracts strong applicants. Publish your evaluation criteria openly. Share examples of successful past grants if available. Describe your milestone and support process clearly. A transparent process helps applicants self-select. This improves application quality across the board.",
+          "Clarity draws strong applicants. Share your scoring rules openly. Show examples of past grant wins if you have them. Describe your milestone and support steps clearly. An open process helps people choose wisely before they apply. This lifts the quality of all your apps.",
       },
       {
         question: "What should my application form include?",
         answer:
-          "Include only questions that inform your evaluation criteria directly. Cover project description, objectives, team background, timeline with milestones, and budget breakdown. Avoid open-ended questions that generate long responses without evaluable content. Every field should map to a scoring criterion.",
+          "Only ask questions that feed your scoring rules. Cover the project plan, goals, team background, timeline with milestones, and budget. Avoid open-ended questions that create long answers with no clear way to score. Every field should map to a scoring point.",
       },
       {
         question: "How long should the application review period be?",
         answer:
-          "Two to four weeks works best. Shorter than two weeks does not give reviewers enough time. Longer than four weeks loses applicant momentum. Communicate the timeline clearly upfront and stick to it. If you need more time, tell applicants proactively rather than going silent.",
+          "Two to four weeks works best. Less than two weeks does not give reviewers enough time. More than four weeks makes applicants lose interest. Share the timeline clearly upfront and stick to it. If you need more time, tell applicants early. Do not go silent.",
       },
       {
         question: "How do I design a grant program setup that scales over multiple rounds?",
         answer:
-          "Build templates for everything from day one. Create reusable evaluation rubrics, milestone structures, and application forms. Document your process in a simple playbook. After each round, update your templates based on lessons learned. Programs that invest in templates early scale much faster than those that start from scratch each round.",
+          "Build templates for all parts from day one. Create reusable scoring rubrics, milestone plans, and app forms. Write your process in a simple playbook. After each round, update your templates based on what you learned. Programs that invest in templates early scale much faster than those that start fresh each round.",
       },
       {
         question: "Should I run my grant program alone or build a review committee?",
         answer:
-          "A review committee improves decision quality and reduces bias. Even two reviewers are better than one. Assign each application to at least two independent reviewers. Use blind scoring when possible. Calibrate reviewers on sample applications before live evaluation. A small committee adds little overhead but significantly strengthens your process.",
+          "A review group improves choices and cuts bias. Even two reviewers are better than one. Assign each app to at least two reviewers who score alone. Use blind scoring when you can. Train reviewers on sample apps before live rounds. A small group adds little overhead but greatly strengthens your process.",
       },
     ],
     ctaText: "Launch Your Grant Program on Karma",
@@ -816,12 +816,12 @@ export const guidesSolutions: SolutionPage[] = [
     problem: {
       heading: "Weak Grant Evaluation Criteria Lead to Inconsistent Funding Decisions",
       description:
-        "When evaluation criteria stay vague, every reviewer interprets them differently. One reviewer scores an 8 out of 10 while another gives a 5 for the same proposal. This creates inconsistent decisions that you cannot defend to applicants or auditors. Vague criteria also introduce unconscious bias. Without specifics, reviewers fall back on pattern matching. They favor applicants who look like past winners instead of evaluating on merit.",
+        "When scoring rules stay vague, every reviewer reads them in their own way. One reviewer scores an 8 out of 10. Another gives a 5 for the same proposal. This creates uneven choices you cannot defend. Vague rules also bring in hidden bias. Without clear details, reviewers rely on gut feeling. They favor people who look like past winners instead of judging on merit.",
     },
     solution: {
       heading: "Build a Grant Evaluation Criteria Rubric That Drives Consistency",
       description:
-        "Start with your program objectives and derive four to six evaluation criteria from them. For each criterion, define what a score of 1, 3, and 5 looks like with concrete examples. Weight criteria based on importance to your goals. Run a calibration session where all reviewers score the same sample applications. This alignment step is the single most impactful action for evaluation quality. Karma supports configurable rubrics with weighted criteria so you can implement structured grant evaluation criteria easily.",
+        "Start with your program goals. Pull four to six scoring rules from them. For each rule, describe what a score of 1, 3, and 5 looks like. Use real examples. Weight each rule based on how much it matters to your goals. Run a practice round where all reviewers score the same sample apps. This step has the biggest impact on scoring quality. Karma supports custom rubrics with weighted rules so you can set up clear grant scoring fast.",
     },
     capabilities: [
       "Configurable scoring rubrics with custom criteria and weights",
@@ -837,37 +837,37 @@ export const guidesSolutions: SolutionPage[] = [
       {
         question: "How many evaluation criteria should I use?",
         answer:
-          "Four to six criteria is the sweet spot. Fewer than four means criteria are too broad and open to interpretation. More than six creates evaluation fatigue. Each criterion should map to a program objective. Each one should also be scorable on its own without overlap.",
+          "Four to six rules is the sweet spot. Fewer than four means rules are too broad and open to guesswork. More than six creates scoring fatigue. Each rule should map to a program goal. Each one should also be easy to score on its own without overlap.",
       },
       {
         question: "How do I reduce bias in grant evaluation?",
         answer:
-          "Three techniques make the biggest difference. Use specific scoring rubrics with concrete anchors. Have multiple reviewers score independently before discussing. Calibrate reviewers on sample applications before live evaluation. Some programs also blind reviewer identities from each other to prevent anchoring.",
+          "Three methods make the biggest impact. Use clear scoring rubrics with real examples. Have many reviewers score alone before they discuss. Train reviewers on sample apps before live rounds. Some programs also hide reviewer names from each other to stop copy-cat scoring.",
       },
       {
         question: "Should evaluation criteria be public?",
         answer:
-          "Yes, publish your criteria openly. This improves application quality because applicants address your priorities directly. It makes rejection decisions easier to explain. It also builds trust in your process. The only exception is screening criteria designed to detect low-effort applications.",
+          "Yes, share your rules openly. This lifts app quality because people speak to your needs. It makes it easier to explain why you said no. It also builds trust in your process. The only exception is screening rules used to catch low-effort apps.",
       },
       {
         question: "How do I handle reviewer disagreements?",
         answer:
-          "Disagreements are normal and often valuable. When reviewers diverge by more than two points, have them discuss the specific criteria. The disagreement often reveals that a criterion needs clearer wording. For final decisions, use the median score rather than the mean. This reduces the impact of outlier scores.",
+          "Gaps in scores are normal and often useful. When reviewers differ by more than two points, have them talk about the rule. The gap often shows that a rule needs clearer wording. For final choices, use the middle score, not the average. This lowers the impact of odd scores.",
       },
       {
         question: "How do I update evaluation criteria between funding rounds?",
         answer:
-          "Review which criteria caused the most disagreement after each round. Check which ones predicted grantee success best. Refine ambiguous criteria with clearer anchors. Only add new criteria if your objectives changed. Document all changes so returning applicants understand the updates.",
+          "Review which rules caused the most debate after each round. Check which ones best predicted grantee success. Fix unclear rules with better examples. Only add new rules if your goals changed. Write down all changes so returning applicants know what shifted.",
       },
       {
         question: "How do I train new reviewers on my grant evaluation criteria?",
         answer:
-          "Start with a walkthrough of each criterion and its score anchors. Then run a calibration exercise on two or three past applications. Compare the new reviewer's scores against established benchmarks. Discuss any differences to align interpretation. Most new reviewers reach consistency after one calibration session.",
+          "Start with a walkthrough of each rule and its score examples. Then run a practice round on two or three past apps. Compare the new reviewer's scores against the set benchmarks. Talk through any gaps to align their reading. Most new reviewers reach steady scoring after one practice session.",
       },
       {
         question: "What is the best way to weight grant evaluation criteria?",
         answer:
-          "Weight based on your program objectives. If ecosystem adoption matters most, weight it at 25 to 30 percent. Technical feasibility might get 20 percent. Weights should sum to 100 percent. Share weights with both reviewers and applicants. Revisit weights annually or when program goals shift.",
+          "Weight based on your program goals. If user growth matters most, weight it at 25 to 30 percent. Technical fit might get 20 percent. Weights should add up to 100 percent. Share weights with both reviewers and applicants. Review weights each year or when goals shift.",
       },
     ],
     ctaText: "Build Better Evaluation with Karma",
@@ -929,12 +929,12 @@ export const guidesSolutions: SolutionPage[] = [
     problem: {
       heading: "Ignoring Grant Milestone Best Practices Makes Accountability Impossible",
       description:
-        "The most common mistake is writing milestones that describe activities instead of outcomes. 'Research competitors' is an activity you cannot verify. Program managers cannot objectively assess vague completions. Grantees game the system with minimal deliverables. The entire accountability structure collapses when milestones lack specifics. Milestone disputes then consume time and damage relationships on both sides.",
+        "The most common mistake is writing milestones that describe tasks, not results. 'Research rivals' is a task you cannot check. Program managers cannot fairly judge vague work. Grantees game the system with bare minimum output. The whole system falls apart when milestones lack detail. Disputes over milestones then eat up time and hurt trust on both sides.",
     },
     solution: {
       heading: "Grant Milestone Best Practices Using the PROVE Framework",
       description:
-        "Use the PROVE framework for each milestone. Purpose: what does this milestone achieve? Result: what specific deliverable gets produced? Observable: what evidence will the grantee submit? Verifiable: how will a reviewer confirm completion? Estimated: what is the target date? Structure milestones so each one builds on the previous. Karma's milestone tracking system follows these grant milestone best practices with proof-of-completion submissions and on-chain attestations.",
+        "Use the PROVE framework for each milestone. Purpose: what does this milestone do? Result: what output gets made? Observable: what proof will the grantee send? Verifiable: how will a reviewer check it? Estimated: what is the target date? Build each milestone on the one before it. Karma's milestone tracking follows these best practices with proof-of-work uploads and on-chain records.",
     },
     capabilities: [
       "Structured milestone definitions with acceptance criteria fields",
@@ -950,38 +950,38 @@ export const guidesSolutions: SolutionPage[] = [
       {
         question: "How many milestones should each grant have?",
         answer:
-          "Three to five milestones works for most grants. Fewer than three provides too few checkpoints. Issues only surface at the midpoint or end. More than five creates excessive overhead. For grants lasting six months or longer, aim for one milestone every four to six weeks. Adjust based on complexity, not a fixed formula.",
+          "Three to five milestones works for most grants. Fewer than three gives too few checkpoints. Issues only show up at the midpoint or end. More than five creates too much overhead. For grants lasting six months or more, aim for one milestone every four to six weeks. Adjust based on how complex the work is.",
       },
       {
         question: "Should funding be tied to milestone completion?",
         answer:
-          "Yes, for most programs. Milestone-based disbursement is the most effective accountability tool. A common structure puts 20 to 30 percent upfront for startup costs. The rest goes out as milestones get completed. This aligns incentives and gives your program leverage if a project stalls.",
+          "Yes, for most programs. Paying per milestone is the best way to drive results. A common setup puts 20 to 30 percent upfront for startup costs. The rest goes out as milestones get done. This lines up goals and gives your program power if a project stalls.",
       },
       {
         question: "How do I handle milestone revisions after a grant is approved?",
         answer:
-          "Build a lightweight change process. Grantees request modifications with justification. The program manager approves or negotiates the change. Overall grant objectives must stay the same even if individual milestones shift. Document all changes. If a grantee revises every milestone, that signals planning problems.",
+          "Build a simple change process. Grantees ask for changes with a clear reason. The program manager approves or works out a new plan. Overall grant goals must stay the same even if single milestones shift. Write down all changes. If a grantee changes every milestone, that points to planning problems.",
       },
       {
         question: "What evidence should grantees provide for milestone completion?",
         answer:
-          "Define evidence requirements when you create the milestone, not after. Software projects might require a deployed feature with a demo video. Research projects might need a published paper or dataset. Evidence should be independently verifiable by a reviewer. Ambiguous evidence leads to disputes every time.",
+          "Set proof needs when you create the milestone, not after. Software projects might need a live feature with a demo video. Research projects might need a published paper or data set. Proof should be something a reviewer can check on their own. Vague proof leads to disputes every time.",
       },
       {
         question: "How do I track milestone health across my entire program?",
         answer:
-          "Track two metrics at the program level. Milestone completion rate shows the percentage completed on time. Milestone velocity compares actual time to estimated time. A completion rate below 60 percent signals systemic issues. Rising velocity numbers suggest grantees face unexpected complexity.",
+          "Track two metrics at the program level. Finish rate shows the percent done on time. Speed compares actual time to planned time. A finish rate below 60 percent signals big problems. Rising speed numbers suggest grantees face surprise hurdles.",
       },
       {
         question: "What makes a good milestone different from a bad one?",
         answer:
-          "A good milestone describes a verifiable outcome. 'Deploy a working prototype with documentation' is specific and checkable. A bad milestone describes an activity. 'Work on development' tells you nothing about what to verify. Always ask: can a reviewer confirm this is done without asking the grantee to explain?",
+          "A good milestone describes a result you can check. 'Deploy a working demo with docs' is clear and testable. A bad milestone describes a task. 'Work on building' tells you nothing to verify. Always ask: can a reviewer confirm this is done without asking the grantee to explain?",
       },
       {
         question:
           "How do grant milestone best practices differ for technical vs. non-technical projects?",
         answer:
-          "Technical projects can use code commits, deployments, and test results as evidence. Non-technical projects need different proof like published reports, event attendance data, or survey results. The PROVE framework works for both types. The only difference is what counts as observable evidence. Define this clearly at grant approval time.",
+          "Tech projects can use code commits, deploys, and test results as proof. Non-tech projects need different proof. Think published reports, event head counts, or survey results. The PROVE framework works for both types. The only gap is what counts as visible proof. Define this clearly when you approve the grant.",
       },
     ],
     ctaText: "Track Milestones Effectively with Karma",
@@ -1043,12 +1043,12 @@ export const guidesSolutions: SolutionPage[] = [
     problem: {
       heading: "Poor Grant Reporting Best Practices Turn Reporting into a Painful Scramble",
       description:
-        "Most grant programs treat reporting as a periodic burden instead of a continuous process. When a board meeting or funder report comes due, the team scrambles to collect data from scattered sources. They manually compile metrics and craft a narrative under time pressure. Reports end up as data dumps without a clear story. Or they become polished narratives that lack supporting evidence. Neither approach builds stakeholder confidence.",
+        "Most grant programs treat reports as a chore they face now and then. When a board meeting or funder report comes due, the team races to pull data from many places. They piece together numbers and write a story under time pressure. Reports end up as raw data dumps with no clear story. Or they become polished tales that lack real proof. Neither builds backer trust.",
     },
     solution: {
       heading: "Grant Reporting Best Practices That Build Reports Automatically",
       description:
-        "Shift from periodic report-building to continuous data collection. Define your program-level metrics before funding your first grant. Design milestones and check-ins to capture the data those metrics need. Use structured grantee updates instead of freeform reports for consistent, aggregatable data. Automate compilation by pulling from your tracking system. Create templates for each audience: one-page summaries for leadership and detailed metrics for internal review. Karma's reporting tools compile data from milestone completions automatically following these grant reporting best practices.",
+        "Stop building reports from scratch each time. Collect data as you go instead. Set your program-level metrics before funding your first grant. Design milestones and check-ins to capture the data those metrics need. Use planned grantee updates, not free-form reports. This keeps data clean and easy to combine. Pull reports from your tracking system with one click. Create templates for each audience. Make one-page summaries for leaders and full metrics for your team. Karma's reporting tools pull data from milestone updates on their own.",
     },
     capabilities: [
       "Continuous data collection through structured milestone updates",
@@ -1064,42 +1064,42 @@ export const guidesSolutions: SolutionPage[] = [
       {
         question: "What metrics should I include in grant program reports?",
         answer:
-          "Cover three layers. Output metrics include grants funded, milestones completed, and funds disbursed. Outcome metrics cover what grantees achieved and community impact. Process metrics track application volume, review time, and completion rates. Stakeholders care most about outcomes. Lead with impact and support it with data.",
+          "Cover three layers. Output metrics include grants funded, milestones done, and funds paid out. Outcome metrics cover what grantees achieved and community impact. Process metrics track app volume, review time, and finish rates. Backers care most about outcomes. Lead with impact and back it up with data.",
       },
       {
         question: "How often should I report on my grant program?",
         answer:
-          "Use dashboards for continuous internal reporting. Produce formal stakeholder reports quarterly to match most board schedules. Publish public impact reports annually or after each funding round. The key is having your data ready at all times. Generating any report should take hours, not weeks.",
+          "Use live dashboards for daily internal reports. Make formal backer reports each quarter to match most board schedules. Share public impact reports once a year or after each funding round. The key is having your data ready at all times. Building any report should take hours, not weeks.",
       },
       {
         question: "How do I make reports compelling for non-technical stakeholders?",
         answer:
-          "Lead with outcomes and stories, not process details. Start each report with two or three grantee success stories. Follow with high-level metrics that show trends over time. Put detailed data in appendices. Every metric needs context: not just 'we funded 25 grants' but also the completion rate and comparison to last round.",
+          "Lead with results and stories, not process details. Start each report with two or three grantee success stories. Follow with top-level metrics that show trends over time. Put detailed data at the end. Every metric needs context. Do not just say 'we funded 25 grants.' Also show the finish rate and how it compares to last round.",
       },
       {
         question: "How do I collect consistent data from grantees?",
         answer:
-          "Use structured update templates with specific questions. Define what each milestone submission must include. Keep submissions under 15 minutes or grantees will delay them. Review submissions promptly and request clarification right away. Karma's milestone workflow standardizes this process so every update follows the same format.",
+          "Use set update templates with clear questions. Define what each milestone upload must include. Keep uploads under 15 minutes or grantees will put them off. Review uploads fast and ask for details right away. Karma's milestone workflow makes this standard so every update follows the same format.",
       },
       {
         question: "How do I measure long-term impact beyond the grant period?",
         answer:
-          "Build post-grant check-ins into your program design. Send brief surveys at three, six, and twelve months after completion. Track whether deliverables still get maintained or adopted. For ecosystem grants, measure downstream activity like forks, integrations, or user growth. Even a 50 percent response rate provides valuable data.",
+          "Build post-grant check-ins into your program plan. Send short surveys at three, six, and twelve months after the grant ends. Track whether work still gets kept up or used. For system grants, measure follow-on work like forks, plug-ins, or user growth. Even a 50 percent reply rate gives useful data.",
       },
       {
         question: "How do I create a grant reporting template that works for every audience?",
         answer:
-          "Build a base data layer that feeds multiple templates. Create a one-page executive summary for leadership. Add a detailed metrics report for internal program review. Design a public impact summary for transparency. Each template pulls from the same data. This prevents duplicate work and keeps numbers consistent across reports.",
+          "Build one base data layer that feeds many templates. Create a one-page summary for leaders. Add a full metrics report for your team's review. Design a public impact summary for openness. Each template pulls from the same data. This stops double work and keeps numbers the same across reports.",
       },
       {
         question: "What tools help automate grant reporting?",
         answer:
-          "Look for grant management platforms with built-in reporting features. The best tools compile data from milestone completions and grantee updates automatically. Dashboards should update in real time. Export options should support common formats like PDF and spreadsheet. Karma provides these capabilities out of the box.",
+          "Look for grant platforms with built-in reports. The best tools pull data from milestone updates on their own. Dashboards should update in real time. Export options should support common formats like PDF and sheets. Karma offers these features out of the box.",
       },
       {
         question: "How do I handle incomplete data in grant reports?",
         answer:
-          "Acknowledge gaps honestly rather than hiding them. Note which grantees have not submitted updates. Show completion rates based on available data. Flag metrics where the sample size is too small to draw conclusions. Stakeholders trust transparent reporting more than reports that appear perfect but hide missing information.",
+          "Be honest about gaps instead of hiding them. Note which grantees have not sent updates. Show finish rates based on the data you have. Flag metrics where the sample is too small to draw real lessons. Backers trust open reports more than ones that look perfect but hide missing info.",
       },
     ],
     ctaText: "Streamline Your Reporting with Karma",
