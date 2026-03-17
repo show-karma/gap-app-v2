@@ -1,6 +1,5 @@
 "use client";
 
-import { Cog6ToothIcon } from "@heroicons/react/24/outline";
 import { memo } from "react";
 import { KycStatusBadge } from "@/components/KycStatusIcon";
 import { Spinner } from "@/components/Utilities/Spinner";
@@ -54,7 +53,6 @@ interface ControlCenterTableRowProps {
   kycStatus: KycStatusResponse | null;
   onSelectGrant?: (uid: string, checked: boolean) => void;
   onRowClick: (item: TableRow, e: React.MouseEvent) => void;
-  onOpenConfigModal?: (item: TableRow) => void;
   readOnly?: boolean;
 }
 
@@ -74,7 +72,6 @@ const ControlCenterTableRow = memo(function ControlCenterTableRow({
   kycStatus,
   onSelectGrant,
   onRowClick,
-  onOpenConfigModal,
   readOnly,
 }: ControlCenterTableRowProps) {
   return (
@@ -178,23 +175,6 @@ const ControlCenterTableRow = memo(function ControlCenterTableRow({
       <td className="px-4 py-3 text-right">
         <TokenBreakdown totalsByToken={totalsByToken} size="sm" />
       </td>
-
-      {/* Actions */}
-      {!readOnly && (
-        <td className="px-4 py-3 text-center">
-          <button
-            onClick={() => onOpenConfigModal?.(item)}
-            className={cn(
-              "p-2 rounded-md transition-colors",
-              "text-gray-500 hover:text-gray-700 hover:bg-gray-100",
-              "dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-zinc-800"
-            )}
-            title="Configure payout settings"
-          >
-            <Cog6ToothIcon className="h-5 w-5" />
-          </button>
-        </td>
-      )}
     </tr>
   );
 });
@@ -220,7 +200,6 @@ export interface ControlCenterTableProps {
   paidMilestoneCountMap: Record<string, number>;
   invoiceRequiredMap: Record<string, boolean>;
   getCheckboxDisabledState?: (item: TableRow) => { disabled: boolean; reason: string | null };
-  onOpenConfigModal?: (item: TableRow) => void;
   hasActiveFilters: boolean;
   onClearFilters: () => void;
   readOnly?: boolean;
@@ -250,7 +229,6 @@ export function ControlCenterTable({
   paidMilestoneCountMap,
   invoiceRequiredMap,
   getCheckboxDisabledState,
-  onOpenConfigModal,
   hasActiveFilters,
   onClearFilters,
   readOnly,
@@ -259,7 +237,7 @@ export function ControlCenterTable({
   itemsPerPage,
   totalItems,
 }: ControlCenterTableProps) {
-  const columnCount = 8 + (isKycEnabled ? 1 : 0) - (readOnly ? 2 : 0);
+  const columnCount = 7 + (isKycEnabled ? 1 : 0) - (readOnly ? 1 : 0);
 
   return (
     <div className="px-4">
@@ -338,12 +316,6 @@ export function ControlCenterTable({
                   <SortIcon column="disbursed_amount" sortBy={sortBy} sortOrder={sortOrder} />
                 </div>
               </th>
-              {/* Actions */}
-              {!readOnly && (
-                <th className="h-11 px-4 text-center text-xs font-semibold text-gray-600 dark:text-zinc-400 uppercase tracking-wider w-20">
-                  Actions
-                </th>
-              )}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-zinc-800 bg-white dark:bg-zinc-950">
@@ -372,7 +344,6 @@ export function ControlCenterTable({
                   kycStatus={kycStatuses.get(item.projectUid) ?? null}
                   onSelectGrant={onSelectGrant}
                   onRowClick={onRowClick}
-                  onOpenConfigModal={onOpenConfigModal}
                   readOnly={readOnly}
                 />
               );

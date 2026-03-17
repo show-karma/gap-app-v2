@@ -13,8 +13,6 @@ import {
   type GrantDisbursementInfo,
   getPaidAllocationIds,
   type PayoutConfigItem,
-  PayoutConfigurationModal,
-  PayoutHistoryDrawer,
   useSavePayoutConfig,
 } from "@/src/features/payout-disbursement";
 import { MESSAGES } from "@/utilities/messages";
@@ -24,7 +22,7 @@ import { BulkPayoutImportPanel } from "./BulkPayoutImportPanel";
 import type { TableRow } from "./ControlCenterTable";
 import { ControlCenterTable } from "./ControlCenterTable";
 import { FilterToolbar } from "./FilterToolbar";
-import { ProjectDetailsModal } from "./ProjectDetailsModal";
+import { ProjectDetailsSidebar } from "./ProjectDetailsSidebar";
 import { useControlCenterData } from "./useControlCenterData";
 
 // ─── Main component ──────────────────────────────────────────────────────────
@@ -95,23 +93,7 @@ export function ControlCenterPage() {
   const [isDisbursementModalOpen, setIsDisbursementModalOpen] = useState(false);
   const [grantsForDisbursement, setGrantsForDisbursement] = useState<GrantDisbursementInfo[]>([]);
 
-  const [isHistoryDrawerOpen, setIsHistoryDrawerOpen] = useState(false);
-  const [historyGrant, setHistoryGrant] = useState<{
-    grantUID: string;
-    grantName: string;
-    projectName: string;
-    approvedAmount?: string;
-  } | null>(null);
-
-  const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
-  const [configGrant, setConfigGrant] = useState<{
-    grantUID: string;
-    projectUID: string;
-    grantName: string;
-    projectName: string;
-  } | null>(null);
-
-  // Details modal state
+  // Details sidebar state
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [detailsModalGrant, setDetailsModalGrant] = useState<TableRow | null>(null);
 
@@ -134,7 +116,6 @@ export function ControlCenterPage() {
   const previousFilterSignature = useRef(filterSignature);
 
   // Safety net: whenever any filter changes, force page back to 1.
-  // This covers cases where a child component updates query params directly.
   useEffect(() => {
     if (previousFilterSignature.current === filterSignature) {
       return;
@@ -305,36 +286,6 @@ export function ControlCenterPage() {
     setIsDisbursementModalOpen(true);
   };
 
-  const handleOpenHistoryDrawer = (item: TableRow) => {
-    setHistoryGrant({
-      grantUID: item.grantUid,
-      grantName: item.grantName,
-      projectName: item.projectName,
-      approvedAmount: item.currentAmount || "0",
-    });
-    setIsHistoryDrawerOpen(true);
-  };
-
-  const handleOpenConfigModal = (item: TableRow) => {
-    setConfigGrant({
-      grantUID: item.grantUid,
-      projectUID: item.projectUid,
-      grantName: item.grantName,
-      projectName: item.projectName,
-    });
-    setIsConfigModalOpen(true);
-  };
-
-  const handleConfigModalClose = () => {
-    setIsConfigModalOpen(false);
-    setConfigGrant(null);
-  };
-
-  const handleConfigSuccess = () => {
-    handleConfigModalClose();
-    refreshPayouts();
-  };
-
   const handleDisbursementModalClose = () => {
     setIsDisbursementModalOpen(false);
     setGrantsForDisbursement([]);
@@ -345,7 +296,7 @@ export function ControlCenterPage() {
     refreshPayouts();
   };
 
-  // ─── Row click → open details modal ─────────────────────────────────────
+  // ─── Row click → open details sidebar ─────────────────────────────────────
 
   const handleRowClick = (item: TableRow, e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
@@ -401,7 +352,7 @@ export function ControlCenterPage() {
   // ─── Loading state ───────────────────────────────────────────────────────
 
   if (!authReady || isLoadingCommunity || !community || loadingAdmin || isLoadingPayouts) {
-    const skeletonCols = 9;
+    const skeletonCols = 8;
     const skeletonColumnKeys = Array.from(
       { length: skeletonCols },
       (_, colNumber) => `skeleton-col-${colNumber + 1}`
@@ -569,7 +520,6 @@ export function ControlCenterPage() {
         paidMilestoneCountMap={paidMilestoneCountMap}
         invoiceRequiredMap={invoiceRequiredMap}
         getCheckboxDisabledState={getCheckboxDisabledState}
-        onOpenConfigModal={handleOpenConfigModal}
         hasActiveFilters={hasActiveFilters}
         onClearFilters={handleClearFilters}
         currentPage={currentPage}
@@ -587,37 +537,8 @@ export function ControlCenterPage() {
         onSuccess={handleDisbursementSuccess}
       />
 
-      {/* Payout History Drawer */}
-      {historyGrant && (
-        <PayoutHistoryDrawer
-          isOpen={isHistoryDrawerOpen}
-          onClose={() => {
-            setIsHistoryDrawerOpen(false);
-            setHistoryGrant(null);
-          }}
-          grantUID={historyGrant.grantUID}
-          grantName={historyGrant.grantName}
-          projectName={historyGrant.projectName}
-          approvedAmount={historyGrant.approvedAmount}
-        />
-      )}
-
-      {/* Payout Configuration Modal */}
-      {configGrant && (
-        <PayoutConfigurationModal
-          isOpen={isConfigModalOpen}
-          onClose={handleConfigModalClose}
-          grantUID={configGrant.grantUID}
-          projectUID={configGrant.projectUID}
-          communityUID={community?.uid || ""}
-          grantName={configGrant.grantName}
-          projectName={configGrant.projectName}
-          onSuccess={handleConfigSuccess}
-        />
-      )}
-
-      {/* Project Details Modal */}
-      <ProjectDetailsModal
+      {/* Project Details Sidebar */}
+      <ProjectDetailsSidebar
         grant={detailsModalGrant}
         open={detailsModalOpen}
         onOpenChange={setDetailsModalOpen}
@@ -638,16 +559,7 @@ export function ControlCenterPage() {
             ? (payoutConfigMap[detailsModalGrant.grantUid]?.milestoneAllocations ?? null)
             : null
         }
-        onOpenConfigModal={() => {
-          if (!detailsModalGrant) return;
-          setDetailsModalOpen(false);
-          handleOpenConfigModal(detailsModalGrant);
-        }}
-        onOpenHistoryDrawer={() => {
-          if (!detailsModalGrant) return;
-          setDetailsModalOpen(false);
-          handleOpenHistoryDrawer(detailsModalGrant);
-        }}
+        onConfigSuccess={refreshPayouts}
         onCreateDisbursement={() => {
           if (!detailsModalGrant) return;
           setDetailsModalOpen(false);

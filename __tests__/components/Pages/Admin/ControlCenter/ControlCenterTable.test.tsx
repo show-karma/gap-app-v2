@@ -102,7 +102,6 @@ function makeDefaultProps(
     paidMilestoneCountMap: {},
     invoiceRequiredMap: {},
     getCheckboxDisabledState: () => ({ disabled: false, reason: null }),
-    onOpenConfigModal: jest.fn(),
     hasActiveFilters: false,
     onClearFilters: jest.fn(),
     readOnly: false,
@@ -144,12 +143,6 @@ describe("ControlCenterTable", () => {
       const checkboxes = screen.getAllByRole("checkbox");
       // Header checkbox + one row checkbox
       expect(checkboxes.length).toBeGreaterThanOrEqual(2);
-    });
-
-    it("renders Actions column header when readOnly is false", () => {
-      render(<ControlCenterTable {...makeDefaultProps({ readOnly: false })} />);
-
-      expect(screen.getByText("Actions")).toBeInTheDocument();
     });
   });
 
