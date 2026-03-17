@@ -58,6 +58,7 @@ import { useEndorsementStore } from "@/store/modals/endorsement";
 import { useIntroModalStore } from "@/store/modals/intro";
 import { useProgressModalStore } from "@/store/modals/progress";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
+import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { type ContentTab, ContentTabs } from "../MainContent/ContentTabs";
 import { MobileSupportContent } from "../Mobile/MobileSupportContent";
@@ -124,7 +125,9 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
   }, [inviteCode, hasOpenedInviteModal, openContributorProfileModal]);
 
   // Use unified hook for all project profile data
-  const { project, isLoading, isError, isVerified, stats } = useProjectProfile(projectId as string);
+  const { project, isProjectLoading, isLoading, isError, isVerified, stats } = useProjectProfile(
+    projectId as string
+  );
 
   // Initialize project permissions in store (for authorization checks in ContentTabs)
   useProjectPermissions();
@@ -196,7 +199,7 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
               Go to Homepage
             </Link>
             <Link
-              href="/projects"
+              href={PAGES.PROJECTS_EXPLORER}
               className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-neutral-300 bg-gray-100 dark:bg-neutral-800 hover:bg-gray-200 dark:hover:bg-neutral-700 rounded-lg transition-colors"
             >
               Browse Projects
@@ -208,7 +211,7 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
   }
 
   // Loading state — matches ProjectProfileLayoutSkeleton structure
-  if (isLoading || !project) {
+  if (isProjectLoading || !project) {
     return (
       <div className="flex flex-col gap-6 w-full" data-testid="layout-loading">
         {/* Mobile: Profile card skeleton */}

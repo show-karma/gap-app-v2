@@ -309,7 +309,9 @@ export const KarmaProfileLinkInput: React.FC<KarmaProfileLinkInputProps> = ({
                           ? `Type at least ${SEARCH_CONSTANTS.MIN_QUERY_LENGTH} characters to search`
                           : "No projects found"}
                       </div>
-                      {debouncedQuery.length >= SEARCH_CONSTANTS.MIN_QUERY_LENGTH && <AddProjectLink />}
+                      {debouncedQuery.length >= SEARCH_CONSTANTS.MIN_QUERY_LENGTH && (
+                        <AddProjectLink />
+                      )}
                     </div>
                   ) : (
                     <div>
