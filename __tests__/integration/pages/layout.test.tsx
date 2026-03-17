@@ -7,12 +7,32 @@ jest.mock("@next/third-parties/google", () => ({
 }));
 
 jest.mock("@/src/components/footer/footer", () => ({
+  __esModule: true,
   Footer: () => <footer data-testid="footer" />,
 }));
 
 jest.mock("@/src/components/footer/whitelabel-footer", () => ({
+  __esModule: true,
   WhitelabelFooter: () => <footer data-testid="whitelabel-footer" />,
 }));
+
+// Mock next/dynamic to render components synchronously in tests
+jest.mock("next/dynamic", () => {
+  return (loader: () => Promise<any>, _opts?: any) => {
+    let Component: any = null;
+    const promise = loader();
+    promise.then((mod: any) => {
+      Component = mod.default || mod;
+    });
+    // Return a wrapper that renders the resolved component
+    const DynamicComponent = (props: any) => {
+      if (!Component) return null;
+      return <Component {...props} />;
+    };
+    DynamicComponent.displayName = "DynamicComponent";
+    return DynamicComponent;
+  };
+});
 
 jest.mock("@/src/components/navbar/navbar", () => ({
   Navbar: () => <header data-testid="header" />,

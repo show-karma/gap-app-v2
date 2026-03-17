@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import dynamic from "next/dynamic";
 import { defaultMetadata } from "@/utilities/meta";
 import "@/styles/globals.css";
 import "@/styles/index.scss";
@@ -13,13 +14,21 @@ import { OrganizationJsonLd } from "@/components/Seo/OrganizationJsonLd";
 import { PermissionsProvider } from "@/components/Utilities/PermissionsProvider";
 import PrivyProviderWrapper from "@/components/Utilities/PrivyProviderWrapper";
 import { TenantStoreInitializer } from "@/components/Utilities/TenantStoreInitializer";
-import { Footer } from "@/src/components/footer/footer";
-import { WhitelabelFooter } from "@/src/components/footer/whitelabel-footer";
 import { Navbar } from "@/src/components/navbar/navbar";
 import { WhitelabelNavbar } from "@/src/components/navbar/whitelabel-navbar";
 import { toHslToken } from "@/utilities/whitelabel-config";
 import { WhitelabelProvider } from "@/utilities/whitelabel-context";
 import { getWhitelabelContext } from "@/utilities/whitelabel-server";
+
+const Footer = dynamic(() =>
+  import("@/src/components/footer/footer").then((m) => ({ default: m.Footer }))
+);
+
+const WhitelabelFooter = dynamic(() =>
+  import("@/src/components/footer/whitelabel-footer").then((m) => ({
+    default: m.WhitelabelFooter,
+  }))
+);
 
 export async function generateMetadata(): Promise<Metadata> {
   const { isWhitelabel, config, tenantConfig } = await getWhitelabelContext();

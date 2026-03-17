@@ -1,22 +1,35 @@
 "use client";
 
 import { DollarSign, HandCoinsIcon } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useState } from "react";
 import { useAccount } from "wagmi";
-import { SingleProjectDonateModal } from "@/components/Donation/SingleProject/SingleProjectDonateModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
 import { Role } from "@/src/core/rbac/types";
-import {
-  hasConfiguredPayoutAddresses,
-  SetChainPayoutAddressModal,
-} from "@/src/features/chain-payout-address";
+import { hasConfiguredPayoutAddresses } from "@/src/features/chain-payout-address";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import type { Project } from "@/types/v2/project";
 import { cn } from "@/utilities/tailwind";
+
+const SingleProjectDonateModal = dynamic(
+  () =>
+    import("@/components/Donation/SingleProject/SingleProjectDonateModal").then((m) => ({
+      default: m.SingleProjectDonateModal,
+    })),
+  { ssr: false }
+);
+
+const SetChainPayoutAddressModal = dynamic(
+  () =>
+    import("@/src/features/chain-payout-address").then((m) => ({
+      default: m.SetChainPayoutAddressModal,
+    })),
+  { ssr: false }
+);
 
 interface DonateSectionProps {
   project: Project;
