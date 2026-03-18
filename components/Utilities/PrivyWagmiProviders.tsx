@@ -2,10 +2,10 @@
 
 import { PrivyProvider, usePrivy, useWallets } from "@privy-io/react-auth";
 import { WagmiProvider } from "@privy-io/wagmi";
-import { type ReactNode, useMemo } from "react";
+import { useEffect } from "react";
 import { useAccount } from "wagmi";
 import { PROJECT_NAME } from "@/constants/brand";
-import { PrivyBridgeContext, type PrivyBridgeValue } from "@/contexts/privy-bridge-context";
+import { type PrivyBridgeValue, usePrivyBridgeSetter } from "@/contexts/privy-bridge-context";
 import type { TenantConfig } from "@/src/infrastructure/types/tenant";
 import { envVars } from "@/utilities/enviromentVars";
 import { appNetwork } from "@/utilities/network";
@@ -23,16 +23,20 @@ const WALLET_LIST = [
 ] as const;
 
 /**
- * Bridge component that reads from Privy/Wagmi hooks and provides values
- * via PrivyBridgeContext, so that useAuth() never needs to call usePrivy() directly.
+ * Reads from Privy/Wagmi hooks and pushes values into PrivyBridgeContext
+ * via the setter. Renders nothing — it's a side-effect-only component.
+ *
+ * This lives inside PrivyProvider + @privy-io/wagmi WagmiProvider, so
+ * usePrivy(), useWallets(), and useAccount() are safe to call.
  */
-function PrivyBridge({ children }: { children: ReactNode }) {
+function PrivyBridgeUpdater() {
+  const setBridge = usePrivyBridgeSetter();
   const privy = usePrivy();
   const { wallets } = useWallets();
   const { isConnected } = useAccount();
 
-  const value = useMemo<PrivyBridgeValue>(
-    () => ({
+  useEffect(() => {
+    const value: PrivyBridgeValue = {
       ready: privy.ready,
       authenticated: privy.authenticated,
       user: privy.user,
@@ -42,32 +46,30 @@ function PrivyBridge({ children }: { children: ReactNode }) {
       connectWallet: privy.connectWallet,
       wallets,
       isConnected,
-    }),
-    [
-      privy.ready,
-      privy.authenticated,
-      privy.user,
-      privy.login,
-      privy.logout,
-      privy.getAccessToken,
-      privy.connectWallet,
-      wallets,
-      isConnected,
-    ]
-  );
+    };
+    setBridge(value);
+  }, [
+    setBridge,
+    privy.ready,
+    privy.authenticated,
+    privy.user,
+    privy.login,
+    privy.logout,
+    privy.getAccessToken,
+    privy.connectWallet,
+    wallets,
+    isConnected,
+  ]);
 
-  return <PrivyBridgeContext.Provider value={value}>{children}</PrivyBridgeContext.Provider>;
+  return null;
 }
 
-interface PrivyWagmiProvidersProps {
-  children: ReactNode;
+interface PrivySidecarProps {
   tenantConfig?: TenantConfig | null;
 }
 
 /**
  * Privy SDK requires HTTPS for all hostnames except localhost/127.0.0.1.
- * For local whitelabel dev on custom hostnames (e.g. test-wl.local),
- * we skip Privy and render without auth for local testing.
  */
 function isPrivyCompatible(): boolean {
   if (typeof window === "undefined") return true;
@@ -79,31 +81,33 @@ function isPrivyCompatible(): boolean {
 }
 
 /**
- * Deferred Privy providers — loaded via dynamic import after hydration.
+ * Sidecar component — renders as a sibling to children, NOT a wrapper.
  *
- * WagmiProvider is already in the shell (PrivyProviderWrapper), so this
- * component only adds PrivyProvider + PrivyBridge on top. This keeps
- * the Privy SDK (~400KB+) out of the initial bundle while wagmi SSR
- * continues to work.
+ * Mounts PrivyProvider + @privy-io/wagmi WagmiProvider + PrivyBridgeUpdater.
+ * PrivyBridgeUpdater reads Privy/Wagmi hooks and pushes values into the
+ * shared PrivyBridgeContext so that useAuth() (and anything else that
+ * reads the bridge) gets live auth state.
+ *
+ * Renders null — no visible output. The @privy-io/wagmi WagmiProvider's
+ * PrivyWagmiConnector syncs Privy wallets to the shared wagmi config store,
+ * which the outer WagmiProvider's consumers (useAccount, etc.) read from.
  */
-export default function PrivyWagmiProviders({ children, tenantConfig }: PrivyWagmiProvidersProps) {
+export default function PrivySidecar({ tenantConfig }: PrivySidecarProps) {
   const privyAppId = envVars.PRIVY_APP_ID;
 
   if (!privyAppId) {
     console.error(
       "NEXT_PUBLIC_PRIVY_APP_ID is not defined. Please set it in your environment variables."
     );
-    return <>{children}</>;
+    return null;
   }
 
-  // On non-HTTPS custom hostnames, Privy throws. Render without auth for local testing.
   if (!isPrivyCompatible()) {
-    return <>{children}</>;
+    return null;
   }
 
   const defaultChain = appNetwork[0];
 
-  // Tenant-aware Privy appearance
   const accentColor = tenantConfig?.theme?.colors?.primary || "#1de9b6";
   const logo = tenantConfig?.assets?.logo
     ? tenantConfig.assets.logo.startsWith("http")
@@ -143,7 +147,7 @@ export default function PrivyWagmiProviders({ children, tenantConfig }: PrivyWag
       }}
     >
       <WagmiProvider config={privyConfig} reconnectOnMount={false}>
-        <PrivyBridge>{children}</PrivyBridge>
+        <PrivyBridgeUpdater />
       </WagmiProvider>
     </PrivyProvider>
   );

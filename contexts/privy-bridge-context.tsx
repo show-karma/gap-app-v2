@@ -1,16 +1,19 @@
 "use client";
 
-import { createContext, useContext } from "react";
+import { createContext, type ReactNode, useCallback, useContext, useState } from "react";
 
 /**
- * Bridge between Privy/Wagmi hooks and the rest of the app.
+ * Bridge between the deferred Privy SDK and the rest of the app.
  *
- * When PrivyWagmiProviders hasn't loaded yet (deferred via dynamic import),
- * consumers get safe defaults (ready=false, authenticated=false) instead of
- * a thrown error from usePrivy()/useAccount() missing their providers.
+ * Architecture:
+ *   PrivyBridgeContext.Provider (always in tree, stable position)
+ *     ├── PrivySidecar (sibling, renders null, pushes values via setState)
+ *     └── children (never moves in the tree, never re-mounts)
  *
- * Once PrivyWagmiProviders mounts, the PrivyBridge component populates this
- * context with live values from usePrivy(), useWallets(), and useAccount().
+ * Before the Privy SDK loads, consumers get safe defaults (ready=false).
+ * Once PrivySidecar mounts inside PrivyProvider, it reads usePrivy() /
+ * useWallets() / useAccount() and calls setBridge() to update the context.
+ * Children re-render (context value changed) but never re-mount.
  */
 export interface PrivyBridgeValue {
   // From usePrivy
@@ -42,8 +45,31 @@ export const PRIVY_BRIDGE_DEFAULTS: PrivyBridgeValue = {
   isConnected: false,
 };
 
-export const PrivyBridgeContext = createContext<PrivyBridgeValue>(PRIVY_BRIDGE_DEFAULTS);
+const PrivyBridgeContext = createContext<PrivyBridgeValue>(PRIVY_BRIDGE_DEFAULTS);
+const PrivyBridgeSetterContext = createContext<(v: PrivyBridgeValue) => void>(noop);
 
 export function usePrivyBridge(): PrivyBridgeValue {
   return useContext(PrivyBridgeContext);
+}
+
+export function usePrivyBridgeSetter(): (v: PrivyBridgeValue) => void {
+  return useContext(PrivyBridgeSetterContext);
+}
+
+/**
+ * Provider that holds bridge state. Wrap the app once at the root.
+ * The setter is exposed via a separate context so PrivySidecar can
+ * push values without being a descendant of PrivyBridgeContext.Provider.
+ */
+export function PrivyBridgeProvider({ children }: { children: ReactNode }) {
+  const [value, setValue] = useState<PrivyBridgeValue>(PRIVY_BRIDGE_DEFAULTS);
+
+  // Stable reference — never causes PrivySidecar to re-render
+  const setter = useCallback((v: PrivyBridgeValue) => setValue(v), []);
+
+  return (
+    <PrivyBridgeSetterContext.Provider value={setter}>
+      <PrivyBridgeContext.Provider value={value}>{children}</PrivyBridgeContext.Provider>
+    </PrivyBridgeSetterContext.Provider>
+  );
 }
