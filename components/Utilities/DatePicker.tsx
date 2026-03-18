@@ -1,5 +1,6 @@
 "use client";
 
+import "react-day-picker/dist/style.css";
 import { CalendarIcon } from "@heroicons/react/24/solid";
 import * as Popover from "@radix-ui/react-popover";
 import { DayPicker } from "react-day-picker";

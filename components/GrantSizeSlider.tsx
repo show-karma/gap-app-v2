@@ -1,3 +1,4 @@
+import "rc-slider/assets/index.css";
 import * as Popover from "@radix-ui/react-popover";
 import Slider from "rc-slider";
 import type { FC } from "react";

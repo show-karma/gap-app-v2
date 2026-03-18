@@ -1,4 +1,5 @@
 "use client";
+import "@uiw/react-markdown-preview/markdown.css";
 import dynamic from "next/dynamic";
 import { useTheme } from "next-themes";
 import rehypeExternalLinks from "rehype-external-links";
