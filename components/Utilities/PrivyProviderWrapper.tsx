@@ -55,7 +55,12 @@ export default function PrivyProviderWrapper({
   const [Sidecar, setSidecar] = useState<SidecarModule | null>(null);
 
   useEffect(() => {
-    import("./PrivyWagmiProviders").then(setSidecar);
+    import("./PrivyWagmiProviders").then(setSidecar).catch((err) => {
+      // Privy SDK chunk failed to load (network error, ad-blocker, etc.).
+      // The app remains usable — auth features degrade gracefully via
+      // PrivyBridgeContext defaults (ready=false, authenticated=false).
+      console.error("[PrivyProviderWrapper] Failed to load Privy SDK:", err);
+    });
   }, []);
 
   return (

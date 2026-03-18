@@ -34,15 +34,18 @@ const httpTransportOptions = {
  * from @wagmi/core/chains.
  */
 const rpcByChainId: Record<number, string | undefined> = {
+  1: envVars.RPC.MAINNET,
   10: envVars.RPC.OPTIMISM,
+  137: envVars.RPC.POLYGON,
+  8453: envVars.RPC.BASE,
   42161: envVars.RPC.ARBITRUM,
-  84532: envVars.RPC.BASE_SEPOLIA,
-  11155420: envVars.RPC.OPT_SEPOLIA,
   42220: envVars.RPC.CELO,
   1329: envVars.RPC.SEI,
-  11155111: envVars.RPC.SEPOLIA,
   1135: envVars.RPC.LISK,
   534352: envVars.RPC.SCROLL,
+  84532: envVars.RPC.BASE_SEPOLIA,
+  11155420: envVars.RPC.OPT_SEPOLIA,
+  11155111: envVars.RPC.SEPOLIA,
 };
 
 const transports = Object.fromEntries(

@@ -1,7 +1,5 @@
 "use client";
 
-import { createContext, type ReactNode, useCallback, useContext, useState } from "react";
-
 /**
  * Bridge between the deferred Privy SDK and the rest of the app.
  *
@@ -15,17 +13,25 @@ import { createContext, type ReactNode, useCallback, useContext, useState } from
  * useWallets() / useAccount() and calls setBridge() to update the context.
  * Children re-render (context value changed) but never re-mount.
  */
+/**
+ * Privy types are imported as `type` to avoid pulling the Privy SDK
+ * into the initial bundle. Only the type information is used — the
+ * actual values come from PrivySidecar at runtime.
+ */
+import type { ConnectedWallet, User } from "@privy-io/react-auth";
+import { createContext, type ReactNode, useCallback, useContext, useState } from "react";
+
 export interface PrivyBridgeValue {
   // From usePrivy
   ready: boolean;
   authenticated: boolean;
-  user: any;
+  user: User | null;
   login: () => void;
   logout: () => Promise<void>;
   getAccessToken: () => Promise<string | null>;
   connectWallet: () => void;
   // From useWallets
-  wallets: any[];
+  wallets: ConnectedWallet[];
   // From useAccount
   isConnected: boolean;
 }

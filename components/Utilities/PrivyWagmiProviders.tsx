@@ -109,11 +109,12 @@ export default function PrivySidecar({ tenantConfig }: PrivySidecarProps) {
   const defaultChain = appNetwork[0];
 
   const accentColor = tenantConfig?.theme?.colors?.primary || "#1de9b6";
+  const baseUrl = envVars.VERCEL_URL;
   const logo = tenantConfig?.assets?.logo
     ? tenantConfig.assets.logo.startsWith("http")
       ? tenantConfig.assets.logo
-      : `https://karmahq.xyz${tenantConfig.assets.logo}`
-    : "https://karmahq.xyz/logo/karma-logo-light.svg";
+      : `${baseUrl}${tenantConfig.assets.logo}`
+    : `${baseUrl}/logo/karma-logo-light.svg`;
   const landingHeader = tenantConfig
     ? `Connect to ${tenantConfig.name}`
     : `Connect to ${PROJECT_NAME}`;
@@ -146,6 +147,21 @@ export default function PrivySidecar({ tenantConfig }: PrivySidecarProps) {
         walletConnectCloudProjectId: envVars.PROJECT_ID || undefined,
       }}
     >
+      {/*
+        This WagmiProvider (from @privy-io/wagmi) is intentionally separate from
+        the outer WagmiProvider (from wagmi) in PrivyProviderWrapper.
+
+        @privy-io/wagmi's WagmiProvider wraps wagmi's native WagmiProvider and
+        adds PrivyWagmiConnector — an internal component that syncs Privy-managed
+        wallets to wagmi's shared config store (Zustand). Without it, wallet
+        connections made through Privy wouldn't be visible to wagmi hooks.
+
+        Both providers share the same `privyConfig` object, so they read/write
+        the same underlying store. The outer provider serves app children (SSR +
+        hook support), this inner one exists only for the Privy ↔ wagmi sync.
+        reconnectOnMount=false prevents the inner provider from re-triggering
+        wallet reconnection that the outer provider already handles.
+      */}
       <WagmiProvider config={privyConfig} reconnectOnMount={false}>
         <PrivyBridgeUpdater />
       </WagmiProvider>
