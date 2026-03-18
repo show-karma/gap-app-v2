@@ -115,6 +115,25 @@ declare global {
  * Mock Next.js modules
  */
 
+// Mock next/dynamic to resolve synchronously in tests
+// Without this, dynamic() with ssr:false renders the loading fallback in Jest
+jest.mock("next/dynamic", () => {
+  return (loader: () => Promise<any>, _opts?: any) => {
+    let Component: any = null;
+    // Resolve the promise synchronously by calling .then in the module scope
+    loader().then((mod: any) => {
+      Component = mod.default || mod;
+    });
+    // Return a wrapper that renders the resolved component or null
+    const DynamicComponent = (props: any) => {
+      if (!Component) return null;
+      return React.createElement(Component, props);
+    };
+    DynamicComponent.displayName = "DynamicMock";
+    return DynamicComponent;
+  };
+});
+
 // Mock next/image
 jest.mock("next/image", () => ({
   __esModule: true,
