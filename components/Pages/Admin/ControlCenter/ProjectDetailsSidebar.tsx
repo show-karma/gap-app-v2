@@ -229,20 +229,26 @@ export function ProjectDetailsSidebar({
   const [confirmingUnsign, setConfirmingUnsign] = useState(false);
 
   const configRef = useRef<PayoutConfigurationContentRef>(null);
+  const [configIsDirty, setConfigIsDirty] = useState(false);
+  const [configIsSaving, setConfigIsSaving] = useState(false);
   const [, copyToClipboard] = useCopyToClipboard();
   const toggleAgreementMutation = useToggleAgreement(communityUID);
   const saveMilestoneInvoicesMutation = useSaveMilestoneInvoices(communityUID);
 
-  // Reset state when grant changes
+  // Reset all state when switching to a different grant
   useEffect(() => {
-    if (grant) {
-      setLocalAgreementSigned(agreement?.signed === true);
-      setAgreementDate(agreement?.signedAt ? new Date(agreement.signedAt) : undefined);
-      setMilestoneEdits({});
-      setConfirmingUnsign(false);
-      setActiveSection("details");
-    }
-  }, [grant?.grantUid, agreement?.signed, agreement?.signedAt]); // eslint-disable-line react-hooks/exhaustive-deps
+    setActiveSection("details");
+    setMilestoneEdits({});
+    setConfirmingUnsign(false);
+    setLocalAgreementSigned(agreement?.signed === true);
+    setAgreementDate(agreement?.signedAt ? new Date(agreement.signedAt) : undefined);
+  }, [grant?.grantUid]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Sync agreement state when it changes server-side
+  useEffect(() => {
+    setLocalAgreementSigned(agreement?.signed === true);
+    setAgreementDate(agreement?.signedAt ? new Date(agreement.signedAt) : undefined);
+  }, [agreement?.signed, agreement?.signedAt]);
 
   const editCount = Object.keys(milestoneEdits).length;
   const hasMilestoneEdits = editCount > 0;
@@ -474,16 +480,13 @@ export function ProjectDetailsSidebar({
 
   const showSaveButton =
     (activeSection === "details" && hasMilestoneEdits) ||
-    (activeSection === "settings" && configRef.current?.isDirty);
+    (activeSection === "settings" && configIsDirty);
 
-  const isSaving =
-    saveMilestoneInvoicesMutation.isPending || (configRef.current?.isSaving ?? false);
-
-  if (!grant) return null;
+  const isSaving = saveMilestoneInvoicesMutation.isPending || configIsSaving;
 
   return (
     <Dialog
-      open={open}
+      open={open && !!grant}
       onOpenChange={(nextOpen) => {
         if (!nextOpen) {
           handleRequestClose();
@@ -492,172 +495,176 @@ export function ProjectDetailsSidebar({
         onOpenChange(nextOpen);
       }}
     >
-      <DialogContent className="max-w-7xl h-[90vh] overflow-hidden flex flex-col bg-white dark:bg-zinc-950">
-        {/* Header */}
-        <DialogHeader className="space-y-1 pb-3 border-b border-gray-100 dark:border-zinc-800">
-          <div className="flex items-start justify-between gap-2">
-            <div>
-              <DialogTitle className="text-lg font-semibold text-gray-900 dark:text-zinc-100">
-                {grant.projectName}
-              </DialogTitle>
-              <DialogDescription className="text-sm text-gray-500 dark:text-zinc-400">
-                {grant.grantName}
-                {chainInfo && (
-                  <span className="ml-2 text-xs text-gray-400 dark:text-zinc-500">
-                    · {getChainNameById(chainInfo.chainID)} · {chainInfo.token}
-                  </span>
-                )}
-              </DialogDescription>
-            </div>
-            <a
-              href={PAGES.PROJECT.GRANT(grant.projectSlug, grant.grantUid)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline shrink-0 mt-1"
-            >
-              View grant
-              <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" />
-            </a>
-          </div>
-        </DialogHeader>
-
-        {/* Two-column body */}
-        <div className="flex-1 flex min-h-0">
-          {/* Sidebar navigation */}
-          <nav className="w-48 shrink-0 border-r border-gray-100 dark:border-zinc-800 py-3 pr-3">
-            <ul className="space-y-1">
-              {NAV_ITEMS.map((item) => {
-                const Icon = item.icon;
-                const isActive = activeSection === item.id;
-                return (
-                  <li key={item.id}>
-                    <button
-                      type="button"
-                      onClick={() => handleSectionChange(item.id)}
-                      className={cn(
-                        "w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-colors",
-                        isActive
-                          ? "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
-                          : "text-gray-600 dark:text-zinc-400 hover:bg-gray-50 dark:hover:bg-zinc-900 hover:text-gray-900 dark:hover:text-zinc-200"
-                      )}
-                    >
-                      <Icon className="h-4 w-4 shrink-0" />
-                      {item.label}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
-
-          {/* Content area */}
-          <div className="flex-1 overflow-auto pl-6 py-3">
-            {activeSection === "details" && (
-              <div className="space-y-6">
-                <DetailsSection
-                  grant={grant}
-                  kycStatus={kycStatus}
-                  agreement={agreement}
-                  localAgreementSigned={localAgreementSigned}
-                  agreementDate={agreementDate}
-                  confirmingUnsign={confirmingUnsign}
-                  setConfirmingUnsign={setConfirmingUnsign}
-                  toggleAgreementMutation={toggleAgreementMutation}
-                  handleSignAgreement={handleSignAgreement}
-                  handleUnsignAgreement={handleUnsignAgreement}
-                  setAgreementDate={setAgreementDate}
-                  handleCopyAddress={handleCopyAddress}
-                  totalsByToken={totalsByToken}
-                  remainingBalance={remainingBalance}
-                  awaitingTx={awaitingTx}
-                  chainInfo={chainInfo}
-                  milestoneSummary={milestoneSummary}
-                  invoiceRequired={invoiceRequired}
-                />
-                <MilestonesSection
-                  grant={grant}
-                  milestoneInvoices={milestoneInvoices}
-                  invoiceRequired={invoiceRequired}
-                  milestoneEdits={milestoneEdits}
-                  allocationByUID={allocationByUID}
-                  todayLocal={todayLocal}
-                  getMilestoneKey={getMilestoneKey}
-                  getInvoiceReceivedDate={getInvoiceReceivedDate}
-                  handleInvoiceReceivedDateChange={handleInvoiceReceivedDateChange}
-                />
+      {grant && (
+        <DialogContent className="max-w-7xl h-[90vh] overflow-hidden flex flex-col bg-white dark:bg-zinc-950">
+          {/* Header */}
+          <DialogHeader className="space-y-1 pb-3 border-b border-gray-100 dark:border-zinc-800">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <DialogTitle className="text-lg font-semibold text-gray-900 dark:text-zinc-100">
+                  {grant.projectName}
+                </DialogTitle>
+                <DialogDescription className="text-sm text-gray-500 dark:text-zinc-400">
+                  {grant.grantName}
+                  {chainInfo && (
+                    <span className="ml-2 text-xs text-gray-400 dark:text-zinc-500">
+                      · {getChainNameById(chainInfo.chainID)} · {chainInfo.token}
+                    </span>
+                  )}
+                </DialogDescription>
               </div>
-            )}
-
-            {activeSection === "settings" && (
-              <PayoutConfigurationContent
-                ref={configRef}
-                isActive={activeSection === "settings"}
-                grantUID={grant.grantUid}
-                projectUID={grant.projectUid}
-                communityUID={communityUID}
-                grantName={grant.grantName}
-                projectName={grant.projectName}
-                onSuccess={onConfigSuccess}
-              />
-            )}
-
-            {activeSection === "history" && (
-              <PayoutHistoryContent
-                isActive={activeSection === "history"}
-                grantUID={grant.grantUid}
-                grantName={grant.grantName}
-                projectName={grant.projectName}
-                approvedAmount={grant.currentAmount}
-              />
-            )}
-          </div>
-        </div>
-
-        {/* Footer */}
-        <DialogFooter className="pt-3 border-t border-gray-100 dark:border-zinc-800">
-          <div className="flex items-center justify-between w-full flex-wrap gap-2">
-            <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                onClick={() => {
-                  if (!confirmDiscardEdits()) return;
-                  onCreateDisbursement?.();
-                }}
-                disabled={!canCreateDisbursement || isSaving}
-                title={
-                  !canCreateDisbursement
-                    ? "Configure a payout address and amount first"
-                    : "Create a disbursement"
-                }
+              <a
+                href={PAGES.PROJECT.GRANT(grant.projectSlug, grant.grantUid)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline shrink-0 mt-1"
               >
-                <PlusCircleIcon />
-                Create Disbursement
-              </Button>
+                View grant
+                <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" />
+              </a>
             </div>
+          </DialogHeader>
 
-            <div className="flex items-center gap-2">
-              {showSaveButton && (
-                <Button size="sm" onClick={handleSaveChanges} disabled={isSaving}>
-                  <CheckIcon />
-                  {isSaving
-                    ? "Saving..."
-                    : activeSection === "details" && hasMilestoneEdits
-                      ? `Save Changes (${editCount})`
-                      : "Save Configuration"}
-                </Button>
+          {/* Two-column body */}
+          <div className="flex-1 flex min-h-0">
+            {/* Sidebar navigation */}
+            <nav className="w-48 shrink-0 border-r border-gray-100 dark:border-zinc-800 py-3 pr-3">
+              <ul className="space-y-1">
+                {NAV_ITEMS.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activeSection === item.id;
+                  return (
+                    <li key={item.id}>
+                      <button
+                        type="button"
+                        onClick={() => handleSectionChange(item.id)}
+                        className={cn(
+                          "w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                          isActive
+                            ? "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+                            : "text-gray-600 dark:text-zinc-400 hover:bg-gray-50 dark:hover:bg-zinc-900 hover:text-gray-900 dark:hover:text-zinc-200"
+                        )}
+                      >
+                        <Icon className="h-4 w-4 shrink-0" />
+                        {item.label}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </nav>
+
+            {/* Content area */}
+            <div className="flex-1 overflow-auto pl-6 py-3">
+              {activeSection === "details" && (
+                <div className="space-y-6">
+                  <DetailsSection
+                    grant={grant}
+                    kycStatus={kycStatus}
+                    agreement={agreement}
+                    localAgreementSigned={localAgreementSigned}
+                    agreementDate={agreementDate}
+                    confirmingUnsign={confirmingUnsign}
+                    setConfirmingUnsign={setConfirmingUnsign}
+                    toggleAgreementMutation={toggleAgreementMutation}
+                    handleSignAgreement={handleSignAgreement}
+                    handleUnsignAgreement={handleUnsignAgreement}
+                    setAgreementDate={setAgreementDate}
+                    handleCopyAddress={handleCopyAddress}
+                    totalsByToken={totalsByToken}
+                    remainingBalance={remainingBalance}
+                    awaitingTx={awaitingTx}
+                    chainInfo={chainInfo}
+                    milestoneSummary={milestoneSummary}
+                    invoiceRequired={invoiceRequired}
+                  />
+                  <MilestonesSection
+                    grant={grant}
+                    milestoneInvoices={milestoneInvoices}
+                    invoiceRequired={invoiceRequired}
+                    milestoneEdits={milestoneEdits}
+                    allocationByUID={allocationByUID}
+                    todayLocal={todayLocal}
+                    getMilestoneKey={getMilestoneKey}
+                    getInvoiceReceivedDate={getInvoiceReceivedDate}
+                    handleInvoiceReceivedDateChange={handleInvoiceReceivedDateChange}
+                  />
+                </div>
               )}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleRequestClose}
-                className="text-gray-500"
-              >
-                Close
-              </Button>
+
+              {activeSection === "settings" && (
+                <PayoutConfigurationContent
+                  ref={configRef}
+                  isActive={activeSection === "settings"}
+                  grantUID={grant.grantUid}
+                  projectUID={grant.projectUid}
+                  communityUID={communityUID}
+                  grantName={grant.grantName}
+                  projectName={grant.projectName}
+                  onSuccess={onConfigSuccess}
+                  onDirtyChange={setConfigIsDirty}
+                  onSavingChange={setConfigIsSaving}
+                />
+              )}
+
+              {activeSection === "history" && (
+                <PayoutHistoryContent
+                  isActive={activeSection === "history"}
+                  grantUID={grant.grantUid}
+                  grantName={grant.grantName}
+                  projectName={grant.projectName}
+                  approvedAmount={grant.currentAmount}
+                />
+              )}
             </div>
           </div>
-        </DialogFooter>
-      </DialogContent>
+
+          {/* Footer */}
+          <DialogFooter className="pt-3 border-t border-gray-100 dark:border-zinc-800">
+            <div className="flex items-center justify-between w-full flex-wrap gap-2">
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    if (!confirmDiscardEdits()) return;
+                    onCreateDisbursement?.();
+                  }}
+                  disabled={!canCreateDisbursement || isSaving}
+                  title={
+                    !canCreateDisbursement
+                      ? "Configure a payout address and amount first"
+                      : "Create a disbursement"
+                  }
+                >
+                  <PlusCircleIcon />
+                  Create Disbursement
+                </Button>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {showSaveButton && (
+                  <Button size="sm" onClick={handleSaveChanges} disabled={isSaving}>
+                    <CheckIcon />
+                    {isSaving
+                      ? "Saving..."
+                      : activeSection === "details" && hasMilestoneEdits
+                        ? `Save Changes (${editCount})`
+                        : "Save Configuration"}
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleRequestClose}
+                  className="text-gray-500"
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      )}
     </Dialog>
   );
 }

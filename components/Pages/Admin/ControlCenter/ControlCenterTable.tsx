@@ -78,6 +78,14 @@ const ControlCenterTableRow = memo(function ControlCenterTableRow({
     <tr
       key={`${item.grantUid}-${item.projectUid}`}
       onClick={(e) => onRowClick(item, e)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onRowClick(item, e as unknown as React.MouseEvent);
+        }
+      }}
+      tabIndex={0}
+      aria-label={`View details for ${item.projectName} - ${item.grantName}`}
       className={cn(
         "cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-zinc-900/70 group",
         isSelected && "bg-blue-50 dark:bg-blue-900/20",

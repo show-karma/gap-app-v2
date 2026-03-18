@@ -100,6 +100,7 @@ export function PayoutHistoryContent({
     data: historyData,
     isLoading: isLoadingHistory,
     error: historyError,
+    refetch: refetchHistory,
   } = usePayoutHistory(grantUID, 1, 50, { enabled: isActive && !!grantUID });
 
   const disbursements = historyData?.payload || [];
@@ -239,10 +240,16 @@ export function PayoutHistoryContent({
         ) : historyError ? (
           <div className="py-12 text-center">
             <p className="text-red-500 dark:text-red-400">Failed to load payout history</p>
+            <Button variant="secondary" className="mt-3" onClick={() => refetchHistory()}>
+              Retry
+            </Button>
           </div>
         ) : disbursements.length === 0 ? (
           <div className="py-12 text-center">
             <p className="text-gray-500 dark:text-gray-400">No disbursements yet</p>
+            <p className="mt-1 text-sm text-gray-400 dark:text-gray-500">
+              Disbursements will appear here once created.
+            </p>
           </div>
         ) : (
           <div className="space-y-4">

@@ -95,8 +95,7 @@ const testGrant: ProjectDetailsSidebarGrant = {
 };
 
 beforeEach(() => {
-  mockToggleMutate.mockClear();
-  mockSaveMutate.mockClear();
+  jest.clearAllMocks();
   mockTogglePending = false;
   mockSavePending = false;
 
@@ -318,8 +317,7 @@ describe("ProjectDetailsSidebar", () => {
   });
 
   describe("Milestone invoices table", () => {
-    it("renders milestone labels", async () => {
-      const user = userEvent.setup();
+    it("renders milestone labels", () => {
       renderSidebar({
         milestoneInvoices: [
           createMockInvoice({ milestoneLabel: "Deliverable A" }),
@@ -357,8 +355,7 @@ describe("ProjectDetailsSidebar", () => {
   });
 
   describe("Milestone status column", () => {
-    it("renders milestone status badge with correct label", async () => {
-      const user = userEvent.setup();
+    it("renders milestone status badge with correct label", () => {
       renderSidebar({
         milestoneInvoices: [
           createMockInvoice({
@@ -378,8 +375,7 @@ describe("ProjectDetailsSidebar", () => {
       expect(screen.getByText("Verified")).toBeInTheDocument();
     });
 
-    it("shows 'Pending' when milestoneStatus is null", async () => {
-      const user = userEvent.setup();
+    it("shows 'Pending' when milestoneStatus is null", () => {
       renderSidebar({
         milestoneInvoices: [
           createMockInvoice({
@@ -394,8 +390,7 @@ describe("ProjectDetailsSidebar", () => {
       expect(screen.getByText("Pending")).toBeInTheDocument();
     });
 
-    it("shows 'Past due' when status is pending and dueDate is in the past", async () => {
-      const user = userEvent.setup();
+    it("shows 'Past due' when status is pending and dueDate is in the past", () => {
       renderSidebar({
         milestoneInvoices: [
           createMockInvoice({
@@ -410,8 +405,7 @@ describe("ProjectDetailsSidebar", () => {
       expect(screen.getByText("Past due")).toBeInTheDocument();
     });
 
-    it("does not show 'Past due' when status is completed even with past dueDate", async () => {
-      const user = userEvent.setup();
+    it("does not show 'Past due' when status is completed even with past dueDate", () => {
       renderSidebar({
         milestoneInvoices: [
           createMockInvoice({
@@ -427,8 +421,7 @@ describe("ProjectDetailsSidebar", () => {
       expect(screen.queryByText("Past due")).not.toBeInTheDocument();
     });
 
-    it("falls back to 'Pending' config when milestoneStatus is null", async () => {
-      const user = userEvent.setup();
+    it("falls back to 'Pending' config when milestoneStatus is null", () => {
       renderSidebar({
         milestoneInvoices: [
           createMockInvoice({
@@ -539,8 +532,7 @@ describe("ProjectDetailsSidebar", () => {
       expect(tooltip).toHaveTextContent("The milestone has not been verified yet");
     });
 
-    it("does not show alert icon for verified milestone", async () => {
-      const user = userEvent.setup();
+    it("does not show alert icon for verified milestone", () => {
       renderSidebar({
         milestoneInvoices: [
           createMockInvoice({
@@ -556,8 +548,7 @@ describe("ProjectDetailsSidebar", () => {
       expect(alertIcon).not.toBeInTheDocument();
     });
 
-    it("does not show alert icon for pending milestone", async () => {
-      const user = userEvent.setup();
+    it("does not show alert icon for pending milestone", () => {
       renderSidebar({
         milestoneInvoices: [
           createMockInvoice({
@@ -574,8 +565,7 @@ describe("ProjectDetailsSidebar", () => {
   });
 
   describe("Invoice status column", () => {
-    it("shows 'Invoice received' badge when invoice status is 'received'", async () => {
-      const user = userEvent.setup();
+    it("shows 'Invoice received' badge when invoice status is 'received'", () => {
       renderSidebar({
         invoiceRequired: true,
         milestoneInvoices: [
@@ -592,8 +582,7 @@ describe("ProjectDetailsSidebar", () => {
       expect(screen.getByText("Received")).toBeInTheDocument();
     });
 
-    it("shows 'Invoice received' badge when invoice status is 'paid'", async () => {
-      const user = userEvent.setup();
+    it("shows 'Invoice received' badge when invoice status is 'paid'", () => {
       renderSidebar({
         invoiceRequired: true,
         milestoneInvoices: [
@@ -608,8 +597,7 @@ describe("ProjectDetailsSidebar", () => {
       expect(screen.getByText("Invoice received")).toBeInTheDocument();
     });
 
-    it("shows 'Not submitted' badge when invoice status is 'not_submitted'", async () => {
-      const user = userEvent.setup();
+    it("shows 'Not submitted' badge when invoice status is 'not_submitted'", () => {
       renderSidebar({
         invoiceRequired: true,
         milestoneInvoices: [
@@ -625,8 +613,7 @@ describe("ProjectDetailsSidebar", () => {
       expect(screen.getByText("Not submitted")).toBeInTheDocument();
     });
 
-    it("does not show invoice status column when invoiceRequired is false", async () => {
-      const user = userEvent.setup();
+    it("does not show invoice status column when invoiceRequired is false", () => {
       renderSidebar({
         invoiceRequired: false,
         milestoneInvoices: [

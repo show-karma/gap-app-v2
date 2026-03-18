@@ -6,7 +6,15 @@ import {
   InformationCircleIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useState } from "react";
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import toast from "react-hot-toast";
 import { isAddress } from "viem";
 import { Spinner } from "@/components/Utilities/Spinner";
@@ -39,6 +47,8 @@ export interface PayoutConfigurationContentProps {
   projectName: string;
   existingConfig?: PayoutGrantConfig | null;
   onSuccess?: () => void;
+  onDirtyChange?: (dirty: boolean) => void;
+  onSavingChange?: (saving: boolean) => void;
 }
 
 export interface PayoutConfigurationContentRef {
@@ -50,9 +60,20 @@ export interface PayoutConfigurationContentRef {
 type TokenType = "usdc" | "native";
 
 const getSupportedNetworks = () => getAvailableNetworks(envVars.isDev);
+const DEFAULT_NETWORK = getSupportedNetworks()[0]?.id ?? 10;
 
 const FIRST_PAYMENT_LABEL = "First payment";
 const FINAL_PAYMENT_LABEL = "Final payment";
+
+function detectTokenTypeFromConfig(config: PayoutGrantConfig): TokenType {
+  if (config.tokenAddress) {
+    const normalizedAddress = config.tokenAddress.toLowerCase();
+    const usdcAddresses = Object.values(TOKEN_ADDRESSES.usdc).map((a) => a.toLowerCase());
+    if (usdcAddresses.includes(normalizedAddress)) return "usdc";
+    return "native";
+  }
+  return "native";
+}
 
 export const PayoutConfigurationContent = forwardRef<
   PayoutConfigurationContentRef,
@@ -67,18 +88,28 @@ export const PayoutConfigurationContent = forwardRef<
     projectName,
     existingConfig,
     onSuccess,
+    onDirtyChange,
+    onSavingChange,
   },
   ref
 ) {
-  const { data: fetchedConfig, isLoading: isLoadingConfig } = usePayoutConfigByGrant(grantUID, {
+  const {
+    data: fetchedConfig,
+    isLoading: isLoadingConfig,
+    error: configError,
+    refetch: refetchConfig,
+  } = usePayoutConfigByGrant(grantUID, {
     enabled: isActive && !existingConfig,
   });
 
-  const { data: fetchedMilestones = [], isLoading: isLoadingMilestones } = useGrantMilestones(
-    projectUID,
-    grantUID,
-    { enabled: isActive }
-  );
+  const {
+    data: fetchedMilestones = [],
+    isLoading: isLoadingMilestones,
+    error: milestonesError,
+    refetch: refetchMilestones,
+  } = useGrantMilestones(projectUID, grantUID, { enabled: isActive });
+
+  const queryError = configError || milestonesError;
 
   const milestones: MilestoneInfo[] = useMemo(
     () =>
@@ -94,10 +125,14 @@ export const PayoutConfigurationContent = forwardRef<
   // Form state
   const [payoutAddress, setPayoutAddress] = useState("");
   const [totalGrantAmount, setTotalGrantAmount] = useState("");
-  const [selectedNetwork, setSelectedNetwork] = useState<SupportedChainId>(10);
+  const [selectedNetwork, setSelectedNetwork] = useState<SupportedChainId>(
+    DEFAULT_NETWORK as SupportedChainId
+  );
   const [tokenType, setTokenType] = useState<TokenType>("usdc");
   const [milestoneAllocations, setMilestoneAllocations] = useState<MilestoneAllocation[]>([]);
   const [hasBeenInitialized, setHasBeenInitialized] = useState(false);
+
+  const initialAllocationsRef = useRef<string>("");
 
   // Validation state
   const [addressError, setAddressError] = useState<string | null>(null);
@@ -170,20 +205,7 @@ export const PayoutConfigurationContent = forwardRef<
   useEffect(() => {
     if (isActive && currentConfig) {
       setPayoutAddress(currentConfig.payoutAddress || "");
-
-      let detectedTokenType: TokenType = "usdc";
-      if (currentConfig.tokenAddress) {
-        const normalizedAddress = currentConfig.tokenAddress.toLowerCase();
-        const usdcAddresses = Object.values(TOKEN_ADDRESSES.usdc).map((a) => a.toLowerCase());
-        if (usdcAddresses.includes(normalizedAddress)) {
-          detectedTokenType = "usdc";
-        } else {
-          detectedTokenType = "native";
-        }
-      } else {
-        detectedTokenType = "native";
-      }
-      setTokenType(detectedTokenType);
+      setTokenType(detectTokenTypeFromConfig(currentConfig));
 
       if (currentConfig.chainID) {
         setSelectedNetwork(currentConfig.chainID as SupportedChainId);
@@ -195,14 +217,20 @@ export const PayoutConfigurationContent = forwardRef<
         setTotalGrantAmount("");
       }
 
-      if (currentConfig.milestoneAllocations && currentConfig.milestoneAllocations.length > 0) {
-        setMilestoneAllocations(currentConfig.milestoneAllocations);
-      } else {
-        setMilestoneAllocations(generateAllocationsFromMilestones(null));
-      }
+      const allocs = generateAllocationsFromMilestones(currentConfig.milestoneAllocations);
+      setMilestoneAllocations(allocs);
+      initialAllocationsRef.current = JSON.stringify(allocs);
       setHasBeenInitialized(true);
-    } else if (isActive && !currentConfig && !isLoadingConfig && !isLoadingMilestones) {
-      setMilestoneAllocations(generateAllocationsFromMilestones(null));
+    } else if (
+      isActive &&
+      !currentConfig &&
+      !isLoadingConfig &&
+      !isLoadingMilestones &&
+      !queryError
+    ) {
+      const allocs = generateAllocationsFromMilestones(null);
+      setMilestoneAllocations(allocs);
+      initialAllocationsRef.current = JSON.stringify(allocs);
       setHasBeenInitialized(true);
     }
   }, [
@@ -210,6 +238,7 @@ export const PayoutConfigurationContent = forwardRef<
     currentConfig,
     isLoadingConfig,
     isLoadingMilestones,
+    queryError,
     generateAllocationsFromMilestones,
   ]);
 
@@ -218,7 +247,7 @@ export const PayoutConfigurationContent = forwardRef<
     if (!isActive) {
       setPayoutAddress("");
       setTotalGrantAmount("");
-      setSelectedNetwork(10);
+      setSelectedNetwork(DEFAULT_NETWORK as SupportedChainId);
       setTokenType("usdc");
       setMilestoneAllocations([]);
       setAddressError(null);
@@ -245,8 +274,19 @@ export const PayoutConfigurationContent = forwardRef<
     }
     if (payoutAddress !== (currentConfig.payoutAddress || "")) return true;
     if (totalGrantAmount !== (currentConfig.totalGrantAmount || "")) return true;
+    if (selectedNetwork !== (currentConfig.chainID ?? DEFAULT_NETWORK)) return true;
+    if (tokenType !== detectTokenTypeFromConfig(currentConfig)) return true;
+    if (JSON.stringify(milestoneAllocations) !== initialAllocationsRef.current) return true;
     return false;
-  }, [hasBeenInitialized, currentConfig, payoutAddress, totalGrantAmount]);
+  }, [
+    hasBeenInitialized,
+    currentConfig,
+    payoutAddress,
+    totalGrantAmount,
+    selectedNetwork,
+    tokenType,
+    milestoneAllocations,
+  ]);
 
   // Validation functions
   const validateAddress = useCallback((address: string): boolean => {
@@ -386,6 +426,14 @@ export const PayoutConfigurationContent = forwardRef<
   const hasAllocationsError = Object.keys(allocationErrors).length > 0;
   const isSaving = saveConfigMutation.isPending;
 
+  useEffect(() => {
+    onDirtyChange?.(isDirty);
+  }, [isDirty, onDirtyChange]);
+
+  useEffect(() => {
+    onSavingChange?.(isSaving);
+  }, [isSaving, onSavingChange]);
+
   // Expose imperative handle for parent
   useImperativeHandle(
     ref,
@@ -404,6 +452,27 @@ export const PayoutConfigurationContent = forwardRef<
         <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">
           Loading configuration...
         </span>
+      </div>
+    );
+  }
+
+  if (queryError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 gap-3">
+        <ExclamationTriangleIcon className="h-8 w-8 text-red-500" />
+        <p className="text-sm text-red-600 dark:text-red-400">
+          Failed to load configuration. Please try again.
+        </p>
+        <button
+          type="button"
+          onClick={() => {
+            if (configError) refetchConfig();
+            if (milestonesError) refetchMilestones();
+          }}
+          className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+        >
+          Retry
+        </button>
       </div>
     );
   }

@@ -19,8 +19,7 @@ import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { BulkPayoutImportPanel } from "./BulkPayoutImportPanel";
-import type { TableRow } from "./ControlCenterTable";
-import { ControlCenterTable } from "./ControlCenterTable";
+import { ControlCenterTable, type TableRow } from "./ControlCenterTable";
 import { FilterToolbar } from "./FilterToolbar";
 import { ProjectDetailsSidebar } from "./ProjectDetailsSidebar";
 import { useControlCenterData } from "./useControlCenterData";
@@ -95,7 +94,7 @@ export function ControlCenterPage() {
 
   // Details sidebar state
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
-  const [detailsModalGrant, setDetailsModalGrant] = useState<TableRow | null>(null);
+  const [detailsGrantUid, setDetailsGrantUid] = useState<string | null>(null);
 
   // URL param helper
   const createQueryString = useCallback(
@@ -169,6 +168,11 @@ export function ControlCenterPage() {
     currentPage,
     itemsPerPage,
   });
+
+  // Derive live grant from current data (avoids stale snapshot after refresh)
+  const detailsModalGrant = detailsGrantUid
+    ? (paginatedData.find((r) => r.grantUid === detailsGrantUid) ?? null)
+    : null;
 
   const saveBulkImportMutation = useSavePayoutConfig();
 
@@ -303,7 +307,7 @@ export function ControlCenterPage() {
     if (target.closest("input[type='checkbox']") || target.closest("button")) {
       return;
     }
-    setDetailsModalGrant(item);
+    setDetailsGrantUid(item.grantUid);
     setDetailsModalOpen(true);
   };
 
@@ -541,7 +545,10 @@ export function ControlCenterPage() {
       <ProjectDetailsSidebar
         grant={detailsModalGrant}
         open={detailsModalOpen}
-        onOpenChange={setDetailsModalOpen}
+        onOpenChange={(nextOpen) => {
+          setDetailsModalOpen(nextOpen);
+          if (!nextOpen) setDetailsGrantUid(null);
+        }}
         communityUID={community?.uid || ""}
         invoiceRequired={
           detailsModalGrant ? (invoiceRequiredMap[detailsModalGrant.grantUid] ?? false) : false
@@ -563,6 +570,7 @@ export function ControlCenterPage() {
         onCreateDisbursement={() => {
           if (!detailsModalGrant) return;
           setDetailsModalOpen(false);
+          setDetailsGrantUid(null);
           const item = detailsModalGrant;
           const payoutConfig = payoutConfigMap[item.grantUid];
           const disbursementHistory = disbursementMap[item.grantUid]?.history || [];
