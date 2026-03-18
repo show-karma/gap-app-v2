@@ -1,5 +1,6 @@
 "use client";
 
+import { Cog6ToothIcon } from "@heroicons/react/24/outline";
 import { memo } from "react";
 import { KycStatusBadge } from "@/components/KycStatusIcon";
 import { Spinner } from "@/components/Utilities/Spinner";
@@ -52,7 +53,7 @@ interface ControlCenterTableRowProps {
   isLoadingKycStatuses: boolean;
   kycStatus: KycStatusResponse | null;
   onSelectGrant?: (uid: string, checked: boolean) => void;
-  onRowClick: (item: TableRow, e: React.MouseEvent) => void;
+  onOpenDetails: (item: TableRow) => void;
   readOnly?: boolean;
 }
 
@@ -71,23 +72,14 @@ const ControlCenterTableRow = memo(function ControlCenterTableRow({
   isLoadingKycStatuses,
   kycStatus,
   onSelectGrant,
-  onRowClick,
+  onOpenDetails,
   readOnly,
 }: ControlCenterTableRowProps) {
   return (
     <tr
       key={`${item.grantUid}-${item.projectUid}`}
-      onClick={(e) => onRowClick(item, e)}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onRowClick(item, e as unknown as React.MouseEvent);
-        }
-      }}
-      tabIndex={0}
-      aria-label={`View details for ${item.projectName} - ${item.grantName}`}
       className={cn(
-        "cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-zinc-900/70 group",
+        "transition-colors",
         isSelected && "bg-blue-50 dark:bg-blue-900/20",
         isFullyDisbursed && "bg-green-50/50 dark:bg-green-900/10",
         checkboxDisabled && !isFullyDisbursed && "bg-gray-50/50 dark:bg-zinc-900/50"
@@ -183,6 +175,18 @@ const ControlCenterTableRow = memo(function ControlCenterTableRow({
       <td className="px-4 py-3 text-right">
         <TokenBreakdown totalsByToken={totalsByToken} size="sm" />
       </td>
+
+      {/* Actions */}
+      <td className="px-2 py-3 text-center w-12">
+        <button
+          type="button"
+          onClick={() => onOpenDetails(item)}
+          className="p-1.5 rounded-md text-gray-400 hover:text-gray-700 dark:text-zinc-500 dark:hover:text-zinc-200 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
+          aria-label={`Open details for ${item.projectName}`}
+        >
+          <Cog6ToothIcon className="h-5 w-5" />
+        </button>
+      </td>
     </tr>
   );
 });
@@ -195,7 +199,7 @@ export interface ControlCenterTableProps {
   selectableGrants?: TableRow[];
   onSelectGrant?: (uid: string, checked: boolean) => void;
   onSelectAll?: (checked: boolean) => void;
-  onRowClick: (item: TableRow, e: React.MouseEvent) => void;
+  onOpenDetails: (item: TableRow) => void;
   onSort: (column: CommunityPayoutsSorting["sortBy"]) => void;
   sortBy?: CommunityPayoutsSorting["sortBy"];
   sortOrder?: "asc" | "desc";
@@ -224,7 +228,7 @@ export function ControlCenterTable({
   selectableGrants,
   onSelectGrant,
   onSelectAll,
-  onRowClick,
+  onOpenDetails,
   onSort,
   sortBy,
   sortOrder,
@@ -245,7 +249,7 @@ export function ControlCenterTable({
   itemsPerPage,
   totalItems,
 }: ControlCenterTableProps) {
-  const columnCount = 7 + (isKycEnabled ? 1 : 0) - (readOnly ? 1 : 0);
+  const columnCount = 8 + (isKycEnabled ? 1 : 0) - (readOnly ? 1 : 0);
 
   return (
     <div className="px-4">
@@ -324,6 +328,8 @@ export function ControlCenterTable({
                   <SortIcon column="disbursed_amount" sortBy={sortBy} sortOrder={sortOrder} />
                 </div>
               </th>
+              {/* Actions */}
+              <th className="h-11 px-2 w-12" />
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-zinc-800 bg-white dark:bg-zinc-950">
@@ -351,7 +357,7 @@ export function ControlCenterTable({
                   isLoadingKycStatuses={isLoadingKycStatuses}
                   kycStatus={kycStatuses.get(item.projectUid) ?? null}
                   onSelectGrant={onSelectGrant}
-                  onRowClick={onRowClick}
+                  onOpenDetails={onOpenDetails}
                   readOnly={readOnly}
                 />
               );

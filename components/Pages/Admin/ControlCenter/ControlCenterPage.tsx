@@ -302,13 +302,9 @@ export function ControlCenterPage() {
     setDataVersion((v) => v + 1);
   };
 
-  // ─── Row click → open details sidebar ─────────────────────────────────────
+  // ─── Open details sidebar ──────────────────────────────────────────────────
 
-  const handleRowClick = (item: TableRow, e: React.MouseEvent) => {
-    const target = e.target as HTMLElement;
-    if (target.closest("input[type='checkbox']") || target.closest("button")) {
-      return;
-    }
+  const handleOpenDetails = (item: TableRow) => {
     setDetailsGrantUid(item.grantUid);
     setDetailsModalOpen(true);
   };
@@ -513,7 +509,7 @@ export function ControlCenterPage() {
         selectableGrants={selectableGrants}
         onSelectGrant={handleSelectGrant}
         onSelectAll={handleSelectAll}
-        onRowClick={handleRowClick}
+        onOpenDetails={handleOpenDetails}
         onSort={handleSort}
         sortBy={sortBy}
         sortOrder={sortOrder}

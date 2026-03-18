@@ -89,7 +89,7 @@ function makeDefaultProps(
     selectableGrants: [],
     onSelectGrant: jest.fn(),
     onSelectAll: jest.fn(),
-    onRowClick: jest.fn(),
+    onOpenDetails: jest.fn(),
     onSort: jest.fn(),
     sortBy: undefined,
     sortOrder: undefined,
