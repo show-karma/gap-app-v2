@@ -95,6 +95,7 @@ export function ControlCenterPage() {
   // Details sidebar state
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [detailsGrantUid, setDetailsGrantUid] = useState<string | null>(null);
+  const [dataVersion, setDataVersion] = useState(0);
 
   // URL param helper
   const createQueryString = useCallback(
@@ -298,6 +299,7 @@ export function ControlCenterPage() {
   const handleDisbursementSuccess = () => {
     setSelectedGrants(new Set());
     refreshPayouts();
+    setDataVersion((v) => v + 1);
   };
 
   // ─── Row click → open details sidebar ─────────────────────────────────────
@@ -545,6 +547,7 @@ export function ControlCenterPage() {
       <ProjectDetailsSidebar
         grant={detailsModalGrant}
         open={detailsModalOpen}
+        dataVersion={dataVersion}
         onOpenChange={(nextOpen) => {
           setDetailsModalOpen(nextOpen);
           if (!nextOpen) setDetailsGrantUid(null);
@@ -566,7 +569,10 @@ export function ControlCenterPage() {
             ? (payoutConfigMap[detailsModalGrant.grantUid]?.milestoneAllocations ?? null)
             : null
         }
-        onConfigSuccess={refreshPayouts}
+        onConfigSuccess={() => {
+          refreshPayouts();
+          setDataVersion((v) => v + 1);
+        }}
         onCreateDisbursement={() => {
           if (!detailsModalGrant) return;
           setDetailsModalOpen(false);

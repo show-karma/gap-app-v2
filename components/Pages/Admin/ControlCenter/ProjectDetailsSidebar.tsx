@@ -85,6 +85,7 @@ interface ProjectDetailsSidebarProps {
   milestoneAllocations?: MilestoneAllocation[] | null;
   onCreateDisbursement?: () => void;
   onConfigSuccess?: () => void;
+  dataVersion?: number;
 }
 
 // ─── Section types ──────────────────────────────────────────────────────────
@@ -219,6 +220,7 @@ export function ProjectDetailsSidebar({
   milestoneAllocations,
   onCreateDisbursement,
   onConfigSuccess,
+  dataVersion = 0,
 }: ProjectDetailsSidebarProps) {
   const [activeSection, setActiveSection] = useState<SidebarSection>("details");
   const [milestoneEdits, setMilestoneEdits] = useState<
@@ -235,14 +237,16 @@ export function ProjectDetailsSidebar({
   const toggleAgreementMutation = useToggleAgreement(communityUID);
   const saveMilestoneInvoicesMutation = useSaveMilestoneInvoices(communityUID);
 
-  // Reset all state when switching to a different grant
+  // Reset all state when switching to a different grant or when data is refreshed
   useEffect(() => {
     setActiveSection("details");
     setMilestoneEdits({});
     setConfirmingUnsign(false);
+    setConfigIsDirty(false);
+    setConfigIsSaving(false);
     setLocalAgreementSigned(agreement?.signed === true);
     setAgreementDate(agreement?.signedAt ? new Date(agreement.signedAt) : undefined);
-  }, [grant?.grantUid]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [grant?.grantUid, dataVersion]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Sync agreement state when it changes server-side
   useEffect(() => {
@@ -609,6 +613,7 @@ export function ProjectDetailsSidebar({
 
               {activeSection === "settings" && (
                 <PayoutConfigurationContent
+                  key={dataVersion}
                   ref={configRef}
                   isActive={activeSection === "settings"}
                   grantUID={grant.grantUid}
@@ -624,6 +629,7 @@ export function ProjectDetailsSidebar({
 
               {activeSection === "history" && (
                 <PayoutHistoryContent
+                  key={dataVersion}
                   isActive={activeSection === "history"}
                   grantUID={grant.grantUid}
                   grantName={grant.grantName}
@@ -638,21 +644,29 @@ export function ProjectDetailsSidebar({
           <DialogFooter className="pt-3 border-t border-gray-100 dark:border-zinc-800">
             <div className="flex items-center justify-between w-full flex-wrap gap-2">
               <div className="flex items-center gap-2">
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    guardAction(() => onCreateDisbursement?.());
-                  }}
-                  disabled={!canCreateDisbursement || isSaving}
-                  title={
-                    !canCreateDisbursement
-                      ? "Configure a payout address and amount first"
-                      : "Create a disbursement"
-                  }
-                >
-                  <PlusCircleIcon />
-                  Create Disbursement
-                </Button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="inline-flex">
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            guardAction(() => onCreateDisbursement?.());
+                          }}
+                          disabled={!canCreateDisbursement || isSaving}
+                        >
+                          <PlusCircleIcon />
+                          Create Disbursement
+                        </Button>
+                      </span>
+                    </TooltipTrigger>
+                    {!canCreateDisbursement && (
+                      <TooltipContent>
+                        Configure a payout address and amount in Payout Settings first
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </TooltipProvider>
               </div>
 
               <div className="flex items-center gap-2">
