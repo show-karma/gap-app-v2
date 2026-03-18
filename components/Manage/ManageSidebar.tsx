@@ -276,7 +276,8 @@ function CommunitySwitcher({
 export function ManageSidebar({ communityId, community }: ManageSidebarProps) {
   const rawPathname = usePathname();
   const { isWhitelabel } = useWhitelabel();
-  const { roles, isCommunityAdmin, isProgramAdmin, isReviewer, isLoading } = usePermissionContext();
+  const { roles, isCommunityAdmin, isProgramAdmin, isReviewer, isRegistryAdmin, isLoading } =
+    usePermissionContext();
   const badgeCounts = useSidebarCounts(communityId);
 
   const slug = community?.details?.slug || communityId;
@@ -286,7 +287,7 @@ export function ManageSidebar({ communityId, community }: ManageSidebarProps) {
       ? `${communityPrefix}${rawPathname}`
       : rawPathname;
 
-  const hasAdminAccess = isCommunityAdmin || isProgramAdmin;
+  const hasAdminAccess = isCommunityAdmin || isProgramAdmin || isRegistryAdmin;
   const hasReviewerAccess = isReviewer;
   const roleLabel = ROLE_LABELS[roles.primaryRole] ?? "";
 

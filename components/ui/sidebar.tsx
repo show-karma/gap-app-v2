@@ -72,7 +72,12 @@ const SidebarProvider = React.forwardRef<
 
     // This is the internal state of the sidebar.
     // We use openProp and setOpenProp for control from outside the component.
-    const [_open, _setOpen] = React.useState(defaultOpen);
+    const [_open, _setOpen] = React.useState(() => {
+      if (typeof document === "undefined") return defaultOpen;
+      const match = document.cookie.match(new RegExp(`(?:^|; )${SIDEBAR_COOKIE_NAME}=([^;]*)`));
+      if (match) return match[1] === "true";
+      return defaultOpen;
+    });
     const open = openProp ?? _open;
     const setOpen = React.useCallback(
       (value: boolean | ((value: boolean) => boolean)) => {
@@ -191,6 +196,7 @@ const Sidebar = React.forwardRef<
       return (
         <Sheet open={openMobile} onOpenChange={setOpenMobile}>
           <SheetContent
+            ref={ref}
             data-sidebar="sidebar"
             data-mobile="true"
             className={cn(
@@ -204,6 +210,7 @@ const Sidebar = React.forwardRef<
               } as React.CSSProperties
             }
             side={side}
+            {...props}
           >
             <SheetHeader className="sr-only">
               <SheetTitle>Sidebar</SheetTitle>
@@ -297,7 +304,6 @@ const SidebarRail = React.forwardRef<HTMLButtonElement, React.ComponentProps<"bu
         ref={ref}
         data-sidebar="rail"
         aria-label="Toggle Sidebar"
-        tabIndex={-1}
         onClick={toggleSidebar}
         title="Toggle Sidebar"
         className={cn(

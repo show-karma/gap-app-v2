@@ -149,7 +149,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   ) : (
                     <>
                       <Navbar />
-                      <div className="h-16" />
+                      <div className="h-[var(--navbar-height)]" />
                     </>
                   )}
                   {children}
