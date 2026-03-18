@@ -22,8 +22,8 @@ jest.mock("@tanstack/react-query", () => ({
   useQueryClient: jest.fn(),
 }));
 
-jest.mock("@privy-io/react-auth", () => ({
-  useWallets: jest.fn(),
+jest.mock("@/contexts/privy-bridge-context", () => ({
+  usePrivyBridge: jest.fn(),
 }));
 
 jest.mock("react-hot-toast", () => ({
@@ -64,7 +64,7 @@ import type { ClaimEligibility } from "@/src/features/claim-funds/types";
 import type { ClaimGrantsConfig } from "@/src/infrastructure/types/tenant";
 
 const { useMutation, useQueryClient } = jest.requireMock("@tanstack/react-query");
-const { useWallets } = jest.requireMock("@privy-io/react-auth");
+const { usePrivyBridge } = jest.requireMock("@/contexts/privy-bridge-context");
 
 const MOCK_WALLET = {
   address: "0xABCDEF1234567890ABCDEF1234567890ABCDEF12",
@@ -85,7 +85,7 @@ const MOCK_ELIGIBILITY: ClaimEligibility = {
 
 function setupMocks(isPending = false) {
   useQueryClient.mockReturnValue({ invalidateQueries: mockInvalidateQueries });
-  useWallets.mockReturnValue({ wallets: [MOCK_WALLET] });
+  usePrivyBridge.mockReturnValue({ wallets: [MOCK_WALLET] });
   useMutation.mockImplementation((options: typeof mutationCallbacks & { mutationFn?: unknown }) => {
     mutationCallbacks.onSettled = options.onSettled;
     mutationCallbacks.onSuccess = options.onSuccess;
@@ -143,7 +143,7 @@ describe("useClaimTransaction — concurrency guard (isClaimingRef)", () => {
   });
 
   it("blocks when no wallet is connected", () => {
-    useWallets.mockReturnValue({ wallets: [] });
+    usePrivyBridge.mockReturnValue({ wallets: [] });
     const { result } = renderHook(() => useClaimTransaction("tenant-abc", MOCK_CLAIM_GRANTS));
 
     act(() => {

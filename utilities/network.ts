@@ -67,20 +67,7 @@ export const gapSupportedNetworks = appNetwork.filter(
 export const PAYOUT_CHAINS = appNetwork;
 
 export function getExplorerUrl(chainId: number, transactionHash: string) {
-  const chain = [
-    mainnet,
-    optimism,
-    arbitrum,
-    base,
-    celo,
-    polygon,
-    optimismSepolia,
-    baseSepolia,
-    sepolia,
-    lisk,
-    scroll,
-    sei,
-  ].find((c) => c.id === chainId);
+  const chain = appNetwork.find((c) => c.id === chainId);
   if (!chain || !chain.blockExplorers?.default?.url) {
     // Return a fallback block explorer URL if the chain or its explorer is not found
     return `https://www.oklink.com/multi-search#key=${transactionHash}`;
