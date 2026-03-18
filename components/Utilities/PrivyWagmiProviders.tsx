@@ -2,7 +2,7 @@
 
 import { PrivyProvider, usePrivy, useWallets } from "@privy-io/react-auth";
 import { WagmiProvider } from "@privy-io/wagmi";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useAccount } from "wagmi";
 import { PROJECT_NAME } from "@/constants/brand";
 import { type PrivyBridgeValue, usePrivyBridgeSetter } from "@/contexts/privy-bridge-context";
@@ -35,31 +35,34 @@ function PrivyBridgeUpdater() {
   const { wallets } = useWallets();
   const { isConnected } = useAccount();
 
+  // Store latest values in refs so the effect always has fresh data.
+  // The effect depends only on primitive values (no object identity issues),
+  // and reads functions/objects from refs to avoid stale closures.
+  const privyRef = useRef(privy);
+  const walletsRef = useRef(wallets);
+  privyRef.current = privy;
+  walletsRef.current = wallets;
+
+  // Depend on primitives only — these are stable across renders when unchanged.
+  // When any of these change, push the full snapshot (including functions from refs).
+  const userId = privy.user?.id;
+  const walletCount = wallets.length;
+
   useEffect(() => {
-    const value: PrivyBridgeValue = {
-      ready: privy.ready,
-      authenticated: privy.authenticated,
-      user: privy.user,
-      login: privy.login,
-      logout: privy.logout,
-      getAccessToken: privy.getAccessToken,
-      connectWallet: privy.connectWallet,
-      wallets,
+    const p = privyRef.current;
+    const w = walletsRef.current;
+    setBridge({
+      ready: p.ready,
+      authenticated: p.authenticated,
+      user: p.user,
+      login: p.login,
+      logout: p.logout,
+      getAccessToken: p.getAccessToken,
+      connectWallet: p.connectWallet,
+      wallets: w,
       isConnected,
-    };
-    setBridge(value);
-  }, [
-    setBridge,
-    privy.ready,
-    privy.authenticated,
-    privy.user,
-    privy.login,
-    privy.logout,
-    privy.getAccessToken,
-    privy.connectWallet,
-    wallets,
-    isConnected,
-  ]);
+    });
+  }, [setBridge, privy.ready, privy.authenticated, userId, walletCount, isConnected]);
 
   return null;
 }
