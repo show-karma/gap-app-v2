@@ -35,7 +35,7 @@ export const GrantSizeSlider: FC<SliderProps> = ({ value, onChangeListener }) =>
             max={registryHelper.grantSizes[1]}
             step={50000}
             value={value}
-            onChange={(e: any) => onChangeListener(e)}
+            onChange={(value) => onChangeListener(value as number[])}
           />
         </div>
       </Popover.Content>
