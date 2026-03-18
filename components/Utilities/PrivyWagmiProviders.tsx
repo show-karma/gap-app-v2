@@ -2,7 +2,7 @@
 
 import { PrivyProvider, usePrivy, useWallets } from "@privy-io/react-auth";
 import { WagmiProvider } from "@privy-io/wagmi";
-import { useEffect, useRef } from "react";
+import { type ReactNode, useEffect, useRef } from "react";
 import { useAccount } from "wagmi";
 import { PROJECT_NAME } from "@/constants/brand";
 import { type PrivyBridgeValue, usePrivyBridgeSetter } from "@/contexts/privy-bridge-context";
@@ -24,27 +24,24 @@ const WALLET_LIST = [
 
 /**
  * Reads from Privy/Wagmi hooks and pushes values into PrivyBridgeContext
- * via the setter. Renders nothing — it's a side-effect-only component.
+ * via the setter. Renders children — acts as a transparent bridge.
  *
- * This lives inside PrivyProvider + @privy-io/wagmi WagmiProvider, so
+ * Lives inside PrivyProvider + @privy-io/wagmi WagmiProvider, so
  * usePrivy(), useWallets(), and useAccount() are safe to call.
  */
-function PrivyBridgeUpdater() {
+function PrivyBridgeUpdater({ children }: { children: ReactNode }) {
   const setBridge = usePrivyBridgeSetter();
   const privy = usePrivy();
   const { wallets } = useWallets();
   const { isConnected } = useAccount();
 
   // Store latest values in refs so the effect always has fresh data.
-  // The effect depends only on primitive values (no object identity issues),
-  // and reads functions/objects from refs to avoid stale closures.
+  // Depend on primitives only (stable across renders when unchanged).
   const privyRef = useRef(privy);
   const walletsRef = useRef(wallets);
   privyRef.current = privy;
   walletsRef.current = wallets;
 
-  // Depend on primitives only — these are stable across renders when unchanged.
-  // When any of these change, push the full snapshot (including functions from refs).
   const userId = privy.user?.id;
   const walletCount = wallets.length;
 
@@ -64,10 +61,11 @@ function PrivyBridgeUpdater() {
     });
   }, [setBridge, privy.ready, privy.authenticated, userId, walletCount, isConnected]);
 
-  return null;
+  return <>{children}</>;
 }
 
-interface PrivySidecarProps {
+interface PrivyWagmiProvidersProps {
+  children: ReactNode;
   tenantConfig?: TenantConfig | null;
 }
 
@@ -84,35 +82,36 @@ function isPrivyCompatible(): boolean {
 }
 
 /**
- * Sidecar component — renders as a sibling to children, NOT a wrapper.
+ * Wraps children with PrivyProvider + @privy-io/wagmi WagmiProvider + bridge.
  *
- * Mounts PrivyProvider + @privy-io/wagmi WagmiProvider + PrivyBridgeUpdater.
- * PrivyBridgeUpdater reads Privy/Wagmi hooks and pushes values into the
- * shared PrivyBridgeContext so that useAuth() (and anything else that
- * reads the bridge) gets live auth state.
+ * Loaded via dynamic import() from PrivyProviderWrapper to keep the Privy
+ * SDK (~400KB) out of the initial bundle. Once loaded, it wraps the entire
+ * app so that direct usePrivy()/useWallets() calls work everywhere.
  *
- * Renders null — no visible output. The @privy-io/wagmi WagmiProvider's
- * PrivyWagmiConnector syncs Privy wallets to the shared wagmi config store,
- * which the outer WagmiProvider's consumers (useAccount, etc.) read from.
+ * The @privy-io/wagmi WagmiProvider is intentionally separate from the outer
+ * WagmiProvider (from wagmi) in PrivyProviderWrapper. It wraps wagmi's native
+ * provider and adds PrivyWagmiConnector for Privy↔wagmi wallet sync. Both
+ * share the same privyConfig store. reconnectOnMount=false prevents duplicate
+ * wallet reconnection.
  */
-export default function PrivySidecar({ tenantConfig }: PrivySidecarProps) {
+export default function PrivyWagmiProviders({ children, tenantConfig }: PrivyWagmiProvidersProps) {
   const privyAppId = envVars.PRIVY_APP_ID;
 
   if (!privyAppId) {
     console.error(
       "NEXT_PUBLIC_PRIVY_APP_ID is not defined. Please set it in your environment variables."
     );
-    return null;
+    return <>{children}</>;
   }
 
   if (!isPrivyCompatible()) {
-    return null;
+    return <>{children}</>;
   }
 
   const defaultChain = appNetwork[0];
 
-  const accentColor = tenantConfig?.theme?.colors?.primary || "#1de9b6";
   const baseUrl = envVars.VERCEL_URL;
+  const accentColor = tenantConfig?.theme?.colors?.primary || "#1de9b6";
   const logo = tenantConfig?.assets?.logo
     ? tenantConfig.assets.logo.startsWith("http")
       ? tenantConfig.assets.logo
@@ -150,23 +149,8 @@ export default function PrivySidecar({ tenantConfig }: PrivySidecarProps) {
         walletConnectCloudProjectId: envVars.PROJECT_ID || undefined,
       }}
     >
-      {/*
-        This WagmiProvider (from @privy-io/wagmi) is intentionally separate from
-        the outer WagmiProvider (from wagmi) in PrivyProviderWrapper.
-
-        @privy-io/wagmi's WagmiProvider wraps wagmi's native WagmiProvider and
-        adds PrivyWagmiConnector — an internal component that syncs Privy-managed
-        wallets to wagmi's shared config store (Zustand). Without it, wallet
-        connections made through Privy wouldn't be visible to wagmi hooks.
-
-        Both providers share the same `privyConfig` object, so they read/write
-        the same underlying store. The outer provider serves app children (SSR +
-        hook support), this inner one exists only for the Privy ↔ wagmi sync.
-        reconnectOnMount=false prevents the inner provider from re-triggering
-        wallet reconnection that the outer provider already handles.
-      */}
       <WagmiProvider config={privyConfig} reconnectOnMount={false}>
-        <PrivyBridgeUpdater />
+        <PrivyBridgeUpdater>{children}</PrivyBridgeUpdater>
       </WagmiProvider>
     </PrivyProvider>
   );

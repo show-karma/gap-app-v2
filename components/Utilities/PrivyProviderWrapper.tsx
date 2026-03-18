@@ -14,13 +14,8 @@ import { privyConfig } from "@/utilities/wagmi/privy-config";
  */
 export { queryClient };
 
-/**
- * Lazily loaded sidecar type. The module default is a component that
- * renders null — it only exists to mount PrivyProvider and push auth
- * state into PrivyBridgeContext.
- */
-type SidecarModule = {
-  default: React.ComponentType<{ tenantConfig?: TenantConfig | null }>;
+type PrivyModule = {
+  default: React.ComponentType<{ children: ReactNode; tenantConfig?: TenantConfig | null }>;
 };
 
 interface PrivyProviderWrapperProps {
@@ -29,47 +24,49 @@ interface PrivyProviderWrapperProps {
 }
 
 /**
- * Root provider shell. The tree structure is stable across the entire
- * lifecycle — children never change position, so React never unmounts them.
+ * Root provider shell.
  *
- * Architecture:
+ * QueryClientProvider and WagmiProvider are always present (SSR + client).
+ * PrivyProvider (the heavy ~400KB SDK) loads via dynamic import() after
+ * hydration and wraps children additively.
  *
- *   QueryClientProvider
- *     WagmiProvider (from wagmi — always present for SSR hook support)
- *       PrivyBridgeProvider (holds auth state, provides context)
- *         ├── PrivySidecar (lazy, renders null, pushes auth state)
- *         └── {children} (stable position, never re-mounts)
+ * While loading, components that call usePrivy()/useWallets() directly
+ * will get Privy's default "not ready" state, and useAuth() reads from
+ * PrivyBridgeContext defaults. Both paths show skeleton/loading UI.
  *
- * The Privy SDK (~400KB) loads asynchronously via dynamic import().
- * PrivySidecar mounts as a sibling to children, reads Privy/Wagmi hooks
- * inside its own PrivyProvider + @privy-io/wagmi WagmiProvider subtree,
- * and pushes values into PrivyBridgeContext via setState.
+ * Once loaded, PrivyProvider wraps children. Components that call Privy
+ * hooks directly get live values, and PrivyBridgeUpdater pushes them
+ * to the bridge for useAuth() consumers.
  *
- * Children see the auth state change as a context value update (re-render),
- * not a tree restructure (re-mount). No blank flash, no lost state.
+ * NOTE: The component type at children's position changes from Fragment
+ * to PrivyProviders when the module loads, causing a React re-mount.
+ * This is acceptable because:
+ * 1. It only happens once (on initial load)
+ * 2. React Query cache (via HydrationBoundary) survives re-mount
+ * 3. Direct Privy hook calls require PrivyProvider in the tree
  */
 export default function PrivyProviderWrapper({
   children,
   tenantConfig,
 }: PrivyProviderWrapperProps) {
-  const [Sidecar, setSidecar] = useState<SidecarModule | null>(null);
+  const [Privy, setPrivy] = useState<PrivyModule | null>(null);
 
   useEffect(() => {
-    import("./PrivyWagmiProviders").then(setSidecar).catch((err) => {
-      // Privy SDK chunk failed to load (network error, ad-blocker, etc.).
-      // The app remains usable — auth features degrade gracefully via
-      // PrivyBridgeContext defaults (ready=false, authenticated=false).
+    import("./PrivyWagmiProviders").then(setPrivy).catch((err) => {
       console.error("[PrivyProviderWrapper] Failed to load Privy SDK:", err);
     });
   }, []);
 
+  const inner = Privy ? (
+    <Privy.default tenantConfig={tenantConfig}>{children}</Privy.default>
+  ) : (
+    children
+  );
+
   return (
     <QueryClientProvider client={queryClient}>
       <WagmiProvider config={privyConfig}>
-        <PrivyBridgeProvider>
-          {Sidecar && <Sidecar.default tenantConfig={tenantConfig} />}
-          {children}
-        </PrivyBridgeProvider>
+        <PrivyBridgeProvider>{inner}</PrivyBridgeProvider>
       </WagmiProvider>
     </QueryClientProvider>
   );
