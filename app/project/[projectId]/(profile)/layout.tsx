@@ -11,12 +11,8 @@ interface ProfileLayoutProps {
 /**
  * Shared layout for the main project profile pages (updates, about, funding, impact, team).
  *
- * No dynamic() here — ProjectProfileLayout is the primary layout for this route
- * and must be in the initial bundle. Code-splitting it causes an extra loading
- * flash (Suspense fallback while chunk loads → layout renders with cached data).
- *
- * The Suspense boundary is required because ProjectProfileLayout uses
- * useSearchParams(), which needs a Suspense boundary in Next.js production builds.
+ * Suspense boundary required because ProjectProfileLayout uses useSearchParams(),
+ * which needs a Suspense boundary in Next.js App Router production builds.
  */
 export default function ProfileLayout({ children }: ProfileLayoutProps) {
   return (

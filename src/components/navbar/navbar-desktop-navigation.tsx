@@ -12,6 +12,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { NavbarUserSkeleton } from "@/src/components/navbar/navbar-user-skeleton";
 import { PAGES } from "@/utilities/pages";
 import { SOCIALS } from "@/utilities/socials";
 import { cn } from "@/utilities/tailwind";
@@ -26,10 +27,12 @@ import {
 import { NavbarAuthButtons } from "./navbar-auth-buttons";
 import { useNavbarPermissions } from "./navbar-permissions-context";
 import { NavbarSearch } from "./navbar-search";
-import { NavbarUserSkeleton } from "./navbar-user-skeleton";
 
 const NavbarUserMenu = dynamic(
-  () => import("./navbar-user-menu").then((m) => ({ default: m.NavbarUserMenu })),
+  () =>
+    import("@/src/components/navbar/navbar-user-menu").then((m) => ({
+      default: m.NavbarUserMenu,
+    })),
   { ssr: false, loading: () => <NavbarUserSkeleton /> }
 );
 

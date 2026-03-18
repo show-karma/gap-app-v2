@@ -110,13 +110,15 @@ export default function PrivyWagmiProviders({ children, tenantConfig }: PrivyWag
 
   const defaultChain = appNetwork[0];
 
-  const baseUrl = envVars.VERCEL_URL;
+  // Use current origin for relative logo paths so whitelabel custom domains
+  // resolve correctly. Fall back to VERCEL_URL during SSR (no window).
+  const origin = typeof window !== "undefined" ? window.location.origin : envVars.VERCEL_URL;
   const accentColor = tenantConfig?.theme?.colors?.primary || "#1de9b6";
   const logo = tenantConfig?.assets?.logo
     ? tenantConfig.assets.logo.startsWith("http")
       ? tenantConfig.assets.logo
-      : `${baseUrl}${tenantConfig.assets.logo}`
-    : `${baseUrl}/logo/karma-logo-light.svg`;
+      : `${origin}${tenantConfig.assets.logo}`
+    : `${origin}/logo/karma-logo-light.svg`;
   const landingHeader = tenantConfig
     ? `Connect to ${tenantConfig.name}`
     : `Connect to ${PROJECT_NAME}`;

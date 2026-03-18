@@ -3,7 +3,11 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 import { type ReactNode, useEffect, useState } from "react";
 import { WagmiProvider } from "wagmi";
-import { PrivyBridgeProvider } from "@/contexts/privy-bridge-context";
+import {
+  PRIVY_BRIDGE_DEFAULTS,
+  PrivyBridgeProvider,
+  usePrivyBridgeSetter,
+} from "@/contexts/privy-bridge-context";
 import type { TenantConfig } from "@/src/infrastructure/types/tenant";
 import { queryClient } from "@/utilities/query-client";
 import { privyConfig } from "@/utilities/wagmi/privy-config";
@@ -24,49 +28,59 @@ interface PrivyProviderWrapperProps {
 }
 
 /**
- * Root provider shell.
+ * Inner component that loads Privy SDK and manages bridge fallback.
+ * Separated so it can call usePrivyBridgeSetter (needs PrivyBridgeProvider above).
+ */
+function PrivyLoader({
+  children,
+  tenantConfig,
+}: {
+  children: ReactNode;
+  tenantConfig?: TenantConfig | null;
+}) {
+  const [Privy, setPrivy] = useState<PrivyModule | null>(null);
+  const setBridge = usePrivyBridgeSetter();
+
+  useEffect(() => {
+    import("./PrivyWagmiProviders").then(setPrivy).catch((err) => {
+      console.error("[PrivyProviderWrapper] Failed to load Privy SDK:", err);
+      // Signal ready=true so the app exits loading/skeleton states.
+      // authenticated=false means auth-gated pages redirect to login
+      // instead of showing infinite skeletons.
+      setBridge({ ...PRIVY_BRIDGE_DEFAULTS, ready: true });
+    });
+  }, [setBridge]);
+
+  if (Privy) {
+    return <Privy.default tenantConfig={tenantConfig}>{children}</Privy.default>;
+  }
+
+  return <>{children}</>;
+}
+
+/**
+ * Root provider shell. The tree structure:
  *
- * QueryClientProvider and WagmiProvider are always present (SSR + client).
- * PrivyProvider (the heavy ~400KB SDK) loads via dynamic import() after
- * hydration and wraps children additively.
+ *   QueryClientProvider
+ *     WagmiProvider (from wagmi — always present for SSR hook support)
+ *       PrivyBridgeProvider (holds auth state, provides context)
+ *         PrivyLoader (lazy-loads PrivyWagmiProviders, wraps children)
  *
- * While loading, components that call usePrivy()/useWallets() directly
- * will get Privy's default "not ready" state, and useAuth() reads from
- * PrivyBridgeContext defaults. Both paths show skeleton/loading UI.
- *
- * Once loaded, PrivyProvider wraps children. Components that call Privy
- * hooks directly get live values, and PrivyBridgeUpdater pushes them
- * to the bridge for useAuth() consumers.
- *
- * NOTE: The component type at children's position changes from Fragment
- * to PrivyProviders when the module loads, causing a React re-mount.
- * This is acceptable because:
- * 1. It only happens once (on initial load)
- * 2. React Query cache (via HydrationBoundary) survives re-mount
- * 3. Direct Privy hook calls require PrivyProvider in the tree
+ * PrivyProvider (~400KB SDK) loads asynchronously via dynamic import().
+ * If the import fails (network error, ad-blocker), the bridge signals
+ * ready=true + authenticated=false so auth-gated pages redirect to
+ * login instead of showing infinite skeletons.
  */
 export default function PrivyProviderWrapper({
   children,
   tenantConfig,
 }: PrivyProviderWrapperProps) {
-  const [Privy, setPrivy] = useState<PrivyModule | null>(null);
-
-  useEffect(() => {
-    import("./PrivyWagmiProviders").then(setPrivy).catch((err) => {
-      console.error("[PrivyProviderWrapper] Failed to load Privy SDK:", err);
-    });
-  }, []);
-
-  const inner = Privy ? (
-    <Privy.default tenantConfig={tenantConfig}>{children}</Privy.default>
-  ) : (
-    children
-  );
-
   return (
     <QueryClientProvider client={queryClient}>
       <WagmiProvider config={privyConfig}>
-        <PrivyBridgeProvider>{inner}</PrivyBridgeProvider>
+        <PrivyBridgeProvider>
+          <PrivyLoader tenantConfig={tenantConfig}>{children}</PrivyLoader>
+        </PrivyBridgeProvider>
       </WagmiProvider>
     </QueryClientProvider>
   );

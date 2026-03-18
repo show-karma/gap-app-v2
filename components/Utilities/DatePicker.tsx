@@ -1,5 +1,8 @@
 "use client";
 
+// CSS co-located with component — bundled in the same chunk since DatePicker
+// is always dynamically imported. Avoids loading this CSS on pages that don't
+// use the date picker.
 import "react-day-picker/dist/style.css";
 import { CalendarIcon } from "@heroicons/react/24/solid";
 import * as Popover from "@radix-ui/react-popover";

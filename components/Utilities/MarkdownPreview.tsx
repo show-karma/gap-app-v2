@@ -1,4 +1,8 @@
 "use client";
+
+// CSS co-located with component — bundled in the same chunk since MarkdownPreview
+// is always dynamically imported. Avoids loading this CSS on pages that don't
+// render markdown.
 import "@uiw/react-markdown-preview/markdown.css";
 import dynamic from "next/dynamic";
 import { useTheme } from "next-themes";
