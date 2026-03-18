@@ -5,6 +5,28 @@
 
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+
+// Mock next/dynamic locally for this integration test.
+// navbar.tsx and navbar-desktop-navigation.tsx use dynamic() for NavbarMobileMenu
+// and NavbarUserMenu. In Jest, dynamic() with ssr:false renders the loading
+// fallback (skeleton) instead of the real component. This mock makes dynamic()
+// resolve synchronously so integration tests can interact with the real components.
+jest.mock("next/dynamic", () => {
+  const React = require("react");
+  return (loader: () => Promise<any>, _opts?: any) => {
+    let Component: any = null;
+    loader().then((mod: any) => {
+      Component = mod.default || mod;
+    });
+    const DynamicComponent = (props: any) => {
+      if (!Component) return null;
+      return React.createElement(Component, props);
+    };
+    DynamicComponent.displayName = "DynamicMock";
+    return DynamicComponent;
+  };
+});
+
 import { Navbar } from "@/src/components/navbar/navbar";
 import { NavbarDesktopNavigation } from "@/src/components/navbar/navbar-desktop-navigation";
 import { getAuthFixture } from "../fixtures/auth-fixtures";
