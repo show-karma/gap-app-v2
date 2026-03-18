@@ -631,10 +631,9 @@ describe("ProjectDetailsSidebar", () => {
   });
 
   describe("Unsaved changes guard", () => {
-    it("calls window.confirm when closing with unsaved changes", async () => {
+    it("shows discard dialog when closing with unsaved changes", async () => {
       const user = userEvent.setup();
       const onOpenChange = jest.fn();
-      const confirmSpy = jest.spyOn(window, "confirm").mockReturnValue(false);
 
       renderSidebar({
         onOpenChange,
@@ -648,8 +647,6 @@ describe("ProjectDetailsSidebar", () => {
         ],
       });
 
-      // Navigate to milestones section first
-
       // Make a change to a milestone invoice date
       const dateInput = screen.getByLabelText(/invoice received date for M1/i);
       await user.type(dateInput, "2024-06-15");
@@ -659,14 +656,15 @@ describe("ProjectDetailsSidebar", () => {
       const closeButton = closeButtons[closeButtons.length - 1];
       await user.click(closeButton);
 
-      expect(confirmSpy).toHaveBeenCalledWith("You have unsaved changes. Discard?");
-      confirmSpy.mockRestore();
+      // Discard confirmation dialog should appear
+      expect(screen.getByText("Unsaved changes")).toBeInTheDocument();
+      expect(screen.getByText(/discard them/i)).toBeInTheDocument();
+      expect(onOpenChange).not.toHaveBeenCalled();
     });
 
-    it("does not prompt when closing without unsaved changes", async () => {
+    it("does not show discard dialog when closing without unsaved changes", async () => {
       const user = userEvent.setup();
       const onOpenChange = jest.fn();
-      const confirmSpy = jest.spyOn(window, "confirm");
 
       renderSidebar({ onOpenChange, milestoneInvoices: [] });
 
@@ -675,8 +673,7 @@ describe("ProjectDetailsSidebar", () => {
       const closeButton = closeButtons[closeButtons.length - 1];
       await user.click(closeButton);
 
-      expect(confirmSpy).not.toHaveBeenCalled();
-      confirmSpy.mockRestore();
+      expect(screen.queryByText("Unsaved changes")).not.toBeInTheDocument();
     });
   });
 

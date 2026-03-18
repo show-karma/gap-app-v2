@@ -443,31 +443,46 @@ export function ProjectDetailsSidebar({
     copyToClipboard(grant.currentPayoutAddress, "Address copied");
   }, [grant?.currentPayoutAddress, copyToClipboard]);
 
-  const hasUnsavedChanges = useCallback(() => {
-    if (hasMilestoneEdits) return true;
-    if (configRef.current?.isDirty) return true;
-    return false;
-  }, [hasMilestoneEdits]);
+  const hasUnsavedChanges = hasMilestoneEdits || configIsDirty;
 
-  const confirmDiscardEdits = useCallback(() => {
-    if (hasUnsavedChanges()) {
-      return window.confirm("You have unsaved changes. Discard?");
-    }
-    return true;
-  }, [hasUnsavedChanges]);
+  // Discard confirmation dialog state
+  const [discardDialogOpen, setDiscardDialogOpen] = useState(false);
+  const pendingActionRef = useRef<(() => void) | null>(null);
+
+  const guardAction = useCallback(
+    (action: () => void) => {
+      if (hasUnsavedChanges) {
+        pendingActionRef.current = action;
+        setDiscardDialogOpen(true);
+      } else {
+        action();
+      }
+    },
+    [hasUnsavedChanges]
+  );
+
+  const handleConfirmDiscard = useCallback(() => {
+    setDiscardDialogOpen(false);
+    setMilestoneEdits({});
+    pendingActionRef.current?.();
+    pendingActionRef.current = null;
+  }, []);
+
+  const handleCancelDiscard = useCallback(() => {
+    setDiscardDialogOpen(false);
+    pendingActionRef.current = null;
+  }, []);
 
   const handleRequestClose = useCallback(() => {
-    if (!confirmDiscardEdits()) return;
-    onOpenChange(false);
-  }, [confirmDiscardEdits, onOpenChange]);
+    guardAction(() => onOpenChange(false));
+  }, [guardAction, onOpenChange]);
 
   const handleSectionChange = useCallback(
     (section: SidebarSection) => {
       if (section === activeSection) return;
-      if (!confirmDiscardEdits()) return;
-      setActiveSection(section);
+      guardAction(() => setActiveSection(section));
     },
-    [activeSection, confirmDiscardEdits]
+    [activeSection, guardAction]
   );
 
   const handleSaveChanges = useCallback(async () => {
@@ -626,8 +641,7 @@ export function ProjectDetailsSidebar({
                 <Button
                   size="sm"
                   onClick={() => {
-                    if (!confirmDiscardEdits()) return;
-                    onCreateDisbursement?.();
+                    guardAction(() => onCreateDisbursement?.());
                   }}
                   disabled={!canCreateDisbursement || isSaving}
                   title={
@@ -665,6 +679,26 @@ export function ProjectDetailsSidebar({
           </DialogFooter>
         </DialogContent>
       )}
+
+      {/* Discard changes confirmation */}
+      <Dialog open={discardDialogOpen} onOpenChange={handleCancelDiscard}>
+        <DialogContent className="max-w-sm bg-white dark:bg-zinc-950">
+          <DialogHeader>
+            <DialogTitle>Unsaved changes</DialogTitle>
+            <DialogDescription>
+              You have unsaved changes. Are you sure you want to discard them?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="ghost" size="sm" onClick={handleCancelDiscard}>
+              Cancel
+            </Button>
+            <Button variant="destructive" size="sm" onClick={handleConfirmDiscard}>
+              Discard
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }

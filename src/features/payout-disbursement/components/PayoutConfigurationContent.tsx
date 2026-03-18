@@ -7,7 +7,7 @@ import {
   TrashIcon,
 } from "@heroicons/react/24/outline";
 import {
-  forwardRef,
+  type Ref,
   useCallback,
   useEffect,
   useImperativeHandle,
@@ -39,6 +39,7 @@ import type {
 } from "../types/payout-disbursement";
 
 export interface PayoutConfigurationContentProps {
+  ref?: Ref<PayoutConfigurationContentRef>;
   isActive: boolean;
   grantUID: string;
   projectUID: string;
@@ -75,24 +76,19 @@ function detectTokenTypeFromConfig(config: PayoutGrantConfig): TokenType {
   return "native";
 }
 
-export const PayoutConfigurationContent = forwardRef<
-  PayoutConfigurationContentRef,
-  PayoutConfigurationContentProps
->(function PayoutConfigurationContent(
-  {
-    isActive,
-    grantUID,
-    projectUID,
-    communityUID,
-    grantName,
-    projectName,
-    existingConfig,
-    onSuccess,
-    onDirtyChange,
-    onSavingChange,
-  },
-  ref
-) {
+export function PayoutConfigurationContent({
+  ref,
+  isActive,
+  grantUID,
+  projectUID,
+  communityUID,
+  grantName,
+  projectName,
+  existingConfig,
+  onSuccess,
+  onDirtyChange,
+  onSavingChange,
+}: PayoutConfigurationContentProps) {
   const {
     data: fetchedConfig,
     isLoading: isLoadingConfig,
@@ -740,4 +736,4 @@ export const PayoutConfigurationContent = forwardRef<
       </div>
     </div>
   );
-});
+}
