@@ -492,7 +492,7 @@ export function ProjectDetailsSidebar({
         onOpenChange(nextOpen);
       }}
     >
-      <DialogContent className="max-w-7xl max-h-[90vh] overflow-hidden flex flex-col bg-white dark:bg-zinc-950">
+      <DialogContent className="max-w-7xl h-[90vh] overflow-hidden flex flex-col bg-white dark:bg-zinc-950">
         {/* Header */}
         <DialogHeader className="space-y-1 pb-3 border-b border-gray-100 dark:border-zinc-800">
           <div className="flex items-start justify-between gap-2">
@@ -630,7 +630,7 @@ export function ProjectDetailsSidebar({
                     : "Create a disbursement"
                 }
               >
-                <PlusCircleIcon className="h-4 w-4 mr-1.5" />
+                <PlusCircleIcon />
                 Create Disbursement
               </Button>
             </div>
@@ -638,7 +638,7 @@ export function ProjectDetailsSidebar({
             <div className="flex items-center gap-2">
               {showSaveButton && (
                 <Button size="sm" onClick={handleSaveChanges} disabled={isSaving}>
-                  <CheckIcon className="h-4 w-4 mr-1.5" />
+                  <CheckIcon />
                   {isSaving
                     ? "Saving..."
                     : activeSection === "details" && hasMilestoneEdits
