@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { GrantCommentsService } from "../api/grant-comments-service";
 import type { GrantComment } from "../types";
 
@@ -11,14 +12,12 @@ interface UseGrantCommentsOptions {
   programId: string;
 }
 
-const QUERY_KEY_PREFIX = "grant-comments";
-
 export function useGrantComments({ projectUID, programId }: UseGrantCommentsOptions) {
   const { authenticated } = useAuth();
   const queryClient = useQueryClient();
 
   const queryKey = useMemo(
-    () => [QUERY_KEY_PREFIX, projectUID, programId],
+    () => [...QUERY_KEYS.GRANTS.COMMENTS(projectUID, programId)],
     [projectUID, programId]
   );
 
