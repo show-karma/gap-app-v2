@@ -45,13 +45,13 @@ function getRelatedSolutions(currentSlug: string): Pick<SolutionPageType, "slug"
 
   for (const s of all) {
     if (s.slug === currentSlug) continue;
-    if (getCategoryFromSlug(s.slug) === currentCategory && related.length < 2) {
+    if (getCategoryFromSlug(s.slug) === currentCategory && related.length < 3) {
       related.push({ slug: s.slug, heading: s.heading });
     }
   }
 
   for (const s of all) {
-    if (related.length >= 4) break;
+    if (related.length >= 6) break;
     if (s.slug === currentSlug) continue;
     if (related.some((r) => r.slug === s.slug)) continue;
     if (getCategoryFromSlug(s.slug) !== currentCategory) {
