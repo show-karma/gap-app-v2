@@ -23,6 +23,7 @@ import { useOwnerStore } from "@/store";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { CommentsAndActivity } from "./CommentsAndActivity";
+import { GrantCommentsAndActivity } from "./GrantCommentsAndActivity";
 import { GrantCompleteButtonForReviewer } from "./GrantCompleteButtonForReviewer";
 import { MilestoneCard } from "./MilestoneCard";
 import {
@@ -566,11 +567,12 @@ function MilestonesReviewPageContent({
                 programId={parsedProgramId}
               />
             ) : (
-              <div className="p-4 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
-                <p className="text-sm text-gray-500 dark:text-zinc-400">
-                  No linked application found. Comments are available on the application page.
-                </p>
-              </div>
+              <GrantCommentsAndActivity
+                projectUID={projectUID || ""}
+                programId={parsedProgramId}
+                communityId={communityId}
+                currentUserAddress={address}
+              />
             )}
           </div>
         </div>
