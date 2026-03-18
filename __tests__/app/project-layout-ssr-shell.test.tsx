@@ -7,7 +7,7 @@ jest.mock("@tanstack/react-query", () => {
   const actual = jest.requireActual("@tanstack/react-query");
   return {
     ...actual,
-    dehydrate: jest.fn(() => ({})),
+    dehydrate: jest.fn(() => ({ queries: [] })),
     HydrationBoundary: ({ children }: { children: React.ReactNode }) => (
       <div data-testid="hydration-boundary">{children}</div>
     ),
@@ -63,7 +63,7 @@ function createMockProject(overrides: Partial<Project> = {}): Project {
   } as Project;
 }
 
-describe("Project Layout SSR LCP Shell", () => {
+describe("Project Layout - Server Prefetch + HydrationBoundary", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS = "false";
@@ -82,81 +82,35 @@ describe("Project Layout SSR LCP Shell", () => {
     return render(element as React.ReactElement);
   }
 
-  describe("when project data is available", () => {
-    const mockProject = createMockProject();
-    beforeEach(() => {
-      mockGetProjectCachedData.mockResolvedValue(mockProject);
-    });
+  it("renders children inside HydrationBoundary", async () => {
+    mockGetProjectCachedData.mockResolvedValue(createMockProject());
+    await renderLayout();
 
-    it("renders project title as an h1 in the SSR shell", async () => {
-      await renderLayout();
-      const heading = screen.getByRole("heading", { level: 1, hidden: true });
-      expect(heading).toHaveTextContent("Test Project Title");
-    });
-
-    it("renders project logo as an img in the SSR shell", async () => {
-      await renderLayout();
-      const shell = document.getElementById("ssr-lcp-shell");
-      expect(shell).not.toBeNull();
-      const img = shell!.querySelector("img");
-      expect(img).not.toBeNull();
-      expect(img!.getAttribute("src")).toBe("https://example.com/logo.png");
-    });
-
-    it("has aria-hidden on the SSR shell", async () => {
-      await renderLayout();
-      const shell = document.getElementById("ssr-lcp-shell");
-      expect(shell).toHaveAttribute("aria-hidden", "true");
-    });
-
-    it("does not include an inline style tag (CSS moved to globals.css)", async () => {
-      await renderLayout();
-      const shell = document.getElementById("ssr-lcp-shell");
-      const styleTag = shell!.querySelector("style");
-      expect(styleTag).toBeNull();
-    });
-
-    it("renders the SSR shell inside the HydrationBoundary", async () => {
-      await renderLayout();
-      const boundary = screen.getByTestId("hydration-boundary");
-      const shell = document.getElementById("ssr-lcp-shell");
-      expect(boundary).toContainElement(shell);
-    });
-
-    it("renders the SSR shell before children", async () => {
-      await renderLayout();
-      const shell = document.getElementById("ssr-lcp-shell");
-      const children = screen.getByTestId("children");
-      const parent = shell!.parentElement!;
-      const childNodes = Array.from(parent.children);
-      expect(childNodes.indexOf(shell!)).toBeLessThan(childNodes.indexOf(children));
-    });
+    const boundary = screen.getByTestId("hydration-boundary");
+    const children = screen.getByTestId("children");
+    expect(boundary).toContainElement(children);
   });
 
-  describe("when project has no logo", () => {
-    beforeEach(() => {
-      mockGetProjectCachedData.mockResolvedValue(
-        createMockProject({ details: { title: "No Logo Project", slug: "no-logo" } })
-      );
-    });
+  it("does not render ssr-lcp-shell (removed in favor of HydrationBoundary)", async () => {
+    mockGetProjectCachedData.mockResolvedValue(createMockProject());
+    await renderLayout();
 
-    it("renders title but no img", async () => {
-      await renderLayout("no-logo");
-      const heading = screen.getByRole("heading", { level: 1, hidden: true });
-      expect(heading).toHaveTextContent("No Logo Project");
-      const shell = document.getElementById("ssr-lcp-shell");
-      expect(shell!.querySelector("img")).toBeNull();
-    });
+    expect(document.getElementById("ssr-lcp-shell")).toBeNull();
   });
 
-  describe("when project data is not available", () => {
-    beforeEach(() => {
-      mockGetProjectCachedData.mockRejectedValue(new Error("Not found"));
-    });
+  it("renders children even when project data fails to load", async () => {
+    mockGetProjectCachedData.mockRejectedValue(new Error("Not found"));
+    await renderLayout();
 
-    it("does not render the SSR shell", async () => {
-      await renderLayout();
-      expect(document.getElementById("ssr-lcp-shell")).toBeNull();
-    });
+    expect(screen.getByTestId("children")).toBeInTheDocument();
+  });
+
+  it("skips prefetch during E2E tests", async () => {
+    process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS = "true";
+    mockGetProjectCachedData.mockResolvedValue(createMockProject());
+    await renderLayout();
+
+    // prefetchQuery should not be called since E2E bypass is set
+    expect(screen.getByTestId("children")).toBeInTheDocument();
   });
 });

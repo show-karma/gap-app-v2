@@ -1,6 +1,5 @@
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 import type { Metadata } from "next";
-import Image from "next/image";
 import { ProjectShareDialogMount } from "@/components/Pages/Project/ProjectShareDialogMount";
 import { E2EStoreExposer } from "@/components/Utilities/E2EStoreExposer";
 import { layoutTheme } from "@/src/helper/theme";
@@ -96,35 +95,11 @@ export default async function RootLayout(props: {
     await safePrefetchProjectData(queryClient, projectId);
   }
 
-  const projectData = queryClient.getQueryData<Awaited<ReturnType<typeof getProjectCachedData>>>(
-    QUERY_KEYS.PROJECT.DETAILS(projectId)
-  );
-
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
       <E2EStoreExposer />
       <ProjectShareDialogMount />
-      <div className={layoutTheme.padding}>
-        {projectData && (
-          <div id="ssr-lcp-shell" aria-hidden="true">
-            <div className="flex items-center gap-4 py-4">
-              {projectData.details?.logoUrl && (
-                <Image
-                  src={projectData.details.logoUrl}
-                  alt=""
-                  width={64}
-                  height={64}
-                  className="rounded-full"
-                />
-              )}
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-neutral-100">
-                {projectData.details?.title}
-              </h1>
-            </div>
-          </div>
-        )}
-        {children}
-      </div>
+      <div className={layoutTheme.padding}>{children}</div>
     </HydrationBoundary>
   );
 }

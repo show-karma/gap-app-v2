@@ -1,7 +1,6 @@
 "use client";
 
 import { QueryClientProvider } from "@tanstack/react-query";
-import dynamic from "next/dynamic";
 import { type ReactNode, useEffect, useState } from "react";
 import { WagmiProvider } from "wagmi";
 import type { TenantConfig } from "@/src/infrastructure/types/tenant";
@@ -14,8 +13,6 @@ import { privyConfig } from "@/utilities/wagmi/privy-config";
  */
 export { queryClient };
 
-const PrivyProviders = dynamic(() => import("./PrivyWagmiProviders"), { ssr: false });
-
 interface PrivyProviderWrapperProps {
   children: ReactNode;
   tenantConfig?: TenantConfig | null;
@@ -25,34 +22,35 @@ interface PrivyProviderWrapperProps {
  * Shell component that wraps children in QueryClientProvider + WagmiProvider
  * immediately and defers Privy SDK loading until after hydration.
  *
- * WagmiProvider (from wagmi, not @privy-io/wagmi) is always present because
- * wagmi hooks are called during SSR. Once PrivyProviders loads client-side,
- * it adds PrivyProvider + PrivyBridge + the @privy-io/wagmi WagmiProvider.
+ * WagmiProvider (from wagmi) is always present because wagmi hooks are called
+ * during SSR. PrivyWagmiProviders is loaded via dynamic import() after mount
+ * and wraps children with PrivyProvider + PrivyBridge additively.
  *
- * During Phase 1, useAuth() reads from PrivyBridgeContext defaults
- * (ready=false, authenticated=false), which causes navbars to show
- * skeleton/loading states — identical to the existing Privy initialization UX.
+ * Children are ALWAYS rendered — the provider tree never unmounts them.
+ * Before Privy loads, useAuth() reads from PrivyBridgeContext defaults
+ * (ready=false, authenticated=false), showing skeleton/loading states.
  */
 export default function PrivyProviderWrapper({
   children,
   tenantConfig,
 }: PrivyProviderWrapperProps) {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const [PrivyModule, setPrivyModule] = useState<{
+    default: React.ComponentType<{ children: ReactNode; tenantConfig?: TenantConfig | null }>;
+  } | null>(null);
 
-  if (!mounted) {
-    // SSR + first client render: QueryClient + wagmi (for SSR hooks), no Privy SDK
-    return (
-      <QueryClientProvider client={queryClient}>
-        <WagmiProvider config={privyConfig}>{children}</WagmiProvider>
-      </QueryClientProvider>
-    );
-  }
+  useEffect(() => {
+    import("./PrivyWagmiProviders").then(setPrivyModule);
+  }, []);
 
-  // After hydration: load Privy providers (dynamic import)
+  const inner = PrivyModule ? (
+    <PrivyModule.default tenantConfig={tenantConfig}>{children}</PrivyModule.default>
+  ) : (
+    children
+  );
+
   return (
     <QueryClientProvider client={queryClient}>
-      <PrivyProviders tenantConfig={tenantConfig}>{children}</PrivyProviders>
+      <WagmiProvider config={privyConfig}>{inner}</WagmiProvider>
     </QueryClientProvider>
   );
 }
