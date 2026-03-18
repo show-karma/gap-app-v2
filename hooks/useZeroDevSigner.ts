@@ -1,10 +1,11 @@
 "use client";
 
-import { type User, usePrivy, useWallets } from "@privy-io/react-auth";
+import type { User } from "@privy-io/react-auth";
 import type { Signer } from "ethers";
 import { BrowserProvider } from "ethers";
 import { useCallback, useMemo } from "react";
 import { useChainId } from "wagmi";
+import { usePrivyBridge } from "@/contexts/privy-bridge-context";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import {
   createGaslessClient,
@@ -65,8 +66,7 @@ interface UseZeroDevSignerResult {
  * - For external wallet users (MetaMask, etc.): User always pays gas
  */
 export function useZeroDevSigner(): UseZeroDevSignerResult {
-  const { ready: privyReady, user } = usePrivy();
-  const { wallets } = useWallets();
+  const { ready: privyReady, user, wallets } = usePrivyBridge();
   const chainId = useChainId();
 
   // Check if user logged in with email/Google (should use embedded wallet)

@@ -29,6 +29,9 @@ export interface PrivyBridgeValue {
   connectWallet: () => void;
   // From useWallets
   wallets: ConnectedWallet[];
+  // From useSmartWallets
+  // biome-ignore lint/suspicious/noExplicitAny: Privy smart wallet client type is complex and internal
+  smartWalletClient: any;
   // From useAccount
   isConnected: boolean;
 }
@@ -45,6 +48,7 @@ export const PRIVY_BRIDGE_DEFAULTS: PrivyBridgeValue = {
   getAccessToken: async () => null,
   connectWallet: noop,
   wallets: [],
+  smartWalletClient: null,
   isConnected: false,
 };
 

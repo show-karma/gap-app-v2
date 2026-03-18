@@ -19,7 +19,7 @@ import { privyConfig } from "@/utilities/wagmi/privy-config";
 export { queryClient };
 
 type PrivyModule = {
-  default: React.ComponentType<{ children: ReactNode; tenantConfig?: TenantConfig | null }>;
+  default: React.ComponentType<{ tenantConfig?: TenantConfig | null }>;
 };
 
 interface PrivyProviderWrapperProps {
@@ -28,8 +28,9 @@ interface PrivyProviderWrapperProps {
 }
 
 /**
- * Inner component that loads Privy SDK and manages bridge fallback.
- * Separated so it can call usePrivyBridgeSetter (needs PrivyBridgeProvider above).
+ * Sidecar that lazy-loads the Privy SDK and renders it as a sibling.
+ * Children stay at a stable position in the React tree — no re-mount
+ * when the dynamic import resolves.
  */
 function PrivyLoader({
   children,
@@ -51,11 +52,12 @@ function PrivyLoader({
     });
   }, [setBridge]);
 
-  if (Privy) {
-    return <Privy.default tenantConfig={tenantConfig}>{children}</Privy.default>;
-  }
-
-  return <>{children}</>;
+  return (
+    <>
+      {Privy && <Privy.default tenantConfig={tenantConfig} />}
+      {children}
+    </>
+  );
 }
 
 /**
