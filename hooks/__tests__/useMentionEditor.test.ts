@@ -185,9 +185,7 @@ describe("useMentionEditor", () => {
       const textarea = document.createElement("textarea");
       editor.appendChild(textarea);
 
-      const { result } = renderHook(() =>
-        useMentionEditor({ editorRef: { current: editor } })
-      );
+      const { result } = renderHook(() => useMentionEditor({ editorRef: { current: editor } }));
       const onChange = jest.fn();
 
       // Simulate typing "Hello @Al world" with cursor at position 9 (after "@Al")

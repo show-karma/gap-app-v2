@@ -11,8 +11,8 @@ import {
   CommandList,
   CommandSeparator,
 } from "@/components/ui/command";
+import { useAllReviewers } from "@/hooks/useAllReviewers";
 import type { CaretPosition } from "@/hooks/useMentionEditor";
-import { useMilestoneReviewers } from "@/hooks/useMilestoneReviewers";
 import { cn } from "@/utilities/tailwind";
 
 interface MentionAutocompleteProps {
@@ -37,7 +37,7 @@ const MentionAutocomplete: FC<MentionAutocompleteProps> = ({
   onSelect,
   onInviteNew,
 }) => {
-  const { data: reviewers, isLoading, isError, error, refetch } = useMilestoneReviewers(programId);
+  const { data: reviewers, isLoading, isError, error, refetch } = useAllReviewers(programId);
 
   const filteredReviewers = useMemo(() => {
     if (!reviewers) return [];

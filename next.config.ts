@@ -23,6 +23,22 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   staticPageGenerationTimeout: 10000,
   turbopack: {},
+  experimental: {
+    optimizePackageImports: [
+      "@tremor/react",
+      "lucide-react",
+      "@radix-ui/react-icons",
+      "@radix-ui/react-dialog",
+      "@radix-ui/react-dropdown-menu",
+      "@radix-ui/react-popover",
+      "@radix-ui/react-select",
+      "@radix-ui/react-tabs",
+      "@radix-ui/react-tooltip",
+      "react-hot-toast",
+      "@heroicons/react",
+      "date-fns",
+    ],
+  },
   eslint: {
     dirs: ["app", "components", "utilities", "hooks", "store", "types"],
     ignoreDuringBuilds: false,

@@ -1,6 +1,7 @@
 "use client";
 
 import { PenLine } from "lucide-react";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
@@ -9,11 +10,16 @@ import { useOwnerStore, useProjectStore } from "@/store";
 import { useProgressModalStore } from "@/store/modals/progress";
 import type { Project } from "@/types/v2/project";
 import { cn } from "@/utilities/tailwind";
-import { DonateSection, useDonationVisibility } from "./DonateSection";
+import { useDonationVisibility } from "./DonateSection";
 import { EndorseSection } from "./EndorseSection";
 import { QuickLinksCard } from "./QuickLinksCard";
 import { SidebarProfileCard } from "./SidebarProfileCard";
 import { SubscribeSection } from "./SubscribeSection";
+
+const DonateSection = dynamic(
+  () => import("./DonateSection").then((m) => ({ default: m.DonateSection })),
+  { ssr: false }
+);
 
 interface ProjectSidePanelProps {
   project: Project;

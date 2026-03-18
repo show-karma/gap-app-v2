@@ -1,7 +1,7 @@
 import { createMockCommunity } from "../../data/communities";
 import { createMockProgram } from "../../data/programs";
 import { expect, mockJson, test } from "../../fixtures";
-import { waitForPageReady } from "../../helpers/navigation";
+import { GOTO_OPTIONS, waitForPageReady } from "../../helpers/navigation";
 
 test.describe("Authentication", () => {
   test("T1-21: authenticated user sees their address", async ({ page, withApiMocks, loginAs }) => {
@@ -10,7 +10,7 @@ test.describe("Authentication", () => {
     await withApiMocks({
       "**/v2/communities/optimism": mockJson(community),
     });
-    await page.goto("/community/optimism");
+    await page.goto("/community/optimism", GOTO_OPTIONS);
     await waitForPageReady(page);
     // The page should render as authenticated user
     await expect(page.locator("body")).toBeVisible();
@@ -27,10 +27,10 @@ test.describe("Authentication", () => {
       "**/v2/communities/optimism": mockJson(community),
       "**/v2/funding-program-configs/community/optimism**": mockJson([createMockProgram()]),
     });
-    await page.goto("/community/optimism");
+    await page.goto("/community/optimism", GOTO_OPTIONS);
     await waitForPageReady(page);
     // Navigate to another community page (avoid /dashboard which may have SSR auth issues)
-    await page.goto("/community/optimism", { waitUntil: "domcontentloaded" });
+    await page.goto("/community/optimism", GOTO_OPTIONS);
     await waitForPageReady(page);
     // Should still be authenticated — page renders content, not a login redirect
     await expect(page.locator("body")).toBeVisible();
@@ -44,13 +44,13 @@ test.describe("Authentication", () => {
     await withApiMocks({
       "**/v2/communities/optimism": mockJson(community),
     });
-    await page.goto("/community/optimism");
+    await page.goto("/community/optimism", GOTO_OPTIONS);
     await waitForPageReady(page);
     // Clear auth state programmatically
     await page.evaluate(() => {
       localStorage.removeItem("privy:auth_state");
     });
-    await page.reload();
+    await page.reload(GOTO_OPTIONS);
     await waitForPageReady(page);
     // Page should still render (as guest)
     await expect(page.locator("body")).toBeVisible();
@@ -61,7 +61,7 @@ test.describe("Authentication", () => {
     await withApiMocks({
       "**/v2/communities/optimism": mockJson(community),
     });
-    await page.goto("/community/optimism");
+    await page.goto("/community/optimism", GOTO_OPTIONS);
     await waitForPageReady(page);
     await expect(page.locator("body")).toBeVisible();
   });
@@ -76,13 +76,13 @@ test.describe("Authentication", () => {
       "**/v2/communities/optimism": mockJson(community),
     });
     // First visit as guest
-    await page.goto("/community/optimism");
+    await page.goto("/community/optimism", GOTO_OPTIONS);
     await waitForPageReady(page);
     const guestContent = await page.textContent("body");
 
     // Then visit as admin (new page context resets)
     await loginAs("communityAdmin");
-    await page.goto("/community/optimism");
+    await page.goto("/community/optimism", GOTO_OPTIONS);
     await waitForPageReady(page);
     const adminContent = await page.textContent("body");
 

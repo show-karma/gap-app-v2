@@ -28,6 +28,17 @@ jest.mock("next/navigation", () => ({
   }),
 }));
 
+// Mock next/dynamic — needed because dialogs are now dynamically imported
+jest.mock("next/dynamic", () => {
+  const mockDynamic = (loader: () => Promise<any>, _options?: { ssr?: boolean }) => {
+    const DynamicComponent = () => null;
+    DynamicComponent.displayName = "DynamicMock";
+    return DynamicComponent;
+  };
+  mockDynamic.default = mockDynamic;
+  return mockDynamic;
+});
+
 // Mock all stores
 jest.mock("@/hooks/useProjectPermissions", () => ({
   useProjectPermissions: () => ({}),
@@ -53,6 +64,10 @@ jest.mock("@/store/modals/intro", () => ({
 
 jest.mock("@/store/modals/progress", () => ({
   useProgressModalStore: () => ({ isProgressModalOpen: false }),
+}));
+
+jest.mock("@/store/modals/shareDialog", () => ({
+  useShareDialogStore: () => ({ isOpen: false }),
 }));
 
 jest.mock("@/store/modals/contributorProfile", () => ({
@@ -91,8 +106,16 @@ jest.mock("@/components/Pages/Project/v2/Mobile/MobileProfileContent", () => ({
   MobileProfileContent: () => null,
 }));
 
+jest.mock("@/components/Pages/Project/v2/Mobile/MobileSupportContent", () => ({
+  MobileSupportContent: () => null,
+}));
+
 jest.mock("@/components/Pages/Project/v2/SidePanel/ProjectSidePanel", () => ({
   ProjectSidePanel: () => null,
+}));
+
+jest.mock("@/components/Pages/Project/v2/SidePanel/SidebarProfileCard", () => ({
+  SidebarProfileCard: () => null,
 }));
 
 jest.mock("@/components/Pages/Project/v2/StatsBar/ProjectStatsBar", () => ({
@@ -118,6 +141,10 @@ jest.mock("@/components/Pages/Project/ProjectOptionsMenu", () => ({
 
 jest.mock("@/components/ErrorBoundary", () => ({
   ErrorBoundary: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
+jest.mock("@/utilities/tailwind", () => ({
+  cn: (...a: string[]) => a.filter(Boolean).join(" "),
 }));
 
 import { ProjectProfileLayout } from "@/components/Pages/Project/v2/Layout/ProjectProfileLayout";

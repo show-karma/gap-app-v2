@@ -167,10 +167,7 @@ export async function middleware(request: NextRequest) {
 
     // Check if this slug has a whitelabel domain and redirect there
     if (domainInfo?.isShared && isKnownTenant(communityId)) {
-      const whitelabelDomain = getWhitelabelDomainForSlug(
-        communityId,
-        domainInfo.isProduction
-      );
+      const whitelabelDomain = getWhitelabelDomainForSlug(communityId, domainInfo.isProduction);
       if (whitelabelDomain) {
         const protocol = request.nextUrl.protocol;
         return NextResponse.redirect(

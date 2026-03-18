@@ -1,6 +1,11 @@
 "use client";
 
-import { ArrowTopRightOnSquareIcon, MagnifyingGlassIcon, PlusIcon, XMarkIcon } from "@heroicons/react/24/solid";
+import {
+  ArrowTopRightOnSquareIcon,
+  MagnifyingGlassIcon,
+  PlusIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/solid";
 import debounce from "lodash.debounce";
 import { type FC, useEffect, useMemo, useRef, useState } from "react";
 import type { Control, FieldError, FieldErrorsImpl, Merge } from "react-hook-form";
@@ -333,7 +338,9 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
                     </div>
                   ) : isSearchError ? (
                     <div className="py-4 text-center">
-                      <p className="text-sm text-red-500 dark:text-red-400">Failed to search projects</p>
+                      <p className="text-sm text-red-500 dark:text-red-400">
+                        Failed to search projects
+                      </p>
                       <button
                         type="button"
                         onClick={() => retrySearch()}

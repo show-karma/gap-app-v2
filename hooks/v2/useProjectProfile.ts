@@ -67,8 +67,9 @@ export function useProjectProfile(projectId: string): UseProjectProfileResult {
     refetch: refetchImpacts,
   } = useProjectImpacts(projectId);
 
-  // Aggregate loading state
-  const isLoading = isProjectLoading || isGrantsLoading || isUpdatesLoading || isImpactsLoading;
+  // Split loading states: core project vs secondary data
+  const isSecondaryLoading = isGrantsLoading || isUpdatesLoading || isImpactsLoading;
+  const isLoading = isProjectLoading || isSecondaryLoading;
 
   // Normalize undefined to null for consistent typing
   const normalizedProject = project ?? null;
@@ -88,6 +89,8 @@ export function useProjectProfile(projectId: string): UseProjectProfileResult {
   return {
     project: normalizedProject,
     isLoading,
+    isProjectLoading,
+    isSecondaryLoading,
     isError,
     error: error ?? null,
     refetch,
