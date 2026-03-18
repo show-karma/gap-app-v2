@@ -25,6 +25,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import {
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+} from "@/components/ui/sidebar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import {
@@ -524,31 +530,31 @@ export function ProjectDetailsSidebar({
         {/* Two-column body */}
         <div className="flex-1 flex min-h-0">
           {/* Sidebar navigation */}
-          <nav className="w-48 shrink-0 border-r border-gray-100 dark:border-zinc-800 py-3 pr-3">
-            <ul className="space-y-1">
-              {NAV_ITEMS.map((item) => {
-                const Icon = item.icon;
-                const isActive = activeSection === item.id;
-                return (
-                  <li key={item.id}>
-                    <button
-                      type="button"
-                      onClick={() => handleSectionChange(item.id)}
-                      className={cn(
-                        "w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-colors",
-                        isActive
-                          ? "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
-                          : "text-gray-600 dark:text-zinc-400 hover:bg-gray-50 dark:hover:bg-zinc-900 hover:text-gray-900 dark:hover:text-zinc-200"
-                      )}
-                    >
-                      <Icon className="h-4 w-4 shrink-0" />
-                      {item.label}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
+          <SidebarProvider
+            defaultOpen
+            open
+            className="!min-h-0 !w-auto"
+            style={{} as React.CSSProperties}
+          >
+            <nav className="w-48 shrink-0 border-r border-gray-100 dark:border-zinc-800 py-3 pr-3">
+              <SidebarMenu>
+                {NAV_ITEMS.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <SidebarMenuItem key={item.id}>
+                      <SidebarMenuButton
+                        isActive={activeSection === item.id}
+                        onClick={() => handleSectionChange(item.id)}
+                      >
+                        <Icon />
+                        <span>{item.label}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </nav>
+          </SidebarProvider>
 
           {/* Content area */}
           <div className="flex-1 overflow-auto pl-6 py-3">
