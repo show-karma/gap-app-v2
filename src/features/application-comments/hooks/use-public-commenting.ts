@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { compareAllWallets } from "@/utilities/auth/compare-all-wallets";
 import { CommentsService } from "../api/comments-service";
 import type { ApplicationComment, UsePublicCommentingReturn } from "../types";
 
@@ -19,7 +20,7 @@ export function usePublicCommenting({
   communityId,
   enabled = true,
 }: UsePublicCommentingOptions): UsePublicCommentingReturn {
-  const { address, authenticated } = useAuth();
+  const { address, authenticated, user } = useAuth();
   const queryClient = useQueryClient();
 
   const currentUserAddress = useMemo(() => {
@@ -71,11 +72,11 @@ export function usePublicCommenting({
 
   const canDeleteComment = useCallback(
     (comment: ApplicationComment): boolean => {
-      if (!authenticated || !currentUserAddress) return false;
+      if (!authenticated || !user) return false;
       if (comment.isDeleted) return false;
-      return comment.authorAddress.toLowerCase() === currentUserAddress;
+      return compareAllWallets(user, comment.authorAddress);
     },
-    [authenticated, currentUserAddress]
+    [authenticated, user]
   );
 
   const addComment = useCallback(

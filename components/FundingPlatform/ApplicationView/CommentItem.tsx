@@ -13,9 +13,11 @@ import React, { type FC, useCallback, useMemo, useRef, useState } from "react";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { useAuth } from "@/hooks/useAuth";
 import { useMentionEditor } from "@/hooks/useMentionEditor";
 import { useMilestoneReviewers } from "@/hooks/useMilestoneReviewers";
 import type { ApplicationComment } from "@/types/funding-platform";
+import { compareAllWallets } from "@/utilities/auth/compare-all-wallets";
 import { renderMentionsAsMarkdown } from "@/utilities/mentions";
 import { cn } from "@/utilities/tailwind";
 import InviteReviewerModal from "./InviteReviewerModal";
@@ -47,6 +49,7 @@ const CommentItem: FC<CommentItemProps> = ({
   const [isUpdating, setIsUpdating] = useState(false);
   const editContainerRef = useRef<HTMLDivElement>(null);
 
+  const { user } = useAuth();
   const mentionsEnabled = enableMentions && !!programId;
 
   const mentionEditor = useMentionEditor({
@@ -113,7 +116,9 @@ const CommentItem: FC<CommentItemProps> = ({
   }, [comment.content]);
 
   // Users can edit their own comments (if not deleted)
-  const isAuthor = currentUserAddress?.toLowerCase() === comment.authorAddress?.toLowerCase();
+  // Use compareAllWallets to support Farcaster multi-wallet users
+  const isAuthor =
+    user && comment.authorAddress ? compareAllWallets(user, comment.authorAddress) : false;
   const canEdit = !comment.isDeleted && isAuthor;
 
   // Users can delete their own comments, admins can delete any comment

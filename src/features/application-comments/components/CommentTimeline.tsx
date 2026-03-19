@@ -12,6 +12,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
+import { useAuth } from "@/hooks/useAuth";
+import { compareAllWallets } from "@/utilities/auth/compare-all-wallets";
 import { useApplicationComments } from "../hooks/use-application-comments";
 import type { CommentTimelineProps } from "../types";
 import { CommentInput } from "./CommentInput";
@@ -21,9 +23,9 @@ import { StatusChangeItem } from "./StatusChangeItem";
 export function CommentTimeline({
   applicationId,
   statusHistory,
-  currentUserAddress,
   communityId,
 }: CommentTimelineProps) {
+  const { user } = useAuth();
   const {
     comments,
     isLoading,
@@ -138,8 +140,8 @@ export function CommentTimeline({
               ) : (
                 timelineItems.map((item, index) => {
                   if (item.type === "comment") {
-                    const isUserComment = currentUserAddress
-                      ? item.authorAddress.toLowerCase() === currentUserAddress.toLowerCase()
+                    const isUserComment = user
+                      ? compareAllWallets(user, item.authorAddress)
                       : false;
 
                     return (
