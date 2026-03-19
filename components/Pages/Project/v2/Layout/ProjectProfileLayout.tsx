@@ -73,6 +73,9 @@ import {
 interface ProjectProfileLayoutProps {
   children: ReactNode;
   className?: string;
+  /** Server-rendered sidebar panel (RSC slot pattern). When provided, renders
+   *  project content in the initial HTML before client hydration. */
+  serverSidePanel?: ReactNode;
 }
 
 /**
@@ -93,7 +96,11 @@ interface ProjectProfileLayoutProps {
  * - ProjectSidePanel: profile card + Donate, Endorse, Subscribe, QuickLinks (desktop only)
  * - ContentTabs: Support (mobile), Updates, About, Funding, Impact, Team
  */
-export function ProjectProfileLayout({ children, className }: ProjectProfileLayoutProps) {
+export function ProjectProfileLayout({
+  children,
+  className,
+  serverSidePanel,
+}: ProjectProfileLayoutProps) {
   const { projectId } = useParams();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -210,8 +217,40 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
     );
   }
 
-  // Loading state — matches ProjectProfileLayoutSkeleton structure
+  // Loading state — when serverSidePanel is available, show real content
+  // with skeleton for the rest; otherwise show full skeleton
   if (isProjectLoading || !project) {
+    if (serverSidePanel) {
+      return (
+        <div className="flex flex-col gap-6 w-full" data-testid="layout-loading">
+          {/* Mobile: Server-rendered profile card */}
+          <div className="lg:hidden">{serverSidePanel}</div>
+
+          {/* Mobile: Tabs skeleton */}
+          <div className="lg:hidden -mx-4 px-4">
+            <ContentTabsSkeleton />
+          </div>
+
+          {/* Main Layout: server panel + skeleton content */}
+          <div className="flex flex-row gap-16">
+            <aside className="hidden lg:flex flex-col gap-4 w-[400px] shrink-0">
+              <div className="flex flex-col rounded-xl border bg-secondary gap-2 p-2">
+                {serverSidePanel}
+              </div>
+            </aside>
+            <div className="flex flex-col gap-6 flex-1 min-w-0">
+              <div className="hidden lg:block">
+                <ContentTabsSkeleton />
+              </div>
+              <div className="flex-1">
+                <div className="animate-pulse bg-muted rounded-xl h-96" />
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="flex flex-col gap-6 w-full" data-testid="layout-loading">
         {/* Mobile: Profile card skeleton */}
@@ -302,7 +341,11 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
         {/* Main Layout: Side Panel + Content */}
         <div className="flex flex-row gap-16" data-testid="main-layout">
           {/* Side Panel - Desktop Only */}
-          <ProjectSidePanel project={project} isVerified={isVerified} />
+          <ProjectSidePanel
+            project={project}
+            isVerified={isVerified}
+            serverSidePanel={serverSidePanel}
+          />
 
           {/* Main Content Area */}
           <div

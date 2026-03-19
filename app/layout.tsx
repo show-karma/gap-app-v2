@@ -1,6 +1,14 @@
 import type { Metadata, Viewport } from "next";
 import dynamic from "next/dynamic";
+import localFont from "next/font/local";
 import { defaultMetadata } from "@/utilities/meta";
+
+const inter = localFont({
+  src: "../public/fonts/Inter/Inter.woff2",
+  variable: "--font-inter",
+  display: "optional",
+  weight: "100 900",
+});
 import "@/styles/globals.css";
 import "@/styles/index.scss";
 import "@/components/Utilities/DynamicStars/styles.css";
@@ -102,7 +110,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       : undefined;
 
   return (
-    <html lang="en" className="h-full" suppressHydrationWarning style={themeStyle}>
+    <html
+      lang="en"
+      className={`h-full ${inter.variable}`}
+      suppressHydrationWarning
+      style={themeStyle}
+    >
       {process.env.NEXT_PUBLIC_GA_TRACKING_ID && process.env.NEXT_PUBLIC_ENV === "production" && (
         <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_TRACKING_ID as string} />
       )}

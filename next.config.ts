@@ -22,7 +22,12 @@ const removeImports = require("next-remove-imports")();
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   staticPageGenerationTimeout: 10000,
-  turbopack: {},
+  turbopack: {
+    resolveAlias: {
+      // Force CJS to work around Turbopack ESM bundling bug with markdown-it's isSpace export
+      "markdown-it": "markdown-it/dist/index.cjs.js",
+    },
+  },
   experimental: {
     optimizePackageImports: [
       "@tremor/react",
@@ -71,14 +76,6 @@ const nextConfig: NextConfig = {
 
     // Add external modules that should not be bundled
     config.externals.push("pino-pretty", "lokijs", "encoding");
-
-    // Ignore dynamic requires in browserslist
-    config.plugins.push(
-      new webpack.IgnorePlugin({
-        resourceRegExp: /^\.\/locale$/,
-        contextRegExp: /moment$/,
-      })
-    );
 
     // Exclude Storybook story files from the build
     config.plugins.push(

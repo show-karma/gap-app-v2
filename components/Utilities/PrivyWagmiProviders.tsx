@@ -144,10 +144,20 @@ export default function PrivyWagmiProviders({ tenantConfig }: PrivyWagmiProvider
           landingHeader,
           showWalletLoginFirst: false,
           walletList: [...WALLET_LIST],
+          // EVM-only app — suppress Solana wallet UI in the connect modal.
+          walletChainType: "ethereum-only",
         },
         embeddedWallets: {
           ethereum: {
             createOnLogin: "users-without-wallets",
+          },
+          // Explicitly disable Solana embedded wallets. The Privy SDK (v3.8)
+          // bundles Solana support (~197KB) internally and tree-shaking cannot
+          // remove it. This config prevents Solana wallet creation at runtime.
+          // Bundle-level elimination requires upstream changes in Privy's
+          // package structure (separate entry points with proper code-splitting).
+          solana: {
+            createOnLogin: "off",
           },
         },
         loginMethods: [...LOGIN_METHODS],

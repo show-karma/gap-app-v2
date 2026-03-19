@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { ethers } from "ethers";
+
 import { useEffect, useMemo } from "react";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAuth } from "@/hooks/useAuth";
@@ -35,6 +35,7 @@ export const useProjectPermissions = () => {
       if (!rpcUrl) {
         return { isProjectOwner: false, isProjectAdmin: false };
       }
+      const { ethers } = await import("ethers");
       const rpcProvider = new ethers.JsonRpcProvider(rpcUrl);
 
       const [isOwnerResult, isAdminResult] = await Promise.all([

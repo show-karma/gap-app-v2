@@ -2,7 +2,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 
 const PUBLIC_DIR = path.resolve(__dirname, "../../public");
-const STYLES_DIR = path.resolve(__dirname, "../../styles");
+const LAYOUT_PATH = path.resolve(__dirname, "../../app/layout.tsx");
 
 describe("Font optimization", () => {
   describe("WOFF2 variable font", () => {
@@ -16,32 +16,38 @@ describe("Font optimization", () => {
       const stats = fs.statSync(woff2Path);
       expect(stats.size).toBeLessThan(400 * 1024);
     });
+
+    it("should NOT have static Inter.ttf file (replaced by woff2)", () => {
+      const ttfPath = path.join(PUBLIC_DIR, "fonts/Inter/Inter.ttf");
+      expect(fs.existsSync(ttfPath)).toBe(false);
+    });
   });
 
-  describe("CSS @font-face declarations", () => {
-    let cssContent: string;
+  describe("next/font/local integration", () => {
+    let layoutContent: string;
 
     beforeAll(() => {
-      cssContent = fs.readFileSync(path.join(STYLES_DIR, "globals.css"), "utf-8");
+      layoutContent = fs.readFileSync(LAYOUT_PATH, "utf-8");
     });
 
-    it("should reference Inter.woff2 variable font", () => {
-      expect(cssContent).toContain("/fonts/Inter/Inter.woff2");
-      expect(cssContent).toContain('format("woff2")');
+    it("should import localFont from next/font/local", () => {
+      expect(layoutContent).toContain('from "next/font/local"');
     });
 
-    it("should use font-weight range 100 900 for variable font", () => {
-      expect(cssContent).toContain("font-weight: 100 900");
+    it("should configure Inter with display optional to eliminate FOUT/CLS", () => {
+      expect(layoutContent).toContain('display: "optional"');
     });
 
-    it("should NOT contain individual static TTF font references", () => {
-      const staticFontPattern =
-        /Inter-(?:Thin|ExtraLight|Light|Regular|Medium|SemiBold|Bold|ExtraBold|Black)\.ttf/;
-      expect(cssContent).not.toMatch(staticFontPattern);
+    it("should reference Inter.woff2 as the font source", () => {
+      expect(layoutContent).toContain("Inter.woff2");
     });
 
-    it("should have font-display: swap for performance", () => {
-      expect(cssContent).toContain("font-display: swap");
+    it("should set --font-inter CSS variable", () => {
+      expect(layoutContent).toContain('variable: "--font-inter"');
+    });
+
+    it("should apply inter.variable to html element", () => {
+      expect(layoutContent).toContain("inter.variable");
     });
   });
 
