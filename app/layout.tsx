@@ -11,7 +11,6 @@ const inter = localFont({
 });
 import "@/styles/globals.css";
 import "@/styles/index.scss";
-import "@/components/Utilities/DynamicStars/styles.css";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { ThemeProvider } from "next-themes";
 import { DeferredLayoutComponents } from "@/components/DeferredLayoutComponents";
@@ -119,6 +118,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       {process.env.NEXT_PUBLIC_GA_TRACKING_ID && process.env.NEXT_PUBLIC_ENV === "production" && (
         <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_TRACKING_ID as string} />
       )}
+      <link rel="preconnect" href={process.env.NEXT_PUBLIC_GAP_INDEXER_URL} />
+      <link rel="dns-prefetch" href="https://auth.privy.io" />
+      <link rel="dns-prefetch" href="https://explorer-api.walletconnect.com" />
+      <link rel="dns-prefetch" href="https://browser.sentry-cdn.com" />
       <body suppressHydrationWarning>
         <ThemeProvider
           defaultTheme="light"
