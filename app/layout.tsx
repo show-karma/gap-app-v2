@@ -11,6 +11,7 @@ const inter = localFont({
 });
 import "@/styles/globals.css";
 import "@/styles/index.scss";
+import "@/components/Utilities/DynamicStars/styles.css";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { ThemeProvider } from "next-themes";
 import { DeferredLayoutComponents } from "@/components/DeferredLayoutComponents";
