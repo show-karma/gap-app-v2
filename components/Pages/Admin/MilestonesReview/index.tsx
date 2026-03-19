@@ -566,14 +566,14 @@ function MilestonesReviewPageContent({
                 currentUserAddress={address}
                 programId={parsedProgramId}
               />
-            ) : (
+            ) : projectUID ? (
               <GrantCommentsAndActivity
-                projectUID={projectUID || ""}
+                projectUID={projectUID}
                 programId={parsedProgramId}
                 communityId={communityId}
                 currentUserAddress={address}
               />
-            )}
+            ) : null}
           </div>
         </div>
       </div>

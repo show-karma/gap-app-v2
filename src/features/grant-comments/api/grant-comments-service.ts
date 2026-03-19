@@ -10,7 +10,7 @@ export class GrantCommentsService {
       `/v2/grants/${projectUID}/${programId}/comments`,
       "GET"
     );
-    if (error) return [];
+    if (error) throw new Error(error);
     return data?.comments ?? [];
   }
 
@@ -28,7 +28,8 @@ export class GrantCommentsService {
       { content }
     );
     if (error) throw new Error(error);
-    return data!.comment;
+    if (!data?.comment) throw new Error("Unexpected API response: missing comment");
+    return data.comment;
   }
 
   /**
@@ -41,7 +42,8 @@ export class GrantCommentsService {
       { content }
     );
     if (error) throw new Error(error);
-    return data!.comment;
+    if (!data?.comment) throw new Error("Unexpected API response: missing comment");
+    return data.comment;
   }
 
   /**

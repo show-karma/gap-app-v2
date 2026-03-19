@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { GrantCommentsService } from "../api/grant-comments-service";
@@ -16,10 +16,7 @@ export function useGrantComments({ projectUID, programId }: UseGrantCommentsOpti
   const { authenticated } = useAuth();
   const queryClient = useQueryClient();
 
-  const queryKey = useMemo(
-    () => [...QUERY_KEYS.GRANTS.COMMENTS(projectUID, programId)],
-    [projectUID, programId]
-  );
+  const queryKey = QUERY_KEYS.GRANTS.COMMENTS(projectUID, programId);
 
   const {
     data: comments = [],
@@ -37,8 +34,29 @@ export function useGrantComments({ projectUID, programId }: UseGrantCommentsOpti
   const addCommentMutation = useMutation({
     mutationFn: (content: string) =>
       GrantCommentsService.createComment(projectUID, programId, content),
-    onSuccess: (newComment) => {
-      queryClient.setQueryData<GrantComment[]>(queryKey, (old) => [...(old ?? []), newComment]);
+    onMutate: async (content) => {
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<GrantComment[]>(queryKey);
+      queryClient.setQueryData<GrantComment[]>(queryKey, (old) => [
+        ...(old ?? []),
+        {
+          id: `optimistic-${Date.now()}`,
+          projectUID,
+          programId,
+          authorAddress: "",
+          authorRole: "admin",
+          content,
+          isDeleted: false,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+      ]);
+      return { previous };
+    },
+    onError: (_err, _content, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData<GrantComment[]>(queryKey, context.previous);
+      }
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey }),
   });
@@ -46,22 +64,41 @@ export function useGrantComments({ projectUID, programId }: UseGrantCommentsOpti
   const editCommentMutation = useMutation({
     mutationFn: ({ commentId, content }: { commentId: string; content: string }) =>
       GrantCommentsService.editComment(commentId, content),
-    onSuccess: (updatedComment) => {
+    onMutate: async ({ commentId, content }) => {
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<GrantComment[]>(queryKey);
       queryClient.setQueryData<GrantComment[]>(
         queryKey,
-        (old) => old?.map((c) => (c.id === updatedComment.id ? updatedComment : c)) ?? []
+        (old) =>
+          old?.map((c) =>
+            c.id === commentId ? { ...c, content, updatedAt: new Date().toISOString() } : c
+          ) ?? []
       );
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData<GrantComment[]>(queryKey, context.previous);
+      }
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey }),
   });
 
   const deleteCommentMutation = useMutation({
     mutationFn: (commentId: string) => GrantCommentsService.deleteComment(commentId),
-    onSuccess: (_, commentId) => {
+    onMutate: async (commentId) => {
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<GrantComment[]>(queryKey);
       queryClient.setQueryData<GrantComment[]>(
         queryKey,
         (old) => old?.filter((c) => c.id !== commentId) ?? []
       );
+      return { previous };
+    },
+    onError: (_err, _commentId, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData<GrantComment[]>(queryKey, context.previous);
+      }
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey }),
   });

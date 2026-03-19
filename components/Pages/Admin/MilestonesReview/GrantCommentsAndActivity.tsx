@@ -36,7 +36,7 @@ export function GrantCommentsAndActivity({
       id: c.id,
       applicationId: `${c.projectUID}/${c.programId}`,
       authorAddress: c.authorAddress,
-      authorRole: c.authorRole as ApplicationComment["authorRole"],
+      authorRole: c.authorRole satisfies ApplicationComment["authorRole"],
       authorName: c.authorName,
       content: c.content,
       isDeleted: c.isDeleted,
