@@ -72,14 +72,6 @@ const nextConfig: NextConfig = {
     // Add external modules that should not be bundled
     config.externals.push("pino-pretty", "lokijs", "encoding");
 
-    // Ignore dynamic requires in browserslist
-    config.plugins.push(
-      new webpack.IgnorePlugin({
-        resourceRegExp: /^\.\/locale$/,
-        contextRegExp: /moment$/,
-      })
-    );
-
     // Exclude Storybook story files from the build
     config.plugins.push(
       new webpack.IgnorePlugin({

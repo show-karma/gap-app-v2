@@ -123,7 +123,6 @@
     "markdown-it": "^14.1.0",
     "millify": "^6.1.0",
     "mixpanel-browser": "^2.49.0",
-    "moment": "^2.30.1",
     "nanoid": "^5.1.6",
     "next": "15.4.10",
     "next-nprogress-bar": "^2.3.12",

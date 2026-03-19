@@ -13,7 +13,6 @@ import { ensureProtocol } from "@/utilities/ensureProtocol";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { VerificationBadge } from "../icons/VerificationBadge";
-import { ProjectActivityChart } from "../MainContent/ProjectActivityChart";
 
 interface CustomLink {
   url: string;
@@ -126,9 +125,9 @@ export function ProjectHeader({ project, isVerified = false, className }: Projec
       {/* Card wrapper matching Figma */}
       <div className="relative rounded-xl border border-border border-t-0 border-l-0 border-r-0 bg-card p-6 lg:p-8">
         {/* Desktop: Two columns with divider (50/50) | Mobile: Single column */}
-        <div className="flex flex-col lg:flex-row lg:gap-8">
-          {/* Left side: Project Info - 50% width on desktop */}
-          <div className="flex flex-col gap-4 lg:flex-1 lg:basis-1/2 lg:min-w-0 w-full">
+        <div className="flex flex-col">
+          {/* Project Info */}
+          <div className="flex flex-col gap-4 w-full">
             {/* Top row: Profile pic, name, and social links */}
             <div className="flex flex-row items-center gap-4 w-full flex-wrap max-sm:flex-col">
               <div className="flex flex-row items-center justify-between flex-1 min-w-0 flex-wrap gap-4">
@@ -306,14 +305,6 @@ export function ProjectHeader({ project, isVerified = false, className }: Projec
                 <span className="text-sm font-semibold text-foreground">{stageLabel}</span>
               </div>
             )}
-          </div>
-
-          {/* Vertical Divider - Desktop only, extends to touch card borders */}
-          <div className="hidden lg:block w-px bg-border self-stretch -my-8" />
-
-          {/* Right side: Project Activity Chart - 50% width on desktop */}
-          <div className="mt-6 lg:mt-0 lg:flex-1 lg:basis-1/2">
-            <ProjectActivityChart embedded />
           </div>
         </div>
       </div>

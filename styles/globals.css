@@ -11,14 +11,6 @@
   }
 }
 
-/* Inter variable font — single WOFF2 replaces 9 static TTF files (88% smaller) */
-@font-face {
-  font-family: "Inter";
-  src: url("/fonts/Inter/Inter.woff2") format("woff2");
-  font-weight: 100 900;
-  font-style: normal;
-  font-display: swap;
-}
 
 * {
   @apply font-body;
@@ -318,7 +310,7 @@
     --radius-small: 0.25rem;
     --radius-medium: 0.5rem;
     --radius-large: 0.75rem;
-    --font-sans: Inter, system-ui, -apple-system, sans-serif;
+    --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
     --font-mono: Fira Code, Monaco, Consolas, monospace;
   }
 

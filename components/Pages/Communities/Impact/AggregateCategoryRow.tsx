@@ -1,6 +1,14 @@
 "use client";
-import { AreaChart, Card } from "@tremor/react";
+import { Card } from "@tremor/react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
+import { ChartSkeleton } from "@/components/Utilities/ChartSkeleton";
+
+const AreaChart = dynamic(() => import("@tremor/react").then((mod) => mod.AreaChart), {
+  ssr: false,
+  loading: () => <ChartSkeleton height="h-52" />,
+});
+
 import pluralize from "pluralize";
 import { useState } from "react";
 import { Carousel, CarouselItem } from "@/components/SnapCarousel";

@@ -53,7 +53,7 @@ export async function createGaslessClient(
     return null;
   }
 
-  const provider = getProvider(providerType);
+  const provider = await getProvider(providerType);
 
   return provider.createClient({
     chainId,
@@ -93,7 +93,7 @@ export async function getGaslessSigner(
     );
   }
 
-  const provider = getProvider(providerType);
+  const provider = await getProvider(providerType);
 
   return provider.toEthersSigner(client, chainId, config);
 }

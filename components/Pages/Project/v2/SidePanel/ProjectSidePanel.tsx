@@ -2,6 +2,7 @@
 
 import { PenLine } from "lucide-react";
 import dynamic from "next/dynamic";
+import type React from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
@@ -25,6 +26,9 @@ interface ProjectSidePanelProps {
   project: Project;
   isVerified?: boolean;
   className?: string;
+  /** Server-rendered profile card (RSC slot). When provided, renders this
+   *  instead of the client SidebarProfileCard for faster initial paint. */
+  serverSidePanel?: React.ReactNode;
 }
 
 /**
@@ -44,7 +48,12 @@ function Separator() {
  * Visibility: Desktop only (lg: breakpoint)
  * Matches Figma design with neutral colors and 12px border radius
  */
-export function ProjectSidePanel({ project, isVerified, className }: ProjectSidePanelProps) {
+export function ProjectSidePanel({
+  project,
+  isVerified,
+  className,
+  serverSidePanel,
+}: ProjectSidePanelProps) {
   const { setIsProgressModalOpen } = useProgressModalStore();
 
   // Authorization checks for Post an update button
@@ -85,8 +94,8 @@ export function ProjectSidePanel({ project, isVerified, className }: ProjectSide
 
       {/* Outer card: profile + actions together */}
       <div className="flex flex-col rounded-xl border bg-secondary gap-2 p-2">
-        {/* Inner white profile card */}
-        <SidebarProfileCard project={project} isVerified={isVerified} />
+        {/* Inner white profile card — prefer server-rendered version for faster LCP */}
+        {serverSidePanel || <SidebarProfileCard project={project} isVerified={isVerified} />}
 
         {/* Actions: Donate + Endorse + Subscribe */}
         <div className="flex flex-col gap-8 p-6">

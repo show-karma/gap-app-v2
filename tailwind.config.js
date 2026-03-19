@@ -26,7 +26,7 @@ module.exports = {
     },
     fontFamily: {
       body: [
-        "Inter",
+        "var(--font-inter)",
         "-apple-system",
         "BlinkMacSystemFont",
         '"Segoe UI"',
