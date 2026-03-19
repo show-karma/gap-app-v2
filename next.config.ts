@@ -22,12 +22,7 @@ const removeImports = require("next-remove-imports")();
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   staticPageGenerationTimeout: 10000,
-  turbopack: {
-    resolveAlias: {
-      // Force CJS to work around Turbopack ESM bundling bug with markdown-it's isSpace export
-      "markdown-it": "markdown-it/dist/index.cjs.js",
-    },
-  },
+  turbopack: {},
   experimental: {
     optimizePackageImports: [
       "@tremor/react",
