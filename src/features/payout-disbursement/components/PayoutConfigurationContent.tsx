@@ -419,7 +419,6 @@ export function PayoutConfigurationContent({
     });
   };
 
-  const hasAllocationsError = Object.keys(allocationErrors).length > 0;
   const isSaving = saveConfigMutation.isPending;
 
   useEffect(() => {

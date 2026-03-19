@@ -2,7 +2,7 @@
 
 import { Dialog, Transition } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
-import { Fragment, useRef } from "react";
+import { Fragment, useRef, useState } from "react";
 import { Button } from "@/components/Utilities/Button";
 import type { PayoutGrantConfig } from "../types/payout-disbursement";
 import {
@@ -35,6 +35,7 @@ export function PayoutConfigurationModal({
   onSuccess,
 }: PayoutConfigurationModalProps) {
   const contentRef = useRef<PayoutConfigurationContentRef>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleSave = async () => {
     await contentRef.current?.save();
@@ -104,14 +105,17 @@ export function PayoutConfigurationModal({
                     onSuccess?.();
                     onClose();
                   }}
+                  onSavingChange={setIsSaving}
                 />
 
                 {/* Actions */}
                 <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-zinc-600 mt-6">
-                  <Button variant="secondary" onClick={onClose}>
+                  <Button variant="secondary" onClick={onClose} disabled={isSaving}>
                     Cancel
                   </Button>
-                  <Button onClick={handleSave}>Save Configuration</Button>
+                  <Button onClick={handleSave} disabled={isSaving}>
+                    {isSaving ? "Saving..." : "Save Configuration"}
+                  </Button>
                 </div>
               </Dialog.Panel>
             </Transition.Child>

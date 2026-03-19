@@ -2,7 +2,7 @@
 
 import { BanknotesIcon } from "@heroicons/react/24/outline";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { Button } from "@/components/ui/button";
@@ -170,10 +170,22 @@ export function ControlCenterPage() {
     itemsPerPage,
   });
 
-  // Derive live grant from current data (avoids stale snapshot after refresh)
-  const detailsModalGrant = detailsGrantUid
-    ? (paginatedData.find((r) => r.grantUid === detailsGrantUid) ?? null)
-    : null;
+  // Derive live grant from current data, with ref fallback so the sidebar
+  // doesn't blank when the user navigates to a different page while it's open.
+  const detailsGrantRef = useRef<TableRow | null>(null);
+  const detailsModalGrant = useMemo(() => {
+    if (!detailsGrantUid) {
+      detailsGrantRef.current = null;
+      return null;
+    }
+    const fresh = paginatedData.find((r) => r.grantUid === detailsGrantUid) ?? null;
+    if (fresh) {
+      detailsGrantRef.current = fresh;
+      return fresh;
+    }
+    // Grant left current page — keep last known snapshot so sidebar stays populated
+    return detailsGrantRef.current;
+  }, [detailsGrantUid, paginatedData]);
 
   const saveBulkImportMutation = useSavePayoutConfig();
 
