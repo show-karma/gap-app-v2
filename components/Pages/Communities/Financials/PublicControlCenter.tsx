@@ -286,10 +286,8 @@ export function PublicControlCenter() {
     router.push(`${pathname}?${query}`);
   };
 
-  // ─── Row click → open details modal ───────────────────────────────────
-  const handleRowClick = (item: TableRow, e: React.MouseEvent) => {
-    const target = e.target as HTMLElement;
-    if (target.closest("button")) return;
+  // ─── Open details modal ────────────────────────────────────────────────
+  const handleOpenDetails = (item: TableRow) => {
     setDetailsModalGrant(item);
     setDetailsModalOpen(true);
   };
@@ -383,7 +381,7 @@ export function PublicControlCenter() {
         <ControlCenterTable
           readOnly
           paginatedData={tableData}
-          onRowClick={handleRowClick}
+          onOpenDetails={handleOpenDetails}
           onSort={handleSort}
           sortBy={sortBy}
           sortOrder={sortOrder}

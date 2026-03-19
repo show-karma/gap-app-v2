@@ -1,5 +1,5 @@
 /**
- * Unit tests for ProjectDetailsModal.
+ * Unit tests for ProjectDetailsSidebar.
  *
  * Tests agreement toggle (date-picker-driven signing), unsign flow,
  * milestone key uniqueness, and button disabled states.
@@ -30,24 +30,19 @@ jest.mock("@/components/Utilities/DatePicker", () => ({
     return React.createElement(
       "button",
       {
-        "aria-label": ariaLabel,
-        "data-testid": "date-picker-trigger",
-        onClick: () => onSelect(new Date("2024-06-15T00:00:00")),
+        "aria-label": ariaLabel || "Pick a date",
+        onClick: () => onSelect(new Date("2024-06-15T00:00:00Z")),
+        type: "button",
       },
-      selected ? selected.toLocaleDateString() : (placeholder ?? "Pick a date")
+      selected ? selected.toISOString().split("T")[0] : placeholder || "Pick a date"
     );
   },
 }));
 
-// Mock the payout-disbursement module at the test file level
 jest.mock("@/src/features/payout-disbursement", () => {
-  const React = require("react");
-  const actual = jest.requireActual("@/src/features/payout-disbursement/types/payout-disbursement");
-  const utils = jest.requireActual("@/src/features/payout-disbursement/utils/format-token-amount");
+  const actual = jest.requireActual("@/src/features/payout-disbursement");
   return {
     ...actual,
-    formatDisplayAmount: utils.formatDisplayAmount,
-    fromSmallestUnit: utils.fromSmallestUnit,
     useToggleAgreement: jest.fn(() => ({
       mutate: mockToggleMutate,
       isPending: mockTogglePending,
@@ -56,18 +51,15 @@ jest.mock("@/src/features/payout-disbursement", () => {
       mutate: mockSaveMutate,
       isPending: mockSavePending,
     })),
-    getPaidAllocationIds: jest.fn(() => []),
-    CreateDisbursementModal: () => null,
-    PayoutConfigurationModal: () => null,
-    PayoutHistoryDrawer: () => null,
-    TokenBreakdown: ({ totalsByToken }: { totalsByToken: unknown[] }) =>
-      React.createElement(
-        "span",
-        { "data-testid": "token-breakdown" },
-        `${totalsByToken.length} tokens`
-      ),
+    // Stub out the content components to avoid their data-fetching hooks
+    PayoutConfigurationContent: jest.fn(() => null),
+    PayoutHistoryContent: jest.fn(() => null),
   };
 });
+
+jest.mock("@/hooks/useCopyToClipboard", () => ({
+  useCopyToClipboard: () => ["", jest.fn()],
+}));
 
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -75,9 +67,9 @@ import React from "react";
 import "@testing-library/jest-dom";
 
 import {
-  ProjectDetailsModal,
-  type ProjectDetailsModalGrant,
-} from "@/components/Pages/Admin/ControlCenter/ProjectDetailsModal";
+  ProjectDetailsSidebar,
+  type ProjectDetailsSidebarGrant,
+} from "@/components/Pages/Admin/ControlCenter/ProjectDetailsSidebar";
 import {
   type CommunityPayoutAgreementInfo,
   type CommunityPayoutInvoiceInfo,
@@ -88,7 +80,7 @@ import { createMockAgreement, createMockInvoice } from "../fixtures";
 
 // ---- Test grant object ----
 
-const testGrant: ProjectDetailsModalGrant = {
+const testGrant: ProjectDetailsSidebarGrant = {
   grantUid: "grant-uid-1",
   projectUid: "project-uid-1",
   projectName: "Alpha Project",
@@ -103,8 +95,7 @@ const testGrant: ProjectDetailsModalGrant = {
 };
 
 beforeEach(() => {
-  mockToggleMutate.mockClear();
-  mockSaveMutate.mockClear();
+  jest.clearAllMocks();
   mockTogglePending = false;
   mockSavePending = false;
 
@@ -124,10 +115,10 @@ beforeEach(() => {
   }));
 });
 
-// ---- Helper to render the modal ----
+// ---- Helper to render the sidebar ----
 
-interface RenderModalOptions {
-  grant?: ProjectDetailsModalGrant | null;
+interface RenderSidebarOptions {
+  grant?: ProjectDetailsSidebarGrant | null;
   open?: boolean;
   agreement?: CommunityPayoutAgreementInfo | null;
   milestoneInvoices?: CommunityPayoutInvoiceInfo[];
@@ -138,12 +129,11 @@ interface RenderModalOptions {
     history: unknown[];
   } | null;
   onOpenChange?: jest.Mock;
-  onOpenConfigModal?: jest.Mock;
-  onOpenHistoryDrawer?: jest.Mock;
   onCreateDisbursement?: jest.Mock;
+  onConfigSuccess?: jest.Mock;
 }
 
-function renderModal(options: RenderModalOptions = {}) {
+function renderSidebar(options: RenderSidebarOptions = {}) {
   const {
     grant = testGrant,
     open = true,
@@ -152,13 +142,12 @@ function renderModal(options: RenderModalOptions = {}) {
     invoiceRequired = false,
     disbursementInfo = null,
     onOpenChange = jest.fn(),
-    onOpenConfigModal = jest.fn(),
-    onOpenHistoryDrawer = jest.fn(),
     onCreateDisbursement = jest.fn(),
+    onConfigSuccess = jest.fn(),
   } = options;
 
   return render(
-    <ProjectDetailsModal
+    <ProjectDetailsSidebar
       grant={grant}
       open={open}
       onOpenChange={onOpenChange}
@@ -168,41 +157,47 @@ function renderModal(options: RenderModalOptions = {}) {
       agreement={agreement}
       milestoneInvoices={milestoneInvoices}
       invoiceRequired={invoiceRequired}
-      onOpenConfigModal={onOpenConfigModal}
-      onOpenHistoryDrawer={onOpenHistoryDrawer}
       onCreateDisbursement={onCreateDisbursement}
+      onConfigSuccess={onConfigSuccess}
     />
   );
 }
 
 // ---- Tests ----
 
-describe("ProjectDetailsModal", () => {
+describe("ProjectDetailsSidebar", () => {
   it("renders the project name and grant name when open", () => {
-    renderModal();
+    renderSidebar();
     expect(screen.getByText("Alpha Project")).toBeInTheDocument();
     expect(screen.getByText("Grant Round Q1")).toBeInTheDocument();
   });
 
   it("renders nothing when grant is null", () => {
-    const { container } = renderModal({ grant: null });
+    const { container } = renderSidebar({ grant: null });
     expect(container.innerHTML).toBe("");
   });
 
   it("shows the approved amount with currency", () => {
-    renderModal();
+    renderSidebar();
     expect(screen.getByText("Approved:")).toBeInTheDocument();
     expect(screen.getByText("10,000 USDC")).toBeInTheDocument();
   });
 
   it("shows the payout address truncated", () => {
-    renderModal();
+    renderSidebar();
     expect(screen.getByText("0x1234...5678")).toBeInTheDocument();
+  });
+
+  it("renders sidebar navigation with all three sections", () => {
+    renderSidebar();
+    expect(screen.getByRole("button", { name: /details/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /payout settings/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /history/i })).toBeInTheDocument();
   });
 
   describe("Agreement signing (date-picker flow)", () => {
     it("shows date input when agreement is not signed", () => {
-      renderModal({
+      renderSidebar({
         agreement: createMockAgreement({
           signed: false,
           signedAt: null,
@@ -217,7 +212,7 @@ describe("ProjectDetailsModal", () => {
 
     it("calls toggleAgreement with signed=true when a date is picked", async () => {
       const user = userEvent.setup();
-      renderModal({
+      renderSidebar({
         agreement: createMockAgreement({
           signed: false,
           signedAt: null,
@@ -240,7 +235,7 @@ describe("ProjectDetailsModal", () => {
     });
 
     it("shows signed state with date when agreement is signed", () => {
-      renderModal({
+      renderSidebar({
         agreement: createMockAgreement({
           signed: true,
           signedAt: "2024-06-15T00:00:00Z",
@@ -254,7 +249,7 @@ describe("ProjectDetailsModal", () => {
     });
 
     it("does not show date input when agreement is signed", () => {
-      renderModal({
+      renderSidebar({
         agreement: createMockAgreement({
           signed: true,
           signedAt: "2024-06-01T00:00:00Z",
@@ -268,7 +263,7 @@ describe("ProjectDetailsModal", () => {
   describe("Agreement unsigning", () => {
     it("shows confirm dialog when X button is clicked on signed agreement", async () => {
       const user = userEvent.setup();
-      renderModal({
+      renderSidebar({
         agreement: createMockAgreement({ signed: true }),
       });
 
@@ -282,7 +277,7 @@ describe("ProjectDetailsModal", () => {
 
     it("calls toggleAgreement with signed=false when confirm is clicked", async () => {
       const user = userEvent.setup();
-      renderModal({
+      renderSidebar({
         agreement: createMockAgreement({ signed: true }),
       });
 
@@ -305,7 +300,7 @@ describe("ProjectDetailsModal", () => {
 
     it("hides confirm dialog when cancel is clicked", async () => {
       const user = userEvent.setup();
-      renderModal({
+      renderSidebar({
         agreement: createMockAgreement({ signed: true }),
       });
 
@@ -323,7 +318,7 @@ describe("ProjectDetailsModal", () => {
 
   describe("Milestone invoices table", () => {
     it("renders milestone labels", () => {
-      renderModal({
+      renderSidebar({
         milestoneInvoices: [
           createMockInvoice({ milestoneLabel: "Deliverable A" }),
           createMockInvoice({
@@ -350,18 +345,18 @@ describe("ProjectDetailsModal", () => {
       ];
 
       // Should not throw even though labels are the same
-      expect(() => renderModal({ milestoneInvoices: invoices })).not.toThrow();
+      expect(() => renderSidebar({ milestoneInvoices: invoices })).not.toThrow();
     });
 
     it("shows empty state when no invoices", () => {
-      renderModal({ milestoneInvoices: [] });
+      renderSidebar({ milestoneInvoices: [] });
       expect(screen.getByText(/no milestones configured/i)).toBeInTheDocument();
     });
   });
 
   describe("Milestone status column", () => {
     it("renders milestone status badge with correct label", () => {
-      renderModal({
+      renderSidebar({
         milestoneInvoices: [
           createMockInvoice({
             milestoneLabel: "MS Completed",
@@ -381,7 +376,7 @@ describe("ProjectDetailsModal", () => {
     });
 
     it("shows 'Pending' when milestoneStatus is null", () => {
-      renderModal({
+      renderSidebar({
         milestoneInvoices: [
           createMockInvoice({
             milestoneLabel: "MS Null",
@@ -396,7 +391,7 @@ describe("ProjectDetailsModal", () => {
     });
 
     it("shows 'Past due' when status is pending and dueDate is in the past", () => {
-      renderModal({
+      renderSidebar({
         milestoneInvoices: [
           createMockInvoice({
             milestoneLabel: "MS Overdue",
@@ -411,7 +406,7 @@ describe("ProjectDetailsModal", () => {
     });
 
     it("does not show 'Past due' when status is completed even with past dueDate", () => {
-      renderModal({
+      renderSidebar({
         milestoneInvoices: [
           createMockInvoice({
             milestoneLabel: "MS Done",
@@ -427,7 +422,7 @@ describe("ProjectDetailsModal", () => {
     });
 
     it("falls back to 'Pending' config when milestoneStatus is null", () => {
-      renderModal({
+      renderSidebar({
         milestoneInvoices: [
           createMockInvoice({
             milestoneLabel: "MS Null Status",
@@ -443,7 +438,7 @@ describe("ProjectDetailsModal", () => {
 
     it("shows completion date in tooltip for completed milestone on hover", async () => {
       const user = userEvent.setup();
-      renderModal({
+      renderSidebar({
         milestoneInvoices: [
           createMockInvoice({
             milestoneLabel: "MS Comp",
@@ -461,7 +456,7 @@ describe("ProjectDetailsModal", () => {
 
     it("shows verification date in tooltip for verified milestone on hover", async () => {
       const user = userEvent.setup();
-      renderModal({
+      renderSidebar({
         milestoneInvoices: [
           createMockInvoice({
             milestoneLabel: "MS Ver",
@@ -479,7 +474,7 @@ describe("ProjectDetailsModal", () => {
 
     it("shows due date in tooltip for past due milestone on hover", async () => {
       const user = userEvent.setup();
-      renderModal({
+      renderSidebar({
         milestoneInvoices: [
           createMockInvoice({
             milestoneLabel: "MS Late",
@@ -497,7 +492,7 @@ describe("ProjectDetailsModal", () => {
 
     it("shows created and due dates in tooltip for pending milestone on hover", async () => {
       const user = userEvent.setup();
-      renderModal({
+      renderSidebar({
         milestoneInvoices: [
           createMockInvoice({
             milestoneLabel: "MS Pend",
@@ -517,7 +512,7 @@ describe("ProjectDetailsModal", () => {
 
     it("shows alert icon with 'not verified yet' tooltip for completed milestone", async () => {
       const user = userEvent.setup();
-      renderModal({
+      renderSidebar({
         milestoneInvoices: [
           createMockInvoice({
             milestoneLabel: "MS Comp Alert",
@@ -538,7 +533,7 @@ describe("ProjectDetailsModal", () => {
     });
 
     it("does not show alert icon for verified milestone", () => {
-      renderModal({
+      renderSidebar({
         milestoneInvoices: [
           createMockInvoice({
             milestoneLabel: "MS Ver No Alert",
@@ -554,7 +549,7 @@ describe("ProjectDetailsModal", () => {
     });
 
     it("does not show alert icon for pending milestone", () => {
-      renderModal({
+      renderSidebar({
         milestoneInvoices: [
           createMockInvoice({
             milestoneLabel: "MS Pend No Alert",
@@ -571,7 +566,7 @@ describe("ProjectDetailsModal", () => {
 
   describe("Invoice status column", () => {
     it("shows 'Invoice received' badge when invoice status is 'received'", () => {
-      renderModal({
+      renderSidebar({
         invoiceRequired: true,
         milestoneInvoices: [
           createMockInvoice({
@@ -588,7 +583,7 @@ describe("ProjectDetailsModal", () => {
     });
 
     it("shows 'Invoice received' badge when invoice status is 'paid'", () => {
-      renderModal({
+      renderSidebar({
         invoiceRequired: true,
         milestoneInvoices: [
           createMockInvoice({
@@ -603,7 +598,7 @@ describe("ProjectDetailsModal", () => {
     });
 
     it("shows 'Not submitted' badge when invoice status is 'not_submitted'", () => {
-      renderModal({
+      renderSidebar({
         invoiceRequired: true,
         milestoneInvoices: [
           createMockInvoice({
@@ -619,7 +614,7 @@ describe("ProjectDetailsModal", () => {
     });
 
     it("does not show invoice status column when invoiceRequired is false", () => {
-      renderModal({
+      renderSidebar({
         invoiceRequired: false,
         milestoneInvoices: [
           createMockInvoice({
@@ -636,12 +631,11 @@ describe("ProjectDetailsModal", () => {
   });
 
   describe("Unsaved changes guard", () => {
-    it("calls window.confirm when closing with unsaved changes", async () => {
+    it("shows discard dialog when closing with unsaved changes", async () => {
       const user = userEvent.setup();
       const onOpenChange = jest.fn();
-      const confirmSpy = jest.spyOn(window, "confirm").mockReturnValue(false);
 
-      renderModal({
+      renderSidebar({
         onOpenChange,
         invoiceRequired: true,
         milestoneInvoices: [
@@ -657,37 +651,36 @@ describe("ProjectDetailsModal", () => {
       const dateInput = screen.getByLabelText(/invoice received date for M1/i);
       await user.type(dateInput, "2024-06-15");
 
-      // Try to close via the explicit Close button (not the Radix dialog X)
+      // Try to close via the explicit Close button in the footer
       const closeButtons = screen.getAllByRole("button", { name: /close/i });
-      // The last one is our explicit "Close" text button in the footer
       const closeButton = closeButtons[closeButtons.length - 1];
       await user.click(closeButton);
 
-      expect(confirmSpy).toHaveBeenCalledWith("You have unsaved changes. Discard?");
-      confirmSpy.mockRestore();
+      // Discard confirmation dialog should appear
+      expect(screen.getByText("Unsaved changes")).toBeInTheDocument();
+      expect(screen.getByText(/discard them/i)).toBeInTheDocument();
+      expect(onOpenChange).not.toHaveBeenCalled();
     });
 
-    it("does not prompt when closing without unsaved changes", async () => {
+    it("does not show discard dialog when closing without unsaved changes", async () => {
       const user = userEvent.setup();
       const onOpenChange = jest.fn();
-      const confirmSpy = jest.spyOn(window, "confirm");
 
-      renderModal({ onOpenChange, milestoneInvoices: [] });
+      renderSidebar({ onOpenChange, milestoneInvoices: [] });
 
       // Use the explicit "Close" text button in the footer
       const closeButtons = screen.getAllByRole("button", { name: /close/i });
       const closeButton = closeButtons[closeButtons.length - 1];
       await user.click(closeButton);
 
-      expect(confirmSpy).not.toHaveBeenCalled();
-      confirmSpy.mockRestore();
+      expect(screen.queryByText("Unsaved changes")).not.toBeInTheDocument();
     });
   });
 
   describe("Save changes", () => {
-    it("shows save button with edit count when there are unsaved changes", async () => {
+    it("shows save button with edit count when there are unsaved milestone changes", async () => {
       const user = userEvent.setup();
-      renderModal({
+      renderSidebar({
         invoiceRequired: true,
         milestoneInvoices: [
           createMockInvoice({
@@ -706,7 +699,7 @@ describe("ProjectDetailsModal", () => {
 
     it("calls saveMilestoneInvoices mutation with correct data", async () => {
       const user = userEvent.setup();
-      renderModal({
+      renderSidebar({
         invoiceRequired: true,
         milestoneInvoices: [
           createMockInvoice({
@@ -740,28 +733,8 @@ describe("ProjectDetailsModal", () => {
   });
 
   describe("Button disabled states", () => {
-    it("disables action buttons when save mutation is pending", () => {
-      mockSavePending = true;
-      const { useSaveMilestoneInvoices } = require("@/src/features/payout-disbursement");
-      (useSaveMilestoneInvoices as jest.Mock).mockImplementation(() => ({
-        mutate: mockSaveMutate,
-        isPending: true,
-      }));
-
-      renderModal();
-
-      const configButton = screen.getByRole("button", {
-        name: /payout settings/i,
-      });
-      const historyButton = screen.getByRole("button", {
-        name: /view history/i,
-      });
-      expect(configButton).toBeDisabled();
-      expect(historyButton).toBeDisabled();
-    });
-
     it("disables create disbursement button when no payout address", () => {
-      renderModal({
+      renderSidebar({
         grant: { ...testGrant, currentPayoutAddress: undefined },
       });
 
@@ -772,7 +745,7 @@ describe("ProjectDetailsModal", () => {
     });
 
     it("disables create disbursement button when amount is 0", () => {
-      renderModal({
+      renderSidebar({
         grant: { ...testGrant, currentAmount: "0" },
       });
 
@@ -783,7 +756,7 @@ describe("ProjectDetailsModal", () => {
     });
 
     it("enables create disbursement button when address and amount are valid", () => {
-      renderModal();
+      renderSidebar();
 
       const createButton = screen.getByRole("button", {
         name: /create disbursement/i,
@@ -793,34 +766,10 @@ describe("ProjectDetailsModal", () => {
   });
 
   describe("Footer action callbacks", () => {
-    it("calls onOpenConfigModal when Payout Settings is clicked", async () => {
-      const user = userEvent.setup();
-      const onOpenConfigModal = jest.fn();
-      renderModal({ onOpenConfigModal });
-
-      const button = screen.getByRole("button", {
-        name: /payout settings/i,
-      });
-      await user.click(button);
-
-      expect(onOpenConfigModal).toHaveBeenCalledTimes(1);
-    });
-
-    it("calls onOpenHistoryDrawer when View History is clicked", async () => {
-      const user = userEvent.setup();
-      const onOpenHistoryDrawer = jest.fn();
-      renderModal({ onOpenHistoryDrawer });
-
-      const button = screen.getByRole("button", { name: /view history/i });
-      await user.click(button);
-
-      expect(onOpenHistoryDrawer).toHaveBeenCalledTimes(1);
-    });
-
     it("calls onCreateDisbursement when Create Disbursement is clicked", async () => {
       const user = userEvent.setup();
       const onCreateDisbursement = jest.fn();
-      renderModal({ onCreateDisbursement });
+      renderSidebar({ onCreateDisbursement });
 
       const button = screen.getByRole("button", {
         name: /create disbursement/i,
