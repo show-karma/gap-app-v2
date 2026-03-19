@@ -638,3 +638,9 @@ body .react-hot-toast * {
   box-shadow: none;
 }
 
+/* Content-visibility optimization for below-fold content */
+.content-visibility-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 500px;
+}
+

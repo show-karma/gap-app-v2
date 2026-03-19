@@ -54,6 +54,8 @@ export const PRIVY_BRIDGE_DEFAULTS: PrivyBridgeValue = {
 
 const PrivyBridgeContext = createContext<PrivyBridgeValue>(PRIVY_BRIDGE_DEFAULTS);
 const PrivyBridgeSetterContext = createContext<(v: PrivyBridgeValue) => void>(noop);
+const LoadPrivyContext = createContext<() => void>(noop);
+const PrivyLoadRequestedContext = createContext<boolean>(false);
 
 export function usePrivyBridge(): PrivyBridgeValue {
   return useContext(PrivyBridgeContext);
@@ -63,16 +65,30 @@ export function usePrivyBridgeSetter(): (v: PrivyBridgeValue) => void {
   return useContext(PrivyBridgeSetterContext);
 }
 
+export function useLoadPrivy(): () => void {
+  return useContext(LoadPrivyContext);
+}
+
+export function usePrivyLoadRequested(): boolean {
+  return useContext(PrivyLoadRequestedContext);
+}
+
 /**
  * Provider that holds bridge state. Wrap the app once at the root.
  */
 export function PrivyBridgeProvider({ children }: { children: ReactNode }) {
   const [value, setValue] = useState<PrivyBridgeValue>(PRIVY_BRIDGE_DEFAULTS);
+  const [loadRequested, setLoadRequested] = useState(false);
   const setter = useCallback((v: PrivyBridgeValue) => setValue(v), []);
+  const loadPrivy = useCallback(() => setLoadRequested(true), []);
 
   return (
     <PrivyBridgeSetterContext.Provider value={setter}>
-      <PrivyBridgeContext.Provider value={value}>{children}</PrivyBridgeContext.Provider>
+      <LoadPrivyContext.Provider value={loadPrivy}>
+        <PrivyLoadRequestedContext.Provider value={loadRequested}>
+          <PrivyBridgeContext.Provider value={value}>{children}</PrivyBridgeContext.Provider>
+        </PrivyLoadRequestedContext.Provider>
+      </LoadPrivyContext.Provider>
     </PrivyBridgeSetterContext.Provider>
   );
 }

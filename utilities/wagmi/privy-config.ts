@@ -104,4 +104,5 @@ export const minimalWagmiConfig = createMinimalConfig({
   transports,
   ssr: true,
   pollingInterval: 30_000,
+  multiInjectedProviderDiscovery: false,
 });

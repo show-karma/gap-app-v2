@@ -74,3 +74,16 @@ describe("Gasless providers lazy instantiation", () => {
     });
   });
 });
+
+describe("No static re-exports", () => {
+  it("should not statically export AlchemyProvider or ZeroDevProvider", () => {
+    const fs = require("fs");
+    const path = require("path");
+    const source = fs.readFileSync(
+      path.resolve(__dirname, "../../../../utilities/gasless/providers/index.ts"),
+      "utf-8"
+    );
+    expect(source).not.toMatch(/^export\s*\{.*AlchemyProvider.*\}/m);
+    expect(source).not.toMatch(/^export\s*\{.*ZeroDevProvider.*\}/m);
+  });
+});
