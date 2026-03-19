@@ -1,5 +1,6 @@
 import { createConfig } from "@privy-io/wagmi";
 import { type Config, http } from "@wagmi/core";
+import { createConfig as createMinimalConfig } from "wagmi";
 import { envVars } from "../enviromentVars";
 import { appNetwork } from "../network";
 
@@ -86,3 +87,21 @@ export const privyConfig = createConfig({
 export function getPrivyWagmiConfig() {
   return privyConfig;
 }
+
+/**
+ * Minimal wagmi config for the outer WagmiProvider in PrivyProviderWrapper.
+ *
+ * Uses wagmi's native `createConfig` (NOT @privy-io/wagmi) so that importing
+ * this config does NOT pull in Privy's wagmi adapter or its connectors.
+ * The inner WagmiProvider from @privy-io/wagmi (lazy-loaded in
+ * PrivyWagmiProviders) overrides this once Privy initialises.
+ */
+export const minimalWagmiConfig = createMinimalConfig({
+  chains: appNetwork as unknown as readonly [
+    (typeof appNetwork)[number],
+    ...(typeof appNetwork)[number][],
+  ],
+  transports,
+  ssr: true,
+  pollingInterval: 30_000,
+});

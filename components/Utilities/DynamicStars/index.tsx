@@ -1,6 +1,9 @@
+"use client";
+
 import type { FC } from "react";
 import { useState } from "react";
 import { StarIcon } from "@/components/Icons/Star";
+import "./styles.css";
 
 interface DynamicStarsProps {
   totalStars?: number;

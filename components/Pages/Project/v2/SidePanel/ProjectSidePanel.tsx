@@ -94,8 +94,10 @@ export function ProjectSidePanel({
 
       {/* Outer card: profile + actions together */}
       <div className="flex flex-col rounded-xl border bg-secondary gap-2 p-2">
-        {/* Inner white profile card — prefer server-rendered version for faster LCP */}
-        {serverSidePanel || <SidebarProfileCard project={project} isVerified={isVerified} />}
+        {/* Inner white profile card — always render the full client version once
+             project data is available. The serverSidePanel (SidebarProfileCardStatic)
+             is only used during the loading state in ProjectProfileLayout. */}
+        <SidebarProfileCard project={project} isVerified={isVerified} />
 
         {/* Actions: Donate + Endorse + Subscribe */}
         <div className="flex flex-col gap-8 p-6">

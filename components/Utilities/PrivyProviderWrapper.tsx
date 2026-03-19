@@ -10,7 +10,7 @@ import {
 } from "@/contexts/privy-bridge-context";
 import type { TenantConfig } from "@/src/infrastructure/types/tenant";
 import { queryClient } from "@/utilities/query-client";
-import { privyConfig } from "@/utilities/wagmi/privy-config";
+import { minimalWagmiConfig } from "@/utilities/wagmi/privy-config";
 
 /**
  * @deprecated Import from `@/utilities/query-client` instead.
@@ -79,7 +79,7 @@ export default function PrivyProviderWrapper({
 }: PrivyProviderWrapperProps) {
   return (
     <QueryClientProvider client={queryClient}>
-      <WagmiProvider config={privyConfig}>
+      <WagmiProvider config={minimalWagmiConfig}>
         <PrivyBridgeProvider>
           <PrivyLoader tenantConfig={tenantConfig}>{children}</PrivyLoader>
         </PrivyBridgeProvider>
