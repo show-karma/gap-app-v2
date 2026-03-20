@@ -4,11 +4,11 @@ import { ArrowLeft, Edit, ExternalLink } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ApplicationDataView } from "@/components/FundingPlatform/ApplicationView/ApplicationTab/ApplicationDataView";
 import { useAuth } from "@/hooks/useAuth";
-import { useIsOwner } from "@/hooks/useIsOwner";
 import { Link } from "@/src/components/navigation/Link";
 import { useIsFundingPlatformAdmin } from "@/src/core/rbac";
 import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
 import { Role } from "@/src/core/rbac/types/role";
+import { useApplicationAccess } from "@/src/features/applications/hooks/use-application-access";
 import { PublicComments } from "@/src/features/application-comments/components/PublicComments";
 import { ApplicationStatusHistory } from "@/src/features/applications/components/ApplicationStatusHistory";
 import type { IFundingApplication, ProgramWithFormSchema } from "@/types/funding-platform";
@@ -74,16 +74,20 @@ export function ApplicationPageClient({
   const { hasRoleOrHigher, isReviewer } = usePermissionContext();
   const isAdminOrReviewer = hasRoleOrHigher(Role.MILESTONE_REVIEWER) || isReviewer;
 
-  const isWalletOwner = useIsOwner(application?.ownerAddress ?? "");
+  // Use authenticated backend check for ownership (SSR-fetched ownerAddress may be sanitized to "")
+  const { isOwner: isBackendOwner } = useApplicationAccess(
+    communityId,
+    application?.referenceNumber
+  );
   const isOwner = useMemo(() => {
     if (!application) return false;
-    if (isWalletOwner) return true;
+    if (isBackendOwner) return true;
     // Privy userId ownership as safety net (for edge cases)
     if (user?.id && application.userId && user.id === application.userId) {
       return true;
     }
     return false;
-  }, [isWalletOwner, user?.id, application]);
+  }, [isBackendOwner, user?.id, application]);
 
   const canOwnerEdit = useMemo(() => {
     if (!editableStatuses.includes(application.status)) return false;
