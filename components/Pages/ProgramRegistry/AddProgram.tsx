@@ -7,7 +7,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { SubmitHandler } from "react-hook-form";
 import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
 import { CommunitiesSelect } from "@/components/CommunitiesSelect";
 import { Telegram2Icon, WebsiteIcon } from "@/components/Icons";
 import { BlogIcon } from "@/components/Icons/Blog";
@@ -22,8 +21,6 @@ import { MultiEmailInput } from "@/components/Utilities/MultiEmailInput";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
-import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
-import { useWallet } from "@/hooks/useWallet";
 import { getCommunities } from "@/services/communities.service";
 import {
   getCreateProgramSchema,
@@ -278,11 +275,7 @@ export default function AddProgram({
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const { address, isConnected } = useAccount();
-  const { authenticated: isAuth, login } = useAuth();
-  const { chain } = useAccount();
-  const { switchChainAsync } = useWallet();
-  const { setupChainAndWallet } = useSetupChainAndWallet();
+  const { address, authenticated: isAuth, login } = useAuth();
 
   // Metadata is constructed inline rather than via ProgramRegistryService.buildProgramMetadata()
   // because this form has significantly more fields (social links, categories, ecosystems, etc.)
@@ -290,7 +283,7 @@ export default function AddProgram({
   const createProgram = async (data: ProgramFormData) => {
     setIsLoading(true);
     try {
-      if (!isConnected || !isAuth) {
+      if (!isAuth) {
         login?.();
         return;
       }
@@ -340,24 +333,12 @@ export default function AddProgram({
   const editProgram = async (data: ProgramFormData) => {
     setIsLoading(true);
     try {
-      // V2 update uses JWT authentication, no wallet connection needed
       if (!isAuth) {
         login?.();
         return;
       }
 
-      const chainSelected = data.networkToCreate;
-      const setup = await setupChainAndWallet({
-        targetChainId: chainSelected as number,
-        currentChainId: chain?.id,
-        switchChainAsync,
-      });
-
-      if (!setup) {
-        setIsLoading(false);
-        return;
-      }
-
+      // V2 update uses JWT — no wallet chain setup needed
       const metadata = sanitizeObject({
         ...buildMetadata(data),
         status: data.status,
@@ -392,6 +373,15 @@ export default function AddProgram({
       setIsLoading(false);
     }
   };
+
+  const onValidationError = useCallback((validationErrors: Record<string, unknown>) => {
+    const fields = Object.keys(validationErrors);
+    if (fields.length > 0) {
+      toast.error(
+        `Please fill in the required ${fields.length === 1 ? "field" : "fields"}: ${fields.join(", ")}`
+      );
+    }
+  }, []);
 
   const onSubmit: SubmitHandler<ProgramFormData> = async (data, event) => {
     event?.preventDefault();
@@ -441,7 +431,10 @@ export default function AddProgram({
             </p>
           </div>
         </div>
-        <form onSubmit={handleSubmit(onSubmit)} className="gap-4 rounded-lg w-full flex-col flex">
+        <form
+          onSubmit={handleSubmit(onSubmit, onValidationError)}
+          className="gap-4 rounded-lg w-full flex-col flex"
+        >
           <div className="flex flex-col w-full gap-6">
             {/* Opportunity Type Selector */}
             <div className="flex flex-col w-full gap-3">

@@ -4,7 +4,6 @@ import { useMutation } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAuth } from "@/hooks/useAuth";
 import type { Community } from "@/types/v2/community";
@@ -70,8 +69,7 @@ export function buildFormValuesFromMetadata(
 }
 
 export function useAdminProgramForm(config: UseAdminProgramFormConfig) {
-  const { address, isConnected } = useAccount();
-  const { authenticated: isAuth, login } = useAuth();
+  const { address, authenticated: isAuth, login } = useAuth();
 
   const isUpdate = config.mode === "update";
   const readOnly = isUpdate && config.readOnly === true;
@@ -187,7 +185,7 @@ export function useAdminProgramForm(config: UseAdminProgramFormConfig) {
 
   const onSubmit = useCallback(
     (data: AdminProgramFormSchema) => {
-      if (!isConnected || !isAuth) {
+      if (!isAuth) {
         login?.();
         return;
       }
@@ -197,7 +195,7 @@ export function useAdminProgramForm(config: UseAdminProgramFormConfig) {
       }
       mutation.mutate(data);
     },
-    [address, isConnected, isAuth, login, mutation]
+    [address, isAuth, login, mutation]
   );
 
   return {
