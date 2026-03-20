@@ -4,7 +4,7 @@ import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
+import { useAuth } from "@/hooks/useAuth";
 import { AIAnalysisTab } from "@/components/FundingPlatform/ApplicationView/AIAnalysisTab";
 import ApplicationHeader from "@/components/FundingPlatform/ApplicationView/ApplicationHeader";
 import { ApplicationTab } from "@/components/FundingPlatform/ApplicationView/ApplicationTab";
@@ -74,7 +74,7 @@ export default function ApplicationDetailPage() {
   const shouldOpenEdit = searchParams.get("edit") === "true";
 
   // Get current user address
-  const { address: currentUserAddress } = useAccount();
+  const { address: currentUserAddress } = useAuth();
 
   // View mode state for ApplicationContent
   const [applicationViewMode, setApplicationViewMode] = useState<"details" | "changes">("details");

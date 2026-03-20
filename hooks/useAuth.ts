@@ -1,17 +1,15 @@
 "use client";
 
-import { usePrivy, useWallets } from "@privy-io/react-auth";
-import { watchAccount } from "@wagmi/core";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Hex } from "viem";
-import { useAccount } from "wagmi";
+import { usePrivyBridge } from "@/contexts/privy-bridge-context";
+import { compareAllWallets } from "@/utilities/auth/compare-all-wallets";
 import { useProjectCreateModalStore } from "@/store/modals/projectCreate";
 import { getCypressMockAuthState } from "@/utilities/auth/cypress-auth";
 import { TokenManager } from "@/utilities/auth/token-manager";
 import { PAGES } from "@/utilities/pages";
 import { queryClient } from "@/utilities/query-client";
-import { privyConfig } from "@/utilities/wagmi/privy-config";
 import { useWhitelabel } from "@/utilities/whitelabel-context";
 
 /**
@@ -102,24 +100,29 @@ const clearWagmiState = () => {
 };
 
 /**
- * Authentication hook that wraps Privy's built-in authentication
+ * Authentication hook that wraps Privy's built-in authentication.
  *
- * Privy handles all the complexity:
- * - Token management and refresh
- * - Session persistence
- * - Cross-tab synchronization
- * - Cookie management
- * - Wallet connections
+ * Reads from PrivyBridgeContext instead of calling usePrivy()/useWallets()/useAccount()
+ * directly. This allows Privy/Wagmi SDK to be deferred via dynamic import — before
+ * the SDK loads, the bridge returns safe defaults (ready=false, authenticated=false).
  */
 export const useAuth = () => {
-  const { ready, authenticated, user, login, logout, getAccessToken, connectWallet } = usePrivy();
+  const {
+    ready,
+    authenticated,
+    user,
+    login,
+    logout,
+    getAccessToken,
+    connectWallet,
+    wallets,
+    isConnected,
+  } = usePrivyBridge();
+
   const router = useRouter();
   const pathname = usePathname();
-
-  const { isConnected } = useAccount();
   const { isWhitelabel } = useWhitelabel();
 
-  const { wallets } = useWallets();
   const primaryWallet = wallets[0];
   // Track client-side hydration so getCypressMockAuthState() re-evaluates after SSR.
   // During SSR, window is undefined so the check returns null. Without isClient,
@@ -290,31 +293,33 @@ export const useAuth = () => {
 
   // Handle wallet switching: logout if switched to non-linked wallet
   // Using wagmi's watchAccount as recommended by Privy docs
+  // Dynamically imports @wagmi/core and privy-config to keep them out of the initial bundle
   useEffect(() => {
     if (!ready || !authenticated) return;
 
-    // Watch for account changes in the EOA wallet
-    const unwatch = watchAccount(privyConfig, {
-      onChange(account) {
-        // Get the new address from the wallet
-        const newAddress = account.address?.toLowerCase();
+    let unwatch: (() => void) | undefined;
 
-        if (!newAddress) return;
+    Promise.all([import("@wagmi/core"), import("@/utilities/wagmi/privy-config")]).then(
+      ([{ watchAccount }, { privyConfig }]) => {
+        unwatch = watchAccount(privyConfig, {
+          onChange(account) {
+            const newAddress = account.address?.toLowerCase();
+            if (!newAddress) return;
 
-        // Use snapshotted wallet addresses from auth time (not live array)
-        // to prevent a race where Privy updates its state before we check
-        const linkedAddresses = walletsSnapshotRef.current;
+            // Check against ALL user linked accounts (wallets, smart wallets,
+            // farcaster custody, cross-app) — not just the wagmi wallets snapshot.
+            // This prevents false logouts for Farcaster users whose custody wallet
+            // gets synced to wagmi after the embedded wallet is snapshotted.
+            if (user && !compareAllWallets(user, newAddress)) {
+              logout();
+            }
+          },
+        });
+      }
+    );
 
-        // If the new address is NOT in the linked wallets, log out
-        if (linkedAddresses.length > 0 && !linkedAddresses.includes(newAddress)) {
-          logout();
-        }
-      },
-    });
-
-    // Cleanup watcher on unmount
-    return () => unwatch();
-  }, [ready, authenticated, logout]);
+    return () => unwatch?.();
+  }, [ready, authenticated, user, logout]);
 
   const adaptedLogin = useCallback(async () => {
     if (typeof window !== "undefined" && !authenticated) {

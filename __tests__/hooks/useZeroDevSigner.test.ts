@@ -1,11 +1,16 @@
 import { renderHook } from "@testing-library/react";
 import { useZeroDevSigner } from "@/hooks/useZeroDevSigner";
 
-// Mock Privy
+// Mock bridge
 const mockUser: any = { linkedAccounts: [] };
-jest.mock("@privy-io/react-auth", () => ({
-  usePrivy: () => ({ ready: true, user: mockUser }),
-  useWallets: () => ({ wallets: mockWallets }),
+let mockWallets: any[] = [];
+jest.mock("@/contexts/privy-bridge-context", () => ({
+  usePrivyBridge: () => ({
+    ready: true,
+    user: mockUser,
+    wallets: mockWallets,
+    smartWalletClient: null,
+  }),
 }));
 
 // Mock wagmi
@@ -27,8 +32,6 @@ jest.mock("@/utilities/gasless", () => ({
 jest.mock("@/utilities/wallet-helpers", () => ({
   safeGetWalletClient: jest.fn(),
 }));
-
-let mockWallets: any[] = [];
 
 describe("useZeroDevSigner", () => {
   beforeEach(() => {

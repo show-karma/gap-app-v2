@@ -100,6 +100,11 @@ export async function middleware(request: NextRequest) {
     const mainDomain = domainInfo.isProduction ? "karmahq.xyz" : "staging.karmahq.xyz";
     const protocol = request.nextUrl.protocol;
 
+    // Path already starts with /community/ — redirect as-is to the main domain
+    if (slug === "community") {
+      return NextResponse.redirect(new URL(`${protocol}//${mainDomain}${path}`), 301);
+    }
+
     if (slug && isKnownTenant(slug)) {
       const whitelabelDomain = getWhitelabelDomainForSlug(slug, domainInfo.isProduction);
       const restPath = `/${segments.slice(1).join("/")}` || "/";
@@ -167,10 +172,7 @@ export async function middleware(request: NextRequest) {
 
     // Check if this slug has a whitelabel domain and redirect there
     if (domainInfo?.isShared && isKnownTenant(communityId)) {
-      const whitelabelDomain = getWhitelabelDomainForSlug(
-        communityId,
-        domainInfo.isProduction
-      );
+      const whitelabelDomain = getWhitelabelDomainForSlug(communityId, domainInfo.isProduction);
       if (whitelabelDomain) {
         const protocol = request.nextUrl.protocol;
         return NextResponse.redirect(

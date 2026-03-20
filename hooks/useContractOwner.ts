@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { JsonRpcProvider } from "ethers";
 import { useEffect } from "react";
 import type { Chain } from "viem";
 import { errorManager } from "@/components/Utilities/errorManager";
@@ -21,6 +20,7 @@ const fetchContractOwner = async (address: string): Promise<boolean> => {
     throw new Error(`RPC URL not configured for chain ${chain.id}`);
   }
 
+  const { JsonRpcProvider } = await import("ethers");
   const provider = new JsonRpcProvider(rpcUrl, {
     chainId: chain.id,
     name: chain.name,

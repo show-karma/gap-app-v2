@@ -4,12 +4,13 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useParams, usePathname, useSearchParams } from "next/navigation";
 import { type ReactNode, useEffect, useState } from "react";
-import { ProgressDialog } from "@/components/Dialogs/ProgressDialog";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
-// Lazy-load ShareDialog because js-confetti (a heavy canvas library) is imported
-// at the module level. Eagerly loading it in the main layout chunk can block
-// client-side hydration in some environments (e.g., Cypress Electron).
+const ProgressDialog = dynamic(
+  () => import("@/components/Dialogs/ProgressDialog").then((mod) => mod.ProgressDialog),
+  { ssr: false }
+);
+
 const ShareDialog = dynamic(
   () =>
     import(
@@ -18,12 +19,38 @@ const ShareDialog = dynamic(
   { ssr: false }
 );
 
-import { EndorsementDialog } from "@/components/Pages/Project/Impact/EndorsementDialog";
-import { IntroDialog } from "@/components/Pages/Project/IntroDialog";
-import {
-  ProjectOptionsDialogs,
-  ProjectOptionsMenu,
-} from "@/components/Pages/Project/ProjectOptionsMenu";
+const EndorsementDialog = dynamic(
+  () =>
+    import("@/components/Pages/Project/Impact/EndorsementDialog").then(
+      (mod) => mod.EndorsementDialog
+    ),
+  { ssr: false }
+);
+
+const IntroDialog = dynamic(
+  () => import("@/components/Pages/Project/IntroDialog").then((mod) => mod.IntroDialog),
+  { ssr: false }
+);
+
+const ProjectOptionsDialogs = dynamic(
+  () =>
+    import("@/components/Pages/Project/ProjectOptionsMenu").then(
+      (mod) => mod.ProjectOptionsDialogs
+    ),
+  { ssr: false }
+);
+
+const ProjectOptionsMenu = dynamic(
+  () =>
+    import("@/components/Pages/Project/ProjectOptionsMenu").then((mod) => mod.ProjectOptionsMenu),
+  { ssr: false }
+);
+
+const EndorsementsListDialog = dynamic(
+  () => import("../EndorsementsListDialog").then((mod) => mod.EndorsementsListDialog),
+  { ssr: false }
+);
+
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useProjectProfile } from "@/hooks/v2/useProjectProfile";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
@@ -31,8 +58,8 @@ import { useEndorsementStore } from "@/store/modals/endorsement";
 import { useIntroModalStore } from "@/store/modals/intro";
 import { useProgressModalStore } from "@/store/modals/progress";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
+import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
-import { EndorsementsListDialog } from "../EndorsementsListDialog";
 import { type ContentTab, ContentTabs } from "../MainContent/ContentTabs";
 import { MobileSupportContent } from "../Mobile/MobileSupportContent";
 import { ProjectSidePanel } from "../SidePanel/ProjectSidePanel";
@@ -46,6 +73,9 @@ import {
 interface ProjectProfileLayoutProps {
   children: ReactNode;
   className?: string;
+  /** Server-rendered sidebar panel (RSC slot pattern). When provided, renders
+   *  project content in the initial HTML before client hydration. */
+  serverSidePanel?: ReactNode;
 }
 
 /**
@@ -66,7 +96,11 @@ interface ProjectProfileLayoutProps {
  * - ProjectSidePanel: profile card + Donate, Endorse, Subscribe, QuickLinks (desktop only)
  * - ContentTabs: Support (mobile), Updates, About, Funding, Impact, Team
  */
-export function ProjectProfileLayout({ children, className }: ProjectProfileLayoutProps) {
+export function ProjectProfileLayout({
+  children,
+  className,
+  serverSidePanel,
+}: ProjectProfileLayoutProps) {
   const { projectId } = useParams();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -98,7 +132,9 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
   }, [inviteCode, hasOpenedInviteModal, openContributorProfileModal]);
 
   // Use unified hook for all project profile data
-  const { project, isLoading, isError, isVerified, stats } = useProjectProfile(projectId as string);
+  const { project, isProjectLoading, isLoading, isError, isVerified, stats } = useProjectProfile(
+    projectId as string
+  );
 
   // Initialize project permissions in store (for authorization checks in ContentTabs)
   useProjectPermissions();
@@ -170,7 +206,7 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
               Go to Homepage
             </Link>
             <Link
-              href="/projects"
+              href={PAGES.PROJECTS_EXPLORER}
               className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-neutral-300 bg-gray-100 dark:bg-neutral-800 hover:bg-gray-200 dark:hover:bg-neutral-700 rounded-lg transition-colors"
             >
               Browse Projects
@@ -181,8 +217,40 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
     );
   }
 
-  // Loading state — matches ProjectProfileLayoutSkeleton structure
-  if (isLoading || !project) {
+  // Loading state — when serverSidePanel is available, show real content
+  // with skeleton for the rest; otherwise show full skeleton
+  if (isProjectLoading || !project) {
+    if (serverSidePanel) {
+      return (
+        <div className="flex flex-col gap-6 w-full" data-testid="layout-loading">
+          {/* Mobile: Server-rendered profile card */}
+          <div className="lg:hidden">{serverSidePanel}</div>
+
+          {/* Mobile: Tabs skeleton */}
+          <div className="lg:hidden -mx-4 px-4">
+            <ContentTabsSkeleton />
+          </div>
+
+          {/* Main Layout: server panel + skeleton content */}
+          <div className="flex flex-row gap-16">
+            <aside className="hidden lg:flex flex-col gap-4 w-[400px] shrink-0">
+              <div className="flex flex-col rounded-xl border bg-secondary gap-2 p-2">
+                {serverSidePanel}
+              </div>
+            </aside>
+            <div className="flex flex-col gap-6 flex-1 min-w-0">
+              <div className="hidden lg:block">
+                <ContentTabsSkeleton />
+              </div>
+              <div className="flex-1">
+                <div className="animate-pulse bg-muted rounded-xl h-96" />
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="flex flex-col gap-6 w-full" data-testid="layout-loading">
         {/* Mobile: Profile card skeleton */}
@@ -273,7 +341,11 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
         {/* Main Layout: Side Panel + Content */}
         <div className="flex flex-row gap-16" data-testid="main-layout">
           {/* Side Panel - Desktop Only */}
-          <ProjectSidePanel project={project} isVerified={isVerified} />
+          <ProjectSidePanel
+            project={project}
+            isVerified={isVerified}
+            serverSidePanel={serverSidePanel}
+          />
 
           {/* Main Content Area */}
           <div

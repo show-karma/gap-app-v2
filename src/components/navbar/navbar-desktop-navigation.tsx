@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronDown } from "lucide-react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { DiscordIcon, TelegramIcon, TwitterIcon } from "@/components/Icons";
 import { ParagraphIcon } from "@/components/Icons/Paragraph";
@@ -11,6 +12,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { NavbarUserSkeleton } from "@/src/components/navbar/navbar-user-skeleton";
 import { PAGES } from "@/utilities/pages";
 import { SOCIALS } from "@/utilities/socials";
 import { cn } from "@/utilities/tailwind";
@@ -25,7 +27,14 @@ import {
 import { NavbarAuthButtons } from "./navbar-auth-buttons";
 import { useNavbarPermissions } from "./navbar-permissions-context";
 import { NavbarSearch } from "./navbar-search";
-import { NavbarUserMenu } from "./navbar-user-menu";
+
+const NavbarUserMenu = dynamic(
+  () =>
+    import("@/src/components/navbar/navbar-user-menu").then((m) => ({
+      default: m.NavbarUserMenu,
+    })),
+  { ssr: false, loading: () => <NavbarUserSkeleton /> }
+);
 
 const menuStyles = {
   trigger:

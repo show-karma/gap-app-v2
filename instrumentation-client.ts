@@ -9,8 +9,7 @@ Sentry.init({
   enabled: process.env.NEXT_PUBLIC_VERCEL_ENV === "production",
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
   ignoreErrors: sentryIgnoreErrors,
-  // Add optional integrations for additional features
-  integrations: [Sentry.replayIntegration()],
+  integrations: [],
 
   // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
   tracesSampleRate: 0.01,
@@ -26,6 +25,14 @@ Sentry.init({
   // Setting this option to true will print useful information to the console while you're setting up Sentry.
   debug: false,
 });
+
+// Lazy-load Replay after init — keeps ~400KB out of the shared bundle.
+// The Replay SDK is fetched on-demand and added to the existing Sentry client.
+if (typeof window !== "undefined") {
+  Sentry.lazyLoadIntegration("replayIntegration").then((replayIntegration) => {
+    Sentry.addIntegration(replayIntegration());
+  });
+}
 
 export const onRequestError = Sentry.captureRequestError;
 export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
