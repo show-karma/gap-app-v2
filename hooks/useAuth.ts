@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Hex } from "viem";
 import { usePrivyBridge } from "@/contexts/privy-bridge-context";
+import { compareAllWallets } from "@/utilities/auth/compare-all-wallets";
 import { useProjectCreateModalStore } from "@/store/modals/projectCreate";
 import { getCypressMockAuthState } from "@/utilities/auth/cypress-auth";
 import { TokenManager } from "@/utilities/auth/token-manager";
@@ -305,12 +306,11 @@ export const useAuth = () => {
             const newAddress = account.address?.toLowerCase();
             if (!newAddress) return;
 
-            // Use snapshotted wallet addresses from auth time (not live array)
-            // to prevent a race where Privy updates its state before we check
-            const linkedAddresses = walletsSnapshotRef.current;
-
-            // If the new address is NOT in the linked wallets, log out
-            if (linkedAddresses.length > 0 && !linkedAddresses.includes(newAddress)) {
+            // Check against ALL user linked accounts (wallets, smart wallets,
+            // farcaster custody, cross-app) — not just the wagmi wallets snapshot.
+            // This prevents false logouts for Farcaster users whose custody wallet
+            // gets synced to wagmi after the embedded wallet is snapshotted.
+            if (user && !compareAllWallets(user, newAddress)) {
               logout();
             }
           },
@@ -319,7 +319,7 @@ export const useAuth = () => {
     );
 
     return () => unwatch?.();
-  }, [ready, authenticated, logout]);
+  }, [ready, authenticated, user, logout]);
 
   const adaptedLogin = useCallback(async () => {
     if (typeof window !== "undefined" && !authenticated) {
