@@ -175,8 +175,6 @@ export const useAuth = () => {
 
     // Detect logout: was authenticated, now not authenticated
     if (prevAuthRef.current && !authenticated) {
-      // eslint-disable-next-line no-console -- temporary debug for Farcaster logout issue
-      console.info("[AUTH-DEBUG] logout detected: authenticated went false. prev=true, now=false");
       queryClient.clear();
       TokenManager.clearCache();
       clearWagmiState();
@@ -188,8 +186,6 @@ export const useAuth = () => {
     // on another subdomain — Privy seamlessly transitions without logout.
     // Force logout to ensure full re-initialization with the new user's state.
     if (authenticated && user?.id && prevUserIdRef.current && user.id !== prevUserIdRef.current) {
-      // eslint-disable-next-line no-console -- temporary debug for Farcaster logout issue
-      console.info("[AUTH-DEBUG] user-switch logout: prev=%s, now=%s", prevUserIdRef.current, user.id);
       queryClient.clear();
       TokenManager.clearCache();
       clearWagmiState();
@@ -231,11 +227,7 @@ export const useAuth = () => {
 
     const handleAuthFailure = () => {
       authFailureCount.current += 1;
-      // eslint-disable-next-line no-console -- temporary debug for Farcaster logout issue
-      console.info("[AUTH-DEBUG] auth-check failure #%d/%d", authFailureCount.current, AUTH_FAILURE_THRESHOLD);
       if (authFailureCount.current >= AUTH_FAILURE_THRESHOLD) {
-        // eslint-disable-next-line no-console -- temporary debug for Farcaster logout issue
-        console.info("[AUTH-DEBUG] cross-tab logout: %d consecutive failures", AUTH_FAILURE_THRESHOLD);
         authFailureCount.current = 0;
         logout();
       }
@@ -298,8 +290,20 @@ export const useAuth = () => {
   // Handle wallet switching: logout if switched to non-linked wallet
   // Using wagmi's watchAccount as recommended by Privy docs
   // Dynamically imports @wagmi/core and privy-config to keep them out of the initial bundle
+  //
+  // Skip for social-login users (Farcaster, email, Google) who don't have an
+  // external wallet linked. A stale wagmi connection from a previous wallet-based
+  // session would falsely trigger logout for these users because the old wagmi
+  // address isn't in the Farcaster user's linkedAccounts.
+  const hasExternalWallet = useMemo(() => {
+    if (!user?.linkedAccounts) return false;
+    return user.linkedAccounts.some(
+      (a) => a.type === "wallet" && (a as { walletClientType?: string }).walletClientType !== "privy"
+    );
+  }, [user]);
+
   useEffect(() => {
-    if (!ready || !authenticated) return;
+    if (!ready || !authenticated || !hasExternalWallet) return;
 
     let unwatch: (() => void) | undefined;
 
@@ -310,13 +314,7 @@ export const useAuth = () => {
             const newAddress = account.address?.toLowerCase();
             if (!newAddress) return;
 
-            // Check against ALL user linked accounts (wallets, smart wallets,
-            // farcaster custody, cross-app) — not just the wagmi wallets snapshot.
-            // This prevents false logouts for Farcaster users whose custody wallet
-            // gets synced to wagmi after the embedded wallet is snapshotted.
             if (user && !compareAllWallets(user, newAddress)) {
-              // eslint-disable-next-line no-console -- temporary debug for Farcaster logout issue
-              console.info("[AUTH-DEBUG] wallet-switch logout: address=%s not in user linkedAccounts", newAddress);
               logout();
             }
           },
@@ -325,7 +323,7 @@ export const useAuth = () => {
     );
 
     return () => unwatch?.();
-  }, [ready, authenticated, user, logout]);
+  }, [ready, authenticated, hasExternalWallet, user, logout]);
 
   const adaptedLogin = useCallback(async () => {
     if (typeof window !== "undefined" && !authenticated) {

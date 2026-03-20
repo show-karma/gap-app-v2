@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Link } from "@/src/components/navigation/Link";
 import { useIsFundingPlatformAdmin } from "@/src/core/rbac";
 import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
+import { Permission } from "@/src/core/rbac/types/permission";
 import { Role } from "@/src/core/rbac/types/role";
 import { useApplicationAccess } from "@/src/features/applications/hooks/use-application-access";
 import { PublicComments } from "@/src/features/application-comments/components/PublicComments";
@@ -71,10 +72,11 @@ export function ApplicationPageClient({
 }: ApplicationPageClientProps) {
   const { user } = useAuth();
   const isAdmin = useIsFundingPlatformAdmin();
-  const { hasRoleOrHigher, isReviewer } = usePermissionContext();
+  const { hasRoleOrHigher, isReviewer, can } = usePermissionContext();
   const isAdminOrReviewer = hasRoleOrHigher(Role.MILESTONE_REVIEWER) || isReviewer;
 
-  // Use authenticated backend check for ownership (SSR-fetched ownerAddress may be sanitized to "")
+  // Use authenticated backend check for ownership
+  // (SSR-fetched ownerAddress may be sanitized to "")
   const { isOwner: isBackendOwner } = useApplicationAccess(
     communityId,
     application?.referenceNumber
@@ -251,8 +253,10 @@ export function ApplicationPageClient({
       {/* Status History — always visible */}
       <ApplicationStatusHistory statusHistory={application.statusHistory || []} />
 
-      {/* Public Comments — shown when the program has "Show comments on public page" enabled */}
-      {program?.applicationConfig?.formSchema?.settings?.showCommentsOnPublicPage && (
+      {/* Comments — visible for users with comment permission,
+          or for guests when "Show comments on public page" is enabled */}
+      {(can(Permission.APPLICATION_COMMENT) ||
+        program?.applicationConfig?.formSchema?.settings?.showCommentsOnPublicPage) && (
         <PublicComments
           referenceNumber={application.referenceNumber}
           communityId={communityId}
