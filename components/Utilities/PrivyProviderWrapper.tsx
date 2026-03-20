@@ -7,6 +7,7 @@ import {
   PRIVY_BRIDGE_DEFAULTS,
   PrivyBridgeProvider,
   usePrivyBridgeSetter,
+  usePrivyLoadRequested,
 } from "@/contexts/privy-bridge-context";
 import type { TenantConfig } from "@/src/infrastructure/types/tenant";
 import { queryClient } from "@/utilities/query-client";
@@ -41,16 +42,33 @@ function PrivyLoader({
 }) {
   const [Privy, setPrivy] = useState<PrivyModule | null>(null);
   const setBridge = usePrivyBridgeSetter();
+  const loadRequested = usePrivyLoadRequested();
 
   useEffect(() => {
-    import("./PrivyWagmiProviders").then(setPrivy).catch((err) => {
-      console.error("[PrivyProviderWrapper] Failed to load Privy SDK:", err);
-      // Signal ready=true so the app exits loading/skeleton states.
-      // authenticated=false means auth-gated pages redirect to login
-      // instead of showing infinite skeletons.
-      setBridge({ ...PRIVY_BRIDGE_DEFAULTS, ready: true });
-    });
-  }, [setBridge]);
+    const doLoad = () => {
+      import("./PrivyWagmiProviders").then(setPrivy).catch((err) => {
+        console.error("[PrivyProviderWrapper] Failed to load Privy SDK:", err);
+        setBridge({ ...PRIVY_BRIDGE_DEFAULTS, ready: true });
+      });
+    };
+
+    // Returning user (has privy token) or explicit load request — load immediately
+    const hasToken = typeof window !== "undefined" && localStorage.getItem("privy:token");
+    if (hasToken || loadRequested) {
+      doLoad();
+      return;
+    }
+
+    // Anonymous user — defer to idle callback with 5s timeout
+    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+      const id = requestIdleCallback(doLoad, { timeout: 5000 });
+      return () => cancelIdleCallback(id);
+    }
+
+    // Fallback: setTimeout for browsers without requestIdleCallback
+    const timer = setTimeout(doLoad, 5000);
+    return () => clearTimeout(timer);
+  }, [setBridge, loadRequested]);
 
   return (
     <>

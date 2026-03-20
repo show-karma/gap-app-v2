@@ -39,7 +39,3 @@ export async function getProvider(type: GaslessProviderType): Promise<IGaslessPr
 export function getRegisteredProviders(): GaslessProviderType[] {
   return ["zerodev", "alchemy"];
 }
-
-// Re-export provider classes for direct use if needed
-export { AlchemyProvider } from "./alchemy.provider";
-export { ZeroDevProvider } from "./zerodev.provider";

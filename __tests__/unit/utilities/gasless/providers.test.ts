@@ -91,12 +91,9 @@ jest.mock("ethers", () => ({
 }));
 
 import { celo, optimism } from "viem/chains";
-import {
-  AlchemyProvider,
-  getProvider,
-  getRegisteredProviders,
-  ZeroDevProvider,
-} from "@/utilities/gasless/providers";
+import { getProvider, getRegisteredProviders } from "@/utilities/gasless/providers";
+import { AlchemyProvider } from "@/utilities/gasless/providers/alchemy.provider";
+import { ZeroDevProvider } from "@/utilities/gasless/providers/zerodev.provider";
 import type { LocalAccountWithEIP7702 } from "@/utilities/gasless/types";
 import { GaslessProviderError } from "@/utilities/gasless/types";
 

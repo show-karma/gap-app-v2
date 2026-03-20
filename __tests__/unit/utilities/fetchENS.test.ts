@@ -350,6 +350,20 @@ describe("fetchENS", () => {
       expect(typeof ensClient.getEnsAvatar).toBe("function");
       expect(typeof ensClient.getEnsAddress).toBe("function");
     });
+
+    it("exports getEnsClient that returns a client lazily", async () => {
+      const { getEnsClient } = await import("@/utilities/fetchENS");
+      const client = getEnsClient();
+      expect(client).toBeDefined();
+      expect(client.getEnsName).toBeDefined();
+    });
+
+    it("returns the same client instance on subsequent calls (singleton)", async () => {
+      const { getEnsClient } = await import("@/utilities/fetchENS");
+      const client1 = getEnsClient();
+      const client2 = getEnsClient();
+      expect(client1).toBe(client2);
+    });
   });
 });
 

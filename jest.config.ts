@@ -43,6 +43,8 @@ const config: Config = {
     "^@/store$": "<rootDir>/store/index.ts",
     "^@/store/(.*)$": "<rootDir>/store/$1",
     "^@/types/(.*)$": "<rootDir>/types/$1",
+    "^@/utilities/gasless/providers/(.*)$": "<rootDir>/utilities/gasless/providers/$1",
+    "^@/utilities/gasless/providers$": "<rootDir>/utilities/gasless/providers/index.ts",
     "^@/utilities/gasless$": "<rootDir>/__mocks__/utilities/gasless/index.ts",
     "^@/utilities/gasless/(.*)$": "<rootDir>/__mocks__/utilities/gasless/index.ts",
     "^utilities/gasless$": "<rootDir>/__mocks__/utilities/gasless/index.ts",
