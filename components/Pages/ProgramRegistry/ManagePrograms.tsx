@@ -8,7 +8,6 @@ import { useQueryState } from "nuqs";
 import type React from "react";
 import { type Dispatch, useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
 import AddProgram from "@/components/Pages/ProgramRegistry/AddProgram";
 import { registryHelper } from "@/components/Pages/ProgramRegistry/helper";
 import { ManageProgramList } from "@/components/Pages/ProgramRegistry/ManageProgramList";
@@ -74,8 +73,7 @@ export const ManagePrograms = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [programToEdit, setProgramToEdit] = useState<GrantProgram | null>(null);
 
-  const { address, isConnected } = useAccount();
-  const { authenticated: isAuth, login } = useAuth();
+  const { authenticated: isAuth, ready: isAuthReady, login, address, isConnected } = useAuth();
 
   const _signer = useSigner();
 
@@ -310,7 +308,7 @@ export const ManagePrograms = () => {
             </Link>
           </div>
         )}
-        {isPermissionsLoading ? (
+        {!isAuthReady || isPermissionsLoading ? (
           <LoadingManagePrograms />
         ) : isAllowed ? (
           isEditing ? (
@@ -322,7 +320,6 @@ export const ManagePrograms = () => {
                   setProgramToEdit(null);
                 }}
                 refreshPrograms={refreshPrograms}
-                isAdmin
               />
             </div>
           ) : (

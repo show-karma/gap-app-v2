@@ -278,4 +278,29 @@ export const createProgramSchema = z
     }
   });
 
+/**
+ * Returns the public program schema, optionally with required email validation.
+ * When `requireEmails` is true (admin context), both adminEmails and financeEmails
+ * must have at least one entry.
+ */
+export function getCreateProgramSchema(options?: { requireEmails?: boolean }) {
+  if (!options?.requireEmails) return createProgramSchema;
+  return createProgramSchema.superRefine((data, ctx) => {
+    if (!data.adminEmails || data.adminEmails.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "At least one admin email is required",
+        path: ["adminEmails"],
+      });
+    }
+    if (!data.financeEmails || data.financeEmails.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "At least one finance email is required",
+        path: ["financeEmails"],
+      });
+    }
+  });
+}
+
 export type ProgramFormData = z.infer<typeof createProgramSchema>;

@@ -26,7 +26,7 @@ import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { getCommunities } from "@/services/communities.service";
 import {
-  createProgramSchema,
+  getCreateProgramSchema,
   OPPORTUNITY_TYPE_OPTIONS,
   type ProgramFormData,
 } from "@/src/features/program-registry/schemas/public-form";
@@ -60,13 +60,14 @@ export default function AddProgram({
   programToEdit,
   backTo,
   refreshPrograms,
-  isAdmin = false,
 }: {
   programToEdit?: GrantProgram | null;
   backTo?: () => void;
   refreshPrograms?: () => Promise<void>;
-  isAdmin?: boolean;
 }) {
+  // Programs on the Karma funding platform require admin + finance emails
+  const isFundingProgram = Boolean(programToEdit?.isOnKarma);
+
   const router = useRouter();
   const _supportedChains = appNetwork
     .filter((chain) => {
@@ -227,6 +228,11 @@ export default function AddProgram({
     [programToEdit]
   );
 
+  const programSchema = useMemo(
+    () => getCreateProgramSchema({ requireEmails: isFundingProgram }),
+    [isFundingProgram]
+  );
+
   const {
     register,
     handleSubmit,
@@ -235,7 +241,7 @@ export default function AddProgram({
     control,
     formState: { errors, isSubmitting },
   } = useForm<ProgramFormData>({
-    resolver: zodResolver(createProgramSchema),
+    resolver: zodResolver(programSchema),
     reValidateMode: "onChange",
     mode: "onChange",
     defaultValues: formDefaultValues,
@@ -712,52 +718,62 @@ export default function AddProgram({
                 />
               )}
 
-              {isAdmin && (
-                <div className="grid grid-cols-2 max-sm:grid-cols-1 gap-4">
-                  <Controller
-                    name="adminEmails"
-                    control={control}
-                    render={({ field, fieldState }) => (
-                      <div className="flex w-full flex-col gap-1">
-                        <label htmlFor="admin-emails" className={labelStyle}>
-                          Admin Emails (optional)
-                        </label>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
-                          Applicants will reply to these emails
-                        </p>
-                        <MultiEmailInput
-                          emails={field.value || []}
-                          onChange={field.onChange}
-                          placeholder="Enter admin email"
-                          disabled={isLoading}
-                          error={fieldState.error?.message}
-                        />
-                      </div>
-                    )}
-                  />
-                  <Controller
-                    name="financeEmails"
-                    control={control}
-                    render={({ field, fieldState }) => (
-                      <div className="flex w-full flex-col gap-1">
-                        <label htmlFor="finance-emails" className={labelStyle}>
-                          Finance Emails *
-                        </label>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
-                          Notified when milestones are verified
-                        </p>
-                        <MultiEmailInput
-                          emails={field.value || []}
-                          onChange={field.onChange}
-                          placeholder="Enter finance email"
-                          disabled={isLoading}
-                          error={fieldState.error?.message}
-                        />
-                      </div>
-                    )}
-                  />
-                </div>
-              )}
+              <div className="grid grid-cols-2 max-sm:grid-cols-1 gap-4">
+                <Controller
+                  name="adminEmails"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <div className="flex w-full flex-col gap-1">
+                      <label htmlFor="admin-emails" className={labelStyle}>
+                        Admin Emails
+                        {isFundingProgram && (
+                          <>
+                            {" "}
+                            <span className="text-destructive">*</span>
+                          </>
+                        )}
+                      </label>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+                        Applicants will reply to these emails
+                      </p>
+                      <MultiEmailInput
+                        emails={field.value || []}
+                        onChange={field.onChange}
+                        placeholder="Enter admin email"
+                        disabled={isLoading}
+                        error={fieldState.error?.message}
+                      />
+                    </div>
+                  )}
+                />
+                <Controller
+                  name="financeEmails"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <div className="flex w-full flex-col gap-1">
+                      <label htmlFor="finance-emails" className={labelStyle}>
+                        Finance Emails
+                        {isFundingProgram && (
+                          <>
+                            {" "}
+                            <span className="text-destructive">*</span>
+                          </>
+                        )}
+                      </label>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+                        Notified when milestones are verified
+                      </p>
+                      <MultiEmailInput
+                        emails={field.value || []}
+                        onChange={field.onChange}
+                        placeholder="Enter finance email"
+                        disabled={isLoading}
+                        error={fieldState.error?.message}
+                      />
+                    </div>
+                  )}
+                />
+              </div>
               <div className="grid grid-cols-4  max-sm:grid-cols-1 max-md:grid-cols-2 gap-4 justify-between">
                 <div className="flex w-full flex-col gap-1">
                   <label htmlFor="program-categories" className={labelStyle}>
