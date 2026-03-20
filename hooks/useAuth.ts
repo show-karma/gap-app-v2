@@ -175,10 +175,8 @@ export const useAuth = () => {
 
     // Detect logout: was authenticated, now not authenticated
     if (prevAuthRef.current && !authenticated) {
-      // Clear ALL query caches on logout to prevent stale data on re-login.
-      // Using clear() instead of selective removeQueries because:
-      // - removeQueries only clears explicitly listed keys (easy to miss new ones)
-      // - clear() is safe on logout since unauthenticated state needs fresh data anyway
+      // eslint-disable-next-line no-console -- temporary debug for Farcaster logout issue
+      console.info("[AUTH-DEBUG] logout detected: authenticated went false. prev=true, now=false");
       queryClient.clear();
       TokenManager.clearCache();
       clearWagmiState();
@@ -190,6 +188,8 @@ export const useAuth = () => {
     // on another subdomain — Privy seamlessly transitions without logout.
     // Force logout to ensure full re-initialization with the new user's state.
     if (authenticated && user?.id && prevUserIdRef.current && user.id !== prevUserIdRef.current) {
+      // eslint-disable-next-line no-console -- temporary debug for Farcaster logout issue
+      console.info("[AUTH-DEBUG] user-switch logout: prev=%s, now=%s", prevUserIdRef.current, user.id);
       queryClient.clear();
       TokenManager.clearCache();
       clearWagmiState();
@@ -231,7 +231,11 @@ export const useAuth = () => {
 
     const handleAuthFailure = () => {
       authFailureCount.current += 1;
+      // eslint-disable-next-line no-console -- temporary debug for Farcaster logout issue
+      console.info("[AUTH-DEBUG] auth-check failure #%d/%d", authFailureCount.current, AUTH_FAILURE_THRESHOLD);
       if (authFailureCount.current >= AUTH_FAILURE_THRESHOLD) {
+        // eslint-disable-next-line no-console -- temporary debug for Farcaster logout issue
+        console.info("[AUTH-DEBUG] cross-tab logout: %d consecutive failures", AUTH_FAILURE_THRESHOLD);
         authFailureCount.current = 0;
         logout();
       }
@@ -311,6 +315,8 @@ export const useAuth = () => {
             // This prevents false logouts for Farcaster users whose custody wallet
             // gets synced to wagmi after the embedded wallet is snapshotted.
             if (user && !compareAllWallets(user, newAddress)) {
+              // eslint-disable-next-line no-console -- temporary debug for Farcaster logout issue
+              console.info("[AUTH-DEBUG] wallet-switch logout: address=%s not in user linkedAccounts", newAddress);
               logout();
             }
           },
