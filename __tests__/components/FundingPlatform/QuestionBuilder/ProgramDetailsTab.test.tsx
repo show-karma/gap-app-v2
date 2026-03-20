@@ -303,6 +303,8 @@ describe("ProgramDetailsTab", () => {
     });
 
     (useAuth as jest.Mock).mockReturnValue({
+      address: mockAddress,
+      isConnected: true,
       authenticated: true,
       login: mockLogin,
     });
@@ -790,6 +792,8 @@ describe("ProgramDetailsTab", () => {
     it("should prompt login if not authenticated", async () => {
       const user = userEvent.setup();
       (useAuth as jest.Mock).mockReturnValue({
+        address: undefined,
+        isConnected: false,
         authenticated: false,
         login: mockLogin,
       });
@@ -815,6 +819,12 @@ describe("ProgramDetailsTab", () => {
       (useAccount as jest.Mock).mockReturnValue({
         address: undefined,
         isConnected: false,
+      });
+      (useAuth as jest.Mock).mockReturnValue({
+        address: undefined,
+        isConnected: false,
+        authenticated: false,
+        login: mockLogin,
       });
 
       renderWithProviders(<ProgramDetailsTab programId={mockProgramId} chainId={mockChainId} />);

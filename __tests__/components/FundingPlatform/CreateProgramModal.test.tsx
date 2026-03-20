@@ -236,6 +236,8 @@ describe("CreateProgramModal", () => {
     });
 
     (useAuth as jest.Mock).mockReturnValue({
+      address: mockAddress,
+      isConnected: true,
       authenticated: true,
       login: mockLogin,
     });
@@ -796,6 +798,8 @@ describe("CreateProgramModal", () => {
     it("should prompt login if not authenticated", async () => {
       const user = userEvent.setup();
       (useAuth as jest.Mock).mockReturnValue({
+        address: undefined,
+        isConnected: false,
         authenticated: false,
         login: mockLogin,
       });
@@ -829,6 +833,12 @@ describe("CreateProgramModal", () => {
       (useAccount as jest.Mock).mockReturnValue({
         address: undefined,
         isConnected: false,
+      });
+      (useAuth as jest.Mock).mockReturnValue({
+        address: undefined,
+        isConnected: false,
+        authenticated: false,
+        login: mockLogin,
       });
 
       renderWithProviders(
