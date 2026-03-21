@@ -8,6 +8,7 @@ import { createWalletClient, custom } from "viem";
 import { useChainId } from "wagmi";
 import { usePrivyBridge } from "@/contexts/privy-bridge-context";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { wrapSignerWithFallbackGas } from "@/utilities/fallback-gas-provider";
 import {
   createGaslessClient,
   createPrivySignerForGasless,
@@ -145,7 +146,8 @@ export function useZeroDevSigner(): UseZeroDevSignerResult {
           await embeddedWallet.switchChain(targetChainId);
           const provider = await embeddedWallet.getEthereumProvider();
           const ethersProvider = new BrowserProvider(provider);
-          return await ethersProvider.getSigner();
+          const embeddedSigner = await ethersProvider.getSigner();
+          return wrapSignerWithFallbackGas(embeddedSigner, targetChainId);
         } catch (error) {
           console.warn("[Gasless] Embedded wallet error:", error);
         }
@@ -173,7 +175,7 @@ export function useZeroDevSigner(): UseZeroDevSignerResult {
           if (!signer) {
             throw new Error("Failed to create signer from Privy wallet client");
           }
-          return signer;
+          return wrapSignerWithFallbackGas(signer, targetChainId);
         } catch (privyError) {
           console.warn(
             "[External Wallet] Privy provider failed, falling back to wagmi:",
@@ -191,7 +193,7 @@ export function useZeroDevSigner(): UseZeroDevSignerResult {
             throw new Error("Failed to create signer from wallet client");
           }
 
-          return signer;
+          return wrapSignerWithFallbackGas(signer, targetChainId);
         }
       }
 
