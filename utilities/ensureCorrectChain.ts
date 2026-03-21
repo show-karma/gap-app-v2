@@ -1,5 +1,6 @@
 import toast from "react-hot-toast";
 import { getGapClient } from "@/utilities/gapClient";
+import { retryUntilCondition } from "@/utilities/retry";
 
 interface EnsureCorrectChainParams {
   targetChainId: number;
@@ -16,11 +17,26 @@ interface EnsureCorrectChainResult {
 }
 
 /**
+ * Verify the wallet provider is actually on the expected chain by querying
+ * the provider directly (bypasses stale React/wagmi state).
+ */
+async function verifyProviderChain(expectedChainId: number): Promise<boolean> {
+  if (typeof window === "undefined" || !(window as any).ethereum) return true;
+
+  try {
+    const hexChainId = await (window as any).ethereum.request({
+      method: "eth_chainId",
+    });
+    return parseInt(hexChainId, 16) === expectedChainId;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Ensures the wallet is on the correct chain and returns the appropriate GAP client.
- * This function handles the chain switching logic consistently across the app.
- *
- * Key insight: After switchChainAsync, we don't wait for React hooks to update.
- * Instead, we trust the switch happened and use the target chain ID directly.
+ * After switching, verifies the chain actually changed by polling the provider directly
+ * rather than relying on a fixed delay (which causes race conditions with MetaMask).
  *
  * @param params - The parameters for chain switching
  * @returns Result object with success status, chain ID, and GAP client
@@ -56,12 +72,27 @@ export async function ensureCorrectChain({
   try {
     await switchChainAsync({ chainId: targetChainId });
 
-    // Small delay to ensure the switch completes
-    // This is a pragmatic solution since wallet state updates are async
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    // Verify the provider actually switched by polling eth_chainId directly.
+    // This avoids the race condition where wagmi's cached wallet client
+    // hasn't updated yet after switchChainAsync resolves.
+    const confirmed = await retryUntilCondition(() => verifyProviderChain(targetChainId), {
+      maxRetries: 20,
+      delayMs: 300,
+    });
 
-    // Trust that the switch happened and use the target chain
-    // Don't wait for React hooks to update
+    if (!confirmed) {
+      const errorMsg =
+        "Chain switch was not confirmed. Please switch your wallet manually and try again.";
+      toast.error(errorMsg);
+      onError?.(new Error(errorMsg));
+      return {
+        success: false,
+        chainId: currentChainId || targetChainId,
+        gapClient: getGapClient(targetChainId),
+        error: errorMsg,
+      };
+    }
+
     return {
       success: true,
       chainId: targetChainId,

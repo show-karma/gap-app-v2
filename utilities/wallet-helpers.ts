@@ -3,7 +3,10 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { privyConfig as config } from "./wagmi/privy-config";
 
 /**
- * Safely gets a wallet client with error handling for common issues
+ * Safely gets a wallet client with error handling for common issues.
+ * After a chain switch, the wagmi wallet client cache can be stale.
+ * This function retries a few times if the returned client is on the wrong chain.
+ *
  * @param chainId The chain ID to connect to
  * @param showToast Whether to show toast messages for errors (default: false)
  * @param setLoadingState Optional function to update loading state on error
@@ -15,7 +18,7 @@ export const safeGetWalletClient = async (
   setLoadingState?: (state: boolean) => void
 ) => {
   try {
-    const walletClient = await getWalletClient(config, {
+    let walletClient = await getWalletClient(config, {
       chainId,
     });
 
@@ -23,12 +26,32 @@ export const safeGetWalletClient = async (
       throw new Error("Error getting wallet client");
     }
 
+    // Verify the wallet client is on the expected chain.
+    // After a chain switch, wagmi's cache may still return a stale client.
+    if (walletClient.chain?.id !== chainId) {
+      let retries = 5;
+      while (retries > 0 && walletClient.chain?.id !== chainId) {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        walletClient = await getWalletClient(config, { chainId });
+        retries--;
+      }
+
+      if (walletClient.chain?.id !== chainId) {
+        throw new Error(
+          `Wallet is on chain ${walletClient.chain?.id} but expected ${chainId}. Please switch your wallet network and try again.`
+        );
+      }
+    }
+
     return { walletClient, error: null };
   } catch (error: unknown) {
     // Use errorManager to track the error
     errorManager("Wallet client error", error, { chainId });
 
-    const errorMsg = "Failed to connect to wallet. Please try again.";
+    const errorMsg =
+      error instanceof Error && error.message.includes("expected")
+        ? error.message
+        : "Failed to connect to wallet. Please try again.";
 
     if (setLoadingState) {
       setLoadingState(false);
