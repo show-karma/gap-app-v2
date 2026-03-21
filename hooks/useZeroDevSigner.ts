@@ -160,7 +160,10 @@ export function useZeroDevSigner(): UseZeroDevSignerResult {
         try {
           await externalWallet.switchChain(targetChainId);
           const provider = await externalWallet.getEthereumProvider();
-          const chain = appNetwork.find((c) => c.id === targetChainId)!;
+          const chain = appNetwork.find((c) => c.id === targetChainId);
+          if (!chain) {
+            throw new Error(`Unsupported chain: ${targetChainId}`);
+          }
           const viemClient = createWalletClient({
             account: externalWallet.address as `0x${string}`,
             chain,
@@ -171,8 +174,11 @@ export function useZeroDevSigner(): UseZeroDevSignerResult {
             throw new Error("Failed to create signer from Privy wallet client");
           }
           return signer;
-        } catch {
-          // Fall back to wagmi's wallet client if Privy provider fails
+        } catch (privyError) {
+          console.warn(
+            "[External Wallet] Privy provider failed, falling back to wagmi:",
+            privyError
+          );
           const { walletClient, error } = await safeGetWalletClient(targetChainId);
 
           if (error || !walletClient) {
