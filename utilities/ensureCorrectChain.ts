@@ -1,6 +1,5 @@
 import toast from "react-hot-toast";
 import { getGapClient } from "@/utilities/gapClient";
-import { retryUntilCondition } from "@/utilities/retry";
 
 interface EnsureCorrectChainParams {
   targetChainId: number;
@@ -17,26 +16,11 @@ interface EnsureCorrectChainResult {
 }
 
 /**
- * Verify the wallet provider is actually on the expected chain by querying
- * the provider directly (bypasses stale React/wagmi state).
- */
-async function verifyProviderChain(expectedChainId: number): Promise<boolean> {
-  if (typeof window === "undefined" || !(window as any).ethereum) return true;
-
-  try {
-    const hexChainId = await (window as any).ethereum.request({
-      method: "eth_chainId",
-    });
-    return parseInt(hexChainId, 16) === expectedChainId;
-  } catch {
-    return false;
-  }
-}
-
-/**
  * Ensures the wallet is on the correct chain and returns the appropriate GAP client.
- * After switching, verifies the chain actually changed by polling the provider directly
- * rather than relying on a fixed delay (which causes race conditions with MetaMask).
+ *
+ * After switchChainAsync resolves, the wallet has confirmed the switch.
+ * The wallet client cache (wagmi) may still be stale at this point —
+ * safeGetWalletClient handles that with chain-verified retries.
  *
  * @param params - The parameters for chain switching
  * @returns Result object with success status, chain ID, and GAP client
@@ -72,27 +56,9 @@ export async function ensureCorrectChain({
   try {
     await switchChainAsync({ chainId: targetChainId });
 
-    // Verify the provider actually switched by polling eth_chainId directly.
-    // This avoids the race condition where wagmi's cached wallet client
-    // hasn't updated yet after switchChainAsync resolves.
-    const confirmed = await retryUntilCondition(() => verifyProviderChain(targetChainId), {
-      maxRetries: 20,
-      delayMs: 300,
-    });
-
-    if (!confirmed) {
-      const errorMsg =
-        "Chain switch was not confirmed. Please switch your wallet manually and try again.";
-      toast.error(errorMsg);
-      onError?.(new Error(errorMsg));
-      return {
-        success: false,
-        chainId: currentChainId || targetChainId,
-        gapClient: getGapClient(targetChainId),
-        error: errorMsg,
-      };
-    }
-
+    // switchChainAsync resolved — the wallet confirmed the switch.
+    // Use the target chain ID directly; safeGetWalletClient will
+    // retry if wagmi's cached wallet client is still stale.
     return {
       success: true,
       chainId: targetChainId,

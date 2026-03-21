@@ -1,11 +1,11 @@
-import { getWalletClient } from "@wagmi/core";
+import { getWalletClient, reconnect } from "@wagmi/core";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { privyConfig as config } from "./wagmi/privy-config";
 
 /**
  * Safely gets a wallet client with error handling for common issues.
  * After a chain switch, the wagmi wallet client cache can be stale.
- * This function retries a few times if the returned client is on the wrong chain.
+ * This function reconnects and retries if the returned client is on the wrong chain.
  *
  * @param chainId The chain ID to connect to
  * @param showToast Whether to show toast messages for errors (default: false)
@@ -29,6 +29,13 @@ export const safeGetWalletClient = async (
     // Verify the wallet client is on the expected chain.
     // After a chain switch, wagmi's cache may still return a stale client.
     if (walletClient.chain?.id !== chainId) {
+      // Force wagmi to re-establish connector state, flushing stale cache
+      try {
+        await reconnect(config);
+      } catch {
+        // Reconnect can fail if already connected — safe to ignore
+      }
+
       let retries = 5;
       while (retries > 0 && walletClient.chain?.id !== chainId) {
         await new Promise((resolve) => setTimeout(resolve, 500));
