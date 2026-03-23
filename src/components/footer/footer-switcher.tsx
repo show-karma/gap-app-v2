@@ -5,12 +5,12 @@ import { PAGES } from "@/utilities/pages";
 import { Footer } from "./footer";
 import { WhitelabelFooter } from "./whitelabel-footer";
 
-/** Routes that use the in-app sidebar layout — suppress the marketing footer. */
+/** Routes that use the in-app sidebar layout — suppress the marketing footer.
+ * Matches /community/<slug>/manage and /community/<slug>/manage/... */
+const MANAGE_ROUTE_RE = /^\/community\/[^/]+\/manage(\/|$)/;
+
 function isAppRoute(pathname: string): boolean {
-  return (
-    pathname.startsWith("/community/") &&
-    (pathname.includes("/manage/") || pathname.endsWith("/manage"))
-  );
+  return MANAGE_ROUTE_RE.test(pathname);
 }
 
 function MinimalFooter() {
