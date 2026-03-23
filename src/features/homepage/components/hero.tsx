@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { SectionContainer } from "@/src/components/shared/section-container";
 import { InfiniteMovingCards } from "@/src/components/ui/infinite-moving-cards";
 import { ThemeImage } from "@/src/components/ui/theme-image";
+import { CreateCommunityButton } from "@/src/features/homepage/components/create-community-button";
 import { CreateProjectButton } from "@/src/features/homepage/components/create-project-button";
 import { marketingLayoutTheme } from "@/src/helper/theme";
 import { chosenCommunities } from "@/utilities/chosenCommunities";
@@ -54,6 +55,9 @@ export function Hero() {
               <Button variant="outline" size="xl" className="relative z-0" asChild>
                 <Link href={PAGES.FUNDERS}>Run a funding program</Link>
               </Button>
+              <div className="relative z-0">
+                <CreateCommunityButton styleClass="w-max px-5 h-11" />
+              </div>
             </div>
             <div className="flex flex-row items-center justify-start gap-10 md:gap-4 mt-6">
               <div className="flex flex-row items-center justify-start gap-2">

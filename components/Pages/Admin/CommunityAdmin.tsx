@@ -360,7 +360,7 @@ export default function CommunitiesToAdminPage() {
                 )
               </span>
             </div>
-            {isSuperAdminOrOwner && <CommunityDialog refreshCommunities={handleRefetch} />}
+            <CommunityDialog refreshCommunities={handleRefetch} />
           </div>
 
           {/* Search and Filter Bar */}
