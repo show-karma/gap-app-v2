@@ -23,7 +23,7 @@ export const GrantSizeSlider: FC<SliderProps> = ({ value, onChangeListener }) =>
         </span>
       </Popover.Trigger>
       <Popover.Content>
-        <div className="flex flex-col gap-4 bg-white px-4 pt-2 pb-4 border mt-1 rounded-md min-w-52">
+        <div className="flex flex-col gap-4 bg-white dark:bg-zinc-800 dark:text-zinc-100 px-4 pt-2 pb-4 border mt-1 rounded-md min-w-52">
           <p>
             Grant Size: ${formatCurrency(value[0])} - ${formatCurrency(value[1])}
             {value[1].toString() === registryHelper.grantSizes[1].toString() ? "+" : ""}

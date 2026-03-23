@@ -372,7 +372,9 @@ const ChatMessage = React.memo(
           <div className="w-max max-w-full flex-col flex">
             <div
               className={` p-3  rounded-xl ${
-                m.role === "assistant" ? "bg-[#EEF4FF] text-gray-900 " : "bg-indigo-500 text-white"
+                m.role === "assistant"
+                  ? "bg-[#EEF4FF] dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 "
+                  : "bg-indigo-500 text-white"
               }`}
               style={{
                 borderBottomLeftRadius: m.role === "assistant" ? "0px" : "8px",
@@ -383,7 +385,7 @@ const ChatMessage = React.memo(
                 <MarkdownPreview
                   source={m.content}
                   style={{
-                    color: m.role === "assistant" ? "black" : "white",
+                    color: m.role === "assistant" ? undefined : "white",
                     fontWeight: 400,
                     fontSize: "16px",
                   }}

@@ -126,7 +126,7 @@ describe("CommunityPageNavigator", () => {
 
       expect(screen.getByText("Funding opportunities")).toBeInTheDocument();
       expect(screen.getByText("Browse applications")).toBeInTheDocument();
-      expect(screen.getByText(/View.*community projects/)).toBeInTheDocument();
+      expect(screen.getByText("View funded projects")).toBeInTheDocument();
       expect(screen.getByText("Milestone updates")).toBeInTheDocument();
       expect(screen.getByText("Impact")).toBeInTheDocument();
       expect(screen.getByText("Financials")).toBeInTheDocument();
@@ -151,7 +151,7 @@ describe("CommunityPageNavigator", () => {
       render(<CommunityPageNavigator />, { wrapper });
 
       const fundingLink = screen.getByText("Funding opportunities").closest("a");
-      const grantsLink = screen.getByText(/View.*community projects/).closest("a");
+      const grantsLink = screen.getByText("View funded projects").closest("a");
       const updatesLink = screen.getByText("Milestone updates").closest("a");
       const impactLink = screen.getByText("Impact").closest("a");
 
@@ -182,7 +182,7 @@ describe("CommunityPageNavigator", () => {
 
       render(<CommunityPageNavigator />, { wrapper });
 
-      const link = screen.getByText(/View.*community projects/).closest("a");
+      const link = screen.getByText("View funded projects").closest("a");
       expect(link?.className).toContain("text-gray-900");
     });
 
@@ -234,7 +234,7 @@ describe("CommunityPageNavigator", () => {
   });
 
   describe("Community Name", () => {
-    it("should include community name in projects link text", () => {
+    it("should show static 'View funded projects' regardless of community name", () => {
       mockUseCommunityDetails.mockReturnValue({
         data: {
           uid: "0x1234567890123456789012345678901234567890",
@@ -247,10 +247,11 @@ describe("CommunityPageNavigator", () => {
 
       render(<CommunityPageNavigator />, { wrapper });
 
-      expect(screen.getByText("View Optimism community projects")).toBeInTheDocument();
+      expect(screen.getByText("View funded projects")).toBeInTheDocument();
+      expect(screen.queryByText(/Optimism/)).not.toBeInTheDocument();
     });
 
-    it("should handle missing community name gracefully", () => {
+    it("should show 'View funded projects' when community name is missing", () => {
       mockUseCommunityDetails.mockReturnValue({
         data: undefined,
         isLoading: false,
@@ -258,9 +259,7 @@ describe("CommunityPageNavigator", () => {
 
       render(<CommunityPageNavigator />, { wrapper });
 
-      // When community name is empty, it renders with double space
-      const link = screen.getByTestId("square-user-icon").closest("a");
-      expect(link?.textContent).toContain("community projects");
+      expect(screen.getByText("View funded projects")).toBeInTheDocument();
     });
   });
 
@@ -357,7 +356,7 @@ describe("CommunityPageNavigator", () => {
 
       render(<CommunityPageNavigator />, { wrapper });
 
-      const link = screen.getByText(/View.*community projects/).closest("a");
+      const link = screen.getByText("View funded projects").closest("a");
       expect(link?.className).toContain("text-gray-900");
     });
 
@@ -366,7 +365,7 @@ describe("CommunityPageNavigator", () => {
 
       render(<CommunityPageNavigator />, { wrapper });
 
-      const link = screen.getByText(/View.*community projects/).closest("a");
+      const link = screen.getByText("View funded projects").closest("a");
       expect(link?.className).toContain("text-gray-500");
     });
 
@@ -375,7 +374,7 @@ describe("CommunityPageNavigator", () => {
 
       render(<CommunityPageNavigator />, { wrapper });
 
-      const link = screen.getByText(/View.*community projects/).closest("a");
+      const link = screen.getByText("View funded projects").closest("a");
       expect(link?.className).toContain("text-gray-500");
     });
   });
@@ -568,7 +567,7 @@ describe("CommunityPageNavigator", () => {
 
       render(<CommunityPageNavigator />, { wrapper });
 
-      const link = screen.getByText(/View.*community projects/).closest("a");
+      const link = screen.getByText("View funded projects").closest("a");
       expect(link?.className).toContain("text-gray-500");
     });
   });
@@ -630,7 +629,7 @@ describe("CommunityPageNavigator", () => {
 
       render(<CommunityPageNavigator />, { wrapper });
 
-      const link = screen.getByText(/View.*community projects/).closest("a");
+      const link = screen.getByText("View funded projects").closest("a");
       expect(link?.className).toContain("text-gray-500");
     });
   });
