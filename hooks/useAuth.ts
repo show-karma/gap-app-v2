@@ -179,13 +179,23 @@ export const useAuth = () => {
       TokenManager.clearCache();
       clearWagmiState();
       authFailureCount.current = 0;
+      // Clear previous user ID so re-login with a different wallet
+      // is not mistaken for a cross-tab user switch.
+      prevUserIdRef.current = undefined;
     }
 
-    // Detect user switch: different user.id while still authenticated.
+    // Detect user switch: different user.id while *continuously* authenticated.
     // This happens with Privy shared auth when a different user logs in
     // on another subdomain — Privy seamlessly transitions without logout.
     // Force logout to ensure full re-initialization with the new user's state.
-    if (authenticated && user?.id && prevUserIdRef.current && user.id !== prevUserIdRef.current) {
+    // Only triggers when prevAuthRef is true (no logout happened in between).
+    if (
+      prevAuthRef.current &&
+      authenticated &&
+      user?.id &&
+      prevUserIdRef.current &&
+      user.id !== prevUserIdRef.current
+    ) {
       queryClient.clear();
       TokenManager.clearCache();
       clearWagmiState();
