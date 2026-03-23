@@ -4,8 +4,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Hex } from "viem";
 import { usePrivyBridge } from "@/contexts/privy-bridge-context";
-import { compareAllWallets } from "@/utilities/auth/compare-all-wallets";
 import { useProjectCreateModalStore } from "@/store/modals/projectCreate";
+import { compareAllWallets } from "@/utilities/auth/compare-all-wallets";
 import { getCypressMockAuthState } from "@/utilities/auth/cypress-auth";
 import { TokenManager } from "@/utilities/auth/token-manager";
 import { PAGES } from "@/utilities/pages";
@@ -143,6 +143,8 @@ export const useAuth = () => {
   const authFailureCount = useRef(0);
   // Snapshot of wallet addresses captured at auth time (security: use ref, not live array)
   const walletsSnapshotRef = useRef<string[]>([]);
+  // Grace period after login — suppresses watchAccount false positives from stale wagmi state
+  const loginGraceRef = useRef(false);
 
   /**
    * AUTH STATE CHANGE DETECTION
@@ -157,6 +159,13 @@ export const useAuth = () => {
   useEffect(() => {
     // Detect login: was not authenticated, now authenticated
     if (!prevAuthRef.current && authenticated) {
+      // Suppress watchAccount checks briefly — wagmi state may be stale
+      // from the previous session during the Privy↔wagmi sync gap.
+      loginGraceRef.current = true;
+      setTimeout(() => {
+        loginGraceRef.current = false;
+      }, 2000);
+
       // Only redirect if we're on the default landing page.
       // In whitelabel mode, "/" is the community homepage (funding opportunities),
       // not a generic landing page — don't redirect away from it.
@@ -308,7 +317,8 @@ export const useAuth = () => {
   const hasExternalWallet = useMemo(() => {
     if (!user?.linkedAccounts) return false;
     return user.linkedAccounts.some(
-      (a) => a.type === "wallet" && (a as { walletClientType?: string }).walletClientType !== "privy"
+      (a) =>
+        a.type === "wallet" && (a as { walletClientType?: string }).walletClientType !== "privy"
     );
   }, [user]);
 
@@ -316,11 +326,18 @@ export const useAuth = () => {
     if (!ready || !authenticated || !hasExternalWallet) return;
 
     let unwatch: (() => void) | undefined;
+    let cancelled = false;
 
     Promise.all([import("@wagmi/core"), import("@/utilities/wagmi/privy-config")]).then(
       ([{ watchAccount }, { privyConfig }]) => {
+        if (cancelled) return;
         unwatch = watchAccount(privyConfig, {
           onChange(account) {
+            if (cancelled) return;
+            // Skip during login grace period — wagmi state may be stale
+            // from the previous session during the Privy↔wagmi sync gap.
+            if (loginGraceRef.current) return;
+
             const newAddress = account.address?.toLowerCase();
             if (!newAddress) return;
 
@@ -332,7 +349,10 @@ export const useAuth = () => {
       }
     );
 
-    return () => unwatch?.();
+    return () => {
+      cancelled = true;
+      unwatch?.();
+    };
   }, [ready, authenticated, hasExternalWallet, user, logout]);
 
   const adaptedLogin = useCallback(async () => {
