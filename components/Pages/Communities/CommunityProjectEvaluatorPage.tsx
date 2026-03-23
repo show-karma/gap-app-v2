@@ -7,6 +7,7 @@ import {
   PaperAirplaneIcon,
   XMarkIcon,
 } from "@heroicons/react/24/solid";
+import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import pluralize from "pluralize";
@@ -878,72 +879,54 @@ export const CommunityProjectEvaluatorPage = () => {
   const communityId = params.communityId as string;
   const programId = searchParams.get("programId");
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingProjects, setIsLoadingProjects] = useState(false);
-  const [programs, setPrograms] = useState<Program[]>([]);
   const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
-  const [projects, setProjects] = useState<Project[]>([]);
 
-  useEffect(() => {
-    const fetchInitialData = async () => {
-      setIsLoading(true);
-      try {
-        const [[programsRes, programsError]] = await Promise.all([
-          fetchData(INDEXER.COMMUNITY.PROGRAMS(communityId)),
-        ]);
-        if (programsError) {
-          console.error("Error fetching programs:", programsError);
-        }
-        setPrograms(programsRes);
+  const { data: programs = [], isLoading: isLoadingPrograms } = useQuery<Program[]>({
+    queryKey: ["evaluator-programs", communityId],
+    queryFn: async () => {
+      const [data, error] = await fetchData(INDEXER.COMMUNITY.PROGRAMS(communityId));
+      if (error) throw new Error(String(error));
+      return data as Program[];
+    },
+    enabled: !!communityId,
+  });
 
-        // If we have a programId in the URL, find and select that program
-        if (programId && programsRes) {
-          const program = programsRes.find((p: Program) => p.programId === programId);
-          if (program) {
-            setSelectedProgram(program);
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching initial data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchInitialData();
-  }, [communityId, programId]);
-
-  async function getProjectsByProgram(programId: string, chainId: number, communityId: string) {
-    try {
-      setIsLoadingProjects(true);
-      const [projects, error] = (await fetchData(
-        INDEXER.PROJECTS.BY_PROGRAM(programId, chainId, communityId)
-      )) as [Project[], string | null, any, number];
-      if (error) {
-        console.error("Error fetching projects:", error);
-        return;
-      }
-
-      setProjects(projects);
-    } catch (error) {
-      console.error("Error fetching projects:", error);
-    } finally {
-      setIsLoadingProjects(false);
+  // Auto-select program from URL param once programs load
+  const hasAutoSelected = useRef(false);
+  if (programs.length > 0 && programId && !hasAutoSelected.current) {
+    const program = programs.find((p: Program) => p.programId === programId);
+    if (program) {
+      hasAutoSelected.current = true;
+      setSelectedProgram(program);
     }
   }
 
-  useEffect(() => {
-    if (selectedProgram) {
-      setProjects([]);
-      setIsLoading(true);
-      getProjectsByProgram(selectedProgram.programId, Number(selectedProgram.chainID), communityId);
-      setIsLoading(false);
-    }
-  }, [selectedProgram, communityId, getProjectsByProgram]);
+  const { data: projects = [], isLoading: isLoadingProjects } = useQuery<Project[]>({
+    queryKey: [
+      "evaluator-projects",
+      selectedProgram?.programId,
+      selectedProgram?.chainID,
+      communityId,
+    ],
+    queryFn: async () => {
+      const [data, error] = (await fetchData(
+        INDEXER.PROJECTS.BY_PROGRAM(
+          selectedProgram!.programId,
+          Number(selectedProgram!.chainID),
+          communityId
+        )
+      )) as [Project[], string | null, any, number];
+      if (error) throw new Error(String(error));
+      return data;
+    },
+    enabled: !!selectedProgram,
+  });
+
+  const isLoading = isLoadingPrograms;
 
   // Function to handle program selection
   const handleProgramSelect = (program: Program) => {
     setSelectedProgram(program);
-    setProjects([]); // Clear previous projects
 
     // Normalize programId (remove chainId suffix if present) before setting in URL
     const normalizedProgramId = program.programId.includes("_")
@@ -954,8 +937,6 @@ export const CommunityProjectEvaluatorPage = () => {
     const newSearchParams = new URLSearchParams(searchParams);
     newSearchParams.set("programId", normalizedProgramId);
     router.push(`${window.location.pathname}?${newSearchParams.toString()}`);
-
-    getProjectsByProgram(program.programId, Number(program.chainID), communityId);
   };
 
   return (

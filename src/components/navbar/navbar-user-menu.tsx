@@ -195,7 +195,7 @@ export function NavbarUserMenu() {
               </Link>
             </MenubarItem>
             <MenubarItem asChild className="w-full cursor-pointer">
-              <Link href="/donations" className="flex items-center gap-2 w-full">
+              <Link href={PAGES.DONATIONS} className="flex items-center gap-2 w-full">
                 <Heart className={menuStyles.itemIcon} />
                 <span className={menuStyles.itemText}>My donations</span>
               </Link>

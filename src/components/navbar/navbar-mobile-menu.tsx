@@ -102,7 +102,7 @@ export function NavbarMobileMenu() {
     },
     {
       label: "My donations",
-      href: "/donations",
+      href: PAGES.DONATIONS,
       visible: isLoggedIn,
     },
     {
