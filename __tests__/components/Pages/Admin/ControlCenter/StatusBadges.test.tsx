@@ -10,6 +10,7 @@ import { MilestoneLifecycleStatus } from "@/src/features/payout-disbursement/typ
 jest.mock("@radix-ui/react-tooltip", () => ({
   Provider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   Root: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  Portal: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   Trigger: ({ children, asChild, ...props }: { children: React.ReactNode; asChild?: boolean }) => (
     <span {...props}>{children}</span>
   ),
