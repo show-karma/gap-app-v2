@@ -80,9 +80,9 @@ describe("NavbarUserMenu", () => {
       expect(screen.getByText("Edit profile")).toBeInTheDocument();
     });
 
-    it("should have desktop-only visibility (hidden on mobile/tablet)", () => {
+    it("should render as a menubar component", () => {
       const authFixture = getAuthFixture("authenticated-basic");
-      const { container } = renderWithProviders(<NavbarUserMenu />, {
+      renderWithProviders(<NavbarUserMenu />, {
         mockUseAuth: createMockUseAuth(authFixture.authState),
         mockUseCommunitiesStore: createMockUseCommunitiesStore(authFixture.permissions.communities),
         mockUseReviewerPrograms: createMockUseReviewerPrograms(
@@ -98,9 +98,9 @@ describe("NavbarUserMenu", () => {
         mockUseContributorProfileModalStore: createMockUseContributorProfileModalStore(),
       });
 
-      // Should have hidden lg:flex class
-      const mainContainer = container.querySelector(".hidden.lg\\:flex");
-      expect(mainContainer).toBeInTheDocument();
+      // Should render a menubar element
+      const menubar = screen.getByRole("menubar");
+      expect(menubar).toBeInTheDocument();
     });
   });
 
@@ -137,11 +137,6 @@ describe("NavbarUserMenu", () => {
       expect(screen.getByText("Edit profile")).toBeInTheDocument();
     });
 
-    it("should display theme toggle", async () => {
-      await setupAuthAndOpenMenu("authenticated-basic");
-      expect(screen.getByText("Dark mode")).toBeInTheDocument();
-    });
-
     it('should display "Dashboard" link', async () => {
       await setupAuthAndOpenMenu("authenticated-basic");
       expect(screen.getByText("Dashboard")).toBeInTheDocument();
@@ -152,17 +147,8 @@ describe("NavbarUserMenu", () => {
       expect(screen.getByText("Log out")).toBeInTheDocument();
     });
 
-    it("should display help button", () => {
-      const authFixture = getAuthFixture("authenticated-basic");
-      const { container } = renderWithProviders(<NavbarUserMenu />, {
-        mockUseAuth: createMockUseAuth(authFixture.authState),
-        mockPermissions: createMockPermissions(authFixture.permissions),
-      });
-
-      // Help button is an external link with CircleHelp icon
-      const helpLink = container.querySelector('a[href*="docs"]');
-      expect(helpLink).toBeInTheDocument();
-    });
+    // Note: Help button and theme toggle have been moved to navbar-desktop-navigation
+    // as standalone buttons visible to all users (not just logged-in users).
   });
 
   describe("Profile Modal Tests", () => {
@@ -193,69 +179,8 @@ describe("NavbarUserMenu", () => {
     });
   });
 
-  describe("Theme Toggle Tests", () => {
-    it('should show "Dark mode" text when theme is light', async () => {
-      const authFixture = getAuthFixture("authenticated-basic");
-      const user = userEvent.setup();
-
-      renderWithProviders(<NavbarUserMenu />, {
-        mockUseAuth: createMockUseAuth(authFixture.authState),
-        mockPermissions: createMockPermissions(authFixture.permissions),
-        mockUseTheme: createMockUseTheme("light"),
-      });
-
-      const avatar = screen.getByRole("img");
-      await user.click(avatar);
-
-      expect(await screen.findByText("Dark mode")).toBeInTheDocument();
-    });
-
-    it('should show "Light mode" text when theme is dark', async () => {
-      const authFixture = getAuthFixture("authenticated-basic");
-      const user = userEvent.setup();
-
-      renderWithProviders(<NavbarUserMenu />, {
-        mockUseAuth: createMockUseAuth(authFixture.authState),
-        mockPermissions: createMockPermissions(authFixture.permissions),
-        mockUseTheme: createMockUseTheme("dark"),
-      });
-
-      const avatar = screen.getByRole("img");
-      await user.click(avatar);
-
-      expect(await screen.findByText("Light mode")).toBeInTheDocument();
-    });
-
-    it("should call setTheme with opposite value when clicked", async () => {
-      const mockSetTheme = jest.fn();
-      const authFixture = getAuthFixture("authenticated-basic");
-      const user = userEvent.setup();
-
-      renderWithProviders(<NavbarUserMenu />, {
-        mockUseAuth: createMockUseAuth(authFixture.authState),
-        mockPermissions: createMockPermissions(authFixture.permissions),
-        mockUseTheme: () => ({
-          theme: "light",
-          setTheme: mockSetTheme,
-          themes: ["light", "dark"],
-          systemTheme: "light",
-          resolvedTheme: "light",
-        }),
-      });
-
-      const avatar = screen.getByRole("img");
-      await user.click(avatar);
-
-      await waitFor(() => {
-        expect(screen.getByText("Dark mode")).toBeInTheDocument();
-      });
-
-      const themeToggle = screen.getByText("Dark mode");
-      await user.click(themeToggle);
-
-      expect(mockSetTheme).toHaveBeenCalledWith("dark");
-    });
-  });
+  // Theme toggle tests have been moved to theme-toggle-button.test.tsx
+  // since the theme toggle is now a standalone component in the navbar.
 
   describe("Conditional Menu Items - Reviewer", () => {
     it('should hide "Review" link when no reviewer programs', async () => {
@@ -435,6 +360,75 @@ describe("NavbarUserMenu", () => {
       // Should show @username in the dropdown, not the raw embedded wallet address
       const usernameElement = screen.queryByText("@fcwithwallet");
       expect(usernameElement).toBeInTheDocument();
+    });
+  });
+
+  describe("Email Authenticated User", () => {
+    it("should show email address instead of wallet address in trigger", () => {
+      const authFixture = getAuthFixture("email-authenticated");
+
+      renderWithProviders(<NavbarUserMenu />, {
+        mockUseAuth: createMockUseAuth(authFixture.authState),
+        mockPermissions: createMockPermissions(authFixture.permissions),
+      });
+
+      // Should show email in the trigger area, not the embedded wallet address
+      expect(screen.getByText("testuser@example.com")).toBeInTheDocument();
+    });
+
+    it("should show email address in dropdown menu instead of wallet address", async () => {
+      const authFixture = getAuthFixture("email-authenticated");
+      const user = userEvent.setup();
+
+      renderWithProviders(<NavbarUserMenu />, {
+        mockUseAuth: createMockUseAuth(authFixture.authState),
+        mockPermissions: createMockPermissions(authFixture.permissions),
+      });
+
+      // Click avatar to open menu
+      const trigger = screen.getByRole("menubar").querySelector("[data-radix-collection-item]");
+      if (trigger) await user.click(trigger);
+
+      // Should show email in the dropdown, not the raw embedded wallet address
+      const emailElements = screen.getAllByText("testuser@example.com");
+      expect(emailElements.length).toBeGreaterThan(0);
+    });
+
+    it("should NOT show wallet address when email is available", () => {
+      const authFixture = getAuthFixture("email-authenticated");
+
+      renderWithProviders(<NavbarUserMenu />, {
+        mockUseAuth: createMockUseAuth(authFixture.authState),
+        mockPermissions: createMockPermissions(authFixture.permissions),
+      });
+
+      // The embedded wallet address should not be displayed as the identity
+      expect(screen.queryByText(/0xEMAIL/i)).not.toBeInTheDocument();
+    });
+
+    it("should show email when no wallet address is available", () => {
+      const authFixture = getAuthFixture("email-authenticated-no-wallet");
+
+      renderWithProviders(<NavbarUserMenu />, {
+        mockUseAuth: createMockUseAuth(authFixture.authState),
+        mockPermissions: createMockPermissions(authFixture.permissions),
+      });
+
+      expect(screen.getByText("nowallet@example.com")).toBeInTheDocument();
+    });
+  });
+
+  describe("Google Authenticated User", () => {
+    it("should show Google email instead of wallet address in trigger", () => {
+      const authFixture = getAuthFixture("google-authenticated");
+
+      renderWithProviders(<NavbarUserMenu />, {
+        mockUseAuth: createMockUseAuth(authFixture.authState),
+        mockPermissions: createMockPermissions(authFixture.permissions),
+      });
+
+      // Should show Google email, not the embedded wallet address
+      expect(screen.getByText("googleuser@gmail.com")).toBeInTheDocument();
     });
   });
 

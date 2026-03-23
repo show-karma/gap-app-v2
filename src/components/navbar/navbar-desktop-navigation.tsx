@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, CircleHelp } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { DiscordIcon, TelegramIcon, TwitterIcon } from "@/components/Icons";
@@ -27,6 +27,7 @@ import {
 import { NavbarAuthButtons } from "./navbar-auth-buttons";
 import { useNavbarPermissions } from "./navbar-permissions-context";
 import { NavbarSearch } from "./navbar-search";
+import { ThemeToggleButton } from "./theme-toggle-button";
 
 const NavbarUserMenu = dynamic(
   () =>
@@ -168,11 +169,33 @@ export function NavbarDesktopNavigation() {
 
           {/* Auth Buttons */}
           <NavbarAuthButtons />
+          <ExternalLink
+            href={SOCIALS.DOCS}
+            className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-full"
+            aria-label="Docs"
+          >
+            <CircleHelp className="w-5 h-5" />
+          </ExternalLink>
+          <ThemeToggleButton />
         </div>
       ) : null}
 
-      {/* Right Side - Social Media & User Profile (Only when logged in) */}
-      {isLoggedIn && <NavbarUserMenu />}
+      {/* Right Side - Help, Theme Toggle & User Profile (Only when logged in) */}
+      {isLoggedIn && (
+        <div className="hidden lg:flex items-center gap-3">
+          <div className="flex flex-row items-center gap-2">
+            <ExternalLink
+              href={SOCIALS.DOCS}
+              className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-full"
+              aria-label="Docs"
+            >
+              <CircleHelp className="w-5 h-5" />
+            </ExternalLink>
+            <ThemeToggleButton />
+            <NavbarUserMenu />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

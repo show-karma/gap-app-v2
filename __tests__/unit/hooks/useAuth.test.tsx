@@ -51,8 +51,9 @@ jest.mock("@/contexts/privy-bridge-context", () => ({
 }));
 
 // Mock @wagmi/core for dynamic import in watchAccount effect
+const mockWatchAccount = jest.fn(() => jest.fn());
 jest.mock("@wagmi/core", () => ({
-  watchAccount: jest.fn(() => jest.fn()),
+  watchAccount: (...args: unknown[]) => mockWatchAccount(...args),
 }));
 
 // Mock privy-config for dynamic import in watchAccount effect
@@ -299,6 +300,188 @@ describe("Cache invalidation on logout", () => {
     // Clean up non-wagmi keys
     localStorage.removeItem("app-preference");
     localStorage.removeItem("privy:token");
+  });
+});
+
+describe("useAuth - Re-login with different wallet", () => {
+  const walletUserA = {
+    id: "user-A",
+    wallet: { address: "0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" },
+    linkedAccounts: [
+      {
+        type: "wallet",
+        address: "0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        walletClientType: "metamask",
+      },
+    ],
+  };
+
+  const walletUserB = {
+    id: "user-B",
+    wallet: { address: "0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB" },
+    linkedAccounts: [
+      {
+        type: "wallet",
+        address: "0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+        walletClientType: "metamask",
+      },
+    ],
+  };
+
+  const mockWalletA = {
+    address: "0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    chainId: "eip155:10",
+  };
+
+  const mockWalletB = {
+    address: "0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+    chainId: "eip155:10",
+  };
+
+  const wrapper = ({ children }: { children: ReactNode }) => <>{children}</>;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    setBridgeState({
+      ready: true,
+      authenticated: true,
+      user: walletUserA,
+      wallets: [mockWalletA],
+      isConnected: true,
+    });
+  });
+
+  afterEach(() => {
+    resetBridgeState();
+  });
+
+  it("should NOT force-logout when user logs out then logs in with a different wallet", async () => {
+    const { rerender } = renderHook(() => useAuth(), { wrapper });
+
+    // Step 1: Logout
+    setBridgeState({
+      authenticated: false,
+      user: null,
+      wallets: [],
+      isConnected: false,
+    });
+    await act(async () => {
+      rerender();
+    });
+
+    mockLogout.mockClear();
+    mockQueryClientClear.mockClear();
+
+    // Step 2: Login with a different wallet (different user.id)
+    setBridgeState({
+      authenticated: true,
+      user: walletUserB,
+      wallets: [mockWalletB],
+      isConnected: true,
+    });
+    await act(async () => {
+      rerender();
+    });
+
+    // The user-switch detection should NOT fire here because
+    // this is a fresh login (went through logout first), not a
+    // cross-tab shared auth switch.
+    expect(mockLogout).not.toHaveBeenCalled();
+  });
+
+  it("should NOT force-logout via watchAccount when re-logging with different wallet", async () => {
+    // Simulate watchAccount firing with stale address from previous session
+    let capturedOnChange: ((account: { address?: string }) => void) | null = null;
+    const mockUnwatch = jest.fn();
+    mockWatchAccount.mockImplementation(
+      (_config: unknown, opts: { onChange: (account: { address?: string }) => void }) => {
+        capturedOnChange = opts.onChange;
+        return mockUnwatch;
+      }
+    );
+
+    const { rerender } = renderHook(() => useAuth(), { wrapper });
+
+    // Let the dynamic import resolve
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    // Step 1: Logout
+    setBridgeState({
+      authenticated: false,
+      user: null,
+      wallets: [],
+      isConnected: false,
+    });
+    await act(async () => {
+      rerender();
+    });
+
+    mockLogout.mockClear();
+
+    // Step 2: Login with wallet B
+    setBridgeState({
+      authenticated: true,
+      user: walletUserB,
+      wallets: [mockWalletB],
+      isConnected: true,
+    });
+    await act(async () => {
+      rerender();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    // watchAccount fires with stale address from user A's session
+    // (wagmi hasn't fully updated yet)
+    if (capturedOnChange) {
+      act(() => {
+        capturedOnChange!({ address: "0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" });
+      });
+    }
+
+    // Should NOT trigger logout — we just logged in, stale wagmi state is expected
+    expect(mockLogout).not.toHaveBeenCalled();
+
+    // Reset mock
+    mockWatchAccount.mockImplementation(() => jest.fn());
+  });
+
+  it("should NOT force-logout when Privy user object lingers after logout", async () => {
+    // This simulates real Privy behavior where the user object
+    // is NOT immediately cleared when authenticated goes to false.
+    const { rerender } = renderHook(() => useAuth(), { wrapper });
+
+    // Step 1: Logout — authenticated goes false but user object lingers
+    setBridgeState({
+      authenticated: false,
+      user: walletUserA, // user object still present!
+      wallets: [],
+      isConnected: false,
+    });
+    await act(async () => {
+      rerender();
+    });
+
+    mockLogout.mockClear();
+    mockQueryClientClear.mockClear();
+
+    // Step 2: Login with a different wallet (Privy sets new user + authenticated in one update)
+    setBridgeState({
+      authenticated: true,
+      user: walletUserB,
+      wallets: [mockWalletB],
+      isConnected: true,
+    });
+    await act(async () => {
+      rerender();
+    });
+
+    // Should NOT trigger user-switch logout — the user explicitly
+    // logged out then logged in again, this is not a cross-tab switch.
+    expect(mockLogout).not.toHaveBeenCalled();
   });
 });
 
