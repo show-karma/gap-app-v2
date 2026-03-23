@@ -23,7 +23,8 @@ const baseClasses =
 const variantClasses = {
   primary:
     "text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:ring-indigo-500 transform hover:scale-105",
-  secondary: "text-gray-700 bg-white border-gray-300 hover:bg-gray-50 focus:ring-indigo-500",
+  secondary:
+    "text-gray-700 dark:text-zinc-100 bg-white dark:bg-zinc-900 border-gray-300 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-800 focus:ring-indigo-500",
   danger:
     "text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 focus:ring-red-500",
   success:

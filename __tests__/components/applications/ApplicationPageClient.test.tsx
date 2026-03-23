@@ -18,6 +18,7 @@ jest.mock("@/src/core/rbac/context/permission-context", () => ({
     hasRoleOrHigher: jest.fn(() => false),
     isReviewer: false,
     isLoading: false,
+    can: jest.fn(() => false),
   })),
 }));
 
@@ -38,6 +39,22 @@ jest.mock(
 
 jest.mock("@/src/features/application-comments/components/PublicComments", () => ({
   PublicComments: () => <div data-testid="public-comments" />,
+}));
+
+const mockUseApplicationAccess = jest.fn(() => ({
+  accessInfo: null,
+  isLoading: false,
+  error: null,
+  refetch: jest.fn(),
+  canView: false,
+  canEdit: false,
+  canReview: false,
+  canAdminister: false,
+  isOwner: false,
+  accessRole: "NONE" as const,
+}));
+jest.mock("@/src/features/applications/hooks/use-application-access", () => ({
+  useApplicationAccess: (...args: unknown[]) => mockUseApplicationAccess(...args),
 }));
 
 jest.mock("@/src/features/applications/components/ApplicationStatusHistory", () => ({
@@ -92,13 +109,23 @@ describe("ApplicationPageClient", () => {
   });
 
   it("shows edit button when wallet user is the owner", () => {
+    mockUseApplicationAccess.mockReturnValue({
+      accessInfo: null,
+      isLoading: false,
+      error: null,
+      refetch: jest.fn(),
+      canView: true,
+      canEdit: true,
+      canReview: false,
+      canAdminister: false,
+      isOwner: true,
+      accessRole: "APPLICANT" as const,
+    });
+
     render(
       <ApplicationPageClient
         communityId="optimism"
-        application={makeApplication({
-          ownerAddress: "0x1234567890123456789012345678901234567890",
-          status: "pending",
-        })}
+        application={makeApplication({ status: "pending" })}
         program={makeProgram()}
       />
     );
@@ -107,13 +134,23 @@ describe("ApplicationPageClient", () => {
   });
 
   it("does not show edit button when wallet user is NOT the owner", () => {
+    mockUseApplicationAccess.mockReturnValue({
+      accessInfo: null,
+      isLoading: false,
+      error: null,
+      refetch: jest.fn(),
+      canView: true,
+      canEdit: false,
+      canReview: false,
+      canAdminister: false,
+      isOwner: false,
+      accessRole: "GUEST" as const,
+    });
+
     render(
       <ApplicationPageClient
         communityId="optimism"
-        application={makeApplication({
-          ownerAddress: "0xdifferentAddress000000000000000000000000",
-          status: "pending",
-        })}
+        application={makeApplication({ status: "pending" })}
         program={makeProgram()}
       />
     );
@@ -140,11 +177,25 @@ describe("ApplicationPageClient", () => {
     });
 
     it("should show edit button when Farcaster user is the owner (matched by userId)", () => {
+      // Backend access check resolves ownership via multi-wallet matching
+      mockUseApplicationAccess.mockReturnValue({
+        accessInfo: null,
+        isLoading: false,
+        error: null,
+        refetch: jest.fn(),
+        canView: true,
+        canEdit: true,
+        canReview: false,
+        canAdminister: false,
+        isOwner: true,
+        accessRole: "APPLICANT" as const,
+      });
+
       render(
         <ApplicationPageClient
           communityId="optimism"
           application={makeApplication({
-            ownerAddress: "", // no wallet address stored
+            ownerAddress: "",
             userId: "did:privy:farcaster-user-123",
             status: "pending",
           })}
@@ -152,12 +203,23 @@ describe("ApplicationPageClient", () => {
         />
       );
 
-      // Farcaster users have no wallet address, so the ownership check must
-      // fall back to comparing user.id against application.userId.
       expect(screen.getByText("Edit Application")).toBeInTheDocument();
     });
 
     it("should not show edit button when Farcaster userId does not match", () => {
+      mockUseApplicationAccess.mockReturnValue({
+        accessInfo: null,
+        isLoading: false,
+        error: null,
+        refetch: jest.fn(),
+        canView: true,
+        canEdit: false,
+        canReview: false,
+        canAdminister: false,
+        isOwner: false,
+        accessRole: "GUEST" as const,
+      });
+
       render(
         <ApplicationPageClient
           communityId="optimism"

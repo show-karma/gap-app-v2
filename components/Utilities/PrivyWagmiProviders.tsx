@@ -3,6 +3,7 @@
 import { PrivyProvider, usePrivy, useWallets } from "@privy-io/react-auth";
 import { useSmartWallets } from "@privy-io/react-auth/smart-wallets";
 import { WagmiProvider } from "@privy-io/wagmi";
+import { connect as wagmiCoreConnect, disconnect as wagmiCoreDisconnect } from "@wagmi/core";
 import { useEffect, useRef } from "react";
 import { useAccount } from "wagmi";
 import { PROJECT_NAME } from "@/constants/brand";
@@ -35,7 +36,7 @@ function PrivyBridgeUpdater() {
   const privy = usePrivy();
   const { wallets } = useWallets();
   const { client: smartWalletClient } = useSmartWallets();
-  const { isConnected } = useAccount();
+  const { isConnected, address, chainId } = useAccount();
 
   // Store latest values in refs so the effect always has fresh data.
   // Depend on primitives only (stable across renders when unchanged).
@@ -73,6 +74,48 @@ function PrivyBridgeUpdater() {
     smartWalletClient,
     isConnected,
   ]);
+
+  // Sync connected wallet to the outer wagmi config (minimalWagmiConfig).
+  // The app has two WagmiProviders: the outer one wraps all components (useAccount()
+  // reads from it) and this inner one syncs with Privy. Without this bridge,
+  // the outer useAccount().address is undefined during the Privy↔wagmi sync gap.
+  const outerSyncedRef = useRef(false);
+  const primaryWallet = wallets[0];
+  const primaryWalletAddress = primaryWallet?.address;
+
+  useEffect(() => {
+    if (!primaryWallet || outerSyncedRef.current) return;
+
+    const syncOuterConfig = async () => {
+      try {
+        const { minimalWagmiConfig } = await import("@/utilities/wagmi/privy-config");
+        const { privyBridgeConnector } = await import("@/utilities/wagmi/privy-bridge-connector");
+        const connector = privyBridgeConnector(primaryWallet, chainId || appNetwork[0].id);
+        await wagmiCoreConnect(minimalWagmiConfig, { connector });
+        outerSyncedRef.current = true;
+      } catch {
+        // Non-fatal: outer useAccount() will lack address, but useAuth().address still works
+      }
+    };
+
+    syncOuterConfig();
+  }, [primaryWallet, primaryWalletAddress, chainId]);
+
+  // Disconnect outer config when user logs out
+  useEffect(() => {
+    if (!privy.authenticated && outerSyncedRef.current) {
+      const disconnectOuter = async () => {
+        try {
+          const { minimalWagmiConfig } = await import("@/utilities/wagmi/privy-config");
+          await wagmiCoreDisconnect(minimalWagmiConfig);
+        } catch {
+          // Ignore disconnect errors
+        }
+        outerSyncedRef.current = false;
+      };
+      disconnectOuter();
+    }
+  }, [privy.authenticated]);
 
   return null;
 }

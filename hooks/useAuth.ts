@@ -4,8 +4,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Hex } from "viem";
 import { usePrivyBridge } from "@/contexts/privy-bridge-context";
-import { compareAllWallets } from "@/utilities/auth/compare-all-wallets";
 import { useProjectCreateModalStore } from "@/store/modals/projectCreate";
+import { compareAllWallets } from "@/utilities/auth/compare-all-wallets";
 import { getCypressMockAuthState } from "@/utilities/auth/cypress-auth";
 import { TokenManager } from "@/utilities/auth/token-manager";
 import { PAGES } from "@/utilities/pages";
@@ -143,6 +143,8 @@ export const useAuth = () => {
   const authFailureCount = useRef(0);
   // Snapshot of wallet addresses captured at auth time (security: use ref, not live array)
   const walletsSnapshotRef = useRef<string[]>([]);
+  // Grace period after login — suppresses watchAccount false positives from stale wagmi state
+  const loginGraceRef = useRef(false);
 
   /**
    * AUTH STATE CHANGE DETECTION
@@ -157,6 +159,13 @@ export const useAuth = () => {
   useEffect(() => {
     // Detect login: was not authenticated, now authenticated
     if (!prevAuthRef.current && authenticated) {
+      // Suppress watchAccount checks briefly — wagmi state may be stale
+      // from the previous session during the Privy↔wagmi sync gap.
+      loginGraceRef.current = true;
+      setTimeout(() => {
+        loginGraceRef.current = false;
+      }, 2000);
+
       // Only redirect if we're on the default landing page.
       // In whitelabel mode, "/" is the community homepage (funding opportunities),
       // not a generic landing page — don't redirect away from it.
@@ -175,21 +184,27 @@ export const useAuth = () => {
 
     // Detect logout: was authenticated, now not authenticated
     if (prevAuthRef.current && !authenticated) {
-      // Clear ALL query caches on logout to prevent stale data on re-login.
-      // Using clear() instead of selective removeQueries because:
-      // - removeQueries only clears explicitly listed keys (easy to miss new ones)
-      // - clear() is safe on logout since unauthenticated state needs fresh data anyway
       queryClient.clear();
       TokenManager.clearCache();
       clearWagmiState();
       authFailureCount.current = 0;
+      // Clear previous user ID so re-login with a different wallet
+      // is not mistaken for a cross-tab user switch.
+      prevUserIdRef.current = undefined;
     }
 
-    // Detect user switch: different user.id while still authenticated.
+    // Detect user switch: different user.id while *continuously* authenticated.
     // This happens with Privy shared auth when a different user logs in
     // on another subdomain — Privy seamlessly transitions without logout.
     // Force logout to ensure full re-initialization with the new user's state.
-    if (authenticated && user?.id && prevUserIdRef.current && user.id !== prevUserIdRef.current) {
+    // Only triggers when prevAuthRef is true (no logout happened in between).
+    if (
+      prevAuthRef.current &&
+      authenticated &&
+      user?.id &&
+      prevUserIdRef.current &&
+      user.id !== prevUserIdRef.current
+    ) {
       queryClient.clear();
       TokenManager.clearCache();
       clearWagmiState();
@@ -294,22 +309,38 @@ export const useAuth = () => {
   // Handle wallet switching: logout if switched to non-linked wallet
   // Using wagmi's watchAccount as recommended by Privy docs
   // Dynamically imports @wagmi/core and privy-config to keep them out of the initial bundle
+  //
+  // Skip for social-login users (Farcaster, email, Google) who don't have an
+  // external wallet linked. A stale wagmi connection from a previous wallet-based
+  // session would falsely trigger logout for these users because the old wagmi
+  // address isn't in the Farcaster user's linkedAccounts.
+  const hasExternalWallet = useMemo(() => {
+    if (!user?.linkedAccounts) return false;
+    return user.linkedAccounts.some(
+      (a) =>
+        a.type === "wallet" && (a as { walletClientType?: string }).walletClientType !== "privy"
+    );
+  }, [user]);
+
   useEffect(() => {
-    if (!ready || !authenticated) return;
+    if (!ready || !authenticated || !hasExternalWallet) return;
 
     let unwatch: (() => void) | undefined;
+    let cancelled = false;
 
     Promise.all([import("@wagmi/core"), import("@/utilities/wagmi/privy-config")]).then(
       ([{ watchAccount }, { privyConfig }]) => {
+        if (cancelled) return;
         unwatch = watchAccount(privyConfig, {
           onChange(account) {
+            if (cancelled) return;
+            // Skip during login grace period — wagmi state may be stale
+            // from the previous session during the Privy↔wagmi sync gap.
+            if (loginGraceRef.current) return;
+
             const newAddress = account.address?.toLowerCase();
             if (!newAddress) return;
 
-            // Check against ALL user linked accounts (wallets, smart wallets,
-            // farcaster custody, cross-app) — not just the wagmi wallets snapshot.
-            // This prevents false logouts for Farcaster users whose custody wallet
-            // gets synced to wagmi after the embedded wallet is snapshotted.
             if (user && !compareAllWallets(user, newAddress)) {
               logout();
             }
@@ -318,8 +349,11 @@ export const useAuth = () => {
       }
     );
 
-    return () => unwatch?.();
-  }, [ready, authenticated, user, logout]);
+    return () => {
+      cancelled = true;
+      unwatch?.();
+    };
+  }, [ready, authenticated, hasExternalWallet, user, logout]);
 
   const adaptedLogin = useCallback(async () => {
     if (typeof window !== "undefined" && !authenticated) {
