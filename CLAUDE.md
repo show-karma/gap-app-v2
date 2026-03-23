@@ -1,260 +1,64 @@
-# AI Assistant Instructions - gap-app-v2
+# gap-app-v2 — AI Instructions
 
-**Purpose**: Route AI assistants to the correct code and patterns. Nothing else.
-
-**Project**: gap-app-v2 is the main frontend for Karma. It lets grant programs create projects, track milestones, and manage community reviews via EAS attestations on-chain. Part of a monorepo — see the parent repo's `CLAUDE.md` for cross-project guidance.
-
----
-
-## Start Here
-
-1. Understand the task type (UI component, hook, page, API integration, test)
-2. Read only the docs you need from the table below
-3. **DO NOT** read all docs at once (wastes context)
-
----
+Next.js frontend for Karma. Parent `CLAUDE.md` has testing targets, git rules, and pre-PR checklist — don't duplicate here.
 
 ## Routing Table
 
-| Task | What to Read |
-|------|-------------|
-| New page/route | `app/` directory structure, existing pages for patterns |
-| New component | `components/` for shared, or `src/features/[name]/` for feature-specific |
-| Data fetching | `hooks/` for React Query patterns, `utilities/` for API helpers |
-| State management | `store/` for Zustand store patterns |
-| Forms | Existing forms use React Hook Form + Zod (`@hookform/resolvers`) |
-| Auth changes | `utilities/auth/`, Privy + Wagmi hooks, see **Auth Architecture** below |
-| Permissions / RBAC | See **Authorization / RBAC** below — read before using any permission hook |
-| Web3/blockchain | `karma-gap-sdk` for EAS, Wagmi hooks for wallet interaction |
-| Styling | TailwindCSS 3 + Tremor components, check existing similar components |
-| Testing | `__tests__/` for Jest, `cypress/` for E2E |
-
----
-
-## Project Structure
-
-```text
-app/                    # Next.js App Router routes
-components/             # Shared React components
-src/features/           # Feature-specific domain modules
-hooks/                  # Custom hooks (auth, query wrappers, domain-specific)
-store/                  # Zustand stores (project, community, donationCart, modals)
-utilities/              # Helpers (adapters, auth/TokenManager, chain handling, validation)
-styles/                 # TailwindCSS globals + SCSS modules
-__tests__/              # Jest unit/integration tests
-cypress/                # E2E + component tests
-```
-
----
-
-## Key Patterns
-
-- **Data Fetching**: React Query (`useQuery`/`useMutation`) + Axios
-- **State**: Zustand stores for UI state (modals, selections, cart)
-- **Components**: Client components (`"use client"`) with server component layouts
-- **Forms**: React Hook Form + Zod schemas
-- **Auth**: Privy OAuth + Wagmi account watching, TokenManager for persistent tokens
-- **Web3**: Wagmi hooks, Safe wallets, EAS attestations via karma-gap-sdk
-- **Styling**: TailwindCSS + Tremor (charts/data viz) + Radix UI (accessible primitives)
-- **Linting**: Biome (line width 100, 2-space indent, no console.log)
-
----
+| Task | Read |
+|------|------|
+| Page/route | Existing pages in `app/` for patterns |
+| Component | `components/` (shared), `src/features/[name]/` (feature-specific) |
+| Data fetching | `hooks/` for React Query patterns |
+| State | `store/` for Zustand patterns |
+| Forms | Existing forms (React Hook Form + Zod) |
+| Auth | **Auth Gotchas** below, then `utilities/auth/` |
+| RBAC | **RBAC** below — read before any permission hook |
+| Tests | `__tests__/` — see **Testing** below for patterns |
+| Deletions | Use `<DeleteDialog>` from `components/DeleteDialog.tsx`, never raw `confirm()` |
+| Clipboard | Use `useCopyToClipboard` from `hooks/useCopyToClipboard.ts`, never raw `navigator.clipboard` |
 
 ## Commands
 
 ```bash
-pnpm run dev            # Dev server with Turbopack (port 3000)
-pnpm run build          # Production build
-pnpm test               # Run Jest tests
-pnpm test:watch         # Tests in watch mode
+pnpm run dev            # Dev server (port 3000)
+pnpm test               # All tests
+pnpm test:unit          # Unit tests only
 pnpm test:coverage      # Coverage report
 pnpm lint:fix           # Biome lint + format
-pnpm storybook          # Component docs
 ```
 
----
+## Non-Obvious Rules (will cause bugs if ignored)
 
-## Testing Requirements
+- **Mutations**: Always `useMutation` with optimistic updates — never `useState` + direct service calls.
+- **Three States**: Every data component renders loading (skeleton), empty (CTA), error (retry). Never `return null`.
+- **Routes**: `PAGES` constants from `utilities/pages.ts` — never hardcode strings.
+- **New routes**: Every `app/` route needs `page.tsx` + `loading.tsx` + `error.tsx`.
+- **`"use client"`**: Required on any file importing `@radix-ui/*`.
+- **No barrel exports**: Import directly from source files, not `index.ts` re-exports. Existing barrel exports in `types/`, `store/`, `utilities/sdk/` are legacy — don't add new ones.
+- **Heavy libs**: Must use `dynamic()` or lazy `import()` — never top-level import of chart/editor/markdown libs.
+- **Zustand resets**: When adding state properties, update `initialState` too — `reset()` spreads it and will miss new fields.
 
-- **Coverage target**: 70% (TDD recommended)
-- **Unit/integration**: `__tests__/` using Jest + React Testing Library
-- **E2E**: `cypress/` for critical user flows
-- **A feature without tests is NOT complete** — bug fixes require regression tests
-- Run `pnpm test` before pushing; `pnpm test:coverage` to check coverage
+## Auth Gotchas
 
----
+Privy and Wagmi initialize independently. During startup, `isConnected=false` while `authenticated=true` briefly. **NEVER** `login()`/`logout()` in useEffect depending on combined auth state — causes sign-out loops.
 
-## Authorization / RBAC
+## RBAC
 
-### Two-Tier Permission System
+Two tiers:
+1. **Global** (`PermissionsProvider`): `isStaff`, `isGuestDueToError` — always available
+2. **Context-specific** (`PermissionProvider`): `isReviewer`, `isCommunityAdmin` — ONLY inside community-scoped layouts with `communityId`
 
-1. **Global PermissionsProvider** (`components/Utilities/PermissionsProvider.tsx`)
-   - Mounted in root layout, always available
-   - Provides: `isStaff`, `isGuestDueToError`
-   - Does NOT provide community-specific roles
+Cross-community pages: detect roles from data (`useReviewerPrograms()`, `useDashboardAdmin()`, `fetchMyProjects()`), not RBAC flags.
 
-2. **Context-Specific PermissionProvider** (`src/core/rbac/context/permission-context.tsx`)
-   - ONLY mounted inside community-scoped layouts (e.g., `/community/[communityId]/manage/`)
-   - Provides: `isReviewer`, `isCommunityAdmin`, `isProjectOwner`
-   - **Requires a communityId resource context** to return meaningful results
-   - Without communityId, all role flags default to `false`
+## Testing Patterns
 
-### Cross-Community Pages (Dashboard, Profile, etc.)
+Tests use Jest + RTL. Follow these established patterns (see `__tests__/` for examples):
+- Mock factories with override support: `createMockProgram(overrides)`
+- `jest.clearAllMocks()` in `beforeEach`, `queryClient.clear()` in `afterEach`
+- Wrap hooks in `QueryClientProvider` via `renderHook`
+- `waitFor(() => expect(...))` for async
+- Separate `describe` blocks for loading, success, empty, and error states
 
-For pages that aggregate data across all communities, do NOT rely on `usePermissionContext()` for role detection. Instead, detect roles from data:
+## Enforcement (automated — don't repeat in code review)
 
-- **Reviewer**: `useReviewerPrograms()` from `hooks/usePermissions.ts` (calls `/v2/funding-program-configs/my-reviewer-programs`)
-- **Admin**: `useDashboardAdmin()` from `hooks/useDashboardAdmin.ts` (calls `/v2/user/communities/admin`)
-- **Project Owner**: Query user's projects directly via `fetchMyProjects()`
-- **Super Admin**: `usePermissionContext().isStaff` (this one IS global)
-
-Show sections based on whether the data query returns results, not RBAC flags.
-
----
-
-## Auth Architecture
-
-### Privy + Wagmi Initialization Race Condition
-
-During page load, Privy and Wagmi initialize independently:
-1. Privy loads first: `ready=true, authenticated=true`
-2. Wagmi still connecting: `isConnected=false` (briefly)
-3. `useAuth` hook combines both: `authenticated = isConnected && privyAuthenticated`
-
-**NEVER call `login()` or `logout()` in a useEffect that depends on the combined auth state.** During the initialization gap, auth state is temporarily inconsistent and will cause sign-out loops.
-
-### Protected Routes Pattern
-
-- Middleware handles redirect to login for unauthenticated users
-- Components should show a loading state until `ready` is true
-- Never programmatically trigger login/logout based on race-prone combined state
-
-### Theming (CSS Variables)
-
-This project uses shadcn/ui with HSL-based CSS custom properties in `styles/globals.css`. Every color token has a paired `-foreground` variable for text contrast (e.g., `--primary` / `--primary-foreground`, `--destructive` / `--destructive-foreground`). When using semantic color variants, verify the foreground provides sufficient contrast in both light and dark modes.
-
----
-
-## Route Constants
-
-All app routes are defined in `utilities/pages.ts` as the `PAGES` constant. Key routes:
-
-- `PAGES.DASHBOARD` — User dashboard (`/dashboard`)
-- `PAGES.PROJECT.OVERVIEW(slug)` — Project detail page
-- `PAGES.REGISTRY.ROOT` — Funding map / program explorer (`/funding-map`)
-- `PAGES.REVIEWER.DASHBOARD(slug)` — Reviewer dashboard for a community
-- `PAGES.ADMIN.ROOT(communityId)` — Community admin panel
-- `PAGES.ADMIN.MILESTONES(communityId)` — Milestone management
-
-**Always use PAGES constants for navigation. Never hardcode route strings.**
-
----
-
-## Required Files for New Routes
-
-Every new route under `app/` MUST include:
-
-1. `page.tsx` — The page component
-2. `loading.tsx` — Loading skeleton (shown during Suspense)
-3. `error.tsx` — Error boundary with retry button and "Go home" link
-
-### Error State Requirements
-
-Every data-fetching section MUST handle 3 states:
-1. **Loading** — skeleton placeholder
-2. **Empty** — helpful message + action (e.g., "Create your first project")
-3. **Error** — error message + retry button
-
-**Never return `null` on error.** Always show a user-visible error state with a retry mechanism.
-
----
-
-## Dev Server Notes
-
-The dev server uses Turbopack (`pnpm run dev`). It can occasionally crash during large file rewrites or rapid successive changes. **If the page goes blank after changes:** check if the dev server is still responding (`curl http://localhost:3000`). If empty response, restart with `pnpm run dev`.
-
----
-
-## Mutation Pattern (MANDATORY)
-
-All API write operations MUST use React Query `useMutation` hooks — never direct service calls with local `useState`. This ensures optimistic updates with rollback, cache invalidation, loading states, and consistent error handling.
-
-**Wrong:**
-```tsx
-const [value, setValue] = useState(initialValue);
-const handleChange = async (v) => {
-  setValue(v);
-  try { await Service.update(v); }
-  catch { setValue(!v); toast.error("Failed"); }
-};
-```
-
-**Right:**
-```tsx
-const mutation = useMutation({
-  mutationFn: (v) => Service.update(v),
-  onMutate: async (v) => {
-    await queryClient.cancelQueries({ queryKey });
-    const previous = queryClient.getQueryData(queryKey);
-    queryClient.setQueryData(queryKey, /* optimistic value */);
-    return { previous };
-  },
-  onError: (err, v, ctx) => {
-    queryClient.setQueryData(queryKey, ctx?.previous);
-    toast.error("Failed");
-  },
-  onSettled: () => queryClient.invalidateQueries({ queryKey }),
-});
-```
-
----
-
-## Three States Rule (ENFORCED)
-
-Every component that fetches data MUST render all three states. This is the #1 repeated mistake — check this BEFORE creating a PR:
-
-1. **Loading** — skeleton placeholder matching the shape of real content (not a spinner)
-2. **Empty** — helpful message + action CTA (e.g., "No projects yet. Create your first project.")
-3. **Error** — error message + Retry button using `refetch()`
-
-**NEVER return `null`** for empty or error states — always render a visible UI. Components that violate this will be rejected in review.
-
----
-
-## Anti-Patterns
-
-- Barrel exports (`index.ts` re-exports) - import directly from source files
-- Business logic in components - extract to hooks or utilities
-- Hardcoded chain IDs or addresses - use constants from `utilities/`
-- Hardcoded API URLs - always use `envVars` or `INDEXER` constants
-- Hardcoded color values - use Tailwind theme classes or CSS variables
-- `any` or `as any` type casts - use proper types (e.g., `as ProgramMetadata`)
-- `console.log` in committed code - Biome will flag it
-- Skipping TypeScript strict mode - errors fail the build
-- `document.querySelector` to click elements in other components - renders dialog/component directly instead
-- `router` from `useRouter()` in useEffect dependency arrays - it's a new object every render, causes infinite loops
-- `params` from `useParams()` in useEffect dependency arrays - same issue, destructure to primitive values (`const { projectId } = params`) and depend on those instead
-- Calling `contextLabel(ctx)` or similar functions twice in JSX (once for condition, once for content) - store result in a variable or use IIFE
-- `usePermissionContext()` outside community-scoped layouts - use data-driven role detection (see RBAC section)
-- Returning `null` on data fetch error - always show an error state with retry
-- Unhandled singular/plural: always use `count === 1 ? "item" : "items"` for dynamic counts
-- Generating array keys inline in render (`Array.from({length: N})`) - use static key arrays at module level
-- List item components in `.map()` without `React.memo()` - wrap in memo for performance
-- Destructive actions (delete, regenerate, revoke) without a confirmation dialog
-- Loose path matching (`pathname.includes("/manage")`) - use exact match or `endsWith`
-- Using `useNavbarPermissions()` for wallet address - use `useAuth()` instead
-- Using raw `<input>` elements - use the project's `<Input>` component from `@/components/ui/input`
-- Swallowing API errors silently (returning `[]` on failure) - throw errors so React Query can show error states
-- Missing `"use client"` on components using Radix primitives (Dialog, HoverCard, Separator, etc.) - these require client-side rendering
-- Unhandled Promise rejections on browser APIs (`navigator.clipboard.writeText()`, etc.) - always add `.catch()`
-- Eagerly importing heavy libraries (`@streamdown/math`, `@streamdown/mermaid`, etc.) - use `dynamic()` or lazy `import()` to reduce bundle size
-- `clearMessages()` / reset actions in Zustand stores that don't reset ALL related state flags (e.g., forgetting `isStreaming`)
-- Starting to code features before finalizing URL structure / information architecture - plan routes and data model first, then build
-- Hardcoding CSS colors inline instead of using CSS custom properties in `styles/globals.css` - define design tokens first
-
----
-
-## Git Rules
-
-- **NEVER** mention Claude, AI, or any AI assistant in commit messages or PR descriptions
-- Use conventional commits format
+Hooks auto-check on every file edit: Biome lint, `return null` in data components, missing `useMutation`, Radix without `"use client"`, hardcoded routes/colors, barrel exports, heavy imports. Pre-commit hook runs tests. CI bot comments anti-pattern violations on PRs.

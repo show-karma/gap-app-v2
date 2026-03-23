@@ -18,9 +18,9 @@ export const DisbursementReview: React.FC<DisbursementReviewProps> = ({
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-gray-200 dark:border-zinc-700 p-6">
       <div className="flex items-center mb-6">
-        <div className="bg-purple-100 rounded-lg p-2 mr-3">
+        <div className="bg-purple-100 dark:bg-purple-900 rounded-lg p-2 mr-3">
           <svg
             className="h-5 w-5 text-purple-600"
             fill="none"
@@ -35,39 +35,49 @@ export const DisbursementReview: React.FC<DisbursementReviewProps> = ({
             />
           </svg>
         </div>
-        <h2 className="text-xl font-semibold text-gray-900">📋 Review Recipients</h2>
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-zinc-100">
+          📋 Review Recipients
+        </h2>
       </div>
-      <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 rounded-lg">
-        <table className="min-w-full divide-y divide-gray-300">
-          <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
+      <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 dark:ring-zinc-700 rounded-lg">
+        <table className="min-w-full divide-y divide-gray-300 dark:divide-zinc-700">
+          <thead className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-zinc-800 dark:to-zinc-800">
             <tr>
               <th
                 scope="col"
-                className="py-4 pl-6 pr-3 text-left text-sm font-semibold text-gray-900"
+                className="py-4 pl-6 pr-3 text-left text-sm font-semibold text-gray-900 dark:text-zinc-100"
               >
                 👤 Recipient Address
               </th>
-              <th scope="col" className="px-3 py-4 text-left text-sm font-semibold text-gray-900">
+              <th
+                scope="col"
+                className="px-3 py-4 text-left text-sm font-semibold text-gray-900 dark:text-zinc-100"
+              >
                 💰 Amount{tokenSymbol ? ` (${tokenSymbol})` : ""}
               </th>
-              <th scope="col" className="px-3 py-4 text-left text-sm font-semibold text-gray-900">
+              <th
+                scope="col"
+                className="px-3 py-4 text-left text-sm font-semibold text-gray-900 dark:text-zinc-100"
+              >
                 ✅ Status
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 bg-white">
+          <tbody className="divide-y divide-gray-200 dark:divide-zinc-700 bg-white dark:bg-zinc-900">
             {recipients.map((recipient, index) => (
               <tr
                 key={`${recipient.address}-${index}`}
-                className="hover:bg-gray-50 transition-colors"
+                className="hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
               >
                 <td className="whitespace-nowrap py-4 pl-6 pr-3 text-sm">
-                  <code className="font-mono text-gray-900 bg-gray-100 px-2 py-1 rounded text-xs">
+                  <code className="font-mono text-gray-900 dark:text-zinc-100 bg-gray-100 dark:bg-zinc-800 px-2 py-1 rounded text-xs">
                     {recipient.address}
                   </code>
                 </td>
                 <td className="whitespace-nowrap px-3 py-4 text-sm">
-                  <span className="font-medium text-gray-900">{recipient.amount}</span>
+                  <span className="font-medium text-gray-900 dark:text-zinc-100">
+                    {recipient.amount}
+                  </span>
                 </td>
                 <td className="whitespace-nowrap px-3 py-4 text-sm">
                   {recipient.error ? (

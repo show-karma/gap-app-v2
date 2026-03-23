@@ -1,26 +1,20 @@
-import { usePrivy } from "@privy-io/react-auth";
 import { renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { useAccount } from "wagmi";
+import { usePrivyBridge } from "@/contexts/privy-bridge-context";
 import { PermissionProvider, usePermissionContext } from "../context/permission-context";
 import { usePermissionsQuery } from "../hooks/use-permissions";
 import { Permission } from "../types/permission";
 import { Role } from "../types/role";
 
-jest.mock("@privy-io/react-auth", () => ({
-  usePrivy: jest.fn(),
-}));
-
-jest.mock("wagmi", () => ({
-  useAccount: jest.fn(),
+jest.mock("@/contexts/privy-bridge-context", () => ({
+  usePrivyBridge: jest.fn(),
 }));
 
 jest.mock("../hooks/use-permissions", () => ({
   usePermissionsQuery: jest.fn(),
 }));
 
-const mockUsePrivy = usePrivy as jest.Mock;
-const mockUseAccount = useAccount as jest.Mock;
+const mockUsePrivyBridge = usePrivyBridge as jest.Mock;
 const mockUsePermissionsQuery = usePermissionsQuery as unknown as jest.Mock;
 
 describe("PermissionProvider", () => {
@@ -35,15 +29,17 @@ describe("PermissionProvider", () => {
     delete (window as Window & { Cypress?: unknown }).Cypress;
     localStorage.removeItem("privy:auth_state");
 
-    mockUsePrivy.mockReturnValue({
+    mockUsePrivyBridge.mockReturnValue({
       ready: false,
       authenticated: false,
-    });
-
-    mockUseAccount.mockReturnValue({
+      user: null,
+      login: jest.fn(),
+      logout: jest.fn(),
+      getAccessToken: jest.fn(),
+      connectWallet: jest.fn(),
+      wallets: [],
+      smartWalletClient: null,
       isConnected: false,
-      isConnecting: false,
-      isReconnecting: false,
     });
 
     mockUsePermissionsQuery.mockReturnValue({
@@ -117,17 +113,86 @@ describe("PermissionProvider", () => {
     expect(result.current.isGuestDueToError).toBe(false);
   });
 
-  describe("Wagmi initialization race condition", () => {
-    it("reports isLoading=true when Privy is ready+authenticated but Wagmi is still connecting", () => {
-      mockUsePrivy.mockReturnValue({
+  describe("Farcaster login (no browser-connectable wallet)", () => {
+    /**
+     * Farcaster users authenticate via Privy but have no browser-connectable wallet.
+     * The permission query should still fire — wallet connectivity is orthogonal to RBAC.
+     */
+    it("enables permissions query when Privy is authenticated without wallet connection", () => {
+      mockUsePrivyBridge.mockReturnValue({
         ready: true,
         authenticated: true,
+        user: null,
+        login: jest.fn(),
+        logout: jest.fn(),
+        getAccessToken: jest.fn(),
+        connectWallet: jest.fn(),
+        wallets: [],
+        smartWalletClient: null,
+        isConnected: false,
       });
 
-      mockUseAccount.mockReturnValue({
+      renderHook(() => usePermissionContext(), { wrapper });
+
+      // Permissions query should be enabled for Farcaster users
+      // even though no wallet is connected in the browser
+      expect(mockUsePermissionsQuery).toHaveBeenCalledWith({}, { enabled: true });
+    });
+
+    it("loads permissions for Farcaster users without wallet connection", () => {
+      mockUsePrivyBridge.mockReturnValue({
+        ready: true,
+        authenticated: true,
+        user: null,
+        login: jest.fn(),
+        logout: jest.fn(),
+        getAccessToken: jest.fn(),
+        connectWallet: jest.fn(),
+        wallets: [],
+        smartWalletClient: null,
         isConnected: false,
-        isConnecting: true,
-        isReconnecting: false,
+      });
+
+      mockUsePermissionsQuery.mockReturnValue({
+        data: {
+          roles: {
+            primaryRole: Role.COMMUNITY_ADMIN,
+            roles: [Role.COMMUNITY_ADMIN],
+            reviewerTypes: [],
+          },
+          permissions: [Permission.PROGRAM_VIEW],
+          resourceContext: {},
+          isCommunityAdmin: true,
+          isProgramAdmin: false,
+          isReviewer: false,
+          isRegistryAdmin: false,
+          isProgramCreator: false,
+        },
+        isLoading: false,
+        isError: false,
+      });
+
+      const { result } = renderHook(() => usePermissionContext(), { wrapper });
+
+      expect(result.current.isLoading).toBe(false);
+      expect(result.current.isCommunityAdmin).toBe(true);
+      expect(result.current.can(Permission.PROGRAM_VIEW)).toBe(true);
+    });
+  });
+
+  describe("Wagmi initialization race condition", () => {
+    it("reports isLoading=true when Privy is ready+authenticated but Wagmi is still connecting", () => {
+      mockUsePrivyBridge.mockReturnValue({
+        ready: true,
+        authenticated: true,
+        user: null,
+        login: jest.fn(),
+        logout: jest.fn(),
+        getAccessToken: jest.fn(),
+        connectWallet: jest.fn(),
+        wallets: [],
+        smartWalletClient: null,
+        isConnected: false,
       });
 
       const { result } = renderHook(() => usePermissionContext(), { wrapper });
@@ -137,15 +202,17 @@ describe("PermissionProvider", () => {
     });
 
     it("reports isLoading=true when Privy is ready+authenticated but Wagmi is reconnecting", () => {
-      mockUsePrivy.mockReturnValue({
+      mockUsePrivyBridge.mockReturnValue({
         ready: true,
         authenticated: true,
-      });
-
-      mockUseAccount.mockReturnValue({
+        user: null,
+        login: jest.fn(),
+        logout: jest.fn(),
+        getAccessToken: jest.fn(),
+        connectWallet: jest.fn(),
+        wallets: [],
+        smartWalletClient: null,
         isConnected: false,
-        isConnecting: false,
-        isReconnecting: true,
       });
 
       const { result } = renderHook(() => usePermissionContext(), { wrapper });
@@ -155,15 +222,17 @@ describe("PermissionProvider", () => {
     });
 
     it("reports isLoading=false once Wagmi connects and permissions load", () => {
-      mockUsePrivy.mockReturnValue({
+      mockUsePrivyBridge.mockReturnValue({
         ready: true,
         authenticated: true,
-      });
-
-      mockUseAccount.mockReturnValue({
+        user: null,
+        login: jest.fn(),
+        logout: jest.fn(),
+        getAccessToken: jest.fn(),
+        connectWallet: jest.fn(),
+        wallets: [],
+        smartWalletClient: null,
         isConnected: true,
-        isConnecting: false,
-        isReconnecting: false,
       });
 
       mockUsePermissionsQuery.mockReturnValue({
@@ -192,15 +261,17 @@ describe("PermissionProvider", () => {
     });
 
     it("reports isLoading=true when Privy is authenticated but Wagmi hasn't started yet", () => {
-      mockUsePrivy.mockReturnValue({
+      mockUsePrivyBridge.mockReturnValue({
         ready: true,
         authenticated: true,
-      });
-
-      mockUseAccount.mockReturnValue({
+        user: null,
+        login: jest.fn(),
+        logout: jest.fn(),
+        getAccessToken: jest.fn(),
+        connectWallet: jest.fn(),
+        wallets: [],
+        smartWalletClient: null,
         isConnected: false,
-        isConnecting: false,
-        isReconnecting: false,
       });
 
       const { result } = renderHook(() => usePermissionContext(), { wrapper });
@@ -210,15 +281,17 @@ describe("PermissionProvider", () => {
     });
 
     it("does not report loading for genuinely unauthenticated users", () => {
-      mockUsePrivy.mockReturnValue({
+      mockUsePrivyBridge.mockReturnValue({
         ready: true,
         authenticated: false,
-      });
-
-      mockUseAccount.mockReturnValue({
+        user: null,
+        login: jest.fn(),
+        logout: jest.fn(),
+        getAccessToken: jest.fn(),
+        connectWallet: jest.fn(),
+        wallets: [],
+        smartWalletClient: null,
         isConnected: false,
-        isConnecting: false,
-        isReconnecting: false,
       });
 
       const { result } = renderHook(() => usePermissionContext(), { wrapper });

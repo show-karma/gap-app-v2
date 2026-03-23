@@ -3,6 +3,7 @@
  * Tests complete search journeys including debouncing, API integration, and navigation
  */
 
+import "./setup-dynamic-mock";
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Navbar } from "@/src/components/navbar/navbar";

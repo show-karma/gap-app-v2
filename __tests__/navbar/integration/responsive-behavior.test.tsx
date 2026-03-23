@@ -3,6 +3,7 @@
  * Tests viewport-specific behavior across mobile, tablet, and desktop breakpoints
  */
 
+import "./setup-dynamic-mock";
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Navbar } from "@/src/components/navbar/navbar";

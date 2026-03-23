@@ -1,6 +1,5 @@
 "use client";
 
-import { Card } from "@tremor/react";
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChartSkeleton } from "@/components/Utilities/ChartSkeleton";
@@ -244,7 +243,7 @@ export function ProjectActivityChart({ className, embedded = false }: ProjectAct
 
     return (
       <div ref={containerRef} className={cn("", className)}>
-        <Card className="bg-white dark:bg-zinc-800 rounded-xl">{loadingContent}</Card>
+        <div className="bg-white dark:bg-zinc-800 rounded-xl p-6">{loadingContent}</div>
       </div>
     );
   }
@@ -335,9 +334,9 @@ export function ProjectActivityChart({ className, embedded = false }: ProjectAct
 
   return (
     <div className={cn("", className)}>
-      <Card className="bg-white dark:bg-zinc-800 rounded-xl border border-gray-200 dark:border-zinc-700">
+      <div className="bg-white dark:bg-zinc-800 rounded-xl border border-gray-200 dark:border-zinc-700 p-6">
         {chartContent}
-      </Card>
+      </div>
     </div>
   );
 }

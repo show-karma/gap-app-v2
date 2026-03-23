@@ -91,34 +91,31 @@ jest.mock("ethers", () => ({
 }));
 
 import { celo, optimism } from "viem/chains";
-import {
-  AlchemyProvider,
-  getProvider,
-  getRegisteredProviders,
-  ZeroDevProvider,
-} from "@/utilities/gasless/providers";
+import { getProvider, getRegisteredProviders } from "@/utilities/gasless/providers";
+import { AlchemyProvider } from "@/utilities/gasless/providers/alchemy.provider";
+import { ZeroDevProvider } from "@/utilities/gasless/providers/zerodev.provider";
 import type { LocalAccountWithEIP7702 } from "@/utilities/gasless/types";
 import { GaslessProviderError } from "@/utilities/gasless/types";
 
 describe("Provider Registry", () => {
   describe("getProvider", () => {
-    it("should return ZeroDev provider for zerodev type", () => {
-      const provider = getProvider("zerodev");
+    it("should return ZeroDev provider for zerodev type", async () => {
+      const provider = await getProvider("zerodev");
       expect(provider).toBeDefined();
       expect(provider.name).toBe("zerodev");
     });
 
-    it("should return Alchemy provider for alchemy type", () => {
-      const provider = getProvider("alchemy");
+    it("should return Alchemy provider for alchemy type", async () => {
+      const provider = await getProvider("alchemy");
       expect(provider).toBeDefined();
       expect(provider.name).toBe("alchemy");
     });
 
-    it("should throw error for unknown provider type", () => {
-      expect(() => {
+    it("should throw error for unknown provider type", async () => {
+      await expect(
         // @ts-expect-error - Testing invalid provider type
-        getProvider("unknown");
-      }).toThrow("Unknown gasless provider: unknown");
+        getProvider("unknown")
+      ).rejects.toThrow("Unknown gasless provider: unknown");
     });
   });
 

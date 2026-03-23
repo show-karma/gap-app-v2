@@ -1,10 +1,12 @@
 "use client";
 
-import { type User, usePrivy, useWallets } from "@privy-io/react-auth";
+import type { User } from "@privy-io/react-auth";
 import type { Signer } from "ethers";
 import { BrowserProvider } from "ethers";
 import { useCallback, useMemo } from "react";
+import { createWalletClient, custom } from "viem";
 import { useChainId } from "wagmi";
+import { usePrivyBridge } from "@/contexts/privy-bridge-context";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import {
   createGaslessClient,
@@ -13,6 +15,7 @@ import {
   getGaslessSigner,
   isChainSupportedForGasless,
 } from "@/utilities/gasless";
+import { appNetwork } from "@/utilities/network";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
 /**
@@ -21,9 +24,11 @@ import { safeGetWalletClient } from "@/utilities/wallet-helpers";
  */
 function didUserLoginWithEmailOrSocial(user: User | null): boolean {
   if (!user) return false;
-  // Check linked accounts for email or Google OAuth
+  // Check linked accounts for email, Google OAuth, or Farcaster
+  // Farcaster users get an embedded wallet via createOnLogin: "users-without-wallets"
   return user.linkedAccounts.some(
-    (account) => account.type === "email" || account.type === "google_oauth"
+    (account) =>
+      account.type === "email" || account.type === "google_oauth" || account.type === "farcaster"
   );
 }
 
@@ -63,8 +68,7 @@ interface UseZeroDevSignerResult {
  * - For external wallet users (MetaMask, etc.): User always pays gas
  */
 export function useZeroDevSigner(): UseZeroDevSignerResult {
-  const { ready: privyReady, user } = usePrivy();
-  const { wallets } = useWallets();
+  const { ready: privyReady, user, wallets } = usePrivyBridge();
   const chainId = useChainId();
 
   // Check if user logged in with email/Google (should use embedded wallet)
@@ -147,21 +151,48 @@ export function useZeroDevSigner(): UseZeroDevSignerResult {
         }
       }
 
-      // Case 3: Wallet login (MetaMask) - use external wallet directly, user pays gas
+      // Case 3: Wallet login (MetaMask) - use external wallet directly, user pays gas.
+      // Primary path: create a viem WalletClient from Privy's provider to avoid wagmi
+      // state desync (chain?.id can be undefined during startup, causing wagmi's
+      // getWalletClient to fail). This follows the same pattern used in claim-funds.
+      // Fallback: wagmi's getWalletClient for environments where Privy provider isn't available.
       if (externalWallet) {
-        const { walletClient, error } = await safeGetWalletClient(targetChainId);
+        try {
+          await externalWallet.switchChain(targetChainId);
+          const provider = await externalWallet.getEthereumProvider();
+          const chain = appNetwork.find((c) => c.id === targetChainId);
+          if (!chain) {
+            throw new Error(`Unsupported chain: ${targetChainId}`);
+          }
+          const viemClient = createWalletClient({
+            account: externalWallet.address as `0x${string}`,
+            chain,
+            transport: custom(provider),
+          });
+          const signer = await walletClientToSigner(viemClient);
+          if (!signer) {
+            throw new Error("Failed to create signer from Privy wallet client");
+          }
+          return signer;
+        } catch (privyError) {
+          console.warn(
+            "[External Wallet] Privy provider failed, falling back to wagmi:",
+            privyError
+          );
+          const { walletClient, error } = await safeGetWalletClient(targetChainId);
 
-        if (error || !walletClient) {
-          throw new Error(`Failed to get wallet client: ${error || "Unknown error"}`);
+          if (error || !walletClient) {
+            throw new Error(`Failed to get wallet client: ${error || "Unknown error"}`);
+          }
+
+          const signer = await walletClientToSigner(walletClient);
+
+          if (!signer) {
+            throw new Error("Failed to create signer from wallet client");
+          }
+
+          return signer;
         }
-
-        const signer = await walletClientToSigner(walletClient);
-
-        if (!signer) {
-          throw new Error("Failed to create signer from wallet client");
-        }
-
-        return signer;
       }
 
       throw new Error("No wallet available for signing");

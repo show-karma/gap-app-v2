@@ -8,6 +8,7 @@ type WalletLike = { address: string };
  * including standard wallets, smart wallets, and cross-app embedded wallets.
  */
 export const compareAllWallets = (user: User, address: string): boolean => {
+  if (!user.linkedAccounts) return false;
   const wallets: string[] = [];
 
   user.linkedAccounts.forEach((account: LinkedAccountWithMetadata) => {
@@ -17,6 +18,13 @@ export const compareAllWallets = (user: User, address: string): boolean => {
     }
     if (account.type === "smart_wallet") {
       wallets.push(account.address);
+      return;
+    }
+    if (account.type === "farcaster") {
+      const ownerAddress = (account as unknown as { ownerAddress?: string }).ownerAddress;
+      if (ownerAddress && isAddress(ownerAddress)) {
+        wallets.push(ownerAddress);
+      }
       return;
     }
     if (account.type === "cross_app") {

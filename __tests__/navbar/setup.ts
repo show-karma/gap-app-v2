@@ -178,6 +178,7 @@ jest.mock("@privy-io/react-auth", () => ({
     wallets: [],
   })),
   PrivyProvider: ({ children }: { children: any }) => children,
+  useCreateWallet: jest.fn(() => ({ createWallet: jest.fn() })),
 }));
 
 /**

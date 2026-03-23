@@ -1,6 +1,8 @@
 "use client";
 
 import { PenLine } from "lucide-react";
+import dynamic from "next/dynamic";
+import type React from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
@@ -9,16 +11,24 @@ import { useOwnerStore, useProjectStore } from "@/store";
 import { useProgressModalStore } from "@/store/modals/progress";
 import type { Project } from "@/types/v2/project";
 import { cn } from "@/utilities/tailwind";
-import { DonateSection, useDonationVisibility } from "./DonateSection";
+import { useDonationVisibility } from "./DonateSection";
 import { EndorseSection } from "./EndorseSection";
 import { QuickLinksCard } from "./QuickLinksCard";
 import { SidebarProfileCard } from "./SidebarProfileCard";
 import { SubscribeSection } from "./SubscribeSection";
 
+const DonateSection = dynamic(
+  () => import("./DonateSection").then((m) => ({ default: m.DonateSection })),
+  { ssr: false }
+);
+
 interface ProjectSidePanelProps {
   project: Project;
   isVerified?: boolean;
   className?: string;
+  /** Server-rendered profile card (RSC slot). When provided, renders this
+   *  instead of the client SidebarProfileCard for faster initial paint. */
+  serverSidePanel?: React.ReactNode;
 }
 
 /**
@@ -38,7 +48,12 @@ function Separator() {
  * Visibility: Desktop only (lg: breakpoint)
  * Matches Figma design with neutral colors and 12px border radius
  */
-export function ProjectSidePanel({ project, isVerified, className }: ProjectSidePanelProps) {
+export function ProjectSidePanel({
+  project,
+  isVerified,
+  className,
+  serverSidePanel,
+}: ProjectSidePanelProps) {
   const { setIsProgressModalOpen } = useProgressModalStore();
 
   // Authorization checks for Post an update button
@@ -79,7 +94,9 @@ export function ProjectSidePanel({ project, isVerified, className }: ProjectSide
 
       {/* Outer card: profile + actions together */}
       <div className="flex flex-col rounded-xl border bg-secondary gap-2 p-2">
-        {/* Inner white profile card */}
+        {/* Inner white profile card — always render the full client version once
+             project data is available. The serverSidePanel (SidebarProfileCardStatic)
+             is only used during the loading state in ProjectProfileLayout. */}
         <SidebarProfileCard project={project} isVerified={isVerified} />
 
         {/* Actions: Donate + Endorse + Subscribe */}

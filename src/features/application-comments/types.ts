@@ -41,6 +41,7 @@ export interface UseApplicationCommentsReturn {
 export interface CommentTimelineProps {
   applicationId: string;
   statusHistory: StatusHistoryItem[];
+  /** @deprecated No longer used - ownership is determined internally via useAuth + compareAllWallets */
   currentUserAddress?: string | null;
   communityId: string;
 }

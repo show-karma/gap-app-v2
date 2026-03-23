@@ -46,7 +46,7 @@ export const DisbursementStepper: React.FC<DisbursementStepperProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-gray-200 dark:border-zinc-700 p-6">
       <nav aria-label="Progress">
         <ol className="flex items-center justify-between">
           {steps.map((step, stepIdx) => {
@@ -72,12 +72,12 @@ export const DisbursementStepper: React.FC<DisbursementStepperProps> = ({
                     <>
                       {stepIdx !== steps.length - 1 && (
                         <div
-                          className="absolute top-5 left-1/2 w-full h-0.5 bg-gray-200"
+                          className="absolute top-5 left-1/2 w-full h-0.5 bg-gray-200 dark:bg-zinc-700"
                           aria-hidden="true"
                         />
                       )}
                       <div
-                        className="relative flex h-12 w-12 items-center justify-center rounded-full border-4 border-blue-500 bg-white shadow-lg"
+                        className="relative flex h-12 w-12 items-center justify-center rounded-full border-4 border-blue-500 bg-white dark:bg-zinc-900 shadow-lg"
                         aria-current="step"
                       >
                         <span className="text-lg" aria-hidden="true">
@@ -90,11 +90,11 @@ export const DisbursementStepper: React.FC<DisbursementStepperProps> = ({
                     <>
                       {stepIdx !== steps.length - 1 && (
                         <div
-                          className="absolute top-5 left-1/2 w-full h-0.5 bg-gray-200"
+                          className="absolute top-5 left-1/2 w-full h-0.5 bg-gray-200 dark:bg-zinc-700"
                           aria-hidden="true"
                         />
                       )}
-                      <div className="relative flex h-12 w-12 items-center justify-center rounded-full border-2 border-gray-300 bg-gray-50 hover:border-gray-400 hover:bg-gray-100 transition-all duration-200">
+                      <div className="relative flex h-12 w-12 items-center justify-center rounded-full border-2 border-gray-300 dark:border-zinc-600 bg-gray-50 dark:bg-zinc-800 hover:border-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-700 transition-all duration-200">
                         <span className="text-lg opacity-50" aria-hidden="true">
                           {step.icon}
                         </span>
@@ -109,12 +109,12 @@ export const DisbursementStepper: React.FC<DisbursementStepperProps> = ({
                           ? "text-green-600"
                           : status === "current"
                             ? "text-blue-600"
-                            : "text-gray-500"
+                            : "text-gray-500 dark:text-zinc-400"
                       }`}
                     >
                       {step.name}
                     </span>
-                    <span className="text-xs text-gray-500 mt-1 block max-w-24 mx-auto">
+                    <span className="text-xs text-gray-500 dark:text-zinc-400 mt-1 block max-w-24 mx-auto">
                       {step.description}
                     </span>
                   </div>

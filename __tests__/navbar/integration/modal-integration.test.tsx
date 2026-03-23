@@ -3,6 +3,7 @@
  * Tests modal interactions triggered from navbar (profile modal, create project modal)
  */
 
+import "./setup-dynamic-mock";
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Navbar } from "@/src/components/navbar/navbar";

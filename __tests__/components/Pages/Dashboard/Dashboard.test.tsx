@@ -243,6 +243,114 @@ describe("Dashboard", () => {
     expect(screen.queryByText("Create your first project")).not.toBeInTheDocument();
   });
 
+  describe("Farcaster user with embedded wallet", () => {
+    beforeEach(() => {
+      mockUseAuth.mockReturnValue({
+        authenticated: true,
+        address: "0xEMBEDDED000000000000000000000000CAFE",
+        ready: true,
+        user: {
+          id: "did:privy:fc-user",
+          farcaster: {
+            fid: 12345,
+            username: "testfcuser",
+            displayName: "Test FC User",
+            pfp: "https://example.com/fc-avatar.png",
+          },
+        },
+      });
+      mockUseContributorProfile.mockReturnValue({ profile: null });
+    });
+
+    it("should show Farcaster display name instead of embedded wallet address", () => {
+      render(<Dashboard />, { wrapper: createWrapper() });
+
+      expect(screen.getByText(/Test FC User/)).toBeInTheDocument();
+    });
+
+    it("should show Farcaster avatar instead of blockie", () => {
+      const { container } = render(<Dashboard />, { wrapper: createWrapper() });
+
+      const fcAvatar = container.querySelector('img[src="https://example.com/fc-avatar.png"]');
+      expect(fcAvatar).toBeInTheDocument();
+    });
+  });
+
+  describe("Farcaster user (no wallet address)", () => {
+    beforeEach(() => {
+      // Farcaster user: authenticated but no wallet address
+      setupAuth({ authenticated: true, address: undefined, ready: true });
+    });
+
+    it("should render dashboard content instead of being stuck on loading", () => {
+      render(<Dashboard />, { wrapper: createWrapper() });
+
+      // Farcaster users have no wallet address but are authenticated.
+      // The dashboard should NOT be permanently stuck on the loading skeleton.
+      expect(screen.getByText(/Welcome back/i)).toBeInTheDocument();
+    });
+
+    it("should not show loading skeleton when authenticated without address", () => {
+      const { container } = render(<Dashboard />, { wrapper: createWrapper() });
+
+      // Should NOT show loading skeletons — the user is authenticated
+      expect(container.querySelectorAll(".animate-pulse").length).toBe(0);
+    });
+
+    it("should enable the projects query for Farcaster users", () => {
+      render(<Dashboard />, { wrapper: createWrapper() });
+
+      // The projects useQuery call should have `enabled: true` even without an address.
+      // The API uses JWT auth, not wallet address.
+      const queryOptions = mockUseQuery.mock.calls[0][0];
+      expect(queryOptions.enabled).toBe(true);
+    });
+  });
+
+  describe("Email authenticated user", () => {
+    beforeEach(() => {
+      mockUseAuth.mockReturnValue({
+        authenticated: true,
+        address: "0xEMBEDDED000000000000000000000000CAFE",
+        ready: true,
+        user: {
+          id: "did:privy:email-user",
+          email: { address: "user@example.com" },
+        },
+      });
+      mockUseContributorProfile.mockReturnValue({ profile: null });
+    });
+
+    it("should show email instead of wallet address in welcome message", () => {
+      render(<Dashboard />, { wrapper: createWrapper() });
+
+      expect(screen.getByText(/user@example.com/)).toBeInTheDocument();
+      expect(screen.queryByText(/0xEMBEDDED/i)).not.toBeInTheDocument();
+    });
+  });
+
+  describe("Google authenticated user", () => {
+    beforeEach(() => {
+      mockUseAuth.mockReturnValue({
+        authenticated: true,
+        address: "0xEMBEDDED000000000000000000000000CAFE",
+        ready: true,
+        user: {
+          id: "did:privy:google-user",
+          google: { email: "googleuser@gmail.com" },
+        },
+      });
+      mockUseContributorProfile.mockReturnValue({ profile: null });
+    });
+
+    it("should show Google email instead of wallet address in welcome message", () => {
+      render(<Dashboard />, { wrapper: createWrapper() });
+
+      expect(screen.getByText(/googleuser@gmail.com/)).toBeInTheDocument();
+      expect(screen.queryByText(/0xEMBEDDED/i)).not.toBeInTheDocument();
+    });
+  });
+
   it("shows permissions error warning when RBAC fails", () => {
     setupPermissions({ isGuestDueToError: true });
 

@@ -17,27 +17,49 @@ jest.unmock("@/hooks/useAuth");
 const mockLogin = jest.fn();
 const mockLogout = jest.fn();
 const mockGetAccessToken = jest.fn();
-const mockUsePrivy = jest.fn();
-const mockUseWallets = jest.fn();
-const mockUseAccount = jest.fn();
 const mockGetToken = jest.fn();
 
-// Override global mocks for per-test control
-jest.mock("@privy-io/react-auth", () => ({
-  usePrivy: () => mockUsePrivy(),
-  useWallets: () => mockUseWallets(),
+// Mock the bridge context that useAuth reads from
+const mockBridgeState = {
+  ready: true,
+  authenticated: false,
+  user: null as any,
+  login: mockLogin,
+  logout: mockLogout,
+  getAccessToken: mockGetAccessToken,
+  connectWallet: jest.fn(),
+  wallets: [] as any[],
+  isConnected: false,
+};
+
+jest.mock("@/contexts/privy-bridge-context", () => ({
+  usePrivyBridge: () => mockBridgeState,
+  PrivyBridgeContext: {
+    Provider: ({ children }: { children: any }) => children,
+  },
+  PRIVY_BRIDGE_DEFAULTS: {
+    ready: false,
+    authenticated: false,
+    user: null,
+    login: jest.fn(),
+    logout: jest.fn(),
+    getAccessToken: async () => null,
+    connectWallet: jest.fn(),
+    wallets: [],
+    isConnected: false,
+  },
 }));
 
-jest.mock("wagmi", () => ({
-  useAccount: () => mockUseAccount(),
-  useConnect: jest.fn(() => ({ connect: jest.fn(), connectors: [] })),
-  useDisconnect: jest.fn(() => ({ disconnect: jest.fn() })),
-  useSwitchChain: jest.fn(() => ({ switchChain: jest.fn() })),
-  createConfig: jest.fn(),
-}));
-
+// Mock @wagmi/core for dynamic import in watchAccount effect
+const mockWatchAccount = jest.fn(() => jest.fn());
 jest.mock("@wagmi/core", () => ({
-  watchAccount: jest.fn(() => jest.fn()),
+  watchAccount: (...args: unknown[]) => mockWatchAccount(...args),
+}));
+
+// Mock privy-config for dynamic import in watchAccount effect
+jest.mock("@/utilities/wagmi/privy-config", () => ({
+  privyConfig: {},
+  getPrivyWagmiConfig: jest.fn(() => ({})),
 }));
 
 const mockQueryClientClear = jest.fn();
@@ -58,6 +80,26 @@ jest.mock("@/utilities/auth/token-manager", () => ({
     clearCache: (...args: unknown[]) => mockClearCache(...args),
   },
 }));
+
+/** Helper to update mockBridgeState in place */
+function setBridgeState(overrides: Partial<typeof mockBridgeState>) {
+  Object.assign(mockBridgeState, overrides);
+}
+
+/** Reset bridge state to defaults */
+function resetBridgeState() {
+  Object.assign(mockBridgeState, {
+    ready: true,
+    authenticated: false,
+    user: null,
+    login: mockLogin,
+    logout: mockLogout,
+    getAccessToken: mockGetAccessToken,
+    connectWallet: jest.fn(),
+    wallets: [],
+    isConnected: false,
+  });
+}
 
 describe("useAuth - Query Key Consistency", () => {
   describe("QUERY_KEYS structure for cache invalidation", () => {
@@ -121,26 +163,17 @@ describe("Cache invalidation on logout", () => {
     mockQueryClientClear.mockClear();
     mockClearCache.mockClear();
 
-    mockUsePrivy.mockReturnValue({
+    setBridgeState({
       ready: true,
       authenticated: true,
       user: mockPrivyUser,
-      login: mockLogin,
-      logout: mockLogout,
-      getAccessToken: mockGetAccessToken,
-    });
-
-    mockUseWallets.mockReturnValue({ wallets: [mockWallet] });
-
-    mockUseAccount.mockReturnValue({
-      address: mockWallet.address,
+      wallets: [mockWallet],
       isConnected: true,
-      isConnecting: false,
-      isDisconnected: false,
     });
   });
 
   afterEach(() => {
+    resetBridgeState();
     // Clean up any wagmi keys set during tests
     const keysToRemove: string[] = [];
     for (let i = 0; i < localStorage.length; i++) {
@@ -154,13 +187,9 @@ describe("Cache invalidation on logout", () => {
     const { rerender } = renderHook(() => useAuth(), { wrapper });
 
     // Simulate logout: authenticated → false
-    mockUsePrivy.mockReturnValue({
-      ready: true,
+    setBridgeState({
       authenticated: false,
       user: null,
-      login: mockLogin,
-      logout: mockLogout,
-      getAccessToken: mockGetAccessToken,
     });
 
     await act(async () => {
@@ -176,14 +205,7 @@ describe("Cache invalidation on logout", () => {
 
     // Simulate user switch: different user.id, still authenticated
     const newUser = { id: "user-456", wallet: { address: "0xABCD" } };
-    mockUsePrivy.mockReturnValue({
-      ready: true,
-      authenticated: true,
-      user: newUser,
-      login: mockLogin,
-      logout: mockLogout,
-      getAccessToken: mockGetAccessToken,
-    });
+    setBridgeState({ user: newUser });
 
     await act(async () => {
       rerender();
@@ -218,13 +240,9 @@ describe("Cache invalidation on logout", () => {
     const { rerender } = renderHook(() => useAuth(), { wrapper });
 
     // Simulate logout: authenticated → false
-    mockUsePrivy.mockReturnValue({
-      ready: true,
+    setBridgeState({
       authenticated: false,
       user: null,
-      login: mockLogin,
-      logout: mockLogout,
-      getAccessToken: mockGetAccessToken,
     });
 
     await act(async () => {
@@ -245,14 +263,7 @@ describe("Cache invalidation on logout", () => {
 
     // Simulate user switch: different user.id, still authenticated
     const newUser = { id: "user-456", wallet: { address: "0xABCD" } };
-    mockUsePrivy.mockReturnValue({
-      ready: true,
-      authenticated: true,
-      user: newUser,
-      login: mockLogin,
-      logout: mockLogout,
-      getAccessToken: mockGetAccessToken,
-    });
+    setBridgeState({ user: newUser });
 
     await act(async () => {
       rerender();
@@ -271,13 +282,9 @@ describe("Cache invalidation on logout", () => {
     const { rerender } = renderHook(() => useAuth(), { wrapper });
 
     // Simulate logout
-    mockUsePrivy.mockReturnValue({
-      ready: true,
+    setBridgeState({
       authenticated: false,
       user: null,
-      login: mockLogin,
-      logout: mockLogout,
-      getAccessToken: mockGetAccessToken,
     });
 
     await act(async () => {
@@ -296,6 +303,256 @@ describe("Cache invalidation on logout", () => {
   });
 });
 
+describe("useAuth - Re-login with different wallet", () => {
+  const walletUserA = {
+    id: "user-A",
+    wallet: { address: "0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" },
+    linkedAccounts: [
+      {
+        type: "wallet",
+        address: "0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        walletClientType: "metamask",
+      },
+    ],
+  };
+
+  const walletUserB = {
+    id: "user-B",
+    wallet: { address: "0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB" },
+    linkedAccounts: [
+      {
+        type: "wallet",
+        address: "0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+        walletClientType: "metamask",
+      },
+    ],
+  };
+
+  const mockWalletA = {
+    address: "0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    chainId: "eip155:10",
+  };
+
+  const mockWalletB = {
+    address: "0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+    chainId: "eip155:10",
+  };
+
+  const wrapper = ({ children }: { children: ReactNode }) => <>{children}</>;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    setBridgeState({
+      ready: true,
+      authenticated: true,
+      user: walletUserA,
+      wallets: [mockWalletA],
+      isConnected: true,
+    });
+  });
+
+  afterEach(() => {
+    resetBridgeState();
+  });
+
+  it("should NOT force-logout when user logs out then logs in with a different wallet", async () => {
+    const { rerender } = renderHook(() => useAuth(), { wrapper });
+
+    // Step 1: Logout
+    setBridgeState({
+      authenticated: false,
+      user: null,
+      wallets: [],
+      isConnected: false,
+    });
+    await act(async () => {
+      rerender();
+    });
+
+    mockLogout.mockClear();
+    mockQueryClientClear.mockClear();
+
+    // Step 2: Login with a different wallet (different user.id)
+    setBridgeState({
+      authenticated: true,
+      user: walletUserB,
+      wallets: [mockWalletB],
+      isConnected: true,
+    });
+    await act(async () => {
+      rerender();
+    });
+
+    // The user-switch detection should NOT fire here because
+    // this is a fresh login (went through logout first), not a
+    // cross-tab shared auth switch.
+    expect(mockLogout).not.toHaveBeenCalled();
+  });
+
+  it("should NOT force-logout via watchAccount when re-logging with different wallet", async () => {
+    // Simulate watchAccount firing with stale address from previous session
+    let capturedOnChange: ((account: { address?: string }) => void) | null = null;
+    const mockUnwatch = jest.fn();
+    mockWatchAccount.mockImplementation(
+      (_config: unknown, opts: { onChange: (account: { address?: string }) => void }) => {
+        capturedOnChange = opts.onChange;
+        return mockUnwatch;
+      }
+    );
+
+    const { rerender } = renderHook(() => useAuth(), { wrapper });
+
+    // Let the dynamic import resolve
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    // Step 1: Logout
+    setBridgeState({
+      authenticated: false,
+      user: null,
+      wallets: [],
+      isConnected: false,
+    });
+    await act(async () => {
+      rerender();
+    });
+
+    mockLogout.mockClear();
+
+    // Step 2: Login with wallet B
+    setBridgeState({
+      authenticated: true,
+      user: walletUserB,
+      wallets: [mockWalletB],
+      isConnected: true,
+    });
+    await act(async () => {
+      rerender();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    // watchAccount fires with stale address from user A's session
+    // (wagmi hasn't fully updated yet)
+    if (capturedOnChange) {
+      act(() => {
+        capturedOnChange!({ address: "0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" });
+      });
+    }
+
+    // Should NOT trigger logout — we just logged in, stale wagmi state is expected
+    expect(mockLogout).not.toHaveBeenCalled();
+
+    // Reset mock
+    mockWatchAccount.mockImplementation(() => jest.fn());
+  });
+
+  it("should NOT force-logout when Privy user object lingers after logout", async () => {
+    // This simulates real Privy behavior where the user object
+    // is NOT immediately cleared when authenticated goes to false.
+    const { rerender } = renderHook(() => useAuth(), { wrapper });
+
+    // Step 1: Logout — authenticated goes false but user object lingers
+    setBridgeState({
+      authenticated: false,
+      user: walletUserA, // user object still present!
+      wallets: [],
+      isConnected: false,
+    });
+    await act(async () => {
+      rerender();
+    });
+
+    mockLogout.mockClear();
+    mockQueryClientClear.mockClear();
+
+    // Step 2: Login with a different wallet (Privy sets new user + authenticated in one update)
+    setBridgeState({
+      authenticated: true,
+      user: walletUserB,
+      wallets: [mockWalletB],
+      isConnected: true,
+    });
+    await act(async () => {
+      rerender();
+    });
+
+    // Should NOT trigger user-switch logout — the user explicitly
+    // logged out then logged in again, this is not a cross-tab switch.
+    expect(mockLogout).not.toHaveBeenCalled();
+  });
+});
+
+describe("useAuth - Farcaster login (no browser-connectable wallet)", () => {
+  /**
+   * Farcaster login scenario:
+   * - Privy authenticates the user via Farcaster (SIWF)
+   * - The Farcaster account may link a wallet, but it's NOT browser-connectable
+   * - createOnLogin: "users-without-wallets" sees the linked wallet and does NOT create an embedded one
+   * - Result: authenticated=true, but wallets=[] and isConnected=false
+   * - The user should STILL appear logged in because Privy says they're authenticated
+   */
+  const wrapper = ({ children }: { children: ReactNode }) => <>{children}</>;
+
+  const mockFarcasterUser = {
+    id: "did:privy:farcaster-user-123",
+    farcaster: { fid: 12345, username: "testuser" },
+    // Privy links the Farcaster wallet on the user object, but it's not in useWallets()
+    wallet: { address: "0xFARCASTER000000000000000000000000000001" },
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+
+    setBridgeState({
+      ready: true,
+      authenticated: true,
+      user: mockFarcasterUser,
+      wallets: [],
+      isConnected: false,
+    });
+  });
+
+  afterEach(() => {
+    resetBridgeState();
+  });
+
+  it("should report authenticated when Privy says authenticated even without a browser wallet", () => {
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    // Farcaster login succeeded — Privy authenticated=true
+    // Even though no wallet is connected in the browser, the user IS logged in
+    expect(result.current.authenticated).toBe(true);
+    expect(result.current.ready).toBe(true);
+  });
+
+  it("should report authenticated when embedded wallet is eventually created", () => {
+    const { result, rerender } = renderHook(() => useAuth(), { wrapper });
+
+    // Initially: authenticated but no wallets
+    expect(result.current.authenticated).toBe(true);
+
+    // Later: Privy creates an embedded wallet (e.g., if config changes to "all-users")
+    const mockEmbeddedWallet = {
+      address: "0xEMBEDDED0000000000000000000000000000001",
+      chainId: "eip155:10",
+      walletClientType: "privy",
+    };
+    setBridgeState({
+      wallets: [mockEmbeddedWallet],
+      isConnected: true,
+    });
+
+    rerender();
+
+    expect(result.current.authenticated).toBe(true);
+    expect(result.current.isConnected).toBe(true);
+    expect(result.current.address).toBe("0xEMBEDDED0000000000000000000000000000001");
+  });
+});
+
 describe("useAuth - Cypress mock auth compatibility", () => {
   const wrapper = ({ children }: { children: ReactNode }) => <>{children}</>;
   const previousE2EBypassFlag = process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS;
@@ -306,26 +563,17 @@ describe("useAuth - Cypress mock auth compatibility", () => {
     delete (window as Window & { Cypress?: unknown }).Cypress;
     localStorage.removeItem("privy:auth_state");
 
-    mockUsePrivy.mockReturnValue({
+    setBridgeState({
       ready: false,
       authenticated: false,
       user: null,
-      login: mockLogin,
-      logout: mockLogout,
-      getAccessToken: mockGetAccessToken,
-    });
-
-    mockUseWallets.mockReturnValue({ wallets: [] });
-
-    mockUseAccount.mockReturnValue({
-      address: undefined,
+      wallets: [],
       isConnected: false,
-      isConnecting: false,
-      isDisconnected: true,
     });
   });
 
   afterEach(() => {
+    resetBridgeState();
     if (previousE2EBypassFlag === undefined) {
       delete process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS;
     } else {
@@ -404,24 +652,12 @@ describe("useAuth - Cross-tab logout synchronization", () => {
     jest.spyOn(console, "error").mockImplementation(() => {});
     mockGetToken.mockResolvedValue(null);
 
-    mockUsePrivy.mockReturnValue({
+    setBridgeState({
       ready: true,
       authenticated: true,
       user: mockPrivyUser,
-      login: mockLogin,
-      logout: mockLogout,
-      getAccessToken: mockGetAccessToken,
-    });
-
-    mockUseWallets.mockReturnValue({
       wallets: [mockWallet],
-    });
-
-    mockUseAccount.mockReturnValue({
-      address: mockWallet.address,
       isConnected: true,
-      isConnecting: false,
-      isDisconnected: false,
     });
   });
 
@@ -429,6 +665,7 @@ describe("useAuth - Cross-tab logout synchronization", () => {
     jest.useRealTimers();
     jest.restoreAllMocks();
     mockGetToken.mockReset();
+    resetBridgeState();
     document.cookie = "privy-session=; expires=Thu, 01 Jan 1970 00:00:00 GMT";
   });
 
@@ -556,13 +793,10 @@ describe("useAuth - Cross-tab logout synchronization", () => {
   });
 
   it("should not set up auth checks when not authenticated", async () => {
-    mockUsePrivy.mockReturnValue({
+    setBridgeState({
       ready: true,
       authenticated: false,
       user: null,
-      login: mockLogin,
-      logout: mockLogout,
-      getAccessToken: mockGetAccessToken,
     });
 
     renderHook(() => useAuth(), { wrapper });
@@ -587,35 +821,22 @@ describe("useAuth - Cross-tab logout synchronization", () => {
     });
 
     // Simulate logout: authenticated → false
-    mockUsePrivy.mockReturnValue({
-      ready: true,
+    setBridgeState({
       authenticated: false,
       user: null,
-      login: mockLogin,
-      logout: mockLogout,
-      getAccessToken: mockGetAccessToken,
+      wallets: [],
     });
-    mockUseWallets.mockReturnValue({ wallets: [] });
 
     await act(async () => {
       rerender();
     });
 
     // Simulate re-login: authenticated → true
-    mockUsePrivy.mockReturnValue({
-      ready: true,
+    setBridgeState({
       authenticated: true,
       user: mockPrivyUser,
-      login: mockLogin,
-      logout: mockLogout,
-      getAccessToken: mockGetAccessToken,
-    });
-    mockUseWallets.mockReturnValue({ wallets: [mockWallet] });
-    mockUseAccount.mockReturnValue({
-      address: mockWallet.address,
+      wallets: [mockWallet],
       isConnected: true,
-      isConnecting: false,
-      isDisconnected: false,
     });
 
     await act(async () => {

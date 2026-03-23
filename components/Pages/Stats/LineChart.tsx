@@ -1,7 +1,15 @@
 "use client";
 
 import type { CardProps, LineChartProps, TitleProps } from "@tremor/react";
-import { Card, Title, LineChart as TremorLineChart } from "@tremor/react";
+import { Card, Title } from "@tremor/react";
+import dynamic from "next/dynamic";
+import { ChartSkeleton } from "@/components/Utilities/ChartSkeleton";
+
+const TremorLineChart = dynamic(() => import("@tremor/react").then((mod) => mod.LineChart), {
+  ssr: false,
+  loading: () => <ChartSkeleton height="h-52" />,
+});
+
 import { endOfWeek, format, startOfMonth, startOfYear } from "date-fns";
 import _groupBy from "lodash.groupby";
 import { type FC, useMemo, useState } from "react";

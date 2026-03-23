@@ -1,10 +1,10 @@
 "use client";
 
-import { useWallets } from "@privy-io/react-auth";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { createWalletClient, custom } from "viem";
+import { usePrivyBridge } from "@/contexts/privy-bridge-context";
 import type { ClaimGrantsConfig } from "@/src/infrastructure/types/tenant";
 import { sanitizeErrorMessage } from "../lib/error-messages";
 import { CLAIM_CAMPAIGNS_ABI, uuidToBytes16 } from "../lib/hedgey-contract";
@@ -39,7 +39,7 @@ export function useClaimTransaction(
 ): UseClaimTransactionReturn {
   const provider = useClaimProvider(claimGrants);
   const queryClient = useQueryClient();
-  const { wallets } = useWallets();
+  const { wallets } = usePrivyBridge();
 
   const [isConfirming, setIsConfirming] = useState(false);
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>(undefined);

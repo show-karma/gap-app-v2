@@ -15,6 +15,10 @@ export default defineConfig({
     baseURL: "http://localhost:3000",
     trace: "on-first-retry",
     screenshot: "only-on-failure",
+    // Use domcontentloaded instead of load to avoid timeouts caused by
+    // deferred layout components (dynamic imports with ssr:false) that
+    // fetch additional JS chunks after the initial page load event.
+    navigationTimeout: 60_000,
   },
 
   projects: [

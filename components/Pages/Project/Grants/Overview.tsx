@@ -11,8 +11,6 @@ import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { useGrantStore } from "@/store/grant";
 import { useOwnerStore } from "@/store/owner";
 import markdownStyles from "@/styles/markdown.module.css";
-import { chainImgDictionary } from "@/utilities/chainImgDictionary";
-import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
 import { PAGES } from "@/utilities/pages";
@@ -151,30 +149,6 @@ export const GrantOverview = () => {
                   </div>
                 </a>
               </div>
-              <div className="flex items-center justify-between gap-2">
-                <div className="text-gray-500 text-base  font-semibold dark:text-gray-300">
-                  Network
-                </div>
-
-                <div className="inline-flex items-center gap-x-2 rounded-full bg-[#E0EAFF] dark:bg-zinc-800 dark:border-gray-800 dark:text-blue-500 px-2 py-1 text-xs font-medium text-gray-900">
-                  <Image
-                    src={chainImgDictionary(
-                      grant?.community?.chainID || (grant?.chainID as number)
-                    )}
-                    alt={chainNameDictionary(
-                      grant?.community?.chainID || (grant?.chainID as number)
-                    )}
-                    width={20}
-                    height={20}
-                    className="rounded-full"
-                    unoptimized
-                  />
-                  <p className="max-w-xs truncate text-base font-semibold text-black dark:text-gray-100 max-md:text-sm  w-full break-words whitespace-break-spaces">
-                    {chainNameDictionary(grant?.community?.chainID || (grant?.chainID as number))}
-                  </p>
-                </div>
-              </div>
-
               {communityId && hasTrackIds && (
                 <div className="flex items-center justify-between gap-2">
                   <div className="text-gray-500 text-base font-semibold dark:text-gray-300">

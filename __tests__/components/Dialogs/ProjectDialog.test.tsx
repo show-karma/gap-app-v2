@@ -157,6 +157,33 @@ jest.mock("@privy-io/react-auth", () => ({
     logout: jest.fn(),
   }),
   PrivyProvider: ({ children }: any) => children,
+  useCreateWallet: () => ({ createWallet: jest.fn() }),
+}));
+
+jest.mock("@/contexts/privy-bridge-context", () => ({
+  usePrivyBridge: () => ({
+    ready: true,
+    authenticated: true,
+    user: {
+      id: "test-user",
+      linkedAccounts: [{ type: "wallet" }],
+    },
+    login: jest.fn(),
+    logout: jest.fn().mockResolvedValue(undefined),
+    getAccessToken: jest.fn().mockResolvedValue(null),
+    connectWallet: jest.fn(),
+    wallets: [
+      {
+        walletClientType: "injected",
+        address: "0x1234567890abcdef1234567890abcdef12345678",
+      },
+    ],
+    smartWalletClient: null,
+    isConnected: true,
+  }),
+  usePrivyBridgeSetter: () => jest.fn(),
+  PrivyBridgeProvider: ({ children }: any) => children,
+  PRIVY_BRIDGE_DEFAULTS: {},
 }));
 
 jest.mock("@/hooks/useAttestationToast", () => ({

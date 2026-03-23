@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { compareAllWallets } from "@/utilities/auth/compare-all-wallets";
 import { CommentsService } from "../api/comments-service";
 import type { ApplicationComment, UseApplicationCommentsReturn } from "../types";
 
@@ -19,13 +20,13 @@ export function useApplicationComments({
   ownerAddress,
   canViewComments = true,
 }: UseApplicationCommentsOptions): UseApplicationCommentsReturn {
-  const { address, authenticated } = useAuth();
+  const { address, authenticated, user } = useAuth();
   const queryClient = useQueryClient();
 
   const isOwner = useMemo(() => {
-    if (!address || !ownerAddress) return false;
-    return address.toLowerCase() === ownerAddress.toLowerCase();
-  }, [address, ownerAddress]);
+    if (!user || !ownerAddress) return false;
+    return compareAllWallets(user, ownerAddress);
+  }, [user, ownerAddress]);
 
   const queryKey = useMemo(() => [QUERY_KEY_PREFIX, applicationId], [applicationId]);
 

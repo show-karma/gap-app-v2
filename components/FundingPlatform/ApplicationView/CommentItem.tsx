@@ -10,12 +10,15 @@ import {
 } from "@heroicons/react/24/outline";
 import { format, isValid, parseISO } from "date-fns";
 import React, { type FC, useCallback, useMemo, useRef, useState } from "react";
+import { DeleteDialog } from "@/components/DeleteDialog";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { useAuth } from "@/hooks/useAuth";
 import { useMentionEditor } from "@/hooks/useMentionEditor";
 import { useMilestoneReviewers } from "@/hooks/useMilestoneReviewers";
 import type { ApplicationComment } from "@/types/funding-platform";
+import { compareAllWallets } from "@/utilities/auth/compare-all-wallets";
 import { renderMentionsAsMarkdown } from "@/utilities/mentions";
 import { cn } from "@/utilities/tailwind";
 import InviteReviewerModal from "./InviteReviewerModal";
@@ -47,6 +50,7 @@ const CommentItem: FC<CommentItemProps> = ({
   const [isUpdating, setIsUpdating] = useState(false);
   const editContainerRef = useRef<HTMLDivElement>(null);
 
+  const { user } = useAuth();
   const mentionsEnabled = enableMentions && !!programId;
 
   const mentionEditor = useMentionEditor({
@@ -113,7 +117,9 @@ const CommentItem: FC<CommentItemProps> = ({
   }, [comment.content]);
 
   // Users can edit their own comments (if not deleted)
-  const isAuthor = currentUserAddress?.toLowerCase() === comment.authorAddress?.toLowerCase();
+  // Use compareAllWallets to support Farcaster multi-wallet users
+  const isAuthor =
+    user && comment.authorAddress ? compareAllWallets(user, comment.authorAddress) : false;
   const canEdit = !comment.isDeleted && isAuthor;
 
   // Users can delete their own comments, admins can delete any comment
@@ -148,25 +154,16 @@ const CommentItem: FC<CommentItemProps> = ({
     }
   };
 
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  const deleteConfirmMessage =
+    isAdmin && !isAuthor
+      ? "Are you sure you want to delete this comment? This action will mark it as deleted but preserve it for audit purposes."
+      : "Are you sure you want to delete your comment? This action cannot be undone.";
+
   const handleDelete = async () => {
     if (!onDelete) return;
-
-    // Different confirmation messages for admins vs regular users
-    const confirmMessage =
-      isAdmin && !isAuthor
-        ? "Are you sure you want to delete this comment? This action will mark it as deleted but preserve it for audit purposes."
-        : "Are you sure you want to delete your comment? This action cannot be undone.";
-
-    if (!confirm(confirmMessage)) return;
-
-    setIsUpdating(true);
-    try {
-      await onDelete(comment.id);
-    } catch (error) {
-      console.error("Failed to delete comment:", error);
-    } finally {
-      setIsUpdating(false);
-    }
+    await onDelete(comment.id);
   };
 
   const handleCancelEdit = () => {
@@ -256,7 +253,7 @@ const CommentItem: FC<CommentItemProps> = ({
                 )}
                 {canDelete && (
                   <button
-                    onClick={handleDelete}
+                    onClick={() => setIsDeleteDialogOpen(true)}
                     disabled={isUpdating}
                     className={cn(
                       "p-1 rounded text-gray-400 hover:text-red-600",
@@ -382,6 +379,16 @@ const CommentItem: FC<CommentItemProps> = ({
           )}
         </div>
       </div>
+      {canDelete && (
+        <DeleteDialog
+          title={deleteConfirmMessage}
+          deleteFunction={handleDelete}
+          isLoading={isUpdating}
+          buttonElement={null}
+          externalIsOpen={isDeleteDialogOpen}
+          externalSetIsOpen={setIsDeleteDialogOpen}
+        />
+      )}
     </div>
   );
 };
