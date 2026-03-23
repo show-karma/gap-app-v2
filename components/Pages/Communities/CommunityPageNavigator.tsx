@@ -53,7 +53,7 @@ const NAVIGATION_ITEMS: readonly NavigationItem[] = [
   {
     id: "community-projects",
     path: (communityId: string) => PAGES.COMMUNITY.PROJECTS(communityId),
-    title: (communityName: string) => `View ${communityName} community projects`,
+    title: () => "View funded projects",
     Icon: SquareUser,
     isActive: (pathname: string) =>
       !pathname.includes("/impact") &&

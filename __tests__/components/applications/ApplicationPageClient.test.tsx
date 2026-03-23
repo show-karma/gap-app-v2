@@ -110,9 +110,16 @@ describe("ApplicationPageClient", () => {
 
   it("shows edit button when wallet user is the owner", () => {
     mockUseApplicationAccess.mockReturnValue({
-      accessInfo: null, isLoading: false, error: null, refetch: jest.fn(),
-      canView: true, canEdit: true, canReview: false, canAdminister: false,
-      isOwner: true, accessRole: "APPLICANT" as const,
+      accessInfo: null,
+      isLoading: false,
+      error: null,
+      refetch: jest.fn(),
+      canView: true,
+      canEdit: true,
+      canReview: false,
+      canAdminister: false,
+      isOwner: true,
+      accessRole: "APPLICANT" as const,
     });
 
     render(
@@ -128,9 +135,16 @@ describe("ApplicationPageClient", () => {
 
   it("does not show edit button when wallet user is NOT the owner", () => {
     mockUseApplicationAccess.mockReturnValue({
-      accessInfo: null, isLoading: false, error: null, refetch: jest.fn(),
-      canView: true, canEdit: false, canReview: false, canAdminister: false,
-      isOwner: false, accessRole: "GUEST" as const,
+      accessInfo: null,
+      isLoading: false,
+      error: null,
+      refetch: jest.fn(),
+      canView: true,
+      canEdit: false,
+      canReview: false,
+      canAdminister: false,
+      isOwner: false,
+      accessRole: "GUEST" as const,
     });
 
     render(
@@ -165,9 +179,16 @@ describe("ApplicationPageClient", () => {
     it("should show edit button when Farcaster user is the owner (matched by userId)", () => {
       // Backend access check resolves ownership via multi-wallet matching
       mockUseApplicationAccess.mockReturnValue({
-        accessInfo: null, isLoading: false, error: null, refetch: jest.fn(),
-        canView: true, canEdit: true, canReview: false, canAdminister: false,
-        isOwner: true, accessRole: "APPLICANT" as const,
+        accessInfo: null,
+        isLoading: false,
+        error: null,
+        refetch: jest.fn(),
+        canView: true,
+        canEdit: true,
+        canReview: false,
+        canAdminister: false,
+        isOwner: true,
+        accessRole: "APPLICANT" as const,
       });
 
       render(
@@ -187,9 +208,16 @@ describe("ApplicationPageClient", () => {
 
     it("should not show edit button when Farcaster userId does not match", () => {
       mockUseApplicationAccess.mockReturnValue({
-        accessInfo: null, isLoading: false, error: null, refetch: jest.fn(),
-        canView: true, canEdit: false, canReview: false, canAdminister: false,
-        isOwner: false, accessRole: "GUEST" as const,
+        accessInfo: null,
+        isLoading: false,
+        error: null,
+        refetch: jest.fn(),
+        canView: true,
+        canEdit: false,
+        canReview: false,
+        canAdminister: false,
+        isOwner: false,
+        accessRole: "GUEST" as const,
       });
 
       render(

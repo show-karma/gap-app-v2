@@ -4,8 +4,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Hex } from "viem";
 import { usePrivyBridge } from "@/contexts/privy-bridge-context";
-import { compareAllWallets } from "@/utilities/auth/compare-all-wallets";
 import { useProjectCreateModalStore } from "@/store/modals/projectCreate";
+import { compareAllWallets } from "@/utilities/auth/compare-all-wallets";
 import { getCypressMockAuthState } from "@/utilities/auth/cypress-auth";
 import { TokenManager } from "@/utilities/auth/token-manager";
 import { PAGES } from "@/utilities/pages";
@@ -298,7 +298,8 @@ export const useAuth = () => {
   const hasExternalWallet = useMemo(() => {
     if (!user?.linkedAccounts) return false;
     return user.linkedAccounts.some(
-      (a) => a.type === "wallet" && (a as { walletClientType?: string }).walletClientType !== "privy"
+      (a) =>
+        a.type === "wallet" && (a as { walletClientType?: string }).walletClientType !== "privy"
     );
   }, [user]);
 
