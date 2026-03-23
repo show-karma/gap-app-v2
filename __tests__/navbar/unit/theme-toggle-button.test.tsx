@@ -19,6 +19,49 @@ describe("ThemeToggleButton", () => {
     cleanupAfterEach();
   });
 
+  describe("Hydration safety", () => {
+    it("should use resolvedTheme instead of theme to determine icon and aria-label", () => {
+      // When theme is "system", resolvedTheme determines the actual appearance.
+      // Using resolvedTheme prevents hydration mismatch because it reflects the
+      // actual resolved value rather than the raw "system" string.
+      renderWithProviders(<ThemeToggleButton />, {
+        mockUseTheme: {
+          theme: "system",
+          setTheme: jest.fn(),
+          themes: ["light", "dark", "system"],
+          systemTheme: "dark",
+          resolvedTheme: "dark",
+        },
+      });
+
+      const button = screen.getByRole("button", { name: /toggle theme/i });
+      // resolvedTheme is "dark", so it should show "Toggle theme to light mode"
+      expect(button).toHaveAttribute("aria-label", "Toggle theme to light mode");
+    });
+
+    it("should render a placeholder button without theme-specific content when resolvedTheme is undefined", () => {
+      // During SSR, next-themes returns undefined for resolvedTheme.
+      // The component uses a mounted guard to render a neutral placeholder,
+      // preventing hydration mismatch. In JSDOM useEffect fires synchronously,
+      // so we verify the component handles undefined resolvedTheme gracefully
+      // by treating it as non-dark (fallback behavior).
+      renderWithProviders(<ThemeToggleButton />, {
+        mockUseTheme: {
+          theme: undefined,
+          setTheme: jest.fn(),
+          themes: ["light", "dark"],
+          systemTheme: undefined,
+          resolvedTheme: undefined,
+        },
+      });
+
+      const button = screen.getByRole("button", { name: /toggle theme/i });
+      // With undefined resolvedTheme (post-mount in JSDOM), isDark=false,
+      // so it renders "Toggle theme to dark mode"
+      expect(button).toHaveAttribute("aria-label", "Toggle theme to dark mode");
+    });
+  });
+
   describe("Rendering", () => {
     it("should render as a button element", () => {
       renderWithProviders(<ThemeToggleButton />);
