@@ -1,8 +1,10 @@
 "use client";
 
+import type { Community } from "@show-karma/karma-gap-sdk/core/class/entities/Community";
 import dynamic from "next/dynamic";
 import { useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
+import { getCommunities } from "@/services/communities.service";
 
 interface CreateCommunityButtonProps {
   styleClass?: string;
@@ -26,7 +28,13 @@ export function CreateCommunityButton({
   );
 
   const refreshCommunities = useCallback(async () => {
-    return undefined;
+    try {
+      const communities = await getCommunities();
+      // Cast to SDK Community type — polling only checks .uid field
+      return communities as unknown as Community[];
+    } catch {
+      return undefined;
+    }
   }, []);
 
   return (

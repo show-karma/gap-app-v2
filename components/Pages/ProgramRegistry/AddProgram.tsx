@@ -317,10 +317,8 @@ export default function AddProgram({
       router.push(PAGES.REGISTRY.ROOT);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      if (
-        errorMessage?.includes("Program Limit Exceeded") ||
-        errorMessage?.includes("program limit")
-      ) {
+      const lowerError = errorMessage?.toLowerCase() ?? "";
+      if (lowerError.includes("program limit exceeded") || lowerError.includes("program limit")) {
         toast.error(
           "Your community is on the free tier, which allows 1 program. Contact us to upgrade.",
           { duration: 10000 }
