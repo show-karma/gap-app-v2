@@ -1,3 +1,5 @@
+"use client";
+
 import { Slot } from "@radix-ui/react-slot";
 import { ChevronRight, MoreHorizontal } from "lucide-react";
 import * as React from "react";
@@ -86,7 +88,7 @@ const BreadcrumbEllipsis = ({ className, ...props }: React.ComponentProps<"span"
     <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
   </span>
 );
-BreadcrumbEllipsis.displayName = "BreadcrumbElipssis";
+BreadcrumbEllipsis.displayName = "BreadcrumbEllipsis";
 
 export {
   Breadcrumb,

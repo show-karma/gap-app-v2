@@ -7,7 +7,10 @@ import { WhitelabelFooter } from "./whitelabel-footer";
 
 /** Routes that use the in-app sidebar layout — suppress the marketing footer. */
 function isAppRoute(pathname: string): boolean {
-  return pathname.includes("/manage/") || pathname.endsWith("/manage");
+  return (
+    pathname.startsWith("/community/") &&
+    (pathname.includes("/manage/") || pathname.endsWith("/manage"))
+  );
 }
 
 function MinimalFooter() {
