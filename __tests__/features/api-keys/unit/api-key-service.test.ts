@@ -1,15 +1,15 @@
 import { apiKeyService } from "@/src/features/api-keys/services/api-key.service";
 
-jest.mock("@/utilities/fetchData", () => ({
+vi.mock("@/utilities/fetchData", () => ({
   __esModule: true,
-  default: jest.fn(),
+  default: vi.fn(),
 }));
 
-const mockFetchData = jest.requireMock("@/utilities/fetchData").default;
+const mockFetchData = require("@/utilities/fetchData").default;
 
 describe("apiKeyService", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("get", () => {

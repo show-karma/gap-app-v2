@@ -6,7 +6,7 @@
 import { setupServer } from "msw/node";
 import React from "react";
 import { handlers } from "./mocks/handlers";
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 import { toHaveNoViolations } from "jest-axe";
 
 /**
@@ -26,15 +26,15 @@ beforeAll(() => {
   // Setup window.matchMedia mock
   Object.defineProperty(window, "matchMedia", {
     writable: true,
-    value: jest.fn().mockImplementation((query) => ({
+    value: vi.fn().mockImplementation((query) => ({
       matches: false,
       media: query,
       onchange: null,
-      addListener: jest.fn(),
-      removeListener: jest.fn(),
-      addEventListener: jest.fn(),
-      removeEventListener: jest.fn(),
-      dispatchEvent: jest.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
     })),
   });
 
@@ -56,16 +56,16 @@ beforeAll(() => {
   } as any;
 
   // Mock scrollTo
-  window.scrollTo = jest.fn();
+  window.scrollTo = vi.fn();
 
   // Mock requestAnimationFrame
-  global.requestAnimationFrame = jest.fn((cb) => {
+  global.requestAnimationFrame = vi.fn((cb) => {
     cb(0);
     return 0;
   });
 
   // Mock cancelAnimationFrame
-  global.cancelAnimationFrame = jest.fn();
+  global.cancelAnimationFrame = vi.fn();
 
   // Setup environment variables
   process.env.NEXT_PUBLIC_GAP_INDEXER_URL = "https://gap-indexer.vercel.app";
@@ -83,10 +83,10 @@ afterEach(() => {
   server.resetHandlers();
 
   // Clear all mocks
-  jest.clearAllMocks();
+  vi.clearAllMocks();
 
   // Clear timers
-  jest.clearAllTimers();
+  vi.clearAllTimers();
 });
 
 /**
@@ -97,26 +97,20 @@ afterAll(() => {
   server.close();
 
   // Restore all mocks
-  jest.restoreAllMocks();
+  vi.restoreAllMocks();
 });
 
 /**
  * Custom matchers for navbar tests
+ * Type declarations are in ./types/jest-axe.d.ts
  */
-declare global {
-  namespace jest {
-    interface Matchers<R> {
-      toHaveNoViolations(): R;
-    }
-  }
-}
 
 /**
  * Mock Next.js modules
  */
 
 // Mock next/image
-jest.mock("next/image", () => ({
+vi.mock("next/image", () => ({
   __esModule: true,
   default: (props: any) => {
     // eslint-disable-next-line @next/next/no-img-element
@@ -125,32 +119,32 @@ jest.mock("next/image", () => ({
 }));
 
 // Mock next/link
-jest.mock("next/link", () => ({
+vi.mock("next/link", () => ({
   __esModule: true,
   default: ({ children, href, onClick, ...props }: any) =>
     React.createElement("a", { href, onClick, ...props }, children),
 }));
 
 // Mock next/navigation
-jest.mock("next/navigation", () => ({
-  useRouter: jest.fn(() => ({
-    push: jest.fn(),
-    replace: jest.fn(),
-    prefetch: jest.fn(),
-    back: jest.fn(),
-    forward: jest.fn(),
-    refresh: jest.fn(),
+vi.mock("next/navigation", () => ({
+  useRouter: vi.fn(() => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    prefetch: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn(),
+    refresh: vi.fn(),
     pathname: "/",
   })),
-  usePathname: jest.fn(() => "/"),
-  useSearchParams: jest.fn(() => ({
-    get: jest.fn(),
+  usePathname: vi.fn(() => "/"),
+  useSearchParams: vi.fn(() => ({
+    get: vi.fn(),
   })),
-  useParams: jest.fn(() => ({})),
+  useParams: vi.fn(() => ({})),
 }));
 
 // Mock lodash.debounce to use fake timers
-jest.mock("lodash.debounce", () => {
+vi.mock("lodash.debounce", () => {
   return (fn: Function, delay: number) => {
     let timeoutId: NodeJS.Timeout;
     const debounced = (...args: any[]) => {
@@ -165,16 +159,16 @@ jest.mock("lodash.debounce", () => {
 /**
  * Mock Privy
  */
-jest.mock("@privy-io/react-auth", () => ({
-  usePrivy: jest.fn(() => ({
+vi.mock("@privy-io/react-auth", () => ({
+  usePrivy: vi.fn(() => ({
     ready: true,
     authenticated: false,
     user: null,
-    login: jest.fn(),
-    logout: jest.fn(),
-    getAccessToken: jest.fn().mockResolvedValue("mock-token"),
+    login: vi.fn(),
+    logout: vi.fn(),
+    getAccessToken: vi.fn().mockResolvedValue("mock-token"),
   })),
-  useWallets: jest.fn(() => ({
+  useWallets: vi.fn(() => ({
     wallets: [],
   })),
   PrivyProvider: ({ children }: { children: any }) => children,
@@ -184,13 +178,13 @@ jest.mock("@privy-io/react-auth", () => ({
 /**
  * Mock Wagmi
  */
-jest.mock("wagmi", () => ({
-  useAccount: jest.fn(() => ({
+vi.mock("wagmi", () => ({
+  useAccount: vi.fn(() => ({
     address: undefined,
     isConnected: false,
   })),
-  useDisconnect: jest.fn(() => ({
-    disconnect: jest.fn(),
+  useDisconnect: vi.fn(() => ({
+    disconnect: vi.fn(),
   })),
   WagmiProvider: ({ children }: { children: any }) => children,
 }));
@@ -201,15 +195,15 @@ jest.mock("wagmi", () => ({
 export const mockThemeState = {
   current: {
     theme: "light",
-    setTheme: jest.fn(),
+    setTheme: vi.fn(),
     themes: ["light", "dark"],
     systemTheme: "light",
     resolvedTheme: "light",
   },
 };
 
-jest.mock("next-themes", () => ({
-  useTheme: jest.fn(() => {
+vi.mock("next-themes", () => ({
+  useTheme: vi.fn(() => {
     const { mockThemeState } = require("@/__tests__/navbar/setup");
     return mockThemeState.current;
   }),
@@ -219,28 +213,28 @@ jest.mock("next-themes", () => ({
 /**
  * Mock @wagmi/core
  */
-jest.mock("@wagmi/core", () => ({
-  createConfig: jest.fn(() => ({})),
-  createStorage: jest.fn(() => ({})),
+vi.mock("@wagmi/core", () => ({
+  createConfig: vi.fn(() => ({})),
+  createStorage: vi.fn(() => ({})),
   cookieStorage: {},
-  http: jest.fn((url: string) => ({
+  http: vi.fn((url: string) => ({
     url,
     type: "http",
   })),
-  getAccount: jest.fn(() => ({
+  getAccount: vi.fn(() => ({
     address: undefined,
     isConnected: false,
   })),
-  getConnections: jest.fn(() => []),
-  disconnect: jest.fn(),
-  watchAccount: jest.fn(),
-  reconnect: jest.fn(),
+  getConnections: vi.fn(() => []),
+  disconnect: vi.fn(),
+  watchAccount: vi.fn(),
+  reconnect: vi.fn(),
 }));
 
 /**
  * Mock @wagmi/core/chains
  */
-jest.mock("@wagmi/core/chains", () => ({
+vi.mock("@wagmi/core/chains", () => ({
   optimism: { id: 10, name: "Optimism" },
   arbitrum: { id: 42161, name: "Arbitrum" },
   baseSepolia: { id: 84532, name: "Base Sepolia" },
@@ -256,9 +250,9 @@ jest.mock("@wagmi/core/chains", () => ({
 /**
  * Mock privy-config
  */
-jest.mock("@/utilities/wagmi/privy-config", () => ({
+vi.mock("@/utilities/wagmi/privy-config", () => ({
   privyConfig: {},
-  getPrivyWagmiConfig: jest.fn(() => ({})),
+  getPrivyWagmiConfig: vi.fn(() => ({})),
 }));
 
 // Mock authentication and permission hooks
@@ -270,72 +264,72 @@ export const mockAuthState = {
     isConnected: false,
     address: undefined,
     user: null,
-    authenticate: jest.fn(),
-    login: jest.fn(),
-    logout: jest.fn(),
-    disconnect: jest.fn(),
-    getAccessToken: jest.fn().mockResolvedValue("mock-token"),
+    authenticate: vi.fn(),
+    login: vi.fn(),
+    logout: vi.fn(),
+    disconnect: vi.fn(),
+    getAccessToken: vi.fn().mockResolvedValue("mock-token"),
   },
 };
 
-jest.mock("@/hooks/useAuth", () => ({
-  useAuth: jest.fn(() => {
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: vi.fn(() => {
     const { mockAuthState } = require("@/__tests__/navbar/setup");
     return mockAuthState.current;
   }),
 }));
 
-jest.mock("@/store/communities", () => ({
-  useCommunitiesStore: jest.fn(() => ({ communities: [] })),
+vi.mock("@/store/communities", () => ({
+  useCommunitiesStore: vi.fn(() => ({ communities: [] })),
 }));
 
-jest.mock("@/hooks/usePermissions", () => ({
-  useReviewerPrograms: jest.fn(() => ({ isReviewerOfProgram: false, data: [] })),
+vi.mock("@/hooks/usePermissions", () => ({
+  useReviewerPrograms: vi.fn(() => ({ isReviewerOfProgram: false, data: [] })),
 }));
 
 // Mock RBAC permissions hook (replaces legacy useStaff)
-jest.mock("@/src/core/rbac/hooks/use-permissions", () => ({
-  usePermissionsQuery: jest.fn(() => ({
+vi.mock("@/src/core/rbac/hooks/use-permissions", () => ({
+  usePermissionsQuery: vi.fn(() => ({
     data: null,
     isLoading: false,
     isError: false,
   })),
 }));
 
-jest.mock("@/store/owner", () => ({
-  useOwnerStore: jest.fn((selector?: Function) => {
+vi.mock("@/store/owner", () => ({
+  useOwnerStore: vi.fn((selector?: Function) => {
     const state = { isProjectOwner: false, isOwner: false };
     return selector ? selector(state) : state;
   }),
 }));
 
 // Mock @/store (index.ts) which re-exports from multiple stores
-jest.mock("@/store", () => ({
-  useOwnerStore: jest.fn((selector?: Function) => {
+vi.mock("@/store", () => ({
+  useOwnerStore: vi.fn((selector?: Function) => {
     const state = { isProjectOwner: false, isOwner: false };
     return selector ? selector(state) : state;
   }),
-  useProjectStore: jest.fn(() => ({ projects: [] })),
-  useDonationCartStore: jest.fn(() => ({ items: [] })),
+  useProjectStore: vi.fn(() => ({ projects: [] })),
+  useDonationCartStore: vi.fn(() => ({ items: [] })),
 }));
 
-jest.mock("@/store/registry", () => ({
-  useRegistryStore: jest.fn(() => ({ isProgramCreator: false, isRegistryAdmin: false })),
+vi.mock("@/store/registry", () => ({
+  useRegistryStore: vi.fn(() => ({ isProgramCreator: false, isRegistryAdmin: false })),
 }));
 
-jest.mock("@/store/modals/contributorProfile", () => ({
-  useContributorProfileModalStore: jest.fn(() => ({
+vi.mock("@/store/modals/contributorProfile", () => ({
+  useContributorProfileModalStore: vi.fn(() => ({
     isOpen: false,
-    openModal: jest.fn(),
-    closeModal: jest.fn(),
+    openModal: vi.fn(),
+    closeModal: vi.fn(),
   })),
 }));
 
-jest.mock("@/store/modals/apiKeyManagement", () => ({
-  useApiKeyManagementModalStore: jest.fn(() => ({
+vi.mock("@/store/modals/apiKeyManagement", () => ({
+  useApiKeyManagementModalStore: vi.fn(() => ({
     isModalOpen: false,
-    openModal: jest.fn(),
-    closeModal: jest.fn(),
+    openModal: vi.fn(),
+    closeModal: vi.fn(),
   })),
 }));
 
@@ -360,8 +354,8 @@ export const mockNavbarPermissionsState = {
   },
 };
 
-jest.mock("@/src/components/navbar/navbar-permissions-context", () => ({
-  useNavbarPermissions: jest.fn(() => {
+vi.mock("@/src/components/navbar/navbar-permissions-context", () => ({
+  useNavbarPermissions: vi.fn(() => {
     const { mockNavbarPermissionsState } = require("@/__tests__/navbar/setup");
     return mockNavbarPermissionsState.current;
   }),
@@ -374,9 +368,9 @@ jest.mock("@/src/components/navbar/navbar-permissions-context", () => ({
 
 // Mock unified search service for search functionality
 // This mock will be controlled by tests via module mocking
-export const mockSearchFunction = jest.fn();
+export const mockSearchFunction = vi.fn();
 
-jest.mock("@/services/unified-search.service", () => ({
+vi.mock("@/services/unified-search.service", () => ({
   unifiedSearch: (...args: any[]) => {
     const { mockSearchFunction } = require("@/__tests__/navbar/setup");
     return mockSearchFunction(...args);
@@ -386,7 +380,7 @@ jest.mock("@/services/unified-search.service", () => ({
 /**
  * Mock external link component
  */
-jest.mock("@/components/Utilities/ExternalLink", () => ({
+vi.mock("@/components/Utilities/ExternalLink", () => ({
   ExternalLink: ({ children, href, ...props }: any) =>
     React.createElement(
       "a",
@@ -398,15 +392,22 @@ jest.mock("@/components/Utilities/ExternalLink", () => ({
 /**
  * Mock profile picture component
  */
-jest.mock("@/components/Utilities/ProfilePicture", () => ({
+vi.mock("@/components/Utilities/ProfilePicture", () => ({
   ProfilePicture: () => "ProfilePicture",
 }));
 
 /**
  * Mock error manager
  */
+<<<<<<< HEAD
 jest.mock("@/components/Utilities/errorManager", () => ({
   errorManager: jest.fn(),
+=======
+vi.mock("@/components/Utilities/errorManager", () => ({
+  errorManager: vi.fn((message, error) => {
+    console.error(message, error);
+  }),
+>>>>>>> 8322801b (test: migrate Jest to Vitest for unit/integration tests)
 }));
 
 /**
@@ -417,29 +418,29 @@ jest.mock("@/components/Utilities/errorManager", () => ({
  * Setup fake timers for debounce tests
  */
 export const setupFakeTimers = () => {
-  jest.useFakeTimers();
+  vi.useFakeTimers();
 };
 
 /**
  * Cleanup fake timers
  */
 export const cleanupFakeTimers = () => {
-  jest.runOnlyPendingTimers();
-  jest.useRealTimers();
+  vi.runOnlyPendingTimers();
+  vi.useRealTimers();
 };
 
 /**
  * Advance timers by specific amount
  */
 export const advanceTimersByTime = (ms: number) => {
-  jest.advanceTimersByTime(ms);
+  vi.advanceTimersByTime(ms);
 };
 
 /**
  * Run all pending timers
  */
 export const runAllTimers = () => {
-  jest.runAllTimers();
+  vi.runAllTimers();
 };
 
 /**

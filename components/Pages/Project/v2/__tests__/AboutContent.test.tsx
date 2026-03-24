@@ -1,9 +1,9 @@
 import { render, screen } from "@testing-library/react";
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 import { AboutContent } from "../MainContent/AboutContent";
 
 // Mock MarkdownPreview to avoid issues with dynamic import
-jest.mock("@/components/Utilities/MarkdownPreview", () => ({
+vi.mock("@/components/Utilities/MarkdownPreview", () => ({
   MarkdownPreview: ({ source, className }: { source: string; className?: string }) => (
     <div data-testid="markdown-preview" className={className}>
       {source}

@@ -1,9 +1,9 @@
 import { render, screen } from "@testing-library/react";
 import { GrantNotCompletedButton } from "@/components/Pages/GrantMilestonesAndUpdates/GrantCompleteButton/GrantNotCompletedButton";
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 
 // Mock Heroicons
-jest.mock("@heroicons/react/24/outline", () => ({
+vi.mock("@heroicons/react/24/outline", () => ({
   CheckCircleIcon: ({ className }: { className?: string }) => (
     <svg data-testid="check-circle-icon" className={className} />
   ),
@@ -20,7 +20,7 @@ describe("GrantNotCompletedButton", () => {
   const mockGrantUID = "grant-123";
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("Rendering", () => {

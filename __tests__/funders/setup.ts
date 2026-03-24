@@ -5,21 +5,21 @@
  * Following the pattern established in homepage tests to avoid global conflicts.
  */
 
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 import React from "react";
 
 // Mock window.matchMedia
 Object.defineProperty(window, "matchMedia", {
   writable: true,
-  value: jest.fn().mockImplementation((query) => ({
+  value: vi.fn().mockImplementation((query) => ({
     matches: false,
     media: query,
     onchange: null,
-    addListener: jest.fn(),
-    removeListener: jest.fn(),
-    addEventListener: jest.fn(),
-    removeEventListener: jest.fn(),
-    dispatchEvent: jest.fn(),
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
   })),
 });
 
@@ -41,7 +41,7 @@ global.ResizeObserver = class ResizeObserver {
 } as any;
 
 // Mock next/image
-jest.mock("next/image", () => ({
+vi.mock("next/image", () => ({
   __esModule: true,
   default: (props: any) => {
     // eslint-disable-next-line jsx-a11y/alt-text
@@ -50,7 +50,7 @@ jest.mock("next/image", () => ({
 }));
 
 // Mock next/link
-jest.mock("next/link", () => ({
+vi.mock("next/link", () => ({
   __esModule: true,
   default: ({ children, href, ...props }: any) => {
     return React.createElement("a", { href, ...props }, children);
@@ -58,7 +58,7 @@ jest.mock("next/link", () => ({
 }));
 
 // Mock InfiniteMovingCards component
-jest.mock("@/src/components/ui/infinite-moving-cards", () => ({
+vi.mock("@/src/components/ui/infinite-moving-cards", () => ({
   InfiniteMovingCards: ({ items }: any) =>
     React.createElement(
       "div",
@@ -74,7 +74,7 @@ jest.mock("@/src/components/ui/infinite-moving-cards", () => ({
 }));
 
 // Mock ThemeImage component (renders light version for tests)
-jest.mock("@/src/components/ui/theme-image", () => ({
+vi.mock("@/src/components/ui/theme-image", () => ({
   ThemeImage: ({ alt, src, className }: any) => {
     return React.createElement("img", {
       "data-testid": "theme-image",
@@ -86,13 +86,13 @@ jest.mock("@/src/components/ui/theme-image", () => ({
 }));
 
 // Mock chosenCommunities
-export const mockChosenCommunities = jest.fn();
-jest.mock("@/utilities/chosenCommunities", () => ({
+export const mockChosenCommunities = vi.fn();
+vi.mock("@/utilities/chosenCommunities", () => ({
   chosenCommunities: (includeAll?: boolean) => mockChosenCommunities(includeAll),
 }));
 
 // Mock CustomerAvatar component
-jest.mock("@/src/features/funders/components/customer-avatar", () => ({
+vi.mock("@/src/features/funders/components/customer-avatar", () => ({
   CustomerAvatar: ({ src, alt }: any) =>
     React.createElement("img", {
       "data-testid": "customer-avatar",
@@ -103,7 +103,7 @@ jest.mock("@/src/features/funders/components/customer-avatar", () => ({
 }));
 
 // Mock CommunityImage component
-jest.mock("@/src/features/funders/components/community-image", () => ({
+vi.mock("@/src/features/funders/components/community-image", () => ({
   CommunityImage: ({ src, alt }: any) =>
     React.createElement("img", {
       "data-testid": "community-image",
@@ -114,7 +114,7 @@ jest.mock("@/src/features/funders/components/community-image", () => ({
 }));
 
 // Mock FAQAccordion component
-jest.mock("@/src/components/shared/faq-accordion", () => ({
+vi.mock("@/src/components/shared/faq-accordion", () => ({
   FAQAccordion: ({ items }: any) =>
     React.createElement(
       "div",
@@ -126,7 +126,7 @@ jest.mock("@/src/components/shared/faq-accordion", () => ({
 }));
 
 // Mock lucide-react icons
-jest.mock("lucide-react", () => ({
+vi.mock("lucide-react", () => ({
   Mail: (props: any) => React.createElement("svg", { ...props, "data-testid": "mail-icon" }),
   Zap: (props: any) => React.createElement("svg", { ...props, "data-testid": "zap-icon" }),
   BarChart2: (props: any) =>
@@ -141,12 +141,12 @@ export const mockAuthState = {
     ready: true,
     authenticated: false,
     user: null,
-    login: jest.fn(),
-    logout: jest.fn(),
+    login: vi.fn(),
+    logout: vi.fn(),
   },
 };
 
-jest.mock("@/hooks/useAuth", () => ({
+vi.mock("@/hooks/useAuth", () => ({
   useAuth: () => mockAuthState.current,
 }));
 
@@ -154,27 +154,27 @@ jest.mock("@/hooks/useAuth", () => ({
 export const mockThemeState = {
   current: {
     theme: "light",
-    setTheme: jest.fn(),
+    setTheme: vi.fn(),
     resolvedTheme: "light",
   },
 };
 
-jest.mock("next-themes", () => ({
+vi.mock("next-themes", () => ({
   useTheme: () => mockThemeState.current,
 }));
 
 // Mock Zustand stores (only the ones actually used by funders page)
-jest.mock("@/store/owner", () => ({
+vi.mock("@/store/owner", () => ({
   useOwnerStore: (selector?: any) => {
     const state = { isOwner: false };
     return selector ? selector(state) : state;
   },
 }));
 
-jest.mock("@/store/communities", () => ({
+vi.mock("@/store/communities", () => ({
   useCommunitiesStore: () => ({
     communities: [],
-    setCommunities: jest.fn(),
+    setCommunities: vi.fn(),
   }),
 }));
 
@@ -184,15 +184,15 @@ export const resetMockAuthState = () => {
     ready: true,
     authenticated: false,
     user: null,
-    login: jest.fn(),
-    logout: jest.fn(),
+    login: vi.fn(),
+    logout: vi.fn(),
   };
 };
 
 export const resetMockThemeState = () => {
   mockThemeState.current = {
     theme: "light",
-    setTheme: jest.fn(),
+    setTheme: vi.fn(),
     resolvedTheme: "light",
   };
 };

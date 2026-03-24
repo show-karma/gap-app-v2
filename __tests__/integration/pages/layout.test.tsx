@@ -1,7 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import RootLayout from "@/app/layout";
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 
+<<<<<<< HEAD
 jest.mock("@next/third-parties/google", () => ({
   GoogleAnalytics: () => <div data-testid="google-analytics" />,
 }));
@@ -40,25 +41,75 @@ jest.mock("@/src/components/navbar/navbar", () => ({
 
 jest.mock("@/src/components/navbar/whitelabel-navbar", () => ({
   WhitelabelNavbar: () => <header data-testid="whitelabel-navbar" />,
+=======
+vi.mock("@vercel/speed-insights/next", () => ({
+  SpeedInsights: () => <div data-testid="speed-insights" />,
 }));
 
-jest.mock("@/components/Utilities/PrivyProviderWrapper", () => ({
+vi.mock("@vercel/analytics/react", () => ({
+  Analytics: () => <div data-testid="analytics" />,
+}));
+
+vi.mock("@next/third-parties/google", () => ({
+  GoogleAnalytics: () => <div data-testid="google-analytics" />,
+}));
+
+vi.mock("@/src/components/footer/footer", () => ({
+  Footer: () => <footer data-testid="footer" />,
+}));
+
+vi.mock("@/src/components/navbar/navbar", () => ({
+  Navbar: () => <header data-testid="header" />,
+}));
+
+vi.mock("react-hot-toast", () => ({
+  Toaster: () => <div data-testid="toaster" />,
+>>>>>>> 8322801b (test: migrate Jest to Vitest for unit/integration tests)
+}));
+
+vi.mock("@/components/Utilities/PrivyProviderWrapper", () => ({
   __esModule: true,
   default: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="privy-provider">{children}</div>
   ),
 }));
 
+<<<<<<< HEAD
 jest.mock("@/components/Utilities/PermissionsProvider", () => ({
   PermissionsProvider: () => <div data-testid="permissions-provider" />,
 }));
 
 jest.mock("next-themes", () => ({
+=======
+vi.mock("@/components/Dialogs/ContributorProfileDialog", () => ({
+  ContributorProfileDialog: () => <div data-testid="contributor-profile-dialog" />,
+}));
+
+vi.mock("@/components/Dialogs/OnboardingDialog", () => ({
+  OnboardingDialog: () => <div data-testid="onboarding-dialog" />,
+}));
+
+vi.mock("@/components/Utilities/PermissionsProvider", () => ({
+  PermissionsProvider: () => <div data-testid="permissions-provider" />,
+}));
+
+vi.mock("@/components/ProgressBarWrapper", () => ({
+  ProgressBarWrapper: () => <div data-testid="progress-bar-wrapper" />,
+}));
+
+vi.mock("@/components/Utilities/HotjarAnalytics", () => ({
+  __esModule: true,
+  default: () => <div data-testid="hotjar-analytics" />,
+}));
+
+vi.mock("next-themes", () => ({
+>>>>>>> 8322801b (test: migrate Jest to Vitest for unit/integration tests)
   ThemeProvider: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="theme-provider">{children}</div>
   ),
 }));
 
+<<<<<<< HEAD
 jest.mock("@/utilities/whitelabel-context", () => ({
   WhitelabelProvider: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="whitelabel-provider">{children}</div>
@@ -87,6 +138,14 @@ jest.mock("@/utilities/whitelabel-server", () => ({
     communitySlug: null,
     tenantConfig: null,
   }),
+=======
+vi.mock("@/components/AgentChat/AgentChatBubble", () => ({
+  AgentChatBubble: () => <div data-testid="agent-chat-bubble" />,
+}));
+
+vi.mock("@/src/features/api-keys/components/api-key-management-modal", () => ({
+  ApiKeyManagementModal: () => <div data-testid="api-key-management-modal" />,
+>>>>>>> 8322801b (test: migrate Jest to Vitest for unit/integration tests)
 }));
 
 describe("RootLayout", () => {

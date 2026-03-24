@@ -5,11 +5,11 @@ import { useContributorProfile } from "@/hooks/useContributorProfile";
 import { NavbarDesktopNavigation } from "@/src/components/navbar/navbar-desktop-navigation";
 import { NavbarUserMenu } from "@/src/components/navbar/navbar-user-menu";
 
-jest.mock("@/hooks/useContributorProfile", () => ({
-  useContributorProfile: jest.fn(),
+vi.mock("@/hooks/useContributorProfile", () => ({
+  useContributorProfile: vi.fn(),
 }));
 
-const mockUseContributorProfile = useContributorProfile as unknown as jest.Mock;
+const mockUseContributorProfile = useContributorProfile as unknown as vi.Mock;
 
 describe("Dashboard nav updates", () => {
   beforeEach(() => {

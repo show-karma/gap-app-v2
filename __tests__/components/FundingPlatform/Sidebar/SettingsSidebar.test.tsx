@@ -10,10 +10,10 @@ import {
   SettingsSidebar,
   type SidebarTabKey,
 } from "@/components/FundingPlatform/Sidebar";
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 
 // Mock next/link
-jest.mock("next/link", () => {
+vi.mock("next/link", () => {
   return ({ children, href }: { children: React.ReactNode; href: string }) => (
     <a href={href}>{children}</a>
   );
@@ -22,13 +22,13 @@ jest.mock("next/link", () => {
 describe("SettingsSidebar", () => {
   const defaultProps = {
     activeTab: "build" as SidebarTabKey,
-    onTabChange: jest.fn(),
+    onTabChange: vi.fn(),
     communityId: "test-community",
     programId: "program-123",
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("rendering", () => {
@@ -159,7 +159,7 @@ describe("SettingsSidebar", () => {
 
     it("should call onTabChange when a tab is clicked", async () => {
       const user = userEvent.setup();
-      const onTabChange = jest.fn();
+      const onTabChange = vi.fn();
 
       render(<SettingsSidebar {...defaultProps} onTabChange={onTabChange} />);
 
@@ -171,7 +171,7 @@ describe("SettingsSidebar", () => {
 
     it("should call onTabChange with correct tab key for each item", async () => {
       const user = userEvent.setup();
-      const onTabChange = jest.fn();
+      const onTabChange = vi.fn();
 
       render(<SettingsSidebar {...defaultProps} onTabChange={onTabChange} />);
 

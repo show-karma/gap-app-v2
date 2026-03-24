@@ -4,21 +4,19 @@ import { DonationStatus } from "@/hooks/donation/types";
 import { OnrampSuccessModal } from "../OnrampSuccessModal";
 
 // Mock useDonationPolling hook
-jest.mock("@/hooks/donation/useDonationPolling", () => ({
-  useDonationPolling: jest.fn(),
+vi.mock("@/hooks/donation/useDonationPolling", () => ({
+  useDonationPolling: vi.fn(),
 }));
 
 // Mock getExplorerUrl and NETWORK_CHAIN_IDS
-jest.mock("@/utilities/network", () => ({
-  getExplorerUrl: jest.fn(
-    (_chainId: number, txHash: string) => `https://basescan.org/tx/${txHash}`
-  ),
+vi.mock("@/utilities/network", () => ({
+  getExplorerUrl: vi.fn((_chainId: number, txHash: string) => `https://basescan.org/tx/${txHash}`),
   NETWORK_CHAIN_IDS: { base: 8453, ethereum: 1, polygon: 137 },
 }));
 
 import { useDonationPolling } from "@/hooks/donation/useDonationPolling";
 
-const mockUseDonationPolling = useDonationPolling as jest.Mock;
+const mockUseDonationPolling = useDonationPolling as vi.Mock;
 
 /**
  * Helper to find the subtitle <p> element that contains the title and subtitle text.
@@ -45,7 +43,7 @@ describe("OnrampSuccessModal", () => {
     network: "base",
     donationUid: "donation-123" as string | null,
     chainId: 8453,
-    onClose: jest.fn(),
+    onClose: vi.fn(),
   };
 
   const defaultPollingReturn = {
@@ -61,7 +59,7 @@ describe("OnrampSuccessModal", () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockUseDonationPolling.mockReturnValue(defaultPollingReturn);
   });
 
@@ -280,7 +278,7 @@ describe("OnrampSuccessModal", () => {
 
   describe("User Interactions", () => {
     it("calls onClose when 'Done & Close' button is clicked", () => {
-      const onClose = jest.fn();
+      const onClose = vi.fn();
       render(<OnrampSuccessModal {...defaultProps} onClose={onClose} />);
 
       const doneButton = screen.getByRole("button", { name: /Done & Close/i });
@@ -290,7 +288,7 @@ describe("OnrampSuccessModal", () => {
     });
 
     it("calls onClose when X (close) button is clicked", () => {
-      const onClose = jest.fn();
+      const onClose = vi.fn();
       render(<OnrampSuccessModal {...defaultProps} onClose={onClose} />);
 
       // The X button has aria-label="Close" exactly, while the other button says "Done & Close"

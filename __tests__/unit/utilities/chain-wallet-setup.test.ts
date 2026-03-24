@@ -4,19 +4,19 @@
  */
 
 // Mock ALL dependencies to avoid ESM import issues
-const mockEnsureCorrectChain = jest.fn();
-const mockSafeGetWalletClient = jest.fn();
-const mockWalletClientToSigner = jest.fn();
+const mockEnsureCorrectChain = vi.fn();
+const mockSafeGetWalletClient = vi.fn();
+const mockWalletClientToSigner = vi.fn();
 
-jest.mock("@/utilities/ensureCorrectChain", () => ({
+vi.mock("@/utilities/ensureCorrectChain", () => ({
   ensureCorrectChain: mockEnsureCorrectChain,
 }));
 
-jest.mock("@/utilities/wallet-helpers", () => ({
+vi.mock("@/utilities/wallet-helpers", () => ({
   safeGetWalletClient: mockSafeGetWalletClient,
 }));
 
-jest.mock("@/utilities/eas-wagmi-utils", () => ({
+vi.mock("@/utilities/eas-wagmi-utils", () => ({
   walletClientToSigner: mockWalletClientToSigner,
 }));
 
@@ -24,13 +24,13 @@ jest.mock("@/utilities/eas-wagmi-utils", () => ({
 const { setupChainAndWallet } = require("@/utilities/chain-wallet-setup");
 
 describe("setupChainAndWallet", () => {
-  const mockGapClient = { fetch: { projectById: jest.fn() } } as any;
+  const mockGapClient = { fetch: { projectById: vi.fn() } } as any;
   const mockWalletClient = { account: { address: "0x123" } } as any;
-  const mockWalletSigner = { getAddress: jest.fn() } as any;
-  const mockSwitchChainAsync = jest.fn();
+  const mockWalletSigner = { getAddress: vi.fn() } as any;
+  const mockSwitchChainAsync = vi.fn();
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("Successful Setup", () => {

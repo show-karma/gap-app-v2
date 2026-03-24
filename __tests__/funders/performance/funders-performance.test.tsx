@@ -20,7 +20,7 @@ describe("Funders Page Performance", () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("should render initial page in under 1 second", () => {

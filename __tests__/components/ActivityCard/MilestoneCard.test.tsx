@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 
 // Mock next/navigation
@@ -63,49 +63,54 @@ jest.mock("@/components/Shared/ActivityCard/GrantAssociation", () => ({
 }));
 
 // Mock useMilestone hook to avoid SDK import issues - must be first
-jest.mock("@/hooks/useMilestone", () => ({
+vi.mock("@/hooks/useMilestone", () => ({
   useMilestone: () => ({
     isDeleting: false,
+<<<<<<< HEAD
     deleteMilestone: jest.fn(),
     multiGrantDelete: jest.fn(),
     multiGrantUndoCompletion: jest.fn(),
+=======
+    deleteMilestone: vi.fn(),
+    multiGrantDelete: vi.fn(),
+>>>>>>> 8322801b (test: migrate Jest to Vitest for unit/integration tests)
   }),
 }));
 
 // Mock ActivityCard to avoid deep import chain issues
-jest.mock("@/components/Shared/ActivityCard", () => ({
+vi.mock("@/components/Shared/ActivityCard", () => ({
   containerClassName: "test-container",
   ActivityCard: () => <div data-testid="activity-card" />,
 }));
 
 // Mock ActivityActionsWrapper to avoid deep SDK import chain
-jest.mock("@/components/Shared/ActivityCard/ActivityActionsWrapper", () => ({
+vi.mock("@/components/Shared/ActivityCard/ActivityActionsWrapper", () => ({
   ActivityActionsWrapper: () => <div data-testid="activity-actions-wrapper" />,
 }));
 
 // Mock useProjectUpdates to avoid QueryClient requirement
-jest.mock("@/hooks/v2/useProjectUpdates", () => ({
+vi.mock("@/hooks/v2/useProjectUpdates", () => ({
   useProjectUpdates: () => ({
     milestones: [],
     pendingMilestones: [],
     isLoading: false,
     error: null,
-    refetch: jest.fn(),
+    refetch: vi.fn(),
   }),
 }));
 
 // Mock useProjectGrants to avoid QueryClient requirement
-jest.mock("@/hooks/v2/useProjectGrants", () => ({
+vi.mock("@/hooks/v2/useProjectGrants", () => ({
   useProjectGrants: () => ({
     grants: [],
     isLoading: false,
     error: null,
-    refetch: jest.fn(),
+    refetch: vi.fn(),
   }),
 }));
 
 // Mock Next.js dynamic imports - must be before all other mocks
-jest.mock("next/dynamic", () => ({
+vi.mock("next/dynamic", () => ({
   __esModule: true,
   default: () => {
     const MockedComponent = (props: any) => (
@@ -117,7 +122,7 @@ jest.mock("next/dynamic", () => ({
 }));
 
 // Mock Next.js Image component
-jest.mock("next/image", () => ({
+vi.mock("next/image", () => ({
   __esModule: true,
   default: ({ src, alt, width, height }: any) => (
     <img src={src} alt={alt} width={width} height={height} />
@@ -125,67 +130,67 @@ jest.mock("next/image", () => ({
 }));
 
 // Mock MilestoneVerification which has complex imports
-jest.mock("@/components/Shared/MilestoneVerification", () => ({
+vi.mock("@/components/Shared/MilestoneVerification", () => ({
   MilestoneVerificationSection: () => <div data-testid="verification-section" />,
 }));
 
 // Mock PrivyProviderWrapper which causes import issues
-jest.mock("@/components/Utilities/PrivyProviderWrapper", () => ({
+vi.mock("@/components/Utilities/PrivyProviderWrapper", () => ({
   __esModule: true,
-  queryClient: { invalidateQueries: jest.fn() },
+  queryClient: { invalidateQueries: vi.fn() },
 }));
 
 // Mock useMilestoneActions hook
-jest.mock("@/hooks/useMilestoneActions", () => ({
+vi.mock("@/hooks/useMilestoneActions", () => ({
   useMilestoneActions: () => ({
     isCompleting: false,
-    handleCompleting: jest.fn(),
+    handleCompleting: vi.fn(),
     isEditing: false,
-    handleEditing: jest.fn(),
+    handleEditing: vi.fn(),
   }),
 }));
 
 // Mock useMilestoneImpactAnswers hook
-jest.mock("@/hooks/useMilestoneImpactAnswers", () => ({
+vi.mock("@/hooks/useMilestoneImpactAnswers", () => ({
   useMilestoneImpactAnswers: () => ({ data: null }),
 }));
 
 // Mock useUpdateActions hook
-jest.mock("@/hooks/useUpdateActions", () => ({
+vi.mock("@/hooks/useUpdateActions", () => ({
   useUpdateActions: () => ({
-    verifyUpdate: jest.fn(),
-    deleteUpdate: jest.fn(),
-    removeVerification: jest.fn(),
-    cancelUpdate: jest.fn(),
+    verifyUpdate: vi.fn(),
+    deleteUpdate: vi.fn(),
+    removeVerification: vi.fn(),
+    cancelUpdate: vi.fn(),
   }),
 }));
 
 // Mock store hooks
-jest.mock("@/store", () => ({
-  useOwnerStore: jest.fn((selector) => {
+vi.mock("@/store", () => ({
+  useOwnerStore: vi.fn((selector) => {
     const state = { isOwner: true };
     return selector ? selector(state) : state;
   }),
-  useProjectStore: jest.fn((selector) => {
+  useProjectStore: vi.fn((selector) => {
     const state = { isProjectAdmin: true, project: { uid: "test-project" } };
     return selector ? selector(state) : state;
   }),
 }));
 
-jest.mock("@/store/communityAdmin", () => ({
-  useCommunityAdminStore: jest.fn((selector) => {
+vi.mock("@/store/communityAdmin", () => ({
+  useCommunityAdminStore: vi.fn((selector) => {
     const state = { isCommunityAdmin: false };
     return selector ? selector(state) : state;
   }),
 }));
 
 // Mock ENS components
-jest.mock("@/components/EthereumAddressToENSAvatar", () => ({
+vi.mock("@/components/EthereumAddressToENSAvatar", () => ({
   __esModule: true,
   default: ({ address }: { address: string }) => <div data-testid="ens-avatar">{address}</div>,
 }));
 
-jest.mock("@/components/EthereumAddressToENSName", () => ({
+vi.mock("@/components/EthereumAddressToENSName", () => ({
   __esModule: true,
   default: ({ address }: { address: string }) => (
     <span data-testid="ens-name">{address?.slice(0, 8)}...</span>
@@ -193,17 +198,17 @@ jest.mock("@/components/EthereumAddressToENSName", () => ({
 }));
 
 // Mock ReadMore component
-jest.mock("@/utilities/ReadMore", () => ({
+vi.mock("@/utilities/ReadMore", () => ({
   ReadMore: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
 // Mock formatDate utility
-jest.mock("@/utilities/formatDate", () => ({
+vi.mock("@/utilities/formatDate", () => ({
   formatDate: (date: string | number) => String(date),
 }));
 
 // Mock Button component
-jest.mock("@/components/Utilities/Button", () => ({
+vi.mock("@/components/Utilities/Button", () => ({
   Button: ({ children, onClick, className, disabled }: any) => (
     <button onClick={onClick} className={className} disabled={disabled}>
       {children}

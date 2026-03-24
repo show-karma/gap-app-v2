@@ -9,18 +9,18 @@ import { isAddress } from "viem";
 import { usePayoutAddressManager } from "@/hooks/donation/usePayoutAddressManager";
 
 // Mock dependencies
-jest.mock("react-hot-toast");
+vi.mock("react-hot-toast");
 
-jest.mock("viem", () => ({
-  isAddress: jest.fn(),
+vi.mock("viem", () => ({
+  isAddress: vi.fn(),
 }));
 
-jest.mock("@/services/project.service", () => ({
-  getProject: jest.fn(),
+vi.mock("@/services/project.service", () => ({
+  getProject: vi.fn(),
 }));
 
-jest.mock("@/services/project-grants.service", () => ({
-  getProjectGrants: jest.fn(),
+vi.mock("@/services/project-grants.service", () => ({
+  getProjectGrants: vi.fn(),
 }));
 
 describe("usePayoutAddressManager", () => {
@@ -56,12 +56,12 @@ describe("usePayoutAddressManager", () => {
   const mockGrantsResponse: any[] = [];
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
-    const mockIsAddress = isAddress as unknown as jest.Mock;
+    const mockIsAddress = isAddress as unknown as vi.Mock;
     mockIsAddress.mockImplementation((addr: string) => addr === mockValidAddress);
 
-    (toast.error as jest.Mock).mockImplementation(() => {});
+    (toast.error as vi.Mock).mockImplementation(() => {});
 
     // Setup default mocks for V2 services
     const { getProject } = require("@/services/project.service");
@@ -192,7 +192,7 @@ describe("usePayoutAddressManager", () => {
       });
       getProjectGrants.mockResolvedValue(mockGrantsResponse);
 
-      const mockIsAddress = isAddress as unknown as jest.Mock;
+      const mockIsAddress = isAddress as unknown as vi.Mock;
       mockIsAddress.mockReturnValue(true);
 
       const { result } = renderHook(() => usePayoutAddressManager([mockItems[0]], "community-1"));
@@ -215,7 +215,7 @@ describe("usePayoutAddressManager", () => {
       });
       getProjectGrants.mockResolvedValue(mockGrantsResponse);
 
-      const mockIsAddress = isAddress as unknown as jest.Mock;
+      const mockIsAddress = isAddress as unknown as vi.Mock;
       mockIsAddress.mockReturnValue(true);
 
       const { result } = renderHook(() => usePayoutAddressManager([mockItems[0]], undefined));
@@ -274,7 +274,7 @@ describe("usePayoutAddressManager", () => {
       });
       getProjectGrants.mockResolvedValue(mockGrantsResponse);
 
-      const mockIsAddress = isAddress as unknown as jest.Mock;
+      const mockIsAddress = isAddress as unknown as vi.Mock;
       mockIsAddress.mockReturnValue(false);
 
       const { result } = renderHook(() => usePayoutAddressManager([mockItems[0]], undefined));

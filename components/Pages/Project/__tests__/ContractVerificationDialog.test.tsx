@@ -1,28 +1,28 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useContractVerification, VerificationStep } from "@/hooks/useContractVerification";
 import { ContractVerificationDialog } from "../ContractVerificationDialog";
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 
 // Mock the hook
-jest.mock("@/hooks/useContractVerification");
-const mockUseContractVerification = useContractVerification as jest.MockedFunction<
+vi.mock("@/hooks/useContractVerification");
+const mockUseContractVerification = useContractVerification as vi.MockedFunction<
   typeof useContractVerification
 >;
 
 describe("ContractVerificationDialog - User Experience", () => {
   const defaultProps = {
     isOpen: true,
-    onClose: jest.fn(),
+    onClose: vi.fn(),
     network: "ethereum",
     contractAddress: "0xContract123",
     projectUid: "project-uid-123",
   };
 
-  const mockVerifyContract = jest.fn();
-  const mockReset = jest.fn();
+  const mockVerifyContract = vi.fn();
+  const mockReset = vi.fn();
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     mockUseContractVerification.mockReturnValue({
       step: VerificationStep.IDLE,
@@ -184,7 +184,7 @@ describe("ContractVerificationDialog - User Experience", () => {
     });
 
     it("should call onSuccess callback", async () => {
-      const onSuccess = jest.fn();
+      const onSuccess = vi.fn();
       const mockResult = { verified: true, contract: {} };
       mockVerifyContract.mockResolvedValueOnce(mockResult);
 

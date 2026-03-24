@@ -343,7 +343,7 @@ describe("Navigation Flow Integration Tests", () => {
       const authFixture = getAuthFixture("unauthenticated");
 
       // Mock scrollIntoView
-      const mockScrollIntoView = jest.fn();
+      const mockScrollIntoView = vi.fn();
       Element.prototype.scrollIntoView = mockScrollIntoView;
 
       // Create anchor element in document
@@ -381,7 +381,7 @@ describe("Navigation Flow Integration Tests", () => {
 
     it("should navigate then scroll when on different page", async () => {
       const user = userEvent.setup();
-      const mockPush = jest.fn();
+      const mockPush = vi.fn();
       const mockRouter = createMockRouter({
         pathname: "/projects",
         push: mockPush,
@@ -420,7 +420,7 @@ describe("Navigation Flow Integration Tests", () => {
       // Mock the modal button in DOM
       const modalButton = document.createElement("button");
       modalButton.id = "new-project-button";
-      modalButton.onclick = jest.fn();
+      modalButton.onclick = vi.fn();
       document.body.appendChild(modalButton);
 
       renderWithProviders(<NavbarDesktopNavigation />, {
@@ -452,7 +452,7 @@ describe("Navigation Flow Integration Tests", () => {
 
     it("should navigate to projects page if modal button not found", async () => {
       const user = userEvent.setup();
-      const mockPush = jest.fn();
+      const mockPush = vi.fn();
       const mockRouter = createMockRouter({ push: mockPush });
       const authFixture = getAuthFixture("unauthenticated");
 

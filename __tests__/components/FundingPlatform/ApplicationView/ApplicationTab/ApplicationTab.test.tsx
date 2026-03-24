@@ -4,7 +4,7 @@ import { ApplicationTab } from "@/components/FundingPlatform/ApplicationView/App
 import type { IFundingApplication, ProgramWithFormSchema } from "@/types/funding-platform";
 
 // Mock child components
-jest.mock("@/components/FundingPlatform/ApplicationView/ApplicationTab/ApplicationSubTabs", () => ({
+vi.mock("@/components/FundingPlatform/ApplicationView/ApplicationTab/ApplicationSubTabs", () => ({
   ApplicationSubTabs: ({ activeTab, onTabChange, showPostApproval }: any) => (
     <div data-testid="sub-tabs">
       <button
@@ -27,49 +27,43 @@ jest.mock("@/components/FundingPlatform/ApplicationView/ApplicationTab/Applicati
   ),
 }));
 
-jest.mock(
-  "@/components/FundingPlatform/ApplicationView/ApplicationTab/ApplicationDataView",
-  () => ({
-    ApplicationDataView: () => <div data-testid="application-data-view">Application Data</div>,
-  })
-);
+vi.mock("@/components/FundingPlatform/ApplicationView/ApplicationTab/ApplicationDataView", () => ({
+  ApplicationDataView: () => <div data-testid="application-data-view">Application Data</div>,
+}));
 
-jest.mock(
-  "@/components/FundingPlatform/ApplicationView/ApplicationTab/PostApprovalDataView",
-  () => ({
-    PostApprovalDataView: () => <div data-testid="post-approval-data-view">Post Approval Data</div>,
-  })
-);
+vi.mock("@/components/FundingPlatform/ApplicationView/ApplicationTab/PostApprovalDataView", () => ({
+  PostApprovalDataView: () => <div data-testid="post-approval-data-view">Post Approval Data</div>,
+}));
 
-jest.mock("@/components/FundingPlatform/ApplicationView/ApplicationVersionSelector", () => ({
+vi.mock("@/components/FundingPlatform/ApplicationView/ApplicationVersionSelector", () => ({
   __esModule: true,
   default: () => <div data-testid="version-selector">Version Selector</div>,
 }));
 
-jest.mock("@/components/FundingPlatform/ApplicationView/ApplicationVersionViewer", () => ({
+vi.mock("@/components/FundingPlatform/ApplicationView/ApplicationVersionViewer", () => ({
   __esModule: true,
   default: () => <div data-testid="version-viewer">Version Viewer</div>,
 }));
 
-jest.mock("@/components/Utilities/MarkdownPreview", () => ({
+vi.mock("@/components/Utilities/MarkdownPreview", () => ({
   MarkdownPreview: ({ source }: { source: string }) => <div data-testid="markdown">{source}</div>,
 }));
 
-jest.mock("@/hooks/useFundingPlatform", () => ({
+vi.mock("@/hooks/useFundingPlatform", () => ({
   useApplicationVersions: () => ({
     versions: [],
     isLoading: false,
   }),
 }));
 
-jest.mock("@/store/applicationVersions", () => ({
+vi.mock("@/store/applicationVersions", () => ({
   useApplicationVersionsStore: () => ({
     selectedVersion: null,
-    selectVersion: jest.fn(),
+    selectVersion: vi.fn(),
   }),
 }));
 
-jest.mock("@/utilities/tailwind", () => ({
+vi.mock("@/utilities/tailwind", () => ({
   cn: (...classes: any[]) => classes.filter(Boolean).join(" "),
 }));
 
@@ -245,7 +239,7 @@ describe("ApplicationTab", () => {
 
   describe("View Mode Control", () => {
     it("renders correctly with controlled viewMode prop", () => {
-      const mockOnViewModeChange = jest.fn();
+      const mockOnViewModeChange = vi.fn();
 
       render(
         <ApplicationTab

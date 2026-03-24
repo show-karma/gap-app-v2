@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 import type { Project } from "@/types/v2/project";
 import { DonateSection } from "../SidePanel/DonateSection";
 import { EndorseSection } from "../SidePanel/EndorseSection";
@@ -8,85 +8,85 @@ import { QuickLinksCard } from "../SidePanel/QuickLinksCard";
 import { SubscribeSection } from "../SidePanel/SubscribeSection";
 
 // Mock the stores
-const mockSetIsEndorsementOpen = jest.fn();
-const mockSetIsIntroModalOpen = jest.fn();
+const mockSetIsEndorsementOpen = vi.fn();
+const mockSetIsIntroModalOpen = vi.fn();
 
-jest.mock("@/store/modals/endorsement", () => ({
+vi.mock("@/store/modals/endorsement", () => ({
   useEndorsementStore: () => ({
     setIsEndorsementOpen: mockSetIsEndorsementOpen,
   }),
 }));
 
-jest.mock("@/store/modals/intro", () => ({
+vi.mock("@/store/modals/intro", () => ({
   useIntroModalStore: () => ({
     setIsIntroModalOpen: mockSetIsIntroModalOpen,
   }),
 }));
 
 // Mock fetchData for SubscribeSection
-jest.mock("@/utilities/fetchData", () => ({
+vi.mock("@/utilities/fetchData", () => ({
   __esModule: true,
-  default: jest.fn(() => Promise.resolve([{}, null])),
+  default: vi.fn(() => Promise.resolve([{}, null])),
 }));
 
 // Mock react-hot-toast
-jest.mock("react-hot-toast", () => ({
+vi.mock("react-hot-toast", () => ({
   __esModule: true,
   default: {
-    success: jest.fn(),
-    error: jest.fn(),
+    success: vi.fn(),
+    error: vi.fn(),
   },
 }));
 
 // Mock wagmi with all required hooks
-jest.mock("wagmi", () => ({
+vi.mock("wagmi", () => ({
   useAccount: () => ({
     address: "0x1234567890123456789012345678901234567890",
     isConnected: true,
   }),
   useChainId: () => 1,
-  useSwitchChain: () => ({ switchChainAsync: jest.fn() }),
+  useSwitchChain: () => ({ switchChainAsync: vi.fn() }),
 }));
 
 // Mock useAuth hook - authenticated = wallet connected + Privy login
-const mockLogin = jest.fn();
-jest.mock("@/hooks/useAuth", () => ({
+const mockLogin = vi.fn();
+vi.mock("@/hooks/useAuth", () => ({
   useAuth: () => ({
     authenticated: true,
     login: mockLogin,
-    logout: jest.fn(),
+    logout: vi.fn(),
     isConnected: true,
     ready: true,
   }),
 }));
 
 // Mock SingleProjectDonateModal to avoid complex wagmi/web3 dependencies
-jest.mock("@/components/Donation/SingleProject/SingleProjectDonateModal", () => ({
+vi.mock("@/components/Donation/SingleProject/SingleProjectDonateModal", () => ({
   SingleProjectDonateModal: ({ isOpen }: { isOpen: boolean }) =>
     isOpen ? <div data-testid="donate-modal">Donation Modal</div> : null,
 }));
 
 // Mock chain payout address hooks
-jest.mock("@/src/features/chain-payout-address/hooks/use-chain-payout-address", () => ({
-  hasConfiguredPayoutAddresses: jest.fn(() => true),
-  getPayoutAddressForChain: jest.fn(() => null),
-  useChainPayoutAddress: jest.fn(() => ({
+vi.mock("@/src/features/chain-payout-address/hooks/use-chain-payout-address", () => ({
+  hasConfiguredPayoutAddresses: vi.fn(() => true),
+  getPayoutAddressForChain: vi.fn(() => null),
+  useChainPayoutAddress: vi.fn(() => ({
     data: [],
     isLoading: false,
     isError: false,
   })),
-  useUpdateChainPayoutAddress: jest.fn(() => ({
-    mutate: jest.fn(),
+  useUpdateChainPayoutAddress: vi.fn(() => ({
+    mutate: vi.fn(),
     isPending: false,
   })),
 }));
 
 // Mock the barrel export for chain payout address feature
-jest.mock("@/src/features/chain-payout-address", () => ({
-  hasConfiguredPayoutAddresses: jest.fn(() => true),
-  getPayoutAddressForChain: jest.fn(() => null),
-  useUpdateChainPayoutAddress: jest.fn(() => ({
-    mutate: jest.fn(),
+vi.mock("@/src/features/chain-payout-address", () => ({
+  hasConfiguredPayoutAddresses: vi.fn(() => true),
+  getPayoutAddressForChain: vi.fn(() => null),
+  useUpdateChainPayoutAddress: vi.fn(() => ({
+    mutate: vi.fn(),
     isPending: false,
   })),
   SetChainPayoutAddressModal: ({ isOpen }: { isOpen: boolean }) =>
@@ -98,21 +98,21 @@ jest.mock("@/src/features/chain-payout-address", () => ({
 const mockProjectStoreState = {
   isProjectAdmin: false,
   isProjectOwner: false,
-  refreshProject: jest.fn(),
+  refreshProject: vi.fn(),
 };
 
 const mockOwnerStoreState = {
   isOwner: false,
 };
 
-jest.mock("@/store", () => ({
-  useOwnerStore: jest.fn((selector?: (state: any) => any) => {
+vi.mock("@/store", () => ({
+  useOwnerStore: vi.fn((selector?: (state: any) => any) => {
     if (typeof selector === "function") {
       return selector(mockOwnerStoreState);
     }
     return mockOwnerStoreState;
   }),
-  useProjectStore: jest.fn((selector?: (state: any) => any) => {
+  useProjectStore: vi.fn((selector?: (state: any) => any) => {
     if (typeof selector === "function") {
       return selector(mockProjectStoreState);
     }
@@ -121,7 +121,7 @@ jest.mock("@/store", () => ({
 }));
 
 // Mock RBAC permissions hook (replaces legacy useStaff)
-jest.mock("@/src/core/rbac/hooks/use-permissions", () => ({
+vi.mock("@/src/core/rbac/hooks/use-permissions", () => ({
   usePermissionsQuery: () => ({
     data: null,
     isLoading: false,
@@ -130,10 +130,10 @@ jest.mock("@/src/core/rbac/hooks/use-permissions", () => ({
 }));
 
 // Mock progress modal store
-jest.mock("@/store/modals/progress", () => ({
+vi.mock("@/store/modals/progress", () => ({
   useProgressModalStore: () => ({
     isProgressModalOpen: false,
-    setIsProgressModalOpen: jest.fn(),
+    setIsProgressModalOpen: vi.fn(),
   }),
 }));
 
@@ -154,7 +154,7 @@ jest.mock("@/components/ui/button", () => ({
 }));
 
 // Mock community admin store
-jest.mock("@/store/communityAdmin", () => ({
+vi.mock("@/store/communityAdmin", () => ({
   useCommunityAdminStore: () => ({
     isCommunityAdmin: false,
   }),

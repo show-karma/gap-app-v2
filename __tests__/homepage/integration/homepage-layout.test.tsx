@@ -10,7 +10,7 @@
 
 import HomePage from "@/app/page";
 import { renderWithProviders, screen, waitFor } from "../utils/test-helpers";
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 
 describe("Homepage Layout Integration", () => {
   describe("Section Rendering", () => {

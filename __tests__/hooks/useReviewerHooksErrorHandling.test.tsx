@@ -8,41 +8,41 @@ import { useProgramReviewers } from "@/hooks/useProgramReviewers";
 import { milestoneReviewersService } from "@/services/milestone-reviewers.service";
 import { programReviewersService } from "@/services/program-reviewers.service";
 
-jest.mock("@/hooks/useAuth", () => ({
-  useAuth: jest.fn(),
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: vi.fn(),
 }));
 
-jest.mock("react-hot-toast", () => ({
+vi.mock("react-hot-toast", () => ({
   toast: {
-    success: jest.fn(),
-    error: jest.fn(),
+    success: vi.fn(),
+    error: vi.fn(),
   },
 }));
 
-jest.mock("@/services/program-reviewers.service", () => ({
+vi.mock("@/services/program-reviewers.service", () => ({
   programReviewersService: {
-    getReviewers: jest.fn(),
-    addReviewer: jest.fn(),
-    removeReviewer: jest.fn(),
-    validateReviewerData: jest.fn(),
+    getReviewers: vi.fn(),
+    addReviewer: vi.fn(),
+    removeReviewer: vi.fn(),
+    validateReviewerData: vi.fn(),
   },
 }));
 
-jest.mock("@/services/milestone-reviewers.service", () => ({
+vi.mock("@/services/milestone-reviewers.service", () => ({
   milestoneReviewersService: {
-    getReviewers: jest.fn(),
-    addReviewer: jest.fn(),
-    removeReviewer: jest.fn(),
-    validateReviewerData: jest.fn(),
+    getReviewers: vi.fn(),
+    addReviewer: vi.fn(),
+    removeReviewer: vi.fn(),
+    validateReviewerData: vi.fn(),
   },
 }));
 
-const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
-const mockToast = toast as jest.Mocked<typeof toast>;
-const mockProgramReviewersService = programReviewersService as jest.Mocked<
+const mockUseAuth = useAuth as vi.MockedFunction<typeof useAuth>;
+const mockToast = toast as vi.Mocked<typeof toast>;
+const mockProgramReviewersService = programReviewersService as vi.Mocked<
   typeof programReviewersService
 >;
-const mockMilestoneReviewersService = milestoneReviewersService as jest.Mocked<
+const mockMilestoneReviewersService = milestoneReviewersService as vi.Mocked<
   typeof milestoneReviewersService
 >;
 
@@ -61,7 +61,7 @@ describe("Reviewer hooks error handling", () => {
       },
     });
 
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     mockUseAuth.mockReturnValue({
       authenticated: true,

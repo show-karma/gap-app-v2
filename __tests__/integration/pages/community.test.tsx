@@ -1,18 +1,18 @@
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 import { render, screen } from "@testing-library/react";
 
-jest.mock("@/utilities/queries/v2/getCommunityData", () => ({
-  getCommunityDetails: jest.fn(),
-  getCommunityStats: jest.fn(),
-  getCommunityProjects: jest.fn(),
-  getCommunityCategories: jest.fn(),
+vi.mock("@/utilities/queries/v2/getCommunityData", () => ({
+  getCommunityDetails: vi.fn(),
+  getCommunityStats: vi.fn(),
+  getCommunityProjects: vi.fn(),
+  getCommunityCategories: vi.fn(),
 }));
 
-jest.mock("@/utilities/pagesOnRoot", () => ({
+vi.mock("@/utilities/pagesOnRoot", () => ({
   pagesOnRoot: [],
 }));
 
-jest.mock("@/components/CommunityGrants", () => ({
+vi.mock("@/components/CommunityGrants", () => ({
   CommunityGrants: () => <div data-testid="community-grants">Community Grants</div>,
 }));
 
@@ -39,7 +39,7 @@ describe("Community Page", () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     const {
       getCommunityDetails,
       getCommunityStats,

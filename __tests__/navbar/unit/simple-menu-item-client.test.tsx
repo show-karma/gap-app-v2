@@ -148,7 +148,7 @@ describe("SimpleMenuItemClient Component", () => {
     });
 
     it("should call onClick callback when clicked", () => {
-      const onClickMock = jest.fn();
+      const onClickMock = vi.fn();
 
       renderWithProviders(
         <SimpleMenuItemClient
@@ -235,7 +235,7 @@ describe("SimpleMenuItemClient Component", () => {
     });
 
     it("should call onClick when item is clicked", () => {
-      const onClickMock = jest.fn();
+      const onClickMock = vi.fn();
 
       renderWithProviders(
         <SimpleMenuItemClient
@@ -253,7 +253,7 @@ describe("SimpleMenuItemClient Component", () => {
     });
 
     it("should work with keyboard navigation", () => {
-      const onClickMock = jest.fn();
+      const onClickMock = vi.fn();
 
       renderWithProviders(
         <SimpleMenuItemClient
@@ -423,7 +423,7 @@ describe("SimpleMenuItemClient Component", () => {
     });
 
     it("should handle all props together", () => {
-      const onClickMock = jest.fn();
+      const onClickMock = vi.fn();
 
       const { container } = renderWithProviders(
         <SimpleMenuItemClient

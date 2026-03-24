@@ -9,15 +9,15 @@ import React from "react";
 import { useImpactMeasurement } from "@/hooks/useImpactMeasurement";
 import { getProgramsImpact } from "@/utilities/registry/getProgramsImpact";
 
-jest.mock("@/utilities/registry/getProgramsImpact", () => ({
-  getProgramsImpact: jest.fn(),
+vi.mock("@/utilities/registry/getProgramsImpact", () => ({
+  getProgramsImpact: vi.fn(),
 }));
 
-jest.mock("next/navigation", () => ({
-  useParams: jest.fn(() => ({ communityId: "test-community" })),
+vi.mock("next/navigation", () => ({
+  useParams: vi.fn(() => ({ communityId: "test-community" })),
 }));
 
-const mockGetProgramsImpact = getProgramsImpact as jest.MockedFunction<typeof getProgramsImpact>;
+const mockGetProgramsImpact = getProgramsImpact as vi.MockedFunction<typeof getProgramsImpact>;
 
 describe("useImpactMeasurement", () => {
   let queryClient: QueryClient;
@@ -40,7 +40,7 @@ describe("useImpactMeasurement", () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("should fetch impact measurement data with communityId", async () => {

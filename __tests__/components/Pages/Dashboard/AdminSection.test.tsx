@@ -2,15 +2,15 @@ import { render, screen } from "@testing-library/react";
 import { AdminSection } from "@/components/Pages/Dashboard/AdminSection/AdminSection";
 import { useDashboardAdmin } from "@/hooks/useDashboardAdmin";
 
-jest.mock("@/hooks/useDashboardAdmin", () => ({
-  useDashboardAdmin: jest.fn(),
+vi.mock("@/hooks/useDashboardAdmin", () => ({
+  useDashboardAdmin: vi.fn(),
 }));
 
-const mockUseDashboardAdmin = useDashboardAdmin as unknown as jest.Mock;
+const mockUseDashboardAdmin = useDashboardAdmin as unknown as vi.Mock;
 
 describe("AdminSection", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("renders skeleton when loading", () => {

@@ -19,7 +19,7 @@ describe("MilestoneSelectionStep", () => {
     allocations: mockAllocations,
     paidAllocationIds: [] as string[],
     selectedAllocationIds: [] as string[],
-    onSelectionChange: jest.fn(),
+    onSelectionChange: vi.fn(),
     tokenSymbol: "USDC",
     tokenDecimals: 6,
     grantName: "Test Grant",
@@ -27,7 +27,7 @@ describe("MilestoneSelectionStep", () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("rendering", () => {
@@ -113,7 +113,7 @@ describe("MilestoneSelectionStep", () => {
 
   describe("selection", () => {
     it("should call onSelectionChange when allocation is selected", () => {
-      const onSelectionChange = jest.fn();
+      const onSelectionChange = vi.fn();
       render(<MilestoneSelectionStep {...defaultProps} onSelectionChange={onSelectionChange} />);
 
       const checkbox = screen.getAllByRole("checkbox")[0];
@@ -123,7 +123,7 @@ describe("MilestoneSelectionStep", () => {
     });
 
     it("should call onSelectionChange when allocation is deselected", () => {
-      const onSelectionChange = jest.fn();
+      const onSelectionChange = vi.fn();
       render(
         <MilestoneSelectionStep
           {...defaultProps}
@@ -139,7 +139,7 @@ describe("MilestoneSelectionStep", () => {
     });
 
     it("should select all unpaid allocations when Select All is clicked", () => {
-      const onSelectionChange = jest.fn();
+      const onSelectionChange = vi.fn();
       render(
         <MilestoneSelectionStep
           {...defaultProps}
@@ -156,7 +156,7 @@ describe("MilestoneSelectionStep", () => {
     });
 
     it("should deselect all when Deselect All is clicked", () => {
-      const onSelectionChange = jest.fn();
+      const onSelectionChange = vi.fn();
       render(
         <MilestoneSelectionStep
           {...defaultProps}

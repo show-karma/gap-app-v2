@@ -5,21 +5,21 @@ import { ApplicationList } from "@/components/FundingPlatform/ApplicationList/Ap
 import type { IFundingApplication } from "@/types/funding-platform";
 
 // Mock the helper functions
-jest.mock("@/components/FundingPlatform/helper/getAIScore", () => ({
-  formatAIScore: jest.fn(),
+vi.mock("@/components/FundingPlatform/helper/getAIScore", () => ({
+  formatAIScore: vi.fn(),
 }));
 
 // Mock the other helper functions
-jest.mock("@/components/FundingPlatform/helper/getProjectTitle", () => ({
-  getProjectTitle: jest.fn(() => "Test Project"),
+vi.mock("@/components/FundingPlatform/helper/getProjectTitle", () => ({
+  getProjectTitle: vi.fn(() => "Test Project"),
 }));
 
-jest.mock("@/utilities/formatDate", () => ({
-  formatDate: jest.fn(() => "2025-01-01"),
+vi.mock("@/utilities/formatDate", () => ({
+  formatDate: vi.fn(() => "2025-01-01"),
 }));
 
 // Mock SortableTableHeader
-jest.mock("@/components/Utilities/SortableTableHeader", () => {
+vi.mock("@/components/Utilities/SortableTableHeader", () => {
   return function MockSortableTableHeader({
     label,
     sortKey,
@@ -38,13 +38,13 @@ jest.mock("@/components/Utilities/SortableTableHeader", () => {
 });
 
 // Mock ReviewerAssignmentDropdown
-jest.mock("@/components/FundingPlatform/ApplicationList/ReviewerAssignmentDropdown", () => ({
+vi.mock("@/components/FundingPlatform/ApplicationList/ReviewerAssignmentDropdown", () => ({
   ReviewerAssignmentDropdown: () => <div data-testid="reviewer-assignment-dropdown" />,
 }));
 
 import { formatAIScore } from "@/components/FundingPlatform/helper/getAIScore";
 
-const mockFormatAIScore = formatAIScore as jest.MockedFunction<typeof formatAIScore>;
+const mockFormatAIScore = formatAIScore as vi.MockedFunction<typeof formatAIScore>;
 
 // Helper to create mock application
 const createMockApplication = (overrides?: Partial<IFundingApplication>): IFundingApplication => ({
@@ -82,7 +82,7 @@ describe("ApplicationList - AI Score Column", () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("AI Score Column Header", () => {
@@ -96,7 +96,7 @@ describe("ApplicationList - AI Score Column", () => {
           applications={applications}
           sortBy="status"
           sortOrder="asc"
-          onSortChange={jest.fn()}
+          onSortChange={vi.fn()}
           showAIScoreColumn={true}
         />
       );
@@ -106,7 +106,7 @@ describe("ApplicationList - AI Score Column", () => {
     });
 
     it("should call onSortChange when AI Score header is clicked", () => {
-      const mockOnSortChange = jest.fn();
+      const mockOnSortChange = vi.fn();
       const applications = [createMockApplication()];
 
       renderWithQueryClient(
@@ -139,7 +139,7 @@ describe("ApplicationList - AI Score Column", () => {
           applications={applications}
           sortBy="aiEvaluationScore"
           sortOrder="desc"
-          onSortChange={jest.fn()}
+          onSortChange={vi.fn()}
           showAIScoreColumn={true}
         />
       );
@@ -321,7 +321,7 @@ describe("ApplicationList - AI Score Column", () => {
   describe("Integration with Application Selection", () => {
     it("should open new tab when row with AI score is clicked", () => {
       // Mock window.open
-      const mockWindowOpen = jest.fn();
+      const mockWindowOpen = vi.fn();
       const originalOpen = window.open;
       window.open = mockWindowOpen;
 
@@ -334,7 +334,7 @@ describe("ApplicationList - AI Score Column", () => {
           programId="test-program"
           chainID={11155111}
           applications={applications}
-          onApplicationSelect={jest.fn()}
+          onApplicationSelect={vi.fn()}
           sortBy="status"
           sortOrder="asc"
           showAIScoreColumn={true}
@@ -352,7 +352,7 @@ describe("ApplicationList - AI Score Column", () => {
     });
 
     it("should call onApplicationHover when row with AI score is hovered", () => {
-      const mockOnApplicationHover = jest.fn();
+      const mockOnApplicationHover = vi.fn();
       mockFormatAIScore.mockReturnValue("4.5");
 
       const applications = [createMockApplication()];

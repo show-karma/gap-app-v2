@@ -11,7 +11,7 @@ import { server } from "../setup";
 import { renderWithProviders } from "../utils/test-helpers";
 
 // Mock child components to prevent complex dependency issues
-jest.mock("@/src/components/navbar/navbar-desktop-navigation", () => ({
+vi.mock("@/src/components/navbar/navbar-desktop-navigation", () => ({
   NavbarDesktopNavigation: () => (
     <div data-testid="desktop-navigation">
       <input type="search" aria-label="Search" />
@@ -20,7 +20,7 @@ jest.mock("@/src/components/navbar/navbar-desktop-navigation", () => ({
   ),
 }));
 
-jest.mock("@/src/components/navbar/navbar-mobile-menu", () => ({
+vi.mock("@/src/components/navbar/navbar-mobile-menu", () => ({
   NavbarMobileMenu: () => (
     <div data-testid="mobile-menu">
       <button type="button">Menu</button>
@@ -28,11 +28,11 @@ jest.mock("@/src/components/navbar/navbar-mobile-menu", () => ({
   ),
 }));
 
-jest.mock("@/src/components/navbar/navbar-search", () => ({
+vi.mock("@/src/components/navbar/navbar-search", () => ({
   NavbarSearch: () => <input type="search" aria-label="Search" data-testid="navbar-search" />,
 }));
 
-jest.mock("@/src/components/navbar/navbar-user-menu", () => ({
+vi.mock("@/src/components/navbar/navbar-user-menu", () => ({
   NavbarUserMenu: () => (
     <div data-testid="user-menu">
       <button type="button" data-testid="user-avatar">
@@ -42,7 +42,7 @@ jest.mock("@/src/components/navbar/navbar-user-menu", () => ({
   ),
 }));
 
-jest.mock("@/src/components/shared/logo", () => ({
+vi.mock("@/src/components/shared/logo", () => ({
   Logo: () => <div data-testid="logo">Logo</div>,
 }));
 
@@ -127,13 +127,13 @@ describe("Navbar Performance Tests", () => {
 
   describe("Search Debouncing Efficiency", () => {
     beforeEach(() => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       server.use(scenarioHandlers.projectsAndCommunities);
     });
 
     afterEach(() => {
-      jest.runOnlyPendingTimers();
-      jest.useRealTimers();
+      vi.runOnlyPendingTimers();
+      vi.useRealTimers();
     });
 
     it("prevents multiple API calls with rapid typing", async () => {
@@ -147,7 +147,7 @@ describe("Navbar Performance Tests", () => {
       fireEvent.change(searchInput, { target: { value: "test" } });
 
       // Only advance timers once
-      jest.advanceTimersByTime(500);
+      vi.advanceTimersByTime(500);
 
       // In mocked version, we just verify input value updated
       expect(searchInput).toHaveValue("test");
@@ -159,11 +159,11 @@ describe("Navbar Performance Tests", () => {
 
       // First search
       fireEvent.change(searchInput, { target: { value: "first" } });
-      jest.advanceTimersByTime(300);
+      vi.advanceTimersByTime(300);
 
       // Second search before first completes
       fireEvent.change(searchInput, { target: { value: "second" } });
-      jest.advanceTimersByTime(500);
+      vi.advanceTimersByTime(500);
 
       // Only the second search should execute
       expect(searchInput).toHaveValue("second");
@@ -177,7 +177,7 @@ describe("Navbar Performance Tests", () => {
       fireEvent.change(searchInput, { target: { value: "test" } });
 
       // Advance to debounce completion
-      jest.advanceTimersByTime(500);
+      vi.advanceTimersByTime(500);
 
       const endTime = performance.now();
 
@@ -306,7 +306,7 @@ describe("Navbar Performance Tests", () => {
     });
 
     it("handles 100+ search results efficiently", async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       renderWithProviders(<Navbar />);
 
       const searchInput = screen.getByRole("searchbox");
@@ -314,7 +314,7 @@ describe("Navbar Performance Tests", () => {
       const startTime = performance.now();
 
       fireEvent.change(searchInput, { target: { value: "test" } });
-      jest.advanceTimersByTime(500);
+      vi.advanceTimersByTime(500);
 
       const endTime = performance.now();
       const renderTime = endTime - startTime;
@@ -323,7 +323,7 @@ describe("Navbar Performance Tests", () => {
       expect(renderTime).toBeLessThan(2000);
       expect(searchInput).toHaveValue("test");
 
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
 
     it("scrolling through large results is performant", async () => {
@@ -340,20 +340,20 @@ describe("Navbar Performance Tests", () => {
     });
 
     it("filtering large results doesn't cause lag", async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       renderWithProviders(<Navbar />);
 
       const searchInput = screen.getByRole("searchbox");
 
       // First search with large results
       fireEvent.change(searchInput, { target: { value: "test" } });
-      jest.advanceTimersByTime(500);
+      vi.advanceTimersByTime(500);
 
       const startTime = performance.now();
 
       // Refine search
       fireEvent.change(searchInput, { target: { value: "test project" } });
-      jest.advanceTimersByTime(500);
+      vi.advanceTimersByTime(500);
 
       const endTime = performance.now();
       const filterTime = endTime - startTime;
@@ -361,7 +361,7 @@ describe("Navbar Performance Tests", () => {
       // Re-filtering should be fast
       expect(filterTime).toBeLessThan(1000);
 
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
   });
 
@@ -377,7 +377,7 @@ describe("Navbar Performance Tests", () => {
     });
 
     it("clears debounce timers on unmount", () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       const { unmount } = renderWithProviders(<Navbar />);
 
       const searchInput = screen.getByRole("searchbox");
@@ -387,12 +387,12 @@ describe("Navbar Performance Tests", () => {
       unmount();
 
       // Advance timers - should not throw or cause issues
-      jest.advanceTimersByTime(500);
+      vi.advanceTimersByTime(500);
 
       // Verify component is unmounted
       expect(screen.queryByRole("searchbox")).not.toBeInTheDocument();
 
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
 
     it("no retained references after unmount", () => {

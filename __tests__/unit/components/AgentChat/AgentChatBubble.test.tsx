@@ -3,16 +3,16 @@ import { AgentChatBubble } from "@/components/AgentChat/AgentChatBubble";
 import { useAgentChatStore } from "@/store/agentChat";
 
 // Mock useAuth
-const mockAuthenticated = jest.fn(() => true);
-jest.mock("@/hooks/useAuth", () => ({
+const mockAuthenticated = vi.fn(() => true);
+vi.mock("@/hooks/useAuth", () => ({
   useAuth: () => ({ authenticated: mockAuthenticated() }),
 }));
 
 // Mock useAgentStream
-const mockSendMessage = jest.fn();
-const mockSendConfirmation = jest.fn();
-const mockAbort = jest.fn();
-jest.mock("@/hooks/useAgentStream", () => ({
+const mockSendMessage = vi.fn();
+const mockSendConfirmation = vi.fn();
+const mockAbort = vi.fn();
+vi.mock("@/hooks/useAgentStream", () => ({
   useAgentStream: () => ({
     sendMessage: mockSendMessage,
     sendConfirmation: mockSendConfirmation,
@@ -21,12 +21,12 @@ jest.mock("@/hooks/useAgentStream", () => ({
 }));
 
 // Mock useAgentContextSync
-jest.mock("@/hooks/useAgentContextSync", () => ({
-  useAgentContextSync: jest.fn(),
+vi.mock("@/hooks/useAgentContextSync", () => ({
+  useAgentContextSync: vi.fn(),
 }));
 
 // Mock AI Elements components to simple div/form renderers for unit testing
-jest.mock("@/src/components/ai-elements/conversation", () => ({
+vi.mock("@/src/components/ai-elements/conversation", () => ({
   Conversation: ({ children, className }: { children: React.ReactNode; className?: string }) => (
     <div data-testid="conversation" className={className}>
       {children}
@@ -59,7 +59,7 @@ jest.mock("@/src/components/ai-elements/conversation", () => ({
   ConversationScrollButton: () => <button data-testid="scroll-button">Scroll</button>,
 }));
 
-jest.mock("@/src/components/ai-elements/message", () => ({
+vi.mock("@/src/components/ai-elements/message", () => ({
   Message: ({ children, from }: { children: React.ReactNode; from: string }) => (
     <div data-testid={`message-${from}`}>{children}</div>
   ),
@@ -87,7 +87,7 @@ jest.mock("@/src/components/ai-elements/message", () => ({
   ),
 }));
 
-jest.mock("@/src/components/ai-elements/prompt-input", () => ({
+vi.mock("@/src/components/ai-elements/prompt-input", () => ({
   PromptInput: ({
     children,
     onSubmit,
@@ -133,15 +133,15 @@ jest.mock("@/src/components/ai-elements/prompt-input", () => ({
 }));
 
 // Mock use-stick-to-bottom
-jest.mock("use-stick-to-bottom", () => ({
+vi.mock("use-stick-to-bottom", () => ({
   useStickToBottomContext: () => ({
-    scrollToBottom: jest.fn(),
+    scrollToBottom: vi.fn(),
     isAtBottom: true,
   }),
 }));
 
 // Mock lucide-react icons
-jest.mock("lucide-react", () => ({
+vi.mock("lucide-react", () => ({
   AlertCircleIcon: () => <span data-testid="icon-alert-circle" />,
   BotIcon: () => <span data-testid="icon-bot" />,
   CopyIcon: () => <span data-testid="icon-copy" />,
@@ -153,7 +153,7 @@ jest.mock("lucide-react", () => ({
 }));
 
 // Mock UI components
-jest.mock("@/components/ui/badge", () => ({
+vi.mock("@/components/ui/badge", () => ({
   Badge: ({
     children,
     variant,
@@ -169,7 +169,7 @@ jest.mock("@/components/ui/badge", () => ({
   ),
 }));
 
-jest.mock("@/components/ui/button", () => ({
+vi.mock("@/components/ui/button", () => ({
   Button: ({
     children,
     ...props
@@ -179,7 +179,7 @@ jest.mock("@/components/ui/button", () => ({
   },
 }));
 
-jest.mock("@/components/ui/avatar", () => ({
+vi.mock("@/components/ui/avatar", () => ({
   Avatar: ({ children, className }: { children: React.ReactNode; className?: string }) => (
     <div data-testid="avatar" className={className}>
       {children}
@@ -192,7 +192,7 @@ jest.mock("@/components/ui/avatar", () => ({
   ),
 }));
 
-jest.mock("@/components/ui/tooltip", () => ({
+vi.mock("@/components/ui/tooltip", () => ({
   TooltipProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   TooltipTrigger: ({ children, asChild }: { children: React.ReactNode; asChild?: boolean }) => (
@@ -205,7 +205,7 @@ jest.mock("@/components/ui/tooltip", () => ({
 
 describe("AgentChatBubble", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockAuthenticated.mockReturnValue(true);
     // Reset store state
     useAgentChatStore.setState({

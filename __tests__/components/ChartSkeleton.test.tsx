@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { ChartSkeleton, DonutChartSkeleton } from "@/components/Utilities/ChartSkeleton";
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 
 describe("ChartSkeleton", () => {
   describe("Default Rendering", () => {

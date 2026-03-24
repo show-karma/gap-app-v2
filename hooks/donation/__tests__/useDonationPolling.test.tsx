@@ -6,9 +6,9 @@ import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { type DonationApiResponse, DonationStatus, type DonationStatusApiResponse } from "../types";
 import { useDonationPolling } from "../useDonationPolling";
 
-jest.mock("@/services/donations.service");
+vi.mock("@/services/donations.service");
 
-const mockDonationsService = donationsService as jest.Mocked<typeof donationsService>;
+const mockDonationsService = donationsService as vi.Mocked<typeof donationsService>;
 
 const createWrapper = () => {
   const queryClient = new QueryClient({
@@ -43,12 +43,12 @@ const makeDonationResponse = (
 
 describe("useDonationPolling", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers();
+    vi.clearAllMocks();
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   describe("when donationUid is null (query disabled)", () => {
@@ -182,7 +182,7 @@ describe("useDonationPolling", () => {
 
       // Advance past the 5s polling interval to verify no refetch occurs
       await act(async () => {
-        jest.advanceTimersByTime(6000);
+        vi.advanceTimersByTime(6000);
       });
 
       expect(mockDonationsService.getDonationByUid.mock.calls.length).toBe(callCount);
@@ -204,7 +204,7 @@ describe("useDonationPolling", () => {
       const callCount = mockDonationsService.getDonationByUid.mock.calls.length;
 
       await act(async () => {
-        jest.advanceTimersByTime(6000);
+        vi.advanceTimersByTime(6000);
       });
 
       expect(mockDonationsService.getDonationByUid.mock.calls.length).toBe(callCount);
@@ -329,7 +329,7 @@ describe("useDonationPolling", () => {
 
       const callCount = mockDonationsService.getDonationStatus.mock.calls.length;
       await act(async () => {
-        jest.advanceTimersByTime(6000);
+        vi.advanceTimersByTime(6000);
       });
       expect(mockDonationsService.getDonationStatus.mock.calls.length).toBe(callCount);
     });

@@ -9,16 +9,16 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
 // Mock fetchData
-jest.mock("@/utilities/fetchData");
-const mockFetchData = fetchData as jest.MockedFunction<typeof fetchData>;
+vi.mock("@/utilities/fetchData");
+const mockFetchData = fetchData as vi.MockedFunction<typeof fetchData>;
 
 // Mock errorManager
-jest.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: jest.fn(),
+vi.mock("@/components/Utilities/errorManager", () => ({
+  errorManager: vi.fn(),
 }));
 
 // Mock Button component
-jest.mock("@/components/Utilities/Button", () => ({
+vi.mock("@/components/Utilities/Button", () => ({
   Button: ({ onClick, disabled, children, className, isLoading, type }: any) => (
     <button
       onClick={onClick}
@@ -33,8 +33,8 @@ jest.mock("@/components/Utilities/Button", () => ({
 }));
 
 describe("IndicatorForm", () => {
-  const mockOnSuccess = jest.fn();
-  const mockOnError = jest.fn();
+  const mockOnSuccess = vi.fn();
+  const mockOnError = vi.fn();
 
   const mockIndicatorResponse = {
     id: "indicator-123",
@@ -44,7 +44,7 @@ describe("IndicatorForm", () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("Rendering", () => {
@@ -510,7 +510,7 @@ describe("IndicatorForm", () => {
 
   describe("Event Propagation", () => {
     it("should prevent propagation when preventPropagation is true", () => {
-      const handleClick = jest.fn();
+      const handleClick = vi.fn();
 
       render(
         <div onClick={handleClick}>
@@ -529,7 +529,7 @@ describe("IndicatorForm", () => {
     });
 
     it("should stop propagation on Enter key when preventPropagation is true", () => {
-      const handleKeyDown = jest.fn();
+      const handleKeyDown = vi.fn();
 
       const { container } = render(
         <div onKeyDown={handleKeyDown}>

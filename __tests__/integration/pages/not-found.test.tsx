@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import NotFoundPage from "@/app/not-found";
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 
 describe("NotFoundPage", () => {
   it("renders the 404 message", () => {

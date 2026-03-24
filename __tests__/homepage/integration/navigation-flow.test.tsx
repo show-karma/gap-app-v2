@@ -10,10 +10,10 @@
 
 import HomePage from "@/app/page";
 import { renderWithProviders, screen } from "../utils/test-helpers";
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 
 // Mock PAGES utility
-jest.mock("@/utilities/pages", () => ({
+vi.mock("@/utilities/pages", () => ({
   PAGES: {
     FUNDERS: "/funders",
     FUNDING_APP: "/funding-map",
@@ -30,7 +30,7 @@ jest.mock("@/utilities/pages", () => ({
 }));
 
 // Mock SOCIALS utility
-jest.mock("@/utilities/socials", () => ({
+vi.mock("@/utilities/socials", () => ({
   SOCIALS: {
     DISCORD: "https://discord.gg/karmahq",
   },

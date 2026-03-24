@@ -2,43 +2,43 @@ import type { AxiosInstance } from "axios";
 import { TokenManager } from "@/utilities/auth/token-manager";
 
 // Mock dependencies BEFORE importing the service
-jest.mock("@/utilities/auth/token-manager");
-jest.mock("@/utilities/enviromentVars", () => ({
+vi.mock("@/utilities/auth/token-manager");
+vi.mock("@/utilities/enviromentVars", () => ({
   envVars: {
     NEXT_PUBLIC_GAP_INDEXER_URL: "http://localhost:4000",
   },
 }));
 
 // Mock fetchData for GET requests
-jest.mock("@/utilities/fetchData");
+vi.mock("@/utilities/fetchData");
 
-// Create a persistent mock instance using var (hoisted) so it's available in jest.mock factory
-var mockAxiosInstance: jest.Mocked<AxiosInstance>;
+// Create a persistent mock instance using var (hoisted) so it's available in vi.mock factory
+var mockAxiosInstance: vi.Mocked<AxiosInstance>;
 
 // Mock api-client for batch POST operations
-jest.mock("@/utilities/auth/api-client", () => {
+vi.mock("@/utilities/auth/api-client", () => {
   const instance = {
-    get: jest.fn(),
-    post: jest.fn(),
-    delete: jest.fn(),
-    put: jest.fn(),
-    patch: jest.fn(),
-    request: jest.fn(),
-    head: jest.fn(),
-    options: jest.fn(),
+    get: vi.fn(),
+    post: vi.fn(),
+    delete: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    request: vi.fn(),
+    head: vi.fn(),
+    options: vi.fn(),
     interceptors: {
-      request: { use: jest.fn(), eject: jest.fn(), clear: jest.fn() },
-      response: { use: jest.fn(), eject: jest.fn(), clear: jest.fn() },
+      request: { use: vi.fn(), eject: vi.fn(), clear: vi.fn() },
+      response: { use: vi.fn(), eject: vi.fn(), clear: vi.fn() },
     },
     defaults: {} as any,
-    getUri: jest.fn(),
-    deleteUri: jest.fn(),
-  } as unknown as jest.Mocked<AxiosInstance>;
+    getUri: vi.fn(),
+    deleteUri: vi.fn(),
+  } as unknown as vi.Mocked<AxiosInstance>;
 
   mockAxiosInstance = instance;
 
   return {
-    createAuthenticatedApiClient: jest.fn(() => instance),
+    createAuthenticatedApiClient: vi.fn(() => instance),
   };
 });
 
@@ -47,17 +47,17 @@ import { type PermissionCheckOptions, PermissionsService } from "@/services/perm
 // Import fetchData mock
 import fetchData from "@/utilities/fetchData";
 
-const mockFetchData = fetchData as jest.MockedFunction<typeof fetchData>;
+const mockFetchData = fetchData as vi.MockedFunction<typeof fetchData>;
 
 describe("PermissionsService", () => {
   let service: PermissionsService;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockAxiosInstance.post.mockClear();
 
     // Mock TokenManager
-    (TokenManager.getToken as jest.Mock) = jest.fn().mockResolvedValue("test-token");
+    (TokenManager.getToken as vi.Mock) = vi.fn().mockResolvedValue("test-token");
 
     service = new PermissionsService();
   });

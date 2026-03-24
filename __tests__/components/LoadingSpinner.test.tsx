@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { LoadingSpinner } from "@/components/Disbursement/components/LoadingSpinner";
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 
 describe("LoadingSpinner", () => {
   describe("Rendering", () => {

@@ -7,8 +7,8 @@ import {
 } from "@/utilities/walletClientValidation";
 
 // Mock console methods
-const _mockConsoleLog = jest.spyOn(console, "log").mockImplementation(() => {});
-const _mockConsoleError = jest.spyOn(console, "error").mockImplementation(() => {});
+const _mockConsoleLog = vi.spyOn(console, "log").mockImplementation(() => {});
+const _mockConsoleError = vi.spyOn(console, "error").mockImplementation(() => {});
 
 describe("walletClientValidation utilities", () => {
   const mockAccount = {
@@ -27,13 +27,13 @@ describe("walletClientValidation utilities", () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers();
+    vi.clearAllMocks();
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
-    jest.useRealTimers();
-    jest.restoreAllMocks();
+    vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 
   describe("validateWalletClient", () => {
@@ -124,7 +124,7 @@ describe("walletClientValidation utilities", () => {
   describe("waitForValidWalletClient", () => {
     it("should return wallet client immediately when valid", async () => {
       const walletClient = createMockWalletClient(10);
-      const getWalletClient = jest.fn().mockReturnValue(walletClient);
+      const getWalletClient = vi.fn().mockReturnValue(walletClient);
 
       const result = await waitForValidWalletClient(getWalletClient, 10);
 
@@ -144,9 +144,9 @@ describe("walletClientValidation utilities", () => {
 
       const promise = waitForValidWalletClient(getWalletClient, 10, 15, 100);
 
-      await jest.advanceTimersByTimeAsync(0);
-      await jest.advanceTimersByTimeAsync(100);
-      await jest.advanceTimersByTimeAsync(120);
+      await vi.advanceTimersByTimeAsync(0);
+      await vi.advanceTimersByTimeAsync(100);
+      await vi.advanceTimersByTimeAsync(120);
 
       const result = await promise;
 
@@ -165,9 +165,9 @@ describe("walletClientValidation utilities", () => {
 
       const promise = waitForValidWalletClient(getWalletClient, 10, 15, 100);
 
-      await jest.advanceTimersByTimeAsync(0);
-      await jest.advanceTimersByTimeAsync(100);
-      await jest.advanceTimersByTimeAsync(120);
+      await vi.advanceTimersByTimeAsync(0);
+      await vi.advanceTimersByTimeAsync(100);
+      await vi.advanceTimersByTimeAsync(120);
 
       const result = await promise;
 
@@ -182,13 +182,13 @@ describe("walletClientValidation utilities", () => {
         .mockReturnValueOnce(null)
         .mockReturnValueOnce(walletClient);
 
-      const setTimeoutSpy = jest.spyOn(global, "setTimeout");
+      const setTimeoutSpy = vi.spyOn(global, "setTimeout");
 
       const promise = waitForValidWalletClient(getWalletClient, 10, 15, 100);
 
-      await jest.advanceTimersByTimeAsync(0);
-      await jest.advanceTimersByTimeAsync(100);
-      await jest.advanceTimersByTimeAsync(120);
+      await vi.advanceTimersByTimeAsync(0);
+      await vi.advanceTimersByTimeAsync(100);
+      await vi.advanceTimersByTimeAsync(120);
 
       await promise;
 
@@ -207,13 +207,13 @@ describe("walletClientValidation utilities", () => {
         .mockReturnValueOnce(null)
         .mockReturnValueOnce(walletClient);
 
-      const setTimeoutSpy = jest.spyOn(global, "setTimeout");
+      const setTimeoutSpy = vi.spyOn(global, "setTimeout");
 
       const promise = waitForValidWalletClient(getWalletClient, 10, 15, 1000);
 
       // Advance through multiple retries
       for (let i = 0; i < 5; i++) {
-        await jest.advanceTimersByTimeAsync(4000);
+        await vi.advanceTimersByTimeAsync(4000);
       }
 
       await promise;
@@ -225,13 +225,13 @@ describe("walletClientValidation utilities", () => {
 
     it("should return null after max retries exhausted", async () => {
       const invalidClient = createMockWalletClient(8453);
-      const getWalletClient = jest.fn().mockReturnValue(invalidClient);
+      const getWalletClient = vi.fn().mockReturnValue(invalidClient);
 
       const promise = waitForValidWalletClient(getWalletClient, 10, 3, 100);
 
-      await jest.advanceTimersByTimeAsync(0);
-      await jest.advanceTimersByTimeAsync(100);
-      await jest.advanceTimersByTimeAsync(120);
+      await vi.advanceTimersByTimeAsync(0);
+      await vi.advanceTimersByTimeAsync(100);
+      await vi.advanceTimersByTimeAsync(120);
 
       const result = await promise;
 
@@ -250,8 +250,8 @@ describe("walletClientValidation utilities", () => {
 
       const promise = waitForValidWalletClient(getWalletClient, 10, 15, 100);
 
-      await jest.advanceTimersByTimeAsync(0);
-      await jest.advanceTimersByTimeAsync(100);
+      await vi.advanceTimersByTimeAsync(0);
+      await vi.advanceTimersByTimeAsync(100);
 
       const result = await promise;
 
@@ -269,8 +269,8 @@ describe("walletClientValidation utilities", () => {
 
       const promise = waitForValidWalletClient(getWalletClient, 10, 15, 100);
 
-      await jest.advanceTimersByTimeAsync(0);
-      await jest.advanceTimersByTimeAsync(100);
+      await vi.advanceTimersByTimeAsync(0);
+      await vi.advanceTimersByTimeAsync(100);
 
       const result = await promise;
 
@@ -288,9 +288,9 @@ describe("walletClientValidation utilities", () => {
 
       const promise = waitForValidWalletClient(getWalletClient, 10, 3, 100);
 
-      await jest.advanceTimersByTimeAsync(0);
-      await jest.advanceTimersByTimeAsync(100);
-      await jest.advanceTimersByTimeAsync(120);
+      await vi.advanceTimersByTimeAsync(0);
+      await vi.advanceTimersByTimeAsync(100);
+      await vi.advanceTimersByTimeAsync(120);
 
       const result = await promise;
 
@@ -412,10 +412,10 @@ describe("walletClientValidation utilities", () => {
 
       const promise = waitForValidWalletClient(getWalletClient, 10, 15, 50);
 
-      await jest.advanceTimersByTimeAsync(0);
-      await jest.advanceTimersByTimeAsync(50);
-      await jest.advanceTimersByTimeAsync(60);
-      await jest.advanceTimersByTimeAsync(70);
+      await vi.advanceTimersByTimeAsync(0);
+      await vi.advanceTimersByTimeAsync(50);
+      await vi.advanceTimersByTimeAsync(60);
+      await vi.advanceTimersByTimeAsync(70);
 
       const result = await promise;
       expect(result).toBe(chain10);
@@ -440,7 +440,7 @@ describe("walletClientValidation utilities", () => {
   describe("Integration scenarios", () => {
     it("should work together: validate -> wait -> refresh check", async () => {
       const walletClient = createMockWalletClient(8453);
-      const getWalletClient = jest.fn().mockReturnValue(walletClient);
+      const getWalletClient = vi.fn().mockReturnValue(walletClient);
 
       // Initial validation should fail
       const initialValidation = validateWalletClient(walletClient, 10);

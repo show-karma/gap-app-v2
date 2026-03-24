@@ -6,10 +6,10 @@ import { useFundingOpportunities } from "@/hooks/useFundingOpportunities";
 import type { FundingProgram } from "@/src/features/funding-map/types/funding-program";
 
 // Mock the hook
-jest.mock("@/hooks/useFundingOpportunities");
+vi.mock("@/hooks/useFundingOpportunities");
 
 // Mock InfiniteScroll
-jest.mock("react-infinite-scroll-component", () => {
+vi.mock("react-infinite-scroll-component", () => {
   return ({ children, loader, hasMore, next, dataLength }: any) => (
     <div data-testid="infinite-scroll" data-has-more={hasMore} data-length={dataLength}>
       {children}
@@ -23,7 +23,7 @@ jest.mock("react-infinite-scroll-component", () => {
 });
 
 // Mock sub-components
-jest.mock("@/components/CommunityGrants/FundingOpportunities/FundingOpportunitiesGrid", () => ({
+vi.mock("@/components/CommunityGrants/FundingOpportunities/FundingOpportunitiesGrid", () => ({
   FundingOpportunitiesGrid: ({ programs }: { programs: FundingProgram[] }) => (
     <div data-testid="funding-opportunities-grid">
       {programs.map((program) => (
@@ -35,23 +35,23 @@ jest.mock("@/components/CommunityGrants/FundingOpportunities/FundingOpportunitie
   ),
 }));
 
-jest.mock("@/components/CommunityGrants/FundingOpportunities/AlreadyAppliedBanner", () => ({
+vi.mock("@/components/CommunityGrants/FundingOpportunities/AlreadyAppliedBanner", () => ({
   AlreadyAppliedBanner: ({ communitySlug }: { communitySlug: string }) => (
     <div data-testid="already-applied-banner">Already applied? - {communitySlug}</div>
   ),
 }));
 
 // Mock Spinner
-jest.mock("@/components/Utilities/Spinner", () => ({
+vi.mock("@/components/Utilities/Spinner", () => ({
   Spinner: () => <div data-testid="spinner">Loading...</div>,
 }));
 
 // Mock lucide-react
-jest.mock("lucide-react", () => ({
+vi.mock("lucide-react", () => ({
   Coins: (props: any) => <svg {...props} data-testid="coins-icon" />,
 }));
 
-const mockUseFundingOpportunities = useFundingOpportunities as jest.MockedFunction<
+const mockUseFundingOpportunities = useFundingOpportunities as vi.MockedFunction<
   typeof useFundingOpportunities
 >;
 
@@ -79,12 +79,12 @@ describe("FundingOpportunities", () => {
   const defaultHookReturn = {
     data: undefined,
     isLoading: false,
-    fetchNextPage: jest.fn(),
+    fetchNextPage: vi.fn(),
     hasNextPage: false,
     isFetchingNextPage: false,
     error: null,
     isError: false,
-    refetch: jest.fn(),
+    refetch: vi.fn(),
     status: "success" as const,
     fetchStatus: "idle" as const,
     isSuccess: true,
@@ -104,7 +104,7 @@ describe("FundingOpportunities", () => {
     isRefetchError: false,
     hasPreviousPage: false,
     isFetchingPreviousPage: false,
-    fetchPreviousPage: jest.fn(),
+    fetchPreviousPage: vi.fn(),
   };
 
   beforeEach(() => {
@@ -115,7 +115,7 @@ describe("FundingOpportunities", () => {
         },
       },
     });
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   afterEach(() => {
@@ -289,7 +289,7 @@ describe("FundingOpportunities", () => {
     });
 
     it("should show load more when hasNextPage is true", () => {
-      const mockFetchNextPage = jest.fn();
+      const mockFetchNextPage = vi.fn();
 
       mockUseFundingOpportunities.mockReturnValue({
         ...defaultHookReturn,

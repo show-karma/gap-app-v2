@@ -10,10 +10,10 @@
 
 import { JoinDiscordButton } from "@/src/features/homepage/components/join-discord-button";
 import { renderWithProviders, screen } from "../utils/test-helpers";
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 
 // Mock SOCIALS utility
-jest.mock("@/utilities/socials", () => ({
+vi.mock("@/utilities/socials", () => ({
   SOCIALS: {
     DISCORD: "https://discord.gg/karmahq",
   },

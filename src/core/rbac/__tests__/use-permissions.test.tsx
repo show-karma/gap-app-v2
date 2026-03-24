@@ -6,11 +6,11 @@ import { Permission } from "../types/permission";
 import { Role } from "../types/role";
 
 // Unmock the hook so we test the real implementation (navbar setup globally mocks it)
-jest.unmock("@/src/core/rbac/hooks/use-permissions");
+vi.unmock("@/src/core/rbac/hooks/use-permissions");
 
-jest.mock("../services/authorization.service");
+vi.mock("../services/authorization.service");
 
-const mockService = authorizationService as jest.Mocked<typeof authorizationService>;
+const mockService = authorizationService as vi.Mocked<typeof authorizationService>;
 
 // Dynamic import after unmocking
 let permissionsKeys: typeof import("../hooks/use-permissions")["permissionsKeys"];
@@ -37,7 +37,7 @@ describe("usePermissions hooks", () => {
         },
       },
     });
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   afterEach(() => {

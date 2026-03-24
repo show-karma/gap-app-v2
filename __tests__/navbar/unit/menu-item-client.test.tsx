@@ -11,8 +11,8 @@ import { MenuItemClient } from "@/src/components/navbar/menu-item-client";
 import { renderWithProviders } from "../utils/test-helpers";
 
 // Mock next/navigation
-const mockPush = jest.fn();
-jest.mock("next/navigation", () => ({
+const mockPush = vi.fn();
+vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: mockPush,
   }),
@@ -20,7 +20,7 @@ jest.mock("next/navigation", () => ({
 
 describe("MenuItemClient Component", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("Rendering Tests", () => {
@@ -121,7 +121,7 @@ describe("MenuItemClient Component", () => {
     });
 
     it("should call onClick callback when clicked", () => {
-      const onClickMock = jest.fn();
+      const onClickMock = vi.fn();
       renderWithProviders(
         <MenuItemClient href="/test" icon={UserPlus} title="Test Title" onClick={onClickMock} />
       );
@@ -207,7 +207,7 @@ describe("MenuItemClient Component", () => {
     it("should click DOM element with id when button exists", () => {
       const mockButton = document.createElement("button");
       mockButton.id = "new-project-button";
-      mockButton.onclick = jest.fn();
+      mockButton.onclick = vi.fn();
       document.body.appendChild(mockButton);
 
       renderWithProviders(
@@ -246,7 +246,7 @@ describe("MenuItemClient Component", () => {
 
       const title = screen.getByText("Test Title");
       const clickEvent = new MouseEvent("click", { bubbles: true });
-      const preventDefaultSpy = jest.spyOn(clickEvent, "preventDefault");
+      const preventDefaultSpy = vi.spyOn(clickEvent, "preventDefault");
 
       title.dispatchEvent(clickEvent);
 
@@ -267,7 +267,7 @@ describe("MenuItemClient Component", () => {
       });
 
       // Mock scrollIntoView
-      Element.prototype.scrollIntoView = jest.fn();
+      Element.prototype.scrollIntoView = vi.fn();
     });
 
     it("should append anchor to href", () => {
@@ -290,7 +290,7 @@ describe("MenuItemClient Component", () => {
 
       const mockElement = document.createElement("div");
       mockElement.id = "test-anchor";
-      mockElement.scrollIntoView = jest.fn();
+      mockElement.scrollIntoView = vi.fn();
       document.body.appendChild(mockElement);
 
       renderWithProviders(
@@ -345,7 +345,7 @@ describe("MenuItemClient Component", () => {
 
       const title = screen.getByText("Test Title");
       const clickEvent = new MouseEvent("click", { bubbles: true });
-      const preventDefaultSpy = jest.spyOn(clickEvent, "preventDefault");
+      const preventDefaultSpy = vi.spyOn(clickEvent, "preventDefault");
 
       title.dispatchEvent(clickEvent);
 
@@ -364,7 +364,7 @@ describe("MenuItemClient Component", () => {
     });
 
     it("should call onClick callback", () => {
-      const onClickMock = jest.fn();
+      const onClickMock = vi.fn();
 
       renderWithProviders(
         <MenuItemClient href="/test" icon={UserPlus} title="Test Title" onClick={onClickMock} />
@@ -377,10 +377,10 @@ describe("MenuItemClient Component", () => {
     });
 
     it("should call onClick before modal logic", () => {
-      const onClickMock = jest.fn();
+      const onClickMock = vi.fn();
       const mockButton = document.createElement("button");
       mockButton.id = "new-project-button";
-      mockButton.onclick = jest.fn();
+      mockButton.onclick = vi.fn();
       document.body.appendChild(mockButton);
 
       renderWithProviders(
@@ -413,7 +413,7 @@ describe("MenuItemClient Component", () => {
     });
 
     it("should be keyboard accessible", () => {
-      const onClickMock = jest.fn();
+      const onClickMock = vi.fn();
 
       renderWithProviders(
         <MenuItemClient href="/test" icon={UserPlus} title="Test Title" onClick={onClickMock} />
@@ -511,7 +511,7 @@ describe("MenuItemClient Component", () => {
     });
 
     it("should handle all props together", () => {
-      const onClickMock = jest.fn();
+      const onClickMock = vi.fn();
 
       renderWithProviders(
         <MenuItemClient

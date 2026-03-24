@@ -10,58 +10,64 @@ import { useReviewerPrograms } from "@/hooks/usePermissions";
 import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
 import { useStaff } from "@/src/core/rbac/hooks/use-staff-bridge";
 
-jest.mock("@tanstack/react-query", () => {
-  const actual = jest.requireActual("@tanstack/react-query");
+vi.mock("@tanstack/react-query", () => {
+  const actual = vi.importActual("@tanstack/react-query");
   return {
     ...actual,
-    useQuery: jest.fn(),
+    useQuery: vi.fn(),
   };
 });
 
-jest.mock("@/hooks/useAuth", () => ({
-  useAuth: jest.fn(),
-  setPostLoginRedirect: jest.fn(),
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: vi.fn(),
+  setPostLoginRedirect: vi.fn(),
 }));
 
-jest.mock("@/hooks/useContributorProfile", () => ({
-  useContributorProfile: jest.fn(),
+vi.mock("@/hooks/useContributorProfile", () => ({
+  useContributorProfile: vi.fn(),
 }));
 
-jest.mock("@/hooks/useDashboardAdmin", () => ({
-  useDashboardAdmin: jest.fn(),
+vi.mock("@/hooks/useDashboardAdmin", () => ({
+  useDashboardAdmin: vi.fn(),
 }));
 
-jest.mock("@/hooks/usePermissions", () => ({
-  useReviewerPrograms: jest.fn(),
+vi.mock("@/hooks/usePermissions", () => ({
+  useReviewerPrograms: vi.fn(),
 }));
 
-jest.mock("@/src/core/rbac/context/permission-context", () => ({
-  usePermissionContext: jest.fn(),
+vi.mock("@/src/core/rbac/context/permission-context", () => ({
+  usePermissionContext: vi.fn(),
 }));
 
-jest.mock("@/src/core/rbac/hooks/use-staff-bridge", () => ({
-  useStaff: jest.fn(),
+vi.mock("@/src/core/rbac/hooks/use-staff-bridge", () => ({
+  useStaff: vi.fn(),
 }));
 
+<<<<<<< HEAD
 jest.mock("next/navigation", () => ({
   useRouter: jest.fn(),
   useParams: jest.fn(() => ({})),
+=======
+vi.mock("next/navigation", () => ({
+  useRouter: vi.fn(),
+>>>>>>> 8322801b (test: migrate Jest to Vitest for unit/integration tests)
 }));
 
-jest.mock("@/components/EthereumAddressToENSAvatar", () => ({
+vi.mock("@/components/EthereumAddressToENSAvatar", () => ({
   __esModule: true,
   default: () => <div data-testid="ens-avatar" />,
 }));
 
-jest.mock("@/components/EthereumAddressToENSName", () => ({
+vi.mock("@/components/EthereumAddressToENSName", () => ({
   __esModule: true,
   default: ({ address }: { address: string }) => <span>{address}</span>,
 }));
 
-jest.mock("@/components/Dialogs/ProjectDialog/index", () => ({
+vi.mock("@/components/Dialogs/ProjectDialog/index", () => ({
   ProjectDialog: () => <button type="button">Create Project</button>,
 }));
 
+<<<<<<< HEAD
 jest.mock("@/features/user-applications/hooks/use-user-applications", () => ({
   useUserApplications: jest.fn(() => ({
     applications: [],
@@ -88,6 +94,17 @@ const mockUseDashboardAdmin = useDashboardAdmin as unknown as jest.Mock;
 const mockUsePermissionContext = usePermissionContext as unknown as jest.Mock;
 const mockUseStaff = useStaff as unknown as jest.Mock;
 const mockUseReviewerPrograms = useReviewerPrograms as unknown as jest.Mock;
+=======
+const mockUseQuery = useQuery as unknown as vi.Mock;
+const mockUseRouter = useRouter as unknown as vi.Mock;
+const mockUseAuth = useAuth as unknown as vi.Mock;
+const mockSetPostLoginRedirect = setPostLoginRedirect as unknown as vi.Mock;
+const mockUseContributorProfile = useContributorProfile as unknown as vi.Mock;
+const mockUseDashboardAdmin = useDashboardAdmin as unknown as vi.Mock;
+const mockUsePermissionContext = usePermissionContext as unknown as vi.Mock;
+const mockUseStaff = useStaff as unknown as vi.Mock;
+const mockUseReviewerPrograms = useReviewerPrograms as unknown as vi.Mock;
+>>>>>>> 8322801b (test: migrate Jest to Vitest for unit/integration tests)
 
 const setupAuth = ({
   authenticated,
@@ -132,15 +149,15 @@ const createWrapper = () => {
 
 describe("Dashboard", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
-    mockUseRouter.mockReturnValue({ replace: jest.fn() });
+    vi.clearAllMocks();
+    mockUseRouter.mockReturnValue({ replace: vi.fn() });
     setupAuth({ authenticated: true, address: "0x123" });
     setupPermissions();
     mockUseDashboardAdmin.mockReturnValue({
       communities: [],
       isLoading: false,
       isError: false,
-      refetch: jest.fn(),
+      refetch: vi.fn(),
     });
     mockUseContributorProfile.mockReturnValue({ profile: { data: { name: "Alex" } } });
     mockUseQuery.mockReturnValue({
@@ -148,12 +165,12 @@ describe("Dashboard", () => {
       isLoading: false,
       isSuccess: true,
       isError: false,
-      refetch: jest.fn(),
+      refetch: vi.fn(),
     });
   });
 
   it("redirects unauthenticated users away from dashboard", async () => {
-    const replace = jest.fn();
+    const replace = vi.fn();
     mockUseRouter.mockReturnValue({ replace });
     setupAuth({ authenticated: false, address: undefined, ready: true });
 
@@ -180,7 +197,7 @@ describe("Dashboard", () => {
       isLoading: false,
       isSuccess: true,
       isError: false,
-      refetch: jest.fn(),
+      refetch: vi.fn(),
     });
 
     render(<Dashboard />, { wrapper: createWrapper() });
@@ -194,7 +211,7 @@ describe("Dashboard", () => {
       isLoading: false,
       isSuccess: true,
       isError: false,
-      refetch: jest.fn(),
+      refetch: vi.fn(),
     });
 
     render(<Dashboard />, { wrapper: createWrapper() });
@@ -209,7 +226,7 @@ describe("Dashboard", () => {
       isLoading: false,
       isSuccess: true,
       isError: false,
-      refetch: jest.fn(),
+      refetch: vi.fn(),
     });
 
     render(<Dashboard />, { wrapper: createWrapper() });
@@ -321,7 +338,7 @@ describe("Dashboard", () => {
       isLoading: false,
       isSuccess: false,
       isError: true,
-      refetch: jest.fn(),
+      refetch: vi.fn(),
     });
 
     render(<Dashboard />, { wrapper: createWrapper() });
@@ -337,7 +354,7 @@ describe("Dashboard", () => {
       isLoading: false,
       isSuccess: false,
       isError: true,
-      refetch: jest.fn(),
+      refetch: vi.fn(),
     });
 
     render(<Dashboard />, { wrapper: createWrapper() });

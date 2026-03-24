@@ -6,15 +6,15 @@
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 
 // Mock next-themes
-jest.mock("next-themes", () => ({
+vi.mock("next-themes", () => ({
   useTheme: () => ({ theme: "light" }),
 }));
 
 // Mock the dynamic import of MDEditor
-jest.mock("next/dynamic", () => {
+vi.mock("next/dynamic", () => {
   return function mockDynamic(
     importFn: () => Promise<{ default: React.ComponentType }>,
     options?: { loading?: () => React.ReactNode }
@@ -138,7 +138,7 @@ describe("MarkdownEditor", () => {
     });
 
     it("should enforce maxLength on change", async () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<MarkdownEditor value="" onChange={handleChange} maxLength={10} id="test-editor" />);
 
       const textarea = screen.getByTestId("md-editor-textarea");
@@ -245,7 +245,7 @@ describe("MarkdownEditor", () => {
 
   describe("User Interactions", () => {
     it("should call onChange when typing", async () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<MarkdownEditor value="" onChange={handleChange} id="test-editor" />);
 
       const textarea = screen.getByTestId("md-editor-textarea");
@@ -255,7 +255,7 @@ describe("MarkdownEditor", () => {
     });
 
     it("should call onBlur when losing focus", async () => {
-      const handleBlur = jest.fn();
+      const handleBlur = vi.fn();
       render(<MarkdownEditor value="" onBlur={handleBlur} id="test-editor" />);
 
       const textarea = screen.getByTestId("md-editor-textarea");

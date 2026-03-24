@@ -11,9 +11,10 @@ import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 // Undo the global mock of useAuth from __tests__/navbar/setup.ts
 // so we can test the real hook implementation
-jest.unmock("@/hooks/useAuth");
+vi.unmock("@/hooks/useAuth");
 
 // Controllable mock functions for hook tests
+<<<<<<< HEAD
 const mockLogin = jest.fn();
 const mockLogout = jest.fn();
 const mockGetAccessToken = jest.fn();
@@ -63,19 +64,54 @@ jest.mock("@/utilities/wagmi/privy-config", () => ({
 
 const mockQueryClientClear = jest.fn();
 const mockClearCache = jest.fn();
+=======
+const mockLogin = vi.fn();
+const mockLogout = vi.fn();
+const mockGetAccessToken = vi.fn();
+const mockUsePrivy = vi.fn();
+const mockUseWallets = vi.fn();
+const mockUseAccount = vi.fn();
+const mockGetToken = vi.fn();
 
-jest.mock("@/utilities/query-client", () => ({
+// Override global mocks for per-test control
+vi.mock("@privy-io/react-auth", () => ({
+  usePrivy: () => mockUsePrivy(),
+  useWallets: () => mockUseWallets(),
+}));
+
+vi.mock("wagmi", () => ({
+  useAccount: () => mockUseAccount(),
+  useConnect: vi.fn(() => ({ connect: vi.fn(), connectors: [] })),
+  useDisconnect: vi.fn(() => ({ disconnect: vi.fn() })),
+  useSwitchChain: vi.fn(() => ({ switchChain: vi.fn() })),
+  createConfig: vi.fn(),
+}));
+
+vi.mock("@wagmi/core", () => ({
+  watchAccount: vi.fn(() => vi.fn()),
+}));
+
+const mockQueryClientClear = vi.fn();
+const mockClearCache = vi.fn();
+>>>>>>> 8322801b (test: migrate Jest to Vitest for unit/integration tests)
+
+vi.mock("@/utilities/query-client", () => ({
   queryClient: {
     clear: (...args: unknown[]) => mockQueryClientClear(...args),
-    removeQueries: jest.fn(),
+    removeQueries: vi.fn(),
   },
 }));
 
 // Mock TokenManager module-level to ensure next/jest resolves the same mock instance
-jest.mock("@/utilities/auth/token-manager", () => ({
+vi.mock("@/utilities/auth/token-manager", () => ({
   TokenManager: {
     getToken: (...args: unknown[]) => mockGetToken(...args),
+<<<<<<< HEAD
     setPrivyInstance: jest.fn(),
+=======
+    setPrivyInstance: vi.fn(),
+    clearTokens: vi.fn(),
+>>>>>>> 8322801b (test: migrate Jest to Vitest for unit/integration tests)
     clearCache: (...args: unknown[]) => mockClearCache(...args),
   },
 }));
@@ -375,7 +411,7 @@ describe("useAuth - Cypress mock auth compatibility", () => {
   const previousE2EBypassFlag = process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS = "true";
     delete (window as Window & { Cypress?: unknown }).Cypress;
     localStorage.removeItem("privy:auth_state");
@@ -465,8 +501,8 @@ describe("useAuth - Cross-tab logout synchronization", () => {
   const wrapper = ({ children }: { children: ReactNode }) => <>{children}</>;
 
   beforeEach(() => {
-    jest.useFakeTimers();
-    jest.spyOn(console, "error").mockImplementation(() => {});
+    vi.useFakeTimers();
+    vi.spyOn(console, "error").mockImplementation(() => {});
     mockGetToken.mockResolvedValue(null);
 
     setBridgeState({
@@ -479,8 +515,8 @@ describe("useAuth - Cross-tab logout synchronization", () => {
   });
 
   afterEach(() => {
-    jest.useRealTimers();
-    jest.restoreAllMocks();
+    vi.useRealTimers();
+    vi.restoreAllMocks();
     mockGetToken.mockReset();
     resetBridgeState();
     document.cookie = "privy-session=; expires=Thu, 01 Jan 1970 00:00:00 GMT";
@@ -491,13 +527,13 @@ describe("useAuth - Cross-tab logout synchronization", () => {
 
     // 1st failure: initial delayed check at 500ms
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(500);
+      await vi.advanceTimersByTimeAsync(500);
     });
     expect(mockLogout).not.toHaveBeenCalled();
 
     // 2nd failure: first interval tick at 10000ms
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(9500);
+      await vi.advanceTimersByTimeAsync(9500);
     });
     expect(mockLogout).not.toHaveBeenCalled();
   });
@@ -507,15 +543,15 @@ describe("useAuth - Cross-tab logout synchronization", () => {
 
     // 1st failure at 500ms
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(500);
+      await vi.advanceTimersByTimeAsync(500);
     });
     // 2nd failure at 10000ms
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(9500);
+      await vi.advanceTimersByTimeAsync(9500);
     });
     // 3rd failure at 20000ms → triggers logout
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(10000);
+      await vi.advanceTimersByTimeAsync(10000);
     });
 
     expect(mockLogout).toHaveBeenCalled();
@@ -531,15 +567,15 @@ describe("useAuth - Cross-tab logout synchronization", () => {
 
     // 1st failure
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(500);
+      await vi.advanceTimersByTimeAsync(500);
     });
     // 2nd failure
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(9500);
+      await vi.advanceTimersByTimeAsync(9500);
     });
     // 3rd call: token available → counter resets
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(10000);
+      await vi.advanceTimersByTimeAsync(10000);
     });
 
     expect(mockLogout).not.toHaveBeenCalled();
@@ -552,16 +588,16 @@ describe("useAuth - Cross-tab logout synchronization", () => {
 
     // Advance through 4 check intervals
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(500);
+      await vi.advanceTimersByTimeAsync(500);
     });
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(9500);
+      await vi.advanceTimersByTimeAsync(9500);
     });
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(10000);
+      await vi.advanceTimersByTimeAsync(10000);
     });
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(10000);
+      await vi.advanceTimersByTimeAsync(10000);
     });
 
     expect(mockLogout).not.toHaveBeenCalled();
@@ -573,7 +609,7 @@ describe("useAuth - Cross-tab logout synchronization", () => {
     expect(mockGetToken).not.toHaveBeenCalled();
 
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(500);
+      await vi.advanceTimersByTimeAsync(500);
     });
 
     expect(mockGetToken).toHaveBeenCalledTimes(1);
@@ -588,7 +624,7 @@ describe("useAuth - Cross-tab logout synchronization", () => {
       unmount();
     });
 
-    await jest.advanceTimersByTimeAsync(20000);
+    await vi.advanceTimersByTimeAsync(20000);
 
     expect(mockGetToken).not.toHaveBeenCalled();
   });
@@ -619,7 +655,7 @@ describe("useAuth - Cross-tab logout synchronization", () => {
     renderHook(() => useAuth(), { wrapper });
 
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(20000);
+      await vi.advanceTimersByTimeAsync(20000);
     });
 
     expect(mockGetToken).not.toHaveBeenCalled();
@@ -631,10 +667,10 @@ describe("useAuth - Cross-tab logout synchronization", () => {
 
     // Accumulate 2 failures
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(500);
+      await vi.advanceTimersByTimeAsync(500);
     });
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(9500);
+      await vi.advanceTimersByTimeAsync(9500);
     });
 
     // Simulate logout: authenticated → false
@@ -664,15 +700,15 @@ describe("useAuth - Cross-tab logout synchronization", () => {
 
     // Need 3 new failures (counter was reset)
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(500);
+      await vi.advanceTimersByTimeAsync(500);
     });
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(9500);
+      await vi.advanceTimersByTimeAsync(9500);
     });
     expect(mockLogout).not.toHaveBeenCalled();
 
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(10000);
+      await vi.advanceTimersByTimeAsync(10000);
     });
 
     expect(mockLogout).toHaveBeenCalled();
@@ -685,15 +721,15 @@ describe("useAuth - Cross-tab logout synchronization", () => {
 
     // 1st failure (error) at 500ms
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(500);
+      await vi.advanceTimersByTimeAsync(500);
     });
     // 2nd failure (error) at 10000ms
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(9500);
+      await vi.advanceTimersByTimeAsync(9500);
     });
     // 3rd failure (error) at 20000ms → triggers logout
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(10000);
+      await vi.advanceTimersByTimeAsync(10000);
     });
 
     expect(mockLogout).toHaveBeenCalled();

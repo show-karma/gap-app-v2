@@ -5,13 +5,13 @@ import {
 } from "@/services/community-project-updates.service";
 
 // Mock dependencies
-jest.mock("@/utilities/enviromentVars", () => ({
+vi.mock("@/utilities/enviromentVars", () => ({
   envVars: {
     NEXT_PUBLIC_GAP_INDEXER_URL: "http://localhost:4000",
   },
 }));
 
-jest.mock("@/utilities/indexer", () => ({
+vi.mock("@/utilities/indexer", () => ({
   INDEXER: {
     COMMUNITY: {
       PROJECT_UPDATES: (communityId: string) => `/communities/${communityId}/project-updates`,
@@ -19,13 +19,13 @@ jest.mock("@/utilities/indexer", () => ({
   },
 }));
 
-jest.mock("@/components/Utilities/errorManager");
+vi.mock("@/components/Utilities/errorManager");
 
 describe("fetchCommunityProjectUpdates", () => {
-  const mockFetch = jest.fn();
+  const mockFetch = vi.fn();
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     global.fetch = mockFetch;
   });
 
@@ -52,9 +52,9 @@ describe("fetchCommunityProjectUpdates", () => {
       mockFetch.mockResolvedValue({
         ok: true,
         headers: {
-          get: jest.fn().mockReturnValue("application/json"),
+          get: vi.fn().mockReturnValue("application/json"),
         },
-        json: jest.fn().mockResolvedValue(mockResponse),
+        json: vi.fn().mockResolvedValue(mockResponse),
       });
 
       const result = await fetchCommunityProjectUpdates({
@@ -81,9 +81,9 @@ describe("fetchCommunityProjectUpdates", () => {
       mockFetch.mockResolvedValue({
         ok: true,
         headers: {
-          get: jest.fn().mockReturnValue("application/json"),
+          get: vi.fn().mockReturnValue("application/json"),
         },
-        json: jest.fn().mockResolvedValue(mockResponse),
+        json: vi.fn().mockResolvedValue(mockResponse),
       });
 
       const params: FetchCommunityProjectUpdatesParams = {
@@ -119,9 +119,9 @@ describe("fetchCommunityProjectUpdates", () => {
       mockFetch.mockResolvedValue({
         ok: true,
         headers: {
-          get: jest.fn().mockReturnValue("application/json"),
+          get: vi.fn().mockReturnValue("application/json"),
         },
-        json: jest.fn().mockResolvedValue(mockResponse),
+        json: vi.fn().mockResolvedValue(mockResponse),
       });
 
       const params: FetchCommunityProjectUpdatesParams = {
@@ -151,9 +151,9 @@ describe("fetchCommunityProjectUpdates", () => {
       mockFetch.mockResolvedValue({
         ok: true,
         headers: {
-          get: jest.fn().mockReturnValue("application/json"),
+          get: vi.fn().mockReturnValue("application/json"),
         },
-        json: jest.fn().mockResolvedValue(mockResponse),
+        json: vi.fn().mockResolvedValue(mockResponse),
       });
 
       const params: FetchCommunityProjectUpdatesParams = {
@@ -182,9 +182,9 @@ describe("fetchCommunityProjectUpdates", () => {
       mockFetch.mockResolvedValue({
         ok: true,
         headers: {
-          get: jest.fn().mockReturnValue("application/json"),
+          get: vi.fn().mockReturnValue("application/json"),
         },
-        json: jest.fn().mockResolvedValue(mockResponse),
+        json: vi.fn().mockResolvedValue(mockResponse),
       });
 
       const params: FetchCommunityProjectUpdatesParams = {
@@ -205,7 +205,7 @@ describe("fetchCommunityProjectUpdates", () => {
         ok: false,
         status: 404,
         statusText: "Not Found",
-        text: jest.fn().mockResolvedValue("Community not found"),
+        text: vi.fn().mockResolvedValue("Community not found"),
       });
 
       await expect(fetchCommunityProjectUpdates({ communityId: "non-existent" })).rejects.toThrow(
@@ -228,7 +228,7 @@ describe("fetchCommunityProjectUpdates", () => {
         ok: false,
         status: 500,
         statusText: "Internal Server Error",
-        text: jest.fn().mockRejectedValue(new Error("Cannot read response")),
+        text: vi.fn().mockRejectedValue(new Error("Cannot read response")),
       });
 
       await expect(fetchCommunityProjectUpdates({ communityId: "community-1" })).rejects.toThrow(
@@ -248,9 +248,9 @@ describe("fetchCommunityProjectUpdates", () => {
       mockFetch.mockResolvedValue({
         ok: true,
         headers: {
-          get: jest.fn().mockReturnValue("text/html"),
+          get: vi.fn().mockReturnValue("text/html"),
         },
-        json: jest.fn(),
+        json: vi.fn(),
       });
 
       await expect(fetchCommunityProjectUpdates({ communityId: "community-1" })).rejects.toThrow(
@@ -271,9 +271,9 @@ describe("fetchCommunityProjectUpdates", () => {
       mockFetch.mockResolvedValue({
         ok: true,
         headers: {
-          get: jest.fn().mockReturnValue(null),
+          get: vi.fn().mockReturnValue(null),
         },
-        json: jest.fn(),
+        json: vi.fn(),
       });
 
       await expect(fetchCommunityProjectUpdates({ communityId: "community-1" })).rejects.toThrow(
@@ -285,9 +285,9 @@ describe("fetchCommunityProjectUpdates", () => {
       mockFetch.mockResolvedValue({
         ok: true,
         headers: {
-          get: jest.fn().mockReturnValue("application/json"),
+          get: vi.fn().mockReturnValue("application/json"),
         },
-        json: jest.fn().mockRejectedValue(new SyntaxError("Invalid JSON")),
+        json: vi.fn().mockRejectedValue(new SyntaxError("Invalid JSON")),
       });
 
       await expect(fetchCommunityProjectUpdates({ communityId: "community-1" })).rejects.toThrow(
@@ -329,7 +329,7 @@ describe("fetchCommunityProjectUpdates", () => {
         ok: false,
         status: 400,
         statusText: "Bad Request",
-        text: jest.fn().mockResolvedValue("Invalid parameters"),
+        text: vi.fn().mockResolvedValue("Invalid parameters"),
       });
 
       try {
@@ -339,7 +339,7 @@ describe("fetchCommunityProjectUpdates", () => {
       }
 
       // errorManager should only be called once for the HTTP error
-      const calls = (errorManager as jest.Mock).mock.calls;
+      const calls = (errorManager as vi.Mock).mock.calls;
       expect(calls.length).toBe(1);
       expect(calls[0][0]).toBe("Community project updates fetch failed");
     });
@@ -374,9 +374,9 @@ describe("fetchCommunityProjectUpdates", () => {
       mockFetch.mockResolvedValue({
         ok: true,
         headers: {
-          get: jest.fn().mockReturnValue("application/json"),
+          get: vi.fn().mockReturnValue("application/json"),
         },
-        json: jest.fn().mockResolvedValue(mockResponse),
+        json: vi.fn().mockResolvedValue(mockResponse),
       });
 
       const params: FetchCommunityProjectUpdatesParams = {
@@ -407,9 +407,9 @@ describe("fetchCommunityProjectUpdates", () => {
       mockFetch.mockResolvedValue({
         ok: true,
         headers: {
-          get: jest.fn().mockReturnValue("application/json"),
+          get: vi.fn().mockReturnValue("application/json"),
         },
-        json: jest.fn().mockResolvedValue(mockResponse),
+        json: vi.fn().mockResolvedValue(mockResponse),
       });
 
       await fetchCommunityProjectUpdates({

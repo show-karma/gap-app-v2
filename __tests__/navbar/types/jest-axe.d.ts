@@ -1,22 +1,25 @@
 /**
- * Type declarations for jest-axe
- * Since @types/jest-axe doesn't exist, we declare the types we need
+ * Type declarations for jest-axe (compatible with both Jest and Vitest)
  */
 
 declare module "jest-axe" {
-  import { AxeResults } from "axe-core";
+  import type { AxeResults } from "axe-core";
 
-  export function axe(element: Element | Document, options?: any): Promise<AxeResults>;
+  export function axe(
+    element: Element | Document,
+    options?: Record<string, unknown>
+  ): Promise<AxeResults>;
 
-  export const toHaveNoViolations: jest.ExpectExtendMap;
+  export const toHaveNoViolations: Record<string, unknown>;
 
-  export function configureAxe(options?: any): typeof axe;
+  export function configureAxe(options?: Record<string, unknown>): typeof axe;
 }
 
-declare global {
-  namespace jest {
-    interface Matchers<R> {
-      toHaveNoViolations(): R;
-    }
-  }
+interface CustomMatchers<R = unknown> {
+  toHaveNoViolations(): R;
+}
+
+declare module "vitest" {
+  interface Assertion<T = unknown> extends CustomMatchers<T> {}
+  interface AsymmetricMatchersContaining extends CustomMatchers {}
 }

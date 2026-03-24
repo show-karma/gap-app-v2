@@ -1,70 +1,70 @@
 import { render, screen } from "@testing-library/react";
 import { Navbar } from "@/src/components/navbar/navbar";
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 
 // Mock useAuth hook
-jest.mock("@/hooks/useAuth", () => ({
-  useAuth: jest.fn(() => ({
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: vi.fn(() => ({
     authenticated: false,
-    authenticate: jest.fn(),
-    logout: jest.fn(),
+    authenticate: vi.fn(),
+    logout: vi.fn(),
     address: undefined,
   })),
 }));
 
 // Mock next-themes
-jest.mock("next-themes", () => ({
-  useTheme: jest.fn(() => ({
+vi.mock("next-themes", () => ({
+  useTheme: vi.fn(() => ({
     theme: "light",
-    setTheme: jest.fn(),
+    setTheme: vi.fn(),
   })),
 }));
 
 // Mock store hooks
-jest.mock("@/store/modals/contributorProfile", () => ({
-  useContributorProfileModalStore: jest.fn(() => ({
-    openModal: jest.fn(),
+vi.mock("@/store/modals/contributorProfile", () => ({
+  useContributorProfileModalStore: vi.fn(() => ({
+    openModal: vi.fn(),
   })),
 }));
 
-jest.mock("@/store/communities", () => ({
-  useCommunitiesStore: jest.fn(() => ({
+vi.mock("@/store/communities", () => ({
+  useCommunitiesStore: vi.fn(() => ({
     communities: [],
   })),
 }));
 
-jest.mock("@/hooks/usePermissions", () => ({
-  useReviewerPrograms: jest.fn(() => ({
+vi.mock("@/hooks/usePermissions", () => ({
+  useReviewerPrograms: vi.fn(() => ({
     programs: [],
   })),
 }));
 
 // Mock RBAC permissions hook (replaces legacy useStaff)
-jest.mock("@/src/core/rbac/hooks/use-permissions", () => ({
-  usePermissionsQuery: jest.fn(() => ({
+vi.mock("@/src/core/rbac/hooks/use-permissions", () => ({
+  usePermissionsQuery: vi.fn(() => ({
     data: null,
     isLoading: false,
     isError: false,
   })),
 }));
 
-jest.mock("@/store/owner", () => ({
-  useOwnerStore: jest.fn(() => false),
+vi.mock("@/store/owner", () => ({
+  useOwnerStore: vi.fn(() => false),
 }));
 
-jest.mock("@/store/registry", () => ({
-  useRegistryStore: jest.fn(() => ({
+vi.mock("@/store/registry", () => ({
+  useRegistryStore: vi.fn(() => ({
     isProgramCreator: false,
     isRegistryAdmin: false,
   })),
 }));
 
 // Mock child components
-jest.mock("@/src/components/navbar/navbar-desktop-navigation", () => ({
+vi.mock("@/src/components/navbar/navbar-desktop-navigation", () => ({
   NavbarDesktopNavigation: () => <div data-testid="desktop-navigation" />,
 }));
 
-jest.mock("@/src/components/navbar/navbar-mobile-menu", () => ({
+vi.mock("@/src/components/navbar/navbar-mobile-menu", () => ({
   NavbarMobileMenu: () => <div data-testid="mobile-menu" />,
 }));
 

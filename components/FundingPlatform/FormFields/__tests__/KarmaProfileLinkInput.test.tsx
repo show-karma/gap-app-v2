@@ -36,8 +36,8 @@ const mockProjects = [
   },
 ];
 
-jest.mock("@/hooks/useProjectSearch", () => ({
-  useProjectSearch: jest.fn((query: string) => {
+vi.mock("@/hooks/useProjectSearch", () => ({
+  useProjectSearch: vi.fn((query: string) => {
     if (query.length < 3) {
       return {
         projects: [],
@@ -45,7 +45,7 @@ jest.mock("@/hooks/useProjectSearch", () => ({
         isFetching: false,
         isError: false,
         error: null,
-        refetch: jest.fn(),
+        refetch: vi.fn(),
       };
     }
     return {
@@ -58,7 +58,7 @@ jest.mock("@/hooks/useProjectSearch", () => ({
       isFetching: false,
       isError: false,
       error: null,
-      refetch: jest.fn(),
+      refetch: vi.fn(),
     };
   }),
 }));
@@ -156,11 +156,11 @@ describe("KarmaProfileLinkInput Component", () => {
 
   describe("Search Functionality", () => {
     beforeEach(() => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
     });
 
     afterEach(() => {
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
 
     it("should not trigger search with less than 3 characters", async () => {
@@ -171,7 +171,7 @@ describe("KarmaProfileLinkInput Component", () => {
 
       // Advance timers past debounce
       act(() => {
-        jest.advanceTimersByTime(600);
+        vi.advanceTimersByTime(600);
       });
 
       // Should not show any project results
@@ -186,7 +186,7 @@ describe("KarmaProfileLinkInput Component", () => {
       await act(async () => {
         fireEvent.change(input, { target: { value: "test" } });
         fireEvent.focus(input);
-        jest.advanceTimersByTime(600);
+        vi.advanceTimersByTime(600);
       });
 
       await waitFor(() => {
@@ -197,11 +197,11 @@ describe("KarmaProfileLinkInput Component", () => {
 
   describe("Selection", () => {
     beforeEach(() => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
     });
 
     afterEach(() => {
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
 
     it("should display selected project info after selection", async () => {
@@ -212,7 +212,7 @@ describe("KarmaProfileLinkInput Component", () => {
       await act(async () => {
         fireEvent.change(input, { target: { value: "test" } });
         fireEvent.focus(input);
-        jest.advanceTimersByTime(600);
+        vi.advanceTimersByTime(600);
       });
 
       await waitFor(() => {
@@ -241,7 +241,7 @@ describe("KarmaProfileLinkInput Component", () => {
       await act(async () => {
         fireEvent.change(input, { target: { value: "test" } });
         fireEvent.focus(input);
-        jest.advanceTimersByTime(600);
+        vi.advanceTimersByTime(600);
       });
 
       await waitFor(() => {

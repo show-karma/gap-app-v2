@@ -16,14 +16,14 @@ import {
 import { renderWithProviders } from "../utils/test-helpers";
 
 // Mock unified search service
-jest.mock("@/services/unified-search.service", () => ({
-  unifiedSearch: jest.fn(),
+vi.mock("@/services/unified-search.service", () => ({
+  unifiedSearch: vi.fn(),
 }));
 
 // Helper to flush timers and promises
 const _flushTimersAndPromises = async () => {
   await act(async () => {
-    jest.runAllTimers();
+    vi.runAllTimers();
     // Flush promise queue
     await Promise.resolve();
     await Promise.resolve();
@@ -32,12 +32,12 @@ const _flushTimersAndPromises = async () => {
 
 describe("NavbarSearch", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.clearAllTimers();
+    vi.clearAllMocks();
+    vi.clearAllTimers();
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   describe("Rendering and Initial State", () => {
@@ -150,11 +150,11 @@ describe("NavbarSearch", () => {
 
   describe("Debouncing Tests", () => {
     beforeEach(() => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
     });
 
     afterEach(() => {
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
 
     it("search triggers after 500ms delay", async () => {
@@ -171,7 +171,7 @@ describe("NavbarSearch", () => {
 
       // Advance timers by 500ms
       act(() => {
-        jest.advanceTimersByTime(500);
+        vi.advanceTimersByTime(500);
       });
 
       // Should call after debounce
@@ -198,7 +198,7 @@ describe("NavbarSearch", () => {
 
       // Advance to complete debounce (500ms)
       act(() => {
-        jest.advanceTimersByTime(500);
+        vi.advanceTimersByTime(500);
       });
 
       // Wait for async operations to complete
@@ -220,21 +220,21 @@ describe("NavbarSearch", () => {
 
       // Type first value and advance almost to debounce completion
       fireEvent.change(searchInput, { target: { value: "test" } });
-      act(() => jest.advanceTimersByTime(400)); // Not enough to trigger (need 500ms)
+      act(() => vi.advanceTimersByTime(400)); // Not enough to trigger (need 500ms)
 
       // No call should have been made yet
       expect(unifiedSearch).not.toHaveBeenCalled();
 
       // Type again - this resets the timer
       fireEvent.change(searchInput, { target: { value: "testing" } });
-      act(() => jest.advanceTimersByTime(400)); // Again, not enough
+      act(() => vi.advanceTimersByTime(400)); // Again, not enough
 
       // Still no call
       expect(unifiedSearch).not.toHaveBeenCalled();
 
       // Now complete the debounce from the last keystroke
       act(() => {
-        jest.advanceTimersByTime(500);
+        vi.advanceTimersByTime(500);
       });
 
       // Wait for async operation
@@ -261,7 +261,7 @@ describe("NavbarSearch", () => {
 
       // After debounce delay
       act(() => {
-        jest.advanceTimersByTime(500);
+        vi.advanceTimersByTime(500);
       });
 
       await waitFor(() => {
@@ -272,7 +272,7 @@ describe("NavbarSearch", () => {
 
   describe("Minimum Character Tests", () => {
     beforeEach(() => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
     });
 
     it("less than 3 characters: no API call", async () => {
@@ -283,7 +283,7 @@ describe("NavbarSearch", () => {
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       fireEvent.change(searchInput, { target: { value: "ab" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       expect(unifiedSearch).not.toHaveBeenCalled();
     });
@@ -296,7 +296,7 @@ describe("NavbarSearch", () => {
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       fireEvent.change(searchInput, { target: { value: "pro" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       await waitFor(() => {
         expect(unifiedSearch).toHaveBeenCalledWith("pro");
@@ -311,7 +311,7 @@ describe("NavbarSearch", () => {
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       fireEvent.change(searchInput, { target: { value: "project" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       await waitFor(() => {
         expect(unifiedSearch).toHaveBeenCalledWith("project");
@@ -323,7 +323,7 @@ describe("NavbarSearch", () => {
       unifiedSearch.mockResolvedValue(projectsOnlyResults);
 
       // Use real timers for this test since it involves async state updates
-      jest.useRealTimers();
+      vi.useRealTimers();
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -351,13 +351,13 @@ describe("NavbarSearch", () => {
       expect(unifiedSearch).not.toHaveBeenCalled();
 
       // Restore fake timers for other tests
-      jest.useFakeTimers();
+      vi.useFakeTimers();
     });
   });
 
   describe("Loading State Tests", () => {
     beforeEach(() => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
     });
 
     it("loading spinner shows during API call", async () => {
@@ -370,7 +370,7 @@ describe("NavbarSearch", () => {
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       fireEvent.change(searchInput, { target: { value: "test" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       // Spinner should be visible
       await waitFor(() => {
@@ -389,7 +389,7 @@ describe("NavbarSearch", () => {
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       fireEvent.change(searchInput, { target: { value: "project" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       await waitFor(() => {
         const dropdown = document.querySelector(".absolute.top-full");
@@ -405,7 +405,7 @@ describe("NavbarSearch", () => {
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       fireEvent.change(searchInput, { target: { value: "test" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       // Wait for results to load
       await waitFor(() => {
@@ -465,7 +465,7 @@ describe("NavbarSearch", () => {
       const { unifiedSearch } = require("@/services/unified-search.service");
       unifiedSearch.mockRejectedValue(new Error("API Error"));
 
-      const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -487,7 +487,7 @@ describe("NavbarSearch", () => {
       const { unifiedSearch } = require("@/services/unified-search.service");
       unifiedSearch.mockRejectedValue(new Error("API Error"));
 
-      const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -522,7 +522,7 @@ describe("NavbarSearch", () => {
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       fireEvent.change(searchInput, { target: { value: "test" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       // Should show loading spinner
       await waitFor(() => {
@@ -544,7 +544,7 @@ describe("NavbarSearch", () => {
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       fireEvent.change(searchInput, { target: { value: "test" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       // Loading spinner should be visible and accessible
       await waitFor(() => {
@@ -560,16 +560,16 @@ describe("NavbarSearch", () => {
         () => new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 100))
       );
 
-      const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       fireEvent.change(searchInput, { target: { value: "test" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       // Advance to timeout (shorter timeout for test)
-      act(() => jest.advanceTimersByTime(100));
+      act(() => vi.advanceTimersByTime(100));
 
       // Wait for error handling to complete
       await waitFor(
@@ -586,7 +586,7 @@ describe("NavbarSearch", () => {
 
     it("recovers from error and shows results on successful retry", async () => {
       const { unifiedSearch } = require("@/services/unified-search.service");
-      const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -594,7 +594,7 @@ describe("NavbarSearch", () => {
       // First search - error
       unifiedSearch.mockRejectedValueOnce(new Error("API Error"));
       fireEvent.change(searchInput, { target: { value: "error" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       await waitFor(() => {
         expect(screen.getByText(/no results found/i)).toBeInTheDocument();
@@ -602,11 +602,11 @@ describe("NavbarSearch", () => {
 
       // Clear and retry with success
       fireEvent.change(searchInput, { target: { value: "" } });
-      act(() => jest.advanceTimersByTime(100));
+      act(() => vi.advanceTimersByTime(100));
 
       unifiedSearch.mockResolvedValueOnce(projectsOnlyResults);
       fireEvent.change(searchInput, { target: { value: "test" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       // Should show results after successful retry
       await waitFor(() => {
@@ -620,7 +620,7 @@ describe("NavbarSearch", () => {
 
   describe("Results Display Tests", () => {
     beforeEach(() => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
     });
 
     it("project results render with correct data", async () => {
@@ -631,7 +631,7 @@ describe("NavbarSearch", () => {
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       fireEvent.change(searchInput, { target: { value: "project" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       await waitFor(() => {
         expect(screen.getByText("Awesome Project")).toBeInTheDocument();
@@ -648,7 +648,7 @@ describe("NavbarSearch", () => {
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       fireEvent.change(searchInput, { target: { value: "optimism" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       await waitFor(() => {
         expect(screen.getByText("Optimism")).toBeInTheDocument();
@@ -665,7 +665,7 @@ describe("NavbarSearch", () => {
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       fireEvent.change(searchInput, { target: { value: "test" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       await waitFor(() => {
         // Projects
@@ -686,7 +686,7 @@ describe("NavbarSearch", () => {
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       fireEvent.change(searchInput, { target: { value: "test" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       await waitFor(() => {
         const scrollContainer = container.querySelector(".overflow-y-auto");
@@ -697,7 +697,7 @@ describe("NavbarSearch", () => {
 
   describe("Results Interaction Tests", () => {
     beforeEach(() => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
     });
 
     it("clicking result closes dropdown", async () => {
@@ -708,7 +708,7 @@ describe("NavbarSearch", () => {
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       fireEvent.change(searchInput, { target: { value: "project" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       await waitFor(() => {
         const result = screen.getByText("Awesome Project");
@@ -731,7 +731,7 @@ describe("NavbarSearch", () => {
       ) as HTMLInputElement;
 
       fireEvent.change(searchInput, { target: { value: "project" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       await waitFor(() => {
         const result = screen.getByText("Awesome Project");
@@ -745,13 +745,13 @@ describe("NavbarSearch", () => {
       const { unifiedSearch } = require("@/services/unified-search.service");
       unifiedSearch.mockResolvedValue(projectsOnlyResults);
 
-      const onSelectItemMock = jest.fn();
+      const onSelectItemMock = vi.fn();
 
       renderWithProviders(<NavbarSearch onSelectItem={onSelectItemMock} />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       fireEvent.change(searchInput, { target: { value: "project" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       await waitFor(() => {
         expect(screen.getByText("Awesome Project")).toBeInTheDocument();
@@ -769,13 +769,13 @@ describe("NavbarSearch", () => {
       const { unifiedSearch } = require("@/services/unified-search.service");
       unifiedSearch.mockResolvedValue(communitiesOnlyResults);
 
-      const onSelectItemMock = jest.fn();
+      const onSelectItemMock = vi.fn();
 
       renderWithProviders(<NavbarSearch onSelectItem={onSelectItemMock} />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       fireEvent.change(searchInput, { target: { value: "optimism" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       await waitFor(() => {
         expect(screen.getByText("Optimism")).toBeInTheDocument();
@@ -798,7 +798,7 @@ describe("NavbarSearch", () => {
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       fireEvent.change(searchInput, { target: { value: "project" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       await waitFor(() => {
         expect(screen.getByText("Awesome Project")).toBeInTheDocument();
@@ -817,7 +817,7 @@ describe("NavbarSearch", () => {
 
   describe("Dropdown Management Tests", () => {
     beforeEach(() => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
     });
 
     it("dropdown opens when results available", async () => {
@@ -828,7 +828,7 @@ describe("NavbarSearch", () => {
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       fireEvent.change(searchInput, { target: { value: "test" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       await waitFor(() => {
         const dropdown = document.querySelector(".absolute.top-full");
@@ -844,7 +844,7 @@ describe("NavbarSearch", () => {
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       fireEvent.change(searchInput, { target: { value: "test" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       await waitFor(() => {
         expect(screen.getByText("Awesome Project")).toBeInTheDocument();
@@ -866,7 +866,7 @@ describe("NavbarSearch", () => {
 
       // First search
       fireEvent.change(searchInput, { target: { value: "test" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       await waitFor(() => {
         expect(screen.getByText("Awesome Project")).toBeInTheDocument();
@@ -881,7 +881,7 @@ describe("NavbarSearch", () => {
 
       // Type again to get results
       fireEvent.change(searchInput, { target: { value: "test2" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       await waitFor(() => {
         expect(screen.getByText("Awesome Project")).toBeInTheDocument();
@@ -895,7 +895,7 @@ describe("NavbarSearch", () => {
 
   describe("Click Outside Tests", () => {
     beforeEach(() => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
     });
 
     it("click outside closes dropdown", async () => {
@@ -906,7 +906,7 @@ describe("NavbarSearch", () => {
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       fireEvent.change(searchInput, { target: { value: "test" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       await waitFor(() => {
         expect(screen.getByText("Awesome Project")).toBeInTheDocument();
@@ -928,7 +928,7 @@ describe("NavbarSearch", () => {
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       fireEvent.change(searchInput, { target: { value: "test" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       await waitFor(() => {
         expect(screen.getByText("Awesome Project")).toBeInTheDocument();
@@ -957,10 +957,10 @@ describe("NavbarSearch", () => {
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       fireEvent.change(searchInput, { target: { value: "test" } });
-      act(() => jest.advanceTimersByTime(500));
-      jest.useRealTimers();
+      act(() => vi.advanceTimersByTime(500));
+      vi.useRealTimers();
 
       await waitFor(() => {
         const results = screen.getAllByRole("link");

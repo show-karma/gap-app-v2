@@ -6,12 +6,12 @@
 import { fetchGrantInstance, fetchMilestoneInstance } from "@/utilities/grant-helpers";
 
 // Mock getProjectGrants
-jest.mock("@/services/project-grants.service", () => ({
-  getProjectGrants: jest.fn(),
+vi.mock("@/services/project-grants.service", () => ({
+  getProjectGrants: vi.fn(),
 }));
 
 const { getProjectGrants } = require("@/services/project-grants.service");
-const mockGetProjectGrants = getProjectGrants as jest.MockedFunction<typeof getProjectGrants>;
+const mockGetProjectGrants = getProjectGrants as vi.MockedFunction<typeof getProjectGrants>;
 
 describe("fetchGrantInstance", () => {
   const mockGrants = [
@@ -22,12 +22,12 @@ describe("fetchGrantInstance", () => {
 
   const mockGapClient = {
     fetch: {
-      projectById: jest.fn(),
+      projectById: vi.fn(),
     },
   } as any;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("Successful Fetch", () => {
@@ -169,12 +169,12 @@ describe("fetchMilestoneInstance", () => {
 
   const mockGapClient = {
     fetch: {
-      projectById: jest.fn(),
+      projectById: vi.fn(),
     },
   } as any;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("Successful Fetch", () => {

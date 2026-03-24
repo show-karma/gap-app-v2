@@ -5,17 +5,17 @@ import { useDashboardAdmin } from "@/hooks/useDashboardAdmin";
 import type { Community } from "@/types/v2/community";
 import fetchData from "@/utilities/fetchData";
 
-jest.mock("@/hooks/useAuth", () => ({
-  useAuth: jest.fn(),
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: vi.fn(),
 }));
 
-jest.mock("@/utilities/fetchData", () => ({
+vi.mock("@/utilities/fetchData", () => ({
   __esModule: true,
-  default: jest.fn(),
+  default: vi.fn(),
 }));
 
-const mockUseAuth = useAuth as unknown as jest.Mock;
-const mockFetchData = fetchData as unknown as jest.Mock;
+const mockUseAuth = useAuth as unknown as vi.Mock;
+const mockFetchData = fetchData as unknown as vi.Mock;
 
 const createWrapper = () => {
   const queryClient = new QueryClient({
@@ -31,7 +31,7 @@ const createWrapper = () => {
 
 describe("useDashboardAdmin", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockUseAuth.mockReturnValue({ authenticated: true, address: "0x123" });
   });
 

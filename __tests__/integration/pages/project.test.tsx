@@ -1,8 +1,8 @@
 import { render, screen } from "@testing-library/react";
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 
 // Mock next/dynamic to render loading state
-jest.mock("next/dynamic", () => ({
+vi.mock("next/dynamic", () => ({
   __esModule: true,
   default: (_callback: () => Promise<any>, options: { loading: () => React.ReactNode }) => {
     return function DynamicComponent() {
@@ -12,14 +12,14 @@ jest.mock("next/dynamic", () => ({
 }));
 
 // Mock the UpdatesContent component
-jest.mock("@/components/Pages/Project/v2/Content/UpdatesContent", () => ({
+vi.mock("@/components/Pages/Project/v2/Content/UpdatesContent", () => ({
   UpdatesContent: function MockUpdatesContent() {
     return <div data-testid="mock-updates-content">Mocked Updates Content</div>;
   },
 }));
 
 // Mock the skeleton component
-jest.mock("@/components/Pages/Project/v2/Skeletons", () => ({
+vi.mock("@/components/Pages/Project/v2/Skeletons", () => ({
   UpdatesContentSkeleton: () => <div data-testid="updates-content-skeleton">Loading...</div>,
 }));
 

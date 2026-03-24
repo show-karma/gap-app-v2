@@ -11,9 +11,9 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
 // Mock fetchData utility
-jest.mock("@/utilities/fetchData", () => ({
+vi.mock("@/utilities/fetchData", () => ({
   __esModule: true,
-  default: jest.fn(),
+  default: vi.fn(),
 }));
 
 describe("ProgramRegistryService", () => {
@@ -42,7 +42,7 @@ describe("ProgramRegistryService", () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("buildProgramMetadata", () => {
@@ -217,7 +217,7 @@ describe("ProgramRegistryService", () => {
         isValid: true,
       };
 
-      (fetchData as jest.Mock).mockResolvedValue([mockResponse, null]);
+      (fetchData as vi.Mock).mockResolvedValue([mockResponse, null]);
 
       const result = await ProgramRegistryService.createProgram(
         mockOwner,
@@ -262,7 +262,7 @@ describe("ProgramRegistryService", () => {
       ];
 
       for (const testCase of testCases) {
-        (fetchData as jest.Mock).mockResolvedValue([testCase.response, null]);
+        (fetchData as vi.Mock).mockResolvedValue([testCase.response, null]);
 
         const result = await ProgramRegistryService.createProgram(
           mockOwner,
@@ -277,7 +277,7 @@ describe("ProgramRegistryService", () => {
     });
 
     it("should handle missing program ID in response", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([{}, null]);
+      (fetchData as vi.Mock).mockResolvedValue([{}, null]);
 
       const result = await ProgramRegistryService.createProgram(
         mockOwner,
@@ -294,7 +294,7 @@ describe("ProgramRegistryService", () => {
 
     it("should throw error when fetchData returns error", async () => {
       const mockError = "Creation failed";
-      (fetchData as jest.Mock).mockResolvedValue([null, mockError]);
+      (fetchData as vi.Mock).mockResolvedValue([null, mockError]);
 
       await expect(
         ProgramRegistryService.createProgram(mockOwner, mockChainId, mockMetadata)
@@ -303,7 +303,7 @@ describe("ProgramRegistryService", () => {
 
     it("should throw error when fetchData throws", async () => {
       const mockError = new Error("Network error");
-      (fetchData as jest.Mock).mockRejectedValue(mockError);
+      (fetchData as vi.Mock).mockRejectedValue(mockError);
 
       await expect(
         ProgramRegistryService.createProgram(mockOwner, mockChainId, mockMetadata)
@@ -315,7 +315,7 @@ describe("ProgramRegistryService", () => {
     const mockProgramId = "program-123";
 
     it("should approve program successfully", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([{ success: true }, null]);
+      (fetchData as vi.Mock).mockResolvedValue([{ success: true }, null]);
 
       await ProgramRegistryService.approveProgram(mockProgramId);
 
@@ -334,7 +334,7 @@ describe("ProgramRegistryService", () => {
 
     it("should throw error when fetchData returns error", async () => {
       const mockError = "Approval failed";
-      (fetchData as jest.Mock).mockResolvedValue([null, mockError]);
+      (fetchData as vi.Mock).mockResolvedValue([null, mockError]);
 
       await expect(ProgramRegistryService.approveProgram(mockProgramId)).rejects.toThrow(
         "Approval failed"
@@ -343,7 +343,7 @@ describe("ProgramRegistryService", () => {
 
     it("should throw error when fetchData throws", async () => {
       const mockError = new Error("Network error");
-      (fetchData as jest.Mock).mockRejectedValue(mockError);
+      (fetchData as vi.Mock).mockRejectedValue(mockError);
 
       await expect(ProgramRegistryService.approveProgram(mockProgramId)).rejects.toThrow(
         "Network error"
@@ -358,7 +358,7 @@ describe("ProgramRegistryService", () => {
       const mockMetadata = ProgramRegistryService.buildProgramMetadata(mockFormData, mockCommunity);
 
       // Mock V2 creation response
-      (fetchData as jest.Mock)
+      (fetchData as vi.Mock)
         .mockResolvedValueOnce([{ programId: "program-123", isValid: null }, null])
         .mockResolvedValueOnce([{ success: true }, null]);
 

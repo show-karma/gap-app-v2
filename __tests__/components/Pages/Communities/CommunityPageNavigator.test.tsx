@@ -8,24 +8,30 @@ import { useCommunityPrograms } from "@/hooks/usePrograms";
 import { useWhitelabel } from "@/utilities/whitelabel-context";
 
 // Mock hooks
+<<<<<<< HEAD
 jest.mock("@/hooks/communities/useCommunityDetails");
 jest.mock("@/hooks/useFundingOpportunitiesCount");
 jest.mock("@/hooks/usePrograms");
 jest.mock("@/utilities/whitelabel-context");
+=======
+vi.mock("@/hooks/communities/useCommunityDetails");
+vi.mock("@/hooks/useFundingOpportunitiesCount");
+vi.mock("@/hooks/usePrograms");
+>>>>>>> 8322801b (test: migrate Jest to Vitest for unit/integration tests)
 
 // Mock next/navigation
-const mockUseParams = jest.fn();
-const mockUsePathname = jest.fn();
-const mockUseSearchParams = jest.fn();
+const mockUseParams = vi.fn();
+const mockUsePathname = vi.fn();
+const mockUseSearchParams = vi.fn();
 
-jest.mock("next/navigation", () => ({
+vi.mock("next/navigation", () => ({
   useParams: () => mockUseParams(),
   usePathname: () => mockUsePathname(),
   useSearchParams: () => mockUseSearchParams(),
 }));
 
 // Mock PAGES utility
-jest.mock("@/utilities/pages", () => ({
+vi.mock("@/utilities/pages", () => ({
   PAGES: {
     COMMUNITY: {
       FUNDING_OPPORTUNITIES: (id: string) => `/community/${id}/funding-opportunities`,
@@ -45,7 +51,7 @@ jest.mock("@/utilities/community-flags", () => ({
 }));
 
 // Mock lucide-react icons
-jest.mock("lucide-react", () => ({
+vi.mock("lucide-react", () => ({
   ChartLine: (props: any) => <svg data-testid="chart-line-icon" {...props} />,
   DollarSign: (props: any) => <svg data-testid="dollar-sign-icon" {...props} />,
   FileSearch: (props: any) => <svg data-testid="file-search-icon" {...props} />,
@@ -54,13 +60,13 @@ jest.mock("lucide-react", () => ({
   Wallet: (props: any) => <svg data-testid="wallet-icon" {...props} />,
 }));
 
-const mockUseCommunityDetails = useCommunityDetails as jest.MockedFunction<
+const mockUseCommunityDetails = useCommunityDetails as vi.MockedFunction<
   typeof useCommunityDetails
 >;
-const mockUseFundingOpportunitiesCount = useFundingOpportunitiesCount as jest.MockedFunction<
+const mockUseFundingOpportunitiesCount = useFundingOpportunitiesCount as vi.MockedFunction<
   typeof useFundingOpportunitiesCount
 >;
-const mockUseCommunityPrograms = useCommunityPrograms as jest.MockedFunction<
+const mockUseCommunityPrograms = useCommunityPrograms as vi.MockedFunction<
   typeof useCommunityPrograms
 >;
 const mockUseWhitelabel = useWhitelabel as jest.MockedFunction<typeof useWhitelabel>;
@@ -80,7 +86,7 @@ describe("CommunityPageNavigator", () => {
         },
       },
     });
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     // Default mocks
     mockUseWhitelabel.mockReturnValue({
@@ -91,7 +97,7 @@ describe("CommunityPageNavigator", () => {
     mockUseParams.mockReturnValue({ communityId: "test-community" });
     mockUsePathname.mockReturnValue("/community/test-community");
     mockUseSearchParams.mockReturnValue({
-      get: jest.fn(() => null),
+      get: vi.fn(() => null),
     });
     mockUseCommunityDetails.mockReturnValue({
       data: {

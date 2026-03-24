@@ -1,53 +1,55 @@
+import { vi } from "vitest";
+
 /**
  * Mock for utilities/gasless to avoid ESM parsing issues in Jest
  * This mock is used because the gasless utilities import ESM-only packages
  * like @aa-sdk/core and @account-kit/infra that Jest cannot transform.
  *
- * All exports are jest.fn() mocks that can be configured in tests.
+ * All exports are vi.fn() mocks that can be configured in tests.
  */
 
 // Mock smart account client returned by createGaslessClient
 const mockSmartAccountClient = {
   account: { address: "0x1234567890123456789012345678901234567890" },
-  getSupportedEntryPoints: jest.fn().mockResolvedValue([]),
-  sendUserOperation: jest.fn(),
-  waitForUserOperationTransaction: jest.fn(),
+  getSupportedEntryPoints: vi.fn().mockResolvedValue([]),
+  sendUserOperation: vi.fn(),
+  waitForUserOperationTransaction: vi.fn(),
 };
 
 // Mock ethers signer returned by getGaslessSigner
 const mockEthersSigner = {
-  getAddress: jest.fn().mockResolvedValue("0x1234567890123456789012345678901234567890"),
+  getAddress: vi.fn().mockResolvedValue("0x1234567890123456789012345678901234567890"),
 };
 
-// Main API exports - all are jest.fn() for test configurability
-export const createGaslessClient = jest.fn().mockResolvedValue(null);
-export const getGaslessSigner = jest.fn().mockResolvedValue(null);
-export const isChainSupportedForGasless = jest.fn().mockReturnValue(false);
-export const createPrivySignerForGasless = jest.fn().mockResolvedValue(null);
-export const getChainGaslessConfig = jest.fn().mockReturnValue(null);
-export const getProviderForChain = jest.fn().mockReturnValue(null);
+// Main API exports - all are vi.fn() for test configurability
+export const createGaslessClient = vi.fn().mockResolvedValue(null);
+export const getGaslessSigner = vi.fn().mockResolvedValue(null);
+export const isChainSupportedForGasless = vi.fn().mockReturnValue(false);
+export const createPrivySignerForGasless = vi.fn().mockResolvedValue(null);
+export const getChainGaslessConfig = vi.fn().mockReturnValue(null);
+export const getProviderForChain = vi.fn().mockReturnValue(null);
 export const SUPPORTED_GASLESS_CHAINS: number[] = [];
 
 // Mock for providers submodule (imported via @/utilities/gasless/providers)
-export const getProvider = jest.fn((type: string) => ({
+export const getProvider = vi.fn((type: string) => ({
   name: type,
-  createClient: jest.fn().mockResolvedValue(mockSmartAccountClient),
-  toEthersSigner: jest.fn().mockResolvedValue(mockEthersSigner),
+  createClient: vi.fn().mockResolvedValue(mockSmartAccountClient),
+  toEthersSigner: vi.fn().mockResolvedValue(mockEthersSigner),
 }));
 
-export const getRegisteredProviders = jest.fn().mockReturnValue(["zerodev", "alchemy"]);
+export const getRegisteredProviders = vi.fn().mockReturnValue(["zerodev", "alchemy"]);
 
 // Provider classes
 export class AlchemyProvider {
   name = "alchemy";
-  createClient = jest.fn().mockResolvedValue(mockSmartAccountClient);
-  toEthersSigner = jest.fn().mockResolvedValue(mockEthersSigner);
+  createClient = vi.fn().mockResolvedValue(mockSmartAccountClient);
+  toEthersSigner = vi.fn().mockResolvedValue(mockEthersSigner);
 }
 
 export class ZeroDevProvider {
   name = "zerodev";
-  createClient = jest.fn().mockResolvedValue(mockSmartAccountClient);
-  toEthersSigner = jest.fn().mockResolvedValue(mockEthersSigner);
+  createClient = vi.fn().mockResolvedValue(mockSmartAccountClient);
+  toEthersSigner = vi.fn().mockResolvedValue(mockEthersSigner);
 }
 
 // Mock types

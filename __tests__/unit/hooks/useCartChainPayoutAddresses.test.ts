@@ -8,8 +8,8 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { useCartChainPayoutAddresses } from "@/hooks/donation/useCartChainPayoutAddresses";
 
 // Mock the project service
-jest.mock("@/services/project.service", () => ({
-  getProject: jest.fn(),
+vi.mock("@/services/project.service", () => ({
+  getProject: vi.fn(),
 }));
 
 describe("useCartChainPayoutAddresses", () => {
@@ -24,7 +24,7 @@ describe("useCartChainPayoutAddresses", () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("initialization", () => {
@@ -162,7 +162,7 @@ describe("useCartChainPayoutAddresses", () => {
       const { getProject } = require("@/services/project.service");
       getProject.mockRejectedValue(new Error("Network error"));
 
-      const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
       const { result } = renderHook(() => useCartChainPayoutAddresses(mockItems));
 

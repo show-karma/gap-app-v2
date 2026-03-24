@@ -6,17 +6,17 @@ import type {
 } from "../types/funding-program";
 
 // Mock fetchData
-jest.mock("@/utilities/fetchData");
+vi.mock("@/utilities/fetchData");
 
 // Import after mock
 import fetchData from "@/utilities/fetchData";
 import { fundingProgramsService } from "../services/funding-programs.service";
 
-const mockFetchData = fetchData as jest.MockedFunction<typeof fetchData>;
+const mockFetchData = fetchData as vi.MockedFunction<typeof fetchData>;
 
 describe("fundingProgramsService", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   const createMockProgram = (

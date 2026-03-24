@@ -1,10 +1,10 @@
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 import { render, screen } from "@testing-library/react";
 import ApplicationContent from "@/components/FundingPlatform/ApplicationView/ApplicationContent";
 import type { IFundingApplication } from "@/types/funding-platform";
 
 // Mock child components
-jest.mock("@/components/FundingPlatform/ApplicationView/InternalAIEvaluation", () => ({
+vi.mock("@/components/FundingPlatform/ApplicationView/InternalAIEvaluation", () => ({
   InternalAIEvaluationDisplay: ({ evaluation, programName }: any) => (
     <div data-testid="internal-evaluation-display">
       {evaluation ? <div>Evaluation: {evaluation}</div> : <div>No evaluation</div>}
@@ -13,7 +13,7 @@ jest.mock("@/components/FundingPlatform/ApplicationView/InternalAIEvaluation", (
   ),
 }));
 
-jest.mock("@/components/FundingPlatform/ApplicationView/AIEvaluationButton", () => ({
+vi.mock("@/components/FundingPlatform/ApplicationView/AIEvaluationButton", () => ({
   __esModule: true,
   default: ({ disabled, isInternal, referenceNumber }: any) => (
     <button
@@ -27,7 +27,7 @@ jest.mock("@/components/FundingPlatform/ApplicationView/AIEvaluationButton", () 
   ),
 }));
 
-jest.mock("@/components/FundingPlatform/ApplicationView/AIEvaluation", () => ({
+vi.mock("@/components/FundingPlatform/ApplicationView/AIEvaluation", () => ({
   AIEvaluationDisplay: ({ evaluation }: any) => (
     <div data-testid="ai-evaluation-display">
       {evaluation ? <div>Evaluation: {evaluation}</div> : <div>No evaluation</div>}
@@ -35,31 +35,31 @@ jest.mock("@/components/FundingPlatform/ApplicationView/AIEvaluation", () => ({
   ),
 }));
 
-jest.mock("@/components/FundingPlatform/ApplicationView/StatusActionButtons", () => ({
+vi.mock("@/components/FundingPlatform/ApplicationView/StatusActionButtons", () => ({
   StatusActionButtons: () => <div data-testid="status-action-buttons">Status Actions</div>,
 }));
 
-jest.mock("@/components/FundingPlatform/ApplicationView/ApplicationVersionSelector", () => ({
+vi.mock("@/components/FundingPlatform/ApplicationView/ApplicationVersionSelector", () => ({
   __esModule: true,
   default: () => <div data-testid="version-selector">Version Selector</div>,
 }));
 
-jest.mock("@/components/FundingPlatform/ApplicationView/ApplicationVersionViewer", () => ({
+vi.mock("@/components/FundingPlatform/ApplicationView/ApplicationVersionViewer", () => ({
   __esModule: true,
   default: () => <div data-testid="version-viewer">Version Viewer</div>,
 }));
 
-jest.mock("@/components/FundingPlatform/ApplicationView/StatusChangeModal", () => ({
+vi.mock("@/components/FundingPlatform/ApplicationView/StatusChangeModal", () => ({
   __esModule: true,
   default: () => null,
 }));
 
-jest.mock("@/components/FundingPlatform/ApplicationView/PostApprovalData", () => ({
+vi.mock("@/components/FundingPlatform/ApplicationView/PostApprovalData", () => ({
   __esModule: true,
   default: () => null,
 }));
 
-jest.mock("@heroicons/react/24/outline", () => ({
+vi.mock("@heroicons/react/24/outline", () => ({
   CheckCircleIcon: () => <svg data-testid="check-icon" />,
   ExclamationTriangleIcon: () => <svg data-testid="warning-icon" />,
   ClockIcon: () => <svg data-testid="clock-icon" />,
@@ -68,24 +68,24 @@ jest.mock("@heroicons/react/24/outline", () => ({
   ArrowPathIcon: () => <svg data-testid="arrow-icon" />,
 }));
 
-jest.mock("@/store/applicationVersions", () => ({
+vi.mock("@/store/applicationVersions", () => ({
   useApplicationVersionsStore: () => ({
     selectedVersion: null,
-    selectVersion: jest.fn(),
+    selectVersion: vi.fn(),
   }),
 }));
 
-jest.mock("@/hooks/useFundingPlatform", () => ({
+vi.mock("@/hooks/useFundingPlatform", () => ({
   useApplicationVersions: () => ({
     versions: [],
   }),
 }));
 
-jest.mock("react-hot-toast", () => ({
+vi.mock("react-hot-toast", () => ({
   __esModule: true,
   default: {
-    success: jest.fn(),
-    error: jest.fn(),
+    success: vi.fn(),
+    error: vi.fn(),
   },
 }));
 

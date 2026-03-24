@@ -9,8 +9,8 @@ import {
 } from "@/utilities/erc20";
 
 // Mock viem
-jest.mock("viem", () => {
-  const actual = jest.requireActual("viem");
+vi.mock("viem", () => {
+  const actual = vi.importActual("viem");
   return {
     ...actual,
   };
@@ -23,30 +23,30 @@ describe("erc20 utilities", () => {
   const mockAccount = "0x3333333333333333333333333333333333333333" as Address;
 
   const mockPublicClient = {
-    readContract: jest.fn(),
-    waitForTransactionReceipt: jest.fn(),
+    readContract: vi.fn(),
+    waitForTransactionReceipt: vi.fn(),
     chain: { id: 10 },
   } as unknown as PublicClient;
 
   const mockWalletClient = {
-    writeContract: jest.fn(),
+    writeContract: vi.fn(),
     account: { address: mockAccount },
     chain: { id: 10 },
   } as unknown as WalletClient;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.spyOn(console, "error").mockImplementation(() => {});
+    vi.clearAllMocks();
+    vi.spyOn(console, "error").mockImplementation(() => {});
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe("checkTokenAllowance", () => {
     it("should return allowance when successful", async () => {
       const expectedAllowance = BigInt("1000000");
-      mockPublicClient.readContract = jest.fn().mockResolvedValue(expectedAllowance);
+      mockPublicClient.readContract = vi.fn().mockResolvedValue(expectedAllowance);
 
       const result = await checkTokenAllowance(
         mockPublicClient,
@@ -66,7 +66,7 @@ describe("erc20 utilities", () => {
 
     it("should return 0n when contract read fails", async () => {
       const error = new Error("Contract read failed");
-      mockPublicClient.readContract = jest.fn().mockRejectedValue(error);
+      mockPublicClient.readContract = vi.fn().mockRejectedValue(error);
 
       const result = await checkTokenAllowance(
         mockPublicClient,
@@ -84,7 +84,7 @@ describe("erc20 utilities", () => {
 
     it("should return 0n for invalid token address", async () => {
       const invalidAddress = "0xinvalid" as Address;
-      mockPublicClient.readContract = jest.fn().mockRejectedValue(new Error("Invalid address"));
+      mockPublicClient.readContract = vi.fn().mockRejectedValue(new Error("Invalid address"));
 
       const result = await checkTokenAllowance(
         mockPublicClient,
@@ -97,7 +97,7 @@ describe("erc20 utilities", () => {
     });
 
     it("should handle network errors gracefully", async () => {
-      mockPublicClient.readContract = jest.fn().mockRejectedValue(new Error("Network error"));
+      mockPublicClient.readContract = vi.fn().mockRejectedValue(new Error("Network error"));
 
       const result = await checkTokenAllowance(
         mockPublicClient,
@@ -166,7 +166,7 @@ describe("erc20 utilities", () => {
         },
       ];
 
-      mockPublicClient.readContract = jest.fn().mockResolvedValue(BigInt("0"));
+      mockPublicClient.readContract = vi.fn().mockResolvedValue(BigInt("0"));
 
       const results = await checkTokenAllowances(
         mockPublicClient,
@@ -216,7 +216,7 @@ describe("erc20 utilities", () => {
     it("should execute approval transaction successfully", async () => {
       const expectedHash = "0xapprovalhash123";
       const amount = BigInt("1000000");
-      mockWalletClient.writeContract = jest.fn().mockResolvedValue(expectedHash);
+      mockWalletClient.writeContract = vi.fn().mockResolvedValue(expectedHash);
 
       const hash = await approveToken(
         mockWalletClient,
@@ -239,7 +239,7 @@ describe("erc20 utilities", () => {
 
     it("should throw error when approval transaction fails", async () => {
       const error = new Error("User rejected transaction");
-      mockWalletClient.writeContract = jest.fn().mockRejectedValue(error);
+      mockWalletClient.writeContract = vi.fn().mockRejectedValue(error);
 
       await expect(
         approveToken(
@@ -254,7 +254,7 @@ describe("erc20 utilities", () => {
 
     it("should handle invalid token address", async () => {
       const invalidAddress = "0xinvalid" as Address;
-      mockWalletClient.writeContract = jest.fn().mockRejectedValue(new Error("Invalid address"));
+      mockWalletClient.writeContract = vi.fn().mockRejectedValue(new Error("Invalid address"));
 
       await expect(
         approveToken(
@@ -269,7 +269,7 @@ describe("erc20 utilities", () => {
 
     it("should handle approval amount overflow", async () => {
       const overflowAmount = MAX_UINT256 + 1n;
-      mockWalletClient.writeContract = jest.fn().mockRejectedValue(new Error("Amount overflow"));
+      mockWalletClient.writeContract = vi.fn().mockRejectedValue(new Error("Amount overflow"));
 
       await expect(
         approveToken(
@@ -336,7 +336,7 @@ describe("erc20 utilities", () => {
 
     it("should call onProgress callback with pending status", async () => {
       const txHash = "0xhash1";
-      const onProgress = jest.fn();
+      const onProgress = vi.fn();
       let firstCallStatus: string | undefined;
 
       // Capture the status from the first call
@@ -346,7 +346,7 @@ describe("erc20 utilities", () => {
         }
       });
 
-      mockWalletClient.writeContract = jest.fn().mockResolvedValue(txHash);
+      mockWalletClient.writeContract = vi.fn().mockResolvedValue(txHash);
       mockPublicClient.waitForTransactionReceipt = jest
         .fn()
         .mockImplementation(() => Promise.resolve({ status: "success" }));
@@ -374,7 +374,7 @@ describe("erc20 utilities", () => {
 
     it("should handle approval transaction failure", async () => {
       const error = new Error("Transaction failed");
-      mockWalletClient.writeContract = jest.fn().mockRejectedValue(error);
+      mockWalletClient.writeContract = vi.fn().mockRejectedValue(error);
 
       await expect(
         executeApprovals(mockWalletClient, mockPublicClient, mockAccount, mockSpenderAddress, [
@@ -390,7 +390,7 @@ describe("erc20 utilities", () => {
 
     it("should handle transaction receipt with failed status", async () => {
       const txHash = "0xhash1";
-      mockWalletClient.writeContract = jest.fn().mockResolvedValue(txHash);
+      mockWalletClient.writeContract = vi.fn().mockResolvedValue(txHash);
       mockPublicClient.waitForTransactionReceipt = jest
         .fn()
         .mockResolvedValue({ status: "reverted" });
@@ -454,8 +454,8 @@ describe("erc20 utilities", () => {
 
     it("should add failed transaction to results on error", async () => {
       const error = new Error("Approval failed");
-      mockWalletClient.writeContract = jest.fn().mockRejectedValue(error);
-      const onProgress = jest.fn();
+      mockWalletClient.writeContract = vi.fn().mockRejectedValue(error);
+      const onProgress = vi.fn();
 
       try {
         await executeApprovals(

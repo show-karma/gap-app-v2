@@ -2,12 +2,12 @@ import { render, screen } from "@testing-library/react";
 import { TabPanel } from "@/components/FundingPlatform/ApplicationView/TabPanel";
 
 // Mock cn utility
-jest.mock("@/utilities/tailwind", () => ({
+vi.mock("@/utilities/tailwind", () => ({
   cn: (...classes: any[]) => classes.filter(Boolean).join(" "),
 }));
 
 // Mock Spinner component
-jest.mock("@/components/Utilities/Spinner", () => ({
+vi.mock("@/components/Utilities/Spinner", () => ({
   Spinner: () => <div data-testid="spinner">Loading...</div>,
 }));
 

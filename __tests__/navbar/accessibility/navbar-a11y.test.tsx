@@ -10,7 +10,7 @@ import { getAuthFixture } from "../fixtures/auth-fixtures";
 import { renderWithProviders, setViewport } from "../utils/test-helpers";
 
 // Mock child components to prevent complex dependency issues
-jest.mock("@/src/components/navbar/navbar-desktop-navigation", () => ({
+vi.mock("@/src/components/navbar/navbar-desktop-navigation", () => ({
   NavbarDesktopNavigation: () => (
     <div data-testid="desktop-navigation" className="hidden xl:flex">
       <nav aria-label="Main navigation">
@@ -22,7 +22,7 @@ jest.mock("@/src/components/navbar/navbar-desktop-navigation", () => ({
   ),
 }));
 
-jest.mock("@/src/components/navbar/navbar-mobile-menu", () => ({
+vi.mock("@/src/components/navbar/navbar-mobile-menu", () => ({
   NavbarMobileMenu: () => (
     <div data-testid="mobile-menu" className="xl:hidden">
       <button type="button" aria-label="Open menu">
@@ -32,13 +32,13 @@ jest.mock("@/src/components/navbar/navbar-mobile-menu", () => ({
   ),
 }));
 
-jest.mock("@/src/components/navbar/navbar-search", () => ({
+vi.mock("@/src/components/navbar/navbar-search", () => ({
   NavbarSearch: () => (
     <input type="search" aria-label="Search projects and communities" placeholder="Search..." />
   ),
 }));
 
-jest.mock("@/src/components/navbar/navbar-user-menu", () => ({
+vi.mock("@/src/components/navbar/navbar-user-menu", () => ({
   NavbarUserMenu: () => (
     <div data-testid="user-menu">
       <button type="button" data-testid="user-avatar" aria-label="User menu">
@@ -48,7 +48,7 @@ jest.mock("@/src/components/navbar/navbar-user-menu", () => ({
   ),
 }));
 
-jest.mock("@/src/components/navbar/navbar-auth-buttons", () => ({
+vi.mock("@/src/components/navbar/navbar-auth-buttons", () => ({
   NavbarAuthButtons: () => (
     <div data-testid="auth-buttons">
       <button type="button">Sign in</button>
@@ -59,7 +59,7 @@ jest.mock("@/src/components/navbar/navbar-auth-buttons", () => ({
   ),
 }));
 
-jest.mock("@/src/components/shared/logo", () => ({
+vi.mock("@/src/components/shared/logo", () => ({
   Logo: () => <div data-testid="logo">Logo</div>,
 }));
 

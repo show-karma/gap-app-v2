@@ -11,17 +11,17 @@ import type { SupportedToken } from "@/constants/supportedTokens";
 import { useCrossChainBalances } from "@/hooks/donation/useCrossChainBalances";
 
 // Mock dependencies
-jest.mock("wagmi", () => ({
-  useAccount: jest.fn(),
+vi.mock("wagmi", () => ({
+  useAccount: vi.fn(),
 }));
 
-jest.mock("@/utilities/rpcClient", () => ({
-  getRPCClient: jest.fn(),
+vi.mock("@/utilities/rpcClient", () => ({
+  getRPCClient: vi.fn(),
 }));
 
-jest.mock("@/constants/supportedTokens", () => ({
-  ...jest.requireActual("@/constants/supportedTokens"),
-  getTokensByChain: jest.fn(),
+vi.mock("@/constants/supportedTokens", () => ({
+  ...vi.importActual("@/constants/supportedTokens"),
+  getTokensByChain: vi.fn(),
 }));
 
 describe("useCrossChainBalances", () => {
@@ -69,9 +69,9 @@ describe("useCrossChainBalances", () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
-    (wagmi.useAccount as jest.Mock).mockReturnValue({
+    (wagmi.useAccount as vi.Mock).mockReturnValue({
       address: mockAddress,
       isConnected: true,
     });
@@ -89,8 +89,8 @@ describe("useCrossChainBalances", () => {
     // Mock RPC client
     getRPCClient.mockImplementation((_chainId: number) => {
       const mockClient = {
-        getBalance: jest.fn().mockResolvedValue(BigInt("5000000000000000000")), // 5 ETH
-        multicall: jest.fn().mockResolvedValue([
+        getBalance: vi.fn().mockResolvedValue(BigInt("5000000000000000000")), // 5 ETH
+        multicall: vi.fn().mockResolvedValue([
           { status: "success", result: BigInt("1000000000") }, // 1000 USDC
         ]),
       };
@@ -100,7 +100,7 @@ describe("useCrossChainBalances", () => {
 
   describe("initialization", () => {
     it("should not fetch when wallet not connected", () => {
-      (wagmi.useAccount as jest.Mock).mockReturnValue({
+      (wagmi.useAccount as vi.Mock).mockReturnValue({
         address: null,
         isConnected: false,
       });
@@ -148,13 +148,13 @@ describe("useCrossChainBalances", () => {
         expect(getRPCClient).toHaveBeenCalled();
       });
 
-      const firstCallCount = (getRPCClient as jest.Mock).mock.calls.length;
+      const firstCallCount = (getRPCClient as vi.Mock).mock.calls.length;
 
       // Rerender should use cache
       rerender();
 
       // Should not call again due to caching
-      expect((getRPCClient as jest.Mock).mock.calls.length).toBe(firstCallCount);
+      expect((getRPCClient as vi.Mock).mock.calls.length).toBe(firstCallCount);
     });
 
     it("should handle native token balances", async () => {
@@ -189,7 +189,7 @@ describe("useCrossChainBalances", () => {
       const { getRPCClient } = require("@/utilities/rpcClient");
 
       getRPCClient.mockResolvedValue({
-        getBalance: jest.fn().mockResolvedValue(BigInt("5000000000000000000")),
+        getBalance: vi.fn().mockResolvedValue(BigInt("5000000000000000000")),
         multicall: jest
           .fn()
           .mockResolvedValue([{ status: "failure", error: new Error("Token error") }]),

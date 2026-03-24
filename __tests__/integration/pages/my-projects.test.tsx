@@ -1,8 +1,8 @@
 import { render, screen } from "@testing-library/react";
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 import Page from "@/app/my-projects/page";
 
-jest.mock("@/components/Pages/MyProjects", () => {
+vi.mock("@/components/Pages/MyProjects", () => {
   return function MockMyProjects() {
     return <div data-testid="mock-my-projects">Mocked MyProjects Component</div>;
   };

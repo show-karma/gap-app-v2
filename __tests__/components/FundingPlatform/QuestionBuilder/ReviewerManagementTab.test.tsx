@@ -1,39 +1,39 @@
 import { act, render, screen } from "@testing-library/react";
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 import { toast } from "react-hot-toast";
 import { ReviewerManagementTab } from "@/components/FundingPlatform/QuestionBuilder/ReviewerManagementTab";
 import { Permission } from "@/src/core/rbac/types/permission";
 
-const mockCan = jest.fn();
-const mockUsePermissionContext = jest.fn();
-const mockRoleManagementTab = jest.fn();
-const mockUseProgramReviewers = jest.fn();
-const mockUseMilestoneReviewers = jest.fn();
+const mockCan = vi.fn();
+const mockUsePermissionContext = vi.fn();
+const mockRoleManagementTab = vi.fn();
+const mockUseProgramReviewers = vi.fn();
+const mockUseMilestoneReviewers = vi.fn();
 
-jest.mock("react-hot-toast", () => ({
+vi.mock("react-hot-toast", () => ({
   toast: {
-    success: jest.fn(),
-    error: jest.fn(),
+    success: vi.fn(),
+    error: vi.fn(),
   },
 }));
 
-jest.mock("@/src/core/rbac/context/permission-context", () => ({
+vi.mock("@/src/core/rbac/context/permission-context", () => ({
   usePermissionContext: () => mockUsePermissionContext(),
 }));
 
-jest.mock("@/hooks/useProgramReviewers", () => ({
+vi.mock("@/hooks/useProgramReviewers", () => ({
   useProgramReviewers: (...args: unknown[]) => mockUseProgramReviewers(...args),
 }));
 
-jest.mock("@/hooks/useMilestoneReviewers", () => ({
+vi.mock("@/hooks/useMilestoneReviewers", () => ({
   useMilestoneReviewers: (...args: unknown[]) => mockUseMilestoneReviewers(...args),
 }));
 
-jest.mock("@/components/Utilities/Spinner", () => ({
+vi.mock("@/components/Utilities/Spinner", () => ({
   Spinner: () => <div data-testid="spinner" />,
 }));
 
-jest.mock("@/components/FundingPlatform/PageHeader", () => ({
+vi.mock("@/components/FundingPlatform/PageHeader", () => ({
   PAGE_HEADER_CONTENT: {
     reviewers: {
       title: "Reviewers",
@@ -43,6 +43,7 @@ jest.mock("@/components/FundingPlatform/PageHeader", () => ({
   PageHeader: () => <div data-testid="page-header" />,
 }));
 
+<<<<<<< HEAD
 jest.mock("@/components/Generic/RoleManagement/RoleManagementTab", () => ({
   RoleManagementTab: (props: {
     canManage?: boolean;
@@ -50,6 +51,10 @@ jest.mock("@/components/Generic/RoleManagement/RoleManagementTab", () => ({
     onEditRoles?: (memberId: string, roles: string[]) => Promise<void>;
     members?: Array<{ id: string; roles?: string[] }>;
   }) => {
+=======
+vi.mock("@/components/Generic/RoleManagement/RoleManagementTab", () => ({
+  RoleManagementTab: (props: { canManage?: boolean }) => {
+>>>>>>> 8322801b (test: migrate Jest to Vitest for unit/integration tests)
     mockRoleManagementTab(props);
     return (
       <div
@@ -63,8 +68,8 @@ jest.mock("@/components/Generic/RoleManagement/RoleManagementTab", () => ({
 }));
 
 // Intentionally mocked to ensure access logic does not rely on this hook.
-jest.mock("@/hooks/communities/useIsCommunityAdmin", () => ({
-  useIsCommunityAdmin: jest.fn(() => ({
+vi.mock("@/hooks/communities/useIsCommunityAdmin", () => ({
+  useIsCommunityAdmin: vi.fn(() => ({
     isCommunityAdmin: false,
     isLoading: false,
   })),
@@ -73,25 +78,25 @@ jest.mock("@/hooks/communities/useIsCommunityAdmin", () => ({
 function createReviewersHookResult(
   data: Array<Record<string, string | undefined>> = [],
   overrides: Partial<{
-    addReviewer: jest.Mock;
-    removeReviewer: jest.Mock;
-    refetch: jest.Mock;
+    addReviewer: vi.Mock;
+    removeReviewer: vi.Mock;
+    refetch: vi.Mock;
   }> = {}
 ) {
   return {
     data,
     isLoading: false,
-    refetch: overrides.refetch ?? jest.fn(),
-    addReviewer: overrides.addReviewer ?? jest.fn(),
-    removeReviewer: overrides.removeReviewer ?? jest.fn(),
+    refetch: overrides.refetch ?? vi.fn(),
+    addReviewer: overrides.addReviewer ?? vi.fn(),
+    removeReviewer: overrides.removeReviewer ?? vi.fn(),
   };
 }
 
-const mockToast = toast as jest.Mocked<typeof toast>;
+const mockToast = toast as vi.Mocked<typeof toast>;
 
 describe("ReviewerManagementTab", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     mockCan.mockReturnValue(false);
 
@@ -153,11 +158,50 @@ describe("ReviewerManagementTab", () => {
     });
   });
 
+<<<<<<< HEAD
   describe("member merging", () => {
     it("combines program and milestone reviewers with the same email into one member", () => {
       mockCan.mockReturnValue(true);
       mockUseProgramReviewers.mockReturnValue(
         createReviewersHookResult([
+=======
+  it("renders in read-only mode without manage permission", () => {
+    render(<ReviewerManagementTab programId="program-1" readOnly />);
+
+    expect(
+      screen.queryByText("You don't have permission to manage reviewers for this program.")
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId("role-management-tab")).toHaveAttribute("data-can-manage", "false");
+  });
+
+  it("uses email fallback in member IDs when wallet address is missing", () => {
+    mockCan.mockReturnValue(true);
+    mockUseProgramReviewers.mockReturnValue(
+      createReviewersHookResult([
+        {
+          name: "Email Reviewer",
+          email: "Reviewer@Example.com",
+          telegram: "reviewer",
+          assignedAt: "2024-01-01T00:00:00Z",
+        },
+      ])
+    );
+
+    render(<ReviewerManagementTab programId="program-1" />);
+
+    const roleTabProps = mockRoleManagementTab.mock.calls.at(-1)?.[0] as {
+      members: Array<{ id: string }>;
+    };
+    expect(roleTabProps.members[0].id).toBe("program-reviewer@example.com");
+  });
+
+  it("blocks remove when wallet address is not available yet", async () => {
+    const removeProgramReviewer = vi.fn().mockResolvedValue(undefined);
+    mockCan.mockReturnValue(true);
+    mockUseProgramReviewers.mockReturnValue(
+      createReviewersHookResult(
+        [
+>>>>>>> 8322801b (test: migrate Jest to Vitest for unit/integration tests)
           {
             name: "Alice",
             email: "alice@example.com",
@@ -465,6 +509,7 @@ describe("ReviewerManagementTab", () => {
     });
   });
 
+<<<<<<< HEAD
   describe("remove error propagation", () => {
     it("propagates errors from remove mutations instead of swallowing them", async () => {
       const removeError = new Error("Network failure");
@@ -505,6 +550,14 @@ describe("ReviewerManagementTab", () => {
       mockCan.mockReturnValue(true);
       mockUseProgramReviewers.mockReturnValue(
         createReviewersHookResult([
+=======
+  it("removes reviewers using wallet address from member data", async () => {
+    const removeProgramReviewer = vi.fn().mockResolvedValue(undefined);
+    mockCan.mockReturnValue(true);
+    mockUseProgramReviewers.mockReturnValue(
+      createReviewersHookResult(
+        [
+>>>>>>> 8322801b (test: migrate Jest to Vitest for unit/integration tests)
           {
             name: "Alice",
             email: "alice@example.com",

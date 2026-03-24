@@ -13,14 +13,14 @@ import { useAgentStream } from "@/hooks/useAgentStream";
 import { useAgentChatStore } from "@/store/agentChat";
 
 // Mock TokenManager
-jest.mock("@/utilities/auth/token-manager", () => ({
+vi.mock("@/utilities/auth/token-manager", () => ({
   TokenManager: {
-    getToken: jest.fn().mockResolvedValue("mock-token-123"),
+    getToken: vi.fn().mockResolvedValue("mock-token-123"),
   },
 }));
 
 // Mock envVars
-jest.mock("@/utilities/enviromentVars", () => ({
+vi.mock("@/utilities/enviromentVars", () => ({
   envVars: {
     NEXT_PUBLIC_GAP_INDEXER_URL: "https://api.test.com",
   },
@@ -28,7 +28,7 @@ jest.mock("@/utilities/enviromentVars", () => ({
 
 import { TokenManager } from "@/utilities/auth/token-manager";
 
-const mockGetToken = TokenManager.getToken as jest.Mock;
+const mockGetToken = TokenManager.getToken as vi.Mock;
 
 // Helper to create SSE formatted text from event data
 function formatSSE(events: Array<{ type: string; [key: string]: unknown }>): string {
@@ -117,7 +117,7 @@ function createErrorResponse(status: number, body: string): Response {
 }
 
 // Direct fetch mock — avoids MSW + jsdom ReadableStream incompatibility
-const mockFetch = jest.fn<Promise<Response>, [RequestInfo | URL, RequestInit?]>();
+const mockFetch = vi.fn<Promise<Response>, [RequestInfo | URL, RequestInit?]>();
 let savedFetch: typeof globalThis.fetch;
 
 // QueryClient wrapper for useQueryClient inside useAgentStream
@@ -885,7 +885,7 @@ describe("useAgentStream", () => {
       });
 
       mockFetch.mockResolvedValue(createStreamResponse(""));
-      const invalidateSpy = jest.spyOn(testQueryClient, "invalidateQueries");
+      const invalidateSpy = vi.spyOn(testQueryClient, "invalidateQueries");
 
       const { result } = renderHook(() => useAgentStream(), { wrapper });
 
@@ -905,7 +905,7 @@ describe("useAgentStream", () => {
       });
 
       mockFetch.mockResolvedValue(createStreamResponse(""));
-      const invalidateSpy = jest.spyOn(testQueryClient, "invalidateQueries");
+      const invalidateSpy = vi.spyOn(testQueryClient, "invalidateQueries");
 
       const { result } = renderHook(() => useAgentStream(), { wrapper });
 
@@ -936,7 +936,7 @@ describe("useAgentStream", () => {
       });
 
       mockFetch.mockResolvedValue(createStreamResponse(""));
-      const invalidateSpy = jest.spyOn(testQueryClient, "invalidateQueries");
+      const invalidateSpy = vi.spyOn(testQueryClient, "invalidateQueries");
 
       const { result } = renderHook(() => useAgentStream(), { wrapper });
 

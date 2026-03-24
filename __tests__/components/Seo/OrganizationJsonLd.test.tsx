@@ -1,7 +1,7 @@
 import { render } from "@testing-library/react";
 import { OrganizationJsonLd } from "@/components/Seo/OrganizationJsonLd";
 import { DEFAULT_DESCRIPTION, DEFAULT_TITLE, SITE_URL } from "@/utilities/meta";
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 
 describe("OrganizationJsonLd", () => {
   function getJsonLdScripts(container: HTMLElement) {

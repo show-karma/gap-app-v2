@@ -1,27 +1,27 @@
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ApplicationSubmission from "@/components/FundingPlatform/ApplicationView/ApplicationSubmission";
 import type { IFormSchema } from "@/types/funding-platform";
 
 // Mock wagmi
-jest.mock("wagmi", () => ({
+vi.mock("wagmi", () => ({
   useAccount: () => ({
     address: "0x1234567890123456789012345678901234567890",
   }),
 }));
 
 // Mock react-hot-toast
-jest.mock("react-hot-toast", () => ({
+vi.mock("react-hot-toast", () => ({
   __esModule: true,
   default: {
-    success: jest.fn(),
-    error: jest.fn(),
+    success: vi.fn(),
+    error: vi.fn(),
   },
 }));
 
 // Mock Button component
-jest.mock("@/components/Utilities/Button", () => ({
+vi.mock("@/components/Utilities/Button", () => ({
   Button: ({ children, onClick, disabled, type, isLoading, ...props }: any) => (
     <button
       onClick={onClick}
@@ -36,16 +36,16 @@ jest.mock("@/components/Utilities/Button", () => ({
 }));
 
 // Mock next-themes
-jest.mock("next-themes", () => ({
+vi.mock("next-themes", () => ({
   useTheme: () => ({
     theme: "light",
-    setTheme: jest.fn(),
+    setTheme: vi.fn(),
     resolvedTheme: "light",
   }),
 }));
 
 // Mock MarkdownEditor component - render as textarea for testing
-jest.mock("@/components/Utilities/MarkdownEditor", () => ({
+vi.mock("@/components/Utilities/MarkdownEditor", () => ({
   MarkdownEditor: ({
     label,
     value,
@@ -109,18 +109,18 @@ describe("ApplicationSubmission - Field Matching Logic", () => {
     programId: "program-123",
     chainId: 1,
     formSchema: mockFormSchema,
-    onSubmit: jest.fn(),
-    onCancel: jest.fn(),
+    onSubmit: vi.fn(),
+    onCancel: vi.fn(),
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     // Clear console.warn mock
-    jest.spyOn(console, "warn").mockImplementation(() => {});
+    vi.spyOn(console, "warn").mockImplementation(() => {});
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe("normalizeForMatching - Strategy 1: Exact match with transformed fieldName", () => {
@@ -621,7 +621,7 @@ describe("ApplicationSubmission - Field Matching Logic", () => {
 
     it("should store number type in form state, not string", async () => {
       const user = userEvent.setup();
-      const mockOnSubmit = jest.fn();
+      const mockOnSubmit = vi.fn();
 
       render(
         <ApplicationSubmission
@@ -658,7 +658,7 @@ describe("ApplicationSubmission - Field Matching Logic", () => {
 
     it("should accept valid numeric input", async () => {
       const user = userEvent.setup();
-      const mockOnSubmit = jest.fn();
+      const mockOnSubmit = vi.fn();
 
       render(
         <ApplicationSubmission
@@ -699,7 +699,7 @@ describe("ApplicationSubmission - Field Matching Logic", () => {
 
     it("should validate min value constraint", async () => {
       const user = userEvent.setup();
-      const mockOnSubmit = jest.fn();
+      const mockOnSubmit = vi.fn();
 
       render(
         <ApplicationSubmission
@@ -734,7 +734,7 @@ describe("ApplicationSubmission - Field Matching Logic", () => {
 
     it("should validate max value constraint", async () => {
       const user = userEvent.setup();
-      const mockOnSubmit = jest.fn();
+      const mockOnSubmit = vi.fn();
 
       render(
         <ApplicationSubmission
@@ -768,7 +768,7 @@ describe("ApplicationSubmission - Field Matching Logic", () => {
 
     it("should accept valid number within min/max range", async () => {
       const user = userEvent.setup();
-      const mockOnSubmit = jest.fn();
+      const mockOnSubmit = vi.fn();
 
       render(
         <ApplicationSubmission
@@ -795,7 +795,7 @@ describe("ApplicationSubmission - Field Matching Logic", () => {
 
     it("should handle optional number fields correctly", async () => {
       const user = userEvent.setup();
-      const mockOnSubmit = jest.fn();
+      const mockOnSubmit = vi.fn();
 
       render(
         <ApplicationSubmission
@@ -824,7 +824,7 @@ describe("ApplicationSubmission - Field Matching Logic", () => {
 
     it("should store numbers (not strings) in form state when pre-filling in edit mode", async () => {
       const user = userEvent.setup();
-      const mockOnSubmit = jest.fn();
+      const mockOnSubmit = vi.fn();
 
       const initialData = {
         team_size: 50, // Number value
@@ -868,7 +868,7 @@ describe("ApplicationSubmission - Field Matching Logic", () => {
 
     it("should handle decimal numbers correctly", async () => {
       const user = userEvent.setup();
-      const mockOnSubmit = jest.fn();
+      const mockOnSubmit = vi.fn();
 
       const decimalFormSchema: IFormSchema = {
         title: "Test Form with Decimals",
@@ -1962,7 +1962,7 @@ describe("ApplicationSubmission - Field Matching Logic", () => {
           ],
         };
 
-        const onSubmit = jest.fn();
+        const onSubmit = vi.fn();
         render(
           <ApplicationSubmission
             {...defaultProps}

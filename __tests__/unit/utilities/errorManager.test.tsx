@@ -2,15 +2,15 @@ import * as Sentry from "@sentry/nextjs";
 import { errorManager } from "@/components/Utilities/errorManager";
 
 // Unmock errorManager from global setup to test the actual implementation
-jest.unmock("@/components/Utilities/errorManager");
-jest.mock("@sentry/nextjs");
+vi.unmock("@/components/Utilities/errorManager");
+vi.mock("@sentry/nextjs");
 
 describe("errorManager", () => {
-  let consoleLogSpy: jest.SpyInstance;
+  let consoleLogSpy: vi.SpyInstance;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    consoleLogSpy = jest.spyOn(console, "log").mockImplementation();
+    vi.clearAllMocks();
+    consoleLogSpy = vi.spyOn(console, "log").mockImplementation();
   });
 
   afterEach(() => {

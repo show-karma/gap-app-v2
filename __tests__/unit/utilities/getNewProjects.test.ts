@@ -1,14 +1,14 @@
 import { errorManager } from "@/components/Utilities/errorManager";
 import fetchData from "@/utilities/fetchData";
 import { getNewProjects } from "@/utilities/indexer/getNewProjects";
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 
-jest.mock("@/utilities/fetchData");
-jest.mock("@/components/Utilities/errorManager");
+vi.mock("@/utilities/fetchData");
+vi.mock("@/components/Utilities/errorManager");
 
 describe("getNewProjects", () => {
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("should fetch projects successfully", async () => {
@@ -19,7 +19,7 @@ describe("getNewProjects", () => {
       ],
     };
     const mockPageInfo = { totalItems: 2, page: 0, pageLimit: 10 };
-    (fetchData as jest.Mock).mockResolvedValue([mockData, null, mockPageInfo]);
+    (fetchData as vi.Mock).mockResolvedValue([mockData, null, mockPageInfo]);
 
     const result = await getNewProjects(10, 0, "createdAt", "desc");
 
@@ -32,7 +32,7 @@ describe("getNewProjects", () => {
   });
 
   it("should handle errors when fetching projects", async () => {
-    (fetchData as jest.Mock).mockResolvedValue([null, new Error("Fetch error"), null]);
+    (fetchData as vi.Mock).mockResolvedValue([null, new Error("Fetch error"), null]);
 
     const result = await getNewProjects(10, 0, "createdAt", "desc");
 
@@ -50,7 +50,7 @@ describe("getNewProjects", () => {
   it("should use default values for optional parameters", async () => {
     const mockData = { data: [] };
     const mockPageInfo = { totalItems: 0, page: 0, pageLimit: 10 };
-    (fetchData as jest.Mock).mockResolvedValue([mockData, null, mockPageInfo]);
+    (fetchData as vi.Mock).mockResolvedValue([mockData, null, mockPageInfo]);
 
     await getNewProjects(10);
 
@@ -62,7 +62,7 @@ describe("getNewProjects", () => {
   it("should calculate correct nextOffset", async () => {
     const mockData = { data: [{ id: 1, name: "Project 1" }] };
     const mockPageInfo = { totalItems: 1, page: 2, pageLimit: 10 };
-    (fetchData as jest.Mock).mockResolvedValue([mockData, null, mockPageInfo]);
+    (fetchData as vi.Mock).mockResolvedValue([mockData, null, mockPageInfo]);
 
     const result = await getNewProjects(10, 2, "updatedAt", "asc");
 

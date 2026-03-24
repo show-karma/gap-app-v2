@@ -15,9 +15,9 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { getDetailedErrorInfo } from "@/utilities/donations/errorMessages";
 
 // Mock dependencies
-jest.mock("@/components/Utilities/errorManager");
-jest.mock("@/utilities/donations/errorMessages");
-jest.mock("next/link", () => {
+vi.mock("@/components/Utilities/errorManager");
+vi.mock("@/utilities/donations/errorMessages");
+vi.mock("next/link", () => {
   return ({ children, href }: { children: React.ReactNode; href: string }) => {
     return <a href={href}>{children}</a>;
   };
@@ -38,14 +38,14 @@ const ThrowError = ({
 };
 
 describe("DonationErrorBoundary", () => {
-  const mockErrorManager = errorManager as jest.MockedFunction<typeof errorManager>;
-  const mockGetDetailedErrorInfo = getDetailedErrorInfo as jest.MockedFunction<
+  const mockErrorManager = errorManager as vi.MockedFunction<typeof errorManager>;
+  const mockGetDetailedErrorInfo = getDetailedErrorInfo as vi.MockedFunction<
     typeof getDetailedErrorInfo
   >;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.spyOn(console, "error").mockImplementation(() => {}); // Suppress React error boundary console errors
+    vi.clearAllMocks();
+    vi.spyOn(console, "error").mockImplementation(() => {}); // Suppress React error boundary console errors
 
     // Setup default mock return for getDetailedErrorInfo
     mockGetDetailedErrorInfo.mockReturnValue({
@@ -58,17 +58,17 @@ describe("DonationErrorBoundary", () => {
     // Mock localStorage
     Object.defineProperty(window, "localStorage", {
       value: {
-        getItem: jest.fn(),
-        setItem: jest.fn(),
-        removeItem: jest.fn(),
-        clear: jest.fn(),
+        getItem: vi.fn(),
+        setItem: vi.fn(),
+        removeItem: vi.fn(),
+        clear: vi.fn(),
       },
       writable: true,
     });
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe("Error Catching", () => {
@@ -261,10 +261,10 @@ describe("DonationErrorBoundary", () => {
     });
 
     it("should clear localStorage and reload page when Clear Cart is clicked", () => {
-      const removeItemSpy = jest.spyOn(window.localStorage, "removeItem");
+      const removeItemSpy = vi.spyOn(window.localStorage, "removeItem");
 
       // Mock window.location.href assignment
-      const hrefSetter = jest.fn();
+      const hrefSetter = vi.fn();
       Object.defineProperty(window.location, "href", {
         set: hrefSetter,
         get: () => originalLocation.href,
@@ -285,11 +285,11 @@ describe("DonationErrorBoundary", () => {
     });
 
     it("should handle localStorage errors gracefully", () => {
-      const removeItemSpy = jest.spyOn(window.localStorage, "removeItem");
+      const removeItemSpy = vi.spyOn(window.localStorage, "removeItem");
       removeItemSpy.mockImplementation(() => {
         throw new Error("localStorage error");
       });
-      const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+      const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
       render(
         <DonationErrorBoundary>

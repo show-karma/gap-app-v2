@@ -8,55 +8,55 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type React from "react";
 import { CreateProgramModal } from "@/components/FundingPlatform/CreateProgramModal";
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { server } from "@/__tests__/utils/msw/setup";
 import { ProgramRegistryService } from "@/services/programRegistry.service";
 
 // Mock useRouter from next/navigation
-const mockPush = jest.fn();
-jest.mock("next/navigation", () => ({
+const mockPush = vi.fn();
+vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: mockPush,
-    back: jest.fn(),
-    forward: jest.fn(),
-    refresh: jest.fn(),
-    replace: jest.fn(),
-    prefetch: jest.fn(),
+    back: vi.fn(),
+    forward: vi.fn(),
+    refresh: vi.fn(),
+    replace: vi.fn(),
+    prefetch: vi.fn(),
   }),
 }));
 
 // Mock dependencies
-jest.mock("wagmi", () => ({
-  useAccount: jest.fn(),
+vi.mock("wagmi", () => ({
+  useAccount: vi.fn(),
 }));
 
-jest.mock("@/hooks/useAuth", () => ({
-  useAuth: jest.fn(),
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: vi.fn(),
 }));
 
-jest.mock("@/hooks/communities/useCommunityDetails", () => ({
-  useCommunityDetails: jest.fn(),
+vi.mock("@/hooks/communities/useCommunityDetails", () => ({
+  useCommunityDetails: vi.fn(),
 }));
 
-jest.mock("@/services/programRegistry.service", () => ({
+vi.mock("@/services/programRegistry.service", () => ({
   ProgramRegistryService: {
-    buildProgramMetadata: jest.fn(),
-    createProgram: jest.fn(),
-    approveProgram: jest.fn(),
+    buildProgramMetadata: vi.fn(),
+    createProgram: vi.fn(),
+    approveProgram: vi.fn(),
   },
 }));
 
-jest.mock("react-hot-toast", () => ({
+vi.mock("react-hot-toast", () => ({
   __esModule: true,
   default: {
-    success: jest.fn(),
-    error: jest.fn(),
+    success: vi.fn(),
+    error: vi.fn(),
   },
 }));
 
 // Mock MultiEmailInput to render a simple input + button for testing
-jest.mock("@/components/Utilities/MultiEmailInput", () => ({
+vi.mock("@/components/Utilities/MultiEmailInput", () => ({
   MultiEmailInput: ({
     emails,
     onChange,
@@ -98,7 +98,7 @@ jest.mock("@/components/Utilities/MultiEmailInput", () => ({
 }));
 
 // Mock MarkdownEditor to render a simple textarea for testing
-jest.mock("@/components/Utilities/MarkdownEditor", () => ({
+vi.mock("@/components/Utilities/MarkdownEditor", () => ({
   MarkdownEditor: ({
     value,
     onChange,
@@ -141,7 +141,7 @@ jest.mock("@/components/Utilities/MarkdownEditor", () => ({
 }));
 
 // Mock Radix UI Dialog
-jest.mock("@radix-ui/react-dialog", () => {
+vi.mock("@radix-ui/react-dialog", () => {
   const React = require("react");
 
   return {
@@ -222,31 +222,31 @@ const renderWithProviders = (ui: React.ReactElement, queryClient?: QueryClient) 
 };
 
 describe("CreateProgramModal", () => {
-  const mockOnClose = jest.fn();
-  const mockOnSuccess = jest.fn();
-  const mockLogin = jest.fn();
+  const mockOnClose = vi.fn();
+  const mockOnSuccess = vi.fn();
+  const mockLogin = vi.fn();
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     // Default mocks
-    (useAccount as jest.Mock).mockReturnValue({
+    (useAccount as vi.Mock).mockReturnValue({
       address: mockAddress,
       isConnected: true,
     });
 
-    (useAuth as jest.Mock).mockReturnValue({
+    (useAuth as vi.Mock).mockReturnValue({
       authenticated: true,
       login: mockLogin,
     });
 
-    (useCommunityDetails as jest.Mock).mockReturnValue({
+    (useCommunityDetails as vi.Mock).mockReturnValue({
       data: mockCommunity,
       isLoading: false,
       error: null,
     });
 
-    (ProgramRegistryService.buildProgramMetadata as jest.Mock).mockReturnValue({
+    (ProgramRegistryService.buildProgramMetadata as vi.Mock).mockReturnValue({
       title: "Test Program",
       description: "Test Description",
       shortDescription: "Short desc",
@@ -254,13 +254,13 @@ describe("CreateProgramModal", () => {
       communityRef: [mockCommunity.uid],
     });
 
-    (ProgramRegistryService.createProgram as jest.Mock).mockResolvedValue({
+    (ProgramRegistryService.createProgram as vi.Mock).mockResolvedValue({
       programId: "program-123",
       success: true,
       requiresManualApproval: false,
     });
 
-    (ProgramRegistryService.approveProgram as jest.Mock).mockResolvedValue(undefined);
+    (ProgramRegistryService.approveProgram as vi.Mock).mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -309,7 +309,7 @@ describe("CreateProgramModal", () => {
     });
 
     it("should show loading state when community is loading", () => {
-      (useCommunityDetails as jest.Mock).mockReturnValue({
+      (useCommunityDetails as vi.Mock).mockReturnValue({
         data: null,
         isLoading: true,
         error: null,
@@ -328,7 +328,7 @@ describe("CreateProgramModal", () => {
     });
 
     it("should show error state when community fails to load", () => {
-      (useCommunityDetails as jest.Mock).mockReturnValue({
+      (useCommunityDetails as vi.Mock).mockReturnValue({
         data: null,
         isLoading: false,
         error: new Error("Failed to load"),
@@ -577,7 +577,7 @@ describe("CreateProgramModal", () => {
 
     it("should show loading state during submission", async () => {
       const user = userEvent.setup();
-      (ProgramRegistryService.createProgram as jest.Mock).mockImplementation(
+      (ProgramRegistryService.createProgram as vi.Mock).mockImplementation(
         () =>
           new Promise((resolve) =>
             setTimeout(() => resolve({ programId: "123", success: true }), 100)
@@ -656,7 +656,7 @@ describe("CreateProgramModal", () => {
       const user = userEvent.setup();
       // Even when requiresManualApproval is true (on-chain pending),
       // funding-platform flow should show success and close
-      (ProgramRegistryService.createProgram as jest.Mock).mockResolvedValue({
+      (ProgramRegistryService.createProgram as vi.Mock).mockResolvedValue({
         programId: "program-123",
         success: true,
         requiresManualApproval: true,
@@ -697,7 +697,7 @@ describe("CreateProgramModal", () => {
 
     it("should handle creation errors", async () => {
       const user = userEvent.setup();
-      (ProgramRegistryService.createProgram as jest.Mock).mockRejectedValue(
+      (ProgramRegistryService.createProgram as vi.Mock).mockRejectedValue(
         new Error("Creation failed")
       );
 
@@ -728,7 +728,7 @@ describe("CreateProgramModal", () => {
 
     it("should handle duplicate program error", async () => {
       const user = userEvent.setup();
-      (ProgramRegistryService.createProgram as jest.Mock).mockRejectedValue(
+      (ProgramRegistryService.createProgram as vi.Mock).mockRejectedValue(
         new Error("A program with this name already exists")
       );
 
@@ -788,7 +788,7 @@ describe("CreateProgramModal", () => {
   describe("Authentication", () => {
     it("should prompt login if not authenticated", async () => {
       const user = userEvent.setup();
-      (useAuth as jest.Mock).mockReturnValue({
+      (useAuth as vi.Mock).mockReturnValue({
         authenticated: false,
         login: mockLogin,
       });
@@ -819,7 +819,7 @@ describe("CreateProgramModal", () => {
 
     it("should prompt login if wallet not connected", async () => {
       const user = userEvent.setup();
-      (useAccount as jest.Mock).mockReturnValue({
+      (useAccount as vi.Mock).mockReturnValue({
         address: undefined,
         isConnected: false,
       });
@@ -854,7 +854,7 @@ describe("CreateProgramModal", () => {
       const user = userEvent.setup();
       // BE may return empty response body due to Fastify serialization,
       // resulting in empty programId - this should still be treated as success
-      (ProgramRegistryService.createProgram as jest.Mock).mockResolvedValue({
+      (ProgramRegistryService.createProgram as vi.Mock).mockResolvedValue({
         programId: "",
         success: true,
         requiresManualApproval: true,

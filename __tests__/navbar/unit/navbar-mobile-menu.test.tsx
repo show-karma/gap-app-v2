@@ -15,7 +15,7 @@ import {
 
 describe("NavbarMobileMenu", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("Drawer Behavior", () => {

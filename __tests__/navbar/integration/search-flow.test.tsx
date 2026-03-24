@@ -235,7 +235,7 @@ describe("Search Flow Integration Tests", () => {
   describe("3. Search with Debouncing", () => {
     it("should debounce rapid typing and only call API once", async () => {
       const user = userEvent.setup();
-      const mockHandler = jest.fn();
+      const mockHandler = vi.fn();
       mockSearchFunction.mockImplementation(() => {
         mockHandler();
         return Promise.resolve(projectsOnlyResults);
@@ -265,7 +265,7 @@ describe("Search Flow Integration Tests", () => {
 
     it("should cancel previous request and call API with latest query", async () => {
       const user = userEvent.setup();
-      const mockHandler = jest.fn();
+      const mockHandler = vi.fn();
       mockSearchFunction.mockImplementation((query) => {
         mockHandler(query);
         return Promise.resolve(projectsOnlyResults);
@@ -295,7 +295,7 @@ describe("Search Flow Integration Tests", () => {
 
     it("should not search when query is less than 3 characters", async () => {
       const user = userEvent.setup();
-      const mockHandler = jest.fn();
+      const mockHandler = vi.fn();
       mockSearchFunction.mockImplementation(() => {
         mockHandler();
         return Promise.resolve(emptySearchResults);

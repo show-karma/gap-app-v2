@@ -11,29 +11,29 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
 // Mock fetchData utility
-jest.mock("@/utilities/fetchData", () => ({
+vi.mock("@/utilities/fetchData", () => ({
   __esModule: true,
-  default: jest.fn(),
+  default: vi.fn(),
 }));
 
 // Mock errorManager
-jest.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: jest.fn(),
+vi.mock("@/components/Utilities/errorManager", () => ({
+  errorManager: vi.fn(),
 }));
 
 // Mock useAuth
-jest.mock("@/hooks/useAuth", () => ({
-  useAuth: jest.fn(() => ({
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: vi.fn(() => ({
     authenticated: true,
   })),
 }));
 
 // Mock communities store
-const mockSetCommunities = jest.fn();
-const mockSetIsLoading = jest.fn();
+const mockSetCommunities = vi.fn();
+const mockSetIsLoading = vi.fn();
 
-jest.mock("@/store/communities", () => ({
-  useCommunitiesStore: jest.fn(() => ({
+vi.mock("@/store/communities", () => ({
+  useCommunitiesStore: vi.fn(() => ({
     setCommunities: mockSetCommunities,
     setIsLoading: mockSetIsLoading,
     communities: [],
@@ -43,8 +43,8 @@ jest.mock("@/store/communities", () => ({
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAuth } from "@/hooks/useAuth";
 
-const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
-const mockErrorManager = errorManager as jest.Mock;
+const mockUseAuth = useAuth as vi.MockedFunction<typeof useAuth>;
+const mockErrorManager = errorManager as vi.Mock;
 
 describe("useAdminCommunities (V2)", () => {
   const mockCommunities = [
@@ -96,7 +96,7 @@ describe("useAdminCommunities (V2)", () => {
   let queryClient: QueryClient;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     queryClient = createTestQueryClient();
     mockUseAuth.mockReturnValue({ authenticated: true } as ReturnType<typeof useAuth>);
   });
@@ -107,7 +107,7 @@ describe("useAdminCommunities (V2)", () => {
 
   describe("Successful fetch", () => {
     it("should fetch admin communities when authenticated", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([mockV2Response, null]);
+      (fetchData as vi.Mock).mockResolvedValue([mockV2Response, null]);
 
       const { result } = renderHook(() => useAdminCommunities("0xtest-address"), {
         wrapper: createWrapper(queryClient),
@@ -129,7 +129,7 @@ describe("useAdminCommunities (V2)", () => {
     });
 
     it("should update zustand store with fetched communities", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([mockV2Response, null]);
+      (fetchData as vi.Mock).mockResolvedValue([mockV2Response, null]);
 
       const { result } = renderHook(() => useAdminCommunities("0xtest-address"), {
         wrapper: createWrapper(queryClient),
@@ -152,13 +152,13 @@ describe("useAdminCommunities (V2)", () => {
     it("should have errorManager properly mocked", () => {
       // This test verifies the fix for the bug where errorManager wasn't mocked
       // Previously, the test would fail because it tried to access mockErrorManager.mock.calls
-      // without first mocking errorManager with jest.mock()
+      // without first mocking errorManager with vi.mock()
       expect(mockErrorManager).toBeDefined();
-      expect(jest.isMockFunction(mockErrorManager)).toBe(true);
+      expect(vi.isMockFunction(mockErrorManager)).toBe(true);
     });
 
     it("should clear communities on fetch error", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([null, "Server error"]);
+      (fetchData as vi.Mock).mockResolvedValue([null, "Server error"]);
 
       renderHook(() => useAdminCommunities("0xtest-address"), {
         wrapper: createWrapper(queryClient),
@@ -209,6 +209,7 @@ describe("useAdminCommunities (V2)", () => {
       expect(fetchData).not.toHaveBeenCalled();
     });
 
+<<<<<<< HEAD
     it("should fetch for Farcaster users with no wallet address", async () => {
       // Farcaster users are authenticated via JWT but have no wallet address.
       // The API uses JWT auth, not wallet address, so the query should fire.
@@ -226,6 +227,10 @@ describe("useAdminCommunities (V2)", () => {
 
     it("should refetch communities when address is removed (JWT auth still valid)", async () => {
       (fetchData as jest.Mock).mockResolvedValue([mockV2Response, null]);
+=======
+    it("should clear communities when address is removed", async () => {
+      (fetchData as vi.Mock).mockResolvedValue([mockV2Response, null]);
+>>>>>>> 8322801b (test: migrate Jest to Vitest for unit/integration tests)
 
       const { rerender } = renderHook(({ address }) => useAdminCommunities(address), {
         wrapper: createWrapper(queryClient),
@@ -236,8 +241,12 @@ describe("useAdminCommunities (V2)", () => {
         expect(mockSetCommunities).toHaveBeenCalled();
       });
 
+<<<<<<< HEAD
       jest.clearAllMocks();
       (fetchData as jest.Mock).mockResolvedValue([{ communities: [] }, null]);
+=======
+      vi.clearAllMocks();
+>>>>>>> 8322801b (test: migrate Jest to Vitest for unit/integration tests)
 
       // Re-render without address — query still fires because auth is JWT-based
       rerender({ address: undefined });
@@ -250,7 +259,7 @@ describe("useAdminCommunities (V2)", () => {
 
   describe("Loading state", () => {
     it("should sync loading state with zustand store", async () => {
-      (fetchData as jest.Mock).mockImplementation(
+      (fetchData as vi.Mock).mockImplementation(
         () => new Promise((resolve) => setTimeout(() => resolve([mockV2Response, null]), 100))
       );
 
@@ -268,7 +277,7 @@ describe("useAdminCommunities (V2)", () => {
 
   describe("Return value", () => {
     it("should return refetch function", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([mockV2Response, null]);
+      (fetchData as vi.Mock).mockResolvedValue([mockV2Response, null]);
 
       const { result } = renderHook(() => useAdminCommunities("0xtest-address"), {
         wrapper: createWrapper(queryClient),

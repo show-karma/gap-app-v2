@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 import type { Project } from "@/types/v2/project";
 import { ProjectHeader } from "../Header/ProjectHeader";
 
@@ -35,7 +35,7 @@ jest.mock("@/utilities/pages", () => ({
 }));
 
 // Mock the MarkdownPreview component
-jest.mock("@/components/Utilities/MarkdownPreview", () => ({
+vi.mock("@/components/Utilities/MarkdownPreview", () => ({
   MarkdownPreview: ({ source, className }: { source: string; className?: string }) => (
     <div className={className}>{source}</div>
   ),
@@ -54,18 +54,18 @@ jest.mock("@/components/Utilities/ProfilePicture", () => ({
 }));
 
 // Mock the ProjectActivityChart component to avoid QueryClient requirement
-jest.mock("../MainContent/ProjectActivityChart", () => ({
+vi.mock("../MainContent/ProjectActivityChart", () => ({
   ProjectActivityChart: () => <div data-testid="project-activity-chart">Activity Chart</div>,
 }));
 
 // Mock the ProjectOptionsMenu to avoid ESM dependencies
-jest.mock("@/components/Pages/Project/ProjectOptionsMenu", () => ({
+vi.mock("@/components/Pages/Project/ProjectOptionsMenu", () => ({
   ProjectOptionsMenu: () => <div data-testid="project-options-menu">Options Menu</div>,
 }));
 
 // Mock the useProjectSocials hook
-jest.mock("@/hooks/useProjectSocials", () => ({
-  useProjectSocials: jest.fn(() => [
+vi.mock("@/hooks/useProjectSocials", () => ({
+  useProjectSocials: vi.fn(() => [
     {
       name: "Twitter",
       url: "https://twitter.com/test",

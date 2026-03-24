@@ -6,16 +6,16 @@
 import type { QueryClient } from "@tanstack/react-query";
 
 // Mock the service modules
-jest.mock("@/services/project-grants.service", () => ({
-  getProjectGrants: jest.fn(),
+vi.mock("@/services/project-grants.service", () => ({
+  getProjectGrants: vi.fn(),
 }));
 
-jest.mock("@/services/project-impacts.service", () => ({
-  getProjectImpacts: jest.fn(),
+vi.mock("@/services/project-impacts.service", () => ({
+  getProjectImpacts: vi.fn(),
 }));
 
-jest.mock("@/services/project-updates.service", () => ({
-  getProjectUpdates: jest.fn(),
+vi.mock("@/services/project-updates.service", () => ({
+  getProjectUpdates: vi.fn(),
 }));
 
 // Import mocked services
@@ -24,27 +24,27 @@ import { getProjectImpacts } from "@/services/project-impacts.service";
 import { getProjectUpdates } from "@/services/project-updates.service";
 import { prefetchProjectProfileData } from "@/utilities/queries/prefetchProjectProfile";
 
-const mockGetProjectGrants = getProjectGrants as jest.MockedFunction<typeof getProjectGrants>;
-const mockGetProjectImpacts = getProjectImpacts as jest.MockedFunction<typeof getProjectImpacts>;
-const mockGetProjectUpdates = getProjectUpdates as jest.MockedFunction<typeof getProjectUpdates>;
+const mockGetProjectGrants = getProjectGrants as vi.MockedFunction<typeof getProjectGrants>;
+const mockGetProjectImpacts = getProjectImpacts as vi.MockedFunction<typeof getProjectImpacts>;
+const mockGetProjectUpdates = getProjectUpdates as vi.MockedFunction<typeof getProjectUpdates>;
 
 describe("prefetchProjectProfile", () => {
-  let mockQueryClient: jest.Mocked<QueryClient>;
-  let consoleWarnSpy: jest.SpyInstance;
+  let mockQueryClient: vi.Mocked<QueryClient>;
+  let consoleWarnSpy: vi.SpyInstance;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     // Create mock QueryClient with prefetchQuery
     mockQueryClient = {
-      prefetchQuery: jest.fn().mockImplementation(async (options) => {
+      prefetchQuery: vi.fn().mockImplementation(async (options) => {
         // Execute the queryFn to simulate the prefetch
         return options.queryFn();
       }),
-    } as unknown as jest.Mocked<QueryClient>;
+    } as unknown as vi.Mocked<QueryClient>;
 
     // Spy on console.warn to verify logging
-    consoleWarnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+    consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
   });
 
   afterEach(() => {

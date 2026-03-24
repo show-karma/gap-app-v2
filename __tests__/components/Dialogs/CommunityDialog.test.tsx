@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { CommunityDialog } from "@/components/Dialogs/CommunityDialog";
 
 // Mock Headless UI Dialog components
-jest.mock("@headlessui/react", () => {
+vi.mock("@headlessui/react", () => {
   const React = require("react");
 
   const TRANSITION_PROPS = [
@@ -74,24 +74,24 @@ jest.mock("@headlessui/react", () => {
 });
 
 // Mock react-hot-toast (used by ensureCorrectChain)
-jest.mock("react-hot-toast", () => ({
+vi.mock("react-hot-toast", () => ({
   __esModule: true,
-  default: { error: jest.fn(), success: jest.fn() },
+  default: { error: vi.fn(), success: vi.fn() },
 }));
 
 // Mock Heroicons
-jest.mock("@heroicons/react/24/solid", () => ({
+vi.mock("@heroicons/react/24/solid", () => ({
   PlusIcon: (props: any) => <svg data-testid="plus-icon" {...props} />,
   ChevronRightIcon: (props: any) => <svg data-testid="chevron-icon" {...props} />,
   XMarkIcon: (props: any) => <svg data-testid="x-icon" {...props} />,
 }));
 
 // Track attest mock for controlling test flow
-let mockAttest: jest.Mock;
-let mockSetupChainAndWallet: jest.Mock;
+let mockAttest: vi.Mock;
+let mockSetupChainAndWallet: vi.Mock;
 
 // Mock hooks
-jest.mock("wagmi", () => ({
+vi.mock("wagmi", () => ({
   useAccount: () => ({
     address: "0x1234567890abcdef1234567890abcdef12345678",
     chain: { id: 1 },
@@ -101,17 +101,17 @@ jest.mock("wagmi", () => ({
   usePublicClient: () => ({}),
 }));
 
-jest.mock("@/hooks/useWallet", () => ({
+vi.mock("@/hooks/useWallet", () => ({
   useWallet: () => ({
-    switchChainAsync: jest.fn(),
+    switchChainAsync: vi.fn(),
   }),
 }));
 
-jest.mock("@/hooks/useGap", () => {
+vi.mock("@/hooks/useGap", () => {
   const gapClient = {
-    findSchema: jest.fn().mockReturnValue("mock-schema"),
-    fetch: { slugExists: jest.fn().mockResolvedValue(false) },
-    generateSlug: jest.fn().mockResolvedValue("generated-slug"),
+    findSchema: vi.fn().mockReturnValue("mock-schema"),
+    fetch: { slugExists: vi.fn().mockResolvedValue(false) },
+    generateSlug: vi.fn().mockResolvedValue("generated-slug"),
   };
   return {
     useGap: () => ({
@@ -119,16 +119,16 @@ jest.mock("@/hooks/useGap", () => {
         network: "optimism",
       },
     }),
-    getGapClient: jest.fn().mockReturnValue(gapClient),
+    getGapClient: vi.fn().mockReturnValue(gapClient),
     __mockGapClient: gapClient,
   };
 });
 
 // Mock ensureCorrectChain to bypass chain switching delays and getGapClient issues
-jest.mock("@/utilities/ensureCorrectChain", () => {
-  const { __mockGapClient } = jest.requireMock("@/hooks/useGap");
+vi.mock("@/utilities/ensureCorrectChain", () => {
+  const { __mockGapClient } = require("@/hooks/useGap");
   return {
-    ensureCorrectChain: jest.fn().mockResolvedValue({
+    ensureCorrectChain: vi.fn().mockResolvedValue({
       success: true,
       chainId: 10,
       gapClient: __mockGapClient,
@@ -136,14 +136,14 @@ jest.mock("@/utilities/ensureCorrectChain", () => {
   };
 });
 
-const mockShowError = jest.fn();
-const mockStartAttestation = jest.fn();
-const mockShowLoading = jest.fn();
-const mockShowSuccess = jest.fn();
-const mockDismiss = jest.fn();
-const mockChangeStepperStep = jest.fn();
+const mockShowError = vi.fn();
+const mockStartAttestation = vi.fn();
+const mockShowLoading = vi.fn();
+const mockShowSuccess = vi.fn();
+const mockDismiss = vi.fn();
+const mockChangeStepperStep = vi.fn();
 
-jest.mock("@/hooks/useAttestationToast", () => ({
+vi.mock("@/hooks/useAttestationToast", () => ({
   useAttestationToast: () => ({
     startAttestation: mockStartAttestation,
     showLoading: mockShowLoading,
@@ -155,8 +155,8 @@ jest.mock("@/hooks/useAttestationToast", () => ({
 }));
 
 // Mock SDK Community class
-jest.mock("@show-karma/karma-gap-sdk", () => ({
-  Community: jest.fn().mockImplementation(() => ({
+vi.mock("@show-karma/karma-gap-sdk", () => ({
+  Community: vi.fn().mockImplementation(() => ({
     attest: (...args: any[]) => mockAttest(...args),
     chainID: 1,
     uid: "0xmock-uid",
@@ -164,25 +164,25 @@ jest.mock("@show-karma/karma-gap-sdk", () => ({
   nullRef: "0x0000000000000000000000000000000000000000000000000000000000000000",
 }));
 
-jest.mock("@/utilities/fetchData", () => jest.fn().mockResolvedValue([{}, null]));
+vi.mock("@/utilities/fetchData", () => vi.fn().mockResolvedValue([{}, null]));
 
-jest.mock("@/utilities/network", () => ({
+vi.mock("@/utilities/network", () => ({
   appNetwork: [
     { id: 10, name: "Optimism" },
     { id: 42161, name: "Arbitrum" },
   ],
 }));
 
-jest.mock("@/utilities/sanitize", () => ({
+vi.mock("@/utilities/sanitize", () => ({
   sanitizeObject: (obj: any) => obj,
 }));
 
-jest.mock("@/utilities/tailwind", () => ({
+vi.mock("@/utilities/tailwind", () => ({
   cn: (...args: any[]) => args.filter(Boolean).join(" "),
 }));
 
 // Mock MarkdownEditor
-jest.mock("@/components/Utilities/MarkdownEditor", () => ({
+vi.mock("@/components/Utilities/MarkdownEditor", () => ({
   MarkdownEditor: ({ value, onChange, ...props }: any) => (
     <textarea
       data-testid="markdown-editor"
@@ -194,12 +194,12 @@ jest.mock("@/components/Utilities/MarkdownEditor", () => ({
 }));
 
 // Mock errorManager
-jest.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: jest.fn(),
+vi.mock("@/components/Utilities/errorManager", () => ({
+  errorManager: vi.fn(),
 }));
 
 // Mock messages
-jest.mock("@/utilities/messages", () => ({
+vi.mock("@/utilities/messages", () => ({
   MESSAGES: {
     COMMUNITY_FORM: {
       TITLE: { MIN: "Too short", MAX: "Too long" },
@@ -210,14 +210,14 @@ jest.mock("@/utilities/messages", () => ({
 }));
 
 // Mock indexer
-jest.mock("@/utilities/indexer", () => ({
+vi.mock("@/utilities/indexer", () => ({
   INDEXER: {
     ATTESTATION_LISTENER: () => "/attestation-listener",
   },
 }));
 
 // Mock ui/button
-jest.mock("@/components/ui/button", () => ({
+vi.mock("@/components/ui/button", () => ({
   Button: ({ children, onClick, isLoading, disabled, ...props }: any) => (
     <button onClick={onClick} disabled={disabled || isLoading} {...props}>
       {isLoading ? "Loading..." : children}
@@ -226,25 +226,25 @@ jest.mock("@/components/ui/button", () => ({
 }));
 
 // Access the file-based mock hook function directly
-// (moduleNameMapper in jest.config.ts maps @/hooks/useSetupChainAndWallet
+// (resolve.alias in vitest.config.ts maps @/hooks/useSetupChainAndWallet
 //  to __mocks__/hooks/useSetupChainAndWallet.ts)
-const mockHookModule = jest.requireMock("@/hooks/useSetupChainAndWallet") as {
-  useSetupChainAndWallet: jest.Mock;
+const mockHookModule = require("@/hooks/useSetupChainAndWallet") as {
+  useSetupChainAndWallet: vi.Mock;
 };
 
 describe("CommunityDialog", () => {
-  const mockRefreshCommunities = jest.fn().mockResolvedValue([]);
+  const mockRefreshCommunities = vi.fn().mockResolvedValue([]);
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    mockAttest = jest.fn();
-    mockSetupChainAndWallet = jest.fn().mockResolvedValue({
+    vi.clearAllMocks();
+    mockAttest = vi.fn();
+    mockSetupChainAndWallet = vi.fn().mockResolvedValue({
       gapClient: {
-        findSchema: jest.fn().mockReturnValue("mock-schema"),
-        fetch: { slugExists: jest.fn().mockResolvedValue(false) },
-        generateSlug: jest.fn().mockResolvedValue("generated-slug"),
+        findSchema: vi.fn().mockReturnValue("mock-schema"),
+        fetch: { slugExists: vi.fn().mockResolvedValue(false) },
+        generateSlug: vi.fn().mockResolvedValue("generated-slug"),
       },
-      walletSigner: { signMessage: jest.fn() },
+      walletSigner: { signMessage: vi.fn() },
       chainId: 10,
     });
     // Reconfigure the hook to return our controllable setupChainAndWallet

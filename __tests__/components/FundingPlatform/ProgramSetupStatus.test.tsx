@@ -8,10 +8,10 @@ import {
   hasFormConfigured,
   ProgramSetupStatus,
 } from "@/components/FundingPlatform/ProgramSetupStatus";
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 
 // Mock next/link
-jest.mock("next/link", () => {
+vi.mock("next/link", () => {
   return ({ children, href }: { children: React.ReactNode; href: string }) => (
     <a href={href}>{children}</a>
   );

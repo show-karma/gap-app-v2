@@ -1,14 +1,14 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-let mockProjectAttest: jest.Mock;
-let mockSetupChainAndWallet: jest.Mock;
-const mockStartAttestation = jest.fn();
-const mockGetAttestationSigner = jest.fn();
-const mockEnsureCorrectChain = jest.fn();
+let mockProjectAttest: vi.Mock;
+let mockSetupChainAndWallet: vi.Mock;
+const mockStartAttestation = vi.fn();
+const mockGetAttestationSigner = vi.fn();
+const mockEnsureCorrectChain = vi.fn();
 
 // Mock Headless UI Dialog components
-jest.mock("@headlessui/react", () => {
+vi.mock("@headlessui/react", () => {
   const React = require("react");
 
   const TRANSITION_PROPS = [
@@ -79,7 +79,7 @@ jest.mock("@headlessui/react", () => {
   };
 });
 
-jest.mock("@radix-ui/react-tooltip", () => {
+vi.mock("@radix-ui/react-tooltip", () => {
   const Wrapper = ({ children }: any) => <>{children}</>;
   return {
     Provider: Wrapper,
@@ -91,13 +91,13 @@ jest.mock("@radix-ui/react-tooltip", () => {
   };
 });
 
-jest.mock("@heroicons/react/24/solid", () => ({
+vi.mock("@heroicons/react/24/solid", () => ({
   PlusIcon: (props: any) => <svg data-testid="plus-icon" {...props} />,
   ChevronRightIcon: (props: any) => <svg data-testid="chevron-icon" {...props} />,
   XMarkIcon: (props: any) => <svg data-testid="x-icon" {...props} />,
 }));
 
-jest.mock("wagmi", () => ({
+vi.mock("wagmi", () => ({
   useAccount: () => ({
     address: "0x1234567890abcdef1234567890abcdef12345678",
     chain: { id: 10 },
@@ -106,36 +106,36 @@ jest.mock("wagmi", () => ({
   useChainId: () => 10,
 }));
 
-jest.mock("@/hooks/useAuth", () => ({
+vi.mock("@/hooks/useAuth", () => ({
   useAuth: () => ({
     authenticated: true,
-    login: jest.fn(),
+    login: vi.fn(),
   }),
 }));
 
-jest.mock("@/hooks/useWallet", () => ({
+vi.mock("@/hooks/useWallet", () => ({
   useWallet: () => ({
-    switchChainAsync: jest.fn(),
+    switchChainAsync: vi.fn(),
   }),
 }));
 
-jest.mock("@/hooks/useGap", () => ({
+vi.mock("@/hooks/useGap", () => ({
   useGap: () => ({
     gap: { network: "optimism" },
   }),
-  getGapClient: jest.fn().mockReturnValue({
-    findSchema: jest.fn().mockReturnValue("mock-schema"),
-    generateSlug: jest.fn().mockResolvedValue("my-project"),
+  getGapClient: vi.fn().mockReturnValue({
+    findSchema: vi.fn().mockReturnValue("mock-schema"),
+    generateSlug: vi.fn().mockResolvedValue("my-project"),
   }),
 }));
 
-jest.mock("@/hooks/useContactInfo", () => ({
+vi.mock("@/hooks/useContactInfo", () => ({
   useContactInfo: () => ({
     data: [],
   }),
 }));
 
-jest.mock("@privy-io/react-auth", () => ({
+vi.mock("@privy-io/react-auth", () => ({
   usePrivy: () => ({
     ready: true,
     user: {
@@ -151,10 +151,10 @@ jest.mock("@privy-io/react-auth", () => ({
     ],
   }),
   useLogin: () => ({
-    login: jest.fn(),
+    login: vi.fn(),
   }),
   useLogout: () => ({
-    logout: jest.fn(),
+    logout: vi.fn(),
   }),
   PrivyProvider: ({ children }: any) => children,
   useCreateWallet: () => ({ createWallet: jest.fn() }),
@@ -186,18 +186,18 @@ jest.mock("@/contexts/privy-bridge-context", () => ({
   PRIVY_BRIDGE_DEFAULTS: {},
 }));
 
-jest.mock("@/hooks/useAttestationToast", () => ({
+vi.mock("@/hooks/useAttestationToast", () => ({
   useAttestationToast: () => ({
     startAttestation: mockStartAttestation,
-    showLoading: jest.fn(),
-    showSuccess: jest.fn(),
-    showError: jest.fn(),
-    dismiss: jest.fn(),
-    changeStepperStep: jest.fn(),
+    showLoading: vi.fn(),
+    showSuccess: vi.fn(),
+    showError: vi.fn(),
+    dismiss: vi.fn(),
+    changeStepperStep: vi.fn(),
   }),
 }));
 
-jest.mock("@/hooks/useZeroDevSigner", () => ({
+vi.mock("@/hooks/useZeroDevSigner", () => ({
   useZeroDevSigner: () => ({
     getAttestationSigner: (...args: any[]) => mockGetAttestationSigner(...args),
     isGaslessAvailable: false,
@@ -207,7 +207,7 @@ jest.mock("@/hooks/useZeroDevSigner", () => ({
   }),
 }));
 
-jest.mock("hooks/useZeroDevSigner", () => ({
+vi.mock("hooks/useZeroDevSigner", () => ({
   useZeroDevSigner: () => ({
     getAttestationSigner: (...args: any[]) => mockGetAttestationSigner(...args),
     isGaslessAvailable: false,
@@ -217,74 +217,74 @@ jest.mock("hooks/useZeroDevSigner", () => ({
   }),
 }));
 
-jest.mock("@/hooks/useSetupChainAndWallet", () => ({
-  useSetupChainAndWallet: jest.fn(),
+vi.mock("@/hooks/useSetupChainAndWallet", () => ({
+  useSetupChainAndWallet: vi.fn(),
 }));
 
-jest.mock("hooks/useSetupChainAndWallet", () => ({
-  useSetupChainAndWallet: jest.fn(),
+vi.mock("hooks/useSetupChainAndWallet", () => ({
+  useSetupChainAndWallet: vi.fn(),
 }));
 
-jest.mock("@/utilities/ensureCorrectChain", () => ({
+vi.mock("@/utilities/ensureCorrectChain", () => ({
   ensureCorrectChain: (...args: any[]) => mockEnsureCorrectChain(...args),
 }));
 
-jest.mock("utilities/ensureCorrectChain", () => ({
+vi.mock("utilities/ensureCorrectChain", () => ({
   ensureCorrectChain: (...args: any[]) => mockEnsureCorrectChain(...args),
 }));
 
-jest.mock("@/store", () => ({
+vi.mock("@/store", () => ({
   useProjectStore: (selector: any) =>
     selector({
-      refreshProject: jest.fn(),
+      refreshProject: vi.fn(),
     }),
 }));
 
-jest.mock("@/store/owner", () => ({
+vi.mock("@/store/owner", () => ({
   useOwnerStore: (selector: any) =>
     selector({
       isOwner: false,
     }),
 }));
 
-jest.mock("@/store/modals/projectEdit", () => ({
+vi.mock("@/store/modals/projectEdit", () => ({
   useProjectEditModalStore: () => ({
     isProjectEditModalOpen: false,
-    setIsProjectEditModalOpen: jest.fn(),
+    setIsProjectEditModalOpen: vi.fn(),
   }),
 }));
 
-jest.mock("@/store/modals/similarProjects", () => ({
+vi.mock("@/store/modals/similarProjects", () => ({
   useSimilarProjectsModalStore: () => ({
     isSimilarProjectsModalOpen: false,
-    openSimilarProjectsModal: jest.fn(),
+    openSimilarProjectsModal: vi.fn(),
   }),
 }));
 
-jest.mock("@/services/project-search.service", () => ({
-  searchProjects: jest.fn().mockResolvedValue([]),
+vi.mock("@/services/project-search.service", () => ({
+  searchProjects: vi.fn().mockResolvedValue([]),
 }));
 
-jest.mock("@/services/project.service", () => ({
-  checkSlugExists: jest.fn().mockResolvedValue(false),
-  getProject: jest.fn().mockResolvedValue(null),
+vi.mock("@/services/project.service", () => ({
+  checkSlugExists: vi.fn().mockResolvedValue(false),
+  getProject: vi.fn().mockResolvedValue(null),
 }));
 
-jest.mock("@/utilities/wallet-helpers", () => ({
-  safeGetWalletClient: jest.fn().mockResolvedValue({ walletClient: {}, error: null }),
+vi.mock("@/utilities/wallet-helpers", () => ({
+  safeGetWalletClient: vi.fn().mockResolvedValue({ walletClient: {}, error: null }),
 }));
 
-jest.mock("@/utilities/eas-wagmi-utils", () => ({
-  walletClientToSigner: jest.fn().mockResolvedValue({ signMessage: jest.fn() }),
+vi.mock("@/utilities/eas-wagmi-utils", () => ({
+  walletClientToSigner: vi.fn().mockResolvedValue({ signMessage: vi.fn() }),
 }));
 
-jest.mock("@/utilities/github", () => ({
-  validateGithubInput: jest.fn().mockResolvedValue({ valid: true }),
+vi.mock("@/utilities/github", () => ({
+  validateGithubInput: vi.fn().mockResolvedValue({ valid: true }),
 }));
 
-jest.mock("@/utilities/fetchData", () => jest.fn().mockResolvedValue([{}, null]));
+vi.mock("@/utilities/fetchData", () => vi.fn().mockResolvedValue([{}, null]));
 
-jest.mock("@/utilities/messages", () => ({
+vi.mock("@/utilities/messages", () => ({
   MESSAGES: {
     PROJECT_FORM: {
       TITLE: { MIN: "Title too short", MAX: "Title too long" },
@@ -306,7 +306,7 @@ jest.mock("@/utilities/messages", () => ({
   },
 }));
 
-jest.mock("@/utilities/indexer", () => ({
+vi.mock("@/utilities/indexer", () => ({
   INDEXER: {
     ATTESTATION_LISTENER: () => "/attestation-listener",
     SUBSCRIPTION: {
@@ -320,51 +320,51 @@ jest.mock("@/utilities/indexer", () => ({
   },
 }));
 
-jest.mock("@/utilities/network", () => ({
+vi.mock("@/utilities/network", () => ({
   gapSupportedNetworks: [
     { id: 10, name: "Optimism" },
     { id: 42161, name: "Arbitrum" },
   ],
 }));
 
-jest.mock("@/utilities/pages", () => ({
+vi.mock("@/utilities/pages", () => ({
   PAGES: {
     PROJECT: {
       SCREENS: {
-        NEW_GRANT: jest.fn().mockReturnValue("/project/new-grant"),
+        NEW_GRANT: vi.fn().mockReturnValue("/project/new-grant"),
       },
-      OVERVIEW: jest.fn().mockReturnValue("/project/overview"),
+      OVERVIEW: vi.fn().mockReturnValue("/project/overview"),
     },
   },
 }));
 
-jest.mock("@/utilities/socials", () => ({
+vi.mock("@/utilities/socials", () => ({
   SOCIALS: {
     TELEGRAM: "https://t.me/example",
   },
 }));
 
-jest.mock("@/utilities/tailwind", () => ({
+vi.mock("@/utilities/tailwind", () => ({
   cn: (...args: string[]) => args.filter(Boolean).join(" "),
 }));
 
-jest.mock("@/utilities/customLink", () => ({
-  isCustomLink: jest.fn().mockReturnValue(false),
+vi.mock("@/utilities/customLink", () => ({
+  isCustomLink: vi.fn().mockReturnValue(false),
 }));
 
-jest.mock("@/utilities/sanitize", () => ({
+vi.mock("@/utilities/sanitize", () => ({
   sanitizeObject: (obj: any) => obj,
 }));
 
-jest.mock("@/utilities/sdk", () => ({
-  getProjectById: jest.fn(),
+vi.mock("@/utilities/sdk", () => ({
+  getProjectById: vi.fn(),
 }));
 
-jest.mock("@/utilities/sdk/projects/editProject", () => ({
-  updateProject: jest.fn(),
+vi.mock("@/utilities/sdk/projects/editProject", () => ({
+  updateProject: vi.fn(),
 }));
 
-jest.mock("@/components/Icons", () => ({
+vi.mock("@/components/Icons", () => ({
   DiscordIcon: (props: any) => <svg data-testid="discord-icon" {...props} />,
   GithubIcon: (props: any) => <svg data-testid="github-icon" {...props} />,
   LinkedInIcon: (props: any) => <svg data-testid="linkedin-icon" {...props} />,
@@ -372,19 +372,19 @@ jest.mock("@/components/Icons", () => ({
   WebsiteIcon: (props: any) => <svg data-testid="website-icon" {...props} />,
 }));
 
-jest.mock("@/components/Icons/Deck", () => ({
+vi.mock("@/components/Icons/Deck", () => ({
   DeckIcon: (props: any) => <svg data-testid="deck-icon" {...props} />,
 }));
 
-jest.mock("@/components/Icons/Farcaster", () => ({
+vi.mock("@/components/Icons/Farcaster", () => ({
   FarcasterIcon: (props: any) => <svg data-testid="farcaster-icon" {...props} />,
 }));
 
-jest.mock("@/components/Icons/Video", () => ({
+vi.mock("@/components/Icons/Video", () => ({
   VideoIcon: (props: any) => <svg data-testid="video-icon" {...props} />,
 }));
 
-jest.mock("@/components/Utilities/ExternalLink", () => ({
+vi.mock("@/components/Utilities/ExternalLink", () => ({
   ExternalLink: ({ children, href, ...props }: any) => (
     <a href={href} {...props}>
       {children}
@@ -392,15 +392,15 @@ jest.mock("@/components/Utilities/ExternalLink", () => ({
   ),
 }));
 
-jest.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: jest.fn(),
+vi.mock("@/components/Utilities/errorManager", () => ({
+  errorManager: vi.fn(),
 }));
 
-jest.mock("@/components/Utilities/FileUpload", () => ({
+vi.mock("@/components/Utilities/FileUpload", () => ({
   FileUpload: () => <div data-testid="file-upload" />,
 }));
 
-jest.mock("@/components/Utilities/MarkdownEditor", () => ({
+vi.mock("@/components/Utilities/MarkdownEditor", () => ({
   MarkdownEditor: ({ value, onChange, placeholderText }: any) => (
     <textarea
       data-testid="markdown-editor"
@@ -411,11 +411,11 @@ jest.mock("@/components/Utilities/MarkdownEditor", () => ({
   ),
 }));
 
-jest.mock("@/components/Utilities/Skeleton", () => ({
+vi.mock("@/components/Utilities/Skeleton", () => ({
   Skeleton: () => <div data-testid="skeleton" />,
 }));
 
-jest.mock("@/components/ui/button", () => ({
+vi.mock("@/components/ui/button", () => ({
   Button: ({ children, onClick, isLoading, disabled, ...props }: any) => (
     <button
       type={props.type || "button"}
@@ -428,11 +428,11 @@ jest.mock("@/components/ui/button", () => ({
   ),
 }));
 
-jest.mock("@/components/Dialogs/SimilarProjectsDialog", () => ({
+vi.mock("@/components/Dialogs/SimilarProjectsDialog", () => ({
   SimilarProjectsDialog: () => <div data-testid="similar-projects-dialog" />,
 }));
 
-jest.mock("@/components/Dialogs/ProjectDialog/ContactInfoSection", () => ({
+vi.mock("@/components/Dialogs/ProjectDialog/ContactInfoSection", () => ({
   ContactInfoSection: ({ addContact }: any) => (
     <button
       type="button"
@@ -443,7 +443,7 @@ jest.mock("@/components/Dialogs/ProjectDialog/ContactInfoSection", () => ({
   ),
 }));
 
-jest.mock("@/components/Dialogs/ProjectDialog/NetworkDropdown", () => ({
+vi.mock("@/components/Dialogs/ProjectDialog/NetworkDropdown", () => ({
   NetworkDropdown: ({ onSelectFunction }: any) => (
     <button type="button" onClick={() => onSelectFunction(10)}>
       Select Optimism
@@ -451,50 +451,50 @@ jest.mock("@/components/Dialogs/ProjectDialog/NetworkDropdown", () => ({
   ),
 }));
 
-jest.mock("@show-karma/karma-gap-sdk", () => ({
-  Project: jest.fn().mockImplementation(() => ({
+vi.mock("@show-karma/karma-gap-sdk", () => ({
+  Project: vi.fn().mockImplementation(() => ({
     attest: (...args: any[]) => mockProjectAttest(...args),
     uid: "0xproject-uid",
     chainID: 10,
     recipient: "0x1234567890abcdef1234567890abcdef12345678",
   })),
-  ProjectDetails: jest.fn().mockImplementation((args: any) => args),
-  MemberOf: jest.fn().mockImplementation((args: any) => args),
+  ProjectDetails: vi.fn().mockImplementation((args: any) => args),
+  MemberOf: vi.fn().mockImplementation((args: any) => args),
   nullRef: "0x0000000000000000000000000000000000000000000000000000000000000000",
 }));
 
 describe("ProjectDialog", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
-    mockProjectAttest = jest.fn(
+    mockProjectAttest = vi.fn(
       () =>
         new Promise(() => {
           // Keep pending to assert modal state during submission.
         })
     );
 
-    mockGetAttestationSigner.mockResolvedValue({ signMessage: jest.fn() });
+    mockGetAttestationSigner.mockResolvedValue({ signMessage: vi.fn() });
     mockEnsureCorrectChain.mockResolvedValue({
       success: true,
       chainId: 10,
       gapClient: {
-        findSchema: jest.fn().mockReturnValue("mock-schema"),
-        generateSlug: jest.fn().mockResolvedValue("my-project"),
+        findSchema: vi.fn().mockReturnValue("mock-schema"),
+        generateSlug: vi.fn().mockResolvedValue("my-project"),
       },
     });
 
-    mockSetupChainAndWallet = jest.fn().mockResolvedValue({
+    mockSetupChainAndWallet = vi.fn().mockResolvedValue({
       gapClient: {
-        findSchema: jest.fn().mockReturnValue("mock-schema"),
-        generateSlug: jest.fn().mockResolvedValue("my-project"),
+        findSchema: vi.fn().mockReturnValue("mock-schema"),
+        generateSlug: vi.fn().mockResolvedValue("my-project"),
       },
-      walletSigner: { signMessage: jest.fn() },
+      walletSigner: { signMessage: vi.fn() },
       chainId: 10,
     });
 
-    const setupHookMockByAlias = jest.requireMock("@/hooks/useSetupChainAndWallet") as {
-      useSetupChainAndWallet: jest.Mock;
+    const setupHookMockByAlias = require("@/hooks/useSetupChainAndWallet") as {
+      useSetupChainAndWallet: vi.Mock;
     };
     setupHookMockByAlias.useSetupChainAndWallet.mockReturnValue({
       setupChainAndWallet: (...args: any[]) => mockSetupChainAndWallet(...args),
@@ -504,8 +504,8 @@ describe("ProjectDialog", () => {
       hasExternalWallet: true,
     });
 
-    const setupHookMockByRoot = jest.requireMock("hooks/useSetupChainAndWallet") as {
-      useSetupChainAndWallet: jest.Mock;
+    const setupHookMockByRoot = require("hooks/useSetupChainAndWallet") as {
+      useSetupChainAndWallet: vi.Mock;
     };
     setupHookMockByRoot.useSetupChainAndWallet.mockReturnValue({
       setupChainAndWallet: (...args: any[]) => mockSetupChainAndWallet(...args),

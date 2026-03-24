@@ -1,4 +1,4 @@
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 import { render, screen } from "@testing-library/react";
 import { EvaluationDisplay } from "@/components/FundingPlatform/ApplicationView/EvaluationComponents";
 import {
@@ -11,36 +11,36 @@ import {
 import { InternalAIEvaluationDisplay } from "@/components/FundingPlatform/ApplicationView/InternalAIEvaluation";
 
 // Mock dependencies
-jest.mock("@/components/FundingPlatform/ApplicationView/evaluationUtils", () => ({
-  parseEvaluation: jest.fn(),
-  getScoreColor: jest.fn(),
-  getScoreIcon: jest.fn(),
-  getPriorityColor: jest.fn(),
-  getStatusColor: jest.fn(),
+vi.mock("@/components/FundingPlatform/ApplicationView/evaluationUtils", () => ({
+  parseEvaluation: vi.fn(),
+  getScoreColor: vi.fn(),
+  getScoreIcon: vi.fn(),
+  getPriorityColor: vi.fn(),
+  getStatusColor: vi.fn(),
 }));
 
-jest.mock("@/components/FundingPlatform/ApplicationView/EvaluationComponents", () => ({
-  EvaluationDisplay: jest.fn(({ footerDisclaimer }) => (
+vi.mock("@/components/FundingPlatform/ApplicationView/EvaluationComponents", () => ({
+  EvaluationDisplay: vi.fn(({ footerDisclaimer }) => (
     <div data-testid="evaluation-display">
       {footerDisclaimer && <div data-testid="footer-disclaimer">{footerDisclaimer}</div>}
     </div>
   )),
 }));
 
-jest.mock("@heroicons/react/24/outline", () => ({
+vi.mock("@heroicons/react/24/outline", () => ({
   ClockIcon: (props: any) => <svg data-testid="clock-icon" {...props} />,
   LockClosedIcon: (props: any) => <svg data-testid="lock-icon" {...props} />,
 }));
 
 describe("InternalAIEvaluationDisplay", () => {
-  const mockParseEvaluation = parseEvaluation as jest.MockedFunction<typeof parseEvaluation>;
-  const mockGetScoreIcon = getScoreIcon as jest.MockedFunction<typeof getScoreIcon>;
-  const mockGetStatusColor = getStatusColor as jest.MockedFunction<typeof getStatusColor>;
-  const mockGetScoreColor = getScoreColor as jest.MockedFunction<typeof getScoreColor>;
-  const mockGetPriorityColor = getPriorityColor as jest.MockedFunction<typeof getPriorityColor>;
+  const mockParseEvaluation = parseEvaluation as vi.MockedFunction<typeof parseEvaluation>;
+  const mockGetScoreIcon = getScoreIcon as vi.MockedFunction<typeof getScoreIcon>;
+  const mockGetStatusColor = getStatusColor as vi.MockedFunction<typeof getStatusColor>;
+  const mockGetScoreColor = getScoreColor as vi.MockedFunction<typeof getScoreColor>;
+  const mockGetPriorityColor = getPriorityColor as vi.MockedFunction<typeof getPriorityColor>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockGetScoreIcon.mockReturnValue(<div data-testid="score-icon">Icon</div>);
     mockGetStatusColor.mockReturnValue("bg-green-100");
     mockGetScoreColor.mockReturnValue("bg-green-500");
@@ -117,7 +117,7 @@ describe("InternalAIEvaluationDisplay", () => {
       );
 
       expect(EvaluationDisplay).toHaveBeenCalledTimes(1);
-      const callArgs = (EvaluationDisplay as jest.Mock).mock.calls[0];
+      const callArgs = (EvaluationDisplay as vi.Mock).mock.calls[0];
       expect(callArgs[0]).toMatchObject({
         data: parsedData,
         programName: "Test Program",
@@ -187,7 +187,7 @@ describe("InternalAIEvaluationDisplay", () => {
       );
 
       expect(EvaluationDisplay).toHaveBeenCalledTimes(1);
-      const callArgs = (EvaluationDisplay as jest.Mock).mock.calls[0];
+      const callArgs = (EvaluationDisplay as vi.Mock).mock.calls[0];
       expect(callArgs[0]).toMatchObject({
         programName: "My Program",
       });
@@ -200,7 +200,7 @@ describe("InternalAIEvaluationDisplay", () => {
       render(<InternalAIEvaluationDisplay evaluation={evaluationData} isLoading={false} />);
 
       expect(EvaluationDisplay).toHaveBeenCalledTimes(1);
-      const callArgs = (EvaluationDisplay as jest.Mock).mock.calls[0];
+      const callArgs = (EvaluationDisplay as vi.Mock).mock.calls[0];
       expect(callArgs[0]).toMatchObject({
         programName: undefined,
       });

@@ -1,10 +1,10 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 import { VirtualizedDatapointsTable } from "@/components/Pages/Project/Impact/VirtualizedDatapointsTable";
 import type { OutputForm } from "@/types/impact";
 
 // Mock the parseProofUrls utility
-jest.mock("@/utilities/impact", () => ({
+vi.mock("@/utilities/impact", () => ({
   parseProofUrls: (proof: string) => {
     if (!proof) return [];
     const urlPattern = /https?:\/\/[^\s]+/g;
@@ -13,14 +13,14 @@ jest.mock("@/utilities/impact", () => ({
 }));
 
 // Mock formatDate utility
-jest.mock("@/utilities/formatDate", () => ({
+vi.mock("@/utilities/formatDate", () => ({
   formatDate: (date: Date) => date.toISOString().split("T")[0],
 }));
 
 // Mock @tanstack/react-virtual to work with JSDOM
 // JSDOM doesn't support layout measurements, so we mock the virtualizer
 // to return all items as visible for testing purposes
-jest.mock("@tanstack/react-virtual", () => ({
+vi.mock("@tanstack/react-virtual", () => ({
   useVirtualizer: ({ count }: { count: number }) => ({
     getVirtualItems: () =>
       Array.from({ length: Math.min(count, 10) }, (_, index) => ({
@@ -31,8 +31,8 @@ jest.mock("@tanstack/react-virtual", () => ({
         end: (index + 1) * 56,
       })),
     getTotalSize: () => count * 56,
-    scrollToIndex: jest.fn(),
-    measureElement: jest.fn(),
+    scrollToIndex: vi.fn(),
+    measureElement: vi.fn(),
   }),
 }));
 
@@ -60,16 +60,16 @@ describe("VirtualizedDatapointsTable", () => {
     form: createMockForm(50),
     isAuthorized: true,
     isAutosynced: false,
-    onInputChange: jest.fn(),
-    onDeleteEntry: jest.fn(),
-    onAddEntry: jest.fn(),
-    isInvalidValue: jest.fn(() => false),
-    isInvalidTimestamp: jest.fn(() => false),
-    hasInvalidDatesSameRow: jest.fn(() => false),
+    onInputChange: vi.fn(),
+    onDeleteEntry: vi.fn(),
+    onAddEntry: vi.fn(),
+    isInvalidValue: vi.fn(() => false),
+    isInvalidTimestamp: vi.fn(() => false),
+    hasInvalidDatesSameRow: vi.fn(() => false),
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("Rendering", () => {
@@ -231,7 +231,7 @@ describe("VirtualizedDatapointsTable", () => {
 
   describe("Validation", () => {
     it("should show error styling for invalid values", () => {
-      const isInvalidValue = jest.fn(() => true);
+      const isInvalidValue = vi.fn(() => true);
       render(<VirtualizedDatapointsTable {...defaultProps} isInvalidValue={isInvalidValue} />);
 
       // Error messages should be present
@@ -240,7 +240,7 @@ describe("VirtualizedDatapointsTable", () => {
     });
 
     it("should show correct error message for integer validation", () => {
-      const isInvalidValue = jest.fn(() => true);
+      const isInvalidValue = vi.fn(() => true);
       const form = { ...createMockForm(5), unitOfMeasure: "int" as const };
       render(
         <VirtualizedDatapointsTable {...defaultProps} form={form} isInvalidValue={isInvalidValue} />
@@ -251,7 +251,7 @@ describe("VirtualizedDatapointsTable", () => {
     });
 
     it("should show correct error message for float validation", () => {
-      const isInvalidValue = jest.fn(() => true);
+      const isInvalidValue = vi.fn(() => true);
       const form = { ...createMockForm(5), unitOfMeasure: "float" as const };
       render(
         <VirtualizedDatapointsTable {...defaultProps} form={form} isInvalidValue={isInvalidValue} />
@@ -262,7 +262,7 @@ describe("VirtualizedDatapointsTable", () => {
     });
 
     it("should apply error border to invalid date inputs", () => {
-      const hasInvalidDatesSameRow = jest.fn(() => true);
+      const hasInvalidDatesSameRow = vi.fn(() => true);
       render(
         <VirtualizedDatapointsTable
           {...defaultProps}
@@ -278,7 +278,7 @@ describe("VirtualizedDatapointsTable", () => {
     });
 
     it("should set aria-invalid on invalid value inputs", () => {
-      const isInvalidValue = jest.fn(() => true);
+      const isInvalidValue = vi.fn(() => true);
       render(<VirtualizedDatapointsTable {...defaultProps} isInvalidValue={isInvalidValue} />);
 
       const valueInputs = screen.getAllByRole("spinbutton");
@@ -385,7 +385,7 @@ describe("VirtualizedDatapointsTable", () => {
     });
 
     it("should have aria-describedby for invalid value inputs", () => {
-      const isInvalidValue = jest.fn(() => true);
+      const isInvalidValue = vi.fn(() => true);
       render(<VirtualizedDatapointsTable {...defaultProps} isInvalidValue={isInvalidValue} />);
 
       const valueInputs = screen.getAllByRole("spinbutton");

@@ -6,8 +6,8 @@ import {
 } from "@/utilities/chainSyncValidation";
 
 // Mock console methods to prevent test output clutter
-const _mockConsoleLog = jest.spyOn(console, "log").mockImplementation(() => {});
-const _mockConsoleWarn = jest.spyOn(console, "warn").mockImplementation(() => {});
+const _mockConsoleLog = vi.spyOn(console, "log").mockImplementation(() => {});
+const _mockConsoleWarn = vi.spyOn(console, "warn").mockImplementation(() => {});
 
 describe("chainSyncValidation utilities", () => {
   const mockAccount = {
@@ -26,13 +26,13 @@ describe("chainSyncValidation utilities", () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers({ now: Date.now() });
+    vi.clearAllMocks();
+    vi.useFakeTimers({ now: Date.now() });
   });
 
   afterEach(() => {
-    jest.useRealTimers();
-    jest.restoreAllMocks();
+    vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 
   describe("validateChainSync", () => {
@@ -122,9 +122,9 @@ describe("chainSyncValidation utilities", () => {
 
   describe("waitForChainSync", () => {
     it("should return wallet client immediately when already synced", async () => {
-      jest.useRealTimers();
+      vi.useRealTimers();
       const walletClient = createMockWalletClient(10);
-      const getWalletClient = jest.fn().mockReturnValue(walletClient);
+      const getWalletClient = vi.fn().mockReturnValue(walletClient);
       const expectedChainId = 10;
 
       const result = await waitForChainSync(getWalletClient, expectedChainId, 30000, "donation");
@@ -134,7 +134,7 @@ describe("chainSyncValidation utilities", () => {
     }, 35000);
 
     it("should wait and retry when wallet is on wrong chain", async () => {
-      jest.useRealTimers();
+      vi.useRealTimers();
       const wrongChainClient = createMockWalletClient(8453);
       const correctChainClient = createMockWalletClient(10);
       const getWalletClient = jest
@@ -151,7 +151,7 @@ describe("chainSyncValidation utilities", () => {
     }, 35000);
 
     it("should use exponential backoff for retries", async () => {
-      jest.useRealTimers();
+      vi.useRealTimers();
       const wrongChainClient = createMockWalletClient(8453);
       const correctChainClient = createMockWalletClient(10);
       const getWalletClient = jest
@@ -167,9 +167,9 @@ describe("chainSyncValidation utilities", () => {
     }, 35000);
 
     it("should timeout after maxWaitMs", async () => {
-      jest.useRealTimers();
+      vi.useRealTimers();
       const wrongChainClient = createMockWalletClient(8453);
-      const getWalletClient = jest.fn().mockReturnValue(wrongChainClient);
+      const getWalletClient = vi.fn().mockReturnValue(wrongChainClient);
       const expectedChainId = 10;
       const maxWaitMs = 100;
 
@@ -179,7 +179,7 @@ describe("chainSyncValidation utilities", () => {
     }, 35000);
 
     it("should make final attempt before timing out", async () => {
-      jest.useRealTimers();
+      vi.useRealTimers();
       const wrongChainClient = createMockWalletClient(8453);
       const correctChainClient = createMockWalletClient(10);
       const getWalletClient = jest
@@ -195,9 +195,9 @@ describe("chainSyncValidation utilities", () => {
     }, 35000);
 
     it("should include operation name in timeout error", async () => {
-      jest.useRealTimers();
+      vi.useRealTimers();
       const wrongChainClient = createMockWalletClient(8453);
-      const getWalletClient = jest.fn().mockReturnValue(wrongChainClient);
+      const getWalletClient = vi.fn().mockReturnValue(wrongChainClient);
       const maxWaitMs = 100;
 
       await expect(waitForChainSync(getWalletClient, 10, maxWaitMs, "approval")).rejects.toThrow(
@@ -206,7 +206,7 @@ describe("chainSyncValidation utilities", () => {
     }, 35000);
 
     it("should handle wallet client becoming null during wait", async () => {
-      jest.useRealTimers();
+      vi.useRealTimers();
       const wrongChainClient = createMockWalletClient(8453);
       const getWalletClient = jest
         .fn()
@@ -217,9 +217,9 @@ describe("chainSyncValidation utilities", () => {
     }, 35000);
 
     it("should cap exponential backoff delay at 5000ms", async () => {
-      jest.useRealTimers();
+      vi.useRealTimers();
       const wrongChainClient = createMockWalletClient(8453);
-      const getWalletClient = jest.fn().mockReturnValue(wrongChainClient);
+      const getWalletClient = vi.fn().mockReturnValue(wrongChainClient);
       const maxWaitMs = 100;
 
       await expect(waitForChainSync(getWalletClient, 10, maxWaitMs, "donation")).rejects.toThrow(
@@ -242,7 +242,7 @@ describe("chainSyncValidation utilities", () => {
 
     it("should return chain ID from window.ethereum when available", async () => {
       const mockEthereum = {
-        request: jest.fn().mockResolvedValue("0xa"), // 10 in hex
+        request: vi.fn().mockResolvedValue("0xa"), // 10 in hex
       };
 
       (global as any).window = {
@@ -259,7 +259,7 @@ describe("chainSyncValidation utilities", () => {
 
     it("should parse hex chain ID correctly", async () => {
       const mockEthereum = {
-        request: jest.fn().mockResolvedValue("0x2105"), // 8453 in hex (Base)
+        request: vi.fn().mockResolvedValue("0x2105"), // 8453 in hex (Base)
       };
 
       (global as any).window = {
@@ -287,7 +287,7 @@ describe("chainSyncValidation utilities", () => {
 
     it("should handle request errors gracefully", async () => {
       const mockEthereum = {
-        request: jest.fn().mockRejectedValue(new Error("Request failed")),
+        request: vi.fn().mockRejectedValue(new Error("Request failed")),
       };
 
       (global as any).window = {
@@ -302,7 +302,7 @@ describe("chainSyncValidation utilities", () => {
 
     it("should handle invalid hex chain ID", async () => {
       const mockEthereum = {
-        request: jest.fn().mockResolvedValue("invalid"),
+        request: vi.fn().mockResolvedValue("invalid"),
       };
 
       (global as any).window = {
@@ -317,7 +317,7 @@ describe("chainSyncValidation utilities", () => {
 
     it("should handle empty chain ID response", async () => {
       const mockEthereum = {
-        request: jest.fn().mockResolvedValue(""),
+        request: vi.fn().mockResolvedValue(""),
       };
 
       (global as any).window = {
@@ -332,7 +332,7 @@ describe("chainSyncValidation utilities", () => {
 
     it("should handle zero chain ID", async () => {
       const mockEthereum = {
-        request: jest.fn().mockResolvedValue("0x0"),
+        request: vi.fn().mockResolvedValue("0x0"),
       };
 
       (global as any).window = {
@@ -347,7 +347,7 @@ describe("chainSyncValidation utilities", () => {
 
   describe("Integration scenarios", () => {
     it("should handle wallet switching chains during wait", async () => {
-      jest.useRealTimers();
+      vi.useRealTimers();
       const baseClient = createMockWalletClient(8453);
       const optimismClient = createMockWalletClient(10);
       const getWalletClient = jest
@@ -362,7 +362,7 @@ describe("chainSyncValidation utilities", () => {
     }, 35000);
 
     it("should handle wallet disconnecting during wait", async () => {
-      jest.useRealTimers();
+      vi.useRealTimers();
       const connectedClient = createMockWalletClient(8453);
       const disconnectedClient = createMockWalletClient(8453, false);
       const getWalletClient = jest

@@ -20,7 +20,7 @@ describe("Funders Page User Journeys", () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("First-Time Funder Visit", () => {

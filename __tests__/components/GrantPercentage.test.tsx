@@ -1,10 +1,10 @@
 import { render, screen } from "@testing-library/react";
 import { GrantPercentage } from "@/components/Pages/Project/Grants/components/GrantPercentage";
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 
 // Mock formatPercentage utility
-jest.mock("@/utilities/formatNumber", () => ({
-  formatPercentage: jest.fn((value: number) => Math.round(value)),
+vi.mock("@/utilities/formatNumber", () => ({
+  formatPercentage: vi.fn((value: number) => Math.round(value)),
 }));
 
 describe("GrantPercentage", () => {

@@ -7,12 +7,12 @@ import {
 } from "@/components/FundingPlatform/ApplicationView/ApplicationTabs";
 
 // Mock cn utility
-jest.mock("@/utilities/tailwind", () => ({
+vi.mock("@/utilities/tailwind", () => ({
   cn: (...classes: any[]) => classes.filter(Boolean).join(" "),
 }));
 
 describe("ApplicationTabs", () => {
-  const mockOnChange = jest.fn();
+  const mockOnChange = vi.fn();
   const defaultTabs: TabConfig[] = [
     {
       id: "application",
@@ -35,7 +35,7 @@ describe("ApplicationTabs", () => {
   ];
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("Rendering", () => {

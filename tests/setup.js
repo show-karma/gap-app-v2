@@ -42,13 +42,13 @@ if (typeof globalThis.Headers === "undefined") {
 
 // Mock until-async before importing MSW (it's an ESM-only package that Jest can't transform)
 // The manual mock in __mocks__/until-async.js will be used automatically
-jest.mock("until-async");
+vi.mock("until-async");
 
 // Import MSW setup AFTER polyfills are configured
 require("@/__tests__/utils/msw/setup");
 
 // Increase timeout for slower tests
-jest.setTimeout(30000);
+vi.setConfig({ testTimeout: 30000 });
 
 // Suppress noisy React warnings during tests (act() warnings, async component warnings, etc.)
 // These are framework-level warnings that don't indicate test issues.
@@ -99,15 +99,15 @@ console.warn = (...args) => {
 // Mock window.matchMedia
 Object.defineProperty(window, "matchMedia", {
   writable: true,
-  value: jest.fn().mockImplementation((query) => ({
+  value: vi.fn().mockImplementation((query) => ({
     matches: false,
     media: query,
     onchange: null,
-    addListener: jest.fn(), // deprecated
-    removeListener: jest.fn(), // deprecated
-    addEventListener: jest.fn(),
-    removeEventListener: jest.fn(),
-    dispatchEvent: jest.fn(),
+    addListener: vi.fn(), // deprecated
+    removeListener: vi.fn(), // deprecated
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
   })),
 });
 
@@ -129,13 +129,13 @@ global.ResizeObserver = class ResizeObserver {
 };
 
 // Mock Next.js router
-jest.mock("next/navigation", () => ({
+vi.mock("next/navigation", () => ({
   useRouter() {
     return {
-      push: jest.fn(),
-      replace: jest.fn(),
-      prefetch: jest.fn(),
-      back: jest.fn(),
+      push: vi.fn(),
+      replace: vi.fn(),
+      prefetch: vi.fn(),
+      back: vi.fn(),
       pathname: "/",
       query: {},
       asPath: "/",
@@ -150,36 +150,36 @@ jest.mock("next/navigation", () => ({
   useParams() {
     return {};
   },
-  notFound: jest.fn(),
-  redirect: jest.fn(),
+  notFound: vi.fn(),
+  redirect: vi.fn(),
 }));
 
 // Mock Privy authentication
-jest.mock("@privy-io/react-auth", () => ({
-  usePrivy: jest.fn(() => ({
+vi.mock("@privy-io/react-auth", () => ({
+  usePrivy: vi.fn(() => ({
     ready: true,
     authenticated: false,
-    login: jest.fn(),
-    logout: jest.fn(),
+    login: vi.fn(),
+    logout: vi.fn(),
     user: null,
-    getAccessToken: jest.fn(),
+    getAccessToken: vi.fn(),
   })),
-  useWallets: jest.fn(() => ({
+  useWallets: vi.fn(() => ({
     wallets: [],
     ready: true,
   })),
   useLogin: () => ({
-    login: jest.fn(),
+    login: vi.fn(),
   }),
   useLogout: () => ({
-    logout: jest.fn(),
+    logout: vi.fn(),
   }),
   PrivyProvider: ({ children }) => children,
 }));
 
 // Mock Wagmi
-jest.mock("wagmi", () => ({
-  useAccount: jest.fn(() => ({
+vi.mock("wagmi", () => ({
+  useAccount: vi.fn(() => ({
     address: undefined,
     isConnected: false,
     connector: null,
@@ -190,14 +190,14 @@ jest.mock("wagmi", () => ({
     isLoading: false,
   }),
   useConnect: () => ({
-    connect: jest.fn(),
+    connect: vi.fn(),
     connectors: [],
   }),
   useDisconnect: () => ({
-    disconnect: jest.fn(),
+    disconnect: vi.fn(),
   }),
   useSwitchChain: () => ({
-    switchChain: jest.fn(),
+    switchChain: vi.fn(),
     chains: [],
   }),
   useWalletClient: () => ({
@@ -207,31 +207,31 @@ jest.mock("wagmi", () => ({
     data: null,
   }),
   WagmiProvider: ({ children }) => children,
-  createConfig: jest.fn(),
+  createConfig: vi.fn(),
 }));
 
 // Mock @wagmi/core
-jest.mock("@wagmi/core", () => ({
-  getAccount: jest.fn(),
-  getBalance: jest.fn(),
-  switchChain: jest.fn(),
-  readContract: jest.fn(),
-  writeContract: jest.fn(),
-  createConfig: jest.fn(() => ({})),
-  createStorage: jest.fn(() => ({})),
+vi.mock("@wagmi/core", () => ({
+  getAccount: vi.fn(),
+  getBalance: vi.fn(),
+  switchChain: vi.fn(),
+  readContract: vi.fn(),
+  writeContract: vi.fn(),
+  createConfig: vi.fn(() => ({})),
+  createStorage: vi.fn(() => ({})),
   cookieStorage: {},
-  http: jest.fn((url) => ({
+  http: vi.fn((url) => ({
     url,
     type: "http",
   })),
-  getConnections: jest.fn(() => []),
-  disconnect: jest.fn(),
-  watchAccount: jest.fn(),
-  reconnect: jest.fn(),
+  getConnections: vi.fn(() => []),
+  disconnect: vi.fn(),
+  watchAccount: vi.fn(),
+  reconnect: vi.fn(),
 }));
 
 // Mock @wagmi/core/chains
-jest.mock("@wagmi/core/chains", () => ({
+vi.mock("@wagmi/core/chains", () => ({
   optimism: { id: 10, name: "Optimism" },
   arbitrum: { id: 42161, name: "Arbitrum" },
   baseSepolia: { id: 84532, name: "Base Sepolia" },
@@ -245,20 +245,20 @@ jest.mock("@wagmi/core/chains", () => ({
 }));
 
 // Mock privy-config
-jest.mock("@/utilities/wagmi/privy-config", () => ({
+vi.mock("@/utilities/wagmi/privy-config", () => ({
   privyConfig: {},
-  getPrivyWagmiConfig: jest.fn(() => ({})),
+  getPrivyWagmiConfig: vi.fn(() => ({})),
 }));
 
 // Mock Sentry
-jest.mock("@sentry/nextjs", () => ({
-  captureException: jest.fn(),
-  captureMessage: jest.fn(),
-  withScope: jest.fn((callback) => callback({ setExtras: jest.fn() })),
+vi.mock("@sentry/nextjs", () => ({
+  captureException: vi.fn(),
+  captureMessage: vi.fn(),
+  withScope: vi.fn((callback) => callback({ setExtras: vi.fn() })),
 }));
 
 // Mock rehype-sanitize to avoid ESM parsing issues
-jest.mock("rehype-sanitize", () => ({
+vi.mock("rehype-sanitize", () => ({
   __esModule: true,
   default: () => (tree) => tree, // Pass-through plugin for testing
   defaultSchema: {
@@ -268,30 +268,30 @@ jest.mock("rehype-sanitize", () => ({
 }));
 
 // Mock rehype-external-links
-jest.mock("rehype-external-links", () => ({
+vi.mock("rehype-external-links", () => ({
   __esModule: true,
   default: () => (tree) => tree, // Pass-through plugin for testing
 }));
 
 // Mock remark-gfm to avoid ESM parsing issues
-jest.mock("remark-gfm", () => ({
+vi.mock("remark-gfm", () => ({
   __esModule: true,
   default: () => (tree) => tree, // Pass-through plugin for testing
 }));
 
 // Mock remark-breaks to avoid ESM parsing issues
-jest.mock("remark-breaks", () => ({
+vi.mock("remark-breaks", () => ({
   __esModule: true,
   default: () => (tree) => tree, // Pass-through plugin for testing
 }));
 
 // NOTE: The gasless module is mocked via jest-resolver.js which redirects all gasless
-// imports to __mocks__/utilities/gasless/index.ts. This provides proper jest.fn() mocks
-// that can be configured in tests. We don't use jest.mock() here because the resolver
+// imports to __mocks__/utilities/gasless/index.ts. This provides proper vi.fn() mocks
+// that can be configured in tests. We don't use vi.mock() here because the resolver
 // handles it more reliably (catches relative paths like ../../../../utilities/gasless).
 
 // Mock ProjectOptionsMenu to avoid deep dependency chain with gasless utilities
-jest.mock("@/components/Pages/Project/ProjectOptionsMenu", () => ({
+vi.mock("@/components/Pages/Project/ProjectOptionsMenu", () => ({
   __esModule: true,
   ProjectOptionsMenu: () => null,
   ProjectOptionsDialogs: () => null,

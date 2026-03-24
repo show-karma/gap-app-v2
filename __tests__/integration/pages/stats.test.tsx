@@ -1,8 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import Index from "@/app/stats/page";
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 
-jest.mock("@/components/Pages/Stats", () => ({
+vi.mock("@/components/Pages/Stats", () => ({
   Stats: () => <div data-testid="stats-component">Stats Component</div>,
 }));
 

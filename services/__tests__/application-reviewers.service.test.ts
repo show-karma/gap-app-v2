@@ -2,9 +2,9 @@ import type { AssignApplicationReviewersRequest } from "../application-reviewers
 import { applicationReviewersService } from "../application-reviewers.service";
 
 // Mock fetchData for GET and PUT requests
-jest.mock("@/utilities/fetchData");
+vi.mock("@/utilities/fetchData");
 
-jest.mock("@/utilities/enviromentVars", () => ({
+vi.mock("@/utilities/enviromentVars", () => ({
   envVars: {
     NEXT_PUBLIC_GAP_INDEXER_URL: "http://localhost:4000",
   },
@@ -13,16 +13,16 @@ jest.mock("@/utilities/enviromentVars", () => ({
 // Import fetchData mock to access it in tests
 import fetchData from "@/utilities/fetchData";
 
-const mockFetchData = fetchData as jest.MockedFunction<typeof fetchData>;
+const mockFetchData = fetchData as vi.MockedFunction<typeof fetchData>;
 
 describe("applicationReviewersService", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.spyOn(console, "error").mockImplementation(() => {});
+    vi.clearAllMocks();
+    vi.spyOn(console, "error").mockImplementation(() => {});
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe("assignReviewers", () => {

@@ -8,15 +8,15 @@ import { GrantMilestoneCompletionForm } from "@/components/Forms/GrantMilestoneC
 import { useMilestone } from "@/hooks/useMilestone";
 import type { UnifiedMilestone } from "@/types/roadmap";
 
-jest.mock("@/hooks/useMilestone", () => ({
-  useMilestone: jest.fn(),
+vi.mock("@/hooks/useMilestone", () => ({
+  useMilestone: vi.fn(),
 }));
 
-jest.mock("@/components/Forms/Outputs/OutputsSection", () => ({
+vi.mock("@/components/Forms/Outputs/OutputsSection", () => ({
   OutputsSection: () => <div data-testid="outputs-section">Outputs Section</div>,
 }));
 
-jest.mock("@/components/Utilities/MarkdownEditor", () => ({
+vi.mock("@/components/Utilities/MarkdownEditor", () => ({
   MarkdownEditor: ({ value, onChange, placeholderText }: any) => (
     <textarea
       data-testid="markdown-editor"
@@ -27,7 +27,7 @@ jest.mock("@/components/Utilities/MarkdownEditor", () => ({
   ),
 }));
 
-jest.mock("@/components/Utilities/Button", () => ({
+vi.mock("@/components/Utilities/Button", () => ({
   Button: ({ children, onClick, disabled, isLoading, type, className }: any) => (
     <button
       onClick={onClick}
@@ -41,7 +41,7 @@ jest.mock("@/components/Utilities/Button", () => ({
   ),
 }));
 
-const mockUseMilestone = useMilestone as jest.MockedFunction<typeof useMilestone>;
+const mockUseMilestone = useMilestone as vi.MockedFunction<typeof useMilestone>;
 
 describe("GrantMilestoneCompletionForm", () => {
   const mockMilestone: UnifiedMilestone = {
@@ -50,11 +50,11 @@ describe("GrantMilestoneCompletionForm", () => {
     type: "grant",
   } as UnifiedMilestone;
 
-  const mockHandleCompleting = jest.fn();
-  const mockCompleteMilestone = jest.fn();
+  const mockHandleCompleting = vi.fn();
+  const mockCompleteMilestone = vi.fn();
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockUseMilestone.mockReturnValue({
       completeMilestone: mockCompleteMilestone,
     } as any);
@@ -208,6 +208,11 @@ describe("GrantMilestoneCompletionForm", () => {
     const error = new Error("Failed to complete milestone");
     mockCompleteMilestone.mockRejectedValue(error);
 
+<<<<<<< HEAD
+=======
+    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation();
+
+>>>>>>> 8322801b (test: migrate Jest to Vitest for unit/integration tests)
     render(
       <GrantMilestoneCompletionForm
         milestone={mockMilestone}

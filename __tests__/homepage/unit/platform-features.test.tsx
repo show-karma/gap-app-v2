@@ -11,7 +11,7 @@
 
 import { PlatformFeatures } from "@/src/features/homepage/components/platform-features";
 import { renderWithProviders, screen, setViewportSize } from "../utils/test-helpers";
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 
 // Define viewports locally
 const VIEWPORTS = {
@@ -21,7 +21,7 @@ const VIEWPORTS = {
 };
 
 // Mock Badge component
-jest.mock("@/components/ui/badge", () => ({
+vi.mock("@/components/ui/badge", () => ({
   Badge: ({ children, variant }: any) => (
     <span data-testid="badge" data-variant={variant}>
       {children}
@@ -30,7 +30,7 @@ jest.mock("@/components/ui/badge", () => ({
 }));
 
 // Mock ThemeImage component
-jest.mock("@/src/components/ui/theme-image", () => ({
+vi.mock("@/src/components/ui/theme-image", () => ({
   ThemeImage: ({ alt, src }: any) => <img data-testid="theme-image" src={src} alt={alt} />,
 }));
 

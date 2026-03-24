@@ -11,15 +11,15 @@
 
 import { WhereBuildersGrow } from "@/src/features/homepage/components/where-builders-grow";
 import { renderWithProviders, screen } from "../utils/test-helpers";
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 
 // Mock CreateProjectButton
-jest.mock("@/src/features/homepage/components/create-project-button", () => ({
+vi.mock("@/src/features/homepage/components/create-project-button", () => ({
   CreateProjectButton: () => <button data-testid="create-project-button">Create project</button>,
 }));
 
 // Mock PAGES utility
-jest.mock("@/utilities/pages", () => ({
+vi.mock("@/utilities/pages", () => ({
   PAGES: {
     FUNDERS: "/funders",
   },

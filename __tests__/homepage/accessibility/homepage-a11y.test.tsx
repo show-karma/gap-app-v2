@@ -9,29 +9,29 @@
 import { axe, toHaveNoViolations } from "jest-axe";
 import HomePage from "@/app/page";
 import { renderWithProviders, screen, waitFor } from "../utils/test-helpers";
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 
 // Extend Jest matchers
 expect.extend(toHaveNoViolations);
 
 // Mock the service functions
-const mockGetLiveFundingOpportunities = jest.fn();
+const mockGetLiveFundingOpportunities = vi.fn();
 
-jest.mock("@/src/services/funding/getLiveFundingOpportunities", () => ({
-  getLiveFundingOpportunities: jest.fn(() => mockGetLiveFundingOpportunities()),
+vi.mock("@/src/services/funding/getLiveFundingOpportunities", () => ({
+  getLiveFundingOpportunities: vi.fn(() => mockGetLiveFundingOpportunities()),
 }));
 
 // Mock chosenCommunities
-jest.mock("@/utilities/chosenCommunities", () => {
+vi.mock("@/utilities/chosenCommunities", () => {
   const { mockCommunities } = require("../fixtures/communities");
   return {
-    chosenCommunities: jest.fn(() => mockCommunities.slice(0, 10)),
+    chosenCommunities: vi.fn(() => mockCommunities.slice(0, 10)),
   };
 });
 
 describe("Homepage Accessibility", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     const { mockFundingOpportunities } = require("../fixtures/funding-opportunities");
     mockGetLiveFundingOpportunities.mockResolvedValue(mockFundingOpportunities);
   });

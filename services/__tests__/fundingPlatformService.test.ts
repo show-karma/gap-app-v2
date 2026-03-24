@@ -11,23 +11,23 @@ import type {
 } from "@/types/funding-platform";
 
 // Mock fetchData for GET requests (most queries now use fetchData)
-jest.mock("@/utilities/fetchData");
+vi.mock("@/utilities/fetchData");
 
-jest.mock("@/utilities/enviromentVars", () => ({
+vi.mock("@/utilities/enviromentVars", () => ({
   envVars: {
     NEXT_PUBLIC_GAP_INDEXER_URL: "http://localhost:4000",
   },
 }));
 
-// Create a persistent mock instance using var (hoisted) so it's available in jest.mock factory
-var mockAxiosInstance: jest.Mocked<AxiosInstance>;
+// Create a persistent mock instance using var (hoisted) so it's available in vi.mock factory
+var mockAxiosInstance: vi.Mocked<AxiosInstance>;
 
 // Mock api-client for mutations (POST, PUT, DELETE)
-jest.mock("@/utilities/auth/api-client", () => {
-  const mockGet = jest.fn();
-  const mockPost = jest.fn();
-  const mockPut = jest.fn();
-  const mockDelete = jest.fn();
+vi.mock("@/utilities/auth/api-client", () => {
+  const mockGet = vi.fn();
+  const mockPost = vi.fn();
+  const mockPut = vi.fn();
+  const mockDelete = vi.fn();
 
   const instance = {
     get: mockGet,
@@ -35,15 +35,15 @@ jest.mock("@/utilities/auth/api-client", () => {
     put: mockPut,
     delete: mockDelete,
     interceptors: {
-      request: { use: jest.fn() },
-      response: { use: jest.fn() },
+      request: { use: vi.fn() },
+      response: { use: vi.fn() },
     },
   };
 
-  mockAxiosInstance = instance as unknown as jest.Mocked<AxiosInstance>;
+  mockAxiosInstance = instance as unknown as vi.Mocked<AxiosInstance>;
 
   return {
-    createAuthenticatedApiClient: jest.fn(() => instance),
+    createAuthenticatedApiClient: vi.fn(() => instance),
     __mockGet: mockGet,
     __mockPost: mockPost,
     __mockPut: mockPut,
@@ -61,24 +61,24 @@ import {
   fundingProgramsAPI,
 } from "../fundingPlatformService";
 
-const mockFetchData = fetchData as jest.MockedFunction<typeof fetchData>;
+const mockFetchData = fetchData as vi.MockedFunction<typeof fetchData>;
 
 const {
   __mockGet: mockGet,
   __mockPost: mockPost,
   __mockPut: mockPut,
   __mockDelete: mockDelete,
-} = jest.requireMock("@/utilities/auth/api-client");
+} = require("@/utilities/auth/api-client");
 
 describe("fundingPlatformService", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.spyOn(console, "error").mockImplementation(() => {});
-    jest.spyOn(console, "warn").mockImplementation(() => {});
+    vi.clearAllMocks();
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.spyOn(console, "warn").mockImplementation(() => {});
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe("fundingProgramsAPI", () => {
@@ -935,7 +935,7 @@ describe("fundingPlatformService", () => {
 
       it("should handle errors when fetching application", async () => {
         mockFetchData.mockResolvedValue([null, "Failed to fetch application", null, 500]);
-        jest.spyOn(console, "error").mockImplementation(() => {});
+        vi.spyOn(console, "error").mockImplementation(() => {});
 
         await expect(fundingApplicationsAPI.getApplicationVersions("app-123")).rejects.toThrow();
         expect(console.error).toHaveBeenCalledWith(

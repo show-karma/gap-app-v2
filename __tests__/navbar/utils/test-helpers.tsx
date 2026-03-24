@@ -21,11 +21,11 @@ export const resetMockAuthState = () => {
     isConnected: false,
     address: undefined,
     user: null,
-    authenticate: jest.fn(),
-    login: jest.fn(),
-    logout: jest.fn(),
-    disconnect: jest.fn(),
-    getAccessToken: jest.fn().mockResolvedValue("mock-token"),
+    authenticate: vi.fn(),
+    login: vi.fn(),
+    logout: vi.fn(),
+    disconnect: vi.fn(),
+    getAccessToken: vi.fn().mockResolvedValue("mock-token"),
   };
 
   // Also reset navbar permissions state
@@ -53,7 +53,7 @@ export const resetMockAuthState = () => {
 export const resetMockThemeState = () => {
   mockThemeState.current = {
     theme: "light",
-    setTheme: jest.fn(),
+    setTheme: vi.fn(),
     themes: ["light", "dark"],
     systemTheme: "light",
     resolvedTheme: "light",
@@ -68,13 +68,13 @@ export const resetPermissionMocks = () => {
   const communitiesModule = require("@/store/communities");
   if (
     communitiesModule.useCommunitiesStore &&
-    jest.isMockFunction(communitiesModule.useCommunitiesStore)
+    vi.isMockFunction(communitiesModule.useCommunitiesStore)
   ) {
     communitiesModule.useCommunitiesStore.mockReturnValue({
       communities: [],
-      setCommunities: jest.fn(),
+      setCommunities: vi.fn(),
       isLoading: false,
-      setIsLoading: jest.fn(),
+      setIsLoading: vi.fn(),
     });
   }
 
@@ -82,7 +82,7 @@ export const resetPermissionMocks = () => {
   const permissionsModule = require("@/hooks/usePermissions");
   if (
     permissionsModule.useReviewerPrograms &&
-    jest.isMockFunction(permissionsModule.useReviewerPrograms)
+    vi.isMockFunction(permissionsModule.useReviewerPrograms)
   ) {
     permissionsModule.useReviewerPrograms.mockReturnValue({
       isReviewerOfProgram: false,
@@ -120,13 +120,13 @@ export const cleanupAfterEach = () => {
   resetPermissionMocks();
 
   // Cleanup timers - ensure we're back to real timers
-  if (jest.isMockFunction(setTimeout)) {
-    jest.clearAllTimers();
+  if (vi.isMockFunction(setTimeout)) {
+    vi.clearAllTimers();
   }
-  jest.useRealTimers();
+  vi.useRealTimers();
 
   // Clear all mocks
-  jest.clearAllMocks();
+  vi.clearAllMocks();
 };
 
 /**
@@ -137,7 +137,7 @@ const _resetAllPermissionMocksExtended = () => {
 
   // Reset RBAC permissions (replaces legacy useStaff)
   const rbacModule = require("@/src/core/rbac/hooks/use-permissions");
-  if (rbacModule.usePermissionsQuery && jest.isMockFunction(rbacModule.usePermissionsQuery)) {
+  if (rbacModule.usePermissionsQuery && vi.isMockFunction(rbacModule.usePermissionsQuery)) {
     rbacModule.usePermissionsQuery.mockReturnValue({
       data: null,
       isLoading: false,
@@ -147,7 +147,7 @@ const _resetAllPermissionMocksExtended = () => {
 
   // Reset owner store (with selector support)
   const ownerModule = require("@/store/owner");
-  if (ownerModule.useOwnerStore && jest.isMockFunction(ownerModule.useOwnerStore)) {
+  if (ownerModule.useOwnerStore && vi.isMockFunction(ownerModule.useOwnerStore)) {
     ownerModule.useOwnerStore.mockImplementation((selector?: Function) => {
       const state = { isProjectOwner: false, isOwner: false };
       return selector ? selector(state) : state;
@@ -156,7 +156,7 @@ const _resetAllPermissionMocksExtended = () => {
 
   // Also reset in @/store (index)
   const storeModule = require("@/store");
-  if (storeModule.useOwnerStore && jest.isMockFunction(storeModule.useOwnerStore)) {
+  if (storeModule.useOwnerStore && vi.isMockFunction(storeModule.useOwnerStore)) {
     storeModule.useOwnerStore.mockImplementation((selector?: Function) => {
       const state = { isProjectOwner: false, isOwner: false };
       return selector ? selector(state) : state;
@@ -165,7 +165,7 @@ const _resetAllPermissionMocksExtended = () => {
 
   // Reset registry store
   const registryModule = require("@/store/registry");
-  if (registryModule.useRegistryStore && jest.isMockFunction(registryModule.useRegistryStore)) {
+  if (registryModule.useRegistryStore && vi.isMockFunction(registryModule.useRegistryStore)) {
     registryModule.useRegistryStore.mockReturnValue({
       isProgramCreator: false,
       isRegistryAdmin: false,
@@ -176,12 +176,12 @@ const _resetAllPermissionMocksExtended = () => {
   const modalModule = require("@/store/modals/contributorProfile");
   if (
     modalModule.useContributorProfileModalStore &&
-    jest.isMockFunction(modalModule.useContributorProfileModalStore)
+    vi.isMockFunction(modalModule.useContributorProfileModalStore)
   ) {
     modalModule.useContributorProfileModalStore.mockReturnValue({
       isOpen: false,
-      openModal: jest.fn(),
-      closeModal: jest.fn(),
+      openModal: vi.fn(),
+      closeModal: vi.fn(),
     });
   }
 };
@@ -221,11 +221,11 @@ export const createMockUseAuth = (authState: AuthFixture["authState"] | any) => 
   isConnected: authState.isConnected ?? false,
   address: authState.address,
   user: authState.user,
-  authenticate: authState.authenticate || jest.fn(),
-  login: authState.login || jest.fn(),
-  logout: authState.logout || jest.fn(),
-  disconnect: authState.disconnect || jest.fn(),
-  getAccessToken: authState.getAccessToken || jest.fn().mockResolvedValue("mock-token"),
+  authenticate: authState.authenticate || vi.fn(),
+  login: authState.login || vi.fn(),
+  logout: authState.logout || vi.fn(),
+  disconnect: authState.disconnect || vi.fn(),
+  getAccessToken: authState.getAccessToken || vi.fn().mockResolvedValue("mock-token"),
   primaryWallet: authState.address ? { address: authState.address } : undefined,
   wallets: authState.address ? [{ address: authState.address }] : [],
   ...authState, // Allow any additional overrides
@@ -254,7 +254,7 @@ export const createMockPermissions = (permissions: AuthFixture["permissions"]) =
 /**
  * Create mock logout function
  */
-export const createMockUseLogoutFunction = (logoutFn: jest.Mock) => () => ({
+export const createMockUseLogoutFunction = (logoutFn: vi.Mock) => () => ({
   logout: logoutFn,
 });
 
@@ -262,20 +262,20 @@ export const createMockUseLogoutFunction = (logoutFn: jest.Mock) => () => ({
  * Create mock modal store
  */
 export const createMockModalStore = (
-  options?: { isOpen?: boolean; openModal?: jest.Mock; closeModal?: jest.Mock } | boolean
+  options?: { isOpen?: boolean; openModal?: vi.Mock; closeModal?: vi.Mock } | boolean
 ) => {
   // Support both old signature (boolean) and new signature (object)
   if (typeof options === "boolean" || options === undefined) {
     return () => ({
       isOpen: options || false,
-      openModal: jest.fn(),
-      closeModal: jest.fn(),
+      openModal: vi.fn(),
+      closeModal: vi.fn(),
     });
   }
   return () => ({
     isOpen: options.isOpen || false,
-    openModal: options.openModal || jest.fn(),
-    closeModal: options.closeModal || jest.fn(),
+    openModal: options.openModal || vi.fn(),
+    closeModal: options.closeModal || vi.fn(),
   });
 };
 
@@ -283,11 +283,11 @@ export const createMockModalStore = (
  * Create mock router (Next.js)
  */
 export const createMockRouter = (overrides: any = {}) => ({
-  push: jest.fn(),
-  replace: jest.fn(),
-  back: jest.fn(),
-  forward: jest.fn(),
-  refresh: jest.fn(),
+  push: vi.fn(),
+  replace: vi.fn(),
+  back: vi.fn(),
+  forward: vi.fn(),
+  refresh: vi.fn(),
   pathname: "/",
   query: {},
   asPath: "/",
@@ -364,7 +364,7 @@ const updateContributorProfileModalMock = (mockUseContributorProfileModalStore?:
   const module = require("@/store/modals/contributorProfile");
   if (
     module.useContributorProfileModalStore &&
-    jest.isMockFunction(module.useContributorProfileModalStore)
+    vi.isMockFunction(module.useContributorProfileModalStore)
   ) {
     module.useContributorProfileModalStore.mockReturnValue(modalMock);
   }
@@ -374,7 +374,7 @@ const updateContributorProfileModalMock = (mockUseContributorProfileModalStore?:
 const updateStoreMock = (modulePath: string, hookName: string, mockValue: any) => {
   if (!mockValue) return;
   const module = require(modulePath);
-  if (module[hookName] && jest.isMockFunction(module[hookName])) {
+  if (module[hookName] && vi.isMockFunction(module[hookName])) {
     module[hookName].mockReturnValue(mockValue);
   }
 };
@@ -391,10 +391,10 @@ const updateOwnerStoreMock = (mockUseOwnerStore: any) => {
   const ownerModule = require("@/store/owner");
   const storeModule = require("@/store");
 
-  if (ownerModule.useOwnerStore && jest.isMockFunction(ownerModule.useOwnerStore)) {
+  if (ownerModule.useOwnerStore && vi.isMockFunction(ownerModule.useOwnerStore)) {
     ownerModule.useOwnerStore.mockImplementation(ownerImpl);
   }
-  if (storeModule.useOwnerStore && jest.isMockFunction(storeModule.useOwnerStore)) {
+  if (storeModule.useOwnerStore && vi.isMockFunction(storeModule.useOwnerStore)) {
     storeModule.useOwnerStore.mockImplementation(ownerImpl);
   }
 };
@@ -439,7 +439,7 @@ export const updateMocks = (options: Partial<CustomRenderOptions>) => {
 
   if (options.mockUseCommunitiesStore) {
     const module = require("@/store/communities");
-    if (module.useCommunitiesStore && jest.isMockFunction(module.useCommunitiesStore)) {
+    if (module.useCommunitiesStore && vi.isMockFunction(module.useCommunitiesStore)) {
       module.useCommunitiesStore.mockReturnValue(options.mockUseCommunitiesStore);
     }
   }
@@ -449,9 +449,9 @@ export const createMockUseCommunitiesStore = (
   communities: AuthFixture["permissions"]["communities"]
 ) => ({
   communities,
-  setCommunities: jest.fn(),
+  setCommunities: vi.fn(),
   isLoading: false,
-  setIsLoading: jest.fn(),
+  setIsLoading: vi.fn(),
 });
 
 export const createMockUseReviewerPrograms = (
@@ -461,7 +461,7 @@ export const createMockUseReviewerPrograms = (
   isLoading: false,
   hasPrograms: programs.length > 0,
   error: null,
-  refetch: jest.fn(),
+  refetch: vi.fn(),
 });
 
 /**
@@ -486,7 +486,7 @@ export const createMockUsePermissionsQuery = (isSuperAdmin: boolean) => ({
 
 export const createMockUseOwnerStore = (isOwner: boolean) => {
   const state = { isProjectOwner: false, isOwner };
-  return jest.fn((selector?: Function) => (selector ? selector(state) : state));
+  return vi.fn((selector?: Function) => (selector ? selector(state) : state));
 };
 
 export const createMockUseRegistryStore = (
@@ -495,12 +495,12 @@ export const createMockUseRegistryStore = (
 ) => ({
   isProgramCreator,
   isRegistryAdmin,
-  setIsPoolManager: jest.fn(),
-  setIsRegistryAdmin: jest.fn(),
+  setIsPoolManager: vi.fn(),
+  setIsRegistryAdmin: vi.fn(),
   isProgramCreatorLoading: false,
   isRegistryAdminLoading: false,
-  setIsPoolManagerLoading: jest.fn(),
-  setIsRegistryAdminLoading: jest.fn(),
+  setIsPoolManagerLoading: vi.fn(),
+  setIsRegistryAdminLoading: vi.fn(),
 });
 
 export const createMockUseTheme = (themeOrOverrides: "light" | "dark" | any = "light") => {
@@ -508,7 +508,7 @@ export const createMockUseTheme = (themeOrOverrides: "light" | "dark" | any = "l
   if (typeof themeOrOverrides === "string") {
     return {
       theme: themeOrOverrides,
-      setTheme: jest.fn(),
+      setTheme: vi.fn(),
       themes: ["light", "dark"],
       systemTheme: "light",
       resolvedTheme: themeOrOverrides,
@@ -518,7 +518,7 @@ export const createMockUseTheme = (themeOrOverrides: "light" | "dark" | any = "l
   const overrides = themeOrOverrides;
   return {
     theme: overrides.theme || "light",
-    setTheme: overrides.setTheme || jest.fn(),
+    setTheme: overrides.setTheme || vi.fn(),
     themes: overrides.themes || ["light", "dark"],
     systemTheme: overrides.systemTheme || "light",
     resolvedTheme: overrides.resolvedTheme || overrides.theme || "light",
@@ -528,8 +528,8 @@ export const createMockUseTheme = (themeOrOverrides: "light" | "dark" | any = "l
 
 export const createMockUseContributorProfileModalStore = () => ({
   isOpen: false,
-  openModal: jest.fn(),
-  closeModal: jest.fn(),
+  openModal: vi.fn(),
+  closeModal: vi.fn(),
 });
 
 /**
@@ -540,57 +540,57 @@ export const setupAuthMocks = (
   permissions: AuthFixture["permissions"]
 ) => {
   // Mock useAuth
-  jest.mock("@/hooks/useAuth", () => ({
-    useAuth: jest.fn(() => createMockUseAuth(authState)),
+  vi.mock("@/hooks/useAuth", () => ({
+    useAuth: vi.fn(() => createMockUseAuth(authState)),
   }));
 
   // Mock useCommunitiesStore
-  jest.mock("@/store/communities", () => ({
-    useCommunitiesStore: jest.fn(() => createMockUseCommunitiesStore(permissions.communities)),
+  vi.mock("@/store/communities", () => ({
+    useCommunitiesStore: vi.fn(() => createMockUseCommunitiesStore(permissions.communities)),
   }));
 
   // Mock useReviewerPrograms
-  jest.mock("@/hooks/usePermissions", () => ({
-    useReviewerPrograms: jest.fn(() => createMockUseReviewerPrograms(permissions.reviewerPrograms)),
+  vi.mock("@/hooks/usePermissions", () => ({
+    useReviewerPrograms: vi.fn(() => createMockUseReviewerPrograms(permissions.reviewerPrograms)),
   }));
 
   // Mock RBAC permissions (replaces legacy useStaff)
-  jest.mock("@/src/core/rbac/hooks/use-permissions", () => ({
-    usePermissionsQuery: jest.fn(() => createMockUsePermissionsQuery(permissions.isStaff)),
+  vi.mock("@/src/core/rbac/hooks/use-permissions", () => ({
+    usePermissionsQuery: vi.fn(() => createMockUsePermissionsQuery(permissions.isStaff)),
   }));
 
   // Mock useOwnerStore
-  jest.mock("@/store/owner", () => ({
+  vi.mock("@/store/owner", () => ({
     useOwnerStore: createMockUseOwnerStore(permissions.isOwner),
   }));
 
   // Mock useRegistryStore
-  jest.mock("@/store/registry", () => ({
-    useRegistryStore: jest.fn(() =>
+  vi.mock("@/store/registry", () => ({
+    useRegistryStore: vi.fn(() =>
       createMockUseRegistryStore(permissions.isProgramCreator, permissions.isRegistryAdmin)
     ),
   }));
 
   // Mock useTheme
-  jest.mock("next-themes", () => ({
-    useTheme: jest.fn(() => createMockUseTheme()),
+  vi.mock("next-themes", () => ({
+    useTheme: vi.fn(() => createMockUseTheme()),
     ThemeProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   }));
 
   // Mock useContributorProfileModalStore
-  jest.mock("@/store/modals/contributorProfile", () => ({
-    useContributorProfileModalStore: jest.fn(() => createMockUseContributorProfileModalStore()),
+  vi.mock("@/store/modals/contributorProfile", () => ({
+    useContributorProfileModalStore: vi.fn(() => createMockUseContributorProfileModalStore()),
   }));
 
   // Mock Next.js router
-  jest.mock("next/navigation", () => ({
-    useRouter: jest.fn(() => ({
-      push: jest.fn(),
-      replace: jest.fn(),
-      prefetch: jest.fn(),
-      back: jest.fn(),
+  vi.mock("next/navigation", () => ({
+    useRouter: vi.fn(() => ({
+      push: vi.fn(),
+      replace: vi.fn(),
+      prefetch: vi.fn(),
+      back: vi.fn(),
     })),
-    usePathname: jest.fn(() => "/"),
+    usePathname: vi.fn(() => "/"),
   }));
 };
 
@@ -755,7 +755,7 @@ export const formatAddress = (addr: string): string => {
 export const createMockModalButton = (id: string) => {
   const button = document.createElement("button");
   button.id = id;
-  button.onclick = jest.fn();
+  button.onclick = vi.fn();
   document.body.appendChild(button);
   return button;
 };

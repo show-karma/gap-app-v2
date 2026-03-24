@@ -1,24 +1,24 @@
 import { render, screen } from "@testing-library/react";
 import type { Project } from "@/types/v2/project";
 import { ProjectCard } from "../ProjectCard";
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 
 // Mock next/link
-jest.mock("next/link", () => {
+vi.mock("next/link", () => {
   return ({ children, href }: { children: React.ReactNode; href: string }) => (
     <a href={href}>{children}</a>
   );
 });
 
 // Mock ProfilePicture component
-jest.mock("@/components/Utilities/ProfilePicture", () => ({
+vi.mock("@/components/Utilities/ProfilePicture", () => ({
   ProfilePicture: ({ name, alt }: { name: string; alt: string }) => (
     <div data-testid="profile-picture">{alt || name}</div>
   ),
 }));
 
 // Mock MarkdownPreview component - renders source as plain text for testing
-jest.mock("@/components/Utilities/MarkdownPreview", () => ({
+vi.mock("@/components/Utilities/MarkdownPreview", () => ({
   MarkdownPreview: ({ source }: { source: string }) => <span>{source}</span>,
 }));
 

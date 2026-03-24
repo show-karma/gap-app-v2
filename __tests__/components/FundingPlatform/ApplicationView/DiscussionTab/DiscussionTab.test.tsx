@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { DiscussionTab } from "@/components/FundingPlatform/ApplicationView/DiscussionTab";
 
 // Mock child components
-jest.mock("@/components/FundingPlatform/ApplicationView/DiscussionTab/TimelineContainer", () => ({
+vi.mock("@/components/FundingPlatform/ApplicationView/DiscussionTab/TimelineContainer", () => ({
   TimelineContainer: ({
     comments,
     statusHistory,
@@ -25,7 +25,7 @@ jest.mock("@/components/FundingPlatform/ApplicationView/DiscussionTab/TimelineCo
   ),
 }));
 
-jest.mock("@/components/FundingPlatform/ApplicationView/CommentInput", () => ({
+vi.mock("@/components/FundingPlatform/ApplicationView/CommentInput", () => ({
   __esModule: true,
   default: ({ onSubmit, disabled, placeholder }: any) => (
     <div data-testid="comment-input">
@@ -51,15 +51,15 @@ describe("DiscussionTab", () => {
     currentStatus: "pending" as const,
     isAdmin: true,
     currentUserAddress: "0x123",
-    onCommentAdd: jest.fn(),
-    onCommentEdit: jest.fn(),
-    onCommentDelete: jest.fn(),
-    onVersionClick: jest.fn(),
+    onCommentAdd: vi.fn(),
+    onCommentEdit: vi.fn(),
+    onCommentDelete: vi.fn(),
+    onVersionClick: vi.fn(),
     isLoading: false,
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("Rendering", () => {
@@ -119,7 +119,7 @@ describe("DiscussionTab", () => {
 
     it("disables input while adding comment", async () => {
       const user = userEvent.setup();
-      const slowAdd = jest.fn(() => new Promise((resolve) => setTimeout(resolve, 100)));
+      const slowAdd = vi.fn(() => new Promise((resolve) => setTimeout(resolve, 100)));
       render(<DiscussionTab {...mockProps} onCommentAdd={slowAdd} />);
 
       await user.click(screen.getByTestId("add-comment-btn"));

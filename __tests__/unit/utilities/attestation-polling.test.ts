@@ -7,27 +7,27 @@ import { pollForGrantCompletion, pollForMilestoneStatus } from "@/utilities/atte
 import * as retriesModule from "@/utilities/retries";
 
 // Mock dependencies
-jest.mock("@/utilities/retries");
-jest.mock("@/services/project-grants.service", () => ({
-  getProjectGrants: jest.fn(),
+vi.mock("@/utilities/retries");
+vi.mock("@/services/project-grants.service", () => ({
+  getProjectGrants: vi.fn(),
 }));
 
 const { getProjectGrants } = require("@/services/project-grants.service");
-const mockGetProjectGrants = getProjectGrants as jest.MockedFunction<typeof getProjectGrants>;
+const mockGetProjectGrants = getProjectGrants as vi.MockedFunction<typeof getProjectGrants>;
 
-const mockRetryUntilConditionMet = retriesModule.retryUntilConditionMet as jest.MockedFunction<
+const mockRetryUntilConditionMet = retriesModule.retryUntilConditionMet as vi.MockedFunction<
   typeof retriesModule.retryUntilConditionMet
 >;
 
 describe("pollForGrantCompletion", () => {
   const mockGapClient = {
     fetch: {
-      projectById: jest.fn(),
+      projectById: vi.fn(),
     },
   } as any;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("Successful Polling", () => {
@@ -182,12 +182,12 @@ describe("pollForGrantCompletion", () => {
 describe("pollForMilestoneStatus", () => {
   const mockGapClient = {
     fetch: {
-      projectById: jest.fn(),
+      projectById: vi.fn(),
     },
   } as any;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("Verification Only", () => {

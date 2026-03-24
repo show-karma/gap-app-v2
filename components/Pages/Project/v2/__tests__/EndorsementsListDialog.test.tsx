@@ -1,27 +1,27 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 import { EndorsementsListDialog } from "../EndorsementsListDialog";
 
 // Mock the project store with different data per test
 let mockProjectData: { endorsements: unknown[] } | null = null;
 
-jest.mock("@/store", () => ({
-  useProjectStore: jest.fn((selector) => {
+vi.mock("@/store", () => ({
+  useProjectStore: vi.fn((selector) => {
     const state = { project: mockProjectData };
     return selector(state);
   }),
 }));
 
-jest.mock("@/store/ens", () => ({
+vi.mock("@/store/ens", () => ({
   useENS: () => ({
     ensData: {},
-    populateEns: jest.fn(),
+    populateEns: vi.fn(),
   }),
 }));
 
 // Mock EthereumAddressToENSAvatar
-jest.mock("@/components/EthereumAddressToENSAvatar", () => ({
+vi.mock("@/components/EthereumAddressToENSAvatar", () => ({
   __esModule: true,
   default: ({ address }: { address: string }) => (
     <div data-testid="avatar">{address.slice(0, 6)}</div>
@@ -29,7 +29,7 @@ jest.mock("@/components/EthereumAddressToENSAvatar", () => ({
 }));
 
 // Mock MarkdownPreview
-jest.mock("@/components/Utilities/MarkdownPreview", () => ({
+vi.mock("@/components/Utilities/MarkdownPreview", () => ({
   MarkdownPreview: ({ source }: { source: string }) => <div>{source}</div>,
 }));
 
@@ -60,11 +60,11 @@ const defaultMockProject = {
 describe("EndorsementsListDialog", () => {
   const defaultProps = {
     open: true,
-    onOpenChange: jest.fn(),
+    onOpenChange: vi.fn(),
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockProjectData = defaultMockProject;
   });
 
@@ -112,7 +112,7 @@ describe("EndorsementsListDialog", () => {
 
   it("calls onOpenChange when close button is clicked", async () => {
     const user = userEvent.setup();
-    const onOpenChange = jest.fn();
+    const onOpenChange = vi.fn();
     render(<EndorsementsListDialog open={true} onOpenChange={onOpenChange} />);
 
     const closeButton = screen.getByTestId("modal-close-button");
@@ -133,7 +133,7 @@ describe("EndorsementsListDialog", () => {
 
 describe("EndorsementsListDialog - Pagination", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("shows load more button when there are more than 12 endorsements", () => {
@@ -147,7 +147,7 @@ describe("EndorsementsListDialog - Pagination", () => {
 
     mockProjectData = { endorsements: manyEndorsements };
 
-    render(<EndorsementsListDialog open={true} onOpenChange={jest.fn()} />);
+    render(<EndorsementsListDialog open={true} onOpenChange={vi.fn()} />);
 
     expect(screen.getByText("Load more")).toBeInTheDocument();
   });

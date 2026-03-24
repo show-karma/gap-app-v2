@@ -3,12 +3,12 @@ import { ApplicationDataView } from "@/components/FundingPlatform/ApplicationVie
 import type { IFundingApplication, ProgramWithFormSchema } from "@/types/funding-platform";
 
 // Mock MarkdownPreview
-jest.mock("@/components/Utilities/MarkdownPreview", () => ({
+vi.mock("@/components/Utilities/MarkdownPreview", () => ({
   MarkdownPreview: ({ source }: { source: string }) => <div data-testid="markdown">{source}</div>,
 }));
 
 // Mock formatDate
-jest.mock("@/utilities/formatDate", () => ({
+vi.mock("@/utilities/formatDate", () => ({
   formatDate: (date: Date) => date.toISOString().split("T")[0],
 }));
 

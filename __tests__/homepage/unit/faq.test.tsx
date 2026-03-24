@@ -12,17 +12,17 @@
 
 import { FAQ } from "@/src/features/homepage/components/faq";
 import { renderWithProviders, screen, userEvent } from "../utils/test-helpers";
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 
 // Mock the SOCIALS utility
-jest.mock("@/utilities/socials", () => ({
+vi.mock("@/utilities/socials", () => ({
   SOCIALS: {
     DISCORD: "https://discord.gg/karma",
   },
 }));
 
 // Mock FAQAccordion to simplify testing
-jest.mock("@/src/components/shared/faq-accordion", () => ({
+vi.mock("@/src/components/shared/faq-accordion", () => ({
   FAQAccordion: ({ items }: any) => (
     <div data-testid="faq-accordion" role="region" aria-label="FAQ Accordion">
       {items.map((item: any) => (

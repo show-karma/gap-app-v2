@@ -1,12 +1,12 @@
 import { render, screen } from "@testing-library/react";
 
 // Unmock ProfilePicture before importing it (navbar/setup.ts mocks it globally)
-jest.unmock("@/components/Utilities/ProfilePicture");
+vi.unmock("@/components/Utilities/ProfilePicture");
 
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 
 // Mock boring-avatars
-jest.mock("boring-avatars", () => ({
+vi.mock("boring-avatars", () => ({
   __esModule: true,
   default: ({ size, name, variant, colors }: any) => (
     <div

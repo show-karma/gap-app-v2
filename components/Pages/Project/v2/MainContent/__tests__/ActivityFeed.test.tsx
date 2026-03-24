@@ -7,18 +7,18 @@ jest.mock("next/navigation", () => ({
 }));
 
 // Mock ActivityCard to avoid complex import chain
-jest.mock("@/components/Shared/ActivityCard", () => ({
+vi.mock("@/components/Shared/ActivityCard", () => ({
   ActivityCard: () => <div data-testid="activity-card" />,
 }));
 
 // Mock EthereumAddressToENSAvatar
-jest.mock("@/components/EthereumAddressToENSAvatar", () => ({
+vi.mock("@/components/EthereumAddressToENSAvatar", () => ({
   __esModule: true,
   default: ({ address }: { address: string }) => <div data-testid="ens-avatar">{address}</div>,
 }));
 
 // Mock EthereumAddressToENSName
-jest.mock("@/components/EthereumAddressToENSName", () => ({
+vi.mock("@/components/EthereumAddressToENSName", () => ({
   __esModule: true,
   default: ({ address }: { address: string }) => (
     <span data-testid="ens-name">{address?.slice(0, 8)}...</span>
@@ -26,12 +26,12 @@ jest.mock("@/components/EthereumAddressToENSName", () => ({
 }));
 
 // Mock ProfilePicture
-jest.mock("@/components/Utilities/ProfilePicture", () => ({
+vi.mock("@/components/Utilities/ProfilePicture", () => ({
   ProfilePicture: ({ name }: { name: string }) => <div data-testid="profile-picture">{name}</div>,
 }));
 
 // Mock formatCurrency
-jest.mock("@/utilities/formatCurrency", () => ({
+vi.mock("@/utilities/formatCurrency", () => ({
   __esModule: true,
   default: (num: number) => `$${num}`,
 }));

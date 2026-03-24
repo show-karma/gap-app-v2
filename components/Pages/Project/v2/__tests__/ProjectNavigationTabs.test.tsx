@@ -1,10 +1,10 @@
 import { render, screen } from "@testing-library/react";
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 import { ProjectNavigationTabs } from "../Navigation/ProjectNavigationTabs";
 
 // Mock next/navigation
 const mockPathname = "/project/test-project-123";
-jest.mock("next/navigation", () => ({
+vi.mock("next/navigation", () => ({
   useParams: () => ({ projectId: "test-project-123" }),
   usePathname: () => mockPathname,
 }));

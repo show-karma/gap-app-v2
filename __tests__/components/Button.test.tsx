@@ -1,9 +1,9 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { Button } from "@/components/ui/button";
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 
 // Mock Spinner
-jest.mock("@/components/ui/spinner", () => ({
+vi.mock("@/components/ui/spinner", () => ({
   Spinner: () => <div data-testid="spinner">Loading...</div>,
 }));
 
@@ -152,7 +152,7 @@ describe("Button", () => {
     });
 
     it("should not trigger onClick when disabled", () => {
-      const handleClick = jest.fn();
+      const handleClick = vi.fn();
 
       render(
         <Button disabled onClick={handleClick}>
@@ -169,7 +169,7 @@ describe("Button", () => {
 
   describe("Events", () => {
     it("should handle onClick event", () => {
-      const handleClick = jest.fn();
+      const handleClick = vi.fn();
 
       render(<Button onClick={handleClick}>Button</Button>);
 
@@ -180,7 +180,7 @@ describe("Button", () => {
     });
 
     it("should handle onMouseEnter event", () => {
-      const handleMouseEnter = jest.fn();
+      const handleMouseEnter = vi.fn();
 
       render(<Button onMouseEnter={handleMouseEnter}>Button</Button>);
 
@@ -191,7 +191,7 @@ describe("Button", () => {
     });
 
     it("should handle onFocus event", () => {
-      const handleFocus = jest.fn();
+      const handleFocus = vi.fn();
 
       render(<Button onFocus={handleFocus}>Button</Button>);
 
