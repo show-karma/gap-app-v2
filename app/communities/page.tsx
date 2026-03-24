@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { CommunitiesPage } from "@/components/Pages/Communities/CommunitiesPage";
+import { CollectionPageJsonLd } from "@/components/Seo/CollectionPageJsonLd";
 import { layoutTheme } from "@/src/helper/theme";
 import { customMetadata } from "@/utilities/meta";
 import { cn } from "@/utilities/tailwind";
@@ -14,6 +15,11 @@ export const metadata: Metadata = customMetadata({
 export default function Communities() {
   return (
     <main className="flex w-full flex-col items-center bg-background">
+      <CollectionPageJsonLd
+        name="Explore Grant-Giving Communities & Ecosystems"
+        description="Browse grant-giving communities and ecosystems on Karma. Discover funding programs, track grantee progress, find opportunities, and apply for grants today."
+        url="/communities"
+      />
       <div
         className={cn(
           layoutTheme.padding,

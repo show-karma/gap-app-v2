@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { HowToJsonLd } from "@/components/Seo/HowToJsonLd";
@@ -10,15 +11,25 @@ export const metadata: Metadata = customMetadata({
   description:
     "Follow the complete grant process from proposal submission to verified impact. Learn the 10 stages every funding program needs to track and coordinate.",
   path: "/knowledge/grant-lifecycle",
+  ogType: "article",
 });
 
 export default function GrantLifecyclePage() {
   return (
     <main className="container mx-auto max-w-3xl px-4 py-12">
+      <Breadcrumbs
+        items={[
+          { label: "Home", href: "/" },
+          { label: "Knowledge", href: "/knowledge" },
+          { label: "The Grant Lifecycle", href: "/knowledge/grant-lifecycle" },
+        ]}
+      />
       <ArticleJsonLd
         title="The Grant Lifecycle: From Proposal to Verified Impact"
         description="Follow the complete grant process from proposal submission to verified impact. Learn the 10 stages every funding program needs to track and coordinate."
         url="/knowledge/grant-lifecycle"
+        datePublished="2025-01-15"
+        dateModified="2026-03-24"
       />
       <BreadcrumbJsonLd
         items={[

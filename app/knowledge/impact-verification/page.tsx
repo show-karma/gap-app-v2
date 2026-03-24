@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
@@ -9,15 +10,25 @@ export const metadata: Metadata = customMetadata({
   description:
     "Learn how impact can be verified through transparent documentation, peer review, and public evidence instead of relying solely on centralized audits.",
   path: "/knowledge/impact-verification",
+  ogType: "article",
 });
 
 export default function ImpactVerificationPage() {
   return (
     <main className="container mx-auto max-w-3xl px-4 py-12">
+      <Breadcrumbs
+        items={[
+          { label: "Home", href: "/" },
+          { label: "Knowledge", href: "/knowledge" },
+          { label: "Impact Verification", href: "/knowledge/impact-verification" },
+        ]}
+      />
       <ArticleJsonLd
         title="How to Verify Impact Without Centralized Auditors"
         description="Learn how impact can be verified through transparent documentation, peer review, and public evidence instead of relying solely on centralized audits."
         url="/knowledge/impact-verification"
+        datePublished="2025-01-15"
+        dateModified="2026-03-24"
       />
       <BreadcrumbJsonLd
         items={[

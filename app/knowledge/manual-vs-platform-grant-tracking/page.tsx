@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
@@ -9,15 +10,28 @@ export const metadata: Metadata = customMetadata({
   description:
     "Compare spreadsheets and documents with dedicated funding platforms for grant tracking. Learn when manual tools break down and when structured platforms scale better.",
   path: "/knowledge/manual-vs-platform-grant-tracking",
+  ogType: "article",
 });
 
 export default function ManualVsPlatformGrantTrackingPage() {
   return (
     <main className="container mx-auto max-w-3xl px-4 py-12">
+      <Breadcrumbs
+        items={[
+          { label: "Home", href: "/" },
+          { label: "Knowledge", href: "/knowledge" },
+          {
+            label: "Manual vs Platform Grant Tracking",
+            href: "/knowledge/manual-vs-platform-grant-tracking",
+          },
+        ]}
+      />
       <ArticleJsonLd
         title="Manual vs Platform-Based Grant Tracking"
         description="Compare spreadsheets and documents with dedicated funding platforms for grant tracking. Learn when manual tools break down and when structured platforms scale better."
         url="/knowledge/manual-vs-platform-grant-tracking"
+        datePublished="2025-01-15"
+        dateModified="2026-03-24"
       />
       <BreadcrumbJsonLd
         items={[

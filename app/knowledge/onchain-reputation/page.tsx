@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
@@ -12,12 +13,26 @@ export const metadata: Metadata = customMetadata({
   title,
   description,
   path: "/knowledge/onchain-reputation",
+  ogType: "article",
 });
 
 export default function OnchainReputationPage() {
   return (
     <main className="container mx-auto max-w-3xl px-4 py-12">
-      <ArticleJsonLd title={title} description={description} url="/knowledge/onchain-reputation" />
+      <Breadcrumbs
+        items={[
+          { label: "Home", href: "/" },
+          { label: "Knowledge", href: "/knowledge" },
+          { label: "Onchain Reputation", href: "/knowledge/onchain-reputation" },
+        ]}
+      />
+      <ArticleJsonLd
+        title={title}
+        description={description}
+        url="/knowledge/onchain-reputation"
+        datePublished="2025-01-15"
+        dateModified="2026-03-24"
+      />
       <BreadcrumbJsonLd
         items={[
           { name: "Home", url: "/" },

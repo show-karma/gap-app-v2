@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
@@ -9,15 +10,25 @@ export const metadata: Metadata = customMetadata({
   description:
     "Understand why grant agreements must be tracked as part of the funding workflow. Learn how integrated document signing prevents operational chaos and payment delays.",
   path: "/knowledge/grant-document-signing",
+  ogType: "article",
 });
 
 export default function GrantDocumentSigningPage() {
   return (
     <main className="container mx-auto max-w-3xl px-4 py-12">
+      <Breadcrumbs
+        items={[
+          { label: "Home", href: "/" },
+          { label: "Knowledge", href: "/knowledge" },
+          { label: "Document Signing", href: "/knowledge/grant-document-signing" },
+        ]}
+      />
       <ArticleJsonLd
         title="Document Signing in Grant Programs"
         description="Understand why grant agreements must be tracked as part of the funding workflow. Learn how integrated document signing prevents operational chaos and payment delays."
         url="/knowledge/grant-document-signing"
+        datePublished="2025-01-15"
+        dateModified="2026-03-24"
       />
       <BreadcrumbJsonLd
         items={[

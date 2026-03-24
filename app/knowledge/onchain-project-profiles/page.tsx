@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
@@ -12,15 +13,25 @@ export const metadata: Metadata = customMetadata({
   title,
   description,
   path: "/knowledge/onchain-project-profiles",
+  ogType: "article",
 });
 
 export default function OnchainProjectProfilesPage() {
   return (
     <main className="container mx-auto max-w-3xl px-4 py-12">
+      <Breadcrumbs
+        items={[
+          { label: "Home", href: "/" },
+          { label: "Knowledge", href: "/knowledge" },
+          { label: "Onchain Project Profiles", href: "/knowledge/onchain-project-profiles" },
+        ]}
+      />
       <ArticleJsonLd
         title={title}
         description={description}
         url="/knowledge/onchain-project-profiles"
+        datePublished="2025-01-15"
+        dateModified="2026-03-24"
       />
       <BreadcrumbJsonLd
         items={[

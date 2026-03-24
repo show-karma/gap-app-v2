@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { CommunityContentWrapper } from "@/components/Community/CommunityContentWrapper";
 import CommunityHeader from "@/components/Community/Header";
 import { CommunityNotFound } from "@/components/Pages/Communities/CommunityNotFound";
+import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { PROJECT_NAME } from "@/constants/brand";
 import { envVars } from "@/utilities/enviromentVars";
 import { DEFAULT_DESCRIPTION, DEFAULT_TITLE, SITE_URL, twitterMeta } from "@/utilities/meta";
@@ -80,8 +81,17 @@ export default async function Layout(props: { children: React.ReactNode; params:
     return <CommunityNotFound communityId={communityId} />;
   }
 
+  const communityName = community.details?.name || communityId;
+
   return (
     <div className="flex w-full h-full max-w-full flex-col justify-start max-lg:flex-col">
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: "/" },
+          { name: "Communities", url: "/communities" },
+          { name: communityName, url: `/community/${communityId}` },
+        ]}
+      />
       <CommunityHeader community={community} />
       <CommunityContentWrapper>{children}</CommunityContentWrapper>
     </div>

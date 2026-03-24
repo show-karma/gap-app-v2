@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
@@ -9,15 +10,25 @@ export const metadata: Metadata = customMetadata({
   description:
     "Explore how DAOs define, track, and evaluate grant milestones. Compare approaches from spreadsheets to modular platforms and learn the tradeoffs of each method.",
   path: "/knowledge/dao-grant-milestones",
+  ogType: "article",
 });
 
 export default function DaoGrantMilestonesPage() {
   return (
     <main className="container mx-auto max-w-3xl px-4 py-12">
+      <Breadcrumbs
+        items={[
+          { label: "Home", href: "/" },
+          { label: "Knowledge", href: "/knowledge" },
+          { label: "DAO Grant Milestones", href: "/knowledge/dao-grant-milestones" },
+        ]}
+      />
       <ArticleJsonLd
         title="How DAOs Track Grant Milestones"
         description="Explore how DAOs define, track, and evaluate grant milestones. Compare approaches from spreadsheets to modular platforms and learn the tradeoffs of each method."
         url="/knowledge/dao-grant-milestones"
+        datePublished="2025-01-15"
+        dateModified="2026-03-24"
       />
       <BreadcrumbJsonLd
         items={[

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
@@ -9,15 +10,25 @@ export const metadata: Metadata = customMetadata({
   description:
     "Learn how AI-assisted evaluation helps grant programs process hundreds of applications without sacrificing review quality. Explore practical approaches to scaling.",
   path: "/knowledge/ai-grant-evaluation",
+  ogType: "article",
 });
 
 export default function AiGrantEvaluationPage() {
   return (
     <main className="container mx-auto max-w-3xl px-4 py-12">
+      <Breadcrumbs
+        items={[
+          { label: "Home", href: "/" },
+          { label: "Knowledge", href: "/knowledge" },
+          { label: "AI-Assisted Grant Evaluation", href: "/knowledge/ai-grant-evaluation" },
+        ]}
+      />
       <ArticleJsonLd
         title="AI-Assisted Grant Evaluation at Scale"
         description="Learn how AI-assisted evaluation helps grant programs process hundreds of applications without sacrificing review quality. Explore practical approaches to scaling."
         url="/knowledge/ai-grant-evaluation"
+        datePublished="2025-01-15"
+        dateModified="2026-03-24"
       />
       <BreadcrumbJsonLd
         items={[

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
@@ -9,15 +10,25 @@ export const metadata: Metadata = customMetadata({
   description:
     "Grant programs fail at post-funding follow-through, not project selection. Learn the structural reasons and how to build systems that learn from outcomes.",
   path: "/knowledge/why-grant-programs-fail",
+  ogType: "article",
 });
 
 export default function WhyGrantProgramsFailPage() {
   return (
     <main className="container mx-auto max-w-3xl px-4 py-12">
+      <Breadcrumbs
+        items={[
+          { label: "Home", href: "/" },
+          { label: "Knowledge", href: "/knowledge" },
+          { label: "Why Grant Programs Fail", href: "/knowledge/why-grant-programs-fail" },
+        ]}
+      />
       <ArticleJsonLd
         title="Why Most Grant Programs Fail After Funding"
         description="Grant programs fail at post-funding follow-through, not project selection. Learn the structural reasons and how to build systems that learn from outcomes."
         url="/knowledge/why-grant-programs-fail"
+        datePublished="2025-01-15"
+        dateModified="2026-03-24"
       />
       <BreadcrumbJsonLd
         items={[

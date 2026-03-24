@@ -1,5 +1,5 @@
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import type { Viewport } from "next";
+import type { Metadata, Viewport } from "next";
 import { defaultMetadata } from "@/utilities/meta";
 import "@/styles/globals.css";
 import "@/styles/index.scss";
@@ -24,7 +24,14 @@ import { Footer } from "@/src/components/footer/footer";
 import { Navbar } from "@/src/components/navbar/navbar";
 import { ApiKeyManagementModal } from "@/src/features/api-keys/components/api-key-management-modal";
 
-export const metadata = defaultMetadata;
+export const metadata: Metadata = {
+  ...defaultMetadata,
+  manifest: "/manifest.json",
+  icons: {
+    icon: [{ url: "/favicon.ico", sizes: "48x48" }],
+    apple: [{ url: "/images/favicon.png" }],
+  },
+};
 
 export const viewport: Viewport = {
   width: "device-width",

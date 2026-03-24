@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
@@ -9,15 +10,25 @@ export const metadata: Metadata = customMetadata({
   description:
     "Grant accountability turns funding promises into persistent execution history. Discover how to track funded projects and improve capital allocation over time.",
   path: "/knowledge/grant-accountability",
+  ogType: "article",
 });
 
 export default function GrantAccountabilityPage() {
   return (
     <main className="container mx-auto max-w-3xl px-4 py-12">
+      <Breadcrumbs
+        items={[
+          { label: "Home", href: "/" },
+          { label: "Knowledge", href: "/knowledge" },
+          { label: "Grant Accountability", href: "/knowledge/grant-accountability" },
+        ]}
+      />
       <ArticleJsonLd
         title="What Is Grant Accountability in Web3?"
         description="Grant accountability turns funding promises into persistent execution history. Discover how to track funded projects and improve capital allocation over time."
         url="/knowledge/grant-accountability"
+        datePublished="2025-01-15"
+        dateModified="2026-03-24"
       />
       <BreadcrumbJsonLd
         items={[

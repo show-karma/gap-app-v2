@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { CollectionPageJsonLd } from "@/components/Seo/CollectionPageJsonLd";
 import { customMetadata } from "@/utilities/meta";
@@ -9,11 +10,18 @@ export const metadata: Metadata = customMetadata({
   description:
     "A reference guide to modern funding systems. Learn about grant accountability, impact verification, onchain reputation, project profiles, and capital allocation.",
   path: "/knowledge",
+  ogType: "website",
 });
 
 export default function KnowledgePage() {
   return (
     <main className="container mx-auto max-w-3xl px-4 py-12">
+      <Breadcrumbs
+        items={[
+          { label: "Home", href: "/" },
+          { label: "Knowledge", href: "/knowledge" },
+        ]}
+      />
       <CollectionPageJsonLd
         name="Grant Funding Knowledge Base"
         description="A reference guide to modern funding systems. Learn about grant accountability, impact verification, onchain reputation, project profiles, and capital allocation."

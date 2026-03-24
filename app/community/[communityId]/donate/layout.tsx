@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { PROJECT_NAME } from "@/constants/brand";
+import { SITE_URL } from "@/utilities/meta";
 import { getCommunityDetails } from "@/utilities/queries/v2/getCommunityData";
 
 type Props = {
@@ -22,6 +23,30 @@ export async function generateMetadata({
   };
 }
 
-export default function DonateLayout({ children }: Props) {
-  return children;
+export default async function DonateLayout({ children, params }: Props) {
+  const { communityId } = await params;
+  const community = await getCommunityDetails(communityId);
+  const communityName = community?.details?.name || communityId;
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD structured data requires dangerouslySetInnerHTML
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "DonateAction",
+            name: `Donate to ${communityName} Projects`,
+            recipient: {
+              "@type": "Organization",
+              name: communityName,
+            },
+            url: `${SITE_URL}/community/${communityId}/donate`,
+          }),
+        }}
+      />
+      {children}
+    </>
+  );
 }
