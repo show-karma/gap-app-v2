@@ -53,7 +53,7 @@ export const PostApprovalDataView: FC<PostApprovalDataViewProps> = ({ applicatio
                     <h5 className="font-medium text-gray-900 dark:text-gray-100">{item.title}</h5>
                     {item.dueDate && (
                       <span className="text-xs bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200 px-2 py-1 rounded flex-shrink-0">
-                        Due: {formatDate(new Date(item.dueDate))}
+                        Due: {formatDate(item.dueDate)}
                       </span>
                     )}
                   </div>
