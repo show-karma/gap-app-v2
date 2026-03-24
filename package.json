@@ -21,7 +21,6 @@
     "test:pages": "vitest run --project unit __tests__/integration/pages",
     "test:fast": "vitest run --project unit __tests__/unit --reporter=dot",
     "test:debug": "vitest run --project unit --reporter=verbose",
-    "test:jest": "cross-env NODE_OPTIONS=--max-old-space-size=4096 jest --maxWorkers=50%",
     "test:metrics:collect": "node scripts/test-metrics.js collect",
     "test:metrics:show": "node scripts/test-metrics.js show",
     "test:metrics:report": "node scripts/test-metrics.js report",
@@ -180,7 +179,6 @@
     "@testing-library/react": "^16.0.1",
     "@testing-library/user-event": "^14.6.1",
     "@types/dompurify": "^3.0.5",
-    "@types/jest": "^29.5.13",
     "@types/lodash.debounce": "^4.0.9",
     "@types/lodash.groupby": "^4.6.9",
     "@types/markdown-it": "^14.1.1",
@@ -193,12 +191,10 @@
     "@types/react-virtualized": "^9.21.29",
     "@vitejs/plugin-react": "^4.7.0",
     "@vitest/browser-playwright": "^4.0.7",
+    "@vitest/coverage-v8": "^4.1.1",
     "chromatic": "^13.3.3",
     "cross-env": "^7.0.3",
     "husky": "^9.1.6",
-    "jest": "^29.7.0",
-    "jest-axe": "^10.0.0",
-    "jest-environment-jsdom": "^29.7.0",
     "lint-staged": "^16.2.7",
     "msw": "^2.12.0",
     "playwright": "^1.58.2",
@@ -218,7 +214,7 @@
     "@types/react-dom": "19.1.6"
   },
   "lint-staged": {
-    "!(cypress)/**/*.{js,jsx,ts,tsx,json,css}": [
+    "**/*.{js,jsx,ts,tsx,json,css}": [
       "biome check --write --diagnostic-level=error"
     ]
   }

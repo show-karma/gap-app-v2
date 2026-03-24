@@ -43,14 +43,9 @@ vi.mock("@/src/core/rbac/hooks/use-staff-bridge", () => ({
   useStaff: vi.fn(),
 }));
 
-<<<<<<< HEAD
-jest.mock("next/navigation", () => ({
-  useRouter: jest.fn(),
-  useParams: jest.fn(() => ({})),
-=======
 vi.mock("next/navigation", () => ({
   useRouter: vi.fn(),
->>>>>>> 8322801b (test: migrate Jest to Vitest for unit/integration tests)
+  useParams: vi.fn(() => ({})),
 }));
 
 vi.mock("@/components/EthereumAddressToENSAvatar", () => ({
@@ -67,9 +62,8 @@ vi.mock("@/components/Dialogs/ProjectDialog/index", () => ({
   ProjectDialog: () => <button type="button">Create Project</button>,
 }));
 
-<<<<<<< HEAD
-jest.mock("@/features/user-applications/hooks/use-user-applications", () => ({
-  useUserApplications: jest.fn(() => ({
+vi.mock("@/features/user-applications/hooks/use-user-applications", () => ({
+  useUserApplications: vi.fn(() => ({
     applications: [],
     filters: { status: "all", programId: null, searchQuery: "" },
     sortBy: "createdAt",
@@ -77,24 +71,14 @@ jest.mock("@/features/user-applications/hooks/use-user-applications", () => ({
     pagination: { page: 1, totalPages: 1, limit: 10 },
     isLoading: false,
     error: null,
-    setFilters: jest.fn(),
-    setSort: jest.fn(),
-    setPage: jest.fn(),
-    setPageSize: jest.fn(),
-    refresh: jest.fn(),
+    setFilters: vi.fn(),
+    setSort: vi.fn(),
+    setPage: vi.fn(),
+    setPageSize: vi.fn(),
+    refresh: vi.fn(),
   })),
 }));
 
-const mockUseQuery = useQuery as unknown as jest.Mock;
-const mockUseRouter = useRouter as unknown as jest.Mock;
-const mockUseAuth = useAuth as unknown as jest.Mock;
-const mockSetPostLoginRedirect = setPostLoginRedirect as unknown as jest.Mock;
-const mockUseContributorProfile = useContributorProfile as unknown as jest.Mock;
-const mockUseDashboardAdmin = useDashboardAdmin as unknown as jest.Mock;
-const mockUsePermissionContext = usePermissionContext as unknown as jest.Mock;
-const mockUseStaff = useStaff as unknown as jest.Mock;
-const mockUseReviewerPrograms = useReviewerPrograms as unknown as jest.Mock;
-=======
 const mockUseQuery = useQuery as unknown as vi.Mock;
 const mockUseRouter = useRouter as unknown as vi.Mock;
 const mockUseAuth = useAuth as unknown as vi.Mock;
@@ -104,7 +88,6 @@ const mockUseDashboardAdmin = useDashboardAdmin as unknown as vi.Mock;
 const mockUsePermissionContext = usePermissionContext as unknown as vi.Mock;
 const mockUseStaff = useStaff as unknown as vi.Mock;
 const mockUseReviewerPrograms = useReviewerPrograms as unknown as vi.Mock;
->>>>>>> 8322801b (test: migrate Jest to Vitest for unit/integration tests)
 
 const setupAuth = ({
   authenticated,

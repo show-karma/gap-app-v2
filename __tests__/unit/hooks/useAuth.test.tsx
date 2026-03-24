@@ -14,11 +14,10 @@ import { QUERY_KEYS } from "@/utilities/queryKeys";
 vi.unmock("@/hooks/useAuth");
 
 // Controllable mock functions for hook tests
-<<<<<<< HEAD
-const mockLogin = jest.fn();
-const mockLogout = jest.fn();
-const mockGetAccessToken = jest.fn();
-const mockGetToken = jest.fn();
+const mockLogin = vi.fn();
+const mockLogout = vi.fn();
+const mockGetAccessToken = vi.fn();
+const mockGetToken = vi.fn();
 
 // Mock the bridge context that useAuth reads from
 const mockBridgeState = {
@@ -28,12 +27,12 @@ const mockBridgeState = {
   login: mockLogin,
   logout: mockLogout,
   getAccessToken: mockGetAccessToken,
-  connectWallet: jest.fn(),
+  connectWallet: vi.fn(),
   wallets: [] as any[],
   isConnected: false,
 };
 
-jest.mock("@/contexts/privy-bridge-context", () => ({
+vi.mock("@/contexts/privy-bridge-context", () => ({
   usePrivyBridge: () => mockBridgeState,
   PrivyBridgeContext: {
     Provider: ({ children }: { children: any }) => children,
@@ -42,58 +41,28 @@ jest.mock("@/contexts/privy-bridge-context", () => ({
     ready: false,
     authenticated: false,
     user: null,
-    login: jest.fn(),
-    logout: jest.fn(),
+    login: vi.fn(),
+    logout: vi.fn(),
     getAccessToken: async () => null,
-    connectWallet: jest.fn(),
+    connectWallet: vi.fn(),
     wallets: [],
     isConnected: false,
   },
 }));
 
 // Mock @wagmi/core for dynamic import in watchAccount effect
-jest.mock("@wagmi/core", () => ({
-  watchAccount: jest.fn(() => jest.fn()),
-}));
-
-// Mock privy-config for dynamic import in watchAccount effect
-jest.mock("@/utilities/wagmi/privy-config", () => ({
-  privyConfig: {},
-  getPrivyWagmiConfig: jest.fn(() => ({})),
-}));
-
-const mockQueryClientClear = jest.fn();
-const mockClearCache = jest.fn();
-=======
-const mockLogin = vi.fn();
-const mockLogout = vi.fn();
-const mockGetAccessToken = vi.fn();
-const mockUsePrivy = vi.fn();
-const mockUseWallets = vi.fn();
-const mockUseAccount = vi.fn();
-const mockGetToken = vi.fn();
-
-// Override global mocks for per-test control
-vi.mock("@privy-io/react-auth", () => ({
-  usePrivy: () => mockUsePrivy(),
-  useWallets: () => mockUseWallets(),
-}));
-
-vi.mock("wagmi", () => ({
-  useAccount: () => mockUseAccount(),
-  useConnect: vi.fn(() => ({ connect: vi.fn(), connectors: [] })),
-  useDisconnect: vi.fn(() => ({ disconnect: vi.fn() })),
-  useSwitchChain: vi.fn(() => ({ switchChain: vi.fn() })),
-  createConfig: vi.fn(),
-}));
-
 vi.mock("@wagmi/core", () => ({
   watchAccount: vi.fn(() => vi.fn()),
 }));
 
+// Mock privy-config for dynamic import in watchAccount effect
+vi.mock("@/utilities/wagmi/privy-config", () => ({
+  privyConfig: {},
+  getPrivyWagmiConfig: vi.fn(() => ({})),
+}));
+
 const mockQueryClientClear = vi.fn();
 const mockClearCache = vi.fn();
->>>>>>> 8322801b (test: migrate Jest to Vitest for unit/integration tests)
 
 vi.mock("@/utilities/query-client", () => ({
   queryClient: {
@@ -106,12 +75,8 @@ vi.mock("@/utilities/query-client", () => ({
 vi.mock("@/utilities/auth/token-manager", () => ({
   TokenManager: {
     getToken: (...args: unknown[]) => mockGetToken(...args),
-<<<<<<< HEAD
-    setPrivyInstance: jest.fn(),
-=======
     setPrivyInstance: vi.fn(),
     clearTokens: vi.fn(),
->>>>>>> 8322801b (test: migrate Jest to Vitest for unit/integration tests)
     clearCache: (...args: unknown[]) => mockClearCache(...args),
   },
 }));
@@ -130,7 +95,7 @@ function resetBridgeState() {
     login: mockLogin,
     logout: mockLogout,
     getAccessToken: mockGetAccessToken,
-    connectWallet: jest.fn(),
+    connectWallet: vi.fn(),
     wallets: [],
     isConnected: false,
   });
@@ -357,7 +322,7 @@ describe("useAuth - Farcaster login (no browser-connectable wallet)", () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     setBridgeState({
       ready: true,

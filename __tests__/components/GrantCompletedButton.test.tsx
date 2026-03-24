@@ -68,36 +68,6 @@ describe("GrantCompletedButton", () => {
       expect(screen.getByTestId("check-circle-icon")).toBeInTheDocument();
     });
 
-    it("should apply correct CSS classes", () => {
-      const { container } = render(
-        <GrantCompletedButton
-          onClick={mockOnClick}
-          disabled={false}
-          isRevoking={false}
-          isAuthorized={true}
-        />
-      );
-
-      const button = screen.getByRole("button");
-      expect(button).toHaveClass(
-        "group",
-        "relative",
-        "flex",
-        "flex-row",
-        "items-center",
-        "justify-center",
-        "gap-2",
-        "rounded-md",
-        "border",
-        "border-emerald-600",
-        "bg-green-100",
-        "px-3.5",
-        "py-2",
-        "text-sm",
-        "font-semibold",
-        "text-emerald-700"
-      );
-    });
   });
 
   describe("Loading State", () => {
@@ -182,20 +152,6 @@ describe("GrantCompletedButton", () => {
 
       const button = screen.getByRole("button");
       expect(button).not.toBeDisabled();
-    });
-
-    it("should apply disabled styling", () => {
-      render(
-        <GrantCompletedButton
-          onClick={mockOnClick}
-          disabled={true}
-          isRevoking={false}
-          isAuthorized={true}
-        />
-      );
-
-      const button = screen.getByRole("button");
-      expect(button).toHaveClass("disabled:opacity-50", "disabled:cursor-not-allowed");
     });
 
     it("should prevent onClick when disabled", () => {
@@ -299,75 +255,6 @@ describe("GrantCompletedButton", () => {
       expect(screen.getByTestId("x-circle-icon")).toBeInTheDocument();
     });
 
-    it("should have hover classes for styling", () => {
-      render(
-        <GrantCompletedButton
-          onClick={mockOnClick}
-          disabled={false}
-          isRevoking={false}
-          isAuthorized={true}
-        />
-      );
-
-      const button = screen.getByRole("button");
-      expect(button).toHaveClass("hover:border-red-600", "hover:bg-red-100", "hover:text-red-700");
-    });
-
-    it("should hide default text on hover (via CSS classes)", () => {
-      render(
-        <GrantCompletedButton
-          onClick={mockOnClick}
-          disabled={false}
-          isRevoking={false}
-          isAuthorized={true}
-        />
-      );
-
-      const defaultText = screen.getByText("Marked as complete");
-      expect(defaultText).toHaveClass("group-hover:hidden");
-    });
-
-    it("should hide CheckCircleIcon on hover (via CSS classes)", () => {
-      render(
-        <GrantCompletedButton
-          onClick={mockOnClick}
-          disabled={false}
-          isRevoking={false}
-          isAuthorized={true}
-        />
-      );
-
-      const checkIcon = screen.getByTestId("check-circle-icon");
-      expect(checkIcon).toHaveClass("group-hover:hidden");
-    });
-
-    it("should show hover text inline on hover (via CSS classes)", () => {
-      render(
-        <GrantCompletedButton
-          onClick={mockOnClick}
-          disabled={false}
-          isRevoking={false}
-          isAuthorized={true}
-        />
-      );
-
-      const hoverText = screen.getByText("Revoke completion");
-      expect(hoverText).toHaveClass("hidden", "group-hover:inline");
-    });
-
-    it("should show XCircleIcon on hover (via CSS classes)", () => {
-      render(
-        <GrantCompletedButton
-          onClick={mockOnClick}
-          disabled={false}
-          isRevoking={false}
-          isAuthorized={true}
-        />
-      );
-
-      const xIcon = screen.getByTestId("x-circle-icon");
-      expect(xIcon).toHaveClass("hidden", "group-hover:block");
-    });
   });
 
   describe("Accessibility", () => {

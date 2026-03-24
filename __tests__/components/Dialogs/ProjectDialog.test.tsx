@@ -157,10 +157,10 @@ vi.mock("@privy-io/react-auth", () => ({
     logout: vi.fn(),
   }),
   PrivyProvider: ({ children }: any) => children,
-  useCreateWallet: () => ({ createWallet: jest.fn() }),
+  useCreateWallet: () => ({ createWallet: vi.fn() }),
 }));
 
-jest.mock("@/contexts/privy-bridge-context", () => ({
+vi.mock("@/contexts/privy-bridge-context", () => ({
   usePrivyBridge: () => ({
     ready: true,
     authenticated: true,
@@ -168,10 +168,10 @@ jest.mock("@/contexts/privy-bridge-context", () => ({
       id: "test-user",
       linkedAccounts: [{ type: "wallet" }],
     },
-    login: jest.fn(),
-    logout: jest.fn().mockResolvedValue(undefined),
-    getAccessToken: jest.fn().mockResolvedValue(null),
-    connectWallet: jest.fn(),
+    login: vi.fn(),
+    logout: vi.fn().mockResolvedValue(undefined),
+    getAccessToken: vi.fn().mockResolvedValue(null),
+    connectWallet: vi.fn(),
     wallets: [
       {
         walletClientType: "injected",
@@ -181,7 +181,7 @@ jest.mock("@/contexts/privy-bridge-context", () => ({
     smartWalletClient: null,
     isConnected: true,
   }),
-  usePrivyBridgeSetter: () => jest.fn(),
+  usePrivyBridgeSetter: () => vi.fn(),
   PrivyBridgeProvider: ({ children }: any) => children,
   PRIVY_BRIDGE_DEFAULTS: {},
 }));

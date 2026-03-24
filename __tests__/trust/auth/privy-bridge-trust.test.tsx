@@ -8,7 +8,7 @@ import { act, renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
 
 // Undo any global mocks
-jest.unmock("@/contexts/privy-bridge-context");
+vi.unmock("@/contexts/privy-bridge-context");
 
 // We need to import directly since this context is the thing under test
 import {

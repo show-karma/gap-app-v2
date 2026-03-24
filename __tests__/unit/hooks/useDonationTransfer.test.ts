@@ -127,13 +127,9 @@ describe("useDonationTransfer", () => {
   const mockWriteContractAsync = vi.fn();
 
   beforeEach(() => {
-<<<<<<< HEAD
-    jest.clearAllMocks();
-    // Suppress expected console.error from error-path tests
-    jest.spyOn(console, "error").mockImplementation(() => {});
-=======
     vi.clearAllMocks();
->>>>>>> 8322801b (test: migrate Jest to Vitest for unit/integration tests)
+    // Suppress expected console.error from error-path tests
+    vi.spyOn(console, "error").mockImplementation(() => {});
 
     // Setup default mocks
     (wagmi.useAccount as vi.Mock).mockReturnValue({
@@ -181,7 +177,7 @@ describe("useDonationTransfer", () => {
 
   afterEach(() => {
     // Restore console.error spy before clearing mocks
-    (console.error as jest.Mock)?.mockRestore?.();
+    (console.error as vi.Mock)?.mockRestore?.();
 
     // Reset all mocks to prevent state accumulation
     vi.clearAllMocks();

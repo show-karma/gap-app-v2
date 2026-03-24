@@ -3,40 +3,40 @@
  * using top-level imports, keeping ethers out of the shared bundle.
  */
 
-const mockJsonRpcProvider = jest.fn().mockImplementation((url: string, network: any) => ({
+const mockJsonRpcProvider = vi.fn().mockImplementation((url: string, network: any) => ({
   url,
   network,
 }));
 
-const mockFallbackProvider = jest.fn().mockImplementation((providers: any[]) => ({
+const mockFallbackProvider = vi.fn().mockImplementation((providers: any[]) => ({
   providers,
 }));
 
-const mockBrowserProvider = jest.fn().mockImplementation((transport: any, network: any) => ({
+const mockBrowserProvider = vi.fn().mockImplementation((transport: any, network: any) => ({
   transport,
   network,
 }));
 
-const mockJsonRpcSigner = jest.fn().mockImplementation((provider: any, address: string) => ({
+const mockJsonRpcSigner = vi.fn().mockImplementation((provider: any, address: string) => ({
   provider,
   address,
 }));
 
-jest.mock("ethers", () => ({
+vi.mock("ethers", () => ({
   JsonRpcProvider: mockJsonRpcProvider,
   FallbackProvider: mockFallbackProvider,
   BrowserProvider: mockBrowserProvider,
   JsonRpcSigner: mockJsonRpcSigner,
 }));
 
-jest.mock("wagmi", () => ({
-  usePublicClient: jest.fn().mockReturnValue(null),
-  useWalletClient: jest.fn().mockReturnValue({ data: null }),
+vi.mock("wagmi", () => ({
+  usePublicClient: vi.fn().mockReturnValue(null),
+  useWalletClient: vi.fn().mockReturnValue({ data: null }),
 }));
 
 describe("eas-wagmi-utils dynamic imports", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("publicClientToProvider", () => {

@@ -12,8 +12,14 @@ test.describe("Authentication", () => {
     });
     await page.goto("/community/optimism", GOTO_OPTIONS);
     await waitForPageReady(page);
-    // The page should render as authenticated user
-    await expect(page.locator("body")).toBeVisible();
+    // The page should render as authenticated user showing their truncated address
+    const bodyText = await page.textContent("body");
+    // Applicant address starts with 0x9965... - check for truncated form or connected indicator
+    expect(
+      bodyText?.includes("0x99") ||
+        bodyText?.toLowerCase().includes("connected") ||
+        bodyText?.includes("Optimism")
+    ).toBeTruthy();
   });
 
   test("T1-22: session persists across page navigation", async ({
@@ -33,7 +39,7 @@ test.describe("Authentication", () => {
     await page.goto("/community/optimism", GOTO_OPTIONS);
     await waitForPageReady(page);
     // Should still be authenticated — page renders content, not a login redirect
-    await expect(page.locator("body")).toBeVisible();
+    await expect(page).toHaveURL(/\/community\/optimism/);
     const bodyText = await page.textContent("body");
     expect(bodyText!.length).toBeGreaterThan(50);
   });
@@ -52,8 +58,9 @@ test.describe("Authentication", () => {
     });
     await page.reload(GOTO_OPTIONS);
     await waitForPageReady(page);
-    // Page should still render (as guest)
-    await expect(page.locator("body")).toBeVisible();
+    // Page should still render (as guest) with community content visible
+    await expect(page).toHaveURL(/\/community\/optimism/);
+    await expect(page.getByText("Optimism").first()).toBeVisible();
   });
 
   test("T1-24: unauthenticated user can browse public pages", async ({ page, withApiMocks }) => {
@@ -63,7 +70,9 @@ test.describe("Authentication", () => {
     });
     await page.goto("/community/optimism", GOTO_OPTIONS);
     await waitForPageReady(page);
-    await expect(page.locator("body")).toBeVisible();
+    // Unauthenticated user can still see community content
+    await expect(page).toHaveURL(/\/community\/optimism/);
+    await expect(page.getByText("Optimism").first()).toBeVisible();
   });
 
   test("T1-25: different roles have different UI states", async ({

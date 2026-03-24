@@ -80,7 +80,7 @@ describe("User Projects Service (V2)", () => {
     });
 
     it("should fetch projects even when no address provided (JWT auth)", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([mockPaginatedResponse, null]);
+      (fetchData as vi.Mock).mockResolvedValue([mockPaginatedResponse, null]);
 
       const result = await fetchMyProjects(undefined);
 

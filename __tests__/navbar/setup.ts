@@ -172,7 +172,7 @@ vi.mock("@privy-io/react-auth", () => ({
     wallets: [],
   })),
   PrivyProvider: ({ children }: { children: any }) => children,
-  useCreateWallet: jest.fn(() => ({ createWallet: jest.fn() })),
+  useCreateWallet: vi.fn(() => ({ createWallet: vi.fn() })),
 }));
 
 /**
@@ -399,15 +399,8 @@ vi.mock("@/components/Utilities/ProfilePicture", () => ({
 /**
  * Mock error manager
  */
-<<<<<<< HEAD
-jest.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: jest.fn(),
-=======
 vi.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: vi.fn((message, error) => {
-    console.error(message, error);
-  }),
->>>>>>> 8322801b (test: migrate Jest to Vitest for unit/integration tests)
+  errorManager: vi.fn(),
 }));
 
 /**

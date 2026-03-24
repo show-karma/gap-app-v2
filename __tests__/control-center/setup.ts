@@ -233,7 +233,7 @@ vi.mock("@privy-io/react-auth", () => ({
   })),
   useWallets: vi.fn(() => ({ wallets: [] })),
   PrivyProvider: ({ children }: { children: any }) => children,
-  useCreateWallet: jest.fn(() => ({ createWallet: jest.fn() })),
+  useCreateWallet: vi.fn(() => ({ createWallet: vi.fn() })),
 }));
 
 // Mock Wagmi

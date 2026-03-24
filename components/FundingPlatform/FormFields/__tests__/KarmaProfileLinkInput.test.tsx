@@ -339,11 +339,11 @@ describe("KarmaProfileLinkInput Component", () => {
 
   describe("Add Project Link", () => {
     beforeEach(() => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
     });
 
     afterEach(() => {
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
 
     it("should show add project link in search results", async () => {
@@ -354,7 +354,7 @@ describe("KarmaProfileLinkInput Component", () => {
       await act(async () => {
         fireEvent.change(input, { target: { value: "test" } });
         fireEvent.focus(input);
-        jest.advanceTimersByTime(600);
+        vi.advanceTimersByTime(600);
       });
 
       await waitFor(() => {
@@ -370,7 +370,7 @@ describe("KarmaProfileLinkInput Component", () => {
       await act(async () => {
         fireEvent.change(input, { target: { value: "zzzzzzz" } });
         fireEvent.focus(input);
-        jest.advanceTimersByTime(600);
+        vi.advanceTimersByTime(600);
       });
 
       await waitFor(() => {
@@ -387,7 +387,7 @@ describe("KarmaProfileLinkInput Component", () => {
       await act(async () => {
         fireEvent.change(input, { target: { value: "test" } });
         fireEvent.focus(input);
-        jest.advanceTimersByTime(600);
+        vi.advanceTimersByTime(600);
       });
 
       await waitFor(() => {
@@ -401,11 +401,11 @@ describe("KarmaProfileLinkInput Component", () => {
 
   describe("Remove Button", () => {
     beforeEach(() => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
     });
 
     afterEach(() => {
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
 
     it("should show remove button on selected project", async () => {
@@ -416,7 +416,7 @@ describe("KarmaProfileLinkInput Component", () => {
       await act(async () => {
         fireEvent.change(input, { target: { value: "test" } });
         fireEvent.focus(input);
-        jest.advanceTimersByTime(600);
+        vi.advanceTimersByTime(600);
       });
 
       await waitFor(() => {
@@ -438,7 +438,7 @@ describe("KarmaProfileLinkInput Component", () => {
       await act(async () => {
         fireEvent.change(input, { target: { value: "test" } });
         fireEvent.focus(input);
-        jest.advanceTimersByTime(600);
+        vi.advanceTimersByTime(600);
       });
 
       await waitFor(() => {

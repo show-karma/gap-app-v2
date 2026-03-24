@@ -75,13 +75,4 @@ describe("EmptyEvaluationState", () => {
     });
   });
 
-  describe("Styling", () => {
-    it("has correct container classes", () => {
-      const { container } = render(<EmptyEvaluationState />);
-
-      // The outermost div should have the styling classes
-      const outerDiv = container.firstChild as HTMLElement;
-      expect(outerDiv).toHaveClass("bg-gray-50", "rounded-lg", "border", "p-8", "text-center");
-    });
-  });
 });

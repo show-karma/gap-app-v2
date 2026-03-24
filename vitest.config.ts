@@ -38,7 +38,7 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "json-summary", "lcov"],
-      thresholds: { branches: 50, functions: 50, lines: 50, statements: 50 },
+      thresholds: { branches: 60, functions: 60, lines: 70, statements: 70 },
     },
     projects: [
       // Unit and integration test project

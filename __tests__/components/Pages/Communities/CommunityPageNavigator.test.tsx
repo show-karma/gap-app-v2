@@ -8,16 +8,10 @@ import { useCommunityPrograms } from "@/hooks/usePrograms";
 import { useWhitelabel } from "@/utilities/whitelabel-context";
 
 // Mock hooks
-<<<<<<< HEAD
-jest.mock("@/hooks/communities/useCommunityDetails");
-jest.mock("@/hooks/useFundingOpportunitiesCount");
-jest.mock("@/hooks/usePrograms");
-jest.mock("@/utilities/whitelabel-context");
-=======
 vi.mock("@/hooks/communities/useCommunityDetails");
 vi.mock("@/hooks/useFundingOpportunitiesCount");
 vi.mock("@/hooks/usePrograms");
->>>>>>> 8322801b (test: migrate Jest to Vitest for unit/integration tests)
+vi.mock("@/utilities/whitelabel-context");
 
 // Mock next/navigation
 const mockUseParams = vi.fn();
@@ -46,7 +40,7 @@ vi.mock("@/utilities/pages", () => ({
 }));
 
 // Mock community-flags
-jest.mock("@/utilities/community-flags", () => ({
+vi.mock("@/utilities/community-flags", () => ({
   FINANCIALS_ENABLED_COMMUNITIES: ["filecoin"],
 }));
 
@@ -69,7 +63,7 @@ const mockUseFundingOpportunitiesCount = useFundingOpportunitiesCount as vi.Mock
 const mockUseCommunityPrograms = useCommunityPrograms as vi.MockedFunction<
   typeof useCommunityPrograms
 >;
-const mockUseWhitelabel = useWhitelabel as jest.MockedFunction<typeof useWhitelabel>;
+const mockUseWhitelabel = useWhitelabel as vi.MockedFunction<typeof useWhitelabel>;
 
 describe("CommunityPageNavigator", () => {
   let queryClient: QueryClient;

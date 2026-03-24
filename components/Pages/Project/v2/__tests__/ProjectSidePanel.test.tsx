@@ -138,14 +138,14 @@ vi.mock("@/store/modals/progress", () => ({
 }));
 
 // Mock SidebarProfileCard
-jest.mock("../SidePanel/SidebarProfileCard", () => ({
+vi.mock("../SidePanel/SidebarProfileCard", () => ({
   SidebarProfileCard: ({ project }: any) => (
     <div data-testid="sidebar-profile-card">{project?.details?.title}</div>
   ),
 }));
 
 // Mock ui/button to avoid shadcn dependencies
-jest.mock("@/components/ui/button", () => ({
+vi.mock("@/components/ui/button", () => ({
   Button: ({ children, onClick, className, ...props }: any) => (
     <button onClick={onClick} className={className} {...props}>
       {children}

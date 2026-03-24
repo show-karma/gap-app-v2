@@ -1,48 +1,48 @@
 import { act, renderHook } from "@testing-library/react";
 
-const mockPerformOffChainRevoke = jest.fn();
-const mockGetProjectById = jest.fn();
-const mockGetProjectObjectives = jest.fn();
-const mockRetryUntilConditionMet = jest.fn();
-const mockRefetchUpdates = jest.fn();
-const mockRefetchGrants = jest.fn();
-const mockShowError = jest.fn();
-const mockShowSuccess = jest.fn();
-const mockStartAttestation = jest.fn();
-const mockChangeStepperStep = jest.fn();
-const mockDismiss = jest.fn();
-const mockShowChainProgress = jest.fn();
-const mockUseAccount = jest.fn();
-const mockSwitchChainAsync = jest.fn();
-const mockSetupChainAndWallet = jest.fn();
+const mockPerformOffChainRevoke = vi.fn();
+const mockGetProjectById = vi.fn();
+const mockGetProjectObjectives = vi.fn();
+const mockRetryUntilConditionMet = vi.fn();
+const mockRefetchUpdates = vi.fn();
+const mockRefetchGrants = vi.fn();
+const mockShowError = vi.fn();
+const mockShowSuccess = vi.fn();
+const mockStartAttestation = vi.fn();
+const mockChangeStepperStep = vi.fn();
+const mockDismiss = vi.fn();
+const mockShowChainProgress = vi.fn();
+const mockUseAccount = vi.fn();
+const mockSwitchChainAsync = vi.fn();
+const mockSetupChainAndWallet = vi.fn();
 
-jest.mock("@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone", () => ({
+vi.mock("@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone", () => ({
   ProjectMilestone: {
-    from: jest.fn(() => []),
+    from: vi.fn(() => []),
   },
 }));
 
-jest.mock("next/navigation", () => ({
-  useParams: jest.fn(() => ({ projectId: "project-slug" })),
-  useRouter: jest.fn(() => ({ push: jest.fn() })),
+vi.mock("next/navigation", () => ({
+  useParams: vi.fn(() => ({ projectId: "project-slug" })),
+  useRouter: vi.fn(() => ({ push: vi.fn() })),
 }));
 
-jest.mock("wagmi", () => ({
+vi.mock("wagmi", () => ({
   useAccount: (...args: unknown[]) => mockUseAccount(...args),
 }));
 
-jest.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: jest.fn(),
+vi.mock("@/components/Utilities/errorManager", () => ({
+  errorManager: vi.fn(),
 }));
 
-jest.mock("@/hooks/useWallet", () => ({
-  useWallet: jest.fn(() => ({ switchChainAsync: mockSwitchChainAsync })),
+vi.mock("@/hooks/useWallet", () => ({
+  useWallet: vi.fn(() => ({ switchChainAsync: mockSwitchChainAsync })),
 }));
 
-jest.mock("@/hooks/useAttestationToast", () => ({
-  useAttestationToast: jest.fn(() => ({
+vi.mock("@/hooks/useAttestationToast", () => ({
+  useAttestationToast: vi.fn(() => ({
     startAttestation: mockStartAttestation,
-    showLoading: jest.fn(),
+    showLoading: vi.fn(),
     showSuccess: mockShowSuccess,
     showError: mockShowError,
     changeStepperStep: mockChangeStepperStep,
@@ -51,53 +51,53 @@ jest.mock("@/hooks/useAttestationToast", () => ({
   })),
 }));
 
-jest.mock("@/hooks/useOffChainRevoke", () => ({
-  useOffChainRevoke: jest.fn(() => ({
+vi.mock("@/hooks/useOffChainRevoke", () => ({
+  useOffChainRevoke: vi.fn(() => ({
     performOffChainRevoke: mockPerformOffChainRevoke,
   })),
 }));
 
-jest.mock("@/hooks/useSetupChainAndWallet", () => ({
-  useSetupChainAndWallet: jest.fn(() => ({
+vi.mock("@/hooks/useSetupChainAndWallet", () => ({
+  useSetupChainAndWallet: vi.fn(() => ({
     setupChainAndWallet: mockSetupChainAndWallet,
   })),
 }));
-jest.mock("hooks/useSetupChainAndWallet", () => ({
-  useSetupChainAndWallet: jest.fn(() => ({
+vi.mock("hooks/useSetupChainAndWallet", () => ({
+  useSetupChainAndWallet: vi.fn(() => ({
     setupChainAndWallet: mockSetupChainAndWallet,
   })),
 }));
-jest.mock("../../../hooks/useSetupChainAndWallet", () => ({
-  useSetupChainAndWallet: jest.fn(() => ({
+vi.mock("../../../hooks/useSetupChainAndWallet", () => ({
+  useSetupChainAndWallet: vi.fn(() => ({
     setupChainAndWallet: mockSetupChainAndWallet,
   })),
 }));
 
-jest.mock("@/hooks/v2/useProjectUpdates", () => ({
-  useProjectUpdates: jest.fn(() => ({
+vi.mock("@/hooks/v2/useProjectUpdates", () => ({
+  useProjectUpdates: vi.fn(() => ({
     refetch: mockRefetchUpdates,
   })),
 }));
 
-jest.mock("@/hooks/v2/useProjectGrants", () => ({
-  useProjectGrants: jest.fn(() => ({
+vi.mock("@/hooks/v2/useProjectGrants", () => ({
+  useProjectGrants: vi.fn(() => ({
     refetch: mockRefetchGrants,
   })),
 }));
 
-jest.mock("@/utilities/sdk", () => ({
+vi.mock("@/utilities/sdk", () => ({
   getProjectById: (...args: unknown[]) => mockGetProjectById(...args),
 }));
 
-jest.mock("@/utilities/gapIndexerApi/getProjectObjectives", () => ({
+vi.mock("@/utilities/gapIndexerApi/getProjectObjectives", () => ({
   getProjectObjectives: (...args: unknown[]) => mockGetProjectObjectives(...args),
 }));
 
-jest.mock("@/utilities/retries", () => ({
+vi.mock("@/utilities/retries", () => ({
   retryUntilConditionMet: (...args: unknown[]) => mockRetryUntilConditionMet(...args),
 }));
 
-jest.mock("@/store", () => {
+vi.mock("@/store", () => {
   const state = {
     project: {
       uid: "0xproject",
@@ -109,11 +109,11 @@ jest.mock("@/store", () => {
 
   return {
     __mockState: state,
-    useProjectStore: jest.fn((selector?: any) => {
+    useProjectStore: vi.fn((selector?: any) => {
       if (!selector) return state;
       return selector(state);
     }),
-    useOwnerStore: jest.fn((selector?: any) => {
+    useOwnerStore: vi.fn((selector?: any) => {
       const ownerState = { isOwner: state.isOwner };
       if (!selector) return ownerState;
       return selector(ownerState);
@@ -134,7 +134,7 @@ const baseMilestone = {
 
 describe("useMilestone - undo completion", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     mockUseAccount.mockReturnValue({
       chain: { id: 42220 },

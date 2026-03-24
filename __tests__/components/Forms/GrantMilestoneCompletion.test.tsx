@@ -208,11 +208,9 @@ describe("GrantMilestoneCompletionForm", () => {
     const error = new Error("Failed to complete milestone");
     mockCompleteMilestone.mockRejectedValue(error);
 
-<<<<<<< HEAD
-=======
     const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation();
 
->>>>>>> 8322801b (test: migrate Jest to Vitest for unit/integration tests)
+
     render(
       <GrantMilestoneCompletionForm
         milestone={mockMilestone}

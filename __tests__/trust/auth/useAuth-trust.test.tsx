@@ -10,21 +10,21 @@ import type { ReactNode } from "react";
 import { useAuth } from "@/hooks/useAuth";
 
 // Undo the global mock of useAuth from __tests__/navbar/setup.ts
-jest.unmock("@/hooks/useAuth");
+vi.unmock("@/hooks/useAuth");
 
 // ---------------------------------------------------------------------------
 // Controllable mocks
 // ---------------------------------------------------------------------------
-const mockLogin = jest.fn();
-const mockLogout = jest.fn().mockResolvedValue(undefined);
-const mockGetAccessToken = jest.fn().mockResolvedValue("token-abc");
-const mockConnectWallet = jest.fn();
-const mockRouterPush = jest.fn();
-const mockPathname = jest.fn().mockReturnValue("/");
-const mockGetToken = jest.fn();
-const mockClearCache = jest.fn();
-const mockSetPrivyInstance = jest.fn();
-const mockQueryClientClear = jest.fn();
+const mockLogin = vi.fn();
+const mockLogout = vi.fn().mockResolvedValue(undefined);
+const mockGetAccessToken = vi.fn().mockResolvedValue("token-abc");
+const mockConnectWallet = vi.fn();
+const mockRouterPush = vi.fn();
+const mockPathname = vi.fn().mockReturnValue("/");
+const mockGetToken = vi.fn();
+const mockClearCache = vi.fn();
+const mockSetPrivyInstance = vi.fn();
+const mockQueryClientClear = vi.fn();
 
 // Bridge state - mutated in-place by setBridgeState()
 const mockBridgeState = {
@@ -43,41 +43,41 @@ const mockBridgeState = {
 // ---------------------------------------------------------------------------
 // Module mocks
 // ---------------------------------------------------------------------------
-jest.mock("@/contexts/privy-bridge-context", () => ({
+vi.mock("@/contexts/privy-bridge-context", () => ({
   usePrivyBridge: () => mockBridgeState,
   PRIVY_BRIDGE_DEFAULTS: {
     ready: false,
     authenticated: false,
     user: null,
-    login: jest.fn(),
-    logout: jest.fn(),
+    login: vi.fn(),
+    logout: vi.fn(),
     getAccessToken: async () => null,
-    connectWallet: jest.fn(),
+    connectWallet: vi.fn(),
     wallets: [],
     isConnected: false,
   },
 }));
 
-jest.mock("next/navigation", () => ({
-  useRouter: () => ({ push: mockRouterPush, replace: jest.fn(), back: jest.fn() }),
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: mockRouterPush, replace: vi.fn(), back: vi.fn() }),
   usePathname: () => mockPathname(),
 }));
 
-jest.mock("@/utilities/whitelabel-context", () => ({
+vi.mock("@/utilities/whitelabel-context", () => ({
   useWhitelabel: () => ({ isWhitelabel: false }),
 }));
 
-jest.mock("@/store/modals/projectCreate", () => ({
+vi.mock("@/store/modals/projectCreate", () => ({
   useProjectCreateModalStore: {
     getState: () => ({ isProjectCreateModalOpen: false }),
   },
 }));
 
-jest.mock("@/utilities/auth/cypress-auth", () => ({
-  getCypressMockAuthState: jest.fn().mockReturnValue(null),
+vi.mock("@/utilities/auth/cypress-auth", () => ({
+  getCypressMockAuthState: vi.fn().mockReturnValue(null),
 }));
 
-jest.mock("@/utilities/auth/token-manager", () => ({
+vi.mock("@/utilities/auth/token-manager", () => ({
   TokenManager: {
     getToken: (...args: unknown[]) => mockGetToken(...args),
     setPrivyInstance: (...args: unknown[]) => mockSetPrivyInstance(...args),
@@ -85,31 +85,31 @@ jest.mock("@/utilities/auth/token-manager", () => ({
   },
 }));
 
-jest.mock("@/utilities/query-client", () => ({
+vi.mock("@/utilities/query-client", () => ({
   queryClient: {
     clear: (...args: unknown[]) => mockQueryClientClear(...args),
-    removeQueries: jest.fn(),
+    removeQueries: vi.fn(),
   },
 }));
 
-jest.mock("@/utilities/pages", () => ({
+vi.mock("@/utilities/pages", () => ({
   PAGES: { DASHBOARD: "/dashboard", HOME: "/" },
 }));
 
-jest.mock("@/utilities/auth/compare-all-wallets", () => ({
-  compareAllWallets: jest.fn().mockReturnValue(true),
+vi.mock("@/utilities/auth/compare-all-wallets", () => ({
+  compareAllWallets: vi.fn().mockReturnValue(true),
 }));
 
 // Mock @wagmi/core for dynamic import in watchAccount effect
-const mockUnwatch = jest.fn();
-const mockWatchAccount = jest.fn().mockReturnValue(mockUnwatch);
-jest.mock("@wagmi/core", () => ({
+const mockUnwatch = vi.fn();
+const mockWatchAccount = vi.fn().mockReturnValue(mockUnwatch);
+vi.mock("@wagmi/core", () => ({
   watchAccount: (...args: unknown[]) => mockWatchAccount(...args),
 }));
 
-jest.mock("@/utilities/wagmi/privy-config", () => ({
+vi.mock("@/utilities/wagmi/privy-config", () => ({
   privyConfig: {},
-  getPrivyWagmiConfig: jest.fn(() => ({})),
+  getPrivyWagmiConfig: vi.fn(() => ({})),
 }));
 
 // ---------------------------------------------------------------------------
@@ -152,8 +152,8 @@ const mockWallet = {
 // Tests
 // ---------------------------------------------------------------------------
 beforeEach(() => {
-  jest.clearAllMocks();
-  jest.useFakeTimers();
+  vi.clearAllMocks();
+  vi.useFakeTimers();
   resetBridgeState();
   mockPathname.mockReturnValue("/");
   sessionStorage.clear();
@@ -166,7 +166,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  jest.useRealTimers();
+  vi.useRealTimers();
 });
 
 // =====================================================================
@@ -280,7 +280,7 @@ describe("useAuth — Effect 1 (Auth State Change)", () => {
       setBridgeState({ authenticated: true, user: mockPrivyUser });
       const { rerender } = renderHook(() => useAuth(), { wrapper });
 
-      jest.clearAllMocks();
+      vi.clearAllMocks();
 
       // Re-render with same state
       rerender();
@@ -369,13 +369,13 @@ describe("useAuth — Effect 4 (Cross-Tab Logout)", () => {
 
     // Initial delay check at 500ms
     await act(async () => {
-      jest.advanceTimersByTime(500);
+      vi.advanceTimersByTime(500);
     });
     expect(mockGetToken).toHaveBeenCalledTimes(1);
 
     // Next check at 10s interval
     await act(async () => {
-      jest.advanceTimersByTime(10_000);
+      vi.advanceTimersByTime(10_000);
     });
     expect(mockGetToken).toHaveBeenCalledTimes(2);
   });
@@ -387,7 +387,7 @@ describe("useAuth — Effect 4 (Cross-Tab Logout)", () => {
     // Several checks should not trigger logout
     for (let i = 0; i < 5; i++) {
       await act(async () => {
-        jest.advanceTimersByTime(10_000);
+        vi.advanceTimersByTime(10_000);
       });
     }
     expect(mockLogout).not.toHaveBeenCalled();
@@ -399,13 +399,13 @@ describe("useAuth — Effect 4 (Cross-Tab Logout)", () => {
 
     // First failure at 500ms
     await act(async () => {
-      jest.advanceTimersByTime(500);
+      vi.advanceTimersByTime(500);
     });
     expect(mockLogout).not.toHaveBeenCalled();
 
     // Second failure at 10.5s
     await act(async () => {
-      jest.advanceTimersByTime(10_000);
+      vi.advanceTimersByTime(10_000);
     });
     expect(mockLogout).not.toHaveBeenCalled();
   });
@@ -416,15 +416,15 @@ describe("useAuth — Effect 4 (Cross-Tab Logout)", () => {
 
     // Failure 1 (at 500ms)
     await act(async () => {
-      jest.advanceTimersByTime(500);
+      vi.advanceTimersByTime(500);
     });
     // Failure 2 (at 10.5s)
     await act(async () => {
-      jest.advanceTimersByTime(10_000);
+      vi.advanceTimersByTime(10_000);
     });
     // Failure 3 (at 20.5s) - should trigger logout
     await act(async () => {
-      jest.advanceTimersByTime(10_000);
+      vi.advanceTimersByTime(10_000);
     });
 
     expect(mockLogout).toHaveBeenCalled();
@@ -474,7 +474,7 @@ describe("useAuth — Effect 4 (Cross-Tab Logout)", () => {
     // Advance time past what would be the next poll
     mockGetToken.mockClear();
     await act(async () => {
-      jest.advanceTimersByTime(20_000);
+      vi.advanceTimersByTime(20_000);
     });
 
     // After unmount, no more getToken calls from polling
@@ -486,7 +486,7 @@ describe("useAuth — Effect 4 (Cross-Tab Logout)", () => {
     renderHook(() => useAuth(), { wrapper });
 
     await act(async () => {
-      jest.advanceTimersByTime(20_000);
+      vi.advanceTimersByTime(20_000);
     });
 
     expect(mockGetToken).not.toHaveBeenCalled();
@@ -497,7 +497,7 @@ describe("useAuth — Effect 4 (Cross-Tab Logout)", () => {
     renderHook(() => useAuth(), { wrapper });
 
     await act(async () => {
-      jest.advanceTimersByTime(20_000);
+      vi.advanceTimersByTime(20_000);
     });
 
     expect(mockGetToken).not.toHaveBeenCalled();

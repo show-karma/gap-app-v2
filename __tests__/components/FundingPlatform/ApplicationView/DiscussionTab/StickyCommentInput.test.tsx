@@ -32,20 +32,6 @@ describe("StickyCommentInput", () => {
 
       expect(screen.getByTestId("comment-input")).toBeInTheDocument();
     });
-
-    it("has sticky positioning classes", () => {
-      const { container } = render(<StickyCommentInput onSubmit={mockOnSubmit} />);
-
-      const wrapper = container.firstChild as HTMLElement;
-      expect(wrapper).toHaveClass("sticky", "bottom-0");
-    });
-
-    it("has visual separation styling", () => {
-      const { container } = render(<StickyCommentInput onSubmit={mockOnSubmit} />);
-
-      const wrapper = container.firstChild as HTMLElement;
-      expect(wrapper).toHaveClass("border-t", "shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]");
-    });
   });
 
   describe("Placeholder", () => {

@@ -13,7 +13,7 @@ describe("useMentionEditor", () => {
   describe("handleContentChange", () => {
     it("should call onChange with the new content", () => {
       const { result } = renderHook(() => useMentionEditor());
-      const onChange = jest.fn();
+      const onChange = vi.fn();
 
       act(() => {
         result.current.handleContentChange("Hello world", onChange);
@@ -24,7 +24,7 @@ describe("useMentionEditor", () => {
 
     it("should open autocomplete when @ is typed at the start", () => {
       const { result } = renderHook(() => useMentionEditor());
-      const onChange = jest.fn();
+      const onChange = vi.fn();
 
       act(() => {
         result.current.handleContentChange("@", onChange);
@@ -36,7 +36,7 @@ describe("useMentionEditor", () => {
 
     it("should open autocomplete when @ is typed after a space", () => {
       const { result } = renderHook(() => useMentionEditor());
-      const onChange = jest.fn();
+      const onChange = vi.fn();
 
       act(() => {
         result.current.handleContentChange("Hello @", onChange);
@@ -47,7 +47,7 @@ describe("useMentionEditor", () => {
 
     it("should extract filter text after @", () => {
       const { result } = renderHook(() => useMentionEditor());
-      const onChange = jest.fn();
+      const onChange = vi.fn();
 
       act(() => {
         result.current.handleContentChange("Hello @Ali", onChange);
@@ -59,7 +59,7 @@ describe("useMentionEditor", () => {
 
     it("should close autocomplete when no @ is present", () => {
       const { result } = renderHook(() => useMentionEditor());
-      const onChange = jest.fn();
+      const onChange = vi.fn();
 
       // First open autocomplete
       act(() => {
@@ -77,7 +77,7 @@ describe("useMentionEditor", () => {
 
     it("should close autocomplete when a newline follows @", () => {
       const { result } = renderHook(() => useMentionEditor());
-      const onChange = jest.fn();
+      const onChange = vi.fn();
 
       act(() => {
         result.current.handleContentChange("Hello @Ali\n", onChange);
@@ -88,7 +88,7 @@ describe("useMentionEditor", () => {
 
     it("should close autocomplete when text after @ starts with [ (completed mention)", () => {
       const { result } = renderHook(() => useMentionEditor());
-      const onChange = jest.fn();
+      const onChange = vi.fn();
 
       act(() => {
         result.current.handleContentChange("Hello @[Alice](email:alice@example.com)", onChange);
@@ -99,7 +99,7 @@ describe("useMentionEditor", () => {
 
     it("should not open autocomplete when @ is part of an email (preceded by non-whitespace)", () => {
       const { result } = renderHook(() => useMentionEditor());
-      const onChange = jest.fn();
+      const onChange = vi.fn();
 
       act(() => {
         result.current.handleContentChange("user@example", onChange);
@@ -110,7 +110,7 @@ describe("useMentionEditor", () => {
 
     it("should open autocomplete when @ is preceded by a newline", () => {
       const { result } = renderHook(() => useMentionEditor());
-      const onChange = jest.fn();
+      const onChange = vi.fn();
 
       act(() => {
         result.current.handleContentChange("First line\n@Ali", onChange);
@@ -122,7 +122,7 @@ describe("useMentionEditor", () => {
 
     it("should not trigger autocomplete when enabled is false", () => {
       const { result } = renderHook(() => useMentionEditor({ enabled: false }));
-      const onChange = jest.fn();
+      const onChange = vi.fn();
 
       act(() => {
         result.current.handleContentChange("Hello @Ali", onChange);
@@ -143,7 +143,7 @@ describe("useMentionEditor", () => {
 
     it("should insert the mention and close autocomplete", () => {
       const { result } = renderHook(() => useMentionEditor());
-      const onChange = jest.fn();
+      const onChange = vi.fn();
 
       // Simulate typing @ to open autocomplete
       act(() => {
@@ -165,7 +165,7 @@ describe("useMentionEditor", () => {
 
     it("should call onChange with content that replaces the @filter text", () => {
       const { result } = renderHook(() => useMentionEditor());
-      const onChange = jest.fn();
+      const onChange = vi.fn();
 
       act(() => {
         result.current.handleContentChange("@Bob", onChange);
@@ -186,7 +186,7 @@ describe("useMentionEditor", () => {
       editor.appendChild(textarea);
 
       const { result } = renderHook(() => useMentionEditor({ editorRef: { current: editor } }));
-      const onChange = jest.fn();
+      const onChange = vi.fn();
 
       // Simulate typing "Hello @Al world" with cursor at position 9 (after "@Al")
       act(() => {
@@ -215,7 +215,7 @@ describe("useMentionEditor", () => {
   describe("handleCloseAutocomplete", () => {
     it("should close autocomplete and clear filter text", () => {
       const { result } = renderHook(() => useMentionEditor());
-      const onChange = jest.fn();
+      const onChange = vi.fn();
 
       act(() => {
         result.current.handleContentChange("Hello @Ali", onChange);
@@ -239,7 +239,7 @@ describe("useMentionEditor", () => {
 
     it("should select a reviewer on Enter", () => {
       const { result } = renderHook(() => useMentionEditor());
-      const onChange = jest.fn();
+      const onChange = vi.fn();
 
       // Open autocomplete
       act(() => {
@@ -259,7 +259,7 @@ describe("useMentionEditor", () => {
 
     it("should navigate down with ArrowDown", () => {
       const { result } = renderHook(() => useMentionEditor());
-      const onChange = jest.fn();
+      const onChange = vi.fn();
 
       act(() => {
         result.current.handleContentChange("@", onChange);
@@ -274,7 +274,7 @@ describe("useMentionEditor", () => {
 
     it("should navigate up with ArrowUp", () => {
       const { result } = renderHook(() => useMentionEditor());
-      const onChange = jest.fn();
+      const onChange = vi.fn();
 
       act(() => {
         result.current.handleContentChange("@", onChange);
@@ -294,7 +294,7 @@ describe("useMentionEditor", () => {
 
     it("should close autocomplete on Escape", () => {
       const { result } = renderHook(() => useMentionEditor());
-      const onChange = jest.fn();
+      const onChange = vi.fn();
 
       act(() => {
         result.current.handleContentChange("Hello @", onChange);
@@ -313,7 +313,7 @@ describe("useMentionEditor", () => {
   describe("invite modal", () => {
     it("should open invite modal and close autocomplete", () => {
       const { result } = renderHook(() => useMentionEditor());
-      const onChange = jest.fn();
+      const onChange = vi.fn();
 
       // Open autocomplete first
       act(() => {

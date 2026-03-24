@@ -4,7 +4,7 @@
  */
 
 // Unmock to test real implementation
-jest.unmock("@/utilities/auth/token-manager");
+vi.unmock("@/utilities/auth/token-manager");
 
 import { TokenManager } from "@/utilities/auth/token-manager";
 
@@ -16,7 +16,7 @@ const originalEnv = process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS;
 beforeEach(() => {
   TokenManager.clearCache();
   TokenManager.setPrivyInstance(null);
-  jest.clearAllMocks();
+  vi.clearAllMocks();
   localStorage.clear();
   delete (window as any).Cypress;
   process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS = originalEnv;
@@ -63,7 +63,7 @@ describe("TokenManager — Cypress bypass", () => {
 
 describe("TokenManager — Null token handling", () => {
   it("does NOT cache null tokens (cachedToken is falsy so cache check fails)", async () => {
-    const mockGetAccessToken = jest.fn().mockResolvedValue(null);
+    const mockGetAccessToken = vi.fn().mockResolvedValue(null);
     TokenManager.setPrivyInstance({ getAccessToken: mockGetAccessToken });
 
     // First call returns null
@@ -79,7 +79,7 @@ describe("TokenManager — Null token handling", () => {
   });
 
   it("caches valid tokens within TTL", async () => {
-    const mockGetAccessToken = jest.fn().mockResolvedValue("valid-jwt");
+    const mockGetAccessToken = vi.fn().mockResolvedValue("valid-jwt");
     TokenManager.setPrivyInstance({ getAccessToken: mockGetAccessToken });
 
     const token1 = await TokenManager.getToken();
@@ -95,7 +95,7 @@ describe("TokenManager — Null token handling", () => {
 describe("TokenManager — Concurrent deduplication", () => {
   it("deduplicates concurrent getToken calls", async () => {
     let resolveToken: (v: string) => void;
-    const slowGetAccessToken = jest.fn().mockImplementation(
+    const slowGetAccessToken = vi.fn().mockImplementation(
       () =>
         new Promise<string>((resolve) => {
           resolveToken = resolve;
@@ -121,11 +121,11 @@ describe("TokenManager — Concurrent deduplication", () => {
   });
 
   it("all callers get null when underlying request fails", async () => {
-    const failingGetAccessToken = jest.fn().mockRejectedValue(new Error("Privy error"));
+    const failingGetAccessToken = vi.fn().mockRejectedValue(new Error("Privy error"));
     TokenManager.setPrivyInstance({ getAccessToken: failingGetAccessToken });
 
     // Suppress console.error from the catch block
-    const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
     const p1 = TokenManager.getToken();
     const p2 = TokenManager.getToken();
@@ -142,7 +142,7 @@ describe("TokenManager — Concurrent deduplication", () => {
 
 describe("TokenManager — clearCache", () => {
   it("forces fresh fetch after clearCache", async () => {
-    const mockGetAccessToken = jest.fn().mockResolvedValue("token-1");
+    const mockGetAccessToken = vi.fn().mockResolvedValue("token-1");
     TokenManager.setPrivyInstance({ getAccessToken: mockGetAccessToken });
 
     await TokenManager.getToken();

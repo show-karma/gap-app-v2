@@ -1,5 +1,7 @@
 import { HttpResponse, http } from "msw";
+import { paginatedProjectsResponseSchema, projectSchema } from "../../contracts/contracts/schemas";
 import { BASE } from "./base-url";
+import { validateResponse } from "./validate";
 
 export interface MockProject {
   uid: string;
@@ -23,6 +25,33 @@ const defaultProject: MockProject = {
   updatedAt: "2024-06-10T00:00:00.000Z",
 };
 
+/**
+ * Converts a simplified MockProject into a shape that satisfies `projectSchema`.
+ * Used for paginated responses that are validated against the Zod contract.
+ */
+function toSchemaProject(p: MockProject) {
+  return {
+    uid: `0x${p.uid.replace(/[^a-f0-9]/gi, "").padStart(8, "0")}`,
+    chainID: p.chainId,
+    owner: `0x${p.payoutAddress.replace(/^0x/, "")}`,
+    payoutAddress: p.payoutAddress,
+    details: {
+      title: p.title,
+      description: p.description,
+      slug: p.slug,
+    },
+    members: [
+      {
+        address: p.payoutAddress,
+        role: "Owner",
+        joinedAt: p.createdAt,
+      },
+    ],
+    createdAt: p.createdAt,
+    updatedAt: p.updatedAt,
+  };
+}
+
 export function projectHandlers(options?: { list?: MockProject[]; detail?: Partial<MockProject> }) {
   const list = options?.list ?? [defaultProject];
   const detail = { ...defaultProject, ...options?.detail };
@@ -33,15 +62,26 @@ export function projectHandlers(options?: { list?: MockProject[]; detail?: Parti
       const page = url.searchParams.get("page");
 
       if (page) {
-        return HttpResponse.json({
-          payload: list,
+        const pageNum = Number(page);
+        const paginatedResponse = {
+          payload: list.map(toSchemaProject),
           pagination: {
-            page: Number(page),
+            totalCount: list.length,
+            page: pageNum,
             limit: 10,
-            total: list.length,
             totalPages: 1,
+            nextPage: null,
+            prevPage: pageNum > 1 ? pageNum - 1 : null,
+            hasNextPage: false,
+            hasPrevPage: pageNum > 1,
           },
-        });
+        };
+        validateResponse(
+          paginatedProjectsResponseSchema,
+          paginatedResponse,
+          "GET /v2/projects (paginated)"
+        );
+        return HttpResponse.json(paginatedResponse);
       }
 
       return HttpResponse.json(list);

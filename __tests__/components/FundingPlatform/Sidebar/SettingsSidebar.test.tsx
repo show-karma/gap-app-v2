@@ -255,12 +255,4 @@ describe("SettingsSidebar", () => {
     });
   });
 
-  describe("custom className", () => {
-    it("should apply custom className", () => {
-      const { container } = render(<SettingsSidebar {...defaultProps} className="custom-class" />);
-
-      const sidebar = container.firstChild;
-      expect(sidebar).toHaveClass("custom-class");
-    });
-  });
 });

@@ -113,17 +113,9 @@ vi.mock("@/hooks/useGap", () => ({
   useGap: vi.fn(() => ({ gap: mockGap })),
 }));
 
-<<<<<<< HEAD
-// SWC transforms @/ aliases to relative paths at compile time, so we must mock
-// the actual file path for the mock to intercept the hook's internal import.
-const mockSetupChainAndWallet = jest.fn();
-jest.mock("../../../hooks/useSetupChainAndWallet", () => ({
-  useSetupChainAndWallet: jest.fn(() => ({
-=======
 const mockSetupChainAndWallet = vi.fn();
 vi.mock("@/hooks/useSetupChainAndWallet", () => ({
   useSetupChainAndWallet: vi.fn(() => ({
->>>>>>> 8322801b (test: migrate Jest to Vitest for unit/integration tests)
     setupChainAndWallet: mockSetupChainAndWallet,
     isSmartWalletReady: false,
     smartWalletAddress: null,

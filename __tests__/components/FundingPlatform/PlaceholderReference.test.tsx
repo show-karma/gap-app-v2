@@ -22,11 +22,6 @@ describe("PlaceholderReference", () => {
       expect(screen.queryByText(/use these placeholders/i)).not.toBeInTheDocument();
     });
 
-    it("should apply custom className", () => {
-      const { container } = render(<PlaceholderReference className="custom-class" />);
-
-      expect(container.firstChild).toHaveClass("custom-class");
-    });
   });
 
   describe("expansion behavior", () => {

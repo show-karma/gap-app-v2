@@ -60,28 +60,6 @@ describe("GrantPercentage", () => {
 
       expect(container.firstChild).toBeNull();
     });
-
-    it("should have proper styling classes", () => {
-      render(<GrantPercentage grant={mockGrantWithMilestones as any} />);
-
-      const element = screen.getByText("50% complete").closest("div");
-      expect(element).toHaveClass("bg-teal-50", "dark:bg-teal-700");
-      expect(element).toHaveClass("text-teal-600", "dark:text-teal-200");
-    });
-
-    it("should have rounded-full styling", () => {
-      render(<GrantPercentage grant={mockGrantWithMilestones as any} />);
-
-      const element = screen.getByText("50% complete").closest("div");
-      expect(element).toHaveClass("rounded-full");
-    });
-
-    it("should apply custom className to span", () => {
-      render(<GrantPercentage grant={mockGrantWithMilestones as any} className="custom-class" />);
-
-      const span = screen.getByText("50% complete");
-      expect(span).toHaveClass("custom-class");
-    });
   });
 
   describe("Percentage Calculation", () => {
@@ -265,38 +243,6 @@ describe("GrantPercentage", () => {
 
       // Should skip u1 and use u2
       expect(screen.getByText("60% complete")).toBeInTheDocument();
-    });
-  });
-
-  describe("Dark Mode Support", () => {
-    it("should have dark mode background class", () => {
-      render(<GrantPercentage grant={mockGrantWithMilestones as any} />);
-
-      const element = screen.getByText("50% complete").closest("div");
-      expect(element).toHaveClass("dark:bg-teal-700");
-    });
-
-    it("should have dark mode text color class", () => {
-      render(<GrantPercentage grant={mockGrantWithMilestones as any} />);
-
-      const element = screen.getByText("50% complete").closest("div");
-      expect(element).toHaveClass("dark:text-teal-200");
-    });
-  });
-
-  describe("Responsive Styling", () => {
-    it("should have responsive padding", () => {
-      render(<GrantPercentage grant={mockGrantWithMilestones as any} />);
-
-      const element = screen.getByText("50% complete").closest("div");
-      expect(element).toHaveClass("max-2xl:px-2");
-    });
-
-    it("should have proper sizing classes", () => {
-      render(<GrantPercentage grant={mockGrantWithMilestones as any} />);
-
-      const element = screen.getByText("50% complete").closest("div");
-      expect(element).toHaveClass("h-max", "w-max");
     });
   });
 

@@ -1,5 +1,7 @@
 import { HttpResponse, http } from "msw";
+import { totalDisbursedResponseSchema } from "../../contracts/contracts/schemas";
 import { BASE } from "./base-url";
+import { validateResponse } from "./validate";
 
 export interface MockDisbursement {
   uid: string;
@@ -63,7 +65,9 @@ export function payoutHandlers(options?: {
       const total = disbursements
         .filter((d) => d.status === "COMPLETED")
         .reduce((sum, d) => sum + Number(d.amount), 0);
-      return HttpResponse.json({ totalDisbursed: String(total) });
+      const response = { totalDisbursed: String(total) };
+      validateResponse(totalDisbursedResponseSchema, response, "GET /total-disbursed");
+      return HttpResponse.json(response);
     }),
 
     http.get(`${BASE}/v2/payouts/community/:communityUID/pending`, () =>

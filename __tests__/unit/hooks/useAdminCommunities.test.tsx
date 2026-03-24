@@ -209,12 +209,11 @@ describe("useAdminCommunities (V2)", () => {
       expect(fetchData).not.toHaveBeenCalled();
     });
 
-<<<<<<< HEAD
     it("should fetch for Farcaster users with no wallet address", async () => {
       // Farcaster users are authenticated via JWT but have no wallet address.
       // The API uses JWT auth, not wallet address, so the query should fire.
       mockUseAuth.mockReturnValue({ authenticated: true } as ReturnType<typeof useAuth>);
-      (fetchData as jest.Mock).mockResolvedValue([{ communities: [] }, null]);
+      (fetchData as vi.Mock).mockResolvedValue([{ communities: [] }, null]);
 
       renderHook(() => useAdminCommunities(undefined), {
         wrapper: createWrapper(queryClient),
@@ -226,11 +225,7 @@ describe("useAdminCommunities (V2)", () => {
     });
 
     it("should refetch communities when address is removed (JWT auth still valid)", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([mockV2Response, null]);
-=======
-    it("should clear communities when address is removed", async () => {
       (fetchData as vi.Mock).mockResolvedValue([mockV2Response, null]);
->>>>>>> 8322801b (test: migrate Jest to Vitest for unit/integration tests)
 
       const { rerender } = renderHook(({ address }) => useAdminCommunities(address), {
         wrapper: createWrapper(queryClient),
@@ -241,12 +236,8 @@ describe("useAdminCommunities (V2)", () => {
         expect(mockSetCommunities).toHaveBeenCalled();
       });
 
-<<<<<<< HEAD
-      jest.clearAllMocks();
-      (fetchData as jest.Mock).mockResolvedValue([{ communities: [] }, null]);
-=======
       vi.clearAllMocks();
->>>>>>> 8322801b (test: migrate Jest to Vitest for unit/integration tests)
+      (fetchData as vi.Mock).mockResolvedValue([{ communities: [] }, null]);
 
       // Re-render without address — query still fires because auth is JWT-based
       rerender({ address: undefined });

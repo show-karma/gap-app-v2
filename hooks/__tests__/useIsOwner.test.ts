@@ -1,19 +1,19 @@
 import { renderHook } from "@testing-library/react";
 import { useIsOwner } from "../useIsOwner";
 
-jest.mock("@/hooks/useAuth", () => ({
-  useAuth: jest.fn(),
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: vi.fn(),
 }));
 
-jest.mock("@/utilities/auth/compare-all-wallets", () => ({
-  compareAllWallets: jest.fn(),
+vi.mock("@/utilities/auth/compare-all-wallets", () => ({
+  compareAllWallets: vi.fn(),
 }));
 
 import { useAuth } from "@/hooks/useAuth";
 import { compareAllWallets } from "@/utilities/auth/compare-all-wallets";
 
-const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
-const mockCompareAllWallets = compareAllWallets as jest.MockedFunction<typeof compareAllWallets>;
+const mockUseAuth = useAuth as vi.MockedFunction<typeof useAuth>;
+const mockCompareAllWallets = compareAllWallets as vi.MockedFunction<typeof compareAllWallets>;
 
 const makeUser = (address = "0xABC") =>
   ({
@@ -23,7 +23,7 @@ const makeUser = (address = "0xABC") =>
 
 describe("useIsOwner", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("returns false when user is null (Privy not ready)", () => {

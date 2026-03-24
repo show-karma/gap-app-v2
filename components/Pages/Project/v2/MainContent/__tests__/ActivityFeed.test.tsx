@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 
 // Mock next/navigation
-jest.mock("next/navigation", () => ({
+vi.mock("next/navigation", () => ({
   useParams: () => ({ projectId: "test-project" }),
 }));
 

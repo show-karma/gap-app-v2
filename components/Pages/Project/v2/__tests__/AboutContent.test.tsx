@@ -12,7 +12,7 @@ vi.mock("@/components/Utilities/MarkdownPreview", () => ({
 }));
 
 // Mock TeamContent to avoid loading external dependencies
-jest.mock("../TeamContent/TeamContent", () => ({
+vi.mock("../TeamContent/TeamContent", () => ({
   TeamContent: () => <div data-testid="team-content">Team Content Mock</div>,
 }));
 

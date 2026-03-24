@@ -4,63 +4,63 @@
  */
 
 // Mock ethers as a dynamic import target
-const mockJsonRpcProvider = jest.fn().mockImplementation(() => ({
-  getNetwork: jest.fn().mockResolvedValue({ chainId: 10 }),
+const mockJsonRpcProvider = vi.fn().mockImplementation(() => ({
+  getNetwork: vi.fn().mockResolvedValue({ chainId: 10 }),
 }));
 
-jest.mock("ethers", () => ({
+vi.mock("ethers", () => ({
   JsonRpcProvider: mockJsonRpcProvider,
 }));
 
 // Mock dependencies
-jest.mock("@/utilities/network", () => ({
+vi.mock("@/utilities/network", () => ({
   gapSupportedNetworks: [{ id: 10, name: "Optimism" }],
 }));
 
-jest.mock("@/utilities/rpcClient", () => ({
-  getRPCUrlByChainId: jest.fn().mockReturnValue("https://rpc.optimism.test"),
+vi.mock("@/utilities/rpcClient", () => ({
+  getRPCUrlByChainId: vi.fn().mockReturnValue("https://rpc.optimism.test"),
 }));
 
-jest.mock("@/utilities/sdk/getContractOwner", () => ({
-  getContractOwner: jest.fn().mockResolvedValue("0xOwnerAddress"),
+vi.mock("@/utilities/sdk/getContractOwner", () => ({
+  getContractOwner: vi.fn().mockResolvedValue("0xOwnerAddress"),
 }));
 
-jest.mock("@tanstack/react-query", () => ({
-  useQuery: jest.fn().mockReturnValue({
+vi.mock("@tanstack/react-query", () => ({
+  useQuery: vi.fn().mockReturnValue({
     data: false,
     isLoading: false,
     error: null,
-    refetch: jest.fn(),
+    refetch: vi.fn(),
   }),
 }));
 
-jest.mock("@/hooks/useAuth", () => ({
-  useAuth: jest.fn().mockReturnValue({ authenticated: false, address: null }),
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: vi.fn().mockReturnValue({ authenticated: false, address: null }),
 }));
 
-jest.mock("@/store/owner", () => ({
-  useOwnerStore: jest.fn().mockReturnValue({
-    setIsOwner: jest.fn(),
-    setIsOwnerLoading: jest.fn(),
+vi.mock("@/store/owner", () => ({
+  useOwnerStore: vi.fn().mockReturnValue({
+    setIsOwner: vi.fn(),
+    setIsOwnerLoading: vi.fn(),
   }),
 }));
 
-jest.mock("@/utilities/eas-wagmi-utils", () => ({
-  useSigner: jest.fn().mockReturnValue(undefined),
+vi.mock("@/utilities/eas-wagmi-utils", () => ({
+  useSigner: vi.fn().mockReturnValue(undefined),
 }));
 
-jest.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: jest.fn(),
+vi.mock("@/components/Utilities/errorManager", () => ({
+  errorManager: vi.fn(),
 }));
 
-jest.mock("@/utilities/cache-config", () => ({
+vi.mock("@/utilities/cache-config", () => ({
   CONTRACT_OWNER_CACHE_CONFIG: { staleTime: 60000, gcTime: 300000 },
 }));
 
-jest.mock("@/utilities/queryKeys", () => ({
+vi.mock("@/utilities/queryKeys", () => ({
   QUERY_KEYS: {
     AUTH: {
-      CONTRACT_OWNER: jest.fn().mockReturnValue(["contract-owner"]),
+      CONTRACT_OWNER: vi.fn().mockReturnValue(["contract-owner"]),
     },
   },
 }));

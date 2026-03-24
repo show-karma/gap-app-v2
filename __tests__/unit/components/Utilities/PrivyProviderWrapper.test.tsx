@@ -2,25 +2,25 @@ import { act, render } from "@testing-library/react";
 import React from "react";
 
 // Mock heavy dependencies
-jest.mock("@tanstack/react-query", () => ({
+vi.mock("@tanstack/react-query", () => ({
   QueryClientProvider: ({ children }: any) => children,
 }));
 
-jest.mock("wagmi", () => ({
+vi.mock("wagmi", () => ({
   WagmiProvider: ({ children }: any) => children,
 }));
 
-jest.mock("@/utilities/query-client", () => ({
+vi.mock("@/utilities/query-client", () => ({
   queryClient: {},
 }));
 
-jest.mock("@/utilities/wagmi/privy-config", () => ({
+vi.mock("@/utilities/wagmi/privy-config", () => ({
   minimalWagmiConfig: {},
 }));
 
 // Mock the dynamic import target
-const mockPrivyComponent = jest.fn(() => null);
-jest.mock(
+const mockPrivyComponent = vi.fn(() => null);
+vi.mock(
   "@/components/Utilities/PrivyWagmiProviders",
   () => ({ __esModule: true, default: mockPrivyComponent }),
   { virtual: true }
@@ -28,22 +28,22 @@ jest.mock(
 
 describe("PrivyProviderWrapper", () => {
   let originalLocalStorage: Storage;
-  let mockGetItem: jest.Mock;
+  let mockGetItem: vi.Mock;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers();
+    vi.clearAllMocks();
+    vi.useFakeTimers();
 
-    mockGetItem = jest.fn().mockReturnValue(null);
+    mockGetItem = vi.fn().mockReturnValue(null);
     originalLocalStorage = window.localStorage;
     Object.defineProperty(window, "localStorage", {
-      value: { getItem: mockGetItem, setItem: jest.fn(), removeItem: jest.fn() },
+      value: { getItem: mockGetItem, setItem: vi.fn(), removeItem: vi.fn() },
       writable: true,
     });
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
     Object.defineProperty(window, "localStorage", {
       value: originalLocalStorage,
       writable: true,
@@ -71,11 +71,11 @@ describe("PrivyProviderWrapper", () => {
     mockGetItem.mockReturnValue(null);
 
     // Mock requestIdleCallback
-    const mockRIC = jest.fn((cb: IdleRequestCallback) => {
+    const mockRIC = vi.fn((cb: IdleRequestCallback) => {
       // Don't call cb immediately — it should be deferred
       return 1;
     });
-    const mockCancelRIC = jest.fn();
+    const mockCancelRIC = vi.fn();
     window.requestIdleCallback = mockRIC;
     window.cancelIdleCallback = mockCancelRIC;
 

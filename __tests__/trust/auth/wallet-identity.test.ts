@@ -4,7 +4,7 @@
  * Farcaster, cross-app, edge cases.
  */
 
-jest.unmock("@/utilities/auth/compare-all-wallets");
+vi.unmock("@/utilities/auth/compare-all-wallets");
 
 import type { User } from "@privy-io/react-auth";
 import { compareAllWallets } from "@/utilities/auth/compare-all-wallets";

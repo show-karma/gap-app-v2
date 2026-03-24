@@ -68,17 +68,9 @@ vi.mock("@/hooks/useGap", () => ({
   })),
 }));
 
-<<<<<<< HEAD
-// SWC transforms @/ aliases to relative paths at compile time, so we must mock
-// the actual file path for the mock to intercept the hook's internal import.
-jest.mock("../../../hooks/useSetupChainAndWallet", () => ({
-  useSetupChainAndWallet: jest.fn(() => ({
-    setupChainAndWallet: jest.fn(),
-=======
 vi.mock("@/hooks/useSetupChainAndWallet", () => ({
   useSetupChainAndWallet: vi.fn(() => ({
     setupChainAndWallet: vi.fn(),
->>>>>>> 8322801b (test: migrate Jest to Vitest for unit/integration tests)
     isSmartWalletReady: false,
     smartWalletAddress: null,
     hasEmbeddedWallet: false,
@@ -267,7 +259,7 @@ describe("Integration: Grant Completion Revocation Flow", () => {
     });
 
     // Setup default useSetupChainAndWallet mock (returns null by default, tests override as needed)
-    const { useSetupChainAndWallet } = require("../../../hooks/useSetupChainAndWallet");
+    const { useSetupChainAndWallet } = require("@/hooks/useSetupChainAndWallet");
     useSetupChainAndWallet.mockReturnValue({
       setupChainAndWallet: vi.fn().mockResolvedValue(null),
       isSmartWalletReady: false,
@@ -429,7 +421,7 @@ describe("Integration: Grant Completion Revocation Flow", () => {
         chainId: 42161,
         isGasless: false,
       });
-      const { useSetupChainAndWallet } = require("../../../hooks/useSetupChainAndWallet");
+      const { useSetupChainAndWallet } = require("@/hooks/useSetupChainAndWallet");
       useSetupChainAndWallet.mockReturnValue({
         setupChainAndWallet: mockSetupChainAndWallet,
         isSmartWalletReady: false,
@@ -662,7 +654,7 @@ describe("Integration: Grant Completion Revocation Flow", () => {
         chainId: 42161,
         isGasless: false,
       });
-      const { useSetupChainAndWallet } = require("../../../hooks/useSetupChainAndWallet");
+      const { useSetupChainAndWallet } = require("@/hooks/useSetupChainAndWallet");
       useSetupChainAndWallet.mockReturnValue({
         setupChainAndWallet: mockSetupChainAndWallet,
         isSmartWalletReady: false,
@@ -761,7 +753,7 @@ describe("Integration: Grant Completion Revocation Flow", () => {
         chainId: 42161,
         isGasless: false,
       });
-      const { useSetupChainAndWallet } = require("../../../hooks/useSetupChainAndWallet");
+      const { useSetupChainAndWallet } = require("@/hooks/useSetupChainAndWallet");
       useSetupChainAndWallet.mockReturnValue({
         setupChainAndWallet: mockSetupChainAndWallet,
         isSmartWalletReady: false,
@@ -848,7 +840,7 @@ describe("Integration: Grant Completion Revocation Flow", () => {
         chainId: 42161,
         isGasless: false,
       });
-      const { useSetupChainAndWallet } = require("../../../hooks/useSetupChainAndWallet");
+      const { useSetupChainAndWallet } = require("@/hooks/useSetupChainAndWallet");
       useSetupChainAndWallet.mockReturnValue({
         setupChainAndWallet: mockSetupChainAndWallet,
         isSmartWalletReady: false,

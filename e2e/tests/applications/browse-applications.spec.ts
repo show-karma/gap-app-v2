@@ -17,7 +17,9 @@ test.describe("Browse Applications", () => {
     });
     await page.goto("/community/optimism/programs/p1");
     await waitForPageReady(page);
-    await expect(page.locator("body")).toBeVisible();
+    // Verify the program page loaded and shows application data
+    await expect(page).toHaveURL(/\/programs\/p1/);
+    await expect(page.getByText("Test Grant Program")).toBeVisible();
   });
 
   test("T1-14: empty applications list shows empty state", async ({
@@ -35,6 +37,8 @@ test.describe("Browse Applications", () => {
     });
     await page.goto("/community/optimism/programs/p1");
     await waitForPageReady(page);
-    await expect(page.locator("body")).toBeVisible();
+    // Verify program page loaded; with empty applications, should show empty state or program info
+    await expect(page).toHaveURL(/\/programs\/p1/);
+    await expect(page.getByText("Test Grant Program")).toBeVisible();
   });
 });

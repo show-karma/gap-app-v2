@@ -18,15 +18,15 @@ import {
 } from "@/src/features/applications/hooks/use-application-access";
 import fetchData from "@/utilities/fetchData";
 
-jest.mock("@/hooks/useAuth", () => ({
-  useAuth: jest.fn().mockReturnValue({
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: vi.fn().mockReturnValue({
     authenticated: true,
     ready: true,
   }),
 }));
 
-jest.mock("@/utilities/fetchData");
-const mockFetchData = fetchData as jest.MockedFunction<typeof fetchData>;
+vi.mock("@/utilities/fetchData");
+const mockFetchData = fetchData as vi.MockedFunction<typeof fetchData>;
 
 const ALL_ACCESS_ROLES = [
   "SUPER_ADMIN",
@@ -64,7 +64,7 @@ describe("ApplicationAccessRole", () => {
     queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false } },
     });
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   afterEach(() => {

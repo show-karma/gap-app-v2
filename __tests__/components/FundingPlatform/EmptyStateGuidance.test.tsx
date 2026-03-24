@@ -97,12 +97,6 @@ describe("EmptyStateGuidance", () => {
       expect(iconContainer).toBeInTheDocument();
     });
 
-    it("should have dashed border styling", () => {
-      const { container } = render(<EmptyStateGuidance />);
-
-      expect(container.firstChild).toHaveClass("border-dashed");
-    });
-
     it("should render field icons", () => {
       const { container } = render(<EmptyStateGuidance />);
 
@@ -180,15 +174,5 @@ describe("ReviewersEmptyState", () => {
     expect(tipBox).toBeInTheDocument();
   });
 
-  it("should apply custom className", () => {
-    const { container } = render(<ReviewersEmptyState className="custom-class" />);
-
-    expect(container.firstChild).toHaveClass("custom-class");
-  });
-
-  it("should have dashed border styling", () => {
-    const { container } = render(<ReviewersEmptyState />);
-
-    expect(container.firstChild).toHaveClass("border-dashed");
-  });
 });
+

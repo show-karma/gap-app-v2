@@ -5,19 +5,19 @@
  */
 
 // Mock the provider modules - these get hoisted
-jest.mock("@/utilities/gasless/providers/zerodev.provider", () => ({
-  ZeroDevProvider: jest.fn().mockImplementation(() => ({
+vi.mock("@/utilities/gasless/providers/zerodev.provider", () => ({
+  ZeroDevProvider: vi.fn().mockImplementation(() => ({
     name: "zerodev",
-    createClient: jest.fn(),
-    toEthersSigner: jest.fn(),
+    createClient: vi.fn(),
+    toEthersSigner: vi.fn(),
   })),
 }));
 
-jest.mock("@/utilities/gasless/providers/alchemy.provider", () => ({
-  AlchemyProvider: jest.fn().mockImplementation(() => ({
+vi.mock("@/utilities/gasless/providers/alchemy.provider", () => ({
+  AlchemyProvider: vi.fn().mockImplementation(() => ({
     name: "alchemy",
-    createClient: jest.fn(),
-    toEthersSigner: jest.fn(),
+    createClient: vi.fn(),
+    toEthersSigner: vi.fn(),
   })),
 }));
 

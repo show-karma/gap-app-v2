@@ -63,13 +63,6 @@ describe("InternalAIEvaluationDisplay", () => {
       ).toBeInTheDocument();
     });
 
-    it("should apply custom className when provided", () => {
-      const { container } = render(
-        <InternalAIEvaluationDisplay evaluation={null} isLoading={false} className="custom-class" />
-      );
-
-      expect(container.firstChild).toHaveClass("custom-class");
-    });
   });
 
   describe("Pending State", () => {

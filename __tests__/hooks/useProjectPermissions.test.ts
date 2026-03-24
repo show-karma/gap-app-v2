@@ -8,28 +8,28 @@ import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useProjectStore } from "@/store";
 import { getRPCUrlByChainId } from "@/utilities/rpcClient";
 
-jest.mock("@/hooks/useAuth", () => ({
-  useAuth: jest.fn(),
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: vi.fn(),
 }));
 
-jest.mock("@/store", () => ({
-  useProjectStore: jest.fn(),
+vi.mock("@/store", () => ({
+  useProjectStore: vi.fn(),
 }));
 
-jest.mock("@/hooks/useProjectInstance", () => ({
-  useProjectInstance: jest.fn(),
+vi.mock("@/hooks/useProjectInstance", () => ({
+  useProjectInstance: vi.fn(),
 }));
 
-jest.mock("@/utilities/rpcClient", () => ({
-  getRPCUrlByChainId: jest.fn(),
+vi.mock("@/utilities/rpcClient", () => ({
+  getRPCUrlByChainId: vi.fn(),
 }));
 
-jest.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: jest.fn(),
+vi.mock("@/components/Utilities/errorManager", () => ({
+  errorManager: vi.fn(),
 }));
 
-jest.mock("ethers", () => {
-  const MockJsonRpcProvider = jest.fn().mockReturnValue({});
+vi.mock("ethers", () => {
+  const MockJsonRpcProvider = vi.fn().mockReturnValue({});
   return {
     __esModule: true,
     ethers: { JsonRpcProvider: MockJsonRpcProvider },
@@ -38,12 +38,12 @@ jest.mock("ethers", () => {
 });
 
 // Access the mock through the mocked module
-const mockJsonRpcProvider = ethers.JsonRpcProvider as unknown as jest.Mock;
+const mockJsonRpcProvider = ethers.JsonRpcProvider as unknown as vi.Mock;
 
-const mockUseAuth = useAuth as unknown as jest.Mock;
-const mockUseProjectStore = useProjectStore as unknown as jest.Mock;
-const mockUseProjectInstance = useProjectInstance as unknown as jest.Mock;
-const mockGetRPCUrlByChainId = getRPCUrlByChainId as unknown as jest.Mock;
+const mockUseAuth = useAuth as unknown as vi.Mock;
+const mockUseProjectStore = useProjectStore as unknown as vi.Mock;
+const mockUseProjectInstance = useProjectInstance as unknown as vi.Mock;
+const mockGetRPCUrlByChainId = getRPCUrlByChainId as unknown as vi.Mock;
 
 function createWrapper() {
   const queryClient = new QueryClient({
@@ -55,8 +55,8 @@ function createWrapper() {
     createElement(QueryClientProvider, { client: queryClient }, children);
 }
 
-const mockSetIsProjectAdmin = jest.fn();
-const mockSetIsProjectOwner = jest.fn();
+const mockSetIsProjectAdmin = vi.fn();
+const mockSetIsProjectOwner = vi.fn();
 
 function setupMocks(
   overrides: {
@@ -104,7 +104,7 @@ function setupMocks(
 
 describe("useProjectPermissions", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("unauthenticated user", () => {
@@ -137,8 +137,8 @@ describe("useProjectPermissions", () => {
 
     const createMockProjectInstance = () => ({
       chainID: 1,
-      isOwner: jest.fn().mockResolvedValue(true),
-      isAdmin: jest.fn().mockResolvedValue(false),
+      isOwner: vi.fn().mockResolvedValue(true),
+      isAdmin: vi.fn().mockResolvedValue(false),
     });
 
     it("checks permissions when authenticated with a project", async () => {

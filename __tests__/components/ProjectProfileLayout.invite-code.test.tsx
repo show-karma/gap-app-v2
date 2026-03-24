@@ -29,7 +29,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 // Mock next/dynamic — needed because dialogs are now dynamically imported
-jest.mock("next/dynamic", () => {
+vi.mock("next/dynamic", () => {
   const mockDynamic = (loader: () => Promise<any>, _options?: { ssr?: boolean }) => {
     const DynamicComponent = () => null;
     DynamicComponent.displayName = "DynamicMock";
@@ -66,15 +66,11 @@ vi.mock("@/store/modals/progress", () => ({
   useProgressModalStore: () => ({ isProgressModalOpen: false }),
 }));
 
-<<<<<<< HEAD
-jest.mock("@/store/modals/shareDialog", () => ({
+vi.mock("@/store/modals/shareDialog", () => ({
   useShareDialogStore: () => ({ isOpen: false }),
 }));
 
-jest.mock("@/store/modals/contributorProfile", () => ({
-=======
 vi.mock("@/store/modals/contributorProfile", () => ({
->>>>>>> 8322801b (test: migrate Jest to Vitest for unit/integration tests)
   useContributorProfileModalStore: () => ({
     openModal: mockOpenContributorProfileModal,
   }),
@@ -110,27 +106,19 @@ vi.mock("@/components/Pages/Project/v2/Mobile/MobileProfileContent", () => ({
   MobileProfileContent: () => null,
 }));
 
-<<<<<<< HEAD
-jest.mock("@/components/Pages/Project/v2/Mobile/MobileSupportContent", () => ({
+vi.mock("@/components/Pages/Project/v2/Mobile/MobileSupportContent", () => ({
   MobileSupportContent: () => null,
 }));
 
-jest.mock("@/components/Pages/Project/v2/SidePanel/ProjectSidePanel", () => ({
-  ProjectSidePanel: () => null,
-}));
-
-jest.mock("@/components/Pages/Project/v2/SidePanel/SidebarProfileCard", () => ({
-  SidebarProfileCard: () => null,
-}));
-
-jest.mock("@/components/Pages/Project/v2/StatsBar/ProjectStatsBar", () => ({
-=======
 vi.mock("@/components/Pages/Project/v2/SidePanel/ProjectSidePanel", () => ({
   ProjectSidePanel: () => null,
 }));
 
+vi.mock("@/components/Pages/Project/v2/SidePanel/SidebarProfileCard", () => ({
+  SidebarProfileCard: () => null,
+}));
+
 vi.mock("@/components/Pages/Project/v2/StatsBar/ProjectStatsBar", () => ({
->>>>>>> 8322801b (test: migrate Jest to Vitest for unit/integration tests)
   ProjectStatsBar: () => null,
 }));
 
@@ -155,7 +143,7 @@ vi.mock("@/components/ErrorBoundary", () => ({
   ErrorBoundary: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
-jest.mock("@/utilities/tailwind", () => ({
+vi.mock("@/utilities/tailwind", () => ({
   cn: (...a: string[]) => a.filter(Boolean).join(" "),
 }));
 

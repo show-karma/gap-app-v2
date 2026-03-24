@@ -4,29 +4,29 @@ import type { Project } from "@/types/v2/project";
 import { ProjectHeader } from "../Header/ProjectHeader";
 
 // Mock next/navigation
-const mockPush = jest.fn();
-jest.mock("next/navigation", () => ({
+const mockPush = vi.fn();
+vi.mock("next/navigation", () => ({
   useParams: () => ({ projectId: "test-project" }),
   useRouter: () => ({ push: mockPush }),
   usePathname: () => "/project/test-project",
 }));
 
 // Mock react-wrap-balancer
-jest.mock("react-wrap-balancer", () => ({
+vi.mock("react-wrap-balancer", () => ({
   __esModule: true,
   default: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
 }));
 
 // Mock utilities
-jest.mock("@/utilities/customLink", () => ({
+vi.mock("@/utilities/customLink", () => ({
   isCustomLink: (link: any) => !!link?.name,
 }));
 
-jest.mock("@/utilities/ensureProtocol", () => ({
+vi.mock("@/utilities/ensureProtocol", () => ({
   ensureProtocol: (url: string) => (url.startsWith("http") ? url : `https://${url}`),
 }));
 
-jest.mock("@/utilities/pages", () => ({
+vi.mock("@/utilities/pages", () => ({
   PAGES: {
     PROJECT: {
       ABOUT: (id: string) => `/project/${id}/about`,
@@ -42,12 +42,12 @@ vi.mock("@/components/Utilities/MarkdownPreview", () => ({
 }));
 
 // Mock the VerificationBadge component
-jest.mock("../icons/VerificationBadge", () => ({
+vi.mock("../icons/VerificationBadge", () => ({
   VerificationBadge: (props: any) => <span data-testid={props["data-testid"]} />,
 }));
 
 // Mock the ProfilePicture component
-jest.mock("@/components/Utilities/ProfilePicture", () => ({
+vi.mock("@/components/Utilities/ProfilePicture", () => ({
   ProfilePicture: ({ name, imageURL }: any) => (
     <div data-testid="profile-picture">{imageURL ? <img src={imageURL} alt={name} /> : name}</div>
   ),

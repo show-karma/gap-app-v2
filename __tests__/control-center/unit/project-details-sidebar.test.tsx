@@ -13,9 +13,8 @@ const mockSaveMutate = vi.fn();
 let mockTogglePending = false;
 let mockSavePending = false;
 
-<<<<<<< HEAD:__tests__/control-center/unit/project-details-sidebar.test.tsx
 // Mock the DatePicker component to avoid Radix Popover portal issues in JSDOM
-jest.mock("@/components/Utilities/DatePicker", () => ({
+vi.mock("@/components/Utilities/DatePicker", () => ({
   DatePicker: ({
     selected,
     onSelect,
@@ -40,23 +39,11 @@ jest.mock("@/components/Utilities/DatePicker", () => ({
   },
 }));
 
-jest.mock("@/src/features/payout-disbursement", () => {
-  const actual = jest.requireActual("@/src/features/payout-disbursement");
-  return {
-    ...actual,
-    useToggleAgreement: jest.fn(() => ({
-=======
-// Mock the payout-disbursement module at the test file level
 vi.mock("@/src/features/payout-disbursement", () => {
-  const React = require("react");
-  const actual = vi.importActual("@/src/features/payout-disbursement/types/payout-disbursement");
-  const utils = vi.importActual("@/src/features/payout-disbursement/utils/format-token-amount");
+  const actual = vi.importActual("@/src/features/payout-disbursement");
   return {
     ...actual,
-    formatDisplayAmount: utils.formatDisplayAmount,
-    fromSmallestUnit: utils.fromSmallestUnit,
     useToggleAgreement: vi.fn(() => ({
->>>>>>> 8322801b (test: migrate Jest to Vitest for unit/integration tests):__tests__/control-center/unit/project-details-modal.test.tsx
       mutate: mockToggleMutate,
       isPending: mockTogglePending,
     })),
@@ -64,27 +51,14 @@ vi.mock("@/src/features/payout-disbursement", () => {
       mutate: mockSaveMutate,
       isPending: mockSavePending,
     })),
-<<<<<<< HEAD:__tests__/control-center/unit/project-details-sidebar.test.tsx
     // Stub out the content components to avoid their data-fetching hooks
-    PayoutConfigurationContent: jest.fn(() => null),
-    PayoutHistoryContent: jest.fn(() => null),
-=======
-    getPaidAllocationIds: vi.fn(() => []),
-    CreateDisbursementModal: () => null,
-    PayoutConfigurationModal: () => null,
-    PayoutHistoryDrawer: () => null,
-    TokenBreakdown: ({ totalsByToken }: { totalsByToken: unknown[] }) =>
-      React.createElement(
-        "span",
-        { "data-testid": "token-breakdown" },
-        `${totalsByToken.length} tokens`
-      ),
->>>>>>> 8322801b (test: migrate Jest to Vitest for unit/integration tests):__tests__/control-center/unit/project-details-modal.test.tsx
+    PayoutConfigurationContent: vi.fn(() => null),
+    PayoutHistoryContent: vi.fn(() => null),
   };
 });
 
-jest.mock("@/hooks/useCopyToClipboard", () => ({
-  useCopyToClipboard: () => ["", jest.fn()],
+vi.mock("@/hooks/useCopyToClipboard", () => ({
+  useCopyToClipboard: () => ["", vi.fn()],
 }));
 
 import { render, screen } from "@testing-library/react";
@@ -121,7 +95,7 @@ const testGrant: ProjectDetailsSidebarGrant = {
 };
 
 beforeEach(() => {
-  jest.clearAllMocks();
+  vi.clearAllMocks();
   mockTogglePending = false;
   mockSavePending = false;
 
@@ -154,16 +128,9 @@ interface RenderSidebarOptions {
     status: string;
     history: unknown[];
   } | null;
-<<<<<<< HEAD:__tests__/control-center/unit/project-details-sidebar.test.tsx
-  onOpenChange?: jest.Mock;
-  onCreateDisbursement?: jest.Mock;
-  onConfigSuccess?: jest.Mock;
-=======
   onOpenChange?: vi.Mock;
-  onOpenConfigModal?: vi.Mock;
-  onOpenHistoryDrawer?: vi.Mock;
   onCreateDisbursement?: vi.Mock;
->>>>>>> 8322801b (test: migrate Jest to Vitest for unit/integration tests):__tests__/control-center/unit/project-details-modal.test.tsx
+  onConfigSuccess?: vi.Mock;
 }
 
 function renderSidebar(options: RenderSidebarOptions = {}) {
@@ -174,16 +141,9 @@ function renderSidebar(options: RenderSidebarOptions = {}) {
     milestoneInvoices = [],
     invoiceRequired = false,
     disbursementInfo = null,
-<<<<<<< HEAD:__tests__/control-center/unit/project-details-sidebar.test.tsx
-    onOpenChange = jest.fn(),
-    onCreateDisbursement = jest.fn(),
-    onConfigSuccess = jest.fn(),
-=======
     onOpenChange = vi.fn(),
-    onOpenConfigModal = vi.fn(),
-    onOpenHistoryDrawer = vi.fn(),
     onCreateDisbursement = vi.fn(),
->>>>>>> 8322801b (test: migrate Jest to Vitest for unit/integration tests):__tests__/control-center/unit/project-details-modal.test.tsx
+    onConfigSuccess = vi.fn(),
   } = options;
 
   return render(
@@ -673,12 +633,7 @@ describe("ProjectDetailsSidebar", () => {
   describe("Unsaved changes guard", () => {
     it("shows discard dialog when closing with unsaved changes", async () => {
       const user = userEvent.setup();
-<<<<<<< HEAD:__tests__/control-center/unit/project-details-sidebar.test.tsx
-      const onOpenChange = jest.fn();
-=======
       const onOpenChange = vi.fn();
-      const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
->>>>>>> 8322801b (test: migrate Jest to Vitest for unit/integration tests):__tests__/control-center/unit/project-details-modal.test.tsx
 
       renderSidebar({
         onOpenChange,
@@ -709,12 +664,7 @@ describe("ProjectDetailsSidebar", () => {
 
     it("does not show discard dialog when closing without unsaved changes", async () => {
       const user = userEvent.setup();
-<<<<<<< HEAD:__tests__/control-center/unit/project-details-sidebar.test.tsx
-      const onOpenChange = jest.fn();
-=======
       const onOpenChange = vi.fn();
-      const confirmSpy = vi.spyOn(window, "confirm");
->>>>>>> 8322801b (test: migrate Jest to Vitest for unit/integration tests):__tests__/control-center/unit/project-details-modal.test.tsx
 
       renderSidebar({ onOpenChange, milestoneInvoices: [] });
 
@@ -783,29 +733,6 @@ describe("ProjectDetailsSidebar", () => {
   });
 
   describe("Button disabled states", () => {
-<<<<<<< HEAD:__tests__/control-center/unit/project-details-sidebar.test.tsx
-=======
-    it("disables action buttons when save mutation is pending", () => {
-      mockSavePending = true;
-      const { useSaveMilestoneInvoices } = require("@/src/features/payout-disbursement");
-      (useSaveMilestoneInvoices as vi.Mock).mockImplementation(() => ({
-        mutate: mockSaveMutate,
-        isPending: true,
-      }));
-
-      renderModal();
-
-      const configButton = screen.getByRole("button", {
-        name: /payout settings/i,
-      });
-      const historyButton = screen.getByRole("button", {
-        name: /view history/i,
-      });
-      expect(configButton).toBeDisabled();
-      expect(historyButton).toBeDisabled();
-    });
-
->>>>>>> 8322801b (test: migrate Jest to Vitest for unit/integration tests):__tests__/control-center/unit/project-details-modal.test.tsx
     it("disables create disbursement button when no payout address", () => {
       renderSidebar({
         grant: { ...testGrant, currentPayoutAddress: undefined },
@@ -839,41 +766,10 @@ describe("ProjectDetailsSidebar", () => {
   });
 
   describe("Footer action callbacks", () => {
-<<<<<<< HEAD:__tests__/control-center/unit/project-details-sidebar.test.tsx
-    it("calls onCreateDisbursement when Create Disbursement is clicked", async () => {
-      const user = userEvent.setup();
-      const onCreateDisbursement = jest.fn();
-      renderSidebar({ onCreateDisbursement });
-=======
-    it("calls onOpenConfigModal when Payout Settings is clicked", async () => {
-      const user = userEvent.setup();
-      const onOpenConfigModal = vi.fn();
-      renderModal({ onOpenConfigModal });
-
-      const button = screen.getByRole("button", {
-        name: /payout settings/i,
-      });
-      await user.click(button);
-
-      expect(onOpenConfigModal).toHaveBeenCalledTimes(1);
-    });
-
-    it("calls onOpenHistoryDrawer when View History is clicked", async () => {
-      const user = userEvent.setup();
-      const onOpenHistoryDrawer = vi.fn();
-      renderModal({ onOpenHistoryDrawer });
-
-      const button = screen.getByRole("button", { name: /view history/i });
-      await user.click(button);
-
-      expect(onOpenHistoryDrawer).toHaveBeenCalledTimes(1);
-    });
-
     it("calls onCreateDisbursement when Create Disbursement is clicked", async () => {
       const user = userEvent.setup();
       const onCreateDisbursement = vi.fn();
-      renderModal({ onCreateDisbursement });
->>>>>>> 8322801b (test: migrate Jest to Vitest for unit/integration tests):__tests__/control-center/unit/project-details-modal.test.tsx
+      renderSidebar({ onCreateDisbursement });
 
       const button = screen.getByRole("button", {
         name: /create disbursement/i,

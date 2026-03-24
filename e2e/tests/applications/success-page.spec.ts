@@ -19,6 +19,15 @@ test.describe("Application Success Page", () => {
     });
     await page.goto("/community/optimism/programs/p1/applications/APP-2024-001/success");
     await waitForPageReady(page);
-    await expect(page.locator("body")).toBeVisible();
+    // Verify success page loaded with confirmation content
+    await expect(page).toHaveURL(/\/success/);
+    const pageContent = await page.textContent("body");
+    expect(
+      pageContent?.toLowerCase().includes("success") ||
+        pageContent?.toLowerCase().includes("submitted") ||
+        pageContent?.toLowerCase().includes("approved") ||
+        pageContent?.toLowerCase().includes("congratulations") ||
+        pageContent?.includes("APP-2024-001")
+    ).toBeTruthy();
   });
 });

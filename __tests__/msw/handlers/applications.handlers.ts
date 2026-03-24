@@ -1,5 +1,7 @@
 import { HttpResponse, http } from "msw";
+import { applicationStatisticsSchema } from "../../contracts/contracts/schemas";
 import { BASE } from "./base-url";
+import { validateResponse } from "./validate";
 
 export interface MockApplication {
   uid: string;
@@ -35,15 +37,18 @@ export function applicationHandlers(options?: {
   return [
     http.get(`${BASE}/v2/funding-applications/program/:programId`, () => HttpResponse.json(list)),
 
-    http.get(`${BASE}/v2/funding-applications/program/:programId/statistics`, () =>
-      HttpResponse.json({
-        total: list.length,
-        submitted: list.filter((a) => a.status === "SUBMITTED").length,
-        approved: list.filter((a) => a.status === "APPROVED").length,
-        rejected: list.filter((a) => a.status === "REJECTED").length,
-        inReview: list.filter((a) => a.status === "IN_REVIEW").length,
-      })
-    ),
+    http.get(`${BASE}/v2/funding-applications/program/:programId/statistics`, () => {
+      const stats = {
+        totalApplications: list.length,
+        pendingApplications: list.filter((a) => a.status === "DRAFT").length,
+        approvedApplications: list.filter((a) => a.status === "APPROVED").length,
+        rejectedApplications: list.filter((a) => a.status === "REJECTED").length,
+        underReviewApplications: list.filter((a) => a.status === "IN_REVIEW").length,
+        resubmittedApplications: list.filter((a) => a.status === "SUBMITTED").length,
+      };
+      validateResponse(applicationStatisticsSchema, stats, "GET /statistics");
+      return HttpResponse.json(stats);
+    }),
 
     http.get(`${BASE}/v2/funding-applications/:applicationId`, () => HttpResponse.json(detail)),
 

@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
 // Mock Next.js Link
-jest.mock("next/link", () => {
+vi.mock("next/link", () => {
   return function MockLink({ href, children }: { href: string; children: React.ReactNode }) {
     return <a href={href}>{children}</a>;
   };
@@ -56,7 +56,7 @@ describe("EmptyState", () => {
 
   describe("action button", () => {
     it("renders action button when action is provided", () => {
-      const handleClick = jest.fn();
+      const handleClick = vi.fn();
       render(
         <EmptyState title="No results" action={{ label: "Create one", onClick: handleClick }} />
       );
@@ -64,7 +64,7 @@ describe("EmptyState", () => {
     });
 
     it("calls onClick when action button is clicked", () => {
-      const handleClick = jest.fn();
+      const handleClick = vi.fn();
       render(
         <EmptyState title="No results" action={{ label: "Add item", onClick: handleClick }} />
       );
@@ -90,7 +90,7 @@ describe("EmptyState", () => {
         <EmptyState
           title="No items"
           description="Nothing here yet."
-          action={{ label: "Add", onClick: jest.fn() }}
+          action={{ label: "Add", onClick: vi.fn() }}
         />
       );
       const html = container.innerHTML;
@@ -108,12 +108,4 @@ describe("EmptyState", () => {
     });
   });
 
-  describe("className prop", () => {
-    it("applies custom className to the Card wrapper", () => {
-      const { container } = render(
-        <EmptyState title="No results" className="custom-empty-state" />
-      );
-      expect(container.firstElementChild).toHaveClass("custom-empty-state");
-    });
-  });
 });

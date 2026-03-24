@@ -5,28 +5,28 @@ import { useCanVerifyMilestone } from "@/hooks/useCanVerifyMilestone";
 import { useIsReviewer } from "@/hooks/usePermissions";
 import { useOwnerStore, useProjectStore } from "@/store";
 
-jest.mock("@/hooks/useAuth", () => ({
-  useAuth: jest.fn(),
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: vi.fn(),
 }));
 
-jest.mock("@/hooks/communities/useIsCommunityAdmin", () => ({
-  useIsCommunityAdmin: jest.fn(),
+vi.mock("@/hooks/communities/useIsCommunityAdmin", () => ({
+  useIsCommunityAdmin: vi.fn(),
 }));
 
-jest.mock("@/hooks/usePermissions", () => ({
-  useIsReviewer: jest.fn(),
+vi.mock("@/hooks/usePermissions", () => ({
+  useIsReviewer: vi.fn(),
 }));
 
-jest.mock("@/store", () => ({
-  useOwnerStore: jest.fn(),
-  useProjectStore: jest.fn(),
+vi.mock("@/store", () => ({
+  useOwnerStore: vi.fn(),
+  useProjectStore: vi.fn(),
 }));
 
-const mockUseAuth = useAuth as unknown as jest.Mock;
-const mockUseIsCommunityAdmin = useIsCommunityAdmin as unknown as jest.Mock;
-const mockUseIsReviewer = useIsReviewer as unknown as jest.Mock;
-const mockUseOwnerStore = useOwnerStore as unknown as jest.Mock;
-const mockUseProjectStore = useProjectStore as unknown as jest.Mock;
+const mockUseAuth = useAuth as unknown as vi.Mock;
+const mockUseIsCommunityAdmin = useIsCommunityAdmin as unknown as vi.Mock;
+const mockUseIsReviewer = useIsReviewer as unknown as vi.Mock;
+const mockUseOwnerStore = useOwnerStore as unknown as vi.Mock;
+const mockUseProjectStore = useProjectStore as unknown as vi.Mock;
 
 function setupMocks(
   overrides: {
@@ -58,7 +58,7 @@ function setupMocks(
 
 describe("useCanVerifyMilestone", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("allows contract owner to verify", () => {

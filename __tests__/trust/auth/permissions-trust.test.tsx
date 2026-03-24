@@ -24,20 +24,20 @@ import { Role } from "@/src/core/rbac/types/role";
 // ---------------------------------------------------------------------------
 // Mocks
 // ---------------------------------------------------------------------------
-jest.mock("@/contexts/privy-bridge-context", () => ({
-  usePrivyBridge: jest.fn(),
+vi.mock("@/contexts/privy-bridge-context", () => ({
+  usePrivyBridge: vi.fn(),
 }));
 
-jest.mock("@/src/core/rbac/hooks/use-permissions", () => ({
-  usePermissionsQuery: jest.fn(),
+vi.mock("@/src/core/rbac/hooks/use-permissions", () => ({
+  usePermissionsQuery: vi.fn(),
 }));
 
-jest.mock("@/utilities/auth/cypress-auth", () => ({
-  getCypressMockAuthState: jest.fn().mockReturnValue(null),
+vi.mock("@/utilities/auth/cypress-auth", () => ({
+  getCypressMockAuthState: vi.fn().mockReturnValue(null),
 }));
 
-const mockUsePrivyBridge = usePrivyBridge as jest.Mock;
-const mockUsePermissionsQuery = usePermissionsQuery as unknown as jest.Mock;
+const mockUsePrivyBridge = usePrivyBridge as vi.Mock;
+const mockUsePermissionsQuery = usePermissionsQuery as unknown as vi.Mock;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -51,10 +51,10 @@ function setAuthState(overrides: Record<string, any> = {}) {
     ready: true,
     authenticated: true,
     user: { id: "user-1" },
-    login: jest.fn(),
-    logout: jest.fn(),
-    getAccessToken: jest.fn(),
-    connectWallet: jest.fn(),
+    login: vi.fn(),
+    logout: vi.fn(),
+    getAccessToken: vi.fn(),
+    connectWallet: vi.fn(),
     wallets: [],
     smartWalletClient: null,
     isConnected: false,
@@ -111,7 +111,7 @@ const GUEST_DATA = {
 // Tests
 // ---------------------------------------------------------------------------
 beforeEach(() => {
-  jest.clearAllMocks();
+  vi.clearAllMocks();
   setAuthState();
   setQueryResult();
 });

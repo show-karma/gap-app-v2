@@ -22,7 +22,8 @@ test.describe("Apply Flow", () => {
     await page.goto("/community/optimism/programs/p1/apply");
     await waitForPageReady(page);
     // Page should load the application form
-    await expect(page.locator("body")).toBeVisible();
+    await expect(page).toHaveURL(/\/apply/);
+    await expect(page.getByText("Test Program")).toBeVisible();
   });
 
   test("T1-35: access-code gated program requires code", async ({
@@ -42,7 +43,10 @@ test.describe("Apply Flow", () => {
     await page.goto("/community/optimism/programs/p-gated/apply");
     await waitForPageReady(page);
     // Should show access code input or gate
-    await expect(page.locator("body")).toBeVisible();
+    const accessCodeInput = page.getByPlaceholder(/access code|enter code/i);
+    const accessCodeLabel = page.getByText(/access code/i);
+    const hasGate = (await accessCodeInput.count()) > 0 || (await accessCodeLabel.count()) > 0;
+    expect(hasGate).toBeTruthy();
   });
 
   test("T1-36: AI evaluation info displays when configured", async ({
@@ -62,7 +66,9 @@ test.describe("Apply Flow", () => {
     });
     await page.goto("/community/optimism/programs/p-ai");
     await waitForPageReady(page);
-    await expect(page.locator("body")).toBeVisible();
+    // Verify the program detail page loaded with program info
+    await expect(page).toHaveURL(/\/programs\/p-ai/);
+    await expect(page.getByText("AI Evaluated Program")).toBeVisible();
   });
 
   test("T1-37: multi-step form preserves data on back navigation", async ({
@@ -79,8 +85,11 @@ test.describe("Apply Flow", () => {
     });
     await page.goto("/community/optimism/programs/p1/apply");
     await waitForPageReady(page);
-    // The form should render without errors
-    await expect(page.locator("body")).toBeVisible();
+    // The form should render on the apply page without errors
+    await expect(page).toHaveURL(/\/programs\/p1\/apply/);
+    // Verify form content is present (form fields or program title)
+    const bodyText = await page.textContent("body");
+    expect(bodyText!.length).toBeGreaterThan(50);
   });
 
   test("T1-38: form validation blocks invalid submit", async ({ page, withApiMocks, loginAs }) => {

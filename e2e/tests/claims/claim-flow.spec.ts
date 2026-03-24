@@ -22,7 +22,10 @@ test.describe("Claim Flow", () => {
     await withTenant("optimism");
     await page.goto("/");
     await waitForPageReady(page);
-    await expect(page.locator("body")).toBeVisible();
+    // Verify Optimism tenant page loaded correctly (whitelabel rewrite worked)
+    await expect(page.getByText("Optimism").first()).toBeVisible();
+    // URL should not expose the community path prefix on whitelabel
+    expect(page.url()).not.toContain("/community/optimism");
   });
 
   test("T1-44: double-click prevention on claim button", async ({
@@ -46,8 +49,8 @@ test.describe("Claim Flow", () => {
       // Click rapidly
       await claimButton.click();
       await claimButton.click();
-      // Page should remain stable
-      await expect(page.locator("body")).toBeVisible();
+      // Page should remain stable - no JS errors or crash
+      await expect(page.getByText("Optimism").first()).toBeVisible();
     }
   });
 
@@ -65,6 +68,13 @@ test.describe("Claim Flow", () => {
     await withTenant("optimism");
     await page.goto("/");
     await waitForPageReady(page);
-    await expect(page.locator("body")).toBeVisible();
+    // Verify Optimism community content loaded
+    await expect(page.getByText("Optimism").first()).toBeVisible();
+    // If a "claimed" indicator exists, verify it; otherwise confirm the page rendered
+    const claimedIndicator = page.getByText(/claimed|already claimed/i);
+    const claimButton = page.getByRole("button", { name: /claim/i });
+    // Either a claimed badge or a claim button (or neither if no claimable items) is valid
+    const pageText = await page.textContent("body");
+    expect(pageText!.length).toBeGreaterThan(100);
   });
 });

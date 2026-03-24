@@ -14,7 +14,9 @@ test.describe("My Applications", () => {
     });
     await page.goto("/community/optimism");
     await waitForPageReady(page);
-    await expect(page.locator("body")).toBeVisible();
+    // Verify the community page loaded with the community name visible
+    await expect(page).toHaveURL(/\/community\/optimism/);
+    await expect(page.getByText("Optimism").first()).toBeVisible();
   });
 
   test("T1-40: empty applications shows empty state", async ({ page, withApiMocks, loginAs }) => {
@@ -26,6 +28,8 @@ test.describe("My Applications", () => {
     });
     await page.goto("/community/optimism");
     await waitForPageReady(page);
-    await expect(page.locator("body")).toBeVisible();
+    // Verify community page loaded; with no applications, page still shows community content
+    await expect(page).toHaveURL(/\/community\/optimism/);
+    await expect(page.getByText("Optimism").first()).toBeVisible();
   });
 });

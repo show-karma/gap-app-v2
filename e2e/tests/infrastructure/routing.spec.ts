@@ -17,7 +17,7 @@ test.describe("Whitelabel Routing", () => {
     await page.goto("/");
     await waitForPageReady(page);
     // Should show Optimism community content (the page was rewritten to /community/optimism)
-    await expect(page.locator("body")).toBeVisible();
+    await expect(page.getByText("Optimism").first()).toBeVisible();
     // URL should stay clean (no /community/optimism prefix visible)
     expect(page.url()).not.toContain("/community/optimism");
   });
@@ -32,7 +32,9 @@ test.describe("Whitelabel Routing", () => {
     });
     await page.goto("/community/arbitrum");
     await waitForPageReady(page);
-    await expect(page.locator("body")).toBeVisible();
+    // Verify the Arbitrum community page loaded with its content
+    await expect(page).toHaveURL(/\/community\/arbitrum/);
+    await expect(page.getByText("Arbitrum").first()).toBeVisible();
   });
 
   test("T1-03: no double-prefix on whitelabel navigation", async ({

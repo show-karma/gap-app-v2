@@ -4,33 +4,33 @@ import { useAuth } from "@/hooks/useAuth";
 import { useUserApplications } from "@/src/features/user-applications/hooks/use-user-applications";
 import { useUserApplicationsStore } from "@/src/features/user-applications/lib/store";
 
-jest.mock("@tanstack/react-query", () => ({
-  useQuery: jest.fn(),
-  useQueryClient: jest.fn(() => ({
-    prefetchQuery: jest.fn(),
+vi.mock("@tanstack/react-query", () => ({
+  useQuery: vi.fn(),
+  useQueryClient: vi.fn(() => ({
+    prefetchQuery: vi.fn(),
   })),
 }));
 
-jest.mock("@/hooks/useAuth", () => ({
-  useAuth: jest.fn(),
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: vi.fn(),
 }));
 
-jest.mock("@/utilities/fetchData", () => ({
+vi.mock("@/utilities/fetchData", () => ({
   __esModule: true,
-  default: jest.fn(),
+  default: vi.fn(),
 }));
 
-const mockUseAuth = useAuth as unknown as jest.Mock;
-const mockUseQuery = useQuery as unknown as jest.Mock;
+const mockUseAuth = useAuth as unknown as vi.Mock;
+const mockUseQuery = useQuery as unknown as vi.Mock;
 
 describe("useUserApplications", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockUseQuery.mockReturnValue({
       data: undefined,
       isLoading: false,
       error: null,
-      refetch: jest.fn(),
+      refetch: vi.fn(),
     });
     // Reset the zustand store between tests
     useUserApplicationsStore.getState().reset();

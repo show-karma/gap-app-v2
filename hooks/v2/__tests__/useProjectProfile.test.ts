@@ -170,7 +170,7 @@ describe("useProjectProfile", () => {
       useProject.mockReturnValue({ project: mockProject, isLoading: false });
 
       const useProjectGrants = require("../useProjectGrants").useProjectGrants;
-      useProjectGrants.mockReturnValue({ grants: [], isLoading: true, refetch: jest.fn() });
+      useProjectGrants.mockReturnValue({ grants: [], isLoading: true, refetch: vi.fn() });
 
       const { result } = renderHook(() => useProjectProfile("test-project"));
 
@@ -183,7 +183,7 @@ describe("useProjectProfile", () => {
       useProject.mockReturnValue({ project: mockProject, isLoading: false });
 
       const useProjectUpdates = require("../useProjectUpdates").useProjectUpdates;
-      useProjectUpdates.mockReturnValue({ milestones: [], isLoading: true, refetch: jest.fn() });
+      useProjectUpdates.mockReturnValue({ milestones: [], isLoading: true, refetch: vi.fn() });
 
       const { result } = renderHook(() => useProjectProfile("test-project"));
 

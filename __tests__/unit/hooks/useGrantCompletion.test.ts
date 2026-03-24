@@ -29,22 +29,12 @@ vi.mock("@/hooks/useZeroDevSigner", () => ({
 }));
 
 // Mock ALL dependencies to avoid ESM import issues
-<<<<<<< HEAD
-const mockFetchGrantInstance = jest.fn();
-const mockNotifyIndexerForGrant = jest.fn();
-const mockPollForGrantCompletion = jest.fn();
-const mockToastSuccess = jest.fn();
-const mockShowError = jest.fn();
-const mockShowSuccess = jest.fn();
-=======
-const mockSetupChainAndWallet = vi.fn();
 const mockFetchGrantInstance = vi.fn();
 const mockNotifyIndexerForGrant = vi.fn();
 const mockPollForGrantCompletion = vi.fn();
 const mockToastSuccess = vi.fn();
 const mockShowError = vi.fn();
 const mockShowSuccess = vi.fn();
->>>>>>> 8322801b (test: migrate Jest to Vitest for unit/integration tests)
 
 vi.mock("@/utilities/grant-helpers", () => ({
   getSDKGrantInstance: mockFetchGrantInstance,
@@ -94,16 +84,11 @@ vi.mock("@/hooks/useAttestationToast", () => ({
   })),
 }));
 
-<<<<<<< HEAD
-// SWC transforms @/ aliases to relative paths at compile time, so jest.mock("@/hooks/...")
+// SWC transforms @/ aliases to relative paths at compile time, so vi.mock("@/hooks/...")
 // doesn't intercept the hook's internal import. We must mock the actual file path instead.
-const mockSetupChainAndWallet = jest.fn().mockResolvedValue(null);
-jest.mock("../../../hooks/useSetupChainAndWallet", () => ({
-  useSetupChainAndWallet: jest.fn(() => ({
-=======
-vi.mock("@/hooks/useSetupChainAndWallet", () => ({
+const mockSetupChainAndWallet = vi.fn().mockResolvedValue(null);
+vi.mock("../../../hooks/useSetupChainAndWallet", () => ({
   useSetupChainAndWallet: vi.fn(() => ({
->>>>>>> 8322801b (test: migrate Jest to Vitest for unit/integration tests)
     setupChainAndWallet: mockSetupChainAndWallet,
     isSmartWalletReady: false,
     smartWalletAddress: null,
@@ -138,21 +123,16 @@ describe("useGrantCompletion", () => {
     complete: vi.fn(),
   } as any;
 
-  let consoleSpy: jest.SpyInstance;
+  let consoleSpy: vi.SpyInstance;
 
   beforeEach(() => {
-<<<<<<< HEAD
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     // Re-apply mock return values that clearAllMocks doesn't reset
     // (restoreAllMocks in afterEach DOES reset them)
-=======
-    vi.clearAllMocks();
-    // Reset useAccount mock to default values
->>>>>>> 8322801b (test: migrate Jest to Vitest for unit/integration tests)
     mockUseAccount.mockReturnValue({ chain: { id: 1 }, address: "0x123" });
     mockSetupChainAndWallet.mockResolvedValue(null);
     // Suppress expected console.error from the hook's catch blocks
-    consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
   });
 
   afterEach(() => {

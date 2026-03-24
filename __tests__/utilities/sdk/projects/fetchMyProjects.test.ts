@@ -1,20 +1,20 @@
 import fetchData from "@/utilities/fetchData";
 import { fetchMyProjects } from "@/utilities/sdk/projects/fetchMyProjects";
 
-jest.mock("@/utilities/fetchData", () => ({
+vi.mock("@/utilities/fetchData", () => ({
   __esModule: true,
-  default: jest.fn(),
+  default: vi.fn(),
 }));
 
-jest.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: jest.fn(),
+vi.mock("@/components/Utilities/errorManager", () => ({
+  errorManager: vi.fn(),
 }));
 
-const mockFetchData = fetchData as unknown as jest.Mock;
+const mockFetchData = fetchData as unknown as vi.Mock;
 
 describe("fetchMyProjects", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("should fetch projects when address is provided", async () => {

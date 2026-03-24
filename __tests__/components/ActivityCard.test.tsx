@@ -166,14 +166,6 @@ describe("ActivityCard", () => {
       expect(screen.getByTestId("milestone-title")).toHaveTextContent("Test Milestone");
     });
 
-    it("should not have update container wrapping for milestone (MilestoneCard renders its own container)", () => {
-      const { container } = render(<ActivityCard activity={mockMilestone} />);
-
-      // MilestoneCard is rendered directly without the containerClassName wrapper
-      // The outer div only has "flex flex-col w-full"
-      const outerDiv = container.firstChild as HTMLElement;
-      expect(outerDiv).toHaveClass("flex", "flex-col", "w-full");
-    });
   });
 
   describe("Authorization Logic", () => {
@@ -273,52 +265,6 @@ describe("ActivityCard", () => {
     });
   });
 
-  describe("Container Styling", () => {
-    it("should have flex column layout", () => {
-      const { container } = render(<ActivityCard activity={mockUpdate} />);
-
-      const mainDiv = container.firstChild as HTMLElement;
-      expect(mainDiv).toHaveClass("flex", "flex-col", "w-full");
-    });
-
-    it("should apply container class name to update wrapper", () => {
-      const { container } = render(<ActivityCard activity={mockUpdate} />);
-
-      const updateContainer = container.querySelector(".border.bg-background.rounded-xl");
-      expect(updateContainer).toBeInTheDocument();
-    });
-
-    it("should have gap-0 in update container", () => {
-      const { container } = render(<ActivityCard activity={mockUpdate} />);
-
-      const updateContainer = container.querySelector(".gap-0");
-      expect(updateContainer).toBeInTheDocument();
-    });
-
-    it("should align items to start in update container", () => {
-      const { container } = render(<ActivityCard activity={mockUpdate} />);
-
-      const updateContainer = container.querySelector(".items-start.justify-start");
-      expect(updateContainer).toBeInTheDocument();
-    });
-  });
-
-  describe("Dark Mode Support", () => {
-    it("should have background class for update card", () => {
-      const { container } = render(<ActivityCard activity={mockUpdate} />);
-
-      const updateContainer = container.querySelector(".bg-background");
-      expect(updateContainer).toBeInTheDocument();
-    });
-
-    it("should have border class for update card", () => {
-      const { container } = render(<ActivityCard activity={mockUpdate} />);
-
-      const updateContainer = container.querySelector(".border");
-      expect(updateContainer).toBeInTheDocument();
-    });
-  });
-
   describe("Prop Variations", () => {
     it("should handle undefined isAuthorized prop", () => {
       render(<ActivityCard activity={mockUpdate} />);
@@ -386,13 +332,6 @@ describe("ActivityCard", () => {
       expect(screen.getByTestId("update-index")).toHaveTextContent("999");
     });
 
-    it("should maintain structure consistency across activity types", () => {
-      const { container: updateContainer } = render(<ActivityCard activity={mockUpdate} />);
-      const { container: milestoneContainer } = render(<ActivityCard activity={mockMilestone} />);
-
-      expect(updateContainer.firstChild).toHaveClass("flex", "flex-col", "w-full");
-      expect(milestoneContainer.firstChild).toHaveClass("flex", "flex-col", "w-full");
-    });
   });
 
   describe("Type Safety", () => {

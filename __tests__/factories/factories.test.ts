@@ -3,6 +3,11 @@ import { Permission } from "@/src/core/rbac/types/permission";
 import { Role } from "@/src/core/rbac/types/role";
 import { PayoutDisbursementStatus } from "@/src/features/payout-disbursement/types/payout-disbursement";
 import {
+  fundingApplicationSchema,
+  payoutDisbursementSchema,
+  projectSchema,
+} from "../contracts/contracts/schemas";
+import {
   approvedApplication,
   createApplicationList,
   createMockApplication,
@@ -570,6 +575,94 @@ describe("milestone.factory", () => {
       });
       expect(ms.completed?.data?.proofOfWork).toBe("https://github.com/example/pr/123");
       expect(ms.completed?.data?.reason).toBe("PR merged and deployed");
+    });
+  });
+});
+
+// ─── Factory vs Zod schema validation ───
+// Every factory output must satisfy its corresponding Zod contract schema.
+// This catches drift between factories and the API contracts they represent.
+
+describe("factory output satisfies Zod schemas", () => {
+  describe("application factory -> fundingApplicationSchema", () => {
+    it("createMockApplication output passes schema validation", () => {
+      const app = createMockApplication();
+      const result = fundingApplicationSchema.safeParse(app);
+      expect(result.success).toBe(true);
+    });
+
+    it("approvedApplication output passes schema validation", () => {
+      const app = approvedApplication();
+      const result = fundingApplicationSchema.safeParse(app);
+      expect(result.success).toBe(true);
+    });
+
+    it("rejectedApplication output passes schema validation", () => {
+      const app = rejectedApplication();
+      const result = fundingApplicationSchema.safeParse(app);
+      expect(result.success).toBe(true);
+    });
+
+    it("submittedApplication output passes schema validation", () => {
+      const app = submittedApplication();
+      const result = fundingApplicationSchema.safeParse(app);
+      expect(result.success).toBe(true);
+    });
+
+    it("draftApplication output passes schema validation", () => {
+      const app = draftApplication();
+      const result = fundingApplicationSchema.safeParse(app);
+      expect(result.success).toBe(true);
+    });
+
+    it("createApplicationList items all pass schema validation", () => {
+      const list = createApplicationList(5);
+      for (const app of list) {
+        const result = fundingApplicationSchema.safeParse(app);
+        expect(result.success).toBe(true);
+      }
+    });
+  });
+
+  describe("project factory -> projectSchema", () => {
+    it("createMockProject output passes schema validation", () => {
+      const project = createMockProject();
+      const result = projectSchema.safeParse(project);
+      expect(result.success).toBe(true);
+    });
+
+    it("createMockProject with overrides passes schema validation", () => {
+      const project = createMockProject({
+        details: { title: "Custom Title" },
+      });
+      const result = projectSchema.safeParse(project);
+      expect(result.success).toBe(true);
+    });
+  });
+
+  describe("payout factory -> payoutDisbursementSchema", () => {
+    it("createMockDisbursement output passes schema validation", () => {
+      const disb = createMockDisbursement();
+      const result = payoutDisbursementSchema.safeParse(disb);
+      expect(result.success).toBe(true);
+    });
+
+    it("pendingDisbursement output passes schema validation", () => {
+      const disb = pendingDisbursement();
+      const result = payoutDisbursementSchema.safeParse(disb);
+      expect(result.success).toBe(true);
+    });
+
+    it("awaitingSignaturesDisbursement output passes schema validation", () => {
+      const disb = awaitingSignaturesDisbursement();
+      const result = payoutDisbursementSchema.safeParse(disb);
+      expect(result.success).toBe(true);
+    });
+
+    it("disbursedDisbursement output passes schema validation", () => {
+      const disb = disbursedDisbursement();
+      const result = payoutDisbursementSchema.safeParse(disb);
+      expect(result.success).toBe(true);
     });
   });
 });

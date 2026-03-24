@@ -3,33 +3,33 @@ import "@testing-library/jest-dom/vitest";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 
 // Mock next/navigation
-jest.mock("next/navigation", () => ({
+vi.mock("next/navigation", () => ({
   useParams: () => ({ projectId: "test-project" }),
 }));
 
 // Mock query-client
-jest.mock("@/utilities/query-client", () => ({
-  queryClient: { invalidateQueries: jest.fn() },
+vi.mock("@/utilities/query-client", () => ({
+  queryClient: { invalidateQueries: vi.fn() },
 }));
 
 // Mock queryKeys
-jest.mock("@/utilities/queryKeys", () => ({
+vi.mock("@/utilities/queryKeys", () => ({
   QUERY_KEYS: { PROJECT: { UPDATES: (id: string) => ["project-updates", id] } },
 }));
 
 // Mock share utilities
-jest.mock("@/utilities/share/shareOnX", () => ({
-  shareOnX: jest.fn(() => "https://x.com/share"),
+vi.mock("@/utilities/share/shareOnX", () => ({
+  shareOnX: vi.fn(() => "https://x.com/share"),
 }));
-jest.mock("@/utilities/share/text", () => ({
+vi.mock("@/utilities/share/text", () => ({
   SHARE_TEXTS: {
-    MILESTONE_COMPLETED: jest.fn(() => "milestone text"),
-    PROJECT_ACTIVITY: jest.fn(() => "activity text"),
+    MILESTONE_COMPLETED: vi.fn(() => "milestone text"),
+    PROJECT_ACTIVITY: vi.fn(() => "activity text"),
   },
 }));
 
 // Mock ExternalLink
-jest.mock("@/components/Utilities/ExternalLink", () => ({
+vi.mock("@/components/Utilities/ExternalLink", () => ({
   ExternalLink: ({ children, href, className }: any) => (
     <a href={href} className={className}>
       {children}
@@ -38,27 +38,27 @@ jest.mock("@/components/Utilities/ExternalLink", () => ({
 }));
 
 // Mock DeleteDialog
-jest.mock("@/components/DeleteDialog", () => ({
+vi.mock("@/components/DeleteDialog", () => ({
   DeleteDialog: () => <div data-testid="delete-dialog" />,
 }));
 
 // Mock Badge component
-jest.mock("@/components/ui/badge", () => ({
+vi.mock("@/components/ui/badge", () => ({
   Badge: ({ children, className }: any) => <span className={className}>{children}</span>,
 }));
 
 // Mock ActivityStatusHeader
-jest.mock("@/components/Shared/ActivityCard/ActivityStatusHeader", () => ({
+vi.mock("@/components/Shared/ActivityCard/ActivityStatusHeader", () => ({
   ActivityStatusHeader: () => <div data-testid="activity-status-header" />,
 }));
 
 // Mock ActivityAttribution
-jest.mock("@/components/Shared/ActivityCard/ActivityAttribution", () => ({
+vi.mock("@/components/Shared/ActivityCard/ActivityAttribution", () => ({
   ActivityAttribution: () => <div data-testid="activity-attribution" />,
 }));
 
 // Mock GrantAssociation
-jest.mock("@/components/Shared/ActivityCard/GrantAssociation", () => ({
+vi.mock("@/components/Shared/ActivityCard/GrantAssociation", () => ({
   GrantAssociation: () => <div data-testid="grant-association" />,
 }));
 
@@ -66,14 +66,9 @@ jest.mock("@/components/Shared/ActivityCard/GrantAssociation", () => ({
 vi.mock("@/hooks/useMilestone", () => ({
   useMilestone: () => ({
     isDeleting: false,
-<<<<<<< HEAD
-    deleteMilestone: jest.fn(),
-    multiGrantDelete: jest.fn(),
-    multiGrantUndoCompletion: jest.fn(),
-=======
     deleteMilestone: vi.fn(),
     multiGrantDelete: vi.fn(),
->>>>>>> 8322801b (test: migrate Jest to Vitest for unit/integration tests)
+    multiGrantUndoCompletion: vi.fn(),
   }),
 }));
 

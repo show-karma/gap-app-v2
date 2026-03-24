@@ -13,7 +13,7 @@
  */
 import React from "react";
 
-jest.mock("next/dynamic", () => {
+vi.mock("next/dynamic", () => {
   return (loader: () => Promise<any>, _opts?: any) => {
     let Component: any = null;
     loader().then((mod: any) => {

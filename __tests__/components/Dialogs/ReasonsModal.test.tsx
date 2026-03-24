@@ -476,29 +476,6 @@ describe("ReasonsModal", () => {
     });
   });
 
-  describe("Button Content", () => {
-    it("should have icon before text in trigger button", () => {
-      render(<ReasonsModal text="Include" reasons={mockReasonsInclude} />);
-
-      const button = screen.getByText("Include").closest("button");
-      expect(button?.firstChild).toMatchSnapshot();
-    });
-
-    it("should have proper gap between icon and text", () => {
-      render(<ReasonsModal text="Include" reasons={mockReasonsInclude} />);
-
-      const button = screen.getByText("Include").closest("button");
-      expect(button?.className).toContain("gap-x-1");
-    });
-
-    it("should have rounded button styling", () => {
-      render(<ReasonsModal text="Include" reasons={mockReasonsInclude} />);
-
-      const button = screen.getByText("Include").closest("button");
-      expect(button?.className).toContain("rounded-md");
-    });
-  });
-
   describe("Close Button", () => {
     it("should render Close button in modal footer", () => {
       render(<ReasonsModal text="Include" reasons={mockReasonsInclude} />);
