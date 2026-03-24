@@ -289,7 +289,7 @@ export default function AddProgram({
       const topLevelFields = buildTopLevelFields(data);
 
       // Use V2 endpoint - owner comes from JWT session
-      const [_request, error] = await fetchData(
+      const [_request, error, , status] = await fetchData(
         INDEXER.REGISTRY.V2.CREATE,
         "POST",
         {
@@ -302,7 +302,9 @@ export default function AddProgram({
         true
       );
       if (error) {
-        throw new Error(error);
+        const fetchError = new Error(error);
+        (fetchError as any).statusCode = status;
+        throw fetchError;
       }
       toast.success(
         <p className="text-left">
@@ -317,8 +319,8 @@ export default function AddProgram({
       router.push(PAGES.REGISTRY.ROOT);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      const lowerError = errorMessage?.toLowerCase() ?? "";
-      if (lowerError.includes("program limit exceeded") || lowerError.includes("program limit")) {
+      const statusCode = (error as any)?.statusCode;
+      if (statusCode === 403 && errorMessage?.toLowerCase().includes("program limit")) {
         toast.error(
           "Your community is on the free tier, which allows 1 program. Contact us to upgrade.",
           { duration: 10000 }
