@@ -120,3 +120,65 @@ describe("ActivityFeed - Activity Type Labels", () => {
     expect(screen.getByText("No activities to display")).toBeInTheDocument();
   });
 });
+
+describe("ActivityFeed - Grant Title Display", () => {
+  const createGrantReceived = (
+    overrides: Partial<NonNullable<UnifiedMilestone["grantReceived"]>> = {}
+  ): UnifiedMilestone => ({
+    uid: "test-grant-received-1",
+    type: "grant_received",
+    title: "Grant received",
+    description: "",
+    completed: false,
+    createdAt: new Date().toISOString(),
+    chainID: 1,
+    refUID: "0xref1",
+    source: { type: "grant_received" },
+    grantReceived: {
+      amount: "1000 USDC",
+      communityName: "Test Community",
+      communityImage: "https://example.com/image.png",
+      grantTitle: "Test Grant",
+      grantUID: "0xgrant1",
+      ...overrides,
+    },
+  });
+
+  it("should show grant title below community name when both exist and differ", () => {
+    const milestones = [createGrantReceived()];
+    render(<ActivityFeed milestones={milestones} />);
+
+    // Community name appears in both ProfilePicture mock and the label span
+    expect(screen.getAllByText("Test Community").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByTestId("grant-title")).toHaveTextContent("Test Grant");
+  });
+
+  it("should fall back to community name only when grantTitle is undefined", () => {
+    const milestones = [createGrantReceived({ grantTitle: undefined })];
+    render(<ActivityFeed milestones={milestones} />);
+
+    expect(screen.getAllByText("Test Community").length).toBeGreaterThanOrEqual(1);
+    expect(screen.queryByTestId("grant-title")).not.toBeInTheDocument();
+  });
+
+  it("should fall back to community name only when grantTitle is empty string", () => {
+    const milestones = [createGrantReceived({ grantTitle: "" })];
+    render(<ActivityFeed milestones={milestones} />);
+
+    expect(screen.getAllByText("Test Community").length).toBeGreaterThanOrEqual(1);
+    expect(screen.queryByTestId("grant-title")).not.toBeInTheDocument();
+  });
+
+  it("should not duplicate display when grantTitle equals communityName (case-insensitive)", () => {
+    const milestones = [
+      createGrantReceived({
+        communityName: "Test Community",
+        grantTitle: "test community",
+      }),
+    ];
+    render(<ActivityFeed milestones={milestones} />);
+
+    expect(screen.getAllByText("Test Community").length).toBeGreaterThanOrEqual(1);
+    expect(screen.queryByTestId("grant-title")).not.toBeInTheDocument();
+  });
+});
