@@ -1,11 +1,18 @@
 "use client";
 
-import { ChevronRightIcon, HomeIcon } from "@heroicons/react/24/outline";
+import { Home } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { useMemo } from "react";
+import React, { useMemo } from "react";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { Link } from "@/src/components/navigation/Link";
 import { PAGES } from "@/utilities/pages";
-import { cn } from "@/utilities/tailwind";
 import { useWhitelabel } from "@/utilities/whitelabel-context";
 
 /** Human-readable labels for URL path segments */
@@ -73,7 +80,7 @@ export function ManageBreadcrumbs({ communitySlug }: { communitySlug: string }) 
       // Use human-readable label or truncate UUIDs/IDs
       let label = SEGMENT_LABELS[segment] || segment;
       if (label.length > 20 && !SEGMENT_LABELS[segment]) {
-        // Likely a programId or applicationId - show truncated
+        // Likely a programId or applicationId — show truncated
         label = `${label.slice(0, 8)}...`;
       }
 
@@ -86,30 +93,26 @@ export function ManageBreadcrumbs({ communitySlug }: { communitySlug: string }) 
   if (crumbs.length === 0) return null;
 
   return (
-    <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-sm mb-4 min-w-0">
-      {crumbs.map((crumb, index) => (
-        <div key={crumb.href} className="flex items-center gap-1 min-w-0">
-          {index > 0 && (
-            <ChevronRightIcon className="w-3.5 h-3.5 flex-shrink-0 text-gray-400 dark:text-gray-500" />
-          )}
-          {crumb.isLast ? (
-            <span className="text-gray-900 dark:text-white font-medium truncate">
-              {crumb.label}
-            </span>
-          ) : (
-            <Link
-              href={crumb.href}
-              className={cn(
-                "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors truncate",
-                index === 0 && "flex items-center gap-1"
+    <Breadcrumb>
+      <BreadcrumbList>
+        {crumbs.map((crumb, index) => (
+          <React.Fragment key={crumb.href}>
+            {index > 0 && <BreadcrumbSeparator />}
+            <BreadcrumbItem>
+              {crumb.isLast ? (
+                <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
+              ) : (
+                <BreadcrumbLink asChild>
+                  <Link href={crumb.href} className="flex items-center gap-1">
+                    {index === 0 && <Home className="size-3.5" />}
+                    <span>{crumb.label}</span>
+                  </Link>
+                </BreadcrumbLink>
               )}
-            >
-              {index === 0 && <HomeIcon className="w-3.5 h-3.5 flex-shrink-0" />}
-              <span>{crumb.label}</span>
-            </Link>
-          )}
-        </div>
-      ))}
-    </nav>
+            </BreadcrumbItem>
+          </React.Fragment>
+        ))}
+      </BreadcrumbList>
+    </Breadcrumb>
   );
 }
