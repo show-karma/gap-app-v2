@@ -38,6 +38,8 @@ function toDisplayDate(date: Date): string {
   return `${month}/${day}/${year}`;
 }
 
+const MAX_YEAR = new Date().getFullYear() + 10;
+
 interface ParseResult {
   date: Date | null;
   error: string | null;
@@ -54,9 +56,7 @@ function parseInputDate(text: string): ParseResult {
 
   if (month < 1 || month > 12) return { date: null, error: "Month must be between 01 and 12" };
   if (day < 1 || day > 31) return { date: null, error: "Day must be between 01 and 31" };
-
-  const maxYear = new Date().getFullYear() + 10;
-  if (year > maxYear) return { date: null, error: `Year cannot be later than ${maxYear}` };
+  if (year > MAX_YEAR) return { date: null, error: `Year cannot be later than ${MAX_YEAR}` };
 
   const date = new Date(year, month - 1, day);
   if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
