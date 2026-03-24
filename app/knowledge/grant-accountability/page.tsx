@@ -1,17 +1,31 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
+import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
 
 export const metadata: Metadata = customMetadata({
   title: "What Is Grant Accountability in Web3?",
   description:
-    "Grant accountability turns funding promises into persistent execution history. Learn how funded projects are tracked after money is disbursed.",
+    "Grant accountability turns funding promises into persistent execution history. Discover how to track funded projects and improve capital allocation over time.",
   path: "/knowledge/grant-accountability",
 });
 
 export default function GrantAccountabilityPage() {
   return (
     <main className="container mx-auto max-w-3xl px-4 py-12">
+      <ArticleJsonLd
+        title="What Is Grant Accountability in Web3?"
+        description="Grant accountability turns funding promises into persistent execution history. Discover how to track funded projects and improve capital allocation over time."
+        url="/knowledge/grant-accountability"
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: "/" },
+          { name: "Knowledge", url: "/knowledge" },
+          { name: "Grant Accountability", url: "/knowledge/grant-accountability" },
+        ]}
+      />
       <article className="space-y-8">
         <h1 className="text-3xl font-bold">What Is Grant Accountability in Web3?</h1>
 
@@ -71,8 +85,26 @@ export default function GrantAccountabilityPage() {
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-xl font-semibold">Related</h2>
+          <h2 className="text-xl font-semibold">Related articles</h2>
           <div className="space-y-1">
+            <Link
+              href="/knowledge/why-grant-programs-fail"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → Why grant programs fail
+            </Link>
+            <Link
+              href="/knowledge/grant-lifecycle"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → The grant lifecycle
+            </Link>
+            <Link
+              href="/knowledge/impact-measurement"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → Impact measurement
+            </Link>
             <Link
               href="/knowledge/project-registry"
               className="block text-blue-600 hover:underline dark:text-blue-400"

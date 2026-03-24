@@ -1,19 +1,32 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
+import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
 
+const title = "What Are Project Profiles for Funded Work?";
+const description =
+  "A public, shareable page where projects document funding, milestones, updates, and outcomes. Learn what project profiles are and how they build credibility.";
+
 export const metadata: Metadata = customMetadata({
-  title: "What Is a Project Profile?",
-  description:
-    "A public, shareable page where projects document funding, milestones, updates, and outcomes over time. Learn what project profiles are.",
+  title,
+  description,
   path: "/knowledge/project-profiles",
 });
 
 export default function ProjectProfilesPage() {
   return (
     <main className="container mx-auto max-w-3xl px-4 py-12">
+      <ArticleJsonLd title={title} description={description} url="/knowledge/project-profiles" />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: "/" },
+          { name: "Knowledge", url: "/knowledge" },
+          { name: "Project Profiles", url: "/knowledge/project-profiles" },
+        ]}
+      />
       <article className="space-y-8">
-        <h1 className="text-3xl font-bold">What Is a Project Profile?</h1>
+        <h1 className="text-3xl font-bold">What Are Project Profiles for Funded Work?</h1>
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold">In one sentence</h2>
@@ -120,6 +133,30 @@ export default function ProjectProfilesPage() {
               → Create your project profile
             </Link>
           </p>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="text-xl font-semibold">Related articles</h2>
+          <div className="space-y-1">
+            <Link
+              href="/knowledge/why-grantees-need-project-profiles"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → Why grantees need project profiles
+            </Link>
+            <Link
+              href="/knowledge/how-funders-use-project-profiles"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → How funders use project profiles
+            </Link>
+            <Link
+              href="/knowledge/onchain-project-profiles"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → Onchain project profiles explained
+            </Link>
+          </div>
         </section>
       </article>
     </main>

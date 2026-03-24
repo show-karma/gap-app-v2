@@ -1,23 +1,31 @@
-"use client";
+import type { Metadata } from "next";
+import { getProjectGrants } from "@/services/project-grants.service";
+import { generateGrantOverviewMetadata } from "@/utilities/metadata/projectMetadata";
+import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
+import { GrantDetailLayoutClient } from "./GrantDetailLayoutClient";
 
-import dynamic from "next/dynamic";
+type Params = Promise<{
+  projectId: string;
+  grantUid: string;
+}>;
 
-const GrantDetailLayout = dynamic(
-  () =>
-    import("@/components/Pages/Project/v2/GrantDetail/GrantDetailLayout").then(
-      (mod) => mod.GrantDetailLayout
-    ),
-  {
-    loading: () => (
-      <div className="flex flex-col gap-4">
-        <div className="animate-pulse h-8 w-32 bg-gray-200 dark:bg-zinc-800 rounded" />
-        <div className="animate-pulse h-10 w-64 bg-gray-200 dark:bg-zinc-800 rounded" />
-        <div className="animate-pulse h-12 w-full bg-gray-200 dark:bg-zinc-800 rounded" />
-        <div className="animate-pulse h-64 w-full bg-gray-200 dark:bg-zinc-800 rounded" />
-      </div>
-    ),
+export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
+  const { projectId, grantUid } = await params;
+  const projectInfo = await getProjectCachedData(projectId);
+  const grants = await getProjectGrants(projectId);
+  const grant = grants.find((g) => g.uid === grantUid);
+
+  if (!grant) {
+    return generateGrantOverviewMetadata(
+      projectInfo,
+      { details: { title: "", description: "" } } as never,
+      projectId,
+      grantUid
+    );
   }
-);
+
+  return generateGrantOverviewMetadata(projectInfo, grant, projectId, grantUid);
+}
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -35,5 +43,5 @@ interface LayoutProps {
  * while showing grant-specific content.
  */
 export default function Layout({ children }: LayoutProps) {
-  return <GrantDetailLayout>{children}</GrantDetailLayout>;
+  return <GrantDetailLayoutClient>{children}</GrantDetailLayoutClient>;
 }

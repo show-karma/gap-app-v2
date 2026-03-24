@@ -8,7 +8,8 @@ import { customMetadata } from "@/utilities/meta";
 
 export const metadata: Metadata = customMetadata({
   title: "Directory of Web3 Funding Programs",
-  description: "Find all the funding opportunities across the web3 ecosystem.",
+  description:
+    "Browse the complete directory of Web3 funding programs. Find grants, retroactive funding, and ecosystem support across Ethereum, Optimism, Arbitrum, and more.",
   path: "/funding-map",
 });
 

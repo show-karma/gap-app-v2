@@ -13,7 +13,7 @@ import { cn } from "@/utilities/tailwind";
 export const metadata: Metadata = customMetadata({
   title: "For Funders - Allocate funding and grow your ecosystem",
   description:
-    "Discover how Karma helps funders allocate grants, track milestones, measure impact, and grow their ecosystems with a full-stack funding platform.",
+    "Discover how Karma helps funders allocate grants, track milestones, measure impact, and grow their ecosystems with a full-stack transparent funding platform.",
   path: "/funders",
 });
 

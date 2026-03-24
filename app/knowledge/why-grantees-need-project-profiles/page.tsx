@@ -1,17 +1,37 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
+import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
 
+const title = "Why Grantees Need Project Profiles";
+const description =
+  "Project profiles help grantees show funders what happens after funding, build lasting credibility, and avoid repetitive reporting across grant programs.";
+
 export const metadata: Metadata = customMetadata({
-  title: "Why Grantees Need Project Profiles",
-  description:
-    "How project profiles help grantees show funders what happens after funding, build credibility, and avoid repetitive reporting.",
+  title,
+  description,
   path: "/knowledge/why-grantees-need-project-profiles",
 });
 
 export default function WhyGranteesNeedProjectProfilesPage() {
   return (
     <main className="container mx-auto max-w-3xl px-4 py-12">
+      <ArticleJsonLd
+        title={title}
+        description={description}
+        url="/knowledge/why-grantees-need-project-profiles"
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: "/" },
+          { name: "Knowledge", url: "/knowledge" },
+          {
+            name: "Why Grantees Need Project Profiles",
+            url: "/knowledge/why-grantees-need-project-profiles",
+          },
+        ]}
+      />
       <article className="space-y-8">
         <h1 className="text-3xl font-bold">Why Grantees Need Project Profiles</h1>
 
@@ -88,6 +108,24 @@ export default function WhyGranteesNeedProjectProfilesPage() {
               → Create your project profile
             </Link>
           </p>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="text-xl font-semibold">Related articles</h2>
+          <div className="space-y-1">
+            <Link
+              href="/knowledge/project-profiles"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → What are project profiles?
+            </Link>
+            <Link
+              href="/knowledge/project-profiles-as-resumes"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → Project profiles as resumes for funded work
+            </Link>
+          </div>
         </section>
       </article>
     </main>

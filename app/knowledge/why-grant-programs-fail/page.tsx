@@ -1,16 +1,31 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
+import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
 
 export const metadata: Metadata = customMetadata({
   title: "Why Most Grant Programs Fail After Funding",
   description:
-    "A structural analysis of why many funding programs struggle to produce consistent outcomes despite strong applicant pools.",
+    "Grant programs fail at post-funding follow-through, not project selection. Learn the structural reasons and how to build systems that learn from outcomes.",
   path: "/knowledge/why-grant-programs-fail",
 });
 
 export default function WhyGrantProgramsFailPage() {
   return (
     <main className="container mx-auto max-w-3xl px-4 py-12">
+      <ArticleJsonLd
+        title="Why Most Grant Programs Fail After Funding"
+        description="Grant programs fail at post-funding follow-through, not project selection. Learn the structural reasons and how to build systems that learn from outcomes."
+        url="/knowledge/why-grant-programs-fail"
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: "/" },
+          { name: "Knowledge", url: "/knowledge" },
+          { name: "Why Grant Programs Fail", url: "/knowledge/why-grant-programs-fail" },
+        ]}
+      />
       <article className="space-y-8">
         <h1 className="text-3xl font-bold">Why Most Grant Programs Fail After Funding</h1>
 
@@ -62,6 +77,42 @@ export default function WhyGrantProgramsFailPage() {
             When execution data is missing, future funding decisions are made with no memory.
             Ecosystems repeat the same risks without realizing it.
           </p>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="text-xl font-semibold">Related articles</h2>
+          <div className="space-y-1">
+            <Link
+              href="/knowledge/grant-accountability"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → Grant accountability
+            </Link>
+            <Link
+              href="/knowledge/grant-lifecycle"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → The grant lifecycle
+            </Link>
+            <Link
+              href="/knowledge/impact-measurement"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → Impact measurement
+            </Link>
+            <Link
+              href="/knowledge/dao-grant-milestones"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → DAO grant milestones
+            </Link>
+            <Link
+              href="/knowledge/manual-vs-platform-grant-tracking"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → Manual vs platform grant tracking
+            </Link>
+          </div>
         </section>
 
         <section className="space-y-4">

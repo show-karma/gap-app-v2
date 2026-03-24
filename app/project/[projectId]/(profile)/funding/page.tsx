@@ -1,21 +1,21 @@
-"use client";
+import type { Metadata } from "next";
+import { generateProjectFundingMetadata } from "@/utilities/metadata/projectMetadata";
+import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
+import { FundingPageClient } from "./FundingPageClient";
 
-import dynamic from "next/dynamic";
-import { FundingContentSkeleton } from "@/components/Pages/Project/v2/Skeletons";
+type Params = Promise<{
+  projectId: string;
+}>;
 
-const FundingContentWrapper = dynamic(
-  () =>
-    import("@/components/Pages/Project/v2/Content/FundingContentWrapper").then(
-      (mod) => mod.FundingContentWrapper
-    ),
-  {
-    loading: () => <FundingContentSkeleton />,
-  }
-);
+export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
+  const { projectId } = await params;
+  const projectInfo = await getProjectCachedData(projectId);
+  return generateProjectFundingMetadata(projectInfo, projectId);
+}
 
 /**
  * Funding page - displays the list of grants/funding for the project.
  */
 export default function FundingPage() {
-  return <FundingContentWrapper />;
+  return <FundingPageClient />;
 }

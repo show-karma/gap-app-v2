@@ -1,13 +1,31 @@
-"use client";
+import type { Metadata } from "next";
+import { getProjectGrants } from "@/services/project-grants.service";
+import { generateGrantOverviewMetadata } from "@/utilities/metadata/projectMetadata";
+import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
+import { GrantOverviewPageClient } from "./GrantOverviewPageClient";
 
-import dynamic from "next/dynamic";
-import { Suspense } from "react";
-import { ProjectGrantsOverviewLoading } from "@/components/Pages/Project/Loading/Grants/Overview";
+type Params = Promise<{
+  projectId: string;
+  grantUid: string;
+}>;
 
-const GrantOverview = dynamic(
-  () => import("@/components/Pages/Project/Grants/Overview").then((mod) => mod.GrantOverview),
-  { loading: () => <ProjectGrantsOverviewLoading /> }
-);
+export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
+  const { projectId, grantUid } = await params;
+  const projectInfo = await getProjectCachedData(projectId);
+  const grants = await getProjectGrants(projectId);
+  const grant = grants.find((g) => g.uid === grantUid);
+
+  if (!grant) {
+    return generateGrantOverviewMetadata(
+      projectInfo,
+      { details: { title: "", description: "" } } as never,
+      projectId,
+      grantUid
+    );
+  }
+
+  return generateGrantOverviewMetadata(projectInfo, grant, projectId, grantUid);
+}
 
 /**
  * Grant Overview Page (V2)
@@ -19,9 +37,5 @@ const GrantOverview = dynamic(
  * - Fund usage breakdown (if available)
  */
 export default function GrantOverviewPage() {
-  return (
-    <Suspense fallback={<ProjectGrantsOverviewLoading />}>
-      <GrantOverview />
-    </Suspense>
-  );
+  return <GrantOverviewPageClient />;
 }

@@ -1,4 +1,6 @@
+import type { Metadata } from "next";
 import { FundingOpportunities } from "@/components/CommunityGrants/FundingOpportunities";
+import { PROJECT_NAME } from "@/constants/brand";
 import { pagesOnRoot } from "@/utilities/pagesOnRoot";
 import { getCommunityDetails } from "@/utilities/queries/v2/getCommunityData";
 import { getFundingOpportunities } from "@/utilities/queries/v2/getFundingOpportunities";
@@ -8,6 +10,17 @@ type Props = {
     communityId: string;
   }>;
 };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { communityId } = await params;
+  const community = await getCommunityDetails(communityId);
+  const communityName = community?.details?.name || communityId;
+
+  return {
+    title: `${communityName} Funding Opportunities | ${PROJECT_NAME}`,
+    description: `Discover open funding opportunities from ${communityName}. Apply for grants, explore program details, deadlines, and eligibility criteria on ${PROJECT_NAME}.`,
+  };
+}
 
 export default async function FundingOpportunitiesPage(props: Props) {
   const { communityId } = await props.params;

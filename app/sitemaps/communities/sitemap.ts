@@ -1,11 +1,28 @@
 import type { MetadataRoute } from "next";
 import { chosenCommunities } from "@/utilities/chosenCommunities";
 
+const communitySubPages = ["funding-opportunities", "impact", "updates"] as const;
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  return chosenCommunities().map((community) => ({
-    url: `https://karmahq.xyz/${community.slug || community.uid}`,
-    lastModified: new Date().toISOString(),
-    changeFrequency: "hourly",
-    priority: 1,
-  }));
+  const now = new Date().toISOString();
+
+  return chosenCommunities().flatMap((community) => {
+    const identifier = community.slug || community.uid;
+
+    const rootEntry: MetadataRoute.Sitemap[number] = {
+      url: `https://karmahq.xyz/community/${identifier}`,
+      lastModified: now,
+      changeFrequency: "daily",
+      priority: 0.9,
+    };
+
+    const subPageEntries: MetadataRoute.Sitemap = communitySubPages.map((subPage) => ({
+      url: `https://karmahq.xyz/community/${identifier}/${subPage}`,
+      lastModified: now,
+      changeFrequency: "daily" as const,
+      priority: 0.7,
+    }));
+
+    return [rootEntry, ...subPageEntries];
+  });
 }

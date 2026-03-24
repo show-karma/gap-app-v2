@@ -1,13 +1,31 @@
-"use client";
+import type { Metadata } from "next";
+import { getProjectGrants } from "@/services/project-grants.service";
+import { generateGrantMilestonesMetadata } from "@/utilities/metadata/projectMetadata";
+import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
+import { MilestonesAndUpdatesPageClient } from "./MilestonesAndUpdatesPageClient";
 
-import dynamic from "next/dynamic";
-import { Suspense } from "react";
-import { ProjectGrantsMilestonesAndUpdatesLoading } from "@/components/Pages/Project/Loading/Grants/MilestonesAndUpdate";
+type Params = Promise<{
+  projectId: string;
+  grantUid: string;
+}>;
 
-const MilestonesAndUpdates = dynamic(
-  () => import("@/components/Pages/Grants/MilestonesAndUpdates"),
-  { loading: () => <ProjectGrantsMilestonesAndUpdatesLoading /> }
-);
+export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
+  const { projectId, grantUid } = await params;
+  const projectInfo = await getProjectCachedData(projectId);
+  const grants = await getProjectGrants(projectId);
+  const grant = grants.find((g) => g.uid === grantUid);
+
+  if (!grant) {
+    return generateGrantMilestonesMetadata(
+      projectInfo,
+      { details: { title: "", description: "" } } as never,
+      projectId,
+      grantUid
+    );
+  }
+
+  return generateGrantMilestonesMetadata(projectInfo, grant, projectId, grantUid);
+}
 
 /**
  * Grant Milestones and Updates Page (V2)
@@ -18,9 +36,5 @@ const MilestonesAndUpdates = dynamic(
  * - Update history
  */
 export default function MilestonesAndUpdatesPage() {
-  return (
-    <Suspense fallback={<ProjectGrantsMilestonesAndUpdatesLoading />}>
-      <MilestonesAndUpdates />
-    </Suspense>
-  );
+  return <MilestonesAndUpdatesPageClient />;
 }

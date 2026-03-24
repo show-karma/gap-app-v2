@@ -1,17 +1,37 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
+import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
 
+const title = "Project Profiles for Software vs Non-Software Projects";
+const description =
+  "Project profiles work for both technical and non-technical work. Learn how software and non-software projects document progress and build credibility differently.";
+
 export const metadata: Metadata = customMetadata({
-  title: "Project Profiles for Software vs Non-Software Projects",
-  description:
-    "How project profiles work for both technical and non-technical work, with different approaches to documenting progress and impact.",
+  title,
+  description,
   path: "/knowledge/project-profiles-software-vs-nonsoftware",
 });
 
 export default function ProjectProfilesSoftwareVsNonsoftwarePage() {
   return (
     <main className="container mx-auto max-w-3xl px-4 py-12">
+      <ArticleJsonLd
+        title={title}
+        description={description}
+        url="/knowledge/project-profiles-software-vs-nonsoftware"
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: "/" },
+          { name: "Knowledge", url: "/knowledge" },
+          {
+            name: "Software vs Non-Software Profiles",
+            url: "/knowledge/project-profiles-software-vs-nonsoftware",
+          },
+        ]}
+      />
       <article className="space-y-8">
         <h1 className="text-3xl font-bold">
           Project Profiles for Software vs Non-Software Projects
@@ -85,6 +105,24 @@ export default function ProjectProfilesSoftwareVsNonsoftwarePage() {
               → Create your project profile
             </Link>
           </p>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="text-xl font-semibold">Related articles</h2>
+          <div className="space-y-1">
+            <Link
+              href="/knowledge/project-profiles"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → What are project profiles?
+            </Link>
+            <Link
+              href="/knowledge/onchain-project-profiles"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → Onchain project profiles explained
+            </Link>
+          </div>
         </section>
       </article>
     </main>

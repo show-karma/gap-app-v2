@@ -1,12 +1,17 @@
-"use client";
+import type { Metadata } from "next";
+import { generateProjectContactMetadata } from "@/utilities/metadata/projectMetadata";
+import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
+import { ContactInfoPageClient } from "./ContactInfoPageClient";
 
-import dynamic from "next/dynamic";
-import { Suspense } from "react";
-import { DefaultLoading } from "@/components/Utilities/DefaultLoading";
+type Params = Promise<{
+  projectId: string;
+}>;
 
-const ContactInfoPage = dynamic(() => import("@/components/Pages/Project/ContactInfoPage"), {
-  loading: () => <DefaultLoading />,
-});
+export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
+  const { projectId } = await params;
+  const projectInfo = await getProjectCachedData(projectId);
+  return generateProjectContactMetadata(projectInfo, projectId);
+}
 
 /**
  * Contact Info Page (V2)
@@ -16,9 +21,5 @@ const ContactInfoPage = dynamic(() => import("@/components/Pages/Project/Contact
  * Only accessible to authorized users (Project Admin, Project Owner, Staff, Contract Owner).
  */
 export default function ContactInfoPageV2() {
-  return (
-    <Suspense fallback={<DefaultLoading />}>
-      <ContactInfoPage />
-    </Suspense>
-  );
+  return <ContactInfoPageClient />;
 }

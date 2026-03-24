@@ -1,18 +1,5 @@
-"use client";
-
-import dynamic from "next/dynamic";
 import type { ReactNode } from "react";
-import { ProjectProfileLayoutSkeleton } from "@/components/Pages/Project/v2/Skeletons";
-
-const ProjectProfileLayout = dynamic(
-  () =>
-    import("@/components/Pages/Project/v2/Layout/ProjectProfileLayout").then(
-      (mod) => mod.ProjectProfileLayout
-    ),
-  {
-    loading: () => <ProjectProfileLayoutSkeleton />,
-  }
-);
+import { ProfileLayoutClient } from "./ProfileLayoutClient";
 
 interface ProfileLayoutProps {
   children: ReactNode;
@@ -21,7 +8,10 @@ interface ProfileLayoutProps {
 /**
  * Shared layout for the main project profile pages (updates, about, funding, impact, team).
  * This layout provides the consistent header, sidebar, and tab navigation.
+ *
+ * This is a server component wrapper that delegates rendering to the client-side
+ * ProfileLayoutClient component. Sub-page metadata is handled by each individual page.
  */
 export default function ProfileLayout({ children }: ProfileLayoutProps) {
-  return <ProjectProfileLayout>{children}</ProjectProfileLayout>;
+  return <ProfileLayoutClient>{children}</ProfileLayoutClient>;
 }

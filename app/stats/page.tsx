@@ -4,9 +4,9 @@ import { Stats } from "@/components/Pages/Stats";
 import { customMetadata } from "@/utilities/meta";
 
 export const metadata: Metadata = customMetadata({
-  title: "Platform Statistics",
+  title: "Platform Statistics - Projects, Grants & Ecosystem Growth",
   description:
-    "View Karma platform statistics including total projects, grants, communities, and ecosystem growth metrics.",
+    "View Karma platform statistics including total projects, grants awarded, active communities, milestone completions, and ecosystem growth metrics over time.",
   path: "/stats",
 });
 

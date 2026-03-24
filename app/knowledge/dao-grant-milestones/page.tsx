@@ -1,17 +1,31 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
+import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
 
 export const metadata: Metadata = customMetadata({
   title: "How DAOs Track Grant Milestones",
   description:
-    "A practical breakdown of how DAOs define, track, and evaluate grant milestones, and the tradeoffs of different approaches.",
+    "Explore how DAOs define, track, and evaluate grant milestones. Compare approaches from spreadsheets to modular platforms and learn the tradeoffs of each method.",
   path: "/knowledge/dao-grant-milestones",
 });
 
 export default function DaoGrantMilestonesPage() {
   return (
     <main className="container mx-auto max-w-3xl px-4 py-12">
+      <ArticleJsonLd
+        title="How DAOs Track Grant Milestones"
+        description="Explore how DAOs define, track, and evaluate grant milestones. Compare approaches from spreadsheets to modular platforms and learn the tradeoffs of each method."
+        url="/knowledge/dao-grant-milestones"
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: "/" },
+          { name: "Knowledge", url: "/knowledge" },
+          { name: "DAO Grant Milestones", url: "/knowledge/dao-grant-milestones" },
+        ]}
+      />
       <article className="space-y-8">
         <h1 className="text-3xl font-bold">How DAOs Track Grant Milestones</h1>
 
@@ -82,15 +96,39 @@ export default function DaoGrantMilestonesPage() {
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-xl font-semibold">Related</h2>
-          <p>
+          <h2 className="text-xl font-semibold">Related articles</h2>
+          <div className="space-y-1">
             <Link
               href="/knowledge/ai-grant-evaluation"
-              className="text-blue-600 hover:underline dark:text-blue-400"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → AI-assisted grant evaluation
             </Link>
-          </p>
+            <Link
+              href="/knowledge/milestones-vs-impact"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → Milestones vs impact
+            </Link>
+            <Link
+              href="/knowledge/grant-lifecycle"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → The grant lifecycle
+            </Link>
+            <Link
+              href="/knowledge/manual-vs-platform-grant-tracking"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → Manual vs platform grant tracking
+            </Link>
+            <Link
+              href="/knowledge/grant-accountability"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → Grant accountability
+            </Link>
+          </div>
         </section>
 
         <section className="space-y-4">

@@ -14,7 +14,7 @@ import { cn } from "@/utilities/tailwind";
 export const metadata: Metadata = {
   ...customMetadata({
     description:
-      "Karma is a platform for builders and ecosystems. Builders showcase their work and build reputation. Ecosystems use our full stack solution to allocate funding and grow their ecosystems.",
+      "Karma helps builders get funded and build reputation. Ecosystems use our full-stack solution to allocate grants, track milestones, and measure impact.",
     path: "/",
   }),
   title: {

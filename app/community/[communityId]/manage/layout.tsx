@@ -1,20 +1,10 @@
-"use client";
+import type { Metadata } from "next";
+import { ManageLayoutClient } from "@/components/Manage/ManageLayoutClient";
 
-import { useParams } from "next/navigation";
-import { ManageLayoutShell } from "@/components/Manage/ManageLayoutShell";
-import { PermissionProvider } from "@/src/core/rbac/context/permission-context";
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 export default function ManageLayout({ children }: { children: React.ReactNode }) {
-  const params = useParams();
-  const communityId = params.communityId as string;
-
-  return (
-    <PermissionProvider
-      resourceContext={{
-        communityId,
-      }}
-    >
-      <ManageLayoutShell>{children}</ManageLayoutShell>
-    </PermissionProvider>
-  );
+  return <ManageLayoutClient>{children}</ManageLayoutClient>;
 }

@@ -1,19 +1,36 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
+import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
 
+const title = "Whitelabel Funding Platforms for DAO Ecosystems";
+const description =
+  "Why ecosystems run grant programs under their own brand using shared infrastructure. Learn how whitelabel platforms reduce costs and accelerate program launches.";
+
 export const metadata: Metadata = customMetadata({
-  title: "Whitelabel Funding Platforms",
-  description:
-    "Why ecosystems run funding programs under their own brand using shared infrastructure. Learn about whitelabel funding platforms.",
+  title,
+  description,
   path: "/knowledge/whitelabel-funding-platforms",
 });
 
 export default function WhitelabelFundingPlatformsPage() {
   return (
     <main className="container mx-auto max-w-3xl px-4 py-12">
+      <ArticleJsonLd
+        title={title}
+        description={description}
+        url="/knowledge/whitelabel-funding-platforms"
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: "/" },
+          { name: "Knowledge", url: "/knowledge" },
+          { name: "Whitelabel Funding Platforms", url: "/knowledge/whitelabel-funding-platforms" },
+        ]}
+      />
       <article className="space-y-8">
-        <h1 className="text-3xl font-bold">Whitelabel Funding Platforms</h1>
+        <h1 className="text-3xl font-bold">Whitelabel Funding Platforms for DAO Ecosystems</h1>
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold">In one sentence</h2>
@@ -53,15 +70,27 @@ export default function WhitelabelFundingPlatformsPage() {
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-xl font-semibold">Related</h2>
-          <p>
+          <h2 className="text-xl font-semibold">Related articles</h2>
+          <div className="space-y-1">
             <Link
               href="/knowledge/grant-lifecycle"
-              className="text-blue-600 hover:underline dark:text-blue-400"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → The grant lifecycle
             </Link>
-          </p>
+            <Link
+              href="/knowledge/grant-accountability"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → Grant accountability
+            </Link>
+            <Link
+              href="/knowledge/funding-distribution-mechanisms"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → Funding distribution mechanisms
+            </Link>
+          </div>
         </section>
 
         <section className="space-y-4">

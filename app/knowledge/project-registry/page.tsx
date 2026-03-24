@@ -1,17 +1,30 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
+import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
 
+const title = "Public Project Registries for Funded Work";
+const description =
+  "Why communities maintain public records of funded projects and progress. Learn how project registries improve transparency, prevent duplicate funding, and build memory.";
+
 export const metadata: Metadata = customMetadata({
-  title: "Public Project Registries for Funded Work",
-  description:
-    "Why communities maintain public records of funded projects and their progress. Learn about project registries in open funding systems.",
+  title,
+  description,
   path: "/knowledge/project-registry",
 });
 
 export default function ProjectRegistryPage() {
   return (
     <main className="container mx-auto max-w-3xl px-4 py-12">
+      <ArticleJsonLd title={title} description={description} url="/knowledge/project-registry" />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: "/" },
+          { name: "Knowledge", url: "/knowledge" },
+          { name: "Project Registry", url: "/knowledge/project-registry" },
+        ]}
+      />
       <article className="space-y-8">
         <h1 className="text-3xl font-bold">Public Project Registries for Funded Work</h1>
 
@@ -56,19 +69,25 @@ export default function ProjectRegistryPage() {
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-xl font-semibold">Related</h2>
+          <h2 className="text-xl font-semibold">Related articles</h2>
           <div className="space-y-1">
             <Link
-              href="/knowledge/grant-lifecycle"
+              href="/knowledge/project-profiles"
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
-              → The grant lifecycle
+              → What are project profiles?
             </Link>
             <Link
               href="/knowledge/grant-accountability"
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Grant accountability
+            </Link>
+            <Link
+              href="/knowledge/grant-lifecycle"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → The grant lifecycle
             </Link>
           </div>
         </section>

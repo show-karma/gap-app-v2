@@ -9,6 +9,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/funders",
     "/funding-map",
     "/seeds",
+    "/stats",
     "/create-project-profile",
     "/knowledge",
     "/knowledge/grant-accountability",
@@ -38,12 +39,22 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/knowledge/how-funders-use-project-profiles",
     "/privacy-policy",
     "/terms-and-conditions",
+    "/dashboard",
   ];
+
+  const lowPriorityPages = ["/privacy-policy", "/terms-and-conditions", "/dashboard"];
 
   return staticPages.map((path) => ({
     url: `${SITE_URL}${path}`,
     lastModified: new Date().toISOString(),
-    changeFrequency: path === "" ? "daily" : "weekly",
-    priority: path === "" ? 1 : path.startsWith("/knowledge") ? 0.7 : 0.8,
+    changeFrequency: path === "" ? "daily" : lowPriorityPages.includes(path) ? "yearly" : "weekly",
+    priority:
+      path === ""
+        ? 1
+        : lowPriorityPages.includes(path)
+          ? 0.3
+          : path.startsWith("/knowledge")
+            ? 0.7
+            : 0.8,
   }));
 }

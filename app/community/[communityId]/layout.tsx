@@ -18,8 +18,8 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const communityName = community?.details?.name || communityId;
 
   const dynamicMetadata = {
-    title: `${PROJECT_NAME} - ${communityName} community grants`,
-    description: `View the list of grants issued by ${communityName} and the grantee updates.`,
+    title: `${communityName} Community Grants | ${PROJECT_NAME}`,
+    description: `Explore grants and funded projects by ${communityName} on ${PROJECT_NAME}. Track grantee milestones, measure impact, and discover funding opportunities in the ecosystem.`,
   };
 
   if (!community) {
@@ -27,30 +27,38 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
     dynamicMetadata.description = `Looks like no one's started this community. Create it now to launch programs, fund projects, and track progress, all in one place.`;
   }
 
+  const title = dynamicMetadata.title || DEFAULT_TITLE;
+  const description = dynamicMetadata.description || DEFAULT_DESCRIPTION;
+  const ogImageUrl = `${envVars.VERCEL_URL}/api/metadata/communities/${communityId}`;
+
   return {
-    title: dynamicMetadata.title || DEFAULT_TITLE,
-    description: dynamicMetadata.description || DEFAULT_DESCRIPTION,
+    title,
+    description,
     alternates: {
       canonical: `/community/${communityId}`,
     },
     twitter: {
+      card: "summary_large_image",
+      title,
+      description,
       creator: twitterMeta.creator,
       site: twitterMeta.site,
       images: [
         {
-          url: `${envVars.VERCEL_URL}/api/metadata/communities/${communityId}`,
-          alt: dynamicMetadata.title || DEFAULT_TITLE,
+          url: ogImageUrl,
+          alt: title,
         },
       ],
     },
     openGraph: {
-      url: SITE_URL,
-      title: dynamicMetadata.title || DEFAULT_TITLE,
-      description: dynamicMetadata.description || DEFAULT_DESCRIPTION,
+      type: "website",
+      url: `${SITE_URL}/community/${communityId}`,
+      title,
+      description,
       images: [
         {
-          url: `${envVars.VERCEL_URL}/api/metadata/communities/${communityId}`,
-          alt: dynamicMetadata.title || DEFAULT_TITLE,
+          url: ogImageUrl,
+          alt: title,
         },
       ],
     },

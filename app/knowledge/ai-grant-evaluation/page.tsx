@@ -1,17 +1,31 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
+import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
 
 export const metadata: Metadata = customMetadata({
   title: "AI-Assisted Grant Evaluation at Scale",
   description:
-    "How funding programs scale application review without sacrificing rigor using AI-assisted evaluation tools.",
+    "Learn how AI-assisted evaluation helps grant programs process hundreds of applications without sacrificing review quality. Explore practical approaches to scaling.",
   path: "/knowledge/ai-grant-evaluation",
 });
 
 export default function AiGrantEvaluationPage() {
   return (
     <main className="container mx-auto max-w-3xl px-4 py-12">
+      <ArticleJsonLd
+        title="AI-Assisted Grant Evaluation at Scale"
+        description="Learn how AI-assisted evaluation helps grant programs process hundreds of applications without sacrificing review quality. Explore practical approaches to scaling."
+        url="/knowledge/ai-grant-evaluation"
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: "/" },
+          { name: "Knowledge", url: "/knowledge" },
+          { name: "AI-Assisted Grant Evaluation", url: "/knowledge/ai-grant-evaluation" },
+        ]}
+      />
       <article className="space-y-8">
         <h1 className="text-3xl font-bold">AI-Assisted Grant Evaluation at Scale</h1>
 
@@ -64,15 +78,33 @@ export default function AiGrantEvaluationPage() {
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-xl font-semibold">Related</h2>
-          <p>
+          <h2 className="text-xl font-semibold">Related articles</h2>
+          <div className="space-y-1">
             <Link
               href="/knowledge/grant-lifecycle"
-              className="text-blue-600 hover:underline dark:text-blue-400"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → The grant lifecycle
             </Link>
-          </p>
+            <Link
+              href="/knowledge/grant-accountability"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → Grant accountability
+            </Link>
+            <Link
+              href="/knowledge/dao-grant-milestones"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → DAO grant milestones
+            </Link>
+            <Link
+              href="/knowledge/why-grant-programs-fail"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → Why grant programs fail
+            </Link>
+          </div>
         </section>
 
         <section className="space-y-4">

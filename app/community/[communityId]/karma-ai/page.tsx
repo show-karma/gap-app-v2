@@ -35,7 +35,7 @@ export async function generateMetadata({
 
   let dynamicMetadata = {
     title: `Karma AI - ${communityName} community grants`,
-    description: `Chat with Karma AI assistant to projects in ${communityName}, measure their impact and fund them.`,
+    description: `Chat with Karma AI assistant about projects in ${communityName}. Explore grantee progress, measure their impact, and discover funding opportunities in the ecosystem.`,
   };
 
   if (programId) {
@@ -45,32 +45,43 @@ export async function generateMetadata({
     if (program) {
       dynamicMetadata = {
         ...dynamicMetadata,
-        description: `Chat with Karma AI assistant to projects in ${communityName}'s ${program}, measure their impact and fund them.`,
+        description: `Chat with Karma AI assistant about projects in ${communityName}'s ${program}. Explore grantee progress, measure their impact, and discover funding opportunities.`,
       };
     }
   }
 
+  const title = dynamicMetadata.title || DEFAULT_TITLE;
+  const description = dynamicMetadata.description || DEFAULT_DESCRIPTION;
+  const ogImageUrl = `${envVars.VERCEL_URL}/api/metadata/communities/${communityId}`;
+
   return {
-    title: dynamicMetadata.title || DEFAULT_TITLE,
-    description: dynamicMetadata.description || DEFAULT_DESCRIPTION,
+    title,
+    description,
+    alternates: {
+      canonical: `/community/${communityId}/karma-ai`,
+    },
     twitter: {
+      card: "summary_large_image",
+      title,
+      description,
       creator: twitterMeta.creator,
       site: twitterMeta.site,
       images: [
         {
-          url: `${envVars.VERCEL_URL}/api/metadata/communities/${communityId}`,
-          alt: dynamicMetadata.title || DEFAULT_TITLE,
+          url: ogImageUrl,
+          alt: title,
         },
       ],
     },
     openGraph: {
-      url: SITE_URL,
-      title: dynamicMetadata.title || DEFAULT_TITLE,
-      description: dynamicMetadata.description || DEFAULT_DESCRIPTION,
+      type: "website",
+      url: `${SITE_URL}/community/${communityId}/karma-ai`,
+      title,
+      description,
       images: [
         {
-          url: `${envVars.VERCEL_URL}/api/metadata/communities/${communityId}`,
-          alt: dynamicMetadata.title || DEFAULT_TITLE,
+          url: ogImageUrl,
+          alt: title,
         },
       ],
     },

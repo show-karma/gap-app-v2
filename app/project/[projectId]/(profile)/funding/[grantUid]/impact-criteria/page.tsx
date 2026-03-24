@@ -1,21 +1,31 @@
-"use client";
+import type { Metadata } from "next";
+import { getProjectGrants } from "@/services/project-grants.service";
+import { generateGrantImpactCriteriaMetadata } from "@/utilities/metadata/projectMetadata";
+import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
+import { ImpactCriteriaPageClient } from "./ImpactCriteriaPageClient";
 
-import dynamic from "next/dynamic";
-import { Suspense } from "react";
-import { Skeleton } from "@/components/Utilities/Skeleton";
+type Params = Promise<{
+  projectId: string;
+  grantUid: string;
+}>;
 
-const GrantImpactCriteria = dynamic(
-  () => import("@/components/Pages/Grants/ImpactCriteria").then((mod) => mod.GrantImpactCriteria),
-  {
-    loading: () => (
-      <div className="flex flex-col gap-4">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-32 w-full" />
-        <Skeleton className="h-32 w-full" />
-      </div>
-    ),
+export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
+  const { projectId, grantUid } = await params;
+  const projectInfo = await getProjectCachedData(projectId);
+  const grants = await getProjectGrants(projectId);
+  const grant = grants.find((g) => g.uid === grantUid);
+
+  if (!grant) {
+    return generateGrantImpactCriteriaMetadata(
+      projectInfo,
+      { details: { title: "", description: "" } } as never,
+      projectId,
+      grantUid
+    );
   }
-);
+
+  return generateGrantImpactCriteriaMetadata(projectInfo, grant, projectId, grantUid);
+}
 
 /**
  * Grant Impact Criteria Page (V2)
@@ -26,17 +36,5 @@ const GrantImpactCriteria = dynamic(
  * - Evaluation criteria
  */
 export default function ImpactCriteriaPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="flex flex-col gap-4">
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-32 w-full" />
-          <Skeleton className="h-32 w-full" />
-        </div>
-      }
-    >
-      <GrantImpactCriteria />
-    </Suspense>
-  );
+  return <ImpactCriteriaPageClient />;
 }

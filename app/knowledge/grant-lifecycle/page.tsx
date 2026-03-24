@@ -1,20 +1,81 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
+import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
+import { HowToJsonLd } from "@/components/Seo/HowToJsonLd";
 import { customMetadata } from "@/utilities/meta";
 
 export const metadata: Metadata = customMetadata({
-  title: "The Grant Lifecycle — From Proposal to Verified Impact",
+  title: "The Grant Lifecycle: From Proposal to Verified Impact",
   description:
-    "A complete view of the grant process, from proposal to verified impact and long-term learning. Understand the full grant lifecycle.",
+    "Follow the complete grant process from proposal submission to verified impact. Learn the 10 stages every funding program needs to track and coordinate.",
   path: "/knowledge/grant-lifecycle",
 });
 
 export default function GrantLifecyclePage() {
   return (
     <main className="container mx-auto max-w-3xl px-4 py-12">
+      <ArticleJsonLd
+        title="The Grant Lifecycle: From Proposal to Verified Impact"
+        description="Follow the complete grant process from proposal submission to verified impact. Learn the 10 stages every funding program needs to track and coordinate."
+        url="/knowledge/grant-lifecycle"
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: "/" },
+          { name: "Knowledge", url: "/knowledge" },
+          { name: "The Grant Lifecycle", url: "/knowledge/grant-lifecycle" },
+        ]}
+      />
+      <HowToJsonLd
+        name="The Grant Lifecycle: From Proposal to Verified Impact"
+        description="A step-by-step guide to the complete grant lifecycle, from proposal submission through evaluation, compliance, execution, and impact measurement."
+        steps={[
+          {
+            name: "Proposal submission",
+            text: "Projects submit applications describing scope, milestones, and expected outcomes.",
+          },
+          {
+            name: "Application evaluation",
+            text: "AI-assisted and human review of applications for first-pass filtering and final decisions.",
+          },
+          {
+            name: "Selection and approval",
+            text: "Approved projects move forward with clearly defined expectations for scope, milestones, and funding structure.",
+          },
+          {
+            name: "Compliance and identity verification",
+            text: "Identity verification (KYC) is completed before funds move, treated as a gated dependency.",
+          },
+          {
+            name: "Agreement and document signing",
+            text: "Signed agreements define milestones, payment conditions, and legal obligations.",
+          },
+          {
+            name: "Fund disbursement",
+            text: "Funds are released after confirming KYC completion, signed agreements, internal approvals, and correct payment configuration.",
+          },
+          {
+            name: "Milestone execution and progress tracking",
+            text: "Projects submit updates, attach evidence, and progress is reviewed over time.",
+          },
+          {
+            name: "Public project registry",
+            text: "Funded projects and their status are listed publicly to enable community transparency.",
+          },
+          {
+            name: "Impact measurement",
+            text: "Outcomes are assessed by aggregating GitHub activity, onchain metrics, manually reported metrics, and community rollups.",
+          },
+          {
+            name: "Reputation accumulation and learning",
+            text: "Execution and impact data feed forward so projects build reputation and funding decisions improve.",
+          },
+        ]}
+      />
       <article className="space-y-8">
         <h1 className="text-3xl font-bold">
-          The Grant Lifecycle — From Proposal to Verified Impact
+          The Grant Lifecycle: From Proposal to Verified Impact
         </h1>
 
         <section className="space-y-4">
@@ -289,6 +350,36 @@ export default function GrantLifecyclePage() {
                 → Related: Reputation compounding
               </Link>
             </div>
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="text-xl font-semibold">Related articles</h2>
+          <div className="space-y-1">
+            <Link
+              href="/knowledge/grant-accountability"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → Grant accountability
+            </Link>
+            <Link
+              href="/knowledge/why-grant-programs-fail"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → Why grant programs fail
+            </Link>
+            <Link
+              href="/knowledge/milestones-vs-impact"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → Milestones vs impact
+            </Link>
+            <Link
+              href="/knowledge/impact-verification"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → Impact verification
+            </Link>
           </div>
         </section>
 

@@ -1,19 +1,21 @@
-"use client";
+import type { Metadata } from "next";
+import { generateProjectTeamMetadata } from "@/utilities/metadata/projectMetadata";
+import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
+import { TeamPageClient } from "./TeamPageClient";
 
-import dynamic from "next/dynamic";
-import { TeamContentSkeleton } from "@/components/Pages/Project/v2/Skeletons";
+type Params = Promise<{
+  projectId: string;
+}>;
 
-const TeamContent = dynamic(
-  () =>
-    import("@/components/Pages/Project/v2/TeamContent/TeamContent").then((mod) => mod.TeamContent),
-  {
-    loading: () => <TeamContentSkeleton />,
-  }
-);
+export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
+  const { projectId } = await params;
+  const projectInfo = await getProjectCachedData(projectId);
+  return generateProjectTeamMetadata(projectInfo, projectId);
+}
 
 /**
  * Team page - displays the list of team members for the project.
  */
 export default function TeamPage() {
-  return <TeamContent />;
+  return <TeamPageClient />;
 }

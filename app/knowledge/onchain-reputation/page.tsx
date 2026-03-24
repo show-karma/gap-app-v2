@@ -1,18 +1,32 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
+import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
 
+const title = "What Is Onchain Reputation in Web3 Funding?";
+const description =
+  "What reputation means in open funding systems, how it differs from tokens or identity, and why persistent execution history matters for projects and funders.";
+
 export const metadata: Metadata = customMetadata({
-  title: "What Is Onchain Reputation?",
-  description:
-    "What reputation actually means in open systems, how it differs from tokens or identity, and why execution history matters.",
+  title,
+  description,
   path: "/knowledge/onchain-reputation",
 });
 
 export default function OnchainReputationPage() {
   return (
     <main className="container mx-auto max-w-3xl px-4 py-12">
+      <ArticleJsonLd title={title} description={description} url="/knowledge/onchain-reputation" />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: "/" },
+          { name: "Knowledge", url: "/knowledge" },
+          { name: "Onchain Reputation", url: "/knowledge/onchain-reputation" },
+        ]}
+      />
       <article className="space-y-8">
-        <h1 className="text-3xl font-bold">What Is Onchain Reputation?</h1>
+        <h1 className="text-3xl font-bold">What Is Onchain Reputation in Web3 Funding?</h1>
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold">In one sentence</h2>
@@ -109,6 +123,36 @@ export default function OnchainReputationPage() {
             enables onchain reputation by providing free, public project profiles where work is
             documented, verified, and preserved over time.
           </p>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="text-xl font-semibold">Related articles</h2>
+          <div className="space-y-1">
+            <Link
+              href="/knowledge/project-profiles"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → What are project profiles?
+            </Link>
+            <Link
+              href="/knowledge/reputation-compounding"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → How reputation compounds in open funding
+            </Link>
+            <Link
+              href="/knowledge/project-reputation"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → How projects build reputation through funding
+            </Link>
+            <Link
+              href="/knowledge/grant-accountability"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → Grant accountability
+            </Link>
+          </div>
         </section>
       </article>
     </main>

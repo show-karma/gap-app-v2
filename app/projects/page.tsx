@@ -8,9 +8,9 @@ import {
 import { customMetadata } from "@/utilities/meta";
 
 export const metadata = customMetadata({
-  title: "Explore Projects",
+  title: "Explore Grant-Funded Projects",
   description:
-    "Thousands of projects utilize Karma to track their grants, share project progress and build reputation. Explore projects making a difference.",
+    "Discover thousands of projects using Karma to track grants, share progress, and build reputation. Explore projects making a difference across Web3 ecosystems.",
   path: "/projects",
 });
 

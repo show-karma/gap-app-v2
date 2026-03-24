@@ -5,9 +5,9 @@ import { customMetadata } from "@/utilities/meta";
 import { cn } from "@/utilities/tailwind";
 
 export const metadata: Metadata = customMetadata({
-  title: "Explore Communities",
+  title: "Explore Grant-Giving Communities & Ecosystems",
   description:
-    "Browse grant-giving communities and ecosystems on Karma. Discover funding programs, track grantee progress, and find opportunities.",
+    "Browse grant-giving communities and ecosystems on Karma. Discover funding programs, track grantee progress, find opportunities, and apply for grants today.",
   path: "/communities",
 });
 

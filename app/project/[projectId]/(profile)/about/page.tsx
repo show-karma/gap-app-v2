@@ -1,21 +1,21 @@
-"use client";
+import type { Metadata } from "next";
+import { generateProjectAboutMetadata } from "@/utilities/metadata/projectMetadata";
+import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
+import { AboutPageClient } from "./AboutPageClient";
 
-import dynamic from "next/dynamic";
-import { AboutContentSkeleton } from "@/components/Pages/Project/v2/Skeletons";
+type Params = Promise<{
+  projectId: string;
+}>;
 
-const AboutContentWrapper = dynamic(
-  () =>
-    import("@/components/Pages/Project/v2/Content/AboutContentWrapper").then(
-      (mod) => mod.AboutContentWrapper
-    ),
-  {
-    loading: () => <AboutContentSkeleton />,
-  }
-);
+export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
+  const { projectId } = await params;
+  const projectInfo = await getProjectCachedData(projectId);
+  return generateProjectAboutMetadata(projectInfo, projectId);
+}
 
 /**
  * About page - displays project details like description, mission, problem, solution.
  */
 export default function AboutPage() {
-  return <AboutContentWrapper />;
+  return <AboutPageClient />;
 }

@@ -1,22 +1,22 @@
-"use client";
+import type { Metadata } from "next";
+import { generateProjectOverviewMetadata } from "@/utilities/metadata/projectMetadata";
+import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
+import { UpdatesPageClient } from "./UpdatesPageClient";
 
-import dynamic from "next/dynamic";
-import { UpdatesContentSkeleton } from "@/components/Pages/Project/v2/Skeletons";
+type Params = Promise<{
+  projectId: string;
+}>;
 
-const UpdatesContent = dynamic(
-  () =>
-    import("@/components/Pages/Project/v2/Content/UpdatesContent").then(
-      (mod) => mod.UpdatesContent
-    ),
-  {
-    loading: () => <UpdatesContentSkeleton />,
-  }
-);
+export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
+  const { projectId } = await params;
+  const projectInfo = await getProjectCachedData(projectId);
+  return generateProjectOverviewMetadata(projectInfo, projectId);
+}
 
 /**
  * Updates page - the main/default tab for the project profile.
  * Shows the activity feed with milestones and updates.
  */
 export default function UpdatesPage() {
-  return <UpdatesContent />;
+  return <UpdatesPageClient />;
 }
