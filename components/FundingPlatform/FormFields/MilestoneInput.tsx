@@ -5,6 +5,7 @@ import type { FC } from "react";
 import type { Control, FieldError } from "react-hook-form";
 import { Controller, useFieldArray } from "react-hook-form";
 import { Button } from "@/components/Utilities/Button";
+import { DatePicker } from "@/components/Utilities/DatePicker";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import type { IFormField, IMilestoneData } from "@/types/funding-platform";
 import { cn } from "@/utilities/tailwind";
@@ -147,26 +148,40 @@ export const MilestoneInput: FC<MilestoneInputProps> = ({
                 name={`${fieldKey}.${index}.dueDate`}
                 control={control}
                 rules={{ required: "Due date is required" }}
-                render={({ field: dateField, fieldState }) => (
-                  <div>
-                    <label htmlFor={`${fieldKey}-${index}-dueDate`} className={labelStyle}>
-                      Due Date *
-                    </label>
-                    <input
-                      {...dateField}
-                      id={`${fieldKey}-${index}-dueDate`}
-                      type="date"
-                      disabled={isLoading}
-                      className={cn(
-                        inputStyle,
-                        fieldState.error && "border-red-500 dark:border-red-500"
+                render={({ field: dateField, fieldState }) => {
+                  const dateValue = dateField.value
+                    ? (() => {
+                        const d = new Date(dateField.value + "T00:00:00");
+                        return Number.isNaN(d.getTime()) ? undefined : d;
+                      })()
+                    : undefined;
+
+                  const today = new Date();
+                  today.setHours(0, 0, 0, 0);
+
+                  return (
+                    <div>
+                      <span className={labelStyle}>Due Date *</span>
+                      <DatePicker
+                        selected={dateValue}
+                        onSelect={(date) => {
+                          const year = date.getFullYear();
+                          const month = String(date.getMonth() + 1).padStart(2, "0");
+                          const day = String(date.getDate()).padStart(2, "0");
+                          dateField.onChange(`${year}-${month}-${day}`);
+                        }}
+                        onInvalidInput={() => dateField.onChange("")}
+                        minDate={today}
+                        placeholder="MM/DD/YYYY"
+                        disabled={isLoading}
+                        ariaLabel={`Milestone ${index + 1} due date`}
+                      />
+                      {fieldState.error && (
+                        <p className="text-sm text-red-400 mt-1">{fieldState.error.message}</p>
                       )}
-                    />
-                    {fieldState.error && (
-                      <p className="text-sm text-red-400 mt-1">{fieldState.error.message}</p>
-                    )}
-                  </div>
-                )}
+                    </div>
+                  );
+                }}
               />
 
               {/* Funding Requested - Optional */}
