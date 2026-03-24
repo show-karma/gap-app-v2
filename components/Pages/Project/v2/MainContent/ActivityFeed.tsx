@@ -49,8 +49,11 @@ function getActivityTypeLabel(type: string, milestone?: UnifiedMilestone): strin
   switch (type) {
     case "grant_update":
       return "Grant Update";
-    case "grant_received":
-      return "Grant Received";
+    case "grant_received": {
+      const programType = milestone?.grantReceived?.programType;
+      if (programType === "hackathon") return "Hackathon Participation";
+      return "Grant Approved";
+    }
     case "project":
     case "activity":
     case "update":
@@ -143,7 +146,9 @@ const TimelineItem = React.memo(function TimelineItem({
           <>
             <div className="flex flex-row items-center gap-1.5 lg:gap-2 flex-wrap">
               <span className="text-xs lg:text-sm font-semibold text-foreground">
-                Funding received
+                {milestone.grantReceived?.programType === "hackathon"
+                  ? "Hackathon participation"
+                  : "Grant approved"}
               </span>
             </div>
             <div className="flex flex-row items-center gap-1.5 lg:gap-2 text-xs lg:text-sm font-medium leading-5 text-muted-foreground">
