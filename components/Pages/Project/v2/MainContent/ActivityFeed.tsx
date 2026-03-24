@@ -151,17 +151,23 @@ function formatGrantAmount(amount?: string): string | null {
   const numAmount = Number(numericPart);
   if (isNaN(numAmount) || numAmount === 0) return null;
 
+  // Safety net: strip hex addresses (e.g., "0x0", "0xA0b86991...") from currency suffix.
+  // Primary filtering happens in transformGrantsToMilestones, but this guards against
+  // any amount strings that already contain a hex suffix.
+  const isHex = currencySuffix ? /^0x[0-9a-fA-F]*$/.test(currencySuffix) : false;
+  const safeCurrency = currencySuffix && !isHex ? currencySuffix : null;
+
   // Format the number using the same utility as Grant Overview
   if (numAmount < 1000) {
     const formatted = new Intl.NumberFormat("en-US", {
       minimumFractionDigits: 0,
       maximumFractionDigits: 2,
     }).format(numAmount);
-    return currencySuffix ? `${formatted} ${currencySuffix}` : formatted;
+    return safeCurrency ? `${formatted} ${safeCurrency}` : formatted;
   }
 
   const formattedNum = formatCurrency(numAmount);
-  return currencySuffix ? `${formattedNum} ${currencySuffix}` : formattedNum;
+  return safeCurrency ? `${formattedNum} ${safeCurrency}` : formattedNum;
 }
 
 /**

@@ -70,7 +70,12 @@ export function transformGrantsToMilestones(grants: Grant[]): UnifiedMilestone[]
   return grants.map((grant) => {
     // Get amount - may already include currency (e.g., "80000 USDC")
     const rawAmount = grant.details?.amount || grant.amount;
-    const currency = grant.details?.currency;
+    const rawCurrency = grant.details?.currency;
+
+    // Filter out hex addresses (e.g., "0x0", "0xA0b86991...") from currency display.
+    // Same pattern used in FundingContent.tsx for consistency.
+    const isHexAddress = rawCurrency ? /^0x[0-9a-fA-F]*$/.test(rawCurrency) : false;
+    const currency = isHexAddress ? undefined : rawCurrency;
 
     // Only append currency if rawAmount doesn't already contain it
     const amountHasCurrency = rawAmount && currency && rawAmount.includes(currency);

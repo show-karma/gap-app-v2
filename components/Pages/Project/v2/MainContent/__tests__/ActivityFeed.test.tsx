@@ -120,3 +120,60 @@ describe("ActivityFeed - Activity Type Labels", () => {
     expect(screen.getByText("No activities to display")).toBeInTheDocument();
   });
 });
+
+// =============================================================================
+// Hex Address Filtering in Grant Amounts (Issue #1144)
+// =============================================================================
+
+describe("ActivityFeed - Hex address filtering in grant amounts", () => {
+  const createMilestone = (
+    type: UnifiedMilestone["type"],
+    overrides: Partial<UnifiedMilestone> = {}
+  ): UnifiedMilestone => ({
+    uid: `test-${type}-1`,
+    type,
+    title: `Test ${type}`,
+    description: "Test description",
+    completed: false,
+    createdAt: new Date().toISOString(),
+    chainID: 1,
+    refUID: "0xref1",
+    source: { type },
+    ...overrides,
+  });
+
+  it("should not display hex address '0x0' as currency suffix in grant amount", () => {
+    const milestones = [
+      createMilestone("grant_received", {
+        grantReceived: {
+          amount: "10000 0x0",
+          communityName: "Test Community",
+          communityImage: "https://example.com/image.png",
+          grantTitle: "Test Grant",
+        },
+      }),
+    ];
+    render(<ActivityFeed milestones={milestones} />);
+
+    // The formatted amount should NOT contain "0x0"
+    const amountElements = screen.getAllByText(/10/);
+    const hasHexAddress = amountElements.some((el) => el.textContent?.includes("0x0"));
+    expect(hasHexAddress).toBe(false);
+  });
+
+  it("should display valid currency suffix in grant amount", () => {
+    const milestones = [
+      createMilestone("grant_received", {
+        grantReceived: {
+          amount: "500 USDC",
+          communityName: "Test Community",
+          communityImage: "https://example.com/image.png",
+          grantTitle: "Test Grant",
+        },
+      }),
+    ];
+    render(<ActivityFeed milestones={milestones} />);
+
+    expect(screen.getByText("500 USDC")).toBeInTheDocument();
+  });
+});

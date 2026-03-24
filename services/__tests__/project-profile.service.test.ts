@@ -221,6 +221,47 @@ describe("transformGrantsToMilestones", () => {
     const result = transformGrantsToMilestones([]);
     expect(result).toEqual([]);
   });
+
+  // -------------------------------------------------------------------------
+  // Hex address filtering (Issue #1144)
+  // -------------------------------------------------------------------------
+
+  it("should filter hex address '0x0' from currency so it does not appear in amount", () => {
+    const grantWithHexCurrency: Grant = {
+      ...mockGrant,
+      details: { ...mockGrant.details, amount: "10000", currency: "0x0" },
+    };
+    const result = transformGrantsToMilestones([grantWithHexCurrency]);
+
+    expect(result[0].grantReceived?.amount).toBe("10000");
+    expect(result[0].grantReceived?.currency).toBeUndefined();
+  });
+
+  it("should filter full hex addresses like '0x1234abcdef' from currency", () => {
+    const grantWithHexCurrency: Grant = {
+      ...mockGrant,
+      details: { ...mockGrant.details, amount: "5000", currency: "0x1234abcdef" },
+    };
+    const result = transformGrantsToMilestones([grantWithHexCurrency]);
+
+    expect(result[0].grantReceived?.amount).toBe("5000");
+    expect(result[0].grantReceived?.currency).toBeUndefined();
+  });
+
+  it("should filter long ERC-20 token hex addresses from currency", () => {
+    const grantWithErc20Address: Grant = {
+      ...mockGrant,
+      details: {
+        ...mockGrant.details,
+        amount: "1000",
+        currency: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+      },
+    };
+    const result = transformGrantsToMilestones([grantWithErc20Address]);
+
+    expect(result[0].grantReceived?.amount).toBe("1000");
+    expect(result[0].grantReceived?.currency).toBeUndefined();
+  });
 });
 
 // =============================================================================
