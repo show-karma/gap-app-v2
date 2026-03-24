@@ -2,8 +2,8 @@ import type {
   IGrantUpdate,
   IProjectUpdate,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import Image from "next/image";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useProjectStore } from "@/store";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
@@ -24,11 +24,12 @@ const GrantItem = ({ href, title, communityImage, communityName, keyPrefix }: Gr
     key={keyPrefix}
     className="flex max-w-max items-center gap-2 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1 hover:shadow-sm animation-default"
   >
-    {communityImage ? (
-      <div className="w-4 h-4 relative overflow-hidden rounded-full">
-        <Image src={communityImage} alt={communityName || "Community"} width={16} height={16} />
-      </div>
-    ) : null}
+    <ProfilePicture
+      imageURL={communityImage}
+      name={communityName || "Community"}
+      size="16"
+      className="w-4 h-4"
+    />
     <span className="font-medium">{title}</span>
   </ExternalLink>
 );

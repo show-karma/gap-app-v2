@@ -2,6 +2,7 @@
 
 import Avatar from "boring-avatars";
 import Image from "next/image";
+import { useEffect, useState } from "react";
 import { cn } from "@/utilities/tailwind";
 
 interface ProfilePictureProps {
@@ -15,6 +16,8 @@ interface ProfilePictureProps {
   /** Responsive sizes hint for Next.js Image optimization */
   sizes?: string;
 }
+
+const AVATAR_COLORS = ["#92A1C6", "#146A7C", "#F0AB3D", "#C271B4", "#C20D90"];
 
 const isValidUrl = (url?: string): boolean => {
   if (!url) return false;
@@ -35,12 +38,19 @@ export const ProfilePicture = ({
   priority = false,
   sizes,
 }: ProfilePictureProps) => {
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    setHasError(false);
+  }, [imageURL]);
+
   const isValid = isValidUrl(imageURL);
   const numericSize = Number.parseInt(size, 10) || 32;
 
-  if (isValid && imageURL) {
+  if (isValid && imageURL && !hasError) {
     return (
       <Image
+        key={imageURL}
         alt={alt || name || "Profile"}
         src={imageURL}
         width={numericSize}
@@ -49,18 +59,14 @@ export const ProfilePicture = ({
         priority={priority}
         sizes={sizes}
         unoptimized
+        onError={() => setHasError(true)}
       />
     );
   }
 
   return (
     <div className={cn("rounded-full overflow-hidden", className)}>
-      <Avatar
-        size={size}
-        name={name}
-        variant="marble"
-        colors={["#92A1C6", "#146A7C", "#F0AB3D", "#C271B4", "#C20D90"]}
-      />
+      <Avatar size={size} name={name} variant="marble" colors={AVATAR_COLORS} />
     </div>
   );
 };
