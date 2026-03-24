@@ -1,4 +1,4 @@
-export interface CypressAuthState {
+export interface E2EAuthState {
   authenticated?: boolean;
   ready?: boolean;
   user?: {
@@ -8,21 +8,34 @@ export interface CypressAuthState {
   };
 }
 
-const CYPRESS_AUTH_STATE_STORAGE_KEY = "privy:auth_state";
+/** @deprecated Use E2EAuthState instead */
+export type CypressAuthState = E2EAuthState;
 
-const isCypressAuthBypassEnabled = (): boolean =>
-  process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS === "true";
+const E2E_AUTH_STATE_STORAGE_KEY = "privy:auth_state";
 
-export const getCypressMockAuthState = (): CypressAuthState | null => {
-  if (!isCypressAuthBypassEnabled()) return null;
-  if (typeof window === "undefined") return null;
-  if (!(window as Window & { Cypress?: unknown }).Cypress) return null;
+const isE2EAuthBypassEnabled = (): boolean => process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS === "true";
+
+/**
+ * Detects whether the app is running inside an E2E test runner.
+ * Supports Cypress (window.Cypress) and Playwright (window.__playwright).
+ * TODO: Consider also checking for a custom localStorage flag set by Playwright
+ * global-setup, which would be more reliable than runtime object detection.
+ */
+const isE2ETestRunner = (): boolean => {
+  if (typeof window === "undefined") return false;
+  const win = window as Window & { Cypress?: unknown; __playwright?: unknown };
+  return Boolean(win.Cypress) || Boolean(win.__playwright);
+};
+
+export const getCypressMockAuthState = (): E2EAuthState | null => {
+  if (!isE2EAuthBypassEnabled()) return null;
+  if (!isE2ETestRunner()) return null;
 
   try {
-    const rawState = localStorage.getItem(CYPRESS_AUTH_STATE_STORAGE_KEY);
+    const rawState = localStorage.getItem(E2E_AUTH_STATE_STORAGE_KEY);
     if (!rawState) return null;
 
-    const parsedState = JSON.parse(rawState) as CypressAuthState;
+    const parsedState = JSON.parse(rawState) as E2EAuthState;
     if (parsedState.authenticated === true) {
       return parsedState;
     }
