@@ -29,6 +29,7 @@ import { useSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { PAGES } from "@/utilities/pages";
+import { cn } from "@/utilities/tailwind";
 import { LoadingManagePrograms } from "./Loading/ManagePrograms";
 import { LoadingProgramTable } from "./Loading/Programs";
 import { SearchDropdown } from "./SearchDropdown";
@@ -101,7 +102,6 @@ export const ManagePrograms = () => {
 
   const [searchInput, setSearchInput] = useQueryState("name", {
     defaultValue: defaultName,
-    throttleMs: 500,
   });
 
   const [programId, setProgramId] = useQueryState("programId", {
@@ -141,7 +141,7 @@ export const ManagePrograms = () => {
   const debouncedSearch = debounce((value: string) => {
     setPage(1);
     setSearchInput(value);
-  }, 500);
+  }, 300);
 
   const getGrantPrograms = async () => {
     try {
@@ -301,9 +301,11 @@ export const ManagePrograms = () => {
         {isEditing ? null : (
           <div className="flex flex-row gap-2 justify-start w-full">
             <Link href={PAGES.REGISTRY.ROOT}>
-              <Button className="flex flex-row gap-2 bg-transparent hover:bg-transparent text-[#004EEB] text-sm p-0">
+              <Button className="flex flex-row gap-2 bg-transparent hover:bg-transparent text-blue-600 dark:text-blue-400 text-sm p-0">
                 <ChevronLeftIcon className="w-4 h-4" />
-                <p className="border-b border-b-[#004EEB]">Back to Programs Explorer</p>
+                <span className="border-b border-b-blue-600 dark:border-b-blue-400">
+                  Back to Programs Explorer
+                </span>
               </Button>
             </Link>
           </div>
@@ -332,48 +334,41 @@ export const ManagePrograms = () => {
                 </div>
               </div>
               <div className="w-full">
-                <div className="flex flex-wrap w-max gap-2 rounded-t bg-[#F2F4F7] dark:bg-zinc-800 px-2 py-1">
-                  <Button
-                    className="bg-transparent text-black"
-                    onClick={() => {
-                      setPage(1);
-                      setTab("pending");
-                    }}
-                    style={{
-                      backgroundColor: tab === "pending" ? "white" : "transparent",
-                      color: tab === "pending" ? "black" : "gray",
-                    }}
-                  >
-                    {isRegistryAdmin || isStaff ? "Pending" : "Waiting for approval"}
-                  </Button>
-                  <Button
-                    className="bg-transparent text-black"
-                    onClick={() => {
-                      setPage(1);
-                      setTab("accepted");
-                    }}
-                    style={{
-                      backgroundColor: tab === "accepted" ? "white" : "transparent",
-                      color: tab === "accepted" ? "black" : "gray",
-                    }}
-                  >
-                    Approved
-                  </Button>
-                  <Button
-                    className="bg-transparent text-black"
-                    onClick={() => {
-                      setPage(1);
-                      setTab("rejected");
-                    }}
-                    style={{
-                      backgroundColor: tab === "rejected" ? "white" : "transparent",
-                      color: tab === "rejected" ? "black" : "gray",
-                    }}
-                  >
-                    Rejected
-                  </Button>
+                <div
+                  className="flex flex-wrap w-max gap-1 rounded-t bg-gray-100 dark:bg-zinc-800 px-2 py-1"
+                  role="tablist"
+                  aria-label="Program status tabs"
+                >
+                  {(
+                    [
+                      {
+                        value: "pending",
+                        label: isRegistryAdmin || isStaff ? "Pending" : "Waiting for approval",
+                      },
+                      { value: "accepted", label: "Approved" },
+                      { value: "rejected", label: "Rejected" },
+                    ] as const
+                  ).map((t) => (
+                    <Button
+                      key={t.value}
+                      role="tab"
+                      aria-selected={tab === t.value}
+                      className={cn(
+                        "text-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600",
+                        tab === t.value
+                          ? "bg-white dark:bg-zinc-700 text-black dark:text-white shadow-sm"
+                          : "bg-transparent text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-200"
+                      )}
+                      onClick={() => {
+                        setPage(1);
+                        setTab(t.value);
+                      }}
+                    >
+                      {t.label}
+                    </Button>
+                  ))}
                 </div>
-                <div className="sm:items-center p-3 flex max-sm:flex-col flex-row gap-3 flex-wrap justify-between rounded-b-[4px] bg-[#F2F4F7] dark:bg-zinc-900">
+                <div className="sm:items-center p-3 flex max-sm:flex-col flex-row gap-3 flex-wrap justify-between rounded-b bg-gray-100 dark:bg-zinc-900">
                   <div className="w-full max-w-[450px] max-lg:max-w-xs">
                     <label htmlFor="search" className="sr-only">
                       Search

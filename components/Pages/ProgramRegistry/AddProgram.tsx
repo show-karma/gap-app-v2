@@ -426,7 +426,7 @@ export default function AddProgram({
             </h1>
             <p className="text-base text-black dark:text-white">
               {programToEdit
-                ? ""
+                ? "Update the details below and save your changes."
                 : "Add your funding opportunity to the registry and attract high quality builders."}
             </p>
           </div>
@@ -511,12 +511,14 @@ export default function AddProgram({
                     placeholder="Ex: https://apply.example.com"
                     {...register("submissionUrl")}
                   />
-                  <p className="text-base text-red-400">{errors.submissionUrl?.message}</p>
+                  <p className="text-sm text-red-600 dark:text-red-400">
+                    {errors.submissionUrl?.message}
+                  </p>
                 </div>
               </div>
             )}
 
-            <div className="flex flex-col w-full gap-6 border-b border-b-[#98A2B3] pb-10">
+            <div className="flex flex-col w-full gap-6 border-b border-b-gray-400 dark:border-b-zinc-600 pb-10">
               <div className="grid grid-cols-2 max-sm:grid-cols-1 gap-4">
                 <div className="flex w-full flex-col gap-1">
                   <label htmlFor="program-name" className={labelStyle}>
@@ -528,9 +530,9 @@ export default function AddProgram({
                     placeholder="Ex: Builder Growth Program"
                     {...register("name")}
                   />
-                  <p className="text-base text-red-400">{errors.name?.message}</p>
+                  <p className="text-sm text-red-600 dark:text-red-400">{errors.name?.message}</p>
                 </div>
-                <div className="flex w-full flex-col  gap-1">
+                <div className="flex w-full flex-col gap-1">
                   <label htmlFor="program-grants-site" className={labelStyle}>
                     Program website *
                   </label>
@@ -540,10 +542,12 @@ export default function AddProgram({
                     placeholder="Ex: https://program.xyz/"
                     {...register("grantsSite")}
                   />
-                  <p className="text-base text-red-400">{errors.grantsSite?.message}</p>
+                  <p className="text-sm text-red-600 dark:text-red-400">
+                    {errors.grantsSite?.message}
+                  </p>
                 </div>
               </div>
-              <div className="flex w-full flex-row items-center justify-between gap-4">
+              <div className="flex w-full flex-row max-sm:flex-col items-center justify-between gap-4">
                 <div className="flex w-full flex-row justify-between gap-4">
                   <Controller
                     name="dates.startsAt"
@@ -578,7 +582,7 @@ export default function AddProgram({
                             field.onChange(undefined);
                           }}
                         />
-                        <p className="text-base text-red-400">
+                        <p className="text-sm text-red-600 dark:text-red-400">
                           {formState.errors.dates?.startsAt?.message}
                         </p>
                       </div>
@@ -620,7 +624,7 @@ export default function AddProgram({
                             field.onChange(undefined);
                           }}
                         />
-                        <p className="text-base text-red-400">
+                        <p className="text-sm text-red-600 dark:text-red-400">
                           {formState.errors.dates?.endsAt?.message}
                         </p>
                       </div>
@@ -640,7 +644,9 @@ export default function AddProgram({
                   {...register("shortDescription")}
                 />
                 <div className="flex justify-between">
-                  <p className="text-base text-red-400">{errors.shortDescription?.message}</p>
+                  <p className="text-sm text-red-600 dark:text-red-400">
+                    {errors.shortDescription?.message}
+                  </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
                     {watch("shortDescription")?.length || 0}/100
                   </p>
@@ -661,7 +667,9 @@ export default function AddProgram({
                   }
                   placeholder="Please provide a description of this program"
                 />
-                <p className="text-base text-red-400">{errors.description?.message}</p>
+                <p className="text-sm text-red-600 dark:text-red-400">
+                  {errors.description?.message}
+                </p>
               </div>
 
               {/* Type-Specific Fields */}
@@ -780,9 +788,11 @@ export default function AddProgram({
                     prefixUnselected="Select"
                     buttonClassname="w-full max-w-full"
                   />
-                  <p className="text-base text-red-400">{errors.categories?.message}</p>
+                  <p className="text-sm text-red-600 dark:text-red-400">
+                    {errors.categories?.message}
+                  </p>
                 </div>
-                <div className="flex w-full flex-col  gap-1">
+                <div className="flex w-full flex-col gap-1">
                   <label htmlFor="program-organizations" className={labelStyle}>
                     Organizations
                   </label>
@@ -795,9 +805,11 @@ export default function AddProgram({
                     buttonClassname="w-full max-w-full"
                     canAdd
                   />
-                  <p className="text-base text-red-400">{errors.organizations?.message}</p>
+                  <p className="text-sm text-red-600 dark:text-red-400">
+                    {errors.organizations?.message}
+                  </p>
                 </div>
-                <div className="flex w-full flex-col  gap-1">
+                <div className="flex w-full flex-col gap-1">
                   <label htmlFor="program-ecosystems" className={labelStyle}>
                     Ecosystems
                   </label>
@@ -810,7 +822,9 @@ export default function AddProgram({
                     buttonClassname="w-full max-w-full"
                     canAdd
                   />
-                  <p className="text-base text-red-400">{errors.ecosystems?.message}</p>
+                  <p className="text-sm text-red-600 dark:text-red-400">
+                    {errors.ecosystems?.message}
+                  </p>
                 </div>
                 <div className="flex w-full flex-col gap-1">
                   <label htmlFor="program-types" className={labelStyle}>
@@ -824,9 +838,11 @@ export default function AddProgram({
                     prefixUnselected="Select"
                     buttonClassname="w-full max-w-full"
                   />
-                  <p className="text-base text-red-400">{errors.grantTypes?.message}</p>
+                  <p className="text-sm text-red-600 dark:text-red-400">
+                    {errors.grantTypes?.message}
+                  </p>
                 </div>
-                <div className="flex w-full flex-col  gap-1">
+                <div className="flex w-full flex-col gap-1">
                   <label htmlFor="program-types" className={labelStyle}>
                     Platforms Used
                   </label>
@@ -840,7 +856,9 @@ export default function AddProgram({
                     shouldSort={false}
                     canAdd
                   />
-                  <p className="text-base text-red-400">{errors.platformsUsed?.message}</p>
+                  <p className="text-sm text-red-600 dark:text-red-400">
+                    {errors.platformsUsed?.message}
+                  </p>
                 </div>
                 <div className="flex w-full flex-col">
                   <label htmlFor="grant-title" className={`${labelStyle} mb-1`}>
@@ -855,7 +873,9 @@ export default function AddProgram({
                     buttonClassname="w-full max-w-full"
                     type="community"
                   />
-                  <p className="text-base text-red-400">{errors?.communityRef?.message}</p>
+                  <p className="text-sm text-red-600 dark:text-red-400">
+                    {errors?.communityRef?.message}
+                  </p>
                 </div>
                 {programToEdit && (
                   <div className="flex w-full flex-col gap-1">
@@ -891,8 +911,11 @@ export default function AddProgram({
               </div>
             </div>
 
-            <div className="grid grid-cols-3 max-sm:grid-cols-1 w-full gap-6 border-b border-b-[#98A2B3] pb-10">
-              <div className="flex w-full flex-col  gap-1">
+            <fieldset className="grid grid-cols-3 max-sm:grid-cols-1 w-full gap-6 border-b border-b-gray-400 dark:border-b-zinc-600 pb-10">
+              <legend className="col-span-full text-base font-semibold text-black dark:text-white mb-2">
+                Financial Information
+              </legend>
+              <div className="flex w-full flex-col gap-1">
                 <label htmlFor="program-budget" className={labelStyle}>
                   Program budget
                 </label>
@@ -903,9 +926,9 @@ export default function AddProgram({
                   type="number"
                   {...register("budget")}
                 />
-                <p className="text-base text-red-400">{errors.budget?.message}</p>
+                <p className="text-sm text-red-600 dark:text-red-400">{errors.budget?.message}</p>
               </div>
-              <div className="flex w-full flex-col  gap-1">
+              <div className="flex w-full flex-col gap-1">
                 <label htmlFor="program-amount-distributed" className={labelStyle}>
                   Amount distributed to date
                 </label>
@@ -916,9 +939,11 @@ export default function AddProgram({
                   type="number"
                   {...register("amountDistributed")}
                 />
-                <p className="text-base text-red-400">{errors.amountDistributed?.message}</p>
+                <p className="text-sm text-red-600 dark:text-red-400">
+                  {errors.amountDistributed?.message}
+                </p>
               </div>
-              <div className="flex w-full flex-col  gap-1">
+              <div className="flex w-full flex-col gap-1">
                 <label htmlFor="program-grants-issued" className={labelStyle}>
                   Grants issued to date
                 </label>
@@ -929,9 +954,11 @@ export default function AddProgram({
                   placeholder="Ex: 60"
                   {...register("grantsToDate")}
                 />
-                <p className="text-base text-red-400">{errors.grantsToDate?.message}</p>
+                <p className="text-sm text-red-600 dark:text-red-400">
+                  {errors.grantsToDate?.message}
+                </p>
               </div>
-              <div className="flex w-full flex-col  gap-1">
+              <div className="flex w-full flex-col gap-1">
                 <label htmlFor="program-min-grant-size" className={labelStyle}>
                   Min Grant size
                 </label>
@@ -942,9 +969,11 @@ export default function AddProgram({
                   placeholder="Ex: 80000"
                   {...register("minGrantSize")}
                 />
-                <p className="text-base text-red-400">{errors.minGrantSize?.message}</p>
+                <p className="text-sm text-red-600 dark:text-red-400">
+                  {errors.minGrantSize?.message}
+                </p>
               </div>
-              <div className="flex w-full flex-col  gap-1">
+              <div className="flex w-full flex-col gap-1">
                 <label htmlFor="program-max-grant-size" className={labelStyle}>
                   Max Grant size
                 </label>
@@ -955,10 +984,15 @@ export default function AddProgram({
                   placeholder="Ex: 80000"
                   {...register("maxGrantSize")}
                 />
-                <p className="text-base text-red-400">{errors.maxGrantSize?.message}</p>
+                <p className="text-sm text-red-600 dark:text-red-400">
+                  {errors.maxGrantSize?.message}
+                </p>
               </div>
-            </div>
-            <div className="grid grid-cols-3 max-sm:grid-cols-1 w-full gap-6  pb-10">
+            </fieldset>
+            <fieldset className="grid grid-cols-3 max-md:grid-cols-2 max-sm:grid-cols-1 w-full gap-6 pb-10">
+              <legend className="col-span-full text-base font-semibold text-black dark:text-white mb-2">
+                Social Links
+              </legend>
               <div className="flex w-full flex-col gap-2 justify-between">
                 <label htmlFor="program-twitter" className={labelStyle}>
                   X/Twitter
@@ -974,7 +1008,7 @@ export default function AddProgram({
                     {...register("twitter")}
                   />
                 </div>
-                <p className="text-base text-red-400">{errors.twitter?.message}</p>
+                <p className="text-sm text-red-600 dark:text-red-400">{errors.twitter?.message}</p>
               </div>
               <div className="flex w-full flex-col gap-2 justify-between">
                 <label htmlFor="program-discord" className={labelStyle}>
@@ -991,7 +1025,7 @@ export default function AddProgram({
                     {...register("discord")}
                   />
                 </div>
-                <p className="text-base text-red-400">{errors.discord?.message}</p>
+                <p className="text-sm text-red-600 dark:text-red-400">{errors.discord?.message}</p>
               </div>
               <div className="flex w-full flex-col gap-2 justify-between">
                 <label htmlFor="program-blog" className={labelStyle}>
@@ -1008,7 +1042,7 @@ export default function AddProgram({
                     {...register("blog")}
                   />
                 </div>
-                <p className="text-base text-red-400">{errors.blog?.message}</p>
+                <p className="text-sm text-red-600 dark:text-red-400">{errors.blog?.message}</p>
               </div>
               <div className="flex w-full flex-col gap-2 justify-between">
                 <label htmlFor="program-forum" className={labelStyle}>
@@ -1025,7 +1059,7 @@ export default function AddProgram({
                     {...register("forum")}
                   />
                 </div>
-                <p className="text-base text-red-400">{errors.forum?.message}</p>
+                <p className="text-sm text-red-600 dark:text-red-400">{errors.forum?.message}</p>
               </div>
               <div className="flex w-full flex-col gap-2 justify-between">
                 <label htmlFor="program-org" className={labelStyle}>
@@ -1042,7 +1076,9 @@ export default function AddProgram({
                     {...register("orgWebsite")}
                   />
                 </div>
-                <p className="text-base text-red-400">{errors.orgWebsite?.message}</p>
+                <p className="text-sm text-red-600 dark:text-red-400">
+                  {errors.orgWebsite?.message}
+                </p>
               </div>
               <div className="flex w-full flex-col gap-2 justify-between">
                 <label htmlFor="program-bug-bounty" className={labelStyle}>
@@ -1059,7 +1095,9 @@ export default function AddProgram({
                     {...register("bugBounty")}
                   />
                 </div>
-                <p className="text-base text-red-400">{errors.bugBounty?.message}</p>
+                <p className="text-sm text-red-600 dark:text-red-400">
+                  {errors.bugBounty?.message}
+                </p>
               </div>
 
               <div className="flex w-full flex-col gap-2 justify-between">
@@ -1077,7 +1115,7 @@ export default function AddProgram({
                     {...register("telegram")}
                   />
                 </div>
-                <p className="text-base text-red-400">{errors.telegram?.message}</p>
+                <p className="text-sm text-red-600 dark:text-red-400">{errors.telegram?.message}</p>
               </div>
               <div className="flex w-full flex-col gap-2 justify-between">
                 <label htmlFor="program-facebook" className={labelStyle}>
@@ -1094,7 +1132,7 @@ export default function AddProgram({
                     {...register("facebook")}
                   />
                 </div>
-                <p className="text-base text-red-400">{errors.facebook?.message}</p>
+                <p className="text-sm text-red-600 dark:text-red-400">{errors.facebook?.message}</p>
               </div>
               <div className="flex w-full flex-col gap-2 justify-between">
                 <label htmlFor="program-instagram" className={labelStyle}>
@@ -1111,9 +1149,11 @@ export default function AddProgram({
                     {...register("instagram")}
                   />
                 </div>
-                <p className="text-base text-red-400">{errors.instagram?.message}</p>
+                <p className="text-sm text-red-600 dark:text-red-400">
+                  {errors.instagram?.message}
+                </p>
               </div>
-            </div>
+            </fieldset>
           </div>
           <div className="flex flex-row justify-start">
             <Button
