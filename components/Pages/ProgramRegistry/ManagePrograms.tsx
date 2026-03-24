@@ -8,24 +8,23 @@ import { useQueryState } from "nuqs";
 import type React from "react";
 import { type Dispatch, useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
 import AddProgram from "@/components/Pages/ProgramRegistry/AddProgram";
 import { registryHelper } from "@/components/Pages/ProgramRegistry/helper";
 import { ManageProgramList } from "@/components/Pages/ProgramRegistry/ManageProgramList";
 import { MyProgramList } from "@/components/Pages/ProgramRegistry/MyProgramList";
 import { ProgramDetailsDialog } from "@/components/Pages/ProgramRegistry/ProgramDetailsDialog";
 import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
-import {
-  getProgramIdForUrl,
-  normalizeGrantTypesArray,
-} from "@/components/Pages/ProgramRegistry/programUtils";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import Pagination from "@/components/Utilities/Pagination";
 import { useAuth } from "@/hooks/useAuth";
-import { ProgramRegistryService } from "@/services/programRegistry.service";
 import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
 import { Role } from "@/src/core/rbac/types/role";
+import { ProgramRegistryService } from "@/src/features/program-registry/services/program-registry.service";
+import {
+  getProgramIdForUrl,
+  normalizeGrantTypesArray,
+} from "@/src/features/program-registry/utils/program-utils";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
@@ -74,8 +73,7 @@ export const ManagePrograms = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [programToEdit, setProgramToEdit] = useState<GrantProgram | null>(null);
 
-  const { address, isConnected } = useAccount();
-  const { authenticated: isAuth, login } = useAuth();
+  const { authenticated: isAuth, ready: isAuthReady, login, address, isConnected } = useAuth();
 
   const _signer = useSigner();
 
@@ -310,7 +308,7 @@ export const ManagePrograms = () => {
             </Link>
           </div>
         )}
-        {isPermissionsLoading ? (
+        {!isAuthReady || isPermissionsLoading ? (
           <LoadingManagePrograms />
         ) : isAllowed ? (
           isEditing ? (
@@ -322,7 +320,6 @@ export const ManagePrograms = () => {
                   setProgramToEdit(null);
                 }}
                 refreshPrograms={refreshPrograms}
-                isAdmin
               />
             </div>
           ) : (

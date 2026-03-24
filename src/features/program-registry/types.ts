@@ -1,7 +1,16 @@
+import type { FundingProgramResponse } from "@/src/features/funding-map/types/funding-program";
+
 /**
  * Domain types for Program Registry
  * These types represent the business domain, separate from UI concerns
  */
+
+/**
+ * Re-export FundingProgramResponse as GrantProgram so the feature module
+ * does not depend on the UI component layer (ProgramList.tsx).
+ * Consumers outside this feature still import from ProgramList for now.
+ */
+export type GrantProgram = FundingProgramResponse;
 
 export interface ProgramMetadata {
   title: string;
@@ -60,8 +69,7 @@ export interface ProgramCreationResult {
 
 export interface ProgramApprovalRequest {
   programId: string;
-  chainId: number;
-  isValid: "accepted" | "rejected";
+  isValid: "accepted" | "rejected" | "pending";
 }
 
 export interface CreateProgramFormData {
@@ -73,7 +81,7 @@ export interface CreateProgramFormData {
     endsAt?: Date;
   };
   budget?: number;
-  adminEmails?: string[];
-  financeEmails?: string[];
+  adminEmails: string[];
+  financeEmails: string[];
   invoiceRequired?: boolean;
 }

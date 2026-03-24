@@ -10,7 +10,8 @@ import {
   fundingPlatformService,
   type IApplicationFilters,
 } from "@/services/fundingPlatformService";
-import { ProgramRegistryService } from "@/services/programRegistry.service";
+import { ProgramRegistryService } from "@/src/features/program-registry/services/program-registry.service";
+import type { ProgramMetadata } from "@/src/features/program-registry/types";
 import type {
   ExportFormat,
   FundingApplicationStatusV2,
@@ -21,7 +22,6 @@ import type {
   IFundingApplication,
   IFundingProgramConfig,
 } from "@/types/funding-platform";
-import type { ProgramMetadata } from "@/types/program-registry";
 import { useAuth } from "./useAuth";
 
 // Query keys for caching
