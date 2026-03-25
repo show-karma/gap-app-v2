@@ -1,3 +1,4 @@
+import type { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from "axios";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("axios", () => {
@@ -31,27 +32,33 @@ function makeAxiosResponse<T>(data: T, status: number): AxiosResponse<T> {
     status,
     statusText: "OK",
     headers: {},
-    config: {} as any,
+    config: {} as InternalAxiosRequestConfig,
   };
 }
 
 function makeAxiosError(status: number, message: string, hasResponse = true): AxiosError {
   if (!hasResponse) {
-    const err = new Error("Network Error") as any;
+    const err = new Error("Network Error") as Error & {
+      response?: unknown;
+      isAxiosError?: boolean;
+    };
     err.response = undefined;
     err.isAxiosError = true;
-    return err;
+    return err as unknown as AxiosError;
   }
-  const err = new Error(message) as any;
+  const err = new Error(message) as Error & {
+    response?: Record<string, unknown>;
+    isAxiosError?: boolean;
+  };
   err.response = {
     data: { message },
     status,
     statusText: "Error",
     headers: {},
-    config: {} as any,
+    config: {} as InternalAxiosRequestConfig,
   };
   err.isAxiosError = true;
-  return err;
+  return err as unknown as AxiosError;
 }
 
 describe("fetchData trust tests", () => {
@@ -216,13 +223,16 @@ describe("fetchData trust tests", () => {
     });
 
     it("falls back to err.message when response.data.message is missing", async () => {
-      const err = new Error("Timeout") as any;
+      const err = new Error("Timeout") as Error & {
+        response?: Record<string, unknown>;
+        isAxiosError?: boolean;
+      };
       err.response = {
         data: {},
         status: 504,
         statusText: "Gateway Timeout",
         headers: {},
-        config: {} as any,
+        config: {} as InternalAxiosRequestConfig,
       };
       err.isAxiosError = true;
       mockRequest.mockRejectedValue(err);

@@ -16,6 +16,7 @@
  *   - Disconnect during operation
  */
 
+import type { ConnectedWallet, User } from "@privy-io/react-auth";
 import { act, renderHook } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -45,14 +46,14 @@ function createMockBridgeValue(overrides: Partial<PrivyBridgeValue> = {}): Privy
     user: {
       id: "user-1",
       linkedAccounts: [{ type: "email", address: "test@test.com" }],
-    } as any,
+    } as unknown as User,
     wallets: [
       {
         address: "0x1234567890abcdef1234567890abcdef12345678",
         walletClientType: "privy",
         switchChain: vi.fn(),
         getEthereumProvider: vi.fn(),
-      } as any,
+      } as unknown as ConnectedWallet,
     ],
     isConnected: true,
     login: vi.fn(),
@@ -214,7 +215,7 @@ describe("Auth Integration Tests", () => {
             {
               address: "0xABCDEF1234567890ABCDEF1234567890ABCDEF12",
               walletClientType: "metamask",
-            } as any,
+            } as unknown as ConnectedWallet,
           ],
         })
       );
@@ -237,8 +238,8 @@ describe("Auth Integration Tests", () => {
       result.current.setter(
         createMockBridgeValue({
           wallets: [
-            { address: "0xEmbedded", walletClientType: "privy" } as any,
-            { address: "0xExternal", walletClientType: "metamask" } as any,
+            { address: "0xEmbedded", walletClientType: "privy" } as unknown as ConnectedWallet,
+            { address: "0xExternal", walletClientType: "metamask" } as unknown as ConnectedWallet,
           ],
         })
       );

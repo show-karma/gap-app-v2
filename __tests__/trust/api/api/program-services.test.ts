@@ -24,7 +24,7 @@ vi.mock("@/utilities/indexer", () => ({
         UPDATE: (id: string) => `/v2/program-registry/${id}`,
         APPROVE: "/v2/program-registry/approve",
         GET_BY_ID: (id: string) => `/v2/program-registry/${id}`,
-        GET_ALL: (params?: any) => {
+        GET_ALL: (params?: Record<string, string | number | undefined>) => {
           const qs = new URLSearchParams();
           if (params?.page) qs.set("page", params.page.toString());
           if (params?.limit) qs.set("limit", params.limit.toString());
@@ -72,7 +72,7 @@ describe("ProgramRegistryService trust tests", () => {
 
       await ProgramRegistryService.createProgram("0xowner", 1, {
         title: "Test Program",
-      } as any);
+      } as Record<string, unknown>);
 
       expect(mockFetchData).toHaveBeenCalledWith(
         "/v2/program-registry",
@@ -92,7 +92,7 @@ describe("ProgramRegistryService trust tests", () => {
 
       const result = await ProgramRegistryService.createProgram("0xowner", 1, {
         title: "Test",
-      } as any);
+      } as Record<string, unknown>);
 
       expect(result.programId).toBe("new-123");
       expect(result.success).toBe(true);
@@ -104,7 +104,7 @@ describe("ProgramRegistryService trust tests", () => {
 
       const result = await ProgramRegistryService.createProgram("0xowner", 1, {
         title: "Test",
-      } as any);
+      } as Record<string, unknown>);
 
       expect(result.requiresManualApproval).toBe(true);
     });
@@ -112,9 +112,9 @@ describe("ProgramRegistryService trust tests", () => {
     it("throws on fetchData error", async () => {
       mockFetchData.mockResolvedValue([null, "Validation Error", null, 400]);
 
-      await expect(ProgramRegistryService.createProgram("0xowner", 1, {} as any)).rejects.toThrow(
-        "Validation Error"
-      );
+      await expect(
+        ProgramRegistryService.createProgram("0xowner", 1, {} as Record<string, unknown>)
+      ).rejects.toThrow("Validation Error");
     });
   });
 
@@ -126,7 +126,7 @@ describe("ProgramRegistryService trust tests", () => {
 
       await ProgramRegistryService.updateProgram("p1", {
         title: "Updated",
-      } as any);
+      } as Record<string, unknown>);
 
       expect(mockFetchData).toHaveBeenCalledWith(
         "/v2/program-registry/p1",
@@ -143,9 +143,9 @@ describe("ProgramRegistryService trust tests", () => {
     it("throws on error", async () => {
       mockFetchData.mockResolvedValue([null, "Not Found", null, 404]);
 
-      await expect(ProgramRegistryService.updateProgram("p1", {} as any)).rejects.toThrow(
-        "Not Found"
-      );
+      await expect(
+        ProgramRegistryService.updateProgram("p1", {} as Record<string, unknown>)
+      ).rejects.toThrow("Not Found");
     });
   });
 

@@ -5,6 +5,7 @@
  * adaptedLogin, and return values.
  */
 
+import type { ConnectedWallet, User } from "@privy-io/react-auth";
 import { act, renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { useAuth } from "@/hooks/useAuth";
@@ -31,12 +32,12 @@ const mockQueryClientClear = vi.fn();
 const mockBridgeState = {
   ready: true,
   authenticated: false,
-  user: null as any,
+  user: null as User | null,
   login: mockLogin,
   logout: mockLogout,
   getAccessToken: mockGetAccessToken,
   connectWallet: mockConnectWallet,
-  wallets: [] as any[],
+  wallets: [] as ConnectedWallet[],
   smartWalletClient: null,
   isConnected: false,
 };

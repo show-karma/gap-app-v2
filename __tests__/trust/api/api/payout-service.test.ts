@@ -30,7 +30,8 @@ vi.mock("@/utilities/indexer", () => ({
           `/v2/payouts/safe/${addr}/awaiting`,
         COMMUNITY_RECENT: (uid: string, page?: number, limit?: number, status?: string) =>
           `/v2/payouts/communities/${uid}/recent`,
-        COMMUNITY_PAYOUTS: (uid: string, _opts?: any) => `/v2/payouts/communities/${uid}/payouts`,
+        COMMUNITY_PAYOUTS: (uid: string, _opts?: Record<string, unknown>) =>
+          `/v2/payouts/communities/${uid}/payouts`,
       },
       PAYOUT_CONFIG: {
         SAVE: "/v2/payout-configs",
@@ -59,6 +60,12 @@ import {
   savePayoutConfigs,
   updateDisbursementStatus,
 } from "@/features/payout-disbursement/services/payout-disbursement.service";
+import type {
+  CreateDisbursementsRequest,
+  RecordSafeTransactionRequest,
+  SavePayoutConfigRequest,
+  UpdateStatusRequest,
+} from "@/features/payout-disbursement/types/payout-disbursement";
 import fetchData from "@/utilities/fetchData";
 
 const mockFetchData = fetchData as ReturnType<typeof vi.fn>;
@@ -85,7 +92,7 @@ describe("payout-disbursement service trust tests", () => {
             chainId: 1,
           },
         ],
-      } as any);
+      } as unknown as CreateDisbursementsRequest);
 
       expect(mockFetchData).toHaveBeenCalledWith(
         "/v2/payouts/create",
@@ -108,7 +115,7 @@ describe("payout-disbursement service trust tests", () => {
       const result = await createDisbursements({
         communityUID: "c1",
         disbursements: [],
-      } as any);
+      } as unknown as CreateDisbursementsRequest);
 
       expect(result).toEqual(disbursements);
     });
@@ -117,7 +124,10 @@ describe("payout-disbursement service trust tests", () => {
       mockFetchData.mockResolvedValue([null, "Bad Request", null, 400]);
 
       await expect(
-        createDisbursements({ communityUID: "c1", disbursements: [] } as any)
+        createDisbursements({
+          communityUID: "c1",
+          disbursements: [],
+        } as unknown as CreateDisbursementsRequest)
       ).rejects.toThrow("Failed to create disbursements");
     });
   });
@@ -135,7 +145,7 @@ describe("payout-disbursement service trust tests", () => {
 
       await recordSafeTransaction("d1", {
         safeTransactionHash: "0xabc",
-      } as any);
+      } as RecordSafeTransactionRequest);
 
       expect(mockFetchData).toHaveBeenCalledWith(
         "/v2/payouts/d1/safe-tx",
@@ -154,7 +164,7 @@ describe("payout-disbursement service trust tests", () => {
 
       const result = await recordSafeTransaction("d1", {
         safeTransactionHash: "0xabc",
-      } as any);
+      } as RecordSafeTransactionRequest);
 
       expect(result).toEqual(updated);
     });
@@ -165,7 +175,7 @@ describe("payout-disbursement service trust tests", () => {
       await expect(
         recordSafeTransaction("d1", {
           safeTransactionHash: "0xabc",
-        } as any)
+        } as RecordSafeTransactionRequest)
       ).rejects.toThrow("Failed to record Safe transaction");
     });
   });
@@ -280,7 +290,7 @@ describe("payout-disbursement service trust tests", () => {
 
       await updateDisbursementStatus("d1", {
         status: "completed",
-      } as any);
+      } as unknown as UpdateStatusRequest);
 
       expect(mockFetchData).toHaveBeenCalledWith(
         "/v2/payouts/d1/status",
@@ -299,7 +309,7 @@ describe("payout-disbursement service trust tests", () => {
       await updateDisbursementStatus("d1", {
         status: "rejected",
         reason: "Invalid data",
-      } as any);
+      } as unknown as UpdateStatusRequest);
 
       expect(mockFetchData).toHaveBeenCalledWith(
         expect.any(String),
@@ -318,9 +328,9 @@ describe("payout-disbursement service trust tests", () => {
     it("throws on error", async () => {
       mockFetchData.mockResolvedValue([null, "Forbidden", null, 403]);
 
-      await expect(updateDisbursementStatus("d1", { status: "completed" } as any)).rejects.toThrow(
-        "Failed to update disbursement status"
-      );
+      await expect(
+        updateDisbursementStatus("d1", { status: "completed" } as unknown as UpdateStatusRequest)
+      ).rejects.toThrow("Failed to update disbursement status");
     });
   });
 
@@ -330,7 +340,7 @@ describe("payout-disbursement service trust tests", () => {
     it("calls fetchData with POST method", async () => {
       mockFetchData.mockResolvedValue([{ configs: [] }, null, null, 201]);
 
-      await savePayoutConfigs({ configs: [] } as any);
+      await savePayoutConfigs({ configs: [] } as unknown as SavePayoutConfigRequest);
 
       expect(mockFetchData).toHaveBeenCalledWith(
         "/v2/payout-configs",
@@ -347,7 +357,7 @@ describe("payout-disbursement service trust tests", () => {
       const response = { configs: [{ grantUID: "g1" }] };
       mockFetchData.mockResolvedValue([response, null, null, 201]);
 
-      const result = await savePayoutConfigs({ configs: [] } as any);
+      const result = await savePayoutConfigs({ configs: [] } as unknown as SavePayoutConfigRequest);
 
       expect(result).toEqual(response);
     });
@@ -355,9 +365,9 @@ describe("payout-disbursement service trust tests", () => {
     it("throws on error", async () => {
       mockFetchData.mockResolvedValue([null, "Bad Request", null, 400]);
 
-      await expect(savePayoutConfigs({ configs: [] } as any)).rejects.toThrow(
-        "Failed to save payout configs"
-      );
+      await expect(
+        savePayoutConfigs({ configs: [] } as unknown as SavePayoutConfigRequest)
+      ).rejects.toThrow("Failed to save payout configs");
     });
   });
 

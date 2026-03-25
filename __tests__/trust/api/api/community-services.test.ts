@@ -16,7 +16,7 @@ vi.mock("@/utilities/indexer", () => ({
         LIST: (limit?: number) => `/v2/projects${limit ? `?limit=${limit}` : ""}`,
         SEARCH: (query: string, limit?: number) =>
           `/v2/projects/search?q=${query}${limit ? `&limit=${limit}` : ""}`,
-        LIST_PAGINATED: (params: any) => {
+        LIST_PAGINATED: (params: Record<string, string | number | undefined>) => {
           const qs = new URLSearchParams();
           if (params.q) qs.set("q", params.q);
           if (params.page) qs.set("page", params.page.toString());
@@ -47,6 +47,7 @@ import {
   getExplorerProjects,
   getExplorerProjectsPaginated,
 } from "@/services/projects-explorer.service";
+import type { ExplorerSortByOptions, ExplorerSortOrder } from "@/types/explorer";
 import fetchData from "@/utilities/fetchData";
 
 const mockFetchData = fetchData as ReturnType<typeof vi.fn>;
@@ -185,8 +186,8 @@ describe("projects-explorer service trust tests", () => {
 
       await getExplorerProjectsPaginated({
         page: 1,
-        sortBy: "updatedAt" as any,
-        sortOrder: "desc" as any,
+        sortBy: "updatedAt" as ExplorerSortByOptions,
+        sortOrder: "desc" as ExplorerSortOrder,
       });
 
       expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("sortBy=updatedAt"));

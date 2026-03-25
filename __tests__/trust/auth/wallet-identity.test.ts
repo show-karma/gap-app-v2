@@ -22,7 +22,7 @@ const ADDR_CROSS_SMART = "0x6666666666666666666666666666666666666666";
 const ADDR_CHECKSUMMED = "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B";
 const ADDR_UNMATCHED = "0x9999999999999999999999999999999999999999";
 
-function createUser(linkedAccounts: any[]): User {
+function createUser(linkedAccounts: Array<Record<string, unknown>>): User {
   return { id: "test-user", linkedAccounts } as unknown as User;
 }
 

@@ -2,19 +2,22 @@ export type DeepPartial<T> = {
   [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K];
 };
 
-export function mergeDeep<T extends Record<string, any>>(target: T, source: DeepPartial<T>): T {
+export function mergeDeep<T extends Record<string, unknown>>(target: T, source: DeepPartial<T>): T {
   const output = { ...target };
   for (const key of Object.keys(source)) {
-    const val = (source as any)[key];
+    const val = (source as Record<string, unknown>)[key];
     if (
       val &&
       typeof val === "object" &&
       !Array.isArray(val) &&
-      typeof (target as any)[key] === "object"
+      typeof (target as Record<string, unknown>)[key] === "object"
     ) {
-      (output as any)[key] = mergeDeep((target as any)[key], val);
+      (output as Record<string, unknown>)[key] = mergeDeep(
+        (target as Record<string, unknown>)[key] as Record<string, unknown>,
+        val as DeepPartial<Record<string, unknown>>
+      );
     } else if (val !== undefined) {
-      (output as any)[key] = val;
+      (output as Record<string, unknown>)[key] = val;
     }
   }
   return output;
@@ -37,7 +40,7 @@ export function randomAddress(): `0x${string}` {
  * Applies DeepPartial overrides to a defaults object.
  * Centralizes the `overrides ? mergeDeep(...) : defaults` pattern used by every factory.
  */
-export function applyOverrides<T extends Record<string, any>>(
+export function applyOverrides<T extends Record<string, unknown>>(
   defaults: T,
   overrides?: DeepPartial<T>
 ): T {

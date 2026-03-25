@@ -27,6 +27,10 @@ vi.mock("@/utilities/indexer", () => ({
 }));
 
 import { programPromptService } from "@/features/prompt-management/services/program-prompt.service";
+import type {
+  SaveProgramPromptRequest,
+  TestProgramPromptRequest,
+} from "@/features/prompt-management/types/program-prompt";
 
 describe("programPromptService", () => {
   beforeEach(() => {
@@ -70,7 +74,11 @@ describe("programPromptService", () => {
       mockFetchData.mockResolvedValue([prompt, null]);
 
       const data = { name: "My Prompt", template: "Hello {name}" };
-      const result = await programPromptService.savePrompt("prog-1", "external", data as any);
+      const result = await programPromptService.savePrompt(
+        "prog-1",
+        "external",
+        data as unknown as SaveProgramPromptRequest
+      );
       expect(result).toEqual(prompt);
       expect(mockFetchData).toHaveBeenCalledWith(
         "/v2/programs/prog-1/prompts/external",
@@ -82,7 +90,11 @@ describe("programPromptService", () => {
     it("throws on error", async () => {
       mockFetchData.mockResolvedValue([null, "Validation error"]);
       await expect(
-        programPromptService.savePrompt("prog-1", "external", {} as any)
+        programPromptService.savePrompt(
+          "prog-1",
+          "external",
+          {} as unknown as SaveProgramPromptRequest
+        )
       ).rejects.toThrow("Validation error");
     });
   });
@@ -98,7 +110,7 @@ describe("programPromptService", () => {
 
       const result = await programPromptService.testPrompt("prog-1", "internal", {
         applicationId: "app-1",
-      } as any);
+      } as TestProgramPromptRequest);
       expect(result).toEqual(testResult);
       expect(mockFetchData).toHaveBeenCalledWith(
         "/v2/programs/prog-1/prompts/internal/test",
@@ -110,7 +122,11 @@ describe("programPromptService", () => {
     it("throws on error", async () => {
       mockFetchData.mockResolvedValue([null, "Application not found"]);
       await expect(
-        programPromptService.testPrompt("prog-1", "external", {} as any)
+        programPromptService.testPrompt(
+          "prog-1",
+          "external",
+          {} as unknown as TestProgramPromptRequest
+        )
       ).rejects.toThrow("Application not found");
     });
   });

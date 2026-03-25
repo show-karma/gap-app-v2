@@ -52,7 +52,7 @@ import {
   pendingDisbursement,
 } from "./payout.factory";
 import { createMockGrant, createMockGrantMilestone, createMockProject } from "./project.factory";
-import { mergeDeep, randomAddress, resetSeq, seq } from "./utils";
+import { type DeepPartial, mergeDeep, randomAddress, resetSeq, seq } from "./utils";
 
 beforeEach(() => {
   resetSeq();
@@ -102,7 +102,7 @@ describe("utils", () => {
   it("mergeDeep replaces arrays instead of merging", () => {
     const target = { tags: ["a", "b"] };
     const source = { tags: ["c"] };
-    const result = mergeDeep(target, source as any);
+    const result = mergeDeep(target, source as DeepPartial<typeof target>);
     expect(result.tags).toEqual(["c"]);
   });
 });

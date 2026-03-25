@@ -26,8 +26,9 @@ vi.mock("@/utilities/indexer", () => ({
           `/v2/payouts/safe/${addr}/awaiting?page=${page ?? 1}&limit=${limit ?? 10}`,
         COMMUNITY_RECENT: (uid: string, page?: number, limit?: number, status?: string) =>
           `/v2/payouts/community/${uid}/recent`,
-        COMMUNITY_PAYOUTS: (uid: string, opts?: any) => `/v2/payouts/community/${uid}/payouts`,
-        COMMUNITY_PAYOUTS_PUBLIC: (uid: string, opts?: any) =>
+        COMMUNITY_PAYOUTS: (uid: string, _opts?: Record<string, unknown>) =>
+          `/v2/payouts/community/${uid}/payouts`,
+        COMMUNITY_PAYOUTS_PUBLIC: (uid: string, _opts?: Record<string, unknown>) =>
           `/v2/payouts/community/${uid}/payouts/public`,
       },
       PAYOUT_CONFIG: {
@@ -68,6 +69,12 @@ import {
   updateDisbursementStatus,
   validateBulkImportRows,
 } from "@/features/payout-disbursement/services/payout-disbursement.service";
+import type {
+  CreateDisbursementsRequest,
+  RecordSafeTransactionRequest,
+  SavePayoutConfigRequest,
+  UpdateStatusRequest,
+} from "@/features/payout-disbursement/types/payout-disbursement";
 
 describe("payout-disbursement.service", () => {
   beforeEach(() => {
@@ -83,22 +90,24 @@ describe("payout-disbursement.service", () => {
       const disbursements = [{ id: "d1" }, { id: "d2" }];
       mockFetchData.mockResolvedValue([{ disbursements }, null]);
 
-      const result = await createDisbursements({ grants: [] } as any);
+      const result = await createDisbursements({
+        grants: [],
+      } as unknown as CreateDisbursementsRequest);
       expect(result).toEqual(disbursements);
     });
 
     it("throws on fetch error", async () => {
       mockFetchData.mockResolvedValue([null, "Server error"]);
-      await expect(createDisbursements({ grants: [] } as any)).rejects.toThrow(
-        /Failed to create disbursements/
-      );
+      await expect(
+        createDisbursements({ grants: [] } as unknown as CreateDisbursementsRequest)
+      ).rejects.toThrow(/Failed to create disbursements/);
     });
 
     it("throws when data is null", async () => {
       mockFetchData.mockResolvedValue([null, null]);
-      await expect(createDisbursements({ grants: [] } as any)).rejects.toThrow(
-        /Failed to create disbursements/
-      );
+      await expect(
+        createDisbursements({ grants: [] } as unknown as CreateDisbursementsRequest)
+      ).rejects.toThrow(/Failed to create disbursements/);
     });
   });
 
@@ -114,15 +123,15 @@ describe("payout-disbursement.service", () => {
       const result = await recordSafeTransaction("d1", {
         safeTxHash: "0xhash",
         safeAddress: "0xSafe",
-      } as any);
+      } as unknown as RecordSafeTransactionRequest);
       expect(result).toEqual(disbursement);
     });
 
     it("throws on error", async () => {
       mockFetchData.mockResolvedValue([null, "Not found"]);
-      await expect(recordSafeTransaction("d1", { safeTxHash: "0x" } as any)).rejects.toThrow(
-        /Failed to record Safe transaction/
-      );
+      await expect(
+        recordSafeTransaction("d1", { safeTxHash: "0x" } as unknown as RecordSafeTransactionRequest)
+      ).rejects.toThrow(/Failed to record Safe transaction/);
     });
   });
 
@@ -192,15 +201,17 @@ describe("payout-disbursement.service", () => {
       const disbursement = { id: "d1", status: "completed" };
       mockFetchData.mockResolvedValue([disbursement, null]);
 
-      const result = await updateDisbursementStatus("d1", { status: "completed" } as any);
+      const result = await updateDisbursementStatus("d1", {
+        status: "completed",
+      } as unknown as UpdateStatusRequest);
       expect(result).toEqual(disbursement);
     });
 
     it("throws on error", async () => {
       mockFetchData.mockResolvedValue([null, "Forbidden"]);
-      await expect(updateDisbursementStatus("d1", { status: "completed" } as any)).rejects.toThrow(
-        /Failed to update disbursement status/
-      );
+      await expect(
+        updateDisbursementStatus("d1", { status: "completed" } as unknown as UpdateStatusRequest)
+      ).rejects.toThrow(/Failed to update disbursement status/);
     });
   });
 
@@ -234,15 +245,15 @@ describe("payout-disbursement.service", () => {
       const response = { saved: 2, configs: [] };
       mockFetchData.mockResolvedValue([response, null]);
 
-      const result = await savePayoutConfigs({ configs: [] } as any);
+      const result = await savePayoutConfigs({ configs: [] } as unknown as SavePayoutConfigRequest);
       expect(result).toEqual(response);
     });
 
     it("throws on error", async () => {
       mockFetchData.mockResolvedValue([null, "Error"]);
-      await expect(savePayoutConfigs({ configs: [] } as any)).rejects.toThrow(
-        /Failed to save payout configs/
-      );
+      await expect(
+        savePayoutConfigs({ configs: [] } as unknown as SavePayoutConfigRequest)
+      ).rejects.toThrow(/Failed to save payout configs/);
     });
   });
 

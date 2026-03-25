@@ -23,6 +23,21 @@ import { TokenManager } from "@/utilities/auth/token-manager";
 const mockGetToken = TokenManager.getToken as ReturnType<typeof vi.fn>;
 const mockClearCache = TokenManager.clearCache as ReturnType<typeof vi.fn>;
 
+/**
+ * Axios stores interceptor handlers in an internal `.handlers` array not exposed
+ * in public types. This helper extracts them for testing interceptor behavior.
+ */
+interface AxiosInterceptorInternal<T> {
+  handlers: Array<{
+    fulfilled: (value: T) => T | Promise<T>;
+    rejected?: (error: unknown) => unknown;
+  }>;
+}
+
+function getResponseHandlers(client: ReturnType<typeof createAuthenticatedApiClient>) {
+  return (client.interceptors.response as unknown as AxiosInterceptorInternal<unknown>).handlers;
+}
+
 describe("Regression: 401 token refresh flow in API client", () => {
   let client: ReturnType<typeof createAuthenticatedApiClient>;
 
@@ -41,13 +56,16 @@ describe("Regression: 401 token refresh flow in API client", () => {
     mockGetToken.mockResolvedValue("test-token");
 
     // Create a mock adapter to capture the request config
-    const requestInterceptors = (client.interceptors.request as any).handlers;
+    const requestInterceptors = (
+      client.interceptors.request as unknown as AxiosInterceptorInternal<Record<string, unknown>>
+    ).handlers;
     expect(requestInterceptors.length).toBeGreaterThan(0);
 
     // Simulate request interceptor behavior
     const requestHandler = requestInterceptors[0].fulfilled;
-    const config = { headers: { set: vi.fn() } } as any;
-    config.headers = new axios.AxiosHeaders();
+    const config: { headers: InstanceType<typeof axios.AxiosHeaders> } = {
+      headers: new axios.AxiosHeaders(),
+    };
 
     const result = await requestHandler(config);
     expect(result.headers.Authorization).toBe("Bearer test-token");
@@ -55,7 +73,7 @@ describe("Regression: 401 token refresh flow in API client", () => {
 
   it("should clear token cache on 401 response", async () => {
     // Verify the response interceptor exists and handles 401
-    const responseInterceptors = (client.interceptors.response as any).handlers;
+    const responseInterceptors = getResponseHandlers(client);
     expect(responseInterceptors.length).toBeGreaterThan(0);
 
     const errorHandler = responseInterceptors[0].rejected;
@@ -82,7 +100,7 @@ describe("Regression: 401 token refresh flow in API client", () => {
   });
 
   it("should not retry more than once on 401 (prevents infinite loop)", async () => {
-    const responseInterceptors = (client.interceptors.response as any).handlers;
+    const responseInterceptors = getResponseHandlers(client);
     const errorHandler = responseInterceptors[0].rejected;
 
     mockGetToken.mockResolvedValue("still-expired-token");
@@ -101,7 +119,7 @@ describe("Regression: 401 token refresh flow in API client", () => {
   });
 
   it("should pass through non-401 errors without retry", async () => {
-    const responseInterceptors = (client.interceptors.response as any).handlers;
+    const responseInterceptors = getResponseHandlers(client);
     const errorHandler = responseInterceptors[0].rejected;
 
     const error500 = {
@@ -114,7 +132,7 @@ describe("Regression: 401 token refresh flow in API client", () => {
   });
 
   it("should pass through successful responses unchanged", async () => {
-    const responseInterceptors = (client.interceptors.response as any).handlers;
+    const responseInterceptors = getResponseHandlers(client);
     const successHandler = responseInterceptors[0].fulfilled;
 
     const response = { status: 200, data: { ok: true } };

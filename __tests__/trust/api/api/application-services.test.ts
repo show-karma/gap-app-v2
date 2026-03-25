@@ -221,7 +221,9 @@ describe("funding-applications service trust tests", () => {
     });
 
     it("rethrows error from apiClient", async () => {
-      const axiosError = new Error("Forbidden") as any;
+      const axiosError: Error & { response?: { status: number; statusText: string } } = new Error(
+        "Forbidden"
+      );
       axiosError.response = { status: 403, statusText: "Forbidden" };
       mockDelete.mockRejectedValue(axiosError);
 

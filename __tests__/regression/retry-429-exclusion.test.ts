@@ -61,7 +61,7 @@ describe("Regression: 429 rate-limited responses should not be retried", () => {
         queryKey: ["regression-429-test"],
         queryFn: async () => {
           callCount++;
-          const err = new Error("Rate limited") as any;
+          const err: Error & { response?: { status: number } } = new Error("Rate limited");
           err.response = { status: 429 };
           throw err;
         },
@@ -93,7 +93,7 @@ describe("Regression: 429 rate-limited responses should not be retried", () => {
         queryKey: ["regression-500-test"],
         queryFn: async () => {
           callCount++;
-          const err = new Error("Server error") as any;
+          const err: Error & { response?: { status: number } } = new Error("Server error");
           err.response = { status: 500 };
           throw err;
         },

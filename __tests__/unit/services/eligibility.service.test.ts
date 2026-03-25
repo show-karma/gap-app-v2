@@ -24,8 +24,9 @@ import { fetchEligibilities } from "@/features/claim-funds/services/eligibility.
 // Helpers
 // ---------------------------------------------------------------------------
 
-function createCampaign(id: string, title = "Campaign") {
-  return { id, title } as any;
+/** Minimal campaign stub -- only id and title are exercised by fetchEligibilities */
+function createCampaign(id: string, title = "Campaign"): { id: string; title: string } {
+  return { id, title };
 }
 
 // ---------------------------------------------------------------------------

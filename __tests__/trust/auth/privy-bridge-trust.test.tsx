@@ -4,6 +4,7 @@
  * and hook return values.
  */
 
+import type { User } from "@privy-io/react-auth";
 import { act, renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
 
@@ -89,7 +90,7 @@ describe("PrivyBridgeContext — Bridge updates", () => {
       ...PRIVY_BRIDGE_DEFAULTS,
       ready: true,
       authenticated: true,
-      user: { id: "test-user" } as any,
+      user: { id: "test-user" } as unknown as User,
     };
 
     act(() => {

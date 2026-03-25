@@ -199,7 +199,7 @@ describe("React Query integration trust tests", () => {
           queryKey: ["test-429-fixed"],
           queryFn: async () => {
             callCount++;
-            const err = new Error("Rate limited") as any;
+            const err: Error & { response?: { status: number } } = new Error("Rate limited");
             err.response = { status: 429 };
             throw err;
           },

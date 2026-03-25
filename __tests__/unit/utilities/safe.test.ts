@@ -102,6 +102,8 @@ vi.stubGlobal("fetch", mockFetch);
 // ---------------------------------------------------------------------------
 
 import Safe from "@safe-global/protocol-kit";
+import type { SupportedChainId } from "@/config/tokens";
+import type { DisbursementRecipient } from "@/types/disbursement";
 import { getRPCClient } from "@/utilities/rpcClient";
 import {
   canProposeToSafe,
@@ -137,30 +139,30 @@ describe("utilities/safe.ts", () => {
 
   describe("isSafeDeployed", () => {
     it("returns true when non-trivial bytecode exists at address", async () => {
-      const result = await isSafeDeployed("0xSafe123", 10 as any);
+      const result = await isSafeDeployed("0xSafe123", 10 as SupportedChainId);
       expect(result).toBe(true);
     });
 
     it("returns false when getBytecode returns undefined", async () => {
       mockRPCClient.getBytecode.mockResolvedValueOnce(undefined);
-      const result = await isSafeDeployed("0xSafe123", 10 as any);
+      const result = await isSafeDeployed("0xSafe123", 10 as SupportedChainId);
       expect(result).toBe(false);
     });
 
     it("returns false when getBytecode returns '0x' (no code)", async () => {
       mockRPCClient.getBytecode.mockResolvedValueOnce("0x");
-      const result = await isSafeDeployed("0xSafe123", 10 as any);
+      const result = await isSafeDeployed("0xSafe123", 10 as SupportedChainId);
       expect(result).toBe(false);
     });
 
     it("returns false when RPC call fails", async () => {
       mockRPCClient.getBytecode.mockRejectedValueOnce(new Error("connection refused"));
-      const result = await isSafeDeployed("0xSafe123", 10 as any);
+      const result = await isSafeDeployed("0xSafe123", 10 as SupportedChainId);
       expect(result).toBe(false);
     });
 
     it("passes correct address to getBytecode", async () => {
-      await isSafeDeployed("0xABCD", 10 as any);
+      await isSafeDeployed("0xABCD", 10 as SupportedChainId);
       expect(mockRPCClient.getBytecode).toHaveBeenCalledWith({
         address: "0xABCD",
       });
@@ -173,34 +175,34 @@ describe("utilities/safe.ts", () => {
 
   describe("isSafeOwner", () => {
     it("returns true when signer is in owners list", async () => {
-      const result = await isSafeOwner("0xSafe", "0xOwner1", 10 as any);
+      const result = await isSafeOwner("0xSafe", "0xOwner1", 10 as SupportedChainId);
       expect(result).toBe(true);
     });
 
     it("performs case-insensitive comparison", async () => {
-      const result = await isSafeOwner("0xSafe", "0xowner1", 10 as any);
+      const result = await isSafeOwner("0xSafe", "0xowner1", 10 as SupportedChainId);
       expect(result).toBe(true);
     });
 
     it("returns true for uppercase owner address", async () => {
-      const result = await isSafeOwner("0xSafe", "0XOWNER2", 10 as any);
+      const result = await isSafeOwner("0xSafe", "0XOWNER2", 10 as SupportedChainId);
       expect(result).toBe(true);
     });
 
     it("returns false when signer is not an owner", async () => {
-      const result = await isSafeOwner("0xSafe", "0xStranger", 10 as any);
+      const result = await isSafeOwner("0xSafe", "0xStranger", 10 as SupportedChainId);
       expect(result).toBe(false);
     });
 
     it("returns false when Safe.init fails", async () => {
       vi.mocked(Safe.init).mockRejectedValueOnce(new Error("Invalid Safe address"));
-      const result = await isSafeOwner("0xBadSafe", "0xOwner1", 10 as any);
+      const result = await isSafeOwner("0xBadSafe", "0xOwner1", 10 as SupportedChainId);
       expect(result).toBe(false);
     });
 
     it("returns false when getOwners fails", async () => {
       mockSafeInstance.getOwners.mockRejectedValueOnce(new Error("Method failed"));
-      const result = await isSafeOwner("0xSafe", "0xOwner1", 10 as any);
+      const result = await isSafeOwner("0xSafe", "0xOwner1", 10 as SupportedChainId);
       expect(result).toBe(false);
     });
   });
@@ -215,7 +217,7 @@ describe("utilities/safe.ts", () => {
         ok: true,
         json: () => Promise.resolve({ count: 3 }),
       });
-      const result = await isSafeDelegate("0xSafe", "0xDelegate", 10 as any);
+      const result = await isSafeDelegate("0xSafe", "0xDelegate", 10 as SupportedChainId);
       expect(result).toBe(true);
     });
 
@@ -224,7 +226,7 @@ describe("utilities/safe.ts", () => {
         ok: true,
         json: () => Promise.resolve({ count: 0 }),
       });
-      const result = await isSafeDelegate("0xSafe", "0xDelegate", 10 as any);
+      const result = await isSafeDelegate("0xSafe", "0xDelegate", 10 as SupportedChainId);
       expect(result).toBe(false);
     });
 
@@ -233,7 +235,7 @@ describe("utilities/safe.ts", () => {
         ok: true,
         json: () => Promise.resolve({ count: 0 }),
       });
-      await isSafeDelegate("0xSafe", "0xDelegate", 10 as any);
+      await isSafeDelegate("0xSafe", "0xDelegate", 10 as SupportedChainId);
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining("safe-transaction-optimism.safe.global/api/v1/delegates/")
       );
@@ -241,18 +243,18 @@ describe("utilities/safe.ts", () => {
 
     it("returns false for non-OK response", async () => {
       mockFetch.mockResolvedValueOnce({ ok: false, status: 500 });
-      const result = await isSafeDelegate("0xSafe", "0xDelegate", 10 as any);
+      const result = await isSafeDelegate("0xSafe", "0xDelegate", 10 as SupportedChainId);
       expect(result).toBe(false);
     });
 
     it("returns false when fetch throws", async () => {
       mockFetch.mockRejectedValueOnce(new Error("ECONNREFUSED"));
-      const result = await isSafeDelegate("0xSafe", "0xDelegate", 10 as any);
+      const result = await isSafeDelegate("0xSafe", "0xDelegate", 10 as SupportedChainId);
       expect(result).toBe(false);
     });
 
     it("returns false for unsupported chain (no txServiceUrl)", async () => {
-      const result = await isSafeDelegate("0xSafe", "0xDelegate", 1329 as any);
+      const result = await isSafeDelegate("0xSafe", "0xDelegate", 1329 as SupportedChainId);
       expect(result).toBe(false);
       expect(mockFetch).not.toHaveBeenCalled();
     });
@@ -262,7 +264,7 @@ describe("utilities/safe.ts", () => {
         ok: true,
         json: () => Promise.resolve({ count: 0 }),
       });
-      await isSafeDelegate("0xABC", "0xDEF", 10 as any);
+      await isSafeDelegate("0xABC", "0xDEF", 10 as SupportedChainId);
       expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining("safe=0xABC&delegate=0xDEF"));
     });
   });
@@ -277,7 +279,7 @@ describe("utilities/safe.ts", () => {
         ok: true,
         json: () => Promise.resolve({ count: 0 }),
       });
-      const result = await canProposeToSafe("0xSafe", "0xOwner1", 10 as any);
+      const result = await canProposeToSafe("0xSafe", "0xOwner1", 10 as SupportedChainId);
       expect(result).toEqual({ canPropose: true, isOwner: true, isDelegate: false });
     });
 
@@ -286,7 +288,7 @@ describe("utilities/safe.ts", () => {
         ok: true,
         json: () => Promise.resolve({ count: 1 }),
       });
-      const result = await canProposeToSafe("0xSafe", "0xDelegateOnly", 10 as any);
+      const result = await canProposeToSafe("0xSafe", "0xDelegateOnly", 10 as SupportedChainId);
       expect(result.canPropose).toBe(true);
       expect(result.isDelegate).toBe(true);
     });
@@ -296,7 +298,7 @@ describe("utilities/safe.ts", () => {
         ok: true,
         json: () => Promise.resolve({ count: 1 }),
       });
-      const result = await canProposeToSafe("0xSafe", "0xOwner1", 10 as any);
+      const result = await canProposeToSafe("0xSafe", "0xOwner1", 10 as SupportedChainId);
       expect(result).toEqual({ canPropose: true, isOwner: true, isDelegate: true });
     });
 
@@ -305,13 +307,13 @@ describe("utilities/safe.ts", () => {
         ok: true,
         json: () => Promise.resolve({ count: 0 }),
       });
-      const result = await canProposeToSafe("0xSafe", "0xNobody", 10 as any);
+      const result = await canProposeToSafe("0xSafe", "0xNobody", 10 as SupportedChainId);
       expect(result).toEqual({ canPropose: false, isOwner: false, isDelegate: false });
     });
 
     it("still returns owner result if delegate check fails", async () => {
       mockFetch.mockRejectedValueOnce(new Error("Service down"));
-      const result = await canProposeToSafe("0xSafe", "0xOwner1", 10 as any);
+      const result = await canProposeToSafe("0xSafe", "0xOwner1", 10 as SupportedChainId);
       expect(result.canPropose).toBe(true);
       expect(result.isOwner).toBe(true);
       expect(result.isDelegate).toBe(false);
@@ -323,7 +325,7 @@ describe("utilities/safe.ts", () => {
         ok: true,
         json: () => Promise.resolve({ count: 1 }),
       });
-      const result = await canProposeToSafe("0xSafe", "0xDelegate", 10 as any);
+      const result = await canProposeToSafe("0xSafe", "0xDelegate", 10 as SupportedChainId);
       expect(result.isOwner).toBe(false);
       expect(result.isDelegate).toBe(true);
       expect(result.canPropose).toBe(true);
@@ -336,12 +338,12 @@ describe("utilities/safe.ts", () => {
 
   describe("isSafeIndexed", () => {
     itSdk("returns true when getSafeInfo succeeds", async () => {
-      const result = await isSafeIndexed("0xSafe", 10 as any);
+      const result = await isSafeIndexed("0xSafe", 10 as SupportedChainId);
       expect(result).toBe(true);
     });
 
     it("returns false for unsupported chain", async () => {
-      const result = await isSafeIndexed("0xSafe", 1329 as any);
+      const result = await isSafeIndexed("0xSafe", 1329 as SupportedChainId);
       expect(result).toBe(false);
     });
 
@@ -349,19 +351,19 @@ describe("utilities/safe.ts", () => {
       mockApiKitInstance.getSafeInfo.mockRejectedValueOnce(
         Object.assign(new Error("Not Found"), { response: { status: 404 } })
       );
-      const result = await isSafeIndexed("0xSafe", 10 as any);
+      const result = await isSafeIndexed("0xSafe", 10 as SupportedChainId);
       expect(result).toBe(false);
     });
 
     it("returns false when error message contains 404", async () => {
       mockApiKitInstance.getSafeInfo.mockRejectedValueOnce(new Error("404 Not Found"));
-      const result = await isSafeIndexed("0xSafe", 10 as any);
+      const result = await isSafeIndexed("0xSafe", 10 as SupportedChainId);
       expect(result).toBe(false);
     });
 
     it("returns false on generic API error", async () => {
       mockApiKitInstance.getSafeInfo.mockRejectedValueOnce(new Error("Internal server error"));
-      const result = await isSafeIndexed("0xSafe", 10 as any);
+      const result = await isSafeIndexed("0xSafe", 10 as SupportedChainId);
       expect(result).toBe(false);
     });
   });
@@ -372,7 +374,7 @@ describe("utilities/safe.ts", () => {
 
   describe("getSafeInfo", () => {
     it("returns owners, threshold, and nonce", async () => {
-      const info = await getSafeInfo("0xSafe", 10 as any);
+      const info = await getSafeInfo("0xSafe", 10 as SupportedChainId);
       expect(info).toEqual({
         owners: ["0xOwner1", "0xOwner2"],
         threshold: 2,
@@ -381,20 +383,20 @@ describe("utilities/safe.ts", () => {
     });
 
     it("calls Safe.init with correct provider and safeAddress", async () => {
-      await getSafeInfo("0xMySafe", 10 as any);
+      await getSafeInfo("0xMySafe", 10 as SupportedChainId);
       expect(Safe.init).toHaveBeenCalledWith(expect.objectContaining({ safeAddress: "0xMySafe" }));
     });
 
     it("throws descriptive error when Safe SDK fails", async () => {
       vi.mocked(Safe.init).mockRejectedValueOnce(new Error("SDK error"));
-      await expect(getSafeInfo("0xBadSafe", 10 as any)).rejects.toThrow(
+      await expect(getSafeInfo("0xBadSafe", 10 as SupportedChainId)).rejects.toThrow(
         "Failed to fetch Safe information"
       );
     });
 
     it("throws when getOwners fails", async () => {
       mockSafeInstance.getOwners.mockRejectedValueOnce(new Error("getOwners failed"));
-      await expect(getSafeInfo("0xSafe", 10 as any)).rejects.toThrow(
+      await expect(getSafeInfo("0xSafe", 10 as SupportedChainId)).rejects.toThrow(
         "Failed to fetch Safe information"
       );
     });
@@ -406,14 +408,14 @@ describe("utilities/safe.ts", () => {
 
   describe("getSafeTokenBalance", () => {
     it("returns native token balance when tokenAddress is null", async () => {
-      const result = await getSafeTokenBalance("0xSafe", null, 10 as any);
+      const result = await getSafeTokenBalance("0xSafe", null, 10 as SupportedChainId);
       expect(result.balance).toBe("2000000000000000000");
       expect(result.decimals).toBe(18);
       expect(parseFloat(result.balanceFormatted)).toBeCloseTo(2.0);
     });
 
     it("calls getBalance with correct Safe address for native tokens", async () => {
-      await getSafeTokenBalance("0xMySafe", null, 10 as any);
+      await getSafeTokenBalance("0xMySafe", null, 10 as SupportedChainId);
       expect(mockRPCClient.getBalance).toHaveBeenCalledWith({
         address: "0xMySafe",
       });
@@ -424,7 +426,7 @@ describe("utilities/safe.ts", () => {
         .mockResolvedValueOnce(5000000n) // balanceOf
         .mockResolvedValueOnce(6); // decimals
 
-      const result = await getSafeTokenBalance("0xSafe", "0xUSDC", 10 as any);
+      const result = await getSafeTokenBalance("0xSafe", "0xUSDC", 10 as SupportedChainId);
       expect(result.balance).toBe("5000000");
       expect(result.decimals).toBe(6);
       expect(parseFloat(result.balanceFormatted)).toBeCloseTo(5.0);
@@ -432,16 +434,16 @@ describe("utilities/safe.ts", () => {
 
     it("throws wrapped error on RPC failure for native balance", async () => {
       mockRPCClient.getBalance.mockRejectedValueOnce(new Error("RPC timeout"));
-      await expect(getSafeTokenBalance("0xSafe", null, 10 as any)).rejects.toThrow(
+      await expect(getSafeTokenBalance("0xSafe", null, 10 as SupportedChainId)).rejects.toThrow(
         "Failed to fetch Safe balance"
       );
     });
 
     it("throws wrapped error on RPC failure for ERC20 balance", async () => {
       mockRPCClient.readContract.mockRejectedValueOnce(new Error("Contract call failed"));
-      await expect(getSafeTokenBalance("0xSafe", "0xToken", 10 as any)).rejects.toThrow(
-        "Failed to fetch Safe balance"
-      );
+      await expect(
+        getSafeTokenBalance("0xSafe", "0xToken", 10 as SupportedChainId)
+      ).rejects.toThrow("Failed to fetch Safe balance");
     });
   });
 
@@ -450,17 +452,17 @@ describe("utilities/safe.ts", () => {
   // =========================================================================
 
   describe("prepareDisbursementTransaction", () => {
-    const validRecipients = [
+    const validRecipients: DisbursementRecipient[] = [
       { address: "0x1111111111111111111111111111111111111111", amount: "1.5", error: undefined },
       { address: "0x2222222222222222222222222222222222222222", amount: "2.5", error: undefined },
-    ] as any[];
+    ];
 
     it("creates transaction with correct recipient count and total", async () => {
       const result = await prepareDisbursementTransaction(
         "0xSafe",
         validRecipients,
         null,
-        10 as any
+        10 as SupportedChainId
       );
       expect(result.totalRecipients).toBe(2);
       expect(result.totalAmount).toBe(4.0);
@@ -468,16 +470,21 @@ describe("utilities/safe.ts", () => {
     });
 
     it("filters out recipients with errors", async () => {
-      const mixed = [
+      const mixed: DisbursementRecipient[] = [
         ...validRecipients,
         { address: "0x3333333333333333333333333333333333333333", amount: "1.0", error: "Invalid" },
-      ] as any[];
-      const result = await prepareDisbursementTransaction("0xSafe", mixed, null, 10 as any);
+      ];
+      const result = await prepareDisbursementTransaction(
+        "0xSafe",
+        mixed,
+        null,
+        10 as SupportedChainId
+      );
       expect(result.totalRecipients).toBe(2);
     });
 
     it("calls createTransaction on Safe instance", async () => {
-      await prepareDisbursementTransaction("0xSafe", validRecipients, null, 10 as any);
+      await prepareDisbursementTransaction("0xSafe", validRecipients, null, 10 as SupportedChainId);
       expect(mockSafeInstance.createTransaction).toHaveBeenCalledWith({
         transactions: expect.arrayContaining([
           expect.objectContaining({ data: "0x" }), // native token
@@ -489,7 +496,12 @@ describe("utilities/safe.ts", () => {
       // Mock decimals fetch
       mockRPCClient.readContract.mockResolvedValueOnce(18);
 
-      await prepareDisbursementTransaction("0xSafe", validRecipients, "0xUSDC", 10 as any);
+      await prepareDisbursementTransaction(
+        "0xSafe",
+        validRecipients,
+        "0xUSDC",
+        10 as SupportedChainId
+      );
       expect(mockSafeInstance.createTransaction).toHaveBeenCalledWith({
         transactions: expect.arrayContaining([
           expect.objectContaining({
@@ -504,7 +516,7 @@ describe("utilities/safe.ts", () => {
     it("throws when Safe SDK init fails", async () => {
       vi.mocked(Safe.init).mockRejectedValueOnce(new Error("init failed"));
       await expect(
-        prepareDisbursementTransaction("0xSafe", validRecipients, null, 10 as any)
+        prepareDisbursementTransaction("0xSafe", validRecipients, null, 10 as SupportedChainId)
       ).rejects.toThrow("Failed to prepare transaction");
     });
 
@@ -515,7 +527,7 @@ describe("utilities/safe.ts", () => {
         "0xSafe",
         validRecipients,
         "0xToken",
-        10 as any,
+        10 as SupportedChainId,
         8
       );
       expect(result.totalRecipients).toBe(2);
@@ -527,9 +539,10 @@ describe("utilities/safe.ts", () => {
   // =========================================================================
 
   describe("signAndProposeDisbursement", () => {
-    const recipients = [
+    const recipients: DisbursementRecipient[] = [
       { address: "0x1111111111111111111111111111111111111111", amount: "1.0" },
-    ] as any[];
+    ];
+    // walletClient param in signAndProposeDisbursement is typed as `any` in source
     const walletClient = {
       account: { address: "0xOwner1" },
       signTypedData: vi.fn().mockResolvedValue("0xsig"),
@@ -540,25 +553,38 @@ describe("utilities/safe.ts", () => {
 
     it("throws when walletClient has no account", async () => {
       await expect(
-        signAndProposeDisbursement("0xSafe", recipients, null, 10 as any, {} as any)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- walletClient param is typed as `any` in source
+        signAndProposeDisbursement("0xSafe", recipients, null, 10 as SupportedChainId, {} as any)
       ).rejects.toThrow("Wallet client is not properly connected");
     });
 
     it("throws when safeAddress is empty", async () => {
       await expect(
-        signAndProposeDisbursement("", recipients, null, 10 as any, walletClient as any)
+        signAndProposeDisbursement(
+          "",
+          recipients,
+          null,
+          10 as SupportedChainId,
+          walletClient as any
+        )
       ).rejects.toThrow("Missing required parameters");
     });
 
     it("throws when recipients is empty", async () => {
       await expect(
-        signAndProposeDisbursement("0xSafe", [], null, 10 as any, walletClient as any)
+        signAndProposeDisbursement("0xSafe", [], null, 10 as SupportedChainId, walletClient as any)
       ).rejects.toThrow("Missing required parameters");
     });
 
     it("throws for chain without Safe Transaction Service", async () => {
       await expect(
-        signAndProposeDisbursement("0xSafe", recipients, null, 1135 as any, walletClient as any)
+        signAndProposeDisbursement(
+          "0xSafe",
+          recipients,
+          null,
+          1135 as SupportedChainId,
+          walletClient as any
+        )
       ).rejects.toThrow("Safe Transaction Service is not available");
     });
 
@@ -576,7 +602,7 @@ describe("utilities/safe.ts", () => {
         "0xSafe",
         recipients,
         null,
-        10 as any,
+        10 as SupportedChainId,
         walletClient as any
       );
 
@@ -594,9 +620,17 @@ describe("utilities/safe.ts", () => {
         })
         .mockResolvedValueOnce({ ok: true });
 
-      await signAndProposeDisbursement("0xSafe", recipients, null, 10 as any, walletClient as any);
+      await signAndProposeDisbursement(
+        "0xSafe",
+        recipients,
+        null,
+        10 as SupportedChainId,
+        walletClient as any
+      );
 
-      const postCall = mockFetch.mock.calls.find((call: any) => call[1]?.method === "POST");
+      const postCall = mockFetch.mock.calls.find(
+        (call: [string, Record<string, unknown>]) => call[1]?.method === "POST"
+      );
       expect(postCall).toBeTruthy();
       const body = JSON.parse(postCall![1].body);
       expect(body.signature).toBe("0xsignaturedata");
@@ -612,7 +646,13 @@ describe("utilities/safe.ts", () => {
       mockSafeInstance.signHash.mockRejectedValueOnce(new Error("User rejected"));
 
       await expect(
-        signAndProposeDisbursement("0xSafe", recipients, null, 10 as any, walletClient as any)
+        signAndProposeDisbursement(
+          "0xSafe",
+          recipients,
+          null,
+          10 as SupportedChainId,
+          walletClient as any
+        )
       ).rejects.toThrow("Failed to sign transaction");
     });
 
@@ -629,7 +669,13 @@ describe("utilities/safe.ts", () => {
         });
 
       await expect(
-        signAndProposeDisbursement("0xSafe", recipients, null, 10 as any, walletClient as any)
+        signAndProposeDisbursement(
+          "0xSafe",
+          recipients,
+          null,
+          10 as SupportedChainId,
+          walletClient as any
+        )
       ).rejects.toThrow(/Safe not found/);
     });
 
@@ -646,7 +692,13 @@ describe("utilities/safe.ts", () => {
         });
 
       await expect(
-        signAndProposeDisbursement("0xSafe", recipients, null, 10 as any, walletClient as any)
+        signAndProposeDisbursement(
+          "0xSafe",
+          recipients,
+          null,
+          10 as SupportedChainId,
+          walletClient as any
+        )
       ).rejects.toThrow(/Transaction validation failed.*Nonce mismatch/);
     });
 
@@ -663,7 +715,13 @@ describe("utilities/safe.ts", () => {
         });
 
       await expect(
-        signAndProposeDisbursement("0xSafe", recipients, null, 10 as any, walletClient as any)
+        signAndProposeDisbursement(
+          "0xSafe",
+          recipients,
+          null,
+          10 as SupportedChainId,
+          walletClient as any
+        )
       ).rejects.toThrow(/Transaction validation failed.*Invalid signature/);
     });
 
@@ -681,7 +739,13 @@ describe("utilities/safe.ts", () => {
         });
 
       await expect(
-        signAndProposeDisbursement("0xSafe", recipients, null, 10 as any, walletClient as any)
+        signAndProposeDisbursement(
+          "0xSafe",
+          recipients,
+          null,
+          10 as SupportedChainId,
+          walletClient as any
+        )
       ).rejects.toThrow(/Failed to propose transaction.*503/);
     });
 
@@ -691,7 +755,13 @@ describe("utilities/safe.ts", () => {
       );
 
       await expect(
-        signAndProposeDisbursement("0xSafe", recipients, null, 10 as any, walletClient as any)
+        signAndProposeDisbursement(
+          "0xSafe",
+          recipients,
+          null,
+          10 as SupportedChainId,
+          walletClient as any
+        )
       ).rejects.toThrow(/not yet indexed/);
     });
   });
@@ -702,7 +772,7 @@ describe("utilities/safe.ts", () => {
 
   describe("getTransactionStatus", () => {
     itSdk("returns full transaction status", async () => {
-      const status = await getTransactionStatus("0xhash", 10 as any);
+      const status = await getTransactionStatus("0xhash", 10 as SupportedChainId);
       expect(status).toEqual({
         isExecuted: true,
         isSuccessful: true,
@@ -723,21 +793,21 @@ describe("utilities/safe.ts", () => {
         confirmations: [],
       });
 
-      const status = await getTransactionStatus("0xhash", 10 as any);
+      const status = await getTransactionStatus("0xhash", 10 as SupportedChainId);
       expect(status.isExecuted).toBe(false);
       expect(status.confirmationsSubmitted).toBe(0);
       expect(status.confirmationsRequired).toBe(3);
     });
 
     it("throws for unsupported chain", async () => {
-      await expect(getTransactionStatus("0xhash", 1329 as any)).rejects.toThrow(
+      await expect(getTransactionStatus("0xhash", 1329 as SupportedChainId)).rejects.toThrow(
         "Safe Transaction Service not available"
       );
     });
 
     it("throws wrapped error when API fails", async () => {
       mockApiKitInstance.getTransaction.mockRejectedValueOnce(new Error("TX not found"));
-      await expect(getTransactionStatus("0xhash", 10 as any)).rejects.toThrow(
+      await expect(getTransactionStatus("0xhash", 10 as SupportedChainId)).rejects.toThrow(
         "Failed to fetch transaction status"
       );
     });
@@ -751,7 +821,7 @@ describe("utilities/safe.ts", () => {
         confirmationsRequired: 2,
         confirmations: null,
       });
-      const status = await getTransactionStatus("0xhash", 10 as any);
+      const status = await getTransactionStatus("0xhash", 10 as SupportedChainId);
       expect(status.confirmationsSubmitted).toBe(0);
     });
   });
@@ -761,10 +831,10 @@ describe("utilities/safe.ts", () => {
   // =========================================================================
 
   describe("estimateGasFee", () => {
-    const recipients = [
+    const recipients: DisbursementRecipient[] = [
       { address: "0x1111111111111111111111111111111111111111", amount: "1.0", error: undefined },
       { address: "0x2222222222222222222222222222222222222222", amount: "2.0", error: undefined },
-    ] as any[];
+    ];
 
     it("returns gas estimation with native token details", async () => {
       // Mock CoinGecko price fetch
@@ -773,7 +843,7 @@ describe("utilities/safe.ts", () => {
         json: () => Promise.resolve({ ethereum: { usd: 2000 } }),
       });
 
-      const result = await estimateGasFee("0xSafe", recipients, null, 10 as any);
+      const result = await estimateGasFee("0xSafe", recipients, null, 10 as SupportedChainId);
 
       expect(result.gasEstimate).toBeGreaterThan(0n);
       expect(result.gasPrice).toBe(50000000n);
@@ -784,25 +854,25 @@ describe("utilities/safe.ts", () => {
     it("returns null totalFeeUSD when CoinGecko fails", async () => {
       mockFetch.mockRejectedValueOnce(new Error("CoinGecko down"));
 
-      const result = await estimateGasFee("0xSafe", recipients, null, 10 as any);
+      const result = await estimateGasFee("0xSafe", recipients, null, 10 as SupportedChainId);
       expect(result.totalFeeUSD).toBeNull();
     });
 
     it("returns null totalFeeUSD when CoinGecko returns non-OK", async () => {
       mockFetch.mockResolvedValueOnce({ ok: false, status: 429 });
 
-      const result = await estimateGasFee("0xSafe", recipients, null, 10 as any);
+      const result = await estimateGasFee("0xSafe", recipients, null, 10 as SupportedChainId);
       expect(result.totalFeeUSD).toBeNull();
     });
 
     it("throws when no valid recipients", async () => {
-      const badRecipients = [
+      const badRecipients: DisbursementRecipient[] = [
         { address: "0x3333333333333333333333333333333333333333", amount: "1.0", error: "Invalid" },
-      ] as any[];
+      ];
 
-      await expect(estimateGasFee("0xSafe", badRecipients, null, 10 as any)).rejects.toThrow(
-        "No valid recipients for gas estimation"
-      );
+      await expect(
+        estimateGasFee("0xSafe", badRecipients, null, 10 as SupportedChainId)
+      ).rejects.toThrow("No valid recipients for gas estimation");
     });
 
     it("fetches token decimals from contract for ERC20", async () => {
@@ -812,7 +882,7 @@ describe("utilities/safe.ts", () => {
         json: () => Promise.resolve({ ethereum: { usd: 2000 } }),
       });
 
-      await estimateGasFee("0xSafe", recipients, "0xUSDC", 10 as any);
+      await estimateGasFee("0xSafe", recipients, "0xUSDC", 10 as SupportedChainId);
       expect(mockRPCClient.readContract).toHaveBeenCalledWith(
         expect.objectContaining({ functionName: "decimals" })
       );
@@ -829,7 +899,7 @@ describe("utilities/safe.ts", () => {
         ok: true,
         json: () => Promise.resolve({ count: 0 }),
       });
-      await isSafeDelegate("0xSafe", "0xAddr", 10 as any);
+      await isSafeDelegate("0xSafe", "0xAddr", 10 as SupportedChainId);
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining("safe-transaction-optimism.safe.global")
       );
@@ -840,7 +910,7 @@ describe("utilities/safe.ts", () => {
         ok: true,
         json: () => Promise.resolve({ count: 0 }),
       });
-      await isSafeDelegate("0xSafe", "0xAddr", 8453 as any);
+      await isSafeDelegate("0xSafe", "0xAddr", 8453 as SupportedChainId);
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining("safe-transaction-base.safe.global")
       );
@@ -851,19 +921,19 @@ describe("utilities/safe.ts", () => {
         ok: true,
         json: () => Promise.resolve({ count: 0 }),
       });
-      await isSafeDelegate("0xSafe", "0xAddr", 42161 as any);
+      await isSafeDelegate("0xSafe", "0xAddr", 42161 as SupportedChainId);
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining("safe-transaction-arbitrum.safe.global")
       );
     });
 
     it("returns false for Sei (no Safe Transaction Service)", async () => {
-      const result = await isSafeDelegate("0xSafe", "0xAddr", 1329 as any);
+      const result = await isSafeDelegate("0xSafe", "0xAddr", 1329 as SupportedChainId);
       expect(result).toBe(false);
     });
 
     it("returns false for Lisk (no Safe Transaction Service)", async () => {
-      const result = await isSafeDelegate("0xSafe", "0xAddr", 1135 as any);
+      const result = await isSafeDelegate("0xSafe", "0xAddr", 1135 as SupportedChainId);
       expect(result).toBe(false);
     });
   });

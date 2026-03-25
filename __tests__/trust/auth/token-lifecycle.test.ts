@@ -18,7 +18,7 @@ beforeEach(() => {
   TokenManager.setPrivyInstance(null);
   vi.clearAllMocks();
   localStorage.clear();
-  delete (window as any).Cypress;
+  delete (window as unknown as Record<string, unknown>).Cypress;
   process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS = originalEnv;
 });
 
@@ -32,7 +32,7 @@ afterAll(() => {
 describe("TokenManager — Cypress bypass", () => {
   it("returns localStorage token when E2E bypass is enabled and Cypress is present", async () => {
     process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS = "true";
-    (window as any).Cypress = true;
+    (window as unknown as Record<string, unknown>).Cypress = true;
     localStorage.setItem("privy:token", "cypress-mock-token");
 
     const token = await TokenManager.getToken();
@@ -42,7 +42,7 @@ describe("TokenManager — Cypress bypass", () => {
 
   it("does NOT return localStorage token when E2E bypass is disabled", async () => {
     process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS = "false";
-    (window as any).Cypress = true;
+    (window as unknown as Record<string, unknown>).Cypress = true;
     localStorage.setItem("privy:token", "cypress-mock-token");
 
     // Without a Privy instance, should return null
