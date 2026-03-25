@@ -13,6 +13,8 @@ vi.mock("@/services/fundingPlatformService", () => ({
   },
 }));
 
+import { fundingPlatformService } from "@/services/fundingPlatformService";
+
 // Mock Headless UI Dialog components
 vi.mock("@headlessui/react", () => {
   const MockDialog = ({ children, onClose, ...props }: any) => (
@@ -228,8 +230,7 @@ describe("StatusChangeModal", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Reset fundingPlatformService mock
-    const { fundingPlatformService } = require("@/services/fundingPlatformService");
-    fundingPlatformService.programs.getFundingDetails.mockResolvedValue({});
+    vi.mocked(fundingPlatformService.programs.getFundingDetails).mockResolvedValue({});
   });
 
   describe("Rendering", () => {
@@ -790,8 +791,7 @@ describe("StatusChangeModal", () => {
     });
 
     it("should auto-load currency from API when application is provided", async () => {
-      const { fundingPlatformService } = require("@/services/fundingPlatformService");
-      fundingPlatformService.programs.getFundingDetails.mockResolvedValue({
+      vi.mocked(fundingPlatformService.programs.getFundingDetails).mockResolvedValue({
         currency: "ETH",
       });
 
@@ -814,8 +814,9 @@ describe("StatusChangeModal", () => {
     });
 
     it("should show empty currency input when API fetch fails", async () => {
-      const { fundingPlatformService } = require("@/services/fundingPlatformService");
-      fundingPlatformService.programs.getFundingDetails.mockRejectedValue(new Error("API Error"));
+      vi.mocked(fundingPlatformService.programs.getFundingDetails).mockRejectedValue(
+        new Error("API Error")
+      );
 
       renderWithQueryClient(
         <StatusChangeModal {...defaultProps} status="approved" application={mockApplication} />
@@ -835,8 +836,9 @@ describe("StatusChangeModal", () => {
     });
 
     it("should allow manual currency entry when API fails", async () => {
-      const { fundingPlatformService } = require("@/services/fundingPlatformService");
-      fundingPlatformService.programs.getFundingDetails.mockRejectedValue(new Error("API Error"));
+      vi.mocked(fundingPlatformService.programs.getFundingDetails).mockRejectedValue(
+        new Error("API Error")
+      );
 
       renderWithQueryClient(
         <StatusChangeModal {...defaultProps} status="approved" application={mockApplication} />
@@ -942,8 +944,7 @@ describe("StatusChangeModal", () => {
 
     it("should accept long currency codes (e.g., USDGLO)", async () => {
       const onConfirm = vi.fn().mockResolvedValue(undefined);
-      const { fundingPlatformService } = require("@/services/fundingPlatformService");
-      fundingPlatformService.programs.getFundingDetails.mockResolvedValue({
+      vi.mocked(fundingPlatformService.programs.getFundingDetails).mockResolvedValue({
         currency: "USDGLO",
       });
 
@@ -971,8 +972,7 @@ describe("StatusChangeModal", () => {
     });
 
     it("should normalize lowercase currency from API to uppercase", async () => {
-      const { fundingPlatformService } = require("@/services/fundingPlatformService");
-      fundingPlatformService.programs.getFundingDetails.mockResolvedValue({
+      vi.mocked(fundingPlatformService.programs.getFundingDetails).mockResolvedValue({
         currency: "eth", // lowercase
       });
 
@@ -987,8 +987,7 @@ describe("StatusChangeModal", () => {
     });
 
     it("should normalize currency with whitespace from API", async () => {
-      const { fundingPlatformService } = require("@/services/fundingPlatformService");
-      fundingPlatformService.programs.getFundingDetails.mockResolvedValue({
+      vi.mocked(fundingPlatformService.programs.getFundingDetails).mockResolvedValue({
         currency: "  USDC  ", // with whitespace
       });
 
@@ -1003,8 +1002,7 @@ describe("StatusChangeModal", () => {
     });
 
     it("should reject currency with numbers", async () => {
-      const { fundingPlatformService } = require("@/services/fundingPlatformService");
-      fundingPlatformService.programs.getFundingDetails.mockResolvedValue({
+      vi.mocked(fundingPlatformService.programs.getFundingDetails).mockResolvedValue({
         currency: "USD123", // contains numbers
       });
 
@@ -1029,10 +1027,8 @@ describe("StatusChangeModal", () => {
     });
 
     it("should handle different API response structures for currency", async () => {
-      const { fundingPlatformService } = require("@/services/fundingPlatformService");
-
       // Test currency in data.currency
-      fundingPlatformService.programs.getFundingDetails.mockResolvedValue({
+      vi.mocked(fundingPlatformService.programs.getFundingDetails).mockResolvedValue({
         data: { currency: "ETH" },
       });
 
@@ -1048,7 +1044,7 @@ describe("StatusChangeModal", () => {
       unmount();
 
       // Test currency in fundingDetails.currency
-      fundingPlatformService.programs.getFundingDetails.mockResolvedValue({
+      vi.mocked(fundingPlatformService.programs.getFundingDetails).mockResolvedValue({
         fundingDetails: { currency: "USDC" },
       });
 
@@ -1290,8 +1286,7 @@ describe("StatusChangeModal", () => {
     });
 
     it("should reset currency when modal closes", async () => {
-      const { fundingPlatformService } = require("@/services/fundingPlatformService");
-      fundingPlatformService.programs.getFundingDetails.mockResolvedValue({
+      vi.mocked(fundingPlatformService.programs.getFundingDetails).mockResolvedValue({
         currency: "ETH",
       });
 
@@ -1421,15 +1416,13 @@ describe("StatusChangeModal", () => {
 
   describe("Loading States", () => {
     it("should show loading state for currency when fetching from API", async () => {
-      const { fundingPlatformService } = require("@/services/fundingPlatformService");
-
       // Create a promise that we can control
       let resolvePromise: (value: any) => void;
       const promise = new Promise((resolve) => {
         resolvePromise = resolve;
       });
 
-      fundingPlatformService.programs.getFundingDetails.mockReturnValue(promise);
+      vi.mocked(fundingPlatformService.programs.getFundingDetails).mockReturnValue(promise);
 
       renderWithQueryClient(
         <StatusChangeModal {...defaultProps} status="approved" application={mockApplication} />
@@ -1450,14 +1443,12 @@ describe("StatusChangeModal", () => {
     });
 
     it("should disable currency input while loading", async () => {
-      const { fundingPlatformService } = require("@/services/fundingPlatformService");
-
       let resolvePromise: (value: any) => void;
       const promise = new Promise((resolve) => {
         resolvePromise = resolve;
       });
 
-      fundingPlatformService.programs.getFundingDetails.mockReturnValue(promise);
+      vi.mocked(fundingPlatformService.programs.getFundingDetails).mockReturnValue(promise);
 
       renderWithQueryClient(
         <StatusChangeModal {...defaultProps} status="approved" application={mockApplication} />
@@ -1480,8 +1471,7 @@ describe("StatusChangeModal", () => {
 
   describe("Error Handling", () => {
     it("should handle API error gracefully and allow manual entry", async () => {
-      const { fundingPlatformService } = require("@/services/fundingPlatformService");
-      fundingPlatformService.programs.getFundingDetails.mockRejectedValue(
+      vi.mocked(fundingPlatformService.programs.getFundingDetails).mockRejectedValue(
         new Error("Network error")
       );
 
@@ -1508,8 +1498,6 @@ describe("StatusChangeModal", () => {
     });
 
     it("should not fetch currency when application is missing", async () => {
-      const { fundingPlatformService } = require("@/services/fundingPlatformService");
-
       renderWithQueryClient(<StatusChangeModal {...defaultProps} status="approved" />);
 
       // Should not call API when application is not provided
@@ -1517,8 +1505,6 @@ describe("StatusChangeModal", () => {
     });
 
     it("should not fetch currency for non-approved statuses", async () => {
-      const { fundingPlatformService } = require("@/services/fundingPlatformService");
-
       renderWithQueryClient(
         <StatusChangeModal {...defaultProps} status="rejected" application={mockApplication} />
       );
@@ -1552,8 +1538,7 @@ describe("StatusChangeModal", () => {
     });
 
     it("should trim and uppercase currency from API before validation", async () => {
-      const { fundingPlatformService } = require("@/services/fundingPlatformService");
-      fundingPlatformService.programs.getFundingDetails.mockResolvedValue({
+      vi.mocked(fundingPlatformService.programs.getFundingDetails).mockResolvedValue({
         currency: "  eth  ", // whitespace and lowercase
       });
 

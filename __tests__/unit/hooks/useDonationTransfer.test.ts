@@ -4,6 +4,13 @@ import * as wagmi from "wagmi";
 import type { SupportedToken } from "@/constants/supportedTokens";
 import { useDonationTransfer, useTransactionStatus } from "@/hooks/useDonationTransfer";
 import type { DonationPayment } from "@/store/donationCart";
+import { validateChainSync } from "@/utilities/chainSyncValidation";
+import { checkTokenAllowances, executeApprovals } from "@/utilities/erc20";
+import { getRPCClient } from "@/utilities/rpcClient";
+import {
+  getWalletClientWithFallback,
+  isWalletClientGoodEnough,
+} from "@/utilities/walletClientFallback";
 
 // Mock wagmi hooks
 vi.mock("wagmi", () => ({
@@ -16,8 +23,8 @@ vi.mock("wagmi", () => ({
 }));
 
 // Mock viem utilities
-vi.mock("viem", () => {
-  const actual = vi.importActual("viem");
+vi.mock("viem", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("viem")>();
   // Use actual parseUnits and formatUnits - they work correctly
   return {
     ...actual,
@@ -132,40 +139,30 @@ describe("useDonationTransfer", () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
 
     // Setup default mocks
-    (wagmi.useAccount as vi.Mock).mockReturnValue({
+    vi.mocked(wagmi.useAccount).mockReturnValue({
       address: mockAddress,
       isConnected: true,
     });
 
-    (wagmi.usePublicClient as vi.Mock).mockReturnValue(mockPublicClient);
+    vi.mocked(wagmi.usePublicClient).mockReturnValue(mockPublicClient);
 
-    (wagmi.useWalletClient as vi.Mock).mockReturnValue({
+    vi.mocked(wagmi.useWalletClient).mockReturnValue({
       data: mockWalletClient,
       refetch: vi.fn().mockResolvedValue({ data: mockWalletClient }),
     });
 
-    (wagmi.useWriteContract as vi.Mock).mockReturnValue({
+    vi.mocked(wagmi.useWriteContract).mockReturnValue({
       writeContractAsync: mockWriteContractAsync,
     });
 
-    (wagmi.useChainId as vi.Mock).mockReturnValue(10);
+    vi.mocked(wagmi.useChainId).mockReturnValue(10);
 
     // Setup utility mocks with default success behavior
-    const { checkTokenAllowances } = require("@/utilities/erc20");
-    checkTokenAllowances.mockResolvedValue([]);
-
-    const { getRPCClient } = require("@/utilities/rpcClient");
-    getRPCClient.mockResolvedValue(mockPublicClient);
-
-    const {
-      getWalletClientWithFallback,
-      isWalletClientGoodEnough,
-    } = require("@/utilities/walletClientFallback");
-    getWalletClientWithFallback.mockResolvedValue(mockWalletClient);
-    isWalletClientGoodEnough.mockReturnValue(true);
-
-    const { validateChainSync } = require("@/utilities/chainSyncValidation");
-    validateChainSync.mockResolvedValue(undefined);
+    vi.mocked(checkTokenAllowances).mockResolvedValue([]);
+    vi.mocked(getRPCClient).mockResolvedValue(mockPublicClient);
+    vi.mocked(getWalletClientWithFallback).mockResolvedValue(mockWalletClient);
+    vi.mocked(isWalletClientGoodEnough).mockReturnValue(true);
+    vi.mocked(validateChainSync).mockResolvedValue(undefined);
 
     mockWalletClient.signTypedData.mockResolvedValue("0xsignature");
     mockWriteContractAsync.mockResolvedValue("0xtxhash");
@@ -177,7 +174,7 @@ describe("useDonationTransfer", () => {
 
   afterEach(() => {
     // Restore console.error spy before clearing mocks
-    (console.error as vi.Mock)?.mockRestore?.();
+    (console.error as any)?.mockRestore?.();
 
     // Reset all mocks to prevent state accumulation
     vi.clearAllMocks();
@@ -205,9 +202,7 @@ describe("useDonationTransfer", () => {
   describe("checkApprovals", () => {
     it("should check token approvals for ERC20 tokens", async () => {
       const { result } = renderHook(() => useDonationTransfer());
-      const { checkTokenAllowances } = require("@/utilities/erc20");
-
-      checkTokenAllowances.mockResolvedValue([
+      vi.mocked(checkTokenAllowances).mockResolvedValue([
         {
           tokenAddress: mockToken.address as Address,
           tokenSymbol: mockToken.symbol,
@@ -230,8 +225,6 @@ describe("useDonationTransfer", () => {
 
     it("should skip native tokens in approval check", async () => {
       const { result } = renderHook(() => useDonationTransfer());
-      const { checkTokenAllowances } = require("@/utilities/erc20");
-
       await act(async () => {
         await result.current.checkApprovals([mockNativePayment]);
       });
@@ -242,8 +235,6 @@ describe("useDonationTransfer", () => {
 
     it("should handle multiple tokens on same chain", async () => {
       const { result } = renderHook(() => useDonationTransfer());
-      const { checkTokenAllowances } = require("@/utilities/erc20");
-
       const payment2: DonationPayment = {
         projectId: "project-2",
         amount: "50",
@@ -251,7 +242,7 @@ describe("useDonationTransfer", () => {
         chainId: 10,
       };
 
-      checkTokenAllowances.mockResolvedValue([
+      vi.mocked(checkTokenAllowances).mockResolvedValue([
         { needsApproval: true, chainId: 10, tokenSymbol: "USDC" },
         { needsApproval: false, chainId: 10, tokenSymbol: "DAI" },
       ]);
@@ -264,7 +255,7 @@ describe("useDonationTransfer", () => {
     });
 
     it("should throw error when wallet not connected", async () => {
-      (wagmi.useAccount as vi.Mock).mockReturnValue({
+      vi.mocked(wagmi.useAccount).mockReturnValue({
         address: null,
         isConnected: false,
       });
@@ -279,7 +270,7 @@ describe("useDonationTransfer", () => {
     it("should use getRPCClient when public client unavailable", async () => {
       // When publicClient is null, checkApprovals should fall back to getRPCClient
       // and not throw an error. This enables multi-chain donations during network switches.
-      (wagmi.usePublicClient as vi.Mock).mockReturnValue(null);
+      vi.mocked(wagmi.usePublicClient).mockReturnValue(null);
 
       const { result } = renderHook(() => useDonationTransfer());
 
@@ -309,9 +300,7 @@ describe("useDonationTransfer", () => {
 
     it("should execute donation for ERC20 token without approval needed", async () => {
       const { result } = renderHook(() => useDonationTransfer());
-      const { checkTokenAllowances } = require("@/utilities/erc20");
-
-      checkTokenAllowances.mockResolvedValue([
+      vi.mocked(checkTokenAllowances).mockResolvedValue([
         {
           needsApproval: false,
           tokenAddress: mockToken.address,
@@ -330,9 +319,7 @@ describe("useDonationTransfer", () => {
 
     it("should execute approvals before donation when needed", async () => {
       const { result } = renderHook(() => useDonationTransfer());
-      const { checkTokenAllowances, executeApprovals } = require("@/utilities/erc20");
-
-      checkTokenAllowances.mockResolvedValue([
+      vi.mocked(checkTokenAllowances).mockResolvedValue([
         {
           needsApproval: true,
           tokenAddress: mockToken.address as Address,
@@ -342,7 +329,7 @@ describe("useDonationTransfer", () => {
         },
       ]);
 
-      executeApprovals.mockResolvedValue([
+      vi.mocked(executeApprovals).mockResolvedValue([
         {
           status: "confirmed",
           hash: "0xapprovalhash",
@@ -402,7 +389,7 @@ describe("useDonationTransfer", () => {
     });
 
     it("should throw error when wallet not connected", async () => {
-      (wagmi.useAccount as vi.Mock).mockReturnValue({
+      vi.mocked(wagmi.useAccount).mockReturnValue({
         address: null,
         isConnected: false,
       });
@@ -733,33 +720,33 @@ describe("useDonationTransfer", () => {
     // Tests in this block modify mocks, so we need explicit reset before each test
     beforeEach(() => {
       // IMPORTANT: Reset all wagmi mocks first to clear any queued values
-      (wagmi.useAccount as vi.Mock).mockReset();
-      (wagmi.usePublicClient as vi.Mock).mockReset();
-      (wagmi.useWalletClient as vi.Mock).mockReset();
-      (wagmi.useWriteContract as vi.Mock).mockReset();
-      (wagmi.useChainId as vi.Mock).mockReset();
-      (wagmi.useWaitForTransactionReceipt as vi.Mock).mockReset();
+      vi.mocked(wagmi.useAccount).mockReset();
+      vi.mocked(wagmi.usePublicClient).mockReset();
+      vi.mocked(wagmi.useWalletClient).mockReset();
+      vi.mocked(wagmi.useWriteContract).mockReset();
+      vi.mocked(wagmi.useChainId).mockReset();
+      vi.mocked(wagmi.useWaitForTransactionReceipt).mockReset();
 
       // Now set up default implementations
-      (wagmi.useAccount as vi.Mock).mockReturnValue({
+      vi.mocked(wagmi.useAccount).mockReturnValue({
         address: mockAddress,
         isConnected: true,
       });
 
-      (wagmi.usePublicClient as vi.Mock).mockReturnValue(mockPublicClient);
+      vi.mocked(wagmi.usePublicClient).mockReturnValue(mockPublicClient);
 
-      (wagmi.useWalletClient as vi.Mock).mockReturnValue({
+      vi.mocked(wagmi.useWalletClient).mockReturnValue({
         data: mockWalletClient,
         refetch: vi.fn().mockResolvedValue({ data: mockWalletClient }),
       });
 
-      (wagmi.useWriteContract as vi.Mock).mockReturnValue({
+      vi.mocked(wagmi.useWriteContract).mockReturnValue({
         writeContractAsync: mockWriteContractAsync,
       });
 
-      (wagmi.useChainId as vi.Mock).mockReturnValue(10);
+      vi.mocked(wagmi.useChainId).mockReturnValue(10);
 
-      (wagmi.useWaitForTransactionReceipt as vi.Mock).mockReturnValue({
+      vi.mocked(wagmi.useWaitForTransactionReceipt).mockReturnValue({
         data: null,
         isLoading: false,
         isSuccess: false,
@@ -767,28 +754,18 @@ describe("useDonationTransfer", () => {
       });
 
       // Reset utility mocks
-      const { checkTokenAllowances, executeApprovals } = require("@/utilities/erc20");
-      checkTokenAllowances.mockReset();
-      checkTokenAllowances.mockResolvedValue([]);
-      executeApprovals.mockReset();
-      executeApprovals.mockResolvedValue([]);
-
-      const { getRPCClient } = require("@/utilities/rpcClient");
-      getRPCClient.mockReset();
-      getRPCClient.mockResolvedValue(mockPublicClient);
-
-      const {
-        getWalletClientWithFallback,
-        isWalletClientGoodEnough,
-      } = require("@/utilities/walletClientFallback");
-      getWalletClientWithFallback.mockReset();
-      getWalletClientWithFallback.mockResolvedValue(mockWalletClient);
-      isWalletClientGoodEnough.mockReset();
-      isWalletClientGoodEnough.mockReturnValue(true);
-
-      const { validateChainSync } = require("@/utilities/chainSyncValidation");
-      validateChainSync.mockReset();
-      validateChainSync.mockResolvedValue(undefined);
+      vi.mocked(checkTokenAllowances).mockReset();
+      vi.mocked(checkTokenAllowances).mockResolvedValue([]);
+      vi.mocked(executeApprovals).mockReset();
+      vi.mocked(executeApprovals).mockResolvedValue([]);
+      vi.mocked(getRPCClient).mockReset();
+      vi.mocked(getRPCClient).mockResolvedValue(mockPublicClient);
+      vi.mocked(getWalletClientWithFallback).mockReset();
+      vi.mocked(getWalletClientWithFallback).mockResolvedValue(mockWalletClient);
+      vi.mocked(isWalletClientGoodEnough).mockReset();
+      vi.mocked(isWalletClientGoodEnough).mockReturnValue(true);
+      vi.mocked(validateChainSync).mockReset();
+      vi.mocked(validateChainSync).mockResolvedValue(undefined);
 
       // Reset mock implementations on shared objects
       mockWalletClient.signTypedData.mockReset();
@@ -853,10 +830,8 @@ describe("useDonationTransfer", () => {
 
     it("should handle wallet client errors during execution", async () => {
       const { result } = renderHook(() => useDonationTransfer());
-      const { getWalletClientWithFallback } = require("@/utilities/walletClientFallback");
-
       // Make getWalletClientWithFallback return null, simulating wallet unavailable
-      getWalletClientWithFallback.mockResolvedValueOnce(null);
+      vi.mocked(getWalletClientWithFallback).mockResolvedValueOnce(null);
 
       await expect(
         act(async () => {
@@ -873,17 +848,15 @@ describe("useDonationTransfer", () => {
 
     it("should retry chain sync validation with fresh wallet client", async () => {
       const { result } = renderHook(() => useDonationTransfer());
-      const { validateChainSync } = require("@/utilities/chainSyncValidation");
-      const { getWalletClientWithFallback } = require("@/utilities/walletClientFallback");
       const freshWalletClient = { ...mockWalletClient, chain: { id: 10 } };
 
       // First validation fails, triggering retry
-      validateChainSync.mockRejectedValueOnce(new Error("Chain mismatch"));
+      vi.mocked(validateChainSync).mockRejectedValueOnce(new Error("Chain mismatch"));
       // Second validation succeeds
-      validateChainSync.mockResolvedValueOnce(undefined);
+      vi.mocked(validateChainSync).mockResolvedValueOnce(undefined);
 
       // getWalletClientWithFallback returns fresh wallet client
-      getWalletClientWithFallback.mockResolvedValue(freshWalletClient);
+      vi.mocked(getWalletClientWithFallback).mockResolvedValue(freshWalletClient);
 
       await act(async () => {
         await result.current.executeDonations(
@@ -967,15 +940,12 @@ describe("useDonationTransfer", () => {
 
     it("should handle wallet client unavailable during permit signing", async () => {
       const { result } = renderHook(() => useDonationTransfer());
-      const { getWalletClientWithFallback } = require("@/utilities/walletClientFallback");
-      const { checkTokenAllowances } = require("@/utilities/erc20");
-
       // Verify hook initialized properly
       expect(result.current).toBeDefined();
       expect(result.current.executeDonations).toBeDefined();
 
       // Setup: no approvals needed, but wallet client becomes unavailable during permit signing
-      checkTokenAllowances.mockResolvedValue([
+      vi.mocked(checkTokenAllowances).mockResolvedValue([
         {
           needsApproval: false,
           tokenAddress: mockToken.address,
@@ -985,7 +955,7 @@ describe("useDonationTransfer", () => {
       ]);
 
       // Return null for wallet client, simulating unavailable wallet
-      getWalletClientWithFallback.mockResolvedValue(null);
+      vi.mocked(getWalletClientWithFallback).mockResolvedValue(null);
 
       // Expect the execution to throw an error about wallet client
       await expect(
@@ -1000,8 +970,6 @@ describe("useDonationTransfer", () => {
 
     it("should handle multiple chains with approvals", async () => {
       const { result } = renderHook(() => useDonationTransfer());
-      const { checkTokenAllowances, executeApprovals } = require("@/utilities/erc20");
-
       const paymentChain1: DonationPayment = {
         ...mockPayment,
         chainId: 10,
@@ -1013,7 +981,7 @@ describe("useDonationTransfer", () => {
         token: { ...mockToken, chainId: 8453 },
       };
 
-      checkTokenAllowances.mockImplementation(
+      vi.mocked(checkTokenAllowances).mockImplementation(
         (_client: any, _address: Address, _spender: Address, _tokens: any[], chainId: number) => {
           return Promise.resolve([
             {
@@ -1027,7 +995,7 @@ describe("useDonationTransfer", () => {
         }
       );
 
-      executeApprovals.mockResolvedValue([
+      vi.mocked(executeApprovals).mockResolvedValue([
         {
           status: "confirmed",
           hash: "0xapprovalhash",
@@ -1054,7 +1022,7 @@ describe("useDonationTransfer", () => {
       vi.clearAllMocks();
 
       // Reset wagmi mocks to default values for useTransactionStatus tests
-      (wagmi.useWaitForTransactionReceipt as vi.Mock).mockReturnValue({
+      vi.mocked(wagmi.useWaitForTransactionReceipt).mockReturnValue({
         data: null,
         isLoading: false,
         isSuccess: false,
@@ -1063,7 +1031,7 @@ describe("useDonationTransfer", () => {
     });
 
     it("should return pending status when loading", () => {
-      (wagmi.useWaitForTransactionReceipt as vi.Mock).mockReturnValue({
+      vi.mocked(wagmi.useWaitForTransactionReceipt).mockReturnValue({
         data: null,
         isLoading: true,
         isSuccess: false,
@@ -1077,7 +1045,7 @@ describe("useDonationTransfer", () => {
     });
 
     it("should return success status when transaction succeeds", () => {
-      (wagmi.useWaitForTransactionReceipt as vi.Mock).mockReturnValue({
+      vi.mocked(wagmi.useWaitForTransactionReceipt).mockReturnValue({
         data: { status: "success", transactionHash: "0xtxhash" },
         isLoading: false,
         isSuccess: true,
@@ -1092,7 +1060,7 @@ describe("useDonationTransfer", () => {
     });
 
     it("should return error status when transaction fails", () => {
-      (wagmi.useWaitForTransactionReceipt as vi.Mock).mockReturnValue({
+      vi.mocked(wagmi.useWaitForTransactionReceipt).mockReturnValue({
         data: null,
         isLoading: false,
         isSuccess: false,
@@ -1106,7 +1074,7 @@ describe("useDonationTransfer", () => {
     });
 
     it("should return idle status when hash is empty", () => {
-      (wagmi.useWaitForTransactionReceipt as vi.Mock).mockReturnValue({
+      vi.mocked(wagmi.useWaitForTransactionReceipt).mockReturnValue({
         data: null,
         isLoading: false,
         isSuccess: false,
@@ -1119,7 +1087,7 @@ describe("useDonationTransfer", () => {
     });
 
     it("should disable query when hash is empty", () => {
-      (wagmi.useWaitForTransactionReceipt as vi.Mock).mockReturnValue({
+      vi.mocked(wagmi.useWaitForTransactionReceipt).mockReturnValue({
         data: null,
         isLoading: false,
         isSuccess: false,
@@ -1139,7 +1107,7 @@ describe("useDonationTransfer", () => {
     });
 
     it("should enable query when hash is provided", () => {
-      (wagmi.useWaitForTransactionReceipt as vi.Mock).mockReturnValue({
+      vi.mocked(wagmi.useWaitForTransactionReceipt).mockReturnValue({
         data: null,
         isLoading: true,
         isSuccess: false,

@@ -13,6 +13,27 @@ import { QUERY_KEYS } from "@/utilities/queryKeys";
 // so we can test the real hook implementation
 vi.unmock("@/hooks/useAuth");
 
+// Mock next/navigation so useRouter() and usePathname() don't throw
+vi.mock("next/navigation", () => ({
+  useRouter: vi.fn(() => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    back: vi.fn(),
+    prefetch: vi.fn(),
+    refresh: vi.fn(),
+  })),
+  usePathname: vi.fn(() => "/"),
+  useSearchParams: vi.fn(() => new URLSearchParams()),
+}));
+
+// Mock useWhitelabel which is called inside useAuth
+vi.mock("@/hooks/useWhitelabel", () => ({
+  useWhitelabel: vi.fn(() => ({
+    isWhitelabel: false,
+    whitelabelConfig: null,
+  })),
+}));
+
 // Controllable mock functions for hook tests
 const mockLogin = vi.fn();
 const mockLogout = vi.fn();
@@ -54,6 +75,10 @@ vi.mock("@/contexts/privy-bridge-context", () => ({
 vi.mock("@wagmi/core", () => ({
   watchAccount: vi.fn(() => vi.fn()),
 }));
+
+import { watchAccount as _watchAccount } from "@wagmi/core";
+
+const mockWatchAccount = vi.mocked(_watchAccount);
 
 // Mock privy-config for dynamic import in watchAccount effect
 vi.mock("@/utilities/wagmi/privy-config", () => ({
@@ -341,7 +366,7 @@ describe("useAuth - Re-login with different wallet", () => {
   const wrapper = ({ children }: { children: ReactNode }) => <>{children}</>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     setBridgeState({
       ready: true,
       authenticated: true,
@@ -392,7 +417,7 @@ describe("useAuth - Re-login with different wallet", () => {
   it("should NOT force-logout via watchAccount when re-logging with different wallet", async () => {
     // Simulate watchAccount firing with stale address from previous session
     let capturedOnChange: ((account: { address?: string }) => void) | null = null;
-    const mockUnwatch = jest.fn();
+    const mockUnwatch = vi.fn();
     mockWatchAccount.mockImplementation(
       (_config: unknown, opts: { onChange: (account: { address?: string }) => void }) => {
         capturedOnChange = opts.onChange;
@@ -446,7 +471,7 @@ describe("useAuth - Re-login with different wallet", () => {
     expect(mockLogout).not.toHaveBeenCalled();
 
     // Reset mock
-    mockWatchAccount.mockImplementation(() => jest.fn());
+    mockWatchAccount.mockImplementation(() => vi.fn());
   });
 
   it("should NOT force-logout when Privy user object lingers after logout", async () => {

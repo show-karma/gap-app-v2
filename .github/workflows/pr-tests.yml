@@ -8,7 +8,11 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1/4, 2/4, 3/4, 4/4]
 
     steps:
       - name: Checkout code
@@ -29,20 +33,42 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Run tests with coverage
-        run: pnpm run test:coverage
+        run: pnpm run test:coverage -- --shard=${{ matrix.shard }}
         env:
           NODE_ENV: test
 
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ strategy.job-index }}
+          path: coverage/
+          retention-days: 1
+          if-no-files-found: ignore
+
+  report:
+    if: always() && github.event_name == 'pull_request'
+    needs: [test]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Download all coverage artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: coverage-*
+          merge-multiple: true
+          path: coverage/
+
       - name: Generate test summary
         id: test-summary
-        if: always()
         run: |
           if [ -f coverage/coverage-summary.json ]; then
             LINES=$(node -p "JSON.parse(require('fs').readFileSync('coverage/coverage-summary.json', 'utf-8')).total.lines.pct.toFixed(2)")
             STATEMENTS=$(node -p "JSON.parse(require('fs').readFileSync('coverage/coverage-summary.json', 'utf-8')).total.statements.pct.toFixed(2)")
             FUNCTIONS=$(node -p "JSON.parse(require('fs').readFileSync('coverage/coverage-summary.json', 'utf-8')).total.functions.pct.toFixed(2)")
             BRANCHES=$(node -p "JSON.parse(require('fs').readFileSync('coverage/coverage-summary.json', 'utf-8')).total.branches.pct.toFixed(2)")
-            
+
             echo "lines=${LINES}" >> $GITHUB_OUTPUT
             echo "statements=${STATEMENTS}" >> $GITHUB_OUTPUT
             echo "functions=${FUNCTIONS}" >> $GITHUB_OUTPUT
@@ -53,27 +79,26 @@ jobs:
           fi
 
       - name: Comment PR with test results
-        if: always() && github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const fs = require('fs');
             const hasCoverage = '${{ steps.test-summary.outputs.has_coverage }}' === 'true';
-            
+            const testResult = '${{ needs.test.result }}';
+
             let body = '';
-            
-            if (context.payload.workflow_run && context.payload.workflow_run.conclusion === 'failure') {
+
+            if (testResult === 'failure') {
               body = `## ❌ Tests Failed\n\nSome tests failed. Please check the workflow logs for details.`;
-            } else if ('${{ job.status }}' === 'success') {
+            } else if (testResult === 'success') {
               body = `## ✅ All Tests Passed!\n\n`;
-              
+
               if (hasCoverage) {
                 const lines = '${{ steps.test-summary.outputs.lines }}';
                 const statements = '${{ steps.test-summary.outputs.statements }}';
                 const functions = '${{ steps.test-summary.outputs.functions }}';
                 const branches = '${{ steps.test-summary.outputs.branches }}';
-                
+
                 const coverageColor = (pct) => {
                   const num = parseFloat(pct);
                   if (num >= 80) return '🟢';
@@ -81,7 +106,7 @@ jobs:
                   if (num >= 50) return '🟠';
                   return '🔴';
                 };
-                
+
                 body += `### 📊 Test Coverage\n\n`;
                 body += `| Metric | Coverage | Status |\n`;
                 body += `|--------|----------|--------|\n`;
@@ -89,7 +114,7 @@ jobs:
                 body += `| Statements | ${statements}% | ${coverageColor(statements)} |\n`;
                 body += `| Functions | ${functions}% | ${coverageColor(functions)} |\n`;
                 body += `| Branches | ${branches}% | ${coverageColor(branches)} |\n\n`;
-                
+
                 const minCoverage = 50;
                 if (parseFloat(lines) >= minCoverage) {
                   body += `✅ Coverage meets the minimum threshold of ${minCoverage}%\n\n`;
@@ -99,29 +124,28 @@ jobs:
               } else {
                 body += `Coverage report not available.\n\n`;
               }
-              
-              body += `**Linting:** ✅ Passed\n`;
-              body += `**Tests:** ✅ All tests passed\n\n`;
+
+              body += `**Tests:** ✅ All shards passed (4 shards)\n\n`;
             } else {
               body = `## ⚠️ Tests Completed with Issues\n\nPlease check the workflow logs for details.`;
             }
-            
+
             body += `\n---\n*Automated test report*`;
-            
+
             // Find existing comment
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
             });
-            
+
             const botComment = comments.find(comment =>
-              comment.user.type === 'Bot' && 
-              (comment.body.includes('All Tests Passed') || 
+              comment.user.type === 'Bot' &&
+              (comment.body.includes('All Tests Passed') ||
                comment.body.includes('Tests Failed') ||
                comment.body.includes('Tests Completed with Issues'))
             );
-            
+
             if (botComment) {
               await github.rest.issues.updateComment({
                 owner: context.repo.owner,
@@ -137,15 +161,3 @@ jobs:
                 body,
               });
             }
-
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results
-          path: |
-            coverage/
-            test-results.json
-          retention-days: 7
-          if-no-files-found: ignore
-

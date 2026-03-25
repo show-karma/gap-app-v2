@@ -22,7 +22,7 @@ vi.mock("@/hooks/useAuth", () => ({
   useAuth: vi.fn(),
 }));
 
-vi.mock("@/services/programRegistry.service", () => ({
+vi.mock("@/src/features/program-registry/services/program-registry.service", () => ({
   ProgramRegistryService: {
     extractProgramId: vi.fn(),
     updateProgram: vi.fn(),
@@ -273,20 +273,22 @@ describe("ProgramDetailsTab", () => {
     vi.clearAllMocks();
 
     // Default mocks
-    (useAccount as vi.Mock).mockReturnValue({
+    vi.mocked(useAccount).mockReturnValue({
       address: mockAddress,
       isConnected: true,
     });
 
-    (useAuth as vi.Mock).mockReturnValue({
+    vi.mocked(useAuth).mockReturnValue({
       authenticated: true,
       login: mockLogin,
-    });
+      address: mockAddress,
+      isConnected: true,
+    } as any);
 
-    (ProgramRegistryService.extractProgramId as vi.Mock).mockReturnValue(mockProgramDbId);
-    (ProgramRegistryService.updateProgram as vi.Mock).mockResolvedValue(undefined);
+    vi.mocked(ProgramRegistryService.extractProgramId).mockReturnValue(mockProgramDbId);
+    vi.mocked(ProgramRegistryService.updateProgram).mockResolvedValue(undefined);
 
-    (fetchData as vi.Mock).mockImplementation(async (url: string) => {
+    vi.mocked(fetchData).mockImplementation(async (url: string) => {
       if (url.includes("find")) {
         return [mockProgram, null];
       }
@@ -327,7 +329,7 @@ describe("ProgramDetailsTab", () => {
     });
 
     it("should show error state when program fails to load", async () => {
-      (fetchData as vi.Mock).mockImplementation(async () => {
+      vi.mocked(fetchData).mockImplementation(async () => {
         return [null, "Failed to load program"];
       });
 
@@ -341,7 +343,7 @@ describe("ProgramDetailsTab", () => {
     });
 
     it("should show 'Program not found' when program is null", async () => {
-      (fetchData as vi.Mock).mockImplementation(async () => {
+      vi.mocked(fetchData).mockImplementation(async () => {
         return [null, null];
       });
 
@@ -353,7 +355,7 @@ describe("ProgramDetailsTab", () => {
     });
 
     it("should handle array response from API", async () => {
-      (fetchData as vi.Mock).mockImplementation(async () => {
+      vi.mocked(fetchData).mockImplementation(async () => {
         return [[mockProgram], null];
       });
 
@@ -669,7 +671,7 @@ describe("ProgramDetailsTab", () => {
           expect(ProgramRegistryService.updateProgram).toHaveBeenCalled();
           // fetchData should be called at least twice (initial load + refetch)
           expect(fetchData).toHaveBeenCalledTimes(2);
-          const calls = (fetchData as vi.Mock).mock.calls;
+          const calls = vi.mocked(fetchData).mock.calls;
           const lastCall = calls[calls.length - 1];
           expect(lastCall[0]).toContain("find");
         },
@@ -680,9 +682,7 @@ describe("ProgramDetailsTab", () => {
     it("should handle update errors", async () => {
       const user = userEvent.setup();
       // Mock service to throw error
-      (ProgramRegistryService.updateProgram as vi.Mock).mockRejectedValue(
-        new Error("Update failed")
-      );
+      vi.mocked(ProgramRegistryService.updateProgram).mockRejectedValue(new Error("Update failed"));
 
       renderWithProviders(<ProgramDetailsTab programId={mockProgramId} chainId={mockChainId} />);
 
@@ -706,7 +706,7 @@ describe("ProgramDetailsTab", () => {
     it("should handle duplicate program name error", async () => {
       const user = userEvent.setup();
       // Mock service to throw duplicate name error
-      (ProgramRegistryService.updateProgram as vi.Mock).mockRejectedValue(
+      vi.mocked(ProgramRegistryService.updateProgram).mockRejectedValue(
         new Error("A program with this name already exists")
       );
 
@@ -734,7 +734,7 @@ describe("ProgramDetailsTab", () => {
     it("should show loading state during submission", async () => {
       const user = userEvent.setup();
       // Mock service to delay so we can see loading state
-      (ProgramRegistryService.updateProgram as vi.Mock).mockImplementation(
+      vi.mocked(ProgramRegistryService.updateProgram).mockImplementation(
         () => new Promise((resolve) => setTimeout(resolve, 100))
       );
 
@@ -765,7 +765,7 @@ describe("ProgramDetailsTab", () => {
   describe("Authentication", () => {
     it("should prompt login if not authenticated", async () => {
       const user = userEvent.setup();
-      (useAuth as vi.Mock).mockReturnValue({
+      vi.mocked(useAuth).mockReturnValue({
         authenticated: false,
         login: mockLogin,
       });
@@ -788,11 +788,11 @@ describe("ProgramDetailsTab", () => {
 
     it("should prompt login if wallet not connected", async () => {
       const user = userEvent.setup();
-      (useAccount as vi.Mock).mockReturnValue({
+      vi.mocked(useAccount).mockReturnValue({
         address: undefined,
         isConnected: false,
       });
-      (useAuth as jest.Mock).mockReturnValue({
+      vi.mocked(useAuth).mockReturnValue({
         address: undefined,
         isConnected: false,
         authenticated: false,
@@ -833,7 +833,7 @@ describe("ProgramDetailsTab", () => {
     it("should allow retry when program fails to load", async () => {
       const user = userEvent.setup();
       let fetchAttempt = 0;
-      (fetchData as vi.Mock).mockImplementation(async () => {
+      vi.mocked(fetchData).mockImplementation(async () => {
         fetchAttempt++;
         if (fetchAttempt === 1) {
           return [null, "Failed to load program"];
@@ -871,7 +871,7 @@ describe("ProgramDetailsTab", () => {
         },
       };
 
-      (fetchData as vi.Mock).mockImplementation(async () => {
+      vi.mocked(fetchData).mockImplementation(async () => {
         return [programWithoutDates, null];
       });
 
@@ -895,7 +895,7 @@ describe("ProgramDetailsTab", () => {
         },
       };
 
-      (fetchData as vi.Mock).mockImplementation(async () => {
+      vi.mocked(fetchData).mockImplementation(async () => {
         return [programWithoutBudget, null];
       });
 

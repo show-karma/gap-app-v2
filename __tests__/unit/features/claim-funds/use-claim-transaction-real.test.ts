@@ -90,6 +90,7 @@ vi.mock("@/features/claim-funds/lib/viem-clients", () => ({
 // ---------------------------------------------------------------------------
 // Import the REAL hook AFTER mocks are in place
 // ---------------------------------------------------------------------------
+import toast from "react-hot-toast";
 import { useClaimTransaction } from "@/features/claim-funds/hooks/use-claim-transaction";
 import { getChainByName } from "@/features/claim-funds/lib/viem-clients";
 import type { ClaimEligibility } from "@/features/claim-funds/types";
@@ -182,7 +183,7 @@ describe("useClaimTransaction (real hook)", () => {
         result.current.claim(MOCK_CAMPAIGN_ID, createMockEligibility(), MOCK_CONTRACT);
       });
 
-      expect(mockToast.error).toHaveBeenCalledWith("Please connect your wallet to claim");
+      expect(toast.error).toHaveBeenCalledWith("Please connect your wallet to claim");
     });
   });
 
@@ -263,10 +264,10 @@ describe("useClaimTransaction (real hook)", () => {
       );
 
       // Toast notifications
-      expect(mockToast.loading).toHaveBeenCalledWith("Waiting for confirmation...", {
+      expect(toast.loading).toHaveBeenCalledWith("Waiting for confirmation...", {
         id: "claim-tx",
       });
-      expect(mockToast.success).toHaveBeenCalledWith("Your tokens have been claimed!", {
+      expect(toast.success).toHaveBeenCalledWith("Your tokens have been claimed!", {
         id: "claim-tx",
       });
 
@@ -367,7 +368,7 @@ describe("useClaimTransaction (real hook)", () => {
       });
 
       expect(mockWriteContract).not.toHaveBeenCalled();
-      expect(mockToast.error).toHaveBeenCalled();
+      expect(toast.error).toHaveBeenCalled();
     });
   });
 
@@ -421,7 +422,7 @@ describe("useClaimTransaction (real hook)", () => {
       });
 
       expect(mockSanitizeErrorMessage).toHaveBeenCalledWith(expect.any(Error), "Claim Failed");
-      expect(mockToast.error).toHaveBeenCalled();
+      expect(toast.error).toHaveBeenCalled();
     });
 
     it("should handle receipt timeout", async () => {
@@ -440,7 +441,7 @@ describe("useClaimTransaction (real hook)", () => {
         expect(result.current.error).toBeTruthy();
       });
 
-      expect(mockToast.error).toHaveBeenCalled();
+      expect(toast.error).toHaveBeenCalled();
     });
 
     it("should handle on-chain revert (receipt.status !== success)", async () => {
@@ -502,7 +503,7 @@ describe("useClaimTransaction (real hook)", () => {
         expect(result.current.error).toBeTruthy();
       });
 
-      expect(mockToast.error).toHaveBeenCalledWith("Friendly error message", { id: "claim-tx" });
+      expect(toast.error).toHaveBeenCalledWith("Friendly error message", { id: "claim-tx" });
     });
   });
 
@@ -662,7 +663,7 @@ describe("useClaimTransaction (real hook)", () => {
       });
 
       // Should show toast error from the guard, not start mutation
-      expect(mockToast.error).toHaveBeenCalledWith("Please connect your wallet to claim");
+      expect(toast.error).toHaveBeenCalledWith("Please connect your wallet to claim");
     });
   });
 
