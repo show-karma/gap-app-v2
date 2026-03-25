@@ -19,6 +19,14 @@ vi.mock("@/services/fundingPlatformService", () => ({
   },
 }));
 
+vi.mock("react-hot-toast", () => ({
+  __esModule: true,
+  default: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
+}));
+
 const mockUseAuth = useAuth as vi.MockedFunction<typeof useAuth>;
 const mockFundingPrograms = fundingPlatformService.programs as {
   getProgramConfiguration: vi.Mock;

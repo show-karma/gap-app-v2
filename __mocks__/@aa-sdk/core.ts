@@ -1,4 +1,3 @@
-import { vi } from "vitest";
 /**
  * Mock for @aa-sdk/core to avoid ESM parsing issues in Jest
  */

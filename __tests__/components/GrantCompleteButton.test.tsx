@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { GrantCompleteButton } from "@/components/Pages/GrantMilestonesAndUpdates/GrantCompleteButton";
-import "@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom";
 
 // Mock child components
 vi.mock(

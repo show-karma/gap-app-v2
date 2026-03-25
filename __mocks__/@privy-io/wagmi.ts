@@ -1,4 +1,3 @@
-import { vi } from "vitest";
 /**
  * Mock for @privy-io/wagmi
  */

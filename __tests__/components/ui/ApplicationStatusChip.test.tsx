@@ -122,6 +122,26 @@ describe("ApplicationStatusChip", () => {
     });
   });
 
+  describe("size prop", () => {
+    it("applies sm size classes", () => {
+      const { container } = render(<ApplicationStatusChip status="pending" size="sm" />);
+      const badge = container.firstElementChild;
+      expect(badge).toHaveClass("text-[10px]", "px-1.5", "py-0");
+    });
+
+    it("applies md size classes (default)", () => {
+      const { container } = render(<ApplicationStatusChip status="pending" size="md" />);
+      const badge = container.firstElementChild;
+      expect(badge).toHaveClass("text-xs", "px-2.5", "py-0.5");
+    });
+
+    it("applies lg size classes", () => {
+      const { container } = render(<ApplicationStatusChip status="pending" size="lg" />);
+      const badge = container.firstElementChild;
+      expect(badge).toHaveClass("text-sm", "px-3", "py-1");
+    });
+  });
+
   describe("case normalization", () => {
     it("normalizes uppercase status to correct display", () => {
       render(<ApplicationStatusChip status="APPROVED" />);

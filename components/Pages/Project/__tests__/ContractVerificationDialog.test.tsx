@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useContractVerification, VerificationStep } from "@/hooks/useContractVerification";
 import { ContractVerificationDialog } from "../ContractVerificationDialog";
-import "@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom";
 
 // Mock the hook
 vi.mock("@/hooks/useContractVerification");

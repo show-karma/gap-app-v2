@@ -17,6 +17,10 @@ vi.mock("@/utilities/fetchData", () => ({
 }));
 
 // Mock errorManager
+vi.mock("@/components/Utilities/errorManager", () => ({
+  errorManager: vi.fn(),
+}));
+
 // Mock useAuth
 vi.mock("@/hooks/useAuth", () => ({
   useAuth: vi.fn(() => ({
@@ -150,7 +154,7 @@ describe("useAdminCommunities (V2)", () => {
       // Previously, the test would fail because it tried to access mockErrorManager.mock.calls
       // without first mocking errorManager with vi.mock()
       expect(mockErrorManager).toBeDefined();
-      expect(vi.isMockFunction(mockErrorManager)).toBe(true);
+      expect(jest.isMockFunction(mockErrorManager)).toBe(true);
     });
 
     it("should clear communities on fetch error", async () => {

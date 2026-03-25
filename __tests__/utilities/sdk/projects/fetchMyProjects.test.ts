@@ -6,6 +6,10 @@ vi.mock("@/utilities/fetchData", () => ({
   default: vi.fn(),
 }));
 
+vi.mock("@/components/Utilities/errorManager", () => ({
+  errorManager: vi.fn(),
+}));
+
 const mockFetchData = fetchData as unknown as vi.Mock;
 
 describe("fetchMyProjects", () => {

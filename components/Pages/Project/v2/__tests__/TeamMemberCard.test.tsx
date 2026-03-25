@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import "@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom";
 import { TeamMemberCard } from "../TeamContent/TeamMemberCard";
 
 // Mock next/navigation

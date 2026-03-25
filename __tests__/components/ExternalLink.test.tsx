@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import "@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom";
 
 describe("ExternalLink", () => {
   describe("Rendering", () => {

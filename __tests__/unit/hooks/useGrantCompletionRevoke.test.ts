@@ -87,6 +87,15 @@ vi.mock("@show-karma/karma-gap-sdk", () => ({
 }));
 
 const mockToastDefault = createMockToastDefault();
+vi.mock("react-hot-toast", () => ({
+  __esModule: true,
+  default: mockToastDefault,
+}));
+
+vi.mock("@/components/Utilities/errorManager", () => ({
+  errorManager: mockErrorManager,
+}));
+
 const mockUseAccount = vi.fn();
 const mockUseChainId = vi.fn(() => 1);
 vi.mock("wagmi", () => ({
@@ -104,8 +113,10 @@ vi.mock("@/hooks/useGap", () => ({
   useGap: vi.fn(() => ({ gap: mockGap })),
 }));
 
+// SWC transforms @/ aliases to relative paths at compile time, so we must mock
+// the actual file path for the mock to intercept the hook's internal import.
 const mockSetupChainAndWallet = vi.fn();
-vi.mock("@/hooks/useSetupChainAndWallet", () => ({
+vi.mock("../../../hooks/useSetupChainAndWallet", () => ({
   useSetupChainAndWallet: vi.fn(() => ({
     setupChainAndWallet: mockSetupChainAndWallet,
     isSmartWalletReady: false,

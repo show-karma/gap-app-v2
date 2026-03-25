@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import "@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom";
 
 // Mock next/dynamic to render loading state
 vi.mock("next/dynamic", () => ({

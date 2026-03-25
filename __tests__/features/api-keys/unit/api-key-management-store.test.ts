@@ -1,7 +1,7 @@
 import { useApiKeyManagementModalStore } from "@/store/modals/apiKeyManagement";
 
 // Need to unmock the store since the navbar setup.ts auto-mocks it
-vi.unmock("@/store/modals/apiKeyManagement");
+jest.unmock("@/store/modals/apiKeyManagement");
 
 // Re-import the real module after unmocking
 const { useApiKeyManagementModalStore: realStore } = vi.importActual(

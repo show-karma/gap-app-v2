@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import "@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom";
 import FundingMapPage from "@/app/funding-map/page";
 import { FundingMapList } from "@/src/features/funding-map/components/funding-map-list";
 import { FundingMapSearch } from "@/src/features/funding-map/components/funding-map-search";

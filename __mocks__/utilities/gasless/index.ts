@@ -1,5 +1,3 @@
-import { vi } from "vitest";
-
 /**
  * Mock for utilities/gasless to avoid ESM parsing issues in Jest
  * This mock is used because the gasless utilities import ESM-only packages

@@ -1,4 +1,4 @@
-import "@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import toast from "react-hot-toast";
 import { PromptEditor } from "@/features/prompt-management/components/PromptEditor";
@@ -21,6 +21,14 @@ vi.mock("@/features/prompt-management/hooks/use-program-prompts", () => ({
 
 vi.mock("@/hooks/useAvailableAIModels", () => ({
   useAvailableAIModels: vi.fn(),
+}));
+
+vi.mock("react-hot-toast", () => ({
+  __esModule: true,
+  default: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
 }));
 
 // Mock MarkdownEditor

@@ -33,7 +33,7 @@ const _flushTimersAndPromises = async () => {
 describe("NavbarSearch", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.clearAllTimers();
+    jest.clearAllTimers();
   });
 
   afterEach(() => {

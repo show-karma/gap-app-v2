@@ -1,22 +1,24 @@
 import { render, screen } from "@testing-library/react";
-import "@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom";
 
 import { FundingMapList } from "@/src/features/funding-map/components/funding-map-list";
 import { useFundingFilters } from "@/src/features/funding-map/hooks/use-funding-filters";
 
-vi.mock("@/src/features/funding-map/components/funding-map-filters", () => ({
+// SWC transforms @/ aliases to relative paths at compile time, so we must mock
+// the actual file paths for the mocks to intercept the component's internal imports.
+vi.mock("../../../src/features/funding-map/components/funding-map-filters", () => ({
   FundingMapFilters: vi.fn(() => <div data-testid="funding-map-filters" />),
 }));
 
-vi.mock("@/src/features/funding-map/components/funding-map-pagination", () => ({
+vi.mock("../../../src/features/funding-map/components/funding-map-pagination", () => ({
   FundingMapPagination: vi.fn(() => <div data-testid="funding-map-pagination" />),
 }));
 
-vi.mock("@/src/features/funding-map/components/funding-program-details-dialog", () => ({
+vi.mock("../../../src/features/funding-map/components/funding-program-details-dialog", () => ({
   FundingProgramDetailsDialog: vi.fn(() => <div data-testid="funding-program-details-dialog" />),
 }));
 
-vi.mock("@/src/features/funding-map/hooks/use-funding-programs", () => ({
+vi.mock("../../../src/features/funding-map/hooks/use-funding-programs", () => ({
   useFundingPrograms: vi.fn(() => ({
     data: { programs: [], count: 0 },
     isLoading: false,
@@ -53,7 +55,7 @@ const defaultFilters = {
   },
 };
 
-vi.mock("@/src/features/funding-map/hooks/use-funding-filters", () => ({
+vi.mock("../../../src/features/funding-map/hooks/use-funding-filters", () => ({
   useFundingFilters: vi.fn(() => ({
     apiParams: {},
     programId: "",

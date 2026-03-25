@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import "@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom";
 import { ProjectStatsBar } from "../StatsBar/ProjectStatsBar";
 import { StatItem } from "../StatsBar/StatItem";
 

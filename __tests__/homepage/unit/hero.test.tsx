@@ -12,7 +12,7 @@
 
 import { Hero } from "@/src/features/homepage/components/hero";
 import { renderWithProviders, screen, setViewportSize, userEvent } from "../utils/test-helpers";
-import "@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom";
 import { VIEWPORTS } from "../setup";
 
 // Mock InfiniteMovingCards

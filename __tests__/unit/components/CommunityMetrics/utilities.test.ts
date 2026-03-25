@@ -249,7 +249,7 @@ describe("calculateDateRange", () => {
   beforeEach(() => {
     mockNow = new Date("2024-01-15T10:00:00Z");
     vi.useFakeTimers();
-    vi.setSystemTime(mockNow);
+    jest.setSystemTime(mockNow);
   });
 
   afterEach(() => {

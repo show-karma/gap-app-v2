@@ -1,4 +1,3 @@
-import { vi } from "vitest";
 /**
  * Mock for useZeroDevSigner hook to avoid ESM parsing issues.
  * The actual hook imports gasless utilities which use ESM-only packages.

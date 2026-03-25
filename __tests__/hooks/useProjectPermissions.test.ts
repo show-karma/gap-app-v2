@@ -25,6 +25,14 @@ vi.mock("@/utilities/rpcClient", () => ({
   getRPCUrlByChainId: vi.fn(),
 }));
 
+vi.mock("@/components/Utilities/errorManager", () => ({
+  errorManager: vi.fn(),
+}));
+
+vi.mock("@/utilities/auth/compare-all-wallets", () => ({
+  compareAllWallets: vi.fn(),
+}));
+
 vi.mock("ethers", () => {
   const MockJsonRpcProvider = vi.fn().mockReturnValue({});
   return {
@@ -41,6 +49,7 @@ const mockUseAuth = useAuth as unknown as vi.Mock;
 const mockUseProjectStore = useProjectStore as unknown as vi.Mock;
 const mockUseProjectInstance = useProjectInstance as unknown as vi.Mock;
 const mockGetRPCUrlByChainId = getRPCUrlByChainId as unknown as vi.Mock;
+const mockCompareAllWallets = compareAllWallets as unknown as vi.Mock;
 
 function createWrapper() {
   const queryClient = new QueryClient({

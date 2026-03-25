@@ -10,7 +10,7 @@
 
 import { JoinDiscordButton } from "@/src/features/homepage/components/join-discord-button";
 import { renderWithProviders, screen } from "../utils/test-helpers";
-import "@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom";
 
 // Mock SOCIALS utility
 vi.mock("@/utilities/socials", () => ({

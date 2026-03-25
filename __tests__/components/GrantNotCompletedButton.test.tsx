@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { GrantNotCompletedButton } from "@/components/Pages/GrantMilestonesAndUpdates/GrantCompleteButton/GrantNotCompletedButton";
-import "@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom";
 
 // Mock Heroicons
 vi.mock("@heroicons/react/24/outline", () => ({

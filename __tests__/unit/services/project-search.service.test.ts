@@ -6,7 +6,17 @@
 import type { ProjectResponse } from "@/types/v2/project";
 
 // Mock environment variables
+vi.mock("@/utilities/enviromentVars", () => ({
+  envVars: {
+    NEXT_PUBLIC_GAP_INDEXER_URL: "http://localhost:4000",
+  },
+}));
+
 // Mock errorManager
+vi.mock("@/components/Utilities/errorManager", () => ({
+  errorManager: vi.fn(),
+}));
+
 // Mock fetchData utility - the service now uses fetchData instead of api-client directly
 vi.mock("@/utilities/fetchData");
 

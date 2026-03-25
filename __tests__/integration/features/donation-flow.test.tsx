@@ -64,6 +64,8 @@ vi.mock("viem", () => {
   };
 });
 
+vi.mock("react-hot-toast");
+
 vi.mock("@/utilities/donations/batchDonations", () => ({
   BatchDonationsABI: [],
   BATCH_DONATIONS_CONTRACTS: {

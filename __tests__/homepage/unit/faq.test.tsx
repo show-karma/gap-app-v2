@@ -12,7 +12,7 @@
 
 import { FAQ } from "@/src/features/homepage/components/faq";
 import { renderWithProviders, screen, userEvent } from "../utils/test-helpers";
-import "@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom";
 
 // Mock the SOCIALS utility
 vi.mock("@/utilities/socials", () => ({

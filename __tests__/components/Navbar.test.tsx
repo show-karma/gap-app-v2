@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { Navbar } from "@/src/components/navbar/navbar";
-import "@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom";
 
 // Mock useAuth hook
 vi.mock("@/hooks/useAuth", () => ({

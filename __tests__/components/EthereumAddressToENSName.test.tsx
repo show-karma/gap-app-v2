@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
-import "@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom";
 
 // Mock ENS store
 const mockPopulateEns = vi.fn();

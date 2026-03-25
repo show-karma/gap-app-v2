@@ -1,4 +1,4 @@
-import "@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import ApplicationContent from "@/components/FundingPlatform/ApplicationView/ApplicationContent";
 import type { IFundingApplication } from "@/types/funding-platform";
@@ -79,6 +79,14 @@ vi.mock("@/hooks/useFundingPlatform", () => ({
   useApplicationVersions: () => ({
     versions: [],
   }),
+}));
+
+vi.mock("react-hot-toast", () => ({
+  __esModule: true,
+  default: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
 }));
 
 describe("ApplicationContent - Internal Evaluation Integration", () => {

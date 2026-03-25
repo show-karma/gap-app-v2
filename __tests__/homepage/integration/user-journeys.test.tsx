@@ -10,7 +10,7 @@
 
 import HomePage from "@/app/page";
 import { renderWithProviders, screen, waitFor } from "../utils/test-helpers";
-import "@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom";
 import { mockFundingOpportunities } from "../fixtures/funding-opportunities";
 
 // Mock the service functions

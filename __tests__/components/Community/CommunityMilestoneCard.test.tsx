@@ -200,6 +200,57 @@ describe("CommunityMilestoneCard", () => {
       expect(screen.queryByText("Past Due")).not.toBeInTheDocument();
     });
 
+    it("should apply red styling for past due status", () => {
+      const milestone = createMockMilestone({
+        status: "pending",
+        details: {
+          title: "Test Milestone",
+          description: "Description",
+          dueDate: pastDate(10),
+        },
+      });
+
+      render(<CommunityMilestoneCard milestone={milestone} />);
+
+      const statusBadge = screen.getByText("Past Due").closest("div");
+      expect(statusBadge).toHaveClass("bg-red-100");
+      expect(statusBadge).toHaveClass("text-red-800");
+    });
+
+    it("should apply yellow styling for pending status", () => {
+      const milestone = createMockMilestone({
+        status: "pending",
+        details: {
+          title: "Test Milestone",
+          description: "Description",
+          dueDate: futureDate(30),
+        },
+      });
+
+      render(<CommunityMilestoneCard milestone={milestone} />);
+
+      const statusBadge = screen.getByText("Pending").closest("div");
+      expect(statusBadge).toHaveClass("bg-yellow-100");
+      expect(statusBadge).toHaveClass("text-yellow-800");
+    });
+
+    it("should apply green styling for completed status", () => {
+      const milestone = createMockMilestone({
+        status: "completed",
+        details: {
+          title: "Test Milestone",
+          description: "Description",
+          dueDate: futureDate(30),
+        },
+      });
+
+      render(<CommunityMilestoneCard milestone={milestone} />);
+
+      const statusBadge = screen.getByText("Completed").closest("div");
+      expect(statusBadge).toHaveClass("bg-green-100");
+      expect(statusBadge).toHaveClass("text-green-800");
+    });
+
     it("should show CheckCircleIcon for completed status", () => {
       const milestone = createMockMilestone({ status: "completed" });
 

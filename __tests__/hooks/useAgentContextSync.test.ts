@@ -9,8 +9,8 @@ import { useAgentContextSync } from "@/hooks/useAgentContextSync";
 import { useAgentChatStore } from "@/store/agentChat";
 
 // Mock next/navigation
-const mockPathname = vi.fn<string | null, []>();
-const mockParams = vi.fn<Record<string, string>, []>();
+const mockPathname = jest.fn<string | null, []>();
+const mockParams = jest.fn<Record<string, string>, []>();
 
 vi.mock("next/navigation", () => ({
   usePathname: () => mockPathname(),

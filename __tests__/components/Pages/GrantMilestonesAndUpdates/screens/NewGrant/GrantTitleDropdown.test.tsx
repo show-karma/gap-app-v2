@@ -6,11 +6,19 @@
 
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import "@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom";
 import { GrantTitleDropdown } from "@/components/Pages/GrantMilestonesAndUpdates/screens/NewGrant/GrantTitleDropdown";
 
 // Mock react-hot-toast
 const mockToastError = vi.fn();
+vi.mock("react-hot-toast", () => ({
+  __esModule: true,
+  default: {
+    error: (...args: unknown[]) => mockToastError(...args),
+    success: vi.fn(),
+  },
+}));
+
 // Mock pluralize
 vi.mock("pluralize", () => ({
   __esModule: true,

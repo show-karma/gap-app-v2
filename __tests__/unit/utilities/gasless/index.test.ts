@@ -3,7 +3,7 @@
  * Since the real gasless module uses ESM-only packages that Jest can't transform,
  * these tests verify the mock behavior and integration patterns.
  *
- * Note: The actual implementation is mocked via resolve.alias in vitest.config.ts.
+ * Note: The actual implementation is mocked via moduleNameMapper in jest.config.ts.
  * These tests verify:
  * 1. Mock exports are correctly defined
  * 2. Mock functions can be configured for different test scenarios
@@ -60,32 +60,32 @@ describe("Gasless Module Mock API", () => {
   describe("Mock Exports", () => {
     it("should export createGaslessClient as a mock function", () => {
       expect(createGaslessClient).toBeDefined();
-      expect(vi.isMockFunction(createGaslessClient)).toBe(true);
+      expect(jest.isMockFunction(createGaslessClient)).toBe(true);
     });
 
     it("should export getGaslessSigner as a mock function", () => {
       expect(getGaslessSigner).toBeDefined();
-      expect(vi.isMockFunction(getGaslessSigner)).toBe(true);
+      expect(jest.isMockFunction(getGaslessSigner)).toBe(true);
     });
 
     it("should export isChainSupportedForGasless as a mock function", () => {
       expect(isChainSupportedForGasless).toBeDefined();
-      expect(vi.isMockFunction(isChainSupportedForGasless)).toBe(true);
+      expect(jest.isMockFunction(isChainSupportedForGasless)).toBe(true);
     });
 
     it("should export getChainGaslessConfig as a mock function", () => {
       expect(getChainGaslessConfig).toBeDefined();
-      expect(vi.isMockFunction(getChainGaslessConfig)).toBe(true);
+      expect(jest.isMockFunction(getChainGaslessConfig)).toBe(true);
     });
 
     it("should export createPrivySignerForGasless as a mock function", () => {
       expect(createPrivySignerForGasless).toBeDefined();
-      expect(vi.isMockFunction(createPrivySignerForGasless)).toBe(true);
+      expect(jest.isMockFunction(createPrivySignerForGasless)).toBe(true);
     });
 
     it("should export getProvider as a mock function", () => {
       expect(getProvider).toBeDefined();
-      expect(vi.isMockFunction(getProvider)).toBe(true);
+      expect(jest.isMockFunction(getProvider)).toBe(true);
     });
 
     it("should export GaslessProviderError class", () => {

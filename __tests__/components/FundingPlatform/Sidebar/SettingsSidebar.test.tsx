@@ -10,7 +10,7 @@ import {
   SettingsSidebar,
   type SidebarTabKey,
 } from "@/components/FundingPlatform/Sidebar";
-import "@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom";
 
 // Mock next/link
 vi.mock("next/link", () => {
@@ -255,4 +255,12 @@ describe("SettingsSidebar", () => {
     });
   });
 
+  describe("custom className", () => {
+    it("should apply custom className", () => {
+      const { container } = render(<SettingsSidebar {...defaultProps} className="custom-class" />);
+
+      const sidebar = container.firstChild;
+      expect(sidebar).toHaveClass("custom-class");
+    });
+  });
 });

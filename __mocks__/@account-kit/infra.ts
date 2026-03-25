@@ -1,4 +1,3 @@
-import { vi } from "vitest";
 /**
  * Mock for @account-kit/infra to avoid ESM parsing issues
  */

@@ -2,7 +2,7 @@
  * Test setup and configuration for Control Center tests.
  * Configures MSW, test environment, and global utilities.
  *
- * This file is automatically loaded by vitest.config.ts via setupFiles.
+ * This file is automatically loaded by jest.config.ts via setupFilesAfterEnv.
  * However, since it is in a separate directory, tests that need control-center-specific
  * mocks should import from this file directly.
  */
@@ -10,7 +10,7 @@
 import { setupServer } from "msw/node";
 import React from "react";
 import { handlers } from "./handlers";
-import "@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom";
 
 /**
  * Setup MSW server for control center tests

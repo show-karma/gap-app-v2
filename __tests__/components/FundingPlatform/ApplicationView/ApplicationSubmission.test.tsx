@@ -1,4 +1,4 @@
-import "@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ApplicationSubmission from "@/components/FundingPlatform/ApplicationView/ApplicationSubmission";
@@ -12,6 +12,14 @@ vi.mock("wagmi", () => ({
 }));
 
 // Mock react-hot-toast
+vi.mock("react-hot-toast", () => ({
+  __esModule: true,
+  default: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
+}));
+
 // Mock Button component
 vi.mock("@/components/Utilities/Button", () => ({
   Button: ({ children, onClick, disabled, type, isLoading, ...props }: any) => (

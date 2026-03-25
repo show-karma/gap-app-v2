@@ -10,7 +10,7 @@
 
 import { HowItWorks } from "@/src/features/homepage/components/how-it-works";
 import { renderWithProviders, screen } from "../utils/test-helpers";
-import "@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom";
 
 // Mock Badge component
 vi.mock("@/components/ui/badge", () => ({

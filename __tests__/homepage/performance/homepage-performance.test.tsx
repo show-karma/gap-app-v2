@@ -9,7 +9,7 @@
 
 import HomePage from "@/app/page";
 import { renderWithProviders, screen, waitFor } from "../utils/test-helpers";
-import "@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom";
 
 // Mock the service functions
 const mockGetLiveFundingOpportunities = vi.fn();

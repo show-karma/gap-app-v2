@@ -10,7 +10,7 @@
 
 import { CreateProfileButton } from "@/src/features/homepage/components/create-profile-button";
 import { fireEvent, renderWithProviders, screen } from "../utils/test-helpers";
-import "@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom";
 
 // Mock the contributor profile modal store
 const mockOpenModal = vi.fn();

@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import "@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom";
 import type { ReactNode } from "react";
 import { VerificationBadge } from "../icons/VerificationBadge";
 

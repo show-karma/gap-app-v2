@@ -12,7 +12,7 @@
 
 import { LiveFundingOpportunities } from "@/src/features/homepage/components/live-funding-opportunities";
 import { renderWithProviders, screen, within } from "../utils/test-helpers";
-import "@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom";
 import { mockFundingOpportunities } from "../fixtures/funding-opportunities";
 
 // Mock the service that fetches funding opportunities

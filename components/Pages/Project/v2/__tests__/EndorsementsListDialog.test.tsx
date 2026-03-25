@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import "@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom";
 import { EndorsementsListDialog } from "../EndorsementsListDialog";
 
 // Mock the project store with different data per test

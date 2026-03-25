@@ -5,7 +5,7 @@
  * milestone key uniqueness, and button disabled states.
  */
 
-// ---- Mock holders (must be declared before vi.mock calls) ----
+// ---- Mock holders (must be declared before jest.mock calls) ----
 
 const mockToggleMutate = vi.fn();
 const mockSaveMutate = vi.fn();
@@ -64,7 +64,7 @@ vi.mock("@/hooks/useCopyToClipboard", () => ({
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import React from "react";
-import "@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom";
 
 import {
   ProjectDetailsSidebar,

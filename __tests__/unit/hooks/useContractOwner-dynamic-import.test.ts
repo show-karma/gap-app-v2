@@ -49,6 +49,10 @@ vi.mock("@/utilities/eas-wagmi-utils", () => ({
   useSigner: vi.fn().mockReturnValue(undefined),
 }));
 
+vi.mock("@/components/Utilities/errorManager", () => ({
+  errorManager: vi.fn(),
+}));
+
 vi.mock("@/utilities/cache-config", () => ({
   CONTRACT_OWNER_CACHE_CONFIG: { staleTime: 60000, gcTime: 300000 },
 }));

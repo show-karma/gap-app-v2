@@ -6,7 +6,7 @@
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { DonationCheckout } from "@/components/Donation/DonationCheckout";
-import "@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom";
 import type { SupportedToken } from "@/constants/supportedTokens";
 import type { DonationPayment } from "@/store/donationCart";
 

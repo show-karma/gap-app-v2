@@ -72,6 +72,20 @@ vi.mock("@/hooks/useCopyToClipboard", () => ({
   useCopyToClipboard: vi.fn(() => [null, vi.fn()]),
 }));
 
+vi.mock("@/utilities/enviromentVars", () => ({
+  envVars: {
+    NEXT_PUBLIC_GAP_INDEXER_URL: "https://api.gap.karmahq.xyz",
+  },
+}));
+
+vi.mock("react-hot-toast", () => ({
+  __esModule: true,
+  default: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
+}));
+
 const createWrapper = () => {
   const queryClient = new QueryClient({
     defaultOptions: {

@@ -3,7 +3,7 @@
  * Following the same patterns as navbar test suite
  */
 
-import "@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom";
 import { TextDecoder, TextEncoder } from "node:util";
 import React from "react";
 

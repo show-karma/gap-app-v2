@@ -108,4 +108,12 @@ describe("EmptyState", () => {
     });
   });
 
+  describe("className prop", () => {
+    it("applies custom className to the Card wrapper", () => {
+      const { container } = render(
+        <EmptyState title="No results" className="custom-empty-state" />
+      );
+      expect(container.firstElementChild).toHaveClass("custom-empty-state");
+    });
+  });
 });

@@ -31,6 +31,10 @@ vi.mock("wagmi", () => ({
   useAccount: (...args: unknown[]) => mockUseAccount(...args),
 }));
 
+vi.mock("@/components/Utilities/errorManager", () => ({
+  errorManager: vi.fn(),
+}));
+
 vi.mock("@/hooks/useWallet", () => ({
   useWallet: vi.fn(() => ({ switchChainAsync: mockSwitchChainAsync })),
 }));

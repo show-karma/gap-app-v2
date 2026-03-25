@@ -1,4 +1,4 @@
-import "@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import { EvaluationDisplay } from "@/components/FundingPlatform/ApplicationView/EvaluationComponents";
 import {
@@ -63,6 +63,13 @@ describe("InternalAIEvaluationDisplay", () => {
       ).toBeInTheDocument();
     });
 
+    it("should apply custom className when provided", () => {
+      const { container } = render(
+        <InternalAIEvaluationDisplay evaluation={null} isLoading={false} className="custom-class" />
+      );
+
+      expect(container.firstChild).toHaveClass("custom-class");
+    });
   });
 
   describe("Pending State", () => {

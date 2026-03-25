@@ -1,4 +1,4 @@
-import "@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { AxiosError } from "axios";
 import toast from "react-hot-toast";
@@ -10,6 +10,14 @@ vi.mock("@/services/fundingPlatformService", () => ({
   fundingApplicationsAPI: {
     runAIEvaluation: vi.fn(),
     runInternalAIEvaluation: vi.fn(),
+  },
+}));
+
+vi.mock("react-hot-toast", () => ({
+  __esModule: true,
+  default: {
+    success: vi.fn(),
+    error: vi.fn(),
   },
 }));
 

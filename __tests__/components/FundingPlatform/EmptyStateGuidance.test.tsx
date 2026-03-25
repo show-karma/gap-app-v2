@@ -1,15 +1,4 @@
-/**
- * Tests for EmptyStateGuidance, PostApprovalEmptyState, and ReviewersEmptyState.
- *
- * Focuses on behavioral concerns:
- * - Prop-driven conditional rendering (showSuggestions toggle, custom titles/descriptions)
- * - Correct default vs overridden content
- * - Composition: PostApprovalEmptyState and ReviewersEmptyState wrap EmptyStateGuidance
- *   with specific configuration
- * - className passthrough
- */
-
-import { render, screen, within } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import {
   EmptyStateGuidance,
   PostApprovalEmptyState,
@@ -17,131 +6,189 @@ import {
 } from "@/components/FundingPlatform/EmptyStateGuidance";
 
 describe("EmptyStateGuidance", () => {
-  describe("default prop behavior", () => {
-    it("shows the default title, description, and suggestions section", () => {
+  describe("rendering with default props", () => {
+    it("should render with default title", () => {
       render(<EmptyStateGuidance />);
 
       expect(screen.getByText("No Form Fields Yet")).toBeInTheDocument();
+    });
+
+    it("should render with default description", () => {
+      render(<EmptyStateGuidance />);
+
       expect(screen.getByText(/build your application form by adding fields/i)).toBeInTheDocument();
+    });
+
+    it("should show suggestions by default", () => {
+      render(<EmptyStateGuidance />);
+
       expect(screen.getByText(/suggested fields for grant applications/i)).toBeInTheDocument();
     });
   });
 
-  describe("prop-driven conditional rendering", () => {
-    it("replaces title and description when custom props are provided", () => {
-      render(<EmptyStateGuidance title="Custom Title" description="Custom description text" />);
+  describe("rendering with custom props", () => {
+    it("should render with custom title", () => {
+      render(<EmptyStateGuidance title="Custom Title" />);
 
       expect(screen.getByText("Custom Title")).toBeInTheDocument();
-      expect(screen.getByText("Custom description text")).toBeInTheDocument();
-      // Defaults should not appear
-      expect(screen.queryByText("No Form Fields Yet")).not.toBeInTheDocument();
     });
 
-    it("hides the suggestions section when showSuggestions is false", () => {
+    it("should render with custom description", () => {
+      render(<EmptyStateGuidance description="Custom description text" />);
+
+      expect(screen.getByText("Custom description text")).toBeInTheDocument();
+    });
+
+    it("should hide suggestions when showSuggestions is false", () => {
       render(<EmptyStateGuidance showSuggestions={false} />);
 
       expect(
         screen.queryByText(/suggested fields for grant applications/i)
       ).not.toBeInTheDocument();
-      // Title should still be visible
-      expect(screen.getByText("No Form Fields Yet")).toBeInTheDocument();
     });
 
-    it("shows the suggestions section when showSuggestions is true (default)", () => {
-      render(<EmptyStateGuidance showSuggestions={true} />);
+    it("should apply custom className", () => {
+      const { container } = render(<EmptyStateGuidance className="custom-class" />);
 
-      expect(screen.getByText(/suggested fields for grant applications/i)).toBeInTheDocument();
-    });
-
-    it("passes className to the root element", () => {
-      const { container } = render(<EmptyStateGuidance className="my-custom-class" />);
-
-      expect(container.firstChild).toHaveClass("my-custom-class");
+      expect(container.firstChild).toHaveClass("custom-class");
     });
   });
 
-  describe("suggested fields content", () => {
-    it("renders all seven suggested fields with labels and descriptions", () => {
+  describe("suggested fields display", () => {
+    it("should display all suggested fields", () => {
       render(<EmptyStateGuidance />);
 
       const expectedFields = [
-        { label: "Project Name", desc: "Short title for the project" },
-        { label: "Project Description", desc: "Detailed project overview" },
-        { label: "Email Address", desc: "Required for communication" },
-        { label: "Funding Amount", desc: "Requested funding in USD" },
-        { label: "Team Information", desc: "Team members and roles" },
-        { label: "Project Links", desc: "Website, GitHub, social media" },
-        { label: "Timeline", desc: "Project milestones and dates" },
+        "Project Name",
+        "Project Description",
+        "Email Address",
+        "Funding Amount",
+        "Team Information",
+        "Project Links",
+        "Timeline",
       ];
 
-      for (const { label, desc } of expectedFields) {
-        expect(screen.getByText(label)).toBeInTheDocument();
-        expect(screen.getByText(desc)).toBeInTheDocument();
-      }
+      expectedFields.forEach((field) => {
+        expect(screen.getByText(field)).toBeInTheDocument();
+      });
     });
 
-    it("displays help text about how to add fields", () => {
+    it("should display field descriptions", () => {
+      render(<EmptyStateGuidance />);
+
+      expect(screen.getByText("Short title for the project")).toBeInTheDocument();
+      expect(screen.getByText("Detailed project overview")).toBeInTheDocument();
+      expect(screen.getByText("Required for communication")).toBeInTheDocument();
+      expect(screen.getByText("Requested funding in USD")).toBeInTheDocument();
+    });
+
+    it("should display help text about adding fields", () => {
       render(<EmptyStateGuidance />);
 
       expect(screen.getByText(/click field types in the left panel/i)).toBeInTheDocument();
     });
+  });
 
-    it("does not show help text when suggestions are hidden", () => {
-      render(<EmptyStateGuidance showSuggestions={false} />);
+  describe("visual elements", () => {
+    it("should render icon", () => {
+      const { container } = render(<EmptyStateGuidance />);
 
-      expect(screen.queryByText(/click field types in the left panel/i)).not.toBeInTheDocument();
+      const iconContainer = container.querySelector(".bg-blue-100");
+      expect(iconContainer).toBeInTheDocument();
+    });
+
+    it("should have dashed border styling", () => {
+      const { container } = render(<EmptyStateGuidance />);
+
+      expect(container.firstChild).toHaveClass("border-dashed");
+    });
+
+    it("should render field icons", () => {
+      const { container } = render(<EmptyStateGuidance />);
+
+      // Should have multiple SVG icons for fields
+      const svgElements = container.querySelectorAll("svg");
+      expect(svgElements.length).toBeGreaterThan(1);
     });
   });
 });
 
 describe("PostApprovalEmptyState", () => {
-  it("renders with post-approval-specific title and description", () => {
+  it("should render with appropriate title", () => {
     render(<PostApprovalEmptyState />);
 
     expect(screen.getByText("No Post-Approval Fields Yet")).toBeInTheDocument();
-    expect(screen.getByText(/this form is optional/i)).toBeInTheDocument();
-    expect(screen.getByText(/bank details, KYC documents/i)).toBeInTheDocument();
   });
 
-  it("does not show suggestions section (overrides showSuggestions=false)", () => {
+  it("should render with appropriate description", () => {
+    render(<PostApprovalEmptyState />);
+
+    expect(screen.getByText(/this form is optional/i)).toBeInTheDocument();
+  });
+
+  it("should not show suggestions", () => {
     render(<PostApprovalEmptyState />);
 
     expect(screen.queryByText(/suggested fields for grant applications/i)).not.toBeInTheDocument();
   });
 
-  it("passes className through to EmptyStateGuidance", () => {
-    const { container } = render(<PostApprovalEmptyState className="post-approval-class" />);
+  it("should mention bank details and KYC", () => {
+    render(<PostApprovalEmptyState />);
 
-    expect(container.firstChild).toHaveClass("post-approval-class");
+    expect(screen.getByText(/bank details, KYC documents/i)).toBeInTheDocument();
+  });
+
+  it("should apply custom className", () => {
+    const { container } = render(<PostApprovalEmptyState className="custom-class" />);
+
+    expect(container.firstChild).toHaveClass("custom-class");
   });
 });
 
 describe("ReviewersEmptyState", () => {
-  it("renders reviewer-specific title and description", () => {
+  it("should render with appropriate title", () => {
     render(<ReviewersEmptyState />);
 
     expect(screen.getByText("No Reviewers Added Yet")).toBeInTheDocument();
+  });
+
+  it("should render with appropriate description", () => {
+    render(<ReviewersEmptyState />);
+
     expect(
       screen.getByText(/add team members who will help review applications/i)
     ).toBeInTheDocument();
   });
 
-  it("displays the tip about wallet address and ENS name", () => {
+  it("should display tip about wallet address and ENS", () => {
     render(<ReviewersEmptyState />);
 
     expect(screen.getByText(/wallet address or ENS name/i)).toBeInTheDocument();
   });
 
-  it("uses purple theming for the icon container and tip box", () => {
+  it("should have purple-themed icon", () => {
     const { container } = render(<ReviewersEmptyState />);
 
-    expect(container.querySelector(".bg-purple-100")).toBeInTheDocument();
-    expect(container.querySelector(".bg-purple-50")).toBeInTheDocument();
+    const iconContainer = container.querySelector(".bg-purple-100");
+    expect(iconContainer).toBeInTheDocument();
   });
 
-  it("passes className through to root element", () => {
-    const { container } = render(<ReviewersEmptyState className="reviewer-class" />);
+  it("should have tip box with purple styling", () => {
+    const { container } = render(<ReviewersEmptyState />);
 
-    expect(container.firstChild).toHaveClass("reviewer-class");
+    const tipBox = container.querySelector(".bg-purple-50");
+    expect(tipBox).toBeInTheDocument();
+  });
+
+  it("should apply custom className", () => {
+    const { container } = render(<ReviewersEmptyState className="custom-class" />);
+
+    expect(container.firstChild).toHaveClass("custom-class");
+  });
+
+  it("should have dashed border styling", () => {
+    const { container } = render(<ReviewersEmptyState />);
+
+    expect(container.firstChild).toHaveClass("border-dashed");
   });
 });

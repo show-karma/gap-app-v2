@@ -10,7 +10,7 @@
 
 import HomePage from "@/app/page";
 import { renderWithProviders, screen } from "../utils/test-helpers";
-import "@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom";
 
 // Mock PAGES utility
 vi.mock("@/utilities/pages", () => ({

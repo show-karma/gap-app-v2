@@ -11,7 +11,7 @@
 
 import { PlatformFeatures } from "@/src/features/homepage/components/platform-features";
 import { renderWithProviders, screen, setViewportSize } from "../utils/test-helpers";
-import "@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom";
 
 // Define viewports locally
 const VIEWPORTS = {

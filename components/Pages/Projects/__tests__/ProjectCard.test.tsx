@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import type { Project } from "@/types/v2/project";
 import { ProjectCard } from "../ProjectCard";
-import "@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom";
 
 // Mock next/link
 vi.mock("next/link", () => {

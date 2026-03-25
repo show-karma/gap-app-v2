@@ -74,6 +74,11 @@ vi.mock("@headlessui/react", () => {
 });
 
 // Mock react-hot-toast (used by ensureCorrectChain)
+vi.mock("react-hot-toast", () => ({
+  __esModule: true,
+  default: { error: vi.fn(), success: vi.fn() },
+}));
+
 // Mock Heroicons
 vi.mock("@heroicons/react/24/solid", () => ({
   PlusIcon: (props: any) => <svg data-testid="plus-icon" {...props} />,
@@ -121,7 +126,7 @@ vi.mock("@/hooks/useGap", () => {
 
 // Mock ensureCorrectChain to bypass chain switching delays and getGapClient issues
 vi.mock("@/utilities/ensureCorrectChain", () => {
-  const { __mockGapClient } = require("@/hooks/useGap");
+  const { __mockGapClient } = jest.requireMock("@/hooks/useGap");
   return {
     ensureCorrectChain: vi.fn().mockResolvedValue({
       success: true,
@@ -189,6 +194,10 @@ vi.mock("@/components/Utilities/MarkdownEditor", () => ({
 }));
 
 // Mock errorManager
+vi.mock("@/components/Utilities/errorManager", () => ({
+  errorManager: vi.fn(),
+}));
+
 // Mock messages
 vi.mock("@/utilities/messages", () => ({
   MESSAGES: {
@@ -217,9 +226,9 @@ vi.mock("@/components/ui/button", () => ({
 }));
 
 // Access the file-based mock hook function directly
-// (resolve.alias in vitest.config.ts maps @/hooks/useSetupChainAndWallet
+// (moduleNameMapper in jest.config.ts maps @/hooks/useSetupChainAndWallet
 //  to __mocks__/hooks/useSetupChainAndWallet.ts)
-const mockHookModule = require("@/hooks/useSetupChainAndWallet") as {
+const mockHookModule = jest.requireMock("@/hooks/useSetupChainAndWallet") as {
   useSetupChainAndWallet: vi.Mock;
 };
 

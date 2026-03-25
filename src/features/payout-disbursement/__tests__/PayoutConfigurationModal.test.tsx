@@ -47,7 +47,7 @@ Object.defineProperty(global, "crypto", {
   value: { randomUUID: mockUUID },
 });
 
-// Import mocks after vi.mock calls
+// Import mocks after jest.mock calls
 import { useGrantMilestones, usePayoutConfigByGrant } from "../hooks/use-payout-disbursement";
 
 const mockedUsePayoutConfigByGrant = usePayoutConfigByGrant as vi.Mock;

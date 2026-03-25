@@ -16,7 +16,9 @@ vi.mock("@/src/features/api-keys/services/api-key.service", () => ({
   },
 }));
 
-const mockApiKeyService = require("@/src/features/api-keys/services/api-key.service").apiKeyService;
+const mockApiKeyService = jest.requireMock(
+  "@/src/features/api-keys/services/api-key.service"
+).apiKeyService;
 
 const createWrapper = () => {
   const queryClient = new QueryClient({

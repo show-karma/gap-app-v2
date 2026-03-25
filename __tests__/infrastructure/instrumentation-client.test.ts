@@ -30,7 +30,7 @@ describe("instrumentation-client", () => {
 
   it("calls Sentry.init WITHOUT replayIntegration in integrations array", async () => {
     // Import triggers the module's top-level code
-    vi.isolateModules(() => {
+    jest.isolateModules(() => {
       require("../../instrumentation-client");
     });
 
@@ -49,7 +49,7 @@ describe("instrumentation-client", () => {
   });
 
   it("calls Sentry.lazyLoadIntegration with 'replayIntegration' in browser environment", async () => {
-    vi.isolateModules(() => {
+    jest.isolateModules(() => {
       require("../../instrumentation-client");
     });
 
@@ -57,7 +57,7 @@ describe("instrumentation-client", () => {
   });
 
   it("calls Sentry.addIntegration with the resolved replay integration instance", async () => {
-    vi.isolateModules(() => {
+    jest.isolateModules(() => {
       require("../../instrumentation-client");
     });
 
@@ -70,7 +70,7 @@ describe("instrumentation-client", () => {
 
   it("exports onRequestError and onRouterTransitionStart", () => {
     let exports: Record<string, unknown> = {};
-    vi.isolateModules(() => {
+    jest.isolateModules(() => {
       exports = require("../../instrumentation-client");
     });
 

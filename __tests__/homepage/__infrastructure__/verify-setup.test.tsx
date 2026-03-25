@@ -4,7 +4,7 @@
  */
 
 import { render, screen } from "@testing-library/react";
-import "@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom";
 import { renderWithProviders } from "../utils/test-helpers";
 
 describe("Homepage Test Infrastructure", () => {

@@ -434,7 +434,7 @@ describe("ProgramRegistryService", () => {
 
     it("should include topLevelFields in request body", async () => {
       const mockResponse = { programId: "program-123", isValid: true };
-      (fetchData as jest.Mock).mockResolvedValue([mockResponse, null]);
+      (fetchData as vi.Mock).mockResolvedValue([mockResponse, null]);
 
       const topLevelFields = { type: "hackathon", deadline: "2025-06-01T00:00:00.000Z" };
       await ProgramRegistryService.createProgram(
@@ -461,7 +461,7 @@ describe("ProgramRegistryService", () => {
 
     it("should not allow topLevelFields to overwrite chainId or metadata", async () => {
       const mockResponse = { programId: "program-789", isValid: true };
-      (fetchData as jest.Mock).mockResolvedValue([mockResponse, null]);
+      (fetchData as vi.Mock).mockResolvedValue([mockResponse, null]);
 
       const maliciousTopLevelFields = {
         chainId: 9999,
@@ -491,7 +491,7 @@ describe("ProgramRegistryService", () => {
 
     it("should work without topLevelFields", async () => {
       const mockResponse = { programId: "program-456", isValid: true };
-      (fetchData as jest.Mock).mockResolvedValue([mockResponse, null]);
+      (fetchData as vi.Mock).mockResolvedValue([mockResponse, null]);
 
       await ProgramRegistryService.createProgram(mockOwner, mockChainId, mockMetadata);
 

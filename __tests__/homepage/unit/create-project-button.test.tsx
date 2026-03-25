@@ -10,7 +10,7 @@
 
 import { CreateProjectButton } from "@/src/features/homepage/components/create-project-button";
 import { renderWithProviders, screen } from "../utils/test-helpers";
-import "@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom";
 
 describe("CreateProjectButton Component", () => {
   it("should render button with correct text", () => {

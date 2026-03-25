@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import "@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom";
 import { VirtualizedDatapointsTable } from "@/components/Pages/Project/Impact/VirtualizedDatapointsTable";
 import type { OutputForm } from "@/types/impact";
 

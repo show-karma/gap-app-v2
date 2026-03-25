@@ -208,9 +208,6 @@ describe("GrantMilestoneCompletionForm", () => {
     const error = new Error("Failed to complete milestone");
     mockCompleteMilestone.mockRejectedValue(error);
 
-    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation();
-
-
     render(
       <GrantMilestoneCompletionForm
         milestone={mockMilestone}

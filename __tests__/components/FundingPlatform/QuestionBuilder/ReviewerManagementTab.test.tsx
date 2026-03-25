@@ -1,5 +1,5 @@
 import { act, render, screen } from "@testing-library/react";
-import "@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom";
 import { toast } from "react-hot-toast";
 import { ReviewerManagementTab } from "@/components/FundingPlatform/QuestionBuilder/ReviewerManagementTab";
 import { Permission } from "@/src/core/rbac/types/permission";
@@ -9,6 +9,13 @@ const mockUsePermissionContext = vi.fn();
 const mockRoleManagementTab = vi.fn();
 const mockUseProgramReviewers = vi.fn();
 const mockUseMilestoneReviewers = vi.fn();
+
+vi.mock("react-hot-toast", () => ({
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
+}));
 
 vi.mock("@/src/core/rbac/context/permission-context", () => ({
   usePermissionContext: () => mockUsePermissionContext(),

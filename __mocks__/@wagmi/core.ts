@@ -1,4 +1,3 @@
-import { vi } from "vitest";
 /**
  * Mock for @wagmi/core to handle ESM imports in Jest
  */

@@ -11,7 +11,7 @@
 
 import { WhereBuildersGrow } from "@/src/features/homepage/components/where-builders-grow";
 import { renderWithProviders, screen } from "../utils/test-helpers";
-import "@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom";
 
 // Mock CreateProjectButton
 vi.mock("@/src/features/homepage/components/create-project-button", () => ({

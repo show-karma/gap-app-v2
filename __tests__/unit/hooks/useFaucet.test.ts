@@ -36,6 +36,14 @@ vi.mock("wagmi", () => ({
   useAccount: vi.fn(),
 }));
 
+vi.mock("react-hot-toast", () => ({
+  __esModule: true,
+  default: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
+}));
+
 const mockFaucetService = faucetService as vi.Mocked<typeof faucetService>;
 const mockUseAccount = useAccount as vi.MockedFunction<typeof useAccount>;
 

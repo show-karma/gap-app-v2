@@ -11,6 +11,10 @@ vi.mock("@/hooks/financials/useProgramFinancials");
 vi.mock("@/hooks/usePrograms");
 
 // Mock errorManager
+vi.mock("@/components/Utilities/errorManager", () => ({
+  errorManager: vi.fn(),
+}));
+
 // Mock next/navigation
 vi.mock("next/navigation", () => ({
   useParams: vi.fn(() => ({ communityId: "test-community" })),

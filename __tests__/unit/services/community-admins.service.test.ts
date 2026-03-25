@@ -2,7 +2,13 @@ import type { AxiosInstance } from "axios";
 
 // Mock dependencies BEFORE importing the service
 vi.mock("@/utilities/auth/token-manager");
-// Create a persistent mock instance using var (hoisted) so it's available in vi.mock factory
+vi.mock("@/utilities/enviromentVars", () => ({
+  envVars: {
+    NEXT_PUBLIC_GAP_INDEXER_URL: "http://localhost:4000",
+  },
+}));
+
+// Create a persistent mock instance using var (hoisted) so it's available in jest.mock factory
 var mockAxiosInstance: vi.Mocked<AxiosInstance>;
 
 // Mock api-client

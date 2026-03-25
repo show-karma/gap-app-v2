@@ -8,7 +8,7 @@ import {
   hasFormConfigured,
   ProgramSetupStatus,
 } from "@/components/FundingPlatform/ProgramSetupStatus";
-import "@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom";
 
 // Mock next/link
 vi.mock("next/link", () => {

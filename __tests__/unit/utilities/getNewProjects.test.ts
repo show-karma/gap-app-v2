@@ -1,9 +1,11 @@
 import { errorManager } from "@/components/Utilities/errorManager";
 import fetchData from "@/utilities/fetchData";
 import { getNewProjects } from "@/utilities/indexer/getNewProjects";
-import "@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom";
 
 vi.mock("@/utilities/fetchData");
+vi.mock("@/components/Utilities/errorManager");
+
 describe("getNewProjects", () => {
   afterEach(() => {
     vi.clearAllMocks();

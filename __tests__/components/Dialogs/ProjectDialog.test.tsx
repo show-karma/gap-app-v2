@@ -392,6 +392,10 @@ vi.mock("@/components/Utilities/ExternalLink", () => ({
   ),
 }));
 
+vi.mock("@/components/Utilities/errorManager", () => ({
+  errorManager: vi.fn(),
+}));
+
 vi.mock("@/components/Utilities/FileUpload", () => ({
   FileUpload: () => <div data-testid="file-upload" />,
 }));
@@ -489,7 +493,7 @@ describe("ProjectDialog", () => {
       chainId: 10,
     });
 
-    const setupHookMockByAlias = require("@/hooks/useSetupChainAndWallet") as {
+    const setupHookMockByAlias = jest.requireMock("@/hooks/useSetupChainAndWallet") as {
       useSetupChainAndWallet: vi.Mock;
     };
     setupHookMockByAlias.useSetupChainAndWallet.mockReturnValue({
@@ -500,7 +504,7 @@ describe("ProjectDialog", () => {
       hasExternalWallet: true,
     });
 
-    const setupHookMockByRoot = require("hooks/useSetupChainAndWallet") as {
+    const setupHookMockByRoot = jest.requireMock("hooks/useSetupChainAndWallet") as {
       useSetupChainAndWallet: vi.Mock;
     };
     setupHookMockByRoot.useSetupChainAndWallet.mockReturnValue({

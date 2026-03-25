@@ -6,7 +6,7 @@
 import { setupServer } from "msw/node";
 import React from "react";
 import { handlers } from "./mocks/handlers";
-import "@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom";
 import { toHaveNoViolations } from "jest-axe";
 
 /**
@@ -86,7 +86,7 @@ afterEach(() => {
   vi.clearAllMocks();
 
   // Clear timers
-  vi.clearAllTimers();
+  jest.clearAllTimers();
 });
 
 /**
@@ -102,8 +102,14 @@ afterAll(() => {
 
 /**
  * Custom matchers for navbar tests
- * Type declarations are in ./types/jest-axe.d.ts
  */
+declare global {
+  namespace jest {
+    interface Matchers<R> {
+      toHaveNoViolations(): R;
+    }
+  }
+}
 
 /**
  * Mock Next.js modules
@@ -411,29 +417,29 @@ vi.mock("@/components/Utilities/errorManager", () => ({
  * Setup fake timers for debounce tests
  */
 export const setupFakeTimers = () => {
-  vi.useFakeTimers();
+  jest.useFakeTimers();
 };
 
 /**
  * Cleanup fake timers
  */
 export const cleanupFakeTimers = () => {
-  vi.runOnlyPendingTimers();
-  vi.useRealTimers();
+  jest.runOnlyPendingTimers();
+  jest.useRealTimers();
 };
 
 /**
  * Advance timers by specific amount
  */
 export const advanceTimersByTime = (ms: number) => {
-  vi.advanceTimersByTime(ms);
+  jest.advanceTimersByTime(ms);
 };
 
 /**
  * Run all pending timers
  */
 export const runAllTimers = () => {
-  vi.runAllTimers();
+  jest.runAllTimers();
 };
 
 /**

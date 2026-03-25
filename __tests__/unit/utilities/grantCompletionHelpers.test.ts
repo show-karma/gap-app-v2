@@ -17,7 +17,7 @@ import {
   validateGrantCompletion,
 } from "@/utilities/grantCompletionHelpers";
 
-// Get the mocked functions after vi.mock
+// Get the mocked functions after jest.mock
 const { retryUntilConditionMet } = require("@/utilities/retries");
 const mockRetryUntilConditionMet = retryUntilConditionMet as vi.MockedFunction<
   typeof retryUntilConditionMet

@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import "@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom";
 import { TeamContent } from "../TeamContent/TeamContent";
 
 // Mock next/navigation
@@ -212,7 +212,7 @@ describe("TeamContent", () => {
 describe("TeamContent - Empty State", () => {
   beforeEach(() => {
     // Override mock for empty project
-    const { useProjectStore, useOwnerStore } = require("@/store");
+    const { useProjectStore, useOwnerStore } = jest.requireMock("@/store");
     useProjectStore.mockImplementation((selector?: (state: unknown) => unknown) => {
       const state = {
         project: null,

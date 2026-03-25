@@ -26,6 +26,15 @@ vi.mock("@/contexts/privy-bridge-context", () => ({
   usePrivyBridge: vi.fn(),
 }));
 
+vi.mock("react-hot-toast", () => ({
+  __esModule: true,
+  default: {
+    error: vi.fn(),
+    success: vi.fn(),
+    loading: vi.fn(),
+  },
+}));
+
 vi.mock("viem", () => ({
   createWalletClient: vi.fn(),
   custom: vi.fn(),
@@ -54,8 +63,8 @@ import { useClaimTransaction } from "@/src/features/claim-funds/hooks/use-claim-
 import type { ClaimEligibility } from "@/src/features/claim-funds/types";
 import type { ClaimGrantsConfig } from "@/src/infrastructure/types/tenant";
 
-const { useMutation, useQueryClient } = vi.requireMock("@tanstack/react-query");
-const { usePrivyBridge } = vi.requireMock("@/contexts/privy-bridge-context");
+const { useMutation, useQueryClient } = jest.requireMock("@tanstack/react-query");
+const { usePrivyBridge } = jest.requireMock("@/contexts/privy-bridge-context");
 
 const MOCK_WALLET = {
   address: "0xABCDEF1234567890ABCDEF1234567890ABCDEF12",

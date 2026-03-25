@@ -8,7 +8,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type React from "react";
 import { CreateProgramModal } from "@/components/FundingPlatform/CreateProgramModal";
-import "@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { server } from "@/__tests__/utils/msw/setup";
 import { ProgramRegistryService } from "@/src/features/program-registry/services/program-registry.service";
@@ -39,11 +39,19 @@ vi.mock("@/hooks/communities/useCommunityDetails", () => ({
   useCommunityDetails: vi.fn(),
 }));
 
-vi.mock("@/services/programRegistry.service", () => ({
+vi.mock("@/src/features/program-registry/services/program-registry.service", () => ({
   ProgramRegistryService: {
     buildProgramMetadata: vi.fn(),
     createProgram: vi.fn(),
     approveProgram: vi.fn(),
+  },
+}));
+
+vi.mock("react-hot-toast", () => ({
+  __esModule: true,
+  default: {
+    success: vi.fn(),
+    error: vi.fn(),
   },
 }));
 
@@ -228,6 +236,8 @@ describe("CreateProgramModal", () => {
     });
 
     (useAuth as vi.Mock).mockReturnValue({
+      address: mockAddress,
+      isConnected: true,
       authenticated: true,
       login: mockLogin,
     });
@@ -788,6 +798,8 @@ describe("CreateProgramModal", () => {
     it("should prompt login if not authenticated", async () => {
       const user = userEvent.setup();
       (useAuth as vi.Mock).mockReturnValue({
+        address: undefined,
+        isConnected: false,
         authenticated: false,
         login: mockLogin,
       });
@@ -822,7 +834,7 @@ describe("CreateProgramModal", () => {
         address: undefined,
         isConnected: false,
       });
-      (useAuth as jest.Mock).mockReturnValue({
+      (useAuth as vi.Mock).mockReturnValue({
         address: undefined,
         isConnected: false,
         authenticated: false,

@@ -1,8 +1,6 @@
 /**
  * @file Tests for ProjectModals component
- * @description Tests conditional rendering behavior driven by Zustand modal stores.
- * Each modal should appear/disappear based on its store state, and ProjectOptionsDialogs
- * should always be present.
+ * @description Tests for the project modals layer that consolidates all modal components
  */
 
 import { render, screen } from "@testing-library/react";
@@ -16,12 +14,14 @@ vi.mock("@/components/Pages/Project/ProjectOptionsMenu", () => ({
 
 import { ProjectModals } from "@/components/Pages/Project/ProjectWrapper/ProjectModals";
 
-// Modal store state holders — mutated per test to drive conditional rendering
+// Mock modal stores
 let mockIsIntroModalOpen = false;
 let mockIsEndorsementOpen = false;
 let mockIsProgressModalOpen = false;
 let mockIsShareDialogOpen = false;
 let mockIsContributorProfileOpen = false;
+// Note: Invite-code auto-open logic has been moved to ProjectProfileLayout (v2).
+// ProjectModals no longer handles invite-code detection.
 
 vi.mock("@/store/modals/intro", () => ({
   useIntroModalStore: () => ({
@@ -53,10 +53,12 @@ vi.mock("@/store/modals/contributorProfile", () => ({
   }),
 }));
 
-// Mock dynamic imports — each modal returns a testid so we can detect which loaded
-vi.mock("next/dynamic", () => ({
-  default: (loader: () => Promise<any>, _options?: { ssr?: boolean }) => {
-    const DynamicComponent = (_props: any) => {
+// Mock dynamic imports for modal components
+vi.mock("next/dynamic", () => {
+  return (loader: () => Promise<any>, options?: { ssr?: boolean }) => {
+    const DynamicComponent = (props: any) => {
+      // Return a placeholder for each modal that can be identified in tests
+      // We detect which modal it is based on the loader string representation
       const loaderStr = loader.toString();
       if (loaderStr.includes("IntroDialog")) {
         return <div data-testid="intro-dialog">IntroDialog Content</div>;
@@ -77,11 +79,12 @@ vi.mock("next/dynamic", () => ({
     };
     DynamicComponent.displayName = "DynamicComponent";
     return DynamicComponent;
-  },
-}));
+  };
+});
 
 describe("ProjectModals", () => {
   beforeEach(() => {
+    // Reset all modal states before each test
     mockIsIntroModalOpen = false;
     mockIsEndorsementOpen = false;
     mockIsProgressModalOpen = false;
@@ -89,110 +92,127 @@ describe("ProjectModals", () => {
     mockIsContributorProfileOpen = false;
   });
 
-  describe("always-present elements", () => {
-    it("renders ProjectOptionsDialogs regardless of modal state", () => {
+  describe("Initial State", () => {
+    it("should render without any modals when all are closed", () => {
       render(<ProjectModals />);
+
+      expect(screen.queryByTestId("intro-dialog")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("endorsement-dialog")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("progress-dialog")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("share-dialog")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("contributor-profile-dialog")).not.toBeInTheDocument();
+
+      // ProjectOptionsDialogs is always rendered
+      expect(screen.getByTestId("project-options-dialogs")).toBeInTheDocument();
+    });
+
+    it("should render ProjectOptionsDialogs", () => {
+      render(<ProjectModals />);
+
+      // ProjectOptionsDialogs is always rendered regardless of modal state
       expect(screen.getByTestId("project-options-dialogs")).toBeInTheDocument();
     });
   });
 
-  describe("conditional rendering driven by store state", () => {
-    const modalCases = [
-      {
-        name: "IntroDialog",
-        testId: "intro-dialog",
-        activate: () => {
-          mockIsIntroModalOpen = true;
-        },
-      },
-      {
-        name: "EndorsementDialog",
-        testId: "endorsement-dialog",
-        activate: () => {
-          mockIsEndorsementOpen = true;
-        },
-      },
-      {
-        name: "ProgressDialog",
-        testId: "progress-dialog",
-        activate: () => {
-          mockIsProgressModalOpen = true;
-        },
-      },
-      {
-        name: "ShareDialog",
-        testId: "share-dialog",
-        activate: () => {
-          mockIsShareDialogOpen = true;
-        },
-      },
-      {
-        name: "ContributorProfileDialog",
-        testId: "contributor-profile-dialog",
-        activate: () => {
-          mockIsContributorProfileOpen = true;
-        },
-      },
-    ];
-
-    it.each(modalCases)(
-      "renders $name only when its store flag is true",
-      ({ testId, activate }) => {
-        // When closed, modal is not in the DOM
-        const { unmount } = render(<ProjectModals />);
-        expect(screen.queryByTestId(testId)).not.toBeInTheDocument();
-        unmount();
-
-        // When opened, modal appears
-        activate();
-        render(<ProjectModals />);
-        expect(screen.getByTestId(testId)).toBeInTheDocument();
-      }
-    );
-
-    it.each(modalCases)(
-      "does not render other modals when only $name is open",
-      ({ testId, activate }) => {
-        activate();
-        render(<ProjectModals />);
-
-        // The activated modal is present
-        expect(screen.getByTestId(testId)).toBeInTheDocument();
-
-        // All other modals are absent
-        const otherTestIds = modalCases.filter((c) => c.testId !== testId).map((c) => c.testId);
-        for (const otherId of otherTestIds) {
-          expect(screen.queryByTestId(otherId)).not.toBeInTheDocument();
-        }
-      }
-    );
-  });
-
-  describe("multiple modals open simultaneously", () => {
-    it("renders exactly the modals whose flags are true", () => {
+  describe("IntroDialog Modal", () => {
+    it("should render IntroDialog when isIntroModalOpen is true", () => {
       mockIsIntroModalOpen = true;
-      mockIsProgressModalOpen = true;
-      mockIsContributorProfileOpen = true;
-
       render(<ProjectModals />);
 
-      // Open modals are present
       expect(screen.getByTestId("intro-dialog")).toBeInTheDocument();
-      expect(screen.getByTestId("progress-dialog")).toBeInTheDocument();
-      expect(screen.getByTestId("contributor-profile-dialog")).toBeInTheDocument();
-
-      // Closed modals are absent
-      expect(screen.queryByTestId("endorsement-dialog")).not.toBeInTheDocument();
-      expect(screen.queryByTestId("share-dialog")).not.toBeInTheDocument();
     });
 
-    it("renders all five modals when every flag is true", () => {
+    it("should not render IntroDialog when isIntroModalOpen is false", () => {
+      mockIsIntroModalOpen = false;
+      render(<ProjectModals />);
+
+      expect(screen.queryByTestId("intro-dialog")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("EndorsementDialog Modal", () => {
+    it("should render EndorsementDialog when isEndorsementOpen is true", () => {
+      mockIsEndorsementOpen = true;
+      render(<ProjectModals />);
+
+      expect(screen.getByTestId("endorsement-dialog")).toBeInTheDocument();
+    });
+
+    it("should not render EndorsementDialog when isEndorsementOpen is false", () => {
+      mockIsEndorsementOpen = false;
+      render(<ProjectModals />);
+
+      expect(screen.queryByTestId("endorsement-dialog")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("ProgressDialog Modal", () => {
+    it("should render ProgressDialog when isProgressModalOpen is true", () => {
+      mockIsProgressModalOpen = true;
+      render(<ProjectModals />);
+
+      expect(screen.getByTestId("progress-dialog")).toBeInTheDocument();
+    });
+
+    it("should not render ProgressDialog when isProgressModalOpen is false", () => {
+      mockIsProgressModalOpen = false;
+      render(<ProjectModals />);
+
+      expect(screen.queryByTestId("progress-dialog")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("ShareDialog Modal", () => {
+    it("should render ShareDialog when isShareDialogOpen is true", () => {
+      mockIsShareDialogOpen = true;
+      render(<ProjectModals />);
+
+      expect(screen.getByTestId("share-dialog")).toBeInTheDocument();
+    });
+
+    it("should not render ShareDialog when isShareDialogOpen is false", () => {
+      mockIsShareDialogOpen = false;
+      render(<ProjectModals />);
+
+      expect(screen.queryByTestId("share-dialog")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("ContributorProfileDialog Modal", () => {
+    it("should render ContributorProfileDialog when isContributorProfileOpen is true", () => {
+      mockIsContributorProfileOpen = true;
+      render(<ProjectModals />);
+
+      expect(screen.getByTestId("contributor-profile-dialog")).toBeInTheDocument();
+    });
+
+    it("should not render ContributorProfileDialog when isContributorProfileOpen is false", () => {
+      mockIsContributorProfileOpen = false;
+      render(<ProjectModals />);
+
+      expect(screen.queryByTestId("contributor-profile-dialog")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("Multiple Modals", () => {
+    it("should render multiple modals when multiple are open", () => {
+      mockIsIntroModalOpen = true;
+      mockIsEndorsementOpen = true;
+      render(<ProjectModals />);
+
+      expect(screen.getByTestId("intro-dialog")).toBeInTheDocument();
+      expect(screen.getByTestId("endorsement-dialog")).toBeInTheDocument();
+      expect(screen.queryByTestId("progress-dialog")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("share-dialog")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("contributor-profile-dialog")).not.toBeInTheDocument();
+    });
+
+    it("should render all modals when all are open", () => {
       mockIsIntroModalOpen = true;
       mockIsEndorsementOpen = true;
       mockIsProgressModalOpen = true;
       mockIsShareDialogOpen = true;
       mockIsContributorProfileOpen = true;
-
       render(<ProjectModals />);
 
       expect(screen.getByTestId("intro-dialog")).toBeInTheDocument();
@@ -201,11 +221,40 @@ describe("ProjectModals", () => {
       expect(screen.getByTestId("share-dialog")).toBeInTheDocument();
       expect(screen.getByTestId("contributor-profile-dialog")).toBeInTheDocument();
     });
+
+    it("should render correct combination of open modals", () => {
+      mockIsProgressModalOpen = true;
+      mockIsShareDialogOpen = true;
+      render(<ProjectModals />);
+
+      expect(screen.queryByTestId("intro-dialog")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("endorsement-dialog")).not.toBeInTheDocument();
+      expect(screen.getByTestId("progress-dialog")).toBeInTheDocument();
+      expect(screen.getByTestId("share-dialog")).toBeInTheDocument();
+      expect(screen.queryByTestId("contributor-profile-dialog")).not.toBeInTheDocument();
+    });
   });
 
-  describe("state independence", () => {
-    it("each modal responds only to its own store, not sibling stores", () => {
-      // Alternating pattern: open, closed, open, closed, open
+  describe("Conditional Rendering Pattern", () => {
+    it("should use ternary operator pattern for conditional rendering", () => {
+      // This test ensures the component uses {condition ? <Modal /> : null} pattern
+      // which is more explicit than {condition && <Modal />}
+      mockIsIntroModalOpen = true;
+      const { container } = render(<ProjectModals />);
+
+      // When modal is open, it should be rendered
+      expect(screen.getByTestId("intro-dialog")).toBeInTheDocument();
+
+      // When modal is closed, no placeholder should exist (null, not false or empty string)
+      mockIsIntroModalOpen = false;
+      const { container: container2 } = render(<ProjectModals />);
+      expect(container2.querySelector('[data-testid="intro-dialog"]')).toBeNull();
+    });
+  });
+
+  describe("State Independence", () => {
+    it("should read each modal state independently", () => {
+      // Each modal should be controlled by its own store
       mockIsIntroModalOpen = true;
       mockIsEndorsementOpen = false;
       mockIsProgressModalOpen = true;
@@ -219,6 +268,20 @@ describe("ProjectModals", () => {
       expect(screen.getByTestId("progress-dialog")).toBeInTheDocument();
       expect(screen.queryByTestId("share-dialog")).not.toBeInTheDocument();
       expect(screen.getByTestId("contributor-profile-dialog")).toBeInTheDocument();
+    });
+  });
+
+  describe("Component Export", () => {
+    it("should be a named export", () => {
+      // This verifies the component is exported correctly
+      expect(ProjectModals).toBeDefined();
+      expect(typeof ProjectModals).toBe("function");
+    });
+
+    it("should be a valid React component", () => {
+      const { container } = render(<ProjectModals />);
+      // Component should render without throwing
+      expect(container).toBeInTheDocument();
     });
   });
 });

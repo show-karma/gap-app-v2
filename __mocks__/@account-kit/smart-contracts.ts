@@ -1,4 +1,3 @@
-import { vi } from "vitest";
 /**
  * Mock for @account-kit/smart-contracts to avoid ESM parsing issues
  */

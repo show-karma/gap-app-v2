@@ -320,7 +320,7 @@ describe("OnrampFlow", () => {
       });
 
       // Capture StripeOnrampEmbed onSuccess callback
-      const { StripeOnrampEmbed } = require("../StripeOnrampEmbed") as any;
+      const { StripeOnrampEmbed } = jest.requireMock("../StripeOnrampEmbed") as any;
       let capturedStripeOnSuccess: ((data: any) => void) | undefined;
       (StripeOnrampEmbed as vi.Mock).mockImplementation((props: any) => {
         capturedStripeOnSuccess = props.onSuccess;
@@ -366,7 +366,7 @@ describe("OnrampFlow", () => {
       });
 
       // Capture StripeOnrampEmbed onSuccess callback
-      const { StripeOnrampEmbed } = require("../StripeOnrampEmbed") as any;
+      const { StripeOnrampEmbed } = jest.requireMock("../StripeOnrampEmbed") as any;
       let capturedStripeOnSuccess: ((data: any) => void) | undefined;
       (StripeOnrampEmbed as vi.Mock).mockImplementation((props: any) => {
         capturedStripeOnSuccess = props.onSuccess;

@@ -7,7 +7,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { SetupWizard } from "@/components/FundingPlatform/SetupWizard";
 import type { SetupProgress, SetupStep } from "@/hooks/useProgramSetupProgress";
-import "@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom";
 
 // Mock next/navigation
 const mockPush = vi.fn();
@@ -25,6 +25,7 @@ vi.mock("next/link", () => {
   );
 });
 
+// Mock dependencies
 const mockToggleStatusAsync = vi.fn();
 const mockRefetch = vi.fn();
 
@@ -34,6 +35,14 @@ vi.mock("@/hooks/useFundingPlatform", () => ({
     isUpdating: false,
     refetch: mockRefetch,
   })),
+}));
+
+vi.mock("react-hot-toast", () => ({
+  __esModule: true,
+  default: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
 }));
 
 describe("SetupWizard", () => {

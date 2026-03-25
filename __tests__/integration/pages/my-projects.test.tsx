@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import "@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom";
 import Page from "@/app/my-projects/page";
 
 vi.mock("@/components/Pages/MyProjects", () => {

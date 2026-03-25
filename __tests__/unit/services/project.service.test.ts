@@ -4,7 +4,17 @@
  */
 
 // Mock environment variables
+vi.mock("@/utilities/enviromentVars", () => ({
+  envVars: {
+    NEXT_PUBLIC_GAP_INDEXER_URL: "http://localhost:4000",
+  },
+}));
+
 // Mock errorManager
+vi.mock("@/components/Utilities/errorManager", () => ({
+  errorManager: vi.fn(),
+}));
+
 // Mock fetchData utility
 vi.mock("@/utilities/fetchData");
 

@@ -5,7 +5,7 @@
  * Following the pattern established in homepage tests to avoid global conflicts.
  */
 
-import "@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom";
 import React from "react";
 
 // Mock window.matchMedia
