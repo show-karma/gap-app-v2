@@ -33,7 +33,7 @@ export const ProgramBanner = () => {
 
   if (!programId || !program) return null;
   return (
-    <div className="flex flex-row gap-5 bg-brand-lightblue rounded-xl  px-4 py-4">
+    <div className="flex flex-row gap-5 bg-brand-lightblue dark:bg-zinc-800 rounded-xl  px-4 py-4">
       <div className="h-full items-start">
         <Image
           width={32}
@@ -44,11 +44,13 @@ export const ProgramBanner = () => {
         />
       </div>
       <div className="flex flex-1 flex-col gap-0">
-        <p className="text-brand-darkblue text-base font-semibold">{program.metadata?.title}</p>
+        <p className="text-brand-darkblue dark:text-zinc-100 text-base font-semibold">
+          {program.metadata?.title}
+        </p>
         <ReadMore
           readLessText="Read less"
           readMoreText="Read more"
-          markdownClass="text-brand-darkblue text-sm font-normal"
+          markdownClass="text-brand-darkblue dark:text-zinc-300 text-sm font-normal"
           side="left"
         >
           {program.metadata?.description as string}

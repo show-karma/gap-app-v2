@@ -95,6 +95,7 @@ export function transformGrantsToMilestones(grants: Grant[]): UnifiedMilestone[]
         communityImage: grant.community?.details?.imageURL,
         grantTitle: grant.details?.title,
         grantUID: grant.uid,
+        programType: grant.programType,
       },
     };
   });

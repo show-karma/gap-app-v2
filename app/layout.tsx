@@ -19,6 +19,7 @@ import { OrganizationJsonLd } from "@/components/Seo/OrganizationJsonLd";
 import { PermissionsProvider } from "@/components/Utilities/PermissionsProvider";
 import PrivyProviderWrapper from "@/components/Utilities/PrivyProviderWrapper";
 import { TenantStoreInitializer } from "@/components/Utilities/TenantStoreInitializer";
+import { FooterSwitcher } from "@/src/components/footer/footer-switcher";
 import { Navbar } from "@/src/components/navbar/navbar";
 import { WhitelabelNavbar } from "@/src/components/navbar/whitelabel-navbar";
 import { toHslToken } from "@/utilities/whitelabel-config";
@@ -149,12 +150,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   ) : (
                     <>
                       <Navbar />
-                      <div className="h-[80px]" />
+                      <div className="h-[var(--navbar-height)]" />
                     </>
                   )}
                   {children}
                 </div>
-                {isWhitelabel ? <WhitelabelFooter /> : <Footer />}
+                <FooterSwitcher isWhitelabel={isWhitelabel} />
               </div>
             </WhitelabelProvider>
           </PrivyProviderWrapper>

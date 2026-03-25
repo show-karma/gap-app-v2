@@ -26,7 +26,11 @@ export function HackathonFields({
             placeholder="e.g. Virtual, San Francisco, Istanbul"
             {...register("hackathonMeta.location")}
           />
-          <p className="text-base text-red-400">{errors.hackathonMeta?.location?.message}</p>
+          {errors.hackathonMeta?.location?.message && (
+            <p className="text-sm text-red-600 dark:text-red-400">
+              {errors.hackathonMeta.location.message}
+            </p>
+          )}
         </div>
         <div className="flex w-full flex-col gap-1">
           <label htmlFor="hackathon-tracks" className={labelStyle}>

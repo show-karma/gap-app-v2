@@ -1,3 +1,4 @@
+"use client";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import {
@@ -180,24 +181,9 @@ export const MyProgramList: FC<MyProgramListProps> = ({
           );
         },
         header: () => (
-          // <button
-          // type="button"
-          // className="flex items-center gap-1"
-          // onClick={() => {
-          // setSortField("name");
-          // setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-          // }}
-          // >
-          <div className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64 cursor-pointer">
+          <div className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64">
             Name
           </div>
-          //     <div className="flex flex-col items-center gap-0.5">
-          //      {sortOrder === "asc" && (
-          //        <ChevronUpIcon className="w-4 h-4 inline-block" />
-          //      )}
-          //      {sortOrder === "desc" && <ChevronDownIcon className="w-4 h-4" />}
-          //    </div>
-          //   </button>
         ),
       },
       {
@@ -239,7 +225,7 @@ export const MyProgramList: FC<MyProgramListProps> = ({
             typeof firstNetworks === "string" ||
             typeof restNetworks === "string"
           )
-            return null;
+            return <div className="w-full max-w-44" />;
           return (
             <div className="w-full max-w-44 flex flex-row flex-wrap gap-1 my-2 items-center">
               {firstNetworks?.map((network, _index) => (
@@ -363,52 +349,34 @@ export const MyProgramList: FC<MyProgramListProps> = ({
             </div>
           );
         },
-        header: () => (
-          <div className="flex items-center gap-1">
+        header: () => {
+          const currentField = searchParams.get("sortField");
+          const currentOrder = searchParams.get("sortOrder") || "desc";
+          const isActive = currentField === "createdAt";
+          return (
             <button
               type="button"
-              className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64 cursor-pointer bg-transparent border-none"
+              className="flex items-center gap-1 px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64 cursor-pointer bg-transparent border-none"
+              aria-label={`Sort by date added, currently ${isActive ? currentOrder : "unsorted"}`}
               onClick={() => {
                 setSortField("createdAt");
-                if (searchParams.get("sortField") === "createdAt") {
-                  setSortOrder(searchParams.get("sortOrder") === "asc" ? "desc" : "asc");
-                }
-                setSortOrder("asc");
+                setSortOrder(isActive && currentOrder === "asc" ? "desc" : "asc");
               }}
             >
               Date Added
-            </button>
-            <div className="flex flex-col items-center gap-0.5">
-              {searchParams.get("sortField") === "asc" && (
-                <ChevronUpIcon className="w-4 h-4 inline-block" />
+              {isActive && (
+                <div className="flex flex-col items-center gap-0.5">
+                  {currentOrder === "asc" ? (
+                    <ChevronUpIcon className="w-4 h-4" />
+                  ) : (
+                    <ChevronDownIcon className="w-4 h-4" />
+                  )}
+                </div>
               )}
-              {searchParams.get("sortField") === "desc" && <ChevronDownIcon className="w-4 h-4" />}
-            </div>
-          </div>
-        ),
+            </button>
+          );
+        },
       },
-      // {
-      //   accessorFn: (row) => row,
-      //   id: "Grant Size",
-      //   cell: (info) => {
-      //     const grant = info.row.original;
-
-      //     return (
-      //       <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
-      //         {grant?.metadata?.minGrantSize && grant?.metadata?.maxGrantSize
-      //           ? `$${formatCurrency(
-      //               +grant?.metadata?.minGrantSize
-      //             )} - $${formatCurrency(+grant?.metadata?.maxGrantSize)}`
-      //           : ""}
-      //       </div>
-      //     );
-      //   },
-      //   header: () => (
-      //     <div className="px-3 py-3.5 text-left text-sm w-[120px] font-bold text-gray-900 dark:text-zinc-100 font-body">
-      //       Grant Size
-      //     </div>
-      //   ),
-      // },
       {
         accessorFn: (row) => row,
         id: "Categories",

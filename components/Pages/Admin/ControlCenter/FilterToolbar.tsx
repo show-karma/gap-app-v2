@@ -170,10 +170,10 @@ export function FilterToolbar({
   return (
     <>
       {/* Row 1: Primary controls */}
-      <div className="flex items-center justify-between gap-4 px-4 pb-3 border-b border-gray-100 dark:border-zinc-800/50">
+      <div className="flex flex-wrap items-center justify-between gap-4 px-4 pb-3 border-b border-gray-100 dark:border-zinc-800/50">
         <ProgramFilter onChange={onProgramChange} />
 
-        <div className="relative flex-shrink-0 w-[280px]">
+        <div className="relative w-full sm:w-[280px]">
           <MagnifyingGlassIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
             value={localSearch}

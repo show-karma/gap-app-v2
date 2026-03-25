@@ -19,7 +19,11 @@ export function RfpFields({ register, errors, labelStyle, inputStyle }: TypeFiel
             placeholder="e.g. Ethereum Foundation"
             {...register("rfpMeta.issuingOrganization")}
           />
-          <p className="text-base text-red-400">{errors.rfpMeta?.issuingOrganization?.message}</p>
+          {errors.rfpMeta?.issuingOrganization?.message && (
+            <p className="text-sm text-red-600 dark:text-red-400">
+              {errors.rfpMeta.issuingOrganization.message}
+            </p>
+          )}
         </div>
         <div className="flex w-full flex-col gap-1">
           <label htmlFor="rfp-budget" className={labelStyle}>

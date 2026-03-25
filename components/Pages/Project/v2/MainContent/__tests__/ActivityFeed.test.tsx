@@ -101,7 +101,7 @@ describe("ActivityFeed - Activity Type Labels", () => {
     expect(screen.getByText("Milestone created")).toBeInTheDocument();
   });
 
-  it("should display 'Funding received' for type 'grant_received'", () => {
+  it("should display 'Grant approved' for type 'grant_received' with no programType", () => {
     const milestones = [
       createMilestone("grant_received", {
         grantReceived: {
@@ -109,12 +109,49 @@ describe("ActivityFeed - Activity Type Labels", () => {
           communityName: "Test Community",
           communityImage: "https://example.com/image.png",
           grantTitle: "Test Grant",
+          grantUID: "0xgrant1",
         },
       }),
     ];
     render(<ActivityFeed milestones={milestones} />);
 
-    expect(screen.getByText("Funding received")).toBeInTheDocument();
+    expect(screen.getByText("Grant approved")).toBeInTheDocument();
+  });
+
+  it("should display 'Grant approved' for type 'grant_received' with programType 'grant'", () => {
+    const milestones = [
+      createMilestone("grant_received", {
+        grantReceived: {
+          amount: "1000 USDC",
+          communityName: "Test Community",
+          communityImage: "https://example.com/image.png",
+          grantTitle: "Test Grant",
+          grantUID: "0xgrant1",
+          programType: "grant",
+        },
+      }),
+    ];
+    render(<ActivityFeed milestones={milestones} />);
+
+    expect(screen.getByText("Grant approved")).toBeInTheDocument();
+  });
+
+  it("should display 'Hackathon participation' for type 'grant_received' with programType 'hackathon'", () => {
+    const milestones = [
+      createMilestone("grant_received", {
+        grantReceived: {
+          amount: "500 ETH",
+          communityName: "Hackathon Org",
+          communityImage: "https://example.com/hack.png",
+          grantTitle: "ETHGlobal",
+          grantUID: "0xhack1",
+          programType: "hackathon",
+        },
+      }),
+    ];
+    render(<ActivityFeed milestones={milestones} />);
+
+    expect(screen.getByText("Hackathon participation")).toBeInTheDocument();
   });
 
   it("should show empty state when no milestones", () => {
