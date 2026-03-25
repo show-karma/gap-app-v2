@@ -5,7 +5,7 @@ const isAnvil = !!process.env.ANVIL;
 
 export default defineConfig({
   testDir: "./tests",
-  testIgnore: isAnvil ? undefined : ["**/*.anvil.spec.ts"],
+  testIgnore: isAnvil ? undefined : ["**/*.anvil.spec.ts", "**/_experimental/**"],
   fullyParallel: true,
   forbidOnly: isCI,
   retries: isCI ? 2 : 1,

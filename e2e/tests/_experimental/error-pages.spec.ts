@@ -79,8 +79,7 @@ test.describe("Error Page Rendering", () => {
     const retryButton = page.getByRole("button", { name: /retry|try again|reload/i });
     const goHomeLink = page.getByRole("link", { name: /home|back|return/i });
 
-    const hasActionableElement =
-      (await retryButton.count()) > 0 || (await goHomeLink.count()) > 0;
+    const hasActionableElement = (await retryButton.count()) > 0 || (await goHomeLink.count()) > 0;
 
     // At minimum, the error page should have some interactive escape hatch
     // If neither exists, check for any link that lets the user navigate away
@@ -90,10 +89,7 @@ test.describe("Error Page Rendering", () => {
     }
   });
 
-  test("T31-05: error page shows a helpful message to the user", async ({
-    page,
-    withApiMocks,
-  }) => {
+  test("T31-05: error page shows a helpful message to the user", async ({ page, withApiMocks }) => {
     await withApiMocks({
       "**/v2/communities/optimism": mockError(500, "Internal Server Error"),
     });
