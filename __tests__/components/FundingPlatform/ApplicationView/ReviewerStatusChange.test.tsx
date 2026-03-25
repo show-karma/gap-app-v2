@@ -6,7 +6,7 @@
  * to change application status from the reviewer detail page.
  */
 
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import React from "react";
@@ -29,7 +29,13 @@ vi.mock("next/navigation", () => ({
   useRouter: vi.fn(() => ({
     push: mockPush,
     back: vi.fn(),
+    replace: vi.fn(),
+    prefetch: vi.fn(),
+    refresh: vi.fn(),
   })),
+  usePathname: vi.fn(
+    () => "/community/test-community/manage/funding-platform/prog-1_1/applications/APP-001"
+  ),
 }));
 
 // Mock next/link
@@ -44,13 +50,17 @@ vi.mock("@heroicons/react/24/solid", () => ({
   EyeIcon: () => React.createElement("span", { "data-testid": "eye-icon" }),
 }));
 
-// Mock toast
-vi.mock("react-hot-toast", () => ({
-  __esModule: true,
-  default: {
-    success: vi.fn(),
-    error: vi.fn(),
-  },
+// Mock useAuth
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: vi.fn(() => ({
+    authenticated: true,
+    ready: true,
+    login: vi.fn(),
+    logout: vi.fn(),
+    isConnected: true,
+    address: "0x1234567890abcdef",
+    getAccessToken: vi.fn().mockResolvedValue("mock-token"),
+  })),
 }));
 
 // Mock wagmi
@@ -152,8 +162,8 @@ vi.mock("@/hooks/useKycStatus", () => ({
   })),
 }));
 
-vi.mock("@/src/core/rbac", () => {
-  const actual = vi.importActual("@/src/core/rbac");
+vi.mock("@/src/core/rbac", async (importOriginal) => {
+  const actual = await importOriginal<Record<string, unknown>>();
   return {
     ...actual,
     useIsFundingPlatformAdmin: vi.fn(() => false),
@@ -352,8 +362,17 @@ vi.mock("@/components/FundingPlatform/ApplicationView/TabPanel", () => ({
     React.createElement("div", { "data-testid": "tab-panel" }, children),
 }));
 
+import toast from "react-hot-toast";
 // Import the page component after mocks (now uses unified manage route)
 import ReviewerApplicationDetailPage from "@/app/community/[communityId]/manage/funding-platform/[programId]/applications/[applicationId]/page";
+// Import mocked modules for vi.mocked() usage
+import { useApplication, useApplicationStatus } from "@/hooks/useFundingPlatform";
+import { usePermissions } from "@/hooks/usePermissions";
+import {
+  useCan,
+  useIsReviewer,
+  usePermissionContext,
+} from "@/src/core/rbac/context/permission-context";
 
 describe("Reviewer Status Change Functionality", () => {
   beforeEach(() => {
@@ -361,8 +380,7 @@ describe("Reviewer Status Change Functionality", () => {
     mockUpdateStatusAsync.mockResolvedValue({});
 
     // Reset hooks to default values
-    const { useApplication } = require("@/hooks/useFundingPlatform");
-    useApplication.mockReturnValue({
+    vi.mocked(useApplication).mockReturnValue({
       application: {
         id: "test-app-1",
         referenceNumber: "APP-001",
@@ -372,21 +390,15 @@ describe("Reviewer Status Change Functionality", () => {
       },
       isLoading: false,
       refetch: mockRefetchApplication,
-    });
+    } as any);
 
-    const { usePermissions } = require("@/hooks/usePermissions");
-    usePermissions.mockReturnValue({
+    vi.mocked(usePermissions).mockReturnValue({
       hasPermission: true,
       isLoading: false,
-    });
+    } as any);
 
     // Reset RBAC context to default values
-    const {
-      usePermissionContext,
-      useIsReviewer,
-      useCan,
-    } = require("@/src/core/rbac/context/permission-context");
-    usePermissionContext.mockReturnValue({
+    vi.mocked(usePermissionContext).mockReturnValue({
       can: vi.fn(() => true),
       canAny: vi.fn(() => true),
       canAll: vi.fn(() => true),
@@ -395,9 +407,9 @@ describe("Reviewer Status Change Functionality", () => {
       isLoading: false,
       roles: { primaryRole: "PROGRAM_REVIEWER", roles: ["PROGRAM_REVIEWER"] },
       permissions: ["application:view_assigned", "application:review"],
-    });
-    useIsReviewer.mockReturnValue(true);
-    useCan.mockReturnValue(true);
+    } as any);
+    vi.mocked(useIsReviewer).mockReturnValue(true as any);
+    vi.mocked(useCan).mockReturnValue(true as any);
   });
 
   describe("Status Actions Rendering", () => {
@@ -415,8 +427,7 @@ describe("Reviewer Status Change Functionality", () => {
     });
 
     it("should show Approve, Request Revision, and Reject buttons for under_review applications", () => {
-      const { useApplication } = require("@/hooks/useFundingPlatform");
-      useApplication.mockReturnValue({
+      vi.mocked(useApplication).mockReturnValue({
         application: {
           id: "test-app-1",
           referenceNumber: "APP-001",
@@ -436,8 +447,7 @@ describe("Reviewer Status Change Functionality", () => {
     });
 
     it("should NOT show status actions for approved applications", () => {
-      const { useApplication } = require("@/hooks/useFundingPlatform");
-      useApplication.mockReturnValue({
+      vi.mocked(useApplication).mockReturnValue({
         application: {
           id: "test-app-1",
           referenceNumber: "APP-001",
@@ -455,8 +465,7 @@ describe("Reviewer Status Change Functionality", () => {
     });
 
     it("should NOT show status actions for rejected applications", () => {
-      const { useApplication } = require("@/hooks/useFundingPlatform");
-      useApplication.mockReturnValue({
+      vi.mocked(useApplication).mockReturnValue({
         application: {
           id: "test-app-1",
           referenceNumber: "APP-001",
@@ -537,7 +546,6 @@ describe("Reviewer Status Change Functionality", () => {
     });
 
     it("should show success toast after successful status change", async () => {
-      const toast = require("react-hot-toast").default;
       const user = userEvent.setup();
       render(React.createElement(ReviewerApplicationDetailPage));
 
@@ -553,7 +561,6 @@ describe("Reviewer Status Change Functionality", () => {
     });
 
     it("should show error toast when status change fails", async () => {
-      const toast = require("react-hot-toast").default;
       mockUpdateStatusAsync.mockRejectedValue(new Error("API Error"));
 
       const user = userEvent.setup();
@@ -574,8 +581,7 @@ describe("Reviewer Status Change Functionality", () => {
   describe("Permission Checks", () => {
     it("should hide status actions when reviewer has no permission", () => {
       // Mock RBAC context with no permissions
-      const { usePermissionContext } = require("@/src/core/rbac/context/permission-context");
-      usePermissionContext.mockReturnValue({
+      vi.mocked(usePermissionContext).mockReturnValue({
         can: vi.fn(() => false),
         canAny: vi.fn(() => false),
         canAll: vi.fn(() => false),
@@ -594,8 +600,7 @@ describe("Reviewer Status Change Functionality", () => {
 
     it("should show loading spinner when permissions are loading", () => {
       // Mock RBAC context with loading state
-      const { usePermissionContext } = require("@/src/core/rbac/context/permission-context");
-      usePermissionContext.mockReturnValue({
+      vi.mocked(usePermissionContext).mockReturnValue({
         can: vi.fn(() => false),
         canAny: vi.fn(() => false),
         canAll: vi.fn(() => false),
@@ -612,8 +617,7 @@ describe("Reviewer Status Change Functionality", () => {
     });
 
     it("should show loading spinner when application is loading", () => {
-      const { useApplication } = require("@/hooks/useFundingPlatform");
-      useApplication.mockReturnValue({
+      vi.mocked(useApplication).mockReturnValue({
         application: null,
         isLoading: true,
         refetch: mockRefetchApplication,
@@ -627,11 +631,7 @@ describe("Reviewer Status Change Functionality", () => {
 
   describe("Reviewer Badge", () => {
     it("should display reviewer mode badge", () => {
-      const {
-        usePermissionContext,
-        useCan,
-      } = require("@/src/core/rbac/context/permission-context");
-      usePermissionContext.mockReturnValue({
+      vi.mocked(usePermissionContext).mockReturnValue({
         can: vi.fn(() => false),
         canAny: vi.fn(() => false),
         canAll: vi.fn(() => false),
@@ -641,7 +641,7 @@ describe("Reviewer Status Change Functionality", () => {
         roles: { primaryRole: "PROGRAM_REVIEWER", roles: ["PROGRAM_REVIEWER"] },
         permissions: ["application:view_assigned", "application:review"],
       });
-      useCan.mockReturnValue(false);
+      vi.mocked(useCan).mockReturnValue(false);
 
       render(React.createElement(ReviewerApplicationDetailPage));
 
@@ -660,8 +660,7 @@ describe("Reviewer Status Change Functionality", () => {
 
   describe("Status Change for Different Application States", () => {
     it("should allow approving an under_review application", async () => {
-      const { useApplication } = require("@/hooks/useFundingPlatform");
-      useApplication.mockReturnValue({
+      vi.mocked(useApplication).mockReturnValue({
         application: {
           id: "test-app-1",
           referenceNumber: "APP-001",
@@ -685,8 +684,7 @@ describe("Reviewer Status Change Functionality", () => {
     });
 
     it("should allow requesting revision for an under_review application", async () => {
-      const { useApplication } = require("@/hooks/useFundingPlatform");
-      useApplication.mockReturnValue({
+      vi.mocked(useApplication).mockReturnValue({
         application: {
           id: "test-app-1",
           referenceNumber: "APP-001",
@@ -710,8 +708,7 @@ describe("Reviewer Status Change Functionality", () => {
     });
 
     it("should allow rejecting an under_review application", async () => {
-      const { useApplication } = require("@/hooks/useFundingPlatform");
-      useApplication.mockReturnValue({
+      vi.mocked(useApplication).mockReturnValue({
         application: {
           id: "test-app-1",
           referenceNumber: "APP-001",
@@ -737,8 +734,7 @@ describe("Reviewer Status Change Functionality", () => {
 
   describe("Application Not Found", () => {
     it("should show 'Application not found' when application is null", () => {
-      const { useApplication } = require("@/hooks/useFundingPlatform");
-      useApplication.mockReturnValue({
+      vi.mocked(useApplication).mockReturnValue({
         application: null,
         isLoading: false,
         refetch: mockRefetchApplication,
@@ -752,8 +748,7 @@ describe("Reviewer Status Change Functionality", () => {
 
   describe("Milestone Review Link", () => {
     it("should show milestone review link for approved applications with projectUID", () => {
-      const { useApplication } = require("@/hooks/useFundingPlatform");
-      useApplication.mockReturnValue({
+      vi.mocked(useApplication).mockReturnValue({
         application: {
           id: "test-app-1",
           referenceNumber: "APP-001",

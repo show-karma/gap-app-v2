@@ -32,6 +32,7 @@ jobs:
         run: pnpm run test
         env:
           NODE_ENV: test
+          NODE_OPTIONS: --max-old-space-size=4096
 
       - name: Generate test summary
         id: test-summary

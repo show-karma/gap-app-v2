@@ -14,12 +14,27 @@
  * - UI state changes (button disabled states, spinner visibility, text changes)
  */
 
+import { GAP } from "@show-karma/karma-gap-sdk";
 import { act, fireEvent, render, renderHook, screen, waitFor } from "@testing-library/react";
 import toast from "react-hot-toast";
+import * as wagmiModule from "wagmi";
 import { GrantCompleteButton } from "@/components/Pages/GrantMilestonesAndUpdates/GrantCompleteButton";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
+import { useGap } from "@/hooks/useGap";
 import { useGrantCompletionRevoke } from "@/hooks/useGrantCompletionRevoke";
+import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
+import { useOwnerStore, useProjectStore } from "@/store";
+import { useCommunityAdminStore } from "@/store/communityAdmin";
+import { useGrantStore } from "@/store/grant";
 import type { GrantResponse } from "@/types/v2/grant";
 import type { ProjectResponse } from "@/types/v2/project";
+import fetchData from "@/utilities/fetchData";
+import {
+  buildRevocationPayload,
+  createCheckIfCompletionExists,
+} from "@/utilities/grantCompletionHelpers";
 
 // Mock ESM modules to avoid parsing issues
 vi.mock("@/utilities/gasless", () => ({
@@ -68,9 +83,7 @@ vi.mock("@/hooks/useGap", () => ({
   })),
 }));
 
-// SWC transforms @/ aliases to relative paths at compile time, so we must mock
-// the actual file path for the mock to intercept the hook's internal import.
-vi.mock("../../../hooks/useSetupChainAndWallet", () => ({
+vi.mock("@/hooks/useSetupChainAndWallet", () => ({
   useSetupChainAndWallet: vi.fn(() => ({
     setupChainAndWallet: vi.fn(),
     isSmartWalletReady: false,
@@ -126,15 +139,6 @@ vi.mock("@show-karma/karma-gap-sdk", () => ({
   GAP: {
     getMulticall: vi.fn(),
   },
-}));
-
-vi.mock("react-hot-toast", () => ({
-  __esModule: true,
-  default: vi.fn(),
-}));
-
-vi.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: vi.fn(),
 }));
 
 vi.mock("@/store/grant", () => ({
@@ -241,15 +245,12 @@ describe("Integration: Grant Completion Revocation Flow", () => {
     vi.clearAllMocks();
 
     // Setup default mocks
-    const wagmi = require("wagmi");
-    wagmi.useAccount.mockReturnValue({ chain: { id: 42161 } });
-
-    const { useAttestationToast } = require("@/hooks/useAttestationToast");
+    vi.mocked(wagmiModule.useAccount).mockReturnValue({ chain: { id: 42161 } });
     const mockChangeStepperStep = vi.fn();
     const mockSetIsStepper = vi.fn();
     const mockDismiss = vi.fn();
     const mockStartAttestation = vi.fn();
-    useAttestationToast.mockReturnValue({
+    vi.mocked(useAttestationToast).mockReturnValue({
       startAttestation: mockStartAttestation,
       changeStepperStep: mockChangeStepperStep,
       setIsStepper: mockSetIsStepper,
@@ -261,8 +262,7 @@ describe("Integration: Grant Completion Revocation Flow", () => {
     });
 
     // Setup default useSetupChainAndWallet mock (returns null by default, tests override as needed)
-    const { useSetupChainAndWallet } = require("../../../hooks/useSetupChainAndWallet");
-    useSetupChainAndWallet.mockReturnValue({
+    vi.mocked(useSetupChainAndWallet).mockReturnValue({
       setupChainAndWallet: vi.fn().mockResolvedValue(null),
       isSmartWalletReady: false,
       smartWalletAddress: null,
@@ -270,16 +270,13 @@ describe("Integration: Grant Completion Revocation Flow", () => {
       hasExternalWallet: true,
     });
 
-    const { useProjectStore } = require("@/store");
-    const { useOwnerStore } = require("@/store");
-    const { useCommunityAdminStore } = require("@/store/communityAdmin");
     const mockRefreshProject = vi.fn();
     const mockIsProjectOwner = vi.fn(() => false);
     const mockIsOwner = vi.fn(() => false);
     const mockIsProjectAdmin = vi.fn(() => false);
     const mockIsCommunityAdmin = vi.fn(() => false);
 
-    useProjectStore.mockImplementation((selector?: any) => {
+    vi.mocked(useProjectStore).mockImplementation((selector?: any) => {
       if (!selector) {
         return {
           refreshProject: mockRefreshProject,
@@ -302,7 +299,7 @@ describe("Integration: Grant Completion Revocation Flow", () => {
       };
     });
 
-    useOwnerStore.mockImplementation((selector?: any) => {
+    vi.mocked(useOwnerStore).mockImplementation((selector?: any) => {
       if (!selector) {
         return { isOwner: mockIsOwner() };
       }
@@ -313,7 +310,7 @@ describe("Integration: Grant Completion Revocation Flow", () => {
       return { isOwner: mockIsOwner() };
     });
 
-    useCommunityAdminStore.mockImplementation((selector?: any) => {
+    vi.mocked(useCommunityAdminStore).mockImplementation((selector?: any) => {
       if (!selector) {
         return { isCommunityAdmin: mockIsCommunityAdmin() };
       }
@@ -323,12 +320,8 @@ describe("Integration: Grant Completion Revocation Flow", () => {
       }
       return { isCommunityAdmin: mockIsCommunityAdmin() };
     });
-
-    const { useGrantStore } = require("@/store/grant");
     const mockRefreshGrant = vi.fn();
-    useGrantStore.mockReturnValue({ refreshGrant: mockRefreshGrant });
-
-    const { createCheckIfCompletionExists } = require("@/utilities/grantCompletionHelpers");
+    vi.mocked(useGrantStore).mockReturnValue({ refreshGrant: mockRefreshGrant });
     // Mock checkIfCompletionExists to invoke the callback when called
     mockCheckIfCompletionExists.mockImplementation(async (callback?: () => void) => {
       // Simulate async completion check
@@ -337,21 +330,17 @@ describe("Integration: Grant Completion Revocation Flow", () => {
       callback?.();
       return undefined;
     });
-    createCheckIfCompletionExists.mockReturnValue(mockCheckIfCompletionExists);
-
-    const { useOffChainRevoke } = require("@/hooks/useOffChainRevoke");
+    vi.mocked(createCheckIfCompletionExists).mockReturnValue(mockCheckIfCompletionExists);
     const mockPerformOffChainRevoke = vi.fn();
-    useOffChainRevoke.mockReturnValue({
+    vi.mocked(useOffChainRevoke).mockReturnValue({
       performOffChainRevoke: mockPerformOffChainRevoke,
     });
-
-    const { useGap } = require("@/hooks/useGap");
     const mockGapClient = {
       fetch: {
         projectById: vi.fn().mockResolvedValue(mockInstanceProject),
       },
     };
-    useGap.mockReturnValue({ gap: mockGapClient });
+    vi.mocked(useGap).mockReturnValue({ gap: mockGapClient });
 
     // Setup toast mock - the default export is callable
     const mockToastFn = vi.fn();
@@ -367,13 +356,11 @@ describe("Integration: Grant Completion Revocation Flow", () => {
   describe("1. Complete On-Chain Revocation Flow", () => {
     it("should complete full on-chain revocation flow with UI state changes", async () => {
       // Setup: Authorized user (project owner)
-      const { useProjectStore } = require("@/store");
-      const { useOwnerStore } = require("@/store");
-      const { useCommunityAdminStore } = require("@/store/communityAdmin");
+
       const mockIsProjectOwner = vi.fn(() => true);
       const mockRefreshProject = vi.fn();
 
-      useProjectStore.mockImplementation((selector?: any) => {
+      vi.mocked(useProjectStore).mockImplementation((selector?: any) => {
         const state = {
           refreshProject: mockRefreshProject,
           isProjectOwner: mockIsProjectOwner(),
@@ -388,7 +375,7 @@ describe("Integration: Grant Completion Revocation Flow", () => {
         return state;
       });
 
-      useOwnerStore.mockImplementation((selector?: any) => {
+      vi.mocked(useOwnerStore).mockImplementation((selector?: any) => {
         const state = { isOwner: true }; // Authorized via isOwner
         if (!selector) {
           return state;
@@ -399,7 +386,7 @@ describe("Integration: Grant Completion Revocation Flow", () => {
         return state;
       });
 
-      useCommunityAdminStore.mockImplementation((selector?: any) => {
+      vi.mocked(useCommunityAdminStore).mockImplementation((selector?: any) => {
         const state = { isCommunityAdmin: false };
         if (!selector) {
           return state;
@@ -423,27 +410,20 @@ describe("Integration: Grant Completion Revocation Flow", () => {
         chainId: 42161,
         isGasless: false,
       });
-      const { useSetupChainAndWallet } = require("../../../hooks/useSetupChainAndWallet");
-      useSetupChainAndWallet.mockReturnValue({
+      vi.mocked(useSetupChainAndWallet).mockReturnValue({
         setupChainAndWallet: mockSetupChainAndWallet,
         isSmartWalletReady: false,
         smartWalletAddress: null,
         hasEmbeddedWallet: false,
         hasExternalWallet: true,
       });
-
-      const { GAP } = require("@show-karma/karma-gap-sdk");
-      GAP.getMulticall.mockResolvedValue(mockMulticallContract);
+      vi.mocked(GAP.getMulticall).mockResolvedValue(mockMulticallContract);
       mockMulticallContract.multiRevoke.mockResolvedValue(mockTransaction);
       mockTransaction.wait.mockResolvedValue({
         transactionHash: "0xtxhash123",
       });
-
-      const { buildRevocationPayload } = require("@/utilities/grantCompletionHelpers");
-      buildRevocationPayload.mockReturnValue([{ schema: "0xschema123", data: [] }]);
-
-      const fetchData = require("@/utilities/fetchData").default;
-      fetchData.mockResolvedValue({});
+      vi.mocked(buildRevocationPayload).mockReturnValue([{ schema: "0xschema123", data: [] }]);
+      vi.mocked(fetchData).mockResolvedValue({});
 
       // Render component
       render(<GrantCompleteButton grant={mockGrant} project={mockProject} />);
@@ -469,7 +449,6 @@ describe("Integration: Grant Completion Revocation Flow", () => {
       });
 
       // Verify stepper was activated (now uses changeStepperStep instead of setIsStepper)
-      const { useAttestationToast } = require("@/hooks/useAttestationToast");
       const stepper = useAttestationToast();
 
       // Verify on-chain path was taken via setupChainAndWallet
@@ -499,12 +478,10 @@ describe("Integration: Grant Completion Revocation Flow", () => {
   describe("2. Complete Off-Chain Revocation Flow", () => {
     it("should complete full off-chain revocation flow for unauthorized user", async () => {
       // Setup: Unauthorized user
-      const { useProjectStore } = require("@/store");
-      const { useOwnerStore } = require("@/store");
-      const { useCommunityAdminStore } = require("@/store/communityAdmin");
+
       const mockRefreshProject = vi.fn();
 
-      useProjectStore.mockImplementation((selector?: any) => {
+      vi.mocked(useProjectStore).mockImplementation((selector?: any) => {
         const state = {
           refreshProject: mockRefreshProject,
           isProjectOwner: false,
@@ -519,7 +496,7 @@ describe("Integration: Grant Completion Revocation Flow", () => {
         return state;
       });
 
-      useOwnerStore.mockImplementation((selector?: any) => {
+      vi.mocked(useOwnerStore).mockImplementation((selector?: any) => {
         const state = { isOwner: false };
         if (!selector) {
           return state;
@@ -530,7 +507,7 @@ describe("Integration: Grant Completion Revocation Flow", () => {
         return state;
       });
 
-      useCommunityAdminStore.mockImplementation((selector?: any) => {
+      vi.mocked(useCommunityAdminStore).mockImplementation((selector?: any) => {
         const state = { isCommunityAdmin: false };
         if (!selector) {
           return state;
@@ -540,8 +517,6 @@ describe("Integration: Grant Completion Revocation Flow", () => {
         }
         return state;
       });
-
-      const { useOffChainRevoke } = require("@/hooks/useOffChainRevoke");
       const mockPerformOffChainRevoke = vi.fn().mockImplementation(async (options: any) => {
         // Simulate async operation
         await new Promise((resolve) => setTimeout(resolve, 10));
@@ -551,7 +526,7 @@ describe("Integration: Grant Completion Revocation Flow", () => {
         }
         return true;
       });
-      useOffChainRevoke.mockReturnValue({
+      vi.mocked(useOffChainRevoke).mockReturnValue({
         performOffChainRevoke: mockPerformOffChainRevoke,
       });
 
@@ -586,7 +561,6 @@ describe("Integration: Grant Completion Revocation Flow", () => {
       });
 
       // Verify stepper was used (off-chain flow calls changeStepperStep and dismiss in onSuccess callback)
-      const { useAttestationToast } = require("@/hooks/useAttestationToast");
       const stepper = useAttestationToast();
       await waitFor(() => {
         expect(stepper.changeStepperStep).toHaveBeenCalledWith("indexed");
@@ -601,12 +575,10 @@ describe("Integration: Grant Completion Revocation Flow", () => {
   describe("3. Fallback Flow (On-Chain Failure → Off-Chain Success)", () => {
     it("should fallback to off-chain when on-chain fails", async () => {
       // Setup: Authorized user
-      const { useProjectStore } = require("@/store");
-      const { useOwnerStore } = require("@/store");
-      const { useCommunityAdminStore } = require("@/store/communityAdmin");
+
       const mockRefreshProject = vi.fn();
 
-      useProjectStore.mockImplementation((selector?: any) => {
+      vi.mocked(useProjectStore).mockImplementation((selector?: any) => {
         const state = {
           refreshProject: mockRefreshProject,
           isProjectOwner: true,
@@ -621,7 +593,7 @@ describe("Integration: Grant Completion Revocation Flow", () => {
         return state;
       });
 
-      useOwnerStore.mockImplementation((selector?: any) => {
+      vi.mocked(useOwnerStore).mockImplementation((selector?: any) => {
         const state = { isOwner: true }; // Authorized via isOwner
         if (!selector) {
           return state;
@@ -632,7 +604,7 @@ describe("Integration: Grant Completion Revocation Flow", () => {
         return state;
       });
 
-      useCommunityAdminStore.mockImplementation((selector?: any) => {
+      vi.mocked(useCommunityAdminStore).mockImplementation((selector?: any) => {
         const state = { isCommunityAdmin: false };
         if (!selector) {
           return state;
@@ -656,8 +628,7 @@ describe("Integration: Grant Completion Revocation Flow", () => {
         chainId: 42161,
         isGasless: false,
       });
-      const { useSetupChainAndWallet } = require("../../../hooks/useSetupChainAndWallet");
-      useSetupChainAndWallet.mockReturnValue({
+      vi.mocked(useSetupChainAndWallet).mockReturnValue({
         setupChainAndWallet: mockSetupChainAndWallet,
         isSmartWalletReady: false,
         smartWalletAddress: null,
@@ -666,13 +637,11 @@ describe("Integration: Grant Completion Revocation Flow", () => {
       });
 
       // Setup: On-chain fails
-      const { GAP } = require("@show-karma/karma-gap-sdk");
-      GAP.getMulticall.mockResolvedValue(mockMulticallContract);
+      vi.mocked(GAP.getMulticall).mockResolvedValue(mockMulticallContract);
       const onChainError = new Error("On-chain error");
       mockMulticallContract.multiRevoke.mockRejectedValue(onChainError);
 
       // Setup: Off-chain succeeds
-      const { useOffChainRevoke } = require("@/hooks/useOffChainRevoke");
       const mockPerformOffChainRevoke = vi.fn().mockImplementation(async (options: any) => {
         // Simulate async operation
         await new Promise((resolve) => setTimeout(resolve, 10));
@@ -682,7 +651,7 @@ describe("Integration: Grant Completion Revocation Flow", () => {
         }
         return true;
       });
-      useOffChainRevoke.mockReturnValue({
+      vi.mocked(useOffChainRevoke).mockReturnValue({
         performOffChainRevoke: mockPerformOffChainRevoke,
       });
 
@@ -704,7 +673,6 @@ describe("Integration: Grant Completion Revocation Flow", () => {
       });
 
       // Verify fallback notification (now uses showLoading from useAttestationToast)
-      const { useAttestationToast } = require("@/hooks/useAttestationToast");
       const stepper = useAttestationToast();
       await waitFor(() => {
         expect(stepper.showLoading).toHaveBeenCalledWith(
@@ -723,9 +691,8 @@ describe("Integration: Grant Completion Revocation Flow", () => {
   describe("4. Error Handling Flow", () => {
     it("should handle errors when both paths fail", async () => {
       // Setup: Authorized user
-      const { useProjectStore } = require("@/store");
-      const { useOwnerStore } = require("@/store");
-      useProjectStore.mockImplementation((selector?: any) => {
+
+      vi.mocked(useProjectStore).mockImplementation((selector?: any) => {
         const state = {
           refreshProject: vi.fn(),
           isProjectOwner: true,
@@ -735,7 +702,7 @@ describe("Integration: Grant Completion Revocation Flow", () => {
         if (typeof selector === "function") return selector(state);
         return state;
       });
-      useOwnerStore.mockImplementation((selector?: any) => {
+      vi.mocked(useOwnerStore).mockImplementation((selector?: any) => {
         const state = { isOwner: true };
         if (!selector) return state;
         if (typeof selector === "function") return selector(state);
@@ -755,8 +722,7 @@ describe("Integration: Grant Completion Revocation Flow", () => {
         chainId: 42161,
         isGasless: false,
       });
-      const { useSetupChainAndWallet } = require("../../../hooks/useSetupChainAndWallet");
-      useSetupChainAndWallet.mockReturnValue({
+      vi.mocked(useSetupChainAndWallet).mockReturnValue({
         setupChainAndWallet: mockSetupChainAndWallet,
         isSmartWalletReady: false,
         smartWalletAddress: null,
@@ -765,20 +731,15 @@ describe("Integration: Grant Completion Revocation Flow", () => {
       });
 
       // Setup: On-chain fails
-      const { GAP } = require("@show-karma/karma-gap-sdk");
-      GAP.getMulticall.mockResolvedValue(mockMulticallContract);
+      vi.mocked(GAP.getMulticall).mockResolvedValue(mockMulticallContract);
       const onChainError = new Error("On-chain error");
       mockMulticallContract.multiRevoke.mockRejectedValue(onChainError);
 
       // Setup: Off-chain also fails
-      const { useOffChainRevoke } = require("@/hooks/useOffChainRevoke");
       const mockPerformOffChainRevoke = vi.fn().mockResolvedValue(false);
-      useOffChainRevoke.mockReturnValue({
+      vi.mocked(useOffChainRevoke).mockReturnValue({
         performOffChainRevoke: mockPerformOffChainRevoke,
       });
-
-      const { errorManager } = require("@/components/Utilities/errorManager");
-
       // Render component
       render(<GrantCompleteButton grant={mockGrant} project={mockProject} />);
 
@@ -793,7 +754,6 @@ describe("Integration: Grant Completion Revocation Flow", () => {
       });
 
       // Verify error handling (now uses showError from useAttestationToast)
-      const { useAttestationToast } = require("@/hooks/useAttestationToast");
       const stepper = useAttestationToast();
       await waitFor(() => {
         expect(stepper.showError).toHaveBeenCalledWith("On-chain error");
@@ -810,9 +770,8 @@ describe("Integration: Grant Completion Revocation Flow", () => {
   describe("5. State Transitions", () => {
     it("should transition through all stepper states during on-chain flow", async () => {
       // Setup: Authorized user
-      const { useProjectStore } = require("@/store");
-      const { useOwnerStore } = require("@/store");
-      useProjectStore.mockImplementation((selector?: any) => {
+
+      vi.mocked(useProjectStore).mockImplementation((selector?: any) => {
         const state = {
           refreshProject: vi.fn(),
           isProjectOwner: true,
@@ -822,7 +781,7 @@ describe("Integration: Grant Completion Revocation Flow", () => {
         if (typeof selector === "function") return selector(state);
         return state;
       });
-      useOwnerStore.mockImplementation((selector?: any) => {
+      vi.mocked(useOwnerStore).mockImplementation((selector?: any) => {
         const state = { isOwner: true };
         if (!selector) return state;
         if (typeof selector === "function") return selector(state);
@@ -842,34 +801,25 @@ describe("Integration: Grant Completion Revocation Flow", () => {
         chainId: 42161,
         isGasless: false,
       });
-      const { useSetupChainAndWallet } = require("../../../hooks/useSetupChainAndWallet");
-      useSetupChainAndWallet.mockReturnValue({
+      vi.mocked(useSetupChainAndWallet).mockReturnValue({
         setupChainAndWallet: mockSetupChainAndWallet,
         isSmartWalletReady: false,
         smartWalletAddress: null,
         hasEmbeddedWallet: false,
         hasExternalWallet: true,
       });
-
-      const { GAP } = require("@show-karma/karma-gap-sdk");
-      GAP.getMulticall.mockResolvedValue(mockMulticallContract);
+      vi.mocked(GAP.getMulticall).mockResolvedValue(mockMulticallContract);
       mockMulticallContract.multiRevoke.mockResolvedValue(mockTransaction);
       mockTransaction.wait.mockResolvedValue({
         transactionHash: "0xtxhash123",
       });
-
-      const { buildRevocationPayload } = require("@/utilities/grantCompletionHelpers");
-      buildRevocationPayload.mockReturnValue([{ schema: "0xschema123", data: [] }]);
-
-      const fetchData = require("@/utilities/fetchData").default;
-      fetchData.mockResolvedValue({});
-
-      const { useAttestationToast } = require("@/hooks/useAttestationToast");
+      vi.mocked(buildRevocationPayload).mockReturnValue([{ schema: "0xschema123", data: [] }]);
+      vi.mocked(fetchData).mockResolvedValue({});
       const mockChangeStepperStep = vi.fn();
       const mockSetIsStepper = vi.fn();
       const mockDismiss = vi.fn();
       const mockStartAttestation = vi.fn();
-      useAttestationToast.mockReturnValue({
+      vi.mocked(useAttestationToast).mockReturnValue({
         startAttestation: mockStartAttestation,
         changeStepperStep: mockChangeStepperStep,
         setIsStepper: mockSetIsStepper,
@@ -920,14 +870,11 @@ describe("Integration: Grant Completion Revocation Flow", () => {
   describe("6. Authorization Checks", () => {
     it("should render GrantCompletedButton when user is authorized", () => {
       // Setup: Authorized user (project owner) - set up mocks before rendering
-      const { useProjectStore } = require("@/store");
-      const { useOwnerStore } = require("@/store");
-      const { useCommunityAdminStore } = require("@/store/communityAdmin");
 
       // Override mocks for this test with proper selector handling
       // Component uses: useProjectStore((state) => state.isProjectAdmin)
       // So selector(state) should return true for isProjectAdmin or isProjectOwner
-      useProjectStore.mockImplementation((selector?: any) => {
+      vi.mocked(useProjectStore).mockImplementation((selector?: any) => {
         if (!selector) {
           return {
             refreshProject: vi.fn(),
@@ -951,7 +898,7 @@ describe("Integration: Grant Completion Revocation Flow", () => {
         };
       });
 
-      useOwnerStore.mockImplementation((selector?: any) => {
+      vi.mocked(useOwnerStore).mockImplementation((selector?: any) => {
         const state = { isOwner: true }; // Set to true so component is authorized
         if (!selector) {
           return state;
@@ -962,7 +909,7 @@ describe("Integration: Grant Completion Revocation Flow", () => {
         return state;
       });
 
-      useCommunityAdminStore.mockImplementation((selector?: any) => {
+      vi.mocked(useCommunityAdminStore).mockImplementation((selector?: any) => {
         if (!selector) {
           return { isCommunityAdmin: false };
         }
@@ -985,12 +932,9 @@ describe("Integration: Grant Completion Revocation Flow", () => {
 
     it("should disable button when user is not authorized", () => {
       // Setup: Unauthorized user - need to set up mocks before rendering
-      const { useProjectStore } = require("@/store");
-      const { useOwnerStore } = require("@/store");
-      const { useCommunityAdminStore } = require("@/store/communityAdmin");
 
       // Override mocks for this test - all authorization flags should be false
-      useProjectStore.mockImplementation((selector?: any) => {
+      vi.mocked(useProjectStore).mockImplementation((selector?: any) => {
         if (!selector) {
           return {
             refreshProject: vi.fn(),
@@ -1013,7 +957,7 @@ describe("Integration: Grant Completion Revocation Flow", () => {
         };
       });
 
-      useOwnerStore.mockImplementation((selector?: any) => {
+      vi.mocked(useOwnerStore).mockImplementation((selector?: any) => {
         const state = { isOwner: false }; // Set to false for unauthorized test
         if (!selector) {
           return state;
@@ -1024,7 +968,7 @@ describe("Integration: Grant Completion Revocation Flow", () => {
         return state;
       });
 
-      useCommunityAdminStore.mockImplementation((selector?: any) => {
+      vi.mocked(useCommunityAdminStore).mockImplementation((selector?: any) => {
         const state = { isCommunityAdmin: false };
         if (!selector) {
           return state;
@@ -1048,12 +992,9 @@ describe("Integration: Grant Completion Revocation Flow", () => {
 
     it("should render GrantNotCompletedButton when grant is not completed and user is authorized", () => {
       // Setup: Authorized user - set up mocks before rendering
-      const { useProjectStore } = require("@/store");
-      const { useOwnerStore } = require("@/store");
-      const { useCommunityAdminStore } = require("@/store/communityAdmin");
 
       // Override mocks for this test with proper selector handling
-      useProjectStore.mockImplementation((selector?: any) => {
+      vi.mocked(useProjectStore).mockImplementation((selector?: any) => {
         if (!selector) {
           return {
             refreshProject: vi.fn(),
@@ -1076,7 +1017,7 @@ describe("Integration: Grant Completion Revocation Flow", () => {
         };
       });
 
-      useOwnerStore.mockImplementation((selector?: any) => {
+      vi.mocked(useOwnerStore).mockImplementation((selector?: any) => {
         const state = { isOwner: true }; // Set to true so component is authorized
         if (!selector) {
           return state;
@@ -1087,7 +1028,7 @@ describe("Integration: Grant Completion Revocation Flow", () => {
         return state;
       });
 
-      useCommunityAdminStore.mockImplementation((selector?: any) => {
+      vi.mocked(useCommunityAdminStore).mockImplementation((selector?: any) => {
         if (!selector) {
           return { isCommunityAdmin: false };
         }

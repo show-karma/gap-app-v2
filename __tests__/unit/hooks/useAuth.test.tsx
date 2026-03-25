@@ -11,7 +11,28 @@ import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 // Undo the global mock of useAuth from __tests__/navbar/setup.ts
 // so we can test the real hook implementation
-jest.unmock("@/hooks/useAuth");
+vi.unmock("@/hooks/useAuth");
+
+// Mock next/navigation so useRouter() and usePathname() don't throw
+vi.mock("next/navigation", () => ({
+  useRouter: vi.fn(() => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    back: vi.fn(),
+    prefetch: vi.fn(),
+    refresh: vi.fn(),
+  })),
+  usePathname: vi.fn(() => "/"),
+  useSearchParams: vi.fn(() => new URLSearchParams()),
+}));
+
+// Mock useWhitelabel which is called inside useAuth
+vi.mock("@/hooks/useWhitelabel", () => ({
+  useWhitelabel: vi.fn(() => ({
+    isWhitelabel: false,
+    whitelabelConfig: null,
+  })),
+}));
 
 // Controllable mock functions for hook tests
 const mockLogin = vi.fn();
@@ -51,10 +72,13 @@ vi.mock("@/contexts/privy-bridge-context", () => ({
 }));
 
 // Mock @wagmi/core for dynamic import in watchAccount effect
-const mockWatchAccount = vi.fn(() => vi.fn());
 vi.mock("@wagmi/core", () => ({
-  watchAccount: (...args: unknown[]) => mockWatchAccount(...args),
+  watchAccount: vi.fn(() => vi.fn()),
 }));
+
+import { watchAccount as _watchAccount } from "@wagmi/core";
+
+const mockWatchAccount = vi.mocked(_watchAccount);
 
 // Mock privy-config for dynamic import in watchAccount effect
 vi.mock("@/utilities/wagmi/privy-config", () => ({
@@ -77,6 +101,7 @@ vi.mock("@/utilities/auth/token-manager", () => ({
   TokenManager: {
     getToken: (...args: unknown[]) => mockGetToken(...args),
     setPrivyInstance: vi.fn(),
+    clearTokens: vi.fn(),
     clearCache: (...args: unknown[]) => mockClearCache(...args),
   },
 }));
