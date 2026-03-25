@@ -3,7 +3,7 @@ import { ChevronLeftIcon } from "@heroicons/react/24/solid";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { SubmitHandler } from "react-hook-form";
 import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -52,6 +52,17 @@ import { VcFundFields } from "./TypeFields/VcFundFields";
 const labelStyle = "text-sm font-bold text-brand-gray dark:text-zinc-100";
 const inputStyle =
   "mt-1 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100";
+
+const sectionLegend = "col-span-full text-base font-semibold text-black dark:text-white mb-2";
+
+function ErrorText({ children }: { children: ReactNode }) {
+  if (!children) return null;
+  return (
+    <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+      {children}
+    </p>
+  );
+}
 
 export default function AddProgram({
   programToEdit,
@@ -274,6 +285,12 @@ export default function AddProgram({
   };
 
   const [isLoading, setIsLoading] = useState(false);
+  const hasSocialLinks = Boolean(
+    programToEdit?.metadata?.socialLinks?.twitter ||
+      programToEdit?.metadata?.socialLinks?.discord ||
+      programToEdit?.metadata?.socialLinks?.blog
+  );
+  const [socialLinksOpen, setSocialLinksOpen] = useState(hasSocialLinks || Boolean(programToEdit));
 
   const { address, authenticated: isAuth, login } = useAuth();
 
@@ -426,7 +443,7 @@ export default function AddProgram({
             </h1>
             <p className="text-base text-black dark:text-white">
               {programToEdit
-                ? ""
+                ? "Update the details below and save your changes."
                 : "Add your funding opportunity to the registry and attract high quality builders."}
             </p>
           </div>
@@ -511,14 +528,15 @@ export default function AddProgram({
                     placeholder="Ex: https://apply.example.com"
                     {...register("submissionUrl")}
                   />
-                  <p className="text-base text-red-400">{errors.submissionUrl?.message}</p>
+                  <ErrorText>{errors.submissionUrl?.message}</ErrorText>
                 </div>
               </div>
             )}
 
-            <div className="flex flex-col w-full gap-6 border-b border-b-[#98A2B3] pb-10">
+            <fieldset className="flex flex-col w-full gap-6 border-b border-b-gray-400 dark:border-b-zinc-600 pb-10">
+              <legend className={sectionLegend}>Program Information</legend>
               <div className="grid grid-cols-2 max-sm:grid-cols-1 gap-4">
-                <div className="flex w-full flex-col gap-1">
+                <div className="flex w-full flex-col gap-2">
                   <label htmlFor="program-name" className={labelStyle}>
                     Program name *
                   </label>
@@ -528,9 +546,9 @@ export default function AddProgram({
                     placeholder="Ex: Builder Growth Program"
                     {...register("name")}
                   />
-                  <p className="text-base text-red-400">{errors.name?.message}</p>
+                  <ErrorText>{errors.name?.message}</ErrorText>
                 </div>
-                <div className="flex w-full flex-col  gap-1">
+                <div className="flex w-full flex-col gap-2">
                   <label htmlFor="program-grants-site" className={labelStyle}>
                     Program website *
                   </label>
@@ -540,17 +558,17 @@ export default function AddProgram({
                     placeholder="Ex: https://program.xyz/"
                     {...register("grantsSite")}
                   />
-                  <p className="text-base text-red-400">{errors.grantsSite?.message}</p>
+                  <ErrorText>{errors.grantsSite?.message}</ErrorText>
                 </div>
               </div>
-              <div className="flex w-full flex-row items-center justify-between gap-4">
+              <div className="flex w-full flex-row max-sm:flex-col items-center justify-between gap-4">
                 <div className="flex w-full flex-row justify-between gap-4">
                   <Controller
                     name="dates.startsAt"
                     control={control}
                     render={({ field, formState }) => (
                       <div className="flex w-full flex-col gap-2">
-                        <div className={labelStyle}>
+                        <span id="start-date-label" className={labelStyle}>
                           Start date{" "}
                           {opportunityType === "hackathon" ? (
                             "*"
@@ -559,7 +577,7 @@ export default function AddProgram({
                               (optional)
                             </span>
                           )}
-                        </div>
+                        </span>
                         <DateTimePicker
                           selected={field.value}
                           onSelect={(date) => {
@@ -578,9 +596,7 @@ export default function AddProgram({
                             field.onChange(undefined);
                           }}
                         />
-                        <p className="text-base text-red-400">
-                          {formState.errors.dates?.startsAt?.message}
-                        </p>
+                        <ErrorText>{formState.errors.dates?.startsAt?.message}</ErrorText>
                       </div>
                     )}
                   />
@@ -591,7 +607,7 @@ export default function AddProgram({
                     control={control}
                     render={({ field, formState }) => (
                       <div className="flex w-full flex-col gap-2">
-                        <div className={labelStyle}>
+                        <span id="end-date-label" className={labelStyle}>
                           End date{" "}
                           {opportunityType === "hackathon" ? (
                             "*"
@@ -600,7 +616,7 @@ export default function AddProgram({
                               (optional)
                             </span>
                           )}
-                        </div>
+                        </span>
                         <DateTimePicker
                           selected={field.value}
                           onSelect={(date) => {
@@ -620,9 +636,7 @@ export default function AddProgram({
                             field.onChange(undefined);
                           }}
                         />
-                        <p className="text-base text-red-400">
-                          {formState.errors.dates?.endsAt?.message}
-                        </p>
+                        <ErrorText>{formState.errors.dates?.endsAt?.message}</ErrorText>
                       </div>
                     )}
                   />
@@ -640,7 +654,7 @@ export default function AddProgram({
                   {...register("shortDescription")}
                 />
                 <div className="flex justify-between">
-                  <p className="text-base text-red-400">{errors.shortDescription?.message}</p>
+                  <ErrorText>{errors.shortDescription?.message}</ErrorText>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
                     {watch("shortDescription")?.length || 0}/100
                   </p>
@@ -661,7 +675,7 @@ export default function AddProgram({
                   }
                   placeholder="Please provide a description of this program"
                 />
-                <p className="text-base text-red-400">{errors.description?.message}</p>
+                <ErrorText>{errors.description?.message}</ErrorText>
               </div>
 
               {/* Type-Specific Fields */}
@@ -767,7 +781,7 @@ export default function AddProgram({
                   )}
                 />
               </div>
-              <div className="grid grid-cols-4  max-sm:grid-cols-1 max-md:grid-cols-2 gap-4 justify-between">
+              <div className="grid grid-cols-3 max-sm:grid-cols-1 max-md:grid-cols-2 gap-4 justify-between">
                 <div className="flex w-full flex-col gap-1">
                   <label htmlFor="program-categories" className={labelStyle}>
                     Categories
@@ -780,9 +794,9 @@ export default function AddProgram({
                     prefixUnselected="Select"
                     buttonClassname="w-full max-w-full"
                   />
-                  <p className="text-base text-red-400">{errors.categories?.message}</p>
+                  <ErrorText>{errors.categories?.message}</ErrorText>
                 </div>
-                <div className="flex w-full flex-col  gap-1">
+                <div className="flex w-full flex-col gap-1">
                   <label htmlFor="program-organizations" className={labelStyle}>
                     Organizations
                   </label>
@@ -795,9 +809,9 @@ export default function AddProgram({
                     buttonClassname="w-full max-w-full"
                     canAdd
                   />
-                  <p className="text-base text-red-400">{errors.organizations?.message}</p>
+                  <ErrorText>{errors.organizations?.message}</ErrorText>
                 </div>
-                <div className="flex w-full flex-col  gap-1">
+                <div className="flex w-full flex-col gap-1">
                   <label htmlFor="program-ecosystems" className={labelStyle}>
                     Ecosystems
                   </label>
@@ -810,10 +824,10 @@ export default function AddProgram({
                     buttonClassname="w-full max-w-full"
                     canAdd
                   />
-                  <p className="text-base text-red-400">{errors.ecosystems?.message}</p>
+                  <ErrorText>{errors.ecosystems?.message}</ErrorText>
                 </div>
                 <div className="flex w-full flex-col gap-1">
-                  <label htmlFor="program-types" className={labelStyle}>
+                  <label htmlFor="program-mechanisms" className={labelStyle}>
                     Funding Mechanisms
                   </label>
                   <SearchDropdown
@@ -824,10 +838,10 @@ export default function AddProgram({
                     prefixUnselected="Select"
                     buttonClassname="w-full max-w-full"
                   />
-                  <p className="text-base text-red-400">{errors.grantTypes?.message}</p>
+                  <ErrorText>{errors.grantTypes?.message}</ErrorText>
                 </div>
-                <div className="flex w-full flex-col  gap-1">
-                  <label htmlFor="program-types" className={labelStyle}>
+                <div className="flex w-full flex-col gap-2">
+                  <label htmlFor="program-platforms" className={labelStyle}>
                     Platforms Used
                   </label>
                   <SearchDropdown
@@ -840,10 +854,10 @@ export default function AddProgram({
                     shouldSort={false}
                     canAdd
                   />
-                  <p className="text-base text-red-400">{errors.platformsUsed?.message}</p>
+                  <ErrorText>{errors.platformsUsed?.message}</ErrorText>
                 </div>
-                <div className="flex w-full flex-col">
-                  <label htmlFor="grant-title" className={`${labelStyle} mb-1`}>
+                <div className="flex w-full flex-col gap-2">
+                  <label htmlFor="program-communities" className={labelStyle}>
                     Communities related
                   </label>
                   <CommunitiesSelect
@@ -855,7 +869,7 @@ export default function AddProgram({
                     buttonClassname="w-full max-w-full"
                     type="community"
                   />
-                  <p className="text-base text-red-400">{errors?.communityRef?.message}</p>
+                  <ErrorText>{errors?.communityRef?.message}</ErrorText>
                 </div>
                 {programToEdit && (
                   <div className="flex w-full flex-col gap-1">
@@ -889,10 +903,11 @@ export default function AddProgram({
                   Any project can self attest their participation in this program
                 </label>
               </div>
-            </div>
+            </fieldset>
 
-            <div className="grid grid-cols-3 max-sm:grid-cols-1 w-full gap-6 border-b border-b-[#98A2B3] pb-10">
-              <div className="flex w-full flex-col  gap-1">
+            <fieldset className="grid grid-cols-3 max-sm:grid-cols-1 w-full gap-6 border-b border-b-gray-400 dark:border-b-zinc-600 pb-10">
+              <legend className={sectionLegend}>Financial Information</legend>
+              <div className="flex w-full flex-col gap-1">
                 <label htmlFor="program-budget" className={labelStyle}>
                   Program budget
                 </label>
@@ -903,9 +918,9 @@ export default function AddProgram({
                   type="number"
                   {...register("budget")}
                 />
-                <p className="text-base text-red-400">{errors.budget?.message}</p>
+                <ErrorText>{errors.budget?.message}</ErrorText>
               </div>
-              <div className="flex w-full flex-col  gap-1">
+              <div className="flex w-full flex-col gap-1">
                 <label htmlFor="program-amount-distributed" className={labelStyle}>
                   Amount distributed to date
                 </label>
@@ -916,9 +931,9 @@ export default function AddProgram({
                   type="number"
                   {...register("amountDistributed")}
                 />
-                <p className="text-base text-red-400">{errors.amountDistributed?.message}</p>
+                <ErrorText>{errors.amountDistributed?.message}</ErrorText>
               </div>
-              <div className="flex w-full flex-col  gap-1">
+              <div className="flex w-full flex-col gap-1">
                 <label htmlFor="program-grants-issued" className={labelStyle}>
                   Grants issued to date
                 </label>
@@ -929,9 +944,9 @@ export default function AddProgram({
                   placeholder="Ex: 60"
                   {...register("grantsToDate")}
                 />
-                <p className="text-base text-red-400">{errors.grantsToDate?.message}</p>
+                <ErrorText>{errors.grantsToDate?.message}</ErrorText>
               </div>
-              <div className="flex w-full flex-col  gap-1">
+              <div className="flex w-full flex-col gap-1">
                 <label htmlFor="program-min-grant-size" className={labelStyle}>
                   Min Grant size
                 </label>
@@ -942,9 +957,9 @@ export default function AddProgram({
                   placeholder="Ex: 80000"
                   {...register("minGrantSize")}
                 />
-                <p className="text-base text-red-400">{errors.minGrantSize?.message}</p>
+                <ErrorText>{errors.minGrantSize?.message}</ErrorText>
               </div>
-              <div className="flex w-full flex-col  gap-1">
+              <div className="flex w-full flex-col gap-1">
                 <label htmlFor="program-max-grant-size" className={labelStyle}>
                   Max Grant size
                 </label>
@@ -955,171 +970,197 @@ export default function AddProgram({
                   placeholder="Ex: 80000"
                   {...register("maxGrantSize")}
                 />
-                <p className="text-base text-red-400">{errors.maxGrantSize?.message}</p>
+                <ErrorText>{errors.maxGrantSize?.message}</ErrorText>
               </div>
-            </div>
-            <div className="grid grid-cols-3 max-sm:grid-cols-1 w-full gap-6  pb-10">
-              <div className="flex w-full flex-col gap-2 justify-between">
-                <label htmlFor="program-twitter" className={labelStyle}>
-                  X/Twitter
-                </label>
-                <div className="w-full relative">
-                  <div className="h-full w-max absolute flex justify-center items-center mx-3">
-                    <Twitter2Icon className="text-zinc-500 w-4 h-4" />
-                  </div>
-                  <Input
-                    id="program-twitter"
-                    className={cn(inputStyle, "pl-10 mt-0")}
-                    placeholder="Ex: https://x.com/program"
-                    {...register("twitter")}
+            </fieldset>
+            <div className="flex flex-col w-full gap-4 pb-10">
+              <button
+                type="button"
+                className="flex items-center gap-2 text-base font-semibold text-black dark:text-white w-max cursor-pointer"
+                onClick={() => setSocialLinksOpen(!socialLinksOpen)}
+                aria-expanded={socialLinksOpen}
+              >
+                Social Links
+                <svg
+                  className={cn("w-4 h-4 transition-transform", socialLinksOpen && "rotate-180")}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
                   />
-                </div>
-                <p className="text-base text-red-400">{errors.twitter?.message}</p>
-              </div>
-              <div className="flex w-full flex-col gap-2 justify-between">
-                <label htmlFor="program-discord" className={labelStyle}>
-                  Discord
-                </label>
-                <div className="w-full relative">
-                  <div className="h-full w-max absolute flex justify-center items-center mx-3">
-                    <Discord2Icon className="text-zinc-500 w-4 h-4" />
+                </svg>
+              </button>
+              {socialLinksOpen && (
+                <div className="grid grid-cols-3 max-md:grid-cols-2 max-sm:grid-cols-1 w-full gap-6">
+                  <div className="flex w-full flex-col gap-2 justify-between">
+                    <label htmlFor="program-twitter" className={labelStyle}>
+                      X/Twitter
+                    </label>
+                    <div className="w-full relative">
+                      <div className="h-full w-max absolute flex justify-center items-center mx-3">
+                        <Twitter2Icon className="text-zinc-500 w-4 h-4" />
+                      </div>
+                      <Input
+                        id="program-twitter"
+                        className={cn(inputStyle, "pl-10 mt-0")}
+                        placeholder="Ex: https://x.com/program"
+                        {...register("twitter")}
+                      />
+                    </div>
+                    <ErrorText>{errors.twitter?.message}</ErrorText>
                   </div>
-                  <Input
-                    id="program-discord"
-                    className={cn(inputStyle, "pl-10 mt-0")}
-                    placeholder="Ex: https://discord.gg/program"
-                    {...register("discord")}
-                  />
-                </div>
-                <p className="text-base text-red-400">{errors.discord?.message}</p>
-              </div>
-              <div className="flex w-full flex-col gap-2 justify-between">
-                <label htmlFor="program-blog" className={labelStyle}>
-                  Blog
-                </label>
-                <div className="w-full relative">
-                  <div className="h-full w-max absolute flex justify-center items-center mx-3">
-                    <BlogIcon className="text-zinc-500 w-4 h-4" />
+                  <div className="flex w-full flex-col gap-2 justify-between">
+                    <label htmlFor="program-discord" className={labelStyle}>
+                      Discord
+                    </label>
+                    <div className="w-full relative">
+                      <div className="h-full w-max absolute flex justify-center items-center mx-3">
+                        <Discord2Icon className="text-zinc-500 w-4 h-4" />
+                      </div>
+                      <Input
+                        id="program-discord"
+                        className={cn(inputStyle, "pl-10 mt-0")}
+                        placeholder="Ex: https://discord.gg/program"
+                        {...register("discord")}
+                      />
+                    </div>
+                    <ErrorText>{errors.discord?.message}</ErrorText>
                   </div>
-                  <Input
-                    id="program-blog"
-                    className={cn(inputStyle, "pl-10 mt-0")}
-                    placeholder="Ex: https://blog.program.co/program"
-                    {...register("blog")}
-                  />
-                </div>
-                <p className="text-base text-red-400">{errors.blog?.message}</p>
-              </div>
-              <div className="flex w-full flex-col gap-2 justify-between">
-                <label htmlFor="program-forum" className={labelStyle}>
-                  Forum
-                </label>
-                <div className="w-full relative">
-                  <div className="h-full w-max absolute flex justify-center items-center mx-3">
-                    <DiscussionIcon className="text-zinc-500 w-4 h-4" />
+                  <div className="flex w-full flex-col gap-2 justify-between">
+                    <label htmlFor="program-blog" className={labelStyle}>
+                      Blog
+                    </label>
+                    <div className="w-full relative">
+                      <div className="h-full w-max absolute flex justify-center items-center mx-3">
+                        <BlogIcon className="text-zinc-500 w-4 h-4" />
+                      </div>
+                      <Input
+                        id="program-blog"
+                        className={cn(inputStyle, "pl-10 mt-0")}
+                        placeholder="Ex: https://blog.program.co/program"
+                        {...register("blog")}
+                      />
+                    </div>
+                    <ErrorText>{errors.blog?.message}</ErrorText>
                   </div>
-                  <Input
-                    className={cn(inputStyle, "pl-10 mt-0")}
-                    id="program-forum"
-                    placeholder="Ex: https://forum.program.co/program"
-                    {...register("forum")}
-                  />
-                </div>
-                <p className="text-base text-red-400">{errors.forum?.message}</p>
-              </div>
-              <div className="flex w-full flex-col gap-2 justify-between">
-                <label htmlFor="program-org" className={labelStyle}>
-                  Organization website
-                </label>
-                <div className="w-full relative">
-                  <div className="h-full w-max absolute flex justify-center items-center mx-3">
-                    <OrganizationIcon className="text-zinc-500 w-4 h-4" />
+                  <div className="flex w-full flex-col gap-2 justify-between">
+                    <label htmlFor="program-forum" className={labelStyle}>
+                      Forum
+                    </label>
+                    <div className="w-full relative">
+                      <div className="h-full w-max absolute flex justify-center items-center mx-3">
+                        <DiscussionIcon className="text-zinc-500 w-4 h-4" />
+                      </div>
+                      <Input
+                        className={cn(inputStyle, "pl-10 mt-0")}
+                        id="program-forum"
+                        placeholder="Ex: https://forum.program.co/program"
+                        {...register("forum")}
+                      />
+                    </div>
+                    <ErrorText>{errors.forum?.message}</ErrorText>
                   </div>
-                  <Input
-                    className={cn(inputStyle, "pl-10 mt-0")}
-                    placeholder="Ex: https://org.program.co/program"
-                    id="program-org"
-                    {...register("orgWebsite")}
-                  />
-                </div>
-                <p className="text-base text-red-400">{errors.orgWebsite?.message}</p>
-              </div>
-              <div className="flex w-full flex-col gap-2 justify-between">
-                <label htmlFor="program-bug-bounty" className={labelStyle}>
-                  Link to Bug bounty
-                </label>
-                <div className="w-full relative">
-                  <div className="h-full w-max absolute flex justify-center items-center mx-3">
-                    <WebsiteIcon className="text-zinc-500 w-4 h-4" />
+                  <div className="flex w-full flex-col gap-2 justify-between">
+                    <label htmlFor="program-org" className={labelStyle}>
+                      Organization website
+                    </label>
+                    <div className="w-full relative">
+                      <div className="h-full w-max absolute flex justify-center items-center mx-3">
+                        <OrganizationIcon className="text-zinc-500 w-4 h-4" />
+                      </div>
+                      <Input
+                        className={cn(inputStyle, "pl-10 mt-0")}
+                        placeholder="Ex: https://org.program.co/program"
+                        id="program-org"
+                        {...register("orgWebsite")}
+                      />
+                    </div>
+                    <ErrorText>{errors.orgWebsite?.message}</ErrorText>
                   </div>
-                  <Input
-                    className={cn(inputStyle, "pl-10 mt-0")}
-                    placeholder="Ex: https://program.xyz"
-                    id="program-bug-bounty"
-                    {...register("bugBounty")}
-                  />
-                </div>
-                <p className="text-base text-red-400">{errors.bugBounty?.message}</p>
-              </div>
+                  <div className="flex w-full flex-col gap-2 justify-between">
+                    <label htmlFor="program-bug-bounty" className={labelStyle}>
+                      Link to Bug bounty
+                    </label>
+                    <div className="w-full relative">
+                      <div className="h-full w-max absolute flex justify-center items-center mx-3">
+                        <WebsiteIcon className="text-zinc-500 w-4 h-4" />
+                      </div>
+                      <Input
+                        className={cn(inputStyle, "pl-10 mt-0")}
+                        placeholder="Ex: https://program.xyz"
+                        id="program-bug-bounty"
+                        {...register("bugBounty")}
+                      />
+                    </div>
+                    <ErrorText>{errors.bugBounty?.message}</ErrorText>
+                  </div>
 
-              <div className="flex w-full flex-col gap-2 justify-between">
-                <label htmlFor="program-telegram" className={labelStyle}>
-                  Telegram
-                </label>
-                <div className="w-full relative">
-                  <div className="h-full w-max absolute flex justify-center items-center mx-3">
-                    <Telegram2Icon className="text-zinc-500 w-4 h-4" />
+                  <div className="flex w-full flex-col gap-2 justify-between">
+                    <label htmlFor="program-telegram" className={labelStyle}>
+                      Telegram
+                    </label>
+                    <div className="w-full relative">
+                      <div className="h-full w-max absolute flex justify-center items-center mx-3">
+                        <Telegram2Icon className="text-zinc-500 w-4 h-4" />
+                      </div>
+                      <Input
+                        className={cn(inputStyle, "pl-10 mt-0")}
+                        placeholder="Ex: https://t.me/yourusername"
+                        id="program-telegram"
+                        {...register("telegram")}
+                      />
+                    </div>
+                    <ErrorText>{errors.telegram?.message}</ErrorText>
                   </div>
-                  <Input
-                    className={cn(inputStyle, "pl-10 mt-0")}
-                    placeholder="Ex: https://t.me/yourusername"
-                    id="program-telegram"
-                    {...register("telegram")}
-                  />
-                </div>
-                <p className="text-base text-red-400">{errors.telegram?.message}</p>
-              </div>
-              <div className="flex w-full flex-col gap-2 justify-between">
-                <label htmlFor="program-facebook" className={labelStyle}>
-                  Facebook
-                </label>
-                <div className="w-full relative">
-                  <div className="h-full w-max absolute flex justify-center items-center mx-3">
-                    <WebsiteIcon className="text-zinc-500 w-4 h-4" />
+                  <div className="flex w-full flex-col gap-2 justify-between">
+                    <label htmlFor="program-facebook" className={labelStyle}>
+                      Facebook
+                    </label>
+                    <div className="w-full relative">
+                      <div className="h-full w-max absolute flex justify-center items-center mx-3">
+                        <WebsiteIcon className="text-zinc-500 w-4 h-4" />
+                      </div>
+                      <Input
+                        className={cn(inputStyle, "pl-10 mt-0")}
+                        placeholder="Ex: https://facebook.com/program"
+                        id="program-facebook"
+                        {...register("facebook")}
+                      />
+                    </div>
+                    <ErrorText>{errors.facebook?.message}</ErrorText>
                   </div>
-                  <Input
-                    className={cn(inputStyle, "pl-10 mt-0")}
-                    placeholder="Ex: https://facebook.com/program"
-                    id="program-facebook"
-                    {...register("facebook")}
-                  />
-                </div>
-                <p className="text-base text-red-400">{errors.facebook?.message}</p>
-              </div>
-              <div className="flex w-full flex-col gap-2 justify-between">
-                <label htmlFor="program-instagram" className={labelStyle}>
-                  Instagram
-                </label>
-                <div className="w-full relative">
-                  <div className="h-full w-max absolute flex justify-center items-center mx-3">
-                    <WebsiteIcon className="text-zinc-500 w-4 h-4" />
+                  <div className="flex w-full flex-col gap-2 justify-between">
+                    <label htmlFor="program-instagram" className={labelStyle}>
+                      Instagram
+                    </label>
+                    <div className="w-full relative">
+                      <div className="h-full w-max absolute flex justify-center items-center mx-3">
+                        <WebsiteIcon className="text-zinc-500 w-4 h-4" />
+                      </div>
+                      <Input
+                        className={cn(inputStyle, "pl-10 mt-0")}
+                        placeholder="Ex: https://instagram.com/program"
+                        id="program-instagram"
+                        {...register("instagram")}
+                      />
+                    </div>
+                    <ErrorText>{errors.instagram?.message}</ErrorText>
                   </div>
-                  <Input
-                    className={cn(inputStyle, "pl-10 mt-0")}
-                    placeholder="Ex: https://instagram.com/program"
-                    id="program-instagram"
-                    {...register("instagram")}
-                  />
                 </div>
-                <p className="text-base text-red-400">{errors.instagram?.message}</p>
-              </div>
+              )}
             </div>
           </div>
-          <div className="flex flex-row justify-start">
+          <div className="flex flex-row justify-end pt-4 border-t border-t-gray-200 dark:border-t-zinc-700">
             <Button
               isLoading={isLoading}
               type="submit"
-              className="px-3 py-3 text-base"
+              className="px-8 py-3 text-base w-full sm:w-auto"
               disabled={isSubmitting}
             >
               {programToEdit ? "Update program" : "Create program"}
