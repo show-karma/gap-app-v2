@@ -1,8 +1,8 @@
 import { createMockCommunity, MOCK_COMMUNITIES } from "../../data/communities";
 import { createMockProgram } from "../../data/programs";
 import { expect, mockJson, test } from "../../fixtures";
+import { assertNoJsErrors, collectJsErrors } from "../../helpers/assertions";
 import { GOTO_OPTIONS, waitForPageReady } from "../../helpers/navigation";
-import { collectJsErrors, assertNoJsErrors } from "../../helpers/assertions";
 
 test.describe("Smoke Tests — Health", () => {
   test("T35-01: homepage loads and shows main content", async ({ page, withApiMocks }) => {
@@ -172,7 +172,8 @@ test.describe("Smoke Tests — Health", () => {
     // Should have at least one clickable element (button or link)
     const buttons = page.getByRole("button");
     const links = page.getByRole("link");
-    const totalInteractive = (await buttons.count()) + (await links.count());
+    const [buttonCount, linkCount] = await Promise.all([buttons.count(), links.count()]);
+    const totalInteractive = buttonCount + linkCount;
 
     expect(totalInteractive).toBeGreaterThan(0);
 
