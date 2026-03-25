@@ -9,6 +9,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { createElement } from "react";
+import toast from "react-hot-toast";
 
 // ---------------------------------------------------------------------------
 // Hoisted mock variables
@@ -26,11 +27,6 @@ const {
   mockGetBrowserProvider,
   mockRequestAccounts,
 } = vi.hoisted(() => {
-  const mockToast = {
-    loading: vi.fn(),
-    success: vi.fn(),
-    error: vi.fn(),
-  };
   const mockSignTypedData = vi.fn();
   const mockWriteContract = vi.fn();
   // Both wallet clients have all methods — the hook uses signTypedData for signing
@@ -50,7 +46,6 @@ const {
   const mockRequestAccounts = vi.fn();
 
   return {
-    mockToast,
     mockSignTypedData,
     mockWriteContract,
     mockWalletClient,
@@ -357,11 +352,11 @@ describe("useDelegatedClaim (real hook)", () => {
         expect(result.current.step).toBe("signature_obtained");
       });
 
-      expect(mockToast.loading).toHaveBeenCalledWith(
+      expect(toast.loading).toHaveBeenCalledWith(
         "Please sign the authorization in your wallet...",
         { id: "signature-request" }
       );
-      expect(mockToast.success).toHaveBeenCalledWith(
+      expect(toast.success).toHaveBeenCalledWith(
         "Signature obtained! You can now submit the claim transaction.",
         { id: "signature-request" }
       );
@@ -488,7 +483,7 @@ describe("useDelegatedClaim (real hook)", () => {
         expect(result.current.error).toBeTruthy();
       });
 
-      expect(mockToast.error).toHaveBeenCalledWith(
+      expect(toast.error).toHaveBeenCalledWith(
         "A wallet request is already pending. Please check your wallet extension.",
         { id: "signature-request" }
       );
@@ -515,10 +510,9 @@ describe("useDelegatedClaim (real hook)", () => {
         expect(result.current.error).toBeTruthy();
       });
 
-      expect(mockToast.error).toHaveBeenCalledWith(
-        expect.stringContaining("Please select account"),
-        { id: "signature-request" }
-      );
+      expect(toast.error).toHaveBeenCalledWith(expect.stringContaining("Please select account"), {
+        id: "signature-request",
+      });
     });
 
     it("should show account mismatch message for 'unknown account' errors", async () => {
@@ -542,10 +536,9 @@ describe("useDelegatedClaim (real hook)", () => {
         expect(result.current.error).toBeTruthy();
       });
 
-      expect(mockToast.error).toHaveBeenCalledWith(
-        expect.stringContaining("Please select account"),
-        { id: "signature-request" }
-      );
+      expect(toast.error).toHaveBeenCalledWith(expect.stringContaining("Please select account"), {
+        id: "signature-request",
+      });
     });
 
     it("should show rejection message when user denies signature", async () => {
@@ -569,7 +562,7 @@ describe("useDelegatedClaim (real hook)", () => {
         expect(result.current.error).toBeTruthy();
       });
 
-      expect(mockToast.error).toHaveBeenCalledWith("You rejected the signature request.", {
+      expect(toast.error).toHaveBeenCalledWith("You rejected the signature request.", {
         id: "signature-request",
       });
     });
@@ -595,7 +588,7 @@ describe("useDelegatedClaim (real hook)", () => {
         expect(result.current.error).toBeTruthy();
       });
 
-      expect(mockToast.error).toHaveBeenCalledWith("You rejected the signature request.", {
+      expect(toast.error).toHaveBeenCalledWith("You rejected the signature request.", {
         id: "signature-request",
       });
     });
@@ -621,7 +614,7 @@ describe("useDelegatedClaim (real hook)", () => {
         expect(result.current.error).toBeTruthy();
       });
 
-      expect(mockToast.error).toHaveBeenCalledWith("some random network error", {
+      expect(toast.error).toHaveBeenCalledWith("some random network error", {
         id: "signature-request",
       });
     });
@@ -732,10 +725,10 @@ describe("useDelegatedClaim (real hook)", () => {
       );
 
       // Toast
-      expect(mockToast.loading).toHaveBeenCalledWith("Waiting for confirmation...", {
+      expect(toast.loading).toHaveBeenCalledWith("Waiting for confirmation...", {
         id: "delegated-tx",
       });
-      expect(mockToast.success).toHaveBeenCalledWith(expect.stringContaining("Tokens sent to"), {
+      expect(toast.success).toHaveBeenCalledWith(expect.stringContaining("Tokens sent to"), {
         id: "delegated-tx",
       });
 
@@ -827,7 +820,7 @@ describe("useDelegatedClaim (real hook)", () => {
         expect(result.current.error).toBeTruthy();
       });
 
-      expect(mockToast.error).toHaveBeenCalled();
+      expect(toast.error).toHaveBeenCalled();
     });
 
     it("should throw if no account available from requestAccounts", async () => {
@@ -878,7 +871,7 @@ describe("useDelegatedClaim (real hook)", () => {
       });
 
       expect(mockSanitizeErrorMessage).toHaveBeenCalledWith(submitError, "Claim Failed");
-      expect(mockToast.error).toHaveBeenCalledWith(expect.any(String), { id: "delegated-tx" });
+      expect(toast.error).toHaveBeenCalledWith(expect.any(String), { id: "delegated-tx" });
     });
 
     it("should reset isConfirming on settled even after error", async () => {
