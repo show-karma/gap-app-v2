@@ -1,3 +1,4 @@
+"use client";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import {
@@ -267,7 +268,7 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
             typeof firstNetworks === "string" ||
             typeof restNetworks === "string"
           )
-            return null;
+            return <div className="w-full max-w-44" />;
           return (
             <div className="w-full max-w-44 flex flex-row flex-wrap gap-1 my-2 items-center">
               {firstNetworks?.map((network, _index) => (
