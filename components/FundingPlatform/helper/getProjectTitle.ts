@@ -1,30 +1,38 @@
 import type { IFundingApplication } from "@/types/funding-platform";
 
 export const getProjectTitle = (application: IFundingApplication) => {
-  // Search for project name/title field in applicationData using contains approach
   const titleKeywords = ["title", "name"];
   const projectKeywords = ["project", "proposal", "application"];
 
-  // Get all keys from applicationData
   const dataKeys = Object.keys(application.applicationData || {});
 
-  // First priority: Find keys that contain both project-related and title/name keywords
-  let titleKey = dataKeys.find((key) => {
-    const lowerKey = key.toLowerCase();
-    const hasProjectKeyword = projectKeywords.some((keyword) => lowerKey.includes(keyword));
-    const hasTitleKeyword = titleKeywords.some((keyword) => lowerKey.includes(keyword));
+  // Title/name fields are short labels (e.g. "Project Title", "Pod Name"),
+  // not long-form questions that incidentally contain keywords like "name".
+  const MAX_LABEL_LENGTH = 50;
+
+  const findBest = (predicate: (lowerKey: string) => boolean): string | undefined => {
+    const matches = dataKeys.filter(
+      (key) =>
+        key.length <= MAX_LABEL_LENGTH &&
+        predicate(key.toLowerCase()) &&
+        application.applicationData[key]
+    );
+    if (matches.length === 0) return undefined;
+    return matches.reduce((a, b) => (a.length <= b.length ? a : b));
+  };
+
+  // First priority: keys containing both a project keyword and a title/name keyword
+  let titleKey = findBest((lowerKey) => {
+    const hasProjectKeyword = projectKeywords.some((kw) => lowerKey.includes(kw));
+    const hasTitleKeyword = titleKeywords.some((kw) => lowerKey.includes(kw));
     return hasProjectKeyword && hasTitleKeyword;
   });
 
-  // Second priority: Find keys that contain just title or name
+  // Second priority: keys containing just title or name
   if (!titleKey) {
-    titleKey = dataKeys.find((key) => {
-      const lowerKey = key.toLowerCase();
-      return titleKeywords.some((keyword) => lowerKey.includes(keyword));
-    });
+    titleKey = findBest((lowerKey) => titleKeywords.some((kw) => lowerKey.includes(kw)));
   }
 
-  // Return the value if found, otherwise fallback to Application ID
   if (titleKey && application.applicationData[titleKey]) {
     return application.applicationData[titleKey];
   }
