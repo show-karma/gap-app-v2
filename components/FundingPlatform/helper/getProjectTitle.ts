@@ -1,6 +1,9 @@
-import type { IFundingApplication } from "@/types/funding-platform";
+interface ApplicationWithData {
+  applicationData: Record<string, unknown>;
+  referenceNumber: string;
+}
 
-export const getProjectTitle = (application: IFundingApplication) => {
+export const getProjectTitle = (application: ApplicationWithData): string => {
   const titleKeywords = ["title", "name"];
   const projectKeywords = ["project", "proposal", "application"];
 
@@ -34,7 +37,7 @@ export const getProjectTitle = (application: IFundingApplication) => {
   }
 
   if (titleKey && application.applicationData[titleKey]) {
-    return application.applicationData[titleKey];
+    return String(application.applicationData[titleKey]);
   }
 
   return application.referenceNumber;
