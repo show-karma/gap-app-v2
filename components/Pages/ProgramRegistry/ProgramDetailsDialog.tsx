@@ -48,28 +48,11 @@ function normalizeUrl(url: string | undefined): string | null {
 }
 
 function extractSourceUrl(program: FundingProgramResponse): string | null {
-  const rawData = program.metadata?.rawData;
-  if (rawData) {
-    for (const key of [
-      "url",
-      "sourceUrl",
-      "source_url",
-      "link",
-      "tweetUrl",
-      "tweet_url",
-      "listing_url",
-      "event_url",
-    ]) {
-      const val = rawData[key];
-      if (typeof val === "string" && val.length > 0) {
-        return normalizeUrl(val);
-      }
-    }
+  const link = program.metadata?.rawData?.link;
+  if (typeof link === "string" && link.length > 0) {
+    return normalizeUrl(link);
   }
-  if (program.metadata?.applicationUrl) {
-    return normalizeUrl(program.metadata.applicationUrl);
-  }
-  return normalizeUrl(program.metadata?.socialLinks?.grantsSite);
+  return null;
 }
 
 const sectionStyles = {
