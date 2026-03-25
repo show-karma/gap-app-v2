@@ -18,15 +18,30 @@ const tsconfigAliases = [
 
 // Aliases that redirect ESM-only modules to mock implementations for unit tests
 const unitTestMockAliases = [
-  { find: /^@\/hooks\/useZeroDevSigner$/, replacement: `${dirname}/__mocks__/hooks/useZeroDevSigner.ts` },
-  { find: /^@\/hooks\/useSetupChainAndWallet$/, replacement: `${dirname}/__mocks__/hooks/useSetupChainAndWallet.ts` },
-  { find: /^@\/utilities\/gasless(\/.*)?$/, replacement: `${dirname}/__mocks__/utilities/gasless/index.ts` },
+  {
+    find: /^@\/hooks\/useZeroDevSigner$/,
+    replacement: `${dirname}/__mocks__/hooks/useZeroDevSigner.ts`,
+  },
+  {
+    find: /^@\/hooks\/useSetupChainAndWallet$/,
+    replacement: `${dirname}/__mocks__/hooks/useSetupChainAndWallet.ts`,
+  },
+  {
+    find: /^@\/utilities\/gasless(\/.*)?$/,
+    replacement: `${dirname}/__mocks__/utilities/gasless/index.ts`,
+  },
   { find: /^until-async$/, replacement: `${dirname}/__mocks__/until-async.js` },
   { find: /^multiformats\/cid$/, replacement: `${dirname}/__mocks__/multiformats.ts` },
   { find: /^@aa-sdk\/core$/, replacement: `${dirname}/__mocks__/@aa-sdk/core.ts` },
   { find: /^@privy-io\/wagmi$/, replacement: `${dirname}/__mocks__/@privy-io/wagmi.ts` },
-  { find: /^@account-kit\/infra(\/.*)?$/, replacement: `${dirname}/__mocks__/@account-kit/infra.ts` },
-  { find: /^@account-kit\/smart-contracts(\/.*)?$/, replacement: `${dirname}/__mocks__/@account-kit/smart-contracts.ts` },
+  {
+    find: /^@account-kit\/infra(\/.*)?$/,
+    replacement: `${dirname}/__mocks__/@account-kit/infra.ts`,
+  },
+  {
+    find: /^@account-kit\/smart-contracts(\/.*)?$/,
+    replacement: `${dirname}/__mocks__/@account-kit/smart-contracts.ts`,
+  },
 ];
 
 export default defineConfig({
@@ -53,7 +68,7 @@ export default defineConfig({
           environment: "jsdom",
           globals: true,
           pool: "forks",
-          setupFiles: ["./__tests__/setup.ts"],
+          setupFiles: ["./__tests__/setup.ts", "./__tests__/setup-mocks.ts"],
           include: ["**/*.{test,spec}.{ts,tsx}"],
           exclude: [
             "**/node_modules/**",
@@ -68,9 +83,7 @@ export default defineConfig({
       // Storybook test project
       {
         extends: true,
-        plugins: [
-          storybookTest({ configDir: path.join(dirname, ".storybook") }),
-        ],
+        plugins: [storybookTest({ configDir: path.join(dirname, ".storybook") })],
         test: {
           name: "storybook",
           browser: {

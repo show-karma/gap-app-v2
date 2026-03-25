@@ -42,15 +42,30 @@ test.describe("Claim Flow", () => {
     await withTenant("optimism");
     await page.goto("/");
     await waitForPageReady(page);
-    // If claim button is present, rapid clicks should not cause issues
+
+    // Verify the page loaded correctly first
+    await expect(page.getByText("Optimism").first()).toBeVisible();
+
+    // Assert that claim buttons exist before testing double-click behavior.
+    // If the UI legitimately has no claim buttons, the test should be updated
+    // to target a page that does, rather than silently passing.
     const claimButtons = page.getByRole("button", { name: /claim/i });
-    if ((await claimButtons.count()) > 0) {
+    const claimButtonCount = await claimButtons.count();
+
+    if (claimButtonCount > 0) {
+      // Claim button found -- test rapid clicks do not cause issues
       const claimButton = claimButtons.first();
-      // Click rapidly
       await claimButton.click();
       await claimButton.click();
-      // Page should remain stable - no JS errors or crash
+      // Page should remain stable after rapid clicks - no crash
       await expect(page.getByText("Optimism").first()).toBeVisible();
+    } else {
+      // No claim buttons on this page -- mark the test as explicitly skipped
+      // so it does not silently pass and mask a missing test scenario.
+      test.skip(
+        true,
+        "No claim buttons found on the tenant home page; test needs a page with claimable items"
+      );
     }
   });
 
@@ -68,13 +83,25 @@ test.describe("Claim Flow", () => {
     await withTenant("optimism");
     await page.goto("/");
     await waitForPageReady(page);
+
     // Verify Optimism community content loaded
     await expect(page.getByText("Optimism").first()).toBeVisible();
-    // If a "claimed" indicator exists, verify it; otherwise confirm the page rendered
+
+    // Check for either a "claimed" indicator or a claim button.
+    // The test should assert a specific state rather than just checking page text length.
     const claimedIndicator = page.getByText(/claimed|already claimed/i);
     const claimButton = page.getByRole("button", { name: /claim/i });
-    // Either a claimed badge or a claim button (or neither if no claimable items) is valid
-    const pageText = await page.textContent("body");
-    expect(pageText!.length).toBeGreaterThan(100);
+
+    const claimedCount = await claimedIndicator.count();
+    const claimButtonCount = await claimButton.count();
+
+    // At least one of these states should be present on a claim-related page,
+    // or the page should show the community name confirming it loaded correctly.
+    // Assert that we can identify the claim state rather than falling back to text length.
+    expect(
+      claimedCount > 0 || claimButtonCount > 0,
+      "Page should show either a 'claimed' indicator or a 'claim' button. " +
+        `Found ${claimedCount} claimed indicators and ${claimButtonCount} claim buttons.`
+    ).toBe(true);
   });
 });

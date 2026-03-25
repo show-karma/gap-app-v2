@@ -6,8 +6,8 @@ import {
 import { createMockCommunity } from "../../data/communities";
 import { createMockProgram } from "../../data/programs";
 import { expect, mockJson, test } from "../../fixtures";
+import { assertNoJsErrors, collectJsErrors } from "../../helpers/assertions";
 import { GOTO_OPTIONS, waitForPageReady } from "../../helpers/navigation";
-import { collectJsErrors, assertNoJsErrors } from "../../helpers/assertions";
 
 test.describe("Admin Journey", () => {
   test("T36-02: admin can login, review an application, approve it, and verify status change", async ({
@@ -57,17 +57,17 @@ test.describe("Admin Journey", () => {
     await page.goto("/community/optimism", GOTO_OPTIONS);
     await waitForPageReady(page);
 
-    const communityBodyText = await page.textContent("body");
-    expect(communityBodyText).toBeTruthy();
-    expect(communityBodyText!.trim().length).toBeGreaterThan(50);
+    // Verify community page rendered with the community name
+    await expect(page.getByText("Optimism").first()).toBeVisible();
 
     // --- Step 3: Navigate to the program to see applications ---
     await page.goto("/community/optimism/programs/p-admin", GOTO_OPTIONS);
     await waitForPageReady(page);
 
-    const programBodyText = await page.textContent("body");
-    expect(programBodyText).toBeTruthy();
-    expect(programBodyText!.trim().length).toBeGreaterThan(30);
+    // Verify program page rendered with program title or back-to-programs link
+    await expect(
+      page.getByText("Admin Review Program").or(page.getByText("Back to programs")).first()
+    ).toBeVisible();
 
     // --- Step 4: View the pending application ---
     await page.goto(
@@ -76,8 +76,9 @@ test.describe("Admin Journey", () => {
     );
     await waitForPageReady(page);
 
-    const applicationBodyText = await page.textContent("body");
-    expect(applicationBodyText).toBeTruthy();
+    // Verify application detail page shows the reference number and pending status
+    await expect(page.getByText("APP-REVIEW-001").first()).toBeVisible();
+    await expect(page.getByText(/pending/i).first()).toBeVisible();
 
     // --- Step 5: Simulate approval and verify status change ---
     // Re-mock the application endpoint to return approved status
@@ -96,16 +97,18 @@ test.describe("Admin Journey", () => {
     );
     await waitForPageReady(page);
 
-    const updatedBodyText = await page.textContent("body");
-    expect(updatedBodyText).toBeTruthy();
+    // Verify the application now shows approved status instead of pending
+    await expect(page.getByText("APP-REVIEW-001").first()).toBeVisible();
+    await expect(page.getByText(/approved/i).first()).toBeVisible();
 
     // --- Step 6: Navigate back to program to verify the list reflects the change ---
     await page.goto("/community/optimism/programs/p-admin", GOTO_OPTIONS);
     await waitForPageReady(page);
 
-    const finalBodyText = await page.textContent("body");
-    expect(finalBodyText).toBeTruthy();
-    expect(finalBodyText!.trim().length).toBeGreaterThan(30);
+    // Verify the program page still renders with program content
+    await expect(
+      page.getByText("Admin Review Program").or(page.getByText("Back to programs")).first()
+    ).toBeVisible();
 
     assertNoJsErrors(jsErrors);
   });
@@ -160,8 +163,9 @@ test.describe("Admin Journey", () => {
     );
     await waitForPageReady(page);
 
-    const pendingBodyText = await page.textContent("body");
-    expect(pendingBodyText).toBeTruthy();
+    // Verify pending application detail is displayed
+    await expect(page.getByText("APP-REJECT-001").first()).toBeVisible();
+    await expect(page.getByText(/pending/i).first()).toBeVisible();
 
     // --- Step 3: Simulate rejection and verify status change ---
     await withApiMocks({
@@ -178,16 +182,18 @@ test.describe("Admin Journey", () => {
     );
     await waitForPageReady(page);
 
-    const rejectedBodyText = await page.textContent("body");
-    expect(rejectedBodyText).toBeTruthy();
+    // Verify the application now shows rejected status
+    await expect(page.getByText("APP-REJECT-001").first()).toBeVisible();
+    await expect(page.getByText(/rejected/i).first()).toBeVisible();
 
     // --- Step 4: Verify the program list shows the rejected application ---
     await page.goto("/community/optimism/programs/p-reject", GOTO_OPTIONS);
     await waitForPageReady(page);
 
-    const programBodyText = await page.textContent("body");
-    expect(programBodyText).toBeTruthy();
-    expect(programBodyText!.trim().length).toBeGreaterThan(30);
+    // Verify the program page still renders with program content
+    await expect(
+      page.getByText("Rejection Test Program").or(page.getByText("Back to programs")).first()
+    ).toBeVisible();
 
     assertNoJsErrors(jsErrors);
   });

@@ -48,13 +48,8 @@ export {
   createMockClaimConfig,
   createMockEligibility,
 } from "./claim.factory";
-export type { MockProgram } from "./community.factory";
-
 // Community factories
-export {
-  createMockCommunity,
-  createMockProgram,
-} from "./community.factory";
+export { createMockCommunity } from "./community.factory";
 // Milestone factories
 export {
   completedMilestone,
@@ -63,7 +58,6 @@ export {
   pendingMilestone,
   verifiedMilestone,
 } from "./milestone.factory";
-
 // Payout factories
 export {
   awaitingSignaturesDisbursement,
@@ -73,6 +67,16 @@ export {
   disbursedDisbursement,
   pendingDisbursement,
 } from "./payout.factory";
+export type { MockProgram } from "./program.factory";
+// Program factories
+export {
+  activeProgramConfig,
+  createMockFormSchema,
+  createMockProgram,
+  createMockProgramConfig,
+  disabledProgramConfig,
+  programWithAI,
+} from "./program.factory";
 // Project factories
 export {
   createMockGrant,

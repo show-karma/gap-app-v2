@@ -1,11 +1,12 @@
-import { apiKeyService } from "@/src/features/api-keys/services/api-key.service";
-
 vi.mock("@/utilities/fetchData", () => ({
   __esModule: true,
   default: vi.fn(),
 }));
 
-const mockFetchData = require("@/utilities/fetchData").default;
+import { apiKeyService } from "@/src/features/api-keys/services/api-key.service";
+import fetchData from "@/utilities/fetchData";
+
+const mockFetchData = fetchData as vi.MockedFunction<typeof fetchData>;
 
 describe("apiKeyService", () => {
   beforeEach(() => {
@@ -35,6 +36,12 @@ describe("apiKeyService", () => {
       mockFetchData.mockResolvedValue([null, "Unauthorized"]);
 
       await expect(apiKeyService.get()).rejects.toThrow("Unauthorized");
+    });
+
+    it("should throw 'Unexpected empty response' when data is null and no error string", async () => {
+      mockFetchData.mockResolvedValue([null, null]);
+
+      await expect(apiKeyService.get()).rejects.toThrow("Unexpected empty response");
     });
   });
 

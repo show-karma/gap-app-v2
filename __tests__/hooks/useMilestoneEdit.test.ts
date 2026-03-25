@@ -90,10 +90,6 @@ vi.mock("@/utilities/sdk", () => ({
   getProjectById: vi.fn(),
 }));
 
-vi.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: vi.fn(),
-}));
-
 import { useMilestoneEdit } from "@/hooks/useMilestoneEdit";
 
 describe("useMilestoneEdit", () => {

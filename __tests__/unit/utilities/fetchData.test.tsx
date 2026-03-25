@@ -4,11 +4,6 @@ import fetchData from "@/utilities/fetchData";
 
 vi.mock("axios");
 vi.mock("@/utilities/auth/token-manager");
-vi.mock("@/utilities/enviromentVars", () => ({
-  envVars: {
-    NEXT_PUBLIC_GAP_INDEXER_URL: "https://test-api.com",
-  },
-}));
 vi.mock("@/utilities/sanitize", () => ({
   sanitizeObject: vi.fn((data) => data),
 }));

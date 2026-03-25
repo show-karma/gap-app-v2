@@ -1,4 +1,15 @@
-import { render, screen } from "@testing-library/react";
+/**
+ * Tests for EmptyStateGuidance, PostApprovalEmptyState, and ReviewersEmptyState.
+ *
+ * Focuses on behavioral concerns:
+ * - Prop-driven conditional rendering (showSuggestions toggle, custom titles/descriptions)
+ * - Correct default vs overridden content
+ * - Composition: PostApprovalEmptyState and ReviewersEmptyState wrap EmptyStateGuidance
+ *   with specific configuration
+ * - className passthrough
+ */
+
+import { render, screen, within } from "@testing-library/react";
 import {
   EmptyStateGuidance,
   PostApprovalEmptyState,
@@ -6,173 +17,131 @@ import {
 } from "@/components/FundingPlatform/EmptyStateGuidance";
 
 describe("EmptyStateGuidance", () => {
-  describe("rendering with default props", () => {
-    it("should render with default title", () => {
+  describe("default prop behavior", () => {
+    it("shows the default title, description, and suggestions section", () => {
       render(<EmptyStateGuidance />);
 
       expect(screen.getByText("No Form Fields Yet")).toBeInTheDocument();
-    });
-
-    it("should render with default description", () => {
-      render(<EmptyStateGuidance />);
-
       expect(screen.getByText(/build your application form by adding fields/i)).toBeInTheDocument();
-    });
-
-    it("should show suggestions by default", () => {
-      render(<EmptyStateGuidance />);
-
       expect(screen.getByText(/suggested fields for grant applications/i)).toBeInTheDocument();
     });
   });
 
-  describe("rendering with custom props", () => {
-    it("should render with custom title", () => {
-      render(<EmptyStateGuidance title="Custom Title" />);
+  describe("prop-driven conditional rendering", () => {
+    it("replaces title and description when custom props are provided", () => {
+      render(<EmptyStateGuidance title="Custom Title" description="Custom description text" />);
 
       expect(screen.getByText("Custom Title")).toBeInTheDocument();
-    });
-
-    it("should render with custom description", () => {
-      render(<EmptyStateGuidance description="Custom description text" />);
-
       expect(screen.getByText("Custom description text")).toBeInTheDocument();
+      // Defaults should not appear
+      expect(screen.queryByText("No Form Fields Yet")).not.toBeInTheDocument();
     });
 
-    it("should hide suggestions when showSuggestions is false", () => {
+    it("hides the suggestions section when showSuggestions is false", () => {
       render(<EmptyStateGuidance showSuggestions={false} />);
 
       expect(
         screen.queryByText(/suggested fields for grant applications/i)
       ).not.toBeInTheDocument();
+      // Title should still be visible
+      expect(screen.getByText("No Form Fields Yet")).toBeInTheDocument();
     });
 
-    it("should apply custom className", () => {
-      const { container } = render(<EmptyStateGuidance className="custom-class" />);
+    it("shows the suggestions section when showSuggestions is true (default)", () => {
+      render(<EmptyStateGuidance showSuggestions={true} />);
 
-      expect(container.firstChild).toHaveClass("custom-class");
+      expect(screen.getByText(/suggested fields for grant applications/i)).toBeInTheDocument();
+    });
+
+    it("passes className to the root element", () => {
+      const { container } = render(<EmptyStateGuidance className="my-custom-class" />);
+
+      expect(container.firstChild).toHaveClass("my-custom-class");
     });
   });
 
-  describe("suggested fields display", () => {
-    it("should display all suggested fields", () => {
+  describe("suggested fields content", () => {
+    it("renders all seven suggested fields with labels and descriptions", () => {
       render(<EmptyStateGuidance />);
 
       const expectedFields = [
-        "Project Name",
-        "Project Description",
-        "Email Address",
-        "Funding Amount",
-        "Team Information",
-        "Project Links",
-        "Timeline",
+        { label: "Project Name", desc: "Short title for the project" },
+        { label: "Project Description", desc: "Detailed project overview" },
+        { label: "Email Address", desc: "Required for communication" },
+        { label: "Funding Amount", desc: "Requested funding in USD" },
+        { label: "Team Information", desc: "Team members and roles" },
+        { label: "Project Links", desc: "Website, GitHub, social media" },
+        { label: "Timeline", desc: "Project milestones and dates" },
       ];
 
-      expectedFields.forEach((field) => {
-        expect(screen.getByText(field)).toBeInTheDocument();
-      });
+      for (const { label, desc } of expectedFields) {
+        expect(screen.getByText(label)).toBeInTheDocument();
+        expect(screen.getByText(desc)).toBeInTheDocument();
+      }
     });
 
-    it("should display field descriptions", () => {
-      render(<EmptyStateGuidance />);
-
-      expect(screen.getByText("Short title for the project")).toBeInTheDocument();
-      expect(screen.getByText("Detailed project overview")).toBeInTheDocument();
-      expect(screen.getByText("Required for communication")).toBeInTheDocument();
-      expect(screen.getByText("Requested funding in USD")).toBeInTheDocument();
-    });
-
-    it("should display help text about adding fields", () => {
+    it("displays help text about how to add fields", () => {
       render(<EmptyStateGuidance />);
 
       expect(screen.getByText(/click field types in the left panel/i)).toBeInTheDocument();
     });
-  });
 
-  describe("visual elements", () => {
-    it("should render icon", () => {
-      const { container } = render(<EmptyStateGuidance />);
+    it("does not show help text when suggestions are hidden", () => {
+      render(<EmptyStateGuidance showSuggestions={false} />);
 
-      const iconContainer = container.querySelector(".bg-blue-100");
-      expect(iconContainer).toBeInTheDocument();
-    });
-
-    it("should render field icons", () => {
-      const { container } = render(<EmptyStateGuidance />);
-
-      // Should have multiple SVG icons for fields
-      const svgElements = container.querySelectorAll("svg");
-      expect(svgElements.length).toBeGreaterThan(1);
+      expect(screen.queryByText(/click field types in the left panel/i)).not.toBeInTheDocument();
     });
   });
 });
 
 describe("PostApprovalEmptyState", () => {
-  it("should render with appropriate title", () => {
+  it("renders with post-approval-specific title and description", () => {
     render(<PostApprovalEmptyState />);
 
     expect(screen.getByText("No Post-Approval Fields Yet")).toBeInTheDocument();
-  });
-
-  it("should render with appropriate description", () => {
-    render(<PostApprovalEmptyState />);
-
     expect(screen.getByText(/this form is optional/i)).toBeInTheDocument();
+    expect(screen.getByText(/bank details, KYC documents/i)).toBeInTheDocument();
   });
 
-  it("should not show suggestions", () => {
+  it("does not show suggestions section (overrides showSuggestions=false)", () => {
     render(<PostApprovalEmptyState />);
 
     expect(screen.queryByText(/suggested fields for grant applications/i)).not.toBeInTheDocument();
   });
 
-  it("should mention bank details and KYC", () => {
-    render(<PostApprovalEmptyState />);
+  it("passes className through to EmptyStateGuidance", () => {
+    const { container } = render(<PostApprovalEmptyState className="post-approval-class" />);
 
-    expect(screen.getByText(/bank details, KYC documents/i)).toBeInTheDocument();
-  });
-
-  it("should apply custom className", () => {
-    const { container } = render(<PostApprovalEmptyState className="custom-class" />);
-
-    expect(container.firstChild).toHaveClass("custom-class");
+    expect(container.firstChild).toHaveClass("post-approval-class");
   });
 });
 
 describe("ReviewersEmptyState", () => {
-  it("should render with appropriate title", () => {
+  it("renders reviewer-specific title and description", () => {
     render(<ReviewersEmptyState />);
 
     expect(screen.getByText("No Reviewers Added Yet")).toBeInTheDocument();
-  });
-
-  it("should render with appropriate description", () => {
-    render(<ReviewersEmptyState />);
-
     expect(
       screen.getByText(/add team members who will help review applications/i)
     ).toBeInTheDocument();
   });
 
-  it("should display tip about wallet address and ENS", () => {
+  it("displays the tip about wallet address and ENS name", () => {
     render(<ReviewersEmptyState />);
 
     expect(screen.getByText(/wallet address or ENS name/i)).toBeInTheDocument();
   });
 
-  it("should have purple-themed icon", () => {
+  it("uses purple theming for the icon container and tip box", () => {
     const { container } = render(<ReviewersEmptyState />);
 
-    const iconContainer = container.querySelector(".bg-purple-100");
-    expect(iconContainer).toBeInTheDocument();
+    expect(container.querySelector(".bg-purple-100")).toBeInTheDocument();
+    expect(container.querySelector(".bg-purple-50")).toBeInTheDocument();
   });
 
-  it("should have tip box with purple styling", () => {
-    const { container } = render(<ReviewersEmptyState />);
+  it("passes className through to root element", () => {
+    const { container } = render(<ReviewersEmptyState className="reviewer-class" />);
 
-    const tipBox = container.querySelector(".bg-purple-50");
-    expect(tipBox).toBeInTheDocument();
+    expect(container.firstChild).toHaveClass("reviewer-class");
   });
-
 });
-

@@ -42,12 +42,6 @@ vi.mock("@/utilities/indexer", () => ({
   },
 }));
 
-vi.mock("@/utilities/enviromentVars", () => ({
-  envVars: {
-    NEXT_PUBLIC_GAP_INDEXER_URL: "https://indexer.example.com",
-  },
-}));
-
 vi.mock("@/utilities/validators", () => ({
   validateEmail: vi.fn(() => true),
   validateTelegram: vi.fn(() => true),
@@ -337,12 +331,15 @@ describe("programReviewersService trust tests", () => {
   // --- removeReviewer ---
 
   describe("removeReviewer", () => {
-    it("calls apiClient.delete with program ID and address", async () => {
+    it("calls apiClient.delete with program ID and email in body", async () => {
       mockApiDelete.mockResolvedValue({});
 
-      await programReviewersService.removeReviewer("p1", "0x123");
+      await programReviewersService.removeReviewer("p1", "alice@example.com");
 
-      expect(mockApiDelete).toHaveBeenCalledWith("/v2/funding-program-configs/p1/reviewers/0x123");
+      expect(mockApiDelete).toHaveBeenCalledWith(
+        "/v2/funding-program-configs/p1/reviewers/by-email",
+        { data: { email: "alice@example.com" } }
+      );
     });
   });
 
@@ -393,18 +390,17 @@ describe("programReviewersService trust tests", () => {
     });
   });
 
-  // --- Known Bug: error.includes() crash ---
+  // --- Fixed Bug: error.includes() crash (was TypeError, now properly coerced) ---
 
-  describe("KNOWN BUG: error.includes() crash on Error objects", () => {
-    it("crashes when fetchData returns an Error object instead of string", async () => {
-      // fetchData returns Error objects for network errors (no response),
-      // but getReviewers calls error.includes() which throws on Error objects
+  describe("FIXED: error.includes() no longer crashes on Error objects", () => {
+    it("handles Error objects from fetchData without crashing", async () => {
+      // fetchData returns Error objects for network errors (no response).
+      // Previously this threw TypeError because Error.includes is not a function.
+      // Now the error is coerced to string before calling .includes().
       const networkError = new Error("Network Error");
       mockFetchData.mockResolvedValue([null, networkError, null, 500]);
 
-      // This demonstrates the bug: .includes() is called on an Error object
-      // Error objects don't have .includes(), so it throws TypeError
-      await expect(programReviewersService.getReviewers("p1")).rejects.toThrow(TypeError);
+      await expect(programReviewersService.getReviewers("p1")).rejects.toThrow("Network Error");
     });
   });
 });

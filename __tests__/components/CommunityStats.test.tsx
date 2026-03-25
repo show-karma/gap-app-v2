@@ -93,10 +93,6 @@ vi.mock("@/components/Utilities/Button", () => ({
 }));
 
 // Mock errorManager
-vi.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: vi.fn(),
-}));
-
 describe("CommunityStats", () => {
   const mockCommunityId = "community-123";
   const mockStatsData = {

@@ -9,8 +9,6 @@ import { isAddress } from "viem";
 import { usePayoutAddressManager } from "@/hooks/donation/usePayoutAddressManager";
 
 // Mock dependencies
-vi.mock("react-hot-toast");
-
 vi.mock("viem", () => ({
   isAddress: vi.fn(),
 }));

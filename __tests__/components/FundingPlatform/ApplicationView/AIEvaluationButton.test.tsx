@@ -13,14 +13,6 @@ vi.mock("@/services/fundingPlatformService", () => ({
   },
 }));
 
-vi.mock("react-hot-toast", () => ({
-  __esModule: true,
-  default: {
-    success: vi.fn(),
-    error: vi.fn(),
-  },
-}));
-
 vi.mock("@/components/Utilities/Button", () => ({
   Button: ({
     onClick,

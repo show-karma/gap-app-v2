@@ -45,14 +45,6 @@ vi.mock("@heroicons/react/24/solid", () => ({
 }));
 
 // Mock toast
-vi.mock("react-hot-toast", () => ({
-  __esModule: true,
-  default: {
-    success: vi.fn(),
-    error: vi.fn(),
-  },
-}));
-
 // Mock wagmi
 vi.mock("wagmi", () => ({
   useAccount: vi.fn(() => ({

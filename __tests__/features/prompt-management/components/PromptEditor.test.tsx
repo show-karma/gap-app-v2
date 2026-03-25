@@ -23,14 +23,6 @@ vi.mock("@/hooks/useAvailableAIModels", () => ({
   useAvailableAIModels: vi.fn(),
 }));
 
-vi.mock("react-hot-toast", () => ({
-  __esModule: true,
-  default: {
-    success: vi.fn(),
-    error: vi.fn(),
-  },
-}));
-
 // Mock MarkdownEditor
 vi.mock("@/components/Utilities/MarkdownEditor", () => ({
   MarkdownEditor: ({

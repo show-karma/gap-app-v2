@@ -8,7 +8,6 @@ import fetchData from "@/utilities/fetchData";
 import { getCommunityMetrics } from "@/utilities/registry/getCommunityMetrics";
 
 vi.mock("@/utilities/fetchData");
-vi.mock("@/components/Utilities/errorManager");
 vi.mock("@/utilities/indexer", () => ({
   INDEXER: {
     COMMUNITY: {

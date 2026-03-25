@@ -43,18 +43,6 @@ vi.mock("@/utilities/indexer", () => ({
   },
 }));
 
-vi.mock("react-hot-toast", () => ({
-  __esModule: true,
-  default: {
-    success: vi.fn(),
-    error: vi.fn(),
-  },
-}));
-
-vi.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: vi.fn(),
-}));
-
 // Mock MultiEmailInput to render a simple input + button for testing
 vi.mock("@/components/Utilities/MultiEmailInput", () => ({
   MultiEmailInput: ({

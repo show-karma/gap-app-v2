@@ -4,14 +4,6 @@ import React from "react";
 import StatusChangeModal from "@/components/FundingPlatform/ApplicationView/StatusChangeModal";
 
 // Note: react-hot-toast is no longer used in StatusChangeModal, but keeping mock for other components
-vi.mock("react-hot-toast", () => ({
-  __esModule: true,
-  default: {
-    error: vi.fn(),
-    success: vi.fn(),
-  },
-}));
-
 // Mock fundingPlatformService
 vi.mock("@/services/fundingPlatformService", () => ({
   fundingPlatformService: {

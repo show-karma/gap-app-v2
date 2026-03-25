@@ -1,12 +1,9 @@
-import {
-  createApprovedApplication,
-  createMockApplication,
-} from "../../data/applications";
+import { createApprovedApplication, createMockApplication } from "../../data/applications";
 import { createMockCommunity } from "../../data/communities";
 import { createMockProgram } from "../../data/programs";
 import { expect, mockJson, test } from "../../fixtures";
+import { assertNoJsErrors, collectJsErrors } from "../../helpers/assertions";
 import { GOTO_OPTIONS, waitForPageReady } from "../../helpers/navigation";
-import { collectJsErrors, assertNoJsErrors } from "../../helpers/assertions";
 
 test.describe("Applicant Journey", () => {
   test("T36-01: applicant can login, find a program, submit an application, and check status", async ({
@@ -53,40 +50,42 @@ test.describe("Applicant Journey", () => {
     await page.goto("/community/optimism", GOTO_OPTIONS);
     await waitForPageReady(page);
 
-    const communityBodyText = await page.textContent("body");
-    expect(communityBodyText).toBeTruthy();
-    expect(communityBodyText!.trim().length).toBeGreaterThan(50);
+    // Verify the community page rendered with the community name
+    await expect(page.getByText("Optimism").first()).toBeVisible();
 
     // --- Step 3: Navigate to the program page ---
     await page.goto("/community/optimism/programs/p-journey", GOTO_OPTIONS);
     await waitForPageReady(page);
 
-    const programBodyText = await page.textContent("body");
-    expect(programBodyText).toBeTruthy();
-    expect(programBodyText!.trim().length).toBeGreaterThan(30);
+    // Verify the program detail page shows the program title or navigation link
+    await expect(
+      page.getByText("Journey Test Program").or(page.getByText("Back to programs")).first()
+    ).toBeVisible();
 
     // --- Step 4: Navigate to the application form ---
     await page.goto("/community/optimism/programs/p-journey/apply", GOTO_OPTIONS);
     await waitForPageReady(page);
 
-    // The apply page should render a form or form-like content
-    const applyBodyText = await page.textContent("body");
-    expect(applyBodyText).toBeTruthy();
-    expect(applyBodyText!.trim().length).toBeGreaterThan(20);
+    // The apply page should render a form heading or form elements
+    await expect(
+      page
+        .getByRole("heading", { name: /apply/i })
+        .or(page.getByText(/application form not available/i))
+        .first()
+    ).toBeVisible();
 
-    // Check for form elements (inputs, textareas, buttons)
+    // Verify the form has interactive elements (inputs, textareas, or buttons)
     const formInputs = page.locator("input, textarea, select");
     const submitButton = page.getByRole("button", { name: /submit|apply|send|next/i });
-    const hasFormElements = (await formInputs.count()) > 0 || (await submitButton.count()) > 0;
-    // The form should have at least some interactive elements
-    expect(hasFormElements).toBeTruthy();
+    const formInputCount = await formInputs.count();
+    const submitButtonCount = await submitButton.count();
+    expect(
+      formInputCount + submitButtonCount,
+      "Application form should have at least one form element or submit button"
+    ).toBeGreaterThan(0);
 
     // --- Step 5: Check application status ---
     // Navigate to my-applications to see the submitted application
-    await page.goto("/community/optimism/my-applications", GOTO_OPTIONS);
-    await waitForPageReady(page);
-
-    // Mock the applications list to include the submitted one
     await withApiMocks({
       "**/v2/communities/optimism": mockJson(community),
       "**/v2/funding-applications/user/**": mockJson([pendingApplication]),
@@ -99,8 +98,8 @@ test.describe("Applicant Journey", () => {
     await page.goto("/community/optimism/my-applications", GOTO_OPTIONS);
     await waitForPageReady(page);
 
-    const myAppsBodyText = await page.textContent("body");
-    expect(myAppsBodyText).toBeTruthy();
+    // Verify the my-applications page rendered with community context
+    await expect(page.getByText("Optimism").first()).toBeVisible();
 
     assertNoJsErrors(jsErrors);
   });

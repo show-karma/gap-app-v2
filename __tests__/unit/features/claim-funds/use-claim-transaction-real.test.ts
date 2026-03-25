@@ -5,7 +5,7 @@
  */
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { renderHook, act, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { createElement } from "react";
 
@@ -55,8 +55,6 @@ const {
 // Module mocks
 // ---------------------------------------------------------------------------
 
-vi.mock("react-hot-toast", () => ({ default: mockToast }));
-
 vi.mock("viem", () => ({
   createWalletClient: vi.fn(() => mockWalletClient),
   custom: vi.fn((provider: unknown) => provider),
@@ -93,8 +91,8 @@ vi.mock("@/features/claim-funds/lib/viem-clients", () => ({
 // Import the REAL hook AFTER mocks are in place
 // ---------------------------------------------------------------------------
 import { useClaimTransaction } from "@/features/claim-funds/hooks/use-claim-transaction";
-import type { ClaimEligibility } from "@/features/claim-funds/types";
 import { getChainByName } from "@/features/claim-funds/lib/viem-clients";
+import type { ClaimEligibility } from "@/features/claim-funds/types";
 
 // ---------------------------------------------------------------------------
 // Test helpers
@@ -155,10 +153,7 @@ describe("useClaimTransaction (real hook)", () => {
   describe("initial state", () => {
     it("should return idle state when no claim is in progress", () => {
       const { wrapper } = createWrapper();
-      const { result } = renderHook(
-        () => useClaimTransaction("tenant-1", undefined),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useClaimTransaction("tenant-1", undefined), { wrapper });
 
       expect(result.current.isPending).toBe(false);
       expect(result.current.isConfirming).toBe(false);
@@ -170,10 +165,7 @@ describe("useClaimTransaction (real hook)", () => {
 
     it("should expose claim and reset functions", () => {
       const { wrapper } = createWrapper();
-      const { result } = renderHook(
-        () => useClaimTransaction("tenant-1", undefined),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useClaimTransaction("tenant-1", undefined), { wrapper });
 
       expect(typeof result.current.claim).toBe("function");
       expect(typeof result.current.reset).toBe("function");
@@ -184,10 +176,7 @@ describe("useClaimTransaction (real hook)", () => {
     it("should show a toast error when no wallet is connected", () => {
       // wallets array is empty
       const { wrapper } = createWrapper();
-      const { result } = renderHook(
-        () => useClaimTransaction("tenant-1", undefined),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useClaimTransaction("tenant-1", undefined), { wrapper });
 
       act(() => {
         result.current.claim(MOCK_CAMPAIGN_ID, createMockEligibility(), MOCK_CONTRACT);
@@ -209,10 +198,7 @@ describe("useClaimTransaction (real hook)", () => {
       );
 
       const { wrapper } = createWrapper();
-      const { result } = renderHook(
-        () => useClaimTransaction("tenant-1", undefined),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useClaimTransaction("tenant-1", undefined), { wrapper });
 
       // Start first claim
       act(() => {
@@ -249,10 +235,7 @@ describe("useClaimTransaction (real hook)", () => {
       const { wrapper, queryClient } = createWrapper();
       const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
 
-      const { result } = renderHook(
-        () => useClaimTransaction("tenant-1", undefined),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useClaimTransaction("tenant-1", undefined), { wrapper });
 
       act(() => {
         result.current.claim(MOCK_CAMPAIGN_ID, createMockEligibility(), MOCK_CONTRACT);
@@ -280,8 +263,12 @@ describe("useClaimTransaction (real hook)", () => {
       );
 
       // Toast notifications
-      expect(mockToast.loading).toHaveBeenCalledWith("Waiting for confirmation...", { id: "claim-tx" });
-      expect(mockToast.success).toHaveBeenCalledWith("Your tokens have been claimed!", { id: "claim-tx" });
+      expect(mockToast.loading).toHaveBeenCalledWith("Waiting for confirmation...", {
+        id: "claim-tx",
+      });
+      expect(mockToast.success).toHaveBeenCalledWith("Your tokens have been claimed!", {
+        id: "claim-tx",
+      });
 
       // Query invalidation
       expect(invalidateSpy).toHaveBeenCalledWith(
@@ -295,10 +282,7 @@ describe("useClaimTransaction (real hook)", () => {
       mockWaitForTransactionReceipt.mockResolvedValue({ status: "success" });
 
       const { wrapper } = createWrapper();
-      const { result } = renderHook(
-        () => useClaimTransaction("tenant-1", undefined),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useClaimTransaction("tenant-1", undefined), { wrapper });
 
       act(() => {
         result.current.claim(MOCK_CAMPAIGN_ID, createMockEligibility(), MOCK_CONTRACT);
@@ -322,10 +306,7 @@ describe("useClaimTransaction (real hook)", () => {
       );
 
       const { wrapper } = createWrapper();
-      const { result } = renderHook(
-        () => useClaimTransaction("tenant-1", undefined),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useClaimTransaction("tenant-1", undefined), { wrapper });
 
       act(() => {
         result.current.claim(MOCK_CAMPAIGN_ID, createMockEligibility(), MOCK_CONTRACT);
@@ -354,10 +335,7 @@ describe("useClaimTransaction (real hook)", () => {
       mockWaitForTransactionReceipt.mockResolvedValue({ status: "success" });
 
       const { wrapper } = createWrapper();
-      const { result } = renderHook(
-        () => useClaimTransaction("tenant-1", undefined),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useClaimTransaction("tenant-1", undefined), { wrapper });
 
       act(() => {
         result.current.claim(MOCK_CAMPAIGN_ID, createMockEligibility(), MOCK_CONTRACT);
@@ -378,10 +356,7 @@ describe("useClaimTransaction (real hook)", () => {
       mockSwitchOrAddChain.mockRejectedValue(new Error("user rejected chain switch"));
 
       const { wrapper } = createWrapper();
-      const { result } = renderHook(
-        () => useClaimTransaction("tenant-1", undefined),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useClaimTransaction("tenant-1", undefined), { wrapper });
 
       act(() => {
         result.current.claim(MOCK_CAMPAIGN_ID, createMockEligibility(), MOCK_CONTRACT);
@@ -414,10 +389,7 @@ describe("useClaimTransaction (real hook)", () => {
       });
 
       const { wrapper } = createWrapper();
-      const { result } = renderHook(
-        () => useClaimTransaction("tenant-1", undefined),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useClaimTransaction("tenant-1", undefined), { wrapper });
 
       act(() => {
         result.current.claim(MOCK_CAMPAIGN_ID, createMockEligibility(), MOCK_CONTRACT);
@@ -438,10 +410,7 @@ describe("useClaimTransaction (real hook)", () => {
       mockWriteContract.mockRejectedValue(new Error("User rejected the request."));
 
       const { wrapper } = createWrapper();
-      const { result } = renderHook(
-        () => useClaimTransaction("tenant-1", undefined),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useClaimTransaction("tenant-1", undefined), { wrapper });
 
       act(() => {
         result.current.claim(MOCK_CAMPAIGN_ID, createMockEligibility(), MOCK_CONTRACT);
@@ -451,10 +420,7 @@ describe("useClaimTransaction (real hook)", () => {
         expect(result.current.error).toBeTruthy();
       });
 
-      expect(mockSanitizeErrorMessage).toHaveBeenCalledWith(
-        expect.any(Error),
-        "Claim Failed"
-      );
+      expect(mockSanitizeErrorMessage).toHaveBeenCalledWith(expect.any(Error), "Claim Failed");
       expect(mockToast.error).toHaveBeenCalled();
     });
 
@@ -464,10 +430,7 @@ describe("useClaimTransaction (real hook)", () => {
       mockWaitForTransactionReceipt.mockRejectedValue(new Error("Timed out"));
 
       const { wrapper } = createWrapper();
-      const { result } = renderHook(
-        () => useClaimTransaction("tenant-1", undefined),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useClaimTransaction("tenant-1", undefined), { wrapper });
 
       act(() => {
         result.current.claim(MOCK_CAMPAIGN_ID, createMockEligibility(), MOCK_CONTRACT);
@@ -486,10 +449,7 @@ describe("useClaimTransaction (real hook)", () => {
       mockWaitForTransactionReceipt.mockResolvedValue({ status: "reverted" });
 
       const { wrapper } = createWrapper();
-      const { result } = renderHook(
-        () => useClaimTransaction("tenant-1", undefined),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useClaimTransaction("tenant-1", undefined), { wrapper });
 
       act(() => {
         result.current.claim(MOCK_CAMPAIGN_ID, createMockEligibility(), MOCK_CONTRACT);
@@ -510,10 +470,7 @@ describe("useClaimTransaction (real hook)", () => {
       mockWriteContract.mockRejectedValue(testError);
 
       const { wrapper } = createWrapper();
-      const { result } = renderHook(
-        () => useClaimTransaction("tenant-1", undefined),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useClaimTransaction("tenant-1", undefined), { wrapper });
 
       act(() => {
         result.current.claim(MOCK_CAMPAIGN_ID, createMockEligibility(), MOCK_CONTRACT);
@@ -535,10 +492,7 @@ describe("useClaimTransaction (real hook)", () => {
       });
 
       const { wrapper } = createWrapper();
-      const { result } = renderHook(
-        () => useClaimTransaction("tenant-1", undefined),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useClaimTransaction("tenant-1", undefined), { wrapper });
 
       act(() => {
         result.current.claim(MOCK_CAMPAIGN_ID, createMockEligibility(), MOCK_CONTRACT);
@@ -559,10 +513,7 @@ describe("useClaimTransaction (real hook)", () => {
       mockWaitForTransactionReceipt.mockResolvedValue({ status: "success" });
 
       const { wrapper } = createWrapper();
-      const { result } = renderHook(
-        () => useClaimTransaction("tenant-1", undefined),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useClaimTransaction("tenant-1", undefined), { wrapper });
 
       act(() => {
         result.current.claim(MOCK_CAMPAIGN_ID, createMockEligibility(), MOCK_CONTRACT);
@@ -587,10 +538,7 @@ describe("useClaimTransaction (real hook)", () => {
       mockWriteContract.mockRejectedValue(new Error("fail"));
 
       const { wrapper } = createWrapper();
-      const { result } = renderHook(
-        () => useClaimTransaction("tenant-1", undefined),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useClaimTransaction("tenant-1", undefined), { wrapper });
 
       act(() => {
         result.current.claim(MOCK_CAMPAIGN_ID, createMockEligibility(), MOCK_CONTRACT);
@@ -624,10 +572,7 @@ describe("useClaimTransaction (real hook)", () => {
       );
 
       const { wrapper } = createWrapper();
-      const { result } = renderHook(
-        () => useClaimTransaction("tenant-1", undefined),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useClaimTransaction("tenant-1", undefined), { wrapper });
 
       act(() => {
         result.current.claim(MOCK_CAMPAIGN_ID, createMockEligibility(), MOCK_CONTRACT);
@@ -657,10 +602,7 @@ describe("useClaimTransaction (real hook)", () => {
       mockWriteContract.mockRejectedValueOnce(new Error("first fail"));
 
       const { wrapper } = createWrapper();
-      const { result } = renderHook(
-        () => useClaimTransaction("tenant-1", undefined),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useClaimTransaction("tenant-1", undefined), { wrapper });
 
       // First claim — fails
       act(() => {
@@ -712,10 +654,7 @@ describe("useClaimTransaction (real hook)", () => {
       });
 
       const { wrapper } = createWrapper();
-      const { result } = renderHook(
-        () => useClaimTransaction("tenant-1", undefined),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useClaimTransaction("tenant-1", undefined), { wrapper });
 
       // The claim() guard checks wallets[0]?.address which is "" (falsy)
       act(() => {
@@ -741,20 +680,14 @@ describe("useClaimTransaction (real hook)", () => {
 
       const { wrapper } = createWrapper();
       // Simply rendering the hook with hedgey config should call getChainByName
-      renderHook(
-        () => useClaimTransaction("tenant-1", hedgeyConfig),
-        { wrapper }
-      );
+      renderHook(() => useClaimTransaction("tenant-1", hedgeyConfig), { wrapper });
 
       expect(getChainByName).toHaveBeenCalledWith("arbitrum");
     });
 
     it("should default to optimism when providerConfig is not hedgey", () => {
       const { wrapper } = createWrapper();
-      renderHook(
-        () => useClaimTransaction("tenant-1", undefined),
-        { wrapper }
-      );
+      renderHook(() => useClaimTransaction("tenant-1", undefined), { wrapper });
 
       expect(getChainByName).toHaveBeenCalledWith("optimism");
     });

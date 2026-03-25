@@ -11,14 +11,6 @@ import { GrantTitleDropdown } from "@/components/Pages/GrantMilestonesAndUpdates
 
 // Mock react-hot-toast
 const mockToastError = vi.fn();
-vi.mock("react-hot-toast", () => ({
-  __esModule: true,
-  default: {
-    error: (...args: unknown[]) => mockToastError(...args),
-    success: vi.fn(),
-  },
-}));
-
 // Mock pluralize
 vi.mock("pluralize", () => ({
   __esModule: true,

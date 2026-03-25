@@ -10,13 +10,6 @@ const mockRoleManagementTab = vi.fn();
 const mockUseProgramReviewers = vi.fn();
 const mockUseMilestoneReviewers = vi.fn();
 
-vi.mock("react-hot-toast", () => ({
-  toast: {
-    success: vi.fn(),
-    error: vi.fn(),
-  },
-}));
-
 vi.mock("@/src/core/rbac/context/permission-context", () => ({
   usePermissionContext: () => mockUsePermissionContext(),
 }));

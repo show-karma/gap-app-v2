@@ -4,9 +4,9 @@ import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Hex } from "viem";
 import { usePrivyBridge } from "@/contexts/privy-bridge-context";
-import { compareAllWallets } from "@/utilities/auth/compare-all-wallets";
 import { useProjectCreateModalStore } from "@/store/modals/projectCreate";
-import { getCypressMockAuthState } from "@/utilities/auth/cypress-auth";
+import { compareAllWallets } from "@/utilities/auth/compare-all-wallets";
+import { getE2EMockAuthState } from "@/utilities/auth/e2e-auth";
 import { TokenManager } from "@/utilities/auth/token-manager";
 import { PAGES } from "@/utilities/pages";
 import { queryClient } from "@/utilities/query-client";
@@ -124,18 +124,15 @@ export const useAuth = () => {
   const { isWhitelabel } = useWhitelabel();
 
   const primaryWallet = wallets[0];
-  // Track client-side hydration so getCypressMockAuthState() re-evaluates after SSR.
+  // Track client-side hydration so getE2EMockAuthState() re-evaluates after SSR.
   // During SSR, window is undefined so the check returns null. Without isClient,
   // useMemo caches the SSR result when Privy's ready/authenticated haven't changed yet.
   const [isClient, setIsClient] = useState(false);
   useEffect(() => setIsClient(true), []);
-  const cypressMockAuthState = useMemo(
-    () => getCypressMockAuthState(),
-    [ready, authenticated, isClient]
-  );
-  const isCypressMockAuthenticated = Boolean(cypressMockAuthState?.authenticated);
-  const cypressMockAddress = cypressMockAuthState?.user?.wallet?.address as Hex | undefined;
-  const address = (primaryWallet?.address as Hex | undefined) || cypressMockAddress;
+  const e2eMockAuthState = useMemo(() => getE2EMockAuthState(), [ready, authenticated, isClient]);
+  const isE2EMockAuthenticated = Boolean(e2eMockAuthState?.authenticated);
+  const e2eMockAddress = e2eMockAuthState?.user?.wallet?.address as Hex | undefined;
+  const address = (primaryWallet?.address as Hex | undefined) || e2eMockAddress;
 
   const shouldLoginAfterLogout = useRef(false);
   const prevAuthRef = useRef(authenticated);
@@ -298,7 +295,8 @@ export const useAuth = () => {
   const hasExternalWallet = useMemo(() => {
     if (!user?.linkedAccounts) return false;
     return user.linkedAccounts.some(
-      (a) => a.type === "wallet" && (a as { walletClientType?: string }).walletClientType !== "privy"
+      (a) =>
+        a.type === "wallet" && (a as { walletClientType?: string }).walletClientType !== "privy"
     );
   }, [user]);
 
@@ -355,20 +353,18 @@ export const useAuth = () => {
   }, [isConnected, authenticated, wallets.length, logout, login]);
 
   const connectedAndAuth = useMemo(() => {
-    if (isCypressMockAuthenticated) {
+    if (isE2EMockAuthenticated) {
       return true;
     }
     // Privy authenticated is sufficient to be "logged in".
     // Some login methods (e.g., Farcaster) don't provide a browser-connectable wallet,
     // so requiring isConnected would incorrectly gate the logged-in status.
     return authenticated;
-  }, [isCypressMockAuthenticated, authenticated]);
+  }, [isE2EMockAuthenticated, authenticated]);
 
-  const effectiveReady = isCypressMockAuthenticated ? true : ready;
+  const effectiveReady = isE2EMockAuthenticated ? true : ready;
   // Include embedded wallets in isConnected (Privy embedded wallets may not register with wagmi)
-  const effectiveIsConnected = isCypressMockAuthenticated
-    ? true
-    : isConnected || wallets.length > 0;
+  const effectiveIsConnected = isE2EMockAuthenticated ? true : isConnected || wallets.length > 0;
 
   return {
     // Core authentication (Privy handles everything)

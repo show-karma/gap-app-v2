@@ -20,12 +20,6 @@ vi.mock("@/utilities/auth/token-manager", () => ({
 }));
 
 // Mock envVars
-vi.mock("@/utilities/enviromentVars", () => ({
-  envVars: {
-    NEXT_PUBLIC_GAP_INDEXER_URL: "https://api.test.com",
-  },
-}));
-
 import { TokenManager } from "@/utilities/auth/token-manager";
 
 const mockGetToken = TokenManager.getToken as vi.Mock;

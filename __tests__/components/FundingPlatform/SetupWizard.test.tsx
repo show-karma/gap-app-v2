@@ -25,7 +25,6 @@ vi.mock("next/link", () => {
   );
 });
 
-// Mock dependencies
 const mockToggleStatusAsync = vi.fn();
 const mockRefetch = vi.fn();
 
@@ -35,14 +34,6 @@ vi.mock("@/hooks/useFundingPlatform", () => ({
     isUpdating: false,
     refetch: mockRefetch,
   })),
-}));
-
-vi.mock("react-hot-toast", () => ({
-  __esModule: true,
-  default: {
-    success: vi.fn(),
-    error: vi.fn(),
-  },
 }));
 
 describe("SetupWizard", () => {

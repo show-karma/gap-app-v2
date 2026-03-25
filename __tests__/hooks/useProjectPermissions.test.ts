@@ -24,10 +24,6 @@ vi.mock("@/utilities/rpcClient", () => ({
   getRPCUrlByChainId: vi.fn(),
 }));
 
-vi.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: vi.fn(),
-}));
-
 vi.mock("ethers", () => {
   const MockJsonRpcProvider = vi.fn().mockReturnValue({});
   return {

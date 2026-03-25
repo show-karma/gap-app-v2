@@ -17,10 +17,6 @@ vi.mock("@/utilities/fetchData", () => ({
 }));
 
 // Mock errorManager
-vi.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: vi.fn(),
-}));
-
 // Mock useAuth
 vi.mock("@/hooks/useAuth", () => ({
   useAuth: vi.fn(() => ({

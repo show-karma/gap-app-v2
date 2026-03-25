@@ -1,10 +1,19 @@
+/**
+ * Tests for ApplicationHeader component.
+ *
+ * Focuses on behavioral concerns:
+ * - Status-driven rendering: different statuses produce different labels, icons, colors
+ * - Conditional rendering of actions section, email, KYC badge
+ * - Edge cases: missing project name, unknown status
+ * - connectedToTabs prop changes border-radius behavior
+ */
+
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import ApplicationHeader from "@/components/FundingPlatform/ApplicationView/ApplicationHeader";
 import type { IFundingApplication } from "@/types/funding-platform";
 
-// Create a wrapper with QueryClientProvider for tests
 const createWrapper = () => {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -21,7 +30,6 @@ const renderWithProviders = (ui: React.ReactElement) => {
   return render(ui, { wrapper: createWrapper() });
 };
 
-// Mock the formatDate utility
 vi.mock("@/utilities/formatDate", () => ({
   formatDate: (date: Date | string) => {
     const d = new Date(date);
@@ -33,13 +41,11 @@ vi.mock("@/utilities/formatDate", () => ({
   },
 }));
 
-// Mock the getProjectTitle helper
 vi.mock("@/components/FundingPlatform/helper/getProjectTitle", () => ({
   getProjectTitle: (application: any) =>
     application.applicationData?.projectName || "Untitled Project",
 }));
 
-// Mock Heroicons
 vi.mock("@heroicons/react/24/outline", () => ({
   CheckCircleIcon: (props: any) => <svg data-testid="check-icon" {...props} />,
   ClockIcon: (props: any) => <svg data-testid="clock-icon" {...props} />,
@@ -69,201 +75,172 @@ const createMockApplication = (
 });
 
 describe("ApplicationHeader", () => {
-  describe("Rendering", () => {
-    it("should render project title", () => {
+  describe("status-driven rendering", () => {
+    const statusCases = [
+      {
+        status: "pending",
+        label: "Pending",
+        iconTestId: "clock-icon",
+        colorClass: "bg-blue-100",
+      },
+      {
+        status: "under_review",
+        label: "Under Review",
+        iconTestId: "clock-icon",
+        colorClass: "bg-purple-100",
+      },
+      {
+        status: "revision_requested",
+        label: "Revision Requested",
+        iconTestId: "warning-icon",
+        colorClass: "bg-yellow-100",
+      },
+      {
+        status: "approved",
+        label: "Approved",
+        iconTestId: "check-icon",
+        colorClass: "bg-green-100",
+      },
+      {
+        status: "rejected",
+        label: "Rejected",
+        iconTestId: "x-icon",
+        colorClass: "bg-red-100",
+      },
+      {
+        status: "resubmitted",
+        label: "Resubmitted",
+        iconTestId: "clock-icon",
+        colorClass: "bg-blue-100",
+      },
+    ];
+
+    it.each(statusCases)(
+      "renders '$label' with $iconTestId icon and $colorClass for status=$status",
+      ({ status, label, iconTestId, colorClass }) => {
+        const application = createMockApplication({ status });
+        const { container } = renderWithProviders(<ApplicationHeader application={application} />);
+
+        // Correct label text
+        expect(screen.getByText(label)).toBeInTheDocument();
+
+        // Correct icon rendered
+        expect(screen.getByTestId(iconTestId)).toBeInTheDocument();
+
+        // Correct color class applied to badge
+        const statusBadge = container.querySelector(`[class*="${colorClass}"]`);
+        expect(statusBadge).toBeInTheDocument();
+      }
+    );
+  });
+
+  describe("metadata display", () => {
+    it("shows project title, reference number, email, and dates", () => {
       const application = createMockApplication();
       renderWithProviders(<ApplicationHeader application={application} />);
 
       expect(screen.getByText("Test Project")).toBeInTheDocument();
-    });
-
-    it("should render reference number", () => {
-      const application = createMockApplication();
-      renderWithProviders(<ApplicationHeader application={application} />);
-
       expect(screen.getByText("APP-TEST-12345")).toBeInTheDocument();
-    });
-
-    it("should render applicant email", () => {
-      const application = createMockApplication();
-      renderWithProviders(<ApplicationHeader application={application} />);
-
       expect(screen.getByText("test@example.com")).toBeInTheDocument();
-    });
-
-    it("should render submitted date", () => {
-      const application = createMockApplication();
-      renderWithProviders(<ApplicationHeader application={application} />);
-
       expect(screen.getByText(/Submitted:/)).toBeInTheDocument();
-    });
-
-    it("should render last updated date", () => {
-      const application = createMockApplication();
-      renderWithProviders(<ApplicationHeader application={application} />);
-
       expect(screen.getByText(/Last updated:/)).toBeInTheDocument();
     });
-  });
 
-  describe("Status Badge", () => {
-    it("should display pending status", () => {
-      const application = createMockApplication({ status: "pending" });
+    it("hides email section when applicantEmail is absent", () => {
+      const application = createMockApplication({ applicantEmail: undefined });
       renderWithProviders(<ApplicationHeader application={application} />);
 
-      expect(screen.getByText("Pending")).toBeInTheDocument();
-      expect(screen.getByTestId("clock-icon")).toBeInTheDocument();
-    });
-
-    it("should display under_review status formatted correctly", () => {
-      const application = createMockApplication({ status: "under_review" });
-      renderWithProviders(<ApplicationHeader application={application} />);
-
-      expect(screen.getByText("Under Review")).toBeInTheDocument();
-    });
-
-    it("should display revision_requested status formatted correctly", () => {
-      const application = createMockApplication({ status: "revision_requested" });
-      renderWithProviders(<ApplicationHeader application={application} />);
-
-      expect(screen.getByText("Revision Requested")).toBeInTheDocument();
-      expect(screen.getByTestId("warning-icon")).toBeInTheDocument();
-    });
-
-    it("should display approved status", () => {
-      const application = createMockApplication({ status: "approved" });
-      renderWithProviders(<ApplicationHeader application={application} />);
-
-      expect(screen.getByText("Approved")).toBeInTheDocument();
-      expect(screen.getByTestId("check-icon")).toBeInTheDocument();
-    });
-
-    it("should display rejected status", () => {
-      const application = createMockApplication({ status: "rejected" });
-      renderWithProviders(<ApplicationHeader application={application} />);
-
-      expect(screen.getByText("Rejected")).toBeInTheDocument();
-      expect(screen.getByTestId("x-icon")).toBeInTheDocument();
-    });
-
-    it("should display resubmitted status", () => {
-      const application = createMockApplication({ status: "resubmitted" });
-      renderWithProviders(<ApplicationHeader application={application} />);
-
-      expect(screen.getByText("Resubmitted")).toBeInTheDocument();
+      expect(screen.queryByText("Submitted by:")).not.toBeInTheDocument();
     });
   });
 
-  describe("Status Colors", () => {
-    it("should apply blue color for pending status", () => {
-      const application = createMockApplication({ status: "pending" });
-      const { container } = renderWithProviders(<ApplicationHeader application={application} />);
+  describe("actions section conditional rendering", () => {
+    it("renders statusActions and shows the actions row with border-t", () => {
+      const application = createMockApplication();
+      const { container } = renderWithProviders(
+        <ApplicationHeader application={application} statusActions={<button>Approve</button>} />
+      );
 
-      const statusBadge = container.querySelector('[class*="bg-blue-100"]');
-      expect(statusBadge).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /approve/i })).toBeInTheDocument();
+      expect(container.querySelector(".border-t")).toBeInTheDocument();
     });
 
-    it("should apply purple color for under_review status", () => {
-      const application = createMockApplication({ status: "under_review" });
-      const { container } = renderWithProviders(<ApplicationHeader application={application} />);
+    it("renders moreActions next to the status badge", () => {
+      const application = createMockApplication();
+      renderWithProviders(
+        <ApplicationHeader application={application} moreActions={<button>More Options</button>} />
+      );
 
-      const statusBadge = container.querySelector('[class*="bg-purple-100"]');
-      expect(statusBadge).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /more options/i })).toBeInTheDocument();
     });
 
-    it("should apply yellow color for revision_requested status", () => {
-      const application = createMockApplication({ status: "revision_requested" });
-      const { container } = renderWithProviders(<ApplicationHeader application={application} />);
+    it("hides the actions row when only moreActions (no statusActions) is provided", () => {
+      const application = createMockApplication();
+      const { container } = renderWithProviders(
+        <ApplicationHeader application={application} moreActions={<button>More</button>} />
+      );
 
-      const statusBadge = container.querySelector('[class*="bg-yellow-100"]');
-      expect(statusBadge).toBeInTheDocument();
+      // The border-t section only appears when statusActions is provided
+      const actionSection = container.querySelector(".border-t.border-gray-200");
+      expect(actionSection).not.toBeInTheDocument();
     });
 
-    it("should apply green color for approved status", () => {
-      const application = createMockApplication({ status: "approved" });
+    it("hides the actions row when neither statusActions nor moreActions are provided", () => {
+      const application = createMockApplication();
       const { container } = renderWithProviders(<ApplicationHeader application={application} />);
 
-      const statusBadge = container.querySelector('[class*="bg-green-100"]');
-      expect(statusBadge).toBeInTheDocument();
-    });
-
-    it("should apply red color for rejected status", () => {
-      const application = createMockApplication({ status: "rejected" });
-      const { container } = renderWithProviders(<ApplicationHeader application={application} />);
-
-      const statusBadge = container.querySelector('[class*="bg-red-100"]');
-      expect(statusBadge).toBeInTheDocument();
+      const actionSection = container.querySelector(".border-t.border-gray-200");
+      expect(actionSection).not.toBeInTheDocument();
     });
   });
 
-  describe("Edge Cases", () => {
-    it("should handle missing project name gracefully", () => {
-      const application = createMockApplication({
-        applicationData: {},
-      });
+  describe("connectedToTabs prop", () => {
+    it("applies rounded-t-lg and no bottom border when connectedToTabs is true", () => {
+      const application = createMockApplication();
+      const { container } = renderWithProviders(
+        <ApplicationHeader application={application} connectedToTabs={true} />
+      );
+
+      const root = container.firstChild as HTMLElement;
+      expect(root).toHaveClass("rounded-t-lg");
+      expect(root).toHaveClass("border-b-0");
+    });
+
+    it("applies full rounded-lg border when connectedToTabs is false (default)", () => {
+      const application = createMockApplication();
+      const { container } = renderWithProviders(<ApplicationHeader application={application} />);
+
+      const root = container.firstChild as HTMLElement;
+      expect(root).toHaveClass("rounded-lg");
+      expect(root).not.toHaveClass("border-b-0");
+    });
+  });
+
+  describe("edge cases", () => {
+    it("shows 'Untitled Project' when project name is missing", () => {
+      const application = createMockApplication({ applicationData: {} });
       renderWithProviders(<ApplicationHeader application={application} />);
 
       expect(screen.getByText("Untitled Project")).toBeInTheDocument();
     });
 
-    it("should handle unknown status gracefully", () => {
+    it("shows formatted unknown status text and falls back to clock icon", () => {
       const application = createMockApplication({
         status: "unknown_status" as any,
       });
       renderWithProviders(<ApplicationHeader application={application} />);
 
       expect(screen.getByText("Unknown Status")).toBeInTheDocument();
-    });
-  });
-
-  describe("Dark Mode Support", () => {
-    it("should have dark mode classes", () => {
-      const application = createMockApplication();
-      const { container } = renderWithProviders(<ApplicationHeader application={application} />);
-
-      const htmlContent = container.innerHTML;
-      expect(htmlContent).toContain("dark:bg-zinc-800");
-      expect(htmlContent).toContain("dark:text-white");
-    });
-  });
-
-  describe("Actions", () => {
-    it("should render status actions when provided", () => {
-      const application = createMockApplication();
-      renderWithProviders(
-        <ApplicationHeader application={application} statusActions={<button>Test Action</button>} />
-      );
-
-      expect(screen.getByRole("button", { name: /test action/i })).toBeInTheDocument();
+      // Falls back to ClockIcon
+      expect(screen.getByTestId("clock-icon")).toBeInTheDocument();
     });
 
-    it("should render more actions when provided", () => {
-      const application = createMockApplication();
-      renderWithProviders(
-        <ApplicationHeader application={application} moreActions={<button>More</button>} />
-      );
+    it("provides an accessible aria-label on the status badge", () => {
+      const application = createMockApplication({ status: "approved" });
+      renderWithProviders(<ApplicationHeader application={application} />);
 
-      expect(screen.getByRole("button", { name: /more/i })).toBeInTheDocument();
-    });
-
-    it("should show actions section with divider when status actions are provided", () => {
-      const application = createMockApplication();
-      const { container } = renderWithProviders(
-        <ApplicationHeader application={application} statusActions={<button>Approve</button>} />
-      );
-
-      expect(container.querySelector(".border-t")).toBeInTheDocument();
-    });
-
-    it("should not show actions section when no status actions", () => {
-      const application = createMockApplication();
-      const { container } = renderWithProviders(
-        <ApplicationHeader application={application} moreActions={<button>More</button>} />
-      );
-
-      // The border-t is only added when statusActions is present
-      const actionSection = container.querySelector(".border-t.border-gray-200");
-      expect(actionSection).not.toBeInTheDocument();
+      const badge = screen.getByLabelText("Application status: Approved");
+      expect(badge).toBeInTheDocument();
     });
   });
 });

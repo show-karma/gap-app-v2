@@ -33,16 +33,6 @@ vi.mock("@/utilities/indexer", () => ({
   },
 }));
 
-vi.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: vi.fn(),
-}));
-
-vi.mock("@/utilities/enviromentVars", () => ({
-  envVars: {
-    NEXT_PUBLIC_GAP_INDEXER_URL: "https://indexer.example.com",
-  },
-}));
-
 vi.mock("@/constants/projects-explorer", () => ({
   PROJECTS_EXPLORER_CONSTANTS: {
     RESULT_LIMIT: 50,

@@ -5,12 +5,6 @@ import {
 } from "@/services/community-project-updates.service";
 
 // Mock dependencies
-vi.mock("@/utilities/enviromentVars", () => ({
-  envVars: {
-    NEXT_PUBLIC_GAP_INDEXER_URL: "http://localhost:4000",
-  },
-}));
-
 vi.mock("@/utilities/indexer", () => ({
   INDEXER: {
     COMMUNITY: {
@@ -18,8 +12,6 @@ vi.mock("@/utilities/indexer", () => ({
     },
   },
 }));
-
-vi.mock("@/components/Utilities/errorManager");
 
 describe("fetchCommunityProjectUpdates", () => {
   const mockFetch = vi.fn();

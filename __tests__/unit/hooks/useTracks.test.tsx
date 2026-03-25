@@ -35,14 +35,6 @@ vi.mock("@/services/tracks", () => ({
 }));
 
 // Mock react-hot-toast
-vi.mock("react-hot-toast", () => ({
-  __esModule: true,
-  default: {
-    success: vi.fn(),
-    error: vi.fn(),
-  },
-}));
-
 // Mock SDK tracks
 vi.mock("@/utilities/sdk/tracks", () => ({
   fetchTrackById: vi.fn(),

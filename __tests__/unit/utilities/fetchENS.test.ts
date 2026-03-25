@@ -39,10 +39,6 @@ vi.mock("@/utilities/enviromentVars", () => ({
   },
 }));
 
-vi.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: vi.fn(),
-}));
-
 // ---- Imports (after mocks) ----
 
 import { createPublicClient, http } from "viem";

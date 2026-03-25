@@ -26,16 +26,6 @@ vi.mock("@/utilities/indexer", () => ({
   },
 }));
 
-vi.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: vi.fn(),
-}));
-
-vi.mock("@/utilities/enviromentVars", () => ({
-  envVars: {
-    NEXT_PUBLIC_GAP_INDEXER_URL: "https://indexer.example.com",
-  },
-}));
-
 vi.mock("@/constants/projects-explorer", () => ({
   PROJECTS_EXPLORER_CONSTANTS: {
     RESULT_LIMIT: 50,
@@ -73,8 +63,8 @@ describe("React Query integration trust tests", () => {
   // --- Default query options ---
 
   describe("default query options", () => {
-    it("retry is set to 1 (retries once on failure)", () => {
-      expect(defaultQueryOptions.retry).toBe(1);
+    it("retry is a function (smart retry based on status code)", () => {
+      expect(typeof defaultQueryOptions.retry).toBe("function");
     });
 
     it("staleTime is 1 minute", () => {
@@ -186,54 +176,40 @@ describe("React Query integration trust tests", () => {
     });
   });
 
-  // --- KNOWN BUG: 429 retried ---
+  // --- FIXED: 429 no longer retried ---
 
-  describe("KNOWN BUG: 429 rate-limited requests are retried", () => {
-    it("default retry=1 means rate-limited 429 requests get retried once", () => {
-      // The defaultQueryOptions sets retry: 1
-      // This means ALL failed requests (including 429 rate limits) are retried once.
-      // 429 responses should ideally NOT be retried, as retrying a rate-limited
-      // request immediately will likely fail again and adds unnecessary load.
-      //
-      // This test documents the current behavior as a known bug.
-      expect(defaultQueryOptions.retry).toBe(1);
-
-      // A proper fix would use a retry function:
-      // retry: (failureCount, error) => {
-      //   if (error?.response?.status === 429) return false;
-      //   return failureCount < 1;
-      // }
+  describe("FIXED: 429 rate-limited requests are not retried", () => {
+    it("retry is a function that skips 429 errors", () => {
+      // Previously retry was set to 1, retrying all errors including 429.
+      // Now it is a function that checks the HTTP status code.
+      expect(typeof defaultQueryOptions.retry).toBe("function");
     });
 
-    it("demonstrates 429 retry behavior with QueryClient", async () => {
+    it("429 error is not retried", async () => {
       let callCount = 0;
 
       const retryClient = new QueryClient({
         defaultOptions: {
-          queries: {
-            ...defaultQueryOptions,
-            // Use the actual default retry value
-          },
+          queries: defaultQueryOptions,
         },
       });
 
       try {
         await retryClient.fetchQuery({
-          queryKey: ["test-429"],
+          queryKey: ["test-429-fixed"],
           queryFn: async () => {
             callCount++;
             const err = new Error("Rate limited") as any;
             err.response = { status: 429 };
             throw err;
           },
-          retry: defaultQueryOptions.retry,
         });
       } catch {
-        // Expected to throw after retries exhausted
+        // Expected to throw
       }
 
-      // With retry=1, the function is called twice: initial + 1 retry
-      expect(callCount).toBe(2);
+      // With the fix, 429 should NOT be retried -- only 1 call
+      expect(callCount).toBe(1);
 
       retryClient.clear();
     });

@@ -12,14 +12,6 @@ vi.mock("wagmi", () => ({
 }));
 
 // Mock react-hot-toast
-vi.mock("react-hot-toast", () => ({
-  __esModule: true,
-  default: {
-    success: vi.fn(),
-    error: vi.fn(),
-  },
-}));
-
 // Mock Button component
 vi.mock("@/components/Utilities/Button", () => ({
   Button: ({ children, onClick, disabled, type, isLoading, ...props }: any) => (

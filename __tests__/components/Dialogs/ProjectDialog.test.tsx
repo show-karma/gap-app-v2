@@ -392,10 +392,6 @@ vi.mock("@/components/Utilities/ExternalLink", () => ({
   ),
 }));
 
-vi.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: vi.fn(),
-}));
-
 vi.mock("@/components/Utilities/FileUpload", () => ({
   FileUpload: () => <div data-testid="file-upload" />,
 }));

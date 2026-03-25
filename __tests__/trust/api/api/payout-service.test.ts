@@ -48,16 +48,6 @@ vi.mock("@/utilities/indexer", () => ({
   },
 }));
 
-vi.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: vi.fn(),
-}));
-
-vi.mock("@/utilities/enviromentVars", () => ({
-  envVars: {
-    NEXT_PUBLIC_GAP_INDEXER_URL: "https://indexer.example.com",
-  },
-}));
-
 import {
   createDisbursements,
   deletePayoutConfig,

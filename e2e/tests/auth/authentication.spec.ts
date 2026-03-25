@@ -12,14 +12,17 @@ test.describe("Authentication", () => {
     });
     await page.goto("/community/optimism", GOTO_OPTIONS);
     await waitForPageReady(page);
-    // The page should render as authenticated user showing their truncated address
-    const bodyText = await page.textContent("body");
-    // Applicant address starts with 0x9965... - check for truncated form or connected indicator
-    expect(
-      bodyText?.includes("0x99") ||
-        bodyText?.toLowerCase().includes("connected") ||
-        bodyText?.includes("Optimism")
-    ).toBeTruthy();
+
+    // The page should render as authenticated user showing their truncated address (0x9965...)
+    // or a "connected" indicator, and the community name
+    await expect(page.getByText("Optimism").first()).toBeVisible();
+    // Verify at least the address prefix or a connected-state indicator is visible
+    await expect(
+      page
+        .getByText("0x99")
+        .or(page.getByText(/connected/i))
+        .first()
+    ).toBeVisible();
   });
 
   test("T1-22: session persists across page navigation", async ({
@@ -35,13 +38,17 @@ test.describe("Authentication", () => {
     });
     await page.goto("/community/optimism", GOTO_OPTIONS);
     await waitForPageReady(page);
-    // Navigate to another community page (avoid /dashboard which may have SSR auth issues)
+
+    // Verify community content is visible before navigating
+    await expect(page.getByText("Optimism").first()).toBeVisible();
+
+    // Navigate to the same community page again (simulating navigation)
     await page.goto("/community/optimism", GOTO_OPTIONS);
     await waitForPageReady(page);
-    // Should still be authenticated — page renders content, not a login redirect
+
+    // Should still be authenticated — page renders community content, not a login redirect
     await expect(page).toHaveURL(/\/community\/optimism/);
-    const bodyText = await page.textContent("body");
-    expect(bodyText!.length).toBeGreaterThan(50);
+    await expect(page.getByText("Optimism").first()).toBeVisible();
   });
 
   test("T1-23: sign-out clears auth state", async ({ page, withApiMocks, loginAs }) => {
@@ -84,19 +91,38 @@ test.describe("Authentication", () => {
     await withApiMocks({
       "**/v2/communities/optimism": mockJson(community),
     });
+
     // First visit as guest
     await page.goto("/community/optimism", GOTO_OPTIONS);
     await waitForPageReady(page);
+    // Guest should see the community name
+    await expect(page.getByText("Optimism").first()).toBeVisible();
+
     const guestContent = await page.textContent("body");
 
-    // Then visit as admin (new page context resets)
+    // Then visit as admin (loginAs sets up new auth state)
     await loginAs("communityAdmin");
+    await withApiMocks({
+      "**/v2/communities/optimism": mockJson(community),
+      "**/v2/user/communities/admin": mockJson([community]),
+    });
     await page.goto("/community/optimism", GOTO_OPTIONS);
     await waitForPageReady(page);
+
+    // Admin should also see the community name
+    await expect(page.getByText("Optimism").first()).toBeVisible();
+
     const adminContent = await page.textContent("body");
 
-    // Both should render valid content
-    expect(guestContent).toBeTruthy();
-    expect(adminContent).toBeTruthy();
+    // Both should render meaningful content (not empty or trivially short)
+    expect(guestContent?.length, "Guest page should have rendered content").toBeGreaterThan(50);
+    expect(adminContent?.length, "Admin page should have rendered content").toBeGreaterThan(50);
+
+    // The admin page content should differ from guest — admin sees their address
+    // or admin-specific UI elements that guest does not
+    expect(adminContent).not.toEqual(guestContent);
+
+    // Admin should see their truncated address (0x3C44...) which guest would not
+    expect(adminContent).toContain("0x3C");
   });
 });

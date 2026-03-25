@@ -6,7 +6,7 @@
  */
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { renderHook, act, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { createElement } from "react";
 
@@ -67,8 +67,6 @@ const {
 // Module mocks
 // ---------------------------------------------------------------------------
 
-vi.mock("react-hot-toast", () => ({ default: mockToast }));
-
 vi.mock("viem", () => ({
   createWalletClient: vi.fn(() => mockWalletClient),
   custom: vi.fn((provider: unknown) => provider),
@@ -115,8 +113,9 @@ vi.mock("@/features/claim-funds/lib/viem-clients", () => ({
 }));
 
 vi.mock("@/utilities/donations/helpers", () => ({
-  formatAddressForDisplay: vi.fn((addr: string, start: number, end: number) =>
-    `${addr.slice(0, start + 2)}...${addr.slice(-end)}`
+  formatAddressForDisplay: vi.fn(
+    (addr: string, start: number, end: number) =>
+      `${addr.slice(0, start + 2)}...${addr.slice(-end)}`
   ),
 }));
 
@@ -124,8 +123,8 @@ vi.mock("@/utilities/donations/helpers", () => ({
 // Import the REAL hook AFTER mocks
 // ---------------------------------------------------------------------------
 import { useDelegatedClaim } from "@/features/claim-funds/hooks/use-delegated-claim";
-import type { ClaimEligibility } from "@/features/claim-funds/types";
 import { getChainByName } from "@/features/claim-funds/lib/viem-clients";
+import type { ClaimEligibility } from "@/features/claim-funds/types";
 
 // ---------------------------------------------------------------------------
 // Test helpers
@@ -196,30 +195,21 @@ describe("useDelegatedClaim (real hook)", () => {
   describe("initial state", () => {
     it("should start in idle step", () => {
       const { wrapper } = createWrapper();
-      const { result } = renderHook(
-        () => useDelegatedClaim("tenant-1", undefined),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useDelegatedClaim("tenant-1", undefined), { wrapper });
 
       expect(result.current.step).toBe("idle");
     });
 
     it("should have no pending claim initially", () => {
       const { wrapper } = createWrapper();
-      const { result } = renderHook(
-        () => useDelegatedClaim("tenant-1", undefined),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useDelegatedClaim("tenant-1", undefined), { wrapper });
 
       expect(result.current.pendingClaim).toBeNull();
     });
 
     it("should report all flags as false initially", () => {
       const { wrapper } = createWrapper();
-      const { result } = renderHook(
-        () => useDelegatedClaim("tenant-1", undefined),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useDelegatedClaim("tenant-1", undefined), { wrapper });
 
       expect(result.current.isPending).toBe(false);
       expect(result.current.isConfirming).toBe(false);
@@ -231,10 +221,7 @@ describe("useDelegatedClaim (real hook)", () => {
 
     it("should expose requestSignature, submitClaim, and reset functions", () => {
       const { wrapper } = createWrapper();
-      const { result } = renderHook(
-        () => useDelegatedClaim("tenant-1", undefined),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useDelegatedClaim("tenant-1", undefined), { wrapper });
 
       expect(typeof result.current.requestSignature).toBe("function");
       expect(typeof result.current.submitClaim).toBe("function");
@@ -259,13 +246,15 @@ describe("useDelegatedClaim (real hook)", () => {
       );
 
       const { wrapper } = createWrapper();
-      const { result } = renderHook(
-        () => useDelegatedClaim("tenant-1", undefined),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useDelegatedClaim("tenant-1", undefined), { wrapper });
 
       act(() => {
-        result.current.requestSignature(MOCK_CAMPAIGN_ID, createMockEligibility(), MOCK_CONTRACT, MOCK_CLAIMER);
+        result.current.requestSignature(
+          MOCK_CAMPAIGN_ID,
+          createMockEligibility(),
+          MOCK_CONTRACT,
+          MOCK_CLAIMER
+        );
       });
 
       await waitFor(() => {
@@ -291,13 +280,15 @@ describe("useDelegatedClaim (real hook)", () => {
       );
 
       const { wrapper } = createWrapper();
-      const { result } = renderHook(
-        () => useDelegatedClaim("tenant-1", undefined),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useDelegatedClaim("tenant-1", undefined), { wrapper });
 
       act(() => {
-        result.current.requestSignature(MOCK_CAMPAIGN_ID, createMockEligibility(), MOCK_CONTRACT, MOCK_CLAIMER);
+        result.current.requestSignature(
+          MOCK_CAMPAIGN_ID,
+          createMockEligibility(),
+          MOCK_CONTRACT,
+          MOCK_CLAIMER
+        );
       });
 
       await waitFor(() => {
@@ -316,13 +307,15 @@ describe("useDelegatedClaim (real hook)", () => {
       mockSignTypedData.mockResolvedValue(MOCK_SIGNATURE);
 
       const { wrapper } = createWrapper();
-      const { result } = renderHook(
-        () => useDelegatedClaim("tenant-1", undefined),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useDelegatedClaim("tenant-1", undefined), { wrapper });
 
       act(() => {
-        result.current.requestSignature(MOCK_CAMPAIGN_ID, createMockEligibility(), MOCK_CONTRACT, MOCK_CLAIMER);
+        result.current.requestSignature(
+          MOCK_CAMPAIGN_ID,
+          createMockEligibility(),
+          MOCK_CONTRACT,
+          MOCK_CLAIMER
+        );
       });
 
       await waitFor(() => {
@@ -349,13 +342,15 @@ describe("useDelegatedClaim (real hook)", () => {
       mockSignTypedData.mockResolvedValue(MOCK_SIGNATURE);
 
       const { wrapper } = createWrapper();
-      const { result } = renderHook(
-        () => useDelegatedClaim("tenant-1", undefined),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useDelegatedClaim("tenant-1", undefined), { wrapper });
 
       act(() => {
-        result.current.requestSignature(MOCK_CAMPAIGN_ID, createMockEligibility(), MOCK_CONTRACT, MOCK_CLAIMER);
+        result.current.requestSignature(
+          MOCK_CAMPAIGN_ID,
+          createMockEligibility(),
+          MOCK_CONTRACT,
+          MOCK_CLAIMER
+        );
       });
 
       await waitFor(() => {
@@ -378,13 +373,15 @@ describe("useDelegatedClaim (real hook)", () => {
       mockSignTypedData.mockResolvedValue(MOCK_SIGNATURE);
 
       const { wrapper } = createWrapper();
-      const { result } = renderHook(
-        () => useDelegatedClaim("tenant-1", undefined),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useDelegatedClaim("tenant-1", undefined), { wrapper });
 
       act(() => {
-        result.current.requestSignature(MOCK_CAMPAIGN_ID, createMockEligibility(), MOCK_CONTRACT, MOCK_CLAIMER);
+        result.current.requestSignature(
+          MOCK_CAMPAIGN_ID,
+          createMockEligibility(),
+          MOCK_CONTRACT,
+          MOCK_CLAIMER
+        );
       });
 
       await waitFor(() => {
@@ -408,13 +405,15 @@ describe("useDelegatedClaim (real hook)", () => {
       );
 
       const { wrapper } = createWrapper();
-      const { result } = renderHook(
-        () => useDelegatedClaim("tenant-1", undefined),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useDelegatedClaim("tenant-1", undefined), { wrapper });
 
       act(() => {
-        result.current.requestSignature(MOCK_CAMPAIGN_ID, createMockEligibility(), MOCK_CONTRACT, MOCK_CLAIMER);
+        result.current.requestSignature(
+          MOCK_CAMPAIGN_ID,
+          createMockEligibility(),
+          MOCK_CONTRACT,
+          MOCK_CLAIMER
+        );
       });
 
       await waitFor(() => {
@@ -423,7 +422,12 @@ describe("useDelegatedClaim (real hook)", () => {
 
       // Second call should be ignored
       act(() => {
-        result.current.requestSignature("other-id", createMockEligibility(), MOCK_CONTRACT, MOCK_CLAIMER);
+        result.current.requestSignature(
+          "other-id",
+          createMockEligibility(),
+          MOCK_CONTRACT,
+          MOCK_CLAIMER
+        );
       });
 
       // signTypedData should still only have been called once
@@ -445,13 +449,15 @@ describe("useDelegatedClaim (real hook)", () => {
       mockGetBrowserProvider.mockReturnValue(undefined);
 
       const { wrapper } = createWrapper();
-      const { result } = renderHook(
-        () => useDelegatedClaim("tenant-1", undefined),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useDelegatedClaim("tenant-1", undefined), { wrapper });
 
       act(() => {
-        result.current.requestSignature(MOCK_CAMPAIGN_ID, createMockEligibility(), MOCK_CONTRACT, MOCK_CLAIMER);
+        result.current.requestSignature(
+          MOCK_CAMPAIGN_ID,
+          createMockEligibility(),
+          MOCK_CONTRACT,
+          MOCK_CLAIMER
+        );
       });
 
       await waitFor(() => {
@@ -467,13 +473,15 @@ describe("useDelegatedClaim (real hook)", () => {
       mockSignTypedData.mockRejectedValue(new Error("already pending request"));
 
       const { wrapper } = createWrapper();
-      const { result } = renderHook(
-        () => useDelegatedClaim("tenant-1", undefined),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useDelegatedClaim("tenant-1", undefined), { wrapper });
 
       act(() => {
-        result.current.requestSignature(MOCK_CAMPAIGN_ID, createMockEligibility(), MOCK_CONTRACT, MOCK_CLAIMER);
+        result.current.requestSignature(
+          MOCK_CAMPAIGN_ID,
+          createMockEligibility(),
+          MOCK_CONTRACT,
+          MOCK_CLAIMER
+        );
       });
 
       await waitFor(() => {
@@ -492,13 +500,15 @@ describe("useDelegatedClaim (real hook)", () => {
       mockSignTypedData.mockRejectedValue(new Error("account does not match"));
 
       const { wrapper } = createWrapper();
-      const { result } = renderHook(
-        () => useDelegatedClaim("tenant-1", undefined),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useDelegatedClaim("tenant-1", undefined), { wrapper });
 
       act(() => {
-        result.current.requestSignature(MOCK_CAMPAIGN_ID, createMockEligibility(), MOCK_CONTRACT, MOCK_CLAIMER);
+        result.current.requestSignature(
+          MOCK_CAMPAIGN_ID,
+          createMockEligibility(),
+          MOCK_CONTRACT,
+          MOCK_CLAIMER
+        );
       });
 
       await waitFor(() => {
@@ -517,13 +527,15 @@ describe("useDelegatedClaim (real hook)", () => {
       mockSignTypedData.mockRejectedValue(new Error("unknown account 0x222"));
 
       const { wrapper } = createWrapper();
-      const { result } = renderHook(
-        () => useDelegatedClaim("tenant-1", undefined),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useDelegatedClaim("tenant-1", undefined), { wrapper });
 
       act(() => {
-        result.current.requestSignature(MOCK_CAMPAIGN_ID, createMockEligibility(), MOCK_CONTRACT, MOCK_CLAIMER);
+        result.current.requestSignature(
+          MOCK_CAMPAIGN_ID,
+          createMockEligibility(),
+          MOCK_CONTRACT,
+          MOCK_CLAIMER
+        );
       });
 
       await waitFor(() => {
@@ -542,23 +554,24 @@ describe("useDelegatedClaim (real hook)", () => {
       mockSignTypedData.mockRejectedValue(new Error("User rejected the request"));
 
       const { wrapper } = createWrapper();
-      const { result } = renderHook(
-        () => useDelegatedClaim("tenant-1", undefined),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useDelegatedClaim("tenant-1", undefined), { wrapper });
 
       act(() => {
-        result.current.requestSignature(MOCK_CAMPAIGN_ID, createMockEligibility(), MOCK_CONTRACT, MOCK_CLAIMER);
+        result.current.requestSignature(
+          MOCK_CAMPAIGN_ID,
+          createMockEligibility(),
+          MOCK_CONTRACT,
+          MOCK_CLAIMER
+        );
       });
 
       await waitFor(() => {
         expect(result.current.error).toBeTruthy();
       });
 
-      expect(mockToast.error).toHaveBeenCalledWith(
-        "You rejected the signature request.",
-        { id: "signature-request" }
-      );
+      expect(mockToast.error).toHaveBeenCalledWith("You rejected the signature request.", {
+        id: "signature-request",
+      });
     });
 
     it("should show rejection message when user denied signature", async () => {
@@ -567,23 +580,24 @@ describe("useDelegatedClaim (real hook)", () => {
       mockSignTypedData.mockRejectedValue(new Error("User denied the request"));
 
       const { wrapper } = createWrapper();
-      const { result } = renderHook(
-        () => useDelegatedClaim("tenant-1", undefined),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useDelegatedClaim("tenant-1", undefined), { wrapper });
 
       act(() => {
-        result.current.requestSignature(MOCK_CAMPAIGN_ID, createMockEligibility(), MOCK_CONTRACT, MOCK_CLAIMER);
+        result.current.requestSignature(
+          MOCK_CAMPAIGN_ID,
+          createMockEligibility(),
+          MOCK_CONTRACT,
+          MOCK_CLAIMER
+        );
       });
 
       await waitFor(() => {
         expect(result.current.error).toBeTruthy();
       });
 
-      expect(mockToast.error).toHaveBeenCalledWith(
-        "You rejected the signature request.",
-        { id: "signature-request" }
-      );
+      expect(mockToast.error).toHaveBeenCalledWith("You rejected the signature request.", {
+        id: "signature-request",
+      });
     });
 
     it("should show generic error message for unrecognized errors", async () => {
@@ -592,23 +606,24 @@ describe("useDelegatedClaim (real hook)", () => {
       mockSignTypedData.mockRejectedValue(new Error("some random network error"));
 
       const { wrapper } = createWrapper();
-      const { result } = renderHook(
-        () => useDelegatedClaim("tenant-1", undefined),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useDelegatedClaim("tenant-1", undefined), { wrapper });
 
       act(() => {
-        result.current.requestSignature(MOCK_CAMPAIGN_ID, createMockEligibility(), MOCK_CONTRACT, MOCK_CLAIMER);
+        result.current.requestSignature(
+          MOCK_CAMPAIGN_ID,
+          createMockEligibility(),
+          MOCK_CONTRACT,
+          MOCK_CLAIMER
+        );
       });
 
       await waitFor(() => {
         expect(result.current.error).toBeTruthy();
       });
 
-      expect(mockToast.error).toHaveBeenCalledWith(
-        "some random network error",
-        { id: "signature-request" }
-      );
+      expect(mockToast.error).toHaveBeenCalledWith("some random network error", {
+        id: "signature-request",
+      });
     });
   });
 
@@ -623,14 +638,18 @@ describe("useDelegatedClaim (real hook)", () => {
       mockSignTypedData.mockResolvedValue(MOCK_SIGNATURE);
 
       const wrapperResult = createWrapper();
-      const { result } = renderHook(
-        () => useDelegatedClaim("tenant-1", undefined),
-        { wrapper: wrapperResult.wrapper }
-      );
+      const { result } = renderHook(() => useDelegatedClaim("tenant-1", undefined), {
+        wrapper: wrapperResult.wrapper,
+      });
 
       // Complete signature step
       act(() => {
-        result.current.requestSignature(MOCK_CAMPAIGN_ID, createMockEligibility(), MOCK_CONTRACT, MOCK_CLAIMER);
+        result.current.requestSignature(
+          MOCK_CAMPAIGN_ID,
+          createMockEligibility(),
+          MOCK_CONTRACT,
+          MOCK_CLAIMER
+        );
       });
 
       await waitFor(() => {
@@ -642,10 +661,7 @@ describe("useDelegatedClaim (real hook)", () => {
 
     it("should not submit if there is no pending claim", () => {
       const { wrapper } = createWrapper();
-      const { result } = renderHook(
-        () => useDelegatedClaim("tenant-1", undefined),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useDelegatedClaim("tenant-1", undefined), { wrapper });
 
       act(() => {
         result.current.submitClaim();
@@ -716,11 +732,12 @@ describe("useDelegatedClaim (real hook)", () => {
       );
 
       // Toast
-      expect(mockToast.loading).toHaveBeenCalledWith("Waiting for confirmation...", { id: "delegated-tx" });
-      expect(mockToast.success).toHaveBeenCalledWith(
-        expect.stringContaining("Tokens sent to"),
-        { id: "delegated-tx" }
-      );
+      expect(mockToast.loading).toHaveBeenCalledWith("Waiting for confirmation...", {
+        id: "delegated-tx",
+      });
+      expect(mockToast.success).toHaveBeenCalledWith(expect.stringContaining("Tokens sent to"), {
+        id: "delegated-tx",
+      });
 
       // Query invalidation
       expect(invalidateSpy).toHaveBeenCalledWith(
@@ -776,13 +793,17 @@ describe("useDelegatedClaim (real hook)", () => {
       mockSignTypedData.mockResolvedValue(MOCK_SIGNATURE);
 
       const wrapperResult = createWrapper();
-      const { result } = renderHook(
-        () => useDelegatedClaim("tenant-1", undefined),
-        { wrapper: wrapperResult.wrapper }
-      );
+      const { result } = renderHook(() => useDelegatedClaim("tenant-1", undefined), {
+        wrapper: wrapperResult.wrapper,
+      });
 
       act(() => {
-        result.current.requestSignature(MOCK_CAMPAIGN_ID, createMockEligibility(), MOCK_CONTRACT, MOCK_CLAIMER);
+        result.current.requestSignature(
+          MOCK_CAMPAIGN_ID,
+          createMockEligibility(),
+          MOCK_CONTRACT,
+          MOCK_CLAIMER
+        );
       });
 
       await waitFor(() => {
@@ -857,10 +878,7 @@ describe("useDelegatedClaim (real hook)", () => {
       });
 
       expect(mockSanitizeErrorMessage).toHaveBeenCalledWith(submitError, "Claim Failed");
-      expect(mockToast.error).toHaveBeenCalledWith(
-        expect.any(String),
-        { id: "delegated-tx" }
-      );
+      expect(mockToast.error).toHaveBeenCalledWith(expect.any(String), { id: "delegated-tx" });
     });
 
     it("should reset isConfirming on settled even after error", async () => {
@@ -896,17 +914,19 @@ describe("useDelegatedClaim (real hook)", () => {
       mockWaitForTransactionReceipt.mockResolvedValue({ status: "success" });
 
       const { wrapper } = createWrapper();
-      const { result } = renderHook(
-        () => useDelegatedClaim("tenant-1", undefined),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useDelegatedClaim("tenant-1", undefined), { wrapper });
 
       // Starts idle
       expect(result.current.step).toBe("idle");
 
       // Step 1: Request signature
       act(() => {
-        result.current.requestSignature(MOCK_CAMPAIGN_ID, createMockEligibility(), MOCK_CONTRACT, MOCK_CLAIMER);
+        result.current.requestSignature(
+          MOCK_CAMPAIGN_ID,
+          createMockEligibility(),
+          MOCK_CONTRACT,
+          MOCK_CLAIMER
+        );
       });
 
       await waitFor(() => {
@@ -939,13 +959,15 @@ describe("useDelegatedClaim (real hook)", () => {
       mockSignTypedData.mockResolvedValue(MOCK_SIGNATURE);
 
       const { wrapper } = createWrapper();
-      const { result } = renderHook(
-        () => useDelegatedClaim("tenant-1", undefined),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useDelegatedClaim("tenant-1", undefined), { wrapper });
 
       act(() => {
-        result.current.requestSignature(MOCK_CAMPAIGN_ID, createMockEligibility(), MOCK_CONTRACT, MOCK_CLAIMER);
+        result.current.requestSignature(
+          MOCK_CAMPAIGN_ID,
+          createMockEligibility(),
+          MOCK_CONTRACT,
+          MOCK_CLAIMER
+        );
       });
 
       await waitFor(() => {
@@ -970,14 +992,16 @@ describe("useDelegatedClaim (real hook)", () => {
       mockSignTypedData.mockResolvedValue(MOCK_SIGNATURE);
 
       const { wrapper } = createWrapper();
-      const { result } = renderHook(
-        () => useDelegatedClaim("tenant-1", undefined),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useDelegatedClaim("tenant-1", undefined), { wrapper });
 
       // First signature
       act(() => {
-        result.current.requestSignature(MOCK_CAMPAIGN_ID, createMockEligibility(), MOCK_CONTRACT, MOCK_CLAIMER);
+        result.current.requestSignature(
+          MOCK_CAMPAIGN_ID,
+          createMockEligibility(),
+          MOCK_CONTRACT,
+          MOCK_CLAIMER
+        );
       });
 
       await waitFor(() => {
@@ -993,7 +1017,12 @@ describe("useDelegatedClaim (real hook)", () => {
 
       // Second signature
       act(() => {
-        result.current.requestSignature(MOCK_CAMPAIGN_ID, createMockEligibility(), MOCK_CONTRACT, MOCK_CLAIMER);
+        result.current.requestSignature(
+          MOCK_CAMPAIGN_ID,
+          createMockEligibility(),
+          MOCK_CONTRACT,
+          MOCK_CLAIMER
+        );
       });
 
       await waitFor(() => {
@@ -1016,13 +1045,15 @@ describe("useDelegatedClaim (real hook)", () => {
       mockSignTypedData.mockRejectedValue(sigError);
 
       const { wrapper } = createWrapper();
-      const { result } = renderHook(
-        () => useDelegatedClaim("tenant-1", undefined),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useDelegatedClaim("tenant-1", undefined), { wrapper });
 
       act(() => {
-        result.current.requestSignature(MOCK_CAMPAIGN_ID, createMockEligibility(), MOCK_CONTRACT, MOCK_CLAIMER);
+        result.current.requestSignature(
+          MOCK_CAMPAIGN_ID,
+          createMockEligibility(),
+          MOCK_CONTRACT,
+          MOCK_CLAIMER
+        );
       });
 
       await waitFor(() => {
@@ -1050,10 +1081,7 @@ describe("useDelegatedClaim (real hook)", () => {
       };
 
       const { wrapper } = createWrapper();
-      renderHook(
-        () => useDelegatedClaim("tenant-1", hedgeyConfig),
-        { wrapper }
-      );
+      renderHook(() => useDelegatedClaim("tenant-1", hedgeyConfig), { wrapper });
 
       expect(getChainByName).toHaveBeenCalledWith("arbitrum");
     });

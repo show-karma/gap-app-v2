@@ -81,14 +81,6 @@ vi.mock("@/hooks/useFundingPlatform", () => ({
   }),
 }));
 
-vi.mock("react-hot-toast", () => ({
-  __esModule: true,
-  default: {
-    success: vi.fn(),
-    error: vi.fn(),
-  },
-}));
-
 describe("ApplicationContent - Internal Evaluation Integration", () => {
   const mockApplication: IFundingApplication = {
     id: "app-123",

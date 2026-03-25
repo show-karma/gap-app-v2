@@ -48,18 +48,6 @@ vi.mock("@/utilities/attestation-polling", () => ({
   pollForGrantCompletion: mockPollForGrantCompletion,
 }));
 
-vi.mock("react-hot-toast", () => ({
-  __esModule: true,
-  default: {
-    success: mockToastSuccess,
-    error: mockShowError,
-  },
-}));
-
-vi.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: vi.fn(),
-}));
-
 const mockUseAccount = vi.fn();
 const mockUseChainId = vi.fn(() => 1);
 vi.mock("wagmi", () => ({

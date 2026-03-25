@@ -74,11 +74,6 @@ vi.mock("@headlessui/react", () => {
 });
 
 // Mock react-hot-toast (used by ensureCorrectChain)
-vi.mock("react-hot-toast", () => ({
-  __esModule: true,
-  default: { error: vi.fn(), success: vi.fn() },
-}));
-
 // Mock Heroicons
 vi.mock("@heroicons/react/24/solid", () => ({
   PlusIcon: (props: any) => <svg data-testid="plus-icon" {...props} />,
@@ -194,10 +189,6 @@ vi.mock("@/components/Utilities/MarkdownEditor", () => ({
 }));
 
 // Mock errorManager
-vi.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: vi.fn(),
-}));
-
 // Mock messages
 vi.mock("@/utilities/messages", () => ({
   MESSAGES: {

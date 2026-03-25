@@ -3,12 +3,6 @@ import { TokenManager } from "@/utilities/auth/token-manager";
 
 // Mock the dependencies BEFORE importing the service
 vi.mock("@/utilities/auth/token-manager");
-vi.mock("@/utilities/enviromentVars", () => ({
-  envVars: {
-    NEXT_PUBLIC_GAP_INDEXER_URL: "http://localhost:4000",
-  },
-}));
-
 // Mock fetchData for getComments method (which uses fetchData)
 vi.mock("@/utilities/fetchData");
 

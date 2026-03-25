@@ -8,6 +8,7 @@
 import { act, renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { getE2EMockAuthState } from "@/utilities/auth/e2e-auth";
 
 // Undo the global mock of useAuth from __tests__/navbar/setup.ts
 vi.unmock("@/hooks/useAuth");
@@ -73,8 +74,8 @@ vi.mock("@/store/modals/projectCreate", () => ({
   },
 }));
 
-vi.mock("@/utilities/auth/cypress-auth", () => ({
-  getCypressMockAuthState: vi.fn().mockReturnValue(null),
+vi.mock("@/utilities/auth/e2e-auth", () => ({
+  getE2EMockAuthState: vi.fn().mockReturnValue(null),
 }));
 
 vi.mock("@/utilities/auth/token-manager", () => ({
@@ -618,12 +619,11 @@ describe("useAuth — adaptedLogin", () => {
 // Return values
 // =====================================================================
 describe("useAuth — Return Values", () => {
-  it("returns ready/authenticated from Cypress mock when active", () => {
-    const { getCypressMockAuthState } = require("@/utilities/auth/cypress-auth");
-    getCypressMockAuthState.mockReturnValue({
+  it("returns ready/authenticated from E2E mock when active", () => {
+    vi.mocked(getE2EMockAuthState).mockReturnValue({
       authenticated: true,
       ready: true,
-      user: { wallet: { address: "0xCYPRESS" } },
+      user: { wallet: { address: "0xE2E0" } },
     });
 
     const { result } = renderHook(() => useAuth(), { wrapper });
@@ -632,7 +632,7 @@ describe("useAuth — Return Values", () => {
     expect(result.current.authenticated).toBe(true);
 
     // Restore
-    getCypressMockAuthState.mockReturnValue(null);
+    vi.mocked(getE2EMockAuthState).mockReturnValue(null);
   });
 
   it("returns address from primary wallet", () => {

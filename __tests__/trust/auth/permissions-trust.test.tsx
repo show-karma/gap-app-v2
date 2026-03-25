@@ -32,8 +32,8 @@ vi.mock("@/src/core/rbac/hooks/use-permissions", () => ({
   usePermissionsQuery: vi.fn(),
 }));
 
-vi.mock("@/utilities/auth/cypress-auth", () => ({
-  getCypressMockAuthState: vi.fn().mockReturnValue(null),
+vi.mock("@/utilities/auth/e2e-auth", () => ({
+  getE2EMockAuthState: vi.fn().mockReturnValue(null),
 }));
 
 const mockUsePrivyBridge = usePrivyBridge as vi.Mock;

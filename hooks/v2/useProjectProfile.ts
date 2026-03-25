@@ -92,7 +92,7 @@ export function useProjectProfile(projectId: string): UseProjectProfileResult {
     isProjectLoading,
     isSecondaryLoading,
     isError,
-    error: error ?? null,
+    error: error instanceof Error ? error : error ? new Error(String(error)) : null,
     refetch,
     ...profileData,
   };

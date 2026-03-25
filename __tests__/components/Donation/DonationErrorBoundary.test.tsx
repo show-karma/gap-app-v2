@@ -15,7 +15,6 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { getDetailedErrorInfo } from "@/utilities/donations/errorMessages";
 
 // Mock dependencies
-vi.mock("@/components/Utilities/errorManager");
 vi.mock("@/utilities/donations/errorMessages");
 vi.mock("next/link", () => {
   return ({ children, href }: { children: React.ReactNode; href: string }) => {

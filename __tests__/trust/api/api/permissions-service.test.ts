@@ -21,12 +21,6 @@ vi.mock("@/utilities/indexer", () => ({
   },
 }));
 
-vi.mock("@/utilities/enviromentVars", () => ({
-  envVars: {
-    NEXT_PUBLIC_GAP_INDEXER_URL: "https://indexer.example.com",
-  },
-}));
-
 vi.mock("@/utilities/auth/api-client", () => ({
   createAuthenticatedApiClient: () => ({
     post: vi.fn(),

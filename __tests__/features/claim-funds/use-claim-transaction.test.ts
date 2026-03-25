@@ -26,15 +26,6 @@ vi.mock("@/contexts/privy-bridge-context", () => ({
   usePrivyBridge: vi.fn(),
 }));
 
-vi.mock("react-hot-toast", () => ({
-  __esModule: true,
-  default: {
-    error: vi.fn(),
-    success: vi.fn(),
-    loading: vi.fn(),
-  },
-}));
-
 vi.mock("viem", () => ({
   createWalletClient: vi.fn(),
   custom: vi.fn(),

@@ -13,10 +13,6 @@ vi.mock("@/utilities/fetchData");
 const mockFetchData = fetchData as vi.MockedFunction<typeof fetchData>;
 
 // Mock errorManager
-vi.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: vi.fn(),
-}));
-
 // Mock Button component
 vi.mock("@/components/Utilities/Button", () => ({
   Button: ({ onClick, disabled, children, className, isLoading, type }: any) => (

@@ -4,11 +4,6 @@ import toast from "react-hot-toast";
 import MoreActionsDropdown from "@/components/FundingPlatform/ApplicationView/MoreActionsDropdown";
 
 // Mock react-hot-toast
-vi.mock("react-hot-toast", () => ({
-  success: vi.fn(),
-  error: vi.fn(),
-}));
-
 // Mock Heroicons
 vi.mock("@heroicons/react/24/outline", () => ({
   EllipsisHorizontalIcon: (props: any) => <svg data-testid="ellipsis-icon" {...props} />,

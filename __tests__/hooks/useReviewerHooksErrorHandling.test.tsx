@@ -12,13 +12,6 @@ vi.mock("@/hooks/useAuth", () => ({
   useAuth: vi.fn(),
 }));
 
-vi.mock("react-hot-toast", () => ({
-  toast: {
-    success: vi.fn(),
-    error: vi.fn(),
-  },
-}));
-
 vi.mock("@/services/program-reviewers.service", () => ({
   programReviewersService: {
     getReviewers: vi.fn(),

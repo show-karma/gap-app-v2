@@ -22,10 +22,6 @@ vi.mock("@show-karma/karma-gap-sdk/core/consts", () => ({
   },
 }));
 
-vi.mock("@/utilities/enviromentVars", () => ({
-  envVars: { NEXT_PUBLIC_GAP_INDEXER_URL: "https://indexer.example.com" },
-}));
-
 vi.mock("@/utilities/gapRpcConfig", () => ({
   getGapRpcConfig: () => ({}),
 }));

@@ -4,8 +4,6 @@ import { getNewProjects } from "@/utilities/indexer/getNewProjects";
 import "@testing-library/jest-dom/vitest";
 
 vi.mock("@/utilities/fetchData");
-vi.mock("@/components/Utilities/errorManager");
-
 describe("getNewProjects", () => {
   afterEach(() => {
     vi.clearAllMocks();

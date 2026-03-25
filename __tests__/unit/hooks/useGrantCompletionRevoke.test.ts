@@ -87,15 +87,6 @@ vi.mock("@show-karma/karma-gap-sdk", () => ({
 }));
 
 const mockToastDefault = createMockToastDefault();
-vi.mock("react-hot-toast", () => ({
-  __esModule: true,
-  default: mockToastDefault,
-}));
-
-vi.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: mockErrorManager,
-}));
-
 const mockUseAccount = vi.fn();
 const mockUseChainId = vi.fn(() => 1);
 vi.mock("wagmi", () => ({

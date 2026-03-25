@@ -9,7 +9,6 @@ import fetchData from "@/utilities/fetchData";
 import { getProgramsImpact } from "@/utilities/registry/getProgramsImpact";
 
 vi.mock("@/utilities/fetchData");
-vi.mock("@/components/Utilities/errorManager");
 vi.mock("@/utilities/indexer", () => ({
   INDEXER: {
     COMMUNITY: {

@@ -9,7 +9,7 @@ import { mockJson } from "./api-mocks";
  *
  * This works because:
  * 1. `NEXT_PUBLIC_E2E_AUTH_BYPASS=true` is set by the test scripts
- * 2. `window.Cypress = true` triggers the bypass in `cypress-auth.ts`
+ * 2. `window.__e2e = true` triggers the bypass in `e2e-auth.ts`
  * 3. localStorage `privy:auth_state` provides the mock auth state
  * 4. Permission API route returns role-appropriate permissions
  *
@@ -23,9 +23,9 @@ export async function loginAs(page: Page, role: MockUserRole): Promise<void> {
 
   const user = MOCK_USERS[role];
 
-  // Set window.Cypress flag to trigger E2E auth bypass
+  // Set window.__e2e flag to trigger E2E auth bypass
   await page.addInitScript(() => {
-    (window as Window & { Cypress?: boolean }).Cypress = true;
+    (window as Window & { __e2e?: boolean }).__e2e = true;
   });
 
   // Set privy:auth_state in localStorage before page loads
@@ -58,6 +58,6 @@ export async function loginAs(page: Page, role: MockUserRole): Promise<void> {
 export async function logout(page: Page): Promise<void> {
   await page.evaluate(() => {
     localStorage.removeItem("privy:auth_state");
-    delete (window as Window & { Cypress?: boolean }).Cypress;
+    delete (window as Window & { __e2e?: boolean }).__e2e;
   });
 }

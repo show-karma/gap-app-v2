@@ -28,10 +28,6 @@ vi.mock("@/src/features/claim-funds/lib/error-messages", () => ({
   sanitizeErrorMessage: vi.fn((e: Error) => ({ message: e.message })),
 }));
 
-vi.mock("react-hot-toast", () => ({
-  default: { error: vi.fn(), success: vi.fn(), loading: vi.fn() },
-}));
-
 vi.mock("viem", () => ({
   createWalletClient: vi.fn(),
   custom: vi.fn(),

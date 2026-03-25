@@ -126,15 +126,6 @@ vi.mock("@show-karma/karma-gap-sdk", () => ({
   },
 }));
 
-vi.mock("react-hot-toast", () => ({
-  __esModule: true,
-  default: vi.fn(),
-}));
-
-vi.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: vi.fn(),
-}));
-
 vi.mock("@/store/grant", () => ({
   useGrantStore: vi.fn(() => ({
     refreshGrant: vi.fn(),

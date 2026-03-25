@@ -19,15 +19,17 @@ test.describe("Application Success Page", () => {
     });
     await page.goto("/community/optimism/programs/p1/applications/APP-2024-001/success");
     await waitForPageReady(page);
-    // Verify success page loaded with confirmation content
+
+    // Verify URL is the success page
     await expect(page).toHaveURL(/\/success/);
-    const pageContent = await page.textContent("body");
-    expect(
-      pageContent?.toLowerCase().includes("success") ||
-        pageContent?.toLowerCase().includes("submitted") ||
-        pageContent?.toLowerCase().includes("approved") ||
-        pageContent?.toLowerCase().includes("congratulations") ||
-        pageContent?.includes("APP-2024-001")
-    ).toBeTruthy();
+
+    // Verify the success heading is visible (from ApplicationSuccessPage: "Thanks for submitting!")
+    await expect(page.getByRole("heading", { name: /thanks for submitting/i })).toBeVisible();
+
+    // Verify the reference number is displayed on the page
+    await expect(page.getByText("APP-2024-001")).toBeVisible();
+
+    // Verify the "Reference Number" label is present
+    await expect(page.getByText("Reference Number")).toBeVisible();
   });
 });

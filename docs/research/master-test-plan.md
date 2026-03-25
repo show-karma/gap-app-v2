@@ -144,7 +144,7 @@ export default defineConfig({
 | 7 | `switchOrAddChain()` + `getChainByName()` tests | 14 | 0.5 day |
 | 8 | `fetchData` utility tests (all HTTP statuses) | 30 | 1 day |
 | 9 | `compare-all-wallets` tests | 14 | 0.5 day |
-| 10 | `cypress-auth.ts` tests | 10 | 0.25 day |
+| 10 | `e2e-auth.ts` tests | 10 | 0.25 day |
 | 11 | Contract schemas + factory validation tests | 15 | 0.5 day |
 
 **Week 1 Total: ~127 tests, 7 days effort**

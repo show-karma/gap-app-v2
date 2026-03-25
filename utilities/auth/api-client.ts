@@ -4,8 +4,9 @@ import { TokenManager } from "./token-manager";
 
 /**
  * Creates an authenticated axios instance for API calls
- * This function creates an axios instance with an interceptor that
- * automatically adds the auth token from the store to requests
+ * This function creates an axios instance with interceptors that:
+ * 1. Automatically adds the auth token to requests
+ * 2. Handles 401 responses by refreshing the token and retrying once
  */
 export function createAuthenticatedApiClient(
   baseURL: string = envVars.NEXT_PUBLIC_GAP_INDEXER_URL,
@@ -29,6 +30,32 @@ export function createAuthenticatedApiClient(
     }
     return config;
   });
+
+  // Add response interceptor for 401 token refresh
+  apiClient.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+      const originalRequest = error.config;
+
+      // Only attempt refresh once per request to avoid infinite loops
+      if (error.response?.status === 401 && originalRequest && !originalRequest._retried) {
+        originalRequest._retried = true;
+
+        // Clear cached token so next getToken() fetches a fresh one
+        TokenManager.clearCache();
+
+        const freshToken = await TokenManager.getToken();
+        if (freshToken) {
+          originalRequest.headers.Authorization = freshToken.startsWith("Bearer ")
+            ? freshToken
+            : `Bearer ${freshToken}`;
+          return apiClient.request(originalRequest);
+        }
+      }
+
+      return Promise.reject(error);
+    }
+  );
 
   return apiClient;
 }

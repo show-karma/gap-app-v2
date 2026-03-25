@@ -30,12 +30,6 @@ vi.mock("@/utilities/indexer", () => ({
   },
 }));
 
-vi.mock("@/utilities/enviromentVars", () => ({
-  envVars: {
-    NEXT_PUBLIC_GAP_INDEXER_URL: "https://indexer.example.com",
-  },
-}));
-
 import { applicationCommentsService } from "@/services/application-comments.service";
 import { deleteApplication, fetchApplicationByProjectUID } from "@/services/funding-applications";
 import fetchData from "@/utilities/fetchData";

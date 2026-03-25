@@ -1,7 +1,7 @@
 import { createApplicationList } from "../../data/applications";
 import { createMockCommunity } from "../../data/communities";
 import { expect, mockJson, test } from "../../fixtures";
-import { waitForPageReady } from "../../helpers/navigation";
+import { GOTO_OPTIONS, waitForPageReady } from "../../helpers/navigation";
 
 test.describe("My Applications", () => {
   test("T1-39: user sees their applications", async ({ page, withApiMocks, loginAs }) => {
@@ -12,10 +12,14 @@ test.describe("My Applications", () => {
       "**/v2/communities/optimism": mockJson(community),
       "**/v2/funding-applications/user/my-applications**": mockJson(applications),
     });
-    await page.goto("/community/optimism");
+
+    // Navigate to my-applications (not just /community/optimism)
+    await page.goto("/community/optimism/my-applications", GOTO_OPTIONS);
     await waitForPageReady(page);
-    // Verify the community page loaded with the community name visible
-    await expect(page).toHaveURL(/\/community\/optimism/);
+
+    // Verify the page loaded at the correct URL
+    await expect(page).toHaveURL(/\/community\/optimism\/my-applications/);
+    // Verify community context is present
     await expect(page.getByText("Optimism").first()).toBeVisible();
   });
 
@@ -26,10 +30,14 @@ test.describe("My Applications", () => {
       "**/v2/communities/optimism": mockJson(community),
       "**/v2/funding-applications/user/my-applications**": mockJson([]),
     });
-    await page.goto("/community/optimism");
+
+    // Navigate to my-applications (not just /community/optimism)
+    await page.goto("/community/optimism/my-applications", GOTO_OPTIONS);
     await waitForPageReady(page);
-    // Verify community page loaded; with no applications, page still shows community content
-    await expect(page).toHaveURL(/\/community\/optimism/);
+
+    // Verify the page loaded at the correct URL
+    await expect(page).toHaveURL(/\/community\/optimism\/my-applications/);
+    // Verify community context is present
     await expect(page.getByText("Optimism").first()).toBeVisible();
   });
 });

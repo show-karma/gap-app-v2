@@ -8,10 +8,6 @@ import toast from "react-hot-toast";
 import * as errorManagerModule from "@/components/Utilities/errorManager";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 
-// Mock dependencies
-vi.mock("react-hot-toast");
-vi.mock("@/components/Utilities/errorManager");
-
 const mockToast = toast as vi.Mocked<typeof toast>;
 const mockErrorManager = errorManagerModule.errorManager as vi.MockedFunction<
   typeof errorManagerModule.errorManager
