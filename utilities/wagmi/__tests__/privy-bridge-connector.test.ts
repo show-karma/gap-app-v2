@@ -4,14 +4,14 @@
  */
 
 // Mock @wagmi/core's createConnector to just call the factory with a mock config
-jest.mock("@wagmi/core", () => ({
+vi.mock("@wagmi/core", () => ({
   createConnector: (factory: any) => {
-    const mockEmitter = { emit: jest.fn() };
+    const mockEmitter = { emit: vi.fn() };
     return factory({ emitter: mockEmitter });
   },
 }));
 
-jest.mock("@/utilities/network", () => ({
+vi.mock("@/utilities/network", () => ({
   appNetwork: [
     {
       id: 137,
@@ -30,17 +30,17 @@ jest.mock("@/utilities/network", () => ({
 
 import { privyBridgeConnector } from "../privy-bridge-connector";
 
-const mockProvider = { request: jest.fn() };
+const mockProvider = { request: vi.fn() };
 const mockWallet = {
   address: "0x9b750f08b73D7441d4A0eFF112648764613019A4",
   walletClientType: "metamask",
-  switchChain: jest.fn(),
-  getEthereumProvider: jest.fn().mockResolvedValue(mockProvider),
+  switchChain: vi.fn(),
+  getEthereumProvider: vi.fn().mockResolvedValue(mockProvider),
 } as any;
 
 describe("privyBridgeConnector", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("connect returns the wallet address and chain ID", async () => {

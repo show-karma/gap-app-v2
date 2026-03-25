@@ -11,10 +11,10 @@ import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
 // Mock next/navigation
-jest.mock("next/navigation", () => ({
-  useParams: jest.fn(() => ({ communityId: "test-community" })),
-  useSearchParams: jest.fn(() => ({
-    get: jest.fn((key: string) => {
+vi.mock("next/navigation", () => ({
+  useParams: vi.fn(() => ({ communityId: "test-community" })),
+  useSearchParams: vi.fn(() => ({
+    get: vi.fn((key: string) => {
       if (key === "programId") return "program-123";
       return null;
     }),
@@ -22,8 +22,8 @@ jest.mock("next/navigation", () => ({
 }));
 
 // Mock useCommunityPrograms to return a program matching the programId
-jest.mock("@/hooks/usePrograms", () => ({
-  useCommunityPrograms: jest.fn(() => ({
+vi.mock("@/hooks/usePrograms", () => ({
+  useCommunityPrograms: vi.fn(() => ({
     data: [
       {
         programId: "program-123",
@@ -41,7 +41,7 @@ jest.mock("@/hooks/usePrograms", () => ({
 }));
 
 // Mock next/image
-jest.mock("next/image", () => ({
+vi.mock("next/image", () => ({
   __esModule: true,
   default: (props: Record<string, unknown>) => {
     // eslint-disable-next-line @next/next/no-img-element
@@ -50,7 +50,7 @@ jest.mock("next/image", () => ({
 }));
 
 // Mock ReadMore to expose the markdownClass for inspection
-jest.mock("@/utilities/ReadMore", () => ({
+vi.mock("@/utilities/ReadMore", () => ({
   ReadMore: ({ children, markdownClass }: { children: string; markdownClass?: string }) => (
     <div data-testid="read-more" data-markdown-class={markdownClass}>
       {children}
@@ -59,7 +59,7 @@ jest.mock("@/utilities/ReadMore", () => ({
 }));
 
 // Mock ExternalLink
-jest.mock("@/components/Utilities/ExternalLink", () => ({
+vi.mock("@/components/Utilities/ExternalLink", () => ({
   ExternalLink: ({ children, href }: { children: React.ReactNode; href: string }) => (
     <a data-testid="external-link" href={href}>
       {children}
@@ -68,7 +68,7 @@ jest.mock("@/components/Utilities/ExternalLink", () => ({
 }));
 
 // Mock ArrowInIcon
-jest.mock("@/components/Icons/ArrowIn", () => ({
+vi.mock("@/components/Icons/ArrowIn", () => ({
   ArrowInIcon: ({ className }: { className: string }) => (
     <span data-testid="arrow-icon" className={className} />
   ),

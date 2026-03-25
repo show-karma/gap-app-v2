@@ -253,8 +253,8 @@ describe("useProjectPermissions", () => {
       const mockProjectInstance = {
         chainID: 10,
         // On-chain check fails because primary wallet (embedded) is not the owner
-        isOwner: jest.fn().mockResolvedValue(false),
-        isAdmin: jest.fn().mockResolvedValue(false),
+        isOwner: vi.fn().mockResolvedValue(false),
+        isAdmin: vi.fn().mockResolvedValue(false),
       };
 
       setupMocks({
@@ -284,8 +284,8 @@ describe("useProjectPermissions", () => {
     it("should_not_recognize_owner_when_no_linked_wallet_matches_project_owner", async () => {
       const mockProjectInstance = {
         chainID: 10,
-        isOwner: jest.fn().mockResolvedValue(false),
-        isAdmin: jest.fn().mockResolvedValue(false),
+        isOwner: vi.fn().mockResolvedValue(false),
+        isAdmin: vi.fn().mockResolvedValue(false),
       };
 
       setupMocks({
@@ -314,8 +314,8 @@ describe("useProjectPermissions", () => {
       const mockProjectInstance = {
         chainID: 10,
         // On-chain check throws (RPC error, network issue, etc.)
-        isOwner: jest.fn().mockRejectedValue(new Error("RPC call failed")),
-        isAdmin: jest.fn().mockRejectedValue(new Error("RPC call failed")),
+        isOwner: vi.fn().mockRejectedValue(new Error("RPC call failed")),
+        isAdmin: vi.fn().mockRejectedValue(new Error("RPC call failed")),
       };
 
       setupMocks({

@@ -4,7 +4,7 @@ import {
   parseProgramIdAndChainId,
 } from "@/src/features/program-registry/utils/program-utils";
 
-jest.mock("@/components/Pages/ProgramRegistry/helper", () => ({
+vi.mock("@/components/Pages/ProgramRegistry/helper", () => ({
   registryHelper: { supportedNetworks: 1 },
 }));
 
