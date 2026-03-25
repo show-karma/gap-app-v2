@@ -162,6 +162,7 @@ describe("transformGrantsToMilestones", () => {
         communityImage: "https://example.com/logo.png",
         grantTitle: "Test Grant",
         grantUID: "0x1234",
+        programType: undefined,
       },
     });
   });
@@ -220,6 +221,34 @@ describe("transformGrantsToMilestones", () => {
   it("should return empty array for empty input", () => {
     const result = transformGrantsToMilestones([]);
     expect(result).toEqual([]);
+  });
+
+  it("should pass through programType to grantReceived", () => {
+    const hackathonGrant: Grant = {
+      ...mockGrant,
+      programType: "hackathon",
+    };
+
+    const result = transformGrantsToMilestones([hackathonGrant]);
+
+    expect(result[0].grantReceived?.programType).toBe("hackathon");
+  });
+
+  it("should handle grant programType", () => {
+    const grantWithType: Grant = {
+      ...mockGrant,
+      programType: "grant",
+    };
+
+    const result = transformGrantsToMilestones([grantWithType]);
+
+    expect(result[0].grantReceived?.programType).toBe("grant");
+  });
+
+  it("should handle undefined programType", () => {
+    const result = transformGrantsToMilestones([mockGrant]);
+
+    expect(result[0].grantReceived?.programType).toBeUndefined();
   });
 });
 
