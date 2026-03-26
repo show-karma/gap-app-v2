@@ -337,7 +337,7 @@ describe("CommunityStats", () => {
     });
 
     it("should call errorManager on fetch error", async () => {
-      const { errorManager } = require("@/components/Utilities/errorManager");
+      const { errorManager } = await import("@/components/Utilities/errorManager");
       const error = new Error("Network error");
       (fetchData as vi.Mock).mockRejectedValue(error);
 

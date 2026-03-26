@@ -38,14 +38,13 @@ describe("Community Page", () => {
     },
   };
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
-    const {
-      getCommunityDetails,
-      getCommunityStats,
-      getCommunityProjects,
-      getCommunityCategories,
-    } = require("@/utilities/queries/v2/getCommunityData");
+    const { getCommunityDetails, getCommunityStats, getCommunityProjects, getCommunityCategories } =
+      (await import("@/utilities/queries/v2/getCommunityData")) as unknown as Record<
+        string,
+        vi.Mock
+      >;
 
     getCommunityDetails.mockResolvedValue(mockCommunityDetails);
     getCommunityStats.mockResolvedValue(mockCommunityStats);
@@ -66,7 +65,9 @@ describe("Community Page", () => {
   });
 
   it("returns undefined for pages on root", async () => {
-    const { pagesOnRoot } = require("@/utilities/pagesOnRoot");
+    const { pagesOnRoot } = (await import("@/utilities/pagesOnRoot")) as unknown as {
+      pagesOnRoot: string[];
+    };
     pagesOnRoot.push("dashboard");
 
     const { default: PageComponent } = await import(

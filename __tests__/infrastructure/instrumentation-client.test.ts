@@ -1,5 +1,5 @@
 /**
- * @jest-environment jsdom
+ * @vitest-environment jsdom
  */
 
 // Mock @sentry/nextjs before importing the module under test
@@ -19,20 +19,19 @@ vi.mock("@sentry/nextjs", () => ({
   captureRouterTransitionStart: mockCaptureRouterTransitionStart,
 }));
 
-vi.mock("../../utilities/sentry/ignoreErrors", () => ({
+vi.mock("@/utilities/sentry/ignoreErrors", () => ({
   sentryIgnoreErrors: ["TestError"],
 }));
 
 describe("instrumentation-client", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.resetModules();
   });
 
   it("calls Sentry.init WITHOUT replayIntegration in integrations array", async () => {
     // Import triggers the module's top-level code
-    jest.isolateModules(() => {
-      require("../../instrumentation-client");
-    });
+    await import("@/instrumentation-client");
 
     expect(mockInit).toHaveBeenCalledTimes(1);
 
@@ -49,17 +48,13 @@ describe("instrumentation-client", () => {
   });
 
   it("calls Sentry.lazyLoadIntegration with 'replayIntegration' in browser environment", async () => {
-    jest.isolateModules(() => {
-      require("../../instrumentation-client");
-    });
+    await import("@/instrumentation-client");
 
     expect(mockLazyLoadIntegration).toHaveBeenCalledWith("replayIntegration");
   });
 
   it("calls Sentry.addIntegration with the resolved replay integration instance", async () => {
-    jest.isolateModules(() => {
-      require("../../instrumentation-client");
-    });
+    await import("@/instrumentation-client");
 
     // Wait for the lazy-load promise to resolve
     await new Promise(process.nextTick);
@@ -68,11 +63,8 @@ describe("instrumentation-client", () => {
     expect(mockAddIntegration).toHaveBeenCalledWith(mockReplayInstance);
   });
 
-  it("exports onRequestError and onRouterTransitionStart", () => {
-    let exports: Record<string, unknown> = {};
-    jest.isolateModules(() => {
-      exports = require("../../instrumentation-client");
-    });
+  it("exports onRequestError and onRouterTransitionStart", async () => {
+    const exports = await import("@/instrumentation-client");
 
     expect(exports.onRequestError).toBe(mockCaptureRequestError);
     expect(exports.onRouterTransitionStart).toBe(mockCaptureRouterTransitionStart);

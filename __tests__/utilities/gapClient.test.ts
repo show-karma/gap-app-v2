@@ -1,11 +1,14 @@
 import "@testing-library/jest-dom";
 
-// Mock the SDK modules to verify they're loaded lazily
-const mockGAP = vi.fn().mockImplementation(() => ({
-  fetch: { projectById: vi.fn(), projectBySlug: vi.fn() },
-}));
-
-const mockGapIndexerClient = vi.fn().mockImplementation(() => ({}));
+// Use vi.hoisted() so mock functions are available when vi.mock() factories run
+const { mockGAP, mockGapIndexerClient } = vi.hoisted(() => {
+  // Must use function() (not arrow) so it can be called with `new`
+  const gapFn = vi.fn(function (this: Record<string, unknown>) {
+    this.fetch = { projectById: vi.fn(), projectBySlug: vi.fn() };
+  });
+  const indexerFn = vi.fn(() => ({}));
+  return { mockGAP: gapFn, mockGapIndexerClient: indexerFn };
+});
 
 vi.mock("@show-karma/karma-gap-sdk/core/class/GAP", () => ({
   GAP: mockGAP,
@@ -46,7 +49,7 @@ describe("gapClient", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Reset the module to clear cached clients between tests
-    jest.resetModules();
+    vi.resetModules();
   });
 
   it("should NOT eagerly initialize all networks on import", async () => {

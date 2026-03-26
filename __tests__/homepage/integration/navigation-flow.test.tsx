@@ -18,6 +18,7 @@ vi.mock("@/utilities/pages", () => ({
     FUNDERS: "/funders",
     FUNDING_APP: "/funding-map",
     COMMUNITIES: "/communities",
+    PROJECTS_EXPLORER: "/projects",
     COMMUNITY: {
       ALL_GRANTS: (slug: string) => `/community/${slug}/grants`,
     },
@@ -117,7 +118,9 @@ describe("Homepage Navigation Flows", () => {
 
       externalLinks.forEach((link) => {
         expect(link).toHaveAttribute("rel");
-        expect(link.getAttribute("rel")).toContain("noopener");
+        const rel = link.getAttribute("rel") || "";
+        // noreferrer implies noopener in modern browsers
+        expect(rel.includes("noopener") || rel.includes("noreferrer")).toBe(true);
       });
     });
   });

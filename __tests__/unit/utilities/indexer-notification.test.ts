@@ -127,9 +127,9 @@ describe("notifyIndexerForGrant", () => {
 
       // Mock QUERY_KEYS
       const mockQueryKey = ["projectGrantMilestones", "project-123", "program-1"];
-      jest
-        .spyOn(queryKeysModule.QUERY_KEYS.MILESTONES, "PROJECT_GRANT_MILESTONES")
-        .mockReturnValue(mockQueryKey as any);
+      vi.spyOn(queryKeysModule.QUERY_KEYS.MILESTONES, "PROJECT_GRANT_MILESTONES").mockReturnValue(
+        mockQueryKey as any
+      );
 
       await notifyIndexerForGrant("0x123abc", 42161, "project-123", "program-1");
 
@@ -174,9 +174,9 @@ describe("notifyIndexerForMilestone", () => {
       mockFetchData.mockResolvedValue([{}, null]);
 
       const mockQueryKey = ["projectGrantMilestones", "project-123", "program-1"];
-      jest
-        .spyOn(queryKeysModule.QUERY_KEYS.MILESTONES, "PROJECT_GRANT_MILESTONES")
-        .mockReturnValue(mockQueryKey as any);
+      vi.spyOn(queryKeysModule.QUERY_KEYS.MILESTONES, "PROJECT_GRANT_MILESTONES").mockReturnValue(
+        mockQueryKey as any
+      );
 
       await notifyIndexerForMilestone("0x123abc", 42161, "project-123", "program-1");
 
@@ -190,9 +190,9 @@ describe("notifyIndexerForMilestone", () => {
       mockFetchData.mockResolvedValue([{}, null]);
 
       const mockQueryKey = ["projectGrantMilestones", "project-123", "program-1"];
-      jest
-        .spyOn(queryKeysModule.QUERY_KEYS.MILESTONES, "PROJECT_GRANT_MILESTONES")
-        .mockReturnValue(mockQueryKey as any);
+      vi.spyOn(queryKeysModule.QUERY_KEYS.MILESTONES, "PROJECT_GRANT_MILESTONES").mockReturnValue(
+        mockQueryKey as any
+      );
 
       await notifyIndexerForMilestone(
         "0x123abc",
@@ -213,9 +213,9 @@ describe("notifyIndexerForMilestone", () => {
 
     it("should work without txHash", async () => {
       const mockQueryKey = ["projectGrantMilestones", "project-123", "program-1"];
-      jest
-        .spyOn(queryKeysModule.QUERY_KEYS.MILESTONES, "PROJECT_GRANT_MILESTONES")
-        .mockReturnValue(mockQueryKey as any);
+      vi.spyOn(queryKeysModule.QUERY_KEYS.MILESTONES, "PROJECT_GRANT_MILESTONES").mockReturnValue(
+        mockQueryKey as any
+      );
 
       await notifyIndexerForMilestone(undefined, 42161, "project-123", "program-1");
 
@@ -229,9 +229,9 @@ describe("notifyIndexerForMilestone", () => {
       mockFetchData.mockResolvedValue([{}, null]);
 
       const mockQueryKey = ["projectGrantMilestones", "project-123", "program-1"];
-      jest
-        .spyOn(queryKeysModule.QUERY_KEYS.MILESTONES, "PROJECT_GRANT_MILESTONES")
-        .mockReturnValue(mockQueryKey as any);
+      vi.spyOn(queryKeysModule.QUERY_KEYS.MILESTONES, "PROJECT_GRANT_MILESTONES").mockReturnValue(
+        mockQueryKey as any
+      );
 
       await notifyIndexerForMilestone("0x123abc", 42161, "project-123", "program-1");
 

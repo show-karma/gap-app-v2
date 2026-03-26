@@ -68,7 +68,7 @@ describe("useCrossChainBalances", () => {
     return Wrapper;
   };
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
 
     (wagmi.useAccount as vi.Mock).mockReturnValue({
@@ -76,8 +76,12 @@ describe("useCrossChainBalances", () => {
       isConnected: true,
     });
 
-    const { getRPCClient } = require("@/utilities/rpcClient");
-    const { getTokensByChain } = require("@/constants/supportedTokens");
+    const { getRPCClient } = (await import("@/utilities/rpcClient")) as unknown as {
+      getRPCClient: vi.Mock;
+    };
+    const { getTokensByChain } = (await import("@/constants/supportedTokens")) as unknown as {
+      getTokensByChain: vi.Mock;
+    };
 
     // Mock getTokensByChain
     getTokensByChain.mockImplementation((chainId: number) => {
@@ -138,7 +142,9 @@ describe("useCrossChainBalances", () => {
     });
 
     it("should use react-query caching", async () => {
-      const { getRPCClient } = require("@/utilities/rpcClient");
+      const { getRPCClient } = (await import("@/utilities/rpcClient")) as unknown as {
+        getRPCClient: vi.Mock;
+      };
 
       const { rerender } = renderHook(() => useCrossChainBalances(10, [10, 8453]), {
         wrapper: createWrapper(),
@@ -186,11 +192,13 @@ describe("useCrossChainBalances", () => {
 
   describe("error handling", () => {
     it("should handle multicall failures", async () => {
-      const { getRPCClient } = require("@/utilities/rpcClient");
+      const { getRPCClient } = (await import("@/utilities/rpcClient")) as unknown as {
+        getRPCClient: vi.Mock;
+      };
 
       getRPCClient.mockResolvedValue({
         getBalance: vi.fn().mockResolvedValue(BigInt("5000000000000000000")),
-        multicall: jest
+        multicall: vi
           .fn()
           .mockResolvedValue([{ status: "failure", error: new Error("Token error") }]),
       });

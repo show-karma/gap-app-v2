@@ -133,7 +133,7 @@ describe("KarmaProfileLinkInput Component (features/applications)", () => {
 
   describe("Search and Results", () => {
     beforeEach(() => {
-      vi.useFakeTimers();
+      vi.useFakeTimers({ shouldAdvanceTime: true });
     });
 
     afterEach(() => {
@@ -182,7 +182,7 @@ describe("KarmaProfileLinkInput Component (features/applications)", () => {
 
   describe("Add Project Link", () => {
     beforeEach(() => {
-      vi.useFakeTimers();
+      vi.useFakeTimers({ shouldAdvanceTime: true });
     });
 
     afterEach(() => {
@@ -244,7 +244,7 @@ describe("KarmaProfileLinkInput Component (features/applications)", () => {
 
   describe("Remove Button", () => {
     beforeEach(() => {
-      vi.useFakeTimers();
+      vi.useFakeTimers({ shouldAdvanceTime: true });
     });
 
     afterEach(() => {

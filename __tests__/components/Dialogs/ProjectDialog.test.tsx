@@ -97,6 +97,19 @@ vi.mock("@heroicons/react/24/solid", () => ({
   XMarkIcon: (props: any) => <svg data-testid="x-icon" {...props} />,
 }));
 
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    refresh: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn(),
+    prefetch: vi.fn(),
+  }),
+  usePathname: () => "/",
+  useSearchParams: () => new URLSearchParams(),
+}));
+
 vi.mock("wagmi", () => ({
   useAccount: () => ({
     address: "0x1234567890abcdef1234567890abcdef12345678",
@@ -282,7 +295,9 @@ vi.mock("@/utilities/github", () => ({
   validateGithubInput: vi.fn().mockResolvedValue({ valid: true }),
 }));
 
-vi.mock("@/utilities/fetchData", () => vi.fn().mockResolvedValue([{}, null]));
+vi.mock("@/utilities/fetchData", () => ({
+  default: vi.fn().mockResolvedValue([{}, null]),
+}));
 
 vi.mock("@/utilities/messages", () => ({
   MESSAGES: {
@@ -464,7 +479,7 @@ vi.mock("@show-karma/karma-gap-sdk", () => ({
 }));
 
 describe("ProjectDialog", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
 
     mockProjectAttest = vi.fn(
@@ -493,31 +508,24 @@ describe("ProjectDialog", () => {
       chainId: 10,
     });
 
-    const setupHookMockByAlias = jest.requireMock("@/hooks/useSetupChainAndWallet") as {
+    const setupHookMockByAlias = (await import("@/hooks/useSetupChainAndWallet")) as unknown as {
       useSetupChainAndWallet: vi.Mock;
     };
     setupHookMockByAlias.useSetupChainAndWallet.mockReturnValue({
-      setupChainAndWallet: (...args: any[]) => mockSetupChainAndWallet(...args),
+      setupChainAndWallet: (...args: unknown[]) => mockSetupChainAndWallet(...args),
       isSmartWalletReady: false,
       smartWalletAddress: null,
       hasEmbeddedWallet: false,
       hasExternalWallet: true,
     });
 
-    const setupHookMockByRoot = jest.requireMock("hooks/useSetupChainAndWallet") as {
-      useSetupChainAndWallet: vi.Mock;
-    };
-    setupHookMockByRoot.useSetupChainAndWallet.mockReturnValue({
-      setupChainAndWallet: (...args: any[]) => mockSetupChainAndWallet(...args),
-      isSmartWalletReady: false,
-      smartWalletAddress: null,
-      hasEmbeddedWallet: false,
-      hasExternalWallet: true,
-    });
+    // The "hooks/useSetupChainAndWallet" mock (without @/ prefix) is already
+    // configured by vi.mock() above and shares the same vi.fn() reference,
+    // so configuring via the @/ alias is sufficient.
   });
 
   it("keeps the modal open after submit while create attestation is in progress", async () => {
-    const { ProjectDialog } = require("@/components/Dialogs/ProjectDialog");
+    const { ProjectDialog } = await import("@/components/Dialogs/ProjectDialog");
     const user = userEvent.setup();
 
     render(<ProjectDialog />);
