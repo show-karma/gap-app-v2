@@ -14,6 +14,7 @@ export function DashboardHeader({ address }: DashboardHeaderProps) {
   const { user } = useAuth();
   const { profile } = useContributorProfile(address);
   const displayName = profile?.data?.name;
+  const userEmail = user?.email?.address || user?.google?.email;
 
   return (
     <div className="flex items-center gap-4">
@@ -39,6 +40,8 @@ export function DashboardHeader({ address }: DashboardHeaderProps) {
             <span className="ml-1">, {displayName}</span>
           ) : user?.farcaster ? (
             <span className="ml-1">, {user.farcaster.displayName || user.farcaster.username}</span>
+          ) : userEmail ? (
+            <span className="ml-1">, {userEmail}</span>
           ) : address ? (
             <span className="ml-1">
               , <EthereumAddressToENSName address={address} />

@@ -267,6 +267,7 @@ export type UnifiedMilestone = {
     communityImage?: string;
     grantTitle?: string;
     grantUID: string;
+    programType?: "grant" | "hackathon" | "bounty" | "accelerator" | "vc_fund" | "rfp";
   };
   /** Endorsement info for endorsement type items */
   endorsement?: {

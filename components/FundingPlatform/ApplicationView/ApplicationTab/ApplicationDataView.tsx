@@ -55,7 +55,7 @@ export const ApplicationDataView: FC<ApplicationDataViewProps> = ({
                     </h5>
                     {milestone.dueDate && (
                       <span className="text-xs bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200 px-2 py-1 rounded flex-shrink-0">
-                        Due: {formatDate(new Date(milestone.dueDate))}
+                        Due: {formatDate(milestone.dueDate)}
                       </span>
                     )}
                   </div>

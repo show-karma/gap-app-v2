@@ -14,6 +14,7 @@ import type {
   SortOption,
 } from "@/types/v2/project-profile.types";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
+import { isHexAddress } from "@/utilities/isHexAddress";
 import type { ProjectImpact } from "./project-impacts.service";
 
 // =============================================================================
@@ -70,7 +71,9 @@ export function transformGrantsToMilestones(grants: Grant[]): UnifiedMilestone[]
   return grants.map((grant) => {
     // Get amount - may already include currency (e.g., "80000 USDC")
     const rawAmount = grant.details?.amount || grant.amount;
-    const currency = grant.details?.currency;
+    const rawCurrency = grant.details?.currency;
+
+    const currency = isHexAddress(rawCurrency) ? undefined : rawCurrency;
 
     // Only append currency if rawAmount doesn't already contain it
     const amountHasCurrency = rawAmount && currency && rawAmount.includes(currency);
@@ -95,6 +98,7 @@ export function transformGrantsToMilestones(grants: Grant[]): UnifiedMilestone[]
         communityImage: grant.community?.details?.imageURL,
         grantTitle: grant.details?.title,
         grantUID: grant.uid,
+        programType: grant.programType,
       },
     };
   });

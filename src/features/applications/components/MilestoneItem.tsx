@@ -2,6 +2,8 @@
 
 import { Trash2 } from "lucide-react";
 import type React from "react";
+import { useMemo } from "react";
+import { DatePicker } from "@/components/Utilities/DatePicker";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,11 +35,30 @@ export const MilestoneItem: React.FC<MilestoneItemProps> = ({
   disabled = false,
   errors,
 }) => {
+  const today = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, []);
+
+  const dueDateAsDate = useMemo(() => {
+    if (!milestone.dueDate) return undefined;
+    const d = new Date(milestone.dueDate + "T00:00:00");
+    return Number.isNaN(d.getTime()) ? undefined : d;
+  }, [milestone.dueDate]);
+
   const handleFieldChange = (field: keyof MilestoneData, value: string) => {
     onUpdate({
       ...milestone,
       [field]: value,
     });
+  };
+
+  const handleDueDateSelect = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    handleFieldChange("dueDate", `${year}-${month}-${day}`);
   };
 
   return (
@@ -88,15 +109,15 @@ export const MilestoneItem: React.FC<MilestoneItemProps> = ({
       />
 
       <div className="space-y-2">
-        <Label htmlFor={`milestone-duedate-${index}`}>Due Date *</Label>
-        <Input
-          id={`milestone-duedate-${index}`}
-          type="date"
-          placeholder="Select due date"
-          value={milestone.dueDate}
-          onChange={(e) => handleFieldChange("dueDate", e.target.value)}
+        <span className="text-sm font-medium">Due Date *</span>
+        <DatePicker
+          selected={dueDateAsDate}
+          onSelect={handleDueDateSelect}
+          onInvalidInput={() => handleFieldChange("dueDate", "")}
+          minDate={today}
+          placeholder="MM/DD/YYYY"
           disabled={disabled}
-          data-testid={`milestone-duedate-input-${index}`}
+          ariaLabel={`Milestone ${index + 1} due date`}
         />
         {errors?.dueDate?.message && (
           <p className="text-sm text-destructive">{errors.dueDate.message}</p>

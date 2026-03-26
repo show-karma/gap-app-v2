@@ -27,6 +27,7 @@ jest.mock("@radix-ui/react-dialog", () => ({
 jest.mock("@radix-ui/react-tooltip", () => ({
   Provider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   Root: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  Portal: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   Trigger: ({ children, asChild, ...props }: { children: React.ReactNode; asChild?: boolean }) => (
     <span {...props}>{children}</span>
   ),

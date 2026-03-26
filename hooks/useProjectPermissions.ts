@@ -4,6 +4,7 @@ import { useEffect, useMemo } from "react";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjectStore } from "@/store";
+import { compareAllWallets } from "@/utilities/auth/compare-all-wallets";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { getRPCUrlByChainId } from "@/utilities/rpcClient";
@@ -15,9 +16,7 @@ interface ProjectPermissionsResult {
 }
 
 export const useProjectPermissions = () => {
-  // Use address from useAuth() instead of useAccount() to get the correct address
-  // for email/embedded wallet users (useAccount returns MetaMask if connected)
-  const { address, isConnected, authenticated: isAuth } = useAuth();
+  const { address, isConnected, authenticated: isAuth, user } = useAuth();
   const { project } = useProjectStore();
   const projectId = project?.details?.slug || project?.uid;
   const { project: projectInstance } = useProjectInstance(projectId);
@@ -26,14 +25,30 @@ export const useProjectPermissions = () => {
 
   const checkPermissions = async (): Promise<ProjectPermissionsResult> => {
     // Early returns for invalid states
-    if (!projectInstance || !isAuth || !isConnected || !address) {
+    if (!isAuth || !isConnected || !address) {
       return { isProjectOwner: false, isProjectAdmin: false };
+    }
+
+    // Check if any of the user's linked wallets matches the project owner
+    // from the API response. This handles multi-wallet users (e.g., user
+    // created the project with MetaMask but primary wallet is now embedded).
+    const isOwnerByApiAddress =
+      !!project?.owner && !!user && compareAllWallets(user, project.owner);
+
+    if (!projectInstance) {
+      return {
+        isProjectOwner: isOwnerByApiAddress,
+        isProjectAdmin: false,
+      };
     }
 
     try {
       const rpcUrl = getRPCUrlByChainId(projectInstance.chainID);
       if (!rpcUrl) {
-        return { isProjectOwner: false, isProjectAdmin: false };
+        return {
+          isProjectOwner: isOwnerByApiAddress,
+          isProjectAdmin: false,
+        };
       }
       const { ethers } = await import("ethers");
       const rpcProvider = new ethers.JsonRpcProvider(rpcUrl);
@@ -56,12 +71,15 @@ export const useProjectPermissions = () => {
       ]);
 
       return {
-        isProjectOwner: isOwnerResult,
+        isProjectOwner: isOwnerResult || isOwnerByApiAddress,
         isProjectAdmin: isAdminResult,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       errorManager(`Error checking permissions for user ${address} on project ${projectId}`, error);
-      return { isProjectOwner: false, isProjectAdmin: false };
+      return {
+        isProjectOwner: isOwnerByApiAddress,
+        isProjectAdmin: false,
+      };
     }
   };
 

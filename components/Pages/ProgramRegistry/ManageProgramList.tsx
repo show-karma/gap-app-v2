@@ -1,3 +1,4 @@
+"use client";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import {
@@ -187,24 +188,9 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
           );
         },
         header: () => (
-          //<button
-          //  type="button"
-          //  className="flex items-center gap-1"
-          //  onClick={() => {
-          //    setSortField("name");
-          //    setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-          //  }}
-          //>
-          <div className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64 cursor-pointer">
+          <div className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64">
             Name
           </div>
-          //   <div className="flex flex-col items-center gap-0.5">
-          //     {sortOrder === "asc" && (
-          //       <ChevronUpIcon className="w-4 h-4 inline-block" />
-          //     )}
-          //     {sortOrder === "desc" && <ChevronDownIcon className="w-4 h-4" />}
-          //   </div>
-          // </button>
         ),
       },
       {
@@ -246,24 +232,9 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
           );
         },
         header: () => (
-          // <button
-          // type="button"
-          // className="flex items-center gap-1"
-          // onClick={() => {
-          // setSortField("startsAt");
-          // setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-          // }}
-          // >
-          <div className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64 cursor-pointer">
+          <div className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64">
             Start Date
           </div>
-          //    <div className="flex flex-col items-center gap-0.5">
-          //      {sortOrder === "asc" && (
-          //        <ChevronUpIcon className="w-4 h-4 inline-block" />
-          //      )}
-          //      {sortOrder === "desc" && <ChevronDownIcon className="w-4 h-4" />}
-          //    </div>
-          //  </button>
         ),
       },
       {
@@ -279,24 +250,9 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
           );
         },
         header: () => (
-          // <button
-          //   type="button"
-          //   className="flex items-center gap-1"
-          //   onClick={() => {
-          //     setSortField("endsAt");
-          //     setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-          //   }}
-          // >
-          <div className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64 cursor-pointer">
+          <div className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64">
             End Date
           </div>
-          //   <div className="flex flex-col items-center gap-0.5">
-          //    {sortOrder === "asc" && (
-          //      <ChevronUpIcon className="w-4 h-4 inline-block" />
-          //    )}
-          //    {sortOrder === "desc" && <ChevronDownIcon className="w-4 h-4" />}
-          //  </div>
-          //</button>
         ),
       },
       {
@@ -312,7 +268,7 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
             typeof firstNetworks === "string" ||
             typeof restNetworks === "string"
           )
-            return null;
+            return <div className="w-full max-w-44" />;
           return (
             <div className="w-full max-w-44 flex flex-row flex-wrap gap-1 my-2 items-center">
               {firstNetworks?.map((network, _index) => (
@@ -555,51 +511,43 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
         cell: (info) => {
           const grant = info.row.original;
 
-          const EditButton = () => {
-            return (
-              <Button
-                className="text-sm bg-black dark:bg-black hover:bg-black text-white"
-                onClick={() => {
-                  editFn(grant);
-                }}
-              >
-                Update
-              </Button>
-            );
-          };
+          const title = grant?.metadata?.title ?? "program";
 
-          const PendingButton = () => (
+          const editButton = (
             <Button
-              className="text-sm bg-zinc-700 dark:bg-zinc-700 hover:bg-zinc-700 text-white"
-              onClick={() => {
-                if (grant) {
-                  approveOrReject(grant, "pending");
-                }
-              }}
+              className="text-sm bg-transparent hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 border border-zinc-300 dark:border-zinc-600"
+              onClick={() => editFn(grant)}
+              aria-label={`Update ${title}`}
+            >
+              Update
+            </Button>
+          );
+
+          const pendingButton = (
+            <Button
+              className="text-sm bg-transparent hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300 border border-zinc-300 dark:border-zinc-600"
+              onClick={() => grant && approveOrReject(grant, "pending")}
+              aria-label={`Set ${title} to pending`}
             >
               Pending
             </Button>
           );
-          const RejectButton = () => (
+
+          const rejectButton = (
             <Button
-              onClick={() => {
-                if (grant) {
-                  approveOrReject(grant, "rejected");
-                }
-              }}
-              className="bg-red-600 hover:bg-red-600 text-sm"
+              onClick={() => grant && approveOrReject(grant, "rejected")}
+              className="text-sm bg-transparent hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-300 dark:border-red-600"
+              aria-label={`Reject ${title}`}
             >
               Reject
             </Button>
           );
-          const ApproveButton = () => (
+
+          const approveButton = (
             <Button
-              className="text-sm bg-blue-700 dark:bg-blue-700 hover:bg-blue-700 text-white"
-              onClick={() => {
-                if (grant) {
-                  approveOrReject(grant, "accepted");
-                }
-              }}
+              className="text-sm bg-blue-600 dark:bg-blue-600 hover:bg-blue-700 text-white"
+              onClick={() => grant && approveOrReject(grant, "accepted")}
+              aria-label={`Approve ${title}`}
             >
               Approve
             </Button>
@@ -609,26 +557,26 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
             if (tab === "accepted") {
               return (
                 <>
-                  <EditButton />
-                  <PendingButton />
-                  <RejectButton />
+                  {editButton}
+                  {pendingButton}
+                  {rejectButton}
                 </>
               );
             }
             if (tab === "rejected") {
               return (
                 <>
-                  <EditButton />
-                  <PendingButton />
-                  <ApproveButton />
+                  {editButton}
+                  {pendingButton}
+                  {approveButton}
                 </>
               );
             }
             return (
               <>
-                <EditButton />
-                <ApproveButton />
-                <RejectButton />
+                {editButton}
+                {approveButton}
+                {rejectButton}
               </>
             );
           };

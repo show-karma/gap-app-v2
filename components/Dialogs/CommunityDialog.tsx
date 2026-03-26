@@ -136,7 +136,11 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
 
       toast.success("Community created successfully!");
       closeModal();
-      await refreshCommunities();
+      try {
+        await refreshCommunities();
+      } catch {
+        // Non-critical — community was already created
+      }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       if (errorMessage.includes("already exists")) {

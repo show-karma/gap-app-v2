@@ -1,6 +1,6 @@
-import { registryHelper } from "./helper";
-import type { GrantProgram } from "./ProgramList";
-import type { ProgramFormData } from "./schema";
+import { registryHelper } from "@/components/Pages/ProgramRegistry/helper";
+import type { ProgramFormData } from "../schemas/public-form";
+import type { GrantProgram } from "../types";
 
 /**
  * Extract MongoDB _id as string - handles both V2 API (string) and legacy ({ $oid: string }) formats
@@ -13,7 +13,7 @@ function getMongoId(program: GrantProgram): string {
 }
 
 /**
- * Parse programId_chainID format from URL (e.g., "1018_10" → { programId: "1018", chainId: 10 })
+ * Parse programId_chainID format from URL (e.g., "1018_10" -> { programId: "1018", chainId: 10 })
  * Falls back to default chainId if parsing fails
  * @param id - The program ID string, potentially in format "programId_chainID"
  * @param defaultChainId - Default chain ID to use if parsing fails
@@ -30,10 +30,10 @@ export const parseProgramIdAndChainId = (
     };
   }
 
-  const parts = id.split("_");
-  if (parts.length === 2 && parts[0]?.trim() && parts[1]?.trim()) {
-    const parsedProgramId = parts[0].trim();
-    const parsedChainId = parseInt(parts[1].trim(), 10);
+  const lastUnderscore = id.lastIndexOf("_");
+  if (lastUnderscore > 0) {
+    const parsedProgramId = id.substring(0, lastUnderscore).trim();
+    const parsedChainId = parseInt(id.substring(lastUnderscore + 1).trim(), 10);
 
     if (parsedProgramId && !Number.isNaN(parsedChainId)) {
       return {
@@ -195,7 +195,7 @@ export const buildTypedMetadata = (data: ProgramFormData): Record<string, unknow
         endDate: data.dates.endsAt?.toISOString() ?? "",
         location: m.location || "",
         ...(tracks && tracks.length > 0 ? { tracks } : {}),
-        ...(m.prizePool
+        ...(m.prizePool != null
           ? {
               prizes: [
                 {
@@ -228,9 +228,9 @@ export const buildTypedMetadata = (data: ProgramFormData): Record<string, unknow
           amount: m.rewardAmount ?? 0,
           currency: m.rewardCurrency || "USD",
         },
-        ...(m.difficulty ? { difficulty: m.difficulty } : {}),
+        ...(m.difficulty != null ? { difficulty: m.difficulty } : {}),
         ...(skills && skills.length > 0 ? { skills } : {}),
-        ...(m.platform ? { platform: m.platform } : {}),
+        ...(m.platform != null ? { platform: m.platform } : {}),
       },
     };
   }
@@ -238,9 +238,9 @@ export const buildTypedMetadata = (data: ProgramFormData): Record<string, unknow
     const m = data.acceleratorMeta;
     return {
       acceleratorMetadata: {
-        ...(m.stage ? { stage: m.stage } : {}),
-        ...(m.equity ? { equity: m.equity } : {}),
-        ...(m.fundingAmount
+        ...(m.stage != null ? { stage: m.stage } : {}),
+        ...(m.equity != null ? { equity: m.equity } : {}),
+        ...(m.fundingAmount != null
           ? {
               funding: {
                 amount: m.fundingAmount,
@@ -248,9 +248,9 @@ export const buildTypedMetadata = (data: ProgramFormData): Record<string, unknow
               },
             }
           : {}),
-        ...(m.programDuration ? { programDuration: m.programDuration } : {}),
-        ...(m.batchSize ? { batchSize: m.batchSize } : {}),
-        ...(m.location ? { location: m.location } : {}),
+        ...(m.programDuration != null ? { programDuration: m.programDuration } : {}),
+        ...(m.batchSize != null ? { batchSize: m.batchSize } : {}),
+        ...(m.location != null ? { location: m.location } : {}),
         ...(data.deadline ? { applicationDeadline: data.deadline.toISOString() } : {}),
       },
     };
@@ -265,7 +265,7 @@ export const buildTypedMetadata = (data: ProgramFormData): Record<string, unknow
       : undefined;
     return {
       vcFundMetadata: {
-        ...(m.stage ? { stage: m.stage } : {}),
+        ...(m.stage != null ? { stage: m.stage } : {}),
         ...(m.checkSizeMin != null || m.checkSizeMax != null
           ? {
               checkSize: {
@@ -275,9 +275,9 @@ export const buildTypedMetadata = (data: ProgramFormData): Record<string, unknow
               },
             }
           : {}),
-        ...(m.thesis ? { thesis: m.thesis } : {}),
+        ...(m.thesis != null ? { thesis: m.thesis } : {}),
         ...(portfolio && portfolio.length > 0 ? { portfolio } : {}),
-        ...(m.contactMethod ? { contactMethod: m.contactMethod } : {}),
+        ...(m.contactMethod != null ? { contactMethod: m.contactMethod } : {}),
         ...(m.activelyInvesting !== undefined ? { activelyInvesting: m.activelyInvesting } : {}),
       },
     };
@@ -293,7 +293,7 @@ export const buildTypedMetadata = (data: ProgramFormData): Record<string, unknow
     return {
       rfpMetadata: {
         issuingOrganization: m.issuingOrganization || "",
-        ...(m.budgetAmount
+        ...(m.budgetAmount != null
           ? {
               budget: {
                 amount: m.budgetAmount,
@@ -301,7 +301,7 @@ export const buildTypedMetadata = (data: ProgramFormData): Record<string, unknow
               },
             }
           : {}),
-        ...(m.scope ? { scope: m.scope } : {}),
+        ...(m.scope != null ? { scope: m.scope } : {}),
         ...(requirements && requirements.length > 0 ? { requirements } : {}),
       },
     };
@@ -311,12 +311,11 @@ export const buildTypedMetadata = (data: ProgramFormData): Record<string, unknow
 
 /**
  * Build top-level fields (type, deadline, submissionUrl, typed metadata) for the API request.
- * Grants don't send these fields; other opportunity types do.
  */
 export const buildTopLevelFields = (data: ProgramFormData): Record<string, unknown> => {
   const isGrant = data.opportunityType === "grant";
   return {
-    ...(isGrant ? {} : { type: data.opportunityType }),
+    type: data.opportunityType,
     ...(!isGrant && data.deadline ? { deadline: data.deadline.toISOString() } : {}),
     ...(!isGrant && data.submissionUrl ? { submissionUrl: data.submissionUrl } : {}),
     ...buildTypedMetadata(data),

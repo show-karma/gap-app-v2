@@ -307,6 +307,50 @@ describe("Dashboard", () => {
     });
   });
 
+  describe("Email authenticated user", () => {
+    beforeEach(() => {
+      mockUseAuth.mockReturnValue({
+        authenticated: true,
+        address: "0xEMBEDDED000000000000000000000000CAFE",
+        ready: true,
+        user: {
+          id: "did:privy:email-user",
+          email: { address: "user@example.com" },
+        },
+      });
+      mockUseContributorProfile.mockReturnValue({ profile: null });
+    });
+
+    it("should show email instead of wallet address in welcome message", () => {
+      render(<Dashboard />, { wrapper: createWrapper() });
+
+      expect(screen.getByText(/user@example.com/)).toBeInTheDocument();
+      expect(screen.queryByText(/0xEMBEDDED/i)).not.toBeInTheDocument();
+    });
+  });
+
+  describe("Google authenticated user", () => {
+    beforeEach(() => {
+      mockUseAuth.mockReturnValue({
+        authenticated: true,
+        address: "0xEMBEDDED000000000000000000000000CAFE",
+        ready: true,
+        user: {
+          id: "did:privy:google-user",
+          google: { email: "googleuser@gmail.com" },
+        },
+      });
+      mockUseContributorProfile.mockReturnValue({ profile: null });
+    });
+
+    it("should show Google email instead of wallet address in welcome message", () => {
+      render(<Dashboard />, { wrapper: createWrapper() });
+
+      expect(screen.getByText(/googleuser@gmail.com/)).toBeInTheDocument();
+      expect(screen.queryByText(/0xEMBEDDED/i)).not.toBeInTheDocument();
+    });
+  });
+
   it("shows permissions error warning when RBAC fails", () => {
     setupPermissions({ isGuestDueToError: true });
 
