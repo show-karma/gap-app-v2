@@ -111,9 +111,10 @@ export function ApplicationsSection({
   };
 
   const stats = useMemo(() => {
-    const total = Object.values(statusCounts).reduce((sum, count) => sum + count, 0);
-    const pending = (statusCounts.pending ?? 0) + (statusCounts.resubmitted ?? 0);
-    const approved = statusCounts.approved ?? 0;
+    const counts = statusCounts ?? {};
+    const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
+    const pending = (counts.pending ?? 0) + (counts.resubmitted ?? 0);
+    const approved = counts.approved ?? 0;
     return { total, pending, approved };
   }, [statusCounts]);
 

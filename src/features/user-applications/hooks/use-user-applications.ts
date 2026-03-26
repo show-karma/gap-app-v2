@@ -69,9 +69,7 @@ export function useUserApplications(communitySlug?: string): UseUserApplications
     if (data) {
       setApplications(data.applications);
       setPagination(data.pagination);
-      if (data.statusCounts) {
-        setStatusCounts(data.statusCounts);
-      }
+      setStatusCounts(data.statusCounts ?? {});
     }
   }, [
     data,
