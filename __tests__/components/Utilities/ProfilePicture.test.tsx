@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 
 // Unmock ProfilePicture before importing it (navbar/setup.ts mocks it globally)
 jest.unmock("@/components/Utilities/ProfilePicture");
@@ -341,6 +341,49 @@ describe("ProfilePicture", () => {
       rerender(<ProfilePicture name="John Doe" imageURL="https://example.com/image.jpg" />);
 
       expect(screen.getByAltText("John Doe")).toBeInTheDocument();
+    });
+  });
+
+  describe("Runtime Image Error Fallback", () => {
+    it("should show boring-avatar fallback when image onError fires", () => {
+      render(
+        <ProfilePicture imageURL="https://example.com/broken-image.jpg" name="Broken Image" />
+      );
+
+      const img = screen.getByAltText("Broken Image");
+      expect(img).toBeInTheDocument();
+
+      // Simulate image load failure
+      fireEvent.error(img);
+
+      // Should now show the boring-avatar fallback
+      expect(screen.getByTestId("boring-avatar")).toBeInTheDocument();
+      expect(screen.queryByAltText("Broken Image")).not.toBeInTheDocument();
+    });
+
+    it("should reset error state when imageURL prop changes", () => {
+      const { rerender } = render(
+        <ProfilePicture imageURL="https://example.com/broken.jpg" name="Test User" />
+      );
+
+      const img = screen.getByAltText("Test User");
+      fireEvent.error(img);
+
+      // Should show fallback after error
+      expect(screen.getByTestId("boring-avatar")).toBeInTheDocument();
+
+      // Change URL - should reset error state and try new image
+      rerender(<ProfilePicture imageURL="https://example.com/new-image.jpg" name="Test User" />);
+
+      // Should render image again (not fallback) because URL changed
+      expect(screen.getByAltText("Test User")).toBeInTheDocument();
+      expect(screen.queryByTestId("boring-avatar")).not.toBeInTheDocument();
+    });
+
+    it("should still show fallback for invalid URLs without needing onError", () => {
+      render(<ProfilePicture imageURL="not-a-url" name="Invalid URL" />);
+
+      expect(screen.getByTestId("boring-avatar")).toBeInTheDocument();
     });
   });
 
