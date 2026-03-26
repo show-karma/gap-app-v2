@@ -8,6 +8,7 @@ import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { WhitelabelNavbar } from "@/src/components/navbar/whitelabel-navbar";
 import type { TenantConfig } from "@/src/infrastructure/types/tenant";
+import { getAuthFixture } from "../fixtures/auth-fixtures";
 import {
   cleanupAfterEach,
   createMockPermissions,
@@ -15,7 +16,6 @@ import {
   createMockUseTheme,
   renderWithProviders,
 } from "../utils/test-helpers";
-import { getAuthFixture } from "../fixtures/auth-fixtures";
 
 // Mock useTenantSafe to return a tenant config
 const mockTenant: TenantConfig = {
