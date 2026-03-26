@@ -357,6 +357,7 @@ export default function AddProgram({
 
       // V2 update uses JWT — no wallet chain setup needed
       const metadata = sanitizeObject({
+        ...programToEdit?.metadata,
         ...buildMetadata(data),
         status: data.status,
       });
