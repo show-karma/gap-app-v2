@@ -48,8 +48,32 @@ export {
   createMockClaimConfig,
   createMockEligibility,
 } from "./claim.factory";
+// Comment factories
+export {
+  adminComment,
+  applicantComment,
+  createCommentThread,
+  createMockComment,
+  deletedComment,
+  editedComment,
+  reviewerComment,
+} from "./comment.factory";
 // Community factories
 export { createMockCommunity } from "./community.factory";
+// Evaluation factories
+export {
+  createMockEvaluation,
+  highScoreEvaluation,
+  lowScoreEvaluation,
+  minimalEvaluation,
+} from "./evaluation.factory";
+// Grant factories
+export {
+  activeGrant,
+  completedGrant,
+  createGrantList,
+  grantWithMilestones,
+} from "./grant.factory";
 // Milestone factories
 export {
   completedMilestone,
@@ -83,5 +107,12 @@ export {
   createMockGrantMilestone,
   createMockProject,
 } from "./project.factory";
+// Reviewer factories
+export {
+  approvedReviewer,
+  createMockReviewer,
+  rejectedReviewer,
+  uncategorizedReviewer,
+} from "./reviewer.factory";
 export type { DeepPartial } from "./utils";
 export { applyOverrides, mergeDeep, randomAddress, resetSeq, seq } from "./utils";
