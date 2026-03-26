@@ -2,6 +2,7 @@ import { safeGetWalletClient } from "../wallet-helpers";
 
 jest.mock("@wagmi/core", () => ({
   getWalletClient: jest.fn(),
+  reconnect: jest.fn(),
 }));
 
 jest.mock("@/components/Utilities/errorManager", () => ({
@@ -12,17 +13,20 @@ jest.mock("../wagmi/privy-config", () => ({
   privyConfig: {},
 }));
 
-import { getWalletClient } from "@wagmi/core";
+import { getWalletClient, reconnect } from "@wagmi/core";
 
 const mockGetWalletClient = getWalletClient as jest.MockedFunction<typeof getWalletClient>;
+const mockReconnect = reconnect as jest.MockedFunction<typeof reconnect>;
 
 describe("safeGetWalletClient", () => {
+  const mockClient = { account: { address: "0x123" }, chain: { id: 137 } } as any;
+
   beforeEach(() => {
     jest.clearAllMocks();
+    mockReconnect.mockResolvedValue([]);
   });
 
   it("returns wallet client on success", async () => {
-    const mockClient = { account: { address: "0x123" } } as any;
     mockGetWalletClient.mockResolvedValueOnce(mockClient);
 
     const result = await safeGetWalletClient(137);
@@ -60,7 +64,6 @@ describe("safeGetWalletClient", () => {
 
   it("does not call setLoadingState on success", async () => {
     const setLoadingState = jest.fn();
-    const mockClient = { account: { address: "0x123" } } as any;
     mockGetWalletClient.mockResolvedValueOnce(mockClient);
 
     await safeGetWalletClient(137, false, setLoadingState);

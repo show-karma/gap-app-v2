@@ -171,6 +171,10 @@ jest.mock("@/utilities/network", () => ({
     { id: 10, name: "Optimism" },
     { id: 42161, name: "Arbitrum" },
   ],
+  gapSupportedNetworks: [
+    { id: 10, name: "Optimism" },
+    { id: 42161, name: "Arbitrum" },
+  ],
 }));
 
 jest.mock("@/utilities/sanitize", () => ({
