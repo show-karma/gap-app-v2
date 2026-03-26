@@ -55,39 +55,65 @@ function normalizeFieldKey(key: string): string {
   return key.toLowerCase().replace(/[\s_-]/g, "");
 }
 
+function formatAmountValue(value: unknown): string | null {
+  if (typeof value === "number") {
+    return `$${value.toLocaleString()}`;
+  }
+  if (typeof value === "string" && value.trim().length > 0) {
+    // Extract the first dollar amount (e.g. "$239,000" from "$239,000 over next three months...")
+    const dollarMatch = value.match(/\$[\d,]+(?:\.\d+)?/);
+    if (dollarMatch) {
+      const num = Number(dollarMatch[0].replace(/[$,]/g, ""));
+      if (!Number.isNaN(num) && num > 0) {
+        return `$${num.toLocaleString()}`;
+      }
+    }
+    // Fall back to parsing a plain number string (e.g. "50000")
+    const plainNum = Number(value.replace(/[^0-9.]/g, ""));
+    if (value.length <= 20 && !Number.isNaN(plainNum) && plainNum > 0) {
+      return `$${plainNum.toLocaleString()}`;
+    }
+    if (value.trim().length <= 50) {
+      return value;
+    }
+  }
+  return null;
+}
+
 function getRequestedAmount(applicationData: Record<string, unknown>): string | null {
   const preferredKeys = new Set([
     "requestedamount",
     "amountrequested",
     "fundingamount",
+    "fundingrequest",
     "grantamount",
     "budget",
   ]);
 
+  // First pass: check preferred (short, unambiguous) keys
+  for (const [key, value] of Object.entries(applicationData ?? {})) {
+    if (preferredKeys.has(normalizeFieldKey(key))) {
+      const formatted = formatAmountValue(value);
+      if (formatted) return formatted;
+    }
+  }
+
+  // Second pass: fall back to pattern matching on longer keys, but only
+  // when the normalized key is short enough to be a field label (not a question)
   for (const [key, value] of Object.entries(applicationData ?? {})) {
     const normalizedKey = normalizeFieldKey(key);
-    const matchesPreferred = preferredKeys.has(normalizedKey);
+    if (normalizedKey.length > 40) continue;
     const matchesPattern =
       normalizedKey.includes("amount") &&
       (normalizedKey.includes("requested") ||
         normalizedKey.includes("funding") ||
         normalizedKey.includes("grant"));
-
-    if (!matchesPreferred && !matchesPattern) continue;
-
-    if (typeof value === "number") {
-      return `$${value.toLocaleString()}`;
-    }
-    if (typeof value === "string" && value.trim().length > 0) {
-      const num = Number(value.replace(/[^0-9.]/g, ""));
-      if (!Number.isNaN(num) && num > 0) {
-        return `$${num.toLocaleString()}`;
-      }
-      if (value.trim().length <= 50) {
-        return value;
-      }
+    if (matchesPattern) {
+      const formatted = formatAmountValue(value);
+      if (formatted) return formatted;
     }
   }
+
   return null;
 }
 
