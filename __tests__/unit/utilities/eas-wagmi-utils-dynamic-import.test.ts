@@ -3,31 +3,48 @@
  * using top-level imports, keeping ethers out of the shared bundle.
  */
 
-const mockJsonRpcProvider = vi.fn().mockImplementation((url: string, network: any) => ({
-  url,
-  network,
-}));
+const { mockJsonRpcProvider, mockFallbackProvider, mockBrowserProvider, mockJsonRpcSigner } =
+  vi.hoisted(() => {
+    const mockJsonRpcProvider = vi.fn();
+    const mockFallbackProvider = vi.fn();
+    const mockBrowserProvider = vi.fn();
+    const mockJsonRpcSigner = vi.fn();
+    return { mockJsonRpcProvider, mockFallbackProvider, mockBrowserProvider, mockJsonRpcSigner };
+  });
 
-const mockFallbackProvider = vi.fn().mockImplementation((providers: any[]) => ({
-  providers,
-}));
-
-const mockBrowserProvider = vi.fn().mockImplementation((transport: any, network: any) => ({
-  transport,
-  network,
-}));
-
-const mockJsonRpcSigner = vi.fn().mockImplementation((provider: any, address: string) => ({
-  provider,
-  address,
-}));
-
-vi.mock("ethers", () => ({
-  JsonRpcProvider: mockJsonRpcProvider,
-  FallbackProvider: mockFallbackProvider,
-  BrowserProvider: mockBrowserProvider,
-  JsonRpcSigner: mockJsonRpcSigner,
-}));
+vi.mock("ethers", () => {
+  // Create proper constructor classes that delegate to spy fns
+  class MockJsonRpcProvider {
+    constructor(...args: unknown[]) {
+      mockJsonRpcProvider(...args);
+      Object.assign(this, { url: args[0], _network: args[1] });
+    }
+  }
+  class MockFallbackProvider {
+    constructor(...args: unknown[]) {
+      mockFallbackProvider(...args);
+      Object.assign(this, { providers: args[0] });
+    }
+  }
+  class MockBrowserProvider {
+    constructor(...args: unknown[]) {
+      mockBrowserProvider(...args);
+      Object.assign(this, { transport: args[0], _network: args[1] });
+    }
+  }
+  class MockJsonRpcSigner {
+    constructor(...args: unknown[]) {
+      mockJsonRpcSigner(...args);
+      Object.assign(this, { provider: args[0], address: args[1] });
+    }
+  }
+  return {
+    JsonRpcProvider: MockJsonRpcProvider,
+    FallbackProvider: MockFallbackProvider,
+    BrowserProvider: MockBrowserProvider,
+    JsonRpcSigner: MockJsonRpcSigner,
+  };
+});
 
 vi.mock("wagmi", () => ({
   usePublicClient: vi.fn().mockReturnValue(null),

@@ -137,7 +137,7 @@ describe("chainSyncValidation utilities", () => {
       vi.useRealTimers();
       const wrongChainClient = createMockWalletClient(8453);
       const correctChainClient = createMockWalletClient(10);
-      const getWalletClient = jest
+      const getWalletClient = vi
         .fn()
         .mockReturnValueOnce(wrongChainClient)
         .mockReturnValueOnce(wrongChainClient)
@@ -154,7 +154,7 @@ describe("chainSyncValidation utilities", () => {
       vi.useRealTimers();
       const wrongChainClient = createMockWalletClient(8453);
       const correctChainClient = createMockWalletClient(10);
-      const getWalletClient = jest
+      const getWalletClient = vi
         .fn()
         .mockReturnValueOnce(wrongChainClient)
         .mockReturnValueOnce(wrongChainClient)
@@ -182,7 +182,7 @@ describe("chainSyncValidation utilities", () => {
       vi.useRealTimers();
       const wrongChainClient = createMockWalletClient(8453);
       const correctChainClient = createMockWalletClient(10);
-      const getWalletClient = jest
+      const getWalletClient = vi
         .fn()
         .mockReturnValueOnce(wrongChainClient)
         .mockReturnValueOnce(wrongChainClient)
@@ -208,7 +208,7 @@ describe("chainSyncValidation utilities", () => {
     it("should handle wallet client becoming null during wait", async () => {
       vi.useRealTimers();
       const wrongChainClient = createMockWalletClient(8453);
-      const getWalletClient = jest
+      const getWalletClient = vi
         .fn()
         .mockReturnValueOnce(wrongChainClient)
         .mockReturnValueOnce(null);
@@ -350,7 +350,7 @@ describe("chainSyncValidation utilities", () => {
       vi.useRealTimers();
       const baseClient = createMockWalletClient(8453);
       const optimismClient = createMockWalletClient(10);
-      const getWalletClient = jest
+      const getWalletClient = vi
         .fn()
         .mockReturnValueOnce(baseClient)
         .mockReturnValueOnce(baseClient)
@@ -365,7 +365,7 @@ describe("chainSyncValidation utilities", () => {
       vi.useRealTimers();
       const connectedClient = createMockWalletClient(8453);
       const disconnectedClient = createMockWalletClient(8453, false);
-      const getWalletClient = jest
+      const getWalletClient = vi
         .fn()
         .mockReturnValueOnce(connectedClient)
         .mockReturnValueOnce(disconnectedClient);

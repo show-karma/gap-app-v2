@@ -136,7 +136,7 @@ describe("walletClientValidation utilities", () => {
 
     it("should retry when wallet client is null", async () => {
       const walletClient = createMockWalletClient(10);
-      const getWalletClient = jest
+      const getWalletClient = vi
         .fn()
         .mockReturnValueOnce(null)
         .mockReturnValueOnce(null)
@@ -157,7 +157,7 @@ describe("walletClientValidation utilities", () => {
     it("should retry when wallet is on wrong chain", async () => {
       const wrongChainClient = createMockWalletClient(8453);
       const correctChainClient = createMockWalletClient(10);
-      const getWalletClient = jest
+      const getWalletClient = vi
         .fn()
         .mockReturnValueOnce(wrongChainClient)
         .mockReturnValueOnce(wrongChainClient)
@@ -176,7 +176,7 @@ describe("walletClientValidation utilities", () => {
 
     it("should increase delay for later attempts", async () => {
       const walletClient = createMockWalletClient(10);
-      const getWalletClient = jest
+      const getWalletClient = vi
         .fn()
         .mockReturnValueOnce(null)
         .mockReturnValueOnce(null)
@@ -200,7 +200,7 @@ describe("walletClientValidation utilities", () => {
 
     it("should cap delay at 3000ms", async () => {
       const walletClient = createMockWalletClient(10);
-      const getWalletClient = jest
+      const getWalletClient = vi
         .fn()
         .mockReturnValueOnce(null)
         .mockReturnValueOnce(null)
@@ -243,7 +243,7 @@ describe("walletClientValidation utilities", () => {
     it("should log validation issues during retries", async () => {
       const invalidClient = createMockWalletClient(8453, false);
       const validClient = createMockWalletClient(10);
-      const getWalletClient = jest
+      const getWalletClient = vi
         .fn()
         .mockReturnValueOnce(invalidClient)
         .mockReturnValueOnce(validClient);
@@ -262,7 +262,7 @@ describe("walletClientValidation utilities", () => {
     it("should handle wallet client switching chains during wait", async () => {
       const baseClient = createMockWalletClient(8453);
       const optimismClient = createMockWalletClient(10);
-      const getWalletClient = jest
+      const getWalletClient = vi
         .fn()
         .mockReturnValueOnce(baseClient)
         .mockReturnValueOnce(optimismClient);
@@ -280,7 +280,7 @@ describe("walletClientValidation utilities", () => {
     it("should handle wallet client disconnecting during wait", async () => {
       const connectedClient = createMockWalletClient(8453);
       const disconnectedClient = createMockWalletClient(8453, false);
-      const getWalletClient = jest
+      const getWalletClient = vi
         .fn()
         .mockReturnValueOnce(connectedClient)
         .mockReturnValueOnce(disconnectedClient)
@@ -403,7 +403,7 @@ describe("walletClientValidation utilities", () => {
       const chain1 = createMockWalletClient(1);
       const chain10 = createMockWalletClient(10);
       const chain8453 = createMockWalletClient(8453);
-      const getWalletClient = jest
+      const getWalletClient = vi
         .fn()
         .mockReturnValueOnce(chain1)
         .mockReturnValueOnce(chain10)
