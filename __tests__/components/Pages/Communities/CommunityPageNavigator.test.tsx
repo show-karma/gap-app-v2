@@ -5,11 +5,13 @@ import { CommunityPageNavigator } from "@/components/Pages/Communities/Community
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import { useFundingOpportunitiesCount } from "@/hooks/useFundingOpportunitiesCount";
 import { useCommunityPrograms } from "@/hooks/usePrograms";
+import { useWhitelabel } from "@/utilities/whitelabel-context";
 
 // Mock hooks
 jest.mock("@/hooks/communities/useCommunityDetails");
 jest.mock("@/hooks/useFundingOpportunitiesCount");
 jest.mock("@/hooks/usePrograms");
+jest.mock("@/utilities/whitelabel-context");
 
 // Mock next/navigation
 const mockUseParams = jest.fn();
@@ -28,17 +30,25 @@ jest.mock("@/utilities/pages", () => ({
     COMMUNITY: {
       FUNDING_OPPORTUNITIES: (id: string) => `/community/${id}/funding-opportunities`,
       ALL_GRANTS: (id: string) => `/community/${id}`,
+      PROJECTS: (id: string) => `/community/${id}/projects`,
       UPDATES: (id: string) => `/community/${id}/updates`,
       IMPACT: (id: string) => `/community/${id}/impact`,
       FINANCIALS: (id: string) => `/community/${id}/financials`,
+      BROWSE_APPLICATIONS: (id: string) => `/community/${id}/browse-applications`,
     },
   },
+}));
+
+// Mock community-flags
+jest.mock("@/utilities/community-flags", () => ({
+  FINANCIALS_ENABLED_COMMUNITIES: ["filecoin"],
 }));
 
 // Mock lucide-react icons
 jest.mock("lucide-react", () => ({
   ChartLine: (props: any) => <svg data-testid="chart-line-icon" {...props} />,
   DollarSign: (props: any) => <svg data-testid="dollar-sign-icon" {...props} />,
+  FileSearch: (props: any) => <svg data-testid="file-search-icon" {...props} />,
   LandPlot: (props: any) => <svg data-testid="land-plot-icon" {...props} />,
   SquareUser: (props: any) => <svg data-testid="square-user-icon" {...props} />,
   Wallet: (props: any) => <svg data-testid="wallet-icon" {...props} />,
@@ -53,6 +63,7 @@ const mockUseFundingOpportunitiesCount = useFundingOpportunitiesCount as jest.Mo
 const mockUseCommunityPrograms = useCommunityPrograms as jest.MockedFunction<
   typeof useCommunityPrograms
 >;
+const mockUseWhitelabel = useWhitelabel as jest.MockedFunction<typeof useWhitelabel>;
 
 describe("CommunityPageNavigator", () => {
   let queryClient: QueryClient;
@@ -72,6 +83,11 @@ describe("CommunityPageNavigator", () => {
     jest.clearAllMocks();
 
     // Default mocks
+    mockUseWhitelabel.mockReturnValue({
+      isWhitelabel: false,
+      communitySlug: null,
+      config: null,
+    } as any);
     mockUseParams.mockReturnValue({ communityId: "test-community" });
     mockUsePathname.mockReturnValue("/community/test-community");
     mockUseSearchParams.mockReturnValue({
@@ -102,19 +118,29 @@ describe("CommunityPageNavigator", () => {
 
   describe("Rendering", () => {
     it("should render all navigation items", () => {
+      // Use filecoin communityId so financials tab is visible
+      mockUseParams.mockReturnValue({ communityId: "filecoin" });
+      mockUsePathname.mockReturnValue("/community/filecoin");
+
       render(<CommunityPageNavigator />, { wrapper });
 
       expect(screen.getByText("Funding opportunities")).toBeInTheDocument();
-      expect(screen.getByText(/View.*community projects/)).toBeInTheDocument();
+      expect(screen.getByText("Browse applications")).toBeInTheDocument();
+      expect(screen.getByText("View funded projects")).toBeInTheDocument();
       expect(screen.getByText("Milestone updates")).toBeInTheDocument();
       expect(screen.getByText("Impact")).toBeInTheDocument();
       expect(screen.getByText("Financials")).toBeInTheDocument();
     });
 
     it("should render all icons", () => {
+      // Use filecoin communityId so financials tab is visible
+      mockUseParams.mockReturnValue({ communityId: "filecoin" });
+      mockUsePathname.mockReturnValue("/community/filecoin");
+
       render(<CommunityPageNavigator />, { wrapper });
 
       expect(screen.getByTestId("dollar-sign-icon")).toBeInTheDocument();
+      expect(screen.getByTestId("file-search-icon")).toBeInTheDocument();
       expect(screen.getByTestId("square-user-icon")).toBeInTheDocument();
       expect(screen.getByTestId("land-plot-icon")).toBeInTheDocument();
       expect(screen.getByTestId("chart-line-icon")).toBeInTheDocument();
@@ -125,7 +151,7 @@ describe("CommunityPageNavigator", () => {
       render(<CommunityPageNavigator />, { wrapper });
 
       const fundingLink = screen.getByText("Funding opportunities").closest("a");
-      const grantsLink = screen.getByText(/View.*community projects/).closest("a");
+      const grantsLink = screen.getByText("View funded projects").closest("a");
       const updatesLink = screen.getByText("Milestone updates").closest("a");
       const impactLink = screen.getByText("Impact").closest("a");
 
@@ -133,7 +159,7 @@ describe("CommunityPageNavigator", () => {
         "href",
         "/community/test-community/funding-opportunities"
       );
-      expect(grantsLink).toHaveAttribute("href", "/community/test-community");
+      expect(grantsLink).toHaveAttribute("href", "/community/test-community/projects");
       expect(updatesLink).toHaveAttribute("href", "/community/test-community/updates");
       expect(impactLink).toHaveAttribute("href", "/community/test-community/impact");
     });
@@ -156,7 +182,7 @@ describe("CommunityPageNavigator", () => {
 
       render(<CommunityPageNavigator />, { wrapper });
 
-      const link = screen.getByText(/View.*community projects/).closest("a");
+      const link = screen.getByText("View funded projects").closest("a");
       expect(link?.className).toContain("text-gray-900");
     });
 
@@ -208,7 +234,7 @@ describe("CommunityPageNavigator", () => {
   });
 
   describe("Community Name", () => {
-    it("should include community name in projects link text", () => {
+    it("should show static 'View funded projects' regardless of community name", () => {
       mockUseCommunityDetails.mockReturnValue({
         data: {
           uid: "0x1234567890123456789012345678901234567890",
@@ -221,10 +247,11 @@ describe("CommunityPageNavigator", () => {
 
       render(<CommunityPageNavigator />, { wrapper });
 
-      expect(screen.getByText("View Optimism community projects")).toBeInTheDocument();
+      expect(screen.getByText("View funded projects")).toBeInTheDocument();
+      expect(screen.queryByText(/Optimism/)).not.toBeInTheDocument();
     });
 
-    it("should handle missing community name gracefully", () => {
+    it("should show 'View funded projects' when community name is missing", () => {
       mockUseCommunityDetails.mockReturnValue({
         data: undefined,
         isLoading: false,
@@ -232,9 +259,7 @@ describe("CommunityPageNavigator", () => {
 
       render(<CommunityPageNavigator />, { wrapper });
 
-      // When community name is empty, it renders with double space
-      const link = screen.getByTestId("square-user-icon").closest("a");
-      expect(link?.textContent).toContain("community projects");
+      expect(screen.getByText("View funded projects")).toBeInTheDocument();
     });
   });
 
@@ -331,7 +356,7 @@ describe("CommunityPageNavigator", () => {
 
       render(<CommunityPageNavigator />, { wrapper });
 
-      const link = screen.getByText(/View.*community projects/).closest("a");
+      const link = screen.getByText("View funded projects").closest("a");
       expect(link?.className).toContain("text-gray-900");
     });
 
@@ -340,7 +365,7 @@ describe("CommunityPageNavigator", () => {
 
       render(<CommunityPageNavigator />, { wrapper });
 
-      const link = screen.getByText(/View.*community projects/).closest("a");
+      const link = screen.getByText("View funded projects").closest("a");
       expect(link?.className).toContain("text-gray-500");
     });
 
@@ -349,7 +374,7 @@ describe("CommunityPageNavigator", () => {
 
       render(<CommunityPageNavigator />, { wrapper });
 
-      const link = screen.getByText(/View.*community projects/).closest("a");
+      const link = screen.getByText("View funded projects").closest("a");
       expect(link?.className).toContain("text-gray-500");
     });
   });
@@ -397,6 +422,22 @@ describe("CommunityPageNavigator", () => {
       expect(screen.getByTestId("dollar-sign-icon")).toBeInTheDocument();
     });
 
+    it("should always show funding opportunities tab in whitelabel mode even when count is 0", () => {
+      mockUseWhitelabel.mockReturnValue({
+        isWhitelabel: true,
+        communitySlug: "test-community",
+        config: null,
+      } as any);
+      mockUseFundingOpportunitiesCount.mockReturnValue({
+        data: 0,
+        isLoading: false,
+      } as any);
+
+      render(<CommunityPageNavigator />, { wrapper });
+
+      expect(screen.getByText("Funding opportunities")).toBeInTheDocument();
+    });
+
     it("should show funding opportunities tab when count is undefined (loading)", () => {
       mockUseFundingOpportunitiesCount.mockReturnValue({
         data: undefined,
@@ -411,7 +452,22 @@ describe("CommunityPageNavigator", () => {
   });
 
   describe("Financials Tab Visibility", () => {
-    it("should hide financials tab when programs count is 0", () => {
+    it("should hide financials tab when community is not in FINANCIALS_ENABLED_COMMUNITIES", () => {
+      // test-community is NOT in FINANCIALS_ENABLED_COMMUNITIES
+      mockUseCommunityPrograms.mockReturnValue({
+        data: [{ programId: "program-1", metadata: { title: "Program One" } }],
+        isLoading: false,
+      } as any);
+
+      render(<CommunityPageNavigator />, { wrapper });
+
+      expect(screen.queryByText("Financials")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("wallet-icon")).not.toBeInTheDocument();
+    });
+
+    it("should hide financials tab when programs count is 0 even for enabled community", () => {
+      mockUseParams.mockReturnValue({ communityId: "filecoin" });
+      mockUsePathname.mockReturnValue("/community/filecoin");
       mockUseCommunityPrograms.mockReturnValue({
         data: [],
         isLoading: false,
@@ -423,7 +479,9 @@ describe("CommunityPageNavigator", () => {
       expect(screen.queryByTestId("wallet-icon")).not.toBeInTheDocument();
     });
 
-    it("should show financials tab when programs exist", () => {
+    it("should show financials tab when community is enabled and programs exist", () => {
+      mockUseParams.mockReturnValue({ communityId: "filecoin" });
+      mockUsePathname.mockReturnValue("/community/filecoin");
       mockUseCommunityPrograms.mockReturnValue({
         data: [{ programId: "program-1", metadata: { title: "Program One" } }],
         isLoading: false,
@@ -435,7 +493,9 @@ describe("CommunityPageNavigator", () => {
       expect(screen.getByTestId("wallet-icon")).toBeInTheDocument();
     });
 
-    it("should show financials tab when programs are loading (undefined !== empty)", () => {
+    it("should hide financials tab when programs are loading (undefined !== empty)", () => {
+      mockUseParams.mockReturnValue({ communityId: "filecoin" });
+      mockUsePathname.mockReturnValue("/community/filecoin");
       mockUseCommunityPrograms.mockReturnValue({
         data: undefined,
         isLoading: true,
@@ -447,7 +507,9 @@ describe("CommunityPageNavigator", () => {
       expect(screen.queryByText("Financials")).not.toBeInTheDocument();
     });
 
-    it("should show financials tab with multiple programs", () => {
+    it("should show financials tab with multiple programs for enabled community", () => {
+      mockUseParams.mockReturnValue({ communityId: "filecoin" });
+      mockUsePathname.mockReturnValue("/community/filecoin");
       mockUseCommunityPrograms.mockReturnValue({
         data: [
           { programId: "program-1", metadata: { title: "Program One" } },
@@ -462,13 +524,18 @@ describe("CommunityPageNavigator", () => {
     });
 
     it("should render financials link with correct href", () => {
+      mockUseParams.mockReturnValue({ communityId: "filecoin" });
+      mockUsePathname.mockReturnValue("/community/filecoin");
+
       render(<CommunityPageNavigator />, { wrapper });
 
       const financialsLink = screen.getByText("Financials").closest("a");
-      expect(financialsLink).toHaveAttribute("href", "/community/test-community/financials");
+      expect(financialsLink).toHaveAttribute("href", "/community/filecoin/financials");
     });
 
     it("should append programId to financials link when present", () => {
+      mockUseParams.mockReturnValue({ communityId: "filecoin" });
+      mockUsePathname.mockReturnValue("/community/filecoin");
       mockUseSearchParams.mockReturnValue({
         get: (key: string) => (key === "programId" ? "program-123" : null),
       });
@@ -478,12 +545,13 @@ describe("CommunityPageNavigator", () => {
       const financialsLink = screen.getByText("Financials").closest("a");
       expect(financialsLink).toHaveAttribute(
         "href",
-        "/community/test-community/financials?programId=program-123"
+        "/community/filecoin/financials?programId=program-123"
       );
     });
 
     it("should apply active styles to financials link when on financials page", () => {
-      mockUsePathname.mockReturnValue("/community/test-community/financials");
+      mockUseParams.mockReturnValue({ communityId: "filecoin" });
+      mockUsePathname.mockReturnValue("/community/filecoin/financials");
 
       render(<CommunityPageNavigator />, { wrapper });
 
@@ -494,11 +562,74 @@ describe("CommunityPageNavigator", () => {
     });
 
     it("should not mark community projects as active on financials page", () => {
-      mockUsePathname.mockReturnValue("/community/test-community/financials");
+      mockUseParams.mockReturnValue({ communityId: "filecoin" });
+      mockUsePathname.mockReturnValue("/community/filecoin/financials");
 
       render(<CommunityPageNavigator />, { wrapper });
 
-      const link = screen.getByText(/View.*community projects/).closest("a");
+      const link = screen.getByText("View funded projects").closest("a");
+      expect(link?.className).toContain("text-gray-500");
+    });
+  });
+
+  describe("Browse Applications Tab Visibility", () => {
+    it("should show browse applications tab when programs exist", () => {
+      mockUseCommunityPrograms.mockReturnValue({
+        data: [{ programId: "program-1", metadata: { title: "Program One" } }],
+        isLoading: false,
+      } as any);
+
+      render(<CommunityPageNavigator />, { wrapper });
+
+      expect(screen.getByText("Browse applications")).toBeInTheDocument();
+      expect(screen.getByTestId("file-search-icon")).toBeInTheDocument();
+    });
+
+    it("should hide browse applications tab when programs count is 0", () => {
+      mockUseCommunityPrograms.mockReturnValue({
+        data: [],
+        isLoading: false,
+      } as any);
+
+      render(<CommunityPageNavigator />, { wrapper });
+
+      expect(screen.queryByText("Browse applications")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("file-search-icon")).not.toBeInTheDocument();
+    });
+
+    it("should hide browse applications tab when programs are undefined (loading)", () => {
+      mockUseCommunityPrograms.mockReturnValue({
+        data: undefined,
+        isLoading: true,
+      } as any);
+
+      render(<CommunityPageNavigator />, { wrapper });
+
+      expect(screen.queryByText("Browse applications")).not.toBeInTheDocument();
+    });
+
+    it("should render browse applications link with correct href", () => {
+      render(<CommunityPageNavigator />, { wrapper });
+
+      const link = screen.getByText("Browse applications").closest("a");
+      expect(link).toHaveAttribute("href", "/community/test-community/browse-applications");
+    });
+
+    it("should apply active styles to browse applications link", () => {
+      mockUsePathname.mockReturnValue("/community/test-community/browse-applications");
+
+      render(<CommunityPageNavigator />, { wrapper });
+
+      const link = screen.getByText("Browse applications").closest("a");
+      expect(link?.className).toContain("text-gray-900");
+    });
+
+    it("should not mark community projects as active on browse-applications page", () => {
+      mockUsePathname.mockReturnValue("/community/test-community/browse-applications");
+
+      render(<CommunityPageNavigator />, { wrapper });
+
+      const link = screen.getByText("View funded projects").closest("a");
       expect(link?.className).toContain("text-gray-500");
     });
   });

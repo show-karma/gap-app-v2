@@ -4,8 +4,8 @@ import { TrashIcon } from "@heroicons/react/24/solid";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Button } from "@/components/Utilities/Button";
 import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
+import { Button } from "@/components/ui/button";
 import { useAutosyncedIndicators } from "@/hooks/useAutosyncedIndicators";
 import type { ImpactIndicatorWithData } from "@/types/impactMeasurement";
 import { getUnlinkedIndicators } from "@/utilities/queries/getUnlinkedIndicators";
@@ -396,7 +396,8 @@ export const MetricsTable = ({
           <Button
             type="button"
             onClick={handleAddOutput}
-            className="text-sm bg-brand-blue text-white px-3 py-1.5"
+            size="xl"
+            className="bg-brand-blue text-white hover:bg-brand-blue/90"
           >
             Add metric
           </Button>
@@ -552,7 +553,8 @@ export const MetricsTable = ({
               <Button
                 type="button"
                 onClick={handleAddOutput}
-                className="text-sm bg-brand-blue text-white px-3 py-1.5"
+                size="xl"
+                className="bg-brand-blue text-white hover:bg-brand-blue/90"
               >
                 Add more metrics
               </Button>

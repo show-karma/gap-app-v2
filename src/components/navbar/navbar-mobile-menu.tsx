@@ -68,9 +68,19 @@ const _formatAddress = (addr: string) => {
   return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
 };
 
+/**
+ * Extract the user's email from Privy user object.
+ * Checks direct email login first, then Google OAuth.
+ */
+const getUserEmail = (
+  user: { email?: { address: string }; google?: { email: string } } | null | undefined
+): string | undefined => {
+  return user?.email?.address || user?.google?.email || undefined;
+};
+
 export function NavbarMobileMenu() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { authenticate: login, logout } = useAuth();
+  const { authenticate: login, logout, user } = useAuth();
   const { theme: currentTheme, setTheme: changeCurrentTheme } = useTheme();
   const toggleTheme = () => {
     changeCurrentTheme(currentTheme === "light" ? "dark" : "light");
@@ -92,7 +102,7 @@ export function NavbarMobileMenu() {
     },
     {
       label: "My donations",
-      href: "/donations",
+      href: PAGES.DONATIONS,
       visible: isLoggedIn,
     },
     {
@@ -127,12 +137,26 @@ export function NavbarMobileMenu() {
             onClick={() => openProfileModal({ isGlobal: true })}
             aria-label="Open profile"
           >
-            <EthereumAddressToENSAvatar
-              address={address}
-              className="h-8 w-8 min-h-8 min-w-8 max-h-8 max-w-8 rounded-full"
-            />
+            {user?.farcaster?.pfp ? (
+              <img
+                src={user.farcaster.pfp}
+                alt="Farcaster avatar"
+                className="h-8 w-8 min-h-8 min-w-8 max-h-8 max-w-8 rounded-full"
+              />
+            ) : (
+              <EthereumAddressToENSAvatar
+                address={address}
+                className="h-8 w-8 min-h-8 min-w-8 max-h-8 max-w-8 rounded-full"
+              />
+            )}
             {profile?.data?.name ? (
               <span className="text-sm text-muted-foreground px-2">{profile?.data?.name}</span>
+            ) : user?.farcaster ? (
+              <span className="text-sm text-muted-foreground px-2">
+                {user.farcaster.displayName || user.farcaster.username}
+              </span>
+            ) : getUserEmail(user) ? (
+              <span className="text-sm text-muted-foreground px-2">{getUserEmail(user)}</span>
             ) : (
               <EthereumAddressToENSName
                 address={address}
@@ -173,6 +197,22 @@ export function NavbarMobileMenu() {
                   ))}
                 </div>
               )}
+
+              {/* Theme Toggle - always visible */}
+              <button
+                type="button"
+                className="w-full flex items-center gap-3 py-3 rounded-md hover:bg-accent text-left"
+                onClick={toggleTheme}
+              >
+                {currentTheme === "light" ? (
+                  <ToggleLeft className={menuStyles.itemIcon} />
+                ) : (
+                  <ToggleRight className={menuStyles.itemIcon} />
+                )}
+                <span className={menuStyles.itemText}>
+                  {currentTheme === "light" ? "Dark mode" : "Light mode"}
+                </span>
+              </button>
 
               {!isLoggedIn && (
                 <>
@@ -224,20 +264,6 @@ export function NavbarMobileMenu() {
               {/* Mobile Auth */}
               {isLoggedIn ? (
                 <div className="py-3">
-                  <button
-                    type="button"
-                    className="w-full flex items-center gap-3 py-3 rounded-md hover:bg-accent text-left"
-                    onClick={toggleTheme}
-                  >
-                    {currentTheme === "light" ? (
-                      <ToggleLeft className={menuStyles.itemIcon} />
-                    ) : (
-                      <ToggleRight className={menuStyles.itemIcon} />
-                    )}
-                    <span className={menuStyles.itemText}>
-                      {currentTheme === "light" ? "Dark mode" : "Light mode"}
-                    </span>
-                  </button>
                   <ExternalLink
                     href={SOCIALS.DOCS}
                     className="w-full flex items-center gap-3 py-3 rounded-md hover:bg-accent text-left"

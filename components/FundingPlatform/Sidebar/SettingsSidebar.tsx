@@ -10,7 +10,7 @@ import {
   UserGroupIcon,
   WrenchScrewdriverIcon,
 } from "@heroicons/react/24/solid";
-import Link from "next/link";
+import { Link } from "@/src/components/navigation/Link";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 

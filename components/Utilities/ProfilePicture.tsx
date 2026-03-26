@@ -58,7 +58,6 @@ export const ProfilePicture = ({
         className={cn("rounded-full object-cover", className)}
         priority={priority}
         sizes={sizes}
-        unoptimized
         onError={() => setHasError(true)}
       />
     );

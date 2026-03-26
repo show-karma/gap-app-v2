@@ -48,20 +48,17 @@ describe("GrantNotCompletedButton", () => {
 
       const link = screen.getByRole("link");
       expect(link).toHaveClass(
-        "hover:opacity-75",
-        "flex",
-        "flex-row",
+        "inline-flex",
         "items-center",
         "justify-center",
         "gap-2",
         "rounded-md",
-        "bg-green-600",
-        "px-3.5",
-        "py-2",
         "text-sm",
         "font-semibold",
-        "text-white",
-        "hover:bg-green-700"
+        "bg-brand-500",
+        "text-brand-950",
+        "h-11",
+        "px-5"
       );
     });
   });

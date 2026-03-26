@@ -1,9 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Skeleton } from "@/components/Utilities/Skeleton";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
+import { Link } from "@/src/components/navigation/Link";
 import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
 import { useOwnerStore } from "@/store/owner";
 import { PAGES } from "@/utilities/pages";
@@ -23,6 +24,16 @@ export function ManageLayoutShell({ children }: { children: React.ReactNode }) {
   } = usePermissionContext();
   const { isOwner, isOwnerLoading } = useOwnerStore();
 
+  // Expose Zustand store setters for E2E tests.
+  // Set during render (not useEffect) to ensure availability immediately.
+  if (process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS === "true" && typeof window !== "undefined") {
+    (window as Window & { __E2E_STORES__?: Record<string, unknown> }).__E2E_STORES__ = {
+      ...((window as Window & { __E2E_STORES__?: Record<string, unknown> }).__E2E_STORES__ || {}),
+      setIsOwner: useOwnerStore.getState().setIsOwner,
+      setIsOwnerLoading: useOwnerStore.getState().setIsOwnerLoading,
+    };
+  }
+
   const hasManageAccess =
     isCommunityAdmin || isProgramAdmin || isReviewer || isRegistryAdmin || isOwner;
 
@@ -30,7 +41,7 @@ export function ManageLayoutShell({ children }: { children: React.ReactNode }) {
     return (
       <div className="flex w-full min-h-[60vh]">
         {/* Sidebar skeleton */}
-        <div className="hidden lg:block w-60 xl:w-64 flex-shrink-0 border-r border-gray-200 dark:border-zinc-700 p-4">
+        <div className="hidden md:block w-64 flex-shrink-0 border-r border-gray-200 dark:border-zinc-700 p-4">
           <Skeleton className="h-12 w-full rounded-lg mb-6" />
           <div className="space-y-2">
             {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -93,12 +104,15 @@ export function ManageLayoutShell({ children }: { children: React.ReactNode }) {
   const slug = community.details?.slug || communityId;
 
   return (
-    <div className="flex w-full min-h-[60vh]">
+    <SidebarProvider>
       <ManageSidebar communityId={communityId} community={community} />
-      <main className="flex-1 min-w-0 p-6 lg:p-8">
-        <ManageBreadcrumbs communitySlug={slug} />
-        {children}
-      </main>
-    </div>
+      <SidebarInset>
+        <header className="flex h-12 shrink-0 items-center gap-2 border-b px-4">
+          <SidebarTrigger className="-ml-1" />
+          <ManageBreadcrumbs communitySlug={slug} />
+        </header>
+        <div className="flex-1 p-6 lg:p-8">{children}</div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

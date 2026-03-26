@@ -219,7 +219,7 @@ describe("Navbar - Main Container", () => {
       const nav = screen.getByRole("navigation");
       const container = nav.querySelector("div");
 
-      expect(container).toHaveClass("py-3");
+      expect(container).toHaveClass("py-8");
     });
 
     it("inner container has max-width constraint", () => {

@@ -16,7 +16,7 @@ import type { KycStatusResponse } from "@/types/kyc";
 import { formatAddressForDisplay } from "@/utilities/donations/helpers";
 import { cn } from "@/utilities/tailwind";
 import { SortIcon } from "./ControlCenterColumns";
-import { AgreementBadge, ProgressCell } from "./StatusBadges";
+import { AgreementBadge, PendingDisbursalBadge, ProgressCell } from "./StatusBadges";
 
 export interface TableRow {
   grantUid: string;
@@ -52,9 +52,9 @@ interface ControlCenterTableRowProps {
   isKycEnabled: boolean;
   isLoadingKycStatuses: boolean;
   kycStatus: KycStatusResponse | null;
-  onSelectGrant: (uid: string, checked: boolean) => void;
-  onRowClick: (item: TableRow, e: React.MouseEvent) => void;
-  onOpenConfigModal: (item: TableRow) => void;
+  onSelectGrant?: (uid: string, checked: boolean) => void;
+  onOpenDetails: (item: TableRow) => void;
+  readOnly?: boolean;
 }
 
 const ControlCenterTableRow = memo(function ControlCenterTableRow({
@@ -72,34 +72,35 @@ const ControlCenterTableRow = memo(function ControlCenterTableRow({
   isLoadingKycStatuses,
   kycStatus,
   onSelectGrant,
-  onRowClick,
-  onOpenConfigModal,
+  onOpenDetails,
+  readOnly,
 }: ControlCenterTableRowProps) {
   return (
     <tr
       key={`${item.grantUid}-${item.projectUid}`}
-      onClick={(e) => onRowClick(item, e)}
       className={cn(
-        "cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-zinc-900/70 group",
+        "transition-colors",
         isSelected && "bg-blue-50 dark:bg-blue-900/20",
         isFullyDisbursed && "bg-green-50/50 dark:bg-green-900/10",
         checkboxDisabled && !isFullyDisbursed && "bg-gray-50/50 dark:bg-zinc-900/50"
       )}
     >
       {/* Checkbox */}
-      <td className="px-2 py-3 text-center">
-        <input
-          type="checkbox"
-          className={cn(
-            "h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500",
-            checkboxDisabled && "opacity-50 cursor-not-allowed"
-          )}
-          checked={isSelected}
-          onChange={(e) => onSelectGrant(item.grantUid, e.target.checked)}
-          disabled={checkboxDisabled}
-          title={checkboxReason || "Select for disbursement"}
-        />
-      </td>
+      {!readOnly && (
+        <td className="px-2 py-3 text-center">
+          <input
+            type="checkbox"
+            className={cn(
+              "h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500",
+              checkboxDisabled && "opacity-50 cursor-not-allowed"
+            )}
+            checked={isSelected}
+            onChange={(e) => onSelectGrant?.(item.grantUid, e.target.checked)}
+            disabled={checkboxDisabled}
+            title={checkboxReason || "Select for disbursement"}
+          />
+        </td>
+      )}
 
       {/* Project */}
       <td className="px-4 py-3">
@@ -151,11 +152,14 @@ const ControlCenterTableRow = memo(function ControlCenterTableRow({
 
       {/* Progress */}
       <td className="px-4 py-3 text-left">
-        <ProgressCell
-          invoices={invoices}
-          paidMilestoneCount={paidMilestoneCount}
-          invoiceRequired={invoiceRequired}
-        />
+        <div className="space-y-1">
+          <ProgressCell
+            invoices={invoices}
+            paidMilestoneCount={paidMilestoneCount}
+            invoiceRequired={invoiceRequired}
+          />
+          <PendingDisbursalBadge invoices={invoices} />
+        </div>
       </td>
 
       {/* Total Grant */}
@@ -173,15 +177,12 @@ const ControlCenterTableRow = memo(function ControlCenterTableRow({
       </td>
 
       {/* Actions */}
-      <td className="px-4 py-3 text-center">
+      <td className="px-2 py-3 text-center w-12">
         <button
-          onClick={() => onOpenConfigModal(item)}
-          className={cn(
-            "p-2 rounded-md transition-colors",
-            "text-gray-500 hover:text-gray-700 hover:bg-gray-100",
-            "dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-zinc-800"
-          )}
-          title="Configure payout settings"
+          type="button"
+          onClick={() => onOpenDetails(item)}
+          className="p-1.5 rounded-md text-gray-400 hover:text-gray-700 dark:text-zinc-500 dark:hover:text-zinc-200 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
+          aria-label={`Open details for ${item.projectName}`}
         >
           <Cog6ToothIcon className="h-5 w-5" />
         </button>
@@ -194,11 +195,11 @@ const ControlCenterTableRow = memo(function ControlCenterTableRow({
 
 export interface ControlCenterTableProps {
   paginatedData: TableRow[];
-  selectedGrants: Set<string>;
-  selectableGrants: TableRow[];
-  onSelectGrant: (uid: string, checked: boolean) => void;
-  onSelectAll: (checked: boolean) => void;
-  onRowClick: (item: TableRow, e: React.MouseEvent) => void;
+  selectedGrants?: Set<string>;
+  selectableGrants?: TableRow[];
+  onSelectGrant?: (uid: string, checked: boolean) => void;
+  onSelectAll?: (checked: boolean) => void;
+  onOpenDetails: (item: TableRow) => void;
   onSort: (column: CommunityPayoutsSorting["sortBy"]) => void;
   sortBy?: CommunityPayoutsSorting["sortBy"];
   sortOrder?: "asc" | "desc";
@@ -210,10 +211,10 @@ export interface ControlCenterTableProps {
   invoiceMap: Record<string, CommunityPayoutInvoiceInfo[]>;
   paidMilestoneCountMap: Record<string, number>;
   invoiceRequiredMap: Record<string, boolean>;
-  getCheckboxDisabledState: (item: TableRow) => { disabled: boolean; reason: string | null };
-  onOpenConfigModal: (item: TableRow) => void;
+  getCheckboxDisabledState?: (item: TableRow) => { disabled: boolean; reason: string | null };
   hasActiveFilters: boolean;
   onClearFilters: () => void;
+  readOnly?: boolean;
   // Pagination
   currentPage: number;
   onPageChange: (page: number) => void;
@@ -227,7 +228,7 @@ export function ControlCenterTable({
   selectableGrants,
   onSelectGrant,
   onSelectAll,
-  onRowClick,
+  onOpenDetails,
   onSort,
   sortBy,
   sortOrder,
@@ -240,15 +241,15 @@ export function ControlCenterTable({
   paidMilestoneCountMap,
   invoiceRequiredMap,
   getCheckboxDisabledState,
-  onOpenConfigModal,
   hasActiveFilters,
   onClearFilters,
+  readOnly,
   currentPage,
   onPageChange,
   itemsPerPage,
   totalItems,
 }: ControlCenterTableProps) {
-  const columnCount = 8 + (isKycEnabled ? 1 : 0);
+  const columnCount = 8 + (isKycEnabled ? 1 : 0) - (readOnly ? 1 : 0);
 
   return (
     <div className="px-4">
@@ -257,26 +258,28 @@ export function ControlCenterTable({
           <thead>
             <tr className="bg-gray-50 dark:bg-zinc-900">
               {/* Checkbox */}
-              <th className="h-11 px-2 text-center align-middle w-12">
-                <input
-                  type="checkbox"
-                  className={cn(
-                    "h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500",
-                    selectableGrants.length === 0 && "opacity-50 cursor-not-allowed"
-                  )}
-                  checked={
-                    selectableGrants.length > 0 &&
-                    selectableGrants.every((p) => selectedGrants.has(p.grantUid))
-                  }
-                  onChange={(e) => onSelectAll(e.target.checked)}
-                  disabled={selectableGrants.length === 0}
-                  title={
-                    selectableGrants.length === 0
-                      ? "No grants have valid payout address and amount"
-                      : `Select all ${selectableGrants.length} eligible grants`
-                  }
-                />
-              </th>
+              {!readOnly && (
+                <th className="h-11 px-2 text-center align-middle w-12">
+                  <input
+                    type="checkbox"
+                    className={cn(
+                      "h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500",
+                      (selectableGrants?.length ?? 0) === 0 && "opacity-50 cursor-not-allowed"
+                    )}
+                    checked={
+                      (selectableGrants?.length ?? 0) > 0 &&
+                      (selectableGrants ?? []).every((p) => selectedGrants?.has(p.grantUid))
+                    }
+                    onChange={(e) => onSelectAll?.(e.target.checked)}
+                    disabled={(selectableGrants?.length ?? 0) === 0}
+                    title={
+                      (selectableGrants?.length ?? 0) === 0
+                        ? "No grants have valid payout address and amount"
+                        : `Select all ${selectableGrants?.length ?? 0} eligible grants`
+                    }
+                  />
+                </th>
+              )}
               {/* Project - sortable */}
               <th
                 className="h-11 px-4 text-left text-xs font-semibold text-gray-600 dark:text-zinc-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-zinc-800 select-none"
@@ -326,21 +329,22 @@ export function ControlCenterTable({
                 </div>
               </th>
               {/* Actions */}
-              <th className="h-11 px-4 text-center text-xs font-semibold text-gray-600 dark:text-zinc-400 uppercase tracking-wider w-20">
-                Actions
-              </th>
+              <th className="h-11 px-2 w-12" />
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-zinc-800 bg-white dark:bg-zinc-950">
             {paginatedData.map((item) => {
               const disbursementInfo = disbursementMap[item.grantUid];
-              const checkboxState = getCheckboxDisabledState(item);
+              const checkboxState = getCheckboxDisabledState?.(item) ?? {
+                disabled: false,
+                reason: null,
+              };
 
               return (
                 <ControlCenterTableRow
                   key={`${item.grantUid}-${item.projectUid}`}
                   item={item}
-                  isSelected={selectedGrants.has(item.grantUid)}
+                  isSelected={selectedGrants?.has(item.grantUid) ?? false}
                   checkboxDisabled={checkboxState.disabled}
                   checkboxReason={checkboxState.reason}
                   isFullyDisbursed={checkboxState.reason === "Fully disbursed"}
@@ -353,8 +357,8 @@ export function ControlCenterTable({
                   isLoadingKycStatuses={isLoadingKycStatuses}
                   kycStatus={kycStatuses.get(item.projectUid) ?? null}
                   onSelectGrant={onSelectGrant}
-                  onRowClick={onRowClick}
-                  onOpenConfigModal={onOpenConfigModal}
+                  onOpenDetails={onOpenDetails}
+                  readOnly={readOnly}
                 />
               );
             })}

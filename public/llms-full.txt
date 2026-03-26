@@ -1,0 +1,2092 @@
+# Karma
+
+> Ecosystems use Karma to fund projects transparently. Builders use it to share progress, earn reputation, and get discovered.
+
+Karma is a platform where ecosystems allocate funding, track milestones, and measure impact, while builders share progress, earn reputation, and get discovered for more opportunities. Karma supports Optimism, Arbitrum One, Polygon, Base, Celo, Scroll, Lisk, Sei.
+
+## Table of Contents
+
+- Landing Pages
+- Supported Networks
+- Developer Docs
+- Documentation
+- Site URL Index
+- Knowledge Base - Core Concepts (10 articles)
+- Knowledge Base - Capabilities (8 articles)
+- Knowledge Base - Project Profiles (7 articles)
+
+## Landing Pages
+
+### Home
+
+Where builders get funded and ecosystems grow
+Ecosystems use Karma to fund projects transparently. Builders use it to share progress, earn reputation, and get discovered for more opportunities.
+We support builders across their lifecycle to access funding opportunities, grow their reputation and track their progress easily.
+Onchain Project Profile
+Create a comprehensive project profile and showcase your work across multiple funding programs, share updates and build reputation onchain.
+Multi-Program Participation
+Link your project to multiple grant rounds, hackathons, and retro funding programs — all under one profile.
+Direct Funding & Donations
+Accept funding directly on your project page through fiat and onchain payments or ecosystem grant disbursals.
+Impact Measurement
+Automatically track activity from GitHub, smart contracts, and other sources by easily linking your repos and contracts.
+Milestones & Updates
+Build your onchain reputation by documenting progress and milestones through Karma's GAP protocol.
+Endorsements & Reputation
+Receive onchain endorsements from supporters, funders, and collaborators that strengthen your credibility.
+Join Discord
+
+### For Funders
+
+From intake to impact, Karma gives you the tools to fund smarter, track progress transparently, and maximize the ROI of every funded project.
+- Arbitrum
+- Gitcoin
+- Celo
+- Polygon
+- Filecoin
+- Optimism
+- Octant
+- Celo Public Goods
+- Scroll
+- Lisk
+- Public Nouns
+- Livepeer
+- Regen Coordination
+- Good Dollar
+Proven expertise in ecosystem funding
+We've powered some of the largest onchain funding programs, helping ecosystems distribute capital transparently, measure outcomes, and grow faster.
+for growth and impact
+Whether you're running applications, tracking milestones, or measuring impact, each module works independently and seamlessly together. Launch fast, adapt easily, and scale your ecosystem with confidence.
+Application Evaluation Smarter decisions with AI-powered evaluation
+Leverage AI to evaluate grant applications at scale. Get instant scoring, risk assessments, and funding recommendations based on historical performance, cross-ecosystem reputation, and proposal quality—so you can review and approve funding with confidence.
+Public Registry One place for all projects and their progress
+A public registry of every project in your ecosystem with complete visibility into funding, milestones, and updates. Track project progress in real-time as grantees submit milestone updates with proof of work.
+Impact Measure what matters with real-time insights
+Track project metrics automatically through GitHub, Dune, and custom integrations. Apply the industry-leading 'Common Approach' framework to measure impact, evaluate performance in real time, and continuously improve your funding program.
+Distribution Funding methods to meet your needs
+Support projects smarter: issue direct grants with AI-driven evaluations and milestone-based funding, then scale impact with our retro funding platform.
+“ Karma isn't just software, they're a true partner. Their AI-driven evaluations cut review time dramatically. Their platform fits our needs perfectly and their team ships features at lightning speed.
+Optimism
+Over the past 10 months, Celo has leveraged Karma's platform to track 400+ projects, 850+ grants and 3600+ milestones, moving from fragmented tracking to a unified onchain project registry and funding funnel to simplify impact measurement and grow their ecosystem.
+Meet your dedicated success partner who will guide you through setup, onboarding, and best practices.
+We’ll help you set up your community space, enable whitelabel branding, and deploy the onchain modules you need — all tailored to your workflow.
+Design your funding program, set evaluation criteria, and go live. Start receiving applications and funding projects within 48 hours.
+scale when you're ready
+Pro
+
+### Projects
+
+Browse projects that use Karma to track grants, share updates, and build public reputation.
+Thousands of projects utilize Karma to track their grants, share project progress and build reputation. Explore projects making a difference.
+Discover projects. Evaluate track records and traction. Fund with confidence
+Explore thousands of Web3 projects with verified milestones and onchain reputation. See
+who's shipping, who's funded, and who delivers.
+
+### Communities
+
+Explore Communities
+Browse communities using Karma to run funding programs and track outcomes.
+Browse grant-giving communities and ecosystems on Karma. Discover funding programs, track grantee progress, and find opportunities.
+Explore the ecosystem of DAOs, protocols, and organizations growing their communities
+through transparent funding, accountability, and impact measurement.
+
+## Supported Networks
+
+- Optimism (Chain ID: 10)
+- Arbitrum One (Chain ID: 42161)
+- Polygon (Chain ID: 137)
+- Base (Chain ID: 8453)
+- Celo (Chain ID: 42220)
+- Scroll (Chain ID: 534352)
+- Lisk (Chain ID: 1135)
+- Sei (Chain ID: 1329)
+- Optimism Sepolia (testnet) (Chain ID: 11155420)
+- Base Sepolia (testnet) (Chain ID: 84532)
+- Sepolia (testnet) (Chain ID: 11155111)
+
+## Developer Docs
+
+- [API Documentation](https://gapapi.karmahq.xyz/v2/docs): REST API docs for projects, communities, grants, and attestations
+- [OpenAPI JSON](https://gapapi.karmahq.xyz/v2/docs/json)
+- Authentication: use Privy JWT in `Authorization: Bearer <token>` for protected endpoints
+- Public reads are available for key listing endpoints (projects, communities, grants)
+
+## Documentation
+
+### Overview
+
+#### Why Karma
+
+A brief introduction to why we are building Karma and Grantee Accountability Protocol
+Problem
+Grant programs in the crypto ecosystem lack a standardized method for grantees to publish progress updates and milestones, leading to several issues:
+Limited Accessibility : Currently, it is challenging for grant managers and the community to easily access and track project progress and milestones, as information is scattered across forums and external links.
+Reputation Portability : Grantees who apply for grants from multiple organizations struggle to establish and carry their reputation consistently across the ecosystem. This is particularly difficult for individuals who are new to the ecosystem and need opportunities to showcase their work and build their reputation.
+Inadequate Data Structure : The absence of structured data that can be accessed in a permissionless manner hampers the development of applications and analytical tools for evaluating grant impact and builder reputation.
+Solution
+To address the aforementioned problems, we built GAP (Grantee Accountability Protocol) where grant teams can post information about the grant and grantees can post milestones and progress updates onchain. This solves a number of problems explained below
+Onchain Reporting : Grantees will utilize the protocol to self-report their progress and milestones directly on the blockchain through EAS (Ethereum Attestation Service). Leveraging the existing support for EAS schemas, we defined schemas tailored to various reporting needs.
+Universal data access : By storing all grant-related data onchain, we eliminate the need for manual searching and external links. We built an interface for grantees and grant teams to interact with the protocol. Communities are not obligated to use this interface but are welcome to build their own interface to present this information in interesting ways.
+Enhanced Reputation Building : Our protocol enables the linking of team member profiles to specific projects. This feature empowers team members to build and showcase their reputation for their contributions. Additionally, this reputation can be carried over to other DAOs, opening opportunities for involvement in various areas of DAO governance or similar initiatives.
+Grant Farming : It is well known in the ecosystem that there are teams who simply try to get grants and either don’t fully execute or do it with no goal of making the project a success. Having better visibility can help community and grant admins evaluate teams before issuing grants.
+Facilitating Novel Applications : With comprehensive on-chain data available, the protocol encourages the development of innovative applications. Few applications we can think of that can be built on top of this protocol are:
+Grantee reputation systems
+Project impact analysis tools
+Signaling for future grants
+Auto monitor milestones and progress updates and alert the community
+Endorsing teams and team members working on projects
+
+#### How does it work?
+
+Structure of a project on Karma
+
+##### Project
+
+Every team (or individual) has a project profile in Karma. This profile contains everything about your project. We recommend you add a clear description of your project, details about the problem you are solving, social links and any help you need for your project.
+
+Projects are created only once and are not to be confused with grants received from various communities.
+
+##### Grant
+
+Grant is funding you receive from an ecosystem to support your work. Every grant you receive can be linked to your Project. Grant details will include the description of the work you will be carrying out, impact details, grant amount, proposal details.
+
+##### Milestone
+
+Every grant has 1 to many milestones. We recommend creating milestones for your grant work to clearly show different phases of your grant work and path to completion of the work. Each milestone should clearly say what you plan to accomplish and how an evaluator can verify your milestone upon completion.
+
+##### Milestone Update
+
+Upon completion of a milestone, post a milestone update under that milestone. Milestone update should clearly articulate the work you have completed and provide proof of your work. This proof will be reviewed by evaluators or community members (if your community has evaluators) to verify your milestone completion.
+
+##### Grant Update
+
+Grantees can also post regular updates in-between milestones to keep the grant manager or community updated on the their progress.
+
+##### Impact
+
+If you are a builder who has created impact through your project, you can create impact attestations on Karma. These impact attestations are a great way to show your impact and qualify for future retroactive funding.
+
+#### Supported Networks
+
+Karma is currently deployed on [Optimism](https://www.optimism.io/), [Arbitrum](https://arbitrum.io/), [Celo](https://celo.org/), [Scroll](https://www.scroll.io/) and [Lisk](https://www.lisk.com/) networks. Any community can utilize one or more networks for their programs.
+
+Reach out to us on [Telegram](https://t.me/karmahq) if you would like us to deploy Karma on any other network.
+
+### For Builders
+
+#### For Builders
+
+Karma with Grantee Accountability Protocol is here to empower you as a grantee and streamline the grant reporting process. Here's how Karma can benefit you:
+
+- Build a Strong Reputation: Create a project profile highlighting your project, its goals, and how it tackles a problem. Link your grant funding to this profile, showcasing your accomplishments and the impact you're making. This builds trust and credibility within the crypto ecosystem, increasing your chances of securing future grants.
+
+- Transparent Reporting Made Easy: Say goodbye to scattered reports and endless searching. Karma allows you to report progress directly on the blockchain. This on-chain storage ensures easy access for grant managers and the community, keeping everyone informed of your project's development.
+
+- Effortless Milestone Tracking: Break down your grant work into clear, achievable milestones. Define what you aim to achieve in each phase and set verifiable criteria for completion. As you complete milestones, submit updates with proof of work, keeping everyone on the same page.
+
+- Stay Connected with Stakeholders: Regular communication is key. Utilize Karma's grant update feature to share progress updates with the community and grant managers in between milestones. This transparency fosters trust and keeps everyone engaged in your project's journey.
+
+- Unlock New Opportunities: Karma's on-chain data paves the way for innovative applications. Imagine grantee reputation systems or tools analyzing project impact – all fueled by the data you provide. This can open doors to future grants and exciting collaborations within the DAO landscape.
+
+#### Add Grant to Project
+
+Follow the steps below to add your grant
+
+###### Step 1: Add new grant
+
+Click on "Add a grant" button to start adding your grant.
+
+View for adding first grant to a project
+
+View for adding subsequent grants to a project
+
+###### Step 2: Add Grant Details
+
+Add your grant title and choose the community that issued a grant to you.
+
+Karma supports multiple chains. We recommend choosing the community + network where your grant was issued. Example: We have Gitcoin community on both Arbitrum and Optimism. If you received a Gitcoin grant on Arbitrum network, choose "Gitcoin on Arbitrum"
+
+Provide comprehensive answers to all questions regarding impact measurement. This is your opportunity to articulate to the community how your grant is making an impact. When grant managers or community members evaluate your grant, they will refer to your answers to gauge its effectiveness.
+
+#### Add Milestone
+
+This is where you create milestones explaining everything you plan to accomplish through this grant.
+
+###### Step 1: Select grant to add milestone
+
+Select your grant where you want to add your milestone and click on "Add a new milestone"
+
+###### Step 2: Add milestone details
+
+**Milestone Title**: Keep the milestone title concise, between 5 to 8 words.
+
+**Milestone Description**: Provide detailed information about the goals and objectives you aim to achieve in this milestone. Include verification criteria or guidelines to assist anyone in confirming milestone completion.
+
+**Milestone update**: If the milestone is already complete, offer details on the achievement and include verifiable proof of completion.
+
+#### Add Team members
+
+###### Step 1: Generate an Invitation
+
+1. Navigate to your project profile
+
+2. Locate the "Team" section
+
+3. Click the "Add Team Member" button to generate a unique invitation link
+
+###### Step 2: Share the Invitation
+
+1. Copy the unique URL that appears
+
+2. Share this link with your team members via email or messaging
+
+###### Step 3: Team Member Acceptance
+
+1. Team members will see a confirmation page when clicking the link
+
+2. They must accept the invitation to join your project team
+
+3. Once accepted, they will appear in your project's team section
+
+###### Step 4: Assign Admin Privileges
+
+1. In the team section, find the team member you want to make an admin
+
+2. Look for the arrow icon next to their name
+
+3. Click this arrow to grant them admin privileges
+
+4. Admin status allows them to manage the project profile and post updates
+
+* * *
+
+_Note: Only the project owner and designated admins can manage team members and assign admin privileges._
+
+#### Create Project
+
+Don't add your grant details here. This is to just tell the entire world how awesome your project is :)
+
+We have partnered with many grant platforms such as Gitcoin and Octant to automatically sync your project to Karma. If your project is on one of these platforms, it is highly likely that your project already exists in Karma and you won't have to create it again.
+
+###### Step 1: Login
+
+The first step is to login with your wallet account. Click the Login/Register button on top right corner of the navigation bar on [Karma](https://www.karmahq.xyz/) website.
+
+###### Step 2: My Projects
+
+Navigate to "My Projects" page to check if your project already exists in Karma.
+
+###### Step 3: Check if your project exists
+
+If your project already exists, you will find it in /my-projects page. If not, before you create your project, lookup your project in the search box to see if your project exists in Karma. It is possible that the project is assigned to another wallet account you own.
+
+If it is assigned to another wallet, [reach out to us](https://t.me/karmahq) and we can transfer ownership of the project to any account address you prefer.
+
+Lookup project
+
+###### Step 4: Create Project
+
+If you can't find your project, then proceed to create your project.
+
+Click on "New Project" button to create your project.
+
+Fill in all the details and click "Create Project" button. Your project is stored onchain. You will be asked to execute an onchain transaction to complete project creation.
+
+#### Login with Safe
+
+
+
+#### Merge projects
+
+**Overview**
+
+When syncing projects from third-party grant systems, duplicate projects may be created due to slight variations in names, different wallet addresses, or other discrepancies. To streamline project management, Karma provides a **Project Merge** feature that allows project owners to consolidate duplicate projects into a single project profile.
+
+###### How It Works
+
+Project owners can merge projects by selecting a primary project (master project) and consolidating other duplicate projects into it. This ensures all project details, grants, updates, and histories are unified under a single project entry.
+
+###### Steps to Merge Projects
+
+1. **Access Project Settings:**
+
+ - Navigate to the **Project Settings** of the project you wish to merge (e.g., Project B or C).
+
+ - Cick on the Merge option
+
+2. **Select Master Project:**
+
+ - Choose the target project (master project) into which the selected project should be merged (e.g., Project A).
+
+3. **Confirm Merge:**
+
+ - Click **Merge** to primary project to finalize the process.
+
+###### Example Scenario
+
+You have three projects: **Project A, Project B, and Project C**. If Project B and Project C are duplicates of Project A, follow these steps:
+
+1. Navigate to **Project B** settings → Click **Merge** → Select **Project A** → Click **Merge**.
+
+2. Navigate to **Project C** settings → Click **Merge** → Select **Project A** → Click **Merge**.
+
+After completion, **Project B and Project C** will be merged into **Project A**, consolidating all data under one unified profile.
+
+###### Benefits
+
+- Eliminates duplicate project entries.
+
+- Ensures accurate grant tracking and reporting.
+
+- Maintains a single source of truth for project updates and progress.
+
+This feature enhances project management efficiency by providing a seamless way to resolve duplication issues in Karma.
+
+#### Post grant update
+
+Occasionally, it's beneficial to keep the grant manager and community informed between milestones. There are also times when you don't have specific milestones but still wish to provide biweekly or monthly updates. The Grant Update feature is an excellent way to share your progress and maintain transparency with stakeholders.
+
+To post a grant update:
+
+1. Choose your grant
+
+2. Navigate to "Milestones and Updates"
+
+3. Click on "Post a grant update" to post updates.
+
+#### Post Milestone update
+
+When you complete a milestone, you can post an update on that milestone! This is a great way to keep the community and program managers updated on your progress.
+
+To post an update on milestone:
+
+1. Select the grant
+
+2. Select "Milestones and Updates" tab
+
+3. Select "Pending" to view all pending milestones
+
+4. Click "Post an update" to post update and mark milestone as complete.
+
+#### Transfer Ownership
+
+**How to Manage Project Ownership in Karma**
+
+Projects in Karma are owned by an Ethereum wallet account. Sometimes when your project is automatically synced by our system, we might have made your multisig wallet the owner of the project or another cold wallet that you prefer not to use for posting updates. While Karma supports multisig login, making updates can be cumbersome. You can choose to transfer ownership of your Project to another account (EOA). Here are the options to manage or transfer project ownership effectively:
+
+1. **Transfer Ownership to an EOA**
+
+ - Log in with the multisig account.
+
+ - Navigate to the project, then go to **Settings > Transfer Ownership**.
+
+ - Follow the prompts to transfer ownership to your EOA (Externally Owned Account).
+
+2. **Add an EOA as an Admin**
+
+ - Log in with the multisig account.
+
+ - Add the desired EOA as a project member.
+
+ - Promote the EOA to admin by updating their role.
+
+3. **Request Assistance**
+
+ - If needed, message our team on [Telegram](https://t.me/karmahq) or [Discord](https://discord.com/invite/X4fwgzPReJ). We can assist in transferring ownership or adding an admin.
+
+### For Grant Managers
+
+#### For Grant Managers
+
+What is the Grant Manager's role in Karma?
+
+- Review grant proposals: You can leverage the information grantees provide in their project profiles and grant details to assess the potential impact of their projects.
+
+- Evaluate milestone updates: Karma allows you to review milestone updates submitted by grantees, including any proof of work provided. This helps you track progress and ensure that grant funds are being used effectively.
+
+How can Karma benefit you?
+
+- Improved decision-making: By having access to a comprehensive record of a grantee's past performance and the impact of their projects, you can make more informed decisions about future grant allocations.
+
+- Increased transparency: Karma fosters transparency between grantors and grantees. You can easily track project progress and hold grantees accountable for delivering on their promises.
+
+#### Categorize grants
+
+**Benefit 1**
+
+In the community page, anyone can view grants filtered by categories. This is useful for any community members who are interested in only certain types of projects (DeFi, NFT etc.)
+
+**Benefit 2**
+
+Grant managers can configure questions for reviews/ratings specific to each grant category. Learn more about reviewing grants in the next section.
+
+###### Steps to categorize grants
+
+1. Navigate to "Admin" section through the top navigation
+
+2. Click on edit categories
+
+3. Create category if one doesn't exist
+
+4. All your grants will be displayed in the page. Simply select one or more categories and assign to each grant.
+
+#### Grant review
+
+Before reviewing a grant, managers can configure the questions they would like answered. Questions can be assigned to each category of grants. To assign a question
+
+1. Navigate to the "Assign questions" in the admin portal
+
+2. Add a new question if required
+
+3. Assign questions to each category and save.
+
+#### Impact Measurement
+
+The system is inspired by the **Common Impact Data Standard (** [**CIDS** ](https://www.commonapproach.org/common-impact-data-standard) **)**, a widely used framework for structuring impact around **outputs**, **outcomes**, and **indicators**.
+Karma adapts these ideas into a **practical, onchain-native workflow** suitable for web3 programs.
+
+###### Core Concepts
+
+Before configuring impact measurement, it’s important to understand the core concepts used in Karma.
+
+###### Activities
+
+**Activities** describe what was _directly produced_ by a project using the funding it received.
+
+Examples:
+
+- Code written
+
+- Features shipped
+
+- Research completed
+
+- Events organized
+
+Activities answer the question:
+
+> _“What did the grantee actually do?”_
+
+* * *
+
+###### Outcomes
+
+**Outcomes** describe the _change or effect_ that resulted from those outputs.
+
+Examples:
+
+- Increased network usage
+
+- Improved developer adoption
+
+- Economic growth
+
+- Environmental or social change
+
+Outcomes answer the question:
+
+> _“Why did those outputs matter?”_
+
+* * *
+
+###### Indicators
+
+In Karma, the **metrics used to measure outputs and outcomes are called Indicators**.
+
+Indicators can be:
+
+- **Predefined** (automatically tracked by Karma)
+
+- **Custom** (manually reported by grantees)
+
+Indicators make impact measurable, comparable, and verifiable.
+
+* * *
+
+###### Example: Activities, Outcomes, and Indicators
+
+Imagine you fund a project to build an onchain application.
+
+**Activity**
+Developer activity in your ecosystem
+
+**Activity Indicators**
+
+- GitHub commits
+
+- Pull requests merged
+
+**Outcome**
+Increased economic activity in the network
+
+**Outcome Indicators**
+
+- Number of transactions
+
+- Total Value Locked (TVL)
+
+This separation allows you to clearly see:
+
+- What work was done (outputs)
+
+- What change that work created (outcomes)
+
+###### Step-by-Step: Setting Up Impact Measurement
+
+###### Step 1: Categorize Funded Projects
+
+Programs often fund **many different types of projects**, and impact indicators are rarely one-size-fits-all.
+The first step is to categorize your projects.
+
+**How to do this**
+
+1. Go to **Categories** in your admin dashboard
+
+1. Click **Add Category and** add one or more categories (e.g. _Developer Tools_, _Infrastructure_, _Community_, _Research_)
+
+2. Assign one or more categories to each funded project
+
+> Categories determine which outputs, outcomes, and indicators are available later.
+
+###### Step 2: Define Activities, Outcomes, and Indicators
+
+Once categories are set up, you can define how impact is measured for each category.
+
+**How to do this**
+
+1. Go to **Impact Measurement** page from admin dashboard
+
+2. Select a **Category**
+
+3. Add **Activities by clicking on Create Activity/Outcome button**
+
+1. Choose a name and description (this will be displayed on impact dashboard on your community page)
+
+1. Assign i **ndicators** from the dropdown by using the toggle **.**
+
+1. If an indicator is not found, you can Add new custom indicator
+
+1. Save the Activity
+
+2. Repeat the same to add more activities or outcomes
+
+**Using Predefined Indicators**
+
+If you select a **predefined indicator**, Karma will automatically pull the data.
+
+Examples:
+
+- GitHub Commits, PRs merged
+
+- Onchain Txns
+
+**What grantees must do**
+
+- Link their GitHub repositories
+
+- Link relevant smart contracts
+
+Karma handles the data collection once links are provided.
+
+**Using Custom Indicators**
+
+If no predefined indicator fits your needs, you can create a **custom indicator**.
+
+Examples:
+
+- Number of workshops conducted
+
+- Partnerships formed
+
+- Users onboarded offchain
+
+**How it works**
+
+- Grantees manually input values
+
+- Data is submitted as part of project updates or milestone completion
+
+This gives you flexibility without losing structure.
+
+###### Step 3: View Impact at the Community Level
+
+Once impact measurement is configured and grantees begin reporting, you can view aggregated impact data.
+
+**How to do this**
+
+1. Go to **Community Page**
+
+2. Open the **Impact** tab
+
+Here you can see:
+
+- Activity metrics across projects
+
+- Outcomes generated by the program
+
+- Indicator values over time
+
+* * *
+
+###### How Grantees Report Impact
+
+When grantees:
+
+- Post project updates
+
+- Complete milestones
+
+They are prompted to:
+
+1. Select relevant **Indicators**
+
+2. Enter or confirm indicator values
+
+3. Submit supporting context where required
+
+This ensures impact data is:
+
+- Collected continuously
+
+- Tied to real project activity
+
+- Comparable across projects and rounds
+
+* * *
+
+###### Best Practices for Program Operators
+
+- **Keep indicators simple**: Fewer, high-signal metrics are better than many vague ones
+
+- **Separate outputs and outcomes clearly**: Avoid mixing activity with impact
+
+- **Reuse categories across programs/rounds**: This enables longitudinal analysis
+
+- **Default to predefined indicators where possible**: They reduce reporting burden and improve data quality
+
+###### Summary
+
+Karma’s impact measurement system allows you to:
+
+- Structure impact using industry-standard concepts
+
+- Automatically track onchain and offchain activity
+
+- Collect comparable, auditable data from grantees
+
+- Generate clear impact narratives for funders and stakeholders
+
+Impact measurement is not just reporting — it’s how programs learn, improve, and earn trust.
+
+#### Verify grant update
+
+1. Find the project and navigate to the grants tab.
+
+1. Click on Milestones and Updates
+
+2. Find the milestone you want to verify and add verification comment
+
+1. Anyone can view the verification comment next to the milestone
+
+### For Reviewers
+
+#### For Reviewers
+
+Karma funding platform supports two types of reviewers:
+
+- Application Reviewers
+
+- Milestone Reviewers
+
+#### Application Review Guide
+
+###### Getting Started
+
+**Step 1: Log In**
+
+Go to [www.karmahq.xyz](http://www.karmahq.xyz/) and click the **Login** button in the top right corner.
+
+**Step 2: Access Your Reviews**
+
+Click \[ **Review\](** [**https://www.karmahq.xyz/my-reviews** ](https://www.karmahq.xyz/my-reviews) **)** in the header navigation. This displays all applications in the program for review.
+
+_Note: If you don't see the My Reviews link, contact your grant program administrator to ensure you've been added as a reviewer._
+
+###### Reviewing Applications
+
+**Step 3: Open an Application**
+
+Navigate to the program you are reviewing and click on any application to view its full details, including:
+
+- Applicant information and proposal
+
+- AI evaluation summary
+
+- Comment thread
+
+**Step 4: Start Your Review**
+
+When you're ready to begin, click the **Start Review** button. This notifies the applicant via email that their application is under active review, helping set expectations and keep them informed.
+
+**Step 5: Ask Questions (If Needed)**
+
+If you need clarification from the applicant, use the **Comments** section. Applicants receive email notifications when you post a comment, and you'll be notified when they respond.
+
+###### Making a Decision
+
+**Step 6: Approve or Reject**
+
+Once you've reached a decision, click **Approve** or **Reject**. You'll be prompted to provide reasoning—we encourage you to be as detailed as possible, as this feedback is valuable to applicants regardless of the outcome. Also, confirm the final amount that is approved.
+
+**Step 7: Applicant Notification**
+
+The applicant is automatically notified of your decision. If approved, they'll receive any post-approval instructions configured by the grant administrator.
+
+### For Community Members
+
+#### For Community Members
+
+How can you participate in Karma?
+
+- Endorse projects: If you believe in a project and its potential impact, you can endorse it on Karma. This is a way to signal your support and help the project gain visibility.
+
+- Stay informed: Karma allows you to follow projects you're interested in and receive updates on their progress.
+
+Benefits of Karma for community members
+
+- Transparency: You gain greater insight into how grant funds are being used and the impact that projects are creating.
+
+- Discovery: Karma can help you discover new and innovative projects that align with your interests.
+
+#### Endorse project
+
+Endorsing a project means publicly expressing your support for it. This is typically done because you believe the project is worthwhile and will have a positive impact. Here are some key points about endorsing a project:
+
+- **Credibility:** Your endorsement carries weight if you have relevant experience or expertise in the project's area.
+
+- **Publicity:** An endorsement can help raise awareness of the project and attract more supporters.
+
+- **Support:** It can also show the project team that you believe in them and are willing to help them succeed.
+
+Here are steps to endorse a project on the platform:
+
+Step 1 - Navigate to the project page & choose the project
+
+Step 2 - Click on 'endorse the button'.
+
+Step 3 - Add an optional message explaining why you endorsee the project.
+
+Step 4 - Endorse - this executes an on-chain transaction and associates your endorsement with the project.
+
+Note - You can see the endorsements on the screen here.
+
+**Here are some other ways to spread the word:**
+
+- **Publicly announce your support.** You can do this through social media, a press release, or a speech.
+
+- **Volunteer your time or expertise.** This is a great way to show your support tangibly.
+
+- **Donate money.** If the project is fundraising, you can make a financial contribution.
+
+By endorsing a project, you can play a valuable role in helping it to succeed.
+
+#### Verify grant update
+
+Community members can verify grant updates too. Follow the steps [here](https://docs.gap.karmahq.xyz/how-to-guides/for-grant-managers/verify-grant-update) to verify grant update.
+
+### Developers
+
+#### Developers
+
+[API DOCS (v2)](https://gapapi.karmahq.xyz/v2/docs/static/index.html)
+
+Contact our tech team on [Telegram](https://t.me/karmahq) if you have any questions.
+
+### FAQs
+
+#### FAQs
+
+1. **What is the difference between a Project and a Grant in Karma?**
+
+**Project:** This is a profile for your overall work or initiative. It can encompass various grants you've received. Think of it as your permanent portfolio within Karma.
+
+**Grant:** This refers to specific funding you receive from a particular community or organization. Each grant is linked to your main project profile.
+
+1. **I don't see my community listed on Karma. Can they still use it?**
+
+Yes! Communities can choose to implement Karma on various networks like Optimism, Arbitrum, and Celo. If your community isn't listed yet, you can encourage them to explore Karma for their grant management needs.
+
+1. **Is my data secure on Karma?**
+
+Karma utilizes Ethereum Attestation Service (EAS) schemas for data storage. EAS leverages the security of the underlying blockchain, ensuring data integrity and immutability. Additionally, grant managers can control access permissions for specific data fields.
+
+1. **Who can create projects on Karma?**
+
+Anyone with a compatible crypto wallet can create a project profile on Karma. This allows individuals, teams, or organizations to showcase their work and potentially attract future grant funding.
+
+1. **How can I learn more about Karma and stay updated?**
+
+There are several ways to stay informed about Karma:
+
+- Visit the Karma [Website](https://www.karmahq.xyz/) for detailed information and resources.
+
+- Join the Karma community on [Telegram](https://t.me/karmahq) to connect with other users and get the latest updates.
+
+- Follow Karma on the [X platform](https://x.com/karmahq_) for announcements and project developments.
+
+### Partners
+
+#### Partners
+
+Karma has been integrated into following platforms:
+
+- [Octant](https://docs.gap.karmahq.xyz/how-to-guides/partners/octant) \- Milestones and updates posted by Octant grantees in Karma are displayed in Octant's platform.
+
+- [Gitcoin](https://grants.gitcoin.co/) \- Milestones and updates posted on Karma by grantees funded by any communities who run their rounds on Gitcoin Grants Stack are displayed in Gitcoin's platform.
+
+- [Ecosystem.vision](https://ecosystem.vision/) \- All the grants related data such as [Grant Programs](https://gap.karmahq.xyz/funding-map) and project grants on Karma are shown on Ecosystem's platform.
+
+#### Celo - Proof of Ship
+
+Proof-of-Ship is a monthly contest that rewards builders for actively building on Celo. The impact metrics in your Karma project profile are used to automtically calculate builder rewards, which you can claim each month [here](https://celo.builderscore.xyz/).
+
+Before creating a project profile, ensure you have:
+
+\- A wallet compatible with the Celo network, such as Rabby, Rainbow, MetaMask
+
+\- You need CELO tokens to pay for transactions. If you don't have any CELO tokens, Karma platform will sponsor your first 5 transactions. You will claim tokens in the project creation flow.
+
+##### Follow the steps below to Submit your project for Proof of Ship program
+
+###### Step 1: Add your project profile
+
+Add your project to Celo [Proof of Ship Program](https://gap.karmahq.xyz/community/celo) on [Karma](https://www.karmahq.xyz/). You can follow the instructions [here](https://docs.gap.karmahq.xyz/how-to-guides/for-builders/create-project). This is your onchain project profile you create one time and can use it to apply for future rounds. You can also point anyone to learn about your project, receive endorsements and donations.
+
+**If you participated in a previous season, you might already have a project profile. You can skip to Step 2. Contact our team if you have trouble accessing your profile here:** [**https://t.me/karmahq** ](https://t.me/karmahq)
+
+The title of your project should just be project name. It should not include "Proof of Ship" because this is a profile you can use in the future for other funding opportunities.
+
+###### Step 1.1: Add your contact info
+
+In the project creation flow and project update flow, you can update your contact info. Please make sure to add your contact info. This is how organizers will contact you for future communication regarding important updates.
+
+###### Step 1.2: Update your public profile
+
+Go to My Profile and update your profile. This is public profile info which is stored onchain. You can go to your profile from "My Profile" by clicking on your avatar in the header as shown below.
+
+###### Step 2: Submit your project for Proof of Ship
+
+To submit your project for proof of ship, follow the steps below
+
+1. Navigate to grants tab in your project and click Add Funding and select "Join Funding Program".
+
+1. Select Celo community from dropdown and choose Proof of Ship program you are applying to. Also, select the tracks you are interested in participating
+
+1. For Start Date, choose today's date (the date you are applying) and add optional description
+
+2. Add milestones explaining what you plan to accomplish. You can add as many milestones as you like.
+
+1. Click create and an onchain transaction will be executed to submit your entry to Proof of Ship program.
+
+###### Step 2.1: Update tracks
+
+If you have already applied to the program and would like to edit the tracks, click edit and update the tracks
+
+###### Step 3: Submit your github repo(s), contract addresses, payout address and divvi profile id
+
+Click on project settings and add your Github repos, contract addresses and divvi profile id.
+
+###### Step 4: Submit milestone updates
+
+As you complete your work, submit milestones and mark them as complete.
+
+###### Step 5: Final project submission
+
+1. At the end of the month, mark the grant as complete and submit a link to all assets ex: logo, screenshots etc.:
+
+1. Add a link to Video explaining your work (4 min max) and link to your Presentation (not more than 10 slides) in project profile.
+
+#### CeloPG - Proof of Impact
+
+The Proof of Impact campaign, powered by CeloPG, rewards builders based on the gas fees their users generate on the Celo network.
+
+##### Follow the steps below to Submit your project for Proof of Impact program
+
+###### Step 1: Add your project profile
+
+Add your project to Celo [Proof of Impact Program](https://gap.karmahq.xyz/community/celopg?programId=918_42161) on [Karma](https://www.karmahq.xyz/). You can follow the instructions [here](https://docs.gap.karmahq.xyz/how-to-guides/for-builders/create-project). This is your onchain project profile you create one time and can use it to apply for future rounds. You can also point anyone to learn about your project, receive endorsements and donations.
+
+**If you participated in a previous season, you might already have a project profile. You can skip to Step 2. Contact our team if you have trouble accessing your profile here:** [**https://t.me/karmahq** ](https://t.me/karmahq)
+
+The title of your project should just be project name. It should not include "Proof of Ship" because this is a profile you can use in the future for other funding opportunities.
+
+###### Step 2: Submit your project for Proof of Impact
+
+To submit your project for proof of impact, follow the steps below
+
+1. Navigate to Funding tab in your project and click Add Funding and select "Join Funding Program".
+
+1. Select Celo PG community from dropdown and choose Proof of impact program you are applying to.
+
+1. Add milestones explaining what you plan to accomplish. You can add as many milestones as you like.
+
+1. Click create and an onchain transaction will be executed to submit your entry to Proof of Ship program.
+
+###### Step 3: Submit your github repo(s), contract addresses and divvi profile id
+
+Click on project settings and add your Github repos, contract addresses and divvi profile id.
+
+###### Step 4: Submit milestone updates
+
+As you complete your work, submit milestones and mark them as complete.
+
+###### Step 5: Final project submission
+
+1. At the end of the month, mark the grant as complete and submit a link to all assets ex: logo, screenshots etc.:
+
+1. Add a link to Video explaining your work (4 min max) and link to your Presentation (not more than 10 slides) in project profile.
+
+#### Filecoin
+
+[ProPGF Batch 1 Grantee Guide](https://docs.gap.karmahq.xyz/how-to-guides/partners/filecoin/propgf-batch-1-grantee-guide) [ProPGF Batch 2 Grantee Guide](https://docs.gap.karmahq.xyz/how-to-guides/partners/filecoin/propgf-batch-2-grantee-guide)
+
+#### ProPGF Batch 1 Grantee Guide
+
+##### Filecoin ProPGF Grantee Guide
+
+Welcome to Karma! Filecoin has partnered with Karma to manage ProPGF grants going forward. If you're a grantee from ProPGF Batch 1, this guide will walk you through everything you need to know to access your project, submit milestone updates, and stay on track with your grant.
+
+###### What's Changed?
+
+We've migrated all 14 projects and milestones from Questbook into Karma's platform. Your project information, milestones, and deliverables are already set up and waiting for you, no need to re-enter anything.
+
+You can view all Batch 1 projects here: [https://www.karmahq.xyz/community/filecoin](https://www.karmahq.xyz/community/filecoin)
+
+###### Getting Started
+
+###### Step 1: Find Your Project
+
+1. Go to [https://www.karmahq.xyz/community/filecoin](https://www.karmahq.xyz/community/filecoin)
+
+2. Browse the list to locate your project
+
+3. Click on your project name to open your project page
+
+###### Step 2: Verify Your Admin Wallet
+
+Before logging in, confirm that we have the correct wallet address on file:
+
+1. On your project page, you can see the wallets in the team section
+
+1. Make sure this matches the wallet address you shared with the Filecoin team during your grant application
+
+> **Important:** Only the wallet listed as Admin can log in and submit updates for your project. If the wallet address doesn't match yours, please contact the Filecoin team to get it corrected.
+
+###### Step 3: Log In to Karma
+
+1. Click the **Login** button (located in the top-right corner of the page).
+
+2. Connect with the wallet account that matches your Admin address.
+
+3. Sign the authentication message when prompted, this verifies you own the wallet.
+
+Once logged in, you'll have full access to manage your project and submit milestone updates.
+
+* * *
+
+###### Submitting Milestone Updates
+
+After logging in, follow these steps to post a milestone completion update:
+
+###### Step 1: Navigate to the Funding Tab
+
+1. From your project page, click on the **Funding** tab in the navigation menu and select Batch 1 grant.
+
+2. This tab displays all your milestones, their current status, and funding details
+
+###### Step 2: Find Your Milestone
+
+1. Review the list of milestones imported from Questbook
+
+2. Locate the milestone you've completed or made progress on
+
+3. Each milestone will show its title, description, and current status
+
+###### Step 3: Post Your Update
+
+1. Click on the milestone you want to update
+
+2. Select the option to **Post Milestone Completion Update** (or similar button)
+
+3. Fill in the required information:
+
+ - **Summary of work completed:** Describe what you accomplished
+
+ - **Evidence of completion:** Include links to deliverables, demos, documentation, repositories, or any proof of work
+
+ - **Any relevant notes:** Add context that reviewers should know
+
+4. Review your submission for accuracy
+
+5. Click **Submit** to post your update
+
+For a detailed visual walkthrough, refer to our [Milestone Completion Update Guide](https://docs.karmahq.xyz/).
+
+###### Tips for Successful Updates
+
+- **Be specific:** Clearly describe what was delivered and how it meets the milestone requirements
+
+- **Include proof:** Link to tangible outputs—GitHub repos, deployed applications, documentation, demos, or reports
+
+- **Update regularly:** Don't wait until the last minute; post updates as you make meaningful progress
+
+###### Troubleshooting
+
+###### The Admin wallet doesn't match mine
+
+Reach out to the Filecoin team with your correct wallet address. They'll work with Karma to update your project's admin settings.
+
+###### My milestones don't look right
+
+If any milestone information appears incorrect or incomplete after the migration, contact the Filecoin team to request corrections.
+
+###### Need Help?
+
+If you run into any issues or have questions not covered in this guide:
+
+- **For Karma platform questions:** Contact us on [Telegram](http://t.me/karmahq) or reach out via the Filecoin support channels
+
+- **For ProPGF grant questions:** Contact the Filecoin team through your usual communication channels
+
+We're excited to support your work on Filecoin. Good luck with your milestones!
+
+#### ProPGF Batch 2 Grantee Guide
+
+Filecoin ProPGF Grantee Guide
+
+Welcome! As a grantee, this guide will walk you through everything you need to know to access your project, submit milestone updates, and stay on track with your grant.
+
+###### Getting Started
+
+###### Step 1: Log In to FilPGF
+
+1. Go to [https://app.filpgf.io](https://app.filpgf.io/)
+
+2. Click the **Login** button (located in the top-right corner of the page) and enter your email address you used to submit the application.
+
+If you don't find your application when you login, you will find a link to lookup your application by the reference ID (it looks like APP-XXXXXXXX-XXXXXX). If you're still unable to log in, contact the Karma team on Telegram [https://t.me/karmahq](https://t.me/karmahq) or email support@karmahq.xyz
+
+###### Step 2: Find Your Application
+
+1. Once logged in, navigate to the **My Applications** tab
+
+2. You'll see your approved grant application listed here
+
+3. Click on your application to open your project page
+
+Your project information and milestones have already been set up based on your approved application — no need to re-enter anything.
+
+* * *
+
+###### Submitting Milestone Updates
+
+After logging in and locating your application, follow these steps to post a milestone completion update:
+
+###### Step 1: Navigate to Your Milestones
+
+1. From your project page, click on the **Milestones** section
+
+2. This displays all your milestones, their current status, and funding details
+
+###### Step 2: Find Your Milestone
+
+1. Review the list of milestones defined in your approved application
+
+2. Locate the milestone you've completed or made progress on
+
+3. Each milestone will show its title, description, and current status
+
+###### Step 3: Post Your Update
+
+1. Click on the milestone you want to update
+
+2. Select the option to **Add Completion Update**
+
+3. Fill in the required information:
+
+ - **Summary of work completed:** Describe what you accomplished
+
+ - **Evidence of completion:** Include links to deliverables, demos, documentation, repositories, or any proof of work
+
+ - **Any relevant notes:** Add context that reviewers should know
+
+4. Review your submission for accuracy
+
+5. Click **Submit** to post your update
+
+* * *
+
+###### Tips for Successful Updates
+
+- **Be specific:** Clearly describe what was delivered and how it meets the milestone requirements
+
+- **Include proof:** Link to tangible outputs — GitHub repos, deployed applications, documentation, demos, or reports
+
+- **Update regularly:** Don't wait until the last minute; post updates as you make meaningful progress
+
+* * *
+
+###### Troubleshooting
+
+###### I don't see my application
+
+After logging in, make sure you're on the **My Applications** tab. If your application doesn't appear, most likely you submitted your application with a different email address. You can lookup your application on the dashboard to find the email you used to login. If you still have trouble, reach out to the Karma on [Telegram](https://t.me/karmahq) or support@karmahq.xyz
+
+###### My milestones don't look right
+
+If any milestone information appears incorrect or incomplete, contact the Filecoin team to request corrections.
+
+* * *
+
+###### Need Help?
+
+If you run into any issues or have questions not covered in this guide:
+
+- **For platform questions:** Contact us on [Telegram](http://t.me/karmahq) or reach out via the Filecoin support channels
+
+- **For ProPGF grant questions:** Contact the Filecoin team through your usual communication channels
+
+We're excited to support your work on Filecoin. Good luck with your milestones!
+
+#### Gitcoin
+
+[Gitcoin](https://grants.gitcoin.co/) **has integrated Karma into their application.** Project milestones added in Karma will now be automatically displayed on the corresponding project pages in Gitcoin. For example, here is a project on [Karma](https://gap.karmahq.xyz/project/karma---gap/grants/0xe7390a6f68ff70e0f7cda461079f92dad0150003e7ec541c7fb9e55e912211c0/milestones-and-updates) with milestones that are also visible in [Gitcoin](https://explorer.gitcoin.co/#/round/42161/608/117), ensuring seamless updates and visibility in both platforms.
+
+#### Global Stablecoin Hackathon
+
+##### Follow the steps below to Submit your project for Global Stablecoin Hackathon
+
+###### Step 1: Add your project profile
+
+Add your project to [Global Stablecoin Hackathon](https://gap.karmahq.xyz/community/celo?programId=889_42161) on [Karma](https://www.karmahq.xyz/). You can follow the instructions [here](https://docs.gap.karmahq.xyz/how-to-guides/for-builders/create-project). This is your onchain project profile you create one time and can use it to apply for future rounds. You can also point anyone to learn about your project, receive endorsements and donations.
+
+**If you participated in any of the Celo's past funding programs, you might already have a project profile. You can skip to Step 2. Contact our team if you have trouble accessing your profile here:** [**https://t.me/karmahq** ](https://t.me/karmahq)
+
+The title of your project should just be project name. It should not include "Global Stablecoin or Hackathon" because this is a profile you can use in the future for other funding opportunities.
+
+###### Step 2: Submit your project for Global Stablecoin Hackathon
+
+To submit your project for the hackathon, follow the steps below
+
+1. Navigate to Funding tab in your project and click Add Funding and select "Join Funding Program".
+
+1. Select Celo community from dropdown and choose Global Stablecoin Hackathon program you are applying to. Also, select the tracks you are interested in participating.
+
+1. For Start Date, choose today's date (the date you are applying) and add optional description
+
+2. Add milestones explaining what you plan to accomplish. You can add as many milestones as you like.
+
+1. Click create and an onchain transaction will be executed to submit your entry to the hackathon.
+
+###### Step 3: Update your personal profile
+
+On project profile page, click edit your profile and add all your profile details.
+
+This is a mandatory step for this hackathon
+
+###### Step 4: Submit your github repo(s) and contract addresses
+
+Click on project settings and add your Github repos, contract addresses and optionally OpenSourceObserver profiles if you have a profile on OSO.
+
+###### Step 5: Submit milestone updates
+
+As you complete your work, submit milestones and mark them as complete.
+
+###### Step 6: Final project submission
+
+1. At the end of the month, mark the grant as complete and submit a link to all assets ex: logo, screenshots etc.:
+
+1. Add a link to Video explaining your work (4 min max) and link to your Presentation (not more than 10 slides) in project profile.
+
+[PreviousCeloPG - Proof of Impact](https://docs.gap.karmahq.xyz/how-to-guides/partners/celopg-proof-of-impact)
+
+#### Octant
+
+[**Octant** ](https://octant.app/projects) **has integrated Karma into their application.** Project milestones added in Karma will now be automatically displayed on the corresponding project pages in Octant. For example, here is a project on [Karma](https://gap.karmahq.xyz/project/-buidlguidl/grants/0x674ed25e9616b5c4237c6295b87f32cca42e74e7cc087e071a9c80c4e279fe91/milestones-and-updates) with milestones that are also visible in [Octant](https://octant.app/project/5/0x00080706a7D99CBC163D52dcF435205B1aD940D1), ensuring seamless updates and visibility in both platforms.
+
+**If you don't see your Epoch specific milestones in Octant, follow the steps below to link Karma grant to Octant's Epoch.**
+
+##### Step 1
+
+Login to your Karma profile and navigate to your Octant Epoch grant and click on the "Link Octant Address" button.
+
+##### Step 2
+
+Enter the wallet address you used to sign up for that specific Octant Epoch and save.
+
+You should now be able to see your milestones in Octant application.
+
+**If you still don't see the milestones, contact us on** [**Telegram** ](https://t.me/karmahq) **or** [**Discord** ](https://discord.com/invite/X4fwgzPReJ) **and we will be glad to assist you.**
+
+#### UNICEF
+
+##### Follow the step by step instructions
+
+###### Step 1: Create your project profile
+
+**Use your email address or google oauth to login to Karma. Your project information is stored on blockchain. Karma will pay the blockchain fees on your behalf.**
+
+Follow the instructions [here](https://docs.gap.karmahq.xyz/how-to-guides/for-builders/create-project) to create your onchain project profile. You only need to create this once and can reuse it for future funding rounds. This public profile allows supporters to learn about your project, follow your progress, endorse your work, and contact you.
+
+The title of your project should just be project name. It should not include the grant name because this is a profile you can use in the future for other funding opportunities.
+
+###### Step 1.1: Add your contact info
+
+During project creation or when updating your project, you can add or edit your contact information. Please ensure this is complete, as it will be used for important communications.
+
+###### Step 2: Add your funding details
+
+Next, add details about the funding you received from UNICEF.
+
+1. Navigate to the **Funding** tab in your project, click **Add Funding**, and select **I want to add a grant**
+
+1. Select UNICEF Venture Fund community from dropdown and choose the appropriate program.
+
+2. Add milestones describing what you plan to accomplish. You can add as many milestones as needed.
+
+1. Click create and an onchain transaction will be executed.
+
+###### Step 3: Submit milestone updates
+
+As you complete your work, submit updates for each milestone and mark them as complete.
+
+###### Step 4: Final project submission
+
+At the end of the funding cycle, mark the grant as complete and submit a link to all assets (such as logos, screenshots, and other deliverables).
+
+## Site URL Index
+- [Create Project Profile](https://karmahq.xyz/create-project-profile): Create a public project profile to track funding, milestones, and updates
+- [Privacy Policy](https://karmahq.xyz/privacy-policy): Privacy policy for the Karma platform
+- [Seeds](https://karmahq.xyz/seeds): Seed funding and early-stage project support
+- [Terms and Conditions](https://karmahq.xyz/terms-and-conditions): Terms and conditions for using the Karma platform
+
+## Knowledge Base - Core Concepts
+
+### Grant Milestones vs Impact
+
+Why execution milestones and real-world impact must be treated as separate but related concepts in funding systems.
+
+#### In one sentence
+Milestones track work done; impact tracks change created.
+#### Short answer
+Milestones measure execution against commitments, while impact measures outcomes
+produced by that execution.
+#### Milestones
+- Controlled by the team
+- Time-bound
+- Execution-focused
+#### Impact
+- Often delayed
+- Influenced by external factors
+- Outcome-focused
+#### Why confusing them causes problems
+A project can meet milestones without impact, or create impact while missing milestones.
+Treating them as the same obscures performance.
+#### Related
+[→ Impact measurement](/knowledge/impact-measurement)
+#### Karma's model
+[Karma](https://www.karmahq.xyz)
+separates milestone tracking from impact documentation so evaluation remains clear and
+honest.
+
+### How DAOs Track Grant Milestones
+
+A practical breakdown of how DAOs define, track, and evaluate grant milestones, and the tradeoffs of different approaches.
+
+#### In one sentence
+Milestone tracking determines whether execution data compounds or disappears.
+#### Short answer
+DAOs track grant milestones using tools ranging from documents and spreadsheets to
+dedicated funding platforms, each with tradeoffs around structure, visibility, and
+learning.
+#### Common approaches
+##### Docs / Notion / Sheets
+- Fast and flexible
+- Low upfront cost
+- No standardization
+- Poor long-term memory
+##### Custom dashboards
+- Powerful and tailored
+- Expensive to build
+- High maintenance
+- Ecosystem silos
+##### Modular funding platforms
+- Standard milestone schemas
+- Ongoing updates
+- Review workflows
+- Cross-round visibility
+#### What good milestone tracking enables
+- Clear expectations
+- Transparent progress
+- Comparable outcomes
+- Better future funding decisions
+#### Related
+[→ AI-assisted grant evaluation](/knowledge/ai-grant-evaluation)
+#### Karma's role
+[Karma](https://www.karmahq.xyz)
+provides milestone tracking as shared infrastructure rather than ad-hoc reporting
+artifacts.
+
+### How Projects Build Reputation Through Funding
+
+How projects build credibility over time by documenting work, completing milestones, and creating verifiable records.
+
+#### In one sentence
+Reputation is the accumulation of visible follow-through.
+#### Short answer
+Projects build reputation by consistently documenting execution across funding cycles,
+not by winning individual grants.
+#### How reputation compounds
+- Commit to milestones
+- Document progress over time
+- Receive contextual review
+- Build execution history
+- Earn trust from future funders and users
+#### What weakens reputation
+- Missing updates
+- Overpromising milestones
+- Lack of evidence
+- Inconsistent communication
+#### Related
+[→ Public project registries](/knowledge/project-registry)
+#### Karma's role
+[Karma](https://www.karmahq.xyz)
+provides the surface where execution history persists and compounds into reputation.
+
+### How Reputation Compounds in Open Funding Systems
+
+Why reputation acts as cumulative memory in open funding systems, and how it improves decision-making over time.
+
+#### In one sentence
+Reputation is cumulative memory for funding decisions.
+#### Short answer
+In open funding systems, reputation reduces uncertainty and improves capital allocation
+over time.
+#### Without reputation
+Each funding round resets trust to zero.
+#### With reputation
+Past execution becomes predictive context, lowering evaluation cost and improving
+outcomes.
+#### Related
+[→ Impact measurement](/knowledge/impact-measurement)
+#### Karma's thesis
+Capital should follow credibility, and credibility should be earned through work.
+[Learn more about Karma](https://www.karmahq.xyz)
+
+### How to Verify Impact Without Centralized Auditors
+
+How impact can be measured and verified without relying solely on centralized auditors or one-off reports in open funding systems.
+
+#### In one sentence
+Trust emerges from repeated, visible verification.
+#### Short answer
+Impact can be verified through transparent documentation, peer review, and repeated
+public evidence rather than centralized audits alone.
+#### Limitations of centralized audits
+- Expensive
+- Infrequent
+- Opaque
+- Difficult to scale
+#### Alternative verification primitives
+- Public progress updates
+- Evidence-linked claims
+- Peer attestations
+- Historical consistency
+#### Karma's role
+[Karma](https://www.karmahq.xyz)
+supports impact as a living record rather than a one-time report.
+
+### Karma vs Manual Grant Tracking
+
+A comparison of spreadsheets, documents, and dedicated funding platforms for grant tracking, and when each approach breaks down.
+
+#### In one sentence
+Manual tracking optimizes speed; platforms optimize trust.
+#### Short answer
+Manual tools offer flexibility but fail at accountability and learning, while dedicated
+platforms trade flexibility for structure and memory.
+#### Where manual tools work
+- Small experiments
+- One-off grants
+- Early exploration
+#### Where they fail
+- Standardization
+- Persistence
+- Discoverability
+- Cross-round learning
+#### When Karma is used
+[Karma](https://www.karmahq.xyz)
+is used when ecosystems need repeatable funding decisions and durable execution history.
+
+### The Grant Lifecycle — From Proposal to Verified Impact
+
+A complete view of the grant process, from proposal to verified impact and long-term learning. Understand the full grant lifecycle.
+
+#### In one sentence
+Modern grant programs are end-to-end systems that combine evaluation, compliance,
+execution tracking, disbursement, and impact measurement.
+#### Short answer
+The grant lifecycle spans from proposal submission to verified impact, requiring
+coordinated evaluation, compliance checks, milestone execution, payments, and long-term
+learning — not just funding approval.
+#### Why the lifecycle matters
+Most grant programs are designed around selection, but most of the real work happens
+after approval.
+When lifecycle steps are disconnected:
+- Operations become manual and error-prone
+- Payments are delayed
+- Accountability breaks down
+- Impact is hard to verify
+- Reputation does not accumulate
+A complete lifecycle design treats grants as processes, not events.
+#### The full grant lifecycle (with capabilities)
+##### 1. Proposal submission
+Projects submit applications describing scope, milestones, and expected outcomes.
+**Key requirement:** Structured applications that can be compared and
+reviewed at scale.
+##### 2. Application evaluation (AI-assisted + human)
+When programs receive hundreds of applications, fully manual review does not scale.
+Modern programs use:
+- AI-assisted evaluation for first-pass filtering
+- Automated summaries and risk signals
+- Human reviewers for judgment and final decisions
+This reduces reviewer fatigue while preserving accountability.
+[→ Related: AI-assisted grant evaluation](/knowledge/ai-grant-evaluation)
+##### 3. Selection and approval
+Approved projects move forward with clearly defined expectations:
+- Scope of work
+- Milestones (if applicable)
+- Funding structure
+This step establishes the commitments that accountability will later measure.
+##### 4. Compliance and identity verification (KYC)
+For larger grants or foundation-managed programs, identity verification is required
+before funds move.
+Operational challenges include:
+- Tracking who needs KYC
+- Following up on incomplete checks
+- Preventing premature payments
+Lifecycle-aware systems treat KYC as a gated dependency, not an afterthought.
+[→ Related: KYC in grant programs](/knowledge/grant-kyc)
+##### 5. Agreement and document signing
+Many programs require signed agreements defining:
+- Milestones
+- Payment conditions
+- Legal and reporting obligations
+Without integrated signing:
+- Documents fragment across inboxes
+- Status becomes unclear
+- Payments stall
+Signing must be tied directly to grant status.
+[→ Related: Document signing in grants](/knowledge/grant-document-signing)
+##### 6. Fund disbursement
+Disbursement is not a single action — it is a coordination step.
+Before funds are released, systems must confirm:
+- KYC completion
+- Signed agreements
+- Internal approvals
+- Correct payment configuration
+Good systems surface blockers clearly and prevent mistakes.
+[→ Related: Grant fund disbursement](/knowledge/grant-fund-disbursement)
+##### 7. Milestone execution and progress tracking
+For milestone-based grants, execution is tracked over time:
+- Projects submit updates
+- Evidence is attached
+- Progress is reviewed
+This turns commitments into visible execution history.
+[→ Related: DAO grant milestones](/knowledge/dao-grant-milestones)
+##### 8. Public project registry
+As projects execute, their work should be visible.
+A project registry:
+- Lists funded projects
+- Shows status and updates
+- Preserves historical context
+- Enables community transparency
+Registries turn funding into shared memory.
+[→ Related: Public project registries](/knowledge/project-registry)
+##### 9. Impact measurement
+Beyond milestones, programs want to understand outcomes.
+Impact measurement aggregates:
+- GitHub activity
+- Smart contract data
+- Manually reported metrics
+- Community-level rollups
+This allows ecosystems to assess what funding actually produced.
+[→ Related: Impact measurement](/knowledge/impact-measurement)
+##### 10. Reputation accumulation and learning
+Execution and impact data feed forward:
+- Projects build reputation
+- Evaluators gain credibility
+- Funding decisions improve over time
+Without this step, every funding round starts from zero.
+#### How Karma fits
+[Karma](https://www.karmahq.xyz)
+supports the entire grant lifecycle, integrating evaluation, compliance, execution
+tracking, payments, impact measurement, and reputation into a single system.
+
+### What Is Grant Accountability in Web3?
+
+Grant accountability turns funding promises into persistent execution history. Learn how funded projects are tracked after money is disbursed.
+
+#### In one sentence
+Grant accountability turns funding promises into persistent execution history.
+#### Short answer
+Grant accountability in Web3 is the system of tracking how funded projects execute on
+their commitments over time, making progress visible, verifiable, and reusable for
+future funding decisions.
+#### Why this matters
+Most Web3 ecosystems spend enormous effort deciding **who gets funded**,
+and very little effort understanding **what happens after funding**. When
+execution is not tracked in a durable, comparable way, ecosystems cannot learn which
+teams reliably deliver.
+Without accountability:
+- Good and bad projects look the same after funding
+- Capital allocation does not improve over time
+- Trust resets every funding round
+#### What grant accountability actually requires
+Grant accountability is not reporting. It requires:
+- Clearly defined milestones at funding time
+- Ongoing, timestamped progress updates
+- Contextual review or verification
+- Public, persistent records
+- Visibility across funding rounds and ecosystems
+#### Common misunderstandings
+- Accountability ≠ submitting a final report
+- Accountability ≠ one-off check-ins
+- Accountability ≠ centralized audits only
+#### Related
+#### How Karma fits
+[Karma](https://www.karmahq.xyz)
+provides modular infrastructure for ecosystems to define milestones, collect structured
+updates, attach reviews, and preserve execution history so accountability compounds
+instead of disappearing.
+
+### What Is Onchain Reputation?
+
+What reputation actually means in open systems, how it differs from tokens or identity, and why execution history matters.
+
+#### In one sentence
+Onchain reputation is the cumulative record of a project's public work, preserved
+through time and visible to anyone.
+#### Short answer
+Onchain reputation is built when a project's execution history — funding, milestones,
+updates, and outcomes — is recorded publicly in a way that cannot be quietly altered or
+erased.
+#### Why reputation needs a substrate
+Reputation is not a score. It is **memory**.
+In most funding systems:
+- Reputation is inferred from narratives
+- History is fragmented across PDFs and links
+- Past work disappears between funding rounds
+This makes trust expensive and fragile.
+#### Project profiles as the unit of reputation
+Onchain reputation is not attached to wallets or tokens alone. It is attached to
+**project profiles**.
+A project profile becomes the canonical place where:
+- Work is documented
+- Updates accumulate
+- Evidence is attached
+- History remains visible
+Reputation emerges from repeated, observable behavior.
+#### Why "onchain" matters
+Storing project profiles as onchain attestations ensures:
+- Updates are append-only
+- Past claims remain visible
+- Credibility compounds over time
+- Trust does not rely on the platform alone
+Projects do **not** need blockchain knowledge to benefit from this.
+#### Common misunderstandings
+- Reputation ≠ token balance
+- Reputation ≠ one successful grant
+- Reputation ≠ endorsements without evidence
+Reputation is earned through sustained execution.
+#### How Karma fits
+[Karma](https://www.karmahq.xyz)
+enables onchain reputation by providing free, public project profiles where work is
+documented, verified, and preserved over time.
+
+### Why Most Grant Programs Fail After Funding
+
+A structural analysis of why many funding programs struggle to produce consistent outcomes despite strong applicant pools.
+
+#### In one sentence
+Grant programs fail at post-funding follow-through, not project selection.
+#### Short answer
+Most grant programs fail because they lack systems to track execution after funds are
+disbursed, leaving ecosystems unable to learn from outcomes.
+#### The hidden failure point
+Grant programs are architected around:
+- Applications
+- Committees
+- Voting
+- Disbursement
+They are rarely architected around:
+- Execution tracking
+- Verification
+- Learning loops
+#### Common failure modes
+- Updates are optional or unstructured
+- No shared definition of "progress"
+- Execution data is lost between rounds
+- Evaluators are not accountable for outcomes
+#### Structural consequence
+When execution data is missing, future funding decisions are made with no memory.
+Ecosystems repeat the same risks without realizing it.
+#### How Karma addresses this
+[Karma](https://www.karmahq.xyz)
+shifts the center of gravity from **funding events** to
+**execution histories**, enabling grant programs to learn which teams
+actually deliver.
+
+## Knowledge Base - Capabilities
+
+### AI-Assisted Grant Evaluation at Scale
+
+How funding programs scale application review without sacrificing rigor using AI-assisted evaluation tools.
+
+#### In one sentence
+AI-assisted evaluation helps grant programs process high volumes of applications without
+sacrificing review quality.
+#### Short answer
+When programs receive hundreds of applications, fully manual review does not scale.
+AI-assisted evaluation provides first-pass filtering, automated summaries, and risk
+signals while preserving human judgment for final decisions.
+#### Why this matters
+Grant programs often face a tradeoff between speed and rigor. Reviewer fatigue leads to
+inconsistent evaluations, missed red flags, and delayed decisions.
+AI assistance addresses this by handling repetitive analysis while keeping humans in
+control of judgment calls.
+#### What AI-assisted evaluation enables
+- Automated summaries of long applications
+- Consistency checks across submissions
+- Risk signal detection
+- Reduced reviewer fatigue
+- Faster turnaround without cutting corners
+#### What it does not replace
+AI does not replace human judgment. Final decisions, nuanced evaluation, and
+context-sensitive assessments remain with reviewers.
+#### Related
+[→ The grant lifecycle](/knowledge/grant-lifecycle)
+#### Karma's role
+[Karma](https://www.karmahq.xyz)
+integrates AI-assisted evaluation into the grant workflow, helping programs scale review
+without losing accountability.
+
+### Document Signing in Grant Programs
+
+Why grant agreements must be tracked as part of the funding workflow. Learn about document signing in grant programs.
+
+#### In one sentence
+Document signing formalizes grant commitments and must be tracked as part of the funding
+workflow.
+#### Short answer
+Many programs require signed agreements defining milestones, payment conditions, and
+legal obligations. Signing must be tied directly to grant status to prevent operational
+chaos.
+#### What agreements typically define
+- Scope of work and milestones
+- Payment conditions and schedule
+- Legal and reporting obligations
+- Termination clauses
+#### Problems without integrated signing
+- Documents fragment across inboxes
+- Signature status becomes unclear
+- Payments stall waiting for confirmations
+- No audit trail for agreements
+#### Related
+#### Karma's role
+[Karma](https://www.karmahq.xyz)
+integrates document signing into the grant workflow so signature status is always
+visible and tied to disbursement readiness.
+
+### Grant Fund Disbursement Coordination
+
+How payments are safely triggered once requirements are met in grant programs. Learn about fund disbursement coordination.
+
+#### In one sentence
+Grant disbursement requires coordinating compliance, approvals, and execution before
+funds move.
+#### Short answer
+Fund disbursement is the operational step where grants move from approval to payment,
+often gated by KYC, signed documents, and milestone conditions.
+#### Why disbursement is complex
+Disbursement often depends on:
+- Completed KYC
+- Signed agreements
+- Internal approvals
+- Correct transaction execution
+Each dependency introduces delays if tracked manually.
+#### What good disbursement systems do
+- Surface blocking requirements
+- Prevent premature payments
+- Reduce manual coordination
+- Create auditability
+#### Related
+#### Karma's role
+[Karma](https://www.karmahq.xyz)
+coordinates KYC, signing, and grant status so program managers can confidently trigger
+payments without operational chaos.
+
+### Impact Measurement for Funded Projects
+
+Learn how funded work is connected to verifiable outputs and outcomes, and how impact measurement improves capital allocation.
+
+#### In one sentence
+Impact measurement connects funded work to verifiable outputs and outcomes.
+#### Short answer
+Beyond milestones, programs want to understand what funding actually produced. Impact
+measurement aggregates data from multiple sources to assess outcomes at the project and
+ecosystem level.
+#### What impact measurement aggregates
+- GitHub activity and code contributions
+- Smart contract data and onchain metrics
+- Manually reported metrics
+- Community-level rollups
+#### Why this matters
+Milestones track execution, but impact tracks change. Without measuring impact,
+ecosystems cannot learn which types of funding produce the best outcomes.
+#### Challenges
+- Impact is often delayed
+- Attribution is difficult
+- Metrics can be gamed
+- Qualitative outcomes are hard to capture
+#### Related
+#### Karma's role
+[Karma](https://www.karmahq.xyz)
+aggregates impact data from multiple sources, allowing ecosystems to assess what funding
+actually produced.
+
+### KYC in Grant and Funding Programs
+
+How identity verification is coordinated without slowing down funding. Learn about KYC and compliance in grant programs.
+
+#### In one sentence
+KYC ensures identity verification happens before funds move, without blocking the rest
+of the funding workflow.
+#### Short answer
+For larger grants or foundation-managed programs, identity verification is required
+before disbursement. Well-designed systems treat KYC as a gated dependency, not an
+afterthought.
+#### Operational challenges
+KYC coordination often involves:
+- Tracking who needs KYC
+- Following up on incomplete checks
+- Preventing premature payments
+- Managing sensitive data securely
+#### What good KYC integration looks like
+- KYC status visible in grant workflow
+- Automatic blocking of payments until complete
+- Clear follow-up mechanisms
+- Privacy-preserving verification
+#### Related
+#### Karma's role
+[Karma](https://www.karmahq.xyz)
+integrates KYC into the grant workflow so verification happens seamlessly without
+delaying other operations.
+
+### Multiple Funding Distribution Mechanisms
+
+How different funding goals require different payment structures. Learn about funding distribution mechanisms in open ecosystems.
+
+#### In one sentence
+Different funding goals require different distribution mechanisms.
+#### Short answer
+Funding programs use mechanisms like milestone-based payments, one-time grants, and
+retroactive funding depending on the nature of the work.
+#### Common mechanisms
+- **One-time grants:** Upfront funding for defined scope
+- **Milestone-based:** Staged payments tied to execution
+- **Retroactive:** Rewards for completed work
+- **Streaming:** Continuous payments over time
+#### Why flexibility matters
+No single mechanism fits all projects. Rigid systems distort incentives and force
+projects into unsuitable structures.
+#### Choosing the right mechanism
+- Known scope with clear deliverables → milestone-based
+- Exploratory or early-stage work → one-time grant
+- Proven impact already delivered → retroactive
+- Ongoing operations → streaming
+#### Related
+#### Karma's role
+[Karma](https://www.karmahq.xyz)
+supports multiple distribution mechanisms so funding models align with how work is
+actually done.
+
+### Public Project Registries for Funded Work
+
+Why communities maintain public records of funded projects and their progress. Learn about project registries in open funding systems.
+
+#### In one sentence
+Public registries create shared sources of truth for funded work and reduce duplicated
+effort across ecosystems.
+#### Short answer
+A project registry lists funded projects, shows their status and updates, preserves
+historical context, and enables community transparency.
+#### Why registries matter
+Without a central registry, ecosystems lose track of what has been funded. This leads
+to:
+- Duplicate funding for similar projects
+- No visibility into project progress
+- Lost institutional memory
+- Difficulty comparing outcomes
+#### What good registries provide
+- Searchable list of all funded projects
+- Current status and milestone progress
+- Historical execution records
+- Cross-ecosystem visibility
+#### Related
+#### Karma's role
+[Karma](https://www.karmahq.xyz)
+provides public project registries that turn funding into shared memory, making
+execution visible across programs and rounds.
+
+### Whitelabel Funding Platforms
+
+Why ecosystems run funding programs under their own brand using shared infrastructure. Learn about whitelabel funding platforms.
+
+#### In one sentence
+Whitelabel platforms let ecosystems run funding programs under their own brand using
+shared infrastructure.
+#### Short answer
+Instead of building custom funding tools, ecosystems can deploy branded instances of a
+shared platform, reducing development costs while maintaining program identity.
+#### Why ecosystems choose whitelabel
+- Faster time to launch
+- Lower development and maintenance costs
+- Access to proven tooling
+- Consistent user experience
+- Shared improvements across deployments
+#### What whitelabel enables
+- Custom branding and domain
+- Program-specific configurations
+- Integrated evaluation, tracking, and payments
+- Cross-ecosystem data visibility (when desired)
+#### Related
+[→ The grant lifecycle](/knowledge/grant-lifecycle)
+#### Karma's role
+[Karma](https://www.karmahq.xyz)
+provides whitelabel funding infrastructure so ecosystems can run branded programs
+without building from scratch.
+
+## Knowledge Base - Project Profiles
+
+### How Funders Use Project Profiles to Evaluate Work
+
+How funders evaluate projects based on execution history, not just proposals. Learn how project profiles support funding decisions.
+
+#### In one sentence
+Funders use project profiles to reduce uncertainty and see execution history at a
+glance.
+#### Short answer
+Project profiles allow funders to evaluate projects based on real progress, not just
+proposals.
+#### What funders look for
+- Consistent updates
+- Evidence of execution
+- Follow-through on milestones
+- Transparency about challenges
+#### Why profiles outperform applications
+Applications predict intent.
+Profiles reveal behavior.
+Over time, funders prefer projects that maintain strong profiles.
+This creates a norm:
+> If you want funding, maintain a project profile.
+#### How Karma fits
+[Karma](https://www.karmahq.xyz)
+provides project profiles that give funders the execution history they need to make
+better funding decisions.
+[→ Create your project profile](/create-project-profile)
+
+### How Projects Build Reputation Through Public Updates
+
+Why consistent public updates build trust more than perfect outcomes. Learn how projects build reputation through transparent progress sharing.
+
+#### In one sentence
+Reputation is built through consistent public updates, not perfect outcomes.
+#### Short answer
+Projects build reputation by showing up regularly, documenting progress, explaining
+setbacks, and sharing evidence over time.
+#### Why updates matter more than outcomes
+- Outcomes are often delayed
+- Updates show intent and execution
+- Transparency builds trust
+A missed milestone explained publicly often builds more trust than silent success.
+#### What good updates include
+- What was done
+- What changed
+- What was learned
+- What comes next
+#### How profiles enable this
+Project profiles provide a permanent home for updates so reputation compounds instead of
+resetting.
+#### How Karma fits
+[Karma](https://www.karmahq.xyz)
+provides the infrastructure where project updates become lasting reputation signals.
+[→ Create your project profile](/create-project-profile)
+
+### Onchain Project Profiles (Without Blockchain Complexity)
+
+How onchain storage provides credibility for project profiles without requiring blockchain knowledge or complexity.
+
+#### In one sentence
+Onchain project profiles provide credibility and persistence without requiring
+blockchain knowledge.
+#### Short answer
+Onchain project profiles store updates as attestations, making history tamper-resistant
+and publicly verifiable while remaining easy to use.
+#### What "onchain" actually means here
+- Updates cannot be silently deleted
+- History is transparent
+- Trust does not depend on the platform alone
+#### What it does not mean
+- No wallets required
+- No crypto expertise needed
+- No technical setup
+#### Why this matters
+Onchain storage ensures that credibility is earned through time, not presentation.
+#### How Karma fits
+[Karma](https://www.karmahq.xyz)
+provides onchain project profiles that are simple to use — no blockchain expertise
+required — while preserving the benefits of tamper-resistant history.
+[→ Create your project profile](/create-project-profile)
+
+### Project Profiles as a Global Resume for Funded Work
+
+Why project profiles serve as global resumes for funded work, enabling teams to build portable, verifiable track records.
+
+#### In one sentence
+A project profile is a resume for funded work.
+#### Short answer
+Project profiles play the same role for projects that resumes play for individuals: they
+show experience, outcomes, and reliability over time.
+#### Useful comparison
+- LinkedIn → who you are
+- GitHub → what you code
+- Grant reports → what you claimed
+- **Project profiles → what your project has actually delivered**
+#### Why this matters
+Funders rarely have context across grants and programs.
+A project profile becomes:
+- A single source of truth
+- A credibility anchor
+- A reusable asset
+#### How Karma fits
+[Karma](https://www.karmahq.xyz)
+provides project profiles as the global resume for funded work — a single place to show
+what your project has delivered.
+[→ Create your project profile](/create-project-profile)
+
+### Project Profiles for Software vs Non-Software Projects
+
+How project profiles work for both technical and non-technical work, with different approaches to documenting progress and impact.
+
+#### In one sentence
+The same project profile works for software and non-software projects — only the
+evidence differs.
+#### Short answer
+Project profiles adapt to different project types by allowing different forms of proof
+while preserving a common structure.
+#### Software projects
+- GitHub repositories
+- Commit and release activity
+- Smart contract addresses
+- Onchain usage metrics
+#### Non-software projects
+- Impact metrics
+- Outputs and outcomes
+- Qualitative evidence
+- Community reports
+#### Why this matters
+Nonprofits and philanthropic projects often lack a shared place to show progress.
+Project profiles create parity between technical and non-technical work.
+#### How Karma fits
+[Karma](https://www.karmahq.xyz)
+provides project profiles that work for both software and non-software projects,
+allowing any type of evidence to build credibility.
+[→ Create your project profile](/create-project-profile)
+
+### What Is a Project Profile?
+
+A public, shareable page where projects document funding, milestones, updates, and outcomes over time. Learn what project profiles are.
+
+#### In one sentence
+A project profile is a public, persistent record of what a project has done, not just
+what it promises to do.
+#### Short answer
+A project profile is a free, public, shareable page where a project documents its work
+over time — including funding received, milestones, updates, and outcomes — creating a
+durable execution history that funders and communities can trust.
+#### Why project profiles exist
+Most projects rely on:
+- Grant applications
+- Reports
+- Slide decks
+- PDFs
+These are **episodic**. They capture a moment, then disappear.
+Project profiles exist because funded work is **continuous**, and
+credibility comes from showing progress over time.
+#### What makes a project profile different
+A project profile is:
+- **Public** — visible to anyone
+- **Cumulative** — grows over time
+- **Update-driven** — not a one-time report
+- **Shareable** — one link, everywhere
+- **Persistent** — history doesn't reset
+#### What goes into a project profile
+- Basic project description
+- Funding received (grants, retro, etc.)
+- Milestones and status
+- Public progress updates
+- Evidence and metrics
+#### Onchain, without complexity
+Project profiles are stored as onchain attestations:
+- Updates are append-only
+- History is always visible
+- Credibility compounds
+Projects do **not** need to know anything about blockchain to benefit.
+#### How Karma fits
+[Karma](https://www.karmahq.xyz)
+provides project profiles as onchain, execution-based records that are free to create,
+public by default, and designed for funded work.
+[→ Create your project profile](/create-project-profile)
+
+### Why Grantees Need Project Profiles
+
+How project profiles help grantees show funders what happens after funding, build credibility, and avoid repetitive reporting.
+
+#### In one sentence
+Grantees need project profiles to show funders what actually happens after funding.
+#### Short answer
+A project profile allows grantees to document progress, share updates, and build trust
+continuously instead of relying on one-off reports.
+#### The problem with traditional reporting
+- Reports are private
+- Reports are static
+- Reports are forgotten
+- Each funder asks for something different
+This creates duplicated work with little long-term benefit.
+#### What profiles change
+With a project profile:
+- Updates are written once
+- Visibility compounds
+- Future funders see history
+- Accountability is proactive
+#### Why this matters for small grants
+For grantees receiving funding from programs like Artizen or small foundations,
+visibility matters as much as the funding itself.
+A profile turns small grants into **credibility signals**, not just line
+items.
+#### How Karma fits
+[Karma](https://www.karmahq.xyz)
+provides free project profiles where grantees can document their work once and share it
+everywhere.
+[→ Create your project profile](/create-project-profile)

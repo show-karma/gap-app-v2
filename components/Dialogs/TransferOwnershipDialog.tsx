@@ -2,18 +2,17 @@
 
 import { Dialog, Transition } from "@headlessui/react";
 import { PlusIcon } from "@heroicons/react/24/solid";
-import { type FC, Fragment, type ReactNode, useEffect, useState } from "react";
-import { isAddress } from "viem";
+import { type FC, Fragment, type ReactNode, useState } from "react";
 import { useAccount } from "wagmi";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
+import { communityAdminsService } from "@/services/community-admins.service";
 import { useProjectStore } from "@/store";
 import { useTransferOwnershipModalStore } from "@/store/modals/transferOwnership";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import { sanitizeInput } from "@/utilities/sanitize";
 import { getProjectById, isOwnershipTransfered } from "@/utilities/sdk";
 import { errorManager } from "../Utilities/errorManager";
 import { Button } from "../ui/button";
@@ -38,9 +37,8 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
     openTransferOwnershipModal: openModal,
     closeTransferOwnershipModal: closeModal,
   } = useTransferOwnershipModalStore();
-  const [newOwner, setNewOwner] = useState<string>();
+  const [newOwnerEmail, setNewOwnerEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [validAddress, setValidAddress] = useState(true);
 
   const signer = useSigner();
   const { chain, address } = useAccount();
@@ -53,14 +51,20 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
     useAttestationToast();
   const { setupChainAndWallet } = useSetupChainAndWallet();
 
+  const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
   const transfer = async () => {
     if (!project) return;
-    if (!newOwner || !isAddress(newOwner)) {
-      showError("Please enter a valid address");
+    if (!newOwnerEmail || !isValidEmail(newOwnerEmail)) {
+      showError("Please enter a valid email address");
       return;
     }
     try {
       setIsLoading(true);
+
+      // Resolve email to wallet address
+      const newOwnerAddress = await communityAdminsService.resolveEmailToWallet(newOwnerEmail);
+
       startAttestation("Transferring ownership...");
       const setup = await setupChainAndWallet({
         targetChainId: project.chainID,
@@ -77,7 +81,7 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
       const fetchedProject = await getProjectById(project.uid);
       if (!fetchedProject) return;
       await fetchedProject
-        .transferOwnership(walletSigner, sanitizeInput(newOwner), changeStepperStep)
+        .transferOwnership(walletSigner, newOwnerAddress, changeStepperStep)
         .then(async (res) => {
           let retries = 1000;
           changeStepperStep("indexing");
@@ -89,7 +93,7 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
             const isTransfered = await isOwnershipTransfered(
               walletSigner || signer,
               fetchedProject,
-              newOwner as `0x${string}`
+              newOwnerAddress as `0x${string}`
             );
 
             if (isTransfered) {
@@ -108,12 +112,12 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
     } catch (error: any) {
       showError("Failed to transfer ownership. Please try again.");
       errorManager(
-        `Error transferring ownership from ${project.owner} to ${newOwner}`,
+        `Error transferring ownership from ${project.owner} to ${newOwnerEmail}`,
         error,
         {
           project: project?.details?.slug || project?.uid,
           oldOwner: project?.owner,
-          newOwner,
+          newOwnerEmail,
           address: address,
         },
         {
@@ -125,10 +129,6 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
       setIsStepper(false);
     }
   };
-
-  useEffect(() => {
-    if (newOwner?.length) setValidAddress(isAddress(newOwner));
-  }, [newOwner]);
 
   return (
     <>
@@ -171,17 +171,18 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
                     Transfer Project Ownership
                   </Dialog.Title>
                   <div className="flex flex-col gap-2 mt-8">
-                    <label htmlFor="newOwner">New Owner Address</label>
+                    <label htmlFor="newOwnerEmail">New Owner Email</label>
                     <input
-                      className="rounded border border-zinc-300  dark:bg-zinc-800 px-2 py-1 text-black dark:text-white"
-                      type="text"
-                      id="newOwner"
-                      onChange={(e) => setNewOwner(e.target.value)}
+                      className="rounded border border-zinc-300 dark:bg-zinc-800 px-2 py-1 text-black dark:text-white"
+                      type="email"
+                      id="newOwnerEmail"
+                      placeholder="newowner@example.com"
+                      value={newOwnerEmail}
+                      onChange={(e) => setNewOwnerEmail(e.target.value)}
                     />
                     <p className="text-red-500">
-                      {!validAddress && newOwner?.length
-                        ? `Invalid address. Address should be a hexadecimal string with
-                exactly 42 characters.`
+                      {newOwnerEmail.length > 0 && !isValidEmail(newOwnerEmail)
+                        ? "Please enter a valid email address."
                         : null}
                     </p>
                   </div>
@@ -196,7 +197,7 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
                     <Button
                       className="text-white text-lg bg-red-600 border-black  hover:bg-red-600 hover:text-white"
                       onClick={transfer}
-                      disabled={isLoading || !validAddress || !newOwner}
+                      disabled={isLoading || !newOwnerEmail || !isValidEmail(newOwnerEmail)}
                       isLoading={isLoading}
                       type="button"
                     >

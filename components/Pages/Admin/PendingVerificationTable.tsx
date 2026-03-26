@@ -1,10 +1,10 @@
 import { CheckCircleIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
-import Link from "next/link";
 import { Button } from "@/components/Utilities/Button";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import TablePagination from "@/components/Utilities/TablePagination";
 import type { PendingVerificationMilestone } from "@/hooks/usePendingVerificationMilestones";
+import { Link } from "@/src/components/navigation/Link";
 import { normalizeProgramId } from "@/utilities/normalizeProgramId";
 import { PAGES } from "@/utilities/pages";
 
@@ -18,8 +18,26 @@ interface PendingVerificationTableProps {
   page: number;
   onPageChange: (page: number) => void;
   totalItems: number;
-  onSwitchToStats: () => void;
   itemsPerPage: number;
+  selectedReviewerAddress?: string;
+  currentUserAddress?: string;
+}
+
+export function getEmptyStateMessage(
+  selectedReviewerAddress?: string,
+  currentUserAddress?: string
+): string {
+  if (
+    selectedReviewerAddress &&
+    currentUserAddress &&
+    selectedReviewerAddress.toLowerCase() === currentUserAddress.toLowerCase()
+  ) {
+    return "All your assigned milestones are verified";
+  }
+  if (selectedReviewerAddress) {
+    return "All milestones assigned to this reviewer are verified";
+  }
+  return "All milestones are verified";
 }
 
 export function PendingVerificationTable({
@@ -30,8 +48,9 @@ export function PendingVerificationTable({
   page,
   onPageChange,
   totalItems,
-  onSwitchToStats,
   itemsPerPage,
+  selectedReviewerAddress,
+  currentUserAddress,
 }: PendingVerificationTableProps) {
   return (
     <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-700 overflow-hidden">
@@ -100,17 +119,7 @@ export function PendingVerificationTable({
                 <td colSpan={4} className="px-4 py-12 text-center">
                   <CheckCircleIcon className="mx-auto h-10 w-10 text-green-400 dark:text-green-500 mb-3" />
                   <p className="text-sm font-medium text-gray-900 dark:text-white">
-                    All milestones are verified
-                  </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    No milestones pending verification.{" "}
-                    <button
-                      type="button"
-                      className="text-primary-600 dark:text-primary-400 hover:underline"
-                      onClick={onSwitchToStats}
-                    >
-                      View Stats
-                    </button>
+                    {getEmptyStateMessage(selectedReviewerAddress, currentUserAddress)}
                   </p>
                 </td>
               </tr>
@@ -162,12 +171,14 @@ export function PendingVerificationTable({
           </tbody>
         </table>
       </div>
-      <TablePagination
-        currentPage={page}
-        setCurrentPage={onPageChange}
-        postsPerPage={itemsPerPage}
-        totalPosts={totalItems}
-      />
+      {totalItems > 0 && (
+        <TablePagination
+          currentPage={page}
+          setCurrentPage={onPageChange}
+          postsPerPage={itemsPerPage}
+          totalPosts={totalItems}
+        />
+      )}
     </div>
   );
 }

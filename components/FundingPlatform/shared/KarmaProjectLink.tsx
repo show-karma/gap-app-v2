@@ -1,9 +1,9 @@
 "use client";
 
 import { ExternalLink } from "lucide-react";
-import Link from "next/link";
 import type { FC } from "react";
 import { useProject } from "@/hooks/useProject";
+import { Link } from "@/src/components/navigation/Link";
 import { PAGES } from "@/utilities/pages";
 
 interface KarmaProjectLinkProps {

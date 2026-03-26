@@ -5,9 +5,9 @@ import type {
   IProjectMilestoneResponse,
   IProjectUpdate,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import Link from "next/link";
 import type { FC } from "react";
 import { useUpdateActions } from "@/hooks/useUpdateActions";
+import { Link } from "@/src/components/navigation/Link";
 import { useProjectStore } from "@/store";
 import type { ConversionGrantUpdate } from "@/types/v2/roadmap";
 import { formatDate } from "@/utilities/formatDate";
@@ -157,7 +157,7 @@ export const UpdateCard: FC<UpdateCardProps> = ({ update, index, isAuthorized })
     <div className="flex flex-col gap-0 w-full">
       {/* Grants Related Section */}
       {/* Show grants related if they exist */}
-      <div className="flex flex-col gap-3 w-full px-5 py-4">
+      <div className="flex flex-col gap-3 w-full px-6 py-6">
         <div className="flex flex-col gap-3 w-full">
           {/* Activity Pill with Due Date and Status */}{" "}
           <ActivityStatusHeader
@@ -171,13 +171,11 @@ export const UpdateCard: FC<UpdateCardProps> = ({ update, index, isAuthorized })
           />
           {/* Title */}
           {hasTitle(update) && update.data.title && (
-            <p className="text-xl font-bold text-[#101828] dark:text-zinc-100">
-              {update.data.title}
-            </p>
+            <p className="text-xl font-semibold text-foreground">{update.data.title}</p>
           )}
           {/* Date range for activities */}
           {(startDate || endDate) && (
-            <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
+            <div className="flex items-center gap-1 text-sm text-muted-foreground">
               <span>
                 {`${startDate ? formatDate(startDate) : ""} ${
                   startDate && endDate ? "-" : ""
@@ -191,7 +189,7 @@ export const UpdateCard: FC<UpdateCardProps> = ({ update, index, isAuthorized })
         <div className="flex flex-col my-2 w-full">
           <ReadMore
             side="left"
-            markdownClass="text-black dark:text-zinc-200 font-normal text-base"
+            markdownClass="text-foreground font-normal text-base"
             readLessText="Read less"
             readMoreText="Read more"
             othersideButton={getReadMoreSideButton()}
@@ -202,7 +200,7 @@ export const UpdateCard: FC<UpdateCardProps> = ({ update, index, isAuthorized })
         {update.type === "ProjectUpdate" &&
         ((update as IProjectUpdate).data?.indicators?.length ||
           (update as IProjectUpdate).data?.deliverables?.length) ? (
-          <div className="w-full flex-col flex gap-2 px-4 py-2 bg-[#F8F9FC] dark:bg-zinc-700 rounded-lg">
+          <div className="w-full flex-col flex gap-2 px-4 py-2 bg-muted rounded-lg">
             <ProjectActivityBlock activity={update as IProjectUpdate} />
           </div>
         ) : null}

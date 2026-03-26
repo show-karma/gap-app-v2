@@ -2,12 +2,73 @@ import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 
+// Mock next/navigation
+jest.mock("next/navigation", () => ({
+  useParams: () => ({ projectId: "test-project" }),
+}));
+
+// Mock query-client
+jest.mock("@/utilities/query-client", () => ({
+  queryClient: { invalidateQueries: jest.fn() },
+}));
+
+// Mock queryKeys
+jest.mock("@/utilities/queryKeys", () => ({
+  QUERY_KEYS: { PROJECT: { UPDATES: (id: string) => ["project-updates", id] } },
+}));
+
+// Mock share utilities
+jest.mock("@/utilities/share/shareOnX", () => ({
+  shareOnX: jest.fn(() => "https://x.com/share"),
+}));
+jest.mock("@/utilities/share/text", () => ({
+  SHARE_TEXTS: {
+    MILESTONE_COMPLETED: jest.fn(() => "milestone text"),
+    PROJECT_ACTIVITY: jest.fn(() => "activity text"),
+  },
+}));
+
+// Mock ExternalLink
+jest.mock("@/components/Utilities/ExternalLink", () => ({
+  ExternalLink: ({ children, href, className }: any) => (
+    <a href={href} className={className}>
+      {children}
+    </a>
+  ),
+}));
+
+// Mock DeleteDialog
+jest.mock("@/components/DeleteDialog", () => ({
+  DeleteDialog: () => <div data-testid="delete-dialog" />,
+}));
+
+// Mock Badge component
+jest.mock("@/components/ui/badge", () => ({
+  Badge: ({ children, className }: any) => <span className={className}>{children}</span>,
+}));
+
+// Mock ActivityStatusHeader
+jest.mock("@/components/Shared/ActivityCard/ActivityStatusHeader", () => ({
+  ActivityStatusHeader: () => <div data-testid="activity-status-header" />,
+}));
+
+// Mock ActivityAttribution
+jest.mock("@/components/Shared/ActivityCard/ActivityAttribution", () => ({
+  ActivityAttribution: () => <div data-testid="activity-attribution" />,
+}));
+
+// Mock GrantAssociation
+jest.mock("@/components/Shared/ActivityCard/GrantAssociation", () => ({
+  GrantAssociation: () => <div data-testid="grant-association" />,
+}));
+
 // Mock useMilestone hook to avoid SDK import issues - must be first
 jest.mock("@/hooks/useMilestone", () => ({
   useMilestone: () => ({
     isDeleting: false,
     deleteMilestone: jest.fn(),
     multiGrantDelete: jest.fn(),
+    multiGrantUndoCompletion: jest.fn(),
   }),
 }));
 
@@ -285,18 +346,18 @@ describe("ActivityCard/MilestoneCard - Mark Milestone Complete Button", () => {
       return milestone;
     };
 
-    it("should display 'Milestone' label for type 'milestone'", () => {
+    it("should display 'Milestone Update' label for type 'milestone'", () => {
       const milestone = createCompletedMilestone("milestone");
       render(<MilestoneCard milestone={milestone} isAuthorized={true} />);
 
-      expect(screen.getByText("Milestone")).toBeInTheDocument();
+      expect(screen.getByText("Milestone Update")).toBeInTheDocument();
     });
 
-    it("should display 'Milestone' label for type 'grant'", () => {
+    it("should display 'Milestone Update' label for type 'grant'", () => {
       const milestone = createCompletedMilestone("grant");
       render(<MilestoneCard milestone={milestone} isAuthorized={true} />);
 
-      expect(screen.getByText("Milestone")).toBeInTheDocument();
+      expect(screen.getByText("Milestone Update")).toBeInTheDocument();
     });
 
     it("should display 'Project Activity' label for type 'activity'", () => {

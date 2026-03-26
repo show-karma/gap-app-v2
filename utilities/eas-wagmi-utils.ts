@@ -1,12 +1,13 @@
 "use client";
-import { BrowserProvider, FallbackProvider, JsonRpcProvider, JsonRpcSigner } from "ethers";
+import type { JsonRpcProvider, JsonRpcSigner } from "ethers";
 import { useEffect, useState } from "react";
 import type { Account, Chain, Client, Transport } from "viem";
 import { usePublicClient, useWalletClient } from "wagmi";
 
-export function publicClientToProvider(client: Client<Transport, Chain>) {
+export async function publicClientToProvider(client: Client<Transport, Chain>) {
   const { chain, transport } = client;
   if (!chain) return;
+  const { JsonRpcProvider, FallbackProvider } = await import("ethers");
   const network = {
     chainId: chain.id,
     name: chain.name,
@@ -25,6 +26,7 @@ export function publicClientToProvider(client: Client<Transport, Chain>) {
 export async function walletClientToSigner(client: Client<Transport, Chain, Account>) {
   const { account, chain, transport } = client;
   if (!chain) return;
+  const { BrowserProvider, JsonRpcSigner } = await import("ethers");
   const network = {
     chainId: chain.id,
     name: chain.name,
@@ -61,7 +63,7 @@ export function useProvider() {
     async function getSigner() {
       if (!publicClient) return;
 
-      const tmpProvider: any = publicClientToProvider(publicClient);
+      const tmpProvider: any = await publicClientToProvider(publicClient);
 
       setProvider(tmpProvider);
     }

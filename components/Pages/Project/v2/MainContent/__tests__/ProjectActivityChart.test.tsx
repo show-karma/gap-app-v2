@@ -55,10 +55,11 @@ describe("ProjectActivityChart", () => {
       isLoading: true,
     });
 
-    render(<ProjectActivityChart />);
+    const { container } = render(<ProjectActivityChart />);
 
-    expect(screen.getByTestId("chart-card")).toBeInTheDocument();
-    expect(document.querySelector(".animate-pulse")).toBeInTheDocument();
+    // Loading state renders a skeleton pulse animation inside a card wrapper
+    expect(container.querySelector(".animate-pulse")).toBeInTheDocument();
+    expect(container.querySelector(".bg-white")).toBeInTheDocument();
   });
 
   it("should categorize grant_received as Funding", async () => {

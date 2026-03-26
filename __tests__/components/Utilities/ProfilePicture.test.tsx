@@ -387,6 +387,17 @@ describe("ProfilePicture", () => {
     });
   });
 
+  describe("Image Optimization", () => {
+    it("should NOT pass unoptimized prop to Image so Next.js can optimize images", () => {
+      render(<ProfilePicture imageURL="https://example.com/image.jpg" name="John Doe" />);
+
+      const img = screen.getByAltText("John Doe");
+      // The Image component should not have the unoptimized attribute
+      // so that Next.js serves optimized WebP/AVIF at correct sizes
+      expect(img).not.toHaveAttribute("data-nimg-unoptimized");
+    });
+  });
+
   describe("Data URI Support", () => {
     it("should render image for valid data URI", () => {
       const dataUri = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA";

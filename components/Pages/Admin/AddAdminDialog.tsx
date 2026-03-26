@@ -6,16 +6,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { GAP } from "@show-karma/karma-gap-sdk";
 import { type FC, Fragment, type ReactNode, useState } from "react";
 import { useForm } from "react-hook-form";
-import { isAddress } from "viem";
 import { useAccount } from "wagmi";
 import { z } from "zod";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
+import { communityAdminsService } from "@/services/community-admins.service";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import { sanitizeInput } from "@/utilities/sanitize";
 import { cn } from "@/utilities/tailwind";
 import { Button } from "../../ui/button";
 
@@ -23,20 +22,13 @@ const inputStyle = "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zi
 const labelStyle = "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200";
 
 const schema = z.object({
-  address: z
+  email: z
     .string()
-    .min(3, { message: "Address too short" })
-    .refine((data) => isAddress(data.toLowerCase()), {
-      message: "Invalid address",
-    }),
+    .min(1, { message: "Email is required" })
+    .email({ message: "Invalid email address" }),
 });
 
 type SchemaType = z.infer<typeof schema>;
-
-interface CommunityAdmin {
-  id: string;
-  admins: { user: { id: string } }[];
-}
 
 type AddAdminDialogProps = {
   buttonElement?: {
@@ -61,10 +53,6 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
   chainid,
   fetchAdmins,
 }) => {
-  const dataToUpdate = {
-    address: "",
-  };
-
   const [isOpen, setIsOpen] = useState(false);
 
   function closeModal() {
@@ -79,10 +67,11 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
     register,
     handleSubmit,
     formState: { errors },
+    reset,
   } = useForm<SchemaType>({
     resolver: zodResolver(schema),
     mode: "onChange",
-    defaultValues: dataToUpdate,
+    defaultValues: { email: "" },
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -108,10 +97,12 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
 
     const { walletSigner } = setup;
     try {
+      // Resolve email to wallet address before the on-chain call
+      const walletAddress = await communityAdminsService.resolveEmailToWallet(data.email);
+
       startAttestation("Adding admin...");
       const communityResolver = await GAP.getCommunityResolver(walletSigner);
-      const address = sanitizeInput(data.address.toLowerCase());
-      const communityResponse = await communityResolver.enlist(UUID, address);
+      const communityResponse = await communityResolver.enlist(UUID, walletAddress);
       changeStepperStep("pending");
       const { hash } = communityResponse;
       await communityResponse.wait().then(async () => {
@@ -136,14 +127,15 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
             }
 
             addressAdded = response.admins.some(
-              (admin: any) => admin.user.id.toLowerCase() === data.address.toLowerCase()
+              (admin: any) => admin.user.id.toLowerCase() === walletAddress
             );
 
             if (addressAdded) {
               await fetchAdmins();
               changeStepperStep("indexed");
               showSuccess("Admin added successfully!");
-              closeModal(); // Close the dialog upon successful submission
+              reset();
+              closeModal();
               break;
             }
           } catch (_error: any) {}
@@ -155,9 +147,9 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
       });
     } catch (error: any) {
       showError("Failed to add admin. Please try again.");
-      errorManager(`Error adding admin ${data.address} to community ${UUID}`, error, {
+      errorManager(`Error adding admin ${data.email} to community ${UUID}`, error, {
         community: UUID,
-        address: data.address,
+        email: data.email,
       });
     } finally {
       setIsStepper(false);
@@ -217,28 +209,26 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
                   >
                     <XMarkIcon className="w-5 h-5" />
                   </button>
-                  {
-                    <div className="mt-2">
-                      <p className="text-sm text-gray-600 dark:text-zinc-300">
-                        Fill out these details to add a new Community Admin
-                      </p>
-                    </div>
-                  }
+                  <div className="mt-2">
+                    <p className="text-sm text-gray-600 dark:text-zinc-300">
+                      Enter the email address of the user to add as a Community Admin.
+                    </p>
+                  </div>
 
                   <form onSubmit={handleSubmit(onSubmit)}>
-                    <div className="w-full px-2 py-4 sm:px-0">
+                    <div className="w-full px-2 py-4 sm:px-0 flex flex-col gap-4">
                       <div className="flex w-full flex-col gap-2">
-                        <label htmlFor="name-input" className={labelStyle}>
-                          Address *
+                        <label htmlFor="email-input" className={labelStyle}>
+                          Email *
                         </label>
                         <input
-                          id="address-input"
-                          type="text"
+                          id="email-input"
+                          type="email"
                           className={inputStyle}
-                          placeholder='e.g. "0x5cd3g343..."'
-                          {...register("address")}
+                          placeholder="admin@example.com"
+                          {...register("email")}
                         />
-                        <p className="text-red-500 text-sm">{errors.address?.message}</p>
+                        <p className="text-red-500 text-sm">{errors.email?.message}</p>
                       </div>
                     </div>
 

@@ -6,7 +6,7 @@ import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { cn } from "@/utilities/tailwind";
 import { AboutContent } from "./AboutContent";
 import { ActivityFeed } from "./ActivityFeed";
-import { ActivityFilters, type ActivityFilterType, type SortOption } from "./ActivityFilters";
+import { ActivityFilters, type ActivityFilterType } from "./ActivityFilters";
 import { type ContentTab, ContentTabs } from "./ContentTabs";
 import { ImpactContent } from "./ImpactContent";
 
@@ -26,7 +26,7 @@ interface ProjectMainContentProps {
 /**
  * ProjectMainContent is the main content area containing:
  * - Content tabs (Profile, Updates, About, Funding, Impact)
- * - Activity filters (Sort, filter badges)
+ * - Activity filters (filter badges)
  * - Activity feed (Timeline of project activities)
  */
 export function ProjectMainContent({
@@ -42,7 +42,6 @@ export function ProjectMainContent({
   className,
 }: ProjectMainContentProps) {
   const [activeTab, setActiveTab] = useState<ContentTab>(initialTab);
-  const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [activeFilters, setActiveFilters] = useState<ActivityFilterType[]>([]);
 
   const handleTabChange = useCallback(
@@ -75,8 +74,6 @@ export function ProjectMainContent({
       {/* Filters - only show on Updates tab */}
       {activeTab === "updates" && (
         <ActivityFilters
-          sortBy={sortBy}
-          onSortChange={setSortBy}
           activeFilters={activeFilters}
           onFilterToggle={handleFilterToggle}
           milestonesCount={milestonesCount}
@@ -90,7 +87,6 @@ export function ProjectMainContent({
           <ActivityFeed
             milestones={milestones}
             isAuthorized={isAuthorized}
-            sortBy={sortBy}
             activeFilters={activeFilters}
           />
         )}

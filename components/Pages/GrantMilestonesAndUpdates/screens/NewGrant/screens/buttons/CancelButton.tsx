@@ -1,5 +1,5 @@
 import type React from "react";
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/utilities/tailwind";
 
 interface CancelButtonProps {
@@ -20,10 +20,11 @@ export const CancelButton: React.FC<CancelButtonProps> = ({
   return (
     <Button
       onClick={onClick}
-      variant="secondary"
+      variant="outline"
+      size="xl"
       disabled={disabled || isLoading}
       isLoading={isLoading}
-      className={cn("text-base font-semibold px-5 py-2.5 rounded-sm", className)}
+      className={cn(className)}
     >
       {text}
     </Button>

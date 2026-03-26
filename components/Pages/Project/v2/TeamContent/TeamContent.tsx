@@ -37,7 +37,7 @@ export function TeamContent({ className }: TeamContentProps) {
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const { authenticated } = useAuth();
   const { data: permissions } = usePermissionsQuery({}, { enabled: authenticated });
-  const isSuperAdmin = permissions?.roles.roles.includes(Role.SUPER_ADMIN) ?? false;
+  const isSuperAdmin = permissions?.roles?.roles?.includes(Role.SUPER_ADMIN) ?? false;
   const isAuthorized = isProjectOwner || isContractOwner || isSuperAdmin;
   const { project: projectInstance } = useProjectInstance(
     project?.details?.slug || project?.uid || ""

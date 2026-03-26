@@ -6,20 +6,26 @@ import { envVars } from "@/utilities/enviromentVars";
 
 const ENS_BATCH_SIZE = 10;
 
-if (!envVars.RPC.MAINNET) {
-  console.warn(
-    "NEXT_PUBLIC_RPC_MAINNET is not set; ENS resolution will use the default public RPC"
-  );
-}
+let _ensClient: ReturnType<typeof createPublicClient> | null = null;
 
-const ensClient = createPublicClient({
-  chain: mainnet,
-  transport: http(envVars.RPC.MAINNET, {
-    batch: true,
-    retryCount: 1,
-  }),
-  cacheTime: 10 * 60 * 1000,
-});
+export function getEnsClient() {
+  if (!_ensClient) {
+    if (!envVars.RPC.MAINNET) {
+      console.warn(
+        "NEXT_PUBLIC_RPC_MAINNET is not set; ENS resolution will use the default public RPC"
+      );
+    }
+    _ensClient = createPublicClient({
+      chain: mainnet,
+      transport: http(envVars.RPC.MAINNET, {
+        batch: true,
+        retryCount: 1,
+      }),
+      cacheTime: 10 * 60 * 1000,
+    });
+  }
+  return _ensClient;
+}
 
 // In-flight request deduplication
 const pendingNameRequests = new Map<string, Promise<string | null>>();
@@ -30,7 +36,7 @@ async function resolveEnsName(address: Hex): Promise<string | null> {
   const pending = pendingNameRequests.get(key);
   if (pending) return pending;
 
-  const promise = ensClient
+  const promise = getEnsClient()
     .getEnsName({ address })
     .catch(() => null)
     .finally(() => {
@@ -45,7 +51,7 @@ async function resolveEnsAvatar(name: string): Promise<string | null> {
   const pending = pendingAvatarRequests.get(name);
   if (pending) return pending;
 
-  const promise = ensClient
+  const promise = getEnsClient()
     .getEnsAvatar({ name: normalize(name) })
     .catch(() => null)
     .finally(() => {
@@ -111,7 +117,7 @@ export const fetchAddressFromENS = async (ensNames: string[]) => {
       const batchResults = await Promise.all(
         batch.map(async (name) => {
           try {
-            const address = await ensClient.getEnsAddress({
+            const address = await getEnsClient().getEnsAddress({
               name: normalize(name),
             });
             return { name, address: address || undefined };

@@ -1,7 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { ProjectUpdateForm } from "@/components/Forms/ProjectUpdate";
 import { Spinner } from "@/components/Utilities/Spinner";
@@ -30,8 +29,6 @@ export const ProjectUpdateFormBlock = ({ onClose, updateId }: ProjectUpdateFormB
     return rawData.projectUpdates.find((update) => update.uid === updateId);
   }, [updateId, rawData?.projectUpdates]);
 
-  const router = useRouter();
-
   // Update the component state when updateId changes
   useEffect(() => {
     if (updateId !== currentUpdateId) {
@@ -39,16 +36,18 @@ export const ProjectUpdateFormBlock = ({ onClose, updateId }: ProjectUpdateFormB
     }
   }, [updateId, currentUpdateId]);
 
-  // Clean up on success - invalidate cache and close dialog
+  // Clean up on success - invalidate cache, wait for refetch, then close
   const handleSuccess = async () => {
-    // Invalidate the project updates cache to trigger a refetch
+    // invalidateQueries marks the cache stale AND triggers a background refetch.
+    // Awaiting it ensures the refetch completes before we close the dialog,
+    // so the updates list shows the new activity immediately.
     await queryClient.invalidateQueries({
       queryKey: QUERY_KEYS.PROJECT.UPDATES(project?.uid || ""),
     });
-    router.refresh();
-    if (onClose) {
-      onClose();
-    }
+    // No router.refresh() — the invalidation already refetched fresh data.
+    // router.refresh() would re-render the server component and race with
+    // the client-side cache, potentially showing stale data.
+    onClose?.();
   };
 
   // Show loading state while fetching data in edit mode

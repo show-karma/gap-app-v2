@@ -180,7 +180,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
     {},
     { enabled: authenticated }
   );
-  const isSuperAdmin = permissions?.roles.roles.includes(Role.SUPER_ADMIN) ?? false;
+  const isSuperAdmin = permissions?.roles?.roles?.includes(Role.SUPER_ADMIN) ?? false;
   const { setupChainAndWallet } = useSetupChainAndWallet();
 
   const createProjectPointer = async ({ ogProjectUID }: PointerType) => {

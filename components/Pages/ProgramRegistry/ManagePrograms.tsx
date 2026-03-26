@@ -8,27 +8,29 @@ import { useQueryState } from "nuqs";
 import type React from "react";
 import { type Dispatch, useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
 import AddProgram from "@/components/Pages/ProgramRegistry/AddProgram";
 import { registryHelper } from "@/components/Pages/ProgramRegistry/helper";
 import { ManageProgramList } from "@/components/Pages/ProgramRegistry/ManageProgramList";
 import { MyProgramList } from "@/components/Pages/ProgramRegistry/MyProgramList";
 import { ProgramDetailsDialog } from "@/components/Pages/ProgramRegistry/ProgramDetailsDialog";
 import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
-import {
-  getProgramIdForUrl,
-  normalizeGrantTypesArray,
-} from "@/components/Pages/ProgramRegistry/programUtils";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import Pagination from "@/components/Utilities/Pagination";
 import { useAuth } from "@/hooks/useAuth";
-import { ProgramRegistryService } from "@/services/programRegistry.service";
 import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
+import { Role } from "@/src/core/rbac/types/role";
+import { ProgramRegistryService } from "@/src/features/program-registry/services/program-registry.service";
+import {
+  getProgramIdForUrl,
+  normalizeGrantTypesArray,
+} from "@/src/features/program-registry/utils/program-utils";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { PAGES } from "@/utilities/pages";
+import { cn } from "@/utilities/tailwind";
+import { LoadingManagePrograms } from "./Loading/ManagePrograms";
 import { LoadingProgramTable } from "./Loading/Programs";
 import { SearchDropdown } from "./SearchDropdown";
 
@@ -72,8 +74,7 @@ export const ManagePrograms = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [programToEdit, setProgramToEdit] = useState<GrantProgram | null>(null);
 
-  const { address, isConnected } = useAccount();
-  const { authenticated: isAuth, login } = useAuth();
+  const { authenticated: isAuth, ready: isAuthReady, login, address, isConnected } = useAuth();
 
   const _signer = useSigner();
 
@@ -85,7 +86,8 @@ export const ManagePrograms = () => {
 
   const isRegistryAdmin = permissions?.isRegistryAdmin ?? false;
   const isProgramCreator = permissions?.isProgramCreator ?? false;
-  const isAllowed = Boolean(address) && (isRegistryAdmin || isProgramCreator) && isAuth;
+  const isStaff = permissions?.roles?.roles?.includes(Role.SUPER_ADMIN) ?? false;
+  const isAllowed = Boolean(address) && (isRegistryAdmin || isProgramCreator || isStaff) && isAuth;
 
   const [tab, setTab] = useQueryState("tab", {
     defaultValue: defaultTab || "pending",
@@ -100,7 +102,6 @@ export const ManagePrograms = () => {
 
   const [searchInput, setSearchInput] = useQueryState("name", {
     defaultValue: defaultName,
-    throttleMs: 500,
   });
 
   const [programId, setProgramId] = useQueryState("programId", {
@@ -140,7 +141,7 @@ export const ManagePrograms = () => {
   const debouncedSearch = debounce((value: string) => {
     setPage(1);
     setSearchInput(value);
-  }, 500);
+  }, 300);
 
   const getGrantPrograms = async () => {
     try {
@@ -161,7 +162,7 @@ export const ManagePrograms = () => {
         grantTypes: selectedGrantTypes.length ? selectedGrantTypes.join(",") : undefined,
         sortField: sortField as "createdAt" | "updatedAt" | "name" | "programId",
         sortOrder: sortOrder as "asc" | "desc",
-        owners: address && !isRegistryAdmin ? address : undefined,
+        owners: address && !(isRegistryAdmin || isStaff) ? address : undefined,
       });
 
       const [res, error] = await fetchData(url);
@@ -195,6 +196,7 @@ export const ManagePrograms = () => {
       isPermissionsLoading,
       isRegistryAdmin,
       isProgramCreator,
+      isStaff,
       selectedEcosystems,
       selectedGrantTypes,
       selectedNetworks,
@@ -299,14 +301,18 @@ export const ManagePrograms = () => {
         {isEditing ? null : (
           <div className="flex flex-row gap-2 justify-start w-full">
             <Link href={PAGES.REGISTRY.ROOT}>
-              <Button className="flex flex-row gap-2 bg-transparent hover:bg-transparent text-[#004EEB] text-sm p-0">
+              <Button className="flex flex-row gap-2 bg-transparent hover:bg-transparent text-blue-600 dark:text-blue-400 text-sm p-0">
                 <ChevronLeftIcon className="w-4 h-4" />
-                <p className="border-b border-b-[#004EEB]">Back to Programs Explorer</p>
+                <span className="border-b border-b-blue-600 dark:border-b-blue-400">
+                  Back to Programs Explorer
+                </span>
               </Button>
             </Link>
           </div>
         )}
-        {isAllowed ? (
+        {!isAuthReady || isPermissionsLoading ? (
+          <LoadingManagePrograms />
+        ) : isAllowed ? (
           isEditing ? (
             <div className="w-full">
               <AddProgram
@@ -316,7 +322,6 @@ export const ManagePrograms = () => {
                   setProgramToEdit(null);
                 }}
                 refreshPrograms={refreshPrograms}
-                isAdmin
               />
             </div>
           ) : (
@@ -329,48 +334,41 @@ export const ManagePrograms = () => {
                 </div>
               </div>
               <div className="w-full">
-                <div className="flex flex-wrap w-max gap-2 rounded-t bg-[#F2F4F7] dark:bg-zinc-800 px-2 py-1">
-                  <Button
-                    className="bg-transparent text-black"
-                    onClick={() => {
-                      setPage(1);
-                      setTab("pending");
-                    }}
-                    style={{
-                      backgroundColor: tab === "pending" ? "white" : "transparent",
-                      color: tab === "pending" ? "black" : "gray",
-                    }}
-                  >
-                    {isRegistryAdmin ? "Pending" : "Waiting for approval"}
-                  </Button>
-                  <Button
-                    className="bg-transparent text-black"
-                    onClick={() => {
-                      setPage(1);
-                      setTab("accepted");
-                    }}
-                    style={{
-                      backgroundColor: tab === "accepted" ? "white" : "transparent",
-                      color: tab === "accepted" ? "black" : "gray",
-                    }}
-                  >
-                    Approved
-                  </Button>
-                  <Button
-                    className="bg-transparent text-black"
-                    onClick={() => {
-                      setPage(1);
-                      setTab("rejected");
-                    }}
-                    style={{
-                      backgroundColor: tab === "rejected" ? "white" : "transparent",
-                      color: tab === "rejected" ? "black" : "gray",
-                    }}
-                  >
-                    Rejected
-                  </Button>
+                <div
+                  className="flex flex-wrap w-max gap-1 rounded-t bg-gray-100 dark:bg-zinc-800 px-2 py-1"
+                  role="tablist"
+                  aria-label="Program status tabs"
+                >
+                  {(
+                    [
+                      {
+                        value: "pending",
+                        label: isRegistryAdmin || isStaff ? "Pending" : "Waiting for approval",
+                      },
+                      { value: "accepted", label: "Approved" },
+                      { value: "rejected", label: "Rejected" },
+                    ] as const
+                  ).map((t) => (
+                    <Button
+                      key={t.value}
+                      role="tab"
+                      aria-selected={tab === t.value}
+                      className={cn(
+                        "text-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600",
+                        tab === t.value
+                          ? "bg-white dark:bg-zinc-700 text-black dark:text-white shadow-sm"
+                          : "bg-transparent text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-200"
+                      )}
+                      onClick={() => {
+                        setPage(1);
+                        setTab(t.value);
+                      }}
+                    >
+                      {t.label}
+                    </Button>
+                  ))}
                 </div>
-                <div className="sm:items-center p-3 flex max-sm:flex-col flex-row gap-3 flex-wrap justify-between rounded-b-[4px] bg-[#F2F4F7] dark:bg-zinc-900">
+                <div className="sm:items-center p-3 flex max-sm:flex-col flex-row gap-3 flex-wrap justify-between rounded-b bg-gray-100 dark:bg-zinc-900">
                   <div className="w-full max-w-[450px] max-lg:max-w-xs">
                     <label htmlFor="search" className="sr-only">
                       Search
@@ -438,7 +436,7 @@ export const ManagePrograms = () => {
                     <div className="mt-8 flow-root">
                       <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
                         <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-                          {isRegistryAdmin ? (
+                          {isRegistryAdmin || isStaff ? (
                             <ManageProgramList
                               approveOrReject={approveOrReject}
                               grantPrograms={grantPrograms}

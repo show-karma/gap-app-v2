@@ -11,82 +11,7 @@
   }
 }
 
-/* Inter font family with multiple weights for better Safari compatibility */
-@font-face {
-  font-family: "Inter";
-  src: url("/fonts/Inter/static/Inter-Thin.ttf") format("truetype");
-  font-weight: 100;
-  font-style: normal;
-  font-display: swap;
-}
 
-@font-face {
-  font-family: "Inter";
-  src: url("/fonts/Inter/static/Inter-ExtraLight.ttf") format("truetype");
-  font-weight: 200;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Inter";
-  src: url("/fonts/Inter/static/Inter-Light.ttf") format("truetype");
-  font-weight: 300;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Inter";
-  src: url("/fonts/Inter/static/Inter-Regular.ttf") format("truetype");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Inter";
-  src: url("/fonts/Inter/static/Inter-Medium.ttf") format("truetype");
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Inter";
-  src: url("/fonts/Inter/static/Inter-SemiBold.ttf") format("truetype");
-  font-weight: 600;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Inter";
-  src: url("/fonts/Inter/static/Inter-Bold.ttf") format("truetype");
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Inter";
-  src: url("/fonts/Inter/static/Inter-ExtraBold.ttf") format("truetype");
-  font-weight: 800;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Inter";
-  src: url("/fonts/Inter/static/Inter-Black.ttf") format("truetype");
-  font-weight: 900;
-  font-style: normal;
-  font-display: swap;
-}
-
-body * {
-  @apply transition-colors duration-500;
-}
 * {
   @apply font-body;
 }
@@ -368,6 +293,34 @@ body * {
 
     /* Toast max-width for overflow prevention */
     --toast-max-width: 500px;
+
+    /* Whitelabel tenant theme tokens (defaults, overridden at runtime by applyTheme) */
+    --color-primary: 29 233 182;
+    --color-primary-dark: 19 159 113;
+    --color-primary-light: 29 233 182;
+    --color-secondary: 102 102 102;
+    --color-success: 12 173 0;
+    --color-warning: 245 166 35;
+    --color-error: 238 0 0;
+    --color-border: 234 234 234;
+    --color-background: 255 255 255;
+    --color-foreground: 0 0 0;
+    --color-buttontext: 255 255 255;
+    --color-muted-foreground: 115 115 115;
+    --radius-small: 0.25rem;
+    --radius-medium: 0.5rem;
+    --radius-large: 0.75rem;
+    --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
+    --font-mono: Fira Code, Monaco, Consolas, monospace;
+    --navbar-height: 64px;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   .dark {
@@ -424,6 +377,14 @@ body * {
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   * {
@@ -431,7 +392,7 @@ body * {
   }
   body {
     @apply bg-background text-foreground;
-    /* Font family is now handled by Tailwind's font-body class applied globally */
+    font-family: var(--font-sans, Inter, system-ui, sans-serif);
   }
   h2 {
     @apply tracking-tight;
@@ -693,3 +654,10 @@ body .react-hot-toast * {
   border-color: inherit;
   box-shadow: none;
 }
+
+/* Content-visibility optimization for below-fold content */
+.content-visibility-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 500px;
+}
+
