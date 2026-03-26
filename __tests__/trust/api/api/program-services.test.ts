@@ -54,7 +54,7 @@ vi.mock("axios", () => ({
 }));
 
 import { programReviewersService } from "@/services/program-reviewers.service";
-import { ProgramRegistryService } from "@/services/programRegistry.service";
+import { ProgramRegistryService } from "@/src/features/program-registry/services/program-registry.service";
 import fetchData from "@/utilities/fetchData";
 
 const mockFetchData = fetchData as ReturnType<typeof vi.fn>;

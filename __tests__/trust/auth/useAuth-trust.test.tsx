@@ -69,9 +69,13 @@ vi.mock("@/utilities/whitelabel-context", () => ({
   useWhitelabel: () => ({ isWhitelabel: false }),
 }));
 
+const { mockGetModalState } = vi.hoisted(() => {
+  const mockGetModalState = { value: { isProjectCreateModalOpen: false } };
+  return { mockGetModalState };
+});
 vi.mock("@/store/modals/projectCreate", () => ({
   useProjectCreateModalStore: {
-    getState: () => ({ isProjectCreateModalOpen: false }),
+    getState: () => mockGetModalState.value,
   },
 }));
 
@@ -210,8 +214,7 @@ describe("useAuth — Effect 1 (Auth State Change)", () => {
     });
 
     it("does NOT redirect when project create modal is open", () => {
-      const { useProjectCreateModalStore } = require("@/store/modals/projectCreate");
-      useProjectCreateModalStore.getState = () => ({ isProjectCreateModalOpen: true });
+      mockGetModalState.value = { isProjectCreateModalOpen: true };
 
       const { rerender } = renderHook(() => useAuth(), { wrapper });
 
@@ -221,7 +224,7 @@ describe("useAuth — Effect 1 (Auth State Change)", () => {
       expect(mockRouterPush).not.toHaveBeenCalled();
 
       // Restore
-      useProjectCreateModalStore.getState = () => ({ isProjectCreateModalOpen: false });
+      mockGetModalState.value = { isProjectCreateModalOpen: false };
     });
   });
 
@@ -534,12 +537,16 @@ describe("useAuth — Effect 5 (Wallet Switch Detection)", () => {
       isConnected: true,
     });
 
+    renderHook(() => useAuth(), { wrapper });
+
+    // The hook uses Promise.all([import("@wagmi/core"), import(...)]).then(...)
+    // We need to flush the microtask queue for the dynamic imports and the .then()
+    // Use real timers briefly to let Promise.all resolve without timer interference
+    vi.useRealTimers();
     await act(async () => {
-      renderHook(() => useAuth(), { wrapper });
-      // Allow the Promise.all dynamic import to resolve
-      await Promise.resolve();
-      await Promise.resolve();
+      await new Promise((r) => setTimeout(r, 50));
     });
+    vi.useFakeTimers();
 
     expect(mockWatchAccount).toHaveBeenCalled();
   });

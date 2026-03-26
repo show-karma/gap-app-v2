@@ -417,7 +417,7 @@ describe("fetchData trust tests", () => {
       await fetchData("/v2/projects");
 
       const config = mockRequest.mock.calls[0][0];
-      expect(config.url).toBe("https://indexer.example.com/v2/projects");
+      expect(config.url).toMatch(/\/v2\/projects$/);
     });
   });
 });

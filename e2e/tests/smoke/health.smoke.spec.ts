@@ -18,14 +18,11 @@ test.describe("Smoke Tests — Health", () => {
     await page.goto("/", GOTO_OPTIONS);
     await waitForPageReady(page);
 
-    // The homepage should have substantial content rendered
-    const bodyText = await page.textContent("body");
-    expect(bodyText).toBeTruthy();
-    expect(bodyText!.trim().length).toBeGreaterThan(50);
+    // The homepage hero heading should be visible
+    await expect(page.getByRole("heading", { name: /where builders/i })).toBeVisible();
 
-    // Should have at least one heading
-    const headings = page.getByRole("heading");
-    expect(await headings.count()).toBeGreaterThan(0);
+    // The FAQ section should be present on the homepage
+    await expect(page.getByText(/frequently asked/i)).toBeVisible();
 
     assertNoJsErrors(jsErrors);
   });
@@ -35,21 +32,13 @@ test.describe("Smoke Tests — Health", () => {
     await page.goto("/", GOTO_OPTIONS);
     await waitForPageReady(page);
 
-    // The page should contain navigation links
+    // The page should contain a navigation region or header links
     const navLinks = page.getByRole("link");
-    const linkCount = await navLinks.count();
-    expect(linkCount).toBeGreaterThan(0);
+    await expect(navLinks.first()).toBeVisible();
 
-    // At least one link should have an href that is not empty or "#"
-    let hasValidLink = false;
-    for (let i = 0; i < Math.min(linkCount, 20); i++) {
-      const href = await navLinks.nth(i).getAttribute("href");
-      if (href && href !== "#" && href !== "") {
-        hasValidLink = true;
-        break;
-      }
-    }
-    expect(hasValidLink).toBeTruthy();
+    // There should be a link to communities or projects
+    const communitiesLink = page.getByRole("link", { name: /communit|project|explorer/i });
+    await expect(communitiesLink.first()).toBeVisible();
   });
 
   test("T35-03: community page loads with mocked data", async ({ page, withApiMocks }) => {
@@ -64,9 +53,11 @@ test.describe("Smoke Tests — Health", () => {
     await page.goto("/community/optimism", GOTO_OPTIONS);
     await waitForPageReady(page);
 
-    const bodyText = await page.textContent("body");
-    expect(bodyText).toBeTruthy();
-    expect(bodyText!.trim().length).toBeGreaterThan(50);
+    // The community name should appear on the page
+    await expect(page.getByText("Optimism")).toBeVisible();
+
+    // The mocked program title should be rendered
+    await expect(page.getByText("Retro Funding Round 4")).toBeVisible();
   });
 
   test("T35-04: project/program page loads", async ({ page, withApiMocks }) => {
@@ -85,35 +76,40 @@ test.describe("Smoke Tests — Health", () => {
     await page.goto("/community/optimism/programs/p-smoke", GOTO_OPTIONS);
     await waitForPageReady(page);
 
-    const bodyText = await page.textContent("body");
-    expect(bodyText).toBeTruthy();
-    expect(bodyText!.trim().length).toBeGreaterThan(20);
+    // The program title should be visible on the page
+    await expect(page.getByText("Smoke Test Program")).toBeVisible();
   });
 
-  test("T35-05: auth-gated page is accessible and shows login prompt for guests", async ({
-    page,
-    withApiMocks,
-  }) => {
+  test("T35-05: auth-gated page redirects guests appropriately", async ({ page, withApiMocks }) => {
     const community = createMockCommunity({ slug: "optimism" });
     await withApiMocks({
       "**/v2/communities/optimism": mockJson(community),
     });
 
-    // Visit a page that typically requires authentication (my-applications)
-    await page.goto("/community/optimism/my-applications", GOTO_OPTIONS);
+    // Visit the dashboard which requires authentication
+    await page.goto("/dashboard", GOTO_OPTIONS);
     await waitForPageReady(page);
 
-    // Should either show a login prompt, redirect, or render the page
-    // The key assertion: the page shows auth-related content or community content
-    const bodyText = await page.textContent("body");
-    expect(bodyText).toBeTruthy();
-    const hasExpectedContent =
-      bodyText?.toLowerCase().includes("sign in") ||
-      bodyText?.toLowerCase().includes("connect wallet") ||
-      bodyText?.toLowerCase().includes("log in") ||
-      bodyText?.includes("Optimism") ||
-      page.url().includes("/community/optimism");
-    expect(hasExpectedContent).toBeTruthy();
+    // Should show a sign-in/connect prompt or redirect to login
+    const hasAuthPrompt = await Promise.race([
+      page
+        .getByText(/sign in|connect wallet|log in/i)
+        .first()
+        .waitFor({ timeout: 5000 })
+        .then(() => true)
+        .catch(() => false),
+      page
+        .getByRole("button", { name: /sign in|connect|log in/i })
+        .first()
+        .waitFor({ timeout: 5000 })
+        .then(() => true)
+        .catch(() => false),
+    ]);
+
+    // If no auth prompt, the URL might have changed (redirect)
+    const wasRedirected = !page.url().includes("/dashboard");
+
+    expect(hasAuthPrompt || wasRedirected).toBeTruthy();
   });
 
   test("T35-06: API health endpoint responds", async ({ page, withApiMocks }) => {
@@ -124,8 +120,7 @@ test.describe("Smoke Tests — Health", () => {
       failOnStatusCode: false,
     });
 
-    // Health endpoint should respond with some status (200, 404 if not defined, etc.)
-    // The key check is that the server is responding at all
+    // Health endpoint should respond without a server error
     expect(response.status()).toBeDefined();
     expect(response.status()).toBeLessThan(500);
   });
@@ -169,17 +164,18 @@ test.describe("Smoke Tests — Health", () => {
     await page.goto("/community/optimism", GOTO_OPTIONS);
     await waitForPageReady(page);
 
-    // Should have at least one clickable element (button or link)
+    // Should have visible buttons (e.g., apply, view details, etc.)
     const buttons = page.getByRole("button");
+    await expect(buttons.first()).toBeVisible();
+
+    // Should have visible links for navigation
     const links = page.getByRole("link");
-    const [buttonCount, linkCount] = await Promise.all([buttons.count(), links.count()]);
-    const totalInteractive = buttonCount + linkCount;
+    await expect(links.first()).toBeVisible();
 
-    expect(totalInteractive).toBeGreaterThan(0);
+    // The community name should be visible, confirming content rendered past skeletons
+    await expect(page.getByText("Optimism")).toBeVisible();
 
-    // Should not show raw loading skeletons indefinitely
-    // (checking that content has resolved beyond just skeleton divs)
-    const bodyText = await page.textContent("body");
-    expect(bodyText!.trim().length).toBeGreaterThan(30);
+    // The mocked program should appear
+    await expect(page.getByText("Open Grants")).toBeVisible();
   });
 });

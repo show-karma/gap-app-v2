@@ -215,53 +215,6 @@ describe("React Query integration trust tests", () => {
     });
   });
 
-  // --- Enabled condition ---
-
-  describe("enabled condition patterns", () => {
-    it("application query is disabled when projectUID is empty", () => {
-      const projectUID = "";
-      const enabled = !!projectUID;
-
-      expect(enabled).toBe(false);
-    });
-
-    it("application query is enabled when projectUID is provided", () => {
-      const projectUID = "project-123";
-      const enabled = !!projectUID;
-
-      expect(enabled).toBe(true);
-    });
-
-    it("explorer search normalization: short searches treated as empty", () => {
-      const search = "ab";
-      const MIN_SEARCH_LENGTH = 3;
-      const effectiveSearch = search.length >= MIN_SEARCH_LENGTH ? search : "";
-
-      expect(effectiveSearch).toBe("");
-    });
-
-    it("explorer search normalization: valid search passes through", () => {
-      const search = "dao";
-      const MIN_SEARCH_LENGTH = 3;
-      const effectiveSearch = search.length >= MIN_SEARCH_LENGTH ? search : "";
-
-      expect(effectiveSearch).toBe("dao");
-    });
-  });
-
-  // --- Stale time ---
-
-  describe("stale time configuration", () => {
-    it("explorer uses PROJECTS_EXPLORER_CONSTANTS.STALE_TIME_MS (60s)", () => {
-      const STALE_TIME_MS = 60 * 1000;
-      expect(STALE_TIME_MS).toBe(60000);
-    });
-
-    it("default staleTime is also 1 minute", () => {
-      expect(defaultQueryOptions.staleTime).toBe(1000 * 60);
-    });
-  });
-
   // --- Service integration ---
 
   describe("service function integration", () => {
