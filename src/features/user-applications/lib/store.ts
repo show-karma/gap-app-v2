@@ -22,6 +22,7 @@ const initialState: UserApplicationsState = {
     total: 0,
     totalPages: 0,
   },
+  statusCounts: {},
   isLoading: false,
   error: null,
   selectedApplicationId: null,
@@ -32,6 +33,7 @@ interface UserApplicationsStore extends UserApplicationsState {
   setFilters: (filters: Partial<UserApplicationsFilters>) => void;
   setSort: (sortBy: UserApplicationsSortBy, sortOrder?: UserApplicationsSortOrder) => void;
   setPagination: (pagination: Partial<UserApplicationsState["pagination"]>) => void;
+  setStatusCounts: (statusCounts: Record<string, number>) => void;
   setPage: (page: number) => void;
   setPageSize: (size: number) => void;
   setLoading: (isLoading: boolean) => void;
@@ -62,6 +64,8 @@ export const useUserApplicationsStore = create<UserApplicationsStore>((set) => (
     set((state) => ({
       pagination: { ...state.pagination, ...pagination },
     })),
+
+  setStatusCounts: (statusCounts) => set({ statusCounts }),
 
   setPage: (page) =>
     set((state) => ({

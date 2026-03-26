@@ -36,6 +36,7 @@ export interface UserApplicationsState {
   sortBy: UserApplicationsSortBy;
   sortOrder: UserApplicationsSortOrder;
   pagination: UserApplicationsPagination;
+  statusCounts: Record<string, number>;
   isLoading: boolean;
   error: Error | null;
   selectedApplicationId: string | null;
@@ -48,6 +49,7 @@ export interface UseUserApplicationsReturn {
   sortBy: UserApplicationsSortBy;
   sortOrder: UserApplicationsSortOrder;
   pagination: UserApplicationsPagination;
+  statusCounts: Record<string, number>;
   isLoading: boolean;
   error: Error | null;
   setFilters: (filters: Partial<UserApplicationsFilters>) => void;
@@ -68,4 +70,5 @@ export interface UseUserApplicationReturn {
 export interface UserApplicationsResponse {
   applications: Application[];
   pagination: UserApplicationsPagination;
+  statusCounts: Record<string, number>;
 }

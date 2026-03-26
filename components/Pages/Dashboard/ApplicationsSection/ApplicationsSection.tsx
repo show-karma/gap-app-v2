@@ -32,8 +32,17 @@ export function ApplicationsSection({
 }: ApplicationsSectionProps) {
   const [isLookupOpen, setIsLookupOpen] = useState(false);
 
-  const { applications, filters, pagination, isLoading, error, setFilters, setPage, refresh } =
-    applicationsHook;
+  const {
+    applications,
+    filters,
+    pagination,
+    statusCounts,
+    isLoading,
+    error,
+    setFilters,
+    setPage,
+    refresh,
+  } = applicationsHook;
 
   // When no communitySlug, fetch program configs to resolve community info per application
   const uniqueProgramIds = useMemo(() => {
@@ -102,14 +111,12 @@ export function ApplicationsSection({
   };
 
   const stats = useMemo(() => {
-    return {
-      total: enrichedApplications.length,
-      pending: enrichedApplications.filter(
-        (a) => a.status === "pending" || a.status === "resubmitted"
-      ).length,
-      approved: enrichedApplications.filter((a) => a.status === "approved").length,
-    };
-  }, [enrichedApplications]);
+    const counts = statusCounts ?? {};
+    const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
+    const pending = (counts.pending ?? 0) + (counts.resubmitted ?? 0);
+    const approved = counts.approved ?? 0;
+    return { total, pending, approved };
+  }, [statusCounts]);
 
   const hasNoApplications = stats.total === 0;
   const hasNoFilters = filters.status === "all" && !filters.programId && !filters.searchQuery;
