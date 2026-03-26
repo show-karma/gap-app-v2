@@ -322,6 +322,46 @@ export function useBatchGrantStatus(grantUIDs: string[], options?: { enabled?: b
 }
 
 /**
+ * Hook for fetching community payouts publicly (no auth required)
+ */
+export function useCommunityPayoutsPublic(
+  communityUID: string,
+  options?: CommunityPayoutsOptions,
+  queryOptions?: { enabled?: boolean }
+) {
+  return useQuery<CommunityPayoutsResponse, Error>({
+    queryKey: [
+      ...payoutDisbursementKeys.all,
+      "communityPayoutsPublic",
+      communityUID,
+      options,
+    ] as const,
+    queryFn: () => payoutService.getCommunityPayoutsPublic(communityUID, options),
+    enabled: queryOptions?.enabled ?? !!communityUID,
+    staleTime: 1000 * 60 * 2,
+  });
+}
+
+/**
+ * Hook for fetching payout configs for a community publicly (no auth required)
+ */
+export function usePayoutConfigsByCommunityPublic(
+  communityUID: string,
+  options?: { enabled?: boolean }
+) {
+  return useQuery<PayoutGrantConfig[], Error>({
+    queryKey: [
+      ...payoutDisbursementKeys.payoutConfigs.all,
+      "communityPublic",
+      communityUID,
+    ] as const,
+    queryFn: () => payoutService.getPayoutConfigsByCommunityPublic(communityUID),
+    enabled: options?.enabled ?? !!communityUID,
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
+/**
  * Hook for fetching community payouts with aggregated disbursement status
  * Returns grants with their project info, payout amounts, and disbursement history
  */

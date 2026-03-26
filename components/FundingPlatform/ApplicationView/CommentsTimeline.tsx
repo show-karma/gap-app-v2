@@ -44,6 +44,8 @@ interface CommentsTimelineProps {
   onVersionClick?: (versionId: string) => void;
   isLoading?: boolean;
   formSchema?: IFormSchema; // Optional: for mapping field IDs to labels
+  programId?: string;
+  enableMentions?: boolean;
 }
 
 type TimelineItem = {
@@ -136,6 +138,8 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
   onVersionClick,
   isLoading = false,
   formSchema,
+  programId,
+  enableMentions = false,
 }: CommentsTimelineProps) => {
   const [isAddingComment, setIsAddingComment] = useState(false);
 
@@ -406,6 +410,9 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
             placeholder={
               isAdmin ? "Add an admin comment..." : "Add a comment for this application..."
             }
+            programId={programId}
+            enableMentions={enableMentions}
+            isAdmin={isAdmin}
           />
         </div>
       )}
@@ -454,6 +461,8 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
                         currentUserAddress={currentUserAddress}
                         onEdit={onCommentEdit ? handleEditComment : undefined}
                         onDelete={onCommentDelete ? handleDeleteComment : undefined}
+                        programId={programId}
+                        enableMentions={enableMentions}
                       />
                     ) : item.type === "version" ? (
                       renderVersionItem(item.data as IApplicationVersion)

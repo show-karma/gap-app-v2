@@ -2,7 +2,6 @@
 import { LinkIcon } from "@heroicons/react/24/solid";
 import { blo } from "blo";
 import debounce from "lodash.debounce";
-import Link from "next/link";
 /* eslint-disable @next/next/no-img-element */
 import type React from "react";
 import { useEffect, useState } from "react";
@@ -10,6 +9,7 @@ import CommunityStats from "@/components/CommunityStats";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useAllCommunitiesWithAdmins } from "@/hooks/useAllCommunitiesWithAdmins";
 import { useCommunityConfig, useCommunityConfigMutation } from "@/hooks/useCommunityConfig";
+import { Link } from "@/src/components/navigation/Link";
 import { layoutTheme } from "@/src/helper/theme";
 import { useCommunitiesStore } from "@/store/communities";
 import { useOwnerStore } from "@/store/owner";

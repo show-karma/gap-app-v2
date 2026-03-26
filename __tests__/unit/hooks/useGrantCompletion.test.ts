@@ -29,7 +29,6 @@ jest.mock("@/hooks/useZeroDevSigner", () => ({
 }));
 
 // Mock ALL dependencies to avoid ESM import issues
-const mockSetupChainAndWallet = jest.fn();
 const mockFetchGrantInstance = jest.fn();
 const mockNotifyIndexerForGrant = jest.fn();
 const mockPollForGrantCompletion = jest.fn();
@@ -85,7 +84,10 @@ jest.mock("@/hooks/useAttestationToast", () => ({
   })),
 }));
 
-jest.mock("@/hooks/useSetupChainAndWallet", () => ({
+// SWC transforms @/ aliases to relative paths at compile time, so jest.mock("@/hooks/...")
+// doesn't intercept the hook's internal import. We must mock the actual file path instead.
+const mockSetupChainAndWallet = jest.fn().mockResolvedValue(null);
+jest.mock("../../../hooks/useSetupChainAndWallet", () => ({
   useSetupChainAndWallet: jest.fn(() => ({
     setupChainAndWallet: mockSetupChainAndWallet,
     isSmartWalletReady: false,
@@ -121,10 +123,20 @@ describe("useGrantCompletion", () => {
     complete: jest.fn(),
   } as any;
 
+  let consoleSpy: jest.SpyInstance;
+
   beforeEach(() => {
     jest.clearAllMocks();
-    // Reset useAccount mock to default values
+    // Re-apply mock return values that clearAllMocks doesn't reset
+    // (restoreAllMocks in afterEach DOES reset them)
     mockUseAccount.mockReturnValue({ chain: { id: 1 }, address: "0x123" });
+    mockSetupChainAndWallet.mockResolvedValue(null);
+    // Suppress expected console.error from the hook's catch blocks
+    consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    consoleSpy.mockRestore();
   });
 
   describe("Initialization", () => {
@@ -143,8 +155,7 @@ describe("useGrantCompletion", () => {
     });
   });
 
-  // TODO: Fix mock setup - useSetupChainAndWallet mock not being used correctly
-  describe.skip("Successful Grant Completion", () => {
+  describe("Successful Grant Completion", () => {
     it("should complete grant successfully", async () => {
       const onComplete = jest.fn();
 
@@ -223,15 +234,16 @@ describe("useGrantCompletion", () => {
     });
   });
 
-  describe.skip("Chain Setup Failures", () => {
+  describe("Chain Setup Failures", () => {
     it("should handle chain setup failure", async () => {
-      mockSetupChainAndWallet.mockResolvedValue(null);
-
+      // Default mock already returns null for setupChainAndWallet
       const { result } = renderHook(() => useGrantCompletion({}));
 
       await act(async () => {
         await result.current.completeGrant(mockGrant, mockProject);
       });
+
+      expect(mockSetupChainAndWallet).toHaveBeenCalled();
 
       expect(mockShowError).toHaveBeenCalledWith(
         "Please switch to the correct network and try again"
@@ -278,7 +290,7 @@ describe("useGrantCompletion", () => {
     });
   });
 
-  describe.skip("Error Handling", () => {
+  describe("Error Handling", () => {
     it("should handle user rejection (code 4001)", async () => {
       mockSetupChainAndWallet.mockResolvedValue({
         gapClient: mockGapClient,
@@ -342,7 +354,7 @@ describe("useGrantCompletion", () => {
     });
   });
 
-  describe.skip("State Management", () => {
+  describe("State Management", () => {
     it("should set isCompleting to true during operation", async () => {
       let resolveSetup: any;
       const setupPromise = new Promise((resolve) => {
@@ -372,8 +384,7 @@ describe("useGrantCompletion", () => {
     });
   });
 
-  // TODO: Fix mock setup - useSetupChainAndWallet mock not being used correctly
-  describe.skip("Transaction Hash Handling", () => {
+  describe("Transaction Hash Handling", () => {
     it("should handle missing transaction hash", async () => {
       mockSetupChainAndWallet.mockResolvedValue({
         gapClient: mockGapClient,

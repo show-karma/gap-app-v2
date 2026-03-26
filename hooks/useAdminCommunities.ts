@@ -43,7 +43,7 @@ export const useAdminCommunities = (address?: string) => {
   const queryResult = useQuery<Community[], Error>({
     queryKey: ["admin-communities", address],
     queryFn: fetchAdminCommunities,
-    enabled: !!address && isAuth,
+    enabled: isAuth,
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: (failureCount, _error) => {
       // Retry up to 2 times for network errors
@@ -59,7 +59,7 @@ export const useAdminCommunities = (address?: string) => {
   }, [isLoading, setIsLoading]);
 
   useEffect(() => {
-    if (!address || !isAuth) {
+    if (!isAuth) {
       setCommunities([]);
       return;
     }

@@ -1,6 +1,7 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
+import type { LucideIcon } from "lucide-react";
+import { BadgeCheck, CircleDollarSign, Goal, Rss } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -16,124 +17,167 @@ import { cn } from "@/utilities/tailwind";
 export type { ActivityFilterType, SortOption } from "@/types/v2/project-profile.types";
 
 interface ActivityFiltersProps {
-  sortBy: SortOption;
-  onSortChange: (sort: SortOption) => void;
   activeFilters: ActivityFilterType[];
   onFilterToggle: (filter: ActivityFilterType) => void;
+  sortBy?: SortOption;
+  onSortChange?: (sort: SortOption) => void;
+  counts?: Partial<Record<ActivityFilterType, number>>;
   milestonesCount?: number;
   completedCount?: number;
   className?: string;
 }
 
-// Use shared filter options from types, but hide blog, socials, and other
-const filterOptions = ACTIVITY_FILTER_OPTIONS.filter(
-  (option) => !["blog", "socials", "other"].includes(option.value)
-);
+// Visible filter types
+const VISIBLE_FILTERS: ActivityFilterType[] = ["funding", "milestones", "endorsements", "updates"];
+
+// Icon and color config per filter category (matches Figma designs)
+const FILTER_CONFIG: Partial<Record<ActivityFilterType, { icon: LucideIcon; iconClass: string }>> =
+  {
+    funding: { icon: CircleDollarSign, iconClass: "text-emerald-600 dark:text-emerald-400" },
+    milestones: { icon: Goal, iconClass: "text-indigo-600 dark:text-indigo-400" },
+    updates: { icon: Rss, iconClass: "text-violet-600 dark:text-violet-400" },
+    endorsements: { icon: BadgeCheck, iconClass: "text-pink-500 dark:text-pink-400" },
+  };
 
 /**
- * ActivityFilters provides sorting and filtering controls for the activity feed.
+ * ActivityFilters provides filtering controls for the activity feed.
  * Includes:
  * - Sort dropdown (Newest/Oldest)
- * - Milestone count display
- * - Filter badges (toggleable)
+ * - Filter pills with icon + label + count chip (Figma design)
  */
 export function ActivityFilters({
-  sortBy,
-  onSortChange,
   activeFilters,
   onFilterToggle,
+  sortBy,
+  onSortChange,
+  counts = {},
   milestonesCount = 0,
   completedCount = 0,
   className,
 }: ActivityFiltersProps) {
+  const filterOptions = ACTIVITY_FILTER_OPTIONS.filter((option) =>
+    VISIBLE_FILTERS.includes(option.value)
+  ).sort((a, b) => {
+    const aEmpty = !counts[a.value];
+    const bEmpty = !counts[b.value];
+    if (aEmpty === bEmpty) return 0;
+    return aEmpty ? 1 : -1;
+  });
+
+  const totalCount = Object.values(counts).reduce((sum, c) => sum + (c || 0), 0);
+
   return (
     <div className={cn("flex flex-col gap-4", className)} data-testid="activity-filters">
-      {/* Top row: Sort and milestone count */}
+      {/* Single row: Filter pills on left, Sort on right */}
       <div className="flex flex-row items-center justify-between flex-wrap gap-4">
-        {/* Sort Dropdown */}
-        <Select value={sortBy} onValueChange={(value) => onSortChange(value as SortOption)}>
-          <SelectTrigger className="w-[140px]" data-testid="sort-select">
-            <SelectValue placeholder="Sort by" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="newest" data-testid="sort-newest">
-              Newest first
-            </SelectItem>
-            <SelectItem value="oldest" data-testid="sort-oldest">
-              Oldest first
-            </SelectItem>
-          </SelectContent>
-        </Select>
-
-        {/* Milestone Count */}
-        {milestonesCount > 0 && (
-          <span
-            className="text-xl font-semibold leading-tight tracking-tight text-foreground"
-            data-testid="milestones-count"
-          >
-            {milestonesCount} {milestonesCount === 1 ? "Milestone" : "Milestones"}, {completedCount}{" "}
-            Completed
-          </span>
-        )}
-      </div>
-
-      {/* Filter Badges */}
-      <div className="flex flex-row flex-wrap gap-2" data-testid="filter-badges">
-        {/* Everything button - shows all items */}
-        <button
-          type="button"
-          onClick={() => {
-            if (activeFilters.length > 0) {
-              activeFilters.forEach((filter) => {
-                onFilterToggle(filter);
-              });
-            }
-          }}
-          data-testid="filter-everything"
-          aria-pressed={activeFilters.length === 0}
-          aria-label="Show everything"
-          className="focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-neutral-500 dark:focus-visible:ring-neutral-400 rounded-md"
-        >
-          <Badge
-            variant={activeFilters.length === 0 ? "default" : "outline"}
+        {/* Filter pills */}
+        <div className="flex flex-row flex-wrap gap-2" data-testid="filter-badges">
+          {/* All button */}
+          <button
+            type="button"
+            onClick={() => {
+              if (activeFilters.length > 0) {
+                for (const filter of activeFilters) onFilterToggle(filter);
+              }
+            }}
+            data-testid="filter-everything"
+            aria-pressed={activeFilters.length === 0}
+            aria-label="Show everything"
             className={cn(
-              "cursor-pointer transition-colors rounded-md",
-              activeFilters.length === 0
-                ? "bg-neutral-900 hover:bg-neutral-800 text-white border-neutral-900 dark:bg-white dark:text-neutral-900 dark:border-white"
-                : "text-neutral-600 dark:text-neutral-400 border-neutral-300 dark:border-zinc-600 hover:bg-neutral-100 dark:hover:bg-zinc-700"
+              "flex items-center gap-1.5 px-2 py-[5px] rounded-full transition-colors",
+              "focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-neutral-500 dark:focus-visible:ring-neutral-400",
+              activeFilters.length === 0 ? "bg-foreground" : "bg-secondary"
             )}
           >
-            Everything
-          </Badge>
-        </button>
-
-        {/* Category filter buttons */}
-        {filterOptions.map((filter) => {
-          const isActive = activeFilters.includes(filter.value);
-          return (
-            <button
-              key={filter.value}
-              type="button"
-              onClick={() => onFilterToggle(filter.value)}
-              data-testid={`filter-${filter.value}`}
-              aria-pressed={isActive}
-              aria-label={`Filter by ${filter.label}`}
-              className="focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-neutral-500 dark:focus-visible:ring-neutral-400 rounded-md"
+            <span
+              className={cn(
+                "text-[12px] font-medium tracking-[0.18px] leading-[1.5]",
+                activeFilters.length === 0 ? "text-background" : "text-foreground"
+              )}
             >
-              <Badge
-                variant={isActive ? "default" : "outline"}
+              All
+            </span>
+            {totalCount > 0 && (
+              <span
                 className={cn(
-                  "cursor-pointer transition-colors rounded-md",
-                  isActive
-                    ? "bg-neutral-900 hover:bg-neutral-800 text-white border-neutral-900 dark:bg-white dark:text-neutral-900 dark:border-white"
-                    : "text-neutral-600 dark:text-neutral-400 border-neutral-300 dark:border-zinc-600 hover:bg-neutral-100 dark:hover:bg-zinc-700"
+                  "flex items-center justify-center border rounded-full w-[18px] h-[18px] text-[11px] font-medium tabular-nums leading-none",
+                  activeFilters.length === 0
+                    ? "border-background/20 text-background/70"
+                    : "border-border text-muted-foreground"
                 )}
               >
-                {filter.label}
-              </Badge>
-            </button>
-          );
-        })}
+                {totalCount}
+              </span>
+            )}
+          </button>
+
+          {/* Category filter pills */}
+          {filterOptions.map((filter) => {
+            const isActive = activeFilters.includes(filter.value);
+            const count = counts[filter.value];
+            const isEmpty = !count;
+            const config = FILTER_CONFIG[filter.value];
+            const Icon = config?.icon;
+
+            return (
+              <button
+                key={filter.value}
+                type="button"
+                onClick={() => onFilterToggle(filter.value)}
+                disabled={isEmpty}
+                data-testid={`filter-${filter.value}`}
+                aria-pressed={isActive}
+                aria-label={`Filter by ${filter.label}`}
+                className={cn(
+                  "flex items-center gap-1.5 px-2 py-[5px] rounded-full transition-colors",
+                  "focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-neutral-500 dark:focus-visible:ring-neutral-400",
+                  "disabled:cursor-not-allowed disabled:opacity-40",
+                  isEmpty && "max-lg:hidden",
+                  isActive ? "bg-foreground" : "bg-secondary"
+                )}
+              >
+                {Icon && <Icon className={cn("w-[13px] h-[13px] shrink-0", config?.iconClass)} />}
+                <span
+                  className={cn(
+                    "text-[12px] font-medium tracking-[0.18px] leading-[1.5] whitespace-nowrap",
+                    isActive ? "text-background" : "text-foreground"
+                  )}
+                >
+                  {filter.label}
+                </span>
+                {count !== undefined && count > 0 && (
+                  <span
+                    className={cn(
+                      "flex items-center justify-center border rounded-full w-[18px] h-[18px] text-[11px] font-medium tabular-nums leading-none",
+                      isActive
+                        ? "border-background/20 text-background/70"
+                        : "border-border text-muted-foreground"
+                    )}
+                  >
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Sort Dropdown */}
+        {sortBy && onSortChange && (
+          <Select value={sortBy} onValueChange={(value) => onSortChange(value as SortOption)}>
+            <SelectTrigger className="w-[140px]" data-testid="sort-select">
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest" data-testid="sort-newest">
+                Newest first
+              </SelectItem>
+              <SelectItem value="oldest" data-testid="sort-oldest">
+                Oldest first
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        )}
       </div>
     </div>
   );

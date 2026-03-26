@@ -116,32 +116,32 @@ const CardSkeleton = ({ index }: { index: number }) => {
 };
 
 export const CardListSkeleton = () => {
-  const cardArray = Array.from({ length: 16 }, (_, index) => index);
+  const cardIndexes = Array.from({ length: 16 }, (_, index) => index);
 
   return (
     <div className="grid w-full gap-4 grid-cols-1 sm:grid-cols-[repeat(auto-fit,minmax(240px,1fr))] xl:grid-cols-3">
-      {cardArray.map((_, index) => (
-        <CardSkeleton key={index} index={index} />
+      {cardIndexes.map((cardIndex) => (
+        <CardSkeleton key={cardIndex} index={cardIndex} />
       ))}
     </div>
   );
 };
 
 export const FilterByProgramsSkeleton = () => {
-  const programsArray = Array.from({ length: 6 }, (_, index) => index);
+  const programIndexes = Array.from({ length: 6 }, (_, index) => index);
   return (
     <div className="flex flex-col gap-2 w-full">
-      {programsArray.map((_, index) => (
-        <Skeleton key={index} className={"h-7 w-full"} />
+      {programIndexes.map((programIndex) => (
+        <Skeleton key={programIndex} className={"h-7 w-full"} />
       ))}
     </div>
   );
 };
 
 export const CommunitiesSkeleton = () => {
-  // Mock 4 summary stats (same as real component)
+  // Render 4 summary stats placeholders (same as real component)
   const summaryStats = Array(4).fill(null);
-  // Mock 12 community cards for skeleton
+  // Render 12 community card placeholders for skeleton
   const communities = Array(12).fill(null);
 
   return (

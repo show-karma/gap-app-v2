@@ -152,10 +152,10 @@ describe("Menu Items Configuration", () => {
       expect(allProjectsItem?.href).toBe(PAGES.PROJECTS_EXPLORER);
     });
 
-    it('should contain "Raising Funds" item with hasPayoutAddress filter', () => {
+    it('should contain "Raising Funds" item with raisingFunds filter', () => {
       const raisingFundsItem = exploreItems.projects.find((item) => item.title === "Raising Funds");
       expect(raisingFundsItem).toBeDefined();
-      expect(raisingFundsItem?.href).toContain("hasPayoutAddress=true");
+      expect(raisingFundsItem?.href).toContain("raisingFunds=true");
     });
 
     it('should contain "Most Active" item with query parameters', () => {

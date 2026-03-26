@@ -6,7 +6,6 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { CreateTrackModal } from "@/components/Pages/Communities/Tracks/CreateTrackModal";
-import { buildCompositeProgramId } from "@/components/Pages/ProgramRegistry/programUtils";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
@@ -22,6 +21,7 @@ import {
   useUpdateTrack,
 } from "@/hooks/useTracks";
 import type { Track } from "@/services/tracks";
+import { buildCompositeProgramId } from "@/src/features/program-registry/utils/program-utils";
 import type { Community } from "@/types/v2/community";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";

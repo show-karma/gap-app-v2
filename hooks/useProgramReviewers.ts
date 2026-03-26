@@ -49,10 +49,10 @@ export function useProgramReviewers(programId: string) {
     },
   });
 
-  // Mutation for removing a program reviewer
+  // Mutation for removing a program reviewer by email
   const removeMutation = useMutation({
-    mutationFn: async (publicAddress: string) => {
-      return programReviewersService.removeReviewer(programId, publicAddress);
+    mutationFn: async (email: string) => {
+      return programReviewersService.removeReviewer(programId, email);
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({

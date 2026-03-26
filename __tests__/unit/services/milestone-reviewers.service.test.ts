@@ -244,16 +244,14 @@ describe("milestoneReviewersService", () => {
   });
 
   describe("removeReviewer", () => {
-    it("should remove a milestone reviewer successfully", async () => {
+    it("should remove a milestone reviewer by email successfully", async () => {
       mockAxiosInstance.delete.mockResolvedValue({ data: {} });
 
-      await milestoneReviewersService.removeReviewer(
-        "program-1",
-        "0x1234567890123456789012345678901234567890"
-      );
+      await milestoneReviewersService.removeReviewer("program-1", "john@example.com");
 
       expect(mockAxiosInstance.delete).toHaveBeenCalledWith(
-        "/v2/programs/program-1/milestone-reviewers/0x1234567890123456789012345678901234567890"
+        "/v2/programs/program-1/milestone-reviewers/by-email",
+        { data: { email: "john@example.com" } }
       );
     });
 
@@ -262,10 +260,7 @@ describe("milestoneReviewersService", () => {
       mockAxiosInstance.delete.mockRejectedValue(mockError);
 
       await expect(
-        milestoneReviewersService.removeReviewer(
-          "program-1",
-          "0x1234567890123456789012345678901234567890"
-        )
+        milestoneReviewersService.removeReviewer("program-1", "john@example.com")
       ).rejects.toThrow("Reviewer not found");
     });
   });

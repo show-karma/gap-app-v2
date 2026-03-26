@@ -239,7 +239,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
                       </h5>
                       {milestone.dueDate && (
                         <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded">
-                          Due: {formatDate(new Date(milestone.dueDate))}
+                          Due: {formatDate(milestone.dueDate)}
                         </span>
                       )}
                     </div>

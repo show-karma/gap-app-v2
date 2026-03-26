@@ -1,7 +1,15 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Card, LineChart, Title } from "@tremor/react";
+import { Card, Title } from "@tremor/react";
+import dynamic from "next/dynamic";
+import { ChartSkeleton } from "@/components/Utilities/ChartSkeleton";
+
+const LineChart = dynamic(() => import("@tremor/react").then((mod) => mod.LineChart), {
+  ssr: false,
+  loading: () => <ChartSkeleton height="h-[240px]" />,
+});
+
 import { formatDate } from "@/utilities/formatDate";
 import { getGAPWeeklyActiveUsers } from "@/utilities/indexer/stats";
 

@@ -10,7 +10,7 @@ interface GetGrantTypeConfigOptions {
   strokeWidth?: number;
 }
 
-const ICON_SIZES = {
+export const ICON_SIZES = {
   xs: "h-3 w-3", // 12px
   sm: "h-3.5 w-3.5", // 14px
   md: "h-4 w-4", // 16px

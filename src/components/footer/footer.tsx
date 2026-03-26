@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { DiscordIcon, TelegramIcon, TwitterIcon } from "@/components/Icons";
 import { ParagraphIcon } from "@/components/Icons/Paragraph";
@@ -10,7 +11,10 @@ import { PAGES } from "@/utilities/pages";
 import { SOCIALS } from "@/utilities/socials";
 import { cn } from "@/utilities/tailwind";
 import { Logo } from "../shared/logo";
-import { Newsletter } from "./newsletter";
+
+const Newsletter = dynamic(() => import("./newsletter").then((m) => ({ default: m.Newsletter })), {
+  ssr: false,
+});
 
 const navigationLinks = [
   { label: "For Builders", href: PAGES.HOME },
@@ -19,6 +23,7 @@ const navigationLinks = [
   { label: "Guide", href: SOCIALS.DOCS },
   { label: "API Docs", href: karmaLinks.apiDocs },
   { label: "Governance", href: karmaLinks.website },
+  { label: "llms.txt", href: karmaLinks.llmsTxt },
 ];
 
 const socialMediaLinks = [

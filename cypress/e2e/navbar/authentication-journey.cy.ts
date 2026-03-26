@@ -4,12 +4,14 @@
  */
 
 import {
+  setupIndexerCatchAll,
   setupCommonIntercepts,
   waitForPageLoad,
 } from "../../support/intercepts";
 
 describe("Navbar Authentication Journey", () => {
   beforeEach(() => {
+    setupIndexerCatchAll();
     setupCommonIntercepts();
   });
 
@@ -102,7 +104,7 @@ describe("Navbar Authentication Journey", () => {
       cy.visit("/");
       waitForPageLoad();
 
-      cy.url().should("eq", Cypress.config("baseUrl") + "/");
+      cy.location("pathname").should("eq", "/");
       cy.get("body").should("be.visible");
     });
 

@@ -117,10 +117,24 @@ export const QUERY_KEYS = {
       page: number,
       sortBy: string,
       sortOrder: string,
-      programIds: string[]
-    ) => ["reportMilestones", communityId, page, sortBy, sortOrder, programIds] as const,
-    PENDING_VERIFICATION: (communityId: string, page: number, programIds: string[]) =>
-      ["pendingVerificationMilestones", communityId, page, programIds] as const,
+      programIds: string[],
+      reviewerAddress?: string
+    ) =>
+      [
+        "reportMilestones",
+        communityId,
+        page,
+        sortBy,
+        sortOrder,
+        programIds,
+        reviewerAddress,
+      ] as const,
+    PENDING_VERIFICATION: (
+      communityId: string,
+      page: number,
+      programIds: string[],
+      reviewerAddress?: string
+    ) => ["pendingVerificationMilestones", communityId, page, programIds, reviewerAddress] as const,
     PROJECT_UPDATES: (
       communityId: string,
       filter: string,

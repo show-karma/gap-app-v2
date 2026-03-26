@@ -52,6 +52,20 @@ describe("Dashboard nav updates", () => {
     expect(screen.getByRole("link", { name: "Manage Programs" })).toBeInTheDocument();
   });
 
+  it("shows Manage Programs for staff users (SUPER_ADMIN) in desktop navigation", () => {
+    mockNavbarPermissionsState.current = {
+      ...mockNavbarPermissionsState.current,
+      isStaff: true,
+      isRegistryAdmin: false,
+      isProgramCreator: false,
+      isRegistryAllowed: true,
+    };
+
+    render(<NavbarDesktopNavigation />);
+
+    expect(screen.getByRole("link", { name: "Manage Programs" })).toBeInTheDocument();
+  });
+
   it("shows Dashboard in user menu and removes Review/Admin items", async () => {
     const user = userEvent.setup();
 

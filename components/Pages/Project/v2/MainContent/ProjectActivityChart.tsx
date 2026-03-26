@@ -1,6 +1,5 @@
 "use client";
 
-import { Card } from "@tremor/react";
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChartSkeleton } from "@/components/Utilities/ChartSkeleton";
@@ -244,7 +243,7 @@ export function ProjectActivityChart({ className, embedded = false }: ProjectAct
 
     return (
       <div ref={containerRef} className={cn("", className)}>
-        <Card className="bg-white dark:bg-zinc-800 rounded-xl">{loadingContent}</Card>
+        <div className="bg-white dark:bg-zinc-800 rounded-xl p-6">{loadingContent}</div>
       </div>
     );
   }
@@ -252,8 +251,8 @@ export function ProjectActivityChart({ className, embedded = false }: ProjectAct
   const chartContent = (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-zinc-100">Project Activity</h3>
+      <div className="flex items-center justify-between mb-5">
+        <h3 className="text-base text-muted-foreground">Project Activity</h3>
       </div>
 
       {/* Chart - explicit dimensions prevent Recharts 0-dimension warning */}
@@ -335,9 +334,9 @@ export function ProjectActivityChart({ className, embedded = false }: ProjectAct
 
   return (
     <div className={cn("", className)}>
-      <Card className="bg-white dark:bg-zinc-800 rounded-xl border border-gray-200 dark:border-zinc-700">
+      <div className="bg-white dark:bg-zinc-800 rounded-xl border border-gray-200 dark:border-zinc-700 p-6">
         {chartContent}
-      </Card>
+      </div>
     </div>
   );
 }

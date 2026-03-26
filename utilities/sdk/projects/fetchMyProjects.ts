@@ -23,8 +23,6 @@ export const fetchMyProjects = async (
   page: number = 1,
   limit: number = 100
 ): Promise<ProjectWithGrantsResponse[]> => {
-  if (!_address) return [];
-
   const [data, error] = await fetchData<UserProjectsV2Response>(
     INDEXER.V2.USER.PROJECTS(page, limit),
     "GET",

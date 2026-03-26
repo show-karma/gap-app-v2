@@ -36,7 +36,7 @@ export const LinkContractAddressButton: FC<LinkContractAddressesButtonProps> = (
   const isCommunityAdmin = useIsCommunityAdmin();
   const { authenticated } = useAuth();
   const { data: permissions } = usePermissionsQuery({}, { enabled: authenticated });
-  const isSuperAdmin = permissions?.roles.roles.includes(Role.SUPER_ADMIN) ?? false;
+  const isSuperAdmin = permissions?.roles?.roles?.includes(Role.SUPER_ADMIN) ?? false;
   const isAuthorized = isOwner || isProjectOwner || isCommunityAdmin || isSuperAdmin;
 
   // Compute effective read-only mode: external prop OR lack of authorization

@@ -90,7 +90,7 @@ export const ProjectNavigation = ({
     {},
     { enabled: authenticated }
   );
-  const isSuperAdmin = permissions?.roles.roles.includes(Role.SUPER_ADMIN) ?? false;
+  const isSuperAdmin = permissions?.roles?.roles?.includes(Role.SUPER_ADMIN) ?? false;
 
   const isAuthorized = isOwner || isProjectAdmin;
   // Can set payout address: project member/owner/admin/super admin

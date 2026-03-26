@@ -110,7 +110,8 @@ describe("MilestoneInput Component", () => {
       expect(screen.getByLabelText(/title \*/i)).toBeInTheDocument();
       // Description is a MarkdownEditor, check for label text instead
       expect(screen.getByText(/description \*/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/due date \*/i)).toBeInTheDocument();
+      // Due Date uses DatePicker with aria-label, check for label text instead
+      expect(screen.getByText(/due date \*/i)).toBeInTheDocument();
     });
 
     it("should render new optional fields", () => {

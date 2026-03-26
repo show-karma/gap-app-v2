@@ -13,13 +13,13 @@ import { z } from "zod";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
-import { useAuth } from "@/hooks/useAuth";
+import { useCanVerifyMilestone } from "@/hooks/useCanVerifyMilestone";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectImpacts } from "@/hooks/v2/useProjectImpacts";
 import type { ProjectImpactVerification } from "@/services/project-impacts.service";
 import { getProjectImpacts } from "@/services/project-impacts.service";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useProjectStore } from "@/store";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
@@ -29,6 +29,8 @@ import { getProjectById } from "@/utilities/sdk";
 type VerifyImpactDialogProps = {
   impact: IProjectImpact;
   addVerification: (newVerified: IProjectImpactStatus) => void;
+  programId?: string;
+  communityUID?: string;
 };
 
 const schema = z.object({
@@ -37,7 +39,12 @@ const schema = z.object({
 
 type SchemaType = z.infer<typeof schema>;
 
-export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({ impact, addVerification }) => {
+export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({
+  impact,
+  addVerification,
+  programId,
+  communityUID,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -150,27 +157,14 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({ impact, addVer
       setIsStepper(false);
     }
   };
-  const { authenticated: isAuth, login } = useAuth();
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
-  const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const verifyPermission = () => {
-    if (!isAuth) return false;
-    return isContractOwner || !isProjectAdmin;
-  };
-  const ableToVerify = verifyPermission();
+  const { canVerify } = useCanVerifyMilestone(programId, communityUID);
 
-  if (hasVerifiedThis || !ableToVerify) return null;
+  if (hasVerifiedThis || !canVerify) return null;
 
   return (
     <>
       <Button
-        onClick={() => {
-          if (!isAuth) {
-            login?.();
-          } else {
-            openModal();
-          }
-        }}
+        onClick={openModal}
         className={
           "flex justify-center items-center gap-x-2 rounded-md bg-transparent dark:bg-transparent px-3 py-2 text-sm font-semibold text-red-600 dark:text-red-300  hover:opacity-75 dark:hover:opacity-75 border border-red-200 dark:border-red-900 hover:bg-transparent"
         }

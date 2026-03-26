@@ -5,7 +5,6 @@
  */
 interface PrivyTokenProvider {
   getAccessToken?: () => Promise<string | null>;
-  logout?: () => Promise<void>;
 }
 
 /**
@@ -100,6 +99,14 @@ export class TokenManager {
       return TokenManager.getServerToken();
     }
 
+    // Cypress E2E auth bypass: return mock token from localStorage
+    if (
+      process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS === "true" &&
+      (window as Window & { Cypress?: unknown }).Cypress
+    ) {
+      return localStorage.getItem("privy:token");
+    }
+
     // Return cached token if still valid
     if (TokenManager.cachedToken && Date.now() < TokenManager.cacheExpiry) {
       return TokenManager.cachedToken;
@@ -149,25 +156,5 @@ export class TokenManager {
   static async isAuthenticated(): Promise<boolean> {
     const token = await TokenManager.getToken();
     return !!token;
-  }
-
-  /**
-   * Clear authentication tokens (logout)
-   * Note: With Privy, you should use the logout() method from usePrivy() hook
-   * This is just a utility for edge cases
-   */
-  static async clearTokens(): Promise<void> {
-    TokenManager.clearCache();
-
-    if (typeof window === "undefined") {
-      // Server-side: can't clear cookies directly
-      console.warn("clearTokens should be called client-side using Privy's logout method");
-      return;
-    }
-
-    // Client-side: Privy handles this through its logout method
-    if (TokenManager.privyInstance?.logout) {
-      await TokenManager.privyInstance.logout();
-    }
   }
 }

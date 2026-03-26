@@ -71,7 +71,7 @@ export function ProjectHeaderSkeleton({ className }: ProjectHeaderSkeletonProps)
             <div className="flex flex-col h-full">
               <Skeleton className="h-6 w-32 mb-4" />
               <Skeleton className="h-[120px] w-full rounded-lg" />
-              <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 dark:border-zinc-700">
+              <div className="flex items-center justify-between mt-4 pt-4 border-t">
                 <div className="flex items-center gap-4">
                   <Skeleton className="h-5 w-20" />
                   <Skeleton className="h-5 w-28" />

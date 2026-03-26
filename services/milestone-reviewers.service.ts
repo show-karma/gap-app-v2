@@ -129,10 +129,12 @@ export const milestoneReviewersService = {
   },
 
   /**
-   * Remove a milestone reviewer from a program
+   * Remove a milestone reviewer from a program by email
    */
-  async removeReviewer(programId: string, publicAddress: string): Promise<void> {
-    await apiClient.delete(`/v2/programs/${programId}/milestone-reviewers/${publicAddress}`);
+  async removeReviewer(programId: string, email: string): Promise<void> {
+    await apiClient.delete(`/v2/programs/${programId}/milestone-reviewers/by-email`, {
+      data: { email },
+    });
   },
 
   /**
