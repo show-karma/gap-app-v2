@@ -311,12 +311,11 @@ export const buildTypedMetadata = (data: ProgramFormData): Record<string, unknow
 
 /**
  * Build top-level fields (type, deadline, submissionUrl, typed metadata) for the API request.
- * Grants don't send these fields; other opportunity types do.
  */
 export const buildTopLevelFields = (data: ProgramFormData): Record<string, unknown> => {
   const isGrant = data.opportunityType === "grant";
   return {
-    ...(isGrant ? {} : { type: data.opportunityType }),
+    type: data.opportunityType,
     ...(!isGrant && data.deadline ? { deadline: data.deadline.toISOString() } : {}),
     ...(!isGrant && data.submissionUrl ? { submissionUrl: data.submissionUrl } : {}),
     ...buildTypedMetadata(data),
