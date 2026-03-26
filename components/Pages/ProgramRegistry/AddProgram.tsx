@@ -356,9 +356,28 @@ export default function AddProgram({
       }
 
       // V2 update uses JWT — no wallet chain setup needed
+      const newMeta = buildMetadata(data);
+      const preserveIfEmpty = [
+        "logoImg",
+        "bannerImg",
+        "logoImgData",
+        "bannerImgData",
+        "credentials",
+      ] as const;
+      for (const key of preserveIfEmpty) {
+        const val = newMeta[key];
+        if (
+          val === "" ||
+          val === null ||
+          val === undefined ||
+          (typeof val === "object" && Object.keys(val).length === 0)
+        ) {
+          delete newMeta[key];
+        }
+      }
       const metadata = sanitizeObject({
         ...programToEdit?.metadata,
-        ...buildMetadata(data),
+        ...newMeta,
         status: data.status,
       });
       const topLevelFields = buildTopLevelFields(data);
