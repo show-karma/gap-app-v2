@@ -44,7 +44,7 @@ const makeDonationResponse = (
 describe("useDonationPolling", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.useFakeTimers();
+    vi.useFakeTimers({ shouldAdvanceTime: true });
   });
 
   afterEach(() => {
