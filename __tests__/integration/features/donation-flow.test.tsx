@@ -543,16 +543,16 @@ describe("Integration: Donation Flow", () => {
       // Arrange: Mock slow balance fetch
       const mockFetchBalances = vi.fn();
 
-      // Simulate timeout (takes longer than expected)
+      // Simulate timeout (takes longer than the timeout threshold)
       mockFetchBalances.mockImplementation(
-        () => new Promise((resolve) => setTimeout(() => resolve({ "USDC-10": "1000" }), 15000))
+        () => new Promise((resolve) => setTimeout(() => resolve({ "USDC-10": "1000" }), 200))
       );
 
-      // Act: Attempt to fetch with timeout
+      // Act: Attempt to fetch with timeout (shorter than the fetch delay)
       const timeoutPromise = Promise.race([
         mockFetchBalances(),
         new Promise((_, reject) =>
-          setTimeout(() => reject(new Error("Balance fetch timeout")), 10000)
+          setTimeout(() => reject(new Error("Balance fetch timeout")), 50)
         ),
       ]);
 
