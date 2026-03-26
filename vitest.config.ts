@@ -67,7 +67,7 @@ export default defineConfig({
           name: "unit",
           environment: "jsdom",
           globals: true,
-          pool: "threads",
+          pool: "forks",
           setupFiles: ["./__tests__/setup.ts", "./__tests__/setup-mocks.ts"],
           include: ["**/*.{test,spec}.{ts,tsx}"],
           exclude: [
