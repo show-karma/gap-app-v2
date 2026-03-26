@@ -104,6 +104,18 @@ if (typeof globalThis.Headers === "undefined") {
   };
 }
 
+// Stream API polyfills for MSW v2.12+ (SSE/streaming support requires them)
+if (typeof globalThis.WritableStream === "undefined") {
+  const { WritableStream, ReadableStream, TransformStream } = await import("node:stream/web");
+  // @ts-expect-error - Polyfill for jsdom test environment
+  globalThis.WritableStream = WritableStream;
+  // @ts-expect-error - Polyfill for jsdom test environment
+  if (typeof globalThis.ReadableStream === "undefined") globalThis.ReadableStream = ReadableStream;
+  // @ts-expect-error - Polyfill for jsdom test environment
+  if (typeof globalThis.TransformStream === "undefined")
+    globalThis.TransformStream = TransformStream;
+}
+
 // Mock window.matchMedia
 Object.defineProperty(window, "matchMedia", {
   writable: true,
