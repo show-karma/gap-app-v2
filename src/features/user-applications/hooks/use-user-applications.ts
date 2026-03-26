@@ -16,12 +16,14 @@ export function useUserApplications(communitySlug?: string): UseUserApplications
     sortBy,
     sortOrder,
     pagination,
+    statusCounts,
     setApplications,
     setFilters,
     setSort,
     setPage,
     setPageSize,
     setPagination,
+    setStatusCounts,
     setLoading,
     setError,
   } = useUserApplicationsStore();
@@ -67,8 +69,20 @@ export function useUserApplications(communitySlug?: string): UseUserApplications
     if (data) {
       setApplications(data.applications);
       setPagination(data.pagination);
+      if (data.statusCounts) {
+        setStatusCounts(data.statusCounts);
+      }
     }
-  }, [data, isLoading, error, setApplications, setPagination, setLoading, setError]);
+  }, [
+    data,
+    isLoading,
+    error,
+    setApplications,
+    setPagination,
+    setStatusCounts,
+    setLoading,
+    setError,
+  ]);
 
   // Prefetch next page
   useEffect(() => {
@@ -124,6 +138,7 @@ export function useUserApplications(communitySlug?: string): UseUserApplications
     sortBy,
     sortOrder,
     pagination,
+    statusCounts,
     isLoading,
     error,
     setFilters,
