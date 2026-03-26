@@ -541,6 +541,7 @@ export const INDEXER = {
     REGIONS: (idOrSlug: string) => `/v2/communities/${idOrSlug}/regions`,
     V2: {
       GET: (slug: string) => `/v2/communities/${slug}`,
+      SLUG_CHECK: (slug: string) => `/v2/communities/slug/check/${slug}`,
       GRANTS: (slug: string) => `/v2/communities/${slug}/grants`,
       STATS: (slug: string) => `/v2/communities/${slug}/stats`,
       IMPACT: (slug: string, params?: { programId?: string; projectId?: string }) => {
