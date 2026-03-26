@@ -1,3 +1,79 @@
+/**
+ * Opportunity type union — mirrors backend OpportunityType enum
+ */
+export type OpportunityType = "grant" | "hackathon" | "bounty" | "accelerator" | "vc_fund" | "rfp";
+
+/**
+ * Typed metadata for hackathon opportunities
+ */
+export interface HackathonMetadata {
+  startDate: string;
+  endDate: string;
+  location: string;
+  tracks?: string[];
+  prizes?: Array<{
+    track?: string;
+    amount: string | number;
+    currency: string;
+  }>;
+  registrationDeadline?: string;
+  teamSize?: { min: number; max: number };
+}
+
+/**
+ * Typed metadata for bounty opportunities
+ */
+export interface BountyMetadata {
+  reward: { amount: string | number; currency: string };
+  difficulty?: "beginner" | "intermediate" | "advanced";
+  skills?: string[];
+  platform?: string;
+}
+
+/**
+ * Typed metadata for accelerator opportunities
+ */
+export interface AcceleratorMetadata {
+  applicationDeadline?: string;
+  programDuration?: number;
+  batchSize?: number;
+  equity?: string;
+  funding?: { amount: string | number; currency: string };
+  stage?: "pre-seed" | "seed" | "series-a";
+  location?: string;
+}
+
+/**
+ * Typed metadata for VC fund opportunities
+ */
+export interface VcFundMetadata {
+  checkSize?: { min: number; max: number; currency: string };
+  stage?: "pre-seed" | "seed" | "series-a" | "series-b+";
+  thesis?: string;
+  portfolio?: string[];
+  contactMethod?: "email" | "form" | "intro-only";
+  activelyInvesting?: boolean;
+}
+
+/**
+ * Typed metadata for RFP opportunities
+ */
+export interface RfpMetadata {
+  issuingOrganization: string;
+  budget?: { amount: string | number; currency: string };
+  scope?: string;
+  requirements?: string[];
+}
+
+/**
+ * Type count from the /types endpoint
+ */
+export interface TypeCount {
+  type: string;
+  count: number;
+  activeCount: number;
+}
+
 export interface FundingProgramMetadata {
   tags?: string[];
   type?: string;
@@ -42,10 +118,20 @@ export interface FundingProgramMetadata {
   platformsUsed?: string[];
   anyoneCanJoin?: boolean;
   invoiceRequired?: boolean;
-  status: string;
+  status?: string;
+  deactivationReason?: string;
+  deactivatedAt?: string;
   communityRef?: string[];
   adminEmails?: string[];
   financeEmails?: string[];
+  /** Ingestion source pipeline (admin-only, not shown on public funding map) */
+  ingestionSource?: string;
+  /** Ingestion run ID for tracing (admin-only) */
+  ingestionRunId?: string;
+  /** Raw data from the source where program was fetched (admin-only) */
+  rawData?: Record<string, unknown>;
+  /** Application URL from ingestion (admin-only) */
+  applicationUrl?: string;
 }
 
 /**
@@ -88,6 +174,26 @@ export interface FundingProgramResponse {
   admins?: string[];
   langfusePromptId?: string;
   refToGrant?: string;
+  /** Opportunity type — defaults to 'grant' when absent */
+  type?: OpportunityType;
+  /** Whether the opportunity is currently active */
+  isActive?: boolean;
+  /** Global deadline for the opportunity */
+  deadline?: string;
+  /** Direct submission/application URL */
+  submissionUrl?: string;
+  /** Hackathon-specific metadata */
+  hackathonMetadata?: HackathonMetadata;
+  /** Bounty-specific metadata */
+  bountyMetadata?: BountyMetadata;
+  /** Accelerator-specific metadata */
+  acceleratorMetadata?: AcceleratorMetadata;
+  /** VC fund-specific metadata */
+  vcFundMetadata?: VcFundMetadata;
+  /** RFP-specific metadata */
+  rfpMetadata?: RfpMetadata;
+  /** Ingestion source (admin-only, not shown on public funding map) */
+  source?: string;
 }
 
 /**
@@ -128,6 +234,8 @@ export interface FetchFundingProgramsParams {
   communityUid?: string;
   /** Filter by organization name (from metadata.organizations) */
   organization?: string;
+  /** Filter by opportunity type */
+  type?: OpportunityType[];
 }
 
 /**

@@ -22,7 +22,7 @@ const GrantItem = ({ href, title, communityImage, communityName, keyPrefix }: Gr
   <ExternalLink
     href={href}
     key={keyPrefix}
-    className="flex max-w-max items-center gap-2 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1 hover:shadow-sm animation-default"
+    className="flex max-w-max items-center gap-2 text-sm text-muted-foreground border rounded-lg px-2 py-1 hover:shadow-sm animation-default"
   >
     {communityImage ? (
       <div className="w-4 h-4 relative overflow-hidden rounded-full">

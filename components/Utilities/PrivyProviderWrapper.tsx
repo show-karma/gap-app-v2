@@ -1,13 +1,17 @@
 "use client";
 
-import { PrivyProvider } from "@privy-io/react-auth";
-import { WagmiProvider } from "@privy-io/wagmi";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { PROJECT_NAME } from "@/constants/brand";
-import { envVars } from "@/utilities/enviromentVars";
-import { appNetwork } from "@/utilities/network";
+import { type ReactNode, useEffect, useState } from "react";
+import { WagmiProvider } from "wagmi";
+import {
+  PRIVY_BRIDGE_DEFAULTS,
+  PrivyBridgeProvider,
+  usePrivyBridgeSetter,
+  usePrivyLoadRequested,
+} from "@/contexts/privy-bridge-context";
+import type { TenantConfig } from "@/src/infrastructure/types/tenant";
 import { queryClient } from "@/utilities/query-client";
-import { privyConfig } from "@/utilities/wagmi/privy-config";
+import { minimalWagmiConfig } from "@/utilities/wagmi/privy-config";
 
 /**
  * @deprecated Import from `@/utilities/query-client` instead.
@@ -15,53 +19,89 @@ import { privyConfig } from "@/utilities/wagmi/privy-config";
  */
 export { queryClient };
 
+type PrivyModule = {
+  default: React.ComponentType<{ tenantConfig?: TenantConfig | null }>;
+};
+
 interface PrivyProviderWrapperProps {
-  children: React.ReactNode;
+  children: ReactNode;
+  tenantConfig?: TenantConfig | null;
 }
 
-export default function PrivyProviderWrapper({ children }: PrivyProviderWrapperProps) {
-  const privyAppId = envVars.PRIVY_APP_ID;
+/**
+ * Sidecar that lazy-loads the Privy SDK and renders it as a sibling.
+ * Children stay at a stable position in the React tree — no re-mount
+ * when the dynamic import resolves.
+ */
+function PrivyLoader({
+  children,
+  tenantConfig,
+}: {
+  children: ReactNode;
+  tenantConfig?: TenantConfig | null;
+}) {
+  const [Privy, setPrivy] = useState<PrivyModule | null>(null);
+  const setBridge = usePrivyBridgeSetter();
+  const loadRequested = usePrivyLoadRequested();
 
-  if (!privyAppId) {
-    throw new Error(
-      "NEXT_PUBLIC_PRIVY_APP_ID is not defined. Please set it in your environment variables."
-    );
-  }
+  useEffect(() => {
+    const doLoad = () => {
+      import("./PrivyWagmiProviders").then(setPrivy).catch((err) => {
+        console.error("[PrivyProviderWrapper] Failed to load Privy SDK:", err);
+        setBridge({ ...PRIVY_BRIDGE_DEFAULTS, ready: true });
+      });
+    };
 
-  // Determine the default chain based on environment
-  const defaultChain = appNetwork[0];
+    // Returning user (has privy token) or explicit load request — load immediately
+    const hasToken = typeof window !== "undefined" && localStorage.getItem("privy:token");
+    if (hasToken || loadRequested) {
+      doLoad();
+      return;
+    }
+
+    // Anonymous user — defer to idle callback with 5s timeout
+    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+      const id = requestIdleCallback(doLoad, { timeout: 5000 });
+      return () => cancelIdleCallback(id);
+    }
+
+    // Fallback: setTimeout for browsers without requestIdleCallback
+    const timer = setTimeout(doLoad, 5000);
+    return () => clearTimeout(timer);
+  }, [setBridge, loadRequested]);
 
   return (
-    <PrivyProvider
-      appId={privyAppId}
-      config={{
-        appearance: {
-          theme: "light",
-          accentColor: "#1de9b6",
-          logo: "https://karmahq.xyz/logo/karma-logo-light.svg",
-          landingHeader: `Connect to ${PROJECT_NAME}`,
-          showWalletLoginFirst: false,
-          walletList: ["detected_wallets", "metamask", "rainbow", "rabby_wallet", "wallet_connect"],
-        },
-        embeddedWallets: {
-          ethereum: {
-            createOnLogin: "users-without-wallets",
-          },
-        },
-        loginMethods: ["email", "google", "wallet"],
-        defaultChain: defaultChain,
-        supportedChains: appNetwork,
-        externalWallets: {
-          walletConnect: {
-            enabled: true,
-          },
-        },
-        walletConnectCloudProjectId: envVars.PROJECT_ID || undefined,
-      }}
-    >
-      <QueryClientProvider client={queryClient}>
-        <WagmiProvider config={privyConfig}>{children}</WagmiProvider>
-      </QueryClientProvider>
-    </PrivyProvider>
+    <>
+      {Privy && <Privy.default tenantConfig={tenantConfig} />}
+      {children}
+    </>
+  );
+}
+
+/**
+ * Root provider shell. The tree structure:
+ *
+ *   QueryClientProvider
+ *     WagmiProvider (from wagmi — always present for SSR hook support)
+ *       PrivyBridgeProvider (holds auth state, provides context)
+ *         PrivyLoader (lazy-loads PrivyWagmiProviders, wraps children)
+ *
+ * PrivyProvider (~400KB SDK) loads asynchronously via dynamic import().
+ * If the import fails (network error, ad-blocker), the bridge signals
+ * ready=true + authenticated=false so auth-gated pages redirect to
+ * login instead of showing infinite skeletons.
+ */
+export default function PrivyProviderWrapper({
+  children,
+  tenantConfig,
+}: PrivyProviderWrapperProps) {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <WagmiProvider config={minimalWagmiConfig}>
+        <PrivyBridgeProvider>
+          <PrivyLoader tenantConfig={tenantConfig}>{children}</PrivyLoader>
+        </PrivyBridgeProvider>
+      </WagmiProvider>
+    </QueryClientProvider>
   );
 }

@@ -183,16 +183,14 @@ describe("programReviewersService", () => {
   });
 
   describe("removeReviewer", () => {
-    it("should remove a program reviewer successfully", async () => {
+    it("should remove a program reviewer by email successfully", async () => {
       mockAxiosInstance.delete.mockResolvedValue({ data: {} });
 
-      await programReviewersService.removeReviewer(
-        "program-1",
-        "0x1234567890123456789012345678901234567890"
-      );
+      await programReviewersService.removeReviewer("program-1", "alice@example.com");
 
       expect(mockAxiosInstance.delete).toHaveBeenCalledWith(
-        "/v2/funding-program-configs/program-1/reviewers/0x1234567890123456789012345678901234567890"
+        "/v2/funding-program-configs/program-1/reviewers/by-email",
+        { data: { email: "alice@example.com" } }
       );
     });
   });

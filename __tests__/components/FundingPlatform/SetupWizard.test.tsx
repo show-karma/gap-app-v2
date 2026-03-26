@@ -15,6 +15,7 @@ jest.mock("next/navigation", () => ({
   useRouter: () => ({
     push: mockPush,
   }),
+  useParams: () => ({}),
 }));
 
 // Mock next/link

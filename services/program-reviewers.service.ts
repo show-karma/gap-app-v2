@@ -127,10 +127,12 @@ export const programReviewersService = {
   },
 
   /**
-   * Remove a reviewer from a program
+   * Remove a reviewer from a program by email
    */
-  async removeReviewer(programId: string, publicAddress: string): Promise<void> {
-    await apiClient.delete(`/v2/funding-program-configs/${programId}/reviewers/${publicAddress}`);
+  async removeReviewer(programId: string, email: string): Promise<void> {
+    await apiClient.delete(`/v2/funding-program-configs/${programId}/reviewers/by-email`, {
+      data: { email },
+    });
   },
 
   /**

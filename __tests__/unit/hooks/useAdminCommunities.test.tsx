@@ -199,7 +199,9 @@ describe("useAdminCommunities (V2)", () => {
       expect(fetchData).not.toHaveBeenCalled();
     });
 
-    it("should not fetch when no address provided", async () => {
+    it("should not fetch when no address provided and not authenticated", async () => {
+      mockUseAuth.mockReturnValue({ authenticated: false } as ReturnType<typeof useAuth>);
+
       renderHook(() => useAdminCommunities(undefined), {
         wrapper: createWrapper(queryClient),
       });
@@ -207,7 +209,22 @@ describe("useAdminCommunities (V2)", () => {
       expect(fetchData).not.toHaveBeenCalled();
     });
 
-    it("should clear communities when address is removed", async () => {
+    it("should fetch for Farcaster users with no wallet address", async () => {
+      // Farcaster users are authenticated via JWT but have no wallet address.
+      // The API uses JWT auth, not wallet address, so the query should fire.
+      mockUseAuth.mockReturnValue({ authenticated: true } as ReturnType<typeof useAuth>);
+      (fetchData as jest.Mock).mockResolvedValue([{ communities: [] }, null]);
+
+      renderHook(() => useAdminCommunities(undefined), {
+        wrapper: createWrapper(queryClient),
+      });
+
+      await waitFor(() => {
+        expect(fetchData).toHaveBeenCalled();
+      });
+    });
+
+    it("should refetch communities when address is removed (JWT auth still valid)", async () => {
       (fetchData as jest.Mock).mockResolvedValue([mockV2Response, null]);
 
       const { rerender } = renderHook(({ address }) => useAdminCommunities(address), {
@@ -220,11 +237,14 @@ describe("useAdminCommunities (V2)", () => {
       });
 
       jest.clearAllMocks();
+      (fetchData as jest.Mock).mockResolvedValue([{ communities: [] }, null]);
 
-      // Re-render without address
+      // Re-render without address — query still fires because auth is JWT-based
       rerender({ address: undefined });
 
-      expect(mockSetCommunities).toHaveBeenCalledWith([]);
+      await waitFor(() => {
+        expect(fetchData).toHaveBeenCalled();
+      });
     });
   });
 

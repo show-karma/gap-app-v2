@@ -1,14 +1,18 @@
+"use client";
+
 import { Calendar, Coins } from "lucide-react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import type { KeyboardEvent } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { useMixpanel } from "@/hooks/useMixpanel";
+import Link from "@/src/components/navigation/Link";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
-import type { FundingProgramResponse } from "../types/funding-program";
+import type { FundingProgramResponse, OpportunityType } from "../types/funding-program";
 import { formatBudgetValue } from "../utils/format-budget";
 import { isValidImageUrl } from "../utils/image-utils";
+import { CardTypeDetails } from "./card-type-details";
 import { FundingMapDescription } from "./funding-map-description";
 import { GrantTypeBadges } from "./grant-type-badges";
 import { OnKarmaBadge } from "./on-karma-badge";
@@ -22,6 +26,12 @@ interface FundingMapCardProps {
   hideDescription?: boolean;
   /** Hide the categories section */
   hideCategories?: boolean;
+  /** Optional element rendered next to the OnKarma badge in the top-right */
+  statusSlot?: React.ReactNode;
+  /** Position of the card in the grid (0-indexed) */
+  cardPosition?: number;
+  /** Current page number */
+  page?: number;
 }
 
 /**
@@ -43,10 +53,15 @@ export function FundingMapCard({
   href,
   hideDescription = false,
   hideCategories = false,
+  statusSlot,
+  cardPosition,
+  page,
   className,
 }: FundingMapCardProps & { className?: string }) {
-  const router = useRouter();
+  const { mixpanel } = useMixpanel("karma");
   const { metadata, isOnKarma, communities } = program;
+  const opportunityType: OpportunityType = program.type ?? "grant";
+  const isNonGrant = opportunityType !== "grant";
 
   const title = metadata?.title;
   const description = metadata?.description;
@@ -69,16 +84,23 @@ export function FundingMapCard({
   const formattedBudget = formatBudgetValue(budget);
 
   const handleClick = () => {
-    if (href) {
-      router.push(href);
-    } else {
-      onClick?.();
-    }
+    mixpanel.reportEvent({
+      event: "funding-map:card-click",
+      properties: {
+        programId: program.programId,
+        programTitle: title,
+        organization: fallbackName || validCommunities.map((c) => c.name).join(", "),
+        isOnKarma,
+        isActive: !hasEnded && metadata?.status !== "inactive",
+        cardPosition,
+        page,
+      },
+    });
+    onClick?.();
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key === "Enter" || event.key === " ") {
-      // Prevent Space from scrolling the page
       if (event.key === " ") {
         event.preventDefault();
       }
@@ -86,24 +108,18 @@ export function FundingMapCard({
     }
   };
 
-  return (
-    <Card
-      className={cn(
-        "flex flex-col justify-between border-border p-6 shadow-sm transition-shadow hover:shadow-md cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-        // Enforce full height to match carousel stretch
-        "h-full",
-        isPendingReview(program) && "ring-1 ring-gray-200",
-        className
-      )}
-      onClick={handleClick}
-      onKeyDown={handleKeyDown}
-      tabIndex={0}
-      role="button"
-      aria-label={`View funding program: ${title ?? "Untitled program"}`}
-    >
+  const cardClassName = cn(
+    "flex flex-col justify-between border-border p-6 shadow-sm transition-shadow hover:shadow-md cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+    "h-full",
+    isPendingReview(program) && "ring-1 ring-gray-200",
+    className
+  );
+
+  const cardContent = (
+    <>
       <div className="flex flex-col gap-4 mb-4 flex-1">
         <div className="flex w-full flex-row items-center justify-between gap-2">
-          {(formattedBudget || (grantTypes && grantTypes.length > 0)) && (
+          {(formattedBudget || isNonGrant || (grantTypes && grantTypes.length > 0)) && (
             <div className="flex items-center rounded-[10px] bg-secondary p-0.5 max-w-full overflow-hidden">
               {formattedBudget && (
                 <Badge
@@ -114,18 +130,20 @@ export function FundingMapCard({
                   <span className="truncate max-w-[120px]">{formattedBudget}</span>
                 </Badge>
               )}
-              {grantTypes && grantTypes.length > 0 && (
-                <GrantTypeBadges
-                  types={grantTypes}
-                  showLabels="conditional"
-                  variant="secondary"
-                  iconSize="sm"
-                  className="gap-0.5"
-                />
-              )}
+              <GrantTypeBadges
+                types={grantTypes ?? []}
+                showLabels="conditional"
+                variant="secondary"
+                iconSize="sm"
+                className="gap-0.5"
+                opportunityType={opportunityType}
+              />
             </div>
           )}
-          {isOnKarma && <OnKarmaBadge showTooltip={true} />}
+          <div className="flex items-center gap-1.5">
+            {statusSlot}
+            {isOnKarma && <OnKarmaBadge showTooltip={true} />}
+          </div>
         </div>
         <div className="flex flex-col gap-1">
           <h3 className="text-lg font-semibold text-foreground">{title}</h3>
@@ -156,6 +174,7 @@ export function FundingMapCard({
             </div>
           )}
         </div>
+        {isNonGrant && <CardTypeDetails program={program} />}
         {!hideDescription && <FundingMapDescription description={description ?? ""} />}
       </div>
 
@@ -195,6 +214,34 @@ export function FundingMapCard({
           </div>
         )}
       </div>
+    </>
+  );
+
+  if (href) {
+    return (
+      <Link href={href} className="no-underline" tabIndex={-1}>
+        <Card
+          className={cardClassName}
+          onClick={handleClick}
+          tabIndex={0}
+          aria-label={`View funding program: ${title ?? "Untitled program"}`}
+        >
+          {cardContent}
+        </Card>
+      </Link>
+    );
+  }
+
+  return (
+    <Card
+      className={cardClassName}
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
+      tabIndex={0}
+      role="button"
+      aria-label={`View funding program: ${title ?? "Untitled program"}`}
+    >
+      {cardContent}
     </Card>
   );
 }

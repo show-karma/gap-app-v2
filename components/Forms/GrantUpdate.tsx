@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { GrantUpdate } from "@show-karma/karma-gap-sdk";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import type { FC } from "react";
 import { useState } from "react";
 import type { SubmitHandler } from "react-hook-form";
@@ -124,6 +124,7 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
   const { openShareDialog } = useShareDialogStore();
 
   const router = useRouter();
+  const pathname = usePathname();
 
   const createGrantUpdate = async (grantToUpdate: Grant, data: UpdateType) => {
     if (!address || !project) return;
@@ -175,13 +176,12 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
               showSuccess(MESSAGES.GRANT.GRANT_UPDATE.SUCCESS);
               afterSubmit?.();
               setTimeout(() => {
-                router.push(
-                  PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
-                    project.uid,
-                    grantToUpdate.uid,
-                    "milestones-and-updates"
-                  )
+                const targetPath = PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
+                  project.details?.slug || project.uid,
+                  grantToUpdate.uid,
+                  "milestones-and-updates"
                 );
+
                 openShareDialog({
                   modalShareText: `Update posted for your ${grant.details?.title}!`,
                   modalShareSecondText: `Your progress is now onchain. Every update builds your reputation and brings your vision closer to reality. Keep building!`,
@@ -191,7 +191,13 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
                     grantToUpdate.uid
                   ),
                 });
-                router.refresh();
+
+                // Let the share dialog render before any route transition.
+                if (pathname !== targetPath) {
+                  setTimeout(() => {
+                    router.push(targetPath);
+                  }, 250);
+                }
               }, 1500);
             }
           } catch {

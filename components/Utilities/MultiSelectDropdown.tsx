@@ -12,6 +12,7 @@ export interface DropdownItem {
   id: string;
   label: string;
   value?: unknown;
+  color?: string;
 }
 
 interface MultiSelectDropdownProps {
@@ -159,6 +160,12 @@ export const MultiSelectDropdown = ({
                 key={item.id}
                 className="flex items-center gap-1 rounded-md bg-gray-100 px-2 py-1 text-xs dark:bg-zinc-700"
               >
+                {item.color && (
+                  <span
+                    className="h-2 w-2 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: item.color }}
+                  />
+                )}
                 <span className="truncate max-w-[200px]">{item.label}</span>
                 <XMarkIcon
                   className={cn(
@@ -237,7 +244,15 @@ export const MultiSelectDropdown = ({
                   )}
                   onClick={() => toggleItem(item.id)}
                 >
-                  <span>{item.label}</span>
+                  <span className="flex items-center gap-2">
+                    {item.color && (
+                      <span
+                        className="h-2.5 w-2.5 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: item.color }}
+                      />
+                    )}
+                    {item.label}
+                  </span>
                   {localSelectedIds.includes(item.id) && (
                     <CheckIcon className="h-4 w-4 text-brand-blue" />
                   )}

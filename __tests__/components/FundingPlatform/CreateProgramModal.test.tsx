@@ -11,7 +11,7 @@ import { CreateProgramModal } from "@/components/FundingPlatform/CreateProgramMo
 import "@testing-library/jest-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { server } from "@/__tests__/utils/msw/setup";
-import { ProgramRegistryService } from "@/services/programRegistry.service";
+import { ProgramRegistryService } from "@/src/features/program-registry/services/program-registry.service";
 
 // Mock useRouter from next/navigation
 const mockPush = jest.fn();
@@ -39,7 +39,7 @@ jest.mock("@/hooks/communities/useCommunityDetails", () => ({
   useCommunityDetails: jest.fn(),
 }));
 
-jest.mock("@/services/programRegistry.service", () => ({
+jest.mock("@/src/features/program-registry/services/program-registry.service", () => ({
   ProgramRegistryService: {
     buildProgramMetadata: jest.fn(),
     createProgram: jest.fn(),
@@ -236,6 +236,8 @@ describe("CreateProgramModal", () => {
     });
 
     (useAuth as jest.Mock).mockReturnValue({
+      address: mockAddress,
+      isConnected: true,
       authenticated: true,
       login: mockLogin,
     });
@@ -378,7 +380,10 @@ describe("CreateProgramModal", () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(screen.getByText(/program name must be at least 3 characters/i)).toBeInTheDocument();
+        // AriaLiveError renders a duplicate in sr-only, so use getAllByText
+        expect(
+          screen.getAllByText(/program name must be at least 3 characters/i).length
+        ).toBeGreaterThan(0);
       });
     });
 
@@ -400,7 +405,9 @@ describe("CreateProgramModal", () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(screen.getByText(/program name must be at least 3 characters/i)).toBeInTheDocument();
+        expect(
+          screen.getAllByText(/program name must be at least 3 characters/i).length
+        ).toBeGreaterThan(0);
       });
     });
 
@@ -422,7 +429,9 @@ describe("CreateProgramModal", () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(screen.getByText(/program name must be at most 50 characters/i)).toBeInTheDocument();
+        expect(
+          screen.getAllByText(/program name must be at most 50 characters/i).length
+        ).toBeGreaterThan(0);
       });
     });
 
@@ -789,6 +798,8 @@ describe("CreateProgramModal", () => {
     it("should prompt login if not authenticated", async () => {
       const user = userEvent.setup();
       (useAuth as jest.Mock).mockReturnValue({
+        address: undefined,
+        isConnected: false,
         authenticated: false,
         login: mockLogin,
       });
@@ -822,6 +833,12 @@ describe("CreateProgramModal", () => {
       (useAccount as jest.Mock).mockReturnValue({
         address: undefined,
         isConnected: false,
+      });
+      (useAuth as jest.Mock).mockReturnValue({
+        address: undefined,
+        isConnected: false,
+        authenticated: false,
+        login: mockLogin,
       });
 
       renderWithProviders(

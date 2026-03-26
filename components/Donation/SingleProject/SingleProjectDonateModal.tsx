@@ -1,6 +1,7 @@
 "use client";
 
 import { Loader2, Zap } from "lucide-react";
+import dynamic from "next/dynamic";
 import React, { useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,9 +20,13 @@ import { PaymentMethod } from "@/types/donations";
 import { appNetwork } from "@/utilities/network";
 import { shortAddress } from "@/utilities/shortAddress";
 import { TokenSelector } from "../TokenSelector";
-import { OnrampFlow } from "./OnrampFlow";
 import { PaymentMethodSelector } from "./PaymentMethodSelector";
 import type { SingleProjectDonateModalProps } from "./types";
+
+const OnrampFlow = dynamic(() => import("./OnrampFlow").then((m) => ({ default: m.OnrampFlow })), {
+  ssr: false,
+  loading: () => <div className="animate-pulse h-96 bg-gray-100 rounded" />,
+});
 
 export const SingleProjectDonateModal = React.memo<SingleProjectDonateModalProps>(
   ({ isOpen, onClose, project, initialAmount }) => {

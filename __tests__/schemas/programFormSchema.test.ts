@@ -3,7 +3,10 @@
  * @description Tests for the Zod schema validation used in program forms
  */
 
-import { createProgramSchema, updateProgramSchema } from "@/schemas/programFormSchema";
+import {
+  createProgramSchema,
+  updateProgramSchema,
+} from "@/src/features/program-registry/schemas/admin-form";
 
 const validEmails = {
   adminEmails: ["admin@example.com"],
@@ -369,6 +372,38 @@ describe("createProgramSchema", () => {
 
       expect(result.success).toBe(false);
     });
+
+    it("should treat empty string budget as undefined, not 0", () => {
+      const result = createProgramSchema.safeParse({
+        name: "Test Program",
+        description: "Test description",
+        shortDescription: "Short desc",
+        dates: {},
+        budget: "",
+        ...validBase,
+      });
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.budget).toBeUndefined();
+      }
+    });
+
+    it("should treat null budget as undefined", () => {
+      const result = createProgramSchema.safeParse({
+        name: "Test Program",
+        description: "Test description",
+        shortDescription: "Short desc",
+        dates: {},
+        budget: null,
+        ...validBase,
+      });
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.budget).toBeUndefined();
+      }
+    });
   });
 
   describe("complete form validation", () => {
@@ -412,7 +447,7 @@ describe("createProgramSchema", () => {
   });
 
   describe("adminEmails validation", () => {
-    it("should allow empty admin email list", () => {
+    it("should require at least one admin email", () => {
       const result = createProgramSchema.safeParse({
         name: "Test Program",
         description: "Test description",
@@ -423,10 +458,14 @@ describe("createProgramSchema", () => {
         financeEmails: ["finance@example.com"],
       });
 
-      expect(result.success).toBe(true);
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        const adminError = result.error.errors.find((err) => err.path.includes("adminEmails"));
+        expect(adminError?.message).toBe("At least one admin email is required");
+      }
     });
 
-    it("should allow omitting admin emails", () => {
+    it("should reject omitting admin emails", () => {
       const result = createProgramSchema.safeParse({
         name: "Test Program",
         description: "Test description",
@@ -436,7 +475,10 @@ describe("createProgramSchema", () => {
         financeEmails: ["finance@example.com"],
       });
 
-      expect(result.success).toBe(true);
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.errors.some((err) => err.path[0] === "adminEmails")).toBe(true);
+      }
     });
 
     it("should reject invalid email addresses", () => {
@@ -514,7 +556,7 @@ describe("createProgramSchema", () => {
 });
 
 describe("updateProgramSchema", () => {
-  it("should allow empty admin emails when finance emails are provided", () => {
+  it("should require at least one admin email", () => {
     const result = updateProgramSchema.safeParse({
       name: "Test Program",
       description: "Test description",
@@ -525,16 +567,37 @@ describe("updateProgramSchema", () => {
       financeEmails: ["finance@example.com"],
     });
 
-    expect(result.success).toBe(true);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const adminError = result.error.errors.find((err) => err.path.includes("adminEmails"));
+      expect(adminError?.message).toBe("At least one admin email is required");
+    }
   });
 
-  it("should allow omitting admin emails", () => {
+  it("should reject omitting admin emails", () => {
     const result = updateProgramSchema.safeParse({
       name: "Test Program",
       description: "Test description",
       shortDescription: "Short desc",
       invoiceRequired: false,
       dates: {},
+      financeEmails: ["finance@example.com"],
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.errors.some((err) => err.path[0] === "adminEmails")).toBe(true);
+    }
+  });
+
+  it("should accept valid admin emails when provided", () => {
+    const result = updateProgramSchema.safeParse({
+      name: "Test Program",
+      description: "Test description",
+      shortDescription: "Short desc",
+      invoiceRequired: false,
+      dates: {},
+      adminEmails: ["admin@example.com"],
       financeEmails: ["finance@example.com"],
     });
 
@@ -560,7 +623,7 @@ describe("updateProgramSchema", () => {
       description: "Test description",
       shortDescription: "Short desc",
       dates: {},
-      adminEmails: [],
+      adminEmails: ["admin@example.com"],
       financeEmails: [],
     });
 

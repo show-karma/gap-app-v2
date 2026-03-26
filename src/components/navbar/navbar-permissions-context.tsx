@@ -83,15 +83,15 @@ export function NavbarPermissionsProvider({ children }: NavbarPermissionsProvide
   const isOwner = useOwnerStore((state) => state.isOwner);
 
   const value = useMemo<NavbarPermissionsContextValue>(() => {
-    const isStaff = permissions?.roles.roles.includes(Role.SUPER_ADMIN) ?? false;
+    const isStaff = permissions?.roles?.roles?.includes(Role.SUPER_ADMIN) ?? false;
     const isCommunityAdmin = permissions?.isCommunityAdmin ?? false;
     const isReviewer = permissions?.isReviewer ?? false;
     const isProgramCreator = permissions?.isProgramCreator ?? false;
     const isRegistryAdmin = permissions?.isRegistryAdmin ?? false;
     const hasAdminAccess = !isPermissionsLoading && (isStaff || isOwner || isCommunityAdmin);
-    // User can access Manage Programs if they are registry admin OR have created programs
+    // User can access Manage Programs if they are registry admin, program creator, or staff
     const isRegistryAllowed =
-      !isPermissionsLoading && (isRegistryAdmin || isProgramCreator) && isLoggedIn;
+      !isPermissionsLoading && (isRegistryAdmin || isProgramCreator || isStaff) && isLoggedIn;
 
     return {
       isLoggedIn,

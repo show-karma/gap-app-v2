@@ -9,6 +9,26 @@ export default function robots(): MetadataRoute.Robots {
         allow: "/",
         disallow: ["/api/", "/admin/", "/super-admin/", "/safe/"],
       },
+      {
+        userAgent: "GPTBot",
+        allow: ["/", "/llms.txt", "/llms-full.txt"],
+        disallow: ["/api/", "/admin/", "/super-admin/", "/safe/"],
+      },
+      {
+        userAgent: "ClaudeBot",
+        allow: ["/", "/llms.txt", "/llms-full.txt"],
+        disallow: ["/api/", "/admin/", "/super-admin/", "/safe/"],
+      },
+      {
+        userAgent: "PerplexityBot",
+        allow: ["/", "/llms.txt", "/llms-full.txt"],
+        disallow: ["/api/", "/admin/", "/super-admin/", "/safe/"],
+      },
+      {
+        userAgent: "Google-Extended",
+        allow: ["/", "/llms.txt", "/llms-full.txt"],
+        disallow: ["/api/", "/admin/", "/super-admin/", "/safe/"],
+      },
     ],
     sitemap: [
       `${SITE_URL}/sitemap.xml`,

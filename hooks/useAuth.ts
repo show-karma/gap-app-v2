@@ -1,16 +1,16 @@
 "use client";
 
-import { usePrivy, useWallets } from "@privy-io/react-auth";
-import { watchAccount } from "@wagmi/core";
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Hex } from "viem";
-import { useAccount } from "wagmi";
+import { usePrivyBridge } from "@/contexts/privy-bridge-context";
+import { useProjectCreateModalStore } from "@/store/modals/projectCreate";
+import { compareAllWallets } from "@/utilities/auth/compare-all-wallets";
 import { getCypressMockAuthState } from "@/utilities/auth/cypress-auth";
 import { TokenManager } from "@/utilities/auth/token-manager";
 import { PAGES } from "@/utilities/pages";
 import { queryClient } from "@/utilities/query-client";
-import { privyConfig } from "@/utilities/wagmi/privy-config";
+import { useWhitelabel } from "@/utilities/whitelabel-context";
 
 /**
  * Initial delay (in ms) before first auth status check.
@@ -100,25 +100,39 @@ const clearWagmiState = () => {
 };
 
 /**
- * Authentication hook that wraps Privy's built-in authentication
+ * Authentication hook that wraps Privy's built-in authentication.
  *
- * Privy handles all the complexity:
- * - Token management and refresh
- * - Session persistence
- * - Cross-tab synchronization
- * - Cookie management
- * - Wallet connections
+ * Reads from PrivyBridgeContext instead of calling usePrivy()/useWallets()/useAccount()
+ * directly. This allows Privy/Wagmi SDK to be deferred via dynamic import — before
+ * the SDK loads, the bridge returns safe defaults (ready=false, authenticated=false).
  */
 export const useAuth = () => {
-  const { ready, authenticated, user, login, logout, getAccessToken, connectWallet } = usePrivy();
+  const {
+    ready,
+    authenticated,
+    user,
+    login,
+    logout,
+    getAccessToken,
+    connectWallet,
+    wallets,
+    isConnected,
+  } = usePrivyBridge();
+
   const router = useRouter();
   const pathname = usePathname();
+  const { isWhitelabel } = useWhitelabel();
 
-  const { isConnected } = useAccount();
-
-  const { wallets } = useWallets();
   const primaryWallet = wallets[0];
-  const cypressMockAuthState = useMemo(() => getCypressMockAuthState(), [ready, authenticated]);
+  // Track client-side hydration so getCypressMockAuthState() re-evaluates after SSR.
+  // During SSR, window is undefined so the check returns null. Without isClient,
+  // useMemo caches the SSR result when Privy's ready/authenticated haven't changed yet.
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => setIsClient(true), []);
+  const cypressMockAuthState = useMemo(
+    () => getCypressMockAuthState(),
+    [ready, authenticated, isClient]
+  );
   const isCypressMockAuthenticated = Boolean(cypressMockAuthState?.authenticated);
   const cypressMockAddress = cypressMockAuthState?.user?.wallet?.address as Hex | undefined;
   const address = (primaryWallet?.address as Hex | undefined) || cypressMockAddress;
@@ -127,6 +141,10 @@ export const useAuth = () => {
   const prevAuthRef = useRef(authenticated);
   const prevUserIdRef = useRef<string | undefined>(user?.id);
   const authFailureCount = useRef(0);
+  // Snapshot of wallet addresses captured at auth time (security: use ref, not live array)
+  const walletsSnapshotRef = useRef<string[]>([]);
+  // Grace period after login — suppresses watchAccount false positives from stale wagmi state
+  const loginGraceRef = useRef(false);
 
   /**
    * AUTH STATE CHANGE DETECTION
@@ -141,8 +159,19 @@ export const useAuth = () => {
   useEffect(() => {
     // Detect login: was not authenticated, now authenticated
     if (!prevAuthRef.current && authenticated) {
-      // Only redirect if we're on the default landing page
-      if (pathname === "/") {
+      // Suppress watchAccount checks briefly — wagmi state may be stale
+      // from the previous session during the Privy↔wagmi sync gap.
+      loginGraceRef.current = true;
+      setTimeout(() => {
+        loginGraceRef.current = false;
+      }, 2000);
+
+      // Only redirect if we're on the default landing page.
+      // In whitelabel mode, "/" is the community homepage (funding opportunities),
+      // not a generic landing page — don't redirect away from it.
+      // Skip redirect if create project modal is open (user triggered login from the modal)
+      const isCreateModalOpen = useProjectCreateModalStore.getState().isProjectCreateModalOpen;
+      if (pathname === "/" && !isWhitelabel && !isCreateModalOpen) {
         const redirectUrl = getPostLoginRedirect();
         if (redirectUrl) {
           router.push(redirectUrl);
@@ -155,21 +184,27 @@ export const useAuth = () => {
 
     // Detect logout: was authenticated, now not authenticated
     if (prevAuthRef.current && !authenticated) {
-      // Clear ALL query caches on logout to prevent stale data on re-login.
-      // Using clear() instead of selective removeQueries because:
-      // - removeQueries only clears explicitly listed keys (easy to miss new ones)
-      // - clear() is safe on logout since unauthenticated state needs fresh data anyway
       queryClient.clear();
       TokenManager.clearCache();
       clearWagmiState();
       authFailureCount.current = 0;
+      // Clear previous user ID so re-login with a different wallet
+      // is not mistaken for a cross-tab user switch.
+      prevUserIdRef.current = undefined;
     }
 
-    // Detect user switch: different user.id while still authenticated.
+    // Detect user switch: different user.id while *continuously* authenticated.
     // This happens with Privy shared auth when a different user logs in
     // on another subdomain — Privy seamlessly transitions without logout.
     // Force logout to ensure full re-initialization with the new user's state.
-    if (authenticated && user?.id && prevUserIdRef.current && user.id !== prevUserIdRef.current) {
+    // Only triggers when prevAuthRef is true (no logout happened in between).
+    if (
+      prevAuthRef.current &&
+      authenticated &&
+      user?.id &&
+      prevUserIdRef.current &&
+      user.id !== prevUserIdRef.current
+    ) {
       queryClient.clear();
       TokenManager.clearCache();
       clearWagmiState();
@@ -180,11 +215,21 @@ export const useAuth = () => {
     prevUserIdRef.current = user?.id;
   }, [authenticated, user?.id, logout]);
 
-  // Initialize TokenManager with Privy synchronously
-  // This must happen before any API calls are made, so we do it outside useEffect
-  if (ready) {
-    TokenManager.setPrivyInstance({ getAccessToken });
-  }
+  // Snapshot wallet addresses at auth time for secure wallet-switch detection (P2-06)
+  useEffect(() => {
+    if (authenticated && wallets.length > 0) {
+      walletsSnapshotRef.current = wallets.map((w) => w.address.toLowerCase());
+    } else if (!authenticated) {
+      walletsSnapshotRef.current = [];
+    }
+  }, [authenticated, wallets]);
+
+  // Initialize TokenManager with Privy inside useEffect
+  useEffect(() => {
+    if (ready) {
+      TokenManager.setPrivyInstance({ getAccessToken });
+    }
+  }, [ready, getAccessToken]);
 
   // Auto-login after logout completes
   useEffect(() => {
@@ -263,30 +308,52 @@ export const useAuth = () => {
 
   // Handle wallet switching: logout if switched to non-linked wallet
   // Using wagmi's watchAccount as recommended by Privy docs
+  // Dynamically imports @wagmi/core and privy-config to keep them out of the initial bundle
+  //
+  // Skip for social-login users (Farcaster, email, Google) who don't have an
+  // external wallet linked. A stale wagmi connection from a previous wallet-based
+  // session would falsely trigger logout for these users because the old wagmi
+  // address isn't in the Farcaster user's linkedAccounts.
+  const hasExternalWallet = useMemo(() => {
+    if (!user?.linkedAccounts) return false;
+    return user.linkedAccounts.some(
+      (a) =>
+        a.type === "wallet" && (a as { walletClientType?: string }).walletClientType !== "privy"
+    );
+  }, [user]);
+
   useEffect(() => {
-    if (!ready || !authenticated) return;
+    if (!ready || !authenticated || !hasExternalWallet) return;
 
-    // Watch for account changes in the EOA wallet
-    const unwatch = watchAccount(privyConfig, {
-      onChange(account) {
-        // Get the new address from the wallet
-        const newAddress = account.address?.toLowerCase();
+    let unwatch: (() => void) | undefined;
+    let cancelled = false;
 
-        if (!newAddress) return;
+    Promise.all([import("@wagmi/core"), import("@/utilities/wagmi/privy-config")]).then(
+      ([{ watchAccount }, { privyConfig }]) => {
+        if (cancelled) return;
+        unwatch = watchAccount(privyConfig, {
+          onChange(account) {
+            if (cancelled) return;
+            // Skip during login grace period — wagmi state may be stale
+            // from the previous session during the Privy↔wagmi sync gap.
+            if (loginGraceRef.current) return;
 
-        // Get all linked wallet addresses from Privy
-        const linkedAddresses = wallets.map((w) => w.address.toLowerCase());
+            const newAddress = account.address?.toLowerCase();
+            if (!newAddress) return;
 
-        // If the new address is NOT in the linked wallets, log out
-        if (!linkedAddresses.includes(newAddress)) {
-          logout();
-        }
-      },
-    });
+            if (user && !compareAllWallets(user, newAddress)) {
+              logout();
+            }
+          },
+        });
+      }
+    );
 
-    // Cleanup watcher on unmount
-    return () => unwatch();
-  }, [ready, authenticated, wallets, logout]);
+    return () => {
+      cancelled = true;
+      unwatch?.();
+    };
+  }, [ready, authenticated, hasExternalWallet, user, logout]);
 
   const adaptedLogin = useCallback(async () => {
     if (typeof window !== "undefined" && !authenticated) {
@@ -296,21 +363,42 @@ export const useAuth = () => {
       }
     }
 
-    // If authenticated but wallet not connected, force logout first
-    if (!isConnected && authenticated) {
+    // If authenticated but wallet not connected via wagmi, force re-login only when
+    // the user has external wallets (not embedded). Embedded wallets (from Privy)
+    // may not register with wagmi, so treat wallets.length > 0 as effectively connected.
+    if (
+      !isConnected &&
+      authenticated &&
+      wallets.length > 0 &&
+      !wallets.some((w) => w.walletClientType === "privy")
+    ) {
       shouldLoginAfterLogout.current = true;
       await logout();
       return;
     }
-    login();
-  }, [isConnected, authenticated, logout, login]);
+    // Don't call Privy's login() when already authenticated (e.g. Farcaster users
+    // with no wallet). Calling login() on an authenticated user triggers a
+    // "already logged in" warning and does nothing useful.
+    if (!authenticated) {
+      login();
+    }
+  }, [isConnected, authenticated, wallets.length, logout, login]);
 
   const connectedAndAuth = useMemo(() => {
     if (isCypressMockAuthenticated) {
       return true;
     }
-    return isConnected && authenticated;
-  }, [isCypressMockAuthenticated, isConnected, authenticated]);
+    // Privy authenticated is sufficient to be "logged in".
+    // Some login methods (e.g., Farcaster) don't provide a browser-connectable wallet,
+    // so requiring isConnected would incorrectly gate the logged-in status.
+    return authenticated;
+  }, [isCypressMockAuthenticated, authenticated]);
+
+  const effectiveReady = isCypressMockAuthenticated ? true : ready;
+  // Include embedded wallets in isConnected (Privy embedded wallets may not register with wagmi)
+  const effectiveIsConnected = isCypressMockAuthenticated
+    ? true
+    : isConnected || wallets.length > 0;
 
   return {
     // Core authentication (Privy handles everything)
@@ -318,9 +406,9 @@ export const useAuth = () => {
     disconnect: logout, // Just use Privy's logout
 
     // State from Privy
-    ready: isCypressMockAuthenticated ? true : ready,
+    ready: effectiveReady,
     authenticated: connectedAndAuth,
-    isConnected: isCypressMockAuthenticated ? true : isConnected,
+    isConnected: effectiveIsConnected,
     user,
     address,
     primaryWallet,
@@ -331,5 +419,9 @@ export const useAuth = () => {
     logout,
     getAccessToken,
     connectWallet, // Connect wallet without full login
+
+    // Compat shims for callers migrating from usePrivyAuth
+    isAuthenticated: connectedAndAuth,
+    isReady: effectiveReady,
   };
 };

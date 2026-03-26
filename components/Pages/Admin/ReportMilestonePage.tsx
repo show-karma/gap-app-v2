@@ -1,9 +1,11 @@
 "use client";
 import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
 import { useParams } from "next/navigation";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
+import { toast } from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { PendingVerificationTable } from "@/components/Pages/Admin/PendingVerificationTable";
+import { ReviewerFilterDropdown } from "@/components/Pages/Admin/ReviewerFilterDropdown";
 import { StatsGrid } from "@/components/Pages/Admin/StatsGrid";
 import { StatsTable } from "@/components/Pages/Admin/StatsTable";
 import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
@@ -13,6 +15,7 @@ import { Skeleton } from "@/components/Utilities/Skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useAuth } from "@/hooks/useAuth";
+import { useCommunityMilestoneReviewers } from "@/hooks/useCommunityMilestoneReviewers";
 import { useReviewerPrograms } from "@/hooks/usePermissions";
 import { itemsPerPage, useReportPageData } from "@/hooks/useReportPageData";
 import {
@@ -23,6 +26,7 @@ import { ReviewerType } from "@/src/core/rbac/types";
 import type { Community } from "@/types/v2/community";
 import { MESSAGES } from "@/utilities/messages";
 import { defaultMetadata } from "@/utilities/meta";
+import { normalizeProgramId } from "@/utilities/normalizeProgramId";
 
 export const metadata = defaultMetadata;
 
@@ -90,7 +94,7 @@ interface ReportMilestonePageProps {
 export const ReportMilestonePage = ({ community, grantPrograms }: ReportMilestonePageProps) => {
   const params = useParams();
   const communityId = params.communityId as string;
-  const { isConnected } = useAccount();
+  const { isConnected, address } = useAccount();
   const { authenticated: isAuth } = useAuth();
   const { hasAccess, isLoading: isLoadingAdminAccess } = useCommunityAdminAccess(community?.uid);
   const isMilestoneReviewer = useIsReviewerType(ReviewerType.MILESTONE);
@@ -112,7 +116,40 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
     hasAccess,
     isAuthorized,
     reviewerPrograms: reviewerPrograms ?? [],
+    currentUserAddress: address,
+    isMilestoneReviewer,
   });
+
+  const allProgramIds = useMemo(
+    () =>
+      grantPrograms
+        .filter(
+          (p): p is typeof p & { programId: string } =>
+            typeof p.programId === "string" && p.programId.length > 0
+        )
+        .map((p) => normalizeProgramId(p.programId)),
+    [grantPrograms]
+  );
+
+  const reviewerProgramIds = useMemo(() => {
+    if (!isAuthorized) return [];
+    const ids = reportData.effectiveProgramIds;
+    return ids.length > 0 ? ids : allProgramIds;
+  }, [isAuthorized, reportData.effectiveProgramIds, allProgramIds]);
+
+  const {
+    reviewers,
+    isLoading: isLoadingReviewers,
+    isError: isReviewersError,
+  } = useCommunityMilestoneReviewers(reviewerProgramIds);
+
+  useEffect(() => {
+    if (isReviewersError) {
+      toast.error("Failed to load reviewers. The filter may be incomplete.", {
+        id: "reviewers-load-error",
+      });
+    }
+  }, [isReviewersError]);
 
   if (isCheckingPermissions) {
     return <MilestonesReportSkeleton />;
@@ -171,8 +208,19 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
               </span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="stats">Stats</TabsTrigger>
+          <TabsTrigger value="stats">All Milestones</TabsTrigger>
         </TabsList>
+
+        <div className="flex items-center gap-2 my-4">
+          <span className="text-sm text-gray-500 dark:text-zinc-400">Reviewer:</span>
+          <ReviewerFilterDropdown
+            reviewers={reviewers}
+            isLoading={isLoadingReviewers}
+            selectedAddress={reportData.selectedReviewerAddress}
+            onSelect={reportData.handleReviewerAddressChange}
+            currentUserAddress={address}
+          />
+        </div>
 
         <TabsContent value="pending-verification">
           <PendingVerificationTable
@@ -183,8 +231,9 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
             page={reportData.pendingPage}
             onPageChange={reportData.setPendingPage}
             totalItems={reportData.pendingTotalItems}
-            onSwitchToStats={() => reportData.setActiveTab("stats")}
             itemsPerPage={itemsPerPage}
+            selectedReviewerAddress={reportData.selectedReviewerAddress}
+            currentUserAddress={address}
           />
         </TabsContent>
 

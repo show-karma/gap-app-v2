@@ -320,7 +320,7 @@ const updateNavbarPermissionsState = (authMock?: any, permissionsMock?: any) => 
   const isCommunityAdmin = communities.length > 0;
   const isReviewer = reviewerPrograms.length > 0;
   const hasAdminAccess = !isStaffLoading && (isStaff || isOwner || isCommunityAdmin);
-  const isRegistryAllowed = (isRegistryAdmin || isProgramCreator) && isLoggedIn;
+  const isRegistryAllowed = (isRegistryAdmin || isProgramCreator || isStaff) && isLoggedIn;
 
   mockNavbarPermissionsState.current = {
     isLoggedIn,

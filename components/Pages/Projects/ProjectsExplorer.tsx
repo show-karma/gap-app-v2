@@ -52,8 +52,8 @@ export const ProjectsExplorer = () => {
     parse: (value) => (value as ExplorerSortOrder) || "desc",
   });
 
-  // URL state for hasPayoutAddress filter
-  const [hasPayoutAddress, setHasPayoutAddress] = useQueryState("hasPayoutAddress", {
+  // URL state for raisingFunds filter
+  const [hasPayoutAddress, setHasPayoutAddress] = useQueryState("raisingFunds", {
     defaultValue: "",
     serialize: (value) => value || "",
     parse: (value) => value || "",

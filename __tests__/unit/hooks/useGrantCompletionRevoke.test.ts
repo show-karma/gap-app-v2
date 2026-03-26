@@ -113,8 +113,10 @@ jest.mock("@/hooks/useGap", () => ({
   useGap: jest.fn(() => ({ gap: mockGap })),
 }));
 
+// SWC transforms @/ aliases to relative paths at compile time, so we must mock
+// the actual file path for the mock to intercept the hook's internal import.
 const mockSetupChainAndWallet = jest.fn();
-jest.mock("@/hooks/useSetupChainAndWallet", () => ({
+jest.mock("../../../hooks/useSetupChainAndWallet", () => ({
   useSetupChainAndWallet: jest.fn(() => ({
     setupChainAndWallet: mockSetupChainAndWallet,
     isSmartWalletReady: false,
@@ -341,8 +343,7 @@ describe("useGrantCompletionRevoke", () => {
       expect(mockErrorManager).toHaveBeenCalled();
     });
 
-    // TODO: Fix mock setup - useSetupChainAndWallet mock not being used
-    it.skip("should use grant.chainID for chain switching", async () => {
+    it("should use grant.chainID for chain switching", async () => {
       const grantWithChainID = {
         ...mockGrant,
         chainID: 42161,
@@ -470,9 +471,7 @@ describe("useGrantCompletionRevoke", () => {
     });
   });
 
-  // TODO: Fix mock setup - useSetupChainAndWallet mock not being used in these tests
-  // The mock is defined but the real function is called due to module resolution issues
-  describe.skip("On-chain Revocation Success Path", () => {
+  describe("On-chain Revocation Success Path", () => {
     beforeEach(() => {
       mockStoreState.isProjectOwner = true;
       // Mock the new setupChainAndWallet hook
@@ -591,7 +590,7 @@ describe("useGrantCompletionRevoke", () => {
     });
   });
 
-  describe.skip("On-chain Chain Setup Failures", () => {
+  describe("On-chain Chain Setup Failures", () => {
     beforeEach(() => {
       mockStoreState.isProjectOwner = true;
     });
@@ -614,7 +613,7 @@ describe("useGrantCompletionRevoke", () => {
     });
   });
 
-  describe.skip("On-chain Wallet Connection Failures", () => {
+  describe("On-chain Wallet Connection Failures", () => {
     beforeEach(() => {
       mockStoreState.isProjectOwner = true;
     });
@@ -654,7 +653,7 @@ describe("useGrantCompletionRevoke", () => {
     });
   });
 
-  describe.skip("On-chain Grant Instance Not Found", () => {
+  describe("On-chain Grant Instance Not Found", () => {
     beforeEach(() => {
       mockStoreState.isProjectOwner = true;
       mockSetupChainAndWallet.mockResolvedValue({
@@ -703,7 +702,7 @@ describe("useGrantCompletionRevoke", () => {
     });
   });
 
-  describe.skip("On-chain Schema Validation Failures", () => {
+  describe("On-chain Schema Validation Failures", () => {
     beforeEach(() => {
       mockStoreState.isProjectOwner = true;
       mockSetupChainAndWallet.mockResolvedValue({
@@ -764,7 +763,7 @@ describe("useGrantCompletionRevoke", () => {
     });
   });
 
-  describe.skip("Off-chain Fallback When On-chain Fails", () => {
+  describe("Off-chain Fallback When On-chain Fails", () => {
     beforeEach(() => {
       mockStoreState.isProjectOwner = true;
       mockSetupChainAndWallet.mockResolvedValue({
@@ -867,7 +866,7 @@ describe("useGrantCompletionRevoke", () => {
     });
   });
 
-  describe.skip("Authorization Checks", () => {
+  describe("Authorization Checks", () => {
     it("should use on-chain path when isProjectOwner is true", async () => {
       mockStoreState.isProjectOwner = true;
       mockStoreState.isOwner = false;
@@ -927,7 +926,7 @@ describe("useGrantCompletionRevoke", () => {
     });
   });
 
-  describe.skip("Stepper State Transitions", () => {
+  describe("Stepper State Transitions", () => {
     beforeEach(() => {
       mockStoreState.isProjectOwner = true;
       mockSetupChainAndWallet.mockResolvedValue({

@@ -13,6 +13,7 @@ export function buildQueryString(params: {
   onlyOnKarma?: boolean;
   communityUid?: string;
   organization?: string;
+  type?: string[];
 }): string {
   const searchParams = new URLSearchParams();
 
@@ -58,6 +59,10 @@ export function buildQueryString(params: {
 
   if (params.organization) {
     searchParams.set("organization", params.organization);
+  }
+
+  if (params.type?.length) {
+    searchParams.set("type", params.type.join(","));
   }
 
   const queryString = searchParams.toString();

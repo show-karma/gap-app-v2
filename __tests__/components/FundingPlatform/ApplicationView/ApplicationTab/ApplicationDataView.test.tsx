@@ -9,7 +9,8 @@ jest.mock("@/components/Utilities/MarkdownPreview", () => ({
 
 // Mock formatDate
 jest.mock("@/utilities/formatDate", () => ({
-  formatDate: (date: Date) => date.toISOString().split("T")[0],
+  formatDate: (date: Date | string) =>
+    typeof date === "string" ? date : date.toISOString().split("T")[0],
 }));
 
 describe("ApplicationDataView", () => {

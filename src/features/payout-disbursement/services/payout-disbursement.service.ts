@@ -297,6 +297,73 @@ export const getCommunityPayouts = async (
 };
 
 /**
+ * Gets community payouts publicly (no auth required)
+ */
+export const getCommunityPayoutsPublic = async (
+  communityUID: string,
+  options?: CommunityPayoutsOptions
+): Promise<CommunityPayoutsResponse> => {
+  try {
+    const [data, error] = await fetchData<CommunityPayoutsResponse>(
+      INDEXER.V2.PAYOUTS.COMMUNITY_PAYOUTS_PUBLIC(communityUID, {
+        page: options?.page,
+        limit: options?.limit,
+        programId: options?.filters?.programId,
+        status: options?.filters?.status,
+        agreementStatus: options?.filters?.agreementStatus,
+        invoiceStatus: options?.filters?.invoiceStatus,
+        search: options?.filters?.search,
+        sortBy: options?.sorting?.sortBy,
+        sortOrder: options?.sorting?.sortOrder,
+      }),
+      "GET",
+      {},
+      {},
+      {},
+      false,
+      false
+    );
+
+    if (error || !data) {
+      throw new Error(error || "Failed to fetch community payouts");
+    }
+
+    return data;
+  } catch (error: unknown) {
+    errorManager(`Error fetching public community payouts for ${communityUID}`, error);
+    throw new Error(`Failed to fetch community payouts: ${getErrorMessage(error)}`);
+  }
+};
+
+/**
+ * Get payout configs for a community publicly (no auth required)
+ */
+export const getPayoutConfigsByCommunityPublic = async (
+  communityUID: string
+): Promise<PayoutGrantConfig[]> => {
+  try {
+    const [data, error] = await fetchData<{ configs: PayoutGrantConfig[] }>(
+      INDEXER.V2.PAYOUT_CONFIG.BY_COMMUNITY_PUBLIC(communityUID),
+      "GET",
+      {},
+      {},
+      {},
+      false,
+      false
+    );
+
+    if (error || !data) {
+      throw new Error(error || "Failed to fetch payout configs");
+    }
+
+    return data.configs;
+  } catch (error: unknown) {
+    errorManager(`Error fetching public payout configs for community ${communityUID}`, error);
+    throw new Error(`Failed to fetch payout configs: ${getErrorMessage(error)}`);
+  }
+};
+
+/**
  * Save payout configs (payout address and total grant amount) for multiple grants
  */
 export const savePayoutConfigs = async (
@@ -377,6 +444,77 @@ export const getPayoutConfigByGrant = async (
   } catch (error: unknown) {
     errorManager(`Error fetching payout config for grant ${grantUID}`, error);
     throw new Error(`Failed to fetch payout config: ${getErrorMessage(error)}`);
+  }
+};
+
+/**
+ * Validate bulk import rows against all community grants via backend matching
+ */
+export const validateBulkImportRows = async (
+  communityUID: string,
+  rows: Array<{
+    rowNumber: number;
+    grantUID: string;
+    projectUID: string;
+    projectSlug: string;
+    projectName: string;
+    payoutAddress: string;
+    amount: string;
+  }>
+): Promise<
+  Array<{
+    rowNumber: number;
+    grantUID: string;
+    projectUID: string;
+    projectSlug: string;
+    projectName: string;
+    payoutAddress: string;
+    amount: string;
+    status: "valid" | "invalid";
+    errors: string[];
+    target: {
+      grantUID: string;
+      projectUID: string;
+      matchedBy: string;
+    } | null;
+  }>
+> => {
+  try {
+    const [data, error] = await fetchData<{
+      rows: Array<{
+        rowNumber: number;
+        grantUID: string;
+        projectUID: string;
+        projectSlug: string;
+        projectName: string;
+        payoutAddress: string;
+        amount: string;
+        status: "valid" | "invalid";
+        errors: string[];
+        target: {
+          grantUID: string;
+          projectUID: string;
+          matchedBy: string;
+        } | null;
+      }>;
+    }>(
+      INDEXER.V2.PAYOUT_CONFIG.VALIDATE_BULK_IMPORT,
+      "POST",
+      { communityUID, rows },
+      {},
+      {},
+      true,
+      false
+    );
+
+    if (error || !data) {
+      throw new Error(error || "Failed to validate bulk import");
+    }
+
+    return data.rows;
+  } catch (error: unknown) {
+    errorManager("Error validating bulk import", error);
+    throw new Error(`Failed to validate bulk import: ${getErrorMessage(error)}`);
   }
 };
 

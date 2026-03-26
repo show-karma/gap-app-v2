@@ -1,6 +1,11 @@
 import { render, screen } from "@testing-library/react";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 
+// Mock next/navigation
+jest.mock("next/navigation", () => ({
+  useParams: () => ({ projectId: "test-project" }),
+}));
+
 // Mock ActivityCard to avoid complex import chain
 jest.mock("@/components/Shared/ActivityCard", () => ({
   ActivityCard: () => <div data-testid="activity-card" />,
@@ -53,18 +58,18 @@ describe("ActivityFeed - Activity Type Labels", () => {
     ...overrides,
   });
 
-  it("should display 'Milestone' for type 'milestone'", () => {
+  it("should display 'Milestone created' for type 'milestone'", () => {
     const milestones = [createMilestone("milestone")];
     render(<ActivityFeed milestones={milestones} />);
 
-    expect(screen.getByText("Milestone")).toBeInTheDocument();
+    expect(screen.getByText("Milestone created")).toBeInTheDocument();
   });
 
-  it("should display 'Milestone' for type 'grant'", () => {
+  it("should display 'Milestone created' for type 'grant'", () => {
     const milestones = [createMilestone("grant")];
     render(<ActivityFeed milestones={milestones} />);
 
-    expect(screen.getByText("Milestone")).toBeInTheDocument();
+    expect(screen.getByText("Milestone created")).toBeInTheDocument();
   });
 
   it("should display 'Project Activity' for type 'activity'", () => {
@@ -88,16 +93,15 @@ describe("ActivityFeed - Activity Type Labels", () => {
     expect(screen.getByText("Grant Update")).toBeInTheDocument();
   });
 
-  it("should display 'Milestone' for type 'impact'", () => {
-    // Note: Impact type displays as "Milestone" per getActivityTypeLabel implementation
-    // This matches the staging behavior where project impacts are shown as milestones
+  it("should display 'Milestone created' for type 'impact'", () => {
+    // Note: Impact type displays as "Milestone created" per getActivityTypeLabel implementation
     const milestones = [createMilestone("impact")];
     render(<ActivityFeed milestones={milestones} />);
 
-    expect(screen.getByText("Milestone")).toBeInTheDocument();
+    expect(screen.getByText("Milestone created")).toBeInTheDocument();
   });
 
-  it("should display 'Grant Received' for type 'grant_received'", () => {
+  it("should display 'Grant approved' for type 'grant_received' with no programType", () => {
     const milestones = [
       createMilestone("grant_received", {
         grantReceived: {
@@ -105,12 +109,49 @@ describe("ActivityFeed - Activity Type Labels", () => {
           communityName: "Test Community",
           communityImage: "https://example.com/image.png",
           grantTitle: "Test Grant",
+          grantUID: "0xgrant1",
         },
       }),
     ];
     render(<ActivityFeed milestones={milestones} />);
 
-    expect(screen.getByText("Grant Received")).toBeInTheDocument();
+    expect(screen.getByText("Grant approved")).toBeInTheDocument();
+  });
+
+  it("should display 'Grant approved' for type 'grant_received' with programType 'grant'", () => {
+    const milestones = [
+      createMilestone("grant_received", {
+        grantReceived: {
+          amount: "1000 USDC",
+          communityName: "Test Community",
+          communityImage: "https://example.com/image.png",
+          grantTitle: "Test Grant",
+          grantUID: "0xgrant1",
+          programType: "grant",
+        },
+      }),
+    ];
+    render(<ActivityFeed milestones={milestones} />);
+
+    expect(screen.getByText("Grant approved")).toBeInTheDocument();
+  });
+
+  it("should display 'Hackathon participation' for type 'grant_received' with programType 'hackathon'", () => {
+    const milestones = [
+      createMilestone("grant_received", {
+        grantReceived: {
+          amount: "500 ETH",
+          communityName: "Hackathon Org",
+          communityImage: "https://example.com/hack.png",
+          grantTitle: "ETHGlobal",
+          grantUID: "0xhack1",
+          programType: "hackathon",
+        },
+      }),
+    ];
+    render(<ActivityFeed milestones={milestones} />);
+
+    expect(screen.getByText("Hackathon participation")).toBeInTheDocument();
   });
 
   it("should show empty state when no milestones", () => {
@@ -148,8 +189,7 @@ describe("ActivityFeed - Grant Title Display", () => {
     const milestones = [createGrantReceived()];
     render(<ActivityFeed milestones={milestones} />);
 
-    // Community name appears in both ProfilePicture mock and the label span
-    expect(screen.getAllByText("Test Community").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("Grant approved")).toBeInTheDocument();
     expect(screen.getByTestId("grant-title")).toHaveTextContent("Test Grant");
   });
 
@@ -157,7 +197,7 @@ describe("ActivityFeed - Grant Title Display", () => {
     const milestones = [createGrantReceived({ grantTitle: undefined })];
     render(<ActivityFeed milestones={milestones} />);
 
-    expect(screen.getAllByText("Test Community").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("Grant approved")).toBeInTheDocument();
     expect(screen.queryByTestId("grant-title")).not.toBeInTheDocument();
   });
 
@@ -165,7 +205,7 @@ describe("ActivityFeed - Grant Title Display", () => {
     const milestones = [createGrantReceived({ grantTitle: "" })];
     render(<ActivityFeed milestones={milestones} />);
 
-    expect(screen.getAllByText("Test Community").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("Grant approved")).toBeInTheDocument();
     expect(screen.queryByTestId("grant-title")).not.toBeInTheDocument();
   });
 
@@ -178,7 +218,7 @@ describe("ActivityFeed - Grant Title Display", () => {
     ];
     render(<ActivityFeed milestones={milestones} />);
 
-    expect(screen.getAllByText("Test Community").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("Grant approved")).toBeInTheDocument();
     expect(screen.queryByTestId("grant-title")).not.toBeInTheDocument();
   });
 });

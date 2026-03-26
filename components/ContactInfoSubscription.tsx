@@ -120,7 +120,7 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({ cont
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const { authenticated } = useAuth();
   const { data: permissions } = usePermissionsQuery({}, { enabled: authenticated });
-  const isSuperAdmin = permissions?.roles.roles.includes(Role.SUPER_ADMIN) ?? false;
+  const isSuperAdmin = permissions?.roles?.roles?.includes(Role.SUPER_ADMIN) ?? false;
   const isAuthorized = isOwner || isProjectAdmin || isProjectOwner || isSuperAdmin;
   const { data: existingContacts, refetch: refreshContactInfo } = useContactInfo(
     projectId,

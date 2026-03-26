@@ -45,9 +45,7 @@ export const ActivityStatusHeader: FC<ActivityStatusHeaderProps> = ({
           <ActivityStatus type={activityType} />
           <GrantAssociation update={update} index={index} milestone={milestone} />
           {dueDate && (
-            <span className="text-sm font-semibold text-brand-gray dark:text-gray-400">
-              Due by {dueDate}
-            </span>
+            <span className="text-sm font-semibold text-muted-foreground">Due by {dueDate}</span>
           )}
         </div>
 
