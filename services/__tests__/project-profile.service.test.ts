@@ -262,6 +262,7 @@ describe("transformGrantsToMilestones", () => {
 
     expect(result[0].grantReceived?.amount).toBe("1000");
     expect(result[0].grantReceived?.currency).toBeUndefined();
+  });
 
   it("should pass through programType to grantReceived", () => {
     const hackathonGrant: Grant = {

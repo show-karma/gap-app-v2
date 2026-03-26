@@ -1,4 +1,5 @@
 import formatCurrency from "@/utilities/formatCurrency";
+import { isHexAddress } from "@/utilities/isHexAddress";
 
 /**
  * Format a grant amount string into a human-readable format.
@@ -14,11 +15,10 @@ export function formatGrantAmount(amount?: string): string | null {
   const numAmount = Number(numericPart);
   if (Number.isNaN(numAmount) || numAmount === 0) return null;
 
-  // Safety net: strip hex addresses (e.g., "0x0", "0xA0b86991...") from currency suffix.
+  // Safety net: strip hex addresses from currency suffix.
   // Primary filtering happens in transformGrantsToMilestones, but this guards against
   // any amount strings that already contain a hex suffix.
-  const isHex = currencySuffix ? /^0x[0-9a-fA-F]*$/.test(currencySuffix) : false;
-  const safeCurrency = currencySuffix && !isHex ? currencySuffix : null;
+  const safeCurrency = currencySuffix && !isHexAddress(currencySuffix) ? currencySuffix : null;
 
   if (numAmount < 1000) {
     const formatted = new Intl.NumberFormat("en-US", {

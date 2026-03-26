@@ -14,6 +14,7 @@ import type {
   SortOption,
 } from "@/types/v2/project-profile.types";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
+import { isHexAddress } from "@/utilities/isHexAddress";
 import type { ProjectImpact } from "./project-impacts.service";
 
 // =============================================================================
@@ -72,10 +73,7 @@ export function transformGrantsToMilestones(grants: Grant[]): UnifiedMilestone[]
     const rawAmount = grant.details?.amount || grant.amount;
     const rawCurrency = grant.details?.currency;
 
-    // Filter out hex addresses (e.g., "0x0", "0xA0b86991...") from currency display.
-    // Same pattern used in FundingContent.tsx for consistency.
-    const isHexAddress = rawCurrency ? /^0x[0-9a-fA-F]*$/.test(rawCurrency) : false;
-    const currency = isHexAddress ? undefined : rawCurrency;
+    const currency = isHexAddress(rawCurrency) ? undefined : rawCurrency;
 
     // Only append currency if rawAmount doesn't already contain it
     const amountHasCurrency = rawAmount && currency && rawAmount.includes(currency);

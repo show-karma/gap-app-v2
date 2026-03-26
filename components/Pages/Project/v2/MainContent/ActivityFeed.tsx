@@ -152,19 +152,6 @@ const TimelineItem = React.memo(function TimelineItem({
               </span>
             </div>
 
-            {/* Grant title on a new line when it differs from community name */}
-            {(() => {
-              const title = milestone.grantReceived?.grantTitle?.trim();
-              const community = milestone.grantReceived?.communityName?.trim();
-              const isDuplicate =
-                title && community && title.toLowerCase() === community.toLowerCase();
-              return title && !isDuplicate ? (
-                <span className="text-xs text-muted-foreground" data-testid="grant-title">
-                  {title}
-                </span>
-              ) : null;
-            })()}
-
             <div className="flex flex-row items-center gap-1.5 lg:gap-2 text-xs lg:text-sm font-medium leading-5 text-muted-foreground">
               <span>Posted {formatDisplayDate(milestone.createdAt)}</span>
             </div>
