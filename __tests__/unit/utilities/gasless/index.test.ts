@@ -60,32 +60,32 @@ describe("Gasless Module Mock API", () => {
   describe("Mock Exports", () => {
     it("should export createGaslessClient as a mock function", () => {
       expect(createGaslessClient).toBeDefined();
-      expect(jest.isMockFunction(createGaslessClient)).toBe(true);
+      expect(vi.isMockFunction(createGaslessClient)).toBe(true);
     });
 
     it("should export getGaslessSigner as a mock function", () => {
       expect(getGaslessSigner).toBeDefined();
-      expect(jest.isMockFunction(getGaslessSigner)).toBe(true);
+      expect(vi.isMockFunction(getGaslessSigner)).toBe(true);
     });
 
     it("should export isChainSupportedForGasless as a mock function", () => {
       expect(isChainSupportedForGasless).toBeDefined();
-      expect(jest.isMockFunction(isChainSupportedForGasless)).toBe(true);
+      expect(vi.isMockFunction(isChainSupportedForGasless)).toBe(true);
     });
 
     it("should export getChainGaslessConfig as a mock function", () => {
       expect(getChainGaslessConfig).toBeDefined();
-      expect(jest.isMockFunction(getChainGaslessConfig)).toBe(true);
+      expect(vi.isMockFunction(getChainGaslessConfig)).toBe(true);
     });
 
     it("should export createPrivySignerForGasless as a mock function", () => {
       expect(createPrivySignerForGasless).toBeDefined();
-      expect(jest.isMockFunction(createPrivySignerForGasless)).toBe(true);
+      expect(vi.isMockFunction(createPrivySignerForGasless)).toBe(true);
     });
 
     it("should export getProvider as a mock function", () => {
       expect(getProvider).toBeDefined();
-      expect(jest.isMockFunction(getProvider)).toBe(true);
+      expect(vi.isMockFunction(getProvider)).toBe(true);
     });
 
     it("should export GaslessProviderError class", () => {

@@ -17,6 +17,10 @@ vi.mock("next/navigation", () => ({
   useParams: vi.fn(() => ({ communityId: "test-community" })),
 }));
 
+import { useParams } from "next/navigation";
+
+const mockUseParams = useParams as unknown as vi.Mock;
+
 const mockGetProgramsImpact = getProgramsImpact as vi.MockedFunction<typeof getProgramsImpact>;
 
 describe("useImpactMeasurement", () => {
@@ -126,8 +130,7 @@ describe("useImpactMeasurement", () => {
   });
 
   it("should not fetch when communityId is missing", () => {
-    const { useParams } = require("next/navigation");
-    useParams.mockReturnValueOnce({ communityId: undefined });
+    mockUseParams.mockReturnValueOnce({ communityId: undefined });
 
     const wrapper = createWrapper();
     const { result } = renderHook(() => useImpactMeasurement(), { wrapper });

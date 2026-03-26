@@ -342,8 +342,8 @@ describe("fetchENS", () => {
 
   describe("module initialization", () => {
     it("uses createPublicClient and http from viem", () => {
-      expect(jest.isMockFunction(createPublicClient)).toBe(true);
-      expect(jest.isMockFunction(http)).toBe(true);
+      expect(vi.isMockFunction(createPublicClient)).toBe(true);
+      expect(vi.isMockFunction(http)).toBe(true);
 
       // The client returned by createPublicClient should be the mock we control
       expect(typeof ensClient.getEnsName).toBe("function");

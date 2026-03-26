@@ -1,7 +1,18 @@
 import { render, screen } from "@testing-library/react";
+import React from "react";
 
 // Unmock ProfilePicture before importing it (navbar/setup.ts mocks it globally)
-jest.unmock("@/components/Utilities/ProfilePicture");
+vi.unmock("@/components/Utilities/ProfilePicture");
+
+// Mock next/image to render a plain img tag (avoids Next.js image optimization in tests)
+vi.mock("next/image", () => ({
+  __esModule: true,
+  default: (props: Record<string, unknown>) => {
+    // Filter out Next.js-specific props
+    const { fill, priority, quality, loader, placeholder, blurDataURL, ...imgProps } = props;
+    return React.createElement("img", imgProps);
+  },
+}));
 
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 

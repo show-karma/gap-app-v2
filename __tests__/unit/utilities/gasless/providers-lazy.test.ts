@@ -6,22 +6,26 @@
 
 // Mock the provider modules - these get hoisted
 vi.mock("@/utilities/gasless/providers/zerodev.provider", () => ({
-  ZeroDevProvider: vi.fn().mockImplementation(() => ({
-    name: "zerodev",
-    createClient: vi.fn(),
-    toEthersSigner: vi.fn(),
-  })),
+  ZeroDevProvider: class {
+    name = "zerodev";
+    createClient = vi.fn();
+    toEthersSigner = vi.fn();
+  },
 }));
 
 vi.mock("@/utilities/gasless/providers/alchemy.provider", () => ({
-  AlchemyProvider: vi.fn().mockImplementation(() => ({
-    name: "alchemy",
-    createClient: vi.fn(),
-    toEthersSigner: vi.fn(),
-  })),
+  AlchemyProvider: class {
+    name = "alchemy";
+    createClient = vi.fn();
+    toEthersSigner = vi.fn();
+  },
 }));
 
 describe("Gasless providers lazy instantiation", () => {
+  beforeEach(() => {
+    vi.resetModules();
+  });
+
   describe("getProvider", () => {
     it("should return a promise (be async)", async () => {
       const { getProvider } = await import("@/utilities/gasless/providers");
@@ -76,11 +80,13 @@ describe("Gasless providers lazy instantiation", () => {
 });
 
 describe("No static re-exports", () => {
-  it("should not statically export AlchemyProvider or ZeroDevProvider", () => {
-    const fs = require("fs");
-    const path = require("path");
+  it("should not statically export AlchemyProvider or ZeroDevProvider", async () => {
+    const fs = await import("fs");
+    const path = await import("path");
+    const { fileURLToPath } = await import("url");
+    const currentDir = path.dirname(fileURLToPath(import.meta.url));
     const source = fs.readFileSync(
-      path.resolve(__dirname, "../../../../utilities/gasless/providers/index.ts"),
+      path.resolve(currentDir, "../../../../utilities/gasless/providers/index.ts"),
       "utf-8"
     );
     expect(source).not.toMatch(/^export\s*\{.*AlchemyProvider.*\}/m);

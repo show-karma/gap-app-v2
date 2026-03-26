@@ -10,8 +10,11 @@ vi.mock("@/services/project-grants.service", () => ({
   getProjectGrants: vi.fn(),
 }));
 
-const { getProjectGrants } = require("@/services/project-grants.service");
-const mockGetProjectGrants = getProjectGrants as vi.MockedFunction<typeof getProjectGrants>;
+import { getProjectGrants } from "@/services/project-grants.service";
+
+const mockGetProjectGrants = getProjectGrants as unknown as vi.MockedFunction<
+  typeof getProjectGrants
+>;
 
 describe("fetchGrantInstance", () => {
   const mockGrants = [

@@ -12,6 +12,22 @@ import { server } from "@/__tests__/utils/msw/setup";
 import { useAgentStream } from "@/hooks/useAgentStream";
 import { useAgentChatStore } from "@/store/agentChat";
 
+// Mock next/navigation (hook uses useRouter internally)
+vi.mock("next/navigation", () => ({
+  useRouter: vi.fn(() => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    prefetch: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn(),
+    refresh: vi.fn(),
+    pathname: "/",
+  })),
+  usePathname: vi.fn(() => "/"),
+  useSearchParams: vi.fn(() => ({ get: vi.fn() })),
+  useParams: vi.fn(() => ({})),
+}));
+
 // Mock TokenManager
 vi.mock("@/utilities/auth/token-manager", () => ({
   TokenManager: {
@@ -117,7 +133,7 @@ function createErrorResponse(status: number, body: string): Response {
 }
 
 // Direct fetch mock — avoids MSW + jsdom ReadableStream incompatibility
-const mockFetch = jest.fn<Promise<Response>, [RequestInfo | URL, RequestInit?]>();
+const mockFetch = vi.fn<(input: RequestInfo | URL, init?: RequestInit) => Promise<Response>>();
 let savedFetch: typeof globalThis.fetch;
 
 // QueryClient wrapper for useQueryClient inside useAgentStream

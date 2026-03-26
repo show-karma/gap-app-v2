@@ -17,14 +17,18 @@ import {
   validateGrantCompletion,
 } from "@/utilities/grantCompletionHelpers";
 
-// Get the mocked functions after jest.mock
-const { retryUntilConditionMet } = require("@/utilities/retries");
-const mockRetryUntilConditionMet = retryUntilConditionMet as vi.MockedFunction<
+// Get the mocked functions after vi.mock
+import { retryUntilConditionMet } from "@/utilities/retries";
+
+const mockRetryUntilConditionMet = retryUntilConditionMet as unknown as vi.MockedFunction<
   typeof retryUntilConditionMet
 >;
 
-const { getProjectGrants } = require("@/services/project-grants.service");
-const mockGetProjectGrants = getProjectGrants as vi.MockedFunction<typeof getProjectGrants>;
+import { getProjectGrants } from "@/services/project-grants.service";
+
+const mockGetProjectGrants = getProjectGrants as unknown as vi.MockedFunction<
+  typeof getProjectGrants
+>;
 
 describe("grantCompletionHelpers", () => {
   describe("validateGrantCompletion", () => {

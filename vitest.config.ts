@@ -27,7 +27,7 @@ const unitTestMockAliases = [
     replacement: `${dirname}/__mocks__/hooks/useSetupChainAndWallet.ts`,
   },
   {
-    find: /^@\/utilities\/gasless(\/.*)?$/,
+    find: /^@\/utilities\/gasless$/,
     replacement: `${dirname}/__mocks__/utilities/gasless/index.ts`,
   },
   { find: /^until-async$/, replacement: `${dirname}/__mocks__/until-async.js` },

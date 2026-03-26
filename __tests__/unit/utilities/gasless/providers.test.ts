@@ -27,7 +27,7 @@ vi.mock("@zerodev/sdk", () => ({
     account: {
       address: "0x1234567890123456789012345678901234567890",
     },
-    getSupportedEntryPoints: jest
+    getSupportedEntryPoints: vi
       .fn()
       .mockResolvedValue(["0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789"]),
     sendUserOperation: vi.fn().mockResolvedValue({ hash: "0xmockhash" }),
@@ -47,17 +47,20 @@ vi.mock("@zerodev/sdk/constants", () => ({
 }));
 
 vi.mock("@zerodev/sdk/providers", () => ({
-  KernelEIP1193Provider: vi.fn().mockImplementation(() => ({
-    request: vi.fn(),
-  })),
+  KernelEIP1193Provider: class MockKernelEIP1193Provider {
+    request = vi.fn();
+  },
 }));
 
 // Mock Alchemy SDK
 vi.mock("@aa-sdk/core", () => ({
-  LocalAccountSigner: vi.fn().mockImplementation((account) => ({
-    account,
-    signMessage: vi.fn(),
-  })),
+  LocalAccountSigner: class MockLocalAccountSigner {
+    account: unknown;
+    signMessage = vi.fn();
+    constructor(account: unknown) {
+      this.account = account;
+    }
+  },
 }));
 
 vi.mock("@account-kit/infra", () => ({
@@ -83,11 +86,11 @@ vi.mock("viem", () => ({
 
 // Mock ethers
 vi.mock("ethers", () => ({
-  BrowserProvider: vi.fn().mockImplementation(() => ({
-    getSigner: vi.fn().mockResolvedValue({
+  BrowserProvider: class MockBrowserProvider {
+    getSigner = vi.fn().mockResolvedValue({
       getAddress: vi.fn().mockResolvedValue("0x1234567890123456789012345678901234567890"),
-    }),
-  })),
+    });
+  },
 }));
 
 import { celo, optimism } from "viem/chains";
@@ -274,7 +277,7 @@ describe("ZeroDevProvider", () => {
         account: {
           address: "0x1234567890123456789012345678901234567890",
         },
-        getSupportedEntryPoints: jest
+        getSupportedEntryPoints: vi
           .fn()
           .mockResolvedValue(["0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789"]),
       };

@@ -121,7 +121,7 @@ vi.mock("@/store", () => {
   };
 });
 
-const { useMilestone } = require("@/hooks/useMilestone");
+import { useMilestone } from "@/hooks/useMilestone";
 
 const baseMilestone = {
   uid: "0xmilestone",

@@ -107,34 +107,33 @@ vi.mock("@/hooks/useWallet", () => ({
   }),
 }));
 
-vi.mock("@/hooks/useGap", () => {
-  const gapClient = {
+const { mockGapClient } = vi.hoisted(() => {
+  const mockGapClient = {
     findSchema: vi.fn().mockReturnValue("mock-schema"),
     fetch: { slugExists: vi.fn().mockResolvedValue(false) },
     generateSlug: vi.fn().mockResolvedValue("generated-slug"),
   };
-  return {
-    useGap: () => ({
-      gap: {
-        network: "optimism",
-      },
-    }),
-    getGapClient: vi.fn().mockReturnValue(gapClient),
-    __mockGapClient: gapClient,
-  };
+  return { mockGapClient };
 });
 
+vi.mock("@/hooks/useGap", () => ({
+  useGap: () => ({
+    gap: {
+      network: "optimism",
+    },
+  }),
+  getGapClient: vi.fn().mockReturnValue(mockGapClient),
+  __mockGapClient: mockGapClient,
+}));
+
 // Mock ensureCorrectChain to bypass chain switching delays and getGapClient issues
-vi.mock("@/utilities/ensureCorrectChain", () => {
-  const { __mockGapClient } = jest.requireMock("@/hooks/useGap");
-  return {
-    ensureCorrectChain: vi.fn().mockResolvedValue({
-      success: true,
-      chainId: 10,
-      gapClient: __mockGapClient,
-    }),
-  };
-});
+vi.mock("@/utilities/ensureCorrectChain", () => ({
+  ensureCorrectChain: vi.fn().mockResolvedValue({
+    success: true,
+    chainId: 10,
+    gapClient: mockGapClient,
+  }),
+}));
 
 const mockShowError = vi.fn();
 const mockStartAttestation = vi.fn();
@@ -164,7 +163,10 @@ vi.mock("@show-karma/karma-gap-sdk", () => ({
   nullRef: "0x0000000000000000000000000000000000000000000000000000000000000000",
 }));
 
-vi.mock("@/utilities/fetchData", () => vi.fn().mockResolvedValue([{}, null]));
+vi.mock("@/utilities/fetchData", () => ({
+  __esModule: true,
+  default: vi.fn().mockResolvedValue([{}, null]),
+}));
 
 vi.mock("@/utilities/network", () => ({
   appNetwork: [
@@ -225,11 +227,12 @@ vi.mock("@/components/ui/button", () => ({
   ),
 }));
 
-// Access the file-based mock hook function directly
-// (moduleNameMapper in jest.config.ts maps @/hooks/useSetupChainAndWallet
-//  to __mocks__/hooks/useSetupChainAndWallet.ts)
-const mockHookModule = jest.requireMock("@/hooks/useSetupChainAndWallet") as {
-  useSetupChainAndWallet: vi.Mock;
+// Access the mock hook via import (vitest alias maps @/hooks/useSetupChainAndWallet
+// to __mocks__/hooks/useSetupChainAndWallet.ts)
+import * as _setupChainModule from "@/hooks/useSetupChainAndWallet";
+
+const mockHookModule = {
+  useSetupChainAndWallet: _setupChainModule.useSetupChainAndWallet as unknown as vi.Mock,
 };
 
 describe("CommunityDialog", () => {

@@ -3,26 +3,69 @@
  * @description Tests grant completion revocation workflow with dual paths (on-chain and off-chain)
  */
 
-// Mock ALL dependencies to avoid ESM import issues
-const mockEnsureCorrectChain = vi.fn();
-const mockSafeGetWalletClient = vi.fn();
-const mockWalletClientToSigner = vi.fn();
-const mockFetchData = vi.fn();
-const mockPerformOffChainRevoke = vi.fn();
-const mockCreateCheckIfCompletionExists = vi.fn();
-const mockValidateGrantCompletion = vi.fn();
-const mockBuildRevocationPayload = vi.fn();
-const mockGetMulticall = vi.fn();
-const mockToastSuccess = vi.fn();
-const mockToastError = vi.fn();
-const mockToast = vi.fn();
-const mockErrorManager = vi.fn();
-const mockShowError = vi.fn();
-const mockShowSuccess = vi.fn();
+// Hoist all mock variables for use in vi.mock factories
+const {
+  mockEnsureCorrectChain,
+  mockSafeGetWalletClient,
+  mockWalletClientToSigner,
+  mockFetchData,
+  mockPerformOffChainRevoke,
+  mockCreateCheckIfCompletionExists,
+  mockValidateGrantCompletion,
+  mockBuildRevocationPayload,
+  mockGetMulticall,
+  mockToastSuccess,
+  mockToastError,
+  mockErrorManager,
+  mockShowError,
+  mockShowSuccess,
+  mockUseAccount,
+  mockUseChainId,
+  mockSwitchChainAsync,
+  mockGap,
+  mockSetupChainAndWallet,
+  mockChangeStepperStep,
+  mockSetIsStepper,
+  mockDismiss,
+  mockStartAttestation,
+  mockRefetchGrants,
+  mockRefreshGrant,
+} = vi.hoisted(() => ({
+  mockEnsureCorrectChain: vi.fn(),
+  mockSafeGetWalletClient: vi.fn(),
+  mockWalletClientToSigner: vi.fn(),
+  mockFetchData: vi.fn(),
+  mockPerformOffChainRevoke: vi.fn(),
+  mockCreateCheckIfCompletionExists: vi.fn(),
+  mockValidateGrantCompletion: vi.fn(),
+  mockBuildRevocationPayload: vi.fn(),
+  mockGetMulticall: vi.fn(),
+  mockToastSuccess: vi.fn(),
+  mockToastError: vi.fn(),
+  mockErrorManager: vi.fn(),
+  mockShowError: vi.fn(),
+  mockShowSuccess: vi.fn(),
+  mockUseAccount: vi.fn(),
+  mockUseChainId: vi.fn(() => 1),
+  mockSwitchChainAsync: vi.fn(),
+  mockGap: { fetch: { projectById: vi.fn() } },
+  mockSetupChainAndWallet: vi.fn(),
+  mockChangeStepperStep: vi.fn(),
+  mockSetIsStepper: vi.fn(),
+  mockDismiss: vi.fn(),
+  mockStartAttestation: vi.fn(),
+  mockRefetchGrants: vi.fn(),
+  mockRefreshGrant: vi.fn(),
+}));
 
 // Create a mock toast function that can be called directly
 const createMockToastDefault = () => {
-  const fn = vi.fn();
+  const fn = vi.fn() as vi.Mock & {
+    success: vi.Mock;
+    error: vi.Mock;
+    loading: vi.Mock;
+    dismiss: vi.Mock;
+  };
   fn.success = mockToastSuccess;
   fn.error = mockToastError;
   fn.loading = vi.fn();
@@ -86,37 +129,36 @@ vi.mock("@show-karma/karma-gap-sdk", () => ({
   },
 }));
 
-const mockToastDefault = createMockToastDefault();
-vi.mock("react-hot-toast", () => ({
-  __esModule: true,
-  default: mockToastDefault,
-}));
+vi.mock("react-hot-toast", () => {
+  const fn = vi.fn();
+  (fn as Record<string, unknown>).success = mockToastSuccess;
+  (fn as Record<string, unknown>).error = mockToastError;
+  (fn as Record<string, unknown>).loading = vi.fn();
+  (fn as Record<string, unknown>).dismiss = vi.fn();
+  return {
+    __esModule: true,
+    default: fn,
+  };
+});
 
 vi.mock("@/components/Utilities/errorManager", () => ({
   errorManager: mockErrorManager,
 }));
 
-const mockUseAccount = vi.fn();
-const mockUseChainId = vi.fn(() => 1);
 vi.mock("wagmi", () => ({
   useAccount: mockUseAccount,
   useChainId: mockUseChainId,
 }));
 
-const mockSwitchChainAsync = vi.fn();
 vi.mock("@/hooks/useWallet", () => ({
   useWallet: vi.fn(() => ({ switchChainAsync: mockSwitchChainAsync })),
 }));
 
-const mockGap = { fetch: { projectById: vi.fn() } };
 vi.mock("@/hooks/useGap", () => ({
   useGap: vi.fn(() => ({ gap: mockGap })),
 }));
 
-// SWC transforms @/ aliases to relative paths at compile time, so we must mock
-// the actual file path for the mock to intercept the hook's internal import.
-const mockSetupChainAndWallet = vi.fn();
-vi.mock("../../../hooks/useSetupChainAndWallet", () => ({
+vi.mock("@/hooks/useSetupChainAndWallet", () => ({
   useSetupChainAndWallet: vi.fn(() => ({
     setupChainAndWallet: mockSetupChainAndWallet,
     isSmartWalletReady: false,
@@ -126,10 +168,6 @@ vi.mock("../../../hooks/useSetupChainAndWallet", () => ({
   })),
 }));
 
-const mockChangeStepperStep = vi.fn();
-const mockSetIsStepper = vi.fn();
-const mockDismiss = vi.fn();
-const mockStartAttestation = vi.fn();
 vi.mock("@/hooks/useAttestationToast", () => ({
   useAttestationToast: vi.fn(() => ({
     startAttestation: mockStartAttestation,
@@ -165,7 +203,6 @@ vi.mock("@/store", () => {
   };
 });
 
-const mockRefetchGrants = vi.fn();
 vi.mock("@/hooks/v2/useProjectGrants", () => ({
   useProjectGrants: vi.fn(() => ({
     refetch: mockRefetchGrants,
@@ -173,23 +210,24 @@ vi.mock("@/hooks/v2/useProjectGrants", () => ({
   })),
 }));
 
-const mockRefreshGrant = vi.fn();
 vi.mock("@/store/grant", () => ({
   useGrantStore: vi.fn(() => ({ refreshGrant: mockRefreshGrant })),
 }));
 
 import { act, renderHook } from "@testing-library/react";
-import { MESSAGES } from "@/utilities/messages";
+// Get the mocked toast function
+import toast from "react-hot-toast";
 
 // Import the hook to test AFTER mocking dependencies
-const { useGrantCompletionRevoke } = require("@/hooks/useGrantCompletionRevoke");
+import { useGrantCompletionRevoke } from "@/hooks/useGrantCompletionRevoke";
+import { MESSAGES } from "@/utilities/messages";
 
-// Get the mocked toast function
-const toast = require("react-hot-toast").default;
-const mockToastFn = (global as any).__mockToastFn || toast;
+const mockToastFn = (global as Record<string, unknown>).__mockToastFn || toast;
 
 // Get reference to mock store state for modifying in tests
-const mockStoreState = require("@/store").__mockState;
+import * as storeModule from "@/store";
+
+const mockStoreState = (storeModule as Record<string, unknown>).__mockState;
 
 describe("useGrantCompletionRevoke", () => {
   const mockGrant = {

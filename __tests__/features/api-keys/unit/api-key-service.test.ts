@@ -5,7 +5,9 @@ vi.mock("@/utilities/fetchData", () => ({
   default: vi.fn(),
 }));
 
-const mockFetchData = jest.requireMock("@/utilities/fetchData").default;
+import fetchData from "@/utilities/fetchData";
+
+const mockFetchData = fetchData as unknown as vi.Mock;
 
 describe("apiKeyService", () => {
   beforeEach(() => {

@@ -539,51 +539,43 @@ export const setupAuthMocks = (
   authState: AuthFixture["authState"],
   permissions: AuthFixture["permissions"]
 ) => {
-  // Mock useAuth
-  vi.mock("@/hooks/useAuth", () => ({
+  // Use vi.doMock to avoid hoisting (vi.mock inside functions gets hoisted and breaks)
+  vi.doMock("@/hooks/useAuth", () => ({
     useAuth: vi.fn(() => createMockUseAuth(authState)),
   }));
 
-  // Mock useCommunitiesStore
-  vi.mock("@/store/communities", () => ({
+  vi.doMock("@/store/communities", () => ({
     useCommunitiesStore: vi.fn(() => createMockUseCommunitiesStore(permissions.communities)),
   }));
 
-  // Mock useReviewerPrograms
-  vi.mock("@/hooks/usePermissions", () => ({
+  vi.doMock("@/hooks/usePermissions", () => ({
     useReviewerPrograms: vi.fn(() => createMockUseReviewerPrograms(permissions.reviewerPrograms)),
   }));
 
-  // Mock RBAC permissions (replaces legacy useStaff)
-  vi.mock("@/src/core/rbac/hooks/use-permissions", () => ({
+  vi.doMock("@/src/core/rbac/hooks/use-permissions", () => ({
     usePermissionsQuery: vi.fn(() => createMockUsePermissionsQuery(permissions.isStaff)),
   }));
 
-  // Mock useOwnerStore
-  vi.mock("@/store/owner", () => ({
+  vi.doMock("@/store/owner", () => ({
     useOwnerStore: createMockUseOwnerStore(permissions.isOwner),
   }));
 
-  // Mock useRegistryStore
-  vi.mock("@/store/registry", () => ({
+  vi.doMock("@/store/registry", () => ({
     useRegistryStore: vi.fn(() =>
       createMockUseRegistryStore(permissions.isProgramCreator, permissions.isRegistryAdmin)
     ),
   }));
 
-  // Mock useTheme
-  vi.mock("next-themes", () => ({
+  vi.doMock("next-themes", () => ({
     useTheme: vi.fn(() => createMockUseTheme()),
     ThemeProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   }));
 
-  // Mock useContributorProfileModalStore
-  vi.mock("@/store/modals/contributorProfile", () => ({
+  vi.doMock("@/store/modals/contributorProfile", () => ({
     useContributorProfileModalStore: vi.fn(() => createMockUseContributorProfileModalStore()),
   }));
 
-  // Mock Next.js router
-  vi.mock("next/navigation", () => ({
+  vi.doMock("next/navigation", () => ({
     useRouter: vi.fn(() => ({
       push: vi.fn(),
       replace: vi.fn(),

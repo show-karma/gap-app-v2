@@ -28,13 +28,28 @@ vi.mock("@/hooks/useZeroDevSigner", () => ({
   })),
 }));
 
-// Mock ALL dependencies to avoid ESM import issues
-const mockFetchGrantInstance = vi.fn();
-const mockNotifyIndexerForGrant = vi.fn();
-const mockPollForGrantCompletion = vi.fn();
-const mockToastSuccess = vi.fn();
-const mockShowError = vi.fn();
-const mockShowSuccess = vi.fn();
+// Hoist mock variables so they are available inside vi.mock factories
+const {
+  mockFetchGrantInstance,
+  mockNotifyIndexerForGrant,
+  mockPollForGrantCompletion,
+  mockToastSuccess,
+  mockShowError,
+  mockShowSuccess,
+  mockUseAccount,
+  mockUseChainId,
+  mockSetupChainAndWallet,
+} = vi.hoisted(() => ({
+  mockFetchGrantInstance: vi.fn(),
+  mockNotifyIndexerForGrant: vi.fn(),
+  mockPollForGrantCompletion: vi.fn(),
+  mockToastSuccess: vi.fn(),
+  mockShowError: vi.fn(),
+  mockShowSuccess: vi.fn(),
+  mockUseAccount: vi.fn(),
+  mockUseChainId: vi.fn(() => 1),
+  mockSetupChainAndWallet: vi.fn().mockResolvedValue(null),
+}));
 
 vi.mock("@/utilities/grant-helpers", () => ({
   getSDKGrantInstance: mockFetchGrantInstance,
@@ -60,8 +75,6 @@ vi.mock("@/components/Utilities/errorManager", () => ({
   errorManager: vi.fn(),
 }));
 
-const mockUseAccount = vi.fn();
-const mockUseChainId = vi.fn(() => 1);
 vi.mock("wagmi", () => ({
   useAccount: mockUseAccount,
   useChainId: mockUseChainId,
@@ -84,10 +97,7 @@ vi.mock("@/hooks/useAttestationToast", () => ({
   })),
 }));
 
-// SWC transforms @/ aliases to relative paths at compile time, so vi.mock("@/hooks/...")
-// doesn't intercept the hook's internal import. We must mock the actual file path instead.
-const mockSetupChainAndWallet = vi.fn().mockResolvedValue(null);
-vi.mock("../../../hooks/useSetupChainAndWallet", () => ({
+vi.mock("@/hooks/useSetupChainAndWallet", () => ({
   useSetupChainAndWallet: vi.fn(() => ({
     setupChainAndWallet: mockSetupChainAndWallet,
     isSmartWalletReady: false,
@@ -104,7 +114,7 @@ vi.mock("@/utilities/sanitize", () => ({
 import { act, renderHook } from "@testing-library/react";
 
 // Import the hook to test AFTER mocking dependencies
-const { useGrantCompletion } = require("@/hooks/useGrantCompletion");
+import { useGrantCompletion } from "@/hooks/useGrantCompletion";
 
 describe("useGrantCompletion", () => {
   const mockGrant = {
@@ -123,7 +133,7 @@ describe("useGrantCompletion", () => {
     complete: vi.fn(),
   } as any;
 
-  let consoleSpy: jest.SpyInstance;
+  let consoleSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
     vi.clearAllMocks();

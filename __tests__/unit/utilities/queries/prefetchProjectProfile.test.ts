@@ -30,7 +30,7 @@ const mockGetProjectUpdates = getProjectUpdates as vi.MockedFunction<typeof getP
 
 describe("prefetchProjectProfile", () => {
   let mockQueryClient: vi.Mocked<QueryClient>;
-  let consoleWarnSpy: jest.SpyInstance;
+  let consoleWarnSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
     vi.clearAllMocks();

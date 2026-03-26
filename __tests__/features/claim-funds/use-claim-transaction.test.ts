@@ -59,12 +59,11 @@ vi.mock("@/src/features/claim-funds/lib/error-messages", () => ({
   sanitizeErrorMessage: vi.fn((err: Error) => ({ message: err.message })),
 }));
 
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { usePrivyBridge } from "@/contexts/privy-bridge-context";
 import { useClaimTransaction } from "@/src/features/claim-funds/hooks/use-claim-transaction";
 import type { ClaimEligibility } from "@/src/features/claim-funds/types";
 import type { ClaimGrantsConfig } from "@/src/infrastructure/types/tenant";
-
-const { useMutation, useQueryClient } = jest.requireMock("@tanstack/react-query");
-const { usePrivyBridge } = jest.requireMock("@/contexts/privy-bridge-context");
 
 const MOCK_WALLET = {
   address: "0xABCDEF1234567890ABCDEF1234567890ABCDEF12",

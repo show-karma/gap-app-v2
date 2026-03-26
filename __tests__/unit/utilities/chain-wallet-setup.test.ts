@@ -3,10 +3,14 @@
  * @description Tests chain switching and wallet connection for attestation operations
  */
 
-// Mock ALL dependencies to avoid ESM import issues
-const mockEnsureCorrectChain = vi.fn();
-const mockSafeGetWalletClient = vi.fn();
-const mockWalletClientToSigner = vi.fn();
+// Hoist mock variables so they are available inside vi.mock factories
+const { mockEnsureCorrectChain, mockSafeGetWalletClient, mockWalletClientToSigner } = vi.hoisted(
+  () => ({
+    mockEnsureCorrectChain: vi.fn(),
+    mockSafeGetWalletClient: vi.fn(),
+    mockWalletClientToSigner: vi.fn(),
+  })
+);
 
 vi.mock("@/utilities/ensureCorrectChain", () => ({
   ensureCorrectChain: mockEnsureCorrectChain,
@@ -21,7 +25,7 @@ vi.mock("@/utilities/eas-wagmi-utils", () => ({
 }));
 
 // Import the function to test AFTER mocking dependencies
-const { setupChainAndWallet } = require("@/utilities/chain-wallet-setup");
+import { setupChainAndWallet } from "@/utilities/chain-wallet-setup";
 
 describe("setupChainAndWallet", () => {
   const mockGapClient = { fetch: { projectById: vi.fn() } } as any;

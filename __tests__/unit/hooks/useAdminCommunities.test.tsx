@@ -154,7 +154,7 @@ describe("useAdminCommunities (V2)", () => {
       // Previously, the test would fail because it tried to access mockErrorManager.mock.calls
       // without first mocking errorManager with vi.mock()
       expect(mockErrorManager).toBeDefined();
-      expect(jest.isMockFunction(mockErrorManager)).toBe(true);
+      expect(vi.isMockFunction(mockErrorManager)).toBe(true);
     });
 
     it("should clear communities on fetch error", async () => {

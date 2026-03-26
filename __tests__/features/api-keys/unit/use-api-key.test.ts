@@ -16,9 +16,9 @@ vi.mock("@/src/features/api-keys/services/api-key.service", () => ({
   },
 }));
 
-const mockApiKeyService = jest.requireMock(
-  "@/src/features/api-keys/services/api-key.service"
-).apiKeyService;
+import { apiKeyService } from "@/src/features/api-keys/services/api-key.service";
+
+const mockApiKeyService = apiKeyService as unknown as Record<string, vi.Mock>;
 
 const createWrapper = () => {
   const queryClient = new QueryClient({

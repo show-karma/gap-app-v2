@@ -17,6 +17,10 @@ vi.mock("next/navigation", () => ({
   useParams: vi.fn(() => ({ communityId: "filecoin" })),
 }));
 
+import { useParams } from "next/navigation";
+
+const mockUseParams = useParams as unknown as vi.Mock;
+
 const mockGetCommunityMetrics = getCommunityMetrics as vi.MockedFunction<
   typeof getCommunityMetrics
 >;
@@ -109,8 +113,7 @@ describe("useCommunityMetrics", () => {
   });
 
   it("should not fetch when communityId is missing", () => {
-    const { useParams } = require("next/navigation");
-    useParams.mockReturnValueOnce({ communityId: undefined });
+    mockUseParams.mockReturnValueOnce({ communityId: undefined });
 
     const wrapper = createWrapper();
     const { result } = renderHook(() => useCommunityMetrics(), { wrapper });

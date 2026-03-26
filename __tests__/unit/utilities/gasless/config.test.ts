@@ -196,11 +196,11 @@ describe("Gasless Config", () => {
 
 describe("Gasless Config - Missing Environment Variables", () => {
   beforeEach(() => {
-    jest.resetModules();
+    vi.resetModules();
   });
 
   it("should handle missing ZERODEV_PROJECT_ID", async () => {
-    jest.doMock("@/utilities/enviromentVars", () => ({
+    vi.doMock("@/utilities/enviromentVars", () => ({
       envVars: {
         ZERODEV_PROJECT_ID: "",
         ALCHEMY_POLICY_ID: "test-policy",
@@ -220,7 +220,7 @@ describe("Gasless Config - Missing Environment Variables", () => {
   });
 
   it("should handle missing ALCHEMY_POLICY_ID", async () => {
-    jest.doMock("@/utilities/enviromentVars", () => ({
+    vi.doMock("@/utilities/enviromentVars", () => ({
       envVars: {
         ZERODEV_PROJECT_ID: "test-project",
         ALCHEMY_POLICY_ID: "",
