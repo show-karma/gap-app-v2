@@ -1,50 +1,15 @@
 /**
- * Global Setup for Homepage Tests
- * Following the same patterns as navbar test suite
+ * Domain-specific setup for homepage tests.
+ *
+ * Polyfills (matchMedia, IntersectionObserver, ResizeObserver, TextEncoder,
+ * Fetch API) are handled by the global __tests__/setup.ts (registered in
+ * vitest.config.ts setupFiles). Only homepage-specific module mocks live here.
  */
 
-import "@testing-library/jest-dom";
-import { TextDecoder, TextEncoder } from "node:util";
 import React from "react";
 
-// Polyfill TextEncoder/TextDecoder for Node environment
-global.TextEncoder = TextEncoder;
-global.TextDecoder = TextDecoder as any;
-
-// Mock window.matchMedia
-Object.defineProperty(window, "matchMedia", {
-  writable: true,
-  value: vi.fn().mockImplementation((query) => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: vi.fn(),
-    removeListener: vi.fn(),
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-    dispatchEvent: vi.fn(),
-  })),
-});
-
-// Mock IntersectionObserver
-global.IntersectionObserver = class IntersectionObserver {
-  disconnect() {}
-  observe() {}
-  takeRecords() {
-    return [];
-  }
-  unobserve() {}
-} as any;
-
-// Mock ResizeObserver
-global.ResizeObserver = class ResizeObserver {
-  disconnect() {}
-  observe() {}
-  unobserve() {}
-} as any;
-
-// Mock scrollTo
-window.scrollTo = vi.fn();
+// Mock scrollTo (homepage-specific)
+window.scrollTo = vi.fn() as unknown as typeof window.scrollTo;
 
 // Mock next/image
 vi.mock("next/image", () => ({

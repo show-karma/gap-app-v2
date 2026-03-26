@@ -1,44 +1,12 @@
 /**
- * Global setup file for funders page tests
+ * Domain-specific setup for funders page tests.
  *
- * This file configures mocks and test utilities for the funders page test suite.
- * Following the pattern established in homepage tests to avoid global conflicts.
+ * Polyfills (matchMedia, IntersectionObserver, ResizeObserver, TextEncoder,
+ * Fetch API) are handled by the global __tests__/setup.ts (registered in
+ * vitest.config.ts setupFiles). Only funders-specific module mocks live here.
  */
 
-import "@testing-library/jest-dom";
 import React from "react";
-
-// Mock window.matchMedia
-Object.defineProperty(window, "matchMedia", {
-  writable: true,
-  value: vi.fn().mockImplementation((query) => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: vi.fn(),
-    removeListener: vi.fn(),
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-    dispatchEvent: vi.fn(),
-  })),
-});
-
-// Mock IntersectionObserver
-global.IntersectionObserver = class IntersectionObserver {
-  disconnect() {}
-  observe() {}
-  takeRecords() {
-    return [];
-  }
-  unobserve() {}
-} as any;
-
-// Mock ResizeObserver
-global.ResizeObserver = class ResizeObserver {
-  disconnect() {}
-  observe() {}
-  unobserve() {}
-} as any;
 
 // Mock next/image
 vi.mock("next/image", () => ({

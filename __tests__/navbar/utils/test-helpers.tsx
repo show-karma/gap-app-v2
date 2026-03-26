@@ -68,7 +68,7 @@ export const resetPermissionMocks = () => {
   const communitiesModule = require("@/store/communities");
   if (
     communitiesModule.useCommunitiesStore &&
-    jest.isMockFunction(communitiesModule.useCommunitiesStore)
+    vi.isMockFunction(communitiesModule.useCommunitiesStore)
   ) {
     communitiesModule.useCommunitiesStore.mockReturnValue({
       communities: [],
@@ -82,7 +82,7 @@ export const resetPermissionMocks = () => {
   const permissionsModule = require("@/hooks/usePermissions");
   if (
     permissionsModule.useReviewerPrograms &&
-    jest.isMockFunction(permissionsModule.useReviewerPrograms)
+    vi.isMockFunction(permissionsModule.useReviewerPrograms)
   ) {
     permissionsModule.useReviewerPrograms.mockReturnValue({
       isReviewerOfProgram: false,
@@ -120,10 +120,10 @@ export const cleanupAfterEach = () => {
   resetPermissionMocks();
 
   // Cleanup timers - ensure we're back to real timers
-  if (jest.isMockFunction(setTimeout)) {
-    jest.clearAllTimers();
+  if (vi.isMockFunction(setTimeout)) {
+    vi.clearAllTimers();
   }
-  jest.useRealTimers();
+  vi.useRealTimers();
 
   // Clear all mocks
   vi.clearAllMocks();
@@ -137,7 +137,7 @@ const _resetAllPermissionMocksExtended = () => {
 
   // Reset RBAC permissions (replaces legacy useStaff)
   const rbacModule = require("@/src/core/rbac/hooks/use-permissions");
-  if (rbacModule.usePermissionsQuery && jest.isMockFunction(rbacModule.usePermissionsQuery)) {
+  if (rbacModule.usePermissionsQuery && vi.isMockFunction(rbacModule.usePermissionsQuery)) {
     rbacModule.usePermissionsQuery.mockReturnValue({
       data: null,
       isLoading: false,
@@ -147,7 +147,7 @@ const _resetAllPermissionMocksExtended = () => {
 
   // Reset owner store (with selector support)
   const ownerModule = require("@/store/owner");
-  if (ownerModule.useOwnerStore && jest.isMockFunction(ownerModule.useOwnerStore)) {
+  if (ownerModule.useOwnerStore && vi.isMockFunction(ownerModule.useOwnerStore)) {
     ownerModule.useOwnerStore.mockImplementation((selector?: Function) => {
       const state = { isProjectOwner: false, isOwner: false };
       return selector ? selector(state) : state;
@@ -156,7 +156,7 @@ const _resetAllPermissionMocksExtended = () => {
 
   // Also reset in @/store (index)
   const storeModule = require("@/store");
-  if (storeModule.useOwnerStore && jest.isMockFunction(storeModule.useOwnerStore)) {
+  if (storeModule.useOwnerStore && vi.isMockFunction(storeModule.useOwnerStore)) {
     storeModule.useOwnerStore.mockImplementation((selector?: Function) => {
       const state = { isProjectOwner: false, isOwner: false };
       return selector ? selector(state) : state;
@@ -165,7 +165,7 @@ const _resetAllPermissionMocksExtended = () => {
 
   // Reset registry store
   const registryModule = require("@/store/registry");
-  if (registryModule.useRegistryStore && jest.isMockFunction(registryModule.useRegistryStore)) {
+  if (registryModule.useRegistryStore && vi.isMockFunction(registryModule.useRegistryStore)) {
     registryModule.useRegistryStore.mockReturnValue({
       isProgramCreator: false,
       isRegistryAdmin: false,
@@ -176,7 +176,7 @@ const _resetAllPermissionMocksExtended = () => {
   const modalModule = require("@/store/modals/contributorProfile");
   if (
     modalModule.useContributorProfileModalStore &&
-    jest.isMockFunction(modalModule.useContributorProfileModalStore)
+    vi.isMockFunction(modalModule.useContributorProfileModalStore)
   ) {
     modalModule.useContributorProfileModalStore.mockReturnValue({
       isOpen: false,
@@ -364,7 +364,7 @@ const updateContributorProfileModalMock = (mockUseContributorProfileModalStore?:
   const module = require("@/store/modals/contributorProfile");
   if (
     module.useContributorProfileModalStore &&
-    jest.isMockFunction(module.useContributorProfileModalStore)
+    vi.isMockFunction(module.useContributorProfileModalStore)
   ) {
     module.useContributorProfileModalStore.mockReturnValue(modalMock);
   }
@@ -374,7 +374,7 @@ const updateContributorProfileModalMock = (mockUseContributorProfileModalStore?:
 const updateStoreMock = (modulePath: string, hookName: string, mockValue: any) => {
   if (!mockValue) return;
   const module = require(modulePath);
-  if (module[hookName] && jest.isMockFunction(module[hookName])) {
+  if (module[hookName] && vi.isMockFunction(module[hookName])) {
     module[hookName].mockReturnValue(mockValue);
   }
 };
@@ -391,10 +391,10 @@ const updateOwnerStoreMock = (mockUseOwnerStore: any) => {
   const ownerModule = require("@/store/owner");
   const storeModule = require("@/store");
 
-  if (ownerModule.useOwnerStore && jest.isMockFunction(ownerModule.useOwnerStore)) {
+  if (ownerModule.useOwnerStore && vi.isMockFunction(ownerModule.useOwnerStore)) {
     ownerModule.useOwnerStore.mockImplementation(ownerImpl);
   }
-  if (storeModule.useOwnerStore && jest.isMockFunction(storeModule.useOwnerStore)) {
+  if (storeModule.useOwnerStore && vi.isMockFunction(storeModule.useOwnerStore)) {
     storeModule.useOwnerStore.mockImplementation(ownerImpl);
   }
 };
@@ -439,7 +439,7 @@ export const updateMocks = (options: Partial<CustomRenderOptions>) => {
 
   if (options.mockUseCommunitiesStore) {
     const module = require("@/store/communities");
-    if (module.useCommunitiesStore && jest.isMockFunction(module.useCommunitiesStore)) {
+    if (module.useCommunitiesStore && vi.isMockFunction(module.useCommunitiesStore)) {
       module.useCommunitiesStore.mockReturnValue(options.mockUseCommunitiesStore);
     }
   }

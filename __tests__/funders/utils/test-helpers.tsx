@@ -201,36 +201,36 @@ export function setViewportSize(width: number, height: number) {
  * Sets up fake timers for testing time-dependent code
  */
 export function setupFakeTimers() {
-  jest.useFakeTimers();
+  vi.useFakeTimers();
 }
 
 /**
  * Cleans up fake timers
  */
 export function cleanupFakeTimers() {
-  jest.runOnlyPendingTimers();
-  jest.useRealTimers();
+  vi.runOnlyPendingTimers();
+  vi.useRealTimers();
 }
 
 /**
  * Advances timers by the specified time
  */
 export function advanceTimersByTime(ms: number) {
-  jest.advanceTimersByTime(ms);
+  vi.advanceTimersByTime(ms);
 }
 
 /**
  * Runs all pending timers
  */
 export function runAllTimers() {
-  jest.runAllTimers();
+  vi.runAllTimers();
 }
 
 /**
  * Waits for debounce to complete (300ms default)
  */
 export async function waitForDebounce(ms: number = 300) {
-  jest.advanceTimersByTime(ms);
+  vi.advanceTimersByTime(ms);
   await Promise.resolve();
 }
 

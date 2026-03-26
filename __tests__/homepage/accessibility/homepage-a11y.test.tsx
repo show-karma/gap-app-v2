@@ -21,18 +21,18 @@ vi.mock("@/src/services/funding/getLiveFundingOpportunities", () => ({
   getLiveFundingOpportunities: vi.fn(() => mockGetLiveFundingOpportunities()),
 }));
 
+// Import fixtures
+import { mockCommunities } from "../fixtures/communities";
+import { mockFundingOpportunities } from "../fixtures/funding-opportunities";
+
 // Mock chosenCommunities
-vi.mock("@/utilities/chosenCommunities", () => {
-  const { mockCommunities } = require("../fixtures/communities");
-  return {
-    chosenCommunities: vi.fn(() => mockCommunities.slice(0, 10)),
-  };
-});
+vi.mock("@/utilities/chosenCommunities", () => ({
+  chosenCommunities: vi.fn(() => []),
+}));
 
 describe("Homepage Accessibility", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    const { mockFundingOpportunities } = require("../fixtures/funding-opportunities");
     mockGetLiveFundingOpportunities.mockResolvedValue(mockFundingOpportunities);
   });
 

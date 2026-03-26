@@ -67,7 +67,7 @@ export const renderWithProviders = (
 
   if (mockRouter) {
     const navigationModule = require("next/navigation");
-    if (navigationModule.useRouter && jest.isMockFunction(navigationModule.useRouter)) {
+    if (navigationModule.useRouter && vi.isMockFunction(navigationModule.useRouter)) {
       navigationModule.useRouter.mockReturnValue(mockRouter);
     }
   }
@@ -85,7 +85,7 @@ export const renderWithProviders = (
     }
     if (options?.mockRouter) {
       const navigationModule = require("next/navigation");
-      if (navigationModule.useRouter && jest.isMockFunction(navigationModule.useRouter)) {
+      if (navigationModule.useRouter && vi.isMockFunction(navigationModule.useRouter)) {
         navigationModule.useRouter.mockReturnValue(options.mockRouter);
       }
     }

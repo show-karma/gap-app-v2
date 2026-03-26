@@ -1,16 +1,19 @@
 /**
- * Test setup and configuration for navbar tests
- * Configures MSW, test environment, and global utilities
+ * Domain-specific setup for navbar tests.
+ *
+ * Polyfills (matchMedia, IntersectionObserver, ResizeObserver, TextEncoder,
+ * Fetch API) are handled by the global __tests__/setup.ts (registered in
+ * vitest.config.ts setupFiles). Only navbar-specific module mocks and MSW
+ * server lifecycle live here.
  */
 
+import { toHaveNoViolations } from "jest-axe";
 import { setupServer } from "msw/node";
 import React from "react";
 import { handlers } from "./mocks/handlers";
-import "@testing-library/jest-dom";
-import { toHaveNoViolations } from "jest-axe";
 
 /**
- * Setup MSW (Mock Service Worker) server
+ * Setup MSW (Mock Service Worker) server for navbar tests
  */
 export const server = setupServer(...handlers);
 
@@ -18,60 +21,21 @@ export const server = setupServer(...handlers);
  * Global test setup
  */
 beforeAll(() => {
-  // Start MSW server
-  server.listen({
-    onUnhandledRequest: "warn",
-  });
+  server.listen({ onUnhandledRequest: "warn" });
 
-  // Setup window.matchMedia mock
-  Object.defineProperty(window, "matchMedia", {
-    writable: true,
-    value: vi.fn().mockImplementation((query) => ({
-      matches: false,
-      media: query,
-      onchange: null,
-      addListener: vi.fn(),
-      removeListener: vi.fn(),
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-      dispatchEvent: vi.fn(),
-    })),
-  });
-
-  // Mock IntersectionObserver
-  global.IntersectionObserver = class IntersectionObserver {
-    disconnect() {}
-    observe() {}
-    takeRecords() {
-      return [];
-    }
-    unobserve() {}
-  } as any;
-
-  // Mock ResizeObserver
-  global.ResizeObserver = class ResizeObserver {
-    disconnect() {}
-    observe() {}
-    unobserve() {}
-  } as any;
-
-  // Mock scrollTo
-  window.scrollTo = vi.fn();
-
-  // Mock requestAnimationFrame
+  // Navbar-specific browser API mocks
+  window.scrollTo = vi.fn() as unknown as typeof window.scrollTo;
   global.requestAnimationFrame = vi.fn((cb) => {
     cb(0);
     return 0;
-  });
-
-  // Mock cancelAnimationFrame
-  global.cancelAnimationFrame = vi.fn();
+  }) as unknown as typeof global.requestAnimationFrame;
+  global.cancelAnimationFrame = vi.fn() as unknown as typeof global.cancelAnimationFrame;
 
   // Setup environment variables
   process.env.NEXT_PUBLIC_GAP_INDEXER_URL = "https://gap-indexer.vercel.app";
   process.env.NEXT_PUBLIC_PRIVY_APP_ID = "test-privy-app-id";
 
-  // Extend Jest matchers with jest-axe
+  // Extend matchers with jest-axe
   expect.extend(toHaveNoViolations);
 });
 
@@ -79,24 +43,16 @@ beforeAll(() => {
  * Reset handlers after each test
  */
 afterEach(() => {
-  // Reset handlers to initial state
   server.resetHandlers();
-
-  // Clear all mocks
   vi.clearAllMocks();
-
-  // Clear timers
-  jest.clearAllTimers();
+  vi.clearAllTimers();
 });
 
 /**
  * Cleanup after all tests
  */
 afterAll(() => {
-  // Close MSW server
   server.close();
-
-  // Restore all mocks
   vi.restoreAllMocks();
 });
 
@@ -417,29 +373,29 @@ vi.mock("@/components/Utilities/errorManager", () => ({
  * Setup fake timers for debounce tests
  */
 export const setupFakeTimers = () => {
-  jest.useFakeTimers();
+  vi.useFakeTimers();
 };
 
 /**
  * Cleanup fake timers
  */
 export const cleanupFakeTimers = () => {
-  jest.runOnlyPendingTimers();
-  jest.useRealTimers();
+  vi.runOnlyPendingTimers();
+  vi.useRealTimers();
 };
 
 /**
  * Advance timers by specific amount
  */
 export const advanceTimersByTime = (ms: number) => {
-  jest.advanceTimersByTime(ms);
+  vi.advanceTimersByTime(ms);
 };
 
 /**
  * Run all pending timers
  */
 export const runAllTimers = () => {
-  jest.runAllTimers();
+  vi.runAllTimers();
 };
 
 /**

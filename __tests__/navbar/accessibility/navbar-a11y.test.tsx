@@ -5,9 +5,27 @@
 
 import { fireEvent, screen, within } from "@testing-library/react";
 import { axe, toHaveNoViolations } from "jest-axe";
+import React from "react";
 import { Navbar } from "@/src/components/navbar/navbar";
 import { getAuthFixture } from "../fixtures/auth-fixtures";
 import { renderWithProviders, setViewport } from "../utils/test-helpers";
+
+// Mock next/dynamic so it resolves synchronously (avoids app router requirement)
+vi.mock("next/dynamic", () => {
+  return {
+    __esModule: true,
+    default: (loader: () => Promise<{ default: React.ComponentType }>, _opts?: unknown) => {
+      let Comp: React.ComponentType | null = null;
+      loader().then((m) => {
+        Comp = m.default || (m as unknown as React.ComponentType);
+      });
+      const Dynamic = (props: Record<string, unknown>) =>
+        Comp ? React.createElement(Comp, props) : null;
+      Dynamic.displayName = "DynamicMock";
+      return Dynamic;
+    },
+  };
+});
 
 // Mock child components to prevent complex dependency issues
 vi.mock("@/src/components/navbar/navbar-desktop-navigation", () => ({
@@ -61,6 +79,34 @@ vi.mock("@/src/components/navbar/navbar-auth-buttons", () => ({
 
 vi.mock("@/src/components/shared/logo", () => ({
   Logo: () => <div data-testid="logo">Logo</div>,
+}));
+
+// Mock the Skeleton component used by dynamic loading fallback
+vi.mock("@/components/ui/skeleton", () => ({
+  Skeleton: ({ className }: { className?: string }) => (
+    <div data-testid="skeleton" className={className} />
+  ),
+}));
+
+// Mock NavbarPermissionsProvider (must be in test file for hoisting to work)
+vi.mock("@/src/components/navbar/navbar-permissions-context", () => ({
+  useNavbarPermissions: vi.fn(() => ({
+    isLoggedIn: false,
+    address: undefined,
+    ready: true,
+    isStaff: false,
+    isStaffLoading: false,
+    isOwner: false,
+    isCommunityAdmin: false,
+    isReviewer: false,
+    hasReviewerRole: false,
+    reviewerPrograms: [],
+    isProgramCreator: false,
+    isRegistryAdmin: false,
+    hasAdminAccess: false,
+    isRegistryAllowed: false,
+  })),
+  NavbarPermissionsProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
 // Extend Jest matchers
