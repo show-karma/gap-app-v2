@@ -104,7 +104,8 @@
           "suspicious": {
             "noExplicitAny": "off",
             "useIterableCallbackReturn": "off",
-            "noArrayIndexKey": "off"
+            "noArrayIndexKey": "off",
+            "noFocusedTests": "error"
           },
           "correctness": {
             "noUnusedFunctionParameters": "off",
