@@ -189,7 +189,7 @@ export const MilestonesSection = memo(function MilestonesSection({
     async (fileKey: string) => {
       try {
         const downloadUrl = await downloadUrlMutation.mutateAsync(fileKey);
-        window.open(downloadUrl, "_blank");
+        window.open(downloadUrl, "_blank", "noopener,noreferrer");
       } catch {
         toast.error("Failed to get download link");
       }
@@ -225,7 +225,6 @@ export const MilestonesSection = memo(function MilestonesSection({
       }
 
       setUploadModalInvoice(null);
-      toast.success("Invoice uploaded — save to confirm");
     },
     [
       uploadModalInvoice,
@@ -532,9 +531,6 @@ export const MilestonesSection = memo(function MilestonesSection({
               "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             ]}
             onS3UploadComplete={handleFileUploaded}
-            onS3UploadError={(errorMsg) => {
-              toast.error(errorMsg);
-            }}
           />
         </DialogContent>
       </Dialog>

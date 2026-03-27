@@ -327,6 +327,12 @@ export function ProjectDetailsSidebar({
       invoiceFileUrl: string,
       invoiceFileKey: string
     ) => {
+      setRemovedFiles((prev) => {
+        if (!prev.has(mKey)) return prev;
+        const next = new Set(prev);
+        next.delete(mKey);
+        return next;
+      });
       setPendingFiles((prev) => ({
         ...prev,
         [mKey]: { milestoneLabel, milestoneUID, invoiceFileUrl, invoiceFileKey },
