@@ -350,6 +350,8 @@ export const INDEXER = {
     MILESTONE_INVOICES: {
       BATCH_SAVE: (grantUID: string) => `/v2/milestone-invoices/${grantUID}`,
       BY_GRANT: (grantUID: string) => `/v2/milestone-invoices/grant/${grantUID}`,
+      PRESIGNED_URL: () => `/v2/milestone-invoices/presigned`,
+      DOWNLOAD: (key: string) => `/v2/milestone-invoices/download?key=${encodeURIComponent(key)}`,
     },
   },
   PROGRAMS: {

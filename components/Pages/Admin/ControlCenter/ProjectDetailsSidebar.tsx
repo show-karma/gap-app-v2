@@ -109,6 +109,18 @@ export function ProjectDetailsSidebar({
   const [milestoneEdits, setMilestoneEdits] = useState<
     Record<string, { invoiceReceivedAt?: string | null; milestoneUID?: string | null }>
   >({});
+  const [pendingFiles, setPendingFiles] = useState<
+    Record<
+      string,
+      {
+        milestoneLabel: string;
+        milestoneUID: string | null;
+        invoiceFileUrl: string;
+        invoiceFileKey: string;
+      }
+    >
+  >({});
+  const [removedFiles, setRemovedFiles] = useState<Set<string>>(new Set());
   const [localAgreementSigned, setLocalAgreementSigned] = useState(false);
   const [agreementDate, setAgreementDate] = useState<Date | undefined>(undefined);
   const [confirmingUnsign, setConfirmingUnsign] = useState(false);
@@ -124,6 +136,8 @@ export function ProjectDetailsSidebar({
   useEffect(() => {
     setActiveSection("details");
     setMilestoneEdits({});
+    setPendingFiles({});
+    setRemovedFiles(new Set());
     setConfirmingUnsign(false);
     setConfigIsDirty(false);
     setConfigIsSaving(false);
@@ -137,7 +151,8 @@ export function ProjectDetailsSidebar({
     setAgreementDate(agreement?.signedAt ? new Date(agreement.signedAt) : undefined);
   }, [agreement?.signed, agreement?.signedAt]);
 
-  const editCount = Object.keys(milestoneEdits).length;
+  const editCount =
+    Object.keys(milestoneEdits).length + Object.keys(pendingFiles).length + removedFiles.size;
   const hasMilestoneEdits = editCount > 0;
 
   const todayLocal = useMemo(() => {
@@ -295,35 +310,122 @@ export function ProjectDetailsSidebar({
     );
   }, [grant?.grantUid, agreementDate]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleSaveMilestoneChanges = useCallback(() => {
+  const handleFileRemoved = useCallback((mKey: string) => {
+    setPendingFiles((prev) => {
+      const next = { ...prev };
+      delete next[mKey];
+      return next;
+    });
+    setRemovedFiles((prev) => new Set(prev).add(mKey));
+  }, []);
+
+  const handleFileUploaded = useCallback(
+    (
+      mKey: string,
+      milestoneLabel: string,
+      milestoneUID: string | null,
+      invoiceFileUrl: string,
+      invoiceFileKey: string
+    ) => {
+      setPendingFiles((prev) => ({
+        ...prev,
+        [mKey]: { milestoneLabel, milestoneUID, invoiceFileUrl, invoiceFileKey },
+      }));
+    },
+    []
+  );
+
+  const handleSaveMilestoneChanges = useCallback(async () => {
     if (!grant) return;
-    const invoices = Object.entries(milestoneEdits).map(([key, edits]) => {
+
+    // Build a map of all edits (dates + files + removals) keyed by milestone key
+    const invoiceMap = new Map<
+      string,
+      {
+        milestoneLabel: string;
+        milestoneUID: string | null;
+        invoiceReceivedAt?: string | null;
+        invoiceFileKey?: string | null;
+        invoiceFileUrl?: string | null;
+      }
+    >();
+
+    // Add date edits
+    for (const [key, edits] of Object.entries(milestoneEdits)) {
       const matchedInvoice = milestoneInvoices.find(
         (inv, idx) => getMilestoneKey(inv, idx) === key
       );
       const rawDate = edits.invoiceReceivedAt;
       const isoDate =
         rawDate && !rawDate.includes("T") ? `${rawDate}T00:00:00.000Z` : (rawDate ?? null);
-      return {
+      invoiceMap.set(key, {
         milestoneLabel: matchedInvoice?.milestoneLabel ?? key,
         milestoneUID: edits.milestoneUID ?? null,
         invoiceReceivedAt: isoDate,
-      };
-    });
+      });
+    }
 
-    saveMilestoneInvoicesMutation.mutate(
-      { grantUID: grant.grantUid, invoices },
-      {
-        onSuccess: () => {
-          setMilestoneEdits({});
-          toast.success(`Saved ${editCount} milestone ${editCount === 1 ? "change" : "changes"}`);
-        },
-        onError: () => {
-          toast.error("Failed to save invoice changes");
-        },
+    // Merge pending file uploads
+    for (const [mKey, pending] of Object.entries(pendingFiles)) {
+      const existing = invoiceMap.get(mKey);
+      if (existing) {
+        existing.invoiceFileKey = pending.invoiceFileKey;
+        existing.invoiceFileUrl = pending.invoiceFileUrl;
+      } else {
+        invoiceMap.set(mKey, {
+          milestoneLabel: pending.milestoneLabel,
+          milestoneUID: pending.milestoneUID,
+          invoiceFileKey: pending.invoiceFileKey,
+          invoiceFileUrl: pending.invoiceFileUrl,
+        });
       }
-    );
-  }, [grant?.grantUid, milestoneEdits, milestoneInvoices, getMilestoneKey, editCount]); // eslint-disable-line react-hooks/exhaustive-deps
+    }
+
+    // Merge file removals (explicit null)
+    for (const mKey of removedFiles) {
+      const existing = invoiceMap.get(mKey);
+      if (existing) {
+        existing.invoiceFileKey = null;
+        existing.invoiceFileUrl = null;
+      } else {
+        const matchedInvoice = milestoneInvoices.find(
+          (inv, idx) => getMilestoneKey(inv, idx) === mKey
+        );
+        if (matchedInvoice) {
+          invoiceMap.set(mKey, {
+            milestoneLabel: matchedInvoice.milestoneLabel,
+            milestoneUID: matchedInvoice.milestoneUID,
+            invoiceReceivedAt: matchedInvoice.invoiceReceivedAt,
+            invoiceFileKey: null,
+            invoiceFileUrl: null,
+          });
+        }
+      }
+    }
+
+    const invoices = [...invoiceMap.values()];
+
+    try {
+      await saveMilestoneInvoicesMutation.mutateAsync({
+        grantUID: grant.grantUid,
+        invoices,
+      });
+      setMilestoneEdits({});
+      setPendingFiles({});
+      setRemovedFiles(new Set());
+      toast.success(`Saved ${editCount} ${editCount === 1 ? "change" : "changes"}`);
+    } catch {
+      toast.error("Failed to save changes");
+    }
+  }, [
+    grant?.grantUid,
+    milestoneEdits,
+    milestoneInvoices,
+    getMilestoneKey,
+    pendingFiles,
+    removedFiles,
+    editCount,
+  ]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleCopyAddress = useCallback(() => {
     if (!grant?.currentPayoutAddress) return;
@@ -351,6 +453,8 @@ export function ProjectDetailsSidebar({
   const handleConfirmDiscard = useCallback(() => {
     setDiscardDialogOpen(false);
     setMilestoneEdits({});
+    setPendingFiles({});
+    setRemovedFiles(new Set());
     pendingActionRef.current?.();
     pendingActionRef.current = null;
   }, []);
@@ -485,11 +589,17 @@ export function ProjectDetailsSidebar({
                     milestoneInvoices={milestoneInvoices}
                     invoiceRequired={invoiceRequired}
                     milestoneEdits={milestoneEdits}
+                    pendingFiles={pendingFiles}
                     allocationByUID={allocationByUID}
                     todayLocal={todayLocal}
                     getMilestoneKey={getMilestoneKey}
                     getInvoiceReceivedDate={getInvoiceReceivedDate}
                     handleInvoiceReceivedDateChange={handleInvoiceReceivedDateChange}
+                    onFileUploaded={handleFileUploaded}
+                    removedFiles={removedFiles}
+                    onFileRemoved={handleFileRemoved}
+                    grantUID={grant.grantUid}
+                    communityUID={communityUID}
                   />
                 </div>
               )}

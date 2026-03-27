@@ -1,5 +1,19 @@
-import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
-import { memo } from "react";
+import {
+  ArrowDownTrayIcon,
+  ExclamationTriangleIcon,
+  PaperClipIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
+import { memo, useCallback, useState } from "react";
+import toast from "react-hot-toast";
+import { FileUpload } from "@/components/Utilities/FileUpload";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
@@ -7,9 +21,11 @@ import {
   formatDisplayAmount,
   MilestoneLifecycleStatus,
   type MilestonePaymentStatus,
+  useInvoiceDownloadUrl,
 } from "@/src/features/payout-disbursement";
 import { formatAddressForDisplay } from "@/utilities/donations/helpers";
 import { formatDate } from "@/utilities/formatDate";
+import { INDEXER } from "@/utilities/indexer";
 import { cn } from "@/utilities/tailwind";
 import type { ProjectDetailsSidebarGrant } from "./ProjectDetailsSidebar";
 
@@ -67,17 +83,6 @@ const milestoneStatusConfig: Record<
   },
 };
 
-const invoiceStatusConfig: Record<string, { label: string; className: string }> = {
-  not_submitted: {
-    label: "Not submitted",
-    className: "bg-gray-100 text-gray-600 dark:bg-zinc-800 dark:text-zinc-400",
-  },
-  received: {
-    label: "Invoice received",
-    className: "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-  },
-};
-
 function getEffectiveMilestoneStatus(
   milestoneStatus: MilestoneLifecycleStatus | null,
   milestoneDueDate: string | null
@@ -90,10 +95,6 @@ function getEffectiveMilestoneStatus(
     }
   }
   return status;
-}
-
-function getInvoiceStatusKey(invoiceStatus: string): string {
-  return invoiceStatus === "received" || invoiceStatus === "paid" ? "received" : "not_submitted";
 }
 
 function getMilestoneStatusTooltip(
@@ -130,6 +131,15 @@ export interface MilestonesSectionProps {
     string,
     { invoiceReceivedAt?: string | null; milestoneUID?: string | null }
   >;
+  pendingFiles: Record<
+    string,
+    {
+      milestoneLabel: string;
+      milestoneUID: string | null;
+      invoiceFileUrl: string;
+      invoiceFileKey: string;
+    }
+  >;
   allocationByUID: Map<string, string>;
   todayLocal: string;
   getMilestoneKey: (invoice: CommunityPayoutInvoiceInfo, idx: number) => string;
@@ -139,6 +149,17 @@ export interface MilestonesSectionProps {
     milestoneUID: string | null,
     dateValue: string
   ) => void;
+  onFileUploaded: (
+    mKey: string,
+    milestoneLabel: string,
+    milestoneUID: string | null,
+    invoiceFileUrl: string,
+    invoiceFileKey: string
+  ) => void;
+  removedFiles: Set<string>;
+  onFileRemoved: (mKey: string) => void;
+  grantUID: string;
+  communityUID: string;
 }
 
 export const MilestonesSection = memo(function MilestonesSection({
@@ -146,12 +167,77 @@ export const MilestonesSection = memo(function MilestonesSection({
   milestoneInvoices,
   invoiceRequired,
   milestoneEdits,
+  pendingFiles,
   allocationByUID,
   todayLocal,
   getMilestoneKey,
   getInvoiceReceivedDate,
   handleInvoiceReceivedDateChange,
+  onFileUploaded,
+  removedFiles,
+  onFileRemoved,
 }: MilestonesSectionProps) {
+  const [uploadModalInvoice, setUploadModalInvoice] = useState<{
+    mKey: string;
+    label: string;
+    milestoneUID: string | null;
+  } | null>(null);
+
+  const downloadUrlMutation = useInvoiceDownloadUrl();
+
+  const handleViewFile = useCallback(
+    async (fileKey: string) => {
+      try {
+        const downloadUrl = await downloadUrlMutation.mutateAsync(fileKey);
+        window.open(downloadUrl, "_blank");
+      } catch {
+        toast.error("Failed to get download link");
+      }
+    },
+    [downloadUrlMutation]
+  );
+
+  const handleFileUploaded = useCallback(
+    (_finalUrl: string, tempKey: string) => {
+      if (!uploadModalInvoice) return;
+
+      onFileUploaded(
+        uploadModalInvoice.mKey,
+        uploadModalInvoice.label,
+        uploadModalInvoice.milestoneUID,
+        _finalUrl,
+        tempKey
+      );
+
+      // Auto-populate received date to today only if not already set
+      const invoiceIdx = milestoneInvoices.findIndex(
+        (inv, idx) => getMilestoneKey(inv, idx) === uploadModalInvoice.mKey
+      );
+      const existingDate =
+        invoiceIdx >= 0 ? getInvoiceReceivedDate(milestoneInvoices[invoiceIdx], invoiceIdx) : null;
+
+      if (!existingDate) {
+        handleInvoiceReceivedDateChange(
+          uploadModalInvoice.mKey,
+          uploadModalInvoice.milestoneUID,
+          todayLocal
+        );
+      }
+
+      setUploadModalInvoice(null);
+      toast.success("Invoice uploaded — save to confirm");
+    },
+    [
+      uploadModalInvoice,
+      onFileUploaded,
+      todayLocal,
+      handleInvoiceReceivedDateChange,
+      milestoneInvoices,
+      getMilestoneKey,
+      getInvoiceReceivedDate,
+    ]
+  );
+
   return (
     <div>
       <h3 className="text-sm font-semibold text-gray-900 dark:text-zinc-100 mb-1">
@@ -159,7 +245,7 @@ export const MilestonesSection = memo(function MilestonesSection({
       </h3>
       {invoiceRequired && (
         <p className="text-xs text-gray-400 dark:text-zinc-500 mb-3">
-          Set the received date to update invoice status. Save changes when done.
+          Attach invoice files or set received dates. Save changes when done.
         </p>
       )}
 
@@ -183,13 +269,8 @@ export const MilestonesSection = memo(function MilestonesSection({
                     Allocation
                   </th>
                   {invoiceRequired && (
-                    <th className="text-center py-3 px-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[110px]">
-                      Invoice Status
-                    </th>
-                  )}
-                  {invoiceRequired && (
-                    <th className="text-center py-3 px-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[130px]">
-                      Received
+                    <th className="text-center py-3 px-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[160px]">
+                      Invoice
                     </th>
                   )}
                   <th className="text-center py-3 px-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[110px]">
@@ -214,13 +295,18 @@ export const MilestonesSection = memo(function MilestonesSection({
                     invoice.milestoneStatusUpdatedAt,
                     invoice.milestoneDueDate
                   );
-                  const invStatusKey = getInvoiceStatusKey(invoice.invoiceStatus);
-                  const invCfg = invoiceStatusConfig[invStatusKey];
-                  const isEdited = milestoneEdits[mKey] !== undefined;
+                  const isRemoved = removedFiles.has(mKey);
+                  const isEdited =
+                    milestoneEdits[mKey] !== undefined ||
+                    pendingFiles[mKey] !== undefined ||
+                    isRemoved;
                   const isCleared =
-                    isEdited &&
+                    milestoneEdits[mKey] !== undefined &&
                     milestoneEdits[mKey]?.invoiceReceivedAt === null &&
                     invoice.invoiceReceivedAt !== null;
+                  const hasFile = (!isRemoved && !!invoice.invoiceFileKey) || !!pendingFiles[mKey];
+                  const hasPendingFile = !!pendingFiles[mKey];
+                  const hasReceivedDate = !!receivedDateValue;
 
                   return (
                     <tr
@@ -307,42 +393,85 @@ export const MilestonesSection = memo(function MilestonesSection({
                         })()}
                       </td>
                       {invoiceRequired && (
-                        <td className="py-3 px-3 text-center">
-                          <span
-                            className={cn(
-                              "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium",
-                              invCfg.className
-                            )}
-                          >
-                            {invCfg.label}
-                          </span>
-                        </td>
-                      )}
-                      {invoiceRequired && (
-                        <td className="py-3 px-3 text-center">
-                          <div className="flex flex-col items-center gap-0.5">
-                            <Input
-                              type="date"
-                              max={todayLocal}
-                              value={receivedDateValue ?? ""}
-                              onChange={(e) =>
-                                handleInvoiceReceivedDateChange(
-                                  mKey,
-                                  invoice.milestoneUID,
-                                  e.target.value
-                                )
-                              }
-                              className="h-7 text-xs w-[140px] mx-auto bg-white dark:bg-zinc-900"
-                              aria-label={`Invoice received date for ${invoice.milestoneLabel}`}
-                            />
-                            {invoice.invoiceReceivedBy && (
-                              <span
-                                className="text-[10px] text-gray-400 dark:text-zinc-500 font-mono"
-                                title={invoice.invoiceReceivedBy}
+                        <td className="py-3 px-3">
+                          <div className="flex flex-col items-center gap-1.5">
+                            {/* Row 1: File action */}
+                            {hasFile ? (
+                              <div className="inline-flex items-center gap-1.5">
+                                {hasPendingFile ? (
+                                  <span className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 dark:text-blue-400">
+                                    <PaperClipIcon className="h-3 w-3" />
+                                    Attached (unsaved)
+                                  </span>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                                    onClick={() => handleViewFile(invoice.invoiceFileKey!)}
+                                  >
+                                    <ArrowDownTrayIcon className="h-3 w-3" />
+                                    View invoice
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  className="p-0.5 rounded text-red-400 hover:text-red-600 dark:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                  onClick={() => {
+                                    onFileRemoved(mKey);
+                                    handleInvoiceReceivedDateChange(mKey, invoice.milestoneUID, "");
+                                  }}
+                                  title="Remove invoice file"
+                                >
+                                  <XMarkIcon className="h-3.5 w-3.5" />
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                className="inline-flex items-center gap-1 text-xs text-gray-400 dark:text-zinc-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                                onClick={() =>
+                                  setUploadModalInvoice({
+                                    mKey,
+                                    label: invoice.milestoneLabel,
+                                    milestoneUID: invoice.milestoneUID,
+                                  })
+                                }
                               >
-                                by {formatAddressForDisplay(invoice.invoiceReceivedBy)}
-                              </span>
+                                <PaperClipIcon className="h-3 w-3" />
+                                Attach file
+                              </button>
                             )}
+
+                            {/* Row 2: Received date */}
+                            <div className="flex flex-col items-center gap-0.5">
+                              <Input
+                                type="date"
+                                max={todayLocal}
+                                value={receivedDateValue ?? ""}
+                                onChange={(e) =>
+                                  handleInvoiceReceivedDateChange(
+                                    mKey,
+                                    invoice.milestoneUID,
+                                    e.target.value
+                                  )
+                                }
+                                className={cn(
+                                  "h-6 text-[11px] w-[130px] bg-white dark:bg-zinc-900",
+                                  hasReceivedDate
+                                    ? "border-emerald-200 dark:border-emerald-800"
+                                    : ""
+                                )}
+                                aria-label={`Invoice received date for ${invoice.milestoneLabel}`}
+                              />
+                              {invoice.invoiceReceivedBy && (
+                                <span
+                                  className="text-[10px] text-gray-400 dark:text-zinc-500 font-mono"
+                                  title={invoice.invoiceReceivedBy}
+                                >
+                                  by {formatAddressForDisplay(invoice.invoiceReceivedBy)}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </td>
                       )}
@@ -377,6 +506,38 @@ export const MilestonesSection = memo(function MilestonesSection({
           </div>
         </TooltipProvider>
       )}
+
+      {/* Upload modal */}
+      <Dialog
+        open={!!uploadModalInvoice}
+        onOpenChange={(open) => {
+          if (!open) setUploadModalInvoice(null);
+        }}
+      >
+        <DialogContent className="max-w-sm bg-white dark:bg-zinc-950">
+          <DialogHeader>
+            <DialogTitle className="text-base">Attach Invoice</DialogTitle>
+            <DialogDescription>{uploadModalInvoice?.label}</DialogDescription>
+          </DialogHeader>
+          <FileUpload
+            onFileSelect={() => {}}
+            acceptedFormats=".pdf,.docx"
+            description="PDF or DOCX (max 10MB)"
+            useS3Upload
+            skipDimensionValidation
+            presignedUrlEndpoint={INDEXER.V2.MILESTONE_INVOICES.PRESIGNED_URL()}
+            maxFileSize={10 * 1024 * 1024}
+            allowedFileTypes={[
+              "application/pdf",
+              "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            ]}
+            onS3UploadComplete={handleFileUploaded}
+            onS3UploadError={(errorMsg) => {
+              toast.error(errorMsg);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 });
