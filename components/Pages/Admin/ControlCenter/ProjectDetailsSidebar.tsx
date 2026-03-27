@@ -604,8 +604,6 @@ export function ProjectDetailsSidebar({
                     onFileUploaded={handleFileUploaded}
                     removedFiles={removedFiles}
                     onFileRemoved={handleFileRemoved}
-                    grantUID={grant.grantUid}
-                    communityUID={communityUID}
                   />
                 </div>
               )}

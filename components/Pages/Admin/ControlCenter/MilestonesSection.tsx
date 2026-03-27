@@ -158,8 +158,6 @@ export interface MilestonesSectionProps {
   ) => void;
   removedFiles: Set<string>;
   onFileRemoved: (mKey: string) => void;
-  grantUID: string;
-  communityUID: string;
 }
 
 export const MilestonesSection = memo(function MilestonesSection({
