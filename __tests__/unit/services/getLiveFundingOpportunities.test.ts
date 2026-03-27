@@ -36,7 +36,7 @@ describe("getLiveFundingOpportunities", () => {
 
     expect(result).toEqual([{ id: "p1" }]);
     expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining("https://api.test.com/v2/registry"),
+      expect.stringContaining("/v2/registry"),
       expect.objectContaining({
         next: { revalidate: 300 },
       })

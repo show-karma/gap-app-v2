@@ -27,11 +27,30 @@ vi.mock("next/navigation", () => ({
 }));
 
 // Mock useWhitelabel which is called inside useAuth
-vi.mock("@/hooks/useWhitelabel", () => ({
+vi.mock("@/utilities/whitelabel-context", () => ({
   useWhitelabel: vi.fn(() => ({
     isWhitelabel: false,
     whitelabelConfig: null,
   })),
+}));
+
+// Mock store used in login redirect logic
+vi.mock("@/store/modals/projectCreate", () => ({
+  useProjectCreateModalStore: {
+    getState: vi.fn(() => ({ isProjectCreateModalOpen: false })),
+  },
+}));
+
+// Mock compareAllWallets used in watchAccount effect
+vi.mock("@/utilities/auth/compare-all-wallets", () => ({
+  compareAllWallets: vi.fn(() => true),
+}));
+
+// Mock PAGES constants
+vi.mock("@/utilities/pages", () => ({
+  PAGES: {
+    DASHBOARD: "/dashboard",
+  },
 }));
 
 // Controllable mock functions for hook tests
@@ -246,6 +265,7 @@ describe("Cache invalidation on logout", () => {
 
     mockQueryClientClear.mockClear();
     mockClearCache.mockClear();
+    mockLogout.mockClear();
 
     // Re-render with same user — no identity change
     await act(async () => {
@@ -578,14 +598,14 @@ describe("useAuth - Farcaster login (no browser-connectable wallet)", () => {
   });
 });
 
-describe("useAuth - Cypress mock auth compatibility", () => {
+describe("useAuth - E2E mock auth compatibility", () => {
   const wrapper = ({ children }: { children: ReactNode }) => <>{children}</>;
   const previousE2EBypassFlag = process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS;
 
   beforeEach(() => {
     vi.clearAllMocks();
     process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS = "true";
-    delete (window as Window & { Cypress?: unknown }).Cypress;
+    delete (window as Window & { __e2e?: unknown }).__e2e;
     localStorage.removeItem("privy:auth_state");
 
     setBridgeState({
@@ -604,12 +624,12 @@ describe("useAuth - Cypress mock auth compatibility", () => {
     } else {
       process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS = previousE2EBypassFlag;
     }
-    delete (window as Window & { Cypress?: unknown }).Cypress;
+    delete (window as Window & { __e2e?: unknown }).__e2e;
     localStorage.removeItem("privy:auth_state");
   });
 
-  it("uses cypress auth state when Privy is not connected", () => {
-    (window as Window & { Cypress?: unknown }).Cypress = {};
+  it("uses e2e auth state when Privy is not connected", () => {
+    (window as Window & { __e2e?: unknown }).__e2e = true;
     localStorage.setItem(
       "privy:auth_state",
       JSON.stringify({
@@ -627,8 +647,8 @@ describe("useAuth - Cypress mock auth compatibility", () => {
     expect(result.current.address).toBe("0x9999999999999999999999999999999999999999");
   });
 
-  it("ignores malformed cypress auth payloads and falls back to real auth state", () => {
-    (window as Window & { Cypress?: unknown }).Cypress = {};
+  it("ignores malformed e2e auth payloads and falls back to real auth state", () => {
+    (window as Window & { __e2e?: unknown }).__e2e = true;
     localStorage.setItem("privy:auth_state", "{bad-json");
 
     const { result } = renderHook(() => useAuth(), { wrapper });
@@ -639,9 +659,9 @@ describe("useAuth - Cypress mock auth compatibility", () => {
     expect(result.current.address).toBeUndefined();
   });
 
-  it("does not use cypress auth state when bypass flag is disabled", () => {
+  it("does not use e2e auth state when bypass flag is disabled", () => {
     process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS = "false";
-    (window as Window & { Cypress?: unknown }).Cypress = {};
+    (window as Window & { __e2e?: unknown }).__e2e = true;
     localStorage.setItem(
       "privy:auth_state",
       JSON.stringify({
@@ -675,7 +695,11 @@ describe("useAuth - Cross-tab logout synchronization", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.spyOn(console, "warn").mockImplementation(() => {});
     mockGetToken.mockResolvedValue(null);
+    mockLogout.mockClear();
+    mockQueryClientClear.mockClear();
+    mockClearCache.mockClear();
 
     setBridgeState({
       ready: true,

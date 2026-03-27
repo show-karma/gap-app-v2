@@ -8,7 +8,7 @@
  *   by vitest.config.ts, so the real hook's gasless imports get the mock automatically.
  */
 
-import { renderHook, act } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 
 // ---------------------------------------------------------------------------
 // Hoisted mock variables
@@ -75,6 +75,22 @@ vi.mock("@/utilities/eas-wagmi-utils", () => ({
   walletClientToSigner: (...args: unknown[]) => mockWalletClientToSigner(...args),
 }));
 
+// Mock appNetwork so the Privy-first path for external wallets can find chains
+vi.mock("@/utilities/network", () => ({
+  appNetwork: [
+    { id: 10, name: "Optimism" },
+    { id: 42161, name: "Arbitrum" },
+    { id: 999, name: "Testnet" },
+  ],
+}));
+
+// Mock viem's createWalletClient and custom to support Privy-first external wallet path
+const mockViemCreateWalletClient = vi.fn();
+vi.mock("viem", () => ({
+  createWalletClient: (...args: unknown[]) => mockViemCreateWalletClient(...args),
+  custom: vi.fn((provider: unknown) => provider),
+}));
+
 vi.mock("ethers", () => ({
   BrowserProvider: class MockBrowserProvider {
     getSigner = mockGetSigner;
@@ -87,9 +103,9 @@ vi.mock("ethers", () => ({
 import {
   createGaslessClient,
   createPrivySignerForGasless,
+  GaslessProviderError,
   getGaslessSigner,
   isChainSupportedForGasless,
-  GaslessProviderError,
 } from "@/utilities/gasless";
 
 // ---------------------------------------------------------------------------
@@ -173,6 +189,7 @@ describe("useZeroDevSigner (real hook)", () => {
     mockSafeGetWalletClient.mockReset();
     mockWalletClientToSigner.mockReset();
     mockGetSigner.mockReset();
+    mockViemCreateWalletClient.mockReset();
   });
 
   // =========================================================================
@@ -302,7 +319,9 @@ describe("useZeroDevSigner (real hook)", () => {
     it("should return gasless signer for email user on supported chain", async () => {
       setupEmailUser();
       (isChainSupportedForGasless as ReturnType<typeof vi.fn>).mockReturnValue(true);
-      (createPrivySignerForGasless as ReturnType<typeof vi.fn>).mockResolvedValue("mockPrivySigner");
+      (createPrivySignerForGasless as ReturnType<typeof vi.fn>).mockResolvedValue(
+        "mockPrivySigner"
+      );
       (createGaslessClient as ReturnType<typeof vi.fn>).mockResolvedValue(mockGaslessClient);
       (getGaslessSigner as ReturnType<typeof vi.fn>).mockResolvedValue(mockGaslessSigner);
 
@@ -461,17 +480,10 @@ describe("useZeroDevSigner (real hook)", () => {
   // =========================================================================
 
   describe("getAttestationSigner — external wallet user", () => {
-    it("should use external wallet via safeGetWalletClient", async () => {
+    it("should use external wallet via Privy provider (primary path)", async () => {
       setupExternalWalletUser();
-      const mockViemWalletClient = {
-        account: { address: EXTERNAL_WALLET_ADDRESS },
-        chain: { id: 10 },
-        transport: { url: "http://rpc" },
-      };
-      mockSafeGetWalletClient.mockResolvedValue({
-        walletClient: mockViemWalletClient,
-        error: null,
-      });
+      const mockCreatedClient = { account: { address: EXTERNAL_WALLET_ADDRESS } };
+      mockViemCreateWalletClient.mockReturnValue(mockCreatedClient);
       mockWalletClientToSigner.mockResolvedValue(mockEthersSigner);
 
       const { result } = renderHook(() => useZeroDevSigner());
@@ -482,8 +494,11 @@ describe("useZeroDevSigner (real hook)", () => {
       });
 
       expect(signer).toBe(mockEthersSigner);
-      expect(mockSafeGetWalletClient).toHaveBeenCalledWith(10);
-      expect(mockWalletClientToSigner).toHaveBeenCalledWith(mockViemWalletClient);
+      // Primary path uses Privy's provider directly, not wagmi's safeGetWalletClient
+      expect(mockSafeGetWalletClient).not.toHaveBeenCalled();
+      expect(mockWalletClientToSigner).toHaveBeenCalledWith(mockCreatedClient);
+      // Should switch chain before creating client
+      expect(mockPrivyState.wallets[0].switchChain).toHaveBeenCalledWith(10);
     });
 
     it("should throw if safeGetWalletClient returns an error", async () => {
