@@ -322,6 +322,22 @@ describe("StatCards", () => {
       expect(mainContainer).toHaveClass("flex-1");
       expect(mainContainer).toHaveClass("gap-6");
     });
+
+    it("should use 2-column grid layout on small screens", () => {
+      usePathname.mockReturnValue("/community/test-community");
+      mockUseCommunityStore.mockReturnValue({
+        totalProjects: 10,
+        totalGrants: 5,
+        totalMilestones: 20,
+        isLoadingFilters: false,
+      } as any);
+
+      const { container } = render(<CommunityImpactStatCards />, { wrapper });
+
+      const mainContainer = container.firstChild;
+      expect(mainContainer).toHaveClass("max-sm:grid");
+      expect(mainContainer).toHaveClass("max-sm:grid-cols-2");
+    });
   });
 
   describe("StatCard Component", () => {

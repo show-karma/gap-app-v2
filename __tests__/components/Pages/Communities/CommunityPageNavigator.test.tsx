@@ -310,6 +310,15 @@ describe("CommunityPageNavigator", () => {
       expect(nav).toHaveClass("border-b");
     });
 
+    it("should have horizontal scroll classes for mobile", () => {
+      const { container } = render(<CommunityPageNavigator />, { wrapper });
+
+      const nav = container.firstChild;
+      expect(nav).toHaveClass("max-md:overflow-x-auto");
+      expect(nav).toHaveClass("max-md:scrollbar-none");
+      expect(nav).toHaveClass("max-md:flex-nowrap");
+    });
+
     it("should have links with gap between icon and text", () => {
       render(<CommunityPageNavigator />, { wrapper });
 

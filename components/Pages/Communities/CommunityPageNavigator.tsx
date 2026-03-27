@@ -16,7 +16,7 @@ const activeLinkStyle =
 const inactiveLinkStyle =
   "text-gray-500 dark:text-zinc-400 border-b-4 border-b-transparent hover:text-gray-700 dark:hover:text-zinc-300";
 const baseLinkStyle =
-  "flex flex-row items-center gap-3 p-3 max-lg:w-full rounded-none text-base font-normal leading-6 w-max transition-colors duration-200";
+  "flex flex-row items-center gap-3 p-3 rounded-none text-base font-normal leading-6 w-max shrink-0 transition-colors duration-200";
 
 const NewTag = () => {
   return (
@@ -143,7 +143,7 @@ export const CommunityPageNavigator = () => {
   if (isAdminPage) return null;
 
   return (
-    <div className="flex flex-row max-md:flex-col flex-wrap pt-8 border-b border-gray-200 dark:border-zinc-700 justify-start items-center gap-6 h-max">
+    <div className="flex flex-row max-md:overflow-x-auto max-md:scrollbar-none max-md:flex-nowrap max-md:-mx-4 max-md:px-4 flex-wrap pt-8 border-b border-gray-200 dark:border-zinc-700 justify-start items-center gap-6 h-max">
       {visibleNavigationItems.map(({ id, path, title, Icon, isActive, showNewTag }) => {
         const href = path(communityId);
         return (
