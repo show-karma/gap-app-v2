@@ -6,6 +6,7 @@ import { config } from "md-editor-rt";
 import dynamic from "next/dynamic";
 import { useTheme } from "next-themes";
 import { type FC, useCallback, useEffect, useMemo, useState } from "react";
+import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { cn } from "@/utilities/tailwind";
 
 // Enable single-newline → <br> rendering globally for all editor/preview instances
@@ -54,11 +55,6 @@ const MdEditor = dynamic(() => import("md-editor-rt").then((mod) => mod.MdEditor
       <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">Loading editor...</span>
     </div>
   ),
-});
-
-const MdPreview = dynamic(() => import("md-editor-rt").then((mod) => mod.MdPreview), {
-  ssr: false,
-  loading: () => <div className="animate-pulse bg-gray-200 dark:bg-gray-700 rounded h-4 w-full" />,
 });
 
 // Toolbar buttons to exclude — removes overflow-causing and rarely-used items in modal contexts
@@ -233,13 +229,8 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
         )}
       >
         {showPreview ? (
-          <div className="px-4">
-            <MdPreview
-              value={value}
-              theme={resolvedTheme === "dark" ? "dark" : "light"}
-              language="en-US"
-              style={{ minHeight }}
-            />
+          <div className="px-4 py-2" style={{ minHeight }}>
+            <MarkdownPreview source={value} />
           </div>
         ) : (
           <MdEditor
