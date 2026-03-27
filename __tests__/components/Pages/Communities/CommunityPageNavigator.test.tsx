@@ -82,6 +82,9 @@ describe("CommunityPageNavigator", () => {
     });
     jest.clearAllMocks();
 
+    // JSDOM doesn't provide scrollIntoView
+    Element.prototype.scrollIntoView = jest.fn();
+
     // Default mocks
     mockUseWhitelabel.mockReturnValue({
       isWhitelabel: false,
@@ -640,6 +643,21 @@ describe("CommunityPageNavigator", () => {
 
       const link = screen.getByText("View funded projects").closest("a");
       expect(link?.className).toContain("text-gray-500");
+    });
+  });
+
+  describe("Active Tab Auto-Scroll", () => {
+    it("should scroll active tab into view on mount", () => {
+      mockUseParams.mockReturnValue({ communityId: "filecoin" });
+      mockUsePathname.mockReturnValue("/community/filecoin/financials");
+
+      render(<CommunityPageNavigator />, { wrapper });
+
+      expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "nearest",
+      });
     });
   });
 });
