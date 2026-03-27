@@ -1,10 +1,9 @@
 "use client";
 
-import { code } from "@streamdown/code";
 import type { MarkdownPreviewProps } from "@uiw/react-markdown-preview";
 import { useTheme } from "next-themes";
-import { type Components, Streamdown } from "streamdown";
-import "streamdown/styles.css";
+import { useEffect, useState } from "react";
+import type { Components } from "streamdown";
 import styles from "@/styles/markdown.module.css";
 import { cn } from "@/utilities/tailwind";
 
@@ -30,7 +29,25 @@ export const MarkdownPreview = ({
 }: MarkdownPreviewProps) => {
   const { resolvedTheme } = useTheme();
 
+  type StreamdownType = typeof import("streamdown").Streamdown;
+  type CodePluginType = typeof import("@streamdown/code").code;
+
+  const [StreamdownComponent, setStreamdownComponent] = useState<StreamdownType | null>(null);
+  const [codePlugin, setCodePlugin] = useState<CodePluginType | null>(null);
+
+  useEffect(() => {
+    Promise.all([
+      import("streamdown").then((m) => m.Streamdown),
+      import("@streamdown/code").then((m) => m.code),
+      import("streamdown/styles.css" as string),
+    ]).then(([Streamdown, code]) => {
+      setStreamdownComponent(() => Streamdown);
+      setCodePlugin(() => code);
+    });
+  }, []);
+
   if (!source) return null;
+  if (!StreamdownComponent || !codePlugin) return null;
 
   const mergedComponents: Components = {
     p: ({ children }) => (
@@ -38,8 +55,7 @@ export const MarkdownPreview = ({
         {children}
       </p>
     ),
-    // biome-ignore lint/suspicious/noExplicitAny: @uiw components type differs from streamdown's
-    ...(components as any),
+    ...(components as Partial<Components>),
   };
 
   return (
@@ -47,15 +63,15 @@ export const MarkdownPreview = ({
       className="preview w-full max-w-full text-foreground"
       data-color-mode={resolvedTheme === "dark" ? "dark" : "light"}
     >
-      <Streamdown
+      <StreamdownComponent
         mode="static"
-        plugins={{ code }}
+        plugins={{ code: codePlugin }}
         className={cn("wmdeMarkdown", styles.wmdeMarkdown, className)}
         allowElement={allowElement ?? undefined}
         components={mergedComponents}
       >
         {source}
-      </Streamdown>
+      </StreamdownComponent>
     </div>
   );
 };

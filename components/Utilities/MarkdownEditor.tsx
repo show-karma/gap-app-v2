@@ -1,14 +1,11 @@
 "use client";
 import "@uiw/react-md-editor/markdown-editor.css";
 import "@uiw/react-markdown-preview/markdown.css";
-import "streamdown/styles.css";
 
-import { code } from "@streamdown/code";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useTheme } from "next-themes";
 import { type FC, useCallback, useEffect, useMemo, useState } from "react";
-import { Streamdown } from "streamdown";
 import { cn } from "@/utilities/tailwind";
 
 // Constants for content validation and performance
@@ -53,7 +50,8 @@ const MDEditor = dynamic(() => import("@uiw/react-md-editor").then((mod) => mod.
 });
 
 // Streamdown preview panel — rendered instead of @uiw's built-in preview
-// to showcase streaming markdown capabilities
+// to showcase streaming markdown capabilities. Heavy deps (@streamdown/code, streamdown)
+// are lazy-loaded on first render to avoid adding them to the main bundle.
 const StreamdownPreview = ({
   value,
   height,
@@ -62,22 +60,50 @@ const StreamdownPreview = ({
   value: string;
   height: number;
   className?: string;
-}) => (
-  <div
-    className={cn("w-full overflow-auto p-4 bg-white dark:bg-zinc-900 text-foreground", className)}
-    style={{ minHeight: height }}
-  >
-    <Streamdown
-      mode="static"
-      plugins={{ code }}
-      components={{
-        p: ({ children }) => <p className="mb-2">{children}</p>,
-      }}
+}) => {
+  type StreamdownType = typeof import("streamdown").Streamdown;
+  type CodePluginType = typeof import("@streamdown/code").code;
+
+  const [StreamdownComponent, setStreamdownComponent] = useState<StreamdownType | null>(null);
+  const [codePlugin, setCodePlugin] = useState<CodePluginType | null>(null);
+
+  useEffect(() => {
+    Promise.all([
+      import("streamdown").then((m) => m.Streamdown),
+      import("@streamdown/code").then((m) => m.code),
+      import("streamdown/styles.css" as string),
+    ]).then(([Streamdown, code]) => {
+      setStreamdownComponent(() => Streamdown);
+      setCodePlugin(() => code);
+    });
+  }, []);
+
+  if (!StreamdownComponent || !codePlugin) {
+    return (
+      <div className={cn("w-full overflow-auto p-4", className)} style={{ minHeight: height }} />
+    );
+  }
+
+  return (
+    <div
+      className={cn(
+        "w-full overflow-auto p-4 bg-white dark:bg-zinc-900 text-foreground",
+        className
+      )}
+      style={{ minHeight: height }}
     >
-      {value || "_Nothing to preview_"}
-    </Streamdown>
-  </div>
-);
+      <StreamdownComponent
+        mode="static"
+        plugins={{ code: codePlugin }}
+        components={{
+          p: ({ children }) => <p className="mb-2">{children}</p>,
+        }}
+      >
+        {value || "_Nothing to preview_"}
+      </StreamdownComponent>
+    </div>
+  );
+};
 
 /**
  * Validates markdown content for potentially dangerous patterns
