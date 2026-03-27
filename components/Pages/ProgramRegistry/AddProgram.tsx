@@ -327,7 +327,13 @@ export default function AddProgram({
       router.push(PAGES.REGISTRY.ROOT);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      if (errorMessage?.includes("already exists")) {
+      const lowerError = errorMessage.toLowerCase();
+      if (lowerError.includes("program limit") || lowerError.includes("program limit exceeded")) {
+        toast.error(
+          "Your community is on the free tier, which allows 1 program. Contact us to upgrade.",
+          { duration: 10000 }
+        );
+      } else if (errorMessage?.includes("already exists")) {
         toast.error("A program with this name already exists");
       } else {
         errorManager(
