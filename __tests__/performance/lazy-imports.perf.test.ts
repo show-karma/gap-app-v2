@@ -47,8 +47,7 @@ const TREMOR_HEAVY_EXPORTS = [
  * Modules where ANY value import is considered heavy and must be lazy-loaded.
  */
 const ALWAYS_HEAVY_MODULES = [
-  "@uiw/react-md-editor",
-  "@uiw/react-markdown-preview",
+  "md-editor-rt",
   "react-markdown",
   "recharts",
   "chart.js",
@@ -135,7 +134,7 @@ function findStaticHeavyModuleImports(filePath: string): string[] {
 
     for (const match of content.matchAll(regex)) {
       const line = match[0];
-      // CSS imports are fine (e.g., import "@uiw/react-md-editor/markdown-editor.css")
+      // CSS imports are fine (e.g., import "md-editor-rt/lib/style.css")
       if (/\.css['"]/.test(line)) continue;
       violations.push(`${path.relative(ROOT, filePath)}: static import from heavy module "${mod}"`);
     }
@@ -192,18 +191,14 @@ describe("Lazy import enforcement for heavy libraries", () => {
     expect(violations).toEqual([]);
   });
 
-  it("verifies that MarkdownPreview uses dynamic() for the heavy preview library", () => {
+  it("verifies that MarkdownPreview lazy-loads streamdown", () => {
     const filePath = path.join(COMPONENTS_DIR, "Utilities", "MarkdownPreview.tsx");
     const content = fs.readFileSync(filePath, "utf-8");
 
-    // Should contain a dynamic import
-    expect(content).toMatch(/dynamic\(\s*\(\)\s*=>\s*import\(/);
-    // Should reference the heavy module inside dynamic()
-    expect(content).toMatch(/@uiw\/react-markdown-preview/);
+    // Should use dynamic import() (not next/dynamic, but inline import())
+    expect(content).toMatch(/import\(["']streamdown["']\)/);
     // Should NOT have a static value import of the module
-    expect(content).not.toMatch(
-      /^import\s+(?!type\s)\w+\s+from\s+['"]@uiw\/react-markdown-preview['"]/m
-    );
+    expect(content).not.toMatch(/^import\s+(?!type\s)\w+\s+from\s+['"]streamdown['"]/m);
   });
 
   it("verifies that MarkdownEditor uses dynamic() for the editor library", () => {

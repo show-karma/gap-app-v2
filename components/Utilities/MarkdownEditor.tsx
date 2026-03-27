@@ -2,19 +2,11 @@
 import "md-editor-rt/lib/style.css";
 
 import { Eye, EyeOff, Loader2 } from "lucide-react";
-import { config } from "md-editor-rt";
 import dynamic from "next/dynamic";
 import { useTheme } from "next-themes";
 import { type FC, useCallback, useEffect, useMemo, useState } from "react";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { cn } from "@/utilities/tailwind";
-
-// Enable single-newline → <br> rendering globally for all editor/preview instances
-config({
-  markdownItConfig(md) {
-    md.options.breaks = true;
-  },
-});
 
 // Constants for content validation and performance
 const DEFAULT_MAX_LENGTH = 50000; // 50KB max to prevent performance issues
@@ -124,6 +116,18 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
   // Ensure client-side only rendering to prevent hydration mismatches
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  // Configure markdown-it to treat single newlines as <br>.
+  // Done via dynamic import so md-editor-rt is never statically bundled.
+  useEffect(() => {
+    import("md-editor-rt").then(({ config }) => {
+      config({
+        markdownItConfig(md) {
+          md.options.breaks = true;
+        },
+      });
+    });
   }, []);
 
   // Use disabled prop if provided, otherwise use isDisabled
