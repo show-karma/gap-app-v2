@@ -19,8 +19,9 @@ vi.mock("@/utilities/formatDate", () => ({
 }));
 
 // Mock SortableTableHeader
-vi.mock("@/components/Utilities/SortableTableHeader", () => {
-  return function MockSortableTableHeader({
+vi.mock("@/components/Utilities/SortableTableHeader", () => ({
+  __esModule: true,
+  default: ({
     label,
     sortKey,
     onSort,
@@ -28,14 +29,12 @@ vi.mock("@/components/Utilities/SortableTableHeader", () => {
     label: string;
     sortKey: string;
     onSort?: (sortKey: string) => void;
-  }) {
-    return (
-      <th scope="col" data-testid={`header-${sortKey}`}>
-        <button onClick={() => onSort?.(sortKey)}>{label}</button>
-      </th>
-    );
-  };
-});
+  }) => (
+    <th scope="col" data-testid={`header-${sortKey}`}>
+      <button onClick={() => onSort?.(sortKey)}>{label}</button>
+    </th>
+  ),
+}));
 
 // Mock ReviewerAssignmentDropdown
 vi.mock("@/components/FundingPlatform/ApplicationList/ReviewerAssignmentDropdown", () => ({

@@ -10,6 +10,7 @@
 import HomePage from "@/app/page";
 import { renderWithProviders, screen, waitFor } from "../utils/test-helpers";
 import "@testing-library/jest-dom";
+import { mockCommunities } from "../fixtures/communities";
 import { mockFundingOpportunities } from "../fixtures/funding-opportunities";
 
 // Mock the service functions
@@ -19,11 +20,11 @@ vi.mock("@/src/services/funding/getLiveFundingOpportunities", () => ({
   getLiveFundingOpportunities: vi.fn(() => mockGetLiveFundingOpportunities()),
 }));
 
-// Mock chosenCommunities directly with a simple implementation
-vi.mock("@/utilities/chosenCommunities", () => {
-  const { mockCommunities } = require("../fixtures/communities");
+// Mock chosenCommunities - mockCommunities will be populated from import
+vi.mock("@/utilities/chosenCommunities", async () => {
+  const { mockCommunities: communities } = await import("../fixtures/communities");
   return {
-    chosenCommunities: vi.fn(() => mockCommunities.slice(0, 10)),
+    chosenCommunities: vi.fn(() => communities.slice(0, 10)),
   };
 });
 
