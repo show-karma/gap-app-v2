@@ -64,6 +64,8 @@ export function CommentMarkdownInput({
           disabled={disabled}
           placeholder={placeholder}
           noUploadImg
+          footers={[]}
+          language="en-US"
           style={{ height: minHeight, minHeight, maxHeight }}
         />
       ) : (
