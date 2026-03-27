@@ -6,6 +6,8 @@
 import { render, screen } from "@testing-library/react";
 import { ProjectCard } from "@/components/Pages/NewProjects/ProjectCard";
 import type { ProjectFromList } from "@/types/project";
+import formatCurrency from "@/utilities/formatCurrency";
+import { formatDate } from "@/utilities/formatDate";
 
 // Mock Next.js Link component
 vi.mock("next/link", () => {
@@ -456,7 +458,7 @@ describe("ProjectCard", () => {
 
   describe("Integration with utilities", () => {
     it("should call formatCurrency for all numeric stats", () => {
-      const formatCurrency = require("@/utilities/formatCurrency").default;
+      const formatCurrencyMock = vi.mocked(formatCurrency);
       render(<ProjectCard project={mockProject} index={0} />);
 
       expect(formatCurrency).toHaveBeenCalledWith(5); // grants
@@ -464,7 +466,7 @@ describe("ProjectCard", () => {
     });
 
     it("should call formatDate with createdAt string", () => {
-      const { formatDate } = require("@/utilities/formatDate");
+      const formatDateMock = vi.mocked(formatDate);
       render(<ProjectCard project={mockProject} index={0} />);
 
       // formatDate accepts string (ISO date), number (timestamp), or Date

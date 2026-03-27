@@ -4,10 +4,17 @@
  */
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { type RenderOptions, type RenderResult, render } from "@testing-library/react";
+import { cleanup, type RenderOptions, type RenderResult, render } from "@testing-library/react";
 import { ThemeProvider } from "next-themes";
 import type React from "react";
+import * as permissionsHook from "@/hooks/usePermissions";
 import { NavbarPermissionsProvider } from "@/src/components/navbar/navbar-permissions-context";
+import * as rbacHook from "@/src/core/rbac/hooks/use-permissions";
+import * as mainStore from "@/store";
+import * as communitiesStore from "@/store/communities";
+import * as contributorProfileModal from "@/store/modals/contributorProfile";
+import * as ownerStore from "@/store/owner";
+import * as registryStore from "@/store/registry";
 import type { AuthFixture } from "../fixtures/auth-fixtures";
 import { mockAuthState, mockNavbarPermissionsState, mockThemeState } from "../setup";
 
@@ -65,7 +72,7 @@ export const resetMockThemeState = () => {
  */
 export const resetPermissionMocks = () => {
   // Reset communities store
-  const communitiesModule = require("@/store/communities");
+  const communitiesModule = communitiesStore;
   if (
     communitiesModule.useCommunitiesStore &&
     vi.isMockFunction(communitiesModule.useCommunitiesStore)
@@ -79,7 +86,7 @@ export const resetPermissionMocks = () => {
   }
 
   // Reset reviewer programs
-  const permissionsModule = require("@/hooks/usePermissions");
+  const permissionsModule = permissionsHook;
   if (
     permissionsModule.useReviewerPrograms &&
     vi.isMockFunction(permissionsModule.useReviewerPrograms)
@@ -111,7 +118,6 @@ export const resetPermissionMocks = () => {
  */
 export const cleanupAfterEach = () => {
   // Cleanup React Testing Library rendered components
-  const { cleanup } = require("@testing-library/react");
   cleanup();
 
   // Reset all mock states
@@ -136,7 +142,7 @@ const _resetAllPermissionMocksExtended = () => {
   resetPermissionMocks();
 
   // Reset RBAC permissions (replaces legacy useStaff)
-  const rbacModule = require("@/src/core/rbac/hooks/use-permissions");
+  const rbacModule = rbacHook;
   if (rbacModule.usePermissionsQuery && vi.isMockFunction(rbacModule.usePermissionsQuery)) {
     rbacModule.usePermissionsQuery.mockReturnValue({
       data: null,
@@ -146,7 +152,7 @@ const _resetAllPermissionMocksExtended = () => {
   }
 
   // Reset owner store (with selector support)
-  const ownerModule = require("@/store/owner");
+  const ownerModule = ownerStore;
   if (ownerModule.useOwnerStore && vi.isMockFunction(ownerModule.useOwnerStore)) {
     ownerModule.useOwnerStore.mockImplementation((selector?: Function) => {
       const state = { isProjectOwner: false, isOwner: false };
@@ -155,7 +161,7 @@ const _resetAllPermissionMocksExtended = () => {
   }
 
   // Also reset in @/store (index)
-  const storeModule = require("@/store");
+  const storeModule = mainStore;
   if (storeModule.useOwnerStore && vi.isMockFunction(storeModule.useOwnerStore)) {
     storeModule.useOwnerStore.mockImplementation((selector?: Function) => {
       const state = { isProjectOwner: false, isOwner: false };
@@ -164,7 +170,7 @@ const _resetAllPermissionMocksExtended = () => {
   }
 
   // Reset registry store
-  const registryModule = require("@/store/registry");
+  const registryModule = registryStore;
   if (registryModule.useRegistryStore && vi.isMockFunction(registryModule.useRegistryStore)) {
     registryModule.useRegistryStore.mockReturnValue({
       isProgramCreator: false,
@@ -173,7 +179,7 @@ const _resetAllPermissionMocksExtended = () => {
   }
 
   // Reset contributor profile modal store
-  const modalModule = require("@/store/modals/contributorProfile");
+  const modalModule = contributorProfileModal;
   if (
     modalModule.useContributorProfileModalStore &&
     vi.isMockFunction(modalModule.useContributorProfileModalStore)
@@ -361,7 +367,7 @@ const updateContributorProfileModalMock = (mockUseContributorProfileModalStore?:
     typeof mockUseContributorProfileModalStore === "function"
       ? mockUseContributorProfileModalStore()
       : mockUseContributorProfileModalStore;
-  const module = require("@/store/modals/contributorProfile");
+  const module = contributorProfileModal;
   if (
     module.useContributorProfileModalStore &&
     vi.isMockFunction(module.useContributorProfileModalStore)
@@ -370,12 +376,22 @@ const updateContributorProfileModalMock = (mockUseContributorProfileModalStore?:
   }
 };
 
+// Module lookup for store mocks (replaces dynamic require)
+const moduleRegistry: Record<string, Record<string, unknown>> = {
+  "@/store/communities": communitiesStore,
+  "@/hooks/usePermissions": permissionsHook,
+  "@/src/core/rbac/hooks/use-permissions": rbacHook,
+  "@/store/registry": registryStore,
+};
+
 // Helper to update a single store mock
 const updateStoreMock = (modulePath: string, hookName: string, mockValue: any) => {
   if (!mockValue) return;
-  const module = require(modulePath);
-  if (module[hookName] && vi.isMockFunction(module[hookName])) {
-    module[hookName].mockReturnValue(mockValue);
+  const module = moduleRegistry[modulePath];
+  if (!module) return;
+  const hook = module[hookName];
+  if (hook && vi.isMockFunction(hook)) {
+    (hook as ReturnType<typeof vi.fn>).mockReturnValue(mockValue);
   }
 };
 
@@ -388,8 +404,8 @@ const updateOwnerStoreMock = (mockUseOwnerStore: any) => {
       ? mockUseOwnerStore
       : (selector?: Function) => (selector ? selector(mockUseOwnerStore) : mockUseOwnerStore);
 
-  const ownerModule = require("@/store/owner");
-  const storeModule = require("@/store");
+  const ownerModule = ownerStore;
+  const storeModule = mainStore;
 
   if (ownerModule.useOwnerStore && vi.isMockFunction(ownerModule.useOwnerStore)) {
     ownerModule.useOwnerStore.mockImplementation(ownerImpl);
@@ -438,7 +454,7 @@ export const updateMocks = (options: Partial<CustomRenderOptions>) => {
   );
 
   if (options.mockUseCommunitiesStore) {
-    const module = require("@/store/communities");
+    const module = communitiesStore;
     if (module.useCommunitiesStore && vi.isMockFunction(module.useCommunitiesStore)) {
       module.useCommunitiesStore.mockReturnValue(options.mockUseCommunitiesStore);
     }

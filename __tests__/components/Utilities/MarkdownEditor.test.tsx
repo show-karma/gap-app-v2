@@ -14,11 +14,12 @@ vi.mock("next-themes", () => ({
 }));
 
 // Mock the dynamic import of MDEditor
-vi.mock("next/dynamic", () => {
-  return function mockDynamic(
+vi.mock("next/dynamic", () => ({
+  __esModule: true,
+  default: (
     importFn: () => Promise<{ default: React.ComponentType }>,
     options?: { loading?: () => React.ReactNode }
-  ) {
+  ) => {
     // Return a mock MDEditor component
     const MockMDEditor = ({
       value,
@@ -64,8 +65,8 @@ vi.mock("next/dynamic", () => {
     );
 
     return MockMDEditor;
-  };
-});
+  },
+}));
 
 // Import after mocks are set up
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";

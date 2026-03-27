@@ -45,7 +45,7 @@ vi.mock("@/utilities/wagmi/privy-config", () => ({
   getPrivyWagmiConfig: vi.fn(() => ({})),
 }));
 
-const { useAuth } = vi.importActual("@/hooks/useAuth") as typeof import("@/hooks/useAuth");
+const { useAuth } = await vi.importActual<typeof import("@/hooks/useAuth")>("@/hooks/useAuth");
 
 vi.mock("@/utilities/auth/cypress-auth", () => ({
   getCypressMockAuthState: () => null,

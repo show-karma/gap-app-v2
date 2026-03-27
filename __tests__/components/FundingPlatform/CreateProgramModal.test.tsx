@@ -141,10 +141,18 @@ vi.mock("@/components/Utilities/MarkdownEditor", () => ({
 }));
 
 // Mock Radix UI Dialog
-vi.mock("@radix-ui/react-dialog", () => {
-  const React = require("react");
+vi.mock("@radix-ui/react-dialog", async () => {
+  const React = await import("react");
 
   return {
+    Trigger: Object.assign(
+      ({ children, ...props }: any) => (
+        <button data-testid="dialog-trigger" {...props}>
+          {children}
+        </button>
+      ),
+      { displayName: "DialogTrigger" }
+    ),
     Root: ({ children, open, onOpenChange }: any) => (
       <div data-testid="dialog-root" data-open={open}>
         {open && (

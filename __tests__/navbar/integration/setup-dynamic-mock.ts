@@ -13,8 +13,8 @@
  */
 import React from "react";
 
-vi.mock("next/dynamic", () => {
-  return (loader: () => Promise<any>, _opts?: any) => {
+vi.mock("next/dynamic", () => ({
+  default: (loader: () => Promise<any>, _opts?: any) => {
     let Component: any = null;
     loader().then((mod: any) => {
       Component = mod.default || mod;
@@ -25,5 +25,5 @@ vi.mock("next/dynamic", () => {
     };
     DynamicComponent.displayName = "DynamicMock";
     return DynamicComponent;
-  };
-});
+  },
+}));

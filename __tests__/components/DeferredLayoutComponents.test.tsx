@@ -9,7 +9,7 @@ vi.mock("next/dynamic", () => {
     return DynamicComponent;
   };
   mockDynamic._imports = dynamicImports;
-  return mockDynamic;
+  return { default: mockDynamic };
 });
 
 import dynamic from "next/dynamic";

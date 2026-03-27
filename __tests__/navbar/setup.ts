@@ -12,6 +12,63 @@ import { setupServer } from "msw/node";
 import React from "react";
 import { handlers } from "./mocks/handlers";
 
+// ---- Hoisted mock state (available in vi.mock factories) ----
+// vi.hoisted runs before vi.mock factories, making these variables
+// available without require() self-references.
+const _h = vi.hoisted(() => {
+  const _vi = globalThis.vi ?? { fn: () => (() => {}) as any };
+  return {
+    themeState: {
+      current: {
+        theme: "light" as string,
+        setTheme: _vi.fn(),
+        themes: ["light", "dark"] as string[],
+        systemTheme: "light" as string,
+        resolvedTheme: "light" as string,
+      },
+    },
+    authState: {
+      current: {
+        ready: true,
+        authenticated: false,
+        isConnected: false,
+        address: undefined as string | undefined,
+        user: null as unknown,
+        authenticate: _vi.fn(),
+        login: _vi.fn(),
+        logout: _vi.fn(),
+        disconnect: _vi.fn(),
+        getAccessToken: _vi.fn().mockResolvedValue("mock-token"),
+      },
+    },
+    navPermsState: {
+      current: {
+        isLoggedIn: false,
+        address: undefined as string | undefined,
+        ready: true,
+        isStaff: false,
+        isStaffLoading: false,
+        isOwner: false,
+        isCommunityAdmin: false,
+        isReviewer: false,
+        hasReviewerRole: false,
+        reviewerPrograms: [] as unknown[],
+        isProgramCreator: false,
+        isRegistryAdmin: false,
+        hasAdminAccess: false,
+        isRegistryAllowed: false,
+      },
+    },
+    searchFn: _vi.fn(),
+  };
+});
+
+// Public exports that reference the hoisted objects
+export const mockThemeState = _h.themeState;
+export const mockAuthState = _h.authState;
+export const mockNavbarPermissionsState = _h.navPermsState;
+export const mockSearchFunction = _h.searchFn;
+
 /**
  * Setup MSW (Mock Service Worker) server for navbar tests
  */
@@ -106,17 +163,17 @@ vi.mock("next/navigation", () => ({
 }));
 
 // Mock lodash.debounce to use fake timers
-vi.mock("lodash.debounce", () => {
-  return (fn: Function, delay: number) => {
+vi.mock("lodash.debounce", () => ({
+  default: (fn: Function, delay: number) => {
     let timeoutId: NodeJS.Timeout;
-    const debounced = (...args: any[]) => {
+    const debounced = (...args: unknown[]) => {
       clearTimeout(timeoutId);
       timeoutId = setTimeout(() => fn(...args), delay);
     };
     debounced.cancel = () => clearTimeout(timeoutId);
     return debounced;
-  };
-});
+  },
+}));
 
 /**
  * Mock Privy
@@ -154,21 +211,8 @@ vi.mock("wagmi", () => ({
 /**
  * Mock next-themes
  */
-export const mockThemeState = {
-  current: {
-    theme: "light",
-    setTheme: vi.fn(),
-    themes: ["light", "dark"],
-    systemTheme: "light",
-    resolvedTheme: "light",
-  },
-};
-
 vi.mock("next-themes", () => ({
-  useTheme: vi.fn(() => {
-    const { mockThemeState } = require("@/__tests__/navbar/setup");
-    return mockThemeState.current;
-  }),
+  useTheme: vi.fn(() => _h.themeState.current),
   ThemeProvider: ({ children }: { children: any }) => children,
 }));
 
@@ -218,27 +262,8 @@ vi.mock("@/utilities/wagmi/privy-config", () => ({
 }));
 
 // Mock authentication and permission hooks
-// Create a holder for the current auth mock state
-export const mockAuthState = {
-  current: {
-    ready: true,
-    authenticated: false,
-    isConnected: false,
-    address: undefined,
-    user: null,
-    authenticate: vi.fn(),
-    login: vi.fn(),
-    logout: vi.fn(),
-    disconnect: vi.fn(),
-    getAccessToken: vi.fn().mockResolvedValue("mock-token"),
-  },
-};
-
 vi.mock("@/hooks/useAuth", () => ({
-  useAuth: vi.fn(() => {
-    const { mockAuthState } = require("@/__tests__/navbar/setup");
-    return mockAuthState.current;
-  }),
+  useAuth: vi.fn(() => _h.authState.current),
 }));
 
 vi.mock("@/store/communities", () => ({
@@ -297,46 +322,18 @@ vi.mock("@/store/modals/apiKeyManagement", () => ({
 
 // Mock the NavbarPermissionsContext - this is needed because NavbarDesktopNavigation
 // uses useNavbarPermissions() which reads from context, not from individual hooks directly
-export const mockNavbarPermissionsState = {
-  current: {
-    isLoggedIn: false,
-    address: undefined,
-    ready: true,
-    isStaff: false,
-    isStaffLoading: false,
-    isOwner: false,
-    isCommunityAdmin: false,
-    isReviewer: false,
-    hasReviewerRole: false,
-    reviewerPrograms: [],
-    isProgramCreator: false,
-    isRegistryAdmin: false,
-    hasAdminAccess: false,
-    isRegistryAllowed: false,
-  },
-};
-
 vi.mock("@/src/components/navbar/navbar-permissions-context", () => ({
-  useNavbarPermissions: vi.fn(() => {
-    const { mockNavbarPermissionsState } = require("@/__tests__/navbar/setup");
-    return mockNavbarPermissionsState.current;
-  }),
+  useNavbarPermissions: vi.fn(() => _h.navPermsState.current),
   NavbarPermissionsProvider: ({ children }: { children: any }) => children,
   NavbarPermissionsContext: {
     Provider: ({ children }: { children: any }) => children,
-    Consumer: ({ children }: { children: any }) => children(mockNavbarPermissionsState.current),
+    Consumer: ({ children }: { children: any }) => children(_h.navPermsState.current),
   },
 }));
 
 // Mock unified search service for search functionality
-// This mock will be controlled by tests via module mocking
-export const mockSearchFunction = vi.fn();
-
 vi.mock("@/services/unified-search.service", () => ({
-  unifiedSearch: (...args: any[]) => {
-    const { mockSearchFunction } = require("@/__tests__/navbar/setup");
-    return mockSearchFunction(...args);
-  },
+  unifiedSearch: _h.searchFn,
 }));
 
 /**

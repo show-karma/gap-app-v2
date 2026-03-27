@@ -29,15 +29,13 @@ vi.mock("next/navigation", () => ({
 }));
 
 // Mock next/dynamic — needed because dialogs are now dynamically imported
-vi.mock("next/dynamic", () => {
-  const mockDynamic = (loader: () => Promise<any>, _options?: { ssr?: boolean }) => {
+vi.mock("next/dynamic", () => ({
+  default: (loader: () => Promise<any>, _options?: { ssr?: boolean }) => {
     const DynamicComponent = () => null;
     DynamicComponent.displayName = "DynamicMock";
     return DynamicComponent;
-  };
-  mockDynamic.default = mockDynamic;
-  return mockDynamic;
-});
+  },
+}));
 
 // Mock all stores
 vi.mock("@/hooks/useProjectPermissions", () => ({

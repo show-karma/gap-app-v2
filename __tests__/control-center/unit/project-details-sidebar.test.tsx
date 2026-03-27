@@ -5,7 +5,7 @@
  * milestone key uniqueness, and button disabled states.
  */
 
-// ---- Mock holders (must be declared before jest.mock calls) ----
+// ---- Mock holders (must be declared before vi.mock calls) ----
 
 const mockToggleMutate = vi.fn();
 const mockSaveMutate = vi.fn();
@@ -14,33 +14,35 @@ let mockTogglePending = false;
 let mockSavePending = false;
 
 // Mock the DatePicker component to avoid Radix Popover portal issues in JSDOM
-vi.mock("@/components/Utilities/DatePicker", () => ({
-  DatePicker: ({
-    selected,
-    onSelect,
-    ariaLabel,
-    placeholder,
-  }: {
-    selected?: Date;
-    onSelect: (date: Date) => void;
-    ariaLabel?: string;
-    placeholder?: string;
-  }) => {
-    const React = require("react");
-    return React.createElement(
-      "button",
-      {
-        "aria-label": ariaLabel || "Pick a date",
-        onClick: () => onSelect(new Date("2024-06-15T00:00:00Z")),
-        type: "button",
-      },
-      selected ? selected.toISOString().split("T")[0] : placeholder || "Pick a date"
-    );
-  },
-}));
+vi.mock("@/components/Utilities/DatePicker", async () => {
+  const React = await import("react");
+  return {
+    DatePicker: ({
+      selected,
+      onSelect,
+      ariaLabel,
+      placeholder,
+    }: {
+      selected?: Date;
+      onSelect: (date: Date) => void;
+      ariaLabel?: string;
+      placeholder?: string;
+    }) => {
+      return React.createElement(
+        "button",
+        {
+          "aria-label": ariaLabel || "Pick a date",
+          onClick: () => onSelect(new Date("2024-06-15T00:00:00Z")),
+          type: "button",
+        },
+        selected ? selected.toISOString().split("T")[0] : placeholder || "Pick a date"
+      );
+    },
+  };
+});
 
-vi.mock("@/src/features/payout-disbursement", () => {
-  const actual = vi.importActual("@/src/features/payout-disbursement");
+vi.mock("@/src/features/payout-disbursement", async () => {
+  const actual = await vi.importActual("@/src/features/payout-disbursement");
   return {
     ...actual,
     useToggleAgreement: vi.fn(() => ({
@@ -70,6 +72,7 @@ import {
   ProjectDetailsSidebar,
   type ProjectDetailsSidebarGrant,
 } from "@/components/Pages/Admin/ControlCenter/ProjectDetailsSidebar";
+import { useSaveMilestoneInvoices, useToggleAgreement } from "@/src/features/payout-disbursement";
 import {
   type CommunityPayoutAgreementInfo,
   type CommunityPayoutInvoiceInfo,
@@ -100,16 +103,11 @@ beforeEach(() => {
   mockSavePending = false;
 
   // Re-mock to pick up updated pending values
-  const {
-    useToggleAgreement,
-    useSaveMilestoneInvoices,
-  } = require("@/src/features/payout-disbursement");
-
-  (useToggleAgreement as vi.Mock).mockImplementation(() => ({
+  vi.mocked(useToggleAgreement).mockImplementation(() => ({
     mutate: mockToggleMutate,
     isPending: mockTogglePending,
   }));
-  (useSaveMilestoneInvoices as vi.Mock).mockImplementation(() => ({
+  vi.mocked(useSaveMilestoneInvoices).mockImplementation(() => ({
     mutate: mockSaveMutate,
     isPending: mockSavePending,
   }));

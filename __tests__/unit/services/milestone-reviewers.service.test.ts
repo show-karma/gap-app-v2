@@ -13,7 +13,7 @@ vi.mock("@/utilities/enviromentVars", () => ({
 // Mock fetchData for GET requests
 vi.mock("@/utilities/fetchData");
 
-// Create a persistent mock instance using var (hoisted) so it's available in jest.mock factory
+// Create a persistent mock instance using var (hoisted) so it's available in vi.mock factory
 var mockAxiosInstance: vi.Mocked<AxiosInstance>;
 
 // Mock api-client for mutations (POST, DELETE)

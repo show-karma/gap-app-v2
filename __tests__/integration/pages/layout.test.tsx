@@ -2,6 +2,15 @@ import { render, screen } from "@testing-library/react";
 import RootLayout from "@/app/layout";
 import "@testing-library/jest-dom";
 
+vi.mock("next/font/local", () => ({
+  __esModule: true,
+  default: () => ({
+    className: "mock-font",
+    variable: "--mock-font",
+    style: { fontFamily: "mock" },
+  }),
+}));
+
 vi.mock("@next/third-parties/google", () => ({
   GoogleAnalytics: () => <div data-testid="google-analytics" />,
 }));
@@ -17,8 +26,9 @@ vi.mock("@/src/components/footer/whitelabel-footer", () => ({
 }));
 
 // Mock next/dynamic to render components synchronously in tests
-vi.mock("next/dynamic", () => {
-  return (loader: () => Promise<any>, _opts?: any) => {
+vi.mock("next/dynamic", () => ({
+  __esModule: true,
+  default: (loader: () => Promise<any>, _opts?: any) => {
     let Component: any = null;
     const promise = loader();
     promise.then((mod: any) => {
@@ -31,8 +41,8 @@ vi.mock("next/dynamic", () => {
     };
     DynamicComponent.displayName = "DynamicComponent";
     return DynamicComponent;
-  };
-});
+  },
+}));
 
 vi.mock("@/src/components/navbar/navbar", () => ({
   Navbar: () => <header data-testid="header" />,

@@ -2,11 +2,12 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
 // Mock Next.js Link
-vi.mock("next/link", () => {
-  return function MockLink({ href, children }: { href: string; children: React.ReactNode }) {
-    return <a href={href}>{children}</a>;
-  };
-});
+vi.mock("next/link", () => ({
+  __esModule: true,
+  default: ({ href, children }: { href: string; children: React.ReactNode }) => (
+    <a href={href}>{children}</a>
+  ),
+}));
 
 import { Search } from "lucide-react";
 import { EmptyState } from "@/src/components/ui/EmptyState";

@@ -29,11 +29,10 @@ vi.mock("@radix-ui/react-tooltip", () => ({
   ),
 }));
 
-vi.mock("@/components/Utilities/TablePagination", () => {
-  return function MockTablePagination(props: any) {
-    return <div data-testid="table-pagination" data-total={props.totalPosts} />;
-  };
-});
+vi.mock("@/components/Utilities/TablePagination", () => ({
+  __esModule: true,
+  default: (props: any) => <div data-testid="table-pagination" data-total={props.totalPosts} />,
+}));
 
 vi.mock("@/components/Pages/Admin/ControlCenter/ControlCenterColumns", () => ({
   SortIcon: ({ column }: { column: string }) => (

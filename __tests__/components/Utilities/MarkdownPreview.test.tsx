@@ -8,6 +8,7 @@ vi.mock("next-themes", () => ({
 
 // Mock CSS module
 vi.mock("@/styles/markdown.module.css", () => ({
+  default: { wmdeMarkdown: "wmdeMarkdown-module" },
   wmdeMarkdown: "wmdeMarkdown-module",
 }));
 
@@ -20,8 +21,9 @@ vi.mock("@/utilities/markdown", () => ({
 let heavyPreviewRendered = false;
 
 // Mock next/dynamic to return a trackable heavy preview component
-vi.mock("next/dynamic", () => {
-  return function mockDynamic() {
+vi.mock("next/dynamic", () => ({
+  __esModule: true,
+  default: () => {
     const MockHeavyPreview = (props: {
       source?: string;
       className?: string;
@@ -44,8 +46,8 @@ vi.mock("next/dynamic", () => {
       );
     };
     return MockHeavyPreview;
-  };
-});
+  },
+}));
 
 // Import after mocks
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";

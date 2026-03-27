@@ -19,11 +19,12 @@ vi.mock("next/navigation", () => ({
 }));
 
 // Mock next/link
-vi.mock("next/link", () => {
-  return ({ children, href }: { children: React.ReactNode; href: string }) => (
+vi.mock("next/link", () => ({
+  __esModule: true,
+  default: ({ children, href }: { children: React.ReactNode; href: string }) => (
     <a href={href}>{children}</a>
-  );
-});
+  ),
+}));
 
 // Mock dependencies
 const mockToggleStatusAsync = vi.fn();

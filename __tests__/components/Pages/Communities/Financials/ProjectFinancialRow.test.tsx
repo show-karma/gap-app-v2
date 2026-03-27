@@ -12,8 +12,9 @@ vi.mock("@/components/Utilities/ProfilePicture", () => ({
 }));
 
 // Mock next/link - preserve data-testid and other props
-vi.mock("next/link", () => {
-  return ({
+vi.mock("next/link", () => ({
+  __esModule: true,
+  default: ({
     children,
     href,
     ...props
@@ -25,8 +26,8 @@ vi.mock("next/link", () => {
     <a href={href} {...props}>
       {children}
     </a>
-  );
-});
+  ),
+}));
 
 describe("ProjectFinancialRow", () => {
   const mockProject: ProjectFinancialStatus = {

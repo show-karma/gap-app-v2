@@ -1,12 +1,12 @@
 import type { Hex } from "viem";
 
 // ---- Mocks ----
-// The mock client is created inside the factory because jest.mock is hoisted
+// The mock client is created inside the factory because vi.mock is hoisted
 // above variable declarations. We retrieve the mock functions after import
 // by accessing the mocked createPublicClient's return value.
 
 vi.mock("viem", () => {
-  // We cannot reference outer variables from a hoisted jest.mock factory,
+  // We cannot reference outer variables from a hoisted vi.mock factory,
   // so we store the mock client on a global that persists across the hoist.
   const client = {
     getEnsName: vi.fn(),

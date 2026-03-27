@@ -9,8 +9,9 @@ import type { FundingProgram } from "@/src/features/funding-map/types/funding-pr
 vi.mock("@/hooks/useFundingOpportunities");
 
 // Mock InfiniteScroll
-vi.mock("react-infinite-scroll-component", () => {
-  return ({ children, loader, hasMore, next, dataLength }: any) => (
+vi.mock("react-infinite-scroll-component", () => ({
+  __esModule: true,
+  default: ({ children, loader, hasMore, next, dataLength }: any) => (
     <div data-testid="infinite-scroll" data-has-more={hasMore} data-length={dataLength}>
       {children}
       {hasMore && (
@@ -19,8 +20,8 @@ vi.mock("react-infinite-scroll-component", () => {
         </button>
       )}
     </div>
-  );
-});
+  ),
+}));
 
 // Mock sub-components
 vi.mock("@/components/CommunityGrants/FundingOpportunities/FundingOpportunitiesGrid", () => ({
