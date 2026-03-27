@@ -3,6 +3,7 @@
 import { Bell, CircleUser, CopyPlus } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import { useTheme } from "next-themes";
 import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { useMixpanel } from "@/hooks/useMixpanel";
@@ -11,6 +12,8 @@ import { FundingMapAgentCard } from "./funding-map-agent-card";
 
 export function FundingMapSidebar() {
   const { mixpanel } = useMixpanel("karma");
+  const { resolvedTheme } = useTheme();
+  const embedTheme = resolvedTheme === "dark" ? "dark" : "light";
 
   const ProjectDialog = useMemo(
     () =>
@@ -38,7 +41,7 @@ export function FundingMapSidebar() {
           Be the first to know when a new program launches
         </p>
         <iframe
-          src="https://paragraph.com/@karmahq/embed?minimal=true&vertical=true"
+          src={`https://paragraph.com/@karmahq/embed?minimal=true&vertical=true&theme=${embedTheme}`}
           width="100%"
           height="90"
           title="Subscribe to Karma"
