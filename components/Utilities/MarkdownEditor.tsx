@@ -225,6 +225,7 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
           placeholder={editorPlaceholder}
           maxLength={maxLength}
           noUploadImg
+          footers={[]}
           style={{ height, minHeight }}
           data-field-id={dataFieldId}
           aria-describedby={ariaDescribedBy}
