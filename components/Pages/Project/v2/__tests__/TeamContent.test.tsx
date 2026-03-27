@@ -212,7 +212,7 @@ describe("TeamContent", () => {
 describe("TeamContent - Empty State", () => {
   beforeEach(() => {
     // Override mock for empty project
-    const { useProjectStore, useOwnerStore } = jest.requireMock("@/store");
+    const { useProjectStore, useOwnerStore } = vi.importActual("@/store");
     useProjectStore.mockImplementation((selector?: (state: unknown) => unknown) => {
       const state = {
         project: null,

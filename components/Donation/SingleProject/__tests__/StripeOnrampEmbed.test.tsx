@@ -241,7 +241,7 @@ describe("StripeOnrampEmbed", () => {
 
     it("shows error when Stripe key is not configured", async () => {
       // Temporarily override the env mock
-      jest.doMock("@/utilities/enviromentVars", () => ({
+      vi.doMock("@/utilities/enviromentVars", () => ({
         envVars: {
           NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: undefined,
         },

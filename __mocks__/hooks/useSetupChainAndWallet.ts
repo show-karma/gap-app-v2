@@ -3,7 +3,7 @@
  * The actual hook imports useZeroDevSigner which imports gasless utilities.
  *
  * Tests can override the return value via:
- *   const mockModule = jest.requireMock("@/hooks/useSetupChainAndWallet");
+ *   const mockModule = vi.importActual("@/hooks/useSetupChainAndWallet");
  *   mockModule.useSetupChainAndWallet.mockReturnValue({ setupChainAndWallet: myMock, ... });
  */
 
