@@ -1,7 +1,7 @@
 "use client";
 import { ChartLine, DollarSign, FileSearch, LandPlot, SquareUser, Wallet } from "lucide-react";
 import { useParams, usePathname, useSearchParams } from "next/navigation";
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import { useFundingOpportunitiesCount } from "@/hooks/useFundingOpportunitiesCount";
 import { useCommunityPrograms } from "@/hooks/usePrograms";
@@ -16,7 +16,7 @@ const activeLinkStyle =
 const inactiveLinkStyle =
   "text-gray-500 dark:text-zinc-400 border-b-4 border-b-transparent hover:text-gray-700 dark:hover:text-zinc-300";
 const baseLinkStyle =
-  "flex flex-row items-center gap-3 p-3 max-lg:w-full rounded-none text-base font-normal leading-6 w-max transition-colors duration-200";
+  "flex flex-row items-center gap-3 p-3 rounded-none text-base font-normal leading-6 w-max shrink-0 transition-colors duration-200";
 
 const NewTag = () => {
   return (
@@ -140,24 +140,30 @@ export const CommunityPageNavigator = () => {
     });
   }, [fundingOpportunitiesCount, programsCount, isWhitelabel, isFinancialsEnabled]);
 
+  const activeLinkRef = useCallback((node: HTMLAnchorElement | null) => {
+    if (node?.scrollIntoView) {
+      node.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+    }
+  }, []);
+
   if (isAdminPage) return null;
 
   return (
-    <div className="flex flex-row max-md:flex-col flex-wrap pt-8 border-b border-gray-200 dark:border-zinc-700 justify-start items-center gap-6 h-max">
+    <div className="flex flex-row max-md:overflow-x-auto max-md:scrollbar-none max-md:flex-nowrap flex-wrap pt-8 border-b border-gray-200 dark:border-zinc-700 justify-start items-center gap-6 h-max w-full">
       {visibleNavigationItems.map(({ id, path, title, Icon, isActive, showNewTag }) => {
         const href = path(communityId);
+        const active = isActive(pathname);
         return (
           <Link
             key={id}
+            ref={active ? activeLinkRef : undefined}
             href={getPathWithProgramId(programId, href)}
-            className={cn(baseLinkStyle, isActive(pathname) ? activeLinkStyle : inactiveLinkStyle)}
+            className={cn(baseLinkStyle, active ? activeLinkStyle : inactiveLinkStyle)}
           >
             <Icon
               className={cn(
                 "w-6 h-6 transition-colors duration-200",
-                isActive(pathname)
-                  ? "text-gray-900 dark:text-white"
-                  : "text-gray-500 dark:text-zinc-400"
+                active ? "text-gray-900 dark:text-white" : "text-gray-500 dark:text-zinc-400"
               )}
             />
             {title(community?.details?.name || "")}
