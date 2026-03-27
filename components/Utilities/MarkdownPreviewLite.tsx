@@ -5,52 +5,34 @@ import { useEffect, useState } from "react";
 import styles from "@/styles/markdown.module.css";
 import { cn } from "@/utilities/tailwind";
 
-interface MarkdownPreviewProps {
+interface MarkdownPreviewLiteProps {
   source?: string;
-  children?: string;
   className?: string;
-  style?: React.CSSProperties;
-  [key: string]: unknown;
 }
 
 /**
- * Markdown preview component backed by markdown-it + DOMPurify (same as MarkdownPreviewLite).
- * Replaces the previous @uiw/react-markdown-preview wrapper.
- *
- * Props surface is kept compatible with the old wrapper:
- * - `source` or `children` — markdown string to render
- * - `className` — forwarded to the inner container
- * - `style` — forwarded to the inner container
- * All other props are accepted and silently ignored so call sites don't break.
- *
+ * Lightweight markdown renderer using markdown-it + DOMPurify (already in the bundle).
  * Content is sanitized by DOMPurify inside renderToHTML before being set as innerHTML.
+ * Used for prose-only content that doesn't need syntax highlighting.
+ *
+ * Renders only on the client because DOMPurify requires a browser DOM.
  */
-export const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({
-  source,
-  children,
-  className,
-  style,
-  // Swallow remaining props so no call site needs to change
-  // biome-ignore lint/correctness/noUnusedFunctionParameters: swallows call-site props for backward compat
-  ...rest
-}) => {
+export function MarkdownPreviewLite({ source, className }: MarkdownPreviewLiteProps) {
   const { resolvedTheme } = useTheme();
   const [html, setHtml] = useState("");
 
-  const markdownSource = source ?? (typeof children === "string" ? children : "");
-
   useEffect(() => {
-    if (!markdownSource) {
+    if (!source) {
       setHtml("");
       return;
     }
     // Dynamic import to avoid SSR issues — DOMPurify requires a browser DOM
     import("@/utilities/markdown").then(({ renderToHTML }) => {
-      setHtml(renderToHTML(markdownSource));
+      setHtml(renderToHTML(source));
     });
-  }, [markdownSource]);
+  }, [source]);
 
-  if (!markdownSource) return null;
+  if (!source) return null;
 
   if (!html) {
     return <div className="animate-pulse bg-gray-200 dark:bg-gray-700 rounded h-4 w-full" />;
@@ -62,14 +44,13 @@ export const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({
         className={cn("wmdeMarkdown", "wmde-markdown", styles.wmdeMarkdown, className)}
         style={{
           backgroundColor: "transparent",
-          color: resolvedTheme === "dark" ? "white" : "rgb(36, 41, 47)",
+          color: "currentColor",
           width: "100%",
           maxWidth: "100%",
-          ...style,
         }}
         // biome-ignore lint/security/noDangerouslySetInnerHtml: content is sanitized by DOMPurify in renderToHTML
         dangerouslySetInnerHTML={{ __html: html }}
       />
     </div>
   );
-};
+}

@@ -1,17 +1,30 @@
 "use client";
-import "@uiw/react-md-editor/markdown-editor.css";
-import "@uiw/react-markdown-preview/markdown.css";
 
+import {
+  defaultValueCtx,
+  Editor,
+  editorViewOptionsCtx,
+  prosePluginsCtx,
+  rootAttrsCtx,
+  serializerCtx,
+} from "@milkdown/core";
+import { clipboard } from "@milkdown/plugin-clipboard";
+import { history } from "@milkdown/plugin-history";
+import { commonmark } from "@milkdown/preset-commonmark";
+import { Milkdown, MilkdownProvider, useEditor } from "@milkdown/react";
+import { nord } from "@milkdown/theme-nord";
+import "@milkdown/theme-nord/lib/style.css";
+import { Plugin, PluginKey } from "@milkdown/prose/state";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
-import dynamic from "next/dynamic";
 import { useTheme } from "next-themes";
-import { type FC, useCallback, useEffect, useMemo, useState } from "react";
-import rehypeSanitize from "rehype-sanitize";
+import { type FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/utilities/tailwind";
 
 // Constants for content validation and performance
 const DEFAULT_MAX_LENGTH = 50000; // 50KB max to prevent performance issues
 const WARNING_THRESHOLD = 0.9; // Show warning at 90% of max length
+
+const MILKDOWN_CHANGE_KEY = new PluginKey("MILKDOWN_CHANGE_TRACKER");
 
 interface MarkdownEditorProps {
   value?: string;
@@ -40,19 +53,9 @@ interface MarkdownEditorProps {
   enablePreviewToggle?: boolean;
 }
 
-const MDEditor = dynamic(() => import("@uiw/react-md-editor").then((mod) => mod.default), {
-  ssr: false,
-  loading: () => (
-    <div className="flex items-center justify-center h-[300px] border border-gray-200 dark:border-gray-700 rounded-lg">
-      <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-      <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">Loading editor...</span>
-    </div>
-  ),
-});
-
 /**
  * Validates markdown content for potentially dangerous patterns
- * Note: rehype-sanitize handles most XSS, this adds extra validation
+ * Note: Milkdown sanitizes content, this adds extra validation
  */
 function validateMarkdownContent(content: string): { isValid: boolean; warnings: string[] } {
   const warnings: string[] = [];
@@ -75,6 +78,126 @@ function validateMarkdownContent(content: string): { isValid: boolean; warnings:
   return { isValid: true, warnings };
 }
 
+interface MilkdownEditorInnerProps {
+  value: string;
+  onChange?: (value: string) => void;
+  onBlur?: () => void;
+  isDisabled: boolean;
+  height: number;
+  minHeight: number;
+  maxLength: number;
+  className?: string;
+}
+
+function MilkdownEditorInner({
+  value,
+  onChange,
+  onBlur,
+  isDisabled,
+  height,
+  minHeight,
+  maxLength,
+  className,
+}: MilkdownEditorInnerProps) {
+  const onChangeRef = useRef(onChange);
+  const onBlurRef = useRef(onBlur);
+  const maxLengthRef = useRef(maxLength);
+  // Store a reference to the editor ctx so the ProseMirror plugin can access it
+  const ctxRef = useRef<ReturnType<Editor["ctx"]["get"]> | null>(null);
+
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
+  useEffect(() => {
+    onBlurRef.current = onBlur;
+  }, [onBlur]);
+
+  useEffect(() => {
+    maxLengthRef.current = maxLength;
+  }, [maxLength]);
+
+  const { loading } = useEditor((_root) => {
+    // ProseMirror plugin that fires onChange whenever the document changes
+    const changePlugin = new Plugin({
+      key: MILKDOWN_CHANGE_KEY,
+      view() {
+        return {
+          update(view, prevState) {
+            if (view.state.doc.eq(prevState.doc)) return;
+            try {
+              const ctx = ctxRef.current as unknown as {
+                get: <T>(slice: { readonly name: string }) => T;
+              } | null;
+              if (!ctx) return;
+              const serializer = ctx.get(serializerCtx);
+              const markdown = serializer(view.state.doc);
+              const limited =
+                markdown.length > maxLengthRef.current
+                  ? markdown.slice(0, maxLengthRef.current)
+                  : markdown;
+              onChangeRef.current?.(limited);
+            } catch {
+              // Editor ctx not ready or serializer unavailable
+            }
+          },
+          destroy() {},
+        };
+      },
+    });
+
+    const editor = Editor.make()
+      .config(nord)
+      .config((ctx) => {
+        // Capture ctx reference for use in the ProseMirror plugin
+        ctxRef.current = ctx as unknown as ReturnType<Editor["ctx"]["get"]>;
+        ctx.set(defaultValueCtx, value);
+        ctx.set(rootAttrsCtx, {
+          "data-milkdown-editor": "true",
+          ...(isDisabled ? { contenteditable: "false" } : {}),
+        });
+        ctx.set(editorViewOptionsCtx, {
+          editable: () => !isDisabled,
+          handleDOMEvents: {
+            blur: () => {
+              onBlurRef.current?.();
+              return false;
+            },
+          },
+        });
+        const existingPlugins = ctx.get(prosePluginsCtx);
+        ctx.set(prosePluginsCtx, [...existingPlugins, changePlugin]);
+      })
+      .use(commonmark)
+      .use(history)
+      .use(clipboard);
+
+    return editor;
+  });
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center" style={{ minHeight }}>
+        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+        <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">Loading editor...</span>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={cn(
+        "milkdown-editor-content w-full",
+        isDisabled && "opacity-50 cursor-not-allowed pointer-events-none",
+        className
+      )}
+      style={{ minHeight, height: height > minHeight ? height : undefined }}
+    >
+      <Milkdown />
+    </div>
+  );
+}
+
 export const MarkdownEditor: FC<MarkdownEditorProps> = ({
   value = "",
   onChange,
@@ -84,13 +207,13 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
   description,
   isRequired = false,
   isDisabled = false,
-  placeholder,
-  placeholderText, // Legacy prop
+  placeholder: _placeholder,
+  placeholderText: _placeholderText,
   className = "",
   height = 300,
   minHeight = 270,
   disabled, // Legacy prop
-  overflow = false,
+  overflow: _overflow = false,
   id,
   "data-field-id": dataFieldId,
   "aria-describedby": ariaDescribedBy,
@@ -100,8 +223,9 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
 }) => {
   const { theme: currentTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-  const [previewMode, setPreviewMode] = useState<"edit" | "live" | "preview">("edit");
+  const [showPreview, setShowPreview] = useState(false);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+  const [previewHtml, setPreviewHtml] = useState("");
 
   // Ensure client-side only rendering to prevent hydration mismatches
   useEffect(() => {
@@ -110,8 +234,6 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
 
   // Use disabled prop if provided, otherwise use isDisabled
   const isEditorDisabled = disabled !== undefined ? disabled : isDisabled;
-  // Use placeholderText if provided, otherwise use placeholder
-  const editorPlaceholder = placeholderText || placeholder || "";
 
   // Calculate character count info
   const characterInfo = useMemo(() => {
@@ -125,31 +247,17 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
   // Validate content
   const contentValidation = useMemo(() => validateMarkdownContent(value || ""), [value]);
 
-  // Handle onChange with length limit
-  const handleChange = useCallback(
-    (val?: string) => {
-      const newValue = val || "";
-      // Enforce max length
-      if (newValue.length > maxLength) {
-        onChange?.(newValue.slice(0, maxLength));
-      } else {
-        onChange?.(newValue);
-      }
-    },
-    [onChange, maxLength]
-  );
-
   // Handle preview mode toggle with loading state
   const handlePreviewToggle = useCallback(() => {
-    if (previewMode === "edit") {
+    if (!showPreview) {
       setIsPreviewLoading(true);
-      setPreviewMode("preview");
-      // Simulate brief loading for large content
-      setTimeout(() => setIsPreviewLoading(false), 100);
-    } else {
-      setPreviewMode("edit");
+      import("@/utilities/markdown").then(({ renderToHTML }) => {
+        setPreviewHtml(renderToHTML(value || ""));
+        setIsPreviewLoading(false);
+      });
     }
-  }, [previewMode]);
+    setShowPreview((prev) => !prev);
+  }, [showPreview, value]);
 
   if (!mounted) {
     return (
@@ -164,7 +272,7 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full" id={id} data-field-id={dataFieldId} aria-describedby={ariaDescribedBy}>
       {/* Header with label and preview toggle */}
       <div className="flex items-center justify-between mb-2">
         {label && (
@@ -177,16 +285,16 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
             type="button"
             onClick={handlePreviewToggle}
             className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
-            aria-label={previewMode === "edit" ? "Show preview" : "Show editor"}
+            aria-label={showPreview ? "Show editor" : "Show preview"}
           >
             {isPreviewLoading ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            ) : previewMode === "edit" ? (
-              <Eye className="w-3.5 h-3.5" />
-            ) : (
+            ) : showPreview ? (
               <EyeOff className="w-3.5 h-3.5" />
+            ) : (
+              <Eye className="w-3.5 h-3.5" />
             )}
-            <span>{previewMode === "edit" ? "Preview" : "Edit"}</span>
+            <span>{showPreview ? "Edit" : "Preview"}</span>
           </button>
         )}
       </div>
@@ -199,6 +307,7 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
       {contentValidation.warnings.length > 0 && (
         <div className="mb-2 p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded text-xs text-yellow-700 dark:text-yellow-400">
           {contentValidation.warnings.map((warning, idx) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: static list
             <p key={idx}>{warning}</p>
           ))}
         </div>
@@ -208,37 +317,30 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
         data-color-mode={currentTheme === "dark" ? "dark" : "light"}
         className={cn(
           "w-full rounded-lg border overflow-hidden markdown-editor-wrapper",
-          error ? "border-red-500 dark:border-red-500" : "border-gray-200 dark:border-gray-700"
+          error ? "border-red-500 dark:border-red-500" : "border-gray-200 dark:border-gray-700",
+          currentTheme === "dark" ? "milkdown-dark" : "milkdown-light"
         )}
       >
-        <MDEditor
-          className={cn(
-            "flex-1 bg-white dark:bg-zinc-900 dark:text-white text-black",
-            error && "border-red-500 dark:border-red-500",
-            isEditorDisabled && "opacity-50 cursor-not-allowed",
-            className
-          )}
-          value={value}
-          onChange={handleChange}
-          onBlur={onBlur}
-          height={height}
-          minHeight={minHeight}
-          preview={previewMode}
-          previewOptions={{
-            rehypePlugins: [[rehypeSanitize]],
-          }}
-          overflow={overflow}
-          textareaProps={{
-            placeholder: editorPlaceholder,
-            spellCheck: true,
-            style: { height: "100%", minHeight: "100%", paddingRight: "0.5rem" },
-            disabled: isEditorDisabled,
-            id,
-            maxLength,
-            "aria-describedby": ariaDescribedBy,
-          }}
-          highlightEnable={false}
-        />
+        {showPreview ? (
+          <MarkdownPreviewPane html={previewHtml} minHeight={minHeight} />
+        ) : (
+          <MilkdownProvider>
+            <MilkdownEditorInner
+              value={value}
+              onChange={onChange}
+              onBlur={onBlur}
+              isDisabled={isEditorDisabled}
+              height={height}
+              minHeight={minHeight}
+              maxLength={maxLength}
+              className={cn(
+                "flex-1 bg-white dark:bg-zinc-900 dark:text-white text-black",
+                error && "border-red-500 dark:border-red-500",
+                className
+              )}
+            />
+          </MilkdownProvider>
+        )}
       </div>
 
       {/* Footer with error and character count */}
@@ -247,20 +349,46 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
           {error && <p className="text-sm text-red-400 dark:text-red-400">{error}</p>}
         </div>
         {showCharacterCount && (
-          <p
-            className={cn(
-              "text-xs text-right whitespace-nowrap",
-              characterInfo.isAtLimit
-                ? "text-red-500 dark:text-red-400 font-medium"
-                : characterInfo.isNearLimit
-                  ? "text-yellow-600 dark:text-yellow-400"
-                  : "text-gray-500 dark:text-gray-400"
-            )}
-          >
-            {characterInfo.length.toLocaleString()}/{maxLength.toLocaleString()}
-          </p>
+          <CharacterCount characterInfo={characterInfo} maxLength={maxLength} />
         )}
       </div>
     </div>
   );
 };
+
+interface CharCountProps {
+  characterInfo: { length: number; isAtLimit: boolean; isNearLimit: boolean };
+  maxLength: number;
+}
+
+function CharacterCount({ characterInfo, maxLength }: CharCountProps) {
+  return (
+    <p
+      className={cn(
+        "text-xs text-right whitespace-nowrap",
+        characterInfo.isAtLimit
+          ? "text-red-500 dark:text-red-400 font-medium"
+          : characterInfo.isNearLimit
+            ? "text-yellow-600 dark:text-yellow-400"
+            : "text-gray-500 dark:text-gray-400"
+      )}
+    >
+      {characterInfo.length.toLocaleString()}/{maxLength.toLocaleString()}
+    </p>
+  );
+}
+
+/**
+ * Safe preview pane that renders sanitized HTML.
+ * Content is sanitized by DOMPurify inside renderToHTML before being set as innerHTML.
+ */
+function MarkdownPreviewPane({ html, minHeight }: { html: string; minHeight: number }) {
+  return (
+    <div
+      className="px-4 py-3 prose prose-sm max-w-none dark:prose-invert"
+      style={{ minHeight }}
+      // biome-ignore lint/security/noDangerouslySetInnerHtml: content is sanitized by DOMPurify in renderToHTML
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  );
+}
