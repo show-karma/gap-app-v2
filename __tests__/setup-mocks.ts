@@ -11,7 +11,37 @@
  *   - @/utilities/enviromentVars  (was in 26+ files with identical shape)
  *   - @/components/Utilities/errorManager  (was in 31 files)
  *   - react-hot-toast  (was in 29 files)
+ *   - next/navigation  (used by components that call useRouter/usePathname)
  */
+
+// ---------------------------------------------------------------------------
+// next/navigation
+// Provides mock router, pathname, search params for Next.js App Router.
+// Individual test files can override with their own vi.mock() call.
+// ---------------------------------------------------------------------------
+vi.mock("next/navigation", () => ({
+  useRouter: vi.fn(() => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    prefetch: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn(),
+    refresh: vi.fn(),
+    pathname: "/",
+  })),
+  usePathname: vi.fn(() => "/"),
+  useSearchParams: vi.fn(() => ({
+    get: vi.fn(),
+    getAll: vi.fn(() => []),
+    has: vi.fn(() => false),
+    toString: vi.fn(() => ""),
+  })),
+  useParams: vi.fn(() => ({})),
+  useSelectedLayoutSegment: vi.fn(() => null),
+  useSelectedLayoutSegments: vi.fn(() => []),
+  notFound: vi.fn(),
+  redirect: vi.fn(),
+}));
 
 // ---------------------------------------------------------------------------
 // @/utilities/enviromentVars

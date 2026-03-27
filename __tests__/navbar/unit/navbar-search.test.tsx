@@ -13,12 +13,8 @@ import {
   mixedResults,
   projectsOnlyResults,
 } from "../fixtures/search-fixtures";
+import { mockSearchFunction as mockUnifiedSearch } from "../setup";
 import { renderWithProviders } from "../utils/test-helpers";
-
-// Mock unified search service
-vi.mock("@/services/unified-search.service", () => ({
-  unifiedSearch: vi.fn(),
-}));
 
 // Helper to flush timers and promises
 const _flushTimersAndPromises = async () => {
@@ -150,7 +146,7 @@ describe("NavbarSearch", () => {
 
   describe("Debouncing Tests", () => {
     beforeEach(() => {
-      vi.useFakeTimers();
+      vi.useFakeTimers({ shouldAdvanceTime: true });
     });
 
     afterEach(() => {
@@ -158,8 +154,7 @@ describe("NavbarSearch", () => {
     });
 
     it("search triggers after 500ms delay", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(mixedResults);
+      mockUnifiedSearch.mockResolvedValue(mixedResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -167,7 +162,7 @@ describe("NavbarSearch", () => {
       fireEvent.change(searchInput, { target: { value: "project" } });
 
       // Should not call immediately
-      expect(unifiedSearch).not.toHaveBeenCalled();
+      expect(mockUnifiedSearch).not.toHaveBeenCalled();
 
       // Advance timers by 500ms
       act(() => {
@@ -176,13 +171,12 @@ describe("NavbarSearch", () => {
 
       // Should call after debounce
       await waitFor(() => {
-        expect(unifiedSearch).toHaveBeenCalledWith("project");
+        expect(mockUnifiedSearch).toHaveBeenCalledWith("project");
       });
     });
 
     it("multiple rapid keystrokes result in single API call", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(mixedResults);
+      mockUnifiedSearch.mockResolvedValue(mixedResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -194,7 +188,7 @@ describe("NavbarSearch", () => {
       fireEvent.change(searchInput, { target: { value: "project" } });
 
       // Verify no calls have been made yet (still in debounce window)
-      expect(unifiedSearch).not.toHaveBeenCalled();
+      expect(mockUnifiedSearch).not.toHaveBeenCalled();
 
       // Advance to complete debounce (500ms)
       act(() => {
@@ -203,17 +197,16 @@ describe("NavbarSearch", () => {
 
       // Wait for async operations to complete
       await waitFor(() => {
-        expect(unifiedSearch).toHaveBeenCalled();
+        expect(mockUnifiedSearch).toHaveBeenCalled();
       });
 
       // Should only call once with final value
-      expect(unifiedSearch).toHaveBeenCalledTimes(1);
-      expect(unifiedSearch).toHaveBeenCalledWith("project");
+      expect(mockUnifiedSearch).toHaveBeenCalledTimes(1);
+      expect(mockUnifiedSearch).toHaveBeenCalledWith("project");
     });
 
     it("debounce timer resets on each keystroke", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(mixedResults);
+      mockUnifiedSearch.mockResolvedValue(mixedResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -223,14 +216,14 @@ describe("NavbarSearch", () => {
       act(() => vi.advanceTimersByTime(400)); // Not enough to trigger (need 500ms)
 
       // No call should have been made yet
-      expect(unifiedSearch).not.toHaveBeenCalled();
+      expect(mockUnifiedSearch).not.toHaveBeenCalled();
 
       // Type again - this resets the timer
       fireEvent.change(searchInput, { target: { value: "testing" } });
       act(() => vi.advanceTimersByTime(400)); // Again, not enough
 
       // Still no call
-      expect(unifiedSearch).not.toHaveBeenCalled();
+      expect(mockUnifiedSearch).not.toHaveBeenCalled();
 
       // Now complete the debounce from the last keystroke
       act(() => {
@@ -239,17 +232,16 @@ describe("NavbarSearch", () => {
 
       // Wait for async operation
       await waitFor(() => {
-        expect(unifiedSearch).toHaveBeenCalled();
+        expect(mockUnifiedSearch).toHaveBeenCalled();
       });
 
       // Should only call once with final value
-      expect(unifiedSearch).toHaveBeenCalledTimes(1);
-      expect(unifiedSearch).toHaveBeenCalledWith("testing");
+      expect(mockUnifiedSearch).toHaveBeenCalledTimes(1);
+      expect(mockUnifiedSearch).toHaveBeenCalledWith("testing");
     });
 
     it("search executes after typing stops", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(projectsOnlyResults);
+      mockUnifiedSearch.mockResolvedValue(projectsOnlyResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -257,7 +249,7 @@ describe("NavbarSearch", () => {
       fireEvent.change(searchInput, { target: { value: "awesome" } });
 
       // Immediately after typing
-      expect(unifiedSearch).not.toHaveBeenCalled();
+      expect(mockUnifiedSearch).not.toHaveBeenCalled();
 
       // After debounce delay
       act(() => {
@@ -265,19 +257,18 @@ describe("NavbarSearch", () => {
       });
 
       await waitFor(() => {
-        expect(unifiedSearch).toHaveBeenCalledWith("awesome");
+        expect(mockUnifiedSearch).toHaveBeenCalledWith("awesome");
       });
     });
   });
 
   describe("Minimum Character Tests", () => {
     beforeEach(() => {
-      vi.useFakeTimers();
+      vi.useFakeTimers({ shouldAdvanceTime: true });
     });
 
     it("less than 3 characters: no API call", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(mixedResults);
+      mockUnifiedSearch.mockResolvedValue(mixedResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -285,12 +276,11 @@ describe("NavbarSearch", () => {
       fireEvent.change(searchInput, { target: { value: "ab" } });
       act(() => vi.advanceTimersByTime(500));
 
-      expect(unifiedSearch).not.toHaveBeenCalled();
+      expect(mockUnifiedSearch).not.toHaveBeenCalled();
     });
 
     it("exactly 3 characters: triggers search", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(projectsOnlyResults);
+      mockUnifiedSearch.mockResolvedValue(projectsOnlyResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -299,13 +289,12 @@ describe("NavbarSearch", () => {
       act(() => vi.advanceTimersByTime(500));
 
       await waitFor(() => {
-        expect(unifiedSearch).toHaveBeenCalledWith("pro");
+        expect(mockUnifiedSearch).toHaveBeenCalledWith("pro");
       });
     });
 
     it("more than 3 characters: continues searching", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(mixedResults);
+      mockUnifiedSearch.mockResolvedValue(mixedResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -314,13 +303,12 @@ describe("NavbarSearch", () => {
       act(() => vi.advanceTimersByTime(500));
 
       await waitFor(() => {
-        expect(unifiedSearch).toHaveBeenCalledWith("project");
+        expect(mockUnifiedSearch).toHaveBeenCalledWith("project");
       });
     });
 
     it("results clear when below 3 characters", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(projectsOnlyResults);
+      mockUnifiedSearch.mockResolvedValue(projectsOnlyResults);
 
       // Use real timers for this test since it involves async state updates
       vi.useRealTimers();
@@ -333,13 +321,13 @@ describe("NavbarSearch", () => {
 
       await waitFor(
         () => {
-          expect(unifiedSearch).toHaveBeenCalled();
+          expect(mockUnifiedSearch).toHaveBeenCalled();
         },
         { timeout: 1000 }
       );
 
       // Then reduce to less than 3 characters
-      unifiedSearch.mockClear();
+      mockUnifiedSearch.mockClear();
       fireEvent.change(searchInput, { target: { value: "te" } });
 
       // Wait for any potential debounce (there shouldn't be an API call)
@@ -348,21 +336,20 @@ describe("NavbarSearch", () => {
       });
 
       // Should not trigger new search
-      expect(unifiedSearch).not.toHaveBeenCalled();
+      expect(mockUnifiedSearch).not.toHaveBeenCalled();
 
       // Restore fake timers for other tests
-      vi.useFakeTimers();
+      vi.useFakeTimers({ shouldAdvanceTime: true });
     });
   });
 
   describe("Loading State Tests", () => {
     beforeEach(() => {
-      vi.useFakeTimers();
+      vi.useFakeTimers({ shouldAdvanceTime: true });
     });
 
     it("loading spinner shows during API call", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockImplementation(
+      mockUnifiedSearch.mockImplementation(
         () => new Promise((resolve) => setTimeout(() => resolve(mixedResults), 1000))
       );
 
@@ -380,8 +367,7 @@ describe("NavbarSearch", () => {
     });
 
     it("dropdown opens with spinner", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockImplementation(
+      mockUnifiedSearch.mockImplementation(
         () => new Promise((resolve) => setTimeout(() => resolve(mixedResults), 1000))
       );
 
@@ -398,8 +384,7 @@ describe("NavbarSearch", () => {
     });
 
     it("spinner disappears when results arrive", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(projectsOnlyResults);
+      mockUnifiedSearch.mockResolvedValue(projectsOnlyResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -418,8 +403,7 @@ describe("NavbarSearch", () => {
   describe("API Integration Tests", () => {
     // Don't use fake timers for these tests - they need real async behavior
     it("successful search response displays results", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(projectsOnlyResults);
+      mockUnifiedSearch.mockResolvedValue(projectsOnlyResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -430,7 +414,7 @@ describe("NavbarSearch", () => {
       // First verify the API gets called
       await waitFor(
         () => {
-          expect(unifiedSearch).toHaveBeenCalledWith("awesome");
+          expect(mockUnifiedSearch).toHaveBeenCalledWith("awesome");
         },
         { timeout: 1000 }
       );
@@ -445,8 +429,7 @@ describe("NavbarSearch", () => {
     });
 
     it("empty results show 'No results found' message", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(emptySearchResults);
+      mockUnifiedSearch.mockResolvedValue(emptySearchResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -462,8 +445,7 @@ describe("NavbarSearch", () => {
     });
 
     it("API error shows error state (no crash)", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockRejectedValue(new Error("API Error"));
+      mockUnifiedSearch.mockRejectedValue(new Error("API Error"));
 
       const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
@@ -484,8 +466,7 @@ describe("NavbarSearch", () => {
     });
 
     it("shows 'No results found' message when API fails", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockRejectedValue(new Error("API Error"));
+      mockUnifiedSearch.mockRejectedValue(new Error("API Error"));
 
       const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
@@ -509,9 +490,8 @@ describe("NavbarSearch", () => {
     });
 
     it("shows loading spinner during API call", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
       // Delay the response to see loading state
-      unifiedSearch.mockImplementation(
+      mockUnifiedSearch.mockImplementation(
         () =>
           new Promise((resolve) =>
             setTimeout(() => resolve({ projects: [], communities: [] }), 100)
@@ -532,8 +512,7 @@ describe("NavbarSearch", () => {
     });
 
     it("loading spinner is accessible", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockImplementation(
+      mockUnifiedSearch.mockImplementation(
         () =>
           new Promise((resolve) =>
             setTimeout(() => resolve({ projects: [], communities: [] }), 100)
@@ -555,8 +534,7 @@ describe("NavbarSearch", () => {
     });
 
     it("network timeout handled gracefully", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockImplementation(
+      mockUnifiedSearch.mockImplementation(
         () => new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 100))
       );
 
@@ -585,14 +563,13 @@ describe("NavbarSearch", () => {
     });
 
     it("recovers from error and shows results on successful retry", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
       const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       // First search - error
-      unifiedSearch.mockRejectedValueOnce(new Error("API Error"));
+      mockUnifiedSearch.mockRejectedValueOnce(new Error("API Error"));
       fireEvent.change(searchInput, { target: { value: "error" } });
       act(() => vi.advanceTimersByTime(500));
 
@@ -604,7 +581,7 @@ describe("NavbarSearch", () => {
       fireEvent.change(searchInput, { target: { value: "" } });
       act(() => vi.advanceTimersByTime(100));
 
-      unifiedSearch.mockResolvedValueOnce(projectsOnlyResults);
+      mockUnifiedSearch.mockResolvedValueOnce(projectsOnlyResults);
       fireEvent.change(searchInput, { target: { value: "test" } });
       act(() => vi.advanceTimersByTime(500));
 
@@ -620,12 +597,11 @@ describe("NavbarSearch", () => {
 
   describe("Results Display Tests", () => {
     beforeEach(() => {
-      vi.useFakeTimers();
+      vi.useFakeTimers({ shouldAdvanceTime: true });
     });
 
     it("project results render with correct data", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(projectsOnlyResults);
+      mockUnifiedSearch.mockResolvedValue(projectsOnlyResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -641,8 +617,7 @@ describe("NavbarSearch", () => {
     });
 
     it("community results render with 'Community' badge", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(communitiesOnlyResults);
+      mockUnifiedSearch.mockResolvedValue(communitiesOnlyResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -658,8 +633,7 @@ describe("NavbarSearch", () => {
     });
 
     it("mixed results show both types", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(mixedResults);
+      mockUnifiedSearch.mockResolvedValue(mixedResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -679,8 +653,7 @@ describe("NavbarSearch", () => {
     });
 
     it("results are scrollable when many", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(largeResultSet);
+      mockUnifiedSearch.mockResolvedValue(largeResultSet);
 
       const { container } = renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -697,12 +670,11 @@ describe("NavbarSearch", () => {
 
   describe("Results Interaction Tests", () => {
     beforeEach(() => {
-      vi.useFakeTimers();
+      vi.useFakeTimers({ shouldAdvanceTime: true });
     });
 
     it("clicking result closes dropdown", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(projectsOnlyResults);
+      mockUnifiedSearch.mockResolvedValue(projectsOnlyResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -722,8 +694,7 @@ describe("NavbarSearch", () => {
     });
 
     it("search value clears after selection", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(projectsOnlyResults);
+      mockUnifiedSearch.mockResolvedValue(projectsOnlyResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(
@@ -742,8 +713,7 @@ describe("NavbarSearch", () => {
     });
 
     it("onSelectItem callback is called when clicking a result", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(projectsOnlyResults);
+      mockUnifiedSearch.mockResolvedValue(projectsOnlyResults);
 
       const onSelectItemMock = vi.fn();
 
@@ -766,8 +736,7 @@ describe("NavbarSearch", () => {
     });
 
     it("onSelectItem callback is called when clicking a community result", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(communitiesOnlyResults);
+      mockUnifiedSearch.mockResolvedValue(communitiesOnlyResults);
 
       const onSelectItemMock = vi.fn();
 
@@ -790,8 +759,7 @@ describe("NavbarSearch", () => {
     });
 
     it("works without onSelectItem callback (optional prop)", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(projectsOnlyResults);
+      mockUnifiedSearch.mockResolvedValue(projectsOnlyResults);
 
       // Render without onSelectItem prop
       renderWithProviders(<NavbarSearch />);
@@ -817,12 +785,11 @@ describe("NavbarSearch", () => {
 
   describe("Dropdown Management Tests", () => {
     beforeEach(() => {
-      vi.useFakeTimers();
+      vi.useFakeTimers({ shouldAdvanceTime: true });
     });
 
     it("dropdown opens when results available", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(projectsOnlyResults);
+      mockUnifiedSearch.mockResolvedValue(projectsOnlyResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -837,8 +804,7 @@ describe("NavbarSearch", () => {
     });
 
     it("dropdown stays open while typing", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(projectsOnlyResults);
+      mockUnifiedSearch.mockResolvedValue(projectsOnlyResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -858,8 +824,7 @@ describe("NavbarSearch", () => {
     });
 
     it("opens on focus if results exist", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(projectsOnlyResults);
+      mockUnifiedSearch.mockResolvedValue(projectsOnlyResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -895,12 +860,11 @@ describe("NavbarSearch", () => {
 
   describe("Click Outside Tests", () => {
     beforeEach(() => {
-      vi.useFakeTimers();
+      vi.useFakeTimers({ shouldAdvanceTime: true });
     });
 
     it("click outside closes dropdown", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(projectsOnlyResults);
+      mockUnifiedSearch.mockResolvedValue(projectsOnlyResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -921,8 +885,7 @@ describe("NavbarSearch", () => {
     });
 
     it("click on search input doesn't close dropdown", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(projectsOnlyResults);
+      mockUnifiedSearch.mockResolvedValue(projectsOnlyResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -951,13 +914,12 @@ describe("NavbarSearch", () => {
     });
 
     it("results are keyboard navigable", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(projectsOnlyResults);
+      mockUnifiedSearch.mockResolvedValue(projectsOnlyResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
-      vi.useFakeTimers();
+      vi.useFakeTimers({ shouldAdvanceTime: true });
       fireEvent.change(searchInput, { target: { value: "test" } });
       act(() => vi.advanceTimersByTime(500));
       vi.useRealTimers();
