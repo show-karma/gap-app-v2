@@ -2,6 +2,7 @@
 
 import { code } from "@streamdown/code";
 import type { MarkdownPreviewProps } from "@uiw/react-markdown-preview";
+import { useTheme } from "next-themes";
 import { type Components, Streamdown } from "streamdown";
 import "streamdown/styles.css";
 import styles from "@/styles/markdown.module.css";
@@ -27,6 +28,8 @@ export const MarkdownPreview = ({
   allowElement,
   components,
 }: MarkdownPreviewProps) => {
+  const { resolvedTheme } = useTheme();
+
   if (!source) return null;
 
   const mergedComponents: Components = {
@@ -40,7 +43,10 @@ export const MarkdownPreview = ({
   };
 
   return (
-    <div className="preview w-full max-w-full">
+    <div
+      className="preview w-full max-w-full text-foreground"
+      data-color-mode={resolvedTheme === "dark" ? "dark" : "light"}
+    >
       <Streamdown
         mode="static"
         plugins={{ code }}

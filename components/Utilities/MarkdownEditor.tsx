@@ -64,10 +64,7 @@ const StreamdownPreview = ({
   className?: string;
 }) => (
   <div
-    className={cn(
-      "w-full overflow-auto p-4 bg-white dark:bg-zinc-900 text-black dark:text-white",
-      className
-    )}
+    className={cn("w-full overflow-auto p-4 bg-white dark:bg-zinc-900 text-foreground", className)}
     style={{ minHeight: height }}
   >
     <Streamdown

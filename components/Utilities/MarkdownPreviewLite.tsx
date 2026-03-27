@@ -1,5 +1,6 @@
 "use client";
 
+import { useTheme } from "next-themes";
 import { Streamdown } from "streamdown";
 import "streamdown/styles.css";
 import styles from "@/styles/markdown.module.css";
@@ -18,10 +19,15 @@ interface MarkdownPreviewLiteProps {
  * Renders synchronously — no async state updates needed.
  */
 export function MarkdownPreviewLite({ source, className }: MarkdownPreviewLiteProps) {
+  const { resolvedTheme } = useTheme();
+
   if (!source) return null;
 
   return (
-    <div className="preview w-full max-w-full">
+    <div
+      className="preview w-full max-w-full text-foreground"
+      data-color-mode={resolvedTheme === "dark" ? "dark" : "light"}
+    >
       <Streamdown
         mode="static"
         className={cn("wmdeMarkdown", "wmde-markdown", styles.wmdeMarkdown, className)}

@@ -1,7 +1,8 @@
 .wmdeMarkdown,
 .wmde-markdown {
-  --color-fg-default: inherit;
-  --color-fg-muted: inherit;
+  --color-fg-default: currentColor;
+  --color-fg-muted: currentColor;
+  color: inherit;
   @apply bg-transparent;
 
   @apply whitespace-pre-wrap;
