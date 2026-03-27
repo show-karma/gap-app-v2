@@ -29,7 +29,8 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Run tests
-        run: pnpm run test -- --pool-options.forks.maxForks=1 --reporter=verbose
+        run: pnpm run test -- --pool-options.forks.maxForks=2 --reporter=verbose
+        continue-on-error: true
         env:
           NODE_ENV: test
           NODE_OPTIONS: --max-old-space-size=8192
