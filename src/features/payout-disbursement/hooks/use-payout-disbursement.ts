@@ -537,15 +537,6 @@ export function useToggleAgreement(
 }
 
 /**
- * Hook for getting a temporary download URL for an invoice file
- */
-export function useInvoiceDownloadUrl() {
-  return useMutation<string, Error, string>({
-    mutationFn: (fileKey) => payoutService.getInvoiceDownloadUrl(fileKey),
-  });
-}
-
-/**
  * Hook for batch saving milestone invoices
  */
 export function useSaveMilestoneInvoices(

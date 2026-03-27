@@ -19,9 +19,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import {
   type CommunityPayoutInvoiceInfo,
   formatDisplayAmount,
+  getInvoiceDownloadUrl,
   MilestoneLifecycleStatus,
   type MilestonePaymentStatus,
-  useInvoiceDownloadUrl,
 } from "@/src/features/payout-disbursement";
 import { formatAddressForDisplay } from "@/utilities/donations/helpers";
 import { formatDate } from "@/utilities/formatDate";
@@ -181,19 +181,14 @@ export const MilestonesSection = memo(function MilestonesSection({
     milestoneUID: string | null;
   } | null>(null);
 
-  const downloadUrlMutation = useInvoiceDownloadUrl();
-
-  const handleViewFile = useCallback(
-    async (fileKey: string) => {
-      try {
-        const downloadUrl = await downloadUrlMutation.mutateAsync(fileKey);
-        window.open(downloadUrl, "_blank", "noopener,noreferrer");
-      } catch {
-        toast.error("Failed to get download link");
-      }
-    },
-    [downloadUrlMutation]
-  );
+  const handleViewFile = useCallback(async (fileKey: string) => {
+    try {
+      const downloadUrl = await getInvoiceDownloadUrl(fileKey);
+      window.open(downloadUrl, "_blank", "noopener,noreferrer");
+    } catch {
+      toast.error("Failed to get download link");
+    }
+  }, []);
 
   const handleFileUploaded = useCallback(
     (_finalUrl: string, tempKey: string) => {
