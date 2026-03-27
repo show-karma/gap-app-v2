@@ -410,7 +410,15 @@ export const MilestonesSection = memo(function MilestonesSection({
                                   className="p-0.5 rounded text-red-400 hover:text-red-600 dark:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                                   onClick={() => {
                                     onFileRemoved(mKey);
-                                    handleInvoiceReceivedDateChange(mKey, invoice.milestoneUID, "");
+                                    if (invoice.invoiceFileKey) {
+                                      // Removing a saved file — clear the date too
+                                      handleInvoiceReceivedDateChange(
+                                        mKey,
+                                        invoice.milestoneUID,
+                                        ""
+                                      );
+                                    }
+                                    // Cancelling a pending upload — leave existing date intact
                                   }}
                                   title="Remove invoice file"
                                 >
