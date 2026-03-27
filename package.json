@@ -121,6 +121,7 @@
     "lodash.groupby": "^4.6.0",
     "lucide-react": "^0.548.0",
     "markdown-it": "^14.1.0",
+    "md-editor-rt": "^6.4.1",
     "millify": "^6.1.0",
     "mixpanel-browser": "^2.49.0",
     "nanoid": "^5.1.6",

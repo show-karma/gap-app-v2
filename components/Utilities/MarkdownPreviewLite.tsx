@@ -1,7 +1,7 @@
 "use client";
 
 import { useTheme } from "next-themes";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import styles from "@/styles/markdown.module.css";
 import { cn } from "@/utilities/tailwind";
 
