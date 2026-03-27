@@ -31,7 +31,7 @@ describe("Funders Page Accessibility", () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("should have no accessibility violations on the complete page", async () => {

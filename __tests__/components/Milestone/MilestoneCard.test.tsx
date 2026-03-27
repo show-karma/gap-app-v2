@@ -3,7 +3,7 @@ import { MilestoneCard } from "@/components/Milestone/MilestoneCard";
 import type { UnifiedMilestone } from "@/types/roadmap";
 
 // Mock Next.js dynamic imports
-jest.mock("next/dynamic", () => ({
+vi.mock("next/dynamic", () => ({
   __esModule: true,
   default: (_fn: any) => {
     const Component = (props: any) => {
@@ -18,7 +18,7 @@ jest.mock("next/dynamic", () => ({
 }));
 
 // Mock Next.js Image component
-jest.mock("next/image", () => ({
+vi.mock("next/image", () => ({
   __esModule: true,
   default: ({ src, alt, width, height }: any) => (
     <img src={src} alt={alt} width={width} height={height} />
@@ -26,7 +26,7 @@ jest.mock("next/image", () => ({
 }));
 
 // Mock ENS components
-jest.mock("@/components/EthereumAddressToENSAvatar", () => ({
+vi.mock("@/components/EthereumAddressToENSAvatar", () => ({
   __esModule: true,
   default: ({ address, className }: any) => (
     <div data-testid="ens-avatar" className={className}>
@@ -35,13 +35,13 @@ jest.mock("@/components/EthereumAddressToENSAvatar", () => ({
   ),
 }));
 
-jest.mock("@/components/EthereumAddressToENSName", () => ({
+vi.mock("@/components/EthereumAddressToENSName", () => ({
   __esModule: true,
   default: ({ address }: any) => <span data-testid="ens-name">{address}</span>,
 }));
 
 // Mock ReadMore utility
-jest.mock("@/utilities/ReadMore", () => ({
+vi.mock("@/utilities/ReadMore", () => ({
   ReadMore: ({ children, side }: any) => (
     <div data-testid="read-more" data-side={side}>
       {children}
@@ -50,7 +50,7 @@ jest.mock("@/utilities/ReadMore", () => ({
 }));
 
 // Mock ExternalLink component
-jest.mock("@/components/Utilities/ExternalLink", () => ({
+vi.mock("@/components/Utilities/ExternalLink", () => ({
   ExternalLink: ({ href, children, className }: any) => (
     <a href={href} className={className} target="_blank" rel="noopener noreferrer">
       {children}
@@ -59,8 +59,8 @@ jest.mock("@/components/Utilities/ExternalLink", () => ({
 }));
 
 // Mock useMilestoneImpactAnswers hook
-jest.mock("@/hooks/useMilestoneImpactAnswers", () => ({
-  useMilestoneImpactAnswers: jest.fn(() => ({
+vi.mock("@/hooks/useMilestoneImpactAnswers", () => ({
+  useMilestoneImpactAnswers: vi.fn(() => ({
     data: null,
     isLoading: false,
     error: null,
@@ -68,8 +68,8 @@ jest.mock("@/hooks/useMilestoneImpactAnswers", () => ({
 }));
 
 // Mock formatDate utility
-jest.mock("@/utilities/formatDate", () => ({
-  formatDate: jest.fn((timestamp: number) => {
+vi.mock("@/utilities/formatDate", () => ({
+  formatDate: vi.fn((timestamp: number) => {
     return new Date(timestamp).toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
@@ -79,7 +79,7 @@ jest.mock("@/utilities/formatDate", () => ({
 }));
 
 // Mock PAGES utility
-jest.mock("@/utilities/pages", () => ({
+vi.mock("@/utilities/pages", () => ({
   PAGES: {
     COMMUNITY: {
       ALL_GRANTS: (slug: string, programId: string) => `/community/${slug}/grants/${programId}`,
@@ -161,7 +161,7 @@ describe("MilestoneCard", () => {
   } as unknown as UnifiedMilestone;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("Rendering - Basic Elements", () => {

@@ -11,29 +11,29 @@ import { useCommunityStore } from "@/store/community";
 import { getCommunityStats } from "@/utilities/queries/v2/getCommunityData";
 
 // Mock hooks and services
-jest.mock("@/hooks/useImpactMeasurement");
-jest.mock("@/utilities/queries/v2/getCommunityData");
-jest.mock("@/store/community");
+vi.mock("@/hooks/useImpactMeasurement");
+vi.mock("@/utilities/queries/v2/getCommunityData");
+vi.mock("@/store/community");
 
 // Mock useQuery for CommunityStatCards
-jest.mock("@tanstack/react-query", () => ({
-  ...jest.requireActual("@tanstack/react-query"),
-  useQuery: jest.fn(),
+vi.mock("@tanstack/react-query", () => ({
+  ...vi.importActual("@tanstack/react-query"),
+  useQuery: vi.fn(),
 }));
 
-const mockUseQuery = useQuery as jest.MockedFunction<typeof useQuery>;
+const mockUseQuery = useQuery as vi.MockedFunction<typeof useQuery>;
 
 // Mock next/navigation
-jest.mock("next/navigation", () => ({
-  useParams: jest.fn(() => ({ communityId: "test-community" })),
-  usePathname: jest.fn(() => "/community/test-community"),
-  useSearchParams: jest.fn(() => ({
-    get: jest.fn((key: string) => null),
+vi.mock("next/navigation", () => ({
+  useParams: vi.fn(() => ({ communityId: "test-community" })),
+  usePathname: vi.fn(() => "/community/test-community"),
+  useSearchParams: vi.fn(() => ({
+    get: vi.fn((key: string) => null),
   })),
 }));
 
 // Mock Skeleton
-jest.mock("@/components/Utilities/Skeleton", () => ({
+vi.mock("@/components/Utilities/Skeleton", () => ({
   Skeleton: ({ className }: { className: string }) => (
     <div data-testid="skeleton" className={className}>
       Loading...
@@ -42,19 +42,19 @@ jest.mock("@/components/Utilities/Skeleton", () => ({
 }));
 
 // Mock InfoTooltip
-jest.mock("@/components/Utilities/InfoTooltip", () => ({
+vi.mock("@/components/Utilities/InfoTooltip", () => ({
   InfoTooltip: ({ content }: { content: ReactNode }) => (
     <div data-testid="info-tooltip">{content}</div>
   ),
 }));
 
-const mockUseImpactMeasurement = useImpactMeasurement as jest.MockedFunction<
+const mockUseImpactMeasurement = useImpactMeasurement as vi.MockedFunction<
   typeof useImpactMeasurement
 >;
 
-const mockGetCommunityStats = getCommunityStats as jest.MockedFunction<typeof getCommunityStats>;
+const mockGetCommunityStats = getCommunityStats as vi.MockedFunction<typeof getCommunityStats>;
 
-const mockUseCommunityStore = useCommunityStore as jest.MockedFunction<typeof useCommunityStore>;
+const mockUseCommunityStore = useCommunityStore as vi.MockedFunction<typeof useCommunityStore>;
 
 describe("StatCards", () => {
   let queryClient: QueryClient;
@@ -71,7 +71,7 @@ describe("StatCards", () => {
         },
       },
     });
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     // Default mock for community store
     mockUseCommunityStore.mockReturnValue({

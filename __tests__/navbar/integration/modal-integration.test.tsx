@@ -19,7 +19,7 @@ import {
 
 describe("Modal Integration Tests", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   afterEach(() => {
@@ -28,7 +28,7 @@ describe("Modal Integration Tests", () => {
   describe("1. Profile Modal from Desktop Menu", () => {
     it("should open profile modal when clicking Edit profile", async () => {
       const user = userEvent.setup();
-      const mockOpenModal = jest.fn();
+      const mockOpenModal = vi.fn();
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
@@ -37,7 +37,7 @@ describe("Modal Integration Tests", () => {
         mockUseContributorProfileModalStore: {
           isOpen: false,
           openModal: mockOpenModal,
-          closeModal: jest.fn(),
+          closeModal: vi.fn(),
         },
       });
 
@@ -60,7 +60,7 @@ describe("Modal Integration Tests", () => {
 
     it("should call openModal with correct parameters", async () => {
       const user = userEvent.setup();
-      const mockOpenModal = jest.fn();
+      const mockOpenModal = vi.fn();
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
@@ -69,7 +69,7 @@ describe("Modal Integration Tests", () => {
         mockUseContributorProfileModalStore: {
           isOpen: false,
           openModal: mockOpenModal,
-          closeModal: jest.fn(),
+          closeModal: vi.fn(),
         },
       });
 
@@ -89,7 +89,7 @@ describe("Modal Integration Tests", () => {
 
     it("should close user menu after opening profile modal", async () => {
       const user = userEvent.setup();
-      const mockOpenModal = jest.fn();
+      const mockOpenModal = vi.fn();
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
@@ -98,7 +98,7 @@ describe("Modal Integration Tests", () => {
         mockUseContributorProfileModalStore: {
           isOpen: false,
           openModal: mockOpenModal,
-          closeModal: jest.fn(),
+          closeModal: vi.fn(),
         },
       });
 
@@ -121,7 +121,7 @@ describe("Modal Integration Tests", () => {
   describe("2. Profile Modal from Mobile Menu", () => {
     it("should open profile modal from mobile avatar button", async () => {
       const user = userEvent.setup();
-      const mockOpenModal = jest.fn();
+      const mockOpenModal = vi.fn();
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
@@ -130,7 +130,7 @@ describe("Modal Integration Tests", () => {
         mockUseContributorProfileModalStore: {
           isOpen: false,
           openModal: mockOpenModal,
-          closeModal: jest.fn(),
+          closeModal: vi.fn(),
         },
       });
 
@@ -146,7 +146,7 @@ describe("Modal Integration Tests", () => {
 
     it("should call openModal with isGlobal parameter", async () => {
       const user = userEvent.setup();
-      const mockOpenModal = jest.fn();
+      const mockOpenModal = vi.fn();
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
@@ -155,7 +155,7 @@ describe("Modal Integration Tests", () => {
         mockUseContributorProfileModalStore: {
           isOpen: false,
           openModal: mockOpenModal,
-          closeModal: jest.fn(),
+          closeModal: vi.fn(),
         },
       });
 
@@ -171,7 +171,7 @@ describe("Modal Integration Tests", () => {
 
     it("should handle profile modal for different user roles", async () => {
       const user = userEvent.setup();
-      const mockOpenModal = jest.fn();
+      const mockOpenModal = vi.fn();
       const roles = ["authenticated-basic", "community-admin-single", "reviewer-single", "staff"];
 
       for (const role of roles) {
@@ -185,7 +185,7 @@ describe("Modal Integration Tests", () => {
           mockUseContributorProfileModalStore: {
             isOpen: false,
             openModal: mockOpenModal,
-            closeModal: jest.fn(),
+            closeModal: vi.fn(),
           },
         });
 
@@ -211,7 +211,7 @@ describe("Modal Integration Tests", () => {
       // Create the modal button in DOM
       const mockModalButton = document.createElement("button");
       mockModalButton.id = "new-project-button";
-      const mockClick = jest.fn();
+      const mockClick = vi.fn();
       mockModalButton.onclick = mockClick;
       document.body.appendChild(mockModalButton);
 
@@ -245,7 +245,7 @@ describe("Modal Integration Tests", () => {
 
     it("should navigate to projects page if modal button not found", async () => {
       const user = userEvent.setup();
-      const mockPush = jest.fn();
+      const mockPush = vi.fn();
       const mockRouter = createMockRouter({ push: mockPush });
       const authFixture = getAuthFixture("unauthenticated");
 
@@ -274,7 +274,7 @@ describe("Modal Integration Tests", () => {
 
     it("should retry modal trigger after navigation", async () => {
       const user = userEvent.setup();
-      const mockPush = jest.fn(() => {
+      const mockPush = vi.fn(() => {
         // Simulate navigation complete - add modal button to DOM
         const modalButton = document.createElement("button");
         modalButton.id = "new-project-button";
@@ -313,7 +313,7 @@ describe("Modal Integration Tests", () => {
   describe("4. Modal with Navigation Fallback", () => {
     it("should handle modal button not found gracefully", async () => {
       const user = userEvent.setup();
-      const mockPush = jest.fn();
+      const mockPush = vi.fn();
       const mockRouter = createMockRouter({ push: mockPush });
       const authFixture = getAuthFixture("unauthenticated");
 
@@ -400,8 +400,8 @@ describe("Modal Integration Tests", () => {
   describe("5. Modal State Management", () => {
     it("should maintain modal state after opening", async () => {
       const user = userEvent.setup();
-      const mockOpenModal = jest.fn();
-      const mockCloseModal = jest.fn();
+      const mockOpenModal = vi.fn();
+      const mockCloseModal = vi.fn();
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
@@ -434,7 +434,7 @@ describe("Modal Integration Tests", () => {
 
     it("should handle multiple modal interactions", async () => {
       const user = userEvent.setup();
-      const mockOpenModal = jest.fn();
+      const mockOpenModal = vi.fn();
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
@@ -443,7 +443,7 @@ describe("Modal Integration Tests", () => {
         mockUseContributorProfileModalStore: {
           isOpen: false,
           openModal: mockOpenModal,
-          closeModal: jest.fn(),
+          closeModal: vi.fn(),
         },
       });
 
@@ -467,7 +467,7 @@ describe("Modal Integration Tests", () => {
 
     it("should not interfere with other navigation when modal opens", async () => {
       const user = userEvent.setup();
-      const mockOpenModal = jest.fn();
+      const mockOpenModal = vi.fn();
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
@@ -476,7 +476,7 @@ describe("Modal Integration Tests", () => {
         mockUseContributorProfileModalStore: {
           isOpen: false,
           openModal: mockOpenModal,
-          closeModal: jest.fn(),
+          closeModal: vi.fn(),
         },
       });
 
@@ -503,7 +503,7 @@ describe("Modal Integration Tests", () => {
 
   describe("6. Modal Accessibility", () => {
     it("should have accessible modal trigger buttons", async () => {
-      const mockOpenModal = jest.fn();
+      const mockOpenModal = vi.fn();
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
@@ -512,7 +512,7 @@ describe("Modal Integration Tests", () => {
         mockUseContributorProfileModalStore: {
           isOpen: false,
           openModal: mockOpenModal,
-          closeModal: jest.fn(),
+          closeModal: vi.fn(),
         },
       });
 
@@ -523,7 +523,7 @@ describe("Modal Integration Tests", () => {
 
     it("should support keyboard interaction for modal triggers", async () => {
       const user = userEvent.setup();
-      const mockOpenModal = jest.fn();
+      const mockOpenModal = vi.fn();
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
@@ -532,7 +532,7 @@ describe("Modal Integration Tests", () => {
         mockUseContributorProfileModalStore: {
           isOpen: false,
           openModal: mockOpenModal,
-          closeModal: jest.fn(),
+          closeModal: vi.fn(),
         },
       });
 

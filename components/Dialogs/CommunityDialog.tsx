@@ -111,10 +111,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
     try {
       // Check slug availability in community namespace and auto-increment if taken
       let slug = data.slug.toLowerCase().replace(/[^a-z0-9-]/g, "-");
-      const [slugCheck] = await fetchData(
-        INDEXER.COMMUNITY.V2.SLUG_CHECK(slug),
-        "GET"
-      );
+      const [slugCheck] = await fetchData(INDEXER.COMMUNITY.V2.SLUG_CHECK(slug), "GET");
       if (slugCheck && !slugCheck.available) {
         let counter = 1;
         let available = false;

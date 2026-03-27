@@ -5,43 +5,43 @@ import { useOwnerStore, useProjectStore } from "@/store";
 import { UpdatesContent } from "../UpdatesContent";
 
 // Mock dependencies
-jest.mock("next/navigation", () => ({
-  useParams: jest.fn(),
-  useRouter: jest.fn(),
-  useSearchParams: jest.fn(),
+vi.mock("next/navigation", () => ({
+  useParams: vi.fn(),
+  useRouter: vi.fn(),
+  useSearchParams: vi.fn(),
 }));
 
-jest.mock("@/hooks/v2/useProjectProfile", () => ({
-  useProjectProfile: jest.fn(),
+vi.mock("@/hooks/v2/useProjectProfile", () => ({
+  useProjectProfile: vi.fn(),
 }));
 
-jest.mock("@/store", () => ({
-  useOwnerStore: jest.fn(),
-  useProjectStore: jest.fn(),
+vi.mock("@/store", () => ({
+  useOwnerStore: vi.fn(),
+  useProjectStore: vi.fn(),
 }));
 
-jest.mock("@/components/Pages/Project/v2/MainContent/ActivityFeed", () => ({
-  ActivityFeed: jest.fn(({ isAuthorized }) => (
+vi.mock("@/components/Pages/Project/v2/MainContent/ActivityFeed", () => ({
+  ActivityFeed: vi.fn(({ isAuthorized }) => (
     <div data-testid="activity-feed" data-authorized={isAuthorized}>
       Mock Activity Feed
     </div>
   )),
 }));
 
-jest.mock("@/components/Pages/Project/v2/MainContent/ActivityFilters", () => ({
-  ActivityFilters: jest.fn(() => <div data-testid="activity-filters">Mock Filters</div>),
+vi.mock("@/components/Pages/Project/v2/MainContent/ActivityFilters", () => ({
+  ActivityFilters: vi.fn(() => <div data-testid="activity-filters">Mock Filters</div>),
 }));
 
 describe("UpdatesContent", () => {
-  const mockRouter = { replace: jest.fn() };
+  const mockRouter = { replace: vi.fn() };
   const mockSearchParams = new URLSearchParams();
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    (useParams as jest.Mock).mockReturnValue({ projectId: "test-project" });
-    (useRouter as jest.Mock).mockReturnValue(mockRouter);
-    (useSearchParams as jest.Mock).mockReturnValue(mockSearchParams);
-    (useProjectProfile as jest.Mock).mockReturnValue({
+    vi.clearAllMocks();
+    (useParams as vi.Mock).mockReturnValue({ projectId: "test-project" });
+    (useRouter as vi.Mock).mockReturnValue(mockRouter);
+    (useSearchParams as vi.Mock).mockReturnValue(mockSearchParams);
+    (useProjectProfile as vi.Mock).mockReturnValue({
       allUpdates: [],
       milestonesCount: 0,
       completedCount: 0,
@@ -49,10 +49,10 @@ describe("UpdatesContent", () => {
   });
 
   it("should pass isAuthorized=true to ActivityFeed when user is owner", () => {
-    (useOwnerStore as unknown as jest.Mock).mockImplementation((selector) =>
+    (useOwnerStore as unknown as vi.Mock).mockImplementation((selector) =>
       selector({ isOwner: true })
     );
-    (useProjectStore as unknown as jest.Mock).mockImplementation((selector) =>
+    (useProjectStore as unknown as vi.Mock).mockImplementation((selector) =>
       selector({ isProjectAdmin: false })
     );
 
@@ -63,10 +63,10 @@ describe("UpdatesContent", () => {
   });
 
   it("should pass isAuthorized=true to ActivityFeed when user is project admin", () => {
-    (useOwnerStore as unknown as jest.Mock).mockImplementation((selector) =>
+    (useOwnerStore as unknown as vi.Mock).mockImplementation((selector) =>
       selector({ isOwner: false })
     );
-    (useProjectStore as unknown as jest.Mock).mockImplementation((selector) =>
+    (useProjectStore as unknown as vi.Mock).mockImplementation((selector) =>
       selector({ isProjectAdmin: true })
     );
 
@@ -77,10 +77,10 @@ describe("UpdatesContent", () => {
   });
 
   it("should pass isAuthorized=true when user is both owner and admin", () => {
-    (useOwnerStore as unknown as jest.Mock).mockImplementation((selector) =>
+    (useOwnerStore as unknown as vi.Mock).mockImplementation((selector) =>
       selector({ isOwner: true })
     );
-    (useProjectStore as unknown as jest.Mock).mockImplementation((selector) =>
+    (useProjectStore as unknown as vi.Mock).mockImplementation((selector) =>
       selector({ isProjectAdmin: true })
     );
 
@@ -91,10 +91,10 @@ describe("UpdatesContent", () => {
   });
 
   it("should pass isAuthorized=false to ActivityFeed when user is neither owner nor admin", () => {
-    (useOwnerStore as unknown as jest.Mock).mockImplementation((selector) =>
+    (useOwnerStore as unknown as vi.Mock).mockImplementation((selector) =>
       selector({ isOwner: false })
     );
-    (useProjectStore as unknown as jest.Mock).mockImplementation((selector) =>
+    (useProjectStore as unknown as vi.Mock).mockImplementation((selector) =>
       selector({ isProjectAdmin: false })
     );
 
@@ -105,10 +105,10 @@ describe("UpdatesContent", () => {
   });
 
   it("should render activity filters", () => {
-    (useOwnerStore as unknown as jest.Mock).mockImplementation((selector) =>
+    (useOwnerStore as unknown as vi.Mock).mockImplementation((selector) =>
       selector({ isOwner: false })
     );
-    (useProjectStore as unknown as jest.Mock).mockImplementation((selector) =>
+    (useProjectStore as unknown as vi.Mock).mockImplementation((selector) =>
       selector({ isProjectAdmin: false })
     );
 

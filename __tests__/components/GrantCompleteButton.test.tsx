@@ -3,7 +3,7 @@ import { GrantCompleteButton } from "@/components/Pages/GrantMilestonesAndUpdate
 import "@testing-library/jest-dom";
 
 // Mock child components
-jest.mock(
+vi.mock(
   "@/components/Pages/GrantMilestonesAndUpdates/GrantCompleteButton/GrantCompletedButton",
   () => ({
     GrantCompletedButton: ({ onClick, disabled, isRevoking, isAuthorized }: any) => (
@@ -20,7 +20,7 @@ jest.mock(
   })
 );
 
-jest.mock(
+vi.mock(
   "@/components/Pages/GrantMilestonesAndUpdates/GrantCompleteButton/GrantNotCompletedButton",
   () => ({
     GrantNotCompletedButton: ({ project, grantUID, text }: any) => (
@@ -36,47 +36,47 @@ jest.mock(
 );
 
 // Mock hooks
-const mockRevokeCompletion = jest.fn();
-const mockIsRevoking = jest.fn(() => false);
+const mockRevokeCompletion = vi.fn();
+const mockIsRevoking = vi.fn(() => false);
 
-jest.mock("@/hooks/useGrantCompletionRevoke", () => ({
-  useGrantCompletionRevoke: jest.fn(() => ({
+vi.mock("@/hooks/useGrantCompletionRevoke", () => ({
+  useGrantCompletionRevoke: vi.fn(() => ({
     revokeCompletion: mockRevokeCompletion,
     isRevoking: mockIsRevoking(),
   })),
 }));
 
-const mockIsOwner = jest.fn(() => false);
-const mockIsProjectAdmin = jest.fn(() => false);
-const mockIsCommunityAdmin = jest.fn(() => false);
+const mockIsOwner = vi.fn(() => false);
+const mockIsProjectAdmin = vi.fn(() => false);
+const mockIsCommunityAdmin = vi.fn(() => false);
 
-jest.mock("@/store", () => ({
-  useOwnerStore: jest.fn((selector: any) => {
+vi.mock("@/store", () => ({
+  useOwnerStore: vi.fn((selector: any) => {
     if (selector.toString().includes("isOwner")) {
       return mockIsOwner();
     }
     return mockIsProjectAdmin();
   }),
-  useProjectStore: jest.fn((selector: any) => {
+  useProjectStore: vi.fn((selector: any) => {
     if (selector.toString().includes("isProjectAdmin")) {
       return mockIsProjectAdmin();
     }
-    return jest.fn();
+    return vi.fn();
   }),
 }));
 
-jest.mock("@/store/communityAdmin", () => ({
-  useCommunityAdminStore: jest.fn((selector: any) => {
+vi.mock("@/store/communityAdmin", () => ({
+  useCommunityAdminStore: vi.fn((selector: any) => {
     if (selector.toString().includes("isCommunityAdmin")) {
       return mockIsCommunityAdmin();
     }
-    return jest.fn();
+    return vi.fn();
   }),
 }));
 
 // Mock the new RBAC hook
-jest.mock("@/src/core/rbac/context/permission-context", () => ({
-  useIsCommunityAdmin: jest.fn(() => mockIsCommunityAdmin()),
+vi.mock("@/src/core/rbac/context/permission-context", () => ({
+  useIsCommunityAdmin: vi.fn(() => mockIsCommunityAdmin()),
 }));
 
 describe("GrantCompleteButton", () => {
@@ -90,7 +90,7 @@ describe("GrantCompleteButton", () => {
   } as any;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockIsRevoking.mockReturnValue(false);
     mockIsOwner.mockReturnValue(false);
     mockIsProjectAdmin.mockReturnValue(false);

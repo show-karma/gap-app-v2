@@ -4,11 +4,11 @@ import type { Project } from "@/types/v2/project";
 import { FundingContent } from "../FundingContent";
 
 // Mock next/navigation
-jest.mock("next/navigation", () => ({
+vi.mock("next/navigation", () => ({
   useParams: () => ({ projectId: "test-project-123" }),
   useRouter: () => ({
-    push: jest.fn(),
-    replace: jest.fn(),
+    push: vi.fn(),
+    replace: vi.fn(),
   }),
 }));
 
@@ -49,33 +49,33 @@ const defaultGrantsMock = {
   ],
   isLoading: false,
   error: null,
-  refetch: jest.fn(),
+  refetch: vi.fn(),
 };
 
-jest.mock("@/hooks/v2/useProjectGrants", () => ({
-  useProjectGrants: jest.fn(() => defaultGrantsMock),
+vi.mock("@/hooks/v2/useProjectGrants", () => ({
+  useProjectGrants: vi.fn(() => defaultGrantsMock),
 }));
 
-jest.mock("@/hooks/useProjectPermissions", () => ({
+vi.mock("@/hooks/useProjectPermissions", () => ({
   useProjectPermissions: () => ({
     isProjectAdmin: false,
     isProjectOwner: false,
   }),
 }));
 
-jest.mock("@/store", () => ({
+vi.mock("@/store", () => ({
   useOwnerStore: () => ({
     isOwner: false,
   }),
 }));
 
-jest.mock("@/store/communities", () => ({
+vi.mock("@/store/communities", () => ({
   useCommunitiesStore: () => ({
     communities: [],
   }),
 }));
 
-jest.mock("@/store/communityAdmin", () => ({
+vi.mock("@/store/communityAdmin", () => ({
   useCommunityAdminStore: () => ({
     isCommunityAdmin: false,
   }),
@@ -83,7 +83,7 @@ jest.mock("@/store/communityAdmin", () => ({
 
 describe("FundingContent", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("Rendering with grants", () => {

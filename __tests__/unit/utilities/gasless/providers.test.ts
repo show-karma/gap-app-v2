@@ -3,7 +3,7 @@
  */
 
 // Mock environment variables
-jest.mock("@/utilities/enviromentVars", () => ({
+vi.mock("@/utilities/enviromentVars", () => ({
   envVars: {
     ZERODEV_PROJECT_ID: "test-zerodev-project-id",
     ALCHEMY_POLICY_ID: "test-alchemy-policy-id",
@@ -15,29 +15,29 @@ jest.mock("@/utilities/enviromentVars", () => ({
 }));
 
 // Mock ZeroDev SDK
-jest.mock("@zerodev/ecdsa-validator", () => ({
-  signerToEcdsaValidator: jest.fn().mockResolvedValue({}),
+vi.mock("@zerodev/ecdsa-validator", () => ({
+  signerToEcdsaValidator: vi.fn().mockResolvedValue({}),
 }));
 
-jest.mock("@zerodev/sdk", () => ({
-  createKernelAccount: jest.fn().mockResolvedValue({
+vi.mock("@zerodev/sdk", () => ({
+  createKernelAccount: vi.fn().mockResolvedValue({
     address: "0x1234567890123456789012345678901234567890",
   }),
-  createKernelAccountClient: jest.fn().mockReturnValue({
+  createKernelAccountClient: vi.fn().mockReturnValue({
     account: {
       address: "0x1234567890123456789012345678901234567890",
     },
-    getSupportedEntryPoints: jest
+    getSupportedEntryPoints: vi
       .fn()
       .mockResolvedValue(["0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789"]),
-    sendUserOperation: jest.fn().mockResolvedValue({ hash: "0xmockhash" }),
-    waitForUserOperationTransaction: jest.fn().mockResolvedValue("0xtxhash"),
+    sendUserOperation: vi.fn().mockResolvedValue({ hash: "0xmockhash" }),
+    waitForUserOperationTransaction: vi.fn().mockResolvedValue("0xtxhash"),
   }),
-  createZeroDevPaymasterClient: jest.fn().mockReturnValue({}),
+  createZeroDevPaymasterClient: vi.fn().mockReturnValue({}),
 }));
 
-jest.mock("@zerodev/sdk/constants", () => ({
-  getEntryPoint: jest.fn().mockReturnValue("0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789"),
+vi.mock("@zerodev/sdk/constants", () => ({
+  getEntryPoint: vi.fn().mockReturnValue("0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789"),
   KERNEL_V3_3: "v3.3",
   KernelVersionToAddressesMap: {
     "v3.3": {
@@ -46,48 +46,51 @@ jest.mock("@zerodev/sdk/constants", () => ({
   },
 }));
 
-jest.mock("@zerodev/sdk/providers", () => ({
-  KernelEIP1193Provider: jest.fn().mockImplementation(() => ({
-    request: jest.fn(),
-  })),
+vi.mock("@zerodev/sdk/providers", () => ({
+  KernelEIP1193Provider: class MockKernelEIP1193Provider {
+    request = vi.fn();
+  },
 }));
 
 // Mock Alchemy SDK
-jest.mock("@aa-sdk/core", () => ({
-  LocalAccountSigner: jest.fn().mockImplementation((account) => ({
-    account,
-    signMessage: jest.fn(),
-  })),
+vi.mock("@aa-sdk/core", () => ({
+  LocalAccountSigner: class MockLocalAccountSigner {
+    account: unknown;
+    signMessage = vi.fn();
+    constructor(account: unknown) {
+      this.account = account;
+    }
+  },
 }));
 
-jest.mock("@account-kit/infra", () => ({
-  alchemy: jest.fn().mockReturnValue({}),
+vi.mock("@account-kit/infra", () => ({
+  alchemy: vi.fn().mockReturnValue({}),
   celoMainnet: { id: 42220, name: "Celo" },
 }));
 
-jest.mock("@account-kit/smart-contracts", () => ({
-  createModularAccountV2Client: jest.fn().mockResolvedValue({
+vi.mock("@account-kit/smart-contracts", () => ({
+  createModularAccountV2Client: vi.fn().mockResolvedValue({
     account: {
       address: "0x1234567890123456789012345678901234567890",
     },
-    sendUserOperation: jest.fn().mockResolvedValue({ hash: "0xmockhash" }),
-    waitForUserOperationTransaction: jest.fn().mockResolvedValue("0xtxhash"),
+    sendUserOperation: vi.fn().mockResolvedValue({ hash: "0xmockhash" }),
+    waitForUserOperationTransaction: vi.fn().mockResolvedValue("0xtxhash"),
   }),
 }));
 
 // Mock viem
-jest.mock("viem", () => ({
-  createPublicClient: jest.fn().mockReturnValue({}),
-  http: jest.fn().mockReturnValue({}),
+vi.mock("viem", () => ({
+  createPublicClient: vi.fn().mockReturnValue({}),
+  http: vi.fn().mockReturnValue({}),
 }));
 
 // Mock ethers
-jest.mock("ethers", () => ({
-  BrowserProvider: jest.fn().mockImplementation(() => ({
-    getSigner: jest.fn().mockResolvedValue({
-      getAddress: jest.fn().mockResolvedValue("0x1234567890123456789012345678901234567890"),
-    }),
-  })),
+vi.mock("ethers", () => ({
+  BrowserProvider: class MockBrowserProvider {
+    getSigner = vi.fn().mockResolvedValue({
+      getAddress: vi.fn().mockResolvedValue("0x1234567890123456789012345678901234567890"),
+    });
+  },
 }));
 
 import { celo, optimism } from "viem/chains";
@@ -139,15 +142,15 @@ describe("ZeroDevProvider", () => {
   let mockSigner: LocalAccountWithEIP7702;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     provider = new ZeroDevProvider();
 
     mockSigner = {
       address: "0x1234567890123456789012345678901234567890" as `0x${string}`,
       type: "local" as const,
-      signMessage: jest.fn().mockResolvedValue("0xsignature" as `0x${string}`),
-      signTypedData: jest.fn().mockResolvedValue("0xsignature" as `0x${string}`),
-      signAuthorization: jest.fn().mockResolvedValue({
+      signMessage: vi.fn().mockResolvedValue("0xsignature" as `0x${string}`),
+      signTypedData: vi.fn().mockResolvedValue("0xsignature" as `0x${string}`),
+      signAuthorization: vi.fn().mockResolvedValue({
         contractAddress: "0xKernelImplementation" as `0x${string}`,
         address: "0xKernelImplementation" as `0x${string}`,
         chainId: optimism.id,
@@ -179,7 +182,7 @@ describe("ZeroDevProvider", () => {
         },
       };
 
-      const consoleSpy = jest.spyOn(console, "warn").mockImplementation();
+      const consoleSpy = vi.spyOn(console, "warn").mockImplementation();
 
       const result = await provider.createClient({
         chainId: optimism.id,
@@ -205,7 +208,7 @@ describe("ZeroDevProvider", () => {
         },
       };
 
-      const consoleSpy = jest.spyOn(console, "warn").mockImplementation();
+      const consoleSpy = vi.spyOn(console, "warn").mockImplementation();
 
       const result = await provider.createClient({
         chainId: optimism.id,
@@ -274,7 +277,7 @@ describe("ZeroDevProvider", () => {
         account: {
           address: "0x1234567890123456789012345678901234567890",
         },
-        getSupportedEntryPoints: jest
+        getSupportedEntryPoints: vi
           .fn()
           .mockResolvedValue(["0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789"]),
       };
@@ -296,7 +299,7 @@ describe("ZeroDevProvider", () => {
         account: {
           address: "0x1234567890123456789012345678901234567890",
         },
-        getSupportedEntryPoints: jest.fn().mockResolvedValue([]),
+        getSupportedEntryPoints: vi.fn().mockResolvedValue([]),
       };
 
       const config = {
@@ -318,15 +321,15 @@ describe("AlchemyProvider", () => {
   let mockSigner: LocalAccountWithEIP7702;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     provider = new AlchemyProvider();
 
     mockSigner = {
       address: "0x1234567890123456789012345678901234567890" as `0x${string}`,
       type: "local" as const,
-      signMessage: jest.fn().mockResolvedValue("0xsignature" as `0x${string}`),
-      signTypedData: jest.fn().mockResolvedValue("0xsignature" as `0x${string}`),
-      signAuthorization: jest.fn().mockResolvedValue({
+      signMessage: vi.fn().mockResolvedValue("0xsignature" as `0x${string}`),
+      signTypedData: vi.fn().mockResolvedValue("0xsignature" as `0x${string}`),
+      signAuthorization: vi.fn().mockResolvedValue({
         contractAddress: "0xImplementation" as `0x${string}`,
         address: "0xImplementation" as `0x${string}`,
         chainId: celo.id,
@@ -357,7 +360,7 @@ describe("AlchemyProvider", () => {
         },
       };
 
-      const consoleSpy = jest.spyOn(console, "warn").mockImplementation();
+      const consoleSpy = vi.spyOn(console, "warn").mockImplementation();
 
       const result = await provider.createClient({
         chainId: celo.id,
@@ -382,7 +385,7 @@ describe("AlchemyProvider", () => {
         },
       };
 
-      const consoleSpy = jest.spyOn(console, "warn").mockImplementation();
+      const consoleSpy = vi.spyOn(console, "warn").mockImplementation();
 
       const result = await provider.createClient({
         chainId: celo.id,
@@ -407,7 +410,7 @@ describe("AlchemyProvider", () => {
         },
       };
 
-      const consoleSpy = jest.spyOn(console, "warn").mockImplementation();
+      const consoleSpy = vi.spyOn(console, "warn").mockImplementation();
 
       const result = await provider.createClient({
         chainId: optimism.id,
@@ -439,7 +442,7 @@ describe("AlchemyProvider", () => {
         },
       };
 
-      const consoleSpy = jest.spyOn(console, "warn").mockImplementation();
+      const consoleSpy = vi.spyOn(console, "warn").mockImplementation();
 
       const result = await provider.createClient({
         chainId: celo.id,
@@ -499,8 +502,8 @@ describe("AlchemyProvider", () => {
         account: {
           address: "0x1234567890123456789012345678901234567890",
         },
-        sendUserOperation: jest.fn(),
-        waitForUserOperationTransaction: jest.fn(),
+        sendUserOperation: vi.fn(),
+        waitForUserOperationTransaction: vi.fn(),
       };
 
       const config = {

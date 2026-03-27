@@ -4,36 +4,36 @@ import { toast } from "react-hot-toast";
 import { ReviewerManagementTab } from "@/components/FundingPlatform/QuestionBuilder/ReviewerManagementTab";
 import { Permission } from "@/src/core/rbac/types/permission";
 
-const mockCan = jest.fn();
-const mockUsePermissionContext = jest.fn();
-const mockRoleManagementTab = jest.fn();
-const mockUseProgramReviewers = jest.fn();
-const mockUseMilestoneReviewers = jest.fn();
+const mockCan = vi.fn();
+const mockUsePermissionContext = vi.fn();
+const mockRoleManagementTab = vi.fn();
+const mockUseProgramReviewers = vi.fn();
+const mockUseMilestoneReviewers = vi.fn();
 
-jest.mock("react-hot-toast", () => ({
+vi.mock("react-hot-toast", () => ({
   toast: {
-    success: jest.fn(),
-    error: jest.fn(),
+    success: vi.fn(),
+    error: vi.fn(),
   },
 }));
 
-jest.mock("@/src/core/rbac/context/permission-context", () => ({
+vi.mock("@/src/core/rbac/context/permission-context", () => ({
   usePermissionContext: () => mockUsePermissionContext(),
 }));
 
-jest.mock("@/hooks/useProgramReviewers", () => ({
+vi.mock("@/hooks/useProgramReviewers", () => ({
   useProgramReviewers: (...args: unknown[]) => mockUseProgramReviewers(...args),
 }));
 
-jest.mock("@/hooks/useMilestoneReviewers", () => ({
+vi.mock("@/hooks/useMilestoneReviewers", () => ({
   useMilestoneReviewers: (...args: unknown[]) => mockUseMilestoneReviewers(...args),
 }));
 
-jest.mock("@/components/Utilities/Spinner", () => ({
+vi.mock("@/components/Utilities/Spinner", () => ({
   Spinner: () => <div data-testid="spinner" />,
 }));
 
-jest.mock("@/components/FundingPlatform/PageHeader", () => ({
+vi.mock("@/components/FundingPlatform/PageHeader", () => ({
   PAGE_HEADER_CONTENT: {
     reviewers: {
       title: "Reviewers",
@@ -43,7 +43,7 @@ jest.mock("@/components/FundingPlatform/PageHeader", () => ({
   PageHeader: () => <div data-testid="page-header" />,
 }));
 
-jest.mock("@/components/Generic/RoleManagement/RoleManagementTab", () => ({
+vi.mock("@/components/Generic/RoleManagement/RoleManagementTab", () => ({
   RoleManagementTab: (props: {
     canManage?: boolean;
     selectedRoles?: string[];
@@ -63,8 +63,8 @@ jest.mock("@/components/Generic/RoleManagement/RoleManagementTab", () => ({
 }));
 
 // Intentionally mocked to ensure access logic does not rely on this hook.
-jest.mock("@/hooks/communities/useIsCommunityAdmin", () => ({
-  useIsCommunityAdmin: jest.fn(() => ({
+vi.mock("@/hooks/communities/useIsCommunityAdmin", () => ({
+  useIsCommunityAdmin: vi.fn(() => ({
     isCommunityAdmin: false,
     isLoading: false,
   })),
@@ -73,25 +73,25 @@ jest.mock("@/hooks/communities/useIsCommunityAdmin", () => ({
 function createReviewersHookResult(
   data: Array<Record<string, string | undefined>> = [],
   overrides: Partial<{
-    addReviewer: jest.Mock;
-    removeReviewer: jest.Mock;
-    refetch: jest.Mock;
+    addReviewer: vi.Mock;
+    removeReviewer: vi.Mock;
+    refetch: vi.Mock;
   }> = {}
 ) {
   return {
     data,
     isLoading: false,
-    refetch: overrides.refetch ?? jest.fn(),
-    addReviewer: overrides.addReviewer ?? jest.fn(),
-    removeReviewer: overrides.removeReviewer ?? jest.fn(),
+    refetch: overrides.refetch ?? vi.fn(),
+    addReviewer: overrides.addReviewer ?? vi.fn(),
+    removeReviewer: overrides.removeReviewer ?? vi.fn(),
   };
 }
 
-const mockToast = toast as jest.Mocked<typeof toast>;
+const mockToast = toast as vi.Mocked<typeof toast>;
 
 describe("ReviewerManagementTab", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     mockCan.mockReturnValue(false);
 
@@ -328,8 +328,8 @@ describe("ReviewerManagementTab", () => {
 
   describe("add with multiple roles", () => {
     it("adds reviewer to both program and milestone when both selected", async () => {
-      const addProgramReviewer = jest.fn().mockResolvedValue(undefined);
-      const addMilestoneReviewer = jest.fn().mockResolvedValue(undefined);
+      const addProgramReviewer = vi.fn().mockResolvedValue(undefined);
+      const addMilestoneReviewer = vi.fn().mockResolvedValue(undefined);
       mockCan.mockReturnValue(true);
       mockUseProgramReviewers.mockReturnValue(
         createReviewersHookResult([], { addReviewer: addProgramReviewer })
@@ -379,8 +379,8 @@ describe("ReviewerManagementTab", () => {
 
   describe("remove from all roles", () => {
     it("removes reviewer from all assigned roles", async () => {
-      const removeProgramReviewer = jest.fn().mockResolvedValue(undefined);
-      const removeMilestoneReviewer = jest.fn().mockResolvedValue(undefined);
+      const removeProgramReviewer = vi.fn().mockResolvedValue(undefined);
+      const removeMilestoneReviewer = vi.fn().mockResolvedValue(undefined);
       mockCan.mockReturnValue(true);
       mockUseProgramReviewers.mockReturnValue(
         createReviewersHookResult(
@@ -468,7 +468,7 @@ describe("ReviewerManagementTab", () => {
   describe("remove error propagation", () => {
     it("propagates errors from remove mutations instead of swallowing them", async () => {
       const removeError = new Error("Network failure");
-      const removeProgramReviewer = jest.fn().mockRejectedValue(removeError);
+      const removeProgramReviewer = vi.fn().mockRejectedValue(removeError);
       mockCan.mockReturnValue(true);
       mockUseProgramReviewers.mockReturnValue(
         createReviewersHookResult(
@@ -501,7 +501,7 @@ describe("ReviewerManagementTab", () => {
 
   describe("edit roles", () => {
     it("adds a role when editing to include a new role", async () => {
-      const addMilestoneReviewer = jest.fn().mockResolvedValue(undefined);
+      const addMilestoneReviewer = vi.fn().mockResolvedValue(undefined);
       mockCan.mockReturnValue(true);
       mockUseProgramReviewers.mockReturnValue(
         createReviewersHookResult([
@@ -536,7 +536,7 @@ describe("ReviewerManagementTab", () => {
     });
 
     it("removes a role when editing to exclude an existing role", async () => {
-      const removeProgramReviewer = jest.fn().mockResolvedValue(undefined);
+      const removeProgramReviewer = vi.fn().mockResolvedValue(undefined);
       mockCan.mockReturnValue(true);
       mockUseProgramReviewers.mockReturnValue(
         createReviewersHookResult(

@@ -10,31 +10,31 @@ import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
 import type { CommunityDetails } from "@/types/community";
 
 // Mock wagmi useAccount
-jest.mock("wagmi", () => ({
-  useAccount: jest.fn(() => ({
+vi.mock("wagmi", () => ({
+  useAccount: vi.fn(() => ({
     address: "0xMockWalletAddress",
   })),
 }));
 
 // Mock useCommunityDetails
-jest.mock("@/hooks/communities/useCommunityDetails", () => ({
-  useCommunityDetails: jest.fn(),
+vi.mock("@/hooks/communities/useCommunityDetails", () => ({
+  useCommunityDetails: vi.fn(),
 }));
 
 // Mock useCheckCommunityAdmin
-jest.mock("@/hooks/communities/useCheckCommunityAdmin", () => ({
-  useCheckCommunityAdmin: jest.fn(),
+vi.mock("@/hooks/communities/useCheckCommunityAdmin", () => ({
+  useCheckCommunityAdmin: vi.fn(),
 }));
 
 import { useAccount } from "wagmi";
 import { useCheckCommunityAdmin } from "@/hooks/communities/useCheckCommunityAdmin";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 
-const mockUseAccount = useAccount as jest.MockedFunction<typeof useAccount>;
-const mockUseCommunityDetails = useCommunityDetails as jest.MockedFunction<
+const mockUseAccount = useAccount as vi.MockedFunction<typeof useAccount>;
+const mockUseCommunityDetails = useCommunityDetails as vi.MockedFunction<
   typeof useCommunityDetails
 >;
-const mockUseCheckCommunityAdmin = useCheckCommunityAdmin as jest.MockedFunction<
+const mockUseCheckCommunityAdmin = useCheckCommunityAdmin as vi.MockedFunction<
   typeof useCheckCommunityAdmin
 >;
 
@@ -86,14 +86,14 @@ const defaultAdminQueryResult = {
   isLoading: false,
   isError: false,
   error: null,
-  refetch: jest.fn(),
+  refetch: vi.fn(),
 };
 
 describe("useIsCommunityAdmin", () => {
   let queryClient: QueryClient;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     queryClient = createTestQueryClient();
 
     // Reset default mock implementations
@@ -239,7 +239,7 @@ describe("useIsCommunityAdmin", () => {
 
   describe("Zustand Sync Behavior", () => {
     it("should call setIsCommunityAdmin when admin query completes", async () => {
-      const setIsCommunityAdmin = jest.fn();
+      const setIsCommunityAdmin = vi.fn();
       mockUseCheckCommunityAdmin.mockReturnValue({
         ...defaultAdminQueryResult,
         isAdmin: true,
@@ -262,7 +262,7 @@ describe("useIsCommunityAdmin", () => {
     });
 
     it("should not call setIsCommunityAdmin while loading", () => {
-      const setIsCommunityAdmin = jest.fn();
+      const setIsCommunityAdmin = vi.fn();
       mockUseCheckCommunityAdmin.mockReturnValue({
         ...defaultAdminQueryResult,
         isLoading: true,
@@ -282,7 +282,7 @@ describe("useIsCommunityAdmin", () => {
     });
 
     it("should update Zustand with false when user is not admin", async () => {
-      const setIsCommunityAdmin = jest.fn();
+      const setIsCommunityAdmin = vi.fn();
       mockUseCheckCommunityAdmin.mockReturnValue({
         ...defaultAdminQueryResult,
         isAdmin: false,
@@ -415,7 +415,7 @@ describe("useIsCommunityAdmin", () => {
 
   describe("Refetch Functionality", () => {
     it("should expose refetch from admin query", () => {
-      const mockRefetch = jest.fn();
+      const mockRefetch = vi.fn();
       mockUseCheckCommunityAdmin.mockReturnValue({
         ...defaultAdminQueryResult,
         refetch: mockRefetch,

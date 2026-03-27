@@ -13,10 +13,11 @@
 import { Hero } from "@/src/features/homepage/components/hero";
 import { renderWithProviders, screen, setViewportSize, userEvent } from "../utils/test-helpers";
 import "@testing-library/jest-dom";
+import { chosenCommunities } from "@/utilities/chosenCommunities";
 import { VIEWPORTS } from "../setup";
 
 // Mock InfiniteMovingCards
-jest.mock("@/src/components/ui/infinite-moving-cards", () => ({
+vi.mock("@/src/components/ui/infinite-moving-cards", () => ({
   InfiniteMovingCards: ({ items }: any) => (
     <div data-testid="infinite-moving-cards">
       {items?.map((item: any, idx: number) => (
@@ -29,15 +30,15 @@ jest.mock("@/src/components/ui/infinite-moving-cards", () => ({
 }));
 
 // Mock ThemeImage
-jest.mock("@/src/components/ui/theme-image", () => ({
+vi.mock("@/src/components/ui/theme-image", () => ({
   ThemeImage: ({ alt, src, className }: any) => (
     <img data-testid="theme-image" src={src} alt={alt} className={className} />
   ),
 }));
 
 // Mock the utilities that provide community data
-jest.mock("@/utilities/chosenCommunities", () => ({
-  chosenCommunities: jest.fn(() => [
+vi.mock("@/utilities/chosenCommunities", () => ({
+  chosenCommunities: vi.fn(() => [
     { name: "Optimism", slug: "optimism", imageURL: "https://example.com/optimism.png" },
     { name: "Arbitrum", slug: "arbitrum", imageURL: "https://example.com/arbitrum.png" },
     { name: "Base", slug: "base", imageURL: "https://example.com/base.png" },
@@ -45,7 +46,7 @@ jest.mock("@/utilities/chosenCommunities", () => ({
 }));
 
 // Mock PAGES utility
-jest.mock("@/utilities/pages", () => ({
+vi.mock("@/utilities/pages", () => ({
   PAGES: {
     FUNDERS: "/funders",
     PROJECTS_EXPLORER: "/projects",
@@ -57,7 +58,7 @@ jest.mock("@/utilities/pages", () => ({
 }));
 
 // Mock CreateProjectButton
-jest.mock("@/src/features/homepage/components/create-project-button", () => ({
+vi.mock("@/src/features/homepage/components/create-project-button", () => ({
   CreateProjectButton: () => <button data-testid="create-project-button">Create project</button>,
 }));
 
@@ -270,8 +271,7 @@ describe("Hero Component", () => {
   describe("Edge Cases", () => {
     it("should handle missing community data gracefully", () => {
       // Mock empty communities
-      const { chosenCommunities } = require("@/utilities/chosenCommunities");
-      chosenCommunities.mockReturnValueOnce([]);
+      vi.mocked(chosenCommunities).mockReturnValueOnce([]);
 
       renderWithProviders(<Hero />);
 

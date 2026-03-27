@@ -14,9 +14,9 @@ import "@testing-library/jest-dom";
 import { mockFundingOpportunities } from "../fixtures/funding-opportunities";
 
 // Mock the service functions
-const mockGetLiveFundingOpportunities = jest.fn();
+const mockGetLiveFundingOpportunities = vi.fn();
 
-jest.mock("@/src/services/funding/getLiveFundingOpportunities", () => ({
+vi.mock("@/src/services/funding/getLiveFundingOpportunities", () => ({
   getLiveFundingOpportunities: () => mockGetLiveFundingOpportunities(),
 }));
 
@@ -27,17 +27,17 @@ const createMockUseAuth = (overrides = {}) => ({
   isConnected: false,
   address: undefined,
   user: null,
-  authenticate: jest.fn(),
-  login: jest.fn(),
-  logout: jest.fn(),
-  disconnect: jest.fn(),
-  getAccessToken: jest.fn().mockResolvedValue("mock-token"),
+  authenticate: vi.fn(),
+  login: vi.fn(),
+  logout: vi.fn(),
+  disconnect: vi.fn(),
+  getAccessToken: vi.fn().mockResolvedValue("mock-token"),
   ...overrides,
 });
 
 describe("Homepage User Journeys", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockGetLiveFundingOpportunities.mockResolvedValue(mockFundingOpportunities);
   });
 

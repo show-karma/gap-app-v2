@@ -10,14 +10,14 @@ import { getAuthFixture } from "../fixtures/auth-fixtures";
 import { createMockUseAuth, renderWithProviders } from "../utils/test-helpers";
 
 // Mock useAuth at module level
-const mockUseAuthImplementation = jest.fn();
-jest.mock("@/hooks/useAuth", () => ({
+const mockUseAuthImplementation = vi.fn();
+vi.mock("@/hooks/useAuth", () => ({
   useAuth: () => mockUseAuthImplementation(),
 }));
 
 describe("NavbarAuthButtons", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
   describe("Loading State", () => {
     it("should show skeleton when ready is false", () => {
@@ -52,7 +52,7 @@ describe("NavbarAuthButtons", () => {
 
     it("should call authenticate() on sign in click", async () => {
       const user = userEvent.setup();
-      const mockAuthenticate = jest.fn();
+      const mockAuthenticate = vi.fn();
       const unauthFixture = getAuthFixture("unauthenticated");
 
       mockUseAuthImplementation.mockReturnValue({
@@ -80,7 +80,7 @@ describe("NavbarAuthButtons", () => {
 
     it("should be keyboard accessible", async () => {
       const user = userEvent.setup();
-      const mockAuthenticate = jest.fn();
+      const mockAuthenticate = vi.fn();
       const unauthFixture = getAuthFixture("unauthenticated");
 
       mockUseAuthImplementation.mockReturnValue({
@@ -315,7 +315,7 @@ describe("NavbarAuthButtons", () => {
 
   describe("Multiple Renders", () => {
     it("should not call authenticate on mount", () => {
-      const mockAuthenticate = jest.fn();
+      const mockAuthenticate = vi.fn();
       const unauthFixture = getAuthFixture("unauthenticated");
 
       mockUseAuthImplementation.mockReturnValue({

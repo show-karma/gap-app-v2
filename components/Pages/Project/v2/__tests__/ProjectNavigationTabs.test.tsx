@@ -4,7 +4,7 @@ import { ProjectNavigationTabs } from "../Navigation/ProjectNavigationTabs";
 
 // Mock next/navigation
 const mockPathname = "/project/test-project-123";
-jest.mock("next/navigation", () => ({
+vi.mock("next/navigation", () => ({
   useParams: () => ({ projectId: "test-project-123" }),
   usePathname: () => mockPathname,
 }));

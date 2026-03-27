@@ -27,6 +27,10 @@ export function collectJsErrors(page: Page): string[] {
     if (msg.includes("Hydration") || msg.includes("hydrat")) return;
     // Ignore ResizeObserver errors (browser-specific, non-fatal)
     if (msg.includes("ResizeObserver")) return;
+    // Ignore upstream image fetch failures (external CDN 404s, e.g. Twitter profile pics)
+    if (msg.includes("upstream image response failed")) return;
+    // Ignore fetch/SSL errors in CI (unable to get local issuer certificate)
+    if (msg.includes("fetch failed") || msg.includes("local issuer certificate")) return;
     errors.push(msg);
   });
   return errors;

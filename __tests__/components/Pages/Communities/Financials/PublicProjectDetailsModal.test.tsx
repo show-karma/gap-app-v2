@@ -11,7 +11,7 @@ import { MilestoneLifecycleStatus } from "@/src/features/payout-disbursement/typ
 
 // ─── Mock Radix dialog: always render content ─────────────────────────────────
 
-jest.mock("@radix-ui/react-dialog", () => ({
+vi.mock("@radix-ui/react-dialog", () => ({
   Root: ({ children }: any) => <div>{children}</div>,
   Portal: ({ children }: any) => <>{children}</>,
   Overlay: () => null,
@@ -24,7 +24,7 @@ jest.mock("@radix-ui/react-dialog", () => ({
 
 // ─── Mock Radix tooltip: always render content ────────────────────────────────
 
-jest.mock("@radix-ui/react-tooltip", () => ({
+vi.mock("@radix-ui/react-tooltip", () => ({
   Provider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   Root: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   Portal: ({ children }: { children: React.ReactNode }) => <>{children}</>,
@@ -51,11 +51,11 @@ jest.mock("@radix-ui/react-tooltip", () => ({
 
 // ─── Mock hooks and utilities ─────────────────────────────────────────────────
 
-jest.mock("@/hooks/useCopyToClipboard", () => ({
-  useCopyToClipboard: () => [null, jest.fn()],
+vi.mock("@/hooks/useCopyToClipboard", () => ({
+  useCopyToClipboard: () => [null, vi.fn()],
 }));
 
-jest.mock("@/src/features/payout-disbursement", () => ({
+vi.mock("@/src/features/payout-disbursement", () => ({
   formatDisplayAmount: (val: string) => val,
   fromSmallestUnit: (val: string, decimals: number) => parseFloat(val) / 10 ** decimals,
   TokenBreakdown: ({ totalsByToken }: any) => (
@@ -72,19 +72,19 @@ jest.mock("@/src/features/payout-disbursement", () => ({
   },
 }));
 
-jest.mock("@/utilities/donations/helpers", () => ({
+vi.mock("@/utilities/donations/helpers", () => ({
   formatAddressForDisplay: (addr: string) => `${addr.slice(0, 6)}...${addr.slice(-4)}`,
 }));
 
-jest.mock("@/utilities/formatDate", () => ({
+vi.mock("@/utilities/formatDate", () => ({
   formatDate: (date: string) => "Jan 1, 2025",
 }));
 
-jest.mock("@/utilities/network", () => ({
+vi.mock("@/utilities/network", () => ({
   getChainNameById: (id: number) => "Ethereum",
 }));
 
-jest.mock("@/utilities/pages", () => ({
+vi.mock("@/utilities/pages", () => ({
   PAGES: {
     PROJECT: {
       GRANT: (slug: string, grantUid: string) => `/project/${slug}/grants/${grantUid}`,
@@ -156,7 +156,7 @@ function renderModal(options: RenderModalOptions = {}) {
     <PublicProjectDetailsModal
       grant={grant}
       open={open}
-      onOpenChange={jest.fn()}
+      onOpenChange={vi.fn()}
       communityUID="community-1"
       invoiceRequired={invoiceRequired}
       disbursementInfo={disbursementInfo}

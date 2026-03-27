@@ -3,12 +3,12 @@
  * @description Tests validation, payload building, and completion checking utilities
  */
 
-jest.mock("@/utilities/retries", () => ({
-  retryUntilConditionMet: jest.fn(),
+vi.mock("@/utilities/retries", () => ({
+  retryUntilConditionMet: vi.fn(),
 }));
 
-jest.mock("@/services/project-grants.service", () => ({
-  getProjectGrants: jest.fn(),
+vi.mock("@/services/project-grants.service", () => ({
+  getProjectGrants: vi.fn(),
 }));
 
 import {
@@ -17,14 +17,18 @@ import {
   validateGrantCompletion,
 } from "@/utilities/grantCompletionHelpers";
 
-// Get the mocked functions after jest.mock
-const { retryUntilConditionMet } = require("@/utilities/retries");
-const mockRetryUntilConditionMet = retryUntilConditionMet as jest.MockedFunction<
+// Get the mocked functions after vi.mock
+import { retryUntilConditionMet } from "@/utilities/retries";
+
+const mockRetryUntilConditionMet = retryUntilConditionMet as unknown as vi.MockedFunction<
   typeof retryUntilConditionMet
 >;
 
-const { getProjectGrants } = require("@/services/project-grants.service");
-const mockGetProjectGrants = getProjectGrants as jest.MockedFunction<typeof getProjectGrants>;
+import { getProjectGrants } from "@/services/project-grants.service";
+
+const mockGetProjectGrants = getProjectGrants as unknown as vi.MockedFunction<
+  typeof getProjectGrants
+>;
 
 describe("grantCompletionHelpers", () => {
   describe("validateGrantCompletion", () => {
@@ -175,7 +179,7 @@ describe("grantCompletionHelpers", () => {
     const projectIdOrSlug = "project-456";
 
     beforeEach(() => {
-      jest.clearAllMocks();
+      vi.clearAllMocks();
       mockRetryUntilConditionMet.mockResolvedValue(undefined);
       mockGetProjectGrants.mockResolvedValue([]);
     });
@@ -266,7 +270,7 @@ describe("grantCompletionHelpers", () => {
     });
 
     it("should call callbackFn when condition is met", async () => {
-      const callbackFn = jest.fn();
+      const callbackFn = vi.fn();
       mockRetryUntilConditionMet.mockImplementation(
         async (conditionFn: () => Promise<boolean>, cb?: () => void) => {
           const result = await conditionFn();

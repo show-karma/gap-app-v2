@@ -1,28 +1,28 @@
 import { act, renderHook } from "@testing-library/react";
 
-const mockSetupChainAndWallet = jest.fn();
-const mockChangeStepperStep = jest.fn();
-const mockStartAttestation = jest.fn();
-const mockShowLoading = jest.fn();
-const mockShowSuccess = jest.fn();
-const mockShowError = jest.fn();
-const mockDismiss = jest.fn();
-const mockShowChainProgress = jest.fn();
-const mockRefetchGrants = jest.fn();
-const mockSwitchChainAsync = jest.fn();
-const mockEdit = jest.fn();
+const mockSetupChainAndWallet = vi.fn();
+const mockChangeStepperStep = vi.fn();
+const mockStartAttestation = vi.fn();
+const mockShowLoading = vi.fn();
+const mockShowSuccess = vi.fn();
+const mockShowError = vi.fn();
+const mockDismiss = vi.fn();
+const mockShowChainProgress = vi.fn();
+const mockRefetchGrants = vi.fn();
+const mockSwitchChainAsync = vi.fn();
+const mockEdit = vi.fn();
 
-jest.mock("wagmi", () => ({
+vi.mock("wagmi", () => ({
   useAccount: () => ({ chain: { id: 10 } }),
   useChainId: () => 10,
 }));
 
-jest.mock("@privy-io/react-auth", () => ({
+vi.mock("@privy-io/react-auth", () => ({
   usePrivy: () => ({ ready: true, user: null }),
   useWallets: () => ({ wallets: [] }),
 }));
 
-jest.mock("@/hooks/useAttestationToast", () => ({
+vi.mock("@/hooks/useAttestationToast", () => ({
   useAttestationToast: () => ({
     startAttestation: mockStartAttestation,
     showLoading: mockShowLoading,
@@ -34,7 +34,7 @@ jest.mock("@/hooks/useAttestationToast", () => ({
   }),
 }));
 
-jest.mock("@/store", () => ({
+vi.mock("@/store", () => ({
   useProjectStore: (selector?: any) => {
     const state = {
       project: { uid: "project-123", details: { slug: "test-project" } },
@@ -45,53 +45,53 @@ jest.mock("@/store", () => ({
   useOwnerStore: () => ({ isOwner: false }),
 }));
 
-jest.mock("@/hooks/useGap", () => ({
+vi.mock("@/hooks/useGap", () => ({
   useGap: () => ({
     gap: {},
   }),
 }));
 
-jest.mock("../../hooks/useSetupChainAndWallet", () => ({
+vi.mock("../../hooks/useSetupChainAndWallet", () => ({
   useSetupChainAndWallet: () => ({
     setupChainAndWallet: mockSetupChainAndWallet,
   }),
 }));
 
-jest.mock("@/hooks/useWallet", () => ({
+vi.mock("@/hooks/useWallet", () => ({
   useWallet: () => ({
     switchChainAsync: mockSwitchChainAsync,
   }),
 }));
 
-jest.mock("@/hooks/v2/useProjectGrants", () => ({
+vi.mock("@/hooks/v2/useProjectGrants", () => ({
   useProjectGrants: () => ({
     refetch: mockRefetchGrants,
   }),
 }));
 
-jest.mock("@/hooks/v2/useProjectUpdates", () => ({
+vi.mock("@/hooks/v2/useProjectUpdates", () => ({
   useProjectUpdates: () => ({
-    refetch: jest.fn(),
+    refetch: vi.fn(),
   }),
 }));
 
-jest.mock("@/utilities/fetchData", () => ({
+vi.mock("@/utilities/fetchData", () => ({
   __esModule: true,
-  default: jest.fn().mockResolvedValue({}),
+  default: vi.fn().mockResolvedValue({}),
 }));
 
-jest.mock("@/utilities/retries", () => ({
-  retryUntilConditionMet: jest.fn(async (_condFn: any, callbackFn: any) => {
+vi.mock("@/utilities/retries", () => ({
+  retryUntilConditionMet: vi.fn(async (_condFn: any, callbackFn: any) => {
     await callbackFn?.();
   }),
 }));
 
-jest.mock("@/utilities/sdk", () => ({
-  getProjectById: jest.fn(),
+vi.mock("@/utilities/sdk", () => ({
+  getProjectById: vi.fn(),
 }));
 
-jest.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: jest.fn(),
+vi.mock("@/components/Utilities/errorManager", () => ({
+  errorManager: vi.fn(),
 }));
 
 import { useMilestoneEdit } from "@/hooks/useMilestoneEdit";
@@ -114,11 +114,11 @@ describe("useMilestoneEdit", () => {
   const mockWalletSigner = { address: "0xabc" };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockSetupChainAndWallet.mockResolvedValue({
       gapClient: {
         fetch: {
-          projectById: jest.fn().mockResolvedValue({
+          projectById: vi.fn().mockResolvedValue({
             grants: [
               {
                 uid: "grant-001",
@@ -190,7 +190,7 @@ describe("useMilestoneEdit", () => {
     mockSetupChainAndWallet.mockResolvedValue({
       gapClient: {
         fetch: {
-          projectById: jest.fn().mockResolvedValue({
+          projectById: vi.fn().mockResolvedValue({
             grants: [
               {
                 uid: "grant-001",

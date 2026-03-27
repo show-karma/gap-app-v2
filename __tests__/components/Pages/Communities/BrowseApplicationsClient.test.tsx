@@ -6,26 +6,26 @@ import { BrowseApplicationsClient } from "@/app/community/[communityId]/(with-he
 
 // --- Mocks ---
 
-const mockRouterReplace = jest.fn();
-const mockRouterPush = jest.fn();
+const mockRouterReplace = vi.fn();
+const mockRouterPush = vi.fn();
 
-jest.mock("next/navigation", () => ({
+vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: mockRouterPush,
     replace: mockRouterReplace,
-    prefetch: jest.fn(),
-    back: jest.fn(),
+    prefetch: vi.fn(),
+    back: vi.fn(),
     pathname: "/community/test-community/browse-applications",
   }),
   usePathname: () => "/community/test-community/browse-applications",
   useSearchParams: () => new URLSearchParams(),
   useParams: () => ({ communityId: "test-community" }),
-  notFound: jest.fn(),
-  redirect: jest.fn(),
+  notFound: vi.fn(),
+  redirect: vi.fn(),
 }));
 
-jest.mock("@/features/programs/hooks/use-programs-with-config", () => ({
-  useProgramsWithConfig: jest.fn(() => ({
+vi.mock("@/features/programs/hooks/use-programs-with-config", () => ({
+  useProgramsWithConfig: vi.fn(() => ({
     programs: [
       {
         programId: "program-abc",
@@ -46,31 +46,29 @@ jest.mock("@/features/programs/hooks/use-programs-with-config", () => ({
     ],
     isLoading: false,
     error: null,
-    refetch: jest.fn(),
+    refetch: vi.fn(),
   })),
 }));
 
-const mockFetchData = jest.fn(() =>
-  Promise.resolve([
-    {
-      applications: [],
-      pagination: { total: 0, page: 1, limit: 100, totalPages: 0 },
-    },
-    null,
-  ])
-);
-
-jest.mock("@/utilities/fetchData", () => ({
+vi.mock("@/utilities/fetchData", () => ({
   __esModule: true,
-  default: (...args: unknown[]) => mockFetchData(...args),
+  default: vi.fn(() =>
+    Promise.resolve([
+      {
+        applications: [],
+        pagination: { total: 0, page: 1, limit: 100, totalPages: 0 },
+      },
+      null,
+    ])
+  ),
 }));
 
-jest.mock("@/components/FundingPlatform/helper/getProjectTitle", () => ({
+vi.mock("@/components/FundingPlatform/helper/getProjectTitle", () => ({
   getProjectTitle: (app: { applicationData?: Record<string, unknown> }) =>
     (app.applicationData?.["Pod Name"] as string) ?? "Untitled",
 }));
 
-jest.mock("@/src/components/navigation/Link", () => ({
+vi.mock("@/src/components/navigation/Link", () => ({
   Link: ({ children, href, ...props }: { children: ReactNode; href: string }) => (
     <a href={href} {...props}>
       {children}
@@ -78,11 +76,11 @@ jest.mock("@/src/components/navigation/Link", () => ({
   ),
 }));
 
-jest.mock("@/utilities/formatDate", () => ({
+vi.mock("@/utilities/formatDate", () => ({
   formatDate: (d: string) => d,
 }));
 
-jest.mock("lucide-react", () => ({
+vi.mock("lucide-react", () => ({
   Lock: (props: Record<string, unknown>) => <svg data-testid="lock-icon" {...props} />,
   RefreshCw: (props: Record<string, unknown>) => <svg data-testid="refresh-icon" {...props} />,
   Search: (props: Record<string, unknown>) => <svg data-testid="search-icon" {...props} />,
@@ -106,7 +104,7 @@ function createWrapper() {
 
 describe("BrowseApplicationsClient - URL sync on filter change", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("updates the URL with programId when a program is selected", async () => {

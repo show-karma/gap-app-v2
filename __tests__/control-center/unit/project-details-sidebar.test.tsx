@@ -5,60 +5,62 @@
  * milestone key uniqueness, and button disabled states.
  */
 
-// ---- Mock holders (must be declared before jest.mock calls) ----
+// ---- Mock holders (must be declared before vi.mock calls) ----
 
-const mockToggleMutate = jest.fn();
-const mockSaveMutate = jest.fn();
+const mockToggleMutate = vi.fn();
+const mockSaveMutate = vi.fn();
 
 let mockTogglePending = false;
 let mockSavePending = false;
 
 // Mock the DatePicker component to avoid Radix Popover portal issues in JSDOM
-jest.mock("@/components/Utilities/DatePicker", () => ({
-  DatePicker: ({
-    selected,
-    onSelect,
-    ariaLabel,
-    placeholder,
-  }: {
-    selected?: Date;
-    onSelect: (date: Date) => void;
-    ariaLabel?: string;
-    placeholder?: string;
-  }) => {
-    const React = require("react");
-    return React.createElement(
-      "button",
-      {
-        "aria-label": ariaLabel || "Pick a date",
-        onClick: () => onSelect(new Date("2024-06-15T00:00:00Z")),
-        type: "button",
-      },
-      selected ? selected.toISOString().split("T")[0] : placeholder || "Pick a date"
-    );
-  },
-}));
+vi.mock("@/components/Utilities/DatePicker", async () => {
+  const React = await import("react");
+  return {
+    DatePicker: ({
+      selected,
+      onSelect,
+      ariaLabel,
+      placeholder,
+    }: {
+      selected?: Date;
+      onSelect: (date: Date) => void;
+      ariaLabel?: string;
+      placeholder?: string;
+    }) => {
+      return React.createElement(
+        "button",
+        {
+          "aria-label": ariaLabel || "Pick a date",
+          onClick: () => onSelect(new Date("2024-06-15T00:00:00Z")),
+          type: "button",
+        },
+        selected ? selected.toISOString().split("T")[0] : placeholder || "Pick a date"
+      );
+    },
+  };
+});
 
-jest.mock("@/src/features/payout-disbursement", () => {
-  const actual = jest.requireActual("@/src/features/payout-disbursement");
+vi.mock("@/src/features/payout-disbursement", async () => {
+  const actual = await vi.importActual("@/src/features/payout-disbursement");
   return {
     ...actual,
-    useToggleAgreement: jest.fn(() => ({
+    useToggleAgreement: vi.fn(() => ({
       mutate: mockToggleMutate,
       isPending: mockTogglePending,
     })),
-    useSaveMilestoneInvoices: jest.fn(() => ({
+    useSaveMilestoneInvoices: vi.fn(() => ({
       mutate: mockSaveMutate,
       isPending: mockSavePending,
     })),
     // Stub out the content components to avoid their data-fetching hooks
-    PayoutConfigurationContent: jest.fn(() => null),
-    PayoutHistoryContent: jest.fn(() => null),
+    PayoutConfigurationContent: vi.fn(() => null),
+    PayoutHistoryContent: vi.fn(() => null),
   };
 });
 
-jest.mock("@/hooks/useCopyToClipboard", () => ({
-  useCopyToClipboard: () => ["", jest.fn()],
+vi.mock("@/hooks/useCopyToClipboard", () => ({
+  useCopyToClipboard: () => ["", vi.fn()],
 }));
 
 import { render, screen } from "@testing-library/react";
@@ -70,6 +72,7 @@ import {
   ProjectDetailsSidebar,
   type ProjectDetailsSidebarGrant,
 } from "@/components/Pages/Admin/ControlCenter/ProjectDetailsSidebar";
+import { useSaveMilestoneInvoices, useToggleAgreement } from "@/src/features/payout-disbursement";
 import {
   type CommunityPayoutAgreementInfo,
   type CommunityPayoutInvoiceInfo,
@@ -95,21 +98,16 @@ const testGrant: ProjectDetailsSidebarGrant = {
 };
 
 beforeEach(() => {
-  jest.clearAllMocks();
+  vi.clearAllMocks();
   mockTogglePending = false;
   mockSavePending = false;
 
   // Re-mock to pick up updated pending values
-  const {
-    useToggleAgreement,
-    useSaveMilestoneInvoices,
-  } = require("@/src/features/payout-disbursement");
-
-  (useToggleAgreement as jest.Mock).mockImplementation(() => ({
+  vi.mocked(useToggleAgreement).mockImplementation(() => ({
     mutate: mockToggleMutate,
     isPending: mockTogglePending,
   }));
-  (useSaveMilestoneInvoices as jest.Mock).mockImplementation(() => ({
+  vi.mocked(useSaveMilestoneInvoices).mockImplementation(() => ({
     mutate: mockSaveMutate,
     isPending: mockSavePending,
   }));
@@ -128,9 +126,9 @@ interface RenderSidebarOptions {
     status: string;
     history: unknown[];
   } | null;
-  onOpenChange?: jest.Mock;
-  onCreateDisbursement?: jest.Mock;
-  onConfigSuccess?: jest.Mock;
+  onOpenChange?: vi.Mock;
+  onCreateDisbursement?: vi.Mock;
+  onConfigSuccess?: vi.Mock;
 }
 
 function renderSidebar(options: RenderSidebarOptions = {}) {
@@ -141,9 +139,9 @@ function renderSidebar(options: RenderSidebarOptions = {}) {
     milestoneInvoices = [],
     invoiceRequired = false,
     disbursementInfo = null,
-    onOpenChange = jest.fn(),
-    onCreateDisbursement = jest.fn(),
-    onConfigSuccess = jest.fn(),
+    onOpenChange = vi.fn(),
+    onCreateDisbursement = vi.fn(),
+    onConfigSuccess = vi.fn(),
   } = options;
 
   return render(
@@ -633,7 +631,7 @@ describe("ProjectDetailsSidebar", () => {
   describe("Unsaved changes guard", () => {
     it("shows discard dialog when closing with unsaved changes", async () => {
       const user = userEvent.setup();
-      const onOpenChange = jest.fn();
+      const onOpenChange = vi.fn();
 
       renderSidebar({
         onOpenChange,
@@ -664,7 +662,7 @@ describe("ProjectDetailsSidebar", () => {
 
     it("does not show discard dialog when closing without unsaved changes", async () => {
       const user = userEvent.setup();
-      const onOpenChange = jest.fn();
+      const onOpenChange = vi.fn();
 
       renderSidebar({ onOpenChange, milestoneInvoices: [] });
 
@@ -768,7 +766,7 @@ describe("ProjectDetailsSidebar", () => {
   describe("Footer action callbacks", () => {
     it("calls onCreateDisbursement when Create Disbursement is clicked", async () => {
       const user = userEvent.setup();
-      const onCreateDisbursement = jest.fn();
+      const onCreateDisbursement = vi.fn();
       renderSidebar({ onCreateDisbursement });
 
       const button = screen.getByRole("button", {

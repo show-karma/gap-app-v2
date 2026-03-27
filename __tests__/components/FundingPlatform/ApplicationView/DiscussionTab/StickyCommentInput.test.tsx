@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { StickyCommentInput } from "@/components/FundingPlatform/ApplicationView/DiscussionTab/StickyCommentInput";
 
 // Mock CommentInput
-jest.mock("@/components/FundingPlatform/ApplicationView/CommentInput", () => ({
+vi.mock("@/components/FundingPlatform/ApplicationView/CommentInput", () => ({
   __esModule: true,
   default: ({ onSubmit, disabled, placeholder }: any) => (
     <div data-testid="comment-input">
@@ -20,7 +20,7 @@ jest.mock("@/components/FundingPlatform/ApplicationView/CommentInput", () => ({
 }));
 
 describe("StickyCommentInput", () => {
-  const mockOnSubmit = jest.fn();
+  const mockOnSubmit = vi.fn();
 
   beforeEach(() => {
     mockOnSubmit.mockClear();

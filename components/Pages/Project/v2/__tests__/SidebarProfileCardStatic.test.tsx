@@ -4,7 +4,7 @@ import type { Project } from "@/types/v2/project";
 import { SidebarProfileCardStatic } from "../SidePanel/SidebarProfileCardStatic";
 
 // Mock next/image to render a simple img tag
-jest.mock("next/image", () => ({
+vi.mock("next/image", () => ({
   __esModule: true,
   default: (props: any) => {
     // eslint-disable-next-line @next/next/no-img-element

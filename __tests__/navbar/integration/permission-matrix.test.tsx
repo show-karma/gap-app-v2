@@ -141,7 +141,7 @@ describe("Permission Matrix Integration Tests", () => {
           renderWithProviders(<Navbar />, {
             mockUsePrivy: createMockUsePrivy(fixture.authState),
             mockPermissions: createMockPermissions(fixture.permissions),
-            mockUseLogout: createMockUseLogoutFunction(jest.fn()),
+            mockUseLogout: createMockUseLogoutFunction(vi.fn()),
           });
 
           if (!expected.userMenu) return;
@@ -171,7 +171,7 @@ describe("Permission Matrix Integration Tests", () => {
           renderWithProviders(<Navbar />, {
             mockUsePrivy: createMockUsePrivy(fixture.authState),
             mockPermissions: createMockPermissions(fixture.permissions),
-            mockUseLogout: createMockUseLogoutFunction(jest.fn()),
+            mockUseLogout: createMockUseLogoutFunction(vi.fn()),
           });
 
           // Open mobile drawer

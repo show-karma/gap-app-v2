@@ -3,20 +3,20 @@ import { renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { createElement } from "react";
 
-jest.mock("@/hooks/useAuth", () => ({
-  useAuth: jest.fn(),
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: vi.fn(),
 }));
 
-jest.mock("@/utilities/auth/compare-all-wallets", () => ({
-  compareAllWallets: jest.fn(),
+vi.mock("@/utilities/auth/compare-all-wallets", () => ({
+  compareAllWallets: vi.fn(),
 }));
 
-jest.mock("../../api/comments-service", () => ({
+vi.mock("../../api/comments-service", () => ({
   CommentsService: {
-    getComments: jest.fn().mockResolvedValue([]),
-    createComment: jest.fn(),
-    editComment: jest.fn(),
-    deleteComment: jest.fn(),
+    getComments: vi.fn().mockResolvedValue([]),
+    createComment: vi.fn(),
+    editComment: vi.fn(),
+    deleteComment: vi.fn(),
   },
 }));
 
@@ -24,8 +24,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { compareAllWallets } from "@/utilities/auth/compare-all-wallets";
 import { useApplicationComments } from "../use-application-comments";
 
-const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
-const mockCompareAllWallets = compareAllWallets as jest.MockedFunction<typeof compareAllWallets>;
+const mockUseAuth = useAuth as vi.MockedFunction<typeof useAuth>;
+const mockCompareAllWallets = compareAllWallets as vi.MockedFunction<typeof compareAllWallets>;
 
 const makeUser = (address = "0xABC") =>
   ({
@@ -54,7 +54,7 @@ describe("useApplicationComments - isOwner multi-wallet support", () => {
     createElement(QueryClientProvider, { client: queryClient }, children);
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false } },
     });

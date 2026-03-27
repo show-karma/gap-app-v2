@@ -3,16 +3,16 @@ import userEvent from "@testing-library/user-event";
 import { GrantMilestoneOptionsMenu } from "@/components/Milestone/GrantMilestoneOptionsMenu";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 
-const mockMultiGrantDelete = jest.fn();
+const mockMultiGrantDelete = vi.fn();
 
-jest.mock("@/hooks/useMilestone", () => ({
+vi.mock("@/hooks/useMilestone", () => ({
   useMilestone: () => ({
     isDeleting: false,
     multiGrantDelete: mockMultiGrantDelete,
   }),
 }));
 
-jest.mock("next/dynamic", () => ({
+vi.mock("next/dynamic", () => ({
   __esModule: true,
   default: (loader: any) => {
     const Component = (props: any) => (
@@ -25,13 +25,13 @@ jest.mock("next/dynamic", () => ({
   },
 }));
 
-jest.mock("@/components/DeleteDialog", () => ({
+vi.mock("@/components/DeleteDialog", () => ({
   DeleteDialog: ({ title, buttonElement }: any) => (
     <button data-testid="delete-button">{buttonElement.text}</button>
   ),
 }));
 
-jest.mock("@/components/Utilities/Button", () => ({
+vi.mock("@/components/Utilities/Button", () => ({
   Button: ({ children, onClick, disabled, className }: any) => (
     <button onClick={onClick} disabled={disabled} className={className}>
       {children}
@@ -39,7 +39,7 @@ jest.mock("@/components/Utilities/Button", () => ({
   ),
 }));
 
-jest.mock("@heroicons/react/24/outline", () => ({
+vi.mock("@heroicons/react/24/outline", () => ({
   CheckCircleIcon: () => <span data-testid="check-icon" />,
   EllipsisVerticalIcon: () => <span data-testid="ellipsis-icon" />,
   PencilSquareIcon: () => <span data-testid="pencil-icon" />,
@@ -71,10 +71,10 @@ describe("GrantMilestoneOptionsMenu", () => {
     },
   } as unknown as UnifiedMilestone;
 
-  const mockCompleteFn = jest.fn();
+  const mockCompleteFn = vi.fn();
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("shows Edit option for pending milestones", async () => {

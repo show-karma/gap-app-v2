@@ -8,6 +8,7 @@ import "../setup";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { type RenderOptions, type RenderResult, render } from "@testing-library/react";
+import * as nextNavigation from "next/navigation";
 import type React from "react";
 import { mockAuthState } from "../setup";
 
@@ -66,8 +67,8 @@ export const renderWithProviders = (
   }
 
   if (mockRouter) {
-    const navigationModule = require("next/navigation");
-    if (navigationModule.useRouter && jest.isMockFunction(navigationModule.useRouter)) {
+    const navigationModule = nextNavigation;
+    if (navigationModule.useRouter && vi.isMockFunction(navigationModule.useRouter)) {
       navigationModule.useRouter.mockReturnValue(mockRouter);
     }
   }
@@ -84,8 +85,8 @@ export const renderWithProviders = (
       mockAuthState.current = options.mockUseAuth;
     }
     if (options?.mockRouter) {
-      const navigationModule = require("next/navigation");
-      if (navigationModule.useRouter && jest.isMockFunction(navigationModule.useRouter)) {
+      const navigationModule = nextNavigation;
+      if (navigationModule.useRouter && vi.isMockFunction(navigationModule.useRouter)) {
         navigationModule.useRouter.mockReturnValue(options.mockRouter);
       }
     }
@@ -107,11 +108,11 @@ export const createMockAuth = (overrides: any = {}) => ({
   isConnected: overrides.isConnected || false,
   address: overrides.address,
   user: overrides.user || null,
-  authenticate: jest.fn(),
-  login: jest.fn(),
-  logout: jest.fn(),
-  disconnect: jest.fn(),
-  getAccessToken: jest.fn().mockResolvedValue("mock-token"),
+  authenticate: vi.fn(),
+  login: vi.fn(),
+  logout: vi.fn(),
+  disconnect: vi.fn(),
+  getAccessToken: vi.fn().mockResolvedValue("mock-token"),
   ...overrides,
 });
 
@@ -119,11 +120,11 @@ export const createMockAuth = (overrides: any = {}) => ({
  * Create mock router
  */
 export const createMockRouter = (overrides: any = {}) => ({
-  push: jest.fn(),
-  replace: jest.fn(),
-  back: jest.fn(),
-  forward: jest.fn(),
-  refresh: jest.fn(),
+  push: vi.fn(),
+  replace: vi.fn(),
+  back: vi.fn(),
+  forward: vi.fn(),
+  refresh: vi.fn(),
   pathname: "/",
   query: {},
   ...overrides,
@@ -139,11 +140,11 @@ export const resetMockAuthState = () => {
     isConnected: false,
     address: undefined,
     user: null,
-    authenticate: jest.fn(),
-    login: jest.fn(),
-    logout: jest.fn(),
-    disconnect: jest.fn(),
-    getAccessToken: jest.fn().mockResolvedValue("mock-token"),
+    authenticate: vi.fn(),
+    login: vi.fn(),
+    logout: vi.fn(),
+    disconnect: vi.fn(),
+    getAccessToken: vi.fn().mockResolvedValue("mock-token"),
   };
 };
 

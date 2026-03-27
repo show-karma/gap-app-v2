@@ -3,7 +3,7 @@ import { DeleteDialog } from "@/components/DeleteDialog";
 import { errorManager } from "@/components/Utilities/errorManager";
 
 // Mock Headless UI Dialog components
-jest.mock("@headlessui/react", () => {
+vi.mock("@headlessui/react", () => {
   const React = require("react");
 
   // List of Headless UI Transition props that should be filtered
@@ -79,12 +79,12 @@ jest.mock("@headlessui/react", () => {
 });
 
 // Mock Heroicons
-jest.mock("@heroicons/react/24/solid", () => ({
+vi.mock("@heroicons/react/24/solid", () => ({
   PlusIcon: (props: any) => <svg role="img" aria-label="Plus" {...props} data-testid="plus-icon" />,
 }));
 
 // Mock Button component
-jest.mock("@/components/Utilities/Button", () => ({
+vi.mock("@/components/Utilities/Button", () => ({
   Button: ({ onClick, disabled, children, className, isLoading, ...props }: any) => (
     <button
       onClick={onClick}
@@ -99,8 +99,8 @@ jest.mock("@/components/Utilities/Button", () => ({
 }));
 
 describe("DeleteDialog", () => {
-  const mockDeleteFunction = jest.fn().mockResolvedValue(undefined);
-  const mockAfterFunction = jest.fn();
+  const mockDeleteFunction = vi.fn().mockResolvedValue(undefined);
+  const mockAfterFunction = vi.fn();
 
   const defaultProps = {
     deleteFunction: mockDeleteFunction,
@@ -108,7 +108,7 @@ describe("DeleteDialog", () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("Rendering", () => {
@@ -197,7 +197,7 @@ describe("DeleteDialog", () => {
     });
 
     it("should call externalSetIsOpen when dialog is opened", () => {
-      const mockSetIsOpen = jest.fn();
+      const mockSetIsOpen = vi.fn();
       render(
         <DeleteDialog {...defaultProps} externalIsOpen={false} externalSetIsOpen={mockSetIsOpen} />
       );
@@ -209,7 +209,7 @@ describe("DeleteDialog", () => {
     });
 
     it("should call externalSetIsOpen when dialog is closed", () => {
-      const mockSetIsOpen = jest.fn();
+      const mockSetIsOpen = vi.fn();
       render(
         <DeleteDialog {...defaultProps} externalIsOpen={true} externalSetIsOpen={mockSetIsOpen} />
       );
@@ -265,7 +265,7 @@ describe("DeleteDialog", () => {
     });
 
     it("should handle deleteFunction errors gracefully", async () => {
-      const errorDeleteFunction = jest.fn().mockRejectedValue(new Error("Delete failed"));
+      const errorDeleteFunction = vi.fn().mockRejectedValue(new Error("Delete failed"));
 
       render(<DeleteDialog {...defaultProps} deleteFunction={errorDeleteFunction} />);
 
@@ -285,7 +285,7 @@ describe("DeleteDialog", () => {
 
     it("should report delete errors through errorManager", async () => {
       const error = new Error("Delete failed");
-      const errorDeleteFunction = jest.fn().mockRejectedValue(error);
+      const errorDeleteFunction = vi.fn().mockRejectedValue(error);
 
       render(<DeleteDialog {...defaultProps} deleteFunction={errorDeleteFunction} />);
 
@@ -298,8 +298,8 @@ describe("DeleteDialog", () => {
     });
 
     it("should not call afterFunction when deletion fails", async () => {
-      const errorDeleteFunction = jest.fn().mockRejectedValue(new Error("Delete failed"));
-      jest.spyOn(console, "log").mockImplementation();
+      const errorDeleteFunction = vi.fn().mockRejectedValue(new Error("Delete failed"));
+      vi.spyOn(console, "log").mockImplementation();
 
       render(
         <DeleteDialog
@@ -536,7 +536,7 @@ describe("DeleteDialog", () => {
     });
 
     it("should not crash when deleteFunction returns undefined", async () => {
-      const undefinedDeleteFunction = jest.fn().mockResolvedValue(undefined);
+      const undefinedDeleteFunction = vi.fn().mockResolvedValue(undefined);
 
       render(<DeleteDialog {...defaultProps} deleteFunction={undefinedDeleteFunction} />);
 

@@ -1,53 +1,37 @@
 /**
- * Global Setup for Homepage Tests
- * Following the same patterns as navbar test suite
+ * Domain-specific setup for homepage tests.
+ *
+ * Polyfills (matchMedia, IntersectionObserver, ResizeObserver, TextEncoder,
+ * Fetch API) are handled by the global __tests__/setup.ts (registered in
+ * vitest.config.ts setupFiles). Only homepage-specific module mocks live here.
  */
 
-import "@testing-library/jest-dom";
-import { TextDecoder, TextEncoder } from "node:util";
 import React from "react";
 
-// Polyfill TextEncoder/TextDecoder for Node environment
-global.TextEncoder = TextEncoder;
-global.TextDecoder = TextDecoder as any;
+// Hoisted mock state - accessible in vi.mock factories
+const _h = vi.hoisted(() => ({
+  authState: {
+    current: {
+      ready: true,
+      authenticated: false,
+      isConnected: false,
+      address: undefined as string | undefined,
+      user: null as unknown,
+      authenticate: vi.fn(),
+      login: vi.fn(),
+      logout: vi.fn(),
+      disconnect: vi.fn(),
+      getAccessToken: vi.fn().mockResolvedValue("mock-token"),
+    },
+  },
+}));
+export const mockAuthState = _h.authState;
 
-// Mock window.matchMedia
-Object.defineProperty(window, "matchMedia", {
-  writable: true,
-  value: jest.fn().mockImplementation((query) => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: jest.fn(),
-    removeListener: jest.fn(),
-    addEventListener: jest.fn(),
-    removeEventListener: jest.fn(),
-    dispatchEvent: jest.fn(),
-  })),
-});
-
-// Mock IntersectionObserver
-global.IntersectionObserver = class IntersectionObserver {
-  disconnect() {}
-  observe() {}
-  takeRecords() {
-    return [];
-  }
-  unobserve() {}
-} as any;
-
-// Mock ResizeObserver
-global.ResizeObserver = class ResizeObserver {
-  disconnect() {}
-  observe() {}
-  unobserve() {}
-} as any;
-
-// Mock scrollTo
-window.scrollTo = jest.fn();
+// Mock scrollTo (homepage-specific)
+window.scrollTo = vi.fn() as unknown as typeof window.scrollTo;
 
 // Mock next/image
-jest.mock("next/image", () => ({
+vi.mock("next/image", () => ({
   __esModule: true,
   default: (props: any) => {
     // eslint-disable-next-line @next/next/no-img-element
@@ -56,14 +40,14 @@ jest.mock("next/image", () => ({
 }));
 
 // Mock next/link
-jest.mock("next/link", () => ({
+vi.mock("next/link", () => ({
   __esModule: true,
   default: ({ children, href, onClick, ...props }: any) =>
     React.createElement("a", { href, onClick, ...props }, children),
 }));
 
 // Mock ExternalLink component
-jest.mock("@/components/Utilities/ExternalLink", () => ({
+vi.mock("@/components/Utilities/ExternalLink", () => ({
   ExternalLink: ({ children, href, ...props }: any) =>
     React.createElement(
       "a",
@@ -72,46 +56,28 @@ jest.mock("@/components/Utilities/ExternalLink", () => ({
     ),
 }));
 
-// Mock useAuth hook - homepage doesn't require complex auth mocking initially
-export const mockAuthState = {
-  current: {
-    ready: true,
-    authenticated: false,
-    isConnected: false,
-    address: undefined,
-    user: null,
-    authenticate: jest.fn(),
-    login: jest.fn(),
-    logout: jest.fn(),
-    disconnect: jest.fn(),
-    getAccessToken: jest.fn().mockResolvedValue("mock-token"),
-  },
-};
-
-jest.mock("@/hooks/useAuth", () => ({
-  useAuth: jest.fn(() => {
-    const { mockAuthState } = require("@/__tests__/homepage/setup");
-    return mockAuthState.current;
-  }),
+// Mock useAuth hook
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: vi.fn(() => _h.authState.current),
 }));
 
 // Mock useRouter
-jest.mock("next/navigation", () => ({
-  useRouter: jest.fn(() => ({
-    push: jest.fn(),
-    replace: jest.fn(),
-    back: jest.fn(),
-    forward: jest.fn(),
-    refresh: jest.fn(),
+vi.mock("next/navigation", () => ({
+  useRouter: vi.fn(() => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn(),
+    refresh: vi.fn(),
     pathname: "/",
     query: {},
   })),
-  usePathname: jest.fn(() => "/"),
-  useSearchParams: jest.fn(() => new URLSearchParams()),
+  usePathname: vi.fn(() => "/"),
+  useSearchParams: vi.fn(() => new URLSearchParams()),
 }));
 
 // Mock wagmi hooks - required for components that use wallet functionality
-jest.mock("wagmi", () => ({
+vi.mock("wagmi", () => ({
   useAccount: () => ({
     address: undefined,
     isConnected: false,
@@ -119,21 +85,21 @@ jest.mock("wagmi", () => ({
   }),
   useChainId: () => 1,
   useSwitchChain: () => ({
-    switchChainAsync: jest.fn(),
+    switchChainAsync: vi.fn(),
     isPending: false,
   }),
   useConnect: () => ({
-    connect: jest.fn(),
+    connect: vi.fn(),
     connectors: [],
     isPending: false,
   }),
   useDisconnect: () => ({
-    disconnect: jest.fn(),
+    disconnect: vi.fn(),
   }),
 }));
 
 // Mock infinite moving cards (community carousel)
-jest.mock("@/src/components/ui/infinite-moving-cards", () => ({
+vi.mock("@/src/components/ui/infinite-moving-cards", () => ({
   InfiniteMovingCards: ({ items }: any) =>
     React.createElement(
       "div",
@@ -149,7 +115,7 @@ jest.mock("@/src/components/ui/infinite-moving-cards", () => ({
 }));
 
 // Mock theme image component
-jest.mock("@/src/components/ui/theme-image", () => ({
+vi.mock("@/src/components/ui/theme-image", () => ({
   ThemeImage: ({ src, alt, ...props }: any) => React.createElement("img", { src, alt, ...props }),
 }));
 

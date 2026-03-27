@@ -4,7 +4,7 @@ import { SettingsConfiguration } from "@/components/QuestionBuilder/SettingsConf
 import type { FormSchema } from "@/types/question-builder";
 
 // Mock MarkdownEditor
-jest.mock("@/components/Utilities/MarkdownEditor", () => ({
+vi.mock("@/components/Utilities/MarkdownEditor", () => ({
   MarkdownEditor: ({ value, onChange, placeholderText, placeholder, disabled, id }: any) => (
     <textarea
       data-testid={`markdown-editor-${id || "default"}`}
@@ -18,7 +18,7 @@ jest.mock("@/components/Utilities/MarkdownEditor", () => ({
 }));
 
 // Mock PlaceholderReference component to render placeholders inline for testing
-jest.mock("@/components/FundingPlatform/PlaceholderReference", () => ({
+vi.mock("@/components/FundingPlatform/PlaceholderReference", () => ({
   PlaceholderReference: () => (
     <div data-testid="placeholder-reference">
       <span>{"Available placeholders: {{applicantName}}, {{programName}}, {{reason}}"}</span>
@@ -27,7 +27,7 @@ jest.mock("@/components/FundingPlatform/PlaceholderReference", () => ({
 }));
 
 // Mock Accordion to always show content (bypasses collapsed state)
-jest.mock("@/components/ui/accordion", () => ({
+vi.mock("@/components/ui/accordion", () => ({
   Accordion: ({ children, className }: any) => <div className={className}>{children}</div>,
   AccordionItem: ({ children, className }: any) => <div className={className}>{children}</div>,
   AccordionTrigger: ({ children, className }: any) => <div className={className}>{children}</div>,
@@ -35,7 +35,7 @@ jest.mock("@/components/ui/accordion", () => ({
 }));
 
 // Mock useParams
-jest.mock("next/navigation", () => ({
+vi.mock("next/navigation", () => ({
   useParams: () => ({ communityId: "test-community" }),
 }));
 
@@ -45,10 +45,10 @@ describe("SettingsConfiguration - Email Templates", () => {
     settings: {},
   };
 
-  const mockOnUpdate = jest.fn();
+  const mockOnUpdate = vi.fn();
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("Approval Email Template", () => {
@@ -339,10 +339,10 @@ describe("SettingsConfiguration - Access Code", () => {
     settings: {},
   };
 
-  const mockOnUpdate = jest.fn();
+  const mockOnUpdate = vi.fn();
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("Access Code field", () => {

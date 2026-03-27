@@ -2,12 +2,12 @@ import { GrantCommentsService } from "@/src/features/grant-comments/api/grant-co
 import type { GrantComment } from "@/src/features/grant-comments/types";
 import fetchData from "@/utilities/fetchData";
 
-jest.mock("@/utilities/fetchData", () => ({
+vi.mock("@/utilities/fetchData", () => ({
   __esModule: true,
-  default: jest.fn(),
+  default: vi.fn(),
 }));
 
-const mockFetchData = fetchData as jest.MockedFunction<typeof fetchData>;
+const mockFetchData = fetchData as vi.MockedFunction<typeof fetchData>;
 
 function createMockComment(overrides: Partial<GrantComment> = {}): GrantComment {
   return {
@@ -27,7 +27,7 @@ function createMockComment(overrides: Partial<GrantComment> = {}): GrantComment 
 
 describe("GrantCommentsService", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("getComments", () => {

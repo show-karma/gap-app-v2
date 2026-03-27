@@ -3,28 +3,28 @@ import userEvent from "@testing-library/user-event";
 import { AIAnalysisSubTabs } from "@/components/FundingPlatform/ApplicationView/AIAnalysisTab/AIAnalysisSubTabs";
 
 // Mock the cn utility
-jest.mock("@/utilities/tailwind", () => ({
+vi.mock("@/utilities/tailwind", () => ({
   cn: (...classes: any[]) => classes.filter(Boolean).join(" "),
 }));
 
 describe("AIAnalysisSubTabs", () => {
   describe("Rendering", () => {
     it("renders both tab buttons", () => {
-      render(<AIAnalysisSubTabs activeTab="external" onTabChange={jest.fn()} />);
+      render(<AIAnalysisSubTabs activeTab="external" onTabChange={vi.fn()} />);
 
       expect(screen.getByText("External Evaluation")).toBeInTheDocument();
       expect(screen.getByText("Internal Evaluation")).toBeInTheDocument();
     });
 
     it("shows external tab as active by default", () => {
-      render(<AIAnalysisSubTabs activeTab="external" onTabChange={jest.fn()} />);
+      render(<AIAnalysisSubTabs activeTab="external" onTabChange={vi.fn()} />);
 
       const externalButton = screen.getByText("External Evaluation").closest("button");
       expect(externalButton).toHaveClass("bg-white");
     });
 
     it("shows internal tab as active when selected", () => {
-      render(<AIAnalysisSubTabs activeTab="internal" onTabChange={jest.fn()} />);
+      render(<AIAnalysisSubTabs activeTab="internal" onTabChange={vi.fn()} />);
 
       const internalButton = screen.getByText("Internal Evaluation").closest("button");
       expect(internalButton).toHaveClass("bg-white");
@@ -34,7 +34,7 @@ describe("AIAnalysisSubTabs", () => {
   describe("Interaction", () => {
     it("calls onTabChange with 'external' when External tab is clicked", async () => {
       const user = userEvent.setup();
-      const mockOnTabChange = jest.fn();
+      const mockOnTabChange = vi.fn();
 
       render(<AIAnalysisSubTabs activeTab="internal" onTabChange={mockOnTabChange} />);
 
@@ -45,7 +45,7 @@ describe("AIAnalysisSubTabs", () => {
 
     it("calls onTabChange with 'internal' when Internal tab is clicked", async () => {
       const user = userEvent.setup();
-      const mockOnTabChange = jest.fn();
+      const mockOnTabChange = vi.fn();
 
       render(<AIAnalysisSubTabs activeTab="external" onTabChange={mockOnTabChange} />);
 
@@ -58,7 +58,7 @@ describe("AIAnalysisSubTabs", () => {
   describe("Icons", () => {
     it("renders icons for both tabs", () => {
       const { container } = render(
-        <AIAnalysisSubTabs activeTab="external" onTabChange={jest.fn()} />
+        <AIAnalysisSubTabs activeTab="external" onTabChange={vi.fn()} />
       );
 
       // Check that SVG icons are present
@@ -68,7 +68,7 @@ describe("AIAnalysisSubTabs", () => {
 
     it("applies purple color to internal icon when active", () => {
       const { container } = render(
-        <AIAnalysisSubTabs activeTab="internal" onTabChange={jest.fn()} />
+        <AIAnalysisSubTabs activeTab="internal" onTabChange={vi.fn()} />
       );
 
       // The second button's icon should have purple styling

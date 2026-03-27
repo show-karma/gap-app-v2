@@ -2,23 +2,33 @@ import { render, screen } from "@testing-library/react";
 import RootLayout from "@/app/layout";
 import "@testing-library/jest-dom";
 
-jest.mock("@next/third-parties/google", () => ({
+vi.mock("next/font/local", () => ({
+  __esModule: true,
+  default: () => ({
+    className: "mock-font",
+    variable: "--mock-font",
+    style: { fontFamily: "mock" },
+  }),
+}));
+
+vi.mock("@next/third-parties/google", () => ({
   GoogleAnalytics: () => <div data-testid="google-analytics" />,
 }));
 
-jest.mock("@/src/components/footer/footer", () => ({
+vi.mock("@/src/components/footer/footer", () => ({
   __esModule: true,
   Footer: () => <footer data-testid="footer" />,
 }));
 
-jest.mock("@/src/components/footer/whitelabel-footer", () => ({
+vi.mock("@/src/components/footer/whitelabel-footer", () => ({
   __esModule: true,
   WhitelabelFooter: () => <footer data-testid="whitelabel-footer" />,
 }));
 
 // Mock next/dynamic to render components synchronously in tests
-jest.mock("next/dynamic", () => {
-  return (loader: () => Promise<any>, _opts?: any) => {
+vi.mock("next/dynamic", () => ({
+  __esModule: true,
+  default: (loader: () => Promise<any>, _opts?: any) => {
     let Component: any = null;
     const promise = loader();
     promise.then((mod: any) => {
@@ -31,58 +41,58 @@ jest.mock("next/dynamic", () => {
     };
     DynamicComponent.displayName = "DynamicComponent";
     return DynamicComponent;
-  };
-});
+  },
+}));
 
-jest.mock("@/src/components/navbar/navbar", () => ({
+vi.mock("@/src/components/navbar/navbar", () => ({
   Navbar: () => <header data-testid="header" />,
 }));
 
-jest.mock("@/src/components/navbar/whitelabel-navbar", () => ({
+vi.mock("@/src/components/navbar/whitelabel-navbar", () => ({
   WhitelabelNavbar: () => <header data-testid="whitelabel-navbar" />,
 }));
 
-jest.mock("@/components/Utilities/PrivyProviderWrapper", () => ({
+vi.mock("@/components/Utilities/PrivyProviderWrapper", () => ({
   __esModule: true,
   default: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="privy-provider">{children}</div>
   ),
 }));
 
-jest.mock("@/components/Utilities/PermissionsProvider", () => ({
+vi.mock("@/components/Utilities/PermissionsProvider", () => ({
   PermissionsProvider: () => <div data-testid="permissions-provider" />,
 }));
 
-jest.mock("next-themes", () => ({
+vi.mock("next-themes", () => ({
   ThemeProvider: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="theme-provider">{children}</div>
   ),
 }));
 
-jest.mock("@/utilities/whitelabel-context", () => ({
+vi.mock("@/utilities/whitelabel-context", () => ({
   WhitelabelProvider: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="whitelabel-provider">{children}</div>
   ),
 }));
 
-jest.mock("@/components/Utilities/TenantStoreInitializer", () => ({
+vi.mock("@/components/Utilities/TenantStoreInitializer", () => ({
   TenantStoreInitializer: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="tenant-store-initializer">{children}</div>
   ),
 }));
 
-jest.mock("@/components/Seo/OrganizationJsonLd", () => ({
+vi.mock("@/components/Seo/OrganizationJsonLd", () => ({
   OrganizationJsonLd: () => <div data-testid="organization-json-ld" />,
 }));
 
-jest.mock("@/components/DeferredLayoutComponents", () => ({
+vi.mock("@/components/DeferredLayoutComponents", () => ({
   DeferredLayoutComponents: (props: { isWhitelabel: boolean }) => (
     <div data-testid="deferred-layout-components" data-whitelabel={props.isWhitelabel} />
   ),
 }));
 
-jest.mock("@/utilities/whitelabel-server", () => ({
-  getWhitelabelContext: jest.fn().mockResolvedValue({
+vi.mock("@/utilities/whitelabel-server", () => ({
+  getWhitelabelContext: vi.fn().mockResolvedValue({
     isWhitelabel: false,
     communitySlug: null,
     tenantConfig: null,

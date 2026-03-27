@@ -1,0 +1,59 @@
+name: Smoke Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: 'Base URL to run smoke tests against'
+        required: true
+        default: 'https://gap.karmahq.xyz'
+        type: string
+  workflow_call:
+    inputs:
+      base_url:
+        description: 'Base URL to run smoke tests against'
+        required: true
+        type: string
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install chromium --with-deps
+
+      - name: Run smoke tests
+        run: pnpm exec playwright test --config e2e/playwright.config.ts --project=chromium --grep @smoke
+        env:
+          CI: true
+          BASE_URL: ${{ inputs.base_url }}
+
+      - name: Upload smoke test report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-test-report
+          path: |
+            e2e/playwright-report
+            e2e/test-results
+          retention-days: 7
+          if-no-files-found: ignore

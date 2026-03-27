@@ -3,14 +3,14 @@ import "@testing-library/jest-dom";
 import { Newsletter } from "@/src/components/footer/newsletter";
 
 // Mock next-themes
-const mockUseTheme = jest.fn();
-jest.mock("next-themes", () => ({
+const mockUseTheme = vi.fn();
+vi.mock("next-themes", () => ({
   useTheme: () => mockUseTheme(),
 }));
 
 describe("Newsletter", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockUseTheme.mockReturnValue({ resolvedTheme: "light" });
   });
 

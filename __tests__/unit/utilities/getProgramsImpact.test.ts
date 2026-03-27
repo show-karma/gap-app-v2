@@ -8,13 +8,13 @@ import type { ProgramImpactData } from "@/types/programs";
 import fetchData from "@/utilities/fetchData";
 import { getProgramsImpact } from "@/utilities/registry/getProgramsImpact";
 
-jest.mock("@/utilities/fetchData");
-jest.mock("@/components/Utilities/errorManager");
-jest.mock("@/utilities/indexer", () => ({
+vi.mock("@/utilities/fetchData");
+vi.mock("@/components/Utilities/errorManager");
+vi.mock("@/utilities/indexer", () => ({
   INDEXER: {
     COMMUNITY: {
       V2: {
-        IMPACT: jest.fn(
+        IMPACT: vi.fn(
           (communityId: string, params?: { programId?: string; projectId?: string }) => {
             const queryParams = new URLSearchParams();
             if (params?.programId) queryParams.set("programId", params.programId);
@@ -28,8 +28,8 @@ jest.mock("@/utilities/indexer", () => ({
   },
 }));
 
-const mockFetchData = fetchData as jest.MockedFunction<typeof fetchData>;
-const mockErrorManager = errorManager as jest.MockedFunction<typeof errorManager>;
+const mockFetchData = fetchData as vi.MockedFunction<typeof fetchData>;
+const mockErrorManager = errorManager as vi.MockedFunction<typeof errorManager>;
 
 describe("getProgramsImpact", () => {
   const emptyFallbackResponse: ProgramImpactData = {
@@ -42,13 +42,13 @@ describe("getProgramsImpact", () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.spyOn(console, "warn").mockImplementation(() => {});
-    jest.spyOn(console, "error").mockImplementation(() => {});
+    vi.clearAllMocks();
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.spyOn(console, "error").mockImplementation(() => {});
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe("successful API response", () => {

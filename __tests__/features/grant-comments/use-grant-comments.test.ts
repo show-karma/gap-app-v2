@@ -4,16 +4,16 @@ import React from "react";
 import { useGrantComments } from "@/src/features/grant-comments/hooks/use-grant-comments";
 import type { GrantComment } from "@/src/features/grant-comments/types";
 
-jest.mock("@/hooks/useAuth", () => ({
+vi.mock("@/hooks/useAuth", () => ({
   useAuth: () => ({ authenticated: true }),
 }));
 
-jest.mock("@/src/features/grant-comments/api/grant-comments-service", () => ({
+vi.mock("@/src/features/grant-comments/api/grant-comments-service", () => ({
   GrantCommentsService: {
-    getComments: jest.fn(),
-    createComment: jest.fn(),
-    editComment: jest.fn(),
-    deleteComment: jest.fn(),
+    getComments: vi.fn(),
+    createComment: vi.fn(),
+    editComment: vi.fn(),
+    deleteComment: vi.fn(),
   },
 }));
 
@@ -54,7 +54,7 @@ describe("useGrantComments", () => {
   const defaultOptions = { projectUID: "project-123", programId: "program-456" };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   afterEach(() => {

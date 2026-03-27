@@ -10,23 +10,23 @@ import "@testing-library/jest-dom";
 import { GrantTitleDropdown } from "@/components/Pages/GrantMilestonesAndUpdates/screens/NewGrant/GrantTitleDropdown";
 
 // Mock react-hot-toast
-const mockToastError = jest.fn();
-jest.mock("react-hot-toast", () => ({
+const mockToastError = vi.fn();
+vi.mock("react-hot-toast", () => ({
   __esModule: true,
   default: {
     error: (...args: unknown[]) => mockToastError(...args),
-    success: jest.fn(),
+    success: vi.fn(),
   },
 }));
 
 // Mock pluralize
-jest.mock("pluralize", () => ({
+vi.mock("pluralize", () => ({
   __esModule: true,
   default: (word: string) => word,
 }));
 
 // Mock @radix-ui/react-popover
-jest.mock("@radix-ui/react-popover", () => {
+vi.mock("@radix-ui/react-popover", () => {
   const React = require("react");
   return {
     Root: ({ children, open }: { children: React.ReactNode; open: boolean }) => (
@@ -60,7 +60,7 @@ jest.mock("@radix-ui/react-popover", () => {
 });
 
 // Mock cmdk
-jest.mock("cmdk", () => {
+vi.mock("cmdk", () => {
   const React = require("react");
   return {
     Command: ({
@@ -87,7 +87,7 @@ jest.mock("cmdk", () => {
 });
 
 // Mock heroicons
-jest.mock("@heroicons/react/24/solid", () => ({
+vi.mock("@heroicons/react/24/solid", () => ({
   CheckIcon: ({ className, style }: { className?: string; style?: React.CSSProperties }) => (
     <span data-testid="check-icon" className={className} style={style} />
   ),
@@ -144,9 +144,9 @@ const createProgramWithoutFlag = (overrides?: Partial<TestProgram>): TestProgram
 });
 
 describe("GrantTitleDropdown", () => {
-  const mockSetValue = jest.fn();
-  const mockSetSelectedProgram = jest.fn();
-  const mockCleanFunction = jest.fn();
+  const mockSetValue = vi.fn();
+  const mockSetSelectedProgram = vi.fn();
+  const mockCleanFunction = vi.fn();
 
   const defaultProps = {
     setValue: mockSetValue,
@@ -161,7 +161,7 @@ describe("GrantTitleDropdown", () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("Rendering", () => {

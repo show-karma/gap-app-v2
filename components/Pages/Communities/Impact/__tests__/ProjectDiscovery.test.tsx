@@ -2,18 +2,18 @@ import { render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
 // Mock next/navigation
-jest.mock("next/navigation", () => ({
+vi.mock("next/navigation", () => ({
   useParams: () => ({ communityId: "test-community" }),
 }));
 
 // Mock fetchData to resolve immediately with empty arrays
-jest.mock("@/utilities/fetchData", () => ({
+vi.mock("@/utilities/fetchData", () => ({
   __esModule: true,
-  default: jest.fn().mockResolvedValue([[], null]),
+  default: vi.fn().mockResolvedValue([[], null]),
 }));
 
 // Mock the Link component
-jest.mock("@/src/components/navigation/Link", () => ({
+vi.mock("@/src/components/navigation/Link", () => ({
   Link: ({
     children,
     href,
@@ -30,13 +30,13 @@ jest.mock("@/src/components/navigation/Link", () => ({
 }));
 
 // Mock formatCurrency
-jest.mock("@/utilities/formatCurrency", () => ({
+vi.mock("@/utilities/formatCurrency", () => ({
   __esModule: true,
   default: (val: number) => String(val),
 }));
 
 // Mock INDEXER
-jest.mock("@/utilities/indexer", () => ({
+vi.mock("@/utilities/indexer", () => ({
   INDEXER: {
     COMMUNITY: {
       CATEGORIES: () => "/categories",

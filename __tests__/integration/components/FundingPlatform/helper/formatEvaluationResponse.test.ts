@@ -1,7 +1,7 @@
 import { formatEvaluationResponse } from "@/components/FundingPlatform/helper/formatEvaluationResponse";
 
 // Mock console.warn to avoid noise in tests
-const mockConsoleWarn = jest.spyOn(console, "warn").mockImplementation();
+const mockConsoleWarn = vi.spyOn(console, "warn").mockImplementation();
 
 describe("formatEvaluationResponse", () => {
   beforeEach(() => {

@@ -9,15 +9,19 @@ import React from "react";
 import { useCommunityMetrics } from "@/hooks/useCommunityMetrics";
 import { getCommunityMetrics } from "@/utilities/registry/getCommunityMetrics";
 
-jest.mock("@/utilities/registry/getCommunityMetrics", () => ({
-  getCommunityMetrics: jest.fn(),
+vi.mock("@/utilities/registry/getCommunityMetrics", () => ({
+  getCommunityMetrics: vi.fn(),
 }));
 
-jest.mock("next/navigation", () => ({
-  useParams: jest.fn(() => ({ communityId: "filecoin" })),
+vi.mock("next/navigation", () => ({
+  useParams: vi.fn(() => ({ communityId: "filecoin" })),
 }));
 
-const mockGetCommunityMetrics = getCommunityMetrics as jest.MockedFunction<
+import { useParams } from "next/navigation";
+
+const mockUseParams = useParams as unknown as vi.Mock;
+
+const mockGetCommunityMetrics = getCommunityMetrics as vi.MockedFunction<
   typeof getCommunityMetrics
 >;
 
@@ -42,7 +46,7 @@ describe("useCommunityMetrics", () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   const mockMetricsResponse = {
@@ -109,8 +113,7 @@ describe("useCommunityMetrics", () => {
   });
 
   it("should not fetch when communityId is missing", () => {
-    const { useParams } = require("next/navigation");
-    useParams.mockReturnValueOnce({ communityId: undefined });
+    mockUseParams.mockReturnValueOnce({ communityId: undefined });
 
     const wrapper = createWrapper();
     const { result } = renderHook(() => useCommunityMetrics(), { wrapper });

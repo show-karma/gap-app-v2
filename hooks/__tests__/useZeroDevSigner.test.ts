@@ -2,42 +2,42 @@ import { renderHook } from "@testing-library/react";
 import { useZeroDevSigner } from "../useZeroDevSigner";
 
 // Mock dependencies
-jest.mock("wagmi", () => ({
-  useChainId: jest.fn(() => 137),
+vi.mock("wagmi", () => ({
+  useChainId: vi.fn(() => 137),
 }));
 
-const mockSafeGetWalletClient = jest.fn();
-jest.mock("@/utilities/wallet-helpers", () => ({
+const mockSafeGetWalletClient = vi.fn();
+vi.mock("@/utilities/wallet-helpers", () => ({
   safeGetWalletClient: (...args: any[]) => mockSafeGetWalletClient(...args),
 }));
 
-const mockWalletClientToSigner = jest.fn();
-jest.mock("@/utilities/eas-wagmi-utils", () => ({
+const mockWalletClientToSigner = vi.fn();
+vi.mock("@/utilities/eas-wagmi-utils", () => ({
   walletClientToSigner: (...args: any[]) => mockWalletClientToSigner(...args),
 }));
 
-jest.mock("@/utilities/gasless", () => ({
-  createGaslessClient: jest.fn(),
-  createPrivySignerForGasless: jest.fn(),
+vi.mock("@/utilities/gasless", () => ({
+  createGaslessClient: vi.fn(),
+  createPrivySignerForGasless: vi.fn(),
   GaslessProviderError: class GaslessProviderError extends Error {
     provider = "test";
   },
-  getGaslessSigner: jest.fn(),
-  isChainSupportedForGasless: jest.fn(() => false),
+  getGaslessSigner: vi.fn(),
+  isChainSupportedForGasless: vi.fn(() => false),
 }));
 
-jest.mock("@/utilities/network", () => ({
+vi.mock("@/utilities/network", () => ({
   appNetwork: [{ id: 137, name: "Polygon" }],
 }));
 
-const mockCreateWalletClient = jest.fn();
-jest.mock("viem", () => ({
+const mockCreateWalletClient = vi.fn();
+vi.mock("viem", () => ({
   createWalletClient: (...args: any[]) => mockCreateWalletClient(...args),
-  custom: jest.fn((provider: any) => ({ type: "custom", provider })),
+  custom: vi.fn((provider: any) => ({ type: "custom", provider })),
 }));
 
-const mockGetEthereumProvider = jest.fn();
-const mockSwitchChain = jest.fn();
+const mockGetEthereumProvider = vi.fn();
+const mockSwitchChain = vi.fn();
 
 const mockExternalWallet = {
   walletClientType: "metamask",
@@ -46,20 +46,20 @@ const mockExternalWallet = {
   getEthereumProvider: mockGetEthereumProvider,
 };
 
-const mockUsePrivyBridge = jest.fn();
-jest.mock("@/contexts/privy-bridge-context", () => ({
+const mockUsePrivyBridge = vi.fn();
+vi.mock("@/contexts/privy-bridge-context", () => ({
   usePrivyBridge: () => mockUsePrivyBridge(),
 }));
 
-jest.mock("ethers", () => ({
-  BrowserProvider: jest.fn(() => ({
-    getSigner: jest.fn(),
+vi.mock("ethers", () => ({
+  BrowserProvider: vi.fn(() => ({
+    getSigner: vi.fn(),
   })),
 }));
 
 describe("useZeroDevSigner", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     // Default: external wallet user (MetaMask), NOT email/social login
     mockUsePrivyBridge.mockReturnValue({
@@ -73,7 +73,7 @@ describe("useZeroDevSigner", () => {
 
   describe("getAttestationSigner - external wallet (Case 3)", () => {
     it("creates viem WalletClient from Privy provider and converts to signer", async () => {
-      const mockProvider = { request: jest.fn() };
+      const mockProvider = { request: vi.fn() };
       mockGetEthereumProvider.mockResolvedValue(mockProvider);
 
       const mockViemClient = { account: mockExternalWallet.address };
@@ -98,7 +98,7 @@ describe("useZeroDevSigner", () => {
     });
 
     it("does not call wagmi getWalletClient when Privy provider succeeds", async () => {
-      const mockProvider = { request: jest.fn() };
+      const mockProvider = { request: vi.fn() };
       mockGetEthereumProvider.mockResolvedValue(mockProvider);
       mockCreateWalletClient.mockReturnValue({});
       mockWalletClientToSigner.mockResolvedValue({ _isSigner: true });

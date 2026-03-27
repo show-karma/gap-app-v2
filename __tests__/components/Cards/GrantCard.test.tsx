@@ -8,7 +8,7 @@ import { GrantCard, pickColor } from "@/components/GrantCard";
 import type { GrantResponse } from "@/types/v2/grant";
 
 // Mock Next.js Link component
-jest.mock("next/link", () => {
+vi.mock("next/link", () => {
   const MockLink = ({ children, href, className, ...props }: any) => (
     <a href={href} className={className} {...props}>
       {children}
@@ -27,7 +27,7 @@ jest.mock("next/link", () => {
 });
 
 // Mock ProfilePicture component
-jest.mock("@/components/Utilities/ProfilePicture", () => ({
+vi.mock("@/components/Utilities/ProfilePicture", () => ({
   ProfilePicture: ({ imageURL, name, className, alt }: any) => (
     <div data-testid="profile-picture" className={className} aria-label={alt}>
       {name}
@@ -36,12 +36,12 @@ jest.mock("@/components/Utilities/ProfilePicture", () => ({
 }));
 
 // Mock MarkdownPreview component
-jest.mock("@/components/Utilities/MarkdownPreview", () => ({
+vi.mock("@/components/Utilities/MarkdownPreview", () => ({
   MarkdownPreview: ({ source }: any) => <div data-testid="markdown-preview">{source}</div>,
 }));
 
 // Mock TrackTags component
-jest.mock("@/components/TrackTags", () => ({
+vi.mock("@/components/TrackTags", () => ({
   TrackTags: ({ communityId, trackIds }: any) => (
     <div data-testid="track-tags" data-community-id={communityId}>
       {trackIds?.map((id: string) => (
@@ -54,7 +54,7 @@ jest.mock("@/components/TrackTags", () => ({
 }));
 
 // Mock GrantPercentage component
-jest.mock("@/components/Pages/Project/Grants/components/GrantPercentage", () => ({
+vi.mock("@/components/Pages/Project/Grants/components/GrantPercentage", () => ({
   GrantPercentage: ({ grant, className }: any) => (
     <div data-testid="grant-percentage" className={className}>
       75%
@@ -63,21 +63,21 @@ jest.mock("@/components/Pages/Project/Grants/components/GrantPercentage", () => 
 }));
 
 // Mock Spinner component
-jest.mock("@/components/Utilities/Spinner", () => ({
+vi.mock("@/components/Utilities/Spinner", () => ({
   Spinner: () => <div data-testid="spinner">Loading...</div>,
 }));
 
 // Mock utilities
-jest.mock("@/utilities/formatCurrency", () => ({
+vi.mock("@/utilities/formatCurrency", () => ({
   __esModule: true,
-  default: jest.fn((value: number) => value.toString()),
+  default: vi.fn((value: number) => value.toString()),
 }));
 
-jest.mock("@/utilities/formatDate", () => ({
-  formatDate: jest.fn((_date: string | number) => "Jan 1, 2024"),
+vi.mock("@/utilities/formatDate", () => ({
+  formatDate: vi.fn((_date: string | number) => "Jan 1, 2024"),
 }));
 
-jest.mock("@/utilities/pages", () => ({
+vi.mock("@/utilities/pages", () => ({
   PAGES: {
     PROJECT: {
       OVERVIEW: (slug: string) => `/project/${slug}`,
@@ -85,8 +85,8 @@ jest.mock("@/utilities/pages", () => ({
   },
 }));
 
-jest.mock("@/utilities/markdown", () => ({
-  rewriteHeadingsToLevel: jest.fn(() => jest.fn()),
+vi.mock("@/utilities/markdown", () => ({
+  rewriteHeadingsToLevel: vi.fn(() => vi.fn()),
 }));
 
 describe("GrantCard", () => {
@@ -119,7 +119,7 @@ describe("GrantCard", () => {
   } as unknown as GrantResponse;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("Rendering", () => {

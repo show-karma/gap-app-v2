@@ -8,17 +8,17 @@ import {
   useRevokeApiKey,
 } from "@/src/features/api-keys/hooks/use-api-key";
 
-jest.mock("@/src/features/api-keys/services/api-key.service", () => ({
+vi.mock("@/src/features/api-keys/services/api-key.service", () => ({
   apiKeyService: {
-    get: jest.fn(),
-    create: jest.fn(),
-    revoke: jest.fn(),
+    get: vi.fn(),
+    create: vi.fn(),
+    revoke: vi.fn(),
   },
 }));
 
-const mockApiKeyService = jest.requireMock(
-  "@/src/features/api-keys/services/api-key.service"
-).apiKeyService;
+import { apiKeyService } from "@/src/features/api-keys/services/api-key.service";
+
+const mockApiKeyService = apiKeyService as unknown as Record<string, vi.Mock>;
 
 const createWrapper = () => {
   const queryClient = new QueryClient({
@@ -40,7 +40,7 @@ describe("apiKeyKeys", () => {
 
 describe("useApiKey", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("should fetch API key when address is provided", async () => {
@@ -91,7 +91,7 @@ describe("useApiKey", () => {
 
 describe("useCreateApiKey", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("should call create and invoke onSuccess", async () => {
@@ -102,7 +102,7 @@ describe("useCreateApiKey", () => {
       createdAt: "2026-02-22",
     };
     mockApiKeyService.create.mockResolvedValue(mockResponse);
-    const onSuccess = jest.fn();
+    const onSuccess = vi.fn();
 
     const { result } = renderHook(() => useCreateApiKey({ onSuccess }), {
       wrapper: createWrapper(),
@@ -118,7 +118,7 @@ describe("useCreateApiKey", () => {
 
   it("should invoke onError on failure", async () => {
     mockApiKeyService.create.mockRejectedValue(new Error("Failed"));
-    const onError = jest.fn();
+    const onError = vi.fn();
 
     const { result } = renderHook(() => useCreateApiKey({ onError }), {
       wrapper: createWrapper(),
@@ -134,12 +134,12 @@ describe("useCreateApiKey", () => {
 
 describe("useRevokeApiKey", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("should call revoke and invoke onSuccess", async () => {
     mockApiKeyService.revoke.mockResolvedValue(undefined);
-    const onSuccess = jest.fn();
+    const onSuccess = vi.fn();
 
     const { result } = renderHook(() => useRevokeApiKey({ onSuccess }), {
       wrapper: createWrapper(),
@@ -154,7 +154,7 @@ describe("useRevokeApiKey", () => {
 
   it("should invoke onError on failure", async () => {
     mockApiKeyService.revoke.mockRejectedValue(new Error("Failed"));
-    const onError = jest.fn();
+    const onError = vi.fn();
 
     const { result } = renderHook(() => useRevokeApiKey({ onError }), {
       wrapper: createWrapper(),

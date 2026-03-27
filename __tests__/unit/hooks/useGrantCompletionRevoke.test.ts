@@ -3,121 +3,163 @@
  * @description Tests grant completion revocation workflow with dual paths (on-chain and off-chain)
  */
 
-// Mock ALL dependencies to avoid ESM import issues
-const mockEnsureCorrectChain = jest.fn();
-const mockSafeGetWalletClient = jest.fn();
-const mockWalletClientToSigner = jest.fn();
-const mockFetchData = jest.fn();
-const mockPerformOffChainRevoke = jest.fn();
-const mockCreateCheckIfCompletionExists = jest.fn();
-const mockValidateGrantCompletion = jest.fn();
-const mockBuildRevocationPayload = jest.fn();
-const mockGetMulticall = jest.fn();
-const mockToastSuccess = jest.fn();
-const mockToastError = jest.fn();
-const mockToast = jest.fn();
-const mockErrorManager = jest.fn();
-const mockShowError = jest.fn();
-const mockShowSuccess = jest.fn();
+// Hoist all mock variables for use in vi.mock factories
+const {
+  mockEnsureCorrectChain,
+  mockSafeGetWalletClient,
+  mockWalletClientToSigner,
+  mockFetchData,
+  mockPerformOffChainRevoke,
+  mockCreateCheckIfCompletionExists,
+  mockValidateGrantCompletion,
+  mockBuildRevocationPayload,
+  mockGetMulticall,
+  mockToastSuccess,
+  mockToastError,
+  mockErrorManager,
+  mockShowError,
+  mockShowSuccess,
+  mockUseAccount,
+  mockUseChainId,
+  mockSwitchChainAsync,
+  mockGap,
+  mockSetupChainAndWallet,
+  mockChangeStepperStep,
+  mockSetIsStepper,
+  mockDismiss,
+  mockStartAttestation,
+  mockRefetchGrants,
+  mockRefreshGrant,
+} = vi.hoisted(() => ({
+  mockEnsureCorrectChain: vi.fn(),
+  mockSafeGetWalletClient: vi.fn(),
+  mockWalletClientToSigner: vi.fn(),
+  mockFetchData: vi.fn(),
+  mockPerformOffChainRevoke: vi.fn(),
+  mockCreateCheckIfCompletionExists: vi.fn(),
+  mockValidateGrantCompletion: vi.fn(),
+  mockBuildRevocationPayload: vi.fn(),
+  mockGetMulticall: vi.fn(),
+  mockToastSuccess: vi.fn(),
+  mockToastError: vi.fn(),
+  mockErrorManager: vi.fn(),
+  mockShowError: vi.fn(),
+  mockShowSuccess: vi.fn(),
+  mockUseAccount: vi.fn(),
+  mockUseChainId: vi.fn(() => 1),
+  mockSwitchChainAsync: vi.fn(),
+  mockGap: { fetch: { projectById: vi.fn() } },
+  mockSetupChainAndWallet: vi.fn(),
+  mockChangeStepperStep: vi.fn(),
+  mockSetIsStepper: vi.fn(),
+  mockDismiss: vi.fn(),
+  mockStartAttestation: vi.fn(),
+  mockRefetchGrants: vi.fn(),
+  mockRefreshGrant: vi.fn(),
+}));
 
 // Create a mock toast function that can be called directly
 const createMockToastDefault = () => {
-  const fn = jest.fn();
+  const fn = vi.fn() as vi.Mock & {
+    success: vi.Mock;
+    error: vi.Mock;
+    loading: vi.Mock;
+    dismiss: vi.Mock;
+  };
   fn.success = mockToastSuccess;
   fn.error = mockToastError;
-  fn.loading = jest.fn();
-  fn.dismiss = jest.fn();
+  fn.loading = vi.fn();
+  fn.dismiss = vi.fn();
   return fn;
 };
 
 // Mock gasless utilities to avoid ESM parsing issues with @account-kit/infra
-jest.mock("@/utilities/gasless", () => ({
-  createGaslessClient: jest.fn().mockResolvedValue(null),
-  getGaslessSigner: jest.fn().mockResolvedValue(null),
-  isChainSupportedForGasless: jest.fn().mockReturnValue(false),
-  createPrivySignerForGasless: jest.fn().mockResolvedValue(null),
-  getChainGaslessConfig: jest.fn().mockReturnValue(null),
-  getProviderForChain: jest.fn().mockReturnValue(null),
+vi.mock("@/utilities/gasless", () => ({
+  createGaslessClient: vi.fn().mockResolvedValue(null),
+  getGaslessSigner: vi.fn().mockResolvedValue(null),
+  isChainSupportedForGasless: vi.fn().mockReturnValue(false),
+  createPrivySignerForGasless: vi.fn().mockResolvedValue(null),
+  getChainGaslessConfig: vi.fn().mockReturnValue(null),
+  getProviderForChain: vi.fn().mockReturnValue(null),
   SUPPORTED_GASLESS_CHAINS: [],
   GaslessProviderError: class GaslessProviderError extends Error {},
 }));
 
 // Mock useZeroDevSigner to avoid gasless import chain
-jest.mock("@/hooks/useZeroDevSigner", () => ({
-  useZeroDevSigner: jest.fn(() => ({
-    getSignerForChain: jest.fn().mockResolvedValue(null),
+vi.mock("@/hooks/useZeroDevSigner", () => ({
+  useZeroDevSigner: vi.fn(() => ({
+    getSignerForChain: vi.fn().mockResolvedValue(null),
     isLoading: false,
     error: null,
   })),
 }));
 
-jest.mock("@/utilities/ensureCorrectChain", () => ({
+vi.mock("@/utilities/ensureCorrectChain", () => ({
   ensureCorrectChain: mockEnsureCorrectChain,
 }));
 
-jest.mock("@/utilities/wallet-helpers", () => ({
+vi.mock("@/utilities/wallet-helpers", () => ({
   safeGetWalletClient: mockSafeGetWalletClient,
 }));
 
-jest.mock("@/utilities/eas-wagmi-utils", () => ({
+vi.mock("@/utilities/eas-wagmi-utils", () => ({
   walletClientToSigner: mockWalletClientToSigner,
 }));
 
-jest.mock("@/utilities/fetchData", () => ({
+vi.mock("@/utilities/fetchData", () => ({
   __esModule: true,
   default: mockFetchData,
 }));
 
-jest.mock("@/hooks/useOffChainRevoke", () => ({
-  useOffChainRevoke: jest.fn(() => ({
+vi.mock("@/hooks/useOffChainRevoke", () => ({
+  useOffChainRevoke: vi.fn(() => ({
     performOffChainRevoke: mockPerformOffChainRevoke,
   })),
 }));
 
-jest.mock("@/utilities/grantCompletionHelpers", () => ({
+vi.mock("@/utilities/grantCompletionHelpers", () => ({
   createCheckIfCompletionExists: mockCreateCheckIfCompletionExists,
   validateGrantCompletion: mockValidateGrantCompletion,
   buildRevocationPayload: mockBuildRevocationPayload,
 }));
 
-jest.mock("@show-karma/karma-gap-sdk", () => ({
+vi.mock("@show-karma/karma-gap-sdk", () => ({
   GAP: {
     getMulticall: mockGetMulticall,
   },
 }));
 
-const mockToastDefault = createMockToastDefault();
-jest.mock("react-hot-toast", () => ({
-  __esModule: true,
-  default: mockToastDefault,
-}));
+vi.mock("react-hot-toast", () => {
+  const fn = vi.fn();
+  (fn as Record<string, unknown>).success = mockToastSuccess;
+  (fn as Record<string, unknown>).error = mockToastError;
+  (fn as Record<string, unknown>).loading = vi.fn();
+  (fn as Record<string, unknown>).dismiss = vi.fn();
+  return {
+    __esModule: true,
+    default: fn,
+  };
+});
 
-jest.mock("@/components/Utilities/errorManager", () => ({
+vi.mock("@/components/Utilities/errorManager", () => ({
   errorManager: mockErrorManager,
 }));
 
-const mockUseAccount = jest.fn();
-const mockUseChainId = jest.fn(() => 1);
-jest.mock("wagmi", () => ({
+vi.mock("wagmi", () => ({
   useAccount: mockUseAccount,
   useChainId: mockUseChainId,
 }));
 
-const mockSwitchChainAsync = jest.fn();
-jest.mock("@/hooks/useWallet", () => ({
-  useWallet: jest.fn(() => ({ switchChainAsync: mockSwitchChainAsync })),
+vi.mock("@/hooks/useWallet", () => ({
+  useWallet: vi.fn(() => ({ switchChainAsync: mockSwitchChainAsync })),
 }));
 
-const mockGap = { fetch: { projectById: jest.fn() } };
-jest.mock("@/hooks/useGap", () => ({
-  useGap: jest.fn(() => ({ gap: mockGap })),
+vi.mock("@/hooks/useGap", () => ({
+  useGap: vi.fn(() => ({ gap: mockGap })),
 }));
 
-// SWC transforms @/ aliases to relative paths at compile time, so we must mock
-// the actual file path for the mock to intercept the hook's internal import.
-const mockSetupChainAndWallet = jest.fn();
-jest.mock("../../../hooks/useSetupChainAndWallet", () => ({
-  useSetupChainAndWallet: jest.fn(() => ({
+vi.mock("@/hooks/useSetupChainAndWallet", () => ({
+  useSetupChainAndWallet: vi.fn(() => ({
     setupChainAndWallet: mockSetupChainAndWallet,
     isSmartWalletReady: false,
     smartWalletAddress: null,
@@ -126,37 +168,33 @@ jest.mock("../../../hooks/useSetupChainAndWallet", () => ({
   })),
 }));
 
-const mockChangeStepperStep = jest.fn();
-const mockSetIsStepper = jest.fn();
-const mockDismiss = jest.fn();
-const mockStartAttestation = jest.fn();
-jest.mock("@/hooks/useAttestationToast", () => ({
-  useAttestationToast: jest.fn(() => ({
+vi.mock("@/hooks/useAttestationToast", () => ({
+  useAttestationToast: vi.fn(() => ({
     startAttestation: mockStartAttestation,
     changeStepperStep: mockChangeStepperStep,
     setIsStepper: mockSetIsStepper,
-    showLoading: jest.fn(),
+    showLoading: vi.fn(),
     showSuccess: mockShowSuccess,
     showError: mockShowError,
-    updateStep: jest.fn(),
+    updateStep: vi.fn(),
     dismiss: mockDismiss,
   })),
 }));
 
 // Define mock state inside the factory - it will be accessible via require("@/store").__mockState
-jest.mock("@/store", () => {
+vi.mock("@/store", () => {
   // This state object is created when the mock is set up and persists across tests
   const state = { isProjectOwner: false, isOwner: false };
   return {
     // Expose state for tests to modify
     __mockState: state,
-    useProjectStore: jest.fn((selector?: any) => {
+    useProjectStore: vi.fn((selector?: any) => {
       const storeState = { isProjectOwner: state.isProjectOwner };
       if (!selector) return storeState;
       if (typeof selector === "function") return selector(storeState);
       return storeState;
     }),
-    useOwnerStore: jest.fn((selector?: any) => {
+    useOwnerStore: vi.fn((selector?: any) => {
       const storeState = { isOwner: state.isOwner };
       if (!selector) return storeState;
       if (typeof selector === "function") return selector(storeState);
@@ -165,31 +203,31 @@ jest.mock("@/store", () => {
   };
 });
 
-const mockRefetchGrants = jest.fn();
-jest.mock("@/hooks/v2/useProjectGrants", () => ({
-  useProjectGrants: jest.fn(() => ({
+vi.mock("@/hooks/v2/useProjectGrants", () => ({
+  useProjectGrants: vi.fn(() => ({
     refetch: mockRefetchGrants,
     grants: [],
   })),
 }));
 
-const mockRefreshGrant = jest.fn();
-jest.mock("@/store/grant", () => ({
-  useGrantStore: jest.fn(() => ({ refreshGrant: mockRefreshGrant })),
+vi.mock("@/store/grant", () => ({
+  useGrantStore: vi.fn(() => ({ refreshGrant: mockRefreshGrant })),
 }));
 
 import { act, renderHook } from "@testing-library/react";
-import { MESSAGES } from "@/utilities/messages";
+// Get the mocked toast function
+import toast from "react-hot-toast";
 
 // Import the hook to test AFTER mocking dependencies
-const { useGrantCompletionRevoke } = require("@/hooks/useGrantCompletionRevoke");
+import { useGrantCompletionRevoke } from "@/hooks/useGrantCompletionRevoke";
+import { MESSAGES } from "@/utilities/messages";
 
-// Get the mocked toast function
-const toast = require("react-hot-toast").default;
-const mockToastFn = (global as any).__mockToastFn || toast;
+const mockToastFn = (global as Record<string, unknown>).__mockToastFn || toast;
 
 // Get reference to mock store state for modifying in tests
-const mockStoreState = require("@/store").__mockState;
+import * as storeModule from "@/store";
+
+const mockStoreState = (storeModule as Record<string, unknown>).__mockState;
 
 describe("useGrantCompletionRevoke", () => {
   const mockGrant = {
@@ -201,7 +239,7 @@ describe("useGrantCompletionRevoke", () => {
       schema: {
         uid: "0xschema123",
         revocable: true,
-        multiRevoke: jest.fn(),
+        multiRevoke: vi.fn(),
       },
       revoked: false,
     },
@@ -213,7 +251,7 @@ describe("useGrantCompletionRevoke", () => {
 
   const mockGapClient = {
     fetch: {
-      projectById: jest.fn(),
+      projectById: vi.fn(),
     },
   } as any;
 
@@ -228,7 +266,7 @@ describe("useGrantCompletionRevoke", () => {
       schema: {
         uid: "0xschema123",
         revocable: true,
-        multiRevoke: jest.fn(),
+        multiRevoke: vi.fn(),
       },
       revoked: false,
     },
@@ -239,17 +277,17 @@ describe("useGrantCompletionRevoke", () => {
   } as any;
 
   const mockMulticallContract = {
-    multiRevoke: jest.fn(),
+    multiRevoke: vi.fn(),
   } as any;
 
   const mockTransaction = {
-    wait: jest.fn(),
+    wait: vi.fn(),
   } as any;
 
-  const mockCheckIfCompletionExists = jest.fn();
+  const mockCheckIfCompletionExists = vi.fn();
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockUseAccount.mockReturnValue({ chain: { id: 42161 } });
     mockStoreState.isProjectOwner = false;
     mockStoreState.isOwner = false;
@@ -442,7 +480,7 @@ describe("useGrantCompletionRevoke", () => {
 
     it("should handle off-chain revocation error callback", async () => {
       // Suppress expected console.error from error callback
-      const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
       const mockError = new Error("Off-chain error");
       let onErrorCallback: ((error: any) => void) | undefined;
@@ -795,7 +833,7 @@ describe("useGrantCompletionRevoke", () => {
        * Note: Indirect toast() assertion
        *
        * The toast() call at line 190 of useGrantCompletionRevoke.ts is not directly verified here
-       * due to Jest mock setup timing issues. The toast mock is created in jest.mock() before the
+       * due to Jest mock setup timing issues. The toast mock is created in vi.mock() before the
        * hook is imported, which can cause the mock reference to not be properly captured.
        *
        * Instead, we verify the toast call indirectly by:

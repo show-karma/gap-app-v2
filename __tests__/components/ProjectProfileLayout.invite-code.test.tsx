@@ -8,15 +8,15 @@ import { render } from "@testing-library/react";
 
 // Track invite-code mock state
 let mockInviteCode: string | null = null;
-let mockOpenContributorProfileModal: jest.Mock;
+let mockOpenContributorProfileModal: vi.Mock;
 
 // Mock next/navigation
-jest.mock("next/navigation", () => ({
+vi.mock("next/navigation", () => ({
   useParams: () => ({ projectId: "test-project-id" }),
   usePathname: () => "/project/test-project-id",
   useRouter: () => ({
-    replace: jest.fn(),
-    push: jest.fn(),
+    replace: vi.fn(),
+    push: vi.fn(),
   }),
   useSearchParams: () => ({
     get: (key: string) => {
@@ -29,22 +29,20 @@ jest.mock("next/navigation", () => ({
 }));
 
 // Mock next/dynamic — needed because dialogs are now dynamically imported
-jest.mock("next/dynamic", () => {
-  const mockDynamic = (loader: () => Promise<any>, _options?: { ssr?: boolean }) => {
+vi.mock("next/dynamic", () => ({
+  default: (loader: () => Promise<any>, _options?: { ssr?: boolean }) => {
     const DynamicComponent = () => null;
     DynamicComponent.displayName = "DynamicMock";
     return DynamicComponent;
-  };
-  mockDynamic.default = mockDynamic;
-  return mockDynamic;
-});
+  },
+}));
 
 // Mock all stores
-jest.mock("@/hooks/useProjectPermissions", () => ({
+vi.mock("@/hooks/useProjectPermissions", () => ({
   useProjectPermissions: () => ({}),
 }));
 
-jest.mock("@/hooks/v2/useProjectProfile", () => ({
+vi.mock("@/hooks/v2/useProjectProfile", () => ({
   useProjectProfile: () => ({
     project: null,
     isLoading: true,
@@ -54,30 +52,30 @@ jest.mock("@/hooks/v2/useProjectProfile", () => ({
   }),
 }));
 
-jest.mock("@/store/modals/endorsement", () => ({
+vi.mock("@/store/modals/endorsement", () => ({
   useEndorsementStore: () => ({ isEndorsementOpen: false }),
 }));
 
-jest.mock("@/store/modals/intro", () => ({
+vi.mock("@/store/modals/intro", () => ({
   useIntroModalStore: () => ({ isIntroModalOpen: false }),
 }));
 
-jest.mock("@/store/modals/progress", () => ({
+vi.mock("@/store/modals/progress", () => ({
   useProgressModalStore: () => ({ isProgressModalOpen: false }),
 }));
 
-jest.mock("@/store/modals/shareDialog", () => ({
+vi.mock("@/store/modals/shareDialog", () => ({
   useShareDialogStore: () => ({ isOpen: false }),
 }));
 
-jest.mock("@/store/modals/contributorProfile", () => ({
+vi.mock("@/store/modals/contributorProfile", () => ({
   useContributorProfileModalStore: () => ({
     openModal: mockOpenContributorProfileModal,
   }),
 }));
 
 // Mock all child components to avoid deep dependency chains (Stripe, gasless, etc.)
-jest.mock("@/components/Pages/Project/v2/Skeletons", () => ({
+vi.mock("@/components/Pages/Project/v2/Skeletons", () => ({
   ContentTabsSkeleton: () => <div data-testid="content-tabs-skeleton" />,
   MobileHeaderMinifiedSkeleton: () => null,
   MobileProfileContentSkeleton: () => null,
@@ -86,64 +84,64 @@ jest.mock("@/components/Pages/Project/v2/Skeletons", () => ({
   ProjectStatsBarSkeleton: () => null,
 }));
 
-jest.mock("@/components/Pages/Project/v2/EndorsementsListDialog", () => ({
+vi.mock("@/components/Pages/Project/v2/EndorsementsListDialog", () => ({
   EndorsementsListDialog: () => null,
 }));
 
-jest.mock("@/components/Pages/Project/v2/Header/ProjectHeader", () => ({
+vi.mock("@/components/Pages/Project/v2/Header/ProjectHeader", () => ({
   ProjectHeader: () => <div data-testid="project-header" />,
 }));
 
-jest.mock("@/components/Pages/Project/v2/MainContent/ContentTabs", () => ({
+vi.mock("@/components/Pages/Project/v2/MainContent/ContentTabs", () => ({
   ContentTabs: () => <div data-testid="content-tabs" />,
 }));
 
-jest.mock("@/components/Pages/Project/v2/Mobile/MobileHeaderMinified", () => ({
+vi.mock("@/components/Pages/Project/v2/Mobile/MobileHeaderMinified", () => ({
   MobileHeaderMinified: () => null,
 }));
 
-jest.mock("@/components/Pages/Project/v2/Mobile/MobileProfileContent", () => ({
+vi.mock("@/components/Pages/Project/v2/Mobile/MobileProfileContent", () => ({
   MobileProfileContent: () => null,
 }));
 
-jest.mock("@/components/Pages/Project/v2/Mobile/MobileSupportContent", () => ({
+vi.mock("@/components/Pages/Project/v2/Mobile/MobileSupportContent", () => ({
   MobileSupportContent: () => null,
 }));
 
-jest.mock("@/components/Pages/Project/v2/SidePanel/ProjectSidePanel", () => ({
+vi.mock("@/components/Pages/Project/v2/SidePanel/ProjectSidePanel", () => ({
   ProjectSidePanel: () => null,
 }));
 
-jest.mock("@/components/Pages/Project/v2/SidePanel/SidebarProfileCard", () => ({
+vi.mock("@/components/Pages/Project/v2/SidePanel/SidebarProfileCard", () => ({
   SidebarProfileCard: () => null,
 }));
 
-jest.mock("@/components/Pages/Project/v2/StatsBar/ProjectStatsBar", () => ({
+vi.mock("@/components/Pages/Project/v2/StatsBar/ProjectStatsBar", () => ({
   ProjectStatsBar: () => null,
 }));
 
-jest.mock("@/components/Dialogs/ProgressDialog", () => ({
+vi.mock("@/components/Dialogs/ProgressDialog", () => ({
   ProgressDialog: () => null,
 }));
 
-jest.mock("@/components/Pages/Project/Impact/EndorsementDialog", () => ({
+vi.mock("@/components/Pages/Project/Impact/EndorsementDialog", () => ({
   EndorsementDialog: () => null,
 }));
 
-jest.mock("@/components/Pages/Project/IntroDialog", () => ({
+vi.mock("@/components/Pages/Project/IntroDialog", () => ({
   IntroDialog: () => null,
 }));
 
-jest.mock("@/components/Pages/Project/ProjectOptionsMenu", () => ({
+vi.mock("@/components/Pages/Project/ProjectOptionsMenu", () => ({
   ProjectOptionsDialogs: () => null,
   ProjectOptionsMenu: () => null,
 }));
 
-jest.mock("@/components/ErrorBoundary", () => ({
+vi.mock("@/components/ErrorBoundary", () => ({
   ErrorBoundary: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
-jest.mock("@/utilities/tailwind", () => ({
+vi.mock("@/utilities/tailwind", () => ({
   cn: (...a: string[]) => a.filter(Boolean).join(" "),
 }));
 
@@ -152,7 +150,7 @@ import { ProjectProfileLayout } from "@/components/Pages/Project/v2/Layout/Proje
 describe("ProjectProfileLayout - Invite Code Detection", () => {
   beforeEach(() => {
     mockInviteCode = null;
-    mockOpenContributorProfileModal = jest.fn();
+    mockOpenContributorProfileModal = vi.fn();
   });
 
   it("should open the contributor profile modal when invite-code is in the URL", () => {

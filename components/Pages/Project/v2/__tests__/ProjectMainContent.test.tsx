@@ -7,12 +7,12 @@ import { ContentTabs } from "../MainContent/ContentTabs";
 import { ProjectMainContent } from "../MainContent/ProjectMainContent";
 
 // Mock next/navigation
-jest.mock("next/navigation", () => ({
+vi.mock("next/navigation", () => ({
   useParams: () => ({ projectId: "test-project" }),
 }));
 
 // Mock next/link
-jest.mock("next/link", () => ({
+vi.mock("next/link", () => ({
   __esModule: true,
   default: ({ children, href, ...props }: any) => (
     <a href={href} {...props}>
@@ -22,22 +22,22 @@ jest.mock("next/link", () => ({
 }));
 
 // Mock useAuth hook
-jest.mock("@/hooks/useAuth", () => ({
-  useAuth: () => ({ authenticated: false, login: jest.fn(), ready: true }),
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: () => ({ authenticated: false, login: vi.fn(), ready: true }),
 }));
 
 // Mock RBAC permissions hook
-jest.mock("@/src/core/rbac/hooks/use-permissions", () => ({
+vi.mock("@/src/core/rbac/hooks/use-permissions", () => ({
   usePermissionsQuery: () => ({ data: null, isLoading: false }),
 }));
 
 // Mock RBAC types
-jest.mock("@/src/core/rbac/types", () => ({
+vi.mock("@/src/core/rbac/types", () => ({
   Role: { SUPER_ADMIN: "SUPER_ADMIN" },
 }));
 
 // Mock PAGES constant
-jest.mock("@/utilities/pages", () => ({
+vi.mock("@/utilities/pages", () => ({
   PAGES: {
     PROJECT: {
       OVERVIEW: (id: string) => `/project/${id}`,
@@ -50,29 +50,29 @@ jest.mock("@/utilities/pages", () => ({
 }));
 
 // Mock Badge component
-jest.mock("@/components/ui/badge", () => ({
+vi.mock("@/components/ui/badge", () => ({
   Badge: ({ children, ...props }: any) => <span {...props}>{children}</span>,
 }));
 
 // Mock the ActivityCard component
-jest.mock("@/components/Shared/ActivityCard", () => ({
+vi.mock("@/components/Shared/ActivityCard", () => ({
   ActivityCard: ({ activity }: { activity: { type: string; data: { title: string } } }) => (
     <div data-testid="activity-card">{activity.data.title || "Activity"}</div>
   ),
 }));
 
 // Mock the ImpactContent component to avoid loading external dependencies
-jest.mock("../MainContent/ImpactContent", () => ({
+vi.mock("../MainContent/ImpactContent", () => ({
   ImpactContent: () => <div data-testid="impact-content">Impact Content Mock</div>,
 }));
 
 // Mock the TeamContent component to avoid loading external dependencies
-jest.mock("../TeamContent/TeamContent", () => ({
+vi.mock("../TeamContent/TeamContent", () => ({
   TeamContent: () => <div data-testid="team-content">Team Content Mock</div>,
 }));
 
 // Mock useOwnerStore and useProjectStore
-jest.mock("@/store", () => ({
+vi.mock("@/store", () => ({
   useOwnerStore: () => ({ isOwner: false }),
   useProjectStore: () => ({ isProjectAdmin: false }),
 }));
@@ -116,11 +116,11 @@ const mockMilestones: UnifiedMilestone[] = [
 describe("ContentTabs", () => {
   const defaultProps = {
     activeTab: "updates" as const,
-    onTabChange: jest.fn(),
+    onTabChange: vi.fn(),
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("Rendering", () => {
@@ -190,11 +190,11 @@ describe("ActivityFilters", () => {
       | "socials"
       | "other"
     )[],
-    onFilterToggle: jest.fn(),
+    onFilterToggle: vi.fn(),
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("Rendering", () => {
@@ -226,7 +226,7 @@ describe("ActivityFilters", () => {
     });
 
     it("should render sort select when sortBy and onSortChange are provided", () => {
-      render(<ActivityFilters {...defaultProps} sortBy="newest" onSortChange={jest.fn()} />);
+      render(<ActivityFilters {...defaultProps} sortBy="newest" onSortChange={vi.fn()} />);
 
       expect(screen.getByTestId("sort-select")).toBeInTheDocument();
     });
@@ -234,7 +234,7 @@ describe("ActivityFilters", () => {
 
   describe("Interactions", () => {
     it("should call onFilterToggle when filter badge is clicked", () => {
-      const handleToggle = jest.fn();
+      const handleToggle = vi.fn();
       render(
         <ActivityFilters {...defaultProps} onFilterToggle={handleToggle} counts={{ funding: 3 }} />
       );
@@ -263,7 +263,7 @@ describe("ActivityFilters", () => {
     });
 
     it("should clear all filters when All button is clicked", () => {
-      const handleToggle = jest.fn();
+      const handleToggle = vi.fn();
       render(
         <ActivityFilters
           {...defaultProps}

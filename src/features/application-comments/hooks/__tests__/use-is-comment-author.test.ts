@@ -1,19 +1,19 @@
 import { renderHook } from "@testing-library/react";
 
-jest.mock("@/hooks/useAuth", () => ({
-  useAuth: jest.fn(),
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: vi.fn(),
 }));
 
-jest.mock("@/utilities/auth/compare-all-wallets", () => ({
-  compareAllWallets: jest.fn(),
+vi.mock("@/utilities/auth/compare-all-wallets", () => ({
+  compareAllWallets: vi.fn(),
 }));
 
 import { useAuth } from "@/hooks/useAuth";
 import { compareAllWallets } from "@/utilities/auth/compare-all-wallets";
 import { useIsCommentAuthor } from "../use-is-comment-author";
 
-const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
-const mockCompareAllWallets = compareAllWallets as jest.MockedFunction<typeof compareAllWallets>;
+const mockUseAuth = useAuth as vi.MockedFunction<typeof useAuth>;
+const mockCompareAllWallets = compareAllWallets as vi.MockedFunction<typeof compareAllWallets>;
 
 const makeUser = (address = "0xABC") =>
   ({
@@ -37,7 +37,7 @@ const makeFarcasterUser = (walletAddress: string, farcasterOwnerAddress: string)
 
 describe("useIsCommentAuthor", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("returns true when compareAllWallets matches the author address", () => {

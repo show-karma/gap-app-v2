@@ -7,25 +7,25 @@ import { useCommunityPrograms } from "@/hooks/usePrograms";
 import type { ProgramFinancialsResponse } from "@/types/financials";
 
 // Mock hooks
-jest.mock("@/hooks/financials/useProgramFinancials");
-jest.mock("@/hooks/usePrograms");
+vi.mock("@/hooks/financials/useProgramFinancials");
+vi.mock("@/hooks/usePrograms");
 
 // Mock errorManager
-jest.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: jest.fn(),
+vi.mock("@/components/Utilities/errorManager", () => ({
+  errorManager: vi.fn(),
 }));
 
 // Mock next/navigation
-jest.mock("next/navigation", () => ({
-  useParams: jest.fn(() => ({ communityId: "test-community" })),
+vi.mock("next/navigation", () => ({
+  useParams: vi.fn(() => ({ communityId: "test-community" })),
 }));
 
 // Mock child components to simplify testing
-jest.mock("@/components/Pages/Communities/Financials/ProgramSelector", () => ({
+vi.mock("@/components/Pages/Communities/Financials/ProgramSelector", () => ({
   ProgramSelector: () => <div data-testid="program-selector">Program Selector</div>,
 }));
 
-jest.mock("@/components/Pages/Communities/Financials/FinancialsSummary", () => ({
+vi.mock("@/components/Pages/Communities/Financials/FinancialsSummary", () => ({
   FinancialsSummary: ({ summary, isLoading }: { summary: any; isLoading: boolean }) => (
     <div data-testid="financials-summary" data-loading={isLoading}>
       {summary ? "Summary loaded" : "No summary"}
@@ -33,7 +33,7 @@ jest.mock("@/components/Pages/Communities/Financials/FinancialsSummary", () => (
   ),
 }));
 
-jest.mock("@/components/Pages/Communities/Financials/ProjectFinancialsList", () => ({
+vi.mock("@/components/Pages/Communities/Financials/ProjectFinancialsList", () => ({
   ProjectFinancialsList: ({
     data,
     isLoading,
@@ -49,11 +49,11 @@ jest.mock("@/components/Pages/Communities/Financials/ProjectFinancialsList", () 
   ),
 }));
 
-const mockUseCommunityPrograms = useCommunityPrograms as jest.MockedFunction<
+const mockUseCommunityPrograms = useCommunityPrograms as vi.MockedFunction<
   typeof useCommunityPrograms
 >;
-const mockUseSelectedProgram = useSelectedProgram as jest.MockedFunction<typeof useSelectedProgram>;
-const mockUseProgramFinancials = useProgramFinancials as jest.MockedFunction<
+const mockUseSelectedProgram = useSelectedProgram as vi.MockedFunction<typeof useSelectedProgram>;
+const mockUseProgramFinancials = useProgramFinancials as vi.MockedFunction<
   typeof useProgramFinancials
 >;
 
@@ -102,7 +102,7 @@ describe("CommunityFinancials", () => {
         },
       },
     });
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     // Default mocks
     mockUseCommunityPrograms.mockReturnValue({
@@ -112,7 +112,7 @@ describe("CommunityFinancials", () => {
       error: null,
     } as any);
 
-    mockUseSelectedProgram.mockReturnValue(["program-1", jest.fn()] as any);
+    mockUseSelectedProgram.mockReturnValue(["program-1", vi.fn()] as any);
 
     mockUseProgramFinancials.mockReturnValue({
       data: { pages: [mockFinancialsResponse] },
@@ -120,7 +120,7 @@ describe("CommunityFinancials", () => {
       isError: false,
       error: null,
       hasNextPage: false,
-      fetchNextPage: jest.fn(),
+      fetchNextPage: vi.fn(),
     } as any);
   });
 
@@ -170,7 +170,7 @@ describe("CommunityFinancials", () => {
   });
 
   it("should show select program state when no program selected", () => {
-    mockUseSelectedProgram.mockReturnValue(["", jest.fn()] as any);
+    mockUseSelectedProgram.mockReturnValue(["", vi.fn()] as any);
 
     render(<CommunityFinancials />, { wrapper });
 
@@ -191,7 +191,7 @@ describe("CommunityFinancials", () => {
       isError: false,
       error: null,
       hasNextPage: false,
-      fetchNextPage: jest.fn(),
+      fetchNextPage: vi.fn(),
     } as any);
 
     render(<CommunityFinancials />, { wrapper });
@@ -226,7 +226,7 @@ describe("CommunityFinancials", () => {
       isError: true,
       error: new Error("Failed to fetch financials"),
       hasNextPage: false,
-      fetchNextPage: jest.fn(),
+      fetchNextPage: vi.fn(),
     } as any);
 
     render(<CommunityFinancials />, { wrapper });

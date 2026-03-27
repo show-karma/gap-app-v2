@@ -3,33 +3,34 @@ import "@testing-library/jest-dom";
 import { FundingMapSidebar } from "@/src/features/funding-map/components/funding-map-sidebar";
 
 // Mock next-themes
-const mockUseTheme = jest.fn();
-jest.mock("next-themes", () => ({
+const mockUseTheme = vi.fn();
+vi.mock("next-themes", () => ({
   useTheme: () => mockUseTheme(),
 }));
 
 // Mock dependencies
-jest.mock("@/hooks/useMixpanel", () => ({
+vi.mock("@/hooks/useMixpanel", () => ({
   useMixpanel: () => ({
-    mixpanel: { reportEvent: jest.fn() },
+    mixpanel: { reportEvent: vi.fn() },
   }),
 }));
 
-jest.mock("next/dynamic", () => {
-  return jest.fn(() => {
+vi.mock("next/dynamic", () => ({
+  __esModule: true,
+  default: vi.fn(() => {
     const Component = () => <button type="button">Create a profile</button>;
     Component.displayName = "DynamicComponent";
     return Component;
-  });
-});
+  }),
+}));
 
-jest.mock("@/src/features/funding-map/components/funding-map-agent-card", () => ({
+vi.mock("@/src/features/funding-map/components/funding-map-agent-card", () => ({
   FundingMapAgentCard: () => <div data-testid="agent-card" />,
 }));
 
 describe("FundingMapSidebar iframe theme", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockUseTheme.mockReturnValue({ resolvedTheme: "light" });
   });
 

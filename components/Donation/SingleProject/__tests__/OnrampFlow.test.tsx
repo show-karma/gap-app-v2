@@ -4,17 +4,17 @@ import type { ReactNode } from "react";
 import { OnrampFlow } from "../OnrampFlow";
 
 // Mock the hooks
-jest.mock("@/hooks/donation/useOnramp", () => ({
-  useOnramp: jest.fn(() => ({
-    initiateOnramp: jest.fn(),
+vi.mock("@/hooks/donation/useOnramp", () => ({
+  useOnramp: vi.fn(() => ({
+    initiateOnramp: vi.fn(),
     isLoading: false,
     session: null,
-    clearSession: jest.fn(),
+    clearSession: vi.fn(),
   })),
 }));
 
-jest.mock("@/hooks/useCountryDetection", () => ({
-  useCountryDetection: jest.fn(() => ({
+vi.mock("@/hooks/useCountryDetection", () => ({
+  useCountryDetection: vi.fn(() => ({
     country: "US",
     isLoading: false,
     error: null,
@@ -22,21 +22,21 @@ jest.mock("@/hooks/useCountryDetection", () => ({
 }));
 
 // Mock child components
-jest.mock("../StripeOnrampEmbed", () => ({
-  StripeOnrampEmbed: jest.fn(() => <div data-testid="stripe-embed">Stripe Embed</div>),
+vi.mock("../StripeOnrampEmbed", () => ({
+  StripeOnrampEmbed: vi.fn(() => <div data-testid="stripe-embed">Stripe Embed</div>),
 }));
 
-jest.mock("../OnrampSuccessModal", () => ({
-  OnrampSuccessModal: jest.fn(() => <div data-testid="success-modal">Success Modal</div>),
+vi.mock("../OnrampSuccessModal", () => ({
+  OnrampSuccessModal: vi.fn(() => <div data-testid="success-modal">Success Modal</div>),
 }));
 
 import { useOnramp } from "@/hooks/donation/useOnramp";
 import { useCountryDetection } from "@/hooks/useCountryDetection";
 import { OnrampSuccessModal } from "../OnrampSuccessModal";
 
-const mockUseOnramp = useOnramp as jest.Mock;
-const mockUseCountryDetection = useCountryDetection as jest.Mock;
-const mockOnrampSuccessModal = OnrampSuccessModal as jest.Mock;
+const mockUseOnramp = useOnramp as vi.Mock;
+const mockUseCountryDetection = useCountryDetection as vi.Mock;
+const mockOnrampSuccessModal = OnrampSuccessModal as vi.Mock;
 
 const createWrapper = () => {
   const queryClient = new QueryClient({
@@ -59,12 +59,12 @@ const defaultProps = {
 
 describe("OnrampFlow", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockUseOnramp.mockReturnValue({
-      initiateOnramp: jest.fn(),
+      initiateOnramp: vi.fn(),
       isLoading: false,
       session: null,
-      clearSession: jest.fn(),
+      clearSession: vi.fn(),
     });
     mockUseCountryDetection.mockReturnValue({
       country: "US",
@@ -186,12 +186,12 @@ describe("OnrampFlow", () => {
 
   describe("Session Creation", () => {
     it("calls initiateOnramp with correct parameters", () => {
-      const mockInitiateOnramp = jest.fn();
+      const mockInitiateOnramp = vi.fn();
       mockUseOnramp.mockReturnValue({
         initiateOnramp: mockInitiateOnramp,
         isLoading: false,
         session: null,
-        clearSession: jest.fn(),
+        clearSession: vi.fn(),
       });
 
       render(<OnrampFlow {...defaultProps} />, { wrapper: createWrapper() });
@@ -207,10 +207,10 @@ describe("OnrampFlow", () => {
 
     it("shows loading state when creating session", () => {
       mockUseOnramp.mockReturnValue({
-        initiateOnramp: jest.fn(),
+        initiateOnramp: vi.fn(),
         isLoading: true,
         session: null,
-        clearSession: jest.fn(),
+        clearSession: vi.fn(),
       });
 
       render(<OnrampFlow {...defaultProps} />, { wrapper: createWrapper() });
@@ -220,14 +220,14 @@ describe("OnrampFlow", () => {
 
     it("renders StripeOnrampEmbed when session is active", () => {
       mockUseOnramp.mockReturnValue({
-        initiateOnramp: jest.fn(),
+        initiateOnramp: vi.fn(),
         isLoading: false,
         session: {
           clientSecret: "cs_test_123",
           donationUid: "donation-456",
           pollingToken: "polling-789",
         },
-        clearSession: jest.fn(),
+        clearSession: vi.fn(),
       });
 
       render(<OnrampFlow {...defaultProps} />, { wrapper: createWrapper() });
@@ -298,7 +298,7 @@ describe("OnrampFlow", () => {
 
   describe("onDonationComplete callback", () => {
     it("is called when success modal closes", () => {
-      const onDonationComplete = jest.fn();
+      const onDonationComplete = vi.fn();
 
       // Capture the OnrampSuccessModal onClose prop when it renders
       let capturedOnClose: (() => void) | undefined;
@@ -307,9 +307,9 @@ describe("OnrampFlow", () => {
         return <div data-testid="success-modal">Success Modal</div>;
       });
 
-      const mockClearSession = jest.fn();
+      const mockClearSession = vi.fn();
       mockUseOnramp.mockReturnValue({
-        initiateOnramp: jest.fn(),
+        initiateOnramp: vi.fn(),
         isLoading: false,
         session: {
           clientSecret: "cs_test_123",
@@ -320,9 +320,9 @@ describe("OnrampFlow", () => {
       });
 
       // Capture StripeOnrampEmbed onSuccess callback
-      const { StripeOnrampEmbed } = jest.requireMock("../StripeOnrampEmbed") as any;
+      const { StripeOnrampEmbed } = vi.importActual("../StripeOnrampEmbed") as any;
       let capturedStripeOnSuccess: ((data: any) => void) | undefined;
-      (StripeOnrampEmbed as jest.Mock).mockImplementation((props: any) => {
+      (StripeOnrampEmbed as vi.Mock).mockImplementation((props: any) => {
         capturedStripeOnSuccess = props.onSuccess;
         return <div data-testid="stripe-embed">Stripe Embed</div>;
       });
@@ -353,9 +353,9 @@ describe("OnrampFlow", () => {
 
   describe("donationUid passed to OnrampSuccessModal", () => {
     it("passes donationUid from session to OnrampSuccessModal", () => {
-      const mockClearSession = jest.fn();
+      const mockClearSession = vi.fn();
       mockUseOnramp.mockReturnValue({
-        initiateOnramp: jest.fn(),
+        initiateOnramp: vi.fn(),
         isLoading: false,
         session: {
           clientSecret: "cs_test_123",
@@ -366,9 +366,9 @@ describe("OnrampFlow", () => {
       });
 
       // Capture StripeOnrampEmbed onSuccess callback
-      const { StripeOnrampEmbed } = jest.requireMock("../StripeOnrampEmbed") as any;
+      const { StripeOnrampEmbed } = vi.importActual("../StripeOnrampEmbed") as any;
       let capturedStripeOnSuccess: ((data: any) => void) | undefined;
-      (StripeOnrampEmbed as jest.Mock).mockImplementation((props: any) => {
+      (StripeOnrampEmbed as vi.Mock).mockImplementation((props: any) => {
         capturedStripeOnSuccess = props.onSuccess;
         return <div data-testid="stripe-embed">Stripe Embed</div>;
       });

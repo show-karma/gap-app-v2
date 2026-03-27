@@ -3,43 +3,43 @@ import "@testing-library/jest-dom";
 import { ImpactContent } from "../MainContent/ImpactContent";
 
 // Mock the OutputsAndOutcomes component
-jest.mock("@/components/Pages/Project/Impact/OutputsAndOutcomes", () => ({
+vi.mock("@/components/Pages/Project/Impact/OutputsAndOutcomes", () => ({
   OutputsAndOutcomes: () => (
     <div data-testid="outputs-and-outcomes">Outputs and Outcomes Content</div>
   ),
 }));
 
 // Mock the AddImpactScreen component
-jest.mock("@/components/Pages/Project/Impact/AddImpactScreen", () => ({
+vi.mock("@/components/Pages/Project/Impact/AddImpactScreen", () => ({
   AddImpactScreen: () => <div data-testid="add-impact-screen">Add Impact Screen</div>,
 }));
 
 // Mock the ImpactStatsSummary component to avoid QueryClient dependency
-jest.mock("../MainContent/ImpactStatsSummary", () => ({
+vi.mock("../MainContent/ImpactStatsSummary", () => ({
   ImpactStatsSummary: () => <div data-testid="impact-stats-summary">Impact Stats Summary</div>,
 }));
 
 // Mock useOwnerStore
-jest.mock("@/store", () => ({
-  useOwnerStore: jest.fn(),
-  useProjectStore: jest.fn(),
+vi.mock("@/store", () => ({
+  useOwnerStore: vi.fn(),
+  useProjectStore: vi.fn(),
 }));
 
 // Mock next/navigation
-jest.mock("next/navigation", () => ({
-  useSearchParams: jest.fn(),
+vi.mock("next/navigation", () => ({
+  useSearchParams: vi.fn(),
 }));
 
 import { useSearchParams } from "next/navigation";
 import { useOwnerStore, useProjectStore } from "@/store";
 
-const mockUseOwnerStore = useOwnerStore as jest.MockedFunction<typeof useOwnerStore>;
-const mockUseProjectStore = useProjectStore as jest.MockedFunction<typeof useProjectStore>;
-const mockUseSearchParams = useSearchParams as jest.MockedFunction<typeof useSearchParams>;
+const mockUseOwnerStore = useOwnerStore as vi.MockedFunction<typeof useOwnerStore>;
+const mockUseProjectStore = useProjectStore as vi.MockedFunction<typeof useProjectStore>;
+const mockUseSearchParams = useSearchParams as vi.MockedFunction<typeof useSearchParams>;
 
 describe("ImpactContent", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockUseOwnerStore.mockImplementation((selector) => {
       const state = { isOwner: false };
       return selector ? selector(state as never) : state;

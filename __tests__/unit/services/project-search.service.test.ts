@@ -6,30 +6,30 @@
 import type { ProjectResponse } from "@/types/v2/project";
 
 // Mock environment variables
-jest.mock("@/utilities/enviromentVars", () => ({
+vi.mock("@/utilities/enviromentVars", () => ({
   envVars: {
     NEXT_PUBLIC_GAP_INDEXER_URL: "http://localhost:4000",
   },
 }));
 
 // Mock errorManager
-jest.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: jest.fn(),
+vi.mock("@/components/Utilities/errorManager", () => ({
+  errorManager: vi.fn(),
 }));
 
 // Mock fetchData utility - the service now uses fetchData instead of api-client directly
-jest.mock("@/utilities/fetchData");
+vi.mock("@/utilities/fetchData");
 
 // Import the service AFTER all mocks are set up
 import { searchProjects, searchProjectsV2 } from "@/services/project-search.service";
 // Import the mocked module to get access to the mock function
 import fetchData from "@/utilities/fetchData";
 
-const mockFetchData = fetchData as jest.MockedFunction<typeof fetchData>;
+const mockFetchData = fetchData as vi.MockedFunction<typeof fetchData>;
 
 describe("project-search.service", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("searchProjects", () => {

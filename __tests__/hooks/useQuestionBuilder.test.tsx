@@ -5,33 +5,33 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQuestionBuilderSchema } from "@/hooks/useQuestionBuilder";
 import { fundingPlatformService } from "@/services/fundingPlatformService";
 
-jest.mock("@/hooks/useAuth", () => ({
-  useAuth: jest.fn(),
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: vi.fn(),
 }));
 
-jest.mock("@/services/fundingPlatformService", () => ({
+vi.mock("@/services/fundingPlatformService", () => ({
   fundingPlatformService: {
     programs: {
-      getProgramConfiguration: jest.fn(),
-      createProgramConfiguration: jest.fn(),
-      updateProgramConfiguration: jest.fn(),
+      getProgramConfiguration: vi.fn(),
+      createProgramConfiguration: vi.fn(),
+      updateProgramConfiguration: vi.fn(),
     },
   },
 }));
 
-jest.mock("react-hot-toast", () => ({
+vi.mock("react-hot-toast", () => ({
   __esModule: true,
   default: {
-    success: jest.fn(),
-    error: jest.fn(),
+    success: vi.fn(),
+    error: vi.fn(),
   },
 }));
 
-const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
+const mockUseAuth = useAuth as vi.MockedFunction<typeof useAuth>;
 const mockFundingPrograms = fundingPlatformService.programs as {
-  getProgramConfiguration: jest.Mock;
-  createProgramConfiguration: jest.Mock;
-  updateProgramConfiguration: jest.Mock;
+  getProgramConfiguration: vi.Mock;
+  createProgramConfiguration: vi.Mock;
+  updateProgramConfiguration: vi.Mock;
 };
 
 describe("useQuestionBuilderSchema", () => {
@@ -66,7 +66,7 @@ describe("useQuestionBuilderSchema", () => {
       },
     });
 
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockUseAuth.mockReturnValue({
       authenticated: true,
       ready: true,
