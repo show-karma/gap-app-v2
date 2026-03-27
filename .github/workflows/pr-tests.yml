@@ -8,7 +8,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
 
     steps:
       - name: Checkout code
@@ -29,10 +29,10 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Run tests
-        run: pnpm run test -- --pool-options.forks.maxForks=2
+        run: pnpm run test -- --pool-options.forks.maxForks=1 --reporter=verbose
         env:
           NODE_ENV: test
-          NODE_OPTIONS: --max-old-space-size=6144
+          NODE_OPTIONS: --max-old-space-size=8192
 
       - name: Generate test summary
         id: test-summary
