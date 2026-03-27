@@ -586,6 +586,8 @@ export const saveMilestoneInvoices = async (
     milestoneLabel: string;
     milestoneUID?: string | null;
     invoiceReceivedAt?: string | null;
+    invoiceFileKey?: string | null;
+    invoiceFileUrl?: string | null;
   }>
 ): Promise<{ invoices: CommunityPayoutInvoiceInfo[] }> => {
   try {
@@ -607,5 +609,31 @@ export const saveMilestoneInvoices = async (
   } catch (error: unknown) {
     errorManager(`Error saving invoices for grant ${grantUID}`, error);
     throw new Error(`Failed to save invoices: ${getErrorMessage(error)}`);
+  }
+};
+
+/**
+ * Get a temporary presigned download URL for an invoice file
+ */
+export const getInvoiceDownloadUrl = async (fileKey: string): Promise<string> => {
+  try {
+    const [data, error] = await fetchData<{ downloadUrl: string }>(
+      INDEXER.V2.MILESTONE_INVOICES.DOWNLOAD(fileKey),
+      "GET",
+      {},
+      {},
+      {},
+      true,
+      false
+    );
+
+    if (error || !data?.downloadUrl) {
+      throw new Error(error || "Failed to get download URL");
+    }
+
+    return data.downloadUrl;
+  } catch (error: unknown) {
+    errorManager("Error getting invoice download URL", error);
+    throw new Error(`Failed to get download URL: ${getErrorMessage(error)}`);
   }
 };
