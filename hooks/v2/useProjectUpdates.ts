@@ -20,7 +20,7 @@ import { QUERY_KEYS } from "@/utilities/queryKeys";
  * - recipient field for the milestone creator
  * - grant object with title and community info
  */
-const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMilestone[] => {
+export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMilestone[] => {
   const unified: UnifiedMilestone[] = [];
 
   // Convert project updates to unified format
@@ -173,6 +173,7 @@ const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMilestone[
           milestone: {
             uid: milestone.uid,
             chainID,
+            refUID: grantInfo?.uid || "",
             attester,
             title: milestone.title,
             description: milestone.description,
