@@ -13,8 +13,15 @@ import {
   mixedResults,
   projectsOnlyResults,
 } from "../fixtures/search-fixtures";
-import { mockSearchFunction as mockUnifiedSearch } from "../setup";
 import { renderWithProviders } from "../utils/test-helpers";
+
+const { mockUnifiedSearch } = vi.hoisted(() => ({
+  mockUnifiedSearch: vi.fn(),
+}));
+
+vi.mock("@/services/unified-search.service", () => ({
+  unifiedSearch: mockUnifiedSearch,
+}));
 
 // Helper to flush timers and promises
 const _flushTimersAndPromises = async () => {
@@ -490,6 +497,8 @@ describe("NavbarSearch", () => {
     });
 
     it("shows loading spinner during API call", async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+
       // Delay the response to see loading state
       mockUnifiedSearch.mockImplementation(
         () =>
@@ -509,9 +518,13 @@ describe("NavbarSearch", () => {
         const spinner = document.querySelector(".animate-spin");
         expect(spinner).toBeInTheDocument();
       });
+
+      vi.useRealTimers();
     });
 
     it("loading spinner is accessible", async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+
       mockUnifiedSearch.mockImplementation(
         () =>
           new Promise((resolve) =>
@@ -531,9 +544,13 @@ describe("NavbarSearch", () => {
         expect(spinner).toBeInTheDocument();
         expect(spinner).toBeVisible();
       });
+
+      vi.useRealTimers();
     });
 
     it("network timeout handled gracefully", async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+
       mockUnifiedSearch.mockImplementation(
         () => new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 100))
       );
@@ -560,9 +577,12 @@ describe("NavbarSearch", () => {
       );
 
       consoleSpy.mockRestore();
+      vi.useRealTimers();
     });
 
     it("recovers from error and shows results on successful retry", async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+
       const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
       renderWithProviders(<NavbarSearch />);
@@ -592,6 +612,7 @@ describe("NavbarSearch", () => {
       });
 
       consoleSpy.mockRestore();
+      vi.useRealTimers();
     });
   });
 
