@@ -17,10 +17,10 @@ interface EnsureCorrectChainResult {
 
 /**
  * Ensures the wallet is on the correct chain and returns the appropriate GAP client.
- * This function handles the chain switching logic consistently across the app.
  *
- * Key insight: After switchChainAsync, we don't wait for React hooks to update.
- * Instead, we trust the switch happened and use the target chain ID directly.
+ * After switchChainAsync resolves, the wallet has confirmed the switch.
+ * The wallet client cache (wagmi) may still be stale at this point —
+ * safeGetWalletClient handles that with chain-verified retries.
  *
  * @param params - The parameters for chain switching
  * @returns Result object with success status, chain ID, and GAP client
@@ -56,12 +56,9 @@ export async function ensureCorrectChain({
   try {
     await switchChainAsync({ chainId: targetChainId });
 
-    // Small delay to ensure the switch completes
-    // This is a pragmatic solution since wallet state updates are async
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    // Trust that the switch happened and use the target chain
-    // Don't wait for React hooks to update
+    // switchChainAsync resolved — the wallet confirmed the switch.
+    // Use the target chain ID directly; safeGetWalletClient will
+    // retry if wagmi's cached wallet client is still stale.
     return {
       success: true,
       chainId: targetChainId,

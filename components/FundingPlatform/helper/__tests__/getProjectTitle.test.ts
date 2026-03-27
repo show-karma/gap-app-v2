@@ -1,14 +1,12 @@
-import type { IFundingApplication } from "@/types/funding-platform";
 import { getProjectTitle } from "../getProjectTitle";
 
 const makeApplication = (
   applicationData: Record<string, unknown>,
   referenceNumber = "APP-12345-67890"
-): IFundingApplication =>
-  ({
-    applicationData,
-    referenceNumber,
-  }) as unknown as IFundingApplication;
+) => ({
+  applicationData,
+  referenceNumber,
+});
 
 describe("getProjectTitle", () => {
   it("returns field matching both project keyword and title/name keyword", () => {

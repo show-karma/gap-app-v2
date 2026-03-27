@@ -2,6 +2,7 @@ import { safeGetWalletClient } from "../wallet-helpers";
 
 vi.mock("@wagmi/core", () => ({
   getWalletClient: vi.fn(),
+  reconnect: vi.fn(),
 }));
 
 vi.mock("@/components/Utilities/errorManager", () => ({
@@ -12,13 +13,15 @@ vi.mock("../wagmi/privy-config", () => ({
   privyConfig: {},
 }));
 
-import { getWalletClient } from "@wagmi/core";
+import { getWalletClient, reconnect } from "@wagmi/core";
 
 const mockGetWalletClient = getWalletClient as vi.MockedFunction<typeof getWalletClient>;
+const mockReconnect = reconnect as vi.MockedFunction<typeof reconnect>;
 
 describe("safeGetWalletClient", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockReconnect.mockResolvedValue([]);
   });
 
   it("returns wallet client on success", async () => {

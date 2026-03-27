@@ -4,6 +4,7 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { Lock, RefreshCw, Search, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
+import { getProjectTitle } from "@/components/FundingPlatform/helper/getProjectTitle";
 import type { ProgramWithConfig } from "@/features/programs/hooks/use-programs-with-config";
 import { useProgramsWithConfig } from "@/features/programs/hooks/use-programs-with-config";
 import { Link } from "@/src/components/navigation/Link";
@@ -52,19 +53,6 @@ function formatStatusLabel(status: ApplicationStatus): string {
 
 function normalizeFieldKey(key: string): string {
   return key.toLowerCase().replace(/[\s_-]/g, "");
-}
-
-function getProjectTitle(app: Application): string {
-  const data = app.applicationData;
-  for (const [key, value] of Object.entries(data)) {
-    const nk = normalizeFieldKey(key);
-    if (nk.includes("projectname") || nk.includes("projecttitle") || nk.includes("title")) {
-      if (typeof value === "string" && value.trim().length > 0) {
-        return value.trim();
-      }
-    }
-  }
-  return app.referenceNumber;
 }
 
 function getRequestedAmount(applicationData: Record<string, unknown>): string | null {

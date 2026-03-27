@@ -3,20 +3,15 @@
 import { Dialog, Transition } from "@headlessui/react";
 import { ChevronRightIcon, PlusIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Community, nullRef } from "@show-karma/karma-gap-sdk";
+import type { Community } from "@show-karma/karma-gap-sdk";
 import { type FC, Fragment, type ReactNode, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useAccount } from "wagmi";
+import toast from "react-hot-toast";
 import { z } from "zod";
-import { useAttestationToast } from "@/hooks/useAttestationToast";
-import { useGap } from "@/hooks/useGap";
-import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
-import { useWallet } from "@/hooks/useWallet";
+import { useAuth } from "@/hooks/useAuth";
 import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
-import { appNetwork } from "@/utilities/network";
-import { sanitizeObject } from "@/utilities/sanitize";
+import { gapSupportedNetworks } from "@/utilities/network";
 import { cn } from "@/utilities/tailwind";
 import { errorManager } from "../Utilities/errorManager";
 import { MarkdownEditor } from "../Utilities/MarkdownEditor";
@@ -68,11 +63,11 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
   );
 
   const [isOpen, setIsOpen] = useState(false);
-  // When true, form data resets on open; when false, preserve existing form data
-  // (e.g., after a failed transaction so the user can retry without re-entering data)
   const [shouldResetOnOpen, setShouldResetOnOpen] = useState(true);
   const [description, setDescription] = useState(dataToUpdate?.description || "");
-  const [selectedChain, setSelectedChain] = useState(appNetwork[0].id);
+  const [selectedChain, setSelectedChain] = useState(gapSupportedNetworks[0].id);
+
+  const { authenticated, login } = useAuth();
 
   function closeModal() {
     setIsOpen(false);
@@ -94,134 +89,74 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
     defaultValues: dataToUpdate,
   });
 
-  // Reset form when modal opens fresh (not after a failed transaction)
   useEffect(() => {
     if (isOpen && shouldResetOnOpen) {
       reset(dataToUpdate);
       setDescription(dataToUpdate?.description || "");
-      setSelectedChain(appNetwork[0].id);
+      setSelectedChain(gapSupportedNetworks[0].id);
     }
   }, [isOpen, shouldResetOnOpen, dataToUpdate, reset, setDescription]);
 
-  const { address, chain } = useAccount();
-  const { switchChainAsync } = useWallet();
   const [isLoading, setIsLoading] = useState(false);
 
-  const { gap } = useGap();
-  const { setupChainAndWallet, smartWalletAddress } = useSetupChainAndWallet();
-  const { startAttestation, showLoading, showSuccess, showError, dismiss, changeStepperStep } =
-    useAttestationToast();
-
   const createCommunity = async (data: SchemaType) => {
-    if (!gap) return;
+    if (!authenticated) {
+      login?.();
+      return;
+    }
+
     setIsLoading(true);
-    startAttestation("Creating community...");
 
     try {
-      // Setup chain and wallet (uses gasless smart wallet if available)
-      const setup = await setupChainAndWallet({
-        targetChainId: selectedChain,
-        currentChainId: chain?.id,
-        switchChainAsync,
-      });
-
-      if (!setup) {
-        setIsLoading(false);
-        return;
-      }
-
-      const { gapClient, walletSigner, chainId: actualChainId } = setup;
-
-      const newCommunity = new Community({
-        data: {
-          community: true,
-        },
-        schema: gapClient.findSchema("Community"),
-        refUID: nullRef,
-        recipient: (smartWalletAddress ||
-          address ||
-          "0x0000000000000000000000000000000000000000") as `0x${string}`,
-        uid: nullRef,
-      });
-      if (await gapClient.fetch.slugExists(data.slug as string)) {
-        data.slug = await gapClient.generateSlug(data.slug as string);
-      }
-
-      const sanitizedData = sanitizeObject({
-        name: data.name,
-        description: description as string,
-        imageURL: data.imageURL as string,
-        slug: data.slug as string,
-      });
-
-      // Close modal before attestation (Privy wallet popups will appear during attest
-      // and conflict with the modal overlay)
-      closeModal();
-
-      await newCommunity
-        .attest(walletSigner as any, sanitizedData, changeStepperStep)
-        .then(async (res) => {
-          showLoading("Indexing community...");
-
-          const txHash = res?.tx[0]?.hash;
-          if (txHash) {
-            await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, newCommunity.chainID), "POST", {});
-          }
-          await fetchData(
-            INDEXER.ATTESTATION_LISTENER(newCommunity.uid, actualChainId),
-            "POST",
-            {}
-          );
-          let retries = 1000;
-          while (retries > 0) {
-            await refreshCommunities()
-              .then(async (fetchedCommunities) => {
-                const createdCommunityExists = fetchedCommunities?.find(
-                  (g) => g.uid === newCommunity.uid
-                );
-                if (createdCommunityExists) {
-                  retries = 0;
-                  showSuccess("Community created!");
-                  // Brief delay to show success, then close
-                  setTimeout(() => {
-                    setShouldResetOnOpen(true);
-                    dismiss();
-                  }, 1500);
-                }
-                retries -= 1;
-                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-                await new Promise((resolve) => setTimeout(resolve, 1500));
-              })
-              .catch(async () => {
-                retries -= 1;
-                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-                await new Promise((resolve) => setTimeout(resolve, 1500));
-              });
-          }
-        });
-    } catch (error: unknown) {
-      showError("Failed to create community. Please try again.");
-      errorManager(
-        `Error creating community`,
-        error,
+      const [result, error, , status] = await fetchData(
+        "/v2/communities",
+        "POST",
         {
-          ...data,
-          address: address,
+          name: data.name,
+          description: description || data.name,
+          imageURL: data.imageURL,
+          slug: data.slug.toLowerCase().replace(/[^a-z0-9-]/g, "-"),
+          chainID: selectedChain,
         },
-        {
-          error: "Failed to create community. Please try again.",
-        }
+        {},
+        {},
+        true
       );
-      // Reopen modal with preserved form data so user can retry
+
+      if (error) {
+        const lowerError = (error as string).toLowerCase();
+        if (status === 403 && lowerError.includes("community limit")) {
+          toast.error("You've reached the free tier limit of 1 community. Contact us to upgrade.", {
+            duration: 10000,
+          });
+          return;
+        }
+        throw new Error(error as string);
+      }
+
+      toast.success("Community created successfully!");
+      closeModal();
+      try {
+        await refreshCommunities();
+      } catch {
+        // Non-critical — community was already created
+      }
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes("already exists")) {
+        toast.error("A community with this slug already exists. Please choose a different slug.");
+      } else {
+        toast.error("Failed to create community. Please try again.");
+        errorManager("Error creating community", error, { ...data });
+      }
       setShouldResetOnOpen(false);
-      openModal();
     } finally {
       setIsLoading(false);
     }
   };
 
   const onSubmit = async (data: SchemaType) => {
-    await createCommunity(data); // Call the createCommunity function
+    await createCommunity(data);
   };
 
   return (
@@ -306,7 +241,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
                             setSelectedChain(+e.target.value);
                           }}
                         >
-                          {appNetwork.map((chain) => (
+                          {gapSupportedNetworks.map((chain) => (
                             <option key={chain.id} value={chain.id}>
                               {chain.name}
                             </option>
