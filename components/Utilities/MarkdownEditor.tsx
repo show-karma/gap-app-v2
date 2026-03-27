@@ -48,6 +48,26 @@ const MdEditor = dynamic(() => import("md-editor-rt").then((mod) => mod.MdEditor
   ),
 });
 
+const MdPreview = dynamic(() => import("md-editor-rt").then((mod) => mod.MdPreview), {
+  ssr: false,
+  loading: () => <div className="animate-pulse bg-gray-200 dark:bg-gray-700 rounded h-4 w-full" />,
+});
+
+// Toolbar buttons to exclude — removes overflow-causing and rarely-used items in modal contexts
+const EXCLUDED_TOOLBARS = [
+  "prettier",
+  "save",
+  "catalog",
+  "github",
+  "mermaid",
+  "katex",
+  "pageFullscreen",
+  "fullscreen",
+  "preview",
+  "previewOnly",
+  "htmlPreview",
+] as const;
+
 /**
  * Validates markdown content for potentially dangerous patterns
  * Note: md-editor-rt uses XSS sanitization internally, this adds extra validation
@@ -208,29 +228,39 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
           error ? "border-red-500 dark:border-red-500" : "border-gray-200 dark:border-gray-700"
         )}
       >
-        <MdEditor
-          id={id}
-          className={cn(
-            "flex-1",
-            error && "border-red-500 dark:border-red-500",
-            isEditorDisabled && "opacity-50 cursor-not-allowed",
-            className
-          )}
-          value={value}
-          onChange={handleChange}
-          onBlur={onBlur}
-          theme={resolvedTheme === "dark" ? "dark" : "light"}
-          preview={showPreview}
-          disabled={isEditorDisabled}
-          placeholder={editorPlaceholder}
-          maxLength={maxLength}
-          noUploadImg
-          footers={[]}
-          language="en-US"
-          style={{ height, minHeight }}
-          data-field-id={dataFieldId}
-          aria-describedby={ariaDescribedBy}
-        />
+        {showPreview ? (
+          <MdPreview
+            value={value}
+            theme={resolvedTheme === "dark" ? "dark" : "light"}
+            language="en-US"
+            style={{ minHeight }}
+          />
+        ) : (
+          <MdEditor
+            id={id}
+            className={cn(
+              "flex-1",
+              error && "border-red-500 dark:border-red-500",
+              isEditorDisabled && "opacity-50 cursor-not-allowed",
+              className
+            )}
+            value={value}
+            onChange={handleChange}
+            onBlur={onBlur}
+            theme={resolvedTheme === "dark" ? "dark" : "light"}
+            preview={false}
+            disabled={isEditorDisabled}
+            placeholder={editorPlaceholder}
+            maxLength={maxLength}
+            noUploadImg
+            footers={[]}
+            language="en-US"
+            toolbarsExclude={[...EXCLUDED_TOOLBARS]}
+            style={{ height, minHeight }}
+            data-field-id={dataFieldId}
+            aria-describedby={ariaDescribedBy}
+          />
+        )}
       </div>
 
       {/* Footer with error and character count */}
