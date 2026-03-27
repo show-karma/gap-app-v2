@@ -9,6 +9,8 @@ module.exports = {
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/**/*.{js,ts,jsx,tsx,mdx}",
     "./node_modules/@tremor/**/*.{js,ts,jsx,tsx}",
+    // streamdown uses Tailwind classes internally — must be included for purge safety
+    "./node_modules/streamdown/dist/*.js",
   ],
   container: {
     center: true,

@@ -1,7 +1,7 @@
 "use client";
 
-import { useTheme } from "next-themes";
-import { useEffect, useMemo, useState } from "react";
+import { Streamdown } from "streamdown";
+import "streamdown/styles.css";
 import styles from "@/styles/markdown.module.css";
 import { cn } from "@/utilities/tailwind";
 
@@ -11,46 +11,30 @@ interface MarkdownPreviewLiteProps {
 }
 
 /**
- * Lightweight markdown renderer using markdown-it + DOMPurify (already in the bundle).
- * Content is sanitized by DOMPurify inside renderToHTML before being set as innerHTML.
- * Used for prose-only content that doesn't need syntax highlighting.
+ * Lightweight markdown renderer powered by streamdown (Vercel's streaming markdown renderer).
+ * Built-in sanitization via rehype-harden, GFM support, and streaming-optimized rendering.
+ * Replaces the previous markdown-it + DOMPurify approach with a smaller, faster renderer.
  *
- * Renders only on the client because DOMPurify requires a browser DOM.
+ * Renders synchronously — no async state updates needed.
  */
 export function MarkdownPreviewLite({ source, className }: MarkdownPreviewLiteProps) {
-  const { resolvedTheme } = useTheme();
-  const [html, setHtml] = useState("");
-
-  useEffect(() => {
-    if (!source) {
-      setHtml("");
-      return;
-    }
-    // Dynamic import to avoid SSR issues — DOMPurify requires a browser DOM
-    import("@/utilities/markdown").then(({ renderToHTML }) => {
-      setHtml(renderToHTML(source));
-    });
-  }, [source]);
-
   if (!source) return null;
 
-  if (!html) {
-    return <div className="animate-pulse bg-gray-200 dark:bg-gray-700 rounded h-4 w-full" />;
-  }
-
   return (
-    <div className="preview w-full max-w-full" data-color-mode={resolvedTheme ?? "light"}>
-      <div
+    <div className="preview w-full max-w-full">
+      <Streamdown
+        mode="static"
         className={cn("wmdeMarkdown", "wmde-markdown", styles.wmdeMarkdown, className)}
-        style={{
-          backgroundColor: "transparent",
-          color: "currentColor",
-          width: "100%",
-          maxWidth: "100%",
+        components={{
+          p: ({ children }) => (
+            <p className="mb-2" style={{ backgroundColor: "transparent", color: "currentColor" }}>
+              {children}
+            </p>
+          ),
         }}
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: content is sanitized by DOMPurify in renderToHTML
-        dangerouslySetInnerHTML={{ __html: html }}
-      />
+      >
+        {source}
+      </Streamdown>
     </div>
   );
 }

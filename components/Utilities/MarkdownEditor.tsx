@@ -1,12 +1,14 @@
 "use client";
 import "@uiw/react-md-editor/markdown-editor.css";
 import "@uiw/react-markdown-preview/markdown.css";
+import "streamdown/styles.css";
 
+import { code } from "@streamdown/code";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useTheme } from "next-themes";
 import { type FC, useCallback, useEffect, useMemo, useState } from "react";
-import rehypeSanitize from "rehype-sanitize";
+import { Streamdown } from "streamdown";
 import { cn } from "@/utilities/tailwind";
 
 // Constants for content validation and performance
@@ -49,6 +51,36 @@ const MDEditor = dynamic(() => import("@uiw/react-md-editor").then((mod) => mod.
     </div>
   ),
 });
+
+// Streamdown preview panel — rendered instead of @uiw's built-in preview
+// to showcase streaming markdown capabilities
+const StreamdownPreview = ({
+  value,
+  height,
+  className,
+}: {
+  value: string;
+  height: number;
+  className?: string;
+}) => (
+  <div
+    className={cn(
+      "w-full overflow-auto p-4 bg-white dark:bg-zinc-900 text-black dark:text-white",
+      className
+    )}
+    style={{ minHeight: height }}
+  >
+    <Streamdown
+      mode="static"
+      plugins={{ code }}
+      components={{
+        p: ({ children }) => <p className="mb-2">{children}</p>,
+      }}
+    >
+      {value || "_Nothing to preview_"}
+    </Streamdown>
+  </div>
+);
 
 /**
  * Validates markdown content for potentially dangerous patterns
@@ -211,34 +243,36 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
           error ? "border-red-500 dark:border-red-500" : "border-gray-200 dark:border-gray-700"
         )}
       >
-        <MDEditor
-          className={cn(
-            "flex-1 bg-white dark:bg-zinc-900 dark:text-white text-black",
-            error && "border-red-500 dark:border-red-500",
-            isEditorDisabled && "opacity-50 cursor-not-allowed",
-            className
-          )}
-          value={value}
-          onChange={handleChange}
-          onBlur={onBlur}
-          height={height}
-          minHeight={minHeight}
-          preview={previewMode}
-          previewOptions={{
-            rehypePlugins: [[rehypeSanitize]],
-          }}
-          overflow={overflow}
-          textareaProps={{
-            placeholder: editorPlaceholder,
-            spellCheck: true,
-            style: { height: "100%", minHeight: "100%", paddingRight: "0.5rem" },
-            disabled: isEditorDisabled,
-            id,
-            maxLength,
-            "aria-describedby": ariaDescribedBy,
-          }}
-          highlightEnable={false}
-        />
+        {previewMode === "preview" ? (
+          /* Streamdown-powered preview — replaces @uiw's built-in preview pane */
+          <StreamdownPreview value={value} height={height} />
+        ) : (
+          <MDEditor
+            className={cn(
+              "flex-1 bg-white dark:bg-zinc-900 dark:text-white text-black",
+              error && "border-red-500 dark:border-red-500",
+              isEditorDisabled && "opacity-50 cursor-not-allowed",
+              className
+            )}
+            value={value}
+            onChange={handleChange}
+            onBlur={onBlur}
+            height={height}
+            minHeight={minHeight}
+            preview="edit"
+            overflow={overflow}
+            textareaProps={{
+              placeholder: editorPlaceholder,
+              spellCheck: true,
+              style: { height: "100%", minHeight: "100%", paddingRight: "0.5rem" },
+              disabled: isEditorDisabled,
+              id,
+              maxLength,
+              "aria-describedby": ariaDescribedBy,
+            }}
+            highlightEnable={false}
+          />
+        )}
       </div>
 
       {/* Footer with error and character count */}
