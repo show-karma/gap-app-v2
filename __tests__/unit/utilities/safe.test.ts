@@ -113,7 +113,6 @@ vi.stubGlobal("fetch", mockFetch);
 import Safe from "@safe-global/protocol-kit";
 import type { SupportedChainId } from "@/config/tokens";
 import type { DisbursementRecipient } from "@/types/disbursement";
-import { getRPCClient } from "@/utilities/rpcClient";
 import {
   canProposeToSafe,
   estimateGasFee,
