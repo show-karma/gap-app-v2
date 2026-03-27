@@ -156,7 +156,7 @@ describe("KarmaProfileLinkInput Component", () => {
 
   describe("Search Functionality", () => {
     beforeEach(() => {
-      vi.useFakeTimers();
+      vi.useFakeTimers({ shouldAdvanceTime: true });
     });
 
     afterEach(() => {
@@ -197,7 +197,7 @@ describe("KarmaProfileLinkInput Component", () => {
 
   describe("Selection", () => {
     beforeEach(() => {
-      vi.useFakeTimers();
+      vi.useFakeTimers({ shouldAdvanceTime: true });
     });
 
     afterEach(() => {
@@ -339,7 +339,7 @@ describe("KarmaProfileLinkInput Component", () => {
 
   describe("Add Project Link", () => {
     beforeEach(() => {
-      vi.useFakeTimers();
+      vi.useFakeTimers({ shouldAdvanceTime: true });
     });
 
     afterEach(() => {
@@ -401,7 +401,7 @@ describe("KarmaProfileLinkInput Component", () => {
 
   describe("Remove Button", () => {
     beforeEach(() => {
-      vi.useFakeTimers();
+      vi.useFakeTimers({ shouldAdvanceTime: true });
     });
 
     afterEach(() => {
