@@ -1,26 +1,29 @@
 "use client";
 
-import type { MarkdownPreviewProps } from "@uiw/react-markdown-preview";
 import { useTheme } from "next-themes";
+import type { ComponentType } from "react";
 import { useEffect, useState } from "react";
 import type { Components } from "streamdown";
 import styles from "@/styles/markdown.module.css";
 import { cn } from "@/utilities/tailwind";
 
-/**
- * Full-featured markdown renderer powered by streamdown (Vercel's streaming markdown renderer).
- *
- * Replaces @uiw/react-markdown-preview with a significantly lighter, streaming-capable renderer.
- * Handles code syntax highlighting via @streamdown/code (Shiki), GFM tables/task lists,
- * and built-in sanitization via rehype-harden. Supports streaming AI-generated content.
- *
- * Props are typed using MarkdownPreviewProps from @uiw/react-markdown-preview to maintain
- * 100% backward compatibility at call sites. Not all props are forwarded — `rehypeRewrite`
- * and `rehypePlugins` are dropped in favour of streamdown's built-in sanitization. The
- * `components` and `allowElement` props are forwarded to streamdown.
- *
- * Bundle improvement: drops ~600KB of refractor/lowlight at runtime.
- */
+// Inline props type — avoids pulling @uiw/react-markdown-preview into the bundle
+// while keeping call-site compatibility for the props we actually use.
+interface MarkdownPreviewProps {
+  source?: string;
+  className?: string;
+  // biome-ignore lint/suspicious/noExplicitAny: matches @uiw allowElement call-site signatures
+  allowElement?: (element: any, index: number, parent: any) => boolean;
+  // biome-ignore lint/suspicious/noExplicitAny: ComponentType<any> makes destructured params explicit-any, avoiding noImplicitAny errors at call sites
+  components?: Record<string, ComponentType<any>>;
+  // biome-ignore lint/suspicious/noExplicitAny: no-op kept for call-site compatibility; explicit any avoids noImplicitAny on node param
+  rehypeRewrite?: (node: any, index?: number, parent?: any) => void;
+  [key: string]: unknown; // absorb remaining unused @uiw props without breaking call sites
+}
+
+type StreamdownType = typeof import("streamdown").Streamdown;
+type CodePluginType = typeof import("@streamdown/code").code;
+
 export const MarkdownPreview = ({
   source,
   className,
@@ -28,10 +31,6 @@ export const MarkdownPreview = ({
   components,
 }: MarkdownPreviewProps) => {
   const { resolvedTheme } = useTheme();
-
-  type StreamdownType = typeof import("streamdown").Streamdown;
-  type CodePluginType = typeof import("@streamdown/code").code;
-
   const [StreamdownComponent, setStreamdownComponent] = useState<StreamdownType | null>(null);
   const [codePlugin, setCodePlugin] = useState<CodePluginType | null>(null);
 
@@ -47,7 +46,10 @@ export const MarkdownPreview = ({
   }, []);
 
   if (!source) return null;
-  if (!StreamdownComponent || !codePlugin) return null;
+
+  if (!StreamdownComponent || !codePlugin) {
+    return <div className="animate-pulse bg-gray-200 dark:bg-gray-700 rounded h-4 w-full" />;
+  }
 
   const mergedComponents: Components = {
     p: ({ children }) => (
