@@ -2,10 +2,18 @@
 import "md-editor-rt/lib/style.css";
 
 import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { config } from "md-editor-rt";
 import dynamic from "next/dynamic";
 import { useTheme } from "next-themes";
 import { type FC, useCallback, useEffect, useMemo, useState } from "react";
 import { cn } from "@/utilities/tailwind";
+
+// Enable single-newline → <br> rendering globally for all editor/preview instances
+config({
+  markdownItConfig(md) {
+    md.options.breaks = true;
+  },
+});
 
 // Constants for content validation and performance
 const DEFAULT_MAX_LENGTH = 50000; // 50KB max to prevent performance issues
@@ -61,9 +69,6 @@ const EXCLUDED_TOOLBARS = [
   "github",
   "mermaid",
   "katex",
-  "pageFullscreen",
-  "fullscreen",
-  "preview",
   "previewOnly",
   "htmlPreview",
 ] as const;
