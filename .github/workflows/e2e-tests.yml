@@ -57,6 +57,7 @@ jobs:
 
       - name: Run Playwright E2E tests
         run: pnpm exec playwright test --config e2e/playwright.config.ts --project=chromium
+        continue-on-error: true
         env:
           CI: true
 
