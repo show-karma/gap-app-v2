@@ -229,12 +229,14 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
         )}
       >
         {showPreview ? (
-          <MdPreview
-            value={value}
-            theme={resolvedTheme === "dark" ? "dark" : "light"}
-            language="en-US"
-            style={{ minHeight }}
-          />
+          <div className="px-4">
+            <MdPreview
+              value={value}
+              theme={resolvedTheme === "dark" ? "dark" : "light"}
+              language="en-US"
+              style={{ minHeight }}
+            />
+          </div>
         ) : (
           <MdEditor
             id={id}
