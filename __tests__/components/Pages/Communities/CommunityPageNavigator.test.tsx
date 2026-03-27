@@ -82,6 +82,9 @@ describe("CommunityPageNavigator", () => {
     });
     vi.clearAllMocks();
 
+    // JSDOM doesn't provide scrollIntoView
+    Element.prototype.scrollIntoView = vi.fn();
+
     // Default mocks
     mockUseWhitelabel.mockReturnValue({
       isWhitelabel: false,
@@ -308,6 +311,15 @@ describe("CommunityPageNavigator", () => {
       expect(nav).toHaveClass("flex-row");
       expect(nav).toHaveClass("pt-8");
       expect(nav).toHaveClass("border-b");
+    });
+
+    it("should have horizontal scroll classes for mobile", () => {
+      const { container } = render(<CommunityPageNavigator />, { wrapper });
+
+      const nav = container.firstChild;
+      expect(nav).toHaveClass("max-md:overflow-x-auto");
+      expect(nav).toHaveClass("max-md:scrollbar-none");
+      expect(nav).toHaveClass("max-md:flex-nowrap");
     });
 
     it("should have links with gap between icon and text", () => {
@@ -631,6 +643,21 @@ describe("CommunityPageNavigator", () => {
 
       const link = screen.getByText("View funded projects").closest("a");
       expect(link?.className).toContain("text-gray-500");
+    });
+  });
+
+  describe("Active Tab Auto-Scroll", () => {
+    it("should scroll active tab into view on mount", () => {
+      mockUseParams.mockReturnValue({ communityId: "filecoin" });
+      mockUsePathname.mockReturnValue("/community/filecoin/financials");
+
+      render(<CommunityPageNavigator />, { wrapper });
+
+      expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "nearest",
+      });
     });
   });
 });
