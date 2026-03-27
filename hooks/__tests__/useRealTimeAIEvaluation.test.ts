@@ -1,13 +1,13 @@
 import { act, renderHook } from "@testing-library/react";
 import { useRealTimeAIEvaluation } from "../useRealTimeAIEvaluation";
 
-jest.mock("@/utilities/auth/token-manager", () => ({
+vi.mock("@/utilities/auth/token-manager", () => ({
   TokenManager: {
-    getAuthHeader: jest.fn().mockResolvedValue({ Authorization: "Bearer test-token" }),
+    getAuthHeader: vi.fn().mockResolvedValue({ Authorization: "Bearer test-token" }),
   },
 }));
 
-jest.mock("@/utilities/enviromentVars", () => ({
+vi.mock("@/utilities/enviromentVars", () => ({
   envVars: {
     NEXT_PUBLIC_GAP_INDEXER_URL: "https://api.test.com",
   },
@@ -16,7 +16,7 @@ jest.mock("@/utilities/enviromentVars", () => ({
 const mockEvaluationData = { score: 85, feedback: "Good application" };
 
 const makeFetchSuccess = () =>
-  jest.fn().mockResolvedValue({
+  vi.fn().mockResolvedValue({
     ok: true,
     json: async () => ({
       success: true,
@@ -26,13 +26,13 @@ const makeFetchSuccess = () =>
   });
 
 const makeFetchError = () =>
-  jest.fn().mockResolvedValue({
+  vi.fn().mockResolvedValue({
     ok: false,
     status: 500,
   });
 
 const makeFetchHanging = () =>
-  jest.fn().mockImplementation((_url: string, options: RequestInit) => {
+  vi.fn().mockImplementation((_url: string, options: RequestInit) => {
     return new Promise((_resolve, reject) => {
       options?.signal?.addEventListener("abort", () => {
         reject(new DOMException("Aborted", "AbortError"));
@@ -42,12 +42,12 @@ const makeFetchHanging = () =>
 
 describe("useRealTimeAIEvaluation", () => {
   beforeEach(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
-    jest.useRealTimers();
-    jest.restoreAllMocks();
+    vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 
   it("returns initial state (isLoading: false, evaluation: null, error: null)", () => {
@@ -72,7 +72,7 @@ describe("useRealTimeAIEvaluation", () => {
 
     await act(async () => {
       result.current.triggerEvaluation({ title: "test" });
-      jest.runAllTimers();
+      vi.runAllTimers();
       await Promise.resolve();
     });
 
@@ -98,7 +98,7 @@ describe("useRealTimeAIEvaluation", () => {
     expect(fetchMock).not.toHaveBeenCalled();
 
     await act(async () => {
-      jest.advanceTimersByTime(500);
+      vi.advanceTimersByTime(500);
       await Promise.resolve();
       await Promise.resolve();
     });
@@ -124,7 +124,7 @@ describe("useRealTimeAIEvaluation", () => {
 
     // Fire debounce — isLoading becomes true inside the timeout callback
     await act(async () => {
-      jest.advanceTimersByTime(500);
+      vi.advanceTimersByTime(500);
       await Promise.resolve();
     });
 
@@ -140,7 +140,7 @@ describe("useRealTimeAIEvaluation", () => {
 
     await act(async () => {
       result.current.triggerEvaluation({ title: "test" });
-      jest.advanceTimersByTime(100);
+      vi.advanceTimersByTime(100);
       await Promise.resolve();
       await Promise.resolve();
     });
@@ -159,7 +159,7 @@ describe("useRealTimeAIEvaluation", () => {
 
     await act(async () => {
       result.current.triggerEvaluation({ title: "test" });
-      jest.advanceTimersByTime(100);
+      vi.advanceTimersByTime(100);
       await Promise.resolve();
       await Promise.resolve();
     });
@@ -179,13 +179,13 @@ describe("useRealTimeAIEvaluation", () => {
     // Fire debounce — starts the fetch and the 15s abort timer
     await act(async () => {
       result.current.triggerEvaluation({ title: "test" });
-      jest.advanceTimersByTime(100);
+      vi.advanceTimersByTime(100);
       await Promise.resolve();
     });
 
     // Fire 15s abort timeout
     await act(async () => {
-      jest.advanceTimersByTime(15_000);
+      vi.advanceTimersByTime(15_000);
       await Promise.resolve();
       await Promise.resolve();
     });
@@ -195,7 +195,7 @@ describe("useRealTimeAIEvaluation", () => {
 
   it("cleans up debounce timeout and aborts in-flight request on unmount", () => {
     global.fetch = makeFetchHanging();
-    const clearTimeoutSpy = jest.spyOn(global, "clearTimeout");
+    const clearTimeoutSpy = vi.spyOn(global, "clearTimeout");
 
     const { result, unmount } = renderHook(() =>
       useRealTimeAIEvaluation({ programId: "prog-1", isEnabled: true, debounceMs: 500 })
@@ -224,7 +224,7 @@ describe("useRealTimeAIEvaluation", () => {
     // First call
     await act(async () => {
       result.current.triggerEvaluation(applicationData);
-      jest.advanceTimersByTime(100);
+      vi.advanceTimersByTime(100);
       await Promise.resolve();
       await Promise.resolve();
     });
@@ -234,7 +234,7 @@ describe("useRealTimeAIEvaluation", () => {
     // Second call with exact same data
     await act(async () => {
       result.current.triggerEvaluation(applicationData);
-      jest.advanceTimersByTime(100);
+      vi.advanceTimersByTime(100);
       await Promise.resolve();
     });
 
@@ -251,7 +251,7 @@ describe("useRealTimeAIEvaluation", () => {
 
     await act(async () => {
       result.current.triggerEvaluation({ title: "test" });
-      jest.advanceTimersByTime(100);
+      vi.advanceTimersByTime(100);
       await Promise.resolve();
       await Promise.resolve();
     });

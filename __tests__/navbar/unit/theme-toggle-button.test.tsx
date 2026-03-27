@@ -27,7 +27,7 @@ describe("ThemeToggleButton", () => {
       renderWithProviders(<ThemeToggleButton />, {
         mockUseTheme: {
           theme: "system",
-          setTheme: jest.fn(),
+          setTheme: vi.fn(),
           themes: ["light", "dark", "system"],
           systemTheme: "dark",
           resolvedTheme: "dark",
@@ -48,7 +48,7 @@ describe("ThemeToggleButton", () => {
       renderWithProviders(<ThemeToggleButton />, {
         mockUseTheme: {
           theme: undefined,
-          setTheme: jest.fn(),
+          setTheme: vi.fn(),
           themes: ["light", "dark"],
           systemTheme: undefined,
           resolvedTheme: undefined,
@@ -101,7 +101,7 @@ describe("ThemeToggleButton", () => {
 
     it("should call setTheme with 'dark' when clicked in light mode", async () => {
       const user = userEvent.setup();
-      const mockSetTheme = jest.fn();
+      const mockSetTheme = vi.fn();
 
       renderWithProviders(<ThemeToggleButton />, {
         mockUseTheme: {
@@ -135,7 +135,7 @@ describe("ThemeToggleButton", () => {
 
     it("should call setTheme with 'light' when clicked in dark mode", async () => {
       const user = userEvent.setup();
-      const mockSetTheme = jest.fn();
+      const mockSetTheme = vi.fn();
 
       renderWithProviders(<ThemeToggleButton />, {
         mockUseTheme: {
@@ -158,7 +158,7 @@ describe("ThemeToggleButton", () => {
   describe("System theme", () => {
     it("should handle system theme by toggling to dark", async () => {
       const user = userEvent.setup();
-      const mockSetTheme = jest.fn();
+      const mockSetTheme = vi.fn();
 
       renderWithProviders(<ThemeToggleButton />, {
         mockUseTheme: {

@@ -5,68 +5,68 @@ import "@testing-library/jest-dom";
 const mockGrantStore = {
   grant: undefined as any,
   loading: false,
-  refreshGrant: jest.fn(),
+  refreshGrant: vi.fn(),
 };
 
-jest.mock("@/store/grant", () => ({
-  useGrantStore: jest.fn(() => mockGrantStore),
+vi.mock("@/store/grant", () => ({
+  useGrantStore: vi.fn(() => mockGrantStore),
 }));
 
-jest.mock("@/store/owner", () => ({
-  useOwnerStore: jest.fn(() => false),
+vi.mock("@/store/owner", () => ({
+  useOwnerStore: vi.fn(() => false),
 }));
 
 // Mock heavy/external dependencies
-jest.mock("@/components/Pages/Grants/MilestonesAndUpdates", () => ({
+vi.mock("@/components/Pages/Grants/MilestonesAndUpdates", () => ({
   GrantCompletionCard: () => <div data-testid="grant-completion-card" />,
 }));
 
-jest.mock("@/components/TrackTags", () => ({
+vi.mock("@/components/TrackTags", () => ({
   TrackTags: () => <div data-testid="track-tags" />,
 }));
 
-jest.mock("@/components/Utilities/ExternalLink", () => ({
+vi.mock("@/components/Utilities/ExternalLink", () => ({
   ExternalLink: ({ children, ...props }: any) => <a {...props}>{children}</a>,
 }));
 
-jest.mock("@/components/Utilities/MarkdownPreview", () => ({
+vi.mock("@/components/Utilities/MarkdownPreview", () => ({
   MarkdownPreview: ({ source }: any) => <div data-testid="markdown-preview">{source}</div>,
 }));
 
-jest.mock("@/components/Pages/Project/Grants/components/GrantPercentage", () => ({
+vi.mock("@/components/Pages/Project/Grants/components/GrantPercentage", () => ({
   GrantPercentage: () => <span data-testid="grant-percentage" />,
 }));
 
-jest.mock("@/components/Pages/Project/Loading/Grants/Overview", () => ({
+vi.mock("@/components/Pages/Project/Loading/Grants/Overview", () => ({
   ProjectGrantsOverviewLoading: () => <div data-testid="loading" />,
 }));
 
-jest.mock("next/image", () => ({
+vi.mock("next/image", () => ({
   __esModule: true,
   default: (props: any) => <img {...props} />,
 }));
 
-jest.mock("@/utilities/chainImgDictionary", () => ({
-  chainImgDictionary: jest.fn(() => "/chain-img.png"),
+vi.mock("@/utilities/chainImgDictionary", () => ({
+  chainImgDictionary: vi.fn(() => "/chain-img.png"),
 }));
 
-jest.mock("@/utilities/chainNameDictionary", () => ({
-  chainNameDictionary: jest.fn(() => "Optimism"),
+vi.mock("@/utilities/chainNameDictionary", () => ({
+  chainNameDictionary: vi.fn(() => "Optimism"),
 }));
 
-jest.mock("@/utilities/formatCurrency", () => ({
+vi.mock("@/utilities/formatCurrency", () => ({
   __esModule: true,
-  default: jest.fn((val: number) => val.toFixed(2)),
+  default: vi.fn((val: number) => val.toFixed(2)),
 }));
 
-jest.mock("@/utilities/formatDate", () => ({
-  formatDate: jest.fn(() => "Jan 1, 2024"),
+vi.mock("@/utilities/formatDate", () => ({
+  formatDate: vi.fn(() => "Jan 1, 2024"),
 }));
 
-jest.mock("@/utilities/pages", () => ({
+vi.mock("@/utilities/pages", () => ({
   PAGES: {
     COMMUNITY: {
-      ALL_GRANTS: jest.fn(() => "/community/test/grants"),
+      ALL_GRANTS: vi.fn(() => "/community/test/grants"),
     },
   },
 }));
@@ -101,7 +101,7 @@ const createMockGrant = (overrides = {}) => ({
 
 describe("GrantOverview", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockGrantStore.grant = createMockGrant();
     mockGrantStore.loading = false;
   });

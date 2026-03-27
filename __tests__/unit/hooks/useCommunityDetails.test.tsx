@@ -10,13 +10,13 @@ import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import type { CommunityDetails } from "@/types/community";
 
 // Mock getCommunityDetails utility
-jest.mock("@/utilities/queries/v2/community", () => ({
-  getCommunityDetails: jest.fn(),
+vi.mock("@/utilities/queries/v2/community", () => ({
+  getCommunityDetails: vi.fn(),
 }));
 
 import { getCommunityDetails } from "@/utilities/queries/v2/community";
 
-const mockGetCommunityDetails = getCommunityDetails as jest.MockedFunction<
+const mockGetCommunityDetails = getCommunityDetails as vi.MockedFunction<
   typeof getCommunityDetails
 >;
 
@@ -57,7 +57,7 @@ describe("useCommunityDetails", () => {
   let queryClient: QueryClient;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     queryClient = createTestQueryClient();
   });
 

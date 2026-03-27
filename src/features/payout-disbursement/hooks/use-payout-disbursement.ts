@@ -557,6 +557,8 @@ export function useSaveMilestoneInvoices(
         milestoneLabel: string;
         milestoneUID?: string | null;
         invoiceReceivedAt?: string | null;
+        invoiceFileKey?: string | null;
+        invoiceFileUrl?: string | null;
       }>;
     }
   >({

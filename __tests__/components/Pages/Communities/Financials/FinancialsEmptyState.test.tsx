@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { FinancialsEmptyState } from "@/components/Pages/Communities/Financials/FinancialsEmptyState";
 
 // Mock next/image
-jest.mock("next/image", () => ({
+vi.mock("next/image", () => ({
   __esModule: true,
   default: ({ src, alt }: { src: string; alt: string }) => (
     <img src={src} alt={alt} data-testid="image" />

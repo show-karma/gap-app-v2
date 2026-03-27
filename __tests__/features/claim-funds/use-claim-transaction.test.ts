@@ -13,62 +13,61 @@ const mutationCallbacks: {
   onError?: (err: Error) => void;
 } = {};
 
-const mockMutate = jest.fn();
-const mockReset = jest.fn();
-const mockInvalidateQueries = jest.fn();
+const mockMutate = vi.fn();
+const mockReset = vi.fn();
+const mockInvalidateQueries = vi.fn();
 
-jest.mock("@tanstack/react-query", () => ({
-  useMutation: jest.fn(),
-  useQueryClient: jest.fn(),
+vi.mock("@tanstack/react-query", () => ({
+  useMutation: vi.fn(),
+  useQueryClient: vi.fn(),
 }));
 
-jest.mock("@/contexts/privy-bridge-context", () => ({
-  usePrivyBridge: jest.fn(),
+vi.mock("@/contexts/privy-bridge-context", () => ({
+  usePrivyBridge: vi.fn(),
 }));
 
-jest.mock("react-hot-toast", () => ({
+vi.mock("react-hot-toast", () => ({
   __esModule: true,
   default: {
-    error: jest.fn(),
-    success: jest.fn(),
-    loading: jest.fn(),
+    error: vi.fn(),
+    success: vi.fn(),
+    loading: vi.fn(),
   },
 }));
 
-jest.mock("viem", () => ({
-  createWalletClient: jest.fn(),
-  custom: jest.fn(),
+vi.mock("viem", () => ({
+  createWalletClient: vi.fn(),
+  custom: vi.fn(),
 }));
 
-jest.mock("@/src/features/claim-funds/hooks/use-claim-provider", () => ({
-  useClaimProvider: jest.fn(),
+vi.mock("@/src/features/claim-funds/hooks/use-claim-provider", () => ({
+  useClaimProvider: vi.fn(),
 }));
 
-jest.mock("@/src/features/claim-funds/lib/viem-clients", () => ({
-  getChainByName: jest.fn(() => ({ id: 10, name: "optimism" })),
-  getPublicClient: jest.fn(() => ({})),
-  switchOrAddChain: jest.fn(),
+vi.mock("@/src/features/claim-funds/lib/viem-clients", () => ({
+  getChainByName: vi.fn(() => ({ id: 10, name: "optimism" })),
+  getPublicClient: vi.fn(() => ({})),
+  switchOrAddChain: vi.fn(),
 }));
 
-jest.mock("@/src/features/claim-funds/lib/hedgey-contract", () => ({
+vi.mock("@/src/features/claim-funds/lib/hedgey-contract", () => ({
   CLAIM_CAMPAIGNS_ABI: [],
-  uuidToBytes16: jest.fn(() => "0x00000000000000000000000000000001"),
+  uuidToBytes16: vi.fn(() => "0x00000000000000000000000000000001"),
 }));
 
-jest.mock("@/src/features/claim-funds/lib/error-messages", () => ({
-  sanitizeErrorMessage: jest.fn((err: Error) => ({ message: err.message })),
+vi.mock("@/src/features/claim-funds/lib/error-messages", () => ({
+  sanitizeErrorMessage: vi.fn((err: Error) => ({ message: err.message })),
 }));
 
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { usePrivyBridge } from "@/contexts/privy-bridge-context";
 import { useClaimTransaction } from "@/src/features/claim-funds/hooks/use-claim-transaction";
 import type { ClaimEligibility } from "@/src/features/claim-funds/types";
 import type { ClaimGrantsConfig } from "@/src/infrastructure/types/tenant";
 
-const { useMutation, useQueryClient } = jest.requireMock("@tanstack/react-query");
-const { usePrivyBridge } = jest.requireMock("@/contexts/privy-bridge-context");
-
 const MOCK_WALLET = {
   address: "0xABCDEF1234567890ABCDEF1234567890ABCDEF12",
-  getEthereumProvider: jest.fn().mockResolvedValue({}),
+  getEthereumProvider: vi.fn().mockResolvedValue({}),
 };
 
 const MOCK_CLAIM_GRANTS: ClaimGrantsConfig = {
@@ -103,7 +102,7 @@ function setupMocks(isPending = false) {
 
 describe("useClaimTransaction — concurrency guard (isClaimingRef)", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     setupMocks();
   });
 
@@ -156,7 +155,7 @@ describe("useClaimTransaction — concurrency guard (isClaimingRef)", () => {
 
 describe("useClaimTransaction — isClaimingRef resets in onSettled", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     setupMocks();
   });
 
@@ -206,7 +205,7 @@ describe("useClaimTransaction — isClaimingRef resets in onSettled", () => {
 
 describe("useClaimTransaction — isMountedRef cleanup", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     setupMocks();
   });
 

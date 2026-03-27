@@ -1,19 +1,19 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
-const mockPush = jest.fn();
-const mockLogin = jest.fn();
+const mockPush = vi.fn();
+const mockLogin = vi.fn();
 
-jest.mock("next/navigation", () => ({
+vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: mockPush }),
 }));
 
-jest.mock("@/hooks/useAuth", () => ({
-  useAuth: jest.fn(),
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: vi.fn(),
 }));
 
 // lucide-react icons need to be mocked in jsdom
-jest.mock("lucide-react", () => ({
+vi.mock("lucide-react", () => ({
   AlertTriangle: (props: React.SVGProps<SVGSVGElement>) => (
     <svg data-testid="alert-icon" {...props} />
   ),
@@ -23,11 +23,11 @@ jest.mock("lucide-react", () => ({
 import { useAuth } from "@/hooks/useAuth";
 import { AccessDenied } from "@/src/components/ui/AccessDenied";
 
-const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
+const mockUseAuth = useAuth as vi.MockedFunction<typeof useAuth>;
 
 describe("AccessDenied", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("when not authenticated", () => {
@@ -56,7 +56,7 @@ describe("AccessDenied", () => {
     });
 
     it("does NOT use window.location.href for navigation", () => {
-      const locationSpy = jest.spyOn(window, "location", "get");
+      const locationSpy = vi.spyOn(window, "location", "get");
       render(<AccessDenied />);
       fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
       // window.location.href should never be set
@@ -91,7 +91,7 @@ describe("AccessDenied", () => {
     });
 
     it("does NOT use window.location.href for navigation", () => {
-      const locationSpy = jest.spyOn(window, "location", "get");
+      const locationSpy = vi.spyOn(window, "location", "get");
       render(<AccessDenied returnUrl="/dashboard" />);
       fireEvent.click(screen.getByRole("button", { name: /go to home/i }));
       expect(locationSpy).not.toHaveBeenCalled();

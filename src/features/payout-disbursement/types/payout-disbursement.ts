@@ -224,6 +224,7 @@ export interface CommunityPayoutInvoiceInfo {
   invoiceStatus: InvoiceStatus;
   invoiceReceivedAt: string | null;
   invoiceReceivedBy: string | null;
+  invoiceFileKey: string | null;
   allocatedAmount: string | null;
   paymentStatus: MilestonePaymentStatus;
   paymentStatusDate: string | null;

@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import HeaderActions from "@/components/FundingPlatform/ApplicationView/HeaderActions";
 
 // Mock the Button component from ui
-jest.mock("@/components/ui/button", () => ({
+vi.mock("@/components/ui/button", () => ({
   Button: ({ onClick, disabled, children, className, variant, size }: any) => (
     <button
       onClick={onClick}
@@ -17,19 +17,19 @@ jest.mock("@/components/ui/button", () => ({
 }));
 
 // Mock the RBAC Can component to always render children (grant all permissions in tests)
-jest.mock("@/src/core/rbac/components/can", () => ({
+vi.mock("@/src/core/rbac/components/can", () => ({
   Can: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
 describe("HeaderActions", () => {
   const defaultProps = {
     currentStatus: "pending" as const,
-    onStatusChange: jest.fn(),
+    onStatusChange: vi.fn(),
     isUpdating: false,
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("Pending Status", () => {
@@ -40,7 +40,7 @@ describe("HeaderActions", () => {
     });
 
     it("should call onStatusChange with under_review when Start Review is clicked", () => {
-      const onStatusChange = jest.fn();
+      const onStatusChange = vi.fn();
       render(
         <HeaderActions {...defaultProps} currentStatus="pending" onStatusChange={onStatusChange} />
       );
@@ -59,7 +59,7 @@ describe("HeaderActions", () => {
     });
 
     it("should call onStatusChange with under_review when Start Review is clicked", () => {
-      const onStatusChange = jest.fn();
+      const onStatusChange = vi.fn();
       render(
         <HeaderActions
           {...defaultProps}
@@ -84,7 +84,7 @@ describe("HeaderActions", () => {
     });
 
     it("should call onStatusChange with approved when Approve is clicked", () => {
-      const onStatusChange = jest.fn();
+      const onStatusChange = vi.fn();
       render(
         <HeaderActions
           {...defaultProps}
@@ -99,7 +99,7 @@ describe("HeaderActions", () => {
     });
 
     it("should call onStatusChange with revision_requested when Request Revision is clicked", () => {
-      const onStatusChange = jest.fn();
+      const onStatusChange = vi.fn();
       render(
         <HeaderActions
           {...defaultProps}
@@ -114,7 +114,7 @@ describe("HeaderActions", () => {
     });
 
     it("should call onStatusChange with rejected when Reject is clicked", () => {
-      const onStatusChange = jest.fn();
+      const onStatusChange = vi.fn();
       render(
         <HeaderActions
           {...defaultProps}
@@ -137,7 +137,7 @@ describe("HeaderActions", () => {
     });
 
     it("should call onStatusChange with under_review when Review is clicked", () => {
-      const onStatusChange = jest.fn();
+      const onStatusChange = vi.fn();
       render(
         <HeaderActions
           {...defaultProps}

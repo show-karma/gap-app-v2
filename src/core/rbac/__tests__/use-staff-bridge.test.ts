@@ -3,11 +3,11 @@ import { Role } from "../types/role";
 
 // Track the mock return value so tests can change it
 const mockContextValue = {
-  hasRoleOrHigher: jest.fn(),
+  hasRoleOrHigher: vi.fn(),
   isLoading: false,
 };
 
-jest.mock("../context/permission-context", () => ({
+vi.mock("../context/permission-context", () => ({
   usePermissionContext: () => mockContextValue,
 }));
 
@@ -16,7 +16,7 @@ import { renderHook } from "@testing-library/react";
 
 describe("useStaff", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockContextValue.isLoading = false;
     mockContextValue.hasRoleOrHigher.mockReturnValue(false);
   });

@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { ProjectsSection } from "@/components/Pages/Dashboard/ProjectsSection/ProjectsSection";
 import type { ProjectWithGrantsResponse } from "@/types/v2/project";
 
-jest.mock("@/components/Dialogs/ProjectDialog/index", () => ({
+vi.mock("@/components/Dialogs/ProjectDialog/index", () => ({
   ProjectDialog: () => <button type="button">Create Project</button>,
 }));
 

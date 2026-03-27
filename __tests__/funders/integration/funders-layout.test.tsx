@@ -21,7 +21,7 @@ describe("Funders Page Layout Integration", () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("Section Rendering", () => {

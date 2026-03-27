@@ -10,10 +10,10 @@ import { useFundingApplicationByProjectUID } from "@/hooks/useFundingApplication
 import * as fundingApplicationsService from "@/services/funding-applications";
 
 // Mock the service
-jest.mock("@/services/funding-applications");
+vi.mock("@/services/funding-applications");
 
 const mockFetchApplicationByProjectUID =
-  fundingApplicationsService.fetchApplicationByProjectUID as jest.MockedFunction<
+  fundingApplicationsService.fetchApplicationByProjectUID as vi.MockedFunction<
     typeof fundingApplicationsService.fetchApplicationByProjectUID
   >;
 
@@ -32,7 +32,7 @@ describe("useFundingApplicationByProjectUID", () => {
         },
       },
     });
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   afterEach(() => {

@@ -4,7 +4,7 @@ import { useZeroDevSigner } from "@/hooks/useZeroDevSigner";
 // Mock bridge
 const mockUser: any = { linkedAccounts: [] };
 let mockWallets: any[] = [];
-jest.mock("@/contexts/privy-bridge-context", () => ({
+vi.mock("@/contexts/privy-bridge-context", () => ({
   usePrivyBridge: () => ({
     ready: true,
     user: mockUser,
@@ -14,23 +14,23 @@ jest.mock("@/contexts/privy-bridge-context", () => ({
 }));
 
 // Mock wagmi
-jest.mock("wagmi", () => ({
+vi.mock("wagmi", () => ({
   useChainId: () => 10,
 }));
 
 // Mock utilities
-jest.mock("@/utilities/eas-wagmi-utils", () => ({
-  walletClientToSigner: jest.fn(),
+vi.mock("@/utilities/eas-wagmi-utils", () => ({
+  walletClientToSigner: vi.fn(),
 }));
-jest.mock("@/utilities/gasless", () => ({
-  createGaslessClient: jest.fn(),
-  createPrivySignerForGasless: jest.fn(),
+vi.mock("@/utilities/gasless", () => ({
+  createGaslessClient: vi.fn(),
+  createPrivySignerForGasless: vi.fn(),
   GaslessProviderError: class extends Error {},
-  getGaslessSigner: jest.fn(),
+  getGaslessSigner: vi.fn(),
   isChainSupportedForGasless: () => false,
 }));
-jest.mock("@/utilities/wallet-helpers", () => ({
-  safeGetWalletClient: jest.fn(),
+vi.mock("@/utilities/wallet-helpers", () => ({
+  safeGetWalletClient: vi.fn(),
 }));
 
 describe("useZeroDevSigner", () => {

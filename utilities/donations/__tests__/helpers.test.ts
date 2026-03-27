@@ -108,7 +108,7 @@ describe("Donation Helpers", () => {
     });
 
     it("should handle invalid amounts gracefully", () => {
-      const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
+      const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation();
       const result = formatDonationAmount("invalid", 6);
       expect(result).toBe(BigInt(0));
       expect(consoleErrorSpy).toHaveBeenCalled();
@@ -148,7 +148,7 @@ describe("Donation Helpers", () => {
     });
 
     it("should handle errors gracefully", () => {
-      const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
+      const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation();
       const result = parseDonationAmount(BigInt(-1), 6);
       expect(typeof result).toBe("string");
       consoleErrorSpy.mockRestore();
@@ -229,7 +229,7 @@ describe("Donation Helpers", () => {
     });
 
     it("should handle errors gracefully", () => {
-      const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
+      const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation();
       expect(hasSufficientBalance("10", "")).toBe(false);
       consoleErrorSpy.mockRestore();
     });

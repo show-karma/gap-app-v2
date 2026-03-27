@@ -13,7 +13,7 @@ import { renderWithProviders, screen } from "../utils/test-helpers";
 import "@testing-library/jest-dom";
 
 // Mock Badge component
-jest.mock("@/components/ui/badge", () => ({
+vi.mock("@/components/ui/badge", () => ({
   Badge: ({ children, variant }: any) => (
     <span data-testid="badge" data-variant={variant}>
       {children}

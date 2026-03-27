@@ -161,7 +161,7 @@ describe("ForBuildersContent Component", () => {
     });
 
     it("should call onClose when item is clicked", () => {
-      const onCloseMock = jest.fn();
+      const onCloseMock = vi.fn();
       renderWithProviders(<ForBuildersContent variant="mobile" onClose={onCloseMock} />);
 
       const firstItem = screen.getByText(forBuildersItems[0].title);
@@ -256,7 +256,7 @@ describe("ForFundersContent Component", () => {
     });
 
     it("should call onClose when any item is clicked", () => {
-      const onCloseMock = jest.fn();
+      const onCloseMock = vi.fn();
       renderWithProviders(<ForFundersContent variant="mobile" onClose={onCloseMock} />);
 
       const mainItem = screen.getByText(forFundersItems.main.title);
@@ -343,7 +343,7 @@ describe("ExploreContent Component", () => {
     });
 
     it("should call onClose when item is clicked", () => {
-      const onCloseMock = jest.fn();
+      const onCloseMock = vi.fn();
       renderWithProviders(<ExploreContent variant="mobile" onClose={onCloseMock} />);
 
       const firstProjectItem = screen.getByText(exploreItems.projects[0].title);
@@ -412,7 +412,7 @@ describe("ResourcesContent Component", () => {
     });
 
     it("should call onClose when item is clicked", () => {
-      const onCloseMock = jest.fn();
+      const onCloseMock = vi.fn();
       renderWithProviders(<ResourcesContent variant="mobile" onClose={onCloseMock} />);
 
       const firstItem = screen.getByText(resourcesItems[0].title);
@@ -462,7 +462,7 @@ describe("Component Integration", () => {
   });
 
   it("should handle onClose callbacks consistently", () => {
-    const onCloseMock = jest.fn();
+    const onCloseMock = vi.fn();
 
     renderWithProviders(
       <>

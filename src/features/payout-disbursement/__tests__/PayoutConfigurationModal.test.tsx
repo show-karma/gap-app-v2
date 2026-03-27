@@ -5,19 +5,19 @@ import { PayoutConfigurationModal } from "../components/PayoutConfigurationModal
 import type { PayoutGrantConfig } from "../types/payout-disbursement";
 
 // Mock the hooks
-const mockSavePayoutConfig = jest.fn();
-const mockMutateAsync = jest.fn();
+const mockSavePayoutConfig = vi.fn();
+const mockMutateAsync = vi.fn();
 
-jest.mock("../hooks/use-payout-disbursement", () => ({
-  usePayoutConfigByGrant: jest.fn(() => ({
+vi.mock("../hooks/use-payout-disbursement", () => ({
+  usePayoutConfigByGrant: vi.fn(() => ({
     data: null,
     isLoading: false,
   })),
-  useGrantMilestones: jest.fn(() => ({
+  useGrantMilestones: vi.fn(() => ({
     data: [],
     isLoading: false,
   })),
-  useSavePayoutConfig: jest.fn((options) => {
+  useSavePayoutConfig: vi.fn((options) => {
     mockSavePayoutConfig.mockImplementation(options);
     return {
       mutateAsync: mockMutateAsync,
@@ -27,22 +27,22 @@ jest.mock("../hooks/use-payout-disbursement", () => ({
 }));
 
 // Mock viem
-jest.mock("viem", () => ({
-  isAddress: jest.fn((addr: string) => addr.startsWith("0x") && addr.length === 42),
+vi.mock("viem", () => ({
+  isAddress: vi.fn((addr: string) => addr.startsWith("0x") && addr.length === 42),
 }));
 
 // Mock toast
-jest.mock("react-hot-toast", () => ({
+vi.mock("react-hot-toast", () => ({
   __esModule: true,
   default: {
-    success: jest.fn(),
-    error: jest.fn(),
+    success: vi.fn(),
+    error: vi.fn(),
   },
 }));
 
 // Mock crypto.randomUUID to return unique values
 let uuidCounter = 0;
-const mockUUID = jest.fn(() => `mock-uuid-${++uuidCounter}`);
+const mockUUID = vi.fn(() => `mock-uuid-${++uuidCounter}`);
 Object.defineProperty(global, "crypto", {
   value: { randomUUID: mockUUID },
 });
@@ -50,8 +50,8 @@ Object.defineProperty(global, "crypto", {
 // Import mocks after jest.mock calls
 import { useGrantMilestones, usePayoutConfigByGrant } from "../hooks/use-payout-disbursement";
 
-const mockedUsePayoutConfigByGrant = usePayoutConfigByGrant as jest.Mock;
-const mockedUseGrantMilestones = useGrantMilestones as jest.Mock;
+const mockedUsePayoutConfigByGrant = usePayoutConfigByGrant as vi.Mock;
+const mockedUseGrantMilestones = useGrantMilestones as vi.Mock;
 
 // Test wrapper with QueryClient
 const createWrapper = () => {
@@ -69,17 +69,17 @@ const createWrapper = () => {
 describe("PayoutConfigurationModal", () => {
   const defaultProps = {
     isOpen: true,
-    onClose: jest.fn(),
+    onClose: vi.fn(),
     grantUID: "grant-123",
     projectUID: "project-456",
     communityUID: "community-789",
     grantName: "Test Grant",
     projectName: "Test Project",
-    onSuccess: jest.fn(),
+    onSuccess: vi.fn(),
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     uuidCounter = 0; // Reset UUID counter
     mockMutateAsync.mockResolvedValue({});
     mockedUsePayoutConfigByGrant.mockReturnValue({

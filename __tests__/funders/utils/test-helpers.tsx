@@ -26,12 +26,12 @@ interface CustomRenderOptions extends Omit<RenderOptions, "wrapper"> {
     ready?: boolean;
     authenticated?: boolean;
     user?: any;
-    login?: jest.Mock;
-    logout?: jest.Mock;
+    login?: vi.Mock;
+    logout?: vi.Mock;
   };
   theme?: {
     theme?: string;
-    setTheme?: jest.Mock;
+    setTheme?: vi.Mock;
     resolvedTheme?: string;
   };
   chosenCommunities?: any[];
@@ -68,8 +68,8 @@ export function renderWithProviders(
       ready: auth.ready ?? true,
       authenticated: auth.authenticated ?? false,
       user: auth.user ?? null,
-      login: auth.login ?? jest.fn(),
-      logout: auth.logout ?? jest.fn(),
+      login: auth.login ?? vi.fn(),
+      logout: auth.logout ?? vi.fn(),
     };
   }
 
@@ -77,7 +77,7 @@ export function renderWithProviders(
   if (theme) {
     mockThemeState.current = {
       theme: theme.theme ?? "light",
-      setTheme: theme.setTheme ?? jest.fn(),
+      setTheme: theme.setTheme ?? vi.fn(),
       resolvedTheme: theme.resolvedTheme ?? theme.theme ?? "light",
     };
   }
@@ -108,8 +108,8 @@ export function createMockUseAuth(
     ready: true,
     authenticated: false,
     user: null,
-    login: jest.fn(),
-    logout: jest.fn(),
+    login: vi.fn(),
+    logout: vi.fn(),
     ...overrides,
   };
 }
@@ -118,21 +118,19 @@ export function createMockUseAuth(
  * Creates a mock useTheme hook return value
  */
 export function createMockUseTheme(
-  themeOrOptions:
-    | string
-    | { theme?: string; setTheme?: jest.Mock; resolvedTheme?: string } = "light"
+  themeOrOptions: string | { theme?: string; setTheme?: vi.Mock; resolvedTheme?: string } = "light"
 ) {
   if (typeof themeOrOptions === "string") {
     return {
       theme: themeOrOptions,
-      setTheme: jest.fn(),
+      setTheme: vi.fn(),
       resolvedTheme: themeOrOptions,
     };
   }
 
   return {
     theme: themeOrOptions.theme ?? "light",
-    setTheme: themeOrOptions.setTheme ?? jest.fn(),
+    setTheme: themeOrOptions.setTheme ?? vi.fn(),
     resolvedTheme: themeOrOptions.resolvedTheme ?? themeOrOptions.theme ?? "light",
   };
 }
@@ -142,10 +140,10 @@ export function createMockUseTheme(
  */
 export function createMockRouter(overrides: any = {}) {
   return {
-    push: jest.fn(),
-    replace: jest.fn(),
-    prefetch: jest.fn(),
-    back: jest.fn(),
+    push: vi.fn(),
+    replace: vi.fn(),
+    prefetch: vi.fn(),
+    back: vi.fn(),
     pathname: "/",
     query: {},
     asPath: "/",
@@ -181,15 +179,15 @@ export function setViewportSize(width: number, height: number) {
   });
 
   // Update matchMedia to reflect viewport
-  window.matchMedia = jest.fn().mockImplementation((query: string) => ({
+  window.matchMedia = vi.fn().mockImplementation((query: string) => ({
     matches: query.includes(`${width}px`) || (query.includes("min-width") && width >= 768),
     media: query,
     onchange: null,
-    addListener: jest.fn(),
-    removeListener: jest.fn(),
-    addEventListener: jest.fn(),
-    removeEventListener: jest.fn(),
-    dispatchEvent: jest.fn(),
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
   }));
 
   window.dispatchEvent(new Event("resize"));
@@ -203,36 +201,36 @@ export function setViewportSize(width: number, height: number) {
  * Sets up fake timers for testing time-dependent code
  */
 export function setupFakeTimers() {
-  jest.useFakeTimers();
+  vi.useFakeTimers();
 }
 
 /**
  * Cleans up fake timers
  */
 export function cleanupFakeTimers() {
-  jest.runOnlyPendingTimers();
-  jest.useRealTimers();
+  vi.runOnlyPendingTimers();
+  vi.useRealTimers();
 }
 
 /**
  * Advances timers by the specified time
  */
 export function advanceTimersByTime(ms: number) {
-  jest.advanceTimersByTime(ms);
+  vi.advanceTimersByTime(ms);
 }
 
 /**
  * Runs all pending timers
  */
 export function runAllTimers() {
-  jest.runAllTimers();
+  vi.runAllTimers();
 }
 
 /**
  * Waits for debounce to complete (300ms default)
  */
 export async function waitForDebounce(ms: number = 300) {
-  jest.advanceTimersByTime(ms);
+  vi.advanceTimersByTime(ms);
   await Promise.resolve();
 }
 
@@ -248,16 +246,16 @@ export function resetAllMocks() {
     ready: true,
     authenticated: false,
     user: null,
-    login: jest.fn(),
-    logout: jest.fn(),
+    login: vi.fn(),
+    logout: vi.fn(),
   };
 
   mockThemeState.current = {
     theme: "light",
-    setTheme: jest.fn(),
+    setTheme: vi.fn(),
     resolvedTheme: "light",
   };
 
   mockChosenCommunities.mockReset();
-  jest.clearAllMocks();
+  vi.clearAllMocks();
 }

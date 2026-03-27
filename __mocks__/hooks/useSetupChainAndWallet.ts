@@ -3,7 +3,7 @@
  * The actual hook imports useZeroDevSigner which imports gasless utilities.
  *
  * Tests can override the return value via:
- *   const mockModule = jest.requireMock("@/hooks/useSetupChainAndWallet");
+ *   const mockModule = vi.importActual("@/hooks/useSetupChainAndWallet");
  *   mockModule.useSetupChainAndWallet.mockReturnValue({ setupChainAndWallet: myMock, ... });
  */
 
@@ -17,14 +17,14 @@
  * it should use jest.mock with a relative path from the test file to the actual hook file.
  *
  * Example:
- *   const mockSetupFn = jest.fn();
- *   jest.mock("../../../hooks/useSetupChainAndWallet", () => ({
- *     useSetupChainAndWallet: jest.fn(() => ({ setupChainAndWallet: mockSetupFn, ... })),
+ *   const mockSetupFn = vi.fn();
+ *   vi.mock("../../../hooks/useSetupChainAndWallet", () => ({
+ *     useSetupChainAndWallet: vi.fn(() => ({ setupChainAndWallet: mockSetupFn, ... })),
  *   }));
  */
 
-export const useSetupChainAndWallet = jest.fn().mockReturnValue({
-  setupChainAndWallet: jest.fn().mockResolvedValue(null),
+export const useSetupChainAndWallet = vi.fn().mockReturnValue({
+  setupChainAndWallet: vi.fn().mockResolvedValue(null),
   isSmartWalletReady: false,
   smartWalletAddress: null,
   hasEmbeddedWallet: false,

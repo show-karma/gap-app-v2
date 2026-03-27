@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { ReasonsModal } from "@/components/Dialogs/ReasonsModal";
 
 // Mock Headless UI Dialog components
-jest.mock("@headlessui/react", () => {
+vi.mock("@headlessui/react", () => {
   const React = require("react");
 
   // List of Headless UI Transition props that should be filtered
@@ -76,7 +76,7 @@ jest.mock("@headlessui/react", () => {
 });
 
 // Mock Heroicons
-jest.mock("@heroicons/react/24/solid", () => ({
+vi.mock("@heroicons/react/24/solid", () => ({
   CheckIcon: (props: any) => (
     <svg role="img" aria-label="Check" {...props} data-testid="check-icon" />
   ),
@@ -86,7 +86,7 @@ jest.mock("@heroicons/react/24/solid", () => ({
 }));
 
 // Mock Button component
-jest.mock("@/components/Utilities/Button", () => ({
+vi.mock("@/components/Utilities/Button", () => ({
   Button: ({ onClick, children, className }: any) => (
     <button onClick={onClick} className={className}>
       {children}
@@ -108,7 +108,7 @@ describe("ReasonsModal", () => {
   ];
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("Rendering - Include Button", () => {

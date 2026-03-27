@@ -4,7 +4,7 @@ import type { ApplicationComment } from "@/types/funding-platform";
 import CommentItem from "../CommentItem";
 
 // Mock DeleteDialog to avoid @headlessui/react dependency in tests
-jest.mock("@/components/DeleteDialog", () => ({
+vi.mock("@/components/DeleteDialog", () => ({
   DeleteDialog: ({
     title,
     deleteFunction,
@@ -38,7 +38,7 @@ jest.mock("@/components/DeleteDialog", () => ({
 }));
 
 // Mock dependencies
-jest.mock("@/hooks/useAuth", () => ({
+vi.mock("@/hooks/useAuth", () => ({
   useAuth: () => ({
     user: {
       address: "0x1234567890abcdef1234567890abcdef12345678",
@@ -46,33 +46,33 @@ jest.mock("@/hooks/useAuth", () => ({
   }),
 }));
 
-jest.mock("@/hooks/useMentionEditor", () => ({
+vi.mock("@/hooks/useMentionEditor", () => ({
   useMentionEditor: () => ({
     isAutocompleteOpen: false,
     filterText: "",
     selectedIndex: 0,
     caretPosition: { top: 0, left: 0 },
-    handleContentChange: jest.fn(),
-    handleSelectReviewer: jest.fn(),
-    handleInvitedReviewer: jest.fn(),
-    handleKeyDown: jest.fn(),
-    handleOpenInviteModal: jest.fn(),
-    handleCloseInviteModal: jest.fn(),
-    handleCloseAutocomplete: jest.fn(),
+    handleContentChange: vi.fn(),
+    handleSelectReviewer: vi.fn(),
+    handleInvitedReviewer: vi.fn(),
+    handleKeyDown: vi.fn(),
+    handleOpenInviteModal: vi.fn(),
+    handleCloseInviteModal: vi.fn(),
+    handleCloseAutocomplete: vi.fn(),
     isInviteModalOpen: false,
   }),
 }));
 
-jest.mock("@/hooks/useMilestoneReviewers", () => ({
+vi.mock("@/hooks/useMilestoneReviewers", () => ({
   useMilestoneReviewers: () => ({ data: [] }),
 }));
 
-jest.mock("@/utilities/auth/compare-all-wallets", () => ({
+vi.mock("@/utilities/auth/compare-all-wallets", () => ({
   compareAllWallets: (user: { address: string }, address: string) =>
     user.address.toLowerCase() === address.toLowerCase(),
 }));
 
-jest.mock("@/components/Utilities/MarkdownEditor", () => ({
+vi.mock("@/components/Utilities/MarkdownEditor", () => ({
   MarkdownEditor: ({ value, onChange }: { value: string; onChange: (v: string) => void }) => (
     <textarea
       data-testid="markdown-editor"
@@ -82,13 +82,13 @@ jest.mock("@/components/Utilities/MarkdownEditor", () => ({
   ),
 }));
 
-jest.mock("@/components/Utilities/MarkdownPreview", () => ({
+vi.mock("@/components/Utilities/MarkdownPreview", () => ({
   MarkdownPreview: ({ source }: { source: string }) => (
     <div data-testid="markdown-preview">{source}</div>
   ),
 }));
 
-jest.mock("@/utilities/mentions", () => ({
+vi.mock("@/utilities/mentions", () => ({
   renderMentionsAsMarkdown: (content: string) => content,
 }));
 
@@ -125,12 +125,12 @@ function renderCommentItem(props: Partial<React.ComponentProps<typeof CommentIte
 
 describe("CommentItem", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("delete confirmation", () => {
     it("should show a DeleteDialog instead of using window.confirm()", async () => {
-      const onDelete = jest.fn().mockResolvedValue(undefined);
+      const onDelete = vi.fn().mockResolvedValue(undefined);
 
       renderCommentItem({ onDelete });
 
@@ -150,7 +150,7 @@ describe("CommentItem", () => {
     });
 
     it("should call onDelete when dialog is confirmed", async () => {
-      const onDelete = jest.fn().mockResolvedValue(undefined);
+      const onDelete = vi.fn().mockResolvedValue(undefined);
 
       renderCommentItem({ onDelete });
 
@@ -169,7 +169,7 @@ describe("CommentItem", () => {
     });
 
     it("should not call onDelete when dialog is cancelled", async () => {
-      const onDelete = jest.fn().mockResolvedValue(undefined);
+      const onDelete = vi.fn().mockResolvedValue(undefined);
 
       renderCommentItem({ onDelete });
 
@@ -186,7 +186,7 @@ describe("CommentItem", () => {
     });
 
     it("should show admin-specific message when admin deletes another user's comment", async () => {
-      const onDelete = jest.fn().mockResolvedValue(undefined);
+      const onDelete = vi.fn().mockResolvedValue(undefined);
 
       renderCommentItem({
         comment: createMockComment({
@@ -206,7 +206,7 @@ describe("CommentItem", () => {
     });
 
     it("should show regular message when user deletes their own comment", async () => {
-      const onDelete = jest.fn().mockResolvedValue(undefined);
+      const onDelete = vi.fn().mockResolvedValue(undefined);
 
       renderCommentItem({ onDelete });
 

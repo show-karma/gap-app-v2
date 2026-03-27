@@ -141,7 +141,7 @@ describe("ExternalLink", () => {
 
   describe("Event Handlers", () => {
     it("should accept onClick handler", () => {
-      const handleClick = jest.fn();
+      const handleClick = vi.fn();
 
       render(
         <ExternalLink href="https://example.com" onClick={handleClick}>
@@ -156,7 +156,7 @@ describe("ExternalLink", () => {
     });
 
     it("should accept onMouseEnter handler", () => {
-      const handleMouseEnter = jest.fn();
+      const handleMouseEnter = vi.fn();
 
       render(
         <ExternalLink href="https://example.com" onMouseEnter={handleMouseEnter}>

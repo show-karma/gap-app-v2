@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { AIEvaluationCard } from "@/components/FundingPlatform/ApplicationView/AIAnalysisTab/AIEvaluationCard";
 
 // Mock the cn utility
-jest.mock("@/utilities/tailwind", () => ({
+vi.mock("@/utilities/tailwind", () => ({
   cn: (...classes: any[]) => classes.filter(Boolean).join(" "),
 }));
 

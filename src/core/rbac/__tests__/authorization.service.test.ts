@@ -2,13 +2,13 @@ import fetchData from "@/utilities/fetchData";
 import { authorizationService } from "../services/authorization.service";
 import { ReviewerType, Role } from "../types/role";
 
-jest.mock("@/utilities/fetchData");
+vi.mock("@/utilities/fetchData");
 
-const mockFetchData = fetchData as jest.MockedFunction<typeof fetchData>;
+const mockFetchData = fetchData as vi.MockedFunction<typeof fetchData>;
 
 describe("authorizationService", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("getPermissions", () => {

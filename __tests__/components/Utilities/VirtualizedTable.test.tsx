@@ -14,8 +14,8 @@ import {
 } from "@/components/Utilities/VirtualizedTable";
 
 // Mock @tanstack/react-virtual to control virtualization in tests
-jest.mock("@tanstack/react-virtual", () => ({
-  useVirtualizer: jest.fn(({ count, estimateSize }) => ({
+vi.mock("@tanstack/react-virtual", () => ({
+  useVirtualizer: vi.fn(({ count, estimateSize }) => ({
     getVirtualItems: () =>
       Array.from({ length: Math.min(count, 20) }, (_, index) => ({
         index,
@@ -24,8 +24,8 @@ jest.mock("@tanstack/react-virtual", () => ({
         key: index,
       })),
     getTotalSize: () => count * estimateSize(),
-    scrollToIndex: jest.fn(),
-    measure: jest.fn(),
+    scrollToIndex: vi.fn(),
+    measure: vi.fn(),
   })),
 }));
 
@@ -220,7 +220,7 @@ describe("VirtualizedTable", () => {
 
   describe("Row Configuration", () => {
     it("should use getRowKey for row keys", () => {
-      const getRowKey = jest.fn((item: TestItem) => item.id);
+      const getRowKey = vi.fn((item: TestItem) => item.id);
 
       renderVirtualizedTable({
         data: generateTestData(5),
@@ -348,7 +348,7 @@ describe("VirtualizedTable", () => {
   describe("Click Interactions", () => {
     it("should call onRowClick when row is clicked", async () => {
       const user = userEvent.setup();
-      const handleRowClick = jest.fn();
+      const handleRowClick = vi.fn();
 
       renderVirtualizedTable({
         data: generateTestData(5),
@@ -378,7 +378,7 @@ describe("VirtualizedTable", () => {
     });
 
     it("should support keyboard navigation with Enter key", async () => {
-      const handleRowClick = jest.fn();
+      const handleRowClick = vi.fn();
 
       const { container } = renderVirtualizedTable({
         data: generateTestData(5),
@@ -393,7 +393,7 @@ describe("VirtualizedTable", () => {
     });
 
     it("should support keyboard navigation with Space key", async () => {
-      const handleRowClick = jest.fn();
+      const handleRowClick = vi.fn();
 
       const { container } = renderVirtualizedTable({
         data: generateTestData(5),
@@ -410,7 +410,7 @@ describe("VirtualizedTable", () => {
     it("should have role=button and tabIndex when clickable", () => {
       const { container } = renderVirtualizedTable({
         data: generateTestData(3),
-        onRowClick: jest.fn(),
+        onRowClick: vi.fn(),
       });
 
       const rows = container.querySelectorAll("tbody tr");

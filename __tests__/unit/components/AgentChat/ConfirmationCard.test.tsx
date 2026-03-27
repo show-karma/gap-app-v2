@@ -128,12 +128,12 @@ describe("ConfirmationCard", () => {
 
   const defaultProps = {
     toolResult: baseToolResult,
-    onApprove: jest.fn(),
-    onDeny: jest.fn(),
+    onApprove: vi.fn(),
+    onDeny: vi.fn(),
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("should render the card with correct test id", () => {
@@ -162,14 +162,14 @@ describe("ConfirmationCard", () => {
   });
 
   it("should call onApprove when approve button clicked", () => {
-    const onApprove = jest.fn();
+    const onApprove = vi.fn();
     render(<ConfirmationCard {...defaultProps} onApprove={onApprove} />);
     fireEvent.click(screen.getByTestId("confirm-approve"));
     expect(onApprove).toHaveBeenCalledTimes(1);
   });
 
   it("should call onDeny when deny button clicked", () => {
-    const onDeny = jest.fn();
+    const onDeny = vi.fn();
     render(<ConfirmationCard {...defaultProps} onDeny={onDeny} />);
     fireEvent.click(screen.getByTestId("confirm-deny"));
     expect(onDeny).toHaveBeenCalledTimes(1);

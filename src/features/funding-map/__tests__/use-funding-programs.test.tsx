@@ -12,9 +12,9 @@ import { fundingProgramsService } from "../services/funding-programs.service";
 import type { FundingProgramResponse } from "../types/funding-program";
 
 // Mock the service
-jest.mock("../services/funding-programs.service");
+vi.mock("../services/funding-programs.service");
 
-const mockService = fundingProgramsService as jest.Mocked<typeof fundingProgramsService>;
+const mockService = fundingProgramsService as vi.Mocked<typeof fundingProgramsService>;
 
 describe("useFundingPrograms hooks", () => {
   let queryClient: QueryClient;
@@ -52,7 +52,7 @@ describe("useFundingPrograms hooks", () => {
         },
       },
     });
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   afterEach(() => {
@@ -299,7 +299,7 @@ describe("useFundingPrograms hooks", () => {
 
       for (const { compositeId, expectedChainId } of testCases) {
         queryClient.clear();
-        jest.clearAllMocks();
+        vi.clearAllMocks();
 
         mockService.getById.mockResolvedValue(createMockProgram());
         mockService.parseProgramIdAndChainId.mockReturnValue({

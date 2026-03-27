@@ -13,18 +13,18 @@ import { fireEvent, renderWithProviders, screen } from "../utils/test-helpers";
 import "@testing-library/jest-dom";
 
 // Mock the contributor profile modal store
-const mockOpenModal = jest.fn();
-jest.mock("@/store/modals/contributorProfile", () => ({
+const mockOpenModal = vi.fn();
+vi.mock("@/store/modals/contributorProfile", () => ({
   useContributorProfileModalStore: () => ({
     openModal: mockOpenModal,
-    closeModal: jest.fn(),
+    closeModal: vi.fn(),
     isOpen: false,
   }),
 }));
 
 describe("CreateProfileButton Component", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("should render button with correct text", () => {

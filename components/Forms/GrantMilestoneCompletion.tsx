@@ -87,7 +87,7 @@ export const GrantMilestoneCompletionForm = ({
       });
       // Close the form after successful completion
       handleCompleting(false);
-    } catch (error) {
+    } catch (_error) {
       // Don't close the form if there was an error
     } finally {
       setIsCompleting(false);

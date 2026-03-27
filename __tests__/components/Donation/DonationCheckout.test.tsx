@@ -11,11 +11,11 @@ import type { SupportedToken } from "@/constants/supportedTokens";
 import type { DonationPayment } from "@/store/donationCart";
 
 // Mock Next.js router
-const mockRouterBack = jest.fn();
-const mockUseParams = jest.fn(() => ({
+const mockRouterBack = vi.fn();
+const mockUseParams = vi.fn(() => ({
   communityId: "test-community",
 }));
-jest.mock("next/navigation", () => ({
+vi.mock("next/navigation", () => ({
   useRouter: () => ({
     back: mockRouterBack,
   }),
@@ -23,56 +23,56 @@ jest.mock("next/navigation", () => ({
 }));
 
 // Mock wagmi hooks
-jest.mock("wagmi", () => ({
-  useAccount: jest.fn(),
-  usePublicClient: jest.fn(),
-  useWalletClient: jest.fn(),
-  useWriteContract: jest.fn(),
-  useWaitForTransactionReceipt: jest.fn(),
-  useChainId: jest.fn(),
+vi.mock("wagmi", () => ({
+  useAccount: vi.fn(),
+  usePublicClient: vi.fn(),
+  useWalletClient: vi.fn(),
+  useWriteContract: vi.fn(),
+  useWaitForTransactionReceipt: vi.fn(),
+  useChainId: vi.fn(),
 }));
 
 // Mock store hooks
-jest.mock("@/store", () => ({
-  useDonationCart: jest.fn(),
-  useOwnerStore: jest.fn(() => ({ isOwner: false })),
-  useProjectStore: jest.fn(() => ({ isProjectAdmin: false })),
+vi.mock("@/store", () => ({
+  useDonationCart: vi.fn(),
+  useOwnerStore: vi.fn(() => ({ isOwner: false })),
+  useProjectStore: vi.fn(() => ({ isProjectAdmin: false })),
 }));
 
-jest.mock("@/hooks/useNetworkSwitching", () => ({
-  useNetworkSwitching: jest.fn(),
+vi.mock("@/hooks/useNetworkSwitching", () => ({
+  useNetworkSwitching: vi.fn(),
 }));
 
-jest.mock("@/hooks/useAuth", () => ({
-  useAuth: jest.fn(),
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: vi.fn(),
 }));
 
-jest.mock("@/hooks/donation/useDonationCheckout", () => ({
-  useDonationCheckout: jest.fn(),
+vi.mock("@/hooks/donation/useDonationCheckout", () => ({
+  useDonationCheckout: vi.fn(),
 }));
 
-jest.mock("@/hooks/donation/useCartChainPayoutAddresses", () => ({
-  useCartChainPayoutAddresses: jest.fn(),
+vi.mock("@/hooks/donation/useCartChainPayoutAddresses", () => ({
+  useCartChainPayoutAddresses: vi.fn(),
 }));
 
-jest.mock("@/hooks/donation/useCrossChainBalances", () => ({
-  useCrossChainBalances: jest.fn(),
+vi.mock("@/hooks/donation/useCrossChainBalances", () => ({
+  useCrossChainBalances: vi.fn(),
 }));
 
-jest.mock("@/constants/supportedTokens", () => ({
-  getTokensByChain: jest.fn(),
-  getAllSupportedChains: jest.fn(() => [10, 8453]),
+vi.mock("@/constants/supportedTokens", () => ({
+  getTokensByChain: vi.fn(),
+  getAllSupportedChains: vi.fn(() => [10, 8453]),
   SUPPORTED_NETWORKS: {},
 }));
 
 // Mock child components
-jest.mock("@/components/Donation/DonationSummary", () => ({
+vi.mock("@/components/Donation/DonationSummary", () => ({
   DonationSummary: ({ payments }: { payments: DonationPayment[] }) => (
     <div data-testid="donation-summary">Summary: {payments.length} payments</div>
   ),
 }));
 
-jest.mock("@/components/Donation/DonationExecutor", () => ({
+vi.mock("@/components/Donation/DonationExecutor", () => ({
   DonationExecutor: ({ executeButtonLabel, onExecute }: any) => (
     <button data-testid="donation-executor" onClick={onExecute}>
       {executeButtonLabel}
@@ -80,11 +80,11 @@ jest.mock("@/components/Donation/DonationExecutor", () => ({
   ),
 }));
 
-jest.mock("@/components/Donation/DonationAlerts", () => ({
+vi.mock("@/components/Donation/DonationAlerts", () => ({
   DonationAlerts: () => <div data-testid="donation-alerts">Alerts</div>,
 }));
 
-jest.mock("@/components/Donation/CheckoutHeader", () => ({
+vi.mock("@/components/Donation/CheckoutHeader", () => ({
   CheckoutHeader: ({ totalItems, onClear }: any) => (
     <div data-testid="checkout-header">
       <span>Items: {totalItems}</span>
@@ -95,21 +95,21 @@ jest.mock("@/components/Donation/CheckoutHeader", () => ({
   ),
 }));
 
-jest.mock("@/components/Donation/CartItemList", () => ({
+vi.mock("@/components/Donation/CartItemList", () => ({
   CartItemList: () => <div data-testid="cart-item-list">Cart Items</div>,
 }));
 
-jest.mock("@/components/Donation/NetworkSwitchPreview", () => ({
+vi.mock("@/components/Donation/NetworkSwitchPreview", () => ({
   NetworkSwitchPreview: () => <div data-testid="network-switch-preview">Network Preview</div>,
 }));
 
-jest.mock("@/components/DonationApprovalStatus", () => ({
+vi.mock("@/components/DonationApprovalStatus", () => ({
   DonationApprovalStatus: ({ executionState }: any) => (
     <div data-testid="approval-status">Phase: {executionState.phase}</div>
   ),
 }));
 
-jest.mock("@/components/DonationStepsPreview", () => ({
+vi.mock("@/components/DonationStepsPreview", () => ({
   DonationStepsPreview: ({ onProceed, onCancel, isLoading }: any) => (
     <div data-testid="steps-preview">
       <button data-testid="proceed-button" onClick={onProceed} disabled={isLoading}>
@@ -122,7 +122,7 @@ jest.mock("@/components/DonationStepsPreview", () => ({
   ),
 }));
 
-jest.mock("@/components/Donation/EmptyCart", () => ({
+vi.mock("@/components/Donation/EmptyCart", () => ({
   EmptyCart: ({ onBrowseProjects }: any) => (
     <div data-testid="empty-cart">
       <button data-testid="browse-projects" onClick={onBrowseProjects}>
@@ -132,7 +132,7 @@ jest.mock("@/components/Donation/EmptyCart", () => ({
   ),
 }));
 
-jest.mock("@/components/Donation/CompletedDonations", () => ({
+vi.mock("@/components/Donation/CompletedDonations", () => ({
   CompletedDonations: ({ onStartNewDonation }: any) => (
     <div data-testid="completed-donations">
       <button data-testid="start-new-donation" onClick={onStartNewDonation}>
@@ -170,22 +170,22 @@ describe("DonationCheckout", () => {
     items: [mockCartItem],
     amounts: { "project-1": "100" },
     selectedTokens: { "project-1": mockToken },
-    setAmount: jest.fn(),
-    setSelectedToken: jest.fn(),
-    remove: jest.fn(),
-    clear: jest.fn(),
-    updatePayments: jest.fn(),
+    setAmount: vi.fn(),
+    setSelectedToken: vi.fn(),
+    remove: vi.fn(),
+    clear: vi.fn(),
+    updatePayments: vi.fn(),
     payments: [mockPayment],
     lastCompletedSession: null,
-    clearLastCompletedSession: jest.fn(),
+    clearLastCompletedSession: vi.fn(),
   };
 
   const defaultNetworkSwitching = {
     currentChainId: 10,
     isCurrentNetworkSupported: true,
-    switchToNetwork: jest.fn(),
+    switchToNetwork: vi.fn(),
     isSwitching: false,
-    getFreshWalletClient: jest.fn(),
+    getFreshWalletClient: vi.fn(),
   };
 
   const defaultDonationCheckout = {
@@ -195,9 +195,9 @@ describe("DonationCheckout", () => {
     approvalInfo: [],
     validationErrors: [],
     showStepsPreview: false,
-    setShowStepsPreview: jest.fn(),
-    handleExecuteDonations: jest.fn(),
-    handleProceedWithDonations: jest.fn(),
+    setShowStepsPreview: vi.fn(),
+    handleExecuteDonations: vi.fn(),
+    handleProceedWithDonations: vi.fn(),
   };
 
   const defaultChainPayoutAddresses = {
@@ -208,7 +208,7 @@ describe("DonationCheckout", () => {
     },
     missingPayouts: [],
     isFetching: false,
-    setMissingPayouts: jest.fn(),
+    setMissingPayouts: vi.fn(),
   };
 
   const defaultBalances = {
@@ -217,7 +217,7 @@ describe("DonationCheckout", () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     const { useDonationCart } = require("@/store");
     useDonationCart.mockReturnValue(defaultCartState);
@@ -405,7 +405,7 @@ describe("DonationCheckout", () => {
 
   describe("User Interactions", () => {
     it("should call handleExecuteDonations when execute button clicked", async () => {
-      const mockHandleExecute = jest.fn();
+      const mockHandleExecute = vi.fn();
       const { useDonationCheckout } = require("@/hooks/donation/useDonationCheckout");
       useDonationCheckout.mockReturnValue({
         ...defaultDonationCheckout,
@@ -423,7 +423,7 @@ describe("DonationCheckout", () => {
     });
 
     it("should call clear when clear button clicked", () => {
-      const mockClear = jest.fn();
+      const mockClear = vi.fn();
       const { useDonationCart } = require("@/store");
       useDonationCart.mockReturnValue({
         ...defaultCartState,
@@ -439,7 +439,7 @@ describe("DonationCheckout", () => {
     });
 
     it("should call handleProceedWithDonations when proceed clicked", async () => {
-      const mockHandleProceed = jest.fn();
+      const mockHandleProceed = vi.fn();
       const { useDonationCheckout } = require("@/hooks/donation/useDonationCheckout");
       useDonationCheckout.mockReturnValue({
         ...defaultDonationCheckout,
@@ -458,7 +458,7 @@ describe("DonationCheckout", () => {
     });
 
     it("should close steps preview when cancel clicked", () => {
-      const mockSetShowStepsPreview = jest.fn();
+      const mockSetShowStepsPreview = vi.fn();
       const { useDonationCheckout } = require("@/hooks/donation/useDonationCheckout");
       useDonationCheckout.mockReturnValue({
         ...defaultDonationCheckout,
@@ -490,7 +490,7 @@ describe("DonationCheckout", () => {
     });
 
     it("should clear session and navigate back when start new donation clicked", () => {
-      const mockClearSession = jest.fn();
+      const mockClearSession = vi.fn();
       const { useDonationCart } = require("@/store");
       useDonationCart.mockReturnValue({
         ...defaultCartState,
@@ -585,7 +585,7 @@ describe("DonationCheckout", () => {
 
   describe("Network Switching", () => {
     it("should switch network when token selected from different chain", () => {
-      const mockSwitchToNetwork = jest.fn();
+      const mockSwitchToNetwork = vi.fn();
       const { useNetworkSwitching } = require("@/hooks/useNetworkSwitching");
       useNetworkSwitching.mockReturnValue({
         ...defaultNetworkSwitching,
@@ -650,7 +650,7 @@ describe("DonationCheckout", () => {
 
     it("should handle null communityId", () => {
       // Mock useParams to return an object without communityId
-      (mockUseParams as jest.Mock).mockReturnValueOnce({} as any);
+      (mockUseParams as vi.Mock).mockReturnValueOnce({} as any);
 
       render(<DonationCheckout />);
 

@@ -4,8 +4,8 @@ import type { ReactNode } from "react";
 import { VerificationBadge } from "../icons/VerificationBadge";
 
 // Mock the InfoTooltip component to capture its props
-const mockInfoTooltip = jest.fn();
-jest.mock("@/components/Utilities/InfoTooltip", () => ({
+const mockInfoTooltip = vi.fn();
+vi.mock("@/components/Utilities/InfoTooltip", () => ({
   InfoTooltip: ({ content, children, ...props }: { content: ReactNode; children: ReactNode }) => {
     mockInfoTooltip({ content, ...props });
     return (

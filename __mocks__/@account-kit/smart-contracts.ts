@@ -2,9 +2,9 @@
  * Mock for @account-kit/smart-contracts to avoid ESM parsing issues
  */
 
-export const createLightAccount = jest.fn();
-export const createModularAccountV2Client = jest.fn(() => ({
-  sendUserOperation: jest.fn(),
-  waitForUserOperationTransaction: jest.fn(),
+export const createLightAccount = vi.fn();
+export const createModularAccountV2Client = vi.fn(() => ({
+  sendUserOperation: vi.fn(),
+  waitForUserOperationTransaction: vi.fn(),
 }));
-export const createModularAccountAlchemyClient = jest.fn();
+export const createModularAccountAlchemyClient = vi.fn();

@@ -29,7 +29,7 @@ describe("evaluationUtils", () => {
 
     it("should return null for invalid JSON", () => {
       const invalidJSON = '{"score": 8, invalid}';
-      const consoleSpy = jest.spyOn(console, "error").mockImplementation();
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation();
 
       const result = parseEvaluation(invalidJSON);
 
@@ -43,7 +43,7 @@ describe("evaluationUtils", () => {
     });
 
     it("should return null for empty string", () => {
-      const consoleSpy = jest.spyOn(console, "error").mockImplementation();
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation();
 
       const result = parseEvaluation("");
 
@@ -55,7 +55,7 @@ describe("evaluationUtils", () => {
 
     it("should return null for malformed JSON", () => {
       const malformedJSON = "{score: 8}";
-      const consoleSpy = jest.spyOn(console, "error").mockImplementation();
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation();
 
       const result = parseEvaluation(malformedJSON);
 

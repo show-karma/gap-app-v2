@@ -1,7 +1,7 @@
 import { render } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
-jest.mock("next/dynamic", () => {
+vi.mock("next/dynamic", () => {
   const dynamicImports: Array<{ ssr: boolean }> = [];
   const mockDynamic = (importFn: () => Promise<any>, options?: { ssr?: boolean }) => {
     dynamicImports.push({ ssr: options?.ssr ?? true });
@@ -9,7 +9,7 @@ jest.mock("next/dynamic", () => {
     return DynamicComponent;
   };
   mockDynamic._imports = dynamicImports;
-  return mockDynamic;
+  return { default: mockDynamic };
 });
 
 import dynamic from "next/dynamic";
@@ -23,7 +23,7 @@ const defaultToasterConfig = {
 
 describe("DeferredLayoutComponents", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("rendering", () => {

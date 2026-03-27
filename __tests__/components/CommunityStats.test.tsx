@@ -3,10 +3,10 @@ import CommunityStats from "@/components/CommunityStats";
 import fetchData from "@/utilities/fetchData";
 
 // Mock fetchData
-jest.mock("@/utilities/fetchData");
+vi.mock("@/utilities/fetchData");
 
 // Mock Headless UI Dialog
-jest.mock("@headlessui/react", () => {
+vi.mock("@headlessui/react", () => {
   const React = require("react");
 
   // List of Headless UI Transition props that should be filtered
@@ -76,7 +76,7 @@ jest.mock("@headlessui/react", () => {
 });
 
 // Mock Heroicons
-jest.mock("@heroicons/react/24/solid", () => ({
+vi.mock("@heroicons/react/24/solid", () => ({
   ArrowPathIcon: (props: any) => <svg {...props} data-testid="refresh-icon" aria-label="Refresh" />,
   ChartBarSquareIcon: (props: any) => (
     <svg {...props} data-testid="chart-icon" aria-label="Chart" />
@@ -84,7 +84,7 @@ jest.mock("@heroicons/react/24/solid", () => ({
 }));
 
 // Mock Button
-jest.mock("@/components/Utilities/Button", () => ({
+vi.mock("@/components/Utilities/Button", () => ({
   Button: ({ onClick, children, className }: any) => (
     <button onClick={onClick} className={className}>
       {children}
@@ -93,8 +93,8 @@ jest.mock("@/components/Utilities/Button", () => ({
 }));
 
 // Mock errorManager
-jest.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: jest.fn(),
+vi.mock("@/components/Utilities/errorManager", () => ({
+  errorManager: vi.fn(),
 }));
 
 describe("CommunityStats", () => {
@@ -117,8 +117,8 @@ describe("CommunityStats", () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    (fetchData as jest.Mock).mockResolvedValue([mockStatsData, null]);
+    vi.clearAllMocks();
+    (fetchData as vi.Mock).mockResolvedValue([mockStatsData, null]);
   });
 
   describe("Rendering", () => {
@@ -173,7 +173,7 @@ describe("CommunityStats", () => {
     });
 
     it("should show loading state when fetching stats", async () => {
-      (fetchData as jest.Mock).mockImplementation(
+      (fetchData as vi.Mock).mockImplementation(
         () => new Promise((resolve) => setTimeout(() => resolve([mockStatsData, null]), 100))
       );
 
@@ -298,7 +298,7 @@ describe("CommunityStats", () => {
   describe("Error Handling", () => {
     it("should display error message when fetch fails", async () => {
       const errorMessage = "Failed to fetch stats";
-      (fetchData as jest.Mock).mockResolvedValue([null, errorMessage]);
+      (fetchData as vi.Mock).mockResolvedValue([null, errorMessage]);
 
       render(<CommunityStats communityId={mockCommunityId} />);
 
@@ -311,7 +311,7 @@ describe("CommunityStats", () => {
     });
 
     it("should display error when no stats found", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([{}, null]);
+      (fetchData as vi.Mock).mockResolvedValue([{}, null]);
 
       render(<CommunityStats communityId={mockCommunityId} />);
 
@@ -324,7 +324,7 @@ describe("CommunityStats", () => {
     });
 
     it("should display error when projects data is missing", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([{ grants: 10 }, null]);
+      (fetchData as vi.Mock).mockResolvedValue([{ grants: 10 }, null]);
 
       render(<CommunityStats communityId={mockCommunityId} />);
 
@@ -337,9 +337,9 @@ describe("CommunityStats", () => {
     });
 
     it("should call errorManager on fetch error", async () => {
-      const { errorManager } = require("@/components/Utilities/errorManager");
+      const { errorManager } = await import("@/components/Utilities/errorManager");
       const error = new Error("Network error");
-      (fetchData as jest.Mock).mockRejectedValue(error);
+      (fetchData as vi.Mock).mockRejectedValue(error);
 
       render(<CommunityStats communityId={mockCommunityId} />);
 
@@ -465,7 +465,7 @@ describe("CommunityStats", () => {
         ProjectEdits: 0,
         ProjectEndorsements: 0,
       };
-      (fetchData as jest.Mock).mockResolvedValue([zeroStats, null]);
+      (fetchData as vi.Mock).mockResolvedValue([zeroStats, null]);
 
       render(<CommunityStats communityId={mockCommunityId} />);
 
@@ -484,7 +484,7 @@ describe("CommunityStats", () => {
         ...mockStatsData,
         projects: 999999,
       };
-      (fetchData as jest.Mock).mockResolvedValue([largeStats, null]);
+      (fetchData as vi.Mock).mockResolvedValue([largeStats, null]);
 
       render(<CommunityStats communityId={mockCommunityId} />);
 
@@ -501,7 +501,7 @@ describe("CommunityStats", () => {
         projects: 10,
         grants: 5,
       };
-      (fetchData as jest.Mock).mockResolvedValue([partialStats, null]);
+      (fetchData as vi.Mock).mockResolvedValue([partialStats, null]);
 
       render(<CommunityStats communityId={mockCommunityId} />);
 
@@ -527,7 +527,7 @@ describe("CommunityStats", () => {
 
   describe("Loading States", () => {
     it("should show loading initially after opening modal", async () => {
-      (fetchData as jest.Mock).mockImplementation(
+      (fetchData as vi.Mock).mockImplementation(
         () => new Promise((resolve) => setTimeout(() => resolve([mockStatsData, null]), 500))
       );
 
@@ -551,7 +551,7 @@ describe("CommunityStats", () => {
     });
 
     it("should show loading when refreshing stats", async () => {
-      (fetchData as jest.Mock).mockImplementation(
+      (fetchData as vi.Mock).mockImplementation(
         () => new Promise((resolve) => setTimeout(() => resolve([mockStatsData, null]), 100))
       );
 

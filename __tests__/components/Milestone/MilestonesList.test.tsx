@@ -3,37 +3,37 @@ import { MilestonesList } from "@/components/Milestone/MilestonesList";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 
 // Mock useQueryState from nuqs
-const mockSetSelectedContentTypeQuery = jest.fn();
-jest.mock("nuqs", () => ({
-  useQueryState: jest.fn((key: string, options: any) => {
+const mockSetSelectedContentTypeQuery = vi.fn();
+vi.mock("nuqs", () => ({
+  useQueryState: vi.fn((key: string, options: any) => {
     if (key === "status") {
-      return ["all", jest.fn()];
+      return ["all", vi.fn()];
     }
     if (key === "contentType") {
       return ["all", mockSetSelectedContentTypeQuery];
     }
-    return [options?.defaultValue || "", jest.fn()];
+    return [options?.defaultValue || "", vi.fn()];
   }),
 }));
 
 // Mock Next.js navigation
-jest.mock("next/navigation", () => ({
+vi.mock("next/navigation", () => ({
   useRouter: () => ({
-    push: jest.fn(),
-    replace: jest.fn(),
+    push: vi.fn(),
+    replace: vi.fn(),
   }),
   usePathname: () => "/project/test-project",
   useSearchParams: () => new URLSearchParams(),
 }));
 
 // Mock stores
-jest.mock("@/store", () => ({
-  useOwnerStore: jest.fn((selector) => selector({ isOwner: false })),
-  useProjectStore: jest.fn((selector) => selector({ isProjectAdmin: false })),
+vi.mock("@/store", () => ({
+  useOwnerStore: vi.fn((selector) => selector({ isOwner: false })),
+  useProjectStore: vi.fn((selector) => selector({ isProjectAdmin: false })),
 }));
 
 // Mock ActivityCard component
-jest.mock("@/components/Shared/ActivityCard", () => ({
+vi.mock("@/components/Shared/ActivityCard", () => ({
   ActivityCard: ({ activity }: any) => (
     <div data-testid={`activity-card-${activity.type}`}>
       {activity.data?.title || activity.data?.uid || "Activity"}
@@ -42,7 +42,7 @@ jest.mock("@/components/Shared/ActivityCard", () => ({
 }));
 
 // Mock ObjectivesSub component
-jest.mock("@/components/Pages/Project/Objective/ObjectivesSub", () => ({
+vi.mock("@/components/Pages/Project/Objective/ObjectivesSub", () => ({
   ObjectivesSub: () => <div data-testid="objectives-sub">ObjectivesSub</div>,
 }));
 
@@ -86,12 +86,12 @@ function createMockMilestones(count: number): UnifiedMilestone[] {
 
 describe("MilestonesList", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers();
+    vi.clearAllMocks();
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   describe("Basic Rendering", () => {
@@ -170,7 +170,7 @@ describe("MilestonesList", () => {
 
       // Advance timers to complete loading
       act(() => {
-        jest.advanceTimersByTime(300);
+        vi.advanceTimersByTime(300);
       });
 
       await waitFor(() => {
@@ -188,7 +188,7 @@ describe("MilestonesList", () => {
       // Click load more
       fireEvent.click(getLoadMoreButton());
       act(() => {
-        jest.advanceTimersByTime(300);
+        vi.advanceTimersByTime(300);
       });
 
       await waitFor(() => {
@@ -206,7 +206,7 @@ describe("MilestonesList", () => {
 
       fireEvent.click(getLoadMoreButton());
       act(() => {
-        jest.advanceTimersByTime(300);
+        vi.advanceTimersByTime(300);
       });
 
       await waitFor(() => {
@@ -249,7 +249,7 @@ describe("MilestonesList", () => {
       // First click: 30 items
       fireEvent.click(getLoadMoreButton());
       act(() => {
-        jest.advanceTimersByTime(300);
+        vi.advanceTimersByTime(300);
       });
 
       await waitFor(() => {
@@ -259,7 +259,7 @@ describe("MilestonesList", () => {
       // Second click: 45 items
       fireEvent.click(getLoadMoreButton());
       act(() => {
-        jest.advanceTimersByTime(300);
+        vi.advanceTimersByTime(300);
       });
 
       await waitFor(() => {
@@ -269,7 +269,7 @@ describe("MilestonesList", () => {
       // Third click: 50 items (all loaded)
       fireEvent.click(getLoadMoreButton());
       act(() => {
-        jest.advanceTimersByTime(300);
+        vi.advanceTimersByTime(300);
       });
 
       await waitFor(() => {
@@ -303,7 +303,7 @@ describe("MilestonesList", () => {
       expect(screen.getByTestId("milestones-loading-skeleton")).toBeInTheDocument();
 
       act(() => {
-        jest.advanceTimersByTime(300);
+        vi.advanceTimersByTime(300);
       });
 
       await waitFor(() => {

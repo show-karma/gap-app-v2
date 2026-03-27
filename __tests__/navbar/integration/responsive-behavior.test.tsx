@@ -473,7 +473,7 @@ describe("Responsive Behavior Integration Tests", () => {
       const { rerender } = renderWithProviders(<Navbar />, {
         mockUsePrivy: createMockUsePrivy(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
-        mockUseTheme: { theme: "dark", setTheme: jest.fn() },
+        mockUseTheme: { theme: "dark", setTheme: vi.fn() },
       });
 
       // Resize to mobile
@@ -482,7 +482,7 @@ describe("Responsive Behavior Integration Tests", () => {
       rerender(<Navbar />, {
         mockUsePrivy: createMockUsePrivy(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
-        mockUseTheme: { theme: "dark", setTheme: jest.fn() },
+        mockUseTheme: { theme: "dark", setTheme: vi.fn() },
       });
 
       // Theme should persist

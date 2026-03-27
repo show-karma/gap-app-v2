@@ -28,7 +28,7 @@ describe("StatItem", () => {
 
   describe("Click Handler", () => {
     it("should call onClick when clicked", () => {
-      const handleClick = jest.fn();
+      const handleClick = vi.fn();
       render(<StatItem value={10} label="Grants" onClick={handleClick} />);
 
       fireEvent.click(screen.getByRole("button"));
@@ -176,7 +176,7 @@ describe("ProjectStatsBar", () => {
 
   describe("Click Handlers", () => {
     it("should call onGrantsClick when grants stat is clicked", () => {
-      const handleClick = jest.fn();
+      const handleClick = vi.fn();
       render(<ProjectStatsBar {...defaultProps} onGrantsClick={handleClick} />);
 
       // Find the button containing "Grants" text
@@ -189,7 +189,7 @@ describe("ProjectStatsBar", () => {
     });
 
     it("should call onEndorsementsClick when endorsements stat is clicked", () => {
-      const handleClick = jest.fn();
+      const handleClick = vi.fn();
       render(<ProjectStatsBar {...defaultProps} onEndorsementsClick={handleClick} />);
 
       const buttons = screen.getAllByRole("button");

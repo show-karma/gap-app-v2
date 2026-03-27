@@ -6,19 +6,19 @@
 import type { GrantResponse } from "@/types/v2/grant";
 
 // Mock environment variables
-jest.mock("@/utilities/enviromentVars", () => ({
+vi.mock("@/utilities/enviromentVars", () => ({
   envVars: {
     NEXT_PUBLIC_GAP_INDEXER_URL: "http://localhost:4000",
   },
 }));
 
 // Mock errorManager
-jest.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: jest.fn(),
+vi.mock("@/components/Utilities/errorManager", () => ({
+  errorManager: vi.fn(),
 }));
 
 // Mock fetchData utility - the service now uses fetchData instead of api-client directly
-jest.mock("@/utilities/fetchData");
+vi.mock("@/utilities/fetchData");
 
 import { errorManager } from "@/components/Utilities/errorManager";
 // Import the service AFTER all mocks are set up
@@ -26,12 +26,12 @@ import { getProjectGrants } from "@/services/project-grants.service";
 // Import the mocked module to get access to the mock function
 import fetchData from "@/utilities/fetchData";
 
-const mockFetchData = fetchData as jest.MockedFunction<typeof fetchData>;
-const mockErrorManager = errorManager as jest.MockedFunction<typeof errorManager>;
+const mockFetchData = fetchData as vi.MockedFunction<typeof fetchData>;
+const mockErrorManager = errorManager as vi.MockedFunction<typeof errorManager>;
 
 describe("project-grants.service", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("getProjectGrants", () => {

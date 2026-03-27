@@ -19,36 +19,36 @@ import {
 import { trackService } from "@/services/tracks";
 
 // Mock trackService
-jest.mock("@/services/tracks", () => ({
+vi.mock("@/services/tracks", () => ({
   trackService: {
-    getAllTracks: jest.fn(),
-    getProgramTracks: jest.fn(),
-    createTrack: jest.fn(),
-    updateTrack: jest.fn(),
-    archiveTrack: jest.fn(),
-    assignTracksToProgram: jest.fn(),
-    removeTrackFromProgram: jest.fn(),
-    getProjectTracks: jest.fn(),
-    assignTracksToProject: jest.fn(),
-    getProjectsByTrack: jest.fn(),
+    getAllTracks: vi.fn(),
+    getProgramTracks: vi.fn(),
+    createTrack: vi.fn(),
+    updateTrack: vi.fn(),
+    archiveTrack: vi.fn(),
+    assignTracksToProgram: vi.fn(),
+    removeTrackFromProgram: vi.fn(),
+    getProjectTracks: vi.fn(),
+    assignTracksToProject: vi.fn(),
+    getProjectsByTrack: vi.fn(),
   },
 }));
 
 // Mock react-hot-toast
-jest.mock("react-hot-toast", () => ({
+vi.mock("react-hot-toast", () => ({
   __esModule: true,
   default: {
-    success: jest.fn(),
-    error: jest.fn(),
+    success: vi.fn(),
+    error: vi.fn(),
   },
 }));
 
 // Mock SDK tracks
-jest.mock("@/utilities/sdk/tracks", () => ({
-  fetchTrackById: jest.fn(),
+vi.mock("@/utilities/sdk/tracks", () => ({
+  fetchTrackById: vi.fn(),
 }));
 
-const mockTrackService = trackService as jest.Mocked<typeof trackService>;
+const mockTrackService = trackService as vi.Mocked<typeof trackService>;
 
 describe("useTracks hooks (V2)", () => {
   const mockTracks = [
@@ -97,7 +97,7 @@ describe("useTracks hooks (V2)", () => {
   let queryClient: QueryClient;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     queryClient = createTestQueryClient();
   });
 
@@ -205,7 +205,7 @@ describe("useTracks hooks (V2)", () => {
     it("should invalidate community tracks query on success", async () => {
       mockTrackService.createTrack.mockResolvedValue(mockTracks[0]);
 
-      const invalidateQueriesSpy = jest.spyOn(queryClient, "invalidateQueries");
+      const invalidateQueriesSpy = vi.spyOn(queryClient, "invalidateQueries");
 
       const { result } = renderHook(() => useCreateTrack(), {
         wrapper: createWrapper(queryClient),

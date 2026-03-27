@@ -6,48 +6,48 @@ import type { AxiosInstance } from "axios";
 import { TokenManager } from "@/utilities/auth/token-manager";
 
 // Mock dependencies BEFORE importing service
-jest.mock("@/utilities/auth/token-manager");
-jest.mock("@/utilities/enviromentVars", () => ({
+vi.mock("@/utilities/auth/token-manager");
+vi.mock("@/utilities/enviromentVars", () => ({
   envVars: {
     NEXT_PUBLIC_GAP_INDEXER_URL: "http://localhost:4000",
   },
 }));
 
 // Mock fetchData for getComments method (which uses fetchData)
-jest.mock("@/utilities/fetchData");
+vi.mock("@/utilities/fetchData");
 
-// Create a persistent mock instance using var (hoisted) so it's available in jest.mock factory
-var mockAxiosInstance: jest.Mocked<AxiosInstance>;
+// Create a persistent mock instance using var (hoisted) so it's available in vi.mock factory
+var mockAxiosInstance: vi.Mocked<AxiosInstance>;
 
 // Mock api-client for mutations (createComment, editComment, deleteComment)
-jest.mock("@/utilities/auth/api-client", () => {
+vi.mock("@/utilities/auth/api-client", () => {
   const instance = {
-    get: jest.fn(),
-    post: jest.fn(),
-    delete: jest.fn(),
-    put: jest.fn(),
-    patch: jest.fn(),
-    request: jest.fn(),
-    head: jest.fn(),
-    options: jest.fn(),
+    get: vi.fn(),
+    post: vi.fn(),
+    delete: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    request: vi.fn(),
+    head: vi.fn(),
+    options: vi.fn(),
     interceptors: {
-      request: { use: jest.fn(), eject: jest.fn(), clear: jest.fn() },
-      response: { use: jest.fn(), eject: jest.fn(), clear: jest.fn() },
+      request: { use: vi.fn(), eject: vi.fn(), clear: vi.fn() },
+      response: { use: vi.fn(), eject: vi.fn(), clear: vi.fn() },
     },
     defaults: {} as any,
-    getUri: jest.fn(),
-  } as unknown as jest.Mocked<AxiosInstance>;
+    getUri: vi.fn(),
+  } as unknown as vi.Mocked<AxiosInstance>;
 
   mockAxiosInstance = instance;
 
   return {
-    createAuthenticatedApiClient: jest.fn(() => instance),
+    createAuthenticatedApiClient: vi.fn(() => instance),
   };
 });
 
 // Mock the wagmi store to simulate a connected wallet
-jest.mock("@/utilities/getWalletFromWagmiStore", () => ({
-  getWalletFromWagmiStore: jest.fn(() => "0x1234567890abcdef"),
+vi.mock("@/utilities/getWalletFromWagmiStore", () => ({
+  getWalletFromWagmiStore: vi.fn(() => "0x1234567890abcdef"),
 }));
 
 // NOW import the service after mocks are configured
@@ -55,14 +55,14 @@ import { applicationCommentsService } from "@/services/application-comments.serv
 // Import fetchData mock
 import fetchData from "@/utilities/fetchData";
 
-const mockFetchData = fetchData as jest.MockedFunction<typeof fetchData>;
+const mockFetchData = fetchData as vi.MockedFunction<typeof fetchData>;
 
 describe("Application Comments Integration", () => {
   const mockToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.mocktoken";
   const applicationId = "app-test-123";
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockFetchData.mockClear();
     if (mockAxiosInstance) {
       mockAxiosInstance.get?.mockClear();
@@ -72,11 +72,11 @@ describe("Application Comments Integration", () => {
     }
 
     // Setup default mock for TokenManager
-    (TokenManager.getToken as jest.Mock) = jest.fn().mockResolvedValue(mockToken);
+    (TokenManager.getToken as vi.Mock) = vi.fn().mockResolvedValue(mockToken);
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe("Authentication Flow", () => {
@@ -190,7 +190,7 @@ describe("Application Comments Integration", () => {
 
     it("should handle authentication failure gracefully", async () => {
       // Simulate no token available
-      (TokenManager.getToken as jest.Mock).mockResolvedValue(null);
+      (TokenManager.getToken as vi.Mock).mockResolvedValue(null);
 
       const error = {
         response: {
@@ -222,7 +222,7 @@ describe("Application Comments Integration", () => {
       const refreshedToken = "refreshed-token";
 
       // First call with initial token (getComments uses fetchData)
-      (TokenManager.getToken as jest.Mock).mockResolvedValueOnce(initialToken);
+      (TokenManager.getToken as vi.Mock).mockResolvedValueOnce(initialToken);
 
       mockFetchData.mockResolvedValueOnce([{ comments: [] }, null, null, 200]);
 
@@ -236,7 +236,7 @@ describe("Application Comments Integration", () => {
       );
 
       // Second call with refreshed token
-      (TokenManager.getToken as jest.Mock).mockResolvedValueOnce(refreshedToken);
+      (TokenManager.getToken as vi.Mock).mockResolvedValueOnce(refreshedToken);
 
       mockFetchData.mockResolvedValueOnce([{ comments: [] }, null, null, 200]);
 

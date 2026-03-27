@@ -4,44 +4,44 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { StripeOnrampEmbed } from "../StripeOnrampEmbed";
 
 // Mock dependencies
-jest.mock("@stripe/crypto");
-jest.mock("next-themes", () => ({
-  useTheme: jest.fn(() => ({ resolvedTheme: "light" })),
+vi.mock("@stripe/crypto");
+vi.mock("next-themes", () => ({
+  useTheme: vi.fn(() => ({ resolvedTheme: "light" })),
 }));
-jest.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: jest.fn(),
+vi.mock("@/components/Utilities/errorManager", () => ({
+  errorManager: vi.fn(),
 }));
-jest.mock("@/utilities/enviromentVars", () => ({
+vi.mock("@/utilities/enviromentVars", () => ({
   envVars: {
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_test_123",
   },
 }));
 
-const mockLoadStripeOnramp = loadStripeOnramp as jest.Mock;
-const mockErrorManager = errorManager as jest.Mock;
+const mockLoadStripeOnramp = loadStripeOnramp as vi.Mock;
+const mockErrorManager = errorManager as vi.Mock;
 
 describe("StripeOnrampEmbed", () => {
   let mockSession: {
-    mount: jest.Mock;
-    addEventListener: jest.Mock;
-    removeEventListener: jest.Mock;
+    mount: vi.Mock;
+    addEventListener: vi.Mock;
+    removeEventListener: vi.Mock;
   };
 
   let mockStripeOnramp: {
-    createSession: jest.Mock;
+    createSession: vi.Mock;
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     mockSession = {
-      mount: jest.fn(),
-      addEventListener: jest.fn(),
-      removeEventListener: jest.fn(),
+      mount: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
     };
 
     mockStripeOnramp = {
-      createSession: jest.fn(() => mockSession),
+      createSession: vi.fn(() => mockSession),
     };
 
     mockLoadStripeOnramp.mockResolvedValue(mockStripeOnramp);
@@ -49,8 +49,8 @@ describe("StripeOnrampEmbed", () => {
 
   const defaultProps = {
     clientSecret: "cs_test_123",
-    onClose: jest.fn(),
-    onSuccess: jest.fn(),
+    onClose: vi.fn(),
+    onSuccess: vi.fn(),
   };
 
   describe("Initialization", () => {
@@ -101,7 +101,7 @@ describe("StripeOnrampEmbed", () => {
 
   describe("Session Events", () => {
     it("triggers onSuccess on fulfillment_processing", async () => {
-      const onSuccess = jest.fn();
+      const onSuccess = vi.fn();
       render(<StripeOnrampEmbed {...defaultProps} onSuccess={onSuccess} />);
 
       await waitFor(() => {
@@ -133,7 +133,7 @@ describe("StripeOnrampEmbed", () => {
     });
 
     it("triggers onSuccess on fulfillment_complete", async () => {
-      const onSuccess = jest.fn();
+      const onSuccess = vi.fn();
       render(<StripeOnrampEmbed {...defaultProps} onSuccess={onSuccess} />);
 
       await waitFor(() => {
@@ -163,7 +163,7 @@ describe("StripeOnrampEmbed", () => {
     });
 
     it("prevents double-triggering success", async () => {
-      const onSuccess = jest.fn();
+      const onSuccess = vi.fn();
       render(<StripeOnrampEmbed {...defaultProps} onSuccess={onSuccess} />);
 
       await waitFor(() => {
@@ -193,7 +193,7 @@ describe("StripeOnrampEmbed", () => {
     });
 
     it("does not trigger success for non-success statuses", async () => {
-      const onSuccess = jest.fn();
+      const onSuccess = vi.fn();
       render(<StripeOnrampEmbed {...defaultProps} onSuccess={onSuccess} />);
 
       await waitFor(() => {
@@ -241,7 +241,7 @@ describe("StripeOnrampEmbed", () => {
 
     it("shows error when Stripe key is not configured", async () => {
       // Temporarily override the env mock
-      jest.doMock("@/utilities/enviromentVars", () => ({
+      vi.doMock("@/utilities/enviromentVars", () => ({
         envVars: {
           NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: undefined,
         },
@@ -300,7 +300,7 @@ describe("StripeOnrampEmbed", () => {
     });
 
     it("calls onClose when close button is clicked", async () => {
-      const onClose = jest.fn();
+      const onClose = vi.fn();
       render(<StripeOnrampEmbed {...defaultProps} onClose={onClose} />);
 
       const closeButton = screen.getByRole("button", { name: /Close/i });
@@ -312,7 +312,7 @@ describe("StripeOnrampEmbed", () => {
 
   describe("clientSecret changes", () => {
     it("resets success trigger when clientSecret changes", async () => {
-      const onSuccess = jest.fn();
+      const onSuccess = vi.fn();
       const { rerender } = render(<StripeOnrampEmbed {...defaultProps} onSuccess={onSuccess} />);
 
       await waitFor(() => {

@@ -6,26 +6,26 @@ import { BrowseApplicationsClient } from "@/app/community/[communityId]/(with-he
 
 // --- Mocks ---
 
-const mockRouterReplace = jest.fn();
-const mockRouterPush = jest.fn();
+const mockRouterReplace = vi.fn();
+const mockRouterPush = vi.fn();
 
-jest.mock("next/navigation", () => ({
+vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: mockRouterPush,
     replace: mockRouterReplace,
-    prefetch: jest.fn(),
-    back: jest.fn(),
+    prefetch: vi.fn(),
+    back: vi.fn(),
     pathname: "/community/test-community/browse-applications",
   }),
   usePathname: () => "/community/test-community/browse-applications",
   useSearchParams: () => new URLSearchParams(),
   useParams: () => ({ communityId: "test-community" }),
-  notFound: jest.fn(),
-  redirect: jest.fn(),
+  notFound: vi.fn(),
+  redirect: vi.fn(),
 }));
 
-jest.mock("@/features/programs/hooks/use-programs-with-config", () => ({
-  useProgramsWithConfig: jest.fn(() => ({
+vi.mock("@/features/programs/hooks/use-programs-with-config", () => ({
+  useProgramsWithConfig: vi.fn(() => ({
     programs: [
       {
         programId: "program-abc",
@@ -46,13 +46,13 @@ jest.mock("@/features/programs/hooks/use-programs-with-config", () => ({
     ],
     isLoading: false,
     error: null,
-    refetch: jest.fn(),
+    refetch: vi.fn(),
   })),
 }));
 
-jest.mock("@/utilities/fetchData", () => ({
+vi.mock("@/utilities/fetchData", () => ({
   __esModule: true,
-  default: jest.fn(() =>
+  default: vi.fn(() =>
     Promise.resolve([
       {
         applications: [],
@@ -63,7 +63,12 @@ jest.mock("@/utilities/fetchData", () => ({
   ),
 }));
 
-jest.mock("@/src/components/navigation/Link", () => ({
+vi.mock("@/components/FundingPlatform/helper/getProjectTitle", () => ({
+  getProjectTitle: (app: { applicationData?: Record<string, unknown> }) =>
+    (app.applicationData?.["Pod Name"] as string) ?? "Untitled",
+}));
+
+vi.mock("@/src/components/navigation/Link", () => ({
   Link: ({ children, href, ...props }: { children: ReactNode; href: string }) => (
     <a href={href} {...props}>
       {children}
@@ -71,11 +76,11 @@ jest.mock("@/src/components/navigation/Link", () => ({
   ),
 }));
 
-jest.mock("@/utilities/formatDate", () => ({
+vi.mock("@/utilities/formatDate", () => ({
   formatDate: (d: string) => d,
 }));
 
-jest.mock("lucide-react", () => ({
+vi.mock("lucide-react", () => ({
   Lock: (props: Record<string, unknown>) => <svg data-testid="lock-icon" {...props} />,
   RefreshCw: (props: Record<string, unknown>) => <svg data-testid="refresh-icon" {...props} />,
   Search: (props: Record<string, unknown>) => <svg data-testid="search-icon" {...props} />,
@@ -99,7 +104,7 @@ function createWrapper() {
 
 describe("BrowseApplicationsClient - URL sync on filter change", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("updates the URL with programId when a program is selected", async () => {
@@ -197,6 +202,112 @@ describe("BrowseApplicationsClient - URL sync on filter change", () => {
     expect(mockRouterReplace).toHaveBeenCalled();
     const lastCall = mockRouterReplace.mock.calls[mockRouterReplace.mock.calls.length - 1][0];
     expect(lastCall).not.toContain("status=");
+  });
+
+  it('displays requested amount when applicationData has "Funding Request" key', async () => {
+    jest
+      .spyOn(require("next/navigation"), "useSearchParams")
+      .mockReturnValue(new URLSearchParams("programId=program-abc"));
+
+    mockFetchData.mockResolvedValueOnce([
+      {
+        applications: [
+          {
+            id: "app-1",
+            programId: "program-abc",
+            referenceNumber: "APP-TEST01",
+            status: "approved",
+            applicationData: {
+              "Pod Name": "Test Pod",
+              "Funding Request": "$466,000 USD",
+            },
+            createdAt: "2026-02-11T10:36:46.032Z",
+            updatedAt: "2026-02-11T10:36:46.032Z",
+          },
+        ],
+        pagination: { total: 1, page: 1, limit: 100, totalPages: 1 },
+      },
+      null,
+    ]);
+
+    render(<BrowseApplicationsClient communityId="test-community" />, {
+      wrapper: createWrapper(),
+    });
+
+    expect(await screen.findByText("$466,000")).toBeInTheDocument();
+  });
+
+  it("prefers Funding Request over long question keys that happen to contain amount and funding", async () => {
+    jest
+      .spyOn(require("next/navigation"), "useSearchParams")
+      .mockReturnValue(new URLSearchParams("programId=program-abc"));
+
+    mockFetchData.mockResolvedValueOnce([
+      {
+        applications: [
+          {
+            id: "app-2",
+            programId: "program-abc",
+            referenceNumber: "APP-TEST02",
+            status: "approved",
+            applicationData: {
+              "Pod Name": "LDO Pod",
+              // This long question key contains both "funding" and "amount" but is NOT the requested amount
+              "Have you received previous Filecoin PGF / PLFIF funding? If yes, specify round, amount, and timing.":
+                "FIDL is funded by PL and FF.",
+              "Funding Request": "$147,630 USD",
+            },
+            createdAt: "2026-01-27T00:00:00.000Z",
+            updatedAt: "2026-01-27T00:00:00.000Z",
+          },
+        ],
+        pagination: { total: 1, page: 1, limit: 100, totalPages: 1 },
+      },
+      null,
+    ]);
+
+    render(<BrowseApplicationsClient communityId="test-community" />, {
+      wrapper: createWrapper(),
+    });
+
+    // Should show the correct funding amount, NOT "FIDL is funded by PL and FF."
+    expect(await screen.findByText("$147,630")).toBeInTheDocument();
+    expect(screen.queryByText(/FIDL is funded/)).not.toBeInTheDocument();
+  });
+
+  it("extracts the first dollar amount when Funding Request contains a sentence with multiple numbers", async () => {
+    jest
+      .spyOn(require("next/navigation"), "useSearchParams")
+      .mockReturnValue(new URLSearchParams("programId=program-abc"));
+
+    mockFetchData.mockResolvedValueOnce([
+      {
+        applications: [
+          {
+            id: "app-3",
+            programId: "program-abc",
+            referenceNumber: "APP-TEST03",
+            status: "pending",
+            applicationData: {
+              "Pod Name": "Web2 Pod",
+              "Funding Request":
+                "$239,000 over next three months (Performance/Milestone based $500,236 expected request for second 3-month period)",
+            },
+            createdAt: "2026-01-28T00:00:00.000Z",
+            updatedAt: "2026-01-28T00:00:00.000Z",
+          },
+        ],
+        pagination: { total: 1, page: 1, limit: 100, totalPages: 1 },
+      },
+      null,
+    ]);
+
+    render(<BrowseApplicationsClient communityId="test-community" />, {
+      wrapper: createWrapper(),
+    });
+
+    // Should extract $239,000 (the first dollar amount), NOT concatenate all numbers
+    expect(await screen.findByText("$239,000")).toBeInTheDocument();
   });
 
   it("removes programId from URL when program is deselected", async () => {

@@ -1,7 +1,7 @@
 // Mock Next.js server imports
-jest.mock("next/server", () => ({
+vi.mock("next/server", () => ({
   NextResponse: {
-    redirect: jest.fn((url: URL, status: number) => ({
+    redirect: vi.fn((url: URL, status: number) => ({
       status,
       headers: new Map([["location", url.toString()]]),
     })),
