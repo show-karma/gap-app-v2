@@ -69,7 +69,6 @@ const EXCLUDED_TOOLBARS = [
   "github",
   "mermaid",
   "katex",
-  "previewOnly",
   "htmlPreview",
 ] as const;
 
