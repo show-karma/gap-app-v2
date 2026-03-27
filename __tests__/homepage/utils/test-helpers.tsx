@@ -8,6 +8,7 @@ import "../setup";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { type RenderOptions, type RenderResult, render } from "@testing-library/react";
+import * as nextNavigation from "next/navigation";
 import type React from "react";
 import { mockAuthState } from "../setup";
 
@@ -66,7 +67,7 @@ export const renderWithProviders = (
   }
 
   if (mockRouter) {
-    const navigationModule = require("next/navigation");
+    const navigationModule = nextNavigation;
     if (navigationModule.useRouter && vi.isMockFunction(navigationModule.useRouter)) {
       navigationModule.useRouter.mockReturnValue(mockRouter);
     }
@@ -84,7 +85,7 @@ export const renderWithProviders = (
       mockAuthState.current = options.mockUseAuth;
     }
     if (options?.mockRouter) {
-      const navigationModule = require("next/navigation");
+      const navigationModule = nextNavigation;
       if (navigationModule.useRouter && vi.isMockFunction(navigationModule.useRouter)) {
         navigationModule.useRouter.mockReturnValue(options.mockRouter);
       }

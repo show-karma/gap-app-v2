@@ -8,6 +8,25 @@
 
 import React from "react";
 
+// Hoisted mock state - accessible in vi.mock factories
+const _h = vi.hoisted(() => ({
+  authState: {
+    current: {
+      ready: true,
+      authenticated: false,
+      isConnected: false,
+      address: undefined as string | undefined,
+      user: null as unknown,
+      authenticate: vi.fn(),
+      login: vi.fn(),
+      logout: vi.fn(),
+      disconnect: vi.fn(),
+      getAccessToken: vi.fn().mockResolvedValue("mock-token"),
+    },
+  },
+}));
+export const mockAuthState = _h.authState;
+
 // Mock scrollTo (homepage-specific)
 window.scrollTo = vi.fn() as unknown as typeof window.scrollTo;
 
@@ -37,27 +56,9 @@ vi.mock("@/components/Utilities/ExternalLink", () => ({
     ),
 }));
 
-// Mock useAuth hook - homepage doesn't require complex auth mocking initially
-export const mockAuthState = {
-  current: {
-    ready: true,
-    authenticated: false,
-    isConnected: false,
-    address: undefined,
-    user: null,
-    authenticate: vi.fn(),
-    login: vi.fn(),
-    logout: vi.fn(),
-    disconnect: vi.fn(),
-    getAccessToken: vi.fn().mockResolvedValue("mock-token"),
-  },
-};
-
+// Mock useAuth hook
 vi.mock("@/hooks/useAuth", () => ({
-  useAuth: vi.fn(() => {
-    const { mockAuthState } = require("@/__tests__/homepage/setup");
-    return mockAuthState.current;
-  }),
+  useAuth: vi.fn(() => _h.authState.current),
 }));
 
 // Mock useRouter

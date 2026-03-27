@@ -15,13 +15,14 @@ vi.mock("@/hooks/useMixpanel", () => ({
   }),
 }));
 
-vi.mock("next/dynamic", () => {
-  return vi.fn(() => {
+vi.mock("next/dynamic", () => ({
+  __esModule: true,
+  default: vi.fn(() => {
     const Component = () => <button type="button">Create a profile</button>;
     Component.displayName = "DynamicComponent";
     return Component;
-  });
-});
+  }),
+}));
 
 vi.mock("@/src/features/funding-map/components/funding-map-agent-card", () => ({
   FundingMapAgentCard: () => <div data-testid="agent-card" />,

@@ -12,6 +12,38 @@ import React from "react";
 import { handlers } from "./handlers";
 import "@testing-library/jest-dom";
 
+// Hoisted mock state - accessible in vi.mock factories
+const _h = vi.hoisted(() => ({
+  authState: {
+    current: {
+      ready: true,
+      authenticated: true,
+      isConnected: true,
+      address: "0xAdmin1234567890abcdef1234567890abcdef" as string | undefined,
+      user: null as unknown,
+      authenticate: vi.fn(),
+      login: vi.fn(),
+      logout: vi.fn(),
+      disconnect: vi.fn(),
+      getAccessToken: vi.fn().mockResolvedValue("mock-token"),
+    },
+  },
+  communityAdminAccessState: {
+    current: {
+      hasAccess: true,
+      isLoading: false,
+      checks: {
+        isCommunityAdmin: true,
+        isOwner: false,
+        isSuperAdmin: false,
+        isRbacCommunityAdmin: false,
+      },
+    },
+  },
+}));
+export const mockAuthState = _h.authState;
+export const mockCommunityAdminAccessState = _h.communityAdminAccessState;
+
 /**
  * Setup MSW server for control center tests
  */
@@ -29,50 +61,14 @@ afterAll(() => {
   server.close();
 });
 
-// ---- Mock holders for per-test overrides ----
-
-export const mockAuthState = {
-  current: {
-    ready: true,
-    authenticated: true,
-    isConnected: true,
-    address: "0xAdmin1234567890abcdef1234567890abcdef" as string | undefined,
-    user: null,
-    authenticate: vi.fn(),
-    login: vi.fn(),
-    logout: vi.fn(),
-    disconnect: vi.fn(),
-    getAccessToken: vi.fn().mockResolvedValue("mock-token"),
-  },
-};
-
-export const mockCommunityAdminAccessState = {
-  current: {
-    hasAccess: true,
-    isLoading: false,
-    checks: {
-      isCommunityAdmin: true,
-      isOwner: false,
-      isSuperAdmin: false,
-      isRbacCommunityAdmin: false,
-    },
-  },
-};
-
 // ---- Module mocks ----
 
 vi.mock("@/hooks/useAuth", () => ({
-  useAuth: vi.fn(() => {
-    const { mockAuthState } = require("@/__tests__/control-center/setup");
-    return mockAuthState.current;
-  }),
+  useAuth: vi.fn(() => _h.authState.current),
 }));
 
 vi.mock("@/hooks/communities/useCommunityAdminAccess", () => ({
-  useCommunityAdminAccess: vi.fn(() => {
-    const { mockCommunityAdminAccessState } = require("@/__tests__/control-center/setup");
-    return mockCommunityAdminAccessState.current;
-  }),
+  useCommunityAdminAccess: vi.fn(() => _h.communityAdminAccessState.current),
 }));
 
 vi.mock("@/hooks/communities/useCommunityDetails", () => ({

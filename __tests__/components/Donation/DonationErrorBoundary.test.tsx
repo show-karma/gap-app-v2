@@ -17,11 +17,12 @@ import { getDetailedErrorInfo } from "@/utilities/donations/errorMessages";
 // Mock dependencies
 vi.mock("@/components/Utilities/errorManager");
 vi.mock("@/utilities/donations/errorMessages");
-vi.mock("next/link", () => {
-  return ({ children, href }: { children: React.ReactNode; href: string }) => {
-    return <a href={href}>{children}</a>;
-  };
-});
+vi.mock("next/link", () => ({
+  __esModule: true,
+  default: ({ children, href }: { children: React.ReactNode; href: string }) => (
+    <a href={href}>{children}</a>
+  ),
+}));
 
 // Component that throws an error for testing
 const ThrowError = ({

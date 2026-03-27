@@ -13,6 +13,7 @@
 import { Hero } from "@/src/features/homepage/components/hero";
 import { renderWithProviders, screen, setViewportSize, userEvent } from "../utils/test-helpers";
 import "@testing-library/jest-dom";
+import { chosenCommunities } from "@/utilities/chosenCommunities";
 import { VIEWPORTS } from "../setup";
 
 // Mock InfiniteMovingCards
@@ -270,8 +271,7 @@ describe("Hero Component", () => {
   describe("Edge Cases", () => {
     it("should handle missing community data gracefully", () => {
       // Mock empty communities
-      const { chosenCommunities } = require("@/utilities/chosenCommunities");
-      chosenCommunities.mockReturnValueOnce([]);
+      vi.mocked(chosenCommunities).mockReturnValueOnce([]);
 
       renderWithProviders(<Hero />);
 
