@@ -1,0 +1,450 @@
+name: QA Pipeline
+
+on:
+  workflow_run:
+    workflows: ['Claude Code']
+    types: [completed]
+
+jobs:
+  gate-check:
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      should_run: ${{ steps.check.outputs.should_run }}
+      pr_number: ${{ steps.check.outputs.pr_number }}
+      deployment_url: ${{ steps.check.outputs.deployment_url }}
+      head_sha: ${{ steps.check.outputs.head_sha }}
+    steps:
+      - name: Check review verdict and extract deployment URL
+        id: check
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            // Get PR from the triggering workflow run
+            const runId = context.payload.workflow_run.id;
+            const headSha = context.payload.workflow_run.head_sha;
+            const headBranch = context.payload.workflow_run.head_branch;
+
+            core.setOutput('head_sha', headSha);
+
+            // Find the PR associated with this workflow run
+            const { data: prs } = await github.rest.pulls.list({
+              owner, repo,
+              state: 'open',
+              head: `${owner}:${headBranch}`,
+              per_page: 1
+            });
+
+            if (prs.length === 0) {
+              console.log('No open PR found for branch ' + headBranch);
+              core.setOutput('should_run', 'false');
+              return;
+            }
+
+            const pr = prs[0];
+            const prNumber = pr.number;
+            core.setOutput('pr_number', prNumber);
+
+            // Skip draft PRs
+            if (pr.draft) {
+              console.log('PR is draft, skipping QA pipeline');
+              core.setOutput('should_run', 'false');
+              return;
+            }
+
+            // Find Claude Code review comment and check verdict
+            const { data: comments } = await github.rest.issues.listComments({
+              owner, repo,
+              issue_number: prNumber,
+              per_page: 100
+            });
+
+            // Look for the review verdict from Claude Code (karma-coding-ai)
+            const reviewComment = comments
+              .reverse()
+              .find(c =>
+                (c.user.login === 'github-actions[bot]' || c.user.login.includes('claude') || c.user.login.includes('karma')) &&
+                (c.body.includes('**APPROVE**') || c.body.includes('**REQUEST CHANGES**') || c.body.includes('**APPROVE WITH SUGGESTIONS**'))
+              );
+
+            if (!reviewComment) {
+              console.log('No Claude Code review verdict found');
+              core.setOutput('should_run', 'false');
+              return;
+            }
+
+            const body = reviewComment.body;
+            const isApproved = body.includes('✅ **APPROVE**') || body.includes('⚠️ **APPROVE WITH SUGGESTIONS**');
+            const isRejected = body.includes('🔄 **REQUEST CHANGES**');
+
+            if (isRejected || !isApproved) {
+              console.log('Review verdict is REQUEST CHANGES or unknown — skipping QA');
+              core.setOutput('should_run', 'false');
+              return;
+            }
+
+            console.log('✅ Review approved — proceeding with QA pipeline');
+
+            // Extract Vercel deployment URL
+            let deploymentUrl = '';
+
+            // Method 1: GitHub Deployments API
+            try {
+              const { data: deployments } = await github.rest.repos.listDeployments({
+                owner, repo,
+                sha: headSha,
+                environment: 'Preview',
+                per_page: 5
+              });
+
+              for (const deployment of deployments) {
+                const { data: statuses } = await github.rest.repos.listDeploymentStatuses({
+                  owner, repo,
+                  deployment_id: deployment.id,
+                  per_page: 1
+                });
+
+                if (statuses.length > 0 && statuses[0].state === 'success') {
+                  deploymentUrl = statuses[0].environment_url || statuses[0].target_url;
+                  if (deploymentUrl) break;
+                }
+              }
+            } catch (e) {
+              console.log('Deployments API failed: ' + e.message);
+            }
+
+            // Method 2: Vercel bot comment
+            if (!deploymentUrl) {
+              const vercelComment = comments.find(c =>
+                (c.user.login === 'vercel[bot]' || c.user.login === 'vercel') &&
+                c.body.includes('vercel.app')
+              );
+
+              if (vercelComment) {
+                const urlMatch = vercelComment.body.match(/https:\/\/[a-z0-9-]+\.vercel\.app/i);
+                if (urlMatch) deploymentUrl = urlMatch[0];
+              }
+            }
+
+            if (!deploymentUrl) {
+              console.log('⚠️ No deployment URL found — cannot run QA');
+              core.setOutput('should_run', 'false');
+              return;
+            }
+
+            console.log('Deployment URL: ' + deploymentUrl);
+
+            // Health check
+            let healthy = false;
+            for (let i = 0; i < 12; i++) {
+              try {
+                const response = await fetch(deploymentUrl, { method: 'HEAD', redirect: 'follow' });
+                if (response.ok || response.status === 308) {
+                  healthy = true;
+                  break;
+                }
+              } catch (e) {
+                console.log('Health check attempt ' + (i + 1) + ' failed');
+              }
+              await new Promise(r => setTimeout(r, 5000));
+            }
+
+            if (!healthy) {
+              console.log('⚠️ Deployment not healthy — cannot run QA');
+              core.setOutput('should_run', 'false');
+              return;
+            }
+
+            console.log('✅ Deployment healthy');
+            core.setOutput('deployment_url', deploymentUrl);
+            core.setOutput('should_run', 'true');
+
+  qa-plan:
+    needs: gate-check
+    if: needs.gate-check.outputs.should_run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ needs.gate-check.outputs.head_sha }}
+
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Generate QA Plan
+        uses: anthropics/claude-code-action@beta
+        env:
+          PR_NUMBER: ${{ needs.gate-check.outputs.pr_number }}
+          PREVIEW_URL: ${{ needs.gate-check.outputs.deployment_url }}
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ steps.app-token.outputs.token }}
+          allowed_tools: |
+            Bash(git:*),
+            Bash(cat:*),
+            Bash(mkdir:*),
+            Read,
+            Write,
+            Glob,
+            Grep
+          claude_env: |
+            PR_NUMBER: ${{ needs.gate-check.outputs.pr_number }}
+            PREVIEW_URL: ${{ needs.gate-check.outputs.deployment_url }}
+            CI: true
+          direct_prompt: |
+            You are a strict senior QA engineer. Read and follow the skill at .claude/skills/qa-plan-generator/SKILL.md exactly.
+
+            Generate a QA plan for this PR. Save to qa-plan.md. Post the comment on the PR as specified.
+
+            Be strict. Be concise. No fluff.
+          max_turns: '20'
+          timeout_minutes: '25'
+
+      - name: Upload QA plan artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-plan
+          path: qa-plan.md
+          retention-days: 7
+          if-no-files-found: ignore
+
+  qa-execution:
+    needs: [gate-check, qa-plan]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ needs.gate-check.outputs.head_sha }}
+
+      - name: Download QA plan
+        uses: actions/download-artifact@v4
+        with:
+          name: qa-plan
+
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Execute QA Plan
+        uses: anthropics/claude-code-action@beta
+        env:
+          PR_NUMBER: ${{ needs.gate-check.outputs.pr_number }}
+          PREVIEW_URL: ${{ needs.gate-check.outputs.deployment_url }}
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ steps.app-token.outputs.token }}
+          allowed_tools: |
+            Bash(agent-browser:*),
+            Bash(curl:*),
+            Bash(mkdir:*),
+            Bash(cat:*),
+            Bash(sleep:*),
+            Read,
+            Write
+          claude_env: |
+            PR_NUMBER: ${{ needs.gate-check.outputs.pr_number }}
+            PREVIEW_URL: ${{ needs.gate-check.outputs.deployment_url }}
+            QA_TEST_EMAIL: ${{ secrets.QA_TEST_EMAIL }}
+            QA_TEST_OTP: ${{ secrets.QA_TEST_OTP }}
+            CI: true
+          direct_prompt: |
+            You are a strict senior QA executor. Read and follow the skill at .claude/skills/qa-executor/SKILL.md exactly.
+
+            QA Plan is at qa-plan.md. Execute ALL scenarios — both Public (P1, P2...) and Authenticated (A1, A2...).
+            For authenticated scenarios, login using the Privy test account (email + fixed OTP from env vars).
+            Post the PR comment as specified. Save results to qa-results.json.
+          max_turns: '40'
+          timeout_minutes: '40'
+
+      - name: Upload QA execution artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-execution-results
+          path: |
+            qa-output/
+            qa-results.json
+          retention-days: 7
+          if-no-files-found: ignore
+
+  dogfood:
+    needs: [gate-check, qa-execution]
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ needs.gate-check.outputs.head_sha }}
+
+      - name: Download QA plan for scope context
+        uses: actions/download-artifact@v4
+        with:
+          name: qa-plan
+        continue-on-error: true
+
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Run Dogfood Exploration
+        uses: anthropics/claude-code-action@beta
+        env:
+          PR_NUMBER: ${{ needs.gate-check.outputs.pr_number }}
+          PREVIEW_URL: ${{ needs.gate-check.outputs.deployment_url }}
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ steps.app-token.outputs.token }}
+          allowed_tools: |
+            Bash(agent-browser:*),
+            Bash(npx agent-browser:*),
+            Bash(curl:*),
+            Bash(mkdir:*),
+            Bash(cat:*),
+            Bash(cp:*),
+            Bash(sleep:*),
+            Read,
+            Write
+          claude_env: |
+            PR_NUMBER: ${{ needs.gate-check.outputs.pr_number }}
+            PREVIEW_URL: ${{ needs.gate-check.outputs.deployment_url }}
+            QA_TEST_EMAIL: ${{ secrets.QA_TEST_EMAIL }}
+            QA_TEST_OTP: ${{ secrets.QA_TEST_OTP }}
+            CI: true
+          direct_prompt: |
+            You are a strict senior QA engineer doing exploratory dogfood testing.
+
+            1. Read qa-plan.md (if available) to understand what areas changed.
+            2. Find and read the dogfood skill SKILL.md (check .agents/skills/dogfood/ and .claude/skills/dogfood/).
+            3. Run BROADER exploratory testing around the changed feature areas — both public AND authenticated pages.
+            4. For authenticated pages: login using the Privy test account (email from $QA_TEST_EMAIL, OTP from $QA_TEST_OTP). Save auth state and reuse.
+            5. Follow the dogfood workflow: Initialize, Authenticate, Orient, Explore, Document.
+            6. Find 5-10 well-documented issues with full repro evidence.
+
+            Post a PR comment with this EXACT format:
+
+            ## Dogfood (3/3)
+
+            **Issues**: X found (Y critical, Z high)
+
+            | # | Issue | Severity | Category |
+            |---|-------|----------|----------|
+            | ISSUE-001 | [title] | severity | category |
+
+            **Verdict**: PASS or FAIL
+
+            Save full report to dogfood-output/report.md.
+            Save summary to dogfood-results.json: {"total":N,"critical":N,"high":N,"medium":N,"low":N,"blocking":bool}
+
+            Be strict. Be thorough. No optimism.
+          max_turns: '50'
+          timeout_minutes: '55'
+
+      - name: Upload dogfood artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dogfood-results
+          path: |
+            dogfood-output/
+            dogfood-results.json
+          retention-days: 7
+          if-no-files-found: ignore
+
+  verdict:
+    needs: [gate-check, qa-execution, dogfood]
+    if: always() && needs.gate-check.outputs.should_run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Download QA results
+        uses: actions/download-artifact@v4
+        with:
+          name: qa-execution-results
+        continue-on-error: true
+
+      - name: Download dogfood results
+        uses: actions/download-artifact@v4
+        with:
+          name: dogfood-results
+        continue-on-error: true
+
+      - name: Evaluate and set commit status
+        uses: actions/github-script@v7
+        env:
+          HEAD_SHA: ${{ needs.gate-check.outputs.head_sha }}
+          RUN_ID: ${{ github.run_id }}
+        with:
+          script: |
+            const fs = require('fs');
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const sha = process.env.HEAD_SHA;
+
+            let criticalCount = 0;
+            let highCount = 0;
+
+            // Parse QA execution results
+            try {
+              const qaResults = JSON.parse(fs.readFileSync('qa-results.json', 'utf8'));
+              for (const s of (qaResults.scenarios || [])) {
+                if (s.result === 'FAIL') {
+                  if (s.severity?.toLowerCase() === 'critical') criticalCount++;
+                  if (s.severity?.toLowerCase() === 'high') highCount++;
+                }
+              }
+            } catch (e) {
+              console.log('Could not parse qa-results.json: ' + e.message);
+            }
+
+            // Parse dogfood results
+            try {
+              const dogfoodResults = JSON.parse(fs.readFileSync('dogfood-results.json', 'utf8'));
+              criticalCount += (dogfoodResults.critical || 0);
+              highCount += (dogfoodResults.high || 0);
+            } catch (e) {
+              console.log('Could not parse dogfood-results.json: ' + e.message);
+            }
+
+            const hasBlockingIssues = criticalCount > 0 || highCount > 0;
+            const state = hasBlockingIssues ? 'failure' : 'success';
+            const description = hasBlockingIssues
+              ? `${criticalCount} critical, ${highCount} high issues found`
+              : 'No critical/high issues found';
+
+            console.log(`Verdict: ${state} — ${description}`);
+
+            // Set commit status
+            await github.rest.repos.createCommitStatus({
+              owner, repo, sha,
+              state,
+              description,
+              context: 'qa-pipeline',
+              target_url: `https://github.com/${owner}/${repo}/actions/runs/${process.env.RUN_ID}`
+            });
+
+            if (hasBlockingIssues) {
+              core.setFailed(`QA Pipeline FAILED: ${description}`);
+            }
