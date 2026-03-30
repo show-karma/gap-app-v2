@@ -15,8 +15,8 @@ Execute the QA plan from Stage 1. You are a strict, rigid QA engineer. If expect
 | QA Plan | `qa-plan.md` in workspace root (artifact from Stage 1) |
 | Target URL | `$PREVIEW_URL` env var |
 | PR number | `$PR_NUMBER` env var |
-| Test email | `$QA_TEST_EMAIL` env var (Privy test account: `test-4920@privy.io`) |
-| Test OTP | `$QA_TEST_OTP` env var (fixed OTP: `158203`) |
+| Test email | `$QA_TEST_EMAIL` env var (Privy test account) |
+| Test OTP | `$QA_TEST_OTP` env var (fixed OTP from Privy dashboard) |
 
 ## Setup
 

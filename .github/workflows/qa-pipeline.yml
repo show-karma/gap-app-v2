@@ -4,10 +4,18 @@ on:
   workflow_run:
     workflows: ['Claude Code']
     types: [completed]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to run QA against'
+        required: true
+        type: string
 
 jobs:
   gate-check:
-    if: github.event.workflow_run.conclusion == 'success'
+    if: >
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
+      github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
@@ -23,91 +31,84 @@ jobs:
           script: |
             const owner = context.repo.owner;
             const repo = context.repo.repo;
+            const isManual = context.eventName === 'workflow_dispatch';
 
-            // Get PR from the triggering workflow run
-            const runId = context.payload.workflow_run.id;
-            const headSha = context.payload.workflow_run.head_sha;
-            const headBranch = context.payload.workflow_run.head_branch;
+            // --- Resolve PR number and head SHA ---
+            let headSha, prNumber;
+
+            if (isManual) {
+              prNumber = parseInt('${{ github.event.inputs.pr_number }}', 10);
+              const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number: prNumber });
+              headSha = pr.head.sha;
+              if (pr.draft) {
+                console.log('PR is draft, skipping');
+                core.setOutput('should_run', 'false');
+                return;
+              }
+            } else {
+              headSha = context.payload.workflow_run.head_sha;
+              const headBranch = context.payload.workflow_run.head_branch;
+              const { data: prs } = await github.rest.pulls.list({
+                owner, repo, state: 'open',
+                head: `${owner}:${headBranch}`, per_page: 1
+              });
+              if (prs.length === 0) {
+                console.log('No open PR found');
+                core.setOutput('should_run', 'false');
+                return;
+              }
+              const pr = prs[0];
+              prNumber = pr.number;
+              if (pr.draft) {
+                console.log('PR is draft, skipping');
+                core.setOutput('should_run', 'false');
+                return;
+              }
+            }
 
             core.setOutput('head_sha', headSha);
-
-            // Find the PR associated with this workflow run
-            const { data: prs } = await github.rest.pulls.list({
-              owner, repo,
-              state: 'open',
-              head: `${owner}:${headBranch}`,
-              per_page: 1
-            });
-
-            if (prs.length === 0) {
-              console.log('No open PR found for branch ' + headBranch);
-              core.setOutput('should_run', 'false');
-              return;
-            }
-
-            const pr = prs[0];
-            const prNumber = pr.number;
             core.setOutput('pr_number', prNumber);
 
-            // Skip draft PRs
-            if (pr.draft) {
-              console.log('PR is draft, skipping QA pipeline');
-              core.setOutput('should_run', 'false');
-              return;
-            }
-
-            // Find Claude Code review comment and check verdict
+            // --- Check review verdict (skip for manual trigger) ---
             const { data: comments } = await github.rest.issues.listComments({
-              owner, repo,
-              issue_number: prNumber,
-              per_page: 100
+              owner, repo, issue_number: prNumber, per_page: 100
             });
 
-            // Look for the review verdict from Claude Code (karma-coding-ai)
-            const reviewComment = comments
-              .reverse()
-              .find(c =>
+            if (!isManual) {
+              const reviewComment = [...comments].reverse().find(c =>
                 (c.user.login === 'github-actions[bot]' || c.user.login.includes('claude') || c.user.login.includes('karma')) &&
                 (c.body.includes('**APPROVE**') || c.body.includes('**REQUEST CHANGES**') || c.body.includes('**APPROVE WITH SUGGESTIONS**'))
               );
 
-            if (!reviewComment) {
-              console.log('No Claude Code review verdict found');
-              core.setOutput('should_run', 'false');
-              return;
+              if (!reviewComment) {
+                console.log('No Claude Code review verdict found');
+                core.setOutput('should_run', 'false');
+                return;
+              }
+
+              const verdict = reviewComment.body;
+              const isApproved = verdict.includes('✅ **APPROVE**') || verdict.includes('⚠️ **APPROVE WITH SUGGESTIONS**');
+              if (!isApproved) {
+                console.log('Review verdict is REQUEST CHANGES — skipping QA');
+                core.setOutput('should_run', 'false');
+                return;
+              }
+              console.log('✅ Review approved');
+            } else {
+              console.log('Manual trigger — skipping verdict check');
             }
 
-            const body = reviewComment.body;
-            const isApproved = body.includes('✅ **APPROVE**') || body.includes('⚠️ **APPROVE WITH SUGGESTIONS**');
-            const isRejected = body.includes('🔄 **REQUEST CHANGES**');
-
-            if (isRejected || !isApproved) {
-              console.log('Review verdict is REQUEST CHANGES or unknown — skipping QA');
-              core.setOutput('should_run', 'false');
-              return;
-            }
-
-            console.log('✅ Review approved — proceeding with QA pipeline');
-
-            // Extract Vercel deployment URL
+            // --- Extract Vercel deployment URL ---
             let deploymentUrl = '';
 
-            // Method 1: GitHub Deployments API
             try {
               const { data: deployments } = await github.rest.repos.listDeployments({
-                owner, repo,
-                sha: headSha,
-                environment: 'Preview',
-                per_page: 5
+                owner, repo, sha: headSha, environment: 'Preview', per_page: 5
               });
-
-              for (const deployment of deployments) {
+              for (const d of deployments) {
                 const { data: statuses } = await github.rest.repos.listDeploymentStatuses({
-                  owner, repo,
-                  deployment_id: deployment.id,
-                  per_page: 1
+                  owner, repo, deployment_id: d.id, per_page: 1
                 });
-
                 if (statuses.length > 0 && statuses[0].state === 'success') {
                   deploymentUrl = statuses[0].environment_url || statuses[0].target_url;
                   if (deploymentUrl) break;
@@ -117,49 +118,42 @@ jobs:
               console.log('Deployments API failed: ' + e.message);
             }
 
-            // Method 2: Vercel bot comment
             if (!deploymentUrl) {
               const vercelComment = comments.find(c =>
                 (c.user.login === 'vercel[bot]' || c.user.login === 'vercel') &&
                 c.body.includes('vercel.app')
               );
-
               if (vercelComment) {
-                const urlMatch = vercelComment.body.match(/https:\/\/[a-z0-9-]+\.vercel\.app/i);
-                if (urlMatch) deploymentUrl = urlMatch[0];
+                const m = vercelComment.body.match(/https:\/\/[a-z0-9-]+\.vercel\.app/i);
+                if (m) deploymentUrl = m[0];
               }
             }
 
             if (!deploymentUrl) {
-              console.log('⚠️ No deployment URL found — cannot run QA');
+              console.log('⚠️ No deployment URL found');
               core.setOutput('should_run', 'false');
               return;
             }
 
-            console.log('Deployment URL: ' + deploymentUrl);
-
-            // Health check
+            // --- Health check ---
             let healthy = false;
             for (let i = 0; i < 12; i++) {
               try {
-                const response = await fetch(deploymentUrl, { method: 'HEAD', redirect: 'follow' });
-                if (response.ok || response.status === 308) {
-                  healthy = true;
-                  break;
-                }
+                const r = await fetch(deploymentUrl, { method: 'HEAD', redirect: 'follow' });
+                if (r.ok || r.status === 308) { healthy = true; break; }
               } catch (e) {
-                console.log('Health check attempt ' + (i + 1) + ' failed');
+                console.log('Health check ' + (i + 1) + ' failed');
               }
               await new Promise(r => setTimeout(r, 5000));
             }
 
             if (!healthy) {
-              console.log('⚠️ Deployment not healthy — cannot run QA');
+              console.log('⚠️ Deployment not healthy');
               core.setOutput('should_run', 'false');
               return;
             }
 
-            console.log('✅ Deployment healthy');
+            console.log('✅ Deployment ready: ' + deploymentUrl);
             core.setOutput('deployment_url', deploymentUrl);
             core.setOutput('should_run', 'true');
 
@@ -319,7 +313,6 @@ jobs:
           github_token: ${{ steps.app-token.outputs.token }}
           allowed_tools: |
             Bash(agent-browser:*),
-            Bash(npx agent-browser:*),
             Bash(curl:*),
             Bash(mkdir:*),
             Bash(cat:*),
