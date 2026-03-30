@@ -8,6 +8,10 @@
   @apply whitespace-pre-wrap;
   @apply text-wrap;
 
+  [data-streamdown="link"] {
+    white-space: normal;
+  }
+
   @media (max-width: 1440px) {
     @apply text-[14px];
   }
