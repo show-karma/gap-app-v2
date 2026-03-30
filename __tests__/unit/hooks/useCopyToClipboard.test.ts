@@ -9,20 +9,20 @@ import * as errorManagerModule from "@/components/Utilities/errorManager";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 
 // Mock dependencies
-jest.mock("react-hot-toast");
-jest.mock("@/components/Utilities/errorManager");
+vi.mock("react-hot-toast");
+vi.mock("@/components/Utilities/errorManager");
 
-const mockToast = toast as jest.Mocked<typeof toast>;
-const mockErrorManager = errorManagerModule.errorManager as jest.MockedFunction<
+const mockToast = toast as vi.Mocked<typeof toast>;
+const mockErrorManager = errorManagerModule.errorManager as vi.MockedFunction<
   typeof errorManagerModule.errorManager
 >;
 
 describe("useCopyToClipboard", () => {
   const originalClipboard = navigator.clipboard;
-  const mockWriteText = jest.fn();
+  const mockWriteText = vi.fn();
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     // Mock clipboard API
     Object.assign(navigator, {
       clipboard: {
@@ -218,7 +218,7 @@ describe("useCopyToClipboard", () => {
         clipboard: undefined,
       });
 
-      const consoleWarnSpy = jest.spyOn(console, "warn").mockImplementation();
+      const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation();
 
       const { result } = renderHook(() => useCopyToClipboard());
 

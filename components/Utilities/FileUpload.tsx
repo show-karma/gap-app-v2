@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
@@ -21,6 +21,10 @@ interface FileUploadProps {
   // Validation props
   maxFileSize?: number; // Maximum file size in bytes
   allowedFileTypes?: string[]; // Array of allowed MIME types
+  // Document upload props (skip image-specific validation)
+  presignedUrlEndpoint?: string; // overrides the default logo presigned URL
+  presignedUrlPayload?: (file: File) => Record<string, unknown>; // customizes POST body
+  skipDimensionValidation?: boolean; // skips image dimension check
 }
 
 interface ImageDimensions {
@@ -41,7 +45,11 @@ export function FileUpload({
   onUploadProgress,
   maxFileSize,
   allowedFileTypes,
+  presignedUrlEndpoint,
+  presignedUrlPayload,
+  skipDimensionValidation,
 }: FileUploadProps) {
+  const inputId = useId();
   const [isDragOver, setIsDragOver] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -89,29 +97,38 @@ export function FileUpload({
         setValidationError(null);
         onUploadProgress?.(0);
 
-        // Get image dimensions for validation
-        const dimensions = await getImageDimensions(file);
+        let payload: Record<string, unknown>;
 
-        // Validate square aspect ratio
-        if (dimensions.width !== dimensions.height) {
-          const error = "Image must have a square aspect ratio (1:1)";
-          setValidationError(error);
-          toast.error(error);
-          onS3UploadError?.(error);
-          return;
+        if (skipDimensionValidation) {
+          // Document mode — no image dimension validation
+          payload = presignedUrlPayload
+            ? presignedUrlPayload(file)
+            : { fileName: file.name, fileType: file.type, fileSize: file.size };
+        } else {
+          // Image mode — validate dimensions
+          const dimensions = await getImageDimensions(file);
+          if (dimensions.width !== dimensions.height) {
+            const error = "Image must have a square aspect ratio (1:1)";
+            setValidationError(error);
+            toast.error(error);
+            onS3UploadError?.(error);
+            return;
+          }
+          payload = {
+            fileName: file.name,
+            fileType: file.type,
+            fileSize: file.size,
+            width: dimensions.width,
+            height: dimensions.height,
+          };
         }
 
         // Step 1: Get presigned URL
         setUploadProgress(10);
         onUploadProgress?.(10);
 
-        const [data, error] = await fetchData(INDEXER.PROJECT.LOGOS.PRESIGNED_URL(), "POST", {
-          fileName: file.name,
-          fileType: file.type,
-          fileSize: file.size,
-          width: dimensions.width,
-          height: dimensions.height,
-        });
+        const endpoint = presignedUrlEndpoint || INDEXER.PROJECT.LOGOS.PRESIGNED_URL();
+        const [data, error] = await fetchData(endpoint, "POST", payload);
 
         if (error) {
           throw new Error(error || "Failed to get upload URL");
@@ -119,7 +136,7 @@ export function FileUpload({
 
         const { uploadUrl, finalUrl, key } = data;
 
-        // Step 2: Upload directly to S3 with progress tracking
+        // Step 2: Upload directly to S3
         setUploadProgress(20);
         onUploadProgress?.(20);
 
@@ -135,15 +152,15 @@ export function FileUpload({
           throw new Error("Failed to upload file to S3");
         }
 
-        // Complete upload
         setUploadProgress(100);
         onUploadProgress?.(100);
 
-        toast.success("Image uploaded successfully!");
+        toast.success(
+          skipDimensionValidation ? "File uploaded successfully!" : "Image uploaded successfully!"
+        );
         onS3UploadComplete?.(finalUrl, key);
-      } catch (error: any) {
-        console.error("Upload error:", error);
-        const errorMessage = error.message || "Failed to upload image";
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Failed to upload file";
         setValidationError(errorMessage);
         toast.error(errorMessage);
         onS3UploadError?.(errorMessage);
@@ -153,7 +170,15 @@ export function FileUpload({
         onUploadProgress?.(0);
       }
     },
-    [getImageDimensions, onUploadProgress, onS3UploadComplete, onS3UploadError]
+    [
+      getImageDimensions,
+      onUploadProgress,
+      onS3UploadComplete,
+      onS3UploadError,
+      skipDimensionValidation,
+      presignedUrlEndpoint,
+      presignedUrlPayload,
+    ]
   );
 
   const handleFileSelection = useCallback(
@@ -175,6 +200,8 @@ export function FileUpload({
             if (type === "image/jpeg") return "JPEG";
             if (type === "image/png") return "PNG";
             if (type === "image/webp") return "WebP";
+            if (type === "application/pdf") return "PDF";
+            if (type.includes("wordprocessingml")) return "DOCX";
             return type.split("/")[1]?.toUpperCase() || type;
           })
           .join(", ");
@@ -279,7 +306,7 @@ export function FileUpload({
           </svg>
           <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 justify-center">
             <label
-              htmlFor="file-upload"
+              htmlFor={inputId}
               className={cn(
                 "relative cursor-pointer rounded-md bg-white dark:bg-zinc-800 font-medium text-indigo-600 dark:text-indigo-400 focus-within:outline-none focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-2 hover:text-indigo-500 dark:hover:text-indigo-300 transition-colors px-2 py-1",
                 isUploading && "cursor-not-allowed opacity-50"
@@ -289,7 +316,7 @@ export function FileUpload({
                 {isUploading ? "Uploading..." : uploadedFile ? uploadedFile.name : "Upload a file"}
               </span>
               <input
-                id="file-upload"
+                id={inputId}
                 name="file-upload"
                 type="file"
                 className="sr-only"

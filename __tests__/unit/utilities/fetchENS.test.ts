@@ -1,37 +1,37 @@
 import type { Hex } from "viem";
 
 // ---- Mocks ----
-// The mock client is created inside the factory because jest.mock is hoisted
+// The mock client is created inside the factory because vi.mock is hoisted
 // above variable declarations. We retrieve the mock functions after import
 // by accessing the mocked createPublicClient's return value.
 
-jest.mock("viem", () => {
-  // We cannot reference outer variables from a hoisted jest.mock factory,
+vi.mock("viem", () => {
+  // We cannot reference outer variables from a hoisted vi.mock factory,
   // so we store the mock client on a global that persists across the hoist.
   const client = {
-    getEnsName: jest.fn(),
-    getEnsAvatar: jest.fn(),
-    getEnsAddress: jest.fn(),
+    getEnsName: vi.fn(),
+    getEnsAvatar: vi.fn(),
+    getEnsAddress: vi.fn(),
   };
   // Attach to global so we can retrieve it in tests
   (globalThis as any).__mockEnsClient = client;
 
   return {
-    createPublicClient: jest.fn(() => client),
-    http: jest.fn(() => "mock-transport"),
-    isAddress: jest.fn((addr: string) => /^0x[0-9a-fA-F]{40}$/i.test(addr)),
+    createPublicClient: vi.fn(() => client),
+    http: vi.fn(() => "mock-transport"),
+    isAddress: vi.fn((addr: string) => /^0x[0-9a-fA-F]{40}$/i.test(addr)),
   };
 });
 
-jest.mock("viem/chains", () => ({
+vi.mock("viem/chains", () => ({
   mainnet: { id: 1, name: "Ethereum", network: "homestead" },
 }));
 
-jest.mock("viem/ens", () => ({
-  normalize: jest.fn((name: string) => name),
+vi.mock("viem/ens", () => ({
+  normalize: vi.fn((name: string) => name),
 }));
 
-jest.mock("@/utilities/enviromentVars", () => ({
+vi.mock("@/utilities/enviromentVars", () => ({
   envVars: {
     RPC: {
       MAINNET: "https://mock-rpc.example.com",
@@ -39,8 +39,8 @@ jest.mock("@/utilities/enviromentVars", () => ({
   },
 }));
 
-jest.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: jest.fn(),
+vi.mock("@/components/Utilities/errorManager", () => ({
+  errorManager: vi.fn(),
 }));
 
 // ---- Imports (after mocks) ----
@@ -51,9 +51,9 @@ import { fetchAddressFromENS, fetchENS } from "@/utilities/fetchENS";
 
 // Retrieve the actual mock functions that were created inside the hoisted factory
 const ensClient = (globalThis as any).__mockEnsClient as {
-  getEnsName: jest.Mock;
-  getEnsAvatar: jest.Mock;
-  getEnsAddress: jest.Mock;
+  getEnsName: vi.Mock;
+  getEnsAvatar: vi.Mock;
+  getEnsAddress: vi.Mock;
 };
 
 // ---- Helpers ----
@@ -66,7 +66,7 @@ function makeAddress(index: number): Hex {
 
 describe("fetchENS", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("basic resolution", () => {
@@ -342,8 +342,8 @@ describe("fetchENS", () => {
 
   describe("module initialization", () => {
     it("uses createPublicClient and http from viem", () => {
-      expect(jest.isMockFunction(createPublicClient)).toBe(true);
-      expect(jest.isMockFunction(http)).toBe(true);
+      expect(vi.isMockFunction(createPublicClient)).toBe(true);
+      expect(vi.isMockFunction(http)).toBe(true);
 
       // The client returned by createPublicClient should be the mock we control
       expect(typeof ensClient.getEnsName).toBe("function");
@@ -369,7 +369,7 @@ describe("fetchENS", () => {
 
 describe("fetchAddressFromENS", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("basic resolution", () => {

@@ -21,7 +21,7 @@ describe("Funders Page Navigation Flows", () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("CTA Navigation", () => {

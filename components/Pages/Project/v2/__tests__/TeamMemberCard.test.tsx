@@ -3,13 +3,13 @@ import "@testing-library/jest-dom";
 import { TeamMemberCard } from "../TeamContent/TeamMemberCard";
 
 // Mock next/navigation
-jest.mock("next/navigation", () => ({
+vi.mock("next/navigation", () => ({
   useParams: () => ({ projectId: "test-project-123" }),
-  useRouter: () => ({ push: jest.fn() }),
+  useRouter: () => ({ push: vi.fn() }),
 }));
 
 // Mock wagmi
-jest.mock("wagmi", () => ({
+vi.mock("wagmi", () => ({
   useAccount: () => ({ address: "0x1234567890123456789012345678901234567890" }),
 }));
 
@@ -33,14 +33,14 @@ const mockStoreState = {
 
 const mockOwnerStoreState = { isOwner: false };
 
-jest.mock("@/store", () => ({
-  useProjectStore: jest.fn((selector?: (state: unknown) => unknown) => {
+vi.mock("@/store", () => ({
+  useProjectStore: vi.fn((selector?: (state: unknown) => unknown) => {
     if (typeof selector === "function") {
       return selector(mockStoreState);
     }
     return mockStoreState;
   }),
-  useOwnerStore: jest.fn((selector?: (state: unknown) => unknown) => {
+  useOwnerStore: vi.fn((selector?: (state: unknown) => unknown) => {
     if (typeof selector === "function") {
       return selector(mockOwnerStoreState);
     }
@@ -51,11 +51,11 @@ jest.mock("@/store", () => ({
 // Mock ENS store
 const mockEnsState = {
   ensData: {},
-  populateEns: jest.fn(),
+  populateEns: vi.fn(),
 };
 
-jest.mock("@/store/ens", () => ({
-  useENS: jest.fn((selector?: (state: unknown) => unknown) => {
+vi.mock("@/store/ens", () => ({
+  useENS: vi.fn((selector?: (state: unknown) => unknown) => {
     if (typeof selector === "function") {
       return selector(mockEnsState);
     }
@@ -64,15 +64,15 @@ jest.mock("@/store/ens", () => ({
 }));
 
 // Mock contributor profile modal store
-const mockOpenModal = jest.fn();
-jest.mock("@/store/modals/contributorProfile", () => ({
+const mockOpenModal = vi.fn();
+vi.mock("@/store/modals/contributorProfile", () => ({
   useContributorProfileModalStore: () => ({
     openModal: mockOpenModal,
   }),
 }));
 
 // Mock team profiles hook
-jest.mock("@/hooks/useTeamProfiles", () => ({
+vi.mock("@/hooks/useTeamProfiles", () => ({
   useTeamProfiles: () => ({
     teamProfiles: [
       {
@@ -91,20 +91,20 @@ jest.mock("@/hooks/useTeamProfiles", () => ({
 }));
 
 // Mock project instance hook
-jest.mock("@/hooks/useProjectInstance", () => ({
+vi.mock("@/hooks/useProjectInstance", () => ({
   useProjectInstance: () => ({
     project: mockProject,
   }),
 }));
 
 // Mock copy to clipboard hook
-const mockCopy = jest.fn();
-jest.mock("@/hooks/useCopyToClipboard", () => ({
+const mockCopy = vi.fn();
+vi.mock("@/hooks/useCopyToClipboard", () => ({
   useCopyToClipboard: () => [null, mockCopy],
 }));
 
 // Mock react-query
-jest.mock("@tanstack/react-query", () => ({
+vi.mock("@tanstack/react-query", () => ({
   useQuery: () => ({
     data: {
       "0x1234567890123456789012345678901234567890": "Owner",
@@ -115,20 +115,20 @@ jest.mock("@tanstack/react-query", () => ({
 }));
 
 // Mock dialog components
-jest.mock("@/components/Dialogs/Member/DeleteMember", () => ({
+vi.mock("@/components/Dialogs/Member/DeleteMember", () => ({
   DeleteMemberDialog: () => <button data-testid="delete-member-dialog">Delete</button>,
 }));
 
-jest.mock("@/components/Dialogs/Member/DemoteMember", () => ({
+vi.mock("@/components/Dialogs/Member/DemoteMember", () => ({
   DemoteMemberDialog: () => <button data-testid="demote-member-dialog">Demote</button>,
 }));
 
-jest.mock("@/components/Dialogs/Member/PromoteMember", () => ({
+vi.mock("@/components/Dialogs/Member/PromoteMember", () => ({
   PromoteMemberDialog: () => <button data-testid="promote-member-dialog">Promote</button>,
 }));
 
 // Mock icons
-jest.mock("@/components/Icons", () => ({
+vi.mock("@/components/Icons", () => ({
   GithubIcon: ({ className }: { className?: string }) => (
     <svg data-testid="github-icon" className={className} />
   ),
@@ -140,14 +140,14 @@ jest.mock("@/components/Icons", () => ({
   ),
 }));
 
-jest.mock("@/components/Icons/Farcaster", () => ({
+vi.mock("@/components/Icons/Farcaster", () => ({
   FarcasterIcon: ({ className }: { className?: string }) => (
     <svg data-testid="farcaster-icon" className={className} />
   ),
 }));
 
 // Mock ExternalLink
-jest.mock("@/components/Utilities/ExternalLink", () => ({
+vi.mock("@/components/Utilities/ExternalLink", () => ({
   ExternalLink: ({ children, href }: { children: React.ReactNode; href: string }) => (
     <a href={href} data-testid="external-link">
       {children}
@@ -156,7 +156,7 @@ jest.mock("@/components/Utilities/ExternalLink", () => ({
 }));
 
 // Mock Skeleton
-jest.mock("@/components/Utilities/Skeleton", () => ({
+vi.mock("@/components/Utilities/Skeleton", () => ({
   Skeleton: ({ className }: { className?: string }) => (
     <div data-testid="skeleton" className={className} />
   ),
@@ -166,7 +166,7 @@ describe("TeamMemberCard", () => {
   const defaultMember = "0x1234567890123456789012345678901234567890";
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("Rendering", () => {

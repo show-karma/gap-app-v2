@@ -153,7 +153,7 @@ describe("NavbarUserMenu", () => {
 
   describe("Profile Modal Tests", () => {
     it('should call openModal() when "Edit profile" is clicked', async () => {
-      const mockOpenModal = jest.fn();
+      const mockOpenModal = vi.fn();
       const authFixture = getAuthFixture("authenticated-basic");
       const user = userEvent.setup();
 
@@ -163,7 +163,7 @@ describe("NavbarUserMenu", () => {
         mockUseContributorProfileModalStore: () => ({
           isOpen: false,
           openModal: mockOpenModal,
-          closeModal: jest.fn(),
+          closeModal: vi.fn(),
         }),
       });
 
@@ -251,7 +251,7 @@ describe("NavbarUserMenu", () => {
 
   describe("Logout Tests", () => {
     it('should call logout() when "Log out" button is clicked', async () => {
-      const mockLogout = jest.fn();
+      const mockLogout = vi.fn();
       const authFixture = getAuthFixture("authenticated-basic");
 
       // Use the helper but with a custom logout mock

@@ -7,26 +7,26 @@ import { renderHook } from "@testing-library/react";
 import { useProgramSetupProgress } from "@/hooks/useProgramSetupProgress";
 
 // Mock dependencies
-jest.mock("@/hooks/useFundingPlatform", () => ({
-  useProgramConfig: jest.fn(),
+vi.mock("@/hooks/useFundingPlatform", () => ({
+  useProgramConfig: vi.fn(),
 }));
 
-jest.mock("@/hooks/useProgramReviewers", () => ({
-  useProgramReviewers: jest.fn(),
+vi.mock("@/hooks/useProgramReviewers", () => ({
+  useProgramReviewers: vi.fn(),
 }));
 
 import { useProgramConfig } from "@/hooks/useFundingPlatform";
 import { useProgramReviewers } from "@/hooks/useProgramReviewers";
 
-const mockUseProgramConfig = useProgramConfig as jest.Mock;
-const mockUseProgramReviewers = useProgramReviewers as jest.Mock;
+const mockUseProgramConfig = useProgramConfig as vi.Mock;
+const mockUseProgramReviewers = useProgramReviewers as vi.Mock;
 
 describe("useProgramSetupProgress", () => {
   const communityId = "test-community";
   const programId = "program-123";
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     // Default mock - loading state
     mockUseProgramConfig.mockReturnValue({
       config: null,

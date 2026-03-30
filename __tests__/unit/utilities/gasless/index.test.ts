@@ -28,23 +28,23 @@ import {
 interface MockSigner {
   address: `0x${string}`;
   type: "local";
-  signMessage: jest.Mock;
-  signTypedData: jest.Mock;
-  signAuthorization: jest.Mock;
+  signMessage: vi.Mock;
+  signTypedData: vi.Mock;
+  signAuthorization: vi.Mock;
 }
 
 describe("Gasless Module Mock API", () => {
   let mockSigner: MockSigner;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     mockSigner = {
       address: "0x1234567890123456789012345678901234567890" as `0x${string}`,
       type: "local" as const,
-      signMessage: jest.fn().mockResolvedValue("0xsignature" as `0x${string}`),
-      signTypedData: jest.fn().mockResolvedValue("0xsignature" as `0x${string}`),
-      signAuthorization: jest.fn().mockResolvedValue({
+      signMessage: vi.fn().mockResolvedValue("0xsignature" as `0x${string}`),
+      signTypedData: vi.fn().mockResolvedValue("0xsignature" as `0x${string}`),
+      signAuthorization: vi.fn().mockResolvedValue({
         contractAddress: "0xImplementation" as `0x${string}`,
         address: "0xImplementation" as `0x${string}`,
         chainId: optimism.id,
@@ -60,32 +60,32 @@ describe("Gasless Module Mock API", () => {
   describe("Mock Exports", () => {
     it("should export createGaslessClient as a mock function", () => {
       expect(createGaslessClient).toBeDefined();
-      expect(jest.isMockFunction(createGaslessClient)).toBe(true);
+      expect(vi.isMockFunction(createGaslessClient)).toBe(true);
     });
 
     it("should export getGaslessSigner as a mock function", () => {
       expect(getGaslessSigner).toBeDefined();
-      expect(jest.isMockFunction(getGaslessSigner)).toBe(true);
+      expect(vi.isMockFunction(getGaslessSigner)).toBe(true);
     });
 
     it("should export isChainSupportedForGasless as a mock function", () => {
       expect(isChainSupportedForGasless).toBeDefined();
-      expect(jest.isMockFunction(isChainSupportedForGasless)).toBe(true);
+      expect(vi.isMockFunction(isChainSupportedForGasless)).toBe(true);
     });
 
     it("should export getChainGaslessConfig as a mock function", () => {
       expect(getChainGaslessConfig).toBeDefined();
-      expect(jest.isMockFunction(getChainGaslessConfig)).toBe(true);
+      expect(vi.isMockFunction(getChainGaslessConfig)).toBe(true);
     });
 
     it("should export createPrivySignerForGasless as a mock function", () => {
       expect(createPrivySignerForGasless).toBeDefined();
-      expect(jest.isMockFunction(createPrivySignerForGasless)).toBe(true);
+      expect(vi.isMockFunction(createPrivySignerForGasless)).toBe(true);
     });
 
     it("should export getProvider as a mock function", () => {
       expect(getProvider).toBeDefined();
-      expect(jest.isMockFunction(getProvider)).toBe(true);
+      expect(vi.isMockFunction(getProvider)).toBe(true);
     });
 
     it("should export GaslessProviderError class", () => {
@@ -109,10 +109,10 @@ describe("Gasless Module Mock API", () => {
     it("should be configurable to return a mock client for supported chains", async () => {
       const mockClient = {
         account: { address: "0x1234567890123456789012345678901234567890" },
-        sendUserOperation: jest.fn(),
+        sendUserOperation: vi.fn(),
       };
 
-      (createGaslessClient as jest.Mock).mockResolvedValueOnce(mockClient);
+      (createGaslessClient as vi.Mock).mockResolvedValueOnce(mockClient);
 
       const result = await createGaslessClient(optimism.id, mockSigner);
 
@@ -120,7 +120,7 @@ describe("Gasless Module Mock API", () => {
     });
 
     it("should be configurable to return null for unsupported chains", async () => {
-      (createGaslessClient as jest.Mock).mockResolvedValueOnce(null);
+      (createGaslessClient as vi.Mock).mockResolvedValueOnce(null);
 
       const result = await createGaslessClient(999999, mockSigner);
 
@@ -128,7 +128,7 @@ describe("Gasless Module Mock API", () => {
     });
 
     it("should be configurable to return null for disabled chains", async () => {
-      (createGaslessClient as jest.Mock).mockResolvedValueOnce(null);
+      (createGaslessClient as vi.Mock).mockResolvedValueOnce(null);
 
       const result = await createGaslessClient(lisk.id, mockSigner);
 
@@ -149,11 +149,11 @@ describe("Gasless Module Mock API", () => {
 
     it("should be configurable to return a mock ethers signer", async () => {
       const mockEthersSigner = {
-        getAddress: jest.fn().mockResolvedValue("0x1234567890123456789012345678901234567890"),
-        signMessage: jest.fn(),
+        getAddress: vi.fn().mockResolvedValue("0x1234567890123456789012345678901234567890"),
+        signMessage: vi.fn(),
       };
 
-      (getGaslessSigner as jest.Mock).mockResolvedValueOnce(mockEthersSigner);
+      (getGaslessSigner as vi.Mock).mockResolvedValueOnce(mockEthersSigner);
 
       const result = await getGaslessSigner(mockClient, optimism.id);
 
@@ -161,7 +161,7 @@ describe("Gasless Module Mock API", () => {
     });
 
     it("should be configurable to throw GaslessProviderError for unsupported chains", async () => {
-      (getGaslessSigner as jest.Mock).mockRejectedValueOnce(
+      (getGaslessSigner as vi.Mock).mockRejectedValueOnce(
         new GaslessProviderError("Chain 999999 is not supported", "zerodev", 999999)
       );
 
@@ -169,7 +169,7 @@ describe("Gasless Module Mock API", () => {
     });
 
     it("should be configurable to throw GaslessProviderError for disabled chains", async () => {
-      (getGaslessSigner as jest.Mock).mockRejectedValueOnce(
+      (getGaslessSigner as vi.Mock).mockRejectedValueOnce(
         new GaslessProviderError("Chain is disabled", "zerodev", lisk.id)
       );
 
@@ -221,7 +221,7 @@ describe("Gasless Module Mock API", () => {
 
   describe("isChainSupportedForGasless", () => {
     it("should be configurable to return true for supported chains", () => {
-      (isChainSupportedForGasless as jest.Mock).mockReturnValueOnce(true);
+      (isChainSupportedForGasless as vi.Mock).mockReturnValueOnce(true);
 
       const result = isChainSupportedForGasless(optimism.id);
 
@@ -229,7 +229,7 @@ describe("Gasless Module Mock API", () => {
     });
 
     it("should be configurable to return false for unsupported chains", () => {
-      (isChainSupportedForGasless as jest.Mock).mockReturnValueOnce(false);
+      (isChainSupportedForGasless as vi.Mock).mockReturnValueOnce(false);
 
       const result = isChainSupportedForGasless(999999);
 
@@ -244,7 +244,7 @@ describe("Gasless Module Mock API", () => {
         paymasterUrl: "https://paymaster.test",
       };
 
-      (getChainGaslessConfig as jest.Mock).mockReturnValueOnce(mockConfig);
+      (getChainGaslessConfig as vi.Mock).mockReturnValueOnce(mockConfig);
 
       const result = getChainGaslessConfig(optimism.id);
 
@@ -252,7 +252,7 @@ describe("Gasless Module Mock API", () => {
     });
 
     it("should be configurable to return null for unsupported chains", () => {
-      (getChainGaslessConfig as jest.Mock).mockReturnValueOnce(null);
+      (getChainGaslessConfig as vi.Mock).mockReturnValueOnce(null);
 
       const result = getChainGaslessConfig(999999);
 

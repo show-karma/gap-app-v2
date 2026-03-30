@@ -10,6 +10,7 @@ import toast from "react-hot-toast";
 import { z } from "zod";
 import { useAuth } from "@/hooks/useAuth";
 import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { gapSupportedNetworks } from "@/utilities/network";
 import { PAGES } from "@/utilities/pages";
@@ -115,6 +116,26 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
     setIsLoading(true);
 
     try {
+      // Check slug availability in community namespace and auto-increment if taken
+      let slug = sanitizeSlug(data.slug);
+      const [slugCheck] = await fetchData(INDEXER.COMMUNITY.V2.SLUG_CHECK(slug), "GET");
+      if (slugCheck && !slugCheck.available) {
+        let counter = 1;
+        let available = false;
+        while (!available && counter < 100) {
+          const [check] = await fetchData(
+            INDEXER.COMMUNITY.V2.SLUG_CHECK(`${slug}-${counter}`),
+            "GET"
+          );
+          if (check?.available) {
+            slug = `${slug}-${counter}`;
+            available = true;
+          } else {
+            counter++;
+          }
+        }
+      }
+
       const [result, error, , status] = await fetchData<CreateCommunityResponse>(
         "/v2/communities",
         "POST",
@@ -122,7 +143,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
           name: data.name,
           description: description || data.name,
           imageURL: data.imageURL,
-          slug: sanitizeSlug(data.slug),
+          slug,
           chainID: selectedChain,
         },
         {},

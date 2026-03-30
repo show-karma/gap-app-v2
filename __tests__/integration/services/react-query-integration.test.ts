@@ -1,0 +1,266 @@
+import { QueryClient } from "@tanstack/react-query";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("@/utilities/fetchData", () => ({
+  default: vi.fn(),
+}));
+
+vi.mock("@/utilities/indexer", () => ({
+  INDEXER: {
+    COMMUNITY: {
+      V2: {
+        GRANTS: (slug: string) => `/v2/communities/${slug}/grants`,
+      },
+    },
+    V2: {
+      PROJECTS: {
+        LIST: (limit?: number) => `/v2/projects${limit ? `?limit=${limit}` : ""}`,
+        SEARCH: (query: string, limit?: number) =>
+          `/v2/projects/search?q=${query}${limit ? `&limit=${limit}` : ""}`,
+        LIST_PAGINATED: () => "/v2/projects/paginated",
+      },
+      APPLICATIONS: {
+        BY_PROJECT_UID: (uid: string) => `/v2/applications/by-project/${uid}`,
+      },
+    },
+  },
+}));
+
+vi.mock("@/constants/projects-explorer", () => ({
+  PROJECTS_EXPLORER_CONSTANTS: {
+    RESULT_LIMIT: 50,
+    DEBOUNCE_DELAY_MS: 300,
+    MIN_SEARCH_LENGTH: 3,
+    STALE_TIME_MS: 60000,
+  },
+}));
+
+import { fetchApplicationByProjectUID } from "@/services/funding-applications";
+import { getExplorerProjects } from "@/services/projects-explorer.service";
+import fetchData from "@/utilities/fetchData";
+import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
+
+const mockFetchData = fetchData as ReturnType<typeof vi.fn>;
+
+describe("React Query integration trust tests", () => {
+  let queryClient: QueryClient;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false, // Disable for unit test speed
+        },
+      },
+    });
+  });
+
+  afterEach(() => {
+    queryClient.clear();
+  });
+
+  // --- Default query options ---
+
+  describe("default query options", () => {
+    it("retry is a function (smart retry based on status code)", () => {
+      expect(typeof defaultQueryOptions.retry).toBe("function");
+    });
+
+    it("staleTime is 1 minute", () => {
+      expect(defaultQueryOptions.staleTime).toBe(60000);
+    });
+
+    it("gcTime is 1 minute", () => {
+      expect(defaultQueryOptions.gcTime).toBe(60000);
+    });
+
+    it("refetchOnWindowFocus is disabled", () => {
+      expect(defaultQueryOptions.refetchOnWindowFocus).toBe(false);
+    });
+
+    it("refetchOnMount is enabled", () => {
+      expect(defaultQueryOptions.refetchOnMount).toBe(true);
+    });
+
+    it("refetchOnReconnect is disabled", () => {
+      expect(defaultQueryOptions.refetchOnReconnect).toBe(false);
+    });
+  });
+
+  // --- Cache behavior via QueryClient ---
+
+  describe("cache behavior", () => {
+    it("fetchQuery caches results and returns cached data on second call", async () => {
+      let callCount = 0;
+      const queryFn = async () => {
+        callCount++;
+        return [{ id: "p1" }];
+      };
+
+      const result1 = await queryClient.fetchQuery({
+        queryKey: ["projects-explorer", ""],
+        queryFn,
+        staleTime: 60000,
+      });
+
+      const result2 = queryClient.getQueryData(["projects-explorer", ""]);
+
+      expect(result1).toEqual([{ id: "p1" }]);
+      expect(result2).toEqual([{ id: "p1" }]);
+      expect(callCount).toBe(1); // Only fetched once
+    });
+
+    it("different query keys result in separate cache entries", async () => {
+      await queryClient.fetchQuery({
+        queryKey: ["projects-explorer", "dao"],
+        queryFn: async () => [{ id: "dao-project" }],
+      });
+
+      await queryClient.fetchQuery({
+        queryKey: ["projects-explorer", "protocol"],
+        queryFn: async () => [{ id: "protocol-project" }],
+      });
+
+      const daoData = queryClient.getQueryData(["projects-explorer", "dao"]);
+      const protocolData = queryClient.getQueryData(["projects-explorer", "protocol"]);
+
+      expect(daoData).toEqual([{ id: "dao-project" }]);
+      expect(protocolData).toEqual([{ id: "protocol-project" }]);
+    });
+  });
+
+  // --- Cache invalidation ---
+
+  describe("cache invalidation", () => {
+    it("invalidating by prefix removes all matching entries", async () => {
+      await queryClient.fetchQuery({
+        queryKey: ["projects-explorer", "dao"],
+        queryFn: async () => [{ id: "1" }],
+      });
+      await queryClient.fetchQuery({
+        queryKey: ["projects-explorer", ""],
+        queryFn: async () => [{ id: "2" }],
+      });
+
+      queryClient.removeQueries({
+        queryKey: ["projects-explorer"],
+      });
+
+      const data1 = queryClient.getQueryData(["projects-explorer", "dao"]);
+      const data2 = queryClient.getQueryData(["projects-explorer", ""]);
+
+      expect(data1).toBeUndefined();
+      expect(data2).toBeUndefined();
+    });
+
+    it("invalidating specific key does not affect other keys", async () => {
+      await queryClient.fetchQuery({
+        queryKey: ["projects-explorer", "dao"],
+        queryFn: async () => [{ id: "1" }],
+      });
+      await queryClient.fetchQuery({
+        queryKey: ["application-by-project-uid", "p1"],
+        queryFn: async () => ({ id: "app1" }),
+      });
+
+      queryClient.removeQueries({
+        queryKey: ["projects-explorer"],
+      });
+
+      const explorerData = queryClient.getQueryData(["projects-explorer", "dao"]);
+      const appData = queryClient.getQueryData(["application-by-project-uid", "p1"]);
+
+      expect(explorerData).toBeUndefined();
+      expect(appData).toEqual({ id: "app1" });
+    });
+  });
+
+  // --- FIXED: 429 no longer retried ---
+
+  describe("FIXED: 429 rate-limited requests are not retried", () => {
+    it("retry is a function that skips 429 errors", () => {
+      // Previously retry was set to 1, retrying all errors including 429.
+      // Now it is a function that checks the HTTP status code.
+      expect(typeof defaultQueryOptions.retry).toBe("function");
+    });
+
+    it("429 error is not retried", async () => {
+      let callCount = 0;
+
+      const retryClient = new QueryClient({
+        defaultOptions: {
+          queries: defaultQueryOptions,
+        },
+      });
+
+      try {
+        await retryClient.fetchQuery({
+          queryKey: ["test-429-fixed"],
+          queryFn: async () => {
+            callCount++;
+            const err: Error & { response?: { status: number } } = new Error("Rate limited");
+            err.response = { status: 429 };
+            throw err;
+          },
+        });
+      } catch {
+        // Expected to throw
+      }
+
+      // With the fix, 429 should NOT be retried -- only 1 call
+      expect(callCount).toBe(1);
+
+      retryClient.clear();
+    });
+  });
+
+  // --- Service integration ---
+
+  describe("service function integration", () => {
+    it("getExplorerProjects can be used as queryFn", async () => {
+      mockFetchData.mockResolvedValue([[{ details: { title: "Project 1" } }], null, null, 200]);
+
+      const result = await queryClient.fetchQuery({
+        queryKey: ["projects-explorer", ""],
+        queryFn: () => getExplorerProjects({}),
+      });
+
+      expect(result).toHaveLength(1);
+    });
+
+    it("fetchApplicationByProjectUID can be used as queryFn", async () => {
+      mockFetchData.mockResolvedValue([{ id: "app-1", status: "submitted" }, null, null, 200]);
+
+      const result = await queryClient.fetchQuery({
+        queryKey: ["application-by-project-uid", "p1"],
+        queryFn: () => fetchApplicationByProjectUID("p1"),
+      });
+
+      expect(result).toEqual({ id: "app-1", status: "submitted" });
+    });
+
+    it("failed service call causes QueryClient to enter error state", async () => {
+      mockFetchData.mockResolvedValue([null, "Server Error", null, 500]);
+
+      const state = queryClient.getQueryState(["application-by-project-uid", "p-fail"]);
+
+      // Before any fetch, state is undefined
+      expect(state).toBeUndefined();
+
+      try {
+        await queryClient.fetchQuery({
+          queryKey: ["application-by-project-uid", "p-fail"],
+          queryFn: () => fetchApplicationByProjectUID("p-fail"),
+          retry: false,
+        });
+      } catch {
+        // Expected - fetchApplicationByProjectUID throws on 500
+      }
+
+      const afterState = queryClient.getQueryState(["application-by-project-uid", "p-fail"]);
+
+      expect(afterState?.status).toBe("error");
+    });
+  });
+});

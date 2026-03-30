@@ -5,19 +5,19 @@ import type { IProjectUpdate } from "@show-karma/karma-gap-sdk/core/class/karma-
 import type { UnifiedMilestone } from "@/types/roadmap";
 
 // Mock store hooks
-jest.mock("@/store", () => ({
-  useOwnerStore: jest.fn((selector) => {
+vi.mock("@/store", () => ({
+  useOwnerStore: vi.fn((selector) => {
     const state = { isOwner: false };
     return selector ? selector(state) : state;
   }),
-  useProjectStore: jest.fn((selector) => {
+  useProjectStore: vi.fn((selector) => {
     const state = { isProjectAdmin: false };
     return selector ? selector(state) : state;
   }),
 }));
 
 // Mock child components
-jest.mock("@/components/Shared/ActivityCard/UpdateCard", () => ({
+vi.mock("@/components/Shared/ActivityCard/UpdateCard", () => ({
   UpdateCard: ({ update, index, isAuthorized }: any) => (
     <div data-testid="update-card">
       <div data-testid="update-index">{index}</div>
@@ -26,7 +26,7 @@ jest.mock("@/components/Shared/ActivityCard/UpdateCard", () => ({
   ),
 }));
 
-jest.mock("@/components/Shared/ActivityCard/MilestoneCard", () => ({
+vi.mock("@/components/Shared/ActivityCard/MilestoneCard", () => ({
   MilestoneCard: ({ milestone, isAuthorized }: any) => (
     <div data-testid="milestone-card">
       <div data-testid="milestone-title">{milestone.title}</div>
@@ -36,7 +36,7 @@ jest.mock("@/components/Shared/ActivityCard/MilestoneCard", () => ({
 }));
 
 // Mock ProjectUpdateCard to avoid SDK import issues
-jest.mock("@/components/Shared/ActivityCard/ProjectUpdateCard", () => ({
+vi.mock("@/components/Shared/ActivityCard/ProjectUpdateCard", () => ({
   ProjectUpdateCard: ({ update, index, isAuthorized }: any) => (
     <div data-testid="project-update-card">
       <div data-testid="update-index">{index}</div>

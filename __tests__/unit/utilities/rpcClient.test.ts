@@ -1,18 +1,18 @@
 // Track calls to createPublicClient
-const mockCreatePublicClient = jest.fn(() => ({
+const mockCreatePublicClient = vi.fn(() => ({
   chain: { id: 1 },
   transport: {},
-  request: jest.fn(),
+  request: vi.fn(),
 }));
 
-const mockHttp = jest.fn((url?: string) => ({ url }));
+const mockHttp = vi.fn((url?: string) => ({ url }));
 
-jest.mock("viem", () => ({
+vi.mock("viem", () => ({
   createPublicClient: (...args: unknown[]) => mockCreatePublicClient(...args),
   http: (...args: unknown[]) => mockHttp(...args),
 }));
 
-jest.mock("viem/chains", () => ({
+vi.mock("viem/chains", () => ({
   mainnet: { id: 1, rpcUrls: { default: { http: ["https://eth.llamarpc.com"] } } },
   optimism: { id: 10, rpcUrls: { default: { http: ["https://optimism.llamarpc.com"] } } },
   arbitrum: { id: 42161, rpcUrls: { default: { http: ["https://arb.llamarpc.com"] } } },
@@ -30,7 +30,7 @@ jest.mock("viem/chains", () => ({
   sepolia: { id: 11155111, rpcUrls: { default: { http: ["https://sepolia.llamarpc.com"] } } },
 }));
 
-jest.mock("@/utilities/enviromentVars", () => ({
+vi.mock("@/utilities/enviromentVars", () => ({
   envVars: {
     RPC: {
       MAINNET: "https://rpc-mainnet.example.com",
@@ -49,7 +49,7 @@ jest.mock("@/utilities/enviromentVars", () => ({
   },
 }));
 
-jest.mock("@/utilities/network", () => ({
+vi.mock("@/utilities/network", () => ({
   getChainNameById: (id: number) => {
     const map: Record<number, string> = {
       1: "mainnet",
@@ -73,21 +73,21 @@ describe("rpcClient", () => {
   beforeEach(() => {
     mockCreatePublicClient.mockClear();
     mockHttp.mockClear();
-    jest.resetModules();
+    vi.resetModules();
   });
 
-  it("does NOT call createPublicClient at module load time", () => {
+  it("does NOT call createPublicClient at module load time", async () => {
     mockCreatePublicClient.mockClear();
-    jest.resetModules();
+    vi.resetModules();
 
-    require("@/utilities/rpcClient");
+    await import("@/utilities/rpcClient");
 
     expect(mockCreatePublicClient).not.toHaveBeenCalled();
   });
 
-  it("returns a valid client when accessing rpcClient['optimism']", () => {
-    jest.resetModules();
-    const { rpcClient } = require("@/utilities/rpcClient");
+  it("returns a valid client when accessing rpcClient['optimism']", async () => {
+    vi.resetModules();
+    const { rpcClient } = await import("@/utilities/rpcClient");
 
     const client = rpcClient.optimism;
 
@@ -100,9 +100,9 @@ describe("rpcClient", () => {
     );
   });
 
-  it("returns the SAME instance on repeated access (memoization)", () => {
-    jest.resetModules();
-    const { rpcClient } = require("@/utilities/rpcClient");
+  it("returns the SAME instance on repeated access (memoization)", async () => {
+    vi.resetModules();
+    const { rpcClient } = await import("@/utilities/rpcClient");
 
     const first = rpcClient.optimism;
     const second = rpcClient.optimism;
@@ -111,11 +111,11 @@ describe("rpcClient", () => {
     expect(mockCreatePublicClient).toHaveBeenCalledTimes(1);
   });
 
-  it("returns undefined for unknown network names", () => {
-    jest.resetModules();
-    const { rpcClient } = require("@/utilities/rpcClient");
+  it("returns undefined for unknown network names", async () => {
+    vi.resetModules();
+    const { rpcClient } = await import("@/utilities/rpcClient");
 
-    const client = rpcClient["nonexistent-network"];
+    const client = rpcClient["nonexistent-network" as keyof typeof rpcClient];
 
     expect(client).toBeUndefined();
     expect(mockCreatePublicClient).not.toHaveBeenCalled();
@@ -123,8 +123,8 @@ describe("rpcClient", () => {
 
   describe("getRPCClient", () => {
     it("returns a client for a valid chain ID", async () => {
-      jest.resetModules();
-      const { getRPCClient } = require("@/utilities/rpcClient");
+      vi.resetModules();
+      const { getRPCClient } = await import("@/utilities/rpcClient");
 
       const client = await getRPCClient(10);
 
@@ -133,8 +133,8 @@ describe("rpcClient", () => {
     });
 
     it("throws for unknown chain IDs", async () => {
-      jest.resetModules();
-      const { getRPCClient } = require("@/utilities/rpcClient");
+      vi.resetModules();
+      const { getRPCClient } = await import("@/utilities/rpcClient");
 
       await expect(getRPCClient(99999)).rejects.toThrow(
         "RPC client not configured for chain 99999"
@@ -143,20 +143,20 @@ describe("rpcClient", () => {
   });
 
   describe("getRPCUrlByChainId", () => {
-    it("returns configured RPC URL when available", () => {
-      jest.resetModules();
-      const { getRPCUrlByChainId } = require("@/utilities/rpcClient");
+    it("returns configured RPC URL when available", async () => {
+      vi.resetModules();
+      const { getRPCUrlByChainId } = await import("@/utilities/rpcClient");
 
       const url = getRPCUrlByChainId(10);
 
       expect(url).toBe("https://rpc-optimism.example.com");
     });
 
-    it("falls back to default RPC URL when configured URL is empty", () => {
-      jest.resetModules();
+    it("falls back to default RPC URL when configured URL is empty", async () => {
+      vi.resetModules();
 
       // Override envVars to have empty OPTIMISM RPC
-      jest.doMock("@/utilities/enviromentVars", () => ({
+      vi.doMock("@/utilities/enviromentVars", () => ({
         envVars: {
           RPC: {
             MAINNET: "",
@@ -175,7 +175,7 @@ describe("rpcClient", () => {
         },
       }));
 
-      const { getRPCUrlByChainId } = require("@/utilities/rpcClient");
+      const { getRPCUrlByChainId } = await import("@/utilities/rpcClient");
 
       const url = getRPCUrlByChainId(10);
 

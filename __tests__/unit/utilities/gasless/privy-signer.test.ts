@@ -10,19 +10,19 @@ import {
 
 describe("Privy Signer", () => {
   let mockProvider: {
-    request: jest.Mock;
+    request: vi.Mock;
   };
   let mockEmbeddedWallet: PrivyEmbeddedWallet;
 
   beforeEach(() => {
     mockProvider = {
-      request: jest.fn(),
+      request: vi.fn(),
     };
 
     mockEmbeddedWallet = {
       address: "0x1234567890123456789012345678901234567890",
-      switchChain: jest.fn().mockResolvedValue(undefined),
-      getEthereumProvider: jest.fn().mockResolvedValue(mockProvider),
+      switchChain: vi.fn().mockResolvedValue(undefined),
+      getEthereumProvider: vi.fn().mockResolvedValue(mockProvider),
       walletClientType: "privy",
     };
   });

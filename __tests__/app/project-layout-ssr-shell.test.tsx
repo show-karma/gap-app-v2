@@ -3,46 +3,46 @@
  */
 import { render, screen } from "@testing-library/react";
 
-jest.mock("@tanstack/react-query", () => {
-  const actual = jest.requireActual("@tanstack/react-query");
+vi.mock("@tanstack/react-query", () => {
+  const actual = vi.importActual("@tanstack/react-query");
   return {
     ...actual,
-    dehydrate: jest.fn(() => ({ queries: [] })),
+    dehydrate: vi.fn(() => ({ queries: [] })),
     HydrationBoundary: ({ children }: { children: React.ReactNode }) => (
       <div data-testid="hydration-boundary">{children}</div>
     ),
   };
 });
 
-jest.mock("@/components/Pages/Project/ProjectShareDialogMount", () => ({
+vi.mock("@/components/Pages/Project/ProjectShareDialogMount", () => ({
   ProjectShareDialogMount: () => null,
 }));
 
-jest.mock("@/components/Utilities/E2EStoreExposer", () => ({
+vi.mock("@/components/Utilities/E2EStoreExposer", () => ({
   E2EStoreExposer: () => null,
 }));
 
-jest.mock("@/utilities/queries/getProjectCachedData", () => ({
-  getProjectCachedData: jest.fn(),
+vi.mock("@/utilities/queries/getProjectCachedData", () => ({
+  getProjectCachedData: vi.fn(),
 }));
 
-jest.mock("@/utilities/queries/prefetchProjectProfile", () => ({
-  prefetchProjectProfileData: jest.fn().mockResolvedValue(undefined),
+vi.mock("@/utilities/queries/prefetchProjectProfile", () => ({
+  prefetchProjectProfileData: vi.fn().mockResolvedValue(undefined),
 }));
 
-jest.mock("@/utilities/metadata/projectMetadata", () => ({
-  generateProjectOverviewMetadata: jest.fn(),
+vi.mock("@/utilities/metadata/projectMetadata", () => ({
+  generateProjectOverviewMetadata: vi.fn(),
 }));
 
-jest.mock("next/navigation", () => ({
-  notFound: jest.fn(),
-  redirect: jest.fn(),
+vi.mock("next/navigation", () => ({
+  notFound: vi.fn(),
+  redirect: vi.fn(),
 }));
 
 import type { Project } from "@/types/v2/project";
 import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
 
-const mockGetProjectCachedData = getProjectCachedData as jest.MockedFunction<
+const mockGetProjectCachedData = getProjectCachedData as vi.MockedFunction<
   typeof getProjectCachedData
 >;
 
@@ -65,7 +65,7 @@ function createMockProject(overrides: Partial<Project> = {}): Project {
 
 describe("Project Layout - Server Prefetch + HydrationBoundary", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS = "false";
   });
 

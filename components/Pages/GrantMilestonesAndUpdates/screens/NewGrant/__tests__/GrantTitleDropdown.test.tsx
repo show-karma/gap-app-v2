@@ -5,17 +5,17 @@ import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramLis
 import { GrantTitleDropdown } from "../GrantTitleDropdown";
 
 // Mock react-hot-toast
-jest.mock("react-hot-toast", () => ({
+vi.mock("react-hot-toast", () => ({
   __esModule: true,
   default: {
-    error: jest.fn(),
-    success: jest.fn(),
+    error: vi.fn(),
+    success: vi.fn(),
   },
 }));
 
 describe("GrantTitleDropdown", () => {
-  const mockSetValue = jest.fn();
-  const mockSetSelectedProgram = jest.fn();
+  const mockSetValue = vi.fn();
+  const mockSetSelectedProgram = vi.fn();
 
   const createMockProgram = (overrides: Partial<GrantProgram> = {}): GrantProgram => ({
     _id: { $oid: "test-id" },
@@ -43,7 +43,7 @@ describe("GrantTitleDropdown", () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("restricted program handling", () => {

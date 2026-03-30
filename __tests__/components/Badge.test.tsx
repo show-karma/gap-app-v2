@@ -305,7 +305,7 @@ describe("Badge", () => {
 
   describe("Event Handlers", () => {
     it("should accept onClick handler", () => {
-      const handleClick = jest.fn();
+      const handleClick = vi.fn();
 
       render(<Badge onClick={handleClick}>Badge</Badge>);
 
@@ -316,7 +316,7 @@ describe("Badge", () => {
     });
 
     it("should accept onMouseEnter handler", () => {
-      const handleMouseEnter = jest.fn();
+      const handleMouseEnter = vi.fn();
 
       render(<Badge onMouseEnter={handleMouseEnter}>Badge</Badge>);
 

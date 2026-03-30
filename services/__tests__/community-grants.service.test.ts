@@ -1,19 +1,19 @@
 import { getCommunityGrants } from "../community-grants.service";
 
-jest.mock("@/utilities/fetchData");
-jest.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: jest.fn(),
+vi.mock("@/utilities/fetchData");
+vi.mock("@/components/Utilities/errorManager", () => ({
+  errorManager: vi.fn(),
 }));
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import fetchData from "@/utilities/fetchData";
 
-const mockFetchData = fetchData as jest.MockedFunction<typeof fetchData>;
-const mockErrorManager = errorManager as jest.MockedFunction<typeof errorManager>;
+const mockFetchData = fetchData as vi.MockedFunction<typeof fetchData>;
+const mockErrorManager = errorManager as vi.MockedFunction<typeof errorManager>;
 
 describe("community-grants.service", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("getCommunityGrants", () => {

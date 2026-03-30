@@ -41,8 +41,8 @@ const mockTenant: TenantConfig = {
   claimGrants: {} as any,
 };
 
-jest.mock("@/store/tenant", () => ({
-  useTenantSafe: jest.fn(() => mockTenant),
+vi.mock("@/store/tenant", () => ({
+  useTenantSafe: vi.fn(() => mockTenant),
 }));
 
 describe("WhitelabelNavbar Theme Toggle", () => {
@@ -66,7 +66,7 @@ describe("WhitelabelNavbar Theme Toggle", () => {
 
     it("should call setTheme when clicked", async () => {
       const user = userEvent.setup();
-      const mockSetTheme = jest.fn();
+      const mockSetTheme = vi.fn();
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<WhitelabelNavbar />, {

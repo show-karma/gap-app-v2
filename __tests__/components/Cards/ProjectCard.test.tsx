@@ -6,9 +6,11 @@
 import { render, screen } from "@testing-library/react";
 import { ProjectCard } from "@/components/Pages/NewProjects/ProjectCard";
 import type { ProjectFromList } from "@/types/project";
+import formatCurrency from "@/utilities/formatCurrency";
+import { formatDate } from "@/utilities/formatDate";
 
 // Mock Next.js Link component
-jest.mock("next/link", () => {
+vi.mock("next/link", () => {
   const MockLink = ({ children, href, className, id, ...props }: any) => (
     <a href={href} className={className} id={id} {...props}>
       {children}
@@ -22,7 +24,7 @@ jest.mock("next/link", () => {
 });
 
 // Mock ProfilePicture component
-jest.mock("@/components/Utilities/ProfilePicture", () => ({
+vi.mock("@/components/Utilities/ProfilePicture", () => ({
   ProfilePicture: ({ imageURL, name, className, alt }: any) => (
     <div
       data-testid="profile-picture"
@@ -36,18 +38,18 @@ jest.mock("@/components/Utilities/ProfilePicture", () => ({
 }));
 
 // Mock MarkdownPreview component
-jest.mock("@/components/Utilities/MarkdownPreview", () => ({
+vi.mock("@/components/Utilities/MarkdownPreview", () => ({
   MarkdownPreview: ({ source }: any) => <div data-testid="markdown-preview">{source}</div>,
 }));
 
 // Mock utilities
-jest.mock("@/utilities/formatCurrency", () => ({
+vi.mock("@/utilities/formatCurrency", () => ({
   __esModule: true,
-  default: jest.fn((value: number) => value.toString()),
+  default: vi.fn((value: number) => value.toString()),
 }));
 
-jest.mock("@/utilities/formatDate", () => ({
-  formatDate: jest.fn((date: string | number) => {
+vi.mock("@/utilities/formatDate", () => ({
+  formatDate: vi.fn((date: string | number) => {
     const d = new Date(date);
     return d.toLocaleDateString("en-US", {
       month: "short",
@@ -57,7 +59,7 @@ jest.mock("@/utilities/formatDate", () => ({
   }),
 }));
 
-jest.mock("@/utilities/pages", () => ({
+vi.mock("@/utilities/pages", () => ({
   PAGES: {
     PROJECT: {
       OVERVIEW: (slug: string) => `/project/${slug}`,
@@ -81,7 +83,7 @@ describe("ProjectCard", () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("Rendering - Basic Elements", () => {
@@ -456,7 +458,7 @@ describe("ProjectCard", () => {
 
   describe("Integration with utilities", () => {
     it("should call formatCurrency for all numeric stats", () => {
-      const formatCurrency = require("@/utilities/formatCurrency").default;
+      const formatCurrencyMock = vi.mocked(formatCurrency);
       render(<ProjectCard project={mockProject} index={0} />);
 
       expect(formatCurrency).toHaveBeenCalledWith(5); // grants
@@ -464,7 +466,7 @@ describe("ProjectCard", () => {
     });
 
     it("should call formatDate with createdAt string", () => {
-      const { formatDate } = require("@/utilities/formatDate");
+      const formatDateMock = vi.mocked(formatDate);
       render(<ProjectCard project={mockProject} index={0} />);
 
       // formatDate accepts string (ISO date), number (timestamp), or Date

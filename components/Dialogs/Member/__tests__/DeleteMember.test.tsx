@@ -12,14 +12,14 @@ const PROJECT_UID = "0x9cdc5607d3da24a3b52f5d215d12cea0ffec0db98aa496963a595264e
 // --- Mocks ---
 
 // Mock next/dynamic to render nothing (DeleteDialog is lazy-loaded but unused in our tests)
-jest.mock("next/dynamic", () => () => {
+vi.mock("next/dynamic", () => () => {
   const DynamicComponent = () => null;
   DynamicComponent.displayName = "DynamicComponent";
   return DynamicComponent;
 });
 
 // Mock headlessui for simpler dialog handling in tests
-jest.mock("@headlessui/react", () => ({
+vi.mock("@headlessui/react", () => ({
   Dialog: Object.assign(
     ({ children, ...props }: any) => (
       <div data-testid="dialog" {...props}>
@@ -45,7 +45,7 @@ jest.mock("@headlessui/react", () => ({
 }));
 
 // Radix tooltip mock
-jest.mock("@radix-ui/react-tooltip", () => ({
+vi.mock("@radix-ui/react-tooltip", () => ({
   Provider: ({ children }: any) => children,
   Root: ({ children }: any) => children,
   Trigger: ({ children }: any) => children,
@@ -54,12 +54,12 @@ jest.mock("@radix-ui/react-tooltip", () => ({
 }));
 
 // Mock heroicons
-jest.mock("@heroicons/react/24/outline", () => ({
+vi.mock("@heroicons/react/24/outline", () => ({
   TrashIcon: ({ className }: any) => <svg data-testid="trash-icon" className={className} />,
 }));
 
 // Mock the Button component
-jest.mock("@/components/Utilities/Button", () => ({
+vi.mock("@/components/Utilities/Button", () => ({
   Button: ({ children, onClick, disabled, isLoading, className, ...props }: any) => (
     <button onClick={onClick} disabled={disabled} className={className} {...props}>
       {isLoading ? "Loading..." : children}
@@ -68,19 +68,19 @@ jest.mock("@/components/Utilities/Button", () => ({
 }));
 
 // Mock error manager
-const mockErrorManager = jest.fn();
-jest.mock("@/components/Utilities/errorManager", () => ({
+const mockErrorManager = vi.fn();
+vi.mock("@/components/Utilities/errorManager", () => ({
   errorManager: (...args: any[]) => mockErrorManager(...args),
 }));
 
 // Mock attestation toast
-const mockStartAttestation = jest.fn();
-const mockShowSuccess = jest.fn();
-const mockShowError = jest.fn();
-const mockChangeStepperStep = jest.fn();
-const mockSetIsStepper = jest.fn();
+const mockStartAttestation = vi.fn();
+const mockShowSuccess = vi.fn();
+const mockShowError = vi.fn();
+const mockChangeStepperStep = vi.fn();
+const mockSetIsStepper = vi.fn();
 
-jest.mock("@/hooks/useAttestationToast", () => ({
+vi.mock("@/hooks/useAttestationToast", () => ({
   useAttestationToast: () => ({
     startAttestation: mockStartAttestation,
     showSuccess: mockShowSuccess,
@@ -91,34 +91,34 @@ jest.mock("@/hooks/useAttestationToast", () => ({
 }));
 
 // Mock useGap
-jest.mock("@/hooks/useGap", () => ({
+vi.mock("@/hooks/useGap", () => ({
   useGap: () => ({ gap: {} }),
 }));
 
 // Mock off-chain revoke
-const mockPerformOffChainRevoke = jest.fn();
-jest.mock("@/hooks/useOffChainRevoke", () => ({
+const mockPerformOffChainRevoke = vi.fn();
+vi.mock("@/hooks/useOffChainRevoke", () => ({
   useOffChainRevoke: () => ({
     performOffChainRevoke: mockPerformOffChainRevoke,
   }),
 }));
 
 // Mock useWallet
-jest.mock("@/hooks/useWallet", () => ({
+vi.mock("@/hooks/useWallet", () => ({
   useWallet: () => ({
-    switchChainAsync: jest.fn(),
+    switchChainAsync: vi.fn(),
   }),
 }));
 
 // Mock fetchData
-const mockFetchData = jest.fn();
-jest.mock("@/utilities/fetchData", () => ({
+const mockFetchData = vi.fn();
+vi.mock("@/utilities/fetchData", () => ({
   __esModule: true,
   default: (...args: any[]) => mockFetchData(...args),
 }));
 
 // Mock INDEXER
-jest.mock("@/utilities/indexer", () => ({
+vi.mock("@/utilities/indexer", () => ({
   INDEXER: {
     ATTESTATION_LISTENER: (hash: string, chainId: number) =>
       `/attestations/index-by-transaction/${hash}/${chainId}`,
@@ -126,20 +126,20 @@ jest.mock("@/utilities/indexer", () => ({
 }));
 
 // Mock query client
-jest.mock("@/utilities/query-client", () => ({
+vi.mock("@/utilities/query-client", () => ({
   queryClient: {
-    invalidateQueries: jest.fn(),
+    invalidateQueries: vi.fn(),
   },
 }));
 
 // Mock getProjectById - THIS IS THE KEY MOCK for reproducing the bug
-const mockGetProjectById = jest.fn();
-jest.mock("@/utilities/sdk", () => ({
+const mockGetProjectById = vi.fn();
+vi.mock("@/utilities/sdk", () => ({
   getProjectById: (...args: any[]) => mockGetProjectById(...args),
 }));
 
 // Mock project store
-const mockRefreshProject = jest.fn();
+const mockRefreshProject = vi.fn();
 const mockProjectStoreState: Record<string, unknown> = {
   project: {
     uid: PROJECT_UID,
@@ -155,8 +155,8 @@ const mockProjectStoreState: Record<string, unknown> = {
   refreshProject: mockRefreshProject,
 };
 
-jest.mock("@/store", () => ({
-  useProjectStore: jest.fn((selector?: (state: unknown) => unknown) => {
+vi.mock("@/store", () => ({
+  useProjectStore: vi.fn((selector?: (state: unknown) => unknown) => {
     if (typeof selector === "function") {
       return selector(mockProjectStoreState);
     }
@@ -165,10 +165,10 @@ jest.mock("@/store", () => ({
 }));
 
 // Mock setupChainAndWallet - use relative path from source file because
-// SWC resolves @/ aliases at compile time, so jest.mock("@/hooks/...") doesn't
+// SWC resolves @/ aliases at compile time, so vi.mock("@/hooks/...") doesn't
 // intercept imports within compiled source modules.
-const mockSetupChainAndWallet = jest.fn();
-jest.mock("../../../../hooks/useSetupChainAndWallet", () => ({
+const mockSetupChainAndWallet = vi.fn();
+vi.mock("../../../../hooks/useSetupChainAndWallet", () => ({
   useSetupChainAndWallet: () => ({
     setupChainAndWallet: mockSetupChainAndWallet,
     isSmartWalletReady: false,
@@ -180,10 +180,10 @@ jest.mock("../../../../hooks/useSetupChainAndWallet", () => ({
 
 describe("DeleteMemberDialog", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     // Override useAccount to return the project owner's address
-    (useAccount as jest.Mock).mockReturnValue({
+    (useAccount as vi.Mock).mockReturnValue({
       address: PROJECT_OWNER_ADDRESS,
       chain: { id: 42220 },
       isConnected: true,
@@ -229,14 +229,14 @@ describe("DeleteMemberDialog", () => {
             uid: "0xd90a079c20d16e2d099fbfd8cc0dd5be40142527394dab33e20bdbcaf36a5aed",
             recipient: PROJECT_OWNER_ADDRESS,
             chainID: 42220,
-            revoke: jest.fn(),
+            revoke: vi.fn(),
             schema: { uid: "0xb4186a24" },
           },
           {
             uid: "0x0b3c802f1a57f14db5f183e06c7ad16875d0995d44961ad012f3a6a45ef2381d",
             recipient: NORMAL_MEMBER_ADDRESS,
             chainID: 42220,
-            revoke: jest.fn(),
+            revoke: vi.fn(),
             schema: { uid: "0xb4186a24" },
           },
           // NOTE: GHOST_MEMBER_ADDRESS is intentionally ABSENT here
@@ -283,7 +283,7 @@ describe("DeleteMemberDialog", () => {
             uid: "0xd90a079c20d16e2d099fbfd8cc0dd5be40142527394dab33e20bdbcaf36a5aed",
             recipient: PROJECT_OWNER_ADDRESS,
             chainID: 42220,
-            revoke: jest.fn(),
+            revoke: vi.fn(),
             schema: { uid: "0xb4186a24" },
           },
         ],
@@ -303,7 +303,7 @@ describe("DeleteMemberDialog", () => {
 
     it("should successfully remove a member that exists in both V1 and V2 data", async () => {
       // SETUP: Normal case — member exists in both V1 (SDK) and V2
-      const mockRevoke = jest.fn().mockResolvedValue({
+      const mockRevoke = vi.fn().mockResolvedValue({
         tx: [{ hash: "0xabc123" }],
       });
 
@@ -315,7 +315,7 @@ describe("DeleteMemberDialog", () => {
             uid: "0xd90a079c",
             recipient: PROJECT_OWNER_ADDRESS,
             chainID: 42220,
-            revoke: jest.fn(),
+            revoke: vi.fn(),
             schema: { uid: "0xb4186a24" },
           },
           {

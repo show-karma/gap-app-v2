@@ -23,7 +23,7 @@ describe("Theme Switching Integration Tests", () => {
   describe("1. Desktop Menu Theme Toggle", () => {
     it("should show correct theme toggle state in light mode", async () => {
       const user = userEvent.setup();
-      const mockSetTheme = jest.fn();
+      const mockSetTheme = vi.fn();
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
@@ -56,7 +56,7 @@ describe("Theme Switching Integration Tests", () => {
 
     it("should show correct theme toggle state in dark mode", async () => {
       const user = userEvent.setup();
-      const mockSetTheme = jest.fn();
+      const mockSetTheme = vi.fn();
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
@@ -89,7 +89,7 @@ describe("Theme Switching Integration Tests", () => {
 
     it("should toggle theme from light to dark in desktop menu", async () => {
       const user = userEvent.setup();
-      const mockSetTheme = jest.fn();
+      const mockSetTheme = vi.fn();
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
@@ -123,7 +123,7 @@ describe("Theme Switching Integration Tests", () => {
 
     it("should toggle theme from dark to light in desktop menu", async () => {
       const user = userEvent.setup();
-      const mockSetTheme = jest.fn();
+      const mockSetTheme = vi.fn();
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
@@ -157,7 +157,7 @@ describe("Theme Switching Integration Tests", () => {
 
     it("should update UI after theme change", async () => {
       const user = userEvent.setup();
-      const mockSetTheme = jest.fn();
+      const mockSetTheme = vi.fn();
       const authFixture = getAuthFixture("authenticated-basic");
 
       // Start in light mode
@@ -209,7 +209,7 @@ describe("Theme Switching Integration Tests", () => {
   describe("2. Mobile Menu Theme Toggle", () => {
     it("should show correct theme toggle in mobile drawer (light mode)", async () => {
       const user = userEvent.setup();
-      const mockSetTheme = jest.fn();
+      const mockSetTheme = vi.fn();
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
@@ -237,7 +237,7 @@ describe("Theme Switching Integration Tests", () => {
 
     it("should show correct theme toggle in mobile drawer (dark mode)", async () => {
       const user = userEvent.setup();
-      const mockSetTheme = jest.fn();
+      const mockSetTheme = vi.fn();
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
@@ -265,7 +265,7 @@ describe("Theme Switching Integration Tests", () => {
 
     it("should toggle theme from mobile drawer", async () => {
       const user = userEvent.setup();
-      const mockSetTheme = jest.fn();
+      const mockSetTheme = vi.fn();
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
@@ -297,7 +297,7 @@ describe("Theme Switching Integration Tests", () => {
 
     it("should keep drawer open after theme toggle", async () => {
       const user = userEvent.setup();
-      const mockSetTheme = jest.fn();
+      const mockSetTheme = vi.fn();
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
@@ -331,7 +331,7 @@ describe("Theme Switching Integration Tests", () => {
 
     it("should update mobile drawer theme toggle after change", async () => {
       const user = userEvent.setup();
-      const mockSetTheme = jest.fn();
+      const mockSetTheme = vi.fn();
       const authFixture = getAuthFixture("authenticated-basic");
 
       const { rerender } = renderWithProviders(<Navbar />, {
@@ -384,7 +384,7 @@ describe("Theme Switching Integration Tests", () => {
 
   describe("3. Theme Persistence Across Navigation", () => {
     it("should maintain theme state after component remount", () => {
-      const mockSetTheme = jest.fn();
+      const mockSetTheme = vi.fn();
       const authFixture = getAuthFixture("authenticated-basic");
 
       const { rerender, unmount } = renderWithProviders(<Navbar />, {
@@ -414,7 +414,7 @@ describe("Theme Switching Integration Tests", () => {
 
     it("should reflect theme across multiple renders", async () => {
       const user = userEvent.setup();
-      const mockSetTheme = jest.fn();
+      const mockSetTheme = vi.fn();
       const authFixture = getAuthFixture("authenticated-basic");
 
       const { rerender } = renderWithProviders(<Navbar />, {
@@ -470,7 +470,7 @@ describe("Theme Switching Integration Tests", () => {
     roles.forEach((role) => {
       it(`should allow theme toggle for ${role}`, async () => {
         const user = userEvent.setup();
-        const mockSetTheme = jest.fn();
+        const mockSetTheme = vi.fn();
         const authFixture = getAuthFixture(role as keyof typeof getAuthFixture);
 
         renderWithProviders(<Navbar />, {
@@ -507,7 +507,7 @@ describe("Theme Switching Integration Tests", () => {
   describe("5. Theme Toggle Icon and Text Updates", () => {
     it("should show ToggleLeft icon in light mode", async () => {
       const user = userEvent.setup();
-      const mockSetTheme = jest.fn();
+      const mockSetTheme = vi.fn();
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
@@ -535,7 +535,7 @@ describe("Theme Switching Integration Tests", () => {
 
     it("should show ToggleRight icon in dark mode", async () => {
       const user = userEvent.setup();
-      const mockSetTheme = jest.fn();
+      const mockSetTheme = vi.fn();
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
@@ -565,7 +565,7 @@ describe("Theme Switching Integration Tests", () => {
   describe("6. System Theme Handling", () => {
     it("should handle system theme preference", async () => {
       const user = userEvent.setup();
-      const mockSetTheme = jest.fn();
+      const mockSetTheme = vi.fn();
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {

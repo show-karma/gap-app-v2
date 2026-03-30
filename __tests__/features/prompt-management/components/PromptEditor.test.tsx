@@ -12,27 +12,27 @@ import type { ProgramPrompt } from "@/features/prompt-management/types/program-p
 import { useAvailableAIModels } from "@/hooks/useAvailableAIModels";
 
 // Mock hooks
-jest.mock("@/features/prompt-management/hooks/use-program-prompts", () => ({
-  useSavePrompt: jest.fn(),
-  useTestPrompt: jest.fn(),
-  useTriggerBulkEvaluation: jest.fn(),
-  useBulkEvaluationJobPolling: jest.fn(),
+vi.mock("@/features/prompt-management/hooks/use-program-prompts", () => ({
+  useSavePrompt: vi.fn(),
+  useTestPrompt: vi.fn(),
+  useTriggerBulkEvaluation: vi.fn(),
+  useBulkEvaluationJobPolling: vi.fn(),
 }));
 
-jest.mock("@/hooks/useAvailableAIModels", () => ({
-  useAvailableAIModels: jest.fn(),
+vi.mock("@/hooks/useAvailableAIModels", () => ({
+  useAvailableAIModels: vi.fn(),
 }));
 
-jest.mock("react-hot-toast", () => ({
+vi.mock("react-hot-toast", () => ({
   __esModule: true,
   default: {
-    success: jest.fn(),
-    error: jest.fn(),
+    success: vi.fn(),
+    error: vi.fn(),
   },
 }));
 
 // Mock MarkdownEditor
-jest.mock("@/components/Utilities/MarkdownEditor", () => ({
+vi.mock("@/components/Utilities/MarkdownEditor", () => ({
   MarkdownEditor: ({
     value,
     onChange,
@@ -61,20 +61,20 @@ jest.mock("@/components/Utilities/MarkdownEditor", () => ({
 }));
 
 // Mock BulkEvaluationProgress
-jest.mock("@/features/prompt-management/components/BulkEvaluationProgress", () => ({
+vi.mock("@/features/prompt-management/components/BulkEvaluationProgress", () => ({
   BulkEvaluationProgress: () => <div data-testid="bulk-evaluation-progress" />,
 }));
 
 // Mock PromptTestPanel
-jest.mock("@/features/prompt-management/components/PromptTestPanel", () => ({
+vi.mock("@/features/prompt-management/components/PromptTestPanel", () => ({
   PromptTestPanel: ({ isOpen }: { isOpen: boolean }) =>
     isOpen ? <div data-testid="prompt-test-panel">Test Panel</div> : null,
 }));
 
 describe("PromptEditor", () => {
-  const mockSavePrompt = jest.fn();
-  const mockTestPrompt = jest.fn();
-  const mockTriggerBulkEvaluation = jest.fn();
+  const mockSavePrompt = vi.fn();
+  const mockTestPrompt = vi.fn();
+  const mockTriggerBulkEvaluation = vi.fn();
 
   const defaultProps = {
     programId: "program-123",
@@ -83,29 +83,29 @@ describe("PromptEditor", () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
-    (useAvailableAIModels as jest.Mock).mockReturnValue({
+    (useAvailableAIModels as vi.Mock).mockReturnValue({
       data: ["gpt-4", "gpt-3.5-turbo", "claude-3-opus"],
       isLoading: false,
     });
 
-    (useSavePrompt as jest.Mock).mockReturnValue({
+    (useSavePrompt as vi.Mock).mockReturnValue({
       mutate: mockSavePrompt,
       isPending: false,
     });
 
-    (useTestPrompt as jest.Mock).mockReturnValue({
+    (useTestPrompt as vi.Mock).mockReturnValue({
       mutate: mockTestPrompt,
       isPending: false,
     });
 
-    (useTriggerBulkEvaluation as jest.Mock).mockReturnValue({
+    (useTriggerBulkEvaluation as vi.Mock).mockReturnValue({
       mutate: mockTriggerBulkEvaluation,
       isPending: false,
     });
 
-    (useBulkEvaluationJobPolling as jest.Mock).mockReturnValue({
+    (useBulkEvaluationJobPolling as vi.Mock).mockReturnValue({
       data: null,
     });
   });

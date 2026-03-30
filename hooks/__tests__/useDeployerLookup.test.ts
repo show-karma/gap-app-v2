@@ -5,13 +5,13 @@ import { contractsService } from "@/services/contracts.service";
 import { useDeployerLookup } from "../useDeployerLookup";
 
 // Mock the contracts service
-jest.mock("@/services/contracts.service", () => ({
+vi.mock("@/services/contracts.service", () => ({
   contractsService: {
-    lookupDeployer: jest.fn(),
+    lookupDeployer: vi.fn(),
   },
 }));
 
-const mockLookupDeployer = contractsService.lookupDeployer as jest.MockedFunction<
+const mockLookupDeployer = contractsService.lookupDeployer as vi.MockedFunction<
   typeof contractsService.lookupDeployer
 >;
 
@@ -32,12 +32,12 @@ describe("useDeployerLookup", () => {
         },
       },
       logger: {
-        log: console.log,
-        warn: console.warn,
-        error: () => {}, // Suppress error logs in tests
+        log: () => {},
+        warn: () => {},
+        error: () => {},
       },
     });
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   afterEach(() => {

@@ -10,42 +10,42 @@ import {
 
 // ─── Mock next/navigation ─────────────────────────────────────────────────────
 
-const mockPush = jest.fn();
-const mockReplace = jest.fn();
+const mockPush = vi.fn();
+const mockReplace = vi.fn();
 
-jest.mock("next/navigation", () => ({
-  useParams: jest.fn(() => ({ communityId: "test-community" })),
-  useRouter: jest.fn(() => ({
+vi.mock("next/navigation", () => ({
+  useParams: vi.fn(() => ({ communityId: "test-community" })),
+  useRouter: vi.fn(() => ({
     push: mockPush,
     replace: mockReplace,
   })),
-  useSearchParams: jest.fn(() => new URLSearchParams()),
-  usePathname: jest.fn(() => "/community/test-community/financials"),
+  useSearchParams: vi.fn(() => new URLSearchParams()),
+  usePathname: vi.fn(() => "/community/test-community/financials"),
 }));
 
 // ─── Mock data hooks ──────────────────────────────────────────────────────────
 
-jest.mock("@/hooks/communities/useCommunityDetails");
-jest.mock("@/src/features/payout-disbursement/hooks/use-payout-disbursement");
+vi.mock("@/hooks/communities/useCommunityDetails");
+vi.mock("@/src/features/payout-disbursement/hooks/use-payout-disbursement");
 
-const mockUseCommunityDetails = useCommunityDetails as jest.MockedFunction<
+const mockUseCommunityDetails = useCommunityDetails as vi.MockedFunction<
   typeof useCommunityDetails
 >;
-const mockUseCommunityPayoutsPublic = useCommunityPayoutsPublic as jest.MockedFunction<
+const mockUseCommunityPayoutsPublic = useCommunityPayoutsPublic as vi.MockedFunction<
   typeof useCommunityPayoutsPublic
 >;
 const mockUsePayoutConfigsByCommunityPublic =
-  usePayoutConfigsByCommunityPublic as jest.MockedFunction<
+  usePayoutConfigsByCommunityPublic as vi.MockedFunction<
     typeof usePayoutConfigsByCommunityPublic
   >;
 
 // ─── Mock child components ────────────────────────────────────────────────────
 
-jest.mock("@/components/Pages/Admin/ControlCenter/FilterToolbar", () => ({
+vi.mock("@/components/Pages/Admin/ControlCenter/FilterToolbar", () => ({
   FilterToolbar: (props: any) => <div data-testid="filter-toolbar">FilterToolbar</div>,
 }));
 
-jest.mock("@/components/Pages/Admin/ControlCenter/ControlCenterTable", () => ({
+vi.mock("@/components/Pages/Admin/ControlCenter/ControlCenterTable", () => ({
   ControlCenterTable: (props: any) => (
     <div data-testid="control-center-table" data-readonly={props.readOnly}>
       ControlCenterTable
@@ -53,17 +53,17 @@ jest.mock("@/components/Pages/Admin/ControlCenter/ControlCenterTable", () => ({
   ),
 }));
 
-jest.mock("@/components/Pages/Communities/Financials/PublicProjectDetailsModal", () => ({
+vi.mock("@/components/Pages/Communities/Financials/PublicProjectDetailsModal", () => ({
   PublicProjectDetailsModal: () => <div data-testid="public-project-details-modal">Modal</div>,
 }));
 
-jest.mock("@/components/Utilities/Skeleton", () => ({
+vi.mock("@/components/Utilities/Skeleton", () => ({
   Skeleton: ({ className }: { className: string }) => (
     <div data-testid="skeleton" className={className} />
   ),
 }));
 
-jest.mock("@/components/ui/button", () => ({
+vi.mock("@/components/ui/button", () => ({
   Button: ({ children, onClick, ...props }: any) => (
     <button onClick={onClick} {...props}>
       {children}
@@ -71,7 +71,7 @@ jest.mock("@/components/ui/button", () => ({
   ),
 }));
 
-jest.mock("@/utilities/pages", () => ({
+vi.mock("@/utilities/pages", () => ({
   PAGES: { NOT_FOUND: "/not-found" },
 }));
 
@@ -125,7 +125,7 @@ describe("PublicControlCenter", () => {
     queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false } },
     });
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     // Default mocks: everything loaded successfully
     mockUseCommunityDetails.mockReturnValue({
@@ -138,7 +138,7 @@ describe("PublicControlCenter", () => {
       data: mockPayoutsData,
       isLoading: false,
       error: null,
-      refetch: jest.fn(),
+      refetch: vi.fn(),
     } as any);
 
     mockUsePayoutConfigsByCommunityPublic.mockReturnValue({
@@ -169,7 +169,7 @@ describe("PublicControlCenter", () => {
       data: undefined,
       isLoading: true,
       error: null,
-      refetch: jest.fn(),
+      refetch: vi.fn(),
     } as any);
 
     render(<PublicControlCenter />, { wrapper });
@@ -196,7 +196,7 @@ describe("PublicControlCenter", () => {
       data: null,
       isLoading: false,
       error: { message: "Payout fetch failed" },
-      refetch: jest.fn(),
+      refetch: vi.fn(),
     } as any);
 
     render(<PublicControlCenter />, { wrapper });

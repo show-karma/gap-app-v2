@@ -3,14 +3,14 @@ import { renderHook, waitFor } from "@testing-library/react";
 import type React from "react";
 import { useProjectUpdates } from "../useProjectUpdates";
 
-jest.mock("@/services/project-updates.service", () => ({
-  getProjectUpdates: jest.fn(),
+vi.mock("@/services/project-updates.service", () => ({
+  getProjectUpdates: vi.fn(),
 }));
 
 import { getProjectUpdates } from "@/services/project-updates.service";
 import type { UpdatesApiResponse } from "@/types/v2/roadmap";
 
-const mockGetProjectUpdates = getProjectUpdates as jest.MockedFunction<typeof getProjectUpdates>;
+const mockGetProjectUpdates = getProjectUpdates as vi.MockedFunction<typeof getProjectUpdates>;
 
 const createTestQueryClient = () =>
   new QueryClient({
@@ -33,7 +33,7 @@ describe("useProjectUpdates", () => {
   let queryClient: QueryClient;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     queryClient = createTestQueryClient();
   });
 

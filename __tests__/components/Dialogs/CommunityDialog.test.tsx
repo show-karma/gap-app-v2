@@ -1,7 +1,8 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { CommunityDialog } from "@/components/Dialogs/CommunityDialog";
 
-jest.mock("@headlessui/react", () => {
+// Mock Headless UI Dialog components
+vi.mock("@headlessui/react", () => {
   const React = require("react");
 
   const TRANSITION_PROPS = [
@@ -37,51 +38,68 @@ jest.mock("@headlessui/react", () => {
 
   const MockTransitionRoot = ({ show, children, as, ...props }: any) => {
     if (!show) return null;
+
     const filteredProps = Object.keys(props).reduce((acc, key) => {
-      if (!TRANSITION_PROPS.includes(key)) acc[key] = props[key];
+      if (!TRANSITION_PROPS.includes(key)) {
+        acc[key] = props[key];
+      }
       return acc;
     }, {} as any);
+
     const Component = as || "div";
     return <Component {...filteredProps}>{children}</Component>;
   };
-  MockTransitionRoot.Child = ({ children, ...props }: any) => {
+  MockTransitionRoot.displayName = "Transition";
+
+  const MockTransitionChild = ({ children, as, ...props }: any) => {
     const filteredProps = Object.keys(props).reduce((acc, key) => {
-      if (!TRANSITION_PROPS.includes(key)) acc[key] = props[key];
+      if (!TRANSITION_PROPS.includes(key)) {
+        acc[key] = props[key];
+      }
       return acc;
     }, {} as any);
-    return <div {...filteredProps}>{children}</div>;
-  };
 
-  return { Dialog: MockDialog, Transition: MockTransitionRoot, Fragment: React.Fragment };
+    const Component = as || "div";
+    return <Component {...filteredProps}>{children}</Component>;
+  };
+  MockTransitionChild.displayName = "Transition.Child";
+
+  MockTransitionRoot.Child = MockTransitionChild;
+
+  return {
+    Dialog: MockDialog,
+    Transition: MockTransitionRoot,
+    Fragment: React.Fragment,
+  };
 });
 
-jest.mock("@heroicons/react/24/solid", () => ({
+// Mock react-hot-toast
+const mockToastError = vi.fn();
+const mockToastSuccess = vi.fn();
+vi.mock("react-hot-toast", () => ({
+  __esModule: true,
+  default: { error: (...args: any[]) => mockToastError(...args), success: (...args: any[]) => mockToastSuccess(...args) },
+}));
+
+// Mock Heroicons
+vi.mock("@heroicons/react/24/solid", () => ({
   PlusIcon: (props: any) => <svg data-testid="plus-icon" {...props} />,
   ChevronRightIcon: (props: any) => <svg data-testid="chevron-icon" {...props} />,
   XMarkIcon: (props: any) => <svg data-testid="x-icon" {...props} />,
 }));
 
-const mockToastError = jest.fn();
-const mockToastSuccess = jest.fn();
-jest.mock("react-hot-toast", () => ({
-  __esModule: true,
-  default: {
-    error: (...args: any[]) => mockToastError(...args),
-    success: (...args: any[]) => mockToastSuccess(...args),
-  },
-}));
-
-const mockFetchData = jest.fn();
-jest.mock("@/utilities/fetchData", () => ({
+// Mock fetchData
+const mockFetchData = vi.fn();
+vi.mock("@/utilities/fetchData", () => ({
   __esModule: true,
   default: (...args: any[]) => mockFetchData(...args),
 }));
 
-jest.mock("@/hooks/useAuth", () => ({
-  useAuth: () => ({ authenticated: true, login: jest.fn() }),
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: () => ({ authenticated: true, login: vi.fn() }),
 }));
 
-jest.mock("@/utilities/network", () => ({
+vi.mock("@/utilities/network", () => ({
   appNetwork: [
     { id: 10, name: "Optimism" },
     { id: 42161, name: "Arbitrum" },
@@ -92,21 +110,33 @@ jest.mock("@/utilities/network", () => ({
   ],
 }));
 
-jest.mock("@/utilities/messages", () => ({
+vi.mock("@/utilities/messages", () => ({
   MESSAGES: {
     COMMUNITY_FORM: {
-      TITLE: { MIN: "Min 3 chars", MAX: "Max 50 chars" },
-      SLUG: "Min 3 chars",
-      IMAGE_URL: "Required",
+      TITLE: { MIN: "Too short", MAX: "Too long" },
+      SLUG: "Slug required",
+      IMAGE_URL: "Image URL required",
     },
   },
 }));
 
-jest.mock("@/utilities/tailwind", () => ({
+vi.mock("@/utilities/indexer", () => ({
+  INDEXER: {
+    COMMUNITY: {
+      V2: {
+        SLUG_CHECK: (slug: string) => `/v2/communities/slug-check/${slug}`,
+      },
+    },
+  },
+}));
+
+vi.mock("@/utilities/tailwind", () => ({
   cn: (...args: any[]) => args.filter(Boolean).join(" "),
 }));
-jest.mock("@/components/Utilities/errorManager", () => ({ errorManager: jest.fn() }));
-jest.mock("@/components/Utilities/MarkdownEditor", () => ({
+
+vi.mock("@/components/Utilities/errorManager", () => ({ errorManager: vi.fn() }));
+
+vi.mock("@/components/Utilities/MarkdownEditor", () => ({
   MarkdownEditor: ({ value, onChange }: any) => (
     <textarea
       data-testid="markdown-editor"
@@ -116,16 +146,30 @@ jest.mock("@/components/Utilities/MarkdownEditor", () => ({
   ),
 }));
 
+vi.mock("@/components/ui/button", () => ({
+  Button: ({ children, onClick, isLoading, disabled, ...props }: any) => (
+    <button onClick={onClick} disabled={disabled || isLoading} {...props}>
+      {isLoading ? "Loading..." : children}
+    </button>
+  ),
+}));
+
 describe("CommunityDialog", () => {
-  const mockRefreshCommunities = jest.fn().mockResolvedValue([]);
+  const mockRefreshCommunities = vi.fn().mockResolvedValue(undefined);
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    mockFetchData.mockResolvedValue([{ uid: "0xnew", slug: "test-slug", chainID: 10 }, null, null, 201]);
+    vi.clearAllMocks();
+    // Default: slug is available, API returns success with slug
+    mockFetchData.mockImplementation((url: string) => {
+      if (url.includes("slug-check")) {
+        return Promise.resolve([{ available: true }, null, null, 200]);
+      }
+      return Promise.resolve([{ uid: "0xnew", slug: "test-slug", chainID: 10 }, null, null, 201]);
+    });
   });
 
   describe("Rendering", () => {
-    it("should render trigger button", () => {
+    it("should render trigger button with default text", () => {
       render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
       expect(screen.getByText("New Community")).toBeInTheDocument();
     });
@@ -135,7 +179,7 @@ describe("CommunityDialog", () => {
       expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
     });
 
-    it("should open dialog on click", () => {
+    it("should open dialog when trigger button is clicked", () => {
       render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
       fireEvent.click(screen.getByText("New Community"));
       expect(screen.getByTestId("dialog")).toBeInTheDocument();
@@ -144,6 +188,7 @@ describe("CommunityDialog", () => {
     it("should display form fields", () => {
       render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
       fireEvent.click(screen.getByText("New Community"));
+
       expect(screen.getByPlaceholderText('e.g. "My awesome Community"')).toBeInTheDocument();
       expect(
         screen.getByPlaceholderText('e.g. "https://example.com/image.jpg"')
@@ -151,7 +196,7 @@ describe("CommunityDialog", () => {
       expect(screen.getByPlaceholderText('e.g. "grant-portal"')).toBeInTheDocument();
     });
 
-    it("should close dialog on cancel", () => {
+    it("should close dialog when cancel is clicked", () => {
       render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
       fireEvent.click(screen.getByText("New Community"));
       fireEvent.click(screen.getByText("Cancel"));
@@ -195,7 +240,12 @@ describe("CommunityDialog", () => {
 
   describe("Error handling", () => {
     it("should show error toast on API failure", async () => {
-      mockFetchData.mockResolvedValue([null, "Server error", null, 500]);
+      mockFetchData.mockImplementation((url: string) => {
+        if (url.includes("slug-check")) {
+          return Promise.resolve([{ available: true }, null, null, 200]);
+        }
+        return Promise.resolve([null, "Server error", null, 500]);
+      });
 
       render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
       fireEvent.click(screen.getByText("New Community"));
@@ -220,7 +270,12 @@ describe("CommunityDialog", () => {
     });
 
     it("should show community limit toast on 403", async () => {
-      mockFetchData.mockResolvedValue([null, "Community limit reached", null, 403]);
+      mockFetchData.mockImplementation((url: string) => {
+        if (url.includes("slug-check")) {
+          return Promise.resolve([{ available: true }, null, null, 200]);
+        }
+        return Promise.resolve([null, "Community limit reached", null, 403]);
+      });
 
       render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
       fireEvent.click(screen.getByText("New Community"));
@@ -246,12 +301,12 @@ describe("CommunityDialog", () => {
     });
 
     it("should show slug exists toast", async () => {
-      mockFetchData.mockResolvedValue([
-        null,
-        'Community with slug "test" already exists',
-        null,
-        409,
-      ]);
+      mockFetchData.mockImplementation((url: string) => {
+        if (url.includes("slug-check")) {
+          return Promise.resolve([{ available: true }, null, null, 200]);
+        }
+        return Promise.resolve([null, 'Community with slug "test" already exists', null, 409]);
+      });
 
       render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
       fireEvent.click(screen.getByText("New Community"));
@@ -274,10 +329,14 @@ describe("CommunityDialog", () => {
         );
       });
     });
-  });
 
     it("should show error toast when response has no slug", async () => {
-      mockFetchData.mockResolvedValue([{ uid: "0xnew", chainID: 10 }, null, null, 201]);
+      mockFetchData.mockImplementation((url: string) => {
+        if (url.includes("slug-check")) {
+          return Promise.resolve([{ available: true }, null, null, 200]);
+        }
+        return Promise.resolve([{ uid: "0xnew", chainID: 10 }, null, null, 201]);
+      });
 
       render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
       fireEvent.click(screen.getByText("New Community"));
@@ -299,6 +358,39 @@ describe("CommunityDialog", () => {
           "Community created but could not determine its URL. Check your dashboard."
         );
       });
+    });
+  });
+
+  describe("Form data preservation on error", () => {
+    it("should preserve form data when API call fails", async () => {
+      mockFetchData.mockImplementation((url: string) => {
+        if (url.includes("slug-check")) {
+          return Promise.resolve([{ available: true }, null, null, 200]);
+        }
+        return Promise.reject(new Error("Network error"));
+      });
+
+      render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
+      fireEvent.click(screen.getByText("New Community"));
+
+      const nameInput = screen.getByPlaceholderText('e.g. "My awesome Community"') as HTMLInputElement;
+      fireEvent.change(nameInput, { target: { value: "Test Community" } });
+      fireEvent.change(screen.getByPlaceholderText('e.g. "https://example.com/image.jpg"'), {
+        target: { value: "https://example.com/logo.png" },
+      });
+      fireEvent.change(screen.getByPlaceholderText('e.g. "grant-portal"'), {
+        target: { value: "test-community" },
+      });
+
+      fireEvent.click(screen.getByText("Create Community"));
+
+      await waitFor(() => {
+        expect(mockToastError).toHaveBeenCalledWith("Failed to create community. Please try again.");
+      });
+
+      // Modal should still be visible with preserved data
+      expect(screen.getByTestId("dialog")).toBeInTheDocument();
+      expect(nameInput.value).toBe("Test Community");
     });
   });
 

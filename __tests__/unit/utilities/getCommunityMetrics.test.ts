@@ -7,13 +7,13 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import fetchData from "@/utilities/fetchData";
 import { getCommunityMetrics } from "@/utilities/registry/getCommunityMetrics";
 
-jest.mock("@/utilities/fetchData");
-jest.mock("@/components/Utilities/errorManager");
-jest.mock("@/utilities/indexer", () => ({
+vi.mock("@/utilities/fetchData");
+vi.mock("@/components/Utilities/errorManager");
+vi.mock("@/utilities/indexer", () => ({
   INDEXER: {
     COMMUNITY: {
       V2: {
-        COMMUNITY_METRICS: jest.fn((communityId, params) => {
+        COMMUNITY_METRICS: vi.fn((communityId, params) => {
           const urlParams = new URLSearchParams();
           if (params?.startDate) urlParams.append("startDate", params.startDate);
           if (params?.endDate) urlParams.append("endDate", params.endDate);
@@ -26,19 +26,19 @@ jest.mock("@/utilities/indexer", () => ({
   },
 }));
 
-const mockFetchData = fetchData as jest.MockedFunction<typeof fetchData>;
-const mockErrorManager = errorManager as jest.MockedFunction<typeof errorManager>;
+const mockFetchData = fetchData as vi.MockedFunction<typeof fetchData>;
+const mockErrorManager = errorManager as vi.MockedFunction<typeof errorManager>;
 
 describe("getCommunityMetrics", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.spyOn(console, "log").mockImplementation(() => {});
-    jest.spyOn(console, "error").mockImplementation(() => {});
-    jest.spyOn(console, "info").mockImplementation(() => {});
+    vi.clearAllMocks();
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.spyOn(console, "info").mockImplementation(() => {});
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   const mockValidResponse = {

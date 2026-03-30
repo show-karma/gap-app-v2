@@ -4,13 +4,13 @@ import "@testing-library/jest-dom";
 import { RoleManagementTab } from "@/components/Generic/RoleManagement/RoleManagementTab";
 import type { RoleManagementConfig, RoleOption } from "@/components/Generic/RoleManagement/types";
 
-const mockCopy = jest.fn().mockResolvedValue(true);
-jest.mock("@/hooks/useCopyToClipboard", () => ({
+const mockCopy = vi.fn().mockResolvedValue(true);
+vi.mock("@/hooks/useCopyToClipboard", () => ({
   useCopyToClipboard: () => [null, mockCopy],
 }));
 
-const mockDeleteDialog = jest.fn();
-jest.mock("@/components/DeleteDialog", () => ({
+const mockDeleteDialog = vi.fn();
+vi.mock("@/components/DeleteDialog", () => ({
   DeleteDialog: (props: Record<string, unknown>) => {
     mockDeleteDialog(props);
     return props.externalIsOpen ? (
@@ -32,13 +32,13 @@ jest.mock("@/components/DeleteDialog", () => ({
   },
 }));
 
-jest.mock("@/components/Utilities/Spinner", () => ({
+vi.mock("@/components/Utilities/Spinner", () => ({
   Spinner: ({ className }: { className?: string }) => (
     <div data-testid="spinner" className={className} />
   ),
 }));
 
-jest.mock("@/components/Utilities/Button", () => ({
+vi.mock("@/components/Utilities/Button", () => ({
   Button: ({
     children,
     onClick,
@@ -67,17 +67,17 @@ jest.mock("@/components/Utilities/Button", () => ({
   ),
 }));
 
-jest.mock("@/components/Icons", () => ({
+vi.mock("@/components/Icons", () => ({
   TelegramIcon: ({ className }: { className?: string }) => (
     <span data-testid="telegram-icon" className={className} />
   ),
 }));
 
-jest.mock("@/utilities/formatDate", () => ({
+vi.mock("@/utilities/formatDate", () => ({
   formatDate: (date: string) => `formatted-${date}`,
 }));
 
-jest.mock("@/utilities/tailwind", () => ({
+vi.mock("@/utilities/tailwind", () => ({
   cn: (...args: (string | boolean | undefined)[]) => args.filter(Boolean).join(" "),
 }));
 
@@ -98,7 +98,7 @@ const roleOptions: RoleOption[] = [
 
 describe("RoleManagementTab", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("loading state", () => {
@@ -121,7 +121,7 @@ describe("RoleManagementTab", () => {
           members={[]}
           roleOptions={roleOptions}
           selectedRoles={["program"]}
-          onRolesChange={jest.fn()}
+          onRolesChange={vi.fn()}
         />
       );
       expect(screen.getByText("No reviewers")).toBeInTheDocument();
@@ -145,7 +145,7 @@ describe("RoleManagementTab", () => {
           members={members}
           roleOptions={roleOptions}
           selectedRoles={["program"]}
-          onRolesChange={jest.fn()}
+          onRolesChange={vi.fn()}
         />
       );
 
@@ -169,7 +169,7 @@ describe("RoleManagementTab", () => {
           members={members}
           roleOptions={roleOptions}
           selectedRoles={["program"]}
-          onRolesChange={jest.fn()}
+          onRolesChange={vi.fn()}
         />
       );
 
@@ -187,10 +187,10 @@ describe("RoleManagementTab", () => {
           config={defaultConfig}
           members={[]}
           canManage
-          onAdd={jest.fn()}
+          onAdd={vi.fn()}
           roleOptions={roleOptions}
           selectedRoles={["program"]}
-          onRolesChange={jest.fn()}
+          onRolesChange={vi.fn()}
         />
       );
 
@@ -204,7 +204,7 @@ describe("RoleManagementTab", () => {
     });
 
     it("calls onRolesChange when toggling a role checkbox", async () => {
-      const onRolesChange = jest.fn();
+      const onRolesChange = vi.fn();
       const user = userEvent.setup();
 
       render(
@@ -212,7 +212,7 @@ describe("RoleManagementTab", () => {
           config={defaultConfig}
           members={[]}
           canManage
-          onAdd={jest.fn()}
+          onAdd={vi.fn()}
           roleOptions={roleOptions}
           selectedRoles={["program"]}
           onRolesChange={onRolesChange}
@@ -249,8 +249,8 @@ describe("RoleManagementTab", () => {
           canManage
           roleOptions={roleOptions}
           selectedRoles={["program"]}
-          onRolesChange={jest.fn()}
-          onEditRoles={jest.fn()}
+          onRolesChange={vi.fn()}
+          onEditRoles={vi.fn()}
         />
       );
 
@@ -274,7 +274,7 @@ describe("RoleManagementTab", () => {
           canManage
           roleOptions={roleOptions}
           selectedRoles={["program"]}
-          onRolesChange={jest.fn()}
+          onRolesChange={vi.fn()}
         />
       );
 
@@ -299,8 +299,8 @@ describe("RoleManagementTab", () => {
           canManage
           roleOptions={roleOptions}
           selectedRoles={["program"]}
-          onRolesChange={jest.fn()}
-          onEditRoles={jest.fn()}
+          onRolesChange={vi.fn()}
+          onEditRoles={vi.fn()}
         />
       );
 
@@ -313,7 +313,7 @@ describe("RoleManagementTab", () => {
 
     it("calls onEditRoles with new roles when save is clicked", async () => {
       const user = userEvent.setup();
-      const onEditRoles = jest.fn().mockResolvedValue(undefined);
+      const onEditRoles = vi.fn().mockResolvedValue(undefined);
       const members = [
         {
           id: "alice@example.com",
@@ -330,9 +330,9 @@ describe("RoleManagementTab", () => {
           canManage
           roleOptions={roleOptions}
           selectedRoles={["program"]}
-          onRolesChange={jest.fn()}
+          onRolesChange={vi.fn()}
           onEditRoles={onEditRoles}
-          onRefresh={jest.fn()}
+          onRefresh={vi.fn()}
         />
       );
 
@@ -366,8 +366,8 @@ describe("RoleManagementTab", () => {
           canManage
           roleOptions={roleOptions}
           selectedRoles={["program"]}
-          onRolesChange={jest.fn()}
-          onEditRoles={jest.fn()}
+          onRolesChange={vi.fn()}
+          onEditRoles={vi.fn()}
         />
       );
 
@@ -380,7 +380,7 @@ describe("RoleManagementTab", () => {
 
     it("uses DeleteDialog instead of confirm() when removing with zero roles", async () => {
       const user = userEvent.setup();
-      const onEditRoles = jest.fn().mockResolvedValue(undefined);
+      const onEditRoles = vi.fn().mockResolvedValue(undefined);
       const members = [
         {
           id: "alice@example.com",
@@ -397,9 +397,9 @@ describe("RoleManagementTab", () => {
           canManage
           roleOptions={roleOptions}
           selectedRoles={["program"]}
-          onRolesChange={jest.fn()}
+          onRolesChange={vi.fn()}
           onEditRoles={onEditRoles}
-          onRefresh={jest.fn()}
+          onRefresh={vi.fn()}
         />
       );
 
@@ -433,8 +433,8 @@ describe("RoleManagementTab", () => {
           canManage
           roleOptions={roleOptions}
           selectedRoles={["program"]}
-          onRolesChange={jest.fn()}
-          onEditRoles={jest.fn()}
+          onRolesChange={vi.fn()}
+          onEditRoles={vi.fn()}
         />
       );
 
@@ -451,7 +451,7 @@ describe("RoleManagementTab", () => {
   describe("remove confirmation", () => {
     it("uses DeleteDialog instead of confirm() for removal", async () => {
       const user = userEvent.setup();
-      const onRemove = jest.fn().mockResolvedValue(undefined);
+      const onRemove = vi.fn().mockResolvedValue(undefined);
       const members = [
         {
           id: "alice@example.com",
@@ -469,7 +469,7 @@ describe("RoleManagementTab", () => {
           onRemove={onRemove}
           roleOptions={roleOptions}
           selectedRoles={["program"]}
-          onRolesChange={jest.fn()}
+          onRolesChange={vi.fn()}
         />
       );
 
@@ -504,7 +504,7 @@ describe("RoleManagementTab", () => {
           members={members}
           roleOptions={roleOptions}
           selectedRoles={["program"]}
-          onRolesChange={jest.fn()}
+          onRolesChange={vi.fn()}
         />
       );
 

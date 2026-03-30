@@ -1,36 +1,39 @@
 import "@testing-library/jest-dom";
 
-// Mock the SDK modules to verify they're loaded lazily
-const mockGAP = jest.fn().mockImplementation(() => ({
-  fetch: { projectById: jest.fn(), projectBySlug: jest.fn() },
-}));
+// Use vi.hoisted() so mock functions are available when vi.mock() factories run
+const { mockGAP, mockGapIndexerClient } = vi.hoisted(() => {
+  // Must use function() (not arrow) so it can be called with `new`
+  const gapFn = vi.fn(function (this: Record<string, unknown>) {
+    this.fetch = { projectById: vi.fn(), projectBySlug: vi.fn() };
+  });
+  const indexerFn = vi.fn(() => ({}));
+  return { mockGAP: gapFn, mockGapIndexerClient: indexerFn };
+});
 
-const mockGapIndexerClient = jest.fn().mockImplementation(() => ({}));
-
-jest.mock("@show-karma/karma-gap-sdk/core/class/GAP", () => ({
+vi.mock("@show-karma/karma-gap-sdk/core/class/GAP", () => ({
   GAP: mockGAP,
 }));
 
-jest.mock("@show-karma/karma-gap-sdk/core/class/karma-indexer/GapIndexerClient", () => ({
+vi.mock("@show-karma/karma-gap-sdk/core/class/karma-indexer/GapIndexerClient", () => ({
   GapIndexerClient: mockGapIndexerClient,
 }));
 
-jest.mock("@show-karma/karma-gap-sdk/core/consts", () => ({
+vi.mock("@show-karma/karma-gap-sdk/core/consts", () => ({
   Networks: {
     "optimism-sepolia": { chainId: 11155420 },
     optimism: { chainId: 10 },
   },
 }));
 
-jest.mock("@/utilities/enviromentVars", () => ({
+vi.mock("@/utilities/enviromentVars", () => ({
   envVars: { NEXT_PUBLIC_GAP_INDEXER_URL: "https://indexer.example.com" },
 }));
 
-jest.mock("@/utilities/gapRpcConfig", () => ({
+vi.mock("@/utilities/gapRpcConfig", () => ({
   getGapRpcConfig: () => ({}),
 }));
 
-jest.mock("@/utilities/network", () => ({
+vi.mock("@/utilities/network", () => ({
   appNetwork: [{ id: 10 }, { id: 11155420 }],
   getChainIdByName: (name: string) => {
     const map: Record<string, number> = { optimism: 10, "optimism-sepolia": 11155420 };
@@ -44,9 +47,9 @@ jest.mock("@/utilities/network", () => ({
 
 describe("gapClient", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     // Reset the module to clear cached clients between tests
-    jest.resetModules();
+    vi.resetModules();
   });
 
   it("should NOT eagerly initialize all networks on import", async () => {

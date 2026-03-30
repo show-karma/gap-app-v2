@@ -3,11 +3,11 @@ import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
 import "@testing-library/jest-dom";
 
 // Mock ENS store
-const mockPopulateEns = jest.fn();
+const mockPopulateEns = vi.fn();
 const mockEnsData = {};
 
-jest.mock("@/store/ens", () => ({
-  useENS: jest.fn((selector) => {
+vi.mock("@/store/ens", () => ({
+  useENS: vi.fn((selector) => {
     const state = {
       ensData: mockEnsData,
       populateEns: mockPopulateEns,
@@ -20,7 +20,7 @@ describe("EthereumAddressToENSName", () => {
   const mockAddress = "0x1234567890abcdef1234567890abcdef12345678";
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     Object.keys(mockEnsData).forEach((key) => delete (mockEnsData as any)[key]);
   });
 

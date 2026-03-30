@@ -2,31 +2,31 @@ import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
 // --- Mocks for DisbursementForm dependencies ---
-jest.mock("wagmi", () => ({
+vi.mock("wagmi", () => ({
   useAccount: () => ({ address: "0x123", isConnected: true }),
   useChainId: () => 42220,
   useWalletClient: () => ({ data: null }),
 }));
 
-jest.mock("@/hooks/useWallet", () => ({
-  useWallet: () => ({ switchChainAsync: jest.fn(), isPending: false }),
+vi.mock("@/hooks/useWallet", () => ({
+  useWallet: () => ({ switchChainAsync: vi.fn(), isPending: false }),
 }));
 
-jest.mock("react-hot-toast", () => ({ default: { error: jest.fn() } }));
+vi.mock("react-hot-toast", () => ({ default: { error: vi.fn() } }));
 
-jest.mock("papaparse", () => ({
-  parse: jest.fn(),
+vi.mock("papaparse", () => ({
+  parse: vi.fn(),
 }));
 
-jest.mock("viem", () => ({
-  isAddress: jest.fn(() => true),
+vi.mock("viem", () => ({
+  isAddress: vi.fn(() => true),
 }));
 
-jest.mock("@heroicons/react/24/solid", () => ({
+vi.mock("@heroicons/react/24/solid", () => ({
   CheckIcon: () => <svg data-testid="check-icon" />,
 }));
 
-jest.mock("lucide-react", () => ({
+vi.mock("lucide-react", () => ({
   CheckCircle: () => <svg data-testid="check-circle" />,
   CircleX: () => <svg data-testid="circle-x" />,
   Coins: () => <svg data-testid="coins" />,
@@ -37,11 +37,11 @@ jest.mock("lucide-react", () => ({
 }));
 
 // Mock safe utilities to prevent real network calls
-jest.mock("../../../utilities/safe", () => ({
-  canProposeToSafe: jest.fn(),
-  getSafeTokenBalance: jest.fn(),
-  isSafeDeployed: jest.fn(),
-  signAndProposeDisbursement: jest.fn(),
+vi.mock("../../../utilities/safe", () => ({
+  canProposeToSafe: vi.fn(),
+  getSafeTokenBalance: vi.fn(),
+  isSafeDeployed: vi.fn(),
+  signAndProposeDisbursement: vi.fn(),
 }));
 
 import { Button } from "@/components/Disbursement/components/Button";

@@ -6,7 +6,7 @@
 import { render, screen } from "@testing-library/react";
 
 // Mock ProjectOptionsMenu to avoid deep dependency chain (gasless utilities with ESM)
-jest.mock("@/components/Pages/Project/ProjectOptionsMenu", () => ({
+vi.mock("@/components/Pages/Project/ProjectOptionsMenu", () => ({
   ProjectOptionsDialogs: () => (
     <div data-testid="project-options-dialogs">ProjectOptionsDialogs</div>
   ),
@@ -23,39 +23,39 @@ let mockIsContributorProfileOpen = false;
 // Note: Invite-code auto-open logic has been moved to ProjectProfileLayout (v2).
 // ProjectModals no longer handles invite-code detection.
 
-jest.mock("@/store/modals/intro", () => ({
+vi.mock("@/store/modals/intro", () => ({
   useIntroModalStore: () => ({
     isIntroModalOpen: mockIsIntroModalOpen,
   }),
 }));
 
-jest.mock("@/store/modals/endorsement", () => ({
+vi.mock("@/store/modals/endorsement", () => ({
   useEndorsementStore: () => ({
     isEndorsementOpen: mockIsEndorsementOpen,
   }),
 }));
 
-jest.mock("@/store/modals/progress", () => ({
+vi.mock("@/store/modals/progress", () => ({
   useProgressModalStore: () => ({
     isProgressModalOpen: mockIsProgressModalOpen,
   }),
 }));
 
-jest.mock("@/store/modals/shareDialog", () => ({
+vi.mock("@/store/modals/shareDialog", () => ({
   useShareDialogStore: () => ({
     isOpen: mockIsShareDialogOpen,
   }),
 }));
 
-jest.mock("@/store/modals/contributorProfile", () => ({
+vi.mock("@/store/modals/contributorProfile", () => ({
   useContributorProfileModalStore: () => ({
     isModalOpen: mockIsContributorProfileOpen,
   }),
 }));
 
 // Mock dynamic imports for modal components
-jest.mock("next/dynamic", () => {
-  return (loader: () => Promise<any>, options?: { ssr?: boolean }) => {
+vi.mock("next/dynamic", () => ({
+  default: (loader: () => Promise<any>, options?: { ssr?: boolean }) => {
     const DynamicComponent = (props: any) => {
       // Return a placeholder for each modal that can be identified in tests
       // We detect which modal it is based on the loader string representation
@@ -79,8 +79,8 @@ jest.mock("next/dynamic", () => {
     };
     DynamicComponent.displayName = "DynamicComponent";
     return DynamicComponent;
-  };
-});
+  },
+}));
 
 describe("ProjectModals", () => {
   beforeEach(() => {

@@ -7,29 +7,29 @@
  */
 
 // Mock next/navigation with redirect function
-jest.mock("next/navigation", () => ({
-  redirect: jest.fn(),
-  useRouter: jest.fn(() => ({
-    push: jest.fn(),
-    replace: jest.fn(),
-    prefetch: jest.fn(),
-    back: jest.fn(),
+vi.mock("next/navigation", () => ({
+  redirect: vi.fn(),
+  useRouter: vi.fn(() => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    prefetch: vi.fn(),
+    back: vi.fn(),
   })),
-  usePathname: jest.fn(() => "/"),
-  useSearchParams: jest.fn(() => new URLSearchParams()),
-  useParams: jest.fn(() => ({})),
-  notFound: jest.fn(),
+  usePathname: vi.fn(() => "/"),
+  useSearchParams: vi.fn(() => new URLSearchParams()),
+  useParams: vi.fn(() => ({})),
+  notFound: vi.fn(),
 }));
 
 import { redirect } from "next/navigation";
 import CommunityPayoutsPage from "@/app/community/[communityId]/manage/payouts/page";
 import { PAGES } from "@/utilities/pages";
 
-const mockedRedirect = jest.mocked(redirect);
+const mockedRedirect = vi.mocked(redirect);
 
 describe("CommunityPayoutsPage (payouts redirect)", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("calls redirect with the correct control center URL", async () => {

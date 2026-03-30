@@ -56,34 +56,34 @@ const mockImpacts = [
 ];
 
 // Mock hooks
-jest.mock("@/hooks/useProject", () => ({
-  useProject: jest.fn(() => ({
+vi.mock("@/hooks/useProject", () => ({
+  useProject: vi.fn(() => ({
     project: mockProject,
     isLoading: false,
   })),
 }));
 
-jest.mock("../useProjectGrants", () => ({
-  useProjectGrants: jest.fn(() => ({
+vi.mock("../useProjectGrants", () => ({
+  useProjectGrants: vi.fn(() => ({
     grants: mockGrants,
     isLoading: false,
-    refetch: jest.fn(),
+    refetch: vi.fn(),
   })),
 }));
 
-jest.mock("../useProjectUpdates", () => ({
-  useProjectUpdates: jest.fn(() => ({
+vi.mock("../useProjectUpdates", () => ({
+  useProjectUpdates: vi.fn(() => ({
     milestones: mockMilestones,
     isLoading: false,
-    refetch: jest.fn(),
+    refetch: vi.fn(),
   })),
 }));
 
-jest.mock("../useProjectImpacts", () => ({
-  useProjectImpacts: jest.fn(() => ({
+vi.mock("../useProjectImpacts", () => ({
+  useProjectImpacts: vi.fn(() => ({
     impacts: mockImpacts,
     isLoading: false,
-    refetch: jest.fn(),
+    refetch: vi.fn(),
   })),
 }));
 
@@ -93,7 +93,7 @@ jest.mock("../useProjectImpacts", () => ({
 
 describe("useProjectProfile", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("Data Aggregation", () => {
@@ -170,7 +170,7 @@ describe("useProjectProfile", () => {
       useProject.mockReturnValue({ project: mockProject, isLoading: false });
 
       const useProjectGrants = require("../useProjectGrants").useProjectGrants;
-      useProjectGrants.mockReturnValue({ grants: [], isLoading: true, refetch: jest.fn() });
+      useProjectGrants.mockReturnValue({ grants: [], isLoading: true, refetch: vi.fn() });
 
       const { result } = renderHook(() => useProjectProfile("test-project"));
 
@@ -183,7 +183,7 @@ describe("useProjectProfile", () => {
       useProject.mockReturnValue({ project: mockProject, isLoading: false });
 
       const useProjectUpdates = require("../useProjectUpdates").useProjectUpdates;
-      useProjectUpdates.mockReturnValue({ milestones: [], isLoading: true, refetch: jest.fn() });
+      useProjectUpdates.mockReturnValue({ milestones: [], isLoading: true, refetch: vi.fn() });
 
       const { result } = renderHook(() => useProjectProfile("test-project"));
 
@@ -195,9 +195,9 @@ describe("useProjectProfile", () => {
 
   describe("Refetch", () => {
     it("should call all refetch functions", async () => {
-      const mockRefetchGrants = jest.fn().mockResolvedValue({});
-      const mockRefetchUpdates = jest.fn().mockResolvedValue({});
-      const mockRefetchImpacts = jest.fn().mockResolvedValue({});
+      const mockRefetchGrants = vi.fn().mockResolvedValue({});
+      const mockRefetchUpdates = vi.fn().mockResolvedValue({});
+      const mockRefetchImpacts = vi.fn().mockResolvedValue({});
 
       const useProjectGrants = require("../useProjectGrants").useProjectGrants;
       useProjectGrants.mockReturnValue({
@@ -246,7 +246,7 @@ describe("useProjectProfile", () => {
       useProjectGrants.mockReturnValue({
         grants: [],
         isLoading: false,
-        refetch: jest.fn(),
+        refetch: vi.fn(),
       });
 
       const { result } = renderHook(() => useProjectProfile("test-project"));
@@ -260,21 +260,21 @@ describe("useProjectProfile", () => {
       useProjectGrants.mockReturnValue({
         grants: [],
         isLoading: false,
-        refetch: jest.fn(),
+        refetch: vi.fn(),
       });
 
       const useProjectUpdates = require("../useProjectUpdates").useProjectUpdates;
       useProjectUpdates.mockReturnValue({
         milestones: [],
         isLoading: false,
-        refetch: jest.fn(),
+        refetch: vi.fn(),
       });
 
       const useProjectImpacts = require("../useProjectImpacts").useProjectImpacts;
       useProjectImpacts.mockReturnValue({
         impacts: [],
         isLoading: false,
-        refetch: jest.fn(),
+        refetch: vi.fn(),
       });
 
       const { result } = renderHook(() => useProjectProfile("test-project"));

@@ -8,71 +8,71 @@ import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
 import { useCommunitiesStore } from "@/store/communities";
 import { useOwnerStore } from "@/store/index";
 
-jest.mock("@tanstack/react-query", () => {
-  const actual = jest.requireActual("@tanstack/react-query");
+vi.mock("@tanstack/react-query", () => {
+  const actual = vi.importActual("@tanstack/react-query");
   return {
     ...actual,
-    useQuery: jest.fn(),
+    useQuery: vi.fn(),
   };
 });
 
-jest.mock("@/components/CommunityStats", () => ({
+vi.mock("@/components/CommunityStats", () => ({
   __esModule: true,
   default: () => <div data-testid="community-stats" />,
 }));
 
-jest.mock("@/components/Dialogs/CommunityDialog", () => ({
+vi.mock("@/components/Dialogs/CommunityDialog", () => ({
   CommunityDialog: () => <div data-testid="community-dialog" />,
 }));
 
-jest.mock("@/components/Pages/Admin/AddAdminDialog", () => ({
+vi.mock("@/components/Pages/Admin/AddAdminDialog", () => ({
   AddAdmin: () => <button type="button">Add Admin</button>,
 }));
 
-jest.mock("@/components/Pages/Admin/RemoveAdminDialog", () => ({
+vi.mock("@/components/Pages/Admin/RemoveAdminDialog", () => ({
   RemoveAdmin: () => <button type="button">Remove Admin</button>,
 }));
 
-jest.mock("@/hooks/useAdminCommunities", () => ({
-  useAdminCommunities: jest.fn(),
+vi.mock("@/hooks/useAdminCommunities", () => ({
+  useAdminCommunities: vi.fn(),
 }));
 
-jest.mock("@/hooks/useAuth", () => ({
-  useAuth: jest.fn(),
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: vi.fn(),
 }));
 
-jest.mock("@/services/communities.service", () => ({
-  getCommunities: jest.fn(),
+vi.mock("@/services/communities.service", () => ({
+  getCommunities: vi.fn(),
 }));
 
-jest.mock("@/src/core/rbac/hooks/use-permissions", () => ({
-  usePermissionsQuery: jest.fn(),
+vi.mock("@/src/core/rbac/hooks/use-permissions", () => ({
+  usePermissionsQuery: vi.fn(),
 }));
 
-jest.mock("@/store", () => ({
-  useOwnerStore: jest.fn(),
+vi.mock("@/store", () => ({
+  useOwnerStore: vi.fn(),
 }));
 
-jest.mock("@/store/communities", () => ({
-  useCommunitiesStore: jest.fn(),
+vi.mock("@/store/communities", () => ({
+  useCommunitiesStore: vi.fn(),
 }));
 
-jest.mock("@/utilities/fetchData", () => ({
+vi.mock("@/utilities/fetchData", () => ({
   __esModule: true,
-  default: jest.fn(),
+  default: vi.fn(),
 }));
 
-const mockUseQuery = useQuery as unknown as jest.Mock;
-const mockUseAdminCommunities = useAdminCommunities as unknown as jest.Mock;
-const mockUseAuth = useAuth as unknown as jest.Mock;
-const mockGetCommunities = getCommunities as unknown as jest.Mock;
-const mockUsePermissionsQuery = usePermissionsQuery as unknown as jest.Mock;
-const mockUseCommunitiesStore = useCommunitiesStore as unknown as jest.Mock;
-const mockUseOwnerStore = useOwnerStore as unknown as jest.Mock;
+const mockUseQuery = useQuery as unknown as vi.Mock;
+const mockUseAdminCommunities = useAdminCommunities as unknown as vi.Mock;
+const mockUseAuth = useAuth as unknown as vi.Mock;
+const mockGetCommunities = getCommunities as unknown as vi.Mock;
+const mockUsePermissionsQuery = usePermissionsQuery as unknown as vi.Mock;
+const mockUseCommunitiesStore = useCommunitiesStore as unknown as vi.Mock;
+const mockUseOwnerStore = useOwnerStore as unknown as vi.Mock;
 
 describe("CommunityAdmin", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     mockUseAdminCommunities.mockReturnValue({ communities: [], isLoading: false });
     mockUseAuth.mockReturnValue({
@@ -117,7 +117,7 @@ describe("CommunityAdmin", () => {
         admins: [{ id: cachedCommunity.uid, admins: [], status: "ok" }],
       },
       isLoading: false,
-      refetch: jest.fn(),
+      refetch: vi.fn(),
     });
 
     render(<CommunitiesToAdminPage />);

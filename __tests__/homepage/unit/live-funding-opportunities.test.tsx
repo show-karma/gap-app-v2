@@ -16,14 +16,14 @@ import "@testing-library/jest-dom";
 import { mockFundingOpportunities } from "../fixtures/funding-opportunities";
 
 // Mock the service that fetches funding opportunities
-const mockGetLiveFundingOpportunities = jest.fn();
+const mockGetLiveFundingOpportunities = vi.fn();
 
-jest.mock("@/src/services/funding/getLiveFundingOpportunities", () => ({
+vi.mock("@/src/services/funding/getLiveFundingOpportunities", () => ({
   getLiveFundingOpportunities: () => mockGetLiveFundingOpportunities(),
 }));
 
 // Mock PAGES utility
-jest.mock("@/utilities/pages", () => ({
+vi.mock("@/utilities/pages", () => ({
   PAGES: {
     FUNDING_APP: "/funding-map",
     REGISTRY: {
@@ -35,12 +35,12 @@ jest.mock("@/utilities/pages", () => ({
 }));
 
 // Mock LiveFundingOpportunitiesSkeleton
-jest.mock("@/src/features/homepage/components/live-funding-opportunities-skeleton", () => ({
+vi.mock("@/src/features/homepage/components/live-funding-opportunities-skeleton", () => ({
   LiveFundingOpportunitiesSkeleton: () => <div data-testid="funding-skeleton">Loading...</div>,
 }));
 
 // Mock LiveFundingOpportunitiesCarousel
-jest.mock("@/src/features/homepage/components/live-funding-opportunities-carousel", () => ({
+vi.mock("@/src/features/homepage/components/live-funding-opportunities-carousel", () => ({
   LiveFundingOpportunitiesCarousel: ({ programs }: any) => (
     <div data-testid="funding-carousel">
       {programs.map((program: any) => {
@@ -63,7 +63,7 @@ jest.mock("@/src/features/homepage/components/live-funding-opportunities-carouse
 
 describe("LiveFundingOpportunities Component", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("Loading States", () => {

@@ -28,7 +28,7 @@ const mockContextValue: PermissionContextValue = {
   isReviewerType: () => false,
 };
 
-jest.mock("../context/permission-context", () => ({
+vi.mock("../context/permission-context", () => ({
   usePermissionContext: () => mockContextValue,
 }));
 

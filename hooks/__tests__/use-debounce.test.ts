@@ -3,11 +3,11 @@ import { useDebounce } from "../use-debounce";
 
 describe("useDebounce", () => {
   beforeEach(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   it("returns the initial value immediately without waiting for the delay", () => {
@@ -25,7 +25,7 @@ describe("useDebounce", () => {
 
     // Advance time partially — not enough to trigger debounce
     act(() => {
-      jest.advanceTimersByTime(300);
+      vi.advanceTimersByTime(300);
     });
 
     expect(result.current).toBe("initial");
@@ -40,7 +40,7 @@ describe("useDebounce", () => {
     rerender({ value: "updated", delay: 500 });
 
     act(() => {
-      jest.advanceTimersByTime(500);
+      vi.advanceTimersByTime(500);
     });
 
     expect(result.current).toBe("updated");
@@ -55,17 +55,17 @@ describe("useDebounce", () => {
     // Rapid changes
     rerender({ value: "second", delay: 300 });
     act(() => {
-      jest.advanceTimersByTime(100);
+      vi.advanceTimersByTime(100);
     });
 
     rerender({ value: "third", delay: 300 });
     act(() => {
-      jest.advanceTimersByTime(100);
+      vi.advanceTimersByTime(100);
     });
 
     rerender({ value: "final", delay: 300 });
     act(() => {
-      jest.advanceTimersByTime(100);
+      vi.advanceTimersByTime(100);
     });
 
     // Still on initial value — not enough time has passed since "final"
@@ -73,7 +73,7 @@ describe("useDebounce", () => {
 
     // Now advance past the debounce delay from the last change
     act(() => {
-      jest.advanceTimersByTime(300);
+      vi.advanceTimersByTime(300);
     });
 
     // Only the last value should be settled
@@ -89,7 +89,7 @@ describe("useDebounce", () => {
     for (let i = 0; i < 10; i++) {
       rerender({ value: `change-${i}`, delay: 1000 });
       act(() => {
-        jest.advanceTimersByTime(100);
+        vi.advanceTimersByTime(100);
       });
     }
 
@@ -108,7 +108,7 @@ describe("useDebounce", () => {
 
     rerender({ value: 42, delay: 200 });
     act(() => {
-      jest.advanceTimersByTime(200);
+      vi.advanceTimersByTime(200);
     });
 
     expect(result.current).toBe(42);
@@ -123,7 +123,7 @@ describe("useDebounce", () => {
 
     rerender({ value: obj, delay: 100 });
     act(() => {
-      jest.advanceTimersByTime(100);
+      vi.advanceTimersByTime(100);
     });
 
     expect(result.current).toBe(obj);

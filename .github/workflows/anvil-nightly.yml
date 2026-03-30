@@ -1,0 +1,69 @@
+name: Anvil Nightly Tests
+
+on:
+  schedule:
+    - cron: '0 3 * * *'  # Nightly at 3 AM UTC
+  workflow_dispatch:
+
+env:
+  NEXT_PUBLIC_E2E_AUTH_BYPASS: true
+  NEXT_PUBLIC_PRIVY_APP_ID: ${{ secrets.NEXT_PUBLIC_PRIVY_APP_ID }}
+  NEXT_PUBLIC_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_PROJECT_ID }}
+  NEXT_PUBLIC_GAP_INDEXER_URL: https://gapstagapi.karmahq.xyz
+
+jobs:
+  anvil-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Verify Anvil installation
+        run: anvil --version
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build application
+        run: pnpm run build
+        env:
+          NODE_ENV: production
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install chromium --with-deps
+
+      - name: Start Anvil
+        run: anvil --fork-url ${{ secrets.ANVIL_FORK_URL || 'http://localhost:8545' }} &
+
+      - name: Run Anvil E2E tests
+        run: pnpm exec playwright test --config e2e/playwright.config.ts --project=chromium --grep @anvil
+        env:
+          CI: true
+          ANVIL: true
+
+      - name: Upload test report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: anvil-test-report
+          path: |
+            e2e/playwright-report
+            e2e/test-results
+          retention-days: 7
+          if-no-files-found: ignore

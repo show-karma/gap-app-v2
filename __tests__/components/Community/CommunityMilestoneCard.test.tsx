@@ -2,14 +2,14 @@ import { render, screen } from "@testing-library/react";
 import type { CommunityMilestoneUpdate } from "@/types/community-updates";
 
 // Mock the entire component module path to avoid deep dependency chain
-jest.mock("@/components/Shared/ActivityCard", () => ({
+vi.mock("@/components/Shared/ActivityCard", () => ({
   containerClassName:
     "border border-gray-300 dark:border-zinc-400 rounded-xl bg-white dark:bg-zinc-800",
-  ActivityCard: jest.fn(),
+  ActivityCard: vi.fn(),
 }));
 
 // Mock ActivityAttribution component
-jest.mock("@/components/Shared/ActivityCard/ActivityAttribution", () => ({
+vi.mock("@/components/Shared/ActivityCard/ActivityAttribution", () => ({
   ActivityAttribution: ({ date, attester, isCompleted }: any) => (
     <div data-testid="activity-attribution">
       <span data-testid="attribution-date">{date}</span>
@@ -19,7 +19,7 @@ jest.mock("@/components/Shared/ActivityCard/ActivityAttribution", () => ({
 }));
 
 // Mock Next.js Link component
-jest.mock("next/link", () => ({
+vi.mock("next/link", () => ({
   __esModule: true,
   default: ({ href, children, className, target, rel }: any) => (
     <a href={href} className={className} target={target} rel={rel}>
@@ -29,7 +29,7 @@ jest.mock("next/link", () => ({
 }));
 
 // Mock ReadMore utility
-jest.mock("@/utilities/ReadMore", () => ({
+vi.mock("@/utilities/ReadMore", () => ({
   ReadMore: ({ children, side }: any) => (
     <div data-testid="read-more" data-side={side}>
       {children}
@@ -38,8 +38,8 @@ jest.mock("@/utilities/ReadMore", () => ({
 }));
 
 // Mock formatDate utility
-jest.mock("@/utilities/formatDate", () => ({
-  formatDate: jest.fn((dateString: string) => {
+vi.mock("@/utilities/formatDate", () => ({
+  formatDate: vi.fn((dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {
       month: "short",
@@ -50,7 +50,7 @@ jest.mock("@/utilities/formatDate", () => ({
 }));
 
 // Mock MilestoneCompletionInfo component
-jest.mock("@/components/Pages/Community/Updates/MilestoneCompletionInfo", () => ({
+vi.mock("@/components/Pages/Community/Updates/MilestoneCompletionInfo", () => ({
   MilestoneCompletionInfo: ({ completionReason, completionDate, completedBy }: any) => (
     <div data-testid="milestone-completion-info">
       <span data-testid="completion-reason">{completionReason}</span>
@@ -61,7 +61,7 @@ jest.mock("@/components/Pages/Community/Updates/MilestoneCompletionInfo", () => 
 }));
 
 // Mock Heroicons
-jest.mock("@heroicons/react/24/outline", () => ({
+vi.mock("@heroicons/react/24/outline", () => ({
   CheckCircleIcon: ({ className }: any) => (
     <svg data-testid="check-circle-icon" className={className} />
   ),
@@ -69,7 +69,7 @@ jest.mock("@heroicons/react/24/outline", () => ({
 }));
 
 // Mock tailwind utility
-jest.mock("@/utilities/tailwind", () => ({
+vi.mock("@/utilities/tailwind", () => ({
   cn: (...args: any[]) => args.filter(Boolean).join(" "),
 }));
 
@@ -126,9 +126,9 @@ describe("CommunityMilestoneCard", () => {
   });
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     // Reset date mocking if any
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   describe("Status Display - Past Due Logic", () => {

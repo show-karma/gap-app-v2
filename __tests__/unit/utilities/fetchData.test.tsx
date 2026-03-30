@@ -2,26 +2,26 @@ import axios from "axios";
 import { TokenManager } from "@/utilities/auth/token-manager";
 import fetchData from "@/utilities/fetchData";
 
-jest.mock("axios");
-jest.mock("@/utilities/auth/token-manager");
-jest.mock("@/utilities/enviromentVars", () => ({
+vi.mock("axios");
+vi.mock("@/utilities/auth/token-manager");
+vi.mock("@/utilities/enviromentVars", () => ({
   envVars: {
     NEXT_PUBLIC_GAP_INDEXER_URL: "https://test-api.com",
   },
 }));
-jest.mock("@/utilities/sanitize", () => ({
-  sanitizeObject: jest.fn((data) => data),
+vi.mock("@/utilities/sanitize", () => ({
+  sanitizeObject: vi.fn((data) => data),
 }));
 
 describe("fetchData", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("should make a successful GET request", async () => {
     const mockResponse = { data: { result: "success" }, status: 200 };
-    (axios.request as jest.Mock).mockResolvedValue(mockResponse);
-    (TokenManager.getToken as jest.Mock).mockResolvedValue(null);
+    (axios.request as vi.Mock).mockResolvedValue(mockResponse);
+    (TokenManager.getToken as vi.Mock).mockResolvedValue(null);
 
     const [resData, error, pageInfo, status] = await fetchData("/test-endpoint");
 
@@ -41,13 +41,13 @@ describe("fetchData", () => {
 
   it("should make an authorized POST request", async () => {
     const mockToken = "test-token";
-    (TokenManager.getToken as jest.Mock).mockResolvedValue(mockToken);
+    (TokenManager.getToken as vi.Mock).mockResolvedValue(mockToken);
 
     const mockResponse = {
       data: { result: "success", pageInfo: { page: 1 } },
       status: 200,
     };
-    (axios.request as jest.Mock).mockResolvedValue(mockResponse);
+    (axios.request as vi.Mock).mockResolvedValue(mockResponse);
 
     const [resData, error, pageInfo, status] = await fetchData(
       "/test-endpoint",
@@ -74,8 +74,8 @@ describe("fetchData", () => {
 
   it("should handle network errors", async () => {
     const mockError = new Error("Network Error");
-    (axios.request as jest.Mock).mockRejectedValue(mockError);
-    (TokenManager.getToken as jest.Mock).mockResolvedValue(null);
+    (axios.request as vi.Mock).mockRejectedValue(mockError);
+    (TokenManager.getToken as vi.Mock).mockResolvedValue(null);
 
     const [resData, error, pageInfo, status] = await fetchData("/test-endpoint");
 
@@ -96,7 +96,7 @@ describe("fetchData", () => {
         status: 400,
       },
     };
-    (axios.request as jest.Mock).mockRejectedValue(mockError);
+    (axios.request as vi.Mock).mockRejectedValue(mockError);
 
     const [resData, error, pageInfo, status] = await fetchData("/test-endpoint");
 
@@ -115,8 +115,8 @@ describe("fetchData", () => {
         status: 404,
       },
     };
-    (axios.request as jest.Mock).mockRejectedValue(mockError);
-    (TokenManager.getToken as jest.Mock).mockResolvedValue(null);
+    (axios.request as vi.Mock).mockRejectedValue(mockError);
+    (TokenManager.getToken as vi.Mock).mockResolvedValue(null);
 
     const [resData, error, pageInfo, status] = await fetchData("/test-endpoint");
 
@@ -135,8 +135,8 @@ describe("fetchData", () => {
         status: 500,
       },
     };
-    (axios.request as jest.Mock).mockRejectedValue(mockError);
-    (TokenManager.getToken as jest.Mock).mockResolvedValue(null);
+    (axios.request as vi.Mock).mockRejectedValue(mockError);
+    (TokenManager.getToken as vi.Mock).mockResolvedValue(null);
 
     const [resData, error, pageInfo, status] = await fetchData("/test-endpoint");
 
@@ -148,8 +148,8 @@ describe("fetchData", () => {
 
   it("should return 201 status for successful creation", async () => {
     const mockResponse = { data: { id: "123", created: true }, status: 201 };
-    (axios.request as jest.Mock).mockResolvedValue(mockResponse);
-    (TokenManager.getToken as jest.Mock).mockResolvedValue("test-token");
+    (axios.request as vi.Mock).mockResolvedValue(mockResponse);
+    (TokenManager.getToken as vi.Mock).mockResolvedValue("test-token");
 
     const [resData, error, pageInfo, status] = await fetchData("/test-endpoint", "POST", {
       name: "test",

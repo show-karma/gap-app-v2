@@ -4,13 +4,13 @@ import toast from "react-hot-toast";
 import MoreActionsDropdown from "@/components/FundingPlatform/ApplicationView/MoreActionsDropdown";
 
 // Mock react-hot-toast
-jest.mock("react-hot-toast", () => ({
-  success: jest.fn(),
-  error: jest.fn(),
+vi.mock("react-hot-toast", () => ({
+  success: vi.fn(),
+  error: vi.fn(),
 }));
 
 // Mock Heroicons
-jest.mock("@heroicons/react/24/outline", () => ({
+vi.mock("@heroicons/react/24/outline", () => ({
   EllipsisHorizontalIcon: (props: any) => <svg data-testid="ellipsis-icon" {...props} />,
   LinkIcon: (props: any) => <svg data-testid="link-icon" {...props} />,
   PencilSquareIcon: (props: any) => <svg data-testid="pencil-icon" {...props} />,
@@ -18,7 +18,7 @@ jest.mock("@heroicons/react/24/outline", () => ({
 }));
 
 // Mock clipboard API - store reference to mock for assertions
-const mockWriteText = jest.fn();
+const mockWriteText = vi.fn();
 
 // Mock ResizeObserver for Radix UI
 class ResizeObserverMock {
@@ -40,7 +40,7 @@ beforeAll(() => {
   Object.defineProperty(navigator, "clipboard", {
     value: {
       writeText: mockWriteText,
-      readText: jest.fn(),
+      readText: vi.fn(),
     },
     writable: true,
     configurable: true,
@@ -50,13 +50,13 @@ beforeAll(() => {
 describe("MoreActionsDropdown", () => {
   const defaultProps = {
     referenceNumber: "APP-TEST-12345",
-    onDeleteClick: jest.fn(),
+    onDeleteClick: vi.fn(),
     canDelete: true,
     isDeleting: false,
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockWriteText.mockResolvedValue(undefined);
   });
 
@@ -121,7 +121,7 @@ describe("MoreActionsDropdown", () => {
 
     it("should render Edit Application option when canEdit is true", async () => {
       const user = userEvent.setup();
-      const onEditClick = jest.fn();
+      const onEditClick = vi.fn();
       render(<MoreActionsDropdown {...defaultProps} canEdit={true} onEditClick={onEditClick} />);
 
       await user.click(screen.getByRole("button", { name: /more actions/i }));
@@ -148,7 +148,7 @@ describe("MoreActionsDropdown", () => {
   describe("Delete Option", () => {
     it("should call onDeleteClick when Delete Application is clicked", async () => {
       const user = userEvent.setup();
-      const onDeleteClick = jest.fn();
+      const onDeleteClick = vi.fn();
       render(<MoreActionsDropdown {...defaultProps} onDeleteClick={onDeleteClick} />);
 
       await user.click(screen.getByRole("button", { name: /more actions/i }));
@@ -211,7 +211,7 @@ describe("MoreActionsDropdown", () => {
     it("should show error toast when clipboard fails", async () => {
       // Temporarily replace navigator.clipboard.writeText to simulate failure
       const originalWriteText = navigator.clipboard.writeText;
-      const failingWriteText = jest.fn().mockRejectedValue(new Error("Clipboard error"));
+      const failingWriteText = vi.fn().mockRejectedValue(new Error("Clipboard error"));
       Object.defineProperty(navigator.clipboard, "writeText", {
         value: failingWriteText,
         writable: true,
@@ -267,7 +267,7 @@ describe("MoreActionsDropdown", () => {
 
     it("should call onEditClick when Edit Application is clicked", async () => {
       const user = userEvent.setup();
-      const onEditClick = jest.fn();
+      const onEditClick = vi.fn();
       render(<MoreActionsDropdown {...defaultProps} canEdit={true} onEditClick={onEditClick} />);
 
       await user.click(screen.getByRole("button", { name: /more actions/i }));

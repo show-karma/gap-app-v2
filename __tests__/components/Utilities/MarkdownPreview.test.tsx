@@ -2,26 +2,28 @@ import { render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
 // Mock next-themes
-jest.mock("next-themes", () => ({
+vi.mock("next-themes", () => ({
   useTheme: () => ({ resolvedTheme: "light" }),
 }));
 
 // Mock CSS module
-jest.mock("@/styles/markdown.module.css", () => ({
+vi.mock("@/styles/markdown.module.css", () => ({
+  default: { wmdeMarkdown: "wmdeMarkdown-module" },
   wmdeMarkdown: "wmdeMarkdown-module",
 }));
 
 // Mock renderToHTML from utilities/markdown
-jest.mock("@/utilities/markdown", () => ({
-  renderToHTML: jest.fn((source: string) => `<p>${source}</p>`),
+vi.mock("@/utilities/markdown", () => ({
+  renderToHTML: vi.fn((source: string) => `<p>${source}</p>`),
 }));
 
 // Track whether HeavyPreview was rendered
 let heavyPreviewRendered = false;
 
 // Mock next/dynamic to return a trackable heavy preview component
-jest.mock("next/dynamic", () => {
-  return function mockDynamic() {
+vi.mock("next/dynamic", () => ({
+  __esModule: true,
+  default: () => {
     const MockHeavyPreview = (props: {
       source?: string;
       className?: string;
@@ -44,8 +46,8 @@ jest.mock("next/dynamic", () => {
       );
     };
     return MockHeavyPreview;
-  };
-});
+  },
+}));
 
 // Import after mocks
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
@@ -54,7 +56,7 @@ import { renderToHTML } from "@/utilities/markdown";
 describe("MarkdownPreview", () => {
   beforeEach(() => {
     heavyPreviewRendered = false;
-    (renderToHTML as jest.Mock).mockClear();
+    (renderToHTML as vi.Mock).mockClear();
   });
 
   describe("routing: lite vs heavy renderer", () => {
@@ -118,7 +120,7 @@ describe("MarkdownPreview", () => {
 
   describe("lite renderer output", () => {
     it("renders HTML from renderToHTML into the DOM", async () => {
-      (renderToHTML as jest.Mock).mockReturnValue("<p>Rendered <strong>markdown</strong></p>");
+      (renderToHTML as vi.Mock).mockReturnValue("<p>Rendered <strong>markdown</strong></p>");
       render(<MarkdownPreview source="Some **markdown**" />);
 
       await waitFor(() => {

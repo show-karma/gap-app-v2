@@ -154,6 +154,8 @@ export const QUERY_KEYS = {
       ] as const,
   },
   GRANTS: {
+    COMMENTS: (projectUID: string, programId: string) =>
+      ["grant-comments", projectUID, programId] as const,
     DUPLICATE_CHECK_BASE: ["duplicate-grant-check"] as const,
     DUPLICATE_CHECK: (params: {
       projectUid?: string;

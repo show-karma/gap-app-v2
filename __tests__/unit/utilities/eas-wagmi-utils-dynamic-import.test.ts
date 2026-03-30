@@ -3,40 +3,57 @@
  * using top-level imports, keeping ethers out of the shared bundle.
  */
 
-const mockJsonRpcProvider = jest.fn().mockImplementation((url: string, network: any) => ({
-  url,
-  network,
-}));
+const { mockJsonRpcProvider, mockFallbackProvider, mockBrowserProvider, mockJsonRpcSigner } =
+  vi.hoisted(() => {
+    const mockJsonRpcProvider = vi.fn();
+    const mockFallbackProvider = vi.fn();
+    const mockBrowserProvider = vi.fn();
+    const mockJsonRpcSigner = vi.fn();
+    return { mockJsonRpcProvider, mockFallbackProvider, mockBrowserProvider, mockJsonRpcSigner };
+  });
 
-const mockFallbackProvider = jest.fn().mockImplementation((providers: any[]) => ({
-  providers,
-}));
+vi.mock("ethers", () => {
+  // Create proper constructor classes that delegate to spy fns
+  class MockJsonRpcProvider {
+    constructor(...args: unknown[]) {
+      mockJsonRpcProvider(...args);
+      Object.assign(this, { url: args[0], _network: args[1] });
+    }
+  }
+  class MockFallbackProvider {
+    constructor(...args: unknown[]) {
+      mockFallbackProvider(...args);
+      Object.assign(this, { providers: args[0] });
+    }
+  }
+  class MockBrowserProvider {
+    constructor(...args: unknown[]) {
+      mockBrowserProvider(...args);
+      Object.assign(this, { transport: args[0], _network: args[1] });
+    }
+  }
+  class MockJsonRpcSigner {
+    constructor(...args: unknown[]) {
+      mockJsonRpcSigner(...args);
+      Object.assign(this, { provider: args[0], address: args[1] });
+    }
+  }
+  return {
+    JsonRpcProvider: MockJsonRpcProvider,
+    FallbackProvider: MockFallbackProvider,
+    BrowserProvider: MockBrowserProvider,
+    JsonRpcSigner: MockJsonRpcSigner,
+  };
+});
 
-const mockBrowserProvider = jest.fn().mockImplementation((transport: any, network: any) => ({
-  transport,
-  network,
-}));
-
-const mockJsonRpcSigner = jest.fn().mockImplementation((provider: any, address: string) => ({
-  provider,
-  address,
-}));
-
-jest.mock("ethers", () => ({
-  JsonRpcProvider: mockJsonRpcProvider,
-  FallbackProvider: mockFallbackProvider,
-  BrowserProvider: mockBrowserProvider,
-  JsonRpcSigner: mockJsonRpcSigner,
-}));
-
-jest.mock("wagmi", () => ({
-  usePublicClient: jest.fn().mockReturnValue(null),
-  useWalletClient: jest.fn().mockReturnValue({ data: null }),
+vi.mock("wagmi", () => ({
+  usePublicClient: vi.fn().mockReturnValue(null),
+  useWalletClient: vi.fn().mockReturnValue({ data: null }),
 }));
 
 describe("eas-wagmi-utils dynamic imports", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("publicClientToProvider", () => {

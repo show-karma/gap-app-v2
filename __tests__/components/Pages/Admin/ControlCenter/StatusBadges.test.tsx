@@ -7,7 +7,7 @@ import { MilestoneLifecycleStatus } from "@/src/features/payout-disbursement/typ
  * Mock Radix tooltip primitives so that tooltip content is always rendered
  * in the DOM (Radix tooltips require pointer events that jsdom cannot simulate).
  */
-jest.mock("@radix-ui/react-tooltip", () => ({
+vi.mock("@radix-ui/react-tooltip", () => ({
   Provider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   Root: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   Portal: ({ children }: { children: React.ReactNode }) => <>{children}</>,

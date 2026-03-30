@@ -4,12 +4,12 @@ import { fillDateRangeWithValues } from "../fillDateRangeWithValues";
 const NOW_UTC = Date.UTC(2024, 2, 15); // March 15, 2024
 
 beforeEach(() => {
-  jest.useFakeTimers();
-  jest.setSystemTime(new Date(NOW_UTC));
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date(NOW_UTC));
 });
 
 afterEach(() => {
-  jest.useRealTimers();
+  vi.useRealTimers();
 });
 
 describe("fillDateRangeWithValues", () => {

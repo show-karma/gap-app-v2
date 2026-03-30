@@ -350,6 +350,8 @@ export const INDEXER = {
     MILESTONE_INVOICES: {
       BATCH_SAVE: (grantUID: string) => `/v2/milestone-invoices/${grantUID}`,
       BY_GRANT: (grantUID: string) => `/v2/milestone-invoices/grant/${grantUID}`,
+      PRESIGNED_URL: () => `/v2/milestone-invoices/presigned`,
+      DOWNLOAD: (key: string) => `/v2/milestone-invoices/download?key=${encodeURIComponent(key)}`,
     },
   },
   PROGRAMS: {
@@ -541,6 +543,7 @@ export const INDEXER = {
     REGIONS: (idOrSlug: string) => `/v2/communities/${idOrSlug}/regions`,
     V2: {
       GET: (slug: string) => `/v2/communities/${slug}`,
+      SLUG_CHECK: (slug: string) => `/v2/communities/slug/check/${slug}`,
       GRANTS: (slug: string) => `/v2/communities/${slug}/grants`,
       STATS: (slug: string) => `/v2/communities/${slug}/stats`,
       IMPACT: (slug: string, params?: { programId?: string; projectId?: string }) => {

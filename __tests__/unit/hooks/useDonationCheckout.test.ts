@@ -10,19 +10,23 @@ import type { SupportedToken } from "@/constants/supportedTokens";
 import { useDonationCheckout } from "@/hooks/donation/useDonationCheckout";
 
 // Mock dependencies
-jest.mock("wagmi", () => ({
-  useAccount: jest.fn(),
+vi.mock("wagmi", () => ({
+  useAccount: vi.fn(),
 }));
 
-jest.mock("react-hot-toast");
+vi.mock("react-hot-toast");
 
-jest.mock("@/hooks/useDonationTransfer", () => ({
-  useDonationTransfer: jest.fn(),
+vi.mock("@/hooks/useDonationTransfer", () => ({
+  useDonationTransfer: vi.fn(),
 }));
 
-jest.mock("@/utilities/donations/errorMessages", () => ({
-  getShortErrorMessage: jest.fn((error: any) => error?.message || "Unknown error"),
-  parseDonationError: jest.fn((error: any) => ({
+import { useDonationTransfer } from "@/hooks/useDonationTransfer";
+
+const mockUseDonationTransferFn = useDonationTransfer as unknown as vi.Mock;
+
+vi.mock("@/utilities/donations/errorMessages", () => ({
+  getShortErrorMessage: vi.fn((error: any) => error?.message || "Unknown error"),
+  parseDonationError: vi.fn((error: any) => ({
     message: error?.message || "Unknown error",
     type: "unknown",
     isRecoverable: false,
@@ -30,9 +34,9 @@ jest.mock("@/utilities/donations/errorMessages", () => ({
   })),
 }));
 
-jest.mock("@/hooks/donation/useCreateDonation", () => ({
-  useCreateDonation: jest.fn(() => ({
-    mutateAsync: jest.fn().mockResolvedValue({}),
+vi.mock("@/hooks/donation/useCreateDonation", () => ({
+  useCreateDonation: vi.fn(() => ({
+    mutateAsync: vi.fn().mockResolvedValue({}),
     isPending: false,
   })),
 }));
@@ -68,25 +72,24 @@ describe("useDonationCheckout", () => {
   const mockUseDonationTransfer = {
     transfers: [],
     isExecuting: false,
-    executeDonations: jest.fn(),
-    validatePayments: jest.fn(),
+    executeDonations: vi.fn(),
+    validatePayments: vi.fn(),
     executionState: { phase: "completed" as const },
     approvalInfo: [],
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
-    (wagmi.useAccount as jest.Mock).mockReturnValue({
+    (wagmi.useAccount as vi.Mock).mockReturnValue({
       address: mockAddress,
       isConnected: true,
     });
 
-    const { useDonationTransfer } = require("@/hooks/useDonationTransfer");
-    useDonationTransfer.mockReturnValue(mockUseDonationTransfer);
+    mockUseDonationTransferFn.mockReturnValue(mockUseDonationTransfer);
 
-    (toast.error as jest.Mock).mockImplementation(() => {});
-    (toast.success as jest.Mock).mockImplementation(() => {});
+    (toast.error as vi.Mock).mockImplementation(() => {});
+    (toast.success as vi.Mock).mockImplementation(() => {});
   });
 
   describe("initialization", () => {
@@ -102,7 +105,7 @@ describe("useDonationCheckout", () => {
 
   describe("handleExecuteDonations", () => {
     it("should show error when wallet not connected", async () => {
-      (wagmi.useAccount as jest.Mock).mockReturnValue({
+      (wagmi.useAccount as vi.Mock).mockReturnValue({
         address: null,
         isConnected: false,
       });
@@ -161,9 +164,9 @@ describe("useDonationCheckout", () => {
       "USDC-10": "1000",
     };
 
-    const mockSwitchNetwork = jest.fn();
-    const mockGetFreshWalletClient = jest.fn();
-    const mockSetMissingPayouts = jest.fn();
+    const mockSwitchNetwork = vi.fn();
+    const mockGetFreshWalletClient = vi.fn();
+    const mockSetMissingPayouts = vi.fn();
 
     beforeEach(() => {
       mockSwitchNetwork.mockClear();
@@ -402,8 +405,7 @@ describe("useDonationCheckout", () => {
       mockUseDonationTransfer.executeDonations.mockResolvedValue(mockTransfers);
 
       // Mock approvals were needed
-      const { useDonationTransfer } = require("@/hooks/useDonationTransfer");
-      useDonationTransfer.mockReturnValue({
+      mockUseDonationTransferFn.mockReturnValue({
         ...mockUseDonationTransfer,
         approvalInfo: [{ needsApproval: true, tokenSymbol: "USDC" }],
       });
@@ -553,8 +555,7 @@ describe("useDonationCheckout", () => {
 
   describe("state passthrough", () => {
     it("should expose transfers from useDonationTransfer", () => {
-      const { useDonationTransfer } = require("@/hooks/useDonationTransfer");
-      useDonationTransfer.mockReturnValue({
+      mockUseDonationTransferFn.mockReturnValue({
         ...mockUseDonationTransfer,
         transfers: mockTransfers,
       });
@@ -565,8 +566,7 @@ describe("useDonationCheckout", () => {
     });
 
     it("should expose isExecuting from useDonationTransfer", () => {
-      const { useDonationTransfer } = require("@/hooks/useDonationTransfer");
-      useDonationTransfer.mockReturnValue({
+      mockUseDonationTransferFn.mockReturnValue({
         ...mockUseDonationTransfer,
         isExecuting: true,
       });
@@ -578,8 +578,7 @@ describe("useDonationCheckout", () => {
 
     it("should expose executionState from useDonationTransfer", () => {
       const executionState = { phase: "approving" as const, approvalProgress: 50 };
-      const { useDonationTransfer } = require("@/hooks/useDonationTransfer");
-      useDonationTransfer.mockReturnValue({
+      mockUseDonationTransferFn.mockReturnValue({
         ...mockUseDonationTransfer,
         executionState,
       });
@@ -593,8 +592,7 @@ describe("useDonationCheckout", () => {
       const approvalInfo = [
         { tokenSymbol: "USDC", needsApproval: true, requiredAmount: BigInt(100) },
       ];
-      const { useDonationTransfer } = require("@/hooks/useDonationTransfer");
-      useDonationTransfer.mockReturnValue({
+      mockUseDonationTransferFn.mockReturnValue({
         ...mockUseDonationTransfer,
         approvalInfo,
       });

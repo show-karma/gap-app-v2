@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 
 // Mock boring-avatars (needed by ProfilePicture)
-jest.mock("boring-avatars", () => ({
+vi.mock("boring-avatars", () => ({
   __esModule: true,
   default: ({ size, name, variant, colors }: Record<string, unknown>) => (
     <div
@@ -17,21 +17,21 @@ jest.mock("boring-avatars", () => ({
 }));
 
 // Unmock ProfilePicture so we test real fallback behavior
-jest.unmock("@/components/Utilities/ProfilePicture");
+vi.unmock("@/components/Utilities/ProfilePicture");
 
 // Mock hooks and stores used by GrantAssociation
-jest.mock("@/hooks/v2/useProjectGrants", () => ({
-  useProjectGrants: jest.fn(() => ({ grants: [] })),
+vi.mock("@/hooks/v2/useProjectGrants", () => ({
+  useProjectGrants: vi.fn(() => ({ grants: [] })),
 }));
 
-jest.mock("@/store", () => ({
-  useProjectStore: jest.fn(() => ({ project: { uid: "test-project-uid" } })),
+vi.mock("@/store", () => ({
+  useProjectStore: vi.fn(() => ({ project: { uid: "test-project-uid" } })),
 }));
 
-jest.mock("@/utilities/pages", () => ({
+vi.mock("@/utilities/pages", () => ({
   PAGES: {
     COMMUNITY: {
-      ALL_GRANTS: jest.fn(
+      ALL_GRANTS: vi.fn(
         (slug: string, programId?: string) => `/community/${slug}/grants/${programId || ""}`
       ),
     },
