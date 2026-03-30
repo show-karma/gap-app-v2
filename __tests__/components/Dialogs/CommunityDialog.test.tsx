@@ -121,7 +121,7 @@ describe("CommunityDialog", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockFetchData.mockResolvedValue([{ uid: "0xnew", chainID: 10 }, null, null, 201]);
+    mockFetchData.mockResolvedValue([{ uid: "0xnew", slug: "test-slug", chainID: 10 }, null, null, 201]);
   });
 
   describe("Rendering", () => {
@@ -271,6 +271,32 @@ describe("CommunityDialog", () => {
       await waitFor(() => {
         expect(mockToastError).toHaveBeenCalledWith(
           "A community with this slug already exists. Please choose a different slug."
+        );
+      });
+    });
+  });
+
+    it("should show error toast when response has no slug", async () => {
+      mockFetchData.mockResolvedValue([{ uid: "0xnew", chainID: 10 }, null, null, 201]);
+
+      render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
+      fireEvent.click(screen.getByText("New Community"));
+
+      fireEvent.change(screen.getByPlaceholderText('e.g. "My awesome Community"'), {
+        target: { value: "Test" },
+      });
+      fireEvent.change(screen.getByPlaceholderText('e.g. "https://example.com/image.jpg"'), {
+        target: { value: "https://img.com/a.png" },
+      });
+      fireEvent.change(screen.getByPlaceholderText('e.g. "grant-portal"'), {
+        target: { value: "test-slug" },
+      });
+
+      fireEvent.click(screen.getByText("Create Community"));
+
+      await waitFor(() => {
+        expect(mockToastError).toHaveBeenCalledWith(
+          "Community created but could not determine its URL. Check your dashboard."
         );
       });
     });

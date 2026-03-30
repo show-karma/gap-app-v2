@@ -1,11 +1,9 @@
 "use client";
 
-import type { Community } from "@show-karma/karma-gap-sdk/core/class/entities/Community";
 import { AlertTriangle } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useCallback } from "react";
 import { useDashboardAdmin } from "@/hooks/useDashboardAdmin";
-import { getCommunities } from "@/services/communities.service";
 import { CommunityHealthCard } from "./CommunityHealthCard";
 import { CommunityHealthCardSkeleton } from "./CommunityHealthCardSkeleton";
 
@@ -20,13 +18,7 @@ export function AdminSection() {
   const { communities, isLoading, isError, refetch } = useDashboardAdmin();
 
   const refreshCommunities = useCallback(async () => {
-    try {
-      refetch();
-      const result = await getCommunities();
-      return result as unknown as Community[];
-    } catch {
-      return undefined;
-    }
+    await refetch();
   }, [refetch]);
 
   return (
