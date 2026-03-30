@@ -3,7 +3,7 @@
 import { Dialog, Transition } from "@headlessui/react";
 import { ChevronRightIcon, PlusIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { Community } from "@show-karma/karma-gap-sdk";
+import { useRouter } from "next/navigation";
 import { type FC, Fragment, type ReactNode, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -13,6 +13,7 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { gapSupportedNetworks } from "@/utilities/network";
+import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { errorManager } from "../Utilities/errorManager";
 import { MarkdownEditor } from "../Utilities/MarkdownEditor";
@@ -32,6 +33,13 @@ const schema = z.object({
 
 type SchemaType = z.infer<typeof schema>;
 
+interface CreateCommunityResponse {
+  slug: string;
+  uid: string;
+}
+
+const sanitizeSlug = (slug: string) => slug.toLowerCase().replace(/[^a-z0-9-]/g, "-");
+
 type ProjectDialogProps = {
   buttonElement?: {
     text?: string;
@@ -39,8 +47,7 @@ type ProjectDialogProps = {
     iconSide?: "left" | "right";
     styleClass: string;
   };
-  createCommuninity?: Community;
-  refreshCommunities: () => Promise<Community[] | undefined>;
+  refreshCommunities: () => Promise<void>;
 };
 
 export const CommunityDialog: FC<ProjectDialogProps> = ({
@@ -50,25 +57,25 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
     text: "New Community",
     styleClass: "",
   },
-  createCommuninity,
   refreshCommunities,
 }) => {
-  const dataToUpdate = useMemo(
+  const defaultValues = useMemo(
     () => ({
-      description: createCommuninity?.details?.description || "",
-      name: createCommuninity?.details?.name || "",
-      imageURL: createCommuninity?.details?.imageURL || "",
-      slug: createCommuninity?.details?.slug || "",
+      description: "",
+      name: "",
+      imageURL: "",
+      slug: "",
     }),
-    [createCommuninity]
+    []
   );
 
   const [isOpen, setIsOpen] = useState(false);
   const [shouldResetOnOpen, setShouldResetOnOpen] = useState(true);
-  const [description, setDescription] = useState(dataToUpdate?.description || "");
+  const [description, setDescription] = useState(defaultValues?.description || "");
   const [selectedChain, setSelectedChain] = useState(gapSupportedNetworks[0].id);
 
   const { authenticated, login } = useAuth();
+  const router = useRouter();
 
   function closeModal() {
     setIsOpen(false);
@@ -87,16 +94,16 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
   } = useForm<SchemaType>({
     resolver: zodResolver(schema),
     mode: "onChange",
-    defaultValues: dataToUpdate,
+    defaultValues: defaultValues,
   });
 
   useEffect(() => {
     if (isOpen && shouldResetOnOpen) {
-      reset(dataToUpdate);
-      setDescription(dataToUpdate?.description || "");
+      reset(defaultValues);
+      setDescription(defaultValues?.description || "");
       setSelectedChain(gapSupportedNetworks[0].id);
     }
-  }, [isOpen, shouldResetOnOpen, dataToUpdate, reset, setDescription]);
+  }, [isOpen, shouldResetOnOpen, defaultValues, reset, setDescription]);
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -110,7 +117,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
 
     try {
       // Check slug availability in community namespace and auto-increment if taken
-      let slug = data.slug.toLowerCase().replace(/[^a-z0-9-]/g, "-");
+      let slug = sanitizeSlug(data.slug);
       const [slugCheck] = await fetchData(INDEXER.COMMUNITY.V2.SLUG_CHECK(slug), "GET");
       if (slugCheck && !slugCheck.available) {
         let counter = 1;
@@ -129,7 +136,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
         }
       }
 
-      const [result, error, , status] = await fetchData(
+      const [result, error, , status] = await fetchData<CreateCommunityResponse>(
         "/v2/communities",
         "POST",
         {
@@ -155,6 +162,11 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
         throw new Error(error as string);
       }
 
+      const communitySlug = result?.slug;
+      if (!communitySlug) {
+        toast.error("Community created but could not determine its URL. Check your dashboard.");
+        return;
+      }
       toast.success("Community created successfully!");
       closeModal();
       try {
@@ -162,6 +174,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
       } catch {
         // Non-critical — community was already created
       }
+      router.push(PAGES.COMMUNITY.ALL_GRANTS(communitySlug));
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       if (errorMessage.includes("already exists")) {
@@ -188,7 +201,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
         {buttonElement.iconSide === "right" && buttonElement.icon}
       </Button>
       <Transition appear show={isOpen} as={Fragment}>
-        <Dialog as="div" className="relative z-10" onClose={isLoading ? () => {} : closeModal}>
+        <Dialog as="div" className="relative z-[100]" onClose={isLoading ? () => {} : closeModal}>
           <Transition.Child
             as={Fragment}
             enter="ease-out duration-300"
@@ -227,13 +240,11 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
                   >
                     <XMarkIcon className="w-5 h-5" />
                   </button>
-                  {!createCommuninity && (
-                    <div className="mt-2">
-                      <p className="text-sm text-gray-600 dark:text-zinc-300">
-                        Fill out these details to create a new Community
-                      </p>
-                    </div>
-                  )}
+                  <div className="mt-2">
+                    <p className="text-sm text-gray-600 dark:text-zinc-300">
+                      Fill out these details to create a new Community
+                    </p>
+                  </div>
 
                   <form onSubmit={handleSubmit(onSubmit)}>
                     <div className="flex flex-col w-full px-2 py-4 gap-1 sm:px-0">
