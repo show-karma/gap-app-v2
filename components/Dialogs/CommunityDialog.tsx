@@ -4,6 +4,7 @@ import { Dialog, Transition } from "@headlessui/react";
 import { ChevronRightIcon, PlusIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Community } from "@show-karma/karma-gap-sdk";
+import { useRouter } from "next/navigation";
 import { type FC, Fragment, type ReactNode, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -12,6 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 import fetchData from "@/utilities/fetchData";
 import { MESSAGES } from "@/utilities/messages";
 import { gapSupportedNetworks } from "@/utilities/network";
+import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { errorManager } from "../Utilities/errorManager";
 import { MarkdownEditor } from "../Utilities/MarkdownEditor";
@@ -68,6 +70,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
   const [selectedChain, setSelectedChain] = useState(gapSupportedNetworks[0].id);
 
   const { authenticated, login } = useAuth();
+  const router = useRouter();
 
   function closeModal() {
     setIsOpen(false);
@@ -134,6 +137,8 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
         throw new Error(error as string);
       }
 
+      const communitySlug =
+        (result as any)?.slug || data.slug.toLowerCase().replace(/[^a-z0-9-]/g, "-");
       toast.success("Community created successfully!");
       closeModal();
       try {
@@ -141,6 +146,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
       } catch {
         // Non-critical — community was already created
       }
+      router.push(PAGES.COMMUNITY.ALL_GRANTS(communitySlug));
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       if (errorMessage.includes("already exists")) {
@@ -191,7 +197,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle transition-all">
+                <Dialog.Panel className="w-full max-w-2xl max-h-[90vh] transform overflow-y-auto rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle transition-all">
                   <Dialog.Title
                     as="h3"
                     className="text-xl font-bold leading-6 text-gray-900 dark:text-zinc-100"
