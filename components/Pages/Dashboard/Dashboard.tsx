@@ -123,7 +123,7 @@ export function Dashboard() {
           refetch={refetchProjects}
         />
         {showReviews ? <ReviewsSection /> : null}
-        {showAdmin ? <AdminSection /> : null}
+        <AdminSection />
         {showSuperAdmin ? <SuperAdminSection /> : null}
         {showEmptyState ? <DashboardEmptyState /> : null}
       </div>
