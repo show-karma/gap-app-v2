@@ -1,6 +1,6 @@
 ---
 name: qa-executor
-description: Execute a QA test plan using agent-browser against a preview deployment. Uses Privy test accounts (fixed OTP) for authenticated scenarios. Produces a strict pass/fail report with evidence.
+description: Execute a QA test plan using agent-browser against localhost:3000. Uses Privy test accounts (fixed OTP) for authenticated scenarios. Always tests locally, never against preview URLs.
 allowed-tools: Bash(agent-browser:*), Bash(curl:*), Bash(mkdir:*), Bash(cat:*), Bash(sleep:*)
 ---
 
@@ -13,7 +13,7 @@ Execute the QA plan from Stage 1. You are a strict, rigid QA engineer. If expect
 | Parameter | Source |
 |-----------|--------|
 | QA Plan | `qa-plan.md` in workspace root (artifact from Stage 1) |
-| Target URL | `$PREVIEW_URL` env var |
+| Target URL | `http://localhost:3000` (always local — never use preview/vercel URLs) |
 | PR number | `$PR_NUMBER` env var |
 | Test email | `$QA_TEST_EMAIL` env var (Privy test account) |
 | Test OTP | `$QA_TEST_OTP` env var (fixed OTP from Privy dashboard) |
@@ -34,7 +34,7 @@ Privy test accounts use a fixed OTP code that works on any domain (including Ver
 
 ```bash
 # 1. Open the target URL
-agent-browser --session qa-auth open "$PREVIEW_URL"
+agent-browser --session qa-auth open "http://localhost:3000"
 agent-browser --session qa-auth wait --load networkidle
 
 # 2. Find and click the login/connect button
@@ -81,7 +81,7 @@ Read `qa-plan.md`. Parse both tables:
 Initialize a session without auth:
 
 ```bash
-agent-browser --session qa-pub open "$PREVIEW_URL"
+agent-browser --session qa-pub open "http://localhost:3000"
 agent-browser --session qa-pub wait --load networkidle
 ```
 
@@ -89,7 +89,7 @@ For each public scenario (P1, P2...), in risk-priority order:
 
 **a. Navigate:**
 ```bash
-agent-browser --session qa-pub open "$PREVIEW_URL/{path}"
+agent-browser --session qa-pub open "http://localhost:3000/{path}"
 agent-browser --session qa-pub wait --load networkidle
 ```
 
