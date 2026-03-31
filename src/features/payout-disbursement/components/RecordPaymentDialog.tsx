@@ -36,12 +36,20 @@ const INITIAL_PAYMENT_KEY = "__initial_payment__";
 
 function getUsdcAddress(chainID: number): string {
   const addresses = TOKEN_ADDRESSES.usdc as Record<number, string>;
-  return addresses[chainID] ?? TOKEN_ADDRESSES.usdc[1];
+  if (!addresses[chainID]) {
+    return TOKEN_ADDRESSES.usdc[1];
+  }
+  return addresses[chainID];
 }
 
 function getEffectiveChainID(chainID: number): number {
   const addresses = TOKEN_ADDRESSES.usdc as Record<number, string>;
   return addresses[chainID] ? chainID : 1;
+}
+
+function isChainSupported(chainID: number): boolean {
+  const addresses = TOKEN_ADDRESSES.usdc as Record<number, string>;
+  return !!addresses[chainID];
 }
 
 interface MilestoneOption {
@@ -70,12 +78,13 @@ function RecordPaymentDialogInner({
   const [notes, setNotes] = useState("");
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
 
+  const chainSupported = isChainSupported(chainID);
+
   const recordPayment = useRecordPayment({
     onSuccess: () => {
       toast.success("Payment recorded successfully");
-      resetForm();
-      onClose();
       onSuccess?.();
+      onClose();
     },
     onError: (error) => {
       toast.error(error.message || "Failed to record payment");
@@ -126,7 +135,7 @@ function RecordPaymentDialogInner({
 
   const todayLocal = useMemo(() => {
     const d = new Date();
-    return d.toISOString().split("T")[0];
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   }, []);
 
   const isValid =
@@ -213,6 +222,15 @@ function RecordPaymentDialogInner({
             Record a historical payment that was made outside the system.
           </DialogDescription>
         </DialogHeader>
+
+        {!chainSupported && (
+          <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 dark:border-amber-800/40 dark:bg-amber-900/10">
+            <p className="text-xs text-amber-700 dark:text-amber-300">
+              USDC is not configured for this grant's chain. Payment will be recorded as Ethereum
+              mainnet USDC.
+            </p>
+          </div>
+        )}
 
         <div className="space-y-4 py-2">
           {/* Payment Type */}

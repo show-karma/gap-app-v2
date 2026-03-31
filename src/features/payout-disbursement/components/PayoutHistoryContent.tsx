@@ -263,8 +263,16 @@ export function PayoutHistoryContent({
   );
 }
 
+/**
+ * Sentinel value set by POST /v2/payouts/record-payment for manual/historical payments.
+ * Must match the backend constant in payout-disbursement.request.mapper.ts.
+ */
 const HISTORICAL_SAFE_ADDRESS = "HISTORICAL";
 
+/**
+ * Detects payments recorded manually (not executed via Safe multisig).
+ * Backend sets safeAddress to "HISTORICAL" and safeTransactionHash to "historical-{uuid}".
+ */
 function isHistoricalPayment(disbursement: PayoutDisbursement): boolean {
   return (
     disbursement.safeAddress === HISTORICAL_SAFE_ADDRESS ||
