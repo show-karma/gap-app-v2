@@ -77,7 +77,7 @@ jobs:
             if (!isManual) {
               const reviewComment = [...comments].reverse().find(c =>
                 (c.user.login === 'github-actions[bot]' || c.user.login.includes('claude') || c.user.login.includes('karma')) &&
-                (c.body.includes('**APPROVE**') || c.body.includes('**REQUEST CHANGES**') || c.body.includes('**APPROVE WITH SUGGESTIONS**'))
+                (c.body.includes('APPROVE') || c.body.includes('REQUEST CHANGES'))
               );
 
               if (!reviewComment) {
@@ -87,7 +87,7 @@ jobs:
               }
 
               const verdict = reviewComment.body;
-              const isApproved = verdict.includes('✅ **APPROVE**') || verdict.includes('⚠️ **APPROVE WITH SUGGESTIONS**');
+              const isApproved = verdict.includes('✅') && (verdict.includes('APPROVE') && !verdict.includes('REQUEST CHANGES'));
               if (!isApproved) {
                 console.log('Review verdict is REQUEST CHANGES — skipping QA');
                 core.setOutput('should_run', 'false');
