@@ -736,6 +736,7 @@ export function ProjectDetailsSidebar({
           chainID={grant.grantChainId}
           milestoneAllocations={milestoneAllocations}
           milestoneInvoices={milestoneInvoices}
+          todayLocal={todayLocal}
           onSuccess={onConfigSuccess}
         />
       )}

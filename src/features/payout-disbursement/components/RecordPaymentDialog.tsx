@@ -28,6 +28,7 @@ interface RecordPaymentDialogProps {
   chainID: number;
   milestoneAllocations?: MilestoneAllocation[] | null;
   milestoneInvoices?: CommunityPayoutInvoiceInfo[];
+  todayLocal: string;
   onSuccess?: () => void;
 }
 
@@ -70,6 +71,7 @@ function RecordPaymentDialogInner({
   chainID,
   milestoneAllocations,
   milestoneInvoices,
+  todayLocal,
   onSuccess,
 }: RecordPaymentDialogProps) {
   const [amount, setAmount] = useState("");
@@ -131,11 +133,6 @@ function RecordPaymentDialogInner({
         return without.includes(key) ? without.filter((k) => k !== key) : [...without, key];
       });
     }
-  }, []);
-
-  const todayLocal = useMemo(() => {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   }, []);
 
   const isValid =
