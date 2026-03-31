@@ -1,6 +1,6 @@
 "use client";
 
-import { BanknoteArrowDown, Rocket, Users } from "lucide-react";
+import { BanknoteArrowDown, Building2, Rocket, Users } from "lucide-react";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/src/components/navigation/Link";
@@ -13,7 +13,7 @@ const ProjectDialog = dynamic(
 
 export function DashboardEmptyState() {
   return (
-    <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
       <div className="flex flex-col items-center rounded-xl border border-border p-6 text-center">
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
           <Rocket className="h-6 w-6 text-muted-foreground" />
@@ -30,6 +30,19 @@ export function DashboardEmptyState() {
             }}
           />
         </div>
+      </div>
+
+      <div className="flex flex-col items-center rounded-xl border border-border p-6 text-center">
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+          <Building2 className="h-6 w-6 text-muted-foreground" />
+        </div>
+        <h2 className="mt-4 text-lg font-semibold text-foreground">Run a funding program</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Create a community and launch your first program for free
+        </p>
+        <Button asChild className="mt-4">
+          <Link href="/funding-map/add-program">Get started free</Link>
+        </Button>
       </div>
 
       <div className="flex flex-col items-center rounded-xl border border-border p-6 text-center">
