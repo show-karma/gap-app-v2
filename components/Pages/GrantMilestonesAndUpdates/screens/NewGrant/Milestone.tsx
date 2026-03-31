@@ -14,6 +14,7 @@ import { DatePicker } from "@/components/Utilities/DatePicker";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { formatDate } from "@/utilities/formatDate";
+import { formatMilestoneTitle } from "@/utilities/formatMilestoneTitle";
 import { useGrantFormStore } from "./store";
 
 interface MilestoneProps {
@@ -341,7 +342,9 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
       <div className="flex w-full flex-col gap-2" data-color-mode="light">
         <div className="flex w-full  flex-row items-center justify-between gap-6">
           <div className="flex flex-col gap-2">
-            <h3 className="text-lg font-bold">{currentMilestone.title}</h3>
+            <h3 className="text-lg font-bold">
+              {formatMilestoneTitle(index, currentMilestone.title)}
+            </h3>
             <p>
               {currentMilestone.startsAt ? `${formatDate(currentMilestone.startsAt)} - ` : null}
               {formatDate(currentMilestone.endsAt)}
