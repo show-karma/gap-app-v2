@@ -111,6 +111,32 @@ jobs:
               console.log('Manual trigger — skipping verdict check');
             }
 
+            // --- Set pending commit status + post progress comment ---
+            await github.rest.repos.createCommitStatus({
+              owner, repo, sha: headSha,
+              state: 'pending',
+              description: 'QA Pipeline running — do not merge',
+              context: 'qa-pipeline',
+              target_url: `https://github.com/${owner}/${repo}/actions/runs/${process.env.GITHUB_RUN_ID}`
+            });
+
+            // Post initial progress comment
+            await github.rest.issues.createComment({
+              owner, repo, issue_number: prNumber,
+              body: [
+                '## QA Pipeline',
+                '',
+                '| Stage | Status |',
+                '|-------|--------|',
+                '| QA Plan | ⏳ Running... |',
+                '| QA Execution | ⏳ Waiting |',
+                '| Dogfood | ⏳ Waiting |',
+                '| Verdict | ⏳ Waiting |',
+                '',
+                `[View workflow run](https://github.com/${owner}/${repo}/actions/runs/${process.env.GITHUB_RUN_ID})`
+              ].join('\n')
+            });
+
             core.setOutput('should_run', 'true');
 
   qa-plan:
@@ -157,6 +183,38 @@ jobs:
           path: qa-plan.md
           retention-days: 7
           if-no-files-found: ignore
+
+      - name: Update progress comment
+        if: always()
+        uses: actions/github-script@v7
+        env:
+          PR_NUMBER: ${{ needs.gate-check.outputs.pr_number }}
+          PLAN_RESULT: ${{ job.status }}
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const prNumber = parseInt(process.env.PR_NUMBER, 10);
+            const planOk = process.env.PLAN_RESULT === 'success';
+            const { data: comments } = await github.rest.issues.listComments({ owner, repo, issue_number: prNumber, per_page: 100 });
+            const progressComment = [...comments].reverse().find(c => c.body.includes('## QA Pipeline') && c.body.includes('QA Plan'));
+            if (progressComment) {
+              await github.rest.issues.updateComment({
+                owner, repo, comment_id: progressComment.id,
+                body: [
+                  '## QA Pipeline',
+                  '',
+                  '| Stage | Status |',
+                  '|-------|--------|',
+                  `| QA Plan | ${planOk ? '✅ Done' : '❌ Failed'} |`,
+                  '| QA Execution | ⏳ Running... |',
+                  '| Dogfood | ⏳ Waiting |',
+                  '| Verdict | ⏳ Waiting |',
+                  '',
+                  `[View workflow run](https://github.com/${owner}/${repo}/actions/runs/${process.env.GITHUB_RUN_ID})`
+                ].join('\n')
+              });
+            }
 
   qa-execution:
     needs: [gate-check, qa-plan]
@@ -248,6 +306,38 @@ jobs:
             qa-results.json
           retention-days: 7
           if-no-files-found: ignore
+
+      - name: Update progress comment
+        if: always()
+        uses: actions/github-script@v7
+        env:
+          PR_NUMBER: ${{ needs.gate-check.outputs.pr_number }}
+          EXEC_RESULT: ${{ job.status }}
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const prNumber = parseInt(process.env.PR_NUMBER, 10);
+            const execOk = process.env.EXEC_RESULT === 'success';
+            const { data: comments } = await github.rest.issues.listComments({ owner, repo, issue_number: prNumber, per_page: 100 });
+            const progressComment = [...comments].reverse().find(c => c.body.includes('## QA Pipeline') && c.body.includes('QA Plan'));
+            if (progressComment) {
+              await github.rest.issues.updateComment({
+                owner, repo, comment_id: progressComment.id,
+                body: [
+                  '## QA Pipeline',
+                  '',
+                  '| Stage | Status |',
+                  '|-------|--------|',
+                  '| QA Plan | ✅ Done |',
+                  `| QA Execution | ${execOk ? '✅ Done' : '❌ Failed'} |`,
+                  '| Dogfood | ⏳ Running... |',
+                  '| Verdict | ⏳ Waiting |',
+                  '',
+                  `[View workflow run](https://github.com/${owner}/${repo}/actions/runs/${process.env.GITHUB_RUN_ID})`
+                ].join('\n')
+              });
+            }
 
   dogfood:
     needs: [gate-check, qa-execution]
@@ -378,6 +468,38 @@ jobs:
           retention-days: 7
           if-no-files-found: ignore
 
+      - name: Update progress comment
+        if: always()
+        uses: actions/github-script@v7
+        env:
+          PR_NUMBER: ${{ needs.gate-check.outputs.pr_number }}
+          DOGFOOD_RESULT: ${{ job.status }}
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const prNumber = parseInt(process.env.PR_NUMBER, 10);
+            const dogfoodOk = process.env.DOGFOOD_RESULT === 'success';
+            const { data: comments } = await github.rest.issues.listComments({ owner, repo, issue_number: prNumber, per_page: 100 });
+            const progressComment = [...comments].reverse().find(c => c.body.includes('## QA Pipeline') && c.body.includes('QA Plan'));
+            if (progressComment) {
+              await github.rest.issues.updateComment({
+                owner, repo, comment_id: progressComment.id,
+                body: [
+                  '## QA Pipeline',
+                  '',
+                  '| Stage | Status |',
+                  '|-------|--------|',
+                  '| QA Plan | ✅ Done |',
+                  '| QA Execution | ✅ Done |',
+                  `| Dogfood | ${dogfoodOk ? '✅ Done' : '❌ Failed'} |`,
+                  '| Verdict | ⏳ Evaluating... |',
+                  '',
+                  `[View workflow run](https://github.com/${owner}/${repo}/actions/runs/${process.env.GITHUB_RUN_ID})`
+                ].join('\n')
+              });
+            }
+
   verdict:
     needs: [gate-check, qa-execution, dogfood]
     if: always() && needs.gate-check.outputs.should_run == 'true'
@@ -400,6 +522,7 @@ jobs:
         uses: actions/github-script@v7
         env:
           HEAD_SHA: ${{ needs.gate-check.outputs.head_sha }}
+          PR_NUMBER: ${{ needs.gate-check.outputs.pr_number }}
           RUN_ID: ${{ github.run_id }}
         with:
           script: |
@@ -446,6 +569,34 @@ jobs:
               context: 'qa-pipeline',
               target_url: `https://github.com/${owner}/${repo}/actions/runs/${process.env.RUN_ID}`
             });
+
+            // Update progress comment with final verdict
+            const prNumber = parseInt(process.env.PR_NUMBER, 10);
+            const { data: comments } = await github.rest.issues.listComments({
+              owner, repo, issue_number: prNumber, per_page: 100
+            });
+            const progressComment = [...comments].reverse().find(c =>
+              c.body.includes('## QA Pipeline') && c.body.includes('QA Plan')
+            );
+            if (progressComment) {
+              const verdictIcon = hasBlockingIssues ? '❌' : '✅';
+              const verdictText = hasBlockingIssues ? `FAIL — ${description}` : 'PASS — no blocking issues';
+              await github.rest.issues.updateComment({
+                owner, repo, comment_id: progressComment.id,
+                body: [
+                  '## QA Pipeline',
+                  '',
+                  '| Stage | Status |',
+                  '|-------|--------|',
+                  '| QA Plan | ✅ Done |',
+                  '| QA Execution | ✅ Done |',
+                  '| Dogfood | ✅ Done |',
+                  `| **Verdict** | **${verdictIcon} ${verdictText}** |`,
+                  '',
+                  `[View workflow run](https://github.com/${owner}/${repo}/actions/runs/${process.env.RUN_ID})`
+                ].join('\n')
+              });
+            }
 
             if (hasBlockingIssues) {
               core.setFailed(`QA Pipeline FAILED: ${description}`);
