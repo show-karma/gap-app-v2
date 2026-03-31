@@ -181,7 +181,7 @@ jobs:
 
       - name: Generate QA Plan
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           PR_NUMBER: ${{ needs.gate-check.outputs.pr_number }}
           PREVIEW_URL: ${{ needs.gate-check.outputs.deployment_url }}
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
@@ -231,7 +231,7 @@ jobs:
 
       - name: Execute QA Plan
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           PR_NUMBER: ${{ needs.gate-check.outputs.pr_number }}
           PREVIEW_URL: ${{ needs.gate-check.outputs.deployment_url }}
           QA_TEST_EMAIL: ${{ secrets.QA_TEST_EMAIL }}
@@ -287,7 +287,7 @@ jobs:
 
       - name: Run Dogfood Exploration
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           PR_NUMBER: ${{ needs.gate-check.outputs.pr_number }}
           PREVIEW_URL: ${{ needs.gate-check.outputs.deployment_url }}
           QA_TEST_EMAIL: ${{ secrets.QA_TEST_EMAIL }}
