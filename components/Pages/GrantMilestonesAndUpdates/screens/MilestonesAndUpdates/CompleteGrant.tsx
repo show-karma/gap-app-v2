@@ -251,12 +251,15 @@ export const GrantCompletion: FC = () => {
           );
         });
     } catch (error: any) {
-      errorManager(
-        MESSAGES.GRANT.MARK_AS_COMPLETE.ERROR,
-        error,
-        { grantUID: grant?.uid, address },
-        { error: MESSAGES.GRANT.MARK_AS_COMPLETE.ERROR }
-      );
+      if (error?.message?.includes("User rejected") || error?.code === 4001) {
+        showError("Grant completion cancelled");
+      } else {
+        showError(MESSAGES.GRANT.MARK_AS_COMPLETE.ERROR);
+        errorManager(MESSAGES.GRANT.MARK_AS_COMPLETE.ERROR, error, {
+          grantUID: grant?.uid,
+          address,
+        });
+      }
     } finally {
       setIsStepper(false);
     }
