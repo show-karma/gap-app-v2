@@ -297,15 +297,46 @@ jobs:
           claude --print --dangerously-skip-permissions \
             "You are a strict senior QA engineer doing exploratory dogfood testing.
             PR number: $PR_NUMBER. Preview URL: $PREVIEW_URL.
+
             1. Read qa-plan.md (if available) to understand what areas changed.
-            2. Find and read the dogfood skill SKILL.md (search for it in the repo).
-            3. Run BROADER exploratory testing around the changed feature areas — both public AND authenticated pages.
-            4. For authenticated pages: login using the Privy test account (email from QA_TEST_EMAIL env var, OTP from QA_TEST_OTP env var). Save auth state and reuse.
-            5. Follow the dogfood workflow: Initialize, Authenticate, Orient, Explore, Document.
-            6. Find 5-10 well-documented issues with full repro evidence.
-            Post the results as a comment on PR #$PR_NUMBER using gh pr comment.
-            Save full report to dogfood-output/report.md.
-            Save summary to dogfood-results.json with structure: {total:N,critical:N,high:N,medium:N,low:N,blocking:bool}
+            2. Run git diff origin/main...HEAD --name-only to know exactly which files this PR changed.
+            3. Find and read the dogfood skill SKILL.md (search for it in the repo).
+            4. Run BROADER exploratory testing around the changed feature areas — both public AND authenticated pages.
+            5. For authenticated pages: login using the Privy test account (email from QA_TEST_EMAIL env var, OTP from QA_TEST_OTP env var). Save auth state and reuse.
+            6. Follow the dogfood workflow: Initialize, Authenticate, Orient, Explore, Document.
+            7. Find 5-10 well-documented issues with full repro evidence.
+
+            CRITICAL — CLASSIFY EVERY ISSUE:
+            For each issue found, classify it as either:
+            - **PR-caused**: The issue is in code/pages that this PR changed, or is a direct consequence of the PR changes (e.g., broken test, missing state, regression).
+            - **Pre-existing**: The issue exists on the main branch too — it is NOT caused by this PR. These are bugs that were already there.
+
+            To determine: check if the affected file/component appears in the git diff. If not, it is pre-existing.
+
+            ACTIONS:
+            - PR-caused issues: Include in the PR comment. These block merge if Critical/High.
+            - Pre-existing issues: Create a GitHub issue for each using 'gh issue create --title \"[QA] <title>\" --body \"<description>\" --label bug'. Do NOT include these in the blocking verdict.
+
+            Post the results as a comment on PR #$PR_NUMBER using gh pr comment. Format:
+
+            ## Dogfood (3/3)
+
+            **PR-caused issues**: X found (Y critical, Z high)
+            **Pre-existing issues**: N found (created as GitHub issues)
+
+            ### PR-Caused (blocks merge if Critical/High)
+            | # | Issue | Severity | Category |
+            |---|-------|----------|----------|
+
+            ### Pre-existing (filed as issues)
+            | # | Issue | Severity | GitHub Issue |
+            |---|-------|----------|-------------|
+
+            **Verdict**: PASS or FAIL (based on PR-caused only)
+
+            Save summary to dogfood-results.json. The 'critical' and 'high' counts must ONLY include PR-caused issues, NOT pre-existing ones:
+            {\"total\":N,\"critical\":N,\"high\":N,\"medium\":N,\"low\":N,\"preexisting\":N,\"blocking\":bool}
+
             Be strict. Be thorough. No optimism."
         timeout-minutes: 55
 
