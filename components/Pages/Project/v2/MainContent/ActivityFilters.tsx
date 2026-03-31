@@ -9,10 +9,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import type { MilestoneStatusFilter } from "@/services/milestone-status-filter.service";
+import { MILESTONE_STATUS_OPTIONS } from "@/services/milestone-status-filter.service";
 import type { ActivityFilterType, SortOption } from "@/types/v2/project-profile.types";
 import { ACTIVITY_FILTER_OPTIONS } from "@/types/v2/project-profile.types";
 import { cn } from "@/utilities/tailwind";
 
+export type { MilestoneStatusFilter } from "@/services/milestone-status-filter.service";
 // Re-export types for backward compatibility
 export type { ActivityFilterType, SortOption } from "@/types/v2/project-profile.types";
 
@@ -24,6 +27,8 @@ interface ActivityFiltersProps {
   counts?: Partial<Record<ActivityFilterType, number>>;
   milestonesCount?: number;
   completedCount?: number;
+  milestoneStatusFilter?: MilestoneStatusFilter;
+  onMilestoneStatusChange?: (status: MilestoneStatusFilter) => void;
   className?: string;
 }
 
@@ -53,6 +58,8 @@ export function ActivityFilters({
   counts = {},
   milestonesCount = 0,
   completedCount = 0,
+  milestoneStatusFilter,
+  onMilestoneStatusChange,
   className,
 }: ActivityFiltersProps) {
   const filterOptions = ACTIVITY_FILTER_OPTIONS.filter((option) =>
@@ -65,6 +72,13 @@ export function ActivityFilters({
   });
 
   const totalCount = Object.values(counts).reduce((sum, c) => sum + (c || 0), 0);
+
+  // Show milestone status filter when milestones are visible:
+  // either no filter is active (All) or milestones filter is explicitly active
+  const showMilestoneStatusFilter =
+    milestoneStatusFilter !== undefined &&
+    onMilestoneStatusChange !== undefined &&
+    (activeFilters.length === 0 || activeFilters.includes("milestones"));
 
   return (
     <div className={cn("flex flex-col gap-4", className)} data-testid="activity-filters">
@@ -162,22 +176,48 @@ export function ActivityFilters({
           })}
         </div>
 
-        {/* Sort Dropdown */}
-        {sortBy && onSortChange && (
-          <Select value={sortBy} onValueChange={(value) => onSortChange(value as SortOption)}>
-            <SelectTrigger className="w-[140px]" data-testid="sort-select">
-              <SelectValue placeholder="Sort by" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="newest" data-testid="sort-newest">
-                Newest first
-              </SelectItem>
-              <SelectItem value="oldest" data-testid="sort-oldest">
-                Oldest first
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        )}
+        {/* Right-side controls: milestone status filter + sort */}
+        <div className="flex flex-row items-center gap-2">
+          {/* Milestone Status Filter */}
+          {showMilestoneStatusFilter && (
+            <Select
+              value={milestoneStatusFilter}
+              onValueChange={(value) => onMilestoneStatusChange(value as MilestoneStatusFilter)}
+            >
+              <SelectTrigger className="w-[150px]" data-testid="milestone-status-filter">
+                <SelectValue placeholder="All statuses" />
+              </SelectTrigger>
+              <SelectContent>
+                {MILESTONE_STATUS_OPTIONS.map((option) => (
+                  <SelectItem
+                    key={option.value}
+                    value={option.value}
+                    data-testid={`milestone-status-${option.value}`}
+                  >
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
+          {/* Sort Dropdown */}
+          {sortBy && onSortChange && (
+            <Select value={sortBy} onValueChange={(value) => onSortChange(value as SortOption)}>
+              <SelectTrigger className="w-[140px]" data-testid="sort-select">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest" data-testid="sort-newest">
+                  Newest first
+                </SelectItem>
+                <SelectItem value="oldest" data-testid="sort-oldest">
+                  Oldest first
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+        </div>
       </div>
     </div>
   );

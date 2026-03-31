@@ -3,6 +3,7 @@
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useMemo } from "react";
 import { useProjectProfile } from "@/hooks/v2/useProjectProfile";
+import type { MilestoneStatusFilter } from "@/services/milestone-status-filter.service";
 import { getActivityFilterType } from "@/services/project-profile.service";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { ActivityFeed } from "../MainContent/ActivityFeed";
@@ -44,6 +45,15 @@ export function UpdatesContent({ className }: UpdatesContentProps) {
     return filterParam.split(",") as ActivityFilterType[];
   }, [searchParams]);
 
+  // Read milestone status filter from URL
+  const milestoneStatusFilter = useMemo(() => {
+    const statusParam = searchParams.get("milestoneStatus");
+    if (statusParam === "pending" || statusParam === "completed" || statusParam === "verified") {
+      return statusParam;
+    }
+    return "all" as MilestoneStatusFilter;
+  }, [searchParams]);
+
   // Update URL when filters change
   const updateURL = useCallback(
     (newFilters: ActivityFilterType[]) => {
@@ -57,6 +67,21 @@ export function UpdatesContent({ className }: UpdatesContentProps) {
       }
       params.delete("sort");
 
+      const newURL = params.toString() ? `?${params.toString()}` : window.location.pathname;
+      router.replace(newURL, { scroll: false });
+    },
+    [searchParams, router]
+  );
+
+  // Update URL when milestone status changes
+  const handleMilestoneStatusChange = useCallback(
+    (status: MilestoneStatusFilter) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (status === "all") {
+        params.delete("milestoneStatus");
+      } else {
+        params.set("milestoneStatus", status);
+      }
       const newURL = params.toString() ? `?${params.toString()}` : window.location.pathname;
       router.replace(newURL, { scroll: false });
     },
@@ -85,6 +110,8 @@ export function UpdatesContent({ className }: UpdatesContentProps) {
         counts={counts}
         milestonesCount={milestonesCount}
         completedCount={completedCount}
+        milestoneStatusFilter={milestoneStatusFilter}
+        onMilestoneStatusChange={handleMilestoneStatusChange}
       />
 
       {/* Activity Feed with Suspense boundary */}
@@ -97,6 +124,7 @@ export function UpdatesContent({ className }: UpdatesContentProps) {
               milestones={allUpdates}
               isAuthorized={isAuthorized}
               activeFilters={activeFilters}
+              milestoneStatusFilter={milestoneStatusFilter}
             />
           </Suspense>
         )}

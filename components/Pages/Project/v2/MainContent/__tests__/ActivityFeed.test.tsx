@@ -6,9 +6,11 @@ vi.mock("next/navigation", () => ({
   useParams: () => ({ projectId: "test-project" }),
 }));
 
-// Mock ActivityCard to avoid complex import chain
+// Mock ActivityCard to avoid complex import chain - renders title for test assertions
 vi.mock("@/components/Shared/ActivityCard", () => ({
-  ActivityCard: () => <div data-testid="activity-card" />,
+  ActivityCard: ({ activity }: { activity: { data?: { title?: string } } }) => (
+    <div data-testid="activity-card">{activity?.data?.title}</div>
+  ),
 }));
 
 // Mock EthereumAddressToENSAvatar
@@ -220,5 +222,126 @@ describe("ActivityFeed - Grant Title Display", () => {
 
     expect(screen.getByText("Grant approved")).toBeInTheDocument();
     expect(screen.queryByTestId("grant-title")).not.toBeInTheDocument();
+  });
+});
+
+describe("ActivityFeed - Milestone Status Filtering", () => {
+  const createMilestone = (
+    type: UnifiedMilestone["type"],
+    overrides: Partial<UnifiedMilestone> = {}
+  ): UnifiedMilestone => ({
+    uid: `test-${type}-${Math.random()}`,
+    type,
+    title: `Test ${type}`,
+    description: "Test description",
+    completed: false,
+    createdAt: new Date().toISOString(),
+    chainID: 1,
+    refUID: "0xref1",
+    source: {},
+    ...overrides,
+  });
+
+  const pendingMilestone = createMilestone("milestone", {
+    uid: "pending-ms",
+    title: "Pending Milestone",
+    completed: false,
+    source: {},
+  });
+
+  const completedMilestone = createMilestone("grant", {
+    uid: "completed-ms",
+    title: "Completed Milestone",
+    completed: { createdAt: "2024-01-01", data: { reason: "Done" } },
+    source: {
+      grantMilestone: {
+        milestone: { uid: "m1", chainID: 1, title: "Completed", verified: [] },
+        grant: { uid: "g1", chainID: 1 },
+      },
+    },
+  });
+
+  const verifiedMilestone = createMilestone("grant", {
+    uid: "verified-ms",
+    title: "Verified Milestone",
+    completed: { createdAt: "2024-01-01", data: { reason: "Done" } },
+    source: {
+      grantMilestone: {
+        milestone: {
+          uid: "m2",
+          chainID: 1,
+          title: "Verified",
+          verified: [{ uid: "v1", attester: "0xverifier", createdAt: "2024-01-02" }],
+        },
+        grant: { uid: "g1", chainID: 1 },
+      },
+    },
+  });
+
+  const updateItem = createMilestone("grant_update", {
+    uid: "update-item",
+    title: "Grant Update Item",
+  });
+
+  const allItems = [pendingMilestone, completedMilestone, verifiedMilestone, updateItem];
+
+  it("shows all items when milestoneStatusFilter is 'all'", () => {
+    render(<ActivityFeed milestones={allItems} milestoneStatusFilter="all" />);
+
+    const items = screen.getAllByTestId("activity-item");
+    expect(items).toHaveLength(4);
+  });
+
+  it("filters to only pending milestones (plus non-milestone items) when status is 'pending'", () => {
+    render(<ActivityFeed milestones={allItems} milestoneStatusFilter="pending" />);
+
+    const items = screen.getAllByTestId("activity-item");
+    // pending milestone + update item (non-milestone passes through)
+    expect(items).toHaveLength(2);
+    expect(screen.getByText("Pending Milestone")).toBeInTheDocument();
+    expect(screen.getByText("Grant Update Item")).toBeInTheDocument();
+  });
+
+  it("filters to only completed milestones (plus non-milestone items) when status is 'completed'", () => {
+    render(<ActivityFeed milestones={allItems} milestoneStatusFilter="completed" />);
+
+    const items = screen.getAllByTestId("activity-item");
+    // completed milestone + update item
+    expect(items).toHaveLength(2);
+    expect(screen.getByText("Completed Milestone")).toBeInTheDocument();
+    expect(screen.getByText("Grant Update Item")).toBeInTheDocument();
+  });
+
+  it("filters to only verified milestones (plus non-milestone items) when status is 'verified'", () => {
+    render(<ActivityFeed milestones={allItems} milestoneStatusFilter="verified" />);
+
+    const items = screen.getAllByTestId("activity-item");
+    // verified milestone + update item
+    expect(items).toHaveLength(2);
+    expect(screen.getByText("Verified Milestone")).toBeInTheDocument();
+    expect(screen.getByText("Grant Update Item")).toBeInTheDocument();
+  });
+
+  it("shows empty state when no items match the milestone status filter", () => {
+    const milestonesOnly = [pendingMilestone];
+    render(<ActivityFeed milestones={milestonesOnly} milestoneStatusFilter="verified" />);
+
+    expect(screen.getByTestId("activity-feed-empty")).toBeInTheDocument();
+  });
+
+  it("combines activeFilters and milestoneStatusFilter correctly", () => {
+    // Only milestones filter active + pending status = only pending milestones
+    render(
+      <ActivityFeed
+        milestones={allItems}
+        activeFilters={["milestones"]}
+        milestoneStatusFilter="pending"
+      />
+    );
+
+    const items = screen.getAllByTestId("activity-item");
+    // Only the pending milestone (update item is filtered out by activeFilters)
+    expect(items).toHaveLength(1);
+    expect(screen.getByText("Pending Milestone")).toBeInTheDocument();
   });
 });
