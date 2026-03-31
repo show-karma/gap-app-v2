@@ -95,7 +95,7 @@
     "@zerodev/ecdsa-validator": "^5.4.9",
     "@zerodev/sdk": "^5.5.7",
     "ai": "^6.0.75",
-    "axios": "^1.4.0",
+    "axios": "1.13.2",
     "blo": "^1.1.1",
     "boring-avatars": "^1.11.2",
     "class-variance-authority": "^0.7.1",
