@@ -42,7 +42,8 @@ export const GrantCompletion: FC = () => {
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isOwnerLoading = useOwnerStore((state) => state.isOwnerLoading);
   const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
-  const isAuthorized = isProjectOwner || isProjectAdmin || isContractOwner || isCommunityAdmin;
+  const isAuthorizedWithoutContractOwner = isProjectOwner || isProjectAdmin || isCommunityAdmin;
+  const isAuthorized = isAuthorizedWithoutContractOwner || isContractOwner;
 
   const [description, setDescription] = useState("");
   const [pitchDeckLink, setPitchDeckLink] = useState("");
@@ -338,7 +339,7 @@ export const GrantCompletion: FC = () => {
     });
   };
 
-  if (isOwnerLoading) {
+  if (isOwnerLoading && !isAuthorizedWithoutContractOwner) {
     return (
       <div className="mt-9 flex flex-1">
         <div className="flex w-full max-w-3xl flex-col gap-6 rounded-md bg-gray-200 dark:bg-zinc-800 px-4 py-6 max-lg:max-w-full">

@@ -8,16 +8,17 @@
  */
 export function isUserCancellationError(error: unknown): boolean {
   const err = error as Record<string, any> | null | undefined;
-  const inner = err?.originalError ?? err;
-  const msg = (inner?.message ?? "").toLowerCase();
-  const code = inner?.code;
+  const layers = [err, err?.originalError].filter(Boolean);
 
-  return (
-    code === 4001 ||
-    msg.includes("user rejected") ||
-    msg.includes("user denied") ||
-    msg.includes("user cancelled") ||
-    msg.includes("signature rejected") ||
-    inner?.name === "UserRejectedRequestError"
-  );
+  return layers.some((layer) => {
+    const msg = (layer?.message ?? "").toLowerCase();
+    return (
+      layer?.code === 4001 ||
+      msg.includes("user rejected") ||
+      msg.includes("user denied") ||
+      msg.includes("user cancelled") ||
+      msg.includes("signature rejected") ||
+      layer?.name === "UserRejectedRequestError"
+    );
+  });
 }
