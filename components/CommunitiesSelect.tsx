@@ -1,5 +1,5 @@
 "use client";
-import { CheckIcon, PlusIcon } from "@heroicons/react/24/solid";
+import { CheckIcon } from "@heroicons/react/24/solid";
 import * as Popover from "@radix-ui/react-popover";
 import { blo } from "blo";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "cmdk";
@@ -38,8 +38,6 @@ interface CommunitiesSelectProps {
   buttonClassname?: string;
   shouldSort?: boolean;
   canSearch?: boolean;
-  showCreateOption?: boolean;
-  onCreateCommunity?: () => void;
 }
 export const CommunitiesSelect: FC<CommunitiesSelectProps> = ({
   onSelectFunction,
@@ -47,8 +45,6 @@ export const CommunitiesSelect: FC<CommunitiesSelectProps> = ({
   list,
   type = "community",
   buttonClassname,
-  showCreateOption,
-  onCreateCommunity,
 }) => {
   const [open, setOpen] = useState(false);
 
@@ -80,18 +76,6 @@ export const CommunitiesSelect: FC<CommunitiesSelectProps> = ({
           <CommandEmpty className="px-4 py-2">No community found.</CommandEmpty>
 
           <CommandGroup>
-            {showCreateOption && (
-              <CommandItem
-                onSelect={() => {
-                  setOpen(false);
-                  onCreateCommunity?.();
-                }}
-                className="my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-700 mb-1"
-              >
-                <PlusIcon className="mr-2 h-4 w-4 min-w-4 min-h-4 text-black dark:text-white" />
-                <span className="font-medium">Create new community</span>
-              </CommandItem>
-            )}
             {list.map((community) => (
               <CommandItem
                 key={community.uid}

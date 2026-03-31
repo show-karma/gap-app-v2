@@ -13,22 +13,9 @@ export interface PricingTier {
   description: string;
   features: string[];
   mostPopular: boolean;
-  isTrial?: boolean;
 }
 
 const pricingTiers: PricingTier[] = [
-  {
-    name: "Trial",
-    description: "Try it free — create 1 community and run 1 funding program",
-    features: [
-      "1 community with 1 funding program",
-      "Application intake with custom forms",
-      "Milestone tracking with onchain attestations",
-      "No credit card required",
-    ],
-    mostPopular: false,
-    isTrial: true,
-  },
   {
     name: "Starter",
     description: "Start your accountability journey with limited distribution capabilities",
@@ -91,7 +78,7 @@ export function OfferingSection() {
         </div>
 
         {/* Pricing Cards */}
-        <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-end">
+        <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-6 items-end">
           {pricingTiers.map((tier) =>
             tier.mostPopular ? (
               // Most Popular Card with special styling
@@ -153,15 +140,6 @@ export function OfferingSection() {
                     </li>
                   ))}
                 </ul>
-
-                {tier.isTrial && (
-                  <Button
-                    asChild
-                    className="bg-foreground text-background hover:bg-foreground/90 rounded-lg font-medium px-6 py-2.5 w-full"
-                  >
-                    <Link href="/funding-map/add-program">Get Started Free</Link>
-                  </Button>
-                )}
               </div>
             )
           )}

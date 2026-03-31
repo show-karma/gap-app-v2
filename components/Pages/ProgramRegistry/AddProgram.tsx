@@ -34,7 +34,6 @@ import {
 } from "@/src/features/program-registry/utils/program-utils";
 import type { Community } from "@/types/v2/community";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
-import fetchData from "@/utilities/fetchData";
 import { MESSAGES } from "@/utilities/messages";
 import { appNetwork } from "@/utilities/network";
 import { PAGES } from "@/utilities/pages";
@@ -92,12 +91,6 @@ export default function AddProgram({
     });
 
   const [allCommunities, setAllCommunities] = useState<Community[]>([]);
-  const [showCreateCommunity, setShowCreateCommunity] = useState(false);
-  const [isCreatingCommunity, setIsCreatingCommunity] = useState(false);
-  const [newCommunityName, setNewCommunityName] = useState("");
-  const [newCommunitySlug, setNewCommunitySlug] = useState("");
-  const [newCommunityImageURL, setNewCommunityImageURL] = useState("");
-  const [newCommunityChainID, setNewCommunityChainID] = useState(appNetwork[0]?.id || 10);
   const typeSelectorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -108,68 +101,6 @@ export default function AddProgram({
 
     if (allCommunities.length === 0) fetchCommunitiesData();
   }, [allCommunities]);
-
-  const handleCreateCommunity = async () => {
-    if (!newCommunityName || !newCommunitySlug || !newCommunityImageURL) {
-      toast.error("Please fill in all community fields");
-      return;
-    }
-    setIsCreatingCommunity(true);
-    try {
-      const [result, error, , status] = await fetchData(
-        "/v2/communities",
-        "POST",
-        {
-          name: newCommunityName,
-          description: newCommunityName,
-          imageURL: newCommunityImageURL,
-          slug: newCommunitySlug.toLowerCase().replace(/[^a-z0-9-]/g, "-"),
-          chainID: newCommunityChainID,
-        },
-        {},
-        {},
-        true
-      );
-
-      if (error) {
-        const lowerError = (error as string).toLowerCase();
-        if (status === 403 && lowerError.includes("community limit")) {
-          toast.error("You've reached the free tier limit of 1 community. Contact us to upgrade.", {
-            duration: 10000,
-          });
-        } else if (lowerError.includes("already exists")) {
-          toast.error("A community with this slug already exists.");
-        } else {
-          toast.error("Failed to create community. Please try again.");
-        }
-        return;
-      }
-
-      const created = result as { uid: string; chainID: number; name: string; slug: string };
-      const newCommunity: Community = {
-        uid: created.uid,
-        chainID: created.chainID,
-        details: {
-          name: created.name || newCommunityName,
-          slug: created.slug || newCommunitySlug,
-          logoUrl: newCommunityImageURL,
-        },
-      } as Community;
-
-      setAllCommunities((prev) => [newCommunity, ...prev]);
-      onChangeGeneric(created.uid, "communityRef");
-      setShowCreateCommunity(false);
-      setNewCommunityName("");
-      setNewCommunitySlug("");
-      setNewCommunityImageURL("");
-      toast.success("Community created!");
-    } catch (err) {
-      toast.error("Failed to create community. Please try again.");
-      errorManager("Error creating community inline", err);
-    } finally {
-      setIsCreatingCommunity(false);
-    }
-  };
 
   const handleTypeSelectorKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
@@ -963,69 +894,7 @@ export default function AddProgram({
                     selected={watch("communityRef")}
                     buttonClassname="w-full max-w-full"
                     type="community"
-                    showCreateOption
-                    onCreateCommunity={() => setShowCreateCommunity(true)}
                   />
-                  {showCreateCommunity && (
-                    <div className="mt-2 rounded-lg border border-gray-200 dark:border-zinc-700 p-4 flex flex-col gap-3 bg-gray-50 dark:bg-zinc-900">
-                      <p className="text-sm font-semibold text-gray-900 dark:text-zinc-100">
-                        Create new community
-                      </p>
-                      <input
-                        type="text"
-                        className={inputStyle}
-                        placeholder="Community name"
-                        value={newCommunityName}
-                        onChange={(e) => setNewCommunityName(e.target.value)}
-                      />
-                      <input
-                        type="text"
-                        className={inputStyle}
-                        placeholder="Slug (e.g. my-community)"
-                        value={newCommunitySlug}
-                        onChange={(e) =>
-                          setNewCommunitySlug(
-                            e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-")
-                          )
-                        }
-                      />
-                      <input
-                        type="text"
-                        className={inputStyle}
-                        placeholder="Image URL"
-                        value={newCommunityImageURL}
-                        onChange={(e) => setNewCommunityImageURL(e.target.value)}
-                      />
-                      <select
-                        className={inputStyle}
-                        value={newCommunityChainID}
-                        onChange={(e) => setNewCommunityChainID(+e.target.value)}
-                      >
-                        {appNetwork.map((chain) => (
-                          <option key={chain.id} value={chain.id}>
-                            {chain.name}
-                          </option>
-                        ))}
-                      </select>
-                      <div className="flex flex-row gap-2 justify-end">
-                        <button
-                          type="button"
-                          className="px-3 py-1.5 text-sm rounded-md border border-gray-300 dark:border-zinc-600 hover:bg-gray-100 dark:hover:bg-zinc-800"
-                          onClick={() => setShowCreateCommunity(false)}
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          type="button"
-                          className="px-3 py-1.5 text-sm rounded-md bg-black text-white hover:bg-black/80 disabled:opacity-50"
-                          onClick={handleCreateCommunity}
-                          disabled={isCreatingCommunity}
-                        >
-                          {isCreatingCommunity ? "Creating..." : "Create"}
-                        </button>
-                      </div>
-                    </div>
-                  )}
                   <ErrorText>{errors?.communityRef?.message}</ErrorText>
                 </div>
                 {programToEdit && (
