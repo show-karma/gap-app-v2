@@ -34,18 +34,16 @@ interface RecordPaymentDialogProps {
 
 const USDC_DECIMALS = TOKENS.usdc.decimals;
 const INITIAL_PAYMENT_KEY = "__initial_payment__";
+const FALLBACK_CHAIN_ID = 1; // Ethereum mainnet — used when grant chain has no USDC configured
 
 function getUsdcAddress(chainID: number): string {
   const addresses = TOKEN_ADDRESSES.usdc as Record<number, string>;
-  if (!addresses[chainID]) {
-    return TOKEN_ADDRESSES.usdc[1];
-  }
-  return addresses[chainID];
+  return addresses[chainID] ?? addresses[FALLBACK_CHAIN_ID];
 }
 
 function getEffectiveChainID(chainID: number): number {
   const addresses = TOKEN_ADDRESSES.usdc as Record<number, string>;
-  return addresses[chainID] ? chainID : 1;
+  return addresses[chainID] ? chainID : FALLBACK_CHAIN_ID;
 }
 
 function isChainSupported(chainID: number): boolean {
@@ -85,6 +83,7 @@ function RecordPaymentDialogInner({
   const recordPayment = useRecordPayment({
     onSuccess: () => {
       toast.success("Payment recorded successfully");
+      resetForm();
       onSuccess?.();
       onClose();
     },
@@ -139,7 +138,7 @@ function RecordPaymentDialogInner({
     amount.trim() !== "" && Number(amount) > 0 && paymentDate !== "" && selectedKeys.length > 0;
 
   const handleSubmit = useCallback(() => {
-    if (!isValid) return;
+    if (!isValid || recordPayment.isPending) return;
 
     const effectiveChainID = getEffectiveChainID(chainID);
     const tokenAddress = getUsdcAddress(chainID);

@@ -316,27 +316,19 @@ function DisbursementCard({ disbursement }: { disbursement: PayoutDisbursement }
         </div>
 
         <div className="space-y-2 text-sm">
-          {!isHistorical && (
-            <>
-              <div className="flex justify-between">
-                <span className="text-gray-500 dark:text-gray-400">Recipient</span>
-                <span className="font-mono text-gray-900 dark:text-white">
-                  {truncateAddress(disbursement.payoutAddress)}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500 dark:text-gray-400">Safe</span>
-                <span className="font-mono text-gray-900 dark:text-white">
-                  {truncateAddress(disbursement.safeAddress)}
-                </span>
-              </div>
-            </>
-          )}
-          {isHistorical && disbursement.payoutAddress && (
+          {disbursement.payoutAddress && (
             <div className="flex justify-between">
               <span className="text-gray-500 dark:text-gray-400">Recipient</span>
               <span className="font-mono text-gray-900 dark:text-white">
                 {truncateAddress(disbursement.payoutAddress)}
+              </span>
+            </div>
+          )}
+          {!isHistorical && (
+            <div className="flex justify-between">
+              <span className="text-gray-500 dark:text-gray-400">Safe</span>
+              <span className="font-mono text-gray-900 dark:text-white">
+                {truncateAddress(disbursement.safeAddress)}
               </span>
             </div>
           )}
