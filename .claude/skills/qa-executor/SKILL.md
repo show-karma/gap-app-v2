@@ -186,15 +186,15 @@ Post a PR comment. **Comment format — follow exactly:**
 
 ### Public Scenarios
 
-| # | Scenario | Result | Severity | Evidence |
-|---|----------|--------|----------|----------|
+| # | Scenario | Result | Severity | Details |
+|---|----------|--------|----------|---------|
 | P1 | [name] | PASS | — | — |
 
 ### Authenticated Scenarios
 
-| # | Scenario | Result | Severity | Evidence |
-|---|----------|--------|----------|----------|
-| A1 | [name] | FAIL | High | [link] |
+| # | Scenario | Result | Severity | Details |
+|---|----------|--------|----------|---------|
+| A1 | [name] | FAIL | High | [1-2 sentence description of what went wrong] |
 
 <details><summary>Console Errors</summary>
 
@@ -205,7 +205,7 @@ Post a PR comment. **Comment format — follow exactly:**
 
 **Rules:**
 - PASS rows: no severity, no evidence.
-- FAIL rows: severity + evidence required.
+- FAIL rows: severity required. For evidence, describe what you observed inline (1-2 sentences) — do NOT link to local file paths like `qa-output/screenshots/...` because those are not accessible from GitHub. Screenshots are saved as workflow artifacts and can be downloaded from the workflow run link.
 - Sort: FAILs first (by severity), then PASSes.
 - No prose. Just the tables.
 - `Blocking: Yes` if any Critical or High severity failure.
