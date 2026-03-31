@@ -15,7 +15,8 @@ import { useTracksForProgram } from "@/hooks/useTracks";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { getProjectGrants } from "@/services/project-grants.service";
-import { useProjectStore } from "@/store";
+import { useOwnerStore, useProjectStore } from "@/store";
+import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useGrantStore } from "@/store/grant";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import type { Grant } from "@/types/v2/grant";
@@ -35,6 +36,12 @@ const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 export const GrantCompletion: FC = () => {
   const { grant } = useGrantStore();
   const { project } = useProjectStore();
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const isContractOwner = useOwnerStore((state) => state.isOwner);
+  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
+  const isAuthorized = isProjectOwner || isProjectAdmin || isContractOwner || isCommunityAdmin;
+
   const [description, setDescription] = useState("");
   const [pitchDeckLink, setPitchDeckLink] = useState("");
   const [demoVideoLink, setDemoVideoLink] = useState("");
@@ -251,7 +258,15 @@ export const GrantCompletion: FC = () => {
           );
         });
     } catch (error: any) {
-      if (error?.message?.includes("User rejected") || error?.code === 4001) {
+      const msg = error?.message?.toLowerCase() ?? "";
+      const isUserCancellation =
+        error?.code === 4001 ||
+        msg.includes("user rejected") ||
+        msg.includes("user denied") ||
+        msg.includes("user cancelled") ||
+        msg.includes("signature rejected") ||
+        error?.name === "UserRejectedRequestError";
+      if (isUserCancellation) {
         showError("Grant completion cancelled");
       } else {
         showError(MESSAGES.GRANT.MARK_AS_COMPLETE.ERROR);
@@ -328,6 +343,16 @@ export const GrantCompletion: FC = () => {
       setIsLoading(false);
     });
   };
+
+  if (!isAuthorized) {
+    return (
+      <div className="mt-9 flex flex-1 items-center justify-center">
+        <p className="text-gray-500 dark:text-gray-400">
+          You do not have permission to complete this grant.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="mt-9 flex flex-1">

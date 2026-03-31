@@ -113,8 +113,16 @@ export const useGrantCompletion = ({
     } catch (error: any) {
       console.error("Error completing grant:", error);
 
-      // User cancelled
-      if (error?.message?.includes("User rejected") || error?.code === 4001) {
+      // User cancelled (covers MetaMask, Privy embedded, and other wallets)
+      const msg = error?.message?.toLowerCase() ?? "";
+      const isUserCancellation =
+        error?.code === 4001 ||
+        msg.includes("user rejected") ||
+        msg.includes("user denied") ||
+        msg.includes("user cancelled") ||
+        msg.includes("signature rejected") ||
+        error?.name === "UserRejectedRequestError";
+      if (isUserCancellation) {
         showError("Grant completion cancelled");
       } else {
         showError(MESSAGES.GRANT.MARK_AS_COMPLETE.ERROR);

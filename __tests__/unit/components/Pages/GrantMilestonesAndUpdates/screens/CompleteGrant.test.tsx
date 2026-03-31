@@ -47,6 +47,10 @@ const {
   mockUseAccount,
   mockRefetchGrants,
   mockOpenShareDialog,
+  mockIsProjectOwner,
+  mockIsProjectAdmin,
+  mockIsOwner,
+  mockIsCommunityAdmin,
 } = vi.hoisted(() => ({
   mockShowError: vi.fn(),
   mockShowSuccess: vi.fn(),
@@ -58,6 +62,10 @@ const {
   mockUseAccount: vi.fn(),
   mockRefetchGrants: vi.fn(),
   mockOpenShareDialog: vi.fn(),
+  mockIsProjectOwner: { current: true },
+  mockIsProjectAdmin: { current: false },
+  mockIsOwner: { current: false },
+  mockIsCommunityAdmin: { current: false },
 }));
 
 vi.mock("@/hooks/useAttestationToast", () => ({
@@ -164,10 +172,26 @@ vi.mock("@/store/grant", () => ({
 }));
 
 vi.mock("@/store", () => ({
-  useProjectStore: vi.fn(() => ({
-    project: mockProject,
-    refreshProject: vi.fn(),
-  })),
+  useProjectStore: vi.fn((selector?: any) => {
+    const state = {
+      project: mockProject,
+      refreshProject: vi.fn(),
+      isProjectAdmin: mockIsProjectAdmin.current,
+      isProjectOwner: mockIsProjectOwner.current,
+    };
+    return selector ? selector(state) : state;
+  }),
+  useOwnerStore: vi.fn((selector?: any) => {
+    const state = { isOwner: mockIsOwner.current };
+    return selector ? selector(state) : state;
+  }),
+}));
+
+vi.mock("@/store/communityAdmin", () => ({
+  useCommunityAdminStore: vi.fn((selector?: any) => {
+    const state = { isCommunityAdmin: mockIsCommunityAdmin.current };
+    return selector ? selector(state) : state;
+  }),
 }));
 
 vi.mock("@/store/modals/shareDialog", () => ({
@@ -244,6 +268,11 @@ describe("GrantCompletion - Error Handling", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUseAccount.mockReturnValue({ chain: { id: 10 }, address: "0xuser123" });
+    // Default to authorized user for error handling tests
+    mockIsProjectOwner.current = true;
+    mockIsProjectAdmin.current = false;
+    mockIsOwner.current = false;
+    mockIsCommunityAdmin.current = false;
     // Suppress expected console.error from error handling
     consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
   });
@@ -327,6 +356,36 @@ describe("GrantCompletion - Error Handling", () => {
     });
   });
 
+  it("should show cancellation for Privy embedded wallet 'Signature rejected' error", async () => {
+    // Privy embedded wallet emits "Signature rejected" without code 4001
+    // when user closes the signing modal. The code gets lost during SDK wrapping.
+    setupSuccessfulChainAndProject();
+    mockGrantInstance.complete.mockRejectedValue(new Error("Signature rejected"));
+
+    render(<GrantCompletion />);
+
+    const submitButton = screen.getByRole("button", { name: /mark grant as complete/i });
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(mockShowError).toHaveBeenCalledWith("Grant completion cancelled");
+    });
+  });
+
+  it("should show cancellation for errors with 'user denied' in message", async () => {
+    setupSuccessfulChainAndProject();
+    mockGrantInstance.complete.mockRejectedValue(new Error("user denied transaction signature"));
+
+    render(<GrantCompletion />);
+
+    const submitButton = screen.getByRole("button", { name: /mark grant as complete/i });
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(mockShowError).toHaveBeenCalledWith("Grant completion cancelled");
+    });
+  });
+
   it("should show error when project fetch fails", async () => {
     mockSetupChainAndWallet.mockResolvedValue({
       gapClient: mockGapClient,
@@ -343,5 +402,48 @@ describe("GrantCompletion - Error Handling", () => {
     await waitFor(() => {
       expect(mockShowError).toHaveBeenCalled();
     });
+  });
+});
+
+describe("GrantCompletion - Authorization", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUseAccount.mockReturnValue({ chain: { id: 10 }, address: "0xuser123" });
+  });
+
+  it("should not render the form when user is not authorized", () => {
+    // Set all permission flags to false
+    mockIsProjectOwner.current = false;
+    mockIsProjectAdmin.current = false;
+    mockIsOwner.current = false;
+    mockIsCommunityAdmin.current = false;
+
+    render(<GrantCompletion />);
+
+    expect(
+      screen.queryByRole("button", { name: /mark grant as complete/i })
+    ).not.toBeInTheDocument();
+  });
+
+  it("should render the form when user is the project owner", () => {
+    mockIsProjectOwner.current = true;
+    mockIsProjectAdmin.current = false;
+    mockIsOwner.current = false;
+    mockIsCommunityAdmin.current = false;
+
+    render(<GrantCompletion />);
+
+    expect(screen.getByRole("button", { name: /mark grant as complete/i })).toBeInTheDocument();
+  });
+
+  it("should render the form when user is a community admin", () => {
+    mockIsProjectOwner.current = false;
+    mockIsProjectAdmin.current = false;
+    mockIsOwner.current = false;
+    mockIsCommunityAdmin.current = true;
+
+    render(<GrantCompletion />);
+
+    expect(screen.getByRole("button", { name: /mark grant as complete/i })).toBeInTheDocument();
   });
 });
