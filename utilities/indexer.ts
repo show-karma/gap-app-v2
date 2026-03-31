@@ -352,6 +352,8 @@ export const INDEXER = {
       BY_GRANT: (grantUID: string) => `/v2/milestone-invoices/grant/${grantUID}`,
       PRESIGNED_URL: () => `/v2/milestone-invoices/presigned`,
       DOWNLOAD: (key: string) => `/v2/milestone-invoices/download?key=${encodeURIComponent(key)}`,
+      UPDATE_PAYMENT_STATUS: (grantUID: string) =>
+        `/v2/milestone-invoices/${grantUID}/payment-status`,
     },
   },
   PROGRAMS: {

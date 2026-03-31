@@ -592,6 +592,7 @@ export function ProjectDetailsSidebar({
                   />
                   <MilestonesSection
                     grant={grant}
+                    communityUID={communityUID}
                     milestoneInvoices={milestoneInvoices}
                     invoiceRequired={invoiceRequired}
                     milestoneEdits={milestoneEdits}

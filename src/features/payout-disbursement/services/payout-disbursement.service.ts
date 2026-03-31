@@ -8,6 +8,7 @@ import type {
   CommunityPayoutsResponse,
   CreateDisbursementsRequest,
   CreateDisbursementsResponse,
+  MilestonePaymentStatus,
   PaginatedDisbursementsResponse,
   PayoutDisbursement,
   PayoutGrantConfig,
@@ -192,6 +193,37 @@ export const updateDisbursementStatus = async (
   } catch (error: unknown) {
     errorManager(`Error updating status for disbursement ${disbursementId}`, error);
     throw new Error(`Failed to update disbursement status: ${getErrorMessage(error)}`);
+  }
+};
+
+/**
+ * Updates payment status override for a specific milestone
+ */
+export const updateMilestonePaymentStatus = async (
+  grantUID: string,
+  request: {
+    communityUID: string;
+    milestoneLabel: string;
+    paymentStatus: MilestonePaymentStatus;
+  }
+): Promise<void> => {
+  try {
+    const [, error] = await fetchData(
+      INDEXER.V2.MILESTONE_INVOICES.UPDATE_PAYMENT_STATUS(grantUID),
+      "PATCH",
+      request,
+      {},
+      {},
+      true,
+      false
+    );
+
+    if (error) {
+      throw new Error(error);
+    }
+  } catch (error: unknown) {
+    errorManager(`Error updating payment status for grant ${grantUID}`, error);
+    throw new Error(`Failed to update payment status: ${getErrorMessage(error)}`);
   }
 };
 

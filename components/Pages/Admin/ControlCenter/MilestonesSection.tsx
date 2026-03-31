@@ -21,41 +21,13 @@ import {
   formatDisplayAmount,
   getInvoiceDownloadUrl,
   MilestoneLifecycleStatus,
-  type MilestonePaymentStatus,
 } from "@/src/features/payout-disbursement";
 import { formatAddressForDisplay } from "@/utilities/donations/helpers";
 import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
 import { cn } from "@/utilities/tailwind";
+import { PaymentStatusDropdown } from "./PaymentStatusDropdown";
 import type { ProjectDetailsSidebarGrant } from "./ProjectDetailsSidebar";
-
-// ─── Status display config ───────────────────────────────────────────────────
-
-const paymentStatusConfig: Record<
-  MilestonePaymentStatus,
-  { label: string; dotColor: string; textColor: string }
-> = {
-  unpaid: {
-    label: "Unpaid",
-    dotColor: "bg-gray-300 dark:bg-zinc-600",
-    textColor: "text-gray-500 dark:text-zinc-500",
-  },
-  pending: {
-    label: "Pending",
-    dotColor: "bg-amber-400",
-    textColor: "text-amber-600 dark:text-amber-400",
-  },
-  awaiting_signatures: {
-    label: "Awaiting sigs",
-    dotColor: "bg-blue-400",
-    textColor: "text-blue-600 dark:text-blue-400",
-  },
-  disbursed: {
-    label: "Disbursed",
-    dotColor: "bg-green-500",
-    textColor: "text-green-600 dark:text-green-400",
-  },
-};
 
 const milestoneStatusConfig: Record<
   MilestoneLifecycleStatus,
@@ -125,6 +97,7 @@ function getMilestoneStatusTooltip(
 
 export interface MilestonesSectionProps {
   grant: ProjectDetailsSidebarGrant;
+  communityUID: string;
   milestoneInvoices: CommunityPayoutInvoiceInfo[];
   invoiceRequired: boolean;
   milestoneEdits: Record<
@@ -162,6 +135,7 @@ export interface MilestonesSectionProps {
 
 export const MilestonesSection = memo(function MilestonesSection({
   grant,
+  communityUID,
   milestoneInvoices,
   invoiceRequired,
   milestoneEdits,
@@ -274,7 +248,6 @@ export const MilestonesSection = memo(function MilestonesSection({
                 {milestoneInvoices.map((invoice, idx) => {
                   const mKey = getMilestoneKey(invoice, idx);
                   const receivedDateValue = getInvoiceReceivedDate(invoice, idx);
-                  const paymentCfg = paymentStatusConfig[invoice.paymentStatus ?? "unpaid"];
                   const effectiveMsStatus = getEffectiveMilestoneStatus(
                     invoice.milestoneStatus,
                     invoice.milestoneDueDate
@@ -477,20 +450,13 @@ export const MilestonesSection = memo(function MilestonesSection({
                       )}
                       <td className="py-3 px-3 text-center">
                         <div className="flex flex-col items-center gap-0.5">
-                          <span
-                            className={cn(
-                              "inline-flex items-center gap-1.5 text-xs font-medium",
-                              paymentCfg.textColor
-                            )}
-                          >
-                            <span
-                              className={cn(
-                                "h-1.5 w-1.5 rounded-full shrink-0",
-                                paymentCfg.dotColor
-                              )}
-                            />
-                            {paymentCfg.label}
-                          </span>
+                          <PaymentStatusDropdown
+                            currentStatus={invoice.paymentStatus ?? "unpaid"}
+                            milestoneLabel={invoice.milestoneLabel}
+                            grantUID={grant.grantUid}
+                            communityUID={communityUID}
+                            paymentStatusDate={invoice.paymentStatusDate}
+                          />
                           {invoice.paymentStatusDate && (
                             <span className="text-[10px] text-gray-400 dark:text-zinc-500 tabular-nums">
                               {formatDate(invoice.paymentStatusDate, "UTC")}
