@@ -442,6 +442,28 @@ describe("GrantCompletion - Authorization", () => {
     expect(screen.getByRole("button", { name: /mark grant as complete/i })).toBeInTheDocument();
   });
 
+  it("should render the form when user is a project admin", () => {
+    mockIsProjectOwner.current = false;
+    mockIsProjectAdmin.current = true;
+    mockIsOwner.current = false;
+    mockIsCommunityAdmin.current = false;
+
+    render(<GrantCompletion />);
+
+    expect(screen.getByRole("button", { name: /mark grant as complete/i })).toBeInTheDocument();
+  });
+
+  it("should render the form when user is the contract owner", () => {
+    mockIsProjectOwner.current = false;
+    mockIsProjectAdmin.current = false;
+    mockIsOwner.current = true;
+    mockIsCommunityAdmin.current = false;
+
+    render(<GrantCompletion />);
+
+    expect(screen.getByRole("button", { name: /mark grant as complete/i })).toBeInTheDocument();
+  });
+
   it("should render the form when user is a community admin", () => {
     mockIsProjectOwner.current = false;
     mockIsProjectAdmin.current = false;

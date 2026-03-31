@@ -28,6 +28,7 @@ import { PAGES } from "@/utilities/pages";
 import { getCommunityDetails } from "@/utilities/queries/v2/community";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { SHARE_TEXTS } from "@/utilities/share/text";
+import { isUserCancellationError } from "@/utilities/wallet-errors";
 import { FundingProgramFields } from "./CompletionRequirements/FundingProgramFields";
 import { TrackExplanations } from "./CompletionRequirements/TrackExplanations";
 
@@ -259,16 +260,7 @@ export const GrantCompletion: FC = () => {
           );
         });
     } catch (error: any) {
-      const msg = (error?.message ?? error?.originalError?.message ?? "").toLowerCase();
-      const code = error?.code ?? error?.originalError?.code;
-      const isUserCancellation =
-        code === 4001 ||
-        msg.includes("user rejected") ||
-        msg.includes("user denied") ||
-        msg.includes("user cancelled") ||
-        msg.includes("signature rejected") ||
-        error?.name === "UserRejectedRequestError";
-      if (isUserCancellation) {
+      if (isUserCancellationError(error)) {
         showError("Grant completion cancelled");
       } else {
         showError(MESSAGES.GRANT.MARK_AS_COMPLETE.ERROR);
