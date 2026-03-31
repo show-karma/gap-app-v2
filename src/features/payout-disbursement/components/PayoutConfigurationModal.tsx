@@ -20,6 +20,8 @@ export interface PayoutConfigurationModalProps {
   projectName: string;
   /** Existing config if editing */
   existingConfig?: PayoutGrantConfig | null;
+  /** IDs of allocations already paid via disbursements (edit/delete disabled for these) */
+  paidAllocationIds?: string[];
   onSuccess?: () => void;
 }
 
@@ -32,6 +34,7 @@ export function PayoutConfigurationModal({
   grantName,
   projectName,
   existingConfig,
+  paidAllocationIds,
   onSuccess,
 }: PayoutConfigurationModalProps) {
   const contentRef = useRef<PayoutConfigurationContentRef>(null);
@@ -101,6 +104,7 @@ export function PayoutConfigurationModal({
                   grantName={grantName}
                   projectName={projectName}
                   existingConfig={existingConfig}
+                  paidAllocationIds={paidAllocationIds}
                   onSuccess={() => {
                     onSuccess?.();
                     onClose();

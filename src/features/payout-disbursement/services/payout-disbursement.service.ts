@@ -665,6 +665,65 @@ export const getInvoiceDownloadUrl = async (fileKey: string): Promise<string> =>
   }
 };
 
+/**
+ * Update a single line item in a grant payout config
+ */
+export const updateLineItem = async (
+  grantUID: string,
+  allocationId: string,
+  updates: { label?: string; amount?: string }
+): Promise<PayoutGrantConfig> => {
+  try {
+    const [data, error] = await fetchData<{ config: PayoutGrantConfig }>(
+      INDEXER.V2.PAYOUT_CONFIG.UPDATE_LINE_ITEM(grantUID, allocationId),
+      "PUT",
+      updates,
+      {},
+      {},
+      true,
+      false
+    );
+
+    if (error || !data) {
+      throw new Error(error || "Failed to update line item");
+    }
+
+    return data.config;
+  } catch (error: unknown) {
+    errorManager(`Error updating line item ${allocationId} for grant ${grantUID}`, error);
+    throw new Error(`Failed to update line item: ${getErrorMessage(error)}`);
+  }
+};
+
+/**
+ * Delete a single line item from a grant payout config
+ */
+export const deleteLineItem = async (
+  grantUID: string,
+  allocationId: string
+): Promise<PayoutGrantConfig> => {
+  try {
+    const [data, error] = await fetchData<{ config: PayoutGrantConfig }>(
+      INDEXER.V2.PAYOUT_CONFIG.DELETE_LINE_ITEM(grantUID, allocationId),
+      "DELETE",
+      {},
+      {},
+      {},
+      true,
+      false
+    );
+
+    if (error || !data) {
+      throw new Error(error || "Failed to delete line item");
+    }
+
+    return data.config;
+  } catch (error: unknown) {
+    errorManager(`Error deleting line item ${allocationId} for grant ${grantUID}`, error);
+    throw new Error(`Failed to delete line item: ${getErrorMessage(error)}`);
+  }
+};
+
 // ─── Grantee Invoice Functions ──────────────────────────────────────────────
 
 export interface GranteeInvoiceCheckResult {
