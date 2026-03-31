@@ -263,12 +263,23 @@ export function PayoutHistoryContent({
   );
 }
 
+const HISTORICAL_SAFE_ADDRESS = "HISTORICAL";
+
+function isHistoricalPayment(disbursement: PayoutDisbursement): boolean {
+  return (
+    disbursement.safeAddress === HISTORICAL_SAFE_ADDRESS ||
+    (disbursement.safeTransactionHash?.startsWith("historical-") ?? false)
+  );
+}
+
 function DisbursementCard({ disbursement }: { disbursement: PayoutDisbursement }) {
   const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const isHistorical = isHistoricalPayment(disbursement);
   const statusConfig = STATUS_COLORS[disbursement.status];
-  const safeUrl = disbursement.safeTransactionHash
-    ? getSafeUrl(disbursement.safeAddress, disbursement.safeTransactionHash, disbursement.chainID)
-    : null;
+  const safeUrl =
+    !isHistorical && disbursement.safeTransactionHash
+      ? getSafeUrl(disbursement.safeAddress, disbursement.safeTransactionHash, disbursement.chainID)
+      : null;
 
   const canCancel = disbursement.status === PayoutDisbursementStatus.PENDING;
 
@@ -282,9 +293,11 @@ function DisbursementCard({ disbursement }: { disbursement: PayoutDisbursement }
             >
               {statusConfig.label}
             </span>
-            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-              {formatDate(disbursement.createdAt)}
-            </p>
+            {isHistorical && (
+              <p className="mt-1.5 text-xs text-amber-600 dark:text-amber-400">
+                Recorded manually — not executed via Safe
+              </p>
+            )}
           </div>
           <div className="text-right">
             <p className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -295,19 +308,31 @@ function DisbursementCard({ disbursement }: { disbursement: PayoutDisbursement }
         </div>
 
         <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-gray-500 dark:text-gray-400">Recipient</span>
-            <span className="font-mono text-gray-900 dark:text-white">
-              {truncateAddress(disbursement.payoutAddress)}
-            </span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-500 dark:text-gray-400">Safe</span>
-            <span className="font-mono text-gray-900 dark:text-white">
-              {truncateAddress(disbursement.safeAddress)}
-            </span>
-          </div>
-          {disbursement.safeTransactionHash && (
+          {!isHistorical && (
+            <>
+              <div className="flex justify-between">
+                <span className="text-gray-500 dark:text-gray-400">Recipient</span>
+                <span className="font-mono text-gray-900 dark:text-white">
+                  {truncateAddress(disbursement.payoutAddress)}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500 dark:text-gray-400">Safe</span>
+                <span className="font-mono text-gray-900 dark:text-white">
+                  {truncateAddress(disbursement.safeAddress)}
+                </span>
+              </div>
+            </>
+          )}
+          {isHistorical && disbursement.payoutAddress && (
+            <div className="flex justify-between">
+              <span className="text-gray-500 dark:text-gray-400">Recipient</span>
+              <span className="font-mono text-gray-900 dark:text-white">
+                {truncateAddress(disbursement.payoutAddress)}
+              </span>
+            </div>
+          )}
+          {disbursement.safeTransactionHash && !isHistorical && (
             <div className="flex items-center justify-between">
               <span className="text-gray-500 dark:text-gray-400">Transaction</span>
               {safeUrl ? (
@@ -331,9 +356,19 @@ function DisbursementCard({ disbursement }: { disbursement: PayoutDisbursement }
           )}
           {disbursement.executedAt && (
             <div className="flex justify-between">
-              <span className="text-gray-500 dark:text-gray-400">Executed</span>
+              <span className="text-gray-500 dark:text-gray-400">
+                {isHistorical ? "Payment Date" : "Executed"}
+              </span>
               <span className="text-gray-900 dark:text-white">
                 {formatDate(disbursement.executedAt)}
+              </span>
+            </div>
+          )}
+          {!isHistorical && disbursement.createdAt && (
+            <div className="flex justify-between">
+              <span className="text-gray-500 dark:text-gray-400">Created</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                {formatDate(disbursement.createdAt)}
               </span>
             </div>
           )}
