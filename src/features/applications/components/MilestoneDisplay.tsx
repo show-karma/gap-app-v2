@@ -3,6 +3,7 @@
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import type { MilestoneData } from "@/types/whitelabel-entities";
 import { formatDate } from "@/utilities/formatDate";
+import { formatMilestoneAmount } from "@/utilities/formatMilestoneAmount";
 import { useMilestoneCompletions } from "../hooks/use-milestone-completions";
 import { formatFieldLabel, isMarkdownContent, MILESTONE_CORE_FIELDS } from "../lib/milestone-utils";
 
@@ -35,12 +36,19 @@ export function MilestoneDisplay({
           (key) => !MILESTONE_CORE_FIELDS.includes(key) && milestone[key as keyof MilestoneData]
         );
 
+        const formattedAmount = formatMilestoneAmount(milestone.fundingRequested);
+
         return (
           <div
             key={`${fieldLabel}-${index}`}
             className="border-l-2 border-zinc-200 dark:border-zinc-700 pl-4 space-y-1"
           >
-            <p className="font-medium text-sm">{milestone.title}</p>
+            <div className="flex items-baseline gap-2 flex-wrap">
+              <p className="font-medium text-sm">{milestone.title}</p>
+              {formattedAmount && (
+                <span className="text-sm text-zinc-500 dark:text-zinc-400">{formattedAmount}</span>
+              )}
+            </div>
 
             {milestone.description && (
               <div className="text-sm text-zinc-600 dark:text-zinc-400">
