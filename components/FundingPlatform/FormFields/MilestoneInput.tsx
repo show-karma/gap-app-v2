@@ -128,7 +128,7 @@ export const MilestoneInput: FC<MilestoneInputProps> = ({
                 rules={{ required: "Description is required" }}
                 render={({ field: descField, fieldState }) => (
                   <MarkdownEditor
-                    label="Description *"
+                    label="Description"
                     placeholder="Describe what will be accomplished in this milestone"
                     value={descField.value || ""}
                     onChange={descField.onChange}

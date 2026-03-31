@@ -43,95 +43,92 @@ export async function injectMockWallet(
 ): Promise<WalletConfig> {
   const config: WalletConfig = { ...DEFAULT_WALLET_CONFIG, ...overrides };
 
-  await page.addInitScript(
-    (cfg: WalletConfig) => {
-      let currentChainId = cfg.chainId;
-      const listeners: Record<string, Array<(...args: unknown[]) => void>> = {};
+  await page.addInitScript((cfg: WalletConfig) => {
+    let currentChainId = cfg.chainId;
+    const listeners: Record<string, Array<(...args: unknown[]) => void>> = {};
 
-      function emit(event: string, ...args: unknown[]) {
-        const handlers = listeners[event] || [];
-        for (const handler of handlers) {
-          try {
-            handler(...args);
-          } catch {
-            // Swallow listener errors in test mock
-          }
+    function emit(event: string, ...args: unknown[]) {
+      const handlers = listeners[event] || [];
+      for (const handler of handlers) {
+        try {
+          handler(...args);
+        } catch {
+          // Swallow listener errors in test mock
         }
       }
+    }
 
-      const provider = {
-        isMetaMask: true,
+    const provider = {
+      isMetaMask: true,
 
-        request: async ({ method, params }: { method: string; params?: unknown[] }) => {
-          switch (method) {
-            case "eth_requestAccounts":
-            case "eth_accounts":
-              return [cfg.address];
+      request: async ({ method, params }: { method: string; params?: unknown[] }) => {
+        switch (method) {
+          case "eth_requestAccounts":
+          case "eth_accounts":
+            return [cfg.address];
 
-            case "eth_chainId":
-              return currentChainId;
+          case "eth_chainId":
+            return currentChainId;
 
-            case "net_version":
-              return String(parseInt(currentChainId, 16));
+          case "net_version":
+            return String(parseInt(currentChainId, 16));
 
-            case "eth_getBalance":
-              return cfg.balance;
+          case "eth_getBalance":
+            return cfg.balance;
 
-            case "wallet_switchEthereumChain": {
-              const requested = (params as Array<{ chainId: string }>)?.[0]?.chainId;
-              if (requested) {
-                currentChainId = requested;
-                emit("chainChanged", currentChainId);
-              }
-              return null;
+          case "wallet_switchEthereumChain": {
+            const requested = (params as Array<{ chainId: string }>)?.[0]?.chainId;
+            if (requested) {
+              currentChainId = requested;
+              emit("chainChanged", currentChainId);
             }
-
-            case "personal_sign": {
-              // Return a deterministic 65-byte signature (r, s, v)
-              return (
-                "0x" +
-                "a".repeat(64) + // r
-                "b".repeat(64) + // s
-                "1c" // v = 28
-              );
-            }
-
-            default:
-              throw new Error(`Mock provider: unsupported method "${method}"`);
+            return null;
           }
-        },
 
-        on: (event: string, handler: (...args: unknown[]) => void) => {
-          if (!listeners[event]) {
-            listeners[event] = [];
+          case "personal_sign": {
+            // Return a deterministic 65-byte signature (r, s, v)
+            return (
+              "0x" +
+              "a".repeat(64) + // r
+              "b".repeat(64) + // s
+              "1c" // v = 28
+            );
           }
-          listeners[event].push(handler);
-        },
 
-        removeListener: (event: string, handler: (...args: unknown[]) => void) => {
-          const handlers = listeners[event];
-          if (handlers) {
-            const idx = handlers.indexOf(handler);
-            if (idx >= 0) handlers.splice(idx, 1);
-          }
-        },
+          default:
+            throw new Error(`Mock provider: unsupported method "${method}"`);
+        }
+      },
 
-        removeAllListeners: () => {
-          for (const key of Object.keys(listeners)) {
-            delete listeners[key];
-          }
-        },
-      };
+      on: (event: string, handler: (...args: unknown[]) => void) => {
+        if (!listeners[event]) {
+          listeners[event] = [];
+        }
+        listeners[event].push(handler);
+      },
 
-      // Inject as window.ethereum (EIP-1193)
-      Object.defineProperty(window, "ethereum", {
-        value: provider,
-        writable: false,
-        configurable: true,
-      });
-    },
-    config
-  );
+      removeListener: (event: string, handler: (...args: unknown[]) => void) => {
+        const handlers = listeners[event];
+        if (handlers) {
+          const idx = handlers.indexOf(handler);
+          if (idx >= 0) handlers.splice(idx, 1);
+        }
+      },
+
+      removeAllListeners: () => {
+        for (const key of Object.keys(listeners)) {
+          delete listeners[key];
+        }
+      },
+    };
+
+    // Inject as window.ethereum (EIP-1193)
+    Object.defineProperty(window, "ethereum", {
+      value: provider,
+      writable: false,
+      configurable: true,
+    });
+  }, config);
 
   return config;
 }

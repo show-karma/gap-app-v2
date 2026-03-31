@@ -34,9 +34,7 @@ const DEFAULT_URL_PATTERN = "**/*";
 /**
  * Create a Playwright route handler that simulates a specific RPC failure mode.
  */
-function createFailureHandler(
-  options: RpcFailureOptions
-): (route: Route) => Promise<void> {
+function createFailureHandler(options: RpcFailureOptions): (route: Route) => Promise<void> {
   return async (route: Route) => {
     const request = route.request();
 

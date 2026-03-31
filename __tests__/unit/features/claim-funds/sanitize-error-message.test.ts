@@ -128,9 +128,7 @@ describe("sanitizeErrorMessage", () => {
   });
 
   it("strips ContractFunctionExecutionError: prefix", () => {
-    const result = sanitizeErrorMessage(
-      new Error("ContractFunctionExecutionError: bad call")
-    );
+    const result = sanitizeErrorMessage(new Error("ContractFunctionExecutionError: bad call"));
     expect(result.message).toBe("bad call");
   });
 

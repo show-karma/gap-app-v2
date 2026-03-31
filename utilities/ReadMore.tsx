@@ -1,6 +1,6 @@
 "use client";
-import type { MarkdownPreviewProps } from "@uiw/react-markdown-preview";
 import type React from "react";
+import type { ComponentType } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 
@@ -10,8 +10,9 @@ interface Props {
   readMoreText?: string;
   readLessText?: string;
   side?: "left" | "right";
-  markdownClass?: MarkdownPreviewProps["className"];
-  markdownComponents?: MarkdownPreviewProps["components"];
+  markdownClass?: string;
+  // biome-ignore lint/suspicious/noExplicitAny: matches MarkdownPreview components call-site signatures
+  markdownComponents?: Record<string, ComponentType<any>>;
   othersideButton?: React.ReactNode;
 }
 

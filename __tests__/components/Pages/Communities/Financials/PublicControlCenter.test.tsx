@@ -35,9 +35,7 @@ const mockUseCommunityPayoutsPublic = useCommunityPayoutsPublic as vi.MockedFunc
   typeof useCommunityPayoutsPublic
 >;
 const mockUsePayoutConfigsByCommunityPublic =
-  usePayoutConfigsByCommunityPublic as vi.MockedFunction<
-    typeof usePayoutConfigsByCommunityPublic
-  >;
+  usePayoutConfigsByCommunityPublic as vi.MockedFunction<typeof usePayoutConfigsByCommunityPublic>;
 
 // ─── Mock child components ────────────────────────────────────────────────────
 

@@ -2,9 +2,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { type RenderOptions, render, renderHook } from "@testing-library/react";
 import { type ReactNode, useEffect } from "react";
 import {
-  type PrivyBridgeValue,
   PRIVY_BRIDGE_DEFAULTS,
   PrivyBridgeProvider,
+  type PrivyBridgeValue,
   usePrivyBridgeSetter,
 } from "@/contexts/privy-bridge-context";
 
@@ -33,13 +33,7 @@ export function createTestQueryClient(): QueryClient {
 // Internal helper that pushes test auth state into the PrivyBridge context.
 // It lives *inside* PrivyBridgeProvider so it can call usePrivyBridgeSetter.
 // ---------------------------------------------------------------------------
-function AuthStateInjector({
-  state,
-  children,
-}: {
-  state: TestAuthState;
-  children: ReactNode;
-}) {
+function AuthStateInjector({ state, children }: { state: TestAuthState; children: ReactNode }) {
   const setBridge = usePrivyBridgeSetter();
   useEffect(() => {
     setBridge({ ...PRIVY_BRIDGE_DEFAULTS, ...state } as PrivyBridgeValue);

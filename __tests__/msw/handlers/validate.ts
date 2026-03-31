@@ -1,4 +1,4 @@
-import type { ZodSchema, ZodError } from "zod";
+import type { ZodError, ZodSchema } from "zod";
 
 /**
  * Validates MSW response data against a Zod schema at handler setup time.
@@ -20,7 +20,5 @@ export function validateResponse<T>(schema: ZodSchema<T>, data: unknown, context
 }
 
 function formatZodError(error: ZodError): string {
-  return error.issues
-    .map((issue) => `  - ${issue.path.join(".")}: ${issue.message}`)
-    .join("\n");
+  return error.issues.map((issue) => `  - ${issue.path.join(".")}: ${issue.message}`).join("\n");
 }

@@ -1,4 +1,4 @@
-import { optimism, arbitrum, mainnet, sepolia } from "viem/chains";
+import { arbitrum, mainnet, optimism, sepolia } from "viem/chains";
 
 // Mock viem to avoid real HTTP transports
 vi.mock("viem", async () => {
@@ -11,9 +11,9 @@ vi.mock("viem", async () => {
 });
 
 import {
+  type EthereumProvider,
   getChainByName,
   switchOrAddChain,
-  type EthereumProvider,
 } from "@/src/features/claim-funds/lib/viem-clients";
 
 // ── getChainByName ───────────────────────────────────────────────────────────

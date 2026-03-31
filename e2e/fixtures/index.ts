@@ -1,7 +1,7 @@
 import { test as base, expect } from "@playwright/test";
 import type { MockUserRole } from "../data/users";
-import { mock404, mockError, mockJson, setupApiMocks } from "./api-mocks";
 import { type AnvilConfig, anvilFixture } from "./anvil.fixture";
+import { mock404, mockError, mockJson, setupApiMocks } from "./api-mocks";
 import { loginAs, logout } from "./auth";
 import { type RpcFailureOptions, rpcFixture } from "./rpc.fixture";
 import { type WalletConfig, walletFixture } from "./wallet.fixture";
@@ -88,5 +88,5 @@ export type { TenantConfig, MockUserRole, WalletConfig, RpcFailureOptions, Anvil
 // Re-export standalone fixtures for tests that need only the Anvil fork
 // without the full GAP fixture set (e.g., *.anvil.spec.ts files).
 export { anvilFixture } from "./anvil.fixture";
-export { walletFixture } from "./wallet.fixture";
 export { rpcFixture } from "./rpc.fixture";
+export { walletFixture } from "./wallet.fixture";
