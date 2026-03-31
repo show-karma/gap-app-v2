@@ -43,11 +43,15 @@ export const MarkdownPreview = ({
       import("@streamdown/code").then((m) => m.code),
       import("remark-breaks").then((m) => m.default),
       import("streamdown/styles.css" as string),
-    ]).then(([Streamdown, code, breaks]) => {
-      setStreamdownComponent(() => Streamdown);
-      setCodePlugin(() => code);
-      setBreaksPlugin(() => breaks);
-    });
+    ])
+      .then(([Streamdown, code, breaks]) => {
+        setStreamdownComponent(() => Streamdown);
+        setCodePlugin(() => code);
+        setBreaksPlugin(() => breaks);
+      })
+      .catch((err) => {
+        console.error("Failed to load markdown preview dependencies:", err);
+      });
   }, []);
 
   if (!source) return null;
