@@ -39,6 +39,7 @@ export const GrantCompletion: FC = () => {
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
+  const isOwnerLoading = useOwnerStore((state) => state.isOwnerLoading);
   const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
   const isAuthorized = isProjectOwner || isProjectAdmin || isContractOwner || isCommunityAdmin;
 
@@ -258,9 +259,10 @@ export const GrantCompletion: FC = () => {
           );
         });
     } catch (error: any) {
-      const msg = error?.message?.toLowerCase() ?? "";
+      const msg = (error?.message ?? error?.originalError?.message ?? "").toLowerCase();
+      const code = error?.code ?? error?.originalError?.code;
       const isUserCancellation =
-        error?.code === 4001 ||
+        code === 4001 ||
         msg.includes("user rejected") ||
         msg.includes("user denied") ||
         msg.includes("user cancelled") ||
@@ -271,7 +273,7 @@ export const GrantCompletion: FC = () => {
       } else {
         showError(MESSAGES.GRANT.MARK_AS_COMPLETE.ERROR);
         errorManager(MESSAGES.GRANT.MARK_AS_COMPLETE.ERROR, error, {
-          grantUID: grant?.uid,
+          grantUID: grantToComplete.uid,
           address,
         });
       }
@@ -343,6 +345,18 @@ export const GrantCompletion: FC = () => {
       setIsLoading(false);
     });
   };
+
+  if (isOwnerLoading) {
+    return (
+      <div className="mt-9 flex flex-1">
+        <div className="flex w-full max-w-3xl flex-col gap-6 rounded-md bg-gray-200 dark:bg-zinc-800 px-4 py-6 max-lg:max-w-full">
+          <div className="animate-pulse h-8 w-64 bg-gray-300 dark:bg-zinc-700 rounded" />
+          <div className="animate-pulse h-40 w-full bg-gray-300 dark:bg-zinc-700 rounded" />
+          <div className="animate-pulse h-11 w-48 bg-gray-300 dark:bg-zinc-700 rounded self-end" />
+        </div>
+      </div>
+    );
+  }
 
   if (!isAuthorized) {
     return (

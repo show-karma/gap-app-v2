@@ -182,7 +182,7 @@ vi.mock("@/store", () => ({
     return selector ? selector(state) : state;
   }),
   useOwnerStore: vi.fn((selector?: any) => {
-    const state = { isOwner: mockIsOwner.current };
+    const state = { isOwner: mockIsOwner.current, isOwnerLoading: false };
     return selector ? selector(state) : state;
   }),
 }));
@@ -206,13 +206,19 @@ vi.mock("@/components/Utilities/MarkdownEditor", () => ({
   ),
 }));
 
-vi.mock("./CompletionRequirements/FundingProgramFields", () => ({
-  FundingProgramFields: () => null,
-}));
+vi.mock(
+  "@/components/Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/CompletionRequirements/FundingProgramFields",
+  () => ({
+    FundingProgramFields: () => null,
+  })
+);
 
-vi.mock("./CompletionRequirements/TrackExplanations", () => ({
-  TrackExplanations: () => null,
-}));
+vi.mock(
+  "@/components/Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/CompletionRequirements/TrackExplanations",
+  () => ({
+    TrackExplanations: () => null,
+  })
+);
 
 vi.mock("@/utilities/pages", () => ({
   PAGES: {
