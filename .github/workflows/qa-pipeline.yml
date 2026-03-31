@@ -69,19 +69,32 @@ jobs:
             core.setOutput('head_sha', headSha);
             core.setOutput('pr_number', prNumber);
 
-            // --- Check review verdict (skip for manual trigger) ---
-            const { data: comments } = await github.rest.issues.listComments({
-              owner, repo, issue_number: prNumber, per_page: 100
-            });
+            // --- Check review verdict (poll for comment, skip for manual trigger) ---
+            let comments;
 
             if (!isManual) {
-              const reviewComment = [...comments].reverse().find(c =>
-                (c.user.login === 'github-actions[bot]' || c.user.login.includes('claude') || c.user.login.includes('karma')) &&
-                (c.body.includes('APPROVE') || c.body.includes('REQUEST CHANGES'))
-              );
+              let reviewComment = null;
+              const maxAttempts = 12;
+
+              for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+                const { data: allComments } = await github.rest.issues.listComments({
+                  owner, repo, issue_number: prNumber, per_page: 100
+                });
+                comments = allComments;
+
+                reviewComment = [...allComments].reverse().find(c =>
+                  (c.user.login === 'github-actions[bot]' || c.user.login.includes('claude') || c.user.login.includes('karma')) &&
+                  (c.body.includes('APPROVE') || c.body.includes('REQUEST CHANGES'))
+                );
+
+                if (reviewComment) break;
+
+                console.log('Waiting for review verdict... (' + attempt + '/' + maxAttempts + ')');
+                await new Promise(r => setTimeout(r, 15000));
+              }
 
               if (!reviewComment) {
-                console.log('No Claude Code review verdict found');
+                console.log('No Claude Code review verdict found after polling');
                 core.setOutput('should_run', 'false');
                 return;
               }
@@ -96,6 +109,10 @@ jobs:
               console.log('✅ Review approved');
             } else {
               console.log('Manual trigger — skipping verdict check');
+              const { data: allComments } = await github.rest.issues.listComments({
+                owner, repo, issue_number: prNumber, per_page: 100
+              });
+              comments = allComments;
             }
 
             // --- Extract Vercel deployment URL ---
