@@ -38,21 +38,17 @@ interface MarkdownEditorProps {
   enablePreviewToggle?: boolean;
 }
 
-const MdEditor = dynamic(
-  () =>
-    import("md-editor-rt/lib/style.css" as string).then(() =>
-      import("md-editor-rt").then((mod) => mod.MdEditor)
-    ),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="flex items-center justify-center h-[300px] border border-gray-200 dark:border-gray-700 rounded-lg">
-        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-        <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">Loading editor...</span>
-      </div>
-    ),
-  }
-);
+import "md-editor-rt/lib/style.css";
+
+const MdEditor = dynamic(() => import("md-editor-rt").then((mod) => mod.MdEditor), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center h-[300px] border border-gray-200 dark:border-gray-700 rounded-lg">
+      <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+      <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">Loading editor...</span>
+    </div>
+  ),
+});
 
 // Toolbar buttons to exclude — removes overflow-causing and rarely-used items in modal contexts
 const EXCLUDED_TOOLBARS = [

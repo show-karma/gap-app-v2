@@ -1,17 +1,12 @@
 "use client";
 
+import "md-editor-rt/lib/style.css";
 import dynamic from "next/dynamic";
 import { useTheme } from "next-themes";
 import { useCallback, useEffect, useState } from "react";
 import { cn } from "@/utilities/tailwind";
 
-const MdEditor = dynamic(
-  () =>
-    import("md-editor-rt/lib/style.css" as string).then(() =>
-      import("md-editor-rt").then((mod) => mod.MdEditor)
-    ),
-  { ssr: false }
-);
+const MdEditor = dynamic(() => import("md-editor-rt").then((mod) => mod.MdEditor), { ssr: false });
 
 interface CommentMarkdownInputProps {
   value: string;
