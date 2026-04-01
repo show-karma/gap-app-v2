@@ -201,6 +201,7 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
                   },
                 ]
               : [],
+            invoiceInfo: milestone.invoiceInfo ?? undefined,
           },
           grant: {
             uid: grantInfo?.uid || "",

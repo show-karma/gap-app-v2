@@ -307,7 +307,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
               <ReadMore side="left">{completionReason}</ReadMore>
             </div>
           ) : null}
-          {milestone.invoiceInfo?.fileKey && grantUID && (
+          {isAuthorized && milestone.invoiceInfo?.fileKey && grantUID && (
             <button
               type="button"
               className="flex items-center gap-1.5 hover:opacity-75 transition-opacity"

@@ -200,6 +200,7 @@ export const GrantMilestoneCompletionForm = ({
               </span>
               <button
                 type="button"
+                aria-label="Remove invoice file"
                 className="p-0.5 rounded text-red-400 hover:text-red-600 dark:text-red-500 dark:hover:text-red-400 transition-colors"
                 onClick={() => setInvoiceFile(null)}
               >

@@ -49,6 +49,8 @@ export const payoutDisbursementKeys = {
     byGrant: (grantUID: string) =>
       [...payoutDisbursementKeys.payoutConfigs.all, "grant", grantUID] as const,
   },
+  granteeInvoiceCheck: (grantUID: string) =>
+    [...payoutDisbursementKeys.all, "granteeInvoiceCheck", grantUID] as const,
 } as const;
 
 /**
@@ -544,8 +546,8 @@ export function useGrantInvoiceRequired(
   options?: { enabled?: boolean }
 ) {
   return useQuery<payoutService.GranteeInvoiceCheckResult, Error>({
-    queryKey: ["granteeInvoiceCheck", grantUID],
-    queryFn: () => payoutService.checkGrantInvoiceRequired(grantUID!),
+    queryKey: payoutDisbursementKeys.granteeInvoiceCheck(grantUID ?? ""),
+    queryFn: () => payoutService.checkGrantInvoiceRequired(grantUID ?? ""),
     enabled: (options?.enabled ?? true) && !!grantUID,
     staleTime: 1000 * 60 * 5,
   });

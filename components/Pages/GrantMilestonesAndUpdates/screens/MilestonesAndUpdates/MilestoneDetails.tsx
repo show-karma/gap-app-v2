@@ -197,7 +197,7 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({ milestone, index }
             <Updates milestone={milestone} />
           </div>
         )}
-        {milestone.invoiceInfo?.fileKey && milestone.refUID && (
+        {isAuthorized && milestone.invoiceInfo?.fileKey && milestone.refUID && (
           <button
             type="button"
             className="flex items-center gap-1.5 px-6 pb-4 hover:opacity-75 transition-opacity"

@@ -400,6 +400,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
           error: MESSAGES.MILESTONES.COMPLETE.ERROR,
         }
       );
+      throw error;
     } finally {
       setIsStepper(false);
       setIsSubmitLoading(false);
@@ -512,6 +513,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
           error: MESSAGES.MILESTONES.UPDATE_COMPLETION.ERROR,
         }
       );
+      throw error;
     } finally {
       setIsStepper(false);
     }
@@ -519,13 +521,18 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
 
   const onSubmit = async (data: SchemaType) => {
     const sanitizedData = sanitizeObject(data);
-    if (isEditing) {
-      await updateMilestoneCompletion(milestone, sanitizedData);
-    } else {
-      await completeMilestone(milestone, sanitizedData);
+    try {
+      if (isEditing) {
+        await updateMilestoneCompletion(milestone, sanitizedData);
+      } else {
+        await completeMilestone(milestone, sanitizedData);
+      }
+    } catch {
+      // Error already displayed by completeMilestone/updateMilestoneCompletion
+      return;
     }
 
-    // Submit invoice if a new file was attached
+    // Submit invoice only after successful milestone operation
     if (invoiceFile && grantUID) {
       try {
         await submitGranteeInvoice(grantUID, {
@@ -610,6 +617,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
                 </span>
                 <button
                   type="button"
+                  aria-label="Remove invoice"
                   className="p-0.5 rounded text-red-400 hover:text-red-600 transition-colors"
                   onClick={handleRemoveInvoice}
                 >
@@ -624,6 +632,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
                 </span>
                 <button
                   type="button"
+                  aria-label="Remove invoice"
                   className="p-0.5 rounded text-red-400 hover:text-red-600 transition-colors"
                   onClick={handleRemoveInvoice}
                 >
