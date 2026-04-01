@@ -1,17 +1,19 @@
 "use client";
 
-import { PencilSquareIcon } from "@heroicons/react/24/outline";
+import { PaperClipIcon, PencilSquareIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import type { IMilestoneCompleted } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePathname, useRouter } from "next/navigation";
-import { type FC, useEffect, useMemo, useState } from "react";
+import { type FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { z } from "zod";
 import { OutputsSection } from "@/components/Forms/Outputs/OutputsSection";
 import { Button } from "@/components/Utilities/Button";
+import { FileUpload } from "@/components/Utilities/FileUpload";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useGap } from "@/hooks/useGap";
@@ -23,6 +25,8 @@ import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
+import { useGrantInvoiceRequired } from "@/src/features/payout-disbursement/hooks/use-payout-disbursement";
+import { submitGranteeInvoice } from "@/src/features/payout-disbursement/services/payout-disbursement.service";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import type { GrantMilestone } from "@/types/v2/grant";
@@ -117,6 +121,31 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
   const { openShareDialog, closeShareDialog } = useShareDialogStore();
   const router = useRouter();
   const pathname = usePathname();
+
+  // Invoice state
+  const grantUID = milestone.refUID;
+  const { data: invoiceCheckData } = useGrantInvoiceRequired(grantUID);
+  const invoiceRequired = invoiceCheckData?.invoiceRequired === true;
+  const hasExistingInvoice = !!milestone.invoiceInfo?.fileKey;
+  const [invoiceFile, setInvoiceFile] = useState<{
+    fileUrl: string;
+    fileKey: string;
+    fileName: string;
+  } | null>(null);
+  const [invoiceRemoved, setInvoiceRemoved] = useState(false);
+  const pendingFileNameRef = useRef("");
+
+  const handleInvoiceFileUploaded = useCallback((finalUrl: string, tempKey: string) => {
+    setInvoiceFile({ fileUrl: finalUrl, fileKey: tempKey, fileName: pendingFileNameRef.current });
+    setInvoiceRemoved(false);
+  }, []);
+
+  const handleRemoveInvoice = useCallback(() => {
+    setInvoiceFile(null);
+    if (hasExistingInvoice) {
+      setInvoiceRemoved(true);
+    }
+  }, [hasExistingInvoice]);
 
   // Fetch existing milestone impact data to populate the form
   const { data: milestoneImpactData } = useMilestoneImpactAnswers({
@@ -495,6 +524,21 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
     } else {
       await completeMilestone(milestone, sanitizedData);
     }
+
+    // Submit invoice if a new file was attached
+    if (invoiceFile && grantUID) {
+      try {
+        await submitGranteeInvoice(grantUID, {
+          milestoneLabel: milestone.title,
+          milestoneUID: milestone.uid,
+          invoiceFileKey: invoiceFile.fileKey,
+          invoiceFileUrl: invoiceFile.fileUrl,
+        });
+        toast.success("Invoice submitted successfully");
+      } catch {
+        toast.error("Update saved but invoice submission failed. You can try again later.");
+      }
+    }
   };
 
   const grant = useMemo(
@@ -554,6 +598,58 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
           onIndicatorCreated={() => {}}
           labelStyle={labelStyle}
         />
+        {/* Invoice Section */}
+        {invoiceRequired && grantUID && (
+          <div className="flex w-full flex-col items-start gap-2 mt-2">
+            <div className={labelStyle}>Invoice (optional)</div>
+            {invoiceFile ? (
+              <div className="flex items-center gap-2 rounded-md border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-2">
+                <PaperClipIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                <span className="text-sm text-emerald-700 dark:text-emerald-300 flex-1 truncate">
+                  {invoiceFile.fileName}
+                </span>
+                <button
+                  type="button"
+                  className="p-0.5 rounded text-red-400 hover:text-red-600 transition-colors"
+                  onClick={handleRemoveInvoice}
+                >
+                  <XMarkIcon className="h-4 w-4" />
+                </button>
+              </div>
+            ) : hasExistingInvoice && !invoiceRemoved ? (
+              <div className="flex items-center gap-2 rounded-md border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-2">
+                <PaperClipIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                <span className="text-sm text-emerald-700 dark:text-emerald-300 flex-1">
+                  Invoice attached
+                </span>
+                <button
+                  type="button"
+                  className="p-0.5 rounded text-red-400 hover:text-red-600 transition-colors"
+                  onClick={handleRemoveInvoice}
+                >
+                  <XMarkIcon className="h-4 w-4" />
+                </button>
+              </div>
+            ) : (
+              <FileUpload
+                onFileSelect={(file) => {
+                  pendingFileNameRef.current = file.name;
+                }}
+                acceptedFormats=".pdf,.docx"
+                description="PDF or DOCX (max 10MB)"
+                useS3Upload
+                skipDimensionValidation
+                presignedUrlEndpoint={INDEXER.V2.MILESTONE_INVOICES.GRANTEE_PRESIGNED()}
+                maxFileSize={10 * 1024 * 1024}
+                allowedFileTypes={[
+                  "application/pdf",
+                  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                ]}
+                onS3UploadComplete={handleInvoiceFileUploaded}
+              />
+            )}
+          </div>
+        )}
       </div>
       <div className="mt-4 flex w-full flex-row justify-end gap-4">
         <Button

@@ -637,3 +637,103 @@ export const getInvoiceDownloadUrl = async (fileKey: string): Promise<string> =>
     throw new Error(`Failed to get download URL: ${getErrorMessage(error)}`);
   }
 };
+
+// ─── Grantee Invoice Functions ──────────────────────────────────────────────
+
+export interface GranteeInvoiceCheckResult {
+  invoiceRequired: boolean;
+  invoiceStatus?: string | null;
+  invoiceFileKey?: string | null;
+}
+
+/**
+ * Check if invoice is required for a grant (grantee endpoint)
+ */
+export const checkGrantInvoiceRequired = async (
+  grantUID: string
+): Promise<GranteeInvoiceCheckResult> => {
+  try {
+    const url = INDEXER.V2.GRANTS.INVOICE_REQUIREMENT(grantUID);
+
+    const [data, error] = await fetchData<GranteeInvoiceCheckResult>(
+      url,
+      "GET",
+      {},
+      {},
+      {},
+      true,
+      false
+    );
+
+    if (error || !data) {
+      return { invoiceRequired: false };
+    }
+
+    return data;
+  } catch {
+    return { invoiceRequired: false };
+  }
+};
+
+/**
+ * Submit invoice for a milestone as a grantee
+ */
+export const submitGranteeInvoice = async (
+  grantUID: string,
+  invoice: {
+    milestoneLabel: string;
+    milestoneUID?: string | null;
+    invoiceFileKey: string;
+    invoiceFileUrl: string;
+  }
+): Promise<CommunityPayoutInvoiceInfo | null> => {
+  try {
+    const [data, error] = await fetchData<{ invoice: CommunityPayoutInvoiceInfo }>(
+      INDEXER.V2.GRANTS.INVOICE_SUBMIT(grantUID),
+      "PUT",
+      invoice,
+      {},
+      {},
+      true,
+      false
+    );
+
+    if (error || !data) {
+      throw new Error(error || "Failed to submit invoice");
+    }
+
+    return data.invoice;
+  } catch (error: unknown) {
+    errorManager(`Error submitting grantee invoice for grant ${grantUID}`, error);
+    throw new Error(`Failed to submit invoice: ${getErrorMessage(error)}`);
+  }
+};
+
+/**
+ * Get a download URL for an invoice file (requires auth + project access)
+ */
+export const getGrantInvoiceDownloadUrl = async (
+  grantUID: string,
+  fileKey: string
+): Promise<string> => {
+  try {
+    const [data, error] = await fetchData<{ downloadUrl: string }>(
+      INDEXER.V2.GRANTS.INVOICE_DOWNLOAD(grantUID, fileKey),
+      "GET",
+      {},
+      {},
+      {},
+      true,
+      false
+    );
+
+    if (error || !data?.downloadUrl) {
+      throw new Error(error || "Failed to get download URL");
+    }
+
+    return data.downloadUrl;
+  } catch (error: unknown) {
+    errorManager("Error getting invoice download URL", error);
+    throw new Error(`Failed to get download URL: ${getErrorMessage(error)}`);
+  }
+};

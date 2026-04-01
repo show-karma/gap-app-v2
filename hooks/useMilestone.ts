@@ -651,6 +651,7 @@ export const useMilestone = () => {
       errorManager("Error completing milestone.", error, {
         milestoneData: milestone,
       });
+      throw error;
     } finally {
       dismiss();
     }
@@ -809,6 +810,7 @@ export const useMilestone = () => {
       errorManager("Error completing milestone", error, {
         milestoneData: milestone,
       });
+      throw error;
     } finally {
       dismiss();
     }

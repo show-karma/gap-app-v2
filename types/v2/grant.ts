@@ -98,6 +98,12 @@ export interface GrantMilestone {
     editedAt: string;
     editedBy: string;
   }>;
+  /** Invoice information for this milestone */
+  invoiceInfo?: {
+    status: string;
+    receivedAt: string | null;
+    fileKey: string | null;
+  } | null;
   // Additional fields for compatibility
   id?: string;
   schemaUID?: string;

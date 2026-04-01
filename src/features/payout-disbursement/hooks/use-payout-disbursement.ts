@@ -537,6 +537,21 @@ export function useToggleAgreement(
 }
 
 /**
+ * Hook for checking if invoice is required for a grant (grantee-facing)
+ */
+export function useGrantInvoiceRequired(
+  grantUID: string | undefined,
+  options?: { enabled?: boolean }
+) {
+  return useQuery<payoutService.GranteeInvoiceCheckResult, Error>({
+    queryKey: ["granteeInvoiceCheck", grantUID],
+    queryFn: () => payoutService.checkGrantInvoiceRequired(grantUID!),
+    enabled: (options?.enabled ?? true) && !!grantUID,
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
+/**
  * Hook for batch saving milestone invoices
  */
 export function useSaveMilestoneInvoices(
