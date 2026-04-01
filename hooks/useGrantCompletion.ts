@@ -10,6 +10,7 @@ import { getSDKGrantInstance } from "@/utilities/grant-helpers";
 import { notifyIndexerForGrant } from "@/utilities/indexer-notification";
 import { MESSAGES } from "@/utilities/messages";
 import { sanitizeObject } from "@/utilities/sanitize";
+import { isUserCancellationError } from "@/utilities/wallet-errors";
 
 interface UseGrantCompletionParams {
   onComplete?: () => void;
@@ -113,8 +114,7 @@ export const useGrantCompletion = ({
     } catch (error: any) {
       console.error("Error completing grant:", error);
 
-      // User cancelled
-      if (error?.message?.includes("User rejected") || error?.code === 4001) {
+      if (isUserCancellationError(error)) {
         showError("Grant completion cancelled");
       } else {
         showError(MESSAGES.GRANT.MARK_AS_COMPLETE.ERROR);
