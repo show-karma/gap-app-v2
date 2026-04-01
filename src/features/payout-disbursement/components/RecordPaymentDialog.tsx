@@ -36,19 +36,9 @@ const USDC_DECIMALS = TOKENS.usdc.decimals;
 const INITIAL_PAYMENT_KEY = "__initial_payment__";
 const FALLBACK_CHAIN_ID = 1; // Ethereum mainnet — used when grant chain has no USDC configured
 
-function getUsdcAddress(chainID: number): string {
+function getUsdcAddressForChain(chainID: number): string | null {
   const addresses = TOKEN_ADDRESSES.usdc as Record<number, string>;
-  return addresses[chainID] ?? addresses[FALLBACK_CHAIN_ID];
-}
-
-function getEffectiveChainID(chainID: number): number {
-  const addresses = TOKEN_ADDRESSES.usdc as Record<number, string>;
-  return addresses[chainID] ? chainID : FALLBACK_CHAIN_ID;
-}
-
-function isChainSupported(chainID: number): boolean {
-  const addresses = TOKEN_ADDRESSES.usdc as Record<number, string>;
-  return !!addresses[chainID];
+  return addresses[chainID] ?? null;
 }
 
 interface MilestoneOption {
@@ -78,7 +68,8 @@ function RecordPaymentDialogInner({
   const [notes, setNotes] = useState("");
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
 
-  const chainSupported = isChainSupported(chainID);
+  const nativeUsdcAddress = getUsdcAddressForChain(chainID);
+  const chainSupported = nativeUsdcAddress !== null;
 
   const recordPayment = useRecordPayment({
     onSuccess: () => {
@@ -140,8 +131,8 @@ function RecordPaymentDialogInner({
   const handleSubmit = useCallback(() => {
     if (!isValid || recordPayment.isPending) return;
 
-    const effectiveChainID = getEffectiveChainID(chainID);
-    const tokenAddress = getUsdcAddress(chainID);
+    const effectiveChainID = chainSupported ? chainID : FALLBACK_CHAIN_ID;
+    const tokenAddress = nativeUsdcAddress ?? (getUsdcAddressForChain(FALLBACK_CHAIN_ID) as string);
     const disbursedAmount = toSmallestUnit(amount, USDC_DECIMALS);
 
     const selectedMilestones = milestoneOptions.filter((m) => selectedKeys.includes(m.key));
