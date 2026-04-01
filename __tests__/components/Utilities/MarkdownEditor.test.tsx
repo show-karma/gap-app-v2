@@ -10,7 +10,19 @@ import "@testing-library/jest-dom";
 
 // Mock next-themes
 vi.mock("next-themes", () => ({
-  useTheme: () => ({ theme: "light" }),
+  useTheme: () => ({ resolvedTheme: "light" }),
+}));
+
+// Mock md-editor-rt CSS (lazy-loaded inside dynamic import)
+vi.mock("md-editor-rt/lib/style.css", () => ({}));
+
+// Mock MarkdownPreview used in preview toggle mode
+vi.mock("@/components/Utilities/MarkdownPreview", () => ({
+  MarkdownPreview: ({ source }: { source?: string }) => (
+    <div data-testid="markdown-preview">
+      <p>Preview: {source}</p>
+    </div>
+  ),
 }));
 
 // Mock the dynamic import of MDEditor
@@ -20,7 +32,7 @@ vi.mock("next/dynamic", () => ({
     importFn: () => Promise<{ default: React.ComponentType }>,
     options?: { loading?: () => React.ReactNode }
   ) => {
-    // Return a mock MDEditor component
+    // Return a mock MDEditor component matching md-editor-rt's direct prop API
     const MockMDEditor = ({
       value,
       onChange,
@@ -28,22 +40,23 @@ vi.mock("next/dynamic", () => ({
       height,
       minHeight,
       preview,
-      textareaProps,
+      disabled,
+      placeholder,
+      maxLength,
       className,
+      id,
     }: {
       value?: string;
       onChange?: (val?: string) => void;
       onBlur?: () => void;
       height?: number;
       minHeight?: number;
-      preview?: string;
-      textareaProps?: {
-        placeholder?: string;
-        disabled?: boolean;
-        id?: string;
-        maxLength?: number;
-      };
+      preview?: boolean;
+      disabled?: boolean;
+      placeholder?: string;
+      maxLength?: number;
       className?: string;
+      id?: string;
     }) => (
       <div data-testid="md-editor" className={className} style={{ height, minHeight }}>
         <textarea
@@ -51,16 +64,11 @@ vi.mock("next/dynamic", () => ({
           value={value}
           onChange={(e) => onChange?.(e.target.value)}
           onBlur={onBlur}
-          placeholder={textareaProps?.placeholder}
-          disabled={textareaProps?.disabled}
-          id={textareaProps?.id}
-          maxLength={textareaProps?.maxLength}
+          placeholder={placeholder}
+          disabled={disabled}
+          id={id}
+          maxLength={maxLength}
         />
-        {preview === "preview" && (
-          <div data-testid="md-editor-preview">
-            <p>Preview: {value}</p>
-          </div>
-        )}
       </div>
     );
 
@@ -187,7 +195,7 @@ describe("MarkdownEditor", () => {
       await user.click(previewButton);
 
       await waitFor(() => {
-        expect(screen.getByTestId("md-editor-preview")).toBeInTheDocument();
+        expect(screen.getByTestId("markdown-preview")).toBeInTheDocument();
       });
     });
 

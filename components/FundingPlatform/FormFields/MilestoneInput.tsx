@@ -125,7 +125,6 @@ export const MilestoneInput: FC<MilestoneInputProps> = ({
               <Controller
                 name={`${fieldKey}.${index}.description`}
                 control={control}
-                rules={{ required: "Description is required" }}
                 render={({ field: descField, fieldState }) => (
                   <MarkdownEditor
                     label="Description"
@@ -134,7 +133,7 @@ export const MilestoneInput: FC<MilestoneInputProps> = ({
                     onChange={descField.onChange}
                     onBlur={descField.onBlur}
                     error={fieldState.error?.message}
-                    isRequired={true}
+                    isRequired={false}
                     isDisabled={isLoading}
                     id={`${fieldKey}-${index}-description`}
                     height={200}

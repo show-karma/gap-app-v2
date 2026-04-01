@@ -8,6 +8,10 @@
   overflow-wrap: break-word;
   word-break: break-word;
 
+  [data-streamdown="link"] {
+    white-space: normal;
+  }
+
   @media (max-width: 1440px) {
     @apply text-[14px];
   }
@@ -41,7 +45,7 @@
     }
     strong,
     a {
-      color: black;
+      color: inherit;
       font-weight: 700;
     }
   }
