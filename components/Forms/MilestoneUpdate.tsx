@@ -555,7 +555,8 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
         await queryClient.invalidateQueries({
           predicate: createProjectQueryPredicate(project?.uid || ""),
         });
-      } catch {
+      } catch (invoiceError) {
+        errorManager("Invoice submission failed after milestone update", invoiceError);
         toast.error("Update saved but invoice submission failed. You can try again later.");
       }
     }

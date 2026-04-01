@@ -9,6 +9,7 @@ import { OutputsSection } from "@/components/Forms/Outputs/OutputsSection";
 import { Button } from "@/components/Utilities/Button";
 import { FileUpload } from "@/components/Utilities/FileUpload";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { errorManager } from "@/components/Utilities/errorManager";
 import { useMilestone } from "@/hooks/useMilestone";
 import { submitGranteeInvoice } from "@/src/features/payout-disbursement/services/payout-disbursement.service";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
@@ -114,7 +115,8 @@ export const GrantMilestoneCompletionForm = ({
             invoiceFileUrl: invoiceFile.fileUrl,
           });
           toast.success("Invoice submitted successfully");
-        } catch {
+        } catch (invoiceError) {
+          errorManager("Invoice submission failed after milestone completion", invoiceError);
           toast.error(
             "Milestone completed but invoice submission failed. You can upload it later."
           );
