@@ -98,6 +98,7 @@ describe("GrantAssociation", () => {
       const img = screen.getByAltText("Broken Community");
 
       // Simulate image load failure
+      // fireEvent required: no userEvent equivalent for error events
       fireEvent.error(img);
 
       // Should show boring-avatar fallback

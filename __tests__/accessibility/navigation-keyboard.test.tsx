@@ -168,7 +168,9 @@ describe("Navigation Keyboard Accessibility", () => {
     expect(document.activeElement).toBe(signInButton);
 
     // Enter key on button should trigger click
+    // fireEvent required: accessibility keyboard navigation test
     fireEvent.keyDown(signInButton, { key: "Enter", code: "Enter" });
+    // fireEvent required: accessibility keyboard navigation test
     fireEvent.keyUp(signInButton, { key: "Enter", code: "Enter" });
 
     // Verify the button is interactive via keyboard
@@ -195,6 +197,7 @@ describe("Navigation Keyboard Accessibility", () => {
     expect(searchInput).toHaveValue("karma");
 
     // Submit with Enter should work (form submission)
+    // fireEvent required: no userEvent equivalent for submit events
     fireEvent.submit(searchInput.closest("form")!);
     expect(mockSearch).toHaveBeenCalledWith("karma");
   });

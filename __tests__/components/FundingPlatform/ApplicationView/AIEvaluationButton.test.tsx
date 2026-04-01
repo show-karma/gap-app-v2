@@ -1,5 +1,6 @@
 import "@testing-library/jest-dom";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import type { AxiosError } from "axios";
 import toast from "react-hot-toast";
 import AIEvaluationButton from "@/components/FundingPlatform/ApplicationView/AIEvaluationButton";
@@ -63,6 +64,7 @@ describe("AIEvaluationButton", () => {
     });
 
     it("should call runAIEvaluation API when clicked", async () => {
+      const user = userEvent.setup();
       (fundingApplicationsAPI.runAIEvaluation as vi.Mock).mockResolvedValue({
         success: true,
         referenceNumber: mockReferenceNumber,
@@ -74,7 +76,7 @@ describe("AIEvaluationButton", () => {
       render(<AIEvaluationButton referenceNumber={mockReferenceNumber} />);
 
       const button = screen.getByTestId("evaluation-button");
-      fireEvent.click(button);
+      await user.click(button);
 
       await waitFor(() => {
         expect(fundingApplicationsAPI.runAIEvaluation).toHaveBeenCalledWith(mockReferenceNumber);
@@ -82,6 +84,7 @@ describe("AIEvaluationButton", () => {
     });
 
     it("should show success toast on successful evaluation", async () => {
+      const user = userEvent.setup();
       (fundingApplicationsAPI.runAIEvaluation as vi.Mock).mockResolvedValue({
         success: true,
         referenceNumber: mockReferenceNumber,
@@ -90,7 +93,7 @@ describe("AIEvaluationButton", () => {
       render(<AIEvaluationButton referenceNumber={mockReferenceNumber} />);
 
       const button = screen.getByTestId("evaluation-button");
-      fireEvent.click(button);
+      await user.click(button);
 
       await waitFor(() => {
         expect(toast.success).toHaveBeenCalledWith("AI evaluation completed successfully!");
@@ -98,6 +101,7 @@ describe("AIEvaluationButton", () => {
     });
 
     it("should call onEvaluationComplete callback after success", async () => {
+      const user = userEvent.setup();
       (fundingApplicationsAPI.runAIEvaluation as vi.Mock).mockResolvedValue({
         success: true,
         referenceNumber: mockReferenceNumber,
@@ -111,7 +115,7 @@ describe("AIEvaluationButton", () => {
       );
 
       const button = screen.getByTestId("evaluation-button");
-      fireEvent.click(button);
+      await user.click(button);
 
       await waitFor(() => {
         expect(mockOnEvaluationComplete).toHaveBeenCalled();
@@ -127,6 +131,7 @@ describe("AIEvaluationButton", () => {
     });
 
     it("should call runInternalAIEvaluation API when clicked", async () => {
+      const user = userEvent.setup();
       (fundingApplicationsAPI.runInternalAIEvaluation as vi.Mock).mockResolvedValue({
         success: true,
         referenceNumber: mockReferenceNumber,
@@ -138,7 +143,7 @@ describe("AIEvaluationButton", () => {
       render(<AIEvaluationButton referenceNumber={mockReferenceNumber} isInternal={true} />);
 
       const button = screen.getByTestId("evaluation-button");
-      fireEvent.click(button);
+      await user.click(button);
 
       await waitFor(() => {
         expect(fundingApplicationsAPI.runInternalAIEvaluation).toHaveBeenCalledWith(
@@ -149,6 +154,7 @@ describe("AIEvaluationButton", () => {
     });
 
     it("should show internal success toast message", async () => {
+      const user = userEvent.setup();
       (fundingApplicationsAPI.runInternalAIEvaluation as vi.Mock).mockResolvedValue({
         success: true,
         referenceNumber: mockReferenceNumber,
@@ -157,7 +163,7 @@ describe("AIEvaluationButton", () => {
       render(<AIEvaluationButton referenceNumber={mockReferenceNumber} isInternal={true} />);
 
       const button = screen.getByTestId("evaluation-button");
-      fireEvent.click(button);
+      await user.click(button);
 
       await waitFor(() => {
         expect(toast.success).toHaveBeenCalledWith(
@@ -169,6 +175,7 @@ describe("AIEvaluationButton", () => {
 
   describe("Loading State", () => {
     it("should show loading text during evaluation", async () => {
+      const user = userEvent.setup();
       (fundingApplicationsAPI.runAIEvaluation as vi.Mock).mockImplementation(
         () => new Promise((resolve) => setTimeout(() => resolve({ success: true }), 100))
       );
@@ -176,12 +183,13 @@ describe("AIEvaluationButton", () => {
       render(<AIEvaluationButton referenceNumber={mockReferenceNumber} />);
 
       const button = screen.getByTestId("evaluation-button");
-      fireEvent.click(button);
+      await user.click(button);
 
       expect(screen.getByText("Running AI Evaluation...")).toBeInTheDocument();
     });
 
     it("should show internal loading text during internal evaluation", async () => {
+      const user = userEvent.setup();
       (fundingApplicationsAPI.runInternalAIEvaluation as vi.Mock).mockImplementation(
         () => new Promise((resolve) => setTimeout(() => resolve({ success: true }), 100))
       );
@@ -189,12 +197,13 @@ describe("AIEvaluationButton", () => {
       render(<AIEvaluationButton referenceNumber={mockReferenceNumber} isInternal={true} />);
 
       const button = screen.getByTestId("evaluation-button");
-      fireEvent.click(button);
+      await user.click(button);
 
       expect(screen.getByText("Running Internal AI Evaluation...")).toBeInTheDocument();
     });
 
     it("should disable button during evaluation", async () => {
+      const user = userEvent.setup();
       (fundingApplicationsAPI.runAIEvaluation as vi.Mock).mockImplementation(
         () => new Promise((resolve) => setTimeout(() => resolve({ success: true }), 100))
       );
@@ -202,12 +211,13 @@ describe("AIEvaluationButton", () => {
       render(<AIEvaluationButton referenceNumber={mockReferenceNumber} />);
 
       const button = screen.getByTestId("evaluation-button") as HTMLButtonElement;
-      fireEvent.click(button);
+      await user.click(button);
 
       expect(button.disabled).toBe(true);
     });
 
     it("should set aria-busy during evaluation", async () => {
+      const user = userEvent.setup();
       (fundingApplicationsAPI.runAIEvaluation as vi.Mock).mockImplementation(
         () => new Promise((resolve) => setTimeout(() => resolve({ success: true }), 100))
       );
@@ -215,12 +225,13 @@ describe("AIEvaluationButton", () => {
       render(<AIEvaluationButton referenceNumber={mockReferenceNumber} />);
 
       const button = screen.getByTestId("evaluation-button");
-      fireEvent.click(button);
+      await user.click(button);
 
       expect(button.getAttribute("aria-busy")).toBe("true");
     });
 
     it("should add animate-pulse class during evaluation", async () => {
+      const user = userEvent.setup();
       (fundingApplicationsAPI.runAIEvaluation as vi.Mock).mockImplementation(
         () => new Promise((resolve) => setTimeout(() => resolve({ success: true }), 100))
       );
@@ -228,7 +239,7 @@ describe("AIEvaluationButton", () => {
       render(<AIEvaluationButton referenceNumber={mockReferenceNumber} />);
 
       const button = screen.getByTestId("evaluation-button");
-      fireEvent.click(button);
+      await user.click(button);
 
       expect(button.className).toContain("animate-pulse");
     });
@@ -242,16 +253,18 @@ describe("AIEvaluationButton", () => {
       expect(button.disabled).toBe(true);
     });
 
-    it("should not call API when disabled and clicked", () => {
+    it("should not call API when disabled and clicked", async () => {
+      const user = userEvent.setup();
       render(<AIEvaluationButton referenceNumber={mockReferenceNumber} disabled={true} />);
 
       const button = screen.getByTestId("evaluation-button");
-      fireEvent.click(button);
+      await user.click(button);
 
       expect(fundingApplicationsAPI.runAIEvaluation).not.toHaveBeenCalled();
     });
 
     it("should not call API when already evaluating", async () => {
+      const user = userEvent.setup();
       (fundingApplicationsAPI.runAIEvaluation as vi.Mock).mockImplementation(
         () => new Promise((resolve) => setTimeout(() => resolve({ success: true }), 100))
       );
@@ -259,8 +272,8 @@ describe("AIEvaluationButton", () => {
       render(<AIEvaluationButton referenceNumber={mockReferenceNumber} />);
 
       const button = screen.getByTestId("evaluation-button");
-      fireEvent.click(button);
-      fireEvent.click(button); // Second click should be ignored
+      await user.click(button);
+      await user.click(button); // Second click should be ignored
 
       await waitFor(() => {
         expect(fundingApplicationsAPI.runAIEvaluation).toHaveBeenCalledTimes(1);
@@ -270,6 +283,7 @@ describe("AIEvaluationButton", () => {
 
   describe("Error Handling", () => {
     it("should handle Axios errors with response data", async () => {
+      const user = userEvent.setup();
       const axiosError = {
         isAxiosError: true,
         response: {
@@ -285,7 +299,7 @@ describe("AIEvaluationButton", () => {
       render(<AIEvaluationButton referenceNumber={mockReferenceNumber} />);
 
       const button = screen.getByTestId("evaluation-button");
-      fireEvent.click(button);
+      await user.click(button);
 
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith("Custom error message");
@@ -293,6 +307,7 @@ describe("AIEvaluationButton", () => {
     });
 
     it("should handle Axios errors without response data", async () => {
+      const user = userEvent.setup();
       // Axios errors without response still have response property (can be undefined)
       const axiosError = {
         isAxiosError: true,
@@ -305,7 +320,7 @@ describe("AIEvaluationButton", () => {
       render(<AIEvaluationButton referenceNumber={mockReferenceNumber} />);
 
       const button = screen.getByTestId("evaluation-button");
-      fireEvent.click(button);
+      await user.click(button);
 
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith("Network error");
@@ -313,6 +328,7 @@ describe("AIEvaluationButton", () => {
     });
 
     it("should handle generic Error objects", async () => {
+      const user = userEvent.setup();
       const genericError = new Error("Generic error message");
 
       (fundingApplicationsAPI.runAIEvaluation as vi.Mock).mockRejectedValue(genericError);
@@ -320,7 +336,7 @@ describe("AIEvaluationButton", () => {
       render(<AIEvaluationButton referenceNumber={mockReferenceNumber} />);
 
       const button = screen.getByTestId("evaluation-button");
-      fireEvent.click(button);
+      await user.click(button);
 
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith("Generic error message");
@@ -328,6 +344,7 @@ describe("AIEvaluationButton", () => {
     });
 
     it("should handle unknown error types", async () => {
+      const user = userEvent.setup();
       const unknownError = "String error";
 
       (fundingApplicationsAPI.runAIEvaluation as vi.Mock).mockRejectedValue(unknownError);
@@ -335,7 +352,7 @@ describe("AIEvaluationButton", () => {
       render(<AIEvaluationButton referenceNumber={mockReferenceNumber} />);
 
       const button = screen.getByTestId("evaluation-button");
-      fireEvent.click(button);
+      await user.click(button);
 
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith("Failed to run AI evaluation");
@@ -343,6 +360,7 @@ describe("AIEvaluationButton", () => {
     });
 
     it("should show internal error message for internal mode", async () => {
+      const user = userEvent.setup();
       const error = new Error("Internal evaluation failed");
 
       (fundingApplicationsAPI.runInternalAIEvaluation as vi.Mock).mockRejectedValue(error);
@@ -350,7 +368,7 @@ describe("AIEvaluationButton", () => {
       render(<AIEvaluationButton referenceNumber={mockReferenceNumber} isInternal={true} />);
 
       const button = screen.getByTestId("evaluation-button");
-      fireEvent.click(button);
+      await user.click(button);
 
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith("Internal evaluation failed");
@@ -360,6 +378,7 @@ describe("AIEvaluationButton", () => {
 
   describe("Callback Error Handling", () => {
     it("should handle errors in onEvaluationComplete callback", async () => {
+      const user = userEvent.setup();
       (fundingApplicationsAPI.runAIEvaluation as vi.Mock).mockResolvedValue({
         success: true,
         referenceNumber: mockReferenceNumber,
@@ -376,7 +395,7 @@ describe("AIEvaluationButton", () => {
       );
 
       const button = screen.getByTestId("evaluation-button");
-      fireEvent.click(button);
+      await user.click(button);
 
       await waitFor(() => {
         expect(failingCallback).toHaveBeenCalled();
@@ -390,6 +409,7 @@ describe("AIEvaluationButton", () => {
     });
 
     it("should show internal callback error message for internal mode", async () => {
+      const user = userEvent.setup();
       (fundingApplicationsAPI.runInternalAIEvaluation as vi.Mock).mockResolvedValue({
         success: true,
         referenceNumber: mockReferenceNumber,
@@ -407,7 +427,7 @@ describe("AIEvaluationButton", () => {
       );
 
       const button = screen.getByTestId("evaluation-button");
-      fireEvent.click(button);
+      await user.click(button);
 
       await waitFor(() => {
         expect(consoleSpy).toHaveBeenCalledWith(
@@ -436,6 +456,7 @@ describe("AIEvaluationButton", () => {
     });
 
     it("should update aria-label during loading", async () => {
+      const user = userEvent.setup();
       (fundingApplicationsAPI.runAIEvaluation as vi.Mock).mockImplementation(
         () => new Promise((resolve) => setTimeout(() => resolve({ success: true }), 100))
       );
@@ -443,7 +464,7 @@ describe("AIEvaluationButton", () => {
       render(<AIEvaluationButton referenceNumber={mockReferenceNumber} />);
 
       const button = screen.getByTestId("evaluation-button");
-      fireEvent.click(button);
+      await user.click(button);
 
       expect(button.getAttribute("aria-label")).toBe("AI evaluation in progress");
     });

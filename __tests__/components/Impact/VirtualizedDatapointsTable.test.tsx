@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import { VirtualizedDatapointsTable } from "@/components/Pages/Project/Impact/VirtualizedDatapointsTable";
 import type { OutputForm } from "@/types/impact";
@@ -145,19 +146,25 @@ describe("VirtualizedDatapointsTable", () => {
       expect(deleteButtons.length).toBe(10);
     });
 
-    it("should call onInputChange when value is changed", () => {
+    it("should call onInputChange when value is changed", async () => {
+      const user = userEvent.setup();
       render(<VirtualizedDatapointsTable {...defaultProps} />);
 
       const valueInputs = screen.getAllByRole("spinbutton");
+      // fireEvent required: controlled input needs single-event value change
+
       fireEvent.change(valueInputs[0], { target: { value: "500" } });
 
       expect(defaultProps.onInputChange).toHaveBeenCalledWith("test-item-id", "value", "500", 0);
     });
 
-    it("should call onInputChange when start date is changed", () => {
+    it("should call onInputChange when start date is changed", async () => {
+      const user = userEvent.setup();
       render(<VirtualizedDatapointsTable {...defaultProps} />);
 
       const dateInputs = screen.getAllByLabelText(/start date for entry/i);
+      // fireEvent required: controlled input needs single-event value change
+
       fireEvent.change(dateInputs[0], { target: { value: "2024-06-01" } });
 
       expect(defaultProps.onInputChange).toHaveBeenCalledWith(
@@ -168,10 +175,13 @@ describe("VirtualizedDatapointsTable", () => {
       );
     });
 
-    it("should call onInputChange when end date is changed", () => {
+    it("should call onInputChange when end date is changed", async () => {
+      const user = userEvent.setup();
       render(<VirtualizedDatapointsTable {...defaultProps} />);
 
       const dateInputs = screen.getAllByLabelText(/end date for entry/i);
+      // fireEvent required: controlled input needs single-event value change
+
       fireEvent.change(dateInputs[0], { target: { value: "2024-06-15" } });
 
       expect(defaultProps.onInputChange).toHaveBeenCalledWith(
@@ -182,20 +192,22 @@ describe("VirtualizedDatapointsTable", () => {
       );
     });
 
-    it("should call onDeleteEntry when delete button is clicked", () => {
+    it("should call onDeleteEntry when delete button is clicked", async () => {
+      const user = userEvent.setup();
       render(<VirtualizedDatapointsTable {...defaultProps} />);
 
       const deleteButtons = screen.getAllByRole("button", { name: /delete entry/i });
-      fireEvent.click(deleteButtons[0]);
+      await user.click(deleteButtons[0]);
 
       expect(defaultProps.onDeleteEntry).toHaveBeenCalledWith("test-item-id", 0);
     });
 
-    it("should call onAddEntry when Add new entry button is clicked", () => {
+    it("should call onAddEntry when Add new entry button is clicked", async () => {
+      const user = userEvent.setup();
       render(<VirtualizedDatapointsTable {...defaultProps} />);
 
       const addButton = screen.getByText("Add new entry");
-      fireEvent.click(addButton);
+      await user.click(addButton);
 
       expect(defaultProps.onAddEntry).toHaveBeenCalledWith("test-item-id");
     });
@@ -296,10 +308,13 @@ describe("VirtualizedDatapointsTable", () => {
       expect(proofInputs.length).toBe(10);
     });
 
-    it("should call onInputChange when proof URL is changed", () => {
+    it("should call onInputChange when proof URL is changed", async () => {
+      const user = userEvent.setup();
       render(<VirtualizedDatapointsTable {...defaultProps} />);
 
       const proofInputs = screen.getAllByLabelText(/proof url/i);
+      // fireEvent required: controlled input needs single-event value change
+
       fireEvent.change(proofInputs[0], { target: { value: "https://new-proof.com" } });
 
       expect(defaultProps.onInputChange).toHaveBeenCalledWith(
@@ -434,12 +449,15 @@ describe("VirtualizedDatapointsTable", () => {
   });
 
   describe("Data Index Tracking", () => {
-    it("should pass correct index to onInputChange", () => {
+    it("should pass correct index to onInputChange", async () => {
+      const user = userEvent.setup();
       render(<VirtualizedDatapointsTable {...defaultProps} />);
 
       const valueInputs = screen.getAllByRole("spinbutton");
 
       // Test first input
+      // fireEvent required: controlled input needs single-event value change
+
       fireEvent.change(valueInputs[0], { target: { value: "999" } });
       expect(defaultProps.onInputChange).toHaveBeenLastCalledWith(
         "test-item-id",
@@ -449,6 +467,8 @@ describe("VirtualizedDatapointsTable", () => {
       );
 
       // Test third input
+      // fireEvent required: controlled input needs single-event value change
+
       fireEvent.change(valueInputs[2], { target: { value: "888" } });
       expect(defaultProps.onInputChange).toHaveBeenLastCalledWith(
         "test-item-id",
@@ -458,15 +478,16 @@ describe("VirtualizedDatapointsTable", () => {
       );
     });
 
-    it("should pass correct index to onDeleteEntry", () => {
+    it("should pass correct index to onDeleteEntry", async () => {
+      const user = userEvent.setup();
       render(<VirtualizedDatapointsTable {...defaultProps} />);
 
       const deleteButtons = screen.getAllByRole("button", { name: /delete entry/i });
 
-      fireEvent.click(deleteButtons[3]);
+      await user.click(deleteButtons[3]);
       expect(defaultProps.onDeleteEntry).toHaveBeenCalledWith("test-item-id", 3);
 
-      fireEvent.click(deleteButtons[7]);
+      await user.click(deleteButtons[7]);
       expect(defaultProps.onDeleteEntry).toHaveBeenCalledWith("test-item-id", 7);
     });
   });

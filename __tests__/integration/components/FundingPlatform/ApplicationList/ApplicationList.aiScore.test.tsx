@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import type React from "react";
 import { ApplicationList } from "@/components/FundingPlatform/ApplicationList/ApplicationList";
 import type { IFundingApplication } from "@/types/funding-platform";
@@ -104,7 +105,8 @@ describe("ApplicationList - AI Score Column", () => {
       expect(screen.getByText("AI Score")).toBeInTheDocument();
     });
 
-    it("should call onSortChange when AI Score header is clicked", () => {
+    it("should call onSortChange when AI Score header is clicked", async () => {
+      const user = userEvent.setup();
       const mockOnSortChange = vi.fn();
       const applications = [createMockApplication()];
 
@@ -123,7 +125,7 @@ describe("ApplicationList - AI Score Column", () => {
       const aiScoreHeader = screen.getByTestId("header-aiEvaluationScore");
       const button = aiScoreHeader.querySelector("button");
 
-      fireEvent.click(button!);
+      await user.click(button!);
 
       expect(mockOnSortChange).toHaveBeenCalledWith("aiEvaluationScore");
     });
@@ -318,7 +320,8 @@ describe("ApplicationList - AI Score Column", () => {
   });
 
   describe("Integration with Application Selection", () => {
-    it("should open new tab when row with AI score is clicked", () => {
+    it("should open new tab when row with AI score is clicked", async () => {
+      const user = userEvent.setup();
       // Mock window.open
       const mockWindowOpen = vi.fn();
       const originalOpen = window.open;
@@ -341,7 +344,7 @@ describe("ApplicationList - AI Score Column", () => {
       );
 
       const row = container.querySelector("tbody tr");
-      fireEvent.click(row!);
+      await user.click(row!);
 
       // Component now opens in new tab instead of calling onApplicationSelect
       expect(mockWindowOpen).toHaveBeenCalled();
@@ -350,7 +353,8 @@ describe("ApplicationList - AI Score Column", () => {
       window.open = originalOpen;
     });
 
-    it("should call onApplicationHover when row with AI score is hovered", () => {
+    it("should call onApplicationHover when row with AI score is hovered", async () => {
+      const user = userEvent.setup();
       const mockOnApplicationHover = vi.fn();
       mockFormatAIScore.mockReturnValue("4.5");
 
@@ -369,7 +373,7 @@ describe("ApplicationList - AI Score Column", () => {
       );
 
       const row = container.querySelector("tbody tr");
-      fireEvent.mouseEnter(row!);
+      await user.hover(row!);
 
       expect(mockOnApplicationHover).toHaveBeenCalledWith(applications[0].referenceNumber);
     });

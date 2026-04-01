@@ -1,4 +1,5 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { CommunityDialog } from "@/components/Dialogs/CommunityDialog";
 
 // Mock Headless UI Dialog components
@@ -78,7 +79,10 @@ const mockToastError = vi.fn();
 const mockToastSuccess = vi.fn();
 vi.mock("react-hot-toast", () => ({
   __esModule: true,
-  default: { error: (...args: any[]) => mockToastError(...args), success: (...args: any[]) => mockToastSuccess(...args) },
+  default: {
+    error: (...args: any[]) => mockToastError(...args),
+    success: (...args: any[]) => mockToastSuccess(...args),
+  },
 }));
 
 // Mock Heroicons
@@ -179,15 +183,17 @@ describe("CommunityDialog", () => {
       expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
     });
 
-    it("should open dialog when trigger button is clicked", () => {
+    it("should open dialog when trigger button is clicked", async () => {
+      const user = userEvent.setup();
       render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
-      fireEvent.click(screen.getByText("New Community"));
+      await user.click(screen.getByText("New Community"));
       expect(screen.getByTestId("dialog")).toBeInTheDocument();
     });
 
-    it("should display form fields", () => {
+    it("should display form fields", async () => {
+      const user = userEvent.setup();
       render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
-      fireEvent.click(screen.getByText("New Community"));
+      await user.click(screen.getByText("New Community"));
 
       expect(screen.getByPlaceholderText('e.g. "My awesome Community"')).toBeInTheDocument();
       expect(
@@ -196,30 +202,35 @@ describe("CommunityDialog", () => {
       expect(screen.getByPlaceholderText('e.g. "grant-portal"')).toBeInTheDocument();
     });
 
-    it("should close dialog when cancel is clicked", () => {
+    it("should close dialog when cancel is clicked", async () => {
+      const user = userEvent.setup();
       render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
-      fireEvent.click(screen.getByText("New Community"));
-      fireEvent.click(screen.getByText("Cancel"));
+      await user.click(screen.getByText("New Community"));
+      await user.click(screen.getByText("Cancel"));
       expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
     });
   });
 
   describe("Success flow", () => {
     it("should call API and show success toast", async () => {
+      const user = userEvent.setup();
       render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
-      fireEvent.click(screen.getByText("New Community"));
+      await user.click(screen.getByText("New Community"));
 
-      fireEvent.change(screen.getByPlaceholderText('e.g. "My awesome Community"'), {
-        target: { value: "Test Community" },
-      });
-      fireEvent.change(screen.getByPlaceholderText('e.g. "https://example.com/image.jpg"'), {
-        target: { value: "https://img.com/a.png" },
-      });
-      fireEvent.change(screen.getByPlaceholderText('e.g. "grant-portal"'), {
-        target: { value: "test-slug" },
-      });
+      await user.clear(screen.getByPlaceholderText('e.g. "My awesome Community"'));
 
-      fireEvent.click(screen.getByText("Create Community"));
+      await user.type(screen.getByPlaceholderText('e.g. "My awesome Community"'), "Test Community");
+      await user.clear(screen.getByPlaceholderText('e.g. "https://example.com/image.jpg"'));
+
+      await user.type(
+        screen.getByPlaceholderText('e.g. "https://example.com/image.jpg"'),
+        "https://img.com/a.png"
+      );
+      await user.clear(screen.getByPlaceholderText('e.g. "grant-portal"'));
+
+      await user.type(screen.getByPlaceholderText('e.g. "grant-portal"'), "test-slug");
+
+      await user.click(screen.getByText("Create Community"));
 
       await waitFor(() => {
         expect(mockFetchData).toHaveBeenCalledWith(
@@ -240,6 +251,7 @@ describe("CommunityDialog", () => {
 
   describe("Error handling", () => {
     it("should show error toast on API failure", async () => {
+      const user = userEvent.setup();
       mockFetchData.mockImplementation((url: string) => {
         if (url.includes("slug-check")) {
           return Promise.resolve([{ available: true }, null, null, 200]);
@@ -248,19 +260,22 @@ describe("CommunityDialog", () => {
       });
 
       render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
-      fireEvent.click(screen.getByText("New Community"));
+      await user.click(screen.getByText("New Community"));
 
-      fireEvent.change(screen.getByPlaceholderText('e.g. "My awesome Community"'), {
-        target: { value: "Test" },
-      });
-      fireEvent.change(screen.getByPlaceholderText('e.g. "https://example.com/image.jpg"'), {
-        target: { value: "https://img.com/a.png" },
-      });
-      fireEvent.change(screen.getByPlaceholderText('e.g. "grant-portal"'), {
-        target: { value: "test-slug" },
-      });
+      await user.clear(screen.getByPlaceholderText('e.g. "My awesome Community"'));
 
-      fireEvent.click(screen.getByText("Create Community"));
+      await user.type(screen.getByPlaceholderText('e.g. "My awesome Community"'), "Test");
+      await user.clear(screen.getByPlaceholderText('e.g. "https://example.com/image.jpg"'));
+
+      await user.type(
+        screen.getByPlaceholderText('e.g. "https://example.com/image.jpg"'),
+        "https://img.com/a.png"
+      );
+      await user.clear(screen.getByPlaceholderText('e.g. "grant-portal"'));
+
+      await user.type(screen.getByPlaceholderText('e.g. "grant-portal"'), "test-slug");
+
+      await user.click(screen.getByText("Create Community"));
 
       await waitFor(() => {
         expect(mockToastError).toHaveBeenCalledWith(
@@ -270,6 +285,7 @@ describe("CommunityDialog", () => {
     });
 
     it("should show community limit toast on 403", async () => {
+      const user = userEvent.setup();
       mockFetchData.mockImplementation((url: string) => {
         if (url.includes("slug-check")) {
           return Promise.resolve([{ available: true }, null, null, 200]);
@@ -278,19 +294,22 @@ describe("CommunityDialog", () => {
       });
 
       render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
-      fireEvent.click(screen.getByText("New Community"));
+      await user.click(screen.getByText("New Community"));
 
-      fireEvent.change(screen.getByPlaceholderText('e.g. "My awesome Community"'), {
-        target: { value: "Test" },
-      });
-      fireEvent.change(screen.getByPlaceholderText('e.g. "https://example.com/image.jpg"'), {
-        target: { value: "https://img.com/a.png" },
-      });
-      fireEvent.change(screen.getByPlaceholderText('e.g. "grant-portal"'), {
-        target: { value: "test-slug" },
-      });
+      await user.clear(screen.getByPlaceholderText('e.g. "My awesome Community"'));
 
-      fireEvent.click(screen.getByText("Create Community"));
+      await user.type(screen.getByPlaceholderText('e.g. "My awesome Community"'), "Test");
+      await user.clear(screen.getByPlaceholderText('e.g. "https://example.com/image.jpg"'));
+
+      await user.type(
+        screen.getByPlaceholderText('e.g. "https://example.com/image.jpg"'),
+        "https://img.com/a.png"
+      );
+      await user.clear(screen.getByPlaceholderText('e.g. "grant-portal"'));
+
+      await user.type(screen.getByPlaceholderText('e.g. "grant-portal"'), "test-slug");
+
+      await user.click(screen.getByText("Create Community"));
 
       await waitFor(() => {
         expect(mockToastError).toHaveBeenCalledWith(
@@ -301,6 +320,7 @@ describe("CommunityDialog", () => {
     });
 
     it("should show slug exists toast", async () => {
+      const user = userEvent.setup();
       mockFetchData.mockImplementation((url: string) => {
         if (url.includes("slug-check")) {
           return Promise.resolve([{ available: true }, null, null, 200]);
@@ -309,19 +329,22 @@ describe("CommunityDialog", () => {
       });
 
       render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
-      fireEvent.click(screen.getByText("New Community"));
+      await user.click(screen.getByText("New Community"));
 
-      fireEvent.change(screen.getByPlaceholderText('e.g. "My awesome Community"'), {
-        target: { value: "Test" },
-      });
-      fireEvent.change(screen.getByPlaceholderText('e.g. "https://example.com/image.jpg"'), {
-        target: { value: "https://img.com/a.png" },
-      });
-      fireEvent.change(screen.getByPlaceholderText('e.g. "grant-portal"'), {
-        target: { value: "test" },
-      });
+      await user.clear(screen.getByPlaceholderText('e.g. "My awesome Community"'));
 
-      fireEvent.click(screen.getByText("Create Community"));
+      await user.type(screen.getByPlaceholderText('e.g. "My awesome Community"'), "Test");
+      await user.clear(screen.getByPlaceholderText('e.g. "https://example.com/image.jpg"'));
+
+      await user.type(
+        screen.getByPlaceholderText('e.g. "https://example.com/image.jpg"'),
+        "https://img.com/a.png"
+      );
+      await user.clear(screen.getByPlaceholderText('e.g. "grant-portal"'));
+
+      await user.type(screen.getByPlaceholderText('e.g. "grant-portal"'), "test");
+
+      await user.click(screen.getByText("Create Community"));
 
       await waitFor(() => {
         expect(mockToastError).toHaveBeenCalledWith(
@@ -331,6 +354,7 @@ describe("CommunityDialog", () => {
     });
 
     it("should show error toast when response has no slug", async () => {
+      const user = userEvent.setup();
       mockFetchData.mockImplementation((url: string) => {
         if (url.includes("slug-check")) {
           return Promise.resolve([{ available: true }, null, null, 200]);
@@ -339,19 +363,22 @@ describe("CommunityDialog", () => {
       });
 
       render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
-      fireEvent.click(screen.getByText("New Community"));
+      await user.click(screen.getByText("New Community"));
 
-      fireEvent.change(screen.getByPlaceholderText('e.g. "My awesome Community"'), {
-        target: { value: "Test" },
-      });
-      fireEvent.change(screen.getByPlaceholderText('e.g. "https://example.com/image.jpg"'), {
-        target: { value: "https://img.com/a.png" },
-      });
-      fireEvent.change(screen.getByPlaceholderText('e.g. "grant-portal"'), {
-        target: { value: "test-slug" },
-      });
+      await user.clear(screen.getByPlaceholderText('e.g. "My awesome Community"'));
 
-      fireEvent.click(screen.getByText("Create Community"));
+      await user.type(screen.getByPlaceholderText('e.g. "My awesome Community"'), "Test");
+      await user.clear(screen.getByPlaceholderText('e.g. "https://example.com/image.jpg"'));
+
+      await user.type(
+        screen.getByPlaceholderText('e.g. "https://example.com/image.jpg"'),
+        "https://img.com/a.png"
+      );
+      await user.clear(screen.getByPlaceholderText('e.g. "grant-portal"'));
+
+      await user.type(screen.getByPlaceholderText('e.g. "grant-portal"'), "test-slug");
+
+      await user.click(screen.getByText("Create Community"));
 
       await waitFor(() => {
         expect(mockToastError).toHaveBeenCalledWith(
@@ -363,6 +390,7 @@ describe("CommunityDialog", () => {
 
   describe("Form data preservation on error", () => {
     it("should preserve form data when API call fails", async () => {
+      const user = userEvent.setup();
       mockFetchData.mockImplementation((url: string) => {
         if (url.includes("slug-check")) {
           return Promise.resolve([{ available: true }, null, null, 200]);
@@ -371,21 +399,30 @@ describe("CommunityDialog", () => {
       });
 
       render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
-      fireEvent.click(screen.getByText("New Community"));
+      await user.click(screen.getByText("New Community"));
 
-      const nameInput = screen.getByPlaceholderText('e.g. "My awesome Community"') as HTMLInputElement;
-      fireEvent.change(nameInput, { target: { value: "Test Community" } });
-      fireEvent.change(screen.getByPlaceholderText('e.g. "https://example.com/image.jpg"'), {
-        target: { value: "https://example.com/logo.png" },
-      });
-      fireEvent.change(screen.getByPlaceholderText('e.g. "grant-portal"'), {
-        target: { value: "test-community" },
-      });
+      const nameInput = screen.getByPlaceholderText(
+        'e.g. "My awesome Community"'
+      ) as HTMLInputElement;
+      await user.clear(nameInput);
 
-      fireEvent.click(screen.getByText("Create Community"));
+      await user.type(nameInput, "Test Community");
+      await user.clear(screen.getByPlaceholderText('e.g. "https://example.com/image.jpg"'));
+
+      await user.type(
+        screen.getByPlaceholderText('e.g. "https://example.com/image.jpg"'),
+        "https://example.com/logo.png"
+      );
+      await user.clear(screen.getByPlaceholderText('e.g. "grant-portal"'));
+
+      await user.type(screen.getByPlaceholderText('e.g. "grant-portal"'), "test-community");
+
+      await user.click(screen.getByText("Create Community"));
 
       await waitFor(() => {
-        expect(mockToastError).toHaveBeenCalledWith("Failed to create community. Please try again.");
+        expect(mockToastError).toHaveBeenCalledWith(
+          "Failed to create community. Please try again."
+        );
       });
 
       // Modal should still be visible with preserved data
@@ -396,16 +433,19 @@ describe("CommunityDialog", () => {
 
   describe("Form reset", () => {
     it("should reset form when reopened after cancel", async () => {
+      const user = userEvent.setup();
       render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
-      fireEvent.click(screen.getByText("New Community"));
+      await user.click(screen.getByText("New Community"));
 
       const nameInput = screen.getByPlaceholderText(
         'e.g. "My awesome Community"'
       ) as HTMLInputElement;
-      fireEvent.change(nameInput, { target: { value: "Some Name" } });
+      await user.clear(nameInput);
 
-      fireEvent.click(screen.getByText("Cancel"));
-      fireEvent.click(screen.getByText("New Community"));
+      await user.type(nameInput, "Some Name");
+
+      await user.click(screen.getByText("Cancel"));
+      await user.click(screen.getByText("New Community"));
 
       const freshInput = screen.getByPlaceholderText(
         'e.g. "My awesome Community"'

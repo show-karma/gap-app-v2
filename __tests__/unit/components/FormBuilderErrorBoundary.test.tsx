@@ -12,7 +12,8 @@
  * - Error does not crash surrounding page content
  */
 
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import FormBuilderErrorBoundary from "@/components/ErrorBoundary/FormBuilderErrorBoundary";
 
 // Mock the Heroicons import -- we only care about rendering, not SVG details.
@@ -108,7 +109,8 @@ describe("FormBuilderErrorBoundary", () => {
   // Recovery: Try Again
   // -------------------------------------------------------------------------
 
-  it("resets error state when Try Again is clicked", () => {
+  it("resets error state when Try Again is clicked", async () => {
+    const user = userEvent.setup();
     let shouldThrow = true;
 
     const ConditionalForm = () => {
@@ -125,7 +127,7 @@ describe("FormBuilderErrorBoundary", () => {
     expect(screen.getByText("Something went wrong")).toBeInTheDocument();
 
     shouldThrow = false;
-    fireEvent.click(screen.getByRole("button", { name: /try again/i }));
+    await user.click(screen.getByRole("button", { name: /try again/i }));
 
     expect(screen.getByText("Form loaded successfully")).toBeInTheDocument();
     expect(screen.queryByText("Something went wrong")).not.toBeInTheDocument();
@@ -135,7 +137,8 @@ describe("FormBuilderErrorBoundary", () => {
   // Recovery: Refresh Page
   // -------------------------------------------------------------------------
 
-  it("calls window.location.reload when Refresh Page is clicked", () => {
+  it("calls window.location.reload when Refresh Page is clicked", async () => {
+    const user = userEvent.setup();
     const reloadMock = vi.fn();
     Object.defineProperty(window, "location", {
       writable: true,
@@ -148,7 +151,7 @@ describe("FormBuilderErrorBoundary", () => {
       </FormBuilderErrorBoundary>
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /refresh page/i }));
+    await user.click(screen.getByRole("button", { name: /refresh page/i }));
     expect(reloadMock).toHaveBeenCalledTimes(1);
   });
 
@@ -173,7 +176,8 @@ describe("FormBuilderErrorBoundary", () => {
   // Development error details
   // -------------------------------------------------------------------------
 
-  it("shows error details section in development mode", () => {
+  it("shows error details section in development mode", async () => {
+    const user = userEvent.setup();
     process.env.NODE_ENV = "development";
 
     render(
@@ -186,7 +190,7 @@ describe("FormBuilderErrorBoundary", () => {
     expect(summary).toBeInTheDocument();
 
     // Expand the details
-    fireEvent.click(summary);
+    await user.click(summary);
     expect(screen.getByText(/Dev-only error info/)).toBeInTheDocument();
   });
 

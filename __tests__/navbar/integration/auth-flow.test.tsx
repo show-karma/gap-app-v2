@@ -183,6 +183,7 @@ describe("Authentication Flow Integration Tests", () => {
           expect(screen.getByText("Menu")).toBeInTheDocument();
         });
 
+        // fireEvent required: vaul drawer incompatible with userEvent in jsdom
         const logoutButton = screen.getByText("Log out");
         fireEvent.click(logoutButton);
       }
@@ -233,7 +234,7 @@ describe("Authentication Flow Integration Tests", () => {
         expect(screen.getByText("Menu")).toBeInTheDocument();
       });
 
-      // Click logout
+      // fireEvent required: vaul drawer incompatible with userEvent in jsdom
       const logoutButton = screen.getByText("Log out");
       fireEvent.click(logoutButton);
 
@@ -381,6 +382,7 @@ describe("Authentication Flow Integration Tests", () => {
       const mobileSignInButton = signInButtons.find((btn) => btn.closest('[role="dialog"]'));
 
       if (mobileSignInButton) {
+        // fireEvent required: vaul drawer incompatible with userEvent in jsdom
         fireEvent.click(mobileSignInButton);
 
         // Verify authenticate called

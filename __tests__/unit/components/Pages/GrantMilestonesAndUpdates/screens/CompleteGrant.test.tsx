@@ -254,7 +254,8 @@ vi.mock("@/utilities/messages", () => ({
   },
 }));
 
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { GrantCompletion } from "@/components/Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/CompleteGrant";
 
 describe("GrantCompletion - Error Handling", () => {
@@ -301,13 +302,14 @@ describe("GrantCompletion - Error Handling", () => {
   }
 
   it("should show error toast when grant completion throws a general error", async () => {
+    const user = userEvent.setup();
     setupSuccessfulChainAndProject();
     mockGrantInstance.complete.mockRejectedValue(new Error("Network timeout"));
 
     render(<GrantCompletion />);
 
     const submitButton = screen.getByRole("button", { name: /mark grant as complete/i });
-    fireEvent.click(submitButton);
+    await user.click(submitButton);
 
     await waitFor(() => {
       expect(mockShowError).toHaveBeenCalledWith("There was an error doing the grant completion.");
@@ -315,6 +317,7 @@ describe("GrantCompletion - Error Handling", () => {
   });
 
   it("should show cancellation message when user rejects the transaction", async () => {
+    const user = userEvent.setup();
     setupSuccessfulChainAndProject();
     const userRejectionError = new Error("User rejected the request");
     (userRejectionError as any).code = 4001;
@@ -323,7 +326,7 @@ describe("GrantCompletion - Error Handling", () => {
     render(<GrantCompletion />);
 
     const submitButton = screen.getByRole("button", { name: /mark grant as complete/i });
-    fireEvent.click(submitButton);
+    await user.click(submitButton);
 
     await waitFor(() => {
       expect(mockShowError).toHaveBeenCalledWith("Grant completion cancelled");
@@ -331,6 +334,7 @@ describe("GrantCompletion - Error Handling", () => {
   });
 
   it("should show error toast when SDK throws error with 'rejected' in message", async () => {
+    const user = userEvent.setup();
     // This is the KEY bug scenario: SDK errors containing "reject" (not user rejection)
     // are silently swallowed by errorManager, leaving the user with no feedback
     setupSuccessfulChainAndProject();
@@ -339,7 +343,7 @@ describe("GrantCompletion - Error Handling", () => {
     render(<GrantCompletion />);
 
     const submitButton = screen.getByRole("button", { name: /mark grant as complete/i });
-    fireEvent.click(submitButton);
+    await user.click(submitButton);
 
     await waitFor(() => {
       // The user MUST see an error - not have it silently swallowed
@@ -348,13 +352,14 @@ describe("GrantCompletion - Error Handling", () => {
   });
 
   it("should reset loading state after an error", async () => {
+    const user = userEvent.setup();
     setupSuccessfulChainAndProject();
     mockGrantInstance.complete.mockRejectedValue(new Error("Something went wrong"));
 
     render(<GrantCompletion />);
 
     const submitButton = screen.getByRole("button", { name: /mark grant as complete/i });
-    fireEvent.click(submitButton);
+    await user.click(submitButton);
 
     await waitFor(() => {
       // Button should not be in loading state after error
@@ -363,6 +368,7 @@ describe("GrantCompletion - Error Handling", () => {
   });
 
   it("should show cancellation for Privy embedded wallet 'Signature rejected' error", async () => {
+    const user = userEvent.setup();
     // Privy embedded wallet emits "Signature rejected" without code 4001
     // when user closes the signing modal. The code gets lost during SDK wrapping.
     setupSuccessfulChainAndProject();
@@ -371,7 +377,7 @@ describe("GrantCompletion - Error Handling", () => {
     render(<GrantCompletion />);
 
     const submitButton = screen.getByRole("button", { name: /mark grant as complete/i });
-    fireEvent.click(submitButton);
+    await user.click(submitButton);
 
     await waitFor(() => {
       expect(mockShowError).toHaveBeenCalledWith("Grant completion cancelled");
@@ -379,13 +385,14 @@ describe("GrantCompletion - Error Handling", () => {
   });
 
   it("should show cancellation for errors with 'user denied' in message", async () => {
+    const user = userEvent.setup();
     setupSuccessfulChainAndProject();
     mockGrantInstance.complete.mockRejectedValue(new Error("user denied transaction signature"));
 
     render(<GrantCompletion />);
 
     const submitButton = screen.getByRole("button", { name: /mark grant as complete/i });
-    fireEvent.click(submitButton);
+    await user.click(submitButton);
 
     await waitFor(() => {
       expect(mockShowError).toHaveBeenCalledWith("Grant completion cancelled");
@@ -393,6 +400,7 @@ describe("GrantCompletion - Error Handling", () => {
   });
 
   it("should show error when project fetch fails", async () => {
+    const user = userEvent.setup();
     mockSetupChainAndWallet.mockResolvedValue({
       gapClient: mockGapClient,
       walletSigner: mockWalletSigner,
@@ -403,7 +411,7 @@ describe("GrantCompletion - Error Handling", () => {
     render(<GrantCompletion />);
 
     const submitButton = screen.getByRole("button", { name: /mark grant as complete/i });
-    fireEvent.click(submitButton);
+    await user.click(submitButton);
 
     await waitFor(() => {
       expect(mockShowError).toHaveBeenCalled();

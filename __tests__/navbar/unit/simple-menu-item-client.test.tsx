@@ -5,7 +5,8 @@
  * @developer Developer 2
  */
 
-import { fireEvent, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { LayoutGrid } from "lucide-react";
 import { SimpleMenuItemClient } from "@/src/components/navbar/simple-menu-item-client";
 import { renderWithProviders } from "../utils/test-helpers";
@@ -147,7 +148,8 @@ describe("SimpleMenuItemClient Component", () => {
       expect(link).toBeInTheDocument();
     });
 
-    it("should call onClick callback when clicked", () => {
+    it("should call onClick callback when clicked", async () => {
+      const user = userEvent.setup();
       const onClickMock = vi.fn();
 
       renderWithProviders(
@@ -160,7 +162,7 @@ describe("SimpleMenuItemClient Component", () => {
       );
 
       const title = screen.getByText("Test Title");
-      fireEvent.click(title);
+      await user.click(title);
 
       expect(onClickMock).toHaveBeenCalled();
     });
@@ -234,7 +236,8 @@ describe("SimpleMenuItemClient Component", () => {
       expect(hoverElement).toBeInTheDocument();
     });
 
-    it("should call onClick when item is clicked", () => {
+    it("should call onClick when item is clicked", async () => {
+      const user = userEvent.setup();
       const onClickMock = vi.fn();
 
       renderWithProviders(
@@ -247,12 +250,13 @@ describe("SimpleMenuItemClient Component", () => {
       );
 
       const title = screen.getByText("Test Title");
-      fireEvent.click(title);
+      await user.click(title);
 
       expect(onClickMock).toHaveBeenCalledTimes(1);
     });
 
-    it("should work with keyboard navigation", () => {
+    it("should work with keyboard navigation", async () => {
+      const user = userEvent.setup();
       const onClickMock = vi.fn();
 
       renderWithProviders(
@@ -267,7 +271,7 @@ describe("SimpleMenuItemClient Component", () => {
       const title = screen.getByText("Test Title");
 
       // Simulate click via keyboard
-      fireEvent.click(title);
+      await user.click(title);
 
       expect(onClickMock).toHaveBeenCalled();
     });
@@ -422,7 +426,8 @@ describe("SimpleMenuItemClient Component", () => {
       expect(arrow).toBeInTheDocument();
     });
 
-    it("should handle all props together", () => {
+    it("should handle all props together", async () => {
+      const user = userEvent.setup();
       const onClickMock = vi.fn();
 
       const { container } = renderWithProviders(
@@ -443,7 +448,7 @@ describe("SimpleMenuItemClient Component", () => {
       expect(arrow).toBeInTheDocument();
 
       const title = screen.getByText("Test Title");
-      fireEvent.click(title);
+      await user.click(title);
 
       expect(onClickMock).toHaveBeenCalled();
     });

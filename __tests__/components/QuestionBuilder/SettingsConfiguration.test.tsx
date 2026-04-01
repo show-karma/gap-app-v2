@@ -81,6 +81,7 @@ describe("SettingsConfiguration - Email Templates", () => {
     });
 
     it("should call onUpdate when approval email template changes", async () => {
+      const user = userEvent.setup();
       render(<SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} />);
 
       const editors = screen.getAllByTestId(/markdown-editor/);
@@ -96,9 +97,9 @@ describe("SettingsConfiguration - Email Templates", () => {
       // Clear any previous calls from useEffect/watch
       mockOnUpdate.mockClear();
 
-      fireEvent.change(approvalEditor, {
-        target: { value: "New approval template" },
-      });
+      await user.clear(approvalEditor);
+
+      await user.type(approvalEditor, "New approval template");
 
       // Wait for the debounced update (component has 300ms debounce)
       await waitFor(() => {
@@ -174,6 +175,7 @@ describe("SettingsConfiguration - Email Templates", () => {
     });
 
     it("should call onUpdate when rejection email template changes", async () => {
+      const user = userEvent.setup();
       render(<SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} />);
 
       const editors = screen.getAllByTestId(/markdown-editor/);
@@ -192,9 +194,9 @@ describe("SettingsConfiguration - Email Templates", () => {
       // Clear any previous calls from useEffect/watch
       mockOnUpdate.mockClear();
 
-      fireEvent.change(rejectionEditor, {
-        target: { value: "New rejection template" },
-      });
+      await user.clear(rejectionEditor);
+
+      await user.type(rejectionEditor, "New rejection template");
 
       // Wait for the debounced update (component has 300ms debounce)
       await waitFor(() => {
@@ -254,6 +256,7 @@ describe("SettingsConfiguration - Email Templates", () => {
 
   describe("Template Persistence", () => {
     it("should preserve other settings when updating approval email template", async () => {
+      const user = userEvent.setup();
       const schemaWithOtherSettings: FormSchema = {
         ...mockSchema,
         settings: {
@@ -275,9 +278,9 @@ describe("SettingsConfiguration - Email Templates", () => {
       // Clear any previous calls from useEffect/watch
       mockOnUpdate.mockClear();
 
-      fireEvent.change(approvalEditor, {
-        target: { value: "New approval template" },
-      });
+      await user.clear(approvalEditor);
+
+      await user.type(approvalEditor, "New approval template");
 
       // Wait for the update to be called
       await waitFor(() => {
@@ -294,6 +297,7 @@ describe("SettingsConfiguration - Email Templates", () => {
     });
 
     it("should preserve other settings when updating rejection email template", async () => {
+      const user = userEvent.setup();
       const schemaWithOtherSettings: FormSchema = {
         ...mockSchema,
         settings: {
@@ -314,9 +318,9 @@ describe("SettingsConfiguration - Email Templates", () => {
       // Clear any previous calls from useEffect/watch
       mockOnUpdate.mockClear();
 
-      fireEvent.change(rejectionEditor, {
-        target: { value: "New rejection template" },
-      });
+      await user.clear(rejectionEditor);
+
+      await user.type(rejectionEditor, "New rejection template");
 
       // Wait for the update to be called
       await waitFor(() => {
@@ -439,6 +443,7 @@ describe("SettingsConfiguration - Access Code", () => {
     });
 
     it("should clear accessCode when input is emptied", async () => {
+      const user = userEvent.setup();
       const schemaWithAccessCode: FormSchema = {
         ...mockSchema,
         settings: {
@@ -454,7 +459,9 @@ describe("SettingsConfiguration - Access Code", () => {
       mockOnUpdate.mockClear();
 
       // Clear the input
-      fireEvent.change(input, { target: { value: "" } });
+      await user.clear(input);
+
+      await user.type(input, "");
 
       await waitFor(() => {
         expect(mockOnUpdate).toHaveBeenCalled();
@@ -510,6 +517,7 @@ describe("SettingsConfiguration - Access Code", () => {
 
       await user.type(input, "ABC");
       // Trigger validation by blurring
+      // fireEvent required: testing blur/focus event handler callback
       fireEvent.blur(input);
 
       await waitFor(() => {
@@ -526,6 +534,7 @@ describe("SettingsConfiguration - Access Code", () => {
 
       await user.type(input, "SECRET CODE");
       // Trigger validation by blurring
+      // fireEvent required: testing blur/focus event handler callback
       fireEvent.blur(input);
 
       await waitFor(() => {

@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { Button } from "@/components/ui/button";
 import "@testing-library/jest-dom";
 
@@ -151,7 +152,8 @@ describe("Button", () => {
       expect(button).toHaveClass("disabled:pointer-events-none", "disabled:opacity-50");
     });
 
-    it("should not trigger onClick when disabled", () => {
+    it("should not trigger onClick when disabled", async () => {
+      const user = userEvent.setup();
       const handleClick = vi.fn();
 
       render(
@@ -161,31 +163,33 @@ describe("Button", () => {
       );
 
       const button = screen.getByRole("button");
-      fireEvent.click(button);
+      await user.click(button);
 
       expect(handleClick).not.toHaveBeenCalled();
     });
   });
 
   describe("Events", () => {
-    it("should handle onClick event", () => {
+    it("should handle onClick event", async () => {
+      const user = userEvent.setup();
       const handleClick = vi.fn();
 
       render(<Button onClick={handleClick}>Button</Button>);
 
       const button = screen.getByRole("button");
-      fireEvent.click(button);
+      await user.click(button);
 
       expect(handleClick).toHaveBeenCalledTimes(1);
     });
 
-    it("should handle onMouseEnter event", () => {
+    it("should handle onMouseEnter event", async () => {
+      const user = userEvent.setup();
       const handleMouseEnter = vi.fn();
 
       render(<Button onMouseEnter={handleMouseEnter}>Button</Button>);
 
       const button = screen.getByRole("button");
-      fireEvent.mouseEnter(button);
+      await user.hover(button);
 
       expect(handleMouseEnter).toHaveBeenCalledTimes(1);
     });
@@ -196,6 +200,7 @@ describe("Button", () => {
       render(<Button onFocus={handleFocus}>Button</Button>);
 
       const button = screen.getByRole("button");
+      // fireEvent required: testing blur/focus event handler callback
       fireEvent.focus(button);
 
       expect(handleFocus).toHaveBeenCalledTimes(1);

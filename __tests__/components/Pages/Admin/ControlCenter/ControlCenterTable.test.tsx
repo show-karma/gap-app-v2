@@ -1,4 +1,5 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import {
   ControlCenterTable,
   type ControlCenterTableProps,
@@ -208,29 +209,32 @@ describe("ControlCenterTable", () => {
   });
 
   describe("sort headers", () => {
-    it("calls onSort when Project header is clicked", () => {
+    it("calls onSort when Project header is clicked", async () => {
+      const user = userEvent.setup();
       const onSort = vi.fn();
       render(<ControlCenterTable {...makeDefaultProps({ onSort })} />);
 
-      fireEvent.click(screen.getByText("Project"));
+      await user.click(screen.getByText("Project"));
 
       expect(onSort).toHaveBeenCalledWith("project_title");
     });
 
-    it("calls onSort when Total Grant header is clicked", () => {
+    it("calls onSort when Total Grant header is clicked", async () => {
+      const user = userEvent.setup();
       const onSort = vi.fn();
       render(<ControlCenterTable {...makeDefaultProps({ onSort })} />);
 
-      fireEvent.click(screen.getByText("Total Grant"));
+      await user.click(screen.getByText("Total Grant"));
 
       expect(onSort).toHaveBeenCalledWith("payout_amount");
     });
 
-    it("calls onSort when Disbursed header is clicked", () => {
+    it("calls onSort when Disbursed header is clicked", async () => {
+      const user = userEvent.setup();
       const onSort = vi.fn();
       render(<ControlCenterTable {...makeDefaultProps({ onSort })} />);
 
-      fireEvent.click(screen.getByText("Disbursed"));
+      await user.click(screen.getByText("Disbursed"));
 
       expect(onSort).toHaveBeenCalledWith("disbursed_amount");
     });
