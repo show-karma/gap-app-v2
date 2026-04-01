@@ -407,7 +407,7 @@ jobs:
 
             Save to dogfood-results.json: {\"total\":N,\"critical\":N,\"high\":N,\"medium\":N,\"low\":N,\"preexisting\":N,\"blocking\":bool}
             critical/high counts = PR-caused only."
-        timeout-minutes: 30
+        timeout-minutes: 40
 
       - name: Upload dogfood artifacts
         if: always()
