@@ -71,6 +71,23 @@ export interface UpdateStatusRequest {
   reason?: string;
 }
 
+export interface RecordPaymentRequest {
+  grantUID: string;
+  projectUID: string;
+  communityUID: string;
+  chainID: number;
+  disbursedAmount: string;
+  tokenDecimals: number;
+  token: string;
+  tokenAddress: string;
+  payoutAddress?: string;
+  milestoneBreakdown?: MilestoneBreakdown;
+  paidAllocationIds?: string[];
+  paymentDate: string;
+  transactionHash?: string;
+  notes?: string;
+}
+
 export interface PaginationInfo {
   totalCount: number;
   page: number;

@@ -237,6 +237,7 @@ export const INDEXER = {
     },
     PAYOUTS: {
       CREATE: "/v2/payouts/disburse",
+      RECORD_PAYMENT: "/v2/payouts/record-payment",
       RECORD_SAFE_TX: (disbursementId: string) => `/v2/payouts/${disbursementId}/record-safe-tx`,
       GRANT_HISTORY: (grantUID: string, page?: number, limit?: number) => {
         const params = new URLSearchParams();

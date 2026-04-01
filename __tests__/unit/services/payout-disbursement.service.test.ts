@@ -15,6 +15,7 @@ vi.mock("@/utilities/indexer", () => ({
     V2: {
       PAYOUTS: {
         CREATE: "/v2/payouts",
+        RECORD_PAYMENT: "/v2/payouts/record-payment",
         RECORD_SAFE_TX: (id: string) => `/v2/payouts/${id}/safe-tx`,
         GRANT_HISTORY: (uid: string, page?: number, limit?: number) =>
           `/v2/payouts/grant/${uid}?page=${page ?? 1}&limit=${limit ?? 10}`,
@@ -62,6 +63,7 @@ import {
   getPendingDisbursements,
   getRecentCommunityDisbursements,
   getTotalDisbursed,
+  recordPayment,
   recordSafeTransaction,
   saveMilestoneInvoices,
   savePayoutConfigs,
@@ -71,6 +73,7 @@ import {
 } from "@/features/payout-disbursement/services/payout-disbursement.service";
 import type {
   CreateDisbursementsRequest,
+  RecordPaymentRequest,
   RecordSafeTransactionRequest,
   SavePayoutConfigRequest,
   UpdateStatusRequest,
@@ -108,6 +111,63 @@ describe("payout-disbursement.service", () => {
       await expect(
         createDisbursements({ grants: [] } as unknown as CreateDisbursementsRequest)
       ).rejects.toThrow(/Failed to create disbursements/);
+    });
+  });
+
+  // =========================================================================
+  // recordPayment
+  // =========================================================================
+
+  describe("recordPayment", () => {
+    const request: RecordPaymentRequest = {
+      grantUID: "grant-1",
+      projectUID: "project-1",
+      communityUID: "community-1",
+      chainID: 1,
+      disbursedAmount: "50000000000",
+      tokenDecimals: 6,
+      token: "USDC",
+      tokenAddress: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+      paymentDate: "2026-03-01T00:00:00.000Z",
+      transactionHash: "0xabc123",
+      notes: "Initial Payment",
+    };
+
+    it("should call fetchData with correct url and method", async () => {
+      const disbursement = { id: "d1", status: "DISBURSED" };
+      mockFetchData.mockResolvedValue([disbursement, null]);
+
+      await recordPayment(request);
+
+      expect(mockFetchData).toHaveBeenCalledWith(
+        "/v2/payouts/record-payment",
+        "POST",
+        request,
+        {},
+        {},
+        true,
+        false
+      );
+    });
+
+    it("should return disbursement on success", async () => {
+      const disbursement = { id: "d1", status: "DISBURSED", grantUID: "grant-1" };
+      mockFetchData.mockResolvedValue([disbursement, null]);
+
+      const result = await recordPayment(request);
+      expect(result).toEqual(disbursement);
+    });
+
+    it("should throw on error response", async () => {
+      mockFetchData.mockResolvedValue([null, "Server error"]);
+
+      await expect(recordPayment(request)).rejects.toThrow(/Failed to record payment/);
+    });
+
+    it("should throw when data is null", async () => {
+      mockFetchData.mockResolvedValue([null, null]);
+
+      await expect(recordPayment(request)).rejects.toThrow(/Failed to record payment/);
     });
   });
 

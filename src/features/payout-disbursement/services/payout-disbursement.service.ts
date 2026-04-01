@@ -11,6 +11,7 @@ import type {
   PaginatedDisbursementsResponse,
   PayoutDisbursement,
   PayoutGrantConfig,
+  RecordPaymentRequest,
   RecordSafeTransactionRequest,
   SavePayoutConfigRequest,
   SavePayoutConfigResponse,
@@ -48,6 +49,32 @@ export const createDisbursements = async (
   } catch (error: unknown) {
     errorManager("Error creating disbursements", error);
     throw new Error(`Failed to create disbursements: ${getErrorMessage(error)}`);
+  }
+};
+
+/**
+ * Records a historical payment directly as disbursed (no Safe required)
+ */
+export const recordPayment = async (request: RecordPaymentRequest): Promise<PayoutDisbursement> => {
+  try {
+    const [data, error] = await fetchData<PayoutDisbursement>(
+      INDEXER.V2.PAYOUTS.RECORD_PAYMENT,
+      "POST",
+      request,
+      {},
+      {},
+      true,
+      false
+    );
+
+    if (error || !data) {
+      throw new Error(error || "Failed to record payment");
+    }
+
+    return data;
+  } catch (error: unknown) {
+    errorManager("Error recording historical payment", error);
+    throw new Error(`Failed to record payment: ${getErrorMessage(error)}`);
   }
 };
 
