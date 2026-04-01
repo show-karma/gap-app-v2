@@ -443,7 +443,7 @@ describe("payout-disbursement.service", () => {
   describe("checkGrantInvoiceRequired", () => {
     it("returns invoice requirement data when API succeeds", async () => {
       const response = { invoiceRequired: true, invoiceStatus: "pending", invoiceFileKey: null };
-      mockFetchData.mockResolvedValue([response, null]);
+      mockFetchData.mockResolvedValue([{ data: response }, null]);
 
       const result = await checkGrantInvoiceRequired("grant-1");
       expect(result).toEqual(response);
@@ -471,7 +471,7 @@ describe("payout-disbursement.service", () => {
     });
 
     it("calls the correct URL with the grant UID", async () => {
-      mockFetchData.mockResolvedValue([{ invoiceRequired: false }, null]);
+      mockFetchData.mockResolvedValue([{ data: { invoiceRequired: false } }, null]);
 
       await checkGrantInvoiceRequired("abc-123");
       expect(mockFetchData).toHaveBeenCalledWith(
@@ -500,14 +500,14 @@ describe("payout-disbursement.service", () => {
 
     it("submits invoice and returns the saved invoice", async () => {
       const savedInvoice = { ...invoice, id: "inv-1", createdAt: "2026-04-01" };
-      mockFetchData.mockResolvedValue([{ invoice: savedInvoice }, null]);
+      mockFetchData.mockResolvedValue([{ data: { invoice: savedInvoice } }, null]);
 
       const result = await submitGranteeInvoice("grant-1", invoice);
       expect(result).toEqual(savedInvoice);
     });
 
     it("calls the correct URL with PUT method and invoice body", async () => {
-      mockFetchData.mockResolvedValue([{ invoice: {} }, null]);
+      mockFetchData.mockResolvedValue([{ data: { invoice: {} } }, null]);
 
       await submitGranteeInvoice("grant-1", invoice);
       expect(mockFetchData).toHaveBeenCalledWith(
@@ -542,14 +542,14 @@ describe("payout-disbursement.service", () => {
 
   describe("getGrantInvoiceDownloadUrl", () => {
     it("returns the download URL", async () => {
-      mockFetchData.mockResolvedValue([{ downloadUrl: "https://s3.example.com/signed-url" }, null]);
+      mockFetchData.mockResolvedValue([{ data: { downloadUrl: "https://s3.example.com/signed-url" } }, null]);
 
       const result = await getGrantInvoiceDownloadUrl("grant-1", "invoices/file.pdf");
       expect(result).toBe("https://s3.example.com/signed-url");
     });
 
     it("calls the correct URL with grant UID and encoded file key", async () => {
-      mockFetchData.mockResolvedValue([{ downloadUrl: "https://example.com" }, null]);
+      mockFetchData.mockResolvedValue([{ data: { downloadUrl: "https://example.com" } }, null]);
 
       await getGrantInvoiceDownloadUrl("grant-1", "path/with spaces.pdf");
       expect(mockFetchData).toHaveBeenCalledWith(

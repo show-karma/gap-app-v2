@@ -655,7 +655,7 @@ export const checkGrantInvoiceRequired = async (
   try {
     const url = INDEXER.V2.GRANTS.INVOICE_REQUIREMENT(grantUID);
 
-    const [data, error] = await fetchData<GranteeInvoiceCheckResult>(
+    const [data, error] = await fetchData<{ data: GranteeInvoiceCheckResult }>(
       url,
       "GET",
       {},
@@ -665,11 +665,11 @@ export const checkGrantInvoiceRequired = async (
       false
     );
 
-    if (error || !data) {
+    if (error || !data?.data) {
       return { invoiceRequired: false };
     }
 
-    return data;
+    return data.data;
   } catch {
     return { invoiceRequired: false };
   }
@@ -688,7 +688,7 @@ export const submitGranteeInvoice = async (
   }
 ): Promise<CommunityPayoutInvoiceInfo | null> => {
   try {
-    const [data, error] = await fetchData<{ invoice: CommunityPayoutInvoiceInfo }>(
+    const [data, error] = await fetchData<{ data: { invoice: CommunityPayoutInvoiceInfo } }>(
       INDEXER.V2.GRANTS.INVOICE_SUBMIT(grantUID),
       "PUT",
       invoice,
@@ -698,11 +698,11 @@ export const submitGranteeInvoice = async (
       false
     );
 
-    if (error || !data) {
+    if (error || !data?.data) {
       throw new Error(error || "Failed to submit invoice");
     }
 
-    return data.invoice;
+    return data.data.invoice;
   } catch (error: unknown) {
     errorManager(`Error submitting grantee invoice for grant ${grantUID}`, error);
     throw new Error(`Failed to submit invoice: ${getErrorMessage(error)}`);
@@ -717,7 +717,7 @@ export const getGrantInvoiceDownloadUrl = async (
   fileKey: string
 ): Promise<string> => {
   try {
-    const [data, error] = await fetchData<{ downloadUrl: string }>(
+    const [data, error] = await fetchData<{ data: { downloadUrl: string } }>(
       INDEXER.V2.GRANTS.INVOICE_DOWNLOAD(grantUID, fileKey),
       "GET",
       {},
@@ -727,11 +727,11 @@ export const getGrantInvoiceDownloadUrl = async (
       false
     );
 
-    if (error || !data?.downloadUrl) {
+    if (error || !data?.data?.downloadUrl) {
       throw new Error(error || "Failed to get download URL");
     }
 
-    return data.downloadUrl;
+    return data.data.downloadUrl;
   } catch (error: unknown) {
     errorManager("Error getting invoice download URL", error);
     throw new Error(`Failed to get download URL: ${getErrorMessage(error)}`);
