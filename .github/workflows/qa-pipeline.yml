@@ -11,6 +11,11 @@ on:
         required: true
         type: string
 
+env:
+  NEXT_PUBLIC_PRIVY_APP_ID: ${{ secrets.NEXT_PUBLIC_PRIVY_APP_ID }}
+  NEXT_PUBLIC_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_PROJECT_ID }}
+  NEXT_PUBLIC_GAP_INDEXER_URL: https://gapstagapi.karmahq.xyz
+
 jobs:
   gate-check:
     if: >
@@ -21,10 +26,9 @@ jobs:
     outputs:
       should_run: ${{ steps.check.outputs.should_run }}
       pr_number: ${{ steps.check.outputs.pr_number }}
-      deployment_url: ${{ steps.check.outputs.deployment_url }}
       head_sha: ${{ steps.check.outputs.head_sha }}
     steps:
-      - name: Check review verdict and extract deployment URL
+      - name: Check review verdict
         id: check
         uses: actions/github-script@v7
         with:
@@ -33,7 +37,6 @@ jobs:
             const repo = context.repo.repo;
             const isManual = context.eventName === 'workflow_dispatch';
 
-            // --- Resolve PR number and head SHA ---
             let headSha, prNumber;
 
             if (isManual) {
@@ -69,28 +72,22 @@ jobs:
             core.setOutput('head_sha', headSha);
             core.setOutput('pr_number', prNumber);
 
-            // --- Check review verdict (poll for comment, skip for manual trigger) ---
-            let comments;
-
+            // Poll for verdict comment (race condition: workflow_run fires before comment is posted)
             if (!isManual) {
-              // Poll for the verdict comment — the Claude Code action may still be
-              // posting it when workflow_run fires (race condition)
               let reviewComment = null;
-              const maxAttempts = 12; // 12 × 15s = 3 min max wait
+              const maxAttempts = 12;
 
               for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-                const { data: allComments } = await github.rest.issues.listComments({
+                const { data: comments } = await github.rest.issues.listComments({
                   owner, repo, issue_number: prNumber, per_page: 100
                 });
-                comments = allComments;
 
-                reviewComment = [...allComments].reverse().find(c =>
+                reviewComment = [...comments].reverse().find(c =>
                   (c.user.login === 'github-actions[bot]' || c.user.login.includes('claude') || c.user.login.includes('karma')) &&
                   (c.body.includes('APPROVE') || c.body.includes('REQUEST CHANGES'))
                 );
 
                 if (reviewComment) break;
-
                 console.log('Waiting for review verdict... (' + attempt + '/' + maxAttempts + ')');
                 await new Promise(r => setTimeout(r, 15000));
               }
@@ -111,69 +108,34 @@ jobs:
               console.log('✅ Review approved');
             } else {
               console.log('Manual trigger — skipping verdict check');
-              const { data: allComments } = await github.rest.issues.listComments({
-                owner, repo, issue_number: prNumber, per_page: 100
-              });
-              comments = allComments;
             }
 
-            // --- Extract Vercel deployment URL ---
-            let deploymentUrl = '';
+            // Set pending commit status + post progress comment
+            await github.rest.repos.createCommitStatus({
+              owner, repo, sha: headSha,
+              state: 'pending',
+              description: 'QA Pipeline running — do not merge',
+              context: 'qa-pipeline',
+              target_url: `https://github.com/${owner}/${repo}/actions/runs/${process.env.GITHUB_RUN_ID}`
+            });
 
-            try {
-              const { data: deployments } = await github.rest.repos.listDeployments({
-                owner, repo, sha: headSha, environment: 'Preview', per_page: 5
-              });
-              for (const d of deployments) {
-                const { data: statuses } = await github.rest.repos.listDeploymentStatuses({
-                  owner, repo, deployment_id: d.id, per_page: 1
-                });
-                if (statuses.length > 0 && statuses[0].state === 'success') {
-                  deploymentUrl = statuses[0].environment_url || statuses[0].target_url;
-                  if (deploymentUrl) break;
-                }
-              }
-            } catch (e) {
-              console.log('Deployments API failed: ' + e.message);
-            }
+            await github.rest.issues.createComment({
+              owner, repo, issue_number: prNumber,
+              body: [
+                '## QA Pipeline',
+                '',
+                '| Stage | Status |',
+                '|-------|--------|',
+                '| QA Plan | ⏳ Running... |',
+                '| Build | ⏳ Waiting |',
+                '| QA Execution | ⏳ Waiting |',
+                '| Dogfood | ⏳ Waiting |',
+                '| Verdict | ⏳ Waiting |',
+                '',
+                `[View workflow run](https://github.com/${owner}/${repo}/actions/runs/${process.env.GITHUB_RUN_ID})`
+              ].join('\n')
+            });
 
-            if (!deploymentUrl) {
-              const vercelComment = comments.find(c =>
-                (c.user.login === 'vercel[bot]' || c.user.login === 'vercel') &&
-                c.body.includes('vercel.app')
-              );
-              if (vercelComment) {
-                const m = vercelComment.body.match(/https:\/\/[a-z0-9-]+\.vercel\.app/i);
-                if (m) deploymentUrl = m[0];
-              }
-            }
-
-            if (!deploymentUrl) {
-              console.log('⚠️ No deployment URL found');
-              core.setOutput('should_run', 'false');
-              return;
-            }
-
-            // --- Health check ---
-            let healthy = false;
-            for (let i = 0; i < 12; i++) {
-              try {
-                const r = await fetch(deploymentUrl, { method: 'HEAD', redirect: 'follow' });
-                if (r.ok || r.status === 308) { healthy = true; break; }
-              } catch (e) {
-                console.log('Health check ' + (i + 1) + ' failed');
-              }
-              await new Promise(r => setTimeout(r, 5000));
-            }
-
-            if (!healthy) {
-              console.log('⚠️ Deployment not healthy');
-              core.setOutput('should_run', 'false');
-              return;
-            }
-
-            console.log('✅ Deployment ready: ' + deploymentUrl);
-            core.setOutput('deployment_url', deploymentUrl);
             core.setOutput('should_run', 'true');
 
   qa-plan:
@@ -202,12 +164,11 @@ jobs:
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           PR_NUMBER: ${{ needs.gate-check.outputs.pr_number }}
-          PREVIEW_URL: ${{ needs.gate-check.outputs.deployment_url }}
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           claude --print --dangerously-skip-permissions \
             "You are a strict senior QA engineer. Read and follow the skill at .claude/skills/qa-plan-generator/SKILL.md exactly.
-            PR number: $PR_NUMBER. Preview URL: $PREVIEW_URL.
+            PR number: $PR_NUMBER.
             Generate a QA plan for this PR. Save to qa-plan.md.
             Then post the QA plan as a comment on PR #$PR_NUMBER using the GitHub CLI (gh pr comment $PR_NUMBER --body-file qa-plan-comment.md). Write the comment content to qa-plan-comment.md first, then use gh to post it.
             Be strict. Be concise. No fluff."
@@ -240,13 +201,89 @@ jobs:
               await github.rest.issues.updateComment({ owner, repo, comment_id: pc.id,
                 body: ['## QA Pipeline','','| Stage | Status |','|-------|--------|',
                   `| QA Plan | ${planOk ? '✅ Done' : '❌ Failed'} |`,
-                  '| QA Execution | ⏳ Running... |','| Dogfood | ⏳ Waiting |','| Verdict | ⏳ Waiting |','',
+                  '| Build | ⏳ Running... |',
+                  '| QA Execution | ⏳ Waiting |','| Dogfood | ⏳ Waiting |','| Verdict | ⏳ Waiting |','',
+                  `[View workflow run](https://github.com/${owner}/${repo}/actions/runs/${process.env.GITHUB_RUN_ID})`
+                ].join('\n') });
+            }
+
+  build-app:
+    needs: [gate-check, qa-plan]
+    if: needs.gate-check.outputs.should_run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.gate-check.outputs.head_sha }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Cache Next.js build
+        uses: actions/cache@v4
+        with:
+          path: .next/cache
+          key: ${{ runner.os }}-nextjs-qa-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-qa-
+            ${{ runner.os }}-nextjs-
+
+      - name: Build application
+        run: pnpm run build
+        env:
+          NODE_ENV: production
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nextjs-build
+          path: |
+            .next/
+            package.json
+            pnpm-lock.yaml
+            next.config.*
+            public/
+          retention-days: 1
+
+      - name: Update progress comment
+        if: always()
+        uses: actions/github-script@v7
+        env:
+          PR_NUMBER: ${{ needs.gate-check.outputs.pr_number }}
+          BUILD_RESULT: ${{ job.status }}
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const prNumber = parseInt(process.env.PR_NUMBER, 10);
+            const buildOk = process.env.BUILD_RESULT === 'success';
+            const { data: comments } = await github.rest.issues.listComments({ owner, repo, issue_number: prNumber, per_page: 100 });
+            const pc = [...comments].reverse().find(c => c.body.includes('## QA Pipeline') && c.body.includes('QA Plan'));
+            if (pc) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: pc.id,
+                body: ['## QA Pipeline','','| Stage | Status |','|-------|--------|',
+                  '| QA Plan | ✅ Done |',
+                  `| Build | ${buildOk ? '✅ Done' : '❌ Failed'} |`,
+                  '| QA Execution | ⏳ Running... |','| Dogfood | ⏳ Running... |','| Verdict | ⏳ Waiting |','',
                   `[View workflow run](https://github.com/${owner}/${repo}/actions/runs/${process.env.GITHUB_RUN_ID})`
                 ].join('\n') });
             }
 
   qa-execution:
-    needs: [gate-check, qa-plan]
+    needs: [gate-check, qa-plan, build-app]
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -260,6 +297,33 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: qa-plan
+
+      - name: Download build
+        uses: actions/download-artifact@v4
+        with:
+          name: nextjs-build
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Start local server
+        run: pnpm start &
+        env:
+          PORT: 3000
+
+      - name: Wait for server
+        run: npx wait-on http://localhost:3000 --timeout 60000
 
       - name: Generate GitHub App token
         id: app-token
@@ -275,16 +339,16 @@ jobs:
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           PR_NUMBER: ${{ needs.gate-check.outputs.pr_number }}
-          PREVIEW_URL: ${{ needs.gate-check.outputs.deployment_url }}
           QA_TEST_EMAIL: ${{ secrets.QA_TEST_EMAIL }}
           QA_TEST_OTP: ${{ secrets.QA_TEST_OTP }}
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           claude --print --dangerously-skip-permissions \
             "You are a strict senior QA executor. Read and follow the skill at .claude/skills/qa-executor/SKILL.md exactly.
-            PR number: $PR_NUMBER. Preview URL: $PREVIEW_URL.
+            PR number: $PR_NUMBER. Target URL: http://localhost:3000.
             QA Plan is at qa-plan.md. Execute ALL scenarios — both Public (P1, P2...) and Authenticated (A1, A2...).
             For authenticated scenarios, login using the Privy test account (email from QA_TEST_EMAIL env var, OTP from QA_TEST_OTP env var).
+            IMPORTANT: Always use http://localhost:3000 as the target URL. Never use a preview/vercel URL.
             Post the results as a comment on PR #$PR_NUMBER using gh pr comment.
             Save results to qa-results.json."
         timeout-minutes: 40
@@ -300,32 +364,8 @@ jobs:
           retention-days: 7
           if-no-files-found: ignore
 
-      - name: Update progress comment
-        if: always()
-        uses: actions/github-script@v7
-        env:
-          PR_NUMBER: ${{ needs.gate-check.outputs.pr_number }}
-          EXEC_RESULT: ${{ job.status }}
-        with:
-          script: |
-            const owner = context.repo.owner;
-            const repo = context.repo.repo;
-            const prNumber = parseInt(process.env.PR_NUMBER, 10);
-            const execOk = process.env.EXEC_RESULT === 'success';
-            const { data: comments } = await github.rest.issues.listComments({ owner, repo, issue_number: prNumber, per_page: 100 });
-            const pc = [...comments].reverse().find(c => c.body.includes('## QA Pipeline') && c.body.includes('QA Plan'));
-            if (pc) {
-              await github.rest.issues.updateComment({ owner, repo, comment_id: pc.id,
-                body: ['## QA Pipeline','','| Stage | Status |','|-------|--------|',
-                  '| QA Plan | ✅ Done |',
-                  `| QA Execution | ${execOk ? '✅ Done' : '❌ Failed'} |`,
-                  '| Dogfood | ⏳ Running... |','| Verdict | ⏳ Waiting |','',
-                  `[View workflow run](https://github.com/${owner}/${repo}/actions/runs/${process.env.GITHUB_RUN_ID})`
-                ].join('\n') });
-            }
-
   dogfood:
-    needs: [gate-check, qa-execution]
+    needs: [gate-check, qa-plan, build-app]
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -341,6 +381,33 @@ jobs:
           name: qa-plan
         continue-on-error: true
 
+      - name: Download build
+        uses: actions/download-artifact@v4
+        with:
+          name: nextjs-build
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Start local server
+        run: pnpm start &
+        env:
+          PORT: 3000
+
+      - name: Wait for server
+        run: npx wait-on http://localhost:3000 --timeout 60000
+
       - name: Generate GitHub App token
         id: app-token
         uses: actions/create-github-app-token@v1
@@ -355,14 +422,13 @@ jobs:
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           PR_NUMBER: ${{ needs.gate-check.outputs.pr_number }}
-          PREVIEW_URL: ${{ needs.gate-check.outputs.deployment_url }}
           QA_TEST_EMAIL: ${{ secrets.QA_TEST_EMAIL }}
           QA_TEST_OTP: ${{ secrets.QA_TEST_OTP }}
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           claude --print --dangerously-skip-permissions \
             "You are a strict senior QA engineer doing exploratory dogfood testing.
-            PR number: $PR_NUMBER. Preview URL: $PREVIEW_URL.
+            PR number: $PR_NUMBER. Target URL: http://localhost:3000.
 
             1. Read qa-plan.md (if available) to understand what areas changed.
             2. Run git diff origin/main...HEAD --name-only to know exactly which files this PR changed.
@@ -371,12 +437,12 @@ jobs:
             5. For authenticated pages: login using the Privy test account (email from QA_TEST_EMAIL env var, OTP from QA_TEST_OTP env var). Save auth state and reuse.
             6. Follow the dogfood workflow: Initialize, Authenticate, Orient, Explore, Document.
             7. Find 5-10 well-documented issues with full repro evidence.
+            IMPORTANT: Always use http://localhost:3000 as the target URL. Never use a preview/vercel URL.
 
             CRITICAL — CLASSIFY EVERY ISSUE:
             For each issue found, classify it as either:
-            - **PR-caused**: The issue is in code/pages that this PR changed, or is a direct consequence of the PR changes (e.g., broken test, missing state, regression).
-            - **Pre-existing**: The issue exists on the main branch too — it is NOT caused by this PR. These are bugs that were already there.
-
+            - **PR-caused**: The issue is in code/pages that this PR changed, or is a direct consequence of the PR changes.
+            - **Pre-existing**: The issue exists on the main branch too — it is NOT caused by this PR.
             To determine: check if the affected file/component appears in the git diff. If not, it is pre-existing.
 
             ACTIONS:
@@ -400,7 +466,7 @@ jobs:
 
             **Verdict**: PASS or FAIL (based on PR-caused only)
 
-            Save summary to dogfood-results.json. The 'critical' and 'high' counts must ONLY include PR-caused issues, NOT pre-existing ones:
+            Save summary to dogfood-results.json. The 'critical' and 'high' counts must ONLY include PR-caused issues:
             {\"total\":N,\"critical\":N,\"high\":N,\"medium\":N,\"low\":N,\"preexisting\":N,\"blocking\":bool}
 
             Be strict. Be thorough. No optimism."
@@ -416,30 +482,6 @@ jobs:
             dogfood-results.json
           retention-days: 7
           if-no-files-found: ignore
-
-      - name: Update progress comment
-        if: always()
-        uses: actions/github-script@v7
-        env:
-          PR_NUMBER: ${{ needs.gate-check.outputs.pr_number }}
-          DOGFOOD_RESULT: ${{ job.status }}
-        with:
-          script: |
-            const owner = context.repo.owner;
-            const repo = context.repo.repo;
-            const prNumber = parseInt(process.env.PR_NUMBER, 10);
-            const dogfoodOk = process.env.DOGFOOD_RESULT === 'success';
-            const { data: comments } = await github.rest.issues.listComments({ owner, repo, issue_number: prNumber, per_page: 100 });
-            const pc = [...comments].reverse().find(c => c.body.includes('## QA Pipeline') && c.body.includes('QA Plan'));
-            if (pc) {
-              await github.rest.issues.updateComment({ owner, repo, comment_id: pc.id,
-                body: ['## QA Pipeline','','| Stage | Status |','|-------|--------|',
-                  '| QA Plan | ✅ Done |','| QA Execution | ✅ Done |',
-                  `| Dogfood | ${dogfoodOk ? '✅ Done' : '❌ Failed'} |`,
-                  '| Verdict | ⏳ Evaluating... |','',
-                  `[View workflow run](https://github.com/${owner}/${repo}/actions/runs/${process.env.GITHUB_RUN_ID})`
-                ].join('\n') });
-            }
 
   verdict:
     needs: [gate-check, qa-execution, dogfood]
@@ -476,8 +518,6 @@ jobs:
             const execResult = process.env.QA_EXEC_RESULT;
             const dogfoodResult = process.env.DOGFOOD_RESULT;
 
-            // If qa-execution or dogfood FAILED (crashed/timed out), that's a failure
-            // regardless of whether result files exist
             const jobsFailed = execResult === 'failure' || dogfoodResult === 'failure';
 
             let criticalCount = 0;
@@ -549,6 +589,7 @@ jobs:
                   '| Stage | Status |',
                   '|-------|--------|',
                   '| QA Plan | ✅ Done |',
+                  '| Build | ✅ Done |',
                   `| QA Execution | ${icon(execResult)} |`,
                   `| Dogfood | ${icon(dogfoodResult)} |`,
                   `| **Verdict** | **${verdictIcon} ${verdictText}** |`,
