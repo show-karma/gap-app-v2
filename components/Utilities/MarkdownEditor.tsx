@@ -1,5 +1,4 @@
 "use client";
-import "md-editor-rt/lib/style.css";
 
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import dynamic from "next/dynamic";
@@ -38,6 +37,8 @@ interface MarkdownEditorProps {
   /** Enable preview toggle button (default: true) */
   enablePreviewToggle?: boolean;
 }
+
+import "md-editor-rt/lib/style.css";
 
 const MdEditor = dynamic(() => import("md-editor-rt").then((mod) => mod.MdEditor), {
   ssr: false,

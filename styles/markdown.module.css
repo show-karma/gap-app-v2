@@ -5,8 +5,14 @@
   color: inherit;
   @apply bg-transparent;
 
-  @apply whitespace-pre-wrap;
-  @apply text-wrap;
+  p,
+  li,
+  blockquote,
+  td,
+  th {
+    @apply whitespace-pre-wrap;
+    @apply text-wrap;
+  }
 
   [data-streamdown="link"] {
     white-space: normal;
@@ -45,7 +51,7 @@
     }
     strong,
     a {
-      color: black;
+      color: inherit;
       font-weight: 700;
     }
   }
