@@ -40,6 +40,7 @@ import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { SHARE_TEXTS } from "@/utilities/share/text";
+import { createProjectQueryPredicate } from "@/utilities/queryKeys";
 import { cn } from "@/utilities/tailwind";
 import { errorManager } from "../Utilities/errorManager";
 
@@ -124,28 +125,24 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
 
   // Invoice state
   const grantUID = milestone.refUID;
-  const { data: invoiceCheckData } = useGrantInvoiceRequired(grantUID);
-  const invoiceRequired = invoiceCheckData?.invoiceRequired === true;
+  const { data: invoiceCheckData, isLoading: isInvoiceCheckLoading } =
+    useGrantInvoiceRequired(grantUID);
+  const invoiceRequired = invoiceCheckData ? invoiceCheckData.invoiceRequired === true : false;
   const hasExistingInvoice = !!milestone.invoiceInfo?.fileKey;
   const [invoiceFile, setInvoiceFile] = useState<{
     fileUrl: string;
     fileKey: string;
     fileName: string;
   } | null>(null);
-  const [invoiceRemoved, setInvoiceRemoved] = useState(false);
   const pendingFileNameRef = useRef("");
 
   const handleInvoiceFileUploaded = useCallback((finalUrl: string, tempKey: string) => {
     setInvoiceFile({ fileUrl: finalUrl, fileKey: tempKey, fileName: pendingFileNameRef.current });
-    setInvoiceRemoved(false);
   }, []);
 
-  const handleRemoveInvoice = useCallback(() => {
+  const handleRemoveNewInvoice = useCallback(() => {
     setInvoiceFile(null);
-    if (hasExistingInvoice) {
-      setInvoiceRemoved(true);
-    }
-  }, [hasExistingInvoice]);
+  }, []);
 
   // Fetch existing milestone impact data to populate the form
   const { data: milestoneImpactData } = useMilestoneImpactAnswers({
@@ -542,6 +539,11 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
           invoiceFileUrl: invoiceFile.fileUrl,
         });
         toast.success("Invoice submitted successfully");
+
+        // Invalidate project grants and updates so milestone.invoiceInfo is fresh
+        await queryClient.invalidateQueries({
+          predicate: createProjectQueryPredicate(project?.uid || ""),
+        });
       } catch {
         toast.error("Update saved but invoice submission failed. You can try again later.");
       }
@@ -606,7 +608,13 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
           labelStyle={labelStyle}
         />
         {/* Invoice Section */}
-        {invoiceRequired && grantUID && (
+        {isInvoiceCheckLoading && grantUID && (
+          <div className="flex w-full flex-col items-start gap-2 mt-2">
+            <div className="h-5 w-28 rounded bg-gray-200 dark:bg-zinc-700 animate-pulse" />
+            <div className="h-10 w-full rounded bg-gray-200 dark:bg-zinc-700 animate-pulse" />
+          </div>
+        )}
+        {!isInvoiceCheckLoading && invoiceRequired && grantUID && (
           <div className="flex w-full flex-col items-start gap-2 mt-2">
             <div className={labelStyle}>Invoice (optional)</div>
             {invoiceFile ? (
@@ -619,25 +627,17 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
                   type="button"
                   aria-label="Remove invoice"
                   className="p-0.5 rounded text-red-400 hover:text-red-600 transition-colors"
-                  onClick={handleRemoveInvoice}
+                  onClick={handleRemoveNewInvoice}
                 >
                   <XMarkIcon className="h-4 w-4" />
                 </button>
               </div>
-            ) : hasExistingInvoice && !invoiceRemoved ? (
+            ) : hasExistingInvoice ? (
               <div className="flex items-center gap-2 rounded-md border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-2">
                 <PaperClipIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                 <span className="text-sm text-emerald-700 dark:text-emerald-300 flex-1">
                   Invoice attached
                 </span>
-                <button
-                  type="button"
-                  aria-label="Remove invoice"
-                  className="p-0.5 rounded text-red-400 hover:text-red-600 transition-colors"
-                  onClick={handleRemoveInvoice}
-                >
-                  <XMarkIcon className="h-4 w-4" />
-                </button>
               </div>
             ) : (
               <FileUpload
@@ -676,7 +676,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
         <Button
           type="submit"
           isLoading={isSubmitLoading}
-          disabled={isSubmitLoading || !isValid}
+          disabled={isSubmitLoading || !isValid || isInvoiceCheckLoading}
           className="flex h-min w-max flex-row gap-2 items-center rounded bg-brand-blue px-4 py-2.5 hover:bg-brand-blue"
         >
           <p className="text-base font-semibold text-white ">
