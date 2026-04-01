@@ -75,6 +75,7 @@ export const GrantMilestoneCompletionForm = ({
     fileKey: string;
     fileName: string;
   } | null>(null);
+  const [isInvoiceUploading, setIsInvoiceUploading] = useState(false);
   const pendingFileNameRef = useRef("");
   const { completeMilestone } = useMilestone();
 
@@ -209,7 +210,10 @@ export const GrantMilestoneCompletionForm = ({
             </div>
           ) : (
             <FileUpload
-              onFileSelect={(file) => { pendingFileNameRef.current = file.name; }}
+              onFileSelect={(file) => {
+                pendingFileNameRef.current = file.name;
+                setIsInvoiceUploading(true);
+              }}
               acceptedFormats=".pdf,.docx"
               description="PDF or DOCX (max 10MB)"
               useS3Upload
@@ -222,7 +226,9 @@ export const GrantMilestoneCompletionForm = ({
               ]}
               onS3UploadComplete={(finalUrl, tempKey) => {
                 setInvoiceFile({ fileUrl: finalUrl, fileKey: tempKey, fileName: pendingFileNameRef.current });
+                setIsInvoiceUploading(false);
               }}
+              onS3UploadError={() => setIsInvoiceUploading(false)}
             />
           )}
         </div>
@@ -241,7 +247,7 @@ export const GrantMilestoneCompletionForm = ({
         <Button
           type="submit"
           isLoading={isSubmitting || isCompleting}
-          disabled={isSubmitting || isCompleting || !isValid}
+          disabled={isSubmitting || isCompleting || !isValid || isInvoiceUploading}
           className="px-3 py-2 bg-brand-blue text-white"
         >
           Complete

@@ -134,10 +134,21 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
     fileKey: string;
     fileName: string;
   } | null>(null);
+  const [isInvoiceUploading, setIsInvoiceUploading] = useState(false);
   const pendingFileNameRef = useRef("");
+
+  const handleInvoiceFileSelected = useCallback((file: File) => {
+    pendingFileNameRef.current = file.name;
+    setIsInvoiceUploading(true);
+  }, []);
 
   const handleInvoiceFileUploaded = useCallback((finalUrl: string, tempKey: string) => {
     setInvoiceFile({ fileUrl: finalUrl, fileKey: tempKey, fileName: pendingFileNameRef.current });
+    setIsInvoiceUploading(false);
+  }, []);
+
+  const handleInvoiceUploadError = useCallback(() => {
+    setIsInvoiceUploading(false);
   }, []);
 
   const handleRemoveNewInvoice = useCallback(() => {
@@ -632,30 +643,32 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
                   <XMarkIcon className="h-4 w-4" />
                 </button>
               </div>
-            ) : hasExistingInvoice ? (
-              <div className="flex items-center gap-2 rounded-md border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-2">
-                <PaperClipIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                <span className="text-sm text-emerald-700 dark:text-emerald-300 flex-1">
-                  Invoice attached
-                </span>
-              </div>
             ) : (
-              <FileUpload
-                onFileSelect={(file) => {
-                  pendingFileNameRef.current = file.name;
-                }}
-                acceptedFormats=".pdf,.docx"
-                description="PDF or DOCX (max 10MB)"
-                useS3Upload
-                skipDimensionValidation
-                presignedUrlEndpoint={INDEXER.V2.MILESTONE_INVOICES.GRANTEE_PRESIGNED()}
-                maxFileSize={10 * 1024 * 1024}
-                allowedFileTypes={[
-                  "application/pdf",
-                  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                ]}
-                onS3UploadComplete={handleInvoiceFileUploaded}
-              />
+              <div className="flex w-full flex-col gap-2">
+                {hasExistingInvoice && (
+                  <div className="flex items-center gap-2 rounded-md border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-2">
+                    <PaperClipIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                    <span className="text-sm text-emerald-700 dark:text-emerald-300 flex-1">
+                      Invoice attached
+                    </span>
+                  </div>
+                )}
+                <FileUpload
+                  onFileSelect={handleInvoiceFileSelected}
+                  acceptedFormats=".pdf,.docx"
+                  description={hasExistingInvoice ? "Upload to replace existing invoice" : "PDF or DOCX (max 10MB)"}
+                  useS3Upload
+                  skipDimensionValidation
+                  presignedUrlEndpoint={INDEXER.V2.MILESTONE_INVOICES.GRANTEE_PRESIGNED()}
+                  maxFileSize={10 * 1024 * 1024}
+                  allowedFileTypes={[
+                    "application/pdf",
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                  ]}
+                  onS3UploadComplete={handleInvoiceFileUploaded}
+                  onS3UploadError={handleInvoiceUploadError}
+                />
+              </div>
             )}
           </div>
         )}
@@ -676,7 +689,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
         <Button
           type="submit"
           isLoading={isSubmitLoading}
-          disabled={isSubmitLoading || !isValid || isInvoiceCheckLoading}
+          disabled={isSubmitLoading || !isValid || isInvoiceCheckLoading || isInvoiceUploading}
           className="flex h-min w-max flex-row gap-2 items-center rounded bg-brand-blue px-4 py-2.5 hover:bg-brand-blue"
         >
           <p className="text-base font-semibold text-white ">
