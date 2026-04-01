@@ -392,18 +392,26 @@ jobs:
         uses: actions/github-script@v7
         env:
           HEAD_SHA: ${{ needs.gate-check.outputs.head_sha }}
+          PR_NUMBER: ${{ needs.gate-check.outputs.pr_number }}
           RUN_ID: ${{ github.run_id }}
+          QA_EXEC_RESULT: ${{ needs.qa-execution.result }}
+          DOGFOOD_RESULT: ${{ needs.dogfood.result }}
         with:
           script: |
             const fs = require('fs');
             const owner = context.repo.owner;
             const repo = context.repo.repo;
             const sha = process.env.HEAD_SHA;
+            const execResult = process.env.QA_EXEC_RESULT;
+            const dogfoodResult = process.env.DOGFOOD_RESULT;
+
+            // If qa-execution or dogfood FAILED (crashed/timed out), that's a failure
+            // regardless of whether result files exist
+            const jobsFailed = execResult === 'failure' || dogfoodResult === 'failure';
 
             let criticalCount = 0;
             let highCount = 0;
 
-            // Parse QA execution results
             try {
               const qaResults = JSON.parse(fs.readFileSync('qa-results.json', 'utf8'));
               for (const s of (qaResults.scenarios || [])) {
@@ -416,7 +424,6 @@ jobs:
               console.log('Could not parse qa-results.json: ' + e.message);
             }
 
-            // Parse dogfood results
             try {
               const dogfoodResults = JSON.parse(fs.readFileSync('dogfood-results.json', 'utf8'));
               criticalCount += (dogfoodResults.critical || 0);
@@ -425,15 +432,23 @@ jobs:
               console.log('Could not parse dogfood-results.json: ' + e.message);
             }
 
-            const hasBlockingIssues = criticalCount > 0 || highCount > 0;
+            const hasBlockingIssues = criticalCount > 0 || highCount > 0 || jobsFailed;
             const state = hasBlockingIssues ? 'failure' : 'success';
-            const description = hasBlockingIssues
-              ? `${criticalCount} critical, ${highCount} high issues found`
-              : 'No critical/high issues found';
+            let description;
+            if (jobsFailed) {
+              const failed = [
+                execResult === 'failure' ? 'QA Execution' : null,
+                dogfoodResult === 'failure' ? 'Dogfood' : null
+              ].filter(Boolean).join(', ');
+              description = `${failed} failed — check workflow logs`;
+            } else if (criticalCount > 0 || highCount > 0) {
+              description = `${criticalCount} critical, ${highCount} high issues found`;
+            } else {
+              description = 'No critical/high issues found';
+            }
 
             console.log(`Verdict: ${state} — ${description}`);
 
-            // Set commit status
             await github.rest.repos.createCommitStatus({
               owner, repo, sha,
               state,
@@ -441,6 +456,36 @@ jobs:
               context: 'qa-pipeline',
               target_url: `https://github.com/${owner}/${repo}/actions/runs/${process.env.RUN_ID}`
             });
+
+            // Update progress comment with actual job results
+            const prNumber = parseInt(process.env.PR_NUMBER, 10);
+            const icon = (r) => r === 'success' ? '✅ Done' : r === 'skipped' ? '⏭️ Skipped' : '❌ Failed';
+            const verdictIcon = hasBlockingIssues ? '❌' : '✅';
+            const verdictText = hasBlockingIssues ? `FAIL — ${description}` : 'PASS — no blocking issues';
+
+            const { data: cmts } = await github.rest.issues.listComments({
+              owner, repo, issue_number: prNumber, per_page: 100
+            });
+            const pc = [...cmts].reverse().find(c =>
+              c.body.includes('## QA Pipeline') && c.body.includes('QA Plan')
+            );
+            if (pc) {
+              await github.rest.issues.updateComment({
+                owner, repo, comment_id: pc.id,
+                body: [
+                  '## QA Pipeline',
+                  '',
+                  '| Stage | Status |',
+                  '|-------|--------|',
+                  '| QA Plan | ✅ Done |',
+                  `| QA Execution | ${icon(execResult)} |`,
+                  `| Dogfood | ${icon(dogfoodResult)} |`,
+                  `| **Verdict** | **${verdictIcon} ${verdictText}** |`,
+                  '',
+                  `[View workflow run](https://github.com/${owner}/${repo}/actions/runs/${process.env.RUN_ID})`
+                ].join('\n')
+              });
+            }
 
             if (hasBlockingIssues) {
               core.setFailed(`QA Pipeline FAILED: ${description}`);
