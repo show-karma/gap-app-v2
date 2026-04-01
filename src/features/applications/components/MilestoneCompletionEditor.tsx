@@ -59,6 +59,13 @@ export function MilestoneCompletionEditor({
 
   const grantUID = invoiceConfig?.grantUID;
   const showInvoice = invoiceRequired && invoiceConfig?.invoiceRequired && !!grantUID;
+  const milestoneInvoices = invoiceConfig?.milestoneInvoices ?? [];
+
+  const getExistingInvoice = useCallback(
+    (milestoneTitle: string) =>
+      milestoneInvoices.find((inv) => inv.milestoneLabel === milestoneTitle),
+    [milestoneInvoices]
+  );
 
   const [editingMilestone, setEditingMilestone] = useState<string | null>(null);
   const [editedText, setEditedText] = useState<Record<string, string>>({});
@@ -292,45 +299,59 @@ export function MilestoneCompletionEditor({
                       <div className="h-10 w-full rounded bg-gray-200 dark:bg-zinc-700 animate-pulse" />
                     </div>
                   )}
-                  {showInvoice && !isInvoiceConfigLoading && (
-                    <div className="flex w-full flex-col items-start gap-2 mt-2">
-                      <p className="text-sm font-medium">Invoice (optional)</p>
-                      {invoiceFile ? (
-                        <div className="flex items-center gap-2 rounded-md border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-2">
-                          <PaperClipIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                          <span className="text-sm text-emerald-700 dark:text-emerald-300 flex-1 truncate">
-                            {invoiceFile.fileName}
-                          </span>
-                          <button
-                            type="button"
-                            aria-label="Remove invoice"
-                            className="p-0.5 rounded text-red-400 hover:text-red-600 transition-colors"
-                            onClick={() => handleRemoveInvoice(milestone.title)}
-                          >
-                            <XMarkIcon className="h-4 w-4" />
-                          </button>
-                        </div>
-                      ) : (
-                        <FileUpload
-                          onFileSelect={(file) => handleInvoiceFileSelected(file, milestone.title)}
-                          acceptedFormats=".pdf,.docx"
-                          description="PDF or DOCX (max 10MB)"
-                          useS3Upload
-                          skipDimensionValidation
-                          presignedUrlEndpoint={INDEXER.V2.MILESTONE_INVOICES.GRANTEE_PRESIGNED()}
-                          maxFileSize={10 * 1024 * 1024}
-                          allowedFileTypes={[
-                            "application/pdf",
-                            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                          ]}
-                          onS3UploadComplete={(finalUrl, tempKey) =>
-                            handleInvoiceFileUploaded(finalUrl, tempKey, milestone.title)
-                          }
-                          onS3UploadError={() => handleInvoiceUploadError(milestone.title)}
-                        />
-                      )}
-                    </div>
-                  )}
+                  {showInvoice && !isInvoiceConfigLoading && (() => {
+                    const invoiceFile = invoiceFiles[milestone.title];
+                    const existingInvoice = getExistingInvoice(milestone.title);
+                    return (
+                      <div className="flex w-full flex-col items-start gap-2 mt-2">
+                        <p className="text-sm font-medium">Invoice (optional)</p>
+                        {invoiceFile ? (
+                          <div className="flex items-center gap-2 rounded-md border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-2">
+                            <PaperClipIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                            <span className="text-sm text-emerald-700 dark:text-emerald-300 flex-1 truncate">
+                              {invoiceFile.fileName}
+                            </span>
+                            <button
+                              type="button"
+                              aria-label="Remove invoice"
+                              className="p-0.5 rounded text-red-400 hover:text-red-600 transition-colors"
+                              onClick={() => handleRemoveInvoice(milestone.title)}
+                            >
+                              <XMarkIcon className="h-4 w-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex w-full flex-col gap-2">
+                            {existingInvoice?.invoiceFileKey && (
+                              <div className="flex items-center gap-2 rounded-md border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-2">
+                                <PaperClipIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                                <span className="text-sm text-emerald-700 dark:text-emerald-300 flex-1">
+                                  Invoice attached
+                                </span>
+                              </div>
+                            )}
+                            <FileUpload
+                              onFileSelect={(file) => handleInvoiceFileSelected(file, milestone.title)}
+                              acceptedFormats=".pdf,.docx"
+                              description={existingInvoice?.invoiceFileKey ? "Upload to replace existing invoice" : "PDF or DOCX (max 10MB)"}
+                              useS3Upload
+                              skipDimensionValidation
+                              presignedUrlEndpoint={INDEXER.V2.MILESTONE_INVOICES.GRANTEE_PRESIGNED()}
+                              maxFileSize={10 * 1024 * 1024}
+                              allowedFileTypes={[
+                                "application/pdf",
+                                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                              ]}
+                              onS3UploadComplete={(finalUrl, tempKey) =>
+                                handleInvoiceFileUploaded(finalUrl, tempKey, milestone.title)
+                              }
+                              onS3UploadError={() => handleInvoiceUploadError(milestone.title)}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   <div className="flex gap-2">
                     <Button
@@ -386,6 +407,16 @@ export function MilestoneCompletionEditor({
                           )}
                         </div>
                       )}
+                    </div>
+                  )}
+
+                  {/* Show existing invoice badge in read-only view */}
+                  {showInvoice && getExistingInvoice(milestone.title)?.invoiceFileKey && (
+                    <div className="flex items-center gap-1.5 mt-2">
+                      <PaperClipIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                      <span className="text-sm text-emerald-700 dark:text-emerald-300">
+                        Invoice attached
+                      </span>
                     </div>
                   )}
 

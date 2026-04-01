@@ -60,9 +60,16 @@ export async function updateMilestoneCompletion(
   return response;
 }
 
+export interface MilestoneInvoiceSummary {
+  milestoneLabel: string;
+  invoiceStatus: string;
+  invoiceFileKey: string | null;
+}
+
 export interface ApplicationInvoiceConfig {
   grantUID: string;
   invoiceRequired: boolean;
+  milestoneInvoices: MilestoneInvoiceSummary[];
 }
 
 export async function getApplicationInvoiceConfig(
