@@ -169,6 +169,8 @@ export const INDEXER = {
         `/v2/funding-applications/user/my-applications?communitySlug=${communitySlug}`,
       MILESTONE_COMPLETIONS: (referenceNumber: string) =>
         `/v2/funding-applications/${referenceNumber}/milestone-completions`,
+      INVOICE_CONFIG: (referenceNumber: string) =>
+        `/v2/funding-applications/${referenceNumber}/invoice-config`,
     },
     AUTH: {
       PERMISSIONS: (params?: {

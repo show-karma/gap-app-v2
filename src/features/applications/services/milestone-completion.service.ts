@@ -1,4 +1,5 @@
 import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 
 export interface MilestoneCompletion {
   id: string;
@@ -57,4 +58,29 @@ export async function updateMilestoneCompletion(
   if (fetchError || !response)
     throw new Error(fetchError ?? "Failed to update milestone completion");
   return response;
+}
+
+export interface ApplicationInvoiceConfig {
+  grantUID: string;
+  invoiceRequired: boolean;
+}
+
+export async function getApplicationInvoiceConfig(
+  referenceNumber: string
+): Promise<ApplicationInvoiceConfig | null> {
+  try {
+    const [data, error] = await fetchData<{ data: ApplicationInvoiceConfig }>(
+      INDEXER.V2.FUNDING_APPLICATIONS.INVOICE_CONFIG(referenceNumber),
+      "GET",
+      {},
+      {},
+      {},
+      true,
+      false
+    );
+    if (error || !data?.data) return null;
+    return data.data;
+  } catch {
+    return null;
+  }
 }
