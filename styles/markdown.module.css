@@ -12,6 +12,11 @@
     white-space: normal;
   }
 
+  li > p {
+    display: inline;
+    margin-bottom: 0;
+  }
+
   @media (max-width: 1440px) {
     @apply text-[14px];
   }

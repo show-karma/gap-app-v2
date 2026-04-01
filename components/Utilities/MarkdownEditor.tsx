@@ -59,6 +59,8 @@ const EXCLUDED_TOOLBARS = [
   "mermaid",
   "katex",
   "htmlPreview",
+  "preview",
+  "previewOnly",
 ] as const;
 
 /**
@@ -112,6 +114,7 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
 
   // Ensure client-side only rendering to prevent hydration mismatches
