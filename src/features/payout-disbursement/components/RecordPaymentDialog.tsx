@@ -13,11 +13,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { TOKEN_ADDRESSES, TOKENS } from "@/config/tokens";
+import { DEFAULT_USDC_CHAIN_ID, TOKEN_ADDRESSES, TOKENS } from "@/config/tokens";
+import { useRecordPayment } from "@/src/features/payout-disbursement/hooks/use-payout-disbursement";
+import type {
+  CommunityPayoutInvoiceInfo,
+  MilestoneAllocation,
+} from "@/src/features/payout-disbursement/types/payout-disbursement";
+import { toSmallestUnit } from "@/src/features/payout-disbursement/utils/format-token-amount";
 import { cn } from "@/utilities/tailwind";
-import { useRecordPayment } from "../hooks/use-payout-disbursement";
-import type { CommunityPayoutInvoiceInfo, MilestoneAllocation } from "../types/payout-disbursement";
-import { toSmallestUnit } from "../utils/format-token-amount";
 
 interface RecordPaymentDialogProps {
   isOpen: boolean;
@@ -34,7 +37,6 @@ interface RecordPaymentDialogProps {
 
 const USDC_DECIMALS = TOKENS.usdc.decimals;
 const INITIAL_PAYMENT_KEY = "__initial_payment__";
-const FALLBACK_CHAIN_ID = 1; // Ethereum mainnet — used when grant chain has no USDC configured
 
 function getUsdcAddressForChain(chainID: number): string | null {
   const addresses = TOKEN_ADDRESSES.usdc as Record<number, string>;
@@ -131,8 +133,9 @@ function RecordPaymentDialogInner({
   const handleSubmit = useCallback(() => {
     if (!isValid || recordPayment.isPending) return;
 
-    const effectiveChainID = chainSupported ? chainID : FALLBACK_CHAIN_ID;
-    const tokenAddress = nativeUsdcAddress ?? (getUsdcAddressForChain(FALLBACK_CHAIN_ID) as string);
+    const effectiveChainID = chainSupported ? chainID : DEFAULT_USDC_CHAIN_ID;
+    const tokenAddress =
+      nativeUsdcAddress ?? (getUsdcAddressForChain(DEFAULT_USDC_CHAIN_ID) as string);
     const disbursedAmount = toSmallestUnit(amount, USDC_DECIMALS);
 
     const selectedMilestones = milestoneOptions.filter((m) => selectedKeys.includes(m.key));
