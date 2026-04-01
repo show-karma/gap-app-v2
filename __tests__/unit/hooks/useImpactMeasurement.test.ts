@@ -47,6 +47,10 @@ describe("useImpactMeasurement", () => {
     vi.clearAllMocks();
   });
 
+  afterEach(() => {
+    queryClient.clear();
+  });
+
   it("should fetch impact measurement data with communityId", async () => {
     const mockImpactData = {
       stats: {

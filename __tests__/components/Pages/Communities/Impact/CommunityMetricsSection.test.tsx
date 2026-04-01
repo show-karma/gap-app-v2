@@ -77,6 +77,10 @@ describe("CommunityMetricsSection", () => {
     mockUseParams.mockReturnValue({ communityId: "filecoin" });
   });
 
+  afterEach(() => {
+    queryClient.clear();
+  });
+
   const mockMetricsResponse: CommunityMetricsResponse = {
     communityUID: "filecoin-uid",
     metrics: [

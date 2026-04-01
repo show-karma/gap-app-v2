@@ -121,6 +121,7 @@ const setupPermissions = ({ isGuestDueToError = false }: { isGuestDueToError?: b
   });
 };
 
+// Fresh QueryClient per render — no afterEach cleanup required
 const createWrapper = () => {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },

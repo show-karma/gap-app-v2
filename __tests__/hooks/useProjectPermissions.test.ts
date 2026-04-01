@@ -51,6 +51,7 @@ const mockUseProjectInstance = useProjectInstance as unknown as vi.Mock;
 const mockGetRPCUrlByChainId = getRPCUrlByChainId as unknown as vi.Mock;
 const mockCompareAllWallets = compareAllWallets as unknown as vi.Mock;
 
+// Fresh QueryClient per render — no afterEach cleanup required
 function createWrapper() {
   const queryClient = new QueryClient({
     defaultOptions: {

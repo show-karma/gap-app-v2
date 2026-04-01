@@ -20,6 +20,7 @@ import { apiKeyService } from "@/src/features/api-keys/services/api-key.service"
 
 const mockApiKeyService = apiKeyService as unknown as Record<string, vi.Mock>;
 
+// Fresh QueryClient per render — no afterEach cleanup required
 const createWrapper = () => {
   const queryClient = new QueryClient({
     defaultOptions: {

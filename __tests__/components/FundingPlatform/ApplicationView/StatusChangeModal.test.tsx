@@ -180,7 +180,7 @@ describe("StatusChangeModal", () => {
     isReasonRequired: false,
   };
 
-  // Create a QueryClient for testing
+  // Fresh QueryClient per render — no afterEach cleanup required
   const createTestQueryClient = () =>
     new QueryClient({
       defaultOptions: {

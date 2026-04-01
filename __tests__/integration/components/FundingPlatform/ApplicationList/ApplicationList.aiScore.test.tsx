@@ -63,6 +63,7 @@ const createMockApplication = (overrides?: Partial<IFundingApplication>): IFundi
 });
 
 describe("ApplicationList - AI Score Column", () => {
+  // Fresh QueryClient per render — no afterEach cleanup required
   const createTestQueryClient = () =>
     new QueryClient({
       defaultOptions: {

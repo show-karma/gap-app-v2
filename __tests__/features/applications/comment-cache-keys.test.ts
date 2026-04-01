@@ -28,6 +28,7 @@ function createWrapper(queryClient: QueryClient) {
   };
 }
 
+// Fresh QueryClient per test — no afterEach cleanup required
 describe("usePublicCommenting — query key scoping", () => {
   it("includes communityId in the query key", () => {
     const queryClient = new QueryClient({

@@ -251,7 +251,7 @@ const mockProgram: GrantProgram = {
   },
 };
 
-// Helper to create test query client
+// Fresh QueryClient per render — no afterEach cleanup required
 const createTestQueryClient = () =>
   new QueryClient({
     defaultOptions: {
