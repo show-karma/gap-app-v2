@@ -1,6 +1,7 @@
 "use client";
 
 import { PaperClipIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { useQueryClient } from "@tanstack/react-query";
 import { Pencil } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 import toast from "react-hot-toast";
@@ -37,6 +38,7 @@ export function MilestoneCompletionEditor({
   isEditable,
   invoiceRequired,
 }: MilestoneCompletionEditorProps) {
+  const queryClient = useQueryClient();
   const {
     isLoading,
     createCompletion,
@@ -148,6 +150,9 @@ export function MilestoneCompletionEditor({
             invoiceFileUrl: invoiceFile.fileUrl,
           });
           toast.success("Invoice submitted successfully");
+          await queryClient.invalidateQueries({
+            queryKey: ["applicationInvoiceConfig", referenceNumber],
+          });
         } catch {
           toast.error("Failed to submit invoice");
         }
