@@ -45,7 +45,7 @@ export function UpdatesContent({ className }: UpdatesContentProps) {
 
   // Pass milestoneStatus to useProjectProfile so filtering happens server-side
   const apiMilestoneStatus = milestoneStatusFilter !== "all" ? milestoneStatusFilter : undefined;
-  const { allUpdates, milestonesCount, completedCount } = useProjectProfile(
+  const { allUpdates, milestonesCount, completedCount, isUpdating } = useProjectProfile(
     projectId as string,
     apiMilestoneStatus
   );
@@ -104,8 +104,8 @@ export function UpdatesContent({ className }: UpdatesContentProps) {
     [activeFilters, updateURL]
   );
 
-  // Show loading state while data is being fetched
-  const isLoading = !allUpdates;
+  // Show loading state while data is being fetched or filter is changing
+  const isLoading = !allUpdates || isUpdating;
 
   return (
     <div className={className} data-testid="updates-content">

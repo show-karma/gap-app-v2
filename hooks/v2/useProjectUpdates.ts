@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { getProjectUpdates } from "@/services/project-updates.service";
 import type {
   GrantMilestoneWithDetails,
@@ -358,6 +358,7 @@ export function useProjectUpdates(
   const {
     data,
     isLoading,
+    isFetching,
     error,
     refetch: originalRefetch,
   } = useQuery<UpdatesApiResponse>({
@@ -365,6 +366,7 @@ export function useProjectUpdates(
     queryFn: () => getProjectUpdates(projectIdOrSlug, milestoneStatus),
     enabled: !!projectIdOrSlug,
     staleTime: 5 * 60 * 1000,
+    placeholderData: keepPreviousData,
   });
 
   // Convert response to unified format (no longer needs project data)
@@ -386,6 +388,7 @@ export function useProjectUpdates(
     pendingMilestones,
     rawData,
     isLoading,
+    isFetching,
     error,
     refetch,
   };

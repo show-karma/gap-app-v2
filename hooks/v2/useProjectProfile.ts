@@ -23,6 +23,8 @@ export interface UseProjectProfileResult extends ProjectProfileData, ProjectProf
   project: Project | null;
   /** Whether the project fetch failed (e.g., not found) */
   isError: boolean;
+  /** Whether the updates/milestones are being re-fetched (e.g., during filter change) */
+  isUpdating: boolean;
   /** Refetch all project data */
   refetch: () => Promise<void>;
 }
@@ -60,6 +62,7 @@ export function useProjectProfile(
   const {
     milestones = [],
     isLoading: isUpdatesLoading,
+    isFetching: isUpdatesFetching,
     refetch: refetchUpdates,
   } = useProjectUpdates(projectId, milestoneStatus);
 
@@ -94,6 +97,7 @@ export function useProjectProfile(
     isLoading,
     isProjectLoading,
     isSecondaryLoading,
+    isUpdating: isUpdatesFetching,
     isError,
     error: error instanceof Error ? error : error ? new Error(String(error)) : null,
     refetch,

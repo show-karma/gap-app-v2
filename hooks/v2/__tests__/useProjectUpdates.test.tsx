@@ -195,4 +195,74 @@ describe("useProjectUpdates", () => {
       expect(mockGetProjectUpdates).toHaveBeenCalledWith("test-project", undefined);
     });
   });
+
+  it("exposes isFetching as true during a filter transition and retains previous milestones", async () => {
+    const firstResponse: UpdatesApiResponse = {
+      projectUpdates: [],
+      projectMilestones: [
+        {
+          uid: "milestone-pending",
+          title: "Pending Milestone",
+          description: "A pending milestone",
+          status: "pending",
+          dueDate: null,
+          createdAt: "2024-01-01T00:00:00.000Z",
+          recipient: "0x123",
+          completionDetails: null,
+          verificationDetails: null,
+        } as any,
+      ],
+      grantMilestones: [],
+      grantUpdates: [],
+    };
+
+    let resolveSecondFetch: (value: UpdatesApiResponse) => void;
+    const secondFetchPromise = new Promise<UpdatesApiResponse>((resolve) => {
+      resolveSecondFetch = resolve;
+    });
+
+    mockGetProjectUpdates.mockResolvedValueOnce(firstResponse);
+    mockGetProjectUpdates.mockReturnValueOnce(secondFetchPromise);
+
+    const { result, rerender } = renderHook(
+      ({ status }: { status?: "pending" | "completed" | "verified" }) =>
+        useProjectUpdates("test-project", status),
+      {
+        wrapper: createWrapper(queryClient),
+        initialProps: { status: undefined },
+      }
+    );
+
+    // Wait for first fetch to complete
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(result.current.milestones).toHaveLength(1);
+
+    // Change filter — triggers new query key → second fetch begins
+    rerender({ status: "completed" });
+
+    // While second fetch is in-flight, isFetching should be true
+    await waitFor(() => {
+      expect(result.current.isFetching).toBe(true);
+    });
+
+    // Previous milestones are retained (not empty) while fetching
+    expect(result.current.milestones).toHaveLength(1);
+
+    // Resolve second fetch
+    resolveSecondFetch!({
+      projectUpdates: [],
+      projectMilestones: [],
+      grantMilestones: [],
+      grantUpdates: [],
+    });
+
+    await waitFor(() => {
+      expect(result.current.isFetching).toBe(false);
+    });
+
+    expect(result.current.milestones).toHaveLength(0);
+  });
 });
