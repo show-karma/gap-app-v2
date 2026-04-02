@@ -15,7 +15,6 @@ import type { ActivityFilterType, SortOption } from "@/types/v2/project-profile.
 import { ACTIVITY_FILTER_OPTIONS } from "@/types/v2/project-profile.types";
 import { cn } from "@/utilities/tailwind";
 
-export type { MilestoneStatusFilter } from "@/services/milestone-status-filter.service";
 // Re-export types for backward compatibility
 export type { ActivityFilterType, SortOption } from "@/types/v2/project-profile.types";
 

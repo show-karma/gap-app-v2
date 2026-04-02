@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useMemo } from "react";
 import { useProjectProfile } from "@/hooks/v2/useProjectProfile";
 import type { MilestoneStatusFilter } from "@/services/milestone-status-filter.service";
@@ -25,18 +25,7 @@ export function UpdatesContent({ className }: UpdatesContentProps) {
   const isAuthorized = isOwner || isProjectAdmin;
   const searchParams = useSearchParams();
   const router = useRouter();
-
-  const { allUpdates, milestonesCount, completedCount } = useProjectProfile(projectId as string);
-
-  // Count items per filter category for badge counters
-  const counts = useMemo(() => {
-    if (!allUpdates) return {} as Partial<Record<ActivityFilterType, number>>;
-    return allUpdates.reduce<Partial<Record<ActivityFilterType, number>>>((acc, item) => {
-      const filterType = getActivityFilterType(item);
-      acc[filterType] = (acc[filterType] ?? 0) + 1;
-      return acc;
-    }, {});
-  }, [allUpdates]);
+  const pathname = usePathname();
 
   // Read filter and sort state from URL
   const activeFilters = useMemo(() => {
@@ -54,6 +43,23 @@ export function UpdatesContent({ className }: UpdatesContentProps) {
     return "all" as MilestoneStatusFilter;
   }, [searchParams]);
 
+  // Pass milestoneStatus to useProjectProfile so filtering happens server-side
+  const apiMilestoneStatus = milestoneStatusFilter !== "all" ? milestoneStatusFilter : undefined;
+  const { allUpdates, milestonesCount, completedCount } = useProjectProfile(
+    projectId as string,
+    apiMilestoneStatus
+  );
+
+  // Count items per filter category for badge counters
+  const counts = useMemo(() => {
+    if (!allUpdates) return {} as Partial<Record<ActivityFilterType, number>>;
+    return allUpdates.reduce<Partial<Record<ActivityFilterType, number>>>((acc, item) => {
+      const filterType = getActivityFilterType(item);
+      acc[filterType] = (acc[filterType] ?? 0) + 1;
+      return acc;
+    }, {});
+  }, [allUpdates]);
+
   // Update URL when filters change
   const updateURL = useCallback(
     (newFilters: ActivityFilterType[]) => {
@@ -67,7 +73,7 @@ export function UpdatesContent({ className }: UpdatesContentProps) {
       }
       params.delete("sort");
 
-      const newURL = params.toString() ? `?${params.toString()}` : window.location.pathname;
+      const newURL = params.toString() ? `?${params.toString()}` : pathname;
       router.replace(newURL, { scroll: false });
     },
     [searchParams, router]
@@ -82,7 +88,7 @@ export function UpdatesContent({ className }: UpdatesContentProps) {
       } else {
         params.set("milestoneStatus", status);
       }
-      const newURL = params.toString() ? `?${params.toString()}` : window.location.pathname;
+      const newURL = params.toString() ? `?${params.toString()}` : pathname;
       router.replace(newURL, { scroll: false });
     },
     [searchParams, router]
@@ -124,7 +130,6 @@ export function UpdatesContent({ className }: UpdatesContentProps) {
               milestones={allUpdates}
               isAuthorized={isAuthorized}
               activeFilters={activeFilters}
-              milestoneStatusFilter={milestoneStatusFilter}
             />
           </Suspense>
         )}

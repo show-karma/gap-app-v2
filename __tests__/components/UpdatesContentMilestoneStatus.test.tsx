@@ -1,15 +1,18 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import type { MilestoneStatusFilter } from "@/services/milestone-status-filter.service";
 
 // Track URL operations
 const mockReplace = vi.fn();
 let mockSearchParams = new URLSearchParams();
+const MOCK_PATHNAME = "/project/test-project";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace: mockReplace }),
   useSearchParams: () => mockSearchParams,
   useParams: () => ({ projectId: "test-project" }),
+  usePathname: () => MOCK_PATHNAME,
 }));
 
 vi.mock("@/hooks/v2/useProjectProfile", () => ({
@@ -45,16 +48,17 @@ vi.mock("@/components/Pages/Project/v2/MainContent/ActivityFilters", () => ({
         data-testid="trigger-status-change"
         onClick={() => props.onMilestoneStatusChange?.("completed")}
       />
+      <button
+        type="button"
+        data-testid="trigger-status-all"
+        onClick={() => props.onMilestoneStatusChange?.("all")}
+      />
     </div>
   ),
 }));
 
 vi.mock("@/components/Pages/Project/v2/MainContent/ActivityFeed", () => ({
-  ActivityFeed: (props: any) => (
-    <div data-testid="activity-feed">
-      <span data-testid="feed-milestone-status">{props.milestoneStatusFilter ?? "none"}</span>
-    </div>
-  ),
+  ActivityFeed: () => <div data-testid="activity-feed" />,
 }));
 
 vi.mock("@/components/Pages/Project/v2/Skeletons", () => ({
@@ -85,12 +89,27 @@ describe("UpdatesContent - milestone status filter URL sync", () => {
     expect(screen.getByTestId("milestone-status-value")).toHaveTextContent("all");
   });
 
-  it("passes milestoneStatusFilter to ActivityFeed", async () => {
+  it("passes milestoneStatusFilter to ActivityFilters dropdown", async () => {
     mockSearchParams = new URLSearchParams("milestoneStatus=verified");
 
     const { UpdatesContent } = await import("@/components/Pages/Project/v2/Content/UpdatesContent");
     render(<UpdatesContent />);
 
-    expect(screen.getByTestId("feed-milestone-status")).toHaveTextContent("verified");
+    // The milestone status value flows to ActivityFilters (for the dropdown display)
+    expect(screen.getByTestId("milestone-status-value")).toHaveTextContent("verified");
+  });
+
+  it("uses pathname from usePathname when clearing all params", async () => {
+    mockSearchParams = new URLSearchParams();
+
+    const { UpdatesContent } = await import("@/components/Pages/Project/v2/Content/UpdatesContent");
+    render(<UpdatesContent />);
+
+    const button = screen.getByTestId("trigger-status-all");
+    await userEvent.click(button);
+
+    // The router.replace call should use the pathname from usePathname ("/project/test-project"),
+    // not window.location.pathname which returns "/" in jsdom
+    expect(mockReplace).toHaveBeenCalledWith("/project/test-project", { scroll: false });
   });
 });

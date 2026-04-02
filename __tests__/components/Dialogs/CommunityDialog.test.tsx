@@ -78,7 +78,10 @@ const mockToastError = vi.fn();
 const mockToastSuccess = vi.fn();
 vi.mock("react-hot-toast", () => ({
   __esModule: true,
-  default: { error: (...args: any[]) => mockToastError(...args), success: (...args: any[]) => mockToastSuccess(...args) },
+  default: {
+    error: (...args: any[]) => mockToastError(...args),
+    success: (...args: any[]) => mockToastSuccess(...args),
+  },
 }));
 
 // Mock Heroicons
@@ -373,7 +376,9 @@ describe("CommunityDialog", () => {
       render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
       fireEvent.click(screen.getByText("New Community"));
 
-      const nameInput = screen.getByPlaceholderText('e.g. "My awesome Community"') as HTMLInputElement;
+      const nameInput = screen.getByPlaceholderText(
+        'e.g. "My awesome Community"'
+      ) as HTMLInputElement;
       fireEvent.change(nameInput, { target: { value: "Test Community" } });
       fireEvent.change(screen.getByPlaceholderText('e.g. "https://example.com/image.jpg"'), {
         target: { value: "https://example.com/logo.png" },
@@ -385,7 +390,9 @@ describe("CommunityDialog", () => {
       fireEvent.click(screen.getByText("Create Community"));
 
       await waitFor(() => {
-        expect(mockToastError).toHaveBeenCalledWith("Failed to create community. Please try again.");
+        expect(mockToastError).toHaveBeenCalledWith(
+          "Failed to create community. Please try again."
+        );
       });
 
       // Modal should still be visible with preserved data

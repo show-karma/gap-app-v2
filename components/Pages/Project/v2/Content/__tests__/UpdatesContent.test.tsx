@@ -9,6 +9,7 @@ vi.mock("next/navigation", () => ({
   useParams: vi.fn(),
   useRouter: vi.fn(),
   useSearchParams: vi.fn(),
+  usePathname: vi.fn(() => "/project/test-project"),
 }));
 
 vi.mock("@/hooks/v2/useProjectProfile", () => ({

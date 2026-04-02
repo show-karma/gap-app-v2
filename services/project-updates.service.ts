@@ -14,7 +14,10 @@ import { INDEXER } from "@/utilities/indexer";
  * @param projectIdOrSlug - The project UID or slug
  * @returns UpdatesApiResponse containing all updates and milestones
  */
-export const getProjectUpdates = async (projectIdOrSlug: string): Promise<UpdatesApiResponse> => {
+export const getProjectUpdates = async (
+  projectIdOrSlug: string,
+  milestoneStatus?: "pending" | "completed" | "verified"
+): Promise<UpdatesApiResponse> => {
   const emptyResponse: UpdatesApiResponse = {
     projectUpdates: [],
     projectMilestones: [],
@@ -22,9 +25,10 @@ export const getProjectUpdates = async (projectIdOrSlug: string): Promise<Update
     grantUpdates: [],
   };
 
-  const [data, error, , status] = await fetchData<UpdatesApiResponse>(
-    INDEXER.V2.PROJECTS.UPDATES(projectIdOrSlug)
-  );
+  const baseUrl = INDEXER.V2.PROJECTS.UPDATES(projectIdOrSlug);
+  const url = milestoneStatus ? `${baseUrl}?milestoneStatus=${milestoneStatus}` : baseUrl;
+
+  const [data, error, , status] = await fetchData<UpdatesApiResponse>(url);
 
   if (error || !data) {
     // Missing project routes are expected for unknown slugs and should not be sent to Sentry.

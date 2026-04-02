@@ -124,6 +124,36 @@ describe("getMilestoneStatus", () => {
     const item = createMilestone({ type: "grant_received" });
     expect(getMilestoneStatus(item)).toBeNull();
   });
+
+  it("returns a non-null status for impact type (impact is a milestone type)", () => {
+    const item = createMilestone({
+      type: "impact",
+      completed: false,
+      source: { type: "impact" },
+    });
+    expect(getMilestoneStatus(item)).not.toBeNull();
+  });
+
+  it("returns 'pending' for an impact item with completed=false", () => {
+    const item = createMilestone({
+      type: "impact",
+      completed: false,
+      source: { type: "impact" },
+    });
+    expect(getMilestoneStatus(item)).toBe("pending");
+  });
+
+  it("returns 'completed' for an impact item with completed as object", () => {
+    const item = createMilestone({
+      type: "impact",
+      completed: {
+        createdAt: "2024-01-01",
+        data: { reason: "Impact done" },
+      },
+      source: { type: "impact" },
+    });
+    expect(getMilestoneStatus(item)).toBe("completed");
+  });
 });
 
 describe("filterByMilestoneStatus", () => {

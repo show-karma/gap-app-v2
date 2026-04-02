@@ -347,8 +347,13 @@ const sortByDateDescending = (milestones: UnifiedMilestone[]): UnifiedMilestone[
  * @param projectIdOrSlug - The project UID or slug
  * @returns Object containing unified milestones, loading state, error, and refetch function
  */
-export function useProjectUpdates(projectIdOrSlug: string) {
-  const queryKey = QUERY_KEYS.PROJECT.UPDATES(projectIdOrSlug);
+export function useProjectUpdates(
+  projectIdOrSlug: string,
+  milestoneStatus?: "pending" | "completed" | "verified"
+) {
+  const queryKey = milestoneStatus
+    ? ([...QUERY_KEYS.PROJECT.UPDATES(projectIdOrSlug), milestoneStatus] as const)
+    : QUERY_KEYS.PROJECT.UPDATES(projectIdOrSlug);
 
   const {
     data,
@@ -357,7 +362,7 @@ export function useProjectUpdates(projectIdOrSlug: string) {
     refetch: originalRefetch,
   } = useQuery<UpdatesApiResponse>({
     queryKey,
-    queryFn: () => getProjectUpdates(projectIdOrSlug),
+    queryFn: () => getProjectUpdates(projectIdOrSlug, milestoneStatus),
     enabled: !!projectIdOrSlug,
     staleTime: 5 * 60 * 1000,
   });

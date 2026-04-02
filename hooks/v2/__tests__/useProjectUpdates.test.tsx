@@ -161,4 +161,38 @@ describe("useProjectUpdates", () => {
 
     expect(grantMilestone?.chainID).toBe(42161);
   });
+
+  it("passes milestoneStatus to getProjectUpdates when provided", async () => {
+    mockGetProjectUpdates.mockResolvedValueOnce({
+      projectUpdates: [],
+      projectMilestones: [],
+      grantMilestones: [],
+      grantUpdates: [],
+    });
+
+    renderHook(() => useProjectUpdates("test-project", "completed"), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    await waitFor(() => {
+      expect(mockGetProjectUpdates).toHaveBeenCalledWith("test-project", "completed");
+    });
+  });
+
+  it("does not pass milestoneStatus to getProjectUpdates when not provided", async () => {
+    mockGetProjectUpdates.mockResolvedValueOnce({
+      projectUpdates: [],
+      projectMilestones: [],
+      grantMilestones: [],
+      grantUpdates: [],
+    });
+
+    renderHook(() => useProjectUpdates("test-project"), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    await waitFor(() => {
+      expect(mockGetProjectUpdates).toHaveBeenCalledWith("test-project", undefined);
+    });
+  });
 });

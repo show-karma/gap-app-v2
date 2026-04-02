@@ -42,7 +42,10 @@ export interface UseProjectProfileResult extends ProjectProfileData, ProjectProf
  * @param projectId - The project UID or slug
  * @returns Aggregated project profile data with loading/error states
  */
-export function useProjectProfile(projectId: string): UseProjectProfileResult {
+export function useProjectProfile(
+  projectId: string,
+  milestoneStatus?: "pending" | "completed" | "verified"
+): UseProjectProfileResult {
   // Fetch core project data
   const { project, isLoading: isProjectLoading, isError, error } = useProject(projectId);
 
@@ -53,12 +56,12 @@ export function useProjectProfile(projectId: string): UseProjectProfileResult {
     refetch: refetchGrants,
   } = useProjectGrants(project?.uid || projectId);
 
-  // Fetch updates and milestones
+  // Fetch updates and milestones (pass milestoneStatus for server-side filtering)
   const {
     milestones = [],
     isLoading: isUpdatesLoading,
     refetch: refetchUpdates,
-  } = useProjectUpdates(projectId);
+  } = useProjectUpdates(projectId, milestoneStatus);
 
   // Fetch impacts
   const {

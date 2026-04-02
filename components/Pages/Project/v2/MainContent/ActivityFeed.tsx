@@ -6,8 +6,6 @@ import React, { useMemo } from "react";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
 import { ActivityCard } from "@/components/Shared/ActivityCard";
-import type { MilestoneStatusFilter } from "@/services/milestone-status-filter.service";
-import { filterByMilestoneStatus } from "@/services/milestone-status-filter.service";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { cn } from "@/utilities/tailwind";
 import type { ActivityFilterType, SortOption } from "./ActivityFilters";
@@ -17,7 +15,6 @@ interface ActivityFeedProps {
   isAuthorized?: boolean;
   sortBy?: SortOption;
   activeFilters?: ActivityFilterType[];
-  milestoneStatusFilter?: MilestoneStatusFilter;
   className?: string;
 }
 
@@ -248,7 +245,6 @@ export function ActivityFeed({
   isAuthorized = false,
   sortBy = "newest",
   activeFilters = [],
-  milestoneStatusFilter = "all",
   className,
 }: ActivityFeedProps) {
   const params = useParams();
@@ -290,8 +286,7 @@ export function ActivityFeed({
       filtered = filtered.filter((milestone) => allowedTypes.includes(milestone.type));
     }
 
-    // Apply milestone status filter
-    filtered = filterByMilestoneStatus(filtered, milestoneStatusFilter);
+    // Milestone status filtering is now done server-side via API query param
 
     // Sort by date using same logic as production (ProjectRoadmap)
     filtered.sort((a, b) => {
@@ -301,7 +296,7 @@ export function ActivityFeed({
     });
 
     return filtered;
-  }, [milestones, sortBy, activeFilters, milestoneStatusFilter]);
+  }, [milestones, sortBy, activeFilters]);
 
   // Format date for display - always show the actual date
   const formatDisplayDate = (dateStr: string): string => {
