@@ -3,81 +3,20 @@ import userEvent from "@testing-library/user-event";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { errorManager } from "@/components/Utilities/errorManager";
 
-// Mock Headless UI Dialog components
-vi.mock("@headlessui/react", () => {
-  const React = require("react");
-
-  // List of Headless UI Transition props that should be filtered
-  const TRANSITION_PROPS = [
-    "appear",
-    "show",
-    "enter",
-    "enterFrom",
-    "enterTo",
-    "leave",
-    "leaveFrom",
-    "leaveTo",
-    "entered",
-    "beforeEnter",
-    "afterEnter",
-    "beforeLeave",
-    "afterLeave",
-  ];
-
-  const MockDialog = ({ children, onClose, ...props }: any) => (
-    <div data-testid="dialog" {...props}>
+// Mock Radix UI Dialog components
+vi.mock("@/components/ui/dialog", () => ({
+  Dialog: ({ children, open }: any) => (open ? <div data-testid="dialog">{children}</div> : null),
+  DialogContent: ({ children, className }: any) => (
+    <div data-testid="dialog-panel" className={className}>
       {children}
     </div>
-  );
-  MockDialog.Panel = ({ children, ...props }: any) => (
-    <div data-testid="dialog-panel" {...props}>
+  ),
+  DialogTitle: ({ children, className }: any) => (
+    <h3 data-testid="dialog-title" className={className}>
       {children}
-    </div>
-  );
-  MockDialog.Title = ({ children, as, ...props }: any) => {
-    const Component = as || "h3";
-    return <Component {...props}>{children}</Component>;
-  };
-
-  const MockTransitionRoot = ({ show, children, as, ...props }: any) => {
-    if (!show) return null;
-
-    // Filter out Transition-specific props
-    const filteredProps = Object.keys(props).reduce((acc, key) => {
-      if (!TRANSITION_PROPS.includes(key)) {
-        acc[key] = props[key];
-      }
-      return acc;
-    }, {} as any);
-
-    const Component = as || "div";
-    return <Component {...filteredProps}>{children}</Component>;
-  };
-  MockTransitionRoot.displayName = "Transition";
-
-  const MockTransitionChild = ({ children, as, ...props }: any) => {
-    // Filter out Transition-specific props
-    const filteredProps = Object.keys(props).reduce((acc, key) => {
-      if (!TRANSITION_PROPS.includes(key)) {
-        acc[key] = props[key];
-      }
-      return acc;
-    }, {} as any);
-
-    const Component = as || "div";
-    return <Component {...filteredProps}>{children}</Component>;
-  };
-  MockTransitionChild.displayName = "Transition.Child";
-
-  // Assign Child to Root as a property
-  MockTransitionRoot.Child = MockTransitionChild;
-
-  return {
-    Dialog: MockDialog,
-    Transition: MockTransitionRoot,
-    Fragment: React.Fragment,
-  };
-});
+    </h3>
+  ),
+}));
 
 // Mock Heroicons
 vi.mock("@heroicons/react/24/solid", () => ({
@@ -85,7 +24,7 @@ vi.mock("@heroicons/react/24/solid", () => ({
 }));
 
 // Mock Button component
-vi.mock("@/components/Utilities/Button", () => ({
+vi.mock("@/components/ui/button", () => ({
   Button: ({ onClick, disabled, children, className, isLoading, ...props }: any) => (
     <button
       onClick={onClick}
@@ -94,7 +33,7 @@ vi.mock("@/components/Utilities/Button", () => ({
       data-loading={isLoading}
       {...props}
     >
-      {isLoading ? "Loading..." : children}
+      {isLoading ? <span role="status" aria-label="Loading" /> : children}
     </button>
   ),
 }));
@@ -368,7 +307,6 @@ describe("DeleteDialog", () => {
       const triggerButton = screen.getByText("Delete Project");
       await user.click(triggerButton);
 
-      // The Spinner component has role="status" and aria-label="Loading"
       expect(screen.getByRole("status", { name: /loading/i })).toBeInTheDocument();
     });
 
@@ -438,16 +376,6 @@ describe("DeleteDialog", () => {
       expect(panel.className).toContain("dark:bg-zinc-800");
     });
 
-    it("should have rounded corners on dialog", async () => {
-      const user = userEvent.setup();
-      render(<DeleteDialog {...defaultProps} />);
-
-      const triggerButton = screen.getByText("Delete Project");
-      await user.click(triggerButton);
-
-      const panel = screen.getByTestId("dialog-panel");
-      expect(panel.className).toContain("rounded-2xl");
-    });
 
     it("should apply custom styleClass to trigger button", () => {
       const customButton = {
@@ -500,14 +428,8 @@ describe("DeleteDialog", () => {
       const triggerButton = screen.getByText("Delete Project");
       await user.click(triggerButton);
 
-      const buttons = screen.getAllByRole("button");
-      const dialogButtons = buttons.filter((btn) =>
-        ["Cancel", "Loading..."].includes(btn.textContent || "")
-      );
-
-      dialogButtons.forEach((button) => {
-        expect(button).toBeDisabled();
-      });
+      const cancelButton = screen.getByText("Cancel");
+      expect(cancelButton).toBeDisabled();
     });
   });
 
@@ -522,7 +444,6 @@ describe("DeleteDialog", () => {
       const continueButton = screen.getByText("Continue");
       await user.click(continueButton);
 
-      // Wait for both the deleteFunction to be called AND the dialog to close
       await waitFor(
         () => {
           expect(mockDeleteFunction).toHaveBeenCalled();

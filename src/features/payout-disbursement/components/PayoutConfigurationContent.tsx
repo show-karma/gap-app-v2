@@ -159,29 +159,52 @@ export function PayoutConfigurationContent({
   const generateAllocationsFromMilestones = useCallback(
     (existingAllocations?: MilestoneAllocation[] | null): MilestoneAllocation[] => {
       const allocations: MilestoneAllocation[] = [];
+      const usedIds = new Set<string>();
 
       const existingFirst = existingAllocations?.find((a) => a.label === FIRST_PAYMENT_LABEL);
+      const firstId = existingFirst?.id || crypto.randomUUID();
+      usedIds.add(firstId);
       allocations.push({
-        id: existingFirst?.id || crypto.randomUUID(),
+        id: firstId,
         label: FIRST_PAYMENT_LABEL,
         amount: existingFirst?.amount || "",
       });
 
       milestones.forEach((milestone, index) => {
         const existingMilestone = existingAllocations?.find(
-          (a) => a.milestoneUID === milestone.uid
+          (a) => a.milestoneUID === milestone.uid && !usedIds.has(a.id)
         );
+        const milestoneId = existingMilestone?.id || crypto.randomUUID();
+        usedIds.add(milestoneId);
         allocations.push({
-          id: existingMilestone?.id || crypto.randomUUID(),
+          id: milestoneId,
           milestoneUID: milestone.uid,
           label: milestone.title || `Milestone ${index + 1}`,
           amount: existingMilestone?.amount || "",
         });
       });
 
-      const existingFinal = existingAllocations?.find((a) => a.label === FINAL_PAYMENT_LABEL);
+      // Re-add custom allocations (no milestoneUID, not First/Final payment)
+      if (existingAllocations) {
+        for (const alloc of existingAllocations) {
+          if (
+            !usedIds.has(alloc.id) &&
+            !alloc.milestoneUID &&
+            alloc.label !== FIRST_PAYMENT_LABEL &&
+            alloc.label !== FINAL_PAYMENT_LABEL
+          ) {
+            usedIds.add(alloc.id);
+            allocations.push({ ...alloc });
+          }
+        }
+      }
+
+      const existingFinal = existingAllocations?.find(
+        (a) => a.label === FINAL_PAYMENT_LABEL && !usedIds.has(a.id)
+      );
+      const finalId = existingFinal?.id || crypto.randomUUID();
       allocations.push({
-        id: existingFinal?.id || crypto.randomUUID(),
+        id: finalId,
         label: FINAL_PAYMENT_LABEL,
         amount: existingFinal?.amount || "",
       });

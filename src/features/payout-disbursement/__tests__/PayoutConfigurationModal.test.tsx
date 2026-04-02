@@ -189,6 +189,142 @@ describe("PayoutConfigurationModal", () => {
     });
   });
 
+  describe("custom line item persistence", () => {
+    it("should restore custom line items when loading an existing config that contains them", async () => {
+      mockedUseGrantMilestones.mockReturnValue({
+        data: [{ uid: "milestone-1", title: "Milestone 1" }],
+        isLoading: false,
+      });
+
+      const configWithCustomItems: PayoutGrantConfig = {
+        id: "config-custom",
+        grantUID: "grant-123",
+        projectUID: "project-456",
+        communityUID: "community-789",
+        payoutAddress: "0x1234567890123456789012345678901234567890",
+        totalGrantAmount: "100",
+        tokenAddress: null,
+        chainID: 10,
+        milestoneAllocations: [
+          { id: "alloc-first", label: "First payment", amount: "20" },
+          { id: "alloc-m1", milestoneUID: "milestone-1", label: "Milestone 1", amount: "30" },
+          { id: "alloc-custom-1", label: "Travel expenses", amount: "10" },
+          { id: "alloc-custom-2", label: "Equipment costs", amount: "15" },
+          { id: "alloc-final", label: "Final payment", amount: "25" },
+        ],
+        createdBy: "0xadmin",
+        updatedBy: null,
+        createdAt: "2024-01-01T00:00:00Z",
+        updatedAt: "2024-01-01T00:00:00Z",
+      };
+
+      mockedUsePayoutConfigByGrant.mockReturnValue({
+        data: configWithCustomItems,
+        isLoading: false,
+      });
+
+      render(<PayoutConfigurationModal {...defaultProps} />, {
+        wrapper: createWrapper(),
+      });
+
+      await waitFor(() => {
+        expect(screen.getByDisplayValue("Travel expenses")).toBeInTheDocument();
+        expect(screen.getByDisplayValue("Equipment costs")).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe("duplicate allocation keys", () => {
+    it("should not produce duplicate keys when an existing allocation matches both a label and a milestoneUID slot", async () => {
+      const DUPLICATE_ID = "057d0401-6477-4d60-881c-791692205b37";
+
+      mockedUseGrantMilestones.mockReturnValue({
+        data: [{ uid: "milestone-1", title: "Milestone 1" }],
+        isLoading: false,
+      });
+
+      const configWithAmbiguousAllocation: PayoutGrantConfig = {
+        id: "config-dup",
+        grantUID: "grant-123",
+        projectUID: "project-456",
+        communityUID: "community-789",
+        payoutAddress: "0x1234567890123456789012345678901234567890",
+        totalGrantAmount: "100",
+        tokenAddress: null,
+        chainID: 10,
+        milestoneAllocations: [
+          { id: DUPLICATE_ID, label: "First payment", milestoneUID: "milestone-1", amount: "50" },
+          { id: "alloc-final", label: "Final payment", amount: "50" },
+        ],
+        createdBy: "0xadmin",
+        updatedBy: null,
+        createdAt: "2024-01-01T00:00:00Z",
+        updatedAt: "2024-01-01T00:00:00Z",
+      };
+
+      mockedUsePayoutConfigByGrant.mockReturnValue({
+        data: configWithAmbiguousAllocation,
+        isLoading: false,
+      });
+
+      render(<PayoutConfigurationModal {...defaultProps} />, {
+        wrapper: createWrapper(),
+      });
+
+      await waitFor(() => {
+        const allocationItems = document.querySelectorAll("[data-allocation-id]");
+        const ids = Array.from(allocationItems).map((el) => el.getAttribute("data-allocation-id"));
+        const uniqueIds = new Set(ids);
+        expect(uniqueIds.size).toBe(ids.length);
+      });
+    });
+
+    it("should not produce duplicate keys when backend data contains duplicate allocation ids", async () => {
+      const DUPLICATE_ID = "dup-backend-id";
+
+      mockedUseGrantMilestones.mockReturnValue({
+        data: [{ uid: "milestone-1", title: "M1" }],
+        isLoading: false,
+      });
+
+      const configWithDuplicateIds: PayoutGrantConfig = {
+        id: "config-dup2",
+        grantUID: "grant-123",
+        projectUID: "project-456",
+        communityUID: "community-789",
+        payoutAddress: "0x1234567890123456789012345678901234567890",
+        totalGrantAmount: "100",
+        tokenAddress: null,
+        chainID: 10,
+        milestoneAllocations: [
+          { id: DUPLICATE_ID, label: "First payment", amount: "30" },
+          { id: DUPLICATE_ID, milestoneUID: "milestone-1", label: "M1", amount: "40" },
+          { id: "alloc-final", label: "Final payment", amount: "30" },
+        ],
+        createdBy: "0xadmin",
+        updatedBy: null,
+        createdAt: "2024-01-01T00:00:00Z",
+        updatedAt: "2024-01-01T00:00:00Z",
+      };
+
+      mockedUsePayoutConfigByGrant.mockReturnValue({
+        data: configWithDuplicateIds,
+        isLoading: false,
+      });
+
+      render(<PayoutConfigurationModal {...defaultProps} />, {
+        wrapper: createWrapper(),
+      });
+
+      await waitFor(() => {
+        const allocationItems = document.querySelectorAll("[data-allocation-id]");
+        const ids = Array.from(allocationItems).map((el) => el.getAttribute("data-allocation-id"));
+        const uniqueIds = new Set(ids);
+        expect(uniqueIds.size).toBe(ids.length);
+      });
+    });
+  });
+
   describe("validation", () => {
     it("should show error for invalid payout address", async () => {
       const user = userEvent.setup();
