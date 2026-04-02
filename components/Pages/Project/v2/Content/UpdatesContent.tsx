@@ -73,6 +73,11 @@ export function UpdatesContent({ className }: UpdatesContentProps) {
       }
       params.delete("sort");
 
+      // Clear milestone status when milestones tab is no longer active
+      if (!newFilters.includes("milestones")) {
+        params.delete("milestoneStatus");
+      }
+
       const newURL = params.toString() ? `?${params.toString()}` : pathname;
       router.replace(newURL, { scroll: false });
     },

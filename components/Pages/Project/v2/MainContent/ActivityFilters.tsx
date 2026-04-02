@@ -72,12 +72,11 @@ export function ActivityFilters({
 
   const totalCount = Object.values(counts).reduce((sum, c) => sum + (c || 0), 0);
 
-  // Show milestone status filter when milestones are visible:
-  // either no filter is active (All) or milestones filter is explicitly active
+  // Show milestone status filter only when the Milestones pill is explicitly active
   const showMilestoneStatusFilter =
     milestoneStatusFilter !== undefined &&
     onMilestoneStatusChange !== undefined &&
-    (activeFilters.length === 0 || activeFilters.includes("milestones"));
+    activeFilters.includes("milestones");
 
   return (
     <div className={cn("flex flex-col gap-4", className)} data-testid="activity-filters">
