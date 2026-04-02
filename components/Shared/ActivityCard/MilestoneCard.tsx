@@ -1,5 +1,6 @@
 import {
   CheckCircleIcon,
+  PaperClipIcon,
   PencilSquareIcon,
   ShareIcon,
   TrashIcon,
@@ -7,7 +8,8 @@ import {
 import { Calendar } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
-import { type FC, useState } from "react";
+import { type FC, useCallback, useState } from "react";
+import toast from "react-hot-toast";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
@@ -19,6 +21,8 @@ import { useMilestone } from "@/hooks/useMilestone";
 import { useMilestoneActions } from "@/hooks/useMilestoneActions";
 import { useMilestoneImpactAnswers } from "@/hooks/useMilestoneImpactAnswers";
 import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
+import { useGrantInvoiceRequired } from "@/src/features/payout-disbursement/hooks/use-payout-disbursement";
+import { getGrantInvoiceDownloadUrl } from "@/src/features/payout-disbursement/services/payout-disbursement.service";
 import { useProjectStore } from "@/store";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { formatDate } from "@/utilities/formatDate";
@@ -139,15 +143,31 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
 
   // grant milestone-specific properties
   const grantMilestone = milestone.source.grantMilestone;
+  const grantUID = grantMilestone?.grant.uid;
   const grantDetails = grantMilestone?.grant.details as
     | { title?: string; programId?: string }
     | undefined;
   const grantTitle = grantDetails?.title;
   const _programId = grantDetails?.programId;
+
+  // Check if invoice is required for this grant
+  const { data: invoiceCheckData } = useGrantInvoiceRequired(
+    isAuthorized && type === "grant" ? grantUID : undefined
+  );
   const _communityData = grantMilestone?.grant.community?.details as
     | { name?: string; imageURL?: string }
     | undefined;
   const endsAt = milestone.endsAt;
+
+  const handleViewInvoice = useCallback(async () => {
+    if (!grantUID || !milestone.invoiceInfo?.fileKey) return;
+    try {
+      const url = await getGrantInvoiceDownloadUrl(grantUID, milestone.invoiceInfo.fileKey);
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch {
+      toast.error("Failed to open invoice");
+    }
+  }, [grantUID, milestone.invoiceInfo?.fileKey]);
 
   // completion information
   const completionReason =
@@ -196,7 +216,13 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
       } else if (type === "grant") {
         // Grant milestone - use GrantMilestoneCompletion form
         return (
-          <GrantMilestoneCompletion milestone={milestone} handleCompleting={handleCompleting} />
+          <GrantMilestoneCompletion
+            milestone={milestone}
+            handleCompleting={handleCompleting}
+            invoiceRequired={invoiceCheckData?.invoiceRequired}
+            grantUID={grantUID}
+            milestoneLabel={title}
+          />
         );
       }
     }
@@ -281,6 +307,18 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
               <ReadMore side="left">{completionReason}</ReadMore>
             </div>
           ) : null}
+          {isAuthorized && milestone.invoiceInfo?.fileKey && grantUID && (
+            <button
+              type="button"
+              className="flex items-center gap-1.5 hover:opacity-75 transition-opacity"
+              onClick={handleViewInvoice}
+            >
+              <PaperClipIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+              <span className="text-sm text-emerald-700 dark:text-emerald-300">
+                Invoice attached
+              </span>
+            </button>
+          )}
           {completionProof ? (
             <div className="flex flex-col gap-1">
               <p className="text-sm font-semibold text-foreground">Proof of Work:</p>

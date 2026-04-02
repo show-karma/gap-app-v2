@@ -86,6 +86,8 @@ export const QUERY_KEYS = {
   APPLICATIONS: {
     BY_PROJECT_UID: (projectUID: string) => ["application-by-project-uid", projectUID] as const,
     COMMENTS: (referenceNumber: string) => ["application-comments", referenceNumber] as const,
+    INVOICE_CONFIG: (referenceNumber: string) =>
+      ["applicationInvoiceConfig", referenceNumber] as const,
   },
   REVIEWERS: {
     PROGRAM: (programId: string) => ["program-reviewers", programId] as const,

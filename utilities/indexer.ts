@@ -169,6 +169,8 @@ export const INDEXER = {
         `/v2/funding-applications/user/my-applications?communitySlug=${communitySlug}`,
       MILESTONE_COMPLETIONS: (referenceNumber: string) =>
         `/v2/funding-applications/${referenceNumber}/milestone-completions`,
+      INVOICE_CONFIG: (referenceNumber: string) =>
+        `/v2/funding-applications/${referenceNumber}/invoice-config`,
     },
     AUTH: {
       PERMISSIONS: (params?: {
@@ -353,6 +355,13 @@ export const INDEXER = {
       BY_GRANT: (grantUID: string) => `/v2/milestone-invoices/grant/${grantUID}`,
       PRESIGNED_URL: () => `/v2/milestone-invoices/presigned`,
       DOWNLOAD: (key: string) => `/v2/milestone-invoices/download?key=${encodeURIComponent(key)}`,
+      GRANTEE_PRESIGNED: () => `/v2/milestone-invoices/grantee/presigned`,
+    },
+    GRANTS: {
+      INVOICE_REQUIREMENT: (grantUID: string) => `/v2/grants/${grantUID}/invoice-requirement`,
+      INVOICE_SUBMIT: (grantUID: string) => `/v2/grants/${grantUID}/invoice`,
+      INVOICE_DOWNLOAD: (grantUID: string, key: string) =>
+        `/v2/grants/${grantUID}/invoice/download?key=${encodeURIComponent(key)}`,
     },
   },
   PROGRAMS: {

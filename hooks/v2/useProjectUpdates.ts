@@ -166,6 +166,7 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
         : false,
       createdAt: milestone.createdAt || new Date().toISOString(),
       endsAt: milestoneEndsAt,
+      invoiceInfo: milestone.invoiceInfo ?? undefined,
       source: {
         type: "grant",
         grantMilestone: {
@@ -200,6 +201,7 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
                   },
                 ]
               : [],
+            invoiceInfo: milestone.invoiceInfo ?? undefined,
           },
           grant: {
             uid: grantInfo?.uid || "",
