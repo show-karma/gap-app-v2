@@ -75,6 +75,10 @@ describe("useFaucet hooks", () => {
     } as any);
   });
 
+  afterEach(() => {
+    queryClient.clear();
+  });
+
   describe("useFaucetEligibility", () => {
     it("should not fetch when chainId is missing", () => {
       const wrapper = createWrapper();

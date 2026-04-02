@@ -145,6 +145,12 @@ agent-browser --session qa-pub close
 agent-browser --session qa-auth close
 ```
 
+## Never Skip — Always Unblock
+
+Skipping a scenario is a last resort, not a default. If a scenario requires state that doesn't exist (no project, no grant, no milestone), create it through the UI first. If a scenario requires a role you don't have, navigate to where you can get it. If an action needs funds you don't have, that's a valid skip — but missing data you can create is not.
+
+Your job is to test, not to find reasons not to test.
+
 ## Early Termination
 
 If 3 or more Critical issues are found, stop execution. Document what was tested and what was skipped.

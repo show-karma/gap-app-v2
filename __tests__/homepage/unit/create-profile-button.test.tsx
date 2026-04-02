@@ -8,8 +8,9 @@
  * - Accessibility (1)
  */
 
+import userEvent from "@testing-library/user-event";
 import { CreateProfileButton } from "@/src/features/homepage/components/create-profile-button";
-import { fireEvent, renderWithProviders, screen } from "../utils/test-helpers";
+import { renderWithProviders, screen } from "../utils/test-helpers";
 import "@testing-library/jest-dom";
 
 // Mock the contributor profile modal store
@@ -43,20 +44,22 @@ describe("CreateProfileButton Component", () => {
     expect(button).toHaveClass("font-medium");
   });
 
-  it("should open modal when clicked", () => {
+  it("should open modal when clicked", async () => {
+    const user = userEvent.setup();
     renderWithProviders(<CreateProfileButton />);
 
     const button = screen.getByRole("button", { name: /Create Profile/i });
-    fireEvent.click(button);
+    await user.click(button);
 
     expect(mockOpenModal).toHaveBeenCalledWith({ isGlobal: true });
   });
 
-  it("should call openModal with correct parameters", () => {
+  it("should call openModal with correct parameters", async () => {
+    const user = userEvent.setup();
     renderWithProviders(<CreateProfileButton />);
 
     const button = screen.getByRole("button", { name: /Create Profile/i });
-    fireEvent.click(button);
+    await user.click(button);
 
     expect(mockOpenModal).toHaveBeenCalledTimes(1);
     expect(mockOpenModal).toHaveBeenCalledWith({ isGlobal: true });

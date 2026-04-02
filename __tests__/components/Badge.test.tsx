@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { Badge } from "@/components/ui/badge";
 import "@testing-library/jest-dom";
 
@@ -315,12 +316,14 @@ describe("Badge", () => {
       expect(handleClick).toHaveBeenCalledTimes(1);
     });
 
-    it("should accept onMouseEnter handler", () => {
+    it("should accept onMouseEnter handler", async () => {
+      const user = userEvent.setup();
       const handleMouseEnter = vi.fn();
 
       render(<Badge onMouseEnter={handleMouseEnter}>Badge</Badge>);
 
       const badge = screen.getByText("Badge");
+      // fireEvent required: testing React synthetic mouseEnter event handler
       require("@testing-library/react").fireEvent.mouseEnter(badge);
 
       expect(handleMouseEnter).toHaveBeenCalledTimes(1);

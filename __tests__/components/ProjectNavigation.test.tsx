@@ -3,7 +3,7 @@
  * @description Tests for project navigation tabs and action buttons
  */
 
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { ProjectNavigation } from "@/components/Pages/Project/ProjectWrapper/ProjectNavigation";
 import type { Project } from "@/types/v2/project";
 

@@ -33,16 +33,19 @@ export const MarkdownPreview = ({
   const { resolvedTheme } = useTheme();
   const [StreamdownComponent, setStreamdownComponent] = useState<StreamdownType | null>(null);
   const [codePlugin, setCodePlugin] = useState<CodePluginType | null>(null);
-
   useEffect(() => {
     Promise.all([
       import("streamdown").then((m) => m.Streamdown),
       import("@streamdown/code").then((m) => m.code),
       import("streamdown/styles.css" as string),
-    ]).then(([Streamdown, code]) => {
-      setStreamdownComponent(() => Streamdown);
-      setCodePlugin(() => code);
-    });
+    ])
+      .then(([Streamdown, code]) => {
+        setStreamdownComponent(() => Streamdown);
+        setCodePlugin(() => code);
+      })
+      .catch((err) => {
+        console.error("Failed to load markdown preview dependencies:", err);
+      });
   }, []);
 
   if (!source) return null;
