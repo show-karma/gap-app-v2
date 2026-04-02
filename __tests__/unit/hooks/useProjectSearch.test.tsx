@@ -11,7 +11,7 @@ vi.mock("@/services/unified-search.service", () => ({
 
 const mockUnifiedSearch = unifiedSearch as vi.MockedFunction<typeof unifiedSearch>;
 
-// Create wrapper with QueryClient for each test
+// Fresh QueryClient per render — no afterEach cleanup required
 const createWrapper = () => {
   const queryClient = new QueryClient({
     defaultOptions: {

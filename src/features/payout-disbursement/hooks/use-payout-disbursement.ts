@@ -13,6 +13,7 @@ import type {
   PaginatedDisbursementsResponse,
   PayoutDisbursement,
   PayoutGrantConfig,
+  RecordPaymentRequest,
   RecordSafeTransactionRequest,
   SavePayoutConfigRequest,
   SavePayoutConfigResponse,
@@ -141,6 +142,35 @@ export function useCreateDisbursements(options?: {
           queryKey: payoutDisbursementKeys.grantTotal(grant.grantUID),
         });
       }
+      options?.onSuccess?.(data);
+    },
+    onError: (error) => {
+      options?.onError?.(error);
+    },
+  });
+}
+
+/**
+ * Hook for recording a historical payment directly as disbursed
+ */
+export function useRecordPayment(options?: {
+  onSuccess?: (data: PayoutDisbursement) => void;
+  onError?: (error: Error) => void;
+}) {
+  const queryClient = useQueryClient();
+
+  return useMutation<PayoutDisbursement, Error, RecordPaymentRequest>({
+    mutationFn: (request) => payoutService.recordPayment(request),
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: payoutDisbursementKeys.grantHistory(variables.grantUID),
+      });
+      queryClient.invalidateQueries({
+        queryKey: payoutDisbursementKeys.grantTotal(variables.grantUID),
+      });
+      queryClient.invalidateQueries({
+        queryKey: [...payoutDisbursementKeys.all, "communityPayouts", variables.communityUID],
+      });
       options?.onSuccess?.(data);
     },
     onError: (error) => {

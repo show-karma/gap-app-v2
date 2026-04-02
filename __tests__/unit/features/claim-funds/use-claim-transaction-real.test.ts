@@ -99,6 +99,7 @@ import type { ClaimEligibility } from "@/features/claim-funds/types";
 // Test helpers
 // ---------------------------------------------------------------------------
 
+// Fresh QueryClient per render — no afterEach cleanup required
 function createWrapper() {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },

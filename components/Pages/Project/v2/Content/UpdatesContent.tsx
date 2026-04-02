@@ -1,8 +1,9 @@
 "use client";
 
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useMemo } from "react";
 import { useProjectProfile } from "@/hooks/v2/useProjectProfile";
+import type { MilestoneStatusFilter } from "@/services/milestone-status-filter.service";
 import { getActivityFilterType } from "@/services/project-profile.service";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { ActivityFeed } from "../MainContent/ActivityFeed";
@@ -24,8 +25,30 @@ export function UpdatesContent({ className }: UpdatesContentProps) {
   const isAuthorized = isOwner || isProjectAdmin;
   const searchParams = useSearchParams();
   const router = useRouter();
+  const pathname = usePathname();
 
-  const { allUpdates, milestonesCount, completedCount } = useProjectProfile(projectId as string);
+  // Read filter and sort state from URL
+  const activeFilters = useMemo(() => {
+    const filterParam = searchParams.get("filter");
+    if (!filterParam) return [];
+    return filterParam.split(",") as ActivityFilterType[];
+  }, [searchParams]);
+
+  // Read milestone status filter from URL
+  const milestoneStatusFilter = useMemo(() => {
+    const statusParam = searchParams.get("milestoneStatus");
+    if (statusParam === "pending" || statusParam === "completed" || statusParam === "verified") {
+      return statusParam;
+    }
+    return "all" as MilestoneStatusFilter;
+  }, [searchParams]);
+
+  // Pass milestoneStatus to useProjectProfile so filtering happens server-side
+  const apiMilestoneStatus = milestoneStatusFilter !== "all" ? milestoneStatusFilter : undefined;
+  const { allUpdates, milestonesCount, completedCount, isUpdating } = useProjectProfile(
+    projectId as string,
+    apiMilestoneStatus
+  );
 
   // Count items per filter category for badge counters
   const counts = useMemo(() => {
@@ -36,13 +59,6 @@ export function UpdatesContent({ className }: UpdatesContentProps) {
       return acc;
     }, {});
   }, [allUpdates]);
-
-  // Read filter and sort state from URL
-  const activeFilters = useMemo(() => {
-    const filterParam = searchParams.get("filter");
-    if (!filterParam) return [];
-    return filterParam.split(",") as ActivityFilterType[];
-  }, [searchParams]);
 
   // Update URL when filters change
   const updateURL = useCallback(
@@ -57,7 +73,27 @@ export function UpdatesContent({ className }: UpdatesContentProps) {
       }
       params.delete("sort");
 
-      const newURL = params.toString() ? `?${params.toString()}` : window.location.pathname;
+      // Clear milestone status when milestones tab is no longer active
+      if (!newFilters.includes("milestones")) {
+        params.delete("milestoneStatus");
+      }
+
+      const newURL = params.toString() ? `?${params.toString()}` : pathname;
+      router.replace(newURL, { scroll: false });
+    },
+    [searchParams, router]
+  );
+
+  // Update URL when milestone status changes
+  const handleMilestoneStatusChange = useCallback(
+    (status: MilestoneStatusFilter) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (status === "all") {
+        params.delete("milestoneStatus");
+      } else {
+        params.set("milestoneStatus", status);
+      }
+      const newURL = params.toString() ? `?${params.toString()}` : pathname;
       router.replace(newURL, { scroll: false });
     },
     [searchParams, router]
@@ -73,8 +109,8 @@ export function UpdatesContent({ className }: UpdatesContentProps) {
     [activeFilters, updateURL]
   );
 
-  // Show loading state while data is being fetched
-  const isLoading = !allUpdates;
+  // Show loading state while data is being fetched or filter is changing
+  const isLoading = !allUpdates || isUpdating;
 
   return (
     <div className={className} data-testid="updates-content">
@@ -85,6 +121,8 @@ export function UpdatesContent({ className }: UpdatesContentProps) {
         counts={counts}
         milestonesCount={milestonesCount}
         completedCount={completedCount}
+        milestoneStatusFilter={milestoneStatusFilter}
+        onMilestoneStatusChange={handleMilestoneStatusChange}
       />
 
       {/* Activity Feed with Suspense boundary */}

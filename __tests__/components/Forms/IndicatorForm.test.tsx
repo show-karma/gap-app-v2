@@ -4,6 +4,7 @@
  */
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { IndicatorForm, type IndicatorFormData } from "@/components/Forms/IndicatorForm";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
@@ -89,14 +90,18 @@ describe("IndicatorForm", () => {
 
   describe("Form Validation", () => {
     it("should show validation error for name too short", async () => {
+      const user = userEvent.setup();
       render(<IndicatorForm />);
 
       const nameInput = screen.getByPlaceholderText("Enter indicator name");
-      fireEvent.change(nameInput, { target: { value: "ab" } });
+      await user.clear(nameInput);
+
+      await user.type(nameInput, "ab");
+      // fireEvent required: testing blur/focus event handler callback
       fireEvent.blur(nameInput);
 
       const submitButton = screen.getByText("Create Output Metric");
-      fireEvent.click(submitButton);
+      await user.click(submitButton);
 
       await waitFor(() => {
         expect(screen.getByText("Name must be at least 3 characters long")).toBeInTheDocument();
@@ -104,15 +109,19 @@ describe("IndicatorForm", () => {
     });
 
     it("should show validation error for name too long", async () => {
+      const user = userEvent.setup();
       render(<IndicatorForm />);
 
       const nameInput = screen.getByPlaceholderText("Enter indicator name");
       const longName = "a".repeat(51);
-      fireEvent.change(nameInput, { target: { value: longName } });
+      await user.clear(nameInput);
+
+      await user.type(nameInput, longName);
+      // fireEvent required: testing blur/focus event handler callback
       fireEvent.blur(nameInput);
 
       const submitButton = screen.getByText("Create Output Metric");
-      fireEvent.click(submitButton);
+      await user.click(submitButton);
 
       await waitFor(() => {
         expect(screen.getByText("Name must be less than 50 characters")).toBeInTheDocument();
@@ -120,13 +129,16 @@ describe("IndicatorForm", () => {
     });
 
     it("should show validation error for empty description", async () => {
+      const user = userEvent.setup();
       render(<IndicatorForm />);
 
       const nameInput = screen.getByPlaceholderText("Enter indicator name");
-      fireEvent.change(nameInput, { target: { value: "Valid Name" } });
+      await user.clear(nameInput);
+
+      await user.type(nameInput, "Valid Name");
 
       const submitButton = screen.getByText("Create Output Metric");
-      fireEvent.click(submitButton);
+      await user.click(submitButton);
 
       await waitFor(() => {
         expect(screen.getByText("Description is required")).toBeInTheDocument();
@@ -134,15 +146,19 @@ describe("IndicatorForm", () => {
     });
 
     it("should show validation error for description too long", async () => {
+      const user = userEvent.setup();
       render(<IndicatorForm />);
 
       const descriptionInput = screen.getByPlaceholderText("Enter indicator description");
       const longDescription = "a".repeat(501);
-      fireEvent.change(descriptionInput, { target: { value: longDescription } });
+      await user.clear(descriptionInput);
+
+      await user.type(descriptionInput, longDescription);
+      // fireEvent required: testing blur/focus event handler callback
       fireEvent.blur(descriptionInput);
 
       const submitButton = screen.getByText("Create Output Metric");
-      fireEvent.click(submitButton);
+      await user.click(submitButton);
 
       await waitFor(() => {
         expect(
@@ -154,6 +170,7 @@ describe("IndicatorForm", () => {
 
   describe("Form Submission - Create Mode", () => {
     it("should submit form with valid data", async () => {
+      const user = userEvent.setup();
       mockFetchData.mockResolvedValueOnce([mockIndicatorResponse, null]);
 
       render(<IndicatorForm onSuccess={mockOnSuccess} />);
@@ -162,16 +179,20 @@ describe("IndicatorForm", () => {
       const nameInput = screen.getByPlaceholderText("Enter indicator name");
       const descriptionInput = screen.getByPlaceholderText("Enter indicator description");
 
-      fireEvent.change(nameInput, { target: { value: "Test Indicator" } });
-      fireEvent.change(descriptionInput, { target: { value: "Test Description" } });
+      await user.clear(nameInput);
+
+      await user.type(nameInput, "Test Indicator");
+      await user.clear(descriptionInput);
+
+      await user.type(descriptionInput, "Test Description");
 
       // Select unit type
       const intRadio = screen.getByDisplayValue("int");
-      fireEvent.click(intRadio);
+      await user.click(intRadio);
 
       // Submit
       const submitButton = screen.getByText("Create Output Metric");
-      fireEvent.click(submitButton);
+      await user.click(submitButton);
 
       await waitFor(() => {
         expect(mockFetchData).toHaveBeenCalledWith(
@@ -190,6 +211,7 @@ describe("IndicatorForm", () => {
     });
 
     it("should call onSuccess callback after successful creation", async () => {
+      const user = userEvent.setup();
       mockFetchData.mockResolvedValueOnce([mockIndicatorResponse, null]);
 
       render(<IndicatorForm onSuccess={mockOnSuccess} />);
@@ -197,14 +219,18 @@ describe("IndicatorForm", () => {
       const nameInput = screen.getByPlaceholderText("Enter indicator name");
       const descriptionInput = screen.getByPlaceholderText("Enter indicator description");
 
-      fireEvent.change(nameInput, { target: { value: "Test Indicator" } });
-      fireEvent.change(descriptionInput, { target: { value: "Test Description" } });
+      await user.clear(nameInput);
+
+      await user.type(nameInput, "Test Indicator");
+      await user.clear(descriptionInput);
+
+      await user.type(descriptionInput, "Test Description");
 
       const intRadio = screen.getByDisplayValue("int");
-      fireEvent.click(intRadio);
+      await user.click(intRadio);
 
       const submitButton = screen.getByText("Create Output Metric");
-      fireEvent.click(submitButton);
+      await user.click(submitButton);
 
       await waitFor(() => {
         expect(mockOnSuccess).toHaveBeenCalledWith(mockIndicatorResponse);
@@ -212,6 +238,7 @@ describe("IndicatorForm", () => {
     });
 
     it("should reset form after successful creation (not update)", async () => {
+      const user = userEvent.setup();
       mockFetchData.mockResolvedValueOnce([mockIndicatorResponse, null]);
 
       render(<IndicatorForm onSuccess={mockOnSuccess} />);
@@ -221,14 +248,18 @@ describe("IndicatorForm", () => {
         "Enter indicator description"
       ) as HTMLTextAreaElement;
 
-      fireEvent.change(nameInput, { target: { value: "Test Indicator" } });
-      fireEvent.change(descriptionInput, { target: { value: "Test Description" } });
+      await user.clear(nameInput);
+
+      await user.type(nameInput, "Test Indicator");
+      await user.clear(descriptionInput);
+
+      await user.type(descriptionInput, "Test Description");
 
       const intRadio = screen.getByDisplayValue("int");
-      fireEvent.click(intRadio);
+      await user.click(intRadio);
 
       const submitButton = screen.getByText("Create Output Metric");
-      fireEvent.click(submitButton);
+      await user.click(submitButton);
 
       await waitFor(() => {
         expect(mockOnSuccess).toHaveBeenCalled();
@@ -244,6 +275,7 @@ describe("IndicatorForm", () => {
 
   describe("Form Submission - Update Mode", () => {
     it("should submit form in update mode with indicatorId", async () => {
+      const user = userEvent.setup();
       mockFetchData.mockResolvedValueOnce([mockIndicatorResponse, null]);
 
       render(
@@ -259,10 +291,12 @@ describe("IndicatorForm", () => {
       );
 
       const nameInput = screen.getByDisplayValue("Existing Indicator");
-      fireEvent.change(nameInput, { target: { value: "Updated Indicator" } });
+      await user.clear(nameInput);
+
+      await user.type(nameInput, "Updated Indicator");
 
       const submitButton = screen.getByText("Update Output Metric");
-      fireEvent.click(submitButton);
+      await user.click(submitButton);
 
       await waitFor(() => {
         expect(mockFetchData).toHaveBeenCalledWith(
@@ -277,6 +311,7 @@ describe("IndicatorForm", () => {
     });
 
     it("should not reset form after successful update", async () => {
+      const user = userEvent.setup();
       mockFetchData.mockResolvedValueOnce([mockIndicatorResponse, null]);
 
       render(
@@ -292,7 +327,7 @@ describe("IndicatorForm", () => {
       );
 
       const submitButton = screen.getByText("Update Output Metric");
-      fireEvent.click(submitButton);
+      await user.click(submitButton);
 
       await waitFor(() => {
         expect(mockOnSuccess).toHaveBeenCalled();
@@ -306,6 +341,7 @@ describe("IndicatorForm", () => {
 
   describe("Error Handling", () => {
     it("should call onError callback on submission failure", async () => {
+      const user = userEvent.setup();
       const error = new Error("API Error");
       mockFetchData.mockResolvedValueOnce([null, error]);
 
@@ -314,14 +350,18 @@ describe("IndicatorForm", () => {
       const nameInput = screen.getByPlaceholderText("Enter indicator name");
       const descriptionInput = screen.getByPlaceholderText("Enter indicator description");
 
-      fireEvent.change(nameInput, { target: { value: "Test Indicator" } });
-      fireEvent.change(descriptionInput, { target: { value: "Test Description" } });
+      await user.clear(nameInput);
+
+      await user.type(nameInput, "Test Indicator");
+      await user.clear(descriptionInput);
+
+      await user.type(descriptionInput, "Test Description");
 
       const intRadio = screen.getByDisplayValue("int");
-      fireEvent.click(intRadio);
+      await user.click(intRadio);
 
       const submitButton = screen.getByText("Create Output Metric");
-      fireEvent.click(submitButton);
+      await user.click(submitButton);
 
       await waitFor(() => {
         expect(mockOnError).toHaveBeenCalledWith(error);
@@ -329,6 +369,7 @@ describe("IndicatorForm", () => {
     });
 
     it("should handle invalid response format", async () => {
+      const user = userEvent.setup();
       mockFetchData.mockResolvedValueOnce([null, null]); // Invalid response
 
       render(<IndicatorForm onError={mockOnError} />);
@@ -336,14 +377,18 @@ describe("IndicatorForm", () => {
       const nameInput = screen.getByPlaceholderText("Enter indicator name");
       const descriptionInput = screen.getByPlaceholderText("Enter indicator description");
 
-      fireEvent.change(nameInput, { target: { value: "Test Indicator" } });
-      fireEvent.change(descriptionInput, { target: { value: "Test Description" } });
+      await user.clear(nameInput);
+
+      await user.type(nameInput, "Test Indicator");
+      await user.clear(descriptionInput);
+
+      await user.type(descriptionInput, "Test Description");
 
       const intRadio = screen.getByDisplayValue("int");
-      fireEvent.click(intRadio);
+      await user.click(intRadio);
 
       const submitButton = screen.getByText("Create Output Metric");
-      fireEvent.click(submitButton);
+      await user.click(submitButton);
 
       await waitFor(() => {
         expect(mockOnError).toHaveBeenCalled();
@@ -351,6 +396,7 @@ describe("IndicatorForm", () => {
     });
 
     it("should handle response without id", async () => {
+      const user = userEvent.setup();
       mockFetchData.mockResolvedValueOnce([{ name: "Test" }, null]); // No id
 
       render(<IndicatorForm onError={mockOnError} />);
@@ -358,14 +404,18 @@ describe("IndicatorForm", () => {
       const nameInput = screen.getByPlaceholderText("Enter indicator name");
       const descriptionInput = screen.getByPlaceholderText("Enter indicator description");
 
-      fireEvent.change(nameInput, { target: { value: "Test Indicator" } });
-      fireEvent.change(descriptionInput, { target: { value: "Test Description" } });
+      await user.clear(nameInput);
+
+      await user.type(nameInput, "Test Indicator");
+      await user.clear(descriptionInput);
+
+      await user.type(descriptionInput, "Test Description");
 
       const intRadio = screen.getByDisplayValue("int");
-      fireEvent.click(intRadio);
+      await user.click(intRadio);
 
       const submitButton = screen.getByText("Create Output Metric");
-      fireEvent.click(submitButton);
+      await user.click(submitButton);
 
       await waitFor(() => {
         expect(mockOnError).toHaveBeenCalled();
@@ -382,6 +432,7 @@ describe("IndicatorForm", () => {
     });
 
     it("should show loading state during submission", async () => {
+      const user = userEvent.setup();
       mockFetchData.mockImplementation(
         () =>
           new Promise((resolve) => setTimeout(() => resolve([mockIndicatorResponse, null]), 100))
@@ -392,14 +443,18 @@ describe("IndicatorForm", () => {
       const nameInput = screen.getByPlaceholderText("Enter indicator name");
       const descriptionInput = screen.getByPlaceholderText("Enter indicator description");
 
-      fireEvent.change(nameInput, { target: { value: "Test Indicator" } });
-      fireEvent.change(descriptionInput, { target: { value: "Test Description" } });
+      await user.clear(nameInput);
+
+      await user.type(nameInput, "Test Indicator");
+      await user.clear(descriptionInput);
+
+      await user.type(descriptionInput, "Test Description");
 
       const intRadio = screen.getByDisplayValue("int");
-      fireEvent.click(intRadio);
+      await user.click(intRadio);
 
       const submitButton = screen.getByText("Create Output Metric");
-      fireEvent.click(submitButton);
+      await user.click(submitButton);
 
       // Should show loading state
       await waitFor(() => {
@@ -478,6 +533,7 @@ describe("IndicatorForm", () => {
     });
 
     it("should submit with pre-selected programs", async () => {
+      const user = userEvent.setup();
       mockFetchData.mockResolvedValueOnce([mockIndicatorResponse, null]);
 
       const preSelectedPrograms = [{ programId: "program-1", title: "Program 1", chainID: 1 }];
@@ -487,14 +543,18 @@ describe("IndicatorForm", () => {
       const nameInput = screen.getByPlaceholderText("Enter indicator name");
       const descriptionInput = screen.getByPlaceholderText("Enter indicator description");
 
-      fireEvent.change(nameInput, { target: { value: "Test Indicator" } });
-      fireEvent.change(descriptionInput, { target: { value: "Test Description" } });
+      await user.clear(nameInput);
+
+      await user.type(nameInput, "Test Indicator");
+      await user.clear(descriptionInput);
+
+      await user.type(descriptionInput, "Test Description");
 
       const intRadio = screen.getByDisplayValue("int");
-      fireEvent.click(intRadio);
+      await user.click(intRadio);
 
       const submitButton = screen.getByText("Create Output Metric");
-      fireEvent.click(submitButton);
+      await user.click(submitButton);
 
       await waitFor(() => {
         expect(mockFetchData).toHaveBeenCalledWith(
@@ -509,7 +569,8 @@ describe("IndicatorForm", () => {
   });
 
   describe("Event Propagation", () => {
-    it("should prevent propagation when preventPropagation is true", () => {
+    it("should prevent propagation when preventPropagation is true", async () => {
+      const user = userEvent.setup();
       const handleClick = vi.fn();
 
       render(
@@ -523,7 +584,7 @@ describe("IndicatorForm", () => {
       expect(form).toBeInTheDocument();
 
       if (form) {
-        fireEvent.click(form);
+        await user.click(form);
         expect(handleClick).not.toHaveBeenCalled();
       }
     });
@@ -594,34 +655,37 @@ describe("IndicatorForm", () => {
   });
 
   describe("Unit Type Selection", () => {
-    it("should select int unit type", () => {
+    it("should select int unit type", async () => {
+      const user = userEvent.setup();
       render(<IndicatorForm />);
 
       const intRadio = screen.getByDisplayValue("int") as HTMLInputElement;
-      fireEvent.click(intRadio);
+      await user.click(intRadio);
 
       expect(intRadio.checked).toBe(true);
     });
 
-    it("should select float unit type", () => {
+    it("should select float unit type", async () => {
+      const user = userEvent.setup();
       render(<IndicatorForm />);
 
       const floatRadio = screen.getByDisplayValue("float") as HTMLInputElement;
-      fireEvent.click(floatRadio);
+      await user.click(floatRadio);
 
       expect(floatRadio.checked).toBe(true);
     });
 
-    it("should toggle between unit types", () => {
+    it("should toggle between unit types", async () => {
+      const user = userEvent.setup();
       render(<IndicatorForm />);
 
       const intRadio = screen.getByDisplayValue("int") as HTMLInputElement;
       const floatRadio = screen.getByDisplayValue("float") as HTMLInputElement;
 
-      fireEvent.click(intRadio);
+      await user.click(intRadio);
       expect(intRadio.checked).toBe(true);
 
-      fireEvent.click(floatRadio);
+      await user.click(floatRadio);
       expect(floatRadio.checked).toBe(true);
       expect(intRadio.checked).toBe(false);
     });
@@ -629,6 +693,7 @@ describe("IndicatorForm", () => {
 
   describe("Community ID Integration", () => {
     it("should include communityUID in submission when provided", async () => {
+      const user = userEvent.setup();
       mockFetchData.mockResolvedValueOnce([mockIndicatorResponse, null]);
 
       render(<IndicatorForm communityId="community-123" onSuccess={mockOnSuccess} />);
@@ -636,14 +701,18 @@ describe("IndicatorForm", () => {
       const nameInput = screen.getByPlaceholderText("Enter indicator name");
       const descriptionInput = screen.getByPlaceholderText("Enter indicator description");
 
-      fireEvent.change(nameInput, { target: { value: "Test Indicator" } });
-      fireEvent.change(descriptionInput, { target: { value: "Test Description" } });
+      await user.clear(nameInput);
+
+      await user.type(nameInput, "Test Indicator");
+      await user.clear(descriptionInput);
+
+      await user.type(descriptionInput, "Test Description");
 
       const intRadio = screen.getByDisplayValue("int");
-      fireEvent.click(intRadio);
+      await user.click(intRadio);
 
       const submitButton = screen.getByText("Create Output Metric");
-      fireEvent.click(submitButton);
+      await user.click(submitButton);
 
       await waitFor(() => {
         expect(mockFetchData).toHaveBeenCalledWith(

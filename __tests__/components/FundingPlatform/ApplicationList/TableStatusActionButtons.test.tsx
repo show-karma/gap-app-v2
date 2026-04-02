@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { TableStatusActionButtons } from "@/components/FundingPlatform/ApplicationList/TableStatusActionButtons";
 
 // Mock Button component
@@ -72,7 +73,8 @@ describe("TableStatusActionButtons", () => {
       expect(screen.getByTestId("action-button-Review")).toBeInTheDocument();
     });
 
-    it("should call onStatusChange with correct parameters when clicked", () => {
+    it("should call onStatusChange with correct parameters when clicked", async () => {
+      const user = userEvent.setup();
       const onStatusChange = vi.fn();
       render(
         <TableStatusActionButtons
@@ -83,7 +85,7 @@ describe("TableStatusActionButtons", () => {
       );
 
       const reviewButton = screen.getByTestId("action-button-Review");
-      fireEvent.click(reviewButton);
+      await user.click(reviewButton);
 
       expect(onStatusChange).toHaveBeenCalledWith("app-123", "under_review", expect.any(Object));
     });
@@ -126,7 +128,8 @@ describe("TableStatusActionButtons", () => {
         expect(screen.queryByTestId("action-button-Request Revision")).not.toBeInTheDocument();
       });
 
-      it("should call onStatusChange with under_review when Review clicked", () => {
+      it("should call onStatusChange with under_review when Review clicked", async () => {
+        const user = userEvent.setup();
         const onStatusChange = vi.fn();
         render(
           <TableStatusActionButtons
@@ -137,7 +140,7 @@ describe("TableStatusActionButtons", () => {
         );
 
         const reviewButton = screen.getByTestId("action-button-Review");
-        fireEvent.click(reviewButton);
+        await user.click(reviewButton);
 
         expect(onStatusChange).toHaveBeenCalledWith("app-123", "under_review", expect.any(Object));
       });
@@ -152,7 +155,8 @@ describe("TableStatusActionButtons", () => {
         expect(screen.getByTestId("action-button-Reject")).toBeInTheDocument();
       });
 
-      it("should call onStatusChange with revision_requested when Request Revision clicked", () => {
+      it("should call onStatusChange with revision_requested when Request Revision clicked", async () => {
+        const user = userEvent.setup();
         const onStatusChange = vi.fn();
         render(
           <TableStatusActionButtons
@@ -163,7 +167,7 @@ describe("TableStatusActionButtons", () => {
         );
 
         const revisionButton = screen.getByTestId("action-button-Request Revision");
-        fireEvent.click(revisionButton);
+        await user.click(revisionButton);
 
         expect(onStatusChange).toHaveBeenCalledWith(
           "app-123",
@@ -172,7 +176,8 @@ describe("TableStatusActionButtons", () => {
         );
       });
 
-      it("should call onStatusChange with approved when Approve clicked", () => {
+      it("should call onStatusChange with approved when Approve clicked", async () => {
+        const user = userEvent.setup();
         const onStatusChange = vi.fn();
         render(
           <TableStatusActionButtons
@@ -183,12 +188,13 @@ describe("TableStatusActionButtons", () => {
         );
 
         const approveButton = screen.getByTestId("action-button-Approve");
-        fireEvent.click(approveButton);
+        await user.click(approveButton);
 
         expect(onStatusChange).toHaveBeenCalledWith("app-123", "approved", expect.any(Object));
       });
 
-      it("should call onStatusChange with rejected when Reject clicked", () => {
+      it("should call onStatusChange with rejected when Reject clicked", async () => {
+        const user = userEvent.setup();
         const onStatusChange = vi.fn();
         render(
           <TableStatusActionButtons
@@ -199,7 +205,7 @@ describe("TableStatusActionButtons", () => {
         );
 
         const rejectButton = screen.getByTestId("action-button-Reject");
-        fireEvent.click(rejectButton);
+        await user.click(rejectButton);
 
         expect(onStatusChange).toHaveBeenCalledWith("app-123", "rejected", expect.any(Object));
       });
@@ -221,7 +227,8 @@ describe("TableStatusActionButtons", () => {
         expect(screen.queryByTestId("action-button-Reject")).not.toBeInTheDocument();
       });
 
-      it("should call onStatusChange with under_review when Review clicked", () => {
+      it("should call onStatusChange with under_review when Review clicked", async () => {
+        const user = userEvent.setup();
         const onStatusChange = vi.fn();
         render(
           <TableStatusActionButtons
@@ -232,7 +239,7 @@ describe("TableStatusActionButtons", () => {
         );
 
         const reviewButton = screen.getByTestId("action-button-Review");
-        fireEvent.click(reviewButton);
+        await user.click(reviewButton);
 
         expect(onStatusChange).toHaveBeenCalledWith("app-123", "under_review", expect.any(Object));
       });
@@ -337,7 +344,8 @@ describe("TableStatusActionButtons", () => {
   });
 
   describe("Click Handlers", () => {
-    it("should pass correct event object to onStatusChange", () => {
+    it("should pass correct event object to onStatusChange", async () => {
+      const user = userEvent.setup();
       const onStatusChange = vi.fn();
       render(
         <TableStatusActionButtons
@@ -349,7 +357,7 @@ describe("TableStatusActionButtons", () => {
 
       const reviewButton = screen.getByTestId("action-button-Review");
       const mockEvent = { preventDefault: vi.fn() } as any;
-      fireEvent.click(reviewButton, mockEvent);
+      await user.click(reviewButton, mockEvent);
 
       expect(onStatusChange).toHaveBeenCalled();
       const callArgs = onStatusChange.mock.calls[0];
@@ -358,7 +366,8 @@ describe("TableStatusActionButtons", () => {
       expect(callArgs[2]).toBeInstanceOf(Object); // Event object
     });
 
-    it("should handle rapid clicks correctly", () => {
+    it("should handle rapid clicks correctly", async () => {
+      const user = userEvent.setup();
       const onStatusChange = vi.fn();
       render(
         <TableStatusActionButtons
@@ -369,9 +378,9 @@ describe("TableStatusActionButtons", () => {
       );
 
       const approveButton = screen.getByTestId("action-button-Approve");
-      fireEvent.click(approveButton);
-      fireEvent.click(approveButton);
-      fireEvent.click(approveButton);
+      await user.click(approveButton);
+      await user.click(approveButton);
+      await user.click(approveButton);
 
       expect(onStatusChange).toHaveBeenCalledTimes(3);
     });
@@ -410,7 +419,8 @@ describe("TableStatusActionButtons", () => {
   });
 
   describe("Edge Cases", () => {
-    it("should handle different application IDs", () => {
+    it("should handle different application IDs", async () => {
+      const user = userEvent.setup();
       const onStatusChange = vi.fn();
       render(
         <TableStatusActionButtons
@@ -422,7 +432,7 @@ describe("TableStatusActionButtons", () => {
       );
 
       const reviewButton = screen.getByTestId("action-button-Review");
-      fireEvent.click(reviewButton);
+      await user.click(reviewButton);
 
       expect(onStatusChange).toHaveBeenCalledWith("app-456", "under_review", expect.any(Object));
     });

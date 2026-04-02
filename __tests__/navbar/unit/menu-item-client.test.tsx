@@ -6,6 +6,7 @@
  */
 
 import { fireEvent, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { UserPlus } from "lucide-react";
 import { MenuItemClient } from "@/src/components/navbar/menu-item-client";
 import { renderWithProviders } from "../utils/test-helpers";
@@ -120,14 +121,15 @@ describe("MenuItemClient Component", () => {
       expect(link).toBeInTheDocument();
     });
 
-    it("should call onClick callback when clicked", () => {
+    it("should call onClick callback when clicked", async () => {
+      const user = userEvent.setup();
       const onClickMock = vi.fn();
       renderWithProviders(
         <MenuItemClient href="/test" icon={UserPlus} title="Test Title" onClick={onClickMock} />
       );
 
       const title = screen.getByText("Test Title");
-      fireEvent.click(title);
+      await user.click(title);
 
       expect(onClickMock).toHaveBeenCalled();
     });
@@ -204,7 +206,8 @@ describe("MenuItemClient Component", () => {
       expect(button).toBeInTheDocument();
     });
 
-    it("should click DOM element with id when button exists", () => {
+    it("should click DOM element with id when button exists", async () => {
+      const user = userEvent.setup();
       const mockButton = document.createElement("button");
       mockButton.id = "new-project-button";
       mockButton.onclick = vi.fn();
@@ -215,7 +218,7 @@ describe("MenuItemClient Component", () => {
       );
 
       const title = screen.getByText("Test Title");
-      fireEvent.click(title);
+      await user.click(title);
 
       // Button click should have been triggered
       expect(mockButton.onclick).toHaveBeenCalled();
@@ -224,12 +227,13 @@ describe("MenuItemClient Component", () => {
     });
 
     it("should navigate and retry if button doesn't exist", async () => {
+      const user = userEvent.setup();
       renderWithProviders(
         <MenuItemClient href="/my-projects" icon={UserPlus} title="Test Title" openModal={true} />
       );
 
       const title = screen.getByText("Test Title");
-      fireEvent.click(title);
+      await user.click(title);
 
       // Should call router.push
       expect(mockPush).toHaveBeenCalledWith("/my-projects");
@@ -280,6 +284,7 @@ describe("MenuItemClient Component", () => {
     });
 
     it("should scroll to element when already on target page", async () => {
+      const user = userEvent.setup();
       // Set current path to match target
       Object.defineProperty(window, "location", {
         value: {
@@ -298,7 +303,7 @@ describe("MenuItemClient Component", () => {
       );
 
       const title = screen.getByText("Test Title");
-      fireEvent.click(title);
+      await user.click(title);
 
       await waitFor(
         () => {
@@ -314,6 +319,7 @@ describe("MenuItemClient Component", () => {
     });
 
     it("should navigate then scroll when on different page", async () => {
+      const user = userEvent.setup();
       Object.defineProperty(window, "location", {
         value: {
           pathname: "/other-page",
@@ -326,7 +332,7 @@ describe("MenuItemClient Component", () => {
       );
 
       const title = screen.getByText("Test Title");
-      fireEvent.click(title);
+      await user.click(title);
 
       expect(mockPush).toHaveBeenCalledWith("/test#test-anchor");
     });
@@ -363,7 +369,8 @@ describe("MenuItemClient Component", () => {
       expect(hoverElement).toBeInTheDocument();
     });
 
-    it("should call onClick callback", () => {
+    it("should call onClick callback", async () => {
+      const user = userEvent.setup();
       const onClickMock = vi.fn();
 
       renderWithProviders(
@@ -371,12 +378,13 @@ describe("MenuItemClient Component", () => {
       );
 
       const title = screen.getByText("Test Title");
-      fireEvent.click(title);
+      await user.click(title);
 
       expect(onClickMock).toHaveBeenCalled();
     });
 
-    it("should call onClick before modal logic", () => {
+    it("should call onClick before modal logic", async () => {
+      const user = userEvent.setup();
       const onClickMock = vi.fn();
       const mockButton = document.createElement("button");
       mockButton.id = "new-project-button";
@@ -394,7 +402,7 @@ describe("MenuItemClient Component", () => {
       );
 
       const title = screen.getByText("Test Title");
-      fireEvent.click(title);
+      await user.click(title);
 
       expect(onClickMock).toHaveBeenCalled();
 
@@ -412,7 +420,8 @@ describe("MenuItemClient Component", () => {
       expect(link).toBeInTheDocument();
     });
 
-    it("should be keyboard accessible", () => {
+    it("should be keyboard accessible", async () => {
+      const user = userEvent.setup();
       const onClickMock = vi.fn();
 
       renderWithProviders(
@@ -421,9 +430,9 @@ describe("MenuItemClient Component", () => {
 
       const title = screen.getByText("Test Title");
 
-      // Simulate Enter key press
+      // fireEvent required: accessibility keyboard navigation test
       fireEvent.keyDown(title, { key: "Enter", code: "Enter" });
-      fireEvent.click(title);
+      await user.click(title);
 
       expect(onClickMock).toHaveBeenCalled();
     });
@@ -510,7 +519,8 @@ describe("MenuItemClient Component", () => {
       expect(link).toBeInTheDocument();
     });
 
-    it("should handle all props together", () => {
+    it("should handle all props together", async () => {
+      const user = userEvent.setup();
       const onClickMock = vi.fn();
 
       renderWithProviders(
@@ -529,7 +539,7 @@ describe("MenuItemClient Component", () => {
       expect(screen.getByText("Test Description")).toBeInTheDocument();
 
       const title = screen.getByText("Test Title");
-      fireEvent.click(title);
+      await user.click(title);
 
       expect(onClickMock).toHaveBeenCalled();
     });

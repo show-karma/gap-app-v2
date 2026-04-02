@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import DeleteApplicationModal from "@/components/FundingPlatform/ApplicationView/DeleteApplicationModal";
 
 // Mock Headless UI Dialog components
@@ -117,27 +118,30 @@ describe("DeleteApplicationModal", () => {
   });
 
   describe("User Interactions", () => {
-    it("should call onConfirm when delete button is clicked", () => {
+    it("should call onConfirm when delete button is clicked", async () => {
+      const user = userEvent.setup();
       const onConfirm = vi.fn();
       render(<DeleteApplicationModal {...defaultProps} onConfirm={onConfirm} />);
 
       const deleteButton = screen.getByRole("button", { name: /delete/i });
-      fireEvent.click(deleteButton);
+      await user.click(deleteButton);
 
       expect(onConfirm).toHaveBeenCalledTimes(1);
     });
 
-    it("should call onClose when cancel button is clicked", () => {
+    it("should call onClose when cancel button is clicked", async () => {
+      const user = userEvent.setup();
       const onClose = vi.fn();
       render(<DeleteApplicationModal {...defaultProps} onClose={onClose} />);
 
       const cancelButton = screen.getByRole("button", { name: /cancel/i });
-      fireEvent.click(cancelButton);
+      await user.click(cancelButton);
 
       expect(onClose).toHaveBeenCalledTimes(1);
     });
 
-    it("should call onClose when close icon is clicked", () => {
+    it("should call onClose when close icon is clicked", async () => {
+      const user = userEvent.setup();
       const onClose = vi.fn();
       render(<DeleteApplicationModal {...defaultProps} onClose={onClose} />);
 
@@ -146,11 +150,11 @@ describe("DeleteApplicationModal", () => {
       const closeButton = closeIcon.closest("button");
 
       if (closeButton) {
-        fireEvent.click(closeButton);
+        await user.click(closeButton);
         expect(onClose).toHaveBeenCalledTimes(1);
       } else {
         // Fallback: try clicking the icon directly
-        fireEvent.click(closeIcon.parentElement!);
+        await user.click(closeIcon.parentElement!);
         expect(onClose).toHaveBeenCalledTimes(1);
       }
     });
@@ -174,7 +178,8 @@ describe("DeleteApplicationModal", () => {
       expect(screen.queryByText("Delete")).not.toBeInTheDocument();
     });
 
-    it("should prevent onClose from being called when isDeleting is true", () => {
+    it("should prevent onClose from being called when isDeleting is true", async () => {
+      const user = userEvent.setup();
       const onClose = vi.fn();
       render(<DeleteApplicationModal {...defaultProps} onClose={onClose} isDeleting={true} />);
 
@@ -182,14 +187,15 @@ describe("DeleteApplicationModal", () => {
       const closeButton = closeIcon.closest("button");
 
       if (closeButton) {
-        fireEvent.click(closeButton);
+        await user.click(closeButton);
       }
 
       // onClose should not be called when deleting
       expect(onClose).not.toHaveBeenCalled();
     });
 
-    it("should not call onConfirm multiple times when delete button is clicked rapidly", () => {
+    it("should not call onConfirm multiple times when delete button is clicked rapidly", async () => {
+      const user = userEvent.setup();
       const onConfirm = vi.fn();
       const { rerender } = render(
         <DeleteApplicationModal {...defaultProps} onConfirm={onConfirm} isDeleting={false} />
@@ -198,7 +204,7 @@ describe("DeleteApplicationModal", () => {
       const deleteButton = screen.getByRole("button", { name: /delete/i });
 
       // First click
-      fireEvent.click(deleteButton);
+      await user.click(deleteButton);
       expect(onConfirm).toHaveBeenCalledTimes(1);
 
       // Simulate the parent component setting isDeleting to true
@@ -208,7 +214,7 @@ describe("DeleteApplicationModal", () => {
 
       // Try to click again while deleting
       const deletingButton = screen.getByRole("button", { name: /deleting.../i });
-      fireEvent.click(deletingButton);
+      await user.click(deletingButton);
 
       // Should still only be called once
       expect(onConfirm).toHaveBeenCalledTimes(1);
@@ -277,7 +283,8 @@ describe("DeleteApplicationModal", () => {
   });
 
   describe("Modal Behavior", () => {
-    it("should prevent modal from closing during deletion", () => {
+    it("should prevent modal from closing during deletion", async () => {
+      const user = userEvent.setup();
       const onClose = vi.fn();
       render(<DeleteApplicationModal {...defaultProps} onClose={onClose} isDeleting={true} />);
 
@@ -286,18 +293,19 @@ describe("DeleteApplicationModal", () => {
       const closeButton = closeIcon.closest("button");
 
       if (closeButton) {
-        fireEvent.click(closeButton);
+        await user.click(closeButton);
       }
 
       expect(onClose).not.toHaveBeenCalled();
     });
 
-    it("should allow modal to close when not deleting", () => {
+    it("should allow modal to close when not deleting", async () => {
+      const user = userEvent.setup();
       const onClose = vi.fn();
       render(<DeleteApplicationModal {...defaultProps} onClose={onClose} isDeleting={false} />);
 
       const cancelButton = screen.getByRole("button", { name: /cancel/i });
-      fireEvent.click(cancelButton);
+      await user.click(cancelButton);
 
       expect(onClose).toHaveBeenCalledTimes(1);
     });

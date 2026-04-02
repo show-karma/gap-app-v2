@@ -187,7 +187,6 @@ export const expectNoA11yViolations = async (container: HTMLElement) => {
 export {
   act,
   cleanup,
-  fireEvent,
   screen,
   waitFor,
   within,

@@ -23,8 +23,6 @@ interface MarkdownPreviewProps {
 
 type StreamdownType = typeof import("streamdown").Streamdown;
 type CodePluginType = typeof import("@streamdown/code").code;
-// biome-ignore lint/suspicious/noExplicitAny: remark plugin type is generic
-type RemarkPlugin = any;
 
 export const MarkdownPreview = ({
   source,
@@ -35,19 +33,15 @@ export const MarkdownPreview = ({
   const { resolvedTheme } = useTheme();
   const [StreamdownComponent, setStreamdownComponent] = useState<StreamdownType | null>(null);
   const [codePlugin, setCodePlugin] = useState<CodePluginType | null>(null);
-  const [breaksPlugin, setBreaksPlugin] = useState<RemarkPlugin | null>(null);
-
   useEffect(() => {
     Promise.all([
       import("streamdown").then((m) => m.Streamdown),
       import("@streamdown/code").then((m) => m.code),
-      import("remark-breaks").then((m) => m.default),
       import("streamdown/styles.css" as string),
     ])
-      .then(([Streamdown, code, breaks]) => {
+      .then(([Streamdown, code]) => {
         setStreamdownComponent(() => Streamdown);
         setCodePlugin(() => code);
-        setBreaksPlugin(() => breaks);
       })
       .catch((err) => {
         console.error("Failed to load markdown preview dependencies:", err);
@@ -56,7 +50,7 @@ export const MarkdownPreview = ({
 
   if (!source) return null;
 
-  if (!StreamdownComponent || !codePlugin || !breaksPlugin) {
+  if (!StreamdownComponent || !codePlugin) {
     return <div className="animate-pulse bg-gray-200 dark:bg-gray-700 rounded h-4 w-full" />;
   }
 
@@ -77,7 +71,6 @@ export const MarkdownPreview = ({
       <StreamdownComponent
         mode="static"
         plugins={{ code: codePlugin }}
-        remarkPlugins={[breaksPlugin]}
         className={cn("wmdeMarkdown", styles.wmdeMarkdown, className)}
         allowElement={allowElement ?? undefined}
         components={mergedComponents}

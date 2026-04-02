@@ -9,7 +9,8 @@
  * - Go home link rendered
  */
 
-import { fireEvent, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import ClaimFundsError from "@/app/community/[communityId]/(whitelabel)/claim-funds/error";
 import { renderWithProviders } from "../../utils/render";
 
@@ -81,14 +82,15 @@ describe("ClaimFundsError", () => {
     expect(screen.queryByText(/Error ID:/)).not.toBeInTheDocument();
   });
 
-  it("should call reset when Try again button is clicked", () => {
+  it("should call reset when Try again button is clicked", async () => {
+    const user = userEvent.setup();
     const error = Object.assign(new Error("Test"), { digest: undefined });
 
     renderWithProviders(
       <ClaimFundsError error={error as Error & { digest?: string }} reset={reset} />
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /Try again/ }));
+    await user.click(screen.getByRole("button", { name: /Try again/ }));
 
     expect(reset).toHaveBeenCalledTimes(1);
   });

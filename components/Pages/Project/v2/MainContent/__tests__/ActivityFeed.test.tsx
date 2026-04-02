@@ -6,9 +6,11 @@ vi.mock("next/navigation", () => ({
   useParams: () => ({ projectId: "test-project" }),
 }));
 
-// Mock ActivityCard to avoid complex import chain
+// Mock ActivityCard to avoid complex import chain - renders title for test assertions
 vi.mock("@/components/Shared/ActivityCard", () => ({
-  ActivityCard: () => <div data-testid="activity-card" />,
+  ActivityCard: ({ activity }: { activity: { data?: { title?: string } } }) => (
+    <div data-testid="activity-card">{activity?.data?.title}</div>
+  ),
 }));
 
 // Mock EthereumAddressToENSAvatar
@@ -220,5 +222,58 @@ describe("ActivityFeed - Grant Title Display", () => {
 
     expect(screen.getByText("Grant approved")).toBeInTheDocument();
     expect(screen.queryByTestId("grant-title")).not.toBeInTheDocument();
+  });
+});
+
+describe("ActivityFeed - renders pre-filtered items from server", () => {
+  // Milestone status filtering is now done server-side via the API query param.
+  // ActivityFeed renders whatever milestones are passed to it without further status filtering.
+  const createMilestone = (
+    type: UnifiedMilestone["type"],
+    overrides: Partial<UnifiedMilestone> = {}
+  ): UnifiedMilestone => ({
+    uid: `test-${type}-${Math.random()}`,
+    type,
+    title: `Test ${type}`,
+    description: "Test description",
+    completed: false,
+    createdAt: new Date().toISOString(),
+    chainID: 1,
+    refUID: "0xref1",
+    source: {},
+    ...overrides,
+  });
+
+  it("renders all passed items regardless of their milestone status", () => {
+    const items = [
+      createMilestone("milestone", {
+        uid: "pending-ms",
+        title: "Pending Milestone",
+        completed: false,
+      }),
+      createMilestone("grant", {
+        uid: "completed-ms",
+        title: "Completed Milestone",
+        completed: { createdAt: "2024-01-01", data: { reason: "Done" } },
+        source: {
+          grantMilestone: {
+            milestone: { uid: "m1", chainID: 1, title: "Completed", verified: [] },
+            grant: { uid: "g1", chainID: 1 },
+          },
+        },
+      }),
+      createMilestone("grant_update", { uid: "update-item", title: "Grant Update Item" }),
+    ];
+
+    render(<ActivityFeed milestones={items} />);
+
+    const rendered = screen.getAllByTestId("activity-item");
+    expect(rendered).toHaveLength(3);
+  });
+
+  it("shows empty state when no milestones are passed", () => {
+    render(<ActivityFeed milestones={[]} />);
+
+    expect(screen.getByTestId("activity-feed-empty")).toBeInTheDocument();
   });
 });

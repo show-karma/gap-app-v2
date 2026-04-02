@@ -25,6 +25,7 @@ import {
 } from "@/src/features/payout-disbursement";
 import { formatAddressForDisplay } from "@/utilities/donations/helpers";
 import { formatDate } from "@/utilities/formatDate";
+import { formatMilestoneTitle } from "@/utilities/formatMilestoneTitle";
 import { INDEXER } from "@/utilities/indexer";
 import { cn } from "@/utilities/tailwind";
 import type { ProjectDetailsSidebarGrant } from "./ProjectDetailsSidebar";
@@ -302,7 +303,10 @@ export const MilestonesSection = memo(function MilestonesSection({
 
                   return (
                     <tr
-                      key={invoice.milestoneUID || `${invoice.milestoneLabel}-${idx}`}
+                      key={
+                        invoice.milestoneUID ||
+                        `${formatMilestoneTitle(idx, invoice.milestoneLabel)}-${idx}`
+                      }
                       className={cn(
                         "transition-colors",
                         isCleared
@@ -323,7 +327,7 @@ export const MilestonesSection = memo(function MilestonesSection({
                             />
                           )}
                           <span className="font-medium text-gray-900 dark:text-zinc-100 line-clamp-2">
-                            {invoice.milestoneLabel}
+                            {formatMilestoneTitle(idx, invoice.milestoneLabel)}
                           </span>
                         </div>
                       </td>
@@ -461,7 +465,7 @@ export const MilestonesSection = memo(function MilestonesSection({
                                     ? "border-emerald-200 dark:border-emerald-800"
                                     : ""
                                 )}
-                                aria-label={`Invoice received date for ${invoice.milestoneLabel}`}
+                                aria-label={`Invoice received date for ${formatMilestoneTitle(idx, invoice.milestoneLabel)}`}
                               />
                               {invoice.invoiceReceivedBy && (
                                 <span

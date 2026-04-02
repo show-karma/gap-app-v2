@@ -5,17 +5,16 @@
   color: inherit;
   @apply bg-transparent;
 
-  p,
-  li,
-  blockquote,
-  td,
-  th {
-    @apply whitespace-pre-wrap;
-    @apply text-wrap;
-  }
+  overflow-wrap: break-word;
+  word-break: break-word;
 
   [data-streamdown="link"] {
     white-space: normal;
+  }
+
+  li > p {
+    display: inline;
+    margin-bottom: 0;
   }
 
   @media (max-width: 1440px) {
@@ -43,8 +42,8 @@
   .wmde-markdown {
     * {
       font-size: 16px;
-      white-space: pre-wrap;
-      word-wrap: break-word;
+      overflow-wrap: break-word;
+      word-break: break-word;
       @media (max-width: 1440px) {
         @apply text-[15px];
       }

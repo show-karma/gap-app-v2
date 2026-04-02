@@ -13,7 +13,8 @@
  * - Edge case: error with no actionableSteps and no technicalMessage
  */
 
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import type React from "react";
 import { DonationErrorBoundary } from "@/components/Donation/DonationErrorBoundary";
 import { errorManager } from "@/components/Utilities/errorManager";
@@ -181,7 +182,8 @@ describe("DonationErrorBoundary (expanded)", () => {
   // Recovery: Try Again
   // -------------------------------------------------------------------------
 
-  it("recovers when Try Again is clicked and child no longer throws", () => {
+  it("recovers when Try Again is clicked and child no longer throws", async () => {
+    const user = userEvent.setup();
     let shouldThrow = true;
 
     const ConditionalDonation = () => {
@@ -198,7 +200,7 @@ describe("DonationErrorBoundary (expanded)", () => {
     expect(screen.getByText("Something went wrong")).toBeInTheDocument();
 
     shouldThrow = false;
-    fireEvent.click(screen.getByRole("button", { name: /try again/i }));
+    await user.click(screen.getByRole("button", { name: /try again/i }));
 
     expect(screen.getByText("Donation form ready")).toBeInTheDocument();
   });
@@ -231,7 +233,8 @@ describe("DonationErrorBoundary (expanded)", () => {
   // Technical details
   // -------------------------------------------------------------------------
 
-  it("shows technical message in expandable details section", () => {
+  it("shows technical message in expandable details section", async () => {
+    const user = userEvent.setup();
     mockGetDetailedErrorInfo.mockReturnValue({
       code: "CONTRACT_ERROR",
       message: "Contract execution failed",
@@ -248,7 +251,7 @@ describe("DonationErrorBoundary (expanded)", () => {
     const summary = screen.getByText("Technical Details");
     expect(summary).toBeInTheDocument();
 
-    fireEvent.click(summary);
+    await user.click(summary);
     expect(screen.getByText("execution reverted: INSUFFICIENT_ALLOWANCE")).toBeInTheDocument();
   });
 

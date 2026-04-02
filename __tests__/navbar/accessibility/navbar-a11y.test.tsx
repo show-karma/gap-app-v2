@@ -203,6 +203,7 @@ describe("Navbar Accessibility Tests", () => {
 
       const signInButton = screen.getByText(/sign in/i);
       signInButton.focus();
+      // fireEvent required: accessibility keyboard navigation test
       fireEvent.keyDown(signInButton, { key: "Enter", code: "Enter" });
 
       // Button should be activatable via keyboard
@@ -295,6 +296,7 @@ describe("Navbar Accessibility Tests", () => {
       });
 
       const menuButton = screen.getByRole("button", { name: /menu/i });
+      // fireEvent required: accessibility keyboard navigation test
       fireEvent.keyDown(menuButton, { key: "Enter", code: "Enter" });
 
       // Drawer should open (implementation may vary)
@@ -309,6 +311,7 @@ describe("Navbar Accessibility Tests", () => {
       });
 
       const menuButton = screen.getByRole("button", { name: /menu/i });
+      // fireEvent required: accessibility keyboard navigation test
       fireEvent.keyDown(menuButton, { key: " ", code: "Space" });
 
       expect(menuButton).toBeInTheDocument();

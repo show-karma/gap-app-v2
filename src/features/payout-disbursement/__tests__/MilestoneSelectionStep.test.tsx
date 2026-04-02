@@ -68,6 +68,25 @@ describe("MilestoneSelectionStep", () => {
       expect(screen.queryByText("Test Grant")).not.toBeInTheDocument();
       expect(screen.queryByText("Test Project")).not.toBeInTheDocument();
     });
+
+    it("should prepend milestone index numbering to allocation labels", () => {
+      const allocationsWithPlainLabels: MilestoneAllocation[] = [
+        { id: "alloc-1", milestoneUID: "ms-1", label: "Design phase", amount: "1" },
+        { id: "alloc-2", milestoneUID: "ms-2", label: "Build prototype", amount: "2" },
+      ];
+      render(<MilestoneSelectionStep {...defaultProps} allocations={allocationsWithPlainLabels} />);
+
+      expect(screen.getByText("Milestone 1: Design phase")).toBeInTheDocument();
+      expect(screen.getByText("Milestone 2: Build prototype")).toBeInTheDocument();
+    });
+
+    it("should not double-prefix labels that already have milestone numbering", () => {
+      render(<MilestoneSelectionStep {...defaultProps} />);
+
+      // Labels are "Milestone 1", "Milestone 2", "Milestone 3" - should not become "Milestone 1: Milestone 1"
+      expect(screen.getByText("Milestone 1")).toBeInTheDocument();
+      expect(screen.queryByText("Milestone 1: Milestone 1")).not.toBeInTheDocument();
+    });
   });
 
   describe("with paid allocations", () => {

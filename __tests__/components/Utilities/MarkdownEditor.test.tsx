@@ -147,11 +147,14 @@ describe("MarkdownEditor", () => {
     });
 
     it("should enforce maxLength on change", async () => {
+      const user = userEvent.setup();
       const handleChange = vi.fn();
       render(<MarkdownEditor value="" onChange={handleChange} maxLength={10} id="test-editor" />);
 
       const textarea = screen.getByTestId("md-editor-textarea");
-      fireEvent.change(textarea, { target: { value: "12345678901234567890" } });
+      await user.clear(textarea);
+
+      await user.type(textarea, "12345678901234567890");
 
       // Should truncate to maxLength
       expect(handleChange).toHaveBeenCalledWith("1234567890");
@@ -254,11 +257,14 @@ describe("MarkdownEditor", () => {
 
   describe("User Interactions", () => {
     it("should call onChange when typing", async () => {
+      const user = userEvent.setup();
       const handleChange = vi.fn();
       render(<MarkdownEditor value="" onChange={handleChange} id="test-editor" />);
 
       const textarea = screen.getByTestId("md-editor-textarea");
-      fireEvent.change(textarea, { target: { value: "Hello" } });
+      await user.clear(textarea);
+
+      await user.type(textarea, "Hello");
 
       expect(handleChange).toHaveBeenCalledWith("Hello");
     });
@@ -268,6 +274,7 @@ describe("MarkdownEditor", () => {
       render(<MarkdownEditor value="" onBlur={handleBlur} id="test-editor" />);
 
       const textarea = screen.getByTestId("md-editor-textarea");
+      // fireEvent required: testing blur/focus event handler callback
       fireEvent.blur(textarea);
 
       expect(handleBlur).toHaveBeenCalled();

@@ -54,6 +54,34 @@ describe("project-updates.service", () => {
       expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("project-slug"));
     });
 
+    it("should append milestoneStatus query param when provided", async () => {
+      mockFetchData.mockResolvedValueOnce([
+        { projectUpdates: [], projectMilestones: [], grantMilestones: [], grantUpdates: [] },
+        null,
+        null,
+        200,
+      ]);
+
+      await getProjectUpdates("project-slug", "completed");
+
+      expect(mockFetchData).toHaveBeenCalledWith(
+        expect.stringContaining("milestoneStatus=completed")
+      );
+    });
+
+    it("should not append milestoneStatus when not provided", async () => {
+      mockFetchData.mockResolvedValueOnce([
+        { projectUpdates: [], projectMilestones: [], grantMilestones: [], grantUpdates: [] },
+        null,
+        null,
+        200,
+      ]);
+
+      await getProjectUpdates("project-slug");
+
+      expect(mockFetchData).toHaveBeenCalledWith(expect.not.stringContaining("milestoneStatus"));
+    });
+
     it("should return empty response without reporting on 404", async () => {
       mockFetchData.mockResolvedValueOnce([
         null,

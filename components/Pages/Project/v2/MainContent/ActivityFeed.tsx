@@ -286,6 +286,8 @@ export function ActivityFeed({
       filtered = filtered.filter((milestone) => allowedTypes.includes(milestone.type));
     }
 
+    // Milestone status filtering is now done server-side via API query param
+
     // Sort by date using same logic as production (ProjectRoadmap)
     filtered.sort((a, b) => {
       const timestampA = getSortTimestamp(a);

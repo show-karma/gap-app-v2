@@ -302,7 +302,7 @@ jobs:
   dogfood:
     needs: [gate-check, qa-plan]
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 45
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -371,36 +371,31 @@ jobs:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           claude --print --dangerously-skip-permissions \
-            "You are a strict senior QA engineer doing exploratory dogfood testing.
+            "You are a strict senior QA engineer doing focused exploratory dogfood testing.
             PR number: $PR_NUMBER. Target URL: http://localhost:3000.
+            IMPORTANT: Always use http://localhost:3000. Never use a preview/vercel URL.
 
-            1. Read qa-plan.md (if available) to understand what areas changed.
-            2. Run git diff origin/main...HEAD --name-only to know exactly which files this PR changed.
-            3. Find and read the dogfood skill SKILL.md (search for it in the repo).
-            4. Run BROADER exploratory testing around the changed feature areas — both public AND authenticated pages.
-            5. For authenticated pages: login using the Privy test account (email from QA_TEST_EMAIL env var, OTP from QA_TEST_OTP env var). Save auth state and reuse.
-            6. Follow the dogfood workflow: Initialize, Authenticate, Orient, Explore, Document.
-            7. Find 5-10 well-documented issues with full repro evidence.
-            IMPORTANT: Always use http://localhost:3000 as the target URL. Never use a preview/vercel URL.
+            TIME BUDGET: You have 15 minutes of active exploration. Be fast and focused. Do not wander.
 
-            CRITICAL — CLASSIFY EVERY ISSUE:
-            For each issue found, classify it as either:
-            - **PR-caused**: The issue is in code/pages that this PR changed, or is a direct consequence of the PR changes.
-            - **Pre-existing**: The issue exists on the main branch too — it is NOT caused by this PR.
-            To determine: check if the affected file/component appears in the git diff. If not, it is pre-existing.
+            1. Run git diff origin/main...HEAD --name-only to identify changed files.
+            2. Open http://localhost:3000 in agent-browser. Navigate ONLY to pages affected by the changed files.
+            3. On each page: take a screenshot, check console errors, interact with changed components.
+            4. For authenticated pages: login with Privy test account (email from QA_TEST_EMAIL, OTP from QA_TEST_OTP). Save auth state.
+            5. Find 3-5 issues max. Quality over quantity. Do NOT explore unrelated pages.
+            6. Do NOT repeat scenarios already covered by qa-plan.md (QA Execution already tested those).
 
-            ACTIONS:
-            - PR-caused issues: Include in the PR comment. These block merge if Critical/High.
-            - Pre-existing issues: Create a GitHub issue for each using 'gh issue create --title \"[QA] <title>\" --body \"<description>\" --label bug'. Do NOT include these in the blocking verdict.
+            CLASSIFY EVERY ISSUE:
+            - **PR-caused**: Affected file appears in the git diff.
+            - **Pre-existing**: Does NOT appear in the git diff. Create a GitHub issue using gh issue create --title '[QA] <title>' --body '<description>' --label bug.
 
-            Post the results as a comment on PR #$PR_NUMBER using gh pr comment. Format:
+            Post results as a comment on PR #$PR_NUMBER using gh pr comment. Format:
 
             ## Dogfood (3/3)
 
             **PR-caused issues**: X found (Y critical, Z high)
             **Pre-existing issues**: N found (created as GitHub issues)
 
-            ### PR-Caused (blocks merge if Critical/High)
+            ### PR-Caused
             | # | Issue | Severity | Category |
             |---|-------|----------|----------|
 
@@ -408,13 +403,11 @@ jobs:
             | # | Issue | Severity | GitHub Issue |
             |---|-------|----------|-------------|
 
-            **Verdict**: PASS or FAIL (based on PR-caused only)
+            **Verdict**: PASS or FAIL (based on PR-caused Critical/High only)
 
-            Save summary to dogfood-results.json. The 'critical' and 'high' counts must ONLY include PR-caused issues:
-            {\"total\":N,\"critical\":N,\"high\":N,\"medium\":N,\"low\":N,\"preexisting\":N,\"blocking\":bool}
-
-            Be strict. Be thorough. No optimism."
-        timeout-minutes: 55
+            Save to dogfood-results.json: {\"total\":N,\"critical\":N,\"high\":N,\"medium\":N,\"low\":N,\"preexisting\":N,\"blocking\":bool}
+            critical/high counts = PR-caused only."
+        timeout-minutes: 40
 
       - name: Upload dogfood artifacts
         if: always()

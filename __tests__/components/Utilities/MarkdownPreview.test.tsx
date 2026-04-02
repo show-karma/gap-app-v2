@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
 // Mock next-themes
@@ -90,7 +90,6 @@ describe("MarkdownPreview", () => {
       render(<MarkdownPreview source="[Click here](https://example.com)" />);
 
       await waitFor(() => {
-        // Streamdown renders links as buttons with data-streamdown="link"
         const link = document.querySelector('[data-streamdown="link"]');
         expect(link).toBeInTheDocument();
         expect(link).toHaveTextContent("Click here");
@@ -101,7 +100,6 @@ describe("MarkdownPreview", () => {
       const { container } = render(<MarkdownPreview source="hello" />);
 
       await waitFor(() => {
-        // Verify rendered content is present (static mode renders immediately)
         expect(screen.getByText("hello")).toBeInTheDocument();
       });
     });
