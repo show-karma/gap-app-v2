@@ -22,10 +22,10 @@ export {
   PendingActionsWidget,
   RecentActivityWidget,
 } from "./components/PayoutDashboardWidgets";
-export { RecordPaymentDialog } from "./components/RecordPaymentDialog";
 export type { PayoutHistoryContentProps } from "./components/PayoutHistoryContent";
 export { PayoutHistoryContent } from "./components/PayoutHistoryContent";
 export { PayoutHistoryDrawer } from "./components/PayoutHistoryDrawer";
+export { RecordPaymentDialog } from "./components/RecordPaymentDialog";
 export { TokenBreakdown, TokenBreakdownInline } from "./components/TokenBreakdown";
 // Hooks
 export * from "./hooks/use-payout-disbursement";
