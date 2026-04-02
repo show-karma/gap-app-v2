@@ -13,6 +13,7 @@ import { submitGranteeInvoice } from "@/src/features/payout-disbursement/service
 import type { MilestoneData } from "@/types/whitelabel-entities";
 import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
+import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { useApplicationInvoiceConfig } from "../hooks/use-application-invoice-config";
 import { useMilestoneCompletions } from "../hooks/use-milestone-completions";
 import { formatFieldLabel, isMarkdownContent, MILESTONE_CORE_FIELDS } from "../lib/milestone-utils";
@@ -151,7 +152,7 @@ export function MilestoneCompletionEditor({
           });
           toast.success("Invoice submitted successfully");
           await queryClient.invalidateQueries({
-            queryKey: ["applicationInvoiceConfig", referenceNumber],
+            queryKey: QUERY_KEYS.APPLICATIONS.INVOICE_CONFIG(referenceNumber),
           });
         } catch {
           toast.error("Failed to submit invoice");

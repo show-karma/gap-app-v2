@@ -5,13 +5,14 @@ import {
   type ApplicationInvoiceConfig,
   getApplicationInvoiceConfig,
 } from "../services/milestone-completion.service";
+import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 export function useApplicationInvoiceConfig(
   referenceNumber: string | undefined,
   options?: { enabled?: boolean }
 ) {
   return useQuery<ApplicationInvoiceConfig | null, Error>({
-    queryKey: ["applicationInvoiceConfig", referenceNumber],
+    queryKey: QUERY_KEYS.APPLICATIONS.INVOICE_CONFIG(referenceNumber ?? ""),
     queryFn: () => getApplicationInvoiceConfig(referenceNumber!),
     enabled: (options?.enabled ?? true) && !!referenceNumber,
     staleTime: 1000 * 60 * 5,
