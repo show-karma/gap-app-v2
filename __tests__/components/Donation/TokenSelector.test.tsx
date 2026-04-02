@@ -9,7 +9,8 @@
  * - Balance display in options
  */
 
-import { fireEvent, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { TokenSelector } from "@/components/Donation/TokenSelector";
 import type { SupportedToken } from "@/constants/supportedTokens";
 import { renderWithProviders } from "../../utils/render";
@@ -146,7 +147,8 @@ describe("TokenSelector", () => {
   });
 
   describe("User interactions", () => {
-    it("should call onTokenSelect when a token is chosen", () => {
+    it("should call onTokenSelect when a token is chosen", async () => {
+      const user = userEvent.setup();
       renderWithProviders(
         <TokenSelector
           tokenOptions={tokenOptions}
@@ -156,12 +158,13 @@ describe("TokenSelector", () => {
       );
 
       const select = screen.getByTestId("token-selector");
-      fireEvent.change(select, { target: { value: "USDC-10" } });
+      await user.selectOptions(select, "USDC-10");
 
       expect(onTokenSelect).toHaveBeenCalledWith(mockUSDC);
     });
 
-    it("should not call onTokenSelect when the placeholder option is selected", () => {
+    it("should not call onTokenSelect when the placeholder option is selected", async () => {
+      const user = userEvent.setup();
       renderWithProviders(
         <TokenSelector
           selectedToken={mockUSDC}
@@ -172,7 +175,7 @@ describe("TokenSelector", () => {
       );
 
       const select = screen.getByTestId("token-selector");
-      fireEvent.change(select, { target: { value: "" } });
+      await user.selectOptions(select, "");
 
       expect(onTokenSelect).not.toHaveBeenCalled();
     });

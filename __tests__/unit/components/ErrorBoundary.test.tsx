@@ -14,7 +14,8 @@
  * - Multiple sequential errors without infinite loops
  */
 
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 // ---------------------------------------------------------------------------
@@ -133,7 +134,8 @@ describe("ErrorBoundary", () => {
     expect(screen.getByRole("button", { name: /try again/i })).toBeInTheDocument();
   });
 
-  it("resets error state when Try again is clicked and child no longer throws", () => {
+  it("resets error state when Try again is clicked and child no longer throws", async () => {
+    const user = userEvent.setup();
     let shouldThrow = true;
 
     const ConditionalThrower = () => {
@@ -151,13 +153,14 @@ describe("ErrorBoundary", () => {
 
     // Stop throwing before clicking retry
     shouldThrow = false;
-    fireEvent.click(screen.getByRole("button", { name: /try again/i }));
+    await user.click(screen.getByRole("button", { name: /try again/i }));
 
     expect(screen.getByText("Recovered content")).toBeInTheDocument();
     expect(screen.queryByTestId("error-boundary-fallback")).not.toBeInTheDocument();
   });
 
-  it("shows fallback again if child still throws after retry", () => {
+  it("shows fallback again if child still throws after retry", async () => {
+    const user = userEvent.setup();
     const AlwaysThrower = () => {
       throw new Error("Persistent error");
     };
@@ -171,7 +174,7 @@ describe("ErrorBoundary", () => {
     expect(screen.getByText("Something went wrong")).toBeInTheDocument();
 
     // Click retry -- child still throws, so fallback should reappear
-    fireEvent.click(screen.getByRole("button", { name: /try again/i }));
+    await user.click(screen.getByRole("button", { name: /try again/i }));
 
     expect(screen.getByText("Something went wrong")).toBeInTheDocument();
     expect(screen.getByText("Persistent error")).toBeInTheDocument();
@@ -271,7 +274,8 @@ describe("ErrorBoundary", () => {
   // Multiple rapid errors
   // -------------------------------------------------------------------------
 
-  it("handles multiple sequential errors without infinite loops", () => {
+  it("handles multiple sequential errors without infinite loops", async () => {
+    const user = userEvent.setup();
     const { rerender } = render(
       <ErrorBoundary>
         <ThrowingComponent shouldThrow errorMessage="First error" />
@@ -298,7 +302,7 @@ describe("ErrorBoundary", () => {
 
     // Now recover
     shouldThrow = false;
-    fireEvent.click(screen.getByRole("button", { name: /try again/i }));
+    await user.click(screen.getByRole("button", { name: /try again/i }));
     expect(screen.getByText("OK")).toBeInTheDocument();
   });
 });

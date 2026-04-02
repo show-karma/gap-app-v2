@@ -857,7 +857,6 @@ export const expectElementToHaveAriaLabel = (element: HTMLElement, label?: strin
  */
 export {
   act,
-  fireEvent,
   screen,
   waitFor,
   within,

@@ -8,7 +8,8 @@
  * - Error reporting integration
  */
 
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import type React from "react";
 import { DonationErrorBoundary } from "@/components/Donation/DonationErrorBoundary";
 import { errorManager } from "@/components/Utilities/errorManager";
@@ -150,7 +151,8 @@ describe("DonationErrorBoundary", () => {
       expect(screen.getByText("Try again")).toBeInTheDocument();
     });
 
-    it("should display technical details when available", () => {
+    it("should display technical details when available", async () => {
+      const user = userEvent.setup();
       mockGetDetailedErrorInfo.mockReturnValue({
         code: "CONTRACT_ERROR" as any,
         message: "Contract execution failed",
@@ -167,7 +169,7 @@ describe("DonationErrorBoundary", () => {
       const detailsElement = screen.getByText("Technical Details");
       expect(detailsElement).toBeInTheDocument();
 
-      fireEvent.click(detailsElement);
+      await user.click(detailsElement);
       expect(screen.getByText("Error: execution reverted")).toBeInTheDocument();
     });
 
@@ -189,7 +191,8 @@ describe("DonationErrorBoundary", () => {
   });
 
   describe("Error Recovery - Try Again", () => {
-    it("should reset error state when Try Again is clicked", () => {
+    it("should reset error state when Try Again is clicked", async () => {
+      const user = userEvent.setup();
       const ThrowErrorComponent = ({ shouldThrow }: { shouldThrow: boolean }) => {
         if (shouldThrow) {
           throw new Error("Test error");
@@ -206,7 +209,7 @@ describe("DonationErrorBoundary", () => {
       expect(screen.getByText("Something went wrong")).toBeInTheDocument();
 
       const tryAgainButton = screen.getByText("Try Again");
-      fireEvent.click(tryAgainButton);
+      await user.click(tryAgainButton);
 
       // Rerender with error cleared - need to use a key to force remount or use different component
       rerender(
@@ -219,7 +222,8 @@ describe("DonationErrorBoundary", () => {
       expect(screen.getByText("No error")).toBeInTheDocument();
     });
 
-    it("should allow children to render again after reset", () => {
+    it("should allow children to render again after reset", async () => {
+      const user = userEvent.setup();
       const ThrowErrorComponent = ({ shouldThrow }: { shouldThrow: boolean }) => {
         if (shouldThrow) {
           throw new Error("Test error");
@@ -234,7 +238,7 @@ describe("DonationErrorBoundary", () => {
       );
 
       const tryAgainButton = screen.getByText("Try Again");
-      fireEvent.click(tryAgainButton);
+      await user.click(tryAgainButton);
 
       // Rerender with non-throwing children
       rerender(
@@ -261,7 +265,8 @@ describe("DonationErrorBoundary", () => {
       window.location = originalLocation;
     });
 
-    it("should clear localStorage and reload page when Clear Cart is clicked", () => {
+    it("should clear localStorage and reload page when Clear Cart is clicked", async () => {
+      const user = userEvent.setup();
       const removeItemSpy = vi.spyOn(window.localStorage, "removeItem");
 
       // Mock window.location.href assignment
@@ -279,13 +284,14 @@ describe("DonationErrorBoundary", () => {
       );
 
       const clearCartButton = screen.getByText("Clear Cart and Start Over");
-      fireEvent.click(clearCartButton);
+      await user.click(clearCartButton);
 
       expect(removeItemSpy).toHaveBeenCalledWith("donation-cart-storage");
       expect(hrefSetter).toHaveBeenCalled();
     });
 
-    it("should handle localStorage errors gracefully", () => {
+    it("should handle localStorage errors gracefully", async () => {
+      const user = userEvent.setup();
       const removeItemSpy = vi.spyOn(window.localStorage, "removeItem");
       removeItemSpy.mockImplementation(() => {
         throw new Error("localStorage error");
@@ -299,7 +305,7 @@ describe("DonationErrorBoundary", () => {
       );
 
       const clearCartButton = screen.getByText("Clear Cart and Start Over");
-      fireEvent.click(clearCartButton);
+      await user.click(clearCartButton);
 
       expect(consoleErrorSpy).toHaveBeenCalledWith("Failed to clear cart:", expect.any(Error));
     });
@@ -353,7 +359,8 @@ describe("DonationErrorBoundary", () => {
   });
 
   describe("Edge Cases", () => {
-    it("should handle multiple errors sequentially", () => {
+    it("should handle multiple errors sequentially", async () => {
+      const user = userEvent.setup();
       const { rerender } = render(
         <DonationErrorBoundary>
           <ThrowError shouldThrow={true} errorMessage="First error" />
@@ -363,7 +370,7 @@ describe("DonationErrorBoundary", () => {
       expect(screen.getByText("Something went wrong")).toBeInTheDocument();
 
       const tryAgainButton = screen.getByText("Try Again");
-      fireEvent.click(tryAgainButton);
+      await user.click(tryAgainButton);
 
       rerender(
         <DonationErrorBoundary>

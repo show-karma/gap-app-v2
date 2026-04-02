@@ -251,7 +251,7 @@ const mockProgram: GrantProgram = {
   },
 };
 
-// Helper to create test query client
+// Fresh QueryClient per render — no afterEach cleanup required
 const createTestQueryClient = () =>
   new QueryClient({
     defaultOptions: {
@@ -518,7 +518,10 @@ describe("ProgramDetailsTab", () => {
       await user.clear(budgetInput);
 
       // Set negative value directly via fireEvent to bypass HTML5 validation
-      fireEvent.change(budgetInput, { target: { value: "-100" } });
+      await user.clear(budgetInput);
+
+      await user.type(budgetInput, "-100");
+      // fireEvent required: testing blur/focus event handler callback
       fireEvent.blur(budgetInput);
 
       // Make form dirty by changing another field first

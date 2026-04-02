@@ -14,6 +14,7 @@
  */
 
 import { act, fireEvent, render, renderHook, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { CartItemRow } from "@/components/Donation/CartItemRow";
 import { EmptyCart } from "@/components/Donation/EmptyCart";
 import { TokenSelector } from "@/components/Donation/TokenSelector";
@@ -209,7 +210,8 @@ describe("Integration: Donation Cart & Checkout UI", () => {
       expect(options[1].textContent).toContain("500.123456");
     });
 
-    it("calls onTokenSelect with the correct token when changed", () => {
+    it("calls onTokenSelect with the correct token when changed", async () => {
+      const user = userEvent.setup();
       const usdc = createMockToken({ symbol: "USDC", chainId: 10 });
       const tokens = [usdc];
       const onSelect = vi.fn();
@@ -219,7 +221,7 @@ describe("Integration: Donation Cart & Checkout UI", () => {
       );
 
       const select = screen.getByTestId("token-selector");
-      fireEvent.change(select, { target: { value: "USDC-10" } });
+      await user.selectOptions(select, "USDC-10");
 
       expect(onSelect).toHaveBeenCalledTimes(1);
       expect(onSelect).toHaveBeenCalledWith(usdc);
@@ -271,7 +273,8 @@ describe("Integration: Donation Cart & Checkout UI", () => {
       expect(screen.getByTestId("remove-item")).toBeInTheDocument();
     });
 
-    it("fires onAmountChange when amount is updated", () => {
+    it("fires onAmountChange when amount is updated", async () => {
+      const user = userEvent.setup();
       const onAmountChange = vi.fn();
       const token = createMockToken();
 
@@ -289,6 +292,7 @@ describe("Integration: Donation Cart & Checkout UI", () => {
       );
 
       const input = screen.getByLabelText(/Donation amount for Test Project in USDC/);
+      // fireEvent required: controlled number input needs single-event value change
       fireEvent.change(input, { target: { value: "42.5" } });
 
       expect(onAmountChange).toHaveBeenCalledWith("42.5");
@@ -311,7 +315,8 @@ describe("Integration: Donation Cart & Checkout UI", () => {
       expect(input).toBeDisabled();
     });
 
-    it("fires onRemove when trash icon is clicked", () => {
+    it("fires onRemove when trash icon is clicked", async () => {
+      const user = userEvent.setup();
       const onRemove = vi.fn();
 
       render(
@@ -326,7 +331,7 @@ describe("Integration: Donation Cart & Checkout UI", () => {
         />
       );
 
-      fireEvent.click(screen.getByTestId("remove-item"));
+      await user.click(screen.getByTestId("remove-item"));
       expect(onRemove).toHaveBeenCalledTimes(1);
     });
 
@@ -522,11 +527,12 @@ describe("Integration: Donation Cart & Checkout UI", () => {
       expect(screen.getByText("Browse Projects")).toBeInTheDocument();
     });
 
-    it("calls onBrowseProjects when button is clicked", () => {
+    it("calls onBrowseProjects when button is clicked", async () => {
+      const user = userEvent.setup();
       const onBrowse = vi.fn();
       render(<EmptyCart onBrowseProjects={onBrowse} />);
 
-      fireEvent.click(screen.getByText("Browse Projects"));
+      await user.click(screen.getByText("Browse Projects"));
       expect(onBrowse).toHaveBeenCalledTimes(1);
     });
   });
@@ -579,23 +585,25 @@ describe("Integration: Donation Cart & Checkout UI", () => {
       expect(screen.getByText("2")).toBeInTheDocument();
     });
 
-    it("calls onProceed when Start Donations is clicked", () => {
+    it("calls onProceed when Start Donations is clicked", async () => {
+      const user = userEvent.setup();
       const onProceed = vi.fn();
       const payments = [createMockPayment()];
 
       render(<DonationStepsPreview payments={payments} onProceed={onProceed} onCancel={vi.fn()} />);
 
-      fireEvent.click(screen.getByText("Start Donations"));
+      await user.click(screen.getByText("Start Donations"));
       expect(onProceed).toHaveBeenCalledTimes(1);
     });
 
-    it("calls onCancel when Review Changes is clicked", () => {
+    it("calls onCancel when Review Changes is clicked", async () => {
+      const user = userEvent.setup();
       const onCancel = vi.fn();
       const payments = [createMockPayment()];
 
       render(<DonationStepsPreview payments={payments} onProceed={vi.fn()} onCancel={onCancel} />);
 
-      fireEvent.click(screen.getByText("Review Changes"));
+      await user.click(screen.getByText("Review Changes"));
       expect(onCancel).toHaveBeenCalledTimes(1);
     });
 

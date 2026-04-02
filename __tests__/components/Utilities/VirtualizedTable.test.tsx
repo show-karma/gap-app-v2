@@ -387,6 +387,7 @@ describe("VirtualizedTable", () => {
 
       const row = container.querySelector("tbody tr");
       if (row) {
+        // fireEvent required: accessibility keyboard navigation test
         fireEvent.keyDown(row, { key: "Enter" });
         expect(handleRowClick).toHaveBeenCalled();
       }
@@ -402,6 +403,7 @@ describe("VirtualizedTable", () => {
 
       const row = container.querySelector("tbody tr");
       if (row) {
+        // fireEvent required: accessibility keyboard navigation test
         fireEvent.keyDown(row, { key: " " });
         expect(handleRowClick).toHaveBeenCalled();
       }

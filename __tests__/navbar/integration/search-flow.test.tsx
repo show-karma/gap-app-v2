@@ -159,7 +159,7 @@ describe("Search Flow Integration Tests", () => {
       const drawer = screen.getByRole("dialog");
       const searchInput = within(drawer).getByPlaceholderText("Search Project/Community");
 
-      // Type search query using fireEvent to avoid setPointerCapture error
+      // fireEvent required: vaul drawer incompatible with userEvent in jsdom
       fireEvent.change(searchInput, { target: { value: searchQueries.medium } });
       await waitForDebounce();
 
@@ -196,7 +196,7 @@ describe("Search Flow Integration Tests", () => {
       const drawer = screen.getByRole("dialog");
       expect(drawer).toBeInTheDocument();
 
-      // Search in drawer using fireEvent to avoid setPointerCapture error
+      // fireEvent required: vaul drawer incompatible with userEvent in jsdom
       const searchInput = within(drawer).getByPlaceholderText("Search Project/Community");
       fireEvent.change(searchInput, { target: { value: searchQueries.medium } });
       await waitForDebounce();
@@ -207,7 +207,7 @@ describe("Search Flow Integration Tests", () => {
         expect(within(drawer).queryByText(firstProject.details.title)).toBeInTheDocument();
       });
 
-      // Click result using fireEvent to avoid setPointerCapture error in drawer
+      // fireEvent required: vaul drawer incompatible with userEvent in jsdom
       const firstProject = mixedResults.projects[0];
       const resultLink = within(drawer).getByRole("link", {
         name: new RegExp(firstProject.details.title, "i"),

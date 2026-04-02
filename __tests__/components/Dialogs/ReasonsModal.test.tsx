@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { ReasonsModal } from "@/components/Dialogs/ReasonsModal";
 
 // Mock Headless UI Dialog components
@@ -166,63 +167,69 @@ describe("ReasonsModal", () => {
       expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
     });
 
-    it("should open modal when button is clicked", () => {
+    it("should open modal when button is clicked", async () => {
+      const user = userEvent.setup();
       render(<ReasonsModal text="Include" reasons={mockReasonsInclude} />);
 
       const button = screen.getByText("Include").closest("button");
-      if (button) fireEvent.click(button);
+      if (button) await user.click(button);
 
       expect(screen.getByTestId("dialog")).toBeInTheDocument();
     });
 
-    it("should close modal when Close button is clicked", () => {
+    it("should close modal when Close button is clicked", async () => {
+      const user = userEvent.setup();
       render(<ReasonsModal text="Include" reasons={mockReasonsInclude} />);
 
       const openButton = screen.getByText("Include").closest("button");
-      if (openButton) fireEvent.click(openButton);
+      if (openButton) await user.click(openButton);
 
       const closeButton = screen.getByText("Close");
-      fireEvent.click(closeButton);
+      await user.click(closeButton);
 
       expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
     });
   });
 
   describe("Modal Content - Include", () => {
-    it("should display correct title for Include", () => {
+    it("should display correct title for Include", async () => {
+      const user = userEvent.setup();
       render(<ReasonsModal text="Include" reasons={mockReasonsInclude} />);
 
       const button = screen.getByText("Include").closest("button");
-      if (button) fireEvent.click(button);
+      if (button) await user.click(button);
 
       expect(screen.getByText("Reasons to include this project")).toBeInTheDocument();
     });
 
-    it("should display AI evaluation note", () => {
+    it("should display AI evaluation note", async () => {
+      const user = userEvent.setup();
       render(<ReasonsModal text="Include" reasons={mockReasonsInclude} />);
 
       const button = screen.getByText("Include").closest("button");
-      if (button) fireEvent.click(button);
+      if (button) await user.click(button);
 
       expect(screen.getByText("*as evaluated by Karma AI")).toBeInTheDocument();
     });
 
-    it("should display all Include reasons", () => {
+    it("should display all Include reasons", async () => {
+      const user = userEvent.setup();
       render(<ReasonsModal text="Include" reasons={mockReasonsInclude} />);
 
       const button = screen.getByText("Include").closest("button");
-      if (button) fireEvent.click(button);
+      if (button) await user.click(button);
 
       mockReasonsInclude.forEach((reason) => {
         expect(screen.getByText(reason)).toBeInTheDocument();
       });
     });
 
-    it("should display milestone numbers for each reason", () => {
+    it("should display milestone numbers for each reason", async () => {
+      const user = userEvent.setup();
       render(<ReasonsModal text="Include" reasons={mockReasonsInclude} />);
 
       const button = screen.getByText("Include").closest("button");
-      if (button) fireEvent.click(button);
+      if (button) await user.click(button);
 
       expect(screen.getByText("Milestone #1")).toBeInTheDocument();
       expect(screen.getByText("Milestone #2")).toBeInTheDocument();
@@ -231,20 +238,22 @@ describe("ReasonsModal", () => {
   });
 
   describe("Modal Content - Exclude", () => {
-    it("should display correct title for Exclude", () => {
+    it("should display correct title for Exclude", async () => {
+      const user = userEvent.setup();
       render(<ReasonsModal text="Exclude" reasons={mockReasonsExclude} />);
 
       const button = screen.getByText("Exclude").closest("button");
-      if (button) fireEvent.click(button);
+      if (button) await user.click(button);
 
       expect(screen.getByText("Reasons to exclude this project")).toBeInTheDocument();
     });
 
-    it("should display all Exclude reasons", () => {
+    it("should display all Exclude reasons", async () => {
+      const user = userEvent.setup();
       render(<ReasonsModal text="Exclude" reasons={mockReasonsExclude} />);
 
       const button = screen.getByText("Exclude").closest("button");
-      if (button) fireEvent.click(button);
+      if (button) await user.click(button);
 
       mockReasonsExclude.forEach((reason) => {
         expect(screen.getByText(reason)).toBeInTheDocument();
@@ -253,20 +262,22 @@ describe("ReasonsModal", () => {
   });
 
   describe("Empty Reasons", () => {
-    it('should display "No reasons provided" when reasons array is empty', () => {
+    it('should display "No reasons provided" when reasons array is empty', async () => {
+      const user = userEvent.setup();
       render(<ReasonsModal text="Include" reasons={[]} />);
 
       const button = screen.getByText("Include").closest("button");
-      if (button) fireEvent.click(button);
+      if (button) await user.click(button);
 
       expect(screen.getByText("No reasons provided.")).toBeInTheDocument();
     });
 
-    it("should display fallback message with proper styling", () => {
+    it("should display fallback message with proper styling", async () => {
+      const user = userEvent.setup();
       render(<ReasonsModal text="Include" reasons={[]} />);
 
       const button = screen.getByText("Include").closest("button");
-      if (button) fireEvent.click(button);
+      if (button) await user.click(button);
 
       const message = screen.getByText("No reasons provided.");
       expect(message.className).toContain("text-gray-500");
@@ -276,41 +287,45 @@ describe("ReasonsModal", () => {
   });
 
   describe("Styling", () => {
-    it("should have dark mode classes on dialog panel", () => {
+    it("should have dark mode classes on dialog panel", async () => {
+      const user = userEvent.setup();
       render(<ReasonsModal text="Include" reasons={mockReasonsInclude} />);
 
       const button = screen.getByText("Include").closest("button");
-      if (button) fireEvent.click(button);
+      if (button) await user.click(button);
 
       const panel = screen.getByTestId("dialog-panel");
       expect(panel.className).toContain("dark:bg-zinc-800");
     });
 
-    it("should have large max-width for modal", () => {
+    it("should have large max-width for modal", async () => {
+      const user = userEvent.setup();
       render(<ReasonsModal text="Include" reasons={mockReasonsInclude} />);
 
       const button = screen.getByText("Include").closest("button");
-      if (button) fireEvent.click(button);
+      if (button) await user.click(button);
 
       const panel = screen.getByTestId("dialog-panel");
       expect(panel.className).toContain("max-w-7xl");
     });
 
-    it("should have scrollable content area", () => {
+    it("should have scrollable content area", async () => {
+      const user = userEvent.setup();
       render(<ReasonsModal text="Include" reasons={mockReasonsInclude} />);
 
       const button = screen.getByText("Include").closest("button");
-      if (button) fireEvent.click(button);
+      if (button) await user.click(button);
 
       const contentArea = screen.getByText(mockReasonsInclude[0]).closest(".max-h-\\[60vh\\]");
       expect(contentArea?.className).toContain("overflow-y-auto");
     });
 
-    it("should have proper spacing between reasons", () => {
+    it("should have proper spacing between reasons", async () => {
+      const user = userEvent.setup();
       render(<ReasonsModal text="Include" reasons={mockReasonsInclude} />);
 
       const button = screen.getByText("Include").closest("button");
-      if (button) fireEvent.click(button);
+      if (button) await user.click(button);
 
       const reasonsContainer = screen.getByText(mockReasonsInclude[0]).closest(".space-y-3");
       expect(reasonsContainer).toBeInTheDocument();
@@ -318,31 +333,34 @@ describe("ReasonsModal", () => {
   });
 
   describe("Accessibility", () => {
-    it("should have proper heading hierarchy", () => {
+    it("should have proper heading hierarchy", async () => {
+      const user = userEvent.setup();
       render(<ReasonsModal text="Include" reasons={mockReasonsInclude} />);
 
       const button = screen.getByText("Include").closest("button");
-      if (button) fireEvent.click(button);
+      if (button) await user.click(button);
 
       const heading = screen.getByText("Reasons to include this project");
       expect(heading.tagName).toBe("H2");
     });
 
-    it("should have semantic font weight for milestone labels", () => {
+    it("should have semantic font weight for milestone labels", async () => {
+      const user = userEvent.setup();
       render(<ReasonsModal text="Include" reasons={mockReasonsInclude} />);
 
       const button = screen.getByText("Include").closest("button");
-      if (button) fireEvent.click(button);
+      if (button) await user.click(button);
 
       const milestoneLabel = screen.getByText("Milestone #1");
       expect(milestoneLabel.className).toContain("font-semibold");
     });
 
-    it("should have proper color contrast for reasons text", () => {
+    it("should have proper color contrast for reasons text", async () => {
+      const user = userEvent.setup();
       render(<ReasonsModal text="Include" reasons={mockReasonsInclude} />);
 
       const button = screen.getByText("Include").closest("button");
-      if (button) fireEvent.click(button);
+      if (button) await user.click(button);
 
       const reasonElement = screen.getByText(mockReasonsInclude[0]).parentElement;
       expect(reasonElement?.className).toContain("text-gray-700");
@@ -367,21 +385,23 @@ describe("ReasonsModal", () => {
       expect(button?.className).toContain("bg-green-100");
     });
 
-    it("should have dark mode classes for title", () => {
+    it("should have dark mode classes for title", async () => {
+      const user = userEvent.setup();
       render(<ReasonsModal text="Include" reasons={mockReasonsInclude} />);
 
       const button = screen.getByText("Include").closest("button");
-      if (button) fireEvent.click(button);
+      if (button) await user.click(button);
 
       const titleContainer = screen.getByText("Reasons to include this project").parentElement;
       expect(titleContainer?.className).toContain("dark:text-zinc-100");
     });
 
-    it("should have dark mode classes for close button", () => {
+    it("should have dark mode classes for close button", async () => {
+      const user = userEvent.setup();
       render(<ReasonsModal text="Include" reasons={mockReasonsInclude} />);
 
       const openButton = screen.getByText("Include").closest("button");
-      if (openButton) fireEvent.click(openButton);
+      if (openButton) await user.click(openButton);
 
       const closeButton = screen.getByText("Close");
       expect(closeButton.className).toContain("dark:text-zinc-100");
@@ -390,24 +410,26 @@ describe("ReasonsModal", () => {
   });
 
   describe("Multiple Reasons", () => {
-    it("should handle single reason", () => {
+    it("should handle single reason", async () => {
+      const user = userEvent.setup();
       const singleReason = ["Only one reason"];
       render(<ReasonsModal text="Include" reasons={singleReason} />);
 
       const button = screen.getByText("Include").closest("button");
-      if (button) fireEvent.click(button);
+      if (button) await user.click(button);
 
       expect(screen.getByText("Only one reason")).toBeInTheDocument();
       expect(screen.getByText("Milestone #1")).toBeInTheDocument();
       expect(screen.queryByText("Milestone #2")).not.toBeInTheDocument();
     });
 
-    it("should handle many reasons", () => {
+    it("should handle many reasons", async () => {
+      const user = userEvent.setup();
       const manyReasons = Array.from({ length: 10 }, (_, i) => `Reason ${i + 1}`);
       render(<ReasonsModal text="Include" reasons={manyReasons} />);
 
       const button = screen.getByText("Include").closest("button");
-      if (button) fireEvent.click(button);
+      if (button) await user.click(button);
 
       manyReasons.forEach((reason) => {
         expect(screen.getByText(reason)).toBeInTheDocument();
@@ -417,11 +439,12 @@ describe("ReasonsModal", () => {
       expect(screen.getByText("Milestone #10")).toBeInTheDocument();
     });
 
-    it("should correctly index milestones starting from 1", () => {
+    it("should correctly index milestones starting from 1", async () => {
+      const user = userEvent.setup();
       render(<ReasonsModal text="Include" reasons={mockReasonsInclude} />);
 
       const button = screen.getByText("Include").closest("button");
-      if (button) fireEvent.click(button);
+      if (button) await user.click(button);
 
       expect(screen.getByText("Milestone #1")).toBeInTheDocument();
       expect(screen.queryByText("Milestone #0")).not.toBeInTheDocument();
@@ -429,17 +452,19 @@ describe("ReasonsModal", () => {
   });
 
   describe("Edge Cases", () => {
-    it("should handle very long reason text", () => {
+    it("should handle very long reason text", async () => {
+      const user = userEvent.setup();
       const longReason = "A".repeat(500);
       render(<ReasonsModal text="Include" reasons={[longReason]} />);
 
       const button = screen.getByText("Include").closest("button");
-      if (button) fireEvent.click(button);
+      if (button) await user.click(button);
 
       expect(screen.getByText(longReason)).toBeInTheDocument();
     });
 
-    it("should handle special characters in reasons", () => {
+    it("should handle special characters in reasons", async () => {
+      const user = userEvent.setup();
       const specialReasons = [
         'Reason with "quotes"',
         "Reason with 'apostrophes'",
@@ -449,29 +474,30 @@ describe("ReasonsModal", () => {
       render(<ReasonsModal text="Include" reasons={specialReasons} />);
 
       const button = screen.getByText("Include").closest("button");
-      if (button) fireEvent.click(button);
+      if (button) await user.click(button);
 
       specialReasons.forEach((reason) => {
         expect(screen.getByText(reason)).toBeInTheDocument();
       });
     });
 
-    it("should handle rapid open/close cycles", () => {
+    it("should handle rapid open/close cycles", async () => {
+      const user = userEvent.setup();
       render(<ReasonsModal text="Include" reasons={mockReasonsInclude} />);
 
       const openButton = screen.getByText("Include").closest("button");
 
       // Open
-      if (openButton) fireEvent.click(openButton);
+      if (openButton) await user.click(openButton);
       expect(screen.getByTestId("dialog")).toBeInTheDocument();
 
       // Close
       const closeButton = screen.getByText("Close");
-      fireEvent.click(closeButton);
+      await user.click(closeButton);
       expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
 
       // Open again
-      if (openButton) fireEvent.click(openButton);
+      if (openButton) await user.click(openButton);
       expect(screen.getByTestId("dialog")).toBeInTheDocument();
     });
   });
@@ -500,20 +526,22 @@ describe("ReasonsModal", () => {
   });
 
   describe("Close Button", () => {
-    it("should render Close button in modal footer", () => {
+    it("should render Close button in modal footer", async () => {
+      const user = userEvent.setup();
       render(<ReasonsModal text="Include" reasons={mockReasonsInclude} />);
 
       const openButton = screen.getByText("Include").closest("button");
-      if (openButton) fireEvent.click(openButton);
+      if (openButton) await user.click(openButton);
 
       expect(screen.getByText("Close")).toBeInTheDocument();
     });
 
-    it("should have proper styling for Close button", () => {
+    it("should have proper styling for Close button", async () => {
+      const user = userEvent.setup();
       render(<ReasonsModal text="Include" reasons={mockReasonsInclude} />);
 
       const openButton = screen.getByText("Include").closest("button");
-      if (openButton) fireEvent.click(openButton);
+      if (openButton) await user.click(openButton);
 
       const closeButton = screen.getByText("Close");
       expect(closeButton.className).toContain("bg-transparent");
@@ -521,11 +549,12 @@ describe("ReasonsModal", () => {
       expect(closeButton.className).toContain("hover:bg-zinc-900");
     });
 
-    it("should have Close button aligned to the right", () => {
+    it("should have Close button aligned to the right", async () => {
+      const user = userEvent.setup();
       render(<ReasonsModal text="Include" reasons={mockReasonsInclude} />);
 
       const openButton = screen.getByText("Include").closest("button");
-      if (openButton) fireEvent.click(openButton);
+      if (openButton) await user.click(openButton);
 
       const buttonContainer = screen.getByText("Close").parentElement;
       expect(buttonContainer?.className).toContain("justify-end");

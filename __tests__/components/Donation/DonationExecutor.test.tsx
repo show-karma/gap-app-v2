@@ -9,7 +9,8 @@
  * - Accessibility labels
  */
 
-import { fireEvent, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { DonationExecutor } from "@/components/Donation/DonationExecutor";
 import type { SupportedToken } from "@/constants/supportedTokens";
 import { renderWithProviders } from "../../utils/render";
@@ -154,10 +155,11 @@ describe("DonationExecutor", () => {
   });
 
   describe("User interactions", () => {
-    it("should call onExecute when button is clicked", () => {
+    it("should call onExecute when button is clicked", async () => {
+      const user = userEvent.setup();
       renderWithProviders(<DonationExecutor {...defaultProps} />);
 
-      fireEvent.click(screen.getByTestId("execute-button"));
+      await user.click(screen.getByTestId("execute-button"));
 
       expect(defaultProps.onExecute).toHaveBeenCalledTimes(1);
     });

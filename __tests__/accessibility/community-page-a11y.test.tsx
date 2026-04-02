@@ -183,6 +183,7 @@ vi.mock("@/hooks/useCommunityStats", () => ({
 
 import { CommunitiesPage } from "@/components/Pages/Communities/CommunitiesPage";
 
+// Fresh QueryClient per render — no afterEach cleanup required
 function createTestQueryClient() {
   return new QueryClient({
     defaultOptions: {

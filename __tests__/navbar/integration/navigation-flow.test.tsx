@@ -205,6 +205,7 @@ describe("Navigation Flow Integration Tests", () => {
       const drawer = screen.getByRole("dialog");
       const createProjectLink = within(drawer).getByText("Create project");
 
+      // fireEvent required: vaul drawer incompatible with userEvent in jsdom
       fireEvent.click(createProjectLink);
 
       // Drawer should close after navigation
@@ -690,6 +691,7 @@ describe("Navigation Flow Integration Tests", () => {
       // Click navigation item
       const drawer = screen.getByRole("dialog");
       const allProjectsLink = within(drawer).getByText("All projects");
+      // fireEvent required: vaul drawer incompatible with userEvent in jsdom
       fireEvent.click(allProjectsLink);
 
       // Drawer should close (via onClose callback)

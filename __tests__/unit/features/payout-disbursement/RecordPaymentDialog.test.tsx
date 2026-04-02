@@ -3,7 +3,8 @@
  * @description Verifies payment type selection, form validation, and chain warning behavior.
  */
 
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // ---------------------------------------------------------------------------
@@ -99,14 +100,16 @@ describe("RecordPaymentDialog", () => {
     expect(submitButton).toBeDisabled();
   });
 
-  it("should disable milestone checkboxes when initial payment selected", () => {
+  it("should disable milestone checkboxes when initial payment selected", async () => {
+    const user = userEvent.setup();
     renderDialog();
 
     // Select "Initial Payment"
-    const initialPaymentCheckbox = screen.getByText("Initial Payment")
+    const initialPaymentCheckbox = screen
+      .getByText("Initial Payment")
       .closest("label")!
       .querySelector("input[type='checkbox']") as HTMLInputElement;
-    fireEvent.click(initialPaymentCheckbox);
+    await user.click(initialPaymentCheckbox);
 
     // Milestone checkboxes should be disabled
     const milestoneCheckboxes = screen
@@ -122,22 +125,28 @@ describe("RecordPaymentDialog", () => {
     expect(milestone2Checkbox).toBeDisabled();
   });
 
-  it("should enable submit when amount, date, and type selected", () => {
+  it("should enable submit when amount, date, and type selected", async () => {
+    const user = userEvent.setup();
     renderDialog();
 
     // Select "Initial Payment"
-    const initialPaymentCheckbox = screen.getByText("Initial Payment")
+    const initialPaymentCheckbox = screen
+      .getByText("Initial Payment")
       .closest("label")!
       .querySelector("input[type='checkbox']") as HTMLInputElement;
-    fireEvent.click(initialPaymentCheckbox);
+    await user.click(initialPaymentCheckbox);
 
     // Fill amount
     const amountInput = screen.getByPlaceholderText("e.g. 50000");
-    fireEvent.change(amountInput, { target: { value: "10000" } });
+    await user.clear(amountInput);
+
+    await user.type(amountInput, "10000");
 
     // Fill date
     const dateInput = screen.getByLabelText("Payment Date");
-    fireEvent.change(dateInput, { target: { value: "2026-03-15" } });
+    await user.clear(dateInput);
+
+    await user.type(dateInput, "2026-03-15");
 
     const submitButton = screen.getByRole("button", { name: /record payment/i });
     expect(submitButton).toBeEnabled();
@@ -147,9 +156,7 @@ describe("RecordPaymentDialog", () => {
     // chainID 999 is not in TOKEN_ADDRESSES.usdc
     renderDialog({ chainID: 999 });
 
-    expect(
-      screen.getByText(/USDC is not configured for this grant's chain/i)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/USDC is not configured for this grant's chain/i)).toBeInTheDocument();
   });
 
   it("should not show chain warning when chain is supported", () => {

@@ -8,7 +8,8 @@
  * - Both alerts can appear independently
  */
 
-import { fireEvent, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { DonationAlerts } from "@/components/Donation/DonationAlerts";
 import { renderWithProviders } from "../../utils/render";
 
@@ -59,7 +60,8 @@ describe("DonationAlerts", () => {
       ).toBeInTheDocument();
     });
 
-    it("should call login when Connect Wallet button is clicked", () => {
+    it("should call login when Connect Wallet button is clicked", async () => {
+      const user = userEvent.setup();
       renderWithProviders(
         <DonationAlerts isConnected={false} address={undefined} isCurrentNetworkSupported={true} />
       );
@@ -68,7 +70,7 @@ describe("DonationAlerts", () => {
       const buttons = screen.getAllByText("Connect Wallet");
       const button = buttons.find((el) => el.tagName === "BUTTON");
       expect(button).toBeTruthy();
-      fireEvent.click(button!);
+      await user.click(button!);
 
       expect(mockLogin).toHaveBeenCalledTimes(1);
     });

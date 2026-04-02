@@ -4,7 +4,8 @@
  * covering UI rendering, user interactions, validation, and edge cases
  */
 
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { DonationCheckout } from "@/components/Donation/DonationCheckout";
 import "@testing-library/jest-dom";
 import type { SupportedToken } from "@/constants/supportedTokens";
@@ -405,6 +406,7 @@ describe("DonationCheckout", () => {
 
   describe("User Interactions", () => {
     it("should call handleExecuteDonations when execute button clicked", async () => {
+      const user = userEvent.setup();
       const mockHandleExecute = vi.fn();
       const { useDonationCheckout } = require("@/hooks/donation/useDonationCheckout");
       useDonationCheckout.mockReturnValue({
@@ -415,14 +417,15 @@ describe("DonationCheckout", () => {
       render(<DonationCheckout />);
 
       const executeButton = screen.getByTestId("donation-executor");
-      fireEvent.click(executeButton);
+      await user.click(executeButton);
 
       await waitFor(() => {
         expect(mockHandleExecute).toHaveBeenCalledWith([mockPayment]);
       });
     });
 
-    it("should call clear when clear button clicked", () => {
+    it("should call clear when clear button clicked", async () => {
+      const user = userEvent.setup();
       const mockClear = vi.fn();
       const { useDonationCart } = require("@/store");
       useDonationCart.mockReturnValue({
@@ -433,12 +436,13 @@ describe("DonationCheckout", () => {
       render(<DonationCheckout />);
 
       const clearButton = screen.getByTestId("clear-cart");
-      fireEvent.click(clearButton);
+      await user.click(clearButton);
 
       expect(mockClear).toHaveBeenCalled();
     });
 
     it("should call handleProceedWithDonations when proceed clicked", async () => {
+      const user = userEvent.setup();
       const mockHandleProceed = vi.fn();
       const { useDonationCheckout } = require("@/hooks/donation/useDonationCheckout");
       useDonationCheckout.mockReturnValue({
@@ -450,14 +454,15 @@ describe("DonationCheckout", () => {
       render(<DonationCheckout />);
 
       const proceedButton = screen.getByTestId("proceed-button");
-      fireEvent.click(proceedButton);
+      await user.click(proceedButton);
 
       await waitFor(() => {
         expect(mockHandleProceed).toHaveBeenCalled();
       });
     });
 
-    it("should close steps preview when cancel clicked", () => {
+    it("should close steps preview when cancel clicked", async () => {
+      const user = userEvent.setup();
       const mockSetShowStepsPreview = vi.fn();
       const { useDonationCheckout } = require("@/hooks/donation/useDonationCheckout");
       useDonationCheckout.mockReturnValue({
@@ -469,12 +474,13 @@ describe("DonationCheckout", () => {
       render(<DonationCheckout />);
 
       const cancelButton = screen.getByTestId("cancel-button");
-      fireEvent.click(cancelButton);
+      await user.click(cancelButton);
 
       expect(mockSetShowStepsPreview).toHaveBeenCalledWith(false);
     });
 
-    it("should navigate back when browse projects clicked", () => {
+    it("should navigate back when browse projects clicked", async () => {
+      const user = userEvent.setup();
       const { useDonationCart } = require("@/store");
       useDonationCart.mockReturnValue({
         ...defaultCartState,
@@ -484,12 +490,13 @@ describe("DonationCheckout", () => {
       render(<DonationCheckout />);
 
       const browseButton = screen.getByTestId("browse-projects");
-      fireEvent.click(browseButton);
+      await user.click(browseButton);
 
       expect(mockRouterBack).toHaveBeenCalled();
     });
 
-    it("should clear session and navigate back when start new donation clicked", () => {
+    it("should clear session and navigate back when start new donation clicked", async () => {
+      const user = userEvent.setup();
       const mockClearSession = vi.fn();
       const { useDonationCart } = require("@/store");
       useDonationCart.mockReturnValue({
@@ -502,7 +509,7 @@ describe("DonationCheckout", () => {
       render(<DonationCheckout />);
 
       const startNewButton = screen.getByTestId("start-new-donation");
-      fireEvent.click(startNewButton);
+      await user.click(startNewButton);
 
       expect(mockClearSession).toHaveBeenCalled();
       expect(mockRouterBack).toHaveBeenCalled();

@@ -55,6 +55,7 @@ const CLAIM_GRANTS: ClaimGrantsConfig = {
   providerConfig: { type: "hedgey", networkName: "optimism", contractAddress: "0xcontract" },
 };
 
+// Fresh QueryClient per render — no afterEach cleanup required
 function createWrapper() {
   const queryClient = new QueryClient({
     defaultOptions: {

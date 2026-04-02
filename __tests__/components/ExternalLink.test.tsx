@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import "@testing-library/jest-dom";
 
@@ -155,7 +156,8 @@ describe("ExternalLink", () => {
       expect(handleClick).toHaveBeenCalledTimes(1);
     });
 
-    it("should accept onMouseEnter handler", () => {
+    it("should accept onMouseEnter handler", async () => {
+      const user = userEvent.setup();
       const handleMouseEnter = vi.fn();
 
       render(
@@ -165,7 +167,7 @@ describe("ExternalLink", () => {
       );
 
       const link = screen.getByText("Link");
-      // Using fireEvent for React synthetic events
+      // fireEvent required: testing React synthetic mouseEnter event handler
       require("@testing-library/react").fireEvent.mouseEnter(link);
 
       expect(handleMouseEnter).toHaveBeenCalledTimes(1);

@@ -115,6 +115,7 @@ import { ApplicationTable } from "@/components/FundingPlatform/ApplicationList/A
 
 // --- Tests -------------------------------------------------------------
 
+// Fresh QueryClient per render — no afterEach cleanup required
 function createWrapper() {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
