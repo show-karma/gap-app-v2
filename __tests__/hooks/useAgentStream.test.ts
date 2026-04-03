@@ -169,7 +169,7 @@ describe("useAgentStream", () => {
     mockGetToken.mockResolvedValue("mock-token-123");
     wrapper = createWrapper();
 
-    // Reset store state
+    // Reset store state — queryClient cleanup is in afterEach
     useAgentChatStore.setState({
       messages: [],
       isOpen: false,
@@ -177,6 +177,10 @@ describe("useAgentStream", () => {
       error: null,
       agentContext: null,
     });
+  });
+
+  afterEach(() => {
+    testQueryClient.clear();
   });
 
   describe("sendMessage", () => {

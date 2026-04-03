@@ -4,6 +4,7 @@ import {
   CheckCircleIcon,
   ExclamationTriangleIcon,
   InformationCircleIcon,
+  LockClosedIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
 import {
@@ -17,6 +18,7 @@ import {
 } from "react";
 import toast from "react-hot-toast";
 import { isAddress } from "viem";
+import { DeleteDialog } from "@/components/DeleteDialog";
 import { Spinner } from "@/components/Utilities/Spinner";
 import {
   getAvailableNetworks,
@@ -47,6 +49,8 @@ export interface PayoutConfigurationContentProps {
   grantName: string;
   projectName: string;
   existingConfig?: PayoutGrantConfig | null;
+  /** IDs of allocations already paid via disbursements (edit/delete disabled for these) */
+  paidAllocationIds?: string[];
   onSuccess?: () => void;
   onDirtyChange?: (dirty: boolean) => void;
   onSavingChange?: (saving: boolean) => void;
@@ -88,6 +92,7 @@ export function PayoutConfigurationContent({
   onSuccess,
   onDirtyChange,
   onSavingChange,
+  paidAllocationIds = [],
 }: PayoutConfigurationContentProps) {
   const {
     data: fetchedConfig,
@@ -130,6 +135,10 @@ export function PayoutConfigurationContent({
 
   const initialAllocationsRef = useRef<string>("");
 
+  // Delete confirmation state
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
   // Validation state
   const [addressError, setAddressError] = useState<string | null>(null);
   const [amountError, setAmountError] = useState<string | null>(null);
@@ -150,29 +159,52 @@ export function PayoutConfigurationContent({
   const generateAllocationsFromMilestones = useCallback(
     (existingAllocations?: MilestoneAllocation[] | null): MilestoneAllocation[] => {
       const allocations: MilestoneAllocation[] = [];
+      const usedIds = new Set<string>();
 
       const existingFirst = existingAllocations?.find((a) => a.label === FIRST_PAYMENT_LABEL);
+      const firstId = existingFirst?.id || crypto.randomUUID();
+      usedIds.add(firstId);
       allocations.push({
-        id: existingFirst?.id || crypto.randomUUID(),
+        id: firstId,
         label: FIRST_PAYMENT_LABEL,
         amount: existingFirst?.amount || "",
       });
 
       milestones.forEach((milestone, index) => {
         const existingMilestone = existingAllocations?.find(
-          (a) => a.milestoneUID === milestone.uid
+          (a) => a.milestoneUID === milestone.uid && !usedIds.has(a.id)
         );
+        const milestoneId = existingMilestone?.id || crypto.randomUUID();
+        usedIds.add(milestoneId);
         allocations.push({
-          id: existingMilestone?.id || crypto.randomUUID(),
+          id: milestoneId,
           milestoneUID: milestone.uid,
           label: milestone.title || `Milestone ${index + 1}`,
           amount: existingMilestone?.amount || "",
         });
       });
 
-      const existingFinal = existingAllocations?.find((a) => a.label === FINAL_PAYMENT_LABEL);
+      // Re-add custom allocations (no milestoneUID, not First/Final payment)
+      if (existingAllocations) {
+        for (const alloc of existingAllocations) {
+          if (
+            !usedIds.has(alloc.id) &&
+            !alloc.milestoneUID &&
+            alloc.label !== FIRST_PAYMENT_LABEL &&
+            alloc.label !== FINAL_PAYMENT_LABEL
+          ) {
+            usedIds.add(alloc.id);
+            allocations.push({ ...alloc });
+          }
+        }
+      }
+
+      const existingFinal = existingAllocations?.find(
+        (a) => a.label === FINAL_PAYMENT_LABEL && !usedIds.has(a.id)
+      );
+      const finalId = existingFinal?.id || crypto.randomUUID();
       allocations.push({
-        id: existingFinal?.id || crypto.randomUUID(),
+        id: finalId,
         label: FINAL_PAYMENT_LABEL,
         amount: existingFinal?.amount || "",
       });
@@ -186,6 +218,13 @@ export function PayoutConfigurationContent({
     if (allocation.milestoneUID) return false;
     return allocation.label !== FIRST_PAYMENT_LABEL && allocation.label !== FINAL_PAYMENT_LABEL;
   }, []);
+
+  const paidAllocationIdsSet = useMemo(() => new Set(paidAllocationIds), [paidAllocationIds]);
+
+  const isAllocationPaid = useCallback(
+    (allocationId: string): boolean => paidAllocationIdsSet.has(allocationId),
+    [paidAllocationIdsSet]
+  );
 
   const saveConfigMutation = useSavePayoutConfig({
     onSuccess: () => {
@@ -376,14 +415,22 @@ export function PayoutConfigurationContent({
     ]);
   };
 
-  const handleRemoveCustomLineItem = (id: string) => {
-    setMilestoneAllocations((prev) => prev.filter((alloc) => alloc.id !== id));
+  const handleRequestRemoveLineItem = (id: string) => {
+    setPendingDeleteId(id);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleConfirmRemoveLineItem = async () => {
+    if (!pendingDeleteId) return;
+    setMilestoneAllocations((prev) => prev.filter((alloc) => alloc.id !== pendingDeleteId));
     setAllocationErrors((prev) => {
       const newErrors = { ...prev };
-      delete newErrors[id];
+      delete newErrors[pendingDeleteId];
       delete newErrors._sum;
       return newErrors;
     });
+    setPendingDeleteId(null);
+    setIsDeleteDialogOpen(false);
   };
 
   const handleSave = async () => {
@@ -607,18 +654,24 @@ export function PayoutConfigurationContent({
             const isFinalPayment = alloc.label === FINAL_PAYMENT_LABEL;
             const isCustom = isCustomAllocation(alloc);
             const isMilestone = !!alloc.milestoneUID;
+            const isPaid = isAllocationPaid(alloc.id);
 
             return (
-              <div key={alloc.id} className="space-y-1">
+              <div key={alloc.id} className="space-y-1" data-allocation-id={alloc.id}>
                 <div
                   className={`flex items-center gap-3 p-3 rounded-lg ${
                     allocationErrors[alloc.id]
                       ? "bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800"
-                      : isFirstPayment || isFinalPayment
-                        ? "bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800"
-                        : "bg-gray-50 dark:bg-zinc-700/50"
+                      : isPaid
+                        ? "bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800"
+                        : isFirstPayment || isFinalPayment
+                          ? "bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800"
+                          : "bg-gray-50 dark:bg-zinc-700/50"
                   }`}
                 >
+                  {isPaid && (
+                    <LockClosedIcon className="h-4 w-4 text-green-600 dark:text-green-400 flex-shrink-0" />
+                  )}
                   <div className="flex-1">
                     {isCustom ? (
                       <input
@@ -627,7 +680,10 @@ export function PayoutConfigurationContent({
                         value={alloc.label}
                         onChange={(e) => handleUpdateAllocationLabel(alloc.id, e.target.value)}
                         placeholder="Description"
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-700 text-gray-900 dark:text-white text-sm"
+                        disabled={isPaid}
+                        className={`w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-700 text-gray-900 dark:text-white text-sm ${
+                          isPaid ? "opacity-60 cursor-not-allowed" : ""
+                        }`}
                       />
                     ) : (
                       <span className="text-sm font-medium text-gray-900 dark:text-white">
@@ -640,6 +696,11 @@ export function PayoutConfigurationContent({
                       </span>
                     )}
                   </div>
+                  {isPaid && (
+                    <span className="text-xs font-medium text-green-700 dark:text-green-300 bg-green-100 dark:bg-green-900/40 px-2 py-0.5 rounded-full whitespace-nowrap">
+                      Paid
+                    </span>
+                  )}
                   <div className="w-36 flex items-center gap-2">
                     <input
                       type="text"
@@ -649,17 +710,20 @@ export function PayoutConfigurationContent({
                         handleUpdateAllocationAmount(alloc.id, sanitizeNumericInput(e.target.value))
                       }
                       placeholder="0"
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-700 text-gray-900 dark:text-white text-sm text-right"
+                      disabled={isPaid}
+                      className={`w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-700 text-gray-900 dark:text-white text-sm text-right ${
+                        isPaid ? "opacity-60 cursor-not-allowed" : ""
+                      }`}
                     />
                     <span className="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
                       {selectedTokenSymbol}
                     </span>
                   </div>
-                  {isCustom && (
+                  {isCustom && !isPaid && (
                     <button
                       type="button"
                       aria-label="Remove custom line item"
-                      onClick={() => handleRemoveCustomLineItem(alloc.id)}
+                      onClick={() => handleRequestRemoveLineItem(alloc.id)}
                       className="p-2 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 transition-colors"
                     >
                       <TrashIcon className="h-4 w-4" />
@@ -733,6 +797,19 @@ export function PayoutConfigurationContent({
           </p>
         )}
       </div>
+
+      {/* Delete confirmation dialog */}
+      <DeleteDialog
+        title="Are you sure you want to remove this line item?"
+        deleteFunction={handleConfirmRemoveLineItem}
+        isLoading={false}
+        buttonElement={null}
+        externalIsOpen={isDeleteDialogOpen}
+        externalSetIsOpen={(open) => {
+          setIsDeleteDialogOpen(open);
+          if (!open) setPendingDeleteId(null);
+        }}
+      />
     </div>
   );
 }

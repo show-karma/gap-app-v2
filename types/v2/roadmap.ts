@@ -120,6 +120,11 @@ export type GrantMilestoneWithDetails = {
   completionDetails: GrantMilestoneCompletionDetails | null;
   verificationDetails: GrantMilestoneVerificationDetails | null;
   fundingApplicationCompletion?: FundingApplicationMilestoneCompletion | null;
+  invoiceInfo?: {
+    status: string;
+    receivedAt: string | null;
+    fileKey: string | null;
+  } | null;
 };
 
 export type GrantUpdateWithDetails = {
@@ -273,5 +278,11 @@ export type UnifiedMilestone = {
   endorsement?: {
     endorsedBy: string;
     comment?: string;
+  };
+  /** Invoice info for grant milestones with invoiceRequired */
+  invoiceInfo?: {
+    status: string;
+    receivedAt: string | null;
+    fileKey: string | null;
   };
 };

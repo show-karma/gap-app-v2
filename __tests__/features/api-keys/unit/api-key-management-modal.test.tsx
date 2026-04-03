@@ -86,6 +86,7 @@ vi.mock("react-hot-toast", () => ({
   },
 }));
 
+// Fresh QueryClient per render — no afterEach cleanup required
 const createWrapper = () => {
   const queryClient = new QueryClient({
     defaultOptions: {

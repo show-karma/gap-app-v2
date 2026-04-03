@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 
 const mockPush = vi.fn();
@@ -49,16 +50,18 @@ describe("AccessDenied", () => {
       expect(screen.getByRole("button", { name: /sign in/i })).toBeInTheDocument();
     });
 
-    it("calls login() when Sign In button is clicked", () => {
+    it("calls login() when Sign In button is clicked", async () => {
+      const user = userEvent.setup();
       render(<AccessDenied />);
-      fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+      await user.click(screen.getByRole("button", { name: /sign in/i }));
       expect(mockLogin).toHaveBeenCalledTimes(1);
     });
 
-    it("does NOT use window.location.href for navigation", () => {
+    it("does NOT use window.location.href for navigation", async () => {
+      const user = userEvent.setup();
       const locationSpy = vi.spyOn(window, "location", "get");
       render(<AccessDenied />);
-      fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+      await user.click(screen.getByRole("button", { name: /sign in/i }));
       // window.location.href should never be set
       expect(locationSpy).not.toHaveBeenCalled();
       locationSpy.mockRestore();
@@ -78,22 +81,25 @@ describe("AccessDenied", () => {
       expect(screen.getByRole("button", { name: /go to home/i })).toBeInTheDocument();
     });
 
-    it("navigates to default returnUrl ('/') when button clicked", () => {
+    it("navigates to default returnUrl ('/') when button clicked", async () => {
+      const user = userEvent.setup();
       render(<AccessDenied />);
-      fireEvent.click(screen.getByRole("button", { name: /go to home/i }));
+      await user.click(screen.getByRole("button", { name: /go to home/i }));
       expect(mockPush).toHaveBeenCalledWith("/");
     });
 
-    it("uses custom returnUrl when provided", () => {
+    it("uses custom returnUrl when provided", async () => {
+      const user = userEvent.setup();
       render(<AccessDenied returnUrl="/dashboard" />);
-      fireEvent.click(screen.getByRole("button", { name: /go to home/i }));
+      await user.click(screen.getByRole("button", { name: /go to home/i }));
       expect(mockPush).toHaveBeenCalledWith("/dashboard");
     });
 
-    it("does NOT use window.location.href for navigation", () => {
+    it("does NOT use window.location.href for navigation", async () => {
+      const user = userEvent.setup();
       const locationSpy = vi.spyOn(window, "location", "get");
       render(<AccessDenied returnUrl="/dashboard" />);
-      fireEvent.click(screen.getByRole("button", { name: /go to home/i }));
+      await user.click(screen.getByRole("button", { name: /go to home/i }));
       expect(locationSpy).not.toHaveBeenCalled();
       locationSpy.mockRestore();
     });

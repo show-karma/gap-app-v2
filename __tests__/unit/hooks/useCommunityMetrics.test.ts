@@ -49,6 +49,10 @@ describe("useCommunityMetrics", () => {
     vi.clearAllMocks();
   });
 
+  afterEach(() => {
+    queryClient.clear();
+  });
+
   const mockMetricsResponse = {
     communityUID: "filecoin-uid",
     metrics: [

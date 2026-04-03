@@ -169,6 +169,8 @@ export const INDEXER = {
         `/v2/funding-applications/user/my-applications?communitySlug=${communitySlug}`,
       MILESTONE_COMPLETIONS: (referenceNumber: string) =>
         `/v2/funding-applications/${referenceNumber}/milestone-completions`,
+      INVOICE_CONFIG: (referenceNumber: string) =>
+        `/v2/funding-applications/${referenceNumber}/invoice-config`,
     },
     AUTH: {
       PERMISSIONS: (params?: {
@@ -237,6 +239,7 @@ export const INDEXER = {
     },
     PAYOUTS: {
       CREATE: "/v2/payouts/disburse",
+      RECORD_PAYMENT: "/v2/payouts/record-payment",
       RECORD_SAFE_TX: (disbursementId: string) => `/v2/payouts/${disbursementId}/record-safe-tx`,
       GRANT_HISTORY: (grantUID: string, page?: number, limit?: number) => {
         const params = new URLSearchParams();
@@ -342,6 +345,10 @@ export const INDEXER = {
         `/v2/payout-config/community/${communityUID}/public`,
       BY_GRANT: (grantUID: string) => `/v2/payout-config/grant/${grantUID}`,
       DELETE: (grantUID: string) => `/v2/payout-config/grant/${grantUID}`,
+      UPDATE_LINE_ITEM: (grantUID: string, allocationId: string) =>
+        `/v2/payout-config/grant/${grantUID}/line-items/${allocationId}`,
+      DELETE_LINE_ITEM: (grantUID: string, allocationId: string) =>
+        `/v2/payout-config/grant/${grantUID}/line-items/${allocationId}`,
     },
     GRANT_AGREEMENTS: {
       TOGGLE: (grantUID: string) => `/v2/grant-agreements/${grantUID}`,
@@ -352,8 +359,15 @@ export const INDEXER = {
       BY_GRANT: (grantUID: string) => `/v2/milestone-invoices/grant/${grantUID}`,
       PRESIGNED_URL: () => `/v2/milestone-invoices/presigned`,
       DOWNLOAD: (key: string) => `/v2/milestone-invoices/download?key=${encodeURIComponent(key)}`,
+      GRANTEE_PRESIGNED: () => `/v2/milestone-invoices/grantee/presigned`,
       UPDATE_PAYMENT_STATUS: (grantUID: string) =>
         `/v2/milestone-invoices/${grantUID}/payment-status`,
+    },
+    GRANTS: {
+      INVOICE_REQUIREMENT: (grantUID: string) => `/v2/grants/${grantUID}/invoice-requirement`,
+      INVOICE_SUBMIT: (grantUID: string) => `/v2/grants/${grantUID}/invoice`,
+      INVOICE_DOWNLOAD: (grantUID: string, key: string) =>
+        `/v2/grants/${grantUID}/invoice/download?key=${encodeURIComponent(key)}`,
     },
   },
   PROGRAMS: {

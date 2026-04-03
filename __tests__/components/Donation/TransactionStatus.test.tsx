@@ -8,7 +8,8 @@
  * - Retry button logic (canRetry + hasFailures + onRetry)
  */
 
-import { fireEvent, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { TransactionStatus } from "@/components/Donation/TransactionStatus";
 import type { SupportedToken } from "@/constants/supportedTokens";
 import { renderWithProviders } from "../../utils/render";
@@ -134,7 +135,8 @@ describe("TransactionStatus", () => {
   });
 
   describe("Retry button", () => {
-    it("should show Retry Failed button when there are failures and canRetry and onRetry", () => {
+    it("should show Retry Failed button when there are failures and canRetry and onRetry", async () => {
+      const user = userEvent.setup();
       const onRetry = vi.fn();
       renderWithProviders(
         <TransactionStatus
@@ -149,7 +151,7 @@ describe("TransactionStatus", () => {
       const retryButton = screen.getByText("Retry Failed");
       expect(retryButton).toBeInTheDocument();
 
-      fireEvent.click(retryButton);
+      await user.click(retryButton);
       expect(onRetry).toHaveBeenCalledTimes(1);
     });
 

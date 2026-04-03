@@ -4,6 +4,8 @@
  */
 
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
+// NOTE: fireEvent.click is retained in this file for vaul drawer interactions
+// and desktop DropdownMenu interactions that use setPointerCapture (incompatible with userEvent in jsdom)
 import userEvent from "@testing-library/user-event";
 import { Navbar } from "@/src/components/navbar/navbar";
 import { getAuthFixture } from "../fixtures/auth-fixtures";
@@ -111,7 +113,7 @@ describe("Theme Switching Integration Tests", () => {
           expect(screen.getByText("Dark mode")).toBeInTheDocument();
         });
 
-        // Click theme toggle
+        // fireEvent required: vaul drawer incompatible with userEvent in jsdom
         const darkModeButton = screen.getByText("Dark mode");
         fireEvent.click(darkModeButton);
 
@@ -145,7 +147,7 @@ describe("Theme Switching Integration Tests", () => {
           expect(screen.getByText("Light mode")).toBeInTheDocument();
         });
 
-        // Click theme toggle
+        // fireEvent required: vaul drawer incompatible with userEvent in jsdom
         const lightModeButton = screen.getByText("Light mode");
         fireEvent.click(lightModeButton);
 
@@ -180,6 +182,7 @@ describe("Theme Switching Integration Tests", () => {
           expect(screen.getByText("Dark mode")).toBeInTheDocument();
         });
 
+        // fireEvent required: vaul drawer incompatible with userEvent in jsdom
         const darkModeButton = screen.getByText("Dark mode");
         fireEvent.click(darkModeButton);
 
@@ -287,7 +290,7 @@ describe("Theme Switching Integration Tests", () => {
 
       const drawer = screen.getByRole("dialog");
 
-      // Click theme toggle
+      // fireEvent required: vaul drawer incompatible with userEvent in jsdom
       const darkModeButton = within(drawer).getByText("Dark mode");
       fireEvent.click(darkModeButton);
 
@@ -319,7 +322,7 @@ describe("Theme Switching Integration Tests", () => {
 
       const drawer = screen.getByRole("dialog");
 
-      // Click theme toggle
+      // fireEvent required: vaul drawer incompatible with userEvent in jsdom
       const darkModeButton = within(drawer).getByText("Dark mode");
       fireEvent.click(darkModeButton);
 
@@ -352,6 +355,7 @@ describe("Theme Switching Integration Tests", () => {
       });
 
       let drawer = screen.getByRole("dialog");
+      // fireEvent required: vaul drawer incompatible with userEvent in jsdom
       const darkModeButton = within(drawer).getByText("Dark mode");
       fireEvent.click(darkModeButton);
 
@@ -365,7 +369,7 @@ describe("Theme Switching Integration Tests", () => {
         }),
       });
 
-      // Close and reopen drawer (use fireEvent for mobile drawer interactions)
+      // fireEvent required: vaul drawer incompatible with userEvent in jsdom
       const closeButton = screen.getByLabelText(/close/i);
       fireEvent.click(closeButton);
 
@@ -435,6 +439,7 @@ describe("Theme Switching Integration Tests", () => {
       });
 
       const drawer = screen.getByRole("dialog");
+      // fireEvent required: vaul drawer incompatible with userEvent in jsdom
       const darkModeButton = within(drawer).getByText("Dark mode");
       fireEvent.click(darkModeButton);
 
@@ -494,7 +499,7 @@ describe("Theme Switching Integration Tests", () => {
         const drawer = screen.getByRole("dialog");
         expect(within(drawer).getByText("Dark mode")).toBeInTheDocument();
 
-        // Click theme toggle
+        // fireEvent required: vaul drawer incompatible with userEvent in jsdom
         const darkModeButton = within(drawer).getByText("Dark mode");
         fireEvent.click(darkModeButton);
 

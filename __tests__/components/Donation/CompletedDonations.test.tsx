@@ -9,7 +9,8 @@
  * - Back to Community link
  */
 
-import { fireEvent, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { CompletedDonations } from "@/components/Donation/CompletedDonations";
 import type { DonationSession } from "@/store/donationCart";
 import { renderWithProviders } from "../../utils/render";
@@ -101,7 +102,8 @@ describe("CompletedDonations", () => {
       expect(screen.getByRole("button", { name: "Browse Projects" })).toBeInTheDocument();
     });
 
-    it("should call onStartNewDonation when Browse Projects is clicked in empty state", () => {
+    it("should call onStartNewDonation when Browse Projects is clicked in empty state", async () => {
+      const user = userEvent.setup();
       const emptySession: DonationSession = {
         id: "session-empty",
         timestamp: Date.now(),
@@ -113,7 +115,7 @@ describe("CompletedDonations", () => {
         <CompletedDonations session={emptySession} onStartNewDonation={onStartNewDonation} />
       );
 
-      fireEvent.click(screen.getByRole("button", { name: "Browse Projects" }));
+      await user.click(screen.getByRole("button", { name: "Browse Projects" }));
       expect(onStartNewDonation).toHaveBeenCalledTimes(1);
     });
   });
@@ -210,12 +212,13 @@ describe("CompletedDonations", () => {
   });
 
   describe("User interactions", () => {
-    it("should call onStartNewDonation when Make Another Donation is clicked", () => {
+    it("should call onStartNewDonation when Make Another Donation is clicked", async () => {
+      const user = userEvent.setup();
       renderWithProviders(
         <CompletedDonations session={mockSession} onStartNewDonation={onStartNewDonation} />
       );
 
-      fireEvent.click(screen.getByRole("button", { name: /Make Another Donation/ }));
+      await user.click(screen.getByRole("button", { name: /Make Another Donation/ }));
       expect(onStartNewDonation).toHaveBeenCalledTimes(1);
     });
 

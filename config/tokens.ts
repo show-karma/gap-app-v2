@@ -197,6 +197,9 @@ export const NATIVE_TOKENS: Record<
 export type SupportedChainId = keyof typeof NETWORKS;
 export type SupportedToken = keyof typeof TOKEN_ADDRESSES;
 
+/** Default chain ID for USDC payments when a grant's chain has no USDC configured */
+export const DEFAULT_USDC_CHAIN_ID: SupportedChainId = 1;
+
 /** Helper to get native token symbol for a chain */
 export function getNativeTokenSymbol(chainId: number): string {
   return NATIVE_TOKENS[chainId]?.symbol || "ETH";

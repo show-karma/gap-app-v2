@@ -15,7 +15,8 @@
  */
 
 import { GAP } from "@show-karma/karma-gap-sdk";
-import { act, fireEvent, render, renderHook, screen, waitFor } from "@testing-library/react";
+import { act, render, renderHook, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import toast from "react-hot-toast";
 import * as wagmiModule from "wagmi";
 import { GrantCompleteButton } from "@/components/Pages/GrantMilestonesAndUpdates/GrantCompleteButton";
@@ -355,6 +356,7 @@ describe("Integration: Grant Completion Revocation Flow", () => {
 
   describe("1. Complete On-Chain Revocation Flow", () => {
     it("should complete full on-chain revocation flow with UI state changes", async () => {
+      const user = userEvent.setup();
       // Setup: Authorized user (project owner)
 
       const mockIsProjectOwner = vi.fn(() => true);
@@ -439,7 +441,7 @@ describe("Integration: Grant Completion Revocation Flow", () => {
       expect(screen.getByText("Marked as complete")).toBeInTheDocument();
 
       // Click button to trigger revocation
-      fireEvent.click(button);
+      await user.click(button);
 
       // Verify loading state: button should be disabled and show spinner
       await waitFor(() => {
@@ -574,6 +576,7 @@ describe("Integration: Grant Completion Revocation Flow", () => {
 
   describe("3. Fallback Flow (On-Chain Failure → Off-Chain Success)", () => {
     it("should fallback to off-chain when on-chain fails", async () => {
+      const user = userEvent.setup();
       // Setup: Authorized user
 
       const mockRefreshProject = vi.fn();
@@ -659,7 +662,7 @@ describe("Integration: Grant Completion Revocation Flow", () => {
       render(<GrantCompleteButton grant={mockGrant} project={mockProject} />);
 
       const button = screen.getByRole("button");
-      fireEvent.click(button);
+      await user.click(button);
 
       // Verify on-chain was attempted via setupChainAndWallet
       await waitFor(() => {
@@ -690,6 +693,7 @@ describe("Integration: Grant Completion Revocation Flow", () => {
 
   describe("4. Error Handling Flow", () => {
     it("should handle errors when both paths fail", async () => {
+      const user = userEvent.setup();
       // Setup: Authorized user
 
       vi.mocked(useProjectStore).mockImplementation((selector?: any) => {
@@ -744,7 +748,7 @@ describe("Integration: Grant Completion Revocation Flow", () => {
       render(<GrantCompleteButton grant={mockGrant} project={mockProject} />);
 
       const button = screen.getByRole("button");
-      fireEvent.click(button);
+      await user.click(button);
 
       // Verify both paths were attempted
       await waitFor(() => {

@@ -2,6 +2,7 @@
 
 import {
   ArrowTopRightOnSquareIcon,
+  BanknotesIcon,
   CheckIcon,
   ClockIcon,
   Cog6ToothIcon,
@@ -31,6 +32,7 @@ import {
   type PayoutDisbursement,
   PayoutDisbursementStatus,
   PayoutHistoryContent,
+  RecordPaymentDialog,
   type TokenTotal,
   useSaveMilestoneInvoices,
   useToggleAgreement,
@@ -125,6 +127,7 @@ export function ProjectDetailsSidebar({
   const [agreementDate, setAgreementDate] = useState<Date | undefined>(undefined);
   const [confirmingUnsign, setConfirmingUnsign] = useState(false);
 
+  const [recordPaymentOpen, setRecordPaymentOpen] = useState(false);
   const configRef = useRef<PayoutConfigurationContentRef>(null);
   const [configIsDirty, setConfigIsDirty] = useState(false);
   const [configIsSaving, setConfigIsSaving] = useState(false);
@@ -139,6 +142,7 @@ export function ProjectDetailsSidebar({
     setPendingFiles({});
     setRemovedFiles(new Set());
     setConfirmingUnsign(false);
+    setRecordPaymentOpen(false);
     setConfigIsDirty(false);
     setConfigIsSaving(false);
     setLocalAgreementSigned(agreement?.signed === true);
@@ -665,6 +669,17 @@ export function ProjectDetailsSidebar({
                     )}
                   </Tooltip>
                 </TooltipProvider>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    guardAction(() => setRecordPaymentOpen(true));
+                  }}
+                  disabled={isSaving}
+                >
+                  <BanknotesIcon className="h-4 w-4" />
+                  Record Payment
+                </Button>
               </div>
 
               <div className="flex items-center gap-2">
@@ -711,6 +726,21 @@ export function ProjectDetailsSidebar({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {grant && (
+        <RecordPaymentDialog
+          isOpen={recordPaymentOpen}
+          onClose={() => setRecordPaymentOpen(false)}
+          grantUID={grant.grantUid}
+          projectUID={grant.projectUid}
+          communityUID={communityUID}
+          chainID={grant.grantChainId}
+          milestoneAllocations={milestoneAllocations}
+          milestoneInvoices={milestoneInvoices}
+          todayLocal={todayLocal}
+          onSuccess={onConfigSuccess}
+        />
+      )}
     </Dialog>
   );
 }

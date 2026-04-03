@@ -235,7 +235,11 @@ export function ApplicationPageClient({
 
       {/* Tab Content */}
       {shouldShowTabs && activeTab === "milestones" ? (
-        <MilestonesTab application={application} isOwner={isOwner} />
+        <MilestonesTab
+          application={application}
+          isOwner={isOwner}
+          invoiceRequired={(program?.metadata as Record<string, unknown>)?.invoiceRequired === true}
+        />
       ) : (
         <div className="rounded-xl border border-border">
           <div className="border-b border-border p-4">

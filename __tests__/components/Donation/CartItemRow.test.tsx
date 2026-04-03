@@ -10,6 +10,7 @@
  */
 
 import { fireEvent, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { CartItemRow } from "@/components/Donation/CartItemRow";
 import type { SupportedToken } from "@/constants/supportedTokens";
 import { renderWithProviders } from "../../utils/render";
@@ -156,15 +157,17 @@ describe("CartItemRow", () => {
       renderWithProviders(<CartItemRow {...defaultProps} />);
 
       const input = screen.getByLabelText("Donation amount for Test Project in USDC");
+      // fireEvent required: controlled number input needs single-event value change
       fireEvent.change(input, { target: { value: "75" } });
 
       expect(defaultProps.onAmountChange).toHaveBeenCalledWith("75");
     });
 
-    it("should call onRemove when remove button is clicked", () => {
+    it("should call onRemove when remove button is clicked", async () => {
+      const user = userEvent.setup();
       renderWithProviders(<CartItemRow {...defaultProps} />);
 
-      fireEvent.click(screen.getByTestId("remove-item"));
+      await user.click(screen.getByTestId("remove-item"));
 
       expect(defaultProps.onRemove).toHaveBeenCalledTimes(1);
     });

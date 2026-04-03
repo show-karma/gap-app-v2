@@ -6,6 +6,7 @@ import {
   InformationCircleIcon,
 } from "@heroicons/react/24/outline";
 import { useMemo } from "react";
+import { formatMilestoneTitle } from "@/utilities/formatMilestoneTitle";
 import { cn } from "@/utilities/tailwind";
 import type { MilestoneAllocation, PayoutDisbursement } from "../types/payout-disbursement";
 
@@ -64,6 +65,15 @@ export function MilestoneSelectionStep({
 
     return { paidAllocations: paid, unpaidAllocations: unpaid };
   }, [allocations, paidIds]);
+
+  // Map allocation IDs to their original index for consistent numbering
+  const allocationIndexById = useMemo(() => {
+    const map = new Map<string, number>();
+    for (let i = 0; i < allocations.length; i++) {
+      map.set(allocations[i].id, i);
+    }
+    return map;
+  }, [allocations]);
 
   // Calculate totals
   // Note: Allocation amounts are stored in human-readable format (e.g., "50000" for 50000 USDC)
@@ -261,7 +271,10 @@ export function MilestoneSelectionStep({
                     compact && "text-sm"
                   )}
                 >
-                  {allocation.label}
+                  {formatMilestoneTitle(
+                    allocationIndexById.get(allocation.id) ?? 0,
+                    allocation.label
+                  )}
                 </p>
                 {allocation.milestoneUID && !compact && (
                   <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
@@ -296,7 +309,12 @@ export function MilestoneSelectionStep({
                 className="flex items-center gap-3 p-2 rounded-lg bg-gray-50 dark:bg-zinc-800/50 opacity-60"
               >
                 <CheckCircleIcon className="h-4 w-4 text-green-500" />
-                <span className="flex-1 truncate">{allocation.label}</span>
+                <span className="flex-1 truncate">
+                  {formatMilestoneTitle(
+                    allocationIndexById.get(allocation.id) ?? 0,
+                    allocation.label
+                  )}
+                </span>
                 <span className="text-gray-500 dark:text-gray-400">
                   {formatAmount(allocation.amount)} {tokenSymbol}
                 </span>

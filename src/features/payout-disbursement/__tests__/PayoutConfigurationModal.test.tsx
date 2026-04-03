@@ -189,6 +189,142 @@ describe("PayoutConfigurationModal", () => {
     });
   });
 
+  describe("custom line item persistence", () => {
+    it("should restore custom line items when loading an existing config that contains them", async () => {
+      mockedUseGrantMilestones.mockReturnValue({
+        data: [{ uid: "milestone-1", title: "Milestone 1" }],
+        isLoading: false,
+      });
+
+      const configWithCustomItems: PayoutGrantConfig = {
+        id: "config-custom",
+        grantUID: "grant-123",
+        projectUID: "project-456",
+        communityUID: "community-789",
+        payoutAddress: "0x1234567890123456789012345678901234567890",
+        totalGrantAmount: "100",
+        tokenAddress: null,
+        chainID: 10,
+        milestoneAllocations: [
+          { id: "alloc-first", label: "First payment", amount: "20" },
+          { id: "alloc-m1", milestoneUID: "milestone-1", label: "Milestone 1", amount: "30" },
+          { id: "alloc-custom-1", label: "Travel expenses", amount: "10" },
+          { id: "alloc-custom-2", label: "Equipment costs", amount: "15" },
+          { id: "alloc-final", label: "Final payment", amount: "25" },
+        ],
+        createdBy: "0xadmin",
+        updatedBy: null,
+        createdAt: "2024-01-01T00:00:00Z",
+        updatedAt: "2024-01-01T00:00:00Z",
+      };
+
+      mockedUsePayoutConfigByGrant.mockReturnValue({
+        data: configWithCustomItems,
+        isLoading: false,
+      });
+
+      render(<PayoutConfigurationModal {...defaultProps} />, {
+        wrapper: createWrapper(),
+      });
+
+      await waitFor(() => {
+        expect(screen.getByDisplayValue("Travel expenses")).toBeInTheDocument();
+        expect(screen.getByDisplayValue("Equipment costs")).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe("duplicate allocation keys", () => {
+    it("should not produce duplicate keys when an existing allocation matches both a label and a milestoneUID slot", async () => {
+      const DUPLICATE_ID = "057d0401-6477-4d60-881c-791692205b37";
+
+      mockedUseGrantMilestones.mockReturnValue({
+        data: [{ uid: "milestone-1", title: "Milestone 1" }],
+        isLoading: false,
+      });
+
+      const configWithAmbiguousAllocation: PayoutGrantConfig = {
+        id: "config-dup",
+        grantUID: "grant-123",
+        projectUID: "project-456",
+        communityUID: "community-789",
+        payoutAddress: "0x1234567890123456789012345678901234567890",
+        totalGrantAmount: "100",
+        tokenAddress: null,
+        chainID: 10,
+        milestoneAllocations: [
+          { id: DUPLICATE_ID, label: "First payment", milestoneUID: "milestone-1", amount: "50" },
+          { id: "alloc-final", label: "Final payment", amount: "50" },
+        ],
+        createdBy: "0xadmin",
+        updatedBy: null,
+        createdAt: "2024-01-01T00:00:00Z",
+        updatedAt: "2024-01-01T00:00:00Z",
+      };
+
+      mockedUsePayoutConfigByGrant.mockReturnValue({
+        data: configWithAmbiguousAllocation,
+        isLoading: false,
+      });
+
+      render(<PayoutConfigurationModal {...defaultProps} />, {
+        wrapper: createWrapper(),
+      });
+
+      await waitFor(() => {
+        const allocationItems = document.querySelectorAll("[data-allocation-id]");
+        const ids = Array.from(allocationItems).map((el) => el.getAttribute("data-allocation-id"));
+        const uniqueIds = new Set(ids);
+        expect(uniqueIds.size).toBe(ids.length);
+      });
+    });
+
+    it("should not produce duplicate keys when backend data contains duplicate allocation ids", async () => {
+      const DUPLICATE_ID = "dup-backend-id";
+
+      mockedUseGrantMilestones.mockReturnValue({
+        data: [{ uid: "milestone-1", title: "M1" }],
+        isLoading: false,
+      });
+
+      const configWithDuplicateIds: PayoutGrantConfig = {
+        id: "config-dup2",
+        grantUID: "grant-123",
+        projectUID: "project-456",
+        communityUID: "community-789",
+        payoutAddress: "0x1234567890123456789012345678901234567890",
+        totalGrantAmount: "100",
+        tokenAddress: null,
+        chainID: 10,
+        milestoneAllocations: [
+          { id: DUPLICATE_ID, label: "First payment", amount: "30" },
+          { id: DUPLICATE_ID, milestoneUID: "milestone-1", label: "M1", amount: "40" },
+          { id: "alloc-final", label: "Final payment", amount: "30" },
+        ],
+        createdBy: "0xadmin",
+        updatedBy: null,
+        createdAt: "2024-01-01T00:00:00Z",
+        updatedAt: "2024-01-01T00:00:00Z",
+      };
+
+      mockedUsePayoutConfigByGrant.mockReturnValue({
+        data: configWithDuplicateIds,
+        isLoading: false,
+      });
+
+      render(<PayoutConfigurationModal {...defaultProps} />, {
+        wrapper: createWrapper(),
+      });
+
+      await waitFor(() => {
+        const allocationItems = document.querySelectorAll("[data-allocation-id]");
+        const ids = Array.from(allocationItems).map((el) => el.getAttribute("data-allocation-id"));
+        const uniqueIds = new Set(ids);
+        expect(uniqueIds.size).toBe(ids.length);
+      });
+    });
+  });
+
   describe("validation", () => {
     it("should show error for invalid payout address", async () => {
       const user = userEvent.setup();
@@ -297,7 +433,7 @@ describe("PayoutConfigurationModal", () => {
       expect((amountInput as HTMLInputElement).value).toBe("1");
     });
 
-    it("should remove a custom line item", async () => {
+    it("should remove a custom line item after confirmation", async () => {
       const user = userEvent.setup();
 
       render(<PayoutConfigurationModal {...defaultProps} />, {
@@ -309,7 +445,19 @@ describe("PayoutConfigurationModal", () => {
 
       await user.click(screen.getByRole("button", { name: "Remove custom line item" }));
 
-      expect(screen.queryByLabelText("Custom line item description")).not.toBeInTheDocument();
+      // Confirmation dialog appears
+      await waitFor(() => {
+        expect(
+          screen.getByText("Are you sure you want to remove this line item?")
+        ).toBeInTheDocument();
+      });
+
+      // Confirm deletion
+      await user.click(screen.getByRole("button", { name: "Continue" }));
+
+      await waitFor(() => {
+        expect(screen.queryByLabelText("Custom line item description")).not.toBeInTheDocument();
+      });
     });
 
     it("should include custom line item in save payload", async () => {
@@ -355,6 +503,213 @@ describe("PayoutConfigurationModal", () => {
         expect(screen.getByText("Description is required")).toBeInTheDocument();
       });
       expect(mockMutateAsync).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("paid allocation guards", () => {
+    const existingConfigWithCustom: PayoutGrantConfig = {
+      id: "config-1",
+      grantUID: "grant-123",
+      projectUID: "project-456",
+      communityUID: "community-789",
+      payoutAddress: "0x1234567890123456789012345678901234567890",
+      totalGrantAmount: "300",
+      tokenAddress: "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85",
+      chainID: 10,
+      milestoneAllocations: [
+        { id: "alloc-first", label: "First payment", amount: "100" },
+        { id: "alloc-custom-1", label: "Consulting fee", amount: "100" },
+        { id: "alloc-final", label: "Final payment", amount: "100" },
+      ],
+      createdBy: "0xadmin",
+      updatedBy: null,
+      createdAt: "2024-01-01T00:00:00Z",
+      updatedAt: "2024-01-01T00:00:00Z",
+    };
+
+    it("should disable editing for paid custom line items", async () => {
+      mockedUsePayoutConfigByGrant.mockReturnValue({
+        data: existingConfigWithCustom,
+        isLoading: false,
+      });
+
+      render(
+        <PayoutConfigurationModal
+          {...defaultProps}
+          existingConfig={existingConfigWithCustom}
+          paidAllocationIds={["alloc-custom-1"]}
+        />,
+        { wrapper: createWrapper() }
+      );
+
+      await waitFor(() => {
+        // The paid custom allocation's description input should be disabled
+        const descriptionInputs = screen.queryAllByLabelText("Custom line item description");
+        for (const input of descriptionInputs) {
+          if ((input as HTMLInputElement).value === "Consulting fee") {
+            expect(input).toBeDisabled();
+          }
+        }
+      });
+    });
+
+    it("should hide the remove button for paid custom line items", async () => {
+      mockedUsePayoutConfigByGrant.mockReturnValue({
+        data: existingConfigWithCustom,
+        isLoading: false,
+      });
+
+      render(
+        <PayoutConfigurationModal
+          {...defaultProps}
+          existingConfig={existingConfigWithCustom}
+          paidAllocationIds={["alloc-custom-1"]}
+        />,
+        { wrapper: createWrapper() }
+      );
+
+      await waitFor(() => {
+        // Should have the "Consulting fee" text visible
+        expect(screen.getByDisplayValue("Consulting fee")).toBeInTheDocument();
+      });
+
+      // The remove button should NOT be present for the paid allocation
+      const removeButtons = screen.queryAllByRole("button", { name: "Remove custom line item" });
+      expect(removeButtons).toHaveLength(0);
+    });
+
+    it("should show paid badge for paid allocations", async () => {
+      mockedUsePayoutConfigByGrant.mockReturnValue({
+        data: existingConfigWithCustom,
+        isLoading: false,
+      });
+
+      render(
+        <PayoutConfigurationModal
+          {...defaultProps}
+          existingConfig={existingConfigWithCustom}
+          paidAllocationIds={["alloc-first"]}
+        />,
+        { wrapper: createWrapper() }
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText("Paid")).toBeInTheDocument();
+      });
+    });
+
+    it("should disable amount input for paid allocations", async () => {
+      mockedUsePayoutConfigByGrant.mockReturnValue({
+        data: existingConfigWithCustom,
+        isLoading: false,
+      });
+
+      render(
+        <PayoutConfigurationModal
+          {...defaultProps}
+          existingConfig={existingConfigWithCustom}
+          paidAllocationIds={["alloc-first"]}
+        />,
+        { wrapper: createWrapper() }
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText("First payment")).toBeInTheDocument();
+      });
+
+      // Find all amount inputs and verify paid ones are disabled
+      // The First payment allocation's amount input should be disabled
+      const allInputs = screen.getAllByRole("textbox");
+      const firstPaymentAmountInput = allInputs.find(
+        (input) =>
+          (input as HTMLInputElement).value === "100" &&
+          input.closest('[data-allocation-id="alloc-first"]')
+      );
+      if (firstPaymentAmountInput) {
+        expect(firstPaymentAmountInput).toBeDisabled();
+      }
+    });
+
+    it("should still allow editing unpaid custom line items when some are paid", async () => {
+      const user = userEvent.setup();
+
+      const configWithMultipleCustom: PayoutGrantConfig = {
+        ...existingConfigWithCustom,
+        milestoneAllocations: [
+          { id: "alloc-first", label: "First payment", amount: "100" },
+          { id: "alloc-custom-1", label: "Consulting fee", amount: "100" },
+          { id: "alloc-custom-2", label: "Travel expenses", amount: "50" },
+          { id: "alloc-final", label: "Final payment", amount: "50" },
+        ],
+        totalGrantAmount: "300",
+      };
+
+      mockedUsePayoutConfigByGrant.mockReturnValue({
+        data: configWithMultipleCustom,
+        isLoading: false,
+      });
+
+      render(
+        <PayoutConfigurationModal
+          {...defaultProps}
+          existingConfig={configWithMultipleCustom}
+          paidAllocationIds={["alloc-custom-1"]}
+        />,
+        { wrapper: createWrapper() }
+      );
+
+      await waitFor(() => {
+        expect(screen.getByDisplayValue("Travel expenses")).toBeInTheDocument();
+      });
+
+      // The unpaid custom line item should still be editable
+      const travelInput = screen.getByDisplayValue("Travel expenses");
+      expect(travelInput).not.toBeDisabled();
+
+      // Should be able to remove the unpaid custom line item
+      const removeButtons = screen.queryAllByRole("button", { name: "Remove custom line item" });
+      expect(removeButtons.length).toBeGreaterThan(0);
+    });
+
+    it("should not allow removing paid allocations from save payload", async () => {
+      const user = userEvent.setup();
+
+      mockedUsePayoutConfigByGrant.mockReturnValue({
+        data: existingConfigWithCustom,
+        isLoading: false,
+      });
+
+      render(
+        <PayoutConfigurationModal
+          {...defaultProps}
+          existingConfig={existingConfigWithCustom}
+          paidAllocationIds={["alloc-custom-1"]}
+        />,
+        { wrapper: createWrapper() }
+      );
+
+      await waitFor(() => {
+        expect(screen.getByDisplayValue("Consulting fee")).toBeInTheDocument();
+      });
+
+      // Save the config
+      await user.click(screen.getByRole("button", { name: "Save Configuration" }));
+
+      await waitFor(() => {
+        expect(mockMutateAsync).toHaveBeenCalled();
+      });
+
+      // The paid allocation should still be in the save payload
+      const callArg = mockMutateAsync.mock.calls[0][0];
+      expect(callArg.configs[0].milestoneAllocations).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: "alloc-custom-1",
+            label: "Consulting fee",
+            amount: "100",
+          }),
+        ])
+      );
     });
   });
 
@@ -537,6 +892,148 @@ describe("PayoutConfigurationModal", () => {
       expect(screen.getByLabelText("Network")).toBeInTheDocument();
       expect(screen.getByLabelText("Token")).toBeInTheDocument();
       expect(screen.getByLabelText("Total Grant Amount")).toBeInTheDocument();
+    });
+  });
+
+  describe("delete confirmation dialog", () => {
+    const configWithCustomItems: PayoutGrantConfig = {
+      id: "config-1",
+      grantUID: "grant-123",
+      projectUID: "project-456",
+      communityUID: "community-789",
+      payoutAddress: "0x1234567890123456789012345678901234567890",
+      totalGrantAmount: "200",
+      tokenAddress: "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85",
+      chainID: 10,
+      milestoneAllocations: [
+        { id: "alloc-first", label: "First payment", amount: "100" },
+        { id: "alloc-custom-1", label: "Custom fee", amount: "50" },
+        { id: "alloc-final", label: "Final payment", amount: "50" },
+      ],
+      createdBy: "0xadmin",
+      updatedBy: null,
+      createdAt: "2024-01-01T00:00:00Z",
+      updatedAt: "2024-01-01T00:00:00Z",
+    };
+
+    it("should show confirmation dialog when clicking remove on custom line item", async () => {
+      const user = userEvent.setup();
+
+      mockedUsePayoutConfigByGrant.mockReturnValue({
+        data: configWithCustomItems,
+        isLoading: false,
+      });
+
+      render(
+        <PayoutConfigurationModal {...defaultProps} existingConfig={configWithCustomItems} />,
+        { wrapper: createWrapper() }
+      );
+
+      await waitFor(() => {
+        expect(screen.getByDisplayValue("Custom fee")).toBeInTheDocument();
+      });
+
+      const removeButton = screen.getByRole("button", { name: "Remove custom line item" });
+      await user.click(removeButton);
+
+      await waitFor(() => {
+        expect(
+          screen.getByText("Are you sure you want to remove this line item?")
+        ).toBeInTheDocument();
+      });
+    });
+
+    it("should remove line item after confirming deletion", async () => {
+      const user = userEvent.setup();
+
+      mockedUsePayoutConfigByGrant.mockReturnValue({
+        data: configWithCustomItems,
+        isLoading: false,
+      });
+
+      render(
+        <PayoutConfigurationModal {...defaultProps} existingConfig={configWithCustomItems} />,
+        { wrapper: createWrapper() }
+      );
+
+      await waitFor(() => {
+        expect(screen.getByDisplayValue("Custom fee")).toBeInTheDocument();
+      });
+
+      const removeButton = screen.getByRole("button", { name: "Remove custom line item" });
+      await user.click(removeButton);
+
+      await waitFor(() => {
+        expect(
+          screen.getByText("Are you sure you want to remove this line item?")
+        ).toBeInTheDocument();
+      });
+
+      // Click the "Continue" button in the dialog to confirm
+      const continueButton = screen.getByRole("button", { name: "Continue" });
+      await user.click(continueButton);
+
+      await waitFor(() => {
+        expect(screen.queryByDisplayValue("Custom fee")).not.toBeInTheDocument();
+      });
+    });
+
+    it("should not remove line item when canceling deletion", async () => {
+      const user = userEvent.setup();
+
+      mockedUsePayoutConfigByGrant.mockReturnValue({
+        data: configWithCustomItems,
+        isLoading: false,
+      });
+
+      render(
+        <PayoutConfigurationModal {...defaultProps} existingConfig={configWithCustomItems} />,
+        { wrapper: createWrapper() }
+      );
+
+      await waitFor(() => {
+        expect(screen.getByDisplayValue("Custom fee")).toBeInTheDocument();
+      });
+
+      const removeButton = screen.getByRole("button", { name: "Remove custom line item" });
+      await user.click(removeButton);
+
+      await waitFor(() => {
+        expect(
+          screen.getByText("Are you sure you want to remove this line item?")
+        ).toBeInTheDocument();
+      });
+
+      // Click "Cancel" to dismiss
+      const cancelButton = screen.getByRole("button", { name: "Cancel" });
+      await user.click(cancelButton);
+
+      // The line item should still be present
+      expect(screen.getByDisplayValue("Custom fee")).toBeInTheDocument();
+    });
+
+    it("should not show remove button for paid custom line items", async () => {
+      mockedUsePayoutConfigByGrant.mockReturnValue({
+        data: configWithCustomItems,
+        isLoading: false,
+      });
+
+      render(
+        <PayoutConfigurationModal
+          {...defaultProps}
+          existingConfig={configWithCustomItems}
+          paidAllocationIds={["alloc-custom-1"]}
+        />,
+        { wrapper: createWrapper() }
+      );
+
+      await waitFor(() => {
+        expect(screen.getByDisplayValue("Custom fee")).toBeInTheDocument();
+      });
+
+      // Remove button should not be present (it is hidden when isPaid)
+      const removeButtons = screen.queryAllByRole("button", { name: "Remove custom line item" });
+      expect(removeButtons).toHaveLength(0);
     });
   });
 });

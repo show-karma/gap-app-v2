@@ -7,7 +7,8 @@
  * - Accessibility (data-testid, button semantics)
  */
 
-import { fireEvent, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { EmptyCart } from "@/components/Donation/EmptyCart";
 import { renderWithProviders } from "../../utils/render";
 
@@ -43,10 +44,11 @@ describe("EmptyCart", () => {
   });
 
   describe("User interactions", () => {
-    it("should call onBrowseProjects when Browse Projects button is clicked", () => {
+    it("should call onBrowseProjects when Browse Projects button is clicked", async () => {
+      const user = userEvent.setup();
       renderWithProviders(<EmptyCart onBrowseProjects={onBrowseProjects} />);
 
-      fireEvent.click(screen.getByRole("button", { name: "Browse Projects" }));
+      await user.click(screen.getByRole("button", { name: "Browse Projects" }));
 
       expect(onBrowseProjects).toHaveBeenCalledTimes(1);
     });

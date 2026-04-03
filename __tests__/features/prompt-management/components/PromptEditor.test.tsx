@@ -1,5 +1,6 @@
 import "@testing-library/jest-dom";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import toast from "react-hot-toast";
 import { PromptEditor } from "@/features/prompt-management/components/PromptEditor";
 import {
@@ -210,52 +211,68 @@ describe("PromptEditor", () => {
   });
 
   describe("Form Validation", () => {
-    it("should disable save button when name is empty", () => {
+    it("should disable save button when name is empty", async () => {
+      const user = userEvent.setup();
       render(<PromptEditor {...defaultProps} />);
 
       // Fill content but leave name empty
       const textarea = screen.getByTestId("markdown-textarea");
-      fireEvent.change(textarea, { target: { value: "Some content with json" } });
+      await user.clear(textarea);
+
+      await user.type(textarea, "Some content with json");
 
       const saveButton = screen.getByRole("button", { name: /Create Prompt/i });
       expect(saveButton).toBeDisabled();
     });
 
-    it("should disable save button when content is empty", () => {
+    it("should disable save button when content is empty", async () => {
+      const user = userEvent.setup();
       render(<PromptEditor {...defaultProps} />);
 
       // Fill name but leave content empty
       const nameInput = screen.getByLabelText(/Prompt Name/i);
-      fireEvent.change(nameInput, { target: { value: "test-prompt" } });
+      await user.clear(nameInput);
+
+      await user.type(nameInput, "test-prompt");
 
       const saveButton = screen.getByRole("button", { name: /Create Prompt/i });
       expect(saveButton).toBeDisabled();
     });
 
-    it("should enable save button when both name and content are filled", () => {
+    it("should enable save button when both name and content are filled", async () => {
+      const user = userEvent.setup();
       render(<PromptEditor {...defaultProps} />);
 
       const nameInput = screen.getByLabelText(/Prompt Name/i);
-      fireEvent.change(nameInput, { target: { value: "test-prompt" } });
+      await user.clear(nameInput);
+
+      await user.type(nameInput, "test-prompt");
 
       const textarea = screen.getByTestId("markdown-textarea");
-      fireEvent.change(textarea, { target: { value: "Content with json" } });
+      await user.clear(textarea);
+
+      await user.type(textarea, "Content with json");
 
       const saveButton = screen.getByRole("button", { name: /Create Prompt/i });
       expect(saveButton).toBeEnabled();
     });
 
     it("should show error when json is not in prompt", async () => {
+      const user = userEvent.setup();
       render(<PromptEditor {...defaultProps} />);
 
       const nameInput = screen.getByLabelText(/Prompt Name/i);
-      fireEvent.change(nameInput, { target: { value: "test-prompt" } });
+      await user.clear(nameInput);
+
+      await user.type(nameInput, "test-prompt");
 
       const textarea = screen.getByTestId("markdown-textarea");
-      fireEvent.change(textarea, { target: { value: "Content without the j word" } });
+      await user.clear(textarea);
+
+      await user.type(textarea, "Content without the j word");
 
       const saveButton = screen.getByRole("button", { name: /Create Prompt/i });
-      fireEvent.click(saveButton);
+      await user.click(saveButton);
 
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith(expect.stringContaining("json"));
@@ -265,24 +282,27 @@ describe("PromptEditor", () => {
 
   describe("Saving Prompt", () => {
     it("should call save mutation with correct data", async () => {
+      const user = userEvent.setup();
       render(<PromptEditor {...defaultProps} />);
 
       // Fill form
       const nameInput = screen.getByLabelText(/Prompt Name/i);
-      fireEvent.change(nameInput, { target: { value: "my-prompt" } });
+      await user.clear(nameInput);
+
+      await user.type(nameInput, "my-prompt");
 
       const systemMessageInput = screen.getByLabelText(/System Message/i);
-      fireEvent.change(systemMessageInput, {
-        target: { value: "You are a helpful assistant" },
-      });
+      await user.clear(systemMessageInput);
+
+      await user.type(systemMessageInput, "You are a helpful assistant");
 
       const textarea = screen.getByTestId("markdown-textarea");
-      fireEvent.change(textarea, {
-        target: { value: "Evaluate in json format" },
-      });
+      await user.clear(textarea);
+
+      await user.type(textarea, "Evaluate in json format");
 
       const saveButton = screen.getByRole("button", { name: /Create Prompt/i });
-      fireEvent.click(saveButton);
+      await user.click(saveButton);
 
       await waitFor(() => {
         expect(mockSavePrompt).toHaveBeenCalledWith({
@@ -295,18 +315,21 @@ describe("PromptEditor", () => {
     });
 
     it("should not include systemMessage if empty", async () => {
+      const user = userEvent.setup();
       render(<PromptEditor {...defaultProps} />);
 
       const nameInput = screen.getByLabelText(/Prompt Name/i);
-      fireEvent.change(nameInput, { target: { value: "my-prompt" } });
+      await user.clear(nameInput);
+
+      await user.type(nameInput, "my-prompt");
 
       const textarea = screen.getByTestId("markdown-textarea");
-      fireEvent.change(textarea, {
-        target: { value: "Evaluate in json format" },
-      });
+      await user.clear(textarea);
+
+      await user.type(textarea, "Evaluate in json format");
 
       const saveButton = screen.getByRole("button", { name: /Create Prompt/i });
-      fireEvent.click(saveButton);
+      await user.click(saveButton);
 
       await waitFor(() => {
         expect(mockSavePrompt).toHaveBeenCalledWith({
@@ -392,16 +415,20 @@ describe("PromptEditor", () => {
   });
 
   describe("Dirty State", () => {
-    it("should show unsaved changes warning when dirty", () => {
+    it("should show unsaved changes warning when dirty", async () => {
+      const user = userEvent.setup();
       render(<PromptEditor {...defaultProps} />);
 
       const textarea = screen.getByTestId("markdown-textarea");
-      fireEvent.change(textarea, { target: { value: "New content" } });
+      await user.clear(textarea);
+
+      await user.type(textarea, "New content");
 
       expect(screen.getByText(/unsaved changes/i)).toBeInTheDocument();
     });
 
-    it("should hide Test Prompt button when dirty", () => {
+    it("should hide Test Prompt button when dirty", async () => {
+      const user = userEvent.setup();
       const existingPrompt: ProgramPrompt = {
         id: "prompt-123",
         programId: "program-123",
@@ -425,7 +452,9 @@ describe("PromptEditor", () => {
 
       // Make form dirty
       const textarea = screen.getByTestId("markdown-textarea");
-      fireEvent.change(textarea, { target: { value: "Modified content" } });
+      await user.clear(textarea);
+
+      await user.type(textarea, "Modified content");
 
       // Test Prompt should be hidden
       expect(screen.queryByRole("button", { name: /Test Prompt/i })).not.toBeInTheDocument();
