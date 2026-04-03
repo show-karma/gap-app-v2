@@ -9,7 +9,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/funders",
     "/funding-map",
     "/seeds",
-    "/stats",
     "/create-project-profile",
     "/knowledge",
     "/knowledge/grant-accountability",
