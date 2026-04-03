@@ -209,19 +209,6 @@ export function PayoutConfigurationContent({
         amount: existingFinal?.amount || "",
       });
 
-      // Preserve custom allocations (not linked to milestones, not first/final)
-      if (existingAllocations) {
-        const milestoneUIDs = new Set(milestones.map((m) => m.uid));
-        const customAllocations = existingAllocations.filter(
-          (a) =>
-            a.label !== FIRST_PAYMENT_LABEL &&
-            a.label !== FINAL_PAYMENT_LABEL &&
-            !a.milestoneUID &&
-            !milestoneUIDs.has(a.milestoneUID ?? "")
-        );
-        allocations.push(...customAllocations);
-      }
-
       return allocations;
     },
     [milestones]
