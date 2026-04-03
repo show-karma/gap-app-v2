@@ -99,7 +99,7 @@ jobs:
               }
 
               const verdict = reviewComment.body;
-              const isApproved = verdict.includes('✅') && (verdict.includes('APPROVE') && !verdict.includes('REQUEST CHANGES'));
+              const isApproved = (verdict.includes('✅') || verdict.includes('⚠️')) && verdict.includes('APPROVE') && !verdict.includes('REQUEST CHANGES');
               if (!isApproved) {
                 console.log('Review verdict is REQUEST CHANGES — skipping QA');
                 core.setOutput('should_run', 'false');
