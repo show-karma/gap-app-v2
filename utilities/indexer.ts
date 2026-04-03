@@ -345,6 +345,10 @@ export const INDEXER = {
         `/v2/payout-config/community/${communityUID}/public`,
       BY_GRANT: (grantUID: string) => `/v2/payout-config/grant/${grantUID}`,
       DELETE: (grantUID: string) => `/v2/payout-config/grant/${grantUID}`,
+      UPDATE_LINE_ITEM: (grantUID: string, allocationId: string) =>
+        `/v2/payout-config/grant/${grantUID}/line-items/${allocationId}`,
+      DELETE_LINE_ITEM: (grantUID: string, allocationId: string) =>
+        `/v2/payout-config/grant/${grantUID}/line-items/${allocationId}`,
     },
     GRANT_AGREEMENTS: {
       TOGGLE: (grantUID: string) => `/v2/grant-agreements/${grantUID}`,

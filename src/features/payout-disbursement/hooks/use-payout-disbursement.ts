@@ -622,3 +622,73 @@ export function useSaveMilestoneInvoices(
     },
   });
 }
+
+/**
+ * Hook for updating a single line item in a grant payout config
+ */
+export function useUpdateLineItem(
+  communityUID: string,
+  options?: {
+    onSuccess?: (data: PayoutGrantConfig) => void;
+    onError?: (error: Error) => void;
+  }
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    PayoutGrantConfig,
+    Error,
+    { grantUID: string; allocationId: string; updates: { label?: string; amount?: string } }
+  >({
+    mutationFn: ({ grantUID, allocationId, updates }) =>
+      payoutService.updateLineItem(grantUID, allocationId, updates),
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: payoutDisbursementKeys.payoutConfigs.byGrant(variables.grantUID),
+      });
+      queryClient.invalidateQueries({
+        queryKey: payoutDisbursementKeys.payoutConfigs.byCommunity(communityUID),
+      });
+      queryClient.invalidateQueries({
+        queryKey: [...payoutDisbursementKeys.all, "communityPayouts", communityUID],
+      });
+      options?.onSuccess?.(data);
+    },
+    onError: (error) => {
+      options?.onError?.(error);
+    },
+  });
+}
+
+/**
+ * Hook for deleting a single line item from a grant payout config
+ */
+export function useDeleteLineItem(
+  communityUID: string,
+  options?: {
+    onSuccess?: (data: PayoutGrantConfig) => void;
+    onError?: (error: Error) => void;
+  }
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation<PayoutGrantConfig, Error, { grantUID: string; allocationId: string }>({
+    mutationFn: ({ grantUID, allocationId }) =>
+      payoutService.deleteLineItem(grantUID, allocationId),
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: payoutDisbursementKeys.payoutConfigs.byGrant(variables.grantUID),
+      });
+      queryClient.invalidateQueries({
+        queryKey: payoutDisbursementKeys.payoutConfigs.byCommunity(communityUID),
+      });
+      queryClient.invalidateQueries({
+        queryKey: [...payoutDisbursementKeys.all, "communityPayouts", communityUID],
+      });
+      options?.onSuccess?.(data);
+    },
+    onError: (error) => {
+      options?.onError?.(error);
+    },
+  });
+}
