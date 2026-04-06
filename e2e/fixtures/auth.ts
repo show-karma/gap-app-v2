@@ -9,12 +9,9 @@ import { mockJson } from "./api-mocks";
  * Requires QA_TEST_EMAIL and QA_TEST_OTP environment variables.
  * The OTP is a fixed code configured in the Privy dashboard for test accounts.
  *
- * Flow:
- * 1. Navigate to any page to load the app
- * 2. Click "Sign in" button to trigger Privy modal
- * 3. Enter email in the Privy iframe
- * 4. Enter OTP code
- * 5. Wait for auth to complete
+ * Privy renders its login UI as a dialog in the main page DOM (not an iframe).
+ * The dialog contains an email input (input#email-input) and a "Submit" button.
+ * After submitting the email, an OTP screen appears with numeric inputs.
  */
 async function loginWithPrivy(page: Page): Promise<void> {
   const email = process.env.QA_TEST_EMAIL;
@@ -30,31 +27,25 @@ async function loginWithPrivy(page: Page): Promise<void> {
   await page.goto("/", { waitUntil: "domcontentloaded" });
   await page.locator("body").waitFor({ state: "visible" });
 
-  // Click the Sign in button to open the Privy modal
+  // Click the Sign in button to open the Privy dialog
   const signInButton = page.getByRole("button", { name: /sign in/i });
   await signInButton.waitFor({ state: "visible", timeout: 15000 });
   await signInButton.click();
 
-  // Privy renders in an iframe — find and interact with it
-  const privyFrame = page.frameLocator('iframe[title*="privy" i], iframe[src*="privy"]');
-
-  // Enter email address
-  const emailInput = privyFrame
-    .getByRole("textbox", { name: /email/i })
-    .or(
-      privyFrame.locator('input[type="email"], input[name="email"], input[placeholder*="email" i]')
-    );
-  await emailInput.waitFor({ state: "visible", timeout: 10000 });
+  // Wait for the Privy email input to appear (rendered in main page DOM, not an iframe).
+  // The dialog wrapper may be aria-hidden during CSS animation, so target the input directly.
+  const privyModal = page.locator("#privy-modal-content");
+  const emailInput = privyModal.locator("input#email-input, input[type='email']").first();
+  await emailInput.waitFor({ state: "visible", timeout: 15000 });
   await emailInput.fill(email);
 
-  // Submit email — click the submit/continue button
-  const submitButton = privyFrame
-    .getByRole("button", { name: /submit|continue|log in|send/i })
-    .or(privyFrame.locator('button[type="submit"]'));
+  // Click the Submit button to send the OTP
+  const submitButton = privyModal.getByRole("button", { name: /^submit$/i });
+  await submitButton.waitFor({ state: "visible", timeout: 5000 });
   await submitButton.click();
 
   // Wait for OTP input to appear and fill it
-  const otpInput = privyFrame
+  const otpInput = privyModal
     .locator(
       'input[aria-label*="code" i], input[autocomplete="one-time-code"], input[type="tel"], input[inputmode="numeric"]'
     )
@@ -62,27 +53,25 @@ async function loginWithPrivy(page: Page): Promise<void> {
   await otpInput.waitFor({ state: "visible", timeout: 15000 });
 
   // Privy may use multiple single-digit inputs or a single input for OTP
-  const otpInputs = privyFrame.locator(
+  const otpInputs = privyModal.locator(
     'input[aria-label*="code" i], input[autocomplete="one-time-code"], input[type="tel"], input[inputmode="numeric"]'
   );
   const inputCount = await otpInputs.count();
 
   if (inputCount > 1) {
-    // Multiple single-digit inputs — fill each one
     for (let i = 0; i < otp.length && i < inputCount; i++) {
       await otpInputs.nth(i).fill(otp[i]);
     }
   } else {
-    // Single input — type the full OTP
     await otpInput.fill(otp);
   }
 
-  // Wait for authentication to complete — Privy iframe should close
-  // and the page should show authenticated state
+  // Wait for authentication to complete — dialog should close
+  // and privy:token should appear in localStorage
   await page.waitForFunction(
     () => {
-      const authState = localStorage.getItem("privy:token");
-      return authState !== null;
+      const token = localStorage.getItem("privy:token");
+      return token !== null;
     },
     { timeout: 20000 }
   );
