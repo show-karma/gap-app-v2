@@ -125,9 +125,14 @@ export const MilestoneTag: FC<MilestoneTagProps> = ({ index, priority }) => {
 interface MilestoneDetailsProps {
   milestone: GrantMilestone;
   index: number;
+  allocationAmount?: string;
 }
 
-export const MilestoneDetails: FC<MilestoneDetailsProps> = ({ milestone, index }) => {
+export const MilestoneDetails: FC<MilestoneDetailsProps> = ({
+  milestone,
+  index,
+  allocationAmount,
+}) => {
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
@@ -155,9 +160,19 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({ milestone, index }
           <div className="flex w-full flex-row items-start justify-between px-4 max-lg:mb-4 max-lg:flex-col">
             <div className="flex flex-col gap-3">
               <MilestoneTag index={index} priority={milestone.priority} />
-              <h4 className="text-base font-bold leading-normal text-black dark:text-zinc-100">
-                {milestone.title}
-              </h4>
+              <div className="flex flex-row flex-wrap items-center gap-2">
+                <h4 className="text-base font-bold leading-normal text-black dark:text-zinc-100">
+                  {milestone.title}
+                </h4>
+                {allocationAmount ? (
+                  <span
+                    data-testid="milestone-allocation-amount"
+                    className="text-sm font-medium text-zinc-500 dark:text-zinc-400"
+                  >
+                    {allocationAmount}
+                  </span>
+                ) : null}
+              </div>
             </div>
             <div className="flex flex-row items-center justify-start gap-2">
               <MilestoneDateStatus milestone={milestone} />

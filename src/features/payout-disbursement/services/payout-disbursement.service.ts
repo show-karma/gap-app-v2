@@ -448,6 +448,34 @@ export const getPayoutConfigByGrant = async (
 };
 
 /**
+ * Get payout config for a specific grant (public, no auth required)
+ */
+export const getPayoutConfigByGrantPublic = async (
+  grantUID: string
+): Promise<PayoutGrantConfig | null> => {
+  try {
+    const [data, error] = await fetchData<{ config: PayoutGrantConfig | null }>(
+      INDEXER.V2.PAYOUT_CONFIG.BY_GRANT_PUBLIC(grantUID),
+      "GET",
+      {},
+      {},
+      {},
+      false,
+      false
+    );
+
+    if (error || !data) {
+      throw new Error(error || "Failed to fetch payout config");
+    }
+
+    return data.config;
+  } catch (error: unknown) {
+    errorManager(`Error fetching public payout config for grant ${grantUID}`, error);
+    throw new Error(`Failed to fetch payout config: ${getErrorMessage(error)}`);
+  }
+};
+
+/**
  * Validate bulk import rows against all community grants via backend matching
  */
 export const validateBulkImportRows = async (

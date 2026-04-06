@@ -36,6 +36,7 @@ vi.mock("@/utilities/indexer", () => ({
         BY_COMMUNITY: (uid: string) => `/v2/payout-config/community/${uid}`,
         BY_COMMUNITY_PUBLIC: (uid: string) => `/v2/payout-config/community/${uid}/public`,
         BY_GRANT: (uid: string) => `/v2/payout-config/grant/${uid}`,
+        BY_GRANT_PUBLIC: (uid: string) => `/v2/payout-config/grant/${uid}/public`,
         VALIDATE_BULK_IMPORT: "/v2/payout-config/validate-bulk",
         DELETE: (uid: string) => `/v2/payout-config/grant/${uid}`,
       },
@@ -56,6 +57,7 @@ import {
   getCommunityPayouts,
   getCommunityPayoutsPublic,
   getPayoutConfigByGrant,
+  getPayoutConfigByGrantPublic,
   getPayoutConfigsByCommunity,
   getPayoutConfigsByCommunityPublic,
   getPayoutHistory,
@@ -297,6 +299,47 @@ describe("payout-disbursement.service", () => {
       mockFetchData.mockResolvedValue([{ config: null }, null]);
       const result = await getPayoutConfigByGrant("g1");
       expect(result).toBeNull();
+    });
+  });
+
+  describe("getPayoutConfigByGrantPublic", () => {
+    it("returns config for grant without authentication", async () => {
+      const config = {
+        grantUID: "g1",
+        payoutAddress: "0xAddr",
+        milestoneAllocations: [{ id: "a1", label: "Milestone 1", amount: "5000" }],
+      };
+      mockFetchData.mockResolvedValue([{ config }, null]);
+
+      const result = await getPayoutConfigByGrantPublic("g1");
+      expect(result).toEqual(config);
+    });
+
+    it("returns null when no config exists", async () => {
+      mockFetchData.mockResolvedValue([{ config: null }, null]);
+      const result = await getPayoutConfigByGrantPublic("g1");
+      expect(result).toBeNull();
+    });
+
+    it("calls the public endpoint without auth flag", async () => {
+      mockFetchData.mockResolvedValue([{ config: null }, null]);
+      await getPayoutConfigByGrantPublic("g1");
+      expect(mockFetchData).toHaveBeenCalledWith(
+        "/v2/payout-config/grant/g1/public",
+        "GET",
+        {},
+        {},
+        {},
+        false,
+        false
+      );
+    });
+
+    it("throws when fetch fails", async () => {
+      mockFetchData.mockResolvedValue([null, "Not found"]);
+      await expect(getPayoutConfigByGrantPublic("g1")).rejects.toThrow(
+        /Failed to fetch payout config/
+      );
     });
   });
 

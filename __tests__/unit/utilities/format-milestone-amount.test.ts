@@ -23,21 +23,21 @@ describe("formatMilestoneAmount", () => {
     });
   });
 
-  describe("formats numeric amounts with comma separators", () => {
-    it("formats a plain number string", () => {
-      expect(formatMilestoneAmount("5000")).toBe("5,000");
+  describe("formats numeric amounts with dollar prefix and comma separators", () => {
+    it("formats a plain number string with dollar prefix", () => {
+      expect(formatMilestoneAmount("5000")).toBe("$5,000");
     });
 
-    it("formats a large number", () => {
-      expect(formatMilestoneAmount("1000000")).toBe("1,000,000");
+    it("formats a large number with dollar prefix", () => {
+      expect(formatMilestoneAmount("1000000")).toBe("$1,000,000");
     });
 
-    it("formats a decimal number", () => {
-      expect(formatMilestoneAmount("5000.50")).toBe("5,000.5");
+    it("formats a decimal number with dollar prefix", () => {
+      expect(formatMilestoneAmount("5000.50")).toBe("$5,000.5");
     });
 
-    it("preserves small decimal amounts", () => {
-      expect(formatMilestoneAmount("0.5")).toBe("0.5");
+    it("preserves small decimal amounts with dollar prefix", () => {
+      expect(formatMilestoneAmount("0.5")).toBe("$0.5");
     });
   });
 
@@ -54,8 +54,8 @@ describe("formatMilestoneAmount", () => {
       expect(formatMilestoneAmount("~5000")).toBe("~5000");
     });
 
-    it("handles amount that already has commas", () => {
-      expect(formatMilestoneAmount("5,000")).toBe("5,000");
+    it("handles amount that already has commas and adds dollar prefix", () => {
+      expect(formatMilestoneAmount("5,000")).toBe("$5,000");
     });
   });
 
@@ -65,12 +65,12 @@ describe("formatMilestoneAmount", () => {
       expect(formatMilestoneAmount("-100")).toBe("-100");
     });
 
-    it("handles very small amounts", () => {
-      expect(formatMilestoneAmount("0.001")).toBe("0.001");
+    it("handles very small amounts with dollar prefix", () => {
+      expect(formatMilestoneAmount("0.001")).toBe("$0.001");
     });
 
-    it("trims whitespace before processing", () => {
-      expect(formatMilestoneAmount(" 5000 ")).toBe("5,000");
+    it("trims whitespace before processing and adds dollar prefix", () => {
+      expect(formatMilestoneAmount(" 5000 ")).toBe("$5,000");
     });
   });
 });

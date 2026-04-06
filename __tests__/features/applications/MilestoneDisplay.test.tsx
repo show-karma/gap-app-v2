@@ -30,14 +30,14 @@ describe("MilestoneDisplay", () => {
     { title: "Final delivery", description: "Ship it", dueDate: "2025-12-01" },
   ];
 
-  it("prepends 'Milestone N:' prefix to each milestone title", () => {
+  it("renders each milestone title as-is without any prefix", () => {
     renderWithQueryClient(
       <MilestoneDisplay milestones={milestones} fieldLabel="milestones" referenceNumber="REF-001" />
     );
 
-    expect(screen.getByText("Milestone 1: Setup infrastructure")).toBeInTheDocument();
-    expect(screen.getByText("Milestone 2: Build prototype")).toBeInTheDocument();
-    expect(screen.getByText("Milestone 3: Final delivery")).toBeInTheDocument();
+    expect(screen.getByText("Setup infrastructure")).toBeInTheDocument();
+    expect(screen.getByText("Build prototype")).toBeInTheDocument();
+    expect(screen.getByText("Final delivery")).toBeInTheDocument();
   });
 
   it("shows loading state", () => {
@@ -86,8 +86,8 @@ describe("MilestoneDisplay", () => {
       />
     );
 
-    expect(screen.getByText("5,000")).toBeInTheDocument();
-    expect(screen.getByText("10,000")).toBeInTheDocument();
+    expect(screen.getByText("$5,000")).toBeInTheDocument();
+    expect(screen.getByText("$10,000")).toBeInTheDocument();
   });
 
   it("does not render amount when fundingRequested is absent or zero", () => {

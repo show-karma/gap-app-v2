@@ -1,6 +1,8 @@
 import pluralize from "pluralize";
 import { type FC, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/Utilities/Button";
+import { usePayoutConfigByGrantPublic } from "@/src/features/payout-disbursement/hooks/use-payout-disbursement";
+import { formatDisplayAmount } from "@/src/features/payout-disbursement/utils/format-token-amount";
 import type { Grant } from "@/types/v2/grant";
 import { normalizeTimestamp } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
@@ -49,6 +51,19 @@ const TabButton: FC<TabButtonProps> = ({ handleSelection, tab, tabName, selected
 
 export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
   const { milestones, updates } = grant;
+
+  const { data: payoutConfig } = usePayoutConfigByGrantPublic(grant.uid);
+
+  // Build a map from milestoneUID to formatted allocation amount
+  const allocationByUID = useMemo<Map<string, string>>(() => {
+    const map = new Map<string, string>();
+    for (const allocation of payoutConfig?.milestoneAllocations ?? []) {
+      if (allocation.milestoneUID && allocation.amount) {
+        map.set(allocation.milestoneUID, formatDisplayAmount(allocation.amount));
+      }
+    }
+    return map;
+  }, [payoutConfig]);
 
   const [selectedMilestoneType, setSelectedMilestoneType] = useState<Tab>("all");
 
@@ -262,6 +277,7 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
                   key={item.object.uid}
                   milestone={item.object}
                   index={milestoneArray.length - mIndex}
+                  allocationAmount={allocationByUID.get(item.object.uid)}
                 />
               );
             })}

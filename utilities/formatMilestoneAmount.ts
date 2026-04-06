@@ -10,7 +10,7 @@
  * @returns Formatted amount string, or null if amount is empty/zero
  *
  * @example
- * formatMilestoneAmount("5000")       // "5,000"
+ * formatMilestoneAmount("5000")       // "$5,000"
  * formatMilestoneAmount("$5,000 USD") // "$5,000 USD"
  * formatMilestoneAmount("")           // null
  * formatMilestoneAmount("0")          // null
@@ -32,10 +32,13 @@ export function formatMilestoneAmount(amount: string | undefined): string | null
     // Negative amounts are unusual for milestones; return as-is to avoid confusion
     if (num < 0) return trimmed;
 
-    return num.toLocaleString("en-US", {
-      maximumFractionDigits: 6,
-      minimumFractionDigits: 0,
-    });
+    return (
+      "$" +
+      num.toLocaleString("en-US", {
+        maximumFractionDigits: 6,
+        minimumFractionDigits: 0,
+      })
+    );
   }
 
   // If the amount has a recognizable numeric part followed by a token/currency suffix
