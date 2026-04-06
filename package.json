@@ -6,6 +6,7 @@
     "dev": "next dev --turbopack",
     "dev:wl": "next dev --turbopack --experimental-https --experimental-https-key ./test-wl.local+2-key.pem --experimental-https-cert ./test-wl.local+2.pem",
     "build": "next build --turbopack",
+    "build:widget": "vite build --config widget/vite.config.ts",
     "start": "next start",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
