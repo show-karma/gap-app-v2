@@ -64,7 +64,7 @@ jobs:
         run: pnpm exec playwright install chromium --with-deps
 
       - name: Run smoke tests
-        run: pnpm exec playwright test --config e2e/playwright.config.ts --project=chromium --workers=1 e2e/tests/smoke/
+        run: pnpm exec playwright test --config e2e/playwright.config.ts --project=chromium e2e/tests/smoke/
         env:
           CI: true
           BASE_URL: ${{ inputs.base_url || 'https://staging.karmahq.xyz' }}

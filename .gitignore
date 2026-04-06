@@ -56,6 +56,7 @@ cypress/screenshots
 cypress/videos
 
 e2e/test-results/
+e2e/.auth/
 playwright-report/
 
 # Generated LLM files (llms.txt and llms-full.txt are committed, updated monthly by CI)

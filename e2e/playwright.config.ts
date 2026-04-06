@@ -2,6 +2,9 @@ import { defineConfig, devices } from "@playwright/test";
 
 const isCI = !!process.env.CI;
 const isAnvil = !!process.env.ANVIL;
+const hasTestAccount = !!process.env.QA_TEST_EMAIL;
+
+const STORAGE_STATE_PATH = "e2e/.auth/user.json";
 
 export default defineConfig({
   testDir: "./tests",
@@ -24,18 +27,30 @@ export default defineConfig({
   },
 
   projects: [
+    // Auth setup — logs in once via Privy and saves storage state.
+    // Only meaningful in CI with QA_TEST_EMAIL; locally it's a no-op.
+    {
+      name: "setup",
+      testMatch: /auth\.setup\.ts/,
+    },
+
     {
       name: "chromium",
       use: {
         ...devices["Desktop Chrome"],
         viewport: { width: 1440, height: 800 },
+        // Reuse Privy auth session from setup project in CI
+        ...(hasTestAccount ? { storageState: STORAGE_STATE_PATH } : {}),
       },
+      dependencies: hasTestAccount ? ["setup"] : [],
     },
     {
       name: "mobile-chrome",
       use: {
         ...devices["Pixel 7"],
+        ...(hasTestAccount ? { storageState: STORAGE_STATE_PATH } : {}),
       },
+      dependencies: hasTestAccount ? ["setup"] : [],
     },
   ],
 
