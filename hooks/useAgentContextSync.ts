@@ -3,6 +3,7 @@
 import { useParams, usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { useAgentChatStore } from "@/store/agentChat";
+import { useWhitelabel } from "@/utilities/whitelabel-context";
 
 /**
  * Syncs the current page context (project, program, or application) to
@@ -16,6 +17,7 @@ export function useAgentContextSync() {
   const pathname = usePathname();
   const params = useParams();
   const setAgentContext = useAgentChatStore((s) => s.setAgentContext);
+  const { communitySlug: whitelabelCommunity } = useWhitelabel();
 
   const projectId = params?.projectId as string | undefined;
   const applicationId = params?.applicationId as string | undefined;
@@ -44,7 +46,19 @@ export function useAgentContextSync() {
       return;
     }
 
-    // No recognized context page — clear context
-    setAgentContext(null);
-  }, [pathname, projectId, applicationId, communityId, cleanProgramId, setAgentContext]);
+    // No recognized context page — fall back to whitelabel community if available
+    if (whitelabelCommunity) {
+      setAgentContext({ communityId: whitelabelCommunity });
+    } else {
+      setAgentContext(null);
+    }
+  }, [
+    pathname,
+    projectId,
+    applicationId,
+    communityId,
+    cleanProgramId,
+    whitelabelCommunity,
+    setAgentContext,
+  ]);
 }
