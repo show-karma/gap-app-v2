@@ -1,7 +1,11 @@
 import type { Page } from "@playwright/test";
 import { getPermissionsResponse } from "../data/permissions";
-import type { MockUserRole } from "../data/users";
+import { MOCK_USERS, type MockUserRole } from "../data/users";
 import { mockJson } from "./api-mocks";
+
+export interface LoginOptions {
+  communityId?: string;
+}
 
 /**
  * Authenticate via Privy's real email + OTP login flow.
@@ -88,7 +92,11 @@ async function loginWithPrivy(page: Page): Promise<void> {
  *
  * Must be called BEFORE navigating to the target page.
  */
-export async function loginAs(page: Page, role: MockUserRole): Promise<void> {
+export async function loginAs(
+  page: Page,
+  role: MockUserRole,
+  options?: LoginOptions
+): Promise<void> {
   if (role === "guest") {
     return;
   }
@@ -104,7 +112,6 @@ export async function loginAs(page: Page, role: MockUserRole): Promise<void> {
 
   if (hasE2EBypass) {
     // E2E bypass (local development)
-    const { MOCK_USERS } = await import("../data/users");
     const user = MOCK_USERS[role];
 
     await page.addInitScript(() => {
@@ -124,6 +131,12 @@ export async function loginAs(page: Page, role: MockUserRole): Promise<void> {
     );
 
     const permissionsData = getPermissionsResponse(role);
+    if (options?.communityId) {
+      permissionsData.resourceContext = {
+        communitySlug: options.communityId,
+        communityUid: `community-uid-${options.communityId}`,
+      };
+    }
     await page.route("**/v2/auth/permissions**", mockJson(permissionsData));
 
     const isStaff = role === "superAdmin" || role === "registryAdmin";

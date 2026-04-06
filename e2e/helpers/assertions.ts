@@ -23,8 +23,11 @@ export function collectJsErrors(page: Page): string[] {
   const errors: string[] = [];
   page.on("pageerror", (error) => {
     const msg = error.message;
-    // Ignore React hydration errors (common in Next.js dev mode)
+    // Ignore React hydration errors (common in Next.js with E2E auth bypass)
+    // #418 = server/client HTML mismatch, #423 = text content mismatch
     if (msg.includes("Hydration") || msg.includes("hydrat")) return;
+    if (msg.includes("Minified React error #418") || msg.includes("Minified React error #423"))
+      return;
     // Ignore ResizeObserver errors (browser-specific, non-fatal)
     if (msg.includes("ResizeObserver")) return;
     // Ignore upstream image fetch failures (external CDN 404s, e.g. Twitter profile pics)
