@@ -73,9 +73,9 @@ export function DeferredLayoutComponents({
           <ContributorProfileDialog />
           <ApiKeyManagementModal />
           <OnboardingDialog />
-          <AgentChatBubble />
         </>
       )}
+      <AgentChatBubble />
     </>
   );
 }
