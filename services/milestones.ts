@@ -80,6 +80,32 @@ export interface ProjectGrantMilestonesResponse {
   grant?: Grant; // Grant data with completed status
 }
 
+export interface MilestoneEvaluationItem {
+  milestoneUID: string;
+  rating: number;
+  reasoning: string;
+  model: string;
+  createdAt: string;
+}
+
+export interface MilestoneEvaluationResponse {
+  evaluations: MilestoneEvaluationItem[];
+}
+
+export async function fetchMilestoneEvaluation(
+  milestoneUID: string
+): Promise<MilestoneEvaluationResponse> {
+  const [data, error] = await fetchData<MilestoneEvaluationResponse>(
+    INDEXER.MILESTONE.EVALUATION(milestoneUID)
+  );
+
+  if (error || !data) {
+    return { evaluations: [] };
+  }
+
+  return data;
+}
+
 async function fetchGrantByProgramId(
   projectUid: string,
   programId: string
