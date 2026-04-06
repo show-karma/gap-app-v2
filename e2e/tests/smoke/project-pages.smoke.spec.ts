@@ -28,12 +28,6 @@ test.describe("Smoke Tests — Project Pages", () => {
         .waitFor({ timeout: 8000 })
         .then(() => true)
         .catch(() => false),
-      page
-        .locator("[class*='skeleton'], [class*='Skeleton'], [class*='animate-pulse']")
-        .first()
-        .waitFor({ timeout: 8000 })
-        .then(() => true)
-        .catch(() => false),
     ]);
     expect(hasContent).toBeTruthy();
 
@@ -47,7 +41,21 @@ test.describe("Smoke Tests — Project Pages", () => {
     await page.goto(`/project/${REAL_PROJECT_ID}/funding`, GOTO_OPTIONS);
     await waitForPageReady(page);
 
-    await expect(page.locator("body")).toBeVisible();
+    const hasTabContent = await Promise.race([
+      page
+        .getByRole("heading")
+        .first()
+        .waitFor({ timeout: 8000 })
+        .then(() => true)
+        .catch(() => false),
+      page
+        .getByText(/funding|grant/i)
+        .first()
+        .waitFor({ timeout: 8000 })
+        .then(() => true)
+        .catch(() => false),
+    ]);
+    expect(hasTabContent).toBeTruthy();
 
     assertNoJsErrors(jsErrors);
   });
@@ -59,7 +67,21 @@ test.describe("Smoke Tests — Project Pages", () => {
     await page.goto(`/project/${REAL_PROJECT_ID}/impact`, GOTO_OPTIONS);
     await waitForPageReady(page);
 
-    await expect(page.locator("body")).toBeVisible();
+    const hasTabContent = await Promise.race([
+      page
+        .getByRole("heading")
+        .first()
+        .waitFor({ timeout: 8000 })
+        .then(() => true)
+        .catch(() => false),
+      page
+        .getByText(/impact/i)
+        .first()
+        .waitFor({ timeout: 8000 })
+        .then(() => true)
+        .catch(() => false),
+    ]);
+    expect(hasTabContent).toBeTruthy();
 
     assertNoJsErrors(jsErrors);
   });
@@ -71,7 +93,21 @@ test.describe("Smoke Tests — Project Pages", () => {
     await page.goto(`/project/${REAL_PROJECT_ID}/team`, GOTO_OPTIONS);
     await waitForPageReady(page);
 
-    await expect(page.locator("body")).toBeVisible();
+    const hasTabContent = await Promise.race([
+      page
+        .getByRole("heading")
+        .first()
+        .waitFor({ timeout: 8000 })
+        .then(() => true)
+        .catch(() => false),
+      page
+        .getByText(/team|member/i)
+        .first()
+        .waitFor({ timeout: 8000 })
+        .then(() => true)
+        .catch(() => false),
+    ]);
+    expect(hasTabContent).toBeTruthy();
 
     assertNoJsErrors(jsErrors);
   });

@@ -30,7 +30,7 @@ test.describe("Smoke Tests — Search & Discovery", () => {
     await page.goto("/communities", GOTO_OPTIONS);
     await waitForPageReady(page);
 
-    // The communities page should display a heading or loading skeleton
+    // The communities page should display a heading
     const hasContent = await Promise.race([
       page
         .getByRole("heading", { name: /communit/i })
@@ -38,7 +38,7 @@ test.describe("Smoke Tests — Search & Discovery", () => {
         .then(() => true)
         .catch(() => false),
       page
-        .locator("[class*='skeleton'], [class*='Skeleton'], [class*='animate-pulse']")
+        .getByText(/communit/i)
         .first()
         .waitFor({ timeout: 8000 })
         .then(() => true)
@@ -71,15 +71,16 @@ test.describe("Smoke Tests — Search & Discovery", () => {
     await page.goto("/community/optimism/impact", GOTO_OPTIONS);
     await waitForPageReady(page);
 
-    // The impact page should render content or loading skeleton
+    // The impact page should render content with impact or community signals
     const hasContent = await Promise.race([
       page
-        .locator("body")
+        .getByRole("heading")
+        .first()
         .waitFor({ timeout: 8000 })
         .then(() => true)
         .catch(() => false),
       page
-        .locator("[class*='skeleton'], [class*='Skeleton'], [class*='animate-pulse']")
+        .getByText(/impact|community|optimism/i)
         .first()
         .waitFor({ timeout: 8000 })
         .then(() => true)

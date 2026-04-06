@@ -45,12 +45,6 @@ test.describe("Smoke Tests — Manage Pages", () => {
         .waitFor({ timeout: 8000 })
         .then(() => true)
         .catch(() => false),
-      page
-        .locator("[class*='skeleton'], [class*='Skeleton'], [class*='animate-pulse']")
-        .first()
-        .waitFor({ timeout: 8000 })
-        .then(() => true)
-        .catch(() => false),
     ]);
     expect(hasContent).toBeTruthy();
 
@@ -65,7 +59,6 @@ test.describe("Smoke Tests — Manage Pages", () => {
     await page.goto("/community/optimism/manage/control-center", GOTO_OPTIONS);
     await waitForPageReady(page);
 
-    // Page should render content, heading, or loading skeleton (auth gated)
     const hasContent = await Promise.race([
       page
         .getByRole("heading")
@@ -75,12 +68,6 @@ test.describe("Smoke Tests — Manage Pages", () => {
         .catch(() => false),
       page
         .getByText(/control center|settings/i)
-        .first()
-        .waitFor({ timeout: 8000 })
-        .then(() => true)
-        .catch(() => false),
-      page
-        .locator("[class*='skeleton'], [class*='Skeleton'], [class*='animate-pulse']")
         .first()
         .waitFor({ timeout: 8000 })
         .then(() => true)
@@ -99,7 +86,6 @@ test.describe("Smoke Tests — Manage Pages", () => {
     await page.goto("/community/optimism/manage/funding-platform", GOTO_OPTIONS);
     await waitForPageReady(page);
 
-    // Page should render program content, funding text, or loading skeleton
     const hasContent = await Promise.race([
       page
         .getByText(/program|funding|application/i)
@@ -109,12 +95,6 @@ test.describe("Smoke Tests — Manage Pages", () => {
         .catch(() => false),
       page
         .getByRole("heading")
-        .first()
-        .waitFor({ timeout: 8000 })
-        .then(() => true)
-        .catch(() => false),
-      page
-        .locator("[class*='skeleton'], [class*='Skeleton'], [class*='animate-pulse']")
         .first()
         .waitFor({ timeout: 8000 })
         .then(() => true)
@@ -149,12 +129,6 @@ test.describe("Smoke Tests — Manage Pages", () => {
         .waitFor({ timeout: 8000 })
         .then(() => true)
         .catch(() => false),
-      page
-        .locator("[class*='skeleton'], [class*='Skeleton'], [class*='animate-pulse']")
-        .first()
-        .waitFor({ timeout: 8000 })
-        .then(() => true)
-        .catch(() => false),
     ]);
     expect(hasContent).toBeTruthy();
 
@@ -181,12 +155,6 @@ test.describe("Smoke Tests — Manage Pages", () => {
         .catch(() => false),
       page
         .getByRole("heading")
-        .first()
-        .waitFor({ timeout: 8000 })
-        .then(() => true)
-        .catch(() => false),
-      page
-        .locator("[class*='skeleton'], [class*='Skeleton'], [class*='animate-pulse']")
         .first()
         .waitFor({ timeout: 8000 })
         .then(() => true)
@@ -218,12 +186,6 @@ test.describe("Smoke Tests — Manage Pages", () => {
         .waitFor({ timeout: 8000 })
         .then(() => true)
         .catch(() => false),
-      page
-        .locator("[class*='skeleton'], [class*='Skeleton'], [class*='animate-pulse']")
-        .first()
-        .waitFor({ timeout: 8000 })
-        .then(() => true)
-        .catch(() => false),
     ]);
     expect(hasContent).toBeTruthy();
 
@@ -247,12 +209,6 @@ test.describe("Smoke Tests — Manage Pages", () => {
         .catch(() => false),
       page
         .getByRole("heading")
-        .first()
-        .waitFor({ timeout: 8000 })
-        .then(() => true)
-        .catch(() => false),
-      page
-        .locator("[class*='skeleton'], [class*='Skeleton'], [class*='animate-pulse']")
         .first()
         .waitFor({ timeout: 8000 })
         .then(() => true)
@@ -284,12 +240,6 @@ test.describe("Smoke Tests — Manage Pages", () => {
         .waitFor({ timeout: 8000 })
         .then(() => true)
         .catch(() => false),
-      page
-        .locator("[class*='skeleton'], [class*='Skeleton'], [class*='animate-pulse']")
-        .first()
-        .waitFor({ timeout: 8000 })
-        .then(() => true)
-        .catch(() => false),
     ]);
     expect(hasContent).toBeTruthy();
 
@@ -313,12 +263,6 @@ test.describe("Smoke Tests — Manage Pages", () => {
         .catch(() => false),
       page
         .getByRole("heading")
-        .first()
-        .waitFor({ timeout: 8000 })
-        .then(() => true)
-        .catch(() => false),
-      page
-        .locator("[class*='skeleton'], [class*='Skeleton'], [class*='animate-pulse']")
         .first()
         .waitFor({ timeout: 8000 })
         .then(() => true)
@@ -349,12 +293,6 @@ test.describe("Smoke Tests — Manage Pages", () => {
         .catch(() => false),
       page
         .getByRole("heading")
-        .first()
-        .waitFor({ timeout: 8000 })
-        .then(() => true)
-        .catch(() => false),
-      page
-        .locator("[class*='skeleton'], [class*='Skeleton'], [class*='animate-pulse']")
         .first()
         .waitFor({ timeout: 8000 })
         .then(() => true)

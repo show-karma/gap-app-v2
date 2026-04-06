@@ -112,6 +112,7 @@ export async function loginAs(
     const permissionsData = getPermissionsResponse(role);
     if (options?.communityId) {
       permissionsData.resourceContext = {
+        ...permissionsData.resourceContext,
         communitySlug: options.communityId,
         communityUid: `community-uid-${options.communityId}`,
       };
@@ -146,6 +147,7 @@ export async function loginAs(
     const permissionsData = getPermissionsResponse(role);
     if (options?.communityId) {
       permissionsData.resourceContext = {
+        ...permissionsData.resourceContext,
         communitySlug: options.communityId,
         communityUid: `community-uid-${options.communityId}`,
       };

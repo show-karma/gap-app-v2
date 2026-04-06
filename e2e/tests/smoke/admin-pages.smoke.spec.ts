@@ -6,8 +6,9 @@ import { GOTO_OPTIONS, waitForPageReady } from "../../helpers/navigation";
 // mocked through Playwright route interception. Pages render either admin content
 // (if isOwner or isSuperAdmin) or a "not admin" message. Both are valid smoke
 // test outcomes — we're verifying the page loads without crashing.
-function adminContentCheck(page: import("@playwright/test").Page) {
-  return Promise.race([
+async function adminContentCheck(page: import("@playwright/test").Page, expectedPath: string) {
+  const onExpectedPath = page.url().includes(expectedPath);
+  const hasAdminUi = await Promise.race([
     page
       .getByRole("heading")
       .first()
@@ -20,13 +21,9 @@ function adminContentCheck(page: import("@playwright/test").Page) {
       .waitFor({ timeout: 8000 })
       .then(() => true)
       .catch(() => false),
-    page
-      .locator("[class*='skeleton'], [class*='Skeleton'], [class*='animate-pulse']")
-      .first()
-      .waitFor({ timeout: 8000 })
-      .then(() => true)
-      .catch(() => false),
   ]);
+
+  return onExpectedPath && hasAdminUi;
 }
 
 test.describe("Smoke Tests — Admin Pages", () => {
@@ -44,7 +41,7 @@ test.describe("Smoke Tests — Admin Pages", () => {
       await page.goto("/admin", GOTO_OPTIONS);
       await waitForPageReady(page);
 
-      expect(await adminContentCheck(page)).toBeTruthy();
+      expect(await adminContentCheck(page, "/admin")).toBeTruthy();
       assertNoJsErrors(jsErrors);
     });
 
@@ -56,7 +53,7 @@ test.describe("Smoke Tests — Admin Pages", () => {
       await page.goto("/admin/communities", GOTO_OPTIONS);
       await waitForPageReady(page);
 
-      expect(await adminContentCheck(page)).toBeTruthy();
+      expect(await adminContentCheck(page, "/admin/communities")).toBeTruthy();
       assertNoJsErrors(jsErrors);
     });
 
@@ -72,7 +69,7 @@ test.describe("Smoke Tests — Admin Pages", () => {
       await page.goto("/admin/communities/stats", GOTO_OPTIONS);
       await waitForPageReady(page);
 
-      expect(await adminContentCheck(page)).toBeTruthy();
+      expect(await adminContentCheck(page, "/admin/communities/stats")).toBeTruthy();
       assertNoJsErrors(jsErrors);
     });
 
@@ -84,7 +81,7 @@ test.describe("Smoke Tests — Admin Pages", () => {
       await page.goto("/admin/projects", GOTO_OPTIONS);
       await waitForPageReady(page);
 
-      expect(await adminContentCheck(page)).toBeTruthy();
+      expect(await adminContentCheck(page, "/admin/projects")).toBeTruthy();
       assertNoJsErrors(jsErrors);
     });
   });
@@ -98,7 +95,7 @@ test.describe("Smoke Tests — Admin Pages", () => {
       await page.goto("/admin/faucet", GOTO_OPTIONS);
       await waitForPageReady(page);
 
-      expect(await adminContentCheck(page)).toBeTruthy();
+      expect(await adminContentCheck(page, "/admin/faucet")).toBeTruthy();
       assertNoJsErrors(jsErrors);
     });
 
@@ -110,7 +107,7 @@ test.describe("Smoke Tests — Admin Pages", () => {
       await page.goto("/super-admin", GOTO_OPTIONS);
       await waitForPageReady(page);
 
-      expect(await adminContentCheck(page)).toBeTruthy();
+      expect(await adminContentCheck(page, "/super-admin")).toBeTruthy();
       assertNoJsErrors(jsErrors);
     });
   });

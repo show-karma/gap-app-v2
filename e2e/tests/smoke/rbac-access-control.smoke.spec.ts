@@ -15,7 +15,7 @@ async function expectAccessBlocked(page: Page, originalPath: string): Promise<vo
 
   const showsDenialText = await page
     .getByText(
-      /sign in|connect wallet|log in|access denied|not authorized|forbidden|only.*admin.*can view|isnt.*admin|need to be an admin|launch.*community|no one.*started/i
+      /sign in|connect wallet|log in|access denied|not authorized|forbidden|only.*admin.*can view|isnt.*admin|need to be an admin/i
     )
     .first()
     .waitFor({ timeout: 5000 })
@@ -53,7 +53,9 @@ test.describe("Smoke Tests @smoke — RBAC Access Control", () => {
       await page.goto("/my-projects", GOTO_OPTIONS);
       await waitForPageReady(page);
 
-      await expectAccessBlocked(page, "/my-projects");
+      // /my-projects is middleware-redirected to /dashboard#projects for all users.
+      // Assert access is blocked on the redirected destination instead.
+      await expectAccessBlocked(page, "/dashboard");
     });
 
     test("T-RBAC-03: guest accessing /community/optimism/manage gets denied", async ({

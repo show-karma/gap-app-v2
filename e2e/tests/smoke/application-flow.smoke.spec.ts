@@ -42,12 +42,6 @@ test.describe("Smoke Tests — Application Flow", () => {
           .waitFor({ timeout: 8000 })
           .then(() => true)
           .catch(() => false),
-        page
-          .locator("[class*='skeleton'], [class*='Skeleton'], [class*='animate-pulse']")
-          .first()
-          .waitFor({ timeout: 8000 })
-          .then(() => true)
-          .catch(() => false),
       ]);
       expect(hasContent).toBeTruthy();
 
@@ -79,12 +73,6 @@ test.describe("Smoke Tests — Application Flow", () => {
           .catch(() => false),
         page
           .getByRole("heading")
-          .first()
-          .waitFor({ timeout: 8000 })
-          .then(() => true)
-          .catch(() => false),
-        page
-          .locator("[class*='skeleton'], [class*='Skeleton'], [class*='animate-pulse']")
           .first()
           .waitFor({ timeout: 8000 })
           .then(() => true)
@@ -126,12 +114,6 @@ test.describe("Smoke Tests — Application Flow", () => {
           .catch(() => false),
         page
           .getByRole("heading")
-          .first()
-          .waitFor({ timeout: 8000 })
-          .then(() => true)
-          .catch(() => false),
-        page
-          .locator("[class*='skeleton'], [class*='Skeleton'], [class*='animate-pulse']")
           .first()
           .waitFor({ timeout: 8000 })
           .then(() => true)
@@ -184,12 +166,6 @@ test.describe("Smoke Tests — Application Flow", () => {
           .waitFor({ timeout: 8000 })
           .then(() => true)
           .catch(() => false),
-        page
-          .locator("[class*='skeleton'], [class*='Skeleton'], [class*='animate-pulse']")
-          .first()
-          .waitFor({ timeout: 8000 })
-          .then(() => true)
-          .catch(() => false),
       ]);
       expect(hasFormContent).toBeTruthy();
 
@@ -211,7 +187,7 @@ test.describe("Smoke Tests — Application Flow", () => {
       await page.goto(`/community/optimism/programs/${REAL_PROGRAM_ID}/apply`, GOTO_OPTIONS);
       await waitForPageReady(page);
 
-      // Should display the real program title or loading state
+      // Should display the real program title or a heading
       const hasTitle = await Promise.race([
         page
           .getByText(/Optimism ASP|Apply for/i)
@@ -221,12 +197,6 @@ test.describe("Smoke Tests — Application Flow", () => {
           .catch(() => false),
         page
           .getByRole("heading")
-          .first()
-          .waitFor({ timeout: 8000 })
-          .then(() => true)
-          .catch(() => false),
-        page
-          .locator("[class*='skeleton'], [class*='Skeleton'], [class*='animate-pulse']")
           .first()
           .waitFor({ timeout: 8000 })
           .then(() => true)
@@ -253,7 +223,7 @@ test.describe("Smoke Tests — Application Flow", () => {
       await waitForPageReady(page);
 
       assertNoJsErrors(jsErrors);
-      await expect(page.locator("body")).toBeVisible();
+      await expect(page.getByRole("heading").first()).toBeVisible({ timeout: 8000 });
     });
   });
 });
