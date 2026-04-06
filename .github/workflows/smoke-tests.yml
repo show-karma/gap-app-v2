@@ -68,6 +68,8 @@ jobs:
         env:
           CI: true
           BASE_URL: ${{ inputs.base_url || 'https://staging.karmahq.xyz' }}
+          QA_TEST_EMAIL: ${{ secrets.QA_TEST_EMAIL }}
+          QA_TEST_OTP: ${{ secrets.QA_TEST_OTP }}
 
       - name: Upload smoke test report
         if: failure()
