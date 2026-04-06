@@ -42,12 +42,13 @@ describe("DeferredLayoutComponents", () => {
       expect(dynamicComponents.length).toBe(9);
     });
 
-    it("renders only 5 always-on components when isWhitelabel is true", () => {
+    it("renders chatbot plus always-on components when isWhitelabel is true", () => {
       const { container } = render(
         <DeferredLayoutComponents isWhitelabel={true} toasterConfig={defaultToasterConfig} />
       );
       const dynamicComponents = container.querySelectorAll('[data-testid="dynamic-component"]');
-      expect(dynamicComponents.length).toBe(5);
+      // 5 always-on + 1 chatbot = 6
+      expect(dynamicComponents.length).toBe(6);
     });
   });
 

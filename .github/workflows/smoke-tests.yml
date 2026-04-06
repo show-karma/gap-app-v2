@@ -18,10 +18,15 @@ on:
         required: true
         type: string
 
+env:
+  NEXT_PUBLIC_PRIVY_APP_ID: ${{ secrets.NEXT_PUBLIC_PRIVY_APP_ID }}
+  NEXT_PUBLIC_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_PROJECT_ID }}
+  NEXT_PUBLIC_GAP_INDEXER_URL: https://gapstagapi.karmahq.xyz
+
 jobs:
   smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - name: Checkout code
@@ -41,14 +46,30 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Cache Next.js build
+        uses: actions/cache@v4
+        with:
+          path: .next/cache
+          key: ${{ runner.os }}-nextjs-smoke-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-smoke-
+            ${{ runner.os }}-nextjs-
+
+      - name: Build application
+        run: pnpm run build
+        env:
+          NODE_ENV: production
+
       - name: Install Playwright browsers
         run: pnpm exec playwright install chromium --with-deps
 
       - name: Run smoke tests
-        run: pnpm exec playwright test --config e2e/playwright.config.ts --project=chromium --grep @smoke
+        run: pnpm exec playwright test --config e2e/playwright.config.ts --project=chromium --workers=1 e2e/tests/smoke/
         env:
           CI: true
           BASE_URL: ${{ inputs.base_url || 'https://staging.karmahq.xyz' }}
+          QA_TEST_EMAIL: ${{ secrets.QA_TEST_EMAIL }}
+          QA_TEST_OTP: ${{ secrets.QA_TEST_OTP }}
 
       - name: Upload smoke test report
         if: failure()
