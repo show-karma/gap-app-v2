@@ -4,7 +4,7 @@ const isCI = !!process.env.CI;
 const isAnvil = !!process.env.ANVIL;
 const hasTestAccount = !!process.env.QA_TEST_EMAIL;
 
-const STORAGE_STATE_PATH = "e2e/.auth/user.json";
+const STORAGE_STATE_PATH = ".auth/user.json";
 
 export default defineConfig({
   testDir: "./tests",

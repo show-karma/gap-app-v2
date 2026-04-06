@@ -1,6 +1,8 @@
+import path from "node:path";
 import { test as setup } from "@playwright/test";
 
-const STORAGE_STATE_PATH = "e2e/.auth/user.json";
+// Resolve relative to the e2e/ directory (same as playwright.config.ts)
+const STORAGE_STATE_PATH = path.join(__dirname, "..", ".auth", "user.json");
 
 /**
  * Playwright setup project that authenticates once via Privy and saves
