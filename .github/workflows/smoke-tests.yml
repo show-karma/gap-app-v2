@@ -9,7 +9,7 @@ on:
       base_url:
         description: 'Base URL to run smoke tests against'
         required: true
-        default: 'https://karmahq.xyz'
+        default: 'https://staging.karmahq.xyz'
         type: string
   workflow_call:
     inputs:
