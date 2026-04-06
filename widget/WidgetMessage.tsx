@@ -1,5 +1,4 @@
 import { cjk } from "@streamdown/cjk";
-import { code } from "@streamdown/code";
 import { BotIcon, UserIcon } from "lucide-react";
 import { memo } from "react";
 import { Streamdown } from "streamdown";
@@ -11,7 +10,9 @@ interface WidgetMessageProps {
   from: "user" | "assistant";
 }
 
-const streamdownPlugins = { code, cjk };
+// Intentionally exclude @streamdown/code — it bundles shiki (~8MB of syntax grammars).
+// The widget uses plain <code> styling instead, which is sufficient for a chat assistant.
+const streamdownPlugins = { cjk };
 
 export const WidgetMessage = memo(function WidgetMessage({ content, from }: WidgetMessageProps) {
   const isUser = from === "user";

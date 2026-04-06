@@ -15,6 +15,7 @@ export default defineConfig({
     },
     outDir: resolve(__dirname, "../public/widget"),
     emptyOutDir: true,
+    minify: "esbuild",
     cssCodeSplit: false,
     rollupOptions: {
       onwarn(warning, warn) {
