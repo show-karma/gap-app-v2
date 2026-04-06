@@ -105,8 +105,21 @@ export async function loginAs(
   const hasE2EBypass = process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS === "true";
 
   if (hasTestAccount) {
-    // Real Privy login — role doesn't map to different accounts (we only have one test account)
+    // Real Privy login — one test account for all roles.
+    // After login, mock the permissions API to simulate the requested role.
     await loginWithPrivy(page);
+
+    const permissionsData = getPermissionsResponse(role);
+    if (options?.communityId) {
+      permissionsData.resourceContext = {
+        communitySlug: options.communityId,
+        communityUid: `community-uid-${options.communityId}`,
+      };
+    }
+    await page.route("**/v2/auth/permissions**", mockJson(permissionsData));
+
+    const isStaff = role === "superAdmin" || role === "registryAdmin";
+    await page.route("**/auth/staff/authorized**", mockJson({ authorized: isStaff }));
     return;
   }
 
