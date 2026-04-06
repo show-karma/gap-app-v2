@@ -157,19 +157,6 @@ export async function updateMilestoneCompletion(
   return response.data.completion;
 }
 
-export async function updateMilestoneVerification(
-  referenceNumber: string,
-  milestoneFieldLabel: string,
-  milestoneTitle: string,
-  verificationComment?: string
-): Promise<void> {
-  await apiClient.post(`/v2/funding-applications/${referenceNumber}/milestone-completions/verify`, {
-    milestoneFieldLabel,
-    milestoneTitle,
-    verificationComment: verificationComment || "",
-  });
-}
-
 /**
  * Attest milestone completion as a program reviewer (backend creates on-chain attestation)
  */
