@@ -1,12 +1,15 @@
 name: Smoke Tests
 
 on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: ['**']
   workflow_dispatch:
     inputs:
       base_url:
         description: 'Base URL to run smoke tests against'
         required: true
-        default: 'https://gap.karmahq.xyz'
+        default: 'https://karmahq.xyz'
         type: string
   workflow_call:
     inputs:
@@ -45,7 +48,7 @@ jobs:
         run: pnpm exec playwright test --config e2e/playwright.config.ts --project=chromium --grep @smoke
         env:
           CI: true
-          BASE_URL: ${{ inputs.base_url }}
+          BASE_URL: ${{ inputs.base_url || 'https://staging.karmahq.xyz' }}
 
       - name: Upload smoke test report
         if: failure()
