@@ -187,16 +187,17 @@ function RecordPaymentDialogInner({
       .map((m) => m.allocationId)
       .filter(Boolean) as string[];
 
-    const withUID = selectedMilestones.filter((m) => m.milestoneUID);
     const milestoneBreakdown: Record<string, string> | undefined =
-      withUID.length > 0
-        ? Object.fromEntries(withUID.map((m) => [m.milestoneUID as string, disbursedAmount]))
+      selectedMilestones.length > 0
+        ? Object.fromEntries(
+            selectedMilestones.map((m) => [m.milestoneUID ?? m.key, disbursedAmount])
+          )
         : undefined;
 
     const milestoneLabels: Record<string, string> | undefined =
       selectedMilestones.length > 0
         ? Object.fromEntries(
-            selectedMilestones.map((m) => [m.key, m.label])
+            selectedMilestones.map((m) => [m.milestoneUID ?? m.key, m.label])
           )
         : undefined;
 
