@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "dev:wl": "next dev --turbopack --experimental-https --experimental-https-key ./test-wl.local+2-key.pem --experimental-https-cert ./test-wl.local+2.pem",
-    "build": "pnpm build:widget && next build --turbopack",
+    "build": "npm run build:widget && next build --turbopack",
     "build:widget": "vite build --config widget/vite.config.ts",
     "start": "next start",
     "lint": "biome check .",
@@ -13,7 +13,7 @@
     "format": "biome format --write .",
     "generate-llms": "ts-node -P tsconfig.scripts.json scripts/generate-llms-txt.ts",
     "postbuild": "next-sitemap",
-    "build-stats": "cross-env ANALYZE=true yarn build",
+    "build-stats": "cross-env ANALYZE=true npm run build",
     "test": "vitest run --project unit",
     "test:watch": "vitest --project unit",
     "test:coverage": "vitest run --project unit --coverage",
