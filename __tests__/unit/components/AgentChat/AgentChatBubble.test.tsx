@@ -67,9 +67,6 @@ vi.mock("@/src/components/ai-elements/message", () => ({
   MessageContent: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="message-content">{children}</div>
   ),
-  MessageResponse: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="message-response">{children}</div>
-  ),
   MessageActions: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="message-actions">{children}</div>
   ),
@@ -85,6 +82,12 @@ vi.mock("@/src/components/ai-elements/message", () => ({
     <button data-testid="message-action" onClick={onClick} title={tooltip}>
       {children}
     </button>
+  ),
+}));
+
+vi.mock("@/src/components/ai-elements/message-response", () => ({
+  MessageResponse: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="message-response">{children}</div>
   ),
 }));
 
@@ -218,10 +221,10 @@ describe("AgentChatBubble", () => {
     });
   });
 
-  it("should not render when unauthenticated", () => {
+  it("should still render toggle when unauthenticated", () => {
     mockAuthenticated.mockReturnValue(false);
-    const { container } = render(<AgentChatBubble />);
-    expect(container.innerHTML).toBe("");
+    render(<AgentChatBubble />);
+    expect(screen.getByLabelText("Open chat")).toBeInTheDocument();
   });
 
   it("should render toggle button when authenticated", () => {
@@ -310,7 +313,7 @@ describe("AgentChatBubble", () => {
       ],
     });
     render(<AgentChatBubble />);
-    expect(screen.getByTestId("message-actions")).toBeInTheDocument();
+    expect(screen.getByTitle("Copy")).toBeInTheDocument();
   });
 
   it("should not render copy action for streaming messages", () => {
