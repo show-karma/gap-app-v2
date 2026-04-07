@@ -432,6 +432,7 @@ export const INDEXER = {
     IMPACT_INDICATORS: {
       SEND: (milestoneUID: string) => `/grants/milestones/${milestoneUID}/indicators/data`,
     },
+    EVALUATION: (milestoneUID: string) => `/v2/milestones/${milestoneUID}/evaluation`,
   },
   CATEGORIES: {
     CREATE: (idOrSlug: string) => `/categories/create/${idOrSlug}`,
