@@ -98,7 +98,7 @@ export function ChatWidget({
               <SparklesIcon className="h-3.5 w-3.5 text-brand-blue" />
             </div>
             <h3 className="text-sm font-semibold text-foreground">{title}</h3>
-            <Badge variant="secondary">Filecoin</Badge>
+            <Badge variant="secondary">{communityId}</Badge>
           </div>
           <div className="flex gap-1">
             <Button
@@ -138,7 +138,7 @@ export function ChatWidget({
                     </div>
                   }
                   title="How can I help?"
-                  description="Ask me about Filecoin grants, programs, or applications."
+                  description={`Ask me about ${communityId} grants, programs, or applications.`}
                 />
               ) : (
                 messages.map((msg) => (

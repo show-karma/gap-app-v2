@@ -75,10 +75,17 @@ describe("ChatWidget", () => {
     expect(screen.getByRole("button", { name: /open chat/i })).toBeInTheDocument();
   });
 
-  it("shows Filecoin community badge", async () => {
+  it("shows communityId in badge", async () => {
     render(<ChatWidget {...defaultProps} />);
     await userEvent.click(screen.getByRole("button", { name: /open chat/i }));
 
-    expect(screen.getByText("Filecoin")).toBeInTheDocument();
+    expect(screen.getByText("filecoin")).toBeInTheDocument();
+  });
+
+  it("shows communityId in empty state description", async () => {
+    render(<ChatWidget {...defaultProps} communityId="optimism" />);
+    await userEvent.click(screen.getByRole("button", { name: /open chat/i }));
+
+    expect(screen.getByText(/optimism grants/i)).toBeInTheDocument();
   });
 });

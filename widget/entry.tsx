@@ -1,4 +1,5 @@
 import { createRoot, type Root } from "react-dom/client";
+import { useAgentChatStore } from "@/store/agentChat";
 import { ChatWidget } from "./ChatWidget";
 import { abortWidgetStream } from "./useWidgetStream";
 import widgetStyles from "./widget.css?inline";
@@ -47,6 +48,11 @@ function init(config: KarmaChatConfig) {
 function destroy() {
   // Abort any in-flight SSE stream before unmounting React
   abortWidgetStream();
+
+  // Reset shared store so re-init starts clean
+  const store = useAgentChatStore.getState();
+  store.clearMessages();
+  store.setOpen(false);
 
   if (root) {
     root.unmount();

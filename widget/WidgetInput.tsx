@@ -1,5 +1,5 @@
 import { CornerDownLeftIcon, SquareIcon } from "lucide-react";
-import { type KeyboardEvent, memo, useCallback, useRef, useState } from "react";
+import { type KeyboardEvent, memo, useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 
 interface WidgetInputProps {
@@ -13,10 +13,17 @@ export const WidgetInput = memo(function WidgetInput({
   onSubmit,
   isStreaming,
   onStop,
-  placeholder = "Ask about Filecoin grants...",
+  placeholder = "Ask me anything...",
 }: WidgetInputProps) {
   const [value, setValue] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, [value]);
 
   const submit = useCallback(() => {
     const trimmed = value.trim();
