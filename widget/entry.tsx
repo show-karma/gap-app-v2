@@ -56,6 +56,7 @@ function destroy() {
   const store = useAgentChatStore.getState();
   store.clearMessages();
   store.setOpen(false);
+  store.setAgentContext(null);
 
   if (root) {
     root.unmount();

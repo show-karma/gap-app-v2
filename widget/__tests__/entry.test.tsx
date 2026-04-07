@@ -23,10 +23,11 @@ vi.mock("../useWidgetStream", () => ({
 vi.mock("@/store/agentChat", () => {
   const clearMessages = vi.fn();
   const setOpen = vi.fn();
+  const setAgentContext = vi.fn();
   return {
     useAgentChatStore: Object.assign(() => ({}), {
-      getState: () => ({ clearMessages, setOpen }),
-      __mocks: { clearMessages, setOpen },
+      getState: () => ({ clearMessages, setOpen, setAgentContext }),
+      __mocks: { clearMessages, setOpen, setAgentContext },
     }),
   };
 });
@@ -68,15 +69,17 @@ describe("KarmaChat", () => {
 
   it("destroy resets the Zustand store", async () => {
     const { useAgentChatStore } = await import("@/store/agentChat");
-    const { clearMessages, setOpen } = (useAgentChatStore as any).__mocks;
+    const { clearMessages, setOpen, setAgentContext } = (useAgentChatStore as any).__mocks;
 
     KarmaChat.init({ apiUrl: "https://test.api/v2/agent/stream", communityId: "filecoin" });
     clearMessages.mockClear();
     setOpen.mockClear();
+    setAgentContext.mockClear();
 
     KarmaChat.destroy();
 
     expect(clearMessages).toHaveBeenCalled();
     expect(setOpen).toHaveBeenCalledWith(false);
+    expect(setAgentContext).toHaveBeenCalledWith(null);
   });
 });

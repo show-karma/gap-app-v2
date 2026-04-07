@@ -53,7 +53,7 @@ export function ChatWidget({
       store.clearMessages();
       previousCommunityIdRef.current = communityId;
     }
-    store.setAgentContext({ communityId });
+    store.setAgentContext({ ...store.agentContext, communityId });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only run when communityId changes
   }, [communityId]);
 
