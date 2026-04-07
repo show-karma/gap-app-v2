@@ -12,6 +12,8 @@ const STORAGE_STATE_PATH = path.join(__dirname, "..", ".auth", "user.json");
  * Only runs when QA_TEST_EMAIL is set (CI). Locally with E2E bypass,
  * auth is handled per-test via localStorage injection.
  */
+setup.setTimeout(60_000);
+
 setup("authenticate via Privy", async ({ page }) => {
   const email = process.env.QA_TEST_EMAIL;
   const otp = process.env.QA_TEST_OTP;
@@ -44,13 +46,28 @@ setup("authenticate via Privy", async ({ page }) => {
   await submitButton.waitFor({ state: "visible", timeout: 5000 });
   await submitButton.click();
 
-  // Wait for OTP input to appear and fill it
+  // Check for rate-limit error before waiting for OTP
+  const rateLimitError = privyModal.getByText(/too many attempts|rate limit/i);
   const otpInput = privyModal
     .locator(
       'input[aria-label*="code" i], input[autocomplete="one-time-code"], input[type="tel"], input[inputmode="numeric"]'
     )
     .first();
-  await otpInput.waitFor({ state: "visible", timeout: 30000 });
+
+  // Race: either OTP input appears or we get a rate-limit error
+  const result = await Promise.race([
+    otpInput.waitFor({ state: "visible", timeout: 30000 }).then(() => "otp" as const),
+    rateLimitError
+      .waitFor({ state: "visible", timeout: 30000 })
+      .then(() => "rate-limited" as const),
+  ]);
+
+  if (result === "rate-limited") {
+    throw new Error(
+      "Privy rate-limited this login attempt ('Too many attempts'). " +
+        "Wait a few minutes before re-running, or check Privy dashboard test user config."
+    );
+  }
 
   // Privy may use multiple single-digit inputs or a single input for OTP
   const otpInputs = privyModal.locator(

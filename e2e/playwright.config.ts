@@ -34,6 +34,8 @@ export default defineConfig({
     {
       name: "setup",
       testMatch: /auth\.setup\.ts/,
+      // Never retry auth setup — retries compound Privy rate limits
+      retries: 0,
     },
 
     {
