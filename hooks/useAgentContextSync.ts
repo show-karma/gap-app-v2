@@ -46,12 +46,28 @@ export function useAgentContextSync() {
       return;
     }
 
-    // No recognized context page — fall back to whitelabel community if available
-    if (whitelabelCommunity) {
-      setAgentContext({ communityId: whitelabelCommunity });
-    } else {
-      setAgentContext(null);
+    // Community pages (regular routes like /community/optimism/funding-opportunities)
+    if (pathname?.startsWith("/community/") && communityId) {
+      if (cleanProgramId) {
+        setAgentContext({ programId: cleanProgramId, communityId });
+      } else {
+        setAgentContext({ communityId });
+      }
+      return;
     }
+
+    // Whitelabel domains (e.g. app.opgrants.io) — community comes from domain config
+    if (whitelabelCommunity) {
+      if (cleanProgramId) {
+        setAgentContext({ programId: cleanProgramId, communityId: whitelabelCommunity });
+      } else {
+        setAgentContext({ communityId: whitelabelCommunity });
+      }
+      return;
+    }
+
+    // No recognized context page — clear context
+    setAgentContext(null);
   }, [
     pathname,
     projectId,
