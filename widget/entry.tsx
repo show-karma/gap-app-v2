@@ -1,5 +1,6 @@
 import { createRoot, type Root } from "react-dom/client";
 import { ChatWidget } from "./ChatWidget";
+import { abortWidgetStream } from "./useWidgetStream";
 import widgetStyles from "./widget.css?inline";
 
 interface KarmaChatConfig {
@@ -44,6 +45,9 @@ function init(config: KarmaChatConfig) {
 }
 
 function destroy() {
+  // Abort any in-flight SSE stream before unmounting React
+  abortWidgetStream();
+
   if (root) {
     root.unmount();
     root = null;
@@ -58,9 +62,6 @@ function destroy() {
   }
 }
 
-export const KarmaChat = { init, destroy };
-
-// Expose on window for IIFE consumers
-if (typeof window !== "undefined") {
-  (window as any).KarmaChat = KarmaChat;
-}
+// Default export so the IIFE `name: "KarmaChat"` exposes init/destroy
+// directly on window.KarmaChat (not nested as window.KarmaChat.KarmaChat)
+export default { init, destroy };

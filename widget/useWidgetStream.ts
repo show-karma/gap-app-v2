@@ -70,8 +70,16 @@ function buildConversationHistory(
     .map((msg) => ({ role: msg.role, content: msg.content }));
 }
 
+// Module-level ref so destroy() can abort in-flight streams after React unmounts
+let activeController: AbortController | null = null;
+
+/** Abort any in-flight widget stream. Safe to call from outside React. */
+export function abortWidgetStream() {
+  activeController?.abort();
+  activeController = null;
+}
+
 export function useWidgetStream({ apiUrl, communityId }: WidgetStreamConfig) {
-  const abortRef = useRef<AbortController | null>(null);
   const streamingContentRef = useRef("");
 
   const sendMessage = useCallback(
@@ -100,9 +108,9 @@ export function useWidgetStream({ apiUrl, communityId }: WidgetStreamConfig) {
       store.setError(null);
       streamingContentRef.current = "";
 
-      abortRef.current?.abort();
+      activeController?.abort();
       const controller = new AbortController();
-      abortRef.current = controller;
+      activeController = controller;
 
       try {
         const response = await fetch(apiUrl, {
@@ -200,7 +208,7 @@ export function useWidgetStream({ apiUrl, communityId }: WidgetStreamConfig) {
   );
 
   const abort = useCallback(() => {
-    abortRef.current?.abort();
+    abortWidgetStream();
   }, []);
 
   return { sendMessage, abort };

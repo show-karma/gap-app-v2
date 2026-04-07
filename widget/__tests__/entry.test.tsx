@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import { KarmaChat } from "../entry";
+import KarmaChat from "../entry";
 
 // Mock the ChatWidget to avoid needing full React rendering
 vi.mock("../ChatWidget", () => ({
@@ -11,6 +11,12 @@ vi.mock("../ChatWidget", () => ({
 // Mock the CSS inline import (Vite-specific feature not available in vitest)
 vi.mock("../widget.css?inline", () => ({
   default: ".karma-chat { display: block; }",
+}));
+
+// Mock useWidgetStream to avoid fetch dependency
+vi.mock("../useWidgetStream", () => ({
+  useWidgetStream: () => ({ sendMessage: vi.fn(), abort: vi.fn() }),
+  abortWidgetStream: vi.fn(),
 }));
 
 afterEach(() => {
