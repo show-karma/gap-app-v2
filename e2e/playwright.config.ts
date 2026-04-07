@@ -4,7 +4,9 @@ const isCI = !!process.env.CI;
 const isAnvil = !!process.env.ANVIL;
 const hasTestAccount = !!process.env.QA_TEST_EMAIL;
 
-const STORAGE_STATE_PATH = ".auth/user.json";
+import path from "node:path";
+
+const STORAGE_STATE_PATH = path.join(__dirname, ".auth", "user.json");
 
 export default defineConfig({
   testDir: "./tests",
