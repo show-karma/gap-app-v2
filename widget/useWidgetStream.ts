@@ -12,16 +12,17 @@ interface SSEEvent {
 }
 
 function parseSSEChunk(chunk: string): SSEEvent[] {
+  const normalized = chunk.replace(/\r\n/g, "\n");
   const events: SSEEvent[] = [];
-  const blocks = chunk.split("\n\n").filter(Boolean);
+  const blocks = normalized.split("\n\n").filter(Boolean);
 
   for (const block of blocks) {
     const lines = block.split("\n");
     let data = "";
 
     for (const line of lines) {
-      if (line.startsWith("data: ")) {
-        data += (data ? "\n" : "") + line.slice(6);
+      if (line.startsWith("data:")) {
+        data += (data ? "\n" : "") + line.slice(5).trimStart();
       }
     }
 
@@ -95,15 +96,6 @@ export function useWidgetStream({ apiUrl, communityId }: WidgetStreamConfig) {
       };
       store.addMessage(userMsg);
 
-      const assistantMsg: ChatMessage = {
-        id: `assistant-${Date.now()}`,
-        role: "assistant",
-        content: "",
-        timestamp: Date.now(),
-        isStreaming: true,
-      };
-      store.addMessage(assistantMsg);
-
       store.setStreaming(true);
       store.setError(null);
       streamingContentRef.current = "";
@@ -138,6 +130,16 @@ export function useWidgetStream({ apiUrl, communityId }: WidgetStreamConfig) {
 
         const reader = response.body?.getReader();
         if (!reader) throw new Error("No response body");
+
+        // Add assistant placeholder only after stream is confirmed
+        const assistantMsg: ChatMessage = {
+          id: `assistant-${Date.now()}`,
+          role: "assistant",
+          content: "",
+          timestamp: Date.now(),
+          isStreaming: true,
+        };
+        store.addMessage(assistantMsg);
 
         const decoder = new TextDecoder();
         let buffer = "";

@@ -45,6 +45,9 @@ function init(config: KarmaChatConfig) {
   );
 }
 
+// NOTE: destroy() mutates the shared useAgentChatStore. This is safe because
+// the widget runs on external sites, never alongside the main app. If dual
+// usage becomes a requirement, create a widget-scoped store slice.
 function destroy() {
   // Abort any in-flight SSE stream before unmounting React
   abortWidgetStream();

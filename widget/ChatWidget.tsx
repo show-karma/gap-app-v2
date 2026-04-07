@@ -10,20 +10,21 @@ import {
   ConversationScrollButton,
 } from "@/src/components/ai-elements/conversation";
 import { useAgentChatStore } from "@/store/agentChat";
-import { useWidgetStream } from "./useWidgetStream";
+import { abortWidgetStream, useWidgetStream } from "./useWidgetStream";
 import { WidgetInput } from "./WidgetInput";
 import { WidgetMessage } from "./WidgetMessage";
 
-function ScrollOnNewMessage({ messageCount }: { messageCount: number }) {
+function ScrollOnNewMessage({ lastMessageContent }: { lastMessageContent: string | undefined }) {
   const { scrollToBottom } = useStickToBottomContext();
-  const prevCount = useRef(messageCount);
+  const prevContent = useRef(lastMessageContent);
 
   useEffect(() => {
-    if (messageCount !== prevCount.current) {
-      prevCount.current = messageCount;
+    // Only scroll when content actually changes (not on empty assistant placeholder)
+    if (lastMessageContent && lastMessageContent !== prevContent.current) {
+      prevContent.current = lastMessageContent;
       scrollToBottom();
     }
-  }, [messageCount, scrollToBottom]);
+  }, [lastMessageContent, scrollToBottom]);
 
   return null;
 }
@@ -44,10 +45,17 @@ export function ChatWidget({
   const { isOpen, toggleOpen, messages, isStreaming, error, clearMessages } = useAgentChatStore();
   const { sendMessage, abort } = useWidgetStream({ apiUrl, communityId });
 
-  const setAgentContext = useAgentChatStore((s) => s.setAgentContext);
+  const previousCommunityIdRef = useRef(communityId);
   useEffect(() => {
-    setAgentContext({ communityId });
-  }, [communityId, setAgentContext]);
+    const store = useAgentChatStore.getState();
+    if (previousCommunityIdRef.current !== communityId) {
+      abortWidgetStream();
+      store.clearMessages();
+      previousCommunityIdRef.current = communityId;
+    }
+    store.setAgentContext({ communityId });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only run when communityId changes
+  }, [communityId]);
 
   const handleSubmit = useCallback(
     (text: string) => {
@@ -129,7 +137,7 @@ export function ChatWidget({
         {/* Messages */}
         {isOpen && (
           <Conversation className="flex-1 min-h-0">
-            <ScrollOnNewMessage messageCount={messages.length} />
+            <ScrollOnNewMessage lastMessageContent={messages[messages.length - 1]?.content} />
             <ConversationContent className="gap-4 px-4 py-4">
               {messages.length === 0 ? (
                 <ConversationEmptyState
@@ -161,8 +169,14 @@ export function ChatWidget({
                 </div>
               )}
               {error && (
-                <div className="rounded-lg border border-destructive/20 bg-destructive-subtle p-3 flex items-start gap-2">
-                  <AlertCircleIcon className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+                <div
+                  role="alert"
+                  className="rounded-lg border border-destructive/20 bg-destructive-subtle p-3 flex items-start gap-2"
+                >
+                  <AlertCircleIcon
+                    aria-hidden="true"
+                    className="h-4 w-4 text-destructive shrink-0 mt-0.5"
+                  />
                   <p className="text-xs text-destructive">{error}</p>
                 </div>
               )}
