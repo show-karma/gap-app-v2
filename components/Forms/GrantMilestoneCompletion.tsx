@@ -7,9 +7,9 @@ import toast from "react-hot-toast";
 import { z } from "zod";
 import { OutputsSection } from "@/components/Forms/Outputs/OutputsSection";
 import { Button } from "@/components/Utilities/Button";
+import { errorManager } from "@/components/Utilities/errorManager";
 import { FileUpload } from "@/components/Utilities/FileUpload";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
-import { errorManager } from "@/components/Utilities/errorManager";
 import { useMilestone } from "@/hooks/useMilestone";
 import { submitGranteeInvoice } from "@/src/features/payout-disbursement/services/payout-disbursement.service";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
@@ -227,7 +227,11 @@ export const GrantMilestoneCompletionForm = ({
                 "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
               ]}
               onS3UploadComplete={(finalUrl, tempKey) => {
-                setInvoiceFile({ fileUrl: finalUrl, fileKey: tempKey, fileName: pendingFileNameRef.current });
+                setInvoiceFile({
+                  fileUrl: finalUrl,
+                  fileKey: tempKey,
+                  fileName: pendingFileNameRef.current,
+                });
                 setIsInvoiceUploading(false);
               }}
               onS3UploadError={() => setIsInvoiceUploading(false)}

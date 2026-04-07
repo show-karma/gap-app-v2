@@ -479,7 +479,10 @@ describe("payout-disbursement.service", () => {
 
   describe("getInvoiceDownloadUrl", () => {
     it("returns presigned download URL", async () => {
-      mockFetchData.mockResolvedValue([{ downloadUrl: "https://s3.example.com/invoice.pdf" }, null]);
+      mockFetchData.mockResolvedValue([
+        { downloadUrl: "https://s3.example.com/invoice.pdf" },
+        null,
+      ]);
 
       const result = await getInvoiceDownloadUrl("invoices/grant-1/file.pdf");
       expect(result).toBe("https://s3.example.com/invoice.pdf");
@@ -602,7 +605,10 @@ describe("payout-disbursement.service", () => {
 
   describe("getGrantInvoiceDownloadUrl", () => {
     it("returns the download URL", async () => {
-      mockFetchData.mockResolvedValue([{ data: { downloadUrl: "https://s3.example.com/signed-url" } }, null]);
+      mockFetchData.mockResolvedValue([
+        { data: { downloadUrl: "https://s3.example.com/signed-url" } },
+        null,
+      ]);
 
       const result = await getGrantInvoiceDownloadUrl("grant-1", "invoices/file.pdf");
       expect(result).toBe("https://s3.example.com/signed-url");
