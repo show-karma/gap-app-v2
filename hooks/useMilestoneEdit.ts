@@ -22,7 +22,14 @@ export type MilestoneEditData = Partial<
   Pick<IMilestone, "title" | "description" | "endsAt" | "startsAt" | "priority">
 >;
 
-export const useMilestoneEdit = () => {
+interface UseMilestoneEditOptions {
+  /** Override project UID when not on a project page (e.g. admin review page) */
+  projectUid?: string;
+  /** Override project slug for query invalidation */
+  projectSlug?: string;
+}
+
+export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
   const [isEditing, setIsEditing] = useState(false);
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
@@ -35,7 +42,10 @@ export const useMilestoneEdit = () => {
     dismiss,
     showChainProgress,
   } = useAttestationToast();
-  const project = useProjectStore((state) => state.project);
+  const storeProject = useProjectStore((state) => state.project);
+  const project = options?.projectUid
+    ? { uid: options.projectUid, details: { slug: options.projectSlug || "" } }
+    : storeProject;
   const projectSlug = project?.details?.slug || "";
   const { refetch: refetchGrants } = useProjectGrants(project?.uid || "");
 

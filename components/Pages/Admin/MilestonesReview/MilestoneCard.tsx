@@ -1,14 +1,58 @@
 "use client";
 
 import { CheckCircleIcon, TrashIcon } from "@heroicons/react/20/solid";
-import { useMemo } from "react";
+import { PencilSquareIcon } from "@heroicons/react/24/outline";
+import { useMemo, useState } from "react";
 import { DeleteDialog } from "@/components/DeleteDialog";
+import { MilestoneEditDialog } from "@/components/Milestone/MilestoneEditDialog";
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import type { GrantMilestoneWithCompletion } from "@/services/milestones";
+import type { GrantMilestone } from "@/types/v2/grant";
+import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { formatDate } from "@/utilities/formatDate";
 import { shortAddress } from "@/utilities/shortAddress";
 import { getMilestoneStatus, MILESTONE_STATUS_CONFIG } from "./utils/milestone-review-status";
+
+function toUnifiedMilestone(
+  milestone: GrantMilestoneWithCompletion,
+  grantUID: string,
+  grantChainID: number
+): UnifiedMilestone {
+  const grantMilestone: GrantMilestone = {
+    uid: milestone.uid,
+    chainID: milestone.chainId,
+    title: milestone.title,
+    description: milestone.description,
+    endsAt: milestone.dueDate
+      ? Math.floor(new Date(milestone.dueDate).getTime() / 1000)
+      : undefined,
+    verified: [],
+  };
+
+  return {
+    uid: milestone.uid,
+    type: "milestone",
+    title: milestone.title,
+    description: milestone.description,
+    completed: false,
+    createdAt: "",
+    startsAt: grantMilestone.startsAt,
+    endsAt: grantMilestone.endsAt,
+    chainID: Number(milestone.chainId) || grantChainID,
+    refUID: grantUID,
+    source: {
+      grantMilestone: {
+        milestone: grantMilestone,
+        completionDetails: milestone.completionDetails,
+        grant: {
+          uid: grantUID,
+          chainID: grantChainID,
+        },
+      },
+    },
+  };
+}
 
 interface MilestoneCardProps {
   milestone: GrantMilestoneWithCompletion;
@@ -18,6 +62,11 @@ interface MilestoneCardProps {
   isVerifying: boolean;
   canVerifyMilestones: boolean;
   canDeleteMilestones: boolean;
+  canEditMilestones?: boolean;
+  grantUID?: string;
+  grantChainID?: number;
+  projectUid?: string;
+  projectSlug?: string;
   onVerifyClick: (uid: string) => void;
   onCancelVerification: () => void;
   onVerificationCommentChange: (comment: string) => void;
@@ -34,6 +83,11 @@ export function MilestoneCard({
   isVerifying,
   canVerifyMilestones,
   canDeleteMilestones,
+  canEditMilestones = false,
+  grantUID,
+  grantChainID,
+  projectUid,
+  projectSlug,
   onVerifyClick,
   onCancelVerification,
   onVerificationCommentChange,
@@ -41,6 +95,16 @@ export function MilestoneCard({
   onDeleteMilestone,
   isDeleting = false,
 }: MilestoneCardProps) {
+  const [isEditOpen, setIsEditOpen] = useState(false);
+
+  const unifiedMilestone = useMemo(
+    () =>
+      canEditMilestones && grantUID && grantChainID
+        ? toUnifiedMilestone(milestone, grantUID, grantChainID)
+        : null,
+    [canEditMilestones, milestone, grantUID, grantChainID]
+  );
+
   const useOnChainData = useMemo(
     () => milestone.completionDetails !== null,
     [milestone.completionDetails]
@@ -74,23 +138,44 @@ export function MilestoneCard({
     >
       <div className="flex items-start justify-between mb-2">
         <h3 className="text-lg font-medium text-black dark:text-white">{milestone.title}</h3>
-        {canDeleteMilestones && milestone.fundingApplicationCompletion && (
-          <DeleteDialog
-            deleteFunction={() => onDeleteMilestone(milestone)}
-            isLoading={isDeleting}
-            title={
-              <p className="font-normal">
-                Are you sure you want to delete <b>{milestone.title}</b> milestone?
-              </p>
-            }
-            buttonElement={{
-              text: "",
-              icon: <TrashIcon className="w-5 h-5 text-red-500" />,
-              styleClass:
-                "bg-transparent p-1 w-max h-max text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 border border-red-200 dark:border-red-800 rounded",
-            }}
-          />
-        )}
+        <div className="flex items-center gap-1">
+          {unifiedMilestone && !isVerified && !hasCompletion && (
+            <>
+              <button
+                type="button"
+                onClick={() => setIsEditOpen(true)}
+                className="bg-transparent p-1 w-max h-max hover:bg-gray-100 dark:hover:bg-zinc-700 rounded"
+                title="Edit milestone"
+              >
+                <PencilSquareIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+              </button>
+              <MilestoneEditDialog
+                milestone={unifiedMilestone}
+                isOpen={isEditOpen}
+                onClose={() => setIsEditOpen(false)}
+                projectUid={projectUid}
+                projectSlug={projectSlug}
+              />
+            </>
+          )}
+          {canDeleteMilestones && milestone.fundingApplicationCompletion && (
+            <DeleteDialog
+              deleteFunction={() => onDeleteMilestone(milestone)}
+              isLoading={isDeleting}
+              title={
+                <p className="font-normal">
+                  Are you sure you want to delete <b>{milestone.title}</b> milestone?
+                </p>
+              }
+              buttonElement={{
+                text: "",
+                icon: <TrashIcon className="w-5 h-5 text-red-500" />,
+                styleClass:
+                  "bg-transparent p-1 w-max h-max text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 border border-red-200 dark:border-red-800 rounded",
+              }}
+            />
+          )}
+        </div>
       </div>
 
       <div className="text-gray-600 dark:text-gray-400 text-sm mb-3">

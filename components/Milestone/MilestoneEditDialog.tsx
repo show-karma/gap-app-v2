@@ -41,6 +41,10 @@ interface MilestoneEditDialogProps {
   milestone: UnifiedMilestone;
   isOpen: boolean;
   onClose: () => void;
+  /** Override project UID when not on a project page (e.g. admin review page) */
+  projectUid?: string;
+  /** Override project slug for query invalidation */
+  projectSlug?: string;
 }
 
 function unixToDateInput(unix?: number): string {
@@ -56,8 +60,16 @@ function dateInputToUnix(dateStr?: string): number | undefined {
   return Math.floor(date.getTime() / 1000);
 }
 
-export const MilestoneEditDialog = ({ milestone, isOpen, onClose }: MilestoneEditDialogProps) => {
-  const { isEditing, editMilestone } = useMilestoneEdit();
+export const MilestoneEditDialog = ({
+  milestone,
+  isOpen,
+  onClose,
+  projectUid,
+  projectSlug,
+}: MilestoneEditDialogProps) => {
+  const { isEditing, editMilestone } = useMilestoneEdit(
+    projectUid ? { projectUid, projectSlug } : undefined
+  );
   const [error, setError] = useState<string | null>(null);
 
   const handleOpenChange = useCallback(

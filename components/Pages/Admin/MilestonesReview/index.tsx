@@ -518,6 +518,11 @@ function MilestonesReviewPageContent({
                       isVerifying={isVerifying}
                       canVerifyMilestones={canVerifyMilestones}
                       canDeleteMilestones={canDeleteMilestones}
+                      canEditMilestones={canVerifyMilestones}
+                      grantUID={grant?.uid}
+                      grantChainID={grant?.chainID}
+                      projectUid={project.uid}
+                      projectSlug={project.details?.slug}
                       onVerifyClick={handleVerifyClick}
                       onCancelVerification={handleCancelVerification}
                       onVerificationCommentChange={setVerificationComment}
