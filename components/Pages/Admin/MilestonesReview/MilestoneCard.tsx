@@ -26,7 +26,7 @@ function AIEvaluationButton({ onClick, className = "" }: AIEvaluationButtonProps
     <button
       type="button"
       onClick={onClick}
-      className={`flex items-center gap-1 px-3 text-sm text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-md transition-colors ${className}`}
+      className={`flex items-center gap-1 px-3 py-1.5 text-sm text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-md transition-colors ${className}`}
     >
       <SparklesIcon className="w-4 h-4" />
       AI Evaluation
@@ -171,7 +171,7 @@ export function MilestoneCard({
                   Verified: {formatDate(milestone.verificationDetails.verifiedAt)}
                 </p>
               </div>
-              <AIEvaluationButton onClick={handleOpenEvaluation} className="mt-2 py-1.5" />
+              <AIEvaluationButton onClick={handleOpenEvaluation} className="mt-2" />
             </div>
           ) : (
             /* Show Verify Button for all non-verified milestones with completion (on-chain or off-chain) */
@@ -239,7 +239,7 @@ export function MilestoneCard({
         </span>
       </div>
 
-      {hasCompletion && (
+      {hasCompletion && isEvaluationModalOpen && (
         <AIEvaluationModal
           milestoneUID={milestone.uid}
           isOpen={isEvaluationModalOpen}
