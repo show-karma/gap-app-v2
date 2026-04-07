@@ -62,10 +62,10 @@ function classifyOption(label: string, milestoneUID: string | null): OptionCateg
   return "custom";
 }
 
-const CATEGORY_CONFIG: Record<OptionCategory, { label: string; order: number }> = {
-  payment: { label: "Payments", order: 0 },
-  milestone: { label: "Milestones", order: 1 },
-  custom: { label: "Custom", order: 2 },
+const CATEGORY_CONFIG: Record<OptionCategory, { label: string }> = {
+  payment: { label: "Payments" },
+  milestone: { label: "Milestones" },
+  custom: { label: "Custom" },
 };
 
 function RecordPaymentDialogInner({
@@ -332,7 +332,7 @@ function RecordPaymentDialogInner({
                           {option.label}
                         </span>
                         <div className="flex items-center gap-2 shrink-0">
-                          {option.allocatedAmount && (
+                          {option.allocatedAmount && !Number.isNaN(Number(option.allocatedAmount)) && (
                             <span className="text-xs text-gray-500 dark:text-zinc-500 tabular-nums">
                               ${Number(option.allocatedAmount).toLocaleString()}
                             </span>
