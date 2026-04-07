@@ -194,10 +194,20 @@ function RecordPaymentDialogInner({
           )
         : undefined;
 
+    const CATEGORY_PREFIX: Record<OptionCategory, string> = {
+      milestone: "Milestone",
+      payment: "Payment",
+      custom: "",
+    };
+
     const milestoneLabels: Record<string, string> | undefined =
       selectedMilestones.length > 0
         ? Object.fromEntries(
-            selectedMilestones.map((m) => [m.milestoneUID ?? m.key, m.label])
+            selectedMilestones.map((m) => {
+              const prefix = CATEGORY_PREFIX[m.category];
+              const displayLabel = prefix ? `${prefix}: ${m.label}` : m.label;
+              return [m.milestoneUID ?? m.key, displayLabel];
+            })
           )
         : undefined;
 
