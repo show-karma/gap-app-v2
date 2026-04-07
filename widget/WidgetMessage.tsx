@@ -1,18 +1,13 @@
-import { cjk } from "@streamdown/cjk";
 import { BotIcon, UserIcon } from "lucide-react";
 import { memo } from "react";
-import { Streamdown } from "streamdown";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/utilities/tailwind";
+import { LiteMarkdown } from "./LiteMarkdown";
 
 interface WidgetMessageProps {
   content: string;
   from: "user" | "assistant";
 }
-
-// Intentionally exclude @streamdown/code — it bundles shiki (~8MB of syntax grammars).
-// The widget uses plain <code> styling instead, which is sufficient for a chat assistant.
-const streamdownPlugins = { cjk };
 
 export const WidgetMessage = memo(function WidgetMessage({ content, from }: WidgetMessageProps) {
   const isUser = from === "user";
@@ -33,7 +28,7 @@ export const WidgetMessage = memo(function WidgetMessage({ content, from }: Widg
         )}
       >
         <div className="prose prose-sm max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
-          <Streamdown plugins={streamdownPlugins}>{content}</Streamdown>
+          <LiteMarkdown>{content}</LiteMarkdown>
         </div>
       </div>
     </div>

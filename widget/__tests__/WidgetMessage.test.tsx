@@ -1,33 +1,4 @@
 import { render, screen } from "@testing-library/react";
-import { vi } from "vitest";
-
-// Mock Streamdown as a React component — jsdom can't run shiki/cjk plugins
-vi.mock("streamdown", () => ({
-  Streamdown: ({ children }: { children: string }) => {
-    // Parse **bold** into <strong> elements for testing
-    const parts = children.split(/\*\*(.+?)\*\*/g);
-    return (
-      <span>
-        {parts.map((part, i) => (i % 2 === 1 ? <strong key={part}>{part}</strong> : part))}
-      </span>
-    );
-  },
-}));
-
-vi.mock("@streamdown/code", () => ({
-  code: { name: "shiki", type: "code-highlighter" },
-}));
-
-vi.mock("@streamdown/cjk", () => ({
-  cjk: {
-    name: "cjk",
-    type: "cjk",
-    remarkPlugins: [],
-    remarkPluginsBefore: [],
-    remarkPluginsAfter: [],
-  },
-}));
-
 import { WidgetMessage } from "../WidgetMessage";
 
 describe("WidgetMessage", () => {
