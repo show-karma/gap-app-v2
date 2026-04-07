@@ -86,9 +86,6 @@ export function AgentChatBubble() {
     [isStreaming, sendMessage]
   );
 
-  // Don't render for unauthenticated users
-  if (!authenticated) return null;
-
   const badge = contextLabel(agentContext);
 
   return (
@@ -175,7 +172,11 @@ export function AgentChatBubble() {
                     </div>
                   }
                   title="How can I help?"
-                  description="Ask me about your projects, programs, or applications."
+                  description={
+                    authenticated
+                      ? "Ask me about your projects, programs, or applications."
+                      : "Ask me about projects, milestones, or the platform. Sign in to manage your own projects."
+                  }
                 />
               ) : (
                 messages.map((msg) => (
@@ -224,7 +225,7 @@ export function AgentChatBubble() {
                         </div>
                       </div>
                     )}
-                    {msg.toolResult?.type === "preview" && (
+                    {msg.toolResult?.type === "preview" && authenticated && (
                       <div className="pl-9">
                         <ConfirmationCard
                           toolResult={msg.toolResult}
@@ -270,7 +271,7 @@ export function AgentChatBubble() {
             <PromptInputTextarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask about your project..."
+              placeholder={authenticated ? "Ask about your project..." : "Ask about a project..."}
               disabled={isStreaming}
               className="min-h-10 max-h-24 text-sm"
             />

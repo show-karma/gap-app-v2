@@ -84,6 +84,30 @@ function extractToolResultData(raw: unknown): Record<string, unknown> {
   return {};
 }
 
+function toFriendlyError(status: number, rawMessage: string): string {
+  // Status-specific fallbacks when the backend message is a raw status code
+  // or missing. When the backend provides a descriptive message, prefer it.
+  const isRawStatusCode = rawMessage.startsWith("HTTP ");
+  switch (status) {
+    case 429:
+      return "I'm getting a lot of requests right now. Please wait a moment and try again.";
+    case 503:
+      return "I'm temporarily unavailable. Please try again in a few minutes.";
+    case 403:
+      // 403 can mean budget exceeded OR access denied — use the backend's
+      // message since it's already user-friendly (e.g., "Daily agent usage
+      // budget exceeded. Please try again tomorrow.")
+      return isRawStatusCode
+        ? "I'm unable to help with that right now. Please try again later."
+        : rawMessage;
+    default:
+      if (status >= 500) {
+        return "Something went wrong on my end. Please try again.";
+      }
+      return isRawStatusCode ? "Something unexpected happened. Please try again." : rawMessage;
+  }
+}
+
 function buildConversationHistory(
   messages: ChatMessage[],
   maxMessages: number = 12
@@ -158,12 +182,15 @@ export function useAgentStream() {
 
         if (!response.ok) {
           const errorText = await response.text();
-          let errorMsg = `HTTP ${response.status}`;
+          let errorMsg = toFriendlyError(response.status, `HTTP ${response.status}`);
           try {
             const errorJson = JSON.parse(errorText);
-            errorMsg = errorJson.message || errorJson.error || errorMsg;
+            const rawMsg = errorJson.message || errorJson.error || "";
+            if (rawMsg) {
+              errorMsg = toFriendlyError(response.status, rawMsg);
+            }
           } catch {
-            if (errorText) errorMsg = errorText;
+            // Use the status-based friendly message
           }
           if (response.status === 409) {
             throw new Error(
