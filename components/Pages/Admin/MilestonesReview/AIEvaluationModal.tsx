@@ -1,7 +1,7 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { memo } from "react";
-import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { Spinner } from "@/components/Utilities/Spinner";
 import {
   Dialog,
@@ -13,6 +13,12 @@ import {
 import { useMilestoneEvaluation } from "@/hooks/useMilestoneEvaluation";
 import type { MilestoneEvaluationItem } from "@/services/milestones";
 import { formatDate } from "@/utilities/formatDate";
+
+const MarkdownPreview = dynamic(
+  () =>
+    import("@/components/Utilities/MarkdownPreview").then((m) => ({ default: m.MarkdownPreview })),
+  { ssr: false }
+);
 
 interface AIEvaluationModalProps {
   milestoneUID: string;
