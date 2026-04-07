@@ -229,6 +229,30 @@ describe("useAgentContextSync", () => {
 
       expect(useAgentChatStore.getState().agentContext).toBeNull();
     });
+
+    it("should set programId and communityId on community program page", () => {
+      mockPathname.mockReturnValue("/community/filecoin/programs/992/apply");
+      mockParams.mockReturnValue({ communityId: "filecoin", programId: "992" });
+
+      renderHook(() => useAgentContextSync());
+
+      expect(useAgentChatStore.getState().agentContext).toEqual({
+        programId: "992",
+        communityId: "filecoin",
+      });
+    });
+
+    it("should strip chainId suffix from programId on community program page", () => {
+      mockPathname.mockReturnValue("/community/filecoin/programs/992_314/apply");
+      mockParams.mockReturnValue({ communityId: "filecoin", programId: "992_314" });
+
+      renderHook(() => useAgentContextSync());
+
+      expect(useAgentChatStore.getState().agentContext).toEqual({
+        programId: "992",
+        communityId: "filecoin",
+      });
+    });
   });
 
   describe("whitelabel domains", () => {
@@ -264,6 +288,31 @@ describe("useAgentContextSync", () => {
       renderHook(() => useAgentContextSync());
 
       expect(useAgentChatStore.getState().agentContext).toBeNull();
+    });
+
+    it("should set programId and communityId on whitelabel program page", () => {
+      mockUseWhitelabel.mockReturnValue({ isWhitelabel: true, communitySlug: "filecoin" });
+      mockPathname.mockReturnValue("/programs/992/apply");
+      mockParams.mockReturnValue({ communityId: "filecoin", programId: "992" });
+
+      renderHook(() => useAgentContextSync());
+
+      expect(useAgentChatStore.getState().agentContext).toEqual({
+        programId: "992",
+        communityId: "filecoin",
+      });
+    });
+
+    it("should set only communityId on whitelabel non-program page", () => {
+      mockUseWhitelabel.mockReturnValue({ isWhitelabel: true, communitySlug: "filecoin" });
+      mockPathname.mockReturnValue("/funding-opportunities");
+      mockParams.mockReturnValue({});
+
+      renderHook(() => useAgentContextSync());
+
+      expect(useAgentChatStore.getState().agentContext).toEqual({
+        communityId: "filecoin",
+      });
     });
 
     it("should prefer project context over whitelabel community on project page", () => {

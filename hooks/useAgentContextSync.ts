@@ -48,13 +48,21 @@ export function useAgentContextSync() {
 
     // Community pages (regular routes like /community/optimism/funding-opportunities)
     if (pathname?.startsWith("/community/") && communityId) {
-      setAgentContext({ communityId });
+      if (cleanProgramId) {
+        setAgentContext({ programId: cleanProgramId, communityId });
+      } else {
+        setAgentContext({ communityId });
+      }
       return;
     }
 
     // Whitelabel domains (e.g. app.opgrants.io) — community comes from domain config
     if (isWhitelabel && communitySlug) {
-      setAgentContext({ communityId: communitySlug });
+      if (cleanProgramId) {
+        setAgentContext({ programId: cleanProgramId, communityId: communitySlug });
+      } else {
+        setAgentContext({ communityId: communitySlug });
+      }
       return;
     }
 
