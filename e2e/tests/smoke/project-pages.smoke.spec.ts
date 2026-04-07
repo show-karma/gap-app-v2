@@ -5,7 +5,7 @@ import { GOTO_OPTIONS, waitForPageReady } from "../../helpers/navigation";
 // The project pages use async server components that fetch data via SSR.
 // Playwright route mocks only intercept browser requests, not server-side fetches.
 // We use a real project ID that exists in the production indexer API.
-const REAL_PROJECT_ID = "0xb3ac3e1e2a897fe064b7b8559e593bba51846a703b8f1af43edba01a5201c361";
+const REAL_PROJECT_ID = "0x26c473b456ff3de304120b5928603b88bfae6562577a328a49e61f4e429a518a";
 
 test.describe("Smoke Tests — Project Pages", () => {
   test("T-PROJ-01: project about page loads with project name", async ({ page, withApiMocks }) => {
