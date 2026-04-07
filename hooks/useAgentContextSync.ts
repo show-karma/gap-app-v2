@@ -17,7 +17,7 @@ export function useAgentContextSync() {
   const pathname = usePathname();
   const params = useParams();
   const setAgentContext = useAgentChatStore((s) => s.setAgentContext);
-  const { isWhitelabel, communitySlug } = useWhitelabel();
+  const { communitySlug: whitelabelCommunity } = useWhitelabel();
 
   const projectId = params?.projectId as string | undefined;
   const applicationId = params?.applicationId as string | undefined;
@@ -57,11 +57,11 @@ export function useAgentContextSync() {
     }
 
     // Whitelabel domains (e.g. app.opgrants.io) — community comes from domain config
-    if (isWhitelabel && communitySlug) {
+    if (whitelabelCommunity) {
       if (cleanProgramId) {
-        setAgentContext({ programId: cleanProgramId, communityId: communitySlug });
+        setAgentContext({ programId: cleanProgramId, communityId: whitelabelCommunity });
       } else {
-        setAgentContext({ communityId: communitySlug });
+        setAgentContext({ communityId: whitelabelCommunity });
       }
       return;
     }
@@ -74,8 +74,7 @@ export function useAgentContextSync() {
     applicationId,
     communityId,
     cleanProgramId,
-    isWhitelabel,
-    communitySlug,
+    whitelabelCommunity,
     setAgentContext,
   ]);
 }

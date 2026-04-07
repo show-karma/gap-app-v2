@@ -18,10 +18,10 @@ vi.mock("next/navigation", () => ({
 }));
 
 // Mock whitelabel context
-const mockUseWhitelabel = vi.fn<() => { isWhitelabel: boolean; communitySlug: string | null }>();
+const mockWhitelabel = vi.fn<() => { communitySlug: string | null }>();
 
 vi.mock("@/utilities/whitelabel-context", () => ({
-  useWhitelabel: () => mockUseWhitelabel(),
+  useWhitelabel: () => mockWhitelabel(),
 }));
 
 describe("useAgentContextSync", () => {
@@ -31,7 +31,7 @@ describe("useAgentContextSync", () => {
     });
     mockPathname.mockReturnValue(null);
     mockParams.mockReturnValue({});
-    mockUseWhitelabel.mockReturnValue({ isWhitelabel: false, communitySlug: null });
+    mockWhitelabel.mockReturnValue({ communitySlug: null });
   });
 
   describe("project pages", () => {
@@ -158,7 +158,7 @@ describe("useAgentContextSync", () => {
   });
 
   describe("non-context pages", () => {
-    it("should clear context on homepage", () => {
+    it("should clear context on homepage when not whitelabel", () => {
       useAgentChatStore.setState({
         agentContext: { projectId: "proj-old" },
       });
@@ -171,7 +171,7 @@ describe("useAgentContextSync", () => {
       expect(useAgentChatStore.getState().agentContext).toBeNull();
     });
 
-    it("should clear context on settings page", () => {
+    it("should clear context on settings page when not whitelabel", () => {
       useAgentChatStore.setState({
         agentContext: { programId: "prog-old" },
       });
@@ -257,7 +257,7 @@ describe("useAgentContextSync", () => {
 
   describe("whitelabel domains", () => {
     it("should set communityId from whitelabel communitySlug on any path", () => {
-      mockUseWhitelabel.mockReturnValue({ isWhitelabel: true, communitySlug: "optimism" });
+      mockWhitelabel.mockReturnValue({ communitySlug: "optimism" });
       mockPathname.mockReturnValue("/funding-opportunities");
       mockParams.mockReturnValue({});
 
@@ -269,7 +269,7 @@ describe("useAgentContextSync", () => {
     });
 
     it("should set communityId from whitelabel on root path", () => {
-      mockUseWhitelabel.mockReturnValue({ isWhitelabel: true, communitySlug: "gitcoin" });
+      mockWhitelabel.mockReturnValue({ communitySlug: "gitcoin" });
       mockPathname.mockReturnValue("/");
       mockParams.mockReturnValue({});
 
@@ -280,8 +280,8 @@ describe("useAgentContextSync", () => {
       });
     });
 
-    it("should not set community context if isWhitelabel is true but communitySlug is null", () => {
-      mockUseWhitelabel.mockReturnValue({ isWhitelabel: true, communitySlug: null });
+    it("should not set community context if communitySlug is null", () => {
+      mockWhitelabel.mockReturnValue({ communitySlug: null });
       mockPathname.mockReturnValue("/funding-opportunities");
       mockParams.mockReturnValue({});
 
@@ -291,7 +291,7 @@ describe("useAgentContextSync", () => {
     });
 
     it("should set programId and communityId on whitelabel program page", () => {
-      mockUseWhitelabel.mockReturnValue({ isWhitelabel: true, communitySlug: "filecoin" });
+      mockWhitelabel.mockReturnValue({ communitySlug: "filecoin" });
       mockPathname.mockReturnValue("/programs/992/apply");
       mockParams.mockReturnValue({ communityId: "filecoin", programId: "992" });
 
@@ -304,7 +304,7 @@ describe("useAgentContextSync", () => {
     });
 
     it("should set only communityId on whitelabel non-program page", () => {
-      mockUseWhitelabel.mockReturnValue({ isWhitelabel: true, communitySlug: "filecoin" });
+      mockWhitelabel.mockReturnValue({ communitySlug: "filecoin" });
       mockPathname.mockReturnValue("/funding-opportunities");
       mockParams.mockReturnValue({});
 
@@ -315,8 +315,20 @@ describe("useAgentContextSync", () => {
       });
     });
 
+    it("should prefer URL communityId over whitelabel fallback", () => {
+      mockWhitelabel.mockReturnValue({ communitySlug: "filecoin" });
+      mockPathname.mockReturnValue("/community/arbitrum/manage/");
+      mockParams.mockReturnValue({ communityId: "arbitrum" });
+
+      renderHook(() => useAgentContextSync());
+
+      expect(useAgentChatStore.getState().agentContext).toEqual({
+        communityId: "arbitrum",
+      });
+    });
+
     it("should prefer project context over whitelabel community on project page", () => {
-      mockUseWhitelabel.mockReturnValue({ isWhitelabel: true, communitySlug: "optimism" });
+      mockWhitelabel.mockReturnValue({ communitySlug: "filecoin" });
       mockPathname.mockReturnValue("/project/my-project");
       mockParams.mockReturnValue({ projectId: "proj-123" });
 
