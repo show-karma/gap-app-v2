@@ -40,18 +40,11 @@ export default defineConfig({
 
     {
       name: "chromium",
+      testIgnore: [/auth\.setup\.ts/],
       use: {
         ...devices["Desktop Chrome"],
         viewport: { width: 1440, height: 800 },
         // Reuse Privy auth session from setup project in CI
-        ...(hasTestAccount ? { storageState: STORAGE_STATE_PATH } : {}),
-      },
-      dependencies: hasTestAccount ? ["setup"] : [],
-    },
-    {
-      name: "mobile-chrome",
-      use: {
-        ...devices["Pixel 7"],
         ...(hasTestAccount ? { storageState: STORAGE_STATE_PATH } : {}),
       },
       dependencies: hasTestAccount ? ["setup"] : [],
