@@ -1,6 +1,11 @@
 import { CornerDownLeftIcon, SquareIcon } from "lucide-react";
-import { type KeyboardEvent, memo, useCallback, useEffect, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { type KeyboardEvent, memo, useCallback, useState } from "react";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupTextarea,
+} from "@/components/ui/input-group";
 
 interface WidgetInputProps {
   onSubmit: (text: string) => void;
@@ -16,21 +21,12 @@ export const WidgetInput = memo(function WidgetInput({
   placeholder = "Ask me anything...",
 }: WidgetInputProps) {
   const [value, setValue] = useState("");
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  useEffect(() => {
-    const el = textareaRef.current;
-    if (!el) return;
-    el.style.height = "auto";
-    el.style.height = `${el.scrollHeight}px`;
-  }, [value]);
 
   const submit = useCallback(() => {
     const trimmed = value.trim();
     if (!trimmed || isStreaming) return;
     onSubmit(trimmed);
     setValue("");
-    textareaRef.current?.focus();
   }, [value, isStreaming, onSubmit]);
 
   const handleKeyDown = useCallback(
@@ -45,41 +41,41 @@ export const WidgetInput = memo(function WidgetInput({
 
   return (
     <div className="border-t border-border p-3">
-      <div className="flex items-end gap-2">
-        <textarea
-          ref={textareaRef}
+      <InputGroup>
+        <InputGroupTextarea
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           disabled={isStreaming}
-          rows={1}
-          className="flex-1 resize-none rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50 min-h-10 max-h-24"
+          className="min-h-10 max-h-24 text-sm"
           aria-label="Chat message"
         />
-        {isStreaming ? (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onStop}
-            aria-label="Stop generating"
-            className="shrink-0"
-          >
-            <SquareIcon className="h-3.5 w-3.5" />
-          </Button>
-        ) : (
-          <Button
-            variant="default"
-            size="sm"
-            onClick={submit}
-            disabled={!value.trim()}
-            aria-label="Send message"
-            className="shrink-0"
-          >
-            <CornerDownLeftIcon className="h-3.5 w-3.5" />
-          </Button>
-        )}
-      </div>
+        <InputGroupAddon align="block-end" className="justify-between gap-1">
+          <div />
+          {isStreaming ? (
+            <InputGroupButton
+              variant="outline"
+              size="icon-sm"
+              onClick={onStop}
+              aria-label="Stop generating"
+            >
+              <SquareIcon className="size-4" />
+            </InputGroupButton>
+          ) : (
+            <InputGroupButton
+              variant="default"
+              size="icon-sm"
+              onClick={submit}
+              disabled={!value.trim()}
+              aria-label="Send message"
+              type="submit"
+            >
+              <CornerDownLeftIcon className="size-4" />
+            </InputGroupButton>
+          )}
+        </InputGroupAddon>
+      </InputGroup>
     </div>
   );
 });

@@ -2,20 +2,97 @@
 @tailwind components;
 @tailwind utilities;
 
-.karma-chat,
-.karma-chat *,
-.karma-chat *::before,
-.karma-chat *::after {
-  box-sizing: border-box;
-  font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
-    Arial, sans-serif;
-}
+/* Scoped preflight — replaces Tailwind's global preflight with rules scoped
+   to .karma-chat so the widget works on any host page without leaking styles.
+   Placed in @layer base so Tailwind utility classes always win on specificity. */
+@layer base {
+  /* :where() zeroes specificity so Tailwind utility classes always win. */
+  :where(.karma-chat),
+  :where(.karma-chat) *,
+  :where(.karma-chat) *::before,
+  :where(.karma-chat) *::after {
+    box-sizing: border-box;
+    border-width: 0;
+    border-style: solid;
+    border-color: hsl(220 13% 91%);
+    font-family:
+      -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+      Arial, sans-serif;
+  }
 
-.karma-chat {
-  all: initial;
-  font-size: 16px;
-  line-height: 1.5;
-  color: hsl(224 71% 4%);
-  -webkit-font-smoothing: antialiased;
+  /* .karma-chat itself keeps normal specificity for `all: initial` + tokens. */
+  .karma-chat {
+    all: initial;
+    display: block;
+    position: fixed;
+    font-size: 16px;
+    line-height: 1.5;
+    color: hsl(224 71% 4%);
+    -webkit-font-smoothing: antialiased;
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+
+    /* Tailwind theme tokens — must be set here because `all: initial` kills
+       inherited custom properties. Values match the main app's light theme.
+       Brand colors (brand-blue etc.) use hex in tailwind.config.ts instead. */
+    --kc-background: 0 0% 100%;
+    --kc-foreground: 224 71% 4%;
+    --kc-card: 0 0% 100%;
+    --kc-card-foreground: 224 71% 4%;
+    --kc-border: 220 13% 91%;
+    --kc-muted: 220 14% 96%;
+    --kc-muted-foreground: 220 9% 46%;
+    --kc-secondary: 220 14% 96%;
+    --kc-secondary-foreground: 220 9% 9%;
+    --kc-accent: 220 14% 96%;
+    --kc-accent-foreground: 220 9% 9%;
+    --kc-destructive: 0 84% 60%;
+    --kc-destructive-subtle: 0 84% 97%;
+    --kc-input: 0 0% 90%;
+    --kc-ring: 215 20% 65%;
+    --kc-radius: 0.5rem;
+    --radius: 0.5rem;
+  }
+
+  :where(.karma-chat) button,
+  :where(.karma-chat) input,
+  :where(.karma-chat) textarea {
+    font-family: inherit;
+    font-size: 100%;
+    font-weight: inherit;
+    line-height: inherit;
+    color: inherit;
+    margin: 0;
+    padding: 0;
+    background-color: transparent;
+  }
+
+  :where(.karma-chat) h1,
+  :where(.karma-chat) h2,
+  :where(.karma-chat) h3,
+  :where(.karma-chat) h4,
+  :where(.karma-chat) h5,
+  :where(.karma-chat) h6,
+  :where(.karma-chat) p {
+    margin: 0;
+    font-size: inherit;
+    font-weight: inherit;
+  }
+
+  :where(.karma-chat) svg {
+    display: block;
+  }
+
+  :where(.karma-chat) a {
+    color: inherit;
+    text-decoration: inherit;
+  }
+
+  :where(.karma-chat) img,
+  :where(.karma-chat) video {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
 }

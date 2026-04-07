@@ -9,6 +9,7 @@ vi.mock("../useWidgetStream", () => ({
     sendMessage: vi.fn(),
     abort: vi.fn(),
   }),
+  abortWidgetStream: vi.fn(),
 }));
 
 // Mock use-stick-to-bottom — jsdom doesn't support scroll/resize measurements
@@ -22,14 +23,14 @@ vi.mock("use-stick-to-bottom", () => ({
   }),
 }));
 
-// Mock WidgetMessage to avoid streamdown setup
-vi.mock("../WidgetMessage", () => ({
-  WidgetMessage: ({ content, from }: { content: string; from: string }) => (
-    <div data-testid={`widget-message-${from}`}>{content}</div>
+// Mock WidgetMarkdown to avoid streamdown setup
+vi.mock("../WidgetMarkdown", () => ({
+  WidgetMarkdown: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="widget-markdown">{children}</div>
   ),
 }));
 
-// StickToBottom.Content needs to be accessible too
+// Mock shared AI elements
 vi.mock("@/src/components/ai-elements/conversation", () => ({
   Conversation: ({ children, className }: React.HTMLAttributes<HTMLDivElement>) => (
     <div className={className}>{children}</div>
@@ -44,6 +45,11 @@ vi.mock("@/src/components/ai-elements/conversation", () => ({
     </div>
   ),
   ConversationScrollButton: () => null,
+}));
+
+vi.mock("@/src/components/ai-elements/message", () => ({
+  Message: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  MessageContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
 beforeEach(() => {
@@ -75,11 +81,11 @@ describe("ChatWidget", () => {
     expect(screen.getByRole("button", { name: /open chat/i })).toBeInTheDocument();
   });
 
-  it("shows communityId in badge", async () => {
-    render(<ChatWidget {...defaultProps} />);
+  it("shows custom title in header", async () => {
+    render(<ChatWidget {...defaultProps} title="Filecoin Grants Assistant" />);
     await userEvent.click(screen.getByRole("button", { name: /open chat/i }));
 
-    expect(screen.getByText("filecoin")).toBeInTheDocument();
+    expect(screen.getByText("Filecoin Grants Assistant")).toBeInTheDocument();
   });
 
   it("shows communityId in empty state description", async () => {
