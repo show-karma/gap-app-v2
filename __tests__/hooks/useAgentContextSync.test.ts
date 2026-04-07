@@ -17,6 +17,13 @@ vi.mock("next/navigation", () => ({
   useParams: () => mockParams(),
 }));
 
+// Mock whitelabel context
+const mockUseWhitelabel = vi.fn<() => { isWhitelabel: boolean; communitySlug: string | null }>();
+
+vi.mock("@/utilities/whitelabel-context", () => ({
+  useWhitelabel: () => mockUseWhitelabel(),
+}));
+
 describe("useAgentContextSync", () => {
   beforeEach(() => {
     useAgentChatStore.setState({
@@ -24,6 +31,7 @@ describe("useAgentContextSync", () => {
     });
     mockPathname.mockReturnValue(null);
     mockParams.mockReturnValue({});
+    mockUseWhitelabel.mockReturnValue({ isWhitelabel: false, communitySlug: null });
   });
 
   describe("project pages", () => {
@@ -176,17 +184,98 @@ describe("useAgentContextSync", () => {
       expect(useAgentChatStore.getState().agentContext).toBeNull();
     });
 
-    it("should clear context on community page without manage path", () => {
+    it("should clear context on unrecognized page without communityId or projectId", () => {
       useAgentChatStore.setState({
         agentContext: { programId: "prog-old" },
       });
 
-      mockPathname.mockReturnValue("/community/comm-1");
-      mockParams.mockReturnValue({ communityId: "comm-1" });
+      mockPathname.mockReturnValue("/settings");
+      mockParams.mockReturnValue({});
 
       renderHook(() => useAgentContextSync());
 
       expect(useAgentChatStore.getState().agentContext).toBeNull();
+    });
+  });
+
+  describe("community pages (regular routes)", () => {
+    it("should set communityId context on community root page", () => {
+      mockPathname.mockReturnValue("/community/optimism");
+      mockParams.mockReturnValue({ communityId: "optimism" });
+
+      renderHook(() => useAgentContextSync());
+
+      expect(useAgentChatStore.getState().agentContext).toEqual({
+        communityId: "optimism",
+      });
+    });
+
+    it("should set communityId context on community funding-opportunities subpage", () => {
+      mockPathname.mockReturnValue("/community/optimism/funding-opportunities");
+      mockParams.mockReturnValue({ communityId: "optimism" });
+
+      renderHook(() => useAgentContextSync());
+
+      expect(useAgentChatStore.getState().agentContext).toEqual({
+        communityId: "optimism",
+      });
+    });
+
+    it("should not set community context if communityId param is missing", () => {
+      mockPathname.mockReturnValue("/community/");
+      mockParams.mockReturnValue({});
+
+      renderHook(() => useAgentContextSync());
+
+      expect(useAgentChatStore.getState().agentContext).toBeNull();
+    });
+  });
+
+  describe("whitelabel domains", () => {
+    it("should set communityId from whitelabel communitySlug on any path", () => {
+      mockUseWhitelabel.mockReturnValue({ isWhitelabel: true, communitySlug: "optimism" });
+      mockPathname.mockReturnValue("/funding-opportunities");
+      mockParams.mockReturnValue({});
+
+      renderHook(() => useAgentContextSync());
+
+      expect(useAgentChatStore.getState().agentContext).toEqual({
+        communityId: "optimism",
+      });
+    });
+
+    it("should set communityId from whitelabel on root path", () => {
+      mockUseWhitelabel.mockReturnValue({ isWhitelabel: true, communitySlug: "gitcoin" });
+      mockPathname.mockReturnValue("/");
+      mockParams.mockReturnValue({});
+
+      renderHook(() => useAgentContextSync());
+
+      expect(useAgentChatStore.getState().agentContext).toEqual({
+        communityId: "gitcoin",
+      });
+    });
+
+    it("should not set community context if isWhitelabel is true but communitySlug is null", () => {
+      mockUseWhitelabel.mockReturnValue({ isWhitelabel: true, communitySlug: null });
+      mockPathname.mockReturnValue("/funding-opportunities");
+      mockParams.mockReturnValue({});
+
+      renderHook(() => useAgentContextSync());
+
+      expect(useAgentChatStore.getState().agentContext).toBeNull();
+    });
+
+    it("should prefer project context over whitelabel community on project page", () => {
+      mockUseWhitelabel.mockReturnValue({ isWhitelabel: true, communitySlug: "optimism" });
+      mockPathname.mockReturnValue("/project/my-project");
+      mockParams.mockReturnValue({ projectId: "proj-123" });
+
+      renderHook(() => useAgentContextSync());
+
+      expect(useAgentChatStore.getState().agentContext).toEqual({
+        projectId: "proj-123",
+      });
     });
   });
 
