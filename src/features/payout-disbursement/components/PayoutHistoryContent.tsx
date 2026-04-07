@@ -280,6 +280,11 @@ function isHistoricalPayment(disbursement: PayoutDisbursement): boolean {
   );
 }
 
+function hasRealTransactionHash(disbursement: PayoutDisbursement): boolean {
+  const hash = disbursement.safeTransactionHash;
+  return Boolean(hash && !hash.startsWith("historical-"));
+}
+
 function DisbursementCard({ disbursement }: { disbursement: PayoutDisbursement }) {
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const isHistorical = isHistoricalPayment(disbursement);
@@ -290,6 +295,11 @@ function DisbursementCard({ disbursement }: { disbursement: PayoutDisbursement }
       : null;
 
   const canCancel = disbursement.status === PayoutDisbursementStatus.PENDING;
+  const historicalTxHash = isHistorical && hasRealTransactionHash(disbursement)
+    ? disbursement.safeTransactionHash
+    : null;
+  const notes = disbursement.metadata?.notes;
+  const milestoneLabels = disbursement.metadata?.milestoneLabels;
 
   return (
     <>
@@ -354,6 +364,14 @@ function DisbursementCard({ disbursement }: { disbursement: PayoutDisbursement }
               )}
             </div>
           )}
+          {historicalTxHash && (
+            <div className="flex items-center justify-between">
+              <span className="text-gray-500 dark:text-gray-400">Transaction</span>
+              <span className="font-mono text-gray-900 dark:text-white">
+                {truncateAddress(historicalTxHash)}
+              </span>
+            </div>
+          )}
           {disbursement.executedAt && (
             <div className="flex justify-between">
               <span className="text-gray-500 dark:text-gray-400">
@@ -372,6 +390,12 @@ function DisbursementCard({ disbursement }: { disbursement: PayoutDisbursement }
               </span>
             </div>
           )}
+          {notes && (
+            <div className="flex justify-between gap-4">
+              <span className="shrink-0 text-gray-500 dark:text-gray-400">Notes</span>
+              <span className="text-right text-gray-900 dark:text-white">{notes}</span>
+            </div>
+          )}
         </div>
 
         {/* Milestone Breakdown */}
@@ -379,13 +403,13 @@ function DisbursementCard({ disbursement }: { disbursement: PayoutDisbursement }
           Object.keys(disbursement.milestoneBreakdown).length > 0 && (
             <div className="mt-3 border-t border-gray-200 pt-3 dark:border-zinc-600">
               <p className="mb-2 text-xs font-medium text-gray-700 dark:text-gray-300">
-                Milestone Breakdown
+                Breakdown
               </p>
               <div className="space-y-1">
                 {Object.entries(disbursement.milestoneBreakdown).map(([milestoneId, amount]) => (
                   <div key={milestoneId} className="flex justify-between text-xs">
-                    <span className="max-w-[150px] truncate text-gray-500 dark:text-gray-400">
-                      {milestoneId}
+                    <span className="max-w-[200px] truncate text-gray-500 dark:text-gray-400">
+                      {milestoneLabels?.[milestoneId] ?? truncateAddress(milestoneId)}
                     </span>
                     <span className="text-gray-900 dark:text-white">
                       {formatTokenAmount(amount, disbursement.tokenDecimals)} {disbursement.token}

@@ -36,12 +36,13 @@ interface RecordPaymentDialogProps {
 }
 
 const USDC_DECIMALS = TOKENS.usdc.decimals;
-const INITIAL_PAYMENT_KEY = "__initial_payment__";
 
 function getUsdcAddressForChain(chainID: number): string | null {
   const addresses = TOKEN_ADDRESSES.usdc as Record<number, string>;
   return addresses[chainID] ?? null;
 }
+
+type OptionCategory = "payment" | "milestone" | "custom";
 
 interface MilestoneOption {
   key: string;
@@ -50,7 +51,22 @@ interface MilestoneOption {
   allocationId: string | null;
   allocatedAmount: string | null;
   isPaid: boolean;
+  category: OptionCategory;
 }
+
+const PAYMENT_KEYWORDS = /\b(first|final|initial|last|signing|completion|upfront|advance|closing)\b/i;
+
+function classifyOption(label: string, milestoneUID: string | null): OptionCategory {
+  if (milestoneUID) return "milestone";
+  if (PAYMENT_KEYWORDS.test(label)) return "payment";
+  return "custom";
+}
+
+const CATEGORY_CONFIG: Record<OptionCategory, { label: string; order: number }> = {
+  payment: { label: "Payments", order: 0 },
+  milestone: { label: "Milestones", order: 1 },
+  custom: { label: "Custom", order: 2 },
+};
 
 function RecordPaymentDialogInner({
   isOpen,
@@ -97,7 +113,6 @@ function RecordPaymentDialogInner({
     const options: MilestoneOption[] = [];
     const usedAllocationIds = new Set<string>();
 
-    // First, build options from invoices enriched with allocation data
     if (milestoneInvoices && milestoneInvoices.length > 0) {
       for (let i = 0; i < milestoneInvoices.length; i++) {
         const invoice = milestoneInvoices[i];
@@ -106,19 +121,19 @@ function RecordPaymentDialogInner({
         );
         if (allocation) usedAllocationIds.add(allocation.id);
 
+        const label = allocation?.label || invoice.milestoneLabel || `Milestone ${i + 1}`;
         options.push({
           key: invoice.milestoneUID ?? `milestone-${i}`,
-          label: allocation?.label || invoice.milestoneLabel || `Milestone ${i + 1}`,
+          label,
           milestoneUID: invoice.milestoneUID,
           allocationId: allocation?.id ?? null,
           allocatedAmount: allocation?.amount ?? invoice.allocatedAmount ?? null,
           isPaid: invoice.paymentStatus === "disbursed",
+          category: classifyOption(label, invoice.milestoneUID),
         });
       }
     }
 
-    // Then, add payout settings allocations that aren't linked to any invoice
-    // (custom lines, renamed entries, etc.)
     if (milestoneAllocations) {
       for (const allocation of milestoneAllocations) {
         if (usedAllocationIds.has(allocation.id)) continue;
@@ -129,6 +144,7 @@ function RecordPaymentDialogInner({
           allocationId: allocation.id,
           allocatedAmount: allocation.amount ?? null,
           isPaid: false,
+          category: classifyOption(allocation.label, allocation.milestoneUID ?? null),
         });
       }
     }
@@ -136,21 +152,22 @@ function RecordPaymentDialogInner({
     return options;
   }, [milestoneInvoices, milestoneAllocations]);
 
-  const isInitialPayment = selectedKeys.includes(INITIAL_PAYMENT_KEY);
+  const groupedOptions = useMemo(() => {
+    const groups = new Map<OptionCategory, MilestoneOption[]>();
+    for (const option of milestoneOptions) {
+      const list = groups.get(option.category) ?? [];
+      list.push(option);
+      groups.set(option.category, list);
+    }
+    return (["milestone", "payment", "custom"] as OptionCategory[])
+      .filter((cat) => groups.has(cat))
+      .map((cat) => ({ category: cat, ...CATEGORY_CONFIG[cat], items: groups.get(cat)! }));
+  }, [milestoneOptions]);
 
   const toggleSelection = useCallback((key: string) => {
-    if (key === INITIAL_PAYMENT_KEY) {
-      setSelectedKeys((prev) =>
-        prev.includes(INITIAL_PAYMENT_KEY)
-          ? prev.filter((k) => k !== INITIAL_PAYMENT_KEY)
-          : [INITIAL_PAYMENT_KEY]
-      );
-    } else {
-      setSelectedKeys((prev) => {
-        const without = prev.filter((k) => k !== INITIAL_PAYMENT_KEY);
-        return without.includes(key) ? without.filter((k) => k !== key) : [...without, key];
-      });
-    }
+    setSelectedKeys((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
+    );
   }, []);
 
   const isValid =
@@ -166,22 +183,22 @@ function RecordPaymentDialogInner({
 
     const selectedMilestones = milestoneOptions.filter((m) => selectedKeys.includes(m.key));
 
-    const paidAllocationIds: string[] | undefined = isInitialPayment
-      ? undefined
-      : (selectedMilestones.map((m) => m.allocationId).filter(Boolean) as string[]);
+    const paidAllocationIds = selectedMilestones
+      .map((m) => m.allocationId)
+      .filter(Boolean) as string[];
 
+    const withUID = selectedMilestones.filter((m) => m.milestoneUID);
     const milestoneBreakdown: Record<string, string> | undefined =
-      !isInitialPayment && selectedMilestones.length > 0
-        ? Object.fromEntries(
-            selectedMilestones
-              .filter((m) => m.milestoneUID)
-              .map((m) => [m.milestoneUID as string, disbursedAmount])
-          )
+      withUID.length > 0
+        ? Object.fromEntries(withUID.map((m) => [m.milestoneUID as string, disbursedAmount]))
         : undefined;
 
-    const paymentNotes = isInitialPayment
-      ? [notes.trim(), "Initial Payment"].filter(Boolean).join(" — ")
-      : notes.trim() || undefined;
+    const milestoneLabels: Record<string, string> | undefined =
+      selectedMilestones.length > 0
+        ? Object.fromEntries(
+            selectedMilestones.map((m) => [m.key, m.label])
+          )
+        : undefined;
 
     recordPayment.mutate({
       grantUID,
@@ -192,11 +209,15 @@ function RecordPaymentDialogInner({
       tokenDecimals: USDC_DECIMALS,
       token: "USDC",
       tokenAddress,
-      paidAllocationIds: paidAllocationIds?.length ? paidAllocationIds : undefined,
-      milestoneBreakdown,
+      paidAllocationIds: paidAllocationIds.length > 0 ? paidAllocationIds : undefined,
+      milestoneBreakdown:
+        milestoneBreakdown && Object.keys(milestoneBreakdown).length > 0
+          ? milestoneBreakdown
+          : undefined,
       paymentDate: new Date(paymentDate).toISOString(),
       transactionHash: transactionHash.trim() || undefined,
-      notes: paymentNotes || undefined,
+      notes: notes.trim() || undefined,
+      milestoneLabels,
     });
   }, [
     isValid,
@@ -206,12 +227,13 @@ function RecordPaymentDialogInner({
     notes,
     selectedKeys,
     milestoneOptions,
-    isInitialPayment,
     chainID,
     grantUID,
     projectUID,
     communityUID,
     recordPayment,
+    chainSupported,
+    nativeUsdcAddress,
   ]);
 
   const handleOpenChange = useCallback(
@@ -242,8 +264,8 @@ function RecordPaymentDialogInner({
         {!chainSupported && (
           <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 dark:border-amber-800/40 dark:bg-amber-900/10">
             <p className="text-xs text-amber-700 dark:text-amber-300">
-              USDC is not configured for this grant's chain. Payment will be recorded as Ethereum
-              mainnet USDC.
+              USDC is not configured for this grant&apos;s chain. Payment will be recorded as
+              Ethereum mainnet USDC.
             </p>
           </div>
         )}
@@ -255,68 +277,72 @@ function RecordPaymentDialogInner({
               Payment Type
             </span>
             <div className="max-h-52 overflow-y-auto rounded-md border border-gray-200 dark:border-zinc-700">
-              {/* Initial Payment option */}
-              <label
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 cursor-pointer",
-                  "border-b border-gray-100 dark:border-zinc-800",
-                  "hover:bg-gray-50 dark:hover:bg-zinc-900",
-                  isInitialPayment && "bg-blue-50 dark:bg-blue-950/30"
-                )}
-              >
-                <input
-                  type="checkbox"
-                  checked={isInitialPayment}
-                  onChange={() => toggleSelection(INITIAL_PAYMENT_KEY)}
-                  disabled={recordPayment.isPending}
-                  className="rounded border-gray-300"
-                />
-                <span className="flex-1 text-sm font-medium text-gray-700 dark:text-zinc-300">
-                  Initial Payment
-                </span>
-              </label>
-
-              {/* Milestone options */}
-              {milestoneOptions.map((milestone) => {
-                const isSelected = selectedKeys.includes(milestone.key);
-                const isDisabled = recordPayment.isPending || milestone.isPaid || isInitialPayment;
-
-                return (
-                  <label
-                    key={milestone.key}
+              {groupedOptions.map((group, groupIdx) => (
+                <div key={group.category}>
+                  {/* Group header */}
+                  <div
                     className={cn(
-                      "flex items-center gap-3 px-3 py-2.5 cursor-pointer",
-                      "border-b border-gray-100 dark:border-zinc-800 last:border-b-0",
-                      "hover:bg-gray-50 dark:hover:bg-zinc-900",
-                      isSelected && !isDisabled && "bg-blue-50 dark:bg-blue-950/30",
-                      isDisabled && "opacity-50 cursor-not-allowed"
+                      "sticky top-0 z-10 px-3 py-1.5",
+                      "bg-gray-50 dark:bg-zinc-900",
+                      "border-b border-gray-200 dark:border-zinc-700",
+                      groupIdx > 0 && "border-t"
                     )}
                   >
-                    <input
-                      type="checkbox"
-                      checked={isSelected && !isInitialPayment}
-                      onChange={() => toggleSelection(milestone.key)}
-                      disabled={isDisabled}
-                      className="rounded border-gray-300 shrink-0"
-                    />
-                    <span className="flex-1 min-w-0 text-sm text-gray-700 dark:text-zinc-300 truncate">
-                      {milestone.label}
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-zinc-500">
+                      {group.label}
                     </span>
-                    <div className="flex items-center gap-2 shrink-0">
-                      {milestone.allocatedAmount && (
-                        <span className="text-xs text-gray-500 dark:text-zinc-500 tabular-nums">
-                          ${Number(milestone.allocatedAmount).toLocaleString()}
+                  </div>
+
+                  {/* Group items */}
+                  {group.items.map((option, itemIdx) => {
+                    const isSelected = selectedKeys.includes(option.key);
+                    const isDisabled = recordPayment.isPending || option.isPaid;
+                    const isLastInGroup = itemIdx === group.items.length - 1;
+
+                    return (
+                      <label
+                        key={option.key}
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-2.5 cursor-pointer",
+                          !isLastInGroup && "border-b border-gray-100 dark:border-zinc-800",
+                          "hover:bg-gray-50 dark:hover:bg-zinc-900",
+                          isSelected && !isDisabled && "bg-blue-50 dark:bg-blue-950/30",
+                          isDisabled && "opacity-50 cursor-not-allowed"
+                        )}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleSelection(option.key)}
+                          disabled={isDisabled}
+                          className="rounded border-gray-300 shrink-0"
+                        />
+                        <span className="flex-1 min-w-0 text-sm text-gray-700 dark:text-zinc-300 truncate">
+                          {option.label}
                         </span>
-                      )}
-                      {milestone.isPaid && (
-                        <span className="text-xs font-medium text-green-600 dark:text-green-400">
-                          Paid
-                        </span>
-                      )}
-                    </div>
-                  </label>
-                );
-              })}
+                        <div className="flex items-center gap-2 shrink-0">
+                          {option.allocatedAmount && (
+                            <span className="text-xs text-gray-500 dark:text-zinc-500 tabular-nums">
+                              ${Number(option.allocatedAmount).toLocaleString()}
+                            </span>
+                          )}
+                          {option.isPaid && (
+                            <span className="text-xs font-medium text-green-600 dark:text-green-400">
+                              Paid
+                            </span>
+                          )}
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+              ))}
+
+              {groupedOptions.length === 0 && (
+                <div className="px-3 py-4 text-center text-sm text-gray-400 dark:text-zinc-600">
+                  No payment types configured. Set up allocations in Payout Settings.
+                </div>
+              )}
             </div>
           </div>
 
