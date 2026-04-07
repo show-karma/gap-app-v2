@@ -85,6 +85,7 @@ export function ChatWidget({
         role="dialog"
         aria-label="Chat assistant"
         aria-hidden={!isOpen}
+        inert={!isOpen ? true : undefined}
         className={`fixed bottom-20 right-6 z-[9999] w-[min(380px,calc(100vw-2rem))] h-[min(600px,calc(100vh-120px))] flex flex-col rounded-xl border border-border bg-card text-card-foreground shadow-lg transition-all duration-300 ease-out overflow-hidden ${
           isOpen
             ? "translate-y-0 opacity-100 scale-100"
