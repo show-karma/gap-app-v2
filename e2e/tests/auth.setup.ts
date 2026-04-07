@@ -17,7 +17,10 @@ setup("authenticate via Privy", async ({ page }) => {
   const otp = process.env.QA_TEST_OTP;
 
   if (!email || !otp) {
-    // No test account — skip setup. Tests will use E2E bypass or fail with a clear error.
+    if (process.env.CI) {
+      throw new Error("QA_TEST_EMAIL and QA_TEST_OTP must be set in CI for Privy auth setup");
+    }
+    // Local dev without test account — skip setup. Tests will use E2E bypass.
     return;
   }
 
