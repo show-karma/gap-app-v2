@@ -34,6 +34,9 @@ async function expectAccessBlocked(page: Page, originalPath: string): Promise<vo
 
 test.describe("Smoke Tests @smoke — RBAC Access Control", () => {
   test.describe("Guest access gates", () => {
+    // Guest tests must run without auth — override storageState from setup project
+    test.use({ storageState: { cookies: [], origins: [] } });
+
     test("T-RBAC-01: guest accessing /dashboard gets auth prompt", async ({
       page,
       withApiMocks,

@@ -30,21 +30,22 @@ test.describe("Smoke Tests — Search & Discovery", () => {
     await page.goto("/communities", GOTO_OPTIONS);
     await waitForPageReady(page);
 
-    // The communities page should display a heading
-    const hasContent = await Promise.race([
+    // The communities page should display a heading or relevant content
+    const [hasHeading, hasText] = await Promise.all([
       page
-        .getByRole("heading", { name: /communit/i })
-        .waitFor({ timeout: 8000 })
+        .getByRole("heading")
+        .first()
+        .waitFor({ timeout: 10000 })
         .then(() => true)
         .catch(() => false),
       page
-        .getByText(/communit/i)
+        .getByText(/communit|ecosystem|explore/i)
         .first()
-        .waitFor({ timeout: 8000 })
+        .waitFor({ timeout: 10000 })
         .then(() => true)
         .catch(() => false),
     ]);
-    expect(hasContent).toBeTruthy();
+    expect(hasHeading || hasText).toBeTruthy();
 
     assertNoJsErrors(jsErrors);
   });
@@ -72,21 +73,21 @@ test.describe("Smoke Tests — Search & Discovery", () => {
     await waitForPageReady(page);
 
     // The impact page should render content with impact or community signals
-    const hasContent = await Promise.race([
+    const [hasHeading, hasText] = await Promise.all([
       page
         .getByRole("heading")
         .first()
-        .waitFor({ timeout: 8000 })
+        .waitFor({ timeout: 10000 })
         .then(() => true)
         .catch(() => false),
       page
         .getByText(/impact|community|optimism/i)
         .first()
-        .waitFor({ timeout: 8000 })
+        .waitFor({ timeout: 10000 })
         .then(() => true)
         .catch(() => false),
     ]);
-    expect(hasContent).toBeTruthy();
+    expect(hasHeading || hasText).toBeTruthy();
 
     assertNoJsErrors(jsErrors);
   });

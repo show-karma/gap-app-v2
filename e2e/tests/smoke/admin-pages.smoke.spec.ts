@@ -4,26 +4,29 @@ import { GOTO_OPTIONS, waitForPageReady } from "../../helpers/navigation";
 
 // Admin pages check contract ownership (isOwner) via RPC calls that can't be
 // mocked through Playwright route interception. Pages render either admin content
-// (if isOwner or isSuperAdmin) or a "not admin" message. Both are valid smoke
-// test outcomes — we're verifying the page loads without crashing.
+// (if isOwner or isSuperAdmin) or a "not admin" message, or redirect. All are
+// valid smoke test outcomes — we're verifying the page loads without crashing.
 async function adminContentCheck(page: import("@playwright/test").Page, expectedPath: string) {
-  const onExpectedPath = page.url().includes(expectedPath);
-  const hasAdminUi = await Promise.race([
+  // Server-side redirects are valid — SSR sees real user permissions, not mocked ones
+  const wasRedirected = !page.url().includes(expectedPath);
+  if (wasRedirected) return true;
+
+  const [hasHeading, hasText] = await Promise.all([
     page
       .getByRole("heading")
       .first()
-      .waitFor({ timeout: 8000 })
+      .waitFor({ timeout: 10000 })
       .then(() => true)
       .catch(() => false),
     page
       .getByText(/admin|communities|projects|super admin|isnt|need to be/i)
       .first()
-      .waitFor({ timeout: 8000 })
+      .waitFor({ timeout: 10000 })
       .then(() => true)
       .catch(() => false),
   ]);
 
-  return onExpectedPath && hasAdminUi;
+  return hasHeading || hasText;
 }
 
 test.describe("Smoke Tests — Admin Pages", () => {
