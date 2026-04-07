@@ -16,6 +16,9 @@
 # production
 /build
 
+# widget build output
+/public/widget
+
 # misc
 .DS_Store
 *.pem
