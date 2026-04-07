@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { memo } from "react";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { Spinner } from "@/components/Utilities/Spinner";
 import {
@@ -10,7 +10,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { fetchMilestoneEvaluation, type MilestoneEvaluationItem } from "@/services/milestones";
+import { useMilestoneEvaluation } from "@/hooks/useMilestoneEvaluation";
+import type { MilestoneEvaluationItem } from "@/services/milestones";
 import { formatDate } from "@/utilities/formatDate";
 
 interface AIEvaluationModalProps {
@@ -42,28 +43,41 @@ function formatReasoning(text: string): string {
   );
 }
 
-export function AIEvaluationModal({ milestoneUID, isOpen, onClose }: AIEvaluationModalProps) {
-  const [evaluations, setEvaluations] = useState<MilestoneEvaluationItem[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [hasLoaded, setHasLoaded] = useState(false);
+interface EvaluationCardProps {
+  evaluation: MilestoneEvaluationItem;
+}
 
-  useEffect(() => {
-    if (isOpen && !hasLoaded) {
-      setIsLoading(true);
-      fetchMilestoneEvaluation(milestoneUID)
-        .then((response) => {
-          setEvaluations(response.evaluations);
-          setHasLoaded(true);
-        })
-        .catch(() => {
-          setEvaluations([]);
-          setHasLoaded(true);
-        })
-        .finally(() => {
-          setIsLoading(false);
-        });
-    }
-  }, [isOpen, hasLoaded, milestoneUID]);
+const EvaluationCard = memo(function EvaluationCard({ evaluation }: EvaluationCardProps) {
+  return (
+    <div className="border border-gray-200 dark:border-zinc-700 rounded-lg p-4">
+      <div className="flex items-center justify-between mb-3">
+        <div
+          className={`flex items-center gap-2 px-3 py-1 rounded-full ${getRatingBgColor(evaluation.rating)}`}
+        >
+          <span className={`text-lg font-bold ${getRatingColor(evaluation.rating)}`}>
+            {evaluation.rating}
+          </span>
+          <span className="text-sm text-gray-600 dark:text-gray-400">/ 10</span>
+        </div>
+        <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-zinc-800 px-2 py-1 rounded">
+          {evaluation.model}
+        </span>
+      </div>
+
+      <div className="text-sm text-gray-700 dark:text-gray-300">
+        <MarkdownPreview source={formatReasoning(evaluation.reasoning)} />
+      </div>
+
+      <div className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+        Evaluated: {formatDate(evaluation.createdAt)}
+      </div>
+    </div>
+  );
+});
+
+export function AIEvaluationModal({ milestoneUID, isOpen, onClose }: AIEvaluationModalProps) {
+  const { data, isLoading, error, refetch } = useMilestoneEvaluation(milestoneUID, isOpen);
+  const evaluations = data?.evaluations ?? [];
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -79,39 +93,28 @@ export function AIEvaluationModal({ milestoneUID, isOpen, onClose }: AIEvaluatio
           <div className="flex justify-center py-8">
             <Spinner />
           </div>
+        ) : error ? (
+          <div className="py-8 text-center text-red-500 dark:text-red-400">
+            <p>Failed to load evaluation.</p>
+            <button
+              type="button"
+              onClick={() => refetch()}
+              className="mt-2 text-sm underline hover:no-underline"
+            >
+              Retry
+            </button>
+          </div>
         ) : evaluations.length === 0 ? (
           <div className="py-8 text-center text-gray-500 dark:text-gray-400">
             No AI evaluation available yet.
           </div>
         ) : (
           <div className="space-y-4 max-h-96 overflow-y-auto">
-            {evaluations.map((evaluation, index) => (
-              <div
-                key={`${evaluation.model}-${index}`}
-                className="border border-gray-200 dark:border-zinc-700 rounded-lg p-4"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <div
-                    className={`flex items-center gap-2 px-3 py-1 rounded-full ${getRatingBgColor(evaluation.rating)}`}
-                  >
-                    <span className={`text-lg font-bold ${getRatingColor(evaluation.rating)}`}>
-                      {evaluation.rating}
-                    </span>
-                    <span className="text-sm text-gray-600 dark:text-gray-400">/ 10</span>
-                  </div>
-                  <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-zinc-800 px-2 py-1 rounded">
-                    {evaluation.model}
-                  </span>
-                </div>
-
-                <div className="text-sm text-gray-700 dark:text-gray-300">
-                  <MarkdownPreview source={formatReasoning(evaluation.reasoning)} />
-                </div>
-
-                <div className="mt-3 text-xs text-gray-500 dark:text-gray-400">
-                  Evaluated: {formatDate(evaluation.createdAt)}
-                </div>
-              </div>
+            {evaluations.map((evaluation) => (
+              <EvaluationCard
+                key={`${evaluation.milestoneUID}-${evaluation.model}-${evaluation.createdAt}`}
+                evaluation={evaluation}
+              />
             ))}
           </div>
         )}

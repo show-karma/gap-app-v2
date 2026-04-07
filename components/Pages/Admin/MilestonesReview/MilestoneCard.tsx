@@ -1,6 +1,7 @@
 "use client";
 
 import { CheckCircleIcon, SparklesIcon, TrashIcon } from "@heroicons/react/20/solid";
+import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { Button } from "@/components/Utilities/Button";
@@ -8,8 +9,30 @@ import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import type { GrantMilestoneWithCompletion } from "@/services/milestones";
 import { formatDate } from "@/utilities/formatDate";
 import { shortAddress } from "@/utilities/shortAddress";
-import { AIEvaluationModal } from "./AIEvaluationModal";
 import { getMilestoneStatus, MILESTONE_STATUS_CONFIG } from "./utils/milestone-review-status";
+
+const AIEvaluationModal = dynamic(
+  () => import("./AIEvaluationModal").then((m) => ({ default: m.AIEvaluationModal })),
+  { ssr: false }
+);
+
+interface AIEvaluationButtonProps {
+  onClick: () => void;
+  className?: string;
+}
+
+function AIEvaluationButton({ onClick, className = "" }: AIEvaluationButtonProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex items-center gap-1 px-3 text-sm text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-md transition-colors ${className}`}
+    >
+      <SparklesIcon className="w-4 h-4" />
+      AI Evaluation
+    </button>
+  );
+}
 
 interface MilestoneCardProps {
   milestone: GrantMilestoneWithCompletion;
@@ -69,6 +92,10 @@ export function MilestoneCard({
   ]);
 
   const [isEvaluationModalOpen, setIsEvaluationModalOpen] = useState(false);
+
+  function handleOpenEvaluation() {
+    setIsEvaluationModalOpen(true);
+  }
 
   return (
     <div
@@ -144,14 +171,7 @@ export function MilestoneCard({
                   Verified: {formatDate(milestone.verificationDetails.verifiedAt)}
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => setIsEvaluationModalOpen(true)}
-                className="mt-2 flex items-center gap-1 px-3 py-1.5 text-sm text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-md transition-colors"
-              >
-                <SparklesIcon className="w-4 h-4" />
-                AI Evaluation
-              </button>
+              <AIEvaluationButton onClick={handleOpenEvaluation} className="mt-2 py-1.5" />
             </div>
           ) : (
             /* Show Verify Button for all non-verified milestones with completion (on-chain or off-chain) */
@@ -201,14 +221,7 @@ export function MilestoneCard({
                       <CheckCircleIcon className="w-4 h-4" />
                       Verify Milestone
                     </Button>
-                    <button
-                      type="button"
-                      onClick={() => setIsEvaluationModalOpen(true)}
-                      className="flex items-center gap-1 px-3 py-2 text-sm text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-md transition-colors"
-                    >
-                      <SparklesIcon className="w-4 h-4" />
-                      AI Evaluation
-                    </button>
+                    <AIEvaluationButton onClick={handleOpenEvaluation} className="py-2" />
                   </div>
                 )}
               </div>

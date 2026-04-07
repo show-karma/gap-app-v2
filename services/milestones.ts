@@ -99,11 +99,11 @@ export async function fetchMilestoneEvaluation(
     INDEXER.MILESTONE.EVALUATION(milestoneUID)
   );
 
-  if (error || !data) {
-    return { evaluations: [] };
+  if (error) {
+    throw new Error(`Failed to fetch milestone evaluation: ${error}`);
   }
 
-  return data;
+  return data ?? { evaluations: [] };
 }
 
 async function fetchGrantByProgramId(
