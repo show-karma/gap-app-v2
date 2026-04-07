@@ -5,13 +5,11 @@ import { PencilSquareIcon } from "@heroicons/react/24/outline";
 import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
 import { DeleteDialog } from "@/components/DeleteDialog";
-import { MilestoneEditDialog } from "@/components/Milestone/MilestoneEditDialog";
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import type { GrantMilestoneWithCompletion } from "@/services/milestones";
-import type { GrantMilestone } from "@/types/v2/grant";
-import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { formatDate } from "@/utilities/formatDate";
+import { toEditableUnifiedMilestone } from "@/utilities/milestoneTransforms";
 import { shortAddress } from "@/utilities/shortAddress";
 import { getMilestoneStatus, MILESTONE_STATUS_CONFIG } from "./utils/milestone-review-status";
 
@@ -20,45 +18,13 @@ const AIEvaluationModal = dynamic(
   { ssr: false }
 );
 
-function toUnifiedMilestone(
-  milestone: GrantMilestoneWithCompletion,
-  grantUID: string,
-  grantChainID: number
-): UnifiedMilestone {
-  const grantMilestone: GrantMilestone = {
-    uid: milestone.uid,
-    chainID: milestone.chainId,
-    title: milestone.title,
-    description: milestone.description,
-    endsAt: milestone.dueDate
-      ? Math.floor(new Date(milestone.dueDate).getTime() / 1000)
-      : undefined,
-    verified: [],
-  };
-
-  return {
-    uid: milestone.uid,
-    type: "milestone",
-    title: milestone.title,
-    description: milestone.description,
-    completed: false,
-    createdAt: "",
-    startsAt: grantMilestone.startsAt,
-    endsAt: grantMilestone.endsAt,
-    chainID: Number(milestone.chainId) || grantChainID,
-    refUID: grantUID,
-    source: {
-      grantMilestone: {
-        milestone: grantMilestone,
-        completionDetails: milestone.completionDetails,
-        grant: {
-          uid: grantUID,
-          chainID: grantChainID,
-        },
-      },
-    },
-  };
-}
+const MilestoneEditDialog = dynamic(
+  () =>
+    import("@/components/Milestone/MilestoneEditDialog").then((m) => ({
+      default: m.MilestoneEditDialog,
+    })),
+  { ssr: false }
+);
 
 interface AIEvaluationButtonProps {
   onClick: () => void;
@@ -124,7 +90,7 @@ export function MilestoneCard({
   const unifiedMilestone = useMemo(
     () =>
       canEditMilestones && grantUID && grantChainID
-        ? toUnifiedMilestone(milestone, grantUID, grantChainID)
+        ? toEditableUnifiedMilestone(milestone, grantUID, grantChainID)
         : null,
     [canEditMilestones, milestone, grantUID, grantChainID]
   );

@@ -43,11 +43,9 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
     showChainProgress,
   } = useAttestationToast();
   const storeProject = useProjectStore((state) => state.project);
-  const project = options?.projectUid
-    ? { uid: options.projectUid, details: { slug: options.projectSlug || "" } }
-    : storeProject;
-  const projectSlug = project?.details?.slug || "";
-  const { refetch: refetchGrants } = useProjectGrants(project?.uid || "");
+  const projectUid = options?.projectUid || storeProject?.uid || "";
+  const projectSlug = options?.projectSlug || storeProject?.details?.slug || "";
+  const { refetch: refetchGrants } = useProjectGrants(projectUid);
 
   const invalidateAllProjectQueries = async () => {
     // refetchGrants invalidates by UID; also invalidate by slug
@@ -140,7 +138,7 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
           }
 
           const { walletSigner } = setup;
-          const fetchedProject = await getProjectById(project!.details?.slug || "");
+          const fetchedProject = await getProjectById(projectSlug);
           if (!fetchedProject) {
             throw new Error("Failed to fetch project data");
           }
@@ -213,7 +211,7 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
         }
 
         const { gapClient, walletSigner } = setup;
-        const fetchedProject = await gapClient.fetch.projectById(project?.uid);
+        const fetchedProject = await gapClient.fetch.projectById(projectUid);
 
         if (!fetchedProject) {
           throw new Error("Failed to fetch project data");
