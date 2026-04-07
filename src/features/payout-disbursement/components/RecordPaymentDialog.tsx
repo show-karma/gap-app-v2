@@ -94,20 +94,46 @@ function RecordPaymentDialogInner({
   }, []);
 
   const milestoneOptions = useMemo((): MilestoneOption[] => {
-    if (!milestoneInvoices || milestoneInvoices.length === 0) return [];
+    const options: MilestoneOption[] = [];
+    const usedAllocationIds = new Set<string>();
 
-    return milestoneInvoices.map((invoice, index) => {
-      const allocation = milestoneAllocations?.find((a) => a.milestoneUID === invoice.milestoneUID);
+    // First, build options from invoices enriched with allocation data
+    if (milestoneInvoices && milestoneInvoices.length > 0) {
+      for (let i = 0; i < milestoneInvoices.length; i++) {
+        const invoice = milestoneInvoices[i];
+        const allocation = milestoneAllocations?.find(
+          (a) => a.milestoneUID && a.milestoneUID === invoice.milestoneUID
+        );
+        if (allocation) usedAllocationIds.add(allocation.id);
 
-      return {
-        key: invoice.milestoneUID ?? `milestone-${index}`,
-        label: invoice.milestoneLabel || `Milestone ${index + 1}`,
-        milestoneUID: invoice.milestoneUID,
-        allocationId: allocation?.id ?? null,
-        allocatedAmount: invoice.allocatedAmount ?? allocation?.amount ?? null,
-        isPaid: invoice.paymentStatus === "disbursed",
-      };
-    });
+        options.push({
+          key: invoice.milestoneUID ?? `milestone-${i}`,
+          label: allocation?.label || invoice.milestoneLabel || `Milestone ${i + 1}`,
+          milestoneUID: invoice.milestoneUID,
+          allocationId: allocation?.id ?? null,
+          allocatedAmount: allocation?.amount ?? invoice.allocatedAmount ?? null,
+          isPaid: invoice.paymentStatus === "disbursed",
+        });
+      }
+    }
+
+    // Then, add payout settings allocations that aren't linked to any invoice
+    // (custom lines, renamed entries, etc.)
+    if (milestoneAllocations) {
+      for (const allocation of milestoneAllocations) {
+        if (usedAllocationIds.has(allocation.id)) continue;
+        options.push({
+          key: allocation.milestoneUID ?? `allocation-${allocation.id}`,
+          label: allocation.label,
+          milestoneUID: allocation.milestoneUID ?? null,
+          allocationId: allocation.id,
+          allocatedAmount: allocation.amount ?? null,
+          isPaid: false,
+        });
+      }
+    }
+
+    return options;
   }, [milestoneInvoices, milestoneAllocations]);
 
   const isInitialPayment = selectedKeys.includes(INITIAL_PAYMENT_KEY);
@@ -271,12 +297,12 @@ function RecordPaymentDialogInner({
                       checked={isSelected && !isInitialPayment}
                       onChange={() => toggleSelection(milestone.key)}
                       disabled={isDisabled}
-                      className="rounded border-gray-300"
+                      className="rounded border-gray-300 shrink-0"
                     />
-                    <span className="flex-1 text-sm text-gray-700 dark:text-zinc-300 truncate">
+                    <span className="flex-1 min-w-0 text-sm text-gray-700 dark:text-zinc-300 truncate">
                       {milestone.label}
                     </span>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 shrink-0">
                       {milestone.allocatedAmount && (
                         <span className="text-xs text-gray-500 dark:text-zinc-500 tabular-nums">
                           ${Number(milestone.allocatedAmount).toLocaleString()}
