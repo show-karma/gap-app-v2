@@ -38,9 +38,9 @@ import {
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
+import { createProjectQueryPredicate } from "@/utilities/queryKeys";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { SHARE_TEXTS } from "@/utilities/share/text";
-import { createProjectQueryPredicate } from "@/utilities/queryKeys";
 import { cn } from "@/utilities/tailwind";
 import { errorManager } from "../Utilities/errorManager";
 
@@ -657,7 +657,11 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
                 <FileUpload
                   onFileSelect={handleInvoiceFileSelected}
                   acceptedFormats=".pdf,.docx"
-                  description={hasExistingInvoice ? "Upload to replace existing invoice" : "PDF or DOCX (max 10MB)"}
+                  description={
+                    hasExistingInvoice
+                      ? "Upload to replace existing invoice"
+                      : "PDF or DOCX (max 10MB)"
+                  }
                   useS3Upload
                   skipDimensionValidation
                   presignedUrlEndpoint={INDEXER.V2.MILESTONE_INVOICES.GRANTEE_PRESIGNED()}

@@ -2,7 +2,7 @@ import { test as base, expect } from "@playwright/test";
 import type { MockUserRole } from "../data/users";
 import { type AnvilConfig, anvilFixture } from "./anvil.fixture";
 import { mock404, mockError, mockJson, setupApiMocks } from "./api-mocks";
-import { loginAs, logout } from "./auth";
+import { type LoginOptions, loginAs, logout } from "./auth";
 import { type RpcFailureOptions, rpcFixture } from "./rpc.fixture";
 import { type WalletConfig, walletFixture } from "./wallet.fixture";
 import { setupWhitelabelContext, TENANTS, type TenantConfig } from "./whitelabel";
@@ -25,7 +25,7 @@ type RouteHandler = (route: import("@playwright/test").Route) => Promise<void> |
  * ```
  */
 export const test = base.extend<{
-  loginAs: (role: MockUserRole) => Promise<void>;
+  loginAs: (role: MockUserRole, options?: LoginOptions) => Promise<void>;
   withApiMocks: (overrides?: Record<string, RouteHandler>) => Promise<void>;
   withTenant: (slug: string) => Promise<TenantConfig>;
   withWallet: (overrides?: Partial<WalletConfig>) => Promise<WalletConfig>;
@@ -33,7 +33,7 @@ export const test = base.extend<{
   withRpcFailures: (failures: RpcFailureOptions[]) => Promise<() => Promise<void>>;
 }>({
   loginAs: async ({ page }, use) => {
-    await use((role: MockUserRole) => loginAs(page, role));
+    await use((role: MockUserRole, options?: LoginOptions) => loginAs(page, role, options));
   },
 
   withApiMocks: async ({ page }, use) => {

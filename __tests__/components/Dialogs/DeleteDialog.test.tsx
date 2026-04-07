@@ -376,7 +376,6 @@ describe("DeleteDialog", () => {
       expect(panel.className).toContain("dark:bg-zinc-800");
     });
 
-
     it("should apply custom styleClass to trigger button", () => {
       const customButton = {
         text: "Delete",

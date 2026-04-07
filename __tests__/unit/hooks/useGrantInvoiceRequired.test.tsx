@@ -11,8 +11,8 @@ vi.mock("@/features/payout-disbursement/services/payout-disbursement.service", (
   checkGrantInvoiceRequired: vi.fn(),
 }));
 
-import { checkGrantInvoiceRequired } from "@/features/payout-disbursement/services/payout-disbursement.service";
 import { useGrantInvoiceRequired } from "@/features/payout-disbursement/hooks/use-payout-disbursement";
+import { checkGrantInvoiceRequired } from "@/features/payout-disbursement/services/payout-disbursement.service";
 
 const mockCheckGrantInvoiceRequired = checkGrantInvoiceRequired as ReturnType<typeof vi.fn>;
 
@@ -105,12 +105,9 @@ describe("useGrantInvoiceRequired", () => {
 
   describe("when explicitly disabled", () => {
     it("should not call the API even with a valid grantUID", async () => {
-      const { result } = renderHook(
-        () => useGrantInvoiceRequired("grant-1", { enabled: false }),
-        {
-          wrapper: createWrapper(queryClient),
-        }
-      );
+      const { result } = renderHook(() => useGrantInvoiceRequired("grant-1", { enabled: false }), {
+        wrapper: createWrapper(queryClient),
+      });
 
       expect(result.current.isFetching).toBe(false);
       expect(mockCheckGrantInvoiceRequired).not.toHaveBeenCalled();
