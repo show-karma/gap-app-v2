@@ -1,11 +1,17 @@
 import { resolve } from "node:path";
 import react from "@vitejs/plugin-react";
+import tailwindcss from "tailwindcss";
 import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
   plugins: [react(), tsconfigPaths()],
   publicDir: false,
+  css: {
+    postcss: {
+      plugins: [tailwindcss({ config: resolve(__dirname, "tailwind.config.ts") })],
+    },
+  },
   build: {
     lib: {
       entry: resolve(__dirname, "entry.tsx"),
