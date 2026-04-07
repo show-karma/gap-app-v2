@@ -179,15 +179,6 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
             <ArrowDownTrayIcon className="h-4 w-4" />
             Export CSV
           </Button>
-          <SearchDropdown
-            list={reportData.programLabels}
-            onSelectFunction={reportData.handleProgramSelect}
-            cleanFunction={reportData.handleProgramClear}
-            prefixUnselected="All"
-            type="Grant Programs"
-            selected={reportData.selectedProgramLabels}
-            showCount={true}
-          />
         </div>
       </div>
 
@@ -211,7 +202,16 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
           <TabsTrigger value="stats">All Milestones</TabsTrigger>
         </TabsList>
 
-        <div className="flex items-center gap-2 my-4">
+        <div className="flex items-center gap-4 my-4">
+          <SearchDropdown
+            list={reportData.programLabels}
+            onSelectFunction={reportData.handleProgramSelect}
+            cleanFunction={reportData.handleProgramClear}
+            prefixUnselected="All"
+            type="Grant Programs"
+            selected={reportData.selectedProgramLabels}
+            showCount={true}
+          />
           <span className="text-sm text-gray-500 dark:text-zinc-400">Reviewer:</span>
           <ReviewerFilterDropdown
             reviewers={reviewers}
