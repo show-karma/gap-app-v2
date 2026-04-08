@@ -54,6 +54,8 @@ interface MilestoneOption {
   category: OptionCategory;
 }
 
+const MAX_LABEL_LENGTH = 42;
+
 const PAYMENT_KEYWORDS = /\b(first|final|initial|last|signing|completion|upfront|advance|closing)\b/i;
 
 function classifyOption(label: string, milestoneUID: string | null): OptionCategory {
@@ -261,7 +263,10 @@ function RecordPaymentDialogInner({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-lg bg-white dark:bg-zinc-950">
+      <DialogContent
+        className="max-w-lg bg-white dark:bg-zinc-950"
+        style={{ left: '50vw', top: '50vh', width: '100vw' }}
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <BanknotesIcon className="h-5 w-5 text-green-600" />
@@ -287,7 +292,7 @@ function RecordPaymentDialogInner({
             <span className="text-sm font-medium text-gray-700 dark:text-zinc-300">
               Payment Type
             </span>
-            <div className="max-h-52 overflow-y-auto rounded-md border border-gray-200 dark:border-zinc-700">
+            <div className="max-h-52 overflow-y-auto overflow-x-hidden rounded-md border border-gray-200 dark:border-zinc-700">
               {groupedOptions.map((group, groupIdx) => (
                 <div key={group.category}>
                   {/* Group header */}
@@ -314,7 +319,7 @@ function RecordPaymentDialogInner({
                       <label
                         key={option.key}
                         className={cn(
-                          "flex items-center gap-3 px-3 py-2.5 cursor-pointer",
+                          "flex items-center gap-3 px-3 py-2.5 cursor-pointer overflow-hidden",
                           !isLastInGroup && "border-b border-gray-100 dark:border-zinc-800",
                           "hover:bg-gray-50 dark:hover:bg-zinc-900",
                           isSelected && !isDisabled && "bg-blue-50 dark:bg-blue-950/30",
@@ -328,8 +333,13 @@ function RecordPaymentDialogInner({
                           disabled={isDisabled}
                           className="rounded border-gray-300 shrink-0"
                         />
-                        <span className="flex-1 min-w-0 text-sm text-gray-700 dark:text-zinc-300 truncate">
-                          {option.label}
+                        <span
+                          className="flex-1 min-w-0 text-sm text-gray-700 dark:text-zinc-300"
+                          title={option.label}
+                        >
+                          {option.label.length > MAX_LABEL_LENGTH
+                            ? `${option.label.slice(0, MAX_LABEL_LENGTH)}...`
+                            : option.label}
                         </span>
                         <div className="flex items-center gap-2 shrink-0">
                           {option.allocatedAmount && !Number.isNaN(Number(option.allocatedAmount)) && (

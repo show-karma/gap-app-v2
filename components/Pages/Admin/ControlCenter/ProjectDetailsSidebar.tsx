@@ -265,6 +265,14 @@ export function ProjectDetailsSidebar({
     return () => clearTimeout(timer);
   }, [confirmingUnsign]);
 
+  useEffect(() => {
+    if (!open) {
+      setDiscardDialogOpen(false);
+      setRecordPaymentOpen(false);
+      pendingActionRef.current = null;
+    }
+  }, [open]);
+
   const handleSignAgreement = useCallback(
     (dateOverride?: Date) => {
       if (!grant) return;
@@ -501,6 +509,7 @@ export function ProjectDetailsSidebar({
   const isSaving = saveMilestoneInvoicesMutation.isPending || configIsSaving;
 
   return (
+    <>
     <Dialog
       open={open && !!grant}
       onOpenChange={(nextOpen) => {
@@ -571,7 +580,7 @@ export function ProjectDetailsSidebar({
             </nav>
 
             {/* Content area */}
-            <div className="flex-1 overflow-auto pl-6 py-3">
+            <div className="flex-1 min-w-0 overflow-auto pl-6 py-3">
               {activeSection === "details" && (
                 <div className="space-y-6">
                   <DetailsSection
@@ -706,40 +715,43 @@ export function ProjectDetailsSidebar({
         </DialogContent>
       )}
 
-      {/* Discard changes confirmation */}
-      <Dialog open={discardDialogOpen} onOpenChange={handleCancelDiscard}>
-        <DialogContent className="max-w-sm bg-white dark:bg-zinc-950">
-          <DialogHeader>
-            <DialogTitle>Unsaved changes</DialogTitle>
-            <DialogDescription>
-              You have unsaved changes. Are you sure you want to discard them?
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="ghost" size="sm" onClick={handleCancelDiscard}>
-              Cancel
-            </Button>
-            <Button variant="destructive" size="sm" onClick={handleConfirmDiscard}>
-              Discard
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {grant && (
-        <RecordPaymentDialog
-          isOpen={recordPaymentOpen}
-          onClose={() => setRecordPaymentOpen(false)}
-          grantUID={grant.grantUid}
-          projectUID={grant.projectUid}
-          communityUID={communityUID}
-          chainID={grant.grantChainId}
-          milestoneAllocations={milestoneAllocations}
-          milestoneInvoices={milestoneInvoices}
-          todayLocal={todayLocal}
-          onSuccess={onConfigSuccess}
-        />
-      )}
     </Dialog>
+
+    {/* Discard changes confirmation — must be outside outer Dialog to avoid
+        the CSS transform containing-block that breaks fixed positioning */}
+    <Dialog open={discardDialogOpen} onOpenChange={handleCancelDiscard}>
+      <DialogContent className="max-w-sm bg-white dark:bg-zinc-950">
+        <DialogHeader>
+          <DialogTitle>Unsaved changes</DialogTitle>
+          <DialogDescription>
+            You have unsaved changes. Are you sure you want to discard them?
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter className="gap-2 sm:gap-0">
+          <Button variant="ghost" size="sm" onClick={handleCancelDiscard}>
+            Cancel
+          </Button>
+          <Button variant="destructive" size="sm" onClick={handleConfirmDiscard}>
+            Discard
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    {grant && (
+      <RecordPaymentDialog
+        isOpen={recordPaymentOpen}
+        onClose={() => setRecordPaymentOpen(false)}
+        grantUID={grant.grantUid}
+        projectUID={grant.projectUid}
+        communityUID={communityUID}
+        chainID={grant.grantChainId}
+        milestoneAllocations={milestoneAllocations}
+        milestoneInvoices={milestoneInvoices}
+        todayLocal={todayLocal}
+        onSuccess={onConfigSuccess}
+      />
+    )}
+  </>
   );
 }
