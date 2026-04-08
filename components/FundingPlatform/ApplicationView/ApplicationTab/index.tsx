@@ -54,7 +54,7 @@ export const ApplicationTab: FC<ApplicationTabProps> = ({
   // Show when application is approved AND (program has a post-approval form schema OR data already exists)
   const postApprovalFormSchema =
     (program as any)?.applicationConfig?.postApprovalFormSchema || program?.postApprovalFormSchema;
-  const hasPostApprovalSchema = !!(postApprovalFormSchema?.fields?.length);
+  const hasPostApprovalSchema = !!postApprovalFormSchema?.fields?.length;
   const hasPostApprovalData =
     !!application.postApprovalData && Object.keys(application.postApprovalData).length > 0;
   const showPostApproval =

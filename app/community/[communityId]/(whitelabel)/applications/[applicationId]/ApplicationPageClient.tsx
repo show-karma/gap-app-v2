@@ -117,20 +117,22 @@ export function ApplicationPageClient({
   );
 
   // Check if post-approval form is configured
-  const hasPostApprovalSchema = !!(
-    program?.applicationConfig?.postApprovalFormSchema?.fields?.length
-  );
+  const hasPostApprovalSchema =
+    !!program?.applicationConfig?.postApprovalFormSchema?.fields?.length;
   const hasPostApprovalData =
     !!application.postApprovalData && Object.keys(application.postApprovalData).length > 0;
   const showPostApproval =
     application.status === "approved" && (hasPostApprovalSchema || hasPostApprovalData);
 
   // Show tabs when application is approved and has milestones or post-approval
-  const shouldShowTabs =
-    application.status === "approved" && (hasMilestones || showPostApproval);
+  const shouldShowTabs = application.status === "approved" && (hasMilestones || showPostApproval);
 
   const [activeTab, setActiveTab] = useState<"details" | "milestones" | "post-approval">(
-    shouldShowTabs && hasMilestones ? "milestones" : shouldShowTabs && showPostApproval ? "post-approval" : "details"
+    shouldShowTabs && hasMilestones
+      ? "milestones"
+      : shouldShowTabs && showPostApproval
+        ? "post-approval"
+        : "details"
   );
 
   return (

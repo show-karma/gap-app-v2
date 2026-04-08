@@ -15,6 +15,7 @@ import { Skeleton } from "@/components/Utilities/Skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useAuth } from "@/hooks/useAuth";
+import { useMilestoneAllocationsByGrants } from "@/hooks/useCommunityMilestoneAllocations";
 import { useCommunityMilestoneReviewers } from "@/hooks/useCommunityMilestoneReviewers";
 import { useReviewerPrograms } from "@/hooks/usePermissions";
 import { itemsPerPage, useReportPageData } from "@/hooks/useReportPageData";
@@ -137,6 +138,20 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
     return ids.length > 0 ? ids : allProgramIds;
   }, [isAuthorized, reportData.effectiveProgramIds, allProgramIds]);
 
+  // Extract unique grant UIDs from both pending milestones and stats reports
+  const allGrantUIDs = useMemo(() => {
+    const uids = new Set<string>();
+    for (const m of reportData.pendingMilestones) {
+      if (m.grantUid) uids.add(m.grantUid);
+    }
+    for (const r of reportData.reports ?? []) {
+      if (r.grantUid) uids.add(r.grantUid);
+    }
+    return Array.from(uids);
+  }, [reportData.pendingMilestones, reportData.reports]);
+
+  const { allocationMap, grantTotalMap } = useMilestoneAllocationsByGrants(allGrantUIDs);
+
   const {
     reviewers,
     isLoading: isLoadingReviewers,
@@ -235,6 +250,7 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
             itemsPerPage={itemsPerPage}
             selectedReviewerAddress={reportData.selectedReviewerAddress}
             currentUserAddress={address}
+            allocationMap={allocationMap}
           />
         </TabsContent>
 
@@ -252,6 +268,7 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
             totalItems={reportData.totalItems}
             itemsPerPage={itemsPerPage}
             isFullyCompleted={reportData.isFullyCompleted}
+            grantTotalMap={grantTotalMap}
           />
         </TabsContent>
       </Tabs>

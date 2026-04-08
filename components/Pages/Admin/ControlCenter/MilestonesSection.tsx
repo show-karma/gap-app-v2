@@ -326,7 +326,7 @@ export const MilestonesSection = memo(function MilestonesSection({
                               )}
                             />
                           )}
-                          <span className="font-medium text-gray-900 dark:text-zinc-100 line-clamp-2">
+                          <span className="font-medium text-gray-900 dark:text-zinc-100">
                             {formatMilestoneTitle(idx, invoice.milestoneLabel)}
                           </span>
                         </div>

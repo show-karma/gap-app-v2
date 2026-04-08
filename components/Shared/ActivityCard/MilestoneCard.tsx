@@ -89,6 +89,7 @@ const MilestoneUpdateForm = dynamic(
 interface MilestoneCardProps {
   milestone: UnifiedMilestone;
   isAuthorized: boolean;
+  allocationAmount?: string;
 }
 
 /**
@@ -114,7 +115,11 @@ const getActivityTypeLabel = (type: string): string => {
   }
 };
 
-export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized }) => {
+export const MilestoneCard: FC<MilestoneCardProps> = ({
+  milestone,
+  isAuthorized,
+  allocationAmount,
+}) => {
   const { isCompleting, handleCompleting, isEditing, handleEditing } = useMilestoneActions();
   const { multiGrantUndoCompletion } = useMilestone();
   const [isUndoing, setIsUndoing] = useState(false);
@@ -489,6 +494,16 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
                   <span>Due by {formatDate(endsAt * 1000)}</span>
                 </Badge>
               )}
+
+              {/* Allocation amount pill */}
+              {allocationAmount ? (
+                <Badge
+                  variant="secondary"
+                  className="bg-blue-50 text-blue-700 hover:bg-blue-50 dark:bg-blue-900 dark:text-blue-200 dark:hover:bg-blue-900"
+                >
+                  {allocationAmount}
+                </Badge>
+              ) : null}
 
               {(type === "milestone" || type === "grant") && (
                 <Badge

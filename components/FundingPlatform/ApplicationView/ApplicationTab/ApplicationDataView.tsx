@@ -11,6 +11,7 @@ import type {
 } from "@/types/funding-platform";
 import { createFieldLabelsMap, createFieldTypeMap } from "@/utilities/form-schema-helpers";
 import { formatDate } from "@/utilities/formatDate";
+import { formatMilestoneAmount } from "@/utilities/formatMilestoneAmount";
 import { PROJECT_UID_REGEX } from "@/utilities/validation";
 
 export interface ApplicationDataViewProps {
@@ -50,9 +51,16 @@ export const ApplicationDataView: FC<ApplicationDataViewProps> = ({
               >
                 <div className="space-y-2">
                   <div className="flex justify-between items-start gap-4">
-                    <h5 className="font-medium text-gray-900 dark:text-gray-100">
-                      {milestone.title}
-                    </h5>
+                    <div className="flex items-baseline gap-2 flex-wrap">
+                      <h5 className="font-medium text-gray-900 dark:text-gray-100">
+                        {milestone.title}
+                      </h5>
+                      {formatMilestoneAmount(milestone.fundingRequested) && (
+                        <span className="text-sm text-zinc-500 dark:text-zinc-400">
+                          {formatMilestoneAmount(milestone.fundingRequested)}
+                        </span>
+                      )}
+                    </div>
                     {milestone.dueDate && (
                       <span className="text-xs bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200 px-2 py-1 rounded flex-shrink-0">
                         Due: {formatDate(milestone.dueDate)}
@@ -62,16 +70,6 @@ export const ApplicationDataView: FC<ApplicationDataViewProps> = ({
                   {milestone.description && (
                     <div className="text-sm text-gray-600 dark:text-gray-400 prose prose-sm dark:prose-invert max-w-none">
                       <MarkdownPreview source={milestone.description} />
-                    </div>
-                  )}
-                  {milestone.fundingRequested && (
-                    <div className="text-sm">
-                      <span className="font-medium text-gray-700 dark:text-gray-300">
-                        Funding Requested:
-                      </span>{" "}
-                      <span className="text-gray-600 dark:text-gray-400">
-                        {milestone.fundingRequested}
-                      </span>
                     </div>
                   )}
                   {milestone.completionCriteria && (

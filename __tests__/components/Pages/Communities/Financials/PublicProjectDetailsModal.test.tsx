@@ -309,11 +309,85 @@ describe("PublicProjectDetailsModal", () => {
     expect(screen.getByText("Invoice received")).toBeInTheDocument();
   });
 
+  it("shows invoice received date below the badge when invoiceReceivedAt is set", () => {
+    const invoices = [
+      makeInvoice({
+        invoiceStatus: "received",
+        invoiceReceivedAt: "2025-03-15T00:00:00Z",
+        milestoneUID: "ms-1",
+      }),
+    ];
+
+    renderModal({ milestoneInvoices: invoices, invoiceRequired: true });
+
+    expect(screen.getByText("Invoice received")).toBeInTheDocument();
+    // formatDate is mocked to return "Jan 1, 2025" for any date
+    const dates = screen.getAllByText("Jan 1, 2025");
+    expect(dates.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("does not show invoice received date when invoiceReceivedAt is null", () => {
+    const invoices = [
+      makeInvoice({
+        invoiceStatus: "not_submitted",
+        invoiceReceivedAt: null,
+        milestoneUID: "ms-1",
+      }),
+    ];
+
+    renderModal({ milestoneInvoices: invoices, invoiceRequired: true });
+
+    expect(screen.getByText("Not submitted")).toBeInTheDocument();
+    // No date should render — agreement is null, paymentStatusDate is null, invoiceReceivedAt is null
+    expect(screen.queryByText("Jan 1, 2025")).not.toBeInTheDocument();
+  });
+
   it("hides invoice status column when invoiceRequired is false", () => {
     const invoices = [makeInvoice({ invoiceStatus: "received", milestoneUID: "ms-1" })];
 
     renderModal({ milestoneInvoices: invoices, invoiceRequired: false });
 
     expect(screen.queryByText("Invoice Status")).not.toBeInTheDocument();
+  });
+
+  describe("currency display in allocation column", () => {
+    it("should_show_currency_after_allocation_amount_when_grant_has_currency", () => {
+      const invoice = makeInvoice({ milestoneUID: "ms-1", allocatedAmount: "30000" });
+
+      renderModal({
+        grant: makeGrant({ currency: "USDC" }),
+        milestoneInvoices: [invoice],
+      });
+
+      // The allocation amount should appear with the currency appended
+      expect(screen.getByText("USDC")).toBeInTheDocument();
+    });
+
+    it("should_show_allocation_amount_from_config_with_currency_when_invoice_has_no_allocatedAmount", () => {
+      const invoice = makeInvoice({ milestoneUID: "ms-1", allocatedAmount: null });
+
+      renderModal({
+        grant: makeGrant({ currency: "OP" }),
+        milestoneInvoices: [invoice],
+        milestoneAllocations: [
+          { id: "alloc-1", milestoneUID: "ms-1", label: "MS 1", amount: "50000" },
+        ],
+      });
+
+      expect(screen.getByText("OP")).toBeInTheDocument();
+    });
+
+    it("should_show_remaining_balance_with_currency_when_grant_has_currency", () => {
+      renderModal({
+        grant: makeGrant({ currentAmount: "10000", currency: "USDC" }),
+        disbursementInfo: {
+          totalsByToken: [{ token: "USDC", totalAmount: "5000000", tokenDecimals: 6 }],
+          status: "partial",
+          history: [],
+        },
+      });
+
+      expect(screen.getByText(/USDC remaining/)).toBeInTheDocument();
+    });
   });
 });

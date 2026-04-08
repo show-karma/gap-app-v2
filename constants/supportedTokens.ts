@@ -530,6 +530,16 @@ export function getTokenBySymbolAndChain(
   return SUPPORTED_TOKENS.find((token) => token.symbol === symbol && token.chainId === chainId);
 }
 
+export function getTokenByAddressAndChain(
+  address: string,
+  chainId: number
+): SupportedToken | undefined {
+  const normalizedAddress = address.toLowerCase();
+  return SUPPORTED_TOKENS.find(
+    (token) => token.address.toLowerCase() === normalizedAddress && token.chainId === chainId
+  );
+}
+
 export function getAllSupportedChains(): number[] {
   return Object.keys(SUPPORTED_NETWORKS).map(Number);
 }

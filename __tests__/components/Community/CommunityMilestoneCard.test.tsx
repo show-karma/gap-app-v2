@@ -766,6 +766,50 @@ describe("CommunityMilestoneCard", () => {
     });
   });
 
+  describe("Allocation Amount Display", () => {
+    it("should_show_dollar_prefixed_amount_when_allocation_provided", () => {
+      const milestone = createMockMilestone();
+      render(<CommunityMilestoneCard milestone={milestone} allocationAmount="$30,000" />);
+
+      expect(screen.getByText("$30,000")).toBeInTheDocument();
+    });
+
+    it("should_show_token_suffixed_amount_when_allocation_has_token", () => {
+      const milestone = createMockMilestone();
+      render(<CommunityMilestoneCard milestone={milestone} allocationAmount="30,000 OP" />);
+
+      expect(screen.getByText("30,000 OP")).toBeInTheDocument();
+    });
+
+    it("should_not_render_amount_pill_when_no_allocation", () => {
+      const milestone = createMockMilestone();
+      render(<CommunityMilestoneCard milestone={milestone} />);
+
+      // The status row should not contain an amount pill
+      const statusBadge = screen.getByText("Pending").closest("div");
+      const statusRow = statusBadge?.parentElement;
+      const spans = statusRow?.querySelectorAll("span.rounded-full");
+      // Only the status badge itself should be rounded-full, no amount pill
+      expect(spans?.length ?? 0).toBe(0);
+    });
+
+    it("should_render_amount_as_pill_in_status_row", () => {
+      const milestone = createMockMilestone({
+        details: {
+          title: "First 40%",
+          description: "Description",
+          dueDate: futureDate(30),
+        },
+      });
+      render(<CommunityMilestoneCard milestone={milestone} allocationAmount="$32,500" />);
+
+      const amount = screen.getByText("$32,500");
+      // Amount pill should be in the same row as the status badge (not next to title)
+      const statusBadge = screen.getByText("Pending").closest("div");
+      expect(amount.parentElement).toBe(statusBadge?.parentElement);
+    });
+  });
+
   describe("Memoization", () => {
     it("should be memoized (exported as memo component)", () => {
       // The component should be memoized to prevent unnecessary re-renders

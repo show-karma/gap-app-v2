@@ -522,12 +522,17 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
         )}
 
         {application.status === "approved" &&
-          (!!((program as any)?.applicationConfig?.postApprovalFormSchema?.fields?.length ||
-            program?.postApprovalFormSchema?.fields?.length) ||
+          (!!(
+            (program as any)?.applicationConfig?.postApprovalFormSchema?.fields?.length ||
+            program?.postApprovalFormSchema?.fields?.length
+          ) ||
             (application?.postApprovalData &&
               Object.keys(application.postApprovalData).length > 0)) && (
-          <PostApprovalData postApprovalData={application?.postApprovalData ?? {}} program={program} />
-        )}
+            <PostApprovalData
+              postApprovalData={application?.postApprovalData ?? {}}
+              program={program}
+            />
+          )}
 
         {/* Application Data Section with Toggle */}
         <div

@@ -64,6 +64,7 @@ interface MilestoneCardProps {
   onSubmitVerification: (milestone: GrantMilestoneWithCompletion) => void;
   onDeleteMilestone: (milestone: GrantMilestoneWithCompletion) => Promise<void>;
   isDeleting?: boolean;
+  allocationAmount?: string;
 }
 
 export function MilestoneCard({
@@ -86,6 +87,7 @@ export function MilestoneCard({
   onSubmitVerification,
   onDeleteMilestone,
   isDeleting = false,
+  allocationAmount,
 }: MilestoneCardProps) {
   const [isEditOpen, setIsEditOpen] = useState(false);
 
@@ -293,8 +295,15 @@ export function MilestoneCard({
       )}
 
       <div className="flex items-center justify-between">
-        <div className="text-sm text-gray-500 dark:text-gray-400">
-          <span className="font-medium">Due:</span> {formatDate(milestone.dueDate, "UTC")}
+        <div className="flex items-center gap-2">
+          <div className="text-sm text-gray-500 dark:text-gray-400">
+            <span className="font-medium">Due:</span> {formatDate(milestone.dueDate, "UTC")}
+          </div>
+          {allocationAmount ? (
+            <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200">
+              {allocationAmount}
+            </span>
+          ) : null}
         </div>
         <span className={`text-xs px-3 py-1 rounded-full font-medium ${statusInfo.statusColor}`}>
           {statusInfo.status}

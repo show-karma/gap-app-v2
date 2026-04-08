@@ -326,7 +326,7 @@ export default function ApplicationDetailPage() {
 
   // Check if post-approval edit should be enabled (admin only)
   // Show when approved AND (program has a post-approval form schema OR data already exists)
-  const hasPostApprovalSchema = !!(config?.postApprovalFormSchema?.fields?.length);
+  const hasPostApprovalSchema = !!config?.postApprovalFormSchema?.fields?.length;
   const hasPostApprovalData =
     !!application?.postApprovalData && Object.keys(application.postApprovalData).length > 0;
   const canEditPostApproval =
