@@ -34,6 +34,7 @@ const unitTestMockAliases = [
   { find: /^multiformats\/cid$/, replacement: `${dirname}/__mocks__/multiformats.ts` },
   { find: /^@aa-sdk\/core$/, replacement: `${dirname}/__mocks__/@aa-sdk/core.ts` },
   { find: /^@privy-io\/wagmi$/, replacement: `${dirname}/__mocks__/@privy-io/wagmi.ts` },
+  { find: /^@sentry\/nextjs$/, replacement: `${dirname}/__mocks__/@sentry/nextjs.ts` },
   {
     find: /^@account-kit\/infra(\/.*)?$/,
     replacement: `${dirname}/__mocks__/@account-kit/infra.ts`,

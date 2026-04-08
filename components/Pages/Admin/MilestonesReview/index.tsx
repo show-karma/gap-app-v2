@@ -6,6 +6,7 @@ import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
 import { Badge } from "@/components/ui/badge";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
+import { useMilestoneAllocationsByGrants } from "@/hooks/useCommunityMilestoneAllocations";
 import { useDeleteMilestone } from "@/hooks/useDeleteMilestone";
 import { useFundingApplicationByProjectUID } from "@/hooks/useFundingApplicationByProjectUID";
 import { useMilestoneCompletionVerification } from "@/hooks/useMilestoneCompletionVerification";
@@ -274,6 +275,11 @@ function MilestonesReviewPageContent({
     [deleteMilestoneAsync]
   );
 
+  // Fetch milestone allocations for the grant
+  const grantUid = data?.grant?.uid;
+  const grantUIDsForAllocations = useMemo(() => (grantUid ? [grantUid] : []), [grantUid]);
+  const { allocationMap } = useMilestoneAllocationsByGrants(grantUIDsForAllocations);
+
   const milestones = data?.grantMilestones ?? EMPTY_MILESTONES;
 
   // Compute the effective filter: default to PendingVerification if any exist, else "all".
@@ -524,6 +530,10 @@ function MilestonesReviewPageContent({
                       onSubmitVerification={handleSubmitVerification}
                       onDeleteMilestone={handleDeleteMilestone}
                       isDeleting={isDeleting && deletingMilestoneId === milestone.uid}
+                      allocationAmount={
+                        allocationMap.get(milestone.uid) ??
+                        allocationMap.get(milestone.uid.toLowerCase())
+                      }
                     />
                   ))
                 )}

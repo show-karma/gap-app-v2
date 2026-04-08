@@ -1,5 +1,6 @@
 "use client";
 
+import * as Sentry from "@sentry/nextjs";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useCallback, useRef } from "react";
@@ -84,6 +85,29 @@ function extractToolResultData(raw: unknown): Record<string, unknown> {
   return {};
 }
 
+function toFriendlyError(status: number, rawMessage: unknown): string {
+  const msg = typeof rawMessage === "string" ? rawMessage.trim() : "";
+  const isRawStatusCode = !msg || msg.startsWith("HTTP ");
+  switch (status) {
+    case 429:
+      return "I'm getting a lot of requests right now. Please wait a moment and try again.";
+    case 503:
+      return "I'm temporarily unavailable. Please try again in a few minutes.";
+    case 403:
+      // 403 can mean budget exceeded OR access denied — use the backend's
+      // message since it's already user-friendly (e.g., "Daily agent usage
+      // budget exceeded. Please try again tomorrow.")
+      return isRawStatusCode
+        ? "I'm unable to help with that right now. Please try again later."
+        : msg;
+    default:
+      if (status >= 500) {
+        return "Something went wrong on my end. Please try again.";
+      }
+      return isRawStatusCode ? "Something unexpected happened. Please try again." : msg;
+  }
+}
+
 function buildConversationHistory(
   messages: ChatMessage[],
   maxMessages: number = 12
@@ -158,13 +182,30 @@ export function useAgentStream() {
 
         if (!response.ok) {
           const errorText = await response.text();
-          let errorMsg = `HTTP ${response.status}`;
+          let errorMsg = toFriendlyError(response.status, `HTTP ${response.status}`);
           try {
-            const errorJson = JSON.parse(errorText);
-            errorMsg = errorJson.message || errorJson.error || errorMsg;
+            const errorJson = JSON.parse(errorText) as {
+              message?: unknown;
+              error?: unknown;
+            };
+            const rawMsg =
+              typeof errorJson.message === "string"
+                ? errorJson.message
+                : typeof errorJson.error === "string"
+                  ? errorJson.error
+                  : "";
+            if (rawMsg.trim()) {
+              errorMsg = toFriendlyError(response.status, rawMsg.trim());
+            }
           } catch {
-            if (errorText) errorMsg = errorText;
+            const rawMsg = errorText.trim();
+            if (rawMsg) {
+              errorMsg = toFriendlyError(response.status, rawMsg);
+            }
           }
+          Sentry.captureException(new Error(`Agent stream error: HTTP ${response.status}`), {
+            extra: { status: response.status, errorText, errorMsg },
+          });
           if (response.status === 409) {
             throw new Error(
               "Please wait for your current request to complete before sending another."

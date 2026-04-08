@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useCallback, useState } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import {
@@ -73,7 +73,10 @@ export const PaymentStatusDropdown = memo(function PaymentStatusDropdown({
   const [confirmingDisbursed, setConfirmingDisbursed] = useState(false);
   const mutation = useUpdateMilestonePaymentStatus(communityUID);
 
-  const currentConfig = STATUS_OPTIONS.find((s) => s.value === currentStatus) ?? STATUS_OPTIONS[0];
+  const currentConfig = useMemo(
+    () => STATUS_OPTIONS.find((s) => s.value === currentStatus) ?? STATUS_OPTIONS[0],
+    [currentStatus]
+  );
 
   const handleSelect = useCallback(
     (status: MilestonePaymentStatus) => {
@@ -89,8 +92,7 @@ export const PaymentStatusDropdown = memo(function PaymentStatusDropdown({
         { grantUID, milestoneLabel, paymentStatus: status },
         {
           onSuccess: () => {
-            const label = STATUS_OPTIONS.find((s) => s.value === status)?.label ?? status;
-            toast.success(`Payment status updated to ${label}`);
+            toast.success(`Payment status updated to ${status}`);
           },
           onError: () => {
             toast.error("Failed to update payment status");

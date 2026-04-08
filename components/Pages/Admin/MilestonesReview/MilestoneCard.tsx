@@ -1,7 +1,8 @@
 "use client";
 
-import { CheckCircleIcon, TrashIcon } from "@heroicons/react/20/solid";
-import { useMemo } from "react";
+import { CheckCircleIcon, SparklesIcon, TrashIcon } from "@heroicons/react/20/solid";
+import dynamic from "next/dynamic";
+import { useMemo, useState } from "react";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
@@ -9,6 +10,29 @@ import type { GrantMilestoneWithCompletion } from "@/services/milestones";
 import { formatDate } from "@/utilities/formatDate";
 import { shortAddress } from "@/utilities/shortAddress";
 import { getMilestoneStatus, MILESTONE_STATUS_CONFIG } from "./utils/milestone-review-status";
+
+const AIEvaluationModal = dynamic(
+  () => import("./AIEvaluationModal").then((m) => ({ default: m.AIEvaluationModal })),
+  { ssr: false }
+);
+
+interface AIEvaluationButtonProps {
+  onClick: () => void;
+  className?: string;
+}
+
+function AIEvaluationButton({ onClick, className = "" }: AIEvaluationButtonProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex items-center gap-1 px-3 py-1.5 text-sm text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-md transition-colors ${className}`}
+    >
+      <SparklesIcon className="w-4 h-4" />
+      AI Evaluation
+    </button>
+  );
+}
 
 interface MilestoneCardProps {
   milestone: GrantMilestoneWithCompletion;
@@ -24,6 +48,7 @@ interface MilestoneCardProps {
   onSubmitVerification: (milestone: GrantMilestoneWithCompletion) => void;
   onDeleteMilestone: (milestone: GrantMilestoneWithCompletion) => Promise<void>;
   isDeleting?: boolean;
+  allocationAmount?: string;
 }
 
 export function MilestoneCard({
@@ -40,6 +65,7 @@ export function MilestoneCard({
   onSubmitVerification,
   onDeleteMilestone,
   isDeleting = false,
+  allocationAmount,
 }: MilestoneCardProps) {
   const useOnChainData = useMemo(
     () => milestone.completionDetails !== null,
@@ -66,6 +92,12 @@ export function MilestoneCard({
     milestone.completionDetails,
     milestone.fundingApplicationCompletion,
   ]);
+
+  const [isEvaluationModalOpen, setIsEvaluationModalOpen] = useState(false);
+
+  function handleOpenEvaluation() {
+    setIsEvaluationModalOpen(true);
+  }
 
   return (
     <div
@@ -141,6 +173,7 @@ export function MilestoneCard({
                   Verified: {formatDate(milestone.verificationDetails.verifiedAt)}
                 </p>
               </div>
+              <AIEvaluationButton onClick={handleOpenEvaluation} className="mt-2" />
             </div>
           ) : (
             /* Show Verify Button for all non-verified milestones with completion (on-chain or off-chain) */
@@ -181,14 +214,17 @@ export function MilestoneCard({
                     </div>
                   </div>
                 ) : (
-                  /* Verify Button */
-                  <Button
-                    onClick={() => onVerifyClick(milestone.uid)}
-                    className="flex items-center gap-2 px-4 py-2 text-sm bg-green-600 hover:bg-green-700"
-                  >
-                    <CheckCircleIcon className="w-4 h-4" />
-                    Verify Milestone
-                  </Button>
+                  /* Verify Button + AI Evaluation */
+                  <div className="flex items-center gap-2">
+                    <Button
+                      onClick={() => onVerifyClick(milestone.uid)}
+                      className="flex items-center gap-2 px-4 py-2 text-sm bg-green-600 hover:bg-green-700"
+                    >
+                      <CheckCircleIcon className="w-4 h-4" />
+                      Verify Milestone
+                    </Button>
+                    <AIEvaluationButton onClick={handleOpenEvaluation} className="py-2" />
+                  </div>
                 )}
               </div>
             )
@@ -197,13 +233,28 @@ export function MilestoneCard({
       )}
 
       <div className="flex items-center justify-between">
-        <div className="text-sm text-gray-500 dark:text-gray-400">
-          <span className="font-medium">Due:</span> {formatDate(milestone.dueDate)}
+        <div className="flex items-center gap-2">
+          <div className="text-sm text-gray-500 dark:text-gray-400">
+            <span className="font-medium">Due:</span> {formatDate(milestone.dueDate)}
+          </div>
+          {allocationAmount ? (
+            <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200">
+              {allocationAmount}
+            </span>
+          ) : null}
         </div>
         <span className={`text-xs px-3 py-1 rounded-full font-medium ${statusInfo.statusColor}`}>
           {statusInfo.status}
         </span>
       </div>
+
+      {hasCompletion && isEvaluationModalOpen && (
+        <AIEvaluationModal
+          milestoneUID={milestone.uid}
+          isOpen={isEvaluationModalOpen}
+          onClose={() => setIsEvaluationModalOpen(false)}
+        />
+      )}
     </div>
   );
 }
