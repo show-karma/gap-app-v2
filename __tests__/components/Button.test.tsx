@@ -1,9 +1,10 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { Button } from "@/components/ui/button";
 import "@testing-library/jest-dom";
 
 // Mock Spinner
-jest.mock("@/components/ui/spinner", () => ({
+vi.mock("@/components/ui/spinner", () => ({
   Spinner: () => <div data-testid="spinner">Loading...</div>,
 }));
 
@@ -151,8 +152,9 @@ describe("Button", () => {
       expect(button).toHaveClass("disabled:pointer-events-none", "disabled:opacity-50");
     });
 
-    it("should not trigger onClick when disabled", () => {
-      const handleClick = jest.fn();
+    it("should not trigger onClick when disabled", async () => {
+      const user = userEvent.setup();
+      const handleClick = vi.fn();
 
       render(
         <Button disabled onClick={handleClick}>
@@ -161,41 +163,44 @@ describe("Button", () => {
       );
 
       const button = screen.getByRole("button");
-      fireEvent.click(button);
+      await user.click(button);
 
       expect(handleClick).not.toHaveBeenCalled();
     });
   });
 
   describe("Events", () => {
-    it("should handle onClick event", () => {
-      const handleClick = jest.fn();
+    it("should handle onClick event", async () => {
+      const user = userEvent.setup();
+      const handleClick = vi.fn();
 
       render(<Button onClick={handleClick}>Button</Button>);
 
       const button = screen.getByRole("button");
-      fireEvent.click(button);
+      await user.click(button);
 
       expect(handleClick).toHaveBeenCalledTimes(1);
     });
 
-    it("should handle onMouseEnter event", () => {
-      const handleMouseEnter = jest.fn();
+    it("should handle onMouseEnter event", async () => {
+      const user = userEvent.setup();
+      const handleMouseEnter = vi.fn();
 
       render(<Button onMouseEnter={handleMouseEnter}>Button</Button>);
 
       const button = screen.getByRole("button");
-      fireEvent.mouseEnter(button);
+      await user.hover(button);
 
       expect(handleMouseEnter).toHaveBeenCalledTimes(1);
     });
 
     it("should handle onFocus event", () => {
-      const handleFocus = jest.fn();
+      const handleFocus = vi.fn();
 
       render(<Button onFocus={handleFocus}>Button</Button>);
 
       const button = screen.getByRole("button");
+      // fireEvent required: testing blur/focus event handler callback
       fireEvent.focus(button);
 
       expect(handleFocus).toHaveBeenCalledTimes(1);

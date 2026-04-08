@@ -1,39 +1,39 @@
 import type { AxiosInstance } from "axios";
 
 // Mock dependencies BEFORE importing the service
-jest.mock("@/utilities/auth/token-manager");
-jest.mock("@/utilities/enviromentVars", () => ({
+vi.mock("@/utilities/auth/token-manager");
+vi.mock("@/utilities/enviromentVars", () => ({
   envVars: {
     NEXT_PUBLIC_GAP_INDEXER_URL: "http://localhost:4000",
   },
 }));
 
-// Create a persistent mock instance using var (hoisted) so it's available in jest.mock factory
-var mockAxiosInstance: jest.Mocked<AxiosInstance>;
+// Create a persistent mock instance using var (hoisted) so it's available in vi.mock factory
+var mockAxiosInstance: vi.Mocked<AxiosInstance>;
 
 // Mock api-client
-jest.mock("@/utilities/auth/api-client", () => {
+vi.mock("@/utilities/auth/api-client", () => {
   const instance = {
-    get: jest.fn(),
-    post: jest.fn(),
-    delete: jest.fn(),
-    put: jest.fn(),
-    patch: jest.fn(),
-    request: jest.fn(),
-    head: jest.fn(),
-    options: jest.fn(),
+    get: vi.fn(),
+    post: vi.fn(),
+    delete: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    request: vi.fn(),
+    head: vi.fn(),
+    options: vi.fn(),
     interceptors: {
-      request: { use: jest.fn(), eject: jest.fn(), clear: jest.fn() },
-      response: { use: jest.fn(), eject: jest.fn(), clear: jest.fn() },
+      request: { use: vi.fn(), eject: vi.fn(), clear: vi.fn() },
+      response: { use: vi.fn(), eject: vi.fn(), clear: vi.fn() },
     },
     defaults: {} as any,
-    getUri: jest.fn(),
-  } as unknown as jest.Mocked<AxiosInstance>;
+    getUri: vi.fn(),
+  } as unknown as vi.Mocked<AxiosInstance>;
 
   mockAxiosInstance = instance;
 
   return {
-    createAuthenticatedApiClient: jest.fn(() => instance),
+    createAuthenticatedApiClient: vi.fn(() => instance),
   };
 });
 
@@ -42,7 +42,7 @@ import { communityAdminsService } from "@/services/community-admins.service";
 
 describe("communityAdminsService", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("resolveEmailToWallet", () => {

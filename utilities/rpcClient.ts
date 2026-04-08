@@ -1,5 +1,6 @@
 import type { TNetwork } from "@show-karma/karma-gap-sdk";
 import { createPublicClient, http, type PublicClient } from "viem";
+import type { Chain } from "viem/chains";
 import {
   arbitrum,
   base,
@@ -37,98 +38,50 @@ const normalizeRPCUrl = (rpcUrl?: string): string | undefined => {
   return normalizedRpcUrl ? normalizedRpcUrl : undefined;
 };
 
-const mainnetClient = createPublicClient({
-  chain: mainnet,
-  transport: http(envVars.RPC.MAINNET),
-});
+const CHAIN_CONFIG: Record<string, { chain: Chain; rpcUrl: string | undefined }> = {
+  mainnet: { chain: mainnet, rpcUrl: envVars.RPC.MAINNET },
+  optimism: { chain: optimism, rpcUrl: envVars.RPC.OPTIMISM },
+  arbitrum: { chain: arbitrum, rpcUrl: envVars.RPC.ARBITRUM },
+  base: { chain: base, rpcUrl: envVars.RPC.BASE },
+  "base-sepolia": { chain: baseSepolia, rpcUrl: envVars.RPC.BASE_SEPOLIA },
+  celo: { chain: celo, rpcUrl: envVars.RPC.CELO },
+  lisk: { chain: lisk, rpcUrl: envVars.RPC.LISK },
+  "optimism-sepolia": { chain: optimismSepolia, rpcUrl: envVars.RPC.OPT_SEPOLIA },
+  polygon: { chain: polygon, rpcUrl: envVars.RPC.POLYGON },
+  scroll: { chain: scroll, rpcUrl: envVars.RPC.SCROLL },
+  sei: { chain: sei, rpcUrl: envVars.RPC.SEI },
+  sepolia: { chain: sepolia, rpcUrl: envVars.RPC.SEPOLIA },
+};
 
-const optimismClient = createPublicClient({
-  chain: optimism,
-  transport: http(envVars.RPC.OPTIMISM),
-});
+const clientCache = new Map<string, PublicClient>();
 
-const arbitrumClient = createPublicClient({
-  chain: arbitrum,
-  transport: http(envVars.RPC.ARBITRUM),
-});
+function getOrCreateClient(network: string): PublicClient | undefined {
+  const existing = clientCache.get(network);
+  if (existing) return existing;
 
-const baseSepoliaClient = createPublicClient({
-  chain: baseSepolia,
-  transport: http(envVars.RPC.BASE_SEPOLIA),
-});
+  const config = CHAIN_CONFIG[network];
+  if (!config) return undefined;
 
-const optimismSepoliaClient = createPublicClient({
-  chain: optimismSepolia,
-  transport: http(envVars.RPC.OPT_SEPOLIA),
-});
+  const client = createPublicClient({
+    chain: config.chain,
+    transport: http(config.rpcUrl),
+  });
 
-const sepoliaClient = createPublicClient({
-  chain: sepolia,
-  transport: http(envVars.RPC.SEPOLIA),
-});
-
-const celoClient = createPublicClient({
-  chain: celo,
-  transport: http(envVars.RPC.CELO),
-});
-
-const seiClient = createPublicClient({
-  chain: sei,
-  transport: http(envVars.RPC.SEI),
-});
-
-const liskClient = createPublicClient({
-  chain: lisk,
-  transport: http(envVars.RPC.LISK),
-});
-
-const scrollClient = createPublicClient({
-  chain: scroll,
-  transport: http(envVars.RPC.SCROLL),
-});
-
-const baseClient = createPublicClient({
-  chain: base,
-  transport: http(envVars.RPC.BASE),
-});
-
-const polygonClient = createPublicClient({
-  chain: polygon,
-  transport: http(envVars.RPC.POLYGON),
-});
+  clientCache.set(network, client as PublicClient);
+  return client as PublicClient;
+}
 
 type RpcClientNetwork = TNetwork | "mainnet" | "base" | "polygon";
 
-type RpcClientValue =
-  | typeof mainnetClient
-  | typeof optimismClient
-  | typeof seiClient
-  | typeof arbitrumClient
-  | typeof celoClient
-  | typeof liskClient
-  | typeof scrollClient
-  | typeof baseClient
-  | typeof polygonClient
-  | typeof optimismSepoliaClient
-  | typeof sepoliaClient
-  | typeof baseSepoliaClient;
-
-export const rpcClient: Partial<Record<RpcClientNetwork, RpcClientValue>> = {
-  //   prod networks
-  mainnet: mainnetClient,
-  optimism: optimismClient,
-  sei: seiClient,
-  arbitrum: arbitrumClient,
-  celo: celoClient,
-  lisk: liskClient,
-  scroll: scrollClient,
-  base: baseClient,
-  polygon: polygonClient,
-  //   testnets
-  "optimism-sepolia": optimismSepoliaClient,
-  sepolia: sepoliaClient,
-  "base-sepolia": baseSepoliaClient,
-};
+export const rpcClient: Partial<Record<RpcClientNetwork, PublicClient>> = new Proxy(
+  {} as Partial<Record<RpcClientNetwork, PublicClient>>,
+  {
+    get(_target, prop: string) {
+      if (typeof prop !== "string") return undefined;
+      return getOrCreateClient(prop);
+    },
+  }
+);
 
 const getConfiguredRPCUrlByChainId = (chainId: number): string | undefined => {
   switch (chainId) {

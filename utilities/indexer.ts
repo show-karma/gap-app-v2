@@ -169,6 +169,8 @@ export const INDEXER = {
         `/v2/funding-applications/user/my-applications?communitySlug=${communitySlug}`,
       MILESTONE_COMPLETIONS: (referenceNumber: string) =>
         `/v2/funding-applications/${referenceNumber}/milestone-completions`,
+      INVOICE_CONFIG: (referenceNumber: string) =>
+        `/v2/funding-applications/${referenceNumber}/invoice-config`,
     },
     AUTH: {
       PERMISSIONS: (params?: {
@@ -237,6 +239,7 @@ export const INDEXER = {
     },
     PAYOUTS: {
       CREATE: "/v2/payouts/disburse",
+      RECORD_PAYMENT: "/v2/payouts/record-payment",
       RECORD_SAFE_TX: (disbursementId: string) => `/v2/payouts/${disbursementId}/record-safe-tx`,
       GRANT_HISTORY: (grantUID: string, page?: number, limit?: number) => {
         const params = new URLSearchParams();
@@ -342,6 +345,10 @@ export const INDEXER = {
         `/v2/payout-config/community/${communityUID}/public`,
       BY_GRANT: (grantUID: string) => `/v2/payout-config/grant/${grantUID}`,
       DELETE: (grantUID: string) => `/v2/payout-config/grant/${grantUID}`,
+      UPDATE_LINE_ITEM: (grantUID: string, allocationId: string) =>
+        `/v2/payout-config/grant/${grantUID}/line-items/${allocationId}`,
+      DELETE_LINE_ITEM: (grantUID: string, allocationId: string) =>
+        `/v2/payout-config/grant/${grantUID}/line-items/${allocationId}`,
     },
     GRANT_AGREEMENTS: {
       TOGGLE: (grantUID: string) => `/v2/grant-agreements/${grantUID}`,
@@ -350,6 +357,15 @@ export const INDEXER = {
     MILESTONE_INVOICES: {
       BATCH_SAVE: (grantUID: string) => `/v2/milestone-invoices/${grantUID}`,
       BY_GRANT: (grantUID: string) => `/v2/milestone-invoices/grant/${grantUID}`,
+      PRESIGNED_URL: () => `/v2/milestone-invoices/presigned`,
+      DOWNLOAD: (key: string) => `/v2/milestone-invoices/download?key=${encodeURIComponent(key)}`,
+      GRANTEE_PRESIGNED: () => `/v2/milestone-invoices/grantee/presigned`,
+    },
+    GRANTS: {
+      INVOICE_REQUIREMENT: (grantUID: string) => `/v2/grants/${grantUID}/invoice-requirement`,
+      INVOICE_SUBMIT: (grantUID: string) => `/v2/grants/${grantUID}/invoice`,
+      INVOICE_DOWNLOAD: (grantUID: string, key: string) =>
+        `/v2/grants/${grantUID}/invoice/download?key=${encodeURIComponent(key)}`,
     },
   },
   PROGRAMS: {
@@ -416,6 +432,7 @@ export const INDEXER = {
     IMPACT_INDICATORS: {
       SEND: (milestoneUID: string) => `/grants/milestones/${milestoneUID}/indicators/data`,
     },
+    EVALUATION: (milestoneUID: string) => `/v2/milestones/${milestoneUID}/evaluation`,
   },
   CATEGORIES: {
     CREATE: (idOrSlug: string) => `/categories/create/${idOrSlug}`,
@@ -541,6 +558,7 @@ export const INDEXER = {
     REGIONS: (idOrSlug: string) => `/v2/communities/${idOrSlug}/regions`,
     V2: {
       GET: (slug: string) => `/v2/communities/${slug}`,
+      SLUG_CHECK: (slug: string) => `/v2/communities/slug/check/${slug}`,
       GRANTS: (slug: string) => `/v2/communities/${slug}/grants`,
       STATS: (slug: string) => `/v2/communities/${slug}/stats`,
       IMPACT: (slug: string, params?: { programId?: string; projectId?: string }) => {

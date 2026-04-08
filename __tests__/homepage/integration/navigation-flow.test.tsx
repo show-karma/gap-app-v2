@@ -13,11 +13,12 @@ import { renderWithProviders, screen } from "../utils/test-helpers";
 import "@testing-library/jest-dom";
 
 // Mock PAGES utility
-jest.mock("@/utilities/pages", () => ({
+vi.mock("@/utilities/pages", () => ({
   PAGES: {
     FUNDERS: "/funders",
     FUNDING_APP: "/funding-map",
     COMMUNITIES: "/communities",
+    PROJECTS_EXPLORER: "/projects",
     COMMUNITY: {
       ALL_GRANTS: (slug: string) => `/community/${slug}/grants`,
     },
@@ -30,7 +31,7 @@ jest.mock("@/utilities/pages", () => ({
 }));
 
 // Mock SOCIALS utility
-jest.mock("@/utilities/socials", () => ({
+vi.mock("@/utilities/socials", () => ({
   SOCIALS: {
     DISCORD: "https://discord.gg/karmahq",
   },
@@ -117,7 +118,9 @@ describe("Homepage Navigation Flows", () => {
 
       externalLinks.forEach((link) => {
         expect(link).toHaveAttribute("rel");
-        expect(link.getAttribute("rel")).toContain("noopener");
+        const rel = link.getAttribute("rel") || "";
+        // noreferrer implies noopener in modern browsers
+        expect(rel.includes("noopener") || rel.includes("noreferrer")).toBe(true);
       });
     });
   });

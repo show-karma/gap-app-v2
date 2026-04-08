@@ -4,30 +4,30 @@
  */
 
 // Mock environment variables
-jest.mock("@/utilities/enviromentVars", () => ({
+vi.mock("@/utilities/enviromentVars", () => ({
   envVars: {
     NEXT_PUBLIC_GAP_INDEXER_URL: "http://localhost:4000",
   },
 }));
 
 // Mock errorManager
-jest.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: jest.fn(),
+vi.mock("@/components/Utilities/errorManager", () => ({
+  errorManager: vi.fn(),
 }));
 
 // Mock fetchData utility
-jest.mock("@/utilities/fetchData");
+vi.mock("@/utilities/fetchData");
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import { getProjectUpdates } from "@/services/project-updates.service";
 import fetchData from "@/utilities/fetchData";
 
-const mockFetchData = fetchData as jest.MockedFunction<typeof fetchData>;
-const mockErrorManager = errorManager as jest.MockedFunction<typeof errorManager>;
+const mockFetchData = fetchData as vi.MockedFunction<typeof fetchData>;
+const mockErrorManager = errorManager as vi.MockedFunction<typeof errorManager>;
 
 describe("project-updates.service", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("getProjectUpdates", () => {
@@ -52,6 +52,34 @@ describe("project-updates.service", () => {
 
       expect(result).toEqual(mockResponse);
       expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("project-slug"));
+    });
+
+    it("should append milestoneStatus query param when provided", async () => {
+      mockFetchData.mockResolvedValueOnce([
+        { projectUpdates: [], projectMilestones: [], grantMilestones: [], grantUpdates: [] },
+        null,
+        null,
+        200,
+      ]);
+
+      await getProjectUpdates("project-slug", "completed");
+
+      expect(mockFetchData).toHaveBeenCalledWith(
+        expect.stringContaining("milestoneStatus=completed")
+      );
+    });
+
+    it("should not append milestoneStatus when not provided", async () => {
+      mockFetchData.mockResolvedValueOnce([
+        { projectUpdates: [], projectMilestones: [], grantMilestones: [], grantUpdates: [] },
+        null,
+        null,
+        200,
+      ]);
+
+      await getProjectUpdates("project-slug");
+
+      expect(mockFetchData).toHaveBeenCalledWith(expect.not.stringContaining("milestoneStatus"));
     });
 
     it("should return empty response without reporting on 404", async () => {

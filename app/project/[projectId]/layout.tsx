@@ -1,4 +1,5 @@
-/* eslint-disable @next/next/no-img-element */
+/** ISR: revalidate project pages every 60 seconds for CDN caching */
+export const revalidate = 60;
 
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 import type { Metadata } from "next";

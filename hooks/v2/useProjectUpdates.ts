@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { getProjectUpdates } from "@/services/project-updates.service";
 import type {
   GrantMilestoneWithDetails,
@@ -20,7 +20,7 @@ import { QUERY_KEYS } from "@/utilities/queryKeys";
  * - recipient field for the milestone creator
  * - grant object with title and community info
  */
-const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMilestone[] => {
+export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMilestone[] => {
   const unified: UnifiedMilestone[] = [];
 
   // Convert project updates to unified format
@@ -166,6 +166,7 @@ const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMilestone[
         : false,
       createdAt: milestone.createdAt || new Date().toISOString(),
       endsAt: milestoneEndsAt,
+      invoiceInfo: milestone.invoiceInfo ?? undefined,
       source: {
         type: "grant",
         grantMilestone: {
@@ -173,6 +174,7 @@ const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMilestone[
           milestone: {
             uid: milestone.uid,
             chainID,
+            refUID: grantInfo?.uid || "",
             attester,
             title: milestone.title,
             description: milestone.description,
@@ -199,6 +201,7 @@ const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMilestone[
                   },
                 ]
               : [],
+            invoiceInfo: milestone.invoiceInfo ?? undefined,
           },
           grant: {
             uid: grantInfo?.uid || "",
@@ -346,19 +349,26 @@ const sortByDateDescending = (milestones: UnifiedMilestone[]): UnifiedMilestone[
  * @param projectIdOrSlug - The project UID or slug
  * @returns Object containing unified milestones, loading state, error, and refetch function
  */
-export function useProjectUpdates(projectIdOrSlug: string) {
-  const queryKey = QUERY_KEYS.PROJECT.UPDATES(projectIdOrSlug);
+export function useProjectUpdates(
+  projectIdOrSlug: string,
+  milestoneStatus?: "pending" | "completed" | "verified"
+) {
+  const queryKey = milestoneStatus
+    ? ([...QUERY_KEYS.PROJECT.UPDATES(projectIdOrSlug), milestoneStatus] as const)
+    : QUERY_KEYS.PROJECT.UPDATES(projectIdOrSlug);
 
   const {
     data,
     isLoading,
+    isFetching,
     error,
     refetch: originalRefetch,
   } = useQuery<UpdatesApiResponse>({
     queryKey,
-    queryFn: () => getProjectUpdates(projectIdOrSlug),
+    queryFn: () => getProjectUpdates(projectIdOrSlug, milestoneStatus),
     enabled: !!projectIdOrSlug,
     staleTime: 5 * 60 * 1000,
+    placeholderData: keepPreviousData,
   });
 
   // Convert response to unified format (no longer needs project data)
@@ -380,6 +390,7 @@ export function useProjectUpdates(projectIdOrSlug: string) {
     pendingMilestones,
     rawData,
     isLoading,
+    isFetching,
     error,
     refetch,
   };

@@ -1,6 +1,19 @@
 import type { Page } from "@playwright/test";
 
 /**
+ * Default goto options for all E2E navigation.
+ *
+ * Uses "domcontentloaded" instead of the Playwright default ("load") because
+ * deferred layout components (dynamic imports with `ssr: false`) fetch
+ * additional JS chunks after the initial load event, which can delay the
+ * "load" event and cause 30 s navigation timeouts.
+ *
+ * The `waitForPageReady` helper already waits for `domcontentloaded` + body
+ * visibility, so the page is interactive before assertions run.
+ */
+export const GOTO_OPTIONS = { waitUntil: "domcontentloaded" as const };
+
+/**
  * Wait until the page is fully ready (body visible, no loading spinners).
  */
 export async function waitForPageReady(page: Page): Promise<void> {
@@ -13,7 +26,7 @@ export async function waitForPageReady(page: Page): Promise<void> {
  * Navigate to a community page and wait for it to be ready.
  */
 export async function navigateToCommunity(page: Page, slug: string): Promise<void> {
-  await page.goto(`/community/${slug}`);
+  await page.goto(`/community/${slug}`, GOTO_OPTIONS);
   await waitForPageReady(page);
 }
 
@@ -25,7 +38,7 @@ export async function navigateToProgram(
   slug: string,
   programId: string
 ): Promise<void> {
-  await page.goto(`/community/${slug}/programs/${programId}`);
+  await page.goto(`/community/${slug}/programs/${programId}`, GOTO_OPTIONS);
   await waitForPageReady(page);
 }
 
@@ -38,7 +51,10 @@ export async function navigateToApplication(
   programId: string,
   referenceNumber: string
 ): Promise<void> {
-  await page.goto(`/community/${slug}/programs/${programId}/applications/${referenceNumber}`);
+  await page.goto(
+    `/community/${slug}/programs/${programId}/applications/${referenceNumber}`,
+    GOTO_OPTIONS
+  );
   await waitForPageReady(page);
 }
 
@@ -46,6 +62,6 @@ export async function navigateToApplication(
  * Navigate to the apply page for a program.
  */
 export async function navigateToApply(page: Page, slug: string, programId: string): Promise<void> {
-  await page.goto(`/community/${slug}/programs/${programId}/apply`);
+  await page.goto(`/community/${slug}/programs/${programId}/apply`, GOTO_OPTIONS);
   await waitForPageReady(page);
 }

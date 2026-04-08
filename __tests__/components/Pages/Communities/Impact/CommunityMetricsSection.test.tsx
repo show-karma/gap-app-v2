@@ -11,19 +11,19 @@ import { CommunityMetricsSection } from "@/components/Pages/Communities/Impact/C
 import { useCommunityMetrics } from "@/hooks/useCommunityMetrics";
 import type { CommunityMetricsResponse } from "@/types/community-metrics";
 
-jest.mock("@/hooks/useCommunityMetrics");
-jest.mock("next/navigation", () => ({
-  useParams: jest.fn(),
+vi.mock("@/hooks/useCommunityMetrics");
+vi.mock("next/navigation", () => ({
+  useParams: vi.fn(),
 }));
 
-jest.mock("@tremor/react", () => ({
+vi.mock("@tremor/react", () => ({
   AreaChart: ({ data }: { data: unknown[] }) => (
     <div data-testid="area-chart">{JSON.stringify(data)}</div>
   ),
   Card: ({ children }: { children: React.ReactNode }) => <div data-testid="card">{children}</div>,
 }));
 
-jest.mock("@/components/Pages/Communities/Impact/TimeframeSelector", () => ({
+vi.mock("@/components/Pages/Communities/Impact/TimeframeSelector", () => ({
   TimeframeSelector: ({
     selectedTimeframe,
     onTimeframeChange,
@@ -37,7 +37,7 @@ jest.mock("@/components/Pages/Communities/Impact/TimeframeSelector", () => ({
   ),
 }));
 
-const mockUseCommunityMetrics = useCommunityMetrics as jest.MockedFunction<
+const mockUseCommunityMetrics = useCommunityMetrics as vi.MockedFunction<
   typeof useCommunityMetrics
 >;
 
@@ -53,7 +53,7 @@ const createMockReturn = (
   isError: false,
   ...overrides,
 });
-const mockUseParams = useParams as jest.MockedFunction<typeof useParams>;
+const mockUseParams = useParams as vi.MockedFunction<typeof useParams>;
 
 describe("CommunityMetricsSection", () => {
   let queryClient: QueryClient;
@@ -73,8 +73,12 @@ describe("CommunityMetricsSection", () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockUseParams.mockReturnValue({ communityId: "filecoin" });
+  });
+
+  afterEach(() => {
+    queryClient.clear();
   });
 
   const mockMetricsResponse: CommunityMetricsResponse = {

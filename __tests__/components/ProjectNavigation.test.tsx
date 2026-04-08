@@ -3,12 +3,12 @@
  * @description Tests for project navigation tabs and action buttons
  */
 
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { ProjectNavigation } from "@/components/Pages/Project/ProjectWrapper/ProjectNavigation";
 import type { Project } from "@/types/v2/project";
 
 // Mock Next.js Link component
-jest.mock("next/link", () => {
+vi.mock("next/link", () => {
   const MockLink = ({ children, href, className, ...props }: any) => (
     <a href={href} className={className} {...props}>
       {children}
@@ -23,7 +23,7 @@ jest.mock("next/link", () => {
 
 // Mock Next.js navigation
 const mockPathname = "/project/test-project";
-jest.mock("next/navigation", () => ({
+vi.mock("next/navigation", () => ({
   usePathname: () => mockPathname,
 }));
 
@@ -32,10 +32,10 @@ const mockIsOwner = false;
 const mockIsProjectAdmin = false;
 const mockIsProjectOwner = false;
 const mockIsCommunityAdmin = false;
-const mockRefreshProject = jest.fn();
-const mockSetIsProgressModalOpen = jest.fn();
+const mockRefreshProject = vi.fn();
+const mockSetIsProgressModalOpen = vi.fn();
 
-jest.mock("@/store", () => ({
+vi.mock("@/store", () => ({
   useOwnerStore: (selector: any) => selector({ isOwner: mockIsOwner }),
   useProjectStore: (selector: any) =>
     selector({
@@ -45,18 +45,18 @@ jest.mock("@/store", () => ({
     }),
 }));
 
-jest.mock("@/store/communityAdmin", () => ({
+vi.mock("@/store/communityAdmin", () => ({
   useCommunityAdminStore: (selector: any) => selector({ isCommunityAdmin: mockIsCommunityAdmin }),
 }));
 
-jest.mock("@/store/modals/progress", () => ({
+vi.mock("@/store/modals/progress", () => ({
   useProgressModalStore: () => ({
     setIsProgressModalOpen: mockSetIsProgressModalOpen,
   }),
 }));
 
 // Mock RBAC permissions hook (replaces legacy useStaff)
-jest.mock("@/src/core/rbac/hooks/use-permissions", () => ({
+vi.mock("@/src/core/rbac/hooks/use-permissions", () => ({
   usePermissionsQuery: () => ({
     data: null,
     isLoading: false,
@@ -65,19 +65,19 @@ jest.mock("@/src/core/rbac/hooks/use-permissions", () => ({
 }));
 
 // Mock chain payout address feature
-jest.mock("@/src/features/chain-payout-address", () => ({
+vi.mock("@/src/features/chain-payout-address", () => ({
   EnableDonationsButton: () => <button data-testid="enable-donations">Enable Donations</button>,
   hasConfiguredPayoutAddresses: (addresses: any) =>
     Boolean(addresses && Object.keys(addresses).length > 0),
 }));
 
 // Mock donation component
-jest.mock("@/components/Donation/SingleProject/ProminentDonateButton", () => ({
+vi.mock("@/components/Donation/SingleProject/ProminentDonateButton", () => ({
   ProminentDonateButton: () => <button data-testid="donate-button">Donate</button>,
 }));
 
 // Mock Button component
-jest.mock("@/components/Utilities/Button", () => ({
+vi.mock("@/components/Utilities/Button", () => ({
   Button: ({ children, onClick, className, type }: any) => (
     <button onClick={onClick} className={className} type={type} data-testid="post-update-button">
       {children}
@@ -86,18 +86,18 @@ jest.mock("@/components/Utilities/Button", () => ({
 }));
 
 // Mock ProjectOptionsMenu
-jest.mock("@/components/Pages/Project/ProjectOptionsMenu", () => ({
+vi.mock("@/components/Pages/Project/ProjectOptionsMenu", () => ({
   ProjectOptionsMenu: () => <div data-testid="options-menu">Options</div>,
 }));
 
 // Mock formatCurrency
-jest.mock("@/utilities/formatCurrency", () => ({
+vi.mock("@/utilities/formatCurrency", () => ({
   __esModule: true,
   default: (value: number) => value.toString(),
 }));
 
 // Mock PAGES utility
-jest.mock("@/utilities/pages", () => ({
+vi.mock("@/utilities/pages", () => ({
   PAGES: {
     PROJECT: {
       OVERVIEW: (slug: string) => `/project/${slug}`,
@@ -113,7 +113,7 @@ jest.mock("@/utilities/pages", () => ({
 }));
 
 // Mock cn utility
-jest.mock("@/utilities/tailwind", () => ({
+vi.mock("@/utilities/tailwind", () => ({
   cn: (...args: any[]) => args.filter(Boolean).join(" "),
 }));
 
@@ -138,7 +138,7 @@ describe("ProjectNavigation", () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("Tab Rendering", () => {

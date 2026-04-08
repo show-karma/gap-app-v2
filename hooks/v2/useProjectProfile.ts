@@ -23,6 +23,8 @@ export interface UseProjectProfileResult extends ProjectProfileData, ProjectProf
   project: Project | null;
   /** Whether the project fetch failed (e.g., not found) */
   isError: boolean;
+  /** Whether the updates/milestones are being re-fetched (e.g., during filter change) */
+  isUpdating: boolean;
   /** Refetch all project data */
   refetch: () => Promise<void>;
 }
@@ -42,7 +44,10 @@ export interface UseProjectProfileResult extends ProjectProfileData, ProjectProf
  * @param projectId - The project UID or slug
  * @returns Aggregated project profile data with loading/error states
  */
-export function useProjectProfile(projectId: string): UseProjectProfileResult {
+export function useProjectProfile(
+  projectId: string,
+  milestoneStatus?: "pending" | "completed" | "verified"
+): UseProjectProfileResult {
   // Fetch core project data
   const { project, isLoading: isProjectLoading, isError, error } = useProject(projectId);
 
@@ -53,12 +58,13 @@ export function useProjectProfile(projectId: string): UseProjectProfileResult {
     refetch: refetchGrants,
   } = useProjectGrants(project?.uid || projectId);
 
-  // Fetch updates and milestones
+  // Fetch updates and milestones (pass milestoneStatus for server-side filtering)
   const {
     milestones = [],
     isLoading: isUpdatesLoading,
+    isFetching: isUpdatesFetching,
     refetch: refetchUpdates,
-  } = useProjectUpdates(projectId);
+  } = useProjectUpdates(projectId, milestoneStatus);
 
   // Fetch impacts
   const {
@@ -67,8 +73,9 @@ export function useProjectProfile(projectId: string): UseProjectProfileResult {
     refetch: refetchImpacts,
   } = useProjectImpacts(projectId);
 
-  // Aggregate loading state
-  const isLoading = isProjectLoading || isGrantsLoading || isUpdatesLoading || isImpactsLoading;
+  // Split loading states: core project vs secondary data
+  const isSecondaryLoading = isGrantsLoading || isUpdatesLoading || isImpactsLoading;
+  const isLoading = isProjectLoading || isSecondaryLoading;
 
   // Normalize undefined to null for consistent typing
   const normalizedProject = project ?? null;
@@ -88,8 +95,11 @@ export function useProjectProfile(projectId: string): UseProjectProfileResult {
   return {
     project: normalizedProject,
     isLoading,
+    isProjectLoading,
+    isSecondaryLoading,
+    isUpdating: isUpdatesFetching,
     isError,
-    error: error ?? null,
+    error: error instanceof Error ? error : error ? new Error(String(error)) : null,
     refetch,
     ...profileData,
   };

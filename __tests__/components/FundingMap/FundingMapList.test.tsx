@@ -6,41 +6,41 @@ import { useFundingFilters } from "@/src/features/funding-map/hooks/use-funding-
 
 // SWC transforms @/ aliases to relative paths at compile time, so we must mock
 // the actual file paths for the mocks to intercept the component's internal imports.
-jest.mock("../../../src/features/funding-map/components/funding-map-filters", () => ({
-  FundingMapFilters: jest.fn(() => <div data-testid="funding-map-filters" />),
+vi.mock("../../../src/features/funding-map/components/funding-map-filters", () => ({
+  FundingMapFilters: vi.fn(() => <div data-testid="funding-map-filters" />),
 }));
 
-jest.mock("../../../src/features/funding-map/components/funding-map-pagination", () => ({
-  FundingMapPagination: jest.fn(() => <div data-testid="funding-map-pagination" />),
+vi.mock("../../../src/features/funding-map/components/funding-map-pagination", () => ({
+  FundingMapPagination: vi.fn(() => <div data-testid="funding-map-pagination" />),
 }));
 
-jest.mock("../../../src/features/funding-map/components/funding-program-details-dialog", () => ({
-  FundingProgramDetailsDialog: jest.fn(() => <div data-testid="funding-program-details-dialog" />),
+vi.mock("../../../src/features/funding-map/components/funding-program-details-dialog", () => ({
+  FundingProgramDetailsDialog: vi.fn(() => <div data-testid="funding-program-details-dialog" />),
 }));
 
-jest.mock("../../../src/features/funding-map/hooks/use-funding-programs", () => ({
-  useFundingPrograms: jest.fn(() => ({
+vi.mock("../../../src/features/funding-map/hooks/use-funding-programs", () => ({
+  useFundingPrograms: vi.fn(() => ({
     data: { programs: [], count: 0 },
     isLoading: false,
     isError: false,
     error: null,
   })),
-  useFundingProgramByCompositeId: jest.fn(() => ({
+  useFundingProgramByCompositeId: vi.fn(() => ({
     data: null,
     isLoading: false,
   })),
-  useTypeCounts: jest.fn(() => ({
+  useTypeCounts: vi.fn(() => ({
     data: [],
     isLoading: false,
     isError: false,
-    refetch: jest.fn(),
+    refetch: vi.fn(),
   })),
 }));
 
 const defaultFilters = {
   apiParams: {},
   programId: "",
-  setProgramId: jest.fn(),
+  setProgramId: vi.fn(),
   filters: {
     page: 1,
     search: "",
@@ -55,11 +55,11 @@ const defaultFilters = {
   },
 };
 
-jest.mock("../../../src/features/funding-map/hooks/use-funding-filters", () => ({
-  useFundingFilters: jest.fn(() => ({
+vi.mock("../../../src/features/funding-map/hooks/use-funding-filters", () => ({
+  useFundingFilters: vi.fn(() => ({
     apiParams: {},
     programId: "",
-    setProgramId: jest.fn(),
+    setProgramId: vi.fn(),
     filters: {
       page: 1,
       search: "",
@@ -75,7 +75,7 @@ jest.mock("../../../src/features/funding-map/hooks/use-funding-filters", () => (
   })),
 }));
 
-const mockUseFundingFilters = useFundingFilters as jest.Mock;
+const mockUseFundingFilters = useFundingFilters as vi.Mock;
 
 describe("FundingMapList empty state", () => {
   afterEach(() => {

@@ -2,11 +2,11 @@
 
 import { Send } from "lucide-react";
 import { useCallback, useMemo, useRef } from "react";
-import MentionAutocomplete from "@/components/FundingPlatform/ApplicationView/MentionAutocomplete";
 import InviteReviewerModal from "@/components/FundingPlatform/ApplicationView/InviteReviewerModal";
+import MentionAutocomplete from "@/components/FundingPlatform/ApplicationView/MentionAutocomplete";
 import { Button } from "@/components/ui/button";
+import { useAllReviewers } from "@/hooks/useAllReviewers";
 import { useMentionEditor } from "@/hooks/useMentionEditor";
-import { useMilestoneReviewers } from "@/hooks/useMilestoneReviewers";
 import type { CommentInputProps } from "../types";
 import { CommentMarkdownInput } from "./CommentMarkdownInput";
 
@@ -30,7 +30,7 @@ export function CommentInput({
     editorRef: editorContainerRef,
   });
 
-  const { data: reviewers } = useMilestoneReviewers(programId ?? "");
+  const { data: reviewers } = useAllReviewers(programId ?? "");
 
   const filteredReviewers = useMemo(() => {
     if (!reviewers) return [];

@@ -2,9 +2,9 @@
  * Mock for @account-kit/infra to avoid ESM parsing issues
  */
 
-export const simulateUserOperationChanges = jest.fn();
-export const createAlchemySmartAccountClient = jest.fn(() => ({
-  sendUserOperation: jest.fn(),
-  waitForUserOperationTransaction: jest.fn(),
+export const simulateUserOperationChanges = vi.fn();
+export const createAlchemySmartAccountClient = vi.fn(() => ({
+  sendUserOperation: vi.fn(),
+  waitForUserOperationTransaction: vi.fn(),
 }));
-export const alchemy = jest.fn();
+export const alchemy = vi.fn();

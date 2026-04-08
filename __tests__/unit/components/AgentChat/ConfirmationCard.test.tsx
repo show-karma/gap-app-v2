@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import {
   ConfirmationCard,
   flattenPreviewData,
@@ -128,12 +129,12 @@ describe("ConfirmationCard", () => {
 
   const defaultProps = {
     toolResult: baseToolResult,
-    onApprove: jest.fn(),
-    onDeny: jest.fn(),
+    onApprove: vi.fn(),
+    onDeny: vi.fn(),
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("should render the card with correct test id", () => {
@@ -161,17 +162,19 @@ describe("ConfirmationCard", () => {
     expect(screen.getByTestId("confirm-deny")).toBeInTheDocument();
   });
 
-  it("should call onApprove when approve button clicked", () => {
-    const onApprove = jest.fn();
+  it("should call onApprove when approve button clicked", async () => {
+    const user = userEvent.setup();
+    const onApprove = vi.fn();
     render(<ConfirmationCard {...defaultProps} onApprove={onApprove} />);
-    fireEvent.click(screen.getByTestId("confirm-approve"));
+    await user.click(screen.getByTestId("confirm-approve"));
     expect(onApprove).toHaveBeenCalledTimes(1);
   });
 
-  it("should call onDeny when deny button clicked", () => {
-    const onDeny = jest.fn();
+  it("should call onDeny when deny button clicked", async () => {
+    const user = userEvent.setup();
+    const onDeny = vi.fn();
     render(<ConfirmationCard {...defaultProps} onDeny={onDeny} />);
-    fireEvent.click(screen.getByTestId("confirm-deny"));
+    await user.click(screen.getByTestId("confirm-deny"));
     expect(onDeny).toHaveBeenCalledTimes(1);
   });
 

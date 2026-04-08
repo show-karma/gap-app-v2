@@ -1,18 +1,12 @@
 "use client";
 
+import "md-editor-rt/lib/style.css";
 import dynamic from "next/dynamic";
 import { useTheme } from "next-themes";
 import { useCallback, useEffect, useState } from "react";
-import rehypeSanitize from "rehype-sanitize";
 import { cn } from "@/utilities/tailwind";
 
-const MDEditor = dynamic(() => import("@uiw/react-md-editor"), {
-  ssr: false,
-});
-
-// Hoisted to avoid recreating on every render
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const PREVIEW_OPTIONS = { rehypePlugins: [[rehypeSanitize]] as any };
+const MdEditor = dynamic(() => import("md-editor-rt").then((mod) => mod.MdEditor), { ssr: false });
 
 interface CommentMarkdownInputProps {
   value: string;
@@ -33,14 +27,12 @@ export function CommentMarkdownInput({
   minHeight = 80,
   maxHeight = 200,
 }: CommentMarkdownInputProps) {
-  const { theme: currentTheme } = useTheme();
+  const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  const colorMode = currentTheme === "dark" ? "dark" : "light";
 
   const handleKeyDown = useCallback(
     async (e: React.KeyboardEvent) => {
@@ -53,9 +45,8 @@ export function CommentMarkdownInput({
   );
 
   return (
-    // biome-ignore lint/a11y/noStaticElementInteractions: MDEditor wrapper needs keyDown for Cmd+Enter submit
+    // biome-ignore lint/a11y/noStaticElementInteractions: MdEditor wrapper needs keyDown for Cmd+Enter submit
     <div
-      data-color-mode={mounted ? colorMode : "light"}
       className={cn(
         "rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700",
         disabled && "opacity-50 cursor-not-allowed"
@@ -63,23 +54,18 @@ export function CommentMarkdownInput({
       onKeyDown={handleKeyDown}
     >
       {mounted ? (
-        <MDEditor
+        <MdEditor
           value={value}
           onChange={(val) => onChange(val ?? "")}
-          preview="edit"
-          height={minHeight}
-          minHeight={minHeight}
-          maxHeight={maxHeight}
-          data-color-mode={colorMode}
-          visibleDragbar={false}
-          hideToolbar={false}
-          textareaProps={{
-            placeholder,
-            disabled,
-            spellCheck: true,
-          }}
-          highlightEnable={false}
-          previewOptions={PREVIEW_OPTIONS}
+          preview={false}
+          theme={resolvedTheme === "dark" ? "dark" : "light"}
+          disabled={disabled}
+          placeholder={placeholder}
+          noUploadImg
+          footers={[]}
+          toolbars={[]}
+          language="en-US"
+          style={{ height: minHeight, minHeight, maxHeight }}
         />
       ) : (
         <div

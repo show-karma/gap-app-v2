@@ -19,7 +19,7 @@ describe("MilestoneSelectionStep", () => {
     allocations: mockAllocations,
     paidAllocationIds: [] as string[],
     selectedAllocationIds: [] as string[],
-    onSelectionChange: jest.fn(),
+    onSelectionChange: vi.fn(),
     tokenSymbol: "USDC",
     tokenDecimals: 6,
     grantName: "Test Grant",
@@ -27,7 +27,7 @@ describe("MilestoneSelectionStep", () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("rendering", () => {
@@ -67,6 +67,25 @@ describe("MilestoneSelectionStep", () => {
 
       expect(screen.queryByText("Test Grant")).not.toBeInTheDocument();
       expect(screen.queryByText("Test Project")).not.toBeInTheDocument();
+    });
+
+    it("should prepend milestone index numbering to allocation labels", () => {
+      const allocationsWithPlainLabels: MilestoneAllocation[] = [
+        { id: "alloc-1", milestoneUID: "ms-1", label: "Design phase", amount: "1" },
+        { id: "alloc-2", milestoneUID: "ms-2", label: "Build prototype", amount: "2" },
+      ];
+      render(<MilestoneSelectionStep {...defaultProps} allocations={allocationsWithPlainLabels} />);
+
+      expect(screen.getByText("Milestone 1: Design phase")).toBeInTheDocument();
+      expect(screen.getByText("Milestone 2: Build prototype")).toBeInTheDocument();
+    });
+
+    it("should not double-prefix labels that already have milestone numbering", () => {
+      render(<MilestoneSelectionStep {...defaultProps} />);
+
+      // Labels are "Milestone 1", "Milestone 2", "Milestone 3" - should not become "Milestone 1: Milestone 1"
+      expect(screen.getByText("Milestone 1")).toBeInTheDocument();
+      expect(screen.queryByText("Milestone 1: Milestone 1")).not.toBeInTheDocument();
     });
   });
 
@@ -113,7 +132,7 @@ describe("MilestoneSelectionStep", () => {
 
   describe("selection", () => {
     it("should call onSelectionChange when allocation is selected", () => {
-      const onSelectionChange = jest.fn();
+      const onSelectionChange = vi.fn();
       render(<MilestoneSelectionStep {...defaultProps} onSelectionChange={onSelectionChange} />);
 
       const checkbox = screen.getAllByRole("checkbox")[0];
@@ -123,7 +142,7 @@ describe("MilestoneSelectionStep", () => {
     });
 
     it("should call onSelectionChange when allocation is deselected", () => {
-      const onSelectionChange = jest.fn();
+      const onSelectionChange = vi.fn();
       render(
         <MilestoneSelectionStep
           {...defaultProps}
@@ -139,7 +158,7 @@ describe("MilestoneSelectionStep", () => {
     });
 
     it("should select all unpaid allocations when Select All is clicked", () => {
-      const onSelectionChange = jest.fn();
+      const onSelectionChange = vi.fn();
       render(
         <MilestoneSelectionStep
           {...defaultProps}
@@ -156,7 +175,7 @@ describe("MilestoneSelectionStep", () => {
     });
 
     it("should deselect all when Deselect All is clicked", () => {
-      const onSelectionChange = jest.fn();
+      const onSelectionChange = vi.fn();
       render(
         <MilestoneSelectionStep
           {...defaultProps}

@@ -1,12 +1,10 @@
 "use client";
-import "@uiw/react-md-editor/markdown-editor.css";
-import "@uiw/react-markdown-preview/markdown.css";
 
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useTheme } from "next-themes";
 import { type FC, useCallback, useEffect, useMemo, useState } from "react";
-import rehypeSanitize from "rehype-sanitize";
+import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { cn } from "@/utilities/tailwind";
 
 // Constants for content validation and performance
@@ -40,7 +38,9 @@ interface MarkdownEditorProps {
   enablePreviewToggle?: boolean;
 }
 
-const MDEditor = dynamic(() => import("@uiw/react-md-editor").then((mod) => mod.default), {
+import "md-editor-rt/lib/style.css";
+
+const MdEditor = dynamic(() => import("md-editor-rt").then((mod) => mod.MdEditor), {
   ssr: false,
   loading: () => (
     <div className="flex items-center justify-center h-[300px] border border-gray-200 dark:border-gray-700 rounded-lg">
@@ -50,9 +50,22 @@ const MDEditor = dynamic(() => import("@uiw/react-md-editor").then((mod) => mod.
   ),
 });
 
+// Toolbar buttons to exclude — removes overflow-causing and rarely-used items in modal contexts
+const EXCLUDED_TOOLBARS = [
+  "prettier",
+  "save",
+  "catalog",
+  "github",
+  "mermaid",
+  "katex",
+  "htmlPreview",
+  "preview",
+  "previewOnly",
+] as const;
+
 /**
  * Validates markdown content for potentially dangerous patterns
- * Note: rehype-sanitize handles most XSS, this adds extra validation
+ * Note: md-editor-rt uses XSS sanitization internally, this adds extra validation
  */
 function validateMarkdownContent(content: string): { isValid: boolean; warnings: string[] } {
   const warnings: string[] = [];
@@ -98,14 +111,27 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
   showCharacterCount = false,
   enablePreviewToggle = true,
 }) => {
-  const { theme: currentTheme } = useTheme();
+  const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-  const [previewMode, setPreviewMode] = useState<"edit" | "live" | "preview">("edit");
+  const [showPreview, setShowPreview] = useState(false);
+
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
 
   // Ensure client-side only rendering to prevent hydration mismatches
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  // Configure markdown-it to treat single newlines as <br>.
+  // Done via dynamic import so md-editor-rt is never statically bundled.
+  useEffect(() => {
+    import("md-editor-rt").then(({ config }) => {
+      config({
+        markdownItConfig(md) {
+          md.options.breaks = true;
+        },
+      });
+    });
   }, []);
 
   // Use disabled prop if provided, otherwise use isDisabled
@@ -127,7 +153,7 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
 
   // Handle onChange with length limit
   const handleChange = useCallback(
-    (val?: string) => {
+    (val: string) => {
       const newValue = val || "";
       // Enforce max length
       if (newValue.length > maxLength) {
@@ -141,15 +167,15 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
 
   // Handle preview mode toggle with loading state
   const handlePreviewToggle = useCallback(() => {
-    if (previewMode === "edit") {
+    if (!showPreview) {
       setIsPreviewLoading(true);
-      setPreviewMode("preview");
+      setShowPreview(true);
       // Simulate brief loading for large content
       setTimeout(() => setIsPreviewLoading(false), 100);
     } else {
-      setPreviewMode("edit");
+      setShowPreview(false);
     }
-  }, [previewMode]);
+  }, [showPreview]);
 
   if (!mounted) {
     return (
@@ -177,16 +203,16 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
             type="button"
             onClick={handlePreviewToggle}
             className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
-            aria-label={previewMode === "edit" ? "Show preview" : "Show editor"}
+            aria-label={showPreview ? "Show editor" : "Show preview"}
           >
             {isPreviewLoading ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            ) : previewMode === "edit" ? (
-              <Eye className="w-3.5 h-3.5" />
-            ) : (
+            ) : showPreview ? (
               <EyeOff className="w-3.5 h-3.5" />
+            ) : (
+              <Eye className="w-3.5 h-3.5" />
             )}
-            <span>{previewMode === "edit" ? "Preview" : "Edit"}</span>
+            <span>{showPreview ? "Edit" : "Preview"}</span>
           </button>
         )}
       </div>
@@ -205,40 +231,41 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
       )}
 
       <div
-        data-color-mode={currentTheme === "dark" ? "dark" : "light"}
         className={cn(
           "w-full rounded-lg border overflow-hidden markdown-editor-wrapper",
           error ? "border-red-500 dark:border-red-500" : "border-gray-200 dark:border-gray-700"
         )}
       >
-        <MDEditor
-          className={cn(
-            "flex-1 bg-white dark:bg-zinc-900 dark:text-white text-black",
-            error && "border-red-500 dark:border-red-500",
-            isEditorDisabled && "opacity-50 cursor-not-allowed",
-            className
-          )}
-          value={value}
-          onChange={handleChange}
-          onBlur={onBlur}
-          height={height}
-          minHeight={minHeight}
-          preview={previewMode}
-          previewOptions={{
-            rehypePlugins: [[rehypeSanitize]],
-          }}
-          overflow={overflow}
-          textareaProps={{
-            placeholder: editorPlaceholder,
-            spellCheck: true,
-            style: { height: "100%", minHeight: "100%", paddingRight: "0.5rem" },
-            disabled: isEditorDisabled,
-            id,
-            maxLength,
-            "aria-describedby": ariaDescribedBy,
-          }}
-          highlightEnable={false}
-        />
+        {showPreview ? (
+          <div className="px-4 py-2" style={{ minHeight }}>
+            <MarkdownPreview source={value} />
+          </div>
+        ) : (
+          <MdEditor
+            id={id}
+            className={cn(
+              "flex-1",
+              error && "border-red-500 dark:border-red-500",
+              isEditorDisabled && "opacity-50 cursor-not-allowed",
+              className
+            )}
+            value={value}
+            onChange={handleChange}
+            onBlur={onBlur}
+            theme={resolvedTheme === "dark" ? "dark" : "light"}
+            preview={false}
+            disabled={isEditorDisabled}
+            placeholder={editorPlaceholder}
+            maxLength={maxLength}
+            noUploadImg
+            footers={[]}
+            language="en-US"
+            toolbarsExclude={[...EXCLUDED_TOOLBARS]}
+            style={{ height, minHeight }}
+            data-field-id={dataFieldId}
+            aria-describedby={ariaDescribedBy}
+          />
+        )}
       </div>
 
       {/* Footer with error and character count */}

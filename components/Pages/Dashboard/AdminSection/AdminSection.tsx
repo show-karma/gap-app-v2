@@ -1,22 +1,38 @@
 "use client";
 
 import { AlertTriangle } from "lucide-react";
+import dynamic from "next/dynamic";
+import { useCallback } from "react";
 import { useDashboardAdmin } from "@/hooks/useDashboardAdmin";
 import { CommunityHealthCard } from "./CommunityHealthCard";
 import { CommunityHealthCardSkeleton } from "./CommunityHealthCardSkeleton";
+
+const CommunityDialog = dynamic(
+  () => import("@/components/Dialogs/CommunityDialog").then((mod) => mod.CommunityDialog),
+  { ssr: false }
+);
 
 const gridClassName = "grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3";
 
 export function AdminSection() {
   const { communities, isLoading, isError, refetch } = useDashboardAdmin();
 
-  if (!isLoading && !isError && communities.length === 0) {
-    return null;
-  }
+  const refreshCommunities = useCallback(async () => {
+    await refetch();
+  }, [refetch]);
 
   return (
     <section id="admin" className="flex flex-col gap-4">
-      <h2 className="text-xl font-semibold text-foreground">My Communities</h2>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-xl font-semibold text-foreground">My Communities</h2>
+        <CommunityDialog
+          buttonElement={{
+            text: "Create Community",
+            styleClass: "h-9 px-4",
+          }}
+          refreshCommunities={refreshCommunities}
+        />
+      </div>
 
       {isError ? (
         <div className="flex items-center gap-3 rounded-xl border border-border p-6">
@@ -35,6 +51,10 @@ export function AdminSection() {
           {Array.from({ length: 2 }, (_, index) => (
             <CommunityHealthCardSkeleton key={`community-card-skeleton-${index}`} />
           ))}
+        </div>
+      ) : communities.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground">
+          No communities yet. Create your first community to get started.
         </div>
       ) : (
         <div className={gridClassName}>

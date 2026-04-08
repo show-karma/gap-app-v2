@@ -2,21 +2,21 @@ import { act, renderHook } from "@testing-library/react";
 import { useRouter } from "next/navigation";
 import { useBackNavigation } from "../useBackNavigation";
 
-jest.mock("next/navigation", () => ({
-  useRouter: jest.fn(),
+vi.mock("next/navigation", () => ({
+  useRouter: vi.fn(),
 }));
 
-const mockPush = jest.fn();
-const mockBack = jest.fn();
-const mockReplace = jest.fn();
-const mockRefresh = jest.fn();
-const mockPrefetch = jest.fn();
-const mockForward = jest.fn();
-const mockUseRouter = useRouter as jest.MockedFunction<typeof useRouter>;
+const mockPush = vi.fn();
+const mockBack = vi.fn();
+const mockReplace = vi.fn();
+const mockRefresh = vi.fn();
+const mockPrefetch = vi.fn();
+const mockForward = vi.fn();
+const mockUseRouter = useRouter as vi.MockedFunction<typeof useRouter>;
 
 describe("useBackNavigation", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockUseRouter.mockReturnValue({
       push: mockPush,
       back: mockBack,

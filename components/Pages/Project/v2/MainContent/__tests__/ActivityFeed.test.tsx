@@ -2,23 +2,25 @@ import { render, screen } from "@testing-library/react";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 
 // Mock next/navigation
-jest.mock("next/navigation", () => ({
+vi.mock("next/navigation", () => ({
   useParams: () => ({ projectId: "test-project" }),
 }));
 
-// Mock ActivityCard to avoid complex import chain
-jest.mock("@/components/Shared/ActivityCard", () => ({
-  ActivityCard: () => <div data-testid="activity-card" />,
+// Mock ActivityCard to avoid complex import chain - renders title for test assertions
+vi.mock("@/components/Shared/ActivityCard", () => ({
+  ActivityCard: ({ activity }: { activity: { data?: { title?: string } } }) => (
+    <div data-testid="activity-card">{activity?.data?.title}</div>
+  ),
 }));
 
 // Mock EthereumAddressToENSAvatar
-jest.mock("@/components/EthereumAddressToENSAvatar", () => ({
+vi.mock("@/components/EthereumAddressToENSAvatar", () => ({
   __esModule: true,
   default: ({ address }: { address: string }) => <div data-testid="ens-avatar">{address}</div>,
 }));
 
 // Mock EthereumAddressToENSName
-jest.mock("@/components/EthereumAddressToENSName", () => ({
+vi.mock("@/components/EthereumAddressToENSName", () => ({
   __esModule: true,
   default: ({ address }: { address: string }) => (
     <span data-testid="ens-name">{address?.slice(0, 8)}...</span>
@@ -26,12 +28,12 @@ jest.mock("@/components/EthereumAddressToENSName", () => ({
 }));
 
 // Mock ProfilePicture
-jest.mock("@/components/Utilities/ProfilePicture", () => ({
+vi.mock("@/components/Utilities/ProfilePicture", () => ({
   ProfilePicture: ({ name }: { name: string }) => <div data-testid="profile-picture">{name}</div>,
 }));
 
 // Mock formatCurrency
-jest.mock("@/utilities/formatCurrency", () => ({
+vi.mock("@/utilities/formatCurrency", () => ({
   __esModule: true,
   default: (num: number) => `$${num}`,
 }));
@@ -101,7 +103,7 @@ describe("ActivityFeed - Activity Type Labels", () => {
     expect(screen.getByText("Milestone created")).toBeInTheDocument();
   });
 
-  it("should display 'Funding received' for type 'grant_received'", () => {
+  it("should display 'Grant approved' for type 'grant_received' with no programType", () => {
     const milestones = [
       createMilestone("grant_received", {
         grantReceived: {
@@ -109,12 +111,49 @@ describe("ActivityFeed - Activity Type Labels", () => {
           communityName: "Test Community",
           communityImage: "https://example.com/image.png",
           grantTitle: "Test Grant",
+          grantUID: "0xgrant1",
         },
       }),
     ];
     render(<ActivityFeed milestones={milestones} />);
 
-    expect(screen.getByText("Funding received")).toBeInTheDocument();
+    expect(screen.getByText("Grant approved")).toBeInTheDocument();
+  });
+
+  it("should display 'Grant approved' for type 'grant_received' with programType 'grant'", () => {
+    const milestones = [
+      createMilestone("grant_received", {
+        grantReceived: {
+          amount: "1000 USDC",
+          communityName: "Test Community",
+          communityImage: "https://example.com/image.png",
+          grantTitle: "Test Grant",
+          grantUID: "0xgrant1",
+          programType: "grant",
+        },
+      }),
+    ];
+    render(<ActivityFeed milestones={milestones} />);
+
+    expect(screen.getByText("Grant approved")).toBeInTheDocument();
+  });
+
+  it("should display 'Hackathon participation' for type 'grant_received' with programType 'hackathon'", () => {
+    const milestones = [
+      createMilestone("grant_received", {
+        grantReceived: {
+          amount: "500 ETH",
+          communityName: "Hackathon Org",
+          communityImage: "https://example.com/hack.png",
+          grantTitle: "ETHGlobal",
+          grantUID: "0xhack1",
+          programType: "hackathon",
+        },
+      }),
+    ];
+    render(<ActivityFeed milestones={milestones} />);
+
+    expect(screen.getByText("Hackathon participation")).toBeInTheDocument();
   });
 
   it("should show empty state when no milestones", () => {
@@ -122,5 +161,119 @@ describe("ActivityFeed - Activity Type Labels", () => {
 
     expect(screen.getByTestId("activity-feed-empty")).toBeInTheDocument();
     expect(screen.getByText("No activities to display")).toBeInTheDocument();
+  });
+});
+
+describe("ActivityFeed - Grant Title Display", () => {
+  const createGrantReceived = (
+    overrides: Partial<NonNullable<UnifiedMilestone["grantReceived"]>> = {}
+  ): UnifiedMilestone => ({
+    uid: "test-grant-received-1",
+    type: "grant_received",
+    title: "Grant received",
+    description: "",
+    completed: false,
+    createdAt: new Date().toISOString(),
+    chainID: 1,
+    refUID: "0xref1",
+    source: { type: "grant_received" },
+    grantReceived: {
+      amount: "1000 USDC",
+      communityName: "Test Community",
+      communityImage: "https://example.com/image.png",
+      grantTitle: "Test Grant",
+      grantUID: "0xgrant1",
+      ...overrides,
+    },
+  });
+
+  it("should show grant title below community name when both exist and differ", () => {
+    const milestones = [createGrantReceived()];
+    render(<ActivityFeed milestones={milestones} />);
+
+    expect(screen.getByText("Grant approved")).toBeInTheDocument();
+    expect(screen.getByTestId("grant-title")).toHaveTextContent("Test Grant");
+  });
+
+  it("should fall back to community name only when grantTitle is undefined", () => {
+    const milestones = [createGrantReceived({ grantTitle: undefined })];
+    render(<ActivityFeed milestones={milestones} />);
+
+    expect(screen.getByText("Grant approved")).toBeInTheDocument();
+    expect(screen.queryByTestId("grant-title")).not.toBeInTheDocument();
+  });
+
+  it("should fall back to community name only when grantTitle is empty string", () => {
+    const milestones = [createGrantReceived({ grantTitle: "" })];
+    render(<ActivityFeed milestones={milestones} />);
+
+    expect(screen.getByText("Grant approved")).toBeInTheDocument();
+    expect(screen.queryByTestId("grant-title")).not.toBeInTheDocument();
+  });
+
+  it("should not duplicate display when grantTitle equals communityName (case-insensitive)", () => {
+    const milestones = [
+      createGrantReceived({
+        communityName: "Test Community",
+        grantTitle: "test community",
+      }),
+    ];
+    render(<ActivityFeed milestones={milestones} />);
+
+    expect(screen.getByText("Grant approved")).toBeInTheDocument();
+    expect(screen.queryByTestId("grant-title")).not.toBeInTheDocument();
+  });
+});
+
+describe("ActivityFeed - renders pre-filtered items from server", () => {
+  // Milestone status filtering is now done server-side via the API query param.
+  // ActivityFeed renders whatever milestones are passed to it without further status filtering.
+  const createMilestone = (
+    type: UnifiedMilestone["type"],
+    overrides: Partial<UnifiedMilestone> = {}
+  ): UnifiedMilestone => ({
+    uid: `test-${type}-${Math.random()}`,
+    type,
+    title: `Test ${type}`,
+    description: "Test description",
+    completed: false,
+    createdAt: new Date().toISOString(),
+    chainID: 1,
+    refUID: "0xref1",
+    source: {},
+    ...overrides,
+  });
+
+  it("renders all passed items regardless of their milestone status", () => {
+    const items = [
+      createMilestone("milestone", {
+        uid: "pending-ms",
+        title: "Pending Milestone",
+        completed: false,
+      }),
+      createMilestone("grant", {
+        uid: "completed-ms",
+        title: "Completed Milestone",
+        completed: { createdAt: "2024-01-01", data: { reason: "Done" } },
+        source: {
+          grantMilestone: {
+            milestone: { uid: "m1", chainID: 1, title: "Completed", verified: [] },
+            grant: { uid: "g1", chainID: 1 },
+          },
+        },
+      }),
+      createMilestone("grant_update", { uid: "update-item", title: "Grant Update Item" }),
+    ];
+
+    render(<ActivityFeed milestones={items} />);
+
+    const rendered = screen.getAllByTestId("activity-item");
+    expect(rendered).toHaveLength(3);
+  });
+
+  it("shows empty state when no milestones are passed", () => {
+    render(<ActivityFeed milestones={[]} />);
+
+    expect(screen.getByTestId("activity-feed-empty")).toBeInTheDocument();
   });
 });

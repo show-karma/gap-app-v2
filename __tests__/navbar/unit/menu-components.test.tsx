@@ -5,7 +5,8 @@
  * @developer Developer 2
  */
 
-import { fireEvent, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import {
   ExploreContent,
   ForBuildersContent,
@@ -160,12 +161,13 @@ describe("ForBuildersContent Component", () => {
       expect(image).not.toBeInTheDocument();
     });
 
-    it("should call onClose when item is clicked", () => {
-      const onCloseMock = jest.fn();
+    it("should call onClose when item is clicked", async () => {
+      const user = userEvent.setup();
+      const onCloseMock = vi.fn();
       renderWithProviders(<ForBuildersContent variant="mobile" onClose={onCloseMock} />);
 
       const firstItem = screen.getByText(forBuildersItems[0].title);
-      fireEvent.click(firstItem);
+      await user.click(firstItem);
 
       expect(onCloseMock).toHaveBeenCalled();
     });
@@ -255,12 +257,13 @@ describe("ForFundersContent Component", () => {
       expect(separator).not.toBeInTheDocument();
     });
 
-    it("should call onClose when any item is clicked", () => {
-      const onCloseMock = jest.fn();
+    it("should call onClose when any item is clicked", async () => {
+      const user = userEvent.setup();
+      const onCloseMock = vi.fn();
       renderWithProviders(<ForFundersContent variant="mobile" onClose={onCloseMock} />);
 
       const mainItem = screen.getByText(forFundersItems.main.title);
-      fireEvent.click(mainItem);
+      await user.click(mainItem);
 
       expect(onCloseMock).toHaveBeenCalled();
     });
@@ -342,12 +345,13 @@ describe("ExploreContent Component", () => {
       });
     });
 
-    it("should call onClose when item is clicked", () => {
-      const onCloseMock = jest.fn();
+    it("should call onClose when item is clicked", async () => {
+      const user = userEvent.setup();
+      const onCloseMock = vi.fn();
       renderWithProviders(<ExploreContent variant="mobile" onClose={onCloseMock} />);
 
       const firstProjectItem = screen.getByText(exploreItems.projects[0].title);
-      fireEvent.click(firstProjectItem);
+      await user.click(firstProjectItem);
 
       expect(onCloseMock).toHaveBeenCalled();
     });
@@ -411,12 +415,13 @@ describe("ResourcesContent Component", () => {
       expect(arrowIcons.length).toBeGreaterThan(0);
     });
 
-    it("should call onClose when item is clicked", () => {
-      const onCloseMock = jest.fn();
+    it("should call onClose when item is clicked", async () => {
+      const user = userEvent.setup();
+      const onCloseMock = vi.fn();
       renderWithProviders(<ResourcesContent variant="mobile" onClose={onCloseMock} />);
 
       const firstItem = screen.getByText(resourcesItems[0].title);
-      fireEvent.click(firstItem);
+      await user.click(firstItem);
 
       expect(onCloseMock).toHaveBeenCalled();
     });
@@ -461,8 +466,9 @@ describe("Component Integration", () => {
     expect(screen.getByText("Resources")).toBeInTheDocument();
   });
 
-  it("should handle onClose callbacks consistently", () => {
-    const onCloseMock = jest.fn();
+  it("should handle onClose callbacks consistently", async () => {
+    const user = userEvent.setup();
+    const onCloseMock = vi.fn();
 
     renderWithProviders(
       <>
@@ -475,7 +481,7 @@ describe("Component Integration", () => {
 
     // Click on first available item from ForBuilders
     const firstItem = screen.getByText(forBuildersItems[0].title);
-    fireEvent.click(firstItem);
+    await user.click(firstItem);
 
     expect(onCloseMock).toHaveBeenCalled();
   });

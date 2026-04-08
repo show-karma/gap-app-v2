@@ -1,16 +1,6 @@
 import { createConfig } from "@privy-io/wagmi";
 import { type Config, http } from "@wagmi/core";
-import {
-  arbitrum,
-  baseSepolia,
-  celo,
-  lisk,
-  optimism,
-  optimismSepolia,
-  scroll,
-  sei,
-  sepolia,
-} from "@wagmi/core/chains";
+import { createConfig as createMinimalConfig } from "wagmi";
 import { envVars } from "../enviromentVars";
 import { appNetwork } from "../network";
 
@@ -39,19 +29,35 @@ const httpTransportOptions = {
   timeout: 20_000,
 };
 
+/**
+ * RPC URL mapping by chain ID.
+ * Uses chain objects from appNetwork (viem/chains) to avoid duplicate imports
+ * from @wagmi/core/chains.
+ */
+const rpcByChainId: Record<number, string | undefined> = {
+  1: envVars.RPC.MAINNET,
+  10: envVars.RPC.OPTIMISM,
+  137: envVars.RPC.POLYGON,
+  8453: envVars.RPC.BASE,
+  42161: envVars.RPC.ARBITRUM,
+  42220: envVars.RPC.CELO,
+  1329: envVars.RPC.SEI,
+  1135: envVars.RPC.LISK,
+  534352: envVars.RPC.SCROLL,
+  84532: envVars.RPC.BASE_SEPOLIA,
+  11155420: envVars.RPC.OPT_SEPOLIA,
+  11155111: envVars.RPC.SEPOLIA,
+};
+
+const transports = Object.fromEntries(
+  appNetwork
+    .filter((chain) => rpcByChainId[chain.id] !== undefined)
+    .map((chain) => [chain.id, http(rpcByChainId[chain.id], httpTransportOptions)])
+);
+
 export const privyConfig = createConfig({
   chains: appNetwork,
-  transports: {
-    [optimism.id]: http(envVars.RPC.OPTIMISM, httpTransportOptions),
-    [arbitrum.id]: http(envVars.RPC.ARBITRUM, httpTransportOptions),
-    [baseSepolia.id]: http(envVars.RPC.BASE_SEPOLIA, httpTransportOptions),
-    [optimismSepolia.id]: http(envVars.RPC.OPT_SEPOLIA, httpTransportOptions),
-    [celo.id]: http(envVars.RPC.CELO, httpTransportOptions),
-    [sei.id]: http(envVars.RPC.SEI, httpTransportOptions),
-    [sepolia.id]: http(envVars.RPC.SEPOLIA, httpTransportOptions),
-    [lisk.id]: http(envVars.RPC.LISK, httpTransportOptions),
-    [scroll.id]: http(envVars.RPC.SCROLL, httpTransportOptions),
-  },
+  transports,
   /**
    * Polling Interval Configuration
    *
@@ -81,3 +87,22 @@ export const privyConfig = createConfig({
 export function getPrivyWagmiConfig() {
   return privyConfig;
 }
+
+/**
+ * Minimal wagmi config for the outer WagmiProvider in PrivyProviderWrapper.
+ *
+ * Uses wagmi's native `createConfig` (NOT @privy-io/wagmi) so that importing
+ * this config does NOT pull in Privy's wagmi adapter or its connectors.
+ * The inner WagmiProvider from @privy-io/wagmi (lazy-loaded in
+ * PrivyWagmiProviders) overrides this once Privy initialises.
+ */
+export const minimalWagmiConfig = createMinimalConfig({
+  chains: appNetwork as unknown as readonly [
+    (typeof appNetwork)[number],
+    ...(typeof appNetwork)[number][],
+  ],
+  transports,
+  ssr: true,
+  pollingInterval: 30_000,
+  multiInjectedProviderDiscovery: false,
+});

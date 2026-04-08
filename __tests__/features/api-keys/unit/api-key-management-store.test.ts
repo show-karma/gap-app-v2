@@ -1,34 +1,30 @@
-import { useApiKeyManagementModalStore } from "@/store/modals/apiKeyManagement";
-
 // Need to unmock the store since the navbar setup.ts auto-mocks it
-jest.unmock("@/store/modals/apiKeyManagement");
+vi.unmock("@/store/modals/apiKeyManagement");
 
-// Re-import the real module after unmocking
-const { useApiKeyManagementModalStore: realStore } = jest.requireActual(
-  "@/store/modals/apiKeyManagement"
-);
+// With vi.unmock, the regular import gives the real module
+import { useApiKeyManagementModalStore } from "@/store/modals/apiKeyManagement";
 
 describe("useApiKeyManagementModalStore", () => {
   beforeEach(() => {
     // Reset store state
-    realStore.setState({ isModalOpen: false });
+    useApiKeyManagementModalStore.setState({ isModalOpen: false });
   });
 
   it("should start with modal closed", () => {
-    const state = realStore.getState();
+    const state = useApiKeyManagementModalStore.getState();
     expect(state.isModalOpen).toBe(false);
   });
 
   it("should open modal", () => {
-    realStore.getState().openModal();
-    expect(realStore.getState().isModalOpen).toBe(true);
+    useApiKeyManagementModalStore.getState().openModal();
+    expect(useApiKeyManagementModalStore.getState().isModalOpen).toBe(true);
   });
 
   it("should close modal", () => {
-    realStore.getState().openModal();
-    expect(realStore.getState().isModalOpen).toBe(true);
+    useApiKeyManagementModalStore.getState().openModal();
+    expect(useApiKeyManagementModalStore.getState().isModalOpen).toBe(true);
 
-    realStore.getState().closeModal();
-    expect(realStore.getState().isModalOpen).toBe(false);
+    useApiKeyManagementModalStore.getState().closeModal();
+    expect(useApiKeyManagementModalStore.getState().isModalOpen).toBe(false);
   });
 });

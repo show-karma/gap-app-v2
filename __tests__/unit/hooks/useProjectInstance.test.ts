@@ -9,11 +9,11 @@ import React from "react";
 import { useProjectInstance } from "@/hooks/useProjectInstance";
 import { getProjectById } from "@/utilities/sdk";
 
-jest.mock("@/utilities/sdk", () => ({
-  getProjectById: jest.fn(),
+vi.mock("@/utilities/sdk", () => ({
+  getProjectById: vi.fn(),
 }));
 
-const mockGetProjectById = getProjectById as jest.MockedFunction<typeof getProjectById>;
+const mockGetProjectById = getProjectById as vi.MockedFunction<typeof getProjectById>;
 
 describe("useProjectInstance", () => {
   let queryClient: QueryClient;
@@ -36,7 +36,11 @@ describe("useProjectInstance", () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    queryClient.clear();
   });
 
   it("should not fetch when projectId is undefined", () => {

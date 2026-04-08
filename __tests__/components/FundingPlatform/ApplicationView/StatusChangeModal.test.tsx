@@ -1,28 +1,23 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import React from "react";
 import StatusChangeModal from "@/components/FundingPlatform/ApplicationView/StatusChangeModal";
 
 // Note: react-hot-toast is no longer used in StatusChangeModal, but keeping mock for other components
-jest.mock("react-hot-toast", () => ({
-  __esModule: true,
-  default: {
-    error: jest.fn(),
-    success: jest.fn(),
-  },
-}));
-
 // Mock fundingPlatformService
-jest.mock("@/services/fundingPlatformService", () => ({
+vi.mock("@/services/fundingPlatformService", () => ({
   fundingPlatformService: {
     programs: {
-      getFundingDetails: jest.fn(),
+      getFundingDetails: vi.fn(),
     },
   },
 }));
 
+import { fundingPlatformService } from "@/services/fundingPlatformService";
+
 // Mock Headless UI Dialog components
-jest.mock("@headlessui/react", () => {
+vi.mock("@headlessui/react", () => {
   const MockDialog = ({ children, onClose, ...props }: any) => (
     <div data-testid="dialog" data-open={props.show} {...props}>
       {children}
@@ -77,7 +72,7 @@ jest.mock("@headlessui/react", () => {
 });
 
 // Mock Heroicons
-jest.mock("@heroicons/react/24/outline", () => ({
+vi.mock("@heroicons/react/24/outline", () => ({
   XMarkIcon: (props: any) => {
     const { "aria-hidden": ariaHidden, className, ...restProps } = props;
     return (
@@ -118,7 +113,7 @@ jest.mock("@heroicons/react/24/outline", () => ({
 }));
 
 // Mock Button component
-jest.mock("@/components/Utilities/Button", () => ({
+vi.mock("@/components/Utilities/Button", () => ({
   Button: ({ onClick, disabled, children, className, variant }: any) => {
     const testId =
       children === "Confirm" || children === "Processing..." ? "confirm-button" : "cancel-button";
@@ -137,7 +132,7 @@ jest.mock("@/components/Utilities/Button", () => ({
 }));
 
 // Mock MarkdownEditor component
-jest.mock("@/components/Utilities/MarkdownEditor", () => ({
+vi.mock("@/components/Utilities/MarkdownEditor", () => ({
   MarkdownEditor: ({
     value,
     onChange,
@@ -178,14 +173,14 @@ describe("StatusChangeModal", () => {
 
   const defaultProps = {
     isOpen: true,
-    onClose: jest.fn(),
-    onConfirm: jest.fn().mockResolvedValue(undefined),
+    onClose: vi.fn(),
+    onConfirm: vi.fn().mockResolvedValue(undefined),
     status: "approved",
     isSubmitting: false,
     isReasonRequired: false,
   };
 
-  // Create a QueryClient for testing
+  // Fresh QueryClient per render — no afterEach cleanup required
   const createTestQueryClient = () =>
     new QueryClient({
       defaultOptions: {
@@ -222,6 +217,7 @@ describe("StatusChangeModal", () => {
       { timeout: 2000 }
     );
 
+    // fireEvent required: helper function without access to userEvent instance
     fireEvent.change(currencyInput, { target: { value: currency } });
 
     // Wait for the value to be set
@@ -234,10 +230,9 @@ describe("StatusChangeModal", () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     // Reset fundingPlatformService mock
-    const { fundingPlatformService } = require("@/services/fundingPlatformService");
-    fundingPlatformService.programs.getFundingDetails.mockResolvedValue({});
+    vi.mocked(fundingPlatformService.programs.getFundingDetails).mockResolvedValue({});
   });
 
   describe("Rendering", () => {
@@ -307,13 +302,16 @@ describe("StatusChangeModal", () => {
     });
 
     it("should not require reason for approved status when isReasonRequired is false", async () => {
+      const user = userEvent.setup();
       renderWithQueryClient(
         <StatusChangeModal {...defaultProps} status="approved" isReasonRequired={false} />
       );
 
       // Fill in required amount and currency fields for approved status
       const amountInput = screen.getByLabelText(/approved amount/i);
-      fireEvent.change(amountInput, { target: { value: "1000" } });
+      await user.clear(amountInput);
+
+      await user.type(amountInput, "1000");
 
       // Select currency
       await enterCurrency("USD");
@@ -341,8 +339,9 @@ describe("StatusChangeModal", () => {
       expect(label.textContent).toMatch(/\*/);
     });
 
-    it("should prevent submission with empty reason when required (handleConfirm validation)", () => {
-      const onConfirm = jest.fn().mockResolvedValue(undefined);
+    it("should prevent submission with empty reason when required (handleConfirm validation)", async () => {
+      const user = userEvent.setup();
+      const onConfirm = vi.fn().mockResolvedValue(undefined);
       renderWithQueryClient(
         <StatusChangeModal {...defaultProps} status="revision_requested" onConfirm={onConfirm} />
       );
@@ -351,29 +350,33 @@ describe("StatusChangeModal", () => {
       expect(confirmButton).toBeDisabled();
 
       // Try to click disabled button
-      fireEvent.click(confirmButton);
+      await user.click(confirmButton);
 
       expect(onConfirm).not.toHaveBeenCalled();
     });
 
-    it("should prevent submission with whitespace-only reason when required", () => {
-      const onConfirm = jest.fn().mockResolvedValue(undefined);
+    it("should prevent submission with whitespace-only reason when required", async () => {
+      const user = userEvent.setup();
+      const onConfirm = vi.fn().mockResolvedValue(undefined);
       renderWithQueryClient(
         <StatusChangeModal {...defaultProps} status="revision_requested" onConfirm={onConfirm} />
       );
 
       const editor = screen.getByTestId("markdown-editor");
-      fireEvent.change(editor, { target: { value: "   " } });
+      await user.clear(editor);
+
+      await user.type(editor, "   ");
 
       const confirmButton = screen.getByTestId("confirm-button");
       expect(confirmButton).toBeDisabled();
 
-      fireEvent.click(confirmButton);
+      await user.click(confirmButton);
       expect(onConfirm).not.toHaveBeenCalled();
     });
 
-    it("should allow submission without reason for rejected status", () => {
-      const onConfirm = jest.fn().mockResolvedValue(undefined);
+    it("should allow submission without reason for rejected status", async () => {
+      const user = userEvent.setup();
+      const onConfirm = vi.fn().mockResolvedValue(undefined);
       renderWithQueryClient(
         <StatusChangeModal {...defaultProps} status="rejected" onConfirm={onConfirm} />
       );
@@ -381,36 +384,42 @@ describe("StatusChangeModal", () => {
       const confirmButton = screen.getByTestId("confirm-button");
       expect(confirmButton).not.toBeDisabled();
 
-      fireEvent.click(confirmButton);
+      await user.click(confirmButton);
       expect(onConfirm).toHaveBeenCalledWith(undefined, undefined, undefined);
     });
 
-    it("should allow submission with valid reason when required", () => {
-      const onConfirm = jest.fn().mockResolvedValue(undefined);
+    it("should allow submission with valid reason when required", async () => {
+      const user = userEvent.setup();
+      const onConfirm = vi.fn().mockResolvedValue(undefined);
       renderWithQueryClient(
         <StatusChangeModal {...defaultProps} status="revision_requested" onConfirm={onConfirm} />
       );
 
       const editor = screen.getByTestId("markdown-editor");
-      fireEvent.change(editor, { target: { value: "Please update section 3" } });
+      await user.clear(editor);
+
+      await user.type(editor, "Please update section 3");
 
       const confirmButton = screen.getByTestId("confirm-button");
       expect(confirmButton).not.toBeDisabled();
 
-      fireEvent.click(confirmButton);
+      await user.click(confirmButton);
       // For non-approval statuses, amount and currency are undefined
       expect(onConfirm).toHaveBeenCalledWith("Please update section 3", undefined, undefined);
     });
 
     it("should allow submission without reason when not required", async () => {
-      const onConfirm = jest.fn().mockResolvedValue(undefined);
+      const user = userEvent.setup();
+      const onConfirm = vi.fn().mockResolvedValue(undefined);
       renderWithQueryClient(
         <StatusChangeModal {...defaultProps} status="approved" onConfirm={onConfirm} />
       );
 
       // Fill in required amount and currency fields for approved status
       const amountInput = screen.getByLabelText(/approved amount/i);
-      fireEvent.change(amountInput, { target: { value: "1000" } });
+      await user.clear(amountInput);
+
+      await user.type(amountInput, "1000");
 
       // Select currency
       await enterCurrency("USD");
@@ -419,25 +428,28 @@ describe("StatusChangeModal", () => {
       await waitFor(() => {
         expect(confirmButton).not.toBeDisabled();
       });
-      fireEvent.click(confirmButton);
+      await user.click(confirmButton);
 
       expect(onConfirm).toHaveBeenCalledWith(undefined, "1000", "USD");
     });
   });
 
   describe("Reason Field Reset - Missing Coverage", () => {
-    it("should reset reason field on close (handleClose)", () => {
+    it("should reset reason field on close (handleClose)", async () => {
+      const user = userEvent.setup();
       const { rerender, queryClient } = renderWithQueryClient(
         <StatusChangeModal {...defaultProps} />
       );
 
       const editor = screen.getByTestId("markdown-editor") as HTMLTextAreaElement;
-      fireEvent.change(editor, { target: { value: "Test reason" } });
+      await user.clear(editor);
+
+      await user.type(editor, "Test reason");
       expect(editor.value).toBe("Test reason");
 
       // Close modal
       const cancelButton = screen.getByTestId("cancel-button");
-      fireEvent.click(cancelButton);
+      await user.click(cancelButton);
 
       expect(defaultProps.onClose).toHaveBeenCalled();
 
@@ -453,17 +465,22 @@ describe("StatusChangeModal", () => {
     });
 
     it("should reset reason field after successful confirmation", async () => {
-      const onConfirm = jest.fn().mockResolvedValue(undefined);
+      const user = userEvent.setup();
+      const onConfirm = vi.fn().mockResolvedValue(undefined);
       const { rerender, queryClient } = renderWithQueryClient(
         <StatusChangeModal {...defaultProps} onConfirm={onConfirm} />
       );
 
       const editor = screen.getByTestId("markdown-editor") as HTMLTextAreaElement;
-      fireEvent.change(editor, { target: { value: "Test reason" } });
+      await user.clear(editor);
+
+      await user.type(editor, "Test reason");
 
       // Fill in required amount and currency fields for approved status
       const amountInput = screen.getByLabelText(/approved amount/i);
-      fireEvent.change(amountInput, { target: { value: "1000" } });
+      await user.clear(amountInput);
+
+      await user.type(amountInput, "1000");
 
       // Select currency
       await enterCurrency("USD");
@@ -472,7 +489,7 @@ describe("StatusChangeModal", () => {
       await waitFor(() => {
         expect(confirmButton).not.toBeDisabled();
       });
-      await fireEvent.click(confirmButton);
+      await user.click(confirmButton);
 
       expect(onConfirm).toHaveBeenCalled();
 
@@ -498,7 +515,7 @@ describe("StatusChangeModal", () => {
 
   describe("Submission State Handling - Missing Coverage", () => {
     it("should disable close when isSubmitting is true (handleClose check)", () => {
-      const onClose = jest.fn();
+      const onClose = vi.fn();
       renderWithQueryClient(
         <StatusChangeModal {...defaultProps} onClose={onClose} isSubmitting={true} />
       );
@@ -517,8 +534,9 @@ describe("StatusChangeModal", () => {
       }
     });
 
-    it("should prevent close during submission", () => {
-      const onClose = jest.fn();
+    it("should prevent close during submission", async () => {
+      const user = userEvent.setup();
+      const onClose = vi.fn();
       renderWithQueryClient(
         <StatusChangeModal {...defaultProps} onClose={onClose} isSubmitting={true} />
       );
@@ -527,7 +545,7 @@ describe("StatusChangeModal", () => {
       // Click the actual Cancel button (not the Processing... button)
       const cancelButton = cancelButtons.find((btn) => btn.textContent === "Cancel");
       if (cancelButton) {
-        fireEvent.click(cancelButton);
+        await user.click(cancelButton);
       }
 
       // onClose should not be called when submitting
@@ -619,15 +637,20 @@ describe("StatusChangeModal", () => {
 
   describe("User Interactions", () => {
     it("should call onConfirm with reason when provided", async () => {
-      const onConfirm = jest.fn().mockResolvedValue(undefined);
+      const user = userEvent.setup();
+      const onConfirm = vi.fn().mockResolvedValue(undefined);
       renderWithQueryClient(<StatusChangeModal {...defaultProps} onConfirm={onConfirm} />);
 
       const editor = screen.getByTestId("markdown-editor");
-      fireEvent.change(editor, { target: { value: "Approved because it meets criteria" } });
+      await user.clear(editor);
+
+      await user.type(editor, "Approved because it meets criteria");
 
       // Fill in required amount and currency fields for approved status
       const amountInput = screen.getByLabelText(/approved amount/i);
-      fireEvent.change(amountInput, { target: { value: "1000" } });
+      await user.clear(amountInput);
+
+      await user.type(amountInput, "1000");
 
       // Select currency
       await enterCurrency("USD");
@@ -636,18 +659,21 @@ describe("StatusChangeModal", () => {
       await waitFor(() => {
         expect(confirmButton).not.toBeDisabled();
       });
-      fireEvent.click(confirmButton);
+      await user.click(confirmButton);
 
       expect(onConfirm).toHaveBeenCalledWith("Approved because it meets criteria", "1000", "USD");
     });
 
     it("should call onConfirm with undefined when reason not provided and not required", async () => {
-      const onConfirm = jest.fn().mockResolvedValue(undefined);
+      const user = userEvent.setup();
+      const onConfirm = vi.fn().mockResolvedValue(undefined);
       renderWithQueryClient(<StatusChangeModal {...defaultProps} onConfirm={onConfirm} />);
 
       // Fill in required amount and currency fields for approved status
       const amountInput = screen.getByLabelText(/approved amount/i);
-      fireEvent.change(amountInput, { target: { value: "1000" } });
+      await user.clear(amountInput);
+
+      await user.type(amountInput, "1000");
 
       // Select currency
       await enterCurrency("USD");
@@ -656,26 +682,28 @@ describe("StatusChangeModal", () => {
       await waitFor(() => {
         expect(confirmButton).not.toBeDisabled();
       });
-      fireEvent.click(confirmButton);
+      await user.click(confirmButton);
 
       expect(onConfirm).toHaveBeenCalledWith(undefined, "1000", "USD");
     });
 
-    it("should call onClose when cancel button is clicked", () => {
-      const onClose = jest.fn();
+    it("should call onClose when cancel button is clicked", async () => {
+      const user = userEvent.setup();
+      const onClose = vi.fn();
       renderWithQueryClient(<StatusChangeModal {...defaultProps} onClose={onClose} />);
 
       const cancelButtons = screen.getAllByTestId("cancel-button");
       const cancelButton = cancelButtons.find((btn) => btn.textContent === "Cancel");
       if (cancelButton) {
         onClose.mockClear();
-        fireEvent.click(cancelButton);
+        await user.click(cancelButton);
         expect(onClose).toHaveBeenCalledTimes(1);
       }
     });
 
-    it("should call onClose when close icon is clicked", () => {
-      const onClose = jest.fn();
+    it("should call onClose when close icon is clicked", async () => {
+      const user = userEvent.setup();
+      const onClose = vi.fn();
       renderWithQueryClient(<StatusChangeModal {...defaultProps} onClose={onClose} />);
 
       const closeIcon = screen.getByTestId("xmark-icon");
@@ -683,7 +711,7 @@ describe("StatusChangeModal", () => {
       if (closeButton) {
         // Clear any previous calls from setup
         onClose.mockClear();
-        fireEvent.click(closeButton);
+        await user.click(closeButton);
         expect(onClose).toHaveBeenCalledTimes(1);
       }
     });
@@ -724,16 +752,21 @@ describe("StatusChangeModal", () => {
     });
 
     it("should handle very long reason text", async () => {
+      const user = userEvent.setup();
       const longReason = "A".repeat(1000);
-      const onConfirm = jest.fn().mockResolvedValue(undefined);
+      const onConfirm = vi.fn().mockResolvedValue(undefined);
       renderWithQueryClient(<StatusChangeModal {...defaultProps} onConfirm={onConfirm} />);
 
       const editor = screen.getByTestId("markdown-editor");
-      fireEvent.change(editor, { target: { value: longReason } });
+      await user.clear(editor);
+
+      await user.type(editor, longReason);
 
       // Fill in required amount and currency fields for approved status
       const amountInput = screen.getByLabelText(/approved amount/i);
-      fireEvent.change(amountInput, { target: { value: "1000" } });
+      await user.clear(amountInput);
+
+      await user.type(amountInput, "1000");
 
       // Select currency
       await enterCurrency("USD");
@@ -742,22 +775,27 @@ describe("StatusChangeModal", () => {
       await waitFor(() => {
         expect(confirmButton).not.toBeDisabled();
       });
-      fireEvent.click(confirmButton);
+      await user.click(confirmButton);
 
       expect(onConfirm).toHaveBeenCalledWith(longReason, "1000", "USD");
     });
 
     it("should handle special characters in reason", async () => {
+      const user = userEvent.setup();
       const specialReason = 'Reason with <script>alert("xss")</script> & special chars';
-      const onConfirm = jest.fn().mockResolvedValue(undefined);
+      const onConfirm = vi.fn().mockResolvedValue(undefined);
       renderWithQueryClient(<StatusChangeModal {...defaultProps} onConfirm={onConfirm} />);
 
       const editor = screen.getByTestId("markdown-editor");
-      fireEvent.change(editor, { target: { value: specialReason } });
+      await user.clear(editor);
+
+      await user.type(editor, specialReason);
 
       // Fill in required amount and currency fields for approved status
       const amountInput = screen.getByLabelText(/approved amount/i);
-      fireEvent.change(amountInput, { target: { value: "1000" } });
+      await user.clear(amountInput);
+
+      await user.type(amountInput, "1000");
 
       // Select currency
       await enterCurrency("USD");
@@ -766,7 +804,7 @@ describe("StatusChangeModal", () => {
       await waitFor(() => {
         expect(confirmButton).not.toBeDisabled();
       });
-      fireEvent.click(confirmButton);
+      await user.click(confirmButton);
 
       expect(onConfirm).toHaveBeenCalledWith(specialReason, "1000", "USD");
     });
@@ -788,18 +826,20 @@ describe("StatusChangeModal", () => {
     });
 
     it("should require currency for approved status", async () => {
+      const user = userEvent.setup();
       renderWithQueryClient(<StatusChangeModal {...defaultProps} status="approved" />);
 
       const amountInput = screen.getByLabelText(/approved amount/i);
-      fireEvent.change(amountInput, { target: { value: "1000" } });
+      await user.clear(amountInput);
+
+      await user.type(amountInput, "1000");
 
       const confirmButton = screen.getByTestId("confirm-button");
       expect(confirmButton).toBeDisabled();
     });
 
     it("should auto-load currency from API when application is provided", async () => {
-      const { fundingPlatformService } = require("@/services/fundingPlatformService");
-      fundingPlatformService.programs.getFundingDetails.mockResolvedValue({
+      vi.mocked(fundingPlatformService.programs.getFundingDetails).mockResolvedValue({
         currency: "ETH",
       });
 
@@ -822,8 +862,9 @@ describe("StatusChangeModal", () => {
     });
 
     it("should show empty currency input when API fetch fails", async () => {
-      const { fundingPlatformService } = require("@/services/fundingPlatformService");
-      fundingPlatformService.programs.getFundingDetails.mockRejectedValue(new Error("API Error"));
+      vi.mocked(fundingPlatformService.programs.getFundingDetails).mockRejectedValue(
+        new Error("API Error")
+      );
 
       renderWithQueryClient(
         <StatusChangeModal {...defaultProps} status="approved" application={mockApplication} />
@@ -843,8 +884,10 @@ describe("StatusChangeModal", () => {
     });
 
     it("should allow manual currency entry when API fails", async () => {
-      const { fundingPlatformService } = require("@/services/fundingPlatformService");
-      fundingPlatformService.programs.getFundingDetails.mockRejectedValue(new Error("API Error"));
+      const user = userEvent.setup();
+      vi.mocked(fundingPlatformService.programs.getFundingDetails).mockRejectedValue(
+        new Error("API Error")
+      );
 
       renderWithQueryClient(
         <StatusChangeModal {...defaultProps} status="approved" application={mockApplication} />
@@ -858,7 +901,9 @@ describe("StatusChangeModal", () => {
 
       // Should be able to manually enter currency
       const amountInput = screen.getByLabelText(/approved amount/i);
-      fireEvent.change(amountInput, { target: { value: "1000" } });
+      await user.clear(amountInput);
+
+      await user.type(amountInput, "1000");
 
       await enterCurrency("USDC");
 
@@ -871,7 +916,8 @@ describe("StatusChangeModal", () => {
 
   describe("Amount Validation", () => {
     it("should show error for invalid amount on form submission", async () => {
-      const onConfirm = jest.fn().mockResolvedValue(undefined);
+      const user = userEvent.setup();
+      const onConfirm = vi.fn().mockResolvedValue(undefined);
       renderWithQueryClient(
         <StatusChangeModal {...defaultProps} status="approved" onConfirm={onConfirm} />
       );
@@ -880,7 +926,9 @@ describe("StatusChangeModal", () => {
       const confirmButton = screen.getByTestId("confirm-button");
 
       // Type invalid value
-      fireEvent.change(amountInput, { target: { value: "abc" } });
+      await user.clear(amountInput);
+
+      await user.type(amountInput, "abc");
 
       // Select currency
       await enterCurrency("USD");
@@ -895,14 +943,15 @@ describe("StatusChangeModal", () => {
       );
 
       // Try to submit
-      fireEvent.click(confirmButton);
+      await user.click(confirmButton);
 
       // onConfirm should not be called
       expect(onConfirm).not.toHaveBeenCalled();
     });
 
     it("should accept valid amount", async () => {
-      const onConfirm = jest.fn().mockResolvedValue(undefined);
+      const user = userEvent.setup();
+      const onConfirm = vi.fn().mockResolvedValue(undefined);
       renderWithQueryClient(
         <StatusChangeModal {...defaultProps} status="approved" onConfirm={onConfirm} />
       );
@@ -910,7 +959,9 @@ describe("StatusChangeModal", () => {
       const amountInput = screen.getByLabelText(/approved amount/i) as HTMLInputElement;
 
       // Type valid value
-      fireEvent.change(amountInput, { target: { value: "1000" } });
+      await user.clear(amountInput);
+
+      await user.type(amountInput, "1000");
 
       // Select currency
       await enterCurrency("USD");
@@ -925,17 +976,20 @@ describe("StatusChangeModal", () => {
         { timeout: 1000 }
       );
 
-      fireEvent.click(confirmButton);
+      await user.click(confirmButton);
       expect(onConfirm).toHaveBeenCalledWith(undefined, "1000", "USD");
     });
   });
 
   describe("Currency Validation - Edge Cases", () => {
     it("should accept single letter currency code", async () => {
+      const user = userEvent.setup();
       renderWithQueryClient(<StatusChangeModal {...defaultProps} status="approved" />);
 
       const amountInput = screen.getByLabelText(/approved amount/i);
-      fireEvent.change(amountInput, { target: { value: "1000" } });
+      await user.clear(amountInput);
+
+      await user.type(amountInput, "1000");
 
       // Manually set currency via input (simulating direct state change)
       const currencyInput = screen.getByLabelText(/approved currency/i);
@@ -949,9 +1003,9 @@ describe("StatusChangeModal", () => {
     });
 
     it("should accept long currency codes (e.g., USDGLO)", async () => {
-      const onConfirm = jest.fn().mockResolvedValue(undefined);
-      const { fundingPlatformService } = require("@/services/fundingPlatformService");
-      fundingPlatformService.programs.getFundingDetails.mockResolvedValue({
+      const user = userEvent.setup();
+      const onConfirm = vi.fn().mockResolvedValue(undefined);
+      vi.mocked(fundingPlatformService.programs.getFundingDetails).mockResolvedValue({
         currency: "USDGLO",
       });
 
@@ -970,7 +1024,9 @@ describe("StatusChangeModal", () => {
       });
 
       const amountInput = screen.getByLabelText(/approved amount/i);
-      fireEvent.change(amountInput, { target: { value: "1000" } });
+      await user.clear(amountInput);
+
+      await user.type(amountInput, "1000");
 
       const confirmButton = screen.getByTestId("confirm-button");
       await waitFor(() => {
@@ -979,8 +1035,7 @@ describe("StatusChangeModal", () => {
     });
 
     it("should normalize lowercase currency from API to uppercase", async () => {
-      const { fundingPlatformService } = require("@/services/fundingPlatformService");
-      fundingPlatformService.programs.getFundingDetails.mockResolvedValue({
+      vi.mocked(fundingPlatformService.programs.getFundingDetails).mockResolvedValue({
         currency: "eth", // lowercase
       });
 
@@ -995,8 +1050,7 @@ describe("StatusChangeModal", () => {
     });
 
     it("should normalize currency with whitespace from API", async () => {
-      const { fundingPlatformService } = require("@/services/fundingPlatformService");
-      fundingPlatformService.programs.getFundingDetails.mockResolvedValue({
+      vi.mocked(fundingPlatformService.programs.getFundingDetails).mockResolvedValue({
         currency: "  USDC  ", // with whitespace
       });
 
@@ -1011,8 +1065,8 @@ describe("StatusChangeModal", () => {
     });
 
     it("should reject currency with numbers", async () => {
-      const { fundingPlatformService } = require("@/services/fundingPlatformService");
-      fundingPlatformService.programs.getFundingDetails.mockResolvedValue({
+      const user = userEvent.setup();
+      vi.mocked(fundingPlatformService.programs.getFundingDetails).mockResolvedValue({
         currency: "USD123", // contains numbers
       });
 
@@ -1027,7 +1081,9 @@ describe("StatusChangeModal", () => {
       });
 
       const amountInput = screen.getByLabelText(/approved amount/i);
-      fireEvent.change(amountInput, { target: { value: "1000" } });
+      await user.clear(amountInput);
+
+      await user.type(amountInput, "1000");
 
       const confirmButton = screen.getByTestId("confirm-button");
       // Button should be disabled due to invalid currency
@@ -1037,10 +1093,8 @@ describe("StatusChangeModal", () => {
     });
 
     it("should handle different API response structures for currency", async () => {
-      const { fundingPlatformService } = require("@/services/fundingPlatformService");
-
       // Test currency in data.currency
-      fundingPlatformService.programs.getFundingDetails.mockResolvedValue({
+      vi.mocked(fundingPlatformService.programs.getFundingDetails).mockResolvedValue({
         data: { currency: "ETH" },
       });
 
@@ -1056,7 +1110,7 @@ describe("StatusChangeModal", () => {
       unmount();
 
       // Test currency in fundingDetails.currency
-      fundingPlatformService.programs.getFundingDetails.mockResolvedValue({
+      vi.mocked(fundingPlatformService.programs.getFundingDetails).mockResolvedValue({
         fundingDetails: { currency: "USDC" },
       });
 
@@ -1073,10 +1127,13 @@ describe("StatusChangeModal", () => {
 
   describe("Amount Validation - Edge Cases", () => {
     it("should reject zero amount", async () => {
+      const user = userEvent.setup();
       renderWithQueryClient(<StatusChangeModal {...defaultProps} status="approved" />);
 
       const amountInput = screen.getByLabelText(/approved amount/i);
-      fireEvent.change(amountInput, { target: { value: "0" } });
+      await user.clear(amountInput);
+
+      await user.type(amountInput, "0");
 
       await enterCurrency("USD");
 
@@ -1087,10 +1144,13 @@ describe("StatusChangeModal", () => {
     });
 
     it("should reject negative amount", async () => {
+      const user = userEvent.setup();
       renderWithQueryClient(<StatusChangeModal {...defaultProps} status="approved" />);
 
       const amountInput = screen.getByLabelText(/approved amount/i);
-      fireEvent.change(amountInput, { target: { value: "-100" } });
+      await user.clear(amountInput);
+
+      await user.type(amountInput, "-100");
 
       await enterCurrency("USD");
 
@@ -1101,13 +1161,16 @@ describe("StatusChangeModal", () => {
     });
 
     it("should accept decimal amounts", async () => {
-      const onConfirm = jest.fn().mockResolvedValue(undefined);
+      const user = userEvent.setup();
+      const onConfirm = vi.fn().mockResolvedValue(undefined);
       renderWithQueryClient(
         <StatusChangeModal {...defaultProps} status="approved" onConfirm={onConfirm} />
       );
 
       const amountInput = screen.getByLabelText(/approved amount/i);
-      fireEvent.change(amountInput, { target: { value: "1234.56" } });
+      await user.clear(amountInput);
+
+      await user.type(amountInput, "1234.56");
 
       await enterCurrency("USD");
 
@@ -1116,18 +1179,21 @@ describe("StatusChangeModal", () => {
         expect(confirmButton).not.toBeDisabled();
       });
 
-      fireEvent.click(confirmButton);
+      await user.click(confirmButton);
       expect(onConfirm).toHaveBeenCalledWith(undefined, "1234.56", "USD");
     });
 
     it("should accept very small decimal amounts", async () => {
-      const onConfirm = jest.fn().mockResolvedValue(undefined);
+      const user = userEvent.setup();
+      const onConfirm = vi.fn().mockResolvedValue(undefined);
       renderWithQueryClient(
         <StatusChangeModal {...defaultProps} status="approved" onConfirm={onConfirm} />
       );
 
       const amountInput = screen.getByLabelText(/approved amount/i);
-      fireEvent.change(amountInput, { target: { value: "0.0001" } });
+      await user.clear(amountInput);
+
+      await user.type(amountInput, "0.0001");
 
       await enterCurrency("USD");
 
@@ -1136,18 +1202,21 @@ describe("StatusChangeModal", () => {
         expect(confirmButton).not.toBeDisabled();
       });
 
-      fireEvent.click(confirmButton);
+      await user.click(confirmButton);
       expect(onConfirm).toHaveBeenCalledWith(undefined, "0.0001", "USD");
     });
 
     it("should accept very large amounts", async () => {
-      const onConfirm = jest.fn().mockResolvedValue(undefined);
+      const user = userEvent.setup();
+      const onConfirm = vi.fn().mockResolvedValue(undefined);
       renderWithQueryClient(
         <StatusChangeModal {...defaultProps} status="approved" onConfirm={onConfirm} />
       );
 
       const amountInput = screen.getByLabelText(/approved amount/i);
-      fireEvent.change(amountInput, { target: { value: "999999999999.99" } });
+      await user.clear(amountInput);
+
+      await user.type(amountInput, "999999999999.99");
 
       await enterCurrency("USD");
 
@@ -1156,15 +1225,18 @@ describe("StatusChangeModal", () => {
         expect(confirmButton).not.toBeDisabled();
       });
 
-      fireEvent.click(confirmButton);
+      await user.click(confirmButton);
       expect(onConfirm).toHaveBeenCalledWith(undefined, "999999999999.99", "USD");
     });
 
     it("should reject non-numeric amount", async () => {
+      const user = userEvent.setup();
       renderWithQueryClient(<StatusChangeModal {...defaultProps} status="approved" />);
 
       const amountInput = screen.getByLabelText(/approved amount/i);
-      fireEvent.change(amountInput, { target: { value: "abc" } });
+      await user.clear(amountInput);
+
+      await user.type(amountInput, "abc");
 
       await enterCurrency("USD");
 
@@ -1184,10 +1256,13 @@ describe("StatusChangeModal", () => {
     });
 
     it("should reject Infinity", async () => {
+      const user = userEvent.setup();
       renderWithQueryClient(<StatusChangeModal {...defaultProps} status="approved" />);
 
       const amountInput = screen.getByLabelText(/approved amount/i);
-      fireEvent.change(amountInput, { target: { value: "Infinity" } });
+      await user.clear(amountInput);
+
+      await user.type(amountInput, "Infinity");
 
       await enterCurrency("USD");
 
@@ -1198,14 +1273,17 @@ describe("StatusChangeModal", () => {
     });
 
     it("should trim whitespace from amount", async () => {
-      const onConfirm = jest.fn().mockResolvedValue(undefined);
+      const user = userEvent.setup();
+      const onConfirm = vi.fn().mockResolvedValue(undefined);
       renderWithQueryClient(
         <StatusChangeModal {...defaultProps} status="approved" onConfirm={onConfirm} />
       );
 
       const amountInput = screen.getByLabelText(/approved amount/i);
       // Enter amount with whitespace - Number.parseFloat handles this, and validation should pass
-      fireEvent.change(amountInput, { target: { value: "1000" } }); // Use valid input without whitespace for reliability
+      await user.clear(amountInput);
+
+      await user.type(amountInput, "1000"); // Use valid input without whitespace for reliability
 
       await enterCurrency("USD");
 
@@ -1217,7 +1295,7 @@ describe("StatusChangeModal", () => {
         { timeout: 1000 }
       );
 
-      fireEvent.click(confirmButton);
+      await user.click(confirmButton);
       // Amount is trimmed in handleConfirm before passing to onConfirm
       expect(onConfirm).toHaveBeenCalledWith(undefined, "1000", "USD");
     });
@@ -1225,10 +1303,13 @@ describe("StatusChangeModal", () => {
 
   describe("Form State Management", () => {
     it("should clear currency error when valid currency is entered", async () => {
+      const user = userEvent.setup();
       renderWithQueryClient(<StatusChangeModal {...defaultProps} status="approved" />);
 
       const amountInput = screen.getByLabelText(/approved amount/i);
-      fireEvent.change(amountInput, { target: { value: "1000" } });
+      await user.clear(amountInput);
+
+      await user.type(amountInput, "1000");
 
       // Initially no currency, so error should appear after validation
       const confirmButton = screen.getByTestId("confirm-button");
@@ -1245,19 +1326,24 @@ describe("StatusChangeModal", () => {
     });
 
     it("should clear amount error when valid amount is entered", async () => {
+      const user = userEvent.setup();
       renderWithQueryClient(<StatusChangeModal {...defaultProps} status="approved" />);
 
       const amountInput = screen.getByLabelText(/approved amount/i) as HTMLInputElement;
 
       // Enter invalid amount
-      fireEvent.change(amountInput, { target: { value: "abc" } });
+      await user.clear(amountInput);
+
+      await user.type(amountInput, "abc");
       await enterCurrency("USD");
 
       // Wait a bit for debounced validation
       await new Promise((resolve) => setTimeout(resolve, 400));
 
       // Enter valid amount
-      fireEvent.change(amountInput, { target: { value: "1000" } });
+      await user.clear(amountInput);
+
+      await user.type(amountInput, "1000");
 
       // Error should clear immediately
       await waitFor(() => {
@@ -1265,7 +1351,8 @@ describe("StatusChangeModal", () => {
       });
     });
 
-    it("should reset all form fields when modal closes", () => {
+    it("should reset all form fields when modal closes", async () => {
+      const user = userEvent.setup();
       const { rerender, queryClient } = renderWithQueryClient(
         <StatusChangeModal {...defaultProps} status="approved" />
       );
@@ -1273,8 +1360,12 @@ describe("StatusChangeModal", () => {
       const amountInput = screen.getByLabelText(/approved amount/i);
       const reasonTextarea = screen.getByLabelText(/reason/i);
 
-      fireEvent.change(amountInput, { target: { value: "1000" } });
-      fireEvent.change(reasonTextarea, { target: { value: "Test reason" } });
+      await user.clear(amountInput);
+
+      await user.type(amountInput, "1000");
+      await user.clear(reasonTextarea);
+
+      await user.type(reasonTextarea, "Test reason");
 
       // Close modal
       rerender(
@@ -1298,8 +1389,7 @@ describe("StatusChangeModal", () => {
     });
 
     it("should reset currency when modal closes", async () => {
-      const { fundingPlatformService } = require("@/services/fundingPlatformService");
-      fundingPlatformService.programs.getFundingDetails.mockResolvedValue({
+      vi.mocked(fundingPlatformService.programs.getFundingDetails).mockResolvedValue({
         currency: "ETH",
       });
 
@@ -1372,12 +1462,15 @@ describe("StatusChangeModal", () => {
     });
 
     it("should mark amount input as invalid when error exists", async () => {
+      const user = userEvent.setup();
       renderWithQueryClient(<StatusChangeModal {...defaultProps} status="approved" />);
 
       const amountInput = screen.getByLabelText(/approved amount/i) as HTMLInputElement;
 
       // Enter invalid amount
-      fireEvent.change(amountInput, { target: { value: "abc" } });
+      await user.clear(amountInput);
+
+      await user.type(amountInput, "abc");
       await enterCurrency("USD");
 
       // Wait for debounced validation (300ms + buffer)
@@ -1398,10 +1491,13 @@ describe("StatusChangeModal", () => {
     });
 
     it("should mark currency as invalid when error exists", async () => {
+      const user = userEvent.setup();
       renderWithQueryClient(<StatusChangeModal {...defaultProps} status="approved" />);
 
       const amountInput = screen.getByLabelText(/approved amount/i);
-      fireEvent.change(amountInput, { target: { value: "1000" } });
+      await user.clear(amountInput);
+
+      await user.type(amountInput, "1000");
 
       // Currency is required but not entered
       const currencyInput = screen.getByLabelText(/approved currency/i);
@@ -1429,15 +1525,13 @@ describe("StatusChangeModal", () => {
 
   describe("Loading States", () => {
     it("should show loading state for currency when fetching from API", async () => {
-      const { fundingPlatformService } = require("@/services/fundingPlatformService");
-
       // Create a promise that we can control
       let resolvePromise: (value: any) => void;
       const promise = new Promise((resolve) => {
         resolvePromise = resolve;
       });
 
-      fundingPlatformService.programs.getFundingDetails.mockReturnValue(promise);
+      vi.mocked(fundingPlatformService.programs.getFundingDetails).mockReturnValue(promise);
 
       renderWithQueryClient(
         <StatusChangeModal {...defaultProps} status="approved" application={mockApplication} />
@@ -1458,14 +1552,12 @@ describe("StatusChangeModal", () => {
     });
 
     it("should disable currency input while loading", async () => {
-      const { fundingPlatformService } = require("@/services/fundingPlatformService");
-
       let resolvePromise: (value: any) => void;
       const promise = new Promise((resolve) => {
         resolvePromise = resolve;
       });
 
-      fundingPlatformService.programs.getFundingDetails.mockReturnValue(promise);
+      vi.mocked(fundingPlatformService.programs.getFundingDetails).mockReturnValue(promise);
 
       renderWithQueryClient(
         <StatusChangeModal {...defaultProps} status="approved" application={mockApplication} />
@@ -1488,8 +1580,8 @@ describe("StatusChangeModal", () => {
 
   describe("Error Handling", () => {
     it("should handle API error gracefully and allow manual entry", async () => {
-      const { fundingPlatformService } = require("@/services/fundingPlatformService");
-      fundingPlatformService.programs.getFundingDetails.mockRejectedValue(
+      const user = userEvent.setup();
+      vi.mocked(fundingPlatformService.programs.getFundingDetails).mockRejectedValue(
         new Error("Network error")
       );
 
@@ -1505,7 +1597,9 @@ describe("StatusChangeModal", () => {
 
       // Should be able to manually enter currency after error
       const amountInput = screen.getByLabelText(/approved amount/i);
-      fireEvent.change(amountInput, { target: { value: "1000" } });
+      await user.clear(amountInput);
+
+      await user.type(amountInput, "1000");
 
       await enterCurrency("USD");
 
@@ -1516,8 +1610,6 @@ describe("StatusChangeModal", () => {
     });
 
     it("should not fetch currency when application is missing", async () => {
-      const { fundingPlatformService } = require("@/services/fundingPlatformService");
-
       renderWithQueryClient(<StatusChangeModal {...defaultProps} status="approved" />);
 
       // Should not call API when application is not provided
@@ -1525,8 +1617,6 @@ describe("StatusChangeModal", () => {
     });
 
     it("should not fetch currency for non-approved statuses", async () => {
-      const { fundingPlatformService } = require("@/services/fundingPlatformService");
-
       renderWithQueryClient(
         <StatusChangeModal {...defaultProps} status="rejected" application={mockApplication} />
       );
@@ -1538,13 +1628,16 @@ describe("StatusChangeModal", () => {
 
   describe("Currency Normalization", () => {
     it("should normalize currency to uppercase when passed to onConfirm", async () => {
-      const onConfirm = jest.fn().mockResolvedValue(undefined);
+      const user = userEvent.setup();
+      const onConfirm = vi.fn().mockResolvedValue(undefined);
       renderWithQueryClient(
         <StatusChangeModal {...defaultProps} status="approved" onConfirm={onConfirm} />
       );
 
       const amountInput = screen.getByLabelText(/approved amount/i);
-      fireEvent.change(amountInput, { target: { value: "1000" } });
+      await user.clear(amountInput);
+
+      await user.type(amountInput, "1000");
 
       // Enter currency in lowercase - should be normalized to uppercase
       await enterCurrency("usdc");
@@ -1554,14 +1647,14 @@ describe("StatusChangeModal", () => {
         expect(confirmButton).not.toBeDisabled();
       });
 
-      fireEvent.click(confirmButton);
+      await user.click(confirmButton);
       // Currency should be normalized to uppercase (handled by handleConfirm)
       expect(onConfirm).toHaveBeenCalledWith(undefined, "1000", "USDC");
     });
 
     it("should trim and uppercase currency from API before validation", async () => {
-      const { fundingPlatformService } = require("@/services/fundingPlatformService");
-      fundingPlatformService.programs.getFundingDetails.mockResolvedValue({
+      const user = userEvent.setup();
+      vi.mocked(fundingPlatformService.programs.getFundingDetails).mockResolvedValue({
         currency: "  eth  ", // whitespace and lowercase
       });
 
@@ -1576,7 +1669,9 @@ describe("StatusChangeModal", () => {
 
       // Form should be valid
       const amountInput = screen.getByLabelText(/approved amount/i);
-      fireEvent.change(amountInput, { target: { value: "1000" } });
+      await user.clear(amountInput);
+
+      await user.type(amountInput, "1000");
 
       const confirmButton = screen.getByTestId("confirm-button");
       await waitFor(() => {
@@ -1706,7 +1801,8 @@ describe("StatusChangeModal", () => {
       expect(editor).toHaveValue(mockProgramConfig.formSchema.settings.approvalEmailTemplate);
     });
 
-    it("should reapply template after modal is closed and reopened", () => {
+    it("should reapply template after modal is closed and reopened", async () => {
+      const user = userEvent.setup();
       const { rerender, queryClient } = renderWithQueryClient(
         <StatusChangeModal
           {...defaultProps}
@@ -1718,7 +1814,9 @@ describe("StatusChangeModal", () => {
       const editor = screen.getByTestId("markdown-editor") as HTMLTextAreaElement;
 
       // User edits the prepopulated template
-      fireEvent.change(editor, { target: { value: "Custom edited reason" } });
+      await user.clear(editor);
+
+      await user.type(editor, "Custom edited reason");
       expect(editor.value).toBe("Custom edited reason");
 
       // Close and reopen modal
@@ -1813,7 +1911,8 @@ describe("StatusChangeModal", () => {
     });
 
     it("should pass prepopulated content to onConfirm when submitted", async () => {
-      const onConfirm = jest.fn().mockResolvedValue(undefined);
+      const user = userEvent.setup();
+      const onConfirm = vi.fn().mockResolvedValue(undefined);
       renderWithQueryClient(
         <StatusChangeModal
           {...defaultProps}
@@ -1828,18 +1927,22 @@ describe("StatusChangeModal", () => {
 
       // Fill in required amount and currency fields for approved status
       const amountInput = screen.getByLabelText(/approved amount/i);
-      fireEvent.change(amountInput, { target: { value: "1000" } });
+      await user.clear(amountInput);
+
+      await user.type(amountInput, "1000");
 
       // Select currency from dropdown
       await enterCurrency("USD");
 
       // Template is prepopulated, user can edit it
-      fireEvent.change(editor, { target: { value: "Edited template content" } });
+      await user.clear(editor);
+
+      await user.type(editor, "Edited template content");
 
       await waitFor(() => {
         expect(confirmButton).not.toBeDisabled();
       });
-      fireEvent.click(confirmButton);
+      await user.click(confirmButton);
 
       expect(onConfirm).toHaveBeenCalledWith("Edited template content", "1000", "USD");
     });

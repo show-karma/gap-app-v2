@@ -21,6 +21,7 @@ import { cn } from "@/utilities/tailwind";
 import { NavbarAuthButtons } from "./navbar-auth-buttons";
 import { NavbarPermissionsProvider } from "./navbar-permissions-context";
 import { NavbarUserMenu } from "./navbar-user-menu";
+import { ThemeToggleButton } from "./theme-toggle-button";
 
 const navStyles = {
   desktopLink:
@@ -312,6 +313,9 @@ export function WhitelabelNavbar() {
               </DropdownMenu>
             )}
 
+            {/* Theme toggle */}
+            <ThemeToggleButton />
+
             {/* Separator */}
             <div className="mx-2 h-6 w-px bg-zinc-200 dark:bg-zinc-700" />
 
@@ -321,6 +325,7 @@ export function WhitelabelNavbar() {
 
           {/* Mobile: menu toggle */}
           <div className="flex items-center gap-2 lg:hidden">
+            <ThemeToggleButton />
             <button
               type="button"
               className="rounded-lg p-2 text-zinc-600 transition-colors hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"

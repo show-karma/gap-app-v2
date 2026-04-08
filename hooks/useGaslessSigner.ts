@@ -1,7 +1,5 @@
 "use client";
 
-import { usePrivy } from "@privy-io/react-auth";
-import { useSmartWallets } from "@privy-io/react-auth/smart-wallets";
 import { JsonRpcProvider, type Signer } from "ethers";
 import { useCallback, useMemo } from "react";
 import {
@@ -15,6 +13,7 @@ import {
   sei,
   sepolia,
 } from "viem/chains";
+import { usePrivyBridge } from "@/contexts/privy-bridge-context";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { envVars } from "@/utilities/enviromentVars";
 import { PrivySmartWalletSigner } from "@/utilities/privy-smart-wallet-signer";
@@ -69,8 +68,7 @@ interface UseGaslessSignerResult {
  * Falls back to regular wagmi wallet if smart wallet is not ready.
  */
 export function useGaslessSigner(): UseGaslessSignerResult {
-  const { client: smartWalletClient } = useSmartWallets();
-  const { user, ready: privyReady } = usePrivy();
+  const { smartWalletClient, user, ready: privyReady } = usePrivyBridge();
 
   const smartWallet = useMemo(() => {
     if (!privyReady || !user) return null;

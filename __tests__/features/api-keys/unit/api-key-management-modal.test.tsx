@@ -6,19 +6,19 @@ import { ApiKeyManagementModal } from "@/src/features/api-keys/components/api-ke
 import type { GetApiKeyResponse } from "@/src/features/api-keys/types/api-key";
 
 // Mock stores
-const mockCloseModal = jest.fn();
+const mockCloseModal = vi.fn();
 let mockIsModalOpen = true;
 
-jest.mock("@/store/modals/apiKeyManagement", () => ({
-  useApiKeyManagementModalStore: jest.fn(() => ({
+vi.mock("@/store/modals/apiKeyManagement", () => ({
+  useApiKeyManagementModalStore: vi.fn(() => ({
     isModalOpen: mockIsModalOpen,
-    openModal: jest.fn(),
+    openModal: vi.fn(),
     closeModal: mockCloseModal,
   })),
 }));
 
-jest.mock("@/hooks/useAuth", () => ({
-  useAuth: jest.fn(() => ({
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: vi.fn(() => ({
     address: "0x1234567890123456789012345678901234567890",
     authenticated: true,
     ready: true,
@@ -26,23 +26,23 @@ jest.mock("@/hooks/useAuth", () => ({
 }));
 
 // Mock hooks
-const mockCreateKey = jest.fn();
-const mockRevokeKey = jest.fn();
+const mockCreateKey = vi.fn();
+const mockRevokeKey = vi.fn();
 let mockApiKeyData: GetApiKeyResponse = { apiKey: null };
 let mockIsLoadingKey = false;
 let mockIsKeyError = false;
 let mockIsCreating = false;
 let mockIsRevoking = false;
-const mockRefetch = jest.fn();
+const mockRefetch = vi.fn();
 
-jest.mock("@/src/features/api-keys/hooks/use-api-key", () => ({
-  useApiKey: jest.fn(() => ({
+vi.mock("@/src/features/api-keys/hooks/use-api-key", () => ({
+  useApiKey: vi.fn(() => ({
     data: mockApiKeyData,
     isLoading: mockIsLoadingKey,
     isError: mockIsKeyError,
     refetch: mockRefetch,
   })),
-  useCreateApiKey: jest.fn((options?: any) => ({
+  useCreateApiKey: vi.fn((options?: any) => ({
     mutate: (name?: string) => {
       mockCreateKey(name);
       // Simulate success callback
@@ -57,7 +57,7 @@ jest.mock("@/src/features/api-keys/hooks/use-api-key", () => ({
     },
     isPending: mockIsCreating,
   })),
-  useRevokeApiKey: jest.fn((options?: any) => ({
+  useRevokeApiKey: vi.fn((options?: any) => ({
     mutate: () => {
       mockRevokeKey();
       if (options?.onSuccess) {
@@ -68,24 +68,25 @@ jest.mock("@/src/features/api-keys/hooks/use-api-key", () => ({
   })),
 }));
 
-jest.mock("@/hooks/useCopyToClipboard", () => ({
-  useCopyToClipboard: jest.fn(() => [null, jest.fn()]),
+vi.mock("@/hooks/useCopyToClipboard", () => ({
+  useCopyToClipboard: vi.fn(() => [null, vi.fn()]),
 }));
 
-jest.mock("@/utilities/enviromentVars", () => ({
+vi.mock("@/utilities/enviromentVars", () => ({
   envVars: {
     NEXT_PUBLIC_GAP_INDEXER_URL: "https://api.gap.karmahq.xyz",
   },
 }));
 
-jest.mock("react-hot-toast", () => ({
+vi.mock("react-hot-toast", () => ({
   __esModule: true,
   default: {
-    success: jest.fn(),
-    error: jest.fn(),
+    success: vi.fn(),
+    error: vi.fn(),
   },
 }));
 
+// Fresh QueryClient per render — no afterEach cleanup required
 const createWrapper = () => {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -104,7 +105,7 @@ const renderModal = () => {
 
 describe("ApiKeyManagementModal", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockIsModalOpen = true;
     mockApiKeyData = { apiKey: null };
     mockIsLoadingKey = false;

@@ -1,13 +1,19 @@
 "use client";
+import { PaperClipIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
 import { z } from "zod";
 import { OutputsSection } from "@/components/Forms/Outputs/OutputsSection";
 import { Button } from "@/components/Utilities/Button";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { FileUpload } from "@/components/Utilities/FileUpload";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useMilestone } from "@/hooks/useMilestone";
+import { submitGranteeInvoice } from "@/src/features/payout-disbursement/services/payout-disbursement.service";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
+import { INDEXER } from "@/utilities/indexer";
 
 // Create form schema with zod
 const formSchema = z.object({
@@ -52,13 +58,26 @@ export type MilestoneCompletedFormData = z.infer<typeof formSchema>;
 interface GrantMilestoneCompletionFormProps {
   milestone: UnifiedMilestone;
   handleCompleting: (isCompleting: boolean) => void;
+  invoiceRequired?: boolean;
+  grantUID?: string;
+  milestoneLabel?: string;
 }
 
 export const GrantMilestoneCompletionForm = ({
   milestone,
   handleCompleting,
+  invoiceRequired = false,
+  grantUID,
+  milestoneLabel,
 }: GrantMilestoneCompletionFormProps) => {
   const [isCompleting, setIsCompleting] = useState(false);
+  const [invoiceFile, setInvoiceFile] = useState<{
+    fileUrl: string;
+    fileKey: string;
+    fileName: string;
+  } | null>(null);
+  const [isInvoiceUploading, setIsInvoiceUploading] = useState(false);
+  const pendingFileNameRef = useRef("");
   const { completeMilestone } = useMilestone();
 
   const {
@@ -85,9 +104,28 @@ export const GrantMilestoneCompletionForm = ({
         ...data,
         noProofCheckbox: true, // Always set to true since we removed the proof section
       });
+
+      // Submit invoice after successful milestone completion
+      if (invoiceFile && grantUID && milestoneLabel) {
+        try {
+          await submitGranteeInvoice(grantUID, {
+            milestoneLabel,
+            milestoneUID: milestone.uid,
+            invoiceFileKey: invoiceFile.fileKey,
+            invoiceFileUrl: invoiceFile.fileUrl,
+          });
+          toast.success("Invoice submitted successfully");
+        } catch (invoiceError) {
+          errorManager("Invoice submission failed after milestone completion", invoiceError);
+          toast.error(
+            "Milestone completed but invoice submission failed. You can upload it later."
+          );
+        }
+      }
+
       // Close the form after successful completion
       handleCompleting(false);
-    } catch (error) {
+    } catch (_error) {
       // Don't close the form if there was an error
     } finally {
       setIsCompleting(false);
@@ -148,6 +186,60 @@ export const GrantMilestoneCompletionForm = ({
         labelStyle="text-sm font-semibold text-zinc-800 dark:text-zinc-200"
       />
 
+      {/* Invoice Upload Section */}
+      {invoiceRequired && grantUID && (
+        <div className="flex flex-col gap-2">
+          <div className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+            Upload Invoice (optional)
+          </div>
+          <p className="text-xs text-gray-500 dark:text-zinc-400">
+            Upload your invoice now to speed up payment processing.
+          </p>
+          {invoiceFile ? (
+            <div className="flex items-center gap-2 rounded-md border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-2">
+              <PaperClipIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+              <span className="text-sm text-emerald-700 dark:text-emerald-300 flex-1 truncate">
+                {invoiceFile.fileName}
+              </span>
+              <button
+                type="button"
+                aria-label="Remove invoice file"
+                className="p-0.5 rounded text-red-400 hover:text-red-600 dark:text-red-500 dark:hover:text-red-400 transition-colors"
+                onClick={() => setInvoiceFile(null)}
+              >
+                <XMarkIcon className="h-4 w-4" />
+              </button>
+            </div>
+          ) : (
+            <FileUpload
+              onFileSelect={(file) => {
+                pendingFileNameRef.current = file.name;
+                setIsInvoiceUploading(true);
+              }}
+              acceptedFormats=".pdf,.docx"
+              description="PDF or DOCX (max 10MB)"
+              useS3Upload
+              skipDimensionValidation
+              presignedUrlEndpoint={INDEXER.V2.MILESTONE_INVOICES.GRANTEE_PRESIGNED()}
+              maxFileSize={10 * 1024 * 1024}
+              allowedFileTypes={[
+                "application/pdf",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+              ]}
+              onS3UploadComplete={(finalUrl, tempKey) => {
+                setInvoiceFile({
+                  fileUrl: finalUrl,
+                  fileKey: tempKey,
+                  fileName: pendingFileNameRef.current,
+                });
+                setIsInvoiceUploading(false);
+              }}
+              onS3UploadError={() => setIsInvoiceUploading(false)}
+            />
+          )}
+        </div>
+      )}
+
       <div className="flex flex-row gap-2 justify-end">
         <Button
           type="button"
@@ -161,7 +253,7 @@ export const GrantMilestoneCompletionForm = ({
         <Button
           type="submit"
           isLoading={isSubmitting || isCompleting}
-          disabled={isSubmitting || isCompleting || !isValid}
+          disabled={isSubmitting || isCompleting || !isValid || isInvoiceUploading}
           className="px-3 py-2 bg-brand-blue text-white"
         >
           Complete

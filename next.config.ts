@@ -22,7 +22,44 @@ const removeImports = require("next-remove-imports")();
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   staticPageGenerationTimeout: 10000,
-  turbopack: {},
+  turbopack: {
+    resolveAlias: {
+      // Force CJS to work around Turbopack ESM bundling bug with markdown-it's isSpace export
+      "markdown-it": "markdown-it/dist/index.cjs.js",
+    },
+  },
+  experimental: {
+    optimizePackageImports: [
+      "@tremor/react",
+      "lucide-react",
+      "@radix-ui/react-icons",
+      "@radix-ui/react-dialog",
+      "@radix-ui/react-dropdown-menu",
+      "@radix-ui/react-popover",
+      "@radix-ui/react-select",
+      "@radix-ui/react-tabs",
+      "@radix-ui/react-tooltip",
+      "react-hot-toast",
+      "@heroicons/react",
+      "date-fns",
+      "@headlessui/react",
+      "@radix-ui/react-accordion",
+      "@radix-ui/react-avatar",
+      "@radix-ui/react-checkbox",
+      "@radix-ui/react-hover-card",
+      "@radix-ui/react-label",
+      "@radix-ui/react-scroll-area",
+      "@radix-ui/react-separator",
+      "@radix-ui/react-slider",
+      "@radix-ui/react-slot",
+      "wagmi",
+      "@wagmi/core",
+      "viem",
+      "@wagmi/connectors",
+      "axios",
+      "semver",
+    ],
+  },
   eslint: {
     dirs: ["app", "components", "utilities", "hooks", "store", "types"],
     ignoreDuringBuilds: false,
@@ -55,14 +92,6 @@ const nextConfig: NextConfig = {
 
     // Add external modules that should not be bundled
     config.externals.push("pino-pretty", "lokijs", "encoding");
-
-    // Ignore dynamic requires in browserslist
-    config.plugins.push(
-      new webpack.IgnorePlugin({
-        resourceRegExp: /^\.\/locale$/,
-        contextRegExp: /moment$/,
-      })
-    );
 
     // Exclude Storybook story files from the build
     config.plugins.push(
@@ -112,6 +141,12 @@ const nextConfig: NextConfig = {
       {
         source: "/community/:communityId/reviewer/:path*",
         destination: "/community/:communityId/manage/:path*",
+        permanent: true,
+      },
+      // Redirect /grants to /funding-opportunities (common alias)
+      {
+        source: "/community/:communityId/grants",
+        destination: "/community/:communityId/funding-opportunities",
         permanent: true,
       },
       // Redirect old project update routes

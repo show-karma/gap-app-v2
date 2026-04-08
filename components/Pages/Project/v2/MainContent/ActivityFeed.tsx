@@ -2,7 +2,7 @@
 
 import { BadgeCheck, CircleDollarSign, Goal, Rss } from "lucide-react";
 import { useParams } from "next/navigation";
-import { useMemo } from "react";
+import React, { useMemo } from "react";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
 import { ActivityCard } from "@/components/Shared/ActivityCard";
@@ -49,8 +49,11 @@ function getActivityTypeLabel(type: string, milestone?: UnifiedMilestone): strin
   switch (type) {
     case "grant_update":
       return "Grant Update";
-    case "grant_received":
-      return "Grant Received";
+    case "grant_received": {
+      const programType = milestone?.grantReceived?.programType;
+      if (programType === "hackathon") return "Hackathon Participation";
+      return "Grant Approved";
+    }
     case "project":
     case "activity":
     case "update":
@@ -65,6 +68,170 @@ function getActivityTypeLabel(type: string, milestone?: UnifiedMilestone): strin
     }
   }
 }
+
+interface TimelineItemProps {
+  milestone: UnifiedMilestone;
+  projectId: string | undefined;
+  isAuthorized: boolean;
+  formatDisplayDate: (dateStr: string) => string;
+  isValidTimestamp: (timestamp: number | undefined) => boolean;
+}
+
+const TimelineItem = React.memo(function TimelineItem({
+  milestone,
+  projectId,
+  isAuthorized,
+  formatDisplayDate,
+  isValidTimestamp,
+}: TimelineItemProps) {
+  return (
+    <div className="relative pl-8 max-lg:pl-7" data-testid="activity-item">
+      {/* Timeline icon - positioned relative to item, not content row */}
+      <div
+        className={cn(
+          "absolute left-0 top-0 w-6 h-6 max-lg:w-5 max-lg:h-5 rounded-full border flex items-center justify-center",
+          "border-foreground/10",
+          "ring-2 ring-white dark:ring-zinc-900",
+          milestone.type === "grant_received" &&
+            "bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400",
+          (milestone.type === "grant_update" ||
+            milestone.type === "activity" ||
+            milestone.type === "update" ||
+            milestone.type === "project") &&
+            "bg-violet-50 text-violet-600 dark:bg-violet-950 dark:text-violet-400",
+          milestone.type === "endorsement" &&
+            "bg-pink-50 text-pink-500 dark:bg-pink-950 dark:text-pink-400",
+          milestone.type === "milestone" &&
+            "bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400",
+          (milestone.type === "grant" || milestone.type === "impact") &&
+            "bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-400"
+        )}
+        data-testid="timeline-icon"
+      >
+        {milestone.type === "grant_received" ? (
+          <CircleDollarSign className="w-3.5 h-3.5 max-lg:w-3 max-lg:h-3" />
+        ) : milestone.type === "grant_update" ||
+          milestone.type === "activity" ||
+          milestone.type === "update" ||
+          milestone.type === "project" ? (
+          <Rss className="w-3.5 h-3.5 max-lg:w-3 max-lg:h-3" />
+        ) : milestone.type === "endorsement" ? (
+          <BadgeCheck className="w-3.5 h-3.5 max-lg:w-3 max-lg:h-3" />
+        ) : (
+          <Goal className="w-3.5 h-3.5 max-lg:w-3 max-lg:h-3" />
+        )}
+      </div>
+
+      {/* Status Text, Due Date, and Posted By */}
+      <div className="flex flex-col gap-1 lg:flex-row lg:items-center lg:justify-between lg:gap-2 mb-3">
+        {/* Endorsement - special format */}
+        {milestone.type === "endorsement" && milestone.endorsement ? (
+          <>
+            <div className="flex flex-row items-center gap-1.5 lg:gap-2 flex-wrap">
+              <span className="text-xs lg:text-sm font-semibold text-foreground">Endorsed by</span>
+              <EthereumAddressToENSAvatar
+                address={milestone.endorsement.endorsedBy}
+                className="h-5 w-5 lg:h-6 lg:w-6 min-w-5 min-h-5 lg:min-w-6 lg:min-h-6 rounded-full"
+              />
+              <span className="text-xs lg:text-sm font-semibold text-foreground">
+                <EthereumAddressToENSName address={milestone.endorsement.endorsedBy} />
+              </span>
+            </div>
+            <div className="flex flex-row items-center gap-1.5 lg:gap-2 text-xs lg:text-sm font-medium leading-5 text-muted-foreground">
+              <span>{formatDisplayDate(milestone.createdAt)}</span>
+            </div>
+          </>
+        ) : /* Grant Received - match milestone header format */
+        milestone.type === "grant_received" ? (
+          <>
+            <div className="flex flex-row items-center gap-1.5 lg:gap-2 flex-wrap">
+              <span className="text-xs lg:text-sm font-semibold text-foreground">
+                {milestone.grantReceived?.programType === "hackathon"
+                  ? "Hackathon participation"
+                  : "Grant approved"}
+              </span>
+            </div>
+
+            {/* Grant title on a new line when it differs from community name */}
+            {(() => {
+              const title = milestone.grantReceived?.grantTitle?.trim();
+              const community = milestone.grantReceived?.communityName?.trim();
+              const isDuplicate =
+                title && community && title.toLowerCase() === community.toLowerCase();
+              return title && !isDuplicate ? (
+                <span className="text-xs text-muted-foreground" data-testid="grant-title">
+                  {title}
+                </span>
+              ) : null;
+            })()}
+
+            <div className="flex flex-row items-center gap-1.5 lg:gap-2 text-xs lg:text-sm font-medium leading-5 text-muted-foreground">
+              <span>Posted {formatDisplayDate(milestone.createdAt)}</span>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Left side: Status and Due Date */}
+            <div className="flex flex-row items-center gap-1.5 lg:gap-2 flex-wrap">
+              <span className="text-xs lg:text-sm font-semibold text-foreground">
+                {getActivityTypeLabel(milestone.type, milestone)}
+              </span>
+              {isValidTimestamp(milestone.endsAt) && (
+                <span className="text-xs lg:text-sm font-semibold text-muted-foreground">
+                  Due by {formatDisplayDate(new Date(milestone.endsAt! * 1000).toISOString())}
+                </span>
+              )}
+            </div>
+
+            {/* Posted by - stacks on mobile */}
+            {(() => {
+              const attester = getMilestoneAttester(milestone);
+              return (
+                <div className="flex flex-row items-center gap-1.5 lg:gap-2 text-xs lg:text-sm font-medium leading-5 text-muted-foreground">
+                  <span>Posted {formatDisplayDate(milestone.createdAt)}</span>
+                  {attester && (
+                    <>
+                      <span>by</span>
+                      <EthereumAddressToENSAvatar
+                        address={attester}
+                        className="h-5 w-5 lg:h-6 lg:w-6 min-h-5 min-w-5 lg:min-h-6 lg:min-w-6 rounded-full"
+                      />
+                      <span className="text-xs lg:text-sm font-semibold leading-5 text-foreground">
+                        <EthereumAddressToENSName address={attester} />
+                      </span>
+                    </>
+                  )}
+                </div>
+              );
+            })()}
+          </>
+        )}
+      </div>
+
+      {/* Activity Card for all types */}
+      <ActivityCard
+        activity={
+          milestone.type === "grant_received"
+            ? {
+                type: "fundingReceived",
+                data: milestone,
+                projectId,
+              }
+            : milestone.type === "endorsement"
+              ? {
+                  type: "endorsement",
+                  data: milestone,
+                }
+              : {
+                  type: "milestone",
+                  data: milestone,
+                }
+        }
+        isAuthorized={isAuthorized}
+      />
+    </div>
+  );
+});
 
 /**
  * ActivityFeed displays a vertical timeline of project activities.
@@ -119,6 +286,8 @@ export function ActivityFeed({
       filtered = filtered.filter((milestone) => allowedTypes.includes(milestone.type));
     }
 
+    // Milestone status filtering is now done server-side via API query param
+
     // Sort by date using same logic as production (ProjectRoadmap)
     filtered.sort((a, b) => {
       const timestampA = getSortTimestamp(a);
@@ -163,149 +332,17 @@ export function ActivityFeed({
       {/* Timeline items */}
       <div className="flex flex-col gap-12 pb-12">
         {sortedMilestones.map((milestone, index) => {
-          // Create unique key combining type, uid, and index to handle duplicate uids
           const uniqueKey = `${milestone.type}-${milestone.uid}-${index}`;
 
           return (
-            <div key={uniqueKey} className="relative pl-8 max-lg:pl-7" data-testid="activity-item">
-              {/* Timeline icon - positioned relative to item, not content row */}
-              <div
-                className={cn(
-                  "absolute left-0 top-0 w-6 h-6 max-lg:w-5 max-lg:h-5 rounded-full border flex items-center justify-center",
-                  // Shared border for all types: foreground at 10% opacity
-                  "border-foreground/10",
-                  // 2px outline that matches page background for separation from timeline
-                  "ring-2 ring-white dark:ring-zinc-900",
-                  // Funding (grant_received) - emerald, matches Funds filter badge
-                  milestone.type === "grant_received" &&
-                    "bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400",
-                  // Updates (grant_update, activity, update, project) - violet, matches Updates filter badge
-                  (milestone.type === "grant_update" ||
-                    milestone.type === "activity" ||
-                    milestone.type === "update" ||
-                    milestone.type === "project") &&
-                    "bg-violet-50 text-violet-600 dark:bg-violet-950 dark:text-violet-400",
-                  // Endorsements - pink, matches Endorsements filter badge
-                  milestone.type === "endorsement" &&
-                    "bg-pink-50 text-pink-500 dark:bg-pink-950 dark:text-pink-400",
-                  // Standalone milestones - indigo
-                  milestone.type === "milestone" &&
-                    "bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400",
-                  // Grant milestones (sub-milestones) - blue
-                  (milestone.type === "grant" || milestone.type === "impact") &&
-                    "bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-400"
-                )}
-                data-testid="timeline-icon"
-              >
-                {milestone.type === "grant_received" ? (
-                  <CircleDollarSign className="w-3.5 h-3.5 max-lg:w-3 max-lg:h-3" />
-                ) : milestone.type === "grant_update" ||
-                  milestone.type === "activity" ||
-                  milestone.type === "update" ||
-                  milestone.type === "project" ? (
-                  <Rss className="w-3.5 h-3.5 max-lg:w-3 max-lg:h-3" />
-                ) : milestone.type === "endorsement" ? (
-                  <BadgeCheck className="w-3.5 h-3.5 max-lg:w-3 max-lg:h-3" />
-                ) : (
-                  <Goal className="w-3.5 h-3.5 max-lg:w-3 max-lg:h-3" />
-                )}
-              </div>
-
-              {/* Status Text, Due Date, and Posted By */}
-              <div className="flex flex-col gap-1 lg:flex-row lg:items-center lg:justify-between lg:gap-2 mb-3">
-                {/* Endorsement - special format */}
-                {milestone.type === "endorsement" && milestone.endorsement ? (
-                  <>
-                    <div className="flex flex-row items-center gap-1.5 lg:gap-2 flex-wrap">
-                      <span className="text-xs lg:text-sm font-semibold text-foreground">
-                        Endorsed by
-                      </span>
-                      <EthereumAddressToENSAvatar
-                        address={milestone.endorsement.endorsedBy}
-                        className="h-5 w-5 lg:h-6 lg:w-6 min-w-5 min-h-5 lg:min-w-6 lg:min-h-6 rounded-full"
-                      />
-                      <span className="text-xs lg:text-sm font-semibold text-foreground">
-                        <EthereumAddressToENSName address={milestone.endorsement.endorsedBy} />
-                      </span>
-                    </div>
-                    <div className="flex flex-row items-center gap-1.5 lg:gap-2 text-xs lg:text-sm font-medium leading-5 text-muted-foreground">
-                      <span>{formatDisplayDate(milestone.createdAt)}</span>
-                    </div>
-                  </>
-                ) : /* Grant Received - match milestone header format */
-                milestone.type === "grant_received" ? (
-                  <>
-                    <div className="flex flex-row items-center gap-1.5 lg:gap-2 flex-wrap">
-                      <span className="text-xs lg:text-sm font-semibold text-foreground">
-                        Funding received
-                      </span>
-                    </div>
-                    <div className="flex flex-row items-center gap-1.5 lg:gap-2 text-xs lg:text-sm font-medium leading-5 text-muted-foreground">
-                      <span>Posted {formatDisplayDate(milestone.createdAt)}</span>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    {/* Left side: Status and Due Date */}
-                    <div className="flex flex-row items-center gap-1.5 lg:gap-2 flex-wrap">
-                      <span className="text-xs lg:text-sm font-semibold text-foreground">
-                        {getActivityTypeLabel(milestone.type, milestone)}
-                      </span>
-                      {isValidTimestamp(milestone.endsAt) && (
-                        <span className="text-xs lg:text-sm font-semibold text-muted-foreground">
-                          Due by{" "}
-                          {formatDisplayDate(new Date(milestone.endsAt! * 1000).toISOString())}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Posted by - stacks on mobile */}
-                    {(() => {
-                      const attester = getMilestoneAttester(milestone);
-                      return (
-                        <div className="flex flex-row items-center gap-1.5 lg:gap-2 text-xs lg:text-sm font-medium leading-5 text-muted-foreground">
-                          <span>Posted {formatDisplayDate(milestone.createdAt)}</span>
-                          {attester && (
-                            <>
-                              <span>by</span>
-                              <EthereumAddressToENSAvatar
-                                address={attester}
-                                className="h-5 w-5 lg:h-6 lg:w-6 min-h-5 min-w-5 lg:min-h-6 lg:min-w-6 rounded-full"
-                              />
-                              <span className="text-xs lg:text-sm font-semibold leading-5 text-foreground">
-                                <EthereumAddressToENSName address={attester} />
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      );
-                    })()}
-                  </>
-                )}
-              </div>
-
-              {/* Activity Card for all types */}
-              <ActivityCard
-                activity={
-                  milestone.type === "grant_received"
-                    ? {
-                        type: "fundingReceived",
-                        data: milestone,
-                        projectId,
-                      }
-                    : milestone.type === "endorsement"
-                      ? {
-                          type: "endorsement",
-                          data: milestone,
-                        }
-                      : {
-                          type: "milestone",
-                          data: milestone,
-                        }
-                }
-                isAuthorized={isAuthorized}
-              />
-            </div>
+            <TimelineItem
+              key={uniqueKey}
+              milestone={milestone}
+              projectId={projectId}
+              isAuthorized={isAuthorized}
+              formatDisplayDate={formatDisplayDate}
+              isValidTimestamp={isValidTimestamp}
+            />
           );
         })}
       </div>

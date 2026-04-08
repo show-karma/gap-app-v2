@@ -5,6 +5,7 @@ import { useState } from "react";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
 import { useMilestoneImpactAnswers } from "@/hooks/useMilestoneImpactAnswers";
+import { useGrantInvoiceRequired } from "@/src/features/payout-disbursement/hooks/use-payout-disbursement";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { formatDate } from "@/utilities/formatDate";
 import { PAGES } from "@/utilities/pages";
@@ -75,11 +76,17 @@ export const MilestoneCard = ({ milestone, isAuthorized }: MilestoneCardProps) =
 
   // grant milestone-specific properties
   const grantMilestone = milestone.source.grantMilestone;
+  const grantUID = grantMilestone?.grant.uid;
   const grantDetails = grantMilestone?.grant.details as
     | { title?: string; programId?: string }
     | undefined;
   const grantTitle = grantDetails?.title;
   const programId = grantDetails?.programId;
+
+  // Check if invoice is required for this grant (only for grant milestones, only when authorized)
+  const { data: invoiceCheckData } = useGrantInvoiceRequired(
+    isAuthorized && type === "grant" ? grantUID : undefined
+  );
   const communityData = grantMilestone?.grant.community?.details as
     | { name?: string; slug?: string; imageURL?: string }
     | undefined;
@@ -253,7 +260,13 @@ export const MilestoneCard = ({ milestone, isAuthorized }: MilestoneCardProps) =
             handleProjectMilestoneCompletion()
           ) : type === "grant" && isCompleting ? (
             <div className="w-full flex-col flex gap-2 px-4 py-2 bg-[#F8F9FC] dark:bg-zinc-700 rounded-lg">
-              <GrantMilestoneCompletion milestone={milestone} handleCompleting={handleCompleting} />
+              <GrantMilestoneCompletion
+                milestone={milestone}
+                handleCompleting={handleCompleting}
+                invoiceRequired={invoiceCheckData?.invoiceRequired}
+                grantUID={grantUID}
+                milestoneLabel={title}
+              />
             </div>
           ) : (
             <div className="w-full flex-col flex gap-2 px-4 py-2 bg-[#F8F9FC] dark:bg-zinc-700 rounded-lg">

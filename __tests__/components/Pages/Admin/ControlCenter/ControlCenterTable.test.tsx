@@ -1,4 +1,5 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import {
   ControlCenterTable,
   type ControlCenterTableProps,
@@ -9,7 +10,7 @@ import {
  * Mock Radix tooltip primitives so that tooltip content is always rendered
  * in the DOM (Radix tooltips require pointer events that jsdom cannot simulate).
  */
-jest.mock("@radix-ui/react-tooltip", () => ({
+vi.mock("@radix-ui/react-tooltip", () => ({
   Provider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   Root: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   Trigger: ({ children, asChild, ...props }: { children: React.ReactNode; asChild?: boolean }) => (
@@ -29,36 +30,35 @@ jest.mock("@radix-ui/react-tooltip", () => ({
   ),
 }));
 
-jest.mock("@/components/Utilities/TablePagination", () => {
-  return function MockTablePagination(props: any) {
-    return <div data-testid="table-pagination" data-total={props.totalPosts} />;
-  };
-});
+vi.mock("@/components/Utilities/TablePagination", () => ({
+  __esModule: true,
+  default: (props: any) => <div data-testid="table-pagination" data-total={props.totalPosts} />,
+}));
 
-jest.mock("@/components/Pages/Admin/ControlCenter/ControlCenterColumns", () => ({
+vi.mock("@/components/Pages/Admin/ControlCenter/ControlCenterColumns", () => ({
   SortIcon: ({ column }: { column: string }) => (
     <span data-testid={`sort-icon-${column}`}>sort</span>
   ),
 }));
 
-jest.mock("@/components/Pages/Admin/ControlCenter/StatusBadges", () => ({
+vi.mock("@/components/Pages/Admin/ControlCenter/StatusBadges", () => ({
   AgreementBadge: () => <div data-testid="agreement-badge">Agreement</div>,
   PendingDisbursalBadge: () => <div data-testid="pending-disbursal-badge">Pending</div>,
   ProgressCell: () => <div data-testid="progress-cell">Progress</div>,
 }));
 
-jest.mock("@/components/KycStatusIcon", () => ({
+vi.mock("@/components/KycStatusIcon", () => ({
   KycStatusBadge: () => <div data-testid="kyc-badge">KYC</div>,
 }));
 
-jest.mock("@/src/features/payout-disbursement", () => ({
+vi.mock("@/src/features/payout-disbursement", () => ({
   formatDisplayAmount: (val: string) => val,
   TokenBreakdown: ({ totalsByToken }: any) => (
     <div data-testid="token-breakdown">{totalsByToken?.length ?? 0} tokens</div>
   ),
 }));
 
-jest.mock("@/utilities/donations/helpers", () => ({
+vi.mock("@/utilities/donations/helpers", () => ({
   formatAddressForDisplay: (addr: string) => `${addr.slice(0, 6)}...${addr.slice(-4)}`,
 }));
 
@@ -87,10 +87,10 @@ function makeDefaultProps(
     paginatedData: [makeTableRow()],
     selectedGrants: new Set<string>(),
     selectableGrants: [],
-    onSelectGrant: jest.fn(),
-    onSelectAll: jest.fn(),
-    onRowClick: jest.fn(),
-    onSort: jest.fn(),
+    onSelectGrant: vi.fn(),
+    onSelectAll: vi.fn(),
+    onOpenDetails: vi.fn(),
+    onSort: vi.fn(),
     sortBy: undefined,
     sortOrder: undefined,
     isKycEnabled: false,
@@ -102,12 +102,11 @@ function makeDefaultProps(
     paidMilestoneCountMap: {},
     invoiceRequiredMap: {},
     getCheckboxDisabledState: () => ({ disabled: false, reason: null }),
-    onOpenConfigModal: jest.fn(),
     hasActiveFilters: false,
-    onClearFilters: jest.fn(),
+    onClearFilters: vi.fn(),
     readOnly: false,
     currentPage: 1,
-    onPageChange: jest.fn(),
+    onPageChange: vi.fn(),
     itemsPerPage: 25,
     totalItems: 1,
     ...overrides,
@@ -144,12 +143,6 @@ describe("ControlCenterTable", () => {
       const checkboxes = screen.getAllByRole("checkbox");
       // Header checkbox + one row checkbox
       expect(checkboxes.length).toBeGreaterThanOrEqual(2);
-    });
-
-    it("renders Actions column header when readOnly is false", () => {
-      render(<ControlCenterTable {...makeDefaultProps({ readOnly: false })} />);
-
-      expect(screen.getByText("Actions")).toBeInTheDocument();
     });
   });
 
@@ -216,29 +209,32 @@ describe("ControlCenterTable", () => {
   });
 
   describe("sort headers", () => {
-    it("calls onSort when Project header is clicked", () => {
-      const onSort = jest.fn();
+    it("calls onSort when Project header is clicked", async () => {
+      const user = userEvent.setup();
+      const onSort = vi.fn();
       render(<ControlCenterTable {...makeDefaultProps({ onSort })} />);
 
-      fireEvent.click(screen.getByText("Project"));
+      await user.click(screen.getByText("Project"));
 
       expect(onSort).toHaveBeenCalledWith("project_title");
     });
 
-    it("calls onSort when Total Grant header is clicked", () => {
-      const onSort = jest.fn();
+    it("calls onSort when Total Grant header is clicked", async () => {
+      const user = userEvent.setup();
+      const onSort = vi.fn();
       render(<ControlCenterTable {...makeDefaultProps({ onSort })} />);
 
-      fireEvent.click(screen.getByText("Total Grant"));
+      await user.click(screen.getByText("Total Grant"));
 
       expect(onSort).toHaveBeenCalledWith("payout_amount");
     });
 
-    it("calls onSort when Disbursed header is clicked", () => {
-      const onSort = jest.fn();
+    it("calls onSort when Disbursed header is clicked", async () => {
+      const user = userEvent.setup();
+      const onSort = vi.fn();
       render(<ControlCenterTable {...makeDefaultProps({ onSort })} />);
 
-      fireEvent.click(screen.getByText("Disbursed"));
+      await user.click(screen.getByText("Disbursed"));
 
       expect(onSort).toHaveBeenCalledWith("disbursed_amount");
     });

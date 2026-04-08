@@ -98,6 +98,12 @@ export interface GrantMilestone {
     editedAt: string;
     editedBy: string;
   }>;
+  /** Invoice information for this milestone */
+  invoiceInfo?: {
+    status: string;
+    receivedAt: string | null;
+    fileKey: string | null;
+  } | null;
   // Additional fields for compatibility
   id?: string;
   schemaUID?: string;
@@ -148,6 +154,8 @@ export interface GrantCompleted {
   };
 }
 
+export type ProgramType = "grant" | "hackathon" | "bounty" | "accelerator" | "vc_fund" | "rfp";
+
 export interface Grant {
   uid: string;
   chainID: number;
@@ -156,6 +164,7 @@ export interface Grant {
   projectUID?: string;
   communityUID?: string;
   programId?: string | null;
+  programType?: ProgramType;
   originalProjectUID?: string | null;
   recipient?: string;
   attester?: string;

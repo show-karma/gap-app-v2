@@ -4,31 +4,31 @@ import { contractsService } from "@/services/contracts.service";
 import { useContractVerification, VerificationStep } from "../useContractVerification";
 
 // Mock dependencies
-jest.mock("@/services/contracts.service", () => ({
+vi.mock("@/services/contracts.service", () => ({
   contractsService: {
-    lookupDeployer: jest.fn(),
-    requestVerificationMessage: jest.fn(),
-    verifyContractSignature: jest.fn(),
+    lookupDeployer: vi.fn(),
+    requestVerificationMessage: vi.fn(),
+    verifyContractSignature: vi.fn(),
   },
 }));
 
-jest.mock("wagmi", () => ({
-  useAccount: jest.fn(),
-  useSignMessage: jest.fn(),
+vi.mock("wagmi", () => ({
+  useAccount: vi.fn(),
+  useSignMessage: vi.fn(),
 }));
 
-const mockLookupDeployer = contractsService.lookupDeployer as jest.MockedFunction<
+const mockLookupDeployer = contractsService.lookupDeployer as vi.MockedFunction<
   typeof contractsService.lookupDeployer
 >;
 const mockRequestVerificationMessage =
-  contractsService.requestVerificationMessage as jest.MockedFunction<
+  contractsService.requestVerificationMessage as vi.MockedFunction<
     typeof contractsService.requestVerificationMessage
   >;
-const mockVerifyContractSignature = contractsService.verifyContractSignature as jest.MockedFunction<
+const mockVerifyContractSignature = contractsService.verifyContractSignature as vi.MockedFunction<
   typeof contractsService.verifyContractSignature
 >;
-const mockUseAccount = useAccount as jest.MockedFunction<typeof useAccount>;
-const mockUseSignMessage = useSignMessage as jest.MockedFunction<typeof useSignMessage>;
+const mockUseAccount = useAccount as vi.MockedFunction<typeof useAccount>;
+const mockUseSignMessage = useSignMessage as vi.MockedFunction<typeof useSignMessage>;
 
 describe("useContractVerification - User Journeys", () => {
   const mockDeployerInfo = {
@@ -54,12 +54,12 @@ describe("useContractVerification - User Journeys", () => {
     },
   };
 
-  let mockSignMessageAsync: jest.Mock;
+  let mockSignMessageAsync: vi.Mock;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
-    mockSignMessageAsync = jest.fn();
+    mockSignMessageAsync = vi.fn();
 
     mockUseAccount.mockReturnValue({
       address: "0xDeployer123",

@@ -1,8 +1,9 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { TableStatusActionButtons } from "@/components/FundingPlatform/ApplicationList/TableStatusActionButtons";
 
 // Mock Button component
-jest.mock("@/components/Utilities/Button", () => ({
+vi.mock("@/components/Utilities/Button", () => ({
   Button: ({ onClick, disabled, children, className, variant }: any) => {
     // Extract text from children (could be icon + text or just text)
     const getButtonText = (children: any): string => {
@@ -37,12 +38,12 @@ jest.mock("@/components/Utilities/Button", () => ({
 }));
 
 // Mock the RBAC Can component to always render children (grant all permissions in tests)
-jest.mock("@/src/core/rbac/components/can", () => ({
+vi.mock("@/src/core/rbac/components/can", () => ({
   Can: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
 // Mock Heroicons
-jest.mock("@heroicons/react/24/outline", () => ({
+vi.mock("@heroicons/react/24/outline", () => ({
   CheckIcon: (props: any) => {
     const { className, ...restProps } = props;
     return <svg data-testid="check-icon" className={className} {...restProps} />;
@@ -57,12 +58,12 @@ describe("TableStatusActionButtons", () => {
   const defaultProps = {
     applicationId: "app-123",
     currentStatus: "pending" as const,
-    onStatusChange: jest.fn(),
+    onStatusChange: vi.fn(),
     isUpdating: false,
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("TableStatusActionButton Component", () => {
@@ -72,8 +73,9 @@ describe("TableStatusActionButtons", () => {
       expect(screen.getByTestId("action-button-Review")).toBeInTheDocument();
     });
 
-    it("should call onStatusChange with correct parameters when clicked", () => {
-      const onStatusChange = jest.fn();
+    it("should call onStatusChange with correct parameters when clicked", async () => {
+      const user = userEvent.setup();
+      const onStatusChange = vi.fn();
       render(
         <TableStatusActionButtons
           {...defaultProps}
@@ -83,7 +85,7 @@ describe("TableStatusActionButtons", () => {
       );
 
       const reviewButton = screen.getByTestId("action-button-Review");
-      fireEvent.click(reviewButton);
+      await user.click(reviewButton);
 
       expect(onStatusChange).toHaveBeenCalledWith("app-123", "under_review", expect.any(Object));
     });
@@ -126,8 +128,9 @@ describe("TableStatusActionButtons", () => {
         expect(screen.queryByTestId("action-button-Request Revision")).not.toBeInTheDocument();
       });
 
-      it("should call onStatusChange with under_review when Review clicked", () => {
-        const onStatusChange = jest.fn();
+      it("should call onStatusChange with under_review when Review clicked", async () => {
+        const user = userEvent.setup();
+        const onStatusChange = vi.fn();
         render(
           <TableStatusActionButtons
             {...defaultProps}
@@ -137,7 +140,7 @@ describe("TableStatusActionButtons", () => {
         );
 
         const reviewButton = screen.getByTestId("action-button-Review");
-        fireEvent.click(reviewButton);
+        await user.click(reviewButton);
 
         expect(onStatusChange).toHaveBeenCalledWith("app-123", "under_review", expect.any(Object));
       });
@@ -152,8 +155,9 @@ describe("TableStatusActionButtons", () => {
         expect(screen.getByTestId("action-button-Reject")).toBeInTheDocument();
       });
 
-      it("should call onStatusChange with revision_requested when Request Revision clicked", () => {
-        const onStatusChange = jest.fn();
+      it("should call onStatusChange with revision_requested when Request Revision clicked", async () => {
+        const user = userEvent.setup();
+        const onStatusChange = vi.fn();
         render(
           <TableStatusActionButtons
             {...defaultProps}
@@ -163,7 +167,7 @@ describe("TableStatusActionButtons", () => {
         );
 
         const revisionButton = screen.getByTestId("action-button-Request Revision");
-        fireEvent.click(revisionButton);
+        await user.click(revisionButton);
 
         expect(onStatusChange).toHaveBeenCalledWith(
           "app-123",
@@ -172,8 +176,9 @@ describe("TableStatusActionButtons", () => {
         );
       });
 
-      it("should call onStatusChange with approved when Approve clicked", () => {
-        const onStatusChange = jest.fn();
+      it("should call onStatusChange with approved when Approve clicked", async () => {
+        const user = userEvent.setup();
+        const onStatusChange = vi.fn();
         render(
           <TableStatusActionButtons
             {...defaultProps}
@@ -183,13 +188,14 @@ describe("TableStatusActionButtons", () => {
         );
 
         const approveButton = screen.getByTestId("action-button-Approve");
-        fireEvent.click(approveButton);
+        await user.click(approveButton);
 
         expect(onStatusChange).toHaveBeenCalledWith("app-123", "approved", expect.any(Object));
       });
 
-      it("should call onStatusChange with rejected when Reject clicked", () => {
-        const onStatusChange = jest.fn();
+      it("should call onStatusChange with rejected when Reject clicked", async () => {
+        const user = userEvent.setup();
+        const onStatusChange = vi.fn();
         render(
           <TableStatusActionButtons
             {...defaultProps}
@@ -199,7 +205,7 @@ describe("TableStatusActionButtons", () => {
         );
 
         const rejectButton = screen.getByTestId("action-button-Reject");
-        fireEvent.click(rejectButton);
+        await user.click(rejectButton);
 
         expect(onStatusChange).toHaveBeenCalledWith("app-123", "rejected", expect.any(Object));
       });
@@ -221,8 +227,9 @@ describe("TableStatusActionButtons", () => {
         expect(screen.queryByTestId("action-button-Reject")).not.toBeInTheDocument();
       });
 
-      it("should call onStatusChange with under_review when Review clicked", () => {
-        const onStatusChange = jest.fn();
+      it("should call onStatusChange with under_review when Review clicked", async () => {
+        const user = userEvent.setup();
+        const onStatusChange = vi.fn();
         render(
           <TableStatusActionButtons
             {...defaultProps}
@@ -232,7 +239,7 @@ describe("TableStatusActionButtons", () => {
         );
 
         const reviewButton = screen.getByTestId("action-button-Review");
-        fireEvent.click(reviewButton);
+        await user.click(reviewButton);
 
         expect(onStatusChange).toHaveBeenCalledWith("app-123", "under_review", expect.any(Object));
       });
@@ -337,8 +344,9 @@ describe("TableStatusActionButtons", () => {
   });
 
   describe("Click Handlers", () => {
-    it("should pass correct event object to onStatusChange", () => {
-      const onStatusChange = jest.fn();
+    it("should pass correct event object to onStatusChange", async () => {
+      const user = userEvent.setup();
+      const onStatusChange = vi.fn();
       render(
         <TableStatusActionButtons
           {...defaultProps}
@@ -348,8 +356,8 @@ describe("TableStatusActionButtons", () => {
       );
 
       const reviewButton = screen.getByTestId("action-button-Review");
-      const mockEvent = { preventDefault: jest.fn() } as any;
-      fireEvent.click(reviewButton, mockEvent);
+      const mockEvent = { preventDefault: vi.fn() } as any;
+      await user.click(reviewButton, mockEvent);
 
       expect(onStatusChange).toHaveBeenCalled();
       const callArgs = onStatusChange.mock.calls[0];
@@ -358,8 +366,9 @@ describe("TableStatusActionButtons", () => {
       expect(callArgs[2]).toBeInstanceOf(Object); // Event object
     });
 
-    it("should handle rapid clicks correctly", () => {
-      const onStatusChange = jest.fn();
+    it("should handle rapid clicks correctly", async () => {
+      const user = userEvent.setup();
+      const onStatusChange = vi.fn();
       render(
         <TableStatusActionButtons
           {...defaultProps}
@@ -369,9 +378,9 @@ describe("TableStatusActionButtons", () => {
       );
 
       const approveButton = screen.getByTestId("action-button-Approve");
-      fireEvent.click(approveButton);
-      fireEvent.click(approveButton);
-      fireEvent.click(approveButton);
+      await user.click(approveButton);
+      await user.click(approveButton);
+      await user.click(approveButton);
 
       expect(onStatusChange).toHaveBeenCalledTimes(3);
     });
@@ -410,8 +419,9 @@ describe("TableStatusActionButtons", () => {
   });
 
   describe("Edge Cases", () => {
-    it("should handle different application IDs", () => {
-      const onStatusChange = jest.fn();
+    it("should handle different application IDs", async () => {
+      const user = userEvent.setup();
+      const onStatusChange = vi.fn();
       render(
         <TableStatusActionButtons
           applicationId="app-456"
@@ -422,7 +432,7 @@ describe("TableStatusActionButtons", () => {
       );
 
       const reviewButton = screen.getByTestId("action-button-Review");
-      fireEvent.click(reviewButton);
+      await user.click(reviewButton);
 
       expect(onStatusChange).toHaveBeenCalledWith("app-456", "under_review", expect.any(Object));
     });
@@ -444,7 +454,7 @@ describe("TableStatusActionButtons", () => {
         <TableStatusActionButtons
           {...defaultProps}
           currentStatus={"unknown" as any}
-          onStatusChange={jest.fn()}
+          onStatusChange={vi.fn()}
         />
       );
 

@@ -119,9 +119,19 @@ export interface FundingProgramMetadata {
   anyoneCanJoin?: boolean;
   invoiceRequired?: boolean;
   status?: string;
+  deactivationReason?: string;
+  deactivatedAt?: string;
   communityRef?: string[];
   adminEmails?: string[];
   financeEmails?: string[];
+  /** Ingestion source pipeline (admin-only, not shown on public funding map) */
+  ingestionSource?: string;
+  /** Ingestion run ID for tracing (admin-only) */
+  ingestionRunId?: string;
+  /** Raw data from the source where program was fetched (admin-only) */
+  rawData?: Record<string, unknown>;
+  /** Application URL from ingestion (admin-only) */
+  applicationUrl?: string;
 }
 
 /**
@@ -182,6 +192,8 @@ export interface FundingProgramResponse {
   vcFundMetadata?: VcFundMetadata;
   /** RFP-specific metadata */
   rfpMetadata?: RfpMetadata;
+  /** Ingestion source (admin-only, not shown on public funding map) */
+  source?: string;
 }
 
 /**

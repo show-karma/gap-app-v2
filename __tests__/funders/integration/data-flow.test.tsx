@@ -20,7 +20,7 @@ describe("Funders Page Data Flow", () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("Community Data", () => {

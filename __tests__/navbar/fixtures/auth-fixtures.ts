@@ -15,6 +15,20 @@ export interface MockAuthState {
     wallet?: {
       address: string;
     };
+    email?: {
+      address: string;
+    };
+    google?: {
+      email: string;
+      name: string | null;
+      subject: string;
+    };
+    farcaster?: {
+      fid: number;
+      username: string | null;
+      displayName: string | null;
+      pfp: string | null;
+    };
   };
 }
 
@@ -525,7 +539,204 @@ export const authFixtures: AuthFixture[] = [
     },
   },
 
-  // 15. Loading State
+  // 15. Farcaster Authenticated User (no wallet)
+  {
+    name: "farcaster-authenticated",
+    description: "User authenticated via Farcaster with no browser-connectable wallet",
+    authState: {
+      ready: true,
+      authenticated: true,
+      isConnected: false,
+      // No address — Farcaster-linked wallet is not browser-connectable
+      user: {
+        id: "did:privy:farcaster-user-123",
+        farcaster: {
+          fid: 12345,
+          username: "testfcuser",
+          displayName: "Test FC User",
+          pfp: "https://example.com/fc-avatar.png",
+        },
+      },
+    },
+    permissions: {
+      communities: [],
+      reviewerPrograms: [],
+      isStaff: false,
+      isOwner: false,
+      isProgramCreator: false,
+      isRegistryAdmin: false,
+    },
+    expectedElements: {
+      signIn: false,
+      contactSales: false,
+      resources: false,
+      userMenu: true,
+      myProjects: true,
+      review: false,
+      admin: false,
+      managePrograms: false,
+    },
+  },
+
+  // 16. Farcaster Authenticated User WITH embedded wallet
+  {
+    name: "farcaster-with-embedded-wallet",
+    description:
+      "User authenticated via Farcaster who also has an embedded wallet (address resolved)",
+    authState: {
+      ready: true,
+      authenticated: true,
+      isConnected: true,
+      address: "0xEMBEDDED0000000000000000000000000000CAFE",
+      user: {
+        id: "did:privy:farcaster-embedded-user",
+        wallet: {
+          address: "0xEMBEDDED0000000000000000000000000000CAFE",
+        },
+        farcaster: {
+          fid: 67890,
+          username: "fcwithwallet",
+          displayName: "FC With Wallet",
+          pfp: "https://example.com/fc-embedded-avatar.png",
+        },
+      },
+    },
+    permissions: {
+      communities: [],
+      reviewerPrograms: [],
+      isStaff: false,
+      isOwner: false,
+      isProgramCreator: false,
+      isRegistryAdmin: false,
+    },
+    expectedElements: {
+      signIn: false,
+      contactSales: false,
+      resources: false,
+      userMenu: true,
+      myProjects: true,
+      review: false,
+      admin: false,
+      managePrograms: false,
+    },
+  },
+
+  // 17. Email Authenticated User (with embedded wallet)
+  {
+    name: "email-authenticated",
+    description: "User authenticated via email with an embedded wallet",
+    authState: {
+      ready: true,
+      authenticated: true,
+      isConnected: true,
+      address: "0xEMAIL000000000000000000000000000000CAFE",
+      user: {
+        id: "did:privy:email-user-123",
+        wallet: {
+          address: "0xEMAIL000000000000000000000000000000CAFE",
+        },
+        email: {
+          address: "testuser@example.com",
+        },
+      },
+    },
+    permissions: {
+      communities: [],
+      reviewerPrograms: [],
+      isStaff: false,
+      isOwner: false,
+      isProgramCreator: false,
+      isRegistryAdmin: false,
+    },
+    expectedElements: {
+      signIn: false,
+      contactSales: false,
+      resources: false,
+      userMenu: true,
+      myProjects: true,
+      review: false,
+      admin: false,
+      managePrograms: false,
+    },
+  },
+
+  // 18. Email Authenticated User (no wallet)
+  {
+    name: "email-authenticated-no-wallet",
+    description: "User authenticated via email with no browser-connectable wallet",
+    authState: {
+      ready: true,
+      authenticated: true,
+      isConnected: false,
+      user: {
+        id: "did:privy:email-user-456",
+        email: {
+          address: "nowallet@example.com",
+        },
+      },
+    },
+    permissions: {
+      communities: [],
+      reviewerPrograms: [],
+      isStaff: false,
+      isOwner: false,
+      isProgramCreator: false,
+      isRegistryAdmin: false,
+    },
+    expectedElements: {
+      signIn: false,
+      contactSales: false,
+      resources: false,
+      userMenu: true,
+      myProjects: true,
+      review: false,
+      admin: false,
+      managePrograms: false,
+    },
+  },
+
+  // 19. Google Authenticated User (with embedded wallet)
+  {
+    name: "google-authenticated",
+    description: "User authenticated via Google with an embedded wallet",
+    authState: {
+      ready: true,
+      authenticated: true,
+      isConnected: true,
+      address: "0xGOOGLE00000000000000000000000000000CAFE",
+      user: {
+        id: "did:privy:google-user-789",
+        wallet: {
+          address: "0xGOOGLE00000000000000000000000000000CAFE",
+        },
+        google: {
+          email: "googleuser@gmail.com",
+          name: "Google User",
+          subject: "google-sub-123",
+        },
+      },
+    },
+    permissions: {
+      communities: [],
+      reviewerPrograms: [],
+      isStaff: false,
+      isOwner: false,
+      isProgramCreator: false,
+      isRegistryAdmin: false,
+    },
+    expectedElements: {
+      signIn: false,
+      contactSales: false,
+      resources: false,
+      userMenu: true,
+      myProjects: true,
+      review: false,
+      admin: false,
+      managePrograms: false,
+    },
+  },
+
+  // 20. Loading State
   // Note: Even during loading, mobile menu shows Sign in/Contact sales because authenticated=false
   {
     name: "loading",

@@ -2,35 +2,35 @@ import { render, screen } from "@testing-library/react";
 import Index from "@/app/page";
 import "@testing-library/jest-dom";
 
-jest.mock("@/src/features/homepage/components/hero", () => ({
+vi.mock("@/src/features/homepage/components/hero", () => ({
   Hero: () => <div data-testid="hero" />,
 }));
 
-jest.mock("@/src/features/homepage/components/live-funding-opportunities", () => ({
+vi.mock("@/src/features/homepage/components/live-funding-opportunities", () => ({
   LiveFundingOpportunities: () => <div data-testid="live-funding-opportunities" />,
 }));
 
-jest.mock("@/src/features/homepage/components/live-funding-opportunities-skeleton", () => ({
+vi.mock("@/src/features/homepage/components/live-funding-opportunities-skeleton", () => ({
   LiveFundingOpportunitiesSkeleton: () => <div data-testid="live-funding-opportunities-skeleton" />,
 }));
 
-jest.mock("@/src/features/homepage/components/platform-features", () => ({
+vi.mock("@/src/features/homepage/components/platform-features", () => ({
   PlatformFeatures: () => <div data-testid="platform-features" />,
 }));
 
-jest.mock("@/src/features/homepage/components/how-it-works", () => ({
+vi.mock("@/src/features/homepage/components/how-it-works", () => ({
   HowItWorks: () => <div data-testid="how-it-works" />,
 }));
 
-jest.mock("@/src/features/homepage/components/where-builders-grow", () => ({
+vi.mock("@/src/features/homepage/components/where-builders-grow", () => ({
   WhereBuildersGrow: () => <div data-testid="where-builders-grow" />,
 }));
 
-jest.mock("@/src/features/homepage/components/join-community", () => ({
+vi.mock("@/src/features/homepage/components/join-community", () => ({
   JoinCommunity: () => <div data-testid="join-community" />,
 }));
 
-jest.mock("@/src/features/homepage/components/faq", () => ({
+vi.mock("@/src/features/homepage/components/faq", () => ({
   FAQ: () => <div data-testid="faq" />,
 }));
 

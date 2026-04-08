@@ -33,6 +33,12 @@ export interface PayoutDisbursement {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+  metadata?: {
+    notes?: string;
+    safeTransactionUrl?: string;
+    milestoneLabels?: Record<string, string>;
+    [key: string]: unknown;
+  } | null;
 }
 
 export interface GrantDisbursementRequest {
@@ -69,6 +75,25 @@ export interface UpdateStatusRequest {
   status: PayoutDisbursementStatus;
   errorMessage?: string;
   reason?: string;
+}
+
+export interface RecordPaymentRequest {
+  grantUID: string;
+  projectUID: string;
+  communityUID: string;
+  chainID: number;
+  disbursedAmount: string;
+  tokenDecimals: number;
+  token: string;
+  tokenAddress: string;
+  payoutAddress?: string;
+  milestoneBreakdown?: MilestoneBreakdown;
+  paidAllocationIds?: string[];
+  paymentDate: string;
+  transactionHash?: string;
+  notes?: string;
+  /** Human-readable labels for milestone UIDs in milestoneBreakdown */
+  milestoneLabels?: Record<string, string>;
 }
 
 export interface PaginationInfo {
@@ -224,6 +249,7 @@ export interface CommunityPayoutInvoiceInfo {
   invoiceStatus: InvoiceStatus;
   invoiceReceivedAt: string | null;
   invoiceReceivedBy: string | null;
+  invoiceFileKey: string | null;
   allocatedAmount: string | null;
   paymentStatus: MilestonePaymentStatus;
   paymentStatusDate: string | null;

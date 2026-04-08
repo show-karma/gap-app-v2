@@ -3,17 +3,17 @@ import userEvent from "@testing-library/user-event";
 import { MilestoneEditDialog } from "@/components/Milestone/MilestoneEditDialog";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 
-const mockEditMilestone = jest.fn();
+const mockEditMilestone = vi.fn();
 let mockIsEditing = false;
 
-jest.mock("@/hooks/useMilestoneEdit", () => ({
+vi.mock("@/hooks/useMilestoneEdit", () => ({
   useMilestoneEdit: () => ({
     isEditing: mockIsEditing,
     editMilestone: mockEditMilestone,
   }),
 }));
 
-jest.mock("@/components/ui/dialog", () => ({
+vi.mock("@/components/ui/dialog", () => ({
   Dialog: ({ children, open }: any) => (open ? <div data-testid="dialog">{children}</div> : null),
   DialogContent: ({ children, className }: any) => (
     <div data-testid="dialog-content" className={className}>
@@ -33,19 +33,19 @@ jest.mock("@/components/ui/dialog", () => ({
   ),
 }));
 
-jest.mock("@/components/ui/input", () => ({
+vi.mock("@/components/ui/input", () => ({
   Input: ({ id, ...props }: any) => <input id={id} data-testid={id} {...props} />,
 }));
 
-jest.mock("@/components/ui/textarea", () => ({
+vi.mock("@/components/ui/textarea", () => ({
   Textarea: ({ id, ...props }: any) => <textarea id={id} data-testid={id} {...props} />,
 }));
 
-jest.mock("@/components/Utilities/Button", () => ({
+vi.mock("@/components/Utilities/Button", () => ({
   Button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
 }));
 
-jest.mock("@heroicons/react/24/outline", () => ({
+vi.mock("@heroicons/react/24/outline", () => ({
   PencilSquareIcon: () => <span data-testid="pencil-icon" />,
 }));
 
@@ -81,10 +81,10 @@ describe("MilestoneEditDialog", () => {
     },
   } as unknown as UnifiedMilestone;
 
-  const mockOnClose = jest.fn();
+  const mockOnClose = vi.fn();
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockIsEditing = false;
     mockEditMilestone.mockResolvedValue(undefined);
   });

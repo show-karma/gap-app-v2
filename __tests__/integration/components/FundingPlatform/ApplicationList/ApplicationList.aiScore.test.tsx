@@ -1,26 +1,28 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import type React from "react";
 import { ApplicationList } from "@/components/FundingPlatform/ApplicationList/ApplicationList";
 import type { IFundingApplication } from "@/types/funding-platform";
 
 // Mock the helper functions
-jest.mock("@/components/FundingPlatform/helper/getAIScore", () => ({
-  formatAIScore: jest.fn(),
+vi.mock("@/components/FundingPlatform/helper/getAIScore", () => ({
+  formatAIScore: vi.fn(),
 }));
 
 // Mock the other helper functions
-jest.mock("@/components/FundingPlatform/helper/getProjectTitle", () => ({
-  getProjectTitle: jest.fn(() => "Test Project"),
+vi.mock("@/components/FundingPlatform/helper/getProjectTitle", () => ({
+  getProjectTitle: vi.fn(() => "Test Project"),
 }));
 
-jest.mock("@/utilities/formatDate", () => ({
-  formatDate: jest.fn(() => "2025-01-01"),
+vi.mock("@/utilities/formatDate", () => ({
+  formatDate: vi.fn(() => "2025-01-01"),
 }));
 
 // Mock SortableTableHeader
-jest.mock("@/components/Utilities/SortableTableHeader", () => {
-  return function MockSortableTableHeader({
+vi.mock("@/components/Utilities/SortableTableHeader", () => ({
+  __esModule: true,
+  default: ({
     label,
     sortKey,
     onSort,
@@ -28,23 +30,21 @@ jest.mock("@/components/Utilities/SortableTableHeader", () => {
     label: string;
     sortKey: string;
     onSort?: (sortKey: string) => void;
-  }) {
-    return (
-      <th scope="col" data-testid={`header-${sortKey}`}>
-        <button onClick={() => onSort?.(sortKey)}>{label}</button>
-      </th>
-    );
-  };
-});
+  }) => (
+    <th scope="col" data-testid={`header-${sortKey}`}>
+      <button onClick={() => onSort?.(sortKey)}>{label}</button>
+    </th>
+  ),
+}));
 
 // Mock ReviewerAssignmentDropdown
-jest.mock("@/components/FundingPlatform/ApplicationList/ReviewerAssignmentDropdown", () => ({
+vi.mock("@/components/FundingPlatform/ApplicationList/ReviewerAssignmentDropdown", () => ({
   ReviewerAssignmentDropdown: () => <div data-testid="reviewer-assignment-dropdown" />,
 }));
 
 import { formatAIScore } from "@/components/FundingPlatform/helper/getAIScore";
 
-const mockFormatAIScore = formatAIScore as jest.MockedFunction<typeof formatAIScore>;
+const mockFormatAIScore = formatAIScore as vi.MockedFunction<typeof formatAIScore>;
 
 // Helper to create mock application
 const createMockApplication = (overrides?: Partial<IFundingApplication>): IFundingApplication => ({
@@ -63,6 +63,7 @@ const createMockApplication = (overrides?: Partial<IFundingApplication>): IFundi
 });
 
 describe("ApplicationList - AI Score Column", () => {
+  // Fresh QueryClient per render — no afterEach cleanup required
   const createTestQueryClient = () =>
     new QueryClient({
       defaultOptions: {
@@ -82,7 +83,7 @@ describe("ApplicationList - AI Score Column", () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("AI Score Column Header", () => {
@@ -96,7 +97,7 @@ describe("ApplicationList - AI Score Column", () => {
           applications={applications}
           sortBy="status"
           sortOrder="asc"
-          onSortChange={jest.fn()}
+          onSortChange={vi.fn()}
           showAIScoreColumn={true}
         />
       );
@@ -105,8 +106,9 @@ describe("ApplicationList - AI Score Column", () => {
       expect(screen.getByText("AI Score")).toBeInTheDocument();
     });
 
-    it("should call onSortChange when AI Score header is clicked", () => {
-      const mockOnSortChange = jest.fn();
+    it("should call onSortChange when AI Score header is clicked", async () => {
+      const user = userEvent.setup();
+      const mockOnSortChange = vi.fn();
       const applications = [createMockApplication()];
 
       renderWithQueryClient(
@@ -124,7 +126,7 @@ describe("ApplicationList - AI Score Column", () => {
       const aiScoreHeader = screen.getByTestId("header-aiEvaluationScore");
       const button = aiScoreHeader.querySelector("button");
 
-      fireEvent.click(button!);
+      await user.click(button!);
 
       expect(mockOnSortChange).toHaveBeenCalledWith("aiEvaluationScore");
     });
@@ -139,7 +141,7 @@ describe("ApplicationList - AI Score Column", () => {
           applications={applications}
           sortBy="aiEvaluationScore"
           sortOrder="desc"
-          onSortChange={jest.fn()}
+          onSortChange={vi.fn()}
           showAIScoreColumn={true}
         />
       );
@@ -319,9 +321,10 @@ describe("ApplicationList - AI Score Column", () => {
   });
 
   describe("Integration with Application Selection", () => {
-    it("should open new tab when row with AI score is clicked", () => {
+    it("should open new tab when row with AI score is clicked", async () => {
+      const user = userEvent.setup();
       // Mock window.open
-      const mockWindowOpen = jest.fn();
+      const mockWindowOpen = vi.fn();
       const originalOpen = window.open;
       window.open = mockWindowOpen;
 
@@ -334,7 +337,7 @@ describe("ApplicationList - AI Score Column", () => {
           programId="test-program"
           chainID={11155111}
           applications={applications}
-          onApplicationSelect={jest.fn()}
+          onApplicationSelect={vi.fn()}
           sortBy="status"
           sortOrder="asc"
           showAIScoreColumn={true}
@@ -342,7 +345,7 @@ describe("ApplicationList - AI Score Column", () => {
       );
 
       const row = container.querySelector("tbody tr");
-      fireEvent.click(row!);
+      await user.click(row!);
 
       // Component now opens in new tab instead of calling onApplicationSelect
       expect(mockWindowOpen).toHaveBeenCalled();
@@ -351,8 +354,9 @@ describe("ApplicationList - AI Score Column", () => {
       window.open = originalOpen;
     });
 
-    it("should call onApplicationHover when row with AI score is hovered", () => {
-      const mockOnApplicationHover = jest.fn();
+    it("should call onApplicationHover when row with AI score is hovered", async () => {
+      const user = userEvent.setup();
+      const mockOnApplicationHover = vi.fn();
       mockFormatAIScore.mockReturnValue("4.5");
 
       const applications = [createMockApplication()];
@@ -370,7 +374,7 @@ describe("ApplicationList - AI Score Column", () => {
       );
 
       const row = container.querySelector("tbody tr");
-      fireEvent.mouseEnter(row!);
+      await user.hover(row!);
 
       expect(mockOnApplicationHover).toHaveBeenCalledWith(applications[0].referenceNumber);
     });

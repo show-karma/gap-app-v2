@@ -12,6 +12,38 @@ import React from "react";
 import { handlers } from "./handlers";
 import "@testing-library/jest-dom";
 
+// Hoisted mock state - accessible in vi.mock factories
+const _h = vi.hoisted(() => ({
+  authState: {
+    current: {
+      ready: true,
+      authenticated: true,
+      isConnected: true,
+      address: "0xAdmin1234567890abcdef1234567890abcdef" as string | undefined,
+      user: null as unknown,
+      authenticate: vi.fn(),
+      login: vi.fn(),
+      logout: vi.fn(),
+      disconnect: vi.fn(),
+      getAccessToken: vi.fn().mockResolvedValue("mock-token"),
+    },
+  },
+  communityAdminAccessState: {
+    current: {
+      hasAccess: true,
+      isLoading: false,
+      checks: {
+        isCommunityAdmin: true,
+        isOwner: false,
+        isSuperAdmin: false,
+        isRbacCommunityAdmin: false,
+      },
+    },
+  },
+}));
+export const mockAuthState = _h.authState;
+export const mockCommunityAdminAccessState = _h.communityAdminAccessState;
+
 /**
  * Setup MSW server for control center tests
  */
@@ -29,54 +61,18 @@ afterAll(() => {
   server.close();
 });
 
-// ---- Mock holders for per-test overrides ----
-
-export const mockAuthState = {
-  current: {
-    ready: true,
-    authenticated: true,
-    isConnected: true,
-    address: "0xAdmin1234567890abcdef1234567890abcdef" as string | undefined,
-    user: null,
-    authenticate: jest.fn(),
-    login: jest.fn(),
-    logout: jest.fn(),
-    disconnect: jest.fn(),
-    getAccessToken: jest.fn().mockResolvedValue("mock-token"),
-  },
-};
-
-export const mockCommunityAdminAccessState = {
-  current: {
-    hasAccess: true,
-    isLoading: false,
-    checks: {
-      isCommunityAdmin: true,
-      isOwner: false,
-      isSuperAdmin: false,
-      isRbacCommunityAdmin: false,
-    },
-  },
-};
-
 // ---- Module mocks ----
 
-jest.mock("@/hooks/useAuth", () => ({
-  useAuth: jest.fn(() => {
-    const { mockAuthState } = require("@/__tests__/control-center/setup");
-    return mockAuthState.current;
-  }),
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: vi.fn(() => _h.authState.current),
 }));
 
-jest.mock("@/hooks/communities/useCommunityAdminAccess", () => ({
-  useCommunityAdminAccess: jest.fn(() => {
-    const { mockCommunityAdminAccessState } = require("@/__tests__/control-center/setup");
-    return mockCommunityAdminAccessState.current;
-  }),
+vi.mock("@/hooks/communities/useCommunityAdminAccess", () => ({
+  useCommunityAdminAccess: vi.fn(() => _h.communityAdminAccessState.current),
 }));
 
-jest.mock("@/hooks/communities/useCommunityDetails", () => ({
-  useCommunityDetails: jest.fn(() => ({
+vi.mock("@/hooks/communities/useCommunityDetails", () => ({
+  useCommunityDetails: vi.fn(() => ({
     data: {
       uid: "community-uid-1",
       details: {
@@ -89,39 +85,39 @@ jest.mock("@/hooks/communities/useCommunityDetails", () => ({
   })),
 }));
 
-jest.mock("@/hooks/useKycStatus", () => ({
-  useKycConfig: jest.fn(() => ({
+vi.mock("@/hooks/useKycStatus", () => ({
+  useKycConfig: vi.fn(() => ({
     config: null,
     isEnabled: false,
   })),
-  useKycBatchStatuses: jest.fn(() => ({
+  useKycBatchStatuses: vi.fn(() => ({
     statuses: new Map(),
     isLoading: false,
   })),
 }));
 
 // Mock the payout-disbursement hooks but keep types
-jest.mock("@/src/features/payout-disbursement", () => {
-  const actual = jest.requireActual("@/src/features/payout-disbursement/types/payout-disbursement");
+vi.mock("@/src/features/payout-disbursement", () => {
+  const actual = vi.importActual("@/src/features/payout-disbursement/types/payout-disbursement");
   return {
     ...actual,
-    useCommunityPayouts: jest.fn(() => ({
+    useCommunityPayouts: vi.fn(() => ({
       data: null,
       isLoading: false,
-      invalidate: jest.fn(),
+      invalidate: vi.fn(),
     })),
-    usePayoutConfigsByCommunity: jest.fn(() => ({
+    usePayoutConfigsByCommunity: vi.fn(() => ({
       data: [],
     })),
-    useToggleAgreement: jest.fn(() => ({
-      mutate: jest.fn(),
+    useToggleAgreement: vi.fn(() => ({
+      mutate: vi.fn(),
       isPending: false,
     })),
-    useSaveMilestoneInvoices: jest.fn(() => ({
-      mutate: jest.fn(),
+    useSaveMilestoneInvoices: vi.fn(() => ({
+      mutate: vi.fn(),
       isPending: false,
     })),
-    getPaidAllocationIds: jest.fn(() => []),
+    getPaidAllocationIds: vi.fn(() => []),
     CreateDisbursementModal: () => null,
     PayoutConfigurationModal: () => null,
     PayoutHistoryDrawer: () => null,
@@ -135,129 +131,130 @@ jest.mock("@/src/features/payout-disbursement", () => {
 });
 
 // Mock components that aren't needed in control-center tests
-jest.mock("@/components/Pages/Communities/Impact/ProgramFilter", () => ({
+vi.mock("@/components/Pages/Communities/Impact/ProgramFilter", () => ({
   ProgramFilter: ({ onChange }: { onChange: (v: string | null) => void }) =>
     React.createElement("div", { "data-testid": "program-filter" }, "ProgramFilter"),
 }));
 
-jest.mock("@/components/Utilities/Skeleton", () => ({
+vi.mock("@/components/Utilities/Skeleton", () => ({
   Skeleton: ({ className }: { className?: string }) =>
     React.createElement("div", { "data-testid": "skeleton", className }),
 }));
 
-jest.mock("@/components/Utilities/Spinner", () => ({
+vi.mock("@/components/Utilities/Spinner", () => ({
   Spinner: ({ className }: { className?: string }) =>
     React.createElement("div", { "data-testid": "spinner", className }),
 }));
 
-jest.mock("@/components/Utilities/TablePagination", () => ({
+vi.mock("@/components/Utilities/TablePagination", () => ({
   __esModule: true,
   default: () => React.createElement("div", { "data-testid": "table-pagination" }),
 }));
 
-jest.mock("@/components/KycStatusIcon", () => ({
+vi.mock("@/components/KycStatusIcon", () => ({
   KycStatusBadge: () => React.createElement("span", { "data-testid": "kyc-badge" }),
 }));
 
 // Mock next/navigation for control center context
-jest.mock("next/navigation", () => ({
-  useRouter: jest.fn(() => ({
-    push: jest.fn(),
-    replace: jest.fn(),
-    prefetch: jest.fn(),
-    back: jest.fn(),
-    forward: jest.fn(),
-    refresh: jest.fn(),
+vi.mock("next/navigation", () => ({
+  useRouter: vi.fn(() => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    prefetch: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn(),
+    refresh: vi.fn(),
     pathname: "/community/test-community/manage/control-center",
   })),
-  usePathname: jest.fn(() => "/community/test-community/manage/control-center"),
-  useSearchParams: jest.fn(() => new URLSearchParams()),
-  useParams: jest.fn(() => ({
+  usePathname: vi.fn(() => "/community/test-community/manage/control-center"),
+  useSearchParams: vi.fn(() => new URLSearchParams()),
+  useParams: vi.fn(() => ({
     communityId: "test-community",
   })),
-  redirect: jest.fn(),
-  notFound: jest.fn(),
+  redirect: vi.fn(),
+  notFound: vi.fn(),
 }));
 
 // Mock next/link
-jest.mock("next/link", () => ({
+vi.mock("next/link", () => ({
   __esModule: true,
   default: ({ children, href, ...props }: any) =>
     React.createElement("a", { href, ...props }, children),
 }));
 
 // Mock next/image
-jest.mock("next/image", () => ({
+vi.mock("next/image", () => ({
   __esModule: true,
   default: (props: any) => React.createElement("img", { ...props, alt: props.alt || "" }),
 }));
 
 // Mock next-themes
-jest.mock("next-themes", () => ({
-  useTheme: jest.fn(() => ({
+vi.mock("next-themes", () => ({
+  useTheme: vi.fn(() => ({
     theme: "light",
-    setTheme: jest.fn(),
+    setTheme: vi.fn(),
     resolvedTheme: "light",
   })),
   ThemeProvider: ({ children }: { children: any }) => children,
 }));
 
 // Mock viem
-jest.mock("viem", () => ({
-  formatUnits: jest.fn((value: bigint, decimals: number) => {
+vi.mock("viem", () => ({
+  formatUnits: vi.fn((value: bigint, decimals: number) => {
     return (Number(value) / 10 ** decimals).toString();
   }),
-  isAddress: jest.fn((addr: string) => {
+  isAddress: vi.fn((addr: string) => {
     return typeof addr === "string" && /^0x[0-9a-fA-F]{40}$/.test(addr);
   }),
 }));
 
 // Mock toast
-jest.mock("react-hot-toast", () => ({
+vi.mock("react-hot-toast", () => ({
   __esModule: true,
   default: {
-    success: jest.fn(),
-    error: jest.fn(),
+    success: vi.fn(),
+    error: vi.fn(),
   },
 }));
 
 // Mock Privy
-jest.mock("@privy-io/react-auth", () => ({
-  usePrivy: jest.fn(() => ({
+vi.mock("@privy-io/react-auth", () => ({
+  usePrivy: vi.fn(() => ({
     ready: true,
     authenticated: true,
     user: null,
-    login: jest.fn(),
-    logout: jest.fn(),
-    getAccessToken: jest.fn().mockResolvedValue("mock-token"),
+    login: vi.fn(),
+    logout: vi.fn(),
+    getAccessToken: vi.fn().mockResolvedValue("mock-token"),
   })),
-  useWallets: jest.fn(() => ({ wallets: [] })),
+  useWallets: vi.fn(() => ({ wallets: [] })),
   PrivyProvider: ({ children }: { children: any }) => children,
+  useCreateWallet: vi.fn(() => ({ createWallet: vi.fn() })),
 }));
 
 // Mock Wagmi
-jest.mock("wagmi", () => ({
-  useAccount: jest.fn(() => ({
+vi.mock("wagmi", () => ({
+  useAccount: vi.fn(() => ({
     address: "0xAdmin1234567890abcdef1234567890abcdef",
     isConnected: true,
   })),
-  useDisconnect: jest.fn(() => ({ disconnect: jest.fn() })),
+  useDisconnect: vi.fn(() => ({ disconnect: vi.fn() })),
   WagmiProvider: ({ children }: { children: any }) => children,
 }));
 
-jest.mock("@wagmi/core", () => ({
-  createConfig: jest.fn(() => ({})),
-  createStorage: jest.fn(() => ({})),
+vi.mock("@wagmi/core", () => ({
+  createConfig: vi.fn(() => ({})),
+  createStorage: vi.fn(() => ({})),
   cookieStorage: {},
-  http: jest.fn((url: string) => ({ url, type: "http" })),
-  getAccount: jest.fn(() => ({ address: undefined, isConnected: false })),
-  getConnections: jest.fn(() => []),
-  disconnect: jest.fn(),
-  watchAccount: jest.fn(),
-  reconnect: jest.fn(),
+  http: vi.fn((url: string) => ({ url, type: "http" })),
+  getAccount: vi.fn(() => ({ address: undefined, isConnected: false })),
+  getConnections: vi.fn(() => []),
+  disconnect: vi.fn(),
+  watchAccount: vi.fn(),
+  reconnect: vi.fn(),
 }));
 
-jest.mock("@wagmi/core/chains", () => ({
+vi.mock("@wagmi/core/chains", () => ({
   optimism: { id: 10, name: "Optimism" },
   arbitrum: { id: 42161, name: "Arbitrum" },
   baseSepolia: { id: 84532, name: "Base Sepolia" },
@@ -270,37 +267,37 @@ jest.mock("@wagmi/core/chains", () => ({
   scroll: { id: 534352, name: "Scroll" },
 }));
 
-jest.mock("@/utilities/wagmi/privy-config", () => ({
+vi.mock("@/utilities/wagmi/privy-config", () => ({
   privyConfig: {},
-  getPrivyWagmiConfig: jest.fn(() => ({})),
+  getPrivyWagmiConfig: vi.fn(() => ({})),
 }));
 
-jest.mock("@/store", () => ({
-  useOwnerStore: jest.fn((selector?: Function) => {
+vi.mock("@/store", () => ({
+  useOwnerStore: vi.fn((selector?: Function) => {
     const state = { isProjectOwner: false, isOwner: false, isOwnerLoading: false };
     return selector ? selector(state) : state;
   }),
-  useProjectStore: jest.fn(() => ({ projects: [] })),
-  useDonationCartStore: jest.fn(() => ({ items: [] })),
+  useProjectStore: vi.fn(() => ({ projects: [] })),
+  useDonationCartStore: vi.fn(() => ({ items: [] })),
 }));
 
-jest.mock("@/store/owner", () => ({
-  useOwnerStore: jest.fn((selector?: Function) => {
+vi.mock("@/store/owner", () => ({
+  useOwnerStore: vi.fn((selector?: Function) => {
     const state = { isProjectOwner: false, isOwner: false, isOwnerLoading: false };
     return selector ? selector(state) : state;
   }),
 }));
 
-jest.mock("@/src/core/rbac/hooks/use-permissions", () => ({
-  usePermissionsQuery: jest.fn(() => ({
+vi.mock("@/src/core/rbac/hooks/use-permissions", () => ({
+  usePermissionsQuery: vi.fn(() => ({
     data: null,
     isLoading: false,
     isError: false,
   })),
 }));
 
-jest.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: jest.fn(),
+vi.mock("@/components/Utilities/errorManager", () => ({
+  errorManager: vi.fn(),
 }));
 
 /**

@@ -1,19 +1,20 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 
-const mockPush = jest.fn();
-const mockLogin = jest.fn();
+const mockPush = vi.fn();
+const mockLogin = vi.fn();
 
-jest.mock("next/navigation", () => ({
+vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: mockPush }),
 }));
 
-jest.mock("@/hooks/useAuth", () => ({
-  useAuth: jest.fn(),
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: vi.fn(),
 }));
 
 // lucide-react icons need to be mocked in jsdom
-jest.mock("lucide-react", () => ({
+vi.mock("lucide-react", () => ({
   AlertTriangle: (props: React.SVGProps<SVGSVGElement>) => (
     <svg data-testid="alert-icon" {...props} />
   ),
@@ -23,11 +24,11 @@ jest.mock("lucide-react", () => ({
 import { useAuth } from "@/hooks/useAuth";
 import { AccessDenied } from "@/src/components/ui/AccessDenied";
 
-const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
+const mockUseAuth = useAuth as vi.MockedFunction<typeof useAuth>;
 
 describe("AccessDenied", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("when not authenticated", () => {
@@ -49,16 +50,18 @@ describe("AccessDenied", () => {
       expect(screen.getByRole("button", { name: /sign in/i })).toBeInTheDocument();
     });
 
-    it("calls login() when Sign In button is clicked", () => {
+    it("calls login() when Sign In button is clicked", async () => {
+      const user = userEvent.setup();
       render(<AccessDenied />);
-      fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+      await user.click(screen.getByRole("button", { name: /sign in/i }));
       expect(mockLogin).toHaveBeenCalledTimes(1);
     });
 
-    it("does NOT use window.location.href for navigation", () => {
-      const locationSpy = jest.spyOn(window, "location", "get");
+    it("does NOT use window.location.href for navigation", async () => {
+      const user = userEvent.setup();
+      const locationSpy = vi.spyOn(window, "location", "get");
       render(<AccessDenied />);
-      fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+      await user.click(screen.getByRole("button", { name: /sign in/i }));
       // window.location.href should never be set
       expect(locationSpy).not.toHaveBeenCalled();
       locationSpy.mockRestore();
@@ -78,22 +81,25 @@ describe("AccessDenied", () => {
       expect(screen.getByRole("button", { name: /go to home/i })).toBeInTheDocument();
     });
 
-    it("navigates to default returnUrl ('/') when button clicked", () => {
+    it("navigates to default returnUrl ('/') when button clicked", async () => {
+      const user = userEvent.setup();
       render(<AccessDenied />);
-      fireEvent.click(screen.getByRole("button", { name: /go to home/i }));
+      await user.click(screen.getByRole("button", { name: /go to home/i }));
       expect(mockPush).toHaveBeenCalledWith("/");
     });
 
-    it("uses custom returnUrl when provided", () => {
+    it("uses custom returnUrl when provided", async () => {
+      const user = userEvent.setup();
       render(<AccessDenied returnUrl="/dashboard" />);
-      fireEvent.click(screen.getByRole("button", { name: /go to home/i }));
+      await user.click(screen.getByRole("button", { name: /go to home/i }));
       expect(mockPush).toHaveBeenCalledWith("/dashboard");
     });
 
-    it("does NOT use window.location.href for navigation", () => {
-      const locationSpy = jest.spyOn(window, "location", "get");
+    it("does NOT use window.location.href for navigation", async () => {
+      const user = userEvent.setup();
+      const locationSpy = vi.spyOn(window, "location", "get");
       render(<AccessDenied returnUrl="/dashboard" />);
-      fireEvent.click(screen.getByRole("button", { name: /go to home/i }));
+      await user.click(screen.getByRole("button", { name: /go to home/i }));
       expect(locationSpy).not.toHaveBeenCalled();
       locationSpy.mockRestore();
     });

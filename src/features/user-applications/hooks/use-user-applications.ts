@@ -8,7 +8,7 @@ import type { UserApplicationsResponse, UseUserApplicationsReturn } from "../typ
 
 export function useUserApplications(communitySlug?: string): UseUserApplicationsReturn {
   const queryClient = useQueryClient();
-  const { address } = useAuth();
+  const { address, authenticated } = useAuth();
 
   const {
     applications,
@@ -16,12 +16,14 @@ export function useUserApplications(communitySlug?: string): UseUserApplications
     sortBy,
     sortOrder,
     pagination,
+    statusCounts,
     setApplications,
     setFilters,
     setSort,
     setPage,
     setPageSize,
     setPagination,
+    setStatusCounts,
     setLoading,
     setError,
   } = useUserApplicationsStore();
@@ -56,7 +58,7 @@ export function useUserApplications(communitySlug?: string): UseUserApplications
       return res as UserApplicationsResponse;
     },
     staleTime: 1000 * 60 * 2,
-    enabled: !!address,
+    enabled: !!authenticated,
   });
 
   // Update store with query results
@@ -67,8 +69,18 @@ export function useUserApplications(communitySlug?: string): UseUserApplications
     if (data) {
       setApplications(data.applications);
       setPagination(data.pagination);
+      setStatusCounts(data.statusCounts ?? {});
     }
-  }, [data, isLoading, error, setApplications, setPagination, setLoading, setError]);
+  }, [
+    data,
+    isLoading,
+    error,
+    setApplications,
+    setPagination,
+    setStatusCounts,
+    setLoading,
+    setError,
+  ]);
 
   // Prefetch next page
   useEffect(() => {
@@ -124,6 +136,7 @@ export function useUserApplications(communitySlug?: string): UseUserApplications
     sortBy,
     sortOrder,
     pagination,
+    statusCounts,
     isLoading,
     error,
     setFilters,

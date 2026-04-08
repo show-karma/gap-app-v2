@@ -5,18 +5,19 @@ import { useDashboardAdmin } from "@/hooks/useDashboardAdmin";
 import type { Community } from "@/types/v2/community";
 import fetchData from "@/utilities/fetchData";
 
-jest.mock("@/hooks/useAuth", () => ({
-  useAuth: jest.fn(),
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: vi.fn(),
 }));
 
-jest.mock("@/utilities/fetchData", () => ({
+vi.mock("@/utilities/fetchData", () => ({
   __esModule: true,
-  default: jest.fn(),
+  default: vi.fn(),
 }));
 
-const mockUseAuth = useAuth as unknown as jest.Mock;
-const mockFetchData = fetchData as unknown as jest.Mock;
+const mockUseAuth = useAuth as unknown as vi.Mock;
+const mockFetchData = fetchData as unknown as vi.Mock;
 
+// Fresh QueryClient per render — no afterEach cleanup required
 const createWrapper = () => {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -31,7 +32,7 @@ const createWrapper = () => {
 
 describe("useDashboardAdmin", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockUseAuth.mockReturnValue({ authenticated: true, address: "0x123" });
   });
 
@@ -105,6 +106,45 @@ describe("useDashboardAdmin", () => {
       pendingApplicationsCount: 3,
       manageUrl: "/community/ethereum/manage",
     });
+  });
+
+  it("enables the query for Farcaster users with no wallet address", async () => {
+    mockUseAuth.mockReturnValue({ authenticated: true, address: undefined });
+
+    const communities: Community[] = [
+      {
+        uid: "0xcommunity1" as `0x${string}`,
+        chainID: 10,
+        details: { name: "Optimism", slug: "optimism", imageURL: "logo.png" },
+      },
+    ];
+
+    mockFetchData.mockResolvedValueOnce([{ communities }, null, null, 200]).mockResolvedValueOnce([
+      {
+        communityUID: "0xcommunity1",
+        totalPrograms: 1,
+        enabledPrograms: 1,
+        totalApplications: 1,
+        approvedApplications: 0,
+        rejectedApplications: 0,
+        pendingApplications: 1,
+        revisionRequestedApplications: 0,
+        underReviewApplications: 0,
+      },
+      null,
+      null,
+      200,
+    ]);
+
+    const { result } = renderHook(() => useDashboardAdmin(), { wrapper: createWrapper() });
+
+    // Farcaster users are authenticated via JWT but have no wallet address.
+    // The API uses JWT auth, not wallet address, so the query should fire.
+    await waitFor(() => {
+      expect(result.current.communities.length).toBe(1);
+    });
+
+    expect(mockFetchData).toHaveBeenCalled();
   });
 
   it("deduplicates communities on multiple chains by slug and aggregates metrics", async () => {

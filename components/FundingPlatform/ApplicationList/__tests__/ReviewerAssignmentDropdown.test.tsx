@@ -8,15 +8,15 @@ import type { ProgramReviewer } from "@/services/program-reviewers.service";
 import { ReviewerAssignmentDropdown } from "../ReviewerAssignmentDropdown";
 
 // Mock dependencies
-jest.mock("@/services/application-reviewers.service");
-jest.mock("react-hot-toast", () => ({
+vi.mock("@/services/application-reviewers.service");
+vi.mock("react-hot-toast", () => ({
   toast: {
-    success: jest.fn(),
-    error: jest.fn(),
+    success: vi.fn(),
+    error: vi.fn(),
   },
 }));
 
-jest.mock("@/components/Utilities/MultiSelectDropdown", () => {
+vi.mock("@/components/Utilities/MultiSelectDropdown", () => {
   const React = require("react");
   return {
     MultiSelectDropdown: ({
@@ -62,7 +62,7 @@ jest.mock("@/components/Utilities/MultiSelectDropdown", () => {
   };
 });
 
-const mockAssignReviewers = applicationReviewersService.assignReviewers as jest.MockedFunction<
+const mockAssignReviewers = applicationReviewersService.assignReviewers as vi.MockedFunction<
   typeof applicationReviewersService.assignReviewers
 >;
 
@@ -100,7 +100,7 @@ describe("ReviewerAssignmentDropdown", () => {
         mutations: { retry: false },
       },
     });
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockAssignReviewers.mockResolvedValue(undefined);
   });
 
@@ -304,7 +304,7 @@ describe("ReviewerAssignmentDropdown", () => {
     });
 
     it("should call onAssignmentChange callback on success", async () => {
-      const onAssignmentChange = jest.fn();
+      const onAssignmentChange = vi.fn();
       renderComponent({ reviewerType: ReviewerType.APP, onAssignmentChange });
 
       const option = screen.getByTestId("option-0x1111111111111111111111111111111111111111");
@@ -475,7 +475,7 @@ describe("ReviewerAssignmentDropdown", () => {
     });
 
     it("should not call onAssignmentChange on error", async () => {
-      const onAssignmentChange = jest.fn();
+      const onAssignmentChange = vi.fn();
       const error = new Error("Failed");
       mockAssignReviewers.mockRejectedValue(error);
 
@@ -540,7 +540,7 @@ describe("ReviewerAssignmentDropdown", () => {
 
   describe("Query Invalidation", () => {
     it("should invalidate application queries after successful assignment", async () => {
-      const invalidateQueries = jest.spyOn(queryClient, "invalidateQueries");
+      const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
 
       renderComponent({ reviewerType: ReviewerType.APP });
 

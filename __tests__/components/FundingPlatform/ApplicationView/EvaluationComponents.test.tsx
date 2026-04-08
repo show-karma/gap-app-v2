@@ -18,7 +18,7 @@ import {
 } from "@/components/FundingPlatform/ApplicationView/evaluationUtils";
 
 // Mock MarkdownPreview
-jest.mock("@/components/Utilities/MarkdownPreview", () => ({
+vi.mock("@/components/Utilities/MarkdownPreview", () => ({
   MarkdownPreview: ({ source }: { source: string }) => (
     <div data-testid="markdown-preview">{source}</div>
   ),
@@ -26,8 +26,8 @@ jest.mock("@/components/Utilities/MarkdownPreview", () => ({
 
 describe("EvaluationComponents", () => {
   describe("ScoreDisplay", () => {
-    const mockGetScoreIcon = jest.fn((score: number) => getScoreIcon(score));
-    const mockGetScoreColor = jest.fn((score: number) => getScoreColor(score));
+    const mockGetScoreIcon = vi.fn((score: number) => getScoreIcon(score));
+    const mockGetScoreColor = vi.fn((score: number) => getScoreColor(score));
 
     it("should render score with icon and text", () => {
       render(
@@ -267,7 +267,7 @@ describe("EvaluationComponents", () => {
   });
 
   describe("ImprovementRecommendations", () => {
-    const mockGetPriorityColor = jest.fn((priority: string) => getPriorityColor(priority));
+    const mockGetPriorityColor = vi.fn((priority: string) => getPriorityColor(priority));
 
     it("should render recommendations with priority badges", () => {
       const recommendations = [
@@ -358,7 +358,7 @@ describe("EvaluationComponents", () => {
   });
 
   describe("StatusChip", () => {
-    const mockGetStatusColor = jest.fn((status: string) => getStatusColor(status));
+    const mockGetStatusColor = vi.fn((status: string) => getStatusColor(status));
 
     it("should capitalize status text", () => {
       render(<StatusChip status="complete" getStatusColor={mockGetStatusColor} />);
@@ -380,10 +380,10 @@ describe("EvaluationComponents", () => {
   });
 
   describe("EvaluationDisplay", () => {
-    const mockGetScoreIcon = jest.fn((score: number) => getScoreIcon(score));
-    const mockGetStatusColor = jest.fn((status: string) => getStatusColor(status));
-    const mockGetScoreColor = jest.fn((score: number) => getScoreColor(score));
-    const mockGetPriorityColor = jest.fn((priority: string) => getPriorityColor(priority));
+    const mockGetScoreIcon = vi.fn((score: number) => getScoreIcon(score));
+    const mockGetStatusColor = vi.fn((status: string) => getStatusColor(status));
+    const mockGetScoreColor = vi.fn((score: number) => getScoreColor(score));
+    const mockGetPriorityColor = vi.fn((priority: string) => getPriorityColor(priority));
 
     const defaultProps = {
       data: {},

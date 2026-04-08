@@ -2,6 +2,7 @@
 
 import { Calendar, FileText } from "lucide-react";
 import Image from "next/image";
+import { getProjectTitle } from "@/components/FundingPlatform/helper/getProjectTitle";
 import { Link } from "@/src/components/navigation/Link";
 import type { Application, ApplicationStatus } from "@/types/whitelabel-entities";
 import { formatDate } from "@/utilities/formatDate";
@@ -29,23 +30,6 @@ function getStatusColor(status: ApplicationStatus): string {
 
 function formatStatusLabel(status: ApplicationStatus): string {
   return status.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
-}
-
-function getProjectTitle(application: Application): string {
-  const data = application.applicationData;
-  for (const [key, value] of Object.entries(data)) {
-    const normalizedKey = key.toLowerCase().replace(/[\s_-]/g, "");
-    if (
-      normalizedKey.includes("projectname") ||
-      normalizedKey.includes("projecttitle") ||
-      normalizedKey.includes("title")
-    ) {
-      if (typeof value === "string" && value.trim().length > 0) {
-        return value.trim();
-      }
-    }
-  }
-  return application.referenceNumber;
 }
 
 interface ApplicationCardProps {

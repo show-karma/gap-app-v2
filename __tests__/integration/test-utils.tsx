@@ -20,12 +20,12 @@ export function mockWalletConnection(
 ) {
   const wagmi = require("wagmi");
 
-  (wagmi.useAccount as jest.Mock).mockReturnValue({
+  (wagmi.useAccount as vi.Mock).mockReturnValue({
     address: isConnected ? address : null,
     isConnected,
   });
 
-  (wagmi.useChainId as jest.Mock).mockReturnValue(chainId);
+  (wagmi.useChainId as vi.Mock).mockReturnValue(chainId);
 }
 
 /**
@@ -48,13 +48,13 @@ export function setupMockWalletClient(chainId: number = 10) {
   const mockWalletClient = {
     account: { address: "0x1234567890123456789012345678901234567890" as Address },
     chain: { id: chainId },
-    signTypedData: jest.fn().mockResolvedValue("0xsignature"),
+    signTypedData: vi.fn().mockResolvedValue("0xsignature"),
   };
 
   const wagmi = require("wagmi");
-  (wagmi.useWalletClient as jest.Mock).mockReturnValue({
+  (wagmi.useWalletClient as vi.Mock).mockReturnValue({
     data: mockWalletClient,
-    refetch: jest.fn().mockResolvedValue({ data: mockWalletClient }),
+    refetch: vi.fn().mockResolvedValue({ data: mockWalletClient }),
   });
 
   return mockWalletClient;
@@ -66,15 +66,15 @@ export function setupMockWalletClient(chainId: number = 10) {
 export function setupMockPublicClient(chainId: number = 10) {
   const mockPublicClient = {
     chain: { id: chainId },
-    waitForTransactionReceipt: jest.fn().mockResolvedValue({
+    waitForTransactionReceipt: vi.fn().mockResolvedValue({
       status: "success",
       transactionHash: "0xtxhash",
     }),
-    readContract: jest.fn(),
+    readContract: vi.fn(),
   };
 
   const wagmi = require("wagmi");
-  (wagmi.usePublicClient as jest.Mock).mockReturnValue(mockPublicClient);
+  (wagmi.usePublicClient as vi.Mock).mockReturnValue(mockPublicClient);
 
   return mockPublicClient;
 }
@@ -111,7 +111,7 @@ export async function simulateTransaction(
   txHash: string = "0xtransactionhash"
 ) {
   const wagmi = require("wagmi");
-  const mockWriteContractAsync = jest.fn();
+  const mockWriteContractAsync = vi.fn();
 
   if (shouldSucceed) {
     mockWriteContractAsync.mockResolvedValue(txHash);
@@ -119,7 +119,7 @@ export async function simulateTransaction(
     mockWriteContractAsync.mockRejectedValue(new Error("Transaction reverted"));
   }
 
-  (wagmi.useWriteContract as jest.Mock).mockReturnValue({
+  (wagmi.useWriteContract as vi.Mock).mockReturnValue({
     writeContractAsync: mockWriteContractAsync,
   });
 
@@ -192,18 +192,18 @@ export function setupDefaultMocks() {
   const wagmi = require("wagmi");
 
   // Mock wagmi hooks
-  (wagmi.useAccount as jest.Mock).mockReturnValue({
+  (wagmi.useAccount as vi.Mock).mockReturnValue({
     address: "0x1234567890123456789012345678901234567890",
     isConnected: true,
   });
 
-  (wagmi.useChainId as jest.Mock).mockReturnValue(10);
+  (wagmi.useChainId as vi.Mock).mockReturnValue(10);
 
   const mockPublicClient = setupMockPublicClient(10);
   const mockWalletClient = setupMockWalletClient(10);
 
-  const mockWriteContractAsync = jest.fn().mockResolvedValue("0xtxhash");
-  (wagmi.useWriteContract as jest.Mock).mockReturnValue({
+  const mockWriteContractAsync = vi.fn().mockResolvedValue("0xtxhash");
+  (wagmi.useWriteContract as vi.Mock).mockReturnValue({
     writeContractAsync: mockWriteContractAsync,
   });
 
@@ -271,8 +271,8 @@ export function createPayoutAddressGetter(
 /**
  * Mock switch chain function
  */
-export function createMockSwitchChain(shouldSucceed: boolean = true): jest.Mock {
-  const mockSwitchChain = jest.fn();
+export function createMockSwitchChain(shouldSucceed: boolean = true): vi.Mock {
+  const mockSwitchChain = vi.fn();
 
   if (shouldSucceed) {
     mockSwitchChain.mockResolvedValue(undefined);
@@ -286,8 +286,8 @@ export function createMockSwitchChain(shouldSucceed: boolean = true): jest.Mock 
 /**
  * Mock fresh wallet client getter
  */
-export function createMockGetFreshWalletClient(chainId: number = 10): jest.Mock {
-  return jest.fn().mockResolvedValue({
+export function createMockGetFreshWalletClient(chainId: number = 10): vi.Mock {
+  return vi.fn().mockResolvedValue({
     chain: { id: chainId },
     account: { address: "0x1234567890123456789012345678901234567890" },
   });
@@ -297,7 +297,7 @@ export function createMockGetFreshWalletClient(chainId: number = 10): jest.Mock 
  * Clear all donation-related mocks
  */
 export function clearDonationMocks() {
-  jest.clearAllMocks();
+  vi.clearAllMocks();
 }
 
 /**

@@ -5,13 +5,13 @@ import { useProjectSearch } from "@/hooks/useProjectSearch";
 import { unifiedSearch } from "@/services/unified-search.service";
 
 // Mock the unified search service
-jest.mock("@/services/unified-search.service", () => ({
-  unifiedSearch: jest.fn(),
+vi.mock("@/services/unified-search.service", () => ({
+  unifiedSearch: vi.fn(),
 }));
 
-const mockUnifiedSearch = unifiedSearch as jest.MockedFunction<typeof unifiedSearch>;
+const mockUnifiedSearch = unifiedSearch as vi.MockedFunction<typeof unifiedSearch>;
 
-// Create wrapper with QueryClient for each test
+// Fresh QueryClient per render — no afterEach cleanup required
 const createWrapper = () => {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -28,7 +28,7 @@ const createWrapper = () => {
 
 describe("useProjectSearch", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("query enabling", () => {

@@ -9,6 +9,11 @@ export {
   getPaidAllocationIds,
   MilestoneSelectionStep,
 } from "./components/MilestoneSelectionStep";
+export type {
+  PayoutConfigurationContentProps,
+  PayoutConfigurationContentRef,
+} from "./components/PayoutConfigurationContent";
+export { PayoutConfigurationContent } from "./components/PayoutConfigurationContent";
 export type { PayoutConfigurationModalProps } from "./components/PayoutConfigurationModal";
 export { PayoutConfigurationModal } from "./components/PayoutConfigurationModal";
 export {
@@ -17,7 +22,10 @@ export {
   PendingActionsWidget,
   RecentActivityWidget,
 } from "./components/PayoutDashboardWidgets";
+export type { PayoutHistoryContentProps } from "./components/PayoutHistoryContent";
+export { PayoutHistoryContent } from "./components/PayoutHistoryContent";
 export { PayoutHistoryDrawer } from "./components/PayoutHistoryDrawer";
+export { RecordPaymentDialog } from "./components/RecordPaymentDialog";
 export { TokenBreakdown, TokenBreakdownInline } from "./components/TokenBreakdown";
 // Hooks
 export * from "./hooks/use-payout-disbursement";

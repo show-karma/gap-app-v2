@@ -13,15 +13,15 @@ import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
 
 // Mock formatCurrency and formatDate
-jest.mock("@/utilities/formatCurrency");
-jest.mock("@/utilities/formatDate");
+vi.mock("@/utilities/formatCurrency");
+vi.mock("@/utilities/formatDate");
 
-const mockFormatCurrency = formatCurrency as jest.MockedFunction<typeof formatCurrency>;
-const mockFormatDate = formatDate as jest.MockedFunction<typeof formatDate>;
+const mockFormatCurrency = formatCurrency as vi.MockedFunction<typeof formatCurrency>;
+const mockFormatDate = formatDate as vi.MockedFunction<typeof formatDate>;
 
 describe("formatMetricValue", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockFormatCurrency.mockImplementation((val) => `$${val.toLocaleString()}`);
   });
 
@@ -64,7 +64,7 @@ describe("formatMetricValue", () => {
 
 describe("prepareCommunityMetricsChartData", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockFormatDate.mockImplementation((date) => date.toISOString().split("T")[0]);
   });
 
@@ -248,12 +248,12 @@ describe("calculateDateRange", () => {
 
   beforeEach(() => {
     mockNow = new Date("2024-01-15T10:00:00Z");
-    jest.useFakeTimers();
-    jest.setSystemTime(mockNow);
+    vi.useFakeTimers();
+    vi.setSystemTime(mockNow);
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   it("should return undefined for 'all' timeframe", () => {

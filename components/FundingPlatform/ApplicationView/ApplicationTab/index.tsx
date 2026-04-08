@@ -50,11 +50,15 @@ export const ApplicationTab: FC<ApplicationTabProps> = ({
     }
   }, [versions, selectedVersion, selectVersion]);
 
-  // Check if post-approval data exists and application is approved
+  // Check if post-approval tab should be shown:
+  // Show when application is approved AND (program has a post-approval form schema OR data already exists)
+  const postApprovalFormSchema =
+    (program as any)?.applicationConfig?.postApprovalFormSchema || program?.postApprovalFormSchema;
+  const hasPostApprovalSchema = !!(postApprovalFormSchema?.fields?.length);
+  const hasPostApprovalData =
+    !!application.postApprovalData && Object.keys(application.postApprovalData).length > 0;
   const showPostApproval =
-    application.status === "approved" &&
-    application.postApprovalData &&
-    Object.keys(application.postApprovalData).length > 0;
+    application.status === "approved" && (hasPostApprovalSchema || hasPostApprovalData);
 
   // Get current revision reason if status is revision_requested
   const getCurrentRevisionReason = (): string | null => {

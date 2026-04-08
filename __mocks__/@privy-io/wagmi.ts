@@ -1,6 +1,6 @@
 /**
  * Mock for @privy-io/wagmi
  */
-export const useWagmiConfig = jest.fn(() => ({}));
-export const createConfig = jest.fn(() => ({}));
-export const useSetActiveWallet = jest.fn(() => ({ setActiveWallet: jest.fn() }));
+export const useWagmiConfig = vi.fn(() => ({}));
+export const createConfig = vi.fn(() => ({}));
+export const useSetActiveWallet = vi.fn(() => ({ setActiveWallet: vi.fn() }));

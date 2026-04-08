@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatAddressForDisplay } from "@/utilities/donations/helpers";
 import { cn } from "@/utilities/tailwind";
 import { formatTokenAmount } from "../lib/hedgey-contract";
@@ -46,15 +46,17 @@ function LockupWarning({ cliffDate }: { cliffDate: string }) {
     <div className="mb-2 p-3 rounded-lg bg-yellow-50 border border-yellow-200 dark:bg-yellow-950/20 dark:border-yellow-800">
       <div className="text-sm text-yellow-700 dark:text-yellow-400 flex items-center gap-1">
         <span>Funds will be locked until {cliffDate}</span>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Info className="w-4 h-4 cursor-help flex-shrink-0" aria-hidden="true" />
-          </TooltipTrigger>
-          <TooltipContent>
-            This claim has a vesting period. Your tokens will be locked in a vesting contract until
-            the specified date.
-          </TooltipContent>
-        </Tooltip>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Info className="w-4 h-4 cursor-help flex-shrink-0" aria-hidden="true" />
+            </TooltipTrigger>
+            <TooltipContent>
+              This claim has a vesting period. Your tokens will be locked in a vesting contract
+              until the specified date.
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
     </div>
   );
@@ -254,15 +256,17 @@ function CampaignCardComponent({
             (isLockupActive && formattedCliffDate ? (
               <output className="w-full flex items-center justify-center gap-1 py-2 text-muted-foreground">
                 <span>Claim funds after {formattedCliffDate}</span>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Info className="w-4 h-4 cursor-help" aria-hidden="true" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    Your funds are locked for vesting until {formattedCliffDate}. Login and claim
-                    your funds after that date.
-                  </TooltipContent>
-                </Tooltip>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="w-4 h-4 cursor-help" aria-hidden="true" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      Your funds are locked for vesting until {formattedCliffDate}. Login and claim
+                      your funds after that date.
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </output>
             ) : (
               <Button

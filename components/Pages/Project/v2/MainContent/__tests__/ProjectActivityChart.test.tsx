@@ -24,41 +24,42 @@ beforeAll(() => {
   window.IntersectionObserver = MockIntersectionObserver as unknown as typeof IntersectionObserver;
 });
 
-jest.mock("@/hooks/v2/useProjectProfile", () => ({
-  useProjectProfile: jest.fn(),
+vi.mock("@/hooks/v2/useProjectProfile", () => ({
+  useProjectProfile: vi.fn(),
 }));
 
-jest.mock("@/store", () => ({
-  useProjectStore: jest.fn(),
+vi.mock("@/store", () => ({
+  useProjectStore: vi.fn(),
 }));
 
-jest.mock("@tremor/react", () => ({
-  AreaChart: jest.fn(({ data, categories }) => (
+vi.mock("@tremor/react", () => ({
+  AreaChart: vi.fn(({ data, categories }) => (
     <div data-testid="area-chart" data-categories={JSON.stringify(categories)}>
       {JSON.stringify(data)}
     </div>
   )),
-  Card: jest.fn(({ children }) => <div data-testid="chart-card">{children}</div>),
+  Card: vi.fn(({ children }) => <div data-testid="chart-card">{children}</div>),
 }));
 
 describe("ProjectActivityChart", () => {
   const mockProject = { uid: "test-project-uid" };
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    (useProjectStore as unknown as jest.Mock).mockReturnValue({ project: mockProject });
+    vi.clearAllMocks();
+    (useProjectStore as unknown as vi.Mock).mockReturnValue({ project: mockProject });
   });
 
   it("should render loading state with skeleton", () => {
-    (useProjectProfile as jest.Mock).mockReturnValue({
+    (useProjectProfile as vi.Mock).mockReturnValue({
       allUpdates: [],
       isLoading: true,
     });
 
-    render(<ProjectActivityChart />);
+    const { container } = render(<ProjectActivityChart />);
 
-    expect(screen.getByTestId("chart-card")).toBeInTheDocument();
-    expect(document.querySelector(".animate-pulse")).toBeInTheDocument();
+    // Loading state renders a skeleton pulse animation inside a card wrapper
+    expect(container.querySelector(".animate-pulse")).toBeInTheDocument();
+    expect(container.querySelector(".bg-white")).toBeInTheDocument();
   });
 
   it("should categorize grant_received as Funding", async () => {
@@ -77,7 +78,7 @@ describe("ProjectActivityChart", () => {
       },
     ];
 
-    (useProjectProfile as jest.Mock).mockReturnValue({
+    (useProjectProfile as vi.Mock).mockReturnValue({
       allUpdates: mockUpdates,
       isLoading: false,
     });
@@ -111,7 +112,7 @@ describe("ProjectActivityChart", () => {
       },
     ];
 
-    (useProjectProfile as jest.Mock).mockReturnValue({
+    (useProjectProfile as vi.Mock).mockReturnValue({
       allUpdates: mockUpdates,
       isLoading: false,
     });
@@ -145,7 +146,7 @@ describe("ProjectActivityChart", () => {
       },
     ];
 
-    (useProjectProfile as jest.Mock).mockReturnValue({
+    (useProjectProfile as vi.Mock).mockReturnValue({
       allUpdates: mockUpdates,
       isLoading: false,
     });
@@ -185,7 +186,7 @@ describe("ProjectActivityChart", () => {
       },
     ];
 
-    (useProjectProfile as jest.Mock).mockReturnValue({
+    (useProjectProfile as vi.Mock).mockReturnValue({
       allUpdates: mockUpdates,
       isLoading: false,
     });
@@ -203,7 +204,7 @@ describe("ProjectActivityChart", () => {
   });
 
   it("should render without card wrapper when embedded", async () => {
-    (useProjectProfile as jest.Mock).mockReturnValue({
+    (useProjectProfile as vi.Mock).mockReturnValue({
       allUpdates: [
         {
           uid: "update-1",
@@ -224,7 +225,7 @@ describe("ProjectActivityChart", () => {
   });
 
   it("should render empty state when no data", async () => {
-    (useProjectProfile as jest.Mock).mockReturnValue({
+    (useProjectProfile as vi.Mock).mockReturnValue({
       allUpdates: [],
       isLoading: false,
     });

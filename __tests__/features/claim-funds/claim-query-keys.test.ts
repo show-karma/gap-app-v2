@@ -8,40 +8,40 @@ import React from "react";
 
 // ── Mocks for heavy external deps ────────────────────────────────────────────
 
-jest.mock("@privy-io/react-auth", () => ({
-  useWallets: jest.fn(() => ({ wallets: [{ address: "0xwallet" }] })),
+vi.mock("@privy-io/react-auth", () => ({
+  useWallets: vi.fn(() => ({ wallets: [{ address: "0xwallet" }] })),
 }));
 
-jest.mock("@/src/features/claim-funds/lib/viem-clients", () => ({
-  getChainByName: jest.fn(() => ({ id: 10 })),
-  getPublicClient: jest.fn(() => ({})),
-  switchOrAddChain: jest.fn(),
+vi.mock("@/src/features/claim-funds/lib/viem-clients", () => ({
+  getChainByName: vi.fn(() => ({ id: 10 })),
+  getPublicClient: vi.fn(() => ({})),
+  switchOrAddChain: vi.fn(),
 }));
 
-jest.mock("@/src/features/claim-funds/lib/hedgey-contract", () => ({
+vi.mock("@/src/features/claim-funds/lib/hedgey-contract", () => ({
   CLAIM_CAMPAIGNS_ABI: [],
   DEFAULT_CLAIM_CONTRACT_ADDRESS: "0xdefault",
-  uuidToBytes16: jest.fn(() => "0x00"),
+  uuidToBytes16: vi.fn(() => "0x00"),
 }));
 
-jest.mock("@/src/features/claim-funds/lib/error-messages", () => ({
-  sanitizeErrorMessage: jest.fn((e: Error) => ({ message: e.message })),
+vi.mock("@/src/features/claim-funds/lib/error-messages", () => ({
+  sanitizeErrorMessage: vi.fn((e: Error) => ({ message: e.message })),
 }));
 
-jest.mock("react-hot-toast", () => ({
-  default: { error: jest.fn(), success: jest.fn(), loading: jest.fn() },
+vi.mock("react-hot-toast", () => ({
+  default: { error: vi.fn(), success: vi.fn(), loading: vi.fn() },
 }));
 
-jest.mock("viem", () => ({
-  createWalletClient: jest.fn(),
-  custom: jest.fn(),
+vi.mock("viem", () => ({
+  createWalletClient: vi.fn(),
+  custom: vi.fn(),
 }));
 
 // Mock provider factory to return a stable provider with known id
-jest.mock("@/src/features/claim-funds/providers/provider-factory", () => ({
-  createClaimProvider: jest.fn(() => ({
+vi.mock("@/src/features/claim-funds/providers/provider-factory", () => ({
+  createClaimProvider: vi.fn(() => ({
     id: "hedgey-optimism",
-    fetchCampaigns: jest.fn().mockResolvedValue([]),
+    fetchCampaigns: vi.fn().mockResolvedValue([]),
   })),
 }));
 
@@ -55,6 +55,7 @@ const CLAIM_GRANTS: ClaimGrantsConfig = {
   providerConfig: { type: "hedgey", networkName: "optimism", contractAddress: "0xcontract" },
 };
 
+// Fresh QueryClient per render — no afterEach cleanup required
 function createWrapper() {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -156,7 +157,7 @@ import { useClaimTransaction } from "@/src/features/claim-funds/hooks/use-claim-
 describe("useClaimTransaction — invalidates cache keys with tenantId on success", () => {
   it("onSuccess invalidates claim-eligibility key with tenantId", () => {
     const wrapper = createWrapper();
-    const invalidateSpy = jest.spyOn(wrapper.queryClient, "invalidateQueries");
+    const invalidateSpy = vi.spyOn(wrapper.queryClient, "invalidateQueries");
 
     renderHook(() => useClaimTransaction("tenant-xyz", CLAIM_GRANTS), { wrapper });
 

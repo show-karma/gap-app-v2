@@ -3,7 +3,7 @@ import "@testing-library/jest-dom";
 import { AboutContent } from "../MainContent/AboutContent";
 
 // Mock MarkdownPreview to avoid issues with dynamic import
-jest.mock("@/components/Utilities/MarkdownPreview", () => ({
+vi.mock("@/components/Utilities/MarkdownPreview", () => ({
   MarkdownPreview: ({ source, className }: { source: string; className?: string }) => (
     <div data-testid="markdown-preview" className={className}>
       {source}
@@ -12,7 +12,7 @@ jest.mock("@/components/Utilities/MarkdownPreview", () => ({
 }));
 
 // Mock TeamContent to avoid loading external dependencies
-jest.mock("../TeamContent/TeamContent", () => ({
+vi.mock("../TeamContent/TeamContent", () => ({
   TeamContent: () => <div data-testid="team-content">Team Content Mock</div>,
 }));
 

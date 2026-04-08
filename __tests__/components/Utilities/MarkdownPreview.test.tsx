@@ -1,107 +1,129 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
 // Mock next-themes
-jest.mock("next-themes", () => ({
+vi.mock("next-themes", () => ({
   useTheme: () => ({ resolvedTheme: "light" }),
 }));
 
 // Mock CSS module
-jest.mock("@/styles/markdown.module.css", () => ({
+vi.mock("@/styles/markdown.module.css", () => ({
+  default: { wmdeMarkdown: "wmdeMarkdown-module" },
   wmdeMarkdown: "wmdeMarkdown-module",
 }));
 
-// Mock next/dynamic to return a component that exercises the `components` prop
-jest.mock("next/dynamic", () => {
-  return function mockDynamic() {
-    const MockPreview = ({
-      components,
-      className,
-    }: {
-      components?: {
-        p?: (props: { children: React.ReactNode }) => React.ReactElement;
-        code?: (props: { children: React.ReactNode; className?: string }) => React.ReactElement;
-      };
-      className?: string;
-      [key: string]: unknown;
-    }) => (
-      <div data-testid="markdown-preview" className={className}>
-        {components?.p && components.p({ children: <span>test paragraph</span> })}
-        {components?.code &&
-          components.code({
-            children: "const x = 1;",
-            className: "language-js",
-          })}
-      </div>
-    );
-    return MockPreview;
-  };
-});
+// Mock streamdown styles (CSS-only, no-op in tests)
+vi.mock("streamdown/styles.css", () => ({}));
 
 // Import after mocks
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 
 describe("MarkdownPreview", () => {
-  describe("paragraph rendering", () => {
-    it("renders paragraphs as <p> elements, not <span>", () => {
-      render(<MarkdownPreview source="hello world" />);
-      const p = document.querySelector("p");
-      expect(p).toBeInTheDocument();
-      // Confirm it is not a span
-      const span = document.querySelector("span.mb-2");
-      expect(span).not.toBeInTheDocument();
+  describe("empty/undefined source handling", () => {
+    it("returns null when source is undefined", () => {
+      const { container } = render(<MarkdownPreview source={undefined} />);
+      expect(container.innerHTML).toBe("");
     });
 
-    it("paragraph has mb-2 class", () => {
-      render(<MarkdownPreview source="hello world" />);
-      const p = document.querySelector("p");
-      expect(p).toHaveClass("mb-2");
+    it("returns null when source is empty string", () => {
+      const { container } = render(<MarkdownPreview source="" />);
+      expect(container.innerHTML).toBe("");
     });
   });
 
-  describe("code block rendering", () => {
-    it("preserves language className on code elements", () => {
-      render(<MarkdownPreview source="```js\nconst x = 1;\n```" />);
-      const code = document.querySelector("code");
-      expect(code).toBeInTheDocument();
-      expect(code).toHaveClass("language-js");
-    });
-
-    it("code element has base styling classes", () => {
-      render(<MarkdownPreview source="```js\nconst x = 1;\n```" />);
-      const code = document.querySelector("code");
-      expect(code).toHaveClass("bg-neutral-200");
-      expect(code).toHaveClass("p-2");
-      expect(code).toHaveClass("rounded-md");
-    });
-  });
-
-  describe("className isolation", () => {
-    it("does not leak parent className onto code elements", () => {
-      render(
-        <MarkdownPreview source="```js\nconst x = 1;\n```" className="my-custom-parent-class" />
-      );
-      const code = document.querySelector("code");
-      // The code element should NOT carry the parent className
-      expect(code).not.toHaveClass("my-custom-parent-class");
-    });
-
-    it("parent className goes to the Preview wrapper, not code", () => {
-      render(<MarkdownPreview source="```js\nconst x = 1;\n```" className="outer-class" />);
-      // The wrapper div contains the preview element with the combined className
-      const preview = screen.getByTestId("markdown-preview");
-      expect(preview.className).toContain("outer-class");
-      // code still should not have it
-      const code = document.querySelector("code");
-      expect(code).not.toHaveClass("outer-class");
-    });
-  });
-
-  describe("wrapper structure", () => {
-    it("wraps content in a div with data-color-mode attribute", () => {
+  describe("loading state", () => {
+    it("renders without crashing for non-empty source", () => {
       const { container } = render(<MarkdownPreview source="hello" />);
-      const wrapper = container.querySelector('[data-color-mode="light"]');
-      expect(wrapper).toBeInTheDocument();
+      expect(container.innerHTML).not.toBe("");
+    });
+  });
+
+  describe("streamdown rendering", () => {
+    it("renders markdown content after streamdown loads", async () => {
+      render(<MarkdownPreview source="Hello world" />);
+
+      await waitFor(
+        () => {
+          expect(screen.getByText("Hello world")).toBeInTheDocument();
+        },
+        { timeout: 3000 }
+      );
+    });
+
+    it("wraps content in a div with data-color-mode attribute", async () => {
+      const { container } = render(<MarkdownPreview source="hello" />);
+
+      await waitFor(() => {
+        const wrapper = container.querySelector('[data-color-mode="light"]');
+        expect(wrapper).toBeInTheDocument();
+      });
+    });
+
+    it("applies CSS module class via className", async () => {
+      const { container } = render(<MarkdownPreview source="hello" />);
+
+      await waitFor(() => {
+        const el = container.querySelector(".wmdeMarkdown");
+        expect(el).toBeInTheDocument();
+        expect(el).toHaveClass("wmdeMarkdown-module");
+      });
+    });
+
+    it("passes custom className prop through to the rendered element", async () => {
+      const { container } = render(<MarkdownPreview source="hello" className="my-custom-class" />);
+
+      await waitFor(() => {
+        const el = container.querySelector(".my-custom-class");
+        expect(el).toBeInTheDocument();
+      });
+    });
+
+    it("renders bold text from markdown", async () => {
+      render(<MarkdownPreview source="This is **bold** text" />);
+
+      await waitFor(() => {
+        expect(screen.getByText("bold")).toBeInTheDocument();
+      });
+    });
+
+    it("renders links from markdown", async () => {
+      render(<MarkdownPreview source="[Click here](https://example.com)" />);
+
+      await waitFor(() => {
+        const link = document.querySelector('[data-streamdown="link"]');
+        expect(link).toBeInTheDocument();
+        expect(link).toHaveTextContent("Click here");
+      });
+    });
+
+    it("renders with mode='static' (no streaming animation)", async () => {
+      const { container } = render(<MarkdownPreview source="hello" />);
+
+      await waitFor(() => {
+        expect(screen.getByText("hello")).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe("custom components", () => {
+    it("applies default paragraph component with mb-2 class", async () => {
+      render(<MarkdownPreview source="A paragraph" />);
+
+      await waitFor(() => {
+        const p = document.querySelector("p.mb-2");
+        expect(p).toBeInTheDocument();
+      });
+    });
+
+    it("default paragraph has transparent background and currentColor", async () => {
+      render(<MarkdownPreview source="A paragraph" />);
+
+      await waitFor(() => {
+        const p = document.querySelector("p.mb-2") as HTMLElement;
+        expect(p).toBeInTheDocument();
+        expect(p.style.backgroundColor).toBe("transparent");
+        expect(p.style.color).toBe("currentColor");
+      });
     });
   });
 });

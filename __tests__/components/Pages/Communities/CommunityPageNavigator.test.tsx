@@ -8,24 +8,24 @@ import { useCommunityPrograms } from "@/hooks/usePrograms";
 import { useWhitelabel } from "@/utilities/whitelabel-context";
 
 // Mock hooks
-jest.mock("@/hooks/communities/useCommunityDetails");
-jest.mock("@/hooks/useFundingOpportunitiesCount");
-jest.mock("@/hooks/usePrograms");
-jest.mock("@/utilities/whitelabel-context");
+vi.mock("@/hooks/communities/useCommunityDetails");
+vi.mock("@/hooks/useFundingOpportunitiesCount");
+vi.mock("@/hooks/usePrograms");
+vi.mock("@/utilities/whitelabel-context");
 
 // Mock next/navigation
-const mockUseParams = jest.fn();
-const mockUsePathname = jest.fn();
-const mockUseSearchParams = jest.fn();
+const mockUseParams = vi.fn();
+const mockUsePathname = vi.fn();
+const mockUseSearchParams = vi.fn();
 
-jest.mock("next/navigation", () => ({
+vi.mock("next/navigation", () => ({
   useParams: () => mockUseParams(),
   usePathname: () => mockUsePathname(),
   useSearchParams: () => mockUseSearchParams(),
 }));
 
 // Mock PAGES utility
-jest.mock("@/utilities/pages", () => ({
+vi.mock("@/utilities/pages", () => ({
   PAGES: {
     COMMUNITY: {
       FUNDING_OPPORTUNITIES: (id: string) => `/community/${id}/funding-opportunities`,
@@ -40,12 +40,12 @@ jest.mock("@/utilities/pages", () => ({
 }));
 
 // Mock community-flags
-jest.mock("@/utilities/community-flags", () => ({
+vi.mock("@/utilities/community-flags", () => ({
   FINANCIALS_ENABLED_COMMUNITIES: ["filecoin"],
 }));
 
 // Mock lucide-react icons
-jest.mock("lucide-react", () => ({
+vi.mock("lucide-react", () => ({
   ChartLine: (props: any) => <svg data-testid="chart-line-icon" {...props} />,
   DollarSign: (props: any) => <svg data-testid="dollar-sign-icon" {...props} />,
   FileSearch: (props: any) => <svg data-testid="file-search-icon" {...props} />,
@@ -54,16 +54,16 @@ jest.mock("lucide-react", () => ({
   Wallet: (props: any) => <svg data-testid="wallet-icon" {...props} />,
 }));
 
-const mockUseCommunityDetails = useCommunityDetails as jest.MockedFunction<
+const mockUseCommunityDetails = useCommunityDetails as vi.MockedFunction<
   typeof useCommunityDetails
 >;
-const mockUseFundingOpportunitiesCount = useFundingOpportunitiesCount as jest.MockedFunction<
+const mockUseFundingOpportunitiesCount = useFundingOpportunitiesCount as vi.MockedFunction<
   typeof useFundingOpportunitiesCount
 >;
-const mockUseCommunityPrograms = useCommunityPrograms as jest.MockedFunction<
+const mockUseCommunityPrograms = useCommunityPrograms as vi.MockedFunction<
   typeof useCommunityPrograms
 >;
-const mockUseWhitelabel = useWhitelabel as jest.MockedFunction<typeof useWhitelabel>;
+const mockUseWhitelabel = useWhitelabel as vi.MockedFunction<typeof useWhitelabel>;
 
 describe("CommunityPageNavigator", () => {
   let queryClient: QueryClient;
@@ -80,7 +80,10 @@ describe("CommunityPageNavigator", () => {
         },
       },
     });
-    jest.clearAllMocks();
+    vi.clearAllMocks();
+
+    // JSDOM doesn't provide scrollIntoView
+    Element.prototype.scrollIntoView = vi.fn();
 
     // Default mocks
     mockUseWhitelabel.mockReturnValue({
@@ -91,7 +94,7 @@ describe("CommunityPageNavigator", () => {
     mockUseParams.mockReturnValue({ communityId: "test-community" });
     mockUsePathname.mockReturnValue("/community/test-community");
     mockUseSearchParams.mockReturnValue({
-      get: jest.fn(() => null),
+      get: vi.fn(() => null),
     });
     mockUseCommunityDetails.mockReturnValue({
       data: {
@@ -126,7 +129,7 @@ describe("CommunityPageNavigator", () => {
 
       expect(screen.getByText("Funding opportunities")).toBeInTheDocument();
       expect(screen.getByText("Browse applications")).toBeInTheDocument();
-      expect(screen.getByText(/View.*community projects/)).toBeInTheDocument();
+      expect(screen.getByText("View funded projects")).toBeInTheDocument();
       expect(screen.getByText("Milestone updates")).toBeInTheDocument();
       expect(screen.getByText("Impact")).toBeInTheDocument();
       expect(screen.getByText("Financials")).toBeInTheDocument();
@@ -151,7 +154,7 @@ describe("CommunityPageNavigator", () => {
       render(<CommunityPageNavigator />, { wrapper });
 
       const fundingLink = screen.getByText("Funding opportunities").closest("a");
-      const grantsLink = screen.getByText(/View.*community projects/).closest("a");
+      const grantsLink = screen.getByText("View funded projects").closest("a");
       const updatesLink = screen.getByText("Milestone updates").closest("a");
       const impactLink = screen.getByText("Impact").closest("a");
 
@@ -182,7 +185,7 @@ describe("CommunityPageNavigator", () => {
 
       render(<CommunityPageNavigator />, { wrapper });
 
-      const link = screen.getByText(/View.*community projects/).closest("a");
+      const link = screen.getByText("View funded projects").closest("a");
       expect(link?.className).toContain("text-gray-900");
     });
 
@@ -234,7 +237,7 @@ describe("CommunityPageNavigator", () => {
   });
 
   describe("Community Name", () => {
-    it("should include community name in projects link text", () => {
+    it("should show static 'View funded projects' regardless of community name", () => {
       mockUseCommunityDetails.mockReturnValue({
         data: {
           uid: "0x1234567890123456789012345678901234567890",
@@ -247,10 +250,11 @@ describe("CommunityPageNavigator", () => {
 
       render(<CommunityPageNavigator />, { wrapper });
 
-      expect(screen.getByText("View Optimism community projects")).toBeInTheDocument();
+      expect(screen.getByText("View funded projects")).toBeInTheDocument();
+      expect(screen.queryByText(/Optimism/)).not.toBeInTheDocument();
     });
 
-    it("should handle missing community name gracefully", () => {
+    it("should show 'View funded projects' when community name is missing", () => {
       mockUseCommunityDetails.mockReturnValue({
         data: undefined,
         isLoading: false,
@@ -258,9 +262,7 @@ describe("CommunityPageNavigator", () => {
 
       render(<CommunityPageNavigator />, { wrapper });
 
-      // When community name is empty, it renders with double space
-      const link = screen.getByTestId("square-user-icon").closest("a");
-      expect(link?.textContent).toContain("community projects");
+      expect(screen.getByText("View funded projects")).toBeInTheDocument();
     });
   });
 
@@ -311,6 +313,15 @@ describe("CommunityPageNavigator", () => {
       expect(nav).toHaveClass("border-b");
     });
 
+    it("should have horizontal scroll classes for mobile", () => {
+      const { container } = render(<CommunityPageNavigator />, { wrapper });
+
+      const nav = container.firstChild;
+      expect(nav).toHaveClass("max-md:overflow-x-auto");
+      expect(nav).toHaveClass("max-md:scrollbar-none");
+      expect(nav).toHaveClass("max-md:flex-nowrap");
+    });
+
     it("should have links with gap between icon and text", () => {
       render(<CommunityPageNavigator />, { wrapper });
 
@@ -357,7 +368,7 @@ describe("CommunityPageNavigator", () => {
 
       render(<CommunityPageNavigator />, { wrapper });
 
-      const link = screen.getByText(/View.*community projects/).closest("a");
+      const link = screen.getByText("View funded projects").closest("a");
       expect(link?.className).toContain("text-gray-900");
     });
 
@@ -366,7 +377,7 @@ describe("CommunityPageNavigator", () => {
 
       render(<CommunityPageNavigator />, { wrapper });
 
-      const link = screen.getByText(/View.*community projects/).closest("a");
+      const link = screen.getByText("View funded projects").closest("a");
       expect(link?.className).toContain("text-gray-500");
     });
 
@@ -375,7 +386,7 @@ describe("CommunityPageNavigator", () => {
 
       render(<CommunityPageNavigator />, { wrapper });
 
-      const link = screen.getByText(/View.*community projects/).closest("a");
+      const link = screen.getByText("View funded projects").closest("a");
       expect(link?.className).toContain("text-gray-500");
     });
   });
@@ -568,7 +579,7 @@ describe("CommunityPageNavigator", () => {
 
       render(<CommunityPageNavigator />, { wrapper });
 
-      const link = screen.getByText(/View.*community projects/).closest("a");
+      const link = screen.getByText("View funded projects").closest("a");
       expect(link?.className).toContain("text-gray-500");
     });
   });
@@ -630,8 +641,23 @@ describe("CommunityPageNavigator", () => {
 
       render(<CommunityPageNavigator />, { wrapper });
 
-      const link = screen.getByText(/View.*community projects/).closest("a");
+      const link = screen.getByText("View funded projects").closest("a");
       expect(link?.className).toContain("text-gray-500");
+    });
+  });
+
+  describe("Active Tab Auto-Scroll", () => {
+    it("should scroll active tab into view on mount", () => {
+      mockUseParams.mockReturnValue({ communityId: "filecoin" });
+      mockUsePathname.mockReturnValue("/community/filecoin/financials");
+
+      render(<CommunityPageNavigator />, { wrapper });
+
+      expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "nearest",
+      });
     });
   });
 });

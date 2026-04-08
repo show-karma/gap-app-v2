@@ -37,36 +37,7 @@ const createGapInstance = (network: TNetwork): GAP => {
   });
 };
 
-let allNetworksInitialized = false;
-
-/**
- * Eagerly initialize GAP instances for every supported network so that the
- * SDK's AllGapSchemas.findSchema() always finds an existing instance with
- * rpcConfig populated instead of creating a bare one without it.
- */
-const ensureAllNetworksInitialized = () => {
-  if (allNetworksInitialized) return;
-  allNetworksInitialized = true;
-
-  for (const network of Object.keys(Networks) as TNetwork[]) {
-    const expectedChainId = Networks[network]?.chainId;
-    const resolvedChainId = getChainIdByName(network);
-    if (expectedChainId && resolvedChainId === expectedChainId && !gapClients[resolvedChainId]) {
-      try {
-        gapClients[resolvedChainId] = createGapInstance(network);
-      } catch (error) {
-        console.error(
-          `GAP::Failed to pre-initialize client for ${network} (chain ${resolvedChainId})`,
-          error
-        );
-      }
-    }
-  }
-};
-
 export const getGapClient = (chainID: number): GAP => {
-  ensureAllNetworksInitialized();
-
   const network = getSupportedNetworkForChain(chainID);
   if (!network) {
     throw new Error(`GAP::Unsupported chain ${chainID}`);

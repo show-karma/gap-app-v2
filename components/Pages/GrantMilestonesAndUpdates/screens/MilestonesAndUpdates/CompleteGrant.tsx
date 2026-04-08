@@ -15,7 +15,8 @@ import { useTracksForProgram } from "@/hooks/useTracks";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { getProjectGrants } from "@/services/project-grants.service";
-import { useProjectStore } from "@/store";
+import { useOwnerStore, useProjectStore } from "@/store";
+import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useGrantStore } from "@/store/grant";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import type { Grant } from "@/types/v2/grant";
@@ -27,6 +28,7 @@ import { PAGES } from "@/utilities/pages";
 import { getCommunityDetails } from "@/utilities/queries/v2/community";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { SHARE_TEXTS } from "@/utilities/share/text";
+import { isUserCancellationError } from "@/utilities/wallet-errors";
 import { FundingProgramFields } from "./CompletionRequirements/FundingProgramFields";
 import { TrackExplanations } from "./CompletionRequirements/TrackExplanations";
 
@@ -35,6 +37,14 @@ const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 export const GrantCompletion: FC = () => {
   const { grant } = useGrantStore();
   const { project } = useProjectStore();
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const isContractOwner = useOwnerStore((state) => state.isOwner);
+  const isOwnerLoading = useOwnerStore((state) => state.isOwnerLoading);
+  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
+  const isAuthorizedWithoutContractOwner = isProjectOwner || isProjectAdmin || isCommunityAdmin;
+  const isAuthorized = isAuthorizedWithoutContractOwner || isContractOwner;
+
   const [description, setDescription] = useState("");
   const [pitchDeckLink, setPitchDeckLink] = useState("");
   const [demoVideoLink, setDemoVideoLink] = useState("");
@@ -251,12 +261,15 @@ export const GrantCompletion: FC = () => {
           );
         });
     } catch (error: any) {
-      errorManager(
-        MESSAGES.GRANT.MARK_AS_COMPLETE.ERROR,
-        error,
-        { grantUID: grant?.uid, address },
-        { error: MESSAGES.GRANT.MARK_AS_COMPLETE.ERROR }
-      );
+      if (isUserCancellationError(error)) {
+        showError("Grant completion cancelled");
+      } else {
+        showError(MESSAGES.GRANT.MARK_AS_COMPLETE.ERROR);
+        errorManager(MESSAGES.GRANT.MARK_AS_COMPLETE.ERROR, error, {
+          grantUID: grantToComplete.uid,
+          address,
+        });
+      }
     } finally {
       setIsStepper(false);
     }
@@ -325,6 +338,28 @@ export const GrantCompletion: FC = () => {
       setIsLoading(false);
     });
   };
+
+  if (isOwnerLoading && !isAuthorizedWithoutContractOwner) {
+    return (
+      <div className="mt-9 flex flex-1">
+        <div className="flex w-full max-w-3xl flex-col gap-6 rounded-md bg-gray-200 dark:bg-zinc-800 px-4 py-6 max-lg:max-w-full">
+          <div className="animate-pulse h-8 w-64 bg-gray-300 dark:bg-zinc-700 rounded" />
+          <div className="animate-pulse h-40 w-full bg-gray-300 dark:bg-zinc-700 rounded" />
+          <div className="animate-pulse h-11 w-48 bg-gray-300 dark:bg-zinc-700 rounded self-end" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthorized) {
+    return (
+      <div className="mt-9 flex flex-1 items-center justify-center">
+        <p className="text-gray-500 dark:text-gray-400">
+          You do not have permission to complete this grant.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="mt-9 flex flex-1">

@@ -1,21 +1,21 @@
 import type { IFundingApplication } from "@/types/funding-platform";
 
 // Mock fetchData for GET requests
-jest.mock("@/utilities/fetchData");
+vi.mock("@/utilities/fetchData");
 
 // Mock the API client factory for delete operations
-jest.mock("@/utilities/auth/api-client", () => {
-  const mockDelete = jest.fn();
+vi.mock("@/utilities/auth/api-client", () => {
+  const mockDelete = vi.fn();
 
   return {
-    createAuthenticatedApiClient: jest.fn(() => ({
+    createAuthenticatedApiClient: vi.fn(() => ({
       delete: mockDelete,
     })),
     __mockDelete: mockDelete,
   };
 });
 
-jest.mock("@/utilities/enviromentVars", () => ({
+vi.mock("@/utilities/enviromentVars", () => ({
   envVars: {
     NEXT_PUBLIC_GAP_INDEXER_URL: "https://test-indexer.example.com",
   },
@@ -26,17 +26,17 @@ import { INDEXER } from "@/utilities/indexer";
 // Import service and mock utilities
 import { deleteApplication, fetchApplicationByProjectUID } from "../funding-applications";
 
-const mockFetchData = fetchData as jest.MockedFunction<typeof fetchData>;
-const { __mockDelete: mockDelete } = jest.requireMock("@/utilities/auth/api-client");
+const mockFetchData = fetchData as vi.MockedFunction<typeof fetchData>;
+const { __mockDelete: mockDelete } = require("@/utilities/auth/api-client");
 
 describe("funding-applications service", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.spyOn(console, "error").mockImplementation(() => {});
+    vi.clearAllMocks();
+    vi.spyOn(console, "error").mockImplementation(() => {});
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe("fetchApplicationByProjectUID", () => {
@@ -205,7 +205,7 @@ describe("funding-applications service", () => {
         })
       );
 
-      const loggedTimestamp = (console.error as jest.Mock).mock.calls[0][1].timestamp;
+      const loggedTimestamp = (console.error as vi.Mock).mock.calls[0][1].timestamp;
       expect(loggedTimestamp).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
       expect(loggedTimestamp >= beforeTime).toBe(true);
       expect(loggedTimestamp <= afterTime).toBe(true);
@@ -350,7 +350,7 @@ describe("funding-applications service", () => {
 
   describe("API client initialization", () => {
     it("should have createAuthenticatedApiClient mocked", () => {
-      const { createAuthenticatedApiClient } = jest.requireMock("@/utilities/auth/api-client");
+      const { createAuthenticatedApiClient } = require("@/utilities/auth/api-client");
       expect(createAuthenticatedApiClient).toBeDefined();
       expect(typeof createAuthenticatedApiClient).toBe("function");
     });

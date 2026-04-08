@@ -53,8 +53,7 @@ interface ControlCenterTableRowProps {
   isLoadingKycStatuses: boolean;
   kycStatus: KycStatusResponse | null;
   onSelectGrant?: (uid: string, checked: boolean) => void;
-  onRowClick: (item: TableRow, e: React.MouseEvent) => void;
-  onOpenConfigModal?: (item: TableRow) => void;
+  onOpenDetails: (item: TableRow) => void;
   readOnly?: boolean;
 }
 
@@ -73,16 +72,14 @@ const ControlCenterTableRow = memo(function ControlCenterTableRow({
   isLoadingKycStatuses,
   kycStatus,
   onSelectGrant,
-  onRowClick,
-  onOpenConfigModal,
+  onOpenDetails,
   readOnly,
 }: ControlCenterTableRowProps) {
   return (
     <tr
       key={`${item.grantUid}-${item.projectUid}`}
-      onClick={(e) => onRowClick(item, e)}
       className={cn(
-        "cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-zinc-900/70 group",
+        "transition-colors",
         isSelected && "bg-blue-50 dark:bg-blue-900/20",
         isFullyDisbursed && "bg-green-50/50 dark:bg-green-900/10",
         checkboxDisabled && !isFullyDisbursed && "bg-gray-50/50 dark:bg-zinc-900/50"
@@ -180,21 +177,16 @@ const ControlCenterTableRow = memo(function ControlCenterTableRow({
       </td>
 
       {/* Actions */}
-      {!readOnly && (
-        <td className="px-4 py-3 text-center">
-          <button
-            onClick={() => onOpenConfigModal?.(item)}
-            className={cn(
-              "p-2 rounded-md transition-colors",
-              "text-gray-500 hover:text-gray-700 hover:bg-gray-100",
-              "dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-zinc-800"
-            )}
-            title="Configure payout settings"
-          >
-            <Cog6ToothIcon className="h-5 w-5" />
-          </button>
-        </td>
-      )}
+      <td className="px-2 py-3 text-center w-12">
+        <button
+          type="button"
+          onClick={() => onOpenDetails(item)}
+          className="p-1.5 rounded-md text-gray-400 hover:text-gray-700 dark:text-zinc-500 dark:hover:text-zinc-200 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
+          aria-label={`Open details for ${item.projectName}`}
+        >
+          <Cog6ToothIcon className="h-5 w-5" />
+        </button>
+      </td>
     </tr>
   );
 });
@@ -207,7 +199,7 @@ export interface ControlCenterTableProps {
   selectableGrants?: TableRow[];
   onSelectGrant?: (uid: string, checked: boolean) => void;
   onSelectAll?: (checked: boolean) => void;
-  onRowClick: (item: TableRow, e: React.MouseEvent) => void;
+  onOpenDetails: (item: TableRow) => void;
   onSort: (column: CommunityPayoutsSorting["sortBy"]) => void;
   sortBy?: CommunityPayoutsSorting["sortBy"];
   sortOrder?: "asc" | "desc";
@@ -220,7 +212,6 @@ export interface ControlCenterTableProps {
   paidMilestoneCountMap: Record<string, number>;
   invoiceRequiredMap: Record<string, boolean>;
   getCheckboxDisabledState?: (item: TableRow) => { disabled: boolean; reason: string | null };
-  onOpenConfigModal?: (item: TableRow) => void;
   hasActiveFilters: boolean;
   onClearFilters: () => void;
   readOnly?: boolean;
@@ -237,7 +228,7 @@ export function ControlCenterTable({
   selectableGrants,
   onSelectGrant,
   onSelectAll,
-  onRowClick,
+  onOpenDetails,
   onSort,
   sortBy,
   sortOrder,
@@ -250,7 +241,6 @@ export function ControlCenterTable({
   paidMilestoneCountMap,
   invoiceRequiredMap,
   getCheckboxDisabledState,
-  onOpenConfigModal,
   hasActiveFilters,
   onClearFilters,
   readOnly,
@@ -259,7 +249,7 @@ export function ControlCenterTable({
   itemsPerPage,
   totalItems,
 }: ControlCenterTableProps) {
-  const columnCount = 8 + (isKycEnabled ? 1 : 0) - (readOnly ? 2 : 0);
+  const columnCount = 8 + (isKycEnabled ? 1 : 0) - (readOnly ? 1 : 0);
 
   return (
     <div className="px-4">
@@ -339,11 +329,7 @@ export function ControlCenterTable({
                 </div>
               </th>
               {/* Actions */}
-              {!readOnly && (
-                <th className="h-11 px-4 text-center text-xs font-semibold text-gray-600 dark:text-zinc-400 uppercase tracking-wider w-20">
-                  Actions
-                </th>
-              )}
+              <th className="h-11 px-2 w-12" />
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-zinc-800 bg-white dark:bg-zinc-950">
@@ -371,8 +357,7 @@ export function ControlCenterTable({
                   isLoadingKycStatuses={isLoadingKycStatuses}
                   kycStatus={kycStatuses.get(item.projectUid) ?? null}
                   onSelectGrant={onSelectGrant}
-                  onRowClick={onRowClick}
-                  onOpenConfigModal={onOpenConfigModal}
+                  onOpenDetails={onOpenDetails}
                   readOnly={readOnly}
                 />
               );

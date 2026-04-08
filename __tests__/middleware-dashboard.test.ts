@@ -2,8 +2,8 @@ import type { NextRequest } from "next/server";
 import { middleware } from "@/middleware";
 import { WHITELABEL_DOMAINS } from "@/utilities/whitelabel-config";
 
-jest.mock("next/server", () => {
-  const actual = jest.requireActual("next/server");
+vi.mock("next/server", () => {
+  const actual = vi.importActual("next/server");
   return {
     ...actual,
     NextResponse: {
@@ -22,12 +22,12 @@ jest.mock("next/server", () => {
   };
 });
 
-jest.mock("@/utilities/redirectHelpers", () => ({
-  shouldRedirectToGov: jest.fn(() => false),
-  redirectToGov: jest.fn(),
+vi.mock("@/utilities/redirectHelpers", () => ({
+  shouldRedirectToGov: vi.fn(() => false),
+  redirectToGov: vi.fn(),
 }));
 
-jest.mock("@/utilities/chosenCommunities", () => ({
+vi.mock("@/utilities/chosenCommunities", () => ({
   chosenCommunities: () => [],
 }));
 

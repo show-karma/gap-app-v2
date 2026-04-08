@@ -14,11 +14,11 @@ import { renderWithProviders, screen } from "../utils/test-helpers";
 import "@testing-library/jest-dom";
 
 // Mock child components
-jest.mock("@/src/features/homepage/components/create-profile-button", () => ({
+vi.mock("@/src/features/homepage/components/create-profile-button", () => ({
   CreateProfileButton: () => <button data-testid="create-profile-button">Create Profile</button>,
 }));
 
-jest.mock("@/src/features/homepage/components/join-discord-button", () => ({
+vi.mock("@/src/features/homepage/components/join-discord-button", () => ({
   JoinDiscordButton: () => (
     <a data-testid="join-discord-button" href="#">
       <button>Join Discord</button>

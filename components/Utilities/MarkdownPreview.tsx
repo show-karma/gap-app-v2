@@ -1,67 +1,82 @@
 "use client";
-import dynamic from "next/dynamic";
+
 import { useTheme } from "next-themes";
-import rehypeExternalLinks from "rehype-external-links";
-import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
-import remarkBreaks from "remark-breaks";
-import remarkGfm from "remark-gfm";
+import type { ComponentType } from "react";
+import { useEffect, useState } from "react";
+import type { Components } from "streamdown";
 import styles from "@/styles/markdown.module.css";
 import { cn } from "@/utilities/tailwind";
 
-// Custom schema that extends the default to allow images
-const baseSchema = defaultSchema || { tagNames: [], attributes: {} };
-const customSchema = {
-  ...baseSchema,
-  tagNames: [...(baseSchema.tagNames || []), "img"],
-  attributes: {
-    ...baseSchema.attributes,
-    img: ["src", "alt", "title", "width", "height", "loading"],
-  },
-};
+// Inline props type — avoids pulling @uiw/react-markdown-preview into the bundle
+// while keeping call-site compatibility for the props we actually use.
+interface MarkdownPreviewProps {
+  source?: string;
+  className?: string;
+  // biome-ignore lint/suspicious/noExplicitAny: matches @uiw allowElement call-site signatures
+  allowElement?: (element: any, index: number, parent: any) => boolean;
+  // biome-ignore lint/suspicious/noExplicitAny: ComponentType<any> makes destructured params explicit-any, avoiding noImplicitAny errors at call sites
+  components?: Record<string, ComponentType<any>>;
+  // biome-ignore lint/suspicious/noExplicitAny: no-op kept for call-site compatibility; explicit any avoids noImplicitAny on node param
+  rehypeRewrite?: (node: any, index?: number, parent?: any) => void;
+  [key: string]: unknown; // absorb remaining unused @uiw props without breaking call sites
+}
 
-// Lazy load the heavy markdown preview library with a loading state
-const Preview = dynamic(() => import("@uiw/react-markdown-preview"), {
-  ssr: false,
-  loading: () => <div className="animate-pulse bg-gray-200 dark:bg-gray-700 rounded h-4 w-full" />,
-});
+type StreamdownType = typeof import("streamdown").Streamdown;
+type CodePluginType = typeof import("@streamdown/code").code;
 
-export const MarkdownPreview: typeof Preview = (props) => {
+export const MarkdownPreview = ({
+  source,
+  className,
+  allowElement,
+  components,
+}: MarkdownPreviewProps) => {
   const { resolvedTheme } = useTheme();
+  const [StreamdownComponent, setStreamdownComponent] = useState<StreamdownType | null>(null);
+  const [codePlugin, setCodePlugin] = useState<CodePluginType | null>(null);
+  useEffect(() => {
+    Promise.all([
+      import("streamdown").then((m) => m.Streamdown),
+      import("@streamdown/code").then((m) => m.code),
+      import("streamdown/styles.css" as string),
+    ])
+      .then(([Streamdown, code]) => {
+        setStreamdownComponent(() => Streamdown);
+        setCodePlugin(() => code);
+      })
+      .catch((err) => {
+        console.error("Failed to load markdown preview dependencies:", err);
+      });
+  }, []);
+
+  if (!source) return null;
+
+  if (!StreamdownComponent || !codePlugin) {
+    return <div className="animate-pulse bg-gray-200 dark:bg-gray-700 rounded h-4 w-full" />;
+  }
+
+  const mergedComponents: Components = {
+    p: ({ children }) => (
+      <p className="mb-2" style={{ backgroundColor: "transparent", color: "currentColor" }}>
+        {children}
+      </p>
+    ),
+    ...(components as Partial<Components>),
+  };
+
   return (
-    <div className="preview w-full max-w-full" data-color-mode={resolvedTheme ?? "light"}>
-      <Preview
-        className={cn("wmdeMarkdown", styles.wmdeMarkdown, props.className)}
-        rehypePlugins={[
-          [rehypeSanitize, customSchema],
-          [rehypeExternalLinks, { target: "_blank", rel: ["nofollow", "noopener", "noreferrer"] }],
-        ]}
-        remarkPlugins={[remarkGfm, remarkBreaks]}
-        style={{
-          backgroundColor: "transparent",
-          color: "currentColor",
-          width: "100%",
-          maxWidth: "100%",
-        }}
-        components={{
-          p: ({ children }) => <p className="mb-2">{children}</p>,
-          code: ({ children, className: langClass }) => (
-            <code
-              className={cn("bg-neutral-200 dark:bg-neutral-800 p-2 rounded-md", langClass)}
-              style={{
-                display: "block",
-                overflow: "auto",
-                maxWidth: "100%",
-                whiteSpace: "pre-wrap",
-                wordWrap: "break-word",
-                // backgroundColor: "black",
-              }}
-            >
-              {children}
-            </code>
-          ),
-        }}
-        {...props}
-      />
+    <div
+      className="preview w-full max-w-full text-foreground"
+      data-color-mode={resolvedTheme === "dark" ? "dark" : "light"}
+    >
+      <StreamdownComponent
+        mode="static"
+        plugins={{ code: codePlugin }}
+        className={cn("wmdeMarkdown", styles.wmdeMarkdown, className)}
+        allowElement={allowElement ?? undefined}
+        components={mergedComponents}
+      >
+        {source}
+      </StreamdownComponent>
     </div>
   );
 };

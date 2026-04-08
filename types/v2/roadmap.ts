@@ -120,6 +120,11 @@ export type GrantMilestoneWithDetails = {
   completionDetails: GrantMilestoneCompletionDetails | null;
   verificationDetails: GrantMilestoneVerificationDetails | null;
   fundingApplicationCompletion?: FundingApplicationMilestoneCompletion | null;
+  invoiceInfo?: {
+    status: string;
+    receivedAt: string | null;
+    fileKey: string | null;
+  } | null;
 };
 
 export type GrantUpdateWithDetails = {
@@ -267,10 +272,17 @@ export type UnifiedMilestone = {
     communityImage?: string;
     grantTitle?: string;
     grantUID: string;
+    programType?: "grant" | "hackathon" | "bounty" | "accelerator" | "vc_fund" | "rfp";
   };
   /** Endorsement info for endorsement type items */
   endorsement?: {
     endorsedBy: string;
     comment?: string;
+  };
+  /** Invoice info for grant milestones with invoiceRequired */
+  invoiceInfo?: {
+    status: string;
+    receivedAt: string | null;
+    fileKey: string | null;
   };
 };

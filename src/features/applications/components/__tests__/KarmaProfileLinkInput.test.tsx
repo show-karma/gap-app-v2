@@ -13,7 +13,7 @@ import type { ApplicationQuestion } from "@/types/whitelabel-entities";
 import { KarmaProfileLinkInput } from "../KarmaProfileLinkInput";
 
 // Mock MarkdownPreview to avoid heavy dependencies
-jest.mock("@/components/Utilities/MarkdownPreview", () => ({
+vi.mock("@/components/Utilities/MarkdownPreview", () => ({
   MarkdownPreview: ({ source }: { source: string }) => <span>{source}</span>,
 }));
 
@@ -39,8 +39,8 @@ const mockProjects = [
   },
 ];
 
-jest.mock("@/hooks/useProjectSearch", () => ({
-  useProjectSearch: jest.fn((query: string) => {
+vi.mock("@/hooks/useProjectSearch", () => ({
+  useProjectSearch: vi.fn((query: string) => {
     if (query.length < 3) {
       return {
         projects: [],
@@ -48,7 +48,7 @@ jest.mock("@/hooks/useProjectSearch", () => ({
         isFetching: false,
         isError: false,
         error: null,
-        refetch: jest.fn(),
+        refetch: vi.fn(),
       };
     }
     return {
@@ -61,7 +61,7 @@ jest.mock("@/hooks/useProjectSearch", () => ({
       isFetching: false,
       isError: false,
       error: null,
-      refetch: jest.fn(),
+      refetch: vi.fn(),
     };
   }),
 }));
@@ -133,11 +133,11 @@ describe("KarmaProfileLinkInput Component (features/applications)", () => {
 
   describe("Search and Results", () => {
     beforeEach(() => {
-      jest.useFakeTimers();
+      vi.useFakeTimers({ shouldAdvanceTime: true });
     });
 
     afterEach(() => {
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
 
     it("should display search results after typing 3+ characters", async () => {
@@ -148,7 +148,7 @@ describe("KarmaProfileLinkInput Component (features/applications)", () => {
       await act(async () => {
         fireEvent.change(input, { target: { value: "test" } });
         fireEvent.focus(input);
-        jest.advanceTimersByTime(600);
+        vi.advanceTimersByTime(600);
       });
 
       await waitFor(() => {
@@ -164,7 +164,7 @@ describe("KarmaProfileLinkInput Component (features/applications)", () => {
       await act(async () => {
         fireEvent.change(input, { target: { value: "test" } });
         fireEvent.focus(input);
-        jest.advanceTimersByTime(600);
+        vi.advanceTimersByTime(600);
       });
 
       await waitFor(() => {
@@ -182,11 +182,11 @@ describe("KarmaProfileLinkInput Component (features/applications)", () => {
 
   describe("Add Project Link", () => {
     beforeEach(() => {
-      jest.useFakeTimers();
+      vi.useFakeTimers({ shouldAdvanceTime: true });
     });
 
     afterEach(() => {
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
 
     it("should show add project link in search results", async () => {
@@ -197,7 +197,7 @@ describe("KarmaProfileLinkInput Component (features/applications)", () => {
       await act(async () => {
         fireEvent.change(input, { target: { value: "test" } });
         fireEvent.focus(input);
-        jest.advanceTimersByTime(600);
+        vi.advanceTimersByTime(600);
       });
 
       await waitFor(() => {
@@ -213,7 +213,7 @@ describe("KarmaProfileLinkInput Component (features/applications)", () => {
       await act(async () => {
         fireEvent.change(input, { target: { value: "zzzzzzz" } });
         fireEvent.focus(input);
-        jest.advanceTimersByTime(600);
+        vi.advanceTimersByTime(600);
       });
 
       await waitFor(() => {
@@ -230,7 +230,7 @@ describe("KarmaProfileLinkInput Component (features/applications)", () => {
       await act(async () => {
         fireEvent.change(input, { target: { value: "test" } });
         fireEvent.focus(input);
-        jest.advanceTimersByTime(600);
+        vi.advanceTimersByTime(600);
       });
 
       await waitFor(() => {
@@ -244,11 +244,11 @@ describe("KarmaProfileLinkInput Component (features/applications)", () => {
 
   describe("Remove Button", () => {
     beforeEach(() => {
-      jest.useFakeTimers();
+      vi.useFakeTimers({ shouldAdvanceTime: true });
     });
 
     afterEach(() => {
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
 
     it("should show remove button on selected project", async () => {
@@ -259,7 +259,7 @@ describe("KarmaProfileLinkInput Component (features/applications)", () => {
       await act(async () => {
         fireEvent.change(input, { target: { value: "test" } });
         fireEvent.focus(input);
-        jest.advanceTimersByTime(600);
+        vi.advanceTimersByTime(600);
       });
 
       await waitFor(() => {
@@ -281,7 +281,7 @@ describe("KarmaProfileLinkInput Component (features/applications)", () => {
       await act(async () => {
         fireEvent.change(input, { target: { value: "test" } });
         fireEvent.focus(input);
-        jest.advanceTimersByTime(600);
+        vi.advanceTimersByTime(600);
       });
 
       await waitFor(() => {

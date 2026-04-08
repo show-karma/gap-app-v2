@@ -3,34 +3,38 @@
  * @description Tests chain switching and wallet connection for attestation operations
  */
 
-// Mock ALL dependencies to avoid ESM import issues
-const mockEnsureCorrectChain = jest.fn();
-const mockSafeGetWalletClient = jest.fn();
-const mockWalletClientToSigner = jest.fn();
+// Hoist mock variables so they are available inside vi.mock factories
+const { mockEnsureCorrectChain, mockSafeGetWalletClient, mockWalletClientToSigner } = vi.hoisted(
+  () => ({
+    mockEnsureCorrectChain: vi.fn(),
+    mockSafeGetWalletClient: vi.fn(),
+    mockWalletClientToSigner: vi.fn(),
+  })
+);
 
-jest.mock("@/utilities/ensureCorrectChain", () => ({
+vi.mock("@/utilities/ensureCorrectChain", () => ({
   ensureCorrectChain: mockEnsureCorrectChain,
 }));
 
-jest.mock("@/utilities/wallet-helpers", () => ({
+vi.mock("@/utilities/wallet-helpers", () => ({
   safeGetWalletClient: mockSafeGetWalletClient,
 }));
 
-jest.mock("@/utilities/eas-wagmi-utils", () => ({
+vi.mock("@/utilities/eas-wagmi-utils", () => ({
   walletClientToSigner: mockWalletClientToSigner,
 }));
 
 // Import the function to test AFTER mocking dependencies
-const { setupChainAndWallet } = require("@/utilities/chain-wallet-setup");
+import { setupChainAndWallet } from "@/utilities/chain-wallet-setup";
 
 describe("setupChainAndWallet", () => {
-  const mockGapClient = { fetch: { projectById: jest.fn() } } as any;
+  const mockGapClient = { fetch: { projectById: vi.fn() } } as any;
   const mockWalletClient = { account: { address: "0x123" } } as any;
-  const mockWalletSigner = { getAddress: jest.fn() } as any;
-  const mockSwitchChainAsync = jest.fn();
+  const mockWalletSigner = { getAddress: vi.fn() } as any;
+  const mockSwitchChainAsync = vi.fn();
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("Successful Setup", () => {

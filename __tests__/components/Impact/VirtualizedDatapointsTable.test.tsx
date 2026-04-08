@@ -1,10 +1,11 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import { VirtualizedDatapointsTable } from "@/components/Pages/Project/Impact/VirtualizedDatapointsTable";
 import type { OutputForm } from "@/types/impact";
 
 // Mock the parseProofUrls utility
-jest.mock("@/utilities/impact", () => ({
+vi.mock("@/utilities/impact", () => ({
   parseProofUrls: (proof: string) => {
     if (!proof) return [];
     const urlPattern = /https?:\/\/[^\s]+/g;
@@ -13,14 +14,14 @@ jest.mock("@/utilities/impact", () => ({
 }));
 
 // Mock formatDate utility
-jest.mock("@/utilities/formatDate", () => ({
+vi.mock("@/utilities/formatDate", () => ({
   formatDate: (date: Date) => date.toISOString().split("T")[0],
 }));
 
 // Mock @tanstack/react-virtual to work with JSDOM
 // JSDOM doesn't support layout measurements, so we mock the virtualizer
 // to return all items as visible for testing purposes
-jest.mock("@tanstack/react-virtual", () => ({
+vi.mock("@tanstack/react-virtual", () => ({
   useVirtualizer: ({ count }: { count: number }) => ({
     getVirtualItems: () =>
       Array.from({ length: Math.min(count, 10) }, (_, index) => ({
@@ -31,8 +32,8 @@ jest.mock("@tanstack/react-virtual", () => ({
         end: (index + 1) * 56,
       })),
     getTotalSize: () => count * 56,
-    scrollToIndex: jest.fn(),
-    measureElement: jest.fn(),
+    scrollToIndex: vi.fn(),
+    measureElement: vi.fn(),
   }),
 }));
 
@@ -60,16 +61,16 @@ describe("VirtualizedDatapointsTable", () => {
     form: createMockForm(50),
     isAuthorized: true,
     isAutosynced: false,
-    onInputChange: jest.fn(),
-    onDeleteEntry: jest.fn(),
-    onAddEntry: jest.fn(),
-    isInvalidValue: jest.fn(() => false),
-    isInvalidTimestamp: jest.fn(() => false),
-    hasInvalidDatesSameRow: jest.fn(() => false),
+    onInputChange: vi.fn(),
+    onDeleteEntry: vi.fn(),
+    onAddEntry: vi.fn(),
+    isInvalidValue: vi.fn(() => false),
+    isInvalidTimestamp: vi.fn(() => false),
+    hasInvalidDatesSameRow: vi.fn(() => false),
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("Rendering", () => {
@@ -145,19 +146,25 @@ describe("VirtualizedDatapointsTable", () => {
       expect(deleteButtons.length).toBe(10);
     });
 
-    it("should call onInputChange when value is changed", () => {
+    it("should call onInputChange when value is changed", async () => {
+      const user = userEvent.setup();
       render(<VirtualizedDatapointsTable {...defaultProps} />);
 
       const valueInputs = screen.getAllByRole("spinbutton");
+      // fireEvent required: controlled input needs single-event value change
+
       fireEvent.change(valueInputs[0], { target: { value: "500" } });
 
       expect(defaultProps.onInputChange).toHaveBeenCalledWith("test-item-id", "value", "500", 0);
     });
 
-    it("should call onInputChange when start date is changed", () => {
+    it("should call onInputChange when start date is changed", async () => {
+      const user = userEvent.setup();
       render(<VirtualizedDatapointsTable {...defaultProps} />);
 
       const dateInputs = screen.getAllByLabelText(/start date for entry/i);
+      // fireEvent required: controlled input needs single-event value change
+
       fireEvent.change(dateInputs[0], { target: { value: "2024-06-01" } });
 
       expect(defaultProps.onInputChange).toHaveBeenCalledWith(
@@ -168,10 +175,13 @@ describe("VirtualizedDatapointsTable", () => {
       );
     });
 
-    it("should call onInputChange when end date is changed", () => {
+    it("should call onInputChange when end date is changed", async () => {
+      const user = userEvent.setup();
       render(<VirtualizedDatapointsTable {...defaultProps} />);
 
       const dateInputs = screen.getAllByLabelText(/end date for entry/i);
+      // fireEvent required: controlled input needs single-event value change
+
       fireEvent.change(dateInputs[0], { target: { value: "2024-06-15" } });
 
       expect(defaultProps.onInputChange).toHaveBeenCalledWith(
@@ -182,20 +192,22 @@ describe("VirtualizedDatapointsTable", () => {
       );
     });
 
-    it("should call onDeleteEntry when delete button is clicked", () => {
+    it("should call onDeleteEntry when delete button is clicked", async () => {
+      const user = userEvent.setup();
       render(<VirtualizedDatapointsTable {...defaultProps} />);
 
       const deleteButtons = screen.getAllByRole("button", { name: /delete entry/i });
-      fireEvent.click(deleteButtons[0]);
+      await user.click(deleteButtons[0]);
 
       expect(defaultProps.onDeleteEntry).toHaveBeenCalledWith("test-item-id", 0);
     });
 
-    it("should call onAddEntry when Add new entry button is clicked", () => {
+    it("should call onAddEntry when Add new entry button is clicked", async () => {
+      const user = userEvent.setup();
       render(<VirtualizedDatapointsTable {...defaultProps} />);
 
       const addButton = screen.getByText("Add new entry");
-      fireEvent.click(addButton);
+      await user.click(addButton);
 
       expect(defaultProps.onAddEntry).toHaveBeenCalledWith("test-item-id");
     });
@@ -231,7 +243,7 @@ describe("VirtualizedDatapointsTable", () => {
 
   describe("Validation", () => {
     it("should show error styling for invalid values", () => {
-      const isInvalidValue = jest.fn(() => true);
+      const isInvalidValue = vi.fn(() => true);
       render(<VirtualizedDatapointsTable {...defaultProps} isInvalidValue={isInvalidValue} />);
 
       // Error messages should be present
@@ -240,7 +252,7 @@ describe("VirtualizedDatapointsTable", () => {
     });
 
     it("should show correct error message for integer validation", () => {
-      const isInvalidValue = jest.fn(() => true);
+      const isInvalidValue = vi.fn(() => true);
       const form = { ...createMockForm(5), unitOfMeasure: "int" as const };
       render(
         <VirtualizedDatapointsTable {...defaultProps} form={form} isInvalidValue={isInvalidValue} />
@@ -251,7 +263,7 @@ describe("VirtualizedDatapointsTable", () => {
     });
 
     it("should show correct error message for float validation", () => {
-      const isInvalidValue = jest.fn(() => true);
+      const isInvalidValue = vi.fn(() => true);
       const form = { ...createMockForm(5), unitOfMeasure: "float" as const };
       render(
         <VirtualizedDatapointsTable {...defaultProps} form={form} isInvalidValue={isInvalidValue} />
@@ -262,7 +274,7 @@ describe("VirtualizedDatapointsTable", () => {
     });
 
     it("should apply error border to invalid date inputs", () => {
-      const hasInvalidDatesSameRow = jest.fn(() => true);
+      const hasInvalidDatesSameRow = vi.fn(() => true);
       render(
         <VirtualizedDatapointsTable
           {...defaultProps}
@@ -278,7 +290,7 @@ describe("VirtualizedDatapointsTable", () => {
     });
 
     it("should set aria-invalid on invalid value inputs", () => {
-      const isInvalidValue = jest.fn(() => true);
+      const isInvalidValue = vi.fn(() => true);
       render(<VirtualizedDatapointsTable {...defaultProps} isInvalidValue={isInvalidValue} />);
 
       const valueInputs = screen.getAllByRole("spinbutton");
@@ -296,10 +308,13 @@ describe("VirtualizedDatapointsTable", () => {
       expect(proofInputs.length).toBe(10);
     });
 
-    it("should call onInputChange when proof URL is changed", () => {
+    it("should call onInputChange when proof URL is changed", async () => {
+      const user = userEvent.setup();
       render(<VirtualizedDatapointsTable {...defaultProps} />);
 
       const proofInputs = screen.getAllByLabelText(/proof url/i);
+      // fireEvent required: controlled input needs single-event value change
+
       fireEvent.change(proofInputs[0], { target: { value: "https://new-proof.com" } });
 
       expect(defaultProps.onInputChange).toHaveBeenCalledWith(
@@ -385,7 +400,7 @@ describe("VirtualizedDatapointsTable", () => {
     });
 
     it("should have aria-describedby for invalid value inputs", () => {
-      const isInvalidValue = jest.fn(() => true);
+      const isInvalidValue = vi.fn(() => true);
       render(<VirtualizedDatapointsTable {...defaultProps} isInvalidValue={isInvalidValue} />);
 
       const valueInputs = screen.getAllByRole("spinbutton");
@@ -434,12 +449,15 @@ describe("VirtualizedDatapointsTable", () => {
   });
 
   describe("Data Index Tracking", () => {
-    it("should pass correct index to onInputChange", () => {
+    it("should pass correct index to onInputChange", async () => {
+      const user = userEvent.setup();
       render(<VirtualizedDatapointsTable {...defaultProps} />);
 
       const valueInputs = screen.getAllByRole("spinbutton");
 
       // Test first input
+      // fireEvent required: controlled input needs single-event value change
+
       fireEvent.change(valueInputs[0], { target: { value: "999" } });
       expect(defaultProps.onInputChange).toHaveBeenLastCalledWith(
         "test-item-id",
@@ -449,6 +467,8 @@ describe("VirtualizedDatapointsTable", () => {
       );
 
       // Test third input
+      // fireEvent required: controlled input needs single-event value change
+
       fireEvent.change(valueInputs[2], { target: { value: "888" } });
       expect(defaultProps.onInputChange).toHaveBeenLastCalledWith(
         "test-item-id",
@@ -458,15 +478,16 @@ describe("VirtualizedDatapointsTable", () => {
       );
     });
 
-    it("should pass correct index to onDeleteEntry", () => {
+    it("should pass correct index to onDeleteEntry", async () => {
+      const user = userEvent.setup();
       render(<VirtualizedDatapointsTable {...defaultProps} />);
 
       const deleteButtons = screen.getAllByRole("button", { name: /delete entry/i });
 
-      fireEvent.click(deleteButtons[3]);
+      await user.click(deleteButtons[3]);
       expect(defaultProps.onDeleteEntry).toHaveBeenCalledWith("test-item-id", 3);
 
-      fireEvent.click(deleteButtons[7]);
+      await user.click(deleteButtons[7]);
       expect(defaultProps.onDeleteEntry).toHaveBeenCalledWith("test-item-id", 7);
     });
   });

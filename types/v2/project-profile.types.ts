@@ -114,5 +114,7 @@ export interface ProjectProfileData {
  */
 export interface ProjectProfileState {
   isLoading: boolean;
+  isProjectLoading: boolean;
+  isSecondaryLoading: boolean;
   error: Error | null;
 }

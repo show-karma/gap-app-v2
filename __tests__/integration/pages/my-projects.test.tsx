@@ -2,11 +2,10 @@ import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import Page from "@/app/my-projects/page";
 
-jest.mock("@/components/Pages/MyProjects", () => {
-  return function MockMyProjects() {
-    return <div data-testid="mock-my-projects">Mocked MyProjects Component</div>;
-  };
-});
+vi.mock("@/components/Pages/MyProjects", () => ({
+  __esModule: true,
+  default: () => <div data-testid="mock-my-projects">Mocked MyProjects Component</div>,
+}));
 describe("My Projects Page", () => {
   it("renders the MyProjects component", () => {
     render(<Page />);

@@ -7,11 +7,11 @@ import { OnrampError, OnrampErrorCode } from "../onramp-errors";
 import { OnrampProvider } from "../types";
 import { useOnramp } from "../useOnramp";
 
-jest.mock("react-hot-toast");
-jest.mock("@/services/donations.service");
+vi.mock("react-hot-toast");
+vi.mock("@/services/donations.service");
 
-const mockDonationsService = donationsService as jest.Mocked<typeof donationsService>;
-const mockToast = toast as jest.Mocked<typeof toast>;
+const mockDonationsService = donationsService as vi.Mocked<typeof donationsService>;
+const mockToast = toast as vi.Mocked<typeof toast>;
 
 const createWrapper = () => {
   const queryClient = new QueryClient({
@@ -36,7 +36,7 @@ const defaultParams = {
 
 describe("useOnramp", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("initial state", () => {
@@ -98,7 +98,7 @@ describe("useOnramp", () => {
     });
 
     it("handles missing payout address", async () => {
-      const onError = jest.fn();
+      const onError = vi.fn();
       const { result } = renderHook(
         () =>
           useOnramp({
@@ -127,7 +127,7 @@ describe("useOnramp", () => {
       const apiError = new Error("Network error");
       mockDonationsService.createOnrampSession.mockRejectedValueOnce(apiError);
 
-      const onError = jest.fn();
+      const onError = vi.fn();
       const { result } = renderHook(
         () =>
           useOnramp({
@@ -159,7 +159,7 @@ describe("useOnramp", () => {
       );
       mockDonationsService.createOnrampSession.mockRejectedValueOnce(onrampError);
 
-      const onError = jest.fn();
+      const onError = vi.fn();
       const { result } = renderHook(
         () =>
           useOnramp({

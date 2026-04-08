@@ -13,7 +13,7 @@ import { renderWithProviders, screen } from "../utils/test-helpers";
 import "@testing-library/jest-dom";
 
 // Mock SOCIALS utility
-jest.mock("@/utilities/socials", () => ({
+vi.mock("@/utilities/socials", () => ({
   SOCIALS: {
     DISCORD: "https://discord.gg/karmahq",
   },

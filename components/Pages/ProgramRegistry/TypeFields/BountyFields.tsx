@@ -26,7 +26,11 @@ export function BountyFields({
             type="number"
             {...register("bountyMeta.rewardAmount")}
           />
-          <p className="text-base text-red-400">{errors.bountyMeta?.rewardAmount?.message}</p>
+          {errors.bountyMeta?.rewardAmount?.message && (
+            <p className="text-sm text-red-600 dark:text-red-400">
+              {errors.bountyMeta.rewardAmount.message}
+            </p>
+          )}
         </div>
         <div className="flex w-full flex-col gap-1">
           <label htmlFor="bounty-currency" className={labelStyle}>

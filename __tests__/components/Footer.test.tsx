@@ -3,16 +3,16 @@ import { Footer } from "@/src/components/footer/footer";
 import "@testing-library/jest-dom";
 
 // Mock child components
-jest.mock("@/src/components/shared/logo", () => ({
+vi.mock("@/src/components/shared/logo", () => ({
   Logo: () => <div data-testid="logo">Karma</div>,
 }));
 
-jest.mock("@/src/components/footer/newsletter", () => ({
+vi.mock("@/src/components/footer/newsletter", () => ({
   Newsletter: () => <div data-testid="newsletter">Newsletter Signup</div>,
 }));
 
 // Mock icons
-jest.mock("@/components/Icons", () => ({
+vi.mock("@/components/Icons", () => ({
   TwitterIcon: (props: any) => <svg {...props} data-testid="twitter-icon" aria-label="Twitter" />,
   DiscordIcon: (props: any) => <svg {...props} data-testid="discord-icon" aria-label="Discord" />,
   TelegramIcon: (props: any) => (
@@ -20,14 +20,14 @@ jest.mock("@/components/Icons", () => ({
   ),
 }));
 
-jest.mock("@/components/Icons/Paragraph", () => ({
+vi.mock("@/components/Icons/Paragraph", () => ({
   ParagraphIcon: (props: any) => (
     <svg {...props} data-testid="paragraph-icon" aria-label="Paragraph" />
   ),
 }));
 
 // Mock ExternalLink component
-jest.mock("@/components/Utilities/ExternalLink", () => ({
+vi.mock("@/components/Utilities/ExternalLink", () => ({
   ExternalLink: ({ children, href, className, ...props }: any) => (
     <a href={href} className={className} target="_blank" rel="noopener noreferrer" {...props}>
       {children}
@@ -421,13 +421,13 @@ describe("Footer", () => {
   describe("Edge Cases", () => {
     it("should handle year transition correctly", () => {
       const mockDate = new Date("2025-01-01");
-      jest.spyOn(global, "Date").mockImplementation(() => mockDate as any);
+      vi.spyOn(global, "Date").mockImplementation(() => mockDate as any);
 
       render(<Footer />);
 
       expect(screen.getByText("© 2025 Karma. All rights reserved.")).toBeInTheDocument();
 
-      jest.restoreAllMocks();
+      vi.restoreAllMocks();
     });
 
     it("should render all components without errors", () => {

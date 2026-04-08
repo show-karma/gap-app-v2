@@ -1,18 +1,18 @@
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 
-jest.mock("@/utilities/queries/v2/getCommunityData", () => ({
-  getCommunityDetails: jest.fn(),
-  getCommunityStats: jest.fn(),
-  getCommunityProjects: jest.fn(),
-  getCommunityCategories: jest.fn(),
+vi.mock("@/utilities/queries/v2/getCommunityData", () => ({
+  getCommunityDetails: vi.fn(),
+  getCommunityStats: vi.fn(),
+  getCommunityProjects: vi.fn(),
+  getCommunityCategories: vi.fn(),
 }));
 
-jest.mock("@/utilities/pagesOnRoot", () => ({
+vi.mock("@/utilities/pagesOnRoot", () => ({
   pagesOnRoot: [],
 }));
 
-jest.mock("@/components/CommunityGrants", () => ({
+vi.mock("@/components/CommunityGrants", () => ({
   CommunityGrants: () => <div data-testid="community-grants">Community Grants</div>,
 }));
 
@@ -38,14 +38,13 @@ describe("Community Page", () => {
     },
   };
 
-  beforeEach(() => {
-    jest.clearAllMocks();
-    const {
-      getCommunityDetails,
-      getCommunityStats,
-      getCommunityProjects,
-      getCommunityCategories,
-    } = require("@/utilities/queries/v2/getCommunityData");
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    const { getCommunityDetails, getCommunityStats, getCommunityProjects, getCommunityCategories } =
+      (await import("@/utilities/queries/v2/getCommunityData")) as unknown as Record<
+        string,
+        vi.Mock
+      >;
 
     getCommunityDetails.mockResolvedValue(mockCommunityDetails);
     getCommunityStats.mockResolvedValue(mockCommunityStats);
@@ -66,7 +65,9 @@ describe("Community Page", () => {
   });
 
   it("returns undefined for pages on root", async () => {
-    const { pagesOnRoot } = require("@/utilities/pagesOnRoot");
+    const { pagesOnRoot } = (await import("@/utilities/pagesOnRoot")) as unknown as {
+      pagesOnRoot: string[];
+    };
     pagesOnRoot.push("dashboard");
 
     const { default: PageComponent } = await import(

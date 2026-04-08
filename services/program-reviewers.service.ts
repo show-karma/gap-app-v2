@@ -74,11 +74,15 @@ export const programReviewersService = {
 
     if (error) {
       // Handle "No reviewers found" as an empty list, not an error
-      if (error.includes("Program Reviewer Not Found") || error.includes("No reviewers found")) {
+      const errorMessage = String(error);
+      if (
+        errorMessage.includes("Program Reviewer Not Found") ||
+        errorMessage.includes("No reviewers found")
+      ) {
         return [];
       }
       console.error("Program Reviewers API Error:", error);
-      throw new Error(error);
+      throw new Error(errorMessage);
     }
 
     // Map the API response to the expected format

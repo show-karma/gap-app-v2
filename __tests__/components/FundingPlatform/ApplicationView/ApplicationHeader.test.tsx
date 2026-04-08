@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import ApplicationHeader from "@/components/FundingPlatform/ApplicationView/ApplicationHeader";
 import type { IFundingApplication } from "@/types/funding-platform";
 
-// Create a wrapper with QueryClientProvider for tests
+// Fresh QueryClient per render — no afterEach cleanup required
 const createWrapper = () => {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -22,7 +22,7 @@ const renderWithProviders = (ui: React.ReactElement) => {
 };
 
 // Mock the formatDate utility
-jest.mock("@/utilities/formatDate", () => ({
+vi.mock("@/utilities/formatDate", () => ({
   formatDate: (date: Date | string) => {
     const d = new Date(date);
     return d.toLocaleDateString("en-US", {
@@ -34,13 +34,13 @@ jest.mock("@/utilities/formatDate", () => ({
 }));
 
 // Mock the getProjectTitle helper
-jest.mock("@/components/FundingPlatform/helper/getProjectTitle", () => ({
+vi.mock("@/components/FundingPlatform/helper/getProjectTitle", () => ({
   getProjectTitle: (application: any) =>
     application.applicationData?.projectName || "Untitled Project",
 }));
 
 // Mock Heroicons
-jest.mock("@heroicons/react/24/outline", () => ({
+vi.mock("@heroicons/react/24/outline", () => ({
   CheckCircleIcon: (props: any) => <svg data-testid="check-icon" {...props} />,
   ClockIcon: (props: any) => <svg data-testid="clock-icon" {...props} />,
   ExclamationTriangleIcon: (props: any) => <svg data-testid="warning-icon" {...props} />,

@@ -8,15 +8,15 @@ import type { ReactNode } from "react";
 import React from "react";
 
 // Mock dependencies
-jest.mock("@/hooks/useAuth", () => ({
+vi.mock("@/hooks/useAuth", () => ({
   useAuth: () => ({ address: null, authenticated: false }),
 }));
 
-jest.mock("@/src/features/application-comments/api/comments-service", () => ({
+vi.mock("@/src/features/application-comments/api/comments-service", () => ({
   CommentsService: {
-    getPublicComments: jest.fn().mockResolvedValue([]),
-    createPublicComment: jest.fn(),
-    deleteComment: jest.fn(),
+    getPublicComments: vi.fn().mockResolvedValue([]),
+    createPublicComment: vi.fn(),
+    deleteComment: vi.fn(),
   },
 }));
 
@@ -28,6 +28,7 @@ function createWrapper(queryClient: QueryClient) {
   };
 }
 
+// Fresh QueryClient per test — no afterEach cleanup required
 describe("usePublicCommenting — query key scoping", () => {
   it("includes communityId in the query key", () => {
     const queryClient = new QueryClient({

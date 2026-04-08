@@ -1,12 +1,14 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 
 // Mock Next.js Link
-jest.mock("next/link", () => {
-  return function MockLink({ href, children }: { href: string; children: React.ReactNode }) {
-    return <a href={href}>{children}</a>;
-  };
-});
+vi.mock("next/link", () => ({
+  __esModule: true,
+  default: ({ href, children }: { href: string; children: React.ReactNode }) => (
+    <a href={href}>{children}</a>
+  ),
+}));
 
 import { Search } from "lucide-react";
 import { EmptyState } from "@/src/components/ui/EmptyState";
@@ -56,19 +58,20 @@ describe("EmptyState", () => {
 
   describe("action button", () => {
     it("renders action button when action is provided", () => {
-      const handleClick = jest.fn();
+      const handleClick = vi.fn();
       render(
         <EmptyState title="No results" action={{ label: "Create one", onClick: handleClick }} />
       );
       expect(screen.getByRole("button", { name: "Create one" })).toBeInTheDocument();
     });
 
-    it("calls onClick when action button is clicked", () => {
-      const handleClick = jest.fn();
+    it("calls onClick when action button is clicked", async () => {
+      const user = userEvent.setup();
+      const handleClick = vi.fn();
       render(
         <EmptyState title="No results" action={{ label: "Add item", onClick: handleClick }} />
       );
-      fireEvent.click(screen.getByRole("button", { name: "Add item" }));
+      await user.click(screen.getByRole("button", { name: "Add item" }));
       expect(handleClick).toHaveBeenCalledTimes(1);
     });
 
@@ -90,7 +93,7 @@ describe("EmptyState", () => {
         <EmptyState
           title="No items"
           description="Nothing here yet."
-          action={{ label: "Add", onClick: jest.fn() }}
+          action={{ label: "Add", onClick: vi.fn() }}
         />
       );
       const html = container.innerHTML;
