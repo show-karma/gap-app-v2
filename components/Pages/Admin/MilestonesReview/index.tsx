@@ -523,6 +523,7 @@ function MilestonesReviewPageContent({
                       grantChainID={grant?.chainID}
                       projectUid={project.uid}
                       projectSlug={project.details?.slug}
+                      programId={parsedProgramId}
                       onVerifyClick={handleVerifyClick}
                       onCancelVerification={handleCancelVerification}
                       onVerificationCommentChange={setVerificationComment}

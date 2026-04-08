@@ -45,6 +45,8 @@ interface MilestoneEditDialogProps {
   projectUid?: string;
   /** Override project slug for query invalidation */
   projectSlug?: string;
+  /** Program ID for admin on-chain edits */
+  programId?: string;
 }
 
 function unixToDateInput(unix?: number): string {
@@ -66,9 +68,10 @@ export const MilestoneEditDialog = ({
   onClose,
   projectUid,
   projectSlug,
+  programId,
 }: MilestoneEditDialogProps) => {
   const { isEditing, editMilestone } = useMilestoneEdit(
-    projectUid ? { projectUid, projectSlug } : undefined
+    projectUid ? { projectUid, projectSlug, programId } : undefined
   );
   const [error, setError] = useState<string | null>(null);
 

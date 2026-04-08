@@ -57,6 +57,7 @@ interface MilestoneCardProps {
   grantChainID?: number;
   projectUid?: string;
   projectSlug?: string;
+  programId?: string;
   onVerifyClick: (uid: string) => void;
   onCancelVerification: () => void;
   onVerificationCommentChange: (comment: string) => void;
@@ -78,6 +79,7 @@ export function MilestoneCard({
   grantChainID,
   projectUid,
   projectSlug,
+  programId,
   onVerifyClick,
   onCancelVerification,
   onVerificationCommentChange,
@@ -151,6 +153,7 @@ export function MilestoneCard({
                 onClose={() => setIsEditOpen(false)}
                 projectUid={projectUid}
                 projectSlug={projectSlug}
+                programId={programId}
               />
             </>
           )}

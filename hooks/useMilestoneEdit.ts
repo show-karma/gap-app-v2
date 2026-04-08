@@ -6,7 +6,9 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useProjectStore } from "@/store";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
+import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
+import { envVars } from "@/utilities/enviromentVars";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { queryClient } from "@/utilities/query-client";
@@ -27,6 +29,8 @@ interface UseMilestoneEditOptions {
   projectUid?: string;
   /** Override project slug for query invalidation */
   projectSlug?: string;
+  /** Program ID for admin edits — required when using the backend on-chain edit API */
+  programId?: string;
 }
 
 export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
@@ -86,7 +90,67 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
     };
   };
 
+  const editMilestoneViaApi = async (milestone: UnifiedMilestone, newData: MilestoneEditData) => {
+    setIsEditing(true);
+    showLoading("Editing milestone via backend...");
+
+    try {
+      const apiClient = createAuthenticatedApiClient(envVars.NEXT_PUBLIC_GAP_INDEXER_URL, 60000);
+
+      const response = await apiClient.put<{
+        txHash: string;
+        newMilestoneUID: string;
+        revokedMilestoneUID: string;
+        revocationSuccess: boolean;
+      }>(INDEXER.MILESTONE.ON_CHAIN_EDIT(milestone.uid), {
+        chainID: milestone.chainID,
+        programId: options!.programId,
+        ...sanitizeObject(newData),
+      });
+
+      changeStepperStep("indexing");
+
+      if (response.data.txHash) {
+        await fetchData(
+          INDEXER.ATTESTATION_LISTENER(response.data.txHash, milestone.chainID),
+          "POST",
+          {}
+        );
+      }
+
+      await retryUntilConditionMet(
+        async () => {
+          const { data: fetchedGrants } = await refetchGrants();
+          if (!fetchedGrants?.length) return false;
+          const found = fetchedGrants
+            .flatMap((g) => g.milestones || [])
+            .find((m) => m.uid === response.data.newMilestoneUID);
+          return !!found;
+        },
+        async () => {
+          changeStepperStep("indexed");
+        }
+      );
+
+      await invalidateAllProjectQueries();
+      showSuccess("Milestone edited successfully!");
+    } catch (error) {
+      showError("There was an error editing the milestone");
+      errorManager("Error editing milestone via API", error, {
+        milestoneData: milestone,
+      });
+      throw error;
+    } finally {
+      setIsEditing(false);
+      dismiss();
+    }
+  };
+
   const editMilestone = async (milestone: UnifiedMilestone, newData: MilestoneEditData) => {
+    if (options?.programId) {
+      return editMilestoneViaApi(milestone, newData);
+    }
+
     setIsEditing(true);
     startAttestation("Step 1/2: Creating updated milestone...");
 
