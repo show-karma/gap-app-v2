@@ -68,7 +68,8 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
           predicate: (query) => {
             const key = query.queryKey[0];
             return key === "reportMilestones" ||
-              key === "pendingVerificationMilestones";
+              key === "pendingVerificationMilestones" ||
+              key === "project-grant-milestones";
           },
         })
       );
