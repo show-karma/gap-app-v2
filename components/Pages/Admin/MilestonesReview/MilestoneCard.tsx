@@ -294,7 +294,7 @@ export function MilestoneCard({
 
       <div className="flex items-center justify-between">
         <div className="text-sm text-gray-500 dark:text-gray-400">
-          <span className="font-medium">Due:</span> {formatDate(milestone.dueDate)}
+          <span className="font-medium">Due:</span> {formatDate(milestone.dueDate, "UTC")}
         </div>
         <span className={`text-xs px-3 py-1 rounded-full font-medium ${statusInfo.statusColor}`}>
           {statusInfo.status}
