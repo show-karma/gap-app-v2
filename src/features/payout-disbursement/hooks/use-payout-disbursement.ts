@@ -10,6 +10,7 @@ import type {
   CommunityPayoutsOptions,
   CommunityPayoutsResponse,
   CreateDisbursementsRequest,
+  MilestonePaymentStatus,
   PaginatedDisbursementsResponse,
   PayoutDisbursement,
   PayoutGrantConfig,
@@ -628,6 +629,78 @@ export function useSaveMilestoneInvoices(
         queryKey: [...payoutDisbursementKeys.all, "communityPayouts", communityUID],
       });
       options?.onSuccess?.(data);
+    },
+    onError: (error) => {
+      options?.onError?.(error);
+    },
+  });
+}
+
+/**
+ * Hook for deleting a disbursement record by milestone
+ */
+export function useDeleteDisbursementByMilestone(
+  communityUID: string,
+  options?: {
+    onSuccess?: () => void;
+    onError?: (error: Error) => void;
+  }
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation<void, Error, { grantUID: string; milestoneUID: string }>({
+    mutationFn: ({ grantUID, milestoneUID }) =>
+      payoutService.deleteDisbursementByMilestone(grantUID, communityUID, milestoneUID),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: [...payoutDisbursementKeys.all, "communityPayouts", communityUID],
+      });
+      queryClient.invalidateQueries({
+        queryKey: payoutDisbursementKeys.grantHistory(variables.grantUID),
+      });
+      queryClient.invalidateQueries({
+        queryKey: payoutDisbursementKeys.grantTotal(variables.grantUID),
+      });
+      options?.onSuccess?.();
+    },
+    onError: (error) => {
+      options?.onError?.(error);
+    },
+  });
+}
+
+/**
+ * Hook for updating milestone payment status override
+ */
+export function useUpdateMilestonePaymentStatus(
+  communityUID: string,
+  options?: {
+    onSuccess?: () => void;
+    onError?: (error: Error) => void;
+  }
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    void,
+    Error,
+    {
+      grantUID: string;
+      milestoneLabel: string;
+      paymentStatus: "pending";
+    }
+  >({
+    mutationFn: ({ grantUID, milestoneLabel, paymentStatus }) =>
+      payoutService.updateMilestonePaymentStatus(grantUID, {
+        communityUID,
+        milestoneLabel,
+        paymentStatus,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [...payoutDisbursementKeys.all, "communityPayouts", communityUID],
+      });
+      options?.onSuccess?.();
     },
     onError: (error) => {
       options?.onError?.(error);

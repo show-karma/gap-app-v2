@@ -256,6 +256,7 @@ export const INDEXER = {
         const query = params.toString();
         return `/v2/payouts/community/${communityUID}/pending${query ? `?${query}` : ""}`;
       },
+      DELETE_BY_MILESTONE: (grantUID: string) => `/v2/payouts/grant/${grantUID}/milestone`,
       UPDATE_STATUS: (disbursementId: string) => `/v2/payouts/${disbursementId}/status`,
       SAFE_AWAITING: (safeAddress: string, page?: number, limit?: number) => {
         const params = new URLSearchParams();
@@ -361,6 +362,8 @@ export const INDEXER = {
       PRESIGNED_URL: () => `/v2/milestone-invoices/presigned`,
       DOWNLOAD: (key: string) => `/v2/milestone-invoices/download?key=${encodeURIComponent(key)}`,
       GRANTEE_PRESIGNED: () => `/v2/milestone-invoices/grantee/presigned`,
+      UPDATE_PAYMENT_STATUS: (grantUID: string) =>
+        `/v2/milestone-invoices/${grantUID}/payment-status`,
     },
     GRANTS: {
       INVOICE_REQUIREMENT: (grantUID: string) => `/v2/grants/${grantUID}/invoice-requirement`,

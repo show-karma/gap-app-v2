@@ -94,6 +94,8 @@ export interface RecordPaymentRequest {
   notes?: string;
   /** Human-readable labels for milestone UIDs in milestoneBreakdown */
   milestoneLabels?: Record<string, string>;
+  /** Target disbursement status — defaults to DISBURSED */
+  status?: "AWAITING_SIGNATURES" | "DISBURSED";
 }
 
 export interface PaginationInfo {
