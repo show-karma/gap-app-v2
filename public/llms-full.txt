@@ -1160,7 +1160,7 @@ We're excited to support your work on Filecoin. Good luck with your milestones!
 
 #### Gitcoin
 
-[Gitcoin](https://grants.gitcoin.co/) **has integrated Karma into their application.** Project milestones added in Karma will now be automatically displayed on the corresponding project pages in Gitcoin. For example, here is a project on [Karma](https://www.karmahq.xyz/project/karma---gap/grants/0xe7390a6f68ff70e0f7cda461079f92dad0150003e7ec541c7fb9e55e912211c0/milestones-and-updates) with milestones that are also visible in [Gitcoin](https://explorer.gitcoin.co/#/round/42161/608/117), ensuring seamless updates and visibility in both platforms.
+[Gitcoin](https://grants.gitcoin.co/) **has integrated Karma into their application.** Project milestones added in Karma will now be automatically displayed on the corresponding project pages in Gitcoin. For example, here is a project on [Karma](https://www.karmahq.xyz/project/karma---gap/funding/0xe7390a6f68ff70e0f7cda461079f92dad0150003e7ec541c7fb9e55e912211c0/milestones-and-updates) with milestones that are also visible in [Gitcoin](https://explorer.gitcoin.co/#/round/42161/608/117), ensuring seamless updates and visibility in both platforms.
 
 #### Global Stablecoin Hackathon
 
@@ -1212,7 +1212,7 @@ As you complete your work, submit milestones and mark them as complete.
 
 #### Octant
 
-[**Octant** ](https://octant.app/projects) **has integrated Karma into their application.** Project milestones added in Karma will now be automatically displayed on the corresponding project pages in Octant. For example, here is a project on [Karma](https://www.karmahq.xyz/project/-buidlguidl/grants/0x674ed25e9616b5c4237c6295b87f32cca42e74e7cc087e071a9c80c4e279fe91/milestones-and-updates) with milestones that are also visible in [Octant](https://octant.app/project/5/0x00080706a7D99CBC163D52dcF435205B1aD940D1), ensuring seamless updates and visibility in both platforms.
+[**Octant** ](https://octant.app/projects) **has integrated Karma into their application.** Project milestones added in Karma will now be automatically displayed on the corresponding project pages in Octant. For example, here is a project on [Karma](https://www.karmahq.xyz/project/-buidlguidl/funding/0x674ed25e9616b5c4237c6295b87f32cca42e74e7cc087e071a9c80c4e279fe91/milestones-and-updates) with milestones that are also visible in [Octant](https://octant.app/project/5/0x00080706a7D99CBC163D52dcF435205B1aD940D1), ensuring seamless updates and visibility in both platforms.
 
 **If you don't see your Epoch specific milestones in Octant, follow the steps below to link Karma grant to Octant's Epoch.**
 

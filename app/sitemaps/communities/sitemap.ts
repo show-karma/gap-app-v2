@@ -3,7 +3,7 @@ import { chosenCommunities } from "@/utilities/chosenCommunities";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return chosenCommunities().map((community) => ({
-    url: `https://karmahq.xyz/${community.slug || community.uid}`,
+    url: `https://www.karmahq.xyz/${community.slug || community.uid}`,
     lastModified: new Date().toISOString(),
     changeFrequency: "hourly",
     priority: 1,

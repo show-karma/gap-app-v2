@@ -20,7 +20,10 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   }
 
   const { projectId, grantUid } = await params;
-  const project = await getProjectCachedData(projectId);
+  const [project, grants] = await Promise.all([
+    getProjectCachedData(projectId),
+    getProjectGrants(projectId),
+  ]);
 
   if (!project) {
     return {
@@ -29,7 +32,6 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
     };
   }
 
-  const grants = await getProjectGrants(projectId);
   const grant = grants?.find((g) => g.uid?.toLowerCase() === grantUid?.toLowerCase());
 
   if (!grant) {
