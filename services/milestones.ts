@@ -51,6 +51,8 @@ export interface GrantMilestoneWithCompletion {
   title: string;
   description: string;
   dueDate: string;
+  startsAt?: number;
+  priority?: number;
   status: string;
   completionDetails: GrantMilestoneCompletionDetails | null;
   verificationDetails: GrantMilestoneVerificationDetails | null;
