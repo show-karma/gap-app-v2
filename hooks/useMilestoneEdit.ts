@@ -133,14 +133,8 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
 
       changeStepperStep("indexing");
 
-      if (response.data.txHash) {
-        await fetchData(
-          INDEXER.ATTESTATION_LISTENER(response.data.txHash, milestone.chainID),
-          "POST",
-          {}
-        );
-      }
-
+      // Backend already re-indexes both the creation and revocation txs
+      // in triggerReindexing — no need to call attestation listener again.
       await retryUntilConditionMet(
         async () => {
           const { data: fetchedGrants } = await refetchGrants();
