@@ -182,14 +182,17 @@ export const MilestonesSection = memo(function MilestonesSection({
     milestoneUID: string | null;
   } | null>(null);
 
-  const handleViewFile = useCallback(async (fileKey: string) => {
-    try {
-      const downloadUrl = await getInvoiceDownloadUrl(fileKey);
-      window.open(downloadUrl, "_blank", "noopener,noreferrer");
-    } catch {
-      toast.error("Failed to get download link");
-    }
-  }, []);
+  const handleViewFile = useCallback(
+    async (fileKey: string) => {
+      try {
+        const downloadUrl = await getInvoiceDownloadUrl(grant.grantUid, fileKey);
+        window.open(downloadUrl, "_blank", "noopener,noreferrer");
+      } catch {
+        toast.error("Failed to get download link");
+      }
+    },
+    [grant.grantUid]
+  );
 
   const handleFileUploaded = useCallback(
     (_finalUrl: string, tempKey: string) => {

@@ -67,11 +67,15 @@ function createMockInvoice(
 
 describe("MilestonesSection", () => {
   const mockGrant: ProjectDetailsSidebarGrant = {
-    uid: "grant-1",
-    title: "Test Grant",
+    grantUid: "grant-1",
+    projectUid: "project-1",
+    projectName: "Test Project",
+    projectSlug: "test-project",
+    grantName: "Test Grant",
+    grantProgramId: "program-1",
+    grantChainId: 10,
+    projectChainId: 10,
     currency: "USDC",
-    milestones: [],
-    updates: [],
   } as unknown as ProjectDetailsSidebarGrant;
 
   const defaultProps: MilestonesSectionProps = {
