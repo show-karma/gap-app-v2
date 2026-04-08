@@ -85,10 +85,9 @@ describe("RecordPaymentDialog", () => {
     });
   });
 
-  it("should render initial payment option and milestone options", () => {
+  it("should render milestone options from invoices", () => {
     renderDialog();
 
-    expect(screen.getByText("Initial Payment")).toBeInTheDocument();
     expect(screen.getByText("Milestone 1")).toBeInTheDocument();
     expect(screen.getByText("Milestone 2")).toBeInTheDocument();
   });
@@ -100,52 +99,56 @@ describe("RecordPaymentDialog", () => {
     expect(submitButton).toBeDisabled();
   });
 
-  it("should disable milestone checkboxes when initial payment selected", async () => {
-    const user = userEvent.setup();
-    renderDialog();
+  it("should mark paid milestones as disabled", () => {
+    renderDialog({
+      milestoneInvoices: [
+        {
+          milestoneLabel: "Milestone 1",
+          milestoneUID: "ms-1",
+          allocatedAmount: "25000",
+          paymentStatus: "disbursed",
+        },
+        {
+          milestoneLabel: "Milestone 2",
+          milestoneUID: "ms-2",
+          allocatedAmount: "50000",
+          paymentStatus: "pending",
+        },
+      ],
+    });
 
-    // Select "Initial Payment"
-    const initialPaymentCheckbox = screen
-      .getByText("Initial Payment")
-      .closest("label")!
-      .querySelector("input[type='checkbox']") as HTMLInputElement;
-    await user.click(initialPaymentCheckbox);
-
-    // Milestone checkboxes should be disabled
-    const milestoneCheckboxes = screen
+    const paidCheckbox = screen
       .getByText("Milestone 1")
       .closest("label")!
       .querySelector("input[type='checkbox']") as HTMLInputElement;
-    expect(milestoneCheckboxes).toBeDisabled();
+    expect(paidCheckbox).toBeDisabled();
 
-    const milestone2Checkbox = screen
+    const pendingCheckbox = screen
       .getByText("Milestone 2")
       .closest("label")!
       .querySelector("input[type='checkbox']") as HTMLInputElement;
-    expect(milestone2Checkbox).toBeDisabled();
+    expect(pendingCheckbox).not.toBeDisabled();
   });
 
-  it("should enable submit when amount, date, and type selected", async () => {
+  it("should enable submit when amount, date, and milestone selected", async () => {
     const user = userEvent.setup();
     renderDialog();
 
-    // Select "Initial Payment"
-    const initialPaymentCheckbox = screen
-      .getByText("Initial Payment")
+    // Select a milestone
+    const milestoneCheckbox = screen
+      .getByText("Milestone 1")
       .closest("label")!
       .querySelector("input[type='checkbox']") as HTMLInputElement;
-    await user.click(initialPaymentCheckbox);
+    await user.click(milestoneCheckbox);
 
     // Fill amount
     const amountInput = screen.getByPlaceholderText("e.g. 50000");
     await user.clear(amountInput);
-
     await user.type(amountInput, "10000");
 
     // Fill date
     const dateInput = screen.getByLabelText("Payment Date");
     await user.clear(dateInput);
-
     await user.type(dateInput, "2026-03-15");
 
     const submitButton = screen.getByRole("button", { name: /record payment/i });

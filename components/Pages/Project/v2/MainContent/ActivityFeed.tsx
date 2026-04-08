@@ -359,7 +359,9 @@ export function ActivityFeed({
               isAuthorized={isAuthorized}
               formatDisplayDate={formatDisplayDate}
               isValidTimestamp={isValidTimestamp}
-              allocationAmount={allocationMap.get(milestone.uid)}
+              allocationAmount={
+                allocationMap.get(milestone.uid) ?? allocationMap.get(milestone.uid.toLowerCase())
+              }
             />
           );
         })}

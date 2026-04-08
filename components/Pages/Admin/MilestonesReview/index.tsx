@@ -530,7 +530,10 @@ function MilestonesReviewPageContent({
                       onSubmitVerification={handleSubmitVerification}
                       onDeleteMilestone={handleDeleteMilestone}
                       isDeleting={isDeleting && deletingMilestoneId === milestone.uid}
-                      allocationAmount={allocationMap.get(milestone.uid)}
+                      allocationAmount={
+                        allocationMap.get(milestone.uid) ??
+                        allocationMap.get(milestone.uid.toLowerCase())
+                      }
                     />
                   ))
                 )}

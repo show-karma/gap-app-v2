@@ -300,7 +300,10 @@ export default function CommunityUpdatesPage() {
                 <CommunityMilestoneCard
                   key={milestone.uid}
                   milestone={milestone}
-                  allocationAmount={allocationMap.get(milestone.uid)}
+                  allocationAmount={
+                    allocationMap.get(milestone.uid) ??
+                    allocationMap.get(milestone.uid.toLowerCase())
+                  }
                 />
               ))}
             </div>
