@@ -265,6 +265,14 @@ export function ProjectDetailsSidebar({
     return () => clearTimeout(timer);
   }, [confirmingUnsign]);
 
+  useEffect(() => {
+    if (!open) {
+      setDiscardDialogOpen(false);
+      setRecordPaymentOpen(false);
+      pendingActionRef.current = null;
+    }
+  }, [open]);
+
   const handleSignAgreement = useCallback(
     (dateOverride?: Date) => {
       if (!grant) return;
