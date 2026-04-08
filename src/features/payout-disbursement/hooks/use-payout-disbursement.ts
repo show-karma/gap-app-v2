@@ -637,6 +637,39 @@ export function useSaveMilestoneInvoices(
 }
 
 /**
+ * Hook for deleting a disbursement record by milestone
+ */
+export function useDeleteDisbursementByMilestone(
+  communityUID: string,
+  options?: {
+    onSuccess?: () => void;
+    onError?: (error: Error) => void;
+  }
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation<void, Error, { grantUID: string; milestoneUID: string }>({
+    mutationFn: ({ grantUID, milestoneUID }) =>
+      payoutService.deleteDisbursementByMilestone(grantUID, communityUID, milestoneUID),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: [...payoutDisbursementKeys.all, "communityPayouts", communityUID],
+      });
+      queryClient.invalidateQueries({
+        queryKey: payoutDisbursementKeys.grantHistory(variables.grantUID),
+      });
+      queryClient.invalidateQueries({
+        queryKey: payoutDisbursementKeys.grantTotal(variables.grantUID),
+      });
+      options?.onSuccess?.();
+    },
+    onError: (error) => {
+      options?.onError?.(error);
+    },
+  });
+}
+
+/**
  * Hook for updating milestone payment status override
  */
 export function useUpdateMilestonePaymentStatus(
@@ -654,7 +687,7 @@ export function useUpdateMilestonePaymentStatus(
     {
       grantUID: string;
       milestoneLabel: string;
-      paymentStatus: MilestonePaymentStatus;
+      paymentStatus: "pending";
     }
   >({
     mutationFn: ({ grantUID, milestoneLabel, paymentStatus }) =>

@@ -231,7 +231,7 @@ export const updateMilestonePaymentStatus = async (
   request: {
     communityUID: string;
     milestoneLabel: string;
-    paymentStatus: MilestonePaymentStatus;
+    paymentStatus: "pending";
   }
 ): Promise<void> => {
   try {
@@ -781,6 +781,37 @@ export const deleteLineItem = async (
   } catch (error: unknown) {
     errorManager(`Error deleting line item ${allocationId} for grant ${grantUID}`, error);
     throw new Error(`Failed to delete line item: ${getErrorMessage(error)}`);
+  }
+};
+
+/**
+ * Deletes the disbursement record associated with a specific milestone
+ */
+export const deleteDisbursementByMilestone = async (
+  grantUID: string,
+  communityUID: string,
+  milestoneUID: string
+): Promise<void> => {
+  try {
+    const [, error] = await fetchData(
+      INDEXER.V2.PAYOUTS.DELETE_BY_MILESTONE(grantUID),
+      "DELETE",
+      { communityUID, milestoneUID },
+      {},
+      {},
+      true,
+      false
+    );
+
+    if (error) {
+      throw new Error(error);
+    }
+  } catch (error: unknown) {
+    errorManager(
+      `Error deleting disbursement for grant ${grantUID} milestone ${milestoneUID}`,
+      error
+    );
+    throw new Error(`Failed to delete disbursement: ${getErrorMessage(error)}`);
   }
 };
 

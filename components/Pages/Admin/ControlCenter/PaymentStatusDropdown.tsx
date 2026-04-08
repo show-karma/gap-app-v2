@@ -1,5 +1,6 @@
 "use client";
 
+import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import { memo, useCallback, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
@@ -61,6 +62,11 @@ interface PaymentStatusDropdownProps {
   grantUID: string;
   communityUID: string;
   paymentStatusDate?: string | null;
+  onRequestRecordPayment?: (
+    milestoneLabel: string,
+    targetStatus: "awaiting_signatures" | "disbursed"
+  ) => void;
+  onRequestDeleteDisbursement?: (milestoneLabel: string) => void;
 }
 
 export const PaymentStatusDropdown = memo(function PaymentStatusDropdown({
@@ -69,8 +75,10 @@ export const PaymentStatusDropdown = memo(function PaymentStatusDropdown({
   grantUID,
   communityUID,
   paymentStatusDate,
+  onRequestRecordPayment,
+  onRequestDeleteDisbursement,
 }: PaymentStatusDropdownProps) {
-  const [confirmingDisbursed, setConfirmingDisbursed] = useState(false);
+  const [confirmingUnpaid, setConfirmingUnpaid] = useState(false);
   const mutation = useUpdateMilestonePaymentStatus(communityUID);
 
   const currentConfig = useMemo(
@@ -82,14 +90,21 @@ export const PaymentStatusDropdown = memo(function PaymentStatusDropdown({
     (status: MilestonePaymentStatus) => {
       if (status === currentStatus) return;
 
-      // Require confirmation for destructive/critical status changes
-      if (status === "disbursed") {
-        setConfirmingDisbursed(true);
+      // "Awaiting sigs" and "Disbursed" open the Record Payment dialog
+      if (status === "awaiting_signatures" || status === "disbursed") {
+        onRequestRecordPayment?.(milestoneLabel, status);
         return;
       }
 
+      // "Unpaid" shows confirmation dialog to delete the disbursement record
+      if (status === "unpaid") {
+        setConfirmingUnpaid(true);
+        return;
+      }
+
+      // "Pending" stays as override-only (existing behavior)
       mutation.mutate(
-        { grantUID, milestoneLabel, paymentStatus: status },
+        { grantUID, milestoneLabel, paymentStatus: "pending" },
         {
           onSuccess: () => {
             toast.success(`Payment status updated to ${status}`);
@@ -100,23 +115,20 @@ export const PaymentStatusDropdown = memo(function PaymentStatusDropdown({
         }
       );
     },
-    [currentStatus, grantUID, milestoneLabel, mutation]
+    [
+      currentStatus,
+      grantUID,
+      milestoneLabel,
+      mutation,
+      onRequestRecordPayment,
+      onRequestDeleteDisbursement,
+    ]
   );
 
-  const handleConfirmDisbursed = useCallback(() => {
-    setConfirmingDisbursed(false);
-    mutation.mutate(
-      { grantUID, milestoneLabel, paymentStatus: "disbursed" },
-      {
-        onSuccess: () => {
-          toast.success("Payment status updated to Disbursed");
-        },
-        onError: () => {
-          toast.error("Failed to update payment status");
-        },
-      }
-    );
-  }, [grantUID, milestoneLabel, mutation]);
+  const handleConfirmUnpaid = useCallback(() => {
+    setConfirmingUnpaid(false);
+    onRequestDeleteDisbursement?.(milestoneLabel);
+  }, [milestoneLabel, onRequestDeleteDisbursement]);
 
   return (
     <>
@@ -126,7 +138,11 @@ export const PaymentStatusDropdown = memo(function PaymentStatusDropdown({
             type="button"
             className={cn(
               "inline-flex items-center gap-1.5 text-xs font-medium cursor-pointer",
-              "hover:opacity-80 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded px-1 -mx-1",
+              "rounded-md px-2 py-1 -mx-1",
+              "border border-transparent hover:border-gray-200 dark:hover:border-zinc-700",
+              "hover:bg-gray-50 dark:hover:bg-zinc-900",
+              "transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
+              "disabled:opacity-50 disabled:cursor-not-allowed",
               currentConfig.textColor
             )}
             disabled={mutation.isPending}
@@ -134,6 +150,7 @@ export const PaymentStatusDropdown = memo(function PaymentStatusDropdown({
           >
             <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", currentConfig.dotColor)} />
             {mutation.isPending ? "Updating..." : currentConfig.label}
+            <ChevronDownIcon className="h-3 w-3 opacity-40" />
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent side="bottom" align="center" className="min-w-[160px]">
@@ -162,22 +179,23 @@ export const PaymentStatusDropdown = memo(function PaymentStatusDropdown({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* Confirmation dialog for marking as disbursed */}
-      <Dialog open={confirmingDisbursed} onOpenChange={setConfirmingDisbursed}>
+      {/* Confirmation dialog for marking as unpaid (deletes disbursement record) */}
+      <Dialog open={confirmingUnpaid} onOpenChange={setConfirmingUnpaid}>
         <DialogContent className="max-w-sm bg-white dark:bg-zinc-950">
           <DialogHeader>
-            <DialogTitle>Mark as disbursed?</DialogTitle>
+            <DialogTitle>Mark as unpaid?</DialogTitle>
             <DialogDescription>
-              This will manually override the payment status for &ldquo;{milestoneLabel}&rdquo; to
-              Disbursed. This is typically set automatically when a Safe transaction is confirmed.
+              This will delete the associated disbursement record for &ldquo;{milestoneLabel}
+              &rdquo;. The disbursement total will be reduced accordingly. This action cannot be
+              undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="ghost" size="sm" onClick={() => setConfirmingDisbursed(false)}>
+            <Button variant="ghost" size="sm" onClick={() => setConfirmingUnpaid(false)}>
               Cancel
             </Button>
-            <Button size="sm" onClick={handleConfirmDisbursed}>
-              Confirm
+            <Button variant="destructive" size="sm" onClick={handleConfirmUnpaid}>
+              Delete disbursement
             </Button>
           </DialogFooter>
         </DialogContent>

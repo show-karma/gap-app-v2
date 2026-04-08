@@ -132,6 +132,11 @@ export interface MilestonesSectionProps {
   ) => void;
   removedFiles: Set<string>;
   onFileRemoved: (mKey: string) => void;
+  onRequestRecordPayment?: (
+    milestoneLabel: string,
+    targetStatus: "awaiting_signatures" | "disbursed"
+  ) => void;
+  onRequestDeleteDisbursement?: (milestoneLabel: string) => void;
 }
 
 export const MilestonesSection = memo(function MilestonesSection({
@@ -149,6 +154,8 @@ export const MilestonesSection = memo(function MilestonesSection({
   onFileUploaded,
   removedFiles,
   onFileRemoved,
+  onRequestRecordPayment,
+  onRequestDeleteDisbursement,
 }: MilestonesSectionProps) {
   const [uploadModalInvoice, setUploadModalInvoice] = useState<{
     mKey: string;
@@ -277,8 +284,9 @@ export const MilestonesSection = memo(function MilestonesSection({
                   return (
                     <tr
                       key={
-                        invoice.milestoneUID ||
-                        `${formatMilestoneTitle(idx, invoice.milestoneLabel)}-${idx}`
+                        invoice.milestoneUID
+                          ? `${invoice.milestoneUID}-${idx}`
+                          : `${formatMilestoneTitle(idx, invoice.milestoneLabel)}-${idx}`
                       }
                       className={cn(
                         "transition-colors",
@@ -460,6 +468,8 @@ export const MilestonesSection = memo(function MilestonesSection({
                             grantUID={grant.grantUid}
                             communityUID={communityUID}
                             paymentStatusDate={invoice.paymentStatusDate}
+                            onRequestRecordPayment={onRequestRecordPayment}
+                            onRequestDeleteDisbursement={onRequestDeleteDisbursement}
                           />
                           {invoice.paymentStatusDate && (
                             <span className="text-[10px] text-gray-400 dark:text-zinc-500 tabular-nums">

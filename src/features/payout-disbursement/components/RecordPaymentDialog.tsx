@@ -1,7 +1,7 @@
 "use client";
 
 import { BanknotesIcon } from "@heroicons/react/24/outline";
-import { memo, useCallback, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,6 +33,12 @@ interface RecordPaymentDialogProps {
   milestoneInvoices?: CommunityPayoutInvoiceInfo[];
   todayLocal: string;
   onSuccess?: () => void;
+  /** Pre-select a milestone by label when opening from the status dropdown */
+  initialMilestoneLabel?: string;
+  /** Pre-fill the amount field with the milestone's allocation value */
+  initialAmount?: string | null;
+  /** Target disbursement status when opening from the status dropdown */
+  initialStatus?: "AWAITING_SIGNATURES" | "DISBURSED";
 }
 
 const USDC_DECIMALS = TOKENS.usdc.decimals;
@@ -82,6 +88,9 @@ function RecordPaymentDialogInner({
   milestoneInvoices,
   todayLocal,
   onSuccess,
+  initialMilestoneLabel,
+  initialAmount,
+  initialStatus,
 }: RecordPaymentDialogProps) {
   const [amount, setAmount] = useState("");
   const [paymentDate, setPaymentDate] = useState("");
@@ -167,6 +176,19 @@ function RecordPaymentDialogInner({
       .map((cat) => ({ category: cat, ...CATEGORY_CONFIG[cat], items: groups.get(cat)! }));
   }, [milestoneOptions]);
 
+  // Pre-select milestone and pre-fill amount when opening from the status dropdown
+  useEffect(() => {
+    if (!isOpen || !initialMilestoneLabel || milestoneOptions.length === 0) return;
+
+    const match = milestoneOptions.find((opt) => opt.label === initialMilestoneLabel);
+    if (match && !match.isPaid) {
+      setSelectedKeys([match.key]);
+    }
+    if (initialAmount && !Number.isNaN(Number(initialAmount))) {
+      setAmount(initialAmount);
+    }
+  }, [isOpen, initialMilestoneLabel, initialAmount, milestoneOptions]);
+
   const toggleSelection = useCallback((key: string) => {
     setSelectedKeys((prev) =>
       prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
@@ -232,6 +254,7 @@ function RecordPaymentDialogInner({
       transactionHash: transactionHash.trim() || undefined,
       notes: notes.trim() || undefined,
       milestoneLabels,
+      status: initialStatus,
     });
   }, [
     isValid,
@@ -241,6 +264,7 @@ function RecordPaymentDialogInner({
     notes,
     selectedKeys,
     milestoneOptions,
+    initialStatus,
     chainID,
     grantUID,
     projectUID,
@@ -463,7 +487,11 @@ function RecordPaymentDialogInner({
             Cancel
           </Button>
           <Button size="sm" onClick={handleSubmit} disabled={!isValid || recordPayment.isPending}>
-            {recordPayment.isPending ? "Recording..." : "Record Payment"}
+            {recordPayment.isPending
+              ? "Recording..."
+              : initialStatus === "AWAITING_SIGNATURES"
+                ? "Record as Awaiting Signatures"
+                : "Record Payment"}
           </Button>
         </DialogFooter>
       </DialogContent>

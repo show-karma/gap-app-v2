@@ -256,6 +256,7 @@ export const INDEXER = {
         const query = params.toString();
         return `/v2/payouts/community/${communityUID}/pending${query ? `?${query}` : ""}`;
       },
+      DELETE_BY_MILESTONE: (grantUID: string) => `/v2/payouts/grant/${grantUID}/milestone`,
       UPDATE_STATUS: (disbursementId: string) => `/v2/payouts/${disbursementId}/status`,
       SAFE_AWAITING: (safeAddress: string, page?: number, limit?: number) => {
         const params = new URLSearchParams();

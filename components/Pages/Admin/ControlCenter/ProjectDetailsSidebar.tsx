@@ -34,6 +34,7 @@ import {
   PayoutHistoryContent,
   RecordPaymentDialog,
   type TokenTotal,
+  useDeleteDisbursementByMilestone,
   useSaveMilestoneInvoices,
   useToggleAgreement,
 } from "@/src/features/payout-disbursement";
@@ -128,12 +129,26 @@ export function ProjectDetailsSidebar({
   const [confirmingUnsign, setConfirmingUnsign] = useState(false);
 
   const [recordPaymentOpen, setRecordPaymentOpen] = useState(false);
+  const [initialPaymentMilestone, setInitialPaymentMilestone] = useState<{
+    milestoneLabel: string;
+    status: "awaiting_signatures" | "disbursed";
+    amount: string | null;
+  } | null>(null);
   const configRef = useRef<PayoutConfigurationContentRef>(null);
   const [configIsDirty, setConfigIsDirty] = useState(false);
   const [configIsSaving, setConfigIsSaving] = useState(false);
   const [, copyToClipboard] = useCopyToClipboard();
   const toggleAgreementMutation = useToggleAgreement(communityUID);
   const saveMilestoneInvoicesMutation = useSaveMilestoneInvoices(communityUID);
+  const deleteDisbursementMutation = useDeleteDisbursementByMilestone(communityUID, {
+    onSuccess: () => {
+      toast.success("Disbursement record deleted");
+      onConfigSuccess?.();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to delete disbursement record");
+    },
+  });
 
   // Reset all state when switching to a different grant or when data is refreshed
   useEffect(() => {
@@ -143,6 +158,7 @@ export function ProjectDetailsSidebar({
     setRemovedFiles(new Set());
     setConfirmingUnsign(false);
     setRecordPaymentOpen(false);
+    setInitialPaymentMilestone(null);
     setConfigIsDirty(false);
     setConfigIsSaving(false);
     setLocalAgreementSigned(agreement?.signed === true);
@@ -482,6 +498,35 @@ export function ProjectDetailsSidebar({
     pendingActionRef.current = null;
   }, []);
 
+  const handleRequestRecordPayment = useCallback(
+    (milestoneLabel: string, targetStatus: "awaiting_signatures" | "disbursed") => {
+      const invoice = milestoneInvoices.find((inv) => inv.milestoneLabel === milestoneLabel);
+      const amount =
+        invoice?.allocatedAmount ??
+        (invoice?.milestoneUID ? allocationByUID.get(invoice.milestoneUID) : undefined) ??
+        null;
+      setInitialPaymentMilestone({ milestoneLabel, status: targetStatus, amount });
+      guardAction(() => setRecordPaymentOpen(true));
+    },
+    [guardAction, milestoneInvoices, allocationByUID]
+  );
+
+  const handleRequestDeleteDisbursement = useCallback(
+    (milestoneLabel: string) => {
+      if (!grant) return;
+      const invoice = milestoneInvoices.find((inv) => inv.milestoneLabel === milestoneLabel);
+      if (!invoice?.milestoneUID) {
+        toast.error("Cannot delete: milestone UID not found");
+        return;
+      }
+      deleteDisbursementMutation.mutate({
+        grantUID: grant.grantUid,
+        milestoneUID: invoice.milestoneUID,
+      });
+    },
+    [grant, milestoneInvoices, deleteDisbursementMutation]
+  );
+
   const handleRequestClose = useCallback(() => {
     guardAction(() => onOpenChange(false));
   }, [guardAction, onOpenChange]);
@@ -618,6 +663,8 @@ export function ProjectDetailsSidebar({
                       onFileUploaded={handleFileUploaded}
                       removedFiles={removedFiles}
                       onFileRemoved={handleFileRemoved}
+                      onRequestRecordPayment={handleRequestRecordPayment}
+                      onRequestDeleteDisbursement={handleRequestDeleteDisbursement}
                     />
                   </div>
                 )}
@@ -741,7 +788,10 @@ export function ProjectDetailsSidebar({
       {grant && (
         <RecordPaymentDialog
           isOpen={recordPaymentOpen}
-          onClose={() => setRecordPaymentOpen(false)}
+          onClose={() => {
+            setRecordPaymentOpen(false);
+            setInitialPaymentMilestone(null);
+          }}
           grantUID={grant.grantUid}
           projectUID={grant.projectUid}
           communityUID={communityUID}
@@ -750,6 +800,15 @@ export function ProjectDetailsSidebar({
           milestoneInvoices={milestoneInvoices}
           todayLocal={todayLocal}
           onSuccess={onConfigSuccess}
+          initialMilestoneLabel={initialPaymentMilestone?.milestoneLabel}
+          initialAmount={initialPaymentMilestone?.amount}
+          initialStatus={
+            initialPaymentMilestone?.status === "awaiting_signatures"
+              ? "AWAITING_SIGNATURES"
+              : initialPaymentMilestone?.status === "disbursed"
+                ? "DISBURSED"
+                : undefined
+          }
         />
       )}
     </>
