@@ -81,6 +81,7 @@ interface StatsTableProps {
   totalItems: number;
   itemsPerPage: number;
   isFullyCompleted: (report: MilestoneCompletion) => boolean;
+  grantTotalMap?: Map<string, string>;
 }
 
 export function StatsTable({
@@ -96,6 +97,7 @@ export function StatsTable({
   totalItems,
   itemsPerPage,
   isFullyCompleted,
+  grantTotalMap,
 }: StatsTableProps) {
   return (
     <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-700 overflow-hidden">
@@ -117,6 +119,12 @@ export function StatsTable({
                 sortOrder={sortOrder}
                 onSort={onSort}
               />
+              <th
+                scope="col"
+                className="h-11 px-4 text-left align-middle font-medium text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400"
+              >
+                Amount
+              </th>
               <SortableHeader
                 label="Total"
                 field="totalMilestones"
@@ -157,6 +165,9 @@ export function StatsTable({
                     <Skeleton className="h-4 w-28 rounded" />
                   </td>
                   <td className="px-4 py-3">
+                    <Skeleton className="h-4 w-20 rounded" />
+                  </td>
+                  <td className="px-4 py-3">
                     <Skeleton className="h-4 w-10 rounded" />
                   </td>
                   <td className="px-4 py-3">
@@ -175,7 +186,7 @@ export function StatsTable({
               ))
             ) : error ? (
               <tr>
-                <td colSpan={6} className="px-4 py-12 text-center">
+                <td colSpan={7} className="px-4 py-12 text-center">
                   <ExclamationTriangleIcon className="mx-auto h-10 w-10 text-red-400 dark:text-red-500 mb-3" />
                   <p className="text-sm font-medium text-gray-900 dark:text-white">
                     Failed to load milestone stats
@@ -187,7 +198,7 @@ export function StatsTable({
               </tr>
             ) : reports?.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-12 text-center">
+                <td colSpan={7} className="px-4 py-12 text-center">
                   <p className="text-sm font-medium text-gray-900 dark:text-white">
                     No milestone data found
                   </p>
@@ -226,6 +237,15 @@ export function StatsTable({
                       >
                         {report.projectTitle}
                       </ExternalLink>
+                    </td>
+                    <td className="px-4 py-3">
+                      {grantTotalMap?.get(report.grantUid) ? (
+                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200">
+                          {grantTotalMap.get(report.grantUid)}
+                        </span>
+                      ) : (
+                        <span className="text-sm text-gray-400 dark:text-gray-500">—</span>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       <Link

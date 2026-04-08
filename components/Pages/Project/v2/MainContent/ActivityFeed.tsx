@@ -6,6 +6,7 @@ import React, { useMemo } from "react";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
 import { ActivityCard } from "@/components/Shared/ActivityCard";
+import { useMilestoneAllocationsByGrants } from "@/hooks/useCommunityMilestoneAllocations";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { cn } from "@/utilities/tailwind";
 import type { ActivityFilterType, SortOption } from "./ActivityFilters";
@@ -75,6 +76,7 @@ interface TimelineItemProps {
   isAuthorized: boolean;
   formatDisplayDate: (dateStr: string) => string;
   isValidTimestamp: (timestamp: number | undefined) => boolean;
+  allocationAmount?: string;
 }
 
 const TimelineItem = React.memo(function TimelineItem({
@@ -83,6 +85,7 @@ const TimelineItem = React.memo(function TimelineItem({
   isAuthorized,
   formatDisplayDate,
   isValidTimestamp,
+  allocationAmount,
 }: TimelineItemProps) {
   return (
     <div className="relative pl-8 max-lg:pl-7" data-testid="activity-item">
@@ -225,6 +228,7 @@ const TimelineItem = React.memo(function TimelineItem({
               : {
                   type: "milestone",
                   data: milestone,
+                  allocationAmount,
                 }
         }
         isAuthorized={isAuthorized}
@@ -249,6 +253,19 @@ export function ActivityFeed({
 }: ActivityFeedProps) {
   const params = useParams();
   const projectId = params?.projectId as string | undefined;
+
+  // Extract unique grant UIDs for allocation lookup
+  const grantUIDs = useMemo(() => {
+    const uids = new Set<string>();
+    for (const m of milestones) {
+      const grantUid = m.source.grantMilestone?.grant?.uid;
+      if (grantUid) uids.add(grantUid);
+    }
+    return Array.from(uids);
+  }, [milestones]);
+
+  const { allocationMap } = useMilestoneAllocationsByGrants(grantUIDs);
+
   // Map filter types to milestone types
   const getFilteredTypes = (filters: ActivityFilterType[]): string[] => {
     const typeMap: Record<ActivityFilterType, string[]> = {
@@ -340,6 +357,7 @@ export function ActivityFeed({
               isAuthorized={isAuthorized}
               formatDisplayDate={formatDisplayDate}
               isValidTimestamp={isValidTimestamp}
+              allocationAmount={allocationMap.get(milestone.uid)}
             />
           );
         })}

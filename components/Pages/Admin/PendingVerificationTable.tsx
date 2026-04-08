@@ -21,6 +21,7 @@ interface PendingVerificationTableProps {
   itemsPerPage: number;
   selectedReviewerAddress?: string;
   currentUserAddress?: string;
+  allocationMap?: Map<string, string>;
 }
 
 export function getEmptyStateMessage(
@@ -51,6 +52,7 @@ export function PendingVerificationTable({
   itemsPerPage,
   selectedReviewerAddress,
   currentUserAddress,
+  allocationMap,
 }: PendingVerificationTableProps) {
   return (
     <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-700 overflow-hidden">
@@ -80,6 +82,12 @@ export function PendingVerificationTable({
                 scope="col"
                 className="h-11 px-4 text-left align-middle font-medium text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400"
               >
+                Amount
+              </th>
+              <th
+                scope="col"
+                className="h-11 px-4 text-left align-middle font-medium text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400"
+              >
                 Actions
               </th>
             </tr>
@@ -98,13 +106,16 @@ export function PendingVerificationTable({
                     <Skeleton className="h-4 w-40 rounded" />
                   </td>
                   <td className="px-4 py-3">
+                    <Skeleton className="h-4 w-20 rounded" />
+                  </td>
+                  <td className="px-4 py-3">
                     <Skeleton className="h-8 w-16 rounded-md" />
                   </td>
                 </tr>
               ))
             ) : error ? (
               <tr>
-                <td colSpan={4} className="px-4 py-12 text-center">
+                <td colSpan={5} className="px-4 py-12 text-center">
                   <ExclamationTriangleIcon className="mx-auto h-10 w-10 text-red-400 dark:text-red-500 mb-3" />
                   <p className="text-sm font-medium text-gray-900 dark:text-white">
                     Failed to load pending milestones
@@ -116,7 +127,7 @@ export function PendingVerificationTable({
               </tr>
             ) : milestones.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-4 py-12 text-center">
+                <td colSpan={5} className="px-4 py-12 text-center">
                   <CheckCircleIcon className="mx-auto h-10 w-10 text-green-400 dark:text-green-500 mb-3" />
                   <p className="text-sm font-medium text-gray-900 dark:text-white">
                     {getEmptyStateMessage(selectedReviewerAddress, currentUserAddress)}
@@ -149,6 +160,15 @@ export function PendingVerificationTable({
                     <span className="text-sm text-gray-900 dark:text-white line-clamp-2">
                       {milestone.milestoneTitle}
                     </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    {allocationMap?.get(milestone.milestoneUid) ? (
+                      <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200">
+                        {allocationMap.get(milestone.milestoneUid)}
+                      </span>
+                    ) : (
+                      <span className="text-sm text-gray-400 dark:text-gray-500">—</span>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     {milestone.programId && (

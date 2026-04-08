@@ -8,7 +8,11 @@ vi.mock("next/navigation", () => ({
 
 // Mock ActivityCard to avoid complex import chain
 vi.mock("@/components/Shared/ActivityCard", () => ({
-  ActivityCard: () => <div data-testid="activity-card" />,
+  ActivityCard: ({ activity }: { activity: { allocationAmount?: string } }) => (
+    <div data-testid="activity-card">
+      {activity.allocationAmount && <span>{activity.allocationAmount}</span>}
+    </div>
+  ),
 }));
 
 // Mock EthereumAddressToENSAvatar
@@ -34,6 +38,16 @@ vi.mock("@/components/Utilities/ProfilePicture", () => ({
 vi.mock("@/utilities/formatCurrency", () => ({
   __esModule: true,
   default: (num: number) => `$${num}`,
+}));
+
+// Mock useMilestoneAllocationsByGrants
+const mockAllocationMap = new Map<string, string>();
+vi.mock("@/hooks/useCommunityMilestoneAllocations", () => ({
+  useMilestoneAllocationsByGrants: () => ({
+    allocationMap: mockAllocationMap,
+    grantTotalMap: new Map(),
+    isLoading: false,
+  }),
 }));
 
 // Import component after mocks
@@ -220,5 +234,48 @@ describe("ActivityFeed - Grant Title Display", () => {
 
     expect(screen.getByText("Grant approved")).toBeInTheDocument();
     expect(screen.queryByTestId("grant-title")).not.toBeInTheDocument();
+  });
+});
+
+describe("ActivityFeed - Allocation Amount Pill", () => {
+  const createMilestoneWithGrant = (uid: string): UnifiedMilestone => ({
+    uid,
+    type: "milestone",
+    title: "Test Milestone",
+    description: "Test",
+    completed: false,
+    createdAt: new Date().toISOString(),
+    chainID: 1,
+    refUID: "0xref1",
+    source: {
+      type: "milestone",
+      grantMilestone: {
+        milestone: { uid, title: "Test", description: "", endsAt: 0 },
+        grant: {
+          uid: "grant-1",
+          chainID: 1,
+          details: { title: "Grant 1" },
+        },
+      },
+    },
+  });
+
+  afterEach(() => {
+    mockAllocationMap.clear();
+  });
+
+  it("should_display_allocation_pill_when_amount_available", () => {
+    mockAllocationMap.set("ms-1", "60,000 USDC");
+    const milestones = [createMilestoneWithGrant("ms-1")];
+    render(<ActivityFeed milestones={milestones} />);
+
+    expect(screen.getByText("60,000 USDC")).toBeInTheDocument();
+  });
+
+  it("should_not_display_allocation_pill_when_no_amount", () => {
+    const milestones = [createMilestoneWithGrant("ms-1")];
+    render(<ActivityFeed milestones={milestones} />);
+
+    expect(screen.queryByText(/USDC/)).not.toBeInTheDocument();
   });
 });

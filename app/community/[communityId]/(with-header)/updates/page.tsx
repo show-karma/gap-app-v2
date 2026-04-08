@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useCommunityMilestoneAllocations } from "@/hooks/useCommunityMilestoneAllocations";
 import { useCommunityProjects } from "@/hooks/useCommunityProjects";
 import { useCommunityProjectUpdates } from "@/hooks/useCommunityProjectUpdates";
 import { useCommunityPrograms } from "@/hooks/usePrograms";
@@ -124,6 +125,9 @@ export default function CommunityUpdatesPage() {
     if (!data?.payload) return [];
     return sortCommunityMilestones([...data.payload], selectedFilter, communityId);
   }, [data?.payload, selectedFilter, communityId]);
+
+  // Fetch payout configs for grants on the current page to show allocation amounts
+  const { allocationMap } = useCommunityMilestoneAllocations(sortedRawData);
 
   // Calculate total pages
   const totalPages = data ? Math.ceil((data.pagination.totalCount || 0) / ITEMS_PER_PAGE) : 0;
@@ -293,7 +297,11 @@ export default function CommunityUpdatesPage() {
           <>
             <div className="flex flex-col gap-4 px-2">
               {sortedRawData.map((milestone) => (
-                <CommunityMilestoneCard key={milestone.uid} milestone={milestone} />
+                <CommunityMilestoneCard
+                  key={milestone.uid}
+                  milestone={milestone}
+                  allocationAmount={allocationMap.get(milestone.uid)}
+                />
               ))}
             </div>
 
