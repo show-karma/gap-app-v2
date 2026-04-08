@@ -92,7 +92,7 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
 
   const editMilestoneViaApi = async (milestone: UnifiedMilestone, newData: MilestoneEditData) => {
     setIsEditing(true);
-    showLoading("Editing milestone via backend...");
+    showLoading("Editing milestone...");
 
     try {
       const apiClient = createAuthenticatedApiClient(envVars.NEXT_PUBLIC_GAP_INDEXER_URL, 60000);
@@ -142,7 +142,7 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
       showSuccess("Milestone edited successfully!");
     } catch (error) {
       showError("There was an error editing the milestone");
-      errorManager("Error editing milestone via API", error, {
+      errorManager("Error editing milestone", error, {
         milestoneData: milestone,
       });
       throw error;
