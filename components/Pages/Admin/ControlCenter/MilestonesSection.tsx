@@ -317,7 +317,10 @@ export const MilestonesSection = memo(function MilestonesSection({
                       )}
                     >
                       <td className="py-3 px-3">
-                        <div className="flex items-center gap-1.5">
+                        <div
+                          className="flex items-center gap-1.5 max-w-[240px]"
+                          title={formatMilestoneTitle(idx, invoice.milestoneLabel)}
+                        >
                           {isEdited && (
                             <span
                               className={cn(
@@ -326,7 +329,7 @@ export const MilestonesSection = memo(function MilestonesSection({
                               )}
                             />
                           )}
-                          <span className="font-medium text-gray-900 dark:text-zinc-100 line-clamp-2">
+                          <span className="font-medium text-gray-900 dark:text-zinc-100 truncate">
                             {formatMilestoneTitle(idx, invoice.milestoneLabel)}
                           </span>
                         </div>
