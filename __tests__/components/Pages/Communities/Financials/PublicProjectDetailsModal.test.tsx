@@ -309,6 +309,39 @@ describe("PublicProjectDetailsModal", () => {
     expect(screen.getByText("Invoice received")).toBeInTheDocument();
   });
 
+  it("shows invoice received date below the badge when invoiceReceivedAt is set", () => {
+    const invoices = [
+      makeInvoice({
+        invoiceStatus: "received",
+        invoiceReceivedAt: "2025-03-15T00:00:00Z",
+        milestoneUID: "ms-1",
+      }),
+    ];
+
+    renderModal({ milestoneInvoices: invoices, invoiceRequired: true });
+
+    expect(screen.getByText("Invoice received")).toBeInTheDocument();
+    // formatDate is mocked to return "Jan 1, 2025" for any date
+    const dates = screen.getAllByText("Jan 1, 2025");
+    expect(dates.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("does not show invoice received date when invoiceReceivedAt is null", () => {
+    const invoices = [
+      makeInvoice({
+        invoiceStatus: "not_submitted",
+        invoiceReceivedAt: null,
+        milestoneUID: "ms-1",
+      }),
+    ];
+
+    renderModal({ milestoneInvoices: invoices, invoiceRequired: true });
+
+    expect(screen.getByText("Not submitted")).toBeInTheDocument();
+    // No date should render — agreement is null, paymentStatusDate is null, invoiceReceivedAt is null
+    expect(screen.queryByText("Jan 1, 2025")).not.toBeInTheDocument();
+  });
+
   it("hides invoice status column when invoiceRequired is false", () => {
     const invoices = [makeInvoice({ invoiceStatus: "received", milestoneUID: "ms-1" })];
 
