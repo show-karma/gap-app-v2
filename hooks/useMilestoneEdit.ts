@@ -108,6 +108,12 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
         ...sanitizeObject(newData),
       });
 
+      if (!response.data.revocationSuccess) {
+        throw new Error(
+          "Milestone was re-attested, but the previous attestation could not be revoked"
+        );
+      }
+
       changeStepperStep("indexing");
 
       if (response.data.txHash) {
@@ -202,7 +208,10 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
           }
 
           const { walletSigner } = setup;
-          const fetchedProject = await getProjectById(projectSlug);
+          if (!projectUid) {
+            throw new Error("Missing project UID for milestone edit");
+          }
+          const fetchedProject = await getProjectById(projectUid);
           if (!fetchedProject) {
             throw new Error("Failed to fetch project data");
           }

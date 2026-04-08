@@ -203,6 +203,7 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
         </TabsList>
 
         <div className="flex items-center gap-4 my-4">
+          <span className="text-sm text-gray-500 dark:text-zinc-400">Program:</span>
           <SearchDropdown
             list={reportData.programLabels}
             onSelectFunction={reportData.handleProgramSelect}
