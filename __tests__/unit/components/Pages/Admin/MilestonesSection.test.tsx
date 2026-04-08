@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import {
   MilestonesSection,
   type MilestonesSectionProps,
@@ -31,7 +32,7 @@ vi.mock("@/src/features/payout-disbursement", async () => {
   );
   return {
     ...actual,
-    getInvoiceDownloadUrl: vi.fn(),
+    getInvoiceDownloadUrl: vi.fn().mockResolvedValue("https://s3.example.com/invoice.pdf"),
     formatDisplayAmount: (amount: string) => amount,
     useUpdateMilestonePaymentStatus: () => ({
       mutate: vi.fn(),
@@ -128,5 +129,31 @@ describe("MilestonesSection", () => {
     render(<MilestonesSection {...defaultProps} milestoneInvoices={[]} />);
 
     expect(screen.getByText("No milestones configured yet.")).toBeInTheDocument();
+  });
+
+  it("should call getInvoiceDownloadUrl with grantUid when View invoice is clicked", async () => {
+    const { getInvoiceDownloadUrl } = await import("@/src/features/payout-disbursement");
+    const mockDownload = vi.mocked(getInvoiceDownloadUrl);
+
+    const invoice = createMockInvoice({
+      milestoneLabel: "Delivery",
+      milestoneUID: "ms-1",
+      invoiceFileKey: "logos/invoices/grant-1/1700000000000.pdf",
+    });
+
+    render(
+      <MilestonesSection
+        {...defaultProps}
+        invoiceRequired={true}
+        milestoneInvoices={[invoice]}
+      />
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: /view invoice/i }));
+
+    expect(mockDownload).toHaveBeenCalledWith(
+      "grant-1",
+      "logos/invoices/grant-1/1700000000000.pdf"
+    );
   });
 });
