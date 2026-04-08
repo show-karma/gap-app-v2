@@ -540,14 +540,21 @@ export function PublicProjectDetailsModal({
                               </td>
                               {invoiceRequired && (
                                 <td className="py-3 px-3 text-center">
-                                  <span
-                                    className={cn(
-                                      "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium",
-                                      invCfg.className
+                                  <div className="flex flex-col items-center gap-0.5">
+                                    <span
+                                      className={cn(
+                                        "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium",
+                                        invCfg.className
+                                      )}
+                                    >
+                                      {invCfg.label}
+                                    </span>
+                                    {invoice.invoiceReceivedAt && (
+                                      <span className="text-[10px] text-gray-400 dark:text-zinc-500 tabular-nums">
+                                        {formatDate(invoice.invoiceReceivedAt, "UTC")}
+                                      </span>
                                     )}
-                                  >
-                                    {invCfg.label}
-                                  </span>
+                                  </div>
                                 </td>
                               )}
                               <td className="py-3 px-3 text-center">
