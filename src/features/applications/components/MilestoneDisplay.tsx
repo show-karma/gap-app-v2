@@ -4,6 +4,7 @@ import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import type { MilestoneData } from "@/types/whitelabel-entities";
 import { formatDate } from "@/utilities/formatDate";
 import { formatMilestoneAmount } from "@/utilities/formatMilestoneAmount";
+import { formatMilestoneTitle } from "@/utilities/formatMilestoneTitle";
 import { useMilestoneCompletions } from "../hooks/use-milestone-completions";
 import { formatFieldLabel, isMarkdownContent, MILESTONE_CORE_FIELDS } from "../lib/milestone-utils";
 
@@ -44,7 +45,7 @@ export function MilestoneDisplay({
             className="border-l-2 border-zinc-200 dark:border-zinc-700 pl-4 space-y-1"
           >
             <div className="flex items-baseline gap-2 flex-wrap">
-              <p className="font-medium text-sm">{milestone.title}</p>
+              <p className="font-medium text-sm">{formatMilestoneTitle(index, milestone.title)}</p>
               {formattedAmount && (
                 <span className="text-sm text-zinc-500 dark:text-zinc-400">{formattedAmount}</span>
               )}

@@ -1,5 +1,4 @@
 "use client";
-import "md-editor-rt/lib/style.css";
 
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import dynamic from "next/dynamic";
@@ -39,6 +38,8 @@ interface MarkdownEditorProps {
   enablePreviewToggle?: boolean;
 }
 
+import "md-editor-rt/lib/style.css";
+
 const MdEditor = dynamic(() => import("md-editor-rt").then((mod) => mod.MdEditor), {
   ssr: false,
   loading: () => (
@@ -58,6 +59,8 @@ const EXCLUDED_TOOLBARS = [
   "mermaid",
   "katex",
   "htmlPreview",
+  "preview",
+  "previewOnly",
 ] as const;
 
 /**
@@ -111,6 +114,7 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
 
   // Ensure client-side only rendering to prevent hydration mismatches

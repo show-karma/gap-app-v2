@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import ApplicationHeader from "@/components/FundingPlatform/ApplicationView/ApplicationHeader";
 import type { IFundingApplication } from "@/types/funding-platform";
 
-// Create a wrapper with QueryClientProvider for tests
+// Fresh QueryClient per render — no afterEach cleanup required
 const createWrapper = () => {
   const queryClient = new QueryClient({
     defaultOptions: {

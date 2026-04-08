@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { getProjectUpdates } from "@/services/project-updates.service";
 import type {
   GrantMilestoneWithDetails,
@@ -166,6 +166,7 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
         : false,
       createdAt: milestone.createdAt || new Date().toISOString(),
       endsAt: milestoneEndsAt,
+      invoiceInfo: milestone.invoiceInfo ?? undefined,
       source: {
         type: "grant",
         grantMilestone: {
@@ -200,6 +201,7 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
                   },
                 ]
               : [],
+            invoiceInfo: milestone.invoiceInfo ?? undefined,
           },
           grant: {
             uid: grantInfo?.uid || "",
@@ -347,19 +349,26 @@ const sortByDateDescending = (milestones: UnifiedMilestone[]): UnifiedMilestone[
  * @param projectIdOrSlug - The project UID or slug
  * @returns Object containing unified milestones, loading state, error, and refetch function
  */
-export function useProjectUpdates(projectIdOrSlug: string) {
-  const queryKey = QUERY_KEYS.PROJECT.UPDATES(projectIdOrSlug);
+export function useProjectUpdates(
+  projectIdOrSlug: string,
+  milestoneStatus?: "pending" | "completed" | "verified"
+) {
+  const queryKey = milestoneStatus
+    ? ([...QUERY_KEYS.PROJECT.UPDATES(projectIdOrSlug), milestoneStatus] as const)
+    : QUERY_KEYS.PROJECT.UPDATES(projectIdOrSlug);
 
   const {
     data,
     isLoading,
+    isFetching,
     error,
     refetch: originalRefetch,
   } = useQuery<UpdatesApiResponse>({
     queryKey,
-    queryFn: () => getProjectUpdates(projectIdOrSlug),
+    queryFn: () => getProjectUpdates(projectIdOrSlug, milestoneStatus),
     enabled: !!projectIdOrSlug,
     staleTime: 5 * 60 * 1000,
+    placeholderData: keepPreviousData,
   });
 
   // Convert response to unified format (no longer needs project data)
@@ -381,6 +390,7 @@ export function useProjectUpdates(projectIdOrSlug: string) {
     pendingMilestones,
     rawData,
     isLoading,
+    isFetching,
     error,
     refetch,
   };

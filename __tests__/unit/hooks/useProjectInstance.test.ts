@@ -39,6 +39,10 @@ describe("useProjectInstance", () => {
     vi.clearAllMocks();
   });
 
+  afterEach(() => {
+    queryClient.clear();
+  });
+
   it("should not fetch when projectId is undefined", () => {
     const wrapper = createWrapper();
     const { result } = renderHook(() => useProjectInstance(undefined), { wrapper });

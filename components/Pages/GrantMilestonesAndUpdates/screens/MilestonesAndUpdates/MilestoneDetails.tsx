@@ -1,7 +1,10 @@
 "use client";
 
-import type { FC } from "react";
+import { PaperClipIcon } from "@heroicons/react/24/outline";
+import { type FC, useCallback } from "react";
+import toast from "react-hot-toast";
 import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
+import { getGrantInvoiceDownloadUrl } from "@/src/features/payout-disbursement/services/payout-disbursement.service";
 import { useOwnerStore, useProjectStore } from "@/store";
 import type { GrantMilestone } from "@/types/v2/grant";
 import { formatDate, normalizeTimestamp } from "@/utilities/formatDate";
@@ -148,6 +151,16 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({
   const isCommunityAdmin = useIsCommunityAdmin();
   const isAuthorized = isProjectOwner || isProjectAdmin || isContractOwner || isCommunityAdmin;
 
+  const handleViewInvoice = useCallback(async () => {
+    if (!milestone.refUID || !milestone.invoiceInfo?.fileKey) return;
+    try {
+      const url = await getGrantInvoiceDownloadUrl(milestone.refUID, milestone.invoiceInfo.fileKey);
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch {
+      toast.error("Failed to open invoice");
+    }
+  }, [milestone.refUID, milestone.invoiceInfo?.fileKey]);
+
   // Get normalized completion data (handles both object and array formats)
   const completionData = getCompletionData(milestone);
   const isCompleted = completionData !== null;
@@ -201,6 +214,16 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({
           <div className="mx-6 mt-4 rounded-lg bg-transparent pb-4">
             <Updates milestone={milestone} />
           </div>
+        )}
+        {isAuthorized && milestone.invoiceInfo?.fileKey && milestone.refUID && (
+          <button
+            type="button"
+            className="flex items-center gap-1.5 px-6 pb-4 hover:opacity-75 transition-opacity"
+            onClick={handleViewInvoice}
+          >
+            <PaperClipIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+            <span className="text-sm text-emerald-700 dark:text-emerald-300">Invoice attached</span>
+          </button>
         )}
       </div>
     </div>

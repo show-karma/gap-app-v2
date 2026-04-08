@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { GrantCompletedButton } from "@/components/Pages/GrantMilestonesAndUpdates/GrantCompleteButton/GrantCompletedButton";
 import "@testing-library/jest-dom";
 
@@ -198,7 +199,8 @@ describe("GrantCompletedButton", () => {
       expect(button).toHaveClass("disabled:opacity-50", "disabled:cursor-not-allowed");
     });
 
-    it("should prevent onClick when disabled", () => {
+    it("should prevent onClick when disabled", async () => {
+      const user = userEvent.setup();
       render(
         <GrantCompletedButton
           onClick={mockOnClick}
@@ -209,14 +211,15 @@ describe("GrantCompletedButton", () => {
       );
 
       const button = screen.getByRole("button");
-      fireEvent.click(button);
+      await user.click(button);
 
       expect(mockOnClick).not.toHaveBeenCalled();
     });
   });
 
   describe("Click Handler", () => {
-    it("should call onClick when clicked (not disabled)", () => {
+    it("should call onClick when clicked (not disabled)", async () => {
+      const user = userEvent.setup();
       render(
         <GrantCompletedButton
           onClick={mockOnClick}
@@ -227,12 +230,13 @@ describe("GrantCompletedButton", () => {
       );
 
       const button = screen.getByRole("button");
-      fireEvent.click(button);
+      await user.click(button);
 
       expect(mockOnClick).toHaveBeenCalledTimes(1);
     });
 
-    it("should not call onClick when disabled", () => {
+    it("should not call onClick when disabled", async () => {
+      const user = userEvent.setup();
       render(
         <GrantCompletedButton
           onClick={mockOnClick}
@@ -243,12 +247,13 @@ describe("GrantCompletedButton", () => {
       );
 
       const button = screen.getByRole("button");
-      fireEvent.click(button);
+      await user.click(button);
 
       expect(mockOnClick).not.toHaveBeenCalled();
     });
 
-    it("should not call onClick when isRevoking is true", () => {
+    it("should not call onClick when isRevoking is true", async () => {
+      const user = userEvent.setup();
       render(
         <GrantCompletedButton
           onClick={mockOnClick}
@@ -259,7 +264,7 @@ describe("GrantCompletedButton", () => {
       );
 
       const button = screen.getByRole("button");
-      fireEvent.click(button);
+      await user.click(button);
 
       // Button should be disabled when disabled prop is true (parent sets this when isRevoking is true)
       expect(button).toBeDisabled();
@@ -268,7 +273,8 @@ describe("GrantCompletedButton", () => {
   });
 
   describe("Hover States", () => {
-    it("should show 'Revoke completion' text on hover", () => {
+    it("should show 'Revoke completion' text on hover", async () => {
+      const user = userEvent.setup();
       render(
         <GrantCompletedButton
           onClick={mockOnClick}
@@ -279,7 +285,7 @@ describe("GrantCompletedButton", () => {
       );
 
       const button = screen.getByRole("button");
-      fireEvent.mouseEnter(button);
+      await user.hover(button);
 
       // The hover text should be in the DOM (hidden by default, shown on hover via CSS)
       expect(screen.getByText("Revoke completion")).toBeInTheDocument();

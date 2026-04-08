@@ -89,6 +89,7 @@ vi.mock("lucide-react", () => ({
 
 // --- Helpers ---
 
+// Fresh QueryClient per render — no afterEach cleanup required
 function createWrapper() {
   const queryClient = new QueryClient({
     defaultOptions: {

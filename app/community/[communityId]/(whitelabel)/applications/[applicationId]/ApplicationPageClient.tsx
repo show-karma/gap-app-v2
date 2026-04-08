@@ -18,6 +18,7 @@ import type { Application, ApplicationStatus, FundingProgram } from "@/types/whi
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 import { MilestonesTab } from "./components/MilestonesTab";
+import { PostApprovalTab } from "./components/PostApprovalTab";
 
 interface ApplicationPageClientProps {
   communityId: string;
@@ -115,11 +116,23 @@ export function ApplicationPageClient({
     [application.applicationData]
   );
 
-  // Show tabs when application is approved and has milestones
-  const shouldShowTabs = application.status === "approved" && hasMilestones;
+  // Check if post-approval form is configured
+  const hasPostApprovalSchema =
+    !!program?.applicationConfig?.postApprovalFormSchema?.fields?.length;
+  const hasPostApprovalData =
+    !!application.postApprovalData && Object.keys(application.postApprovalData).length > 0;
+  const showPostApproval =
+    application.status === "approved" && (hasPostApprovalSchema || hasPostApprovalData);
 
-  const [activeTab, setActiveTab] = useState<"details" | "milestones">(
-    shouldShowTabs ? "milestones" : "details"
+  // Show tabs when application is approved and has milestones or post-approval
+  const shouldShowTabs = application.status === "approved" && (hasMilestones || showPostApproval);
+
+  const [activeTab, setActiveTab] = useState<"details" | "milestones" | "post-approval">(
+    shouldShowTabs && hasMilestones
+      ? "milestones"
+      : shouldShowTabs && showPostApproval
+        ? "post-approval"
+        : "details"
   );
 
   return (
@@ -203,7 +216,7 @@ export function ApplicationPageClient({
         </div>
       )}
 
-      {/* Tab Bar — only for approved applications with milestones */}
+      {/* Tab Bar — only for approved applications with milestones or post-approval */}
       {shouldShowTabs && (
         <div className="border-b border-border">
           <nav className="-mb-px flex space-x-8">
@@ -218,24 +231,50 @@ export function ApplicationPageClient({
             >
               Application Details
             </button>
-            <button
-              onClick={() => setActiveTab("milestones")}
-              className={cn(
-                "py-2 px-1 border-b-2 font-medium text-sm",
-                activeTab === "milestones"
-                  ? "border-primary text-primary"
-                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
-              )}
-            >
-              Milestones
-            </button>
+            {hasMilestones && (
+              <button
+                onClick={() => setActiveTab("milestones")}
+                className={cn(
+                  "py-2 px-1 border-b-2 font-medium text-sm",
+                  activeTab === "milestones"
+                    ? "border-primary text-primary"
+                    : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
+                )}
+              >
+                Milestones
+              </button>
+            )}
+            {showPostApproval && (
+              <button
+                onClick={() => setActiveTab("post-approval")}
+                className={cn(
+                  "py-2 px-1 border-b-2 font-medium text-sm",
+                  activeTab === "post-approval"
+                    ? "border-primary text-primary"
+                    : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
+                )}
+              >
+                Post Approval
+              </button>
+            )}
           </nav>
         </div>
       )}
 
       {/* Tab Content */}
       {shouldShowTabs && activeTab === "milestones" ? (
-        <MilestonesTab application={application} isOwner={isOwner} />
+        <MilestonesTab
+          application={application}
+          isOwner={isOwner}
+          invoiceRequired={(program?.metadata as Record<string, unknown>)?.invoiceRequired === true}
+        />
+      ) : shouldShowTabs && activeTab === "post-approval" ? (
+        <PostApprovalTab
+          communityId={communityId}
+          application={application}
+          program={program}
+          isOwner={isOwner}
+        />
       ) : (
         <div className="rounded-xl border border-border">
           <div className="border-b border-border p-4">

@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 
 // Mock Next.js Link
@@ -64,12 +65,13 @@ describe("EmptyState", () => {
       expect(screen.getByRole("button", { name: "Create one" })).toBeInTheDocument();
     });
 
-    it("calls onClick when action button is clicked", () => {
+    it("calls onClick when action button is clicked", async () => {
+      const user = userEvent.setup();
       const handleClick = vi.fn();
       render(
         <EmptyState title="No results" action={{ label: "Add item", onClick: handleClick }} />
       );
-      fireEvent.click(screen.getByRole("button", { name: "Add item" }));
+      await user.click(screen.getByRole("button", { name: "Add item" }));
       expect(handleClick).toHaveBeenCalledTimes(1);
     });
 

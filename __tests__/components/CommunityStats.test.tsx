@@ -1,4 +1,5 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import CommunityStats from "@/components/CommunityStats";
 import fetchData from "@/utilities/fetchData";
 
@@ -151,10 +152,11 @@ describe("CommunityStats", () => {
 
   describe("Modal Opening", () => {
     it("should open modal when Stats button is clicked", async () => {
+      const user = userEvent.setup();
       render(<CommunityStats communityId={mockCommunityId} />);
 
       const statsButton = screen.getByText("Stats");
-      fireEvent.click(statsButton);
+      await user.click(statsButton);
 
       await waitFor(() => {
         expect(screen.getByTestId("dialog")).toBeInTheDocument();
@@ -162,10 +164,11 @@ describe("CommunityStats", () => {
     });
 
     it("should fetch stats when modal is opened", async () => {
+      const user = userEvent.setup();
       render(<CommunityStats communityId={mockCommunityId} />);
 
       const statsButton = screen.getByText("Stats");
-      fireEvent.click(statsButton);
+      await user.click(statsButton);
 
       await waitFor(() => {
         expect(fetchData).toHaveBeenCalledWith(expect.stringContaining(mockCommunityId));
@@ -173,6 +176,7 @@ describe("CommunityStats", () => {
     });
 
     it("should show loading state when fetching stats", async () => {
+      const user = userEvent.setup();
       (fetchData as vi.Mock).mockImplementation(
         () => new Promise((resolve) => setTimeout(() => resolve([mockStatsData, null]), 100))
       );
@@ -180,7 +184,7 @@ describe("CommunityStats", () => {
       render(<CommunityStats communityId={mockCommunityId} />);
 
       const statsButton = screen.getByText("Stats");
-      fireEvent.click(statsButton);
+      await user.click(statsButton);
 
       await waitFor(() => {
         expect(screen.getByText("Loading stats...")).toBeInTheDocument();
@@ -190,10 +194,11 @@ describe("CommunityStats", () => {
 
   describe("Stats Display", () => {
     it("should display Community Stats title", async () => {
+      const user = userEvent.setup();
       render(<CommunityStats communityId={mockCommunityId} />);
 
       const statsButton = screen.getByText("Stats");
-      fireEvent.click(statsButton);
+      await user.click(statsButton);
 
       await waitFor(() => {
         expect(screen.getByText("Community Stats")).toBeInTheDocument();
@@ -201,10 +206,11 @@ describe("CommunityStats", () => {
     });
 
     it("should display all stats after loading", async () => {
+      const user = userEvent.setup();
       render(<CommunityStats communityId={mockCommunityId} />);
 
       const statsButton = screen.getByText("Stats");
-      fireEvent.click(statsButton);
+      await user.click(statsButton);
 
       await waitFor(() => {
         expect(screen.getByText("No. of Projects")).toBeInTheDocument();
@@ -213,10 +219,11 @@ describe("CommunityStats", () => {
     });
 
     it("should display calculated total attestations", async () => {
+      const user = userEvent.setup();
       render(<CommunityStats communityId={mockCommunityId} />);
 
       const statsButton = screen.getByText("Stats");
-      fireEvent.click(statsButton);
+      await user.click(statsButton);
 
       await waitFor(() => {
         expect(screen.getByText("Total Attestations")).toBeInTheDocument();
@@ -228,10 +235,11 @@ describe("CommunityStats", () => {
     });
 
     it("should display grants stats", async () => {
+      const user = userEvent.setup();
       render(<CommunityStats communityId={mockCommunityId} />);
 
       const statsButton = screen.getByText("Stats");
-      fireEvent.click(statsButton);
+      await user.click(statsButton);
 
       await waitFor(() => {
         expect(screen.getByText("No. of Grants")).toBeInTheDocument();
@@ -240,10 +248,11 @@ describe("CommunityStats", () => {
     });
 
     it("should display milestone stats", async () => {
+      const user = userEvent.setup();
       render(<CommunityStats communityId={mockCommunityId} />);
 
       const statsButton = screen.getByText("Stats");
-      fireEvent.click(statsButton);
+      await user.click(statsButton);
 
       await waitFor(() => {
         expect(screen.getByText("No. of Milestones")).toBeInTheDocument();
@@ -252,10 +261,11 @@ describe("CommunityStats", () => {
     });
 
     it("should display completed milestones", async () => {
+      const user = userEvent.setup();
       render(<CommunityStats communityId={mockCommunityId} />);
 
       const statsButton = screen.getByText("Stats");
-      fireEvent.click(statsButton);
+      await user.click(statsButton);
 
       await waitFor(() => {
         expect(screen.getByText("No. of Milestones Completed")).toBeInTheDocument();
@@ -266,10 +276,11 @@ describe("CommunityStats", () => {
 
   describe("Refresh Functionality", () => {
     it("should render refresh button", async () => {
+      const user = userEvent.setup();
       render(<CommunityStats communityId={mockCommunityId} />);
 
       const statsButton = screen.getByText("Stats");
-      fireEvent.click(statsButton);
+      await user.click(statsButton);
 
       await waitFor(() => {
         expect(screen.getByTestId("refresh-icon")).toBeInTheDocument();
@@ -277,17 +288,18 @@ describe("CommunityStats", () => {
     });
 
     it("should refetch stats when refresh button is clicked", async () => {
+      const user = userEvent.setup();
       render(<CommunityStats communityId={mockCommunityId} />);
 
       const statsButton = screen.getByText("Stats");
-      fireEvent.click(statsButton);
+      await user.click(statsButton);
 
       await waitFor(() => {
         expect(screen.getByTestId("refresh-icon")).toBeInTheDocument();
       });
 
       const refreshButton = screen.getByTestId("refresh-icon").closest("button");
-      if (refreshButton) fireEvent.click(refreshButton);
+      if (refreshButton) await user.click(refreshButton);
 
       await waitFor(() => {
         expect(fetchData).toHaveBeenCalledTimes(2);
@@ -297,13 +309,14 @@ describe("CommunityStats", () => {
 
   describe("Error Handling", () => {
     it("should display error message when fetch fails", async () => {
+      const user = userEvent.setup();
       const errorMessage = "Failed to fetch stats";
       (fetchData as vi.Mock).mockResolvedValue([null, errorMessage]);
 
       render(<CommunityStats communityId={mockCommunityId} />);
 
       const statsButton = screen.getByText("Stats");
-      fireEvent.click(statsButton);
+      await user.click(statsButton);
 
       await waitFor(() => {
         expect(screen.getByText(/Error fetching stats/i)).toBeInTheDocument();
@@ -311,12 +324,13 @@ describe("CommunityStats", () => {
     });
 
     it("should display error when no stats found", async () => {
+      const user = userEvent.setup();
       (fetchData as vi.Mock).mockResolvedValue([{}, null]);
 
       render(<CommunityStats communityId={mockCommunityId} />);
 
       const statsButton = screen.getByText("Stats");
-      fireEvent.click(statsButton);
+      await user.click(statsButton);
 
       await waitFor(() => {
         expect(screen.getByText(/Error fetching stats/i)).toBeInTheDocument();
@@ -324,12 +338,13 @@ describe("CommunityStats", () => {
     });
 
     it("should display error when projects data is missing", async () => {
+      const user = userEvent.setup();
       (fetchData as vi.Mock).mockResolvedValue([{ grants: 10 }, null]);
 
       render(<CommunityStats communityId={mockCommunityId} />);
 
       const statsButton = screen.getByText("Stats");
-      fireEvent.click(statsButton);
+      await user.click(statsButton);
 
       await waitFor(() => {
         expect(screen.getByText(/Error fetching stats/i)).toBeInTheDocument();
@@ -337,6 +352,7 @@ describe("CommunityStats", () => {
     });
 
     it("should call errorManager on fetch error", async () => {
+      const user = userEvent.setup();
       const { errorManager } = await import("@/components/Utilities/errorManager");
       const error = new Error("Network error");
       (fetchData as vi.Mock).mockRejectedValue(error);
@@ -344,7 +360,7 @@ describe("CommunityStats", () => {
       render(<CommunityStats communityId={mockCommunityId} />);
 
       const statsButton = screen.getByText("Stats");
-      fireEvent.click(statsButton);
+      await user.click(statsButton);
 
       await waitFor(() => {
         expect(errorManager).toHaveBeenCalled();
@@ -354,10 +370,11 @@ describe("CommunityStats", () => {
 
   describe("Stats Format", () => {
     it("should display stats in key-value pairs", async () => {
+      const user = userEvent.setup();
       render(<CommunityStats communityId={mockCommunityId} />);
 
       const statsButton = screen.getByText("Stats");
-      fireEvent.click(statsButton);
+      await user.click(statsButton);
 
       await waitFor(() => {
         const statsContainer = screen.getByText("No. of Projects").parentElement;
@@ -366,10 +383,11 @@ describe("CommunityStats", () => {
     });
 
     it("should style stat values in blue", async () => {
+      const user = userEvent.setup();
       render(<CommunityStats communityId={mockCommunityId} />);
 
       const statsButton = screen.getByText("Stats");
-      fireEvent.click(statsButton);
+      await user.click(statsButton);
 
       await waitFor(() => {
         const value = screen.getByText("50");
@@ -378,10 +396,11 @@ describe("CommunityStats", () => {
     });
 
     it("should display stats with proper labels", async () => {
+      const user = userEvent.setup();
       render(<CommunityStats communityId={mockCommunityId} />);
 
       const statsButton = screen.getByText("Stats");
-      fireEvent.click(statsButton);
+      await user.click(statsButton);
 
       await waitFor(() => {
         expect(screen.getByText("No. of Project Edits")).toBeInTheDocument();
@@ -393,10 +412,11 @@ describe("CommunityStats", () => {
 
   describe("Styling", () => {
     it("should have dark mode classes on dialog panel", async () => {
+      const user = userEvent.setup();
       render(<CommunityStats communityId={mockCommunityId} />);
 
       const statsButton = screen.getByText("Stats");
-      fireEvent.click(statsButton);
+      await user.click(statsButton);
 
       await waitFor(() => {
         const panel = screen.getByTestId("dialog-panel");
@@ -405,10 +425,11 @@ describe("CommunityStats", () => {
     });
 
     it("should have rounded corners on modal", async () => {
+      const user = userEvent.setup();
       render(<CommunityStats communityId={mockCommunityId} />);
 
       const statsButton = screen.getByText("Stats");
-      fireEvent.click(statsButton);
+      await user.click(statsButton);
 
       await waitFor(() => {
         const panel = screen.getByTestId("dialog-panel");
@@ -417,10 +438,11 @@ describe("CommunityStats", () => {
     });
 
     it("should have border on header", async () => {
+      const user = userEvent.setup();
       render(<CommunityStats communityId={mockCommunityId} />);
 
       const statsButton = screen.getByText("Stats");
-      fireEvent.click(statsButton);
+      await user.click(statsButton);
 
       await waitFor(() => {
         const header = screen.getByText("Community Stats").parentElement;
@@ -431,10 +453,11 @@ describe("CommunityStats", () => {
 
   describe("Accessibility", () => {
     it("should have heading for modal title", async () => {
+      const user = userEvent.setup();
       render(<CommunityStats communityId={mockCommunityId} />);
 
       const statsButton = screen.getByText("Stats");
-      fireEvent.click(statsButton);
+      await user.click(statsButton);
 
       await waitFor(() => {
         const title = screen.getByText("Community Stats");
@@ -443,10 +466,11 @@ describe("CommunityStats", () => {
     });
 
     it("should have proper font styling for title", async () => {
+      const user = userEvent.setup();
       render(<CommunityStats communityId={mockCommunityId} />);
 
       const statsButton = screen.getByText("Stats");
-      fireEvent.click(statsButton);
+      await user.click(statsButton);
 
       await waitFor(() => {
         const title = screen.getByText("Community Stats");
@@ -458,6 +482,7 @@ describe("CommunityStats", () => {
 
   describe("Edge Cases", () => {
     it("should handle zero values in stats", async () => {
+      const user = userEvent.setup();
       const zeroStats = {
         ...mockStatsData,
         projects: 1, // Must have at least 1 project for data validation
@@ -470,7 +495,7 @@ describe("CommunityStats", () => {
       render(<CommunityStats communityId={mockCommunityId} />);
 
       const statsButton = screen.getByText("Stats");
-      fireEvent.click(statsButton);
+      await user.click(statsButton);
 
       await waitFor(() => {
         expect(screen.getByText("No. of Grants")).toBeInTheDocument();
@@ -480,6 +505,7 @@ describe("CommunityStats", () => {
     });
 
     it("should handle very large numbers", async () => {
+      const user = userEvent.setup();
       const largeStats = {
         ...mockStatsData,
         projects: 999999,
@@ -489,7 +515,7 @@ describe("CommunityStats", () => {
       render(<CommunityStats communityId={mockCommunityId} />);
 
       const statsButton = screen.getByText("Stats");
-      fireEvent.click(statsButton);
+      await user.click(statsButton);
 
       await waitFor(() => {
         expect(screen.getByText("999999")).toBeInTheDocument();
@@ -497,6 +523,7 @@ describe("CommunityStats", () => {
     });
 
     it("should handle missing optional stats fields", async () => {
+      const user = userEvent.setup();
       const partialStats = {
         projects: 10,
         grants: 5,
@@ -506,7 +533,7 @@ describe("CommunityStats", () => {
       render(<CommunityStats communityId={mockCommunityId} />);
 
       const statsButton = screen.getByText("Stats");
-      fireEvent.click(statsButton);
+      await user.click(statsButton);
 
       await waitFor(() => {
         expect(screen.getByText("No. of Projects")).toBeInTheDocument();
@@ -514,10 +541,11 @@ describe("CommunityStats", () => {
     });
 
     it("should handle empty communityId gracefully", async () => {
+      const user = userEvent.setup();
       render(<CommunityStats communityId="" />);
 
       const statsButton = screen.getByText("Stats");
-      fireEvent.click(statsButton);
+      await user.click(statsButton);
 
       await waitFor(() => {
         expect(fetchData).toHaveBeenCalled();
@@ -527,6 +555,7 @@ describe("CommunityStats", () => {
 
   describe("Loading States", () => {
     it("should show loading initially after opening modal", async () => {
+      const user = userEvent.setup();
       (fetchData as vi.Mock).mockImplementation(
         () => new Promise((resolve) => setTimeout(() => resolve([mockStatsData, null]), 500))
       );
@@ -534,16 +563,17 @@ describe("CommunityStats", () => {
       render(<CommunityStats communityId={mockCommunityId} />);
 
       const statsButton = screen.getByText("Stats");
-      fireEvent.click(statsButton);
+      await user.click(statsButton);
 
       expect(await screen.findByText("Loading stats...")).toBeInTheDocument();
     });
 
     it("should hide loading after stats are fetched", async () => {
+      const user = userEvent.setup();
       render(<CommunityStats communityId={mockCommunityId} />);
 
       const statsButton = screen.getByText("Stats");
-      fireEvent.click(statsButton);
+      await user.click(statsButton);
 
       await waitFor(() => {
         expect(screen.queryByText("Loading stats...")).not.toBeInTheDocument();
@@ -551,6 +581,7 @@ describe("CommunityStats", () => {
     });
 
     it("should show loading when refreshing stats", async () => {
+      const user = userEvent.setup();
       (fetchData as vi.Mock).mockImplementation(
         () => new Promise((resolve) => setTimeout(() => resolve([mockStatsData, null]), 100))
       );
@@ -558,14 +589,14 @@ describe("CommunityStats", () => {
       render(<CommunityStats communityId={mockCommunityId} />);
 
       const statsButton = screen.getByText("Stats");
-      fireEvent.click(statsButton);
+      await user.click(statsButton);
 
       await waitFor(() => {
         expect(screen.getByTestId("refresh-icon")).toBeInTheDocument();
       });
 
       const refreshButton = screen.getByTestId("refresh-icon").closest("button");
-      if (refreshButton) fireEvent.click(refreshButton);
+      if (refreshButton) await user.click(refreshButton);
 
       expect(await screen.findByText("Loading stats...")).toBeInTheDocument();
     });

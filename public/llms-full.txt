@@ -19,6 +19,7 @@ Karma is a platform where ecosystems allocate funding, track milestones, and mea
 
 ### Home
 
+Wallet · Privy
 Where builders get funded and ecosystems grow
 Ecosystems use Karma to fund projects transparently. Builders use it to share progress, earn reputation, and get discovered for more opportunities.
 We support builders across their lifecycle to access funding opportunities, grow their reputation and track their progress easily.
@@ -38,41 +39,27 @@ Join Discord
 
 ### For Funders
 
+Wallet · Privy
 From intake to impact, Karma gives you the tools to fund smarter, track progress transparently, and maximize the ROI of every funded project.
-- Arbitrum
-- Gitcoin
-- Celo
-- Polygon
-- Filecoin
-- Optimism
-- Octant
-- Celo Public Goods
-- Scroll
-- Lisk
-- Public Nouns
-- Livepeer
-- Regen Coordination
-- Good Dollar
 Proven expertise in ecosystem funding
 We've powered some of the largest onchain funding programs, helping ecosystems distribute capital transparently, measure outcomes, and grow faster.
-for growth and impact
 Whether you're running applications, tracking milestones, or measuring impact, each module works independently and seamlessly together. Launch fast, adapt easily, and scale your ecosystem with confidence.
-Application Evaluation Smarter decisions with AI-powered evaluation
+Application Evaluation
+Smarter decisions with AI-powered evaluation
 Leverage AI to evaluate grant applications at scale. Get instant scoring, risk assessments, and funding recommendations based on historical performance, cross-ecosystem reputation, and proposal quality—so you can review and approve funding with confidence.
-Public Registry One place for all projects and their progress
+Public Registry
+One place for all projects and their progress
 A public registry of every project in your ecosystem with complete visibility into funding, milestones, and updates. Track project progress in real-time as grantees submit milestone updates with proof of work.
-Impact Measure what matters with real-time insights
+Impact
+Measure what matters with real-time insights
 Track project metrics automatically through GitHub, Dune, and custom integrations. Apply the industry-leading 'Common Approach' framework to measure impact, evaluate performance in real time, and continuously improve your funding program.
-Distribution Funding methods to meet your needs
+Distribution
+Funding methods to meet your needs
 Support projects smarter: issue direct grants with AI-driven evaluations and milestone-based funding, then scale impact with our retro funding platform.
-“ Karma isn't just software, they're a true partner. Their AI-driven evaluations cut review time dramatically. Their platform fits our needs perfectly and their team ships features at lightning speed.
-Optimism
 Over the past 10 months, Celo has leveraged Karma's platform to track 400+ projects, 850+ grants and 3600+ milestones, moving from fragmented tracking to a unified onchain project registry and funding funnel to simplify impact measurement and grow their ecosystem.
 Meet your dedicated success partner who will guide you through setup, onboarding, and best practices.
 We’ll help you set up your community space, enable whitelabel branding, and deploy the onchain modules you need — all tailored to your workflow.
 Design your funding program, set evaluation criteria, and go live. Start receiving applications and funding projects within 48 hours.
-scale when you're ready
-Pro
 
 ### Projects
 
@@ -117,24 +104,41 @@ through transparent funding, accountability, and impact measurement.
 
 #### Why Karma
 
-A brief introduction to why we are building Karma and Grantee Accountability Protocol
-Problem
+##### Problem
+
 Grant programs in the crypto ecosystem lack a standardized method for grantees to publish progress updates and milestones, leading to several issues:
-Limited Accessibility : Currently, it is challenging for grant managers and the community to easily access and track project progress and milestones, as information is scattered across forums and external links.
-Reputation Portability : Grantees who apply for grants from multiple organizations struggle to establish and carry their reputation consistently across the ecosystem. This is particularly difficult for individuals who are new to the ecosystem and need opportunities to showcase their work and build their reputation.
-Inadequate Data Structure : The absence of structured data that can be accessed in a permissionless manner hampers the development of applications and analytical tools for evaluating grant impact and builder reputation.
-Solution
-To address the aforementioned problems, we built GAP (Grantee Accountability Protocol) where grant teams can post information about the grant and grantees can post milestones and progress updates onchain. This solves a number of problems explained below
-Onchain Reporting : Grantees will utilize the protocol to self-report their progress and milestones directly on the blockchain through EAS (Ethereum Attestation Service). Leveraging the existing support for EAS schemas, we defined schemas tailored to various reporting needs.
-Universal data access : By storing all grant-related data onchain, we eliminate the need for manual searching and external links. We built an interface for grantees and grant teams to interact with the protocol. Communities are not obligated to use this interface but are welcome to build their own interface to present this information in interesting ways.
-Enhanced Reputation Building : Our protocol enables the linking of team member profiles to specific projects. This feature empowers team members to build and showcase their reputation for their contributions. Additionally, this reputation can be carried over to other DAOs, opening opportunities for involvement in various areas of DAO governance or similar initiatives.
-Grant Farming : It is well known in the ecosystem that there are teams who simply try to get grants and either don’t fully execute or do it with no goal of making the project a success. Having better visibility can help community and grant admins evaluate teams before issuing grants.
-Facilitating Novel Applications : With comprehensive on-chain data available, the protocol encourages the development of innovative applications. Few applications we can think of that can be built on top of this protocol are:
-Grantee reputation systems
-Project impact analysis tools
-Signaling for future grants
-Auto monitor milestones and progress updates and alert the community
-Endorsing teams and team members working on projects
+
+**Limited Accessibility**: Currently, it is challenging for grant managers and the community to easily access and track project progress and milestones, as information is scattered across forums and external links.
+
+**Reputation Portability**: Grantees who apply for grants from multiple organizations struggle to establish and carry their reputation consistently across the ecosystem. This is particularly difficult for individuals who are new to the ecosystem and need opportunities to showcase their work and build their reputation.
+
+**Inadequate Data Structure**: The absence of structured data that can be accessed in a permissionless manner hampers the development of applications and analytical tools for evaluating grant impact and builder reputation.
+
+##### Solution
+
+To address the aforementioned problems, we built [GAP](https://www.karmahq.xyz/) (Grantee Accountability Protocol) where grant teams can post information about the grant and grantees can post milestones and progress updates onchain. This solves a number of problems explained below
+
+**Onchain Reporting**: Grantees will utilize the protocol to self-report their progress and milestones directly on the blockchain through [EAS](https://attest.org/) (Ethereum Attestation Service). Leveraging the existing support for EAS schemas, we defined schemas tailored to various reporting needs.
+
+**Universal data access**: By storing all grant-related data onchain, we eliminate the need for manual searching and external links. We built an interface for grantees and grant teams to interact with the protocol. Communities are not obligated to use this interface but are welcome to build their own interface to present this information in interesting ways.
+
+**Enhanced Reputation Building**: Our protocol enables the linking of team member profiles to specific projects. This feature empowers team members to build and showcase their reputation for their contributions. Additionally, this reputation can be carried over to other DAOs, opening opportunities for involvement in various areas of DAO governance or similar initiatives.
+
+**Grant Farming**: It is well known in the ecosystem that there are teams who simply try to get grants and either don’t fully execute or do it with no goal of making the project a success. Having better visibility can help community and grant admins evaluate teams before issuing grants.
+
+**Facilitating Novel Applications**: With comprehensive on-chain data available, the protocol encourages the development of innovative applications. Few applications we can think of that can be built on top of this protocol are:
+
+- Grantee reputation systems
+
+- Project impact analysis tools
+
+- Signaling for future grants
+
+- Auto monitor milestones and progress updates and alert the community
+
+- Endorsing teams and team members working on projects
+
+[NextHow does it work?](https://docs.gap.karmahq.xyz/overview/how-does-it-work)
 
 #### How does it work?
 
@@ -294,7 +298,7 @@ Fill in all the details and click "Create Project" button. Your project is store
 
 #### Login with Safe
 
-
+Karma supports logging in with Safe wallet. Follow the instructions in the video below to login with Safe.
 
 #### Merge projects
 
@@ -844,7 +848,7 @@ Karma has been integrated into following platforms:
 
 - [Gitcoin](https://grants.gitcoin.co/) \- Milestones and updates posted on Karma by grantees funded by any communities who run their rounds on Gitcoin Grants Stack are displayed in Gitcoin's platform.
 
-- [Ecosystem.vision](https://ecosystem.vision/) \- All the grants related data such as [Grant Programs](https://gap.karmahq.xyz/funding-map) and project grants on Karma are shown on Ecosystem's platform.
+- [Ecosystem.vision](https://ecosystem.vision/) \- All the grants related data such as [Grant Programs](https://www.karmahq.xyz/funding-map) and project grants on Karma are shown on Ecosystem's platform.
 
 #### Celo - Proof of Ship
 
@@ -860,7 +864,7 @@ Before creating a project profile, ensure you have:
 
 ###### Step 1: Add your project profile
 
-Add your project to Celo [Proof of Ship Program](https://gap.karmahq.xyz/community/celo) on [Karma](https://www.karmahq.xyz/). You can follow the instructions [here](https://docs.gap.karmahq.xyz/how-to-guides/for-builders/create-project). This is your onchain project profile you create one time and can use it to apply for future rounds. You can also point anyone to learn about your project, receive endorsements and donations.
+Add your project to Celo [Proof of Ship Program](https://www.karmahq.xyz/community/celo) on [Karma](https://www.karmahq.xyz/). You can follow the instructions [here](https://docs.gap.karmahq.xyz/how-to-guides/for-builders/create-project). This is your onchain project profile you create one time and can use it to apply for future rounds. You can also point anyone to learn about your project, receive endorsements and donations.
 
 **If you participated in a previous season, you might already have a project profile. You can skip to Step 2. Contact our team if you have trouble accessing your profile here:** [**https://t.me/karmahq** ](https://t.me/karmahq)
 
@@ -914,7 +918,7 @@ The Proof of Impact campaign, powered by CeloPG, rewards builders based on the g
 
 ###### Step 1: Add your project profile
 
-Add your project to Celo [Proof of Impact Program](https://gap.karmahq.xyz/community/celopg?programId=918_42161) on [Karma](https://www.karmahq.xyz/). You can follow the instructions [here](https://docs.gap.karmahq.xyz/how-to-guides/for-builders/create-project). This is your onchain project profile you create one time and can use it to apply for future rounds. You can also point anyone to learn about your project, receive endorsements and donations.
+Add your project to Celo [Proof of Impact Program](https://www.karmahq.xyz/community/celopg?programId=918_42161) on [Karma](https://www.karmahq.xyz/). You can follow the instructions [here](https://docs.gap.karmahq.xyz/how-to-guides/for-builders/create-project). This is your onchain project profile you create one time and can use it to apply for future rounds. You can also point anyone to learn about your project, receive endorsements and donations.
 
 **If you participated in a previous season, you might already have a project profile. You can skip to Step 2. Contact our team if you have trouble accessing your profile here:** [**https://t.me/karmahq** ](https://t.me/karmahq)
 
@@ -1160,7 +1164,7 @@ We're excited to support your work on Filecoin. Good luck with your milestones!
 
 #### Gitcoin
 
-[Gitcoin](https://grants.gitcoin.co/) **has integrated Karma into their application.** Project milestones added in Karma will now be automatically displayed on the corresponding project pages in Gitcoin. For example, here is a project on [Karma](https://gap.karmahq.xyz/project/karma---gap/grants/0xe7390a6f68ff70e0f7cda461079f92dad0150003e7ec541c7fb9e55e912211c0/milestones-and-updates) with milestones that are also visible in [Gitcoin](https://explorer.gitcoin.co/#/round/42161/608/117), ensuring seamless updates and visibility in both platforms.
+[Gitcoin](https://grants.gitcoin.co/) **has integrated Karma into their application.** Project milestones added in Karma will now be automatically displayed on the corresponding project pages in Gitcoin. For example, here is a project on [Karma](https://www.karmahq.xyz/project/karma---gap/funding/0xe7390a6f68ff70e0f7cda461079f92dad0150003e7ec541c7fb9e55e912211c0/milestones-and-updates) with milestones that are also visible in [Gitcoin](https://explorer.gitcoin.co/#/round/42161/608/117), ensuring seamless updates and visibility in both platforms.
 
 #### Global Stablecoin Hackathon
 
@@ -1168,7 +1172,7 @@ We're excited to support your work on Filecoin. Good luck with your milestones!
 
 ###### Step 1: Add your project profile
 
-Add your project to [Global Stablecoin Hackathon](https://gap.karmahq.xyz/community/celo?programId=889_42161) on [Karma](https://www.karmahq.xyz/). You can follow the instructions [here](https://docs.gap.karmahq.xyz/how-to-guides/for-builders/create-project). This is your onchain project profile you create one time and can use it to apply for future rounds. You can also point anyone to learn about your project, receive endorsements and donations.
+Add your project to [Global Stablecoin Hackathon](https://www.karmahq.xyz/community/celo?programId=889_42161) on [Karma](https://www.karmahq.xyz/). You can follow the instructions [here](https://docs.gap.karmahq.xyz/how-to-guides/for-builders/create-project). This is your onchain project profile you create one time and can use it to apply for future rounds. You can also point anyone to learn about your project, receive endorsements and donations.
 
 **If you participated in any of the Celo's past funding programs, you might already have a project profile. You can skip to Step 2. Contact our team if you have trouble accessing your profile here:** [**https://t.me/karmahq** ](https://t.me/karmahq)
 
@@ -1212,7 +1216,7 @@ As you complete your work, submit milestones and mark them as complete.
 
 #### Octant
 
-[**Octant** ](https://octant.app/projects) **has integrated Karma into their application.** Project milestones added in Karma will now be automatically displayed on the corresponding project pages in Octant. For example, here is a project on [Karma](https://gap.karmahq.xyz/project/-buidlguidl/grants/0x674ed25e9616b5c4237c6295b87f32cca42e74e7cc087e071a9c80c4e279fe91/milestones-and-updates) with milestones that are also visible in [Octant](https://octant.app/project/5/0x00080706a7D99CBC163D52dcF435205B1aD940D1), ensuring seamless updates and visibility in both platforms.
+[**Octant** ](https://octant.app/projects) **has integrated Karma into their application.** Project milestones added in Karma will now be automatically displayed on the corresponding project pages in Octant. For example, here is a project on [Karma](https://www.karmahq.xyz/project/-buidlguidl/funding/0x674ed25e9616b5c4237c6295b87f32cca42e74e7cc087e071a9c80c4e279fe91/milestones-and-updates) with milestones that are also visible in [Octant](https://octant.app/project/5/0x00080706a7D99CBC163D52dcF435205B1aD940D1), ensuring seamless updates and visibility in both platforms.
 
 **If you don't see your Epoch specific milestones in Octant, follow the steps below to link Karma grant to Octant's Epoch.**
 

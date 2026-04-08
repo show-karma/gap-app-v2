@@ -7,6 +7,7 @@ import type { Application, MilestoneData } from "@/types/whitelabel-entities";
 interface MilestonesTabProps {
   application: Application;
   isOwner: boolean;
+  invoiceRequired?: boolean;
 }
 
 function isMilestoneArray(value: unknown): value is MilestoneData[] {
@@ -19,7 +20,7 @@ function isMilestoneArray(value: unknown): value is MilestoneData[] {
   );
 }
 
-export function MilestonesTab({ application, isOwner }: MilestonesTabProps) {
+export function MilestonesTab({ application, isOwner, invoiceRequired }: MilestonesTabProps) {
   const milestoneFields = Object.entries(application.applicationData).filter(([_, value]) =>
     isMilestoneArray(value)
   ) as [string, MilestoneData[]][];
@@ -47,6 +48,7 @@ export function MilestonesTab({ application, isOwner }: MilestonesTabProps) {
               fieldLabel={fieldLabel}
               referenceNumber={application.referenceNumber}
               isEditable={isOwner}
+              invoiceRequired={invoiceRequired}
             />
           </div>
         </div>

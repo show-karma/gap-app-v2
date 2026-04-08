@@ -7,7 +7,7 @@ This document describes the domain migration strategy implemented to transition 
 ## Current State (Before Migration)
 
 - `karmahq.xyz` → `frontend-nextjs` project (governance/DAO features)
-- `gap.karmahq.xyz` → `gap-app-v2` project (grants accountability protocol)
+- `www.karmahq.xyz` → `gap-app-v2` project (grants accountability protocol)
 
 ## Target State (After Migration)
 

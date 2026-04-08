@@ -58,13 +58,12 @@ export function formatMilestoneAmount(
   const match = trimmed.match(numericWithSuffix);
   if (match) {
     const numPart = parseFloat(match[1].replace(/,/g, ""));
-    if (!Number.isNaN(numPart) && numPart !== 0) {
-      const formatted = numPart.toLocaleString("en-US", {
-        maximumFractionDigits: 6,
-        minimumFractionDigits: 0,
-      });
-      return `${formatted} ${match[2]}`;
-    }
+    if (Number.isNaN(numPart) || numPart === 0) return null;
+    const formatted = numPart.toLocaleString("en-US", {
+      maximumFractionDigits: 6,
+      minimumFractionDigits: 0,
+    });
+    return `${formatted} ${match[2]}`;
   }
 
   // For anything else (e.g., "$5,000 USD", "~5000"), return as-is

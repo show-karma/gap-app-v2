@@ -54,6 +54,15 @@ function defaultHandlers(): Record<string, RouteHandler> {
 
     // KYC config - default disabled
     "**/v2/communities/*/kyc-config**": (route) => jsonResponse(route, { enabled: false }),
+
+    // Manage page payouts
+    "**/v2/payouts/**": (route) => jsonResponse(route, []),
+
+    // Manage page tracks/indicators
+    "**/v2/tracks/**": (route) => jsonResponse(route, []),
+
+    // Manage page categories
+    "**/v2/categories/**": (route) => jsonResponse(route, []),
   };
 }
 

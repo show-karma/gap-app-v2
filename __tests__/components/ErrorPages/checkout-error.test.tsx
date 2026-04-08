@@ -11,7 +11,8 @@
  * - Error logged via errorManager
  */
 
-import { fireEvent, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import DonationCheckoutError from "@/app/community/[communityId]/donate/[programId]/checkout/error";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { getDetailedErrorInfo } from "@/utilities/donations/errorMessages";
@@ -98,7 +99,8 @@ describe("DonationCheckoutError", () => {
     expect(screen.queryByText("What you can do")).not.toBeInTheDocument();
   });
 
-  it("should show technical details when digest is present", () => {
+  it("should show technical details when digest is present", async () => {
+    const user = userEvent.setup();
     const error = Object.assign(new Error("Test"), {
       digest: "ERR_DIGEST_789",
     });
@@ -108,7 +110,7 @@ describe("DonationCheckoutError", () => {
     expect(screen.getByText("Technical Details")).toBeInTheDocument();
 
     // Click to expand details
-    fireEvent.click(screen.getByText("Technical Details"));
+    await user.click(screen.getByText("Technical Details"));
     expect(screen.getByText("ERR_DIGEST_789")).toBeInTheDocument();
     expect(screen.getByText("RPC timeout")).toBeInTheDocument();
   });
@@ -123,14 +125,15 @@ describe("DonationCheckoutError", () => {
     expect(screen.queryByText("Technical Details")).not.toBeInTheDocument();
   });
 
-  it("should call reset when Try Again button is clicked", () => {
+  it("should call reset when Try Again button is clicked", async () => {
+    const user = userEvent.setup();
     const error = Object.assign(new Error("Test"), { digest: undefined });
 
     renderWithProviders(
       <DonationCheckoutError error={error as Error & { digest?: string }} reset={reset} />
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Try Again" }));
+    await user.click(screen.getByRole("button", { name: "Try Again" }));
 
     expect(reset).toHaveBeenCalledTimes(1);
   });

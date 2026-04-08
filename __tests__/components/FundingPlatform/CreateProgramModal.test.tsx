@@ -214,7 +214,7 @@ const mockCommunity = {
 
 const mockAddress = "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd";
 
-// Helper to create test query client
+// Fresh QueryClient per render — no afterEach cleanup required
 const createTestQueryClient = () =>
   new QueryClient({
     defaultOptions: {

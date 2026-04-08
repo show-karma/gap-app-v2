@@ -51,6 +51,10 @@ const baseGrant: Grant = {
   updates: [],
 } as unknown as Grant;
 
+beforeEach(() => {
+  vi.clearAllMocks();
+});
+
 describe("MilestonesList — allocation amount display", () => {
   beforeEach(() => {
     mockPayoutConfig.data = null;

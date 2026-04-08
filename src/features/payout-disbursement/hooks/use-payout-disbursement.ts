@@ -13,6 +13,7 @@ import type {
   PaginatedDisbursementsResponse,
   PayoutDisbursement,
   PayoutGrantConfig,
+  RecordPaymentRequest,
   RecordSafeTransactionRequest,
   SavePayoutConfigRequest,
   SavePayoutConfigResponse,
@@ -49,6 +50,8 @@ export const payoutDisbursementKeys = {
     byGrant: (grantUID: string) =>
       [...payoutDisbursementKeys.payoutConfigs.all, "grant", grantUID] as const,
   },
+  granteeInvoiceCheck: (grantUID: string) =>
+    [...payoutDisbursementKeys.all, "granteeInvoiceCheck", grantUID] as const,
 } as const;
 
 /**
@@ -139,6 +142,35 @@ export function useCreateDisbursements(options?: {
           queryKey: payoutDisbursementKeys.grantTotal(grant.grantUID),
         });
       }
+      options?.onSuccess?.(data);
+    },
+    onError: (error) => {
+      options?.onError?.(error);
+    },
+  });
+}
+
+/**
+ * Hook for recording a historical payment directly as disbursed
+ */
+export function useRecordPayment(options?: {
+  onSuccess?: (data: PayoutDisbursement) => void;
+  onError?: (error: Error) => void;
+}) {
+  const queryClient = useQueryClient();
+
+  return useMutation<PayoutDisbursement, Error, RecordPaymentRequest>({
+    mutationFn: (request) => payoutService.recordPayment(request),
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: payoutDisbursementKeys.grantHistory(variables.grantUID),
+      });
+      queryClient.invalidateQueries({
+        queryKey: payoutDisbursementKeys.grantTotal(variables.grantUID),
+      });
+      queryClient.invalidateQueries({
+        queryKey: [...payoutDisbursementKeys.all, "communityPayouts", variables.communityUID],
+      });
       options?.onSuccess?.(data);
     },
     onError: (error) => {
@@ -549,6 +581,21 @@ export function useToggleAgreement(
 }
 
 /**
+ * Hook for checking if invoice is required for a grant (grantee-facing)
+ */
+export function useGrantInvoiceRequired(
+  grantUID: string | undefined,
+  options?: { enabled?: boolean }
+) {
+  return useQuery<payoutService.GranteeInvoiceCheckResult, Error>({
+    queryKey: payoutDisbursementKeys.granteeInvoiceCheck(grantUID ?? ""),
+    queryFn: () => payoutService.checkGrantInvoiceRequired(grantUID ?? ""),
+    enabled: (options?.enabled ?? true) && !!grantUID,
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
+/**
  * Hook for batch saving milestone invoices
  */
 export function useSaveMilestoneInvoices(
@@ -577,6 +624,76 @@ export function useSaveMilestoneInvoices(
     mutationFn: ({ grantUID, invoices }) =>
       payoutService.saveMilestoneInvoices(grantUID, communityUID, invoices),
     onSuccess: (data) => {
+      queryClient.invalidateQueries({
+        queryKey: [...payoutDisbursementKeys.all, "communityPayouts", communityUID],
+      });
+      options?.onSuccess?.(data);
+    },
+    onError: (error) => {
+      options?.onError?.(error);
+    },
+  });
+}
+
+/**
+ * Hook for updating a single line item in a grant payout config
+ */
+export function useUpdateLineItem(
+  communityUID: string,
+  options?: {
+    onSuccess?: (data: PayoutGrantConfig) => void;
+    onError?: (error: Error) => void;
+  }
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    PayoutGrantConfig,
+    Error,
+    { grantUID: string; allocationId: string; updates: { label?: string; amount?: string } }
+  >({
+    mutationFn: ({ grantUID, allocationId, updates }) =>
+      payoutService.updateLineItem(grantUID, allocationId, updates),
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: payoutDisbursementKeys.payoutConfigs.byGrant(variables.grantUID),
+      });
+      queryClient.invalidateQueries({
+        queryKey: payoutDisbursementKeys.payoutConfigs.byCommunity(communityUID),
+      });
+      queryClient.invalidateQueries({
+        queryKey: [...payoutDisbursementKeys.all, "communityPayouts", communityUID],
+      });
+      options?.onSuccess?.(data);
+    },
+    onError: (error) => {
+      options?.onError?.(error);
+    },
+  });
+}
+
+/**
+ * Hook for deleting a single line item from a grant payout config
+ */
+export function useDeleteLineItem(
+  communityUID: string,
+  options?: {
+    onSuccess?: (data: PayoutGrantConfig) => void;
+    onError?: (error: Error) => void;
+  }
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation<PayoutGrantConfig, Error, { grantUID: string; allocationId: string }>({
+    mutationFn: ({ grantUID, allocationId }) =>
+      payoutService.deleteLineItem(grantUID, allocationId),
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: payoutDisbursementKeys.payoutConfigs.byGrant(variables.grantUID),
+      });
+      queryClient.invalidateQueries({
+        queryKey: payoutDisbursementKeys.payoutConfigs.byCommunity(communityUID),
+      });
       queryClient.invalidateQueries({
         queryKey: [...payoutDisbursementKeys.all, "communityPayouts", communityUID],
       });

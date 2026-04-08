@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Karma Seeds - Plant Seeds. Grow Projects.",
     description: "Support projects at $1 per seed. 97% goes to builders.",
-    url: "https://gap.karmahq.xyz/seeds/fund",
+    url: "https://www.karmahq.xyz/seeds/fund",
     images: [{ url: "/og/seeds.png", width: 1200, height: 630 }],
   },
   twitter: {

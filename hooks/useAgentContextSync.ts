@@ -3,6 +3,7 @@
 import { useParams, usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { useAgentChatStore } from "@/store/agentChat";
+import { useWhitelabel } from "@/utilities/whitelabel-context";
 
 /**
  * Syncs the current page context (project, program, or application) to
@@ -16,6 +17,7 @@ export function useAgentContextSync() {
   const pathname = usePathname();
   const params = useParams();
   const setAgentContext = useAgentChatStore((s) => s.setAgentContext);
+  const { communitySlug: whitelabelCommunity } = useWhitelabel();
 
   const projectId = params?.projectId as string | undefined;
   const applicationId = params?.applicationId as string | undefined;
@@ -44,7 +46,35 @@ export function useAgentContextSync() {
       return;
     }
 
+    // Community pages (regular routes like /community/optimism/funding-opportunities)
+    if (pathname?.startsWith("/community/") && communityId) {
+      if (cleanProgramId) {
+        setAgentContext({ programId: cleanProgramId, communityId });
+      } else {
+        setAgentContext({ communityId });
+      }
+      return;
+    }
+
+    // Whitelabel domains (e.g. app.opgrants.io) — community comes from domain config
+    if (whitelabelCommunity) {
+      if (cleanProgramId) {
+        setAgentContext({ programId: cleanProgramId, communityId: whitelabelCommunity });
+      } else {
+        setAgentContext({ communityId: whitelabelCommunity });
+      }
+      return;
+    }
+
     // No recognized context page — clear context
     setAgentContext(null);
-  }, [pathname, projectId, applicationId, communityId, cleanProgramId, setAgentContext]);
+  }, [
+    pathname,
+    projectId,
+    applicationId,
+    communityId,
+    cleanProgramId,
+    whitelabelCommunity,
+    setAgentContext,
+  ]);
 }

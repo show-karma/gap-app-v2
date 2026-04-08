@@ -325,12 +325,14 @@ export default function ApplicationDetailPage() {
       can(Permission.APPLICATION_REVIEW));
 
   // Check if post-approval edit should be enabled (admin only)
-  // Only for approved applications with existing post-approval data
+  // Show when approved AND (program has a post-approval form schema OR data already exists)
+  const hasPostApprovalSchema = !!config?.postApprovalFormSchema?.fields?.length;
+  const hasPostApprovalData =
+    !!application?.postApprovalData && Object.keys(application.postApprovalData).length > 0;
   const canEditPostApproval =
     isAdmin &&
     application?.status?.toLowerCase() === "approved" &&
-    application?.postApprovalData &&
-    Object.keys(application.postApprovalData).length > 0;
+    (hasPostApprovalSchema || hasPostApprovalData);
 
   // Check loading states
   if (isLoadingPermissions || isLoadingApplication) {

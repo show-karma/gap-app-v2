@@ -40,20 +40,6 @@ describe("MilestoneDisplay", () => {
     expect(screen.getByText("Final delivery")).toBeInTheDocument();
   });
 
-  it("shows loading state", () => {
-    // Override mock for this test
-    vi.doMock("@/src/features/applications/hooks/use-milestone-completions", () => ({
-      useMilestoneCompletions: () => ({
-        isLoading: true,
-        getCompletion: () => undefined,
-      }),
-    }));
-
-    // Since we can't dynamically re-mock after module resolution, test the static loading path
-    // The component shows "Loading milestones..." when isLoading is true
-    // This is already tested by verifying the milestone titles appear (meaning loading is done)
-  });
-
   it("renders empty list without errors", () => {
     const { container } = renderWithQueryClient(
       <MilestoneDisplay milestones={[]} fieldLabel="milestones" referenceNumber="REF-001" />

@@ -130,6 +130,7 @@ describe("Dialog Focus Trap Accessibility", () => {
       });
 
       // Press Escape
+      // fireEvent required: accessibility keyboard navigation test
       fireEvent.keyDown(screen.getByRole("dialog"), {
         key: "Escape",
         code: "Escape",

@@ -239,13 +239,18 @@ export function StatsTable({
                       </ExternalLink>
                     </td>
                     <td className="px-4 py-3">
-                      {grantTotalMap?.get(report.grantUid) ? (
-                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200">
-                          {grantTotalMap.get(report.grantUid)}
-                        </span>
-                      ) : (
-                        <span className="text-sm text-gray-400 dark:text-gray-500">—</span>
-                      )}
+                      {(() => {
+                        const amount =
+                          grantTotalMap?.get(report.grantUid) ??
+                          grantTotalMap?.get(report.grantUid.toLowerCase());
+                        return amount ? (
+                          <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200">
+                            {amount}
+                          </span>
+                        ) : (
+                          <span className="text-sm text-gray-400 dark:text-gray-500">—</span>
+                        );
+                      })()}
                     </td>
                     <td className="px-4 py-3">
                       <Link

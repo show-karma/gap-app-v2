@@ -263,14 +263,42 @@ export function PayoutHistoryContent({
   );
 }
 
+/**
+ * Sentinel value set by POST /v2/payouts/record-payment for manual/historical payments.
+ * Must match the backend constant in payout-disbursement.request.mapper.ts.
+ */
+const HISTORICAL_SAFE_ADDRESS = "HISTORICAL";
+
+/**
+ * Detects payments recorded manually (not executed via Safe multisig).
+ * Backend sets safeAddress to "HISTORICAL" and safeTransactionHash to "historical-{uuid}".
+ */
+function isHistoricalPayment(disbursement: PayoutDisbursement): boolean {
+  return (
+    disbursement.safeAddress === HISTORICAL_SAFE_ADDRESS ||
+    (disbursement.safeTransactionHash?.startsWith("historical-") ?? false)
+  );
+}
+
+function hasRealTransactionHash(disbursement: PayoutDisbursement): boolean {
+  const hash = disbursement.safeTransactionHash;
+  return Boolean(hash && !hash.startsWith("historical-"));
+}
+
 function DisbursementCard({ disbursement }: { disbursement: PayoutDisbursement }) {
   const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const isHistorical = isHistoricalPayment(disbursement);
   const statusConfig = STATUS_COLORS[disbursement.status];
-  const safeUrl = disbursement.safeTransactionHash
-    ? getSafeUrl(disbursement.safeAddress, disbursement.safeTransactionHash, disbursement.chainID)
-    : null;
+  const safeUrl =
+    !isHistorical && disbursement.safeTransactionHash
+      ? getSafeUrl(disbursement.safeAddress, disbursement.safeTransactionHash, disbursement.chainID)
+      : null;
 
   const canCancel = disbursement.status === PayoutDisbursementStatus.PENDING;
+  const historicalTxHash =
+    isHistorical && hasRealTransactionHash(disbursement) ? disbursement.safeTransactionHash : null;
+  const notes = disbursement.metadata?.notes;
+  const milestoneLabels = disbursement.metadata?.milestoneLabels;
 
   return (
     <>
@@ -282,9 +310,11 @@ function DisbursementCard({ disbursement }: { disbursement: PayoutDisbursement }
             >
               {statusConfig.label}
             </span>
-            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-              {formatDate(disbursement.createdAt)}
-            </p>
+            {isHistorical && (
+              <p className="mt-1.5 text-xs text-amber-600 dark:text-amber-400">
+                Recorded manually — not executed via Safe
+              </p>
+            )}
           </div>
           <div className="text-right">
             <p className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -295,19 +325,23 @@ function DisbursementCard({ disbursement }: { disbursement: PayoutDisbursement }
         </div>
 
         <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-gray-500 dark:text-gray-400">Recipient</span>
-            <span className="font-mono text-gray-900 dark:text-white">
-              {truncateAddress(disbursement.payoutAddress)}
-            </span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-500 dark:text-gray-400">Safe</span>
-            <span className="font-mono text-gray-900 dark:text-white">
-              {truncateAddress(disbursement.safeAddress)}
-            </span>
-          </div>
-          {disbursement.safeTransactionHash && (
+          {disbursement.payoutAddress && (
+            <div className="flex justify-between">
+              <span className="text-gray-500 dark:text-gray-400">Recipient</span>
+              <span className="font-mono text-gray-900 dark:text-white">
+                {truncateAddress(disbursement.payoutAddress)}
+              </span>
+            </div>
+          )}
+          {!isHistorical && (
+            <div className="flex justify-between">
+              <span className="text-gray-500 dark:text-gray-400">Safe</span>
+              <span className="font-mono text-gray-900 dark:text-white">
+                {truncateAddress(disbursement.safeAddress)}
+              </span>
+            </div>
+          )}
+          {disbursement.safeTransactionHash && !isHistorical && (
             <div className="flex items-center justify-between">
               <span className="text-gray-500 dark:text-gray-400">Transaction</span>
               {safeUrl ? (
@@ -329,12 +363,36 @@ function DisbursementCard({ disbursement }: { disbursement: PayoutDisbursement }
               )}
             </div>
           )}
+          {historicalTxHash && (
+            <div className="flex items-center justify-between">
+              <span className="text-gray-500 dark:text-gray-400">Transaction</span>
+              <span className="font-mono text-gray-900 dark:text-white">
+                {truncateAddress(historicalTxHash)}
+              </span>
+            </div>
+          )}
           {disbursement.executedAt && (
             <div className="flex justify-between">
-              <span className="text-gray-500 dark:text-gray-400">Executed</span>
+              <span className="text-gray-500 dark:text-gray-400">
+                {isHistorical ? "Payment Date" : "Executed"}
+              </span>
               <span className="text-gray-900 dark:text-white">
                 {formatDate(disbursement.executedAt)}
               </span>
+            </div>
+          )}
+          {!isHistorical && disbursement.createdAt && (
+            <div className="flex justify-between">
+              <span className="text-gray-500 dark:text-gray-400">Created</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                {formatDate(disbursement.createdAt)}
+              </span>
+            </div>
+          )}
+          {notes && (
+            <div className="flex justify-between gap-4">
+              <span className="shrink-0 text-gray-500 dark:text-gray-400">Notes</span>
+              <span className="text-right text-gray-900 dark:text-white">{notes}</span>
             </div>
           )}
         </div>
@@ -343,14 +401,12 @@ function DisbursementCard({ disbursement }: { disbursement: PayoutDisbursement }
         {disbursement.milestoneBreakdown &&
           Object.keys(disbursement.milestoneBreakdown).length > 0 && (
             <div className="mt-3 border-t border-gray-200 pt-3 dark:border-zinc-600">
-              <p className="mb-2 text-xs font-medium text-gray-700 dark:text-gray-300">
-                Milestone Breakdown
-              </p>
+              <p className="mb-2 text-xs font-medium text-gray-700 dark:text-gray-300">Breakdown</p>
               <div className="space-y-1">
                 {Object.entries(disbursement.milestoneBreakdown).map(([milestoneId, amount]) => (
                   <div key={milestoneId} className="flex justify-between text-xs">
-                    <span className="max-w-[150px] truncate text-gray-500 dark:text-gray-400">
-                      {milestoneId}
+                    <span className="max-w-[200px] truncate text-gray-500 dark:text-gray-400">
+                      {milestoneLabels?.[milestoneId] ?? truncateAddress(milestoneId)}
                     </span>
                     <span className="text-gray-900 dark:text-white">
                       {formatTokenAmount(amount, disbursement.tokenDecimals)} {disbursement.token}

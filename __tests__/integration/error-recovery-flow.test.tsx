@@ -13,7 +13,8 @@
  * - Deeply nested component trees with errors
  */
 
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import type React from "react";
 import { DonationErrorBoundary } from "@/components/Donation/DonationErrorBoundary";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -120,7 +121,8 @@ describe("Error Recovery Flow (integration)", () => {
   // First-render throw, then retry success
   // -------------------------------------------------------------------------
 
-  it("component that throws on first render succeeds on retry", () => {
+  it("component that throws on first render succeeds on retry", async () => {
+    const user = userEvent.setup();
     // Use an external flag rather than a counter -- React 19 may call the
     // component function multiple times during its internal retry cycle.
     let shouldThrow = true;
@@ -140,7 +142,7 @@ describe("Error Recovery Flow (integration)", () => {
 
     // Disable throwing before clicking retry
     shouldThrow = false;
-    fireEvent.click(screen.getByRole("button", { name: /try again/i }));
+    await user.click(screen.getByRole("button", { name: /try again/i }));
 
     expect(screen.getByText("Successfully loaded")).toBeInTheDocument();
   });
@@ -224,7 +226,8 @@ describe("Error Recovery Flow (integration)", () => {
   // Recovery cycle: error -> retry -> error -> retry -> success
   // -------------------------------------------------------------------------
 
-  it("supports multiple retry cycles before eventual success", () => {
+  it("supports multiple retry cycles before eventual success", async () => {
+    const user = userEvent.setup();
     // Use a flag-based approach. React 19 may call the component multiple
     // times during its internal retry, so counters are unreliable.
     let failMode: "first" | "second" | "succeed" = "first";
@@ -246,12 +249,12 @@ describe("Error Recovery Flow (integration)", () => {
 
     // First retry -- triggers second failure
     failMode = "second";
-    fireEvent.click(screen.getByRole("button", { name: /try again/i }));
+    await user.click(screen.getByRole("button", { name: /try again/i }));
     expect(screen.getByText("Something went wrong")).toBeInTheDocument();
 
     // Second retry -- succeeds
     failMode = "succeed";
-    fireEvent.click(screen.getByRole("button", { name: /try again/i }));
+    await user.click(screen.getByRole("button", { name: /try again/i }));
     expect(screen.getByTestId("success")).toBeInTheDocument();
     expect(screen.getByText("Finally worked")).toBeInTheDocument();
   });

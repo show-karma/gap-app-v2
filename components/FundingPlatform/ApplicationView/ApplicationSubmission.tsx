@@ -37,11 +37,22 @@ const inputStyle =
   "mt-2 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder:text-zinc-300";
 
 /**
+ * Derives a safe field name from a label — valid as both a form key and DOM id.
+ * Replaces whitespace with underscores and strips characters invalid in CSS selectors.
+ */
+function toFieldName(label: string): string {
+  return label
+    .toLowerCase()
+    .replace(/\s+/g, "_")
+    .replace(/[^a-z0-9_-]/g, "");
+}
+
+/**
  * Finds the original key in initialData that matches the given field.
  * Uses multiple matching strategies to handle different key formats.
  */
 function findOriginalKey(field: IFormField, initialData: Record<string, any>): string | undefined {
-  const fieldName = field.label.toLowerCase().replace(/\s+/g, "_");
+  const fieldName = toFieldName(field.label);
 
   // Strategy 1: Match with field.id (if available) - most reliable
   if (field.id && field.id in initialData) {
@@ -109,7 +120,7 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
     const schemaObject: Record<string, any> = {};
 
     schema.fields.forEach((field) => {
-      const fieldName = field.label.toLowerCase().replace(/\s+/g, "_");
+      const fieldName = toFieldName(field.label);
       let fieldSchema: z.ZodTypeAny;
 
       switch (field.type) {
@@ -357,7 +368,7 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
   const getDefaultValues = useCallback((): Partial<FormData> => {
     const defaults: Record<string, any> = {};
     formSchema.fields.forEach((field) => {
-      const fieldName = field.label.toLowerCase().replace(/\s+/g, "_");
+      const fieldName = toFieldName(field.label);
       // Use field.id if available, otherwise fall back to fieldName (consistent with validation schema)
       const fieldKey = field.id || fieldName;
       if (field.type === "checkbox") {
@@ -394,7 +405,7 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
   const fieldIdToLabelMapping = useMemo(() => {
     const mapping: Record<string, string> = {};
     formSchema.fields.forEach((field) => {
-      const fieldKey = field.id || field.label.toLowerCase().replace(/\s+/g, "_");
+      const fieldKey = field.id || toFieldName(field.label);
       mapping[fieldKey] = field.label;
     });
     return mapping;
@@ -407,7 +418,7 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
 
     const mapping: Record<string, string> = {};
     formSchema.fields.forEach((field) => {
-      const fieldKey = field.id || field.label.toLowerCase().replace(/\s+/g, "_");
+      const fieldKey = field.id || toFieldName(field.label);
       const originalKey = findOriginalKey(field, initialData);
 
       if (originalKey) {
@@ -430,7 +441,7 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
 
     // Track which fields matched
     formSchema.fields.forEach((field) => {
-      const fieldKey = field.id || field.label.toLowerCase().replace(/\s+/g, "_");
+      const fieldKey = field.id || toFieldName(field.label);
       const originalKey = findOriginalKey(field, initialData);
 
       if (originalKey) {
@@ -498,7 +509,7 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
         const formData: Record<string, any> = {};
 
         formSchema.fields.forEach((field) => {
-          const fieldName = field.label.toLowerCase().replace(/\s+/g, "_");
+          const fieldName = toFieldName(field.label);
           // Use field.id if available, otherwise fall back to fieldName (consistent with validation schema)
           const fieldKey = field.id || fieldName;
 
@@ -621,7 +632,7 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
   };
 
   const renderField = (field: any, index: number) => {
-    const fieldName = field.label.toLowerCase().replace(/\s+/g, "_");
+    const fieldName = toFieldName(field.label);
     // Use field.id if available, otherwise fall back to fieldName (consistent with validation schema)
     const fieldKey = (field.id || fieldName) as keyof FormData;
     const error = errors[fieldKey];

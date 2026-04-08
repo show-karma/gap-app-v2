@@ -17,6 +17,7 @@ vi.mock("@/utilities/fetchData", () => ({
 const mockUseAuth = useAuth as unknown as vi.Mock;
 const mockFetchData = fetchData as unknown as vi.Mock;
 
+// Fresh QueryClient per render — no afterEach cleanup required
 const createWrapper = () => {
   const queryClient = new QueryClient({
     defaultOptions: {

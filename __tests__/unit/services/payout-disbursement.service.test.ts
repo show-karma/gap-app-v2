@@ -15,6 +15,7 @@ vi.mock("@/utilities/indexer", () => ({
     V2: {
       PAYOUTS: {
         CREATE: "/v2/payouts",
+        RECORD_PAYMENT: "/v2/payouts/record-payment",
         RECORD_SAFE_TX: (id: string) => `/v2/payouts/${id}/safe-tx`,
         GRANT_HISTORY: (uid: string, page?: number, limit?: number) =>
           `/v2/payouts/grant/${uid}?page=${page ?? 1}&limit=${limit ?? 10}`,
@@ -45,17 +46,27 @@ vi.mock("@/utilities/indexer", () => ({
       },
       MILESTONE_INVOICES: {
         BATCH_SAVE: (uid: string) => `/v2/milestone-invoices/${uid}/batch`,
+        DOWNLOAD: (key: string) => `/v2/milestone-invoices/download?key=${encodeURIComponent(key)}`,
+      },
+      GRANTS: {
+        INVOICE_REQUIREMENT: (uid: string) => `/v2/grants/${uid}/invoice-requirement`,
+        INVOICE_SUBMIT: (uid: string) => `/v2/grants/${uid}/invoice`,
+        INVOICE_DOWNLOAD: (uid: string, key: string) =>
+          `/v2/grants/${uid}/invoice/download?key=${encodeURIComponent(key)}`,
       },
     },
   },
 }));
 
 import {
+  checkGrantInvoiceRequired,
   createDisbursements,
   deletePayoutConfig,
   getAwaitingSignaturesDisbursements,
   getCommunityPayouts,
   getCommunityPayoutsPublic,
+  getGrantInvoiceDownloadUrl,
+  getInvoiceDownloadUrl,
   getPayoutConfigByGrant,
   getPayoutConfigByGrantPublic,
   getPayoutConfigsByCommunity,
@@ -64,15 +75,18 @@ import {
   getPendingDisbursements,
   getRecentCommunityDisbursements,
   getTotalDisbursed,
+  recordPayment,
   recordSafeTransaction,
   saveMilestoneInvoices,
   savePayoutConfigs,
+  submitGranteeInvoice,
   toggleGrantAgreement,
   updateDisbursementStatus,
   validateBulkImportRows,
 } from "@/features/payout-disbursement/services/payout-disbursement.service";
 import type {
   CreateDisbursementsRequest,
+  RecordPaymentRequest,
   RecordSafeTransactionRequest,
   SavePayoutConfigRequest,
   UpdateStatusRequest,
@@ -110,6 +124,63 @@ describe("payout-disbursement.service", () => {
       await expect(
         createDisbursements({ grants: [] } as unknown as CreateDisbursementsRequest)
       ).rejects.toThrow(/Failed to create disbursements/);
+    });
+  });
+
+  // =========================================================================
+  // recordPayment
+  // =========================================================================
+
+  describe("recordPayment", () => {
+    const request: RecordPaymentRequest = {
+      grantUID: "grant-1",
+      projectUID: "project-1",
+      communityUID: "community-1",
+      chainID: 1,
+      disbursedAmount: "50000000000",
+      tokenDecimals: 6,
+      token: "USDC",
+      tokenAddress: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+      paymentDate: "2026-03-01T00:00:00.000Z",
+      transactionHash: "0xabc123",
+      notes: "Initial Payment",
+    };
+
+    it("should call fetchData with correct url and method", async () => {
+      const disbursement = { id: "d1", status: "DISBURSED" };
+      mockFetchData.mockResolvedValue([disbursement, null]);
+
+      await recordPayment(request);
+
+      expect(mockFetchData).toHaveBeenCalledWith(
+        "/v2/payouts/record-payment",
+        "POST",
+        request,
+        {},
+        {},
+        true,
+        false
+      );
+    });
+
+    it("should return disbursement on success", async () => {
+      const disbursement = { id: "d1", status: "DISBURSED", grantUID: "grant-1" };
+      mockFetchData.mockResolvedValue([disbursement, null]);
+
+      const result = await recordPayment(request);
+      expect(result).toEqual(disbursement);
+    });
+
+    it("should throw on error response", async () => {
+      mockFetchData.mockResolvedValue([null, "Server error"]);
+
+      await expect(recordPayment(request)).rejects.toThrow(/Failed to record payment/);
+    });
+
+    it("should throw when data is null", async () => {
+      mockFetchData.mockResolvedValue([null, null]);
+
+      await expect(recordPayment(request)).rejects.toThrow(/Failed to record payment/);
     });
   });
 
@@ -441,6 +512,177 @@ describe("payout-disbursement.service", () => {
       mockFetchData.mockResolvedValue([null, "Validation failed"]);
       await expect(validateBulkImportRows("c1", [])).rejects.toThrow(
         /Failed to validate bulk import/
+      );
+    });
+  });
+
+  // =========================================================================
+  // getInvoiceDownloadUrl
+  // =========================================================================
+
+  describe("getInvoiceDownloadUrl", () => {
+    it("returns presigned download URL", async () => {
+      mockFetchData.mockResolvedValue([
+        { downloadUrl: "https://s3.example.com/invoice.pdf" },
+        null,
+      ]);
+
+      const result = await getInvoiceDownloadUrl("invoices/grant-1/file.pdf");
+      expect(result).toBe("https://s3.example.com/invoice.pdf");
+    });
+
+    it("throws when downloadUrl is missing from response", async () => {
+      mockFetchData.mockResolvedValue([{}, null]);
+      await expect(getInvoiceDownloadUrl("key")).rejects.toThrow(/Failed to get download URL/);
+    });
+
+    it("throws on fetch error", async () => {
+      mockFetchData.mockResolvedValue([null, "Not found"]);
+      await expect(getInvoiceDownloadUrl("key")).rejects.toThrow(/Failed to get download URL/);
+    });
+  });
+
+  // =========================================================================
+  // checkGrantInvoiceRequired
+  // =========================================================================
+
+  describe("checkGrantInvoiceRequired", () => {
+    it("returns invoice requirement data when API succeeds", async () => {
+      const response = { invoiceRequired: true, invoiceStatus: "pending", invoiceFileKey: null };
+      mockFetchData.mockResolvedValue([{ data: response }, null]);
+
+      const result = await checkGrantInvoiceRequired("grant-1");
+      expect(result).toEqual(response);
+    });
+
+    it("returns { invoiceRequired: false } on fetch error", async () => {
+      mockFetchData.mockResolvedValue([null, "Server error"]);
+
+      const result = await checkGrantInvoiceRequired("grant-1");
+      expect(result).toEqual({ invoiceRequired: false });
+    });
+
+    it("returns { invoiceRequired: false } when data is null", async () => {
+      mockFetchData.mockResolvedValue([null, null]);
+
+      const result = await checkGrantInvoiceRequired("grant-1");
+      expect(result).toEqual({ invoiceRequired: false });
+    });
+
+    it("returns { invoiceRequired: false } when fetchData throws", async () => {
+      mockFetchData.mockRejectedValue(new Error("Network failure"));
+
+      const result = await checkGrantInvoiceRequired("grant-1");
+      expect(result).toEqual({ invoiceRequired: false });
+    });
+
+    it("calls the correct URL with the grant UID", async () => {
+      mockFetchData.mockResolvedValue([{ data: { invoiceRequired: false } }, null]);
+
+      await checkGrantInvoiceRequired("abc-123");
+      expect(mockFetchData).toHaveBeenCalledWith(
+        "/v2/grants/abc-123/invoice-requirement",
+        "GET",
+        {},
+        {},
+        {},
+        true,
+        false
+      );
+    });
+  });
+
+  // =========================================================================
+  // submitGranteeInvoice
+  // =========================================================================
+
+  describe("submitGranteeInvoice", () => {
+    const invoice = {
+      milestoneLabel: "Milestone 1",
+      milestoneUID: "ms-1",
+      invoiceFileKey: "invoices/grant-1/file.pdf",
+      invoiceFileUrl: "https://s3.example.com/file.pdf",
+    };
+
+    it("submits invoice and returns the saved invoice", async () => {
+      const savedInvoice = { ...invoice, id: "inv-1", createdAt: "2026-04-01" };
+      mockFetchData.mockResolvedValue([{ data: { invoice: savedInvoice } }, null]);
+
+      const result = await submitGranteeInvoice("grant-1", invoice);
+      expect(result).toEqual(savedInvoice);
+    });
+
+    it("calls the correct URL with PUT method and invoice body", async () => {
+      mockFetchData.mockResolvedValue([{ data: { invoice: {} } }, null]);
+
+      await submitGranteeInvoice("grant-1", invoice);
+      expect(mockFetchData).toHaveBeenCalledWith(
+        "/v2/grants/grant-1/invoice",
+        "PUT",
+        invoice,
+        {},
+        {},
+        true,
+        false
+      );
+    });
+
+    it("throws on fetch error", async () => {
+      mockFetchData.mockResolvedValue([null, "Unauthorized"]);
+      await expect(submitGranteeInvoice("grant-1", invoice)).rejects.toThrow(
+        /Failed to submit invoice/
+      );
+    });
+
+    it("throws when data is null", async () => {
+      mockFetchData.mockResolvedValue([null, null]);
+      await expect(submitGranteeInvoice("grant-1", invoice)).rejects.toThrow(
+        /Failed to submit invoice/
+      );
+    });
+  });
+
+  // =========================================================================
+  // getGrantInvoiceDownloadUrl
+  // =========================================================================
+
+  describe("getGrantInvoiceDownloadUrl", () => {
+    it("returns the download URL", async () => {
+      mockFetchData.mockResolvedValue([
+        { data: { downloadUrl: "https://s3.example.com/signed-url" } },
+        null,
+      ]);
+
+      const result = await getGrantInvoiceDownloadUrl("grant-1", "invoices/file.pdf");
+      expect(result).toBe("https://s3.example.com/signed-url");
+    });
+
+    it("calls the correct URL with grant UID and encoded file key", async () => {
+      mockFetchData.mockResolvedValue([{ data: { downloadUrl: "https://example.com" } }, null]);
+
+      await getGrantInvoiceDownloadUrl("grant-1", "path/with spaces.pdf");
+      expect(mockFetchData).toHaveBeenCalledWith(
+        "/v2/grants/grant-1/invoice/download?key=path%2Fwith%20spaces.pdf",
+        "GET",
+        {},
+        {},
+        {},
+        true,
+        false
+      );
+    });
+
+    it("throws when downloadUrl is missing from response", async () => {
+      mockFetchData.mockResolvedValue([{}, null]);
+      await expect(getGrantInvoiceDownloadUrl("grant-1", "key")).rejects.toThrow(
+        /Failed to get download URL/
+      );
+    });
+
+    it("throws on fetch error", async () => {
+      mockFetchData.mockResolvedValue([null, "Forbidden"]);
+      await expect(getGrantInvoiceDownloadUrl("grant-1", "key")).rejects.toThrow(
+        /Failed to get download URL/
       );
     });
   });

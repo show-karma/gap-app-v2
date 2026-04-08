@@ -29,6 +29,7 @@ const mockService = donationsService as vi.Mocked<typeof donationsService>;
 // Helpers
 // ---------------------------------------------------------------------------
 
+// Fresh QueryClient per render — no afterEach cleanup required
 function createQueryClient(): QueryClient {
   return new QueryClient({
     defaultOptions: {

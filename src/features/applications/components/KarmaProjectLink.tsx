@@ -23,7 +23,7 @@ export const KarmaProjectLink: React.FC<KarmaProjectLinkProps> = ({ uid }) => {
 
   return (
     <a
-      href={`https://gap.karmahq.xyz/project/${uid}`}
+      href={`https://www.karmahq.xyz/project/${uid}`}
       target="_blank"
       rel="noopener noreferrer"
       className="inline-flex items-center gap-1 text-primary hover:underline"

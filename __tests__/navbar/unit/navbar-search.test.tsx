@@ -151,6 +151,9 @@ describe("NavbarSearch", () => {
     });
   });
 
+  // NOTE: This section uses fireEvent.change for debounce testing.
+  // userEvent.type fires onChange per-character, which breaks debounce timer assertions.
+  // fireEvent.change sets the full value in one event, enabling precise timer control.
   describe("Debouncing Tests", () => {
     beforeEach(() => {
       vi.useFakeTimers({ shouldAdvanceTime: true });
@@ -689,6 +692,9 @@ describe("NavbarSearch", () => {
     });
   });
 
+  // NOTE: Results interaction tests use fireEvent.change for debounce testing
+  // and fireEvent.click/.focus/.mouseDown for consistency within fake-timer context.
+  // fireEvent required: debounce test needs single-event value change
   describe("Results Interaction Tests", () => {
     beforeEach(() => {
       vi.useFakeTimers({ shouldAdvanceTime: true });

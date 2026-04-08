@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { AgentChatBubble } from "@/components/AgentChat/AgentChatBubble";
 import { useAgentChatStore } from "@/store/agentChat";
 
@@ -66,9 +67,6 @@ vi.mock("@/src/components/ai-elements/message", () => ({
   MessageContent: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="message-content">{children}</div>
   ),
-  MessageResponse: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="message-response">{children}</div>
-  ),
   MessageActions: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="message-actions">{children}</div>
   ),
@@ -84,6 +82,12 @@ vi.mock("@/src/components/ai-elements/message", () => ({
     <button data-testid="message-action" onClick={onClick} title={tooltip}>
       {children}
     </button>
+  ),
+}));
+
+vi.mock("@/src/components/ai-elements/message-response", () => ({
+  MessageResponse: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="message-response">{children}</div>
   ),
 }));
 
@@ -217,10 +221,10 @@ describe("AgentChatBubble", () => {
     });
   });
 
-  it("should not render when unauthenticated", () => {
+  it("should still render toggle when unauthenticated", () => {
     mockAuthenticated.mockReturnValue(false);
-    const { container } = render(<AgentChatBubble />);
-    expect(container.innerHTML).toBe("");
+    render(<AgentChatBubble />);
+    expect(screen.getByLabelText("Open chat")).toBeInTheDocument();
   });
 
   it("should render toggle button when authenticated", () => {
@@ -245,9 +249,10 @@ describe("AgentChatBubble", () => {
     expect(screen.getByTestId("conversation")).toBeInTheDocument();
   });
 
-  it("should toggle chat on button click", () => {
+  it("should toggle chat on button click", async () => {
+    const user = userEvent.setup();
     render(<AgentChatBubble />);
-    fireEvent.click(screen.getByLabelText("Open chat"));
+    await user.click(screen.getByLabelText("Open chat"));
     // After click, store.toggleOpen is called → isOpen becomes true
     expect(useAgentChatStore.getState().isOpen).toBe(true);
   });
@@ -308,7 +313,7 @@ describe("AgentChatBubble", () => {
       ],
     });
     render(<AgentChatBubble />);
-    expect(screen.getByTestId("message-actions")).toBeInTheDocument();
+    expect(screen.getByTitle("Copy")).toBeInTheDocument();
   });
 
   it("should not render copy action for streaming messages", () => {
@@ -369,14 +374,18 @@ describe("AgentChatBubble", () => {
     expect(screen.getByTestId("confirmation-card")).toBeInTheDocument();
   });
 
-  it("should call sendMessage when submitting text", () => {
+  it("should call sendMessage when submitting text", async () => {
+    const user = userEvent.setup();
     useAgentChatStore.setState({ isOpen: true });
     render(<AgentChatBubble />);
 
     const textarea = screen.getByTestId("prompt-textarea");
-    fireEvent.change(textarea, { target: { value: "Test message" } });
+    await user.clear(textarea);
+
+    await user.type(textarea, "Test message");
 
     const form = screen.getByTestId("prompt-input");
+    // fireEvent required: no userEvent equivalent for submit events
     fireEvent.submit(form);
 
     expect(mockSendMessage).toHaveBeenCalledWith("Test message");
@@ -387,6 +396,7 @@ describe("AgentChatBubble", () => {
     render(<AgentChatBubble />);
 
     const form = screen.getByTestId("prompt-input");
+    // fireEvent required: no userEvent equivalent for submit events
     fireEvent.submit(form);
 
     expect(mockSendMessage).not.toHaveBeenCalled();
@@ -398,11 +408,12 @@ describe("AgentChatBubble", () => {
     expect(screen.getByTestId("stop-button")).toBeInTheDocument();
   });
 
-  it("should call abort when stop button clicked", () => {
+  it("should call abort when stop button clicked", async () => {
+    const user = userEvent.setup();
     useAgentChatStore.setState({ isOpen: true, isStreaming: true });
     render(<AgentChatBubble />);
 
-    fireEvent.click(screen.getByTestId("stop-button"));
+    await user.click(screen.getByTestId("stop-button"));
     expect(mockAbort).toHaveBeenCalled();
   });
 
@@ -433,14 +444,15 @@ describe("AgentChatBubble", () => {
     expect(screen.getByText("Application")).toBeInTheDocument();
   });
 
-  it("should clear messages when Clear button clicked", () => {
+  it("should clear messages when Clear button clicked", async () => {
+    const user = userEvent.setup();
     useAgentChatStore.setState({
       isOpen: true,
       messages: [{ id: "1", role: "user", content: "Hello", timestamp: Date.now() }],
     });
     render(<AgentChatBubble />);
 
-    fireEvent.click(screen.getByTitle("Clear chat"));
+    await user.click(screen.getByTitle("Clear chat"));
     expect(useAgentChatStore.getState().messages).toHaveLength(0);
   });
 
@@ -450,7 +462,8 @@ describe("AgentChatBubble", () => {
     expect(screen.getByTestId("scroll-button")).toBeInTheDocument();
   });
 
-  it("should call sendConfirmation when approving a preview", () => {
+  it("should call sendConfirmation when approving a preview", async () => {
+    const user = userEvent.setup();
     useAgentChatStore.setState({
       isOpen: true,
       messages: [
@@ -470,11 +483,12 @@ describe("AgentChatBubble", () => {
     });
     render(<AgentChatBubble />);
 
-    fireEvent.click(screen.getByTestId("confirm-approve"));
+    await user.click(screen.getByTestId("confirm-approve"));
     expect(mockSendConfirmation).toHaveBeenCalledWith("msg-1", "preview_update_project", true);
   });
 
-  it("should call sendConfirmation when denying a preview", () => {
+  it("should call sendConfirmation when denying a preview", async () => {
+    const user = userEvent.setup();
     useAgentChatStore.setState({
       isOpen: true,
       messages: [
@@ -494,7 +508,7 @@ describe("AgentChatBubble", () => {
     });
     render(<AgentChatBubble />);
 
-    fireEvent.click(screen.getByTestId("confirm-deny"));
+    await user.click(screen.getByTestId("confirm-deny"));
     expect(mockSendConfirmation).toHaveBeenCalledWith("msg-1", "preview_update_project", false);
   });
 });

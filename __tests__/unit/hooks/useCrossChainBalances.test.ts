@@ -102,6 +102,10 @@ describe("useCrossChainBalances", () => {
     });
   });
 
+  afterEach(() => {
+    queryClient.clear();
+  });
+
   describe("initialization", () => {
     it("should not fetch when wallet not connected", () => {
       (wagmi.useAccount as vi.Mock).mockReturnValue({

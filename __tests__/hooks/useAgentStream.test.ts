@@ -5,10 +5,10 @@
  * does not support ReadableStream bodies needed for SSE stream parsing.
  */
 
+import * as Sentry from "@sentry/nextjs";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook } from "@testing-library/react";
 import React from "react";
-import { server } from "@/__tests__/utils/msw/setup";
 import { useAgentStream } from "@/hooks/useAgentStream";
 import { useAgentChatStore } from "@/store/agentChat";
 
@@ -149,16 +149,11 @@ function createWrapper() {
 
 describe("useAgentStream", () => {
   beforeAll(() => {
-    // Close MSW to prevent it from intercepting our direct fetch mocks.
-    // MSW's Response polyfill doesn't support ReadableStream bodies in jsdom.
-    server.close();
     savedFetch = globalThis.fetch;
   });
 
   afterAll(() => {
-    // Restore and restart MSW for other test files in the same worker
     globalThis.fetch = savedFetch;
-    server.listen({ onUnhandledRequest: "warn" });
   });
 
   let wrapper: ReturnType<typeof createWrapper>;
@@ -169,7 +164,7 @@ describe("useAgentStream", () => {
     mockGetToken.mockResolvedValue("mock-token-123");
     wrapper = createWrapper();
 
-    // Reset store state
+    // Reset store state — queryClient cleanup is in afterEach
     useAgentChatStore.setState({
       messages: [],
       isOpen: false,
@@ -177,6 +172,10 @@ describe("useAgentStream", () => {
       error: null,
       agentContext: null,
     });
+  });
+
+  afterEach(() => {
+    testQueryClient.clear();
   });
 
   describe("sendMessage", () => {
@@ -293,7 +292,7 @@ describe("useAgentStream", () => {
       expect(useAgentChatStore.getState().isStreaming).toBe(false);
     });
 
-    it("should handle HTTP error response", async () => {
+    it("should handle HTTP error response with user-friendly message", async () => {
       mockFetch.mockResolvedValue(createErrorResponse(500, "Internal Server Error"));
 
       const { result } = renderHook(() => useAgentStream(), { wrapper });
@@ -302,7 +301,9 @@ describe("useAgentStream", () => {
         await result.current.sendMessage("Test");
       });
 
-      expect(useAgentChatStore.getState().error).toBe("Internal Server Error");
+      expect(useAgentChatStore.getState().error).toBe(
+        "Something went wrong on my end. Please try again."
+      );
     });
 
     it("should parse JSON error responses and extract message field", async () => {
@@ -364,7 +365,7 @@ describe("useAgentStream", () => {
       );
     });
 
-    it("should fall back to plain text for non-JSON error responses", async () => {
+    it("should show user-friendly message for 5xx plain text errors", async () => {
       mockFetch.mockResolvedValue(createErrorResponse(502, "Bad Gateway"));
 
       const { result } = renderHook(() => useAgentStream(), { wrapper });
@@ -373,10 +374,12 @@ describe("useAgentStream", () => {
         await result.current.sendMessage("Test");
       });
 
-      expect(useAgentChatStore.getState().error).toBe("Bad Gateway");
+      expect(useAgentChatStore.getState().error).toBe(
+        "Something went wrong on my end. Please try again."
+      );
     });
 
-    it("should fall back to HTTP status for empty error responses", async () => {
+    it("should show user-friendly message for empty error responses", async () => {
       mockFetch.mockResolvedValue(createErrorResponse(500, ""));
 
       const { result } = renderHook(() => useAgentStream(), { wrapper });
@@ -385,7 +388,75 @@ describe("useAgentStream", () => {
         await result.current.sendMessage("Test");
       });
 
-      expect(useAgentChatStore.getState().error).toBe("HTTP 500");
+      expect(useAgentChatStore.getState().error).toBe(
+        "Something went wrong on my end. Please try again."
+      );
+    });
+
+    it("should capture HTTP errors in Sentry", async () => {
+      mockFetch.mockResolvedValue(createErrorResponse(500, "Internal Server Error"));
+
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
+
+      await act(async () => {
+        await result.current.sendMessage("Test");
+      });
+
+      expect(Sentry.captureException).toHaveBeenCalledWith(
+        expect.objectContaining({ message: "Agent stream error: HTTP 500" }),
+        expect.objectContaining({
+          extra: expect.objectContaining({ status: 500 }),
+        })
+      );
+    });
+
+    it("should show rate limit message for 429 errors", async () => {
+      mockFetch.mockResolvedValue(createErrorResponse(429, ""));
+
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
+
+      await act(async () => {
+        await result.current.sendMessage("Test");
+      });
+
+      expect(useAgentChatStore.getState().error).toBe(
+        "I'm getting a lot of requests right now. Please wait a moment and try again."
+      );
+    });
+
+    it("should show unavailable message for 503 errors", async () => {
+      mockFetch.mockResolvedValue(createErrorResponse(503, ""));
+
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
+
+      await act(async () => {
+        await result.current.sendMessage("Test");
+      });
+
+      expect(useAgentChatStore.getState().error).toBe(
+        "I'm temporarily unavailable. Please try again in a few minutes."
+      );
+    });
+
+    it("should use backend message for 403 errors when descriptive", async () => {
+      mockFetch.mockResolvedValue(
+        createErrorResponse(
+          403,
+          JSON.stringify({
+            message: "Daily agent usage budget exceeded. Please try again tomorrow.",
+          })
+        )
+      );
+
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
+
+      await act(async () => {
+        await result.current.sendMessage("Test");
+      });
+
+      expect(useAgentChatStore.getState().error).toBe(
+        "Daily agent usage budget exceeded. Please try again tomorrow."
+      );
     });
 
     it("should handle network failure", async () => {
