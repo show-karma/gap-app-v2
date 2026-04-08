@@ -1,6 +1,7 @@
 import { useQueries } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { getNativeTokenSymbol, NATIVE_TOKEN_ADDRESS, TOKEN_ADDRESSES } from "@/config/tokens";
+import { getNativeTokenSymbol, NATIVE_TOKEN_ADDRESS } from "@/config/tokens";
+import { getTokenByAddressAndChain } from "@/constants/supportedTokens";
 import { payoutDisbursementKeys } from "@/src/features/payout-disbursement/hooks/use-payout-disbursement";
 import * as payoutService from "@/src/features/payout-disbursement/services/payout-disbursement.service";
 import type { PayoutGrantConfig } from "@/src/features/payout-disbursement/types/payout-disbursement";
@@ -21,18 +22,17 @@ export function resolveTokenSymbol(
   const { tokenAddress, chainID } = config;
   if (!tokenAddress || !chainID) return undefined;
 
-  // 2. Check if it's a known USDC address
   const normalizedAddress = tokenAddress.toLowerCase();
-  const usdcEntries = Object.entries(TOKEN_ADDRESSES.usdc) as [string, string][];
-  for (const [, address] of usdcEntries) {
-    if (address.toLowerCase() === normalizedAddress) {
-      return "USDC";
-    }
-  }
 
-  // 3. Check if it's the native token sentinel address
+  // 2. Check if it's the native token sentinel address
   if (normalizedAddress === NATIVE_TOKEN_ADDRESS.toLowerCase()) {
     return getNativeTokenSymbol(chainID);
+  }
+
+  // 3. Fall back to the canonical supported-token registry (covers USDC and all other ERC-20s)
+  const token = getTokenByAddressAndChain(normalizedAddress, chainID);
+  if (token) {
+    return token.symbol;
   }
 
   return undefined;
@@ -83,9 +83,9 @@ export function buildGrantAllocationTotalMap(
     const grantCurrency = currencyByGrant?.get(config.grantUID);
     const tokenSymbol = resolveTokenSymbol(config, grantCurrency);
 
-    // Group totals by token to handle mixed-currency allocations
-    const totalsByToken = new Map<string, number>();
-    const TOKEN_KEY_NONE = "__none__";
+    // Group totals by resolved currency to handle mixed-currency allocations
+    const totalsByCurrency = new Map<string, number>();
+    const CURRENCY_KEY_NONE = "__none__";
 
     for (const allocation of config.milestoneAllocations ?? []) {
       if (allocation.amount) {
@@ -93,40 +93,42 @@ export function buildGrantAllocationTotalMap(
         const numericStr = parts[0].replace(/[$,]/g, "");
         const numericValue = Number(numericStr);
         if (!Number.isNaN(numericValue)) {
-          // Use embedded token suffix if present, otherwise use a sentinel key
-          const embeddedToken = parts.length > 1 ? parts.slice(1).join(" ") : TOKEN_KEY_NONE;
-          totalsByToken.set(embeddedToken, (totalsByToken.get(embeddedToken) || 0) + numericValue);
+          // Resolve to final currency: embedded suffix > resolved token symbol > sentinel
+          const embeddedToken = parts.length > 1 ? parts.slice(1).join(" ") : undefined;
+          const currencyKey = embeddedToken ?? tokenSymbol ?? CURRENCY_KEY_NONE;
+          totalsByCurrency.set(
+            currencyKey,
+            (totalsByCurrency.get(currencyKey) || 0) + numericValue
+          );
         }
       }
     }
 
     // Build the formatted total string
-    if (totalsByToken.size === 0) continue;
+    if (totalsByCurrency.size === 0) continue;
 
-    // If all allocations use the same token (or none have embedded tokens), format simply
-    if (totalsByToken.size === 1) {
-      const [embeddedToken, total] = [...totalsByToken.entries()][0];
+    if (totalsByCurrency.size === 1) {
+      const [currencyKey, total] = [...totalsByCurrency.entries()][0];
       if (total <= 0) continue;
 
-      // Use embedded token if present, otherwise fall back to resolved token symbol
-      const currency = embeddedToken !== TOKEN_KEY_NONE ? embeddedToken : tokenSymbol;
+      const currency = currencyKey !== CURRENCY_KEY_NONE ? currencyKey : undefined;
       const formatted = formatMilestoneAmount(String(total), currency);
       if (formatted) {
         map.set(config.grantUID, formatted);
       }
     } else {
-      // Mixed currencies: format each token's total and join them
-      const parts: string[] = [];
-      for (const [embeddedToken, total] of totalsByToken) {
+      // Mixed currencies: format each currency's total and join them
+      const formattedParts: string[] = [];
+      for (const [currencyKey, total] of totalsByCurrency) {
         if (total <= 0) continue;
-        const currency = embeddedToken !== TOKEN_KEY_NONE ? embeddedToken : tokenSymbol;
+        const currency = currencyKey !== CURRENCY_KEY_NONE ? currencyKey : undefined;
         const formatted = formatMilestoneAmount(String(total), currency);
         if (formatted) {
-          parts.push(formatted);
+          formattedParts.push(formatted);
         }
       }
-      if (parts.length > 0) {
-        map.set(config.grantUID, parts.join(" + "));
+      if (formattedParts.length > 0) {
+        map.set(config.grantUID, formattedParts.join(" + "));
       }
     }
   }
@@ -151,6 +153,8 @@ export function useMilestoneAllocationsByGrants(
   });
 
   const isLoading = queries.some((q) => q.isLoading);
+  const isError = queries.some((q) => q.isError);
+  const error = queries.find((q) => q.error)?.error ?? null;
 
   const dataKey = useMemo(() => queries.map((q) => q.dataUpdatedAt).join(","), [queries]);
 
@@ -170,7 +174,7 @@ export function useMilestoneAllocationsByGrants(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dataKey, currencyByGrant]);
 
-  return { allocationMap, grantTotalMap, isLoading };
+  return { allocationMap, grantTotalMap, isLoading, isError, error };
 }
 
 /**
@@ -207,6 +211,8 @@ export function useCommunityMilestoneAllocations(milestones: CommunityMilestoneU
   });
 
   const isLoading = queries.some((q) => q.isLoading);
+  const isError = queries.some((q) => q.isError);
+  const error = queries.find((q) => q.error)?.error ?? null;
 
   const dataKey = useMemo(() => queries.map((q) => q.dataUpdatedAt).join(","), [queries]);
 
@@ -218,5 +224,5 @@ export function useCommunityMilestoneAllocations(milestones: CommunityMilestoneU
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dataKey, currencyByGrant]);
 
-  return { allocationMap, isLoading };
+  return { allocationMap, isLoading, isError, error };
 }

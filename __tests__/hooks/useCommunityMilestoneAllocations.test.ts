@@ -351,6 +351,24 @@ describe("buildGrantAllocationTotalMap", () => {
     expect(result.get("grant-1")).toBe("10,000 OP + 5,000 USDC");
   });
 
+  it("should_merge_suffixed_and_bare_amounts_when_same_resolved_currency", () => {
+    const configs: (PayoutGrantConfig | null | undefined)[] = [
+      {
+        grantUID: "grant-1",
+        milestoneAllocations: [
+          { id: "a1", milestoneUID: "ms-1", label: "M1", amount: "100 USDC" },
+          { id: "a2", milestoneUID: "ms-2", label: "M2", amount: "200" },
+        ],
+      } as PayoutGrantConfig,
+    ];
+    const currencyByGrant = new Map([["grant-1", "USDC"]]);
+
+    const result = buildGrantAllocationTotalMap(configs, currencyByGrant);
+
+    // Both should merge into one USDC total, not "100 USDC + 200 USDC"
+    expect(result.get("grant-1")).toBe("300 USDC");
+  });
+
   it("should_handle_multiple_grants", () => {
     const configs: (PayoutGrantConfig | null | undefined)[] = [
       {
