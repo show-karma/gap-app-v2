@@ -52,13 +52,29 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
   const { refetch: refetchGrants } = useProjectGrants(projectUid);
 
   const invalidateAllProjectQueries = async () => {
-    // refetchGrants invalidates by UID; also invalidate by slug
-    // so the Updates tab (which uses slug from URL) gets fresh data
+    const invalidations: Promise<void>[] = [];
+
     if (projectSlug) {
-      await queryClient.invalidateQueries({
-        predicate: createProjectQueryPredicate(projectSlug),
-      });
+      invalidations.push(
+        queryClient.invalidateQueries({
+          predicate: createProjectQueryPredicate(projectSlug),
+        })
+      );
     }
+
+    if (options?.programId) {
+      invalidations.push(
+        queryClient.invalidateQueries({
+          predicate: (query) => {
+            const key = query.queryKey[0];
+            return key === "reportMilestones" ||
+              key === "pendingVerificationMilestones";
+          },
+        })
+      );
+    }
+
+    await Promise.all(invalidations);
   };
 
   const { setupChainAndWallet } = useSetupChainAndWallet();
