@@ -38,7 +38,7 @@ function loadScriptEnv() {
 
 loadScriptEnv();
 
-const SITE_URL = "https://karmahq.xyz";
+const SITE_URL = "https://www.karmahq.xyz";
 const SITEMAP_URL = `${SITE_URL}/sitemap.xml`;
 const PROJECT_NAME = "Karma";
 const API_DOCS_URL = "https://gapapi.karmahq.xyz/v2/docs";
