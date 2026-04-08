@@ -21,7 +21,7 @@ import { useWallet } from "./useWallet";
 import { useProjectGrants } from "./v2/useProjectGrants";
 
 export type MilestoneEditData = Partial<
-  Pick<IMilestone, "title" | "description" | "endsAt" | "startsAt" | "priority">
+  Pick<IMilestone, "title" | "description" | "endsAt" | "priority">
 >;
 
 interface UseMilestoneEditOptions {

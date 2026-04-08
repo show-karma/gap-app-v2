@@ -22,7 +22,6 @@ export function toEditableUnifiedMilestone(
     endsAt: milestone.dueDate
       ? Math.floor(new Date(milestone.dueDate).getTime() / 1000)
       : undefined,
-    startsAt: milestone.startsAt,
     priority: milestone.priority,
     verified: [],
   };
@@ -34,7 +33,6 @@ export function toEditableUnifiedMilestone(
     description: milestone.description,
     completed: false,
     createdAt: "",
-    startsAt: milestone.startsAt,
     endsAt: grantMilestone.endsAt,
     chainID,
     refUID: grantUID,
