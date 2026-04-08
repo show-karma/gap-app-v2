@@ -130,18 +130,23 @@ export function useControlCenterData(
   // ─── Derived table data ─────────────────────────────────────────────────
 
   const tableData: TableRow[] = useMemo(() => {
-    return payouts.map((payout) => ({
-      grantUid: payout.grant.uid,
-      projectUid: payout.project.uid,
-      projectName: payout.project.title,
-      projectSlug: payout.project.slug,
-      grantName: payout.grant.title,
-      grantProgramId: payout.grant.programId || "",
-      grantChainId: payout.grant.chainID,
-      projectChainId: payout.project.chainID,
-      currentPayoutAddress: payout.project.adminPayoutAddress || "",
-      currentAmount: payout.grant.adminPayoutAmount || payout.grant.payoutAmount || "",
-    }));
+    const seen = new Set<string>();
+    return payouts.flatMap((payout) => {
+      if (seen.has(payout.grant.uid)) return [];
+      seen.add(payout.grant.uid);
+      return [{
+        grantUid: payout.grant.uid,
+        projectUid: payout.project.uid,
+        projectName: payout.project.title,
+        projectSlug: payout.project.slug,
+        grantName: payout.grant.title,
+        grantProgramId: payout.grant.programId || "",
+        grantChainId: payout.grant.chainID,
+        projectChainId: payout.project.chainID,
+        currentPayoutAddress: payout.project.adminPayoutAddress || "",
+        currentAmount: payout.grant.adminPayoutAmount || payout.grant.payoutAmount || "",
+      }];
+    });
   }, [payouts]);
 
   // Consolidated maps from payouts response (single pass)
