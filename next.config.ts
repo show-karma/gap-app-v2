@@ -143,6 +143,12 @@ const nextConfig: NextConfig = {
         destination: "/community/:communityId/manage/:path*",
         permanent: true,
       },
+      // Redirect /grants to /funding-opportunities (common alias)
+      {
+        source: "/community/:communityId/grants",
+        destination: "/community/:communityId/funding-opportunities",
+        permanent: true,
+      },
       // Redirect old project update routes
       {
         source: "/project/:projectId/update",

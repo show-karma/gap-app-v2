@@ -50,6 +50,8 @@
     "**/__tests__/**/*",
     "**/__mocks__/**/*",
     "tests/**/*",
-    "e2e/**/*"
+    "e2e/**/*",
+    "widget/vite.config.ts",
+    "widget/tailwind.config.ts"
   ]
 }

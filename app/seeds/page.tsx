@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     title: "Karma Seeds - Accept Support Without a Token",
     description:
       "Raise funds from your community at $1 per seed. No token economics, no speculation—just transparent funding that goes to your treasury.",
-    url: "https://gap.karmahq.xyz/seeds",
+    url: "https://www.karmahq.xyz/seeds",
     images: [
       {
         url: "/og/seeds.png",

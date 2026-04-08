@@ -116,7 +116,7 @@ Grant programs in the crypto ecosystem lack a standardized method for grantees t
 
 ##### Solution
 
-To address the aforementioned problems, we built [GAP](https://gap.karmahq.xyz/) (Grantee Accountability Protocol) where grant teams can post information about the grant and grantees can post milestones and progress updates onchain. This solves a number of problems explained below
+To address the aforementioned problems, we built [GAP](https://www.karmahq.xyz/) (Grantee Accountability Protocol) where grant teams can post information about the grant and grantees can post milestones and progress updates onchain. This solves a number of problems explained below
 
 **Onchain Reporting**: Grantees will utilize the protocol to self-report their progress and milestones directly on the blockchain through [EAS](https://attest.org/) (Ethereum Attestation Service). Leveraging the existing support for EAS schemas, we defined schemas tailored to various reporting needs.
 
@@ -848,7 +848,7 @@ Karma has been integrated into following platforms:
 
 - [Gitcoin](https://grants.gitcoin.co/) \- Milestones and updates posted on Karma by grantees funded by any communities who run their rounds on Gitcoin Grants Stack are displayed in Gitcoin's platform.
 
-- [Ecosystem.vision](https://ecosystem.vision/) \- All the grants related data such as [Grant Programs](https://gap.karmahq.xyz/funding-map) and project grants on Karma are shown on Ecosystem's platform.
+- [Ecosystem.vision](https://ecosystem.vision/) \- All the grants related data such as [Grant Programs](https://www.karmahq.xyz/funding-map) and project grants on Karma are shown on Ecosystem's platform.
 
 #### Celo - Proof of Ship
 
@@ -864,7 +864,7 @@ Before creating a project profile, ensure you have:
 
 ###### Step 1: Add your project profile
 
-Add your project to Celo [Proof of Ship Program](https://gap.karmahq.xyz/community/celo) on [Karma](https://www.karmahq.xyz/). You can follow the instructions [here](https://docs.gap.karmahq.xyz/how-to-guides/for-builders/create-project). This is your onchain project profile you create one time and can use it to apply for future rounds. You can also point anyone to learn about your project, receive endorsements and donations.
+Add your project to Celo [Proof of Ship Program](https://www.karmahq.xyz/community/celo) on [Karma](https://www.karmahq.xyz/). You can follow the instructions [here](https://docs.gap.karmahq.xyz/how-to-guides/for-builders/create-project). This is your onchain project profile you create one time and can use it to apply for future rounds. You can also point anyone to learn about your project, receive endorsements and donations.
 
 **If you participated in a previous season, you might already have a project profile. You can skip to Step 2. Contact our team if you have trouble accessing your profile here:** [**https://t.me/karmahq** ](https://t.me/karmahq)
 
@@ -918,7 +918,7 @@ The Proof of Impact campaign, powered by CeloPG, rewards builders based on the g
 
 ###### Step 1: Add your project profile
 
-Add your project to Celo [Proof of Impact Program](https://gap.karmahq.xyz/community/celopg?programId=918_42161) on [Karma](https://www.karmahq.xyz/). You can follow the instructions [here](https://docs.gap.karmahq.xyz/how-to-guides/for-builders/create-project). This is your onchain project profile you create one time and can use it to apply for future rounds. You can also point anyone to learn about your project, receive endorsements and donations.
+Add your project to Celo [Proof of Impact Program](https://www.karmahq.xyz/community/celopg?programId=918_42161) on [Karma](https://www.karmahq.xyz/). You can follow the instructions [here](https://docs.gap.karmahq.xyz/how-to-guides/for-builders/create-project). This is your onchain project profile you create one time and can use it to apply for future rounds. You can also point anyone to learn about your project, receive endorsements and donations.
 
 **If you participated in a previous season, you might already have a project profile. You can skip to Step 2. Contact our team if you have trouble accessing your profile here:** [**https://t.me/karmahq** ](https://t.me/karmahq)
 
@@ -1164,7 +1164,7 @@ We're excited to support your work on Filecoin. Good luck with your milestones!
 
 #### Gitcoin
 
-[Gitcoin](https://grants.gitcoin.co/) **has integrated Karma into their application.** Project milestones added in Karma will now be automatically displayed on the corresponding project pages in Gitcoin. For example, here is a project on [Karma](https://gap.karmahq.xyz/project/karma---gap/grants/0xe7390a6f68ff70e0f7cda461079f92dad0150003e7ec541c7fb9e55e912211c0/milestones-and-updates) with milestones that are also visible in [Gitcoin](https://explorer.gitcoin.co/#/round/42161/608/117), ensuring seamless updates and visibility in both platforms.
+[Gitcoin](https://grants.gitcoin.co/) **has integrated Karma into their application.** Project milestones added in Karma will now be automatically displayed on the corresponding project pages in Gitcoin. For example, here is a project on [Karma](https://www.karmahq.xyz/project/karma---gap/funding/0xe7390a6f68ff70e0f7cda461079f92dad0150003e7ec541c7fb9e55e912211c0/milestones-and-updates) with milestones that are also visible in [Gitcoin](https://explorer.gitcoin.co/#/round/42161/608/117), ensuring seamless updates and visibility in both platforms.
 
 #### Global Stablecoin Hackathon
 
@@ -1172,7 +1172,7 @@ We're excited to support your work on Filecoin. Good luck with your milestones!
 
 ###### Step 1: Add your project profile
 
-Add your project to [Global Stablecoin Hackathon](https://gap.karmahq.xyz/community/celo?programId=889_42161) on [Karma](https://www.karmahq.xyz/). You can follow the instructions [here](https://docs.gap.karmahq.xyz/how-to-guides/for-builders/create-project). This is your onchain project profile you create one time and can use it to apply for future rounds. You can also point anyone to learn about your project, receive endorsements and donations.
+Add your project to [Global Stablecoin Hackathon](https://www.karmahq.xyz/community/celo?programId=889_42161) on [Karma](https://www.karmahq.xyz/). You can follow the instructions [here](https://docs.gap.karmahq.xyz/how-to-guides/for-builders/create-project). This is your onchain project profile you create one time and can use it to apply for future rounds. You can also point anyone to learn about your project, receive endorsements and donations.
 
 **If you participated in any of the Celo's past funding programs, you might already have a project profile. You can skip to Step 2. Contact our team if you have trouble accessing your profile here:** [**https://t.me/karmahq** ](https://t.me/karmahq)
 
@@ -1216,7 +1216,7 @@ As you complete your work, submit milestones and mark them as complete.
 
 #### Octant
 
-[**Octant** ](https://octant.app/projects) **has integrated Karma into their application.** Project milestones added in Karma will now be automatically displayed on the corresponding project pages in Octant. For example, here is a project on [Karma](https://gap.karmahq.xyz/project/-buidlguidl/grants/0x674ed25e9616b5c4237c6295b87f32cca42e74e7cc087e071a9c80c4e279fe91/milestones-and-updates) with milestones that are also visible in [Octant](https://octant.app/project/5/0x00080706a7D99CBC163D52dcF435205B1aD940D1), ensuring seamless updates and visibility in both platforms.
+[**Octant** ](https://octant.app/projects) **has integrated Karma into their application.** Project milestones added in Karma will now be automatically displayed on the corresponding project pages in Octant. For example, here is a project on [Karma](https://www.karmahq.xyz/project/-buidlguidl/funding/0x674ed25e9616b5c4237c6295b87f32cca42e74e7cc087e071a9c80c4e279fe91/milestones-and-updates) with milestones that are also visible in [Octant](https://octant.app/project/5/0x00080706a7D99CBC163D52dcF435205B1aD940D1), ensuring seamless updates and visibility in both platforms.
 
 **If you don't see your Epoch specific milestones in Octant, follow the steps below to link Karma grant to Octant's Epoch.**
 

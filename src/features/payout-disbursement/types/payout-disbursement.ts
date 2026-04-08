@@ -33,6 +33,12 @@ export interface PayoutDisbursement {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+  metadata?: {
+    notes?: string;
+    safeTransactionUrl?: string;
+    milestoneLabels?: Record<string, string>;
+    [key: string]: unknown;
+  } | null;
 }
 
 export interface GrantDisbursementRequest {
@@ -86,6 +92,8 @@ export interface RecordPaymentRequest {
   paymentDate: string;
   transactionHash?: string;
   notes?: string;
+  /** Human-readable labels for milestone UIDs in milestoneBreakdown */
+  milestoneLabels?: Record<string, string>;
 }
 
 export interface PaginationInfo {
