@@ -295,9 +295,8 @@ function DisbursementCard({ disbursement }: { disbursement: PayoutDisbursement }
       : null;
 
   const canCancel = disbursement.status === PayoutDisbursementStatus.PENDING;
-  const historicalTxHash = isHistorical && hasRealTransactionHash(disbursement)
-    ? disbursement.safeTransactionHash
-    : null;
+  const historicalTxHash =
+    isHistorical && hasRealTransactionHash(disbursement) ? disbursement.safeTransactionHash : null;
   const notes = disbursement.metadata?.notes;
   const milestoneLabels = disbursement.metadata?.milestoneLabels;
 
@@ -402,9 +401,7 @@ function DisbursementCard({ disbursement }: { disbursement: PayoutDisbursement }
         {disbursement.milestoneBreakdown &&
           Object.keys(disbursement.milestoneBreakdown).length > 0 && (
             <div className="mt-3 border-t border-gray-200 pt-3 dark:border-zinc-600">
-              <p className="mb-2 text-xs font-medium text-gray-700 dark:text-gray-300">
-                Breakdown
-              </p>
+              <p className="mb-2 text-xs font-medium text-gray-700 dark:text-gray-300">Breakdown</p>
               <div className="space-y-1">
                 {Object.entries(disbursement.milestoneBreakdown).map(([milestoneId, amount]) => (
                   <div key={milestoneId} className="flex justify-between text-xs">

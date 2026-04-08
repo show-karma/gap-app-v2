@@ -56,7 +56,8 @@ interface MilestoneOption {
 
 const MAX_LABEL_LENGTH = 42;
 
-const PAYMENT_KEYWORDS = /\b(first|final|initial|last|signing|completion|upfront|advance|closing)\b/i;
+const PAYMENT_KEYWORDS =
+  /\b(first|final|initial|last|signing|completion|upfront|advance|closing)\b/i;
 
 function classifyOption(label: string, milestoneUID: string | null): OptionCategory {
   if (milestoneUID) return "milestone";
@@ -265,7 +266,7 @@ function RecordPaymentDialogInner({
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent
         className="max-w-lg bg-white dark:bg-zinc-950"
-        style={{ left: '50vw', top: '50vh', width: '100vw' }}
+        style={{ left: "50vw", top: "50vh", width: "100vw" }}
       >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -342,11 +343,12 @@ function RecordPaymentDialogInner({
                             : option.label}
                         </span>
                         <div className="flex items-center gap-2 shrink-0">
-                          {option.allocatedAmount && !Number.isNaN(Number(option.allocatedAmount)) && (
-                            <span className="text-xs text-gray-500 dark:text-zinc-500 tabular-nums">
-                              ${Number(option.allocatedAmount).toLocaleString()}
-                            </span>
-                          )}
+                          {option.allocatedAmount &&
+                            !Number.isNaN(Number(option.allocatedAmount)) && (
+                              <span className="text-xs text-gray-500 dark:text-zinc-500 tabular-nums">
+                                ${Number(option.allocatedAmount).toLocaleString()}
+                              </span>
+                            )}
                           {option.isPaid && (
                             <span className="text-xs font-medium text-green-600 dark:text-green-400">
                               Paid

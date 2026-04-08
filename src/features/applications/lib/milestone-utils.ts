@@ -1,4 +1,10 @@
-export const MILESTONE_CORE_FIELDS = ["title", "description", "dueDate", "completed"];
+export const MILESTONE_CORE_FIELDS = [
+  "title",
+  "description",
+  "dueDate",
+  "completed",
+  "fundingRequested",
+];
 
 export const formatFieldLabel = (key: string): string => {
   return key

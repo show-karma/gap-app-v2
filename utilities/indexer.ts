@@ -344,6 +344,7 @@ export const INDEXER = {
       BY_COMMUNITY_PUBLIC: (communityUID: string) =>
         `/v2/payout-config/community/${communityUID}/public`,
       BY_GRANT: (grantUID: string) => `/v2/payout-config/grant/${grantUID}`,
+      BY_GRANT_PUBLIC: (grantUID: string) => `/v2/payout-config/grant/${grantUID}/public`,
       DELETE: (grantUID: string) => `/v2/payout-config/grant/${grantUID}`,
       UPDATE_LINE_ITEM: (grantUID: string, allocationId: string) =>
         `/v2/payout-config/grant/${grantUID}/line-items/${allocationId}`,

@@ -193,6 +193,7 @@ export function PublicControlCenter() {
       projectChainId: payout.project.chainID,
       currentPayoutAddress: payout.project.adminPayoutAddress || "",
       currentAmount: payout.grant.adminPayoutAmount || payout.grant.payoutAmount || "",
+      currency: payout.grant.currency || undefined,
     }));
   }, [payouts]);
 

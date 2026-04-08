@@ -46,8 +46,7 @@ export const PostApprovalTab: FC<PostApprovalTabProps> = ({
   }
 
   const dataToDisplay = submittedData ?? application.postApprovalData;
-  const hasData =
-    (hasExistingData || !!submittedData);
+  const hasData = hasExistingData || !!submittedData;
 
   // Show the form if owner has no data yet
   if (isOwner && !hasData) {

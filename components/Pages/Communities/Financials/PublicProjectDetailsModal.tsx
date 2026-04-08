@@ -360,7 +360,11 @@ export function PublicProjectDetailsModal({
                 <span className="text-[10px] tabular-nums text-gray-400 dark:text-zinc-500 whitespace-nowrap">
                   {remainingBalance.pct}% disbursed
                   {remainingBalance.remaining > 0 && (
-                    <> · {formatDisplayAmount(String(remainingBalance.remaining))} remaining</>
+                    <>
+                      {" "}
+                      · {formatDisplayAmount(String(remainingBalance.remaining))}
+                      {grant.currency ? ` ${grant.currency}` : ""} remaining
+                    </>
                   )}
                 </span>
               </div>

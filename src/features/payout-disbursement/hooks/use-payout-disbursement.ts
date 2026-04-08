@@ -482,6 +482,18 @@ export function usePayoutConfigByGrant(grantUID: string, options?: { enabled?: b
 }
 
 /**
+ * Hook for fetching payout config for a specific grant (public, no auth required)
+ */
+export function usePayoutConfigByGrantPublic(grantUID: string, options?: { enabled?: boolean }) {
+  return useQuery<PayoutGrantConfig | null, Error>({
+    queryKey: [...payoutDisbursementKeys.payoutConfigs.byGrant(grantUID), "public"] as const,
+    queryFn: () => payoutService.getPayoutConfigByGrantPublic(grantUID),
+    enabled: options?.enabled ?? !!grantUID,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+}
+
+/**
  * Hook for deleting a payout config
  */
 export function useDeletePayoutConfig(options?: {
