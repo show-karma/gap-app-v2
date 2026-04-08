@@ -83,22 +83,50 @@ export function buildGrantAllocationTotalMap(
     const grantCurrency = currencyByGrant?.get(config.grantUID);
     const tokenSymbol = resolveTokenSymbol(config, grantCurrency);
 
-    let total = 0;
+    // Group totals by token to handle mixed-currency allocations
+    const totalsByToken = new Map<string, number>();
+    const TOKEN_KEY_NONE = "__none__";
+
     for (const allocation of config.milestoneAllocations ?? []) {
       if (allocation.amount) {
         const parts = allocation.amount.trim().split(/\s+/);
         const numericStr = parts[0].replace(/[$,]/g, "");
         const numericValue = Number(numericStr);
         if (!Number.isNaN(numericValue)) {
-          total += numericValue;
+          // Use embedded token suffix if present, otherwise use a sentinel key
+          const embeddedToken = parts.length > 1 ? parts.slice(1).join(" ") : TOKEN_KEY_NONE;
+          totalsByToken.set(embeddedToken, (totalsByToken.get(embeddedToken) || 0) + numericValue);
         }
       }
     }
 
-    if (total > 0) {
-      const formatted = formatMilestoneAmount(String(total), tokenSymbol);
+    // Build the formatted total string
+    if (totalsByToken.size === 0) continue;
+
+    // If all allocations use the same token (or none have embedded tokens), format simply
+    if (totalsByToken.size === 1) {
+      const [embeddedToken, total] = [...totalsByToken.entries()][0];
+      if (total <= 0) continue;
+
+      // Use embedded token if present, otherwise fall back to resolved token symbol
+      const currency = embeddedToken !== TOKEN_KEY_NONE ? embeddedToken : tokenSymbol;
+      const formatted = formatMilestoneAmount(String(total), currency);
       if (formatted) {
         map.set(config.grantUID, formatted);
+      }
+    } else {
+      // Mixed currencies: format each token's total and join them
+      const parts: string[] = [];
+      for (const [embeddedToken, total] of totalsByToken) {
+        if (total <= 0) continue;
+        const currency = embeddedToken !== TOKEN_KEY_NONE ? embeddedToken : tokenSymbol;
+        const formatted = formatMilestoneAmount(String(total), currency);
+        if (formatted) {
+          parts.push(formatted);
+        }
+      }
+      if (parts.length > 0) {
+        map.set(config.grantUID, parts.join(" + "));
       }
     }
   }

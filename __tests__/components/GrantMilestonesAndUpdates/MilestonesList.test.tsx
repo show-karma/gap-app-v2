@@ -35,12 +35,20 @@ vi.mock(
   () => ({ GrantUpdate: () => null })
 );
 
+let currentQueryClient: QueryClient | null = null;
+
 function renderWithQueryClient(ui: React.ReactElement) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
+  currentQueryClient = queryClient;
   return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
 }
+
+afterEach(() => {
+  currentQueryClient?.clear();
+  currentQueryClient = null;
+});
 
 const baseGrant: Grant = {
   uid: "0xgrant123",

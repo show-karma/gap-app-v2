@@ -16,12 +16,21 @@ vi.mock("@/components/Utilities/MarkdownPreview", () => ({
   MarkdownPreview: ({ source }: { source: string }) => <span>{source}</span>,
 }));
 
+// Mock formatMilestoneTitle to return title as-is (tested separately)
+vi.mock("@/utilities/formatMilestoneTitle", () => ({
+  formatMilestoneTitle: (_index: number, title: string) => title,
+}));
+
 function renderWithQueryClient(ui: React.ReactElement) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
   return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
 }
+
+beforeEach(() => {
+  vi.clearAllMocks();
+});
 
 describe("MilestoneDisplay", () => {
   const milestones: MilestoneData[] = [

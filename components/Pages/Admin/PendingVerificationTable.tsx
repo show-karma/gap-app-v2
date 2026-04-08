@@ -162,13 +162,18 @@ export function PendingVerificationTable({
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    {allocationMap?.get(milestone.milestoneUid) ? (
-                      <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200">
-                        {allocationMap.get(milestone.milestoneUid)}
-                      </span>
-                    ) : (
-                      <span className="text-sm text-gray-400 dark:text-gray-500">—</span>
-                    )}
+                    {(() => {
+                      const amount =
+                        allocationMap?.get(milestone.milestoneUid) ??
+                        allocationMap?.get(milestone.milestoneUid.toLowerCase());
+                      return amount ? (
+                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200">
+                          {amount}
+                        </span>
+                      ) : (
+                        <span className="text-sm text-gray-400 dark:text-gray-500">—</span>
+                      );
+                    })()}
                   </td>
                   <td className="px-4 py-3">
                     {milestone.programId && (

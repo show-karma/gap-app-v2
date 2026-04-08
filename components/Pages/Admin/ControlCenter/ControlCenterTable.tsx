@@ -29,6 +29,7 @@ export interface TableRow {
   projectChainId: number;
   currentPayoutAddress?: string;
   currentAmount?: string;
+  currency?: string;
 }
 
 interface DisbursementMapEntry {

@@ -316,4 +316,45 @@ describe("PublicProjectDetailsModal", () => {
 
     expect(screen.queryByText("Invoice Status")).not.toBeInTheDocument();
   });
+
+  describe("currency display in allocation column", () => {
+    it("should_show_currency_after_allocation_amount_when_grant_has_currency", () => {
+      const invoice = makeInvoice({ milestoneUID: "ms-1", allocatedAmount: "30000" });
+
+      renderModal({
+        grant: makeGrant({ currency: "USDC" }),
+        milestoneInvoices: [invoice],
+      });
+
+      // The allocation amount should appear with the currency appended
+      expect(screen.getByText("USDC")).toBeInTheDocument();
+    });
+
+    it("should_show_allocation_amount_from_config_with_currency_when_invoice_has_no_allocatedAmount", () => {
+      const invoice = makeInvoice({ milestoneUID: "ms-1", allocatedAmount: null });
+
+      renderModal({
+        grant: makeGrant({ currency: "OP" }),
+        milestoneInvoices: [invoice],
+        milestoneAllocations: [
+          { id: "alloc-1", milestoneUID: "ms-1", label: "MS 1", amount: "50000" },
+        ],
+      });
+
+      expect(screen.getByText("OP")).toBeInTheDocument();
+    });
+
+    it("should_show_remaining_balance_with_currency_when_grant_has_currency", () => {
+      renderModal({
+        grant: makeGrant({ currentAmount: "10000", currency: "USDC" }),
+        disbursementInfo: {
+          totalsByToken: [{ token: "USDC", totalAmount: "5000000", tokenDecimals: 6 }],
+          status: "partial",
+          history: [],
+        },
+      });
+
+      expect(screen.getByText(/USDC remaining/)).toBeInTheDocument();
+    });
+  });
 });

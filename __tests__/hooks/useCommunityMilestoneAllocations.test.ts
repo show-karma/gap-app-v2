@@ -318,7 +318,7 @@ describe("buildGrantAllocationTotalMap", () => {
     expect(result.size).toBe(0);
   });
 
-  it("should_handle_token_suffixed_amounts", () => {
+  it("should_handle_token_suffixed_amounts_with_same_token", () => {
     const configs: (PayoutGrantConfig | null | undefined)[] = [
       {
         grantUID: "grant-1",
@@ -331,7 +331,24 @@ describe("buildGrantAllocationTotalMap", () => {
 
     const result = buildGrantAllocationTotalMap(configs);
 
-    expect(result.get("grant-1")).toBe("$15,000");
+    expect(result.get("grant-1")).toBe("15,000 OP");
+  });
+
+  it("should_show_mixed_when_allocations_have_different_embedded_tokens", () => {
+    const configs: (PayoutGrantConfig | null | undefined)[] = [
+      {
+        grantUID: "grant-1",
+        milestoneAllocations: [
+          { id: "a1", milestoneUID: "ms-1", label: "M1", amount: "10000 OP" },
+          { id: "a2", milestoneUID: "ms-2", label: "M2", amount: "5000 USDC" },
+        ],
+      } as PayoutGrantConfig,
+    ];
+
+    const result = buildGrantAllocationTotalMap(configs);
+
+    // Mixed currencies: should show each token's total separately
+    expect(result.get("grant-1")).toBe("10,000 OP + 5,000 USDC");
   });
 
   it("should_handle_multiple_grants", () => {

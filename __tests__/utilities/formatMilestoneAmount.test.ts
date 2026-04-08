@@ -48,6 +48,10 @@ describe("formatMilestoneAmount", () => {
       // Amount already has token embedded — currency param is ignored
       expect(formatMilestoneAmount("30000 OP", "USDC")).toBe("30,000 OP");
     });
+
+    it("should_return_null_when_suffixed_amount_is_zero", () => {
+      expect(formatMilestoneAmount("0 FIL")).toBeNull();
+    });
   });
 
   describe("pass-through amounts", () => {
