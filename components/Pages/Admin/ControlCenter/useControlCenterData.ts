@@ -129,8 +129,19 @@ export function useControlCenterData(
 
   // ─── Derived table data ─────────────────────────────────────────────────
 
+  // Deduplicate by grant.uid (keep first occurrence) so tableData and all
+  // derived maps reference the exact same payout record set.
+  const dedupedPayouts = useMemo(() => {
+    const seen = new Set<string>();
+    return payouts.filter((payout) => {
+      if (seen.has(payout.grant.uid)) return false;
+      seen.add(payout.grant.uid);
+      return true;
+    });
+  }, [payouts]);
+
   const tableData: TableRow[] = useMemo(() => {
-    return payouts.map((payout) => ({
+    return dedupedPayouts.map((payout) => ({
       grantUid: payout.grant.uid,
       projectUid: payout.project.uid,
       projectName: payout.project.title,
@@ -142,7 +153,7 @@ export function useControlCenterData(
       currentPayoutAddress: payout.project.adminPayoutAddress || "",
       currentAmount: payout.grant.adminPayoutAmount || payout.grant.payoutAmount || "",
     }));
-  }, [payouts]);
+  }, [dedupedPayouts]);
 
   // Consolidated maps from payouts response (single pass)
   const { disbursementMap, agreementMap, invoiceMap, paidMilestoneCountMap, invoiceRequiredMap } =
@@ -152,7 +163,7 @@ export function useControlCenterData(
       const iMap: Record<string, CommunityPayoutInvoiceInfo[]> = {};
       const pMap: Record<string, number> = {};
       const irMap: Record<string, boolean> = {};
-      for (const payout of payouts) {
+      for (const payout of dedupedPayouts) {
         dMap[payout.grant.uid] = {
           totalsByToken: payout.disbursements.totalsByToken || [],
           status: payout.disbursements.status,
@@ -170,7 +181,7 @@ export function useControlCenterData(
         paidMilestoneCountMap: pMap,
         invoiceRequiredMap: irMap,
       };
-    }, [payouts]);
+    }, [dedupedPayouts]);
 
   const hasInvoicePrograms = useMemo(
     () => Object.values(invoiceRequiredMap).some(Boolean),

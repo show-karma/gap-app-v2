@@ -162,15 +162,26 @@ export const MilestonesSection = memo(function MilestonesSection({
     label: string;
     milestoneUID: string | null;
   } | null>(null);
+  const [loadingFileKeys, setLoadingFileKeys] = useState<Set<string>>(new Set());
 
-  const handleViewFile = useCallback(async (fileKey: string) => {
-    try {
-      const downloadUrl = await getInvoiceDownloadUrl(fileKey);
-      window.open(downloadUrl, "_blank", "noopener,noreferrer");
-    } catch {
-      toast.error("Failed to get download link");
-    }
-  }, []);
+  const handleViewFile = useCallback(
+    async (fileKey: string) => {
+      setLoadingFileKeys((prev) => new Set(prev).add(fileKey));
+      try {
+        const downloadUrl = await getInvoiceDownloadUrl(grant.grantUid, fileKey);
+        window.open(downloadUrl, "_blank", "noopener,noreferrer");
+      } catch {
+        toast.error("Failed to get download link");
+      } finally {
+        setLoadingFileKeys((prev) => {
+          const next = new Set(prev);
+          next.delete(fileKey);
+          return next;
+        });
+      }
+    },
+    [grant.grantUid]
+  );
 
   const handleFileUploaded = useCallback(
     (_finalUrl: string, tempKey: string) => {
@@ -383,10 +394,18 @@ export const MilestonesSection = memo(function MilestonesSection({
                                 ) : (
                                   <button
                                     type="button"
-                                    className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                                    className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                     onClick={() => handleViewFile(invoice.invoiceFileKey!)}
+                                    disabled={loadingFileKeys.has(invoice.invoiceFileKey!)}
                                   >
-                                    <ArrowDownTrayIcon className="h-3 w-3" />
+                                    {loadingFileKeys.has(invoice.invoiceFileKey!) ? (
+                                      <svg className="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                      </svg>
+                                    ) : (
+                                      <ArrowDownTrayIcon className="h-3 w-3" />
+                                    )}
                                     View invoice
                                   </button>
                                 )}

@@ -360,7 +360,8 @@ export const INDEXER = {
       BATCH_SAVE: (grantUID: string) => `/v2/milestone-invoices/${grantUID}`,
       BY_GRANT: (grantUID: string) => `/v2/milestone-invoices/grant/${grantUID}`,
       PRESIGNED_URL: () => `/v2/milestone-invoices/presigned`,
-      DOWNLOAD: (key: string) => `/v2/milestone-invoices/download?key=${encodeURIComponent(key)}`,
+      DOWNLOAD: (grantUID: string, key: string) =>
+        `/v2/milestone-invoices/download?grantUID=${encodeURIComponent(grantUID)}&key=${encodeURIComponent(key)}`,
       GRANTEE_PRESIGNED: () => `/v2/milestone-invoices/grantee/presigned`,
       UPDATE_PAYMENT_STATUS: (grantUID: string) =>
         `/v2/milestone-invoices/${grantUID}/payment-status`,

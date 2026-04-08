@@ -702,10 +702,10 @@ export const saveMilestoneInvoices = async (
 /**
  * Get a temporary presigned download URL for an invoice file
  */
-export const getInvoiceDownloadUrl = async (fileKey: string): Promise<string> => {
+export const getInvoiceDownloadUrl = async (grantUID: string, fileKey: string): Promise<string> => {
   try {
     const [data, error] = await fetchData<{ downloadUrl: string }>(
-      INDEXER.V2.MILESTONE_INVOICES.DOWNLOAD(fileKey),
+      INDEXER.V2.MILESTONE_INVOICES.DOWNLOAD(grantUID, fileKey),
       "GET",
       {},
       {},
