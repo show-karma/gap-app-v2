@@ -131,9 +131,11 @@ export function ProgressCell({
             : "text-gray-600 dark:text-zinc-400"
       )}
     >
-      <div>
-        {received}/{total} invoices received
-      </div>
+      {invoiceRequired && (
+        <div>
+          {received}/{total} invoices received
+        </div>
+      )}
       <div>
         {completed}/{total} milestones completed
       </div>
