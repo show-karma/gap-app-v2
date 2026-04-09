@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import type { Hex } from "viem";
-import { useAccount, useChainId, useSwitchChain } from "wagmi";
+import { useAccount } from "wagmi";
 import type { SingleProjectDonateModalProps } from "@/components/Donation/SingleProject/types";
 import { getAllSupportedChains, type SupportedToken } from "@/constants/supportedTokens";
 import type { CreateDonationRequest } from "@/hooks/donation/types";
 import { useCreateDonation } from "@/hooks/donation/useCreateDonation";
 import { useCrossChainBalances } from "@/hooks/donation/useCrossChainBalances";
 import { useDonationTransfer } from "@/hooks/useDonationTransfer";
+import { useNetworkSwitching } from "@/hooks/useNetworkSwitching";
 import { getPayoutAddressForChain } from "@/src/features/chain-payout-address/hooks/use-chain-payout-address";
 import { DonationType, PaymentMethod } from "@/types/donations";
 import type { DonationPayment } from "@/utilities/donations/donationExecution";
@@ -18,8 +19,7 @@ export const useSingleProjectDonation = (
   initialAmount?: string
 ) => {
   const { address } = useAccount();
-  const currentChainId = useChainId();
-  const { switchChainAsync } = useSwitchChain();
+  const { currentChainId, switchToNetwork } = useNetworkSwitching();
   const { executeDonations, isExecuting } = useDonationTransfer();
   const { mutateAsync: createDonation } = useCreateDonation();
 
@@ -105,13 +105,15 @@ export const useSingleProjectDonation = (
     };
 
     try {
-      if (currentChainId !== selectedToken.chainId) {
-        await switchChainAsync({ chainId: selectedToken.chainId });
-      }
-
       const results = await executeDonations(
         [payment],
-        (_projectId, _chainId) => resolvedPayoutAddress
+        (_projectId, _chainId) => resolvedPayoutAddress,
+        async (paymentToSwitch) => {
+          // Always attempt the switch — wagmi's useChainId() can be stale
+          // relative to the actual wallet chain (e.g. after Privy connect).
+          // switchToNetwork is a no-op if already on the correct chain.
+          await switchToNetwork(paymentToSwitch.chainId);
+        }
       );
 
       const successfulResult = results.find(
@@ -135,7 +137,7 @@ export const useSingleProjectDonation = (
     project.uid,
     amount,
     currentChainId,
-    switchChainAsync,
+    switchToNetwork,
     executeDonations,
     resolvedPayoutAddress,
     saveDonation,

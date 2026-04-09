@@ -108,7 +108,11 @@ export function useNetworkSwitching() {
         throw new Error(`Chain ID ${targetChainId} is not supported`);
       }
 
-      if (chainId === targetChainId) {
+      // Check the actual wallet chain, not wagmi's potentially stale useChainId().
+      // After Privy connect, wagmi can report a different chain than the wallet.
+      const actualChainId = walletClient?.chain?.id ?? chainId;
+
+      if (actualChainId === targetChainId) {
         return; // Already on target network
       }
 
