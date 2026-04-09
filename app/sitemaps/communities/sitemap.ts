@@ -10,14 +10,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const identifier = community.slug || community.uid;
 
     const rootEntry: MetadataRoute.Sitemap[number] = {
-      url: `https://karmahq.xyz/community/${identifier}`,
+      url: `https://www.karmahq.xyz/community/${identifier}`,
       lastModified: now,
       changeFrequency: "daily",
       priority: 0.9,
     };
 
     const subPageEntries: MetadataRoute.Sitemap = communitySubPages.map((subPage) => ({
-      url: `https://karmahq.xyz/community/${identifier}/${subPage}`,
+      url: `https://www.karmahq.xyz/community/${identifier}/${subPage}`,
       lastModified: now,
       changeFrequency: "daily" as const,
       priority: 0.7,

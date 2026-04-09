@@ -1,8 +1,11 @@
 import pluralize from "pluralize";
 import { type FC, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/Utilities/Button";
+import { getTokenByAddressAndChain } from "@/constants/supportedTokens";
+import { usePayoutConfigByGrantPublic } from "@/src/features/payout-disbursement/hooks/use-payout-disbursement";
 import type { Grant } from "@/types/v2/grant";
 import { normalizeTimestamp } from "@/utilities/formatDate";
+import { formatMilestoneAmount } from "@/utilities/formatMilestoneAmount";
 import { cn } from "@/utilities/tailwind";
 import { GrantUpdate } from "./GrantUpdate";
 import { MilestoneDetails } from "./MilestoneDetails";
@@ -49,6 +52,32 @@ const TabButton: FC<TabButtonProps> = ({ handleSelection, tab, tabName, selected
 
 export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
   const { milestones, updates } = grant;
+
+  const { data: payoutConfig } = usePayoutConfigByGrantPublic(grant.uid);
+
+  // Resolve currency: prefer grant details, fall back to token lookup from payout config
+  const grantCurrency = useMemo(() => {
+    if (grant.details?.currency) return grant.details.currency;
+    if (payoutConfig?.tokenAddress && payoutConfig?.chainID) {
+      const token = getTokenByAddressAndChain(payoutConfig.tokenAddress, payoutConfig.chainID);
+      return token?.symbol;
+    }
+    return undefined;
+  }, [grant.details?.currency, payoutConfig?.tokenAddress, payoutConfig?.chainID]);
+
+  // Build a map from milestoneUID to formatted allocation amount
+  const allocationByUID = useMemo<Map<string, string>>(() => {
+    const map = new Map<string, string>();
+    for (const allocation of payoutConfig?.milestoneAllocations ?? []) {
+      if (allocation.milestoneUID && allocation.amount) {
+        const formatted = formatMilestoneAmount(allocation.amount, grantCurrency);
+        if (formatted) {
+          map.set(allocation.milestoneUID, formatted);
+        }
+      }
+    }
+    return map;
+  }, [payoutConfig, grantCurrency]);
 
   const [selectedMilestoneType, setSelectedMilestoneType] = useState<Tab>("all");
 
@@ -262,6 +291,7 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
                   key={item.object.uid}
                   milestone={item.object}
                   index={milestoneArray.length - mIndex}
+                  allocationAmount={allocationByUID.get(item.object.uid)}
                 />
               );
             })}

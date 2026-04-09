@@ -1,6 +1,8 @@
 "use client";
 
 import { PenLine } from "lucide-react";
+import dynamic from "next/dynamic";
+import type React from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
@@ -9,21 +11,31 @@ import { useOwnerStore, useProjectStore } from "@/store";
 import { useProgressModalStore } from "@/store/modals/progress";
 import type { Project } from "@/types/v2/project";
 import { cn } from "@/utilities/tailwind";
-import { DonateSection, useDonationVisibility } from "./DonateSection";
+import { useDonationVisibility } from "./DonateSection";
 import { EndorseSection } from "./EndorseSection";
 import { QuickLinksCard } from "./QuickLinksCard";
+import { SidebarProfileCard } from "./SidebarProfileCard";
 import { SubscribeSection } from "./SubscribeSection";
+
+const DonateSection = dynamic(
+  () => import("./DonateSection").then((m) => ({ default: m.DonateSection })),
+  { ssr: false }
+);
 
 interface ProjectSidePanelProps {
   project: Project;
+  isVerified?: boolean;
   className?: string;
+  /** Server-rendered profile card (RSC slot). When provided, renders this
+   *  instead of the client SidebarProfileCard for faster initial paint. */
+  serverSidePanel?: React.ReactNode;
 }
 
 /**
  * Separator component for dividing sections
  */
 function Separator() {
-  return <div className="h-px w-full bg-neutral-200 dark:bg-zinc-700" />;
+  return <div className="h-px w-full bg-border" />;
 }
 
 /**
@@ -32,11 +44,16 @@ function Separator() {
  * - Main card with Donate, Endorse, Subscribe sections
  * - Separate Quick links card
  *
- * Width: 324px (fixed)
+ * Width: 400px (fixed)
  * Visibility: Desktop only (lg: breakpoint)
  * Matches Figma design with neutral colors and 12px border radius
  */
-export function ProjectSidePanel({ project, className }: ProjectSidePanelProps) {
+export function ProjectSidePanel({
+  project,
+  isVerified,
+  className,
+  serverSidePanel,
+}: ProjectSidePanelProps) {
   const { setIsProgressModalOpen } = useProgressModalStore();
 
   // Authorization checks for Post an update button
@@ -48,7 +65,7 @@ export function ProjectSidePanel({ project, className }: ProjectSidePanelProps) 
     {},
     { enabled: authenticated }
   );
-  const isSuperAdmin = permissions?.roles.roles.includes(Role.SUPER_ADMIN) ?? false;
+  const isSuperAdmin = permissions?.roles?.roles?.includes(Role.SUPER_ADMIN) ?? false;
 
   const isAuthorized =
     isOwner || isProjectAdmin || isProjectOwner || (!isPermissionsLoading && isSuperAdmin);
@@ -60,7 +77,7 @@ export function ProjectSidePanel({ project, className }: ProjectSidePanelProps) 
 
   return (
     <aside
-      className={cn("hidden lg:flex flex-col gap-4 w-[324px] shrink-0", className)}
+      className={cn("hidden lg:flex flex-col gap-4 w-[400px] shrink-0", className)}
       data-testid="project-side-panel"
     >
       {/* Post an update button - only for authorized users */}
@@ -75,23 +92,25 @@ export function ProjectSidePanel({ project, className }: ProjectSidePanelProps) 
         </Button>
       )}
 
-      {/* Main Card with Donate, Endorse, Subscribe */}
-      <div className="flex flex-col gap-8 p-8 rounded-xl border border-neutral-200 dark:border-zinc-700 bg-neutral-100 dark:bg-zinc-800/50 shadow-sm">
-        {/* Donate Section - only visible if payout addresses configured or user can set them */}
-        {showDonateSection && (
-          <>
-            <DonateSection project={project} />
-            <Separator />
-          </>
-        )}
+      {/* Outer card: profile + actions together */}
+      <div className="flex flex-col rounded-xl border bg-secondary gap-2 p-2">
+        {/* Inner white profile card — always render the full client version once
+             project data is available. The serverSidePanel (SidebarProfileCardStatic)
+             is only used during the loading state in ProjectProfileLayout. */}
+        <SidebarProfileCard project={project} isVerified={isVerified} />
 
-        {/* Endorse Section */}
-        <EndorseSection project={project} />
-
-        <Separator />
-
-        {/* Subscribe Section */}
-        <SubscribeSection project={project} />
+        {/* Actions: Donate + Endorse + Subscribe */}
+        <div className="flex flex-col gap-8 p-6">
+          {showDonateSection && (
+            <>
+              <DonateSection project={project} />
+              <Separator />
+            </>
+          )}
+          <EndorseSection project={project} />
+          <Separator />
+          <SubscribeSection project={project} />
+        </div>
       </div>
 
       {/* Quick Links - Separate Card */}

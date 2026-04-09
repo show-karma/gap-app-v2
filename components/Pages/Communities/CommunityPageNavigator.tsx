@@ -1,20 +1,22 @@
 "use client";
-import { ChartLine, DollarSign, LandPlot, SquareUser, Wallet } from "lucide-react";
-import Link from "next/link";
+import { ChartLine, DollarSign, FileSearch, LandPlot, SquareUser, Wallet } from "lucide-react";
 import { useParams, usePathname, useSearchParams } from "next/navigation";
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import { useFundingOpportunitiesCount } from "@/hooks/useFundingOpportunitiesCount";
 import { useCommunityPrograms } from "@/hooks/usePrograms";
+import { Link } from "@/src/components/navigation/Link";
+import { FINANCIALS_ENABLED_COMMUNITIES } from "@/utilities/community-flags";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
+import { useWhitelabel } from "@/utilities/whitelabel-context";
 
 const activeLinkStyle =
   "text-gray-900 dark:text-white border-b-4 border-b-gray-900 dark:border-b-white";
 const inactiveLinkStyle =
   "text-gray-500 dark:text-zinc-400 border-b-4 border-b-transparent hover:text-gray-700 dark:hover:text-zinc-300";
 const baseLinkStyle =
-  "flex flex-row items-center gap-3 p-3 max-lg:w-full rounded-none text-base font-normal leading-6 w-max transition-colors duration-200";
+  "flex flex-row items-center gap-3 p-3 rounded-none text-base font-normal leading-6 w-max shrink-0 transition-colors duration-200";
 
 const NewTag = () => {
   return (
@@ -42,9 +44,16 @@ const NAVIGATION_ITEMS: readonly NavigationItem[] = [
     isActive: (pathname: string) => pathname.includes("/funding-opportunities"),
   },
   {
+    id: "browse-applications",
+    path: (communityId: string) => PAGES.COMMUNITY.BROWSE_APPLICATIONS(communityId),
+    title: () => "Browse applications",
+    Icon: FileSearch,
+    isActive: (pathname: string) => pathname.includes("/browse-applications"),
+  },
+  {
     id: "community-projects",
-    path: (communityId: string) => PAGES.COMMUNITY.ALL_GRANTS(communityId),
-    title: (communityName: string) => `View ${communityName} community projects`,
+    path: (communityId: string) => PAGES.COMMUNITY.PROJECTS(communityId),
+    title: () => "View funded projects",
     Icon: SquareUser,
     isActive: (pathname: string) =>
       !pathname.includes("/impact") &&
@@ -52,6 +61,7 @@ const NAVIGATION_ITEMS: readonly NavigationItem[] = [
       !pathname.includes("/updates") &&
       !pathname.includes("/donate") &&
       !pathname.includes("/funding-opportunities") &&
+      !pathname.includes("/browse-applications") &&
       !pathname.includes("/financials"),
   },
   {
@@ -86,8 +96,13 @@ export const CommunityPageNavigator = () => {
   const params = useParams();
   const searchParams = useSearchParams();
   const communityId = params.communityId as string;
-  const pathname = usePathname();
+  const rawPathname = usePathname();
+  const { isWhitelabel } = useWhitelabel();
   const programId = searchParams.get("programId");
+  // In whitelabel mode, the middleware rewrites the root to /community/<slug>/funding-opportunities
+  // but usePathname() still returns "/". Normalize so tab highlighting works correctly.
+  const isWhitelabelRoot = isWhitelabel && (rawPathname === "/" || rawPathname === "");
+  const pathname = isWhitelabelRoot ? "/funding-opportunities" : rawPathname;
 
   // Check if we're on an admin page early to avoid unnecessary data fetching
   const isAdminPage = pathname.includes("/manage");
@@ -104,42 +119,58 @@ export const CommunityPageNavigator = () => {
   });
   const programsCount = programs?.length ?? 0;
 
+  const isFinancialsEnabled = FINANCIALS_ENABLED_COMMUNITIES.includes(communityId);
+
   const visibleNavigationItems = useMemo(() => {
     return NAVIGATION_ITEMS.filter((item) => {
-      // Hide funding opportunities tab if there are no opportunities
-      if (item.id === "funding-opportunities" && fundingOpportunitiesCount === 0) {
+      // In whitelabel mode, always show funding opportunities (it's the landing page)
+      // In normal mode, hide it if there are no opportunities
+      if (item.id === "funding-opportunities" && fundingOpportunitiesCount === 0 && !isWhitelabel) {
         return false;
       }
-      // Hide financials tab if there are no programs
-      if (item.id === "financials" && programsCount === 0) {
+      // Show browse applications if the community has at least one program (live or ended)
+      if (item.id === "browse-applications" && programsCount === 0) {
+        return false;
+      }
+      // Show financials only for enabled communities with programs
+      if (item.id === "financials" && (!isFinancialsEnabled || programsCount === 0)) {
         return false;
       }
       return true;
     });
-  }, [fundingOpportunitiesCount, programsCount]);
+  }, [fundingOpportunitiesCount, programsCount, isWhitelabel, isFinancialsEnabled]);
+
+  const activeLinkRef = useCallback((node: HTMLAnchorElement | null) => {
+    if (node?.scrollIntoView) {
+      node.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+    }
+  }, []);
 
   if (isAdminPage) return null;
 
   return (
-    <div className="flex flex-row max-md:flex-col flex-wrap pt-8 border-b border-gray-200 dark:border-zinc-700 justify-start items-center gap-6 h-max">
-      {visibleNavigationItems.map(({ id, path, title, Icon, isActive, showNewTag }) => (
-        <Link
-          key={id}
-          href={getPathWithProgramId(programId, path(communityId))}
-          className={cn(baseLinkStyle, isActive(pathname) ? activeLinkStyle : inactiveLinkStyle)}
-        >
-          <Icon
-            className={cn(
-              "w-6 h-6 transition-colors duration-200",
-              isActive(pathname)
-                ? "text-gray-900 dark:text-white"
-                : "text-gray-500 dark:text-zinc-400"
-            )}
-          />
-          {title(community?.details?.name || "")}
-          {showNewTag ? <NewTag /> : null}
-        </Link>
-      ))}
+    <div className="flex flex-row max-md:overflow-x-auto max-md:scrollbar-none max-md:flex-nowrap flex-wrap pt-8 border-b border-gray-200 dark:border-zinc-700 justify-start items-center gap-6 h-max w-full">
+      {visibleNavigationItems.map(({ id, path, title, Icon, isActive, showNewTag }) => {
+        const href = path(communityId);
+        const active = isActive(pathname);
+        return (
+          <Link
+            key={id}
+            ref={active ? activeLinkRef : undefined}
+            href={getPathWithProgramId(programId, href)}
+            className={cn(baseLinkStyle, active ? activeLinkStyle : inactiveLinkStyle)}
+          >
+            <Icon
+              className={cn(
+                "w-6 h-6 transition-colors duration-200",
+                active ? "text-gray-900 dark:text-white" : "text-gray-500 dark:text-zinc-400"
+              )}
+            />
+            {title(community?.details?.name || "")}
+            {showNewTag ? <NewTag /> : null}
+          </Link>
+        );
+      })}
     </div>
   );
 };

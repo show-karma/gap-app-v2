@@ -36,8 +36,8 @@ const mockProjects = [
   },
 ];
 
-jest.mock("@/hooks/useProjectSearch", () => ({
-  useProjectSearch: jest.fn((query: string) => {
+vi.mock("@/hooks/useProjectSearch", () => ({
+  useProjectSearch: vi.fn((query: string) => {
     if (query.length < 3) {
       return {
         projects: [],
@@ -45,7 +45,7 @@ jest.mock("@/hooks/useProjectSearch", () => ({
         isFetching: false,
         isError: false,
         error: null,
-        refetch: jest.fn(),
+        refetch: vi.fn(),
       };
     }
     return {
@@ -58,7 +58,7 @@ jest.mock("@/hooks/useProjectSearch", () => ({
       isFetching: false,
       isError: false,
       error: null,
-      refetch: jest.fn(),
+      refetch: vi.fn(),
     };
   }),
 }));
@@ -156,11 +156,11 @@ describe("KarmaProfileLinkInput Component", () => {
 
   describe("Search Functionality", () => {
     beforeEach(() => {
-      jest.useFakeTimers();
+      vi.useFakeTimers({ shouldAdvanceTime: true });
     });
 
     afterEach(() => {
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
 
     it("should not trigger search with less than 3 characters", async () => {
@@ -171,7 +171,7 @@ describe("KarmaProfileLinkInput Component", () => {
 
       // Advance timers past debounce
       act(() => {
-        jest.advanceTimersByTime(600);
+        vi.advanceTimersByTime(600);
       });
 
       // Should not show any project results
@@ -186,7 +186,7 @@ describe("KarmaProfileLinkInput Component", () => {
       await act(async () => {
         fireEvent.change(input, { target: { value: "test" } });
         fireEvent.focus(input);
-        jest.advanceTimersByTime(600);
+        vi.advanceTimersByTime(600);
       });
 
       await waitFor(() => {
@@ -197,11 +197,11 @@ describe("KarmaProfileLinkInput Component", () => {
 
   describe("Selection", () => {
     beforeEach(() => {
-      jest.useFakeTimers();
+      vi.useFakeTimers({ shouldAdvanceTime: true });
     });
 
     afterEach(() => {
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
 
     it("should display selected project info after selection", async () => {
@@ -212,7 +212,7 @@ describe("KarmaProfileLinkInput Component", () => {
       await act(async () => {
         fireEvent.change(input, { target: { value: "test" } });
         fireEvent.focus(input);
-        jest.advanceTimersByTime(600);
+        vi.advanceTimersByTime(600);
       });
 
       await waitFor(() => {
@@ -241,7 +241,7 @@ describe("KarmaProfileLinkInput Component", () => {
       await act(async () => {
         fireEvent.change(input, { target: { value: "test" } });
         fireEvent.focus(input);
-        jest.advanceTimersByTime(600);
+        vi.advanceTimersByTime(600);
       });
 
       await waitFor(() => {
@@ -258,9 +258,10 @@ describe("KarmaProfileLinkInput Component", () => {
         expect(screen.getByText("Test Project")).toBeInTheDocument();
       });
 
-      // Find and click the clear button (X icon button)
-      const clearButton = screen.getByRole("button");
-      fireEvent.click(clearButton);
+      // Find and click the clear button (X icon button) - not the Remove button
+      const buttons = screen.getAllByRole("button");
+      const clearButton = buttons.find((btn) => !btn.textContent?.includes("Remove"));
+      fireEvent.click(clearButton!);
 
       // Verify selection is cleared
       await waitFor(() => {
@@ -333,6 +334,162 @@ describe("KarmaProfileLinkInput Component", () => {
 
       const input = screen.getByPlaceholderText("Search for your project...");
       expect(input).toBeDisabled();
+    });
+  });
+
+  describe("Add Project Link", () => {
+    beforeEach(() => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("should show add project link in search results", async () => {
+      render(<TestWrapper field={mockField} />);
+
+      const input = screen.getByPlaceholderText("Search for your project...");
+
+      await act(async () => {
+        fireEvent.change(input, { target: { value: "test" } });
+        fireEvent.focus(input);
+        vi.advanceTimersByTime(600);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId("add-project-link")).toBeInTheDocument();
+      });
+    });
+
+    it("should show add project link when no results found", async () => {
+      render(<TestWrapper field={mockField} />);
+
+      const input = screen.getByPlaceholderText("Search for your project...");
+
+      await act(async () => {
+        fireEvent.change(input, { target: { value: "zzzzzzz" } });
+        fireEvent.focus(input);
+        vi.advanceTimersByTime(600);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText("No projects found")).toBeInTheDocument();
+        expect(screen.getByTestId("add-project-link")).toBeInTheDocument();
+      });
+    });
+
+    it("should have correct href and target on add project link", async () => {
+      render(<TestWrapper field={mockField} />);
+
+      const input = screen.getByPlaceholderText("Search for your project...");
+
+      await act(async () => {
+        fireEvent.change(input, { target: { value: "test" } });
+        fireEvent.focus(input);
+        vi.advanceTimersByTime(600);
+      });
+
+      await waitFor(() => {
+        const link = screen.getByTestId("add-project-link");
+        expect(link).toHaveAttribute("href", expect.stringContaining("?action=create-project"));
+        expect(link).toHaveAttribute("target", "_blank");
+        expect(link).toHaveAttribute("rel", "noopener noreferrer");
+      });
+    });
+  });
+
+  describe("Remove Button", () => {
+    beforeEach(() => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("should show remove button on selected project", async () => {
+      render(<TestWrapper field={mockField} />);
+
+      const input = screen.getByPlaceholderText("Search for your project...");
+
+      await act(async () => {
+        fireEvent.change(input, { target: { value: "test" } });
+        fireEvent.focus(input);
+        vi.advanceTimersByTime(600);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText("Test Project")).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByText("Test Project"));
+
+      await waitFor(() => {
+        expect(screen.getByTestId("remove-project-button")).toBeInTheDocument();
+      });
+    });
+
+    it("should clear selection when remove button is clicked", async () => {
+      render(<TestWrapper field={mockField} />);
+
+      const input = screen.getByPlaceholderText("Search for your project...");
+
+      await act(async () => {
+        fireEvent.change(input, { target: { value: "test" } });
+        fireEvent.focus(input);
+        vi.advanceTimersByTime(600);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText("Test Project")).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByText("Test Project"));
+
+      await waitFor(() => {
+        expect(screen.getByTestId("remove-project-button")).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByTestId("remove-project-button"));
+
+      await waitFor(() => {
+        expect(screen.queryByTestId("remove-project-button")).not.toBeInTheDocument();
+        expect(input).toHaveValue("");
+      });
+    });
+
+    it("should not show remove button when isLoading is true", async () => {
+      const TestWrapperLoading = () => {
+        const queryClient = new QueryClient({
+          defaultOptions: { queries: { retry: false } },
+        });
+
+        const methods = useForm({
+          defaultValues: {
+            karma_profile_link:
+              "0x1234567890123456789012345678901234567890123456789012345678901234",
+          },
+        });
+
+        return (
+          <QueryClientProvider client={queryClient}>
+            <FormProvider {...methods}>
+              <KarmaProfileLinkInput
+                field={mockField}
+                control={methods.control}
+                fieldKey="karma_profile_link"
+                isLoading={true}
+              />
+            </FormProvider>
+          </QueryClientProvider>
+        );
+      };
+
+      render(<TestWrapperLoading />);
+
+      // Even if a project is selected/linked, the remove button should not appear when loading
+      expect(screen.queryByTestId("remove-project-button")).not.toBeInTheDocument();
     });
   });
 });

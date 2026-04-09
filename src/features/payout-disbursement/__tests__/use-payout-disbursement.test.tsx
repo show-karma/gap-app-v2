@@ -19,9 +19,9 @@ import type {
 } from "../types/payout-disbursement";
 import { PayoutDisbursementStatus } from "../types/payout-disbursement";
 
-jest.mock("../services/payout-disbursement.service");
+vi.mock("../services/payout-disbursement.service");
 
-const mockPayoutService = payoutService as jest.Mocked<typeof payoutService>;
+const mockPayoutService = payoutService as vi.Mocked<typeof payoutService>;
 
 describe("usePayoutDisbursement hooks", () => {
   let queryClient: QueryClient;
@@ -79,7 +79,7 @@ describe("usePayoutDisbursement hooks", () => {
         },
       },
     });
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   afterEach(() => {
@@ -319,7 +319,7 @@ describe("usePayoutDisbursement hooks", () => {
       const mockDisbursements = [createMockDisbursement()];
       mockPayoutService.createDisbursements.mockResolvedValue(mockDisbursements);
 
-      const onSuccess = jest.fn();
+      const onSuccess = vi.fn();
       const { result } = renderHook(() => useCreateDisbursements({ onSuccess }), { wrapper });
 
       await act(async () => {

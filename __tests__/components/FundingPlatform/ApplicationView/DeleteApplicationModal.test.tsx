@@ -1,8 +1,9 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import DeleteApplicationModal from "@/components/FundingPlatform/ApplicationView/DeleteApplicationModal";
 
 // Mock Headless UI Dialog components
-jest.mock("@headlessui/react", () => {
+vi.mock("@headlessui/react", () => {
   const MockDialog = ({ children, ...props }: any) => (
     <div data-testid="dialog" {...props}>
       {children}
@@ -40,7 +41,7 @@ jest.mock("@headlessui/react", () => {
 });
 
 // Mock Heroicons
-jest.mock("@heroicons/react/24/outline", () => ({
+vi.mock("@heroicons/react/24/outline", () => ({
   XMarkIcon: (props: any) => (
     <svg
       role="img"
@@ -56,7 +57,7 @@ jest.mock("@heroicons/react/24/outline", () => ({
 }));
 
 // Mock Button component
-jest.mock("@/components/Utilities/Button", () => ({
+vi.mock("@/components/Utilities/Button", () => ({
   Button: ({ onClick, disabled, children, className, variant }: any) => (
     <button onClick={onClick} disabled={disabled} className={className} data-variant={variant}>
       {children}
@@ -67,14 +68,14 @@ jest.mock("@/components/Utilities/Button", () => ({
 describe("DeleteApplicationModal", () => {
   const defaultProps = {
     isOpen: true,
-    onClose: jest.fn(),
-    onConfirm: jest.fn(),
+    onClose: vi.fn(),
+    onConfirm: vi.fn(),
     referenceNumber: "APP-TEST-12345",
     isDeleting: false,
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("Rendering", () => {
@@ -117,28 +118,31 @@ describe("DeleteApplicationModal", () => {
   });
 
   describe("User Interactions", () => {
-    it("should call onConfirm when delete button is clicked", () => {
-      const onConfirm = jest.fn();
+    it("should call onConfirm when delete button is clicked", async () => {
+      const user = userEvent.setup();
+      const onConfirm = vi.fn();
       render(<DeleteApplicationModal {...defaultProps} onConfirm={onConfirm} />);
 
       const deleteButton = screen.getByRole("button", { name: /delete/i });
-      fireEvent.click(deleteButton);
+      await user.click(deleteButton);
 
       expect(onConfirm).toHaveBeenCalledTimes(1);
     });
 
-    it("should call onClose when cancel button is clicked", () => {
-      const onClose = jest.fn();
+    it("should call onClose when cancel button is clicked", async () => {
+      const user = userEvent.setup();
+      const onClose = vi.fn();
       render(<DeleteApplicationModal {...defaultProps} onClose={onClose} />);
 
       const cancelButton = screen.getByRole("button", { name: /cancel/i });
-      fireEvent.click(cancelButton);
+      await user.click(cancelButton);
 
       expect(onClose).toHaveBeenCalledTimes(1);
     });
 
-    it("should call onClose when close icon is clicked", () => {
-      const onClose = jest.fn();
+    it("should call onClose when close icon is clicked", async () => {
+      const user = userEvent.setup();
+      const onClose = vi.fn();
       render(<DeleteApplicationModal {...defaultProps} onClose={onClose} />);
 
       // Find the close button by its testid (parent button of the icon)
@@ -146,11 +150,11 @@ describe("DeleteApplicationModal", () => {
       const closeButton = closeIcon.closest("button");
 
       if (closeButton) {
-        fireEvent.click(closeButton);
+        await user.click(closeButton);
         expect(onClose).toHaveBeenCalledTimes(1);
       } else {
         // Fallback: try clicking the icon directly
-        fireEvent.click(closeIcon.parentElement!);
+        await user.click(closeIcon.parentElement!);
         expect(onClose).toHaveBeenCalledTimes(1);
       }
     });
@@ -174,23 +178,25 @@ describe("DeleteApplicationModal", () => {
       expect(screen.queryByText("Delete")).not.toBeInTheDocument();
     });
 
-    it("should prevent onClose from being called when isDeleting is true", () => {
-      const onClose = jest.fn();
+    it("should prevent onClose from being called when isDeleting is true", async () => {
+      const user = userEvent.setup();
+      const onClose = vi.fn();
       render(<DeleteApplicationModal {...defaultProps} onClose={onClose} isDeleting={true} />);
 
       const closeIcon = screen.getByTestId("xmark-icon");
       const closeButton = closeIcon.closest("button");
 
       if (closeButton) {
-        fireEvent.click(closeButton);
+        await user.click(closeButton);
       }
 
       // onClose should not be called when deleting
       expect(onClose).not.toHaveBeenCalled();
     });
 
-    it("should not call onConfirm multiple times when delete button is clicked rapidly", () => {
-      const onConfirm = jest.fn();
+    it("should not call onConfirm multiple times when delete button is clicked rapidly", async () => {
+      const user = userEvent.setup();
+      const onConfirm = vi.fn();
       const { rerender } = render(
         <DeleteApplicationModal {...defaultProps} onConfirm={onConfirm} isDeleting={false} />
       );
@@ -198,7 +204,7 @@ describe("DeleteApplicationModal", () => {
       const deleteButton = screen.getByRole("button", { name: /delete/i });
 
       // First click
-      fireEvent.click(deleteButton);
+      await user.click(deleteButton);
       expect(onConfirm).toHaveBeenCalledTimes(1);
 
       // Simulate the parent component setting isDeleting to true
@@ -208,7 +214,7 @@ describe("DeleteApplicationModal", () => {
 
       // Try to click again while deleting
       const deletingButton = screen.getByRole("button", { name: /deleting.../i });
-      fireEvent.click(deletingButton);
+      await user.click(deletingButton);
 
       // Should still only be called once
       expect(onConfirm).toHaveBeenCalledTimes(1);
@@ -277,8 +283,9 @@ describe("DeleteApplicationModal", () => {
   });
 
   describe("Modal Behavior", () => {
-    it("should prevent modal from closing during deletion", () => {
-      const onClose = jest.fn();
+    it("should prevent modal from closing during deletion", async () => {
+      const user = userEvent.setup();
+      const onClose = vi.fn();
       render(<DeleteApplicationModal {...defaultProps} onClose={onClose} isDeleting={true} />);
 
       // Try to close by clicking the close button
@@ -286,18 +293,19 @@ describe("DeleteApplicationModal", () => {
       const closeButton = closeIcon.closest("button");
 
       if (closeButton) {
-        fireEvent.click(closeButton);
+        await user.click(closeButton);
       }
 
       expect(onClose).not.toHaveBeenCalled();
     });
 
-    it("should allow modal to close when not deleting", () => {
-      const onClose = jest.fn();
+    it("should allow modal to close when not deleting", async () => {
+      const user = userEvent.setup();
+      const onClose = vi.fn();
       render(<DeleteApplicationModal {...defaultProps} onClose={onClose} isDeleting={false} />);
 
       const cancelButton = screen.getByRole("button", { name: /cancel/i });
-      fireEvent.click(cancelButton);
+      await user.click(cancelButton);
 
       expect(onClose).toHaveBeenCalledTimes(1);
     });

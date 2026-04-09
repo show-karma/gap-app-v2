@@ -1,8 +1,13 @@
 import type { Metadata } from "next";
+import dynamic from "next/dynamic";
 import { getProjectGrants } from "@/services/project-grants.service";
-import { generateGrantMilestonesMetadata } from "@/utilities/metadata/projectMetadata";
+import {
+  generateGrantMilestonesMetadata,
+  generateProjectFundingMetadata,
+} from "@/utilities/metadata/projectMetadata";
 import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
-import { MilestonesAndUpdatesPageClient } from "./MilestonesAndUpdatesPageClient";
+
+const MilestonesAndUpdatesClient = dynamic(() => import("./MilestonesAndUpdatesClient"));
 
 type Params = Promise<{
   projectId: string;
@@ -10,21 +15,30 @@ type Params = Promise<{
 }>;
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
-  const { projectId, grantUid } = await params;
-  const projectInfo = await getProjectCachedData(projectId);
-  const grants = await getProjectGrants(projectId);
-  const grant = grants.find((g) => g.uid === grantUid);
-
-  if (!grant) {
-    return generateGrantMilestonesMetadata(
-      projectInfo,
-      { details: { title: "", description: "" } } as never,
-      projectId,
-      grantUid
-    );
+  if (process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS === "true") {
+    return { title: "Grant Milestones and Updates" };
   }
 
-  return generateGrantMilestonesMetadata(projectInfo, grant, projectId, grantUid);
+  const { projectId, grantUid } = await params;
+  const [project, grants] = await Promise.all([
+    getProjectCachedData(projectId),
+    getProjectGrants(projectId),
+  ]);
+
+  if (!project) {
+    return {
+      title: "Project Not Found",
+      description: "Project not found",
+    };
+  }
+
+  const grant = grants?.find((g) => g.uid?.toLowerCase() === grantUid?.toLowerCase());
+
+  if (!grant) {
+    return generateProjectFundingMetadata(project, projectId);
+  }
+
+  return generateGrantMilestonesMetadata(project, grant, projectId, grantUid);
 }
 
 /**
@@ -36,5 +50,5 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
  * - Update history
  */
 export default function MilestonesAndUpdatesPage() {
-  return <MilestonesAndUpdatesPageClient />;
+  return <MilestonesAndUpdatesClient />;
 }

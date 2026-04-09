@@ -6,20 +6,73 @@ import { ActivityFilters } from "../MainContent/ActivityFilters";
 import { ContentTabs } from "../MainContent/ContentTabs";
 import { ProjectMainContent } from "../MainContent/ProjectMainContent";
 
+// Mock next/navigation
+vi.mock("next/navigation", () => ({
+  useParams: () => ({ projectId: "test-project" }),
+}));
+
+// Mock next/link
+vi.mock("next/link", () => ({
+  __esModule: true,
+  default: ({ children, href, ...props }: any) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
+}));
+
+// Mock useAuth hook
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: () => ({ authenticated: false, login: vi.fn(), ready: true }),
+}));
+
+// Mock RBAC permissions hook
+vi.mock("@/src/core/rbac/hooks/use-permissions", () => ({
+  usePermissionsQuery: () => ({ data: null, isLoading: false }),
+}));
+
+// Mock RBAC types
+vi.mock("@/src/core/rbac/types", () => ({
+  Role: { SUPER_ADMIN: "SUPER_ADMIN" },
+}));
+
+// Mock PAGES constant
+vi.mock("@/utilities/pages", () => ({
+  PAGES: {
+    PROJECT: {
+      OVERVIEW: (id: string) => `/project/${id}`,
+      ABOUT: (id: string) => `/project/${id}/about`,
+      GRANTS: (id: string) => `/project/${id}/grants`,
+      IMPACT: { ROOT: (id: string) => `/project/${id}/impact` },
+      CONTACT_INFO: (id: string) => `/project/${id}/contact-info`,
+    },
+  },
+}));
+
+// Mock Badge component
+vi.mock("@/components/ui/badge", () => ({
+  Badge: ({ children, ...props }: any) => <span {...props}>{children}</span>,
+}));
+
 // Mock the ActivityCard component
-jest.mock("@/components/Shared/ActivityCard", () => ({
+vi.mock("@/components/Shared/ActivityCard", () => ({
   ActivityCard: ({ activity }: { activity: { type: string; data: { title: string } } }) => (
     <div data-testid="activity-card">{activity.data.title || "Activity"}</div>
   ),
 }));
 
 // Mock the ImpactContent component to avoid loading external dependencies
-jest.mock("../MainContent/ImpactContent", () => ({
+vi.mock("../MainContent/ImpactContent", () => ({
   ImpactContent: () => <div data-testid="impact-content">Impact Content Mock</div>,
 }));
 
+// Mock the TeamContent component to avoid loading external dependencies
+vi.mock("../TeamContent/TeamContent", () => ({
+  TeamContent: () => <div data-testid="team-content">Team Content Mock</div>,
+}));
+
 // Mock useOwnerStore and useProjectStore
-jest.mock("@/store", () => ({
+vi.mock("@/store", () => ({
   useOwnerStore: () => ({ isOwner: false }),
   useProjectStore: () => ({ isProjectAdmin: false }),
 }));
@@ -63,11 +116,11 @@ const mockMilestones: UnifiedMilestone[] = [
 describe("ContentTabs", () => {
   const defaultProps = {
     activeTab: "updates" as const,
-    onTabChange: jest.fn(),
+    onTabChange: vi.fn(),
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("Rendering", () => {
@@ -84,8 +137,8 @@ describe("ContentTabs", () => {
       expect(screen.getByTestId("tab-about")).toBeInTheDocument();
       expect(screen.getByTestId("tab-funding")).toBeInTheDocument();
       expect(screen.getByTestId("tab-impact")).toBeInTheDocument();
-      // Profile tab exists but is hidden on desktop (lg:hidden class)
-      expect(screen.getByTestId("tab-profile")).toHaveClass("lg:hidden");
+      // Support tab exists but is hidden on desktop (lg:hidden class)
+      expect(screen.getByTestId("tab-support")).toHaveClass("lg:hidden");
     });
 
     it("should show funding count badge when provided", () => {
@@ -128,14 +181,20 @@ describe("ContentTabs", () => {
 
 describe("ActivityFilters", () => {
   const defaultProps = {
-    sortBy: "newest" as const,
-    onSortChange: jest.fn(),
-    activeFilters: [] as ("funding" | "updates" | "blog" | "socials" | "other")[],
-    onFilterToggle: jest.fn(),
+    activeFilters: [] as (
+      | "funding"
+      | "milestones"
+      | "updates"
+      | "endorsements"
+      | "blog"
+      | "socials"
+      | "other"
+    )[],
+    onFilterToggle: vi.fn(),
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("Rendering", () => {
@@ -145,10 +204,10 @@ describe("ActivityFilters", () => {
       expect(screen.getByTestId("activity-filters")).toBeInTheDocument();
     });
 
-    it("should render sort select", () => {
+    it("should not render sort select when sortBy is not provided", () => {
       render(<ActivityFilters {...defaultProps} />);
 
-      expect(screen.getByTestId("sort-select")).toBeInTheDocument();
+      expect(screen.queryByTestId("sort-select")).not.toBeInTheDocument();
     });
 
     it("should render filter badges", () => {
@@ -157,38 +216,28 @@ describe("ActivityFilters", () => {
       expect(screen.getByTestId("filter-badges")).toBeInTheDocument();
       expect(screen.getByTestId("filter-everything")).toBeInTheDocument();
       expect(screen.getByTestId("filter-funding")).toBeInTheDocument();
+      expect(screen.getByTestId("filter-milestones")).toBeInTheDocument();
       expect(screen.getByTestId("filter-updates")).toBeInTheDocument();
+      expect(screen.getByTestId("filter-endorsements")).toBeInTheDocument();
       // Blog, Socials, and Other are hidden
       expect(screen.queryByTestId("filter-blog")).not.toBeInTheDocument();
       expect(screen.queryByTestId("filter-socials")).not.toBeInTheDocument();
       expect(screen.queryByTestId("filter-other")).not.toBeInTheDocument();
     });
 
-    it("should show milestone count when provided", () => {
-      render(<ActivityFilters {...defaultProps} milestonesCount={21} completedCount={15} />);
+    it("should render sort select when sortBy and onSortChange are provided", () => {
+      render(<ActivityFilters {...defaultProps} sortBy="newest" onSortChange={vi.fn()} />);
 
-      expect(screen.getByTestId("milestones-count")).toHaveTextContent(
-        "21 Milestones, 15 Completed"
-      );
-    });
-
-    it("should use singular form for single milestone", () => {
-      render(<ActivityFilters {...defaultProps} milestonesCount={1} completedCount={1} />);
-
-      expect(screen.getByTestId("milestones-count")).toHaveTextContent("1 Milestone, 1 Completed");
-    });
-
-    it("should not show milestone count when zero", () => {
-      render(<ActivityFilters {...defaultProps} milestonesCount={0} />);
-
-      expect(screen.queryByTestId("milestones-count")).not.toBeInTheDocument();
+      expect(screen.getByTestId("sort-select")).toBeInTheDocument();
     });
   });
 
   describe("Interactions", () => {
     it("should call onFilterToggle when filter badge is clicked", () => {
-      const handleToggle = jest.fn();
-      render(<ActivityFilters {...defaultProps} onFilterToggle={handleToggle} />);
+      const handleToggle = vi.fn();
+      render(
+        <ActivityFilters {...defaultProps} onFilterToggle={handleToggle} counts={{ funding: 3 }} />
+      );
 
       fireEvent.click(screen.getByTestId("filter-funding"));
 
@@ -198,25 +247,23 @@ describe("ActivityFilters", () => {
     it("should show active state for selected filters", () => {
       render(<ActivityFilters {...defaultProps} activeFilters={["funding"]} />);
 
-      // Check that the badge inside funding filter has active styling (bg-neutral-900)
+      // Active filter button has bg-foreground class
       const fundingButton = screen.getByTestId("filter-funding");
-      const badge = fundingButton.querySelector("div");
-      expect(badge).toHaveClass("bg-neutral-900");
+      expect(fundingButton).toHaveClass("bg-foreground");
     });
 
-    it("should show Everything button as active when no filters selected", () => {
+    it("should show All button as active when no filters selected", () => {
       render(<ActivityFilters {...defaultProps} activeFilters={[]} />);
 
-      const everythingButton = screen.getByTestId("filter-everything");
-      expect(everythingButton).toBeInTheDocument();
+      const allButton = screen.getByTestId("filter-everything");
+      expect(allButton).toBeInTheDocument();
 
-      // Check that the badge inside Everything button has active styling
-      const badge = everythingButton.querySelector("div");
-      expect(badge).toHaveClass("bg-neutral-900");
+      // All button has bg-foreground class when active (no filters selected)
+      expect(allButton).toHaveClass("bg-foreground");
     });
 
-    it("should clear all filters when Everything button is clicked", () => {
-      const handleToggle = jest.fn();
+    it("should clear all filters when All button is clicked", () => {
+      const handleToggle = vi.fn();
       render(
         <ActivityFilters
           {...defaultProps}
@@ -300,11 +347,11 @@ describe("ActivityFeed", () => {
 
   describe("Filtering", () => {
     it("should filter by active filters", () => {
-      render(<ActivityFeed milestones={mockMilestones} activeFilters={["funding"]} />);
+      render(<ActivityFeed milestones={mockMilestones} activeFilters={["milestones"]} />);
 
-      // Only the grant type should show
+      // milestone and grant types should show (both map to "milestones" filter)
       const items = screen.getAllByTestId("activity-item");
-      expect(items).toHaveLength(1);
+      expect(items).toHaveLength(2);
     });
 
     it("should show all items when no filters active", () => {
@@ -316,20 +363,23 @@ describe("ActivityFeed", () => {
   });
 
   describe("Timeline Icons", () => {
-    it("should show orange icon for milestone type", () => {
+    it("should show indigo icon for milestone type", () => {
       render(<ActivityFeed milestones={mockMilestones} />);
 
       const icons = screen.getAllByTestId("timeline-icon");
-      // First milestone is type "milestone" - should have orange background
-      expect(icons[0]).toHaveClass("bg-orange-50");
+      // First milestone is type "milestone" - should have indigo background
+      expect(icons[0]).toHaveClass("bg-indigo-50");
     });
 
-    it("should show orange icon for grant type (default color)", () => {
-      render(<ActivityFeed milestones={mockMilestones} activeFilters={["funding"]} />);
+    it("should show blue icon for grant type", () => {
+      render(<ActivityFeed milestones={mockMilestones} activeFilters={["milestones"]} />);
 
       const icons = screen.getAllByTestId("timeline-icon");
-      // "grant" type uses default orange color (emerald is only for "grant_received")
-      expect(icons[0]).toHaveClass("bg-orange-50");
+      // "milestone" type has indigo, "grant" type has blue
+      // With milestones filter, both milestone and grant types are shown
+      expect(icons).toHaveLength(2);
+      expect(icons[0]).toHaveClass("bg-indigo-50");
+      expect(icons[1]).toHaveClass("bg-blue-50");
     });
   });
 
@@ -397,8 +447,8 @@ describe("ProjectMainContent", () => {
       expect(screen.getByTestId("tab-about")).toBeInTheDocument();
       expect(screen.getByTestId("tab-funding")).toBeInTheDocument();
       expect(screen.getByTestId("tab-impact")).toBeInTheDocument();
-      // Profile tab exists but is hidden on desktop (lg:hidden class)
-      expect(screen.getByTestId("tab-profile")).toHaveClass("lg:hidden");
+      // Support tab exists but is hidden on desktop (lg:hidden class)
+      expect(screen.getByTestId("tab-support")).toHaveClass("lg:hidden");
     });
   });
 

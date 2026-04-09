@@ -39,36 +39,34 @@ import {
 } from "../test-utils";
 
 // Mock dependencies
-jest.mock("wagmi", () => ({
-  useAccount: jest.fn(),
-  usePublicClient: jest.fn(),
-  useWalletClient: jest.fn(),
-  useWriteContract: jest.fn(),
-  useWaitForTransactionReceipt: jest.fn(),
-  useChainId: jest.fn(),
-  useSwitchChain: jest.fn(),
+vi.mock("wagmi", () => ({
+  useAccount: vi.fn(),
+  usePublicClient: vi.fn(),
+  useWalletClient: vi.fn(),
+  useWriteContract: vi.fn(),
+  useWaitForTransactionReceipt: vi.fn(),
+  useChainId: vi.fn(),
+  useSwitchChain: vi.fn(),
 }));
 
-jest.mock("viem", () => {
-  const actual = jest.requireActual("viem");
+vi.mock("viem", () => {
+  const actual = vi.importActual("viem");
   return {
     ...actual,
-    getAddress: jest.fn((addr: string) => addr as Address),
-    parseUnits: jest.fn((value: string, decimals: number) => {
+    getAddress: vi.fn((addr: string) => addr as Address),
+    parseUnits: vi.fn((value: string, decimals: number) => {
       // Handle decimal values by converting to smallest unit
       const numValue = parseFloat(value);
       const multiplier = 10 ** decimals;
       return BigInt(Math.floor(numValue * multiplier));
     }),
-    formatUnits: jest.fn((value: bigint, decimals: number) =>
-      String(Number(value) / 10 ** decimals)
-    ),
+    formatUnits: vi.fn((value: bigint, decimals: number) => String(Number(value) / 10 ** decimals)),
   };
 });
 
-jest.mock("react-hot-toast");
+vi.mock("react-hot-toast");
 
-jest.mock("@/utilities/donations/batchDonations", () => ({
+vi.mock("@/utilities/donations/batchDonations", () => ({
   BatchDonationsABI: [],
   BATCH_DONATIONS_CONTRACTS: {
     10: "0x1111111111111111111111111111111111111111",
@@ -76,7 +74,7 @@ jest.mock("@/utilities/donations/batchDonations", () => ({
     42161: "0x3333333333333333333333333333333333333333",
   },
   PERMIT2_ADDRESS: "0x000000000022D473030F116dDEE9F6B43aC78BA3" as Address,
-  getBatchDonationsContractAddress: jest.fn((chainId: number) => {
+  getBatchDonationsContractAddress: vi.fn((chainId: number) => {
     const contracts: Record<number, string> = {
       10: "0x1111111111111111111111111111111111111111",
       8453: "0x2222222222222222222222222222222222222222",
@@ -86,33 +84,33 @@ jest.mock("@/utilities/donations/batchDonations", () => ({
   }),
 }));
 
-jest.mock("@/utilities/erc20", () => ({
-  checkTokenAllowances: jest.fn(),
-  executeApprovals: jest.fn(),
-  getApprovalAmount: jest.fn((amount: bigint) => amount),
+vi.mock("@/utilities/erc20", () => ({
+  checkTokenAllowances: vi.fn(),
+  executeApprovals: vi.fn(),
+  getApprovalAmount: vi.fn((amount: bigint) => amount),
 }));
 
-jest.mock("@/utilities/rpcClient", () => ({
-  getRPCClient: jest.fn(),
+vi.mock("@/utilities/rpcClient", () => ({
+  getRPCClient: vi.fn(),
 }));
 
-jest.mock("@/utilities/walletClientValidation", () => ({
-  validateWalletClient: jest.fn(),
-  waitForValidWalletClient: jest.fn(),
+vi.mock("@/utilities/walletClientValidation", () => ({
+  validateWalletClient: vi.fn(),
+  waitForValidWalletClient: vi.fn(),
 }));
 
-jest.mock("@/utilities/walletClientFallback", () => ({
-  getWalletClientWithFallback: jest.fn(),
-  isWalletClientGoodEnough: jest.fn(),
+vi.mock("@/utilities/walletClientFallback", () => ({
+  getWalletClientWithFallback: vi.fn(),
+  isWalletClientGoodEnough: vi.fn(),
 }));
 
-jest.mock("@/utilities/chainSyncValidation", () => ({
-  validateChainSync: jest.fn(),
+vi.mock("@/utilities/chainSyncValidation", () => ({
+  validateChainSync: vi.fn(),
 }));
 
-jest.mock("@/utilities/donations/errorMessages", () => ({
-  getShortErrorMessage: jest.fn((error: any) => error?.message || "Unknown error"),
-  parseDonationError: jest.fn((error: any) => ({
+vi.mock("@/utilities/donations/errorMessages", () => ({
+  getShortErrorMessage: vi.fn((error: any) => error?.message || "Unknown error"),
+  parseDonationError: vi.fn((error: any) => ({
     message: error?.message || "Unknown error",
     type: "unknown",
     isRecoverable: false,
@@ -129,12 +127,12 @@ describe("Integration: Donation Flow", () => {
     setupLocalStorageMock();
 
     // Setup default toast mocks - track calls instead of silencing them
-    (toast.error as jest.Mock).mockImplementation((message: string) => {
+    (toast.error as vi.Mock).mockImplementation((message: string) => {
       // Store error messages for verification in tests
-      const _errorCalls = (toast.error as jest.Mock).mock.calls;
+      const _errorCalls = (toast.error as vi.Mock).mock.calls;
       return `toast-error:${message}`;
     });
-    (toast.success as jest.Mock).mockImplementation((message: string) => {
+    (toast.success as vi.Mock).mockImplementation((message: string) => {
       return `toast-success:${message}`;
     });
 
@@ -391,7 +389,7 @@ describe("Integration: Donation Flow", () => {
     it("detects when user is on wrong network", async () => {
       // Arrange: User on wrong network
       const wagmi = require("wagmi");
-      (wagmi.useChainId as jest.Mock).mockReturnValue(1); // User on Ethereum
+      (wagmi.useChainId as vi.Mock).mockReturnValue(1); // User on Ethereum
 
       const _payment = createMockPayment({ chainId: 10 }); // Payment on Optimism
       const _mockSwitchChain = createMockSwitchChain(true);
@@ -512,7 +510,7 @@ describe("Integration: Donation Flow", () => {
       const transferHook = renderHook(() => useDonationTransfer());
 
       const viem = require("viem");
-      const mockGetAddress = viem.getAddress as jest.Mock;
+      const mockGetAddress = viem.getAddress as vi.Mock;
 
       mockGetAddress.mockImplementationOnce((addr: string) => {
         if (addr === "invalid-address") {
@@ -543,18 +541,18 @@ describe("Integration: Donation Flow", () => {
       // In a real scenario, this would test the useCrossChainBalances hook
 
       // Arrange: Mock slow balance fetch
-      const mockFetchBalances = jest.fn();
+      const mockFetchBalances = vi.fn();
 
-      // Simulate timeout (takes longer than expected)
+      // Simulate timeout (takes longer than the timeout threshold)
       mockFetchBalances.mockImplementation(
-        () => new Promise((resolve) => setTimeout(() => resolve({ "USDC-10": "1000" }), 15000))
+        () => new Promise((resolve) => setTimeout(() => resolve({ "USDC-10": "1000" }), 200))
       );
 
-      // Act: Attempt to fetch with timeout
+      // Act: Attempt to fetch with timeout (shorter than the fetch delay)
       const timeoutPromise = Promise.race([
         mockFetchBalances(),
         new Promise((_, reject) =>
-          setTimeout(() => reject(new Error("Balance fetch timeout")), 10000)
+          setTimeout(() => reject(new Error("Balance fetch timeout")), 50)
         ),
       ]);
 
@@ -564,7 +562,7 @@ describe("Integration: Donation Flow", () => {
 
     it("successfully retries balance fetch after initial timeout", async () => {
       // Arrange: Mock balance fetch that fails first time, succeeds second time
-      const mockFetchBalances = jest.fn();
+      const mockFetchBalances = vi.fn();
 
       let attemptCount = 0;
       mockFetchBalances.mockImplementation(() => {

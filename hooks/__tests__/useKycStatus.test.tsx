@@ -20,9 +20,9 @@ import {
 } from "../useKycStatus";
 
 // Mock the fetchData utility
-jest.mock("@/utilities/fetchData");
+vi.mock("@/utilities/fetchData");
 
-const mockFetchData = fetchData as jest.MockedFunction<typeof fetchData>;
+const mockFetchData = fetchData as vi.MockedFunction<typeof fetchData>;
 
 describe("KYC Hooks", () => {
   let queryClient: QueryClient;
@@ -61,7 +61,7 @@ describe("KYC Hooks", () => {
         },
       },
     });
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   afterEach(() => {
@@ -385,7 +385,7 @@ describe("KYC Hooks", () => {
       const mockConfig = createMockKycConfig();
       mockFetchData.mockResolvedValue([mockConfig, null]);
 
-      const invalidateQueriesSpy = jest.spyOn(queryClient, "invalidateQueries");
+      const invalidateQueriesSpy = vi.spyOn(queryClient, "invalidateQueries");
 
       const { result } = renderHook(() => useSaveKycConfig("optimism"), {
         wrapper,
@@ -411,7 +411,7 @@ describe("KYC Hooks", () => {
   describe("KYC_QUERY_KEYS", () => {
     it("should generate correct status query key", () => {
       const key = KYC_QUERY_KEYS.status("project-123", "community-456");
-      expect(key).toEqual(["kyc", "status", "project-123", "community-456"]);
+      expect(key).toEqual(["kyc", "status", "community-456", "project-123"]);
     });
 
     it("should generate correct config query key", () => {

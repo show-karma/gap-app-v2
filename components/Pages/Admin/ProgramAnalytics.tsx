@@ -1,4 +1,18 @@
-import { BarChart, Card, Select, SelectItem, Title } from "@tremor/react";
+import { Card, Title } from "@tremor/react";
+import dynamic from "next/dynamic";
+import { ChartSkeleton } from "@/components/Utilities/ChartSkeleton";
+
+const BarChart = dynamic(() => import("@tremor/react").then((mod) => mod.BarChart), {
+  ssr: false,
+  loading: () => <ChartSkeleton height="h-72" />,
+});
+const Select = dynamic(() => import("@tremor/react").then((mod) => mod.Select), {
+  ssr: false,
+});
+const SelectItem = dynamic(() => import("@tremor/react").then((mod) => mod.SelectItem), {
+  ssr: false,
+});
+
 import { useState } from "react";
 import type { ProgramImpactDataResponse } from "@/types/programs";
 

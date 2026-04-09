@@ -5,6 +5,7 @@ import type { Project as ProjectResponse } from "@/types/v2/project";
 import { envVars } from "@/utilities/enviromentVars";
 import { cleanMarkdownForPlainText } from "@/utilities/markdown";
 import { DEFAULT_DESCRIPTION, SITE_URL, twitterMeta } from "@/utilities/meta";
+import { PAGES } from "@/utilities/pages";
 
 const getProjectTitle = (project: ProjectResponse): string => {
   return project?.details?.title || "";
@@ -156,7 +157,7 @@ export const generateProjectFundingMetadata = (
     projectId,
     title: `${projectTitle} Grants`,
     description: `View funding and grants for ${projectTitle} on ${PROJECT_NAME}.`,
-    canonicalPath: `/project/${projectId}/funding`,
+    canonicalPath: PAGES.PROJECT.GRANTS(projectId),
   });
 };
 
@@ -184,8 +185,8 @@ export const generateGrantOverviewMetadata = (
     title: `${grantTitle} Grant Overview | ${projectTitle}`,
     description: cleanMarkdownForPlainText(getGrantDescription(grant), 160),
     canonicalPath: grantUid
-      ? `/project/${projectId}/funding/${grantUid}`
-      : `/project/${projectId}/funding`,
+      ? PAGES.PROJECT.GRANT(projectId, grantUid)
+      : PAGES.PROJECT.GRANTS(projectId),
   });
 };
 
@@ -202,8 +203,8 @@ export const generateGrantMilestonesMetadata = (
     title: `${projectTitle} - Milestones and Updates for ${grantTitle}`,
     description: `View all milestones and updates by ${projectTitle} for ${grantTitle} grant.`,
     canonicalPath: grantUid
-      ? `/project/${projectId}/funding/${grantUid}/milestones-and-updates`
-      : `/project/${projectId}/funding`,
+      ? PAGES.PROJECT.MILESTONES_AND_UPDATES(projectId, grantUid)
+      : PAGES.PROJECT.GRANTS(projectId),
   });
 };
 
@@ -220,8 +221,8 @@ export const generateGrantImpactCriteriaMetadata = (
     title: `Impact Criteria for ${grantTitle} Grant | ${projectTitle}`,
     description: `Impact criteria defined by ${projectTitle} for ${grantTitle} grant.`,
     canonicalPath: grantUid
-      ? `/project/${projectId}/funding/${grantUid}/impact-criteria`
-      : `/project/${projectId}/funding`,
+      ? PAGES.PROJECT.SCREENS.SELECTED_SCREEN(projectId, grantUid, "impact-criteria")
+      : PAGES.PROJECT.GRANTS(projectId),
   });
 };
 

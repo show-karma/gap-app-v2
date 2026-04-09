@@ -13,8 +13,16 @@
  * - AggregateCategoryRow.tsx: prepareChartData() for aggregated indicators
  */
 "use client";
-import { AreaChart, Card } from "@tremor/react";
+import { Card } from "@tremor/react";
+import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
+import { ChartSkeleton as ChartSkeletonLoading } from "@/components/Utilities/ChartSkeleton";
+
+const AreaChart = dynamic(() => import("@tremor/react").then((mod) => mod.AreaChart), {
+  ssr: false,
+  loading: () => <ChartSkeletonLoading height="h-72" />,
+});
+
 import { memo, useMemo, useState } from "react";
 import { useCommunityMetrics } from "@/hooks/useCommunityMetrics";
 import type { CommunityMetric } from "@/types/community-metrics";

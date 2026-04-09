@@ -2,8 +2,9 @@ import { AddProgramWrapper } from "@/components/Pages/ProgramRegistry/AddProgram
 import { customMetadata } from "@/utilities/meta";
 
 export const metadata = customMetadata({
-  title: "Add a Grant Program",
-  description: "Add your grant program to the comprehensive registry of funding programs.",
+  title: "Submit a Funding Opportunity",
+  description:
+    "Submit your funding opportunity to the comprehensive registry of funding programs.",
   path: "/funding-map/add-program",
 });
 

@@ -9,17 +9,17 @@ import { getAuthFixture } from "../fixtures/auth-fixtures";
 import { renderWithProviders } from "../utils/test-helpers";
 
 // Mock child components to isolate container testing
-jest.mock("@/src/components/navbar/navbar-desktop-navigation", () => ({
+vi.mock("@/src/components/navbar/navbar-desktop-navigation", () => ({
   NavbarDesktopNavigation: () => (
     <div data-testid="navbar-desktop-navigation">Desktop Navigation</div>
   ),
 }));
 
-jest.mock("@/src/components/navbar/navbar-mobile-menu", () => ({
+vi.mock("@/src/components/navbar/navbar-mobile-menu", () => ({
   NavbarMobileMenu: () => <div data-testid="navbar-mobile-menu">Mobile Menu</div>,
 }));
 
-jest.mock("@/src/components/shared/logo", () => ({
+vi.mock("@/src/components/shared/logo", () => ({
   Logo: () => <div data-testid="logo">Logo</div>,
 }));
 
@@ -219,7 +219,7 @@ describe("Navbar - Main Container", () => {
       const nav = screen.getByRole("navigation");
       const container = nav.querySelector("div");
 
-      expect(container).toHaveClass("py-3");
+      expect(container).toHaveClass("py-8");
     });
 
     it("inner container has max-width constraint", () => {

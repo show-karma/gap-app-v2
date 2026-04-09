@@ -2,7 +2,6 @@
 
 import { Cog6ToothIcon } from "@heroicons/react/24/outline";
 import { ArrowLeftIcon } from "@heroicons/react/24/solid";
-import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 import { ApplicationListWithAPI } from "@/components/FundingPlatform";
@@ -16,6 +15,7 @@ import {
   useProgramConfig,
 } from "@/hooks/useFundingPlatform";
 import type { IApplicationFilters } from "@/services/fundingPlatformService";
+import { Link } from "@/src/components/navigation/Link";
 import { AdminOnly, FundingPlatformGuard, useIsFundingPlatformAdmin } from "@/src/core/rbac";
 import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
 import type { IFundingApplication } from "@/types/funding-platform";

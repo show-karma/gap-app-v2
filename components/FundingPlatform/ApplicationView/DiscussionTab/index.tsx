@@ -35,6 +35,10 @@ export interface DiscussionTabProps {
   onVersionClick?: (versionId: string) => void;
   /** Whether data is loading */
   isLoading?: boolean;
+  /** Program ID for @mention autocomplete */
+  programId?: string;
+  /** Enable @mention functionality */
+  enableMentions?: boolean;
 }
 
 /**
@@ -54,6 +58,8 @@ export const DiscussionTab: FC<DiscussionTabProps> = ({
   onCommentDelete,
   onVersionClick,
   isLoading = false,
+  programId,
+  enableMentions = false,
 }) => {
   const [isAddingComment, setIsAddingComment] = useState(false);
 
@@ -78,6 +84,9 @@ export const DiscussionTab: FC<DiscussionTabProps> = ({
           placeholder={
             isAdmin ? "Add an admin comment..." : "Add a comment for this application..."
           }
+          programId={programId}
+          enableMentions={enableMentions}
+          isAdmin={isAdmin}
         />
       </div>
 
@@ -93,6 +102,8 @@ export const DiscussionTab: FC<DiscussionTabProps> = ({
         onCommentDelete={onCommentDelete}
         onVersionClick={onVersionClick}
         isLoading={isLoading}
+        programId={programId}
+        enableMentions={enableMentions}
       />
     </div>
   );

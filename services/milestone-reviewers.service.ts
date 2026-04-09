@@ -74,11 +74,15 @@ export const milestoneReviewersService = {
 
     if (error) {
       // Handle "No reviewers found" as an empty list, not an error
-      if (error.includes("Milestone Reviewer Not Found") || error.includes("No reviewers found")) {
+      const errorMessage = String(error);
+      if (
+        errorMessage.includes("Milestone Reviewer Not Found") ||
+        errorMessage.includes("No reviewers found")
+      ) {
         return [];
       }
       console.error("Milestone Reviewers API Error:", error);
-      throw new Error(error);
+      throw new Error(errorMessage);
     }
 
     // Map the API response to the expected format
@@ -129,10 +133,12 @@ export const milestoneReviewersService = {
   },
 
   /**
-   * Remove a milestone reviewer from a program
+   * Remove a milestone reviewer from a program by email
    */
-  async removeReviewer(programId: string, publicAddress: string): Promise<void> {
-    await apiClient.delete(`/v2/programs/${programId}/milestone-reviewers/${publicAddress}`);
+  async removeReviewer(programId: string, email: string): Promise<void> {
+    await apiClient.delete(`/v2/programs/${programId}/milestone-reviewers/by-email`, {
+      data: { email },
+    });
   },
 
   /**

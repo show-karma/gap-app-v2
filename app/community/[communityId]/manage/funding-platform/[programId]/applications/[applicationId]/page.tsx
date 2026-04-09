@@ -1,11 +1,9 @@
 "use client";
 
 import { ArrowLeftIcon } from "@heroicons/react/24/solid";
-import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
 import { AIAnalysisTab } from "@/components/FundingPlatform/ApplicationView/AIAnalysisTab";
 import ApplicationHeader from "@/components/FundingPlatform/ApplicationView/ApplicationHeader";
 import { ApplicationTab } from "@/components/FundingPlatform/ApplicationView/ApplicationTab";
@@ -26,6 +24,7 @@ import { StatusChangeInline } from "@/components/FundingPlatform/ApplicationView
 import { TabPanel } from "@/components/FundingPlatform/ApplicationView/TabPanel";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { useAuth } from "@/hooks/useAuth";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
 import {
   useApplication,
@@ -36,6 +35,7 @@ import {
   useProgramConfig,
 } from "@/hooks/useFundingPlatform";
 import { useKycConfig, useKycStatus } from "@/hooks/useKycStatus";
+import { Link } from "@/src/components/navigation/Link";
 import {
   AdminOnly,
   FundingPlatformGuard,
@@ -74,7 +74,7 @@ export default function ApplicationDetailPage() {
   const shouldOpenEdit = searchParams.get("edit") === "true";
 
   // Get current user address
-  const { address: currentUserAddress } = useAccount();
+  const { address: currentUserAddress } = useAuth();
 
   // View mode state for ApplicationContent
   const [applicationViewMode, setApplicationViewMode] = useState<"details" | "changes">("details");
@@ -325,12 +325,14 @@ export default function ApplicationDetailPage() {
       can(Permission.APPLICATION_REVIEW));
 
   // Check if post-approval edit should be enabled (admin only)
-  // Only for approved applications with existing post-approval data
+  // Show when approved AND (program has a post-approval form schema OR data already exists)
+  const hasPostApprovalSchema = !!config?.postApprovalFormSchema?.fields?.length;
+  const hasPostApprovalData =
+    !!application?.postApprovalData && Object.keys(application.postApprovalData).length > 0;
   const canEditPostApproval =
     isAdmin &&
     application?.status?.toLowerCase() === "approved" &&
-    application?.postApprovalData &&
-    Object.keys(application.postApprovalData).length > 0;
+    (hasPostApprovalSchema || hasPostApprovalData);
 
   // Check loading states
   if (isLoadingPermissions || isLoadingApplication) {
@@ -502,6 +504,8 @@ export default function ApplicationDetailPage() {
                         onCommentDelete={handleCommentDelete}
                         onVersionClick={handleVersionClick}
                         isLoading={isLoadingComments}
+                        programId={programId}
+                        enableMentions
                       />
                     </TabPanel>
                   ),

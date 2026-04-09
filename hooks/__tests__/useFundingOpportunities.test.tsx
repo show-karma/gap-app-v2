@@ -6,9 +6,9 @@ import type { FundingProgram } from "@/src/features/funding-map/types/funding-pr
 import { useFundingOpportunities } from "../useFundingOpportunities";
 
 // Mock the service
-jest.mock("@/src/features/funding-map/services/funding-programs.service");
+vi.mock("@/src/features/funding-map/services/funding-programs.service");
 
-const mockGetAll = fundingProgramsService.getAll as jest.MockedFunction<
+const mockGetAll = fundingProgramsService.getAll as vi.MockedFunction<
   typeof fundingProgramsService.getAll
 >;
 
@@ -41,7 +41,7 @@ describe("useFundingOpportunities", () => {
         },
       },
     });
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   afterEach(() => {

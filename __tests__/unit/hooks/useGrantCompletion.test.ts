@@ -4,21 +4,21 @@
  */
 
 // Mock ESM modules to avoid parsing issues
-jest.mock("@/utilities/gasless", () => ({
-  createGaslessClient: jest.fn().mockResolvedValue(null),
-  getGaslessSigner: jest.fn().mockResolvedValue(null),
-  isChainSupportedForGasless: jest.fn().mockReturnValue(false),
-  createPrivySignerForGasless: jest.fn().mockResolvedValue(null),
-  getChainGaslessConfig: jest.fn().mockReturnValue(null),
-  getProviderForChain: jest.fn().mockReturnValue(null),
+vi.mock("@/utilities/gasless", () => ({
+  createGaslessClient: vi.fn().mockResolvedValue(null),
+  getGaslessSigner: vi.fn().mockResolvedValue(null),
+  isChainSupportedForGasless: vi.fn().mockReturnValue(false),
+  createPrivySignerForGasless: vi.fn().mockResolvedValue(null),
+  getChainGaslessConfig: vi.fn().mockReturnValue(null),
+  getProviderForChain: vi.fn().mockReturnValue(null),
   SUPPORTED_GASLESS_CHAINS: [],
   GaslessProviderError: class GaslessProviderError extends Error {},
 }));
 
-jest.mock("@/hooks/useZeroDevSigner", () => ({
-  useZeroDevSigner: jest.fn(() => ({
-    getSignerForChain: jest.fn().mockResolvedValue(null),
-    getAttestationSigner: jest.fn().mockResolvedValue({}),
+vi.mock("@/hooks/useZeroDevSigner", () => ({
+  useZeroDevSigner: vi.fn(() => ({
+    getSignerForChain: vi.fn().mockResolvedValue(null),
+    getAttestationSigner: vi.fn().mockResolvedValue({}),
     isGaslessAvailable: false,
     attestationAddress: null,
     hasEmbeddedWallet: false,
@@ -28,28 +28,42 @@ jest.mock("@/hooks/useZeroDevSigner", () => ({
   })),
 }));
 
-// Mock ALL dependencies to avoid ESM import issues
-const mockSetupChainAndWallet = jest.fn();
-const mockFetchGrantInstance = jest.fn();
-const mockNotifyIndexerForGrant = jest.fn();
-const mockPollForGrantCompletion = jest.fn();
-const mockToastSuccess = jest.fn();
-const mockShowError = jest.fn();
-const mockShowSuccess = jest.fn();
+// Hoist mock variables so they are available inside vi.mock factories
+const {
+  mockFetchGrantInstance,
+  mockNotifyIndexerForGrant,
+  mockPollForGrantCompletion,
+  mockToastSuccess,
+  mockShowError,
+  mockShowSuccess,
+  mockUseAccount,
+  mockUseChainId,
+  mockSetupChainAndWallet,
+} = vi.hoisted(() => ({
+  mockFetchGrantInstance: vi.fn(),
+  mockNotifyIndexerForGrant: vi.fn(),
+  mockPollForGrantCompletion: vi.fn(),
+  mockToastSuccess: vi.fn(),
+  mockShowError: vi.fn(),
+  mockShowSuccess: vi.fn(),
+  mockUseAccount: vi.fn(),
+  mockUseChainId: vi.fn(() => 1),
+  mockSetupChainAndWallet: vi.fn().mockResolvedValue(null),
+}));
 
-jest.mock("@/utilities/grant-helpers", () => ({
+vi.mock("@/utilities/grant-helpers", () => ({
   getSDKGrantInstance: mockFetchGrantInstance,
 }));
 
-jest.mock("@/utilities/indexer-notification", () => ({
+vi.mock("@/utilities/indexer-notification", () => ({
   notifyIndexerForGrant: mockNotifyIndexerForGrant,
 }));
 
-jest.mock("@/utilities/attestation-polling", () => ({
+vi.mock("@/utilities/attestation-polling", () => ({
   pollForGrantCompletion: mockPollForGrantCompletion,
 }));
 
-jest.mock("react-hot-toast", () => ({
+vi.mock("react-hot-toast", () => ({
   __esModule: true,
   default: {
     success: mockToastSuccess,
@@ -57,36 +71,34 @@ jest.mock("react-hot-toast", () => ({
   },
 }));
 
-jest.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: jest.fn(),
+vi.mock("@/components/Utilities/errorManager", () => ({
+  errorManager: vi.fn(),
 }));
 
-const mockUseAccount = jest.fn();
-const mockUseChainId = jest.fn(() => 1);
-jest.mock("wagmi", () => ({
+vi.mock("wagmi", () => ({
   useAccount: mockUseAccount,
   useChainId: mockUseChainId,
 }));
 
-jest.mock("@/hooks/useWallet", () => ({
-  useWallet: jest.fn(() => ({ switchChainAsync: jest.fn() })),
+vi.mock("@/hooks/useWallet", () => ({
+  useWallet: vi.fn(() => ({ switchChainAsync: vi.fn() })),
 }));
 
-jest.mock("@/hooks/useAttestationToast", () => ({
-  useAttestationToast: jest.fn(() => ({
-    startAttestation: jest.fn(),
-    changeStepperStep: jest.fn(),
-    setIsStepper: jest.fn(),
-    showLoading: jest.fn(),
+vi.mock("@/hooks/useAttestationToast", () => ({
+  useAttestationToast: vi.fn(() => ({
+    startAttestation: vi.fn(),
+    changeStepperStep: vi.fn(),
+    setIsStepper: vi.fn(),
+    showLoading: vi.fn(),
     showSuccess: mockShowSuccess,
     showError: mockShowError,
-    updateStep: jest.fn(),
-    dismiss: jest.fn(),
+    updateStep: vi.fn(),
+    dismiss: vi.fn(),
   })),
 }));
 
-jest.mock("@/hooks/useSetupChainAndWallet", () => ({
-  useSetupChainAndWallet: jest.fn(() => ({
+vi.mock("@/hooks/useSetupChainAndWallet", () => ({
+  useSetupChainAndWallet: vi.fn(() => ({
     setupChainAndWallet: mockSetupChainAndWallet,
     isSmartWalletReady: false,
     smartWalletAddress: null,
@@ -95,14 +107,14 @@ jest.mock("@/hooks/useSetupChainAndWallet", () => ({
   })),
 }));
 
-jest.mock("@/utilities/sanitize", () => ({
-  sanitizeObject: jest.fn((obj) => obj),
+vi.mock("@/utilities/sanitize", () => ({
+  sanitizeObject: vi.fn((obj) => obj),
 }));
 
 import { act, renderHook } from "@testing-library/react";
 
 // Import the hook to test AFTER mocking dependencies
-const { useGrantCompletion } = require("@/hooks/useGrantCompletion");
+import { useGrantCompletion } from "@/hooks/useGrantCompletion";
 
 describe("useGrantCompletion", () => {
   const mockGrant = {
@@ -115,16 +127,26 @@ describe("useGrantCompletion", () => {
     uid: "project-456",
   };
 
-  const mockGapClient = { fetch: { projectById: jest.fn() } } as any;
-  const mockWalletSigner = { getAddress: jest.fn() } as any;
+  const mockGapClient = { fetch: { projectById: vi.fn() } } as any;
+  const mockWalletSigner = { getAddress: vi.fn() } as any;
   const mockGrantInstance = {
-    complete: jest.fn(),
+    complete: vi.fn(),
   } as any;
 
+  let consoleSpy: ReturnType<typeof vi.spyOn>;
+
   beforeEach(() => {
-    jest.clearAllMocks();
-    // Reset useAccount mock to default values
+    vi.clearAllMocks();
+    // Re-apply mock return values that clearAllMocks doesn't reset
+    // (restoreAllMocks in afterEach DOES reset them)
     mockUseAccount.mockReturnValue({ chain: { id: 1 }, address: "0x123" });
+    mockSetupChainAndWallet.mockResolvedValue(null);
+    // Suppress expected console.error from the hook's catch blocks
+    consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    consoleSpy.mockRestore();
   });
 
   describe("Initialization", () => {
@@ -136,17 +158,16 @@ describe("useGrantCompletion", () => {
     });
 
     it("should accept onComplete callback", () => {
-      const onComplete = jest.fn();
+      const onComplete = vi.fn();
       const { result } = renderHook(() => useGrantCompletion({ onComplete }));
 
       expect(typeof result.current.completeGrant).toBe("function");
     });
   });
 
-  // TODO: Fix mock setup - useSetupChainAndWallet mock not being used correctly
-  describe.skip("Successful Grant Completion", () => {
+  describe("Successful Grant Completion", () => {
     it("should complete grant successfully", async () => {
-      const onComplete = jest.fn();
+      const onComplete = vi.fn();
 
       mockSetupChainAndWallet.mockResolvedValue({
         gapClient: mockGapClient,
@@ -223,15 +244,16 @@ describe("useGrantCompletion", () => {
     });
   });
 
-  describe.skip("Chain Setup Failures", () => {
+  describe("Chain Setup Failures", () => {
     it("should handle chain setup failure", async () => {
-      mockSetupChainAndWallet.mockResolvedValue(null);
-
+      // Default mock already returns null for setupChainAndWallet
       const { result } = renderHook(() => useGrantCompletion({}));
 
       await act(async () => {
         await result.current.completeGrant(mockGrant, mockProject);
       });
+
+      expect(mockSetupChainAndWallet).toHaveBeenCalled();
 
       expect(mockShowError).toHaveBeenCalledWith(
         "Please switch to the correct network and try again"
@@ -278,7 +300,7 @@ describe("useGrantCompletion", () => {
     });
   });
 
-  describe.skip("Error Handling", () => {
+  describe("Error Handling", () => {
     it("should handle user rejection (code 4001)", async () => {
       mockSetupChainAndWallet.mockResolvedValue({
         gapClient: mockGapClient,
@@ -342,7 +364,7 @@ describe("useGrantCompletion", () => {
     });
   });
 
-  describe.skip("State Management", () => {
+  describe("State Management", () => {
     it("should set isCompleting to true during operation", async () => {
       let resolveSetup: any;
       const setupPromise = new Promise((resolve) => {
@@ -372,8 +394,7 @@ describe("useGrantCompletion", () => {
     });
   });
 
-  // TODO: Fix mock setup - useSetupChainAndWallet mock not being used correctly
-  describe.skip("Transaction Hash Handling", () => {
+  describe("Transaction Hash Handling", () => {
     it("should handle missing transaction hash", async () => {
       mockSetupChainAndWallet.mockResolvedValue({
         gapClient: mockGapClient,

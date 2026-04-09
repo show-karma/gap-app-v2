@@ -3,26 +3,69 @@ import "@testing-library/jest-dom";
 import type { Project } from "@/types/v2/project";
 import { ProjectHeader } from "../Header/ProjectHeader";
 
+// Mock next/navigation
+const mockPush = vi.fn();
+vi.mock("next/navigation", () => ({
+  useParams: () => ({ projectId: "test-project" }),
+  useRouter: () => ({ push: mockPush }),
+  usePathname: () => "/project/test-project",
+}));
+
+// Mock react-wrap-balancer
+vi.mock("react-wrap-balancer", () => ({
+  __esModule: true,
+  default: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
+}));
+
+// Mock utilities
+vi.mock("@/utilities/customLink", () => ({
+  isCustomLink: (link: any) => !!link?.name,
+}));
+
+vi.mock("@/utilities/ensureProtocol", () => ({
+  ensureProtocol: (url: string) => (url.startsWith("http") ? url : `https://${url}`),
+}));
+
+vi.mock("@/utilities/pages", () => ({
+  PAGES: {
+    PROJECT: {
+      ABOUT: (id: string) => `/project/${id}/about`,
+    },
+  },
+}));
+
 // Mock the MarkdownPreview component
-jest.mock("@/components/Utilities/MarkdownPreview", () => ({
+vi.mock("@/components/Utilities/MarkdownPreview", () => ({
   MarkdownPreview: ({ source, className }: { source: string; className?: string }) => (
     <div className={className}>{source}</div>
   ),
 }));
 
+// Mock the VerificationBadge component
+vi.mock("../icons/VerificationBadge", () => ({
+  VerificationBadge: (props: any) => <span data-testid={props["data-testid"]} />,
+}));
+
+// Mock the ProfilePicture component
+vi.mock("@/components/Utilities/ProfilePicture", () => ({
+  ProfilePicture: ({ name, imageURL }: any) => (
+    <div data-testid="profile-picture">{imageURL ? <img src={imageURL} alt={name} /> : name}</div>
+  ),
+}));
+
 // Mock the ProjectActivityChart component to avoid QueryClient requirement
-jest.mock("../MainContent/ProjectActivityChart", () => ({
+vi.mock("../MainContent/ProjectActivityChart", () => ({
   ProjectActivityChart: () => <div data-testid="project-activity-chart">Activity Chart</div>,
 }));
 
 // Mock the ProjectOptionsMenu to avoid ESM dependencies
-jest.mock("@/components/Pages/Project/ProjectOptionsMenu", () => ({
+vi.mock("@/components/Pages/Project/ProjectOptionsMenu", () => ({
   ProjectOptionsMenu: () => <div data-testid="project-options-menu">Options Menu</div>,
 }));
 
 // Mock the useProjectSocials hook
-jest.mock("@/hooks/useProjectSocials", () => ({
-  useProjectSocials: jest.fn(() => [
+vi.mock("@/hooks/useProjectSocials", () => ({
+  useProjectSocials: vi.fn(() => [
     {
       name: "Twitter",
       url: "https://twitter.com/test",
@@ -152,23 +195,14 @@ describe("ProjectHeader", () => {
       expect(screen.getByTestId("read-more-button")).toHaveTextContent("Read More");
     });
 
-    it("should expand description when Read More is clicked", () => {
+    it("should navigate to About page when Read More is clicked", () => {
       render(<ProjectHeader project={mockProjectLongDescription} />);
 
-      const readMoreButton = screen.getByTestId("read-more-button");
-      fireEvent.click(readMoreButton);
+      const readMoreLink = screen.getByTestId("read-more-button");
+      fireEvent.click(readMoreLink);
 
-      expect(readMoreButton).toHaveTextContent("Show less");
-    });
-
-    it("should collapse description when Show Less is clicked", () => {
-      render(<ProjectHeader project={mockProjectLongDescription} />);
-
-      const readMoreButton = screen.getByTestId("read-more-button");
-      fireEvent.click(readMoreButton); // Expand
-      fireEvent.click(readMoreButton); // Collapse
-
-      expect(readMoreButton).toHaveTextContent("Read More");
+      // Read More navigates to About page instead of toggling inline
+      expect(readMoreLink).toHaveTextContent("Read More");
     });
 
     it("should not show Read More for short descriptions", () => {

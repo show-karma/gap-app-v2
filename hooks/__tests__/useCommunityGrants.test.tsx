@@ -6,9 +6,9 @@ import type { CommunityGrant } from "@/types/v2/community-grant";
 import { useCommunityGrants } from "../useCommunityGrants";
 
 // Mock the service
-jest.mock("@/services/community-grants.service");
+vi.mock("@/services/community-grants.service");
 
-const mockGetCommunityGrants = getCommunityGrants as jest.MockedFunction<typeof getCommunityGrants>;
+const mockGetCommunityGrants = getCommunityGrants as vi.MockedFunction<typeof getCommunityGrants>;
 
 describe("useCommunityGrants", () => {
   let queryClient: QueryClient;
@@ -37,7 +37,7 @@ describe("useCommunityGrants", () => {
         },
       },
     });
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   afterEach(() => {

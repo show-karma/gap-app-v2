@@ -3,15 +3,15 @@ import userEvent from "@testing-library/user-event";
 import { ApplicationSubTabs } from "@/components/FundingPlatform/ApplicationView/ApplicationTab/ApplicationSubTabs";
 
 // Mock cn utility
-jest.mock("@/utilities/tailwind", () => ({
+vi.mock("@/utilities/tailwind", () => ({
   cn: (...classes: any[]) => classes.filter(Boolean).join(" "),
 }));
 
 describe("ApplicationSubTabs", () => {
-  const mockOnTabChange = jest.fn();
+  const mockOnTabChange = vi.fn();
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("Rendering", () => {

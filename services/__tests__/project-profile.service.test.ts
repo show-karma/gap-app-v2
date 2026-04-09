@@ -162,6 +162,7 @@ describe("transformGrantsToMilestones", () => {
         communityImage: "https://example.com/logo.png",
         grantTitle: "Test Grant",
         grantUID: "0x1234",
+        programType: undefined,
       },
     });
   });
@@ -220,6 +221,75 @@ describe("transformGrantsToMilestones", () => {
   it("should return empty array for empty input", () => {
     const result = transformGrantsToMilestones([]);
     expect(result).toEqual([]);
+  });
+
+  // -------------------------------------------------------------------------
+  // Hex address filtering (Issue #1144)
+  // -------------------------------------------------------------------------
+
+  it("should filter hex address '0x0' from currency so it does not appear in amount", () => {
+    const grantWithHexCurrency: Grant = {
+      ...mockGrant,
+      details: { ...mockGrant.details, amount: "10000", currency: "0x0" },
+    };
+    const result = transformGrantsToMilestones([grantWithHexCurrency]);
+
+    expect(result[0].grantReceived?.amount).toBe("10000");
+    expect(result[0].grantReceived?.currency).toBeUndefined();
+  });
+
+  it("should filter full hex addresses like '0x1234abcdef' from currency", () => {
+    const grantWithHexCurrency: Grant = {
+      ...mockGrant,
+      details: { ...mockGrant.details, amount: "5000", currency: "0x1234abcdef" },
+    };
+    const result = transformGrantsToMilestones([grantWithHexCurrency]);
+
+    expect(result[0].grantReceived?.amount).toBe("5000");
+    expect(result[0].grantReceived?.currency).toBeUndefined();
+  });
+
+  it("should filter long ERC-20 token hex addresses from currency", () => {
+    const grantWithErc20Address: Grant = {
+      ...mockGrant,
+      details: {
+        ...mockGrant.details,
+        amount: "1000",
+        currency: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+      },
+    };
+    const result = transformGrantsToMilestones([grantWithErc20Address]);
+
+    expect(result[0].grantReceived?.amount).toBe("1000");
+    expect(result[0].grantReceived?.currency).toBeUndefined();
+  });
+
+  it("should pass through programType to grantReceived", () => {
+    const hackathonGrant: Grant = {
+      ...mockGrant,
+      programType: "hackathon",
+    };
+
+    const result = transformGrantsToMilestones([hackathonGrant]);
+
+    expect(result[0].grantReceived?.programType).toBe("hackathon");
+  });
+
+  it("should handle grant programType", () => {
+    const grantWithType: Grant = {
+      ...mockGrant,
+      programType: "grant",
+    };
+
+    const result = transformGrantsToMilestones([grantWithType]);
+
+    expect(result[0].grantReceived?.programType).toBe("grant");
+  });
+
+  it("should handle undefined programType", () => {
+    const result = transformGrantsToMilestones([mockGrant]);
+
+    expect(result[0].grantReceived?.programType).toBeUndefined();
   });
 });
 
@@ -450,8 +520,8 @@ describe("aggregateProjectProfileData", () => {
     );
 
     expect(result.isVerified).toBe(true);
-    // Should include: 1 milestone + 1 impact + 1 grant_received
-    expect(result.allUpdates).toHaveLength(3);
+    // Should include: 1 milestone + 1 impact + 1 grant_received + 2 endorsements
+    expect(result.allUpdates).toHaveLength(5);
     expect(result.completedCount).toBe(1);
     expect(result.stats.grantsCount).toBe(1);
     expect(result.stats.endorsementsCount).toBe(2);
@@ -512,14 +582,14 @@ describe("sortActivities", () => {
 // =============================================================================
 
 describe("getActivityFilterType", () => {
-  it("should return funding for grant type", () => {
+  it("should return milestones for grant type", () => {
     const milestone = { ...mockMilestone, type: "grant" as const };
-    expect(getActivityFilterType(milestone)).toBe("funding");
+    expect(getActivityFilterType(milestone)).toBe("milestones");
   });
 
-  it("should return funding for grant_update type", () => {
+  it("should return updates for grant_update type", () => {
     const milestone = { ...mockMilestone, type: "grant_update" as const };
-    expect(getActivityFilterType(milestone)).toBe("funding");
+    expect(getActivityFilterType(milestone)).toBe("updates");
   });
 
   it("should return funding for grant_received type", () => {
@@ -527,9 +597,9 @@ describe("getActivityFilterType", () => {
     expect(getActivityFilterType(milestone)).toBe("funding");
   });
 
-  it("should return updates for milestone type", () => {
+  it("should return milestones for milestone type", () => {
     const milestone = { ...mockMilestone, type: "milestone" as const };
-    expect(getActivityFilterType(milestone)).toBe("updates");
+    expect(getActivityFilterType(milestone)).toBe("milestones");
   });
 
   it("should return updates for activity type", () => {
@@ -560,16 +630,16 @@ describe("filterActivities", () => {
   });
 
   it("should filter by single type", () => {
-    const result = filterActivities(items, ["funding"]);
+    const result = filterActivities(items, ["milestones"]);
 
-    expect(result).toHaveLength(1);
-    expect(result[0].type).toBe("grant");
+    expect(result).toHaveLength(2);
+    expect(result.map((r) => r.type)).toEqual(expect.arrayContaining(["grant", "milestone"]));
   });
 
   it("should filter by multiple types", () => {
-    const result = filterActivities(items, ["funding", "updates"]);
+    const result = filterActivities(items, ["milestones", "other"]);
 
-    expect(result).toHaveLength(2);
+    expect(result).toHaveLength(3);
   });
 });
 
@@ -585,7 +655,7 @@ describe("processActivities", () => {
   ];
 
   it("should apply both filtering and sorting", () => {
-    const result = processActivities(items, "newest", ["funding", "updates"]);
+    const result = processActivities(items, "newest", ["milestones"]);
 
     expect(result).toHaveLength(2);
     expect(result[0].uid).toBe("2");

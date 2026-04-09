@@ -5,23 +5,30 @@ export function sanitizeInput<T>(input: T): T {
   return input;
 }
 
-export function sanitizeObject(obj: any): any {
+export function sanitizeObject(obj: any, seen?: WeakSet<object>): any {
   if (typeof obj !== "object" || obj === null) {
     return sanitizeInput(obj);
   }
-
-  if (Array.isArray(obj)) {
-    return obj.map((item) => sanitizeObject(item));
-  }
-
-  const sanitizedObj: any = {};
 
   if (obj instanceof Date) {
     return obj;
   }
 
+  // Circular reference guard: track visited objects to prevent stack overflow
+  const visited = seen ?? new WeakSet<object>();
+  if (visited.has(obj)) {
+    return obj;
+  }
+  visited.add(obj);
+
+  if (Array.isArray(obj)) {
+    return obj.map((item) => sanitizeObject(item, visited));
+  }
+
+  const sanitizedObj: any = {};
+
   for (const [key, value] of Object.entries(obj)) {
-    sanitizedObj[key] = sanitizeObject(value);
+    sanitizedObj[key] = sanitizeObject(value, visited);
   }
 
   return sanitizedObj;

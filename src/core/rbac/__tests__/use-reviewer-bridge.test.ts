@@ -12,7 +12,7 @@ const mockContextValue = {
   isLoading: false,
 };
 
-jest.mock("../context/permission-context", () => ({
+vi.mock("../context/permission-context", () => ({
   usePermissionContext: () => mockContextValue,
 }));
 
@@ -20,7 +20,7 @@ import { renderHook } from "@testing-library/react";
 
 describe("useReviewerBridge", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockContextValue.isReviewer = false;
     mockContextValue.isLoading = false;
     mockContextValue.roles = {

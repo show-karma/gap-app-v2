@@ -49,6 +49,9 @@
     "**/*.stories.ts",
     "**/__tests__/**/*",
     "**/__mocks__/**/*",
-    "tests/**/*"
+    "tests/**/*",
+    "e2e/**/*",
+    "widget/vite.config.ts",
+    "widget/tailwind.config.ts"
   ]
 }

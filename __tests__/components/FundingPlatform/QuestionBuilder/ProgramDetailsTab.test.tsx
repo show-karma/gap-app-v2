@@ -8,33 +8,33 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type React from "react";
 import { ProgramDetailsTab } from "@/components/FundingPlatform/QuestionBuilder/ProgramDetailsTab";
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
-import { ProgramRegistryService } from "@/services/programRegistry.service";
+import { ProgramRegistryService } from "@/src/features/program-registry/services/program-registry.service";
+import type { GrantProgram } from "@/src/features/program-registry/types";
 
 // Mock dependencies
-jest.mock("wagmi", () => ({
-  useAccount: jest.fn(),
+vi.mock("wagmi", () => ({
+  useAccount: vi.fn(),
 }));
 
-jest.mock("@/hooks/useAuth", () => ({
-  useAuth: jest.fn(),
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: vi.fn(),
 }));
 
-jest.mock("@/services/programRegistry.service", () => ({
+vi.mock("@/src/features/program-registry/services/program-registry.service", () => ({
   ProgramRegistryService: {
-    extractProgramId: jest.fn(),
-    updateProgram: jest.fn(),
+    extractProgramId: vi.fn(),
+    updateProgram: vi.fn(),
   },
 }));
 
-jest.mock("@/utilities/fetchData", () => ({
+vi.mock("@/utilities/fetchData", () => ({
   __esModule: true,
-  default: jest.fn(),
+  default: vi.fn(),
 }));
 
-jest.mock("@/utilities/indexer", () => ({
+vi.mock("@/utilities/indexer", () => ({
   INDEXER: {
     REGISTRY: {
       FIND_BY_ID: (id: string, chainId: number) => `/registry/find/${id}/${chainId}`,
@@ -43,20 +43,8 @@ jest.mock("@/utilities/indexer", () => ({
   },
 }));
 
-jest.mock("react-hot-toast", () => ({
-  __esModule: true,
-  default: {
-    success: jest.fn(),
-    error: jest.fn(),
-  },
-}));
-
-jest.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: jest.fn(),
-}));
-
 // Mock MultiEmailInput to render a simple input + button for testing
-jest.mock("@/components/Utilities/MultiEmailInput", () => ({
+vi.mock("@/components/Utilities/MultiEmailInput", () => ({
   MultiEmailInput: ({
     emails,
     onChange,
@@ -98,7 +86,7 @@ jest.mock("@/components/Utilities/MultiEmailInput", () => ({
 }));
 
 // Mock MarkdownEditor to render a simple textarea for testing
-jest.mock("@/components/Utilities/MarkdownEditor", () => ({
+vi.mock("@/components/Utilities/MarkdownEditor", () => ({
   MarkdownEditor: ({
     value,
     onChange,
@@ -144,7 +132,7 @@ jest.mock("@/components/Utilities/MarkdownEditor", () => ({
   ),
 }));
 
-jest.mock("@/components/Utilities/DatePicker", () => ({
+vi.mock("@/components/Utilities/DatePicker", () => ({
   DatePicker: ({ selected, onSelect, placeholder, buttonClassName, clearButtonFn }: any) => (
     <div data-testid="date-picker">
       <button
@@ -170,7 +158,7 @@ jest.mock("@/components/Utilities/DatePicker", () => ({
   ),
 }));
 
-jest.mock("@/components/Utilities/DateTimePicker", () => ({
+vi.mock("@/components/Utilities/DateTimePicker", () => ({
   DateTimePicker: ({
     selected,
     onSelect,
@@ -263,7 +251,7 @@ const mockProgram: GrantProgram = {
   },
 };
 
-// Helper to create test query client
+// Fresh QueryClient per render — no afterEach cleanup required
 const createTestQueryClient = () =>
   new QueryClient({
     defaultOptions: {
@@ -279,26 +267,28 @@ const renderWithProviders = (ui: React.ReactElement, queryClient?: QueryClient) 
 };
 
 describe("ProgramDetailsTab", () => {
-  const mockLogin = jest.fn();
+  const mockLogin = vi.fn();
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     // Default mocks
-    (useAccount as jest.Mock).mockReturnValue({
+    vi.mocked(useAccount).mockReturnValue({
       address: mockAddress,
       isConnected: true,
     });
 
-    (useAuth as jest.Mock).mockReturnValue({
+    vi.mocked(useAuth).mockReturnValue({
       authenticated: true,
       login: mockLogin,
-    });
+      address: mockAddress,
+      isConnected: true,
+    } as any);
 
-    (ProgramRegistryService.extractProgramId as jest.Mock).mockReturnValue(mockProgramDbId);
-    (ProgramRegistryService.updateProgram as jest.Mock).mockResolvedValue(undefined);
+    vi.mocked(ProgramRegistryService.extractProgramId).mockReturnValue(mockProgramDbId);
+    vi.mocked(ProgramRegistryService.updateProgram).mockResolvedValue(undefined);
 
-    (fetchData as jest.Mock).mockImplementation(async (url: string) => {
+    vi.mocked(fetchData).mockImplementation(async (url: string) => {
       if (url.includes("find")) {
         return [mockProgram, null];
       }
@@ -339,7 +329,7 @@ describe("ProgramDetailsTab", () => {
     });
 
     it("should show error state when program fails to load", async () => {
-      (fetchData as jest.Mock).mockImplementation(async () => {
+      vi.mocked(fetchData).mockImplementation(async () => {
         return [null, "Failed to load program"];
       });
 
@@ -353,7 +343,7 @@ describe("ProgramDetailsTab", () => {
     });
 
     it("should show 'Program not found' when program is null", async () => {
-      (fetchData as jest.Mock).mockImplementation(async () => {
+      vi.mocked(fetchData).mockImplementation(async () => {
         return [null, null];
       });
 
@@ -365,7 +355,7 @@ describe("ProgramDetailsTab", () => {
     });
 
     it("should handle array response from API", async () => {
-      (fetchData as jest.Mock).mockImplementation(async () => {
+      vi.mocked(fetchData).mockImplementation(async () => {
         return [[mockProgram], null];
       });
 
@@ -528,7 +518,10 @@ describe("ProgramDetailsTab", () => {
       await user.clear(budgetInput);
 
       // Set negative value directly via fireEvent to bypass HTML5 validation
-      fireEvent.change(budgetInput, { target: { value: "-100" } });
+      await user.clear(budgetInput);
+
+      await user.type(budgetInput, "-100");
+      // fireEvent required: testing blur/focus event handler callback
       fireEvent.blur(budgetInput);
 
       // Make form dirty by changing another field first
@@ -681,7 +674,7 @@ describe("ProgramDetailsTab", () => {
           expect(ProgramRegistryService.updateProgram).toHaveBeenCalled();
           // fetchData should be called at least twice (initial load + refetch)
           expect(fetchData).toHaveBeenCalledTimes(2);
-          const calls = (fetchData as jest.Mock).mock.calls;
+          const calls = vi.mocked(fetchData).mock.calls;
           const lastCall = calls[calls.length - 1];
           expect(lastCall[0]).toContain("find");
         },
@@ -692,9 +685,7 @@ describe("ProgramDetailsTab", () => {
     it("should handle update errors", async () => {
       const user = userEvent.setup();
       // Mock service to throw error
-      (ProgramRegistryService.updateProgram as jest.Mock).mockRejectedValue(
-        new Error("Update failed")
-      );
+      vi.mocked(ProgramRegistryService.updateProgram).mockRejectedValue(new Error("Update failed"));
 
       renderWithProviders(<ProgramDetailsTab programId={mockProgramId} chainId={mockChainId} />);
 
@@ -718,7 +709,7 @@ describe("ProgramDetailsTab", () => {
     it("should handle duplicate program name error", async () => {
       const user = userEvent.setup();
       // Mock service to throw duplicate name error
-      (ProgramRegistryService.updateProgram as jest.Mock).mockRejectedValue(
+      vi.mocked(ProgramRegistryService.updateProgram).mockRejectedValue(
         new Error("A program with this name already exists")
       );
 
@@ -746,7 +737,7 @@ describe("ProgramDetailsTab", () => {
     it("should show loading state during submission", async () => {
       const user = userEvent.setup();
       // Mock service to delay so we can see loading state
-      (ProgramRegistryService.updateProgram as jest.Mock).mockImplementation(
+      vi.mocked(ProgramRegistryService.updateProgram).mockImplementation(
         () => new Promise((resolve) => setTimeout(resolve, 100))
       );
 
@@ -762,11 +753,12 @@ describe("ProgramDetailsTab", () => {
       const submitButton = screen.getByRole("button", { name: /save changes/i });
       await user.click(submitButton);
 
-      // Button should show loading state (disabled)
+      // Button should be replaced by spinner when isLoading is true
+      // The Button component replaces children with Spinner when isLoading=true
       await waitFor(
         () => {
-          const buttonAfterClick = screen.getByRole("button", { name: /save changes/i });
-          expect(buttonAfterClick).toBeDisabled();
+          const buttonAfterClick = screen.queryByRole("button", { name: /save changes/i });
+          expect(buttonAfterClick).not.toBeInTheDocument();
         },
         { timeout: 2000 }
       );
@@ -776,7 +768,7 @@ describe("ProgramDetailsTab", () => {
   describe("Authentication", () => {
     it("should prompt login if not authenticated", async () => {
       const user = userEvent.setup();
-      (useAuth as jest.Mock).mockReturnValue({
+      vi.mocked(useAuth).mockReturnValue({
         authenticated: false,
         login: mockLogin,
       });
@@ -794,14 +786,20 @@ describe("ProgramDetailsTab", () => {
       await user.click(submitButton);
 
       expect(mockLogin).toHaveBeenCalled();
-      expect(toast.error).toHaveBeenCalledWith("Authentication required");
+      expect(ProgramRegistryService.updateProgram).not.toHaveBeenCalled();
     });
 
     it("should prompt login if wallet not connected", async () => {
       const user = userEvent.setup();
-      (useAccount as jest.Mock).mockReturnValue({
+      vi.mocked(useAccount).mockReturnValue({
         address: undefined,
         isConnected: false,
+      });
+      vi.mocked(useAuth).mockReturnValue({
+        address: undefined,
+        isConnected: false,
+        authenticated: false,
+        login: mockLogin,
       });
 
       renderWithProviders(<ProgramDetailsTab programId={mockProgramId} chainId={mockChainId} />);
@@ -817,7 +815,7 @@ describe("ProgramDetailsTab", () => {
       await user.click(submitButton);
 
       expect(mockLogin).toHaveBeenCalled();
-      expect(toast.error).toHaveBeenCalledWith("Authentication required");
+      expect(ProgramRegistryService.updateProgram).not.toHaveBeenCalled();
     });
 
     it("should prevent submission in read-only mode", async () => {
@@ -838,7 +836,7 @@ describe("ProgramDetailsTab", () => {
     it("should allow retry when program fails to load", async () => {
       const user = userEvent.setup();
       let fetchAttempt = 0;
-      (fetchData as jest.Mock).mockImplementation(async () => {
+      vi.mocked(fetchData).mockImplementation(async () => {
         fetchAttempt++;
         if (fetchAttempt === 1) {
           return [null, "Failed to load program"];
@@ -876,7 +874,7 @@ describe("ProgramDetailsTab", () => {
         },
       };
 
-      (fetchData as jest.Mock).mockImplementation(async () => {
+      vi.mocked(fetchData).mockImplementation(async () => {
         return [programWithoutDates, null];
       });
 
@@ -900,7 +898,7 @@ describe("ProgramDetailsTab", () => {
         },
       };
 
-      (fetchData as jest.Mock).mockImplementation(async () => {
+      vi.mocked(fetchData).mockImplementation(async () => {
         return [programWithoutBudget, null];
       });
 

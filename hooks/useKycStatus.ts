@@ -31,8 +31,9 @@ const isApplicationReference = (identifier: string): boolean =>
 
 export const KYC_QUERY_KEYS = {
   all: ["kyc"] as const,
+  // communityUID is first to prevent cross-tenant cache collisions
   status: (projectUID: string, communityUID: string) =>
-    [...KYC_QUERY_KEYS.all, "status", projectUID, communityUID] as const,
+    [...KYC_QUERY_KEYS.all, "status", communityUID, projectUID] as const,
   statusByAppRef: (referenceNumber: string) =>
     [...KYC_QUERY_KEYS.all, "status-by-app-ref", referenceNumber] as const,
   config: (communityIdOrSlug: string) =>
@@ -227,6 +228,58 @@ export const useKycBatchStatuses = (
 };
 
 /**
+ * Hook to fetch batch KYC statuses publicly (no auth required)
+ */
+export const useKycBatchStatusesPublic = (
+  communityUID: string | undefined,
+  projectUIDs: string[],
+  options?: { enabled?: boolean }
+) => {
+  const query = useQuery<Map<string, KycStatusResponse | null>>({
+    queryKey: [...KYC_QUERY_KEYS.batchStatuses(communityUID || "", projectUIDs), "public"],
+    queryFn: async () => {
+      if (!communityUID || projectUIDs.length === 0) {
+        return new Map();
+      }
+
+      const [data, error] = await fetchData<KycBatchStatusResponse>(
+        INDEXER.KYC.GET_BATCH_STATUSES_PUBLIC(communityUID),
+        "POST",
+        { projectUIDs },
+        {},
+        {},
+        false
+      );
+
+      if (error) {
+        throw new Error(error);
+      }
+
+      const statusMap = new Map<string, KycStatusResponse | null>();
+      if (data?.statuses) {
+        Object.entries(data.statuses).forEach(([projectUID, status]) => {
+          statusMap.set(projectUID, status);
+        });
+      }
+
+      return statusMap;
+    },
+    enabled: options?.enabled !== false && !!communityUID && projectUIDs.length > 0,
+    staleTime: KYC_STATUS_STALE_TIME,
+  });
+
+  return {
+    statuses: query.data ?? EMPTY_KYC_STATUS_MAP,
+    isLoading: query.isLoading,
+    isFetching: query.isFetching,
+    error: query.error,
+    isError: query.isError,
+    refetch: query.refetch,
+    getStatus: (projectUID: string) => query.data?.get(projectUID) ?? null,
+  };
+};
+
+/**
  * Hook to fetch batch KYC statuses for multiple funding applications in a community.
  *
  * Optimized for infinite scroll: uses delta-fetching to only request new
@@ -358,9 +411,15 @@ export const useKycFormUrl = () => {
       return data;
     },
     onSuccess: (_, variables) => {
-      // Invalidate single status query
+      // Invalidate single project status query (key variant 1)
       queryClient.invalidateQueries({
         queryKey: KYC_QUERY_KEYS.status(variables.projectUID, variables.communityIdOrSlug),
+      });
+      // Invalidate all app-ref status queries (key variant 2) — the application reference
+      // is generated server-side by this mutation, so we can't target a specific ref
+      queryClient.invalidateQueries({
+        queryKey: [...KYC_QUERY_KEYS.all, "status-by-app-ref"],
+        exact: false,
       });
       // Also invalidate batch statuses that might contain this project
       queryClient.invalidateQueries({

@@ -1,25 +1,43 @@
-import type { Metadata } from "next";
-import { CommunityContentWrapper } from "@/components/Community/CommunityContentWrapper";
-import CommunityHeader from "@/components/Community/Header";
-import { CommunityNotFound } from "@/components/Pages/Communities/CommunityNotFound";
-import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
+import type { Metadata, Viewport } from "next";
+import { cache } from "react";
+import { WhitelabelJsonLd } from "@/components/Seo/WhitelabelJsonLd";
 import { PROJECT_NAME } from "@/constants/brand";
 import { envVars } from "@/utilities/enviromentVars";
 import { DEFAULT_DESCRIPTION, DEFAULT_TITLE, SITE_URL, twitterMeta } from "@/utilities/meta";
 import { pagesOnRoot } from "@/utilities/pagesOnRoot";
 import { getCommunityDetails } from "@/utilities/queries/v2/getCommunityData";
+import { getWhitelabelContext } from "@/utilities/whitelabel-server";
+
+// Deduplicate across generateMetadata, generateViewport, and Layout per request
+const getCachedContext = cache(getWhitelabelContext);
 
 type Params = Promise<{
   communityId: string;
 }>;
+
+export async function generateViewport(): Promise<Viewport> {
+  const { isWhitelabel, tenantConfig, config } = await getCachedContext();
+  if (!isWhitelabel) return {};
+  const primary = tenantConfig?.theme?.colors?.primary ?? config?.theme?.primaryColor ?? "#000000";
+  return {
+    themeColor: [
+      { media: "(prefers-color-scheme: light)", color: primary },
+      { media: "(prefers-color-scheme: dark)", color: "#000000" },
+    ],
+  };
+}
+
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { communityId } = await params;
+  const { isWhitelabel, config: wlConfig } = await getCachedContext();
 
   const community = await getCommunityDetails(communityId);
   const communityName = community?.details?.name || communityId;
 
   const dynamicMetadata = {
-    title: `${communityName} Community Grants | ${PROJECT_NAME}`,
+    title: isWhitelabel
+      ? `${communityName} Grants`
+      : `${communityName} Community Grants | ${PROJECT_NAME}`,
     description: `Explore grants and funded projects by ${communityName} on ${PROJECT_NAME}. Track grantee milestones, measure impact, and discover funding opportunities in the ecosystem.`,
   };
 
@@ -28,15 +46,18 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
     dynamicMetadata.description = `Looks like no one's started this community. Create it now to launch programs, fund projects, and track progress, all in one place.`;
   }
 
+  const siteUrl = isWhitelabel && wlConfig ? `https://${wlConfig.domain}` : SITE_URL;
+  const ogImageBase = isWhitelabel && wlConfig ? `https://${wlConfig.domain}` : envVars.VERCEL_URL;
+  const canonical = isWhitelabel ? "/" : `/community/${communityId}`;
+
   const title = dynamicMetadata.title || DEFAULT_TITLE;
   const description = dynamicMetadata.description || DEFAULT_DESCRIPTION;
-  const ogImageUrl = `${envVars.VERCEL_URL}/api/metadata/communities/${communityId}`;
 
   return {
     title,
     description,
     alternates: {
-      canonical: `/community/${communityId}`,
+      canonical,
     },
     twitter: {
       card: "summary_large_image",
@@ -46,19 +67,19 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
       site: twitterMeta.site,
       images: [
         {
-          url: ogImageUrl,
+          url: `${ogImageBase}/api/metadata/communities/${communityId}`,
           alt: title,
         },
       ],
     },
     openGraph: {
       type: "website",
-      url: `${SITE_URL}/community/${communityId}`,
+      url: `${siteUrl}${canonical}`,
       title,
       description,
       images: [
         {
-          url: ogImageUrl,
+          url: `${ogImageBase}/api/metadata/communities/${communityId}`,
           alt: title,
         },
       ],
@@ -68,6 +89,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 
 export default async function Layout(props: { children: React.ReactNode; params: Params }) {
   const { communityId } = await props.params;
+  const { isWhitelabel, tenantConfig, config } = await getCachedContext();
 
   const { children } = props;
 
@@ -75,25 +97,14 @@ export default async function Layout(props: { children: React.ReactNode; params:
     return undefined;
   }
 
-  const community = await getCommunityDetails(communityId);
-
-  if (!community) {
-    return <CommunityNotFound communityId={communityId} />;
-  }
-
-  const communityName = community.details?.name || communityId;
+  const canonicalUrl = isWhitelabel && config ? `https://${config.domain}` : undefined;
 
   return (
-    <div className="flex w-full h-full max-w-full flex-col justify-start max-lg:flex-col">
-      <BreadcrumbJsonLd
-        items={[
-          { name: "Home", url: "/" },
-          { name: "Communities", url: "/communities" },
-          { name: communityName, url: `/community/${communityId}` },
-        ]}
-      />
-      <CommunityHeader community={community} />
-      <CommunityContentWrapper>{children}</CommunityContentWrapper>
-    </div>
+    <>
+      {isWhitelabel && tenantConfig && canonicalUrl && (
+        <WhitelabelJsonLd tenant={tenantConfig} url={canonicalUrl} />
+      )}
+      {children}
+    </>
   );
 }

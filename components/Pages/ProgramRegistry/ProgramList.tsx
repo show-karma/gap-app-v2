@@ -21,6 +21,7 @@ import type { FundingProgramResponse } from "@/src/features/funding-map/types/fu
 import { formatDate } from "@/utilities/formatDate";
 import { ReadMore } from "@/utilities/ReadMore";
 import { registryHelper } from "./helper";
+import { ProgramTypeBadges } from "./ProgramTypeBadges";
 
 /**
  * @deprecated Use FundingProgramResponse from @/src/features/funding-map/types/funding-program instead
@@ -358,14 +359,7 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms, selectProgram
 
           return (
             <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
-              {grant.metadata?.grantTypes?.map((type, index) => (
-                <span
-                  key={index}
-                  className="mr-1 inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-600/20"
-                >
-                  {type}
-                </span>
-              ))}
+              <ProgramTypeBadges type={grant.type} legacyTypes={grant.metadata?.grantTypes ?? []} />
             </div>
           );
         },

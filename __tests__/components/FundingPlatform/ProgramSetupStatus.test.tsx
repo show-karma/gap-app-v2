@@ -11,11 +11,12 @@ import {
 import "@testing-library/jest-dom";
 
 // Mock next/link
-jest.mock("next/link", () => {
-  return ({ children, href }: { children: React.ReactNode; href: string }) => (
+vi.mock("next/link", () => ({
+  __esModule: true,
+  default: ({ children, href }: { children: React.ReactNode; href: string }) => (
     <a href={href}>{children}</a>
-  );
-});
+  ),
+}));
 
 describe("ProgramSetupStatus", () => {
   const programId = "program-123";

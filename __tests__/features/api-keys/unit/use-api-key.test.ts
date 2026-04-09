@@ -8,18 +8,19 @@ import {
   useRevokeApiKey,
 } from "@/src/features/api-keys/hooks/use-api-key";
 
-jest.mock("@/src/features/api-keys/services/api-key.service", () => ({
+vi.mock("@/src/features/api-keys/services/api-key.service", () => ({
   apiKeyService: {
-    get: jest.fn(),
-    create: jest.fn(),
-    revoke: jest.fn(),
+    get: vi.fn(),
+    create: vi.fn(),
+    revoke: vi.fn(),
   },
 }));
 
-const mockApiKeyService = jest.requireMock(
-  "@/src/features/api-keys/services/api-key.service"
-).apiKeyService;
+import { apiKeyService } from "@/src/features/api-keys/services/api-key.service";
 
+const mockApiKeyService = apiKeyService as unknown as Record<string, vi.Mock>;
+
+// Fresh QueryClient per render — no afterEach cleanup required
 const createWrapper = () => {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -40,7 +41,7 @@ describe("apiKeyKeys", () => {
 
 describe("useApiKey", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("should fetch API key when address is provided", async () => {
@@ -65,19 +66,33 @@ describe("useApiKey", () => {
     expect(mockApiKeyService.get).toHaveBeenCalledTimes(1);
   });
 
-  it("should not fetch when address is undefined", () => {
-    const { result } = renderHook(() => useApiKey(undefined), {
+  it("should not fetch when address is undefined and not authenticated", () => {
+    const { result } = renderHook(() => useApiKey(undefined, false), {
       wrapper: createWrapper(),
     });
 
     expect(result.current.fetchStatus).toBe("idle");
     expect(mockApiKeyService.get).not.toHaveBeenCalled();
   });
+
+  it("should fetch for Farcaster users with no wallet address", async () => {
+    // Farcaster users are authenticated via JWT but have no wallet address.
+    // The API uses JWT auth, not wallet address, so the query should fire.
+    const mockData = { apiKey: null };
+    mockApiKeyService.get.mockResolvedValue(mockData);
+
+    const { result } = renderHook(() => useApiKey(undefined, true), {
+      wrapper: createWrapper(),
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(mockApiKeyService.get).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe("useCreateApiKey", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("should call create and invoke onSuccess", async () => {
@@ -88,7 +103,7 @@ describe("useCreateApiKey", () => {
       createdAt: "2026-02-22",
     };
     mockApiKeyService.create.mockResolvedValue(mockResponse);
-    const onSuccess = jest.fn();
+    const onSuccess = vi.fn();
 
     const { result } = renderHook(() => useCreateApiKey({ onSuccess }), {
       wrapper: createWrapper(),
@@ -104,7 +119,7 @@ describe("useCreateApiKey", () => {
 
   it("should invoke onError on failure", async () => {
     mockApiKeyService.create.mockRejectedValue(new Error("Failed"));
-    const onError = jest.fn();
+    const onError = vi.fn();
 
     const { result } = renderHook(() => useCreateApiKey({ onError }), {
       wrapper: createWrapper(),
@@ -120,12 +135,12 @@ describe("useCreateApiKey", () => {
 
 describe("useRevokeApiKey", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("should call revoke and invoke onSuccess", async () => {
     mockApiKeyService.revoke.mockResolvedValue(undefined);
-    const onSuccess = jest.fn();
+    const onSuccess = vi.fn();
 
     const { result } = renderHook(() => useRevokeApiKey({ onSuccess }), {
       wrapper: createWrapper(),
@@ -140,7 +155,7 @@ describe("useRevokeApiKey", () => {
 
   it("should invoke onError on failure", async () => {
     mockApiKeyService.revoke.mockRejectedValue(new Error("Failed"));
-    const onError = jest.fn();
+    const onError = vi.fn();
 
     const { result } = renderHook(() => useRevokeApiKey({ onError }), {
       wrapper: createWrapper(),

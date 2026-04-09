@@ -9,9 +9,9 @@ import { getProgramFinancials } from "@/services/financialsService";
 import type { ProgramFinancialsResponse } from "@/types/financials";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 
-jest.mock("@/services/financialsService");
+vi.mock("@/services/financialsService");
 
-const mockGetProgramFinancials = getProgramFinancials as jest.MockedFunction<
+const mockGetProgramFinancials = getProgramFinancials as vi.MockedFunction<
   typeof getProgramFinancials
 >;
 
@@ -72,7 +72,7 @@ describe("useProgramFinancials hooks", () => {
         },
       },
     });
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   afterEach(() => {

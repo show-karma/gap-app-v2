@@ -5,6 +5,7 @@ import { useState } from "react";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
 import { useMilestoneImpactAnswers } from "@/hooks/useMilestoneImpactAnswers";
+import { useGrantInvoiceRequired } from "@/src/features/payout-disbursement/hooks/use-payout-disbursement";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { formatDate } from "@/utilities/formatDate";
 import { PAGES } from "@/utilities/pages";
@@ -60,6 +61,7 @@ export const MilestoneCard = ({ milestone, isAuthorized }: MilestoneCardProps) =
   };
 
   const { title, description, completed, type } = milestone;
+  const editHistory = milestone.source.grantMilestone?.milestone.editHistory;
 
   // Fetch milestone impact data (outputs/metrics) if milestone is completed
   const { data: milestoneImpactData } = useMilestoneImpactAnswers({
@@ -74,11 +76,17 @@ export const MilestoneCard = ({ milestone, isAuthorized }: MilestoneCardProps) =
 
   // grant milestone-specific properties
   const grantMilestone = milestone.source.grantMilestone;
+  const grantUID = grantMilestone?.grant.uid;
   const grantDetails = grantMilestone?.grant.details as
     | { title?: string; programId?: string }
     | undefined;
   const grantTitle = grantDetails?.title;
   const programId = grantDetails?.programId;
+
+  // Check if invoice is required for this grant (only for grant milestones, only when authorized)
+  const { data: invoiceCheckData } = useGrantInvoiceRequired(
+    isAuthorized && type === "grant" ? grantUID : undefined
+  );
   const communityData = grantMilestone?.grant.community?.details as
     | { name?: string; slug?: string; imageURL?: string }
     | undefined;
@@ -183,6 +191,14 @@ export const MilestoneCard = ({ milestone, isAuthorized }: MilestoneCardProps) =
             >
               {getStatusText()}
             </p>
+            {editHistory && editHistory.length > 0 ? (
+              <span
+                className="px-2 py-0.5 rounded-full text-xs bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300"
+                title={`Edited ${editHistory.length} ${editHistory.length === 1 ? "time" : "times"}. Last edited ${new Date(editHistory[editHistory.length - 1].editedAt).toLocaleDateString()}`}
+              >
+                Edited
+              </span>
+            ) : null}
           </div>
 
           {isAuthorized && type === "project" && projectMilestone ? (
@@ -244,7 +260,13 @@ export const MilestoneCard = ({ milestone, isAuthorized }: MilestoneCardProps) =
             handleProjectMilestoneCompletion()
           ) : type === "grant" && isCompleting ? (
             <div className="w-full flex-col flex gap-2 px-4 py-2 bg-[#F8F9FC] dark:bg-zinc-700 rounded-lg">
-              <GrantMilestoneCompletion milestone={milestone} handleCompleting={handleCompleting} />
+              <GrantMilestoneCompletion
+                milestone={milestone}
+                handleCompleting={handleCompleting}
+                invoiceRequired={invoiceCheckData?.invoiceRequired}
+                grantUID={grantUID}
+                milestoneLabel={title}
+              />
             </div>
           ) : (
             <div className="w-full flex-col flex gap-2 px-4 py-2 bg-[#F8F9FC] dark:bg-zinc-700 rounded-lg">

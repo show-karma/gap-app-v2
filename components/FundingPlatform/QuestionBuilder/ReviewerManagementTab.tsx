@@ -6,6 +6,7 @@ import { useCallback, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { RoleManagementTab } from "@/components/Generic/RoleManagement/RoleManagementTab";
 import type {
+  ReviewerRole,
   RoleManagementConfig,
   RoleMember,
   RoleOption,
@@ -18,43 +19,14 @@ import { Permission } from "@/src/core/rbac/types/permission";
 import { validateEmail, validateTelegram } from "@/utilities/validators";
 import { PAGE_HEADER_CONTENT, PageHeader } from "../PageHeader";
 
-/**
- * Props for ReviewerManagementTab
- */
 interface ReviewerManagementTabProps {
   programId: string;
   readOnly?: boolean;
 }
 
 /**
- * Reviewer role type
- */
-type ReviewerRole = "program" | "milestone";
-
-/**
- * Extended role member with role type
- */
-interface ReviewerMemberWithRole extends RoleMember {
-  role: ReviewerRole;
-}
-
-function buildReviewerMemberId(
-  role: ReviewerRole,
-  reviewer: { publicAddress?: string; email: string; name: string; assignedAt: string }
-): string {
-  const normalizedIdentifier =
-    reviewer.publicAddress?.trim().toLowerCase() || reviewer.email.trim().toLowerCase();
-
-  if (normalizedIdentifier) {
-    return `${role}-${normalizedIdentifier}`;
-  }
-
-  const normalizedName = reviewer.name.trim().toLowerCase().replace(/\s+/g, "-");
-  return `${role}-${normalizedName || "unknown"}-${reviewer.assignedAt}`;
-}
-
-/**
- * Reviewer management tab specifically for funding platform
+ * Reviewer management tab specifically for funding platform.
+ * Combines program and milestone reviewers into a unified view.
  */
 export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
   programId,
@@ -62,9 +34,8 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
 }) => {
   const { can, isLoading: isLoadingPermissions, isGuestDueToError } = usePermissionContext();
   const canManageReviewers = can(Permission.PROGRAM_MANAGE_REVIEWERS);
-  const [selectedRole, setSelectedRole] = useState<ReviewerRole>("program");
+  const [selectedRoles, setSelectedRoles] = useState<ReviewerRole[]>(["program"]);
 
-  // Fetch program reviewers with mutations
   const {
     data: programReviewers = [],
     isLoading: isLoadingProgramReviewers,
@@ -73,7 +44,6 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
     removeReviewer: removeProgramReviewer,
   } = useProgramReviewers(programId);
 
-  // Fetch milestone reviewers with mutations
   const {
     data: milestoneReviewers = [],
     isLoading: isLoadingMilestoneReviewers,
@@ -82,7 +52,6 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
     removeReviewer: removeMilestoneReviewer,
   } = useMilestoneReviewers(programId);
 
-  // Common field configuration for both roles
   const commonFields: RoleManagementConfig["fields"] = useMemo(
     () => [
       {
@@ -132,7 +101,6 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
     []
   );
 
-  // Configuration for program reviewer role
   const programReviewerConfig: RoleManagementConfig = useMemo(
     () => ({
       roleName: "program-reviewer",
@@ -144,7 +112,6 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
     [commonFields, programId]
   );
 
-  // Configuration for milestone reviewer role
   const milestoneReviewerConfig: RoleManagementConfig = useMemo(
     () => ({
       roleName: "milestone-reviewer",
@@ -156,12 +123,11 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
     [commonFields, programId]
   );
 
-  // Role options for the role selector
   const roleOptions: RoleOption[] = useMemo(
     () => [
       {
         value: "program",
-        label: "Program Reviewer",
+        label: "App Reviewer",
         config: programReviewerConfig,
       },
       {
@@ -173,42 +139,73 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
     [programReviewerConfig, milestoneReviewerConfig]
   );
 
-  // Merge reviewers from both types with role information
-  const members: ReviewerMemberWithRole[] = useMemo(() => {
-    const programMembers: ReviewerMemberWithRole[] = programReviewers.map((reviewer) => ({
-      id: buildReviewerMemberId("program", reviewer),
-      publicAddress: reviewer.publicAddress,
-      name: reviewer.name,
-      email: reviewer.email,
-      telegram: reviewer.telegram || "",
-      assignedAt: reviewer.assignedAt,
-      role: "program" as ReviewerRole,
-    }));
+  // Merge program and milestone reviewers by email into combined entries
+  const members: RoleMember[] = useMemo(() => {
+    const emailToMember = new Map<string, RoleMember>();
 
-    const milestoneMembers: ReviewerMemberWithRole[] = milestoneReviewers.map((reviewer) => ({
-      id: buildReviewerMemberId("milestone", reviewer),
-      publicAddress: reviewer.publicAddress,
-      name: reviewer.name,
-      email: reviewer.email,
-      telegram: reviewer.telegram || "",
-      assignedAt: reviewer.assignedAt,
-      role: "milestone" as ReviewerRole,
-    }));
+    for (const reviewer of programReviewers) {
+      if (!reviewer.email) continue;
+      const key = reviewer.email.trim().toLowerCase();
+      const existing = emailToMember.get(key);
+      if (existing) {
+        const existingRoles = existing.roles || [];
+        if (!existingRoles.includes("program")) {
+          existing.roles = [...existingRoles, "program"];
+        }
+      } else {
+        emailToMember.set(key, {
+          id: key,
+          publicAddress: reviewer.publicAddress,
+          name: reviewer.name,
+          email: reviewer.email.trim(),
+          telegram: reviewer.telegram || "",
+          assignedAt: reviewer.assignedAt,
+          roles: ["program"],
+        });
+      }
+    }
 
-    return [...programMembers, ...milestoneMembers];
+    for (const reviewer of milestoneReviewers) {
+      if (!reviewer.email) continue;
+      const key = reviewer.email.trim().toLowerCase();
+      const existing = emailToMember.get(key);
+      if (existing) {
+        const existingRoles = existing.roles || [];
+        if (!existingRoles.includes("milestone")) {
+          existing.roles = [...existingRoles, "milestone"];
+        }
+      } else {
+        emailToMember.set(key, {
+          id: key,
+          publicAddress: reviewer.publicAddress,
+          name: reviewer.name,
+          email: reviewer.email.trim(),
+          telegram: reviewer.telegram || "",
+          assignedAt: reviewer.assignedAt,
+          roles: ["milestone"],
+        });
+      }
+    }
+
+    return Array.from(emailToMember.values());
   }, [programReviewers, milestoneReviewers]);
 
+  // Add reviewer to all selected roles in parallel, then refetch once
   const handleAdd = useCallback(
     async (data: Record<string, string>) => {
-      if (selectedRole === "program") {
-        await addProgramReviewer(data);
-      } else {
-        await addMilestoneReviewer(data);
+      const promises: Promise<unknown>[] = [];
+      if (selectedRoles.includes("program")) {
+        promises.push(addProgramReviewer(data));
       }
+      if (selectedRoles.includes("milestone")) {
+        promises.push(addMilestoneReviewer(data));
+      }
+      await Promise.all(promises);
     },
-    [selectedRole, addProgramReviewer, addMilestoneReviewer]
+    [selectedRoles, addProgramReviewer, addMilestoneReviewer]
   );
 
+  // Remove reviewer from all roles
   const handleRemove = useCallback(
     async (memberId: string) => {
       const memberToRemove = members.find((member) => member.id === memberId);
@@ -217,36 +214,85 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
         return;
       }
 
-      if (!memberToRemove.publicAddress) {
-        toast.error("This reviewer is still being provisioned. Refresh and try again.");
+      if (!memberToRemove.email) {
+        toast.error("Reviewer email not available. Please refresh and try again.");
         return;
       }
 
-      try {
-        if (memberToRemove.role === "program") {
-          await removeProgramReviewer(memberToRemove.publicAddress);
-        } else if (memberToRemove.role === "milestone") {
-          await removeMilestoneReviewer(memberToRemove.publicAddress);
-        } else {
-          toast.error(`Unknown reviewer role: ${memberToRemove.role}`);
-        }
-      } catch {
-        // Error handling is already done in the mutations, but we catch here
-        // to prevent unhandled promise rejections
+      const promises: Promise<unknown>[] = [];
+      const roles = memberToRemove.roles || [];
+      if (roles.includes("program")) {
+        promises.push(removeProgramReviewer(memberToRemove.email));
       }
+      if (roles.includes("milestone")) {
+        promises.push(removeMilestoneReviewer(memberToRemove.email));
+      }
+      await Promise.all(promises);
     },
     [members, removeProgramReviewer, removeMilestoneReviewer]
   );
 
-  const handleRefresh = useCallback(() => {
-    refetchProgramReviewers();
-    refetchMilestoneReviewers();
+  // Edit reviewer roles (add/remove individual roles)
+  const handleEditRoles = useCallback(
+    async (memberId: string, newRoles: string[]) => {
+      const member = members.find((m) => m.id === memberId);
+      if (!member || !member.email) {
+        toast.error("Reviewer not found. Please refresh and try again.");
+        return;
+      }
+
+      const currentRoles = member.roles || [];
+      const validRoles: ReviewerRole[] = ["program", "milestone"];
+      const typedNewRoles = newRoles.filter((r): r is ReviewerRole =>
+        validRoles.includes(r as ReviewerRole)
+      );
+
+      // If no roles selected, remove entirely
+      if (typedNewRoles.length === 0) {
+        await handleRemove(memberId);
+        return;
+      }
+
+      const rolesToAdd = typedNewRoles.filter((r) => !currentRoles.includes(r));
+      const rolesToRemove = currentRoles.filter((r) => !typedNewRoles.includes(r));
+
+      const reviewerData = {
+        name: member.name,
+        email: member.email,
+        telegram: member.telegram || "",
+      };
+
+      for (const role of rolesToAdd) {
+        if (role === "program") {
+          await addProgramReviewer(reviewerData);
+        } else if (role === "milestone") {
+          await addMilestoneReviewer(reviewerData);
+        }
+      }
+
+      for (const role of rolesToRemove) {
+        if (role === "program") {
+          await removeProgramReviewer(member.email);
+        } else if (role === "milestone") {
+          await removeMilestoneReviewer(member.email);
+        }
+      }
+    },
+    [
+      members,
+      handleRemove,
+      addProgramReviewer,
+      addMilestoneReviewer,
+      removeProgramReviewer,
+      removeMilestoneReviewer,
+    ]
+  );
+
+  const handleRefresh = useCallback(async () => {
+    await Promise.all([refetchProgramReviewers(), refetchMilestoneReviewers()]);
   }, [refetchProgramReviewers, refetchMilestoneReviewers]);
 
-  const isLoadingReviewers = useMemo(
-    () => isLoadingProgramReviewers || isLoadingMilestoneReviewers,
-    [isLoadingProgramReviewers, isLoadingMilestoneReviewers]
-  );
+  const isLoadingReviewers = isLoadingProgramReviewers || isLoadingMilestoneReviewers;
 
   if (isLoadingPermissions) {
     return (
@@ -293,8 +339,9 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
           onRemove={!readOnly ? handleRemove : undefined}
           onRefresh={handleRefresh}
           roleOptions={roleOptions}
-          selectedRole={selectedRole}
-          onRoleChange={(role) => setSelectedRole(role as ReviewerRole)}
+          selectedRoles={selectedRoles}
+          onRolesChange={(roles) => setSelectedRoles(roles as ReviewerRole[])}
+          onEditRoles={!readOnly ? handleEditRoles : undefined}
         />
       </div>
     </div>

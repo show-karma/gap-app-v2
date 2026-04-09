@@ -23,8 +23,8 @@ describe("Authentication Flow Integration Tests", () => {
   describe("1. Login Flow", () => {
     it("should complete login flow from unauthenticated to authenticated state", async () => {
       const user = userEvent.setup();
-      const mockAuthenticate = jest.fn();
-      const mockLogout = jest.fn();
+      const mockAuthenticate = vi.fn();
+      const mockLogout = vi.fn();
 
       // Start unauthenticated
       const unauthFixture = getAuthFixture("unauthenticated");
@@ -89,7 +89,7 @@ describe("Authentication Flow Integration Tests", () => {
   describe("2. Profile Modal Flow", () => {
     it("should open profile modal from desktop user menu", async () => {
       const user = userEvent.setup();
-      const mockOpenModal = jest.fn();
+      const mockOpenModal = vi.fn();
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
@@ -98,7 +98,7 @@ describe("Authentication Flow Integration Tests", () => {
         mockUseContributorProfileModalStore: {
           isOpen: false,
           openModal: mockOpenModal,
-          closeModal: jest.fn(),
+          closeModal: vi.fn(),
         },
       });
 
@@ -123,7 +123,7 @@ describe("Authentication Flow Integration Tests", () => {
 
     it("should open profile modal from mobile avatar button", async () => {
       const user = userEvent.setup();
-      const mockOpenModal = jest.fn();
+      const mockOpenModal = vi.fn();
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
@@ -132,7 +132,7 @@ describe("Authentication Flow Integration Tests", () => {
         mockUseContributorProfileModalStore: {
           isOpen: false,
           openModal: mockOpenModal,
-          closeModal: jest.fn(),
+          closeModal: vi.fn(),
         },
       });
 
@@ -150,7 +150,7 @@ describe("Authentication Flow Integration Tests", () => {
   describe("3. Logout Flow", () => {
     it("should complete logout flow from authenticated to unauthenticated state", async () => {
       const user = userEvent.setup();
-      const mockLogout = jest.fn();
+      const mockLogout = vi.fn();
       const authFixture = getAuthFixture("authenticated-basic");
 
       const { rerender } = renderWithProviders(<Navbar />, {
@@ -183,6 +183,7 @@ describe("Authentication Flow Integration Tests", () => {
           expect(screen.getByText("Menu")).toBeInTheDocument();
         });
 
+        // fireEvent required: vaul drawer incompatible with userEvent in jsdom
         const logoutButton = screen.getByText("Log out");
         fireEvent.click(logoutButton);
       }
@@ -214,7 +215,7 @@ describe("Authentication Flow Integration Tests", () => {
 
     it("should close menu after logout", async () => {
       const user = userEvent.setup();
-      const mockLogout = jest.fn();
+      const mockLogout = vi.fn();
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
@@ -233,7 +234,7 @@ describe("Authentication Flow Integration Tests", () => {
         expect(screen.getByText("Menu")).toBeInTheDocument();
       });
 
-      // Click logout
+      // fireEvent required: vaul drawer incompatible with userEvent in jsdom
       const logoutButton = screen.getByText("Log out");
       fireEvent.click(logoutButton);
 
@@ -357,7 +358,7 @@ describe("Authentication Flow Integration Tests", () => {
   describe("6. Mobile Auth Flow", () => {
     it("should complete mobile login flow", async () => {
       const user = userEvent.setup();
-      const mockAuthenticate = jest.fn();
+      const mockAuthenticate = vi.fn();
       const unauthFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<Navbar />, {
@@ -381,6 +382,7 @@ describe("Authentication Flow Integration Tests", () => {
       const mobileSignInButton = signInButtons.find((btn) => btn.closest('[role="dialog"]'));
 
       if (mobileSignInButton) {
+        // fireEvent required: vaul drawer incompatible with userEvent in jsdom
         fireEvent.click(mobileSignInButton);
 
         // Verify authenticate called

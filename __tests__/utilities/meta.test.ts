@@ -12,7 +12,7 @@ import {
 describe("meta utilities", () => {
   describe("constants", () => {
     it("should have a valid SITE_URL", () => {
-      expect(SITE_URL).toBe("https://karmahq.xyz");
+      expect(SITE_URL).toBe("https://www.karmahq.xyz");
     });
 
     it("should include project name in DEFAULT_TITLE", () => {
@@ -25,7 +25,7 @@ describe("meta utilities", () => {
     });
 
     it("should have an OG image URL under the site domain", () => {
-      expect(DEFAULT_OG_IMAGE).toMatch(/^https:\/\/karmahq\.xyz\/.+/);
+      expect(DEFAULT_OG_IMAGE).toMatch(/^https:\/\/www\.karmahq\.xyz\/.+/);
     });
   });
 

@@ -4,7 +4,7 @@ import type { Project } from "@/types/v2/project";
 import { ProjectHeader, type ProjectHeaderProps } from "../ProjectWrapper/ProjectHeader";
 
 // Mock Next.js Image component
-jest.mock("next/image", () => ({
+vi.mock("next/image", () => ({
   __esModule: true,
   default: ({ src, alt, ...props }: { src: string; alt: string; [key: string]: unknown }) => (
     // eslint-disable-next-line @next/next/no-img-element
@@ -13,7 +13,7 @@ jest.mock("next/image", () => ({
 }));
 
 // Mock ProfilePicture component
-jest.mock("@/components/Utilities/ProfilePicture", () => ({
+vi.mock("@/components/Utilities/ProfilePicture", () => ({
   ProfilePicture: ({ alt, imageURL }: { alt: string; imageURL?: string }) => (
     <div data-testid="profile-picture" data-alt={alt} data-image-url={imageURL}>
       ProfilePicture
@@ -22,14 +22,14 @@ jest.mock("@/components/Utilities/ProfilePicture", () => ({
 }));
 
 // Mock Globe icon
-jest.mock("@/components/Icons", () => ({
+vi.mock("@/components/Icons", () => ({
   Globe: ({ className }: { className?: string }) => (
     <svg data-testid="globe-icon" className={className} />
   ),
 }));
 
 // Mock ExternalLink
-jest.mock("@/components/Utilities/ExternalLink", () => ({
+vi.mock("@/components/Utilities/ExternalLink", () => ({
   ExternalLink: ({
     href,
     children,

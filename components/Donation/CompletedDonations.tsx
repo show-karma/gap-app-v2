@@ -1,8 +1,8 @@
 "use client";
 import Image from "next/image";
-import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useMemo } from "react";
+import { Link } from "@/src/components/navigation/Link";
 import type { DonationSession } from "@/store/donationCart";
 import { getExplorerUrl } from "@/utilities/network";
 

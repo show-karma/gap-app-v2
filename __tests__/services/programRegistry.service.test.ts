@@ -4,16 +4,16 @@
  * covering business logic, error handling, and response parsing
  */
 
-import { ProgramRegistryService } from "@/services/programRegistry.service";
+import { ProgramRegistryService } from "@/src/features/program-registry/services/program-registry.service";
+import type { CreateProgramFormData, GrantProgram } from "@/src/features/program-registry/types";
 import type { CommunityDetails } from "@/types/community";
-import type { CreateProgramFormData } from "@/types/program-registry";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
 // Mock fetchData utility
-jest.mock("@/utilities/fetchData", () => ({
+vi.mock("@/utilities/fetchData", () => ({
   __esModule: true,
-  default: jest.fn(),
+  default: vi.fn(),
 }));
 
 describe("ProgramRegistryService", () => {
@@ -39,10 +39,12 @@ describe("ProgramRegistryService", () => {
       endsAt: new Date("2024-12-31"),
     },
     budget: 100000,
+    adminEmails: ["admin@example.com"],
+    financeEmails: ["finance@example.com"],
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("buildProgramMetadata", () => {
@@ -86,7 +88,16 @@ describe("ProgramRegistryService", () => {
         communityRef: [mockCommunity.uid],
         anyoneCanJoin: true,
         invoiceRequired: false,
+        adminEmails: ["admin@example.com"],
+        financeEmails: ["finance@example.com"],
       });
+    });
+
+    it("should include adminEmails and financeEmails from form data", () => {
+      const metadata = ProgramRegistryService.buildProgramMetadata(mockFormData, mockCommunity);
+
+      expect(metadata.adminEmails).toEqual(["admin@example.com"]);
+      expect(metadata.financeEmails).toEqual(["finance@example.com"]);
     });
 
     describe("anyoneCanJoin option", () => {
@@ -217,7 +228,7 @@ describe("ProgramRegistryService", () => {
         isValid: true,
       };
 
-      (fetchData as jest.Mock).mockResolvedValue([mockResponse, null]);
+      (fetchData as vi.Mock).mockResolvedValue([mockResponse, null]);
 
       const result = await ProgramRegistryService.createProgram(
         mockOwner,
@@ -262,7 +273,7 @@ describe("ProgramRegistryService", () => {
       ];
 
       for (const testCase of testCases) {
-        (fetchData as jest.Mock).mockResolvedValue([testCase.response, null]);
+        (fetchData as vi.Mock).mockResolvedValue([testCase.response, null]);
 
         const result = await ProgramRegistryService.createProgram(
           mockOwner,
@@ -277,7 +288,7 @@ describe("ProgramRegistryService", () => {
     });
 
     it("should handle missing program ID in response", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([{}, null]);
+      (fetchData as vi.Mock).mockResolvedValue([{}, null]);
 
       const result = await ProgramRegistryService.createProgram(
         mockOwner,
@@ -294,7 +305,7 @@ describe("ProgramRegistryService", () => {
 
     it("should throw error when fetchData returns error", async () => {
       const mockError = "Creation failed";
-      (fetchData as jest.Mock).mockResolvedValue([null, mockError]);
+      (fetchData as vi.Mock).mockResolvedValue([null, mockError]);
 
       await expect(
         ProgramRegistryService.createProgram(mockOwner, mockChainId, mockMetadata)
@@ -303,7 +314,7 @@ describe("ProgramRegistryService", () => {
 
     it("should throw error when fetchData throws", async () => {
       const mockError = new Error("Network error");
-      (fetchData as jest.Mock).mockRejectedValue(mockError);
+      (fetchData as vi.Mock).mockRejectedValue(mockError);
 
       await expect(
         ProgramRegistryService.createProgram(mockOwner, mockChainId, mockMetadata)
@@ -315,7 +326,7 @@ describe("ProgramRegistryService", () => {
     const mockProgramId = "program-123";
 
     it("should approve program successfully", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([{ success: true }, null]);
+      (fetchData as vi.Mock).mockResolvedValue([{ success: true }, null]);
 
       await ProgramRegistryService.approveProgram(mockProgramId);
 
@@ -334,7 +345,7 @@ describe("ProgramRegistryService", () => {
 
     it("should throw error when fetchData returns error", async () => {
       const mockError = "Approval failed";
-      (fetchData as jest.Mock).mockResolvedValue([null, mockError]);
+      (fetchData as vi.Mock).mockResolvedValue([null, mockError]);
 
       await expect(ProgramRegistryService.approveProgram(mockProgramId)).rejects.toThrow(
         "Approval failed"
@@ -343,10 +354,157 @@ describe("ProgramRegistryService", () => {
 
     it("should throw error when fetchData throws", async () => {
       const mockError = new Error("Network error");
-      (fetchData as jest.Mock).mockRejectedValue(mockError);
+      (fetchData as vi.Mock).mockRejectedValue(mockError);
 
       await expect(ProgramRegistryService.approveProgram(mockProgramId)).rejects.toThrow(
         "Network error"
+      );
+    });
+  });
+
+  describe("buildUpdateMetadata", () => {
+    const existingMetadata = {
+      title: "Old Title",
+      description: "Old description",
+      shortDescription: "Old short",
+      programBudget: 50000,
+      website: "https://example.com",
+      projectTwitter: "",
+      socialLinks: {
+        twitter: "",
+        website: "https://example.com",
+        discord: "",
+        orgWebsite: "",
+        blog: "",
+        forum: "",
+        grantsSite: "",
+        telegram: "",
+      },
+      bugBounty: "",
+      categories: ["DeFi"],
+      ecosystems: ["Ethereum"],
+      organizations: [],
+      networks: [],
+      grantTypes: [],
+      platformsUsed: [],
+      logoImg: "",
+      bannerImg: "",
+      logoImgData: {},
+      bannerImgData: {},
+      credentials: {},
+      status: "Active",
+      type: "program",
+      tags: ["karma-gap"],
+      communityRef: ["0x123"],
+      adminEmails: ["old-admin@example.com"],
+      financeEmails: ["old-finance@example.com"],
+    } as GrantProgram["metadata"];
+
+    it("should merge form data into existing metadata", () => {
+      const formData = {
+        name: "New Title",
+        description: "New description",
+        shortDescription: "New short",
+        dates: {
+          startsAt: new Date("2025-01-01"),
+          endsAt: new Date("2025-12-31"),
+        },
+        budget: 200000,
+        adminEmails: ["new-admin@example.com"],
+        financeEmails: ["new-finance@example.com"],
+        invoiceRequired: true,
+      };
+
+      const result = ProgramRegistryService.buildUpdateMetadata(formData, existingMetadata);
+
+      expect(result.title).toBe("New Title");
+      expect(result.description).toBe("New description");
+      expect(result.adminEmails).toEqual(["new-admin@example.com"]);
+      expect(result.financeEmails).toEqual(["new-finance@example.com"]);
+      // Preserved from existing metadata
+      expect(result.categories).toEqual(["DeFi"]);
+      expect(result.ecosystems).toEqual(["Ethereum"]);
+    });
+  });
+
+  describe("createProgram with topLevelFields", () => {
+    const mockOwner = "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd";
+    const mockChainId = 1;
+    const mockMetadata = ProgramRegistryService.buildProgramMetadata(mockFormData, mockCommunity);
+
+    it("should include topLevelFields in request body", async () => {
+      const mockResponse = { programId: "program-123", isValid: true };
+      (fetchData as vi.Mock).mockResolvedValue([mockResponse, null]);
+
+      const topLevelFields = { type: "hackathon", deadline: "2025-06-01T00:00:00.000Z" };
+      await ProgramRegistryService.createProgram(
+        mockOwner,
+        mockChainId,
+        mockMetadata,
+        topLevelFields
+      );
+
+      expect(fetchData).toHaveBeenCalledWith(
+        INDEXER.REGISTRY.V2.CREATE,
+        "POST",
+        {
+          chainId: mockChainId,
+          metadata: mockMetadata,
+          type: "hackathon",
+          deadline: "2025-06-01T00:00:00.000Z",
+        },
+        {},
+        {},
+        true
+      );
+    });
+
+    it("should not allow topLevelFields to overwrite chainId or metadata", async () => {
+      const mockResponse = { programId: "program-789", isValid: true };
+      (fetchData as vi.Mock).mockResolvedValue([mockResponse, null]);
+
+      const maliciousTopLevelFields = {
+        chainId: 9999,
+        metadata: { title: "hacked" },
+        type: "hackathon",
+      };
+      await ProgramRegistryService.createProgram(
+        mockOwner,
+        mockChainId,
+        mockMetadata,
+        maliciousTopLevelFields
+      );
+
+      expect(fetchData).toHaveBeenCalledWith(
+        INDEXER.REGISTRY.V2.CREATE,
+        "POST",
+        {
+          chainId: mockChainId,
+          metadata: mockMetadata,
+          type: "hackathon",
+        },
+        {},
+        {},
+        true
+      );
+    });
+
+    it("should work without topLevelFields", async () => {
+      const mockResponse = { programId: "program-456", isValid: true };
+      (fetchData as vi.Mock).mockResolvedValue([mockResponse, null]);
+
+      await ProgramRegistryService.createProgram(mockOwner, mockChainId, mockMetadata);
+
+      expect(fetchData).toHaveBeenCalledWith(
+        INDEXER.REGISTRY.V2.CREATE,
+        "POST",
+        {
+          chainId: mockChainId,
+          metadata: mockMetadata,
+        },
+        {},
+        {},
+        true
       );
     });
   });
@@ -358,7 +516,7 @@ describe("ProgramRegistryService", () => {
       const mockMetadata = ProgramRegistryService.buildProgramMetadata(mockFormData, mockCommunity);
 
       // Mock V2 creation response
-      (fetchData as jest.Mock)
+      (fetchData as vi.Mock)
         .mockResolvedValueOnce([{ programId: "program-123", isValid: null }, null])
         .mockResolvedValueOnce([{ success: true }, null]);
 

@@ -46,24 +46,18 @@ export function EndorseSection({ project, className }: EndorseSectionProps) {
       {/* Header */}
       <div className="flex flex-col gap-1">
         <div className="flex flex-row items-center gap-2">
-          <BadgeCheckIcon
-            className="h-6 w-6 text-neutral-700 dark:text-neutral-300"
-            aria-hidden="true"
-          />
-          <h3
-            id="endorse-heading"
-            className="text-xl font-semibold text-neutral-900 dark:text-white tracking-tight"
-          >
+          <BadgeCheckIcon className="h-6 w-6 text-foreground" aria-hidden="true" />
+          <h3 id="endorse-heading" className="text-xl font-semibold text-foreground tracking-tight">
             Endorse
           </h3>
         </div>
-        <p className="text-sm text-neutral-500 dark:text-neutral-400">Vouch for this project</p>
+        <p className="text-sm text-muted-foreground">Vouch for this project</p>
       </div>
 
       {/* Endorse Button - Opens EndorsementDialog for full endorsement flow, or login if not connected */}
       <Button
         onClick={handleClick}
-        className="w-full bg-neutral-900 hover:bg-neutral-800 text-white dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100 rounded-lg px-3"
+        className="w-full bg-foreground hover:bg-foreground/90 text-background rounded-lg px-3"
         data-testid="endorse-button"
         aria-describedby="endorse-description"
       >

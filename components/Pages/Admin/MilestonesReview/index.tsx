@@ -1,17 +1,18 @@
 "use client";
 
 import { ArrowLeftIcon, ChevronLeftIcon, ExclamationTriangleIcon } from "@heroicons/react/20/solid";
-import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
 import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
 import { Badge } from "@/components/ui/badge";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
+import { useMilestoneAllocationsByGrants } from "@/hooks/useCommunityMilestoneAllocations";
 import { useDeleteMilestone } from "@/hooks/useDeleteMilestone";
 import { useFundingApplicationByProjectUID } from "@/hooks/useFundingApplicationByProjectUID";
 import { useMilestoneCompletionVerification } from "@/hooks/useMilestoneCompletionVerification";
 import { useProjectGrantMilestones } from "@/hooks/useProjectGrantMilestones";
 import type { GrantMilestoneWithCompletion } from "@/services/milestones";
+import { Link } from "@/src/components/navigation/Link";
 import {
   PermissionProvider,
   useIsReviewer,
@@ -23,6 +24,7 @@ import { useOwnerStore } from "@/store";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { CommentsAndActivity } from "./CommentsAndActivity";
+import { GrantCommentsAndActivity } from "./GrantCommentsAndActivity";
 import { GrantCompleteButtonForReviewer } from "./GrantCompleteButtonForReviewer";
 import { MilestoneCard } from "./MilestoneCard";
 import {
@@ -143,13 +145,27 @@ function MilestonesReviewPageContent({
   const projectUID = data?.project?.uid;
 
   // Fetch funding application data by project UID (must be before any returns)
-  const { application: fundingApplication } = useFundingApplicationByProjectUID(projectUID || "");
+  const {
+    application: fundingApplication,
+    isLoading: isLoadingFundingApp,
+    error: fundingApplicationError,
+    refetch: refetchFundingApplication,
+  } = useFundingApplicationByProjectUID(projectUID || "");
 
-  // Memoize reference number from the funding application
-  const referenceNumber = useMemo(
-    () => fundingApplication?.referenceNumber,
-    [fundingApplication?.referenceNumber]
-  );
+  // Memoize reference number: prefer funding application, fallback to milestone completion data
+  const referenceNumber = useMemo(() => {
+    if (fundingApplication?.referenceNumber) {
+      return fundingApplication.referenceNumber;
+    }
+    // Fallback: extract from any milestone that has funding application completion data
+    const milestones = data?.grantMilestones ?? [];
+    for (const m of milestones) {
+      if (m.fundingApplicationCompletion?.referenceNumber) {
+        return m.fundingApplicationCompletion.referenceNumber;
+      }
+    }
+    return undefined;
+  }, [fundingApplication?.referenceNumber, data?.grantMilestones]);
 
   // Get grant name from first milestone's programId (must be before any returns)
   const grantName = useMemo(() => {
@@ -258,6 +274,11 @@ function MilestonesReviewPageContent({
     },
     [deleteMilestoneAsync]
   );
+
+  // Fetch milestone allocations for the grant
+  const grantUid = data?.grant?.uid;
+  const grantUIDsForAllocations = useMemo(() => (grantUid ? [grantUid] : []), [grantUid]);
+  const { allocationMap } = useMilestoneAllocationsByGrants(grantUIDsForAllocations);
 
   const milestones = data?.grantMilestones ?? EMPTY_MILESTONES;
 
@@ -509,6 +530,10 @@ function MilestonesReviewPageContent({
                       onSubmitVerification={handleSubmitVerification}
                       onDeleteMilestone={handleDeleteMilestone}
                       isDeleting={isDeleting && deletingMilestoneId === milestone.uid}
+                      allocationAmount={
+                        allocationMap.get(milestone.uid) ??
+                        allocationMap.get(milestone.uid.toLowerCase())
+                      }
                     />
                   ))
                 )}
@@ -517,8 +542,26 @@ function MilestonesReviewPageContent({
           </div>
 
           {/* Sidebar - Comments & Activity */}
-          {referenceNumber && (
-            <div className="lg:col-span-2">
+          <div className="lg:col-span-2">
+            {isLoadingFundingApp && !referenceNumber ? (
+              <div className="space-y-4 p-4 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+                <div className="h-5 w-40 bg-gray-200 dark:bg-zinc-700 rounded animate-pulse" />
+                <div className="space-y-2">
+                  <div className="h-4 w-full bg-gray-100 dark:bg-zinc-800 rounded animate-pulse" />
+                  <div className="h-4 w-3/4 bg-gray-100 dark:bg-zinc-800 rounded animate-pulse" />
+                  <div className="h-4 w-1/2 bg-gray-100 dark:bg-zinc-800 rounded animate-pulse" />
+                </div>
+              </div>
+            ) : fundingApplicationError && !referenceNumber ? (
+              <div className="p-4 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10">
+                <p className="text-sm text-red-700 dark:text-red-300 mb-3">
+                  Failed to load linked application data.
+                </p>
+                <Button variant="secondary" onClick={() => refetchFundingApplication()}>
+                  Retry
+                </Button>
+              </div>
+            ) : referenceNumber ? (
               <CommentsAndActivity
                 referenceNumber={referenceNumber}
                 statusHistory={(fundingApplication?.statusHistory || []).map((item) => ({
@@ -531,9 +574,17 @@ function MilestonesReviewPageContent({
                 }))}
                 communityId={communityId}
                 currentUserAddress={address}
+                programId={parsedProgramId}
               />
-            </div>
-          )}
+            ) : projectUID ? (
+              <GrantCommentsAndActivity
+                projectUID={projectUID}
+                programId={parsedProgramId}
+                communityId={communityId}
+                currentUserAddress={address}
+              />
+            ) : null}
+          </div>
         </div>
       </div>
     </div>

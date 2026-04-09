@@ -1,7 +1,51 @@
+import type { OpportunityType } from "../types/funding-program";
+
 /**
  * Filter options for the funding map
  * Extracted from components/Pages/ProgramRegistry/helper.ts
  */
+
+/**
+ * All opportunity types in display order
+ */
+export const OPPORTUNITY_TYPES: readonly OpportunityType[] = [
+  "grant",
+  "hackathon",
+  "bounty",
+  "accelerator",
+  "vc_fund",
+  "rfp",
+] as const;
+
+/**
+ * Human-readable labels for each opportunity type
+ */
+export const OPPORTUNITY_TYPE_LABELS: Record<OpportunityType, string> = {
+  grant: "Grants",
+  hackathon: "Hackathons",
+  bounty: "Bounties",
+  accelerator: "Accelerators",
+  vc_fund: "VC Funds",
+  rfp: "RFPs",
+};
+
+/**
+ * Singular labels for each opportunity type
+ */
+export const OPPORTUNITY_TYPE_SINGULAR_LABELS: Record<OpportunityType, string> = {
+  grant: "Grant",
+  hackathon: "Hackathon",
+  bounty: "Bounty",
+  accelerator: "Accelerator",
+  vc_fund: "VC Fund",
+  rfp: "RFP",
+};
+
+export const BOUNTY_DIFFICULTY_LEVELS = ["beginner", "intermediate", "advanced"] as const;
+
+export const ACCELERATOR_STAGES = ["pre-seed", "seed", "series-a"] as const;
+
+export const VC_FUND_STAGES = ["pre-seed", "seed", "series-a", "series-b+"] as const;
 
 export const FUNDING_MAP_NETWORKS = [
   "Aleo",
@@ -157,12 +201,63 @@ export const FUNDING_MAP_CATEGORIES = [
 
 export const FUNDING_MAP_GRANT_TYPES = [
   "Direct Grants",
-  "Bounties",
   "Retro Funding",
   "Quadratic Funding",
-  "Hackathons",
-  "Accelerators",
 ] as const;
+
+/**
+ * Unified type options combining opportunity types and funding mechanisms.
+ * "Bounties", "Hackathons", and "Accelerators" are removed from mechanisms
+ * because they're already covered by opportunity types.
+ */
+export interface UnifiedTypeOption {
+  label: string;
+  value: string;
+  filterTarget: "type" | "grantType";
+  section: "opportunityTypes" | "fundingMechanisms";
+}
+
+export const UNIFIED_TYPE_OPTIONS: readonly UnifiedTypeOption[] = [
+  { label: "Grants", value: "grant", filterTarget: "type", section: "opportunityTypes" },
+  { label: "Hackathons", value: "hackathon", filterTarget: "type", section: "opportunityTypes" },
+  { label: "Bounties", value: "bounty", filterTarget: "type", section: "opportunityTypes" },
+  {
+    label: "Accelerators",
+    value: "accelerator",
+    filterTarget: "type",
+    section: "opportunityTypes",
+  },
+  { label: "VC Funds", value: "vc_fund", filterTarget: "type", section: "opportunityTypes" },
+  { label: "RFPs", value: "rfp", filterTarget: "type", section: "opportunityTypes" },
+  {
+    label: "Direct Grants",
+    value: "Direct Grants",
+    filterTarget: "grantType",
+    section: "fundingMechanisms",
+  },
+  {
+    label: "Retro Funding",
+    value: "Retro Funding",
+    filterTarget: "grantType",
+    section: "fundingMechanisms",
+  },
+  {
+    label: "Quadratic Funding",
+    value: "Quadratic Funding",
+    filterTarget: "grantType",
+    section: "fundingMechanisms",
+  },
+] as const;
+
+/**
+ * Maps opportunity types to their equivalent grant type display names.
+ * Used for badge deduplication and icon resolution.
+ */
+export const OPPORTUNITY_TO_GRANT_TYPE: Partial<Record<OpportunityType, string>> = {
+  hackathon: "Hackathons",
+  bounty: "Bounties",
+  accelerator: "Accelerators",
+};
 
 export const FUNDING_MAP_STATUSES = ["Active", "Inactive"] as const;
 

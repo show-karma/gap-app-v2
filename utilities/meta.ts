@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { PROJECT_NAME } from "@/constants/brand";
 
-export const SITE_URL = "https://karmahq.xyz";
+export const SITE_URL = "https://www.karmahq.xyz";
 
 export const DEFAULT_TITLE = `${PROJECT_NAME} - Where builders get funded and ecosystems grow`;
 export const DEFAULT_DESCRIPTION =

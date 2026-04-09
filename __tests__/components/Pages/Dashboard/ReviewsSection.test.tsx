@@ -3,15 +3,15 @@ import { ReviewsSection } from "@/components/Pages/Dashboard/ReviewsSection/Revi
 import { useReviewerPrograms } from "@/hooks/usePermissions";
 import type { FundingProgram } from "@/services/fundingPlatformService";
 
-jest.mock("@/hooks/usePermissions", () => ({
-  useReviewerPrograms: jest.fn(),
+vi.mock("@/hooks/usePermissions", () => ({
+  useReviewerPrograms: vi.fn(),
 }));
 
-jest.mock("@/components/Utilities/ProfilePicture", () => ({
+vi.mock("@/components/Utilities/ProfilePicture", () => ({
   ProfilePicture: ({ name }: { name: string }) => <div data-testid={`avatar-${name}`} />,
 }));
 
-const mockUseReviewerPrograms = useReviewerPrograms as unknown as jest.Mock;
+const mockUseReviewerPrograms = useReviewerPrograms as unknown as vi.Mock;
 
 const createProgram = (overrides: Partial<FundingProgram> = {}): FundingProgram =>
   ({
@@ -29,7 +29,7 @@ const createProgram = (overrides: Partial<FundingProgram> = {}): FundingProgram 
 
 describe("ReviewsSection", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("renders loading skeleton", () => {
@@ -37,7 +37,7 @@ describe("ReviewsSection", () => {
       programs: [],
       isLoading: true,
       error: null,
-      refetch: jest.fn(),
+      refetch: vi.fn(),
     });
 
     const { container } = render(<ReviewsSection />);
@@ -50,7 +50,7 @@ describe("ReviewsSection", () => {
       programs: [],
       isLoading: false,
       error: null,
-      refetch: jest.fn(),
+      refetch: vi.fn(),
     });
 
     render(<ReviewsSection />);
@@ -59,7 +59,7 @@ describe("ReviewsSection", () => {
   });
 
   it("renders error state with retry button", () => {
-    const refetch = jest.fn();
+    const refetch = vi.fn();
     mockUseReviewerPrograms.mockReturnValue({
       programs: [],
       isLoading: false,
@@ -82,7 +82,7 @@ describe("ReviewsSection", () => {
       ],
       isLoading: false,
       error: null,
-      refetch: jest.fn(),
+      refetch: vi.fn(),
     });
 
     render(<ReviewsSection />);
@@ -112,7 +112,7 @@ describe("ReviewsSection", () => {
       ],
       isLoading: false,
       error: null,
-      refetch: jest.fn(),
+      refetch: vi.fn(),
     });
 
     render(<ReviewsSection />);
@@ -136,7 +136,7 @@ describe("ReviewsSection", () => {
       ],
       isLoading: false,
       error: null,
-      refetch: jest.fn(),
+      refetch: vi.fn(),
     });
 
     render(<ReviewsSection />);
@@ -156,7 +156,7 @@ describe("ReviewsSection", () => {
       ],
       isLoading: false,
       error: null,
-      refetch: jest.fn(),
+      refetch: vi.fn(),
     });
 
     render(<ReviewsSection />);
@@ -172,7 +172,7 @@ describe("ReviewsSection", () => {
       ],
       isLoading: false,
       error: null,
-      refetch: jest.fn(),
+      refetch: vi.fn(),
     });
 
     render(<ReviewsSection />);

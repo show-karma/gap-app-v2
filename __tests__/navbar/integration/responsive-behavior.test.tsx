@@ -3,6 +3,7 @@
  * Tests viewport-specific behavior across mobile, tablet, and desktop breakpoints
  */
 
+import "./setup-dynamic-mock";
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Navbar } from "@/src/components/navbar/navbar";
@@ -87,7 +88,7 @@ describe("Responsive Behavior Integration Tests", () => {
       const searchInput = within(drawer).getByPlaceholderText("Search Project/Community");
       expect(searchInput).toBeInTheDocument();
 
-      // Search should be functional (use fireEvent to avoid setPointerCapture issues)
+      // fireEvent required: vaul drawer incompatible with userEvent in jsdom
       fireEvent.change(searchInput, { target: { value: "test" } });
       expect(searchInput).toHaveValue("test");
     });
@@ -363,7 +364,7 @@ describe("Responsive Behavior Integration Tests", () => {
         expect(screen.getByText("Menu")).toBeInTheDocument();
       });
 
-      // Close drawer manually
+      // fireEvent required: vaul drawer incompatible with userEvent in jsdom
       const closeButton = screen.getByLabelText(/close/i);
       fireEvent.click(closeButton);
 
@@ -472,7 +473,7 @@ describe("Responsive Behavior Integration Tests", () => {
       const { rerender } = renderWithProviders(<Navbar />, {
         mockUsePrivy: createMockUsePrivy(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
-        mockUseTheme: { theme: "dark", setTheme: jest.fn() },
+        mockUseTheme: { theme: "dark", setTheme: vi.fn() },
       });
 
       // Resize to mobile
@@ -481,7 +482,7 @@ describe("Responsive Behavior Integration Tests", () => {
       rerender(<Navbar />, {
         mockUsePrivy: createMockUsePrivy(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
-        mockUseTheme: { theme: "dark", setTheme: jest.fn() },
+        mockUseTheme: { theme: "dark", setTheme: vi.fn() },
       });
 
       // Theme should persist
@@ -547,6 +548,7 @@ describe("Responsive Behavior Integration Tests", () => {
       const drawer = screen.getByRole("dialog");
       const searchInput = within(drawer).getByPlaceholderText("Search Project/Community");
 
+      // fireEvent required: vaul drawer incompatible with userEvent in jsdom
       fireEvent.change(searchInput, { target: { value: "test" } });
 
       // Results should adapt to mobile drawer context

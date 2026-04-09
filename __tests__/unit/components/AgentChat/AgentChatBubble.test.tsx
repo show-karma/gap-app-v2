@@ -1,18 +1,19 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { AgentChatBubble } from "@/components/AgentChat/AgentChatBubble";
 import { useAgentChatStore } from "@/store/agentChat";
 
 // Mock useAuth
-const mockAuthenticated = jest.fn(() => true);
-jest.mock("@/hooks/useAuth", () => ({
+const mockAuthenticated = vi.fn(() => true);
+vi.mock("@/hooks/useAuth", () => ({
   useAuth: () => ({ authenticated: mockAuthenticated() }),
 }));
 
 // Mock useAgentStream
-const mockSendMessage = jest.fn();
-const mockSendConfirmation = jest.fn();
-const mockAbort = jest.fn();
-jest.mock("@/hooks/useAgentStream", () => ({
+const mockSendMessage = vi.fn();
+const mockSendConfirmation = vi.fn();
+const mockAbort = vi.fn();
+vi.mock("@/hooks/useAgentStream", () => ({
   useAgentStream: () => ({
     sendMessage: mockSendMessage,
     sendConfirmation: mockSendConfirmation,
@@ -21,12 +22,12 @@ jest.mock("@/hooks/useAgentStream", () => ({
 }));
 
 // Mock useAgentContextSync
-jest.mock("@/hooks/useAgentContextSync", () => ({
-  useAgentContextSync: jest.fn(),
+vi.mock("@/hooks/useAgentContextSync", () => ({
+  useAgentContextSync: vi.fn(),
 }));
 
 // Mock AI Elements components to simple div/form renderers for unit testing
-jest.mock("@/src/components/ai-elements/conversation", () => ({
+vi.mock("@/src/components/ai-elements/conversation", () => ({
   Conversation: ({ children, className }: { children: React.ReactNode; className?: string }) => (
     <div data-testid="conversation" className={className}>
       {children}
@@ -59,15 +60,12 @@ jest.mock("@/src/components/ai-elements/conversation", () => ({
   ConversationScrollButton: () => <button data-testid="scroll-button">Scroll</button>,
 }));
 
-jest.mock("@/src/components/ai-elements/message", () => ({
+vi.mock("@/src/components/ai-elements/message", () => ({
   Message: ({ children, from }: { children: React.ReactNode; from: string }) => (
     <div data-testid={`message-${from}`}>{children}</div>
   ),
   MessageContent: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="message-content">{children}</div>
-  ),
-  MessageResponse: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="message-response">{children}</div>
   ),
   MessageActions: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="message-actions">{children}</div>
@@ -87,7 +85,13 @@ jest.mock("@/src/components/ai-elements/message", () => ({
   ),
 }));
 
-jest.mock("@/src/components/ai-elements/prompt-input", () => ({
+vi.mock("@/src/components/ai-elements/message-response", () => ({
+  MessageResponse: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="message-response">{children}</div>
+  ),
+}));
+
+vi.mock("@/src/components/ai-elements/prompt-input", () => ({
   PromptInput: ({
     children,
     onSubmit,
@@ -133,15 +137,15 @@ jest.mock("@/src/components/ai-elements/prompt-input", () => ({
 }));
 
 // Mock use-stick-to-bottom
-jest.mock("use-stick-to-bottom", () => ({
+vi.mock("use-stick-to-bottom", () => ({
   useStickToBottomContext: () => ({
-    scrollToBottom: jest.fn(),
+    scrollToBottom: vi.fn(),
     isAtBottom: true,
   }),
 }));
 
 // Mock lucide-react icons
-jest.mock("lucide-react", () => ({
+vi.mock("lucide-react", () => ({
   AlertCircleIcon: () => <span data-testid="icon-alert-circle" />,
   BotIcon: () => <span data-testid="icon-bot" />,
   CopyIcon: () => <span data-testid="icon-copy" />,
@@ -153,7 +157,7 @@ jest.mock("lucide-react", () => ({
 }));
 
 // Mock UI components
-jest.mock("@/components/ui/badge", () => ({
+vi.mock("@/components/ui/badge", () => ({
   Badge: ({
     children,
     variant,
@@ -169,7 +173,7 @@ jest.mock("@/components/ui/badge", () => ({
   ),
 }));
 
-jest.mock("@/components/ui/button", () => ({
+vi.mock("@/components/ui/button", () => ({
   Button: ({
     children,
     ...props
@@ -179,7 +183,7 @@ jest.mock("@/components/ui/button", () => ({
   },
 }));
 
-jest.mock("@/components/ui/avatar", () => ({
+vi.mock("@/components/ui/avatar", () => ({
   Avatar: ({ children, className }: { children: React.ReactNode; className?: string }) => (
     <div data-testid="avatar" className={className}>
       {children}
@@ -192,7 +196,7 @@ jest.mock("@/components/ui/avatar", () => ({
   ),
 }));
 
-jest.mock("@/components/ui/tooltip", () => ({
+vi.mock("@/components/ui/tooltip", () => ({
   TooltipProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   TooltipTrigger: ({ children, asChild }: { children: React.ReactNode; asChild?: boolean }) => (
@@ -205,7 +209,7 @@ jest.mock("@/components/ui/tooltip", () => ({
 
 describe("AgentChatBubble", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockAuthenticated.mockReturnValue(true);
     // Reset store state
     useAgentChatStore.setState({
@@ -217,10 +221,10 @@ describe("AgentChatBubble", () => {
     });
   });
 
-  it("should not render when unauthenticated", () => {
+  it("should still render toggle when unauthenticated", () => {
     mockAuthenticated.mockReturnValue(false);
-    const { container } = render(<AgentChatBubble />);
-    expect(container.innerHTML).toBe("");
+    render(<AgentChatBubble />);
+    expect(screen.getByLabelText("Open chat")).toBeInTheDocument();
   });
 
   it("should render toggle button when authenticated", () => {
@@ -245,9 +249,10 @@ describe("AgentChatBubble", () => {
     expect(screen.getByTestId("conversation")).toBeInTheDocument();
   });
 
-  it("should toggle chat on button click", () => {
+  it("should toggle chat on button click", async () => {
+    const user = userEvent.setup();
     render(<AgentChatBubble />);
-    fireEvent.click(screen.getByLabelText("Open chat"));
+    await user.click(screen.getByLabelText("Open chat"));
     // After click, store.toggleOpen is called → isOpen becomes true
     expect(useAgentChatStore.getState().isOpen).toBe(true);
   });
@@ -308,7 +313,7 @@ describe("AgentChatBubble", () => {
       ],
     });
     render(<AgentChatBubble />);
-    expect(screen.getByTestId("message-actions")).toBeInTheDocument();
+    expect(screen.getByTitle("Copy")).toBeInTheDocument();
   });
 
   it("should not render copy action for streaming messages", () => {
@@ -369,14 +374,18 @@ describe("AgentChatBubble", () => {
     expect(screen.getByTestId("confirmation-card")).toBeInTheDocument();
   });
 
-  it("should call sendMessage when submitting text", () => {
+  it("should call sendMessage when submitting text", async () => {
+    const user = userEvent.setup();
     useAgentChatStore.setState({ isOpen: true });
     render(<AgentChatBubble />);
 
     const textarea = screen.getByTestId("prompt-textarea");
-    fireEvent.change(textarea, { target: { value: "Test message" } });
+    await user.clear(textarea);
+
+    await user.type(textarea, "Test message");
 
     const form = screen.getByTestId("prompt-input");
+    // fireEvent required: no userEvent equivalent for submit events
     fireEvent.submit(form);
 
     expect(mockSendMessage).toHaveBeenCalledWith("Test message");
@@ -387,6 +396,7 @@ describe("AgentChatBubble", () => {
     render(<AgentChatBubble />);
 
     const form = screen.getByTestId("prompt-input");
+    // fireEvent required: no userEvent equivalent for submit events
     fireEvent.submit(form);
 
     expect(mockSendMessage).not.toHaveBeenCalled();
@@ -398,11 +408,12 @@ describe("AgentChatBubble", () => {
     expect(screen.getByTestId("stop-button")).toBeInTheDocument();
   });
 
-  it("should call abort when stop button clicked", () => {
+  it("should call abort when stop button clicked", async () => {
+    const user = userEvent.setup();
     useAgentChatStore.setState({ isOpen: true, isStreaming: true });
     render(<AgentChatBubble />);
 
-    fireEvent.click(screen.getByTestId("stop-button"));
+    await user.click(screen.getByTestId("stop-button"));
     expect(mockAbort).toHaveBeenCalled();
   });
 
@@ -433,14 +444,15 @@ describe("AgentChatBubble", () => {
     expect(screen.getByText("Application")).toBeInTheDocument();
   });
 
-  it("should clear messages when Clear button clicked", () => {
+  it("should clear messages when Clear button clicked", async () => {
+    const user = userEvent.setup();
     useAgentChatStore.setState({
       isOpen: true,
       messages: [{ id: "1", role: "user", content: "Hello", timestamp: Date.now() }],
     });
     render(<AgentChatBubble />);
 
-    fireEvent.click(screen.getByTitle("Clear chat"));
+    await user.click(screen.getByTitle("Clear chat"));
     expect(useAgentChatStore.getState().messages).toHaveLength(0);
   });
 
@@ -450,7 +462,8 @@ describe("AgentChatBubble", () => {
     expect(screen.getByTestId("scroll-button")).toBeInTheDocument();
   });
 
-  it("should call sendConfirmation when approving a preview", () => {
+  it("should call sendConfirmation when approving a preview", async () => {
+    const user = userEvent.setup();
     useAgentChatStore.setState({
       isOpen: true,
       messages: [
@@ -470,11 +483,12 @@ describe("AgentChatBubble", () => {
     });
     render(<AgentChatBubble />);
 
-    fireEvent.click(screen.getByTestId("confirm-approve"));
+    await user.click(screen.getByTestId("confirm-approve"));
     expect(mockSendConfirmation).toHaveBeenCalledWith("msg-1", "preview_update_project", true);
   });
 
-  it("should call sendConfirmation when denying a preview", () => {
+  it("should call sendConfirmation when denying a preview", async () => {
+    const user = userEvent.setup();
     useAgentChatStore.setState({
       isOpen: true,
       messages: [
@@ -494,7 +508,7 @@ describe("AgentChatBubble", () => {
     });
     render(<AgentChatBubble />);
 
-    fireEvent.click(screen.getByTestId("confirm-deny"));
+    await user.click(screen.getByTestId("confirm-deny"));
     expect(mockSendConfirmation).toHaveBeenCalledWith("msg-1", "preview_update_project", false);
   });
 });

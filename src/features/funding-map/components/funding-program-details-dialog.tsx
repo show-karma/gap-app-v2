@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import type { MutableRefObject } from "react";
+import { useEffect, useRef } from "react";
 import {
   BlogIcon,
   Discord2Icon,
@@ -37,6 +39,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useMixpanel } from "@/hooks/useMixpanel";
 import { envVars } from "@/utilities/enviromentVars";
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
@@ -47,10 +50,12 @@ import type {
   FundingProgramCommunity,
   FundingProgramMetadata,
   FundingProgramResponse,
+  OpportunityType,
 } from "../types/funding-program";
 import { formatBudgetValue } from "../utils/format-budget";
 import { FUNDING_PLATFORM_DOMAINS } from "../utils/funding-platform-domains";
 import { isValidImageUrl } from "../utils/image-utils";
+import { DialogTypeSection } from "./dialog-type-sections";
 import { GrantTypeBadges } from "./grant-type-badges";
 
 interface FundingProgramDetailsDialogProps {
@@ -59,6 +64,7 @@ interface FundingProgramDetailsDialogProps {
   onOpenChange: (open: boolean) => void;
   isLoading?: boolean;
   isNotFound?: boolean;
+  cardClickedRef?: MutableRefObject<boolean>;
 }
 
 function formatGrantSize(min: string | undefined, max: string | undefined): string | null {
@@ -109,9 +115,10 @@ function isProgramActive(program: FundingProgramResponse): boolean {
 interface CommunityApplyButtonProps {
   program: FundingProgramResponse;
   isActive: boolean;
+  onApplyClick?: (applyType: string, communityName?: string) => void;
 }
 
-function CommunityApplyButton({ program, isActive }: CommunityApplyButtonProps) {
+function CommunityApplyButton({ program, isActive, onApplyClick }: CommunityApplyButtonProps) {
   const validCommunities = program.communities?.filter((c) => c.slug) ?? [];
 
   // Case 1: No valid communities with slugs - fall back to grantsSite
@@ -126,7 +133,12 @@ function CommunityApplyButton({ program, isActive }: CommunityApplyButtonProps) 
         disabled={!isActive}
         className={cn("gap-1.5 ml-auto", !isActive && "pointer-events-none opacity-50")}
       >
-        <Link href={isActive ? fallbackUrl : ""} target="_blank" rel="noopener noreferrer">
+        <Link
+          href={isActive ? fallbackUrl : ""}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() => onApplyClick?.("external")}
+        >
           Apply
           <ChevronRight className="h-4 w-4" />
         </Link>
@@ -146,7 +158,12 @@ function CommunityApplyButton({ program, isActive }: CommunityApplyButtonProps) 
         disabled={!isActive}
         className={cn("gap-1.5 ml-auto", !isActive && "pointer-events-none opacity-50")}
       >
-        <Link href={isActive ? applyUrl : ""} target="_blank" rel="noopener noreferrer">
+        <Link
+          href={isActive ? applyUrl : ""}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() => onApplyClick?.("karma", validCommunities[0].name ?? undefined)}
+        >
           Apply on Karma
           <ChevronRight className="h-4 w-4" />
         </Link>
@@ -179,6 +196,7 @@ function CommunityApplyButton({ program, isActive }: CommunityApplyButtonProps) 
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 cursor-pointer"
+                onClick={() => onApplyClick?.("karma", community.name ?? undefined)}
               >
                 {isValidImageUrl(community.imageUrl) && (
                   <Image
@@ -241,7 +259,13 @@ function DialogNotFound() {
   );
 }
 
-function SocialLinks({ socialLinks }: { socialLinks: FundingProgramMetadata["socialLinks"] }) {
+function SocialLinks({
+  socialLinks,
+  onLinkClick,
+}: {
+  socialLinks: FundingProgramMetadata["socialLinks"];
+  onLinkClick?: (linkType: string, url: string) => void;
+}) {
   if (!socialLinks) return null;
 
   const links = [
@@ -270,7 +294,9 @@ function SocialLinks({ socialLinks }: { socialLinks: FundingProgramMetadata["soc
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-center w-8 h-8 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
+            aria-label={link.label}
             title={link.label}
+            onClick={() => onLinkClick?.(link.label, href)}
           >
             <Icon className="h-4 w-4 text-foreground" />
           </a>
@@ -339,7 +365,58 @@ export function FundingProgramDetailsDialog({
   onOpenChange,
   isLoading = false,
   isNotFound = false,
+  cardClickedRef,
 }: FundingProgramDetailsDialogProps) {
+  const { mixpanel } = useMixpanel("karma");
+  const openTimeRef = useRef<number>(0);
+  const hasTrackedOpenRef = useRef(false);
+
+  // Track details-open when dialog opens with a program
+  useEffect(() => {
+    if (open && program && !hasTrackedOpenRef.current) {
+      hasTrackedOpenRef.current = true;
+      openTimeRef.current = Date.now();
+      const source = cardClickedRef?.current ? "card_click" : "direct_url";
+      if (cardClickedRef) {
+        cardClickedRef.current = false;
+      }
+      mixpanel.reportEvent({
+        event: "funding-map:details-open",
+        properties: {
+          programId: program.programId,
+          programTitle: program.metadata?.title,
+          organization:
+            program.communities
+              ?.filter((c) => c.name)
+              .map((c) => c.name)
+              .join(", ") || program.metadata?.organizations?.join(", "),
+          isOnKarma: program.isOnKarma,
+          isActive: isProgramActive(program),
+          source,
+        },
+      });
+    }
+  }, [open, program, mixpanel, cardClickedRef]);
+
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!newOpen) {
+      hasTrackedOpenRef.current = false;
+      if (cardClickedRef) {
+        cardClickedRef.current = false;
+      }
+    }
+    if (!newOpen && program) {
+      mixpanel.reportEvent({
+        event: "funding-map:details-close",
+        properties: {
+          programId: program.programId,
+          timeViewedMs: Date.now() - openTimeRef.current,
+        },
+      });
+    }
+    onOpenChange(newOpen);
+  };
+
   const renderContent = () => {
     if (isNotFound) {
       return <DialogNotFound />;
@@ -351,7 +428,7 @@ export function FundingProgramDetailsDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
         {renderContent()}
       </DialogContent>
@@ -360,7 +437,10 @@ export function FundingProgramDetailsDialog({
 }
 
 function DialogContentInner({ program }: { program: FundingProgramResponse }) {
+  const { mixpanel } = useMixpanel("karma");
   const { metadata, isOnKarma, communities, programId } = program;
+  const opportunityType: OpportunityType = program.type ?? "grant";
+  const isNonGrant = opportunityType !== "grant";
   const title = metadata?.title;
   const description = metadata?.description;
   const grantTypes = metadata?.grantTypes?.filter(
@@ -417,7 +497,15 @@ function DialogContentInner({ program }: { program: FundingProgramResponse }) {
                 </Badge>
               )}
             </div>
-            <SocialLinks socialLinks={metadata?.socialLinks} />
+            <SocialLinks
+              socialLinks={metadata?.socialLinks}
+              onLinkClick={(linkType, url) => {
+                mixpanel.reportEvent({
+                  event: "funding-map:social-link-click",
+                  properties: { programId, linkType, url },
+                });
+              }}
+            />
           </div>
 
           {/* Title */}
@@ -426,15 +514,18 @@ function DialogContentInner({ program }: { program: FundingProgramResponse }) {
           </DialogTitle>
 
           {/* Grant Types + Categories */}
-          {((grantTypes && grantTypes.length > 0) || (categories && categories.length > 0)) && (
+          {(isNonGrant ||
+            (grantTypes && grantTypes.length > 0) ||
+            (categories && categories.length > 0)) && (
             <div className="flex flex-wrap items-center gap-1.5">
-              {grantTypes && grantTypes.length > 0 && (
+              {(isNonGrant || (grantTypes && grantTypes.length > 0)) && (
                 <GrantTypeBadges
-                  types={grantTypes}
+                  types={grantTypes ?? []}
                   showLabels={true}
                   variant="secondary"
                   iconSize="sm"
                   className="gap-1.5"
+                  opportunityType={opportunityType}
                 />
               )}
               {categories?.map((category) => (
@@ -508,6 +599,9 @@ function DialogContentInner({ program }: { program: FundingProgramResponse }) {
           </DialogDescription>
         )}
 
+        {/* Type-Specific Details */}
+        {isNonGrant && <DialogTypeSection program={program} />}
+
         {/* Info Cards Grid */}
         {hasInfoCards && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
@@ -566,6 +660,12 @@ function DialogContentInner({ program }: { program: FundingProgramResponse }) {
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 text-sm font-semibold text-foreground hover:text-muted-foreground transition-colors"
+              onClick={() => {
+                mixpanel.reportEvent({
+                  event: "funding-map:bug-bounty-click",
+                  properties: { programId, url: bugBounty },
+                });
+              }}
             >
               <Bug className="h-4 w-4" />
               Bug Bounty
@@ -573,26 +673,89 @@ function DialogContentInner({ program }: { program: FundingProgramResponse }) {
             </a>
           )}
 
-          {isOnKarma ? (
-            <CommunityApplyButton program={program} isActive={isActive} />
-          ) : (
-            fallbackApplyUrl && (
-              <Button
-                asChild
-                size="sm"
-                disabled={!isActive}
-                className={cn("gap-1.5 ml-auto", !isActive && "pointer-events-none opacity-50")}
-              >
+          {program.submissionUrl ? (
+            isActive ? (
+              <Button asChild size="sm" className="gap-1.5 ml-auto">
                 <Link
-                  href={isActive ? fallbackApplyUrl : ""}
+                  href={
+                    program.submissionUrl.startsWith("http")
+                      ? program.submissionUrl
+                      : `https://${program.submissionUrl}`
+                  }
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => {
+                    mixpanel.reportEvent({
+                      event: "funding-map:apply-click",
+                      properties: {
+                        programId,
+                        programTitle: title,
+                        isOnKarma,
+                        isActive,
+                        applyType: "submission_url",
+                      },
+                    });
+                  }}
+                >
+                  Apply
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </Link>
+              </Button>
+            ) : (
+              <Button size="sm" disabled className="gap-1.5 ml-auto">
+                Apply
+                <ExternalLink className="h-3.5 w-3.5" />
+              </Button>
+            )
+          ) : isOnKarma ? (
+            <CommunityApplyButton
+              program={program}
+              isActive={isActive}
+              onApplyClick={(applyType, communityName) => {
+                mixpanel.reportEvent({
+                  event: "funding-map:apply-click",
+                  properties: {
+                    programId,
+                    programTitle: title,
+                    isOnKarma,
+                    isActive,
+                    communityName,
+                    applyType,
+                  },
+                });
+              }}
+            />
+          ) : (
+            fallbackApplyUrl &&
+            (isActive ? (
+              <Button asChild size="sm" className="gap-1.5 ml-auto">
+                <Link
+                  href={fallbackApplyUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => {
+                    mixpanel.reportEvent({
+                      event: "funding-map:apply-click",
+                      properties: {
+                        programId,
+                        programTitle: title,
+                        isOnKarma,
+                        isActive,
+                        applyType: "external",
+                      },
+                    });
+                  }}
                 >
                   Apply
                   <ChevronRight className="h-4 w-4" />
                 </Link>
               </Button>
-            )
+            ) : (
+              <Button size="sm" disabled className="gap-1.5 ml-auto">
+                Apply
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            ))
           )}
         </div>
       </div>
@@ -601,12 +764,18 @@ function DialogContentInner({ program }: { program: FundingProgramResponse }) {
       {programId && (
         <div className="border-t border-border px-6 py-4 bg-muted/30">
           <p className="text-sm text-muted-foreground">
-            Are you the manager of this grant program?{" "}
+            Are you the manager of this {isNonGrant ? "program" : "grant program"}?{" "}
             <a
               href={`https://tally.so/r/3qB1PY?program_id=${programId}&program_name=karma`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-foreground hover:underline font-medium"
+              onClick={() => {
+                mixpanel.reportEvent({
+                  event: "funding-map:claim-program-click",
+                  properties: { programId, programTitle: title },
+                });
+              }}
             >
               Claim
             </a>{" "}

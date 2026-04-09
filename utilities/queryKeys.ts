@@ -82,10 +82,13 @@ export const QUERY_KEYS = {
   MILESTONES: {
     PROJECT_GRANT_MILESTONES: (projectId: string, programId: string) =>
       ["project-grant-milestones", projectId, programId] as const,
+    EVALUATION: (milestoneUID: string) => ["milestone-evaluation", milestoneUID] as const,
   },
   APPLICATIONS: {
     BY_PROJECT_UID: (projectUID: string) => ["application-by-project-uid", projectUID] as const,
     COMMENTS: (referenceNumber: string) => ["application-comments", referenceNumber] as const,
+    INVOICE_CONFIG: (referenceNumber: string) =>
+      ["applicationInvoiceConfig", referenceNumber] as const,
   },
   REVIEWERS: {
     PROGRAM: (programId: string) => ["program-reviewers", programId] as const,
@@ -117,10 +120,24 @@ export const QUERY_KEYS = {
       page: number,
       sortBy: string,
       sortOrder: string,
-      programIds: string[]
-    ) => ["reportMilestones", communityId, page, sortBy, sortOrder, programIds] as const,
-    PENDING_VERIFICATION: (communityId: string, page: number, programIds: string[]) =>
-      ["pendingVerificationMilestones", communityId, page, programIds] as const,
+      programIds: string[],
+      reviewerAddress?: string
+    ) =>
+      [
+        "reportMilestones",
+        communityId,
+        page,
+        sortBy,
+        sortOrder,
+        programIds,
+        reviewerAddress,
+      ] as const,
+    PENDING_VERIFICATION: (
+      communityId: string,
+      page: number,
+      programIds: string[],
+      reviewerAddress?: string
+    ) => ["pendingVerificationMilestones", communityId, page, programIds, reviewerAddress] as const,
     PROJECT_UPDATES: (
       communityId: string,
       filter: string,
@@ -140,6 +157,8 @@ export const QUERY_KEYS = {
       ] as const,
   },
   GRANTS: {
+    COMMENTS: (projectUID: string, programId: string) =>
+      ["grant-comments", projectUID, programId] as const,
     DUPLICATE_CHECK_BASE: ["duplicate-grant-check"] as const,
     DUPLICATE_CHECK: (params: {
       projectUid?: string;

@@ -13,12 +13,12 @@ export function ContentTabsSkeleton({ className }: ContentTabsSkeletonProps) {
   return (
     <div
       className={cn(
-        "flex flex-row items-center gap-1 p-1 rounded-lg bg-neutral-100 dark:bg-zinc-800 overflow-x-auto",
+        "flex flex-row items-center gap-1 p-1 rounded-lg bg-muted overflow-x-auto",
         className
       )}
       data-testid="content-tabs-skeleton"
     >
-      {/* Profile tab - mobile only */}
+      {/* Support tab - mobile only */}
       <Skeleton className="lg:hidden h-9 w-16 rounded-md" />
       {/* Updates tab */}
       <Skeleton className="h-9 w-20 rounded-md" />

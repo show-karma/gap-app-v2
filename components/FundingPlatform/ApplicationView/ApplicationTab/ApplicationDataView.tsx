@@ -4,17 +4,27 @@ import type { FC, JSX } from "react";
 import { useMemo } from "react";
 import { KarmaProjectLink } from "@/components/FundingPlatform/shared/KarmaProjectLink";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
-import type { IFundingApplication, ProgramWithFormSchema } from "@/types/funding-platform";
+import type {
+  IFundingApplication,
+  IMilestoneData,
+  ProgramWithFormSchema,
+} from "@/types/funding-platform";
 import { createFieldLabelsMap, createFieldTypeMap } from "@/utilities/form-schema-helpers";
 import { formatDate } from "@/utilities/formatDate";
+import { formatMilestoneAmount } from "@/utilities/formatMilestoneAmount";
 import { PROJECT_UID_REGEX } from "@/utilities/validation";
 
 export interface ApplicationDataViewProps {
   application: IFundingApplication;
   program?: ProgramWithFormSchema;
+  excludeMilestones?: boolean;
 }
 
-export const ApplicationDataView: FC<ApplicationDataViewProps> = ({ application, program }) => {
+export const ApplicationDataView: FC<ApplicationDataViewProps> = ({
+  application,
+  program,
+  excludeMilestones,
+}) => {
   // Resolve form schema from program object (handles both direct formSchema and nested applicationConfig.formSchema)
   const programAny = program as Record<string, unknown> | null | undefined;
   const formSchema =
@@ -34,25 +44,42 @@ export const ApplicationDataView: FC<ApplicationDataViewProps> = ({ application,
       if (isMilestoneArray) {
         return (
           <div className="space-y-3">
-            {value.map((milestone: any, index) => (
+            {value.map((milestone: IMilestoneData, index) => (
               <div
                 key={index}
                 className="bg-gray-50 dark:bg-zinc-700/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600"
               >
                 <div className="space-y-2">
                   <div className="flex justify-between items-start gap-4">
-                    <h5 className="font-medium text-gray-900 dark:text-gray-100">
-                      {milestone.title}
-                    </h5>
+                    <div className="flex items-baseline gap-2 flex-wrap">
+                      <h5 className="font-medium text-gray-900 dark:text-gray-100">
+                        {milestone.title}
+                      </h5>
+                      {formatMilestoneAmount(milestone.fundingRequested) && (
+                        <span className="text-sm text-zinc-500 dark:text-zinc-400">
+                          {formatMilestoneAmount(milestone.fundingRequested)}
+                        </span>
+                      )}
+                    </div>
                     {milestone.dueDate && (
                       <span className="text-xs bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200 px-2 py-1 rounded flex-shrink-0">
-                        Due: {formatDate(new Date(milestone.dueDate))}
+                        Due: {formatDate(milestone.dueDate)}
                       </span>
                     )}
                   </div>
                   {milestone.description && (
                     <div className="text-sm text-gray-600 dark:text-gray-400 prose prose-sm dark:prose-invert max-w-none">
                       <MarkdownPreview source={milestone.description} />
+                    </div>
+                  )}
+                  {milestone.completionCriteria && (
+                    <div className="text-sm">
+                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                        Completion Criteria:
+                      </span>
+                      <div className="text-gray-600 dark:text-gray-400 prose prose-sm dark:prose-invert max-w-none mt-1">
+                        <MarkdownPreview source={milestone.completionCriteria} />
+                      </div>
                     </div>
                   )}
                 </div>
@@ -115,7 +142,16 @@ export const ApplicationDataView: FC<ApplicationDataViewProps> = ({ application,
     );
   };
 
-  const dataToRender = application.applicationData;
+  const { applicationData } = application;
+  const dataToRender = useMemo(() => {
+    if (!excludeMilestones || !applicationData) return applicationData;
+    return Object.fromEntries(
+      Object.entries(applicationData).filter(([_, value]) => {
+        if (!Array.isArray(value) || value.length === 0) return true;
+        return !(typeof value[0] === "object" && value[0] !== null && "title" in value[0]);
+      })
+    );
+  }, [applicationData, excludeMilestones]);
 
   if (!dataToRender || Object.keys(dataToRender).length === 0) {
     return (

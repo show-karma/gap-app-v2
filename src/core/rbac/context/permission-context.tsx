@@ -1,9 +1,8 @@
 "use client";
 
-import { usePrivy } from "@privy-io/react-auth";
-import { createContext, type ReactNode, useContext, useMemo } from "react";
-import { useAccount } from "wagmi";
-import { getCypressMockAuthState } from "@/utilities/auth/cypress-auth";
+import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from "react";
+import { usePrivyBridge } from "@/contexts/privy-bridge-context";
+import { getE2EMockAuthState } from "@/utilities/auth/e2e-auth";
 import { usePermissionsQuery } from "../hooks/use-permissions";
 import { hasAllPermissions, hasAnyPermission, hasPermission } from "../policies";
 import type { GetPermissionsParams } from "../services/authorization.service";
@@ -53,12 +52,17 @@ interface PermissionProviderProps {
 }
 
 export function PermissionProvider({ children, resourceContext = {} }: PermissionProviderProps) {
-  const { authenticated, ready } = usePrivy();
-  const { isConnected } = useAccount();
-  const cypressMockAuthState = useMemo(() => getCypressMockAuthState(), [ready, authenticated]);
-  const isCypressMockAuthenticated = Boolean(cypressMockAuthState?.authenticated);
+  const { authenticated, ready } = usePrivyBridge();
+  // Track client-side hydration so getE2EMockAuthState() is re-evaluated
+  // after SSR. During SSR, window is undefined so the check returns null.
+  // Without this, useMemo caches the SSR result and never re-checks on the client
+  // when Privy's ready/authenticated haven't changed yet.
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => setIsClient(true), []);
+  const e2eMockAuthState = useMemo(() => getE2EMockAuthState(), [ready, authenticated, isClient]);
+  const isE2EMockAuthenticated = Boolean(e2eMockAuthState?.authenticated);
 
-  const isAuthenticated = isCypressMockAuthenticated || (ready && authenticated && isConnected);
+  const isAuthenticated = isE2EMockAuthenticated || (ready && authenticated);
 
   const { data, isLoading, isError } = usePermissionsQuery(resourceContext, {
     enabled: isAuthenticated,
@@ -70,11 +74,11 @@ export function PermissionProvider({ children, resourceContext = {} }: Permissio
     const context = data?.resourceContext ?? defaultResourceContext;
 
     // Keep loading while Privy initializes
-    const privyNotReady = isCypressMockAuthenticated ? false : !ready;
+    const privyNotReady = isE2EMockAuthenticated ? false : !ready;
     // If we believe the user is authenticated (Privy says so) but we don't
     // have permission data yet, stay in loading state. This covers ALL race
     // conditions: Wagmi not connected yet, query disabled, query in-flight, etc.
-    const believedAuthenticated = isCypressMockAuthenticated || (ready && authenticated);
+    const believedAuthenticated = isE2EMockAuthenticated || (ready && authenticated);
     const awaitingPermissions = believedAuthenticated && !data && !isError;
     const effectiveIsLoading = privyNotReady || awaitingPermissions || isLoading;
     const isGuestDueToError = isError || (!effectiveIsLoading && isAuthenticated && !data);
@@ -98,7 +102,7 @@ export function PermissionProvider({ children, resourceContext = {} }: Permissio
         isValidRole(role) && isRoleAtLeast(roles.primaryRole, role),
       isReviewerType: (type: ReviewerType) => roles.reviewerTypes?.includes(type) ?? false,
     };
-  }, [data, isLoading, isError, ready, authenticated, isAuthenticated, isCypressMockAuthenticated]);
+  }, [data, isLoading, isError, ready, authenticated, isAuthenticated, isE2EMockAuthenticated]);
 
   return <PermissionContext.Provider value={contextValue}>{children}</PermissionContext.Provider>;
 }

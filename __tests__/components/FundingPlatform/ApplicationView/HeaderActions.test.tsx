@@ -1,8 +1,9 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import HeaderActions from "@/components/FundingPlatform/ApplicationView/HeaderActions";
 
 // Mock the Button component from ui
-jest.mock("@/components/ui/button", () => ({
+vi.mock("@/components/ui/button", () => ({
   Button: ({ onClick, disabled, children, className, variant, size }: any) => (
     <button
       onClick={onClick}
@@ -17,19 +18,19 @@ jest.mock("@/components/ui/button", () => ({
 }));
 
 // Mock the RBAC Can component to always render children (grant all permissions in tests)
-jest.mock("@/src/core/rbac/components/can", () => ({
+vi.mock("@/src/core/rbac/components/can", () => ({
   Can: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
 describe("HeaderActions", () => {
   const defaultProps = {
     currentStatus: "pending" as const,
-    onStatusChange: jest.fn(),
+    onStatusChange: vi.fn(),
     isUpdating: false,
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("Pending Status", () => {
@@ -39,13 +40,14 @@ describe("HeaderActions", () => {
       expect(screen.getByRole("button", { name: /start review/i })).toBeInTheDocument();
     });
 
-    it("should call onStatusChange with under_review when Start Review is clicked", () => {
-      const onStatusChange = jest.fn();
+    it("should call onStatusChange with under_review when Start Review is clicked", async () => {
+      const user = userEvent.setup();
+      const onStatusChange = vi.fn();
       render(
         <HeaderActions {...defaultProps} currentStatus="pending" onStatusChange={onStatusChange} />
       );
 
-      fireEvent.click(screen.getByRole("button", { name: /start review/i }));
+      await user.click(screen.getByRole("button", { name: /start review/i }));
 
       expect(onStatusChange).toHaveBeenCalledWith("under_review");
     });
@@ -58,8 +60,9 @@ describe("HeaderActions", () => {
       expect(screen.getByRole("button", { name: /start review/i })).toBeInTheDocument();
     });
 
-    it("should call onStatusChange with under_review when Start Review is clicked", () => {
-      const onStatusChange = jest.fn();
+    it("should call onStatusChange with under_review when Start Review is clicked", async () => {
+      const user = userEvent.setup();
+      const onStatusChange = vi.fn();
       render(
         <HeaderActions
           {...defaultProps}
@@ -68,7 +71,7 @@ describe("HeaderActions", () => {
         />
       );
 
-      fireEvent.click(screen.getByRole("button", { name: /start review/i }));
+      await user.click(screen.getByRole("button", { name: /start review/i }));
 
       expect(onStatusChange).toHaveBeenCalledWith("under_review");
     });
@@ -83,8 +86,9 @@ describe("HeaderActions", () => {
       expect(screen.getByRole("button", { name: /reject/i })).toBeInTheDocument();
     });
 
-    it("should call onStatusChange with approved when Approve is clicked", () => {
-      const onStatusChange = jest.fn();
+    it("should call onStatusChange with approved when Approve is clicked", async () => {
+      const user = userEvent.setup();
+      const onStatusChange = vi.fn();
       render(
         <HeaderActions
           {...defaultProps}
@@ -93,13 +97,14 @@ describe("HeaderActions", () => {
         />
       );
 
-      fireEvent.click(screen.getByRole("button", { name: /approve/i }));
+      await user.click(screen.getByRole("button", { name: /approve/i }));
 
       expect(onStatusChange).toHaveBeenCalledWith("approved");
     });
 
-    it("should call onStatusChange with revision_requested when Request Revision is clicked", () => {
-      const onStatusChange = jest.fn();
+    it("should call onStatusChange with revision_requested when Request Revision is clicked", async () => {
+      const user = userEvent.setup();
+      const onStatusChange = vi.fn();
       render(
         <HeaderActions
           {...defaultProps}
@@ -108,13 +113,14 @@ describe("HeaderActions", () => {
         />
       );
 
-      fireEvent.click(screen.getByRole("button", { name: /request revision/i }));
+      await user.click(screen.getByRole("button", { name: /request revision/i }));
 
       expect(onStatusChange).toHaveBeenCalledWith("revision_requested");
     });
 
-    it("should call onStatusChange with rejected when Reject is clicked", () => {
-      const onStatusChange = jest.fn();
+    it("should call onStatusChange with rejected when Reject is clicked", async () => {
+      const user = userEvent.setup();
+      const onStatusChange = vi.fn();
       render(
         <HeaderActions
           {...defaultProps}
@@ -123,7 +129,7 @@ describe("HeaderActions", () => {
         />
       );
 
-      fireEvent.click(screen.getByRole("button", { name: /reject/i }));
+      await user.click(screen.getByRole("button", { name: /reject/i }));
 
       expect(onStatusChange).toHaveBeenCalledWith("rejected");
     });
@@ -136,8 +142,9 @@ describe("HeaderActions", () => {
       expect(screen.getByRole("button", { name: /review/i })).toBeInTheDocument();
     });
 
-    it("should call onStatusChange with under_review when Review is clicked", () => {
-      const onStatusChange = jest.fn();
+    it("should call onStatusChange with under_review when Review is clicked", async () => {
+      const user = userEvent.setup();
+      const onStatusChange = vi.fn();
       render(
         <HeaderActions
           {...defaultProps}
@@ -146,7 +153,7 @@ describe("HeaderActions", () => {
         />
       );
 
-      fireEvent.click(screen.getByRole("button", { name: /review/i }));
+      await user.click(screen.getByRole("button", { name: /review/i }));
 
       expect(onStatusChange).toHaveBeenCalledWith("under_review");
     });

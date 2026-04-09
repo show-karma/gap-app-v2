@@ -74,11 +74,15 @@ export const programReviewersService = {
 
     if (error) {
       // Handle "No reviewers found" as an empty list, not an error
-      if (error.includes("Program Reviewer Not Found") || error.includes("No reviewers found")) {
+      const errorMessage = String(error);
+      if (
+        errorMessage.includes("Program Reviewer Not Found") ||
+        errorMessage.includes("No reviewers found")
+      ) {
         return [];
       }
       console.error("Program Reviewers API Error:", error);
-      throw new Error(error);
+      throw new Error(errorMessage);
     }
 
     // Map the API response to the expected format
@@ -127,10 +131,12 @@ export const programReviewersService = {
   },
 
   /**
-   * Remove a reviewer from a program
+   * Remove a reviewer from a program by email
    */
-  async removeReviewer(programId: string, publicAddress: string): Promise<void> {
-    await apiClient.delete(`/v2/funding-program-configs/${programId}/reviewers/${publicAddress}`);
+  async removeReviewer(programId: string, email: string): Promise<void> {
+    await apiClient.delete(`/v2/funding-program-configs/${programId}/reviewers/by-email`, {
+      data: { email },
+    });
   },
 
   /**

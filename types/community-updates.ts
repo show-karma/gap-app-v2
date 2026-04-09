@@ -24,6 +24,7 @@ export interface GrantInfo {
     data: {
       title: string;
     };
+    currency?: string | null;
   };
 }
 

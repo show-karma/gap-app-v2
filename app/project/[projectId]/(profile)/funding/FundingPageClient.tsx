@@ -14,8 +14,8 @@ const FundingContentWrapper = dynamic(
 );
 
 /**
- * Client-side funding content wrapper.
+ * Funding page client component - displays the list of grants/funding for the project.
  */
-export function FundingPageClient() {
+export default function FundingPageClient() {
   return <FundingContentWrapper />;
 }

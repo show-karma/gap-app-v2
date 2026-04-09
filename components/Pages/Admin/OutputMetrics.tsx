@@ -1,5 +1,19 @@
 import { Field, Label, Radio, RadioGroup } from "@headlessui/react";
-import { AreaChart, Card, Grid, Metric, Text, Title } from "@tremor/react";
+import { Card, Text, Title } from "@tremor/react";
+import dynamic from "next/dynamic";
+import { ChartSkeleton } from "@/components/Utilities/ChartSkeleton";
+
+const AreaChart = dynamic(() => import("@tremor/react").then((mod) => mod.AreaChart), {
+  ssr: false,
+  loading: () => <ChartSkeleton height="h-72" />,
+});
+const Grid = dynamic(() => import("@tremor/react").then((mod) => mod.Grid), {
+  ssr: false,
+});
+const Metric = dynamic(() => import("@tremor/react").then((mod) => mod.Metric), {
+  ssr: false,
+});
+
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { envVars } from "@/utilities/enviromentVars";

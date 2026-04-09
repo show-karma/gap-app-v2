@@ -4,7 +4,7 @@ import { AIAnalysisTab } from "@/components/FundingPlatform/ApplicationView/AIAn
 import type { IFundingApplication, ProgramWithFormSchema } from "@/types/funding-platform";
 
 // Mock child components
-jest.mock("@/components/FundingPlatform/ApplicationView/AIEvaluation", () => ({
+vi.mock("@/components/FundingPlatform/ApplicationView/AIEvaluation", () => ({
   AIEvaluationDisplay: ({ evaluation, programName }: any) => (
     <div data-testid="external-evaluation">
       External Evaluation: {evaluation || "none"}
@@ -13,7 +13,7 @@ jest.mock("@/components/FundingPlatform/ApplicationView/AIEvaluation", () => ({
   ),
 }));
 
-jest.mock("@/components/FundingPlatform/ApplicationView/InternalAIEvaluation", () => ({
+vi.mock("@/components/FundingPlatform/ApplicationView/InternalAIEvaluation", () => ({
   InternalAIEvaluationDisplay: ({ evaluation, programName }: any) => (
     <div data-testid="internal-evaluation">
       Internal Evaluation: {evaluation || "none"}
@@ -22,7 +22,7 @@ jest.mock("@/components/FundingPlatform/ApplicationView/InternalAIEvaluation", (
   ),
 }));
 
-jest.mock("@/components/FundingPlatform/ApplicationView/AIEvaluationButton", () => ({
+vi.mock("@/components/FundingPlatform/ApplicationView/AIEvaluationButton", () => ({
   __esModule: true,
   default: ({ referenceNumber, isInternal, onEvaluationComplete }: any) => (
     <button
@@ -35,7 +35,7 @@ jest.mock("@/components/FundingPlatform/ApplicationView/AIEvaluationButton", () 
   ),
 }));
 
-jest.mock("@/utilities/tailwind", () => ({
+vi.mock("@/utilities/tailwind", () => ({
   cn: (...classes: any[]) => classes.filter(Boolean).join(" "),
 }));
 
@@ -316,7 +316,7 @@ describe("AIAnalysisTab", () => {
     });
 
     it("passes onEvaluationComplete callback to button", async () => {
-      const mockCallback = jest.fn();
+      const mockCallback = vi.fn();
 
       render(
         <AIAnalysisTab

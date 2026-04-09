@@ -373,7 +373,7 @@ export const DisbursementForm = () => {
   if (transactionState.isComplete && transactionState.result) {
     return (
       <div className="mx-auto max-w-4xl py-8">
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+        <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-gray-100 dark:border-zinc-700 overflow-hidden">
           <div className="px-8 py-12 text-center">
             <div
               className={`mx-auto flex h-16 w-16 items-center justify-center rounded-full ${
@@ -387,20 +387,20 @@ export const DisbursementForm = () => {
               )}
             </div>
             <div className="mt-6">
-              <h3 className="text-2xl font-bold text-gray-900">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-zinc-100">
                 {transactionState.result.executed
                   ? "🎉 Disbursement Completed!"
                   : "✅ Transaction Ready!"}
               </h3>
               <div className="mt-4 space-y-3">
-                <p className="text-gray-600 max-w-2xl mx-auto">
+                <p className="text-gray-600 dark:text-zinc-400 max-w-2xl mx-auto">
                   {transactionState.result.executed
                     ? `Successfully executed disbursement to ${transactionState.result.totalRecipients} recipients for a total of ${transactionState.result.totalAmount} ${getTokenName(token)}. The funds have been transferred!`
                     : `Successfully signed disbursement to ${transactionState.result.totalRecipients} recipients for a total of ${transactionState.result.totalAmount} ${getTokenName(token)}. The transaction is ready for execution.`}
                 </p>
-                <div className="bg-gray-50 rounded-lg px-4 py-3 mx-auto max-w-md">
-                  <p className="text-sm text-gray-600">Transaction Hash:</p>
-                  <code className="text-xs font-mono bg-white px-2 py-1 rounded border text-gray-800 break-all">
+                <div className="bg-gray-50 dark:bg-zinc-800 rounded-lg px-4 py-3 mx-auto max-w-md">
+                  <p className="text-sm text-gray-600 dark:text-zinc-400">Transaction Hash:</p>
+                  <code className="text-xs font-mono bg-white dark:bg-zinc-900 px-2 py-1 rounded border dark:border-zinc-700 text-gray-800 dark:text-zinc-200 break-all">
                     {transactionState.result.txHash}
                   </code>
                 </div>
@@ -484,12 +484,14 @@ export const DisbursementForm = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950">
       <div className="mx-auto max-w-6xl px-4 py-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">💰 Safe Disbursement</h1>
-          <p className="text-gray-600">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-zinc-100 mb-2">
+            💰 Safe Disbursement
+          </h1>
+          <p className="text-gray-600 dark:text-zinc-400">
             Distribute tokens to multiple recipients using Gnosis Safe
           </p>
         </div>
@@ -534,7 +536,7 @@ export const DisbursementForm = () => {
               <div className="sm:col-span-2">
                 <label
                   htmlFor="safe-address"
-                  className="block text-sm font-medium text-gray-700 mb-2"
+                  className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-2"
                 >
                   🏦 Gnosis Safe Address
                 </label>
@@ -544,7 +546,7 @@ export const DisbursementForm = () => {
                   id="safe-address"
                   value={safeAddress}
                   onChange={(e) => setSafeAddress(e.target.value)}
-                  className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm transition-colors"
+                  className="block w-full rounded-lg border-gray-300 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm transition-colors"
                   placeholder="0x..."
                   disabled={transactionState.isProcessing}
                 />
@@ -552,7 +554,10 @@ export const DisbursementForm = () => {
 
               {/* Network Selection */}
               <div>
-                <label htmlFor="network" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="network"
+                  className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-2"
+                >
                   🌐 Network
                 </label>
                 <select
@@ -560,7 +565,7 @@ export const DisbursementForm = () => {
                   name="network"
                   value={network}
                   onChange={(e) => handleNetworkChange(Number(e.target.value) as SupportedChainId)}
-                  className="block w-full rounded-lg border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm transition-colors"
+                  className="block w-full rounded-lg border-gray-300 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm transition-colors"
                   disabled={transactionState.isProcessing || isSwitchingNetwork}
                 >
                   {NETWORK_OPTIONS.map((network) => (
@@ -573,7 +578,10 @@ export const DisbursementForm = () => {
 
               {/* Token Selection */}
               <div>
-                <label htmlFor="token" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="token"
+                  className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-2"
+                >
                   💰 Token
                 </label>
                 <select
@@ -581,7 +589,7 @@ export const DisbursementForm = () => {
                   name="token"
                   value={token}
                   onChange={(e) => setToken(e.target.value as "usdc")}
-                  className="block w-full rounded-lg border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm transition-colors"
+                  className="block w-full rounded-lg border-gray-300 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm transition-colors"
                   disabled={transactionState.isProcessing}
                 >
                   {TOKEN_OPTIONS.map((token) => (
@@ -600,15 +608,18 @@ export const DisbursementForm = () => {
             titleEmoji="📄"
           >
             <div>
-              <label htmlFor="csv-upload" className="block text-sm font-medium text-gray-700 mb-3">
+              <label
+                htmlFor="csv-upload"
+                className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-3"
+              >
                 📊 Upload CSV File
               </label>
               <section
                 aria-label="CSV file drop zone"
                 className={`flex justify-center rounded-xl border-2 border-dashed px-6 pb-6 pt-5 transition-all duration-200 ${
                   isDragOver
-                    ? "border-indigo-400 bg-indigo-50 scale-105"
-                    : "border-gray-300 hover:border-gray-400"
+                    ? "border-indigo-400 bg-indigo-50 dark:bg-indigo-950 scale-105"
+                    : "border-gray-300 dark:border-zinc-700 hover:border-gray-400 dark:hover:border-zinc-500"
                 } ${transactionState.isProcessing ? "opacity-50 pointer-events-none" : ""}`}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
@@ -631,10 +642,10 @@ export const DisbursementForm = () => {
                       strokeLinejoin="round"
                     />
                   </svg>
-                  <div className="flex text-sm text-gray-600 justify-center">
+                  <div className="flex text-sm text-gray-600 dark:text-zinc-400 justify-center">
                     <label
                       htmlFor="file-upload"
-                      className="relative cursor-pointer rounded-md bg-white font-medium text-indigo-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-2 hover:text-indigo-500 transition-colors"
+                      className="relative cursor-pointer rounded-md bg-white dark:bg-zinc-900 font-medium text-indigo-600 dark:text-indigo-400 focus-within:outline-none focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-2 hover:text-indigo-500 transition-colors"
                     >
                       <span className="font-semibold">
                         {file ? `📄 ${file.name}` : "📤 Upload a file"}
@@ -651,7 +662,7 @@ export const DisbursementForm = () => {
                     </label>
                     {!file && <p className="pl-1">or drag and drop</p>}
                   </div>
-                  <p className="text-xs text-gray-500 bg-gray-50 px-3 py-1 rounded-full inline-block">
+                  <p className="text-xs text-gray-500 dark:text-zinc-400 bg-gray-50 dark:bg-zinc-800 px-3 py-1 rounded-full inline-block">
                     📋 CSV format: address, amount
                   </p>
                 </div>
@@ -663,9 +674,9 @@ export const DisbursementForm = () => {
 
           {/* Pre-flight Check Status */}
           {safeAddress && isConnected && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-gray-200 dark:border-zinc-700 p-6">
               <div className="flex items-center mb-6">
-                <div className="bg-blue-100 rounded-lg p-2 mr-3">
+                <div className="bg-blue-100 dark:bg-blue-900 rounded-lg p-2 mr-3">
                   <svg
                     className="h-5 w-5 text-blue-600"
                     fill="none"
@@ -680,7 +691,9 @@ export const DisbursementForm = () => {
                     />
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900">🔍 Pre-flight Checks</h3>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-zinc-100">
+                  🔍 Pre-flight Checks
+                </h3>
               </div>
               <div className="space-y-4">
                 {preflightChecks.isChecking ? (
@@ -695,10 +708,10 @@ export const DisbursementForm = () => {
                     <div
                       className={`flex items-center p-3 rounded-lg border ${
                         preflightChecks.isCorrectNetwork === true
-                          ? "bg-green-50 border-green-200 text-green-700"
+                          ? "bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800 text-green-700 dark:text-green-400"
                           : preflightChecks.isCorrectNetwork === false
-                            ? "bg-red-50 border-red-200 text-red-700"
-                            : "bg-gray-50 border-gray-200 text-gray-600"
+                            ? "bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400"
+                            : "bg-gray-50 dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 text-gray-600 dark:text-zinc-400"
                       }`}
                     >
                       <span className="mr-3">
@@ -732,10 +745,10 @@ export const DisbursementForm = () => {
                     <div
                       className={`flex items-center p-3 rounded-lg border ${
                         preflightChecks.isDeployed === true
-                          ? "bg-green-50 border-green-200 text-green-700"
+                          ? "bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800 text-green-700 dark:text-green-400"
                           : preflightChecks.isDeployed === false
-                            ? "bg-red-50 border-red-200 text-red-700"
-                            : "bg-gray-50 border-gray-200 text-gray-600"
+                            ? "bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400"
+                            : "bg-gray-50 dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 text-gray-600 dark:text-zinc-400"
                       }`}
                     >
                       <span className="mr-3">
@@ -765,10 +778,10 @@ export const DisbursementForm = () => {
                     <div
                       className={`flex items-center p-3 rounded-lg border ${
                         preflightChecks.canPropose === true
-                          ? "bg-green-50 border-green-200 text-green-700"
+                          ? "bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800 text-green-700 dark:text-green-400"
                           : preflightChecks.canPropose === false
-                            ? "bg-red-50 border-red-200 text-red-700"
-                            : "bg-gray-50 border-gray-200 text-gray-600"
+                            ? "bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400"
+                            : "bg-gray-50 dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 text-gray-600 dark:text-zinc-400"
                       }`}
                     >
                       <span className="mr-3">
@@ -802,10 +815,10 @@ export const DisbursementForm = () => {
                     <div
                       className={`flex items-center p-3 rounded-lg border ${
                         preflightChecks.hasSufficientBalance === true
-                          ? "bg-green-50 border-green-200 text-green-700"
+                          ? "bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800 text-green-700 dark:text-green-400"
                           : preflightChecks.hasSufficientBalance === false
-                            ? "bg-red-50 border-red-200 text-red-700"
-                            : "bg-gray-50 border-gray-200 text-gray-600"
+                            ? "bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400"
+                            : "bg-gray-50 dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 text-gray-600 dark:text-zinc-400"
                       }`}
                     >
                       <span className="mr-3">
@@ -832,9 +845,9 @@ export const DisbursementForm = () => {
                     </div>
 
                     {preflightChecks.error && (
-                      <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-center gap-2">
-                        <CircleX className="h-4 w-4 text-red-600 flex-shrink-0" />
-                        <div className="text-red-700 text-sm font-medium">
+                      <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg p-3 flex items-center gap-2">
+                        <CircleX className="h-4 w-4 text-red-600 dark:text-red-400 flex-shrink-0" />
+                        <div className="text-red-700 dark:text-red-400 text-sm font-medium">
                           {preflightChecks.error}
                         </div>
                       </div>
@@ -846,11 +859,11 @@ export const DisbursementForm = () => {
           )}
 
           {recipients.length > 0 && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-gray-200 dark:border-zinc-700 p-6">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4 flex-1">
+                <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-zinc-800 dark:to-zinc-800 rounded-lg p-4 flex-1">
                   <div className="flex items-center">
-                    <div className="bg-white rounded-lg p-2 mr-3">
+                    <div className="bg-white dark:bg-zinc-900 rounded-lg p-2 mr-3">
                       <svg
                         className="h-5 w-5 text-indigo-600"
                         fill="none"
@@ -866,8 +879,10 @@ export const DisbursementForm = () => {
                       </svg>
                     </div>
                     <div>
-                      <div className="text-lg font-semibold text-gray-900">📊 Summary</div>
-                      <div className="text-sm text-gray-600">
+                      <div className="text-lg font-semibold text-gray-900 dark:text-zinc-100">
+                        📊 Summary
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-zinc-400">
                         👥 {recipients.length} recipients • 💰 {formatNumber(totalAmount)}{" "}
                         {getTokenName(token)} total
                       </div>

@@ -28,12 +28,16 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
-    // Log error to console in development
-    if (process.env.NODE_ENV === "development") {
-      console.error("ErrorBoundary caught an error:", error, errorInfo);
+    // Expose error on window for E2E test debugging
+    if (typeof window !== "undefined") {
+      (
+        window as Window & { __LAST_ERROR_BOUNDARY__?: { message: string; stack?: string } }
+      ).__LAST_ERROR_BOUNDARY__ = {
+        message: error.message,
+        stack: error.stack,
+      };
     }
 
-    // Call optional error callback
     if (this.props.onError) {
       this.props.onError(error, errorInfo);
     }
@@ -48,7 +52,11 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
       // Default fallback UI
       return (
-        <div className="p-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+        <div
+          className="p-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800"
+          data-testid="error-boundary-fallback"
+          data-error-message={this.state.error?.message}
+        >
           <h3 className="text-sm font-medium text-red-800 dark:text-red-400 mb-2">
             Something went wrong
           </h3>

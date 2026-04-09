@@ -6,8 +6,8 @@
 import { TokenManager } from "../token-manager";
 
 // Mock next/headers
-jest.mock("next/headers", () => ({
-  cookies: jest.fn(),
+vi.mock("next/headers", () => ({
+  cookies: vi.fn(),
 }));
 
 describe("TokenManager", () => {
@@ -15,12 +15,12 @@ describe("TokenManager", () => {
   const originalWindow = global.window;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     // Create a fresh mock Privy instance for each test
     mockPrivyInstance = {
-      getAccessToken: jest.fn(),
-      logout: jest.fn(),
+      getAccessToken: vi.fn(),
+      logout: vi.fn(),
     };
 
     // Reset the Privy instance
@@ -79,7 +79,7 @@ describe("TokenManager", () => {
     });
 
     it("should handle getAccessToken errors", async () => {
-      const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
+      const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation();
 
       mockPrivyInstance.getAccessToken.mockRejectedValue(new Error("Token fetch failed"));
       TokenManager.setPrivyInstance(mockPrivyInstance);
@@ -113,17 +113,17 @@ describe("TokenManager", () => {
 
     it("should get token from cookies on server side", async () => {
       const mockCookieStore = {
-        get: jest.fn((name: string) => {
+        get: vi.fn((name: string) => {
           if (name === "privy-token") {
             return { value: "server-token" };
           }
           return undefined;
         }),
-        getAll: jest.fn(() => []),
+        getAll: vi.fn(() => []),
       };
 
       const { cookies } = await import("next/headers");
-      (cookies as jest.Mock).mockResolvedValue(mockCookieStore);
+      (cookies as vi.Mock).mockResolvedValue(mockCookieStore);
 
       const token = await TokenManager.getServerToken();
 
@@ -133,17 +133,17 @@ describe("TokenManager", () => {
 
     it("should check multiple token cookie names", async () => {
       const mockCookieStore = {
-        get: jest.fn((name: string) => {
+        get: vi.fn((name: string) => {
           if (name === "privy-access-token") {
             return { value: "access-token" };
           }
           return undefined;
         }),
-        getAll: jest.fn(() => []),
+        getAll: vi.fn(() => []),
       };
 
       const { cookies } = await import("next/headers");
-      (cookies as jest.Mock).mockResolvedValue(mockCookieStore);
+      (cookies as vi.Mock).mockResolvedValue(mockCookieStore);
 
       const token = await TokenManager.getServerToken();
 
@@ -154,15 +154,15 @@ describe("TokenManager", () => {
 
     it("should search all cookies for privy tokens", async () => {
       const mockCookieStore = {
-        get: jest.fn(() => undefined),
-        getAll: jest.fn(() => [
+        get: vi.fn(() => undefined),
+        getAll: vi.fn(() => [
           { name: "some-other-cookie", value: "other" },
           { name: "privy-custom-token", value: "custom-token" },
         ]),
       };
 
       const { cookies } = await import("next/headers");
-      (cookies as jest.Mock).mockResolvedValue(mockCookieStore);
+      (cookies as vi.Mock).mockResolvedValue(mockCookieStore);
 
       const token = await TokenManager.getServerToken();
 
@@ -171,15 +171,15 @@ describe("TokenManager", () => {
 
     it("should find privy jwt cookie", async () => {
       const mockCookieStore = {
-        get: jest.fn(() => undefined),
-        getAll: jest.fn(() => [
+        get: vi.fn(() => undefined),
+        getAll: vi.fn(() => [
           { name: "session", value: "session-value" },
           { name: "privy-jwt-token", value: "jwt-token" },
         ]),
       };
 
       const { cookies } = await import("next/headers");
-      (cookies as jest.Mock).mockResolvedValue(mockCookieStore);
+      (cookies as vi.Mock).mockResolvedValue(mockCookieStore);
 
       const token = await TokenManager.getServerToken();
 
@@ -188,15 +188,15 @@ describe("TokenManager", () => {
 
     it("should return null when no privy cookies found", async () => {
       const mockCookieStore = {
-        get: jest.fn(() => undefined),
-        getAll: jest.fn(() => [
+        get: vi.fn(() => undefined),
+        getAll: vi.fn(() => [
           { name: "session", value: "session-value" },
           { name: "other", value: "other-value" },
         ]),
       };
 
       const { cookies } = await import("next/headers");
-      (cookies as jest.Mock).mockResolvedValue(mockCookieStore);
+      (cookies as vi.Mock).mockResolvedValue(mockCookieStore);
 
       const token = await TokenManager.getServerToken();
 
@@ -204,10 +204,10 @@ describe("TokenManager", () => {
     });
 
     it("should handle cookie access errors", async () => {
-      const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
+      const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation();
 
       const { cookies } = await import("next/headers");
-      (cookies as jest.Mock).mockRejectedValue(new Error("Cookie access denied"));
+      (cookies as vi.Mock).mockRejectedValue(new Error("Cookie access denied"));
 
       const token = await TokenManager.getServerToken();
 
@@ -224,7 +224,7 @@ describe("TokenManager", () => {
       // Temporarily set window to simulate client-side
       global.window = {} as any;
 
-      const consoleWarnSpy = jest.spyOn(console, "warn").mockImplementation();
+      const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation();
 
       const token = await TokenManager.getServerToken();
 
@@ -246,17 +246,17 @@ describe("TokenManager", () => {
 
     it("should call getServerToken on server side", async () => {
       const mockCookieStore = {
-        get: jest.fn((name: string) => {
+        get: vi.fn((name: string) => {
           if (name === "privy-token") {
             return { value: "server-token" };
           }
           return undefined;
         }),
-        getAll: jest.fn(() => []),
+        getAll: vi.fn(() => []),
       };
 
       const { cookies } = await import("next/headers");
-      (cookies as jest.Mock).mockResolvedValue(mockCookieStore);
+      (cookies as vi.Mock).mockResolvedValue(mockCookieStore);
 
       const token = await TokenManager.getToken();
 
@@ -375,7 +375,7 @@ describe("TokenManager", () => {
     it("should warn when called from server side", async () => {
       delete (global as any).window;
 
-      const consoleWarnSpy = jest.spyOn(console, "warn").mockImplementation();
+      const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation();
 
       await TokenManager.clearTokens();
 
@@ -401,17 +401,17 @@ describe("TokenManager", () => {
 
     it("should check privy-id-token", async () => {
       const mockCookieStore = {
-        get: jest.fn((name: string) => {
+        get: vi.fn((name: string) => {
           if (name === "privy-id-token") {
             return { value: "id-token" };
           }
           return undefined;
         }),
-        getAll: jest.fn(() => []),
+        getAll: vi.fn(() => []),
       };
 
       const { cookies } = await import("next/headers");
-      (cookies as jest.Mock).mockResolvedValue(mockCookieStore);
+      (cookies as vi.Mock).mockResolvedValue(mockCookieStore);
 
       const token = await TokenManager.getServerToken();
 
@@ -420,17 +420,17 @@ describe("TokenManager", () => {
 
     it("should check privy-jwt", async () => {
       const mockCookieStore = {
-        get: jest.fn((name: string) => {
+        get: vi.fn((name: string) => {
           if (name === "privy-jwt") {
             return { value: "jwt-token" };
           }
           return undefined;
         }),
-        getAll: jest.fn(() => []),
+        getAll: vi.fn(() => []),
       };
 
       const { cookies } = await import("next/headers");
-      (cookies as jest.Mock).mockResolvedValue(mockCookieStore);
+      (cookies as vi.Mock).mockResolvedValue(mockCookieStore);
 
       const token = await TokenManager.getServerToken();
 
@@ -439,7 +439,7 @@ describe("TokenManager", () => {
 
     it("should return first found token in priority order", async () => {
       const mockCookieStore = {
-        get: jest.fn((name: string) => {
+        get: vi.fn((name: string) => {
           const tokens: Record<string, string> = {
             "privy-token": "token-1",
             "privy-access-token": "token-2",
@@ -448,11 +448,11 @@ describe("TokenManager", () => {
           };
           return tokens[name] ? { value: tokens[name] } : undefined;
         }),
-        getAll: jest.fn(() => []),
+        getAll: vi.fn(() => []),
       };
 
       const { cookies } = await import("next/headers");
-      (cookies as jest.Mock).mockResolvedValue(mockCookieStore);
+      (cookies as vi.Mock).mockResolvedValue(mockCookieStore);
 
       const token = await TokenManager.getServerToken();
 
@@ -468,12 +468,12 @@ describe("TokenManager", () => {
 
     it("should find cookies with uppercase PRIVY", async () => {
       const mockCookieStore = {
-        get: jest.fn(() => undefined),
-        getAll: jest.fn(() => [{ name: "PRIVY-TOKEN", value: "uppercase-token" }]),
+        get: vi.fn(() => undefined),
+        getAll: vi.fn(() => [{ name: "PRIVY-TOKEN", value: "uppercase-token" }]),
       };
 
       const { cookies } = await import("next/headers");
-      (cookies as jest.Mock).mockResolvedValue(mockCookieStore);
+      (cookies as vi.Mock).mockResolvedValue(mockCookieStore);
 
       const token = await TokenManager.getServerToken();
 
@@ -482,12 +482,12 @@ describe("TokenManager", () => {
 
     it("should find cookies with mixed case", async () => {
       const mockCookieStore = {
-        get: jest.fn(() => undefined),
-        getAll: jest.fn(() => [{ name: "Privy-Access-Token", value: "mixed-case-token" }]),
+        get: vi.fn(() => undefined),
+        getAll: vi.fn(() => [{ name: "Privy-Access-Token", value: "mixed-case-token" }]),
       };
 
       const { cookies } = await import("next/headers");
-      (cookies as jest.Mock).mockResolvedValue(mockCookieStore);
+      (cookies as vi.Mock).mockResolvedValue(mockCookieStore);
 
       const token = await TokenManager.getServerToken();
 
@@ -496,12 +496,12 @@ describe("TokenManager", () => {
 
     it("should match cookies with jwt in name", async () => {
       const mockCookieStore = {
-        get: jest.fn(() => undefined),
-        getAll: jest.fn(() => [{ name: "privy-custom-jwt", value: "jwt-value" }]),
+        get: vi.fn(() => undefined),
+        getAll: vi.fn(() => [{ name: "privy-custom-jwt", value: "jwt-value" }]),
       };
 
       const { cookies } = await import("next/headers");
-      (cookies as jest.Mock).mockResolvedValue(mockCookieStore);
+      (cookies as vi.Mock).mockResolvedValue(mockCookieStore);
 
       const token = await TokenManager.getServerToken();
 
@@ -512,11 +512,11 @@ describe("TokenManager", () => {
   describe("Token caching and deduplication", () => {
     beforeEach(() => {
       global.window = {} as any;
-      jest.useFakeTimers();
+      vi.useFakeTimers();
     });
 
     afterEach(() => {
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
 
     it("should return cached token within TTL window", async () => {
@@ -544,7 +544,7 @@ describe("TokenManager", () => {
       expect(token1).toBe("old-token");
 
       // Advance past TTL (20s)
-      jest.advanceTimersByTime(21_000);
+      vi.advanceTimersByTime(21_000);
 
       const token2 = await TokenManager.getToken();
       expect(token2).toBe("new-token");
@@ -560,8 +560,8 @@ describe("TokenManager", () => {
 
       // Create a new instance and set it — cache should be cleared
       const newInstance = {
-        getAccessToken: jest.fn().mockResolvedValue("token-from-instance-2"),
-        logout: jest.fn(),
+        getAccessToken: vi.fn().mockResolvedValue("token-from-instance-2"),
+        logout: vi.fn(),
       };
       TokenManager.setPrivyInstance(newInstance);
 

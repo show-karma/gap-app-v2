@@ -8,9 +8,11 @@ import type {
   CommunityPayoutsResponse,
   CreateDisbursementsRequest,
   CreateDisbursementsResponse,
+  MilestonePaymentStatus,
   PaginatedDisbursementsResponse,
   PayoutDisbursement,
   PayoutGrantConfig,
+  RecordPaymentRequest,
   RecordSafeTransactionRequest,
   SavePayoutConfigRequest,
   SavePayoutConfigResponse,
@@ -48,6 +50,32 @@ export const createDisbursements = async (
   } catch (error: unknown) {
     errorManager("Error creating disbursements", error);
     throw new Error(`Failed to create disbursements: ${getErrorMessage(error)}`);
+  }
+};
+
+/**
+ * Records a historical payment directly as disbursed (no Safe required)
+ */
+export const recordPayment = async (request: RecordPaymentRequest): Promise<PayoutDisbursement> => {
+  try {
+    const [data, error] = await fetchData<PayoutDisbursement>(
+      INDEXER.V2.PAYOUTS.RECORD_PAYMENT,
+      "POST",
+      request,
+      {},
+      {},
+      true,
+      false
+    );
+
+    if (error || !data) {
+      throw new Error(error || "Failed to record payment");
+    }
+
+    return data;
+  } catch (error: unknown) {
+    errorManager("Error recording historical payment", error);
+    throw new Error(`Failed to record payment: ${getErrorMessage(error)}`);
   }
 };
 
@@ -196,6 +224,37 @@ export const updateDisbursementStatus = async (
 };
 
 /**
+ * Updates payment status override for a specific milestone
+ */
+export const updateMilestonePaymentStatus = async (
+  grantUID: string,
+  request: {
+    communityUID: string;
+    milestoneLabel: string;
+    paymentStatus: "pending";
+  }
+): Promise<void> => {
+  try {
+    const [, error] = await fetchData(
+      INDEXER.V2.MILESTONE_INVOICES.UPDATE_PAYMENT_STATUS(grantUID),
+      "PATCH",
+      request,
+      {},
+      {},
+      true,
+      false
+    );
+
+    if (error) {
+      throw new Error(error);
+    }
+  } catch (error: unknown) {
+    errorManager(`Error updating payment status for grant ${grantUID}`, error);
+    throw new Error(`Failed to update payment status: ${getErrorMessage(error)}`);
+  }
+};
+
+/**
  * Gets disbursements awaiting signatures for a Safe address
  */
 export const getAwaitingSignaturesDisbursements = async (
@@ -297,6 +356,73 @@ export const getCommunityPayouts = async (
 };
 
 /**
+ * Gets community payouts publicly (no auth required)
+ */
+export const getCommunityPayoutsPublic = async (
+  communityUID: string,
+  options?: CommunityPayoutsOptions
+): Promise<CommunityPayoutsResponse> => {
+  try {
+    const [data, error] = await fetchData<CommunityPayoutsResponse>(
+      INDEXER.V2.PAYOUTS.COMMUNITY_PAYOUTS_PUBLIC(communityUID, {
+        page: options?.page,
+        limit: options?.limit,
+        programId: options?.filters?.programId,
+        status: options?.filters?.status,
+        agreementStatus: options?.filters?.agreementStatus,
+        invoiceStatus: options?.filters?.invoiceStatus,
+        search: options?.filters?.search,
+        sortBy: options?.sorting?.sortBy,
+        sortOrder: options?.sorting?.sortOrder,
+      }),
+      "GET",
+      {},
+      {},
+      {},
+      false,
+      false
+    );
+
+    if (error || !data) {
+      throw new Error(error || "Failed to fetch community payouts");
+    }
+
+    return data;
+  } catch (error: unknown) {
+    errorManager(`Error fetching public community payouts for ${communityUID}`, error);
+    throw new Error(`Failed to fetch community payouts: ${getErrorMessage(error)}`);
+  }
+};
+
+/**
+ * Get payout configs for a community publicly (no auth required)
+ */
+export const getPayoutConfigsByCommunityPublic = async (
+  communityUID: string
+): Promise<PayoutGrantConfig[]> => {
+  try {
+    const [data, error] = await fetchData<{ configs: PayoutGrantConfig[] }>(
+      INDEXER.V2.PAYOUT_CONFIG.BY_COMMUNITY_PUBLIC(communityUID),
+      "GET",
+      {},
+      {},
+      {},
+      false,
+      false
+    );
+
+    if (error || !data) {
+      throw new Error(error || "Failed to fetch payout configs");
+    }
+
+    return data.configs;
+  } catch (error: unknown) {
+    errorManager(`Error fetching public payout configs for community ${communityUID}`, error);
+    throw new Error(`Failed to fetch payout configs: ${getErrorMessage(error)}`);
+  }
+};
+
+/**
  * Save payout configs (payout address and total grant amount) for multiple grants
  */
 export const savePayoutConfigs = async (
@@ -381,6 +507,105 @@ export const getPayoutConfigByGrant = async (
 };
 
 /**
+ * Get payout config for a specific grant (public, no auth required)
+ */
+export const getPayoutConfigByGrantPublic = async (
+  grantUID: string
+): Promise<PayoutGrantConfig | null> => {
+  try {
+    const [data, error] = await fetchData<{ config: PayoutGrantConfig | null }>(
+      INDEXER.V2.PAYOUT_CONFIG.BY_GRANT_PUBLIC(grantUID),
+      "GET",
+      {},
+      {},
+      {},
+      false,
+      false
+    );
+
+    if (error || !data) {
+      throw new Error(error || "Failed to fetch payout config");
+    }
+
+    return data.config;
+  } catch (error: unknown) {
+    errorManager(`Error fetching public payout config for grant ${grantUID}`, error);
+    throw new Error(`Failed to fetch payout config: ${getErrorMessage(error)}`);
+  }
+};
+
+/**
+ * Validate bulk import rows against all community grants via backend matching
+ */
+export const validateBulkImportRows = async (
+  communityUID: string,
+  rows: Array<{
+    rowNumber: number;
+    grantUID: string;
+    projectUID: string;
+    projectSlug: string;
+    projectName: string;
+    payoutAddress: string;
+    amount: string;
+  }>
+): Promise<
+  Array<{
+    rowNumber: number;
+    grantUID: string;
+    projectUID: string;
+    projectSlug: string;
+    projectName: string;
+    payoutAddress: string;
+    amount: string;
+    status: "valid" | "invalid";
+    errors: string[];
+    target: {
+      grantUID: string;
+      projectUID: string;
+      matchedBy: string;
+    } | null;
+  }>
+> => {
+  try {
+    const [data, error] = await fetchData<{
+      rows: Array<{
+        rowNumber: number;
+        grantUID: string;
+        projectUID: string;
+        projectSlug: string;
+        projectName: string;
+        payoutAddress: string;
+        amount: string;
+        status: "valid" | "invalid";
+        errors: string[];
+        target: {
+          grantUID: string;
+          projectUID: string;
+          matchedBy: string;
+        } | null;
+      }>;
+    }>(
+      INDEXER.V2.PAYOUT_CONFIG.VALIDATE_BULK_IMPORT,
+      "POST",
+      { communityUID, rows },
+      {},
+      {},
+      true,
+      false
+    );
+
+    if (error || !data) {
+      throw new Error(error || "Failed to validate bulk import");
+    }
+
+    return data.rows;
+  } catch (error: unknown) {
+    errorManager("Error validating bulk import", error);
+    throw new Error(`Failed to validate bulk import: ${getErrorMessage(error)}`);
+  }
+};
+
+/**
  * Delete payout config for a grant
  */
 export const deletePayoutConfig = async (grantUID: string): Promise<void> => {
@@ -448,6 +673,8 @@ export const saveMilestoneInvoices = async (
     milestoneLabel: string;
     milestoneUID?: string | null;
     invoiceReceivedAt?: string | null;
+    invoiceFileKey?: string | null;
+    invoiceFileUrl?: string | null;
   }>
 ): Promise<{ invoices: CommunityPayoutInvoiceInfo[] }> => {
   try {
@@ -469,5 +696,221 @@ export const saveMilestoneInvoices = async (
   } catch (error: unknown) {
     errorManager(`Error saving invoices for grant ${grantUID}`, error);
     throw new Error(`Failed to save invoices: ${getErrorMessage(error)}`);
+  }
+};
+
+/**
+ * Get a temporary presigned download URL for an invoice file
+ */
+export const getInvoiceDownloadUrl = async (grantUID: string, fileKey: string): Promise<string> => {
+  try {
+    const [data, error] = await fetchData<{ downloadUrl: string }>(
+      INDEXER.V2.MILESTONE_INVOICES.DOWNLOAD(grantUID, fileKey),
+      "GET",
+      {},
+      {},
+      {},
+      true,
+      false
+    );
+
+    if (error || !data?.downloadUrl) {
+      throw new Error(error || "Failed to get download URL");
+    }
+
+    return data.downloadUrl;
+  } catch (error: unknown) {
+    errorManager("Error getting invoice download URL", error);
+    throw new Error(`Failed to get download URL: ${getErrorMessage(error)}`);
+  }
+};
+
+/**
+ * Update a single line item in a grant payout config
+ */
+export const updateLineItem = async (
+  grantUID: string,
+  allocationId: string,
+  updates: { label?: string; amount?: string }
+): Promise<PayoutGrantConfig> => {
+  try {
+    const [data, error] = await fetchData<{ config: PayoutGrantConfig }>(
+      INDEXER.V2.PAYOUT_CONFIG.UPDATE_LINE_ITEM(grantUID, allocationId),
+      "PUT",
+      updates,
+      {},
+      {},
+      true,
+      false
+    );
+
+    if (error || !data) {
+      throw new Error(error || "Failed to update line item");
+    }
+
+    return data.config;
+  } catch (error: unknown) {
+    errorManager(`Error updating line item ${allocationId} for grant ${grantUID}`, error);
+    throw new Error(`Failed to update line item: ${getErrorMessage(error)}`);
+  }
+};
+
+/**
+ * Delete a single line item from a grant payout config
+ */
+export const deleteLineItem = async (
+  grantUID: string,
+  allocationId: string
+): Promise<PayoutGrantConfig> => {
+  try {
+    const [data, error] = await fetchData<{ config: PayoutGrantConfig }>(
+      INDEXER.V2.PAYOUT_CONFIG.DELETE_LINE_ITEM(grantUID, allocationId),
+      "DELETE",
+      {},
+      {},
+      {},
+      true,
+      false
+    );
+
+    if (error || !data) {
+      throw new Error(error || "Failed to delete line item");
+    }
+
+    return data.config;
+  } catch (error: unknown) {
+    errorManager(`Error deleting line item ${allocationId} for grant ${grantUID}`, error);
+    throw new Error(`Failed to delete line item: ${getErrorMessage(error)}`);
+  }
+};
+
+/**
+ * Deletes the disbursement record associated with a specific milestone
+ */
+export const deleteDisbursementByMilestone = async (
+  grantUID: string,
+  communityUID: string,
+  milestoneUID: string
+): Promise<void> => {
+  try {
+    const [, error] = await fetchData(
+      INDEXER.V2.PAYOUTS.DELETE_BY_MILESTONE(grantUID),
+      "DELETE",
+      { communityUID, milestoneUID },
+      {},
+      {},
+      true,
+      false
+    );
+
+    if (error) {
+      throw new Error(error);
+    }
+  } catch (error: unknown) {
+    errorManager(
+      `Error deleting disbursement for grant ${grantUID} milestone ${milestoneUID}`,
+      error
+    );
+    throw new Error(`Failed to delete disbursement: ${getErrorMessage(error)}`);
+  }
+};
+
+// ─── Grantee Invoice Functions ──────────────────────────────────────────────
+
+export interface GranteeInvoiceCheckResult {
+  invoiceRequired: boolean;
+  invoiceStatus?: string | null;
+  invoiceFileKey?: string | null;
+}
+
+/**
+ * Check if invoice is required for a grant (grantee endpoint)
+ */
+export const checkGrantInvoiceRequired = async (
+  grantUID: string
+): Promise<GranteeInvoiceCheckResult> => {
+  try {
+    const url = INDEXER.V2.GRANTS.INVOICE_REQUIREMENT(grantUID);
+
+    const [data, error] = await fetchData<{ data: GranteeInvoiceCheckResult }>(
+      url,
+      "GET",
+      {},
+      {},
+      {},
+      true,
+      false
+    );
+
+    if (error || !data?.data) {
+      return { invoiceRequired: false };
+    }
+
+    return data.data;
+  } catch {
+    return { invoiceRequired: false };
+  }
+};
+
+/**
+ * Submit invoice for a milestone as a grantee
+ */
+export const submitGranteeInvoice = async (
+  grantUID: string,
+  invoice: {
+    milestoneLabel: string;
+    milestoneUID?: string | null;
+    invoiceFileKey: string;
+    invoiceFileUrl: string;
+  }
+): Promise<CommunityPayoutInvoiceInfo | null> => {
+  try {
+    const [data, error] = await fetchData<{ data: { invoice: CommunityPayoutInvoiceInfo } }>(
+      INDEXER.V2.GRANTS.INVOICE_SUBMIT(grantUID),
+      "PUT",
+      invoice,
+      {},
+      {},
+      true,
+      false
+    );
+
+    if (error || !data?.data) {
+      throw new Error(error || "Failed to submit invoice");
+    }
+
+    return data.data.invoice;
+  } catch (error: unknown) {
+    errorManager(`Error submitting grantee invoice for grant ${grantUID}`, error);
+    throw new Error(`Failed to submit invoice: ${getErrorMessage(error)}`);
+  }
+};
+
+/**
+ * Get a download URL for an invoice file (requires auth + project access)
+ */
+export const getGrantInvoiceDownloadUrl = async (
+  grantUID: string,
+  fileKey: string
+): Promise<string> => {
+  try {
+    const [data, error] = await fetchData<{ data: { downloadUrl: string } }>(
+      INDEXER.V2.GRANTS.INVOICE_DOWNLOAD(grantUID, fileKey),
+      "GET",
+      {},
+      {},
+      {},
+      true,
+      false
+    );
+
+    if (error || !data?.data?.downloadUrl) {
+      throw new Error(error || "Failed to get download URL");
+    }
+
+    return data.data.downloadUrl;
+  } catch (error: unknown) {
+    errorManager("Error getting invoice download URL", error);
+    throw new Error(`Failed to get download URL: ${getErrorMessage(error)}`);
   }
 };

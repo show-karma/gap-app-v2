@@ -7,7 +7,7 @@ import {
 import type { IFundingApplication } from "@/types/funding-platform";
 
 // Mock console.warn to avoid noise in tests
-const mockConsoleWarn = jest.spyOn(console, "warn").mockImplementation();
+const mockConsoleWarn = vi.spyOn(console, "warn").mockImplementation();
 
 // Helper to create a basic application object
 const createMockApplication = (internalAIEvaluation?: any): IFundingApplication => ({

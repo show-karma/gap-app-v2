@@ -8,20 +8,22 @@
  * - Error reporting integration
  */
 
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import type React from "react";
 import { DonationErrorBoundary } from "@/components/Donation/DonationErrorBoundary";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { getDetailedErrorInfo } from "@/utilities/donations/errorMessages";
 
 // Mock dependencies
-jest.mock("@/components/Utilities/errorManager");
-jest.mock("@/utilities/donations/errorMessages");
-jest.mock("next/link", () => {
-  return ({ children, href }: { children: React.ReactNode; href: string }) => {
-    return <a href={href}>{children}</a>;
-  };
-});
+vi.mock("@/components/Utilities/errorManager");
+vi.mock("@/utilities/donations/errorMessages");
+vi.mock("next/link", () => ({
+  __esModule: true,
+  default: ({ children, href }: { children: React.ReactNode; href: string }) => (
+    <a href={href}>{children}</a>
+  ),
+}));
 
 // Component that throws an error for testing
 const ThrowError = ({
@@ -38,14 +40,14 @@ const ThrowError = ({
 };
 
 describe("DonationErrorBoundary", () => {
-  const mockErrorManager = errorManager as jest.MockedFunction<typeof errorManager>;
-  const mockGetDetailedErrorInfo = getDetailedErrorInfo as jest.MockedFunction<
+  const mockErrorManager = errorManager as vi.MockedFunction<typeof errorManager>;
+  const mockGetDetailedErrorInfo = getDetailedErrorInfo as vi.MockedFunction<
     typeof getDetailedErrorInfo
   >;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.spyOn(console, "error").mockImplementation(() => {}); // Suppress React error boundary console errors
+    vi.clearAllMocks();
+    vi.spyOn(console, "error").mockImplementation(() => {}); // Suppress React error boundary console errors
 
     // Setup default mock return for getDetailedErrorInfo
     mockGetDetailedErrorInfo.mockReturnValue({
@@ -58,17 +60,17 @@ describe("DonationErrorBoundary", () => {
     // Mock localStorage
     Object.defineProperty(window, "localStorage", {
       value: {
-        getItem: jest.fn(),
-        setItem: jest.fn(),
-        removeItem: jest.fn(),
-        clear: jest.fn(),
+        getItem: vi.fn(),
+        setItem: vi.fn(),
+        removeItem: vi.fn(),
+        clear: vi.fn(),
       },
       writable: true,
     });
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe("Error Catching", () => {
@@ -149,7 +151,8 @@ describe("DonationErrorBoundary", () => {
       expect(screen.getByText("Try again")).toBeInTheDocument();
     });
 
-    it("should display technical details when available", () => {
+    it("should display technical details when available", async () => {
+      const user = userEvent.setup();
       mockGetDetailedErrorInfo.mockReturnValue({
         code: "CONTRACT_ERROR" as any,
         message: "Contract execution failed",
@@ -166,7 +169,7 @@ describe("DonationErrorBoundary", () => {
       const detailsElement = screen.getByText("Technical Details");
       expect(detailsElement).toBeInTheDocument();
 
-      fireEvent.click(detailsElement);
+      await user.click(detailsElement);
       expect(screen.getByText("Error: execution reverted")).toBeInTheDocument();
     });
 
@@ -188,7 +191,8 @@ describe("DonationErrorBoundary", () => {
   });
 
   describe("Error Recovery - Try Again", () => {
-    it("should reset error state when Try Again is clicked", () => {
+    it("should reset error state when Try Again is clicked", async () => {
+      const user = userEvent.setup();
       const ThrowErrorComponent = ({ shouldThrow }: { shouldThrow: boolean }) => {
         if (shouldThrow) {
           throw new Error("Test error");
@@ -205,7 +209,7 @@ describe("DonationErrorBoundary", () => {
       expect(screen.getByText("Something went wrong")).toBeInTheDocument();
 
       const tryAgainButton = screen.getByText("Try Again");
-      fireEvent.click(tryAgainButton);
+      await user.click(tryAgainButton);
 
       // Rerender with error cleared - need to use a key to force remount or use different component
       rerender(
@@ -218,7 +222,8 @@ describe("DonationErrorBoundary", () => {
       expect(screen.getByText("No error")).toBeInTheDocument();
     });
 
-    it("should allow children to render again after reset", () => {
+    it("should allow children to render again after reset", async () => {
+      const user = userEvent.setup();
       const ThrowErrorComponent = ({ shouldThrow }: { shouldThrow: boolean }) => {
         if (shouldThrow) {
           throw new Error("Test error");
@@ -233,7 +238,7 @@ describe("DonationErrorBoundary", () => {
       );
 
       const tryAgainButton = screen.getByText("Try Again");
-      fireEvent.click(tryAgainButton);
+      await user.click(tryAgainButton);
 
       // Rerender with non-throwing children
       rerender(
@@ -260,11 +265,12 @@ describe("DonationErrorBoundary", () => {
       window.location = originalLocation;
     });
 
-    it("should clear localStorage and reload page when Clear Cart is clicked", () => {
-      const removeItemSpy = jest.spyOn(window.localStorage, "removeItem");
+    it("should clear localStorage and reload page when Clear Cart is clicked", async () => {
+      const user = userEvent.setup();
+      const removeItemSpy = vi.spyOn(window.localStorage, "removeItem");
 
       // Mock window.location.href assignment
-      const hrefSetter = jest.fn();
+      const hrefSetter = vi.fn();
       Object.defineProperty(window.location, "href", {
         set: hrefSetter,
         get: () => originalLocation.href,
@@ -278,18 +284,19 @@ describe("DonationErrorBoundary", () => {
       );
 
       const clearCartButton = screen.getByText("Clear Cart and Start Over");
-      fireEvent.click(clearCartButton);
+      await user.click(clearCartButton);
 
       expect(removeItemSpy).toHaveBeenCalledWith("donation-cart-storage");
       expect(hrefSetter).toHaveBeenCalled();
     });
 
-    it("should handle localStorage errors gracefully", () => {
-      const removeItemSpy = jest.spyOn(window.localStorage, "removeItem");
+    it("should handle localStorage errors gracefully", async () => {
+      const user = userEvent.setup();
+      const removeItemSpy = vi.spyOn(window.localStorage, "removeItem");
       removeItemSpy.mockImplementation(() => {
         throw new Error("localStorage error");
       });
-      const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+      const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
       render(
         <DonationErrorBoundary>
@@ -298,7 +305,7 @@ describe("DonationErrorBoundary", () => {
       );
 
       const clearCartButton = screen.getByText("Clear Cart and Start Over");
-      fireEvent.click(clearCartButton);
+      await user.click(clearCartButton);
 
       expect(consoleErrorSpy).toHaveBeenCalledWith("Failed to clear cart:", expect.any(Error));
     });
@@ -352,7 +359,8 @@ describe("DonationErrorBoundary", () => {
   });
 
   describe("Edge Cases", () => {
-    it("should handle multiple errors sequentially", () => {
+    it("should handle multiple errors sequentially", async () => {
+      const user = userEvent.setup();
       const { rerender } = render(
         <DonationErrorBoundary>
           <ThrowError shouldThrow={true} errorMessage="First error" />
@@ -362,7 +370,7 @@ describe("DonationErrorBoundary", () => {
       expect(screen.getByText("Something went wrong")).toBeInTheDocument();
 
       const tryAgainButton = screen.getByText("Try Again");
-      fireEvent.click(tryAgainButton);
+      await user.click(tryAgainButton);
 
       rerender(
         <DonationErrorBoundary>

@@ -9,19 +9,25 @@ import { isAddress } from "viem";
 import { usePayoutAddressManager } from "@/hooks/donation/usePayoutAddressManager";
 
 // Mock dependencies
-jest.mock("react-hot-toast");
+vi.mock("react-hot-toast");
 
-jest.mock("viem", () => ({
-  isAddress: jest.fn(),
+vi.mock("viem", () => ({
+  isAddress: vi.fn(),
 }));
 
-jest.mock("@/services/project.service", () => ({
-  getProject: jest.fn(),
+vi.mock("@/services/project.service", () => ({
+  getProject: vi.fn(),
 }));
 
-jest.mock("@/services/project-grants.service", () => ({
-  getProjectGrants: jest.fn(),
+vi.mock("@/services/project-grants.service", () => ({
+  getProjectGrants: vi.fn(),
 }));
+
+import { getProject } from "@/services/project.service";
+import { getProjectGrants } from "@/services/project-grants.service";
+
+const mockGetProject = getProject as unknown as vi.Mock;
+const mockGetProjectGrants = getProjectGrants as unknown as vi.Mock;
 
 describe("usePayoutAddressManager", () => {
   const mockValidAddress = "0x1234567890123456789012345678901234567890";
@@ -56,16 +62,16 @@ describe("usePayoutAddressManager", () => {
   const mockGrantsResponse: any[] = [];
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
-    const mockIsAddress = isAddress as unknown as jest.Mock;
+    const mockIsAddress = isAddress as unknown as vi.Mock;
     mockIsAddress.mockImplementation((addr: string) => addr === mockValidAddress);
 
-    (toast.error as jest.Mock).mockImplementation(() => {});
+    (toast.error as vi.Mock).mockImplementation(() => {});
 
     // Setup default mocks for V2 services
-    const { getProject } = require("@/services/project.service");
-    const { getProjectGrants } = require("@/services/project-grants.service");
+    const getProject = mockGetProject;
+    const getProjectGrants = mockGetProjectGrants;
     getProject.mockResolvedValue(mockProjectResponse);
     getProjectGrants.mockResolvedValue(mockGrantsResponse);
   });
@@ -86,8 +92,8 @@ describe("usePayoutAddressManager", () => {
     });
 
     it("should not fetch when no items provided", () => {
-      const { getProject } = require("@/services/project.service");
-      const { getProjectGrants } = require("@/services/project-grants.service");
+      const getProject = mockGetProject;
+      const getProjectGrants = mockGetProjectGrants;
 
       renderHook(() => usePayoutAddressManager([], undefined));
 
@@ -98,8 +104,8 @@ describe("usePayoutAddressManager", () => {
 
   describe("fetching payout addresses", () => {
     it("should fetch payout addresses for all items", async () => {
-      const { getProject } = require("@/services/project.service");
-      const { getProjectGrants } = require("@/services/project-grants.service");
+      const getProject = mockGetProject;
+      const getProjectGrants = mockGetProjectGrants;
       getProject.mockResolvedValue(mockProjectResponse);
       getProjectGrants.mockResolvedValue(mockGrantsResponse);
 
@@ -118,8 +124,8 @@ describe("usePayoutAddressManager", () => {
     });
 
     it("should use uid as fallback when slug is missing", async () => {
-      const { getProject } = require("@/services/project.service");
-      const { getProjectGrants } = require("@/services/project-grants.service");
+      const getProject = mockGetProject;
+      const getProjectGrants = mockGetProjectGrants;
       getProject.mockResolvedValue(mockProjectResponse);
       getProjectGrants.mockResolvedValue(mockGrantsResponse);
 
@@ -133,8 +139,8 @@ describe("usePayoutAddressManager", () => {
     });
 
     it("should store resolved payout addresses", async () => {
-      const { getProject } = require("@/services/project.service");
-      const { getProjectGrants } = require("@/services/project-grants.service");
+      const getProject = mockGetProject;
+      const getProjectGrants = mockGetProjectGrants;
       getProject.mockResolvedValue(mockProjectResponse);
       getProjectGrants.mockResolvedValue(mockGrantsResponse);
 
@@ -146,8 +152,8 @@ describe("usePayoutAddressManager", () => {
     });
 
     it("should handle fetch error gracefully", async () => {
-      const { getProject } = require("@/services/project.service");
-      const { getProjectGrants } = require("@/services/project-grants.service");
+      const getProject = mockGetProject;
+      const getProjectGrants = mockGetProjectGrants;
       getProject.mockRejectedValue(new Error("Network error"));
       getProjectGrants.mockResolvedValue(mockGrantsResponse);
 
@@ -165,8 +171,8 @@ describe("usePayoutAddressManager", () => {
 
   describe("resolvePayoutAddress", () => {
     it("should resolve string payout address", async () => {
-      const { getProject } = require("@/services/project.service");
-      const { getProjectGrants } = require("@/services/project-grants.service");
+      const getProject = mockGetProject;
+      const getProjectGrants = mockGetProjectGrants;
       getProject.mockResolvedValue({
         ...mockProjectResponse,
         payoutAddress: mockValidAddress,
@@ -181,8 +187,8 @@ describe("usePayoutAddressManager", () => {
     });
 
     it("should resolve object payout address (community-specific)", async () => {
-      const { getProject } = require("@/services/project.service");
-      const { getProjectGrants } = require("@/services/project-grants.service");
+      const getProject = mockGetProject;
+      const getProjectGrants = mockGetProjectGrants;
       getProject.mockResolvedValue({
         ...mockProjectResponse,
         payoutAddress: {
@@ -192,7 +198,7 @@ describe("usePayoutAddressManager", () => {
       });
       getProjectGrants.mockResolvedValue(mockGrantsResponse);
 
-      const mockIsAddress = isAddress as unknown as jest.Mock;
+      const mockIsAddress = isAddress as unknown as vi.Mock;
       mockIsAddress.mockReturnValue(true);
 
       const { result } = renderHook(() => usePayoutAddressManager([mockItems[0]], "community-1"));
@@ -203,8 +209,8 @@ describe("usePayoutAddressManager", () => {
     });
 
     it("should use first available address from object when community ID not provided", async () => {
-      const { getProject } = require("@/services/project.service");
-      const { getProjectGrants } = require("@/services/project-grants.service");
+      const getProject = mockGetProject;
+      const getProjectGrants = mockGetProjectGrants;
       const firstAddress = "0x9876543210987654321098765432109876543210";
       getProject.mockResolvedValue({
         ...mockProjectResponse,
@@ -215,7 +221,7 @@ describe("usePayoutAddressManager", () => {
       });
       getProjectGrants.mockResolvedValue(mockGrantsResponse);
 
-      const mockIsAddress = isAddress as unknown as jest.Mock;
+      const mockIsAddress = isAddress as unknown as vi.Mock;
       mockIsAddress.mockReturnValue(true);
 
       const { result } = renderHook(() => usePayoutAddressManager([mockItems[0]], undefined));
@@ -227,8 +233,8 @@ describe("usePayoutAddressManager", () => {
     });
 
     it("should fallback to grant payout address", async () => {
-      const { getProject } = require("@/services/project.service");
-      const { getProjectGrants } = require("@/services/project-grants.service");
+      const getProject = mockGetProject;
+      const getProjectGrants = mockGetProjectGrants;
       getProject.mockResolvedValue({
         ...mockProjectResponse,
         payoutAddress: undefined,
@@ -249,8 +255,8 @@ describe("usePayoutAddressManager", () => {
     });
 
     it("should fallback to owner address", async () => {
-      const { getProject } = require("@/services/project.service");
-      const { getProjectGrants } = require("@/services/project-grants.service");
+      const getProject = mockGetProject;
+      const getProjectGrants = mockGetProjectGrants;
       getProject.mockResolvedValue({
         ...mockProjectResponse,
         owner: mockValidAddress,
@@ -266,15 +272,15 @@ describe("usePayoutAddressManager", () => {
     });
 
     it("should reject invalid addresses", async () => {
-      const { getProject } = require("@/services/project.service");
-      const { getProjectGrants } = require("@/services/project-grants.service");
+      const getProject = mockGetProject;
+      const getProjectGrants = mockGetProjectGrants;
       getProject.mockResolvedValue({
         ...mockProjectResponse,
         payoutAddress: mockInvalidAddress,
       });
       getProjectGrants.mockResolvedValue(mockGrantsResponse);
 
-      const mockIsAddress = isAddress as unknown as jest.Mock;
+      const mockIsAddress = isAddress as unknown as vi.Mock;
       mockIsAddress.mockReturnValue(false);
 
       const { result } = renderHook(() => usePayoutAddressManager([mockItems[0]], undefined));
@@ -286,8 +292,8 @@ describe("usePayoutAddressManager", () => {
     });
 
     it("should handle missing payout address", async () => {
-      const { getProject } = require("@/services/project.service");
-      const { getProjectGrants } = require("@/services/project-grants.service");
+      const getProject = mockGetProject;
+      const getProjectGrants = mockGetProjectGrants;
       getProject.mockResolvedValue({
         ...mockProjectResponse,
         owner: undefined,
@@ -306,8 +312,8 @@ describe("usePayoutAddressManager", () => {
 
   describe("missing payouts tracking", () => {
     it("should track projects with missing payout addresses", async () => {
-      const { getProject } = require("@/services/project.service");
-      const { getProjectGrants } = require("@/services/project-grants.service");
+      const getProject = mockGetProject;
+      const getProjectGrants = mockGetProjectGrants;
 
       getProject
         .mockResolvedValueOnce({
@@ -329,8 +335,8 @@ describe("usePayoutAddressManager", () => {
     });
 
     it("should clear missing payouts when items change", async () => {
-      const { getProject } = require("@/services/project.service");
-      const { getProjectGrants } = require("@/services/project-grants.service");
+      const getProject = mockGetProject;
+      const getProjectGrants = mockGetProjectGrants;
       getProject.mockResolvedValue({
         ...mockProjectResponse,
         owner: undefined,
@@ -362,8 +368,8 @@ describe("usePayoutAddressManager", () => {
 
   describe("payoutStatusByProject", () => {
     it("should provide status for each project", async () => {
-      const { getProject } = require("@/services/project.service");
-      const { getProjectGrants } = require("@/services/project-grants.service");
+      const getProject = mockGetProject;
+      const getProjectGrants = mockGetProjectGrants;
       getProject.mockResolvedValue(mockProjectResponse);
       getProjectGrants.mockResolvedValue(mockGrantsResponse);
 
@@ -378,8 +384,8 @@ describe("usePayoutAddressManager", () => {
     });
 
     it("should mark status as loading during fetch", () => {
-      const { getProject } = require("@/services/project.service");
-      const { getProjectGrants } = require("@/services/project-grants.service");
+      const getProject = mockGetProject;
+      const getProjectGrants = mockGetProjectGrants;
       getProject.mockImplementation(
         () => new Promise((resolve) => setTimeout(() => resolve(mockProjectResponse), 1000))
       );
@@ -393,8 +399,8 @@ describe("usePayoutAddressManager", () => {
     });
 
     it("should mark status as missing when payout address not found", async () => {
-      const { getProject } = require("@/services/project.service");
-      const { getProjectGrants } = require("@/services/project-grants.service");
+      const getProject = mockGetProject;
+      const getProjectGrants = mockGetProjectGrants;
       getProject.mockResolvedValue({
         ...mockProjectResponse,
         owner: undefined,
@@ -438,8 +444,8 @@ describe("usePayoutAddressManager", () => {
 
   describe("cleanup", () => {
     it("should ignore results after unmount", async () => {
-      const { getProject } = require("@/services/project.service");
-      const { getProjectGrants } = require("@/services/project-grants.service");
+      const getProject = mockGetProject;
+      const getProjectGrants = mockGetProjectGrants;
 
       let resolvePromise: (value: any) => void;
       const promise = new Promise((resolve) => {
@@ -481,8 +487,8 @@ describe("usePayoutAddressManager", () => {
 
   describe("edge cases", () => {
     it("should handle items with special characters in slug", async () => {
-      const { getProject } = require("@/services/project.service");
-      const { getProjectGrants } = require("@/services/project-grants.service");
+      const getProject = mockGetProject;
+      const getProjectGrants = mockGetProjectGrants;
       getProject.mockResolvedValue(mockProjectResponse);
       getProjectGrants.mockResolvedValue(mockGrantsResponse);
 
@@ -500,8 +506,8 @@ describe("usePayoutAddressManager", () => {
     });
 
     it("should handle empty payout address object", async () => {
-      const { getProject } = require("@/services/project.service");
-      const { getProjectGrants } = require("@/services/project-grants.service");
+      const getProject = mockGetProject;
+      const getProjectGrants = mockGetProjectGrants;
       getProject.mockResolvedValue({
         ...mockProjectResponse,
         owner: undefined,
@@ -517,8 +523,8 @@ describe("usePayoutAddressManager", () => {
     });
 
     it("should handle payout address object with invalid values", async () => {
-      const { getProject } = require("@/services/project.service");
-      const { getProjectGrants } = require("@/services/project-grants.service");
+      const getProject = mockGetProject;
+      const getProjectGrants = mockGetProjectGrants;
       getProject.mockResolvedValue({
         ...mockProjectResponse,
         owner: undefined,
@@ -538,8 +544,8 @@ describe("usePayoutAddressManager", () => {
     });
 
     it("should handle concurrent item updates", async () => {
-      const { getProject } = require("@/services/project.service");
-      const { getProjectGrants } = require("@/services/project-grants.service");
+      const getProject = mockGetProject;
+      const getProjectGrants = mockGetProjectGrants;
       getProject.mockResolvedValue(mockProjectResponse);
       getProjectGrants.mockResolvedValue(mockGrantsResponse);
 

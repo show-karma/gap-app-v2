@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { Badge } from "@/components/ui/badge";
 import "@testing-library/jest-dom";
 
@@ -55,7 +56,7 @@ describe("Badge", () => {
       render(<Badge>Badge</Badge>);
 
       const badge = screen.getByText("Badge");
-      expect(badge).toHaveClass("rounded-md");
+      expect(badge).toHaveClass("rounded-full");
     });
 
     it("should have border", () => {
@@ -69,7 +70,7 @@ describe("Badge", () => {
       render(<Badge>Badge</Badge>);
 
       const badge = screen.getByText("Badge");
-      expect(badge).toHaveClass("px-2.5", "py-0.5");
+      expect(badge).toHaveClass("px-2", "py-0.5");
     });
 
     it("should have small text size", () => {
@@ -83,7 +84,7 @@ describe("Badge", () => {
       render(<Badge>Badge</Badge>);
 
       const badge = screen.getByText("Badge");
-      expect(badge).toHaveClass("font-semibold");
+      expect(badge).toHaveClass("font-medium");
     });
 
     it("should have transition-colors", () => {
@@ -305,7 +306,7 @@ describe("Badge", () => {
 
   describe("Event Handlers", () => {
     it("should accept onClick handler", () => {
-      const handleClick = jest.fn();
+      const handleClick = vi.fn();
 
       render(<Badge onClick={handleClick}>Badge</Badge>);
 
@@ -315,12 +316,14 @@ describe("Badge", () => {
       expect(handleClick).toHaveBeenCalledTimes(1);
     });
 
-    it("should accept onMouseEnter handler", () => {
-      const handleMouseEnter = jest.fn();
+    it("should accept onMouseEnter handler", async () => {
+      const user = userEvent.setup();
+      const handleMouseEnter = vi.fn();
 
       render(<Badge onMouseEnter={handleMouseEnter}>Badge</Badge>);
 
       const badge = screen.getByText("Badge");
+      // fireEvent required: testing React synthetic mouseEnter event handler
       require("@testing-library/react").fireEvent.mouseEnter(badge);
 
       expect(handleMouseEnter).toHaveBeenCalledTimes(1);

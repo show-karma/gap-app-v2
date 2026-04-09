@@ -1,8 +1,9 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { CommunityDialog } from "@/components/Dialogs/CommunityDialog";
 
 // Mock Headless UI Dialog components
-jest.mock("@headlessui/react", () => {
+vi.mock("@headlessui/react", () => {
   const React = require("react");
 
   const TRANSITION_PROPS = [
@@ -73,133 +74,47 @@ jest.mock("@headlessui/react", () => {
   };
 });
 
-// Mock react-hot-toast (used by ensureCorrectChain)
-jest.mock("react-hot-toast", () => ({
+// Mock react-hot-toast
+const mockToastError = vi.fn();
+const mockToastSuccess = vi.fn();
+vi.mock("react-hot-toast", () => ({
   __esModule: true,
-  default: { error: jest.fn(), success: jest.fn() },
+  default: {
+    error: (...args: any[]) => mockToastError(...args),
+    success: (...args: any[]) => mockToastSuccess(...args),
+  },
 }));
 
 // Mock Heroicons
-jest.mock("@heroicons/react/24/solid", () => ({
+vi.mock("@heroicons/react/24/solid", () => ({
   PlusIcon: (props: any) => <svg data-testid="plus-icon" {...props} />,
   ChevronRightIcon: (props: any) => <svg data-testid="chevron-icon" {...props} />,
   XMarkIcon: (props: any) => <svg data-testid="x-icon" {...props} />,
 }));
 
-// Track attest mock for controlling test flow
-let mockAttest: jest.Mock;
-let mockSetupChainAndWallet: jest.Mock;
-
-// Mock hooks
-jest.mock("wagmi", () => ({
-  useAccount: () => ({
-    address: "0x1234567890abcdef1234567890abcdef12345678",
-    chain: { id: 1 },
-  }),
-  useChainId: () => 1,
-  useWalletClient: () => ({ data: null }),
-  usePublicClient: () => ({}),
+// Mock fetchData
+const mockFetchData = vi.fn();
+vi.mock("@/utilities/fetchData", () => ({
+  __esModule: true,
+  default: (...args: any[]) => mockFetchData(...args),
 }));
 
-jest.mock("@/hooks/useWallet", () => ({
-  useWallet: () => ({
-    switchChainAsync: jest.fn(),
-  }),
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: () => ({ authenticated: true, login: vi.fn() }),
 }));
 
-jest.mock("@/hooks/useGap", () => {
-  const gapClient = {
-    findSchema: jest.fn().mockReturnValue("mock-schema"),
-    fetch: { slugExists: jest.fn().mockResolvedValue(false) },
-    generateSlug: jest.fn().mockResolvedValue("generated-slug"),
-  };
-  return {
-    useGap: () => ({
-      gap: {
-        network: "optimism",
-      },
-    }),
-    getGapClient: jest.fn().mockReturnValue(gapClient),
-    __mockGapClient: gapClient,
-  };
-});
-
-// Mock ensureCorrectChain to bypass chain switching delays and getGapClient issues
-jest.mock("@/utilities/ensureCorrectChain", () => {
-  const { __mockGapClient } = jest.requireMock("@/hooks/useGap");
-  return {
-    ensureCorrectChain: jest.fn().mockResolvedValue({
-      success: true,
-      chainId: 10,
-      gapClient: __mockGapClient,
-    }),
-  };
-});
-
-const mockShowError = jest.fn();
-const mockStartAttestation = jest.fn();
-const mockShowLoading = jest.fn();
-const mockShowSuccess = jest.fn();
-const mockDismiss = jest.fn();
-const mockChangeStepperStep = jest.fn();
-
-jest.mock("@/hooks/useAttestationToast", () => ({
-  useAttestationToast: () => ({
-    startAttestation: mockStartAttestation,
-    showLoading: mockShowLoading,
-    showSuccess: mockShowSuccess,
-    showError: mockShowError,
-    dismiss: mockDismiss,
-    changeStepperStep: mockChangeStepperStep,
-  }),
-}));
-
-// Mock SDK Community class
-jest.mock("@show-karma/karma-gap-sdk", () => ({
-  Community: jest.fn().mockImplementation(() => ({
-    attest: (...args: any[]) => mockAttest(...args),
-    chainID: 1,
-    uid: "0xmock-uid",
-  })),
-  nullRef: "0x0000000000000000000000000000000000000000000000000000000000000000",
-}));
-
-jest.mock("@/utilities/fetchData", () => jest.fn().mockResolvedValue([{}, null]));
-
-jest.mock("@/utilities/network", () => ({
+vi.mock("@/utilities/network", () => ({
   appNetwork: [
+    { id: 10, name: "Optimism" },
+    { id: 42161, name: "Arbitrum" },
+  ],
+  gapSupportedNetworks: [
     { id: 10, name: "Optimism" },
     { id: 42161, name: "Arbitrum" },
   ],
 }));
 
-jest.mock("@/utilities/sanitize", () => ({
-  sanitizeObject: (obj: any) => obj,
-}));
-
-jest.mock("@/utilities/tailwind", () => ({
-  cn: (...args: any[]) => args.filter(Boolean).join(" "),
-}));
-
-// Mock MarkdownEditor
-jest.mock("@/components/Utilities/MarkdownEditor", () => ({
-  MarkdownEditor: ({ value, onChange, ...props }: any) => (
-    <textarea
-      data-testid="markdown-editor"
-      value={value}
-      onChange={(e: any) => onChange(e.target.value)}
-      {...props}
-    />
-  ),
-}));
-
-// Mock errorManager
-jest.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: jest.fn(),
-}));
-
-// Mock messages
-jest.mock("@/utilities/messages", () => ({
+vi.mock("@/utilities/messages", () => ({
   MESSAGES: {
     COMMUNITY_FORM: {
       TITLE: { MIN: "Too short", MAX: "Too long" },
@@ -209,15 +124,33 @@ jest.mock("@/utilities/messages", () => ({
   },
 }));
 
-// Mock indexer
-jest.mock("@/utilities/indexer", () => ({
+vi.mock("@/utilities/indexer", () => ({
   INDEXER: {
-    ATTESTATION_LISTENER: () => "/attestation-listener",
+    COMMUNITY: {
+      V2: {
+        SLUG_CHECK: (slug: string) => `/v2/communities/slug-check/${slug}`,
+      },
+    },
   },
 }));
 
-// Mock ui/button
-jest.mock("@/components/ui/button", () => ({
+vi.mock("@/utilities/tailwind", () => ({
+  cn: (...args: any[]) => args.filter(Boolean).join(" "),
+}));
+
+vi.mock("@/components/Utilities/errorManager", () => ({ errorManager: vi.fn() }));
+
+vi.mock("@/components/Utilities/MarkdownEditor", () => ({
+  MarkdownEditor: ({ value, onChange }: any) => (
+    <textarea
+      data-testid="markdown-editor"
+      value={value}
+      onChange={(e: any) => onChange(e.target.value)}
+    />
+  ),
+}));
+
+vi.mock("@/components/ui/button", () => ({
   Button: ({ children, onClick, isLoading, disabled, ...props }: any) => (
     <button onClick={onClick} disabled={disabled || isLoading} {...props}>
       {isLoading ? "Loading..." : children}
@@ -225,173 +158,17 @@ jest.mock("@/components/ui/button", () => ({
   ),
 }));
 
-// Access the file-based mock hook function directly
-// (moduleNameMapper in jest.config.ts maps @/hooks/useSetupChainAndWallet
-//  to __mocks__/hooks/useSetupChainAndWallet.ts)
-const mockHookModule = jest.requireMock("@/hooks/useSetupChainAndWallet") as {
-  useSetupChainAndWallet: jest.Mock;
-};
-
 describe("CommunityDialog", () => {
-  const mockRefreshCommunities = jest.fn().mockResolvedValue([]);
+  const mockRefreshCommunities = vi.fn().mockResolvedValue(undefined);
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    mockAttest = jest.fn();
-    mockSetupChainAndWallet = jest.fn().mockResolvedValue({
-      gapClient: {
-        findSchema: jest.fn().mockReturnValue("mock-schema"),
-        fetch: { slugExists: jest.fn().mockResolvedValue(false) },
-        generateSlug: jest.fn().mockResolvedValue("generated-slug"),
-      },
-      walletSigner: { signMessage: jest.fn() },
-      chainId: 10,
-    });
-    // Reconfigure the hook to return our controllable setupChainAndWallet
-    // (clearAllMocks resets mockReturnValue, so we must set it each time)
-    mockHookModule.useSetupChainAndWallet.mockReturnValue({
-      setupChainAndWallet: (...args: any[]) => mockSetupChainAndWallet(...args),
-      isSmartWalletReady: false,
-      smartWalletAddress: null,
-      hasEmbeddedWallet: false,
-      hasExternalWallet: false,
-    });
-  });
-
-  describe("Form data preservation on transaction failure", () => {
-    it("should reopen modal with preserved form data when attestation fails", async () => {
-      // Setup: attest rejects (simulating a failed onchain transaction)
-      mockAttest.mockRejectedValue(new Error("Transaction rejected by user"));
-
-      render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
-
-      // Open modal
-      const openButton = screen.getByText("New Community");
-      fireEvent.click(openButton);
-
-      // Fill in form data
-      const nameInput = screen.getByPlaceholderText('e.g. "My awesome Community"');
-      fireEvent.change(nameInput, { target: { value: "Test Community" } });
-
-      const imageInput = screen.getByPlaceholderText('e.g. "https://example.com/image.jpg"');
-      fireEvent.change(imageInput, { target: { value: "https://example.com/logo.png" } });
-
-      const slugInput = screen.getByPlaceholderText('e.g. "grant-portal"');
-      fireEvent.change(slugInput, { target: { value: "test-community" } });
-
-      // Submit form
-      const submitButton = screen.getByText("Create Community");
-      fireEvent.click(submitButton);
-
-      // Wait for the error handling to complete and modal to reopen
-      await waitFor(() => {
-        expect(mockShowError).toHaveBeenCalledWith("Failed to create community. Please try again.");
-      });
-
-      // Modal should be reopened
-      await waitFor(() => {
-        expect(screen.getByTestId("dialog")).toBeInTheDocument();
-      });
-
-      // Form data should be preserved (the inputs should still have their values)
-      const preservedNameInput = screen.getByPlaceholderText(
-        'e.g. "My awesome Community"'
-      ) as HTMLInputElement;
-      expect(preservedNameInput.value).toBe("Test Community");
-
-      const preservedImageInput = screen.getByPlaceholderText(
-        'e.g. "https://example.com/image.jpg"'
-      ) as HTMLInputElement;
-      expect(preservedImageInput.value).toBe("https://example.com/logo.png");
-
-      const preservedSlugInput = screen.getByPlaceholderText(
-        'e.g. "grant-portal"'
-      ) as HTMLInputElement;
-      expect(preservedSlugInput.value).toBe("test-community");
-    });
-
-    it("should show error toast when attestation fails", async () => {
-      mockAttest.mockRejectedValue(new Error("Transaction failed"));
-
-      render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
-
-      const openButton = screen.getByText("New Community");
-      fireEvent.click(openButton);
-
-      // Fill required fields to pass validation
-      fireEvent.change(screen.getByPlaceholderText('e.g. "My awesome Community"'), {
-        target: { value: "Test" },
-      });
-      fireEvent.change(screen.getByPlaceholderText('e.g. "https://example.com/image.jpg"'), {
-        target: { value: "https://img.com/a.png" },
-      });
-      fireEvent.change(screen.getByPlaceholderText('e.g. "grant-portal"'), {
-        target: { value: "test-slug" },
-      });
-
-      fireEvent.click(screen.getByText("Create Community"));
-
-      await waitFor(() => {
-        expect(mockShowError).toHaveBeenCalledWith("Failed to create community. Please try again.");
-      });
-    });
-
-    it("should reset form when modal is opened fresh (not from error recovery)", async () => {
-      render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
-
-      // Open modal
-      const openButton = screen.getByText("New Community");
-      fireEvent.click(openButton);
-
-      // Fill in data
-      const nameInput = screen.getByPlaceholderText(
-        'e.g. "My awesome Community"'
-      ) as HTMLInputElement;
-      fireEvent.change(nameInput, { target: { value: "Some Name" } });
-
-      // Close via cancel
-      fireEvent.click(screen.getByText("Cancel"));
-
-      // Reopen - should be fresh
-      fireEvent.click(openButton);
-
-      const freshNameInput = screen.getByPlaceholderText(
-        'e.g. "My awesome Community"'
-      ) as HTMLInputElement;
-      // Default value should be empty string (from dataToUpdate)
-      expect(freshNameInput.value).toBe("");
-    });
-  });
-
-  describe("Modal stays open when setup fails", () => {
-    it("should keep modal open when setupChainAndWallet returns null", async () => {
-      mockSetupChainAndWallet.mockResolvedValue(null);
-
-      render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
-
-      const openButton = screen.getByText("New Community");
-      fireEvent.click(openButton);
-
-      // Fill required fields
-      fireEvent.change(screen.getByPlaceholderText('e.g. "My awesome Community"'), {
-        target: { value: "Test" },
-      });
-      fireEvent.change(screen.getByPlaceholderText('e.g. "https://example.com/image.jpg"'), {
-        target: { value: "https://img.com/a.png" },
-      });
-      fireEvent.change(screen.getByPlaceholderText('e.g. "grant-portal"'), {
-        target: { value: "test-slug" },
-      });
-
-      fireEvent.click(screen.getByText("Create Community"));
-
-      // Modal should still be visible since setup failed
-      await waitFor(() => {
-        expect(screen.getByTestId("dialog")).toBeInTheDocument();
-      });
-
-      // Attest should not have been called
-      expect(mockAttest).not.toHaveBeenCalled();
+    vi.clearAllMocks();
+    // Default: slug is available, API returns success with slug
+    mockFetchData.mockImplementation((url: string) => {
+      if (url.includes("slug-check")) {
+        return Promise.resolve([{ available: true }, null, null, 200]);
+      }
+      return Promise.resolve([{ uid: "0xnew", slug: "test-slug", chainID: 10 }, null, null, 201]);
     });
   });
 
@@ -406,15 +183,17 @@ describe("CommunityDialog", () => {
       expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
     });
 
-    it("should open dialog when trigger button is clicked", () => {
+    it("should open dialog when trigger button is clicked", async () => {
+      const user = userEvent.setup();
       render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
-      fireEvent.click(screen.getByText("New Community"));
+      await user.click(screen.getByText("New Community"));
       expect(screen.getByTestId("dialog")).toBeInTheDocument();
     });
 
-    it("should display form fields", () => {
+    it("should display form fields", async () => {
+      const user = userEvent.setup();
       render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
-      fireEvent.click(screen.getByText("New Community"));
+      await user.click(screen.getByText("New Community"));
 
       expect(screen.getByPlaceholderText('e.g. "My awesome Community"')).toBeInTheDocument();
       expect(
@@ -423,37 +202,255 @@ describe("CommunityDialog", () => {
       expect(screen.getByPlaceholderText('e.g. "grant-portal"')).toBeInTheDocument();
     });
 
-    it("should close dialog when cancel is clicked", () => {
+    it("should close dialog when cancel is clicked", async () => {
+      const user = userEvent.setup();
       render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
-      fireEvent.click(screen.getByText("New Community"));
-      fireEvent.click(screen.getByText("Cancel"));
+      await user.click(screen.getByText("New Community"));
+      await user.click(screen.getByText("Cancel"));
       expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
     });
   });
 
   describe("Success flow", () => {
-    it("should start attestation when form is submitted with valid data", async () => {
+    it("should call API and show success toast", async () => {
+      const user = userEvent.setup();
       render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
+      await user.click(screen.getByText("New Community"));
 
-      fireEvent.click(screen.getByText("New Community"));
+      await user.clear(screen.getByPlaceholderText('e.g. "My awesome Community"'));
 
-      // Fill required fields
-      fireEvent.change(screen.getByPlaceholderText('e.g. "My awesome Community"'), {
-        target: { value: "Test Community" },
-      });
-      fireEvent.change(screen.getByPlaceholderText('e.g. "https://example.com/image.jpg"'), {
-        target: { value: "https://img.com/a.png" },
-      });
-      fireEvent.change(screen.getByPlaceholderText('e.g. "grant-portal"'), {
-        target: { value: "test-slug" },
-      });
+      await user.type(screen.getByPlaceholderText('e.g. "My awesome Community"'), "Test Community");
+      await user.clear(screen.getByPlaceholderText('e.g. "https://example.com/image.jpg"'));
 
-      fireEvent.click(screen.getByText("Create Community"));
+      await user.type(
+        screen.getByPlaceholderText('e.g. "https://example.com/image.jpg"'),
+        "https://img.com/a.png"
+      );
+      await user.clear(screen.getByPlaceholderText('e.g. "grant-portal"'));
 
-      // Verify the attestation flow starts (form validation passes and createCommunity runs)
+      await user.type(screen.getByPlaceholderText('e.g. "grant-portal"'), "test-slug");
+
+      await user.click(screen.getByText("Create Community"));
+
       await waitFor(() => {
-        expect(mockStartAttestation).toHaveBeenCalledWith("Creating community...");
+        expect(mockFetchData).toHaveBeenCalledWith(
+          "/v2/communities",
+          "POST",
+          expect.objectContaining({ name: "Test Community", slug: "test-slug" }),
+          {},
+          {},
+          true
+        );
       });
+
+      await waitFor(() => {
+        expect(mockToastSuccess).toHaveBeenCalledWith("Community created successfully!");
+      });
+    });
+  });
+
+  describe("Error handling", () => {
+    it("should show error toast on API failure", async () => {
+      const user = userEvent.setup();
+      mockFetchData.mockImplementation((url: string) => {
+        if (url.includes("slug-check")) {
+          return Promise.resolve([{ available: true }, null, null, 200]);
+        }
+        return Promise.resolve([null, "Server error", null, 500]);
+      });
+
+      render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
+      await user.click(screen.getByText("New Community"));
+
+      await user.clear(screen.getByPlaceholderText('e.g. "My awesome Community"'));
+
+      await user.type(screen.getByPlaceholderText('e.g. "My awesome Community"'), "Test");
+      await user.clear(screen.getByPlaceholderText('e.g. "https://example.com/image.jpg"'));
+
+      await user.type(
+        screen.getByPlaceholderText('e.g. "https://example.com/image.jpg"'),
+        "https://img.com/a.png"
+      );
+      await user.clear(screen.getByPlaceholderText('e.g. "grant-portal"'));
+
+      await user.type(screen.getByPlaceholderText('e.g. "grant-portal"'), "test-slug");
+
+      await user.click(screen.getByText("Create Community"));
+
+      await waitFor(() => {
+        expect(mockToastError).toHaveBeenCalledWith(
+          "Failed to create community. Please try again."
+        );
+      });
+    });
+
+    it("should show community limit toast on 403", async () => {
+      const user = userEvent.setup();
+      mockFetchData.mockImplementation((url: string) => {
+        if (url.includes("slug-check")) {
+          return Promise.resolve([{ available: true }, null, null, 200]);
+        }
+        return Promise.resolve([null, "Community limit reached", null, 403]);
+      });
+
+      render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
+      await user.click(screen.getByText("New Community"));
+
+      await user.clear(screen.getByPlaceholderText('e.g. "My awesome Community"'));
+
+      await user.type(screen.getByPlaceholderText('e.g. "My awesome Community"'), "Test");
+      await user.clear(screen.getByPlaceholderText('e.g. "https://example.com/image.jpg"'));
+
+      await user.type(
+        screen.getByPlaceholderText('e.g. "https://example.com/image.jpg"'),
+        "https://img.com/a.png"
+      );
+      await user.clear(screen.getByPlaceholderText('e.g. "grant-portal"'));
+
+      await user.type(screen.getByPlaceholderText('e.g. "grant-portal"'), "test-slug");
+
+      await user.click(screen.getByText("Create Community"));
+
+      await waitFor(() => {
+        expect(mockToastError).toHaveBeenCalledWith(
+          "You've reached the free tier limit of 1 community. Contact us to upgrade.",
+          { duration: 10000 }
+        );
+      });
+    });
+
+    it("should show slug exists toast", async () => {
+      const user = userEvent.setup();
+      mockFetchData.mockImplementation((url: string) => {
+        if (url.includes("slug-check")) {
+          return Promise.resolve([{ available: true }, null, null, 200]);
+        }
+        return Promise.resolve([null, 'Community with slug "test" already exists', null, 409]);
+      });
+
+      render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
+      await user.click(screen.getByText("New Community"));
+
+      await user.clear(screen.getByPlaceholderText('e.g. "My awesome Community"'));
+
+      await user.type(screen.getByPlaceholderText('e.g. "My awesome Community"'), "Test");
+      await user.clear(screen.getByPlaceholderText('e.g. "https://example.com/image.jpg"'));
+
+      await user.type(
+        screen.getByPlaceholderText('e.g. "https://example.com/image.jpg"'),
+        "https://img.com/a.png"
+      );
+      await user.clear(screen.getByPlaceholderText('e.g. "grant-portal"'));
+
+      await user.type(screen.getByPlaceholderText('e.g. "grant-portal"'), "test");
+
+      await user.click(screen.getByText("Create Community"));
+
+      await waitFor(() => {
+        expect(mockToastError).toHaveBeenCalledWith(
+          "A community with this slug already exists. Please choose a different slug."
+        );
+      });
+    });
+
+    it("should show error toast when response has no slug", async () => {
+      const user = userEvent.setup();
+      mockFetchData.mockImplementation((url: string) => {
+        if (url.includes("slug-check")) {
+          return Promise.resolve([{ available: true }, null, null, 200]);
+        }
+        return Promise.resolve([{ uid: "0xnew", chainID: 10 }, null, null, 201]);
+      });
+
+      render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
+      await user.click(screen.getByText("New Community"));
+
+      await user.clear(screen.getByPlaceholderText('e.g. "My awesome Community"'));
+
+      await user.type(screen.getByPlaceholderText('e.g. "My awesome Community"'), "Test");
+      await user.clear(screen.getByPlaceholderText('e.g. "https://example.com/image.jpg"'));
+
+      await user.type(
+        screen.getByPlaceholderText('e.g. "https://example.com/image.jpg"'),
+        "https://img.com/a.png"
+      );
+      await user.clear(screen.getByPlaceholderText('e.g. "grant-portal"'));
+
+      await user.type(screen.getByPlaceholderText('e.g. "grant-portal"'), "test-slug");
+
+      await user.click(screen.getByText("Create Community"));
+
+      await waitFor(() => {
+        expect(mockToastError).toHaveBeenCalledWith(
+          "Community created but could not determine its URL. Check your dashboard."
+        );
+      });
+    });
+  });
+
+  describe("Form data preservation on error", () => {
+    it("should preserve form data when API call fails", async () => {
+      const user = userEvent.setup();
+      mockFetchData.mockImplementation((url: string) => {
+        if (url.includes("slug-check")) {
+          return Promise.resolve([{ available: true }, null, null, 200]);
+        }
+        return Promise.reject(new Error("Network error"));
+      });
+
+      render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
+      await user.click(screen.getByText("New Community"));
+
+      const nameInput = screen.getByPlaceholderText(
+        'e.g. "My awesome Community"'
+      ) as HTMLInputElement;
+      await user.clear(nameInput);
+
+      await user.type(nameInput, "Test Community");
+      await user.clear(screen.getByPlaceholderText('e.g. "https://example.com/image.jpg"'));
+
+      await user.type(
+        screen.getByPlaceholderText('e.g. "https://example.com/image.jpg"'),
+        "https://example.com/logo.png"
+      );
+      await user.clear(screen.getByPlaceholderText('e.g. "grant-portal"'));
+
+      await user.type(screen.getByPlaceholderText('e.g. "grant-portal"'), "test-community");
+
+      await user.click(screen.getByText("Create Community"));
+
+      await waitFor(() => {
+        expect(mockToastError).toHaveBeenCalledWith(
+          "Failed to create community. Please try again."
+        );
+      });
+
+      // Modal should still be visible with preserved data
+      expect(screen.getByTestId("dialog")).toBeInTheDocument();
+      expect(nameInput.value).toBe("Test Community");
+    });
+  });
+
+  describe("Form reset", () => {
+    it("should reset form when reopened after cancel", async () => {
+      const user = userEvent.setup();
+      render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
+      await user.click(screen.getByText("New Community"));
+
+      const nameInput = screen.getByPlaceholderText(
+        'e.g. "My awesome Community"'
+      ) as HTMLInputElement;
+      await user.clear(nameInput);
+
+      await user.type(nameInput, "Some Name");
+
+      await user.click(screen.getByText("Cancel"));
+      await user.click(screen.getByText("New Community"));
+
+      const freshInput = screen.getByPlaceholderText(
+        'e.g. "My awesome Community"'
+      ) as HTMLInputElement;
+      expect(freshInput.value).toBe("");
     });
   });
 });

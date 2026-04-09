@@ -3,7 +3,7 @@ import { ProjectFinancialRow } from "@/components/Pages/Communities/Financials/P
 import type { ProjectFinancialStatus } from "@/types/financials";
 
 // Mock ProfilePicture
-jest.mock("@/components/Utilities/ProfilePicture", () => ({
+vi.mock("@/components/Utilities/ProfilePicture", () => ({
   ProfilePicture: ({ name, alt }: { name: string; alt: string }) => (
     <div data-testid="profile-picture" data-name={name} data-alt={alt}>
       Avatar
@@ -12,8 +12,9 @@ jest.mock("@/components/Utilities/ProfilePicture", () => ({
 }));
 
 // Mock next/link - preserve data-testid and other props
-jest.mock("next/link", () => {
-  return ({
+vi.mock("next/link", () => ({
+  __esModule: true,
+  default: ({
     children,
     href,
     ...props
@@ -25,8 +26,8 @@ jest.mock("next/link", () => {
     <a href={href} {...props}>
       {children}
     </a>
-  );
-});
+  ),
+}));
 
 describe("ProjectFinancialRow", () => {
   const mockProject: ProjectFinancialStatus = {

@@ -6,18 +6,15 @@ interface AboutContentSkeletonProps {
 }
 
 /**
- * Skeleton for a single about section (Problem, Solution, Mission, etc.)
+ * Skeleton for a single section inside the doc-style about card.
  */
-function SectionSkeleton({ hasButton = false }: { hasButton?: boolean }) {
+function SectionSkeleton() {
   return (
-    <div className="flex flex-col gap-4 p-6 rounded-xl border border-border bg-card">
-      {/* Header with icon and title */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Skeleton className="h-6 w-6 rounded" />
-          <Skeleton className="h-6 w-32" />
-        </div>
-        {hasButton && <Skeleton className="h-8 w-8 rounded" />}
+    <div className="px-10 py-9">
+      {/* Icon + title */}
+      <div className="flex items-center gap-3 mb-5">
+        <Skeleton className="h-5 w-5 rounded" />
+        <Skeleton className="h-5 w-32" />
       </div>
 
       {/* Content paragraphs */}
@@ -32,31 +29,29 @@ function SectionSkeleton({ hasButton = false }: { hasButton?: boolean }) {
 
 /**
  * Skeleton loading state for AboutContent.
- * Shows placeholders for project description sections.
+ * Matches the doc-style single-card layout with section separators.
  */
 export function AboutContentSkeleton({ className }: AboutContentSkeletonProps) {
-  return (
-    <div className={cn("flex flex-col gap-6", className)} data-testid="about-content-skeleton">
-      {/* Main description section */}
-      <SectionSkeleton hasButton />
+  const sectionCount = 3;
 
-      {/* Problem/Solution grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <SectionSkeleton />
-        <SectionSkeleton />
+  return (
+    <div className={cn("flex flex-col gap-8", className)} data-testid="about-content-skeleton">
+      {/* Doc-style card */}
+      <div className="rounded-xl border bg-background overflow-hidden">
+        {Array.from({ length: sectionCount }, (_, i) => (
+          <div key={i}>
+            {i > 0 && <div className="h-px bg-border mx-10" />}
+            <SectionSkeleton />
+          </div>
+        ))}
       </div>
 
-      {/* Mission/Vision */}
-      <SectionSkeleton />
-
-      {/* Tags/Categories */}
-      <div className="flex flex-col gap-4 p-6 rounded-xl border border-border bg-card">
-        <Skeleton className="h-6 w-24" />
-        <div className="flex flex-wrap gap-2">
-          <Skeleton className="h-8 w-20 rounded-full" />
-          <Skeleton className="h-8 w-24 rounded-full" />
-          <Skeleton className="h-8 w-16 rounded-full" />
-          <Skeleton className="h-8 w-28 rounded-full" />
+      {/* Team section skeleton */}
+      <div className="flex flex-col gap-4 p-6 rounded-xl border bg-background">
+        <Skeleton className="h-5 w-16" />
+        <div className="flex flex-row gap-4 flex-wrap">
+          <Skeleton className="h-12 w-48 rounded-lg" />
+          <Skeleton className="h-12 w-48 rounded-lg" />
         </div>
       </div>
     </div>

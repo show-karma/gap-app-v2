@@ -20,7 +20,7 @@ const ContactInfoPage = () => {
     {},
     { enabled: authenticated }
   );
-  const isSuperAdmin = permissions?.roles.roles.includes(Role.SUPER_ADMIN) ?? false;
+  const isSuperAdmin = permissions?.roles?.roles?.includes(Role.SUPER_ADMIN) ?? false;
   const isAuthorized = isProjectAdmin || isProjectOwner || isContractOwner || isSuperAdmin;
 
   const projectId = project?.uid;

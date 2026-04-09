@@ -1,8 +1,8 @@
 import { CheckCircleIcon, ClockIcon } from "@heroicons/react/24/outline";
-import Link from "next/link";
 import { type FC, memo } from "react";
 import { containerClassName } from "@/components/Shared/ActivityCard";
 import { ActivityAttribution } from "@/components/Shared/ActivityCard/ActivityAttribution";
+import { Link } from "@/src/components/navigation/Link";
 import type { CommunityMilestoneUpdate } from "@/types/community-updates";
 import { formatDate } from "@/utilities/formatDate";
 import { ReadMore } from "@/utilities/ReadMore";
@@ -11,9 +11,13 @@ import { MilestoneCompletionInfo } from "./MilestoneCompletionInfo";
 
 interface CommunityMilestoneCardProps {
   milestone: CommunityMilestoneUpdate;
+  allocationAmount?: string;
 }
 
-const CommunityMilestoneCardComponent: FC<CommunityMilestoneCardProps> = ({ milestone }) => {
+const CommunityMilestoneCardComponent: FC<CommunityMilestoneCardProps> = ({
+  milestone,
+  allocationAmount,
+}) => {
   const isCompleted = milestone.status === "completed";
   const projectSlug = milestone.project.details?.data?.slug || milestone.project.uid;
   const projectTitle = milestone.project.details?.data?.title;
@@ -44,7 +48,7 @@ const CommunityMilestoneCardComponent: FC<CommunityMilestoneCardProps> = ({ mile
             </div>
           </div>
 
-          {/* Status and Due Date */}
+          {/* Status, Amount, and Due Date */}
           <div className="flex flex-row items-center gap-3">
             <div
               className={cn(
@@ -63,6 +67,11 @@ const CommunityMilestoneCardComponent: FC<CommunityMilestoneCardProps> = ({ mile
               )}
               {isCompleted ? "Completed" : isPastDue ? "Past Due" : "Pending"}
             </div>
+            {allocationAmount ? (
+              <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200">
+                {allocationAmount}
+              </span>
+            ) : null}
             {!isCompleted && milestone.details.dueDate && (
               <span className="text-sm text-gray-600 dark:text-gray-400">
                 Due {formatDate(milestone.details.dueDate)}

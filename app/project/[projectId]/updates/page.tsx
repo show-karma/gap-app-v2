@@ -12,6 +12,10 @@ type Params = Promise<{
 }>;
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
+  if (process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS === "true") {
+    return { title: "Project Updates" };
+  }
+
   const { projectId } = await params;
   const projectInfo = await getProjectCachedData(projectId);
 
@@ -27,6 +31,13 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 
 export default async function RoadmapPage(props: { params: Promise<{ projectId: string }> }) {
   const { projectId } = await props.params;
+
+  // Skip server-side data fetching during E2E tests — Cypress intercepts
+  // only work client-side, and the staging API may be unreachable from CI.
+  if (process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS === "true") {
+    return <ProjectRoadmap project={null as never} />;
+  }
+
   const projectInfo = await getProjectCachedData(projectId);
 
   if (!projectInfo) {

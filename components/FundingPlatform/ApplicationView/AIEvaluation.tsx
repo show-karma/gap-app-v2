@@ -87,7 +87,7 @@ export function AIEvaluationDisplay({
           <SunIcon className="w-5 h-5 text-primary animate-pulse" />
           <h3 className="text-sm font-semibold">AI Evaluation Feedback</h3>
         </div>
-        <p className="text-xs text-default-500">
+        <p className="text-xs text-muted-foreground">
           Real-time feedback to help improve your application
         </p>
       </div>

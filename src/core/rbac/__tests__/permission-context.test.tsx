@@ -7,21 +7,21 @@ import { usePermissionsQuery } from "../hooks/use-permissions";
 import { Permission } from "../types/permission";
 import { Role } from "../types/role";
 
-jest.mock("@privy-io/react-auth", () => ({
-  usePrivy: jest.fn(),
+vi.mock("@privy-io/react-auth", () => ({
+  usePrivy: vi.fn(),
 }));
 
-jest.mock("wagmi", () => ({
-  useAccount: jest.fn(),
+vi.mock("wagmi", () => ({
+  useAccount: vi.fn(),
 }));
 
-jest.mock("../hooks/use-permissions", () => ({
-  usePermissionsQuery: jest.fn(),
+vi.mock("../hooks/use-permissions", () => ({
+  usePermissionsQuery: vi.fn(),
 }));
 
-const mockUsePrivy = usePrivy as jest.Mock;
-const mockUseAccount = useAccount as jest.Mock;
-const mockUsePermissionsQuery = usePermissionsQuery as unknown as jest.Mock;
+const mockUsePrivy = usePrivy as vi.Mock;
+const mockUseAccount = useAccount as vi.Mock;
+const mockUsePermissionsQuery = usePermissionsQuery as unknown as vi.Mock;
 
 describe("PermissionProvider", () => {
   const wrapper = ({ children }: { children: ReactNode }) => (
@@ -30,7 +30,7 @@ describe("PermissionProvider", () => {
   const previousE2EBypassFlag = process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS = "true";
     delete (window as Window & { Cypress?: unknown }).Cypress;
     localStorage.removeItem("privy:auth_state");

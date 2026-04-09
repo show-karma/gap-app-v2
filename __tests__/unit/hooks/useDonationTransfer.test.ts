@@ -4,69 +4,76 @@ import * as wagmi from "wagmi";
 import type { SupportedToken } from "@/constants/supportedTokens";
 import { useDonationTransfer, useTransactionStatus } from "@/hooks/useDonationTransfer";
 import type { DonationPayment } from "@/store/donationCart";
+import { validateChainSync } from "@/utilities/chainSyncValidation";
+import { checkTokenAllowances, executeApprovals } from "@/utilities/erc20";
+import { getRPCClient } from "@/utilities/rpcClient";
+import {
+  getWalletClientWithFallback,
+  isWalletClientGoodEnough,
+} from "@/utilities/walletClientFallback";
 
 // Mock wagmi hooks
-jest.mock("wagmi", () => ({
-  useAccount: jest.fn(),
-  usePublicClient: jest.fn(),
-  useWalletClient: jest.fn(),
-  useWriteContract: jest.fn(),
-  useWaitForTransactionReceipt: jest.fn(),
-  useChainId: jest.fn(),
+vi.mock("wagmi", () => ({
+  useAccount: vi.fn(),
+  usePublicClient: vi.fn(),
+  useWalletClient: vi.fn(),
+  useWriteContract: vi.fn(),
+  useWaitForTransactionReceipt: vi.fn(),
+  useChainId: vi.fn(),
 }));
 
 // Mock viem utilities
-jest.mock("viem", () => {
-  const actual = jest.requireActual("viem");
+vi.mock("viem", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("viem")>();
   // Use actual parseUnits and formatUnits - they work correctly
   return {
     ...actual,
-    getAddress: jest.fn((addr: string) => addr as Address),
+    getAddress: vi.fn((addr: string) => addr as Address),
   };
 });
 
 // Mock utilities
-jest.mock("@/utilities/donations/batchDonations", () => ({
+vi.mock("@/utilities/donations/batchDonations", () => ({
   BatchDonationsABI: [],
   BATCH_DONATIONS_CONTRACTS: {
     10: "0x1111111111111111111111111111111111111111",
     8453: "0x2222222222222222222222222222222222222222",
   },
   PERMIT2_ADDRESS: "0x000000000022D473030F116dDEE9F6B43aC78BA3" as Address,
-  getBatchDonationsContractAddress: jest.fn((chainId: number) =>
+  getBatchDonationsContractAddress: vi.fn((chainId: number) =>
     chainId === 10
       ? "0x1111111111111111111111111111111111111111"
       : "0x2222222222222222222222222222222222222222"
   ),
 }));
 
-jest.mock("@/utilities/erc20", () => ({
-  checkTokenAllowances: jest.fn(),
-  executeApprovals: jest.fn(),
-  getApprovalAmount: jest.fn((amount: bigint) => amount),
+vi.mock("@/utilities/erc20", () => ({
+  checkTokenAllowances: vi.fn(),
+  executeApprovals: vi.fn(),
+  getApprovalAmount: vi.fn((amount: bigint) => amount),
 }));
 
-jest.mock("@/utilities/rpcClient", () => ({
-  getRPCClient: jest.fn(),
+vi.mock("@/utilities/rpcClient", () => ({
+  getRPCClient: vi.fn(),
 }));
 
-jest.mock("@/utilities/walletClientValidation", () => ({
-  validateWalletClient: jest.fn(),
-  waitForValidWalletClient: jest.fn(),
+vi.mock("@/utilities/walletClientValidation", () => ({
+  validateWalletClient: vi.fn(),
+  waitForValidWalletClient: vi.fn(),
 }));
 
-jest.mock("@/utilities/walletClientFallback", () => ({
-  getWalletClientWithFallback: jest.fn(),
-  isWalletClientGoodEnough: jest.fn(),
+vi.mock("@/utilities/walletClientFallback", () => ({
+  getWalletClientWithFallback: vi.fn(),
+  isWalletClientGoodEnough: vi.fn(),
 }));
 
-jest.mock("@/utilities/chainSyncValidation", () => ({
-  validateChainSync: jest.fn(),
+vi.mock("@/utilities/chainSyncValidation", () => ({
+  validateChainSync: vi.fn(),
 }));
 
-jest.mock("@/utilities/donations/errorMessages", () => ({
-  getShortErrorMessage: jest.fn((error: any) => error?.message || "Unknown error"),
-  parseDonationError: jest.fn((error: any) => ({
+vi.mock("@/utilities/donations/errorMessages", () => ({
+  getShortErrorMessage: vi.fn((error: any) => error?.message || "Unknown error"),
+  parseDonationError: vi.fn((error: any) => ({
     message: error?.message || "Unknown error",
     type: "unknown",
     isRecoverable: false,
@@ -114,56 +121,48 @@ describe("useDonationTransfer", () => {
 
   const mockPublicClient = {
     chain: { id: 10 },
-    waitForTransactionReceipt: jest.fn(),
-    readContract: jest.fn(),
+    waitForTransactionReceipt: vi.fn(),
+    readContract: vi.fn(),
   };
 
   const mockWalletClient = {
     account: { address: mockAddress },
     chain: { id: 10 },
-    signTypedData: jest.fn(),
+    signTypedData: vi.fn(),
   };
 
-  const mockWriteContractAsync = jest.fn();
+  const mockWriteContractAsync = vi.fn();
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
+    // Suppress expected console.error from error-path tests
+    vi.spyOn(console, "error").mockImplementation(() => {});
 
     // Setup default mocks
-    (wagmi.useAccount as jest.Mock).mockReturnValue({
+    vi.mocked(wagmi.useAccount).mockReturnValue({
       address: mockAddress,
       isConnected: true,
     });
 
-    (wagmi.usePublicClient as jest.Mock).mockReturnValue(mockPublicClient);
+    vi.mocked(wagmi.usePublicClient).mockReturnValue(mockPublicClient);
 
-    (wagmi.useWalletClient as jest.Mock).mockReturnValue({
+    vi.mocked(wagmi.useWalletClient).mockReturnValue({
       data: mockWalletClient,
-      refetch: jest.fn().mockResolvedValue({ data: mockWalletClient }),
+      refetch: vi.fn().mockResolvedValue({ data: mockWalletClient }),
     });
 
-    (wagmi.useWriteContract as jest.Mock).mockReturnValue({
+    vi.mocked(wagmi.useWriteContract).mockReturnValue({
       writeContractAsync: mockWriteContractAsync,
     });
 
-    (wagmi.useChainId as jest.Mock).mockReturnValue(10);
+    vi.mocked(wagmi.useChainId).mockReturnValue(10);
 
     // Setup utility mocks with default success behavior
-    const { checkTokenAllowances } = require("@/utilities/erc20");
-    checkTokenAllowances.mockResolvedValue([]);
-
-    const { getRPCClient } = require("@/utilities/rpcClient");
-    getRPCClient.mockResolvedValue(mockPublicClient);
-
-    const {
-      getWalletClientWithFallback,
-      isWalletClientGoodEnough,
-    } = require("@/utilities/walletClientFallback");
-    getWalletClientWithFallback.mockResolvedValue(mockWalletClient);
-    isWalletClientGoodEnough.mockReturnValue(true);
-
-    const { validateChainSync } = require("@/utilities/chainSyncValidation");
-    validateChainSync.mockResolvedValue(undefined);
+    vi.mocked(checkTokenAllowances).mockResolvedValue([]);
+    vi.mocked(getRPCClient).mockResolvedValue(mockPublicClient);
+    vi.mocked(getWalletClientWithFallback).mockResolvedValue(mockWalletClient);
+    vi.mocked(isWalletClientGoodEnough).mockReturnValue(true);
+    vi.mocked(validateChainSync).mockResolvedValue(undefined);
 
     mockWalletClient.signTypedData.mockResolvedValue("0xsignature");
     mockWriteContractAsync.mockResolvedValue("0xtxhash");
@@ -174,8 +173,11 @@ describe("useDonationTransfer", () => {
   });
 
   afterEach(() => {
+    // Restore console.error spy before clearing mocks
+    (console.error as any)?.mockRestore?.();
+
     // Reset all mocks to prevent state accumulation
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     // Reset mock implementations to defaults
     mockWalletClient.signTypedData.mockResolvedValue("0xsignature");
@@ -200,9 +202,7 @@ describe("useDonationTransfer", () => {
   describe("checkApprovals", () => {
     it("should check token approvals for ERC20 tokens", async () => {
       const { result } = renderHook(() => useDonationTransfer());
-      const { checkTokenAllowances } = require("@/utilities/erc20");
-
-      checkTokenAllowances.mockResolvedValue([
+      vi.mocked(checkTokenAllowances).mockResolvedValue([
         {
           tokenAddress: mockToken.address as Address,
           tokenSymbol: mockToken.symbol,
@@ -225,8 +225,6 @@ describe("useDonationTransfer", () => {
 
     it("should skip native tokens in approval check", async () => {
       const { result } = renderHook(() => useDonationTransfer());
-      const { checkTokenAllowances } = require("@/utilities/erc20");
-
       await act(async () => {
         await result.current.checkApprovals([mockNativePayment]);
       });
@@ -237,8 +235,6 @@ describe("useDonationTransfer", () => {
 
     it("should handle multiple tokens on same chain", async () => {
       const { result } = renderHook(() => useDonationTransfer());
-      const { checkTokenAllowances } = require("@/utilities/erc20");
-
       const payment2: DonationPayment = {
         projectId: "project-2",
         amount: "50",
@@ -246,7 +242,7 @@ describe("useDonationTransfer", () => {
         chainId: 10,
       };
 
-      checkTokenAllowances.mockResolvedValue([
+      vi.mocked(checkTokenAllowances).mockResolvedValue([
         { needsApproval: true, chainId: 10, tokenSymbol: "USDC" },
         { needsApproval: false, chainId: 10, tokenSymbol: "DAI" },
       ]);
@@ -259,7 +255,7 @@ describe("useDonationTransfer", () => {
     });
 
     it("should throw error when wallet not connected", async () => {
-      (wagmi.useAccount as jest.Mock).mockReturnValue({
+      vi.mocked(wagmi.useAccount).mockReturnValue({
         address: null,
         isConnected: false,
       });
@@ -274,7 +270,7 @@ describe("useDonationTransfer", () => {
     it("should use getRPCClient when public client unavailable", async () => {
       // When publicClient is null, checkApprovals should fall back to getRPCClient
       // and not throw an error. This enables multi-chain donations during network switches.
-      (wagmi.usePublicClient as jest.Mock).mockReturnValue(null);
+      vi.mocked(wagmi.usePublicClient).mockReturnValue(null);
 
       const { result } = renderHook(() => useDonationTransfer());
 
@@ -285,7 +281,7 @@ describe("useDonationTransfer", () => {
   });
 
   describe("executeDonations", () => {
-    const getRecipientAddress = jest.fn(
+    const getRecipientAddress = vi.fn(
       (_projectId: string, _chainId: number) => mockRecipientAddress
     );
 
@@ -304,9 +300,7 @@ describe("useDonationTransfer", () => {
 
     it("should execute donation for ERC20 token without approval needed", async () => {
       const { result } = renderHook(() => useDonationTransfer());
-      const { checkTokenAllowances } = require("@/utilities/erc20");
-
-      checkTokenAllowances.mockResolvedValue([
+      vi.mocked(checkTokenAllowances).mockResolvedValue([
         {
           needsApproval: false,
           tokenAddress: mockToken.address,
@@ -325,9 +319,7 @@ describe("useDonationTransfer", () => {
 
     it("should execute approvals before donation when needed", async () => {
       const { result } = renderHook(() => useDonationTransfer());
-      const { checkTokenAllowances, executeApprovals } = require("@/utilities/erc20");
-
-      checkTokenAllowances.mockResolvedValue([
+      vi.mocked(checkTokenAllowances).mockResolvedValue([
         {
           needsApproval: true,
           tokenAddress: mockToken.address as Address,
@@ -337,7 +329,7 @@ describe("useDonationTransfer", () => {
         },
       ]);
 
-      executeApprovals.mockResolvedValue([
+      vi.mocked(executeApprovals).mockResolvedValue([
         {
           status: "confirmed",
           hash: "0xapprovalhash",
@@ -356,7 +348,7 @@ describe("useDonationTransfer", () => {
 
     it("should validate recipient addresses before execution", async () => {
       const { result } = renderHook(() => useDonationTransfer());
-      const invalidGetRecipient = jest.fn(() => "");
+      const invalidGetRecipient = vi.fn(() => "");
 
       await expect(
         act(async () => {
@@ -367,7 +359,7 @@ describe("useDonationTransfer", () => {
 
     it("should handle missing payout address error", async () => {
       const { result } = renderHook(() => useDonationTransfer());
-      const getInvalidRecipient = jest.fn(() => "");
+      const getInvalidRecipient = vi.fn(() => "");
 
       await expect(
         act(async () => {
@@ -378,7 +370,7 @@ describe("useDonationTransfer", () => {
 
     it("should handle invalid payout address error", async () => {
       const { result } = renderHook(() => useDonationTransfer());
-      const mockGetAddress = getAddress as jest.Mock;
+      const mockGetAddress = getAddress as vi.Mock;
 
       mockGetAddress.mockImplementation((addr: string) => {
         if (addr === "invalid-address") {
@@ -387,7 +379,7 @@ describe("useDonationTransfer", () => {
         return addr as Address;
       });
 
-      const getBadRecipient = jest.fn(() => "invalid-address");
+      const getBadRecipient = vi.fn(() => "invalid-address");
 
       await expect(
         act(async () => {
@@ -397,7 +389,7 @@ describe("useDonationTransfer", () => {
     });
 
     it("should throw error when wallet not connected", async () => {
-      (wagmi.useAccount as jest.Mock).mockReturnValue({
+      vi.mocked(wagmi.useAccount).mockReturnValue({
         address: null,
         isConnected: false,
       });
@@ -485,7 +477,7 @@ describe("useDonationTransfer", () => {
 
     it("should call beforeTransfer callback when switching networks", async () => {
       const { result } = renderHook(() => useDonationTransfer());
-      const beforeTransfer = jest.fn().mockResolvedValue(undefined);
+      const beforeTransfer = vi.fn().mockResolvedValue(undefined);
 
       await act(async () => {
         await result.current.executeDonations([mockPayment], getRecipientAddress, beforeTransfer);
@@ -728,33 +720,33 @@ describe("useDonationTransfer", () => {
     // Tests in this block modify mocks, so we need explicit reset before each test
     beforeEach(() => {
       // IMPORTANT: Reset all wagmi mocks first to clear any queued values
-      (wagmi.useAccount as jest.Mock).mockReset();
-      (wagmi.usePublicClient as jest.Mock).mockReset();
-      (wagmi.useWalletClient as jest.Mock).mockReset();
-      (wagmi.useWriteContract as jest.Mock).mockReset();
-      (wagmi.useChainId as jest.Mock).mockReset();
-      (wagmi.useWaitForTransactionReceipt as jest.Mock).mockReset();
+      vi.mocked(wagmi.useAccount).mockReset();
+      vi.mocked(wagmi.usePublicClient).mockReset();
+      vi.mocked(wagmi.useWalletClient).mockReset();
+      vi.mocked(wagmi.useWriteContract).mockReset();
+      vi.mocked(wagmi.useChainId).mockReset();
+      vi.mocked(wagmi.useWaitForTransactionReceipt).mockReset();
 
       // Now set up default implementations
-      (wagmi.useAccount as jest.Mock).mockReturnValue({
+      vi.mocked(wagmi.useAccount).mockReturnValue({
         address: mockAddress,
         isConnected: true,
       });
 
-      (wagmi.usePublicClient as jest.Mock).mockReturnValue(mockPublicClient);
+      vi.mocked(wagmi.usePublicClient).mockReturnValue(mockPublicClient);
 
-      (wagmi.useWalletClient as jest.Mock).mockReturnValue({
+      vi.mocked(wagmi.useWalletClient).mockReturnValue({
         data: mockWalletClient,
-        refetch: jest.fn().mockResolvedValue({ data: mockWalletClient }),
+        refetch: vi.fn().mockResolvedValue({ data: mockWalletClient }),
       });
 
-      (wagmi.useWriteContract as jest.Mock).mockReturnValue({
+      vi.mocked(wagmi.useWriteContract).mockReturnValue({
         writeContractAsync: mockWriteContractAsync,
       });
 
-      (wagmi.useChainId as jest.Mock).mockReturnValue(10);
+      vi.mocked(wagmi.useChainId).mockReturnValue(10);
 
-      (wagmi.useWaitForTransactionReceipt as jest.Mock).mockReturnValue({
+      vi.mocked(wagmi.useWaitForTransactionReceipt).mockReturnValue({
         data: null,
         isLoading: false,
         isSuccess: false,
@@ -762,28 +754,18 @@ describe("useDonationTransfer", () => {
       });
 
       // Reset utility mocks
-      const { checkTokenAllowances, executeApprovals } = require("@/utilities/erc20");
-      checkTokenAllowances.mockReset();
-      checkTokenAllowances.mockResolvedValue([]);
-      executeApprovals.mockReset();
-      executeApprovals.mockResolvedValue([]);
-
-      const { getRPCClient } = require("@/utilities/rpcClient");
-      getRPCClient.mockReset();
-      getRPCClient.mockResolvedValue(mockPublicClient);
-
-      const {
-        getWalletClientWithFallback,
-        isWalletClientGoodEnough,
-      } = require("@/utilities/walletClientFallback");
-      getWalletClientWithFallback.mockReset();
-      getWalletClientWithFallback.mockResolvedValue(mockWalletClient);
-      isWalletClientGoodEnough.mockReset();
-      isWalletClientGoodEnough.mockReturnValue(true);
-
-      const { validateChainSync } = require("@/utilities/chainSyncValidation");
-      validateChainSync.mockReset();
-      validateChainSync.mockResolvedValue(undefined);
+      vi.mocked(checkTokenAllowances).mockReset();
+      vi.mocked(checkTokenAllowances).mockResolvedValue([]);
+      vi.mocked(executeApprovals).mockReset();
+      vi.mocked(executeApprovals).mockResolvedValue([]);
+      vi.mocked(getRPCClient).mockReset();
+      vi.mocked(getRPCClient).mockResolvedValue(mockPublicClient);
+      vi.mocked(getWalletClientWithFallback).mockReset();
+      vi.mocked(getWalletClientWithFallback).mockResolvedValue(mockWalletClient);
+      vi.mocked(isWalletClientGoodEnough).mockReset();
+      vi.mocked(isWalletClientGoodEnough).mockReturnValue(true);
+      vi.mocked(validateChainSync).mockReset();
+      vi.mocked(validateChainSync).mockResolvedValue(undefined);
 
       // Reset mock implementations on shared objects
       mockWalletClient.signTypedData.mockReset();
@@ -805,7 +787,7 @@ describe("useDonationTransfer", () => {
       await act(async () => {
         await result.current.executeDonations(
           [mockNativePayment],
-          jest.fn(() => mockRecipientAddress)
+          vi.fn(() => mockRecipientAddress)
         );
       });
 
@@ -822,7 +804,7 @@ describe("useDonationTransfer", () => {
         await act(async () => {
           await result.current.executeDonations(
             [mockNativePayment],
-            jest.fn(() => mockRecipientAddress)
+            vi.fn(() => mockRecipientAddress)
           );
         });
       } catch (_error) {
@@ -838,7 +820,7 @@ describe("useDonationTransfer", () => {
       await act(async () => {
         await result.current.executeDonations(
           [mockNativePayment],
-          jest.fn(() => mockRecipientAddress)
+          vi.fn(() => mockRecipientAddress)
         );
       });
 
@@ -848,16 +830,14 @@ describe("useDonationTransfer", () => {
 
     it("should handle wallet client errors during execution", async () => {
       const { result } = renderHook(() => useDonationTransfer());
-      const { getWalletClientWithFallback } = require("@/utilities/walletClientFallback");
-
       // Make getWalletClientWithFallback return null, simulating wallet unavailable
-      getWalletClientWithFallback.mockResolvedValueOnce(null);
+      vi.mocked(getWalletClientWithFallback).mockResolvedValueOnce(null);
 
       await expect(
         act(async () => {
           await result.current.executeDonations(
             [mockPayment],
-            jest.fn(() => mockRecipientAddress)
+            vi.fn(() => mockRecipientAddress)
           );
         })
       ).rejects.toThrow(/wallet client/i);
@@ -868,22 +848,20 @@ describe("useDonationTransfer", () => {
 
     it("should retry chain sync validation with fresh wallet client", async () => {
       const { result } = renderHook(() => useDonationTransfer());
-      const { validateChainSync } = require("@/utilities/chainSyncValidation");
-      const { getWalletClientWithFallback } = require("@/utilities/walletClientFallback");
       const freshWalletClient = { ...mockWalletClient, chain: { id: 10 } };
 
       // First validation fails, triggering retry
-      validateChainSync.mockRejectedValueOnce(new Error("Chain mismatch"));
+      vi.mocked(validateChainSync).mockRejectedValueOnce(new Error("Chain mismatch"));
       // Second validation succeeds
-      validateChainSync.mockResolvedValueOnce(undefined);
+      vi.mocked(validateChainSync).mockResolvedValueOnce(undefined);
 
       // getWalletClientWithFallback returns fresh wallet client
-      getWalletClientWithFallback.mockResolvedValue(freshWalletClient);
+      vi.mocked(getWalletClientWithFallback).mockResolvedValue(freshWalletClient);
 
       await act(async () => {
         await result.current.executeDonations(
           [mockPayment],
-          jest.fn(() => mockRecipientAddress)
+          vi.fn(() => mockRecipientAddress)
         );
       });
 
@@ -917,7 +895,7 @@ describe("useDonationTransfer", () => {
           }
           await result.current.executeDonations(
             [invalidPayment, { ...invalidPayment2, chainId: 10 }], // Force same chainId
-            jest.fn(() => mockRecipientAddress)
+            vi.fn(() => mockRecipientAddress)
           );
         })
       ).resolves.not.toThrow();
@@ -929,7 +907,7 @@ describe("useDonationTransfer", () => {
       await act(async () => {
         await result.current.executeDonations(
           [],
-          jest.fn(() => mockRecipientAddress)
+          vi.fn(() => mockRecipientAddress)
         );
       });
 
@@ -951,7 +929,7 @@ describe("useDonationTransfer", () => {
         act(async () => {
           await result.current.executeDonations(
             [mockNativePayment],
-            jest.fn(() => mockRecipientAddress)
+            vi.fn(() => mockRecipientAddress)
           );
         })
       ).rejects.toThrow("Transaction failed");
@@ -962,15 +940,12 @@ describe("useDonationTransfer", () => {
 
     it("should handle wallet client unavailable during permit signing", async () => {
       const { result } = renderHook(() => useDonationTransfer());
-      const { getWalletClientWithFallback } = require("@/utilities/walletClientFallback");
-      const { checkTokenAllowances } = require("@/utilities/erc20");
-
       // Verify hook initialized properly
       expect(result.current).toBeDefined();
       expect(result.current.executeDonations).toBeDefined();
 
       // Setup: no approvals needed, but wallet client becomes unavailable during permit signing
-      checkTokenAllowances.mockResolvedValue([
+      vi.mocked(checkTokenAllowances).mockResolvedValue([
         {
           needsApproval: false,
           tokenAddress: mockToken.address,
@@ -980,14 +955,14 @@ describe("useDonationTransfer", () => {
       ]);
 
       // Return null for wallet client, simulating unavailable wallet
-      getWalletClientWithFallback.mockResolvedValue(null);
+      vi.mocked(getWalletClientWithFallback).mockResolvedValue(null);
 
       // Expect the execution to throw an error about wallet client
       await expect(
         act(async () => {
           await result.current.executeDonations(
             [mockPayment],
-            jest.fn(() => mockRecipientAddress)
+            vi.fn(() => mockRecipientAddress)
           );
         })
       ).rejects.toThrow(/wallet client/i);
@@ -995,8 +970,6 @@ describe("useDonationTransfer", () => {
 
     it("should handle multiple chains with approvals", async () => {
       const { result } = renderHook(() => useDonationTransfer());
-      const { checkTokenAllowances, executeApprovals } = require("@/utilities/erc20");
-
       const paymentChain1: DonationPayment = {
         ...mockPayment,
         chainId: 10,
@@ -1008,7 +981,7 @@ describe("useDonationTransfer", () => {
         token: { ...mockToken, chainId: 8453 },
       };
 
-      checkTokenAllowances.mockImplementation(
+      vi.mocked(checkTokenAllowances).mockImplementation(
         (_client: any, _address: Address, _spender: Address, _tokens: any[], chainId: number) => {
           return Promise.resolve([
             {
@@ -1022,7 +995,7 @@ describe("useDonationTransfer", () => {
         }
       );
 
-      executeApprovals.mockResolvedValue([
+      vi.mocked(executeApprovals).mockResolvedValue([
         {
           status: "confirmed",
           hash: "0xapprovalhash",
@@ -1034,7 +1007,7 @@ describe("useDonationTransfer", () => {
       await act(async () => {
         await result.current.executeDonations(
           [paymentChain1, paymentChain2],
-          jest.fn(() => mockRecipientAddress)
+          vi.fn(() => mockRecipientAddress)
         );
       });
 
@@ -1046,10 +1019,10 @@ describe("useDonationTransfer", () => {
   describe("useTransactionStatus", () => {
     // Reset all wagmi mocks before each test
     beforeEach(() => {
-      jest.clearAllMocks();
+      vi.clearAllMocks();
 
       // Reset wagmi mocks to default values for useTransactionStatus tests
-      (wagmi.useWaitForTransactionReceipt as jest.Mock).mockReturnValue({
+      vi.mocked(wagmi.useWaitForTransactionReceipt).mockReturnValue({
         data: null,
         isLoading: false,
         isSuccess: false,
@@ -1058,7 +1031,7 @@ describe("useDonationTransfer", () => {
     });
 
     it("should return pending status when loading", () => {
-      (wagmi.useWaitForTransactionReceipt as jest.Mock).mockReturnValue({
+      vi.mocked(wagmi.useWaitForTransactionReceipt).mockReturnValue({
         data: null,
         isLoading: true,
         isSuccess: false,
@@ -1072,7 +1045,7 @@ describe("useDonationTransfer", () => {
     });
 
     it("should return success status when transaction succeeds", () => {
-      (wagmi.useWaitForTransactionReceipt as jest.Mock).mockReturnValue({
+      vi.mocked(wagmi.useWaitForTransactionReceipt).mockReturnValue({
         data: { status: "success", transactionHash: "0xtxhash" },
         isLoading: false,
         isSuccess: true,
@@ -1087,7 +1060,7 @@ describe("useDonationTransfer", () => {
     });
 
     it("should return error status when transaction fails", () => {
-      (wagmi.useWaitForTransactionReceipt as jest.Mock).mockReturnValue({
+      vi.mocked(wagmi.useWaitForTransactionReceipt).mockReturnValue({
         data: null,
         isLoading: false,
         isSuccess: false,
@@ -1101,7 +1074,7 @@ describe("useDonationTransfer", () => {
     });
 
     it("should return idle status when hash is empty", () => {
-      (wagmi.useWaitForTransactionReceipt as jest.Mock).mockReturnValue({
+      vi.mocked(wagmi.useWaitForTransactionReceipt).mockReturnValue({
         data: null,
         isLoading: false,
         isSuccess: false,
@@ -1114,7 +1087,7 @@ describe("useDonationTransfer", () => {
     });
 
     it("should disable query when hash is empty", () => {
-      (wagmi.useWaitForTransactionReceipt as jest.Mock).mockReturnValue({
+      vi.mocked(wagmi.useWaitForTransactionReceipt).mockReturnValue({
         data: null,
         isLoading: false,
         isSuccess: false,
@@ -1134,7 +1107,7 @@ describe("useDonationTransfer", () => {
     });
 
     it("should enable query when hash is provided", () => {
-      (wagmi.useWaitForTransactionReceipt as jest.Mock).mockReturnValue({
+      vi.mocked(wagmi.useWaitForTransactionReceipt).mockReturnValue({
         data: null,
         isLoading: true,
         isSuccess: false,

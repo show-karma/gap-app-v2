@@ -10,37 +10,39 @@ import type { SetupProgress, SetupStep } from "@/hooks/useProgramSetupProgress";
 import "@testing-library/jest-dom";
 
 // Mock next/navigation
-const mockPush = jest.fn();
-jest.mock("next/navigation", () => ({
+const mockPush = vi.fn();
+vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: mockPush,
   }),
+  useParams: () => ({}),
 }));
 
 // Mock next/link
-jest.mock("next/link", () => {
-  return ({ children, href }: { children: React.ReactNode; href: string }) => (
+vi.mock("next/link", () => ({
+  __esModule: true,
+  default: ({ children, href }: { children: React.ReactNode; href: string }) => (
     <a href={href}>{children}</a>
-  );
-});
+  ),
+}));
 
 // Mock dependencies
-const mockToggleStatusAsync = jest.fn();
-const mockRefetch = jest.fn();
+const mockToggleStatusAsync = vi.fn();
+const mockRefetch = vi.fn();
 
-jest.mock("@/hooks/useFundingPlatform", () => ({
-  useProgramConfig: jest.fn(() => ({
+vi.mock("@/hooks/useFundingPlatform", () => ({
+  useProgramConfig: vi.fn(() => ({
     toggleStatusAsync: mockToggleStatusAsync,
     isUpdating: false,
     refetch: mockRefetch,
   })),
 }));
 
-jest.mock("react-hot-toast", () => ({
+vi.mock("react-hot-toast", () => ({
   __esModule: true,
   default: {
-    success: jest.fn(),
-    error: jest.fn(),
+    success: vi.fn(),
+    error: vi.fn(),
   },
 }));
 
@@ -50,7 +52,7 @@ describe("SetupWizard", () => {
   const programName = "Test Grant Program";
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockPush.mockClear();
     mockToggleStatusAsync.mockResolvedValue(undefined);
     mockRefetch.mockResolvedValue(undefined);

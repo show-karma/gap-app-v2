@@ -8,6 +8,7 @@ import { useQueryState } from "nuqs";
 import { Fragment, useCallback, useMemo, useState } from "react";
 import { ActivityCard } from "@/components/Shared/ActivityCard";
 import { Skeleton } from "@/components/Utilities/Skeleton";
+import { useMilestoneAllocationsByGrants } from "@/hooks/useCommunityMilestoneAllocations";
 import { useOwnerStore, useProjectStore } from "@/store";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import type { StatusOptions } from "@/utilities/gapIndexerApi/getProjectObjectives";
@@ -89,6 +90,18 @@ export const MilestonesList = ({
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isAuthorized = isOwner || isProjectAdmin;
+
+  // Extract unique grant UIDs for allocation lookup
+  const grantUIDs = useMemo(() => {
+    const uids = new Set<string>();
+    for (const m of milestones) {
+      const grantUid = m.source.grantMilestone?.grant?.uid;
+      if (grantUid) uids.add(grantUid);
+    }
+    return Array.from(uids);
+  }, [milestones]);
+
+  const { allocationMap } = useMilestoneAllocationsByGrants(grantUIDs);
 
   const [status] = useQueryState<StatusOptions>("status", {
     defaultValue: "all",
@@ -316,7 +329,12 @@ export const MilestonesList = ({
               ) : (
                 <ActivityCard
                   key={`milestone-${item.uid}-${index}`}
-                  activity={{ type: "milestone", data: item }}
+                  activity={{
+                    type: "milestone",
+                    data: item,
+                    allocationAmount:
+                      allocationMap.get(item.uid) ?? allocationMap.get(item.uid.toLowerCase()),
+                  }}
                   isAuthorized={isAuthorized}
                 />
               )

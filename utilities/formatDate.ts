@@ -26,9 +26,10 @@ export const normalizeTimestamp = (timestamp: number): number => {
 
 export const formatDate = (
   date: number | Date | string | undefined | null,
-  timeZoneFormat: TimeZoneFormat = "local",
+  inputTimeZoneFormat: TimeZoneFormat = "local",
   formatOption: DateFormatOption = "MMM D, YYYY"
 ): string => {
+  let timeZoneFormat = inputTimeZoneFormat;
   // Handle undefined/null input
   if (date === undefined || date === null) {
     return "";
@@ -36,6 +37,14 @@ export const formatDate = (
 
   // Auto-detect and normalize Unix timestamps (seconds vs milliseconds)
   const normalizedDate = typeof date === "number" && date > 0 ? normalizeTimestamp(date) : date;
+
+  // Date-only strings (YYYY-MM-DD) are parsed as UTC midnight by JS.
+  // Force UTC display to prevent timezone offset showing the previous day.
+  const isDateOnlyString =
+    typeof normalizedDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(normalizedDate);
+  if (isDateOnlyString && timeZoneFormat === "local") {
+    timeZoneFormat = "UTC";
+  }
 
   const d = new Date(normalizedDate);
 

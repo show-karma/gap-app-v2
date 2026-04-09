@@ -2,44 +2,44 @@ import axios, { type AxiosInstance } from "axios";
 import { TokenManager } from "@/utilities/auth/token-manager";
 
 // Mock dependencies BEFORE importing the service
-jest.mock("axios");
-jest.mock("@/utilities/auth/token-manager");
-jest.mock("@/utilities/enviromentVars", () => ({
+vi.mock("axios");
+vi.mock("@/utilities/auth/token-manager");
+vi.mock("@/utilities/enviromentVars", () => ({
   envVars: {
     NEXT_PUBLIC_GAP_INDEXER_URL: "http://localhost:4000",
   },
 }));
 
 // Mock fetchData for GET requests
-jest.mock("@/utilities/fetchData");
+vi.mock("@/utilities/fetchData");
 
-// Create a persistent mock instance using var (hoisted) so it's available in jest.mock factory
-var mockAxiosInstance: jest.Mocked<AxiosInstance>;
+// Create a persistent mock instance using var (hoisted) so it's available in vi.mock factory
+var mockAxiosInstance: vi.Mocked<AxiosInstance>;
 
 // Mock api-client for mutations (POST, DELETE)
-jest.mock("@/utilities/auth/api-client", () => {
+vi.mock("@/utilities/auth/api-client", () => {
   const instance = {
-    get: jest.fn(),
-    post: jest.fn(),
-    delete: jest.fn(),
-    put: jest.fn(),
-    patch: jest.fn(),
-    request: jest.fn(),
-    head: jest.fn(),
-    options: jest.fn(),
+    get: vi.fn(),
+    post: vi.fn(),
+    delete: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    request: vi.fn(),
+    head: vi.fn(),
+    options: vi.fn(),
     interceptors: {
-      request: { use: jest.fn(), eject: jest.fn(), clear: jest.fn() },
-      response: { use: jest.fn(), eject: jest.fn(), clear: jest.fn() },
+      request: { use: vi.fn(), eject: vi.fn(), clear: vi.fn() },
+      response: { use: vi.fn(), eject: vi.fn(), clear: vi.fn() },
     },
     defaults: {} as any,
-    getUri: jest.fn(),
-    deleteUri: jest.fn(),
-  } as unknown as jest.Mocked<AxiosInstance>;
+    getUri: vi.fn(),
+    deleteUri: vi.fn(),
+  } as unknown as vi.Mocked<AxiosInstance>;
 
   mockAxiosInstance = instance;
 
   return {
-    createAuthenticatedApiClient: jest.fn(() => instance),
+    createAuthenticatedApiClient: vi.fn(() => instance),
   };
 });
 
@@ -51,17 +51,17 @@ import {
 // Import fetchData mock
 import fetchData from "@/utilities/fetchData";
 
-const mockedAxios = axios as jest.Mocked<typeof axios>;
-const mockFetchData = fetchData as jest.MockedFunction<typeof fetchData>;
+const mockedAxios = axios as vi.Mocked<typeof axios>;
+const mockFetchData = fetchData as vi.MockedFunction<typeof fetchData>;
 
 describe("milestoneReviewersService", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockAxiosInstance.post.mockClear();
     mockAxiosInstance.delete.mockClear();
 
     // Mock TokenManager
-    (TokenManager.getToken as jest.Mock) = jest.fn().mockResolvedValue("test-token");
+    (TokenManager.getToken as vi.Mock) = vi.fn().mockResolvedValue("test-token");
   });
 
   describe("getReviewers", () => {
@@ -244,16 +244,14 @@ describe("milestoneReviewersService", () => {
   });
 
   describe("removeReviewer", () => {
-    it("should remove a milestone reviewer successfully", async () => {
+    it("should remove a milestone reviewer by email successfully", async () => {
       mockAxiosInstance.delete.mockResolvedValue({ data: {} });
 
-      await milestoneReviewersService.removeReviewer(
-        "program-1",
-        "0x1234567890123456789012345678901234567890"
-      );
+      await milestoneReviewersService.removeReviewer("program-1", "john@example.com");
 
       expect(mockAxiosInstance.delete).toHaveBeenCalledWith(
-        "/v2/programs/program-1/milestone-reviewers/0x1234567890123456789012345678901234567890"
+        "/v2/programs/program-1/milestone-reviewers/by-email",
+        { data: { email: "john@example.com" } }
       );
     });
 
@@ -262,10 +260,7 @@ describe("milestoneReviewersService", () => {
       mockAxiosInstance.delete.mockRejectedValue(mockError);
 
       await expect(
-        milestoneReviewersService.removeReviewer(
-          "program-1",
-          "0x1234567890123456789012345678901234567890"
-        )
+        milestoneReviewersService.removeReviewer("program-1", "john@example.com")
       ).rejects.toThrow("Reviewer not found");
     });
   });
@@ -321,7 +316,7 @@ describe("milestoneReviewersService", () => {
       ];
 
       // Mock axios.isAxiosError for this test
-      mockedAxios.isAxiosError = jest.fn(
+      mockedAxios.isAxiosError = vi.fn(
         (payload: any): payload is import("axios").AxiosError => true
       ) as unknown as typeof mockedAxios.isAxiosError;
 
@@ -378,7 +373,7 @@ describe("milestoneReviewersService", () => {
         message: "Request failed",
       };
 
-      mockedAxios.isAxiosError = jest.fn(
+      mockedAxios.isAxiosError = vi.fn(
         (payload: any): payload is import("axios").AxiosError => true
       ) as unknown as typeof mockedAxios.isAxiosError;
       mockAxiosInstance.post.mockRejectedValue(axiosError);
@@ -399,7 +394,7 @@ describe("milestoneReviewersService", () => {
       ];
 
       const error = new Error("Network error");
-      mockedAxios.isAxiosError = jest.fn(
+      mockedAxios.isAxiosError = vi.fn(
         (payload: any): payload is import("axios").AxiosError => false
       ) as unknown as typeof mockedAxios.isAxiosError;
       mockAxiosInstance.post.mockRejectedValue(error);

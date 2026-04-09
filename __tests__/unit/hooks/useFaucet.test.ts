@@ -19,33 +19,33 @@ import {
 } from "@/hooks/useFaucet";
 import { faucetService } from "@/utilities/faucet/faucetService";
 
-jest.mock("@/utilities/faucet/faucetService", () => ({
+vi.mock("@/utilities/faucet/faucetService", () => ({
   faucetService: {
-    checkEligibility: jest.fn(),
-    getBalance: jest.fn(),
-    getAllBalances: jest.fn(),
-    getHistory: jest.fn(),
-    getStats: jest.fn(),
-    createRequest: jest.fn(),
-    claimFaucet: jest.fn(),
-    getRequest: jest.fn(),
+    checkEligibility: vi.fn(),
+    getBalance: vi.fn(),
+    getAllBalances: vi.fn(),
+    getHistory: vi.fn(),
+    getStats: vi.fn(),
+    createRequest: vi.fn(),
+    claimFaucet: vi.fn(),
+    getRequest: vi.fn(),
   },
 }));
 
-jest.mock("wagmi", () => ({
-  useAccount: jest.fn(),
+vi.mock("wagmi", () => ({
+  useAccount: vi.fn(),
 }));
 
-jest.mock("react-hot-toast", () => ({
+vi.mock("react-hot-toast", () => ({
   __esModule: true,
   default: {
-    success: jest.fn(),
-    error: jest.fn(),
+    success: vi.fn(),
+    error: vi.fn(),
   },
 }));
 
-const mockFaucetService = faucetService as jest.Mocked<typeof faucetService>;
-const mockUseAccount = useAccount as jest.MockedFunction<typeof useAccount>;
+const mockFaucetService = faucetService as vi.Mocked<typeof faucetService>;
+const mockUseAccount = useAccount as vi.MockedFunction<typeof useAccount>;
 
 describe("useFaucet hooks", () => {
   let queryClient: QueryClient;
@@ -68,11 +68,15 @@ describe("useFaucet hooks", () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockUseAccount.mockReturnValue({
       address: "0x1234567890123456789012345678901234567890",
       isConnected: true,
     } as any);
+  });
+
+  afterEach(() => {
+    queryClient.clear();
   });
 
   describe("useFaucetEligibility", () => {

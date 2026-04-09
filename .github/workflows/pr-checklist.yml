@@ -1,0 +1,154 @@
+name: PR Quality Checklist
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: ['**']
+
+jobs:
+  checklist:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run anti-pattern checks
+        id: antipatterns
+        run: |
+          chmod +x scripts/check-anti-patterns.sh
+          # Check only changed TSX/TS files
+          CHANGED_FILES=$(git diff --name-only --diff-filter=ACMR "origin/$GITHUB_BASE_REF"...HEAD -- '*.tsx' '*.ts' | head -200)
+
+          ISSUES=""
+          ISSUE_COUNT=0
+
+          while IFS= read -r FILE; do
+            [ -z "$FILE" ] && continue
+            [ ! -f "$FILE" ] && continue
+
+            OUTPUT=$(./scripts/check-anti-patterns.sh "$FILE" 2>/dev/null || true)
+            if echo "$OUTPUT" | grep -q "\["; then
+              ISSUES="${ISSUES}${OUTPUT}\n"
+              FILE_ISSUES=$(echo "$OUTPUT" | grep -c "\[" || echo 0)
+              ISSUE_COUNT=$((ISSUE_COUNT + FILE_ISSUES))
+            fi
+          done <<< "$CHANGED_FILES"
+
+          echo "count=$ISSUE_COUNT" >> "$GITHUB_OUTPUT"
+
+          if [ $ISSUE_COUNT -gt 0 ]; then
+            {
+              echo "details<<EOF"
+              echo -e "$ISSUES"
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          GITHUB_BASE_REF: ${{ github.base_ref }}
+
+      - name: Check for missing route files
+        id: missing_routes
+        run: |
+          MISSING=""
+          MISSING_COUNT=0
+
+          NEW_PAGES=$(git diff --name-only --diff-filter=A "origin/$GITHUB_BASE_REF"...HEAD -- '**/page.tsx' || true)
+
+          while IFS= read -r PAGE; do
+            [ -z "$PAGE" ] && continue
+            DIR=$(dirname "$PAGE")
+
+            if [ ! -f "$DIR/loading.tsx" ]; then
+              MISSING="${MISSING}- \`${DIR}/\` missing \`loading.tsx\`\n"
+              MISSING_COUNT=$((MISSING_COUNT + 1))
+            fi
+
+            if [ ! -f "$DIR/error.tsx" ]; then
+              MISSING="${MISSING}- \`${DIR}/\` missing \`error.tsx\`\n"
+              MISSING_COUNT=$((MISSING_COUNT + 1))
+            fi
+          done <<< "$NEW_PAGES"
+
+          echo "count=$MISSING_COUNT" >> "$GITHUB_OUTPUT"
+          if [ $MISSING_COUNT -gt 0 ]; then
+            {
+              echo "details<<EOF"
+              echo -e "$MISSING"
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          GITHUB_BASE_REF: ${{ github.base_ref }}
+
+      - name: Comment PR with results
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const antipatternCount = parseInt(process.env.AP_COUNT || '0');
+            const missingCount = parseInt(process.env.MR_COUNT || '0');
+            const totalIssues = antipatternCount + missingCount;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const botComment = comments.find(c =>
+              c.user.type === 'Bot' && c.body.includes('Quality Checklist')
+            );
+
+            if (totalIssues === 0) {
+              if (botComment) {
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: botComment.id,
+                  body: '## Quality Checklist\n\nAll automated checks passed.',
+                });
+              }
+              return;
+            }
+
+            let body = '## Quality Checklist\n\n';
+            body += `Found **${totalIssues}** issue(s) to address before merge.\n\n`;
+
+            if (antipatternCount > 0) {
+              body += '### Anti-Pattern Violations\n\n';
+              body += '```\n';
+              body += process.env.AP_DETAILS || '';
+              body += '\n```\n\n';
+            }
+
+            if (missingCount > 0) {
+              body += '### Missing Route Files\n\n';
+              body += (process.env.MR_DETAILS || '') + '\n\n';
+            }
+
+            body += '---\n*Automated quality check*';
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+        env:
+          AP_COUNT: ${{ steps.antipatterns.outputs.count }}
+          AP_DETAILS: ${{ steps.antipatterns.outputs.details }}
+          MR_COUNT: ${{ steps.missing_routes.outputs.count }}
+          MR_DETAILS: ${{ steps.missing_routes.outputs.details }}

@@ -4,7 +4,7 @@ import { FinancialsSummary } from "@/components/Pages/Communities/Financials/Fin
 import type { CurrencyBreakdown, ProgramFinancialSummary } from "@/types/financials";
 
 // Mock Skeleton
-jest.mock("@/components/Utilities/Skeleton", () => ({
+vi.mock("@/components/Utilities/Skeleton", () => ({
   Skeleton: ({ className }: { className: string }) => (
     <div data-testid="skeleton" className={className}>
       Loading...
@@ -13,7 +13,7 @@ jest.mock("@/components/Utilities/Skeleton", () => ({
 }));
 
 // Mock InfoTooltip
-jest.mock("@/components/Utilities/InfoTooltip", () => ({
+vi.mock("@/components/Utilities/InfoTooltip", () => ({
   InfoTooltip: ({ content }: { content: ReactNode }) => (
     <div data-testid="info-tooltip">{content}</div>
   ),

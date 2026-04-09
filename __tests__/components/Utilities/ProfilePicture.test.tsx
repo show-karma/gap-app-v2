@@ -1,12 +1,23 @@
 import { render, screen } from "@testing-library/react";
+import React from "react";
 
 // Unmock ProfilePicture before importing it (navbar/setup.ts mocks it globally)
-jest.unmock("@/components/Utilities/ProfilePicture");
+vi.unmock("@/components/Utilities/ProfilePicture");
+
+// Mock next/image to render a plain img tag (avoids Next.js image optimization in tests)
+vi.mock("next/image", () => ({
+  __esModule: true,
+  default: (props: Record<string, unknown>) => {
+    // Filter out Next.js-specific props
+    const { fill, priority, quality, loader, placeholder, blurDataURL, ...imgProps } = props;
+    return React.createElement("img", imgProps);
+  },
+}));
 
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 
 // Mock boring-avatars
-jest.mock("boring-avatars", () => ({
+vi.mock("boring-avatars", () => ({
   __esModule: true,
   default: ({ size, name, variant, colors }: any) => (
     <div
@@ -341,6 +352,17 @@ describe("ProfilePicture", () => {
       rerender(<ProfilePicture name="John Doe" imageURL="https://example.com/image.jpg" />);
 
       expect(screen.getByAltText("John Doe")).toBeInTheDocument();
+    });
+  });
+
+  describe("Image Optimization", () => {
+    it("should NOT pass unoptimized prop to Image so Next.js can optimize images", () => {
+      render(<ProfilePicture imageURL="https://example.com/image.jpg" name="John Doe" />);
+
+      const img = screen.getByAltText("John Doe");
+      // The Image component should not have the unoptimized attribute
+      // so that Next.js serves optimized WebP/AVIF at correct sizes
+      expect(img).not.toHaveAttribute("data-nimg-unoptimized");
     });
   });
 

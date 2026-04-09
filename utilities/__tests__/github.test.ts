@@ -1,6 +1,6 @@
 import { validateGithubInput } from "@/utilities/github";
 
-const mockFetch = jest.fn() as jest.MockedFunction<typeof fetch>;
+const mockFetch = vi.fn() as vi.MockedFunction<typeof fetch>;
 
 describe("validateGithubInput", () => {
   beforeEach(() => {

@@ -20,7 +20,7 @@ jobs:
       (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
       (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude'))) ||
       (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ubuntu-latest
     permissions:
       contents: write
       pull-requests: write
@@ -367,9 +367,8 @@ jobs:
 
           # Conditional prompts based on triggers - enables automatic PR reviews
           direct_prompt: |
-            ${{ github.event_name == 'pull_request' && 'Review this PR against the rules in custom_instructions. IMPORTANT: First run `git diff origin/main...HEAD` and ONLY review lines that were added or modified in the diff. Never flag pre-existing code. Triage: security/bugs first, then performance, then architecture. Only report MEDIUM+ issues with emoji severity indicators. For each: file:line, rule, severity, problem, root cause, fix. Flag any AI slop. End with the verdict section: Score X/100, then Status (APPROVE / APPROVE WITH SUGGESTIONS / REQUEST CHANGES). No strengths, no praise.' || '' }}
+            ${{ github.event_name == 'pull_request' && 'Review this PR against the rules in custom_instructions. IMPORTANT: First run `git diff origin/main...HEAD` and ONLY review lines that were added or modified in the diff. Never flag pre-existing code. Triage: security/bugs first, then performance, then architecture. Only report MEDIUM+ issues with emoji severity indicators. For each: file:line, rule, severity, problem, root cause, fix. Flag any AI slop. DEDUPLICATION: Before reporting an issue, check previous review comments on this PR (from karma-coding-ai or github-actions[bot]). If an issue was flagged before AND the current diff shows it has been fixed (the problematic code no longer exists in the diff), do NOT re-flag it. Only flag issues that are still present in the current diff. End with the verdict section: Score X/100, then Status (APPROVE / APPROVE WITH SUGGESTIONS / REQUEST CHANGES). No strengths, no praise.' || '' }}
 
           max_turns: '30'
           timeout_minutes: '45'
-          # Allow the Blacksmith bot account to trigger Claude on automation PRs.
-          allowed_bots: blacksmith-sh,blacksmith-sh[bot]
+

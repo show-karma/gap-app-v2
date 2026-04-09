@@ -1,17 +1,43 @@
-import type { ReactNode } from "react";
-import { ProfileLayoutClient } from "./ProfileLayoutClient";
+import { type ReactNode, Suspense } from "react";
+import { ProjectProfileLayout } from "@/components/Pages/Project/v2/Layout/ProjectProfileLayout";
+import { SidebarProfileCardStatic } from "@/components/Pages/Project/v2/SidePanel/SidebarProfileCardStatic";
+import { ProjectProfileLayoutSkeleton } from "@/components/Pages/Project/v2/Skeletons";
+import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
 
-interface ProfileLayoutProps {
-  children: ReactNode;
-}
+type Params = Promise<{ projectId: string }>;
 
 /**
  * Shared layout for the main project profile pages (updates, about, funding, impact, team).
- * This layout provides the consistent header, sidebar, and tab navigation.
  *
- * This is a server component wrapper that delegates rendering to the client-side
- * ProfileLayoutClient component. Sub-page metadata is handled by each individual page.
+ * Async RSC that fetches project data server-side and renders a static sidebar card
+ * into the initial HTML, eliminating the blank-content LCP problem.
+ *
+ * Suspense boundary required because ProjectProfileLayout uses useSearchParams(),
+ * which needs a Suspense boundary in Next.js App Router production builds.
  */
-export default function ProfileLayout({ children }: ProfileLayoutProps) {
-  return <ProfileLayoutClient>{children}</ProfileLayoutClient>;
+export default async function ProfileLayout({
+  children,
+  params,
+}: {
+  children: ReactNode;
+  params: Params;
+}) {
+  const { projectId } = await params;
+
+  let serverSidePanel: ReactNode = null;
+  try {
+    const project = await getProjectCachedData(projectId);
+    if (project) {
+      serverSidePanel = <SidebarProfileCardStatic project={project} />;
+    }
+  } catch {
+    // If server fetch fails, serverSidePanel stays null.
+    // Client-side hooks will fetch data as fallback.
+  }
+
+  return (
+    <Suspense fallback={<ProjectProfileLayoutSkeleton />}>
+      <ProjectProfileLayout serverSidePanel={serverSidePanel}>{children}</ProjectProfileLayout>
+    </Suspense>
+  );
 }

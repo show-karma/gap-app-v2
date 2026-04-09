@@ -38,8 +38,9 @@ export interface RoleMember {
   email: string;
   telegram?: string;
   assignedAt?: string;
-  role?: ReviewerRole; // Optional role field for multi-role support
-  [key: string]: string | undefined; // Additional dynamic fields based on configuration
+  role?: ReviewerRole; // Optional single role field for backward compatibility
+  roles?: ReviewerRole[]; // Multiple roles for combined view
+  [key: string]: string | string[] | undefined; // Additional dynamic fields based on configuration
 }
 
 /**

@@ -1,12 +1,16 @@
 "use client";
 
-import type { FC } from "react";
+import { PaperClipIcon } from "@heroicons/react/24/outline";
+import { type FC, useCallback } from "react";
+import toast from "react-hot-toast";
 import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
+import { getGrantInvoiceDownloadUrl } from "@/src/features/payout-disbursement/services/payout-disbursement.service";
 import { useOwnerStore, useProjectStore } from "@/store";
 import type { GrantMilestone } from "@/types/v2/grant";
 import { formatDate, normalizeTimestamp } from "@/utilities/formatDate";
 import { ReadMore } from "@/utilities/ReadMore";
 import { MilestoneDelete } from "./MilestoneDelete";
+import { MilestoneEdit } from "./MilestoneEdit";
 import { Updates } from "./Updates";
 
 /**
@@ -107,7 +111,7 @@ interface MilestoneTagProps {
 }
 export const MilestoneTag: FC<MilestoneTagProps> = ({ index, priority }) => {
   return (
-    <div className="flex flex-row gap-3">
+    <div className="flex flex-row gap-3 flex-wrap">
       <div className="flex w-max flex-row gap-3 rounded-full bg-[#F5F3FF] dark:bg-zinc-900 px-3 py-1 text-[#5720B7] dark:text-violet-100">
         <FlagIcon />
         <p className="text-xs font-bold">MILESTONE {index}</p>
@@ -124,14 +128,29 @@ export const MilestoneTag: FC<MilestoneTagProps> = ({ index, priority }) => {
 interface MilestoneDetailsProps {
   milestone: GrantMilestone;
   index: number;
+  allocationAmount?: string;
 }
 
-export const MilestoneDetails: FC<MilestoneDetailsProps> = ({ milestone, index }) => {
+export const MilestoneDetails: FC<MilestoneDetailsProps> = ({
+  milestone,
+  index,
+  allocationAmount,
+}) => {
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useIsCommunityAdmin();
   const isAuthorized = isProjectOwner || isProjectAdmin || isContractOwner || isCommunityAdmin;
+
+  const handleViewInvoice = useCallback(async () => {
+    if (!milestone.refUID || !milestone.invoiceInfo?.fileKey) return;
+    try {
+      const url = await getGrantInvoiceDownloadUrl(milestone.refUID, milestone.invoiceInfo.fileKey);
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch {
+      toast.error("Failed to open invoice");
+    }
+  }, [milestone.refUID, milestone.invoiceInfo?.fileKey]);
 
   // Get normalized completion data (handles both object and array formats)
   const completionData = getCompletionData(milestone);
@@ -154,12 +173,23 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({ milestone, index }
           <div className="flex w-full flex-row items-start justify-between px-4 max-lg:mb-4 max-lg:flex-col">
             <div className="flex flex-col gap-3">
               <MilestoneTag index={index} priority={milestone.priority} />
-              <h4 className="text-base font-bold leading-normal text-black dark:text-zinc-100">
-                {milestone.title}
-              </h4>
+              <div className="flex flex-row items-center gap-2">
+                <h4 className="text-base font-bold leading-normal text-black dark:text-zinc-100">
+                  {milestone.title}
+                </h4>
+                {allocationAmount ? (
+                  <span
+                    data-testid="milestone-allocation-amount"
+                    className="inline-flex items-center rounded-full bg-green-50 dark:bg-green-900/30 px-3 py-1 text-xs font-bold text-green-700 dark:text-green-300"
+                  >
+                    {allocationAmount}
+                  </span>
+                ) : null}
+              </div>
             </div>
             <div className="flex flex-row items-center justify-start gap-2">
               <MilestoneDateStatus milestone={milestone} />
+              {isAuthorized && !isCompleted ? <MilestoneEdit milestone={milestone} /> : null}
               {isAuthorized ? <MilestoneDelete milestone={milestone} /> : null}
             </div>
           </div>
@@ -181,6 +211,16 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({ milestone, index }
           <div className="mx-6 mt-4 rounded-lg bg-transparent pb-4">
             <Updates milestone={milestone} />
           </div>
+        )}
+        {isAuthorized && milestone.invoiceInfo?.fileKey && milestone.refUID && (
+          <button
+            type="button"
+            className="flex items-center gap-1.5 px-6 pb-4 hover:opacity-75 transition-opacity"
+            onClick={handleViewInvoice}
+          >
+            <PaperClipIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+            <span className="text-sm text-emerald-700 dark:text-emerald-300">Invoice attached</span>
+          </button>
         )}
       </div>
     </div>

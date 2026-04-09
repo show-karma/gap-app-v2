@@ -14,23 +14,23 @@ interface StatusCheckItemProps {
 const getStatusConfig = (status: CheckStatus) => {
   if (status === true) {
     return {
-      bgColor: "bg-green-50",
-      borderColor: "border-green-200",
-      textColor: "text-green-700",
+      bgColor: "bg-green-50 dark:bg-green-950",
+      borderColor: "border-green-200 dark:border-green-800",
+      textColor: "text-green-700 dark:text-green-400",
       statusIcon: "✅",
     };
   } else if (status === false) {
     return {
-      bgColor: "bg-red-50",
-      borderColor: "border-red-200",
-      textColor: "text-red-700",
+      bgColor: "bg-red-50 dark:bg-red-950",
+      borderColor: "border-red-200 dark:border-red-800",
+      textColor: "text-red-700 dark:text-red-400",
       statusIcon: "❌",
     };
   } else {
     return {
-      bgColor: "bg-gray-50",
-      borderColor: "border-gray-200",
-      textColor: "text-gray-600",
+      bgColor: "bg-gray-50 dark:bg-zinc-800",
+      borderColor: "border-gray-200 dark:border-zinc-700",
+      textColor: "text-gray-600 dark:text-zinc-400",
       statusIcon: "⏳",
     };
   }

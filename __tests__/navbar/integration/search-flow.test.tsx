@@ -3,6 +3,7 @@
  * Tests complete search journeys including debouncing, API integration, and navigation
  */
 
+import "./setup-dynamic-mock";
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Navbar } from "@/src/components/navbar/navbar";
@@ -158,7 +159,7 @@ describe("Search Flow Integration Tests", () => {
       const drawer = screen.getByRole("dialog");
       const searchInput = within(drawer).getByPlaceholderText("Search Project/Community");
 
-      // Type search query using fireEvent to avoid setPointerCapture error
+      // fireEvent required: vaul drawer incompatible with userEvent in jsdom
       fireEvent.change(searchInput, { target: { value: searchQueries.medium } });
       await waitForDebounce();
 
@@ -195,7 +196,7 @@ describe("Search Flow Integration Tests", () => {
       const drawer = screen.getByRole("dialog");
       expect(drawer).toBeInTheDocument();
 
-      // Search in drawer using fireEvent to avoid setPointerCapture error
+      // fireEvent required: vaul drawer incompatible with userEvent in jsdom
       const searchInput = within(drawer).getByPlaceholderText("Search Project/Community");
       fireEvent.change(searchInput, { target: { value: searchQueries.medium } });
       await waitForDebounce();
@@ -206,7 +207,7 @@ describe("Search Flow Integration Tests", () => {
         expect(within(drawer).queryByText(firstProject.details.title)).toBeInTheDocument();
       });
 
-      // Click result using fireEvent to avoid setPointerCapture error in drawer
+      // fireEvent required: vaul drawer incompatible with userEvent in jsdom
       const firstProject = mixedResults.projects[0];
       const resultLink = within(drawer).getByRole("link", {
         name: new RegExp(firstProject.details.title, "i"),
@@ -234,7 +235,7 @@ describe("Search Flow Integration Tests", () => {
   describe("3. Search with Debouncing", () => {
     it("should debounce rapid typing and only call API once", async () => {
       const user = userEvent.setup();
-      const mockHandler = jest.fn();
+      const mockHandler = vi.fn();
       mockSearchFunction.mockImplementation(() => {
         mockHandler();
         return Promise.resolve(projectsOnlyResults);
@@ -264,7 +265,7 @@ describe("Search Flow Integration Tests", () => {
 
     it("should cancel previous request and call API with latest query", async () => {
       const user = userEvent.setup();
-      const mockHandler = jest.fn();
+      const mockHandler = vi.fn();
       mockSearchFunction.mockImplementation((query) => {
         mockHandler(query);
         return Promise.resolve(projectsOnlyResults);
@@ -294,7 +295,7 @@ describe("Search Flow Integration Tests", () => {
 
     it("should not search when query is less than 3 characters", async () => {
       const user = userEvent.setup();
-      const mockHandler = jest.fn();
+      const mockHandler = vi.fn();
       mockSearchFunction.mockImplementation(() => {
         mockHandler();
         return Promise.resolve(emptySearchResults);

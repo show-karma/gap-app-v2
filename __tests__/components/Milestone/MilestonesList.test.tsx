@@ -1,39 +1,40 @@
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MilestonesList } from "@/components/Milestone/MilestonesList";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 
 // Mock useQueryState from nuqs
-const mockSetSelectedContentTypeQuery = jest.fn();
-jest.mock("nuqs", () => ({
-  useQueryState: jest.fn((key: string, options: any) => {
+const mockSetSelectedContentTypeQuery = vi.fn();
+vi.mock("nuqs", () => ({
+  useQueryState: vi.fn((key: string, options: any) => {
     if (key === "status") {
-      return ["all", jest.fn()];
+      return ["all", vi.fn()];
     }
     if (key === "contentType") {
       return ["all", mockSetSelectedContentTypeQuery];
     }
-    return [options?.defaultValue || "", jest.fn()];
+    return [options?.defaultValue || "", vi.fn()];
   }),
 }));
 
 // Mock Next.js navigation
-jest.mock("next/navigation", () => ({
+vi.mock("next/navigation", () => ({
   useRouter: () => ({
-    push: jest.fn(),
-    replace: jest.fn(),
+    push: vi.fn(),
+    replace: vi.fn(),
   }),
   usePathname: () => "/project/test-project",
   useSearchParams: () => new URLSearchParams(),
 }));
 
 // Mock stores
-jest.mock("@/store", () => ({
-  useOwnerStore: jest.fn((selector) => selector({ isOwner: false })),
-  useProjectStore: jest.fn((selector) => selector({ isProjectAdmin: false })),
+vi.mock("@/store", () => ({
+  useOwnerStore: vi.fn((selector) => selector({ isOwner: false })),
+  useProjectStore: vi.fn((selector) => selector({ isProjectAdmin: false })),
 }));
 
 // Mock ActivityCard component
-jest.mock("@/components/Shared/ActivityCard", () => ({
+vi.mock("@/components/Shared/ActivityCard", () => ({
   ActivityCard: ({ activity }: any) => (
     <div data-testid={`activity-card-${activity.type}`}>
       {activity.data?.title || activity.data?.uid || "Activity"}
@@ -42,7 +43,7 @@ jest.mock("@/components/Shared/ActivityCard", () => ({
 }));
 
 // Mock ObjectivesSub component
-jest.mock("@/components/Pages/Project/Objective/ObjectivesSub", () => ({
+vi.mock("@/components/Pages/Project/Objective/ObjectivesSub", () => ({
   ObjectivesSub: () => <div data-testid="objectives-sub">ObjectivesSub</div>,
 }));
 
@@ -86,12 +87,12 @@ function createMockMilestones(count: number): UnifiedMilestone[] {
 
 describe("MilestonesList", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers();
+    vi.clearAllMocks();
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   describe("Basic Rendering", () => {
@@ -157,20 +158,21 @@ describe("MilestonesList", () => {
 
   describe("Pagination - Load More Functionality", () => {
     it("should load more milestones when clicking Load More", async () => {
+      const user = userEvent.setup();
       const milestones = createMockMilestones(25);
       render(<MilestonesList milestones={milestones} />);
 
       expect(screen.getAllByTestId("activity-card-milestone")).toHaveLength(15);
 
       const loadMoreButton = getLoadMoreButton();
-      fireEvent.click(loadMoreButton);
+      await user.click(loadMoreButton);
 
       // Show loading skeleton
       expect(screen.getByTestId("milestones-loading-skeleton")).toBeInTheDocument();
 
       // Advance timers to complete loading
       act(() => {
-        jest.advanceTimersByTime(300);
+        vi.advanceTimersByTime(300);
       });
 
       await waitFor(() => {
@@ -179,6 +181,7 @@ describe("MilestonesList", () => {
     });
 
     it("should show correct remaining count after loading more", async () => {
+      const user = userEvent.setup();
       const milestones = createMockMilestones(50);
       render(<MilestonesList milestones={milestones} />);
 
@@ -186,9 +189,9 @@ describe("MilestonesList", () => {
       expect(screen.getByText("35 remaining", { exact: false })).toBeInTheDocument();
 
       // Click load more
-      fireEvent.click(getLoadMoreButton());
+      await user.click(getLoadMoreButton());
       act(() => {
-        jest.advanceTimersByTime(300);
+        vi.advanceTimersByTime(300);
       });
 
       await waitFor(() => {
@@ -198,15 +201,16 @@ describe("MilestonesList", () => {
     });
 
     it("should hide Load More button when all items are loaded", async () => {
+      const user = userEvent.setup();
       const milestones = createMockMilestones(20);
       render(<MilestonesList milestones={milestones} />);
 
       expect(screen.getAllByTestId("activity-card-milestone")).toHaveLength(15);
       expect(getLoadMoreButton()).toBeInTheDocument();
 
-      fireEvent.click(getLoadMoreButton());
+      await user.click(getLoadMoreButton());
       act(() => {
-        jest.advanceTimersByTime(300);
+        vi.advanceTimersByTime(300);
       });
 
       await waitFor(() => {
@@ -215,23 +219,25 @@ describe("MilestonesList", () => {
       });
     });
 
-    it("should show loading skeleton while loading more", () => {
+    it("should show loading skeleton while loading more", async () => {
+      const user = userEvent.setup();
       const milestones = createMockMilestones(30);
       render(<MilestonesList milestones={milestones} />);
 
-      fireEvent.click(getLoadMoreButton());
+      await user.click(getLoadMoreButton());
 
       // Loading skeleton should be visible
       expect(screen.getByTestId("milestones-loading-skeleton")).toBeInTheDocument();
       expect(screen.getAllByTestId("milestone-item-skeleton")).toHaveLength(3);
     });
 
-    it("should hide Load More button while loading", () => {
+    it("should hide Load More button while loading", async () => {
+      const user = userEvent.setup();
       const milestones = createMockMilestones(30);
       render(<MilestonesList milestones={milestones} />);
 
       const loadMoreButton = getLoadMoreButton();
-      fireEvent.click(loadMoreButton);
+      await user.click(loadMoreButton);
 
       // Button should not be visible during loading
       expect(queryLoadMoreButton()).not.toBeInTheDocument();
@@ -240,6 +246,7 @@ describe("MilestonesList", () => {
 
   describe("Pagination - Multiple Load More Clicks", () => {
     it("should correctly load items across multiple clicks", async () => {
+      const user = userEvent.setup();
       const milestones = createMockMilestones(50);
       render(<MilestonesList milestones={milestones} />);
 
@@ -247,9 +254,9 @@ describe("MilestonesList", () => {
       expect(screen.getAllByTestId("activity-card-milestone")).toHaveLength(15);
 
       // First click: 30 items
-      fireEvent.click(getLoadMoreButton());
+      await user.click(getLoadMoreButton());
       act(() => {
-        jest.advanceTimersByTime(300);
+        vi.advanceTimersByTime(300);
       });
 
       await waitFor(() => {
@@ -257,9 +264,9 @@ describe("MilestonesList", () => {
       });
 
       // Second click: 45 items
-      fireEvent.click(getLoadMoreButton());
+      await user.click(getLoadMoreButton());
       act(() => {
-        jest.advanceTimersByTime(300);
+        vi.advanceTimersByTime(300);
       });
 
       await waitFor(() => {
@@ -267,9 +274,9 @@ describe("MilestonesList", () => {
       });
 
       // Third click: 50 items (all loaded)
-      fireEvent.click(getLoadMoreButton());
+      await user.click(getLoadMoreButton());
       act(() => {
-        jest.advanceTimersByTime(300);
+        vi.advanceTimersByTime(300);
       });
 
       await waitFor(() => {
@@ -280,11 +287,12 @@ describe("MilestonesList", () => {
   });
 
   describe("Skeleton Loaders", () => {
-    it("should render MilestoneItemSkeleton with correct structure", () => {
+    it("should render MilestoneItemSkeleton with correct structure", async () => {
+      const user = userEvent.setup();
       const milestones = createMockMilestones(20);
       render(<MilestonesList milestones={milestones} />);
 
-      fireEvent.click(getLoadMoreButton());
+      await user.click(getLoadMoreButton());
 
       const skeletons = screen.getAllByTestId("milestone-item-skeleton");
       expect(skeletons).toHaveLength(3);
@@ -295,15 +303,16 @@ describe("MilestonesList", () => {
     });
 
     it("should hide skeleton after loading completes", async () => {
+      const user = userEvent.setup();
       const milestones = createMockMilestones(20);
       render(<MilestonesList milestones={milestones} />);
 
-      fireEvent.click(getLoadMoreButton());
+      await user.click(getLoadMoreButton());
 
       expect(screen.getByTestId("milestones-loading-skeleton")).toBeInTheDocument();
 
       act(() => {
-        jest.advanceTimersByTime(300);
+        vi.advanceTimersByTime(300);
       });
 
       await waitFor(() => {

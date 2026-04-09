@@ -3,11 +3,18 @@
 import { Bell, CircleUser, CopyPlus } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import { useTheme } from "next-themes";
 import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
+import { useMixpanel } from "@/hooks/useMixpanel";
 import { PAGES } from "@/utilities/pages";
+import { FundingMapAgentCard } from "./funding-map-agent-card";
 
 export function FundingMapSidebar() {
+  const { mixpanel } = useMixpanel("karma");
+  const { resolvedTheme } = useTheme();
+  const embedTheme = resolvedTheme === "dark" ? "dark" : "light";
+
   const ProjectDialog = useMemo(
     () =>
       dynamic(
@@ -26,6 +33,7 @@ export function FundingMapSidebar() {
 
   return (
     <aside className="flex w-full flex-col gap-6 rounded-2xl lg:w-80 lg:shrink-0">
+      <FundingMapAgentCard />
       {/* Newsletter & Submit Program Section */}
       <div className="flex bg-background border border-border flex-col items-start gap-5 rounded-xl p-5">
         <Bell className="h-5 w-5 text-muted-foreground" />
@@ -33,7 +41,7 @@ export function FundingMapSidebar() {
           Be the first to know when a new program launches
         </p>
         <iframe
-          src="https://paragraph.com/@karmahq/embed?minimal=true&vertical=true"
+          src={`https://paragraph.com/@karmahq/embed?minimal=true&vertical=true&theme=${embedTheme}`}
           width="100%"
           height="90"
           title="Subscribe to Karma"
@@ -50,7 +58,15 @@ export function FundingMapSidebar() {
           <CopyPlus className="h-5 w-5 text-muted-foreground" />
           <p className="font-medium text-foreground">Funding opportunity not listed?</p>
           <Button variant="outline" className="w-fit shadow-sm" asChild>
-            <Link href={PAGES.REGISTRY.ADD_PROGRAM} prefetch>
+            <Link
+              href={PAGES.REGISTRY.ADD_PROGRAM}
+              prefetch
+              onClick={() => {
+                mixpanel.reportEvent({
+                  event: "funding-map:submit-program-click",
+                });
+              }}
+            >
               Submit a program
             </Link>
           </Button>
@@ -61,8 +77,18 @@ export function FundingMapSidebar() {
         </div>
       </div>
 
-      {/* Create Profile Card */}
-      <div className="flex flex-col gap-5 rounded-xl p-5">
+      {/* Create Profile Card — onClickCapture used because ProjectDialog renders
+         its own button internally; we can't pass onClick to it directly. The capture
+         handler only fires analytics and does not interfere with keyboard/screen-reader
+         interaction, which is handled by the inner button. */}
+      <div
+        className="flex flex-col gap-5 rounded-xl p-5"
+        onClickCapture={() => {
+          mixpanel.reportEvent({
+            event: "funding-map:create-profile-click",
+          });
+        }}
+      >
         <CircleUser className="h-5 w-5 text-muted-foreground" />
         <div className="flex flex-col gap-3">
           <p className="font-medium text-foreground">Create your project profile</p>

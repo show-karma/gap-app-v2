@@ -6,74 +6,84 @@
  * to change application status from the reviewer detail page.
  */
 
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import React from "react";
 
 // Define mock functions before mocks
-const mockUpdateStatusAsync = jest.fn();
-const mockRefetchApplication = jest.fn();
-const mockPush = jest.fn();
+const mockUpdateStatusAsync = vi.fn();
+const mockRefetchApplication = vi.fn();
+const mockPush = vi.fn();
 
 // Mock next/navigation
-jest.mock("next/navigation", () => ({
-  useParams: jest.fn(() => ({
+vi.mock("next/navigation", () => ({
+  useParams: vi.fn(() => ({
     communityId: "test-community",
     programId: "prog-1_1",
     applicationId: "APP-001",
   })),
-  useSearchParams: jest.fn(() => ({
-    get: jest.fn(() => null),
+  useSearchParams: vi.fn(() => ({
+    get: vi.fn(() => null),
   })),
-  useRouter: jest.fn(() => ({
+  useRouter: vi.fn(() => ({
     push: mockPush,
-    back: jest.fn(),
+    back: vi.fn(),
+    replace: vi.fn(),
+    prefetch: vi.fn(),
+    refresh: vi.fn(),
   })),
+  usePathname: vi.fn(
+    () => "/community/test-community/manage/funding-platform/prog-1_1/applications/APP-001"
+  ),
 }));
 
 // Mock next/link
-jest.mock("next/link", () => ({
+vi.mock("next/link", () => ({
   __esModule: true,
   default: ({ children, href }: any) => React.createElement("a", { href }, children),
 }));
 
 // Mock heroicons
-jest.mock("@heroicons/react/24/solid", () => ({
+vi.mock("@heroicons/react/24/solid", () => ({
   ArrowLeftIcon: () => React.createElement("span", { "data-testid": "arrow-left-icon" }),
   EyeIcon: () => React.createElement("span", { "data-testid": "eye-icon" }),
 }));
 
-// Mock toast
-jest.mock("react-hot-toast", () => ({
-  __esModule: true,
-  default: {
-    success: jest.fn(),
-    error: jest.fn(),
-  },
+// Mock useAuth
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: vi.fn(() => ({
+    authenticated: true,
+    ready: true,
+    login: vi.fn(),
+    logout: vi.fn(),
+    isConnected: true,
+    address: "0x1234567890abcdef",
+    getAccessToken: vi.fn().mockResolvedValue("mock-token"),
+  })),
 }));
 
 // Mock wagmi
-jest.mock("wagmi", () => ({
-  useAccount: jest.fn(() => ({
+vi.mock("wagmi", () => ({
+  useAccount: vi.fn(() => ({
     address: "0x1234567890abcdef",
   })),
 }));
 
 // Mock store
-jest.mock("@/store/applicationVersions", () => ({
-  useApplicationVersionsStore: jest.fn(() => ({
-    selectVersion: jest.fn(),
+vi.mock("@/store/applicationVersions", () => ({
+  useApplicationVersionsStore: vi.fn(() => ({
+    selectVersion: vi.fn(),
   })),
 }));
 
 // Mock type guards
-jest.mock("@/utilities/type-guards", () => ({
-  isFundingProgramConfig: jest.fn(() => true),
+vi.mock("@/utilities/type-guards", () => ({
+  isFundingProgramConfig: vi.fn(() => true),
 }));
 
 // Mock pages
-jest.mock("@/utilities/pages", () => ({
+vi.mock("@/utilities/pages", () => ({
   PAGES: {
     REVIEWER: {
       APPLICATIONS: (communityId: string, programId: string) =>
@@ -91,15 +101,15 @@ jest.mock("@/utilities/pages", () => ({
 }));
 
 // Mock theme
-jest.mock("@/src/helper/theme", () => ({
+vi.mock("@/src/helper/theme", () => ({
   layoutTheme: {
     padding: "px-4",
   },
 }));
 
 // Mock hooks
-jest.mock("@/hooks/useFundingPlatform", () => ({
-  useApplication: jest.fn(() => ({
+vi.mock("@/hooks/useFundingPlatform", () => ({
+  useApplication: vi.fn(() => ({
     application: {
       id: "test-app-1",
       referenceNumber: "APP-001",
@@ -110,53 +120,53 @@ jest.mock("@/hooks/useFundingPlatform", () => ({
     isLoading: false,
     refetch: mockRefetchApplication,
   })),
-  useProgramConfig: jest.fn(() => ({
+  useProgramConfig: vi.fn(() => ({
     data: { id: "prog-1", name: "Test Program" },
   })),
-  useApplicationStatus: jest.fn(() => ({
+  useApplicationStatus: vi.fn(() => ({
     updateStatusAsync: mockUpdateStatusAsync,
   })),
-  useApplicationComments: jest.fn(() => ({
+  useApplicationComments: vi.fn(() => ({
     comments: [],
     isLoading: false,
-    createCommentAsync: jest.fn(),
-    editCommentAsync: jest.fn(),
-    deleteCommentAsync: jest.fn(),
+    createCommentAsync: vi.fn(),
+    editCommentAsync: vi.fn(),
+    deleteCommentAsync: vi.fn(),
   })),
-  useApplicationVersions: jest.fn(() => ({
+  useApplicationVersions: vi.fn(() => ({
     versions: [],
   })),
-  useDeleteApplication: jest.fn(() => ({
-    deleteApplicationAsync: jest.fn(),
+  useDeleteApplication: vi.fn(() => ({
+    deleteApplicationAsync: vi.fn(),
     isDeleting: false,
   })),
-  useApplicationUpdateV2: jest.fn(() => ({
-    updateApplicationAsync: jest.fn(),
+  useApplicationUpdateV2: vi.fn(() => ({
+    updateApplicationAsync: vi.fn(),
     isUpdating: false,
   })),
 }));
 
-jest.mock("@/hooks/usePermissions", () => ({
-  usePermissions: jest.fn(() => ({
+vi.mock("@/hooks/usePermissions", () => ({
+  usePermissions: vi.fn(() => ({
     hasPermission: true,
     isLoading: false,
   })),
 }));
 
-jest.mock("@/hooks/useKycStatus", () => ({
-  useKycStatus: jest.fn(() => ({
+vi.mock("@/hooks/useKycStatus", () => ({
+  useKycStatus: vi.fn(() => ({
     status: null,
   })),
-  useKycConfig: jest.fn(() => ({
+  useKycConfig: vi.fn(() => ({
     isEnabled: false,
   })),
 }));
 
-jest.mock("@/src/core/rbac", () => {
-  const actual = jest.requireActual("@/src/core/rbac");
+vi.mock("@/src/core/rbac", async (importOriginal) => {
+  const actual = await importOriginal<Record<string, unknown>>();
   return {
     ...actual,
-    useIsFundingPlatformAdmin: jest.fn(() => false),
+    useIsFundingPlatformAdmin: vi.fn(() => false),
     FundingPlatformGuard: ({ children }: any) => children,
     AdminOnly: ({ children }: any) => children,
     Can: ({ children }: any) => children,
@@ -164,23 +174,23 @@ jest.mock("@/src/core/rbac", () => {
 });
 
 // Mock RBAC permission context
-jest.mock("@/src/core/rbac/context/permission-context", () => ({
-  usePermissionContext: jest.fn(() => ({
-    can: jest.fn(() => true),
-    canAny: jest.fn(() => true),
-    canAll: jest.fn(() => true),
-    hasRole: jest.fn(() => true),
-    hasRoleOrHigher: jest.fn(() => true),
+vi.mock("@/src/core/rbac/context/permission-context", () => ({
+  usePermissionContext: vi.fn(() => ({
+    can: vi.fn(() => true),
+    canAny: vi.fn(() => true),
+    canAll: vi.fn(() => true),
+    hasRole: vi.fn(() => true),
+    hasRoleOrHigher: vi.fn(() => true),
     isLoading: false,
     roles: { primaryRole: "PROGRAM_REVIEWER", roles: ["PROGRAM_REVIEWER"] },
     permissions: ["application:view_assigned", "application:review"],
   })),
-  useIsReviewer: jest.fn(() => true),
-  useCan: jest.fn(() => true),
+  useIsReviewer: vi.fn(() => true),
+  useCan: vi.fn(() => true),
 }));
 
 // Mock UI components
-jest.mock("@/components/Utilities/Button", () => ({
+vi.mock("@/components/Utilities/Button", () => ({
   Button: ({ children, onClick, className, variant, ...props }: any) =>
     React.createElement(
       "button",
@@ -189,12 +199,12 @@ jest.mock("@/components/Utilities/Button", () => ({
     ),
 }));
 
-jest.mock("@/components/Utilities/Spinner", () => ({
+vi.mock("@/components/Utilities/Spinner", () => ({
   Spinner: () => React.createElement("div", { "data-testid": "spinner" }, "Loading..."),
 }));
 
 // Mock ApplicationView components
-jest.mock("@/components/FundingPlatform/ApplicationView/HeaderActions", () => {
+vi.mock("@/components/FundingPlatform/ApplicationView/HeaderActions", () => {
   const MockHeaderActions = ({ currentStatus, onStatusChange, isUpdating }: any) => {
     const buttons: React.ReactNode[] = [];
 
@@ -272,7 +282,7 @@ jest.mock("@/components/FundingPlatform/ApplicationView/HeaderActions", () => {
   };
 });
 
-jest.mock("@/components/FundingPlatform/ApplicationView/StatusChangeInline", () => ({
+vi.mock("@/components/FundingPlatform/ApplicationView/StatusChangeInline", () => ({
   StatusChangeInline: ({ status, onConfirm, onCancel, isSubmitting }: any) =>
     React.createElement(
       "div",
@@ -303,7 +313,7 @@ jest.mock("@/components/FundingPlatform/ApplicationView/StatusChangeInline", () 
     ),
 }));
 
-jest.mock("@/components/FundingPlatform/ApplicationView/ApplicationHeader", () => ({
+vi.mock("@/components/FundingPlatform/ApplicationView/ApplicationHeader", () => ({
   __esModule: true,
   default: ({ application, statusActions }: any) =>
     React.createElement(
@@ -316,22 +326,22 @@ jest.mock("@/components/FundingPlatform/ApplicationView/ApplicationHeader", () =
     ),
 }));
 
-jest.mock("@/components/FundingPlatform/ApplicationView/ApplicationTab", () => ({
+vi.mock("@/components/FundingPlatform/ApplicationView/ApplicationTab", () => ({
   ApplicationTab: () =>
     React.createElement("div", { "data-testid": "application-tab" }, "Application Tab"),
 }));
 
-jest.mock("@/components/FundingPlatform/ApplicationView/AIAnalysisTab", () => ({
+vi.mock("@/components/FundingPlatform/ApplicationView/AIAnalysisTab", () => ({
   AIAnalysisTab: () =>
     React.createElement("div", { "data-testid": "ai-analysis-tab" }, "AI Analysis Tab"),
 }));
 
-jest.mock("@/components/FundingPlatform/ApplicationView/DiscussionTab", () => ({
+vi.mock("@/components/FundingPlatform/ApplicationView/DiscussionTab", () => ({
   DiscussionTab: () =>
     React.createElement("div", { "data-testid": "discussion-tab" }, "Discussion Tab"),
 }));
 
-jest.mock("@/components/FundingPlatform/ApplicationView/ApplicationTabs", () => ({
+vi.mock("@/components/FundingPlatform/ApplicationView/ApplicationTabs", () => ({
   ApplicationTabs: ({ tabs }: any) =>
     React.createElement(
       "div",
@@ -347,22 +357,30 @@ jest.mock("@/components/FundingPlatform/ApplicationView/ApplicationTabs", () => 
   },
 }));
 
-jest.mock("@/components/FundingPlatform/ApplicationView/TabPanel", () => ({
+vi.mock("@/components/FundingPlatform/ApplicationView/TabPanel", () => ({
   TabPanel: ({ children }: any) =>
     React.createElement("div", { "data-testid": "tab-panel" }, children),
 }));
 
+import toast from "react-hot-toast";
 // Import the page component after mocks (now uses unified manage route)
 import ReviewerApplicationDetailPage from "@/app/community/[communityId]/manage/funding-platform/[programId]/applications/[applicationId]/page";
+// Import mocked modules for vi.mocked() usage
+import { useApplication, useApplicationStatus } from "@/hooks/useFundingPlatform";
+import { usePermissions } from "@/hooks/usePermissions";
+import {
+  useCan,
+  useIsReviewer,
+  usePermissionContext,
+} from "@/src/core/rbac/context/permission-context";
 
 describe("Reviewer Status Change Functionality", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockUpdateStatusAsync.mockResolvedValue({});
 
     // Reset hooks to default values
-    const { useApplication } = require("@/hooks/useFundingPlatform");
-    useApplication.mockReturnValue({
+    vi.mocked(useApplication).mockReturnValue({
       application: {
         id: "test-app-1",
         referenceNumber: "APP-001",
@@ -372,32 +390,26 @@ describe("Reviewer Status Change Functionality", () => {
       },
       isLoading: false,
       refetch: mockRefetchApplication,
-    });
+    } as any);
 
-    const { usePermissions } = require("@/hooks/usePermissions");
-    usePermissions.mockReturnValue({
+    vi.mocked(usePermissions).mockReturnValue({
       hasPermission: true,
       isLoading: false,
-    });
+    } as any);
 
     // Reset RBAC context to default values
-    const {
-      usePermissionContext,
-      useIsReviewer,
-      useCan,
-    } = require("@/src/core/rbac/context/permission-context");
-    usePermissionContext.mockReturnValue({
-      can: jest.fn(() => true),
-      canAny: jest.fn(() => true),
-      canAll: jest.fn(() => true),
-      hasRole: jest.fn(() => true),
-      hasRoleOrHigher: jest.fn(() => true),
+    vi.mocked(usePermissionContext).mockReturnValue({
+      can: vi.fn(() => true),
+      canAny: vi.fn(() => true),
+      canAll: vi.fn(() => true),
+      hasRole: vi.fn(() => true),
+      hasRoleOrHigher: vi.fn(() => true),
       isLoading: false,
       roles: { primaryRole: "PROGRAM_REVIEWER", roles: ["PROGRAM_REVIEWER"] },
       permissions: ["application:view_assigned", "application:review"],
-    });
-    useIsReviewer.mockReturnValue(true);
-    useCan.mockReturnValue(true);
+    } as any);
+    vi.mocked(useIsReviewer).mockReturnValue(true as any);
+    vi.mocked(useCan).mockReturnValue(true as any);
   });
 
   describe("Status Actions Rendering", () => {
@@ -415,8 +427,7 @@ describe("Reviewer Status Change Functionality", () => {
     });
 
     it("should show Approve, Request Revision, and Reject buttons for under_review applications", () => {
-      const { useApplication } = require("@/hooks/useFundingPlatform");
-      useApplication.mockReturnValue({
+      vi.mocked(useApplication).mockReturnValue({
         application: {
           id: "test-app-1",
           referenceNumber: "APP-001",
@@ -436,8 +447,7 @@ describe("Reviewer Status Change Functionality", () => {
     });
 
     it("should NOT show status actions for approved applications", () => {
-      const { useApplication } = require("@/hooks/useFundingPlatform");
-      useApplication.mockReturnValue({
+      vi.mocked(useApplication).mockReturnValue({
         application: {
           id: "test-app-1",
           referenceNumber: "APP-001",
@@ -455,8 +465,7 @@ describe("Reviewer Status Change Functionality", () => {
     });
 
     it("should NOT show status actions for rejected applications", () => {
-      const { useApplication } = require("@/hooks/useFundingPlatform");
-      useApplication.mockReturnValue({
+      vi.mocked(useApplication).mockReturnValue({
         application: {
           id: "test-app-1",
           referenceNumber: "APP-001",
@@ -537,7 +546,6 @@ describe("Reviewer Status Change Functionality", () => {
     });
 
     it("should show success toast after successful status change", async () => {
-      const toast = require("react-hot-toast").default;
       const user = userEvent.setup();
       render(React.createElement(ReviewerApplicationDetailPage));
 
@@ -553,7 +561,6 @@ describe("Reviewer Status Change Functionality", () => {
     });
 
     it("should show error toast when status change fails", async () => {
-      const toast = require("react-hot-toast").default;
       mockUpdateStatusAsync.mockRejectedValue(new Error("API Error"));
 
       const user = userEvent.setup();
@@ -574,13 +581,12 @@ describe("Reviewer Status Change Functionality", () => {
   describe("Permission Checks", () => {
     it("should hide status actions when reviewer has no permission", () => {
       // Mock RBAC context with no permissions
-      const { usePermissionContext } = require("@/src/core/rbac/context/permission-context");
-      usePermissionContext.mockReturnValue({
-        can: jest.fn(() => false),
-        canAny: jest.fn(() => false),
-        canAll: jest.fn(() => false),
-        hasRole: jest.fn(() => false),
-        hasRoleOrHigher: jest.fn(() => false),
+      vi.mocked(usePermissionContext).mockReturnValue({
+        can: vi.fn(() => false),
+        canAny: vi.fn(() => false),
+        canAll: vi.fn(() => false),
+        hasRole: vi.fn(() => false),
+        hasRoleOrHigher: vi.fn(() => false),
         isLoading: false,
         roles: { primaryRole: "GUEST", roles: ["GUEST"] },
         permissions: [],
@@ -594,13 +600,12 @@ describe("Reviewer Status Change Functionality", () => {
 
     it("should show loading spinner when permissions are loading", () => {
       // Mock RBAC context with loading state
-      const { usePermissionContext } = require("@/src/core/rbac/context/permission-context");
-      usePermissionContext.mockReturnValue({
-        can: jest.fn(() => false),
-        canAny: jest.fn(() => false),
-        canAll: jest.fn(() => false),
-        hasRole: jest.fn(() => false),
-        hasRoleOrHigher: jest.fn(() => false),
+      vi.mocked(usePermissionContext).mockReturnValue({
+        can: vi.fn(() => false),
+        canAny: vi.fn(() => false),
+        canAll: vi.fn(() => false),
+        hasRole: vi.fn(() => false),
+        hasRoleOrHigher: vi.fn(() => false),
         isLoading: true,
         roles: { primaryRole: null, roles: [] },
         permissions: [],
@@ -612,8 +617,7 @@ describe("Reviewer Status Change Functionality", () => {
     });
 
     it("should show loading spinner when application is loading", () => {
-      const { useApplication } = require("@/hooks/useFundingPlatform");
-      useApplication.mockReturnValue({
+      vi.mocked(useApplication).mockReturnValue({
         application: null,
         isLoading: true,
         refetch: mockRefetchApplication,
@@ -627,21 +631,17 @@ describe("Reviewer Status Change Functionality", () => {
 
   describe("Reviewer Badge", () => {
     it("should display reviewer mode badge", () => {
-      const {
-        usePermissionContext,
-        useCan,
-      } = require("@/src/core/rbac/context/permission-context");
-      usePermissionContext.mockReturnValue({
-        can: jest.fn(() => false),
-        canAny: jest.fn(() => false),
-        canAll: jest.fn(() => false),
-        hasRole: jest.fn(() => true),
-        hasRoleOrHigher: jest.fn(() => true),
+      vi.mocked(usePermissionContext).mockReturnValue({
+        can: vi.fn(() => false),
+        canAny: vi.fn(() => false),
+        canAll: vi.fn(() => false),
+        hasRole: vi.fn(() => true),
+        hasRoleOrHigher: vi.fn(() => true),
         isLoading: false,
         roles: { primaryRole: "PROGRAM_REVIEWER", roles: ["PROGRAM_REVIEWER"] },
         permissions: ["application:view_assigned", "application:review"],
       });
-      useCan.mockReturnValue(false);
+      vi.mocked(useCan).mockReturnValue(false);
 
       render(React.createElement(ReviewerApplicationDetailPage));
 
@@ -660,8 +660,7 @@ describe("Reviewer Status Change Functionality", () => {
 
   describe("Status Change for Different Application States", () => {
     it("should allow approving an under_review application", async () => {
-      const { useApplication } = require("@/hooks/useFundingPlatform");
-      useApplication.mockReturnValue({
+      vi.mocked(useApplication).mockReturnValue({
         application: {
           id: "test-app-1",
           referenceNumber: "APP-001",
@@ -685,8 +684,7 @@ describe("Reviewer Status Change Functionality", () => {
     });
 
     it("should allow requesting revision for an under_review application", async () => {
-      const { useApplication } = require("@/hooks/useFundingPlatform");
-      useApplication.mockReturnValue({
+      vi.mocked(useApplication).mockReturnValue({
         application: {
           id: "test-app-1",
           referenceNumber: "APP-001",
@@ -710,8 +708,7 @@ describe("Reviewer Status Change Functionality", () => {
     });
 
     it("should allow rejecting an under_review application", async () => {
-      const { useApplication } = require("@/hooks/useFundingPlatform");
-      useApplication.mockReturnValue({
+      vi.mocked(useApplication).mockReturnValue({
         application: {
           id: "test-app-1",
           referenceNumber: "APP-001",
@@ -737,8 +734,7 @@ describe("Reviewer Status Change Functionality", () => {
 
   describe("Application Not Found", () => {
     it("should show 'Application not found' when application is null", () => {
-      const { useApplication } = require("@/hooks/useFundingPlatform");
-      useApplication.mockReturnValue({
+      vi.mocked(useApplication).mockReturnValue({
         application: null,
         isLoading: false,
         refetch: mockRefetchApplication,
@@ -752,8 +748,7 @@ describe("Reviewer Status Change Functionality", () => {
 
   describe("Milestone Review Link", () => {
     it("should show milestone review link for approved applications with projectUID", () => {
-      const { useApplication } = require("@/hooks/useFundingPlatform");
-      useApplication.mockReturnValue({
+      vi.mocked(useApplication).mockReturnValue({
         application: {
           id: "test-app-1",
           referenceNumber: "APP-001",

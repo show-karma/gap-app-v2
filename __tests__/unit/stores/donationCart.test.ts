@@ -1,6 +1,7 @@
 import { act, renderHook } from "@testing-library/react";
+import { DONATION_CONSTANTS } from "@/constants/donation";
 import type { SupportedToken } from "@/constants/supportedTokens";
-import { type DonationCartItem, useDonationCart } from "@/store/donationCart";
+import { type DonationCartItem, type DonationSession, useDonationCart } from "@/store/donationCart";
 
 // Mock the zustand persist middleware
 const mockStorageData: Record<string, string> = {};
@@ -696,6 +697,242 @@ describe("useDonationCart", () => {
       });
 
       expect(result.current.amounts[mockItem.uid]).toBe("0.123456789");
+    });
+  });
+
+  describe("cart capacity (isCartFull / isCartWarning / getCartSize)", () => {
+    it("should report cart is not full when empty", () => {
+      const { result } = renderHook(() => useDonationCart());
+
+      expect(result.current.isCartFull()).toBe(false);
+    });
+
+    it("should report correct cart size", () => {
+      const { result } = renderHook(() => useDonationCart());
+
+      act(() => {
+        result.current.add(mockItem);
+        result.current.add(mockItem2);
+      });
+
+      expect(result.current.getCartSize()).toBe(2);
+    });
+
+    it("should report cart size 0 for empty cart", () => {
+      const { result } = renderHook(() => useDonationCart());
+
+      expect(result.current.getCartSize()).toBe(0);
+    });
+
+    it("should report isCartWarning false when below threshold", () => {
+      const { result } = renderHook(() => useDonationCart());
+
+      act(() => {
+        result.current.add(mockItem);
+      });
+
+      expect(result.current.isCartWarning()).toBe(false);
+    });
+
+    it("should report isCartWarning true when at warning threshold", () => {
+      const { result } = renderHook(() => useDonationCart());
+
+      // Fill cart to exactly the warning threshold
+      act(() => {
+        for (let i = 0; i < DONATION_CONSTANTS.CART_SIZE_WARNING_THRESHOLD; i++) {
+          result.current.add({ uid: `project-warn-${i}`, title: `P${i}` });
+        }
+      });
+
+      expect(result.current.isCartWarning()).toBe(true);
+    });
+
+    it("should report isCartFull true when at max capacity", () => {
+      const { result } = renderHook(() => useDonationCart());
+
+      act(() => {
+        for (let i = 0; i < DONATION_CONSTANTS.MAX_CART_SIZE; i++) {
+          result.current.add({ uid: `project-full-${i}`, title: `P${i}` });
+        }
+      });
+
+      expect(result.current.isCartFull()).toBe(true);
+      expect(result.current.getCartSize()).toBe(DONATION_CONSTANTS.MAX_CART_SIZE);
+    });
+
+    it("should return false from add when cart is full", () => {
+      const { result } = renderHook(() => useDonationCart());
+
+      act(() => {
+        for (let i = 0; i < DONATION_CONSTANTS.MAX_CART_SIZE; i++) {
+          result.current.add({ uid: `project-cap-${i}`, title: `P${i}` });
+        }
+      });
+
+      let addResult = true;
+      act(() => {
+        addResult = result.current.add({
+          uid: "overflow-project",
+          title: "Overflow",
+        });
+      });
+
+      expect(addResult).toBe(false);
+      expect(result.current.getCartSize()).toBe(DONATION_CONSTANTS.MAX_CART_SIZE);
+    });
+
+    it("should return false from toggle when adding to a full cart", () => {
+      const { result } = renderHook(() => useDonationCart());
+
+      act(() => {
+        for (let i = 0; i < DONATION_CONSTANTS.MAX_CART_SIZE; i++) {
+          result.current.add({
+            uid: `project-toggle-${i}`,
+            title: `P${i}`,
+          });
+        }
+      });
+
+      let toggleResult = true;
+      act(() => {
+        toggleResult = result.current.toggle({
+          uid: "new-toggle-project",
+          title: "New",
+        });
+      });
+
+      expect(toggleResult).toBe(false);
+    });
+
+    it("should return true from add when item already exists (even in full cart)", () => {
+      const { result } = renderHook(() => useDonationCart());
+
+      act(() => {
+        for (let i = 0; i < DONATION_CONSTANTS.MAX_CART_SIZE; i++) {
+          result.current.add({
+            uid: `project-dup-${i}`,
+            title: `P${i}`,
+          });
+        }
+      });
+
+      // Adding an existing item should succeed (it is a no-op)
+      let addResult = false;
+      act(() => {
+        addResult = result.current.add({
+          uid: "project-dup-0",
+          title: "P0",
+        });
+      });
+
+      expect(addResult).toBe(true);
+    });
+  });
+
+  describe("completed session tracking", () => {
+    const mockSession: DonationSession = {
+      id: "session-1",
+      timestamp: 1700000000000,
+      donations: [
+        {
+          projectId: "project-1",
+          projectTitle: "Test Project",
+          projectSlug: "test-project",
+          projectImageURL: "https://example.com/image.png",
+          amount: "100",
+          token: {
+            address: "0x1234567890123456789012345678901234567890",
+            symbol: "USDC",
+            name: "USD Coin",
+            decimals: 6,
+            chainId: 10,
+            chainName: "Optimism",
+            isNative: false,
+          },
+          chainId: 10,
+          transactionHash: "0xabc123",
+          timestamp: 1700000000000,
+          status: "success",
+        },
+      ],
+      totalProjects: 1,
+    };
+
+    it("should have no completed session by default", () => {
+      const { result } = renderHook(() => useDonationCart());
+
+      expect(result.current.lastCompletedSession).toBeNull();
+    });
+
+    it("should store a completed session", () => {
+      const { result } = renderHook(() => useDonationCart());
+
+      act(() => {
+        result.current.setLastCompletedSession(mockSession);
+      });
+
+      expect(result.current.lastCompletedSession).toEqual(mockSession);
+    });
+
+    it("should clear a completed session", () => {
+      const { result } = renderHook(() => useDonationCart());
+
+      act(() => {
+        result.current.setLastCompletedSession(mockSession);
+      });
+
+      expect(result.current.lastCompletedSession).not.toBeNull();
+
+      act(() => {
+        result.current.clearLastCompletedSession();
+      });
+
+      expect(result.current.lastCompletedSession).toBeNull();
+    });
+
+    it("should replace an existing completed session", () => {
+      const { result } = renderHook(() => useDonationCart());
+
+      const secondSession: DonationSession = {
+        id: "session-2",
+        timestamp: 1700001000000,
+        donations: [],
+        totalProjects: 0,
+      };
+
+      act(() => {
+        result.current.setLastCompletedSession(mockSession);
+        result.current.setLastCompletedSession(secondSession);
+      });
+
+      expect(result.current.lastCompletedSession?.id).toBe("session-2");
+    });
+
+    it("should not affect cart items when setting completed session", () => {
+      const { result } = renderHook(() => useDonationCart());
+
+      act(() => {
+        result.current.add(mockItem);
+        result.current.setLastCompletedSession(mockSession);
+      });
+
+      expect(result.current.items).toHaveLength(1);
+      expect(result.current.lastCompletedSession).not.toBeNull();
+    });
+
+    it("should not clear completed session when clearing cart", () => {
+      const { result } = renderHook(() => useDonationCart());
+
+      act(() => {
+        result.current.add(mockItem);
+        result.current.setLastCompletedSession(mockSession);
+        result.current.clear();
+      });
+
+      // clear() only resets items, amounts, selectedTokens, payments
+      // lastCompletedSession should remain
+      expect(result.current.lastCompletedSession).toEqual(mockSession);
+      expect(result.current.items).toHaveLength(0);
     });
   });
 });

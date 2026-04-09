@@ -2,7 +2,7 @@
 
 import { BanknotesIcon } from "@heroicons/react/24/outline";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { Button } from "@/components/ui/button";
@@ -12,20 +12,21 @@ import {
   CreateDisbursementModal,
   type GrantDisbursementInfo,
   getPaidAllocationIds,
-  PayoutConfigurationModal,
-  PayoutHistoryDrawer,
+  type PayoutConfigItem,
+  useSavePayoutConfig,
 } from "@/src/features/payout-disbursement";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
-import type { TableRow } from "./ControlCenterTable";
-import { ControlCenterTable } from "./ControlCenterTable";
+import { BulkPayoutImportPanel } from "./BulkPayoutImportPanel";
+import { ControlCenterTable, type TableRow } from "./ControlCenterTable";
 import { FilterToolbar } from "./FilterToolbar";
-import { ProjectDetailsModal } from "./ProjectDetailsModal";
+import { ProjectDetailsSidebar } from "./ProjectDetailsSidebar";
 import { useControlCenterData } from "./useControlCenterData";
 
 // ─── Main component ──────────────────────────────────────────────────────────
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: This page intentionally orchestrates URL state, data-loading guards, and modal coordination in one container component.
 export function ControlCenterPage() {
   const router = useRouter();
   const pathname = usePathname();
@@ -56,6 +57,14 @@ export function ControlCenterPage() {
     | "COMPLETED"
     | undefined;
   const kycFilter = searchParams.get("kycStatus") || undefined;
+  const filterSignature = JSON.stringify({
+    selectedProgramId,
+    agreementFilter,
+    invoiceFilter,
+    disbursementFilter,
+    kycFilter,
+    searchQuery,
+  });
 
   // Local state
   const [localSearch, setLocalSearch] = useState(searchQuery);
@@ -83,25 +92,10 @@ export function ControlCenterPage() {
   const [isDisbursementModalOpen, setIsDisbursementModalOpen] = useState(false);
   const [grantsForDisbursement, setGrantsForDisbursement] = useState<GrantDisbursementInfo[]>([]);
 
-  const [isHistoryDrawerOpen, setIsHistoryDrawerOpen] = useState(false);
-  const [historyGrant, setHistoryGrant] = useState<{
-    grantUID: string;
-    grantName: string;
-    projectName: string;
-    approvedAmount?: string;
-  } | null>(null);
-
-  const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
-  const [configGrant, setConfigGrant] = useState<{
-    grantUID: string;
-    projectUID: string;
-    grantName: string;
-    projectName: string;
-  } | null>(null);
-
-  // Details modal state
+  // Details sidebar state
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
-  const [detailsModalGrant, setDetailsModalGrant] = useState<TableRow | null>(null);
+  const [detailsGrantUid, setDetailsGrantUid] = useState<string | null>(null);
+  const [dataVersion, setDataVersion] = useState(0);
 
   // URL param helper
   const createQueryString = useCallback(
@@ -118,6 +112,24 @@ export function ControlCenterPage() {
     },
     [searchParams]
   );
+
+  const previousFilterSignature = useRef(filterSignature);
+
+  // Safety net: whenever any filter changes, force page back to 1.
+  useEffect(() => {
+    if (previousFilterSignature.current === filterSignature) {
+      return;
+    }
+
+    previousFilterSignature.current = filterSignature;
+
+    if (currentPage === 1) {
+      return;
+    }
+
+    const query = createQueryString({ page: "1" });
+    router.replace(`${pathname}?${query}`);
+  }, [createQueryString, currentPage, filterSignature, pathname, router]);
 
   // ─── Data fetching (extracted hook) ───────────────────────────────────────
 
@@ -157,6 +169,38 @@ export function ControlCenterPage() {
     currentPage,
     itemsPerPage,
   });
+
+  // Derive live grant from current data, with ref fallback so the sidebar
+  // doesn't blank when the user navigates to a different page while it's open.
+  const detailsGrantRef = useRef<TableRow | null>(null);
+  const detailsModalGrant = useMemo(() => {
+    if (!detailsGrantUid) {
+      detailsGrantRef.current = null;
+      return null;
+    }
+    const fresh = paginatedData.find((r) => r.grantUid === detailsGrantUid) ?? null;
+    if (fresh) {
+      detailsGrantRef.current = fresh;
+      return fresh;
+    }
+    // Grant left current page — keep last known snapshot so sidebar stays populated
+    return detailsGrantRef.current;
+  }, [detailsGrantUid, paginatedData]);
+
+  const saveBulkImportMutation = useSavePayoutConfig();
+
+  const handleApplyBulkConfigs = useCallback(
+    async (configs: PayoutConfigItem[]) => {
+      if (!community?.uid) {
+        throw new Error("Community UID not available");
+      }
+      return saveBulkImportMutation.mutateAsync({
+        communityUID: community.uid,
+        configs,
+      });
+    },
+    [community?.uid, saveBulkImportMutation]
+  );
 
   // ─── URL param handlers ──────────────────────────────────────────────────
 
@@ -259,36 +303,6 @@ export function ControlCenterPage() {
     setIsDisbursementModalOpen(true);
   };
 
-  const handleOpenHistoryDrawer = (item: TableRow) => {
-    setHistoryGrant({
-      grantUID: item.grantUid,
-      grantName: item.grantName,
-      projectName: item.projectName,
-      approvedAmount: item.currentAmount || "0",
-    });
-    setIsHistoryDrawerOpen(true);
-  };
-
-  const handleOpenConfigModal = (item: TableRow) => {
-    setConfigGrant({
-      grantUID: item.grantUid,
-      projectUID: item.projectUid,
-      grantName: item.grantName,
-      projectName: item.projectName,
-    });
-    setIsConfigModalOpen(true);
-  };
-
-  const handleConfigModalClose = () => {
-    setIsConfigModalOpen(false);
-    setConfigGrant(null);
-  };
-
-  const handleConfigSuccess = () => {
-    handleConfigModalClose();
-    refreshPayouts();
-  };
-
   const handleDisbursementModalClose = () => {
     setIsDisbursementModalOpen(false);
     setGrantsForDisbursement([]);
@@ -297,16 +311,13 @@ export function ControlCenterPage() {
   const handleDisbursementSuccess = () => {
     setSelectedGrants(new Set());
     refreshPayouts();
+    setDataVersion((v) => v + 1);
   };
 
-  // ─── Row click → open details modal ─────────────────────────────────────
+  // ─── Open details sidebar ──────────────────────────────────────────────────
 
-  const handleRowClick = (item: TableRow, e: React.MouseEvent) => {
-    const target = e.target as HTMLElement;
-    if (target.closest("input[type='checkbox']") || target.closest("button")) {
-      return;
-    }
-    setDetailsModalGrant(item);
+  const handleOpenDetails = (item: TableRow) => {
+    setDetailsGrantUid(item.grantUid);
     setDetailsModalOpen(true);
   };
 
@@ -355,7 +366,16 @@ export function ControlCenterPage() {
   // ─── Loading state ───────────────────────────────────────────────────────
 
   if (!authReady || isLoadingCommunity || !community || loadingAdmin || isLoadingPayouts) {
-    const skeletonCols = 9;
+    const skeletonCols = 8;
+    const skeletonColumnKeys = Array.from(
+      { length: skeletonCols },
+      (_, colNumber) => `skeleton-col-${colNumber + 1}`
+    );
+    const skeletonRowKeys = Array.from(
+      { length: 6 },
+      (_, rowNumber) => `skeleton-row-${rowNumber + 1}`
+    );
+
     return (
       <div className="my-4 flex flex-col gap-6 w-full">
         <div className="flex flex-col gap-1 px-4">
@@ -379,22 +399,22 @@ export function ControlCenterPage() {
             <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-800">
               <thead>
                 <tr className="bg-gray-50 dark:bg-zinc-900">
-                  {Array.from({ length: skeletonCols }).map((_, i) => (
-                    <th key={i} className="h-11 px-4">
+                  {skeletonColumnKeys.map((columnKey) => (
+                    <th key={columnKey} className="h-11 px-4">
                       <Skeleton className="h-3 w-16" />
                     </th>
                   ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-zinc-800 bg-white dark:bg-zinc-950">
-                {Array.from({ length: 6 }).map((_, rowIdx) => (
-                  <tr key={rowIdx}>
-                    {Array.from({ length: skeletonCols }).map((_, colIdx) => (
-                      <td key={colIdx} className="px-4 py-3">
+                {skeletonRowKeys.map((rowKey) => (
+                  <tr key={rowKey}>
+                    {skeletonColumnKeys.map((columnKey, columnIndex) => (
+                      <td key={`${rowKey}-${columnKey}`} className="px-4 py-3">
                         <Skeleton
                           className={cn(
                             "h-4",
-                            colIdx === 0 ? "w-4" : colIdx === 1 ? "w-32" : "w-20"
+                            columnIndex === 0 ? "w-4" : columnIndex === 1 ? "w-32" : "w-20"
                           )}
                         />
                       </td>
@@ -487,6 +507,13 @@ export function ControlCenterPage() {
         onItemsPerPageChange={handleItemsPerPageChange}
       />
 
+      <BulkPayoutImportPanel
+        communityUID={community?.uid ?? ""}
+        tableRows={paginatedData}
+        onApplyConfigs={handleApplyBulkConfigs}
+        isApplying={saveBulkImportMutation.isPending}
+      />
+
       {/* Table */}
       <ControlCenterTable
         paginatedData={paginatedData}
@@ -494,7 +521,7 @@ export function ControlCenterPage() {
         selectableGrants={selectableGrants}
         onSelectGrant={handleSelectGrant}
         onSelectAll={handleSelectAll}
-        onRowClick={handleRowClick}
+        onOpenDetails={handleOpenDetails}
         onSort={handleSort}
         sortBy={sortBy}
         sortOrder={sortOrder}
@@ -507,7 +534,6 @@ export function ControlCenterPage() {
         paidMilestoneCountMap={paidMilestoneCountMap}
         invoiceRequiredMap={invoiceRequiredMap}
         getCheckboxDisabledState={getCheckboxDisabledState}
-        onOpenConfigModal={handleOpenConfigModal}
         hasActiveFilters={hasActiveFilters}
         onClearFilters={handleClearFilters}
         currentPage={currentPage}
@@ -525,40 +551,15 @@ export function ControlCenterPage() {
         onSuccess={handleDisbursementSuccess}
       />
 
-      {/* Payout History Drawer */}
-      {historyGrant && (
-        <PayoutHistoryDrawer
-          isOpen={isHistoryDrawerOpen}
-          onClose={() => {
-            setIsHistoryDrawerOpen(false);
-            setHistoryGrant(null);
-          }}
-          grantUID={historyGrant.grantUID}
-          grantName={historyGrant.grantName}
-          projectName={historyGrant.projectName}
-          approvedAmount={historyGrant.approvedAmount}
-        />
-      )}
-
-      {/* Payout Configuration Modal */}
-      {configGrant && (
-        <PayoutConfigurationModal
-          isOpen={isConfigModalOpen}
-          onClose={handleConfigModalClose}
-          grantUID={configGrant.grantUID}
-          projectUID={configGrant.projectUID}
-          communityUID={community?.uid || ""}
-          grantName={configGrant.grantName}
-          projectName={configGrant.projectName}
-          onSuccess={handleConfigSuccess}
-        />
-      )}
-
-      {/* Project Details Modal */}
-      <ProjectDetailsModal
+      {/* Project Details Sidebar */}
+      <ProjectDetailsSidebar
         grant={detailsModalGrant}
         open={detailsModalOpen}
-        onOpenChange={setDetailsModalOpen}
+        dataVersion={dataVersion}
+        onOpenChange={(nextOpen) => {
+          setDetailsModalOpen(nextOpen);
+          if (!nextOpen) setDetailsGrantUid(null);
+        }}
         communityUID={community?.uid || ""}
         invoiceRequired={
           detailsModalGrant ? (invoiceRequiredMap[detailsModalGrant.grantUid] ?? false) : false
@@ -576,19 +577,14 @@ export function ControlCenterPage() {
             ? (payoutConfigMap[detailsModalGrant.grantUid]?.milestoneAllocations ?? null)
             : null
         }
-        onOpenConfigModal={() => {
-          if (!detailsModalGrant) return;
-          setDetailsModalOpen(false);
-          handleOpenConfigModal(detailsModalGrant);
-        }}
-        onOpenHistoryDrawer={() => {
-          if (!detailsModalGrant) return;
-          setDetailsModalOpen(false);
-          handleOpenHistoryDrawer(detailsModalGrant);
+        onConfigSuccess={() => {
+          refreshPayouts();
+          setDataVersion((v) => v + 1);
         }}
         onCreateDisbursement={() => {
           if (!detailsModalGrant) return;
           setDetailsModalOpen(false);
+          setDetailsGrantUid(null);
           const item = detailsModalGrant;
           const payoutConfig = payoutConfigMap[item.grantUid];
           const disbursementHistory = disbursementMap[item.grantUid]?.history || [];
@@ -613,6 +609,7 @@ export function ControlCenterPage() {
       {selectedGrants.size > 0 && (
         <div className="fixed bottom-6 right-6 z-40 animate-in slide-in-from-bottom-4 fade-in duration-300">
           <button
+            type="button"
             onClick={handleOpenDisbursementModal}
             className="flex items-center gap-3 px-6 py-4 bg-brand-blue hover:bg-brand-blue/80 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 text-base font-semibold"
           >

@@ -1,5 +1,6 @@
 import { CheckCircleIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import type { Project as ProjectResponse } from "@/types/v2/project";
 import { PAGES } from "@/utilities/pages";
 
@@ -15,18 +16,17 @@ export const GrantNotCompletedButton: React.FC<GrantNotCompletedButtonProps> = (
   text = "Mark as Complete",
 }) => {
   return (
-    <Link
-      href={PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
-        project.details?.slug || project.uid,
-        grantUID,
-        "complete-grant"
-      )}
-      className="hover:opacity-75 flex flex-row items-center justify-center gap-2 rounded-md bg-green-600 px-3.5 py-2 text-sm font-semibold text-white hover:bg-green-700"
-    >
-      {text}
-      <div className="h-5 w-5">
+    <Button size="xl" asChild>
+      <Link
+        href={PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
+          project.details?.slug || project.uid,
+          grantUID,
+          "complete-grant"
+        )}
+      >
+        {text}
         <CheckCircleIcon className="h-5 w-5" />
-      </div>
-    </Link>
+      </Link>
+    </Button>
   );
 };

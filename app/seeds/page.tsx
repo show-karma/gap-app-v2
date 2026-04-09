@@ -6,22 +6,32 @@ import { LaunchHero } from "@/src/features/seeds/components/launch/launch-hero";
 import { LaunchHowTo } from "@/src/features/seeds/components/launch/launch-how-to";
 import { LaunchProblem } from "@/src/features/seeds/components/launch/launch-problem";
 import { LaunchUseCases } from "@/src/features/seeds/components/launch/launch-use-cases";
-import { customMetadata } from "@/utilities/meta";
 
-export const metadata: Metadata = customMetadata({
+export const metadata: Metadata = {
   title: "Karma Seeds - Raise Funds Without Launching a Token",
   description:
-    "Raise funds from your community without launching a token. Karma Seeds let you build community support, stay focused on building, and grow sustainably.",
-  path: "/seeds",
-  images: [
-    {
-      url: "/og/seeds.png",
-      width: 1200,
-      height: 630,
-      alt: "Karma Seeds for your project",
-    },
-  ],
-});
+    "Raise funds from your community without launching a token. Karma Seeds let you build community and stay focused on building.",
+  openGraph: {
+    title: "Karma Seeds - Accept Support Without a Token",
+    description:
+      "Raise funds from your community at $1 per seed. No token economics, no speculation—just transparent funding that goes to your treasury.",
+    url: "https://www.karmahq.xyz/seeds",
+    images: [
+      {
+        url: "/og/seeds.png",
+        width: 1200,
+        height: 630,
+        alt: "Karma Seeds for your project",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Karma Seeds - Raise Funds for Your Project",
+    description: "Raise funds without launching a token. Funds go directly to your treasury.",
+    images: ["/og/seeds.png"],
+  },
+};
 
 export default function SeedsPage() {
   return (

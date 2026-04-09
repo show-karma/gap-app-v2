@@ -5,21 +5,21 @@ import { FundingMapList } from "@/src/features/funding-map/components/funding-ma
 import { FundingMapSearch } from "@/src/features/funding-map/components/funding-map-search";
 import { FundingMapSidebar } from "@/src/features/funding-map/components/funding-map-sidebar";
 
-jest.mock("@/src/features/funding-map/components/funding-map-list", () => ({
-  FundingMapList: jest.fn(() => <div data-testid="funding-map-list" />),
+vi.mock("@/src/features/funding-map/components/funding-map-list", () => ({
+  FundingMapList: vi.fn(() => <div data-testid="funding-map-list" />),
 }));
 
-jest.mock("@/src/features/funding-map/components/funding-map-search", () => ({
-  FundingMapSearch: jest.fn(() => <div data-testid="funding-map-search" />),
+vi.mock("@/src/features/funding-map/components/funding-map-search", () => ({
+  FundingMapSearch: vi.fn(() => <div data-testid="funding-map-search" />),
 }));
 
-jest.mock("@/src/features/funding-map/components/funding-map-sidebar", () => ({
-  FundingMapSidebar: jest.fn(() => <div data-testid="funding-map-sidebar" />),
+vi.mock("@/src/features/funding-map/components/funding-map-sidebar", () => ({
+  FundingMapSidebar: vi.fn(() => <div data-testid="funding-map-sidebar" />),
 }));
 
 describe("FundingMapPage", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("renders the FundingMapList component", () => {

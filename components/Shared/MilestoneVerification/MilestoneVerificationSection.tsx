@@ -13,6 +13,8 @@ interface MilestoneVerificationSectionProps {
   isVerified?: boolean;
   verifications?: VerificationRecord[];
   onVerified?: () => void;
+  programId?: string;
+  communityUID?: string;
 }
 
 export const MilestoneVerificationSection: FC<MilestoneVerificationSectionProps> = ({
@@ -21,6 +23,8 @@ export const MilestoneVerificationSection: FC<MilestoneVerificationSectionProps>
   isVerified: isVerifiedProp,
   verifications,
   onVerified,
+  programId,
+  communityUID,
 }) => {
   // V2: verified is an array of verifications
   const getInitialVerifiedState = (): boolean => {
@@ -75,6 +79,14 @@ export const MilestoneVerificationSection: FC<MilestoneVerificationSectionProps>
 
   const milestoneForDialog = getMilestoneForDialog();
 
+  // Extract grant context for permission checks
+  const grantContext =
+    "source" in milestone
+      ? (milestone as UnifiedMilestone).source.grantMilestone?.grant
+      : undefined;
+  const derivedProgramId = programId ?? grantContext?.details?.programId;
+  const derivedCommunityUID = communityUID ?? grantContext?.community?.uid;
+
   return (
     <div className="flex flex-row gap-4 items-center flex-wrap w-max max-w-full">
       {isVerified && (
@@ -89,6 +101,8 @@ export const MilestoneVerificationSection: FC<MilestoneVerificationSectionProps>
           milestone={milestoneForDialog}
           onVerified={markAsVerified}
           isVerified={isVerified}
+          programId={derivedProgramId}
+          communityUID={derivedCommunityUID}
         />
       )}
     </div>

@@ -3,12 +3,17 @@ import "@testing-library/jest-dom";
 import { AboutContent } from "../MainContent/AboutContent";
 
 // Mock MarkdownPreview to avoid issues with dynamic import
-jest.mock("@/components/Utilities/MarkdownPreview", () => ({
+vi.mock("@/components/Utilities/MarkdownPreview", () => ({
   MarkdownPreview: ({ source, className }: { source: string; className?: string }) => (
     <div data-testid="markdown-preview" className={className}>
       {source}
     </div>
   ),
+}));
+
+// Mock TeamContent to avoid loading external dependencies
+vi.mock("../TeamContent/TeamContent", () => ({
+  TeamContent: () => <div data-testid="team-content">Team Content Mock</div>,
 }));
 
 const createMockProject = (
@@ -234,9 +239,9 @@ describe("AboutContent", () => {
 
       render(<AboutContent project={project} />);
 
-      // Check that icon container exists with proper styling classes
+      // Check that icon container (span with text-muted-foreground) exists
       const section = screen.getByTestId("about-section-description");
-      const iconContainer = section.querySelector(".w-10.h-10");
+      const iconContainer = section.querySelector(".text-muted-foreground");
       expect(iconContainer).toBeInTheDocument();
     });
   });

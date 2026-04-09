@@ -15,15 +15,18 @@ import {
 } from "../fixtures/search-fixtures";
 import { renderWithProviders } from "../utils/test-helpers";
 
-// Mock unified search service
-jest.mock("@/services/unified-search.service", () => ({
-  unifiedSearch: jest.fn(),
+const { mockUnifiedSearch } = vi.hoisted(() => ({
+  mockUnifiedSearch: vi.fn(),
+}));
+
+vi.mock("@/services/unified-search.service", () => ({
+  unifiedSearch: mockUnifiedSearch,
 }));
 
 // Helper to flush timers and promises
 const _flushTimersAndPromises = async () => {
   await act(async () => {
-    jest.runAllTimers();
+    vi.runAllTimers();
     // Flush promise queue
     await Promise.resolve();
     await Promise.resolve();
@@ -32,12 +35,12 @@ const _flushTimersAndPromises = async () => {
 
 describe("NavbarSearch", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.clearAllTimers();
+    vi.clearAllMocks();
+    vi.clearAllTimers();
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   describe("Rendering and Initial State", () => {
@@ -148,18 +151,20 @@ describe("NavbarSearch", () => {
     });
   });
 
+  // NOTE: This section uses fireEvent.change for debounce testing.
+  // userEvent.type fires onChange per-character, which breaks debounce timer assertions.
+  // fireEvent.change sets the full value in one event, enabling precise timer control.
   describe("Debouncing Tests", () => {
     beforeEach(() => {
-      jest.useFakeTimers();
+      vi.useFakeTimers({ shouldAdvanceTime: true });
     });
 
     afterEach(() => {
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
 
     it("search triggers after 500ms delay", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(mixedResults);
+      mockUnifiedSearch.mockResolvedValue(mixedResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -167,22 +172,21 @@ describe("NavbarSearch", () => {
       fireEvent.change(searchInput, { target: { value: "project" } });
 
       // Should not call immediately
-      expect(unifiedSearch).not.toHaveBeenCalled();
+      expect(mockUnifiedSearch).not.toHaveBeenCalled();
 
       // Advance timers by 500ms
       act(() => {
-        jest.advanceTimersByTime(500);
+        vi.advanceTimersByTime(500);
       });
 
       // Should call after debounce
       await waitFor(() => {
-        expect(unifiedSearch).toHaveBeenCalledWith("project");
+        expect(mockUnifiedSearch).toHaveBeenCalledWith("project");
       });
     });
 
     it("multiple rapid keystrokes result in single API call", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(mixedResults);
+      mockUnifiedSearch.mockResolvedValue(mixedResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -194,62 +198,60 @@ describe("NavbarSearch", () => {
       fireEvent.change(searchInput, { target: { value: "project" } });
 
       // Verify no calls have been made yet (still in debounce window)
-      expect(unifiedSearch).not.toHaveBeenCalled();
+      expect(mockUnifiedSearch).not.toHaveBeenCalled();
 
       // Advance to complete debounce (500ms)
       act(() => {
-        jest.advanceTimersByTime(500);
+        vi.advanceTimersByTime(500);
       });
 
       // Wait for async operations to complete
       await waitFor(() => {
-        expect(unifiedSearch).toHaveBeenCalled();
+        expect(mockUnifiedSearch).toHaveBeenCalled();
       });
 
       // Should only call once with final value
-      expect(unifiedSearch).toHaveBeenCalledTimes(1);
-      expect(unifiedSearch).toHaveBeenCalledWith("project");
+      expect(mockUnifiedSearch).toHaveBeenCalledTimes(1);
+      expect(mockUnifiedSearch).toHaveBeenCalledWith("project");
     });
 
     it("debounce timer resets on each keystroke", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(mixedResults);
+      mockUnifiedSearch.mockResolvedValue(mixedResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       // Type first value and advance almost to debounce completion
       fireEvent.change(searchInput, { target: { value: "test" } });
-      act(() => jest.advanceTimersByTime(400)); // Not enough to trigger (need 500ms)
+      act(() => vi.advanceTimersByTime(400)); // Not enough to trigger (need 500ms)
 
       // No call should have been made yet
-      expect(unifiedSearch).not.toHaveBeenCalled();
+      expect(mockUnifiedSearch).not.toHaveBeenCalled();
 
       // Type again - this resets the timer
       fireEvent.change(searchInput, { target: { value: "testing" } });
-      act(() => jest.advanceTimersByTime(400)); // Again, not enough
+      act(() => vi.advanceTimersByTime(400)); // Again, not enough
 
       // Still no call
-      expect(unifiedSearch).not.toHaveBeenCalled();
+      expect(mockUnifiedSearch).not.toHaveBeenCalled();
 
       // Now complete the debounce from the last keystroke
       act(() => {
-        jest.advanceTimersByTime(500);
+        vi.advanceTimersByTime(500);
       });
 
       // Wait for async operation
       await waitFor(() => {
-        expect(unifiedSearch).toHaveBeenCalled();
+        expect(mockUnifiedSearch).toHaveBeenCalled();
       });
 
       // Should only call once with final value
-      expect(unifiedSearch).toHaveBeenCalledTimes(1);
-      expect(unifiedSearch).toHaveBeenCalledWith("testing");
+      expect(mockUnifiedSearch).toHaveBeenCalledTimes(1);
+      expect(mockUnifiedSearch).toHaveBeenCalledWith("testing");
     });
 
     it("search executes after typing stops", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(projectsOnlyResults);
+      mockUnifiedSearch.mockResolvedValue(projectsOnlyResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -257,73 +259,69 @@ describe("NavbarSearch", () => {
       fireEvent.change(searchInput, { target: { value: "awesome" } });
 
       // Immediately after typing
-      expect(unifiedSearch).not.toHaveBeenCalled();
+      expect(mockUnifiedSearch).not.toHaveBeenCalled();
 
       // After debounce delay
       act(() => {
-        jest.advanceTimersByTime(500);
+        vi.advanceTimersByTime(500);
       });
 
       await waitFor(() => {
-        expect(unifiedSearch).toHaveBeenCalledWith("awesome");
+        expect(mockUnifiedSearch).toHaveBeenCalledWith("awesome");
       });
     });
   });
 
   describe("Minimum Character Tests", () => {
     beforeEach(() => {
-      jest.useFakeTimers();
+      vi.useFakeTimers({ shouldAdvanceTime: true });
     });
 
     it("less than 3 characters: no API call", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(mixedResults);
+      mockUnifiedSearch.mockResolvedValue(mixedResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       fireEvent.change(searchInput, { target: { value: "ab" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
-      expect(unifiedSearch).not.toHaveBeenCalled();
+      expect(mockUnifiedSearch).not.toHaveBeenCalled();
     });
 
     it("exactly 3 characters: triggers search", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(projectsOnlyResults);
+      mockUnifiedSearch.mockResolvedValue(projectsOnlyResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       fireEvent.change(searchInput, { target: { value: "pro" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       await waitFor(() => {
-        expect(unifiedSearch).toHaveBeenCalledWith("pro");
+        expect(mockUnifiedSearch).toHaveBeenCalledWith("pro");
       });
     });
 
     it("more than 3 characters: continues searching", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(mixedResults);
+      mockUnifiedSearch.mockResolvedValue(mixedResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       fireEvent.change(searchInput, { target: { value: "project" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       await waitFor(() => {
-        expect(unifiedSearch).toHaveBeenCalledWith("project");
+        expect(mockUnifiedSearch).toHaveBeenCalledWith("project");
       });
     });
 
     it("results clear when below 3 characters", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(projectsOnlyResults);
+      mockUnifiedSearch.mockResolvedValue(projectsOnlyResults);
 
       // Use real timers for this test since it involves async state updates
-      jest.useRealTimers();
+      vi.useRealTimers();
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -333,13 +331,13 @@ describe("NavbarSearch", () => {
 
       await waitFor(
         () => {
-          expect(unifiedSearch).toHaveBeenCalled();
+          expect(mockUnifiedSearch).toHaveBeenCalled();
         },
         { timeout: 1000 }
       );
 
       // Then reduce to less than 3 characters
-      unifiedSearch.mockClear();
+      mockUnifiedSearch.mockClear();
       fireEvent.change(searchInput, { target: { value: "te" } });
 
       // Wait for any potential debounce (there shouldn't be an API call)
@@ -348,21 +346,20 @@ describe("NavbarSearch", () => {
       });
 
       // Should not trigger new search
-      expect(unifiedSearch).not.toHaveBeenCalled();
+      expect(mockUnifiedSearch).not.toHaveBeenCalled();
 
       // Restore fake timers for other tests
-      jest.useFakeTimers();
+      vi.useFakeTimers({ shouldAdvanceTime: true });
     });
   });
 
   describe("Loading State Tests", () => {
     beforeEach(() => {
-      jest.useFakeTimers();
+      vi.useFakeTimers({ shouldAdvanceTime: true });
     });
 
     it("loading spinner shows during API call", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockImplementation(
+      mockUnifiedSearch.mockImplementation(
         () => new Promise((resolve) => setTimeout(() => resolve(mixedResults), 1000))
       );
 
@@ -370,7 +367,7 @@ describe("NavbarSearch", () => {
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       fireEvent.change(searchInput, { target: { value: "test" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       // Spinner should be visible
       await waitFor(() => {
@@ -380,8 +377,7 @@ describe("NavbarSearch", () => {
     });
 
     it("dropdown opens with spinner", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockImplementation(
+      mockUnifiedSearch.mockImplementation(
         () => new Promise((resolve) => setTimeout(() => resolve(mixedResults), 1000))
       );
 
@@ -389,7 +385,7 @@ describe("NavbarSearch", () => {
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       fireEvent.change(searchInput, { target: { value: "project" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       await waitFor(() => {
         const dropdown = document.querySelector(".absolute.top-full");
@@ -398,14 +394,13 @@ describe("NavbarSearch", () => {
     });
 
     it("spinner disappears when results arrive", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(projectsOnlyResults);
+      mockUnifiedSearch.mockResolvedValue(projectsOnlyResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       fireEvent.change(searchInput, { target: { value: "test" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       // Wait for results to load
       await waitFor(() => {
@@ -418,8 +413,7 @@ describe("NavbarSearch", () => {
   describe("API Integration Tests", () => {
     // Don't use fake timers for these tests - they need real async behavior
     it("successful search response displays results", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(projectsOnlyResults);
+      mockUnifiedSearch.mockResolvedValue(projectsOnlyResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -430,7 +424,7 @@ describe("NavbarSearch", () => {
       // First verify the API gets called
       await waitFor(
         () => {
-          expect(unifiedSearch).toHaveBeenCalledWith("awesome");
+          expect(mockUnifiedSearch).toHaveBeenCalledWith("awesome");
         },
         { timeout: 1000 }
       );
@@ -445,8 +439,7 @@ describe("NavbarSearch", () => {
     });
 
     it("empty results show 'No results found' message", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(emptySearchResults);
+      mockUnifiedSearch.mockResolvedValue(emptySearchResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -462,10 +455,9 @@ describe("NavbarSearch", () => {
     });
 
     it("API error shows error state (no crash)", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockRejectedValue(new Error("API Error"));
+      mockUnifiedSearch.mockRejectedValue(new Error("API Error"));
 
-      const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -484,10 +476,9 @@ describe("NavbarSearch", () => {
     });
 
     it("shows 'No results found' message when API fails", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockRejectedValue(new Error("API Error"));
+      mockUnifiedSearch.mockRejectedValue(new Error("API Error"));
 
-      const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -509,9 +500,10 @@ describe("NavbarSearch", () => {
     });
 
     it("shows loading spinner during API call", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+
       // Delay the response to see loading state
-      unifiedSearch.mockImplementation(
+      mockUnifiedSearch.mockImplementation(
         () =>
           new Promise((resolve) =>
             setTimeout(() => resolve({ projects: [], communities: [] }), 100)
@@ -522,18 +514,21 @@ describe("NavbarSearch", () => {
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       fireEvent.change(searchInput, { target: { value: "test" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       // Should show loading spinner
       await waitFor(() => {
         const spinner = document.querySelector(".animate-spin");
         expect(spinner).toBeInTheDocument();
       });
+
+      vi.useRealTimers();
     });
 
     it("loading spinner is accessible", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockImplementation(
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+
+      mockUnifiedSearch.mockImplementation(
         () =>
           new Promise((resolve) =>
             setTimeout(() => resolve({ projects: [], communities: [] }), 100)
@@ -544,7 +539,7 @@ describe("NavbarSearch", () => {
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       fireEvent.change(searchInput, { target: { value: "test" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       // Loading spinner should be visible and accessible
       await waitFor(() => {
@@ -552,24 +547,27 @@ describe("NavbarSearch", () => {
         expect(spinner).toBeInTheDocument();
         expect(spinner).toBeVisible();
       });
+
+      vi.useRealTimers();
     });
 
     it("network timeout handled gracefully", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockImplementation(
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+
+      mockUnifiedSearch.mockImplementation(
         () => new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 100))
       );
 
-      const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       fireEvent.change(searchInput, { target: { value: "test" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       // Advance to timeout (shorter timeout for test)
-      act(() => jest.advanceTimersByTime(100));
+      act(() => vi.advanceTimersByTime(100));
 
       // Wait for error handling to complete
       await waitFor(
@@ -582,19 +580,21 @@ describe("NavbarSearch", () => {
       );
 
       consoleSpy.mockRestore();
+      vi.useRealTimers();
     });
 
     it("recovers from error and shows results on successful retry", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       // First search - error
-      unifiedSearch.mockRejectedValueOnce(new Error("API Error"));
+      mockUnifiedSearch.mockRejectedValueOnce(new Error("API Error"));
       fireEvent.change(searchInput, { target: { value: "error" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       await waitFor(() => {
         expect(screen.getByText(/no results found/i)).toBeInTheDocument();
@@ -602,11 +602,11 @@ describe("NavbarSearch", () => {
 
       // Clear and retry with success
       fireEvent.change(searchInput, { target: { value: "" } });
-      act(() => jest.advanceTimersByTime(100));
+      act(() => vi.advanceTimersByTime(100));
 
-      unifiedSearch.mockResolvedValueOnce(projectsOnlyResults);
+      mockUnifiedSearch.mockResolvedValueOnce(projectsOnlyResults);
       fireEvent.change(searchInput, { target: { value: "test" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       // Should show results after successful retry
       await waitFor(() => {
@@ -615,23 +615,23 @@ describe("NavbarSearch", () => {
       });
 
       consoleSpy.mockRestore();
+      vi.useRealTimers();
     });
   });
 
   describe("Results Display Tests", () => {
     beforeEach(() => {
-      jest.useFakeTimers();
+      vi.useFakeTimers({ shouldAdvanceTime: true });
     });
 
     it("project results render with correct data", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(projectsOnlyResults);
+      mockUnifiedSearch.mockResolvedValue(projectsOnlyResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       fireEvent.change(searchInput, { target: { value: "project" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       await waitFor(() => {
         expect(screen.getByText("Awesome Project")).toBeInTheDocument();
@@ -641,14 +641,13 @@ describe("NavbarSearch", () => {
     });
 
     it("community results render with 'Community' badge", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(communitiesOnlyResults);
+      mockUnifiedSearch.mockResolvedValue(communitiesOnlyResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       fireEvent.change(searchInput, { target: { value: "optimism" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       await waitFor(() => {
         expect(screen.getByText("Optimism")).toBeInTheDocument();
@@ -658,14 +657,13 @@ describe("NavbarSearch", () => {
     });
 
     it("mixed results show both types", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(mixedResults);
+      mockUnifiedSearch.mockResolvedValue(mixedResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       fireEvent.change(searchInput, { target: { value: "test" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       await waitFor(() => {
         // Projects
@@ -679,14 +677,13 @@ describe("NavbarSearch", () => {
     });
 
     it("results are scrollable when many", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(largeResultSet);
+      mockUnifiedSearch.mockResolvedValue(largeResultSet);
 
       const { container } = renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       fireEvent.change(searchInput, { target: { value: "test" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       await waitFor(() => {
         const scrollContainer = container.querySelector(".overflow-y-auto");
@@ -695,20 +692,22 @@ describe("NavbarSearch", () => {
     });
   });
 
+  // NOTE: Results interaction tests use fireEvent.change for debounce testing
+  // and fireEvent.click/.focus/.mouseDown for consistency within fake-timer context.
+  // fireEvent required: debounce test needs single-event value change
   describe("Results Interaction Tests", () => {
     beforeEach(() => {
-      jest.useFakeTimers();
+      vi.useFakeTimers({ shouldAdvanceTime: true });
     });
 
     it("clicking result closes dropdown", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(projectsOnlyResults);
+      mockUnifiedSearch.mockResolvedValue(projectsOnlyResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       fireEvent.change(searchInput, { target: { value: "project" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       await waitFor(() => {
         const result = screen.getByText("Awesome Project");
@@ -722,8 +721,7 @@ describe("NavbarSearch", () => {
     });
 
     it("search value clears after selection", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(projectsOnlyResults);
+      mockUnifiedSearch.mockResolvedValue(projectsOnlyResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(
@@ -731,7 +729,7 @@ describe("NavbarSearch", () => {
       ) as HTMLInputElement;
 
       fireEvent.change(searchInput, { target: { value: "project" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       await waitFor(() => {
         const result = screen.getByText("Awesome Project");
@@ -742,16 +740,15 @@ describe("NavbarSearch", () => {
     });
 
     it("onSelectItem callback is called when clicking a result", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(projectsOnlyResults);
+      mockUnifiedSearch.mockResolvedValue(projectsOnlyResults);
 
-      const onSelectItemMock = jest.fn();
+      const onSelectItemMock = vi.fn();
 
       renderWithProviders(<NavbarSearch onSelectItem={onSelectItemMock} />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       fireEvent.change(searchInput, { target: { value: "project" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       await waitFor(() => {
         expect(screen.getByText("Awesome Project")).toBeInTheDocument();
@@ -766,16 +763,15 @@ describe("NavbarSearch", () => {
     });
 
     it("onSelectItem callback is called when clicking a community result", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(communitiesOnlyResults);
+      mockUnifiedSearch.mockResolvedValue(communitiesOnlyResults);
 
-      const onSelectItemMock = jest.fn();
+      const onSelectItemMock = vi.fn();
 
       renderWithProviders(<NavbarSearch onSelectItem={onSelectItemMock} />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       fireEvent.change(searchInput, { target: { value: "optimism" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       await waitFor(() => {
         expect(screen.getByText("Optimism")).toBeInTheDocument();
@@ -790,15 +786,14 @@ describe("NavbarSearch", () => {
     });
 
     it("works without onSelectItem callback (optional prop)", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(projectsOnlyResults);
+      mockUnifiedSearch.mockResolvedValue(projectsOnlyResults);
 
       // Render without onSelectItem prop
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       fireEvent.change(searchInput, { target: { value: "project" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       await waitFor(() => {
         expect(screen.getByText("Awesome Project")).toBeInTheDocument();
@@ -817,18 +812,17 @@ describe("NavbarSearch", () => {
 
   describe("Dropdown Management Tests", () => {
     beforeEach(() => {
-      jest.useFakeTimers();
+      vi.useFakeTimers({ shouldAdvanceTime: true });
     });
 
     it("dropdown opens when results available", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(projectsOnlyResults);
+      mockUnifiedSearch.mockResolvedValue(projectsOnlyResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       fireEvent.change(searchInput, { target: { value: "test" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       await waitFor(() => {
         const dropdown = document.querySelector(".absolute.top-full");
@@ -837,14 +831,13 @@ describe("NavbarSearch", () => {
     });
 
     it("dropdown stays open while typing", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(projectsOnlyResults);
+      mockUnifiedSearch.mockResolvedValue(projectsOnlyResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       fireEvent.change(searchInput, { target: { value: "test" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       await waitFor(() => {
         expect(screen.getByText("Awesome Project")).toBeInTheDocument();
@@ -858,15 +851,14 @@ describe("NavbarSearch", () => {
     });
 
     it("opens on focus if results exist", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(projectsOnlyResults);
+      mockUnifiedSearch.mockResolvedValue(projectsOnlyResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       // First search
       fireEvent.change(searchInput, { target: { value: "test" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       await waitFor(() => {
         expect(screen.getByText("Awesome Project")).toBeInTheDocument();
@@ -881,7 +873,7 @@ describe("NavbarSearch", () => {
 
       // Type again to get results
       fireEvent.change(searchInput, { target: { value: "test2" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       await waitFor(() => {
         expect(screen.getByText("Awesome Project")).toBeInTheDocument();
@@ -895,18 +887,17 @@ describe("NavbarSearch", () => {
 
   describe("Click Outside Tests", () => {
     beforeEach(() => {
-      jest.useFakeTimers();
+      vi.useFakeTimers({ shouldAdvanceTime: true });
     });
 
     it("click outside closes dropdown", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(projectsOnlyResults);
+      mockUnifiedSearch.mockResolvedValue(projectsOnlyResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       fireEvent.change(searchInput, { target: { value: "test" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       await waitFor(() => {
         expect(screen.getByText("Awesome Project")).toBeInTheDocument();
@@ -921,14 +912,13 @@ describe("NavbarSearch", () => {
     });
 
     it("click on search input doesn't close dropdown", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(projectsOnlyResults);
+      mockUnifiedSearch.mockResolvedValue(projectsOnlyResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       fireEvent.change(searchInput, { target: { value: "test" } });
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       await waitFor(() => {
         expect(screen.getByText("Awesome Project")).toBeInTheDocument();
@@ -951,16 +941,15 @@ describe("NavbarSearch", () => {
     });
 
     it("results are keyboard navigable", async () => {
-      const { unifiedSearch } = require("@/services/unified-search.service");
-      unifiedSearch.mockResolvedValue(projectsOnlyResults);
+      mockUnifiedSearch.mockResolvedValue(projectsOnlyResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
-      jest.useFakeTimers();
+      vi.useFakeTimers({ shouldAdvanceTime: true });
       fireEvent.change(searchInput, { target: { value: "test" } });
-      act(() => jest.advanceTimersByTime(500));
-      jest.useRealTimers();
+      act(() => vi.advanceTimersByTime(500));
+      vi.useRealTimers();
 
       await waitFor(() => {
         const results = screen.getAllByRole("link");

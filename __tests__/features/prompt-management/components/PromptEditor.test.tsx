@@ -1,5 +1,6 @@
 import "@testing-library/jest-dom";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import toast from "react-hot-toast";
 import { PromptEditor } from "@/features/prompt-management/components/PromptEditor";
 import {
@@ -12,27 +13,27 @@ import type { ProgramPrompt } from "@/features/prompt-management/types/program-p
 import { useAvailableAIModels } from "@/hooks/useAvailableAIModels";
 
 // Mock hooks
-jest.mock("@/features/prompt-management/hooks/use-program-prompts", () => ({
-  useSavePrompt: jest.fn(),
-  useTestPrompt: jest.fn(),
-  useTriggerBulkEvaluation: jest.fn(),
-  useBulkEvaluationJobPolling: jest.fn(),
+vi.mock("@/features/prompt-management/hooks/use-program-prompts", () => ({
+  useSavePrompt: vi.fn(),
+  useTestPrompt: vi.fn(),
+  useTriggerBulkEvaluation: vi.fn(),
+  useBulkEvaluationJobPolling: vi.fn(),
 }));
 
-jest.mock("@/hooks/useAvailableAIModels", () => ({
-  useAvailableAIModels: jest.fn(),
+vi.mock("@/hooks/useAvailableAIModels", () => ({
+  useAvailableAIModels: vi.fn(),
 }));
 
-jest.mock("react-hot-toast", () => ({
+vi.mock("react-hot-toast", () => ({
   __esModule: true,
   default: {
-    success: jest.fn(),
-    error: jest.fn(),
+    success: vi.fn(),
+    error: vi.fn(),
   },
 }));
 
 // Mock MarkdownEditor
-jest.mock("@/components/Utilities/MarkdownEditor", () => ({
+vi.mock("@/components/Utilities/MarkdownEditor", () => ({
   MarkdownEditor: ({
     value,
     onChange,
@@ -61,20 +62,20 @@ jest.mock("@/components/Utilities/MarkdownEditor", () => ({
 }));
 
 // Mock BulkEvaluationProgress
-jest.mock("@/features/prompt-management/components/BulkEvaluationProgress", () => ({
+vi.mock("@/features/prompt-management/components/BulkEvaluationProgress", () => ({
   BulkEvaluationProgress: () => <div data-testid="bulk-evaluation-progress" />,
 }));
 
 // Mock PromptTestPanel
-jest.mock("@/features/prompt-management/components/PromptTestPanel", () => ({
+vi.mock("@/features/prompt-management/components/PromptTestPanel", () => ({
   PromptTestPanel: ({ isOpen }: { isOpen: boolean }) =>
     isOpen ? <div data-testid="prompt-test-panel">Test Panel</div> : null,
 }));
 
 describe("PromptEditor", () => {
-  const mockSavePrompt = jest.fn();
-  const mockTestPrompt = jest.fn();
-  const mockTriggerBulkEvaluation = jest.fn();
+  const mockSavePrompt = vi.fn();
+  const mockTestPrompt = vi.fn();
+  const mockTriggerBulkEvaluation = vi.fn();
 
   const defaultProps = {
     programId: "program-123",
@@ -83,29 +84,29 @@ describe("PromptEditor", () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
-    (useAvailableAIModels as jest.Mock).mockReturnValue({
+    (useAvailableAIModels as vi.Mock).mockReturnValue({
       data: ["gpt-4", "gpt-3.5-turbo", "claude-3-opus"],
       isLoading: false,
     });
 
-    (useSavePrompt as jest.Mock).mockReturnValue({
+    (useSavePrompt as vi.Mock).mockReturnValue({
       mutate: mockSavePrompt,
       isPending: false,
     });
 
-    (useTestPrompt as jest.Mock).mockReturnValue({
+    (useTestPrompt as vi.Mock).mockReturnValue({
       mutate: mockTestPrompt,
       isPending: false,
     });
 
-    (useTriggerBulkEvaluation as jest.Mock).mockReturnValue({
+    (useTriggerBulkEvaluation as vi.Mock).mockReturnValue({
       mutate: mockTriggerBulkEvaluation,
       isPending: false,
     });
 
-    (useBulkEvaluationJobPolling as jest.Mock).mockReturnValue({
+    (useBulkEvaluationJobPolling as vi.Mock).mockReturnValue({
       data: null,
     });
   });
@@ -210,52 +211,68 @@ describe("PromptEditor", () => {
   });
 
   describe("Form Validation", () => {
-    it("should disable save button when name is empty", () => {
+    it("should disable save button when name is empty", async () => {
+      const user = userEvent.setup();
       render(<PromptEditor {...defaultProps} />);
 
       // Fill content but leave name empty
       const textarea = screen.getByTestId("markdown-textarea");
-      fireEvent.change(textarea, { target: { value: "Some content with json" } });
+      await user.clear(textarea);
+
+      await user.type(textarea, "Some content with json");
 
       const saveButton = screen.getByRole("button", { name: /Create Prompt/i });
       expect(saveButton).toBeDisabled();
     });
 
-    it("should disable save button when content is empty", () => {
+    it("should disable save button when content is empty", async () => {
+      const user = userEvent.setup();
       render(<PromptEditor {...defaultProps} />);
 
       // Fill name but leave content empty
       const nameInput = screen.getByLabelText(/Prompt Name/i);
-      fireEvent.change(nameInput, { target: { value: "test-prompt" } });
+      await user.clear(nameInput);
+
+      await user.type(nameInput, "test-prompt");
 
       const saveButton = screen.getByRole("button", { name: /Create Prompt/i });
       expect(saveButton).toBeDisabled();
     });
 
-    it("should enable save button when both name and content are filled", () => {
+    it("should enable save button when both name and content are filled", async () => {
+      const user = userEvent.setup();
       render(<PromptEditor {...defaultProps} />);
 
       const nameInput = screen.getByLabelText(/Prompt Name/i);
-      fireEvent.change(nameInput, { target: { value: "test-prompt" } });
+      await user.clear(nameInput);
+
+      await user.type(nameInput, "test-prompt");
 
       const textarea = screen.getByTestId("markdown-textarea");
-      fireEvent.change(textarea, { target: { value: "Content with json" } });
+      await user.clear(textarea);
+
+      await user.type(textarea, "Content with json");
 
       const saveButton = screen.getByRole("button", { name: /Create Prompt/i });
       expect(saveButton).toBeEnabled();
     });
 
     it("should show error when json is not in prompt", async () => {
+      const user = userEvent.setup();
       render(<PromptEditor {...defaultProps} />);
 
       const nameInput = screen.getByLabelText(/Prompt Name/i);
-      fireEvent.change(nameInput, { target: { value: "test-prompt" } });
+      await user.clear(nameInput);
+
+      await user.type(nameInput, "test-prompt");
 
       const textarea = screen.getByTestId("markdown-textarea");
-      fireEvent.change(textarea, { target: { value: "Content without the j word" } });
+      await user.clear(textarea);
+
+      await user.type(textarea, "Content without the j word");
 
       const saveButton = screen.getByRole("button", { name: /Create Prompt/i });
-      fireEvent.click(saveButton);
+      await user.click(saveButton);
 
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith(expect.stringContaining("json"));
@@ -265,24 +282,27 @@ describe("PromptEditor", () => {
 
   describe("Saving Prompt", () => {
     it("should call save mutation with correct data", async () => {
+      const user = userEvent.setup();
       render(<PromptEditor {...defaultProps} />);
 
       // Fill form
       const nameInput = screen.getByLabelText(/Prompt Name/i);
-      fireEvent.change(nameInput, { target: { value: "my-prompt" } });
+      await user.clear(nameInput);
+
+      await user.type(nameInput, "my-prompt");
 
       const systemMessageInput = screen.getByLabelText(/System Message/i);
-      fireEvent.change(systemMessageInput, {
-        target: { value: "You are a helpful assistant" },
-      });
+      await user.clear(systemMessageInput);
+
+      await user.type(systemMessageInput, "You are a helpful assistant");
 
       const textarea = screen.getByTestId("markdown-textarea");
-      fireEvent.change(textarea, {
-        target: { value: "Evaluate in json format" },
-      });
+      await user.clear(textarea);
+
+      await user.type(textarea, "Evaluate in json format");
 
       const saveButton = screen.getByRole("button", { name: /Create Prompt/i });
-      fireEvent.click(saveButton);
+      await user.click(saveButton);
 
       await waitFor(() => {
         expect(mockSavePrompt).toHaveBeenCalledWith({
@@ -295,18 +315,21 @@ describe("PromptEditor", () => {
     });
 
     it("should not include systemMessage if empty", async () => {
+      const user = userEvent.setup();
       render(<PromptEditor {...defaultProps} />);
 
       const nameInput = screen.getByLabelText(/Prompt Name/i);
-      fireEvent.change(nameInput, { target: { value: "my-prompt" } });
+      await user.clear(nameInput);
+
+      await user.type(nameInput, "my-prompt");
 
       const textarea = screen.getByTestId("markdown-textarea");
-      fireEvent.change(textarea, {
-        target: { value: "Evaluate in json format" },
-      });
+      await user.clear(textarea);
+
+      await user.type(textarea, "Evaluate in json format");
 
       const saveButton = screen.getByRole("button", { name: /Create Prompt/i });
-      fireEvent.click(saveButton);
+      await user.click(saveButton);
 
       await waitFor(() => {
         expect(mockSavePrompt).toHaveBeenCalledWith({
@@ -392,16 +415,20 @@ describe("PromptEditor", () => {
   });
 
   describe("Dirty State", () => {
-    it("should show unsaved changes warning when dirty", () => {
+    it("should show unsaved changes warning when dirty", async () => {
+      const user = userEvent.setup();
       render(<PromptEditor {...defaultProps} />);
 
       const textarea = screen.getByTestId("markdown-textarea");
-      fireEvent.change(textarea, { target: { value: "New content" } });
+      await user.clear(textarea);
+
+      await user.type(textarea, "New content");
 
       expect(screen.getByText(/unsaved changes/i)).toBeInTheDocument();
     });
 
-    it("should hide Test Prompt button when dirty", () => {
+    it("should hide Test Prompt button when dirty", async () => {
+      const user = userEvent.setup();
       const existingPrompt: ProgramPrompt = {
         id: "prompt-123",
         programId: "program-123",
@@ -425,7 +452,9 @@ describe("PromptEditor", () => {
 
       // Make form dirty
       const textarea = screen.getByTestId("markdown-textarea");
-      fireEvent.change(textarea, { target: { value: "Modified content" } });
+      await user.clear(textarea);
+
+      await user.type(textarea, "Modified content");
 
       // Test Prompt should be hidden
       expect(screen.queryByRole("button", { name: /Test Prompt/i })).not.toBeInTheDocument();

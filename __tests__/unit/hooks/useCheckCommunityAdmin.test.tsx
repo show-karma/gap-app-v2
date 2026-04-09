@@ -10,27 +10,27 @@ import { useCheckCommunityAdmin } from "@/hooks/communities/useCheckCommunityAdm
 import type { CommunityDetails } from "@/types/community";
 
 // Mock wagmi useAccount
-jest.mock("wagmi", () => ({
-  useAccount: jest.fn(() => ({
+vi.mock("wagmi", () => ({
+  useAccount: vi.fn(() => ({
     address: "0xMockWalletAddress",
   })),
 }));
 
 // Mock useAuth hook
-jest.mock("@/hooks/useAuth", () => ({
-  useAuth: jest.fn(() => ({
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: vi.fn(() => ({
     authenticated: true,
   })),
 }));
 
 // Mock useSigner
-jest.mock("@/utilities/eas-wagmi-utils", () => ({
-  useSigner: jest.fn(() => "mockSigner"),
+vi.mock("@/utilities/eas-wagmi-utils", () => ({
+  useSigner: vi.fn(() => "mockSigner"),
 }));
 
 // Mock isCommunityAdminOf
-jest.mock("@/utilities/sdk/communities/isCommunityAdmin", () => ({
-  isCommunityAdminOf: jest.fn(),
+vi.mock("@/utilities/sdk/communities/isCommunityAdmin", () => ({
+  isCommunityAdminOf: vi.fn(),
 }));
 
 import { useAccount } from "wagmi";
@@ -38,10 +38,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
 
-const mockUseAccount = useAccount as jest.MockedFunction<typeof useAccount>;
-const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
-const mockUseSigner = useSigner as jest.MockedFunction<typeof useSigner>;
-const mockIsCommunityAdminOf = isCommunityAdminOf as jest.MockedFunction<typeof isCommunityAdminOf>;
+const mockUseAccount = useAccount as vi.MockedFunction<typeof useAccount>;
+const mockUseAuth = useAuth as vi.MockedFunction<typeof useAuth>;
+const mockUseSigner = useSigner as vi.MockedFunction<typeof useSigner>;
+const mockIsCommunityAdminOf = isCommunityAdminOf as vi.MockedFunction<typeof isCommunityAdminOf>;
 
 // Test data
 const mockCommunity: CommunityDetails = {
@@ -82,7 +82,7 @@ describe("useCheckCommunityAdmin", () => {
   let queryClient: QueryClient;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     queryClient = createTestQueryClient();
 
     // Reset default mock implementations

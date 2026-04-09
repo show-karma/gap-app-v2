@@ -8,9 +8,9 @@ import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObject
 import { INDEXER } from "@/utilities/indexer";
 
 // Mock fetchData utility
-jest.mock("@/utilities/fetchData", () => ({
+vi.mock("@/utilities/fetchData", () => ({
   __esModule: true,
-  default: jest.fn(),
+  default: vi.fn(),
 }));
 
 describe("getProjectObjectives (V2)", () => {
@@ -48,14 +48,14 @@ describe("getProjectObjectives (V2)", () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("getProjectObjectives", () => {
     const projectId = "project-123";
 
     it("should fetch project milestones successfully", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([mockV2Response, null]);
+      (fetchData as vi.Mock).mockResolvedValue([mockV2Response, null]);
 
       const result = await getProjectObjectives(projectId);
 
@@ -71,7 +71,7 @@ describe("getProjectObjectives (V2)", () => {
     });
 
     it("should map V2 response to SDK format correctly", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([mockV2Response, null]);
+      (fetchData as vi.Mock).mockResolvedValue([mockV2Response, null]);
 
       const result = await getProjectObjectives(projectId);
 
@@ -94,7 +94,7 @@ describe("getProjectObjectives (V2)", () => {
     });
 
     it("should return empty array when fetch fails", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([null, "Not found"]);
+      (fetchData as vi.Mock).mockResolvedValue([null, "Not found"]);
 
       const result = await getProjectObjectives(projectId);
 
@@ -102,7 +102,7 @@ describe("getProjectObjectives (V2)", () => {
     });
 
     it("should return empty array when no milestones exist", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([{ milestones: [] }, null]);
+      (fetchData as vi.Mock).mockResolvedValue([{ milestones: [] }, null]);
 
       const result = await getProjectObjectives(projectId);
 
@@ -123,7 +123,7 @@ describe("getProjectObjectives (V2)", () => {
         },
       ];
 
-      (fetchData as jest.Mock).mockResolvedValue([{ milestones: milestonesWithoutDueDate }, null]);
+      (fetchData as vi.Mock).mockResolvedValue([{ milestones: milestonesWithoutDueDate }, null]);
 
       const result = await getProjectObjectives(projectId);
 
@@ -132,7 +132,7 @@ describe("getProjectObjectives (V2)", () => {
 
     it("should work with project slug instead of UID", async () => {
       const projectSlug = "my-project-slug";
-      (fetchData as jest.Mock).mockResolvedValue([mockV2Response, null]);
+      (fetchData as vi.Mock).mockResolvedValue([mockV2Response, null]);
 
       await getProjectObjectives(projectSlug);
 
@@ -147,7 +147,7 @@ describe("getProjectObjectives (V2)", () => {
     });
 
     it("should handle fetch throwing an error", async () => {
-      (fetchData as jest.Mock).mockRejectedValue(new Error("Network error"));
+      (fetchData as vi.Mock).mockRejectedValue(new Error("Network error"));
 
       const result = await getProjectObjectives(projectId);
 

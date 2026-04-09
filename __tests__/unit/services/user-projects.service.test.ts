@@ -11,9 +11,9 @@ import {
 } from "@/utilities/sdk/projects/fetchMyProjects";
 
 // Mock fetchData utility
-jest.mock("@/utilities/fetchData", () => ({
+vi.mock("@/utilities/fetchData", () => ({
   __esModule: true,
-  default: jest.fn(),
+  default: vi.fn(),
 }));
 
 describe("User Projects Service (V2)", () => {
@@ -55,14 +55,14 @@ describe("User Projects Service (V2)", () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("fetchMyProjects", () => {
     const mockAddress = "0xabcdef1234567890123456789012345678901234" as `0x${string}`;
 
     it("should fetch user projects successfully", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([mockPaginatedResponse, null]);
+      (fetchData as vi.Mock).mockResolvedValue([mockPaginatedResponse, null]);
 
       const result = await fetchMyProjects(mockAddress);
 
@@ -79,21 +79,23 @@ describe("User Projects Service (V2)", () => {
       expect(result[0].details.title).toBe("Test Project 1");
     });
 
-    it("should return empty array when no address provided", async () => {
+    it("should fetch projects even when no address provided (JWT auth)", async () => {
+      (fetchData as vi.Mock).mockResolvedValue([mockPaginatedResponse, null]);
+
       const result = await fetchMyProjects(undefined);
 
-      expect(fetchData).not.toHaveBeenCalled();
-      expect(result).toEqual([]);
+      expect(fetchData).toHaveBeenCalled();
+      expect(result).toHaveLength(2);
     });
 
     it("should throw when fetch fails", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([null, "Unauthorized"]);
+      (fetchData as vi.Mock).mockResolvedValue([null, "Unauthorized"]);
 
       await expect(fetchMyProjects(mockAddress)).rejects.toThrow("Unauthorized");
     });
 
     it("should handle custom page and limit", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([mockPaginatedResponse, null]);
+      (fetchData as vi.Mock).mockResolvedValue([mockPaginatedResponse, null]);
 
       await fetchMyProjects(mockAddress, 2, 50);
 
@@ -111,7 +113,7 @@ describe("User Projects Service (V2)", () => {
 
   describe("fetchMyProjectsPaginated", () => {
     it("should fetch paginated user projects", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([mockPaginatedResponse, null]);
+      (fetchData as vi.Mock).mockResolvedValue([mockPaginatedResponse, null]);
 
       const result = await fetchMyProjectsPaginated(1, 20);
 
@@ -130,7 +132,7 @@ describe("User Projects Service (V2)", () => {
     });
 
     it("should return null when fetch fails", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([null, "Unauthorized"]);
+      (fetchData as vi.Mock).mockResolvedValue([null, "Unauthorized"]);
 
       const result = await fetchMyProjectsPaginated();
 
@@ -138,7 +140,7 @@ describe("User Projects Service (V2)", () => {
     });
 
     it("should use default pagination values", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([mockPaginatedResponse, null]);
+      (fetchData as vi.Mock).mockResolvedValue([mockPaginatedResponse, null]);
 
       await fetchMyProjectsPaginated();
 

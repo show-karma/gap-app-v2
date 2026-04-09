@@ -189,8 +189,11 @@ export default function PayoutsAdminPage() {
 
   // Process payouts into table data format
   const tableData: PayoutsTableData[] = useMemo(() => {
-    return payouts.map((payout) => {
-      return {
+    const seen = new Set<string>();
+    return payouts.flatMap((payout) => {
+      if (seen.has(payout.grant.uid)) return [];
+      seen.add(payout.grant.uid);
+      return [{
         uid: payout.grant.uid,
         projectUid: payout.project.uid,
         projectName: payout.project.title,
@@ -202,7 +205,7 @@ export default function PayoutsAdminPage() {
         // Use admin-set values from attestation table (separate from project/grant native data)
         currentPayoutAddress: payout.project.adminPayoutAddress || "",
         currentAmount: payout.grant.adminPayoutAmount || "",
-      };
+      }];
     });
   }, [payouts]);
 
