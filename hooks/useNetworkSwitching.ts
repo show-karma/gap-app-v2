@@ -110,15 +110,7 @@ export function useNetworkSwitching() {
 
       // Check the actual wallet chain, not wagmi's potentially stale useChainId().
       // After Privy connect, wagmi can report a different chain than the wallet.
-      let actualChainId = chainId;
-      if (typeof window !== "undefined" && (window as any).ethereum) {
-        try {
-          const hexChainId = await (window as any).ethereum.request({ method: "eth_chainId" });
-          actualChainId = parseInt(hexChainId, 16);
-        } catch {
-          // Fall back to wagmi's chainId
-        }
-      }
+      const actualChainId = walletClient?.chain?.id ?? chainId;
 
       if (actualChainId === targetChainId) {
         return; // Already on target network
