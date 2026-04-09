@@ -1,3 +1,4 @@
+import { safeJsonLdStringify } from "@/utilities/jsonLd";
 import { SITE_URL } from "@/utilities/meta";
 
 interface CollectionPageJsonLdProps {
@@ -19,7 +20,7 @@ export function CollectionPageJsonLd({ name, description, url }: CollectionPageJ
     <script
       type="application/ld+json"
       dangerouslySetInnerHTML={{
-        __html: JSON.stringify(collectionPageSchema),
+        __html: safeJsonLdStringify(collectionPageSchema),
       }}
     />
   );

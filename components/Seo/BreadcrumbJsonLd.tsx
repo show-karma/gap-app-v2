@@ -1,3 +1,4 @@
+import { safeJsonLdStringify } from "@/utilities/jsonLd";
 import { SITE_URL } from "@/utilities/meta";
 
 interface BreadcrumbJsonLdProps {
@@ -20,7 +21,7 @@ export function BreadcrumbJsonLd({ items }: BreadcrumbJsonLdProps) {
     <script
       type="application/ld+json"
       dangerouslySetInnerHTML={{
-        __html: JSON.stringify(breadcrumbSchema),
+        __html: safeJsonLdStringify(breadcrumbSchema),
       }}
     />
   );

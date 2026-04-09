@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { PROJECT_NAME } from "@/constants/brand";
+import { safeJsonLdStringify } from "@/utilities/jsonLd";
 import { SITE_URL } from "@/utilities/meta";
 import { getCommunityDetails } from "@/utilities/queries/v2/getCommunityData";
 
@@ -34,7 +35,7 @@ export default async function DonateLayout({ children, params }: Props) {
         type="application/ld+json"
         // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD structured data requires dangerouslySetInnerHTML
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
+          __html: safeJsonLdStringify({
             "@context": "https://schema.org",
             "@type": "DonateAction",
             name: `Donate to ${communityName} Projects`,

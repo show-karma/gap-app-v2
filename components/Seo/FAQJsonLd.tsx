@@ -1,3 +1,5 @@
+import { safeJsonLdStringify } from "@/utilities/jsonLd";
+
 interface FAQJsonLdProps {
   questions: Array<{ question: string; answer: string }>;
 }
@@ -20,7 +22,7 @@ export function FAQJsonLd({ questions }: FAQJsonLdProps) {
     <script
       type="application/ld+json"
       dangerouslySetInnerHTML={{
-        __html: JSON.stringify(faqSchema),
+        __html: safeJsonLdStringify(faqSchema),
       }}
     />
   );

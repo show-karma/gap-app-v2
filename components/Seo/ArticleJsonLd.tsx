@@ -1,3 +1,4 @@
+import { safeJsonLdStringify } from "@/utilities/jsonLd";
 import { SITE_URL } from "@/utilities/meta";
 
 interface ArticleJsonLdProps {
@@ -46,7 +47,7 @@ export function ArticleJsonLd({
     <script
       type="application/ld+json"
       dangerouslySetInnerHTML={{
-        __html: JSON.stringify(articleSchema),
+        __html: safeJsonLdStringify(articleSchema),
       }}
     />
   );

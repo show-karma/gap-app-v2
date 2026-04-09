@@ -1,3 +1,5 @@
+import { safeJsonLdStringify } from "@/utilities/jsonLd";
+
 interface HowToJsonLdProps {
   name: string;
   description: string;
@@ -22,7 +24,7 @@ export function HowToJsonLd({ name, description, steps }: HowToJsonLdProps) {
     <script
       type="application/ld+json"
       dangerouslySetInnerHTML={{
-        __html: JSON.stringify(howToSchema),
+        __html: safeJsonLdStringify(howToSchema),
       }}
     />
   );

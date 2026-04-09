@@ -1,4 +1,5 @@
 import type { TenantConfig } from "@/src/infrastructure/types/tenant";
+import { safeJsonLdStringify } from "@/utilities/jsonLd";
 
 interface WhitelabelJsonLdProps {
   tenant: TenantConfig;
@@ -34,11 +35,11 @@ export function WhitelabelJsonLd({ tenant, url }: WhitelabelJsonLdProps) {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLdStringify(organizationSchema) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(webAppSchema) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLdStringify(webAppSchema) }}
       />
     </>
   );
