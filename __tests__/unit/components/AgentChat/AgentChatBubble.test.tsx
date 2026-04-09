@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AgentChatBubble } from "@/components/AgentChat/AgentChatBubble";
 import { useAgentChatStore } from "@/store/agentChat";
@@ -91,49 +91,22 @@ vi.mock("@/src/components/ai-elements/message-response", () => ({
   ),
 }));
 
-vi.mock("@/src/components/ai-elements/prompt-input", () => ({
-  PromptInput: ({
-    children,
-    onSubmit,
-  }: {
-    children: React.ReactNode;
-    onSubmit: (msg: { text: string; files: unknown[] }) => void;
-  }) => (
-    <form
-      data-testid="prompt-input"
-      onSubmit={(e) => {
-        e.preventDefault();
-        const textarea = e.currentTarget.querySelector("textarea");
-        onSubmit({ text: textarea?.value ?? "", files: [] });
-      }}
-    >
-      {children}
-    </form>
+// WidgetInput is now used by AgentChatBubble — mock the InputGroup primitives it renders
+vi.mock("@/components/ui/input-group", () => ({
+  InputGroup: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="input-group">{children}</div>
   ),
-  PromptInputTextarea: (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => (
+  InputGroupTextarea: (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => (
     <textarea data-testid="prompt-textarea" {...props} />
   ),
-  PromptInputSubmit: ({
-    status,
-    onStop,
-    disabled,
-  }: {
-    status?: string;
-    onStop?: () => void;
-    disabled?: boolean;
-  }) =>
-    status === "streaming" ? (
-      <button data-testid="stop-button" type="button" onClick={onStop}>
-        Stop
-      </button>
-    ) : (
-      <button data-testid="submit-button" type="submit" disabled={disabled}>
-        Send
-      </button>
-    ),
-  PromptInputFooter: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="prompt-footer">{children}</div>
-  ),
+  InputGroupAddon: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  InputGroupButton: ({
+    children,
+    ...props
+  }: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: string; size?: string }) => {
+    const { variant, size, ...rest } = props as Record<string, unknown>;
+    return <button {...(rest as React.ButtonHTMLAttributes<HTMLButtonElement>)}>{children}</button>;
+  },
 }));
 
 // Mock use-stick-to-bottom
@@ -149,8 +122,10 @@ vi.mock("lucide-react", () => ({
   AlertCircleIcon: () => <span data-testid="icon-alert-circle" />,
   BotIcon: () => <span data-testid="icon-bot" />,
   CopyIcon: () => <span data-testid="icon-copy" />,
+  CornerDownLeftIcon: () => <span data-testid="icon-corner-down-left" />,
   MessageSquareIcon: () => <span data-testid="icon-message-square" />,
   SparklesIcon: () => <span data-testid="icon-sparkles" />,
+  SquareIcon: () => <span data-testid="icon-square" />,
   Trash2Icon: () => <span data-testid="icon-trash" />,
   UserIcon: () => <span data-testid="icon-user" />,
   XIcon: () => <span data-testid="icon-x" />,
@@ -381,31 +356,23 @@ describe("AgentChatBubble", () => {
 
     const textarea = screen.getByTestId("prompt-textarea");
     await user.clear(textarea);
-
-    await user.type(textarea, "Test message");
-
-    const form = screen.getByTestId("prompt-input");
-    // fireEvent required: no userEvent equivalent for submit events
-    fireEvent.submit(form);
+    await user.type(textarea, "Test message{Enter}");
 
     expect(mockSendMessage).toHaveBeenCalledWith("Test message");
   });
 
-  it("should not submit empty messages", () => {
+  it("should not submit empty messages", async () => {
     useAgentChatStore.setState({ isOpen: true });
     render(<AgentChatBubble />);
 
-    const form = screen.getByTestId("prompt-input");
-    // fireEvent required: no userEvent equivalent for submit events
-    fireEvent.submit(form);
-
-    expect(mockSendMessage).not.toHaveBeenCalled();
+    const sendButton = screen.getByLabelText("Send message");
+    expect(sendButton).toBeDisabled();
   });
 
   it("should show stop button when streaming", () => {
     useAgentChatStore.setState({ isOpen: true, isStreaming: true });
     render(<AgentChatBubble />);
-    expect(screen.getByTestId("stop-button")).toBeInTheDocument();
+    expect(screen.getByLabelText("Stop generating")).toBeInTheDocument();
   });
 
   it("should call abort when stop button clicked", async () => {
@@ -413,7 +380,7 @@ describe("AgentChatBubble", () => {
     useAgentChatStore.setState({ isOpen: true, isStreaming: true });
     render(<AgentChatBubble />);
 
-    await user.click(screen.getByTestId("stop-button"));
+    await user.click(screen.getByLabelText("Stop generating"));
     expect(mockAbort).toHaveBeenCalled();
   });
 

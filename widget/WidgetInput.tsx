@@ -49,6 +49,7 @@ export const WidgetInput = memo(function WidgetInput({
           placeholder={placeholder}
           disabled={isStreaming}
           className="min-h-10 max-h-24 text-sm"
+          aria-label="Chat message"
         />
         <InputGroupAddon align="block-end" className="justify-between gap-1">
           <div />

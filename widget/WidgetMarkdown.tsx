@@ -175,6 +175,13 @@ function sanitizeNode(node: Node): void {
         el.removeAttribute(attr.name);
       }
     }
+    // Validate href on <a> elements — only allow http/https protocols
+    if (el.tagName.toLowerCase() === "a") {
+      const href = el.getAttribute("href") ?? "";
+      if (!/^https?:\/\//i.test(href)) {
+        el.removeAttribute("href");
+      }
+    }
     sanitizeNode(el);
   }
 }
