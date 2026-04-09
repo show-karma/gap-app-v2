@@ -27,6 +27,7 @@ import {
   type CommunityPayoutInvoiceInfo,
   fromSmallestUnit,
   type MilestoneAllocation,
+  MilestoneLifecycleStatus,
   PayoutConfigurationContent,
   type PayoutConfigurationContentRef,
   type PayoutDisbursement,
@@ -229,8 +230,13 @@ export function ProjectDetailsSidebar({
     const received = milestoneInvoices.filter(
       (i) => i.invoiceStatus === "received" || i.invoiceStatus === "paid"
     ).length;
+    const completed = milestoneInvoices.filter(
+      (i) =>
+        i.milestoneStatus === MilestoneLifecycleStatus.COMPLETED ||
+        i.milestoneStatus === MilestoneLifecycleStatus.VERIFIED
+    ).length;
     const paid = milestoneInvoices.filter((i) => i.paymentStatus === "disbursed").length;
-    return { total, received, paid };
+    return { total, received, completed, paid };
   }, [milestoneInvoices]);
 
   const allocationByUID = useMemo(() => {

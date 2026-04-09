@@ -103,18 +103,27 @@ export function ProgressCell({
   const received = invoices.filter(
     (inv) => inv.invoiceStatus === "received" || inv.invoiceStatus === "paid"
   ).length;
+  const completed = invoices.filter(
+    (inv) =>
+      inv.milestoneStatus === MilestoneLifecycleStatus.COMPLETED ||
+      inv.milestoneStatus === MilestoneLifecycleStatus.VERIFIED
+  ).length;
 
   if (total === 0) {
     return <span className="text-xs text-gray-500 dark:text-zinc-500">No milestones</span>;
   }
 
-  const allDone = invoiceRequired ? paid === total && received === total : paid === total;
-  const hasProgress = invoiceRequired ? paid > 0 || received > 0 : paid > 0;
+  // For non-invoice programs, only paid status determines "all done".
+  // For invoice programs, all three metrics must be complete.
+  const allDone = invoiceRequired
+    ? paid === total && received === total && completed === total
+    : paid === total && completed === total;
+  const hasProgress = paid > 0 || received > 0 || completed > 0;
 
   return (
     <div
       className={cn(
-        "text-xs tabular-nums",
+        "text-xs tabular-nums whitespace-nowrap",
         allDone
           ? "text-green-700 dark:text-green-400"
           : hasProgress
@@ -122,14 +131,17 @@ export function ProgressCell({
             : "text-gray-600 dark:text-zinc-400"
       )}
     >
-      <div>
-        {paid}/{total} milestones paid
-      </div>
       {invoiceRequired && (
         <div>
           {received}/{total} invoices received
         </div>
       )}
+      <div>
+        {completed}/{total} milestones completed
+      </div>
+      <div>
+        {paid}/{total} milestones paid
+      </div>
     </div>
   );
 }

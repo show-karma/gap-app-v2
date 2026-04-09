@@ -44,7 +44,7 @@ export interface DetailsSectionProps {
   } | null;
   awaitingTx: PayoutDisbursement | null;
   chainInfo: { chainID: number; token: string; tokenDecimals: number } | null;
-  milestoneSummary: { total: number; received: number; paid: number } | null;
+  milestoneSummary: { total: number; received: number; completed: number; paid: number } | null;
   invoiceRequired: boolean;
 }
 
@@ -251,6 +251,12 @@ export const DetailsSection = memo(function DetailsSection({
               {milestoneSummary.total === 1 ? "invoice" : "invoices"} received
             </span>
           )}
+          <span>
+            <span className="font-medium text-gray-700 dark:text-zinc-300">
+              {milestoneSummary.completed}/{milestoneSummary.total}
+            </span>{" "}
+            {milestoneSummary.total === 1 ? "milestone" : "milestones"} completed
+          </span>
           <span>
             <span className="font-medium text-gray-700 dark:text-zinc-300">
               {milestoneSummary.paid}/{milestoneSummary.total}

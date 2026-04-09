@@ -193,19 +193,21 @@ export default function PayoutsAdminPage() {
     return payouts.flatMap((payout) => {
       if (seen.has(payout.grant.uid)) return [];
       seen.add(payout.grant.uid);
-      return [{
-        uid: payout.grant.uid,
-        projectUid: payout.project.uid,
-        projectName: payout.project.title,
-        projectSlug: payout.project.slug,
-        grantName: payout.grant.title,
-        grantProgramId: payout.grant.programId || "",
-        grantChainId: payout.grant.chainID,
-        projectChainId: payout.project.chainID,
-        // Use admin-set values from attestation table (separate from project/grant native data)
-        currentPayoutAddress: payout.project.adminPayoutAddress || "",
-        currentAmount: payout.grant.adminPayoutAmount || "",
-      }];
+      return [
+        {
+          uid: payout.grant.uid,
+          projectUid: payout.project.uid,
+          projectName: payout.project.title,
+          projectSlug: payout.project.slug,
+          grantName: payout.grant.title,
+          grantProgramId: payout.grant.programId || "",
+          grantChainId: payout.grant.chainID,
+          projectChainId: payout.project.chainID,
+          // Use admin-set values from attestation table (separate from project/grant native data)
+          currentPayoutAddress: payout.project.adminPayoutAddress || "",
+          currentAmount: payout.grant.adminPayoutAmount || "",
+        },
+      ];
     });
   }, [payouts]);
 
