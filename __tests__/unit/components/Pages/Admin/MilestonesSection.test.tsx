@@ -142,11 +142,7 @@ describe("MilestonesSection", () => {
     });
 
     render(
-      <MilestonesSection
-        {...defaultProps}
-        invoiceRequired={true}
-        milestoneInvoices={[invoice]}
-      />
+      <MilestonesSection {...defaultProps} invoiceRequired={true} milestoneInvoices={[invoice]} />
     );
 
     await userEvent.click(screen.getByRole("button", { name: /view invoice/i }));

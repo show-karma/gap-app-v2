@@ -1,9 +1,11 @@
 import {
   ArrowDownTrayIcon,
+  ArrowTopRightOnSquareIcon,
   ExclamationTriangleIcon,
   PaperClipIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
+import Link from "next/link";
 import { memo, useCallback, useState } from "react";
 import toast from "react-hot-toast";
 import { FileUpload } from "@/components/Utilities/FileUpload";
@@ -26,6 +28,7 @@ import { formatAddressForDisplay } from "@/utilities/donations/helpers";
 import { formatDate } from "@/utilities/formatDate";
 import { formatMilestoneTitle } from "@/utilities/formatMilestoneTitle";
 import { INDEXER } from "@/utilities/indexer";
+import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { PaymentStatusDropdown } from "./PaymentStatusDropdown";
 import type { ProjectDetailsSidebarGrant } from "./ProjectDetailsSidebar";
@@ -318,9 +321,15 @@ export const MilestonesSection = memo(function MilestonesSection({
                               )}
                             />
                           )}
-                          <span className="font-medium text-gray-900 dark:text-zinc-100">
+                          <Link
+                            href={`${PAGES.MANAGE.FUNDING_PLATFORM.MILESTONES(communityUID, grant.grantProgramId, grant.projectUid)}${invoice.milestoneUID ? `#${invoice.milestoneUID}` : ""}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 font-medium text-gray-900 dark:text-zinc-100 hover:text-blue-600 dark:hover:text-blue-400 hover:underline transition-colors"
+                          >
                             {formatMilestoneTitle(idx, invoice.milestoneLabel)}
-                          </span>
+                            <ArrowTopRightOnSquareIcon className="h-3 w-3 opacity-40 shrink-0" />
+                          </Link>
                         </div>
                       </td>
                       <td className="py-3 px-3 text-center">
@@ -399,9 +408,24 @@ export const MilestonesSection = memo(function MilestonesSection({
                                     disabled={loadingFileKeys.has(invoice.invoiceFileKey!)}
                                   >
                                     {loadingFileKeys.has(invoice.invoiceFileKey!) ? (
-                                      <svg className="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                      <svg
+                                        className="h-3 w-3 animate-spin"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                      >
+                                        <circle
+                                          className="opacity-25"
+                                          cx="12"
+                                          cy="12"
+                                          r="10"
+                                          stroke="currentColor"
+                                          strokeWidth="4"
+                                        />
+                                        <path
+                                          className="opacity-75"
+                                          fill="currentColor"
+                                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                                        />
                                       </svg>
                                     ) : (
                                       <ArrowDownTrayIcon className="h-3 w-3" />
