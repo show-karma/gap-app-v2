@@ -1,7 +1,7 @@
 import type { IMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/Milestone";
 import { useState } from "react";
+import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
-
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useProjectStore } from "@/store";
@@ -12,7 +12,7 @@ import { envVars } from "@/utilities/enviromentVars";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { queryClient } from "@/utilities/query-client";
-import { createProjectQueryPredicate } from "@/utilities/queryKeys";
+import { createProjectQueryPredicate, QUERY_KEYS } from "@/utilities/queryKeys";
 import { retryUntilConditionMet } from "@/utilities/retries";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { getProjectById } from "@/utilities/sdk";
@@ -63,13 +63,15 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
     }
 
     if (options?.programId) {
+      const reportKey = QUERY_KEYS.COMMUNITY.REPORT_MILESTONES("", 0, "", "", [])[0];
+      const pendingKey = QUERY_KEYS.COMMUNITY.PENDING_VERIFICATION("", 0, [])[0];
+      const grantMilestonesKey = QUERY_KEYS.MILESTONES.PROJECT_GRANT_MILESTONES("", "")[0];
+
       invalidations.push(
         queryClient.invalidateQueries({
           predicate: (query) => {
             const key = query.queryKey[0];
-            return key === "reportMilestones" ||
-              key === "pendingVerificationMilestones" ||
-              key === "project-grant-milestones";
+            return key === reportKey || key === pendingKey || key === grantMilestonesKey;
           },
         })
       );
@@ -126,8 +128,14 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
       });
 
       if (!response.data.revocationSuccess) {
-        throw new Error(
-          "Milestone was re-attested, but the previous attestation could not be revoked"
+        toast("Milestone updated, but the old attestation could not be revoked.", {
+          icon: "\u26A0\uFE0F",
+          duration: 6000,
+        });
+        errorManager(
+          "Old milestone attestation revocation failed (non-fatal)",
+          new Error("revocationSuccess was false"),
+          { milestoneUid: milestone.uid, newUid: response.data.newMilestoneUID }
         );
       }
 

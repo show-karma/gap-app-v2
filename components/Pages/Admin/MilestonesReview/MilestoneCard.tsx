@@ -157,16 +157,6 @@ export function MilestoneCard({
               <PencilSquareIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
             </Button>
           )}
-          {unifiedMilestone && isEditOpen && (
-            <MilestoneEditDialog
-              milestone={unifiedMilestone}
-              isOpen={isEditOpen}
-              onClose={handleEditClose}
-              projectUid={projectUid}
-              projectSlug={projectSlug}
-              programId={programId}
-            />
-          )}
           {canDeleteMilestones && milestone.fundingApplicationCompletion && (
             <DeleteDialog
               deleteFunction={() => onDeleteMilestone(milestone)}
@@ -315,6 +305,17 @@ export function MilestoneCard({
           milestoneUID={milestone.uid}
           isOpen={isEvaluationModalOpen}
           onClose={() => setIsEvaluationModalOpen(false)}
+        />
+      )}
+
+      {unifiedMilestone && isEditOpen && (
+        <MilestoneEditDialog
+          milestone={unifiedMilestone}
+          isOpen={isEditOpen}
+          onClose={handleEditClose}
+          projectUid={projectUid}
+          projectSlug={projectSlug}
+          programId={programId}
         />
       )}
     </div>
