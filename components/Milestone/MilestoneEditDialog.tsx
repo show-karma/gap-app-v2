@@ -27,6 +27,7 @@ const editMilestoneSchema = z.object({
     .max(200, "Title must be less than 200 characters")
     .refine((val) => val.trim().length > 0, "Title cannot be only whitespace"),
   description: z.string().max(5000, "Description must be less than 5000 characters").optional(),
+  startsAt: z.string().optional(),
   endsAt: z.string().optional(),
   priority: z.preprocess(
     (v) => (v === "" ? undefined : v),
@@ -46,6 +47,8 @@ interface MilestoneEditDialogProps {
   projectSlug?: string;
   /** Program ID for admin on-chain edits */
   programId?: string;
+  /** Hide the start date field (e.g. admin review flow) */
+  hideStartDate?: boolean;
 }
 
 function unixToDateInput(unix?: number): string {
@@ -68,6 +71,7 @@ export const MilestoneEditDialog = ({
   projectUid,
   projectSlug,
   programId,
+  hideStartDate = false,
 }: MilestoneEditDialogProps) => {
   const { isEditing, editMilestone } = useMilestoneEdit(
     projectUid ? { projectUid, projectSlug, programId } : undefined
@@ -92,6 +96,7 @@ export const MilestoneEditDialog = ({
     defaultValues: {
       title: milestone.title || "",
       description: milestone.description || "",
+      startsAt: unixToDateInput(milestone.startsAt),
       endsAt: unixToDateInput(milestone.endsAt),
       priority: grantMilestone?.priority ?? undefined,
     },
@@ -103,6 +108,7 @@ export const MilestoneEditDialog = ({
       const editData: MilestoneEditData = {
         title: data.title.trim(),
         description: data.description?.trim() || undefined,
+        startsAt: hideStartDate ? undefined : dateInputToUnix(data.startsAt),
         endsAt: dateInputToUnix(data.endsAt),
         priority: data.priority,
       };
@@ -160,19 +166,37 @@ export const MilestoneEditDialog = ({
             ) : null}
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label
-              htmlFor="milestone-ends-at"
-              className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
-            >
-              Due Date
-            </label>
-            <Input
-              id="milestone-ends-at"
-              type="date"
-              {...register("endsAt")}
-              disabled={isEditing}
-            />
+          <div className={hideStartDate ? "" : "grid grid-cols-2 gap-4"}>
+            {!hideStartDate && (
+              <div className="flex flex-col gap-1.5">
+                <label
+                  htmlFor="milestone-starts-at"
+                  className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                >
+                  Start Date
+                </label>
+                <Input
+                  id="milestone-starts-at"
+                  type="date"
+                  {...register("startsAt")}
+                  disabled={isEditing}
+                />
+              </div>
+            )}
+            <div className="flex flex-col gap-1.5">
+              <label
+                htmlFor="milestone-ends-at"
+                className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
+              >
+                Due Date
+              </label>
+              <Input
+                id="milestone-ends-at"
+                type="date"
+                {...register("endsAt")}
+                disabled={isEditing}
+              />
+            </div>
           </div>
 
           <div className="flex flex-col gap-1.5">
