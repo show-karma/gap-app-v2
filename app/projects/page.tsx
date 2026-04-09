@@ -11,7 +11,7 @@ import { customMetadata } from "@/utilities/meta";
 export const metadata = customMetadata({
   title: "Explore Grant-Funded Projects",
   description:
-    "Discover thousands of projects using Karma to track grants, share progress, and build reputation. Explore projects making a difference across Web3 ecosystems.",
+    "Discover thousands of projects using Karma to track grants, share progress, and build reputation. Explore projects making a difference across funding ecosystems.",
   path: "/projects",
 });
 
@@ -20,7 +20,7 @@ export default function Projects() {
     <div className="flex flex-col w-full">
       <CollectionPageJsonLd
         name="Explore Grant-Funded Projects"
-        description="Discover thousands of projects using Karma to track grants, share progress, and build reputation. Explore projects making a difference across Web3 ecosystems."
+        description="Discover thousands of projects using Karma to track grants, share progress, and build reputation. Explore projects making a difference across funding ecosystems."
         url="/projects"
       />
       <ProjectsHeroSection />

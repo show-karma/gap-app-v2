@@ -6,7 +6,7 @@ import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
 
 export const metadata: Metadata = customMetadata({
-  title: "What Is Grant Accountability in Web3?",
+  title: "What Is Grant Accountability in Open Funding?",
   description:
     "Grant accountability turns funding promises into persistent execution history. Discover how to track funded projects and improve capital allocation over time.",
   path: "/knowledge/grant-accountability",
@@ -24,7 +24,7 @@ export default function GrantAccountabilityPage() {
         ]}
       />
       <ArticleJsonLd
-        title="What Is Grant Accountability in Web3?"
+        title="What Is Grant Accountability in Open Funding?"
         description="Grant accountability turns funding promises into persistent execution history. Discover how to track funded projects and improve capital allocation over time."
         url="/knowledge/grant-accountability"
         datePublished="2025-01-15"
@@ -38,7 +38,7 @@ export default function GrantAccountabilityPage() {
         ]}
       />
       <article className="space-y-8">
-        <h1 className="text-3xl font-bold">What Is Grant Accountability in Web3?</h1>
+        <h1 className="text-3xl font-bold">What Is Grant Accountability in Open Funding?</h1>
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold">In one sentence</h2>
@@ -50,7 +50,7 @@ export default function GrantAccountabilityPage() {
         <section className="space-y-4">
           <h2 className="text-xl font-semibold">Short answer</h2>
           <p className="text-gray-700 dark:text-gray-300">
-            Grant accountability in Web3 is the system of tracking how funded projects execute on
+            Grant accountability is the system of tracking how funded projects execute on
             their commitments over time, making progress visible, verifiable, and reusable for
             future funding decisions.
           </p>
@@ -59,7 +59,7 @@ export default function GrantAccountabilityPage() {
         <section className="space-y-4">
           <h2 className="text-xl font-semibold">Why this matters</h2>
           <p className="text-gray-700 dark:text-gray-300">
-            Most Web3 ecosystems spend enormous effort deciding <strong>who gets funded</strong>,
+            Most funding ecosystems spend enormous effort deciding <strong>who gets funded</strong>,
             and very little effort understanding <strong>what happens after funding</strong>. When
             execution is not tracked in a durable, comparable way, ecosystems cannot learn which
             teams reliably deliver.

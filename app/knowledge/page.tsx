@@ -59,7 +59,7 @@ export default function KnowledgePage() {
         <section className="space-y-6">
           <h2 className="text-xl font-semibold">What this knowledge base covers</h2>
           <p className="text-gray-700 dark:text-gray-300">
-            Open funding systems — especially in Web3 — face a common problem:{" "}
+            Open funding systems face a common problem:{" "}
             <strong>capital moves faster than accountability.</strong>
           </p>
           <p className="text-gray-700 dark:text-gray-300">

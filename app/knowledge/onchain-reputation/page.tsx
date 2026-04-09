@@ -5,7 +5,7 @@ import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
 import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
 
-const title = "What Is Onchain Reputation in Web3 Funding?";
+const title = "What Is Onchain Reputation in Open Funding?";
 const description =
   "What reputation means in open funding systems, how it differs from tokens or identity, and why persistent execution history matters for projects and funders.";
 
@@ -41,7 +41,7 @@ export default function OnchainReputationPage() {
         ]}
       />
       <article className="space-y-8">
-        <h1 className="text-3xl font-bold">What Is Onchain Reputation in Web3 Funding?</h1>
+        <h1 className="text-3xl font-bold">What Is Onchain Reputation in Open Funding?</h1>
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold">In one sentence</h2>

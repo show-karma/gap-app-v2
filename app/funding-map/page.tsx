@@ -8,9 +8,9 @@ import { FundingMapSidebar } from "@/src/features/funding-map/components/funding
 import { customMetadata } from "@/utilities/meta";
 
 export const metadata: Metadata = customMetadata({
-  title: "Directory of Web3 Funding Programs",
+  title: "Directory of Funding Programs",
   description:
-    "Browse the complete directory of Web3 funding programs. Find grants, retroactive funding, and ecosystem support across Ethereum, Optimism, Arbitrum, and more.",
+    "Browse the complete directory of funding programs. Find grants, retroactive funding, and ecosystem support across Ethereum, Optimism, Arbitrum, and more.",
   path: "/funding-map",
 });
 
@@ -18,8 +18,8 @@ const FundingMapPage = () => {
   return (
     <main className="flex w-full flex-col">
       <CollectionPageJsonLd
-        name="Directory of Web3 Funding Programs"
-        description="Browse the complete directory of Web3 funding programs. Find grants, retroactive funding, and ecosystem support across Ethereum, Optimism, Arbitrum, and more."
+        name="Directory of Funding Programs"
+        description="Browse the complete directory of funding programs. Find grants, retroactive funding, and ecosystem support across Ethereum, Optimism, Arbitrum, and more."
         url="/funding-map"
       />
       <Suspense fallback={null}>

@@ -8,6 +8,7 @@ export const metadata: Metadata = customMetadata({
   description:
     "View Karma platform statistics including total projects, grants awarded, active communities, milestone completions, and ecosystem growth metrics over time.",
   path: "/stats",
+  robots: { index: false, follow: false },
 });
 
 export default function Index() {
