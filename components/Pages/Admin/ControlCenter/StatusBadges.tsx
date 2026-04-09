@@ -113,13 +113,17 @@ export function ProgressCell({
     return <span className="text-xs text-gray-500 dark:text-zinc-500">No milestones</span>;
   }
 
-  const allDone = paid === total && received === total && completed === total;
+  // For non-invoice programs, only paid status determines "all done".
+  // For invoice programs, all three metrics must be complete.
+  const allDone = invoiceRequired
+    ? paid === total && received === total && completed === total
+    : paid === total && completed === total;
   const hasProgress = paid > 0 || received > 0 || completed > 0;
 
   return (
     <div
       className={cn(
-        "text-xs tabular-nums",
+        "text-xs tabular-nums whitespace-nowrap",
         allDone
           ? "text-green-700 dark:text-green-400"
           : hasProgress
