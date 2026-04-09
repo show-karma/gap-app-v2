@@ -1,7 +1,7 @@
 "use client";
 
-import { SparklesIcon, Trash2Icon, XIcon } from "lucide-react";
-import { useCallback, useState } from "react";
+import { Trash2Icon, XIcon } from "lucide-react";
+import { useCallback } from "react";
 import { ConfirmationCard } from "@/components/AgentChat/ConfirmationCard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,14 +10,8 @@ import { useAgentContextSync } from "@/hooks/useAgentContextSync";
 import { useAgentStream } from "@/hooks/useAgentStream";
 import { useAuth } from "@/hooks/useAuth";
 import { MessageResponse } from "@/src/components/ai-elements/message-response";
-import {
-  PromptInput,
-  PromptInputFooter,
-  type PromptInputMessage,
-  PromptInputSubmit,
-  PromptInputTextarea,
-} from "@/src/components/ai-elements/prompt-input";
 import { useAgentChatStore } from "@/store/agentChat";
+import { WidgetInput } from "@/widget/WidgetInput";
 import { ChatBubbleShell } from "./ChatBubbleShell";
 
 function contextLabel(ctx: Record<string, string | undefined> | null): string | null {
@@ -34,17 +28,14 @@ export function AgentChatBubble() {
   const { isOpen, toggleOpen, messages, isStreaming, error, clearMessages, agentContext } =
     useAgentChatStore();
   const { sendMessage, sendConfirmation, abort } = useAgentStream();
-  const [input, setInput] = useState("");
 
   // Sync page context (project/program/application) to agent store
   useAgentContextSync();
 
   const handleSubmit = useCallback(
-    (message: PromptInputMessage) => {
-      const trimmed = message.text.trim();
-      if (!trimmed || isStreaming) return;
-      setInput("");
-      sendMessage(trimmed);
+    (text: string) => {
+      if (!text || isStreaming) return;
+      sendMessage(text);
     },
     [isStreaming, sendMessage]
   );
@@ -71,25 +62,12 @@ export function AgentChatBubble() {
       error={error}
       renderMarkdown={(content) => <MessageResponse>{content}</MessageResponse>}
       renderInput={() => (
-        <div className="border-t border-border p-3">
-          <PromptInput onSubmit={handleSubmit}>
-            <PromptInputTextarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder={authenticated ? "Ask about your project..." : "Ask about a project..."}
-              disabled={isStreaming}
-              className="min-h-10 max-h-24 text-sm"
-            />
-            <PromptInputFooter>
-              <div />
-              <PromptInputSubmit
-                status={isStreaming ? "streaming" : "ready"}
-                onStop={abort}
-                disabled={!input.trim() && !isStreaming}
-              />
-            </PromptInputFooter>
-          </PromptInput>
-        </div>
+        <WidgetInput
+          onSubmit={handleSubmit}
+          isStreaming={isStreaming}
+          onStop={abort}
+          placeholder={authenticated ? "Ask about your project..." : "Ask about a project..."}
+        />
       )}
       renderAfterMessage={(msg) =>
         msg.toolResult?.type === "preview" && authenticated ? (
