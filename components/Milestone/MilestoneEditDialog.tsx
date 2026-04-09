@@ -47,8 +47,8 @@ interface MilestoneEditDialogProps {
   projectSlug?: string;
   /** Program ID for admin on-chain edits */
   programId?: string;
-  /** Hide the start date field (e.g. admin review flow) */
-  hideStartDate?: boolean;
+  /** Exclude the start date field from display and submission (e.g. admin review flow) */
+  excludeStartDate?: boolean;
 }
 
 function unixToDateInput(unix?: number): string {
@@ -71,7 +71,7 @@ export const MilestoneEditDialog = ({
   projectUid,
   projectSlug,
   programId,
-  hideStartDate = false,
+  excludeStartDate = false,
 }: MilestoneEditDialogProps) => {
   const { isEditing, editMilestone } = useMilestoneEdit(
     projectUid ? { projectUid, projectSlug, programId } : undefined
@@ -108,7 +108,7 @@ export const MilestoneEditDialog = ({
       const editData: MilestoneEditData = {
         title: data.title.trim(),
         description: data.description?.trim() || undefined,
-        startsAt: hideStartDate ? undefined : dateInputToUnix(data.startsAt),
+        startsAt: excludeStartDate ? undefined : dateInputToUnix(data.startsAt),
         endsAt: dateInputToUnix(data.endsAt),
         priority: data.priority,
       };
@@ -166,8 +166,8 @@ export const MilestoneEditDialog = ({
             ) : null}
           </div>
 
-          <div className={hideStartDate ? "" : "grid grid-cols-2 gap-4"}>
-            {!hideStartDate && (
+          <div className={excludeStartDate ? "" : "grid grid-cols-2 gap-4"}>
+            {!excludeStartDate && (
               <div className="flex flex-col gap-1.5">
                 <label
                   htmlFor="milestone-starts-at"

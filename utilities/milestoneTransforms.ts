@@ -33,6 +33,7 @@ export function toEditableUnifiedMilestone(
     description: milestone.description,
     completed: false,
     createdAt: "",
+    startsAt: milestone.startsAt,
     endsAt: grantMilestone.endsAt,
     chainID,
     refUID: grantUID,

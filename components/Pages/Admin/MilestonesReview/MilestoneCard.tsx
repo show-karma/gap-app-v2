@@ -316,7 +316,7 @@ export function MilestoneCard({
           projectUid={projectUid}
           projectSlug={projectSlug}
           programId={programId}
-          hideStartDate
+          excludeStartDate
         />
       )}
     </div>

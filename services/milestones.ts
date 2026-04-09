@@ -160,6 +160,8 @@ export async function fetchProjectGrantMilestones(
       title: milestone.title,
       description: milestone.description,
       dueDate: milestone.dueDate,
+      startsAt: milestone.startsAt,
+      priority: milestone.priority,
       status: milestone.status,
       completionDetails: milestone.completionDetails,
       verificationDetails: milestone.verificationDetails,
