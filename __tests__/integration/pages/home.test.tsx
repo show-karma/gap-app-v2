@@ -99,7 +99,7 @@ describe("Homepage", () => {
     render(<Index />);
 
     const mainContainer = screen.getByRole("main");
-    const innerContainer = mainContainer.firstChild as HTMLElement;
+    const innerContainer = mainContainer.querySelector(".max-w-\\[1920px\\]") as HTMLElement;
 
     expect(innerContainer).toHaveClass("flex", "w-full", "max-w-[1920px]");
   });

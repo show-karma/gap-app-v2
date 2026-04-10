@@ -3,12 +3,12 @@ import { SectionContainer } from "@/src/components/shared/section-container";
 import { marketingLayoutTheme } from "@/src/helper/theme";
 import { cn } from "@/utilities/tailwind";
 
-interface Objection {
+export interface Objection {
   question: string;
   answer: string;
 }
 
-const objections: Objection[] = [
+export const objections: Objection[] = [
   {
     question: '"We\'re too small for this."',
     answer:

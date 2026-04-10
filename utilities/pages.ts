@@ -125,6 +125,10 @@ export const PAGES = {
   STATS: `/stats`,
   SUMUP_CONFIG: `/admin/sumup`,
   FOUNDATIONS: `/foundations`,
+  SOLUTIONS: {
+    ROOT: `/solutions`,
+    DETAIL: (slug: string) => `/solutions/${slug}`,
+  },
   FUNDERS: `/funders`,
   SEEDS: `/seeds`,
   SEEDS_FUND: `/seeds/fund`,

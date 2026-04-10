@@ -68,3 +68,7 @@ public/funders.md
 public/projects.md
 public/communities.md
 public/knowledge/*.md
+
+# Audit results (generated per-run)
+scripts/.aeo-results/
+scripts/.lighthouse-results/
