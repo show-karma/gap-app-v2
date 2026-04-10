@@ -24,6 +24,7 @@ export const generateProjectMetadata = (
     pageName?: string;
     projectId: string;
     canonicalPath?: string;
+    robots?: { index: boolean; follow: boolean };
   }
 ): Metadata => {
   const projectTitle = getProjectTitle(project);
@@ -35,12 +36,15 @@ export const generateProjectMetadata = (
     cleanMarkdownForPlainText(getProjectDescription(project) || "", 160) ||
     DEFAULT_DESCRIPTION;
 
+  const canonicalPath = options.canonicalPath || `/project/${options.projectId}`;
+
   return {
     title: { absolute: `${title} | ${PROJECT_NAME}` },
     description,
     alternates: {
-      canonical: options.canonicalPath || `/project/${options.projectId}`,
+      canonical: canonicalPath,
     },
+    ...(options.robots && { robots: options.robots }),
     twitter: {
       creator: twitterMeta.creator,
       site: twitterMeta.site,
@@ -53,7 +57,8 @@ export const generateProjectMetadata = (
       ],
     },
     openGraph: {
-      url: SITE_URL,
+      url: `${SITE_URL}${canonicalPath}`,
+      type: "website",
       title,
       description,
       images: [
@@ -73,8 +78,21 @@ export const generateProjectOverviewMetadata = (
 ): Metadata => {
   return generateProjectMetadata(project, {
     projectId,
-    description: cleanMarkdownForPlainText(getProjectDescription(project) || "", 80),
+    description: cleanMarkdownForPlainText(getProjectDescription(project) || "", 155),
     canonicalPath: `/project/${projectId}`,
+  });
+};
+
+export const generateProjectAboutMetadata = (
+  project: ProjectResponse,
+  projectId: string
+): Metadata => {
+  const projectTitle = getProjectTitle(project);
+  return generateProjectMetadata(project, {
+    projectId,
+    pageName: "About",
+    description: `Learn about ${projectTitle}: mission, problem statement, solution, and project details.`,
+    canonicalPath: `/project/${projectId}/about`,
   });
 };
 
@@ -113,7 +131,7 @@ export const generateProjectContactMetadata = (
     projectId,
     pageName: "Contact",
     description: `Contact information for ${projectTitle} project team.`,
-    canonicalPath: `/project/${projectId}/contact`,
+    canonicalPath: `/project/${projectId}/contact-info`,
   });
 };
 
@@ -208,11 +226,57 @@ export const generateGrantImpactCriteriaMetadata = (
   });
 };
 
+// Metadata for action/form pages (noindex)
+export const generateGrantEditMetadata = (
+  project: ProjectResponse,
+  grant: Grant,
+  projectId: string,
+  grantUid: string
+): Metadata => {
+  const projectTitle = getProjectTitle(project);
+  const grantTitle = getGrantTitle(grant);
+  return generateProjectMetadata(project, {
+    projectId,
+    title: `Edit ${grantTitle} Grant | ${projectTitle}`,
+    description: `Edit grant details for ${grantTitle}.`,
+    canonicalPath: `/project/${projectId}/funding/${grantUid}/edit`,
+    robots: { index: false, follow: true },
+  });
+};
+
+export const generateGrantCompleteMetadata = (
+  project: ProjectResponse,
+  grant: Grant,
+  projectId: string,
+  grantUid: string
+): Metadata => {
+  const projectTitle = getProjectTitle(project);
+  const grantTitle = getGrantTitle(grant);
+  return generateProjectMetadata(project, {
+    projectId,
+    title: `Complete ${grantTitle} Grant | ${projectTitle}`,
+    description: `Complete grant for ${grantTitle}.`,
+    canonicalPath: `/project/${projectId}/funding/${grantUid}/complete-grant`,
+    robots: { index: false, follow: true },
+  });
+};
+
+export const generateNewGrantMetadata = (project: ProjectResponse, projectId: string): Metadata => {
+  const projectTitle = getProjectTitle(project);
+  return generateProjectMetadata(project, {
+    projectId,
+    title: `Add New Funding | ${projectTitle}`,
+    description: `Add a new grant or funding to ${projectTitle}.`,
+    canonicalPath: `/project/${projectId}/funding/new`,
+    robots: { index: false, follow: true },
+  });
+};
+
 // Enhanced metadata composition functions
 export const createMetadataFromContext = (
   project: ProjectResponse | null,
   projectId: string,
-  metadataType: "overview" | "team" | "impact" | "contact" | "updates" | "funding",
+  metadataType: "overview" | "about" | "team" | "impact" | "contact" | "updates" | "funding",
   customOptions?: {
     title?: string;
     description?: string;
@@ -226,6 +290,8 @@ export const createMetadataFromContext = (
   }
 
   switch (metadataType) {
+    case "about":
+      return generateProjectAboutMetadata(project, projectId);
     case "team":
       return generateProjectTeamMetadata(project, projectId);
     case "impact":
@@ -254,7 +320,7 @@ export const createGrantMetadataFromContext = (
   grant: Grant | null,
   projectId: string,
   grantUid?: string,
-  metadataType: "overview" | "milestones" | "impact-criteria" = "overview"
+  metadataType: "overview" | "milestones" | "impact-criteria" | "edit" | "complete" = "overview"
 ): Metadata => {
   if (!project) {
     return {
@@ -273,6 +339,10 @@ export const createGrantMetadataFromContext = (
       return generateGrantMilestonesMetadata(project, grant, projectId, grantUid);
     case "impact-criteria":
       return generateGrantImpactCriteriaMetadata(project, grant, projectId, grantUid);
+    case "edit":
+      return generateGrantEditMetadata(project, grant, projectId, grantUid || "");
+    case "complete":
+      return generateGrantCompleteMetadata(project, grant, projectId, grantUid || "");
     default:
       return generateGrantOverviewMetadata(project, grant, projectId, grantUid);
   }

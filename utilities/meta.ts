@@ -50,11 +50,20 @@ export const customMetadata = ({
   title = DEFAULT_TITLE,
   description = DEFAULT_DESCRIPTION,
   path,
+  ogType = "website",
+  robots,
+  images,
 }: {
   title?: string;
   description?: string;
   path?: string;
+  ogType?: "website" | "article";
+  robots?: { index: boolean; follow: boolean };
+  images?: Array<{ url: string; width?: number; height?: number; alt?: string }>;
 }): Metadata => {
+  const ogImages = images ?? ogMeta.images;
+  const twitterImages = images ? images.map((img) => img.url) : twitterMeta.images;
+
   return {
     title,
     description,
@@ -63,15 +72,20 @@ export const customMetadata = ({
         canonical: path,
       },
     }),
+    ...(robots && { robots }),
     openGraph: {
       ...ogMeta,
+      type: ogType,
       title,
       description,
+      ...(path && { url: `${SITE_URL}${path}` }),
+      images: ogImages,
     },
     twitter: {
       ...twitterMeta,
       title,
       description,
+      images: twitterImages,
     },
   };
 };

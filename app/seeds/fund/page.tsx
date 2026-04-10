@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   keywords: [
     "karma seeds",
     "project support",
-    "web3 funding",
+    "project funding",
     "ERC-20",
     "grants",
     "open source funding",

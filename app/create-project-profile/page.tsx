@@ -4,7 +4,7 @@ import { customMetadata } from "@/utilities/meta";
 export const metadata: Metadata = customMetadata({
   title: "Create Your Project Profile",
   description:
-    "Create a free, public project profile to document your funding, milestones, updates, and impact. Build credibility and reputation over time.",
+    "Create a free, public project profile to document your funding, milestones, updates, and impact. Build credibility and reputation over time with Karma.",
   path: "/create-project-profile",
 });
 
@@ -34,7 +34,7 @@ export default function CreateProjectProfilePage() {
           <ul className="list-disc list-inside space-y-2 text-gray-700 dark:text-gray-300">
             <li>Grantees</li>
             <li>Nonprofits</li>
-            <li>Web3 projects</li>
+            <li>Tech projects</li>
             <li>Philanthropic initiatives</li>
             <li>Early-stage funded work</li>
           </ul>

@@ -1,19 +1,53 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
+import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
 
+const title = "Grant Funding Distribution Mechanisms Explained";
+const description =
+  "How different funding goals require different payment structures. Learn about milestone-based, retroactive, streaming, and one-time distribution mechanisms.";
+
 export const metadata: Metadata = customMetadata({
-  title: "Multiple Funding Distribution Mechanisms",
-  description:
-    "How different funding goals require different payment structures. Learn about funding distribution mechanisms in open ecosystems.",
+  title,
+  description,
   path: "/knowledge/funding-distribution-mechanisms",
+  ogType: "article",
 });
 
 export default function FundingDistributionMechanismsPage() {
   return (
     <main className="container mx-auto max-w-3xl px-4 py-12">
+      <Breadcrumbs
+        items={[
+          { label: "Home", href: "/" },
+          { label: "Knowledge", href: "/knowledge" },
+          {
+            label: "Funding Distribution Mechanisms",
+            href: "/knowledge/funding-distribution-mechanisms",
+          },
+        ]}
+      />
+      <ArticleJsonLd
+        title={title}
+        description={description}
+        url="/knowledge/funding-distribution-mechanisms"
+        datePublished="2025-01-15"
+        dateModified="2026-03-24"
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: "/" },
+          { name: "Knowledge", url: "/knowledge" },
+          {
+            name: "Funding Distribution Mechanisms",
+            url: "/knowledge/funding-distribution-mechanisms",
+          },
+        ]}
+      />
       <article className="space-y-8">
-        <h1 className="text-3xl font-bold">Multiple Funding Distribution Mechanisms</h1>
+        <h1 className="text-3xl font-bold">Grant Funding Distribution Mechanisms Explained</h1>
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold">In one sentence</h2>
@@ -67,8 +101,14 @@ export default function FundingDistributionMechanismsPage() {
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-xl font-semibold">Related</h2>
+          <h2 className="text-xl font-semibold">Related articles</h2>
           <div className="space-y-1">
+            <Link
+              href="/knowledge/grant-lifecycle"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → The grant lifecycle
+            </Link>
             <Link
               href="/knowledge/grant-fund-disbursement"
               className="block text-blue-600 hover:underline dark:text-blue-400"
@@ -76,10 +116,10 @@ export default function FundingDistributionMechanismsPage() {
               → Grant fund disbursement
             </Link>
             <Link
-              href="/knowledge/grant-lifecycle"
+              href="/knowledge/whitelabel-funding-platforms"
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
-              → The grant lifecycle
+              → Whitelabel funding platforms
             </Link>
           </div>
         </section>

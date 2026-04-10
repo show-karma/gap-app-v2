@@ -1,3 +1,4 @@
+import { safeJsonLdStringify } from "@/utilities/jsonLd";
 import { DEFAULT_DESCRIPTION, DEFAULT_TITLE, SITE_URL } from "@/utilities/meta";
 
 const organizationSchema = {
@@ -31,13 +32,13 @@ export function OrganizationJsonLd() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(organizationSchema),
+          __html: safeJsonLdStringify(organizationSchema),
         }}
       />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(webApplicationSchema),
+          __html: safeJsonLdStringify(webApplicationSchema),
         }}
       />
     </>

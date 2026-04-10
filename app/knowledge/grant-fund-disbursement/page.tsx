@@ -1,17 +1,42 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
+import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
 
 export const metadata: Metadata = customMetadata({
   title: "Grant Fund Disbursement Coordination",
   description:
-    "How payments are safely triggered once requirements are met in grant programs. Learn about fund disbursement coordination.",
+    "Learn how grant payments are safely triggered once KYC, signing, and approvals are complete. Explore best practices for coordinating fund disbursement at scale.",
   path: "/knowledge/grant-fund-disbursement",
+  ogType: "article",
 });
 
 export default function GrantFundDisbursementPage() {
   return (
     <main className="container mx-auto max-w-3xl px-4 py-12">
+      <Breadcrumbs
+        items={[
+          { label: "Home", href: "/" },
+          { label: "Knowledge", href: "/knowledge" },
+          { label: "Fund Disbursement", href: "/knowledge/grant-fund-disbursement" },
+        ]}
+      />
+      <ArticleJsonLd
+        title="Grant Fund Disbursement Coordination"
+        description="Learn how grant payments are safely triggered once KYC, signing, and approvals are complete. Explore best practices for coordinating fund disbursement at scale."
+        url="/knowledge/grant-fund-disbursement"
+        datePublished="2025-01-15"
+        dateModified="2026-03-24"
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: "/" },
+          { name: "Knowledge", url: "/knowledge" },
+          { name: "Fund Disbursement", url: "/knowledge/grant-fund-disbursement" },
+        ]}
+      />
       <article className="space-y-8">
         <h1 className="text-3xl font-bold">Grant Fund Disbursement Coordination</h1>
 
@@ -56,7 +81,7 @@ export default function GrantFundDisbursementPage() {
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-xl font-semibold">Related</h2>
+          <h2 className="text-xl font-semibold">Related articles</h2>
           <div className="space-y-1">
             <Link
               href="/knowledge/grant-kyc"
@@ -69,6 +94,18 @@ export default function GrantFundDisbursementPage() {
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → The grant lifecycle
+            </Link>
+            <Link
+              href="/knowledge/grant-document-signing"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → Document signing in grants
+            </Link>
+            <Link
+              href="/knowledge/grant-accountability"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → Grant accountability
             </Link>
           </div>
         </section>

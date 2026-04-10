@@ -1,20 +1,41 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
+import { CollectionPageJsonLd } from "@/components/Seo/CollectionPageJsonLd";
 import { customMetadata } from "@/utilities/meta";
 
 export const metadata: Metadata = customMetadata({
-  title: "Knowledge Base - How Funding, Accountability and Reputation Work",
+  title: "Grant Funding Knowledge Base",
   description:
-    "A reference guide to how modern funding systems work. Learn about grant accountability, impact verification, onchain reputation, and capital allocation.",
+    "A reference guide to modern funding systems. Learn about grant accountability, impact verification, onchain reputation, project profiles, and capital allocation.",
   path: "/knowledge",
+  ogType: "website",
 });
 
 export default function KnowledgePage() {
   return (
     <main className="container mx-auto max-w-3xl px-4 py-12">
+      <Breadcrumbs
+        items={[
+          { label: "Home", href: "/" },
+          { label: "Knowledge", href: "/knowledge" },
+        ]}
+      />
+      <CollectionPageJsonLd
+        name="Grant Funding Knowledge Base"
+        description="A reference guide to modern funding systems. Learn about grant accountability, impact verification, onchain reputation, project profiles, and capital allocation."
+        url="/knowledge"
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: "/" },
+          { name: "Knowledge", url: "/knowledge" },
+        ]}
+      />
       <article className="space-y-12">
         <header className="space-y-6">
-          <h1 className="text-3xl font-bold">Knowledge</h1>
+          <h1 className="text-3xl font-bold">Grant Funding Knowledge Base</h1>
 
           <section className="space-y-4">
             <h2 className="text-xl font-semibold">Short answer</h2>
@@ -38,7 +59,7 @@ export default function KnowledgePage() {
         <section className="space-y-6">
           <h2 className="text-xl font-semibold">What this knowledge base covers</h2>
           <p className="text-gray-700 dark:text-gray-300">
-            Open funding systems — especially in Web3 — face a common problem:{" "}
+            Open funding systems face a common problem:{" "}
             <strong>capital moves faster than accountability.</strong>
           </p>
           <p className="text-gray-700 dark:text-gray-300">

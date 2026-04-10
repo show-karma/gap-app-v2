@@ -1,19 +1,34 @@
-"use client";
-import dynamic from "next/dynamic";
-import { DefaultLoading } from "@/components/Utilities/DefaultLoading";
-import { useGrantStore } from "@/store/grant";
+import type { Metadata } from "next";
+import { getProjectGrants } from "@/services/project-grants.service";
+import { generateGrantEditMetadata, generateProjectFundingMetadata } from "@/utilities/metadata/projectMetadata";
+import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
+import { EditGrantPageClient } from "./EditGrantPageClient";
 
-const NewGrant = dynamic(
-  () =>
-    import("@/components/Pages/GrantMilestonesAndUpdates/screens/NewGrant").then(
-      (mod) => mod.NewGrant
-    ),
-  {
-    loading: () => <DefaultLoading />,
+type Params = Promise<{
+  projectId: string;
+  grantUid: string;
+}>;
+
+export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
+  const { projectId, grantUid } = await params;
+  const [projectInfo, grants] = await Promise.all([
+    getProjectCachedData(projectId),
+    getProjectGrants(projectId),
+  ]);
+
+  if (!projectInfo) {
+    return { title: "Project Not Found", description: "Project not found" };
   }
-);
-export default function Page() {
-  const { grant } = useGrantStore();
 
-  return <NewGrant grantToEdit={grant} />;
+  const grant = grants?.find((g) => g.uid?.toLowerCase() === grantUid?.toLowerCase());
+
+  if (!grant) {
+    return generateProjectFundingMetadata(projectInfo, projectId);
+  }
+
+  return generateGrantEditMetadata(projectInfo, grant, projectId, grantUid);
+}
+
+export default function Page() {
+  return <EditGrantPageClient />;
 }

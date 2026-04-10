@@ -1,17 +1,45 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
+import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
 
+const title = "How Reputation Compounds in Open Funding Systems";
+const description =
+  "Why reputation acts as cumulative memory in open funding, reducing uncertainty and improving capital allocation. Learn how compounding credibility works.";
+
 export const metadata: Metadata = customMetadata({
-  title: "How Reputation Compounds in Open Funding Systems",
-  description:
-    "Why reputation acts as cumulative memory in open funding systems, and how it improves decision-making over time.",
+  title,
+  description,
   path: "/knowledge/reputation-compounding",
+  ogType: "article",
 });
 
 export default function ReputationCompoundingPage() {
   return (
     <main className="container mx-auto max-w-3xl px-4 py-12">
+      <Breadcrumbs
+        items={[
+          { label: "Home", href: "/" },
+          { label: "Knowledge", href: "/knowledge" },
+          { label: "Reputation Compounding", href: "/knowledge/reputation-compounding" },
+        ]}
+      />
+      <ArticleJsonLd
+        title={title}
+        description={description}
+        url="/knowledge/reputation-compounding"
+        datePublished="2025-01-15"
+        dateModified="2026-03-24"
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: "/" },
+          { name: "Knowledge", url: "/knowledge" },
+          { name: "Reputation Compounding", url: "/knowledge/reputation-compounding" },
+        ]}
+      />
       <article className="space-y-8">
         <h1 className="text-3xl font-bold">How Reputation Compounds in Open Funding Systems</h1>
 
@@ -46,15 +74,33 @@ export default function ReputationCompoundingPage() {
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-xl font-semibold">Related</h2>
-          <p>
+          <h2 className="text-xl font-semibold">Related articles</h2>
+          <div className="space-y-1">
+            <Link
+              href="/knowledge/onchain-reputation"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → What is onchain reputation?
+            </Link>
+            <Link
+              href="/knowledge/project-reputation"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → How projects build reputation through funding
+            </Link>
+            <Link
+              href="/knowledge/project-updates-and-reputation"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → Project updates and reputation
+            </Link>
             <Link
               href="/knowledge/impact-measurement"
-              className="text-blue-600 hover:underline dark:text-blue-400"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Impact measurement
             </Link>
-          </p>
+          </div>
         </section>
 
         <section className="space-y-4">

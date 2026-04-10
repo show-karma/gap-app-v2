@@ -1,17 +1,45 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
+import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
 
+const title = "Project Profiles as a Global Resume for Funded Work";
+const description =
+  "Project profiles serve as global resumes for funded work, giving teams a portable, verifiable track record that funders can trust across programs.";
+
 export const metadata: Metadata = customMetadata({
-  title: "Project Profiles as a Global Resume for Funded Work",
-  description:
-    "Why project profiles serve as global resumes for funded work, enabling teams to build portable, verifiable track records.",
+  title,
+  description,
   path: "/knowledge/project-profiles-as-resumes",
+  ogType: "article",
 });
 
 export default function ProjectProfilesAsResumesPage() {
   return (
     <main className="container mx-auto max-w-3xl px-4 py-12">
+      <Breadcrumbs
+        items={[
+          { label: "Home", href: "/" },
+          { label: "Knowledge", href: "/knowledge" },
+          { label: "Project Profiles as Resumes", href: "/knowledge/project-profiles-as-resumes" },
+        ]}
+      />
+      <ArticleJsonLd
+        title={title}
+        description={description}
+        url="/knowledge/project-profiles-as-resumes"
+        datePublished="2025-01-15"
+        dateModified="2026-03-24"
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: "/" },
+          { name: "Knowledge", url: "/knowledge" },
+          { name: "Project Profiles as Resumes", url: "/knowledge/project-profiles-as-resumes" },
+        ]}
+      />
       <article className="space-y-8">
         <h1 className="text-3xl font-bold">Project Profiles as a Global Resume for Funded Work</h1>
 
@@ -77,6 +105,24 @@ export default function ProjectProfilesAsResumesPage() {
               → Create your project profile
             </Link>
           </p>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="text-xl font-semibold">Related articles</h2>
+          <div className="space-y-1">
+            <Link
+              href="/knowledge/project-profiles"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → What are project profiles?
+            </Link>
+            <Link
+              href="/knowledge/why-grantees-need-project-profiles"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → Why grantees need project profiles
+            </Link>
+          </div>
         </section>
       </article>
     </main>

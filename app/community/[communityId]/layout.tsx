@@ -37,8 +37,8 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const dynamicMetadata = {
     title: isWhitelabel
       ? `${communityName} Grants`
-      : `${PROJECT_NAME} - ${communityName} community grants`,
-    description: `View the list of grants issued by ${communityName} and the grantee updates.`,
+      : `${communityName} Community Grants | ${PROJECT_NAME}`,
+    description: `Explore grants and funded projects by ${communityName} on ${PROJECT_NAME}. Track grantee milestones, measure impact, and discover funding opportunities in the ecosystem.`,
   };
 
   if (!community) {
@@ -50,30 +50,37 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const ogImageBase = isWhitelabel && wlConfig ? `https://${wlConfig.domain}` : envVars.VERCEL_URL;
   const canonical = isWhitelabel ? "/" : `/community/${communityId}`;
 
+  const title = dynamicMetadata.title || DEFAULT_TITLE;
+  const description = dynamicMetadata.description || DEFAULT_DESCRIPTION;
+
   return {
-    title: dynamicMetadata.title || DEFAULT_TITLE,
-    description: dynamicMetadata.description || DEFAULT_DESCRIPTION,
+    title,
+    description,
     alternates: {
       canonical,
     },
     twitter: {
+      card: "summary_large_image",
+      title,
+      description,
       creator: twitterMeta.creator,
       site: twitterMeta.site,
       images: [
         {
           url: `${ogImageBase}/api/metadata/communities/${communityId}`,
-          alt: dynamicMetadata.title || DEFAULT_TITLE,
+          alt: title,
         },
       ],
     },
     openGraph: {
-      url: siteUrl,
-      title: dynamicMetadata.title || DEFAULT_TITLE,
-      description: dynamicMetadata.description || DEFAULT_DESCRIPTION,
+      type: "website",
+      url: `${siteUrl}${canonical}`,
+      title,
+      description,
       images: [
         {
           url: `${ogImageBase}/api/metadata/communities/${communityId}`,
-          alt: dynamicMetadata.title || DEFAULT_TITLE,
+          alt: title,
         },
       ],
     },

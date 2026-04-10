@@ -1,17 +1,51 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
+import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
 
+const title = "How Funders Use Project Profiles to Evaluate Work";
+const description =
+  "How funders evaluate projects based on execution history, not just proposals. Learn what funders look for in project profiles and how profiles outperform applications.";
+
 export const metadata: Metadata = customMetadata({
-  title: "How Funders Use Project Profiles to Evaluate Work",
-  description:
-    "How funders evaluate projects based on execution history, not just proposals. Learn how project profiles support funding decisions.",
+  title,
+  description,
   path: "/knowledge/how-funders-use-project-profiles",
+  ogType: "article",
 });
 
 export default function HowFundersUseProjectProfilesPage() {
   return (
     <main className="container mx-auto max-w-3xl px-4 py-12">
+      <Breadcrumbs
+        items={[
+          { label: "Home", href: "/" },
+          { label: "Knowledge", href: "/knowledge" },
+          {
+            label: "How Funders Use Project Profiles",
+            href: "/knowledge/how-funders-use-project-profiles",
+          },
+        ]}
+      />
+      <ArticleJsonLd
+        title={title}
+        description={description}
+        url="/knowledge/how-funders-use-project-profiles"
+        datePublished="2025-01-15"
+        dateModified="2026-03-24"
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: "/" },
+          { name: "Knowledge", url: "/knowledge" },
+          {
+            name: "How Funders Use Project Profiles",
+            url: "/knowledge/how-funders-use-project-profiles",
+          },
+        ]}
+      />
       <article className="space-y-8">
         <h1 className="text-3xl font-bold">How Funders Use Project Profiles to Evaluate Work</h1>
 
@@ -76,6 +110,30 @@ export default function HowFundersUseProjectProfilesPage() {
               → Create your project profile
             </Link>
           </p>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="text-xl font-semibold">Related articles</h2>
+          <div className="space-y-1">
+            <Link
+              href="/knowledge/project-profiles"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → What are project profiles?
+            </Link>
+            <Link
+              href="/knowledge/onchain-reputation"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → What is onchain reputation?
+            </Link>
+            <Link
+              href="/knowledge/grant-accountability"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → Grant accountability
+            </Link>
+          </div>
         </section>
       </article>
     </main>

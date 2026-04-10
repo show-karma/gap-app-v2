@@ -1,6 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { CommunityGrants } from "@/components/CommunityGrants";
+import { PROJECT_NAME } from "@/constants/brand";
 import type { MaturityStageOptions, SortByOptions } from "@/types";
 import { pagesOnRoot } from "@/utilities/pagesOnRoot";
 import {
@@ -14,6 +16,17 @@ type Props = {
     communityId: string;
   }>;
 };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { communityId } = await params;
+  const community = await getCommunityDetails(communityId);
+  const communityName = community?.details?.name || communityId;
+
+  return {
+    title: `${communityName} Community Grants | ${PROJECT_NAME}`,
+    description: `Browse the full list of grants and funded projects by ${communityName}. Filter by category, track milestones, and explore grantee progress on ${PROJECT_NAME}.`,
+  };
+}
 
 export default async function Page(props: Props) {
   const { communityId } = await props.params;

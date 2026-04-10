@@ -66,7 +66,14 @@ export async function generateMetadata(): Promise<Metadata> {
     };
   }
 
-  return defaultMetadata;
+  return {
+    ...defaultMetadata,
+    manifest: "/manifest.json",
+    icons: {
+      icon: [{ url: "/favicon.ico", sizes: "48x48" }],
+      apple: [{ url: "/images/favicon.png" }],
+    },
+  };
 }
 
 export const viewport: Viewport = {

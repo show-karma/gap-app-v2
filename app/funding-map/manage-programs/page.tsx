@@ -5,7 +5,7 @@ import { customMetadata } from "@/utilities/meta";
 
 export const metadata: Metadata = customMetadata({
   title: "Manage Your Funding Programs",
-  description: "Manage and update your funding programs in the web3 grant program registry.",
+  description: "Manage and update your funding programs in the grant program registry.",
   path: "/funding-map/manage-programs",
 });
 

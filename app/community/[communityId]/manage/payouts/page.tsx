@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { permanentRedirect } from "next/navigation";
 import { PAGES } from "@/utilities/pages";
 
 export default async function CommunityPayoutsPage(props: {
@@ -15,5 +15,5 @@ export default async function CommunityPayoutsPage(props: {
     }
   }
   const query = qs.toString();
-  redirect(`${PAGES.ADMIN.CONTROL_CENTER(communityId)}${query ? `?${query}` : ""}`);
+  permanentRedirect(`${PAGES.ADMIN.CONTROL_CENTER(communityId)}${query ? `?${query}` : ""}`);
 }

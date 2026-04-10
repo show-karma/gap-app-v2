@@ -18,12 +18,38 @@ export async function GET(
     getProjectGrants(projectId),
   ]);
   if (!project) {
-    return new Response("Not found", { status: 404 });
+    return new ImageResponse(
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          width: "100%",
+          height: "100%",
+          backgroundColor: "#0F172A",
+          color: "white",
+          fontFamily: "sans-serif",
+        }}
+      >
+        <div style={{ fontSize: 48, fontWeight: 700 }}>Karma</div>
+        <div style={{ fontSize: 24, marginTop: 16, color: "#94A3B8" }}>
+          Where builders get funded and ecosystems grow
+        </div>
+      </div>,
+      {
+        width: 1200,
+        height: 630,
+        headers: {
+          "Cache-Control": "public, max-age=3600, s-maxage=86400",
+        },
+      }
+    );
   }
 
   const projectTitle = project?.details?.title || "";
   const title =
-    projectTitle && projectTitle.length > 30 ? projectTitle.substring(0, 30) + "..." : projectTitle;
+    projectTitle && projectTitle.length > 55 ? projectTitle.substring(0, 55) + "..." : projectTitle;
 
   const description = cleanMarkdownForPlainText(project?.details?.description || "", 200);
 
@@ -107,6 +133,9 @@ export async function GET(
     {
       width: 1200,
       height: 630,
+      headers: {
+        "Cache-Control": "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800",
+      },
     }
   );
 }

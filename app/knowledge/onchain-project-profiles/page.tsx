@@ -1,17 +1,45 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
+import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
 
+const title = "Onchain Project Profiles (Without Blockchain Complexity)";
+const description =
+  "Onchain storage provides tamper-resistant credibility for project profiles without requiring blockchain knowledge. Learn how attestations preserve project history.";
+
 export const metadata: Metadata = customMetadata({
-  title: "Onchain Project Profiles (Without Blockchain Complexity)",
-  description:
-    "How onchain storage provides credibility for project profiles without requiring blockchain knowledge or complexity.",
+  title,
+  description,
   path: "/knowledge/onchain-project-profiles",
+  ogType: "article",
 });
 
 export default function OnchainProjectProfilesPage() {
   return (
     <main className="container mx-auto max-w-3xl px-4 py-12">
+      <Breadcrumbs
+        items={[
+          { label: "Home", href: "/" },
+          { label: "Knowledge", href: "/knowledge" },
+          { label: "Onchain Project Profiles", href: "/knowledge/onchain-project-profiles" },
+        ]}
+      />
+      <ArticleJsonLd
+        title={title}
+        description={description}
+        url="/knowledge/onchain-project-profiles"
+        datePublished="2025-01-15"
+        dateModified="2026-03-24"
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: "/" },
+          { name: "Knowledge", url: "/knowledge" },
+          { name: "Onchain Project Profiles", url: "/knowledge/onchain-project-profiles" },
+        ]}
+      />
       <article className="space-y-8">
         <h1 className="text-3xl font-bold">
           Onchain Project Profiles (Without Blockchain Complexity)
@@ -80,6 +108,24 @@ export default function OnchainProjectProfilesPage() {
               → Create your project profile
             </Link>
           </p>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="text-xl font-semibold">Related articles</h2>
+          <div className="space-y-1">
+            <Link
+              href="/knowledge/project-profiles"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → What are project profiles?
+            </Link>
+            <Link
+              href="/knowledge/onchain-reputation"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → What is onchain reputation?
+            </Link>
+          </div>
         </section>
       </article>
     </main>

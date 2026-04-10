@@ -1,17 +1,42 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { ArticleJsonLd } from "@/components/Seo/ArticleJsonLd";
+import { BreadcrumbJsonLd } from "@/components/Seo/BreadcrumbJsonLd";
 import { customMetadata } from "@/utilities/meta";
 
 export const metadata: Metadata = customMetadata({
   title: "Document Signing in Grant Programs",
   description:
-    "Why grant agreements must be tracked as part of the funding workflow. Learn about document signing in grant programs.",
+    "Understand why grant agreements must be tracked as part of the funding workflow. Learn how integrated document signing prevents operational chaos and payment delays.",
   path: "/knowledge/grant-document-signing",
+  ogType: "article",
 });
 
 export default function GrantDocumentSigningPage() {
   return (
     <main className="container mx-auto max-w-3xl px-4 py-12">
+      <Breadcrumbs
+        items={[
+          { label: "Home", href: "/" },
+          { label: "Knowledge", href: "/knowledge" },
+          { label: "Document Signing", href: "/knowledge/grant-document-signing" },
+        ]}
+      />
+      <ArticleJsonLd
+        title="Document Signing in Grant Programs"
+        description="Understand why grant agreements must be tracked as part of the funding workflow. Learn how integrated document signing prevents operational chaos and payment delays."
+        url="/knowledge/grant-document-signing"
+        datePublished="2025-01-15"
+        dateModified="2026-03-24"
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: "/" },
+          { name: "Knowledge", url: "/knowledge" },
+          { name: "Document Signing", url: "/knowledge/grant-document-signing" },
+        ]}
+      />
       <article className="space-y-8">
         <h1 className="text-3xl font-bold">Document Signing in Grant Programs</h1>
 
@@ -53,7 +78,7 @@ export default function GrantDocumentSigningPage() {
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-xl font-semibold">Related</h2>
+          <h2 className="text-xl font-semibold">Related articles</h2>
           <div className="space-y-1">
             <Link
               href="/knowledge/grant-lifecycle"
@@ -66,6 +91,18 @@ export default function GrantDocumentSigningPage() {
               className="block text-blue-600 hover:underline dark:text-blue-400"
             >
               → Grant accountability
+            </Link>
+            <Link
+              href="/knowledge/grant-kyc"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → KYC in grant programs
+            </Link>
+            <Link
+              href="/knowledge/grant-fund-disbursement"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → Grant fund disbursement
             </Link>
           </div>
         </section>

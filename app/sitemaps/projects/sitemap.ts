@@ -14,50 +14,26 @@ export default async function sitemap({ id }: { id: number }): Promise<MetadataR
     });
     const sitemaps = response.data;
 
+    const sitemapConfig: Record<
+      number,
+      { key: string; priority: number; changeFrequency: "daily" | "weekly" }
+    > = {
+      1: { key: "projects", priority: 0.8, changeFrequency: "daily" },
+      2: { key: "impacts", priority: 0.7, changeFrequency: "weekly" },
+      3: { key: "grants", priority: 0.6, changeFrequency: "weekly" },
+      4: { key: "milestonesAndUpdates", priority: 0.5, changeFrequency: "weekly" },
+    };
+
+    const config = sitemapConfig[id];
     let sitemap: MetadataRoute.Sitemap = [];
-    switch (id) {
-      case 1:
-        sitemap = sitemaps.projects
-          ? sitemaps.projects.map((url: string) => ({
-              url,
-              lastModified: new Date().toISOString(),
-              changeFrequency: "daily",
-              priority: 1,
-            }))
-          : [];
-        break;
-      case 2:
-        sitemap = sitemaps.impacts
-          ? sitemaps.impacts.map((url: string) => ({
-              url,
-              lastModified: new Date().toISOString(),
-              changeFrequency: "daily",
-              priority: 1,
-            }))
-          : [];
-        break;
-      case 3:
-        sitemap = sitemaps.grants
-          ? sitemaps.grants.map((url: string) => ({
-              url,
-              lastModified: new Date().toISOString(),
-              changeFrequency: "daily",
-              priority: 1,
-            }))
-          : [];
-        break;
-      case 4:
-        sitemap = sitemaps.milestonesAndUpdates
-          ? sitemaps.milestonesAndUpdates.map((url: string) => ({
-              url,
-              lastModified: new Date().toISOString(),
-              changeFrequency: "daily",
-              priority: 1,
-            }))
-          : [];
-        break;
-      default:
-        sitemap = [];
+
+    if (config && sitemaps[config.key]) {
+      sitemap = sitemaps[config.key].map((url: string) => ({
+        url,
+        lastModified: new Date().toISOString(),
+        changeFrequency: config.changeFrequency,
+        priority: config.priority,
+      }));
     }
 
     final.push(...sitemap);
