@@ -1,15 +1,8 @@
 import { useCallback, useState } from "react";
 import { type Address, getAddress, type PublicClient, parseUnits } from "viem";
-import {
-  useAccount,
-  usePublicClient,
-  useWaitForTransactionReceipt,
-  useWalletClient,
-  useWriteContract,
-} from "wagmi";
+import { useAccount, usePublicClient, useWaitForTransactionReceipt, useWalletClient } from "wagmi";
 import { TRANSACTION_CONSTANTS } from "@/constants/donation";
 import type { DonationPayment } from "@/store/donationCart";
-import { validateChainSync } from "@/utilities/chainSyncValidation";
 import {
   BATCH_DONATIONS_CONTRACTS,
   BatchDonationsABI,
@@ -72,7 +65,6 @@ export function useDonationTransfer() {
   const { address } = useAccount();
   const publicClient = usePublicClient();
   const { data: walletClient, refetch: refetchWalletClient } = useWalletClient();
-  const { writeContractAsync } = useWriteContract();
   const [transfers, setTransfers] = useState<TransferResult[]>([]);
   const [isExecuting, setIsExecuting] = useState(false);
   const [executionState, setExecutionState] = useState<DonationExecutionState>({
@@ -356,20 +348,33 @@ export function useDonationTransfer() {
             );
           }
 
-          // Critical: Validate chain synchronization before executing donations
-          try {
-            await validateChainSync(currentWalletClient, chainId, "batch donations");
-          } catch (error) {
-            // Try one more time with a fresh wallet client
-            await new Promise((resolve) => setTimeout(resolve, 2000));
+          // Verify the ACTUAL provider chain, not the wallet client's .chain property.
+          // After wagmi's switchChain, the wallet client object may report the new chain
+          // in .chain.id, but the underlying provider/transport can still be on the old chain.
+          // getChainId() queries the real provider.
+          const actualProviderChainId = await currentWalletClient.getChainId();
+          if (actualProviderChainId !== chainId) {
+            // The provider didn't actually switch — force it via the wallet client
+            if (typeof currentWalletClient.switchChain === "function") {
+              await currentWalletClient.switchChain({ id: chainId });
+              // Wait briefly for the switch to propagate
+              await new Promise((resolve) => setTimeout(resolve, 1500));
+            }
 
+            // Refetch to get a wallet client whose transport is on the correct chain
             const result = await refetchWalletClient();
-            const freshClient = result.data;
-            if (freshClient) {
-              await validateChainSync(freshClient, chainId, "batch donations");
-              currentWalletClient = freshClient;
-            } else {
-              throw error; // Re-throw the original validation error
+            if (result.data) {
+              currentWalletClient = result.data;
+            }
+
+            // Final verification
+            const verifiedChainId = await currentWalletClient.getChainId();
+            if (verifiedChainId !== chainId) {
+              throw new Error(
+                `Failed to switch wallet to chain ${chainId}. ` +
+                  `Wallet is still on chain ${verifiedChainId}. ` +
+                  `Please switch to the correct network in your wallet and try again.`
+              );
             }
           }
 
@@ -485,7 +490,12 @@ export function useDonationTransfer() {
             });
           }
 
-          const hash = await writeContractAsync({
+          // Use viem's walletClient.writeContract directly instead of wagmi's
+          // writeContractAsync. Wagmi's hook checks the connector's chain state,
+          // which can be stale after a network switch.
+          // We omit the `chain` parameter so viem doesn't assert against the
+          // provider's chain — we've already verified it via getChainId() above.
+          const hash = await currentWalletClient.writeContract({
             address: getAddress(contractAddress),
             abi: BatchDonationsABI,
             functionName: hasTokenTransfers ? "batchDonateWithPermit" : "batchDonate",
@@ -493,7 +503,8 @@ export function useDonationTransfer() {
               hasTokenTransfers && permit && permitSignature
                 ? [donations, permit, permitSignature]
                 : [donations],
-            chainId,
+            chain: null,
+            account: address as Address,
             ...(totalEth > 0n ? { value: totalEth } : {}),
           });
 
@@ -600,7 +611,6 @@ export function useDonationTransfer() {
       address,
       publicClient,
       walletClient,
-      writeContractAsync,
       checkApprovals,
       executeApprovalTransactions,
       refetchWalletClient,
