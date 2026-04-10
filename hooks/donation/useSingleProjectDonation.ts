@@ -12,6 +12,7 @@ import { useNetworkSwitching } from "@/hooks/useNetworkSwitching";
 import { getPayoutAddressForChain } from "@/src/features/chain-payout-address/hooks/use-chain-payout-address";
 import { DonationType, PaymentMethod } from "@/types/donations";
 import type { DonationPayment } from "@/utilities/donations/donationExecution";
+import { getShortErrorMessage } from "@/utilities/donations/errorMessages";
 
 export const useSingleProjectDonation = (
   project: SingleProjectDonateModalProps["project"],
@@ -129,7 +130,7 @@ export const useSingleProjectDonation = (
       }
     } catch (error) {
       console.error("Donation execution failed:", error);
-      toast.error(error instanceof Error ? error.message : "Donation failed");
+      toast.error(getShortErrorMessage(error));
     }
   }, [
     selectedToken,
