@@ -109,7 +109,11 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
     };
   };
 
-  const editMilestoneViaApi = async (milestone: UnifiedMilestone, newData: MilestoneEditData) => {
+  const editMilestoneViaApi = async (
+    milestone: UnifiedMilestone,
+    newData: MilestoneEditData,
+    programId: string
+  ) => {
     setIsEditing(true);
     showLoading("Editing milestone...");
 
@@ -123,7 +127,7 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
         revocationSuccess: boolean;
       }>(INDEXER.MILESTONE.ON_CHAIN_EDIT(milestone.uid), {
         chainID: milestone.chainID,
-        programId: options!.programId,
+        programId,
         ...sanitizeObject(newData),
       });
 
@@ -173,7 +177,7 @@ export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
 
   const editMilestone = async (milestone: UnifiedMilestone, newData: MilestoneEditData) => {
     if (options?.programId) {
-      return editMilestoneViaApi(milestone, newData);
+      return editMilestoneViaApi(milestone, newData, options.programId);
     }
 
     setIsEditing(true);
