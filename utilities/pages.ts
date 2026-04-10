@@ -125,6 +125,12 @@ export const PAGES = {
   STATS: `/stats`,
   SUMUP_CONFIG: `/admin/sumup`,
   FOUNDATIONS: `/foundations`,
+  GRANT_ATLAS: {
+    ROOT: `/grant-atlas`,
+    FOUNDATION: (id: string) => `/grant-atlas/foundations/${id}`,
+    NONPROFIT: (id: string) => `/grant-atlas/nonprofits/${id}`,
+    GRANT: (id: string) => `/grant-atlas/grants/${id}`,
+  },
   FUNDERS: `/funders`,
   SEEDS: `/seeds`,
   SEEDS_FUND: `/seeds/fund`,

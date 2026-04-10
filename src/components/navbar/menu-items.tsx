@@ -2,6 +2,7 @@ import {
   BanknoteArrowDown,
   BellDot,
   GalleryThumbnails,
+  Globe,
   GoalIcon,
   LayoutGrid,
   LayoutList,
@@ -104,6 +105,11 @@ export const exploreItems: ExploreItems = {
       href: PAGES.REGISTRY.ROOT,
       icon: Radio,
       title: "Funding Map",
+    },
+    {
+      href: PAGES.GRANT_ATLAS.ROOT,
+      icon: Globe,
+      title: "Grant Atlas",
     },
   ],
 };

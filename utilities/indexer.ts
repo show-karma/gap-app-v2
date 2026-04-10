@@ -368,6 +368,24 @@ export const INDEXER = {
       INVOICE_DOWNLOAD: (grantUID: string, key: string) =>
         `/v2/grants/${grantUID}/invoice/download?key=${encodeURIComponent(key)}`,
     },
+    PHILANTHROPY: {
+      QUERY: "/v2/philanthropy/query",
+      QUERY_STREAM: "/v2/philanthropy/query/stream",
+      FOUNDATIONS: {
+        GET: (id: string) => `/v2/philanthropy/foundations/${id}`,
+        GRANTS: (id: string) => `/v2/philanthropy/foundations/${id}/grants`,
+        OFFICERS: (id: string) => `/v2/philanthropy/foundations/${id}/officers`,
+        FINANCIALS: (id: string) => `/v2/philanthropy/foundations/${id}/financials`,
+        FILING: (id: string, year: number) => `/v2/philanthropy/foundations/${id}/filings/${year}`,
+      },
+      NONPROFITS: {
+        GET: (id: string) => `/v2/philanthropy/nonprofits/${id}`,
+        GRANTS: (id: string) => `/v2/philanthropy/nonprofits/${id}/grants`,
+      },
+      GRANTS: {
+        GET: (id: string) => `/v2/philanthropy/grants/${id}`,
+      },
+    },
   },
   PROGRAMS: {
     COMMUNITY: (communityId: string) => `/communities/${communityId}/programs`,
