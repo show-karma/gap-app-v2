@@ -52,12 +52,21 @@ function toFriendlyError(status: number): string {
   }
 }
 
-async function fetchSync(query: string, page: number): Promise<QueryResponse> {
+async function fetchSyncWithOptions(
+  query: string,
+  page: number,
+  includeNarrative: boolean
+): Promise<QueryResponse> {
   const url = `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}${INDEXER.V2.PHILANTHROPY.QUERY}`;
   const response = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message: query, page, limit: DEFAULT_PAGE_SIZE }),
+    body: JSON.stringify({
+      message: query,
+      page,
+      limit: DEFAULT_PAGE_SIZE,
+      includeNarrative,
+    }),
   });
   if (!response.ok) {
     const errorText = await response.text();
@@ -127,10 +136,19 @@ export function usePhilanthropySearch() {
 
   const search = useCallback(async (query: string, page = 1) => {
     const store = useGrantAtlasStore.getState();
+    const normalizedQuery = query.trim();
+    const currentPage = store.result?.pagination.page;
+    const isPagination =
+      store.query.trim().toLowerCase() === normalizedQuery.toLowerCase() &&
+      store.result !== null &&
+      currentPage !== undefined &&
+      currentPage !== page;
 
-    store.setQuery(query);
-    store.setNarrative("");
-    store.setResult(null);
+    store.setQuery(normalizedQuery);
+    if (!isPagination) {
+      store.setNarrative("");
+      store.setResult(null);
+    }
     store.setSearching(true);
     store.setError(null);
 
@@ -139,20 +157,22 @@ export function usePhilanthropySearch() {
     abortRef.current = controller;
 
     try {
-      // Try streaming narrative first, fall back to sync if unavailable
       let streamed = false;
-      try {
-        streamed = await fetchStream(query, page, controller.signal, (text) => {
-          store.setNarrative(text);
-        });
-      } catch (streamErr) {
-        // Re-throw aborts, swallow other stream errors to try sync
-        if (streamErr instanceof DOMException && streamErr.name === "AbortError") throw streamErr;
-        Sentry.captureException(streamErr, { extra: { context: "philanthropy-stream" } });
+      if (!isPagination) {
+        try {
+          streamed = await fetchStream(normalizedQuery, page, controller.signal, (text) => {
+            store.setNarrative(text);
+          });
+        } catch (streamErr) {
+          // Re-throw aborts, swallow other stream errors to try sync
+          if (streamErr instanceof DOMException && streamErr.name === "AbortError") {
+            throw streamErr;
+          }
+          Sentry.captureException(streamErr, { extra: { context: "philanthropy-stream" } });
+        }
       }
 
-      // Always fetch full results via sync endpoint (entities + citations + intent)
-      const syncData = await fetchSync(query, page);
+      const syncData = await fetchSyncWithOptions(normalizedQuery, page, !isPagination);
       store.setResult({
         entities: syncData.entities,
         citations: syncData.citations,
@@ -160,8 +180,7 @@ export function usePhilanthropySearch() {
         pagination: syncData.pagination,
       });
 
-      // If streaming didn't produce a narrative, use the sync one
-      if (!streamed && syncData.narrative) {
+      if (!isPagination && !streamed && syncData.narrative) {
         store.setNarrative(syncData.narrative);
       }
     } catch (err: unknown) {

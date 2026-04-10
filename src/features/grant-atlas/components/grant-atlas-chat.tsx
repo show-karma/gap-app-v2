@@ -106,7 +106,7 @@ export function GrantAtlasSearch() {
           )}
 
           {/* Narrative answer */}
-          {(narrative || isSearching) && (
+          {(narrative || (isSearching && !result)) && (
             <div className="mb-8">
               <h2 className="mb-3 text-xs font-medium uppercase tracking-wide text-zinc-500">
                 Answer
