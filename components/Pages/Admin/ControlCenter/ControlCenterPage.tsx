@@ -190,9 +190,16 @@ export function ControlCenterPage() {
   }, [detailsGrantUid, paginatedData]);
 
   // Auto-open project details sidebar when ?project=<slug> is in the URL.
-  // tableData holds the current server page; if the project isn't found and
-  // we're past page 1, navigate to page 1 and retry once data reloads.
-  // After opening, the param is stripped so a page refresh doesn't reopen.
+  //
+  // The project may be on any page of the paginated dataset, so we can't rely
+  // on a simple tableData scan. Instead we use the existing `search` param as
+  // a proxy: the backend search filter matches exact project slugs, so setting
+  // search=<slug> collapses the dataset to just that project. Once the filtered
+  // data loads and the match is found the sidebar opens, then both `project`
+  // and the transient `search` param are stripped from the URL.
+  //
+  // If search=<slug> is already active but the project is still not found the
+  // slug doesn't exist in this community — we clean up the URL and give up.
   const autoOpenedProjectRef = useRef<string | null>(null);
   useEffect(() => {
     if (!projectParam || isLoadingPayouts) return;
@@ -200,8 +207,12 @@ export function ControlCenterPage() {
 
     const match = tableData.find((row) => row.projectSlug === projectParam);
     if (!match) {
-      if (currentPage !== 1) {
-        router.replace(`${pathname}?${createQueryString({ page: "1" })}`);
+      if (searchQuery === projectParam) {
+        // Already filtered by this slug but no match — project not in community.
+        router.replace(`${pathname}?${createQueryString({ project: null, search: null })}`);
+      } else {
+        // Narrow the dataset to this slug and retry when data reloads.
+        router.replace(`${pathname}?${createQueryString({ search: projectParam, page: "1" })}`);
       }
       return;
     }
@@ -209,8 +220,10 @@ export function ControlCenterPage() {
     autoOpenedProjectRef.current = projectParam;
     setDetailsGrantUid(match.grantUid);
     setDetailsModalOpen(true);
-    router.replace(`${pathname}?${createQueryString({ project: null })}`);
-  }, [projectParam, isLoadingPayouts, tableData, currentPage, router, pathname, createQueryString]);
+    // Strip `project` and the transient search param we may have injected.
+    const clearSearch = searchQuery === projectParam ? null : searchQuery || null;
+    router.replace(`${pathname}?${createQueryString({ project: null, search: clearSearch })}`);
+  }, [projectParam, isLoadingPayouts, tableData, searchQuery]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const saveBulkImportMutation = useSavePayoutConfig();
 
