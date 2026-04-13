@@ -93,6 +93,80 @@ interface ProgressCellProps {
   invoiceRequired?: boolean;
 }
 
+type StepStatus = "complete" | "in-progress" | "empty";
+
+function getStepStatus(count: number, total: number): StepStatus {
+  if (count === total) return "complete";
+  if (count > 0) return "in-progress";
+  return "empty";
+}
+
+const stepStyles: Record<StepStatus, { text: string; bg: string }> = {
+  complete: {
+    text: "text-green-700 dark:text-green-400",
+    bg: "bg-green-100 dark:bg-green-900/30",
+  },
+  "in-progress": {
+    text: "text-blue-700 dark:text-blue-400",
+    bg: "bg-blue-50 dark:bg-blue-900/20",
+  },
+  empty: {
+    text: "text-muted-foreground",
+    bg: "bg-muted/50",
+  },
+};
+
+const connectorStyles: Record<StepStatus, string> = {
+  complete: "text-green-400 dark:text-green-600",
+  "in-progress": "text-muted-foreground/40",
+  empty: "text-muted-foreground/25",
+};
+
+function PipelineStep({
+  label,
+  count,
+  total,
+  status,
+}: {
+  label: string;
+  count: number;
+  total: number;
+  status: StepStatus;
+}) {
+  const style = stepStyles[status];
+  return (
+    <span
+      className={cn("inline-flex items-center gap-1 px-1.5 py-0.5 rounded", style.bg, style.text)}
+    >
+      <span className="font-medium tabular-nums">
+        {count}/{total}
+      </span>
+      <span>{label}</span>
+    </span>
+  );
+}
+
+function PipelineConnector({ status }: { status: StepStatus }) {
+  return (
+    <svg
+      className={cn("shrink-0", connectorStyles[status])}
+      width="16"
+      height="10"
+      viewBox="0 0 16 10"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M0 5h12m0 0L9 2m3 3L9 8"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export function ProgressCell({
   invoices,
   paidMilestoneCount,
@@ -103,44 +177,40 @@ export function ProgressCell({
   const received = invoices.filter(
     (inv) => inv.invoiceStatus === "received" || inv.invoiceStatus === "paid"
   ).length;
-  const completed = invoices.filter(
+  const done = invoices.filter(
     (inv) =>
       inv.milestoneStatus === MilestoneLifecycleStatus.COMPLETED ||
       inv.milestoneStatus === MilestoneLifecycleStatus.VERIFIED
   ).length;
+  const verified = invoices.filter(
+    (inv) => inv.milestoneStatus === MilestoneLifecycleStatus.VERIFIED
+  ).length;
 
   if (total === 0) {
-    return <span className="text-xs text-gray-500 dark:text-zinc-500">No milestones</span>;
+    return <span className="text-xs text-muted-foreground">No milestones</span>;
   }
 
-  // For non-invoice programs, only paid status determines "all done".
-  // For invoice programs, all three metrics must be complete.
-  const allDone = invoiceRequired
-    ? paid === total && received === total && completed === total
-    : paid === total && completed === total;
-  const hasProgress = paid > 0 || received > 0 || completed > 0;
+  const doneStatus = getStepStatus(done, total);
+  const verifiedStatus = getStepStatus(verified, total);
+  const paidStatus = getStepStatus(paid, total);
+
+  const invoiceStatus = getStepStatus(received, total);
 
   return (
-    <div
-      className={cn(
-        "text-xs tabular-nums whitespace-nowrap",
-        allDone
-          ? "text-green-700 dark:text-green-400"
-          : hasProgress
-            ? "text-blue-700 dark:text-blue-400"
-            : "text-gray-600 dark:text-zinc-400"
-      )}
-    >
+    <div className="space-y-1.5">
       {invoiceRequired && (
-        <div>
-          {received}/{total} invoices received
+        <div className="inline-flex items-center gap-1.5 text-[11px] whitespace-nowrap">
+          <span className="font-medium text-muted-foreground">Invoices</span>
+          <PipelineStep label="Received" count={received} total={total} status={invoiceStatus} />
         </div>
       )}
-      <div>
-        {completed}/{total} milestones completed
-      </div>
-      <div>
-        {paid}/{total} milestones paid
+      <div className="inline-flex items-center gap-1 text-[11px] whitespace-nowrap">
+        <span className="font-medium text-muted-foreground">Milestones</span>
+        <PipelineStep label="Completed" count={done} total={total} status={doneStatus} />
+        <PipelineConnector status={doneStatus === "complete" ? verifiedStatus : "empty"} />
+        <PipelineStep label="Verified" count={verified} total={total} status={verifiedStatus} />
+        <PipelineConnector status={verifiedStatus === "complete" ? paidStatus : "empty"} />
+        <PipelineStep label="Paid" count={paid} total={total} status={paidStatus} />
       </div>
     </div>
   );
