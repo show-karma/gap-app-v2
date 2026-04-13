@@ -57,6 +57,7 @@ export function ControlCenterPage() {
     | "COMPLETED"
     | undefined;
   const kycFilter = searchParams.get("kycStatus") || undefined;
+  const projectParam = searchParams.get("project") || undefined;
   const filterSignature = JSON.stringify({
     selectedProgramId,
     agreementFilter,
@@ -144,6 +145,7 @@ export function ControlCenterPage() {
     payoutsData,
     refreshPayouts,
     totalItems,
+    tableData,
     paginatedData,
     selectableGrants,
     disbursementMap,
@@ -186,6 +188,21 @@ export function ControlCenterPage() {
     // Grant left current page — keep last known snapshot so sidebar stays populated
     return detailsGrantRef.current;
   }, [detailsGrantUid, paginatedData]);
+
+  // Auto-open project details when 'project' URL param is present.
+  // Searches tableData (all loaded rows) so it works regardless of KYC filter.
+  const autoOpenedProjectRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!projectParam || isLoadingPayouts) return;
+    if (autoOpenedProjectRef.current === projectParam) return;
+
+    const match = tableData.find((row) => row.projectSlug === projectParam);
+    if (!match) return;
+
+    autoOpenedProjectRef.current = projectParam;
+    setDetailsGrantUid(match.grantUid);
+    setDetailsModalOpen(true);
+  }, [projectParam, isLoadingPayouts, tableData]);
 
   const saveBulkImportMutation = useSavePayoutConfig();
 
