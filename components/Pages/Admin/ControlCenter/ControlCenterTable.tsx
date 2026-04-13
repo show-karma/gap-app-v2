@@ -306,7 +306,7 @@ export function ControlCenterTable({
                 Payout Address
               </th>
               {/* Progress */}
-              <th className="h-11 px-4 text-left text-xs font-semibold text-gray-600 dark:text-zinc-400 uppercase tracking-wider w-52">
+              <th className="h-11 px-4 text-left text-xs font-semibold text-gray-600 dark:text-zinc-400 uppercase tracking-wider w-80">
                 Progress
               </th>
               {/* Total Grant - sortable */}
