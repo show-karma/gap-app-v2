@@ -189,20 +189,28 @@ export function ControlCenterPage() {
     return detailsGrantRef.current;
   }, [detailsGrantUid, paginatedData]);
 
-  // Auto-open project details when 'project' URL param is present.
-  // Searches tableData (all loaded rows) so it works regardless of KYC filter.
+  // Auto-open project details sidebar when ?project=<slug> is in the URL.
+  // tableData holds the current server page; if the project isn't found and
+  // we're past page 1, navigate to page 1 and retry once data reloads.
+  // After opening, the param is stripped so a page refresh doesn't reopen.
   const autoOpenedProjectRef = useRef<string | null>(null);
   useEffect(() => {
     if (!projectParam || isLoadingPayouts) return;
     if (autoOpenedProjectRef.current === projectParam) return;
 
     const match = tableData.find((row) => row.projectSlug === projectParam);
-    if (!match) return;
+    if (!match) {
+      if (currentPage !== 1) {
+        router.replace(`${pathname}?${createQueryString({ page: "1" })}`);
+      }
+      return;
+    }
 
     autoOpenedProjectRef.current = projectParam;
     setDetailsGrantUid(match.grantUid);
     setDetailsModalOpen(true);
-  }, [projectParam, isLoadingPayouts, tableData]);
+    router.replace(`${pathname}?${createQueryString({ project: null })}`);
+  }, [projectParam, isLoadingPayouts, tableData, currentPage, router, pathname, createQueryString]);
 
   const saveBulkImportMutation = useSavePayoutConfig();
 
