@@ -172,14 +172,12 @@ const GrantCardContent = ({
                   />
                 )}
 
-                {(grant.updates?.length ?? 0) > 0 && (
-                  <div className="flex h-max w-max items-center justify-start rounded-full bg-slate-50 dark:bg-slate-600 text-slate-600 dark:text-gray-300 px-3 py-1 max-2xl:px-2">
-                    <p className="text-center text-sm font-semibold text-slate-600 dark:text-slate-100 max-2xl:text-[13px]">
-                      {formatCurrency(grant.updates?.length ?? 0)}{" "}
-                      {pluralize("Activity", grant.updates?.length ?? 0)}
-                    </p>
-                  </div>
-                )}
+                <div className="flex h-max w-max items-center justify-start rounded-full bg-slate-50 dark:bg-slate-600 text-slate-600 dark:text-gray-300 px-3 py-1 max-2xl:px-2">
+                  <p className="text-center text-sm font-semibold text-slate-600 dark:text-slate-100 max-2xl:text-[13px]">
+                    {formatCurrency(grant.updates?.length ?? 0)}{" "}
+                    {pluralize("Activity", grant.updates?.length ?? 0)}
+                  </p>
+                </div>
               </div>
             )}
 
