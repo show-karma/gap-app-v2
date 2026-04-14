@@ -148,8 +148,8 @@ describe("GrantCard", () => {
     it("should display activity statistics when updates exist", () => {
       render(<GrantCard grant={mockGrant} index={0} />);
 
-      // Shows project activity updates count
-      expect(screen.getByText(/1.*Activit/i)).toBeInTheDocument();
+      // Shows project updates count
+      expect(screen.getByText(/1.*Update/i)).toBeInTheDocument();
     });
 
     it("should display grant percentage", () => {
@@ -282,8 +282,8 @@ describe("GrantCard", () => {
 
       render(<GrantCard grant={grantWithoutUpdates} index={0} />);
 
-      // Activity badge should still be visible when 0 updates
-      expect(screen.getByText(/0.*Activit/i)).toBeInTheDocument();
+      // Updates badge should still be visible when 0
+      expect(screen.getByText(/0.*Update/i)).toBeInTheDocument();
     });
 
     it("should handle grant without categories", () => {
@@ -439,8 +439,8 @@ describe("GrantCard", () => {
 
       // Shows completed/total milestones
       expect(screen.getByText(/2\/3.*Milestones/i)).toBeInTheDocument();
-      // Shows project activity updates count
-      expect(screen.getByText(/2.*Activities/i)).toBeInTheDocument();
+      // Shows project updates count
+      expect(screen.getByText(/2.*Updates/i)).toBeInTheDocument();
     });
   });
 
