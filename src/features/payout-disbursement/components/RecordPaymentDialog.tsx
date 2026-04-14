@@ -196,7 +196,7 @@ function RecordPaymentDialogInner({
   }, []);
 
   const isValid =
-    amount.trim() !== "" && Number(amount) > 0 && paymentDate !== "" && selectedKeys.length > 0;
+    !Number.isNaN(Number(amount)) && Number(amount) >= 0 && paymentDate !== "" && selectedKeys.length > 0;
 
   const handleSubmit = useCallback(() => {
     if (!isValid || recordPayment.isPending) return;
@@ -204,7 +204,7 @@ function RecordPaymentDialogInner({
     const effectiveChainID = chainSupported ? chainID : DEFAULT_USDC_CHAIN_ID;
     const tokenAddress =
       nativeUsdcAddress ?? (getUsdcAddressForChain(DEFAULT_USDC_CHAIN_ID) as string);
-    const disbursedAmount = toSmallestUnit(amount, USDC_DECIMALS);
+    const disbursedAmount = toSmallestUnit(amount || "0", USDC_DECIMALS);
 
     const selectedMilestones = milestoneOptions.filter((m) => selectedKeys.includes(m.key));
 
