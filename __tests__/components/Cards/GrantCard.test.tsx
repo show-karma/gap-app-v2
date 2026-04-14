@@ -142,14 +142,14 @@ describe("GrantCard", () => {
     it("should display milestone statistics", () => {
       render(<GrantCard grant={mockGrant} index={0} />);
 
-      expect(screen.getByText(/2.*Milestones/i)).toBeInTheDocument();
+      expect(screen.getByText(/1\/2.*Milestones/i)).toBeInTheDocument();
     });
 
-    it("should display update statistics", () => {
+    it("should display activity statistics when updates exist", () => {
       render(<GrantCard grant={mockGrant} index={0} />);
 
-      // 1 completed milestone + 1 update = 2 updates
-      expect(screen.getByText(/2.*Updates/i)).toBeInTheDocument();
+      // Shows project activity updates count
+      expect(screen.getByText(/1.*Activit/i)).toBeInTheDocument();
     });
 
     it("should display grant percentage", () => {
@@ -270,10 +270,10 @@ describe("GrantCard", () => {
 
       render(<GrantCard grant={grantWithoutMilestones} index={0} />);
 
-      expect(screen.getByText(/0.*Milestones/i)).toBeInTheDocument();
+      expect(screen.getByText(/0\/0.*Milestones/i)).toBeInTheDocument();
     });
 
-    it("should handle grant without updates", () => {
+    it("should hide activity badge when no updates", () => {
       const grantWithoutUpdates = {
         ...mockGrant,
         updates: [],
@@ -282,7 +282,8 @@ describe("GrantCard", () => {
 
       render(<GrantCard grant={grantWithoutUpdates} index={0} />);
 
-      expect(screen.getByText(/0.*Update/i)).toBeInTheDocument();
+      // Activity badge should be hidden when 0 updates
+      expect(screen.queryByText(/Activit/i)).not.toBeInTheDocument();
     });
 
     it("should handle grant without categories", () => {
@@ -396,13 +397,13 @@ describe("GrantCard", () => {
 
       render(<GrantCard grant={grantWithOneMilestone} index={0} />);
 
-      expect(screen.getByText(/1.*Milestone$/i)).toBeInTheDocument();
+      expect(screen.getByText(/0\/1.*Milestone$/i)).toBeInTheDocument();
     });
 
     it("should display plural milestone text when count is not 1", () => {
       render(<GrantCard grant={mockGrant} index={0} />);
 
-      expect(screen.getByText(/2.*Milestones/i)).toBeInTheDocument();
+      expect(screen.getByText(/1\/2.*Milestones/i)).toBeInTheDocument();
     });
 
     it("should truncate description to 200 characters", () => {
@@ -423,7 +424,7 @@ describe("GrantCard", () => {
       expect(markdownPreview.textContent?.length).toBe(200);
     });
 
-    it("should calculate updates correctly (completed milestones + updates)", () => {
+    it("should show milestone completed/total and activity updates separately", () => {
       const grantWithMultipleUpdates = {
         ...mockGrant,
         milestones: [
@@ -436,8 +437,10 @@ describe("GrantCard", () => {
 
       render(<GrantCard grant={grantWithMultipleUpdates} index={0} />);
 
-      // 2 completed milestones + 2 updates = 4 total updates
-      expect(screen.getByText(/4.*Updates/i)).toBeInTheDocument();
+      // Shows completed/total milestones
+      expect(screen.getByText(/2\/3.*Milestones/i)).toBeInTheDocument();
+      // Shows project activity updates count
+      expect(screen.getByText(/2.*Activities/i)).toBeInTheDocument();
     });
   });
 
