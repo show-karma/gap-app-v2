@@ -5,6 +5,7 @@ import {
   PaperClipIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { memo, useCallback, useState } from "react";
 import toast from "react-hot-toast";
@@ -32,6 +33,14 @@ import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { PaymentStatusDropdown } from "./PaymentStatusDropdown";
 import type { ProjectDetailsSidebarGrant } from "./ProjectDetailsSidebar";
+
+const MilestoneAIEvaluationBadge = dynamic(
+  () =>
+    import("@/components/Milestone/MilestoneAIEvaluationBadge").then(
+      (m) => m.MilestoneAIEvaluationBadge
+    ),
+  { ssr: false }
+);
 
 const milestoneStatusConfig: Record<
   MilestoneLifecycleStatus,
@@ -263,6 +272,9 @@ export const MilestonesSection = memo(function MilestonesSection({
                   )}
                   <th className="text-center py-3 px-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[110px]">
                     Payment
+                  </th>
+                  <th className="text-center py-3 px-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[100px]">
+                    AI Score
                   </th>
                 </tr>
               </thead>
@@ -520,6 +532,15 @@ export const MilestonesSection = memo(function MilestonesSection({
                             </span>
                           )}
                         </div>
+                      </td>
+                      <td className="py-3 px-3 text-center">
+                        {invoice.milestoneUID &&
+                        (effectiveMsStatus === MilestoneLifecycleStatus.COMPLETED ||
+                          effectiveMsStatus === MilestoneLifecycleStatus.VERIFIED) ? (
+                          <MilestoneAIEvaluationBadge milestoneUID={invoice.milestoneUID} />
+                        ) : (
+                          <span className="text-xs text-gray-300 dark:text-zinc-600">&mdash;</span>
+                        )}
                       </td>
                     </tr>
                   );
