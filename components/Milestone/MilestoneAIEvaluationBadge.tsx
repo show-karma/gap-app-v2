@@ -65,7 +65,7 @@ export function MilestoneAIEvaluationBadge({
   className = "",
 }: MilestoneAIEvaluationBadgeProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { data, isLoading } = useMilestoneEvaluation(milestoneUID, true);
+  const { data, isLoading, error } = useMilestoneEvaluation(milestoneUID, true);
   const evaluations = data?.evaluations ?? [];
 
   const avgScore = useMemo(() => {
@@ -86,7 +86,11 @@ export function MilestoneAIEvaluationBadge({
     );
   }
 
-  if (!avgScore || evaluations.length === 0) {
+  if (error) {
+    return null;
+  }
+
+  if (avgScore === null) {
     return null;
   }
 
@@ -250,7 +254,7 @@ export function ApplicationMilestoneAIEvaluationBadge({
   className = "",
 }: ApplicationMilestoneAIEvaluationBadgeProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { data, isLoading } = useApplicationMilestoneEvaluation(
+  const { data, isLoading, error } = useApplicationMilestoneEvaluation(
     referenceNumber,
     milestoneTitle,
     true
@@ -275,7 +279,11 @@ export function ApplicationMilestoneAIEvaluationBadge({
     );
   }
 
-  if (!avgScore || evaluations.length === 0) {
+  if (error) {
+    return null;
+  }
+
+  if (avgScore === null) {
     return null;
   }
 

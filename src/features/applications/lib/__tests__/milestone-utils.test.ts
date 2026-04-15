@@ -18,10 +18,13 @@ function makeMilestone(title: string) {
   return { title, description: "", dueDate: "2025-01-01" };
 }
 
+type CompletionValue<T extends { milestoneFieldLabel?: string; milestoneTitle?: string }> =
+  T extends unknown ? T | null : never;
+
 // Extract just the titles (or null) from the map for easy assertion
-function toTitleArray(
+function toTitleArray<T extends { milestoneFieldLabel?: string; milestoneTitle?: string }>(
   milestones: { title: string }[],
-  map: Map<number, ReturnType<typeof buildPositionalCompletionMap>[0]>
+  map: Map<number, CompletionValue<T>>
 ): (string | null)[] {
   return milestones.map((_, i) => map.get(i)?.milestoneTitle ?? null);
 }
