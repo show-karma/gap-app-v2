@@ -5,6 +5,7 @@ import {
   ClipboardDocumentIcon,
   ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
+import dynamic from "next/dynamic";
 import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,6 +36,14 @@ import { formatDate } from "@/utilities/formatDate";
 import { getChainNameById } from "@/utilities/network";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
+
+const MilestoneAIEvaluationBadge = dynamic(
+  () =>
+    import("@/components/Milestone/MilestoneAIEvaluationBadge").then(
+      (m) => m.MilestoneAIEvaluationBadge
+    ),
+  { ssr: false }
+);
 
 // ─── Props ──────────────────────────────────────────────────────────────────
 
@@ -452,6 +461,9 @@ export function PublicProjectDetailsModal({
                           <th className="text-center py-3 px-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[110px]">
                             Payment
                           </th>
+                          <th className="text-center py-3 px-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[100px]">
+                            AI Score
+                          </th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
@@ -583,6 +595,17 @@ export function PublicProjectDetailsModal({
                                     </span>
                                   )}
                                 </div>
+                              </td>
+                              <td className="py-3 px-3 text-center">
+                                {invoice.milestoneUID &&
+                                (effectiveMsStatus === MilestoneLifecycleStatus.COMPLETED ||
+                                  effectiveMsStatus === MilestoneLifecycleStatus.VERIFIED) ? (
+                                  <MilestoneAIEvaluationBadge milestoneUID={invoice.milestoneUID} />
+                                ) : (
+                                  <span className="text-xs text-gray-300 dark:text-zinc-600">
+                                    &mdash;
+                                  </span>
+                                )}
                               </td>
                             </tr>
                           );

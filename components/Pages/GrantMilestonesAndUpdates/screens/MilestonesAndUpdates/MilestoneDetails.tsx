@@ -1,6 +1,7 @@
 "use client";
 
 import { PaperClipIcon } from "@heroicons/react/24/outline";
+import dynamic from "next/dynamic";
 import { type FC, useCallback } from "react";
 import toast from "react-hot-toast";
 import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
@@ -12,6 +13,14 @@ import { ReadMore } from "@/utilities/ReadMore";
 import { MilestoneDelete } from "./MilestoneDelete";
 import { MilestoneEdit } from "./MilestoneEdit";
 import { Updates } from "./Updates";
+
+const MilestoneAIEvaluationBadge = dynamic(
+  () =>
+    import("@/components/Milestone/MilestoneAIEvaluationBadge").then(
+      (m) => m.MilestoneAIEvaluationBadge
+    ),
+  { ssr: false }
+);
 
 /**
  * Helper to get the completion object from a milestone.
@@ -187,8 +196,11 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({
                 ) : null}
               </div>
             </div>
-            <div className="flex flex-row items-center justify-start gap-2">
+            <div className="flex flex-row items-center justify-start gap-2 flex-wrap">
               <MilestoneDateStatus milestone={milestone} />
+              {isCompleted && milestone.uid ? (
+                <MilestoneAIEvaluationBadge milestoneUID={milestone.uid} />
+              ) : null}
               {isAuthorized && !isCompleted ? <MilestoneEdit milestone={milestone} /> : null}
               {isAuthorized ? <MilestoneDelete milestone={milestone} /> : null}
             </div>

@@ -3,7 +3,8 @@
 import { PaperClipIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useQueryClient } from "@tanstack/react-query";
 import { Pencil } from "lucide-react";
-import { useCallback, useRef, useState } from "react";
+import dynamic from "next/dynamic";
+import { useCallback, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { FileUpload } from "@/components/Utilities/FileUpload";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
@@ -16,7 +17,20 @@ import { INDEXER } from "@/utilities/indexer";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { useApplicationInvoiceConfig } from "../hooks/use-application-invoice-config";
 import { useMilestoneCompletions } from "../hooks/use-milestone-completions";
-import { formatFieldLabel, isMarkdownContent, MILESTONE_CORE_FIELDS } from "../lib/milestone-utils";
+import {
+  buildPositionalCompletionMap,
+  formatFieldLabel,
+  isMarkdownContent,
+  MILESTONE_CORE_FIELDS,
+} from "../lib/milestone-utils";
+
+const ApplicationMilestoneAIEvaluationBadge = dynamic(
+  () =>
+    import("@/components/Milestone/MilestoneAIEvaluationBadge").then(
+      (m) => m.ApplicationMilestoneAIEvaluationBadge
+    ),
+  { ssr: false }
+);
 
 interface InvoiceFileState {
   fileUrl: string;
@@ -42,6 +56,7 @@ export function MilestoneCompletionEditor({
   const queryClient = useQueryClient();
   const {
     isLoading,
+    completions,
     createCompletion,
     updateCompletion,
     isCreating,
@@ -68,6 +83,14 @@ export function MilestoneCompletionEditor({
     (milestoneTitle: string) =>
       milestoneInvoices.find((inv) => inv.milestoneLabel === milestoneTitle),
     [milestoneInvoices]
+  );
+
+  // Build positional completion map to handle duplicate milestone titles.
+  // When N milestones share the same title and M completions exist (M ≤ N),
+  // the k-th completion maps to the k-th milestone with that title.
+  const completionByIndex = useMemo(
+    () => buildPositionalCompletionMap(milestones, completions, fieldLabel),
+    [completions, fieldLabel, milestones]
   );
 
   const [editingMilestone, setEditingMilestone] = useState<string | null>(null);
@@ -191,11 +214,11 @@ export function MilestoneCompletionEditor({
     }
   };
 
-  const isSubmitEnabled = (milestoneTitle: string) => {
+  const isSubmitEnabled = (milestoneTitle: string, milestoneIndex: number) => {
     if (uploadingMilestones.has(milestoneTitle)) return false;
     const currentText = editedText[milestoneTitle] || "";
-    const completion = getCompletion(fieldLabel, milestoneTitle);
-    const savedText = completion?.completionText || "";
+    const savedCompletion = completionByIndex.get(milestoneIndex);
+    const savedText = savedCompletion?.completionText || "";
     const hasTextChange = currentText !== savedText;
     const hasInvoice = !!invoiceFiles[milestoneTitle];
     return hasTextChange || hasInvoice;
@@ -208,7 +231,7 @@ export function MilestoneCompletionEditor({
   return (
     <div className="space-y-3">
       {milestones.map((milestone, index) => {
-        const completion = getCompletion(fieldLabel, milestone.title);
+        const completion = completionByIndex.get(index) ?? null;
         const isEditing = editingMilestone === milestone.title;
         const currentText = editedText[milestone.title] || "";
         const isCompletionVerified = completion?.isVerified || false;
@@ -373,7 +396,10 @@ export function MilestoneCompletionEditor({
                       onClick={() => handleSubmit(milestone.title)}
                       isLoading={isCreating || isUpdating}
                       disabled={
-                        !isSubmitEnabled(milestone.title) || isCreating || isUpdating || isUploading
+                        !isSubmitEnabled(milestone.title, index) ||
+                        isCreating ||
+                        isUpdating ||
+                        isUploading
                       }
                     >
                       {isCreating || isUpdating ? "Saving..." : completion ? "Update" : "Save"}
@@ -393,7 +419,13 @@ export function MilestoneCompletionEditor({
                   {completion && (
                     <div className="mt-3 space-y-1 pt-3 border-t border-zinc-200 dark:border-zinc-700">
                       <div className="flex items-center justify-between">
-                        <p className="text-xs font-semibold">Completion Update</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-xs font-semibold">Completion Update</p>
+                          <ApplicationMilestoneAIEvaluationBadge
+                            referenceNumber={referenceNumber}
+                            milestoneTitle={milestone.title}
+                          />
+                        </div>
                         {canEdit && (
                           <Button size="icon-sm" onClick={() => handleStartEdit(milestone.title)}>
                             <Pencil className="w-4 h-4" />
