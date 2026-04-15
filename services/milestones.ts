@@ -106,6 +106,21 @@ export async function fetchMilestoneEvaluation(
   return data ?? { evaluations: [] };
 }
 
+export async function fetchApplicationMilestoneEvaluation(
+  referenceNumber: string,
+  milestoneTitle: string
+): Promise<MilestoneEvaluationResponse> {
+  const [data, error] = await fetchData<MilestoneEvaluationResponse>(
+    INDEXER.V2.FUNDING_APPLICATIONS.MILESTONE_EVALUATION(referenceNumber, milestoneTitle)
+  );
+
+  if (error) {
+    throw new Error(`Failed to fetch application milestone evaluation: ${error}`);
+  }
+
+  return data ?? { evaluations: [] };
+}
+
 async function fetchGrantByProgramId(
   projectUid: string,
   programId: string

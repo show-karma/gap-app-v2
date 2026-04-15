@@ -86,6 +86,14 @@ const MilestoneUpdateForm = dynamic(
   }
 );
 
+const MilestoneAIEvaluationBadge = dynamic(
+  () =>
+    import("@/components/Milestone/MilestoneAIEvaluationBadge").then(
+      (m) => m.MilestoneAIEvaluationBadge
+    ),
+  { ssr: false }
+);
+
 interface MilestoneCardProps {
   milestone: UnifiedMilestone;
   isAuthorized: boolean;
@@ -516,6 +524,9 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
                 >
                   {completed ? "Completed" : "Pending"}
                 </Badge>
+              )}
+              {completed && milestone.uid && (
+                <MilestoneAIEvaluationBadge milestoneUID={milestone.uid} />
               )}
             </div>
           </div>

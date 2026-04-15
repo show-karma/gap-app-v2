@@ -1,11 +1,26 @@
 import { useQuery } from "@tanstack/react-query";
-import { fetchMilestoneEvaluation } from "@/services/milestones";
+import {
+  fetchApplicationMilestoneEvaluation,
+  fetchMilestoneEvaluation,
+} from "@/services/milestones";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 export const useMilestoneEvaluation = (milestoneUID: string, enabled: boolean) => {
   return useQuery({
     queryKey: QUERY_KEYS.MILESTONES.EVALUATION(milestoneUID),
     queryFn: () => fetchMilestoneEvaluation(milestoneUID),
+    enabled,
+  });
+};
+
+export const useApplicationMilestoneEvaluation = (
+  referenceNumber: string,
+  milestoneTitle: string,
+  enabled: boolean
+) => {
+  return useQuery({
+    queryKey: ["application-milestone-evaluation", referenceNumber, milestoneTitle],
+    queryFn: () => fetchApplicationMilestoneEvaluation(referenceNumber, milestoneTitle),
     enabled,
   });
 };
