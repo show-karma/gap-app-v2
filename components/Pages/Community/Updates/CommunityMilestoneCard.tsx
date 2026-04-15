@@ -1,4 +1,5 @@
 import { CheckCircleIcon, ClockIcon } from "@heroicons/react/24/outline";
+import dynamic from "next/dynamic";
 import { type FC, memo } from "react";
 import { containerClassName } from "@/components/Shared/ActivityCard";
 import { ActivityAttribution } from "@/components/Shared/ActivityCard/ActivityAttribution";
@@ -8,6 +9,14 @@ import { formatDate } from "@/utilities/formatDate";
 import { ReadMore } from "@/utilities/ReadMore";
 import { cn } from "@/utilities/tailwind";
 import { MilestoneCompletionInfo } from "./MilestoneCompletionInfo";
+
+const MilestoneAIEvaluationBadge = dynamic(
+  () =>
+    import("@/components/Milestone/MilestoneAIEvaluationBadge").then(
+      (m) => m.MilestoneAIEvaluationBadge
+    ),
+  { ssr: false }
+);
 
 interface CommunityMilestoneCardProps {
   milestone: CommunityMilestoneUpdate;
@@ -77,6 +86,9 @@ const CommunityMilestoneCardComponent: FC<CommunityMilestoneCardProps> = ({
                 Due {formatDate(milestone.details.dueDate)}
               </span>
             )}
+            {isCompleted && milestone.uid ? (
+              <MilestoneAIEvaluationBadge milestoneUID={milestone.uid} />
+            ) : null}
           </div>
 
           {/* Title */}
