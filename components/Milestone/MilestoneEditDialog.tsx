@@ -27,8 +27,8 @@ const editMilestoneSchema = z.object({
     .max(200, "Title must be less than 200 characters")
     .refine((val) => val.trim().length > 0, "Title cannot be only whitespace"),
   description: z.string().max(5000, "Description must be less than 5000 characters").optional(),
-  endsAt: z.string().optional(),
   startsAt: z.string().optional(),
+  endsAt: z.string().optional(),
   priority: z.preprocess(
     (v) => (v === "" ? undefined : v),
     z.coerce.number().min(0).max(10).optional()
@@ -41,6 +41,14 @@ interface MilestoneEditDialogProps {
   milestone: UnifiedMilestone;
   isOpen: boolean;
   onClose: () => void;
+  /** Override project UID when not on a project page (e.g. admin review page) */
+  projectUid?: string;
+  /** Override project slug for query invalidation */
+  projectSlug?: string;
+  /** Program ID for admin on-chain edits */
+  programId?: string;
+  /** Exclude the start date field from display and submission (e.g. admin review flow) */
+  excludeStartDate?: boolean;
 }
 
 function unixToDateInput(unix?: number): string {
@@ -56,8 +64,18 @@ function dateInputToUnix(dateStr?: string): number | undefined {
   return Math.floor(date.getTime() / 1000);
 }
 
-export const MilestoneEditDialog = ({ milestone, isOpen, onClose }: MilestoneEditDialogProps) => {
-  const { isEditing, editMilestone } = useMilestoneEdit();
+export const MilestoneEditDialog = ({
+  milestone,
+  isOpen,
+  onClose,
+  projectUid,
+  projectSlug,
+  programId,
+  excludeStartDate = false,
+}: MilestoneEditDialogProps) => {
+  const { isEditing, editMilestone } = useMilestoneEdit(
+    projectUid ? { projectUid, projectSlug, programId } : undefined
+  );
   const [error, setError] = useState<string | null>(null);
 
   const handleOpenChange = useCallback(
@@ -78,8 +96,8 @@ export const MilestoneEditDialog = ({ milestone, isOpen, onClose }: MilestoneEdi
     defaultValues: {
       title: milestone.title || "",
       description: milestone.description || "",
-      endsAt: unixToDateInput(milestone.endsAt),
       startsAt: unixToDateInput(milestone.startsAt),
+      endsAt: unixToDateInput(milestone.endsAt),
       priority: grantMilestone?.priority ?? undefined,
     },
   });
@@ -90,8 +108,8 @@ export const MilestoneEditDialog = ({ milestone, isOpen, onClose }: MilestoneEdi
       const editData: MilestoneEditData = {
         title: data.title.trim(),
         description: data.description?.trim() || undefined,
+        startsAt: excludeStartDate ? undefined : dateInputToUnix(data.startsAt),
         endsAt: dateInputToUnix(data.endsAt),
-        startsAt: dateInputToUnix(data.startsAt),
         priority: data.priority,
       };
 
@@ -148,22 +166,23 @@ export const MilestoneEditDialog = ({ milestone, isOpen, onClose }: MilestoneEdi
             ) : null}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label
-                htmlFor="milestone-starts-at"
-                className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
-              >
-                Start Date
-              </label>
-              <Input
-                id="milestone-starts-at"
-                type="date"
-                {...register("startsAt")}
-                disabled={isEditing}
-              />
-            </div>
-
+          <div className={excludeStartDate ? "" : "grid grid-cols-2 gap-4"}>
+            {!excludeStartDate && (
+              <div className="flex flex-col gap-1.5">
+                <label
+                  htmlFor="milestone-starts-at"
+                  className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                >
+                  Start Date
+                </label>
+                <Input
+                  id="milestone-starts-at"
+                  type="date"
+                  {...register("startsAt")}
+                  disabled={isEditing}
+                />
+              </div>
+            )}
             <div className="flex flex-col gap-1.5">
               <label
                 htmlFor="milestone-ends-at"

@@ -524,6 +524,13 @@ function MilestonesReviewPageContent({
                       isVerifying={isVerifying}
                       canVerifyMilestones={canVerifyMilestones}
                       canDeleteMilestones={canDeleteMilestones}
+                      // Intentionally reuses canVerifyMilestones — edit and verify share the same permission gate
+                      canEditMilestones={canVerifyMilestones}
+                      grantUID={grant?.uid}
+                      grantChainID={grant?.chainID}
+                      projectUid={project.uid}
+                      projectSlug={project.details?.slug}
+                      programId={parsedProgramId}
                       onVerifyClick={handleVerifyClick}
                       onCancelVerification={handleCancelVerification}
                       onVerificationCommentChange={setVerificationComment}

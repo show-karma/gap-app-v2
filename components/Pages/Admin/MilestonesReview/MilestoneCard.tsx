@@ -1,18 +1,28 @@
 "use client";
 
 import { CheckCircleIcon, SparklesIcon, TrashIcon } from "@heroicons/react/20/solid";
+import { PencilSquareIcon } from "@heroicons/react/24/outline";
 import dynamic from "next/dynamic";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import type { GrantMilestoneWithCompletion } from "@/services/milestones";
 import { formatDate } from "@/utilities/formatDate";
+import { toEditableUnifiedMilestone } from "@/utilities/milestoneTransforms";
 import { shortAddress } from "@/utilities/shortAddress";
 import { getMilestoneStatus, MILESTONE_STATUS_CONFIG } from "./utils/milestone-review-status";
 
 const AIEvaluationModal = dynamic(
   () => import("./AIEvaluationModal").then((m) => ({ default: m.AIEvaluationModal })),
+  { ssr: false }
+);
+
+const MilestoneEditDialog = dynamic(
+  () =>
+    import("@/components/Milestone/MilestoneEditDialog").then((m) => ({
+      default: m.MilestoneEditDialog,
+    })),
   { ssr: false }
 );
 
@@ -42,6 +52,12 @@ interface MilestoneCardProps {
   isVerifying: boolean;
   canVerifyMilestones: boolean;
   canDeleteMilestones: boolean;
+  canEditMilestones?: boolean;
+  grantUID?: string;
+  grantChainID?: number;
+  projectUid?: string;
+  projectSlug?: string;
+  programId?: string;
   onVerifyClick: (uid: string) => void;
   onCancelVerification: () => void;
   onVerificationCommentChange: (comment: string) => void;
@@ -59,6 +75,12 @@ export function MilestoneCard({
   isVerifying,
   canVerifyMilestones,
   canDeleteMilestones,
+  canEditMilestones = false,
+  grantUID,
+  grantChainID,
+  projectUid,
+  projectSlug,
+  programId,
   onVerifyClick,
   onCancelVerification,
   onVerificationCommentChange,
@@ -67,6 +89,24 @@ export function MilestoneCard({
   isDeleting = false,
   allocationAmount,
 }: MilestoneCardProps) {
+  const [isEditOpen, setIsEditOpen] = useState(false);
+
+  const unifiedMilestone = useMemo(
+    () =>
+      canEditMilestones && grantUID && grantChainID
+        ? toEditableUnifiedMilestone(milestone, grantUID, grantChainID)
+        : null,
+    [canEditMilestones, milestone, grantUID, grantChainID]
+  );
+
+  const handleEditOpen = useCallback(() => {
+    setIsEditOpen(true);
+  }, []);
+
+  const handleEditClose = useCallback(() => {
+    setIsEditOpen(false);
+  }, []);
+
   const useOnChainData = useMemo(
     () => milestone.completionDetails !== null,
     [milestone.completionDetails]
@@ -106,23 +146,35 @@ export function MilestoneCard({
     >
       <div className="flex items-start justify-between mb-2">
         <h3 className="text-lg font-medium text-black dark:text-white">{milestone.title}</h3>
-        {canDeleteMilestones && milestone.fundingApplicationCompletion && (
-          <DeleteDialog
-            deleteFunction={() => onDeleteMilestone(milestone)}
-            isLoading={isDeleting}
-            title={
-              <p className="font-normal">
-                Are you sure you want to delete <b>{milestone.title}</b> milestone?
-              </p>
-            }
-            buttonElement={{
-              text: "",
-              icon: <TrashIcon className="w-5 h-5 text-red-500" />,
-              styleClass:
-                "bg-transparent p-1 w-max h-max text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 border border-red-200 dark:border-red-800 rounded",
-            }}
-          />
-        )}
+        <div className="flex items-center gap-1">
+          {unifiedMilestone && !isVerified && !hasCompletion && (
+            <Button
+              onClick={handleEditOpen}
+              className="bg-transparent p-1 w-max h-max hover:bg-gray-100 dark:hover:bg-zinc-700 rounded"
+              title="Edit milestone"
+              aria-label={`Edit milestone ${milestone.title}`}
+            >
+              <PencilSquareIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+            </Button>
+          )}
+          {canDeleteMilestones && milestone.fundingApplicationCompletion && (
+            <DeleteDialog
+              deleteFunction={() => onDeleteMilestone(milestone)}
+              isLoading={isDeleting}
+              title={
+                <p className="font-normal">
+                  Are you sure you want to delete <b>{milestone.title}</b> milestone?
+                </p>
+              }
+              buttonElement={{
+                text: "",
+                icon: <TrashIcon className="w-5 h-5 text-red-500" />,
+                styleClass:
+                  "bg-transparent p-1 w-max h-max text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 border border-red-200 dark:border-red-800 rounded",
+              }}
+            />
+          )}
+        </div>
       </div>
 
       <div className="text-gray-600 dark:text-gray-400 text-sm mb-3">
@@ -235,7 +287,7 @@ export function MilestoneCard({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="text-sm text-gray-500 dark:text-gray-400">
-            <span className="font-medium">Due:</span> {formatDate(milestone.dueDate)}
+            <span className="font-medium">Due:</span> {formatDate(milestone.dueDate, "UTC")}
           </div>
           {allocationAmount ? (
             <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200">
@@ -253,6 +305,18 @@ export function MilestoneCard({
           milestoneUID={milestone.uid}
           isOpen={isEvaluationModalOpen}
           onClose={() => setIsEvaluationModalOpen(false)}
+        />
+      )}
+
+      {unifiedMilestone && isEditOpen && (
+        <MilestoneEditDialog
+          milestone={unifiedMilestone}
+          isOpen={isEditOpen}
+          onClose={handleEditClose}
+          projectUid={projectUid}
+          projectSlug={projectSlug}
+          programId={programId}
+          excludeStartDate
         />
       )}
     </div>

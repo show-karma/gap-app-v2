@@ -440,6 +440,7 @@ export const INDEXER = {
       SEND: (milestoneUID: string) => `/grants/milestones/${milestoneUID}/indicators/data`,
     },
     EVALUATION: (milestoneUID: string) => `/v2/milestones/${milestoneUID}/evaluation`,
+    ON_CHAIN_EDIT: (milestoneUID: string) => `/v2/milestones/${milestoneUID}/on-chain-edit`,
   },
   CATEGORIES: {
     CREATE: (idOrSlug: string) => `/categories/create/${idOrSlug}`,

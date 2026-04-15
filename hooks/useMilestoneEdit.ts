@@ -1,16 +1,18 @@
 import type { IMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/Milestone";
 import { useState } from "react";
+import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
-
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useProjectStore } from "@/store";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
+import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
+import { envVars } from "@/utilities/enviromentVars";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { queryClient } from "@/utilities/query-client";
-import { createProjectQueryPredicate } from "@/utilities/queryKeys";
+import { createProjectQueryPredicate, QUERY_KEYS } from "@/utilities/queryKeys";
 import { retryUntilConditionMet } from "@/utilities/retries";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { getProjectById } from "@/utilities/sdk";
@@ -19,10 +21,19 @@ import { useWallet } from "./useWallet";
 import { useProjectGrants } from "./v2/useProjectGrants";
 
 export type MilestoneEditData = Partial<
-  Pick<IMilestone, "title" | "description" | "endsAt" | "startsAt" | "priority">
+  Pick<IMilestone, "title" | "description" | "startsAt" | "endsAt" | "priority">
 >;
 
-export const useMilestoneEdit = () => {
+interface UseMilestoneEditOptions {
+  /** Override project UID when not on a project page (e.g. admin review page) */
+  projectUid?: string;
+  /** Override project slug for query invalidation */
+  projectSlug?: string;
+  /** Program ID for admin edits — required when using the backend on-chain edit API */
+  programId?: string;
+}
+
+export const useMilestoneEdit = (options?: UseMilestoneEditOptions) => {
   const [isEditing, setIsEditing] = useState(false);
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
@@ -35,18 +46,38 @@ export const useMilestoneEdit = () => {
     dismiss,
     showChainProgress,
   } = useAttestationToast();
-  const project = useProjectStore((state) => state.project);
-  const projectSlug = project?.details?.slug || "";
-  const { refetch: refetchGrants } = useProjectGrants(project?.uid || "");
+  const storeProject = useProjectStore((state) => state.project);
+  const projectUid = options?.projectUid || storeProject?.uid || "";
+  const projectSlug = options?.projectSlug || storeProject?.details?.slug || "";
+  const { refetch: refetchGrants } = useProjectGrants(projectUid);
 
   const invalidateAllProjectQueries = async () => {
-    // refetchGrants invalidates by UID; also invalidate by slug
-    // so the Updates tab (which uses slug from URL) gets fresh data
+    const invalidations: Promise<void>[] = [];
+
     if (projectSlug) {
-      await queryClient.invalidateQueries({
-        predicate: createProjectQueryPredicate(projectSlug),
-      });
+      invalidations.push(
+        queryClient.invalidateQueries({
+          predicate: createProjectQueryPredicate(projectSlug),
+        })
+      );
     }
+
+    if (options?.programId) {
+      const reportKey = QUERY_KEYS.COMMUNITY.REPORT_MILESTONES("", 0, "", "", [])[0];
+      const pendingKey = QUERY_KEYS.COMMUNITY.PENDING_VERIFICATION("", 0, [])[0];
+      const grantMilestonesKey = QUERY_KEYS.MILESTONES.PROJECT_GRANT_MILESTONES("", "")[0];
+
+      invalidations.push(
+        queryClient.invalidateQueries({
+          predicate: (query) => {
+            const key = query.queryKey[0];
+            return key === reportKey || key === pendingKey || key === grantMilestonesKey;
+          },
+        })
+      );
+    }
+
+    await Promise.all(invalidations);
   };
 
   const { setupChainAndWallet } = useSetupChainAndWallet();
@@ -78,7 +109,77 @@ export const useMilestoneEdit = () => {
     };
   };
 
+  const editMilestoneViaApi = async (
+    milestone: UnifiedMilestone,
+    newData: MilestoneEditData,
+    programId: string
+  ) => {
+    setIsEditing(true);
+    showLoading("Editing milestone...");
+
+    try {
+      const apiClient = createAuthenticatedApiClient(envVars.NEXT_PUBLIC_GAP_INDEXER_URL, 60000);
+
+      const response = await apiClient.put<{
+        txHash: string;
+        newMilestoneUID: string;
+        revokedMilestoneUID: string;
+        revocationSuccess: boolean;
+      }>(INDEXER.MILESTONE.ON_CHAIN_EDIT(milestone.uid), {
+        chainID: milestone.chainID,
+        programId,
+        ...sanitizeObject(newData),
+      });
+
+      if (!response.data.revocationSuccess) {
+        toast("Milestone updated, but the old attestation could not be revoked.", {
+          icon: "\u26A0\uFE0F",
+          duration: 6000,
+        });
+        errorManager(
+          "Old milestone attestation revocation failed (non-fatal)",
+          new Error("revocationSuccess was false"),
+          { milestoneUid: milestone.uid, newUid: response.data.newMilestoneUID }
+        );
+      }
+
+      changeStepperStep("indexing");
+
+      // Backend already re-indexes both the creation and revocation txs
+      // in triggerReindexing — no need to call attestation listener again.
+      await retryUntilConditionMet(
+        async () => {
+          const { data: fetchedGrants } = await refetchGrants();
+          if (!fetchedGrants?.length) return false;
+          const found = fetchedGrants
+            .flatMap((g) => g.milestones || [])
+            .find((m) => m.uid === response.data.newMilestoneUID);
+          return !!found;
+        },
+        async () => {
+          changeStepperStep("indexed");
+        }
+      );
+
+      await invalidateAllProjectQueries();
+      showSuccess("Milestone edited successfully!");
+    } catch (error) {
+      showError("There was an error editing the milestone");
+      errorManager("Error editing milestone", error, {
+        milestoneData: milestone,
+      });
+      throw error;
+    } finally {
+      setIsEditing(false);
+      dismiss();
+    }
+  };
+
   const editMilestone = async (milestone: UnifiedMilestone, newData: MilestoneEditData) => {
+    if (options?.programId) {
+      return editMilestoneViaApi(milestone, newData, options.programId);
+    }
+
     setIsEditing(true);
     startAttestation("Step 1/2: Creating updated milestone...");
 
@@ -130,7 +231,10 @@ export const useMilestoneEdit = () => {
           }
 
           const { walletSigner } = setup;
-          const fetchedProject = await getProjectById(project!.details?.slug || "");
+          if (!projectUid) {
+            throw new Error("Missing project UID for milestone edit");
+          }
+          const fetchedProject = await getProjectById(projectUid);
           if (!fetchedProject) {
             throw new Error("Failed to fetch project data");
           }
@@ -203,7 +307,7 @@ export const useMilestoneEdit = () => {
         }
 
         const { gapClient, walletSigner } = setup;
-        const fetchedProject = await gapClient.fetch.projectById(project?.uid);
+        const fetchedProject = await gapClient.fetch.projectById(projectUid);
 
         if (!fetchedProject) {
           throw new Error("Failed to fetch project data");
