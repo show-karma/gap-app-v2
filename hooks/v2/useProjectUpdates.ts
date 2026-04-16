@@ -116,6 +116,8 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
       milestoneAny.data?.attester ||
       milestoneAny.data?.recipient ||
       "";
+    // Off-chain completions use fundingApplicationCompletion instead of completionDetails
+    const appCompletion = milestone.fundingApplicationCompletion;
     const chainID =
       parseChainId(milestone.chainId) ||
       parseChainId(milestoneAny?.grant?.chainID) ||
@@ -155,10 +157,14 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
       description: milestone.description,
       completed: isCompleted
         ? {
-            createdAt: milestone.completionDetails?.completedAt || milestone.createdAt || "",
+            createdAt:
+              milestone.completionDetails?.completedAt ||
+              appCompletion?.createdAt ||
+              milestone.createdAt ||
+              "",
             data: {
               proofOfWork: milestone.completionDetails?.proofOfWork,
-              reason: milestone.completionDetails?.description,
+              reason: milestone.completionDetails?.description || appCompletion?.completionText,
               completionPercentage: milestone.completionDetails?.completionPercentage,
               deliverables: milestone.completionDetails?.deliverables,
             },
@@ -181,11 +187,16 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
             endsAt: milestoneEndsAt,
             completed: isCompleted
               ? {
-                  createdAt: milestone.completionDetails?.completedAt || milestone.createdAt || "",
-                  attester: milestone.completionDetails?.completedBy,
+                  createdAt:
+                    milestone.completionDetails?.completedAt ||
+                    appCompletion?.createdAt ||
+                    milestone.createdAt ||
+                    "",
+                  attester: milestone.completionDetails?.completedBy || appCompletion?.ownerAddress,
                   data: {
                     proofOfWork: milestone.completionDetails?.proofOfWork,
-                    reason: milestone.completionDetails?.description,
+                    reason:
+                      milestone.completionDetails?.description || appCompletion?.completionText,
                     completionPercentage: milestone.completionDetails?.completionPercentage,
                     deliverables: milestone.completionDetails?.deliverables,
                   },
