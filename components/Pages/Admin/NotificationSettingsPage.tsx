@@ -188,16 +188,17 @@ function ProviderConfigCard({
   };
 
   const handleTest = () => {
-    const firstChat = ids.find((id) => id.trim());
+    const filtered = ids.filter((id) => id.trim());
     testConfig(
       {
         providerType,
         botToken: isTelegram ? token : null,
-        chatId: isTelegram ? firstChat : null,
+        chatId: isTelegram ? filtered[0] : null,
+        chatIds: isTelegram ? filtered : undefined,
         webhookUrl: !isTelegram ? url : null,
       },
       {
-        onSuccess: (r) => r.success ? toast.success("Test sent!") : toast.error(r.message || "Test failed"),
+        onSuccess: (r) => r.success ? toast.success(r.message || "Test sent!") : toast.error(r.message || "Test failed"),
         onError: (e) => toast.error(e.message || "Test failed"),
       }
     );

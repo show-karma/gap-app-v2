@@ -12,6 +12,7 @@ export interface TestNotificationConfigRequest {
   providerType: NotificationProviderType;
   botToken?: string | null;
   chatId?: string | null;
+  chatIds?: string[];
   webhookUrl?: string | null;
 }
 
