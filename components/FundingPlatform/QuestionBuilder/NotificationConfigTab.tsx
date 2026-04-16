@@ -48,7 +48,7 @@ export function NotificationConfigTab({
         {
           providerType: "TELEGRAM",
           botToken: config?.telegramBotToken,
-          chatId: config?.telegramChatId,
+          chatId: config?.telegramChatIds?.[0],
         },
         {
           onSuccess: (result) => {
@@ -75,7 +75,7 @@ export function NotificationConfigTab({
     }
   };
 
-  const telegramActive = config?.telegramEnabled && !!config?.telegramBotToken && !!config?.telegramChatId;
+  const telegramActive = config?.telegramEnabled && !!config?.telegramBotToken && (config?.telegramChatIds?.length ?? 0) > 0;
   const slackActive = config?.slackEnabled && !!config?.slackWebhookUrl;
 
   return (

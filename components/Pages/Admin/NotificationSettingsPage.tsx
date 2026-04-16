@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import toast from "react-hot-toast";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import {
-  Bell, Send, Loader2, AlertTriangle, Info,
-  Eye, EyeOff, CheckCircle2, XCircle, MessageSquare, Hash,
+  Bell, Send, Loader2, AlertTriangle, Info, Eye, EyeOff,
+  CheckCircle2, XCircle, MessageSquare, Hash, Plus, Trash2, HelpCircle,
 } from "lucide-react";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
@@ -19,6 +19,29 @@ import {
 import { useTestNotificationConfig } from "@/hooks/useNotificationConfig";
 import type { Community } from "@/types/v2/community";
 import { MESSAGES } from "@/utilities/messages";
+
+// ── Tooltip ──
+
+function Tooltip({ children, content }: { children: React.ReactNode; content: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <span
+      className="relative inline-flex"
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+      onFocus={() => setOpen(true)}
+      onBlur={() => setOpen(false)}
+    >
+      <span className="cursor-help">{children}</span>
+      {open && (
+        <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-80 p-3 text-sm bg-gray-900 dark:bg-zinc-800 text-white rounded-lg shadow-xl pointer-events-none">
+          {content}
+          <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-px border-4 border-transparent border-t-gray-900 dark:border-t-zinc-800" />
+        </div>
+      )}
+    </span>
+  );
+}
 
 // ── Kill Switch ──
 
@@ -77,16 +100,64 @@ function KillSwitchCard({
   );
 }
 
-// ── Provider Config Card ──
+// ── Chat IDs Editor ──
 
-interface FieldDef {
-  key: string;
-  label: string;
-  placeholder: string;
-  type?: string;
-  secret?: boolean;
-  value: string;
+function ChatIdsEditor({
+  chatIds,
+  onChange,
+  disabled,
+}: {
+  chatIds: string[];
+  onChange: (ids: string[]) => void;
+  disabled: boolean;
+}) {
+  const addChatId = () => onChange([...chatIds, ""]);
+  const removeChatId = (idx: number) => onChange(chatIds.filter((_, i) => i !== idx));
+  const updateChatId = (idx: number, value: string) => {
+    const next = [...chatIds];
+    next[idx] = value;
+    onChange(next);
+  };
+
+  return (
+    <div className="space-y-2">
+      {chatIds.map((id, idx) => (
+        <div key={idx} className="flex items-center gap-2">
+          <input
+            type="text"
+            value={id}
+            onChange={(e) => updateChatId(idx, e.target.value)}
+            disabled={disabled}
+            placeholder={`Chat ID ${idx + 1} (e.g. -1001234567890)`}
+            className="flex-1 px-4 py-2.5 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-zinc-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow disabled:opacity-50"
+          />
+          {chatIds.length > 1 && (
+            <button
+              type="button"
+              onClick={() => removeChatId(idx)}
+              disabled={disabled}
+              className="p-2 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors disabled:opacity-50"
+              title="Remove this chat ID"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={addChatId}
+        disabled={disabled}
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors disabled:opacity-50"
+      >
+        <Plus className="w-4 h-4" />
+        Add another chat ID
+      </button>
+    </div>
+  );
 }
+
+// ── Provider Config Card ──
 
 function ProviderConfigCard({
   title,
@@ -94,73 +165,69 @@ function ProviderConfigCard({
   providerType,
   communitySlug,
   isEnabled,
-  fields,
+  botToken,
+  chatIds,
+  webhookUrl,
 }: {
   title: string;
   description: string;
   providerType: "TELEGRAM" | "SLACK";
   communitySlug: string;
   isEnabled: boolean;
-  fields: FieldDef[];
+  botToken?: string | null;
+  chatIds?: string[];
+  webhookUrl?: string | null;
 }) {
   const { mutate: saveConfig, isPending: isSaving } = useCommunityConfigMutation();
   const { mutate: testConfig, isPending: isTesting } = useTestNotificationConfig(communitySlug);
   const [showSecrets, setShowSecrets] = useState(false);
+  const isTelegram = providerType === "TELEGRAM";
 
-  const schemaFields: Record<string, any> = { isEnabled: z.boolean() };
-  for (const f of fields) {
-    schemaFields[f.key] = f.type === "url"
-      ? z.string().url("Must be a valid URL")
-      : z.string().min(1, `${f.label} is required`);
-  }
-  const schema = z.object(schemaFields);
+  // Local form state
+  const [enabled, setEnabled] = useState(isEnabled);
+  const [token, setToken] = useState(botToken ?? "");
+  const [ids, setIds] = useState<string[]>(chatIds?.length ? chatIds : [""]);
+  const [url, setUrl] = useState(webhookUrl ?? "");
 
-  const defaults: Record<string, any> = { isEnabled };
-  for (const f of fields) {
-    defaults[f.key] = f.value ?? "";
-  }
-
-  const form = useForm({
-    resolver: zodResolver(schema),
-    defaultValues: defaults,
-  });
-
+  // Sync from props
   const prevKey = useRef("");
-  const currentKey = JSON.stringify(defaults);
+  const currentKey = `${isEnabled}-${botToken}-${JSON.stringify(chatIds)}-${webhookUrl}`;
   useEffect(() => {
     if (currentKey !== prevKey.current) {
       prevKey.current = currentKey;
-      form.reset(defaults);
+      setEnabled(isEnabled);
+      setToken(botToken ?? "");
+      setIds(chatIds?.length ? chatIds : [""]);
+      setUrl(webhookUrl ?? "");
     }
-  }, [currentKey, form, defaults]);
+  }, [currentKey, isEnabled, botToken, chatIds, webhookUrl]);
 
-  const onSubmit = (data: any) => {
-    const patch: Record<string, any> = {};
-    if (providerType === "TELEGRAM") {
-      patch.telegramEnabled = data.isEnabled;
-      patch.telegramBotToken = data.botToken || null;
-      patch.telegramChatId = data.chatId || null;
+  const handleSave = () => {
+    if (isTelegram) {
+      if (!token) { toast.error("Bot Token is required"); return; }
+      const filtered = ids.filter((id) => id.trim());
+      if (filtered.length === 0) { toast.error("At least one Chat ID is required"); return; }
+      saveConfig(
+        { slug: communitySlug, config: { telegramEnabled: enabled, telegramBotToken: token, telegramChatIds: filtered } },
+        { onSuccess: () => toast.success("Telegram config saved"), onError: (err) => toast.error(err.message || "Failed to save") }
+      );
     } else {
-      patch.slackEnabled = data.isEnabled;
-      patch.slackWebhookUrl = data.webhookUrl || null;
+      if (enabled && !url) { toast.error("Webhook URL is required"); return; }
+      saveConfig(
+        { slug: communitySlug, config: { slackEnabled: enabled, slackWebhookUrl: url || null } },
+        { onSuccess: () => toast.success("Slack config saved"), onError: (err) => toast.error(err.message || "Failed to save") }
+      );
     }
-    saveConfig(
-      { slug: communitySlug, config: patch },
-      {
-        onSuccess: () => toast.success(`${title} configuration saved`),
-        onError: (err) => toast.error(err.message || "Failed to save"),
-      }
-    );
   };
 
   const handleTest = () => {
-    const values = form.getValues();
+    const firstChatId = ids.find((id) => id.trim());
     testConfig(
       {
         providerType,
-        botToken: providerType === "TELEGRAM" ? values.botToken : null,
-        chatId: providerType === "TELEGRAM" ? values.chatId : null,
-        webhookUrl: providerType === "SLACK" ? values.webhookUrl : null,
+        botToken: isTelegram ? token : null,
+        chatId: isTelegram ? firstChatId : null,
+        webhookUrl: !isTelegram ? url : null,
       },
       {
         onSuccess: (result) => {
@@ -172,19 +239,15 @@ function ProviderConfigCard({
     );
   };
 
-  const enabled = form.watch("isEnabled");
-
   return (
     <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl overflow-hidden">
       <div className="px-6 py-5 border-b border-gray-100 dark:border-zinc-800">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-              providerType === "TELEGRAM"
-                ? "bg-blue-50 dark:bg-blue-900/30"
-                : "bg-purple-50 dark:bg-purple-900/30"
+              isTelegram ? "bg-blue-50 dark:bg-blue-900/30" : "bg-purple-50 dark:bg-purple-900/30"
             }`}>
-              {providerType === "TELEGRAM"
+              {isTelegram
                 ? <MessageSquare className="w-5 h-5 text-blue-500 dark:text-blue-400" />
                 : <Hash className="w-5 h-5 text-purple-500 dark:text-purple-400" />
               }
@@ -206,11 +269,13 @@ function ProviderConfigCard({
         </div>
       </div>
 
-      <form onSubmit={form.handleSubmit(onSubmit)} className="p-6 space-y-5">
+      <div className="p-6 space-y-5">
+        {/* Enable toggle */}
         <label className="flex items-center gap-3 cursor-pointer group">
           <input
             type="checkbox"
-            {...form.register("isEnabled")}
+            checked={enabled}
+            onChange={(e) => setEnabled(e.target.checked)}
             className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
           />
           <span className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
@@ -218,38 +283,104 @@ function ProviderConfigCard({
           </span>
         </label>
 
-        {fields.map((f) => (
-          <div key={f.key} className={enabled ? "" : "opacity-50 pointer-events-none"}>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-              {f.label}
-            </label>
-            <div className="relative">
+        <div className={enabled ? "" : "opacity-50 pointer-events-none space-y-5"}>
+          {isTelegram ? (
+            <>
+              {/* Bot Token */}
+              <div>
+                <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                  Bot Token
+                  <Tooltip content={
+                    <div className="space-y-2">
+                      <p className="font-semibold">How to get a Telegram Bot Token:</p>
+                      <ol className="list-decimal list-inside space-y-1">
+                        <li>Open Telegram and search for <strong>@BotFather</strong></li>
+                        <li>Send <code>/newbot</code> and follow the prompts</li>
+                        <li>Copy the token (format: <code>123456789:ABCdef...</code>)</li>
+                      </ol>
+                      <p className="text-xs text-gray-400 mt-1">You can also use an existing bot via <code>/mybots</code></p>
+                    </div>
+                  }>
+                    <HelpCircle className="w-4 h-4 text-gray-400 hover:text-blue-500" />
+                  </Tooltip>
+                </label>
+                <div className="relative">
+                  <input
+                    type={showSecrets ? "text" : "password"}
+                    value={token}
+                    onChange={(e) => setToken(e.target.value)}
+                    placeholder="123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
+                    className="w-full px-4 py-2.5 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-zinc-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowSecrets((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  >
+                    {showSecrets ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Chat IDs */}
+              <div>
+                <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                  Chat IDs
+                  <Tooltip content={
+                    <div className="space-y-2">
+                      <p className="font-semibold">How to get a Telegram Chat ID:</p>
+                      <ol className="list-decimal list-inside space-y-1">
+                        <li>Add your bot to the target group/channel</li>
+                        <li>Send a message in the group (or forward one to the bot)</li>
+                        <li>Visit <code className="break-all">https://api.telegram.org/bot{'{TOKEN}'}/getUpdates</code></li>
+                        <li>Find the <code>chat.id</code> in the JSON response</li>
+                      </ol>
+                      <p className="text-xs text-gray-400 mt-1">
+                        Groups use negative IDs (e.g. <code>-1001234567890</code>).<br />
+                        You can send to multiple groups — add more chat IDs below.
+                      </p>
+                    </div>
+                  }>
+                    <HelpCircle className="w-4 h-4 text-gray-400 hover:text-blue-500" />
+                  </Tooltip>
+                </label>
+                <ChatIdsEditor chatIds={ids} onChange={setIds} disabled={!enabled} />
+              </div>
+            </>
+          ) : (
+            /* Slack Webhook URL */
+            <div>
+              <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                Webhook URL
+                <Tooltip content={
+                  <div className="space-y-2">
+                    <p className="font-semibold">How to get a Slack Webhook URL:</p>
+                    <ol className="list-decimal list-inside space-y-1">
+                      <li>Go to <strong>api.slack.com/messaging/webhooks</strong></li>
+                      <li>Click <strong>Create your Slack app</strong> if you don&apos;t have one</li>
+                      <li>Create an <strong>Incoming Webhook</strong> for your workspace</li>
+                      <li>Select the target channel and copy the webhook URL</li>
+                    </ol>
+                    <p className="text-xs text-gray-400 mt-1">Format: <code className="break-all">https://hooks.slack.com/services/T.../B.../...</code></p>
+                  </div>
+                }>
+                  <HelpCircle className="w-4 h-4 text-gray-400 hover:text-blue-500" />
+                </Tooltip>
+              </label>
               <input
-                type={f.secret && !showSecrets ? "password" : "text"}
-                {...form.register(f.key)}
-                placeholder={f.placeholder}
+                type="url"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder="https://hooks.slack.com/services/T.../B.../..."
                 className="w-full px-4 py-2.5 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-zinc-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
               />
-              {f.secret && (
-                <button
-                  type="button"
-                  onClick={() => setShowSecrets((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                >
-                  {showSecrets ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              )}
             </div>
-            {form.formState.errors[f.key] && (
-              <p className="text-sm text-red-600 dark:text-red-400 mt-1">
-                {String(form.formState.errors[f.key]?.message)}
-              </p>
-            )}
-          </div>
-        ))}
+          )}
+        </div>
 
+        {/* Actions */}
         <div className="flex items-center gap-3 pt-3 border-t border-gray-100 dark:border-zinc-800">
-          <Button type="submit" disabled={isSaving} className="flex-1 sm:flex-none">
+          <Button type="button" disabled={isSaving} onClick={handleSave} className="flex-1 sm:flex-none">
             {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
             Save
           </Button>
@@ -258,7 +389,7 @@ function ProviderConfigCard({
             Send Test
           </Button>
         </div>
-      </form>
+      </div>
     </div>
   );
 }
@@ -361,12 +492,9 @@ export function NotificationSettingsPage({ community }: NotificationSettingsPage
     );
   };
 
-  const telegramEnabled = config?.telegramEnabled ?? false;
-  const slackEnabled = config?.slackEnabled ?? false;
-
   return (
     <div className="space-y-8">
-      {/* Page header — full width */}
+      {/* Page header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
           <Bell className="w-7 h-7 text-blue-500 dark:text-blue-400" />
@@ -387,14 +515,12 @@ export function NotificationSettingsPage({ community }: NotificationSettingsPage
         <div className="space-y-6">
           <ProviderConfigCard
             title="Telegram"
-            description="Send to a Telegram group or channel via bot"
+            description="Send to Telegram groups or channels via bot"
             providerType="TELEGRAM"
             communitySlug={communitySlug}
-            isEnabled={telegramEnabled}
-            fields={[
-              { key: "botToken", label: "Bot Token", placeholder: "123456789:ABCdefGHIjklMNOpqrsTUVwxyz", secret: true, value: config?.telegramBotToken ?? "" },
-              { key: "chatId", label: "Chat ID", placeholder: "-1001234567890", value: config?.telegramChatId ?? "" },
-            ]}
+            isEnabled={config?.telegramEnabled ?? false}
+            botToken={config?.telegramBotToken}
+            chatIds={config?.telegramChatIds}
           />
 
           <ProviderConfigCard
@@ -402,10 +528,8 @@ export function NotificationSettingsPage({ community }: NotificationSettingsPage
             description="Send to a Slack channel via incoming webhook"
             providerType="SLACK"
             communitySlug={communitySlug}
-            isEnabled={slackEnabled}
-            fields={[
-              { key: "webhookUrl", label: "Webhook URL", placeholder: "https://hooks.slack.com/services/T.../B.../...", type: "url", value: config?.slackWebhookUrl ?? "" },
-            ]}
+            isEnabled={config?.slackEnabled ?? false}
+            webhookUrl={config?.slackWebhookUrl}
           />
         </div>
 

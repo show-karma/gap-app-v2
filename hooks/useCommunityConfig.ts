@@ -7,7 +7,7 @@ export interface CommunityConfig {
   rank?: number;
   disableReviewerEmails?: boolean;
   telegramBotToken?: string | null;
-  telegramChatId?: string | null;
+  telegramChatIds?: string[];
   telegramEnabled?: boolean;
   slackWebhookUrl?: string | null;
   slackEnabled?: boolean;
