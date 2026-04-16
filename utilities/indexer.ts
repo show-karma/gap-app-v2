@@ -738,11 +738,6 @@ export const INDEXER = {
       `/v2/communities/${communityIdOrSlug}/kyc-form-url`,
   },
   NOTIFICATION_CONFIG: {
-    GET_CONFIGS: (communityIdOrSlug: string) =>
-      `/v2/communities/${communityIdOrSlug}/notification-config`,
-    UPSERT_CONFIG: (communityIdOrSlug: string) =>
-      `/v2/communities/${communityIdOrSlug}/notification-config`,
-    DELETE_CONFIG: (configId: string) => `/v2/notification-config/${configId}`,
     TEST_CONFIG: (communityIdOrSlug: string) =>
       `/v2/communities/${communityIdOrSlug}/notification-config/test`,
   },

@@ -5,13 +5,19 @@ import { INDEXER } from "@/utilities/indexer";
 export interface CommunityConfig {
   public?: boolean;
   rank?: number;
+  disableReviewerEmails?: boolean;
+  telegramBotToken?: string | null;
+  telegramChatId?: string | null;
+  telegramEnabled?: boolean;
+  slackWebhookUrl?: string | null;
+  slackEnabled?: boolean;
 }
 
 export const useCommunityConfig = (slug: string, enabled: boolean = true) => {
   return useQuery<CommunityConfig | null>({
     queryKey: ["community-config", slug],
     queryFn: async () => {
-      const [data, error] = await fetchData(
+      const [data, error, , ] = await fetchData(
         INDEXER.COMMUNITY.CONFIG.GET(slug),
         "GET",
         {},
@@ -37,7 +43,7 @@ export const useCommunityConfigMutation = () => {
     { previousConfig: CommunityConfig | null }
   >({
     mutationFn: async ({ slug, config }) => {
-      const [data, error] = await fetchData(
+      const [data, error, , ] = await fetchData(
         INDEXER.COMMUNITY.CONFIG.UPDATE(slug),
         "PUT",
         config,
@@ -71,7 +77,7 @@ export const useCommunityConfigMutation = () => {
       }
     },
     onSettled: (_, __, { slug }) => {
-      // Always refetch after error or success to ensure we have the latest data
+      // Always refetch after error or success to ensure we have the latest
       queryClient.invalidateQueries({ queryKey: ["community-config", slug] });
     },
   });
