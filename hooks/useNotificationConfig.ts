@@ -14,6 +14,7 @@ export interface TestNotificationConfigRequest {
   chatId?: string | null;
   chatIds?: string[];
   webhookUrl?: string | null;
+  webhookUrls?: string[];
 }
 
 // ── Hooks ──

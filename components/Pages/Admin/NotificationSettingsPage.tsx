@@ -139,7 +139,7 @@ function ProviderConfigCard({
   isEnabled,
   botToken,
   chatIds,
-  webhookUrl,
+  webhookUrls,
 }: {
   title: string;
   providerType: "TELEGRAM" | "SLACK";
@@ -147,7 +147,7 @@ function ProviderConfigCard({
   isEnabled: boolean;
   botToken?: string | null;
   chatIds?: string[];
-  webhookUrl?: string | null;
+  webhookUrls?: string[];
 }) {
   const { mutate: saveConfig, isPending: isSaving } = useCommunityConfigMutation();
   const { mutate: testConfig, isPending: isTesting } = useTestNotificationConfig(communitySlug);
@@ -157,20 +157,20 @@ function ProviderConfigCard({
   const [enabled, setEnabled] = useState(isEnabled);
   const [token, setToken] = useState(botToken ?? "");
   const [ids, setIds] = useState<string[]>(chatIds?.length ? chatIds : [""]);
-  const [url, setUrl] = useState(webhookUrl ?? "");
+  const [urls, setUrls] = useState<string[]>(webhookUrls?.length ? webhookUrls : [""]);
 
   // Sync from props
   const prevKey = useRef("");
-  const currentKey = `${isEnabled}-${botToken}-${JSON.stringify(chatIds)}-${webhookUrl}`;
+  const currentKey = `${isEnabled}-${botToken}-${JSON.stringify(chatIds)}-${JSON.stringify(webhookUrls)}`;
   useEffect(() => {
     if (currentKey !== prevKey.current) {
       prevKey.current = currentKey;
       setEnabled(isEnabled);
       setToken(botToken ?? "");
       setIds(chatIds?.length ? chatIds : [""]);
-      setUrl(webhookUrl ?? "");
+      setUrls(webhookUrls?.length ? webhookUrls : [""]);
     }
-  }, [currentKey, isEnabled, botToken, chatIds, webhookUrl]);
+  }, [currentKey, isEnabled, botToken, chatIds, webhookUrls]);
 
   const handleSave = () => {
     if (isTelegram) {
@@ -180,28 +180,45 @@ function ProviderConfigCard({
         { onSuccess: () => toast.success("Telegram config saved"), onError: (e) => toast.error(e.message || "Failed") }
       );
     } else {
+      const filtered = ids.filter((id) => id.trim());
       saveConfig(
-        { slug: communitySlug, config: { slackEnabled: enabled, slackWebhookUrl: url || null } },
+        { slug: communitySlug, config: { slackEnabled: enabled, slackWebhookUrls: filtered } },
         { onSuccess: () => toast.success("Slack config saved"), onError: (e) => toast.error(e.message || "Failed") }
       );
     }
   };
 
   const handleTest = () => {
-    const filtered = ids.filter((id) => id.trim());
-    testConfig(
-      {
-        providerType,
-        botToken: isTelegram ? token : null,
-        chatId: isTelegram ? filtered[0] : null,
-        chatIds: isTelegram ? filtered : undefined,
-        webhookUrl: !isTelegram ? url : null,
-      },
-      {
-        onSuccess: (r) => r.success ? toast.success(r.message || "Test sent!") : toast.error(r.message || "Test failed"),
-        onError: (e) => toast.error(e.message || "Test failed"),
-      }
-    );
+    if (isTelegram) {
+      const filtered = ids.filter((id) => id.trim());
+      testConfig(
+        {
+          providerType,
+          botToken: token,
+          chatId: filtered[0] || null,
+          chatIds: filtered.length > 0 ? filtered : undefined,
+          webhookUrl: null,
+        },
+        {
+          onSuccess: (r) => r.success ? toast.success(r.message || "Test sent!") : toast.error(r.message || "Test failed"),
+          onError: (e) => toast.error(e.message || "Test failed"),
+        }
+      );
+    } else {
+      const filtered = urls.filter((u) => u.trim());
+      testConfig(
+        {
+          providerType,
+          botToken: null,
+          webhookUrl: filtered[0] || null,
+          webhookUrls: filtered.length > 0 ? filtered : undefined,
+        },
+        {
+          onSuccess: (r) => r.success ? toast.success(r.message || "Test sent!") : toast.error(r.message || "Test failed"),
+          onError: (e) => toast.error(e.message || "Test failed"),
+        }
+      );
+    }
   };
 
   const disabled = !enabled;
@@ -324,7 +341,7 @@ function ProviderConfigCard({
           ) : (
             <div>
               <label className="flex items-center text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
-                Webhook URL
+                Webhook URLs
                 <InfoTooltip
                   side="right"
                   content={
@@ -336,6 +353,7 @@ function ProviderConfigCard({
                         <li>Select the target channel</li>
                         <li>Copy the webhook URL</li>
                       </ol>
+                      <p className="text-gray-500">Add multiple to notify several channels.</p>
                     </div>
                   }
                 >
@@ -344,13 +362,7 @@ function ProviderConfigCard({
                   </button>
                 </InfoTooltip>
               </label>
-              <input
-                type="url"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                placeholder="https://hooks.slack.com/services/T.../B.../..."
-                className="w-full h-9 px-3 text-sm border border-gray-200 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800/80 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400 transition"
-              />
+              <ChatIdsEditor chatIds={urls} onChange={setUrls} disabled={disabled} />
             </div>
           )}
         </div>
@@ -497,7 +509,7 @@ export function NotificationSettingsPage({ community }: NotificationSettingsPage
           providerType="SLACK"
           communitySlug={communitySlug}
           isEnabled={config?.slackEnabled ?? false}
-          webhookUrl={config?.slackWebhookUrl}
+          webhookUrls={config?.slackWebhookUrls}
         />
       </div>
 

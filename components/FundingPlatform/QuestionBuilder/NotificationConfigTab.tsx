@@ -62,7 +62,7 @@ export function NotificationConfigTab({
       testConfig(
         {
           providerType: "SLACK",
-          webhookUrl: config?.slackWebhookUrl,
+          webhookUrl: config?.slackWebhookUrls?.[0],
         },
         {
           onSuccess: (result) => {
@@ -76,7 +76,7 @@ export function NotificationConfigTab({
   };
 
   const telegramActive = config?.telegramEnabled && !!config?.telegramBotToken && (config?.telegramChatIds?.length ?? 0) > 0;
-  const slackActive = config?.slackEnabled && !!config?.slackWebhookUrl;
+  const slackActive = config?.slackEnabled && (config?.slackWebhookUrls?.length ?? 0) > 0;
 
   return (
     <div className="space-y-6">

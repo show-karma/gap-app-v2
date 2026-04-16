@@ -9,7 +9,7 @@ export interface CommunityConfig {
   telegramBotToken?: string | null;
   telegramChatIds?: string[];
   telegramEnabled?: boolean;
-  slackWebhookUrl?: string | null;
+  slackWebhookUrls?: string[];
   slackEnabled?: boolean;
 }
 
