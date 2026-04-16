@@ -3,12 +3,13 @@
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import {
-  Bell, Send, Loader2, AlertTriangle, Info, Eye, EyeOff,
+  Bell, Send, Loader2, Eye, EyeOff,
   CheckCircle2, XCircle, MessageSquare, Hash, Plus, Trash2,
-  HelpCircle, Zap, Shield,
+  Zap, Shield, HelpCircle,
 } from "lucide-react";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import {
   useCommunityConfig,
@@ -17,27 +18,6 @@ import {
 import { useTestNotificationConfig } from "@/hooks/useNotificationConfig";
 import type { Community } from "@/types/v2/community";
 import { MESSAGES } from "@/utilities/messages";
-
-// ── Hover Info Tooltip ──
-
-function InfoTip({ content }: { content: React.ReactNode }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <span
-      className="relative inline-flex ml-1"
-      onMouseEnter={() => setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
-    >
-      <HelpCircle className="w-3.5 h-3.5 text-gray-400 hover:text-blue-500 cursor-help" />
-      {open && (
-        <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-3 text-xs leading-relaxed bg-gray-900 text-gray-100 rounded-lg shadow-2xl border border-gray-700">
-          {content}
-          <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-px border-4 border-transparent border-t-gray-900" />
-        </div>
-      )}
-    </span>
-  );
-}
 
 // ── Kill Switch ──
 
@@ -277,16 +257,23 @@ function ProviderConfigCard({
               <div>
                 <label className="flex items-center text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
                   Bot Token
-                  <InfoTip content={
-                    <>
-                      <p className="font-semibold mb-1">Get a Bot Token</p>
-                      <ol className="list-decimal list-inside space-y-0.5 text-gray-300">
-                        <li>Open Telegram, search <strong>@BotFather</strong></li>
-                        <li>Send <code>/newbot</code>, follow the prompts</li>
-                        <li>Copy the token (<code>123456:ABCdef...</code>)</li>
-                      </ol>
-                    </>
-                  } />
+                  <InfoTooltip
+                    side="right"
+                    content={
+                      <div className="space-y-1.5 text-xs">
+                        <p className="font-semibold">Get a Bot Token</p>
+                        <ol className="list-decimal list-inside space-y-0.5 text-gray-400">
+                          <li>Open Telegram, search <strong>@BotFather</strong></li>
+                          <li>Send <code>/newbot</code>, follow the prompts</li>
+                          <li>Copy the token (<code>123456:ABCdef...</code>)</li>
+                        </ol>
+                      </div>
+                    }
+                  >
+                    <button type="button" className="ml-1 text-gray-400 hover:text-blue-500">
+                      <HelpCircle className="w-3.5 h-3.5" />
+                    </button>
+                  </InfoTooltip>
                 </label>
                 <div className="relative">
                   <input
@@ -310,18 +297,25 @@ function ProviderConfigCard({
               <div>
                 <label className="flex items-center text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
                   Chat IDs
-                  <InfoTip content={
-                    <>
-                      <p className="font-semibold mb-1">Get Chat IDs</p>
-                      <ol className="list-decimal list-inside space-y-0.5 text-gray-300">
-                        <li>Add your bot to the target group</li>
-                        <li>Send or forward any message</li>
-                        <li>Visit <code className="break-all">api.telegram.org/bot{'{TOKEN}'}/getUpdates</code></li>
-                        <li>Copy <code>chat.id</code> from the JSON</li>
-                      </ol>
-                      <p className="mt-1 text-gray-400">Groups use negative IDs (e.g. <code>-100123...</code>). Add multiple to send to several groups.</p>
-                    </>
-                  } />
+                  <InfoTooltip
+                    side="right"
+                    content={
+                      <div className="space-y-1.5 text-xs">
+                        <p className="font-semibold">Get Chat IDs</p>
+                        <ol className="list-decimal list-inside space-y-0.5 text-gray-400">
+                          <li>Add your bot to the target group</li>
+                          <li>Send or forward any message</li>
+                          <li>Visit <code className="break-all">api.telegram.org/bot{'{TOKEN}'}/getUpdates</code></li>
+                          <li>Copy <code>chat.id</code> from the JSON</li>
+                        </ol>
+                        <p className="text-gray-500">Groups use negative IDs (e.g. <code>-100123...</code>). Add multiple to send to several groups.</p>
+                      </div>
+                    }
+                  >
+                    <button type="button" className="ml-1 text-gray-400 hover:text-blue-500">
+                      <HelpCircle className="w-3.5 h-3.5" />
+                    </button>
+                  </InfoTooltip>
                 </label>
                 <ChatIdsEditor chatIds={ids} onChange={setIds} disabled={disabled} />
               </div>
@@ -330,17 +324,24 @@ function ProviderConfigCard({
             <div>
               <label className="flex items-center text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
                 Webhook URL
-                <InfoTip content={
-                  <>
-                    <p className="font-semibold mb-1">Create a Webhook</p>
-                    <ol className="list-decimal list-inside space-y-0.5 text-gray-300">
-                      <li>Go to <strong>api.slack.com/messaging/webhooks</strong></li>
-                      <li>Create an <strong>Incoming Webhook</strong></li>
-                      <li>Select the target channel</li>
-                      <li>Copy the webhook URL</li>
-                    </ol>
-                  </>
-                } />
+                <InfoTooltip
+                  side="right"
+                  content={
+                    <div className="space-y-1.5 text-xs">
+                      <p className="font-semibold">Create a Webhook</p>
+                      <ol className="list-decimal list-inside space-y-0.5 text-gray-400">
+                        <li>Go to <strong>api.slack.com/messaging/webhooks</strong></li>
+                        <li>Create an <strong>Incoming Webhook</strong></li>
+                        <li>Select the target channel</li>
+                        <li>Copy the webhook URL</li>
+                      </ol>
+                    </div>
+                  }
+                >
+                  <button type="button" className="ml-1 text-gray-400 hover:text-blue-500">
+                    <HelpCircle className="w-3.5 h-3.5" />
+                  </button>
+                </InfoTooltip>
               </label>
               <input
                 type="url"
@@ -355,20 +356,11 @@ function ProviderConfigCard({
 
         {/* Actions */}
         <div className="flex items-center gap-2 pt-1">
-          <Button
-            type="button"
-            disabled={isSaving}
-            onClick={handleSave}
-          >
+          <Button type="button" disabled={isSaving} onClick={handleSave}>
             {isSaving && <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />}
             Save
           </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={handleTest}
-            disabled={isTesting || !enabled}
-          >
+          <Button type="button" variant="secondary" onClick={handleTest} disabled={isTesting || !enabled}>
             {isTesting ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Send className="w-3.5 h-3.5 mr-1.5" />}
             Test
           </Button>
@@ -470,7 +462,7 @@ export function NotificationSettingsPage({ community }: NotificationSettingsPage
   };
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6">
       {/* Header */}
       <div className="pb-2">
         <h1 className="text-xl font-bold text-gray-900 dark:text-white">
@@ -481,7 +473,7 @@ export function NotificationSettingsPage({ community }: NotificationSettingsPage
         </p>
       </div>
 
-      {/* Kill switch — full width, prominent */}
+      {/* Kill switch — full width */}
       <KillSwitchCard
         disabled={config?.disableReviewerEmails ?? false}
         onToggle={handleKillSwitch}
