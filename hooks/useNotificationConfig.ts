@@ -63,7 +63,7 @@ export const useNotificationConfigs = (
         {},
         {},
         {},
-        false
+        true
       );
 
       if (error) {
