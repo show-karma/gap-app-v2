@@ -10,6 +10,7 @@ import {
   UserGroupIcon,
   WrenchScrewdriverIcon,
 } from "@heroicons/react/24/solid";
+import { Bell as BellIcon } from "lucide-react";
 import { Link } from "@/src/components/navigation/Link";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
@@ -21,7 +22,8 @@ export type SidebarTabKey =
   | "ai-config"
   | "reviewers"
   | "program-details"
-  | "kyc-settings";
+  | "kyc-settings"
+  | "notification-config";
 
 interface SidebarSection {
   title: string;
@@ -95,6 +97,12 @@ const getSidebarSections = (kycEnabled: boolean): SidebarSection[] => [
             },
           ]
         : []),
+      {
+        key: "notification-config" as SidebarTabKey,
+        label: "Notifications",
+        icon: BellIcon,
+        description: "Override community notification settings",
+      },
     ],
   },
   {

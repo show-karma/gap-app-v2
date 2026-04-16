@@ -49,6 +49,7 @@ import { AIPromptConfiguration } from "./AIPromptConfiguration";
 import { FieldEditor } from "./FieldEditor";
 import { FieldTypeSelector, fieldTypes } from "./FieldTypeSelector";
 import { KycSettingsConfiguration } from "./KycSettingsConfiguration";
+import { NotificationConfigTab } from "../FundingPlatform/QuestionBuilder/NotificationConfigTab";
 import { SettingsConfiguration } from "./SettingsConfiguration";
 
 const TAB_KEYS = [
@@ -59,6 +60,7 @@ const TAB_KEYS = [
   "reviewers",
   "program-details",
   "kyc-settings",
+  "notification-config",
 ] as const;
 
 const DEFAULT_TAB: SidebarTabKey = "build";
@@ -946,6 +948,16 @@ export function QuestionBuilder({
                   kybFormUrl: schema.settings?.kybFormUrl,
                 }}
                 onSave={handleKycSettingsChange}
+              />
+            </div>
+          </div>
+        ) : activeTab === "notification-config" ? (
+          <div className="p-4 sm:p-6 lg:p-8">
+            <div className="max-w-4xl mx-auto">
+              <NotificationConfigTab
+                communityId={communityId}
+                programId={programId}
+                readOnly={readOnly}
               />
             </div>
           </div>
