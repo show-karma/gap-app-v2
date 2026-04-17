@@ -492,7 +492,8 @@ export function SettingsConfiguration({
                       Show comments on public page
                     </label>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Display comments on public application pages.
+                      Display comments on public application pages. When enabled, any
+                      signed-in user will be able to post comments on applications.
                     </p>
                   </div>
                 </div>
