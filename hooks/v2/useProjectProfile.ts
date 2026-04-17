@@ -10,7 +10,11 @@ import { useMemo } from "react";
 import { useProject } from "@/hooks/useProject";
 import { aggregateProjectProfileData } from "@/services/project-profile.service";
 import type { Project } from "@/types/v2/project";
-import type { ProjectProfileData, ProjectProfileState } from "@/types/v2/project-profile.types";
+import type {
+  ProjectProfileData,
+  ProjectProfileState,
+  UpdatesFeedFilters,
+} from "@/types/v2/project-profile.types";
 import { useProjectGrants } from "./useProjectGrants";
 import { useProjectImpacts } from "./useProjectImpacts";
 import { useProjectUpdates } from "./useProjectUpdates";
@@ -42,11 +46,14 @@ export interface UseProjectProfileResult extends ProjectProfileData, ProjectProf
  * all data into a unified format for the ProjectProfilePage.
  *
  * @param projectId - The project UID or slug
+ * @param milestoneStatus - Optional milestone lifecycle filter
+ * @param filters - Optional extra filters forwarded to the indexer
  * @returns Aggregated project profile data with loading/error states
  */
 export function useProjectProfile(
   projectId: string,
-  milestoneStatus?: "pending" | "completed" | "verified"
+  milestoneStatus?: "pending" | "completed" | "verified",
+  filters?: UpdatesFeedFilters
 ): UseProjectProfileResult {
   // Fetch core project data
   const { project, isLoading: isProjectLoading, isError, error } = useProject(projectId);
@@ -58,13 +65,13 @@ export function useProjectProfile(
     refetch: refetchGrants,
   } = useProjectGrants(project?.uid || projectId);
 
-  // Fetch updates and milestones (pass milestoneStatus for server-side filtering)
+  // Fetch updates and milestones (pass milestoneStatus and extra filters for server-side filtering)
   const {
     milestones = [],
     isLoading: isUpdatesLoading,
     isFetching: isUpdatesFetching,
     refetch: refetchUpdates,
-  } = useProjectUpdates(projectId, milestoneStatus);
+  } = useProjectUpdates(projectId, milestoneStatus, filters);
 
   // Fetch impacts
   const {

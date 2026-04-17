@@ -175,7 +175,7 @@ describe("useProjectUpdates", () => {
     });
 
     await waitFor(() => {
-      expect(mockGetProjectUpdates).toHaveBeenCalledWith("test-project", "completed");
+      expect(mockGetProjectUpdates).toHaveBeenCalledWith("test-project", "completed", undefined);
     });
   });
 
@@ -192,7 +192,63 @@ describe("useProjectUpdates", () => {
     });
 
     await waitFor(() => {
-      expect(mockGetProjectUpdates).toHaveBeenCalledWith("test-project", undefined);
+      expect(mockGetProjectUpdates).toHaveBeenCalledWith("test-project", undefined, undefined);
+    });
+  });
+
+  it("passes extra filters to getProjectUpdates when provided", async () => {
+    mockGetProjectUpdates.mockResolvedValueOnce({
+      projectUpdates: [],
+      projectMilestones: [],
+      grantMilestones: [],
+      grantUpdates: [],
+    });
+
+    const filters = {
+      dateFrom: "2024-01-01",
+      dateTo: "2024-12-31",
+      hasAIEvaluation: true,
+      aiScoreMin: 5,
+    };
+
+    renderHook(() => useProjectUpdates("test-project", undefined, filters), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    await waitFor(() => {
+      expect(mockGetProjectUpdates).toHaveBeenCalledWith("test-project", undefined, filters);
+    });
+  });
+
+  it("uses distinct query keys for different filter combinations", async () => {
+    mockGetProjectUpdates.mockResolvedValue({
+      projectUpdates: [],
+      projectMilestones: [],
+      grantMilestones: [],
+      grantUpdates: [],
+    });
+
+    const { rerender } = renderHook(
+      ({ scoreMin }: { scoreMin?: number }) =>
+        useProjectUpdates(
+          "test-project",
+          undefined,
+          scoreMin !== undefined ? { aiScoreMin: scoreMin } : undefined
+        ),
+      {
+        wrapper: createWrapper(queryClient),
+        initialProps: { scoreMin: undefined },
+      }
+    );
+
+    await waitFor(() => {
+      expect(mockGetProjectUpdates).toHaveBeenCalledTimes(1);
+    });
+
+    rerender({ scoreMin: 7 });
+
+    await waitFor(() => {
+      expect(mockGetProjectUpdates).toHaveBeenCalledTimes(2);
     });
   });
 
