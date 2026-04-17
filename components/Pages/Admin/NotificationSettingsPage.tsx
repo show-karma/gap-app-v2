@@ -163,7 +163,10 @@ function KarmaBotSetupPanel() {
               Click <strong>Pair new chat</strong> below — Karma will walk you through connecting
               the group securely.
             </li>
-            <li>Once paired, the chat ID appears in the list below. Click Save to confirm.</li>
+            <li>
+              Once verified, the chat ID is saved and Telegram notifications are enabled
+              automatically.
+            </li>
           </ol>
         </div>
       </div>
