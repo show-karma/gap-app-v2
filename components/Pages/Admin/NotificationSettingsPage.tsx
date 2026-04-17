@@ -58,7 +58,7 @@ function KillSwitchCard({
           <div>
             <p className="text-sm font-semibold text-gray-900 dark:text-white">Email Kill Switch</p>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Silence reviewer, admin &amp; finance emails
+              Silences reviewer, admin &amp; finance emails. Telegram / Slack are unaffected.
             </p>
           </div>
         </div>
@@ -82,7 +82,8 @@ function KillSwitchCard({
       {disabled && (
         <div className="px-5 py-2.5 bg-red-50 dark:bg-red-900/10 border-t border-red-100 dark:border-red-900/20">
           <p className="text-xs text-red-600 dark:text-red-400">
-            Reviewer, admin &amp; finance emails disabled. Applicant/grantee emails unaffected.
+            Reviewer, admin &amp; finance emails are off. Applicant / grantee emails and all
+            real-time Telegram / Slack notifications continue to fire.
           </p>
         </div>
       )}
@@ -398,6 +399,10 @@ function ProviderConfigCard({
                         <li>Copy the webhook URL</li>
                       </ol>
                       <p className="text-gray-500">Add multiple to notify several channels.</p>
+                      <p className="text-gray-500 italic">
+                        Slack messages currently list reviewer names as plain text. Real{" "}
+                        <code>&lt;@user&gt;</code> Slack tagging is on the Phase&nbsp;2 roadmap.
+                      </p>
                     </div>
                   }
                 >
@@ -644,9 +649,28 @@ export function NotificationSettingsPage({ community }: NotificationSettingsPage
       <div className="pb-2">
         <h1 className="text-xl font-bold text-gray-900 dark:text-white">Notification Settings</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Configure how {community.details?.name || "this community"} receives reviewer, admin, and
-          finance notifications.
+          Configure where {community.details?.name || "this community"} sends real-time Telegram /
+          Slack notifications, and silence reviewer / admin / finance emails when needed. Applicant
+          and grantee emails are always on.
         </p>
+      </div>
+
+      {/* Reviewer-side prerequisite reminder */}
+      <div className="rounded-lg border border-amber-200 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-900/10 px-4 py-3">
+        <div className="flex items-start gap-2.5">
+          <AtSign className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+          <div className="space-y-1 text-xs text-gray-700 dark:text-gray-300">
+            <p className="font-semibold text-gray-900 dark:text-white">
+              Heads-up for your reviewers
+            </p>
+            <p>
+              For Karma to <code>@</code>-tag a reviewer in your Telegram group, that reviewer must
+              add their Telegram username (without the <code>@</code>) to their Karma user profile{" "}
+              <strong>and</strong> be a member of the group. Reviewers without a username still see
+              the message — they just appear by name instead of as a tag.
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Kill switch — full width */}
