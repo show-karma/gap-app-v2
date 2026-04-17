@@ -102,7 +102,7 @@ export function MilestoneAIEvaluationBadge({
             <button
               type="button"
               onClick={() => setIsModalOpen(true)}
-              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs border cursor-pointer hover:opacity-80 transition-opacity ${getScoreBg(avgScore)} ${className}`}
+              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs border cursor-pointer hover:brightness-95 dark:hover:brightness-110 transition-all ${getScoreBg(avgScore)} ${className}`}
             >
               <SparklesIcon className="w-3 h-3 text-purple-500 dark:text-purple-400" />
               <span className={`font-semibold ${getScoreColor(avgScore)}`}>{avgScore}/10</span>
@@ -295,7 +295,7 @@ export function ApplicationMilestoneAIEvaluationBadge({
             <button
               type="button"
               onClick={() => setIsModalOpen(true)}
-              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs border cursor-pointer hover:opacity-80 transition-opacity ${getScoreBg(avgScore)} ${className}`}
+              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs border cursor-pointer hover:brightness-95 dark:hover:brightness-110 transition-all ${getScoreBg(avgScore)} ${className}`}
             >
               <SparklesIcon className="w-3 h-3 text-purple-500 dark:text-purple-400" />
               <span className={`font-semibold ${getScoreColor(avgScore)}`}>{avgScore}/10</span>

@@ -35,7 +35,12 @@ type ActivityType =
       data: SdkUpdateType;
       index: number;
     }
-  | { type: "milestone"; data: UnifiedMilestone; allocationAmount?: string }
+  | {
+      type: "milestone";
+      data: UnifiedMilestone;
+      allocationAmount?: string;
+      hideTimelineMarker?: boolean;
+    }
   | { type: "fundingReceived"; data: UnifiedMilestone; projectId?: string }
   | { type: "endorsement"; data: UnifiedMilestone };
 
@@ -83,6 +88,7 @@ export const ActivityCard: FC<ActivityCardProps> = ({ activity, isAuthorized = f
           milestone={activity.data}
           isAuthorized={isAuthenticatedUser}
           allocationAmount={activity.allocationAmount}
+          hideTimelineMarker={activity.hideTimelineMarker}
         />
       )}
     </div>
