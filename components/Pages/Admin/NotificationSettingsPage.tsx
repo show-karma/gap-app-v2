@@ -467,6 +467,16 @@ const REALTIME_BULLETS: ReadonlyArray<{ key: string; text: ReactNode }> = [
     ),
   },
   {
+    key: "post-approval",
+    text: (
+      <>
+        When a grantee submits the post-approval form for the first time, all program reviewers and
+        milestone reviewers are notified in your Telegram group. The per-program admin/finance email
+        list still receives a separate email.
+      </>
+    ),
+  },
+  {
     key: "tagging",
     text: (
       <>
@@ -493,6 +503,7 @@ function NotificationTypesCard() {
   const realtimeTypes = [
     "Comment on an application (from a grantee or applicant) → reviewers",
     "Milestone marked complete (by a grantee) → milestone reviewers",
+    "Post-approval form submitted (by a grantee) → reviewers",
     "@-mention in a comment → the tagged user",
   ];
 
@@ -501,7 +512,7 @@ function NotificationTypesCard() {
     "Milestone Reviewer Digest",
     "Admin Weekly Digest",
     "Milestone Verification → Finance",
-    "Post-Approval → Admin",
+    "Post-Approval → per-program admin/finance email list",
     "Invoice Received → Finance",
     "KYC Status Change → Admin",
     "Reviewer invitations",
