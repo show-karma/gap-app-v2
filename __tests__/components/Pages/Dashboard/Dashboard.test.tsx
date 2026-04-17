@@ -10,8 +10,8 @@ import { useReviewerPrograms } from "@/hooks/usePermissions";
 import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
 import { useStaff } from "@/src/core/rbac/hooks/use-staff-bridge";
 
-vi.mock("@tanstack/react-query", () => {
-  const actual = vi.importActual("@tanstack/react-query");
+vi.mock("@tanstack/react-query", async () => {
+  const actual = await vi.importActual("@tanstack/react-query");
   return {
     ...actual,
     useQuery: vi.fn(),
@@ -175,7 +175,7 @@ describe("Dashboard", () => {
     expect(screen.getByTestId("ens-avatar")).toBeInTheDocument();
   });
 
-  it("renders DashboardEmptyState when user has no projects and no roles", () => {
+  it("renders section empty states when user has no projects and no roles", () => {
     mockUseQuery.mockReturnValue({
       data: [],
       isLoading: false,
@@ -186,7 +186,7 @@ describe("Dashboard", () => {
 
     render(<Dashboard />, { wrapper: createWrapper() });
 
-    expect(screen.getByText("Create your first project")).toBeInTheDocument();
+    expect(screen.getByText(/No projects yet/i)).toBeInTheDocument();
   });
 
   it("shows the projects section empty state when no projects are found", () => {

@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle } from "lucide-react";
 import { useRouter } from "next/navigation";
+import type React from "react";
 import { useEffect } from "react";
 import type { Hex } from "viem";
 import { useProgramsWithConfig } from "@/features/programs/hooks/use-programs-with-config";
@@ -18,7 +19,6 @@ import { fetchMyProjects } from "@/utilities/sdk/projects/fetchMyProjects";
 import { useWhitelabel } from "@/utilities/whitelabel-context";
 import { AdminSection } from "./AdminSection/AdminSection";
 import { ApplicationsSection } from "./ApplicationsSection/ApplicationsSection";
-import { DashboardEmptyState } from "./DashboardEmptyState";
 import { DashboardHeader } from "./DashboardHeader";
 import { DashboardLoading } from "./DashboardLoading";
 import { ProjectsSection } from "./ProjectsSection/ProjectsSection";
@@ -54,7 +54,11 @@ export function Dashboard() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { communities: adminCommunities, isLoading: isAdminLoading } = useDashboardAdmin();
+  const {
+    communities: adminCommunities,
+    isLoading: isAdminLoading,
+    isError: isAdminError,
+  } = useDashboardAdmin();
 
   // Fetch applications + programs eagerly so they start in parallel with RBAC
   const applicationsHook = useUserApplications(communitySlug ?? undefined);
@@ -63,16 +67,8 @@ export function Dashboard() {
   const hasProjects = projects.length > 0;
   const showReviews = hasReviewerPrograms;
   const hasAdminCommunities = adminCommunities.length > 0;
-  const showAdmin = hasAdminCommunities;
+  const showAdmin = hasAdminCommunities || isAdminLoading || isAdminError;
   const showSuperAdmin = isRegistryAdmin || isStaff;
-  const showEmptyState =
-    !isLoadingProjects &&
-    !isProjectsError &&
-    !hasProjects &&
-    !showReviews &&
-    !showAdmin &&
-    !showSuperAdmin &&
-    !isAdminLoading;
   const isLoading =
     !ready ||
     (authenticated && (isPermissionsLoading || isStaffLoading || isReviewerProgramsLoading));
@@ -98,6 +94,48 @@ export function Dashboard() {
     return <DashboardLoading />;
   }
 
+  const hasApplications = applicationsHook.statusCounts
+    ? Object.values(applicationsHook.statusCounts).reduce((sum, c) => sum + c, 0) > 0
+    : false;
+
+  const applicationsSection = (
+    <ApplicationsSection
+      key="applications"
+      communitySlug={communitySlug ?? undefined}
+      applicationsHook={applicationsHook}
+      programs={programs}
+    />
+  );
+
+  const projectsSection = (
+    <ProjectsSection
+      key="projects"
+      projects={projects}
+      isLoading={isLoadingProjects}
+      isError={isProjectsError}
+      refetch={refetchProjects}
+    />
+  );
+
+  // Sections with data or loading state render first; empty sections render after.
+  // Role-specific sections always precede applications and projects.
+  const hasApplicationsContent =
+    hasApplications || applicationsHook.isLoading || applicationsHook.error;
+  const hasProjectsContent = hasProjects || isLoadingProjects || isProjectsError;
+
+  const contentSections: React.ReactNode[] = [
+    showReviews && <ReviewsSection key="reviews" />,
+    showAdmin && <AdminSection key="admin" />,
+    showSuperAdmin && <SuperAdminSection key="super-admin" />,
+    hasApplicationsContent && applicationsSection,
+    hasProjectsContent && projectsSection,
+  ].filter(Boolean);
+
+  const emptySections: React.ReactNode[] = [
+    !hasApplicationsContent && applicationsSection,
+    !hasProjectsContent && projectsSection,
+  ].filter(Boolean);
+
   return (
     <div className={layoutTheme.padding}>
       <div className="flex flex-col gap-8">
@@ -111,21 +149,8 @@ export function Dashboard() {
             </p>
           </div>
         ) : null}
-        <ApplicationsSection
-          communitySlug={communitySlug ?? undefined}
-          applicationsHook={applicationsHook}
-          programs={programs}
-        />
-        <ProjectsSection
-          projects={projects}
-          isLoading={isLoadingProjects}
-          isError={isProjectsError}
-          refetch={refetchProjects}
-        />
-        {showReviews ? <ReviewsSection /> : null}
-        <AdminSection />
-        {showSuperAdmin ? <SuperAdminSection /> : null}
-        {showEmptyState ? <DashboardEmptyState /> : null}
+        {contentSections}
+        {emptySections}
       </div>
     </div>
   );
