@@ -490,14 +490,22 @@ const REALTIME_BULLETS: ReadonlyArray<{ key: string; text: ReactNode }> = [
 ];
 
 function NotificationTypesCard() {
-  const types = [
+  const realtimeTypes = [
+    "Comment on an application (from a grantee or applicant) → reviewers",
+    "Milestone marked complete (by a grantee) → milestone reviewers",
+    "@-mention in a comment → the tagged user",
+  ];
+
+  const emailOnly = [
     "Daily Reviewer Digest",
     "Milestone Reviewer Digest",
     "Admin Weekly Digest",
     "Milestone Verification → Finance",
-    "Post-Approval → Finance/Admin",
+    "Post-Approval → Admin",
     "Invoice Received → Finance",
     "KYC Status Change → Admin",
+    "Reviewer invitations",
+    "All applicant / grantee emails",
   ];
 
   return (
@@ -508,33 +516,33 @@ function NotificationTypesCard() {
         </div>
         <div>
           <p className="text-sm font-semibold text-gray-900 dark:text-white">
-            Affected Notifications
+            Routed through Telegram / Slack
           </p>
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            Routed through Telegram / Slack
+            Real-time notifications sent to the configured group(s)
           </p>
         </div>
       </div>
       <div className="px-5 py-3">
         <ul className="space-y-1.5">
-          {types.map((t) => (
+          {realtimeTypes.map((t) => (
             <li
               key={t}
               className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400"
             >
-              <Bell className="w-3 h-3 text-gray-400 shrink-0" />
+              <Bell className="w-3 h-3 text-sky-500 shrink-0" />
               {t}
             </li>
           ))}
         </ul>
       </div>
 
-      {/* Real-time Telegram notifications subsection */}
+      {/* How it behaves */}
       <div className="px-5 py-4 border-t border-gray-100 dark:border-zinc-800">
         <div className="flex items-center gap-2 mb-2">
           <AtSign className="w-3.5 h-3.5 text-sky-500" />
           <p className="text-sm font-semibold text-gray-900 dark:text-white">
-            Real-time Telegram notifications
+            How it behaves
           </p>
         </div>
         <ul className="space-y-1.5 list-disc list-inside marker:text-gray-300 dark:marker:text-zinc-600">
@@ -549,10 +557,22 @@ function NotificationTypesCard() {
         </ul>
       </div>
 
-      <div className="px-5 py-2.5 bg-gray-50 dark:bg-zinc-800/50 border-t border-gray-100 dark:border-zinc-800">
-        <p className="text-xs text-gray-500 dark:text-gray-500">
-          <strong>Not affected:</strong> Reviewer invitations · All applicant emails
+      {/* Email-only notifications */}
+      <div className="px-5 py-4 border-t border-gray-100 dark:border-zinc-800">
+        <p className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
+          Email only (not routed through Telegram / Slack)
         </p>
+        <ul className="space-y-1.5">
+          {emailOnly.map((t) => (
+            <li
+              key={t}
+              className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-500"
+            >
+              <Bell className="w-3 h-3 text-gray-300 dark:text-zinc-600 shrink-0" />
+              {t}
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );
