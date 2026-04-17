@@ -6,7 +6,10 @@ export interface CommunityConfig {
   public?: boolean;
   rank?: number;
   disableReviewerEmails?: boolean;
-  telegramBotToken?: string | null;
+  /**
+   * Telegram chat IDs that the platform-owned Karma bot will post to.
+   * Bot token is platform-owned (server env), no longer per-community.
+   */
   telegramChatIds?: string[];
   telegramEnabled?: boolean;
   slackWebhookUrls?: string[];
@@ -17,7 +20,7 @@ export const useCommunityConfig = (slug: string, enabled: boolean = true) => {
   return useQuery<CommunityConfig | null>({
     queryKey: ["community-config", slug],
     queryFn: async () => {
-      const [data, error, , ] = await fetchData(
+      const [data, error, ,] = await fetchData(
         INDEXER.COMMUNITY.CONFIG.GET(slug),
         "GET",
         {},
@@ -43,7 +46,7 @@ export const useCommunityConfigMutation = () => {
     { previousConfig: CommunityConfig | null }
   >({
     mutationFn: async ({ slug, config }) => {
-      const [data, error, , ] = await fetchData(
+      const [data, error, ,] = await fetchData(
         INDEXER.COMMUNITY.CONFIG.UPDATE(slug),
         "PUT",
         config,

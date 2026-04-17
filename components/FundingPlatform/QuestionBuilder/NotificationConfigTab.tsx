@@ -1,12 +1,9 @@
 "use client";
 
-import { Send, Loader2, ArrowDownIcon } from "lucide-react";
+import { ArrowDownIcon, Loader2, Send } from "lucide-react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/Utilities/Button";
-import {
-  useCommunityConfig,
-  useCommunityConfigMutation,
-} from "@/hooks/useCommunityConfig";
+import { useCommunityConfig, useCommunityConfigMutation } from "@/hooks/useCommunityConfig";
 import { useTestNotificationConfig } from "@/hooks/useNotificationConfig";
 
 interface NotificationConfigTabProps {
@@ -47,7 +44,7 @@ export function NotificationConfigTab({
       testConfig(
         {
           providerType: "TELEGRAM",
-          botToken: config?.telegramBotToken,
+          botToken: null,
           chatId: config?.telegramChatIds?.[0],
         },
         {
@@ -75,7 +72,7 @@ export function NotificationConfigTab({
     }
   };
 
-  const telegramActive = config?.telegramEnabled && !!config?.telegramBotToken && (config?.telegramChatIds?.length ?? 0) > 0;
+  const telegramActive = !!config?.telegramEnabled && (config?.telegramChatIds?.length ?? 0) > 0;
   const slackActive = config?.slackEnabled && (config?.slackWebhookUrls?.length ?? 0) > 0;
 
   return (
@@ -85,7 +82,8 @@ export function NotificationConfigTab({
           Notification Settings
         </h2>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          These settings are configured at the community level. Program-level overrides are coming soon.
+          These settings are configured at the community level. Program-level overrides are coming
+          soon.
         </p>
       </div>
 
@@ -126,7 +124,11 @@ export function NotificationConfigTab({
                 disabled={isTesting}
                 className="text-xs px-2 py-1"
               >
-                {isTesting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
+                {isTesting ? (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                ) : (
+                  <Send className="w-3 h-3" />
+                )}
               </Button>
             )}
           </div>
@@ -159,7 +161,11 @@ export function NotificationConfigTab({
                 disabled={isTesting}
                 className="text-xs px-2 py-1"
               >
-                {isTesting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
+                {isTesting ? (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                ) : (
+                  <Send className="w-3 h-3" />
+                )}
               </Button>
             )}
           </div>
@@ -174,7 +180,9 @@ export function NotificationConfigTab({
             <div>
               <p className="text-sm font-medium text-gray-900 dark:text-white">Email Kill Switch</p>
               <p className="text-xs text-gray-500">
-                {config?.disableReviewerEmails ? "Reviewer/admin/finance emails are disabled" : "All emails active"}
+                {config?.disableReviewerEmails
+                  ? "Reviewer/admin/finance emails are disabled"
+                  : "All emails active"}
               </p>
             </div>
           </div>
@@ -188,7 +196,9 @@ export function NotificationConfigTab({
 
       {/* What data goes through these channels */}
       <div className="bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700 rounded-lg p-4">
-        <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Data sent via these channels</h3>
+        <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
+          Data sent via these channels
+        </h3>
         <ul className="text-xs text-gray-500 dark:text-gray-400 space-y-1 list-disc list-inside">
           <li>Daily Reviewer Digest — new application updates</li>
           <li>Daily/Weekly Milestone Reviewer Digest</li>

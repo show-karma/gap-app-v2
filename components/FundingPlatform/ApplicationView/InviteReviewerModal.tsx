@@ -20,7 +20,11 @@ import { useMilestoneReviewers } from "@/hooks/useMilestoneReviewers";
 const inviteSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
   email: z.string().email("Invalid email address"),
-  telegram: z.string().optional(),
+  telegram: z
+    .string()
+    .regex(/^[a-zA-Z0-9_]{5,32}$/, "Telegram username: 5-32 chars, letters/numbers/underscore")
+    .or(z.literal(""))
+    .optional(),
 });
 
 type InviteFormData = z.infer<typeof inviteSchema>;
@@ -142,9 +146,20 @@ const InviteReviewerModal: FC<InviteReviewerModalProps> = ({
             <Input
               id="reviewer-telegram"
               {...register("telegram")}
-              placeholder="@username"
+              placeholder="username"
+              aria-describedby="reviewer-telegram-helper"
               disabled={isAdding}
             />
+            <p
+              id="reviewer-telegram-helper"
+              className="mt-1 text-xs text-gray-500 dark:text-gray-400"
+            >
+              Reviewer&apos;s Telegram @username (without @). Used to tag them in group
+              notifications.
+            </p>
+            {errors.telegram && (
+              <p className="mt-1 text-xs text-red-500">{errors.telegram.message}</p>
+            )}
           </div>
 
           <DialogFooter>

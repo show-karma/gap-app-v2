@@ -23,7 +23,10 @@ const schema = z.object({
   email: z.string().email({ message: MESSAGES.PROJECT.INTRO.EMAIL }).min(3, {
     message: MESSAGES.PROJECT.INTRO.EMAIL,
   }),
-  telegram: z.string(),
+  telegram: z
+    .string()
+    .regex(/^[a-zA-Z0-9_]{5,32}$/, "Telegram username: 5-32 chars, letters/numbers/underscore")
+    .or(z.literal("")),
   message: z
     .string()
     .describe(MESSAGES.PROJECT.INTRO.MESSAGE)
@@ -160,9 +163,16 @@ export const IntroDialog: FC<IntroDialogProps> = () => {
                         id="telegram-input"
                         type="text"
                         className={inputStyle}
-                        placeholder="Enter your telegram address"
+                        placeholder="johnsmith"
+                        aria-describedby="telegram-input-helper"
                         {...register("telegram")}
                       />
+                      <p
+                        id="telegram-input-helper"
+                        className="text-xs text-gray-500 dark:text-zinc-400"
+                      >
+                        Your Telegram @username (without @). Used to tag you in group notifications.
+                      </p>
                       <p className="text-red-600 mb-2">{errors.telegram?.message}</p>
                     </div>
                     <div className="flex w-full flex-col gap-2">
