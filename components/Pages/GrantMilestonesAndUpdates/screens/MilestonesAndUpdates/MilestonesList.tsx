@@ -278,19 +278,10 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
                 );
               }
 
-              const milestoneArray = generalArray.filter((i) => i.type === "milestone");
-              const mIndex = milestoneArray.findIndex(
-                (i) =>
-                  // eslint-disable-next-line no-underscore-dangle
-                  (i?.object._uid || i.object.uid) ===
-                  // eslint-disable-next-line no-underscore-dangle
-                  (item?.object._uid || item.object.uid)
-              );
               return (
                 <MilestoneDetails
                   key={item.object.uid}
                   milestone={item.object}
-                  index={milestoneArray.length - mIndex}
                   allocationAmount={allocationByUID.get(item.object.uid)}
                 />
               );
