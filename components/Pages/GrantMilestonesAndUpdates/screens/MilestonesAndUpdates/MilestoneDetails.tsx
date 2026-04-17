@@ -7,6 +7,7 @@ import { useOwnerStore, useProjectStore } from "@/store";
 import { useGrantStore } from "@/store/grant";
 import type { GrantMilestone } from "@/types/v2/grant";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
+import { FlagIcon } from "./GrantUpdate";
 
 /**
  * Helper to get the completion object from a milestone.
@@ -103,13 +104,36 @@ function toUnifiedMilestone(milestone: GrantMilestone, grant: GrantContext): Uni
   };
 }
 
+interface MilestoneTagProps {
+  index: number;
+  priority?: number;
+}
+
+const MilestoneTag: FC<MilestoneTagProps> = ({ index, priority }) => (
+  <div className="flex flex-row gap-3 flex-wrap">
+    <div className="flex w-max flex-row gap-3 rounded-full bg-[#F5F3FF] dark:bg-zinc-900 px-3 py-1 text-[#5720B7] dark:text-violet-100">
+      <FlagIcon />
+      <p className="text-xs font-bold">MILESTONE {index}</p>
+    </div>
+    {priority ? (
+      <div className="flex w-max flex-row gap-3 rounded-full bg-slate-100 dark:bg-zinc-700 px-3 py-1 text-zinc-700 dark:text-zinc-100">
+        <p className="text-xs font-bold">PRIORITY {priority}</p>
+      </div>
+    ) : null}
+  </div>
+);
+
 interface MilestoneDetailsProps {
   milestone: GrantMilestone;
   index: number;
   allocationAmount?: string;
 }
 
-export const MilestoneDetails: FC<MilestoneDetailsProps> = ({ milestone, allocationAmount }) => {
+export const MilestoneDetails: FC<MilestoneDetailsProps> = ({
+  milestone,
+  index,
+  allocationAmount,
+}) => {
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
@@ -121,14 +145,17 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({ milestone, allocat
   const unifiedMilestone = useMemo(() => toUnifiedMilestone(milestone, grant), [milestone, grant]);
 
   return (
-    <ActivityCard
-      activity={{
-        type: "milestone",
-        data: unifiedMilestone,
-        allocationAmount,
-        hideTimelineMarker: true,
-      }}
-      isAuthorized={isAuthorized}
-    />
+    <div className="flex flex-col gap-3 w-full">
+      <MilestoneTag index={index} priority={milestone.priority} />
+      <ActivityCard
+        activity={{
+          type: "milestone",
+          data: unifiedMilestone,
+          allocationAmount,
+          hideTimelineMarker: true,
+        }}
+        isAuthorized={isAuthorized}
+      />
+    </div>
   );
 };
