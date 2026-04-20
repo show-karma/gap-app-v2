@@ -6,6 +6,7 @@ import { NotificationSettingsPage } from "@/components/Pages/Admin/NotificationS
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import {
   type CommunityConfig,
+  type TelegramChat,
   useCommunityConfig,
   useCommunityConfigMutation,
 } from "@/hooks/useCommunityConfig";
@@ -68,10 +69,16 @@ const createCommunity = (overrides: Partial<Community> = {}): Community => ({
   ...overrides,
 });
 
+// Convenience: build a TelegramChat[] from a list of bare IDs (legacy test
+// data shape was string[]; the new shape requires { id, name }). Names are
+// blank because most tests don't assert on them — see the explicit
+// "renders chat name" tests for the populated-name path.
+const tgChats = (...ids: string[]): TelegramChat[] => ids.map((id) => ({ id, name: "" }));
+
 const createConfig = (overrides: Partial<CommunityConfig> = {}): CommunityConfig => ({
   disableReviewerEmails: false,
   telegramEnabled: false,
-  telegramChatIds: [],
+  telegramChats: [],
   slackEnabled: false,
   slackWebhookUrls: [],
   ...overrides,
@@ -404,7 +411,7 @@ describe("NotificationSettingsPage — Telegram provider card", () => {
     setupDefaultMocks({
       config: createConfig({
         telegramEnabled: true,
-        telegramChatIds: ["-1001111", "-1002222"],
+        telegramChats: tgChats("-1001111", "-1002222"),
       }),
     });
 
@@ -432,7 +439,7 @@ describe("NotificationSettingsPage — Telegram provider card", () => {
     setupDefaultMocks({
       config: createConfig({
         telegramEnabled: true,
-        telegramChatIds: ["a"],
+        telegramChats: tgChats("a"),
       }),
     });
 
@@ -450,7 +457,7 @@ describe("NotificationSettingsPage — Telegram provider card", () => {
       createConfigQuery({
         data: createConfig({
           telegramEnabled: true,
-          telegramChatIds: ["a", "b"],
+          telegramChats: tgChats("a", "b"),
         }),
       })
     );
@@ -469,7 +476,7 @@ describe("NotificationSettingsPage — Telegram provider card", () => {
     setupDefaultMocks({
       config: createConfig({
         telegramEnabled: true,
-        telegramChatIds: ["-1001111", "-1002222"],
+        telegramChats: tgChats("-1001111", "-1002222"),
       }),
     });
 
@@ -491,7 +498,7 @@ describe("NotificationSettingsPage — Telegram provider card", () => {
 
   it("should_show_toast_success_when_test_mutation_returns_success_true", () => {
     setupDefaultMocks({
-      config: createConfig({ telegramEnabled: true, telegramChatIds: ["-1001"] }),
+      config: createConfig({ telegramEnabled: true, telegramChats: tgChats("-1001") }),
     });
 
     renderPage();
@@ -506,7 +513,7 @@ describe("NotificationSettingsPage — Telegram provider card", () => {
 
   it("should_show_toast_error_when_test_mutation_returns_success_false", () => {
     setupDefaultMocks({
-      config: createConfig({ telegramEnabled: true, telegramChatIds: ["-1001"] }),
+      config: createConfig({ telegramEnabled: true, telegramChats: tgChats("-1001") }),
     });
 
     renderPage();
@@ -555,7 +562,7 @@ describe("NotificationSettingsPage — Slack provider card", () => {
 describe("NotificationSettingsPage — IdsEditor (via Telegram card)", () => {
   it("should_append_an_empty_input_when_add_chat_id_clicked", () => {
     setupDefaultMocks({
-      config: createConfig({ telegramEnabled: true, telegramChatIds: ["-1001"] }),
+      config: createConfig({ telegramEnabled: true, telegramChats: tgChats("-1001") }),
     });
 
     renderPage();
@@ -570,7 +577,7 @@ describe("NotificationSettingsPage — IdsEditor (via Telegram card)", () => {
 
   it("should_remove_empty_row_without_confirmation_prompt", () => {
     setupDefaultMocks({
-      config: createConfig({ telegramEnabled: true, telegramChatIds: ["-1001", ""] }),
+      config: createConfig({ telegramEnabled: true, telegramChats: tgChats("-1001", "") }),
     });
 
     const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
@@ -596,7 +603,7 @@ describe("NotificationSettingsPage — IdsEditor (via Telegram card)", () => {
 
   it("should_prompt_confirm_when_removing_non_empty_row_and_remove_only_when_confirmed", () => {
     setupDefaultMocks({
-      config: createConfig({ telegramEnabled: true, telegramChatIds: ["-1001", "-1002"] }),
+      config: createConfig({ telegramEnabled: true, telegramChats: tgChats("-1001", "-1002") }),
     });
 
     const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
@@ -610,7 +617,7 @@ describe("NotificationSettingsPage — IdsEditor (via Telegram card)", () => {
 
     fireEvent.click(trashButtons[0]);
 
-    expect(confirmSpy).toHaveBeenCalledWith('Remove chat ID "-1001"?');
+    expect(confirmSpy).toHaveBeenCalledWith('Remove chat "-1001"?');
     expect(within(telegramCard).getAllByRole("textbox")).toHaveLength(1);
     expect(within(telegramCard).getByDisplayValue("-1002")).toBeInTheDocument();
 
@@ -619,7 +626,7 @@ describe("NotificationSettingsPage — IdsEditor (via Telegram card)", () => {
 
   it("should_NOT_remove_non_empty_row_when_user_cancels_confirm_dialog", () => {
     setupDefaultMocks({
-      config: createConfig({ telegramEnabled: true, telegramChatIds: ["-1001", "-1002"] }),
+      config: createConfig({ telegramEnabled: true, telegramChats: tgChats("-1001", "-1002") }),
     });
 
     const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
@@ -633,7 +640,7 @@ describe("NotificationSettingsPage — IdsEditor (via Telegram card)", () => {
 
     fireEvent.click(trashButtons[0]);
 
-    expect(confirmSpy).toHaveBeenCalledWith('Remove chat ID "-1001"?');
+    expect(confirmSpy).toHaveBeenCalledWith('Remove chat "-1001"?');
     expect(within(telegramCard).getAllByRole("textbox")).toHaveLength(2);
 
     confirmSpy.mockRestore();
@@ -715,7 +722,7 @@ describe("NotificationSettingsPage — global sticky save bar", () => {
     setupDefaultMocks({
       config: createConfig({
         telegramEnabled: true,
-        telegramChatIds: ["-1001"],
+        telegramChats: tgChats("-1001"),
       }),
     });
 
@@ -731,7 +738,7 @@ describe("NotificationSettingsPage — global sticky save bar", () => {
     setupDefaultMocks({
       config: createConfig({
         telegramEnabled: true,
-        telegramChatIds: ["-1001"],
+        telegramChats: tgChats("-1001"),
       }),
     });
 
@@ -749,7 +756,7 @@ describe("NotificationSettingsPage — global sticky save bar", () => {
     setupDefaultMocks({
       config: createConfig({
         telegramEnabled: true,
-        telegramChatIds: ["-1001"],
+        telegramChats: tgChats("-1001"),
         slackEnabled: true,
         slackWebhookUrls: ["https://hooks.slack.com/services/AAA"],
       }),
@@ -778,7 +785,7 @@ describe("NotificationSettingsPage — global sticky save bar", () => {
     setupDefaultMocks({
       config: createConfig({
         telegramEnabled: true,
-        telegramChatIds: ["-1001111"],
+        telegramChats: tgChats("-1001111"),
       }),
     });
 
@@ -797,7 +804,7 @@ describe("NotificationSettingsPage — global sticky save bar", () => {
     expect(saveConfigMutate).toHaveBeenLastCalledWith(
       {
         slug: "filecoin",
-        config: { telegramEnabled: true, telegramChatIds: ["-1009999"] },
+        config: { telegramEnabled: true, telegramChats: tgChats("-1009999") },
       },
       expect.any(Object)
     );
@@ -841,7 +848,7 @@ describe("NotificationSettingsPage — global sticky save bar", () => {
     setupDefaultMocks({
       config: createConfig({
         telegramEnabled: true,
-        telegramChatIds: ["-1001"],
+        telegramChats: tgChats("-1001"),
         slackEnabled: true,
         slackWebhookUrls: ["https://hooks.slack.com/services/A"],
       }),
@@ -874,7 +881,7 @@ describe("NotificationSettingsPage — global sticky save bar", () => {
     setupDefaultMocks({
       config: createConfig({
         telegramEnabled: true,
-        telegramChatIds: ["-1001111"],
+        telegramChats: tgChats("-1001111"),
       }),
     });
 

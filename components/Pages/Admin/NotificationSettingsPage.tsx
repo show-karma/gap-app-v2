@@ -313,6 +313,77 @@ function IdsEditor({
   );
 }
 
+// ── Telegram chat editor (renders id + paired group name) ──
+
+function ChatsEditor({
+  chats,
+  onChange,
+  disabled,
+}: {
+  chats: TelegramChat[];
+  onChange: (next: TelegramChat[]) => void;
+  disabled: boolean;
+}) {
+  return (
+    <div className="space-y-2.5">
+      {chats.map((chat, idx) => {
+        const rowKey = `${idx}-${chat.id || "blank"}`;
+        return (
+          <div key={rowKey} className="flex items-start gap-2">
+            <div className="flex-1 space-y-1">
+              <input
+                type="text"
+                value={chat.id}
+                onChange={(e) => {
+                  const next = [...chats];
+                  next[idx] = { id: e.target.value, name: chat.name };
+                  onChange(next);
+                }}
+                disabled={disabled}
+                placeholder={idx === 0 ? "-1001234567890" : "Additional chat ID"}
+                className="h-9 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm text-stone-900 placeholder-stone-400 transition focus:border-blue-400 focus:ring-2 focus:ring-blue-500/40 disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-800/80 dark:text-zinc-100 dark:placeholder-zinc-500"
+              />
+              {chat.name ? (
+                <p className="px-1 text-xs text-stone-600 dark:text-zinc-400">
+                  Paired to <span className="font-medium">{chat.name}</span>
+                </p>
+              ) : chat.id.trim() ? (
+                <p className="px-1 text-xs italic text-stone-400 dark:text-zinc-500">
+                  Name unknown — re-pair this chat to populate it
+                </p>
+              ) : null}
+            </div>
+            {chats.length > 1 && (
+              <button
+                type="button"
+                onClick={() => {
+                  const label = chat.name || chat.id;
+                  if (label.trim() && !window.confirm(`Remove chat "${label}"?`)) return;
+                  onChange(chats.filter((_, i) => i !== idx));
+                }}
+                disabled={disabled}
+                aria-label="Remove"
+                className="mt-1 rounded-md p-1.5 text-stone-400 transition hover:bg-red-50 hover:text-red-500 disabled:opacity-40 dark:hover:bg-red-900/20"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+        );
+      })}
+      <button
+        type="button"
+        onClick={() => onChange([...chats, { id: "", name: "" }])}
+        disabled={disabled}
+        className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 transition hover:text-blue-700 disabled:opacity-40 dark:text-blue-400"
+      >
+        <Plus className="h-3.5 w-3.5" />
+        Add chat ID
+      </button>
+    </div>
+  );
+}
+
 // ── Karma bot setup instructions (Telegram only) ──
 
 function KarmaBotSetupPanel() {
@@ -354,8 +425,8 @@ interface TelegramProviderProps {
   providerType: "TELEGRAM";
   enabled: boolean;
   onEnabledChange: (next: boolean) => void;
-  chatIds: string[];
-  onChatIdsChange: (next: string[]) => void;
+  chats: TelegramChat[];
+  onChatsChange: (next: TelegramChat[]) => void;
 }
 
 interface SlackProviderProps {
@@ -378,11 +449,11 @@ function ProviderConfigCard(props: ProviderProps) {
   const isTelegram = props.providerType === "TELEGRAM";
   const [isPairModalOpen, setIsPairModalOpen] = useState(false);
 
-  const ids = isTelegram ? props.chatIds : [];
+  const chats = isTelegram ? props.chats : [];
   const urls = !isTelegram ? props.webhookUrls : [];
 
   const handleTest = () => {
-    const filteredIds = isTelegram ? ids.filter((id) => id.trim()) : [];
+    const filteredIds = isTelegram ? chats.map((c) => c.id).filter((id) => id.trim()) : [];
     const filteredUrls = !isTelegram ? urls.filter((u) => u.trim()) : [];
     testConfig(
       {
@@ -445,6 +516,7 @@ function ProviderConfigCard(props: ProviderProps) {
                   Chat IDs
                   <InfoTooltip
                     side="right"
+                    triggerAsChild
                     content={
                       <div className="space-y-1.5 text-xs">
                         <p className="font-semibold">Pair a chat</p>
@@ -469,14 +541,10 @@ function ProviderConfigCard(props: ProviderProps) {
                     </button>
                   </InfoTooltip>
                 </label>
-                <IdsEditor
-                  values={ids}
-                  onChange={props.onChatIdsChange}
+                <ChatsEditor
+                  chats={chats}
+                  onChange={(props as TelegramProviderProps).onChatsChange}
                   disabled={false}
-                  placeholderFirst="-1001234567890"
-                  placeholderRest="Additional chat ID"
-                  removeConfirmCopy={(v) => `Remove chat ID "${v}"?`}
-                  addLabel="Add chat ID"
                 />
                 <div className="mt-2.5">
                   <button
@@ -501,6 +569,7 @@ function ProviderConfigCard(props: ProviderProps) {
                 Webhook URLs
                 <InfoTooltip
                   side="right"
+                  triggerAsChild
                   content={
                     <div className="space-y-1.5 text-xs">
                       <p className="font-semibold">Create a Webhook</p>
@@ -710,7 +779,7 @@ export function NotificationSettingsPage({ community }: NotificationSettingsPage
       disableReviewerEmails={config?.disableReviewerEmails ?? false}
       initialChannels={{
         telegramEnabled: config?.telegramEnabled ?? false,
-        telegramChatIds: config?.telegramChatIds ?? [],
+        telegramChats: config?.telegramChats ?? [],
         slackEnabled: config?.slackEnabled ?? false,
         slackWebhookUrls: config?.slackWebhookUrls ?? [],
       }}
@@ -732,7 +801,7 @@ function NotificationSettingsPageContent({
   disableReviewerEmails: boolean;
   initialChannels: {
     telegramEnabled: boolean;
-    telegramChatIds: string[];
+    telegramChats: TelegramChat[];
     slackEnabled: boolean;
     slackWebhookUrls: string[];
   };
@@ -745,8 +814,10 @@ function NotificationSettingsPageContent({
   // edits whenever an unrelated mutation invalidates the community-config
   // query. Baselines are reset explicitly after a successful global save.
   const [tgEnabled, setTgEnabled] = useState(initialChannels.telegramEnabled);
-  const [tgChatIds, setTgChatIds] = useState<string[]>(
-    initialChannels.telegramChatIds.length > 0 ? initialChannels.telegramChatIds : [""]
+  const [tgChats, setTgChats] = useState<TelegramChat[]>(
+    initialChannels.telegramChats.length > 0
+      ? initialChannels.telegramChats
+      : [{ id: "", name: "" }]
   );
   const [slackEnabled, setSlackEnabled] = useState(initialChannels.slackEnabled);
   const [slackUrls, setSlackUrls] = useState<string[]>(
@@ -756,7 +827,7 @@ function NotificationSettingsPageContent({
   // Baselines (server truth). Compared against current state for dirty-detect.
   const tgBaseline = useRef({
     enabled: initialChannels.telegramEnabled,
-    chatIds: initialChannels.telegramChatIds,
+    chats: initialChannels.telegramChats,
   });
   const slackBaseline = useRef({
     enabled: initialChannels.slackEnabled,
@@ -775,12 +846,12 @@ function NotificationSettingsPageContent({
     );
   };
 
-  const tgFiltered = useMemo(() => tgChatIds.filter((id) => id.trim()), [tgChatIds]);
+  const tgFiltered = useMemo(() => tgChats.filter((c) => c.id.trim()), [tgChats]);
   const slackFiltered = useMemo(() => slackUrls.filter((u) => u.trim()), [slackUrls]);
 
   const tgDirty =
     tgEnabled !== tgBaseline.current.enabled ||
-    !arraysEqual(tgFiltered, tgBaseline.current.chatIds);
+    !telegramChatsEqual(tgFiltered, tgBaseline.current.chats);
   const slackDirty =
     slackEnabled !== slackBaseline.current.enabled ||
     !arraysEqual(slackFiltered, slackBaseline.current.urls);
@@ -811,7 +882,7 @@ function NotificationSettingsPageContent({
           savePersisted(
             {
               slug: communitySlug,
-              config: { telegramEnabled: tgEnabled, telegramChatIds: tgFiltered },
+              config: { telegramEnabled: tgEnabled, telegramChats: tgFiltered },
             },
             {
               onSuccess: () => resolve({ kind: "TELEGRAM", ok: true }),
@@ -851,8 +922,8 @@ function NotificationSettingsPageContent({
           successCount += 1;
           // Re-sync baselines + local state to the now-authoritative values
           if (r.value.kind === "TELEGRAM") {
-            tgBaseline.current = { enabled: tgEnabled, chatIds: tgFiltered };
-            setTgChatIds(tgFiltered.length > 0 ? tgFiltered : [""]);
+            tgBaseline.current = { enabled: tgEnabled, chats: tgFiltered };
+            setTgChats(tgFiltered.length > 0 ? tgFiltered : [{ id: "", name: "" }]);
           } else {
             slackBaseline.current = { enabled: slackEnabled, urls: slackFiltered };
             setSlackUrls(slackFiltered.length > 0 ? slackFiltered : [""]);
@@ -921,8 +992,8 @@ function NotificationSettingsPageContent({
             communitySlug={communitySlug}
             enabled={tgEnabled}
             onEnabledChange={setTgEnabled}
-            chatIds={tgChatIds}
-            onChatIdsChange={setTgChatIds}
+            chats={tgChats}
+            onChatsChange={setTgChats}
           />
           <ProviderConfigCard
             providerType="SLACK"
