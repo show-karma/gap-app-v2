@@ -698,6 +698,8 @@ export const INDEXER = {
     CONFIG: {
       GET: (slug: string) => `/v2/community-configs/${slug}`,
       UPDATE: (slug: string) => `/v2/community-configs/${slug}`,
+      TELEGRAM_PAIR_START: (slug: string) => `/v2/community-configs/${slug}/telegram-pair/start`,
+      TELEGRAM_PAIR_VERIFY: (slug: string) => `/v2/community-configs/${slug}/telegram-pair/verify`,
     },
   },
   GRANTS: {
@@ -736,6 +738,10 @@ export const INDEXER = {
       `/v2/communities/${communityIdOrSlug}/kyc/batch-status/by-application-reference`,
     GET_FORM_URL: (communityIdOrSlug: string) =>
       `/v2/communities/${communityIdOrSlug}/kyc-form-url`,
+  },
+  NOTIFICATION_CONFIG: {
+    TEST_CONFIG: (communityIdOrSlug: string) =>
+      `/v2/communities/${communityIdOrSlug}/notification-config/test`,
   },
   USERS: {
     RESOLVE_EMAIL: `/v2/user/resolve-email`,
