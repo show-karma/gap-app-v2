@@ -26,7 +26,7 @@ export const useTestNotificationConfig = (communityIdOrSlug: string | undefined)
         throw new Error("Community ID is required");
       }
 
-      const [data, error, , ] = await fetchData<{ success: boolean; message?: string }>(
+      const [data, error, ,] = await fetchData<{ success: boolean; message?: string }>(
         INDEXER.NOTIFICATION_CONFIG.TEST_CONFIG(communityIdOrSlug),
         "POST",
         config,

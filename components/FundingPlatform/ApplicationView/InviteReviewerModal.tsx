@@ -22,7 +22,10 @@ const inviteSchema = z.object({
   email: z.string().email("Invalid email address"),
   telegram: z
     .string()
-    .regex(/^[a-zA-Z0-9_]{5,32}$/, "Telegram username: 5-32 chars, letters/numbers/underscore")
+    .regex(
+      /^[a-zA-Z](?!.*__)[a-zA-Z0-9_]{3,30}[a-zA-Z0-9]$/,
+      "Use 5-32 letters/numbers/underscores, starting with a letter and ending with a letter or number"
+    )
     .or(z.literal(""))
     .optional(),
 });

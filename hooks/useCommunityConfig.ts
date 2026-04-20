@@ -20,7 +20,7 @@ export const useCommunityConfig = (slug: string, enabled: boolean = true) => {
   return useQuery<CommunityConfig | null>({
     queryKey: ["community-config", slug],
     queryFn: async () => {
-      const [data, error, ,] = await fetchData(
+      const [data, error] = await fetchData(
         INDEXER.COMMUNITY.CONFIG.GET(slug),
         "GET",
         {},
@@ -46,7 +46,7 @@ export const useCommunityConfigMutation = () => {
     { previousConfig: CommunityConfig | null }
   >({
     mutationFn: async ({ slug, config }) => {
-      const [data, error, ,] = await fetchData(
+      const [data, error] = await fetchData(
         INDEXER.COMMUNITY.CONFIG.UPDATE(slug),
         "PUT",
         config,

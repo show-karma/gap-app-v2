@@ -156,7 +156,10 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
         .max(50, "Name must be less than 50 characters long"),
       telegram: z
         .string()
-        .regex(/^[a-zA-Z0-9_]{5,32}$/, "Telegram username: 5-32 chars, letters/numbers/underscore")
+        .regex(
+          /^[a-zA-Z](?!.*__)[a-zA-Z0-9_]{3,30}[a-zA-Z0-9]$/,
+          "Use 5-32 letters/numbers/underscores, starting with a letter and ending with a letter or number"
+        )
         .or(z.literal("")),
       email: z
         .string()
@@ -411,10 +414,13 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
                 type="text"
                 className={inputStyle}
                 placeholder="johnsmith"
-                aria-describedby="telegram-input-helper"
+                aria-describedby="contact-section-telegram-helper"
                 {...register("telegram")}
               />
-              <p id="telegram-input-helper" className="text-xs text-gray-500 dark:text-zinc-400">
+              <p
+                id="contact-section-telegram-helper"
+                className="text-xs text-gray-500 dark:text-zinc-400"
+              >
                 Your Telegram @username (without @). Used to tag you in group notifications.
               </p>
               <p className="text-red-500">{errors.telegram?.message}</p>

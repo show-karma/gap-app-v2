@@ -18,7 +18,7 @@ import {
   Zap,
 } from "lucide-react";
 import type { ReactNode } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/Utilities/Button";
 import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
@@ -104,32 +104,41 @@ function ChatIdsEditor({
 }) {
   return (
     <div className="space-y-2.5">
-      {chatIds.map((id, idx) => (
-        <div key={idx} className="flex items-center gap-2">
-          <input
-            type="text"
-            value={id}
-            onChange={(e) => {
-              const next = [...chatIds];
-              next[idx] = e.target.value;
-              onChange(next);
-            }}
-            disabled={disabled}
-            placeholder={idx === 0 ? "-1001234567890" : `Additional chat ID`}
-            className="flex-1 h-9 px-3 text-sm border border-gray-200 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800/80 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-zinc-500 focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400 transition disabled:opacity-40"
-          />
-          {chatIds.length > 1 && (
-            <button
-              type="button"
-              onClick={() => onChange(chatIds.filter((_, i) => i !== idx))}
+      {chatIds.map((id, idx) => {
+        // Stable-ish key: combines index and content. Pure index keys cause
+        // input focus to jump on row removal; content alone collides on the
+        // empty-input case during initial state.
+        const rowKey = `${idx}-${id || "blank"}`;
+        return (
+          <div key={rowKey} className="flex items-center gap-2">
+            <input
+              type="text"
+              value={id}
+              onChange={(e) => {
+                const next = [...chatIds];
+                next[idx] = e.target.value;
+                onChange(next);
+              }}
               disabled={disabled}
-              className="p-1.5 rounded-md text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition disabled:opacity-40"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-            </button>
-          )}
-        </div>
-      ))}
+              placeholder={idx === 0 ? "-1001234567890" : `Additional chat ID`}
+              className="flex-1 h-9 px-3 text-sm border border-gray-200 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800/80 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-zinc-500 focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400 transition disabled:opacity-40"
+            />
+            {chatIds.length > 1 && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (id.trim() && !window.confirm(`Remove chat ID "${id}"?`)) return;
+                  onChange(chatIds.filter((_, i) => i !== idx));
+                }}
+                disabled={disabled}
+                className="p-1.5 rounded-md text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition disabled:opacity-40"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        );
+      })}
       <button
         type="button"
         onClick={() => onChange([...chatIds, ""])}
@@ -196,82 +205,71 @@ function ProviderConfigCard({
   const { mutate: testConfig, isPending: isTesting } = useTestNotificationConfig(communitySlug);
   const isTelegram = providerType === "TELEGRAM";
 
+  // One-time initializers from props. We deliberately do NOT mirror prop
+  // changes back into state via useEffect — that would clobber unsaved local
+  // edits whenever an unrelated mutation invalidates the community-config
+  // query (e.g. saving the sibling Slack card while editing TG, or toggling
+  // the kill switch). State is reset explicitly after a successful save.
   const [enabled, setEnabled] = useState(isEnabled);
   const [ids, setIds] = useState<string[]>(chatIds?.length ? chatIds : [""]);
   const [urls, setUrls] = useState<string[]>(webhookUrls?.length ? webhookUrls : [""]);
   const [isPairModalOpen, setIsPairModalOpen] = useState(false);
 
-  // Sync from props
-  const prevKey = useRef("");
-  const currentKey = `${isEnabled}-${JSON.stringify(chatIds)}-${JSON.stringify(webhookUrls)}`;
-  useEffect(() => {
-    if (currentKey !== prevKey.current) {
-      prevKey.current = currentKey;
-      setEnabled(isEnabled);
-      setIds(chatIds?.length ? chatIds : [""]);
-      setUrls(webhookUrls?.length ? webhookUrls : [""]);
-    }
-  }, [currentKey, isEnabled, chatIds, webhookUrls]);
-
-  const handleSave = () => {
+  const buildSavePayload = () => {
     if (isTelegram) {
       const filtered = ids.filter((id) => id.trim());
-      saveConfig(
-        { slug: communitySlug, config: { telegramEnabled: enabled, telegramChatIds: filtered } },
-        {
-          onSuccess: () => toast.success("Telegram config saved"),
-          onError: (e) => toast.error(e.message || "Failed"),
-        }
-      );
-    } else {
-      const filtered = urls.filter((u) => u.trim());
-      saveConfig(
-        { slug: communitySlug, config: { slackEnabled: enabled, slackWebhookUrls: filtered } },
-        {
-          onSuccess: () => toast.success("Slack config saved"),
-          onError: (e) => toast.error(e.message || "Failed"),
-        }
-      );
+      return {
+        config: { telegramEnabled: enabled, telegramChatIds: filtered },
+        normalized: filtered,
+      };
     }
+    const filtered = urls.filter((u) => u.trim());
+    return {
+      config: { slackEnabled: enabled, slackWebhookUrls: filtered },
+      normalized: filtered,
+    };
+  };
+
+  const handleSave = () => {
+    const { config: payload, normalized } = buildSavePayload();
+    saveConfig(
+      { slug: communitySlug, config: payload },
+      {
+        onSuccess: () => {
+          toast.success(`${title} config saved`);
+          // Re-sync local state to the now-authoritative server values so the
+          // next refetch is a no-op and trim/dedup is reflected in the inputs.
+          if (isTelegram) {
+            setIds(normalized.length ? normalized : [""]);
+          } else {
+            setUrls(normalized.length ? normalized : [""]);
+          }
+        },
+        onError: (e) => toast.error(e.message || "Failed"),
+      }
+    );
   };
 
   const handleTest = () => {
-    if (isTelegram) {
-      const filtered = ids.filter((id) => id.trim());
-      testConfig(
-        {
-          providerType,
-          botToken: null,
-          chatId: filtered[0] || null,
-          chatIds: filtered.length > 0 ? filtered : undefined,
-          webhookUrl: null,
-        },
-        {
-          onSuccess: (r) =>
-            r.success
-              ? toast.success(r.message || "Test sent!")
-              : toast.error(r.message || "Test failed"),
-          onError: (e) => toast.error(e.message || "Test failed"),
-        }
-      );
-    } else {
-      const filtered = urls.filter((u) => u.trim());
-      testConfig(
-        {
-          providerType,
-          botToken: null,
-          webhookUrl: filtered[0] || null,
-          webhookUrls: filtered.length > 0 ? filtered : undefined,
-        },
-        {
-          onSuccess: (r) =>
-            r.success
-              ? toast.success(r.message || "Test sent!")
-              : toast.error(r.message || "Test failed"),
-          onError: (e) => toast.error(e.message || "Test failed"),
-        }
-      );
-    }
+    const filteredIds = isTelegram ? ids.filter((id) => id.trim()) : [];
+    const filteredUrls = isTelegram ? [] : urls.filter((u) => u.trim());
+    testConfig(
+      {
+        providerType,
+        botToken: null,
+        chatId: isTelegram ? filteredIds[0] || null : null,
+        chatIds: isTelegram && filteredIds.length > 0 ? filteredIds : undefined,
+        webhookUrl: isTelegram ? null : filteredUrls[0] || null,
+        webhookUrls: !isTelegram && filteredUrls.length > 0 ? filteredUrls : undefined,
+      },
+      {
+        onSuccess: (r) =>
+          r.success
+            ? toast.success(r.message || "Test sent!")
+            : toast.error(r.message || "Test failed"),
+        onError: (e) => toast.error(e.message || "Test failed"),
+      }
+    );
   };
 
   const disabled = !enabled;
@@ -504,25 +502,28 @@ const REALTIME_BULLETS: ReadonlyArray<{ key: string; text: ReactNode }> = [
   },
 ];
 
-function NotificationTypesCard() {
-  const realtimeTypes = [
-    "Comment on an application (from a grantee or applicant) → reviewers",
-    "Milestone marked complete (by a grantee) → milestone reviewers",
-    "Post-approval form submitted (by a grantee) → reviewers",
-    "@-mention in a comment → the tagged user",
-  ];
+const REALTIME_TYPES: ReadonlyArray<string> = [
+  "Comment on an application (from a grantee or applicant) → reviewers",
+  "Milestone marked complete (by a grantee) → milestone reviewers",
+  "Post-approval form submitted (by a grantee) → reviewers",
+  "@-mention in a comment → the tagged user",
+];
 
-  const emailOnly = [
-    "Daily Reviewer Digest",
-    "Milestone Reviewer Digest",
-    "Admin Weekly Digest",
-    "Milestone Verification → Finance",
-    "Post-Approval → per-program admin/finance email list",
-    "Invoice Received → Finance",
-    "KYC Status Change → Admin",
-    "Reviewer invitations",
-    "All applicant / grantee emails",
-  ];
+const EMAIL_ONLY_TYPES: ReadonlyArray<string> = [
+  "Daily Reviewer Digest",
+  "Milestone Reviewer Digest",
+  "Admin Weekly Digest",
+  "Milestone Verification → Finance",
+  "Post-Approval → per-program admin/finance email list",
+  "Invoice Received → Finance",
+  "KYC Status Change → Admin",
+  "Reviewer invitations",
+  "All applicant / grantee emails",
+];
+
+function NotificationTypesCard() {
+  const realtimeTypes = REALTIME_TYPES;
+  const emailOnly = EMAIL_ONLY_TYPES;
 
   return (
     <div className="rounded-xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm overflow-hidden">
@@ -557,9 +558,7 @@ function NotificationTypesCard() {
       <div className="px-5 py-4 border-t border-gray-100 dark:border-zinc-800">
         <div className="flex items-center gap-2 mb-2">
           <AtSign className="w-3.5 h-3.5 text-sky-500" />
-          <p className="text-sm font-semibold text-gray-900 dark:text-white">
-            How it behaves
-          </p>
+          <p className="text-sm font-semibold text-gray-900 dark:text-white">How it behaves</p>
         </div>
         <ul className="space-y-1.5 list-disc list-inside marker:text-gray-300 dark:marker:text-zinc-600">
           {REALTIME_BULLETS.map((bullet) => (

@@ -35,5 +35,8 @@ export const envVars = {
   ZERODEV_PROJECT_ID: process.env.NEXT_PUBLIC_ZERODEV_PROJECT_ID || "",
   ALCHEMY_POLICY_ID: process.env.NEXT_PUBLIC_ALCHEMY_POLICY_ID || "",
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "",
-  KARMA_TELEGRAM_BOT_HANDLE: "karma_notifications_bot",
+  // Bot handle differs across environments (staging uses a different bot than prod).
+  // Fallback covers single-env / local-dev setups; deploy configs should set the env var.
+  KARMA_TELEGRAM_BOT_HANDLE:
+    process.env.NEXT_PUBLIC_KARMA_TELEGRAM_BOT_HANDLE || "karma_notifications_bot",
 };

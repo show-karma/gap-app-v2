@@ -50,9 +50,9 @@ export default function GrantAccountabilityPage() {
         <section className="space-y-4">
           <h2 className="text-xl font-semibold">Short answer</h2>
           <p className="text-gray-700 dark:text-gray-300">
-            Grant accountability is the system of tracking how funded projects execute on
-            their commitments over time, making progress visible, verifiable, and reusable for
-            future funding decisions.
+            Grant accountability is the system of tracking how funded projects execute on their
+            commitments over time, making progress visible, verifiable, and reusable for future
+            funding decisions.
           </p>
         </section>
 

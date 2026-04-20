@@ -35,6 +35,7 @@ import {
   PostApprovalEmptyState,
 } from "@/components/FundingPlatform/EmptyStateGuidance";
 import { PAGE_HEADER_CONTENT, PageHeader } from "@/components/FundingPlatform/PageHeader";
+import { NotificationConfigTab } from "@/components/FundingPlatform/QuestionBuilder/NotificationConfigTab";
 import { ProgramDetailsTab } from "@/components/FundingPlatform/QuestionBuilder/ProgramDetailsTab";
 import { ReviewerManagementTab } from "@/components/FundingPlatform/QuestionBuilder/ReviewerManagementTab";
 import { SettingsSidebar, type SidebarTabKey } from "@/components/FundingPlatform/Sidebar";
@@ -49,7 +50,6 @@ import { AIPromptConfiguration } from "./AIPromptConfiguration";
 import { FieldEditor } from "./FieldEditor";
 import { FieldTypeSelector, fieldTypes } from "./FieldTypeSelector";
 import { KycSettingsConfiguration } from "./KycSettingsConfiguration";
-import { NotificationConfigTab } from "../FundingPlatform/QuestionBuilder/NotificationConfigTab";
 import { SettingsConfiguration } from "./SettingsConfiguration";
 
 const TAB_KEYS = [
