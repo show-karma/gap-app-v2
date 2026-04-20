@@ -961,7 +961,7 @@ export function QuestionBuilder({
         ) : activeTab === "notification-config" ? (
           <div className="p-4 sm:p-6 lg:p-8">
             <div className="max-w-4xl mx-auto">
-              <NotificationConfigTab communityId={communityId} readOnly={readOnly} />
+              <NotificationConfigTab communitySlug={communityId} readOnly={readOnly} />
             </div>
           </div>
         ) : null}

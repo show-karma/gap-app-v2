@@ -12,19 +12,21 @@ import {
 } from "@/hooks/useNotificationConfig";
 
 interface NotificationConfigTabProps {
-  communityId: string;
+  /** Community URL slug (e.g. "filecoin") — NOT the community UID.
+   *  `useCommunityConfig` hits `/v2/community-configs/${slug}`. */
+  communitySlug: string;
   readOnly?: boolean;
 }
 
 export function NotificationConfigTab({
-  communityId,
+  communitySlug,
   readOnly = false,
 }: NotificationConfigTabProps) {
-  const { data: config, isLoading, error } = useCommunityConfig(communityId);
+  const { data: config, isLoading, error } = useCommunityConfig(communitySlug);
   // Single mutation instance covers both Telegram + Slack test buttons.
   // Previously called twice (once per provider) which spawned two
   // useMutation instances and made it harder to reason about isPending.
-  const { mutate: testConfig, isPending: isTesting } = useTestNotificationConfig(communityId);
+  const { mutate: testConfig, isPending: isTesting } = useTestNotificationConfig(communitySlug);
 
   const handleTest = useCallback(
     (providerType: NotificationProviderType) => {

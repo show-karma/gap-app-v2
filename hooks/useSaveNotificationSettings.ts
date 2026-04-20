@@ -165,7 +165,13 @@ export function useSaveNotificationSettings({
     // the clobber-fix.
     if (failedKinds.length > 0) {
       const queryKey = ["community-config", slug];
-      await queryClient.invalidateQueries({ queryKey });
+      // `invalidateQueries` only marks stale + schedules a refetch; it does
+      // NOT await the network call. To actually read server-fresh data here
+      // we must use `refetchQueries`, which resolves once the refetch
+      // completes (or fails). If the refetch errors, we fall back to the
+      // currently cached value (which the mutation's onError already rolled
+      // back to the last-known-good baseline).
+      await queryClient.refetchQueries({ queryKey });
       const fresh = queryClient.getQueryData<CommunityConfig | null>(queryKey);
       if (fresh) {
         if (failedKinds.includes("TELEGRAM")) {
