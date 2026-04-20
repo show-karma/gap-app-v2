@@ -1,10 +1,15 @@
 "use client";
 
 import { ArrowDownIcon, Loader2, Send } from "lucide-react";
+import { useCallback } from "react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/Utilities/Button";
 import { useCommunityConfig } from "@/hooks/useCommunityConfig";
-import { useTestNotificationConfig } from "@/hooks/useNotificationConfig";
+import {
+  type NotificationProviderType,
+  type TestNotificationConfigRequest,
+  useTestNotificationConfig,
+} from "@/hooks/useNotificationConfig";
 
 interface NotificationConfigTabProps {
   communityId: string;
@@ -16,7 +21,47 @@ export function NotificationConfigTab({
   readOnly = false,
 }: NotificationConfigTabProps) {
   const { data: config, isLoading, error } = useCommunityConfig(communityId);
+  // Single mutation instance covers both Telegram + Slack test buttons.
+  // Previously called twice (once per provider) which spawned two
+  // useMutation instances and made it harder to reason about isPending.
   const { mutate: testConfig, isPending: isTesting } = useTestNotificationConfig(communityId);
+
+  const handleTest = useCallback(
+    (providerType: NotificationProviderType) => {
+      // Build the per-provider payload. Both share success/error handlers, so
+      // we extract them here and only branch on the channel-specific fields.
+      // (Previously two near-identical TG/SLACK branches duplicated the
+      // onSuccess/onError boilerplate — extract the shared shape.)
+      const tgChatIds = config?.telegramChats?.map((c) => c.id).filter((id) => id.trim()) ?? [];
+      const slackUrls = config?.slackWebhookUrls?.filter((u) => u.trim()) ?? [];
+
+      const payload: TestNotificationConfigRequest =
+        providerType === "TELEGRAM"
+          ? {
+              providerType: "TELEGRAM",
+              botToken: null,
+              chatId: tgChatIds[0] || null,
+              // Pass ALL chat IDs so the backend exercises every configured
+              // destination. Was previously [0] only — test only validated
+              // the first chat, leaving silent breakage in subsequent rows.
+              chatIds: tgChatIds.length > 0 ? tgChatIds : undefined,
+            }
+          : {
+              providerType: "SLACK",
+              webhookUrl: slackUrls[0] || null,
+              webhookUrls: slackUrls.length > 0 ? slackUrls : undefined,
+            };
+
+      testConfig(payload, {
+        onSuccess: (result) => {
+          if (result.success) toast.success("Test notification sent!");
+          else toast.error(result.message || "Test failed");
+        },
+        onError: (err: Error) => toast.error(err.message || "Test failed"),
+      });
+    },
+    [config?.telegramChats, config?.slackWebhookUrls, testConfig]
+  );
 
   if (isLoading) {
     return (
@@ -36,41 +81,12 @@ export function NotificationConfigTab({
     );
   }
 
-  const handleTest = (providerType: "TELEGRAM" | "SLACK") => {
-    if (providerType === "TELEGRAM") {
-      testConfig(
-        {
-          providerType: "TELEGRAM",
-          botToken: null,
-          chatId: config?.telegramChats?.[0]?.id,
-        },
-        {
-          onSuccess: (result) => {
-            if (result.success) toast.success("Test notification sent!");
-            else toast.error(result.message || "Test failed");
-          },
-          onError: (err: Error) => toast.error(err.message || "Test failed"),
-        }
-      );
-    } else {
-      testConfig(
-        {
-          providerType: "SLACK",
-          webhookUrl: config?.slackWebhookUrls?.[0],
-        },
-        {
-          onSuccess: (result) => {
-            if (result.success) toast.success("Test notification sent!");
-            else toast.error(result.message || "Test failed");
-          },
-          onError: (err: Error) => toast.error(err.message || "Test failed"),
-        }
-      );
-    }
-  };
-
-  const telegramActive = !!config?.telegramEnabled && (config?.telegramChats?.length ?? 0) > 0;
-  const slackActive = config?.slackEnabled && (config?.slackWebhookUrls?.length ?? 0) > 0;
+  // Truthiness style: both channels use the same shape (boolean | undefined),
+  // so we coerce identically. No `!!` — relying on the boolean context the
+  // expression is consumed in keeps it consistent across both lines.
+  const telegramActive =
+    Boolean(config?.telegramEnabled) && (config?.telegramChats?.length ?? 0) > 0;
+  const slackActive = Boolean(config?.slackEnabled) && (config?.slackWebhookUrls?.length ?? 0) > 0;
 
   return (
     <div className="space-y-6">
@@ -102,7 +118,7 @@ export function NotificationConfigTab({
             </div>
             <div>
               <p className="text-sm font-medium text-gray-900 dark:text-white">Telegram</p>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
                 {telegramActive ? "Configured" : "Not configured"}
               </p>
             </div>
@@ -119,6 +135,8 @@ export function NotificationConfigTab({
                 variant="secondary"
                 onClick={() => handleTest("TELEGRAM")}
                 disabled={isTesting}
+                title="Send a real test message to every configured Telegram chat"
+                aria-label="Send test notification to Telegram"
                 className="text-xs px-2 py-1"
               >
                 {isTesting ? (
@@ -139,7 +157,7 @@ export function NotificationConfigTab({
             </div>
             <div>
               <p className="text-sm font-medium text-gray-900 dark:text-white">Slack</p>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
                 {slackActive ? "Configured" : "Not configured"}
               </p>
             </div>
@@ -156,6 +174,8 @@ export function NotificationConfigTab({
                 variant="secondary"
                 onClick={() => handleTest("SLACK")}
                 disabled={isTesting}
+                title="Send a real test message to every configured Slack webhook"
+                aria-label="Send test notification to Slack"
                 className="text-xs px-2 py-1"
               >
                 {isTesting ? (
@@ -176,7 +196,7 @@ export function NotificationConfigTab({
             </div>
             <div>
               <p className="text-sm font-medium text-gray-900 dark:text-white">Email Kill Switch</p>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
                 {config?.disableReviewerEmails
                   ? "Reviewer/admin/finance emails are disabled"
                   : "All emails active"}

@@ -1,21 +1,27 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
-import type { ReactNode } from "react";
+import type { PropsWithChildren, ReactNode } from "react";
+import type { MockedFunction } from "vitest";
 import { TelegramPairChatModal } from "@/components/Pages/Admin/TelegramPairChatModal";
 import fetchData from "@/utilities/fetchData";
 import "@testing-library/jest-dom";
 
 vi.mock("@/utilities/fetchData");
 
-// Flatten Radix Dialog so children render straight into the DOM
+// Flatten Radix Dialog so children render straight into the DOM. Props are
+// PropsWithChildren rather than `any`, with className narrowed where Radix
+// would normally pass it through. (Avoids `any` per CLAUDE.md.)
+type DialogStubProps = PropsWithChildren<{ open?: boolean }>;
+type DialogStyledProps = PropsWithChildren<{ className?: string }>;
 vi.mock("@/components/ui/dialog", () => ({
-  Dialog: ({ children, open }: any) => (open ? <div data-testid="dialog">{children}</div> : null),
-  DialogContent: ({ children, className }: any) => (
+  Dialog: ({ children, open }: DialogStubProps) =>
+    open ? <div data-testid="dialog">{children}</div> : null,
+  DialogContent: ({ children, className }: DialogStyledProps) => (
     <div data-testid="dialog-panel" className={className}>
       {children}
     </div>
   ),
-  DialogTitle: ({ children, className }: any) => (
+  DialogTitle: ({ children, className }: DialogStyledProps) => (
     <h2 data-testid="dialog-title" className={className}>
       {children}
     </h2>
@@ -30,7 +36,7 @@ vi.mock("react-hot-toast", () => ({
   },
 }));
 
-const mockFetchData = fetchData as vi.MockedFunction<typeof fetchData>;
+const mockFetchData = fetchData as MockedFunction<typeof fetchData>;
 
 describe("TelegramPairChatModal", () => {
   let queryClient: QueryClient;

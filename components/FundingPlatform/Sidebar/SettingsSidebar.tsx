@@ -10,7 +10,7 @@ import {
   UserGroupIcon,
   WrenchScrewdriverIcon,
 } from "@heroicons/react/24/solid";
-import { Bell as BellIcon } from "lucide-react";
+import { Bell } from "lucide-react";
 import { Link } from "@/src/components/navigation/Link";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
@@ -109,7 +109,7 @@ const getSidebarSections = (
             {
               key: "notification-config" as SidebarTabKey,
               label: "Notifications",
-              icon: BellIcon,
+              icon: Bell,
               description: "View community notification settings (read-only)",
             },
           ]

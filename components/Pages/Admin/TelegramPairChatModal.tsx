@@ -7,7 +7,7 @@ import { Button } from "@/components/Utilities/Button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import {
-  type TelegramPairingError,
+  TelegramPairingError,
   useStartTelegramPairing,
   useVerifyTelegramPairing,
 } from "@/hooks/useTelegramPairing";
@@ -28,13 +28,17 @@ const formatCountdown = (msRemaining: number): string => {
   return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 };
 
-const resolveVerifyErrorMessage = (error: TelegramPairingError | null): string | null => {
+const resolveVerifyErrorMessage = (error: Error | null): string | null => {
   if (!error) return null;
-  if (error.status === 404) {
-    return "Token not found yet. Make sure you posted it in the group and the Karma bot is a member.";
-  }
-  if (error.status === 503) {
-    return "Telegram integration is not configured yet. Contact support.";
+  // Real-class instanceof check (TelegramPairingError is now a proper Error
+  // subclass — see hooks/useTelegramPairing.ts).
+  if (error instanceof TelegramPairingError) {
+    if (error.status === 404) {
+      return "Token not found yet. Make sure you posted it in the group and the Karma bot is a member.";
+    }
+    if (error.status === 503) {
+      return "Telegram integration is not configured yet. Contact support.";
+    }
   }
   return error.message || "Verification failed. Please try again.";
 };
@@ -47,7 +51,6 @@ export function TelegramPairChatModal({
   const [token, setToken] = useState<string | null>(null);
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
   const [now, setNow] = useState<number>(() => Date.now());
-  const [verifyError, setVerifyError] = useState<TelegramPairingError | null>(null);
 
   const [, copy] = useCopyToClipboard();
 
@@ -58,26 +61,25 @@ export function TelegramPairChatModal({
   const startReset = startPairing.reset;
   const verifyReset = verifyPairing.reset;
 
-  // Track latest `open` so async mutation callbacks don't apply state updates
-  // (token/expiresAt/error) from a previous modal session if the user closed
-  // and rapidly reopened the modal. The reopen kicks off a fresh start —
-  // letting the stale onSuccess overwrite would clobber the new token.
-  const openRef = useRef(open);
-  useEffect(() => {
-    openRef.current = open;
-  }, [open]);
+  // Per-open session id. Incremented every time the modal opens. Async
+  // mutation callbacks compare the captured id at fire-time against the
+  // current ref — late responses from a previous session are silently
+  // dropped. This is the lighter-weight equivalent of an AbortController
+  // (which fetchData doesn't currently surface) and is sufficient because
+  // the only side effects are local setState calls.
+  const sessionIdRef = useRef(0);
 
   const handleStart = useCallback(() => {
-    setVerifyError(null);
+    // Snapshot the session id at call time. Subsequent reopens bump the ref.
+    const sessionId = sessionIdRef.current;
     startMutate(undefined, {
       onSuccess: (data) => {
-        // Stale-token guard: ignore late responses after close/reopen.
-        if (!openRef.current) return;
+        if (sessionId !== sessionIdRef.current) return; // stale — drop
         setToken(data.token);
         setExpiresAt(data.expiresAt);
       },
       onError: (err) => {
-        if (!openRef.current) return;
+        if (sessionId !== sessionIdRef.current) return; // stale — drop
         toast.error(err.message || "Could not generate pairing token");
       },
     });
@@ -86,9 +88,9 @@ export function TelegramPairChatModal({
   // Kick off a fresh token when the modal opens
   useEffect(() => {
     if (!open) return;
+    sessionIdRef.current += 1;
     setToken(null);
     setExpiresAt(null);
-    setVerifyError(null);
     verifyReset();
     startReset();
     handleStart();
@@ -116,11 +118,17 @@ export function TelegramPairChatModal({
 
   const handleVerify = useCallback(() => {
     if (!token) return;
-    setVerifyError(null);
+    // Reset clears the previous error from the mutation result so the inline
+    // banner disappears on retry. (Local error mirror state was previously
+    // duplicating verifyPairing.error — dropped in favour of reading the
+    // mutation result directly.)
+    verifyReset();
+    const sessionId = sessionIdRef.current;
     verifyPairing.mutate(
       { token },
       {
         onSuccess: (data) => {
+          if (sessionId !== sessionIdRef.current) return; // stale — drop
           const label = data.chatTitle || "chat";
           if (data.alreadyPaired) {
             toast.success(`"${label}" is already paired`, { icon: "ℹ️" });
@@ -129,14 +137,14 @@ export function TelegramPairChatModal({
           }
           onOpenChange(false);
         },
-        onError: (err) => {
-          setVerifyError(err);
-        },
+        // No onError handler needed — verifyPairing.error drives the inline
+        // banner via the resolveVerifyErrorMessage call below.
       }
     );
-  }, [token, verifyPairing, onOpenChange]);
+  }, [token, verifyPairing, verifyReset, onOpenChange]);
 
-  const inlineError = resolveVerifyErrorMessage(verifyError);
+  // Read the error directly from the mutation result. Single source of truth.
+  const inlineError = resolveVerifyErrorMessage(verifyPairing.error);
   const isStarting = startPairing.isPending;
   const isVerifying = verifyPairing.isPending;
 
@@ -215,7 +223,10 @@ export function TelegramPairChatModal({
 
           {/* Inline error */}
           {inlineError ? (
-            <div className="flex items-start gap-2 rounded-lg border border-red-200 dark:border-red-900/40 bg-red-50 dark:bg-red-900/10 px-3 py-2.5 text-xs text-red-700 dark:text-red-400">
+            <div
+              role="alert"
+              className="flex items-start gap-2 rounded-lg border border-red-200 dark:border-red-900/40 bg-red-50 dark:bg-red-900/10 px-3 py-2.5 text-xs text-red-700 dark:text-red-400"
+            >
               <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
               <p>{inlineError}</p>
             </div>

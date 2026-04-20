@@ -1,6 +1,5 @@
 "use client";
 
-import { useQueryClient } from "@tanstack/react-query";
 import { Check, HelpCircle, Info, Link2, Loader2, Plus, Send, Trash2 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -11,12 +10,12 @@ import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import {
-  type CommunityConfig,
   type TelegramChat,
   useCommunityConfig,
   useCommunityConfigMutation,
 } from "@/hooks/useCommunityConfig";
 import { useTestNotificationConfig } from "@/hooks/useNotificationConfig";
+import { useSaveNotificationSettings } from "@/hooks/useSaveNotificationSettings";
 import type { Community } from "@/types/v2/community";
 import { envVars } from "@/utilities/enviromentVars";
 import { MESSAGES } from "@/utilities/messages";
@@ -199,13 +198,20 @@ function ReviewerHeadsUpBanner() {
 }
 
 // ── Kill switch ──
+//
+// Naming note: the prop is `silenced` (not `disabled`) so `aria-checked={silenced}`
+// reads naturally for screen readers. When emails are SILENCED, the switch
+// reads as "checked" — which matches the visual on-state of the toggle and
+// the user's mental model (the kill switch is engaged). Previously named
+// `disabled`, which was confusing because "disabled switch checked" sounds
+// inverted to assistive tech users.
 
 function KillSwitchCard({
-  disabled,
+  silenced,
   onToggle,
   isSaving,
 }: {
-  disabled: boolean;
+  silenced: boolean;
   onToggle: (value: boolean) => void;
   isSaving: boolean;
 }) {
@@ -217,7 +223,7 @@ function KillSwitchCard({
             Email Kill Switch
           </p>
           <p className="mt-0.5 text-xs text-stone-500 dark:text-zinc-400">
-            {disabled
+            {silenced
               ? "Reviewer, admin & finance emails are silenced."
               : "Emails enabled. Silences reviewer, admin & finance emails when armed. Telegram / Slack are unaffected."}
           </p>
@@ -225,22 +231,22 @@ function KillSwitchCard({
         <button
           type="button"
           role="switch"
-          aria-checked={disabled}
+          aria-checked={silenced}
           aria-label="Toggle email kill switch"
-          onClick={() => onToggle(!disabled)}
+          onClick={() => onToggle(!silenced)}
           disabled={isSaving}
           className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-2 disabled:opacity-40 dark:focus:ring-offset-zinc-900 ${
-            disabled ? "bg-red-500" : "bg-stone-300 dark:bg-zinc-700"
+            silenced ? "bg-red-500" : "bg-stone-300 dark:bg-zinc-700"
           }`}
         >
           <span
             className={`pointer-events-none mt-0.5 inline-block h-5 w-5 rounded-full bg-white shadow-sm transition duration-200 ${
-              disabled ? "translate-x-[22px]" : "translate-x-[2px]"
+              silenced ? "translate-x-[22px]" : "translate-x-[2px]"
             }`}
           />
         </button>
       </div>
-      {disabled && (
+      {silenced && (
         <div className="border-t border-red-100 bg-red-50 px-5 py-2.5 dark:border-red-900/30 dark:bg-red-900/10">
           <p className="text-xs text-red-600 dark:text-red-400">
             Reviewer, admin &amp; finance emails are off. Applicant / grantee emails and all
@@ -480,54 +486,141 @@ function KarmaBotSetupPanel() {
   );
 }
 
-// ── Provider Config Card (controlled — state lifted to parent) ──
+// ── Provider Config Card ──
+//
+// Provider-specific props are discriminated by `providerType`. We split into
+// two wrapper components (TelegramProviderCard / SlackProviderCard) that share
+// the common chrome via ProviderCardChrome, so the discriminator narrows
+// naturally inside each wrapper — no `as` casts needed.
 
-interface TelegramProviderProps {
-  providerType: "TELEGRAM";
+interface CommonProviderProps {
+  title: string;
+  communitySlug: string;
   enabled: boolean;
   onEnabledChange: (next: boolean) => void;
+}
+
+interface TelegramProviderProps extends CommonProviderProps {
+  providerType: "TELEGRAM";
   chats: TelegramChat[];
   onChatsChange: (next: TelegramChat[]) => void;
 }
 
-interface SlackProviderProps {
+interface SlackProviderProps extends CommonProviderProps {
   providerType: "SLACK";
-  enabled: boolean;
-  onEnabledChange: (next: boolean) => void;
   webhookUrls: string[];
   onWebhookUrlsChange: (next: string[]) => void;
 }
 
-type ProviderProps = (TelegramProviderProps | SlackProviderProps) & {
-  title: string;
-  communitySlug: string;
-};
+type ProviderProps = TelegramProviderProps | SlackProviderProps;
 
-function ProviderConfigCard(props: ProviderProps) {
+/**
+ * Shared chrome: header (title + on/off toggle), collapsed-hint when off,
+ * test button + footer. Body content is supplied via `children`.
+ */
+function ProviderCardChrome({
+  title,
+  subtitle,
+  enabled,
+  onEnabledChange,
+  collapsedHint,
+  testButtonLabel,
+  isTesting,
+  onTest,
+  children,
+}: {
+  title: string;
+  subtitle: string;
+  enabled: boolean;
+  onEnabledChange: (next: boolean) => void;
+  collapsedHint: string;
+  testButtonLabel: string;
+  isTesting: boolean;
+  onTest: () => void;
+  children: React.ReactNode;
+}) {
+  const collapsed = !enabled;
+
+  return (
+    <div className="overflow-hidden rounded-xl border border-stone-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+      {/* Header with toggle */}
+      <div className="flex items-center justify-between px-5 py-4">
+        <div>
+          <p className="text-sm font-semibold text-stone-900 dark:text-zinc-100">{title}</p>
+          <p className="mt-0.5 text-xs text-stone-500 dark:text-zinc-400">{subtitle}</p>
+        </div>
+        <label className="flex cursor-pointer items-center gap-2.5">
+          <span className="text-xs font-medium text-stone-600 dark:text-zinc-400">
+            {enabled ? "Enabled" : "Disabled"}
+          </span>
+          <input
+            type="checkbox"
+            checked={enabled}
+            onChange={(e) => onEnabledChange(e.target.checked)}
+            className="h-4 w-4 rounded border-stone-300 text-blue-600 focus:ring-blue-500 dark:border-zinc-600"
+          />
+        </label>
+      </div>
+
+      {/* Body */}
+      {collapsed ? (
+        <div className="border-t border-stone-100 px-5 py-3 text-xs text-stone-500 dark:border-zinc-800 dark:text-zinc-500">
+          {collapsedHint}
+        </div>
+      ) : (
+        <div className="space-y-4 border-t border-stone-100 px-5 py-4 dark:border-zinc-800">
+          {children}
+
+          {/* Test button — icon-only inside the Button label, so we provide an
+              explicit aria-label + InfoTooltip warning the user a real message
+              is about to be sent (WCAG 2.2 SC 4.1.2). */}
+          <div className="flex items-center gap-2 pt-1">
+            <InfoTooltip
+              side="top"
+              triggerAsChild
+              content={
+                <p className="text-xs">
+                  Sends a real test message to every configured destination on this channel.
+                </p>
+              }
+            >
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={onTest}
+                disabled={isTesting}
+                aria-label={testButtonLabel}
+              >
+                {isTesting ? (
+                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Send className="mr-1.5 h-3.5 w-3.5" />
+                )}
+                Test
+              </Button>
+            </InfoTooltip>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TelegramProviderCard(props: TelegramProviderProps) {
   const { mutate: testConfig, isPending: isTesting } = useTestNotificationConfig(
     props.communitySlug
   );
   const [isPairModalOpen, setIsPairModalOpen] = useState(false);
 
-  // Narrow via the discriminator so downstream access is type-safe without
-  // `as` casts. The variants only diverge inside the `if (isTelegram)`
-  // branch; everything above (toggle/header/test handler) reads only
-  // discriminator-independent fields.
-  const isTelegram = props.providerType === "TELEGRAM";
-
   const handleTest = () => {
-    const filteredIds = isTelegram
-      ? props.chats.map((c) => c.id).filter((id) => id.trim())
-      : [];
-    const filteredUrls = !isTelegram ? props.webhookUrls.filter((u) => u.trim()) : [];
+    const filteredIds = props.chats.map((c) => c.id).filter((id) => id.trim());
     testConfig(
       {
-        providerType: props.providerType,
+        providerType: "TELEGRAM",
         botToken: null,
-        chatId: isTelegram ? filteredIds[0] || null : null,
-        chatIds: isTelegram && filteredIds.length > 0 ? filteredIds : undefined,
-        webhookUrl: !isTelegram ? filteredUrls[0] || null : null,
-        webhookUrls: !isTelegram && filteredUrls.length > 0 ? filteredUrls : undefined,
+        chatId: filteredIds[0] || null,
+        chatIds: filteredIds.length > 0 ? filteredIds : undefined,
+        webhookUrl: null,
       },
       {
         onSuccess: (r) =>
@@ -539,170 +632,160 @@ function ProviderConfigCard(props: ProviderProps) {
     );
   };
 
-  const collapsed = !props.enabled;
-  // Pre-compose an aria-label that includes the channel name (e.g.
-  // "Send test notification to Telegram") for screen readers — the icon-only
-  // Test button needs an accessible name (WCAG 2.2 SC 4.1.2).
-  const testButtonLabel = `Send test notification to ${props.title}`;
+  return (
+    <ProviderCardChrome
+      title={props.title}
+      subtitle="Karma bot → group/channel"
+      enabled={props.enabled}
+      onEnabledChange={props.onEnabledChange}
+      collapsedHint="Toggle on to configure chat IDs and pair a new group."
+      testButtonLabel={`Send test notification to ${props.title}`}
+      isTesting={isTesting}
+      onTest={handleTest}
+    >
+      <KarmaBotSetupPanel />
+      <div>
+        <label className="mb-1.5 flex items-center text-xs font-medium text-stone-600 dark:text-zinc-400">
+          Chat IDs
+          <InfoTooltip
+            side="right"
+            triggerAsChild
+            content={
+              <div className="space-y-1.5 text-xs">
+                <p className="font-semibold">Pair a chat</p>
+                <ol className="list-inside list-decimal space-y-0.5 text-gray-400">
+                  <li>
+                    Add <strong>@{KARMA_TELEGRAM_BOT_HANDLE}</strong> to your target group
+                  </li>
+                  <li>
+                    Click <strong>Pair new chat</strong> — Karma walks you through the rest
+                  </li>
+                  <li>The chat ID is added automatically once verified</li>
+                </ol>
+                <p className="text-gray-500">
+                  Groups use negative IDs (e.g. <code>-100123...</code>). Pair multiple groups to
+                  notify each of them.
+                </p>
+              </div>
+            }
+          >
+            <button type="button" className="ml-1 text-stone-400 hover:text-blue-500">
+              <HelpCircle className="h-3.5 w-3.5" />
+            </button>
+          </InfoTooltip>
+        </label>
+        <ChatsEditor chats={props.chats} onChange={props.onChatsChange} disabled={false} />
+        <div className="mt-2.5">
+          <button
+            type="button"
+            onClick={() => setIsPairModalOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-xs font-medium text-stone-700 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-blue-800 dark:hover:bg-blue-950/30 dark:hover:text-blue-300"
+          >
+            <Link2 className="h-3.5 w-3.5" />
+            Pair new chat
+          </button>
+        </div>
+      </div>
+      <TelegramPairChatModal
+        communitySlug={props.communitySlug}
+        open={isPairModalOpen}
+        onOpenChange={setIsPairModalOpen}
+      />
+    </ProviderCardChrome>
+  );
+}
+
+function SlackProviderCard(props: SlackProviderProps) {
+  const { mutate: testConfig, isPending: isTesting } = useTestNotificationConfig(
+    props.communitySlug
+  );
+
+  const handleTest = () => {
+    const filteredUrls = props.webhookUrls.filter((u) => u.trim());
+    testConfig(
+      {
+        providerType: "SLACK",
+        botToken: null,
+        chatId: null,
+        webhookUrl: filteredUrls[0] || null,
+        webhookUrls: filteredUrls.length > 0 ? filteredUrls : undefined,
+      },
+      {
+        onSuccess: (r) =>
+          r.success
+            ? toast.success(r.message || "Test sent!")
+            : toast.error(r.message || "Test failed"),
+        onError: (e) => toast.error(e.message || "Test failed"),
+      }
+    );
+  };
 
   return (
-    <div className="overflow-hidden rounded-xl border border-stone-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-      {/* Header with toggle */}
-      <div className="flex items-center justify-between px-5 py-4">
-        <div>
-          <p className="text-sm font-semibold text-stone-900 dark:text-zinc-100">{props.title}</p>
-          <p className="mt-0.5 text-xs text-stone-500 dark:text-zinc-400">
-            {isTelegram ? "Karma bot → group/channel" : "Incoming webhook"}
-          </p>
-        </div>
-        <label className="flex cursor-pointer items-center gap-2.5">
-          <span className="text-xs font-medium text-stone-600 dark:text-zinc-400">
-            {props.enabled ? "Enabled" : "Disabled"}
-          </span>
-          <input
-            type="checkbox"
-            checked={props.enabled}
-            onChange={(e) => props.onEnabledChange(e.target.checked)}
-            className="h-4 w-4 rounded border-stone-300 text-blue-600 focus:ring-blue-500 dark:border-zinc-600"
-          />
-        </label>
-      </div>
-
-      {/* Body — collapsed when disabled */}
-      {collapsed ? (
-        <div className="border-t border-stone-100 px-5 py-3 text-xs text-stone-500 dark:border-zinc-800 dark:text-zinc-500">
-          {isTelegram
-            ? "Toggle on to configure chat IDs and pair a new group."
-            : "Toggle on to add webhook URLs."}
-        </div>
-      ) : (
-        <div className="space-y-4 border-t border-stone-100 px-5 py-4 dark:border-zinc-800">
-          {/* TS narrows `props` to TelegramProviderProps inside this branch
-              via the discriminator (providerType: "TELEGRAM"), so .chats and
-              .onChatsChange access is type-safe — no `as` cast needed. */}
-          {isTelegram ? (
-            <>
-              <KarmaBotSetupPanel />
-              <div>
-                <label className="mb-1.5 flex items-center text-xs font-medium text-stone-600 dark:text-zinc-400">
-                  Chat IDs
-                  <InfoTooltip
-                    side="right"
-                    triggerAsChild
-                    content={
-                      <div className="space-y-1.5 text-xs">
-                        <p className="font-semibold">Pair a chat</p>
-                        <ol className="list-inside list-decimal space-y-0.5 text-gray-400">
-                          <li>
-                            Add <strong>@{KARMA_TELEGRAM_BOT_HANDLE}</strong> to your target group
-                          </li>
-                          <li>
-                            Click <strong>Pair new chat</strong> — Karma walks you through the rest
-                          </li>
-                          <li>The chat ID is added automatically once verified</li>
-                        </ol>
-                        <p className="text-gray-500">
-                          Groups use negative IDs (e.g. <code>-100123...</code>). Pair multiple
-                          groups to notify each of them.
-                        </p>
-                      </div>
-                    }
-                  >
-                    <button type="button" className="ml-1 text-stone-400 hover:text-blue-500">
-                      <HelpCircle className="h-3.5 w-3.5" />
-                    </button>
-                  </InfoTooltip>
-                </label>
-                <ChatsEditor
-                  chats={props.chats}
-                  onChange={props.onChatsChange}
-                  disabled={false}
-                />
-                <div className="mt-2.5">
-                  <button
-                    type="button"
-                    onClick={() => setIsPairModalOpen(true)}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-xs font-medium text-stone-700 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-blue-800 dark:hover:bg-blue-950/30 dark:hover:text-blue-300"
-                  >
-                    <Link2 className="h-3.5 w-3.5" />
-                    Pair new chat
-                  </button>
-                </div>
+    <ProviderCardChrome
+      title={props.title}
+      subtitle="Incoming webhook"
+      enabled={props.enabled}
+      onEnabledChange={props.onEnabledChange}
+      collapsedHint="Toggle on to add webhook URLs."
+      testButtonLabel={`Send test notification to ${props.title}`}
+      isTesting={isTesting}
+      onTest={handleTest}
+    >
+      <div>
+        <label className="mb-1.5 flex items-center text-xs font-medium text-stone-600 dark:text-zinc-400">
+          Webhook URLs
+          <InfoTooltip
+            side="right"
+            triggerAsChild
+            content={
+              <div className="space-y-1.5 text-xs">
+                <p className="font-semibold">Create a Webhook</p>
+                <ol className="list-inside list-decimal space-y-0.5 text-gray-400">
+                  <li>
+                    Go to <strong>api.slack.com/messaging/webhooks</strong>
+                  </li>
+                  <li>
+                    Create an <strong>Incoming Webhook</strong>
+                  </li>
+                  <li>Select the target channel</li>
+                  <li>Copy the webhook URL</li>
+                </ol>
+                <p className="text-gray-500">Add multiple to notify several channels.</p>
+                <p className="text-gray-500 italic">
+                  Slack messages currently list reviewer names as plain text. Real{" "}
+                  <code>&lt;@user&gt;</code> Slack tagging is on the Phase&nbsp;2 roadmap.
+                </p>
               </div>
-              <TelegramPairChatModal
-                communitySlug={props.communitySlug}
-                open={isPairModalOpen}
-                onOpenChange={setIsPairModalOpen}
-              />
-            </>
-          ) : (
-            <div>
-              <label className="mb-1.5 flex items-center text-xs font-medium text-stone-600 dark:text-zinc-400">
-                Webhook URLs
-                <InfoTooltip
-                  side="right"
-                  triggerAsChild
-                  content={
-                    <div className="space-y-1.5 text-xs">
-                      <p className="font-semibold">Create a Webhook</p>
-                      <ol className="list-inside list-decimal space-y-0.5 text-gray-400">
-                        <li>
-                          Go to <strong>api.slack.com/messaging/webhooks</strong>
-                        </li>
-                        <li>
-                          Create an <strong>Incoming Webhook</strong>
-                        </li>
-                        <li>Select the target channel</li>
-                        <li>Copy the webhook URL</li>
-                      </ol>
-                      <p className="text-gray-500">Add multiple to notify several channels.</p>
-                      <p className="text-gray-500 italic">
-                        Slack messages currently list reviewer names as plain text. Real{" "}
-                        <code>&lt;@user&gt;</code> Slack tagging is on the Phase&nbsp;2 roadmap.
-                      </p>
-                    </div>
-                  }
-                >
-                  <button type="button" className="ml-1 text-stone-400 hover:text-blue-500">
-                    <HelpCircle className="h-3.5 w-3.5" />
-                  </button>
-                </InfoTooltip>
-              </label>
-              <IdsEditor
-                values={props.webhookUrls}
-                onChange={props.onWebhookUrlsChange}
-                disabled={false}
-                placeholderFirst="https://hooks.slack.com/services/..."
-                placeholderRest="Additional webhook URL"
-                removeConfirmCopy={(v) => `Remove webhook "${v}"?`}
-                addLabel="Add webhook URL"
-              />
-            </div>
-          )}
-
-          {/* Test button only — Save is now in the global sticky bar.
-              Icon-only at narrow widths, so an explicit aria-label is set
-              for screen-reader access (WCAG 2.2 SC 4.1.2). */}
-          <div className="flex items-center gap-2 pt-1">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={handleTest}
-              disabled={isTesting}
-              aria-label={testButtonLabel}
-            >
-              {isTesting ? (
-                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Send className="mr-1.5 h-3.5 w-3.5" />
-              )}
-              Test
-            </Button>
-          </div>
-        </div>
-      )}
-    </div>
+            }
+          >
+            <button type="button" className="ml-1 text-stone-400 hover:text-blue-500">
+              <HelpCircle className="h-3.5 w-3.5" />
+            </button>
+          </InfoTooltip>
+        </label>
+        <IdsEditor
+          values={props.webhookUrls}
+          onChange={props.onWebhookUrlsChange}
+          disabled={false}
+          placeholderFirst="https://hooks.slack.com/services/..."
+          placeholderRest="Additional webhook URL"
+          removeConfirmCopy={(v) => `Remove webhook "${v}"?`}
+          addLabel="Add webhook URL"
+        />
+      </div>
+    </ProviderCardChrome>
   );
+}
+
+/**
+ * Discriminator-based dispatcher. Each branch narrows `props` to its variant
+ * naturally — no `as` casts required.
+ */
+function ProviderConfigCard(props: ProviderProps) {
+  if (props.providerType === "TELEGRAM") {
+    return <TelegramProviderCard {...props} />;
+  }
+  return <SlackProviderCard {...props} />;
 }
 
 // ── Reference card (read-only "What triggers a notification") ──
@@ -886,14 +969,7 @@ function NotificationSettingsPageContent({
     slackWebhookUrls: string[];
   };
 }) {
-  const queryClient = useQueryClient();
   const { mutate: saveConfig, isPending: isSavingKillSwitch } = useCommunityConfigMutation();
-  // Single React-Query mutation drives the persisted Save button. We use
-  // mutateAsync from this hook to fire both channels in parallel (see
-  // handleGlobalSave). Its `isPending` is the only "saving" signal — no
-  // duplicate useState needed.
-  const { mutateAsync: savePersistedAsync, isPending: isSavingPersisted } =
-    useCommunityConfigMutation();
 
   // One-time initializers from props. We deliberately do NOT mirror prop
   // changes back into state via useEffect — that would clobber unsaved local
@@ -942,7 +1018,18 @@ function NotificationSettingsPageContent({
     slackEnabled !== slackBaseline.current.enabled ||
     !arraysEqual(slackFiltered, slackBaseline.current.urls);
 
-  const dirtyCount = (tgDirty ? 1 : 0) + (slackDirty ? 1 : 0);
+  const { save, isSaving, dirtyCount } = useSaveNotificationSettings({
+    slug: communitySlug,
+    state: {
+      telegram: { enabled: tgEnabled, chats: tgFiltered, dirty: tgDirty },
+      slack: { enabled: slackEnabled, urls: slackFiltered, dirty: slackDirty },
+    },
+    baselines: { telegram: tgBaseline, slack: slackBaseline },
+    setTgEnabled,
+    setTgChats,
+    setSlackEnabled,
+    setSlackUrls,
+  });
 
   // Warn before navigation when there are unsaved changes.
   useEffect(() => {
@@ -954,138 +1041,6 @@ function NotificationSettingsPageContent({
     window.addEventListener("beforeunload", handler);
     return () => window.removeEventListener("beforeunload", handler);
   }, [dirtyCount]);
-
-  const handleGlobalSave = async () => {
-    if (dirtyCount === 0) return;
-
-    // Snapshot the values we're about to send so we can re-sync baselines
-    // against the exact payload below (state may change while async settles).
-    const tgPayload = { enabled: tgEnabled, chats: tgFiltered };
-    const slackPayload = { enabled: slackEnabled, urls: slackFiltered };
-
-    type SaveOutcome = { kind: "TELEGRAM" | "SLACK"; ok: boolean; error?: string };
-
-    const tasks: Promise<SaveOutcome>[] = [];
-
-    if (tgDirty) {
-      tasks.push(
-        savePersistedAsync({
-          slug: communitySlug,
-          config: { telegramEnabled: tgPayload.enabled, telegramChats: tgPayload.chats },
-        }).then(
-          (): SaveOutcome => ({ kind: "TELEGRAM", ok: true }),
-          (err: Error): SaveOutcome => ({
-            kind: "TELEGRAM",
-            ok: false,
-            error: err.message || "Failed",
-          })
-        )
-      );
-    }
-
-    if (slackDirty) {
-      tasks.push(
-        savePersistedAsync({
-          slug: communitySlug,
-          config: {
-            slackEnabled: slackPayload.enabled,
-            slackWebhookUrls: slackPayload.urls,
-          },
-        }).then(
-          (): SaveOutcome => ({ kind: "SLACK", ok: true }),
-          (err: Error): SaveOutcome => ({
-            kind: "SLACK",
-            ok: false,
-            error: err.message || "Failed",
-          })
-        )
-      );
-    }
-
-    const results = await Promise.allSettled(tasks);
-
-    let successCount = 0;
-    const failures: string[] = [];
-    const failedKinds: Array<"TELEGRAM" | "SLACK"> = [];
-
-    for (const r of results) {
-      // Inner promises always resolve (we map both fulfilled+rejected to
-      // SaveOutcome above), so r.status is effectively always "fulfilled".
-      // Defensive branch for the rejected case keeps TS happy.
-      if (r.status === "fulfilled") {
-        if (r.value.ok) {
-          successCount += 1;
-          // Re-sync baselines + local state to the now-authoritative values.
-          // We compare against the snapshotted payload, NOT current state, so
-          // the next dirty-check is accurate even if the user kept typing.
-          if (r.value.kind === "TELEGRAM") {
-            tgBaseline.current = { enabled: tgPayload.enabled, chats: tgPayload.chats };
-            setTgChats(tgPayload.chats.length > 0 ? tgPayload.chats : [{ id: "", name: "" }]);
-          } else {
-            slackBaseline.current = { enabled: slackPayload.enabled, urls: slackPayload.urls };
-            setSlackUrls(slackPayload.urls.length > 0 ? slackPayload.urls : [""]);
-          }
-        } else {
-          failures.push(`${r.value.kind}: ${r.value.error || "Failed"}`);
-          failedKinds.push(r.value.kind);
-        }
-      } else {
-        failures.push(r.reason?.message || "Unknown error");
-      }
-    }
-
-    // Reconcile failed channels against server truth.
-    //
-    // The page intentionally never syncs from props on re-render (commit
-    // a17bed6b — protects unsaved edits from sibling-mutation invalidations).
-    // BUT: on partial failure, the failed channel's local state has diverged
-    // from the server (the optimistic update in useCommunityConfigMutation's
-    // onError already rolled back the cache, but our local component state
-    // and baseline still reflect what we tried to send). Without this
-    // reconcile, the user has no way back to consistency without a page
-    // reload.
-    //
-    // We only reset the channels that FAILED, because the channels the user
-    // is no longer editing are the only ones safe to overwrite — preserves
-    // the clobber-fix.
-    if (failedKinds.length > 0) {
-      const queryKey = ["community-config", communitySlug];
-      await queryClient.invalidateQueries({ queryKey });
-      const fresh = queryClient.getQueryData<CommunityConfig | null>(queryKey);
-      if (fresh) {
-        if (failedKinds.includes("TELEGRAM")) {
-          const freshChats = fresh.telegramChats ?? [];
-          tgBaseline.current = {
-            enabled: fresh.telegramEnabled ?? false,
-            chats: freshChats,
-          };
-          setTgEnabled(fresh.telegramEnabled ?? false);
-          setTgChats(freshChats.length > 0 ? freshChats : [{ id: "", name: "" }]);
-        }
-        if (failedKinds.includes("SLACK")) {
-          const freshUrls = fresh.slackWebhookUrls ?? [];
-          slackBaseline.current = {
-            enabled: fresh.slackEnabled ?? false,
-            urls: freshUrls,
-          };
-          setSlackEnabled(fresh.slackEnabled ?? false);
-          setSlackUrls(freshUrls.length > 0 ? freshUrls : [""]);
-        }
-      }
-    }
-
-    if (successCount > 0 && failures.length === 0) {
-      toast.success(
-        successCount === 1 ? "Notification settings saved" : `${successCount} channels saved`
-      );
-    } else if (successCount > 0 && failures.length > 0) {
-      toast.error(`Saved with errors: ${failures.join("; ")}`);
-    } else {
-      toast.error(`Save failed: ${failures.join("; ")}`);
-    }
-  };
-
-  const isSaving = isSavingPersisted;
 
   return (
     <div className="space-y-6">
@@ -1116,7 +1071,7 @@ function NotificationSettingsPageContent({
         </h2>
 
         <KillSwitchCard
-          disabled={disableReviewerEmails}
+          silenced={disableReviewerEmails}
           onToggle={handleKillSwitch}
           isSaving={isSavingKillSwitch}
         />
@@ -1151,7 +1106,7 @@ function NotificationSettingsPageContent({
         <NotificationReferenceCard />
       </section>
 
-      <StickySaveBar dirtyCount={dirtyCount} onSave={handleGlobalSave} isSaving={isSaving} />
+      <StickySaveBar dirtyCount={dirtyCount} onSave={save} isSaving={isSaving} />
     </div>
   );
 }

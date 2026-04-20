@@ -1,13 +1,18 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
+import type { MockedFunction } from "vitest";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import { useStartTelegramPairing, useVerifyTelegramPairing } from "../useTelegramPairing";
+import {
+  TelegramPairingError,
+  useStartTelegramPairing,
+  useVerifyTelegramPairing,
+} from "../useTelegramPairing";
 
 vi.mock("@/utilities/fetchData");
 
-const mockFetchData = fetchData as vi.MockedFunction<typeof fetchData>;
+const mockFetchData = fetchData as MockedFunction<typeof fetchData>;
 
 const SLUG = "filecoin";
 
@@ -71,6 +76,29 @@ describe("useTelegramPairing", () => {
         message: "Unavailable",
         status: 503,
       });
+    });
+
+    it("throws an error that satisfies `instanceof TelegramPairingError`", async () => {
+      // Previously the error was a plain Error with a stamped `status` field
+      // cast via `as TelegramPairingError`, so `instanceof` checks at call
+      // sites returned false. Now it's a real Error subclass — call sites
+      // can branch on the class.
+      mockFetchData.mockResolvedValue([null, "Boom", null, 500]);
+
+      const { result } = renderHook(() => useStartTelegramPairing(SLUG), { wrapper });
+
+      let caught: unknown;
+      await act(async () => {
+        try {
+          await result.current.mutateAsync();
+        } catch (err) {
+          caught = err;
+        }
+      });
+
+      expect(caught).toBeInstanceOf(TelegramPairingError);
+      expect(caught).toBeInstanceOf(Error);
+      expect((caught as TelegramPairingError).status).toBe(500);
     });
 
     it("throws when community slug is undefined", async () => {

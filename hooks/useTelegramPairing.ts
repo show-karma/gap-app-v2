@@ -1,5 +1,3 @@
-"use client";
-
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
@@ -19,15 +17,22 @@ export interface TelegramPairVerifyResponse {
   alreadyPaired: boolean;
 }
 
-export interface TelegramPairingError extends Error {
-  status: number;
-}
+/**
+ * Real Error subclass — supports `instanceof TelegramPairingError` checks at
+ * call sites. Previously a plain Error with a stamped `status` field cast via
+ * `as`, which made instanceof checks return false.
+ */
+export class TelegramPairingError extends Error {
+  readonly status: number;
 
-const createPairingError = (message: string, status: number): TelegramPairingError => {
-  const error = new Error(message) as TelegramPairingError;
-  error.status = status;
-  return error;
-};
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "TelegramPairingError";
+    this.status = status;
+    // Preserve prototype chain for `instanceof` after transpilation to ES5.
+    Object.setPrototypeOf(this, TelegramPairingError.prototype);
+  }
+}
 
 // ── Hooks ──
 
@@ -35,7 +40,7 @@ export const useStartTelegramPairing = (communitySlug: string | undefined) => {
   return useMutation<TelegramPairStartResponse, TelegramPairingError, void>({
     mutationFn: async () => {
       if (!communitySlug) {
-        throw createPairingError("Community slug is required", 400);
+        throw new TelegramPairingError("Community slug is required", 400);
       }
 
       const [data, error, , status] = await fetchData<TelegramPairStartResponse>(
@@ -48,7 +53,7 @@ export const useStartTelegramPairing = (communitySlug: string | undefined) => {
       );
 
       if (error || !data) {
-        throw createPairingError(error || "Failed to start pairing", status);
+        throw new TelegramPairingError(error || "Failed to start pairing", status);
       }
 
       return data;
@@ -62,7 +67,7 @@ export const useVerifyTelegramPairing = (communitySlug: string | undefined) => {
   return useMutation<TelegramPairVerifyResponse, TelegramPairingError, { token: string }>({
     mutationFn: async ({ token }) => {
       if (!communitySlug) {
-        throw createPairingError("Community slug is required", 400);
+        throw new TelegramPairingError("Community slug is required", 400);
       }
 
       const [data, error, , status] = await fetchData<TelegramPairVerifyResponse>(
@@ -75,7 +80,7 @@ export const useVerifyTelegramPairing = (communitySlug: string | undefined) => {
       );
 
       if (error || !data) {
-        throw createPairingError(error || "Verification failed", status);
+        throw new TelegramPairingError(error || "Verification failed", status);
       }
 
       return data;
