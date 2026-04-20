@@ -17,16 +17,24 @@ export interface TestNotificationConfigRequest {
   webhookUrls?: string[];
 }
 
+interface TestNotificationConfigResponse {
+  success: boolean;
+  message?: string;
+}
+
 // ── Hooks ──
 
 export const useTestNotificationConfig = (communityIdOrSlug: string | undefined) => {
-  return useMutation<{ success: boolean; message?: string }, Error, TestNotificationConfigRequest>({
+  return useMutation<TestNotificationConfigResponse, Error, TestNotificationConfigRequest>({
     mutationFn: async (config) => {
       if (!communityIdOrSlug) {
         throw new Error("Community ID is required");
       }
 
-      const [data, error, ,] = await fetchData<{ success: boolean; message?: string }>(
+      // fetchData signature is positional across the codebase:
+      // (endpoint, method, axiosData, params, headers, isAuthorized).
+      // We pass empty objects for params/headers and `true` for isAuthorized.
+      const [data, error] = await fetchData<TestNotificationConfigResponse>(
         INDEXER.NOTIFICATION_CONFIG.TEST_CONFIG(communityIdOrSlug),
         "POST",
         config,
@@ -39,7 +47,16 @@ export const useTestNotificationConfig = (communityIdOrSlug: string | undefined)
         throw new Error(error);
       }
 
-      return data ?? { success: false, message: "No response from test" };
+      // Treat a missing/null response as a hard error so the calling
+      // mutation lands in onError. Returning `{ success: false }` here would
+      // squash the failure into the success path and leave callers with no
+      // way to distinguish "test ran and the provider rejected the message"
+      // from "we never got a usable response from our own backend".
+      if (!data || typeof data.success !== "boolean") {
+        throw new Error("Test notification: no response from server");
+      }
+
+      return data;
     },
   });
 };

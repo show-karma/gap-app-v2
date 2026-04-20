@@ -13,6 +13,7 @@ import { useOwnerStore, useProjectStore } from "@/store";
 import type { Contact } from "@/types/project";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
+import { telegramUsernameSchema } from "@/utilities/validation/telegram-username";
 import { Button } from "./Utilities/Button";
 import { errorManager } from "./Utilities/errorManager";
 
@@ -26,13 +27,7 @@ const subscriptionSchema = z.object({
     .string()
     .min(3, "Name must be at least 3 characters long")
     .max(50, "Name must be less than 50 characters"),
-  telegram: z
-    .string()
-    .regex(
-      /^[a-zA-Z](?!.*__)[a-zA-Z0-9_]{3,30}[a-zA-Z0-9]$/,
-      "Use 5-32 letters/numbers/underscores, starting with a letter and ending with a letter or number"
-    )
-    .or(z.literal("")),
+  telegram: telegramUsernameSchema,
   email: z
     .string()
     .email({

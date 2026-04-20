@@ -16,6 +16,7 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { shortAddress } from "@/utilities/shortAddress";
+import { telegramUsernameSchema } from "@/utilities/validation/telegram-username";
 
 type IntroDialogProps = {};
 
@@ -23,13 +24,7 @@ const schema = z.object({
   email: z.string().email({ message: MESSAGES.PROJECT.INTRO.EMAIL }).min(3, {
     message: MESSAGES.PROJECT.INTRO.EMAIL,
   }),
-  telegram: z
-    .string()
-    .regex(
-      /^[a-zA-Z](?!.*__)[a-zA-Z0-9_]{3,30}[a-zA-Z0-9]$/,
-      "Use 5-32 letters/numbers/underscores, starting with a letter and ending with a letter or number"
-    )
-    .or(z.literal("")),
+  telegram: telegramUsernameSchema,
   message: z
     .string()
     .describe(MESSAGES.PROJECT.INTRO.MESSAGE)

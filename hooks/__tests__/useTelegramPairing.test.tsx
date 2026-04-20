@@ -112,10 +112,20 @@ describe("useTelegramPairing", () => {
       );
     });
 
-    it("invalidates the community-config query on success", async () => {
+    it("patches the community-config cache (and does NOT invalidate) on success", async () => {
+      // Seed cache with an existing config so we can verify the patch lands.
+      const existingConfig = {
+        disableReviewerEmails: false,
+        telegramEnabled: false,
+        telegramChats: [],
+        slackEnabled: false,
+        slackWebhookUrls: [],
+      };
+      queryClient.setQueryData(["community-config", SLUG], existingConfig);
+
       const verifyResponse = {
         chatId: "-100",
-        chatTitle: "Test",
+        chatTitle: "Test Group",
         chatType: "group",
         alreadyPaired: false,
       };
@@ -129,9 +139,15 @@ describe("useTelegramPairing", () => {
         await result.current.mutateAsync({ token: "KARMA-PAIR-xyz" });
       });
 
-      expect(invalidateQueriesSpy).toHaveBeenCalledWith({
-        queryKey: ["community-config", SLUG],
-      });
+      // We deliberately do NOT invalidate — the setQueryData patch is the
+      // authoritative update. Invalidating would trigger a refetch race that
+      // can clobber unsaved local form edits in NotificationSettingsPage.
+      expect(invalidateQueriesSpy).not.toHaveBeenCalled();
+
+      // The cache patch added the new chat and auto-enabled telegram.
+      const patched = queryClient.getQueryData(["community-config", SLUG]) as typeof existingConfig;
+      expect(patched.telegramEnabled).toBe(true);
+      expect(patched.telegramChats).toEqual([{ id: "-100", name: "Test Group" }]);
     });
 
     it("surfaces a 404 error with status preserved", async () => {

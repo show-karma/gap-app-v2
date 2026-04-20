@@ -41,7 +41,10 @@ interface SidebarItem {
 // Module-level constant to avoid creating new Set on every render
 const EMPTY_COMPLETED_STEPS = new Set<SidebarTabKey>();
 
-const getSidebarSections = (kycEnabled: boolean): SidebarSection[] => [
+const getSidebarSections = (
+  kycEnabled: boolean,
+  showNotificationConfig: boolean
+): SidebarSection[] => [
   {
     title: "Setup",
     items: [
@@ -97,12 +100,20 @@ const getSidebarSections = (kycEnabled: boolean): SidebarSection[] => [
             },
           ]
         : []),
-      {
-        key: "notification-config" as SidebarTabKey,
-        label: "Notifications",
-        icon: BellIcon,
-        description: "Override community notification settings",
-      },
+      // Notifications tab is read-only and inherits from the community config.
+      // Only community admins / staff can see it; everyone else is gated out
+      // (the backend also returns 403 for non-admins, but hiding the tab
+      // avoids confusing dead-end UI).
+      ...(showNotificationConfig
+        ? [
+            {
+              key: "notification-config" as SidebarTabKey,
+              label: "Notifications",
+              icon: BellIcon,
+              description: "View community notification settings (read-only)",
+            },
+          ]
+        : []),
     ],
   },
   {
@@ -127,6 +138,12 @@ interface SettingsSidebarProps {
   completedSteps?: Set<SidebarTabKey>;
   className?: string;
   kycEnabled?: boolean;
+  /**
+   * Whether to show the (read-only) Notifications tab. Should only be true
+   * for community admins / staff — the underlying API also returns 403 for
+   * non-admins, but hiding the tab keeps the sidebar honest.
+   */
+  showNotificationConfig?: boolean;
 }
 
 export function SettingsSidebar({
@@ -138,8 +155,9 @@ export function SettingsSidebar({
   completedSteps = EMPTY_COMPLETED_STEPS,
   className,
   kycEnabled = false,
+  showNotificationConfig = false,
 }: SettingsSidebarProps) {
-  const sections = getSidebarSections(kycEnabled);
+  const sections = getSidebarSections(kycEnabled, showNotificationConfig);
 
   return (
     <div

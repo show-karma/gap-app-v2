@@ -153,14 +153,21 @@ const renderPage = (community: Community = createCommunity()) => {
 let saveConfigMutate: ReturnType<typeof vi.fn>;
 let testConfigMutate: ReturnType<typeof vi.fn>;
 
+// mutateAsync stub. Default resolves; overridden per-test for the failure paths.
+let saveConfigMutateAsync: ReturnType<typeof vi.fn>;
+
 beforeEach(() => {
   vi.clearAllMocks();
 
   saveConfigMutate = vi.fn();
+  // mutateAsync resolves immediately by default. Tests that exercise the
+  // global-save path can read `.mock.calls` to assert payload shape.
+  saveConfigMutateAsync = vi.fn().mockResolvedValue(undefined);
   testConfigMutate = vi.fn();
 
   mockUseCommunityConfigMutation.mockReturnValue({
     mutate: saveConfigMutate,
+    mutateAsync: saveConfigMutateAsync,
     isPending: false,
   });
 
@@ -169,6 +176,25 @@ beforeEach(() => {
     isPending: false,
   });
 });
+
+// ── Open the in-app DeleteDialog via the trash button at `index` and click
+//    Continue (or Cancel) inside the dialog. Replaces the old window.confirm
+//    spy pattern after the migration to in-app dialogs.
+const trashAndConfirm = async (
+  card: HTMLElement,
+  rowIndex: number,
+  action: "continue" | "cancel"
+) => {
+  const trashButtons = within(card)
+    .getAllByRole("button")
+    .filter((b) => b.querySelector("svg.lucide-trash2") !== null);
+  fireEvent.click(trashButtons[rowIndex]);
+  // The dialog renders to a portal; query screen-wide for the action button.
+  const button = await screen.findByRole("button", {
+    name: action === "continue" ? /^continue$/i : /^cancel$/i,
+  });
+  fireEvent.click(button);
+};
 
 // ── Helpers to grab card-scoped elements ──
 
@@ -421,7 +447,7 @@ describe("NotificationSettingsPage — Telegram provider card", () => {
     expect(screen.getByDisplayValue("-1002222")).toBeInTheDocument();
   });
 
-  it("should_open_pair_modal_when_pair_new_chat_clicked_and_telegram_is_on", () => {
+  it("should_open_pair_modal_when_pair_new_chat_clicked_and_telegram_is_on", async () => {
     setupDefaultMocks({ config: createConfig({ telegramEnabled: true }) });
 
     renderPage();
@@ -430,7 +456,8 @@ describe("NotificationSettingsPage — Telegram provider card", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Pair new chat/i }));
 
-    expect(screen.getByTestId("telegram-pair-modal")).toBeInTheDocument();
+    // Modal is now lazy-loaded via next/dynamic — wait for the chunk to mount.
+    expect(await screen.findByTestId("telegram-pair-modal")).toBeInTheDocument();
   });
 
   it("should_NOT_clobber_unsaved_local_edits_when_parent_refetches_props", () => {
@@ -601,49 +628,33 @@ describe("NotificationSettingsPage — IdsEditor (via Telegram card)", () => {
     confirmSpy.mockRestore();
   });
 
-  it("should_prompt_confirm_when_removing_non_empty_row_and_remove_only_when_confirmed", () => {
+  it("should_prompt_confirm_when_removing_non_empty_row_and_remove_only_when_confirmed", async () => {
     setupDefaultMocks({
       config: createConfig({ telegramEnabled: true, telegramChats: tgChats("-1001", "-1002") }),
     });
 
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
-
     renderPage();
 
     const telegramCard = getCardByTitle("Telegram");
-    const trashButtons = within(telegramCard)
-      .getAllByRole("button")
-      .filter((b) => b.querySelector("svg.lucide-trash2") !== null);
+    await trashAndConfirm(telegramCard, 0, "continue");
 
-    fireEvent.click(trashButtons[0]);
-
-    expect(confirmSpy).toHaveBeenCalledWith('Remove chat "-1001"?');
     expect(within(telegramCard).getAllByRole("textbox")).toHaveLength(1);
     expect(within(telegramCard).getByDisplayValue("-1002")).toBeInTheDocument();
-
-    confirmSpy.mockRestore();
   });
 
-  it("should_NOT_remove_non_empty_row_when_user_cancels_confirm_dialog", () => {
+  it("should_NOT_remove_non_empty_row_when_user_cancels_confirm_dialog", async () => {
     setupDefaultMocks({
       config: createConfig({ telegramEnabled: true, telegramChats: tgChats("-1001", "-1002") }),
     });
 
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
-
     renderPage();
 
     const telegramCard = getCardByTitle("Telegram");
-    const trashButtons = within(telegramCard)
-      .getAllByRole("button")
-      .filter((b) => b.querySelector("svg.lucide-trash2") !== null);
+    await trashAndConfirm(telegramCard, 0, "cancel");
 
-    fireEvent.click(trashButtons[0]);
-
-    expect(confirmSpy).toHaveBeenCalledWith('Remove chat "-1001"?');
     expect(within(telegramCard).getAllByRole("textbox")).toHaveLength(2);
-
-    confirmSpy.mockRestore();
+    expect(within(telegramCard).getByDisplayValue("-1001")).toBeInTheDocument();
+    expect(within(telegramCard).getByDisplayValue("-1002")).toBeInTheDocument();
   });
 });
 
@@ -801,13 +812,16 @@ describe("NotificationSettingsPage — global sticky save bar", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Save notification settings/i }));
 
-    expect(saveConfigMutate).toHaveBeenLastCalledWith(
-      {
-        slug: "filecoin",
-        config: { telegramEnabled: true, telegramChats: tgChats("-1009999") },
-      },
-      expect.any(Object)
-    );
+    // Global save uses mutateAsync (no callback object). Wait one tick for
+    // the async save promise to be picked up.
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(saveConfigMutateAsync).toHaveBeenLastCalledWith({
+      slug: "filecoin",
+      config: { telegramEnabled: true, telegramChats: tgChats("-1009999") },
+    });
   });
 
   it("should_call_saveConfig_with_trimmed_slack_webhooks_when_global_save_clicked", async () => {
@@ -832,19 +846,20 @@ describe("NotificationSettingsPage — global sticky save bar", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Save notification settings/i }));
 
-    expect(saveConfigMutate).toHaveBeenLastCalledWith(
-      {
-        slug: "filecoin",
-        config: {
-          slackEnabled: true,
-          slackWebhookUrls: ["https://hooks.slack.com/services/CCC"],
-        },
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(saveConfigMutateAsync).toHaveBeenLastCalledWith({
+      slug: "filecoin",
+      config: {
+        slackEnabled: true,
+        slackWebhookUrls: ["https://hooks.slack.com/services/CCC"],
       },
-      expect.any(Object)
-    );
+    });
   });
 
-  it("should_fire_both_telegram_and_slack_mutations_when_both_dirty", () => {
+  it("should_fire_both_telegram_and_slack_mutations_when_both_dirty", async () => {
     setupDefaultMocks({
       config: createConfig({
         telegramEnabled: true,
@@ -870,8 +885,12 @@ describe("NotificationSettingsPage — global sticky save bar", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Save notification settings/i }));
 
-    // Two persisted mutations fired (kill switch was not toggled here)
-    const persistedCalls = saveConfigMutate.mock.calls.filter(
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    // Two persisted mutateAsync calls fired (kill switch was not toggled here)
+    const persistedCalls = saveConfigMutateAsync.mock.calls.filter(
       (c) => "telegramEnabled" in (c[0]?.config ?? {}) || "slackEnabled" in (c[0]?.config ?? {})
     );
     expect(persistedCalls).toHaveLength(2);
@@ -895,11 +914,13 @@ describe("NotificationSettingsPage — global sticky save bar", () => {
     fireEvent.click(within(telegramCard).getByRole("button", { name: /Add chat ID/i }));
     expect(within(telegramCard).getAllByRole("textbox")).toHaveLength(2);
 
-    // Click global Save
-    fireEvent.click(screen.getByRole("button", { name: /Save notification settings/i }));
-
-    // Trigger onSuccess for all pending mutations and let microtasks flush
-    await flushPendingMutations();
+    // Click global Save — fires mutateAsync, which the mock resolves immediately
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /Save notification settings/i }));
+      // Let the resolved mutateAsync promise + the post-save state updates flush
+      await Promise.resolve();
+      await Promise.resolve();
+    });
 
     // Local state should collapse back to the single non-empty row
     const refetchedCard = getCardByTitle("Telegram");

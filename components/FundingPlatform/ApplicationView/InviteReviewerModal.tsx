@@ -16,18 +16,12 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useMilestoneReviewers } from "@/hooks/useMilestoneReviewers";
+import { telegramUsernameSchema } from "@/utilities/validation/telegram-username";
 
 const inviteSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
   email: z.string().email("Invalid email address"),
-  telegram: z
-    .string()
-    .regex(
-      /^[a-zA-Z](?!.*__)[a-zA-Z0-9_]{3,30}[a-zA-Z0-9]$/,
-      "Use 5-32 letters/numbers/underscores, starting with a letter and ending with a letter or number"
-    )
-    .or(z.literal(""))
-    .optional(),
+  telegram: telegramUsernameSchema.optional(),
 });
 
 type InviteFormData = z.infer<typeof inviteSchema>;

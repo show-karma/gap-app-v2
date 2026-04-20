@@ -1,7 +1,7 @@
 "use client";
 
 import { AlertCircle, Copy, Loader2, MessageSquare, RefreshCw } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/Utilities/Button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
@@ -58,14 +58,26 @@ export function TelegramPairChatModal({
   const startReset = startPairing.reset;
   const verifyReset = verifyPairing.reset;
 
+  // Track latest `open` so async mutation callbacks don't apply state updates
+  // (token/expiresAt/error) from a previous modal session if the user closed
+  // and rapidly reopened the modal. The reopen kicks off a fresh start —
+  // letting the stale onSuccess overwrite would clobber the new token.
+  const openRef = useRef(open);
+  useEffect(() => {
+    openRef.current = open;
+  }, [open]);
+
   const handleStart = useCallback(() => {
     setVerifyError(null);
     startMutate(undefined, {
       onSuccess: (data) => {
+        // Stale-token guard: ignore late responses after close/reopen.
+        if (!openRef.current) return;
         setToken(data.token);
         setExpiresAt(data.expiresAt);
       },
       onError: (err) => {
+        if (!openRef.current) return;
         toast.error(err.message || "Could not generate pairing token");
       },
     });

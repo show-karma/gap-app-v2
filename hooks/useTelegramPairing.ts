@@ -84,8 +84,14 @@ export const useVerifyTelegramPairing = (communitySlug: string | undefined) => {
       if (!communitySlug) return;
       const queryKey = ["community-config", communitySlug];
       // Patch the cache directly so the chat-IDs list reflects the new
-      // pairing immediately (and isn't subject to refetch races that could
-      // clobber unsaved local form edits).
+      // pairing immediately. The verifyPairing response includes the
+      // canonical chat data (id, title), so this patch IS the authoritative
+      // update — there's no need to invalidate and refetch. Invalidating
+      // here would defeat the patch by triggering exactly the refetch race
+      // we're trying to avoid (it would clobber unsaved local form edits in
+      // NotificationSettingsPage). If the cached entry needs to be
+      // refreshed for some reason (e.g. the bot was kicked from the chat),
+      // the user can navigate away and back.
       queryClient.setQueryData<CommunityConfig | null>(queryKey, (old) => {
         if (!old) return old;
         const existingChats = old.telegramChats ?? [];
@@ -99,7 +105,6 @@ export const useVerifyTelegramPairing = (communitySlug: string | undefined) => {
           telegramEnabled: true, // backend auto-enables on first pair
         };
       });
-      queryClient.invalidateQueries({ queryKey });
     },
   });
 };

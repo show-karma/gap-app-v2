@@ -196,10 +196,7 @@ function RecordPaymentDialogInner({
   }, []);
 
   const isValid =
-    !Number.isNaN(Number(amount)) &&
-    Number(amount) >= 0 &&
-    paymentDate !== "" &&
-    selectedKeys.length > 0;
+    !Number.isNaN(Number(amount)) && Number(amount) >= 0 && paymentDate !== "" && selectedKeys.length > 0;
 
   const handleSubmit = useCallback(() => {
     if (!isValid || recordPayment.isPending) return;

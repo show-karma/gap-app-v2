@@ -192,18 +192,18 @@ describe("SettingsSidebar", () => {
 
   describe("getSidebarSections function", () => {
     it("should return 4 sections when kycEnabled is false", () => {
-      const sections = getSidebarSections(false);
+      const sections = getSidebarSections(false, false);
       expect(sections).toHaveLength(4);
     });
 
     it("should have correct section titles", () => {
-      const sections = getSidebarSections(false);
+      const sections = getSidebarSections(false, false);
       const sectionTitles = sections.map((s) => s.title);
       expect(sectionTitles).toEqual(["Setup", "Team", "Configuration", "Advanced"]);
     });
 
     it("should have the required flag only on Application Form", () => {
-      const sections = getSidebarSections(false);
+      const sections = getSidebarSections(false, false);
       const allItems = sections.flatMap((s) => s.items);
       const requiredItems = allItems.filter((item) => item.required);
 
@@ -212,7 +212,7 @@ describe("SettingsSidebar", () => {
     });
 
     it("should include KYC settings when kycEnabled is true", () => {
-      const sections = getSidebarSections(true);
+      const sections = getSidebarSections(true, false);
       const configSection = sections.find((s) => s.title === "Configuration");
       const kycItem = configSection?.items.find((item) => item.key === "kyc-settings");
 
@@ -220,8 +220,30 @@ describe("SettingsSidebar", () => {
       expect(kycItem?.label).toBe("KYC/KYB Settings");
     });
 
+    it("should hide notification-config tab by default", () => {
+      const sections = getSidebarSections(false, false);
+      const allItems = sections.flatMap((s) => s.items);
+      const notificationItem = allItems.find((item) => item.key === "notification-config");
+
+      expect(notificationItem).toBeUndefined();
+    });
+
+    it("should include notification-config tab when showNotificationConfig is true", () => {
+      const sections = getSidebarSections(false, true);
+      const configSection = sections.find((s) => s.title === "Configuration");
+      const notificationItem = configSection?.items.find(
+        (item) => item.key === "notification-config"
+      );
+
+      expect(notificationItem).toBeDefined();
+      expect(notificationItem?.label).toBe("Notifications");
+      expect(notificationItem?.description).toBe(
+        "View community notification settings (read-only)"
+      );
+    });
+
     it("should not include KYC settings when kycEnabled is false", () => {
-      const sections = getSidebarSections(false);
+      const sections = getSidebarSections(false, false);
       const configSection = sections.find((s) => s.title === "Configuration");
       const kycItem = configSection?.items.find((item) => item.key === "kyc-settings");
 

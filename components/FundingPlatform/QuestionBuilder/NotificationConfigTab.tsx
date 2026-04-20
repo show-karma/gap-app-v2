@@ -3,7 +3,7 @@
 import { ArrowDownIcon, Loader2, Send } from "lucide-react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/Utilities/Button";
-import { useCommunityConfig, useCommunityConfigMutation } from "@/hooks/useCommunityConfig";
+import { useCommunityConfig } from "@/hooks/useCommunityConfig";
 import { useTestNotificationConfig } from "@/hooks/useNotificationConfig";
 
 interface NotificationConfigTabProps {
@@ -16,7 +16,6 @@ export function NotificationConfigTab({
   readOnly = false,
 }: NotificationConfigTabProps) {
   const { data: config, isLoading, error } = useCommunityConfig(communityId);
-  const { mutate: saveConfig, isPending: isSaving } = useCommunityConfigMutation();
   const { mutate: testConfig, isPending: isTesting } = useTestNotificationConfig(communityId);
 
   if (isLoading) {
@@ -80,8 +79,8 @@ export function NotificationConfigTab({
           Notification Settings
         </h2>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          These settings are configured at the community level. Program-level overrides are coming
-          soon.
+          Read-only view of the notification settings inherited from the community. Configuration
+          lives at <span className="font-medium">Community → Settings → Notifications</span>.
         </p>
       </div>
 

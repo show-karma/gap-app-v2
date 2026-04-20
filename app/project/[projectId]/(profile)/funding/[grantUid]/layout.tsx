@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
 import { getProjectGrants } from "@/services/project-grants.service";
-import {
-  generateGrantOverviewMetadata,
-  generateProjectFundingMetadata,
-} from "@/utilities/metadata/projectMetadata";
+import { generateGrantOverviewMetadata, generateProjectFundingMetadata } from "@/utilities/metadata/projectMetadata";
 import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
 import { GrantDetailLayoutClient } from "./GrantDetailLayoutClient";
 
