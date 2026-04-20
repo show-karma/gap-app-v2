@@ -1,6 +1,12 @@
 "use client";
 
-import { ArrowLeftIcon, ChevronLeftIcon, ExclamationTriangleIcon } from "@heroicons/react/20/solid";
+import {
+  ArrowLeftIcon,
+  CheckCircleIcon,
+  ChevronLeftIcon,
+  ClockIcon,
+  ExclamationTriangleIcon,
+} from "@heroicons/react/20/solid";
 import { useCallback, useMemo, useState } from "react";
 import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
@@ -20,22 +26,101 @@ import {
   usePermissionContext,
 } from "@/src/core/rbac/context/permission-context";
 import { ReviewerType } from "@/src/core/rbac/types";
-import { useOwnerStore } from "@/store";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { CommentsAndActivity } from "./CommentsAndActivity";
 import { GrantCommentsAndActivity } from "./GrantCommentsAndActivity";
-import { GrantCompleteButtonForReviewer } from "./GrantCompleteButtonForReviewer";
 import { MilestoneCard } from "./MilestoneCard";
 import {
   FILTER_TABS,
   getMilestoneStatus,
+  MILESTONE_STATUS_CONFIG,
   type MilestoneFilterKey,
   MilestoneReviewStatus,
+  type StatusIconName,
   sortMilestones,
 } from "./utils/milestone-review-status";
 
 const EMPTY_MILESTONES: GrantMilestoneWithCompletion[] = [];
+
+/** Small icon component for filter pills */
+function StatusIcon({ icon, className }: { icon: StatusIconName | null; className?: string }) {
+  if (!icon) return null;
+  const cls = cn("w-3.5 h-3.5", className);
+  switch (icon) {
+    case "check":
+      return <CheckCircleIcon className={cls} />;
+    case "clock":
+      return <ClockIcon className={cls} />;
+    case "hourglass":
+      return <ClockIcon className={cls} />;
+    case "circle":
+      return (
+        <span className="inline-flex items-center justify-center w-3.5 h-3.5">
+          <span className="w-2.5 h-2.5 rounded-full border-[1.5px] border-current" />
+        </span>
+      );
+    default:
+      return null;
+  }
+}
+
+/** Visual progress stepper showing milestone states at a glance */
+function MilestoneProgressStepper({ milestones }: { milestones: GrantMilestoneWithCompletion[] }) {
+  if (milestones.length === 0) return null;
+
+  const statuses = milestones.map((m) => getMilestoneStatus(m));
+  const counts = {
+    verified: statuses.filter((s) => s === MilestoneReviewStatus.Verified).length,
+    pendingVerification: statuses.filter((s) => s === MilestoneReviewStatus.PendingVerification)
+      .length,
+    pendingCompletion: statuses.filter((s) => s === MilestoneReviewStatus.PendingCompletion).length,
+    notStarted: statuses.filter((s) => s === MilestoneReviewStatus.NotStarted).length,
+  };
+
+  return (
+    <div className="mb-4">
+      <div className="flex items-center gap-3 mb-1.5 flex-wrap text-xs text-gray-600 dark:text-gray-400">
+        {counts.verified > 0 && (
+          <span className="flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-green-500" />
+            {counts.verified} Verified
+          </span>
+        )}
+        {counts.pendingVerification > 0 && (
+          <span className="flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-yellow-500" />
+            {counts.pendingVerification} Pending Verification
+          </span>
+        )}
+        {counts.pendingCompletion > 0 && (
+          <span className="flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-orange-400" />
+            {counts.pendingCompletion} Pending (Off-chain)
+          </span>
+        )}
+        {counts.notStarted > 0 && (
+          <span className="flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-600" />
+            {counts.notStarted} Not Started
+          </span>
+        )}
+      </div>
+      <div className="flex items-center gap-0.5">
+        {statuses.map((status, i) => {
+          const config = MILESTONE_STATUS_CONFIG[status];
+          return (
+            <div
+              key={i}
+              className={cn("h-2 rounded-full flex-1 transition-colors", config.stepperColor)}
+              title={`Milestone ${i + 1}: ${config.label}`}
+            />
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 interface MilestonesReviewPageProps {
   communityId: string;
@@ -390,78 +475,54 @@ function MilestonesReviewPageContent({
 
   const { project, grant } = data;
 
-  // Project data for GrantCompleteButtonForReviewer (only needs uid)
-  const projectForButton = {
-    uid: project.uid,
-  };
-
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen overflow-x-hidden">
       {/* Header Section */}
       <div className="bg-white dark:bg-zinc-800 border-b border-gray-200 dark:border-gray-700">
         <div className="px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center gap-4 max-sm:gap-1 max-sm:flex-col max-sm:items-start">
+          {/* Back button row */}
+          <div className="flex items-center justify-between gap-3 mb-2">
             <Link href={backButtonConfig.url}>
-              <Button variant="secondary" className="flex items-center">
-                <ArrowLeftIcon className="w-4 h-4 mr-2" />
+              <Button variant="secondary" className="flex items-center text-sm">
+                <ArrowLeftIcon className="w-4 h-4 mr-1.5" />
                 {backButtonConfig.label}
               </Button>
             </Link>
-            <div className="flex flex-col gap-1 flex-1">
-              <h1 className="text-2xl font-bold text-black dark:text-white">
-                {project.details.title}
-              </h1>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                {grantName} - Review project milestones
-              </p>
-            </div>
-            {/* Grant Complete Button for Milestone Reviewers */}
-            {grant && canVerifyMilestones && (
-              <div className="max-sm:w-full">
-                <GrantCompleteButtonForReviewer
-                  project={projectForButton}
-                  grant={grant}
-                  onComplete={() => {
-                    // Refetch data to update the grant completion status
-                    refetch();
-                  }}
-                />
-              </div>
+            {milestoneReviewUrl && (
+              <Link href={milestoneReviewUrl}>
+                <Button
+                  variant="secondary"
+                  className="flex items-center gap-2 px-3 py-1.5 text-sm border border-gray-300 dark:border-zinc-600 bg-transparent hover:bg-gray-50 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300"
+                >
+                  View Application
+                </Button>
+              </Link>
             )}
+          </div>
+          {/* Title */}
+          <div className="flex flex-col gap-0.5">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              {grantName} • Milestone Review
+            </p>
+            <h1 className="text-xl font-bold text-black dark:text-white">
+              {project.details.title}
+            </h1>
           </div>
         </div>
       </div>
 
       {/* Content Area */}
       <div className="px-4 sm:px-6 lg:px-8 py-6">
-        {/* Application Link - Only shown if application is approved */}
-        {milestoneReviewUrl && (
-          <div className="mb-6 bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex flex-col gap-1">
-                <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-100">
-                  Application Details
-                </h3>
-                <p className="text-xs text-blue-700 dark:text-blue-300">
-                  View the full application and review details
-                </p>
-              </div>
-              <Link href={milestoneReviewUrl}>
-                <Button className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white">
-                  View Application
-                </Button>
-              </Link>
-            </div>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 ">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Main Content - Milestones */}
-          <div className="lg:col-span-2 flex flex-col gap-6 ">
+          <div className="lg:col-span-2 flex flex-col gap-6 min-w-0">
             <section className="bg-white dark:bg-zinc-900 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
               <h2 className="text-xl font-semibold mb-4 text-black dark:text-white">
                 Project Milestones
               </h2>
+
+              {/* Progress stepper */}
+              {milestones.length > 0 && <MilestoneProgressStepper milestones={milestones} />}
 
               {/* Status filter tabs */}
               {milestones.length > 0 && (
@@ -488,6 +549,7 @@ function MilestonesReviewPageContent({
                             "bg-brand-blue text-white border-brand-blue hover:bg-brand-blue/90"
                         )}
                       >
+                        <StatusIcon icon={tab.icon} />
                         {tab.label}
                         <span
                           className={cn(
@@ -549,7 +611,7 @@ function MilestonesReviewPageContent({
           </div>
 
           {/* Sidebar - Comments & Activity */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 min-w-0">
             {isLoadingFundingApp && !referenceNumber ? (
               <div className="space-y-4 p-4 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
                 <div className="h-5 w-40 bg-gray-200 dark:bg-zinc-700 rounded animate-pulse" />

@@ -9,7 +9,7 @@ import {
   PencilSquareIcon,
   XCircleIcon,
 } from "@heroicons/react/24/outline";
-import { format, isValid, parseISO } from "date-fns";
+import { format, formatDistanceToNow, isValid, parseISO } from "date-fns";
 import pluralize from "pluralize";
 import { type FC, useMemo, useState } from "react";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
@@ -236,6 +236,23 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
     }
   };
 
+  /** Renders relative time with absolute date on hover */
+  const renderRelativeTime = (dateString: string | Date) => {
+    try {
+      const date = typeof dateString === "string" ? parseISO(dateString) : dateString;
+      if (!isValid(date)) return <span>Invalid date</span>;
+      const relative = formatDistanceToNow(date, { addSuffix: true });
+      const absolute = format(date, "MMM dd, yyyy HH:mm");
+      return (
+        <span title={absolute} className="cursor-default">
+          {relative}
+        </span>
+      );
+    } catch {
+      return <span>Invalid date</span>;
+    }
+  };
+
   const renderStatusItem = (status: IStatusHistoryEntry, isLatest: boolean) => {
     const config = statusConfig[status.status as keyof typeof statusConfig] || statusConfig.pending;
     const StatusIcon = config.icon;
@@ -271,7 +288,7 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
                 )}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                {formatDate(status.timestamp)}
+                {renderRelativeTime(status.timestamp)}
               </p>
             </div>
           </div>
@@ -332,7 +349,7 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
               </div>
               {version.submittedBy && (
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  {formatDate(version.createdAt)} • Version {version.versionNumber}
+                  {renderRelativeTime(version.createdAt)} • Version {version.versionNumber}
                   <span className="ml-2 text-gray-400 dark:text-gray-500">
                     by {version.submittedBy.slice(0, 6)}...{version.submittedBy.slice(-4)}
                   </span>
@@ -340,7 +357,7 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
               )}
               {!version.submittedBy && (
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  {formatDate(version.createdAt)} • Version {version.versionNumber}
+                  {renderRelativeTime(version.createdAt)} • Version {version.versionNumber}
                 </p>
               )}
             </div>

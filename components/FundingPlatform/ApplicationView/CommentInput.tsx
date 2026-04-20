@@ -114,8 +114,44 @@ const CommentInput: FC<CommentInputProps> = ({
     }
   };
 
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // Collapse back if content is empty and user clicks away
+  const handleBlur = useCallback(
+    (e: React.FocusEvent<HTMLFormElement>) => {
+      // Don't collapse if focus stays within the form
+      if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+      if (!content.trim()) {
+        setIsExpanded(false);
+      }
+    },
+    [content]
+  );
+
+  // Collapsed state: show a simple clickable input placeholder
+  if (!isExpanded) {
+    return (
+      <button
+        type="button"
+        onClick={() => setIsExpanded(true)}
+        className={cn(
+          "w-full text-left px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-700",
+          "text-sm text-gray-500 dark:text-gray-400",
+          "hover:border-blue-300 dark:hover:border-blue-600 hover:bg-gray-50 dark:hover:bg-zinc-800/50",
+          "transition-colors cursor-text",
+          className
+        )}
+      >
+        {placeholder}
+        {enableMentions && (
+          <span className="ml-1 text-gray-400 dark:text-gray-500">Use @ to mention.</span>
+        )}
+      </button>
+    );
+  }
+
   return (
-    <form onSubmit={handleSubmit} className={cn("relative", className)}>
+    <form onSubmit={handleSubmit} onBlur={handleBlur} className={cn("relative", className)}>
       <div className="flex flex-col space-y-3">
         <div
           ref={editorContainerRef}
@@ -149,7 +185,16 @@ const CommentInput: FC<CommentInputProps> = ({
             />
           )}
         </div>
-        <div className="flex items-center justify-end">
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => {
+              if (!content.trim()) setIsExpanded(false);
+            }}
+            className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+          >
+            {!content.trim() ? "Cancel" : ""}
+          </button>
           <button
             type="submit"
             disabled={!content.trim() || disabled || isSubmitting}

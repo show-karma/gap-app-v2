@@ -8,7 +8,7 @@ import {
   UserCircleIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
-import { format, isValid, parseISO } from "date-fns";
+import { format, formatDistanceToNow, isValid, parseISO } from "date-fns";
 import React, { type FC, useCallback, useMemo, useRef, useState } from "react";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
@@ -129,7 +129,9 @@ const CommentItem: FC<CommentItemProps> = ({
     try {
       const date = typeof dateString === "string" ? parseISO(dateString) : dateString;
       if (!isValid(date)) return "Invalid date";
-      return format(date, "MMM dd, yyyy HH:mm");
+      const relative = formatDistanceToNow(date, { addSuffix: true });
+      const absolute = format(date, "MMM dd, yyyy HH:mm");
+      return `${relative} (${absolute})`;
     } catch {
       return "Invalid date";
     }
