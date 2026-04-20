@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Users } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useCallback } from "react";
 import { useDashboardAdmin } from "@/hooks/useDashboardAdmin";
@@ -53,8 +53,14 @@ export function AdminSection() {
           ))}
         </div>
       ) : communities.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground">
-          No communities yet. Create your first community to get started.
+        <div className="flex flex-col items-center rounded-xl border border-dashed border-border px-6 py-10 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+            <Users className="h-6 w-6 text-muted-foreground" />
+          </div>
+          <h3 className="mt-4 text-base font-semibold text-foreground">No communities yet</h3>
+          <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+            Create your first community to get started managing programs and applications.
+          </p>
         </div>
       ) : (
         <div className={gridClassName}>

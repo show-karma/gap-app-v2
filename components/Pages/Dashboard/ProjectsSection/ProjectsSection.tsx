@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Rocket } from "lucide-react";
 import dynamic from "next/dynamic";
 import type { ProjectWithGrantsResponse } from "@/types/v2/project";
 import { DashboardProjectCard } from "./DashboardProjectCard";
@@ -29,12 +29,14 @@ export function ProjectsSection({ projects, isLoading, isError, refetch }: Proje
     <section id="projects" className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-xl font-semibold text-foreground">My Projects</h2>
-        <ProjectDialog
-          buttonElement={{
-            text: "Create Project",
-            styleClass: "h-9 px-4",
-          }}
-        />
+        {projects.length > 0 ? (
+          <ProjectDialog
+            buttonElement={{
+              text: "Create Project",
+              styleClass: "h-9 px-4",
+            }}
+          />
+        ) : null}
       </div>
 
       {isError ? (
@@ -56,8 +58,20 @@ export function ProjectsSection({ projects, isLoading, isError, refetch }: Proje
           ))}
         </div>
       ) : projects.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground">
-          No projects yet. Create your first project to get started.
+        <div className="flex flex-col items-center rounded-xl border border-dashed border-border px-6 py-10 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+            <Rocket className="h-6 w-6 text-muted-foreground" />
+          </div>
+          <h3 className="mt-4 text-base font-semibold text-foreground">No projects yet</h3>
+          <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+            Create a project to start tracking your grants and milestones.
+          </p>
+          <ProjectDialog
+            buttonElement={{
+              text: "Create project",
+              styleClass: "mt-4 h-9 px-4",
+            }}
+          />
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
