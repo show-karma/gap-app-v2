@@ -117,10 +117,9 @@ export function Dashboard() {
     />
   );
 
-  // Sections with data or loading state render first; empty sections render after.
-  // Role-specific sections always precede applications and projects.
-  const hasApplicationsContent =
-    hasApplications || applicationsHook.isLoading || applicationsHook.error;
+  const hasApplicationsContent = Boolean(
+    hasApplications || applicationsHook.isLoading || applicationsHook.error
+  );
   const hasProjectsContent = hasProjects || isLoadingProjects || isProjectsError;
 
   const contentSections: React.ReactNode[] = [
