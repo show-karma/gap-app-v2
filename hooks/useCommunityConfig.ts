@@ -2,15 +2,28 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
+/**
+ * One paired Telegram chat. The `name` is the chat title that Telegram
+ * returns at pairing time (chat.title). May be empty for legacy entries
+ * created before names were persisted, or for chat IDs that admins typed
+ * in by hand instead of using the pairing flow.
+ */
+export interface TelegramChat {
+  id: string;
+  name: string;
+}
+
 export interface CommunityConfig {
   public?: boolean;
   rank?: number;
   disableReviewerEmails?: boolean;
   /**
-   * Telegram chat IDs that the platform-owned Karma bot will post to.
+   * Paired Telegram chats the platform-owned Karma bot will post to.
    * Bot token is platform-owned (server env), no longer per-community.
+   *
+   * Replaces the legacy `telegramChatIds: string[]` shape.
    */
-  telegramChatIds?: string[];
+  telegramChats?: TelegramChat[];
   telegramEnabled?: boolean;
   slackWebhookUrls?: string[];
   slackEnabled?: boolean;

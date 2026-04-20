@@ -88,13 +88,14 @@ export const useVerifyTelegramPairing = (communitySlug: string | undefined) => {
       // clobber unsaved local form edits).
       queryClient.setQueryData<CommunityConfig | null>(queryKey, (old) => {
         if (!old) return old;
-        const existingIds = old.telegramChatIds ?? [];
-        const nextIds = existingIds.includes(data.chatId)
-          ? existingIds
-          : [...existingIds, data.chatId];
+        const existingChats = old.telegramChats ?? [];
+        const alreadyPaired = existingChats.some((c) => c.id === data.chatId);
+        const nextChats = alreadyPaired
+          ? existingChats
+          : [...existingChats, { id: data.chatId, name: data.chatTitle }];
         return {
           ...old,
-          telegramChatIds: nextIds,
+          telegramChats: nextChats,
           telegramEnabled: true, // backend auto-enables on first pair
         };
       });

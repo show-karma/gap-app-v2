@@ -7,7 +7,11 @@ import { Button } from "@/components/Utilities/Button";
 import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
-import { useCommunityConfig, useCommunityConfigMutation } from "@/hooks/useCommunityConfig";
+import {
+  type TelegramChat,
+  useCommunityConfig,
+  useCommunityConfigMutation,
+} from "@/hooks/useCommunityConfig";
 import { useTestNotificationConfig } from "@/hooks/useNotificationConfig";
 import type { Community } from "@/types/v2/community";
 import { envVars } from "@/utilities/enviromentVars";
@@ -18,11 +22,24 @@ const KARMA_TELEGRAM_BOT_HANDLE = envVars.KARMA_TELEGRAM_BOT_HANDLE;
 
 const SECTION_OFFSET_CLASS = "scroll-mt-28";
 
-// Stable shallow array equality for dirty-detection.
+// Stable shallow array equality for dirty-detection (Slack URLs).
 function arraysEqual(a: ReadonlyArray<string>, b: ReadonlyArray<string>): boolean {
   if (a.length !== b.length) return false;
   for (let i = 0; i < a.length; i += 1) {
     if (a[i] !== b[i]) return false;
+  }
+  return true;
+}
+
+// Deep equality for TelegramChat[]. We compare both id AND name because
+// re-pairing can update the name while the id stays the same.
+function telegramChatsEqual(
+  a: ReadonlyArray<TelegramChat>,
+  b: ReadonlyArray<TelegramChat>
+): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i += 1) {
+    if (a[i].id !== b[i].id || a[i].name !== b[i].name) return false;
   }
   return true;
 }
