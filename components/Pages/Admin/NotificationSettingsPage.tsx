@@ -95,9 +95,9 @@ const REALTIME_EVENTS: ReadonlyArray<ReferenceRow> = [
     note: "Fires when a grantee marks a milestone complete.",
   },
   {
-    event: "@-mention in any comment",
+    event: "@-mention in any comment (Telegram)",
     recipient: "The mentioned user (any role)",
-    note: "Fires regardless of commenter role; user must have a Telegram username on profile to be tagged.",
+    note: "Fires regardless of commenter role; user must have a Telegram username on profile to be tagged. The matching email notification is gated by the kill switch (see email-only table).",
   },
 ];
 
@@ -113,9 +113,19 @@ const EMAIL_ONLY_EVENTS: ReadonlyArray<ReferenceRow> = [
     note: "Bundles milestone completions from the last 24h.",
   },
   {
+    event: "Weekly Milestone Reviewer Digest",
+    recipient: "Milestone reviewers",
+    note: "Weekly roll-up of milestone completions.",
+  },
+  {
     event: "Admin Weekly Digest",
     recipient: "Admins",
     note: "Weekly summary; not migrated to Telegram (deferred).",
+  },
+  {
+    event: "Comment @-mention email",
+    recipient: "The mentioned user",
+    note: "Silenced by the kill switch; Telegram mention dispatch continues.",
   },
   {
     event: "Milestone Verification",
@@ -150,7 +160,7 @@ const EMAIL_ONLY_EVENTS: ReadonlyArray<ReferenceRow> = [
 ];
 
 const RULES_OF_THUMB: ReadonlyArray<string> = [
-  "The kill switch only silences the three digest emails (daily reviewer, milestone reviewer, admin weekly). All per-event emails (milestone verification, invoices, KYC, reviewer invitations) continue regardless.",
+  "The kill switch silences the four digest emails (daily reviewer, daily + weekly milestone reviewer, admin weekly) and the comment @-mention email. All other per-event emails (milestone verification, invoices, KYC, reviewer invitations) continue regardless, and Telegram/Slack dispatch is never silenced.",
   "Real-time events do not replace the daily digests — both fire (intentional duplication).",
   "To be @-tagged in a Telegram group, a reviewer must have their Telegram username set on their Karma profile and be a member of the configured group.",
 ];
@@ -265,7 +275,7 @@ function KillSwitchCard({
           </p>
           <p className="mt-0.5 text-xs text-stone-500 dark:text-zinc-400">
             {
-              "Silences the three reviewer/milestone/admin digest emails. All other notifications (Telegram, Slack, per-event emails) are unaffected."
+              "Silences the four digest emails (daily reviewer, daily + weekly milestone reviewer, admin weekly) and the comment @-mention email. Telegram, Slack, and all other per-event emails are unaffected."
             }
           </p>
         </div>
