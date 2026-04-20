@@ -11,9 +11,7 @@ import {
   useStartTelegramPairing,
   useVerifyTelegramPairing,
 } from "@/hooks/useTelegramPairing";
-import { envVars } from "@/utilities/enviromentVars";
-
-const KARMA_TELEGRAM_BOT_HANDLE = envVars.KARMA_TELEGRAM_BOT_HANDLE;
+import { KARMA_TELEGRAM_BOT_HANDLE } from "@/utilities/enviromentVars";
 
 interface TelegramPairChatModalProps {
   communitySlug: string;

@@ -40,6 +40,8 @@ vi.mock("@/utilities/enviromentVars", () => ({
   envVars: {
     KARMA_TELEGRAM_BOT_HANDLE: "test_bot",
   },
+  // Named re-export mirror the production module — see `utilities/enviromentVars.ts`.
+  KARMA_TELEGRAM_BOT_HANDLE: "test_bot",
 }));
 
 vi.mock("@/components/Pages/Admin/TelegramPairChatModal", () => ({
@@ -209,18 +211,11 @@ const getCardByTitle = (title: string): HTMLElement => {
   return el;
 };
 
-// Helper to invoke onSuccess on every captured mock call (for global save flow)
-const flushPendingMutations = async (overrideOnSuccess?: () => void) => {
-  await act(async () => {
-    for (const callArgs of saveConfigMutate.mock.calls) {
-      const handlers = callArgs[1];
-      if (handlers?.onSuccess) {
-        if (overrideOnSuccess) overrideOnSuccess();
-        else handlers.onSuccess();
-      }
-    }
-  });
-};
+// Note: the global save flow uses `mutateAsync` (see
+// `useSaveNotificationSettings`), so tests assert the `saveConfigMutateAsync`
+// mock directly — no need to reach into `mutate.mock.calls[N][1].onSuccess`.
+// The kill switch still uses `mutate` with callbacks; those tests invoke
+// `handlers.onSuccess()` inline (see the kill-switch describe block).
 
 // ── Tests ──
 
@@ -322,7 +317,7 @@ describe("NotificationSettingsPage — kill switch", () => {
 
     renderPage();
 
-    const toggle = screen.getByRole("switch");
+    const toggle = screen.getByRole("switch", { name: /kill switch/i });
     expect(toggle).toHaveAttribute("aria-checked", "false");
     expect(screen.queryByText(/Reviewer, admin & finance emails are off/i)).not.toBeInTheDocument();
   });
@@ -332,7 +327,7 @@ describe("NotificationSettingsPage — kill switch", () => {
 
     renderPage();
 
-    const toggle = screen.getByRole("switch");
+    const toggle = screen.getByRole("switch", { name: /kill switch/i });
     expect(toggle).toHaveAttribute("aria-checked", "true");
     expect(
       screen.getByText(
@@ -346,7 +341,7 @@ describe("NotificationSettingsPage — kill switch", () => {
 
     renderPage();
 
-    const toggle = screen.getByRole("switch");
+    const toggle = screen.getByRole("switch", { name: /kill switch/i });
     fireEvent.click(toggle);
 
     expect(saveConfigMutate).toHaveBeenCalledWith(
@@ -360,7 +355,7 @@ describe("NotificationSettingsPage — kill switch", () => {
 
     renderPage();
 
-    fireEvent.click(screen.getByRole("switch"));
+    fireEvent.click(screen.getByRole("switch", { name: /kill switch/i }));
 
     // Trigger the onSuccess callback the component passed to mutate
     const callArgs = saveConfigMutate.mock.calls[0];
@@ -375,7 +370,7 @@ describe("NotificationSettingsPage — kill switch", () => {
 
     renderPage();
 
-    fireEvent.click(screen.getByRole("switch"));
+    fireEvent.click(screen.getByRole("switch", { name: /kill switch/i }));
 
     // Kill switch saves immediately and never contributes to dirty count
     expect(

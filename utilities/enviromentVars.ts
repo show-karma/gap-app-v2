@@ -39,3 +39,8 @@ export const envVars = {
   // Hardcoded — single bot used across all environments.
   KARMA_TELEGRAM_BOT_HANDLE: "karmahq_support_bot",
 };
+
+// Re-exported as a named constant so callers can `import { KARMA_TELEGRAM_BOT_HANDLE }`
+// directly instead of aliasing `envVars.KARMA_TELEGRAM_BOT_HANDLE` at module scope
+// in every consumer.
+export const KARMA_TELEGRAM_BOT_HANDLE = envVars.KARMA_TELEGRAM_BOT_HANDLE;
