@@ -163,6 +163,32 @@ beforeEach(() => {
   });
 });
 
+// ── Helpers to grab card-scoped elements ──
+
+const getCardByTitle = (title: string): HTMLElement => {
+  const heading = screen.getByText(title);
+  // Walk up to the card container (rounded-xl border)
+  let el: HTMLElement | null = heading;
+  while (el && !el.className?.includes?.("rounded-xl")) {
+    el = el.parentElement;
+  }
+  if (!el) throw new Error(`Card for "${title}" not found`);
+  return el;
+};
+
+// Helper to invoke onSuccess on every captured mock call (for global save flow)
+const flushPendingMutations = async (overrideOnSuccess?: () => void) => {
+  await act(async () => {
+    for (const callArgs of saveConfigMutate.mock.calls) {
+      const handlers = callArgs[1];
+      if (handlers?.onSuccess) {
+        if (overrideOnSuccess) overrideOnSuccess();
+        else handlers.onSuccess();
+      }
+    }
+  });
+};
+
 // ── Tests ──
 
 describe("NotificationSettingsPage — auth gate", () => {
@@ -209,6 +235,51 @@ describe("NotificationSettingsPage — header", () => {
 
     expect(screen.getByRole("heading", { name: /Notification Settings/i })).toBeInTheDocument();
     expect(screen.getByText(/Optimism sends real-time/i)).toBeInTheDocument();
+  });
+});
+
+describe("NotificationSettingsPage — reviewer heads-up banner", () => {
+  it("should_render_reviewer_banner_with_telegram_username_guidance", () => {
+    setupDefaultMocks();
+
+    renderPage();
+
+    const headsUpHeading = screen.getByText(/Heads-up for your reviewers/i);
+    expect(headsUpHeading).toBeInTheDocument();
+    // Scope to the banner so we don't collide with the reference card, which
+    // also mentions "Telegram username" in the rules-of-thumb section.
+    const banner = headsUpHeading.closest("div.rounded-lg") as HTMLElement;
+    expect(banner).not.toBeNull();
+    expect(within(banner).getByText(/Telegram username/i)).toBeInTheDocument();
+  });
+});
+
+describe("NotificationSettingsPage — sticky subnav", () => {
+  it("should_render_anchor_links_to_channels_and_reference_sections", () => {
+    setupDefaultMocks();
+
+    renderPage();
+
+    const channelsLink = screen.getByRole("link", { name: /Channels/i });
+    const referenceLink = screen.getByRole("link", { name: /Reference/i });
+
+    expect(channelsLink).toHaveAttribute("href", "#channels");
+    expect(referenceLink).toHaveAttribute("href", "#reference");
+  });
+
+  it("should_render_corresponding_section_anchors_with_scroll_offset_class", () => {
+    setupDefaultMocks();
+
+    const { container } = renderPage();
+
+    const channelsSection = container.querySelector("section#channels");
+    const referenceSection = container.querySelector("section#reference");
+
+    expect(channelsSection).toBeInTheDocument();
+    expect(referenceSection).toBeInTheDocument();
+    // scroll-mt-* class anchors the section header below the sticky subnav
+    expect(channelsSection?.className).toMatch(/scroll-mt-/);
+    expect(referenceSection?.className).toMatch(/scroll-mt-/);
   });
 });
 
@@ -261,6 +332,20 @@ describe("NotificationSettingsPage — kill switch", () => {
 
     expect(mockToast.success).toHaveBeenCalledWith("Reviewer emails disabled");
   });
+
+  it("should_NOT_show_global_save_bar_when_only_kill_switch_is_toggled", () => {
+    setupDefaultMocks({ config: createConfig({ disableReviewerEmails: false }) });
+
+    renderPage();
+
+    fireEvent.click(screen.getByRole("switch"));
+
+    // Kill switch saves immediately and never contributes to dirty count
+    expect(
+      screen.queryByRole("button", { name: /Save notification settings/i })
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/changes? pending/i)).not.toBeInTheDocument();
+  });
 });
 
 describe("NotificationSettingsPage — provider cards layout", () => {
@@ -276,17 +361,43 @@ describe("NotificationSettingsPage — provider cards layout", () => {
   });
 });
 
-// Helpers to grab card-scoped elements
-const getCardByTitle = (title: string): HTMLElement => {
-  const heading = screen.getByText(title);
-  // Walk up to the card container (rounded-xl border)
-  let el: HTMLElement | null = heading;
-  while (el && !el.className?.includes?.("rounded-xl")) {
-    el = el.parentElement;
-  }
-  if (!el) throw new Error(`Card for "${title}" not found`);
-  return el;
-};
+describe("NotificationSettingsPage — provider cards collapse-when-off", () => {
+  it("should_collapse_slack_card_body_when_slack_is_disabled", () => {
+    setupDefaultMocks({ config: createConfig({ slackEnabled: false }) });
+
+    renderPage();
+
+    const slackCard = getCardByTitle("Slack");
+    // When collapsed, the URL editor is hidden and a hint is shown
+    expect(within(slackCard).queryByPlaceholderText(/hooks.slack.com/i)).not.toBeInTheDocument();
+    expect(within(slackCard).getByText(/Toggle on to add webhook URLs/i)).toBeInTheDocument();
+  });
+
+  it("should_collapse_telegram_card_body_when_telegram_is_disabled", () => {
+    setupDefaultMocks({ config: createConfig({ telegramEnabled: false }) });
+
+    renderPage();
+
+    const tgCard = getCardByTitle("Telegram");
+    expect(within(tgCard).queryByPlaceholderText(/-1001234567890/i)).not.toBeInTheDocument();
+    expect(
+      within(tgCard).queryByRole("button", { name: /Pair new chat/i })
+    ).not.toBeInTheDocument();
+    expect(
+      within(tgCard).getByText(/Toggle on to configure chat IDs and pair a new group/i)
+    ).toBeInTheDocument();
+  });
+
+  it("should_expand_telegram_card_body_when_telegram_is_enabled", () => {
+    setupDefaultMocks({ config: createConfig({ telegramEnabled: true }) });
+
+    renderPage();
+
+    const tgCard = getCardByTitle("Telegram");
+    expect(within(tgCard).getByPlaceholderText(/-1001234567890/i)).toBeInTheDocument();
+    expect(within(tgCard).getByRole("button", { name: /Pair new chat/i })).toBeInTheDocument();
+  });
+});
 
 describe("NotificationSettingsPage — Telegram provider card", () => {
   it("should_render_chat_ids_from_props", () => {
@@ -303,15 +414,6 @@ describe("NotificationSettingsPage — Telegram provider card", () => {
     expect(screen.getByDisplayValue("-1002222")).toBeInTheDocument();
   });
 
-  it("should_disable_pair_new_chat_button_when_telegram_is_off", () => {
-    setupDefaultMocks({ config: createConfig({ telegramEnabled: false }) });
-
-    renderPage();
-
-    const pairButton = screen.getByRole("button", { name: /Pair new chat/i });
-    expect(pairButton).toBeDisabled();
-  });
-
   it("should_open_pair_modal_when_pair_new_chat_clicked_and_telegram_is_on", () => {
     setupDefaultMocks({ config: createConfig({ telegramEnabled: true }) });
 
@@ -322,66 +424,6 @@ describe("NotificationSettingsPage — Telegram provider card", () => {
     fireEvent.click(screen.getByRole("button", { name: /Pair new chat/i }));
 
     expect(screen.getByTestId("telegram-pair-modal")).toBeInTheDocument();
-  });
-
-  it("should_call_saveConfig_with_trimmed_telegram_chat_ids_when_save_clicked", () => {
-    setupDefaultMocks({
-      config: createConfig({
-        telegramEnabled: true,
-        telegramChatIds: ["-1001111"],
-      }),
-    });
-
-    renderPage();
-
-    // Add empty row, then save — the empty row should be filtered out
-    const telegramCard = getCardByTitle("Telegram");
-    const addBtn = within(telegramCard).getByRole("button", { name: /Add chat ID/i });
-    fireEvent.click(addBtn);
-
-    const saveBtn = within(telegramCard).getByRole("button", { name: /^Save$/i });
-    fireEvent.click(saveBtn);
-
-    expect(saveConfigMutate).toHaveBeenCalledWith(
-      {
-        slug: "filecoin",
-        config: { telegramEnabled: true, telegramChatIds: ["-1001111"] },
-      },
-      expect.any(Object)
-    );
-  });
-
-  it("should_re_sync_local_state_to_normalized_values_after_successful_save", () => {
-    setupDefaultMocks({
-      config: createConfig({
-        telegramEnabled: true,
-        telegramChatIds: ["-1001111"],
-      }),
-    });
-
-    renderPage();
-
-    const telegramCard = getCardByTitle("Telegram");
-    const addBtn = within(telegramCard).getByRole("button", { name: /Add chat ID/i });
-    fireEvent.click(addBtn);
-
-    // Two inputs now — original and a blank one
-    expect(within(telegramCard).getAllByRole("textbox")).toHaveLength(2);
-
-    fireEvent.click(within(telegramCard).getByRole("button", { name: /^Save$/i }));
-
-    // Trigger onSuccess to simulate server confirmation. Wrap in act() so the
-    // setState calls inside the callback flush before we assert the DOM.
-    const handlers = saveConfigMutate.mock.calls[0][1];
-    act(() => {
-      handlers.onSuccess();
-    });
-
-    // Local state should collapse back to just the non-empty row
-    const refetchedCard = getCardByTitle("Telegram");
-    expect(within(refetchedCard).getAllByRole("textbox")).toHaveLength(1);
-    expect(within(refetchedCard).getByDisplayValue("-1001111")).toBeInTheDocument();
-    expect(mockToast.success).toHaveBeenCalledWith("Telegram config saved");
   });
 
   it("should_NOT_clobber_unsaved_local_edits_when_parent_refetches_props", () => {
@@ -479,34 +521,6 @@ describe("NotificationSettingsPage — Telegram provider card", () => {
 });
 
 describe("NotificationSettingsPage — Slack provider card", () => {
-  it("should_call_saveConfig_with_trimmed_webhook_urls_when_save_clicked", () => {
-    setupDefaultMocks({
-      config: createConfig({
-        slackEnabled: true,
-        slackWebhookUrls: ["https://hooks.slack.com/services/AAA"],
-      }),
-    });
-
-    renderPage();
-
-    const slackCard = getCardByTitle("Slack");
-    const addBtn = within(slackCard).getByRole("button", { name: /Add chat ID/i });
-    fireEvent.click(addBtn);
-
-    fireEvent.click(within(slackCard).getByRole("button", { name: /^Save$/i }));
-
-    expect(saveConfigMutate).toHaveBeenCalledWith(
-      {
-        slug: "filecoin",
-        config: {
-          slackEnabled: true,
-          slackWebhookUrls: ["https://hooks.slack.com/services/AAA"],
-        },
-      },
-      expect.any(Object)
-    );
-  });
-
   it("should_call_test_mutation_with_slack_payload_when_test_button_clicked", () => {
     setupDefaultMocks({
       config: createConfig({
@@ -538,7 +552,7 @@ describe("NotificationSettingsPage — Slack provider card", () => {
   });
 });
 
-describe("NotificationSettingsPage — ChatIdsEditor (via parent)", () => {
+describe("NotificationSettingsPage — IdsEditor (via Telegram card)", () => {
   it("should_append_an_empty_input_when_add_chat_id_clicked", () => {
     setupDefaultMocks({
       config: createConfig({ telegramEnabled: true, telegramChatIds: ["-1001"] }),
@@ -637,59 +651,260 @@ describe("NotificationSettingsPage — KarmaBotSetupPanel", () => {
   });
 });
 
-describe("NotificationSettingsPage — NotificationTypesCard", () => {
-  it("should_render_all_four_realtime_notification_types", () => {
+describe("NotificationSettingsPage — reference card", () => {
+  it("should_render_reference_card_heading", () => {
     setupDefaultMocks();
 
     renderPage();
 
-    expect(screen.getByText(/Comment on an application .* → reviewers/i)).toBeInTheDocument();
-    expect(
-      screen.getByText(/Milestone marked complete .* → milestone reviewers/i)
-    ).toBeInTheDocument();
-    expect(screen.getByText(/Post-approval form submitted .* → reviewers/i)).toBeInTheDocument();
-    expect(screen.getByText(/@-mention in a comment → the tagged user/i)).toBeInTheDocument();
+    expect(screen.getByText(/What triggers a notification/i)).toBeInTheDocument();
   });
 
-  it("should_render_all_nine_email_only_notification_types", () => {
+  it("should_render_all_four_realtime_events_with_recipients", () => {
     setupDefaultMocks();
 
     renderPage();
 
-    const emailOnlyTypes = [
+    expect(screen.getByText(/Real-time \(Telegram \/ Slack\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/Comment posted on application/i)).toBeInTheDocument();
+    expect(screen.getByText(/Milestone marked complete/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Post-approval form submitted \(first time only\)/i)
+    ).toBeInTheDocument();
+    expect(screen.getByText(/@-mention in any comment/i)).toBeInTheDocument();
+    // Recipient column
+    expect(screen.getByText(/The mentioned user \(any role\)/i)).toBeInTheDocument();
+  });
+
+  it("should_render_all_nine_email_only_events", () => {
+    setupDefaultMocks();
+
+    renderPage();
+
+    const emailOnlyEvents = [
       "Daily Reviewer Digest",
-      "Milestone Reviewer Digest",
+      "Daily Milestone Reviewer Digest",
       "Admin Weekly Digest",
-      "Milestone Verification → Finance",
-      "Post-Approval → per-program admin/finance email list",
-      "Invoice Received → Finance",
-      "KYC Status Change → Admin",
+      "Milestone Verification",
+      "Post-approval form submission",
+      "Invoice received",
+      "KYC status change",
       "Reviewer invitations",
-      "All applicant / grantee emails",
+      "Applicant / grantee emails",
     ];
 
-    for (const type of emailOnlyTypes) {
-      expect(screen.getByText(type)).toBeInTheDocument();
+    for (const evt of emailOnlyEvents) {
+      expect(screen.getByText(evt)).toBeInTheDocument();
     }
   });
 
-  it("should_render_all_five_how_it_behaves_bullets_including_post_approval", () => {
+  it("should_render_rules_of_thumb_callout_with_three_rules", () => {
     setupDefaultMocks();
 
     renderPage();
 
-    // The phrase "all program reviewers and milestone reviewers are notified"
-    // appears in TWO bullets (broadcast + post-approval). Assert both are
-    // present rather than expecting a single match.
+    expect(screen.getByText(/Rules of thumb/i)).toBeInTheDocument();
+    expect(screen.getByText(/email kill switch silences/i)).toBeInTheDocument();
+    expect(screen.getByText(/intentional duplication/i)).toBeInTheDocument();
+    expect(screen.getByText(/To be @-tagged in a Telegram group/i)).toBeInTheDocument();
+  });
+});
+
+describe("NotificationSettingsPage — global sticky save bar", () => {
+  it("should_NOT_render_save_bar_when_no_dirty_changes", () => {
+    setupDefaultMocks({
+      config: createConfig({
+        telegramEnabled: true,
+        telegramChatIds: ["-1001"],
+      }),
+    });
+
+    renderPage();
+
     expect(
-      screen.getAllByText(/all program reviewers and milestone reviewers are notified/i)
-    ).toHaveLength(2);
-    expect(screen.getByText(/Comments from admins or reviewers do/i)).toBeInTheDocument();
-    expect(screen.getByText(/grantee marks a milestone complete/i)).toBeInTheDocument();
+      screen.queryByRole("button", { name: /Save notification settings/i })
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/changes? pending/i)).not.toBeInTheDocument();
+  });
+
+  it("should_render_save_bar_with_singular_label_when_one_channel_is_dirty", () => {
+    setupDefaultMocks({
+      config: createConfig({
+        telegramEnabled: true,
+        telegramChatIds: ["-1001"],
+      }),
+    });
+
+    renderPage();
+
+    const telegramCard = getCardByTitle("Telegram");
+    const input = within(telegramCard).getByDisplayValue("-1001") as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "-1099" } });
+
+    expect(screen.getByRole("button", { name: /Save notification settings/i })).toBeInTheDocument();
+    expect(screen.getByText("1 change pending")).toBeInTheDocument();
+  });
+
+  it("should_render_save_bar_with_plural_label_when_both_channels_are_dirty", () => {
+    setupDefaultMocks({
+      config: createConfig({
+        telegramEnabled: true,
+        telegramChatIds: ["-1001"],
+        slackEnabled: true,
+        slackWebhookUrls: ["https://hooks.slack.com/services/AAA"],
+      }),
+    });
+
+    renderPage();
+
+    // Dirty TG by editing existing chat id
+    const telegramCard = getCardByTitle("Telegram");
+    const tgInput = within(telegramCard).getByDisplayValue("-1001") as HTMLInputElement;
+    fireEvent.change(tgInput, { target: { value: "-1099" } });
+
+    // Dirty Slack by editing existing webhook
+    const slackCard = getCardByTitle("Slack");
+    const slackInput = within(slackCard).getByDisplayValue(
+      "https://hooks.slack.com/services/AAA"
+    ) as HTMLInputElement;
+    fireEvent.change(slackInput, {
+      target: { value: "https://hooks.slack.com/services/BBB" },
+    });
+
+    expect(screen.getByText("2 changes pending")).toBeInTheDocument();
+  });
+
+  it("should_call_saveConfig_with_trimmed_telegram_chat_ids_when_global_save_clicked", async () => {
+    setupDefaultMocks({
+      config: createConfig({
+        telegramEnabled: true,
+        telegramChatIds: ["-1001111"],
+      }),
+    });
+
+    renderPage();
+
+    // Edit the existing row to dirty the channel (without saving)
+    const telegramCard = getCardByTitle("Telegram");
+    const input = within(telegramCard).getByDisplayValue("-1001111") as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "-1009999" } });
+
+    // Add a blank row — should be filtered out at save time
+    fireEvent.click(within(telegramCard).getByRole("button", { name: /Add chat ID/i }));
+
+    fireEvent.click(screen.getByRole("button", { name: /Save notification settings/i }));
+
+    expect(saveConfigMutate).toHaveBeenLastCalledWith(
+      {
+        slug: "filecoin",
+        config: { telegramEnabled: true, telegramChatIds: ["-1009999"] },
+      },
+      expect.any(Object)
+    );
+  });
+
+  it("should_call_saveConfig_with_trimmed_slack_webhooks_when_global_save_clicked", async () => {
+    setupDefaultMocks({
+      config: createConfig({
+        slackEnabled: true,
+        slackWebhookUrls: ["https://hooks.slack.com/services/AAA"],
+      }),
+    });
+
+    renderPage();
+
+    const slackCard = getCardByTitle("Slack");
+    const input = within(slackCard).getByDisplayValue(
+      "https://hooks.slack.com/services/AAA"
+    ) as HTMLInputElement;
+    fireEvent.change(input, {
+      target: { value: "https://hooks.slack.com/services/CCC" },
+    });
+
+    fireEvent.click(within(slackCard).getByRole("button", { name: /Add webhook URL/i }));
+
+    fireEvent.click(screen.getByRole("button", { name: /Save notification settings/i }));
+
+    expect(saveConfigMutate).toHaveBeenLastCalledWith(
+      {
+        slug: "filecoin",
+        config: {
+          slackEnabled: true,
+          slackWebhookUrls: ["https://hooks.slack.com/services/CCC"],
+        },
+      },
+      expect.any(Object)
+    );
+  });
+
+  it("should_fire_both_telegram_and_slack_mutations_when_both_dirty", () => {
+    setupDefaultMocks({
+      config: createConfig({
+        telegramEnabled: true,
+        telegramChatIds: ["-1001"],
+        slackEnabled: true,
+        slackWebhookUrls: ["https://hooks.slack.com/services/A"],
+      }),
+    });
+
+    renderPage();
+
+    // Dirty both
+    fireEvent.change(
+      within(getCardByTitle("Telegram")).getByDisplayValue("-1001") as HTMLInputElement,
+      { target: { value: "-1099" } }
+    );
+    fireEvent.change(
+      within(getCardByTitle("Slack")).getByDisplayValue(
+        "https://hooks.slack.com/services/A"
+      ) as HTMLInputElement,
+      { target: { value: "https://hooks.slack.com/services/B" } }
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Save notification settings/i }));
+
+    // Two persisted mutations fired (kill switch was not toggled here)
+    const persistedCalls = saveConfigMutate.mock.calls.filter(
+      (c) => "telegramEnabled" in (c[0]?.config ?? {}) || "slackEnabled" in (c[0]?.config ?? {})
+    );
+    expect(persistedCalls).toHaveLength(2);
+  });
+
+  it("should_re_sync_baselines_and_clear_dirty_after_successful_global_save", async () => {
+    setupDefaultMocks({
+      config: createConfig({
+        telegramEnabled: true,
+        telegramChatIds: ["-1001111"],
+      }),
+    });
+
+    renderPage();
+
+    const telegramCard = getCardByTitle("Telegram");
+    const input = within(telegramCard).getByDisplayValue("-1001111") as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "-1009999" } });
+
+    // Add an empty row that should be filtered out
+    fireEvent.click(within(telegramCard).getByRole("button", { name: /Add chat ID/i }));
+    expect(within(telegramCard).getAllByRole("textbox")).toHaveLength(2);
+
+    // Click global Save
+    fireEvent.click(screen.getByRole("button", { name: /Save notification settings/i }));
+
+    // Trigger onSuccess for all pending mutations and let microtasks flush
+    await flushPendingMutations();
+
+    // Local state should collapse back to the single non-empty row
+    const refetchedCard = getCardByTitle("Telegram");
+    expect(within(refetchedCard).getAllByRole("textbox")).toHaveLength(1);
+    expect(within(refetchedCard).getByDisplayValue("-1009999")).toBeInTheDocument();
+
+    // Save bar is hidden now (no dirty state)
     expect(
-      screen.getByText(/grantee submits the post-approval form for the first time/i)
-    ).toBeInTheDocument();
-    expect(screen.getByText(/Reviewers with a Telegram username/i)).toBeInTheDocument();
-    expect(screen.getByText(/kill-switch above only blocks emails/i)).toBeInTheDocument();
+      screen.queryByRole("button", { name: /Save notification settings/i })
+    ).not.toBeInTheDocument();
+
+    // Success toast fired
+    expect(mockToast.success).toHaveBeenCalled();
   });
 });
