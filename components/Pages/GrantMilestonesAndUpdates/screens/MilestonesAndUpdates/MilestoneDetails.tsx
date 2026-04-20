@@ -1,41 +1,24 @@
 "use client";
 
-import { PaperClipIcon } from "@heroicons/react/24/outline";
-import dynamic from "next/dynamic";
-import { type FC, useCallback } from "react";
-import toast from "react-hot-toast";
+import { type FC, useMemo } from "react";
+import { ActivityCard } from "@/components/Shared/ActivityCard";
 import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
-import { getGrantInvoiceDownloadUrl } from "@/src/features/payout-disbursement/services/payout-disbursement.service";
 import { useOwnerStore, useProjectStore } from "@/store";
+import { useGrantStore } from "@/store/grant";
 import type { GrantMilestone } from "@/types/v2/grant";
-import { formatDate, normalizeTimestamp } from "@/utilities/formatDate";
-import { ReadMore } from "@/utilities/ReadMore";
-import { MilestoneDelete } from "./MilestoneDelete";
-import { MilestoneEdit } from "./MilestoneEdit";
-import { Updates } from "./Updates";
-
-const MilestoneAIEvaluationBadge = dynamic(
-  () =>
-    import("@/components/Milestone/MilestoneAIEvaluationBadge").then(
-      (m) => m.MilestoneAIEvaluationBadge
-    ),
-  { ssr: false }
-);
+import type { UnifiedMilestone } from "@/types/v2/roadmap";
 
 /**
  * Helper to get the completion object from a milestone.
  * API may return completion as an object or an array.
- * Ensures createdAt/updatedAt are preserved from the source.
  */
 export const getCompletionData = (milestone: GrantMilestone) => {
   const completed = milestone.completed;
   if (!completed) return null;
 
-  // Handle array format (some API responses return array)
   if (Array.isArray(completed)) {
     if (completed.length === 0) return null;
     const firstItem = completed[0];
-    // Merge createdAt/updatedAt from both sources - array item or array itself
     return {
       ...firstItem,
       createdAt: firstItem?.createdAt ?? (completed as any).createdAt,
@@ -46,195 +29,105 @@ export const getCompletionData = (milestone: GrantMilestone) => {
   return completed;
 };
 
-/**
- * Helper to check if a milestone is completed.
- */
-export const isMilestoneCompleted = (milestone: GrantMilestone): boolean => {
-  return getCompletionData(milestone) !== null;
-};
+export const isMilestoneCompleted = (milestone: GrantMilestone): boolean =>
+  getCompletionData(milestone) !== null;
 
-interface MilestoneDateStatusProps {
-  milestone: GrantMilestone;
-}
+type GrantContext =
+  | {
+      uid?: string;
+      chainID?: number;
+      communityUID?: string;
+      details?: { title?: string; programId?: string };
+    }
+  | null
+  | undefined;
 
-const statusDictionary = {
-  completed: "Completed",
-  pending: "Pending",
-  "past due": "Past Due",
-};
+function toUnifiedMilestone(milestone: GrantMilestone, grant: GrantContext): UnifiedMilestone {
+  const completion = getCompletionData(milestone);
+  const chainID = milestone.chainID || grant?.chainID || 0;
+  const refUID = milestone.refUID || grant?.uid || "";
 
-const statusBg = {
-  completed: "bg-blue-600",
-  pending: "bg-gray-500",
-  "past due": "bg-red-600",
-};
+  const normalizedCompleted = completion
+    ? {
+        uid: completion.uid,
+        chainID: completion.chainID,
+        createdAt: completion.createdAt || (milestone as any).updatedAt || "",
+        updatedAt: completion.updatedAt,
+        attester: completion.attester,
+        data: {
+          proofOfWork: completion.data?.proofOfWork,
+          reason: completion.data?.reason,
+          completionPercentage: completion.data?.completionPercentage,
+          deliverables: (completion.data as any)?.deliverables,
+        },
+      }
+    : null;
 
-const FlagIcon = () => {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="h-4 w-4"
-    >
-      <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path>
-      <line x1="4" x2="4" y1="22" y2="15"></line>
-    </svg>
-  );
-};
+  const completed = normalizedCompleted
+    ? {
+        createdAt: normalizedCompleted.createdAt,
+        data: normalizedCompleted.data,
+      }
+    : false;
 
-export const MilestoneDateStatus: FC<MilestoneDateStatusProps> = ({ milestone }) => {
-  const getMilestoneStatus = () => {
-    if (isMilestoneCompleted(milestone)) return "completed";
-    if (normalizeTimestamp(milestone.endsAt || 0) < Date.now()) return "past due";
-    return "pending";
+  const normalizedMilestone: GrantMilestone = {
+    ...milestone,
+    completed: normalizedCompleted,
   };
 
-  const status = getMilestoneStatus();
-
-  return (
-    <div className="flex max-w-full w-max max-lg:w-full flex-row items-center justify-center gap-4 max-lg:justify-start flex-wrap">
-      <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">
-        {milestone.startsAt
-          ? `${formatDate(milestone.startsAt)} - ${formatDate(milestone.endsAt)}`
-          : `Due on ${formatDate(milestone.endsAt)}`}
-      </p>
-      <div className={`flex items-center justify-start rounded-2xl px-2 py-1 ${statusBg[status]}`}>
-        <p className="text-center text-xs font-medium leading-none text-white">
-          {statusDictionary[status]}
-        </p>
-      </div>
-    </div>
-  );
-};
-
-interface MilestoneTagProps {
-  index: number;
-  priority?: number;
+  return {
+    uid: milestone.uid,
+    type: "grant",
+    title: milestone.title,
+    description: milestone.description,
+    completed,
+    createdAt: (milestone as any).createdAt || "",
+    startsAt: milestone.startsAt,
+    endsAt: milestone.endsAt,
+    chainID,
+    refUID,
+    invoiceInfo: milestone.invoiceInfo ?? undefined,
+    source: {
+      type: "grant",
+      grantMilestone: {
+        completionDetails: null,
+        milestone: normalizedMilestone,
+        grant: {
+          uid: refUID,
+          chainID,
+          details: grant?.details,
+          communityUID: grant?.communityUID,
+        } as any,
+      },
+    },
+  };
 }
-export const MilestoneTag: FC<MilestoneTagProps> = ({ index, priority }) => {
-  return (
-    <div className="flex flex-row gap-3 flex-wrap">
-      <div className="flex w-max flex-row gap-3 rounded-full bg-[#F5F3FF] dark:bg-zinc-900 px-3 py-1 text-[#5720B7] dark:text-violet-100">
-        <FlagIcon />
-        <p className="text-xs font-bold">MILESTONE {index}</p>
-      </div>
-      {priority ? (
-        <div className="flex w-max flex-row gap-3 rounded-full bg-slate-100 dark:bg-zinc-700 px-3 py-1 text-zinc-700 dark:text-zinc-100">
-          <p className="text-xs font-bold">PRIORITY {priority}</p>
-        </div>
-      ) : null}
-    </div>
-  );
-};
 
 interface MilestoneDetailsProps {
   milestone: GrantMilestone;
-  index: number;
   allocationAmount?: string;
 }
 
-export const MilestoneDetails: FC<MilestoneDetailsProps> = ({
-  milestone,
-  index,
-  allocationAmount,
-}) => {
+export const MilestoneDetails: FC<MilestoneDetailsProps> = ({ milestone, allocationAmount }) => {
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useIsCommunityAdmin();
   const isAuthorized = isProjectOwner || isProjectAdmin || isContractOwner || isCommunityAdmin;
 
-  const handleViewInvoice = useCallback(async () => {
-    if (!milestone.refUID || !milestone.invoiceInfo?.fileKey) return;
-    try {
-      const url = await getGrantInvoiceDownloadUrl(milestone.refUID, milestone.invoiceInfo.fileKey);
-      window.open(url, "_blank", "noopener,noreferrer");
-    } catch {
-      toast.error("Failed to open invoice");
-    }
-  }, [milestone.refUID, milestone.invoiceInfo?.fileKey]);
+  const grant = useGrantStore((state) => state.grant);
 
-  // Get normalized completion data (handles both object and array formats)
-  const completionData = getCompletionData(milestone);
-  const isCompleted = completionData !== null;
+  const unifiedMilestone = useMemo(() => toUnifiedMilestone(milestone, grant), [milestone, grant]);
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex w-full flex-1 flex-col rounded-lg border border-zinc-200 bg-white dark:bg-zinc-800 transition-all duration-200 ease-in-out">
-        <div
-          className="flex w-full flex-col py-4"
-          style={{
-            borderBottom:
-              (isAuthorized && !isCompleted) ||
-              completionData?.data?.reason ||
-              (isCommunityAdmin && !isCompleted)
-                ? "1px solid #CCCCCC"
-                : "none",
-          }}
-        >
-          <div className="flex w-full flex-row items-start justify-between px-4 max-lg:mb-4 max-lg:flex-col">
-            <div className="flex flex-col gap-3">
-              <MilestoneTag index={index} priority={milestone.priority} />
-              <div className="flex flex-row items-center gap-2">
-                <h4 className="text-base font-bold leading-normal text-black dark:text-zinc-100">
-                  {milestone.title}
-                </h4>
-                {allocationAmount ? (
-                  <span
-                    data-testid="milestone-allocation-amount"
-                    className="inline-flex items-center rounded-full bg-green-50 dark:bg-green-900/30 px-3 py-1 text-xs font-bold text-green-700 dark:text-green-300"
-                  >
-                    {allocationAmount}
-                  </span>
-                ) : null}
-              </div>
-            </div>
-            <div className="flex flex-row items-center justify-start gap-2 flex-wrap">
-              <MilestoneDateStatus milestone={milestone} />
-              {isCompleted && milestone.uid ? (
-                <MilestoneAIEvaluationBadge milestoneUID={milestone.uid} />
-              ) : null}
-              {isAuthorized && !isCompleted ? <MilestoneEdit milestone={milestone} /> : null}
-              {isAuthorized ? <MilestoneDelete milestone={milestone} /> : null}
-            </div>
-          </div>
-          <div
-            className="flex flex-col gap-2 px-4  pb-3 max-lg:max-w-xl max-sm:max-w-[300px]"
-            data-color-mode="light"
-          >
-            <ReadMore
-              readLessText="Read less milestone description"
-              readMoreText="Read full milestone description"
-            >
-              {milestone.description || ""}
-            </ReadMore>
-          </div>
-        </div>
-        {((isAuthorized && !isCompleted) ||
-          completionData?.data?.reason ||
-          completionData?.data?.proofOfWork) && (
-          <div className="mx-6 mt-4 rounded-lg bg-transparent pb-4">
-            <Updates milestone={milestone} />
-          </div>
-        )}
-        {isAuthorized && milestone.invoiceInfo?.fileKey && milestone.refUID && (
-          <button
-            type="button"
-            className="flex items-center gap-1.5 px-6 pb-4 hover:opacity-75 transition-opacity"
-            onClick={handleViewInvoice}
-          >
-            <PaperClipIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-            <span className="text-sm text-emerald-700 dark:text-emerald-300">Invoice attached</span>
-          </button>
-        )}
-      </div>
-    </div>
+    <ActivityCard
+      activity={{
+        type: "milestone",
+        data: unifiedMilestone,
+        allocationAmount,
+        hideTimelineMarker: true,
+      }}
+      isAuthorized={isAuthorized}
+    />
   );
 };

@@ -1,5 +1,6 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { getProjectUpdates } from "@/services/project-updates.service";
+import type { UpdatesFeedFilters } from "@/types/v2/project-profile.types";
 import type {
   GrantMilestoneWithDetails,
   GrantUpdateWithDetails,
@@ -116,6 +117,8 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
       milestoneAny.data?.attester ||
       milestoneAny.data?.recipient ||
       "";
+    // Off-chain completions use fundingApplicationCompletion instead of completionDetails
+    const appCompletion = milestone.fundingApplicationCompletion;
     const chainID =
       parseChainId(milestone.chainId) ||
       parseChainId(milestoneAny?.grant?.chainID) ||
@@ -155,10 +158,14 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
       description: milestone.description,
       completed: isCompleted
         ? {
-            createdAt: milestone.completionDetails?.completedAt || milestone.createdAt || "",
+            createdAt:
+              milestone.completionDetails?.completedAt ||
+              appCompletion?.createdAt ||
+              milestone.createdAt ||
+              "",
             data: {
               proofOfWork: milestone.completionDetails?.proofOfWork,
-              reason: milestone.completionDetails?.description,
+              reason: milestone.completionDetails?.description || appCompletion?.completionText,
               completionPercentage: milestone.completionDetails?.completionPercentage,
               deliverables: milestone.completionDetails?.deliverables,
             },
@@ -181,11 +188,16 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
             endsAt: milestoneEndsAt,
             completed: isCompleted
               ? {
-                  createdAt: milestone.completionDetails?.completedAt || milestone.createdAt || "",
-                  attester: milestone.completionDetails?.completedBy,
+                  createdAt:
+                    milestone.completionDetails?.completedAt ||
+                    appCompletion?.createdAt ||
+                    milestone.createdAt ||
+                    "",
+                  attester: milestone.completionDetails?.completedBy || appCompletion?.ownerAddress,
                   data: {
                     proofOfWork: milestone.completionDetails?.proofOfWork,
-                    reason: milestone.completionDetails?.description,
+                    reason:
+                      milestone.completionDetails?.description || appCompletion?.completionText,
                     completionPercentage: milestone.completionDetails?.completionPercentage,
                     deliverables: milestone.completionDetails?.deliverables,
                   },
@@ -347,15 +359,26 @@ const sortByDateDescending = (milestones: UnifiedMilestone[]): UnifiedMilestone[
  * that returns all updates, project milestones, and grant milestones.
  *
  * @param projectIdOrSlug - The project UID or slug
+ * @param milestoneStatus - Optional milestone lifecycle filter
+ * @param filters - Optional extra filters forwarded to the indexer
  * @returns Object containing unified milestones, loading state, error, and refetch function
  */
 export function useProjectUpdates(
   projectIdOrSlug: string,
-  milestoneStatus?: "pending" | "completed" | "verified"
+  milestoneStatus?: "pending" | "completed" | "verified",
+  filters?: UpdatesFeedFilters
 ) {
-  const queryKey = milestoneStatus
-    ? ([...QUERY_KEYS.PROJECT.UPDATES(projectIdOrSlug), milestoneStatus] as const)
-    : QUERY_KEYS.PROJECT.UPDATES(projectIdOrSlug);
+  // Build a stable query key that includes all active filter values so that
+  // React Query invalidates the cache whenever any filter changes.
+  const queryKey = [
+    ...QUERY_KEYS.PROJECT.UPDATES(projectIdOrSlug),
+    milestoneStatus ?? null,
+    filters?.dateFrom ?? null,
+    filters?.dateTo ?? null,
+    filters?.hasAIEvaluation ?? null,
+    filters?.aiScoreMin ?? null,
+    filters?.aiScoreMax ?? null,
+  ] as const;
 
   const {
     data,
@@ -365,7 +388,7 @@ export function useProjectUpdates(
     refetch: originalRefetch,
   } = useQuery<UpdatesApiResponse>({
     queryKey,
-    queryFn: () => getProjectUpdates(projectIdOrSlug, milestoneStatus),
+    queryFn: () => getProjectUpdates(projectIdOrSlug, milestoneStatus, filters),
     enabled: !!projectIdOrSlug,
     staleTime: 5 * 60 * 1000,
     placeholderData: keepPreviousData,

@@ -4,6 +4,7 @@ import MarkdownIt from "markdown-it";
 const markdownIt = new MarkdownIt({
   linkify: true,
   html: false,
+  breaks: true,
 });
 
 const defaultLinkOpen =

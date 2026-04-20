@@ -8,6 +8,39 @@
 import type { UnifiedMilestone } from "./roadmap";
 
 // =============================================================================
+// Updates Feed Filter Types
+// =============================================================================
+
+/**
+ * Date range filter for the updates feed.
+ * Values are ISO 8601 strings (e.g., "2024-01-01" or full datetime).
+ */
+export interface DateRangeFilter {
+  dateFrom?: string;
+  dateTo?: string;
+}
+
+/**
+ * AI evaluation filter for the updates feed.
+ * - `hasAIEvaluation`: when true, restricts results to items with an AI evaluation.
+ *   Never set to false together with `aiScoreMin`/`aiScoreMax` — omit `hasAIEvaluation` instead.
+ * - `aiScoreMin`: integer 0–10; lower bound of the score range filter.
+ * - `aiScoreMax`: integer 0–10; upper bound of the score range filter.
+ *   If `aiScoreMin > aiScoreMax`, the service swaps them defensively before sending.
+ */
+export interface AIEvaluationFilter {
+  hasAIEvaluation?: boolean;
+  aiScoreMin?: number;
+  aiScoreMax?: number;
+}
+
+/**
+ * Combined extra filter params forwarded to the indexer for the updates feed.
+ * All fields are optional; undefined/null values are omitted from the query string.
+ */
+export interface UpdatesFeedFilters extends DateRangeFilter, AIEvaluationFilter {}
+
+// =============================================================================
 // Activity Feed Types
 // =============================================================================
 

@@ -98,6 +98,7 @@ interface MilestoneCardProps {
   milestone: UnifiedMilestone;
   isAuthorized: boolean;
   allocationAmount?: string;
+  hideTimelineMarker?: boolean;
 }
 
 /**
@@ -127,6 +128,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
   milestone,
   isAuthorized,
   allocationAmount,
+  hideTimelineMarker = false,
 }) => {
   const { isCompleting, handleCompleting, isEditing, handleEditing } = useMilestoneActions();
   const { multiGrantUndoCompletion } = useMilestone();
@@ -582,10 +584,12 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
           {/* Timeline header: Only show when viewing existing completion data, not during form input */}
           {!isCompleting && (completionReason || completionProof || completionDeliverables) && (
             <div className="relative flex flex-row items-center justify-between gap-2 flex-wrap">
-              {/* Timeline badge - vertically centered relative to header row, aligned with main timeline */}
-              <div className="absolute -left-[73px] max-lg:-left-[69px] top-1/2 -translate-y-1/2 w-6 h-6 max-lg:w-5 max-lg:h-5 flex items-center justify-center z-10 bg-blue-50 dark:bg-blue-950 rounded-full ring-2 ring-white dark:ring-zinc-900">
-                <div className="w-[3px] h-[3px] rounded-full bg-blue-400" />
-              </div>
+              {!hideTimelineMarker && (
+                /* Timeline badge - vertically centered relative to header row, aligned with main timeline */
+                <div className="absolute -left-[73px] max-lg:-left-[69px] top-1/2 -translate-y-1/2 w-6 h-6 max-lg:w-5 max-lg:h-5 flex items-center justify-center z-10 bg-blue-50 dark:bg-blue-950 rounded-full ring-2 ring-white dark:ring-zinc-900">
+                  <div className="w-[3px] h-[3px] rounded-full bg-blue-400" />
+                </div>
+              )}
               {/* Left side: Activity type label */}
               <div className="flex flex-row items-center gap-2.5 flex-wrap">
                 <span className="text-sm font-semibold text-foreground">

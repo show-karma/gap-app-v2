@@ -10,8 +10,8 @@ import { useReviewerPrograms } from "@/hooks/usePermissions";
 import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
 import { useStaff } from "@/src/core/rbac/hooks/use-staff-bridge";
 
-vi.mock("@tanstack/react-query", () => {
-  const actual = vi.importActual("@tanstack/react-query");
+vi.mock("@tanstack/react-query", async () => {
+  const actual = await vi.importActual("@tanstack/react-query");
   return {
     ...actual,
     useQuery: vi.fn(),
@@ -175,7 +175,7 @@ describe("Dashboard", () => {
     expect(screen.getByTestId("ens-avatar")).toBeInTheDocument();
   });
 
-  it("renders DashboardEmptyState when user has no projects and no roles", () => {
+  it("renders section empty states when user has no projects and no roles", () => {
     mockUseQuery.mockReturnValue({
       data: [],
       isLoading: false,
@@ -186,7 +186,7 @@ describe("Dashboard", () => {
 
     render(<Dashboard />, { wrapper: createWrapper() });
 
-    expect(screen.getByText("Create your first project")).toBeInTheDocument();
+    expect(screen.getByText(/No projects yet/i)).toBeInTheDocument();
   });
 
   it("shows the projects section empty state when no projects are found", () => {
@@ -388,5 +388,139 @@ describe("Dashboard", () => {
     render(<Dashboard />, { wrapper: createWrapper() });
 
     expect(screen.queryByText("Create your first project")).not.toBeInTheDocument();
+  });
+
+  describe("section ordering", () => {
+    const getSectionOrder = (container: HTMLElement): string[] => {
+      const ids = ["applications", "projects"];
+      const sections = Array.from(container.querySelectorAll("section[id]")) as HTMLElement[];
+      return sections.map((s) => s.id).filter((id) => ids.includes(id));
+    };
+
+    it("hides AdminSection entirely for users with no admin communities", () => {
+      render(<Dashboard />, { wrapper: createWrapper() });
+
+      expect(screen.queryByText("My Communities")).not.toBeInTheDocument();
+      expect(screen.queryByText(/No communities yet/i)).not.toBeInTheDocument();
+    });
+
+    it("renders AdminSection heading when admin hook is loading", () => {
+      mockUseDashboardAdmin.mockReturnValue({
+        communities: [],
+        isLoading: true,
+        isError: false,
+        refetch: vi.fn(),
+      });
+
+      render(<Dashboard />, { wrapper: createWrapper() });
+
+      expect(screen.getByText("My Communities")).toBeInTheDocument();
+    });
+
+    it("renders AdminSection with retry when admin hook errors", () => {
+      mockUseDashboardAdmin.mockReturnValue({
+        communities: [],
+        isLoading: false,
+        isError: true,
+        refetch: vi.fn(),
+      });
+
+      render(<Dashboard />, { wrapper: createWrapper() });
+
+      expect(screen.getByText(/Unable to load your communities/i)).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /try again/i })).toBeInTheDocument();
+    });
+
+    it("places applications before projects when applications has content", async () => {
+      const { useUserApplications } = await import(
+        "@/features/user-applications/hooks/use-user-applications"
+      );
+      (useUserApplications as unknown as vi.Mock).mockReturnValue({
+        applications: [],
+        statusCounts: { pending: 2 },
+        filters: { status: "all", programId: null, searchQuery: "" },
+        sortBy: "createdAt",
+        sortOrder: "desc",
+        pagination: { page: 1, totalPages: 1, limit: 10 },
+        isLoading: false,
+        error: null,
+        setFilters: vi.fn(),
+        setSort: vi.fn(),
+        setPage: vi.fn(),
+        setPageSize: vi.fn(),
+        refresh: vi.fn(),
+      });
+
+      const { container } = render(<Dashboard />, { wrapper: createWrapper() });
+
+      const order = getSectionOrder(container);
+      expect(order).toEqual(["applications", "projects"]);
+    });
+
+    it("places projects before applications when only projects has content", async () => {
+      const { useUserApplications } = await import(
+        "@/features/user-applications/hooks/use-user-applications"
+      );
+      (useUserApplications as unknown as vi.Mock).mockReturnValue({
+        applications: [],
+        statusCounts: {},
+        filters: { status: "all", programId: null, searchQuery: "" },
+        sortBy: "createdAt",
+        sortOrder: "desc",
+        pagination: { page: 1, totalPages: 1, limit: 10 },
+        isLoading: false,
+        error: null,
+        setFilters: vi.fn(),
+        setSort: vi.fn(),
+        setPage: vi.fn(),
+        setPageSize: vi.fn(),
+        refresh: vi.fn(),
+      });
+      mockUseQuery.mockReturnValue({
+        data: [{ uid: "project-1" }],
+        isLoading: false,
+        isSuccess: true,
+        isError: false,
+        refetch: vi.fn(),
+      });
+
+      const { container } = render(<Dashboard />, { wrapper: createWrapper() });
+
+      const order = getSectionOrder(container);
+      expect(order).toEqual(["projects", "applications"]);
+    });
+
+    it("places projects error before empty applications (error state stays prominent)", async () => {
+      const { useUserApplications } = await import(
+        "@/features/user-applications/hooks/use-user-applications"
+      );
+      (useUserApplications as unknown as vi.Mock).mockReturnValue({
+        applications: [],
+        statusCounts: {},
+        filters: { status: "all", programId: null, searchQuery: "" },
+        sortBy: "createdAt",
+        sortOrder: "desc",
+        pagination: { page: 1, totalPages: 1, limit: 10 },
+        isLoading: false,
+        error: null,
+        setFilters: vi.fn(),
+        setSort: vi.fn(),
+        setPage: vi.fn(),
+        setPageSize: vi.fn(),
+        refresh: vi.fn(),
+      });
+      mockUseQuery.mockReturnValue({
+        data: [],
+        isLoading: false,
+        isSuccess: false,
+        isError: true,
+        refetch: vi.fn(),
+      });
+
+      const { container } = render(<Dashboard />, { wrapper: createWrapper() });
+
+      const order = getSectionOrder(container);
+      expect(order).toEqual(["projects", "applications"]);
+    });
   });
 });
