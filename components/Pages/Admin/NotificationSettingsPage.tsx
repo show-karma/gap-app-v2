@@ -17,7 +17,7 @@ import {
 import { useTestNotificationConfig } from "@/hooks/useNotificationConfig";
 import { useSaveNotificationSettings } from "@/hooks/useSaveNotificationSettings";
 import type { Community } from "@/types/v2/community";
-import { envVars } from "@/utilities/enviromentVars";
+import { KARMA_TELEGRAM_BOT_HANDLE } from "@/utilities/enviromentVars";
 import { MESSAGES } from "@/utilities/messages";
 
 // Modal-only — defer the bundle until the user opens it.
@@ -25,8 +25,6 @@ const TelegramPairChatModal = dynamic(
   () => import("./TelegramPairChatModal").then((m) => m.TelegramPairChatModal),
   { ssr: false }
 );
-
-const KARMA_TELEGRAM_BOT_HANDLE = envVars.KARMA_TELEGRAM_BOT_HANDLE;
 
 const SECTION_OFFSET_CLASS = "scroll-mt-28";
 
@@ -37,6 +35,31 @@ function arraysEqual(a: ReadonlyArray<string>, b: ReadonlyArray<string>): boolea
     if (a[i] !== b[i]) return false;
   }
   return true;
+}
+
+// Slack incoming webhooks always start with this prefix — Slack rejects
+// POSTs to anything else, so the browser URL parser alone isn't enough.
+const SLACK_WEBHOOK_PREFIX = "https://hooks.slack.com/";
+
+// Synchronous client-side validator for Slack incoming webhook URLs. Returns
+// null when valid or blank (blank rows are filtered at save time). The Save
+// bar also blocks persistence when any row is invalid.
+export function validateSlackWebhookUrl(value: string): string | null {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  let parsed: URL;
+  try {
+    parsed = new URL(trimmed);
+  } catch {
+    return "Enter a valid URL.";
+  }
+  if (parsed.protocol !== "https:") {
+    return "Webhook URL must use https.";
+  }
+  if (!trimmed.startsWith(SLACK_WEBHOOK_PREFIX)) {
+    return "Slack webhook URLs must start with https://hooks.slack.com/.";
+  }
+  return null;
 }
 
 // Deep equality for TelegramChat[]. We compare both id AND name because
@@ -145,22 +168,45 @@ const SUBNAV_LINKS: ReadonlyArray<SubnavLink> = [
 ];
 
 function StickySubnav() {
+  // Track the current URL hash so we can mark the active section with
+  // aria-current + a visual cue. We intentionally keep this simple
+  // (hash-only, no IntersectionObserver) to stay in scope; scroll-synced
+  // highlighting can come as a follow-up if desired.
+  const [activeHash, setActiveHash] = useState<string>(() => {
+    if (typeof window === "undefined") return "";
+    return window.location.hash.replace("#", "");
+  });
+
+  useEffect(() => {
+    const onHashChange = () => setActiveHash(window.location.hash.replace("#", ""));
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, []);
+
   return (
     <nav
       aria-label="Notification settings sections"
       className="sticky top-0 z-20 -mx-2 mb-4 border-b border-stone-200 bg-white/90 px-2 py-2 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/85"
     >
       <ul className="flex flex-wrap gap-1">
-        {SUBNAV_LINKS.map((link) => (
-          <li key={link.id}>
-            <a
-              href={`#${link.id}`}
-              className="inline-flex items-center rounded-md px-3 py-1.5 text-xs font-medium text-stone-600 hover:bg-stone-100 hover:text-stone-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
-            >
-              {link.label}
-            </a>
-          </li>
-        ))}
+        {SUBNAV_LINKS.map((link) => {
+          const isActive = activeHash === link.id;
+          return (
+            <li key={link.id}>
+              <a
+                href={`#${link.id}`}
+                aria-current={isActive ? "true" : undefined}
+                className={`inline-flex items-center rounded-md px-3 py-1.5 text-xs font-medium transition ${
+                  isActive
+                    ? "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300"
+                    : "text-stone-600 hover:bg-stone-100 hover:text-stone-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
+                }`}
+              >
+                {link.label}
+              </a>
+            </li>
+          );
+        })}
       </ul>
     </nav>
   );
@@ -263,6 +309,9 @@ function IdsEditor({
   placeholderRest,
   removeConfirmCopy,
   addLabel,
+  inputType = "text",
+  validate,
+  rowAriaLabel,
 }: {
   values: string[];
   onChange: (next: string[]) => void;
@@ -271,10 +320,19 @@ function IdsEditor({
   placeholderRest: string;
   removeConfirmCopy: (value: string) => string;
   addLabel: string;
+  /** HTML input type. Default "text". Slack passes "url" for native validation. */
+  inputType?: "text" | "url";
+  /** Synchronous validator. Return an error string to show inline, or null when valid.
+   *  Empty values should return null — they're filtered at save time. */
+  validate?: (value: string) => string | null;
+  /** Builds the per-row accessible label (WCAG 2.2 SC 1.3.1 / 4.1.2). */
+  rowAriaLabel: (index: number) => string;
 }) {
   // Tracks which row's delete-confirmation dialog is open. -1 = none.
   const [confirmIndex, setConfirmIndex] = useState<number>(-1);
 
+  // `async` is intentional — `DeleteDialog.deleteFunction` is typed as
+  // `() => Promise<void>`, so returning a sync value trips TS.
   const handleConfirmDelete = async (idx: number) => {
     onChange(values.filter((_, i) => i !== idx));
     setConfirmIndex(-1);
@@ -283,25 +341,39 @@ function IdsEditor({
   return (
     <div className="space-y-2.5">
       {values.map((value, idx) => {
-        // Stable-ish key: combines index + content. Pure index keys cause input
-        // focus to jump on row removal; content alone collides during initial
-        // empty-input state.
-        const rowKey = `${idx}-${value || "blank"}`;
+        // Pure index key — controlled inputs sync from `value` regardless of
+        // key identity, so mixing the current value into the key would only
+        // serve to unmount + remount the <input> on every keystroke and
+        // destroy focus. Row reorderings aren't supported here, so index is
+        // sufficient.
+        const rowKey = String(idx);
         const isConfirmOpen = confirmIndex === idx;
+        const validationError = validate ? validate(value) : null;
+        const errorId = validationError ? `ids-editor-error-${idx}` : undefined;
         return (
-          <div key={rowKey} className="flex items-center gap-2">
-            <input
-              type="text"
-              value={value}
-              onChange={(e) => {
-                const next = [...values];
-                next[idx] = e.target.value;
-                onChange(next);
-              }}
-              disabled={disabled}
-              placeholder={idx === 0 ? placeholderFirst : placeholderRest}
-              className="h-9 flex-1 rounded-lg border border-stone-200 bg-white px-3 text-sm text-stone-900 placeholder-stone-400 transition focus:border-blue-400 focus:ring-2 focus:ring-blue-500/40 disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-800/80 dark:text-zinc-100 dark:placeholder-zinc-500"
-            />
+          <div key={rowKey} className="flex items-start gap-2">
+            <div className="flex-1 space-y-1">
+              <input
+                type={inputType}
+                value={value}
+                onChange={(e) => {
+                  const next = [...values];
+                  next[idx] = e.target.value;
+                  onChange(next);
+                }}
+                disabled={disabled}
+                placeholder={idx === 0 ? placeholderFirst : placeholderRest}
+                aria-label={rowAriaLabel(idx)}
+                aria-invalid={validationError ? true : undefined}
+                aria-describedby={errorId}
+                className="h-9 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm text-stone-900 placeholder-stone-400 transition focus:border-blue-400 focus:ring-2 focus:ring-blue-500/40 disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-800/80 dark:text-zinc-100 dark:placeholder-zinc-500"
+              />
+              {validationError ? (
+                <p id={errorId} className="px-1 text-xs text-red-600 dark:text-red-400">
+                  {validationError}
+                </p>
+              ) : null}
+            </div>
             {values.length > 1 && (
               <>
                 <button
@@ -314,8 +386,8 @@ function IdsEditor({
                     }
                   }}
                   disabled={disabled}
-                  aria-label="Remove"
-                  className="rounded-md p-1.5 text-stone-400 transition hover:bg-red-50 hover:text-red-500 disabled:opacity-40 dark:hover:bg-red-900/20"
+                  aria-label={`Remove ${rowAriaLabel(idx)}`}
+                  className="mt-1 rounded-md p-1.5 text-stone-400 transition hover:bg-red-50 hover:text-red-500 disabled:opacity-40 dark:hover:bg-red-900/20"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
@@ -363,6 +435,7 @@ function ChatsEditor({
   // Tracks which row's delete-confirmation dialog is open. -1 = none.
   const [confirmIndex, setConfirmIndex] = useState<number>(-1);
 
+  // `async` is intentional — see IdsEditor. DeleteDialog expects Promise<void>.
   const handleConfirmDelete = async (idx: number) => {
     onChange(chats.filter((_, i) => i !== idx));
     setConfirmIndex(-1);
@@ -371,7 +444,9 @@ function ChatsEditor({
   return (
     <div className="space-y-2.5">
       {chats.map((chat, idx) => {
-        const rowKey = `${idx}-${chat.id || "blank"}`;
+        // Pure index key — see IdsEditor note. Mixing content into the key
+        // unmounts the controlled <input> on every keystroke, destroying focus.
+        const rowKey = String(idx);
         const label = chat.name || chat.id;
         const isConfirmOpen = confirmIndex === idx;
         return (
@@ -387,6 +462,7 @@ function ChatsEditor({
                 }}
                 disabled={disabled}
                 placeholder={idx === 0 ? "-1001234567890" : "Additional chat ID"}
+                aria-label={`Telegram chat ID ${idx + 1}`}
                 className="h-9 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm text-stone-900 placeholder-stone-400 transition focus:border-blue-400 focus:ring-2 focus:ring-blue-500/40 disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-800/80 dark:text-zinc-100 dark:placeholder-zinc-500"
               />
               {chat.name ? (
@@ -411,7 +487,7 @@ function ChatsEditor({
                     }
                   }}
                   disabled={disabled}
-                  aria-label="Remove"
+                  aria-label={`Remove Telegram chat ID ${idx + 1}`}
                   className="mt-1 rounded-md p-1.5 text-stone-400 transition hover:bg-red-50 hover:text-red-500 disabled:opacity-40 dark:hover:bg-red-900/20"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
@@ -548,8 +624,13 @@ function ProviderCardChrome({
           <span className="text-xs font-medium text-stone-600 dark:text-zinc-400">
             {enabled ? "Enabled" : "Disabled"}
           </span>
+          {/* role="switch" — brings this control to parity with KillSwitchCard so
+              SRs announce "switch" instead of "checkbox" (WCAG 2.2 SC 4.1.2). */}
           <input
             type="checkbox"
+            role="switch"
+            aria-checked={enabled}
+            aria-label={`Toggle ${title}`}
             checked={enabled}
             onChange={(e) => onEnabledChange(e.target.checked)}
             className="h-4 w-4 rounded border-stone-300 text-blue-600 focus:ring-blue-500 dark:border-zinc-600"
@@ -766,6 +847,9 @@ function SlackProviderCard(props: SlackProviderProps) {
           placeholderRest="Additional webhook URL"
           removeConfirmCopy={(v) => `Remove webhook "${v}"?`}
           addLabel="Add webhook URL"
+          inputType="url"
+          validate={validateSlackWebhookUrl}
+          rowAriaLabel={(idx) => `Slack webhook URL ${idx + 1}`}
         />
       </div>
     </ProviderCardChrome>
@@ -862,10 +946,14 @@ function StickySaveBar({
   dirtyCount,
   onSave,
   isSaving,
+  disabled = false,
+  disabledReason,
 }: {
   dirtyCount: number;
   onSave: () => void;
   isSaving: boolean;
+  disabled?: boolean;
+  disabledReason?: string;
 }) {
   if (dirtyCount === 0) return null;
   const label = dirtyCount === 1 ? "1 change pending" : `${dirtyCount} changes pending`;
@@ -875,11 +963,18 @@ function StickySaveBar({
         <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
           {label}
         </span>
+        {disabled && disabledReason ? (
+          // biome-ignore lint/a11y/useSemanticElements: inline error text next to Save — <output> doesn't fit this context
+          <span className="text-xs text-red-600 dark:text-red-400" role="status">
+            {disabledReason}
+          </span>
+        ) : null}
         <Button
           type="button"
           onClick={onSave}
-          disabled={isSaving}
+          disabled={isSaving || disabled}
           aria-label="Save notification settings"
+          aria-disabled={isSaving || disabled}
         >
           {isSaving ? (
             <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
@@ -1006,6 +1101,14 @@ function NotificationSettingsPageContent({
   const tgFiltered = useMemo(() => tgChats.filter((c) => c.id.trim()), [tgChats]);
   const slackFiltered = useMemo(() => slackUrls.filter((u) => u.trim()), [slackUrls]);
 
+  // Disable Save while any non-empty Slack webhook URL fails validation. Empty
+  // rows are ignored — they get filtered at save time. Prevents persisting a
+  // malformed URL that would fail silently on first send.
+  const slackHasInvalidUrls = useMemo(
+    () => slackUrls.some((u) => validateSlackWebhookUrl(u) !== null),
+    [slackUrls]
+  );
+
   const tgDirty =
     tgEnabled !== tgBaseline.current.enabled ||
     !telegramChatsEqual(tgFiltered, tgBaseline.current.chats);
@@ -1101,7 +1204,15 @@ function NotificationSettingsPageContent({
         <NotificationReferenceCard />
       </section>
 
-      <StickySaveBar dirtyCount={dirtyCount} onSave={save} isSaving={isSaving} />
+      <StickySaveBar
+        dirtyCount={dirtyCount}
+        onSave={save}
+        isSaving={isSaving}
+        disabled={slackHasInvalidUrls}
+        disabledReason={
+          slackHasInvalidUrls ? "Fix invalid Slack webhook URLs before saving." : undefined
+        }
+      />
     </div>
   );
 }
