@@ -8,13 +8,11 @@ import { useTestNotificationConfig } from "@/hooks/useNotificationConfig";
 
 interface NotificationConfigTabProps {
   communityId: string;
-  programId: string;
   readOnly?: boolean;
 }
 
 export function NotificationConfigTab({
   communityId,
-  programId,
   readOnly = false,
 }: NotificationConfigTabProps) {
   const { data: config, isLoading, error } = useCommunityConfig(communityId);
