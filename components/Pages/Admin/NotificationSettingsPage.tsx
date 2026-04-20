@@ -90,9 +90,9 @@ const REALTIME_EVENTS: ReadonlyArray<ReferenceRow> = [
     note: "Skipped when commenter is staff/admin/reviewer; @-mentions still fire.",
   },
   {
-    event: "Milestone marked complete (off-chain or on-chain)",
+    event: "Milestone marked complete",
     recipient: "Milestone reviewers of the program",
-    note: "Fires from both the in-app form and on-chain MILESTONE attestation.",
+    note: "Fires when a grantee marks a milestone complete.",
   },
   {
     event: "@-mention in any comment",
