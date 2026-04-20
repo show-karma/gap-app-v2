@@ -73,6 +73,9 @@ export default function ApplicationDetailPage() {
   const searchParams = useSearchParams();
   const shouldOpenEdit = searchParams.get("edit") === "true";
 
+  // ?tab=comments from TG notification deep-link
+  const tabParam = searchParams.get("tab");
+
   // Get current user address
   const { address: currentUserAddress } = useAuth();
 
@@ -454,6 +457,7 @@ export default function ApplicationDetailPage() {
           {/* Tab-based Layout */}
           <ApplicationTabs
             connectedToHeader={!milestoneReviewUrl && !selectedStatus}
+            defaultIndex={tabParam === "comments" ? 2 : 0}
             tabs={
               [
                 {

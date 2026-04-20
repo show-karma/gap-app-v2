@@ -334,7 +334,11 @@ describe("NotificationSettingsPage — kill switch", () => {
 
     const toggle = screen.getByRole("switch");
     expect(toggle).toHaveAttribute("aria-checked", "true");
-    expect(screen.getByText(/Reviewer, admin & finance emails are off/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /Daily Reviewer Digest, Daily Milestone Reviewer Digest, and Admin Weekly Digest are/i
+      )
+    ).toBeInTheDocument();
   });
 
   it("should_call_saveConfig_with_disableReviewerEmails_true_when_toggled_on", () => {
@@ -678,7 +682,7 @@ describe("NotificationSettingsPage — reference card", () => {
     expect(screen.getByText(/What triggers a notification/i)).toBeInTheDocument();
   });
 
-  it("should_render_all_four_realtime_events_with_recipients", () => {
+  it("should_render_all_three_realtime_events_with_recipients", () => {
     setupDefaultMocks();
 
     renderPage();
@@ -686,12 +690,13 @@ describe("NotificationSettingsPage — reference card", () => {
     expect(screen.getByText(/Real-time \(Telegram \/ Slack\)/i)).toBeInTheDocument();
     expect(screen.getByText(/Comment posted on application/i)).toBeInTheDocument();
     expect(screen.getByText(/Milestone marked complete/i)).toBeInTheDocument();
-    expect(
-      screen.getByText(/Post-approval form submitted \(first time only\)/i)
-    ).toBeInTheDocument();
     expect(screen.getByText(/@-mention in any comment/i)).toBeInTheDocument();
     // Recipient column
     expect(screen.getByText(/The mentioned user \(any role\)/i)).toBeInTheDocument();
+    // Post-approval TG dispatch removed — must NOT appear in real-time section
+    expect(
+      screen.queryByText(/Post-approval form submitted \(first time only\)/i)
+    ).not.toBeInTheDocument();
   });
 
   it("should_render_all_nine_email_only_events", () => {
@@ -704,7 +709,7 @@ describe("NotificationSettingsPage — reference card", () => {
       "Daily Milestone Reviewer Digest",
       "Admin Weekly Digest",
       "Milestone Verification",
-      "Post-approval form submission",
+      "Post-approval form submitted",
       "Invoice received",
       "KYC status change",
       "Reviewer invitations",
@@ -722,7 +727,9 @@ describe("NotificationSettingsPage — reference card", () => {
     renderPage();
 
     expect(screen.getByText(/Rules of thumb/i)).toBeInTheDocument();
-    expect(screen.getByText(/email kill switch silences/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/kill switch only silences the three digest emails/i)
+    ).toBeInTheDocument();
     expect(screen.getByText(/intentional duplication/i)).toBeInTheDocument();
     expect(screen.getByText(/To be @-tagged in a Telegram group/i)).toBeInTheDocument();
   });

@@ -72,11 +72,6 @@ const REALTIME_EVENTS: ReadonlyArray<ReferenceRow> = [
     note: "Fires from both the in-app form and on-chain MILESTONE attestation.",
   },
   {
-    event: "Post-approval form submitted (first time only)",
-    recipient: "Program reviewers + milestone reviewers (deduped)",
-    note: "Per-program admin/finance email list still receives a separate email.",
-  },
-  {
     event: "@-mention in any comment",
     recipient: "The mentioned user (any role)",
     note: "Fires regardless of commenter role; user must have a Telegram username on profile to be tagged.",
@@ -105,9 +100,9 @@ const EMAIL_ONLY_EVENTS: ReadonlyArray<ReferenceRow> = [
     note: "Sent when a reviewer verifies a milestone.",
   },
   {
-    event: "Post-approval form submission",
+    event: "Post-approval form submitted",
     recipient: "Per-program admin/finance email list",
-    note: "Configured in the form schema; runs in parallel with the new Telegram dispatch.",
+    note: "Configured in the form schema.",
   },
   {
     event: "Invoice received",
@@ -132,7 +127,7 @@ const EMAIL_ONLY_EVENTS: ReadonlyArray<ReferenceRow> = [
 ];
 
 const RULES_OF_THUMB: ReadonlyArray<string> = [
-  "The email kill switch silences reviewer / admin / finance emails only. Telegram and Slack notifications continue.",
+  "The kill switch only silences the three digest emails (daily reviewer, milestone reviewer, admin weekly). All per-event emails (milestone verification, invoices, KYC, reviewer invitations) continue regardless.",
   "Real-time events do not replace the daily digests — both fire (intentional duplication).",
   "To be @-tagged in a Telegram group, a reviewer must have their Telegram username set on their Karma profile and be a member of the configured group.",
 ];
@@ -223,9 +218,9 @@ function KillSwitchCard({
             Email Kill Switch
           </p>
           <p className="mt-0.5 text-xs text-stone-500 dark:text-zinc-400">
-            {silenced
-              ? "Reviewer, admin & finance emails are silenced."
-              : "Emails enabled. Silences reviewer, admin & finance emails when armed. Telegram / Slack are unaffected."}
+            {
+              "Silences the three reviewer/milestone/admin digest emails. All other notifications (Telegram, Slack, per-event emails) are unaffected."
+            }
           </p>
         </div>
         <button
@@ -249,8 +244,8 @@ function KillSwitchCard({
       {silenced && (
         <div className="border-t border-red-100 bg-red-50 px-5 py-2.5 dark:border-red-900/30 dark:bg-red-900/10">
           <p className="text-xs text-red-600 dark:text-red-400">
-            Reviewer, admin &amp; finance emails are off. Applicant / grantee emails and all
-            real-time Telegram / Slack notifications continue to fire.
+            Daily Reviewer Digest, Daily Milestone Reviewer Digest, and Admin Weekly Digest are off.
+            All other notifications continue.
           </p>
         </div>
       )}
