@@ -17,8 +17,8 @@ const Newsletter = dynamic(() => import("./newsletter").then((m) => ({ default: 
 });
 
 const navigationLinks = [
-  { label: "For Builders", href: PAGES.HOME },
-  { label: "For Funders", href: PAGES.FUNDERS },
+  { label: "For Projects", href: PAGES.FOR_PROJECTS },
+  { label: "For Funders", href: PAGES.HOME },
   { label: "Blog", href: SOCIALS.PARAGRAPH },
   { label: "Guide", href: SOCIALS.DOCS },
   { label: "API Docs", href: karmaLinks.apiDocs },

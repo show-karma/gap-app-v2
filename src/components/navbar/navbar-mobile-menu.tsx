@@ -28,7 +28,7 @@ import { SOCIALS } from "@/utilities/socials";
 import { Logo } from "../shared/logo";
 import {
   ExploreContent,
-  ForBuildersContent,
+  ForProjectsContent,
   ForFundersContent,
   MenuSection,
   ResourcesContent,
@@ -216,10 +216,10 @@ export function NavbarMobileMenu() {
 
               {!isLoggedIn && (
                 <>
-                  {/* For Builders Section */}
+                  {/* For Projects Section */}
                   <div className="border-b border-border py-3">
-                    <MenuSection title="For Builders" variant="mobile" />
-                    <ForBuildersContent variant="mobile" onClose={() => setMobileMenuOpen(false)} />
+                    <MenuSection title="For Projects" variant="mobile" />
+                    <ForProjectsContent variant="mobile" onClose={() => setMobileMenuOpen(false)} />
                   </div>
 
                   {/* For Funders Section */}

@@ -100,7 +100,7 @@ export function LiveFundingOpportunitiesCarousel({
           className="border-border text-sm font-medium leading-[1.5] tracking-[0.005em] text-center align-middle text-foreground"
           asChild
         >
-          <Link href={PAGES.FUNDERS}>Run a funding program</Link>
+          <Link href={PAGES.HOME}>Run a funding program</Link>
         </Button>
       </div>
     );
@@ -179,7 +179,7 @@ export function LiveFundingOpportunitiesCarousel({
           className="border-border text-sm font-medium leading-[1.5] tracking-[0.005em] text-center align-middle text-foreground"
           asChild
         >
-          <Link href={PAGES.FUNDERS}>Run a funding program</Link>
+          <Link href={PAGES.HOME}>Run a funding program</Link>
         </Button>
       </div>
     </>

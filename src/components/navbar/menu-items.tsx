@@ -36,33 +36,37 @@ export interface ExploreItems {
   communities: MenuItem[];
 }
 
-export const forBuildersItems: MenuItem[] = [
+export const forProjectsItems: MenuItem[] = [
   {
-    href: PAGES.MY_PROJECTS,
+    href: PAGES.FOR_PROJECTS,
     icon: UserPlus,
     title: "Create project",
     description: "Get started and create your project",
-    openModal: true,
   },
   {
-    href: PAGES.HOME,
+    href: PAGES.PROJECTS_EXPLORER,
+    icon: LayoutGrid,
+    title: "Explore projects",
+    description: "Discover funded projects and their progress",
+  },
+  {
+    href: PAGES.REGISTRY.ROOT,
     icon: BanknoteArrowDown,
     title: "Find funding",
     description: "Explore live funding opportunities",
-    anchor: "live-funding-opportunities",
   },
 ];
 
 export const forFundersItems: ForFundersItems = {
   main: {
-    href: PAGES.FUNDERS,
+    href: PAGES.HOME,
     icon: GoalIcon,
     title: "Launch a program",
     description: "Setup and start funding in 2 days",
   },
   secondary: [
     {
-      href: PAGES.FUNDERS,
+      href: PAGES.HOME,
       icon: GalleryThumbnails,
       title: "Case studies",
       anchor: "case-studies",

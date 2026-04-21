@@ -1,25 +1,26 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import { FAQJsonLd } from "@/components/Seo/FAQJsonLd";
-import { FAQ } from "@/src/features/homepage/components/faq";
-import { Hero } from "@/src/features/homepage/components/hero";
-import { HowItWorks } from "@/src/features/homepage/components/how-it-works";
-import { JoinCommunity } from "@/src/features/homepage/components/join-community";
-import { LiveFundingOpportunities } from "@/src/features/homepage/components/live-funding-opportunities";
-import { LiveFundingOpportunitiesSkeleton } from "@/src/features/homepage/components/live-funding-opportunities-skeleton";
-import { PlatformFeatures } from "@/src/features/homepage/components/platform-features";
-import { WhereBuildersGrow } from "@/src/features/homepage/components/where-builders-grow";
+import { CaseStudiesSection } from "@/src/features/home/components/case-studies-section";
+import { CTASection } from "@/src/features/home/components/cta-section";
+import { FAQSection } from "@/src/features/home/components/faq-section";
+import { Hero } from "@/src/features/home/components/hero";
+import { HowItWorksSection } from "@/src/features/home/components/how-it-works-section";
+import { NumbersSection } from "@/src/features/home/components/numbers-section";
+import { ObjectionsSection } from "@/src/features/home/components/objections-section";
+import { OfferingSection } from "@/src/features/home/components/offering-section";
+import { PainPoints } from "@/src/features/home/components/pain-points";
+import { PlatformSection } from "@/src/features/home/components/platform-section";
 import { customMetadata } from "@/utilities/meta";
 import { cn } from "@/utilities/tailwind";
 
 export const metadata: Metadata = {
   ...customMetadata({
     description:
-      "Karma helps builders get funded and build reputation. Ecosystems use our full-stack solution to allocate grants, track milestones, and measure impact.",
+      "AI-powered software for grants, hackathons, and RFPs. Automated evaluation, milestone tracking, and impact reporting. Funding software that does the work.",
     path: "/",
   }),
   title: {
-    absolute: "Karma - Where builders get funded and ecosystems grow",
+    absolute: "Karma | Funding Software That Does the Work",
   },
 };
 
@@ -33,63 +34,71 @@ export default function Index() {
       <FAQJsonLd
         questions={[
           {
-            question: "What is Karma and how can it help my project?",
+            question: "What is Karma?",
             answer:
-              "Karma is a modular funding and impact platform that helps you showcase your work, attract funding, and build your onchain reputation. You can share progress, complete milestones, and receive endorsements that boost your credibility across ecosystems.",
+              "Karma is funding software that does the work, not just a dashboard. It automates intake, AI-powered evaluation, milestone tracking, impact reporting, and fund distribution for grants, hackathons, and RFPs.",
           },
           {
-            question: "Do I need to be part of a specific program or community to use Karma?",
+            question: "Who is Karma for?",
             answer:
-              "No, you can create your project profile anytime. Think of your project profile as a resume. If your project is part of a grant program, hackathon, or ecosystem that partners with Karma, it will appear automatically. If not, you can easily add your grant by following the steps in our guide.",
+              "Any organization that funds projects: foundations, ecosystems, corporate programs, DAOs, government agencies. Especially useful for lean teams that need enterprise-grade programs without adding headcount.",
           },
           {
-            question: "What kind of information should I include in my project profile?",
+            question: "How is Karma different from other grant management tools?",
             answer:
-              "Your profile is your public, onchain portfolio. Include a clear description of your project and goals, milestones or deliverables you plan to achieve, updates on your progress (with links, screenshots, or metrics), and any impact results or endorsements you receive. The more complete your profile, the easier it is for funders and collaborators to discover and trust your work.",
+              "Most tools give you forms and dashboards, but you still do all the work. Karma automates the work itself: AI agents evaluate applications, milestones are tracked automatically, and reports generate continuously.",
           },
           {
-            question: "How does Karma track and verify project progress?",
+            question: "How do AI agents work in Karma?",
             answer:
-              "Karma lets you post updates, complete milestones, and attach evidence (documents, links, metrics, attestations). These are reviewed or automatically verified depending on your program setup. Verified milestones strengthen your project's credibility and onchain impact record.",
+              "Karma's AI agents handle time-consuming operational tasks: scoring applications, flagging risks, summarizing grantee progress, and generating impact reports. They run continuously in the background. You review the output and make the decisions.",
           },
           {
-            question: "Can I receive funding or donations directly through Karma?",
+            question: "Can we migrate from our current setup?",
             answer:
-              "Yes. You can log in and enable donations to accept fiat or crypto across multiple networks. Karma also functions as a funding platform. If your project is part of a program hosted on Karma, you can receive direct payments from that program or community.",
+              "Yes. Whether you're using spreadsheets, another platform, or a patchwork of tools, we handle the migration completely.",
           },
           {
-            question: "What happens to my data and reputation after my program ends?",
+            question: "Do we have to use everything?",
             answer:
-              "Your project's profile and verified impact remain permanently available onchain. This means your history travels with you, helping you qualify faster for future funding, collaborations, or opportunities across other ecosystems using Karma.",
+              "No. Start with what you need. We can run part of your program while you keep the rest. Most organizations expand as they see results.",
           },
           {
-            question: "How do I make my metrics show up on my profile impact page?",
+            question: "Do I still need a grants team?",
             answer:
-              "Once you create your profile, you can link your github and onchain contracts. We will automatically fetch and display those metrics. You can also input your metrics manually.",
+              "Many organizations run their entire program with Karma and a very lean team. The platform handles the operational work so your team can focus on strategy and funding decisions.",
           },
           {
-            question: "Do I need to pay gas fees to update my project or post progress?",
+            question: "Do we get reports for our board?",
             answer:
-              "Yes, for now. Since all project data is stored onchain, you'll need to pay a small gas fee when updating your project or posting progress. We're actively working on gasless transactions, so soon you'll be able to update your project without paying gas or holding crypto in your wallet.",
+              "Yes, automatically. Board-ready impact reports are always current. No quarterly scramble.",
+          },
+          {
+            question: "Can we run it under our own brand?",
+            answer:
+              "Yes. Many organizations use a custom-branded instance of Karma with their own domain, theme, and workflows. Your applicants see your brand. Karma is invisible.",
           },
         ]}
       />
-      <div className="flex w-full max-w-[1920px] justify-center items-center flex-1 flex-col gap-2">
+      <div className="flex w-full max-w-[1920px] justify-center items-center flex-1 flex-col gap-16 lg:gap-24">
         <Hero />
         <HorizontalLine className="max-w-full" />
-        <Suspense fallback={<LiveFundingOpportunitiesSkeleton />}>
-          <LiveFundingOpportunities />
-        </Suspense>
+        <PainPoints />
         <HorizontalLine />
-        <PlatformFeatures />
+        <NumbersSection />
         <HorizontalLine />
-        <HowItWorks />
+        <PlatformSection />
         <HorizontalLine />
-        <JoinCommunity />
+        <CaseStudiesSection />
         <HorizontalLine />
-        <FAQ />
+        <HowItWorksSection />
         <HorizontalLine />
-        <WhereBuildersGrow />
+        <ObjectionsSection />
+        <HorizontalLine />
+        <OfferingSection />
+        <HorizontalLine />
+        <FAQSection />
+        <CTASection />
       </div>
     </main>
   );
