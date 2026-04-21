@@ -11,8 +11,15 @@ import {
 } from "@/src/features/payout-disbursement";
 
 // Mock heavy dependencies
+const { captureFileUploadProps } = vi.hoisted(() => ({
+  captureFileUploadProps: vi.fn(),
+}));
+
 vi.mock("@/components/Utilities/FileUpload", () => ({
-  FileUpload: () => <div data-testid="file-upload">FileUpload</div>,
+  FileUpload: (props: Record<string, unknown>) => {
+    captureFileUploadProps(props);
+    return <div data-testid="file-upload">FileUpload</div>;
+  },
 }));
 
 vi.mock("@/utilities/indexer", () => ({
@@ -129,6 +136,36 @@ describe("MilestonesSection", () => {
     render(<MilestonesSection {...defaultProps} milestoneInvoices={[]} />);
 
     expect(screen.getByText("No milestones configured yet.")).toBeInTheDocument();
+  });
+
+  it("should include grantUID in presigned URL payload when Attach file modal opens", async () => {
+    const invoice = createMockInvoice({
+      milestoneLabel: "Delivery",
+      milestoneUID: "ms-1",
+    });
+
+    render(
+      <MilestonesSection {...defaultProps} invoiceRequired={true} milestoneInvoices={[invoice]} />
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: /attach file/i }));
+
+    expect(captureFileUploadProps).toHaveBeenCalled();
+    const props = captureFileUploadProps.mock.calls.at(-1)?.[0] as {
+      presignedUrlPayload?: (file: File) => Record<string, unknown>;
+    };
+
+    expect(props.presignedUrlPayload).toBeTypeOf("function");
+
+    const mockFile = new File(["pdf content"], "invoice.pdf", { type: "application/pdf" });
+    const payload = props.presignedUrlPayload?.(mockFile);
+
+    expect(payload).toEqual({
+      grantUID: "grant-1",
+      fileName: "invoice.pdf",
+      fileType: "application/pdf",
+      fileSize: mockFile.size,
+    });
   });
 
   it("should call getInvoiceDownloadUrl with grantUid when View invoice is clicked", async () => {

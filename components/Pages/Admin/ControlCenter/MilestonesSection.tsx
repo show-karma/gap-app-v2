@@ -570,6 +570,12 @@ export const MilestonesSection = memo(function MilestonesSection({
             useS3Upload
             skipDimensionValidation
             presignedUrlEndpoint={INDEXER.V2.MILESTONE_INVOICES.PRESIGNED_URL()}
+            presignedUrlPayload={(file) => ({
+              grantUID: grant.grantUid,
+              fileName: file.name,
+              fileType: file.type,
+              fileSize: file.size,
+            })}
             maxFileSize={10 * 1024 * 1024}
             allowedFileTypes={[
               "application/pdf",
