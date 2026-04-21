@@ -11,8 +11,15 @@ import {
 } from "@/src/features/payout-disbursement";
 
 // Mock heavy dependencies
+const { captureFileUploadProps } = vi.hoisted(() => ({
+  captureFileUploadProps: vi.fn(),
+}));
+
 vi.mock("@/components/Utilities/FileUpload", () => ({
-  FileUpload: () => <div data-testid="file-upload">FileUpload</div>,
+  FileUpload: (props: Record<string, unknown>) => {
+    captureFileUploadProps(props);
+    return <div data-testid="file-upload">FileUpload</div>;
+  },
 }));
 
 vi.mock("@/utilities/indexer", () => ({
@@ -84,6 +91,7 @@ describe("MilestonesSection", () => {
     communityUID: "community-1",
     milestoneInvoices: [],
     invoiceRequired: false,
+    canEditInvoices: true,
     milestoneEdits: {},
     pendingFiles: {},
     allocationByUID: new Map(),
@@ -129,6 +137,110 @@ describe("MilestonesSection", () => {
     render(<MilestonesSection {...defaultProps} milestoneInvoices={[]} />);
 
     expect(screen.getByText("No milestones configured yet.")).toBeInTheDocument();
+  });
+
+  it("should include grantUID in presigned URL payload when Attach file modal opens", async () => {
+    const invoice = createMockInvoice({
+      milestoneLabel: "Delivery",
+      milestoneUID: "ms-1",
+    });
+
+    render(
+      <MilestonesSection {...defaultProps} invoiceRequired={true} milestoneInvoices={[invoice]} />
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: /attach file/i }));
+
+    expect(captureFileUploadProps).toHaveBeenCalled();
+    const props = captureFileUploadProps.mock.calls.at(-1)?.[0] as {
+      presignedUrlPayload?: (file: File) => Record<string, unknown>;
+    };
+
+    expect(props.presignedUrlPayload).toBeTypeOf("function");
+
+    const mockFile = new File(["pdf content"], "invoice.pdf", { type: "application/pdf" });
+    const payload = props.presignedUrlPayload?.(mockFile);
+
+    expect(payload).toEqual({
+      grantUID: "grant-1",
+      fileName: "invoice.pdf",
+      fileType: "application/pdf",
+      fileSize: mockFile.size,
+    });
+  });
+
+  it("should hide Attach file button when canEditInvoices is false", () => {
+    const invoice = createMockInvoice({ milestoneLabel: "Delivery", milestoneUID: "ms-1" });
+
+    render(
+      <MilestonesSection
+        {...defaultProps}
+        invoiceRequired={true}
+        canEditInvoices={false}
+        milestoneInvoices={[invoice]}
+      />
+    );
+
+    expect(screen.queryByRole("button", { name: /attach file/i })).not.toBeInTheDocument();
+  });
+
+  it("should hide Remove invoice button when canEditInvoices is false but still show View invoice", async () => {
+    const invoice = createMockInvoice({
+      milestoneLabel: "Delivery",
+      milestoneUID: "ms-1",
+      invoiceFileKey: "logos/invoices/grant-1/1700000000000.pdf",
+    });
+
+    render(
+      <MilestonesSection
+        {...defaultProps}
+        invoiceRequired={true}
+        canEditInvoices={false}
+        milestoneInvoices={[invoice]}
+      />
+    );
+
+    expect(screen.getByRole("button", { name: /view invoice/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /remove invoice file/i })).not.toBeInTheDocument();
+  });
+
+  it("should render received date as read-only text when canEditInvoices is false", () => {
+    const invoice = createMockInvoice({
+      milestoneLabel: "Delivery",
+      milestoneUID: "ms-1",
+      invoiceReceivedAt: "2026-04-01T00:00:00.000Z",
+    });
+
+    render(
+      <MilestonesSection
+        {...defaultProps}
+        invoiceRequired={true}
+        canEditInvoices={false}
+        milestoneInvoices={[invoice]}
+        getInvoiceReceivedDate={() => "2026-04-01"}
+      />
+    );
+
+    // Date picker input is absent
+    const dateInputs = screen
+      .queryAllByLabelText(/invoice received date/i)
+      .filter((el) => el.tagName === "INPUT");
+    expect(dateInputs).toHaveLength(0);
+  });
+
+  it("should show Attach file button when canEditInvoices is true", () => {
+    const invoice = createMockInvoice({ milestoneLabel: "Delivery", milestoneUID: "ms-1" });
+
+    render(
+      <MilestonesSection
+        {...defaultProps}
+        invoiceRequired={true}
+        canEditInvoices={true}
+        milestoneInvoices={[invoice]}
+      />
+    );
+
+    expect(screen.getByRole("button", { name: /attach file/i })).toBeInTheDocument();
   });
 
   it("should call getInvoiceDownloadUrl with grantUid when View invoice is clicked", async () => {

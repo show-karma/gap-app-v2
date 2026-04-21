@@ -113,6 +113,13 @@ export interface MilestonesSectionProps {
   communityUID: string;
   milestoneInvoices: CommunityPayoutInvoiceInfo[];
   invoiceRequired: boolean;
+  /**
+   * Whether the caller has `program:edit` permission. When false, invoice
+   * edit controls (attach, remove, received-date input) are hidden or
+   * rendered read-only. Mirrors the backend authorization that gates
+   * `POST /v2/milestone-invoices/presigned` and sibling write routes.
+   */
+  canEditInvoices: boolean;
   milestoneEdits: Record<
     string,
     { invoiceReceivedAt?: string | null; milestoneUID?: string | null }
@@ -156,6 +163,7 @@ export const MilestonesSection = memo(function MilestonesSection({
   communityUID,
   milestoneInvoices,
   invoiceRequired,
+  canEditInvoices,
   milestoneEdits,
   pendingFiles,
   allocationByUID,
@@ -240,7 +248,7 @@ export const MilestonesSection = memo(function MilestonesSection({
       <h3 className="text-sm font-semibold text-gray-900 dark:text-zinc-100 mb-1">
         Milestones ({milestoneInvoices.length})
       </h3>
-      {invoiceRequired && (
+      {invoiceRequired && canEditInvoices && (
         <p className="text-xs text-gray-400 dark:text-zinc-500 mb-3">
           Attach invoice files or set received dates. Save changes when done.
         </p>
@@ -445,27 +453,29 @@ export const MilestonesSection = memo(function MilestonesSection({
                                     View invoice
                                   </button>
                                 )}
-                                <button
-                                  type="button"
-                                  className="p-0.5 rounded text-red-400 hover:text-red-600 dark:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                                  onClick={() => {
-                                    onFileRemoved(mKey);
-                                    if (invoice.invoiceFileKey) {
-                                      // Removing a saved file — clear the date too
-                                      handleInvoiceReceivedDateChange(
-                                        mKey,
-                                        invoice.milestoneUID,
-                                        ""
-                                      );
-                                    }
-                                    // Cancelling a pending upload — leave existing date intact
-                                  }}
-                                  title="Remove invoice file"
-                                >
-                                  <XMarkIcon className="h-3.5 w-3.5" />
-                                </button>
+                                {canEditInvoices && (
+                                  <button
+                                    type="button"
+                                    className="p-0.5 rounded text-red-400 hover:text-red-600 dark:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                    onClick={() => {
+                                      onFileRemoved(mKey);
+                                      if (invoice.invoiceFileKey) {
+                                        // Removing a saved file — clear the date too
+                                        handleInvoiceReceivedDateChange(
+                                          mKey,
+                                          invoice.milestoneUID,
+                                          ""
+                                        );
+                                      }
+                                      // Cancelling a pending upload — leave existing date intact
+                                    }}
+                                    title="Remove invoice file"
+                                  >
+                                    <XMarkIcon className="h-3.5 w-3.5" />
+                                  </button>
+                                )}
                               </div>
-                            ) : (
+                            ) : canEditInvoices ? (
                               <button
                                 type="button"
                                 className="inline-flex items-center gap-1 text-xs text-gray-400 dark:text-zinc-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
@@ -480,29 +490,39 @@ export const MilestonesSection = memo(function MilestonesSection({
                                 <PaperClipIcon className="h-3 w-3" />
                                 Attach file
                               </button>
+                            ) : (
+                              <span className="text-xs text-gray-300 dark:text-zinc-600">
+                                &mdash;
+                              </span>
                             )}
 
                             {/* Row 2: Received date */}
                             <div className="flex flex-col items-center gap-0.5">
-                              <Input
-                                type="date"
-                                max={todayLocal}
-                                value={receivedDateValue ?? ""}
-                                onChange={(e) =>
-                                  handleInvoiceReceivedDateChange(
-                                    mKey,
-                                    invoice.milestoneUID,
-                                    e.target.value
-                                  )
-                                }
-                                className={cn(
-                                  "h-6 text-[11px] w-[130px] bg-white dark:bg-zinc-900",
-                                  hasReceivedDate
-                                    ? "border-emerald-200 dark:border-emerald-800"
-                                    : ""
-                                )}
-                                aria-label={`Invoice received date for ${formatMilestoneTitle(idx, invoice.milestoneLabel)}`}
-                              />
+                              {canEditInvoices ? (
+                                <Input
+                                  type="date"
+                                  max={todayLocal}
+                                  value={receivedDateValue ?? ""}
+                                  onChange={(e) =>
+                                    handleInvoiceReceivedDateChange(
+                                      mKey,
+                                      invoice.milestoneUID,
+                                      e.target.value
+                                    )
+                                  }
+                                  className={cn(
+                                    "h-6 text-[11px] w-[130px] bg-white dark:bg-zinc-900",
+                                    hasReceivedDate
+                                      ? "border-emerald-200 dark:border-emerald-800"
+                                      : ""
+                                  )}
+                                  aria-label={`Invoice received date for ${formatMilestoneTitle(idx, invoice.milestoneLabel)}`}
+                                />
+                              ) : (
+                                <span className="text-[11px] text-gray-600 dark:text-zinc-400 tabular-nums">
+                                  {receivedDateValue ? formatDate(receivedDateValue, "UTC") : "—"}
+                                </span>
+                              )}
                               {invoice.invoiceReceivedBy && (
                                 <span
                                   className="text-[10px] text-gray-400 dark:text-zinc-500 font-mono"
@@ -570,6 +590,12 @@ export const MilestonesSection = memo(function MilestonesSection({
             useS3Upload
             skipDimensionValidation
             presignedUrlEndpoint={INDEXER.V2.MILESTONE_INVOICES.PRESIGNED_URL()}
+            presignedUrlPayload={(file) => ({
+              grantUID: grant.grantUid,
+              fileName: file.name,
+              fileType: file.type,
+              fileSize: file.size,
+            })}
             maxFileSize={10 * 1024 * 1024}
             allowedFileTypes={[
               "application/pdf",
