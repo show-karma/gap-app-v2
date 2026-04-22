@@ -17,6 +17,12 @@ interface TelegramPairChatModalProps {
   communitySlug: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  // Fires on successful verify (both newly-paired and already-paired). The
+  // parent's local `tgChats` state is seeded once from server data and never
+  // re-synced from props (see NotificationSettingsPage.tsx:1074-1078 — sync
+  // would clobber unsaved edits). Without this callback the provider card's
+  // Chat-IDs list stays empty until the page is remounted.
+  onPaired?: (chat: { id: string; name: string }) => void;
 }
 
 const formatCountdown = (msRemaining: number): string => {
@@ -45,6 +51,7 @@ export function TelegramPairChatModal({
   communitySlug,
   open,
   onOpenChange,
+  onPaired,
 }: TelegramPairChatModalProps) {
   const [token, setToken] = useState<string | null>(null);
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
@@ -133,13 +140,17 @@ export function TelegramPairChatModal({
           } else {
             toast.success(`Paired "${label}"`);
           }
+          // Fire even on already-paired: server truth includes the chat but
+          // the parent's local state may not (e.g. it was paired in another
+          // tab / session). Parent de-dupes by id.
+          onPaired?.({ id: data.chatId, name: data.chatTitle });
           onOpenChange(false);
         },
         // No onError handler needed — verifyPairing.error drives the inline
         // banner via the resolveVerifyErrorMessage call below.
       }
     );
-  }, [token, verifyPairing, verifyReset, onOpenChange]);
+  }, [token, verifyPairing, verifyReset, onOpenChange, onPaired]);
 
   // Read the error directly from the mutation result. Single source of truth.
   const inlineError = resolveVerifyErrorMessage(verifyPairing.error);
