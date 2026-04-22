@@ -39,8 +39,8 @@ export function Hero() {
               Build reputation. Ship with proof.
             </h1>
             <p className="text-muted-foreground text-sm sm:text-base font-medium">
-              Create your project profile, find funding opportunities, track milestones,
-              and get discovered for more grants, hackathons, and collaborations.
+              Create your project profile, find funding opportunities, track milestones, and get
+              discovered for more grants, hackathons, and collaborations.
             </p>
             <div className="relative flex flex-col mt-4 md:flex-row gap-3 md:gap-3">
               {/* Blurred gradient background */}

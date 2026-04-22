@@ -50,25 +50,25 @@ export function HowItWorksSection() {
       <SectionContainer className="flex flex-col items-start gap-12">
         {/* Header */}
         <ScrollReveal variant="fade-up">
-        <div className="flex flex-col items-start gap-4 w-full">
-          <Badge
-            variant="secondary"
-            className={cn(
-              "text-secondary-foreground font-medium text-xs",
-              "leading-[150%] tracking-[0.015em]",
-              "rounded-full py-[3px] px-2",
-              "bg-secondary border-0 w-fit"
-            )}
-          >
-            How It Works
-          </Badge>
+          <div className="flex flex-col items-start gap-4 w-full">
+            <Badge
+              variant="secondary"
+              className={cn(
+                "text-secondary-foreground font-medium text-xs",
+                "leading-[150%] tracking-[0.015em]",
+                "rounded-full py-[3px] px-2",
+                "bg-secondary border-0 w-fit"
+              )}
+            >
+              How It Works
+            </Badge>
 
-          <h2 className={cn("section-title", "w-full")}>
-            <span className="text-foreground">Live in 48 hours.</span>{" "}
-            <br className="hidden md:block" />
-            <span className="text-muted-foreground">No IT team required.</span>
-          </h2>
-        </div>
+            <h2 className={cn("section-title", "w-full")}>
+              <span className="text-foreground">Live in 48 hours.</span>{" "}
+              <br className="hidden md:block" />
+              <span className="text-muted-foreground">No IT team required.</span>
+            </h2>
+          </div>
         </ScrollReveal>
 
         {/* Steps Grid */}
@@ -77,79 +77,76 @@ export function HowItWorksSection() {
             const IconComponent = step.icon;
             return (
               <ScrollReveal key={index} variant="fade-up" delay={index * 150}>
-              <div className={cn("flex flex-col items-center gap-4 h-full")}>
-                <div
-                  className={cn(
-                    "w-12 h-12 rounded-full flex-shrink-0",
-                    "bg-secondary flex items-center justify-center"
-                  )}
-                >
-                  <IconComponent className={cn("w-6 h-6", "text-foreground")} />
-                </div>
-
-                <Badge
-                  variant="secondary"
-                  className={cn(
-                    "text-secondary-foreground font-medium text-xs",
-                    "leading-[150%] tracking-[0.015em]",
-                    "rounded-full py-[3px] px-2",
-                    "bg-secondary border-0 w-fit"
-                  )}
-                >
-                  {step.stepLabel}
-                </Badge>
-
-                <Card
-                  className={cn(
-                    "flex flex-col w-full h-full",
-                    "rounded-2xl border-0 bg-secondary shadow-none",
-                    "p-8"
-                  )}
-                >
-                  <CardContent
+                <div className={cn("flex flex-col items-center gap-4 h-full")}>
+                  <div
                     className={cn(
-                      "p-0 flex flex-col items-start gap-2",
-                      step.hasButton ? "justify-between h-full" : ""
+                      "w-12 h-12 rounded-full flex-shrink-0",
+                      "bg-secondary flex items-center justify-center"
                     )}
                   >
-                    <div className="flex flex-col gap-2">
-                      <h3
-                        className={cn(
-                          "text-foreground font-semibold",
-                          "text-xl leading-[120%] tracking-[-0.02em]"
-                        )}
-                      >
-                        {step.title}
-                      </h3>
-                      <p
-                        className={cn(
-                          "text-muted-foreground font-medium text-sm",
-                          "leading-[22px]"
-                        )}
-                      >
-                        {step.description}
-                      </p>
-                    </div>
+                    <IconComponent className={cn("w-6 h-6", "text-foreground")} />
+                  </div>
 
-                    {step.hasButton && (
-                      <div className="mt-4">
-                        <Button
-                          asChild
-                          className="rounded-md font-medium"
-                        >
-                          <Link
-                            href={SOCIALS.PARTNER_FORM}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            Schedule a Call
-                          </Link>
-                        </Button>
-                      </div>
+                  <Badge
+                    variant="secondary"
+                    className={cn(
+                      "text-secondary-foreground font-medium text-xs",
+                      "leading-[150%] tracking-[0.015em]",
+                      "rounded-full py-[3px] px-2",
+                      "bg-secondary border-0 w-fit"
                     )}
-                  </CardContent>
-                </Card>
-              </div>
+                  >
+                    {step.stepLabel}
+                  </Badge>
+
+                  <Card
+                    className={cn(
+                      "flex flex-col w-full h-full",
+                      "rounded-2xl border-0 bg-secondary shadow-none",
+                      "p-8"
+                    )}
+                  >
+                    <CardContent
+                      className={cn(
+                        "p-0 flex flex-col items-start gap-2",
+                        step.hasButton ? "justify-between h-full" : ""
+                      )}
+                    >
+                      <div className="flex flex-col gap-2">
+                        <h3
+                          className={cn(
+                            "text-foreground font-semibold",
+                            "text-xl leading-[120%] tracking-[-0.02em]"
+                          )}
+                        >
+                          {step.title}
+                        </h3>
+                        <p
+                          className={cn(
+                            "text-muted-foreground font-medium text-sm",
+                            "leading-[22px]"
+                          )}
+                        >
+                          {step.description}
+                        </p>
+                      </div>
+
+                      {step.hasButton && (
+                        <div className="mt-4">
+                          <Button asChild className="rounded-md font-medium">
+                            <Link
+                              href={SOCIALS.PARTNER_FORM}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              Schedule a Call
+                            </Link>
+                          </Button>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
               </ScrollReveal>
             );
           })}

@@ -16,20 +16,56 @@ interface AnimatedCounterProps {
 }
 
 /**
- * Parses a display string like "4,000+" into a numeric value and suffix.
+ * Parses a display string into its numeric target, magnitude, and trailing suffix.
+ * Examples: "4,000+" → { num: 4000, magnitude: "", suffix: "+" },
+ *           "50k+"   → { num: 50000, magnitude: "k", suffix: "+" },
+ *           "1.2M"   → { num: 1200000, magnitude: "M", suffix: "" }.
  */
-function parseDisplayValue(display: string): { num: number; suffix: string } {
-  const match = display.match(/^([\d,]+)(.*)/);
-  if (!match) return { num: 0, suffix: display };
-  const num = Number.parseInt(match[1].replace(/,/g, ""), 10);
-  const suffix = match[2] || "";
-  return { num, suffix };
+function parseDisplayValue(display: string): {
+  num: number;
+  magnitude: string;
+  suffix: string;
+} {
+  const match = display.match(/^([\d,]+(?:\.\d+)?)\s*([kKmMbB]?)(.*)$/);
+  if (!match) return { num: 0, magnitude: "", suffix: display };
+  const base = Number.parseFloat(match[1].replace(/,/g, ""));
+  const magnitude = match[2] || "";
+  const multiplier =
+    magnitude.toLowerCase() === "k"
+      ? 1_000
+      : magnitude.toLowerCase() === "m"
+        ? 1_000_000
+        : magnitude.toLowerCase() === "b"
+          ? 1_000_000_000
+          : 1;
+  return {
+    num: Math.round(base * multiplier),
+    magnitude,
+    suffix: match[3] || "",
+  };
 }
 
 /**
- * Formats a number with commas for display.
+ * Formats a number for display. When a magnitude suffix was present in the
+ * source string (k/M/B), uses compact notation so the animated count stays in
+ * the same visual family (e.g. "50k" rather than "50,000").
  */
-function formatNumber(n: number): string {
+function formatNumber(n: number, magnitude: string): string {
+  if (magnitude) {
+    const divisor =
+      magnitude.toLowerCase() === "k"
+        ? 1_000
+        : magnitude.toLowerCase() === "m"
+          ? 1_000_000
+          : magnitude.toLowerCase() === "b"
+            ? 1_000_000_000
+            : 1;
+    const scaled = n / divisor;
+    // Preserve the original magnitude casing (e.g. "50k" vs "1.2M").
+    const display =
+      scaled >= 10 || Number.isInteger(scaled) ? Math.round(scaled).toString() : scaled.toFixed(1);
+    return `${display}${magnitude}`;
+  }
   return n.toLocaleString("en-US");
 }
 
@@ -40,7 +76,7 @@ export function AnimatedCounter({
   duration = 1800,
   className,
 }: AnimatedCounterProps) {
-  const { num: target, suffix: parsedSuffix } = parseDisplayValue(value);
+  const { num: target, magnitude, suffix: parsedSuffix } = parseDisplayValue(value);
   const suffix = explicitSuffix ?? parsedSuffix;
   const [count, setCount] = useState(0);
   const [hasStarted, setHasStarted] = useState(false);
@@ -50,9 +86,7 @@ export function AnimatedCounter({
     const el = ref.current;
     if (!el) return;
 
-    const prefersReducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)"
-    ).matches;
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     if (prefersReducedMotion) {
       setCount(target);
@@ -77,9 +111,7 @@ export function AnimatedCounter({
   useEffect(() => {
     if (!hasStarted) return;
 
-    const prefersReducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)"
-    ).matches;
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (prefersReducedMotion) {
       setCount(target);
       return;
@@ -107,7 +139,7 @@ export function AnimatedCounter({
   return (
     <span ref={ref} className={cn("tabular-nums", className)}>
       {prefix}
-      {formatNumber(count)}
+      {formatNumber(count, magnitude)}
       {suffix}
     </span>
   );

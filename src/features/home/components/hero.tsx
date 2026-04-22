@@ -50,31 +50,22 @@ export function Hero() {
               "max-w-[640px] w-full md:mx-auto"
             )}
           >
-            Run grants, hackathons, and RFPs with a lean team. AI-powered evaluation,
-            automated milestone tracking, and real-time impact reporting so you can
-            focus on funding what matters.
+            Run grants, hackathons, and RFPs with a lean team. AI-powered evaluation, automated
+            milestone tracking, and real-time impact reporting so you can focus on funding what
+            matters.
           </p>
         </ScrollReveal>
 
         {/* CTA Buttons */}
         <ScrollReveal variant="fade-up" delay={300} duration={800}>
           <div className="w-full flex flex-col sm:flex-row justify-start md:justify-center gap-3 max-w-[640px] md:mx-auto">
-            <Button
-              asChild
-              size="xl"
-            >
+            <Button asChild size="xl">
               <Link href={SOCIALS.PARTNER_FORM} target="_blank" rel="noopener noreferrer">
                 Schedule a Demo
               </Link>
             </Button>
-            <Button
-              asChild
-              variant="outline"
-              size="xl"
-            >
-              <Link href={PAGES.COMMUNITIES}>
-                Explore Organizations
-              </Link>
+            <Button asChild variant="outline" size="xl">
+              <Link href={PAGES.COMMUNITIES}>Explore Organizations</Link>
             </Button>
           </div>
         </ScrollReveal>

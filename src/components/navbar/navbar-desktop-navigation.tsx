@@ -19,8 +19,8 @@ import { cn } from "@/utilities/tailwind";
 import { Logo } from "../shared/logo";
 import {
   ExploreContent,
-  ForProjectsContent,
   ForFundersContent,
+  ForProjectsContent,
   MenuSection,
   ResourcesContent,
 } from "./menu-components";

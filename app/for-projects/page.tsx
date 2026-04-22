@@ -12,14 +12,12 @@ import { WhereBuildersGrow } from "@/src/features/homepage/components/where-buil
 import { customMetadata } from "@/utilities/meta";
 import { cn } from "@/utilities/tailwind";
 
-export const metadata: Metadata = {
-  ...customMetadata({
-    description:
-      "Create your project profile on Karma. Find funding, track milestones, build reputation, and get discovered across grant programs and hackathons.",
-    path: "/for-projects",
-  }),
+export const metadata: Metadata = customMetadata({
   title: "Karma | For Projects",
-};
+  description:
+    "Create your project profile on Karma. Find funding, track milestones, build reputation, and get discovered across grant programs and hackathons.",
+  path: "/for-projects",
+});
 
 const HorizontalLine = ({ className }: { className?: string }) => {
   return <hr className={cn("w-full h-[1px] bg-border max-w-[75%]", className)} />;

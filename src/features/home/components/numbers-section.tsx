@@ -28,7 +28,8 @@ const statistics: Statistic[] = [
   {
     number: "50k+",
     title: "Milestones verified",
-    description: "Proof of work collected, reviewed, and recorded automatically. No manual follow-up",
+    description:
+      "Proof of work collected, reviewed, and recorded automatically. No manual follow-up",
   },
   {
     number: "48hrs",
@@ -63,9 +64,7 @@ export function NumbersSection() {
                 The Numbers
               </Badge>
 
-              <h2 className={cn("text-foreground", "section-title")}>
-                Proven at scale
-              </h2>
+              <h2 className={cn("text-foreground", "section-title")}>Proven at scale</h2>
 
               <p
                 className={cn(
@@ -74,8 +73,8 @@ export function NumbersSection() {
                   "lg:text-xl lg:leading-[30px]"
                 )}
               >
-                Organizations use Karma to do more with less: fewer tools, fewer
-                spreadsheets, and fewer hours spent on program operations.
+                Organizations use Karma to do more with less: fewer tools, fewer spreadsheets, and
+                fewer hours spent on program operations.
               </p>
             </div>
           </ScrollReveal>
@@ -96,19 +95,11 @@ export function NumbersSection() {
                     <AnimatedCounter value={stat.number} />
                   </div>
 
-                  <h3
-                    className={cn(
-                      "text-foreground font-medium text-lg leading-[28px]"
-                    )}
-                  >
+                  <h3 className={cn("text-foreground font-medium text-lg leading-[28px]")}>
                     {stat.title}
                   </h3>
 
-                  <p
-                    className={cn(
-                      "text-muted-foreground font-normal text-sm leading-[22px]"
-                    )}
-                  >
+                  <p className={cn("text-muted-foreground font-normal text-sm leading-[22px]")}>
                     {stat.description}
                   </p>
                 </div>

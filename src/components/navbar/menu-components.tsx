@@ -3,7 +3,7 @@ import Image from "next/image";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { cn } from "@/utilities/tailwind";
 import { MenuItemClient } from "./menu-item-client";
-import { exploreItems, forProjectsItems, forFundersItems, resourcesItems } from "./menu-items";
+import { exploreItems, forFundersItems, forProjectsItems, resourcesItems } from "./menu-items";
 import { SimpleMenuItemClient } from "./simple-menu-item-client";
 
 const menuStyles = {

@@ -42,7 +42,8 @@ const cards: CardType[] = [
   {
     type: "case-study",
     headline: "100+ hours saved on application evaluation",
-    description: "AI-powered review reduced evaluation time across hundreds of applications, freeing the grants council to focus on strategy.",
+    description:
+      "AI-powered review reduced evaluation time across hundreds of applications, freeing the grants council to focus on strategy.",
     communitySlug: "optimism",
     link: "https://paragraph.com/@karmahq/optimism-grants-partners-with-karma-for-season-8",
   },
@@ -83,9 +84,7 @@ function TestimonialCardComponent({ card }: { card: TestimonialCard }) {
           >
             {`\u201C`}
           </span>
-          <p className={cn("text-foreground font-normal text-sm", "leading-[150%]")}>
-            {card.text}
-          </p>
+          <p className={cn("text-foreground font-normal text-sm", "leading-[150%]")}>{card.text}</p>
         </div>
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
@@ -116,7 +115,9 @@ function CaseStudyCardComponent({ card }: { card: CaseStudyCard }) {
       )}
     >
       <div className="flex flex-col gap-3">
-        <h3 className={cn("text-foreground font-semibold", "text-2xl leading-tight tracking-tight")}>
+        <h3
+          className={cn("text-foreground font-semibold", "text-2xl leading-tight tracking-tight")}
+        >
           {card.headline}
         </h3>
         <p className={cn("text-muted-foreground font-normal text-sm", "leading-[150%]")}>
@@ -159,33 +160,28 @@ export function CaseStudiesSection() {
     >
       <SectionContainer className="flex flex-col items-start gap-12">
         <ScrollReveal variant="fade-up">
-        <div className="flex flex-col items-start gap-4 w-full">
-          <Badge
-            variant="secondary"
-            className={cn(
-              "text-secondary-foreground font-medium text-xs",
-              "leading-[150%] tracking-[0.015em]",
-              "rounded-full py-[3px] px-2",
-              "bg-secondary border-0 w-fit"
-            )}
-          >
-            Case Studies
-          </Badge>
+          <div className="flex flex-col items-start gap-4 w-full">
+            <Badge
+              variant="secondary"
+              className={cn(
+                "text-secondary-foreground font-medium text-xs",
+                "leading-[150%] tracking-[0.015em]",
+                "rounded-full py-[3px] px-2",
+                "bg-secondary border-0 w-fit"
+              )}
+            >
+              Case Studies
+            </Badge>
 
-          <h2 className={cn("section-title", "w-full")}>
-            <span className="text-foreground">Organizations trust Karma</span>{" "}
-            <br className="hidden md:block" />
-            <span className="text-muted-foreground">to run their funding programs</span>
-          </h2>
-        </div>
+            <h2 className={cn("section-title", "w-full")}>
+              <span className="text-foreground">Organizations trust Karma</span>{" "}
+              <br className="hidden md:block" />
+              <span className="text-muted-foreground">to run their funding programs</span>
+            </h2>
+          </div>
         </ScrollReveal>
 
-        <div
-          className={cn(
-            "grid grid-cols-1 md:grid-cols-6 gap-10 w-full",
-            "items-stretch"
-          )}
-        >
+        <div className={cn("grid grid-cols-1 md:grid-cols-6 gap-10 w-full", "items-stretch")}>
           <ScrollReveal variant="fade-left" className="md:col-span-2">
             <TestimonialCardComponent card={cards[0] as TestimonialCard} />
           </ScrollReveal>

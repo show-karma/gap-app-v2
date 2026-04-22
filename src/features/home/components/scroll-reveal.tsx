@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { type ReactNode, useEffect, useRef } from "react";
 import { cn } from "@/utilities/tailwind";
 
 interface ScrollRevealProps {
@@ -31,9 +31,7 @@ export function ScrollReveal({
     if (!el) return;
 
     // Respect reduced motion preference
-    const prefersReducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)"
-    ).matches;
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (prefersReducedMotion) {
       el.style.opacity = "1";
       el.style.transform = "none";
@@ -52,7 +50,7 @@ export function ScrollReveal({
           }
         }
       },
-      { threshold: 0, rootMargin: "0px 0px 600px 0px" }
+      { threshold, rootMargin: "0px 0px 600px 0px" }
     );
 
     observer.observe(el);

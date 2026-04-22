@@ -73,8 +73,8 @@ export const CommunitiesPage = () => {
           Organizations on Karma
         </h1>
         <p className="text-black dark:text-white text-sm sm:text-lg max-w-4xl text-center">
-          Explore organizations running grants, hackathons, and funding programs on Karma.
-          Discover opportunities, track progress, and see real impact.
+          Explore organizations running grants, hackathons, and funding programs on Karma. Discover
+          opportunities, track progress, and see real impact.
         </p>
 
         <a href="https://tally.so/r/wd0jeq" target="_blank" rel="noreferrer">

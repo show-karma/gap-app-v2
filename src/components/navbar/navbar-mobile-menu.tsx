@@ -28,8 +28,8 @@ import { SOCIALS } from "@/utilities/socials";
 import { Logo } from "../shared/logo";
 import {
   ExploreContent,
-  ForProjectsContent,
   ForFundersContent,
+  ForProjectsContent,
   MenuSection,
   ResourcesContent,
 } from "./menu-components";

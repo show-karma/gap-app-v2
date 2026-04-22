@@ -69,7 +69,9 @@ export function FAQSection() {
       <SectionContainer>
         <ScrollReveal variant="fade-up">
           <div className="flex flex-col items-center gap-4 max-w-4xl mx-auto px-4">
-            <h2 className="section-title text-foreground text-center">Frequently asked questions</h2>
+            <h2 className="section-title text-foreground text-center">
+              Frequently asked questions
+            </h2>
             <p className="text-base md:text-lg font-normal text-muted-foreground text-center leading-[28px]">
               Everything you need to know about the platform.
             </p>
