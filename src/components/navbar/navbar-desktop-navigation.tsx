@@ -19,8 +19,8 @@ import { cn } from "@/utilities/tailwind";
 import { Logo } from "../shared/logo";
 import {
   ExploreContent,
-  ForBuildersContent,
   ForFundersContent,
+  ForProjectsContent,
   MenuSection,
   ResourcesContent,
 } from "./menu-components";
@@ -87,12 +87,12 @@ export function NavbarDesktopNavigation() {
         <Logo />
         {!isLoggedIn ? (
           <div className="flex items-center gap-1">
-            {/* For Builders Dropdown */}
+            {/* For Projects Dropdown */}
             <DropdownMenu>
-              <NavDropdownTrigger>For Builders</NavDropdownTrigger>
+              <NavDropdownTrigger>For Projects</NavDropdownTrigger>
               <DropdownMenuContent align="start" className="p-0">
                 <div className="min-w-[500px] p-4">
-                  <ForBuildersContent variant="desktop" />
+                  <ForProjectsContent variant="desktop" />
                 </div>
               </DropdownMenuContent>
             </DropdownMenu>

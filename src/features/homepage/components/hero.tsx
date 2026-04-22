@@ -35,12 +35,12 @@ export function Hero() {
         <div className="flex flex-row items-center justify-between gap-10 w-full max-[640px]:flex-col max-[640px]:gap-0">
           <div className="flex flex-col items-start justify-center gap-4 max-w-full lg:max-w-lg 2xl:max-w-2xl flex-1 min-w-0">
             <h1 className="text-foreground text-[40px] lg:text-5xl font-semibold leading-none tracking-[-0.02em]">
-              Where builders <br className="hidden lg:block" />
-              get funded and ecosystems grow
+              Get funded. <br className="hidden lg:block" />
+              Build reputation. Ship with proof.
             </h1>
             <p className="text-muted-foreground text-sm sm:text-base font-medium">
-              Ecosystems use Karma to fund projects transparently. Builders use it to share
-              progress, earn reputation, and get discovered for more opportunities.
+              Create your project profile, find funding opportunities, track milestones, and get
+              discovered for more grants, hackathons, and collaborations.
             </p>
             <div className="relative flex flex-col mt-4 md:flex-row gap-3 md:gap-3">
               {/* Blurred gradient background */}
@@ -52,7 +52,7 @@ export function Hero() {
                 <CreateProjectButton styleClass="w-max px-5 h-11" />
               </div>
               <Button variant="outline" size="xl" className="relative z-0" asChild>
-                <Link href={PAGES.FUNDERS}>Run a funding program</Link>
+                <Link href={PAGES.REGISTRY.ROOT}>Explore opportunities</Link>
               </Button>
             </div>
             <div className="flex flex-row items-center justify-start gap-10 md:gap-4 mt-6">

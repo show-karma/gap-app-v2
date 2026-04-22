@@ -128,6 +128,7 @@ export const PAGES = {
   SUMUP_CONFIG: `/admin/sumup`,
   FOUNDATIONS: `/foundations`,
   FUNDERS: `/funders`,
+  FOR_PROJECTS: `/for-projects`,
   SEEDS: `/seeds`,
   SEEDS_FUND: `/seeds/fund`,
 };

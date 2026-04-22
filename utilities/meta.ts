@@ -3,10 +3,10 @@ import { PROJECT_NAME } from "@/constants/brand";
 
 export const SITE_URL = "https://www.karmahq.xyz";
 
-export const DEFAULT_TITLE = `${PROJECT_NAME} - Where builders get funded and ecosystems grow`;
+export const DEFAULT_TITLE = `${PROJECT_NAME} - Funding Software That Does the Work`;
 export const DEFAULT_DESCRIPTION =
-  "Karma is a platform for builders and ecosystems. Builders showcase their work and build reputation. Ecosystems use our full stack solution to allocate funding and grow their ecosystems.";
-export const DEFAULT_OG_IMAGE = `${SITE_URL}/images/homepage/builder-hero.png`;
+  "AI-powered software for grants, hackathons, and RFPs. Automated evaluation, milestone tracking, and impact reporting for lean teams.";
+export const DEFAULT_OG_IMAGE = `${SITE_URL}/images/homepage/funder-benefit-01.png`;
 
 export const ogMeta = {
   url: SITE_URL,

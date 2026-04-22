@@ -60,7 +60,7 @@ describe("Homepage Data Flow", () => {
       renderWithProviders(await HomePage());
 
       // Hero section should render (communities are mocked)
-      const heroSection = screen.getByText(/Where builders get funded/i);
+      const heroSection = screen.getByText(/Get funded/i);
       expect(heroSection).toBeInTheDocument();
     });
 
@@ -72,7 +72,7 @@ describe("Homepage Data Flow", () => {
 
       // Page should still render
       expect(container.querySelector("main")).toBeInTheDocument();
-      expect(screen.getByText(/Where builders get funded/i)).toBeInTheDocument();
+      expect(screen.getByText(/Get funded/i)).toBeInTheDocument();
     });
 
     it("should handle async data loading with Suspense", async () => {
@@ -109,7 +109,7 @@ describe("Homepage Data Flow", () => {
       renderWithProviders(await HomePage());
 
       // Community carousel should render
-      const heroSection = screen.getByText(/Where builders get funded/i);
+      const heroSection = screen.getByText(/Get funded/i);
       expect(heroSection).toBeInTheDocument();
     });
 
@@ -146,7 +146,7 @@ describe("Homepage Data Flow", () => {
       renderWithProviders(await HomePage());
 
       // Hero should be immediately visible
-      const hero = screen.getByText(/Where builders get funded/i);
+      const hero = screen.getByText(/Get funded/i);
       expect(hero).toBeInTheDocument();
 
       // Other sections should remain stable

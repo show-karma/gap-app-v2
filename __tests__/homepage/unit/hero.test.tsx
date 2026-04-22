@@ -51,6 +51,9 @@ vi.mock("@/utilities/pages", () => ({
     FUNDERS: "/funders",
     PROJECTS_EXPLORER: "/projects",
     COMMUNITIES: "/communities",
+    REGISTRY: {
+      ROOT: "/funding-map",
+    },
     COMMUNITY: {
       ALL_GRANTS: (slug: string) => `/community/${slug}`,
     },
@@ -69,13 +72,15 @@ describe("Hero Component", () => {
 
       const heading = screen.getByRole("heading", { level: 1 });
       expect(heading).toBeInTheDocument();
-      expect(heading).toHaveTextContent("Where builders get funded and ecosystems grow");
+      expect(heading).toHaveTextContent(/Get funded\..*Build reputation\. Ship with proof\./);
     });
 
     it("should render description text", () => {
       renderWithProviders(<Hero />);
 
-      const description = screen.getByText(/Ecosystems use Karma to fund projects transparently/i);
+      const description = screen.getByText(
+        /Create your project profile, find funding opportunities/i
+      );
       expect(description).toBeInTheDocument();
     });
 
@@ -87,12 +92,12 @@ describe("Hero Component", () => {
       expect(createButton).toHaveTextContent("Create project");
     });
 
-    it("should render Run a funding program CTA button", () => {
+    it("should render Explore opportunities CTA button", () => {
       renderWithProviders(<Hero />);
 
-      const fundersButton = screen.getByRole("link", { name: /run a funding program/i });
-      expect(fundersButton).toBeInTheDocument();
-      expect(fundersButton).toHaveAttribute("href", "/funders");
+      const opportunitiesButton = screen.getByRole("link", { name: /explore opportunities/i });
+      expect(opportunitiesButton).toBeInTheDocument();
+      expect(opportunitiesButton).toHaveAttribute("href", "/funding-map");
     });
 
     it("should render user avatars (3 images)", () => {
@@ -105,16 +110,15 @@ describe("Hero Component", () => {
   });
 
   describe("Interaction Tests", () => {
-    it("should have clickable Run a funding program button", async () => {
+    it("should have clickable Explore opportunities button", async () => {
       const user = userEvent.setup();
       renderWithProviders(<Hero />);
 
-      const fundersButton = screen.getByRole("link", { name: /run a funding program/i });
-      expect(fundersButton).toBeInTheDocument();
+      const opportunitiesButton = screen.getByRole("link", { name: /explore opportunities/i });
+      expect(opportunitiesButton).toBeInTheDocument();
 
-      // Button should be clickable (it's a link)
-      await user.click(fundersButton);
-      expect(fundersButton).toHaveAttribute("href", "/funders");
+      await user.click(opportunitiesButton);
+      expect(opportunitiesButton).toHaveAttribute("href", "/funding-map");
     });
 
     it("should display community carousel", () => {
@@ -194,10 +198,10 @@ describe("Hero Component", () => {
 
       // Both buttons should be present
       const createButton = screen.getByTestId("create-project-button");
-      const fundersButton = screen.getByRole("link", { name: /run a funding program/i });
+      const opportunitiesButton = screen.getByRole("link", { name: /explore opportunities/i });
 
       expect(createButton).toBeInTheDocument();
-      expect(fundersButton).toBeInTheDocument();
+      expect(opportunitiesButton).toBeInTheDocument();
     });
 
     it("should show hero image on desktop but hide on mobile", () => {
@@ -218,7 +222,7 @@ describe("Hero Component", () => {
 
       const h1 = screen.getByRole("heading", { level: 1 });
       expect(h1).toBeInTheDocument();
-      expect(h1).toHaveTextContent(/where builders get funded/i);
+      expect(h1).toHaveTextContent(/get funded/i);
     });
 
     it("should have descriptive image alt text", () => {
@@ -237,8 +241,8 @@ describe("Hero Component", () => {
       const createButton = screen.getByTestId("create-project-button");
       expect(createButton).toBeInTheDocument();
 
-      const fundersLink = screen.getByRole("link", { name: /run a funding program/i });
-      expect(fundersLink).toBeInTheDocument();
+      const opportunitiesLink = screen.getByRole("link", { name: /explore opportunities/i });
+      expect(opportunitiesLink).toBeInTheDocument();
     });
 
     it("should have keyboard navigable links", async () => {
@@ -285,7 +289,7 @@ describe("Hero Component", () => {
 
       // Verify text content is displayed
       const heading = screen.getByRole("heading", { level: 1 });
-      const description = screen.getByText(/Ecosystems use Karma/i);
+      const description = screen.getByText(/Create your project profile/i);
 
       expect(heading).toBeInTheDocument();
       expect(description).toBeInTheDocument();
@@ -294,8 +298,8 @@ describe("Hero Component", () => {
     it("should render all links with correct href attributes", () => {
       renderWithProviders(<Hero />);
 
-      const fundersLink = screen.getByRole("link", { name: /run a funding program/i });
-      expect(fundersLink).toHaveAttribute("href", "/funders");
+      const opportunitiesLink = screen.getByRole("link", { name: /explore opportunities/i });
+      expect(opportunitiesLink).toHaveAttribute("href", "/funding-map");
 
       const exploreLink = screen.getByRole("link", { name: /explore projects/i });
       expect(exploreLink).toHaveAttribute("href", "/projects");

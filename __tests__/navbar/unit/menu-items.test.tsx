@@ -7,8 +7,8 @@
 
 import {
   exploreItems,
-  forBuildersItems,
   forFundersItems,
+  forProjectsItems,
   type MenuItem,
   resourcesItems,
 } from "@/src/components/navbar/menu-items";
@@ -16,15 +16,15 @@ import { PAGES } from "@/utilities/pages";
 import { SOCIALS } from "@/utilities/socials";
 
 describe("Menu Items Configuration", () => {
-  describe("ForBuilders Items", () => {
+  describe("ForProjects Items", () => {
     it("should have valid configuration", () => {
-      expect(forBuildersItems).toBeDefined();
-      expect(Array.isArray(forBuildersItems)).toBe(true);
-      expect(forBuildersItems.length).toBeGreaterThan(0);
+      expect(forProjectsItems).toBeDefined();
+      expect(Array.isArray(forProjectsItems)).toBe(true);
+      expect(forProjectsItems.length).toBeGreaterThan(0);
     });
 
     it("should have all required properties for each item", () => {
-      forBuildersItems.forEach((item) => {
+      forProjectsItems.forEach((item) => {
         expect(item).toHaveProperty("href");
         expect(item).toHaveProperty("icon");
         expect(item).toHaveProperty("title");
@@ -35,29 +35,27 @@ describe("Menu Items Configuration", () => {
     });
 
     it("should have valid href values", () => {
-      forBuildersItems.forEach((item) => {
+      forProjectsItems.forEach((item) => {
         expect(item.href.length).toBeGreaterThan(0);
         // Should be a valid path or URL
         expect(item.href).toMatch(/^(\/|https?:\/\/)/);
       });
     });
 
-    it('should contain "Create project" item with modal trigger', () => {
-      const createProjectItem = forBuildersItems.find((item) => item.title === "Create project");
+    it('should contain "Create project" item linking to for-projects', () => {
+      const createProjectItem = forProjectsItems.find((item) => item.title === "Create project");
       expect(createProjectItem).toBeDefined();
-      expect(createProjectItem?.openModal).toBe(true);
-      expect(createProjectItem?.href).toBe(PAGES.MY_PROJECTS);
+      expect(createProjectItem?.href).toBe(PAGES.FOR_PROJECTS);
     });
 
-    it('should contain "Find funding" item with anchor', () => {
-      const findFundingItem = forBuildersItems.find((item) => item.title === "Find funding");
+    it('should contain "Find funding" item linking to the registry', () => {
+      const findFundingItem = forProjectsItems.find((item) => item.title === "Find funding");
       expect(findFundingItem).toBeDefined();
-      expect(findFundingItem?.anchor).toBe("live-funding-opportunities");
-      expect(findFundingItem?.href).toBe(PAGES.HOME);
+      expect(findFundingItem?.href).toBe(PAGES.REGISTRY.ROOT);
     });
 
     it("should have descriptions for all items", () => {
-      forBuildersItems.forEach((item) => {
+      forProjectsItems.forEach((item) => {
         expect(item.description).toBeDefined();
         expect(typeof item.description).toBe("string");
         expect(item.description!.length).toBeGreaterThan(0);
@@ -78,7 +76,7 @@ describe("Menu Items Configuration", () => {
       expect(main).toHaveProperty("icon");
       expect(main).toHaveProperty("title");
       expect(main.title).toBe("Launch a program");
-      expect(main.href).toBe(PAGES.FUNDERS);
+      expect(main.href).toBe(PAGES.HOME);
     });
 
     it("should have valid secondary items array", () => {
@@ -231,8 +229,8 @@ describe("Menu Items Configuration", () => {
   });
 
   describe("No Duplicate Hrefs", () => {
-    it("should not have duplicate hrefs in forBuildersItems", () => {
-      const hrefs = forBuildersItems.map((item) => item.href);
+    it("should not have duplicate hrefs in forProjectsItems", () => {
+      const hrefs = forProjectsItems.map((item) => item.href);
       const _uniqueHrefs = new Set(hrefs);
       // Note: We allow duplicate hrefs because "Create project" and other items might go to the same page
       // with different behaviors (modal vs navigation)
@@ -293,8 +291,8 @@ describe("Menu Items Configuration", () => {
   });
 
   describe("Icon Components", () => {
-    it("should have valid icon components for forBuildersItems", () => {
-      forBuildersItems.forEach((item) => {
+    it("should have valid icon components for forProjectsItems", () => {
+      forProjectsItems.forEach((item) => {
         expect(item.icon).toBeDefined();
         expect(item.icon).toBeTruthy();
       });

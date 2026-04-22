@@ -722,9 +722,7 @@ describe("NotificationSettingsPage — reference card", () => {
     renderPage();
 
     expect(screen.getByText(/Rules of thumb/i)).toBeInTheDocument();
-    expect(
-      screen.getByText(/kill switch silences the four digest emails/i)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/kill switch silences the four digest emails/i)).toBeInTheDocument();
     expect(screen.getByText(/intentional duplication/i)).toBeInTheDocument();
     expect(screen.getByText(/To be @-tagged in a Telegram group/i)).toBeInTheDocument();
   });
