@@ -1,5 +1,3 @@
-"use client";
-
 import { BarChart2, Mail, Zap } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";

@@ -1,5 +1,3 @@
-"use client";
-
 import { BadgeDollarSign, Eye, Puzzle, Wrench } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { SectionContainer } from "@/src/components/shared/section-container";

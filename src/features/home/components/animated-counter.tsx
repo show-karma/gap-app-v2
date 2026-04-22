@@ -96,7 +96,7 @@ export function AnimatedCounter({
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && !hasStarted) {
+        if (entries[0].isIntersecting) {
           setHasStarted(true);
           observer.disconnect();
         }
@@ -106,7 +106,7 @@ export function AnimatedCounter({
 
     observer.observe(el);
     return () => observer.disconnect();
-  }, [target, hasStarted]);
+  }, [target]);
 
   useEffect(() => {
     if (!hasStarted) return;

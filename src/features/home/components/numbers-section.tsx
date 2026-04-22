@@ -1,5 +1,3 @@
-"use client";
-
 import { Badge } from "@/components/ui/badge";
 import { SectionContainer } from "@/src/components/shared/section-container";
 import { AnimatedCounter } from "@/src/features/home/components/animated-counter";
