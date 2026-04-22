@@ -1,9 +1,8 @@
-import { type FC, useCallback, useEffect, useState } from "react";
+import { type FC, useEffect, useState } from "react";
 import {
   type VerificationRecord,
   VerifiedBadge,
 } from "@/components/Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/VerifiedBadge";
-import { VerifyMilestoneUpdateDialog } from "@/components/Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/VerifyMilestoneUpdateDialog";
 import type { GrantMilestone } from "@/types/v2/grant";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 
@@ -22,9 +21,6 @@ export const MilestoneVerificationSection: FC<MilestoneVerificationSectionProps>
   title,
   isVerified: isVerifiedProp,
   verifications,
-  onVerified,
-  programId,
-  communityUID,
 }) => {
   // V2: verified is an array of verifications
   const getInitialVerifiedState = (): boolean => {
@@ -50,11 +46,6 @@ export const MilestoneVerificationSection: FC<MilestoneVerificationSectionProps>
 
   const [isVerified, setIsVerified] = useState<boolean>(getInitialVerifiedState());
 
-  const markAsVerified = useCallback(() => {
-    setIsVerified(true);
-    onVerified?.();
-  }, [onVerified]);
-
   // Sync state when prop changes
   useEffect(() => {
     if (isVerifiedProp !== undefined) {
@@ -62,49 +53,15 @@ export const MilestoneVerificationSection: FC<MilestoneVerificationSectionProps>
     }
   }, [isVerifiedProp]);
 
-  // Get milestone for dialog
-  const getMilestoneForDialog = (): GrantMilestone | null => {
-    // For GrantMilestone (has refUID which UnifiedMilestone doesn't have at top level)
-    if ("refUID" in milestone && typeof (milestone as GrantMilestone).refUID === "string") {
-      return milestone as GrantMilestone;
-    }
-
-    // For UnifiedMilestone
-    if ("source" in milestone && (milestone as UnifiedMilestone).source?.grantMilestone) {
-      return (milestone as UnifiedMilestone).source.grantMilestone?.milestone || null;
-    }
-
-    return null;
-  };
-
-  const milestoneForDialog = getMilestoneForDialog();
-
-  // Extract grant context for permission checks
-  const grantContext =
-    "source" in milestone
-      ? (milestone as UnifiedMilestone).source.grantMilestone?.grant
-      : undefined;
-  const derivedProgramId = programId ?? grantContext?.details?.programId;
-  const derivedCommunityUID = communityUID ?? grantContext?.community?.uid;
+  if (!isVerified) return null;
 
   return (
     <div className="flex flex-row gap-4 items-center flex-wrap w-max max-w-full">
-      {isVerified && (
-        <VerifiedBadge
-          verifications={verifications && verifications.length > 0 ? verifications : undefined}
-          isVerified={!(verifications && verifications.length > 0) ? isVerified : undefined}
-          title={title}
-        />
-      )}
-      {milestoneForDialog && (
-        <VerifyMilestoneUpdateDialog
-          milestone={milestoneForDialog}
-          onVerified={markAsVerified}
-          isVerified={isVerified}
-          programId={derivedProgramId}
-          communityUID={derivedCommunityUID}
-        />
-      )}
+      <VerifiedBadge
+        verifications={verifications && verifications.length > 0 ? verifications : undefined}
+        isVerified={!(verifications && verifications.length > 0) ? isVerified : undefined}
+        title={title}
+      />
     </div>
   );
 };

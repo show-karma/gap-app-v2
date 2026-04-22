@@ -22,7 +22,6 @@ import { ReadMore } from "@/utilities/ReadMore";
 import { retryUntilConditionMet } from "@/utilities/retries";
 import { shareOnX } from "@/utilities/share/shareOnX";
 import { SHARE_TEXTS } from "@/utilities/share/text";
-import { VerifyGrantUpdateDialog } from "./VerifyGrantUpdateDialog";
 
 interface UpdateTagProps {
   index: number;
@@ -206,13 +205,7 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({ title, description, index, d
 
   const isAuthorized = isProjectOwner || isProjectAdmin || isContractOwner || isCommunityAdmin;
 
-  const [isVerified, setIsVerified] = useState<boolean>(
-    Array.isArray(update?.verified) && update.verified.length > 0
-  );
-
-  const markAsVerified = () => {
-    setIsVerified(true);
-  };
+  const isVerified: boolean = Array.isArray(update?.verified) && update.verified.length > 0;
 
   /*
    * Check if the grant update was created after the launch date of the feature
@@ -243,11 +236,6 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({ title, description, index, d
               <span className="text-xs font-bold">Verified</span>
             </div>
           ) : null}
-          <VerifyGrantUpdateDialog
-            grantUpdate={update}
-            onVerified={markAsVerified}
-            isVerified={isVerified}
-          />
         </div>
         <div className="flex flex-row gap-3 items-center flex-wrap">
           <p className="text-sm font-semibold text-gray-500 dark:text-zinc-300 max-sm:text-xs">
