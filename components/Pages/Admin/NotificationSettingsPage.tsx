@@ -776,6 +776,19 @@ function TelegramProviderCard(props: TelegramProviderProps) {
         communitySlug={props.communitySlug}
         open={isPairModalOpen}
         onOpenChange={setIsPairModalOpen}
+        onPaired={(chat) => {
+          // Parent seeds tgChats from props ONCE (see NotificationSettingsPageContent)
+          // and never re-syncs from the query cache, so the verify hook's cache
+          // patch alone does not repopulate the Chat-IDs list. Push the paired
+          // chat into local state here: drop blank sentinel rows, keep existing
+          // entries, de-dupe by id.
+          const withoutBlanks = props.chats.filter((c) => c.id.trim());
+          const alreadyPresent = withoutBlanks.some((c) => c.id === chat.id);
+          const next = alreadyPresent
+            ? withoutBlanks.map((c) => (c.id === chat.id ? chat : c))
+            : [...withoutBlanks, chat];
+          props.onChatsChange(next);
+        }}
       />
     </ProviderCardChrome>
   );
