@@ -31,7 +31,7 @@ const HorizontalLine = ({ className }: { className?: string }) => {
 
 export default function Index() {
   return (
-    <main className="flex w-full flex-col flex-1 items-center bg-background">
+    <main className="flex w-full flex-col flex-1 items-center bg-background overflow-x-hidden">
       <FAQJsonLd
         questions={[
           {

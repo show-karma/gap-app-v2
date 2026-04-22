@@ -100,19 +100,19 @@ export function Hero() {
         </div>
 
         {/* Trusted By */}
-        <ScrollReveal variant="fade-in" delay={600} duration={1000}>
-          <div className="flex flex-col items-start md:items-center mt-4 gap-3 w-full">
+        <ScrollReveal variant="fade-in" delay={600} duration={1000} className="w-full min-w-0">
+          <div className="flex flex-col items-start md:items-center mt-4 gap-3 w-full min-w-0">
             <p className="text-muted-foreground font-medium text-xs tracking-wider uppercase">
               Trusted by leading organizations
             </p>
-            <div className="w-full -mx-4 md:-mx-8 flex flex-row items-center justify-center">
+            <div className="w-full min-w-0 -mx-4 md:-mx-8 flex flex-row items-center justify-center overflow-hidden">
               <InfiniteMovingCards
                 items={communityItems}
                 variant="pill"
                 direction="left"
                 speed="slow"
                 pauseOnHover
-                className="w-full"
+                className="w-full min-w-0"
               />
             </div>
           </div>
