@@ -36,6 +36,7 @@ export const PAGES = {
       `/community/${community}/applications/${applicationId}/success`,
     BROWSE_APPLICATIONS: (community: string) => `/community/${community}/browse-applications`,
     CLAIM_FUNDS: (community: string) => `/community/${community}/claim-funds`,
+    REPORTS: (community: string) => `/community/${community}/reports`,
   },
   MY_PROJECTS: `/my-projects`,
   MY_REVIEWS: `/my-reviews`,
@@ -92,6 +93,8 @@ export const PAGES = {
     KYC_SETTINGS: (community: string) => `/community/${community}/manage/kyc-settings`,
     PROGRAM_SCORES: (community: string) => `/community/${community}/manage/program-scores`,
     SEND_EMAIL: (community: string) => `/community/${community}/manage/send-email`,
+    PORTFOLIO_REPORTS: (community: string) => `/community/${community}/manage/portfolio-reports`,
+    PORTFOLIO_REPORTS_CONFIG: (community: string) => `/community/${community}/manage/portfolio-reports/config`,
     PROJECT_MILESTONES: (community: string, projectId: string, programId: string) =>
       `/community/${community}/manage/${projectId}/milestones?programIds=${programId}`,
   },
@@ -147,6 +150,7 @@ export const COMMUNITY_SUB_ROUTE_SEGMENTS: ReadonlySet<string> = new Set([
   "impact",
   "programs",
   "projects",
+  "reports",
   "updates",
   // Direct route directories under /community/[communityId]/
   "admin",
