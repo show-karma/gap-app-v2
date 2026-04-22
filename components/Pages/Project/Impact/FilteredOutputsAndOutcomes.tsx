@@ -330,13 +330,17 @@ export const FilteredOutputsAndOutcomes = ({
         <div className="flex flex-col gap-8">
           {filteredOutputs.map((item) => {
             const form = forms.find((f) => f.id === item.id);
-            const lastUpdated = filteredOutputs
-              .find((subItem) => item.id === subItem.id)
-              ?.datapoints?.sort(
-                (a, b) =>
-                  new Date(b.endDate || new Date().toISOString()).getTime() -
-                  new Date(a.endDate || new Date().toISOString()).getTime()
-              )[0]?.endDate;
+            // Prefer the server-computed lastUpdatedAt — fall back to the
+            // newest datapoint endDate for older API responses.
+            const lastUpdated =
+              item.lastUpdatedAt ??
+              filteredOutputs
+                .find((subItem) => item.id === subItem.id)
+                ?.datapoints?.sort(
+                  (a, b) =>
+                    new Date(b.endDate || new Date().toISOString()).getTime() -
+                    new Date(a.endDate || new Date().toISOString()).getTime()
+                )[0]?.endDate;
             const allOutputs = filteredOutputs.find((subItem) => subItem.id === item.id);
             const outputs = allOutputs?.datapoints.map((datapoint, _index) => ({
               value: datapoint.value,
