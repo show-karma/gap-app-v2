@@ -399,7 +399,7 @@ export const OutputsAndOutcomes = () => {
                 <div className="flex flex-row gap-4 max-md:flex-col-reverse">
                   <div className="flex flex-1 flex-col gap-5">
                     {/* Raw Historical Values Chart */}
-                    {item.datapoints?.length > 1 ? (
+                    {(item.datapoints?.length ?? 0) >= 1 ? (
                       <Card className="bg-white dark:bg-zinc-800 rounded h-full">
                         <Title className="text-sm font-medium text-gray-700 dark:text-zinc-300 mb-4">
                           Historical Values
