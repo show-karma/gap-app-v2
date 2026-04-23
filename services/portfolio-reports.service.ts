@@ -67,8 +67,8 @@ export async function listReports(
   communitySlug: string,
   status?: string
 ): Promise<PortfolioReport[]> {
-  const params = status ? `?status=${status}` : "";
-  const { data } = await apiClient.get(`/v2/communities/${communitySlug}/reports${params}`);
+  const query = status ? `?${new URLSearchParams({ status }).toString()}` : "";
+  const { data } = await apiClient.get(`/v2/communities/${communitySlug}/reports${query}`);
   return data;
 }
 
