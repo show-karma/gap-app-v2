@@ -12,6 +12,7 @@ import {
 import { format, isValid, parseISO } from "date-fns";
 import pluralize from "pluralize";
 import { type FC, useMemo, useState } from "react";
+import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Badge } from "@/components/ui/badge";
@@ -334,7 +335,7 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   {formatDate(version.createdAt)} • Version {version.versionNumber}
                   <span className="ml-2 text-gray-400 dark:text-gray-500">
-                    by {version.submittedBy.slice(0, 6)}...{version.submittedBy.slice(-4)}
+                    by <EthereumAddressToProfileName address={version.submittedBy} />
                   </span>
                 </p>
               )}

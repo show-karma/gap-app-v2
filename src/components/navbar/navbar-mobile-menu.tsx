@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useTheme } from "next-themes";
 import { useState } from "react";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
-import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
+import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { DiscordIcon, TelegramIcon, TwitterIcon } from "@/components/Icons";
 import { ParagraphIcon } from "@/components/Icons/Paragraph";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
@@ -158,7 +158,7 @@ export function NavbarMobileMenu() {
             ) : getUserEmail(user) ? (
               <span className="text-sm text-muted-foreground px-2">{getUserEmail(user)}</span>
             ) : (
-              <EthereumAddressToENSName
+              <EthereumAddressToProfileName
                 address={address}
                 className="text-sm text-muted-foreground px-2"
               />

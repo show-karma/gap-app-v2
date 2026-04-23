@@ -3,6 +3,7 @@ import { Dialog, Transition } from "@headlessui/react";
 import { ChevronRightIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import { type FC, Fragment, useState } from "react";
+import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import {
   BlogIcon,
   Discord2Icon,
@@ -20,7 +21,6 @@ import type {
 } from "@/src/features/funding-map/types/funding-program";
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
-import { shortAddress } from "@/utilities/shortAddress";
 import { cn } from "@/utilities/tailwind";
 import { registryHelper } from "./helper";
 import { ProgramTypeBadges } from "./ProgramTypeBadges";
@@ -385,7 +385,7 @@ function AdminDetailsSection({ program }: { program: FundingProgramResponse }) {
           <div className={statStyles.row}>
             <span className={statStyles.label}>Created By</span>
             <span className={cn(statStyles.value, "font-mono text-xs")}>
-              {shortAddress(program.createdByAddress)}
+              <EthereumAddressToProfileName address={program.createdByAddress} />
             </span>
           </div>
         )}
@@ -426,7 +426,7 @@ function AdminDetailsSection({ program }: { program: FundingProgramResponse }) {
                   key={admin}
                   className="font-mono text-xs bg-zinc-100 dark:bg-zinc-600 px-2 py-0.5 rounded"
                 >
-                  {shortAddress(admin)}
+                  <EthereumAddressToProfileName address={admin} />
                 </span>
               ))}
             </div>

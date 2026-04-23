@@ -746,5 +746,7 @@ export const INDEXER = {
   USERS: {
     RESOLVE_EMAIL: `/v2/user/resolve-email`,
     PROFILES: (addresses: string) => `/v2/user/profiles?addresses=${addresses}`,
+    PUBLIC_PROFILES: (addresses: string[]) =>
+      `/v2/user/profiles/public?addresses=${addresses.join(",")}`,
   },
 };

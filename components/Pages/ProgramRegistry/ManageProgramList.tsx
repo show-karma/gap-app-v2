@@ -16,6 +16,7 @@ import { useSearchParams } from "next/navigation";
 import { useQueryState } from "nuqs";
 import { type FC, useMemo, useRef, useState } from "react";
 import { useAccount } from "wagmi";
+import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { Discord2Icon, Telegram2Icon, Twitter2Icon } from "@/components/Icons";
 import { BlogIcon } from "@/components/Icons/Blog";
 import { DiscussionIcon } from "@/components/Icons/Discussion";
@@ -24,7 +25,6 @@ import { Button } from "@/components/Utilities/Button";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { formatDate } from "@/utilities/formatDate";
 import { ReadMore } from "@/utilities/ReadMore";
-import { shortAddress } from "@/utilities/shortAddress";
 import { registryHelper } from "./helper";
 import type { GrantProgram } from "./ProgramList";
 import { ProgramTypeBadges } from "./ProgramTypeBadges";
@@ -492,7 +492,7 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
                     admin.toLowerCase() === address?.toLowerCase() ? "bg-blue-100" : "bg-zinc-50"
                   }`}
                 >
-                  {shortAddress(admin.toLowerCase())}
+                  <EthereumAddressToProfileName address={admin.toLowerCase()} />
                 </span>
               ))}
             </div>

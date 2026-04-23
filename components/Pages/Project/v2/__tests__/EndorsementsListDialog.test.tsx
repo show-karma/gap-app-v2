@@ -20,8 +20,8 @@ vi.mock("@/store/ens", () => ({
   }),
 }));
 
-// Mock EthereumAddressToENSAvatar
-vi.mock("@/components/EthereumAddressToENSAvatar", () => ({
+// Mock EthereumAddressToProfileName
+vi.mock("@/components/EthereumAddressToProfileName", () => ({
   __esModule: true,
   default: ({ address }: { address: string }) => (
     <div data-testid="avatar">{address.slice(0, 6)}</div>

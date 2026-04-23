@@ -3,7 +3,7 @@
 import { BadgeCheckIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { Hex } from "viem";
-import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
+import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import {
@@ -15,9 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useProjectStore } from "@/store";
-import { useENS } from "@/store/ens";
 import { formatDate } from "@/utilities/formatDate";
-import { shortAddress } from "@/utilities/shortAddress";
 
 const ITEMS_PER_PAGE = 12;
 
@@ -33,27 +31,18 @@ interface EndorsementRowProps {
 }
 
 function EndorsementRow({ endorsement }: EndorsementRowProps) {
-  const { ensData, populateEns } = useENS();
-  const endorserAddress = endorsement.endorsedBy?.toLowerCase() as Hex;
-
-  useEffect(() => {
-    if (endorsement.endorsedBy) {
-      populateEns([endorsement.endorsedBy]);
-    }
-  }, [endorsement.endorsedBy, populateEns]);
-
-  const displayName = ensData[endorserAddress]?.name || shortAddress(endorsement.endorsedBy);
-
   return (
     <div className="flex flex-col w-full p-4 gap-3">
       <div className="flex flex-row gap-2 w-full items-start">
         <div className="flex flex-row gap-2 w-full items-center">
-          <EthereumAddressToENSAvatar
-            address={endorsement.endorsedBy}
-            className="h-8 w-8 rounded-full"
-          />
           <div className="flex flex-col gap-0.5">
-            <p className="text-sm font-semibold text-foreground">{displayName}</p>
+            <p className="text-sm font-semibold text-foreground">
+              <EthereumAddressToProfileName
+                address={endorsement.endorsedBy}
+                showProfilePicture
+                pictureClassName="h-8 w-8 rounded-full"
+              />
+            </p>
             <p className="text-xs text-muted-foreground">
               endorsed on {formatDate(endorsement.createdAt)}
             </p>
@@ -90,8 +79,6 @@ interface EndorsementsListDialogProps {
 export function EndorsementsListDialog({ open, onOpenChange }: EndorsementsListDialogProps) {
   const project = useProjectStore((state) => state.project);
   const [page, setPage] = useState<number>(1);
-
-  const { populateEns } = useENS();
 
   // Reset pagination when dialog opens
   useEffect(() => {
@@ -130,15 +117,6 @@ export function EndorsementsListDialog({ open, onOpenChange }: EndorsementsListD
       totalCount: uniqueEndorsements.length,
     };
   }, [project?.endorsements, page]);
-
-  // Populate ENS data for all addresses
-  useEffect(() => {
-    const endorsements = (project?.endorsements || []) as ProjectEndorsementV2[];
-    const allAddresses = endorsements.map((endorsement) => endorsement.endorsedBy);
-    if (allAddresses.length > 0) {
-      populateEns(allAddresses);
-    }
-  }, [project?.endorsements, populateEns]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

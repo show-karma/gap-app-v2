@@ -5,12 +5,12 @@ import { PencilSquareIcon } from "@heroicons/react/24/outline";
 import dynamic from "next/dynamic";
 import { useCallback, useMemo, useState } from "react";
 import { DeleteDialog } from "@/components/DeleteDialog";
+import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import type { GrantMilestoneWithCompletion } from "@/services/milestones";
 import { formatDate } from "@/utilities/formatDate";
 import { toEditableUnifiedMilestone } from "@/utilities/milestoneTransforms";
-import { shortAddress } from "@/utilities/shortAddress";
 import { getMilestoneStatus, MILESTONE_STATUS_CONFIG } from "./utils/milestone-review-status";
 
 const AIEvaluationModal = dynamic(
@@ -219,7 +219,10 @@ export function MilestoneCard({
                   <MarkdownPreview source={milestone.verificationDetails.description} />
                 </div>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                  Verified by: {shortAddress(milestone.verificationDetails.verifiedBy)}
+                  Verified by:{" "}
+                  <EthereumAddressToProfileName
+                    address={milestone.verificationDetails.verifiedBy}
+                  />
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   Verified: {formatDate(milestone.verificationDetails.verifiedAt)}

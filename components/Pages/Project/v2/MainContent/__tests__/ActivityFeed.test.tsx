@@ -20,14 +20,8 @@ vi.mock("@/components/Shared/ActivityCard", () => ({
   ),
 }));
 
-// Mock EthereumAddressToENSAvatar
-vi.mock("@/components/EthereumAddressToENSAvatar", () => ({
-  __esModule: true,
-  default: ({ address }: { address: string }) => <div data-testid="ens-avatar">{address}</div>,
-}));
-
-// Mock EthereumAddressToENSName
-vi.mock("@/components/EthereumAddressToENSName", () => ({
+// Mock EthereumAddressToProfileName
+vi.mock("@/components/EthereumAddressToProfileName", () => ({
   __esModule: true,
   default: ({ address }: { address: string }) => (
     <span data-testid="ens-name">{address?.slice(0, 8)}...</span>

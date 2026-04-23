@@ -11,6 +11,7 @@ import {
 import { format, isValid, parseISO } from "date-fns";
 import React, { type FC, useCallback, useMemo, useRef, useState } from "react";
 import { DeleteDialog } from "@/components/DeleteDialog";
+import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { Spinner } from "@/components/Utilities/Spinner";
@@ -206,8 +207,9 @@ const CommentItem: FC<CommentItemProps> = ({
           <div className="flex items-start justify-between">
             <div>
               <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                {comment.authorName ||
-                  `${comment.authorAddress?.slice(0, 6)}...${comment.authorAddress?.slice(-4)}`}
+                {comment.authorName || (
+                  <EthereumAddressToProfileName address={comment.authorAddress} />
+                )}
                 <span
                   className={cn(
                     "ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium",

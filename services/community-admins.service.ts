@@ -16,6 +16,13 @@ export interface UserProfileInfo {
   email: string;
 }
 
+export interface PublicUserProfileInfo {
+  publicAddress: string;
+  name: string;
+  email?: string;
+  picture?: string;
+}
+
 /**
  * Service for community admin operations requiring server-side email resolution
  */
@@ -49,5 +56,33 @@ export const communityAdminsService = {
       map.set(profile.publicAddress.toLowerCase(), profile);
     }
     return map;
+  },
+
+  /**
+   * Batch lookup public user profiles (name, email, picture) for wallet addresses.
+   * This endpoint is public-ish — on 401/403, returns an empty map instead of throwing.
+   * Returns a map of lowercase address -> public profile info.
+   */
+  async getPublicUserProfiles(addresses: string[]): Promise<Map<string, PublicUserProfileInfo>> {
+    if (addresses.length === 0) return new Map();
+
+    try {
+      const response = await apiClient.get<PublicUserProfileInfo[]>(
+        INDEXER.USERS.PUBLIC_PROFILES(addresses)
+      );
+
+      const map = new Map<string, PublicUserProfileInfo>();
+      for (const profile of response.data) {
+        map.set(profile.publicAddress.toLowerCase(), profile);
+      }
+      return map;
+    } catch (error: unknown) {
+      const status = (error as { response?: { status?: number } })?.response?.status;
+      // Graceful fallback for auth errors — component must never crash
+      if (status === 401 || status === 403) {
+        return new Map();
+      }
+      throw error;
+    }
   },
 };

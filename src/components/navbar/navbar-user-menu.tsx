@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
-import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
+import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { DiscordIcon, TelegramIcon, TwitterIcon } from "@/components/Icons";
 import { ParagraphIcon } from "@/components/Icons/Paragraph";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
@@ -133,7 +133,7 @@ export function NavbarUserMenu() {
                 {getUserEmail(user)}
               </span>
             ) : address ? (
-              <EthereumAddressToENSName
+              <EthereumAddressToProfileName
                 address={address}
                 className="text-sm text-muted-foreground hidden xl:inline px-2"
               />

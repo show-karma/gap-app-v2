@@ -53,7 +53,7 @@ vi.mock("@/components/EthereumAddressToENSAvatar", () => ({
   default: () => <div data-testid="ens-avatar" />,
 }));
 
-vi.mock("@/components/EthereumAddressToENSName", () => ({
+vi.mock("@/components/EthereumAddressToProfileName", () => ({
   __esModule: true,
   default: ({ address }: { address: string }) => <span>{address}</span>,
 }));

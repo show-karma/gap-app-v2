@@ -2,7 +2,7 @@
 
 import type { Hex } from "viem";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
-import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
+import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { useAuth } from "@/hooks/useAuth";
 import { useContributorProfile } from "@/hooks/useContributorProfile";
 
@@ -44,7 +44,7 @@ export function DashboardHeader({ address }: DashboardHeaderProps) {
             <span className="ml-1">, {userEmail}</span>
           ) : address ? (
             <span className="ml-1">
-              , <EthereumAddressToENSName address={address} />
+              , <EthereumAddressToProfileName address={address} />
             </span>
           ) : null}
         </h1>
