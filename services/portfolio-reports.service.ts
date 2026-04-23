@@ -1,12 +1,12 @@
+import type {
+  CreateReportConfigRequest,
+  GenerateReportRequest,
+  PortfolioReport,
+  ReportConfig,
+  UpdateReportConfigRequest,
+} from "@/types/portfolio-report";
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { envVars } from "@/utilities/enviromentVars";
-import type {
-  ReportConfig,
-  PortfolioReport,
-  CreateReportConfigRequest,
-  UpdateReportConfigRequest,
-  GenerateReportRequest,
-} from "@/types/portfolio-report";
 
 const API_URL = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
 const apiClient = createAuthenticatedApiClient(API_URL, 60000);
@@ -22,12 +22,8 @@ async function fetchPublic<T>(url: string): Promise<T> {
 
 // ── Report Config ────────────────────────────────────────────
 
-export async function getReportConfigs(
-  communitySlug: string
-): Promise<ReportConfig[]> {
-  const { data } = await apiClient.get(
-    `/v2/communities/${communitySlug}/report-configs`
-  );
+export async function getReportConfigs(communitySlug: string): Promise<ReportConfig[]> {
+  const { data } = await apiClient.get(`/v2/communities/${communitySlug}/report-configs`);
   return data;
 }
 
@@ -45,10 +41,7 @@ export async function createReportConfig(
   communitySlug: string,
   body: CreateReportConfigRequest
 ): Promise<ReportConfig> {
-  const { data } = await apiClient.post(
-    `/v2/communities/${communitySlug}/report-configs`,
-    body
-  );
+  const { data } = await apiClient.post(`/v2/communities/${communitySlug}/report-configs`, body);
   return data;
 }
 
@@ -64,13 +57,8 @@ export async function updateReportConfig(
   return data;
 }
 
-export async function deleteReportConfig(
-  communitySlug: string,
-  configId: string
-): Promise<void> {
-  await apiClient.delete(
-    `/v2/communities/${communitySlug}/report-configs/${configId}`
-  );
+export async function deleteReportConfig(communitySlug: string, configId: string): Promise<void> {
+  await apiClient.delete(`/v2/communities/${communitySlug}/report-configs/${configId}`);
 }
 
 // ── Reports ──────────────────────────────────────────────────
@@ -80,19 +68,12 @@ export async function listReports(
   status?: string
 ): Promise<PortfolioReport[]> {
   const params = status ? `?status=${status}` : "";
-  const { data } = await apiClient.get(
-    `/v2/communities/${communitySlug}/reports${params}`
-  );
+  const { data } = await apiClient.get(`/v2/communities/${communitySlug}/reports${params}`);
   return data;
 }
 
-export async function getReport(
-  communitySlug: string,
-  reportId: string
-): Promise<PortfolioReport> {
-  const { data } = await apiClient.get(
-    `/v2/communities/${communitySlug}/reports/${reportId}`
-  );
+export async function getReport(communitySlug: string, reportId: string): Promise<PortfolioReport> {
+  const { data } = await apiClient.get(`/v2/communities/${communitySlug}/reports/${reportId}`);
   return data;
 }
 
@@ -101,10 +82,9 @@ export async function updateReportMarkdown(
   reportId: string,
   markdown: string
 ): Promise<PortfolioReport> {
-  const { data } = await apiClient.put(
-    `/v2/communities/${communitySlug}/reports/${reportId}`,
-    { markdown }
-  );
+  const { data } = await apiClient.put(`/v2/communities/${communitySlug}/reports/${reportId}`, {
+    markdown,
+  });
   return data;
 }
 
@@ -112,10 +92,7 @@ export async function generateReport(
   communitySlug: string,
   body: GenerateReportRequest
 ): Promise<PortfolioReport[]> {
-  const { data } = await apiClient.post(
-    `/v2/communities/${communitySlug}/reports/generate`,
-    body
-  );
+  const { data } = await apiClient.post(`/v2/communities/${communitySlug}/reports/generate`, body);
   return data;
 }
 
@@ -151,19 +128,16 @@ export async function unpublishReport(
 
 // ── Public endpoints ─────────────────────────────────────────
 
-export async function getPublishedReports(
-  communitySlug: string
-): Promise<PortfolioReport[]> {
-  return fetchPublic<PortfolioReport[]>(
-    `/v2/communities/${communitySlug}/reports/published`
-  );
+export async function getPublishedReports(communitySlug: string): Promise<PortfolioReport[]> {
+  return fetchPublic<PortfolioReport[]>(`/v2/communities/${communitySlug}/reports/published`);
 }
 
 export async function getPublishedReportByMonth(
   communitySlug: string,
   month: string
-): Promise<PortfolioReport> {
-  return fetchPublic<PortfolioReport>(
-    `/v2/communities/${communitySlug}/reports/published/${month}`
-  );
+): Promise<PortfolioReport | null> {
+  const res = await fetch(`${API_URL}/v2/communities/${communitySlug}/reports/published/${month}`);
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`API error: ${res.status} ${res.statusText}`);
+  return res.json() as Promise<PortfolioReport>;
 }

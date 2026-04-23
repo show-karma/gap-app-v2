@@ -671,3 +671,59 @@ body .react-hot-toast * {
   contain-intrinsic-size: auto 500px;
 }
 
+/* View Transitions API — scoped to portfolio report card → detail morph */
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(report-hero),
+  ::view-transition-new(report-hero) {
+    animation-duration: 380ms;
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  ::view-transition-old(report-meta),
+  ::view-transition-new(report-meta) {
+    animation-duration: 320ms;
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+
+/* Portfolio report article — refined data tables + numerals */
+.report-article {
+  font-variant-numeric: tabular-nums;
+}
+.report-article table {
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid rgb(228 228 231);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.dark .report-article table {
+  border-color: rgb(39 39 42);
+}
+.report-article th {
+  background: rgb(250 250 250);
+  font-weight: 600;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: rgb(82 82 91);
+  border-bottom: 1px solid rgb(228 228 231);
+}
+.dark .report-article th {
+  background: rgb(24 24 27);
+  color: rgb(161 161 170);
+  border-bottom-color: rgb(39 39 42);
+}
+.report-article td {
+  border-top: 1px solid rgb(244 244 245);
+  transition: background-color 120ms ease;
+}
+.dark .report-article td {
+  border-top-color: rgb(39 39 42);
+}
+.report-article tbody tr:hover td {
+  background: rgb(250 250 250);
+}
+.dark .report-article tbody tr:hover td {
+  background: rgb(24 24 27);
+}
+

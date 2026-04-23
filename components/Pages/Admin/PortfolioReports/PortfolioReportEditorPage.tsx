@@ -2,7 +2,7 @@
 
 import { ArrowLeft, Eye, EyeOff, RefreshCw, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
@@ -30,6 +30,29 @@ function formatMonth(month: string): string {
   return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
 }
 
+// Extracts the in-app navigation target from an anchor click, or null if the
+// click should be ignored (external link, new tab, same-page anchor, etc.).
+function getInAppNavTarget(e: MouseEvent): string | null {
+  if (e.defaultPrevented) return null;
+  if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return null;
+  const anchor = (e.target as Element | null)?.closest?.("a[href]") as HTMLAnchorElement | null;
+  if (!anchor) return null;
+  const href = anchor.getAttribute("href");
+  if (!href) return null;
+  if (href.startsWith("#") || href.startsWith("mailto:") || href.startsWith("tel:")) return null;
+  let url: URL;
+  try {
+    url = new URL(href, window.location.href);
+  } catch {
+    return null;
+  }
+  if (url.origin !== window.location.origin) return null;
+  if (url.pathname === window.location.pathname && url.search === window.location.search) {
+    return null;
+  }
+  return url.pathname + url.search + url.hash;
+}
+
 export function PortfolioReportEditorPage({ community, reportId }: Props) {
   const slug = community.details.slug;
   const router = useRouter();
@@ -43,12 +66,45 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
   const [markdown, setMarkdown] = useState<string | null>(null);
   const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
   const [showRegenerateDialog, setShowRegenerateDialog] = useState(false);
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
+  const isDirtyRef = useRef(false);
 
   // Initialize local markdown from fetched report
   const currentMarkdown = markdown ?? report?.markdown ?? "";
 
   // Dirty flag: local edits differ from the saved value
   const isDirty = markdown !== null && markdown !== (report?.markdown ?? "");
+
+  // Keep a ref so event handlers always see the latest value without re-binding.
+  useEffect(() => {
+    isDirtyRef.current = isDirty;
+  }, [isDirty]);
+
+  // Browser refresh/close/external nav — show the native confirm.
+  useEffect(() => {
+    if (!isDirty) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [isDirty]);
+
+  // In-app nav — intercept anchor clicks on capture phase so they can't slip past.
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (!isDirtyRef.current) return;
+      const target = getInAppNavTarget(e);
+      if (!target) return;
+      e.preventDefault();
+      e.stopPropagation();
+      setPendingHref(target);
+      setShowUnsavedDialog(true);
+    };
+    document.addEventListener("click", handler, true);
+    return () => document.removeEventListener("click", handler, true);
+  }, []);
 
   if (accessLoading || isLoading) {
     return (
@@ -126,11 +182,24 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
       <DeleteDialog
         title="You have unsaved changes. Leave without saving?"
         deleteFunction={async () => {
-          navigateBack();
+          const href = pendingHref;
+          // Discard local edits so the beforeunload + click guards don't re-fire
+          setMarkdown(null);
+          setPendingHref(null);
+          // Let state flush before navigating
+          await Promise.resolve();
+          if (href) {
+            router.push(href);
+          } else {
+            navigateBack();
+          }
         }}
         isLoading={false}
         externalIsOpen={showUnsavedDialog}
-        externalSetIsOpen={setShowUnsavedDialog}
+        externalSetIsOpen={(open) => {
+          setShowUnsavedDialog(open);
+          if (!open) setPendingHref(null);
+        }}
         buttonElement={null}
       />
 
