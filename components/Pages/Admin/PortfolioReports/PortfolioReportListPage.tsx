@@ -1,22 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { Eye, EyeOff, FileText, Plus, RefreshCw, Settings } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { FileText, Plus, RefreshCw, Eye, EyeOff, Settings } from "lucide-react";
+import { useState } from "react";
 import toast from "react-hot-toast";
-import { Button } from "@/components/ui/button";
-import {
-  usePortfolioReports,
-  useGenerateReport,
-  usePublishReport,
-  useUnpublishReport,
-  useRegenerateReport,
-} from "@/hooks/portfolio-reports/usePortfolioReports";
-import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
-import type { Community } from "@/types/v2/community";
-import type { PortfolioReport } from "@/types/portfolio-report";
-import { PAGES } from "@/utilities/pages";
+import { DeleteDialog } from "@/components/DeleteDialog";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { Button } from "@/components/ui/button";
+import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
+import {
+  useGenerateReport,
+  usePortfolioReports,
+  usePublishReport,
+  useRegenerateReport,
+  useUnpublishReport,
+} from "@/hooks/portfolio-reports/usePortfolioReports";
+import type { PortfolioReport } from "@/types/portfolio-report";
+import type { Community } from "@/types/v2/community";
+import { PAGES } from "@/utilities/pages";
 
 interface Props {
   community: Community;
@@ -35,6 +36,73 @@ function getPreviousMonth(): string {
   return `${year}-${String(month).padStart(2, "0")}`;
 }
 
+interface ReportTableRowProps {
+  report: PortfolioReport;
+  slug: string;
+  rowPending: boolean;
+  activeMutationType: "publish" | "unpublish" | "regenerate" | null;
+  onEdit: () => void;
+  onPublish: () => void;
+  onUnpublish: () => void;
+  onRegenerate: () => void;
+}
+
+function ReportTableRow({
+  report,
+  rowPending,
+  activeMutationType,
+  onEdit,
+  onPublish,
+  onUnpublish,
+  onRegenerate,
+}: ReportTableRowProps) {
+  return (
+    <tr className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
+      <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">
+        {formatMonth(report.reportMonth)}
+      </td>
+      <td className="px-4 py-3">
+        <span
+          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+            report.status === "published"
+              ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+              : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+          }`}
+        >
+          {report.status}
+        </span>
+        {report.generationError && <span className="ml-2 text-xs text-red-500">Error</span>}
+      </td>
+      <td className="px-4 py-3 text-zinc-500">{report.modelId}</td>
+      <td className="px-4 py-3 text-zinc-500">
+        {new Date(report.generatedAt).toLocaleDateString()}
+      </td>
+      <td className="px-4 py-3">
+        <div className="flex items-center justify-end gap-1">
+          <Button variant="ghost" size="sm" onClick={onEdit}>
+            Edit
+          </Button>
+          {report.status === "draft" ? (
+            <Button variant="ghost" size="sm" onClick={onPublish} disabled={rowPending}>
+              <Eye className="mr-1 h-3 w-3" />
+              {rowPending && activeMutationType === "publish" ? "Publishing..." : "Publish"}
+            </Button>
+          ) : (
+            <Button variant="ghost" size="sm" onClick={onUnpublish} disabled={rowPending}>
+              <EyeOff className="mr-1 h-3 w-3" />
+              {rowPending && activeMutationType === "unpublish" ? "Unpublishing..." : "Unpublish"}
+            </Button>
+          )}
+          <Button variant="ghost" size="sm" onClick={onRegenerate} disabled={rowPending}>
+            <RefreshCw className="mr-1 h-3 w-3" />
+            {rowPending && activeMutationType === "regenerate" ? "Regenerating..." : "Regen"}
+          </Button>
+        </div>
+      </td>
+    </tr>
+  );
+}
+
 export function PortfolioReportListPage({ community }: Props) {
   const slug = community.details.slug;
   const router = useRouter();
@@ -47,6 +115,15 @@ export function PortfolioReportListPage({ community }: Props) {
 
   const [generateMonth, setGenerateMonth] = useState(getPreviousMonth());
   const [showGenerateDialog, setShowGenerateDialog] = useState(false);
+
+  // Per-row pending state: track which report is being mutated and what action
+  const [activeReportId, setActiveReportId] = useState<string | null>(null);
+  const [activeMutationType, setActiveMutationType] = useState<
+    "publish" | "unpublish" | "regenerate" | null
+  >(null);
+
+  // Regenerate confirmation dialog state
+  const [regenerateTargetId, setRegenerateTargetId] = useState<string | null>(null);
 
   if (accessLoading || isLoading) {
     return (
@@ -70,45 +147,77 @@ export function PortfolioReportListPage({ community }: Props) {
       toast.success("Report generated successfully");
       setShowGenerateDialog(false);
     } catch (error) {
-      toast.error(`Failed to generate report: ${error instanceof Error ? error.message : "Unknown error"}`);
+      toast.error(
+        `Failed to generate report: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
     }
   };
 
   const handlePublish = async (reportId: string) => {
+    setActiveReportId(reportId);
+    setActiveMutationType("publish");
     try {
       await publishMutation.mutateAsync(reportId);
       toast.success("Report published");
-    } catch (error) {
+    } catch {
       toast.error("Failed to publish report");
+    } finally {
+      setActiveReportId(null);
+      setActiveMutationType(null);
     }
   };
 
   const handleUnpublish = async (reportId: string) => {
+    setActiveReportId(reportId);
+    setActiveMutationType("unpublish");
     try {
       await unpublishMutation.mutateAsync(reportId);
       toast.success("Report unpublished");
-    } catch (error) {
+    } catch {
       toast.error("Failed to unpublish report");
+    } finally {
+      setActiveReportId(null);
+      setActiveMutationType(null);
     }
   };
 
-  const handleRegenerate = async (reportId: string) => {
-    if (!confirm("This will overwrite the current draft. Continue?")) return;
+  const handleRegenerate = async () => {
+    if (!regenerateTargetId) return;
+    const reportId = regenerateTargetId;
+    setActiveReportId(reportId);
+    setActiveMutationType("regenerate");
     try {
       await regenerateMutation.mutateAsync(reportId);
       toast.success("Report regenerated");
-    } catch (error) {
+    } catch {
       toast.error("Failed to regenerate report");
+    } finally {
+      setActiveReportId(null);
+      setActiveMutationType(null);
     }
   };
 
+  const isRowPending = (reportId: string) =>
+    activeReportId === reportId &&
+    (publishMutation.isPending || unpublishMutation.isPending || regenerateMutation.isPending);
+
   return (
     <div className="space-y-6">
+      {/* Regenerate confirmation dialog */}
+      <DeleteDialog
+        title="This will overwrite the current draft. Continue?"
+        deleteFunction={handleRegenerate}
+        isLoading={regenerateMutation.isPending}
+        externalIsOpen={regenerateTargetId !== null}
+        externalSetIsOpen={(open) => {
+          if (!open) setRegenerateTargetId(null);
+        }}
+        buttonElement={null}
+      />
+
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-            Portfolio Reports
-          </h1>
+          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">Portfolio Reports</h1>
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
             Monthly portfolio reports for your grant programs
           </p>
@@ -133,18 +242,18 @@ export function PortfolioReportListPage({ community }: Props) {
           <h3 className="mb-3 text-sm font-medium">Generate Report</h3>
           <div className="flex items-end gap-3">
             <div>
-              <label className="mb-1 block text-xs text-zinc-500">Month</label>
+              <label htmlFor="generate-month" className="mb-1 block text-xs text-zinc-500">
+                Month
+              </label>
               <input
+                id="generate-month"
                 type="month"
                 value={generateMonth}
                 onChange={(e) => setGenerateMonth(e.target.value)}
                 className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-700"
               />
             </div>
-            <Button
-              onClick={handleGenerate}
-              disabled={generateMutation.isPending}
-            >
+            <Button onClick={handleGenerate} disabled={generateMutation.isPending}>
               {generateMutation.isPending ? (
                 <>
                   <Spinner className="mr-2 h-4 w-4" />
@@ -182,77 +291,17 @@ export function PortfolioReportListPage({ community }: Props) {
             </thead>
             <tbody className="divide-y divide-zinc-200 dark:divide-zinc-700">
               {reports.map((report: PortfolioReport) => (
-                <tr
+                <ReportTableRow
                   key={report.id}
-                  className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
-                >
-                  <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">
-                    {formatMonth(report.reportMonth)}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                        report.status === "published"
-                          ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                          : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
-                      }`}
-                    >
-                      {report.status}
-                    </span>
-                    {report.generationError && (
-                      <span className="ml-2 text-xs text-red-500">Error</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-zinc-500">{report.modelId}</td>
-                  <td className="px-4 py-3 text-zinc-500">
-                    {new Date(report.generatedAt).toLocaleDateString()}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center justify-end gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() =>
-                          router.push(
-                            `${PAGES.ADMIN.PORTFOLIO_REPORTS(slug)}/${report.id}`
-                          )
-                        }
-                      >
-                        Edit
-                      </Button>
-                      {report.status === "draft" ? (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handlePublish(report.id)}
-                          disabled={publishMutation.isPending}
-                        >
-                          <Eye className="mr-1 h-3 w-3" />
-                          Publish
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleUnpublish(report.id)}
-                          disabled={unpublishMutation.isPending}
-                        >
-                          <EyeOff className="mr-1 h-3 w-3" />
-                          Unpublish
-                        </Button>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRegenerate(report.id)}
-                        disabled={regenerateMutation.isPending}
-                      >
-                        <RefreshCw className="mr-1 h-3 w-3" />
-                        Regen
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
+                  report={report}
+                  slug={slug}
+                  rowPending={isRowPending(report.id)}
+                  activeMutationType={activeMutationType}
+                  onEdit={() => router.push(`${PAGES.ADMIN.PORTFOLIO_REPORTS(slug)}/${report.id}`)}
+                  onPublish={() => handlePublish(report.id)}
+                  onUnpublish={() => handleUnpublish(report.id)}
+                  onRegenerate={() => setRegenerateTargetId(report.id)}
+                />
               ))}
             </tbody>
           </table>

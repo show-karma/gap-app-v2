@@ -1,22 +1,23 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { ArrowLeft, Eye, EyeOff, RefreshCw, Save } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import toast from "react-hot-toast";
-import { Button } from "@/components/ui/button";
+import { DeleteDialog } from "@/components/DeleteDialog";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { Spinner } from "@/components/Utilities/Spinner";
+import { Button } from "@/components/ui/button";
+import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import {
   usePortfolioReport,
-  useUpdateReportMarkdown,
   usePublishReport,
-  useUnpublishReport,
   useRegenerateReport,
+  useUnpublishReport,
+  useUpdateReportMarkdown,
 } from "@/hooks/portfolio-reports/usePortfolioReports";
-import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import type { Community } from "@/types/v2/community";
 import { PAGES } from "@/utilities/pages";
-import { Spinner } from "@/components/Utilities/Spinner";
 
 interface Props {
   community: Community;
@@ -40,9 +41,14 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
   const regenerateMutation = useRegenerateReport(slug);
 
   const [markdown, setMarkdown] = useState<string | null>(null);
+  const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
+  const [showRegenerateDialog, setShowRegenerateDialog] = useState(false);
 
   // Initialize local markdown from fetched report
   const currentMarkdown = markdown ?? report?.markdown ?? "";
+
+  // Dirty flag: local edits differ from the saved value
+  const isDirty = markdown !== null && markdown !== (report?.markdown ?? "");
 
   if (accessLoading || isLoading) {
     return (
@@ -60,14 +66,28 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
     );
   }
 
+  const navigateBack = () => {
+    router.push(PAGES.ADMIN.PORTFOLIO_REPORTS(slug));
+  };
+
+  const handleBackClick = () => {
+    if (isDirty) {
+      setShowUnsavedDialog(true);
+    } else {
+      navigateBack();
+    }
+  };
+
   const handleSave = async () => {
     try {
       await updateMarkdownMutation.mutateAsync({
         reportId,
         markdown: currentMarkdown,
       });
+      // Sync dirty state away after successful save
+      setMarkdown(null);
       toast.success("Report saved");
-    } catch (error) {
+    } catch {
       toast.error("Failed to save report");
     }
   };
@@ -76,7 +96,7 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
     try {
       await publishMutation.mutateAsync(reportId);
       toast.success("Report published");
-    } catch (error) {
+    } catch {
       toast.error("Failed to publish report");
     }
   };
@@ -85,37 +105,55 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
     try {
       await unpublishMutation.mutateAsync(reportId);
       toast.success("Report unpublished");
-    } catch (error) {
+    } catch {
       toast.error("Failed to unpublish report");
     }
   };
 
   const handleRegenerate = async () => {
-    if (!confirm("This will overwrite the current draft. Any edits will be lost. Continue?")) return;
     try {
       const result = await regenerateMutation.mutateAsync(reportId);
       setMarkdown(result.markdown);
       toast.success("Report regenerated");
-    } catch (error) {
+    } catch {
       toast.error("Failed to regenerate report");
     }
   };
 
   return (
     <div className="flex h-full flex-col">
+      {/* Unsaved changes confirmation dialog */}
+      <DeleteDialog
+        title="You have unsaved changes. Leave without saving?"
+        deleteFunction={async () => {
+          navigateBack();
+        }}
+        isLoading={false}
+        externalIsOpen={showUnsavedDialog}
+        externalSetIsOpen={setShowUnsavedDialog}
+        buttonElement={null}
+      />
+
+      {/* Regenerate confirmation dialog */}
+      <DeleteDialog
+        title="This will overwrite the current draft. Any edits will be lost. Continue?"
+        deleteFunction={handleRegenerate}
+        isLoading={regenerateMutation.isPending}
+        externalIsOpen={showRegenerateDialog}
+        externalSetIsOpen={setShowRegenerateDialog}
+        buttonElement={null}
+      />
+
       {/* Top bar */}
       <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3 dark:border-zinc-700">
         <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.push(PAGES.ADMIN.PORTFOLIO_REPORTS(slug))}
-          >
+          <Button variant="ghost" size="sm" onClick={handleBackClick}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
             <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
               {formatMonth(report.reportMonth)}
+              {isDirty && <span className="ml-2 text-sm font-normal text-zinc-400">(unsaved)</span>}
             </h1>
             <div className="flex items-center gap-2 text-xs text-zinc-500">
               <span
@@ -138,7 +176,7 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
           <Button
             variant="outline"
             size="sm"
-            onClick={handleRegenerate}
+            onClick={() => setShowRegenerateDialog(true)}
             disabled={regenerateMutation.isPending}
           >
             <RefreshCw className="mr-1 h-3 w-3" />
@@ -154,11 +192,7 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
             {updateMarkdownMutation.isPending ? "Saving..." : "Save"}
           </Button>
           {report.status === "draft" ? (
-            <Button
-              size="sm"
-              onClick={handlePublish}
-              disabled={publishMutation.isPending}
-            >
+            <Button size="sm" onClick={handlePublish} disabled={publishMutation.isPending}>
               <Eye className="mr-1 h-3 w-3" />
               Publish
             </Button>
