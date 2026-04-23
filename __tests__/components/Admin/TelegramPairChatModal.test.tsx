@@ -66,14 +66,16 @@ describe("TelegramPairChatModal", () => {
     expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
   });
 
-  it("starts a pairing session and displays the token + countdown when opened", async () => {
+  it("starts a pairing session and displays the /karma_pair command + countdown when opened", async () => {
     const futureIso = new Date(Date.now() + 5 * 60 * 1000).toISOString();
-    mockFetchData.mockResolvedValue([
-      { token: "KARMA-PAIR-ab3f9k", expiresAt: futureIso },
-      null,
-      null,
-      200,
-    ]);
+    // `/start` returns the token; any subsequent `/verify` poll returns 422
+    // (pending — bot hasn't claimed yet) so the polling loop stays quiet.
+    mockFetchData.mockImplementation(async (url: string) => {
+      if (url.includes("/telegram-pair/start")) {
+        return [{ token: "KARMA-PAIR-ab3f9k", expiresAt: futureIso }, null, null, 200];
+      }
+      return [null, "pending", null, 422];
+    });
 
     render(<TelegramPairChatModal communitySlug="filecoin" open={true} onOpenChange={vi.fn()} />, {
       wrapper,
@@ -83,11 +85,16 @@ describe("TelegramPairChatModal", () => {
     expect(screen.getByText(/Pair a Telegram chat/i)).toBeInTheDocument();
 
     await waitFor(() => {
-      expect(screen.getByTestId("telegram-pair-token")).toHaveTextContent("KARMA-PAIR-ab3f9k");
+      expect(screen.getByTestId("telegram-pair-command")).toHaveTextContent(
+        "/karma_pair KARMA-PAIR-ab3f9k"
+      );
     });
 
     // Countdown is rendered in m:ss format
     expect(screen.getByTestId("telegram-pair-countdown").textContent).toMatch(/^\d+:\d{2}$/);
+
+    // Polling indicator replaces the old "Verify now" CTA
+    expect(screen.getByRole("status")).toHaveTextContent(/Waiting for the bot/i);
 
     // Pairing /start was hit
     expect(mockFetchData).toHaveBeenCalledWith(
