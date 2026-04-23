@@ -66,7 +66,7 @@ describe("TelegramPairChatModal", () => {
     expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
   });
 
-  it("starts a pairing session and displays the /karma-pair command + countdown when opened", async () => {
+  it("starts a pairing session and displays the /karma_pair command + countdown when opened", async () => {
     const futureIso = new Date(Date.now() + 5 * 60 * 1000).toISOString();
     // `/start` returns the token; any subsequent `/verify` poll returns 422
     // (pending — bot hasn't claimed yet) so the polling loop stays quiet.
@@ -86,7 +86,7 @@ describe("TelegramPairChatModal", () => {
 
     await waitFor(() => {
       expect(screen.getByTestId("telegram-pair-command")).toHaveTextContent(
-        "/karma-pair KARMA-PAIR-ab3f9k"
+        "/karma_pair KARMA-PAIR-ab3f9k"
       );
     });
 

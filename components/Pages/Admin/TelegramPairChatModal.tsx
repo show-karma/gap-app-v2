@@ -135,7 +135,10 @@ export function TelegramPairChatModal({
   // token rides along as the `startgroup` payload — Telegram surfaces it back
   // to the bot on some clients, but we do NOT rely on that (payload delivery
   // isn't consistent across clients). The grantee still sends
-  // `/karma-pair <token>` in the group to complete the flow.
+  // `/karma_pair <token>` in the group to complete the flow. Command uses
+  // an underscore rather than a hyphen — Telegram's native bot command
+  // syntax only permits `[a-z0-9_]`, and `/karma-pair` would not register
+  // as a proper command with BotFather.
   const addBotDeepLink = useMemo(() => {
     if (!token) return null;
     return `https://t.me/${KARMA_TELEGRAM_BOT_HANDLE}?startgroup=${encodeURIComponent(token)}`;
@@ -143,7 +146,7 @@ export function TelegramPairChatModal({
 
   // The exact command the grantee should paste in the group. Shown verbatim
   // in the copy box so they can paste without modification.
-  const slashCommand = useMemo(() => (token ? `/karma-pair ${token}` : null), [token]);
+  const slashCommand = useMemo(() => (token ? `/karma_pair ${token}` : null), [token]);
 
   const handleCopy = useCallback(() => {
     if (!slashCommand) return;
@@ -288,7 +291,7 @@ export function TelegramPairChatModal({
               Karma bot is already in the group, skip this step.
             </li>
             <li>
-              Send the <strong>/karma-pair</strong> command above as a message in that group.
+              Send the <strong>/karma_pair</strong> command above as a message in that group.
             </li>
             <li>
               Come back here — Karma auto-detects the pairing and this modal closes. No extra click
