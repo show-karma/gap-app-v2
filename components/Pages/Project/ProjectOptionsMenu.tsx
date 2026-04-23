@@ -119,14 +119,13 @@ export const ProjectOptionsMenu = () => {
   const projectId = params.projectId as string;
   const [isDeleting, setIsDeleting] = useState(false);
   const [showLinkContractsDialog, setShowLinkContractsDialog] = useState(false);
-  const [showViewContractsDialog, setShowViewContractsDialog] = useState(false);
   const [showLinkGithubDialog, setShowLinkGithubDialog] = useState(false);
   const [showLinkOSODialog, setShowLinkOSODialog] = useState(false);
   const [showLinkDivviDialog, setShowLinkDivviDialog] = useState(false);
   const [showSetPayoutDialog, setShowSetPayoutDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { address, chain } = useAccount();
-  const { authenticated: isAuthenticated } = useAuth();
+  const { authenticated } = useAuth();
   const { switchChainAsync } = useWallet();
   const router = useRouter();
   const { startAttestation, showSuccess, showError, changeStepperStep, setIsStepper } =
@@ -137,12 +136,11 @@ export const ProjectOptionsMenu = () => {
   const { openGrantGenieModal } = useGrantGenieModalStore();
   const { openTransferOwnershipModal } = useTransferOwnershipModalStore();
   const { openAdminTransferOwnershipModal } = useAdminTransferOwnershipModalStore();
-  const { isProjectOwner, refreshProject } = useProjectStore();
+  const { isProjectAdmin, isProjectOwner, refreshProject } = useProjectStore();
   const { data: contactsInfo } = useContactInfo(projectId);
   const { isOwner: isContractOwner } = useOwnerStore();
   const isCommunityAdmin = useIsCommunityAdmin();
-  const isAuthorized = isProjectOwner || isContractOwner || isCommunityAdmin;
-  const { authenticated } = useAuth();
+  const isAuthorized = isProjectAdmin || isProjectOwner || isContractOwner || isCommunityAdmin;
   const { data: permissions, isLoading: isPermissionsLoading } = usePermissionsQuery(
     {},
     { enabled: authenticated }
@@ -152,10 +150,6 @@ export const ProjectOptionsMenu = () => {
   // Event handlers to reset state when dialogs close
   const handleLinkContractsDialogClose = () => {
     setShowLinkContractsDialog(false);
-  };
-
-  const handleViewContractsDialogClose = () => {
-    setShowViewContractsDialog(false);
   };
 
   const handleLinkGithubDialogClose = () => {
@@ -233,15 +227,6 @@ export const ProjectOptionsMenu = () => {
               onClose={handleLinkContractsDialogClose}
             />
           )}
-          {showViewContractsDialog && (
-            <LinkContractAddressButton
-              buttonElement={null}
-              buttonClassName={buttonClassName}
-              project={project}
-              onClose={handleViewContractsDialogClose}
-              readOnly={true}
-            />
-          )}
           {showLinkGithubDialog && (
             <LinkGithubRepoButton
               buttonElement={null}
@@ -292,7 +277,7 @@ export const ProjectOptionsMenu = () => {
         </>
       )}
 
-      {!isPermissionsLoading && (isAuthorized || isSuperAdmin || isAuthenticated) && (
+      {!isPermissionsLoading && (isAuthorized || isSuperAdmin) && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
@@ -384,16 +369,6 @@ export const ProjectOptionsMenu = () => {
                   Delete project
                 </DropdownMenuItem>
               </>
-            )}
-            {/* Non-authorized but logged-in users: View Contracts only */}
-            {!isAuthorized && !isSuperAdmin && isAuthenticated && project && (
-              <DropdownMenuItem
-                onClick={() => setShowViewContractsDialog(true)}
-                className={buttonClassName}
-              >
-                <LinkIcon className="h-5 w-5" aria-hidden="true" />
-                View Contracts
-              </DropdownMenuItem>
             )}
           </DropdownMenuContent>
         </DropdownMenu>
