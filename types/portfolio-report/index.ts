@@ -41,6 +41,7 @@ export interface CreateReportConfigRequest {
   reportType?: string;
   modelId: string;
   prompt: string;
+  isActive?: boolean;
 }
 
 export interface UpdateReportConfigRequest {

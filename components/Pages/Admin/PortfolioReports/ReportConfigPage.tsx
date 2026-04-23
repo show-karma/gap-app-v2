@@ -103,10 +103,11 @@ export function ReportConfigPage({ community }: Props) {
     );
   }
 
-  // Show validation toasts for both fields if anything fails.
+  // Show validation toasts for any failing field.
   const onInvalid = (formErrors: typeof errors) => {
     if (formErrors.programIds?.message) toast.error(formErrors.programIds.message);
     if (formErrors.prompt?.message) toast.error(formErrors.prompt.message);
+    if (formErrors.modelId?.message) toast.error(formErrors.modelId.message);
   };
 
   const onSubmit = async (values: FormValues) => {
@@ -129,6 +130,7 @@ export function ReportConfigPage({ community }: Props) {
           programIds: parsedProgramIds,
           modelId: values.modelId,
           prompt: values.prompt,
+          isActive: values.isActive,
         });
         toast.success("Config created");
       }
