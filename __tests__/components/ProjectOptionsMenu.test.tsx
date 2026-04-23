@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { ProjectOptionsMenu } from "@/components/Pages/Project/ProjectOptionsMenu";
-import type { Role } from "@/src/core/rbac/types";
+import { Role } from "@/src/core/rbac/types";
 
 const mockAuthState = {
   authenticated: false,
@@ -194,5 +194,23 @@ describe("ProjectOptionsMenu", () => {
 
     expect(screen.getByTestId("project-options-menu")).toBeInTheDocument();
     expect(screen.getByText("Project Settings")).toBeInTheDocument();
+  });
+
+  it("renders the project settings button for super admins", () => {
+    mockAuthState.authenticated = true;
+    mockPermissionsState.roles = [Role.SUPER_ADMIN];
+
+    render(<ProjectOptionsMenu />);
+
+    expect(screen.getByTestId("project-options-menu")).toBeInTheDocument();
+  });
+
+  it("renders the project settings button for community admins", () => {
+    mockAuthState.authenticated = true;
+    mockCommunityAdminState.isCommunityAdmin = true;
+
+    render(<ProjectOptionsMenu />);
+
+    expect(screen.getByTestId("project-options-menu")).toBeInTheDocument();
   });
 });

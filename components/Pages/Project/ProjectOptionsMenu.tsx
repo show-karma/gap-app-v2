@@ -119,7 +119,6 @@ export const ProjectOptionsMenu = () => {
   const projectId = params.projectId as string;
   const [isDeleting, setIsDeleting] = useState(false);
   const [showLinkContractsDialog, setShowLinkContractsDialog] = useState(false);
-  const [showViewContractsDialog, setShowViewContractsDialog] = useState(false);
   const [showLinkGithubDialog, setShowLinkGithubDialog] = useState(false);
   const [showLinkOSODialog, setShowLinkOSODialog] = useState(false);
   const [showLinkDivviDialog, setShowLinkDivviDialog] = useState(false);
@@ -151,10 +150,6 @@ export const ProjectOptionsMenu = () => {
   // Event handlers to reset state when dialogs close
   const handleLinkContractsDialogClose = () => {
     setShowLinkContractsDialog(false);
-  };
-
-  const handleViewContractsDialogClose = () => {
-    setShowViewContractsDialog(false);
   };
 
   const handleLinkGithubDialogClose = () => {
@@ -230,15 +225,6 @@ export const ProjectOptionsMenu = () => {
               buttonClassName={buttonClassName}
               project={project}
               onClose={handleLinkContractsDialogClose}
-            />
-          )}
-          {showViewContractsDialog && (
-            <LinkContractAddressButton
-              buttonElement={null}
-              buttonClassName={buttonClassName}
-              project={project}
-              onClose={handleViewContractsDialogClose}
-              readOnly={true}
             />
           )}
           {showLinkGithubDialog && (
@@ -383,16 +369,6 @@ export const ProjectOptionsMenu = () => {
                   Delete project
                 </DropdownMenuItem>
               </>
-            )}
-            {/* Non-authorized but logged-in users: View Contracts only */}
-            {!isAuthorized && !isSuperAdmin && isAuthenticated && project && (
-              <DropdownMenuItem
-                onClick={() => setShowViewContractsDialog(true)}
-                className={buttonClassName}
-              >
-                <LinkIcon className="h-5 w-5" aria-hidden="true" />
-                View Contracts
-              </DropdownMenuItem>
             )}
           </DropdownMenuContent>
         </DropdownMenu>
