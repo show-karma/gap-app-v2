@@ -8,6 +8,7 @@ import {
   CircleDollarSign,
   CreditCard,
   ExternalLink,
+  FileText,
   Flag,
   Globe,
   Home,
@@ -88,6 +89,12 @@ const NAV_GROUPS: NavGroup[] = [
         matchSegment: "milestones-report",
         label: "Milestones",
         icon: Flag,
+      },
+      {
+        href: PAGES.ADMIN.PORTFOLIO_REPORTS,
+        matchSegment: "portfolio-reports",
+        label: "Portfolio Reports",
+        icon: FileText,
       },
       {
         href: PAGES.ADMIN.CONTROL_CENTER,
