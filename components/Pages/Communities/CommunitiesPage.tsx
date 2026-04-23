@@ -70,16 +70,16 @@ export const CommunitiesPage = () => {
         </div>
 
         <h1 className="text-4xl sm:text-[72px] font-bold text-black dark:text-white">
-          Communities on Karma
+          Organizations on Karma
         </h1>
         <p className="text-black dark:text-white text-sm sm:text-lg max-w-4xl text-center">
-          Explore the ecosystem of DAOs, protocols, and organizations growing their communities
-          through transparent funding, accountability, and impact measurement.
+          Explore organizations running grants, hackathons, and funding programs on Karma. Discover
+          opportunities, track progress, and see real impact.
         </p>
 
         <a href="https://tally.so/r/wd0jeq" target="_blank" rel="noreferrer">
           <Button className="text-xs sm:text-base font-bold rounded-sm px-4 py-2 mt-5 w-fit mx-auto">
-            Add your community
+            Add your organization
           </Button>
         </a>
       </div>

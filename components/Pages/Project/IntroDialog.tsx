@@ -16,6 +16,7 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { shortAddress } from "@/utilities/shortAddress";
+import { telegramUsernameSchema } from "@/utilities/validation/telegram-username";
 
 type IntroDialogProps = {};
 
@@ -23,7 +24,7 @@ const schema = z.object({
   email: z.string().email({ message: MESSAGES.PROJECT.INTRO.EMAIL }).min(3, {
     message: MESSAGES.PROJECT.INTRO.EMAIL,
   }),
-  telegram: z.string(),
+  telegram: telegramUsernameSchema,
   message: z
     .string()
     .describe(MESSAGES.PROJECT.INTRO.MESSAGE)
@@ -160,9 +161,16 @@ export const IntroDialog: FC<IntroDialogProps> = () => {
                         id="telegram-input"
                         type="text"
                         className={inputStyle}
-                        placeholder="Enter your telegram address"
+                        placeholder="johnsmith"
+                        aria-describedby="intro-telegram-helper"
                         {...register("telegram")}
                       />
+                      <p
+                        id="intro-telegram-helper"
+                        className="text-xs text-gray-500 dark:text-zinc-400"
+                      >
+                        Your Telegram @username (without @). Used to tag you in group notifications.
+                      </p>
                       <p className="text-red-600 mb-2">{errors.telegram?.message}</p>
                     </div>
                     <div className="flex w-full flex-col gap-2">

@@ -2,9 +2,31 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
+/**
+ * One paired Telegram chat. The `name` is the chat title that Telegram
+ * returns at pairing time (chat.title). May be empty for legacy entries
+ * created before names were persisted, or for chat IDs that admins typed
+ * in by hand instead of using the pairing flow.
+ */
+export interface TelegramChat {
+  id: string;
+  name: string;
+}
+
 export interface CommunityConfig {
   public?: boolean;
   rank?: number;
+  disableReviewerEmails?: boolean;
+  /**
+   * Paired Telegram chats the platform-owned Karma bot will post to.
+   * Bot token is platform-owned (server env), no longer per-community.
+   *
+   * Replaces the legacy `telegramChatIds: string[]` shape.
+   */
+  telegramChats?: TelegramChat[];
+  telegramEnabled?: boolean;
+  slackWebhookUrls?: string[];
+  slackEnabled?: boolean;
 }
 
 export const useCommunityConfig = (slug: string, enabled: boolean = true) => {
@@ -71,7 +93,7 @@ export const useCommunityConfigMutation = () => {
       }
     },
     onSettled: (_, __, { slug }) => {
-      // Always refetch after error or success to ensure we have the latest data
+      // Always refetch after error or success to ensure we have the latest
       queryClient.invalidateQueries({ queryKey: ["community-config", slug] });
     },
   });

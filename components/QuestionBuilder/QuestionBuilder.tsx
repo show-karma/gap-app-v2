@@ -35,11 +35,13 @@ import {
   PostApprovalEmptyState,
 } from "@/components/FundingPlatform/EmptyStateGuidance";
 import { PAGE_HEADER_CONTENT, PageHeader } from "@/components/FundingPlatform/PageHeader";
+import { NotificationConfigTab } from "@/components/FundingPlatform/QuestionBuilder/NotificationConfigTab";
 import { ProgramDetailsTab } from "@/components/FundingPlatform/QuestionBuilder/ProgramDetailsTab";
 import { ReviewerManagementTab } from "@/components/FundingPlatform/QuestionBuilder/ReviewerManagementTab";
 import { SettingsSidebar, type SidebarTabKey } from "@/components/FundingPlatform/Sidebar";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useUpdateProgramEnrollment } from "@/hooks/useFundingPlatform";
 import type { FormField, FormSchema } from "@/types/question-builder";
 import { MarkdownEditor } from "../Utilities/MarkdownEditor";
@@ -59,6 +61,7 @@ const TAB_KEYS = [
   "reviewers",
   "program-details",
   "kyc-settings",
+  "notification-config",
 ] as const;
 
 const DEFAULT_TAB: SidebarTabKey = "build";
@@ -136,6 +139,11 @@ export function QuestionBuilder({
       },
     }
   );
+
+  // Gate the (read-only) Notifications tab to community admins / staff only.
+  // Backend also enforces 403, but hiding the tab avoids dead-end UI for
+  // reviewers / non-admins who can otherwise reach the QuestionBuilder.
+  const { hasAccess: hasCommunityAdminAccess } = useCommunityAdminAccess(communityId);
 
   // Mutation for toggling open enrollment (anyoneCanJoin)
   const { updateEnrollment, isPending: isEnrollmentPending } = useUpdateProgramEnrollment(
@@ -649,6 +657,7 @@ export function QuestionBuilder({
         programTitle={programTitle}
         completedSteps={completedSteps}
         kycEnabled={kycEnabled}
+        showNotificationConfig={hasCommunityAdminAccess}
       />
 
       {/* Main Content Area */}
@@ -947,6 +956,12 @@ export function QuestionBuilder({
                 }}
                 onSave={handleKycSettingsChange}
               />
+            </div>
+          </div>
+        ) : activeTab === "notification-config" ? (
+          <div className="p-4 sm:p-6 lg:p-8">
+            <div className="max-w-4xl mx-auto">
+              <NotificationConfigTab communitySlug={communityId} readOnly={readOnly} />
             </div>
           </div>
         ) : null}

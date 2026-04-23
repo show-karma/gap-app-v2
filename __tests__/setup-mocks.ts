@@ -63,7 +63,10 @@ vi.mock("@/utilities/enviromentVars", () => ({
     ZERODEV_PROJECT_ID: "",
     ALCHEMY_POLICY_ID: "",
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "",
+    KARMA_TELEGRAM_BOT_HANDLE: "test_bot",
   },
+  // Named re-export — mirror the production module.
+  KARMA_TELEGRAM_BOT_HANDLE: "test_bot",
 }));
 
 // ---------------------------------------------------------------------------

@@ -3,7 +3,7 @@ import Image from "next/image";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { cn } from "@/utilities/tailwind";
 import { MenuItemClient } from "./menu-item-client";
-import { exploreItems, forBuildersItems, forFundersItems, resourcesItems } from "./menu-items";
+import { exploreItems, forFundersItems, forProjectsItems, resourcesItems } from "./menu-items";
 import { SimpleMenuItemClient } from "./simple-menu-item-client";
 
 const menuStyles = {
@@ -32,17 +32,17 @@ export function MenuSection({ title, variant = "desktop", className }: MenuSecti
   return <p className={cn(menuStyles.itemDescription, "mb-2", className)}>{title}</p>;
 }
 
-// For Builders Section
-interface ForBuildersContentProps {
+// For Projects Section
+interface ForProjectsContentProps {
   variant?: "desktop" | "mobile";
   onClose?: () => void;
 }
 
-export function ForBuildersContent({ variant = "desktop", onClose }: ForBuildersContentProps) {
+export function ForProjectsContent({ variant = "desktop", onClose }: ForProjectsContentProps) {
   if (variant === "mobile") {
     return (
       <>
-        {forBuildersItems.map((item) => (
+        {forProjectsItems.map((item) => (
           <MenuItem key={item.href} {...item} variant="mobile" onClick={onClose} />
         ))}
       </>
@@ -52,11 +52,11 @@ export function ForBuildersContent({ variant = "desktop", onClose }: ForBuilders
   return (
     <div className="flex flex-row justify-between items-center gap-4">
       <div className="flex flex-col items-start justify-start">
-        {forBuildersItems.map((item) => (
+        {forProjectsItems.map((item) => (
           <MenuItem key={item.href} {...item} variant="desktop" />
         ))}
       </div>
-      <Image src="/images/homepage/nav-builder.png" alt="For Builders" width={170} height={132} />
+      <Image src="/images/homepage/nav-builder.png" alt="For Projects" width={170} height={132} />
     </div>
   );
 }

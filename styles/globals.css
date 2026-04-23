@@ -727,3 +727,50 @@ body .react-hot-toast * {
   background: rgb(24 24 27);
 }
 
+/* ─── Scroll Reveal Animations ─── */
+
+.scroll-reveal {
+  will-change: opacity, transform;
+  transition-property: opacity, transform;
+  transition-duration: var(--reveal-duration, 700ms);
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1); /* ease-out-expo */
+}
+
+.scroll-reveal--fade-up {
+  opacity: 0;
+  transform: translateY(32px);
+}
+
+.scroll-reveal--fade-in {
+  opacity: 0;
+  transform: none;
+}
+
+.scroll-reveal--fade-left {
+  opacity: 0;
+  transform: translateX(32px);
+}
+
+.scroll-reveal--fade-right {
+  opacity: 0;
+  transform: translateX(-32px);
+}
+
+.scroll-reveal--scale-up {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+.scroll-reveal.scroll-revealed {
+  opacity: 1;
+  transform: none;
+}
+
+/* Reduced motion: skip all scroll animations */
+@media (prefers-reduced-motion: reduce) {
+  .scroll-reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}

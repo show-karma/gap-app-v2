@@ -28,6 +28,7 @@ function transformProjectIndicators(
     hasData: indicator.hasData,
     isAssociatedWithPrograms: false, // This can be determined elsewhere if needed
     aggregatedData: indicator.aggregatedData,
+    lastUpdatedAt: indicator.lastUpdatedAt,
   }));
 }
 

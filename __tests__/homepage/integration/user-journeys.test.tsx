@@ -48,7 +48,7 @@ describe("Homepage User Journeys", () => {
       });
 
       // Hero
-      expect(screen.getByText(/Where builders get funded/i)).toBeInTheDocument();
+      expect(screen.getByText(/Get funded/i)).toBeInTheDocument();
 
       // Funding opportunities
       await waitFor(() => {

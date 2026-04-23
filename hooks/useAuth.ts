@@ -163,18 +163,16 @@ export const useAuth = () => {
         loginGraceRef.current = false;
       }, 2000);
 
-      // Only redirect if we're on the default landing page.
-      // In whitelabel mode, "/" is the community homepage (funding opportunities),
-      // not a generic landing page — don't redirect away from it.
-      // Skip redirect if create project modal is open (user triggered login from the modal)
+      // After login, redirect to a saved post-login URL if one exists,
+      // but only if we're on the homepage (not a deep link the user navigated to).
+      // In whitelabel mode, "/" is the community homepage — don't redirect.
+      // Skip redirect if create project modal is open (user triggered login from the modal).
       const isCreateModalOpen = useProjectCreateModalStore.getState().isProjectCreateModalOpen;
       if (pathname === "/" && !isWhitelabel && !isCreateModalOpen) {
         const redirectUrl = getPostLoginRedirect();
         if (redirectUrl) {
           router.push(redirectUrl);
           clearPostLoginRedirect();
-        } else {
-          router.push(PAGES.DASHBOARD);
         }
       }
     }
