@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, Copy, Loader2, MessageSquare, RefreshCw } from "lucide-react";
+import { AlertCircle, Copy, ExternalLink, Loader2, MessageSquare, RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/Utilities/Button";
@@ -116,6 +116,18 @@ export function TelegramPairChatModal({
   const isExpired = Boolean(expiresAt) && msRemaining === 0;
   const isLowTime = !isExpired && msRemaining > 0 && msRemaining < 30_000;
 
+  // One-tap "add bot" deep link. Opens Telegram's group picker pre-scoped to
+  // the Karma bot so the admin doesn't have to search for its username. The
+  // token rides along as the `startgroup` payload — Telegram surfaces it back
+  // to the bot on some clients, but we do NOT rely on that (payload delivery
+  // isn't consistent across clients). The token still has to be posted in
+  // the group for the current verify flow to find it; the deep link just
+  // collapses "search for bot → add to group" into a single tap.
+  const addBotDeepLink = useMemo(() => {
+    if (!token) return null;
+    return `https://t.me/${KARMA_TELEGRAM_BOT_HANDLE}?startgroup=${encodeURIComponent(token)}`;
+  }, [token]);
+
   const handleCopy = useCallback(() => {
     if (!token) return;
     copy(token, "Token copied to clipboard");
@@ -214,19 +226,29 @@ export function TelegramPairChatModal({
             </div>
           </div>
 
+          {/* One-tap add-to-group deep link */}
+          {addBotDeepLink ? (
+            <a
+              href={addBotDeepLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 rounded-lg border border-sky-200 dark:border-sky-900/40 bg-sky-50 dark:bg-sky-900/10 px-4 py-2.5 text-sm font-medium text-sky-700 dark:text-sky-300 transition hover:border-sky-300 hover:bg-sky-100 dark:hover:border-sky-700 dark:hover:bg-sky-900/20"
+            >
+              <ExternalLink className="w-4 h-4" />
+              Open Telegram — add Karma bot to a group
+            </a>
+          ) : null}
+
           {/* Instructions */}
           <ol className="space-y-2 text-sm text-gray-700 dark:text-gray-300 list-decimal list-inside marker:text-sky-600 dark:marker:text-sky-400">
             <li>
-              Add{" "}
-              <code className="px-1 py-0.5 rounded bg-gray-100 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-sky-700 dark:text-sky-300 text-xs">
-                @{KARMA_TELEGRAM_BOT_HANDLE}
-              </code>{" "}
-              to your Telegram group if you haven&apos;t already.
+              Click <strong>Open Telegram</strong> above and pick the group you want to pair. If the
+              Karma bot is already in the group, skip this step.
             </li>
             <li>Copy the token above and post it as a message in that group.</li>
             <li>
-              Click <strong>Verify now</strong> below. Karma will detect which chat the token was
-              posted in and add it automatically.
+              Come back here and click <strong>Verify now</strong> below. Karma will detect which
+              chat the token was posted in and add it automatically.
             </li>
           </ol>
 
