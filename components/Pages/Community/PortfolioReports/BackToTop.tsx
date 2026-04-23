@@ -26,6 +26,8 @@ export function BackToTop() {
     <button
       type="button"
       aria-label="Back to top"
+      aria-hidden={!visible}
+      tabIndex={visible ? 0 : -1}
       onClick={scrollTop}
       className={`fixed bottom-6 right-20 z-40 flex h-10 w-10 items-center justify-center rounded-full border border-zinc-200 bg-background shadow-lg backdrop-blur transition-all duration-200 hover:scale-105 hover:border-zinc-300 dark:border-zinc-700 dark:hover:border-zinc-600 ${
         visible ? "opacity-100" : "pointer-events-none opacity-0"

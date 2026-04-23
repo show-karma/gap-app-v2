@@ -1,13 +1,13 @@
 "use client";
 
 import { AlertTriangle, ArrowUpRight, FileText, RefreshCw } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { usePublishedReports } from "@/hooks/portfolio-reports/usePortfolioReports";
 import type { PortfolioReport } from "@/types/portfolio-report";
 import type { Community } from "@/types/v2/community";
 import { ReportTimelineScrubber, type TimelineEntry } from "./ReportTimelineScrubber";
-import { TransitionLink } from "./TransitionLink";
 
 interface Props {
   community: Community;
@@ -64,12 +64,12 @@ function deriveTimeline(reports: PortfolioReport[]): TimelineEntry[] {
   const reportSet = new Set(sorted.map((r) => r.reportMonth));
   const [maxY, maxM] = sorted[0].reportMonth.split("-").map(Number);
   const [minY, minM] = sorted[sorted.length - 1].reportMonth.split("-").map(Number);
+  // Total months covered between the oldest and newest report (inclusive).
+  const totalMonths = (maxY - minY) * 12 + (maxM - minM) + 1;
   const entries: TimelineEntry[] = [];
   let y = maxY;
   let m = maxM;
-  // Walk newest → oldest. Cap at 36 entries to avoid runaway ladders.
-  let safety = 36;
-  while ((y > minY || (y === minY && m >= minM)) && safety-- > 0) {
+  for (let i = 0; i < totalMonths; i++) {
     const key = `${y}-${String(m).padStart(2, "0")}`;
     entries.push({ year: y, month: m, key, hasReport: reportSet.has(key) });
     m -= 1;
@@ -86,6 +86,7 @@ export function PublicReportListPage({ community }: Props) {
   const { data: reports, isLoading, isError, refetch } = usePublishedReports(slug);
   const [activeKey, setActiveKey] = useState<string | null>(null);
   const sectionsRef = useRef<HTMLDivElement>(null);
+  const seededRef = useRef(false);
 
   const sortedReports = useMemo(
     () => (reports ? [...reports].sort((a, b) => b.reportMonth.localeCompare(a.reportMonth)) : []),
@@ -94,6 +95,14 @@ export function PublicReportListPage({ community }: Props) {
 
   const timeline = useMemo(() => deriveTimeline(sortedReports), [sortedReports]);
 
+  // Reset the "seeded" flag whenever the report set changes so the next active
+  // key gets seeded once on the new set.
+  useEffect(() => {
+    seededRef.current = false;
+  }, [sortedReports]);
+
+  // IntersectionObserver — depends only on the report set so it isn't torn down
+  // on every scroll.
   useEffect(() => {
     if (sortedReports.length === 0) return;
     const root = sectionsRef.current;
@@ -114,9 +123,12 @@ export function PublicReportListPage({ community }: Props) {
     nodes.forEach((node) => {
       observer.observe(node);
     });
-    if (!activeKey) setActiveKey(nodes[0].dataset.reportKey ?? null);
+    if (!seededRef.current) {
+      seededRef.current = true;
+      setActiveKey((current) => current ?? nodes[0].dataset.reportKey ?? null);
+    }
     return () => observer.disconnect();
-  }, [sortedReports, activeKey]);
+  }, [sortedReports]);
 
   const handleJumpTo = (key: string) => {
     const target = sectionsRef.current?.querySelector<HTMLElement>(`[data-report-key="${key}"]`);
@@ -204,7 +216,7 @@ export function PublicReportListPage({ community }: Props) {
                   index !== 0 ? "border-t border-zinc-200 dark:border-zinc-800" : ""
                 }`}
               >
-                <TransitionLink
+                <Link
                   href={`/community/${slug}/reports/${report.reportMonth}`}
                   className="group/link flex items-start justify-between gap-8"
                 >
@@ -212,10 +224,7 @@ export function PublicReportListPage({ community }: Props) {
                     <p className="mb-1.5 font-mono text-[11px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
                       {indexBadge}
                     </p>
-                    <h2
-                      className="text-xl font-semibold tracking-tight text-zinc-900 transition-colors group-hover/link:text-blue-600 sm:text-2xl dark:text-zinc-100 dark:group-hover/link:text-blue-400"
-                      data-vt-source={`report-hero-${report.reportMonth}`}
-                    >
+                    <h2 className="text-xl font-semibold tracking-tight text-zinc-900 transition-colors group-hover/link:text-blue-600 sm:text-2xl dark:text-zinc-100 dark:group-hover/link:text-blue-400">
                       {formatMonth(report.reportMonth)}
                     </h2>
                     <p className="mt-3 max-w-3xl text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">
@@ -223,9 +232,7 @@ export function PublicReportListPage({ community }: Props) {
                     </p>
                     <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 font-mono text-[11px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
                       {report.publishedAt && (
-                        <span data-vt-source={`report-meta-${report.reportMonth}`}>
-                          Published {formatPublished(report.publishedAt)}
-                        </span>
+                        <span>Published {formatPublished(report.publishedAt)}</span>
                       )}
                       <span className="inline-flex items-center gap-1 text-blue-500 opacity-0 transition-all duration-200 group-hover/link:opacity-100 dark:text-blue-400">
                         Read report
@@ -240,7 +247,7 @@ export function PublicReportListPage({ community }: Props) {
                   >
                     →
                   </div>
-                </TransitionLink>
+                </Link>
               </article>
             );
           })}

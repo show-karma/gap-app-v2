@@ -671,20 +671,6 @@ body .react-hot-toast * {
   contain-intrinsic-size: auto 500px;
 }
 
-/* View Transitions API — scoped to portfolio report card → detail morph */
-@media (prefers-reduced-motion: no-preference) {
-  ::view-transition-old(report-hero),
-  ::view-transition-new(report-hero) {
-    animation-duration: 380ms;
-    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-  }
-  ::view-transition-old(report-meta),
-  ::view-transition-new(report-meta) {
-    animation-duration: 320ms;
-    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-  }
-}
-
 /* Portfolio report article — refined data tables + numerals */
 .report-article {
   font-variant-numeric: tabular-nums;

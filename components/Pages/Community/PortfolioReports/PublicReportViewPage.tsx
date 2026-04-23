@@ -110,16 +110,10 @@ export function PublicReportViewPage({ community, month }: Props) {
           <p className="mb-2 font-mono text-[11px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
             {community.details.name ?? slug} · Portfolio report
           </p>
-          <h1
-            className="text-4xl font-bold tracking-tight text-zinc-900 sm:text-5xl dark:text-zinc-100"
-            style={{ viewTransitionName: "report-hero" }}
-          >
+          <h1 className="text-4xl font-bold tracking-tight text-zinc-900 sm:text-5xl dark:text-zinc-100">
             {monthLabel}
           </h1>
-          <p
-            className="mt-4 font-mono text-[11px] uppercase tracking-wider text-zinc-400"
-            style={{ viewTransitionName: "report-meta" }}
-          >
+          <p className="mt-4 font-mono text-[11px] uppercase tracking-wider text-zinc-400">
             {report.publishedAt ? `Published ${formatDate(report.publishedAt)}` : "Draft"}
           </p>
         </header>

@@ -216,7 +216,12 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
       {/* Top bar */}
       <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3 dark:border-zinc-700">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={handleBackClick}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleBackClick}
+            aria-label="Back to portfolio reports"
+          >
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>

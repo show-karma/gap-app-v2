@@ -38,20 +38,36 @@ export function ReportTimelineScrubber({ entries, activeKey, onJumpTo }: Props) 
   const [fillHeight, setFillHeight] = useState(0);
 
   useIsomorphicLayoutEffect(() => {
+    const measure = () => {
+      const container = containerRef.current;
+      if (!container || !activeKey) {
+        setFillHeight(0);
+        return;
+      }
+      const dot = dotRefs.current.get(activeKey);
+      if (!dot) {
+        setFillHeight(0);
+        return;
+      }
+      const containerRect = container.getBoundingClientRect();
+      const dotRect = dot.getBoundingClientRect();
+      const offset = dotRect.top + dotRect.height / 2 - containerRect.top;
+      setFillHeight(Math.max(0, offset));
+    };
+
+    measure();
+
     const container = containerRef.current;
-    if (!container || !activeKey) {
-      setFillHeight(0);
-      return;
-    }
-    const dot = dotRefs.current.get(activeKey);
-    if (!dot) {
-      setFillHeight(0);
-      return;
-    }
-    const containerRect = container.getBoundingClientRect();
-    const dotRect = dot.getBoundingClientRect();
-    const offset = dotRect.top + dotRect.height / 2 - containerRect.top;
-    setFillHeight(Math.max(0, offset));
+    if (!container) return;
+    // Re-measure on viewport resize, font load, or container size change so the
+    // active fill stays anchored to the active dot under any layout shift.
+    const ro = new ResizeObserver(() => measure());
+    ro.observe(container);
+    window.addEventListener("resize", measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+    };
   }, [activeKey, entries.length]);
 
   if (entries.length === 0) return null;
