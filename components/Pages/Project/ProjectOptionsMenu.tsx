@@ -126,7 +126,7 @@ export const ProjectOptionsMenu = () => {
   const [showSetPayoutDialog, setShowSetPayoutDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { address, chain } = useAccount();
-  const { authenticated: isAuthenticated } = useAuth();
+  const { authenticated } = useAuth();
   const { switchChainAsync } = useWallet();
   const router = useRouter();
   const { startAttestation, showSuccess, showError, changeStepperStep, setIsStepper } =
@@ -137,12 +137,11 @@ export const ProjectOptionsMenu = () => {
   const { openGrantGenieModal } = useGrantGenieModalStore();
   const { openTransferOwnershipModal } = useTransferOwnershipModalStore();
   const { openAdminTransferOwnershipModal } = useAdminTransferOwnershipModalStore();
-  const { isProjectOwner, refreshProject } = useProjectStore();
+  const { isProjectAdmin, isProjectOwner, refreshProject } = useProjectStore();
   const { data: contactsInfo } = useContactInfo(projectId);
   const { isOwner: isContractOwner } = useOwnerStore();
   const isCommunityAdmin = useIsCommunityAdmin();
-  const isAuthorized = isProjectOwner || isContractOwner || isCommunityAdmin;
-  const { authenticated } = useAuth();
+  const isAuthorized = isProjectAdmin || isProjectOwner || isContractOwner || isCommunityAdmin;
   const { data: permissions, isLoading: isPermissionsLoading } = usePermissionsQuery(
     {},
     { enabled: authenticated }
@@ -292,7 +291,7 @@ export const ProjectOptionsMenu = () => {
         </>
       )}
 
-      {!isPermissionsLoading && (isAuthorized || isSuperAdmin || isAuthenticated) && (
+      {!isPermissionsLoading && (isAuthorized || isSuperAdmin) && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
