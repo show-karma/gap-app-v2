@@ -36,6 +36,19 @@
   h8 {
     @apply text-base font-bold border-none;
   }
+
+  table {
+    @apply w-full border-collapse text-sm my-4;
+  }
+  th {
+    @apply text-left font-semibold px-3 py-2 border-b-2 border-zinc-300 dark:border-zinc-600 bg-zinc-50 dark:bg-zinc-800/50;
+  }
+  td {
+    @apply px-3 py-2 border-b border-zinc-200 dark:border-zinc-700;
+  }
+  tr:hover td {
+    @apply bg-zinc-50 dark:bg-zinc-800/30;
+  }
 }
 
 .markdownFeed {
