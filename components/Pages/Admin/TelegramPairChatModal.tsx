@@ -71,6 +71,12 @@ export function TelegramPairChatModal({
   // Terminal state — set when the bot claims (success) or when polling hits
   // a non-retryable error. Stops the polling loop.
   const [pollingHalted, setPollingHalted] = useState(false);
+  // Ref mirror of `pollingHalted`. State updates don't propagate into
+  // closures captured by already-scheduled setInterval ticks or in-flight
+  // mutation callbacks; a ref read does. This closes the race where a
+  // scheduled verify tick fires AFTER a successful one, the stale POST
+  // comes back 404 (token consumed), and the UI flashes "Token expired".
+  const pollingHaltedRef = useRef(false);
 
   const [, copy] = useCopyToClipboard();
 
@@ -110,6 +116,7 @@ export function TelegramPairChatModal({
     setToken(null);
     setExpiresAt(null);
     setPollingHalted(false);
+    pollingHaltedRef.current = false;
     verifyReset();
     startReset();
     handleStart();
@@ -162,11 +169,17 @@ export function TelegramPairChatModal({
 
     const sessionId = sessionIdRef.current;
     const pollOnce = () => {
+      // Skip stale ticks: if polling already halted (success or fatal
+      // error), a setInterval tick queued before the state update propagated
+      // would otherwise fire a POST whose 404 (one-time-use token is now
+      // gone) stomps the mutation's success-state with an error banner.
+      if (pollingHaltedRef.current) return;
       verifyMutate(
         { token },
         {
           onSuccess: (data) => {
             if (sessionId !== sessionIdRef.current) return;
+            pollingHaltedRef.current = true;
             setPollingHalted(true);
             const label = data.chatTitle || "chat";
             if (data.alreadyPaired) {
@@ -182,12 +195,18 @@ export function TelegramPairChatModal({
           },
           onError: (err) => {
             if (sessionId !== sessionIdRef.current) return;
+            // Late response from a poll that fired just before a success.
+            // The successful poll already consumed the token server-side;
+            // this 404/422 is expected noise. Drop it so React Query's
+            // mutation-error state doesn't overwrite the success branch.
+            if (pollingHaltedRef.current) return;
             // 422 = "pending" (bot hasn't claimed yet). Keep polling silently.
             // 429 = rate limit (shouldn't happen at 3s cadence). Keep polling.
             // 404 / 403 / 503 = terminal. Halt and surface the error.
             if (err instanceof TelegramPairingError) {
               if (err.status === 422 || err.status === 429) return;
             }
+            pollingHaltedRef.current = true;
             setPollingHalted(true);
           },
         }
