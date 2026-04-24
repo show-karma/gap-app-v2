@@ -31,6 +31,7 @@ import { useOwnerStore, useProjectStore } from "@/store";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import type { GrantMilestone } from "@/types/v2/grant";
 import fetchData from "@/utilities/fetchData";
+import { hasAnyDirtyField } from "@/utilities/hasAnyDirtyField";
 import {
   deleteMilestoneImpactAnswers,
   sendMilestoneImpactAnswers,
@@ -68,16 +69,6 @@ interface MilestoneUpdateFormProps {
 const labelStyle = "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200";
 
 const inputStyle = "bg-white border border-gray-300 rounded-md p-2 dark:bg-zinc-900";
-
-// Recursively checks react-hook-form `dirtyFields`. Returns true if any leaf is truthy.
-// Handles objects, arrays (RHF represents dirty array items as sparse objects), and primitives.
-const hasAnyDirtyField = (value: unknown): boolean => {
-  if (value == null) return false;
-  if (typeof value === "boolean") return value;
-  if (Array.isArray(value)) return value.some(hasAnyDirtyField);
-  if (typeof value === "object") return Object.values(value).some(hasAnyDirtyField);
-  return Boolean(value);
-};
 
 const schema = z.object({
   description: z.string().optional(),
@@ -538,7 +529,6 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
   };
 
   const onSubmit = async (data: SchemaType) => {
-    const sanitizedData = sanitizeObject(data);
     const hasFieldChanges = hasAnyDirtyField(dirtyFields);
 
     // Nothing-to-save guard: editing with no field changes and no new invoice would
@@ -573,7 +563,12 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
         cancelEditing(false);
         parentSetIsUpdating?.(false);
       } catch (invoiceError) {
-        errorManager("Invoice-only submission failed", invoiceError);
+        errorManager("Invoice-only submission failed", invoiceError, {
+          grantUID,
+          projectUID: project?.uid,
+          address,
+          milestoneUID: milestone.uid,
+        });
         toast.error("Invoice submission failed. Please try again.", { id: loadingToastId });
       } finally {
         setIsSubmitLoading(false);
@@ -581,6 +576,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
       return;
     }
 
+    const sanitizedData = sanitizeObject(data);
     try {
       if (isEditing) {
         await updateMilestoneCompletion(milestone, sanitizedData);
@@ -592,7 +588,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
       return;
     }
 
-    // Submit invoice after successful milestone operation
+    // Submit invoice only after successful milestone operation
     if (invoiceFile && grantUID) {
       try {
         await submitGranteeInvoice(grantUID, {
