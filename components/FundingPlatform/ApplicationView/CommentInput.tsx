@@ -189,11 +189,13 @@ const CommentInput: FC<CommentInputProps> = ({
           <button
             type="button"
             onClick={() => {
-              if (!content.trim()) setIsExpanded(false);
+              setContent("");
+              setIsExpanded(false);
             }}
-            className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+            disabled={isSubmitting}
+            className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {!content.trim() ? "Cancel" : ""}
+            Cancel
           </button>
           <button
             type="submit"

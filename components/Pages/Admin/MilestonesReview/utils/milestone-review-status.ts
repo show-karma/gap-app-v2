@@ -10,7 +10,7 @@ export enum MilestoneReviewStatus {
 export type MilestoneFilterKey = MilestoneReviewStatus | "all";
 
 /** Icon name constants for use with heroicons in the UI layer */
-export type StatusIconName = "check" | "clock" | "hourglass" | "circle";
+export type StatusIconName = "check" | "clock" | "arrow-path" | "circle";
 
 export const MILESTONE_STATUS_CONFIG: Record<
   MilestoneReviewStatus,
@@ -37,10 +37,10 @@ export const MILESTONE_STATUS_CONFIG: Record<
     stepperColor: "bg-yellow-500",
   },
   [MilestoneReviewStatus.PendingCompletion]: {
-    label: "Pending Verification",
-    badgeColor: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300",
+    label: "Pending Completion",
+    badgeColor: "bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300",
     filterLabel: "Pending (Off-chain)",
-    icon: "hourglass",
+    icon: "arrow-path",
     stepperColor: "bg-orange-400",
   },
   [MilestoneReviewStatus.NotStarted]: {

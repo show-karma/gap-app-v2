@@ -226,16 +226,6 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
     await onCommentDelete(commentId);
   };
 
-  const formatDate = (dateString: string | Date) => {
-    try {
-      const date = typeof dateString === "string" ? parseISO(dateString) : dateString;
-      if (!isValid(date)) return "Invalid date";
-      return format(date, "MMM dd, yyyy HH:mm");
-    } catch {
-      return "Invalid date";
-    }
-  };
-
   /** Renders relative time with absolute date on hover */
   const renderRelativeTime = (dateString: string | Date) => {
     try {

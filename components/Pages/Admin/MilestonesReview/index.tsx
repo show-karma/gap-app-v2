@@ -2,6 +2,7 @@
 
 import {
   ArrowLeftIcon,
+  ArrowPathIcon,
   CheckCircleIcon,
   ChevronLeftIcon,
   ClockIcon,
@@ -52,8 +53,8 @@ function StatusIcon({ icon, className }: { icon: StatusIconName | null; classNam
       return <CheckCircleIcon className={cls} />;
     case "clock":
       return <ClockIcon className={cls} />;
-    case "hourglass":
-      return <ClockIcon className={cls} />;
+    case "arrow-path":
+      return <ArrowPathIcon className={cls} />;
     case "circle":
       return (
         <span className="inline-flex items-center justify-center w-3.5 h-3.5">
@@ -67,16 +68,24 @@ function StatusIcon({ icon, className }: { icon: StatusIconName | null; classNam
 
 /** Visual progress stepper showing milestone states at a glance */
 function MilestoneProgressStepper({ milestones }: { milestones: GrantMilestoneWithCompletion[] }) {
-  if (milestones.length === 0) return null;
+  const { entries, counts } = useMemo(() => {
+    const entries = milestones.map((m) => ({ uid: m.uid, status: getMilestoneStatus(m) }));
+    const counts = {
+      verified: 0,
+      pendingVerification: 0,
+      pendingCompletion: 0,
+      notStarted: 0,
+    };
+    for (const { status } of entries) {
+      if (status === MilestoneReviewStatus.Verified) counts.verified++;
+      else if (status === MilestoneReviewStatus.PendingVerification) counts.pendingVerification++;
+      else if (status === MilestoneReviewStatus.PendingCompletion) counts.pendingCompletion++;
+      else if (status === MilestoneReviewStatus.NotStarted) counts.notStarted++;
+    }
+    return { entries, counts };
+  }, [milestones]);
 
-  const statuses = milestones.map((m) => getMilestoneStatus(m));
-  const counts = {
-    verified: statuses.filter((s) => s === MilestoneReviewStatus.Verified).length,
-    pendingVerification: statuses.filter((s) => s === MilestoneReviewStatus.PendingVerification)
-      .length,
-    pendingCompletion: statuses.filter((s) => s === MilestoneReviewStatus.PendingCompletion).length,
-    notStarted: statuses.filter((s) => s === MilestoneReviewStatus.NotStarted).length,
-  };
+  if (entries.length === 0) return null;
 
   return (
     <div className="mb-4">
@@ -107,11 +116,11 @@ function MilestoneProgressStepper({ milestones }: { milestones: GrantMilestoneWi
         )}
       </div>
       <div className="flex items-center gap-0.5">
-        {statuses.map((status, i) => {
+        {entries.map(({ uid, status }, i) => {
           const config = MILESTONE_STATUS_CONFIG[status];
           return (
             <div
-              key={i}
+              key={uid || `milestone-${i}`}
               className={cn("h-2 rounded-full flex-1 transition-colors", config.stepperColor)}
               title={`Milestone ${i + 1}: ${config.label}`}
             />
@@ -175,27 +184,16 @@ function MilestonesReviewPageContent({
   const [statusFilter, setStatusFilter] = useState<MilestoneFilterKey | null>(null);
 
   const { address } = useAccount();
-  const {
-    hasAccess: hasAdminAccess,
-    isLoading: isLoadingAdminAccess,
-    checks,
-  } = useCommunityAdminAccess(communityId);
+  const { hasAccess: hasAdminAccess, isLoading: isLoadingAdminAccess } =
+    useCommunityAdminAccess(communityId);
 
   // Extract programId from URL param (supports both "959" and legacy "959_42161" formats)
-  const { parsedProgramId, parsedChainId } = useMemo(() => {
-    // Check if the programId contains chainId suffix (legacy format)
+  const parsedProgramId = useMemo(() => {
     if (programId.includes("_")) {
-      const [id, chain] = programId.split("_");
-      return {
-        parsedProgramId: id,
-        parsedChainId: chain ? parseInt(chain, 10) : undefined,
-      };
+      const [id] = programId.split("_");
+      return id;
     }
-    // New format: programId only
-    return {
-      parsedProgramId: programId,
-      parsedChainId: undefined,
-    };
+    return programId;
   }, [programId]);
 
   // Check if user is a reviewer for this program using RBAC

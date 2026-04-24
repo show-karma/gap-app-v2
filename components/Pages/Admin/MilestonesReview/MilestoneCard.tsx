@@ -10,7 +10,7 @@ import {
 } from "@heroicons/react/20/solid";
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
 import dynamic from "next/dynamic";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
@@ -144,7 +144,11 @@ export function MilestoneCard({
   const [isEvaluationModalOpen, setIsEvaluationModalOpen] = useState(false);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [isOverflowOpen, setIsOverflowOpen] = useState(false);
+  const [hasLongDescription, setHasLongDescription] = useState(false);
+  const [hasLongCompletion, setHasLongCompletion] = useState(false);
   const overflowRef = useRef<HTMLDivElement>(null);
+  const descriptionRef = useRef<HTMLDivElement>(null);
+  const completionRef = useRef<HTMLDivElement>(null);
 
   function handleOpenEvaluation() {
     setIsEvaluationModalOpen(true);
@@ -152,14 +156,18 @@ export function MilestoneCard({
 
   const [isCompletionExpanded, setIsCompletionExpanded] = useState(false);
 
-  // Close overflow menu when clicking outside
+  // Close overflow menu when clicking outside or on Escape
   const handleOverflowBlur = useCallback((e: React.FocusEvent) => {
     if (overflowRef.current && !overflowRef.current.contains(e.relatedTarget as Node)) {
       setIsOverflowOpen(false);
     }
   }, []);
 
-  const hasLongDescription = (milestone.description?.length ?? 0) > 200;
+  const handleOverflowKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === "Escape") {
+      setIsOverflowOpen(false);
+    }
+  }, []);
 
   const completionText = useMemo(() => {
     if (!completionData) return "";
@@ -173,7 +181,21 @@ export function MilestoneCard({
     milestone.fundingApplicationCompletion,
   ]);
 
-  const hasLongCompletion = (completionText?.length ?? 0) > 150;
+  // Measure rendered content height to decide whether a Show more toggle is needed.
+  // The collapsed container's max-h-24 is 6rem (96px at default font size).
+  const COLLAPSED_HEIGHT_PX = 96;
+
+  useEffect(() => {
+    const node = descriptionRef.current;
+    if (!node) return;
+    setHasLongDescription(node.scrollHeight > COLLAPSED_HEIGHT_PX);
+  }, [milestone.description]);
+
+  useEffect(() => {
+    const node = completionRef.current;
+    if (!node) return;
+    setHasLongCompletion(node.scrollHeight > COLLAPSED_HEIGHT_PX);
+  }, [completionText]);
 
   return (
     <div
@@ -183,7 +205,10 @@ export function MilestoneCard({
       {/* Header row: title + status badge + actions */}
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex items-center gap-2 flex-1 min-w-0">
-          <h3 className="text-lg font-medium text-black dark:text-white truncate">
+          <h3
+            className="text-lg font-medium text-black dark:text-white truncate"
+            title={milestone.title}
+          >
             {milestone.title}
           </h3>
           <span
@@ -209,17 +234,25 @@ export function MilestoneCard({
             </Button>
           )}
           {canDeleteMilestones && milestone.fundingApplicationCompletion && (
-            <div className="relative" role="menu" ref={overflowRef} onBlur={handleOverflowBlur}>
+            // biome-ignore lint/a11y/noStaticElementInteractions: wrapper needs onBlur to detect focus leaving the menu group; the interactive child is the trigger button below.
+            <div className="relative" ref={overflowRef} onBlur={handleOverflowBlur}>
               <button
                 type="button"
                 onClick={() => setIsOverflowOpen((v) => !v)}
+                onKeyDown={handleOverflowKeyDown}
                 className="p-1 rounded hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors"
                 aria-label="More actions"
+                aria-haspopup="menu"
+                aria-expanded={isOverflowOpen}
               >
                 <EllipsisVerticalIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
               </button>
               {isOverflowOpen && (
-                <div className="absolute right-0 top-full mt-1 z-10 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-md shadow-lg py-1 min-w-[140px]">
+                <div
+                  role="menu"
+                  onKeyDown={handleOverflowKeyDown}
+                  className="absolute right-0 top-full mt-1 z-10 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-md shadow-lg py-1 min-w-[140px]"
+                >
                   <DeleteDialog
                     deleteFunction={() => {
                       setIsOverflowOpen(false);
@@ -261,6 +294,7 @@ export function MilestoneCard({
       <div className="mb-3">
         <div className="relative">
           <div
+            ref={descriptionRef}
             className={cn(
               "text-gray-600 dark:text-gray-400 text-sm overflow-hidden transition-all",
               !isDescriptionExpanded && hasLongDescription && "max-h-24"
@@ -333,6 +367,7 @@ export function MilestoneCard({
             </div>
             <div className="relative">
               <div
+                ref={completionRef}
                 className={cn(
                   "text-sm text-gray-700 dark:text-gray-300 overflow-hidden transition-all",
                   !isCompletionExpanded && hasLongCompletion && "max-h-24"
