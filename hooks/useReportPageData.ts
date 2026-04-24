@@ -23,6 +23,7 @@ interface Report {
   programId?: string;
   totalMilestones: number;
   pendingMilestones: number;
+  pastDueMilestones: number;
   completedMilestones: number;
   isGrantCompleted?: boolean;
   proofOfWorkLinks: string[];

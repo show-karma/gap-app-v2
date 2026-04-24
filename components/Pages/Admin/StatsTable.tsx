@@ -140,6 +140,13 @@ export function StatsTable({
                 onSort={onSort}
               />
               <SortableHeader
+                label="Past Due"
+                field="pastDueMilestones"
+                sortBy={sortBy}
+                sortOrder={sortOrder}
+                onSort={onSort}
+              />
+              <SortableHeader
                 label="Completed"
                 field="completedMilestones"
                 sortBy={sortBy}
@@ -174,6 +181,9 @@ export function StatsTable({
                     <Skeleton className="h-4 w-10 rounded" />
                   </td>
                   <td className="px-4 py-3">
+                    <Skeleton className="h-4 w-10 rounded" />
+                  </td>
+                  <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <Skeleton className="h-4 w-8 rounded" />
                       <Skeleton className="h-1.5 w-16 rounded-full" />
@@ -186,7 +196,7 @@ export function StatsTable({
               ))
             ) : error ? (
               <tr>
-                <td colSpan={7} className="px-4 py-12 text-center">
+                <td colSpan={8} className="px-4 py-12 text-center">
                   <ExclamationTriangleIcon className="mx-auto h-10 w-10 text-red-400 dark:text-red-500 mb-3" />
                   <p className="text-sm font-medium text-gray-900 dark:text-white">
                     Failed to load milestone stats
@@ -198,7 +208,7 @@ export function StatsTable({
               </tr>
             ) : reports?.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-12 text-center">
+                <td colSpan={8} className="px-4 py-12 text-center">
                   <p className="text-sm font-medium text-gray-900 dark:text-white">
                     No milestone data found
                   </p>
@@ -281,6 +291,24 @@ export function StatsTable({
                         rel="noopener noreferrer"
                       >
                         {report.pendingMilestones}
+                      </Link>
+                    </td>
+                    <td className="px-4 py-3">
+                      <Link
+                        href={`${PAGES.PROJECT.GRANT(
+                          report.projectSlug,
+                          report.grantUid
+                        )}/milestones-and-updates#past-due`}
+                        className={cn(
+                          "text-sm tabular-nums transition-colors",
+                          report.pastDueMilestones > 0
+                            ? "text-red-600 dark:text-red-400 font-medium"
+                            : "text-gray-500 dark:text-gray-400"
+                        )}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {report.pastDueMilestones}
                       </Link>
                     </td>
                     <td className="px-4 py-3">
