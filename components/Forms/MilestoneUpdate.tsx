@@ -69,6 +69,16 @@ const labelStyle = "text-slate-700 text-sm font-bold leading-tight dark:text-sla
 
 const inputStyle = "bg-white border border-gray-300 rounded-md p-2 dark:bg-zinc-900";
 
+// Recursively checks react-hook-form `dirtyFields`. Returns true if any leaf is truthy.
+// Handles objects, arrays (RHF represents dirty array items as sparse objects), and primitives.
+const hasAnyDirtyField = (value: unknown): boolean => {
+  if (value == null) return false;
+  if (typeof value === "boolean") return value;
+  if (Array.isArray(value)) return value.some(hasAnyDirtyField);
+  if (typeof value === "object") return Object.values(value).some(hasAnyDirtyField);
+  return Boolean(value);
+};
+
 const schema = z.object({
   description: z.string().optional(),
   completionPercentage: z.string().refine(
@@ -166,7 +176,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
     handleSubmit,
     watch,
     control,
-    formState: { errors, isValid },
+    formState: { errors, isValid, dirtyFields },
   } = useForm<SchemaType>({
     resolver: zodResolver(schema),
     reValidateMode: "onChange",
@@ -529,6 +539,48 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
 
   const onSubmit = async (data: SchemaType) => {
     const sanitizedData = sanitizeObject(data);
+    const hasFieldChanges = hasAnyDirtyField(dirtyFields);
+
+    // Nothing-to-save guard: editing with no field changes and no new invoice would
+    // otherwise trigger a no-op on-chain re-attestation (wastes gas + orphans verifications).
+    if (isEditing && !hasFieldChanges && !invoiceFile) {
+      toast.error("No changes to save");
+      return;
+    }
+
+    // Invoice-only fast path: when editing an already-completed milestone, if the user
+    // only added an invoice (no tracked form fields changed), skip the on-chain
+    // re-attestation. Re-attesting creates a new MilestoneCompleted UID and orphans any
+    // verifications referencing the original completion attestation.
+    const isInvoiceOnlyEdit = isEditing && !!invoiceFile && !!grantUID && !hasFieldChanges;
+
+    if (isInvoiceOnlyEdit) {
+      setIsSubmitLoading(true);
+      const loadingToastId = toast.loading("Saving invoice...");
+      try {
+        await submitGranteeInvoice(grantUID, {
+          milestoneLabel: milestone.title,
+          milestoneUID: milestone.uid,
+          invoiceFileKey: invoiceFile.fileKey,
+          invoiceFileUrl: invoiceFile.fileUrl,
+        });
+        toast.success("Invoice submitted successfully", { id: loadingToastId });
+
+        await queryClient.invalidateQueries({
+          predicate: createProjectQueryPredicate(project?.uid || ""),
+        });
+
+        cancelEditing(false);
+        parentSetIsUpdating?.(false);
+      } catch (invoiceError) {
+        errorManager("Invoice-only submission failed", invoiceError);
+        toast.error("Invoice submission failed. Please try again.", { id: loadingToastId });
+      } finally {
+        setIsSubmitLoading(false);
+      }
+      return;
+    }
+
     try {
       if (isEditing) {
         await updateMilestoneCompletion(milestone, sanitizedData);
@@ -540,7 +592,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
       return;
     }
 
-    // Submit invoice only after successful milestone operation
+    // Submit invoice after successful milestone operation
     if (invoiceFile && grantUID) {
       try {
         await submitGranteeInvoice(grantUID, {
@@ -581,6 +633,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
               onChange={(newValue: string) => {
                 setValue("description", newValue || "", {
                   shouldValidate: true,
+                  shouldDirty: true,
                 });
               }}
             />
