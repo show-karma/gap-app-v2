@@ -38,10 +38,10 @@ function getPreviousMonth(): string {
 
 interface ReportTableRowProps {
   report: PortfolioReport;
-  slug: string;
   rowPending: boolean;
   activeMutationType: "publish" | "unpublish" | "regenerate" | null;
   onEdit: () => void;
+  onPreview: () => void;
   onPublish: () => void;
   onUnpublish: () => void;
   onRegenerate: () => void;
@@ -52,6 +52,7 @@ function ReportTableRow({
   rowPending,
   activeMutationType,
   onEdit,
+  onPreview,
   onPublish,
   onUnpublish,
   onRegenerate,
@@ -82,6 +83,12 @@ function ReportTableRow({
           <Button variant="ghost" size="sm" onClick={onEdit}>
             Edit
           </Button>
+          {report.status === "draft" ? (
+            <Button variant="ghost" size="sm" onClick={onPreview}>
+              <Eye className="mr-1 h-3 w-3" />
+              Preview
+            </Button>
+          ) : null}
           {report.status === "draft" ? (
             <Button variant="ghost" size="sm" onClick={onPublish} disabled={rowPending}>
               <Eye className="mr-1 h-3 w-3" />
@@ -294,10 +301,12 @@ export function PortfolioReportListPage({ community }: Props) {
                 <ReportTableRow
                   key={report.id}
                   report={report}
-                  slug={slug}
                   rowPending={isRowPending(report.id)}
                   activeMutationType={activeMutationType}
                   onEdit={() => router.push(`${PAGES.ADMIN.PORTFOLIO_REPORTS(slug)}/${report.id}`)}
+                  onPreview={() =>
+                    router.push(PAGES.ADMIN.PORTFOLIO_REPORTS_PREVIEW(slug, report.id))
+                  }
                   onPublish={() => handlePublish(report.id)}
                   onUnpublish={() => handleUnpublish(report.id)}
                   onRegenerate={() => setRegenerateTargetId(report.id)}
