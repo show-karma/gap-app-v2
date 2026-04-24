@@ -30,6 +30,7 @@ export function useMilestoneReviewers(programId: string) {
         name: data.name,
         email: data.email,
         telegram: data.telegram,
+        slack: data.slack,
       });
 
       if (!validation.valid) {
@@ -65,6 +66,22 @@ export function useMilestoneReviewers(programId: string) {
     },
   });
 
+  // Mutation for updating milestone reviewer contact (telegram/slack) by email
+  const updateContactMutation = useMutation({
+    mutationFn: async (patch: { email: string; telegram?: string; slack?: string }) => {
+      return milestoneReviewersService.updateReviewerContact(programId, patch);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.REVIEWERS.MILESTONE(programId),
+      });
+      toast.success("Milestone reviewer updated successfully");
+    },
+    onError: (error) => {
+      toast.error(getReviewerErrorMessage(error, "Failed to update milestone reviewer"));
+    },
+  });
+
   return useMemo(
     () => ({
       // Query data and state
@@ -81,7 +98,11 @@ export function useMilestoneReviewers(programId: string) {
       // Remove mutation
       removeReviewer: removeMutation.mutateAsync,
       isRemoving: removeMutation.isPending,
+
+      // Update contact mutation
+      updateReviewerContact: updateContactMutation.mutateAsync,
+      isUpdatingContact: updateContactMutation.isPending,
     }),
-    [query, addMutation, removeMutation]
+    [query, addMutation, removeMutation, updateContactMutation]
   );
 }

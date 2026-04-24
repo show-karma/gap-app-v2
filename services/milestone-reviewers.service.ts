@@ -23,6 +23,7 @@ export interface UserProfile {
   name: string;
   email: string;
   telegram?: string;
+  slack?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -47,6 +48,7 @@ export interface MilestoneReviewer {
   name: string;
   email: string;
   telegram?: string;
+  slack?: string;
   assignedAt: string;
   assignedBy?: string;
 }
@@ -58,6 +60,16 @@ export interface AddMilestoneReviewerRequest {
   name: string;
   email: string;
   telegram?: string;
+  slack?: string;
+}
+
+/**
+ * Update milestone reviewer contact request (PATCH by email)
+ */
+export interface UpdateMilestoneReviewerContactRequest {
+  email: string;
+  telegram?: string;
+  slack?: string;
 }
 
 /**
@@ -91,6 +103,7 @@ export const milestoneReviewersService = {
       name: reviewer.userProfile?.name || "",
       email: reviewer.userProfile?.email || "",
       telegram: reviewer.userProfile?.telegram || "",
+      slack: reviewer.userProfile?.slack || "",
       assignedAt: reviewer.assignedAt,
       assignedBy: reviewer.assignedBy,
     }));
@@ -117,6 +130,7 @@ export const milestoneReviewersService = {
         name: reviewerData.name,
         email: reviewerData.email,
         telegram: reviewerData.telegram,
+        slack: reviewerData.slack,
         assignedAt: new Date().toISOString(),
         assignedBy: undefined,
       };
@@ -127,6 +141,7 @@ export const milestoneReviewersService = {
       name: reviewer.userProfile?.name || reviewerData.name,
       email: reviewer.userProfile?.email || reviewerData.email,
       telegram: reviewer.userProfile?.telegram || reviewerData.telegram,
+      slack: reviewer.userProfile?.slack || reviewerData.slack,
       assignedAt: reviewer.assignedAt,
       assignedBy: reviewer.assignedBy,
     };
@@ -139,6 +154,16 @@ export const milestoneReviewersService = {
     await apiClient.delete(`/v2/programs/${programId}/milestone-reviewers/by-email`, {
       data: { email },
     });
+  },
+
+  /**
+   * Update milestone reviewer contact fields (telegram/slack) by email
+   */
+  async updateReviewerContact(
+    programId: string,
+    patch: UpdateMilestoneReviewerContactRequest
+  ): Promise<void> {
+    await apiClient.patch(`/v2/programs/${programId}/milestone-reviewers/by-email`, patch);
   },
 
   /**

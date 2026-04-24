@@ -16,7 +16,7 @@ import { useMilestoneReviewers } from "@/hooks/useMilestoneReviewers";
 import { useProgramReviewers } from "@/hooks/useProgramReviewers";
 import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
 import { Permission } from "@/src/core/rbac/types/permission";
-import { validateEmail, validateTelegram } from "@/utilities/validators";
+import { validateEmail, validateSlack, validateTelegram } from "@/utilities/validators";
 import { PAGE_HEADER_CONTENT, PageHeader } from "../PageHeader";
 
 interface ReviewerManagementTabProps {
@@ -42,6 +42,7 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
     refetch: refetchProgramReviewers,
     addReviewer: addProgramReviewer,
     removeReviewer: removeProgramReviewer,
+    updateReviewerContact: updateProgramReviewerContact,
   } = useProgramReviewers(programId);
 
   const {
@@ -50,6 +51,7 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
     refetch: refetchMilestoneReviewers,
     addReviewer: addMilestoneReviewer,
     removeReviewer: removeMilestoneReviewer,
+    updateReviewerContact: updateMilestoneReviewerContact,
   } = useMilestoneReviewers(programId);
 
   const commonFields: RoleManagementConfig["fields"] = useMemo(
@@ -90,9 +92,24 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
         type: "text" as const,
         placeholder: "@username",
         required: false,
+        editable: true,
         validation: (value: string) => {
           if (value && !validateTelegram(value)) {
             return "Please enter a valid Telegram username (5-32 characters)";
+          }
+          return true;
+        },
+      },
+      {
+        name: "slack",
+        label: "Slack",
+        type: "text" as const,
+        placeholder: "@username",
+        required: false,
+        editable: true,
+        validation: (value: string) => {
+          if (value && !validateSlack(value)) {
+            return "Please enter a valid Slack handle (2-80 characters)";
           }
           return true;
         },
@@ -159,6 +176,7 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
           name: reviewer.name,
           email: reviewer.email.trim(),
           telegram: reviewer.telegram || "",
+          slack: reviewer.slack || "",
           assignedAt: reviewer.assignedAt,
           roles: ["program"],
         });
@@ -174,6 +192,12 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
         if (!existingRoles.includes("milestone")) {
           existing.roles = [...existingRoles, "milestone"];
         }
+        if (!existing.slack && reviewer.slack) {
+          existing.slack = reviewer.slack;
+        }
+        if (!existing.telegram && reviewer.telegram) {
+          existing.telegram = reviewer.telegram;
+        }
       } else {
         emailToMember.set(key, {
           id: key,
@@ -181,6 +205,7 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
           name: reviewer.name,
           email: reviewer.email.trim(),
           telegram: reviewer.telegram || "",
+          slack: reviewer.slack || "",
           assignedAt: reviewer.assignedAt,
           roles: ["milestone"],
         });
@@ -260,6 +285,7 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
         name: member.name,
         email: member.email,
         telegram: member.telegram || "",
+        slack: member.slack || "",
       };
 
       for (const role of rolesToAdd) {
@@ -286,6 +312,38 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
       removeProgramReviewer,
       removeMilestoneReviewer,
     ]
+  );
+
+  const handleEditContact = useCallback(
+    async (memberId: string, patch: Record<string, string>) => {
+      const member = members.find((m) => m.id === memberId);
+      if (!member || !member.email) {
+        toast.error("Reviewer not found. Please refresh and try again.");
+        return;
+      }
+
+      const contactPayload = {
+        email: member.email,
+        ...(patch.telegram !== undefined && { telegram: patch.telegram }),
+        ...(patch.slack !== undefined && { slack: patch.slack }),
+      };
+
+      const roles = member.roles || [];
+      const promises: Promise<unknown>[] = [];
+      if (roles.includes("program")) {
+        promises.push(updateProgramReviewerContact(contactPayload));
+      }
+      if (roles.includes("milestone")) {
+        promises.push(updateMilestoneReviewerContact(contactPayload));
+      }
+
+      const results = await Promise.allSettled(promises);
+      const firstFailure = results.find((r) => r.status === "rejected");
+      if (firstFailure && firstFailure.status === "rejected") {
+        throw firstFailure.reason;
+      }
+    },
+    [members, updateProgramReviewerContact, updateMilestoneReviewerContact]
   );
 
   const handleRefresh = useCallback(async () => {
@@ -342,6 +400,7 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
           selectedRoles={selectedRoles}
           onRolesChange={(roles) => setSelectedRoles(roles as ReviewerRole[])}
           onEditRoles={!readOnly ? handleEditRoles : undefined}
+          onEditContact={!readOnly ? handleEditContact : undefined}
         />
       </div>
     </div>
