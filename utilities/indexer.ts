@@ -743,6 +743,22 @@ export const INDEXER = {
     TEST_CONFIG: (communityIdOrSlug: string) =>
       `/v2/communities/${communityIdOrSlug}/notification-config/test`,
   },
+  SLACK_OAUTH: {
+    // Workspace
+    WORKSPACE: (communityIdOrSlug: string) =>
+      `/v2/communities/${communityIdOrSlug}/slack-oauth/workspace`,
+    WORKSPACE_BY_UID: (communityIdOrSlug: string, uid: string) =>
+      `/v2/communities/${communityIdOrSlug}/slack-oauth/workspace/${uid}`,
+    WORKSPACE_TEST: (communityIdOrSlug: string, uid: string) =>
+      `/v2/communities/${communityIdOrSlug}/slack-oauth/workspace/${uid}/test`,
+    WORKSPACE_MEMBERS: (communityIdOrSlug: string, uid: string) =>
+      `/v2/communities/${communityIdOrSlug}/slack-oauth/workspace/${uid}/members`,
+    // User links
+    USER_LINKS: (communityIdOrSlug: string) =>
+      `/v2/communities/${communityIdOrSlug}/slack-oauth/user-links`,
+    USER_LINK_BY_UID: (communityIdOrSlug: string, uid: string) =>
+      `/v2/communities/${communityIdOrSlug}/slack-oauth/user-links/${uid}`,
+  },
   USERS: {
     RESOLVE_EMAIL: `/v2/user/resolve-email`,
     PROFILES: (addresses: string) => `/v2/user/profiles?addresses=${addresses}`,

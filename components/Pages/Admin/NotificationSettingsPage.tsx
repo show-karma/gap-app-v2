@@ -19,6 +19,13 @@ import { useSaveNotificationSettings } from "@/hooks/useSaveNotificationSettings
 import type { Community } from "@/types/v2/community";
 import { KARMA_TELEGRAM_BOT_HANDLE } from "@/utilities/enviromentVars";
 import { MESSAGES } from "@/utilities/messages";
+import { SlackOauthProviderCard } from "./SlackOauth/SlackOauthProviderCard";
+
+// Env-driven feature flag. The backend has the matching
+// `FF_SLACK_OAUTH_MANUAL`; the FE flag just hides the card when the
+// server would return 503 anyway, so the UI never surfaces a dead row.
+const SLACK_OAUTH_ENABLED =
+  process.env.NEXT_PUBLIC_SLACK_OAUTH_ENABLED === "true";
 
 // Modal-only — defer the bundle until the user opens it.
 const TelegramPairChatModal = dynamic(
@@ -1217,6 +1224,10 @@ function NotificationSettingsPageContent({
             onWebhookUrlsChange={setSlackUrls}
           />
         </div>
+
+        {SLACK_OAUTH_ENABLED ? (
+          <SlackOauthProviderCard communitySlug={communitySlug} />
+        ) : null}
       </section>
 
       {/* Reference section */}
