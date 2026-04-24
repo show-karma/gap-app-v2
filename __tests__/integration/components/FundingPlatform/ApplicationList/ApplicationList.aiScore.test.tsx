@@ -13,6 +13,7 @@ vi.mock("@/components/FundingPlatform/helper/getAIScore", () => ({
 // Mock the other helper functions
 vi.mock("@/components/FundingPlatform/helper/getProjectTitle", () => ({
   getProjectTitle: vi.fn(() => "Test Project"),
+  findProjectTitleInData: vi.fn(() => "Test Project"),
 }));
 
 vi.mock("@/utilities/formatDate", () => ({
