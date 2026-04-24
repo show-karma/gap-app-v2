@@ -17,9 +17,18 @@ export const findProjectTitleInData = (
   const dataKeys = Object.keys(data);
   if (dataKeys.length === 0) return undefined;
 
+  // Only strings count as valid titles. Guarding here (rather than at the
+  // return site) means the keyword search also ignores non-string fields,
+  // so we don't pick an object-valued key as "best" and then reject it.
+  const isNonEmptyString = (value: unknown): value is string =>
+    typeof value === "string" && value.trim().length > 0;
+
   const findBest = (predicate: (lowerKey: string) => boolean): string | undefined => {
     const matches = dataKeys.filter(
-      (key) => key.length <= MAX_LABEL_LENGTH && predicate(key.toLowerCase()) && data[key]
+      (key) =>
+        key.length <= MAX_LABEL_LENGTH &&
+        predicate(key.toLowerCase()) &&
+        isNonEmptyString(data[key])
     );
     if (matches.length === 0) return undefined;
     return matches.reduce((a, b) => (a.length <= b.length ? a : b));
@@ -37,8 +46,11 @@ export const findProjectTitleInData = (
     titleKey = findBest((lowerKey) => titleKeywords.some((kw) => lowerKey.includes(kw)));
   }
 
-  if (titleKey && data[titleKey]) {
-    return String(data[titleKey]);
+  if (titleKey) {
+    const value = data[titleKey];
+    if (isNonEmptyString(value)) {
+      return value;
+    }
   }
 
   return undefined;
