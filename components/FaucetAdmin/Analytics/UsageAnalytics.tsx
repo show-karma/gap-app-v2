@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { formatEther } from "viem";
+import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useFaucetHistory, useFaucetStats } from "@/hooks/useFaucet";
 import { useChains, useRequests } from "@/hooks/useFaucetAdmin";
@@ -213,7 +214,7 @@ export function UsageAnalytics() {
                   {requests.payload.map((request) => (
                     <tr key={request.id}>
                       <td className="px-4 py-3 text-sm font-mono text-gray-900 dark:text-white">
-                        {request.walletAddress.slice(0, 6)}...{request.walletAddress.slice(-4)}
+                        <EthereumAddressToProfileName address={request.walletAddress} />
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">
                         {chains?.find((n) => n.chainId === request.chainId)?.name ||

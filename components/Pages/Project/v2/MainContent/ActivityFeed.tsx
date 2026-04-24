@@ -3,8 +3,7 @@
 import { BadgeCheck, CircleDollarSign, Goal, Rss } from "lucide-react";
 import { useParams } from "next/navigation";
 import React, { useMemo } from "react";
-import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
-import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
+import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { ActivityCard } from "@/components/Shared/ActivityCard";
 import { useMilestoneAllocationsByGrants } from "@/hooks/useCommunityMilestoneAllocations";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
@@ -132,12 +131,12 @@ const TimelineItem = React.memo(function TimelineItem({
           <>
             <div className="flex flex-row items-center gap-1.5 lg:gap-2 flex-wrap">
               <span className="text-xs lg:text-sm font-semibold text-foreground">Endorsed by</span>
-              <EthereumAddressToENSAvatar
-                address={milestone.endorsement.endorsedBy}
-                className="h-5 w-5 lg:h-6 lg:w-6 min-w-5 min-h-5 lg:min-w-6 lg:min-h-6 rounded-full"
-              />
               <span className="text-xs lg:text-sm font-semibold text-foreground">
-                <EthereumAddressToENSName address={milestone.endorsement.endorsedBy} />
+                <EthereumAddressToProfileName
+                  address={milestone.endorsement.endorsedBy}
+                  showProfilePicture
+                  pictureClassName="h-5 w-5 lg:h-6 lg:w-6 min-w-5 min-h-5 lg:min-w-6 lg:min-h-6 rounded-full"
+                />
               </span>
             </div>
             <div className="flex flex-row items-center gap-1.5 lg:gap-2 text-xs lg:text-sm font-medium leading-5 text-muted-foreground">
@@ -195,12 +194,12 @@ const TimelineItem = React.memo(function TimelineItem({
                   {attester && (
                     <>
                       <span>by</span>
-                      <EthereumAddressToENSAvatar
-                        address={attester}
-                        className="h-5 w-5 lg:h-6 lg:w-6 min-h-5 min-w-5 lg:min-h-6 lg:min-w-6 rounded-full"
-                      />
                       <span className="text-xs lg:text-sm font-semibold leading-5 text-foreground">
-                        <EthereumAddressToENSName address={attester} />
+                        <EthereumAddressToProfileName
+                          address={attester}
+                          showProfilePicture
+                          pictureClassName="h-5 w-5 lg:h-6 lg:w-6 min-h-5 min-w-5 lg:min-h-6 lg:min-w-6 rounded-full"
+                        />
                       </span>
                     </>
                   )}

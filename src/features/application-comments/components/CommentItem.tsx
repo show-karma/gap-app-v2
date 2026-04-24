@@ -2,6 +2,7 @@
 
 import { Clock, Edit2, Save, Trash2, User, X } from "lucide-react";
 import React, { useState } from "react";
+import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -16,7 +17,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { formatDate } from "@/utilities/formatDate";
-import { shortAddress } from "@/utilities/shortAddress";
 import { cn } from "@/utilities/tailwind";
 import { ROLE_BADGE_CONFIG } from "../constants";
 import type { CommentItemProps } from "../types";
@@ -81,7 +81,9 @@ export const CommentItem = React.memo(function CommentItem({
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="font-medium text-sm">
-                      {comment.authorName || shortAddress(comment.authorAddress)}
+                      {comment.authorName || (
+                        <EthereumAddressToProfileName address={comment.authorAddress} />
+                      )}
                     </span>
                     <Badge variant={roleConfig.variant}>{roleConfig.label}</Badge>
                     {comment.isDeleted && <Badge variant="destructive">Deleted</Badge>}
@@ -149,7 +151,12 @@ export const CommentItem = React.memo(function CommentItem({
                 <div className="text-xs text-destructive mt-2">
                   Deleted on {formatDate(comment.deletedAt)} at{" "}
                   {formatDate(comment.deletedAt, "local", "h:mm a")}
-                  {comment.deletedBy && ` by ${shortAddress(comment.deletedBy)}`}
+                  {comment.deletedBy && (
+                    <>
+                      {" "}
+                      by <EthereumAddressToProfileName address={comment.deletedBy} />
+                    </>
+                  )}
                 </div>
               )}
             </div>

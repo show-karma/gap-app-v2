@@ -26,8 +26,7 @@ import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { sanitizeInput } from "@/utilities/sanitize";
-import EthereumAddressToENSAvatar from "../EthereumAddressToENSAvatar";
-import EthereumAddressToENSName from "../EthereumAddressToENSName";
+import EthereumAddressToProfileName from "../EthereumAddressToProfileName";
 import { errorManager } from "../Utilities/errorManager";
 import { Spinner } from "../Utilities/Spinner";
 import { Button } from "../ui/button";
@@ -93,11 +92,11 @@ function SearchProject({
             <div className="mt-3 flex items-center">
               <small className="mr-2">By</small>
               <div className="flex flex-row gap-1 items-center font-medium">
-                <EthereumAddressToENSAvatar
+                <EthereumAddressToProfileName
                   address={item.owner}
-                  className="w-4 h-4  rounded-full border-1 border-gray-100 dark:border-zinc-900"
+                  showProfilePicture
+                  pictureClassName="w-4 h-4 rounded-full border-1 border-gray-100 dark:border-zinc-900"
                 />
-                <EthereumAddressToENSName address={item.owner} />
               </div>
             </div>
           </div>

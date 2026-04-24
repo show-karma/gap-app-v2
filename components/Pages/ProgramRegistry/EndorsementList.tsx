@@ -1,14 +1,13 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import { type FC, useEffect, useMemo, useState } from "react";
+import { type FC, useMemo, useState } from "react";
 import type { Hex } from "viem";
-import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
+import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { useProjectStore } from "@/store";
 import { useENS } from "@/store/ens";
 import { formatDate } from "@/utilities/formatDate";
-import { shortAddress } from "@/utilities/shortAddress";
 import { EmptyEndorsmentList } from "../Project/Impact/EmptyEndorsmentList";
 
 // V2 API endorsement structure
@@ -24,28 +23,17 @@ interface EndorsementRowProps {
 }
 
 const EndorsementRow: FC<EndorsementRowProps> = ({ endorsement }) => {
-  const { ensData, populateEns } = useENS();
-  const endorserAddress = endorsement.endorsedBy?.toLowerCase() as Hex;
-
-  useEffect(() => {
-    if (endorsement.endorsedBy) {
-      populateEns([endorsement.endorsedBy]);
-    }
-  }, [endorsement.endorsedBy, populateEns]);
-
-  const displayName = ensData[endorserAddress]?.name || shortAddress(endorsement.endorsedBy);
-
   return (
     <div className="flex flex-col w-full p-4 gap-3">
       <div className="flex flex-row gap-2 w-full items-start">
         <div className="flex flex-row gap-2 w-full items-center">
-          <EthereumAddressToENSAvatar
-            address={endorsement.endorsedBy}
-            className="h-6 w-6 rounded-full"
-          />
           <div className="flex flex-row gap-3 w-full items-start justify-between">
             <p className="text-sm font-bold text-brand-darkblue dark:text-zinc-100">
-              {displayName}
+              <EthereumAddressToProfileName
+                address={endorsement.endorsedBy}
+                showProfilePicture
+                pictureClassName="h-6 w-6 rounded-full"
+              />
               {` `}
               <span className="text-sm font-normal text-brand-gray dark:text-zinc-200">
                 endorsed this on {formatDate(endorsement.createdAt)}
