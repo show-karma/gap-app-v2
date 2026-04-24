@@ -13,7 +13,6 @@ import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 import { formatAIScore } from "../helper/getAIScore";
 import { formatInternalAIScore } from "../helper/getInternalAIScore";
-import { getProjectTitle } from "../helper/getProjectTitle";
 import { AIEvaluationModal, type EvaluationType } from "./AIEvaluationModal";
 import { ReviewerAssignmentDropdown } from "./ReviewerAssignmentDropdown";
 import { TableStatusActionButtons } from "./TableStatusActionButtons";
@@ -85,6 +84,8 @@ const ApplicationTableRowComponent: FC<ApplicationTableRowProps> = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [evaluationType, setEvaluationType] = useState<EvaluationType>("external");
 
+  const projectDisplayName = application.resolvedProjectName || application.referenceNumber;
+
   const handleAIScoreClick = (e: React.MouseEvent, type: EvaluationType) => {
     e.stopPropagation();
     setEvaluationType(type);
@@ -119,8 +120,8 @@ const ApplicationTableRowComponent: FC<ApplicationTableRowProps> = ({
           {application.referenceNumber}
         </td>
         <td className="px-4 py-4 text-sm text-gray-900 dark:text-white">
-          <div className="max-w-xs truncate" title={getProjectTitle(application)}>
-            {getProjectTitle(application)}
+          <div className="max-w-xs truncate" title={projectDisplayName}>
+            {projectDisplayName}
           </div>
         </td>
         <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
@@ -228,7 +229,7 @@ const ApplicationTableRowComponent: FC<ApplicationTableRowProps> = ({
         onClose={() => setIsModalOpen(false)}
         evaluationType={evaluationType}
         evaluation={getEvaluationData()}
-        projectTitle={getProjectTitle(application)}
+        projectTitle={projectDisplayName}
       />
     </>
   );
