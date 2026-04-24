@@ -1,24 +1,71 @@
-import type { ContributorProfile } from "@show-karma/karma-gap-sdk";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { communityAdminsService } from "@/services/community-admins.service";
 import { useProjectStore } from "@/store";
+import type { TeamProfile } from "@/types/team-profile";
 import type { Project as ProjectResponse } from "@/types/v2/project";
 import { getContributorProfiles } from "@/utilities/indexer/getContributorProfiles";
 
 export const useTeamProfiles = (project: ProjectResponse | undefined) => {
   const setTeamProfiles = useProjectStore((state) => state.setTeamProfiles);
+  const { authenticated } = useAuth();
 
-  const rawAddresses = project?.members?.map((member) => member.address).filter(Boolean) || [];
+  const rawAddresses = [
+    project?.owner,
+    ...(project?.members?.map((member) => member.address).filter(Boolean) || []),
+  ].filter(Boolean) as string[];
   const uniqueLowercasedAddresses = Array.from(
     new Set(rawAddresses.map((address) => address.toLowerCase()))
   );
 
-  const query = useQuery<ContributorProfile[] | undefined>({
-    queryKey: ["contributor-profiles", uniqueLowercasedAddresses],
+  const query = useQuery<TeamProfile[] | undefined>({
+    queryKey: ["contributor-profiles", uniqueLowercasedAddresses, authenticated],
     queryFn: async () => {
       if (!project || uniqueLowercasedAddresses.length === 0) return [];
-      const profiles = (await getContributorProfiles(uniqueLowercasedAddresses)) || [];
-      return profiles;
+      const profiles = ((await getContributorProfiles(uniqueLowercasedAddresses)) ||
+        []) as TeamProfile[];
+
+      if (!authenticated) return profiles;
+
+      try {
+        const authorizedProfiles =
+          await communityAdminsService.getUserProfiles(uniqueLowercasedAddresses);
+        const publicProfilesByAddress = new Map(
+          profiles.map((profile) => [profile.recipient.toLowerCase(), profile] as const)
+        );
+
+        return uniqueLowercasedAddresses
+          .map((address) => {
+            const publicProfile = publicProfilesByAddress.get(address);
+            const authorizedProfile = authorizedProfiles.get(address);
+
+            if (publicProfile) {
+              if (!authorizedProfile?.email) return publicProfile;
+
+              return {
+                ...publicProfile,
+                data: {
+                  ...publicProfile.data,
+                  email: authorizedProfile.email,
+                },
+              };
+            }
+
+            if (!authorizedProfile) return undefined;
+
+            return {
+              recipient: authorizedProfile.publicAddress,
+              data: {
+                name: authorizedProfile.name,
+                email: authorizedProfile.email,
+              },
+            } as TeamProfile;
+          })
+          .filter((profile): profile is TeamProfile => Boolean(profile));
+      } catch {
+        return profiles;
+      }
     },
     enabled: uniqueLowercasedAddresses.length > 0,
     staleTime: 10 * 60 * 1000, // 10 minutes

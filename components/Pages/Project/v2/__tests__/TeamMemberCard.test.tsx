@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import type { TeamProfile } from "@/types/team-profile";
 import "@testing-library/jest-dom";
 import { TeamMemberCard } from "../TeamContent/TeamMemberCard";
 
@@ -72,21 +73,24 @@ vi.mock("@/store/modals/contributorProfile", () => ({
 }));
 
 // Mock team profiles hook
+let mockTeamProfiles: TeamProfile[] = [
+  {
+    recipient: "0x1234567890123456789012345678901234567890",
+    data: {
+      name: "John Doe",
+      email: "john@example.com",
+      aboutMe: "A test user",
+      twitter: "johndoe",
+      github: "johndoe",
+      linkedin: "johndoe",
+      farcaster: "johndoe",
+    },
+  } as TeamProfile,
+];
+
 vi.mock("@/hooks/useTeamProfiles", () => ({
   useTeamProfiles: () => ({
-    teamProfiles: [
-      {
-        recipient: "0x1234567890123456789012345678901234567890",
-        data: {
-          name: "John Doe",
-          aboutMe: "A test user",
-          twitter: "johndoe",
-          github: "johndoe",
-          linkedin: "johndoe",
-          farcaster: "johndoe",
-        },
-      },
-    ],
+    teamProfiles: mockTeamProfiles,
   }),
 }));
 
@@ -167,6 +171,20 @@ describe("TeamMemberCard", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockTeamProfiles = [
+      {
+        recipient: "0x1234567890123456789012345678901234567890",
+        data: {
+          name: "John Doe",
+          email: "john@example.com",
+          aboutMe: "A test user",
+          twitter: "johndoe",
+          github: "johndoe",
+          linkedin: "johndoe",
+          farcaster: "johndoe",
+        },
+      } as TeamProfile,
+    ];
   });
 
   describe("Rendering", () => {
@@ -194,6 +212,12 @@ describe("TeamMemberCard", () => {
       expect(screen.getByTestId("member-address")).toHaveTextContent(defaultMember);
     });
 
+    it("should display member email when available", () => {
+      render(<TeamMemberCard member={defaultMember} />);
+
+      expect(screen.getByTestId("member-email")).toHaveTextContent("john@example.com");
+    });
+
     it("should display about me text when available", () => {
       render(<TeamMemberCard member={defaultMember} />);
 
@@ -208,6 +232,22 @@ describe("TeamMemberCard", () => {
       expect(screen.getByTestId("github-icon")).toBeInTheDocument();
       expect(screen.getByTestId("linkedin-icon")).toBeInTheDocument();
       expect(screen.getByTestId("farcaster-icon")).toBeInTheDocument();
+    });
+
+    it("should not display member email when unavailable", () => {
+      mockTeamProfiles = [
+        {
+          recipient: defaultMember,
+          data: {
+            name: "John Doe",
+            aboutMe: "A test user",
+          },
+        } as TeamProfile,
+      ];
+
+      render(<TeamMemberCard member={defaultMember} />);
+
+      expect(screen.queryByTestId("member-email")).not.toBeInTheDocument();
     });
   });
 
