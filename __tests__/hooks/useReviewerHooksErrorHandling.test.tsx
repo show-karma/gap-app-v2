@@ -137,4 +137,68 @@ describe("Reviewer hooks error handling", () => {
       expect(mockToast.error).toHaveBeenCalledWith("A reviewer with this email already exists.");
     });
   });
+
+  it("refetches program reviewers when addReviewer succeeds without a publicAddress", async () => {
+    mockProgramReviewersService.addReviewer.mockResolvedValue({
+      name: "Program Reviewer",
+      email: "program@example.com",
+      assignedAt: "2024-01-01T00:00:00Z",
+    });
+    mockProgramReviewersService.getReviewers.mockResolvedValueOnce([]).mockResolvedValueOnce([
+      {
+        publicAddress: "0x1111111111111111111111111111111111111111",
+        name: "Program Reviewer",
+        email: "program@example.com",
+        assignedAt: "2024-01-01T00:00:00Z",
+      },
+    ]);
+
+    const { result } = renderHook(() => useProgramReviewers("program-1"), { wrapper });
+
+    let addedReviewer: Awaited<ReturnType<typeof result.current.addReviewer>> | undefined;
+    await act(async () => {
+      addedReviewer = await result.current.addReviewer({
+        name: "Program Reviewer",
+        email: "program@example.com",
+      });
+    });
+
+    expect(mockProgramReviewersService.getReviewers).toHaveBeenCalledTimes(3);
+    expect(addedReviewer).toMatchObject({
+      publicAddress: "0x1111111111111111111111111111111111111111",
+      email: "program@example.com",
+    });
+  });
+
+  it("refetches milestone reviewers when addReviewer succeeds without a publicAddress", async () => {
+    mockMilestoneReviewersService.addReviewer.mockResolvedValue({
+      name: "Milestone Reviewer",
+      email: "milestone@example.com",
+      assignedAt: "2024-01-01T00:00:00Z",
+    });
+    mockMilestoneReviewersService.getReviewers.mockResolvedValueOnce([]).mockResolvedValueOnce([
+      {
+        publicAddress: "0x2222222222222222222222222222222222222222",
+        name: "Milestone Reviewer",
+        email: "milestone@example.com",
+        assignedAt: "2024-01-01T00:00:00Z",
+      },
+    ]);
+
+    const { result } = renderHook(() => useMilestoneReviewers("program-1"), { wrapper });
+
+    let addedReviewer: Awaited<ReturnType<typeof result.current.addReviewer>> | undefined;
+    await act(async () => {
+      addedReviewer = await result.current.addReviewer({
+        name: "Milestone Reviewer",
+        email: "milestone@example.com",
+      });
+    });
+
+    expect(mockMilestoneReviewersService.getReviewers).toHaveBeenCalledTimes(3);
+    expect(addedReviewer).toMatchObject({
+      publicAddress: "0x2222222222222222222222222222222222222222",
+      email: "milestone@example.com",
+    });
+  });
 });

@@ -36,7 +36,21 @@ export function useProgramReviewers(programId: string) {
         throw new Error(validation.errors.join(", "));
       }
 
-      return programReviewersService.addReviewer(programId, validation.sanitized);
+      const addedReviewer = await programReviewersService.addReviewer(
+        programId,
+        validation.sanitized
+      );
+
+      if (addedReviewer.publicAddress) {
+        return addedReviewer;
+      }
+
+      const refreshedReviewers = await programReviewersService.getReviewers(programId);
+      const matchedReviewer = refreshedReviewers.find(
+        (reviewer) => reviewer.email.toLowerCase() === validation.sanitized.email.toLowerCase()
+      );
+
+      return matchedReviewer ?? addedReviewer;
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({
