@@ -6,8 +6,8 @@ import { useStartSlackInstall } from "@/hooks/useSlackOauth";
 
 /**
  * "Add to Slack" button — entry point for the distributed OAuth install
- * flow (Segment 2). Replaces the manual paste form when
- * `NEXT_PUBLIC_SLACK_OAUTH_DISTRIBUTED=true`.
+ * flow (Segment 2). Primary CTA in the empty-state register form;
+ * manual paste lives behind an "Advanced" expander.
  *
  * Click flow:
  *   1. Authed fetch to /v2/slack-oauth/authorize-url → returns the

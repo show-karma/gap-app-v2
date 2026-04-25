@@ -13,9 +13,6 @@ import { SlackOauthWorkspaceSummary } from "./SlackOauthWorkspaceSummary";
  * Slack-webhook cards on NotificationSettingsPage. Renders four
  * states (loading / error-retry / empty-register / populated-summary)
  * so callers never see a `null` or undefined placeholder.
- *
- * Feature-flag gating (NEXT_PUBLIC_SLACK_OAUTH_ENABLED) lives on the
- * parent page — this component assumes it's already been granted.
  */
 export function SlackOauthProviderCard({ communitySlug }: { communitySlug: string }) {
   const query = useSlackOauthWorkspace(communitySlug);
