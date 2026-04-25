@@ -8,23 +8,16 @@ import { useRegisterSlackWorkspace } from "@/hooks/useSlackOauth";
 import { SlackOauthAddToSlackButton } from "./SlackOauthAddToSlackButton";
 import { SlackOauthTextField } from "./SlackOauthTextField";
 
-const SLACK_OAUTH_DISTRIBUTED = process.env.NEXT_PUBLIC_SLACK_OAUTH_DISTRIBUTED === "true";
-
 /**
  * Empty-state for the Slack OAuth card. Two install paths:
  *
- *   1. Distributed (Segment 2, gated by NEXT_PUBLIC_SLACK_OAUTH_DISTRIBUTED):
- *      one-click "Add to Slack" button — preferred when the Karma Slack
- *      App is published. Token never touches the admin's clipboard.
+ *   1. "Add to Slack" — distributed OAuth (Segment 2). Primary CTA.
+ *      Token never touches the admin's clipboard.
  *
- *   2. Manual paste (Segment 1): admin creates a Slack App from the
- *      Karma manifest, installs it, and pastes the bot token. Always
- *      available as a fallback (collapsed by default when the
- *      distributed flow is on, expanded otherwise).
- *
- * The distributed path is the default when both are enabled — token-
- * paste is a hidden expander labeled "Advanced: paste manually" so
- * customers don't see two competing primary CTAs.
+ *   2. Manual paste (Segment 1). Hidden behind an "Advanced" expander
+ *      so admins don't see two competing primary CTAs. Useful for
+ *      pre-distribution-publish customers and as a recovery path if
+ *      the distributed flow is unavailable.
  */
 export function SlackOauthRegisterForm({ communitySlug }: { communitySlug: string }) {
   const { mutate, isPending } = useRegisterSlackWorkspace(communitySlug);
@@ -32,10 +25,7 @@ export function SlackOauthRegisterForm({ communitySlug }: { communitySlug: strin
   const [teamName, setTeamName] = useState("");
   const [botUserId, setBotUserId] = useState("");
   const [botToken, setBotToken] = useState("");
-  // When the distributed button is shown, the manual form starts
-  // collapsed. When distributed is off, the manual form is the only
-  // path so it's expanded.
-  const [showManual, setShowManual] = useState(!SLACK_OAUTH_DISTRIBUTED);
+  const [showManual, setShowManual] = useState(false);
 
   const canSubmit = teamId.trim() && teamName.trim() && botUserId.trim() && botToken.trim();
 
@@ -61,17 +51,15 @@ export function SlackOauthRegisterForm({ communitySlug }: { communitySlug: strin
 
   return (
     <div className="space-y-4 px-5 py-4">
-      {SLACK_OAUTH_DISTRIBUTED ? (
-        <div className="space-y-3">
-          <p className="text-sm text-stone-700 dark:text-zinc-300">
-            Connect your Slack workspace to enable direct-message notifications. Karma will redirect
-            you to Slack to confirm the install.
-          </p>
-          <SlackOauthAddToSlackButton communitySlug={communitySlug} />
-        </div>
-      ) : null}
+      <div className="space-y-3">
+        <p className="text-sm text-stone-700 dark:text-zinc-300">
+          Connect your Slack workspace to enable direct-message notifications. Karma will redirect
+          you to Slack to confirm the install.
+        </p>
+        <SlackOauthAddToSlackButton communitySlug={communitySlug} />
+      </div>
 
-      {SLACK_OAUTH_DISTRIBUTED && !showManual ? (
+      {!showManual ? (
         <button
           type="button"
           onClick={() => setShowManual(true)}

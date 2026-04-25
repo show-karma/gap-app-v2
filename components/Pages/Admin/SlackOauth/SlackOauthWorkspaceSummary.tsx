@@ -9,8 +9,6 @@ import { useDeleteSlackWorkspace, useTestSlackWorkspace } from "@/hooks/useSlack
 import type { SlackOAuthWorkspace } from "@/types/slack-oauth";
 import { SlackOauthAddToSlackButton } from "./SlackOauthAddToSlackButton";
 
-const SLACK_OAUTH_DISTRIBUTED = process.env.NEXT_PUBLIC_SLACK_OAUTH_DISTRIBUTED === "true";
-
 /**
  * Read-only summary + action buttons for an active/revoked workspace.
  * Renders a definition list of team, status, install date, and
@@ -78,7 +76,7 @@ export function SlackOauthWorkspaceSummary({
   // The /authorize-url flow rotates the bot token and reactivates the
   // workspace status (status flips to ACTIVE on the server's
   // registerFromOAuth path) WITHOUT touching slack_user_links.
-  const showReinstall = SLACK_OAUTH_DISTRIBUTED && workspace.status !== "ACTIVE";
+  const showReinstall = workspace.status !== "ACTIVE";
 
   return (
     <>
