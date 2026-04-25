@@ -118,12 +118,59 @@ export function useLinkSlackUser(slug: string | undefined) {
   });
 }
 
+/**
+ * Unlink with optimistic update — the row disappears immediately on
+ * click, rolls back if the server rejects. Per CLAUDE.md mutation rule:
+ * "Always useMutation with optimistic updates — never useState +
+ * direct service calls". Unlink is the textbook case: a single row
+ * removal where the server outcome is near-certain and waiting feels
+ * sluggish.
+ */
 export function useUnlinkSlackUser(slug: string | undefined) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (uid: string) =>
       slackOauthService.unlinkUser(slug as string, uid),
-    onSuccess: () => {
+
+    onMutate: async (uid: string) => {
+      // Cancel in-flight list refetches so they don't overwrite our
+      // optimistic delete with a stale snapshot.
+      await queryClient.cancelQueries({
+        queryKey: slackOauthKeys.userLinksAll(slug),
+      });
+
+      // Snapshot every cached link list (multiple keys exist if the UI
+      // has paginated or filtered queries) and remove the matching uid
+      // from each. Returning the snapshots from onMutate hands them to
+      // onError as `context` for rollback.
+      const snapshots = queryClient.getQueriesData<SlackOAuthUserLinksListResponse>({
+        queryKey: slackOauthKeys.userLinksAll(slug),
+      });
+
+      for (const [key, data] of snapshots) {
+        if (!data) continue;
+        queryClient.setQueryData<SlackOAuthUserLinksListResponse>(key, {
+          ...data,
+          items: data.items.filter((link) => link.uid !== uid),
+          total: Math.max(0, data.total - 1),
+        });
+      }
+
+      return { snapshots };
+    },
+
+    onError: (_err, _uid, context) => {
+      // Server rejected — restore every snapshot so the row reappears
+      // with its original list-position + total intact.
+      if (!context?.snapshots) return;
+      for (const [key, data] of context.snapshots) {
+        queryClient.setQueryData(key, data);
+      }
+    },
+
+    onSettled: () => {
+      // Whether the optimistic delete stuck or rolled back, refetch
+      // ground truth from the server.
       queryClient.invalidateQueries({
         queryKey: slackOauthKeys.userLinksAll(slug),
       });

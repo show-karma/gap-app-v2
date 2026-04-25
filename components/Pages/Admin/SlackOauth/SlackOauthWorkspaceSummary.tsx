@@ -20,8 +20,19 @@ import type { SlackOAuthWorkspace } from "@/types/slack-oauth";
  * lives in the sibling `SlackOauthUserLinksSection`.
  */
 
+/**
+ * Format with explicit locale + parts. `toLocaleDateString()` without
+ * a locale arg uses the runtime's default — which differs between
+ * Node (SSR) and the browser, producing hydration-mismatch warnings.
+ * Fixed to en-US to match the codebase's date convention; per-user
+ * localization is a separate feature.
+ */
 function formatInstalledAt(iso: string): string {
-  return new Date(iso).toLocaleDateString();
+  return new Date(iso).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
 }
 
 function statusColorClass(status: SlackOAuthWorkspace["status"]): string {

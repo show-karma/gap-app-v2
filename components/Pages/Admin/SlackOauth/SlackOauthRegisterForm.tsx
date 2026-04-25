@@ -46,8 +46,15 @@ export function SlackOauthRegisterForm({
     );
   };
 
+  // Real <form> element so Enter submits and browser autofill works.
+  // Submit-type button routes through onSubmit.
+  const handleSubmitEvent = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (canSubmit && !isPending) handleSubmit();
+  };
+
   return (
-    <div className="space-y-4 px-5 py-4">
+    <form onSubmit={handleSubmitEvent} className="space-y-4 px-5 py-4">
       <div className="flex items-start gap-2.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 dark:border-blue-900/40 dark:bg-blue-950/30">
         <Info
           className="mt-0.5 h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400"
@@ -91,8 +98,7 @@ export function SlackOauthRegisterForm({
       />
 
       <Button
-        type="button"
-        onClick={handleSubmit}
+        type="submit"
         disabled={!canSubmit || isPending}
         aria-label="Register Slack workspace"
       >
@@ -103,6 +109,6 @@ export function SlackOauthRegisterForm({
         )}
         Register workspace
       </Button>
-    </div>
+    </form>
   );
 }

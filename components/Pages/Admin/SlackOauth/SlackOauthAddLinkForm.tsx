@@ -65,9 +65,10 @@ export function SlackOauthAddLinkForm({
       onError: (err) => {
         if (err instanceof SlackOAuthHandleAmbiguousError) {
           setCandidates([...err.candidates]);
-          toast(`${err.candidates.length} matches — pick one below`, {
-            icon: "ℹ️",
-          });
+          // Use a regular .success-styled call (lucide icon supplied
+          // separately via custom render in the toast options would be
+          // too heavy here). No emoji per project convention.
+          toast(`${err.candidates.length} matches — pick one below`);
           return;
         }
         toast.error(err.message || "Link failed");
@@ -75,10 +76,34 @@ export function SlackOauthAddLinkForm({
     });
   };
 
+  // Clear stale candidates whenever the inputs change. Without this,
+  // editing `karmaUserId` after a 409 leaves the picker visible while
+  // the inputs no longer match — confusing UX.
+  const handleKarmaUserIdChange = (next: string) => {
+    setKarmaUserId(next);
+    if (candidates.length > 0) setCandidates([]);
+  };
+  const handleValueChange = (next: string) => {
+    setValue(next);
+    if (candidates.length > 0) setCandidates([]);
+  };
+
   const canSubmit = karmaUserId.trim().length > 0 && value.trim().length > 0;
 
+  // Wrap in a real <form> so Enter submits, browser autofill kicks in,
+  // and screen readers announce the form region. Submit-type button
+  // routes through onSubmit; mode toggle + candidate picks stay as
+  // plain buttons (they're not the primary submit action).
+  const handleSubmitEvent = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (canSubmit && !isPending) submit();
+  };
+
   return (
-    <div className="space-y-2 rounded-lg border border-stone-200 bg-stone-50 px-3 py-3 dark:border-zinc-800 dark:bg-zinc-950/40">
+    <form
+      onSubmit={handleSubmitEvent}
+      className="space-y-2 rounded-lg border border-stone-200 bg-stone-50 px-3 py-3 dark:border-zinc-800 dark:bg-zinc-950/40"
+    >
       <LinkModeToggle
         mode={mode}
         onChange={(next) => {
@@ -90,21 +115,20 @@ export function SlackOauthAddLinkForm({
       <SlackOauthTextField
         label="Karma user ID"
         value={karmaUserId}
-        onChange={setKarmaUserId}
+        onChange={handleKarmaUserIdChange}
         placeholder="user-id-or-wallet"
         disabled={isPending}
       />
       <SlackOauthTextField
         label={mode === "handle" ? "Slack handle" : "Slack member ID"}
         value={value}
-        onChange={setValue}
+        onChange={handleValueChange}
         placeholder={mode === "handle" ? "@bruno" : "U01AB2CDEF"}
         disabled={isPending}
       />
 
       <Button
-        type="button"
-        onClick={() => submit()}
+        type="submit"
         disabled={!canSubmit || isPending}
         aria-label="Link user"
       >
@@ -127,7 +151,7 @@ export function SlackOauthAddLinkForm({
       <p className="text-[11px] text-stone-400 dark:text-zinc-500">
         Workspace: {workspace.teamName}
       </p>
-    </div>
+    </form>
   );
 }
 
