@@ -54,6 +54,7 @@ interface IApplicationListComponentProps extends IApplicationListProps {
 }
 
 const ApplicationListComponent: FC<IApplicationListComponentProps> = ({
+  programId,
   applications,
   isLoading = false,
   onApplicationSelect,
