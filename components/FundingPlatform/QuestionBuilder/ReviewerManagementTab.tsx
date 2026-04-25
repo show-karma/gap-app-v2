@@ -16,7 +16,13 @@ import { useMilestoneReviewers } from "@/hooks/useMilestoneReviewers";
 import { useProgramReviewers } from "@/hooks/useProgramReviewers";
 import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
 import { Permission } from "@/src/core/rbac/types/permission";
-import { validateEmail, validateSlack, validateTelegram } from "@/utilities/validators";
+import {
+  sanitizeSlack,
+  sanitizeTelegram,
+  validateEmail,
+  validateSlack,
+  validateTelegram,
+} from "@/utilities/validators";
 import { PAGE_HEADER_CONTENT, PageHeader } from "../PageHeader";
 
 interface ReviewerManagementTabProps {
@@ -90,7 +96,8 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
         name: "telegram",
         label: "Telegram",
         type: "text" as const,
-        placeholder: "@username",
+        placeholder: "username",
+        helperText: "Telegram handle (without @). Used for group notifications.",
         required: false,
         editable: true,
         validation: (value: string) => {
@@ -104,7 +111,8 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
         name: "slack",
         label: "Slack",
         type: "text" as const,
-        placeholder: "@username",
+        placeholder: "username",
+        helperText: "Slack handle (without @). Used to tag in team channels.",
         required: false,
         editable: true,
         validation: (value: string) => {
@@ -324,8 +332,10 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
 
       const contactPayload = {
         email: member.email,
-        ...(patch.telegram !== undefined && { telegram: patch.telegram }),
-        ...(patch.slack !== undefined && { slack: patch.slack }),
+        ...(patch.telegram !== undefined && {
+          telegram: sanitizeTelegram(patch.telegram),
+        }),
+        ...(patch.slack !== undefined && { slack: sanitizeSlack(patch.slack) }),
       };
 
       const roles = member.roles || [];
