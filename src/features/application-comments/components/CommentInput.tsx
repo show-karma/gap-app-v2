@@ -7,6 +7,8 @@ import MentionAutocomplete from "@/components/FundingPlatform/ApplicationView/Me
 import { Button } from "@/components/ui/button";
 import { useAllReviewers } from "@/hooks/useAllReviewers";
 import { useMentionEditor } from "@/hooks/useMentionEditor";
+import { useMilestoneReviewers } from "@/hooks/useMilestoneReviewers";
+import { ReviewerType } from "@/hooks/useReviewerAssignment";
 import type { CommentInputProps } from "../types";
 import { CommentMarkdownInput } from "./CommentMarkdownInput";
 
@@ -31,6 +33,7 @@ export function CommentInput({
   });
 
   const { data: reviewers } = useAllReviewers(programId ?? "");
+  const { addReviewer, isAdding } = useMilestoneReviewers(programId ?? "");
 
   const filteredReviewers = useMemo(() => {
     if (!reviewers) return [];
@@ -139,6 +142,9 @@ export function CommentInput({
           programId={programId}
           isOpen={mentionEditor.isInviteModalOpen}
           onClose={mentionEditor.handleCloseInviteModal}
+          reviewerType={ReviewerType.MILESTONE}
+          onInviteReviewer={addReviewer}
+          isInviting={isAdding}
           onInvited={handleInvited}
         />
       )}

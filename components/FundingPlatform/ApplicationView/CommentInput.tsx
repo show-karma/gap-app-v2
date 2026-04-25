@@ -6,6 +6,7 @@ import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useMentionEditor } from "@/hooks/useMentionEditor";
 import { useMilestoneReviewers } from "@/hooks/useMilestoneReviewers";
+import { ReviewerType } from "@/hooks/useReviewerAssignment";
 import { cn } from "@/utilities/tailwind";
 import InviteReviewerModal from "./InviteReviewerModal";
 import MentionAutocomplete from "./MentionAutocomplete";
@@ -40,7 +41,7 @@ const CommentInput: FC<CommentInputProps> = ({
     editorRef: editorContainerRef,
   });
 
-  const { data: reviewers } = useMilestoneReviewers(programId ?? "");
+  const { data: reviewers, addReviewer, isAdding } = useMilestoneReviewers(programId ?? "");
 
   const filteredReviewers = useMemo(() => {
     if (!reviewers) return [];
@@ -183,6 +184,9 @@ const CommentInput: FC<CommentInputProps> = ({
           programId={programId}
           isOpen={mentionEditor.isInviteModalOpen}
           onClose={mentionEditor.handleCloseInviteModal}
+          reviewerType={ReviewerType.MILESTONE}
+          onInviteReviewer={addReviewer}
+          isInviting={isAdding}
           onInvited={handleInvited}
         />
       )}

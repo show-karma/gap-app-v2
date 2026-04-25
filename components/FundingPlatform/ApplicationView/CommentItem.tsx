@@ -18,6 +18,7 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import { useAuth } from "@/hooks/useAuth";
 import { useMentionEditor } from "@/hooks/useMentionEditor";
 import { useMilestoneReviewers } from "@/hooks/useMilestoneReviewers";
+import { ReviewerType } from "@/hooks/useReviewerAssignment";
 import type { ApplicationComment } from "@/types/funding-platform";
 import { compareAllWallets } from "@/utilities/auth/compare-all-wallets";
 import { renderMentionsAsMarkdown } from "@/utilities/mentions";
@@ -59,7 +60,11 @@ const CommentItem: FC<CommentItemProps> = ({
     editorRef: editContainerRef,
   });
 
-  const { data: reviewers } = useMilestoneReviewers(mentionsEnabled ? (programId ?? "") : "");
+  const {
+    data: reviewers,
+    addReviewer,
+    isAdding,
+  } = useMilestoneReviewers(mentionsEnabled ? (programId ?? "") : "");
 
   const filteredReviewers = useMemo(() => {
     if (!reviewers) return [];
@@ -360,6 +365,9 @@ const CommentItem: FC<CommentItemProps> = ({
                     programId={programId}
                     isOpen={mentionEditor.isInviteModalOpen}
                     onClose={mentionEditor.handleCloseInviteModal}
+                    reviewerType={ReviewerType.MILESTONE}
+                    onInviteReviewer={addReviewer}
+                    isInviting={isAdding}
                     onInvited={handleEditInvited}
                   />
                 )}

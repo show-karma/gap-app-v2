@@ -15,7 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { useMilestoneReviewers } from "@/hooks/useMilestoneReviewers";
+import { ReviewerType } from "@/hooks/useReviewerAssignment";
 import { telegramUsernameSchema } from "@/utilities/validation/telegram-username";
 
 const inviteSchema = z.object({
@@ -26,21 +26,31 @@ const inviteSchema = z.object({
 
 type InviteFormData = z.infer<typeof inviteSchema>;
 
+export interface InvitedReviewer {
+  name: string;
+  email: string;
+  publicAddress?: string;
+}
+
 interface InviteReviewerModalProps {
   programId: string;
   isOpen: boolean;
   onClose: () => void;
-  onInvited?: (reviewer: { name: string; email: string }) => void;
+  reviewerType?: ReviewerType;
+  onInviteReviewer: (data: InviteFormData) => Promise<InvitedReviewer>;
+  isInviting?: boolean;
+  onInvited?: (reviewer: InvitedReviewer) => void;
 }
 
 const InviteReviewerModal: FC<InviteReviewerModalProps> = ({
-  programId,
+  programId: _programId,
   isOpen,
   onClose,
+  reviewerType = ReviewerType.MILESTONE,
+  onInviteReviewer,
+  isInviting = false,
   onInvited,
 }) => {
-  const { addReviewer, isAdding } = useMilestoneReviewers(programId);
-
   const {
     register,
     handleSubmit,
@@ -58,39 +68,39 @@ const InviteReviewerModal: FC<InviteReviewerModalProps> = ({
   const onSubmit = useCallback(
     async (data: InviteFormData) => {
       try {
-        await addReviewer(data);
-        onInvited?.({
-          name: data.name,
-          email: data.email,
-        });
+        const reviewer = await onInviteReviewer(data);
+        onInvited?.(reviewer);
         reset();
         onClose();
       } catch {
-        // Error handled by useMilestoneReviewers (shows toast)
+        // Error handled by parent hook callback (shows toast)
       }
     },
-    [addReviewer, onInvited, reset, onClose]
+    [onInviteReviewer, onInvited, reset, onClose]
   );
 
   const handleOpenChange = useCallback(
     (open: boolean) => {
       if (!open) {
-        if (isAdding) return;
+        if (isInviting) return;
         reset();
         onClose();
       }
     },
-    [reset, onClose, isAdding]
+    [reset, onClose, isInviting]
   );
+
+  const reviewerTypeLabel =
+    reviewerType === ReviewerType.APP ? "application reviewer" : "milestone reviewer";
+  const inviteActionLabel =
+    reviewerType === ReviewerType.APP ? "Invite Application Reviewer" : "Invite Reviewer";
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Invite Milestone Reviewer</DialogTitle>
-          <DialogDescription>
-            Add a new reviewer who will be able to verify milestones for this program.
-          </DialogDescription>
+          <DialogTitle>{inviteActionLabel}</DialogTitle>
+          <DialogDescription>Add a new {reviewerTypeLabel} for this program.</DialogDescription>
         </DialogHeader>
 
         <form
@@ -111,7 +121,7 @@ const InviteReviewerModal: FC<InviteReviewerModalProps> = ({
               id="reviewer-name"
               {...register("name")}
               placeholder="Reviewer name"
-              disabled={isAdding}
+              disabled={isInviting}
             />
             {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name.message}</p>}
           </div>
@@ -128,7 +138,7 @@ const InviteReviewerModal: FC<InviteReviewerModalProps> = ({
               type="email"
               {...register("email")}
               placeholder="reviewer@example.com"
-              disabled={isAdding}
+              disabled={isInviting}
             />
             {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
           </div>
@@ -145,7 +155,7 @@ const InviteReviewerModal: FC<InviteReviewerModalProps> = ({
               {...register("telegram")}
               placeholder="username"
               aria-describedby="reviewer-telegram-helper"
-              disabled={isAdding}
+              disabled={isInviting}
             />
             <p
               id="reviewer-telegram-helper"
@@ -164,18 +174,18 @@ const InviteReviewerModal: FC<InviteReviewerModalProps> = ({
               type="button"
               variant="outline"
               onClick={() => handleOpenChange(false)}
-              disabled={isAdding}
+              disabled={isInviting}
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isAdding}>
-              {isAdding ? (
+            <Button type="submit" disabled={isInviting}>
+              {isInviting ? (
                 <>
                   <Spinner className="h-4 w-4 mr-2 border-2" />
                   Inviting...
                 </>
               ) : (
-                "Invite Reviewer"
+                inviteActionLabel
               )}
             </Button>
           </DialogFooter>
