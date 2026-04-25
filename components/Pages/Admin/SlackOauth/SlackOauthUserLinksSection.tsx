@@ -3,10 +3,7 @@
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useSlackOauthUserLinks } from "@/hooks/useSlackOauth";
-import type {
-  SlackOAuthUserLink,
-  SlackOAuthWorkspace,
-} from "@/types/slack-oauth";
+import type { SlackOAuthUserLink, SlackOAuthWorkspace } from "@/types/slack-oauth";
 import { SlackOauthAddLinkForm } from "./SlackOauthAddLinkForm";
 import { SlackOauthUserLinkRow } from "./SlackOauthUserLinkRow";
 
@@ -29,21 +26,15 @@ export function SlackOauthUserLinksSection({
   workspace: SlackOAuthWorkspace;
   communitySlug: string;
 }) {
-  const { data, isLoading, isError, refetch } = useSlackOauthUserLinks(
-    communitySlug,
-    { limit: LIST_LIMIT }
-  );
+  const { data, isLoading, isError, refetch } = useSlackOauthUserLinks(communitySlug, {
+    limit: LIST_LIMIT,
+  });
 
   return (
     <section className="space-y-3">
-      <p className="text-sm font-semibold text-stone-900 dark:text-zinc-100">
-        Linked users
-      </p>
+      <p className="text-sm font-semibold text-stone-900 dark:text-zinc-100">Linked users</p>
 
-      <SlackOauthAddLinkForm
-        workspace={workspace}
-        communitySlug={communitySlug}
-      />
+      <SlackOauthAddLinkForm workspace={workspace} communitySlug={communitySlug} />
 
       <SlackOauthUserLinksBody
         isLoading={isLoading}
@@ -81,9 +72,7 @@ function SlackOauthUserLinksBody({
   if (isError) {
     return (
       <div className="space-y-1.5 rounded-md border border-red-200 bg-red-50 px-3 py-2 dark:border-red-900/40 dark:bg-red-900/10">
-        <p className="text-xs text-red-600 dark:text-red-400">
-          Failed to load linked users.
-        </p>
+        <p className="text-xs text-red-600 dark:text-red-400">Failed to load linked users.</p>
         <Button
           type="button"
           variant="secondary"
@@ -105,11 +94,7 @@ function SlackOauthUserLinksBody({
   return (
     <ul className="divide-y divide-stone-100 rounded-lg border border-stone-200 dark:divide-zinc-800 dark:border-zinc-800">
       {items.map((link) => (
-        <SlackOauthUserLinkRow
-          key={link.uid}
-          link={link}
-          communitySlug={communitySlug}
-        />
+        <SlackOauthUserLinkRow key={link.uid} link={link} communitySlug={communitySlug} />
       ))}
     </ul>
   );

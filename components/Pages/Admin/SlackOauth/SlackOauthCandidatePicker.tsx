@@ -48,9 +48,7 @@ function SlackOauthCandidateRow({
   return (
     <li className="flex items-center justify-between px-3 py-1.5 text-xs">
       <div>
-        <span className="font-medium text-stone-900 dark:text-zinc-100">
-          {displayLabel}
-        </span>
+        <span className="font-medium text-stone-900 dark:text-zinc-100">{displayLabel}</span>
         <span className="ml-2 text-stone-400">{candidate.slackUserId}</span>
       </div>
       <button

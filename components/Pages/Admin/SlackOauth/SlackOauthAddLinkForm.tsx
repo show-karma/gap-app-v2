@@ -4,10 +4,7 @@ import { Loader2, Plus } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/Utilities/Button";
-import {
-  SlackOAuthHandleAmbiguousError,
-  useLinkSlackUser,
-} from "@/hooks/useSlackOauth";
+import { SlackOAuthHandleAmbiguousError, useLinkSlackUser } from "@/hooks/useSlackOauth";
 import type {
   SlackOAuthHandleCandidate,
   SlackOAuthLinkInput,
@@ -16,14 +13,19 @@ import type {
 import { SlackOauthCandidatePicker } from "./SlackOauthCandidatePicker";
 import { SlackOauthTextField } from "./SlackOauthTextField";
 
-type LinkMode = "handle" | "memberId";
+type LinkMode = "handle" | "memberId" | "email";
 
 /**
- * Add-link form with handle/member-id mode toggle. On 409 ambiguous
- * handle, shows the candidate picker so the admin can resolve without
- * re-entering the form. The mode toggle is a cheap UX: both paths go
- * through the same `linkByHandleOrMember` service method which
- * discriminates on the body shape.
+ * Add-link form with three modes: handle, member ID, and email
+ * resolve-missing. On 409 ambiguous handle, shows the candidate picker
+ * so the admin can resolve without re-entering the form. All three
+ * modes route through the same `linkByHandleOrMember` service method
+ * which discriminates on the body shape (handle / slackUserId / email).
+ *
+ * Email mode is the resolve-missing CTA: the backend runs Slack's
+ * `users.lookupByEmail` and persists an `EMAIL_LOOKUP`-tagged link on
+ * hit. The auto-resolve path runs at dispatch-time anyway, but this
+ * lets admins pre-warm the link before the first notification fires.
  */
 export function SlackOauthAddLinkForm({
   workspace,
@@ -44,16 +46,22 @@ export function SlackOauthAddLinkForm({
     setCandidates([]);
   };
 
-  const buildInput = (
-    slackUserIdOverride?: string
-  ): SlackOAuthLinkInput => {
-    if (mode === "handle" && !slackUserIdOverride) {
+  const buildInput = (slackUserIdOverride?: string): SlackOAuthLinkInput => {
+    if (slackUserIdOverride) {
+      // Candidate-picker resolves an ambiguous handle by giving us a
+      // canonical slackUserId — short-circuit the mode entirely.
+      return {
+        karmaUserId: karmaUserId.trim(),
+        slackUserId: slackUserIdOverride,
+      };
+    }
+    if (mode === "handle") {
       return { karmaUserId: karmaUserId.trim(), handle: value.trim() };
     }
-    return {
-      karmaUserId: karmaUserId.trim(),
-      slackUserId: slackUserIdOverride ?? value.trim(),
-    };
+    if (mode === "email") {
+      return { karmaUserId: karmaUserId.trim(), email: value.trim() };
+    }
+    return { karmaUserId: karmaUserId.trim(), slackUserId: value.trim() };
   };
 
   const submit = (slackUserIdOverride?: string) => {
@@ -120,18 +128,15 @@ export function SlackOauthAddLinkForm({
         disabled={isPending}
       />
       <SlackOauthTextField
-        label={mode === "handle" ? "Slack handle" : "Slack member ID"}
+        label={fieldLabel(mode)}
         value={value}
         onChange={handleValueChange}
-        placeholder={mode === "handle" ? "@bruno" : "U01AB2CDEF"}
+        placeholder={fieldPlaceholder(mode)}
         disabled={isPending}
+        type={mode === "email" ? "email" : "text"}
       />
 
-      <Button
-        type="submit"
-        disabled={!canSubmit || isPending}
-        aria-label="Link user"
-      >
+      <Button type="submit" disabled={!canSubmit || isPending} aria-label="Link user">
         {isPending ? (
           <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
         ) : (
@@ -155,6 +160,18 @@ export function SlackOauthAddLinkForm({
   );
 }
 
+function fieldLabel(mode: LinkMode): string {
+  if (mode === "handle") return "Slack handle";
+  if (mode === "memberId") return "Slack member ID";
+  return "Email";
+}
+
+function fieldPlaceholder(mode: LinkMode): string {
+  if (mode === "handle") return "@bruno";
+  if (mode === "memberId") return "U01AB2CDEF";
+  return "user@example.com";
+}
+
 function LinkModeToggle({
   mode,
   onChange,
@@ -163,7 +180,7 @@ function LinkModeToggle({
   onChange: (next: LinkMode) => void;
 }) {
   return (
-    <div className="flex gap-2 text-xs">
+    <div className="flex flex-wrap gap-2 text-xs">
       <LinkModeButton
         active={mode === "handle"}
         onClick={() => onChange("handle")}
@@ -173,6 +190,11 @@ function LinkModeToggle({
         active={mode === "memberId"}
         onClick={() => onChange("memberId")}
         label="By member ID"
+      />
+      <LinkModeButton
+        active={mode === "email"}
+        onClick={() => onChange("email")}
+        label="By email"
       />
     </div>
   );

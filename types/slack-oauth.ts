@@ -10,11 +10,7 @@
 
 export type SlackOAuthWorkspaceStatus = "ACTIVE" | "REVOKED" | "ERROR";
 
-export type SlackOAuthUserLinkSource =
-  | "MANUAL"
-  | "HANDLE_LOOKUP"
-  | "EMAIL_LOOKUP"
-  | "OAUTH_LINK";
+export type SlackOAuthUserLinkSource = "MANUAL" | "HANDLE_LOOKUP" | "EMAIL_LOOKUP" | "OAUTH_LINK";
 
 export interface SlackOAuthWorkspace {
   uid: string;
@@ -77,7 +73,8 @@ export interface SlackOAuthRegisterWorkspaceInput {
 
 export type SlackOAuthLinkInput =
   | { karmaUserId: string; handle: string }
-  | { karmaUserId: string; slackUserId: string };
+  | { karmaUserId: string; slackUserId: string }
+  | { karmaUserId: string; email: string };
 
 export interface SlackOAuthUserLinksListResponse {
   items: SlackOAuthUserLink[];

@@ -17,11 +17,7 @@ import { SlackOauthWorkspaceSummary } from "./SlackOauthWorkspaceSummary";
  * Feature-flag gating (NEXT_PUBLIC_SLACK_OAUTH_ENABLED) lives on the
  * parent page — this component assumes it's already been granted.
  */
-export function SlackOauthProviderCard({
-  communitySlug,
-}: {
-  communitySlug: string;
-}) {
+export function SlackOauthProviderCard({ communitySlug }: { communitySlug: string }) {
   const query = useSlackOauthWorkspace(communitySlug);
 
   if (query.isLoading) {
@@ -48,17 +44,11 @@ export function SlackOauthProviderCard({
   );
 }
 
-function SlackOauthProviderCardShell({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+function SlackOauthProviderCardShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="overflow-hidden rounded-xl border border-stone-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
       <header className="border-b border-stone-100 px-5 py-4 dark:border-zinc-800">
-        <p className="text-sm font-semibold text-stone-900 dark:text-zinc-100">
-          Slack DMs
-        </p>
+        <p className="text-sm font-semibold text-stone-900 dark:text-zinc-100">Slack DMs</p>
         <p className="mt-0.5 text-xs text-stone-500 dark:text-zinc-400">
           Direct messages to individual users via the Karma Slack App
         </p>
@@ -101,14 +91,8 @@ function PopulatedBody({
 }) {
   return (
     <div className="space-y-4 px-5 py-4">
-      <SlackOauthWorkspaceSummary
-        workspace={workspace}
-        communitySlug={communitySlug}
-      />
-      <SlackOauthUserLinksSection
-        workspace={workspace}
-        communitySlug={communitySlug}
-      />
+      <SlackOauthWorkspaceSummary workspace={workspace} communitySlug={communitySlug} />
+      <SlackOauthUserLinksSection workspace={workspace} communitySlug={communitySlug} />
     </div>
   );
 }

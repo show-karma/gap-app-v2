@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { slackOauthService } from "@/services/slackOauth.service";
-import { slackOauthKeys } from "@/utilities/queryKeys/slackOauth";
 import type {
   SlackOAuthLinkInput,
   SlackOAuthRegisterWorkspaceInput,
@@ -8,6 +7,7 @@ import type {
   SlackOAuthUserLinksListResponse,
   SlackOAuthWorkspace,
 } from "@/types/slack-oauth";
+import { slackOauthKeys } from "@/utilities/queryKeys/slackOauth";
 
 /**
  * React Query hooks over `slackOauthService`. Each `queryFn` delegates
@@ -61,8 +61,33 @@ export function useSlackOauthWorkspaceMembers(
     queryKey: slackOauthKeys.members(slug, uid, q),
     enabled: !!slug && !!uid && q.length > 0,
     staleTime: DEFAULT_STALE_TIME_MS,
-    queryFn: () =>
-      slackOauthService.searchMembers(slug as string, uid as string, q),
+    queryFn: () => slackOauthService.searchMembers(slug as string, uid as string, q),
+  });
+}
+
+/**
+ * Fetches the Slack authorize URL via the SPA-friendly /authorize-url
+ * endpoint and navigates the browser to it. Modeled as a mutation
+ * (not a query) because it's an action with side-effects (browser
+ * navigation) rather than a passive read.
+ *
+ * The hook returns `{ start, isPending }` so the calling button can
+ * disable itself while the fetch is in flight; once the URL is in
+ * hand, navigation is synchronous via window.location.href and the
+ * page unloads.
+ */
+export function useStartSlackInstall(slug: string | undefined) {
+  return useMutation<void, Error, void>({
+    mutationFn: async () => {
+      if (!slug) throw new Error("Community slug is required");
+      const authorizeUrl = await slackOauthService.getSlackAuthorizeUrl(slug);
+      // Hard navigation to slack.com — the server set a Redis nonce on
+      // the way out, the callback will redeem it. No SPA-side state to
+      // preserve; the callback bounces back to /settings with a flag.
+      if (typeof window !== "undefined") {
+        window.location.href = authorizeUrl;
+      }
+    },
   });
 }
 
@@ -84,8 +109,7 @@ export function useRegisterSlackWorkspace(slug: string | undefined) {
 export function useDeleteSlackWorkspace(slug: string | undefined) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (uid: string) =>
-      slackOauthService.deleteWorkspace(slug as string, uid),
+    mutationFn: (uid: string) => slackOauthService.deleteWorkspace(slug as string, uid),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: slackOauthKeys.workspace(slug),
@@ -100,16 +124,14 @@ export function useDeleteSlackWorkspace(slug: string | undefined) {
 
 export function useTestSlackWorkspace(slug: string | undefined) {
   return useMutation({
-    mutationFn: (uid: string) =>
-      slackOauthService.testWorkspace(slug as string, uid),
+    mutationFn: (uid: string) => slackOauthService.testWorkspace(slug as string, uid),
   });
 }
 
 export function useLinkSlackUser(slug: string | undefined) {
   const queryClient = useQueryClient();
   return useMutation<SlackOAuthUserLink, Error, SlackOAuthLinkInput>({
-    mutationFn: (input) =>
-      slackOauthService.linkByHandleOrMember(slug as string, input),
+    mutationFn: (input) => slackOauthService.linkByHandleOrMember(slug as string, input),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: slackOauthKeys.userLinksAll(slug),
@@ -129,8 +151,7 @@ export function useLinkSlackUser(slug: string | undefined) {
 export function useUnlinkSlackUser(slug: string | undefined) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (uid: string) =>
-      slackOauthService.unlinkUser(slug as string, uid),
+    mutationFn: (uid: string) => slackOauthService.unlinkUser(slug as string, uid),
 
     onMutate: async (uid: string) => {
       // Cancel in-flight list refetches so they don't overwrite our

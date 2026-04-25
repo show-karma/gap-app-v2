@@ -1,8 +1,4 @@
 import axios from "axios";
-import fetchData from "@/utilities/fetchData";
-import { TokenManager } from "@/utilities/auth/token-manager";
-import { envVars } from "@/utilities/enviromentVars";
-import { INDEXER } from "@/utilities/indexer";
 import type {
   SlackOAuthHandleAmbiguousResponse,
   SlackOAuthLinkInput,
@@ -12,6 +8,10 @@ import type {
   SlackOAuthUserLinksListResponse,
   SlackOAuthWorkspace,
 } from "@/types/slack-oauth";
+import { TokenManager } from "@/utilities/auth/token-manager";
+import { envVars } from "@/utilities/enviromentVars";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 
 /**
  * API service for the Slack OAuth admin surface. Owns all HTTP calls +
@@ -100,10 +100,7 @@ export const slackOauthService = {
     if (error) throw new Error(error);
   },
 
-  async testWorkspace(
-    slug: string,
-    uid: string
-  ): Promise<TestWorkspaceResponse> {
+  async testWorkspace(slug: string, uid: string): Promise<TestWorkspaceResponse> {
     const [data, error] = await fetchData<TestWorkspaceResponse>(
       INDEXER.SLACK_OAUTH.WORKSPACE_TEST(slug, uid),
       "POST",
@@ -152,18 +149,14 @@ export const slackOauthService = {
     const token = await TokenManager.getToken();
     try {
       const response = await axios.post<SlackOAuthUserLink>(
-        `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}${INDEXER.SLACK_OAUTH.USER_LINKS(
-          slug
-        )}`,
+        `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}${INDEXER.SLACK_OAUTH.USER_LINKS(slug)}`,
         input,
         { headers: token ? { Authorization: `Bearer ${token}` } : undefined }
       );
       return response.data;
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.status === 409) {
-        const body = err.response.data as
-          | Partial<SlackOAuthHandleAmbiguousResponse>
-          | undefined;
+        const body = err.response.data as Partial<SlackOAuthHandleAmbiguousResponse> | undefined;
         if (body && Array.isArray(body.candidates) && body.handle) {
           throw new SlackOAuthHandleAmbiguousError({
             error: body.error ?? "Slack Handle Ambiguous",
@@ -175,8 +168,7 @@ export const slackOauthService = {
       }
       if (axios.isAxiosError(err)) {
         const msg =
-          (err.response?.data as { message?: string } | undefined)?.message ??
-          err.message;
+          (err.response?.data as { message?: string } | undefined)?.message ?? err.message;
         throw new Error(msg);
       }
       throw err;
@@ -195,6 +187,31 @@ export const slackOauthService = {
     if (error) throw new Error(error);
   },
 
+  /**
+   * Fetch the Slack-side authorize URL for the distributed-install
+   * flow (Segment 2). The endpoint is Karma-authed; we can't use a
+   * plain `<a href>` for the install button because link clicks don't
+   * carry the JWT, and we can't `fetch('/install')` because fetch
+   * can't follow the cross-origin 302 to slack.com. Solution: this
+   * endpoint returns the URL as JSON, and the caller does
+   * `window.location.href = authorizeUrl` to navigate.
+   */
+  async getSlackAuthorizeUrl(slug: string): Promise<string> {
+    const [data, error] = await fetchData<{ authorizeUrl: string }>(
+      INDEXER.SLACK_OAUTH.AUTHORIZE_URL(slug),
+      "GET",
+      {},
+      {},
+      {},
+      true
+    );
+    if (error) throw new Error(error);
+    if (!data?.authorizeUrl) {
+      throw new Error("Authorize URL response was empty");
+    }
+    return data.authorizeUrl;
+  },
+
   async searchMembers(
     slug: string,
     uid: string,
@@ -204,14 +221,7 @@ export const slackOauthService = {
     const [data, error] = await fetchData<{
       items: SlackOAuthMember[];
       total: number;
-    }>(
-      INDEXER.SLACK_OAUTH.WORKSPACE_MEMBERS(slug, uid),
-      "GET",
-      {},
-      { q, limit },
-      {},
-      true
-    );
+    }>(INDEXER.SLACK_OAUTH.WORKSPACE_MEMBERS(slug, uid), "GET", {}, { q, limit }, {}, true);
     if (error) throw new Error(error);
     return data ?? { items: [], total: 0 };
   },

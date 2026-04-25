@@ -1,15 +1,15 @@
 "use client";
 
-import { Loader2, Send, Trash2 } from "lucide-react";
+import { AlertCircle, Loader2, Send, Trash2 } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { Button } from "@/components/Utilities/Button";
-import {
-  useDeleteSlackWorkspace,
-  useTestSlackWorkspace,
-} from "@/hooks/useSlackOauth";
+import { useDeleteSlackWorkspace, useTestSlackWorkspace } from "@/hooks/useSlackOauth";
 import type { SlackOAuthWorkspace } from "@/types/slack-oauth";
+import { SlackOauthAddToSlackButton } from "./SlackOauthAddToSlackButton";
+
+const SLACK_OAUTH_DISTRIBUTED = process.env.NEXT_PUBLIC_SLACK_OAUTH_DISTRIBUTED === "true";
 
 /**
  * Read-only summary + action buttons for an active/revoked workspace.
@@ -47,9 +47,7 @@ export function SlackOauthWorkspaceSummary({
   workspace: SlackOAuthWorkspace;
   communitySlug: string;
 }) {
-  const { mutate: testConnection, isPending: isTesting } = useTestSlackWorkspace(
-    communitySlug
-  );
+  const { mutate: testConnection, isPending: isTesting } = useTestSlackWorkspace(communitySlug);
   const { mutate: deleteWorkspace } = useDeleteSlackWorkspace(communitySlug);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
@@ -76,13 +74,35 @@ export function SlackOauthWorkspaceSummary({
     setDeleteOpen(false);
   };
 
+  // Reinstall is the recovery action for REVOKED + ERROR workspaces.
+  // The /authorize-url flow rotates the bot token and reactivates the
+  // workspace status (status flips to ACTIVE on the server's
+  // registerFromOAuth path) WITHOUT touching slack_user_links.
+  const showReinstall = SLACK_OAUTH_DISTRIBUTED && workspace.status !== "ACTIVE";
+
   return (
     <>
+      {showReinstall ? (
+        <div className="mb-4 flex items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 dark:border-amber-900/40 dark:bg-amber-950/30">
+          <AlertCircle
+            className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400"
+            aria-hidden="true"
+          />
+          <div className="flex-1 space-y-2">
+            <p className="text-xs text-amber-900 dark:text-amber-200">
+              {workspace.status === "REVOKED"
+                ? "The Slack token was revoked. DMs will not deliver until you reinstall."
+                : "Too many delivery failures. Reinstall after fixing the underlying issue (deleted bot user, scope removed, etc)."}
+            </p>
+            <SlackOauthAddToSlackButton communitySlug={communitySlug} variant="compact" />
+          </div>
+        </div>
+      ) : null}
+
       <dl className="grid grid-cols-2 gap-y-1 text-xs">
         <dt className="text-stone-500 dark:text-zinc-400">Team</dt>
         <dd className="text-stone-900 dark:text-zinc-100">
-          {workspace.teamName}{" "}
-          <span className="text-stone-400">({workspace.teamId})</span>
+          {workspace.teamName} <span className="text-stone-400">({workspace.teamId})</span>
         </dd>
 
         <dt className="text-stone-500 dark:text-zinc-400">Status</dt>
@@ -98,9 +118,7 @@ export function SlackOauthWorkspaceSummary({
 
         {workspace.consecutiveFailures > 0 ? (
           <>
-            <dt className="text-stone-500 dark:text-zinc-400">
-              Recent failures
-            </dt>
+            <dt className="text-stone-500 dark:text-zinc-400">Recent failures</dt>
             <dd className="text-amber-600 dark:text-amber-400">
               {workspace.consecutiveFailures} consecutive
             </dd>

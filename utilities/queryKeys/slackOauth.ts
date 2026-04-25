@@ -15,20 +15,15 @@
 export const slackOauthKeys = {
   all: ["slack-oauth"] as const,
 
-  workspace: (slug: string | undefined) =>
-    ["slack-oauth", "workspace", slug ?? ""] as const,
+  workspace: (slug: string | undefined) => ["slack-oauth", "workspace", slug ?? ""] as const,
 
-  userLinksAll: (slug: string | undefined) =>
-    ["slack-oauth", "user-links", slug ?? ""] as const,
+  userLinksAll: (slug: string | undefined) => ["slack-oauth", "user-links", slug ?? ""] as const,
 
   userLinks: (
     slug: string | undefined,
     query?: { karmaUserId?: string; page?: number; limit?: number }
   ) => ["slack-oauth", "user-links", slug ?? "", query ?? {}] as const,
 
-  members: (
-    slug: string | undefined,
-    uid: string | undefined,
-    q?: string
-  ) => ["slack-oauth", "members", slug ?? "", uid ?? "", q ?? ""] as const,
+  members: (slug: string | undefined, uid: string | undefined, q?: string) =>
+    ["slack-oauth", "members", slug ?? "", uid ?? "", q ?? ""] as const,
 };

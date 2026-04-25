@@ -18,13 +18,11 @@ export function SlackOauthTextField({
   onChange: (v: string) => void;
   placeholder?: string;
   disabled?: boolean;
-  type?: "text" | "password";
+  type?: "text" | "password" | "email";
 }) {
   return (
     <label className="block text-xs">
-      <span className="mb-1 block font-medium text-stone-600 dark:text-zinc-400">
-        {label}
-      </span>
+      <span className="mb-1 block font-medium text-stone-600 dark:text-zinc-400">{label}</span>
       <input
         type={type}
         value={value}

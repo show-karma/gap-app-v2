@@ -43,9 +43,7 @@ export function SlackOauthUserLinkRow({
   return (
     <li className="flex items-center justify-between px-4 py-2 text-xs">
       <div>
-        <p className="font-medium text-stone-900 dark:text-zinc-100">
-          {link.karmaUserId}
-        </p>
+        <p className="font-medium text-stone-900 dark:text-zinc-100">{link.karmaUserId}</p>
         <p className="text-stone-500 dark:text-zinc-400">
           → {link.slackUserId}
           {link.slackHandleSnapshot ? ` (${link.slackHandleSnapshot})` : ""}
