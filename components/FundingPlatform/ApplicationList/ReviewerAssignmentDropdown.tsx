@@ -1,8 +1,14 @@
 "use client";
 
-import { type FC, useMemo } from "react";
+import { type FC, useCallback, useMemo, useState } from "react";
+import { toast } from "react-hot-toast";
+import InviteReviewerModal, {
+  type InvitedReviewer,
+} from "@/components/FundingPlatform/ApplicationView/InviteReviewerModal";
 import { type DropdownItem, MultiSelectDropdown } from "@/components/Utilities/MultiSelectDropdown";
-import { type ReviewerType, useReviewerAssignment } from "@/hooks/useReviewerAssignment";
+import { ReviewerType, useReviewerAssignment } from "@/hooks/useReviewerAssignment";
+import type { AddMilestoneReviewerRequest } from "@/services/milestone-reviewers.service";
+import type { AddReviewerRequest } from "@/services/program-reviewers.service";
 
 /**
  * Shared base interface for reviewer types
@@ -19,20 +25,30 @@ export interface ReviewerBase {
 }
 
 interface ReviewerAssignmentDropdownProps {
+  programId: string;
   applicationId: string;
   availableReviewers: ReviewerBase[];
   assignedReviewerAddresses: string[];
   reviewerType: ReviewerType;
   onAssignmentChange?: () => void;
+  onAddReviewer: (
+    data: AddReviewerRequest | AddMilestoneReviewerRequest
+  ) => Promise<InvitedReviewer>;
+  isAddingReviewer?: boolean;
 }
 
 export const ReviewerAssignmentDropdown: FC<ReviewerAssignmentDropdownProps> = ({
+  programId,
   applicationId,
   availableReviewers,
   assignedReviewerAddresses,
   reviewerType,
   onAssignmentChange,
+  onAddReviewer,
+  isAddingReviewer = false,
 }) => {
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+
   // Use custom hook for assignment logic
   const { assignReviewers, isLoading } = useReviewerAssignment({
     applicationId,
@@ -63,16 +79,51 @@ export const ReviewerAssignmentDropdown: FC<ReviewerAssignmentDropdownProps> = (
     [assignedReviewerAddresses]
   );
 
+  const reviewerActionLabel =
+    reviewerType === ReviewerType.APP ? "Add application reviewer" : "Add milestone reviewer";
+
+  const handleInvited = useCallback(
+    async (reviewer: InvitedReviewer) => {
+      if (!reviewer.publicAddress) {
+        const reviewerLabel = reviewer.name || reviewer.email;
+        toast.success(
+          `${reviewerLabel} was invited. They'll appear in the reviewer list once they sign in, then you can assign them to this application.`
+        );
+        return;
+      }
+
+      const nextAssignedAddresses = Array.from(
+        new Set([...normalizedAssignedAddresses, reviewer.publicAddress.toLowerCase()])
+      );
+
+      await assignReviewers(nextAssignedAddresses);
+    },
+    [assignReviewers, normalizedAssignedAddresses]
+  );
+
   return (
-    <MultiSelectDropdown
-      items={dropdownItems}
-      selectedIds={normalizedAssignedAddresses}
-      onChange={assignReviewers}
-      placeholder={isLoading ? "Updating..." : `Select ${reviewerType} reviewers...`}
-      searchPlaceholder="Search reviewers..."
-      className="min-w-[200px]"
-      disabled={isLoading}
-      isLoading={isLoading}
-    />
+    <>
+      <MultiSelectDropdown
+        items={dropdownItems}
+        selectedIds={normalizedAssignedAddresses}
+        onChange={assignReviewers}
+        placeholder={isLoading ? "Updating..." : `Select ${reviewerType} reviewers...`}
+        searchPlaceholder="Search reviewers..."
+        className="min-w-[200px]"
+        disabled={isLoading}
+        isLoading={isLoading}
+        emptyActionLabel={reviewerActionLabel}
+        onEmptyAction={() => setIsInviteModalOpen(true)}
+      />
+      <InviteReviewerModal
+        programId={programId}
+        isOpen={isInviteModalOpen}
+        onClose={() => setIsInviteModalOpen(false)}
+        reviewerType={reviewerType}
+        onInviteReviewer={onAddReviewer}
+        isInviting={isAddingReviewer}
+        onInvited={handleInvited}
+      />
+    </>
   );
 };

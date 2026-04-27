@@ -13,6 +13,7 @@ import { ApplicationTableRow } from "./ApplicationTableRow";
 const EMPTY_KYC_MAP = new Map<string, KycStatusResponse | null>();
 
 interface ApplicationTableProps {
+  programId: string;
   applications: IFundingApplication[];
   sortBy?: IApplicationFilters["sortBy"];
   sortOrder?: IApplicationFilters["sortOrder"];
@@ -24,6 +25,18 @@ interface ApplicationTableProps {
   showStatusActions: boolean;
   programReviewers: ProgramReviewer[];
   milestoneReviewers: MilestoneReviewer[];
+  onAddProgramReviewer: (data: { name: string; email: string; telegram?: string }) => Promise<{
+    name: string;
+    email: string;
+    publicAddress?: string;
+  }>;
+  isAddingProgramReviewer?: boolean;
+  onAddMilestoneReviewer: (data: {
+    name: string;
+    email: string;
+    telegram?: string;
+  }) => Promise<{ name: string; email: string; publicAddress?: string }>;
+  isAddingMilestoneReviewer?: boolean;
   isLoadingProgramReviewers: boolean;
   isProgramReviewersError: boolean;
   isLoadingMilestoneReviewers: boolean;
@@ -39,6 +52,7 @@ interface ApplicationTableProps {
 }
 
 const ApplicationTableComponent: FC<ApplicationTableProps> = ({
+  programId,
   applications,
   sortBy,
   sortOrder,
@@ -50,6 +64,10 @@ const ApplicationTableComponent: FC<ApplicationTableProps> = ({
   showStatusActions,
   programReviewers,
   milestoneReviewers,
+  onAddProgramReviewer,
+  isAddingProgramReviewer = false,
+  onAddMilestoneReviewer,
+  isAddingMilestoneReviewer = false,
   isLoadingProgramReviewers,
   isProgramReviewersError,
   isLoadingMilestoneReviewers,
@@ -192,6 +210,7 @@ const ApplicationTableComponent: FC<ApplicationTableProps> = ({
         {applications.map((application) => (
           <ApplicationTableRow
             key={application.referenceNumber}
+            programId={programId}
             application={application}
             showAIScoreColumn={showAIScoreColumn}
             showInternalAIScoreColumn={showInternalAIScoreColumn}
@@ -200,6 +219,10 @@ const ApplicationTableComponent: FC<ApplicationTableProps> = ({
             showStatusActions={showStatusActions}
             programReviewers={programReviewers}
             milestoneReviewers={milestoneReviewers}
+            onAddProgramReviewer={onAddProgramReviewer}
+            isAddingProgramReviewer={isAddingProgramReviewer}
+            onAddMilestoneReviewer={onAddMilestoneReviewer}
+            isAddingMilestoneReviewer={isAddingMilestoneReviewer}
             onApplicationSelect={onApplicationSelect}
             onApplicationHover={onApplicationHover}
             onStatusChange={onStatusChange}

@@ -37,7 +37,25 @@ export function useMilestoneReviewers(programId: string) {
         throw new Error(validation.errors.join(", "));
       }
 
-      return milestoneReviewersService.addReviewer(programId, validation.sanitized);
+      const addedReviewer = await milestoneReviewersService.addReviewer(
+        programId,
+        validation.sanitized
+      );
+
+      if (addedReviewer.publicAddress) {
+        return addedReviewer;
+      }
+
+      try {
+        const refreshedReviewers = await milestoneReviewersService.getReviewers(programId);
+        const matchedReviewer = refreshedReviewers.find(
+          (reviewer) => reviewer.email.toLowerCase() === validation.sanitized.email.toLowerCase()
+        );
+
+        return matchedReviewer ?? addedReviewer;
+      } catch {
+        return addedReviewer;
+      }
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({
