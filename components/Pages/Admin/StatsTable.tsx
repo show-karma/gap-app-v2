@@ -294,22 +294,28 @@ export function StatsTable({
                       </Link>
                     </td>
                     <td className="px-4 py-3">
-                      <Link
-                        href={`${PAGES.PROJECT.GRANT(
-                          report.projectSlug,
-                          report.grantUid
-                        )}/milestones-and-updates#past-due`}
-                        className={cn(
-                          "text-sm tabular-nums transition-colors",
-                          report.pastDueMilestones > 0
-                            ? "text-red-600 dark:text-red-400 font-medium"
-                            : "text-gray-500 dark:text-gray-400"
-                        )}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {report.pastDueMilestones}
-                      </Link>
+                      {(() => {
+                        const pastDueCount = report.pastDueMilestones ?? 0;
+                        return (
+                          <Link
+                            href={`${PAGES.PROJECT.GRANT(
+                              report.projectSlug,
+                              report.grantUid
+                            )}/milestones-and-updates#past-due`}
+                            aria-label={`${pastDueCount} past due milestones for ${report.grantTitle}`}
+                            className={cn(
+                              "text-sm tabular-nums transition-colors",
+                              pastDueCount > 0
+                                ? "text-red-600 dark:text-red-400 font-medium"
+                                : "text-gray-500 dark:text-gray-400"
+                            )}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {pastDueCount}
+                          </Link>
+                        );
+                      })()}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
