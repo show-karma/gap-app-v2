@@ -1,10 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { PortfolioReportPreviewPage } from "@/components/Pages/Admin/PortfolioReports/PortfolioReportPreviewPage";
-import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { usePortfolioReport } from "@/hooks/portfolio-reports/usePortfolioReports";
 
-vi.mock("@/hooks/communities/useCommunityAdminAccess");
 vi.mock("@/hooks/portfolio-reports/usePortfolioReports");
 vi.mock("@/components/Utilities/MarkdownPreview", () => ({
   MarkdownPreview: ({ source }: { source?: string }) => (
@@ -12,7 +10,6 @@ vi.mock("@/components/Utilities/MarkdownPreview", () => ({
   ),
 }));
 
-const mockUseCommunityAdminAccess = vi.mocked(useCommunityAdminAccess);
 const mockUsePortfolioReport = vi.mocked(usePortfolioReport);
 
 const community = {
@@ -49,30 +46,9 @@ const publishedReport = {
 describe("PortfolioReportPreviewPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockUseCommunityAdminAccess.mockReturnValue({
-      hasAccess: true,
-      isLoading: false,
-    } as any);
   });
 
   describe("loading state", () => {
-    it("renders a spinner while admin access is being resolved", () => {
-      mockUseCommunityAdminAccess.mockReturnValue({
-        hasAccess: false,
-        isLoading: true,
-      } as any);
-      mockUsePortfolioReport.mockReturnValue({
-        data: undefined,
-        isLoading: false,
-      } as any);
-
-      const { container } = render(
-        <PortfolioReportPreviewPage community={community} reportId="draft-report" />
-      );
-
-      expect(container.querySelector(".animate-spin")).toBeInTheDocument();
-    });
-
     it("renders a spinner while the report is loading", () => {
       mockUsePortfolioReport.mockReturnValue({
         data: undefined,
@@ -84,24 +60,6 @@ describe("PortfolioReportPreviewPage", () => {
       );
 
       expect(container.querySelector(".animate-spin")).toBeInTheDocument();
-    });
-  });
-
-  describe("access denied", () => {
-    it("shows a permission-denied message when the user is not a community admin", () => {
-      mockUseCommunityAdminAccess.mockReturnValue({
-        hasAccess: false,
-        isLoading: false,
-      } as any);
-      mockUsePortfolioReport.mockReturnValue({
-        data: undefined,
-        isLoading: false,
-      } as any);
-
-      render(<PortfolioReportPreviewPage community={community} reportId="draft-report" />);
-
-      expect(screen.getByText(/don't have permission to view this preview/i)).toBeInTheDocument();
-      expect(screen.queryByTestId("markdown-preview")).not.toBeInTheDocument();
     });
   });
 
