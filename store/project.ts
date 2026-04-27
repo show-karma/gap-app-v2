@@ -1,7 +1,7 @@
-import type { ContributorProfile } from "@show-karma/karma-gap-sdk";
 import { create } from "zustand";
 import { getProject } from "@/services/project.service";
 import { getProjectGrants } from "@/services/project-grants.service";
+import type { TeamProfile } from "@/types/team-profile";
 import type { Project as ProjectResponse } from "@/types/v2/project";
 import { queryClient } from "@/utilities/query-client";
 import { useGrantStore } from "./grant";
@@ -16,8 +16,8 @@ interface ProjectStore {
   setIsProjectAdmin: (isProjectAdmin: boolean) => void;
   isProjectOwner: boolean;
   setIsProjectOwner: (isProjectOwner: boolean) => void;
-  teamProfiles: ContributorProfile[] | undefined;
-  setTeamProfiles: (profiles: ContributorProfile[] | undefined) => void;
+  teamProfiles: TeamProfile[] | undefined;
+  setTeamProfiles: (profiles: TeamProfile[] | undefined) => void;
 }
 
 export const useProjectStore = create<ProjectStore>((set, get) => ({

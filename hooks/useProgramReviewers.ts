@@ -30,6 +30,7 @@ export function useProgramReviewers(programId: string) {
         name: data.name,
         email: data.email,
         telegram: data.telegram,
+        slack: data.slack,
       });
 
       if (!validation.valid) {
@@ -83,6 +84,22 @@ export function useProgramReviewers(programId: string) {
     },
   });
 
+  // Mutation for updating reviewer contact (telegram/slack) by email
+  const updateContactMutation = useMutation({
+    mutationFn: async (patch: { email: string; telegram?: string; slack?: string }) => {
+      return programReviewersService.updateReviewerContact(programId, patch);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.REVIEWERS.PROGRAM(programId),
+      });
+      toast.success("Program reviewer updated successfully");
+    },
+    onError: (error) => {
+      toast.error(getReviewerErrorMessage(error, "Failed to update program reviewer"));
+    },
+  });
+
   return useMemo(
     () => ({
       // Query data and state
@@ -99,7 +116,11 @@ export function useProgramReviewers(programId: string) {
       // Remove mutation
       removeReviewer: removeMutation.mutateAsync,
       isRemoving: removeMutation.isPending,
+
+      // Update contact mutation
+      updateReviewerContact: updateContactMutation.mutateAsync,
+      isUpdatingContact: updateContactMutation.isPending,
     }),
-    [query, addMutation, removeMutation]
+    [query, addMutation, removeMutation, updateContactMutation]
   );
 }

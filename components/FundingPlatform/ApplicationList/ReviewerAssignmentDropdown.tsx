@@ -19,6 +19,7 @@ export interface ReviewerBase {
   name: string;
   email: string;
   telegram?: string;
+  slack?: string;
   assignedAt: string;
   assignedBy?: string;
 }

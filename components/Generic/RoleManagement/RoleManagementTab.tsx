@@ -12,14 +12,20 @@ import {
 import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DeleteDialog } from "@/components/DeleteDialog";
-import { TelegramIcon } from "@/components/Icons";
+import { SlackIcon, TelegramIcon } from "@/components/Icons";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 import { getMemberRoles, getRoleShortLabel } from "./helpers";
-import type { RoleFieldConfig, RoleManagementConfig, RoleMember, RoleOption } from "./types";
+import type {
+  ReviewerRole,
+  RoleFieldConfig,
+  RoleManagementConfig,
+  RoleMember,
+  RoleOption,
+} from "./types";
 
 interface RoleManagementTabProps {
   config: RoleManagementConfig;
@@ -35,6 +41,8 @@ interface RoleManagementTabProps {
   onRolesChange?: (roles: string[]) => void;
   // Edit roles support
   onEditRoles?: (memberId: string, roles: string[]) => Promise<void>;
+  // Edit contact fields (telegram/slack) for existing members
+  onEditContact?: (memberId: string, patch: Record<string, string>) => Promise<void>;
   // Legacy single-role support (backward compatibility)
   selectedRole?: string;
   onRoleChange?: (role: string) => void;
@@ -52,6 +60,7 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
   selectedRoles,
   onRolesChange,
   onEditRoles,
+  onEditContact,
   selectedRole,
   onRoleChange,
 }) => {
@@ -63,6 +72,8 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
   const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
   const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
   const [editRoles, setEditRoles] = useState<string[]>([]);
+  const [editContactValues, setEditContactValues] = useState<Record<string, string>>({});
+  const [editContactErrors, setEditContactErrors] = useState<Record<string, string>>({});
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [removeDialogMemberId, setRemoveDialogMemberId] = useState<string | null>(null);
   const [showEmptyRolesDialog, setShowEmptyRolesDialog] = useState(false);
@@ -258,39 +269,121 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
     }
   }, [removeDialogMemberId, onRemove, onRefresh]);
 
-  const handleStartEdit = useCallback((memberId: string) => {
-    const member = membersRef.current.find((m) => m.id === memberId);
-    if (member) {
-      setEditingMemberId(memberId);
-      setEditRoles([...getMemberRoles(member)]);
-    }
-  }, []);
+  const editableFields = useMemo(
+    () => activeConfig.fields.filter((f) => f.editable),
+    [activeConfig.fields]
+  );
+
+  const handleStartEdit = useCallback(
+    (memberId: string) => {
+      const member = membersRef.current.find((m) => m.id === memberId);
+      if (member) {
+        setEditingMemberId(memberId);
+        setEditRoles([...getMemberRoles(member)]);
+        const initial: Record<string, string> = {};
+        for (const field of editableFields) {
+          const value = member[field.name];
+          initial[field.name] = typeof value === "string" ? value : "";
+        }
+        setEditContactValues(initial);
+        setEditContactErrors({});
+      }
+    },
+    [editableFields]
+  );
 
   const handleCancelEdit = useCallback(() => {
     setEditingMemberId(null);
     setEditRoles([]);
+    setEditContactValues({});
+    setEditContactErrors({});
   }, []);
 
+  const handleEditContactFieldChange = useCallback((fieldName: string, value: string) => {
+    setEditContactValues((prev) => ({ ...prev, [fieldName]: value }));
+    setEditContactErrors((prev) => {
+      if (prev[fieldName]) {
+        return { ...prev, [fieldName]: "" };
+      }
+      return prev;
+    });
+  }, []);
+
+  const validateEditContact = useCallback((): boolean => {
+    const errors: Record<string, string> = {};
+    let isValid = true;
+
+    for (const field of editableFields) {
+      const error = validateField(field, editContactValues[field.name] || "");
+      if (error) {
+        errors[field.name] = error;
+        isValid = false;
+      }
+    }
+
+    setEditContactErrors(errors);
+    return isValid;
+  }, [editableFields, editContactValues, validateField]);
+
   const handleSaveEdit = useCallback(async () => {
-    if (!editingMemberId || !onEditRoles) return;
+    if (!editingMemberId) return;
 
     if (editRoles.length === 0) {
       setShowEmptyRolesDialog(true);
       return;
     }
 
+    if (!validateEditContact()) {
+      return;
+    }
+
+    const member = membersRef.current.find((m) => m.id === editingMemberId);
+    const contactPatch: Record<string, string> = {};
+    if (member) {
+      for (const field of editableFields) {
+        const newValue = editContactValues[field.name] ?? "";
+        const currentValue =
+          typeof member[field.name] === "string" ? (member[field.name] as string) : "";
+        if (newValue !== currentValue) {
+          contactPatch[field.name] = newValue;
+        }
+      }
+    }
+
+    const hasContactChanges = Object.keys(contactPatch).length > 0;
+    const currentRoles = member ? getMemberRoles(member) : [];
+    const hasRoleChanges =
+      editRoles.length !== currentRoles.length ||
+      !editRoles.every((r) => currentRoles.includes(r as ReviewerRole));
+
     setIsSavingEdit(true);
     try {
-      await onEditRoles(editingMemberId, editRoles);
+      if (hasContactChanges && onEditContact) {
+        await onEditContact(editingMemberId, contactPatch);
+      }
+      if (hasRoleChanges && onEditRoles) {
+        await onEditRoles(editingMemberId, editRoles);
+      }
       setEditingMemberId(null);
       setEditRoles([]);
+      setEditContactValues({});
+      setEditContactErrors({});
       if (onRefresh) {
         await onRefresh();
       }
     } finally {
       setIsSavingEdit(false);
     }
-  }, [editingMemberId, editRoles, onEditRoles, onRefresh]);
+  }, [
+    editingMemberId,
+    editRoles,
+    editableFields,
+    editContactValues,
+    validateEditContact,
+    onEditContact,
+    onEditRoles,
+    onRefresh,
+  ]);
 
   const handleEmptyRolesConfirm = useCallback(async () => {
     if (!editingMemberId || !onEditRoles) return;
@@ -603,7 +696,7 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
                                     onClick={handleSaveEdit}
                                     disabled={isSavingEdit}
                                     className="p-1 rounded text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 disabled:opacity-50"
-                                    aria-label="Save role changes"
+                                    aria-label="Save changes"
                                   >
                                     {isSavingEdit ? (
                                       <Spinner className="h-4 w-4" />
@@ -623,17 +716,62 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
                               </div>
                             )}
 
-                            {/* Email and Telegram */}
-                            {(member.email || member.telegram) && (
-                              <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                            {/* Inline edit form for contact fields */}
+                            {isEditing && onEditContact && editableFields.length > 0 && (
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 py-1">
+                                {editableFields.map((field) => (
+                                  <div key={field.name}>
+                                    <label
+                                      htmlFor={`edit-${member.id}-${field.name}`}
+                                      className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1"
+                                    >
+                                      {field.label}
+                                    </label>
+                                    <input
+                                      id={`edit-${member.id}-${field.name}`}
+                                      type="text"
+                                      value={editContactValues[field.name] ?? ""}
+                                      onChange={(e) =>
+                                        handleEditContactFieldChange(field.name, e.target.value)
+                                      }
+                                      placeholder={field.placeholder}
+                                      disabled={isSavingEdit}
+                                      aria-invalid={!!editContactErrors[field.name]}
+                                      className={cn(
+                                        "block w-full rounded-md border-gray-300 dark:border-gray-600",
+                                        "bg-white dark:bg-gray-700",
+                                        "text-gray-900 dark:text-gray-100",
+                                        "shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm",
+                                        "disabled:opacity-50 disabled:cursor-not-allowed",
+                                        editContactErrors[field.name] &&
+                                          "border-red-500 focus:border-red-500 focus:ring-red-500"
+                                      )}
+                                    />
+                                    {editContactErrors[field.name] && (
+                                      <p
+                                        className="mt-1 text-xs text-red-600 dark:text-red-400"
+                                        role="alert"
+                                        aria-live="polite"
+                                      >
+                                        {editContactErrors[field.name]}
+                                      </p>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Email, Telegram, Slack */}
+                            {!isEditing && (member.email || member.telegram || member.slack) && (
+                              <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 flex-wrap gap-x-2">
                                 {member.email && (
                                   <span className="flex items-center space-x-1">
                                     <EnvelopeIcon className="h-3.5 w-3.5 text-gray-400 dark:text-gray-500" />
                                     <span>{member.email}</span>
                                   </span>
                                 )}
-                                {member.email && member.telegram && (
-                                  <span className="mx-2 text-gray-400 dark:text-gray-500">|</span>
+                                {member.email && (member.telegram || member.slack) && (
+                                  <span className="text-gray-400 dark:text-gray-500">|</span>
                                 )}
                                 {member.telegram && (
                                   <span className="flex items-center space-x-1">
@@ -641,6 +779,19 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
                                     <span>
                                       {member.telegram?.[0] === "@" ? "" : "@"}
                                       {member.telegram}
+                                    </span>
+                                  </span>
+                                )}
+                                {member.telegram && member.slack && (
+                                  <span className="text-gray-400 dark:text-gray-500">|</span>
+                                )}
+                                {member.slack && (
+                                  <span className="flex items-center space-x-1">
+                                    <SlackIcon className="h-4 w-4" />
+                                    <span>
+                                      {member.slack?.[0] === "@"
+                                        ? member.slack.slice(1)
+                                        : member.slack}
                                     </span>
                                   </span>
                                 )}
@@ -688,10 +839,10 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
                     </div>
                     {canManage && !isEditing && (
                       <div className="flex items-center space-x-1 ml-4">
-                        {onEditRoles && roleOptions && (
+                        {((onEditRoles && roleOptions) || onEditContact) && (
                           <button
                             onClick={() => handleStartEdit(member.id)}
-                            aria-label={`Edit roles for ${member.name || member.id}`}
+                            aria-label={`Edit ${member.name || member.id}`}
                             className={cn(
                               "p-2 rounded-md",
                               "text-gray-400 hover:text-blue-600 dark:text-gray-500 dark:hover:text-blue-400",

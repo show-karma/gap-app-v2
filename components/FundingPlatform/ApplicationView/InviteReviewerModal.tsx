@@ -16,12 +16,14 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ReviewerType } from "@/hooks/useReviewerAssignment";
+import { slackHandleSchema } from "@/utilities/validation/slack-handle";
 import { telegramUsernameSchema } from "@/utilities/validation/telegram-username";
 
 const inviteSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
   email: z.string().email("Invalid email address"),
   telegram: telegramUsernameSchema.optional(),
+  slack: slackHandleSchema.optional(),
 });
 
 type InviteFormData = z.infer<typeof inviteSchema>;
@@ -62,6 +64,7 @@ const InviteReviewerModal: FC<InviteReviewerModalProps> = ({
       name: "",
       email: "",
       telegram: "",
+      slack: "",
     },
   });
 
@@ -167,6 +170,26 @@ const InviteReviewerModal: FC<InviteReviewerModalProps> = ({
             {errors.telegram && (
               <p className="mt-1 text-xs text-red-500">{errors.telegram.message}</p>
             )}
+          </div>
+
+          <div>
+            <label
+              htmlFor="reviewer-slack"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+            >
+              Slack (optional)
+            </label>
+            <Input
+              id="reviewer-slack"
+              {...register("slack")}
+              placeholder="username"
+              aria-describedby="reviewer-slack-helper"
+              disabled={isInviting}
+            />
+            <p id="reviewer-slack-helper" className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Reviewer&apos;s Slack handle (without @). Used to tag them in team channels.
+            </p>
+            {errors.slack && <p className="mt-1 text-xs text-red-500">{errors.slack.message}</p>}
           </div>
 
           <DialogFooter>
