@@ -1,7 +1,7 @@
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
-import { Check, FileBadge, FileText, ShieldCheck, X } from "lucide-react";
+import { Check, FileBadge, FileText, Info, ShieldCheck, X } from "lucide-react";
 import { type ComponentType, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/Utilities/Button";
@@ -142,6 +142,7 @@ export function AddSourceDialog({ communityIdOrSlug, open, onOpenChange }: Props
             </fieldset>
 
             <PublicAccessReminder kind={kind} />
+            <OneSourceAtATimeNote />
 
             {/* Form fields */}
             <div className="mt-6 space-y-4">
@@ -285,6 +286,33 @@ function PublicAccessReminder({ kind }: { kind: KnowledgeSourceKind }) {
             behind a sign-in wall the fetch will fail.
           </p>
         )}
+      </div>
+    </div>
+  );
+}
+
+// ── One-source-at-a-time note ───────────────────────────────────────────────
+//
+// Sets expectations so admins don't paste a curated "table of contents" doc
+// expecting Karma to crawl every link inside. Each source is fetched and
+// indexed independently — links inside a doc are preserved verbatim but never
+// followed.
+
+function OneSourceAtATimeNote() {
+  return (
+    <div className="mt-3 flex items-start gap-3 rounded-xl border border-stone-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900/40">
+      <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-stone-100 text-stone-600 dark:bg-zinc-800 dark:text-zinc-400">
+        <Info className="h-3.5 w-3.5" aria-hidden="true" />
+      </div>
+      <div className="min-w-0 flex-1 text-xs leading-relaxed text-stone-700 dark:text-zinc-300">
+        <p className="font-semibold text-stone-900 dark:text-zinc-100">
+          Karma reads each source on its own
+        </p>
+        <p className="mt-0.5">
+          Links inside this doc <strong>aren&apos;t followed</strong> — if you have a curated index
+          that points to other docs, register the docs you actually want the chatbot to read from as
+          separate sources here.
+        </p>
       </div>
     </div>
   );
