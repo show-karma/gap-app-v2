@@ -1,5 +1,13 @@
 "use client";
-import { ChartLine, DollarSign, FileSearch, FileText, LandPlot, SquareUser, Wallet } from "lucide-react";
+import {
+  ChartLine,
+  DollarSign,
+  FileSearch,
+  FileText,
+  LandPlot,
+  SquareUser,
+  Wallet,
+} from "lucide-react";
 import { useParams, usePathname, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";

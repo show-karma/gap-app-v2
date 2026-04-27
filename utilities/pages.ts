@@ -93,6 +93,8 @@ export const PAGES = {
     KYC_SETTINGS: (community: string) => `/community/${community}/manage/kyc-settings`,
     NOTIFICATION_SETTINGS: (community: string) =>
       `/community/${community}/manage/notification-settings`,
+    KNOWLEDGE_BASE: (community: string) =>
+      `/community/${community}/manage/knowledge-base`,
     PROGRAM_SCORES: (community: string) => `/community/${community}/manage/program-scores`,
     SEND_EMAIL: (community: string) => `/community/${community}/manage/send-email`,
     PORTFOLIO_REPORTS: (community: string) => `/community/${community}/manage/portfolio-reports`,
