@@ -1,12 +1,12 @@
 "use client";
 
-import { Library, Plus, Search, Sparkles } from "lucide-react";
+import { FileBadge, FileText, Plus, Search, Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/Utilities/Button";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useKnowledgeSources } from "@/hooks/knowledge-base/useKnowledgeSources";
 import type { Community } from "@/types/v2/community";
-import type { KnowledgeSource } from "@/types/v2/knowledge-base";
+import type { KnowledgeSource, KnowledgeSourceKind } from "@/types/v2/knowledge-base";
 import { AddSourceDialog } from "./AddSourceDialog";
 import { SourceRow } from "./SourceRow";
 
@@ -14,38 +14,33 @@ interface Props {
   community: Community;
 }
 
-interface Aggregates {
-  total: number;
-  active: number;
-  failing: number;
-  lastSyncedAt: number | null;
+// The masthead's right-rail "Last sync" pill is a single rolled-up signal
+// that matches the topbar pill in the design — much lighter than the
+// previous 4-up stat strip while still surfacing the most actionable number.
+function lastSyncedAt(list: KnowledgeSource[]): number | null {
+  let max: number | null = null;
+  for (const s of list) {
+    if (!s.lastSyncedAt) continue;
+    const ts = new Date(s.lastSyncedAt).getTime();
+    if (!max || ts > max) max = ts;
+  }
+  return max;
 }
 
-function aggregate(list: KnowledgeSource[]): Aggregates {
-  return list.reduce<Aggregates>(
-    (acc, s) => {
-      acc.total += 1;
-      if (s.isActive) acc.active += 1;
-      if (s.lastSyncStatus === "failed" || s.lastSyncStatus === "partial") {
-        acc.failing += 1;
-      }
-      const ts = s.lastSyncedAt ? new Date(s.lastSyncedAt).getTime() : null;
-      if (ts && (!acc.lastSyncedAt || ts > acc.lastSyncedAt)) {
-        acc.lastSyncedAt = ts;
-      }
-      return acc;
-    },
-    { total: 0, active: 0, failing: 0, lastSyncedAt: null }
+function failingCount(list: KnowledgeSource[]): number {
+  return list.reduce(
+    (n, s) => (s.lastSyncStatus === "failed" || s.lastSyncStatus === "partial" ? n + 1 : n),
+    0
   );
 }
 
 function formatRelative(ms: number | null): string {
   if (!ms) return "Never";
   const diff = Date.now() - ms;
-  if (diff < 60_000) return "Just now";
-  if (diff < 3_600_000) return `${Math.round(diff / 60_000)} min ago`;
-  if (diff < 86_400_000) return `${Math.round(diff / 3_600_000)} hr ago`;
-  return `${Math.round(diff / 86_400_000)} days ago`;
+  if (diff < 60_000) return "just now";
+  if (diff < 3_600_000) return `${Math.round(diff / 60_000)}m ago`;
+  if (diff < 86_400_000) return `${Math.round(diff / 3_600_000)}h ago`;
+  return `${Math.round(diff / 86_400_000)}d ago`;
 }
 
 export function KnowledgeBasePage({ community }: Props) {
@@ -63,7 +58,8 @@ export function KnowledgeBasePage({ community }: Props) {
       (s) => s.title.toLowerCase().includes(needle) || s.externalId.toLowerCase().includes(needle)
     );
   }, [list, filter]);
-  const stats = useMemo(() => aggregate(list), [list]);
+  const lastSync = useMemo(() => lastSyncedAt(list), [list]);
+  const failing = useMemo(() => failingCount(list), [list]);
 
   if (isCheckingAdmin) {
     return (
@@ -87,7 +83,8 @@ export function KnowledgeBasePage({ community }: Props) {
         communityName={community.details?.data?.name ?? "this community"}
         showHeaderCta={list.length > 0}
         onAdd={() => setAddOpen(true)}
-        stats={stats}
+        lastSyncedAt={lastSync}
+        failing={failing}
       />
 
       {sources.isLoading ? (
@@ -110,9 +107,9 @@ export function KnowledgeBasePage({ community }: Props) {
           {filtered.length === 0 ? (
             <NoMatchesState query={filter} onClear={() => setFilter("")} />
           ) : (
-            <ul className="mt-4 divide-y divide-stone-200/70 overflow-hidden rounded-2xl border border-stone-200 bg-white dark:divide-zinc-800/80 dark:border-zinc-800 dark:bg-zinc-900/40">
-              {filtered.map((s) => (
-                <SourceRow key={s.id} source={s} communityIdOrSlug={slug} />
+            <ul className="overflow-hidden rounded-xl border border-stone-200 bg-white dark:border-zinc-800 dark:bg-zinc-900/40">
+              {filtered.map((s, i) => (
+                <SourceRow key={s.id} source={s} communityIdOrSlug={slug} isFirst={i === 0} />
               ))}
             </ul>
           )}
@@ -127,7 +124,8 @@ export function KnowledgeBasePage({ community }: Props) {
 // ── Frame ────────────────────────────────────────────────────────────────────
 
 function PageFrame({ children }: { children: React.ReactNode }) {
-  return <div className="mx-auto w-full max-w-6xl px-6 pb-16 pt-10">{children}</div>;
+  // 1240px max-width matches the design's `.page` token.
+  return <div className="mx-auto w-full max-w-[1240px] px-6 pb-24 pt-7 sm:px-12">{children}</div>;
 }
 
 // ── Header / masthead ────────────────────────────────────────────────────────
@@ -136,105 +134,80 @@ function Masthead({
   communityName,
   showHeaderCta,
   onAdd,
-  stats,
+  lastSyncedAt,
+  failing,
 }: {
   communityName: string;
   showHeaderCta: boolean;
   onAdd: () => void;
-  stats: Aggregates;
+  lastSyncedAt: number | null;
+  failing: number;
 }) {
   return (
-    <header className="mb-8">
-      <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500 dark:text-zinc-500">
-        <span className="text-stone-400 dark:text-zinc-600">Karma</span>
-        <span className="mx-1.5 text-stone-300 dark:text-zinc-700">/</span>
-        Knowledge
+    <header className="mb-6">
+      <p className="font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-stone-500 dark:text-zinc-500">
+        Karma <span className="mx-1 text-stone-300 dark:text-zinc-700">/</span> Knowledge
       </p>
 
-      <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+      <div className="mt-1.5 grid grid-cols-1 items-end gap-x-6 gap-y-4 sm:grid-cols-[1fr_auto]">
         <div className="min-w-0">
-          <h1 className="text-[34px] font-semibold leading-[1.05] tracking-tight text-stone-900 dark:text-zinc-50 sm:text-[40px]">
+          <h1 className="text-[26px] font-semibold leading-[1.2] tracking-[-0.02em] text-stone-900 dark:text-zinc-50">
             Knowledge base
           </h1>
-          <p className="mt-2 max-w-2xl text-[15px] leading-relaxed text-stone-600 dark:text-zinc-400">
+          <p className="mt-1.5 max-w-[68ch] text-sm leading-relaxed text-stone-600 dark:text-zinc-400">
             Curate the documents your chatbot reads from for{" "}
             <span className="font-medium text-stone-900 dark:text-zinc-100">{communityName}</span>.
             Each source is fetched, chunked, and embedded automatically on the nightly sync.
           </p>
         </div>
 
-        {showHeaderCta && (
-          <Button
-            type="button"
-            onClick={onAdd}
-            className="shrink-0 gap-1.5"
-            aria-label="Add a knowledge source"
-          >
-            <Plus className="h-4 w-4" aria-hidden="true" />
-            Add source
-          </Button>
-        )}
+        <div className="flex items-center gap-2 sm:justify-end">
+          <SyncPill lastSyncedAt={lastSyncedAt} failing={failing} />
+          {showHeaderCta && (
+            <Button
+              type="button"
+              onClick={onAdd}
+              className="shrink-0 gap-1.5"
+              aria-label="Add a knowledge source"
+            >
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              Add source
+            </Button>
+          )}
+        </div>
       </div>
-
-      <StatStrip stats={stats} />
     </header>
   );
 }
 
-function StatStrip({ stats }: { stats: Aggregates }) {
-  if (stats.total === 0) return null;
-  const inactive = stats.total - stats.active;
-  const items = [
-    {
-      label: "Sources",
-      value: stats.total.toString(),
-      hint: "registered",
-      tone: "neutral" as const,
-    },
-    {
-      label: "Active",
-      value: stats.active.toString(),
-      hint: inactive > 0 ? `${inactive} paused` : "all running",
-      tone: stats.active > 0 ? ("good" as const) : ("muted" as const),
-    },
-    {
-      label: "Needs attention",
-      value: stats.failing.toString(),
-      hint: stats.failing === 1 ? "sync issue" : "sync issues",
-      tone: stats.failing > 0 ? ("warn" as const) : ("good" as const),
-    },
-    {
-      label: "Last sync",
-      value: formatRelative(stats.lastSyncedAt),
-      hint: stats.lastSyncedAt ? new Date(stats.lastSyncedAt).toLocaleString() : "no syncs yet",
-      tone: "neutral" as const,
-    },
-  ];
-
+// Pill mirrors the design's topbar `Last sync · 2h ago` chip — a single
+// rolled-up signal rather than a 4-up strip. We surface failures here too,
+// so admins still get an at-a-glance "needs attention" cue.
+function SyncPill({ lastSyncedAt, failing }: { lastSyncedAt: number | null; failing: number }) {
+  if (failing > 0) {
+    return (
+      <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11.5px] font-medium text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-300">
+        <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+        {failing === 1 ? "1 sync issue" : `${failing} sync issues`}
+      </span>
+    );
+  }
+  if (!lastSyncedAt) {
+    return (
+      <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-stone-200 bg-stone-50 px-2.5 py-1 text-[11.5px] font-medium text-stone-600 dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-400">
+        <span
+          aria-hidden="true"
+          className="h-1.5 w-1.5 rounded-full bg-stone-400 dark:bg-zinc-500"
+        />
+        No syncs yet
+      </span>
+    );
+  }
   return (
-    <dl className="mt-7 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-stone-200 bg-stone-200 dark:border-zinc-800 dark:bg-zinc-800 sm:grid-cols-4">
-      {items.map((it) => (
-        <div key={it.label} className="flex flex-col gap-1 bg-white px-5 py-4 dark:bg-zinc-900/60">
-          <dt className="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-500 dark:text-zinc-500">
-            {it.label}
-          </dt>
-          <dd
-            className={`text-2xl font-semibold tabular-nums ${
-              it.tone === "warn"
-                ? "text-amber-600 dark:text-amber-400"
-                : it.tone === "good"
-                  ? "text-emerald-600 dark:text-emerald-400"
-                  : "text-stone-900 dark:text-zinc-100"
-            }`}
-          >
-            {it.value}
-          </dd>
-          <p className="truncate text-xs text-stone-500 dark:text-zinc-500" title={it.hint}>
-            {it.hint}
-          </p>
-        </div>
-      ))}
-    </dl>
+    <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11.5px] font-medium text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-300">
+      <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+      Last sync · {formatRelative(lastSyncedAt)}
+    </span>
   );
 }
 
@@ -252,7 +225,7 @@ function FilterBar({
   totalCount: number;
 }) {
   return (
-    <div className="mt-2 flex flex-wrap items-center gap-3">
+    <div className="mb-4 flex flex-wrap items-center gap-2.5">
       <div className="relative min-w-[240px] flex-1">
         <Search
           aria-hidden="true"
@@ -264,75 +237,101 @@ function FilterBar({
           onChange={(e) => onChange(e.target.value)}
           placeholder="Filter by title or URL"
           aria-label="Filter knowledge sources"
-          className="h-10 w-full rounded-lg border border-stone-200 bg-white pl-10 pr-3 text-sm text-stone-900 placeholder-stone-400 transition focus:border-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-300/60 dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-100 dark:placeholder-zinc-500 dark:focus:border-zinc-600 dark:focus:ring-zinc-700/60"
+          className="h-9 w-full rounded-md border border-stone-200 bg-white pl-9 pr-3 text-[13px] text-stone-900 placeholder-stone-400 transition focus:border-sky-500 focus:outline-none focus:ring-[3px] focus:ring-sky-500/20 dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-100 dark:placeholder-zinc-500 dark:focus:border-sky-400 dark:focus:ring-sky-400/20"
         />
       </div>
-      <p className="text-xs tabular-nums text-stone-500 dark:text-zinc-500">
+      <span className="px-1 font-mono text-[11px] tabular-nums text-stone-500 dark:text-zinc-500">
         {visibleCount === totalCount
           ? `${totalCount} ${totalCount === 1 ? "source" : "sources"}`
           : `${visibleCount} of ${totalCount}`}
-      </p>
+      </span>
     </div>
   );
 }
 
 // ── Empty state ──────────────────────────────────────────────────────────────
+//
+// Mirrors the design: a soft gradient tile with two concentric dashed rings
+// orbiting a single illustrative glyph, followed by short copy, a primary
+// CTA, and a row of quick-pick tiles. Quick-picks only surface the kinds we
+// expose today (gdrive_file + pdf_url) — see KIND_OPTIONS in
+// AddSourceDialog for the canonical list.
+const QUICK_PICKS: Array<{
+  kind: KnowledgeSourceKind;
+  label: string;
+  Icon: typeof FileText;
+  fg: string;
+}> = [
+  {
+    kind: "gdrive_file",
+    label: "Google Doc",
+    Icon: FileText,
+    fg: "text-emerald-600 dark:text-emerald-400",
+  },
+  {
+    kind: "pdf_url",
+    label: "PDF URL",
+    Icon: FileBadge,
+    fg: "text-rose-600 dark:text-rose-400",
+  },
+];
 
 function EmptyState({ onAdd }: { onAdd: () => void }) {
   return (
-    <div
-      className="relative mt-2 flex flex-col items-center overflow-hidden rounded-2xl border border-stone-200 bg-white px-8 py-16 text-center dark:border-zinc-800 dark:bg-zinc-900/40"
-      style={{
-        backgroundImage:
-          "radial-gradient(circle at 1px 1px, rgba(120,113,108,0.18) 1px, transparent 0)",
-        backgroundSize: "20px 20px",
-      }}
-    >
-      {/* concentric rings around the icon */}
-      <div className="relative flex h-28 w-28 items-center justify-center">
+    <div className="mt-2 flex flex-col items-center rounded-xl border border-dashed border-stone-300 bg-white px-6 py-14 text-center dark:border-zinc-700 dark:bg-zinc-900/40">
+      {/* Gradient illo with two concentric dashed orbits */}
+      <div className="relative">
         <span
           aria-hidden="true"
-          className="absolute inset-0 rounded-full border border-stone-200 dark:border-zinc-800"
+          className="absolute -inset-2 rounded-[22px] border border-dashed border-sky-300/40 dark:border-sky-400/30"
         />
         <span
           aria-hidden="true"
-          className="absolute inset-3 rounded-full border border-stone-200 dark:border-zinc-800"
+          className="absolute -inset-4 rounded-[28px] border border-dashed border-sky-300/20 dark:border-sky-400/15"
         />
-        <span
-          aria-hidden="true"
-          className="absolute inset-6 rounded-full border border-stone-300/70 bg-white shadow-sm dark:border-zinc-700/70 dark:bg-zinc-900"
-        />
-        <Library
-          aria-hidden="true"
-          className="relative h-7 w-7 text-stone-700 dark:text-zinc-200"
-          strokeWidth={1.6}
-        />
+        <div className="relative flex h-[72px] w-[72px] items-center justify-center rounded-2xl border border-stone-200 bg-gradient-to-br from-sky-50 to-stone-50 text-sky-700 dark:border-zinc-800 dark:from-sky-950/50 dark:to-zinc-900 dark:text-sky-300">
+          <FileText aria-hidden="true" className="h-7 w-7" strokeWidth={1.75} />
+        </div>
       </div>
 
-      <p className="mt-5 text-[11px] font-semibold uppercase tracking-[0.2em] text-stone-500 dark:text-zinc-500">
-        Empty shelf
-      </p>
-      <h2 className="mt-2 max-w-md text-xl font-semibold tracking-tight text-stone-900 dark:text-zinc-100">
-        No knowledge sources yet
+      <h2 className="mt-5 text-[17px] font-semibold tracking-[-0.01em] text-stone-900 dark:text-zinc-100">
+        No sources yet
       </h2>
-      <p className="mt-2 max-w-md text-sm leading-relaxed text-stone-600 dark:text-zinc-400">
-        Register a publicly-shared Google Doc or a PDF URL — Karma will fetch and index it for your
-        chatbot to cite.
+      <p className="mx-auto mt-1.5 max-w-[44ch] text-sm leading-relaxed text-stone-600 dark:text-zinc-400">
+        Add a publicly-shared Google Doc or a PDF URL and your chatbot will start answering
+        questions from it on the next nightly sync.
       </p>
 
       <Button
         type="button"
         onClick={onAdd}
-        className="mt-6 gap-1.5"
+        className="mt-5 gap-1.5"
         aria-label="Add your first knowledge source"
       >
         <Plus className="h-4 w-4" aria-hidden="true" />
         Add your first source
       </Button>
 
-      <ul className="mt-8 flex flex-wrap justify-center gap-x-5 gap-y-2 text-[11px] font-medium uppercase tracking-[0.14em] text-stone-400 dark:text-zinc-600">
-        <li>· Google Docs</li>
-        <li>· PDFs</li>
+      <ul
+        className="mt-6 grid w-full max-w-[480px] grid-cols-2 gap-2.5"
+        aria-label="Suggested source kinds"
+      >
+        {QUICK_PICKS.map((p) => (
+          <li key={p.kind}>
+            <button
+              type="button"
+              onClick={onAdd}
+              className="group flex w-full flex-col items-center gap-2 rounded-md border border-stone-200 bg-stone-50 px-3 py-3.5 transition hover:border-sky-400 hover:bg-white active:translate-y-[0.5px] dark:border-zinc-800 dark:bg-zinc-900/40 dark:hover:border-sky-400 dark:hover:bg-zinc-900"
+            >
+              <span className="flex h-7 w-7 items-center justify-center rounded-md border border-stone-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+                <p.Icon aria-hidden="true" className={`h-4 w-4 ${p.fg}`} strokeWidth={1.75} />
+              </span>
+              <span className="text-[12.5px] font-medium text-stone-900 dark:text-zinc-100">
+                {p.label}
+              </span>
+            </button>
+          </li>
+        ))}
       </ul>
     </div>
   );
@@ -360,16 +359,10 @@ function NoMatchesState({ query, onClear }: { query: string; onClear: () => void
 
 function HeaderSkeleton() {
   return (
-    <div className="mb-8 animate-pulse">
-      <div className="mb-2 h-3 w-32 rounded bg-stone-200 dark:bg-zinc-800" />
-      <div className="h-9 w-64 rounded bg-stone-200 dark:bg-zinc-800" />
-      <div className="mt-3 h-4 w-full max-w-xl rounded bg-stone-200 dark:bg-zinc-800" />
-      <div className="mt-7 grid h-[88px] grid-cols-4 gap-px overflow-hidden rounded-xl bg-stone-200 dark:bg-zinc-800">
-        <div className="bg-white dark:bg-zinc-900/60" />
-        <div className="bg-white dark:bg-zinc-900/60" />
-        <div className="bg-white dark:bg-zinc-900/60" />
-        <div className="bg-white dark:bg-zinc-900/60" />
-      </div>
+    <div className="mb-6 animate-pulse">
+      <div className="h-3 w-32 rounded bg-stone-200 dark:bg-zinc-800" />
+      <div className="mt-2 h-7 w-64 rounded bg-stone-200 dark:bg-zinc-800" />
+      <div className="mt-2 h-4 w-full max-w-xl rounded bg-stone-200 dark:bg-zinc-800" />
     </div>
   );
 }
@@ -378,16 +371,21 @@ function ListSkeleton() {
   return (
     <ul
       aria-label="Loading knowledge sources"
-      className="mt-4 divide-y divide-stone-200/70 overflow-hidden rounded-2xl border border-stone-200 bg-white dark:divide-zinc-800/80 dark:border-zinc-800 dark:bg-zinc-900/40"
+      className="overflow-hidden rounded-xl border border-stone-200 bg-white dark:border-zinc-800 dark:bg-zinc-900/40"
     >
       {[0, 1, 2].map((i) => (
-        <li key={i} className="flex items-center gap-4 px-5 py-5">
-          <div className="h-10 w-10 shrink-0 animate-pulse rounded-full bg-stone-200 dark:bg-zinc-800" />
+        <li
+          key={i}
+          className={`flex items-center gap-3.5 px-4 py-3.5 ${
+            i > 0 ? "border-t border-stone-200 dark:border-zinc-800" : ""
+          }`}
+        >
+          <div className="h-8 w-8 shrink-0 animate-pulse rounded-md bg-stone-200 dark:bg-zinc-800" />
           <div className="flex-1 space-y-2">
-            <div className="h-4 w-1/3 animate-pulse rounded bg-stone-200 dark:bg-zinc-800" />
+            <div className="h-3.5 w-1/3 animate-pulse rounded bg-stone-200 dark:bg-zinc-800" />
             <div className="h-3 w-2/3 animate-pulse rounded bg-stone-200/70 dark:bg-zinc-800/70" />
           </div>
-          <div className="hidden h-6 w-20 animate-pulse rounded-full bg-stone-200 dark:bg-zinc-800 sm:block" />
+          <div className="hidden h-5 w-20 animate-pulse rounded-full bg-stone-200 dark:bg-zinc-800 sm:block" />
         </li>
       ))}
     </ul>
