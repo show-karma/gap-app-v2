@@ -79,10 +79,10 @@ describe("ActivityFilters - Milestone Status Dropdown Visibility", () => {
     onMilestoneStatusChange: vi.fn(),
   };
 
-  it("shows milestone status dropdown when no filters are active (All)", () => {
+  it("hides milestone status dropdown when no filters are active (All)", () => {
     render(<ActivityFilters {...defaultProps} activeFilters={[]} />);
 
-    expect(screen.getByTestId("milestone-status-filter")).toBeInTheDocument();
+    expect(screen.queryByTestId("milestone-status-filter")).not.toBeInTheDocument();
   });
 
   it("shows milestone status dropdown when milestones filter is active", () => {
@@ -144,7 +144,7 @@ describe("ActivityFilters - Milestone Status Dropdown Options", () => {
   it("renders the milestone status trigger with correct value", () => {
     render(
       <ActivityFilters
-        activeFilters={[]}
+        activeFilters={["milestones"]}
         onFilterToggle={vi.fn()}
         counts={{ milestones: 3 }}
         milestoneStatusFilter="all"

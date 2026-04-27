@@ -47,8 +47,13 @@ export function UpdatesContent({ className }: UpdatesContentProps) {
   // Read milestone status filter from URL
   const milestoneStatusFilter = useMemo(() => {
     const statusParam = searchParams.get("milestoneStatus");
-    if (statusParam === "pending" || statusParam === "completed" || statusParam === "verified") {
-      return statusParam;
+    if (
+      statusParam === "all" ||
+      statusParam === "pending" ||
+      statusParam === "completed" ||
+      statusParam === "verified"
+    ) {
+      return statusParam as MilestoneStatusFilter;
     }
     return "all" as MilestoneStatusFilter;
   }, [searchParams]);
@@ -109,8 +114,19 @@ export function UpdatesContent({ className }: UpdatesContentProps) {
       }
       params.delete("sort");
 
-      // Clear milestone status when milestones tab is no longer active
-      if (!newFilters.includes("milestones")) {
+      // Default milestones to completed when no explicit status is present.
+      if (newFilters.includes("milestones")) {
+        const currentStatus = params.get("milestoneStatus");
+        const hasExplicitMilestoneStatus =
+          currentStatus === "all" ||
+          currentStatus === "pending" ||
+          currentStatus === "completed" ||
+          currentStatus === "verified";
+
+        if (!hasExplicitMilestoneStatus) {
+          params.set("milestoneStatus", "completed");
+        }
+      } else {
         params.delete("milestoneStatus");
       }
 
@@ -125,7 +141,7 @@ export function UpdatesContent({ className }: UpdatesContentProps) {
     (status: MilestoneStatusFilter) => {
       const params = new URLSearchParams(searchParams.toString());
       if (status === "all") {
-        params.delete("milestoneStatus");
+        params.set("milestoneStatus", "all");
       } else {
         params.set("milestoneStatus", status);
       }
