@@ -77,11 +77,16 @@ export function usePortfolioReports(communitySlug: string, status?: string) {
   });
 }
 
-export function usePortfolioReport(communitySlug: string, reportId: string) {
+export function usePortfolioReport(
+  communitySlug: string,
+  reportId: string,
+  options?: { enabled?: boolean }
+) {
+  const enabled = options?.enabled ?? true;
   return useQuery({
     queryKey: QUERY_KEYS.report(communitySlug, reportId),
     queryFn: () => portfolioService.getReport(communitySlug, reportId),
-    enabled: Boolean(communitySlug && reportId),
+    enabled: Boolean(communitySlug && reportId) && enabled,
   });
 }
 
