@@ -6,7 +6,7 @@ PR checks are green and posts the videos as the final PR comment.
 
 ## How it fits together
 
-```
+```text
 e2e/demos/
 ├── playwright.config.ts        # Standalone config — records video, no web server
 └── <feature>.demo.ts           # Playwright spec + an exported `demoDescription`
@@ -24,8 +24,8 @@ it with a regex — no separate `.md` file to keep in sync.
 4. Runs every `*.demo.ts` against that preview URL, capturing video.
 5. Converts each `.webm` to `.mp4` (`libx264`, `+faststart`).
 6. Pushes the MP4s to an orphan `pr-demo-assets` branch under `demos/pr-<n>/<sha>/`.
-7. Posts a single PR comment that concatenates each `<feature>.md` with an inline
-   `<video>` tag pointing at the raw MP4.
+7. Posts a single PR comment that concatenates each spec's exported
+   `demoDescription` with an inline `<video>` tag pointing at the raw MP4.
 
 ## Adding a demo to a PR
 

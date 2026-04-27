@@ -21,7 +21,8 @@ jobs:
   record:
     if: >-
       github.event.workflow_run.event == 'pull_request' &&
-      github.event.workflow_run.conclusion == 'success'
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_repository.fork == false
     runs-on: ubuntu-latest
     timeout-minutes: 25
     env:
@@ -38,7 +39,7 @@ jobs:
             --state open \
             --search "$SHA" \
             --json number,headRefOid \
-            --jq '.[] | select(.headRefOid=="'"$SHA"'") | .number' \
+            --jq --arg sha "$SHA" '.[] | select(.headRefOid==$sha) | .number' \
             | head -1)
           if [ -z "$PR" ]; then
             echo "No open PR found for $SHA — skipping"
@@ -49,15 +50,27 @@ jobs:
           echo "sha=$SHA" >> "$GITHUB_OUTPUT"
 
       - name: Wait for required checks to settle
+        id: checks
         if: steps.pr.outputs.skip != 'true'
         run: |
           set -euo pipefail
           PR="${{ steps.pr.outputs.number }}"
+          settled=0
           # Poll up to 30 minutes; bail early if something failed.
           for _ in $(seq 1 60); do
-            json=$(gh pr checks "$PR" \
-              --repo "${{ github.repository }}" \
-              --json name,bucket 2>/dev/null || echo "[]")
+            if ! json=$(gh pr checks "$PR" \
+                --repo "${{ github.repository }}" \
+                --json name,bucket 2>/dev/null); then
+              echo "gh pr checks request failed — retrying"
+              sleep 30
+              continue
+            fi
+            total=$(echo "$json" | jq 'length')
+            if [ "$total" -eq 0 ]; then
+              echo "No checks reported yet — retrying"
+              sleep 30
+              continue
+            fi
             failures=$(echo "$json" \
               | jq '[.[] | select(.bucket=="fail" and .name != "pr-demo-video")] | length')
             pending=$(echo "$json" \
@@ -69,23 +82,30 @@ jobs:
             fi
             if [ "$pending" -eq 0 ]; then
               echo "All required checks green"
+              settled=1
               break
             fi
             echo "Pending checks: $pending — waiting"
             sleep 30
           done
+          if [ "$settled" -ne 1 ]; then
+            echo "Checks did not settle within the polling window — skipping demo"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
 
       - name: Resolve Vercel preview URL
-        if: steps.pr.outputs.skip != 'true'
+        if: steps.pr.outputs.skip != 'true' && steps.checks.outputs.skip != 'true'
         id: preview
         run: |
           set -euo pipefail
           PR="${{ steps.pr.outputs.number }}"
-          # Look at the most recent vercel[bot] comment for a preview URL.
+          # Vercel's GitHub App posts comments under both `vercel` and
+          # `vercel[bot]` depending on context — match both.
           URL=$(gh pr view "$PR" \
             --repo "${{ github.repository }}" \
             --json comments \
-            --jq '[.comments[] | select(.author.login=="vercel")] | last | .body' \
+            --jq '[.comments[] | select(.author.login=="vercel" or .author.login=="vercel[bot]")] | last | .body' \
             | grep -oE 'https://[a-z0-9-]+\.vercel\.app' \
             | head -1 || true)
           if [ -z "${URL:-}" ]; then
@@ -152,26 +172,54 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p demo-output
-          if [ ! -d e2e-demos-results ]; then
-            echo "No e2e-demos-results directory — Playwright produced no videos"
+          REPORT="e2e-demos-results/report.json"
+          if [ ! -f "$REPORT" ]; then
+            echo "No Playwright JSON report — nothing to publish"
             echo "count=0" >> "$GITHUB_OUTPUT"
             exit 0
           fi
+          # Resolve (demo-name, video-path) pairs from the JSON report so we
+          # don't have to guess the spec name from Playwright's output dir.
+          node -e '
+            const fs = require("fs");
+            const path = require("path");
+            const r = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+            const out = [];
+            const walk = (suites) => {
+              for (const s of suites || []) {
+                for (const spec of s.specs || []) {
+                  const file = spec.file || s.file || "";
+                  const name = path.basename(file).replace(/\.demo\.ts$/, "");
+                  for (const t of spec.tests || []) {
+                    for (const res of t.results || []) {
+                      for (const a of res.attachments || []) {
+                        if (a.name === "video" && a.path) {
+                          out.push(name + "\t" + a.path);
+                        }
+                      }
+                    }
+                  }
+                }
+                if (s.suites) walk(s.suites);
+              }
+            };
+            walk(r.suites || []);
+            process.stdout.write(out.join("\n"));
+          ' "$REPORT" > /tmp/demo-manifest.tsv
+
           count=0
-          # Map each .webm back to its spec name. Playwright nests videos under
-          # <results>/<spec basename>-<project>/<test slug>/video.webm
-          while IFS= read -r webm; do
-            spec_dir=$(dirname "$(dirname "$webm")")
-            spec_base=$(basename "$spec_dir")
-            # spec_base looks like "team-email-display-demo-demo" — strip the
-            # trailing "-demo-demo" / "-demo" project suffixes.
-            name=$(echo "$spec_base" | sed -E 's/-demo(-demo)?$//')
+          while IFS=$'\t' read -r name webm; do
+            [ -n "$name" ] || continue
+            if [ ! -f "$webm" ]; then
+              echo "Video not found for $name: $webm — skipping"
+              continue
+            fi
             ffmpeg -nostdin -y -i "$webm" \
               -c:v libx264 -pix_fmt yuv420p -crf 23 \
               -movflags +faststart \
               "demo-output/${name}.mp4"
             count=$((count + 1))
-          done < <(find e2e-demos-results -name "video.webm" -type f)
+          done < /tmp/demo-manifest.tsv
           echo "count=$count" >> "$GITHUB_OUTPUT"
           ls -la demo-output
 

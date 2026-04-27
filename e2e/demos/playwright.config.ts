@@ -9,7 +9,10 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   retries: 0,
-  reporter: [["list"]],
+  reporter: [
+    ["list"],
+    ["json", { outputFile: path.resolve(__dirname, "../../e2e-demos-results/report.json") }],
+  ],
   outputDir: path.resolve(__dirname, "../../e2e-demos-results"),
 
   use: {
