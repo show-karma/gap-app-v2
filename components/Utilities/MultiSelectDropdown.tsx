@@ -268,7 +268,10 @@ export const MultiSelectDropdown = ({
                   <button
                     type="button"
                     className="mt-2 text-sm font-medium text-brand-blue hover:underline"
-                    onClick={onEmptyAction}
+                    onClick={() => {
+                      setIsOpen(false);
+                      onEmptyAction();
+                    }}
                   >
                     {emptyActionLabel}
                   </button>

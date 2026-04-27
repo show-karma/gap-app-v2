@@ -1,6 +1,7 @@
 "use client";
 
 import { type FC, useCallback, useMemo, useState } from "react";
+import { toast } from "react-hot-toast";
 import InviteReviewerModal, {
   type InvitedReviewer,
 } from "@/components/FundingPlatform/ApplicationView/InviteReviewerModal";
@@ -83,6 +84,10 @@ export const ReviewerAssignmentDropdown: FC<ReviewerAssignmentDropdownProps> = (
   const handleInvited = useCallback(
     async (reviewer: InvitedReviewer) => {
       if (!reviewer.publicAddress) {
+        const reviewerLabel = reviewer.name || reviewer.email;
+        toast.success(
+          `${reviewerLabel} was invited. They'll appear in the reviewer list once they sign in, then you can assign them to this application.`
+        );
         return;
       }
 
