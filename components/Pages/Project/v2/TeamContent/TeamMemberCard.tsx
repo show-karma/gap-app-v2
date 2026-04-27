@@ -44,7 +44,6 @@ export function TeamMemberCard({ member, className }: TeamMemberCardProps) {
   );
   const [, copy] = useCopyToClipboard();
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const { address } = useAccount();
   const isAuthorized = isProjectOwner || isContractOwner;
@@ -159,6 +158,15 @@ export function TeamMemberCard({ member, className }: TeamMemberCardProps) {
             />
           </button>
         </div>
+        {profile?.data.email ? (
+          <a
+            href={`mailto:${profile.data.email}`}
+            className="text-sm text-zinc-500 dark:text-zinc-400 break-all hover:underline"
+            data-testid="member-email"
+          >
+            {profile.data.email}
+          </a>
+        ) : null}
         {profile?.data.aboutMe && (
           <p className="text-sm text-zinc-600 dark:text-zinc-400 pt-2" data-testid="member-about">
             {profile.data.aboutMe}
