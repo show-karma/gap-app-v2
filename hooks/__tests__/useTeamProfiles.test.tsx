@@ -77,7 +77,10 @@ describe("useTeamProfiles", () => {
 
   describe("authenticated", () => {
     beforeEach(() => {
-      mockUseAuth.mockReturnValue({ authenticated: true } as any);
+      mockUseAuth.mockReturnValue({
+        authenticated: true,
+        address: "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      } as any);
     });
 
     it("merges backend-authorized email onto team profiles", async () => {
@@ -180,9 +183,37 @@ describe("useTeamProfiles", () => {
     });
   });
 
+  describe("authenticated without a wallet", () => {
+    beforeEach(() => {
+      // Email-only Privy session — no embedded wallet linked yet.
+      mockUseAuth.mockReturnValue({ authenticated: true, address: undefined } as any);
+    });
+
+    it("does not request backend-authorized profiles", async () => {
+      mockGetContributorProfiles.mockResolvedValue([
+        {
+          recipient: "0x2222222222222222222222222222222222222222",
+          data: { name: "Member Name" },
+        },
+      ] as any);
+
+      const { result } = renderHook(() => useTeamProfiles(project), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.isSuccess).toBe(true);
+      });
+
+      expect(mockGetUserProfiles).not.toHaveBeenCalled();
+      expect(result.current.teamProfiles?.[0].data.email).toBeUndefined();
+    });
+  });
+
   describe("error", () => {
     beforeEach(() => {
-      mockUseAuth.mockReturnValue({ authenticated: true } as any);
+      mockUseAuth.mockReturnValue({
+        authenticated: true,
+        address: "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      } as any);
     });
 
     it("falls back to public profiles when the authorized backend lookup is unavailable", async () => {

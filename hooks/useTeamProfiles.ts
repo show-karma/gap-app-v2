@@ -10,7 +10,11 @@ import { getContributorProfiles } from "@/utilities/indexer/getContributorProfil
 
 export const useTeamProfiles = (project: ProjectResponse | undefined) => {
   const setTeamProfiles = useProjectStore((state) => state.setTeamProfiles);
-  const { authenticated } = useAuth();
+  const { authenticated, address: viewerAddress } = useAuth();
+  // The authorized profiles endpoint requires a wallet-linked viewer; calling
+  // it as an email-only Privy user yields a 401 on every render. Gate the
+  // request on having a wallet to avoid noisy Sentry captures.
+  const canFetchAuthorizedProfiles = authenticated && Boolean(viewerAddress);
 
   const uniqueLowercasedAddresses = useMemo(() => {
     const rawAddresses = [
@@ -21,13 +25,13 @@ export const useTeamProfiles = (project: ProjectResponse | undefined) => {
   }, [project?.owner, project?.members]);
 
   const query = useQuery<TeamProfile[] | undefined>({
-    queryKey: ["contributor-profiles", uniqueLowercasedAddresses, authenticated],
+    queryKey: ["contributor-profiles", uniqueLowercasedAddresses, canFetchAuthorizedProfiles],
     queryFn: async () => {
       if (!project || uniqueLowercasedAddresses.length === 0) return [];
       const profiles = ((await getContributorProfiles(uniqueLowercasedAddresses)) ||
         []) as TeamProfile[];
 
-      if (!authenticated) return profiles;
+      if (!canFetchAuthorizedProfiles) return profiles;
 
       try {
         const authorizedProfiles =
