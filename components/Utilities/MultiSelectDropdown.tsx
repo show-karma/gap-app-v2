@@ -85,6 +85,14 @@ export const MultiSelectDropdown = ({
     }
   }, [isLoading]);
 
+  // Reset the search term whenever the dropdown closes so it doesn't carry
+  // over to the next time the user opens it.
+  useEffect(() => {
+    if (!isOpen) {
+      setSearchTerm("");
+    }
+  }, [isOpen]);
+
   // Toggle an item selection
   const toggleItem = (id: string) => {
     if (isDisabled) return;
@@ -264,7 +272,7 @@ export const MultiSelectDropdown = ({
             ) : (
               <div className="px-2 py-1">
                 <div className="text-sm text-gray-500 dark:text-zinc-400">No items found</div>
-                {onEmptyAction && emptyActionLabel && (
+                {items.length === 0 && onEmptyAction && emptyActionLabel && (
                   <button
                     type="button"
                     className="mt-2 text-sm font-medium text-brand-blue hover:underline"

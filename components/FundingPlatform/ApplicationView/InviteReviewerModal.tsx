@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ReviewerType } from "@/hooks/useReviewerAssignment";
+import { cn } from "@/utilities/tailwind";
 import { slackHandleSchema } from "@/utilities/validation/slack-handle";
 import { telegramUsernameSchema } from "@/utilities/validation/telegram-username";
 
@@ -100,7 +101,13 @@ const InviteReviewerModal: FC<InviteReviewerModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent
+        className={cn(
+          "sm:max-w-[425px]",
+          isInviting &&
+            "[&_[data-testid=modal-close-button]]:pointer-events-none [&_[data-testid=modal-close-button]]:opacity-30"
+        )}
+      >
         <DialogHeader>
           <DialogTitle>{inviteActionLabel}</DialogTitle>
           <DialogDescription>Add a new {reviewerTypeLabel} for this program.</DialogDescription>

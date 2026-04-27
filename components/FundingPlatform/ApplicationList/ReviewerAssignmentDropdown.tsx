@@ -110,8 +110,8 @@ export const ReviewerAssignmentDropdown: FC<ReviewerAssignmentDropdownProps> = (
         placeholder={isLoading ? "Updating..." : `Select ${reviewerType} reviewers...`}
         searchPlaceholder="Search reviewers..."
         className="min-w-[200px]"
-        disabled={isLoading || isAddingReviewer}
-        isLoading={isLoading || isAddingReviewer}
+        disabled={isLoading}
+        isLoading={isLoading}
         emptyActionLabel={reviewerActionLabel}
         onEmptyAction={() => setIsInviteModalOpen(true)}
       />
