@@ -580,6 +580,10 @@ export function ActivityFilters({
             const isActive = activeFilters.includes(filter.value);
             const count = counts[filter.value];
             const isEmpty = !count;
+            // Keep active pills clickable so users can always toggle them off,
+            // even when the current filter selection produces zero results
+            // (e.g. milestones=completed on a project without completed milestones).
+            const isDisabled = isEmpty && !isActive;
             const config = FILTER_CONFIG[filter.value];
             const Icon = config?.icon;
 
@@ -588,7 +592,7 @@ export function ActivityFilters({
                 key={filter.value}
                 type="button"
                 onClick={() => onFilterToggle(filter.value)}
-                disabled={isEmpty}
+                disabled={isDisabled}
                 data-testid={`filter-${filter.value}`}
                 aria-pressed={isActive}
                 aria-label={`Filter by ${filter.label}`}

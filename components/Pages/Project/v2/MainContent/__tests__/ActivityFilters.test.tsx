@@ -68,6 +68,40 @@ vi.mock("@/components/ui/slider", () => ({
   },
 }));
 
+describe("ActivityFilters - Filter pill disabled state", () => {
+  const baseProps = {
+    activeFilters: [] as ActivityFilterType[],
+    onFilterToggle: vi.fn(),
+    milestoneStatusFilter: "all" as MilestoneStatusFilter,
+    onMilestoneStatusChange: vi.fn(),
+  };
+
+  it("disables a filter pill when the count is zero and the pill is not active", () => {
+    render(
+      <ActivityFilters {...baseProps} activeFilters={[]} counts={{ milestones: 0, funding: 1 }} />
+    );
+
+    expect(screen.getByTestId("filter-milestones")).toBeDisabled();
+  });
+
+  it("keeps the milestones pill clickable when active even if the filtered count is zero", () => {
+    render(
+      <ActivityFilters
+        {...baseProps}
+        activeFilters={["milestones"]}
+        counts={{ milestones: 0, funding: 1 }}
+        milestoneStatusFilter="completed"
+      />
+    );
+
+    const pill = screen.getByTestId("filter-milestones");
+    expect(pill).not.toBeDisabled();
+
+    fireEvent.click(pill);
+    expect(baseProps.onFilterToggle).toHaveBeenCalledWith("milestones");
+  });
+});
+
 describe("ActivityFilters - Milestone Status Dropdown Visibility", () => {
   const defaultProps = {
     activeFilters: [] as ActivityFilterType[],
