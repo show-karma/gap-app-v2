@@ -9,9 +9,12 @@ PR checks are green and posts the videos as the final PR comment.
 ```
 e2e/demos/
 ├── playwright.config.ts        # Standalone config — records video, no web server
-├── <feature>.demo.ts           # Playwright spec; basename matches the .md
-└── <feature>.md                # Markdown that explains the feature in the PR comment
+└── <feature>.demo.ts           # Playwright spec + an exported `demoDescription`
 ```
+
+Each spec exports a `demoDescription` template literal containing the
+markdown that will be posted alongside the video. The workflow extracts
+it with a regex — no separate `.md` file to keep in sync.
 
 `.github/workflows/pr-demo-video.yml`:
 
@@ -29,9 +32,17 @@ e2e/demos/
 1. Drop a new spec at `e2e/demos/<short-name>.demo.ts`. Keep it focused — one
    user-visible flow, ~10–20 seconds. Use `test.step` with descriptive titles;
    step names show up in the recording.
-2. Add a sibling `e2e/demos/<short-name>.md` that explains how the feature
-   works. Markdown is supported. Don't include the heading from the comment
-   template — the workflow wraps each entry in `## Feature demo` automatically.
+2. At the top of that file, export a markdown string named `demoDescription`
+   that explains how the feature works. The workflow wraps each entry in
+   `## Feature demo` automatically — start at `### <heading>` or lower.
+
+   ```ts
+   export const demoDescription = `
+   ### My feature
+
+   How it works...
+   `;
+   ```
 3. Push and let CI do the rest.
 
 If credentials are needed (Privy, etc.), prefer mocking the relevant React

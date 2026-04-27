@@ -235,14 +235,33 @@ jobs:
           BASE_RAW="https://raw.githubusercontent.com/${REPO}/pr-demo-assets/${REL}"
           BASE_BLOB="https://github.com/${REPO}/blob/pr-demo-assets/${REL}"
 
+          # Extract the `demoDescription` template literal from a spec file
+          # and undo TypeScript's escaping of `, $ and \ inside template literals.
+          extract_description() {
+            local spec="$1"
+            [ -f "$spec" ] || return 0
+            node -e '
+              const fs = require("fs");
+              const src = fs.readFileSync(process.argv[1], "utf8");
+              const m = src.match(/export\s+const\s+demoDescription\s*=\s*`([\s\S]*?)`;/);
+              if (!m) return;
+              const unescaped = m[1]
+                .replace(/\\`/g, "`")
+                .replace(/\\\$/g, "$")
+                .replace(/\\\\/g, "\\");
+              process.stdout.write(unescaped.trim());
+            ' "$spec"
+          }
+
           {
             echo "## Feature demo"
             echo
             for mp4 in demo-output/*.mp4; do
               name=$(basename "$mp4" .mp4)
-              md="e2e/demos/${name}.md"
-              if [ -f "$md" ]; then
-                cat "$md"
+              spec="e2e/demos/${name}.demo.ts"
+              desc=$(extract_description "$spec")
+              if [ -n "$desc" ]; then
+                printf '%s\n' "$desc"
               else
                 echo "**${name}**"
               fi
