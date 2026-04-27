@@ -36,6 +36,21 @@ export const MILESTONE_STATUS_OPTIONS: MilestoneStatusOption[] = [
   { value: "verified", label: "Verified" },
 ] as const;
 
+const VALID_MILESTONE_STATUSES = new Set<MilestoneStatusFilter>([
+  "all",
+  "pending",
+  "completed",
+  "verified",
+]);
+
+/**
+ * Type guard for {@link MilestoneStatusFilter}. Useful when validating raw URL
+ * params or other untrusted string inputs.
+ */
+export function isMilestoneStatusFilter(value: string | null): value is MilestoneStatusFilter {
+  return value !== null && VALID_MILESTONE_STATUSES.has(value as MilestoneStatusFilter);
+}
+
 // Milestone types in the unified feed
 const MILESTONE_TYPES: ReadonlySet<string> = new Set(["milestone", "grant", "impact"]);
 
