@@ -17,6 +17,12 @@ permissions:
   contents: write
   pull-requests: write
 
+concurrency:
+  # All runs publish to the same `pr-demo-assets` branch and would race on
+  # `git push`; serialize regardless of which PR triggered them.
+  group: pr-demo-assets
+  cancel-in-progress: false
+
 jobs:
   record:
     if: >-
@@ -34,12 +40,15 @@ jobs:
         run: |
           set -euo pipefail
           SHA="${{ github.event.workflow_run.head_sha }}"
+          # `gh`'s `--jq` accepts only a single filter expression — it doesn't
+          # forward `--arg` to jq. Pipe through standalone jq so the SHA can
+          # be safely bound as a parameter.
           PR=$(gh pr list \
             --repo "${{ github.repository }}" \
             --state open \
             --search "$SHA" \
             --json number,headRefOid \
-            --jq --arg sha "$SHA" '.[] | select(.headRefOid==$sha) | .number' \
+            | jq -r --arg sha "$SHA" '.[] | select(.headRefOid==$sha) | .number' \
             | head -1)
           if [ -z "$PR" ]; then
             echo "No open PR found for $SHA — skipping"

@@ -34,40 +34,49 @@ test("team member email — public vs. authorized view", async ({ page }) => {
 
   await test.step("Simulate the authorized backend returning an email", async () => {
     await page.evaluate(() => {
-      const findQueryClient = () => {
+      type QueryEntry = { queryKey: unknown[] };
+      type QueryClientLite = {
+        getQueryCache: () => { getAll: () => QueryEntry[] };
+        setQueryData: (key: unknown[], data: unknown) => void;
+      };
+      type Fiber = {
+        return: Fiber | null;
+        memoizedProps?: { client?: QueryClientLite };
+      };
+
+      const findQueryClient = (): QueryClientLite | null => {
         const root = document.querySelector('[data-testid="team-member-card"]');
         if (!root) return null;
         const fiberKey = Object.keys(root).find((k) => k.startsWith("__reactFiber"));
         if (!fiberKey) return null;
-        // biome-ignore lint/suspicious/noExplicitAny: walking React internals
-        let cur: any = (root as any)[fiberKey];
+        let cur: Fiber | null =
+          (root as unknown as Record<string, Fiber | undefined>)[fiberKey] ?? null;
         while (cur) {
-          if (cur.memoizedProps?.client?.getQueryCache) return cur.memoizedProps.client;
+          const client = cur.memoizedProps?.client;
+          if (client?.getQueryCache) return client;
           cur = cur.return;
         }
         return null;
       };
 
-      // biome-ignore lint/suspicious/noExplicitAny: query client API
-      const qc = findQueryClient() as any;
+      const qc = findQueryClient();
       if (!qc) throw new Error("QueryClient not found in fiber tree");
 
       const matches = qc
         .getQueryCache()
         .getAll()
-        .filter(
-          // biome-ignore lint/suspicious/noExplicitAny: query shape
-          (q: any) => Array.isArray(q.queryKey) && q.queryKey[0] === "contributor-profiles"
-        );
+        .filter((q) => Array.isArray(q.queryKey) && q.queryKey[0] === "contributor-profiles");
       if (matches.length === 0) throw new Error("No contributor-profiles query in cache");
 
       // Pick the active query (the one with a non-empty addresses array)
       const active =
-        // biome-ignore lint/suspicious/noExplicitAny: query shape
-        matches.find((q: any) => Array.isArray(q.queryKey?.[1]) && q.queryKey[1].length > 0) ??
-        matches[0];
-      const [, addresses] = active.queryKey;
-      const recipient = (addresses?.[0] ?? "").toString();
+        matches.find((q) => {
+          const addresses = q.queryKey[1];
+          return Array.isArray(addresses) && addresses.length > 0;
+        }) ?? matches[0];
+      const addresses = active.queryKey[1];
+      const recipient =
+        Array.isArray(addresses) && addresses.length > 0 ? String(addresses[0]) : "";
 
       qc.setQueryData(active.queryKey, [
         {
