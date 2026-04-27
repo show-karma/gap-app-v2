@@ -9,6 +9,7 @@ import {
   Pause,
   Play,
   RefreshCw,
+  Target,
   Trash2,
 } from "lucide-react";
 import { type ComponentType, memo, useState } from "react";
@@ -304,6 +305,20 @@ function SourceRowImpl({ source, communityIdOrSlug, isFirst }: Props) {
             </>
           )}
         </div>
+
+        {source.goal && (
+          <p
+            className="mt-1.5 flex items-start gap-1.5 text-xs leading-snug text-stone-500 dark:text-zinc-500"
+            title={`Curator purpose: ${source.goal}`}
+          >
+            <Target
+              aria-hidden="true"
+              className="mt-[2px] h-3 w-3 shrink-0 text-stone-400 dark:text-zinc-600"
+              strokeWidth={1.75}
+            />
+            <span className="line-clamp-2 italic">{source.goal}</span>
+          </p>
+        )}
 
         {source.lastSyncError && (
           <p

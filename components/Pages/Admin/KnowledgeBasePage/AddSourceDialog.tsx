@@ -62,10 +62,13 @@ const PLACEHOLDER_BY_KIND: Partial<Record<KnowledgeSourceKind, string>> = {
 
 const DEFAULT_KIND: KnowledgeSourceKind = "gdrive_file";
 
+const GOAL_MAX = 500;
+
 export function AddSourceDialog({ communityIdOrSlug, open, onOpenChange }: Props) {
   const [kind, setKind] = useState<KnowledgeSourceKind>(DEFAULT_KIND);
   const [externalId, setExternalId] = useState("");
   const [title, setTitle] = useState("");
+  const [goal, setGoal] = useState("");
   const create = useCreateKnowledgeSource(communityIdOrSlug);
 
   // Reset form when the dialog closes so a re-open starts fresh.
@@ -74,6 +77,7 @@ export function AddSourceDialog({ communityIdOrSlug, open, onOpenChange }: Props
       setKind(DEFAULT_KIND);
       setExternalId("");
       setTitle("");
+      setGoal("");
     }
   }, [open]);
 
@@ -84,11 +88,13 @@ export function AddSourceDialog({ communityIdOrSlug, open, onOpenChange }: Props
       toast.error("Fill in both the URL/ID and the title.");
       return;
     }
+    const trimmedGoal = goal.trim();
     try {
       await create.mutateAsync({
         kind,
         externalId: externalId.trim(),
         title: title.trim(),
+        goal: trimmedGoal.length > 0 ? trimmedGoal : null,
       });
       toast.success("Knowledge source added.");
       onOpenChange(false);
@@ -179,6 +185,30 @@ export function AddSourceDialog({ communityIdOrSlug, open, onOpenChange }: Props
                   spellCheck={false}
                   className="h-9 w-full rounded-md border border-stone-300 bg-white px-3 font-mono text-[12.5px] text-stone-900 placeholder-stone-400 transition focus:border-sky-500 focus:outline-none focus:ring-[3px] focus:ring-sky-500/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder-zinc-600 dark:focus:border-sky-400 dark:focus:ring-sky-400/20"
                 />
+              </FormField>
+
+              <FormField
+                label="Purpose (optional)"
+                hint="One sentence on what this source is for. Prepended to each chunk at embed time so the chatbot ranks it higher when a question matches the intent. Not shown in citations."
+                htmlFor="kb-goal"
+              >
+                <div className="relative">
+                  <textarea
+                    id="kb-goal"
+                    value={goal}
+                    onChange={(e) => setGoal(e.target.value.slice(0, GOAL_MAX))}
+                    placeholder="Reference for grant applicants reviewing milestone formats."
+                    maxLength={GOAL_MAX}
+                    rows={3}
+                    className="block w-full resize-y rounded-md border border-stone-300 bg-white px-3 py-2 pb-5 text-[13px] leading-relaxed text-stone-900 placeholder-stone-400 transition focus:border-sky-500 focus:outline-none focus:ring-[3px] focus:ring-sky-500/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder-zinc-500 dark:focus:border-sky-400 dark:focus:ring-sky-400/20"
+                  />
+                  <span
+                    aria-live="polite"
+                    className="pointer-events-none absolute bottom-1.5 right-2 font-mono text-[10.5px] tabular-nums text-stone-400 dark:text-zinc-600"
+                  >
+                    {goal.length}/{GOAL_MAX}
+                  </span>
+                </div>
               </FormField>
             </div>
 

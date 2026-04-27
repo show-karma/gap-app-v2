@@ -17,6 +17,10 @@ export interface KnowledgeSource {
   externalId: string;
   title: string;
   isActive: boolean;
+  // Optional editorial purpose. Prepended to each chunk at embed time so
+  // retrieval picks up the curator's intent — never shown in citations or
+  // the agent's excerpt path.
+  goal: string | null;
   syncIntervalMin: number;
   lastSyncedAt: string | null;
   lastSyncStatus: KnowledgeSyncStatus | null;
@@ -44,11 +48,14 @@ export interface CreateKnowledgeSourceInput {
   kind: KnowledgeSourceKind;
   externalId: string;
   title: string;
+  goal?: string | null;
   syncIntervalMin?: number;
 }
 
 export interface UpdateKnowledgeSourceInput {
   title?: string;
+  // `null` clears the goal; omitting the key leaves it unchanged.
+  goal?: string | null;
   isActive?: boolean;
   syncIntervalMin?: number;
 }
