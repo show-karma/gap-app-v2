@@ -397,7 +397,7 @@ function RowAction({
         tone === "danger" ? danger : neutral
       }`}
     >
-      <Icon aria-hidden="true" className={`h-4 w-4 ${spinning ? "animate-spin" : ""}`} />
+      <Icon aria-hidden={true} className={`h-4 w-4 ${spinning ? "animate-spin" : ""}`} />
     </button>
   );
 }
