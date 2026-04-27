@@ -62,9 +62,10 @@ export const KNOWLEDGE_SOURCE_KIND_LABELS: Record<KnowledgeSourceKind, string> =
 };
 
 export const KNOWLEDGE_SOURCE_KIND_HINTS: Record<KnowledgeSourceKind, string> = {
-  gdrive_folder: "Folder ID — share the folder with the service account first.",
-  gdrive_file: "Google Doc ID (the long string in the doc URL).",
-  url: "Full URL of the page (e.g. https://docs.example.com/intro).",
-  sitemap: "URL of an XML sitemap (e.g. https://docs.example.com/sitemap.xml).",
-  pdf_url: "Direct URL to a PDF file.",
+  gdrive_folder: "Folder ID — currently disabled in the UI; tracked in docs/features.",
+  gdrive_file:
+    "Paste the share URL or just the doc ID. The Doc must be set to “Anyone with the link — Viewer”.",
+  url: "Currently disabled in the UI; tracked in docs/features.",
+  sitemap: "Currently disabled in the UI; tracked in docs/features.",
+  pdf_url: "Direct URL to a publicly-accessible PDF file (no auth or session cookies required).",
 };
