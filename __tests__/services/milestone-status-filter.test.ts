@@ -1,6 +1,7 @@
 import {
   filterByMilestoneStatus,
   getMilestoneStatus,
+  isMilestoneStatusFilter,
   MILESTONE_STATUS_OPTIONS,
   type MilestoneStatusFilter,
 } from "@/services/milestone-status-filter.service";
@@ -258,6 +259,19 @@ describe("filterByMilestoneStatus", () => {
     expect(result).toHaveLength(1);
     expect(result[0].uid).toBe("pending-1");
   });
+});
+
+describe("isMilestoneStatusFilter", () => {
+  it.each(["all", "pending", "completed", "verified"])("returns true for %s", (value) => {
+    expect(isMilestoneStatusFilter(value)).toBe(true);
+  });
+
+  it.each([null, "", "ALL", "done", "unknown", "Pending"])(
+    "returns false for invalid value %s",
+    (value) => {
+      expect(isMilestoneStatusFilter(value as string | null)).toBe(false);
+    }
+  );
 });
 
 describe("MILESTONE_STATUS_OPTIONS", () => {

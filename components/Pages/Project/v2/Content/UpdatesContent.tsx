@@ -3,7 +3,10 @@
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useMemo } from "react";
 import { useProjectProfile } from "@/hooks/v2/useProjectProfile";
-import type { MilestoneStatusFilter } from "@/services/milestone-status-filter.service";
+import {
+  isMilestoneStatusFilter,
+  type MilestoneStatusFilter,
+} from "@/services/milestone-status-filter.service";
 import { getActivityFilterType } from "@/services/project-profile.service";
 import { useOwnerStore, useProjectStore } from "@/store";
 import type { UpdatesFeedFilters } from "@/types/v2/project-profile.types";
@@ -45,17 +48,9 @@ export function UpdatesContent({ className }: UpdatesContentProps) {
   }, [searchParams]);
 
   // Read milestone status filter from URL
-  const milestoneStatusFilter = useMemo(() => {
+  const milestoneStatusFilter = useMemo<MilestoneStatusFilter>(() => {
     const statusParam = searchParams.get("milestoneStatus");
-    if (
-      statusParam === "all" ||
-      statusParam === "pending" ||
-      statusParam === "completed" ||
-      statusParam === "verified"
-    ) {
-      return statusParam as MilestoneStatusFilter;
-    }
-    return "all" as MilestoneStatusFilter;
+    return isMilestoneStatusFilter(statusParam) ? statusParam : "all";
   }, [searchParams]);
 
   // Read the 4 new filter params from URL
@@ -116,14 +111,7 @@ export function UpdatesContent({ className }: UpdatesContentProps) {
 
       // Default milestones to completed when no explicit status is present.
       if (newFilters.includes("milestones")) {
-        const currentStatus = params.get("milestoneStatus");
-        const hasExplicitMilestoneStatus =
-          currentStatus === "all" ||
-          currentStatus === "pending" ||
-          currentStatus === "completed" ||
-          currentStatus === "verified";
-
-        if (!hasExplicitMilestoneStatus) {
+        if (!isMilestoneStatusFilter(params.get("milestoneStatus"))) {
           params.set("milestoneStatus", "completed");
         }
       } else {
@@ -140,11 +128,7 @@ export function UpdatesContent({ className }: UpdatesContentProps) {
   const handleMilestoneStatusChange = useCallback(
     (status: MilestoneStatusFilter) => {
       const params = new URLSearchParams(searchParams.toString());
-      if (status === "all") {
-        params.set("milestoneStatus", "all");
-      } else {
-        params.set("milestoneStatus", status);
-      }
+      params.set("milestoneStatus", status);
       const newURL = params.toString() ? `?${params.toString()}` : pathname;
       router.replace(newURL, { scroll: false });
     },
