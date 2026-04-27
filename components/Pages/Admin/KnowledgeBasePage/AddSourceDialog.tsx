@@ -1,7 +1,7 @@
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
-import { FileBadge, FileText, Info, ShieldCheck, X } from "lucide-react";
+import { FileBadge, FileText, Globe, Info, ShieldCheck, X } from "lucide-react";
 import { type ComponentType, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/Utilities/Button";
@@ -29,8 +29,7 @@ interface KindOption {
   fg: string;
 }
 
-// Note: only the kinds we actively support today are exposed in the UI.
-// `url`, `sitemap`, and `gdrive_folder` are intentionally hidden — they remain
+// Note: `sitemap` and `gdrive_folder` are intentionally hidden — they remain
 // in the type union and on the backend, see
 // docs/features/rag-filecoin-knowledge-base.md for the deferral rationale and
 // the re-enable plan.
@@ -42,6 +41,12 @@ const KIND_OPTIONS: KindOption[] = [
     fg: "text-emerald-600 dark:text-emerald-400",
   },
   {
+    kind: "url",
+    Icon: Globe,
+    blurb: "Any publicly-accessible web page",
+    fg: "text-sky-600 dark:text-sky-400",
+  },
+  {
     kind: "pdf_url",
     Icon: FileBadge,
     blurb: "A PDF served from a public URL",
@@ -51,6 +56,7 @@ const KIND_OPTIONS: KindOption[] = [
 
 const PLACEHOLDER_BY_KIND: Partial<Record<KnowledgeSourceKind, string>> = {
   gdrive_file: "https://docs.google.com/document/d/<doc-id>/edit",
+  url: "https://docs.example.com/intro",
   pdf_url: "https://example.com/whitepaper.pdf",
 };
 
@@ -153,7 +159,13 @@ export function AddSourceDialog({ communityIdOrSlug, open, onOpenChange }: Props
               </FormField>
 
               <FormField
-                label={kind === "gdrive_file" ? "Google Doc URL or ID" : "PDF URL"}
+                label={
+                  kind === "gdrive_file"
+                    ? "Google Doc URL or ID"
+                    : kind === "pdf_url"
+                      ? "PDF URL"
+                      : "Web page URL"
+                }
                 hint={KNOWLEDGE_SOURCE_KIND_HINTS[kind] ?? "Provide a publicly-accessible URL."}
                 htmlFor="kb-external"
               >
@@ -242,7 +254,6 @@ function KindCard({
 // not load" error after registering a private doc.
 
 function PublicAccessReminder({ kind }: { kind: KnowledgeSourceKind }) {
-  const isDoc = kind === "gdrive_file";
   return (
     <div className="mt-4 flex items-start gap-2 rounded-md border border-stone-200 bg-stone-50 px-2.5 py-2 dark:border-zinc-800 dark:bg-zinc-900/60">
       <ShieldCheck
@@ -250,7 +261,7 @@ function PublicAccessReminder({ kind }: { kind: KnowledgeSourceKind }) {
         aria-hidden="true"
       />
       <div className="min-w-0 flex-1 text-[12px] leading-relaxed text-stone-600 dark:text-zinc-400">
-        {isDoc ? (
+        {kind === "gdrive_file" ? (
           <p>
             <strong className="font-semibold text-stone-800 dark:text-zinc-200">
               Source must be publicly accessible.
@@ -260,6 +271,15 @@ function PublicAccessReminder({ kind }: { kind: KnowledgeSourceKind }) {
               Anyone with the link — Viewer
             </strong>
             . Karma fetches the doc through its public export URL — no Drive credentials needed.
+          </p>
+        ) : kind === "url" ? (
+          <p>
+            <strong className="font-semibold text-stone-800 dark:text-zinc-200">
+              Source must be publicly accessible.
+            </strong>{" "}
+            The page must load without a sign-in wall, paywall, or required cookies. Karma converts
+            the page&apos;s HTML to markdown — pages that render content via JavaScript only may
+            return empty.
           </p>
         ) : (
           <p>

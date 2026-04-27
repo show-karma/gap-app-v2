@@ -1,6 +1,6 @@
 "use client";
 
-import { FileBadge, FileText, Plus, Search, Sparkles } from "lucide-react";
+import { FileBadge, FileText, Globe, Plus, Search, Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/Utilities/Button";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
@@ -269,6 +269,12 @@ const QUICK_PICKS: Array<{
     fg: "text-emerald-600 dark:text-emerald-400",
   },
   {
+    kind: "url",
+    label: "Web page",
+    Icon: Globe,
+    fg: "text-sky-600 dark:text-sky-400",
+  },
+  {
     kind: "pdf_url",
     label: "PDF URL",
     Icon: FileBadge,
@@ -298,8 +304,8 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
         No sources yet
       </h2>
       <p className="mx-auto mt-1.5 max-w-[44ch] text-sm leading-relaxed text-stone-600 dark:text-zinc-400">
-        Add a publicly-shared Google Doc or a PDF URL and your chatbot will start answering
-        questions from it on the next nightly sync.
+        Add a publicly-shared Google Doc, a web page, or a PDF URL and your chatbot will start
+        answering questions from it on the next nightly sync.
       </p>
 
       <Button
