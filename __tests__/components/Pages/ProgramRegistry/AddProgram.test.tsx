@@ -3,6 +3,8 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { vi } from "vitest";
 import AddProgram from "@/components/Pages/ProgramRegistry/AddProgram";
+import { errorManager } from "@/components/Utilities/errorManager";
+import fetchData from "@/utilities/fetchData";
 
 // --- Mocks ---
 
@@ -296,7 +298,7 @@ describe("AddProgram", () => {
   describe("rendering", () => {
     it("renders the create program heading when no programToEdit", () => {
       renderWithProviders(<AddProgram />);
-      expect(screen.getByText("Add your program to onchain registry")).toBeInTheDocument();
+      expect(screen.getByText("Submit a Funding Opportunity")).toBeInTheDocument();
     });
 
     it("renders update heading when programToEdit is provided", () => {
@@ -338,6 +340,7 @@ describe("AddProgram", () => {
 
     it("renders social link fields", () => {
       renderWithProviders(<AddProgram />);
+      fireEvent.click(screen.getByText("Social Links"));
 
       expect(screen.getByLabelText("X/Twitter")).toBeInTheDocument();
       expect(screen.getByLabelText("Discord")).toBeInTheDocument();
@@ -417,8 +420,8 @@ describe("AddProgram", () => {
 
     it("renders email fields when isAdmin is true", () => {
       renderWithProviders(<AddProgram isAdmin={true} />);
-      expect(screen.getByText("Admin Emails (optional)")).toBeInTheDocument();
-      expect(screen.getByText("Finance Emails *")).toBeInTheDocument();
+      expect(screen.getByText("Admin Emails")).toBeInTheDocument();
+      expect(screen.getByText("Finance Emails")).toBeInTheDocument();
     });
   });
 
@@ -501,7 +504,6 @@ describe("AddProgram", () => {
 
   describe("form submission", () => {
     it("calls fetchData on create when required fields are filled", async () => {
-      const fetchData = require("@/utilities/fetchData").default;
       const user = userEvent.setup();
       renderWithProviders(<AddProgram />);
 
@@ -541,8 +543,7 @@ describe("AddProgram", () => {
 
     it("shows loading state on submit button during submission", async () => {
       // Make fetchData hang to keep loading state active
-      const fetchData = require("@/utilities/fetchData").default;
-      fetchData.mockReturnValue(new Promise(() => {}));
+      vi.mocked(fetchData).mockReturnValue(new Promise(() => {}));
 
       const user = userEvent.setup();
       renderWithProviders(<AddProgram />);
@@ -567,11 +568,7 @@ describe("AddProgram", () => {
     });
 
     it("shows error toast when submission fails", async () => {
-      const fetchData = require("@/utilities/fetchData").default;
-      fetchData.mockResolvedValue([null, "Server error"]);
-      const toast = require("react-hot-toast").default;
-      const { errorManager } = require("@/components/Utilities/errorManager");
-
+      vi.mocked(fetchData).mockResolvedValue([null, "Server error"]);
       const user = userEvent.setup();
       renderWithProviders(<AddProgram />);
 
