@@ -582,7 +582,7 @@ export function ActivityFilters({
             const isEmpty = !count;
             // Keep active pills clickable so users can always toggle them off,
             // even when the current filter selection produces zero results
-            // (e.g. milestones=completed on a project without completed milestones).
+            // (e.g. `milestones=completed` on a project without completed milestones).
             const isDisabled = isEmpty && !isActive;
             const config = FILTER_CONFIG[filter.value];
             const Icon = config?.icon;
