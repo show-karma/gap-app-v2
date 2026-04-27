@@ -1,0 +1,287 @@
+name: PR Demo Video
+
+# Records short walkthroughs of the features added by a PR and posts them
+# as a final comment, once every other required check has gone green.
+#
+# Sources of truth:
+#   .github/workflows/pr-demo-video.yml  — this file
+#   e2e/demos/                           — specs + descriptions
+
+on:
+  workflow_run:
+    workflows: ["E2E Tests"]
+    types:
+      - completed
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  record:
+    if: >-
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Resolve PR number
+        id: pr
+        run: |
+          set -euo pipefail
+          SHA="${{ github.event.workflow_run.head_sha }}"
+          PR=$(gh pr list \
+            --repo "${{ github.repository }}" \
+            --state open \
+            --search "$SHA" \
+            --json number,headRefOid \
+            --jq '.[] | select(.headRefOid=="'"$SHA"'") | .number' \
+            | head -1)
+          if [ -z "$PR" ]; then
+            echo "No open PR found for $SHA — skipping"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "number=$PR" >> "$GITHUB_OUTPUT"
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Wait for required checks to settle
+        if: steps.pr.outputs.skip != 'true'
+        run: |
+          set -euo pipefail
+          PR="${{ steps.pr.outputs.number }}"
+          # Poll up to 30 minutes; bail early if something failed.
+          for _ in $(seq 1 60); do
+            json=$(gh pr checks "$PR" \
+              --repo "${{ github.repository }}" \
+              --json name,bucket 2>/dev/null || echo "[]")
+            failures=$(echo "$json" \
+              | jq '[.[] | select(.bucket=="fail" and .name != "pr-demo-video")] | length')
+            pending=$(echo "$json" \
+              | jq '[.[] | select(.bucket=="pending" and .name != "pr-demo-video")] | length')
+            if [ "$failures" -gt 0 ]; then
+              echo "Other checks failed — skipping demo"
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            if [ "$pending" -eq 0 ]; then
+              echo "All required checks green"
+              break
+            fi
+            echo "Pending checks: $pending — waiting"
+            sleep 30
+          done
+
+      - name: Resolve Vercel preview URL
+        if: steps.pr.outputs.skip != 'true'
+        id: preview
+        run: |
+          set -euo pipefail
+          PR="${{ steps.pr.outputs.number }}"
+          # Look at the most recent vercel[bot] comment for a preview URL.
+          URL=$(gh pr view "$PR" \
+            --repo "${{ github.repository }}" \
+            --json comments \
+            --jq '[.comments[] | select(.author.login=="vercel")] | last | .body' \
+            | grep -oE 'https://[a-z0-9-]+\.vercel\.app' \
+            | head -1 || true)
+          if [ -z "${URL:-}" ]; then
+            echo "No Vercel preview URL found — skipping"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "Preview URL: $URL"
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout PR head
+        if: steps.preview.outputs.skip != 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.pr.outputs.sha }}
+          fetch-depth: 1
+
+      - name: Detect demo specs
+        if: steps.preview.outputs.skip != 'true'
+        id: detect
+        run: |
+          if compgen -G "e2e/demos/*.demo.ts" > /dev/null; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            ls e2e/demos/*.demo.ts
+          else
+            echo "No demo specs in this PR — skipping"
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup pnpm
+        if: steps.detect.outputs.exists == 'true'
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        if: steps.detect.outputs.exists == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        if: steps.detect.outputs.exists == 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright (Chromium)
+        if: steps.detect.outputs.exists == 'true'
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Install ffmpeg
+        if: steps.detect.outputs.exists == 'true'
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Record demos against the Vercel preview
+        if: steps.detect.outputs.exists == 'true'
+        env:
+          DEMO_BASE_URL: ${{ steps.preview.outputs.url }}
+        run: pnpm exec playwright test --config=e2e/demos/playwright.config.ts
+
+      - name: Convert recordings to MP4
+        if: steps.detect.outputs.exists == 'true'
+        id: convert
+        run: |
+          set -euo pipefail
+          mkdir -p demo-output
+          if [ ! -d e2e-demos-results ]; then
+            echo "No e2e-demos-results directory — Playwright produced no videos"
+            echo "count=0" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          count=0
+          # Map each .webm back to its spec name. Playwright nests videos under
+          # <results>/<spec basename>-<project>/<test slug>/video.webm
+          while IFS= read -r webm; do
+            spec_dir=$(dirname "$(dirname "$webm")")
+            spec_base=$(basename "$spec_dir")
+            # spec_base looks like "team-email-display-demo-demo" — strip the
+            # trailing "-demo-demo" / "-demo" project suffixes.
+            name=$(echo "$spec_base" | sed -E 's/-demo(-demo)?$//')
+            ffmpeg -nostdin -y -i "$webm" \
+              -c:v libx264 -pix_fmt yuv420p -crf 23 \
+              -movflags +faststart \
+              "demo-output/${name}.mp4"
+            count=$((count + 1))
+          done < <(find e2e-demos-results -name "video.webm" -type f)
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+          ls -la demo-output
+
+      - name: Push videos to pr-demo-assets branch
+        if: steps.detect.outputs.exists == 'true' && steps.convert.outputs.count != '0'
+        id: push
+        run: |
+          set -euo pipefail
+          PR="${{ steps.pr.outputs.number }}"
+          SHA="${{ steps.pr.outputs.sha }}"
+          SHORT="${SHA:0:7}"
+          DEST_REL="demos/pr-${PR}/${SHORT}"
+
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Check out (or create) the orphan branch in a separate worktree.
+          if git ls-remote --exit-code --heads origin pr-demo-assets >/dev/null 2>&1; then
+            git fetch origin pr-demo-assets
+            git worktree add /tmp/assets pr-demo-assets
+          else
+            git worktree add --detach /tmp/assets HEAD
+            (
+              cd /tmp/assets
+              git checkout --orphan pr-demo-assets
+              git rm -rf . >/dev/null 2>&1 || true
+              cat > README.md <<'EOF'
+          # PR demo assets
+
+          Auto-generated MP4 walkthroughs posted by `.github/workflows/pr-demo-video.yml`.
+          Layout: `demos/pr-<number>/<short-sha>/<feature>.mp4`.
+          EOF
+              git add README.md
+              git commit -m "init: pr-demo-assets branch"
+            )
+          fi
+
+          mkdir -p "/tmp/assets/${DEST_REL}"
+          cp demo-output/*.mp4 "/tmp/assets/${DEST_REL}/"
+
+          (
+            cd /tmp/assets
+            git add "${DEST_REL}"
+            if git diff --cached --quiet; then
+              echo "No new videos to commit"
+            else
+              git commit -m "demo: PR #${PR} @ ${SHORT}"
+              git push origin pr-demo-assets
+            fi
+          )
+
+          echo "rel=${DEST_REL}" >> "$GITHUB_OUTPUT"
+
+      - name: Build PR comment body
+        if: steps.detect.outputs.exists == 'true' && steps.convert.outputs.count != '0'
+        id: body
+        run: |
+          set -euo pipefail
+          REPO="${{ github.repository }}"
+          REL="${{ steps.push.outputs.rel }}"
+          BASE_RAW="https://raw.githubusercontent.com/${REPO}/pr-demo-assets/${REL}"
+          BASE_BLOB="https://github.com/${REPO}/blob/pr-demo-assets/${REL}"
+
+          {
+            echo "## Feature demo"
+            echo
+            for mp4 in demo-output/*.mp4; do
+              name=$(basename "$mp4" .mp4)
+              md="e2e/demos/${name}.md"
+              if [ -f "$md" ]; then
+                cat "$md"
+              else
+                echo "**${name}**"
+              fi
+              echo
+              echo "<video src=\"${BASE_RAW}/${name}.mp4\" controls width=\"720\"></video>"
+              echo
+              echo "[Open video](${BASE_BLOB}/${name}.mp4?raw=true)"
+              echo
+              echo "---"
+              echo
+            done
+            echo "_Recorded against the Vercel preview at \`${{ steps.pr.outputs.sha }}\`._"
+          } > comment.md
+
+          cat comment.md
+
+      - name: Post or update PR comment
+        if: steps.detect.outputs.exists == 'true' && steps.convert.outputs.count != '0'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const body = fs.readFileSync('comment.md', 'utf8');
+            const issue_number = parseInt('${{ steps.pr.outputs.number }}', 10);
+            const { owner, repo } = context.repo;
+            const marker = '## Feature demo';
+            const { data: comments } = await github.rest.issues.listComments({
+              owner, repo, issue_number, per_page: 100,
+            });
+            const existing = comments.find(
+              (c) => c.user?.type === 'Bot' && c.body?.startsWith(marker)
+            );
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner, repo, comment_id: existing.id, body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner, repo, issue_number, body,
+              });
+            }
