@@ -17,7 +17,14 @@ interface Props {
 export function PortfolioReportPreviewPage({ community, reportId }: Props) {
   const slug = community.details.slug;
   const { hasAccess, isLoading: accessLoading } = useCommunityAdminAccess(community.uid);
-  const { data: report, isLoading, isError, refetch } = usePortfolioReport(slug, reportId);
+  const {
+    data: report,
+    isLoading,
+    isError,
+    refetch,
+  } = usePortfolioReport(slug, reportId, {
+    enabled: hasAccess && !accessLoading,
+  });
   const backHref = PAGES.ADMIN.PORTFOLIO_REPORTS(slug);
 
   if (accessLoading || isLoading) {
@@ -77,6 +84,10 @@ export function PortfolioReportPreviewPage({ community, reportId }: Props) {
     );
   }
 
+  const bannerText = report.publishedAt
+    ? "Preview mode — admin view of this report."
+    : "Preview mode — this draft is only visible to community admins.";
+
   return (
     <PortfolioReportDocumentView
       community={community}
@@ -84,7 +95,7 @@ export function PortfolioReportPreviewPage({ community, reportId }: Props) {
       report={report}
       backHref={backHref}
       backLabel="Back to portfolio reports"
-      bannerText="Preview mode — this draft is only visible to community admins."
+      bannerText={bannerText}
     />
   );
 }

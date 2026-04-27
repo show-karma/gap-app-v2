@@ -24,18 +24,12 @@ vi.mock("react-hot-toast", () => ({
 vi.mock("@/hooks/communities/useCommunityAdminAccess");
 vi.mock("@/hooks/portfolio-reports/usePortfolioReports");
 
-const mockUseCommunityAdminAccess = useCommunityAdminAccess as vi.MockedFunction<
-  typeof useCommunityAdminAccess
->;
-const mockUsePortfolioReports = usePortfolioReports as vi.MockedFunction<
-  typeof usePortfolioReports
->;
-const mockUseGenerateReport = useGenerateReport as vi.MockedFunction<typeof useGenerateReport>;
-const mockUsePublishReport = usePublishReport as vi.MockedFunction<typeof usePublishReport>;
-const mockUseUnpublishReport = useUnpublishReport as vi.MockedFunction<typeof useUnpublishReport>;
-const mockUseRegenerateReport = useRegenerateReport as vi.MockedFunction<
-  typeof useRegenerateReport
->;
+const mockUseCommunityAdminAccess = vi.mocked(useCommunityAdminAccess);
+const mockUsePortfolioReports = vi.mocked(usePortfolioReports);
+const mockUseGenerateReport = vi.mocked(useGenerateReport);
+const mockUsePublishReport = vi.mocked(usePublishReport);
+const mockUseUnpublishReport = vi.mocked(useUnpublishReport);
+const mockUseRegenerateReport = vi.mocked(useRegenerateReport);
 
 describe("PortfolioReportListPage", () => {
   beforeEach(() => {
