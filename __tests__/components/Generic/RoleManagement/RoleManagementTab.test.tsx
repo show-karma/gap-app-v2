@@ -254,7 +254,7 @@ describe("RoleManagementTab", () => {
         />
       );
 
-      expect(screen.getByLabelText("Edit roles for Alice")).toBeInTheDocument();
+      expect(screen.getByLabelText("Edit Alice")).toBeInTheDocument();
     });
 
     it("does not render edit button when onEditRoles is not provided", () => {
@@ -278,7 +278,7 @@ describe("RoleManagementTab", () => {
         />
       );
 
-      expect(screen.queryByLabelText("Edit roles for Alice")).not.toBeInTheDocument();
+      expect(screen.queryByLabelText("Edit Alice")).not.toBeInTheDocument();
     });
 
     it("shows inline edit form when edit button is clicked", async () => {
@@ -304,10 +304,10 @@ describe("RoleManagementTab", () => {
         />
       );
 
-      await user.click(screen.getByLabelText("Edit roles for Alice"));
+      await user.click(screen.getByLabelText("Edit Alice"));
 
       // Edit form shows checkboxes for roles
-      expect(screen.getByLabelText("Save role changes")).toBeInTheDocument();
+      expect(screen.getByLabelText("Save changes")).toBeInTheDocument();
       expect(screen.getByLabelText("Cancel editing")).toBeInTheDocument();
     });
 
@@ -336,14 +336,14 @@ describe("RoleManagementTab", () => {
         />
       );
 
-      await user.click(screen.getByLabelText("Edit roles for Alice"));
+      await user.click(screen.getByLabelText("Edit Alice"));
 
       // The program checkbox should be checked, milestone unchecked
       // Check the milestone checkbox
       const uncheckedCheckbox = screen.getByRole("checkbox", { checked: false });
       await user.click(uncheckedCheckbox);
 
-      await user.click(screen.getByLabelText("Save role changes"));
+      await user.click(screen.getByLabelText("Save changes"));
 
       expect(onEditRoles).toHaveBeenCalledWith("alice@example.com", ["program", "milestone"]);
     });
@@ -371,11 +371,11 @@ describe("RoleManagementTab", () => {
         />
       );
 
-      await user.click(screen.getByLabelText("Edit roles for Alice"));
-      expect(screen.getByLabelText("Save role changes")).toBeInTheDocument();
+      await user.click(screen.getByLabelText("Edit Alice"));
+      expect(screen.getByLabelText("Save changes")).toBeInTheDocument();
 
       await user.click(screen.getByLabelText("Cancel editing"));
-      expect(screen.queryByLabelText("Save role changes")).not.toBeInTheDocument();
+      expect(screen.queryByLabelText("Save changes")).not.toBeInTheDocument();
     });
 
     it("uses DeleteDialog instead of confirm() when removing with zero roles", async () => {
@@ -403,14 +403,14 @@ describe("RoleManagementTab", () => {
         />
       );
 
-      await user.click(screen.getByLabelText("Edit roles for Alice"));
+      await user.click(screen.getByLabelText("Edit Alice"));
 
       // Uncheck the only checked role
       const checkedCheckbox = screen.getByRole("checkbox", { checked: true });
       await user.click(checkedCheckbox);
 
       // Click save - should show DeleteDialog, not browser confirm()
-      await user.click(screen.getByLabelText("Save role changes"));
+      await user.click(screen.getByLabelText("Save changes"));
 
       expect(screen.getByTestId("delete-dialog")).toBeInTheDocument();
     });
@@ -438,12 +438,12 @@ describe("RoleManagementTab", () => {
         />
       );
 
-      await user.click(screen.getByLabelText("Edit roles for Alice"));
+      await user.click(screen.getByLabelText("Edit Alice"));
 
       // Role badges should be hidden during edit
       expect(screen.queryByText("App")).not.toBeInTheDocument();
       // Edit/remove buttons should be hidden during edit
-      expect(screen.queryByLabelText("Edit roles for Alice")).not.toBeInTheDocument();
+      expect(screen.queryByLabelText("Edit Alice")).not.toBeInTheDocument();
       expect(screen.queryByLabelText("Remove Alice")).not.toBeInTheDocument();
     });
   });

@@ -7,6 +7,7 @@ import {
   validateProgramIdentifier,
   validateProgramIdentifiers,
   validateReviewerData,
+  validateSlack,
   validateTelegram,
   validateWalletAddress,
 } from "../validators";
@@ -100,6 +101,36 @@ describe("validators", () => {
     it("should validate exactly 5 characters (minimum)", () => {
       expect(validateTelegram("abcde")).toBe(true);
       expect(validateTelegram("@abcde")).toBe(true); // @ + 5 chars = 6 total (5 alphanumeric minimum)
+    });
+  });
+
+  describe("validateSlack", () => {
+    it("should validate correct Slack handles", () => {
+      expect(validateSlack("alice")).toBe(true);
+      expect(validateSlack("@alice")).toBe(true);
+      expect(validateSlack("alice.cooper")).toBe(true);
+      expect(validateSlack("alice_cooper")).toBe(true);
+      expect(validateSlack("alice-cooper")).toBe(true);
+      expect(validateSlack("a1")).toBe(true); // minimum length
+      expect(validateSlack("a".repeat(80))).toBe(true); // maximum length
+    });
+
+    it("should reject invalid Slack handles", () => {
+      expect(validateSlack("a")).toBe(false); // too short
+      expect(validateSlack("a".repeat(81))).toBe(false); // too long
+      expect(validateSlack("alice cooper")).toBe(false); // space
+      expect(validateSlack("alice/cooper")).toBe(false); // invalid char
+    });
+
+    it("should handle edge cases", () => {
+      expect(validateSlack("")).toBe(false);
+      expect(validateSlack(null as any)).toBe(false);
+      expect(validateSlack(undefined as any)).toBe(false);
+    });
+
+    it("should trim whitespace before validation", () => {
+      expect(validateSlack("  alice  ")).toBe(true);
+      expect(validateSlack("  @alice  ")).toBe(true);
     });
   });
 
@@ -384,6 +415,26 @@ describe("validators", () => {
       });
       expect(result.valid).toBe(false);
       expect(result.errors.some((e) => e.includes("Telegram"))).toBe(true);
+    });
+
+    it("should reject invalid slack handle", () => {
+      const result = validateReviewerData({
+        name: "John Doe",
+        email: "john@example.com",
+        slack: "a",
+      });
+      expect(result.valid).toBe(false);
+      expect(result.errors.some((e) => e.includes("Slack"))).toBe(true);
+    });
+
+    it("should accept valid slack handle and return sanitized value", () => {
+      const result = validateReviewerData({
+        name: "John Doe",
+        email: "john@example.com",
+        slack: "@john.doe",
+      });
+      expect(result.valid).toBe(true);
+      expect(result.sanitized.slack).toBe("john.doe");
     });
 
     it("should accept name with whitespace trimmed to valid length", () => {
