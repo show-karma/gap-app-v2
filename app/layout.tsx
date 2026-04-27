@@ -149,7 +149,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 <TenantStoreInitializer tenant={tenantConfig}>{null}</TenantStoreInitializer>
               )}
               <PermissionsProvider />
-              <DeferredLayoutComponents isWhitelabel={isWhitelabel} toasterConfig={toasterConfig} />
+              <DeferredLayoutComponents toasterConfig={toasterConfig} />
               <div className="min-h-screen flex flex-col justify-between h-full text-gray-700 bg-white dark:bg-black dark:text-white">
                 <div className="flex flex-col w-full h-full">
                   {isWhitelabel ? (
