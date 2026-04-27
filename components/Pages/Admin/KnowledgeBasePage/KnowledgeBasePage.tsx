@@ -44,7 +44,7 @@ function formatRelative(ms: number | null): string {
 }
 
 export function KnowledgeBasePage({ community }: Props) {
-  const slug = community.details?.data?.slug ?? community.uid;
+  const slug = community.details?.slug ?? community.uid;
   const { hasAccess, isLoading: isCheckingAdmin } = useCommunityAdminAccess(community.uid);
   const sources = useKnowledgeSources(hasAccess ? slug : undefined);
   const [addOpen, setAddOpen] = useState(false);
@@ -80,7 +80,7 @@ export function KnowledgeBasePage({ community }: Props) {
   return (
     <PageFrame>
       <Masthead
-        communityName={community.details?.data?.name ?? "this community"}
+        communityName={community.details?.name ?? "this community"}
         showHeaderCta={list.length > 0}
         onAdd={() => setAddOpen(true)}
         lastSyncedAt={lastSync}
