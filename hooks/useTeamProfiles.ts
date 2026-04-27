@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
+import { errorManager } from "@/components/Utilities/errorManager";
 import { useAuth } from "@/hooks/useAuth";
 import { communityAdminsService } from "@/services/community-admins.service";
 import { useProjectStore } from "@/store";
@@ -11,13 +12,13 @@ export const useTeamProfiles = (project: ProjectResponse | undefined) => {
   const setTeamProfiles = useProjectStore((state) => state.setTeamProfiles);
   const { authenticated } = useAuth();
 
-  const rawAddresses = [
-    project?.owner,
-    ...(project?.members?.map((member) => member.address).filter(Boolean) || []),
-  ].filter(Boolean) as string[];
-  const uniqueLowercasedAddresses = Array.from(
-    new Set(rawAddresses.map((address) => address.toLowerCase()))
-  );
+  const uniqueLowercasedAddresses = useMemo(() => {
+    const rawAddresses = [
+      project?.owner,
+      ...(project?.members?.map((member) => member.address).filter(Boolean) || []),
+    ].filter(Boolean) as string[];
+    return Array.from(new Set(rawAddresses.map((address) => address.toLowerCase())));
+  }, [project?.owner, project?.members]);
 
   const query = useQuery<TeamProfile[] | undefined>({
     queryKey: ["contributor-profiles", uniqueLowercasedAddresses, authenticated],
@@ -55,7 +56,7 @@ export const useTeamProfiles = (project: ProjectResponse | undefined) => {
             if (!authorizedProfile) return undefined;
 
             return {
-              recipient: authorizedProfile.publicAddress,
+              recipient: address,
               data: {
                 name: authorizedProfile.name,
                 email: authorizedProfile.email,
@@ -63,7 +64,12 @@ export const useTeamProfiles = (project: ProjectResponse | undefined) => {
             } as TeamProfile;
           })
           .filter((profile): profile is TeamProfile => Boolean(profile));
-      } catch {
+      } catch (error) {
+        errorManager(
+          "Failed to fetch authorized user profiles; falling back to public profiles",
+          error,
+          { addresses: uniqueLowercasedAddresses }
+        );
         return profiles;
       }
     },

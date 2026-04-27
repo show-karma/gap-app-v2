@@ -159,12 +159,13 @@ export function TeamMemberCard({ member, className }: TeamMemberCardProps) {
           </button>
         </div>
         {profile?.data.email ? (
-          <p
-            className="text-sm text-zinc-500 dark:text-zinc-400 break-all"
+          <a
+            href={`mailto:${profile.data.email}`}
+            className="text-sm text-zinc-500 dark:text-zinc-400 break-all hover:underline"
             data-testid="member-email"
           >
             {profile.data.email}
-          </p>
+          </a>
         ) : null}
         {profile?.data.aboutMe && (
           <p className="text-sm text-zinc-600 dark:text-zinc-400 pt-2" data-testid="member-about">

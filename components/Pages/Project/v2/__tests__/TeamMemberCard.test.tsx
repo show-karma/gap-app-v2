@@ -72,10 +72,13 @@ vi.mock("@/store/modals/contributorProfile", () => ({
   }),
 }));
 
-// Mock team profiles hook
-let mockTeamProfiles: TeamProfile[] = [
-  {
-    recipient: "0x1234567890123456789012345678901234567890",
+// Mock team profiles hook with factory for per-test overrides
+const createMockTeamProfile = (
+  overrides: Partial<TeamProfile["data"]> & { recipient?: string } = {}
+): TeamProfile => {
+  const { recipient, ...dataOverrides } = overrides;
+  return {
+    recipient: recipient ?? "0x1234567890123456789012345678901234567890",
     data: {
       name: "John Doe",
       email: "john@example.com",
@@ -84,9 +87,12 @@ let mockTeamProfiles: TeamProfile[] = [
       github: "johndoe",
       linkedin: "johndoe",
       farcaster: "johndoe",
+      ...dataOverrides,
     },
-  } as TeamProfile,
-];
+  } as TeamProfile;
+};
+
+let mockTeamProfiles: TeamProfile[] = [createMockTeamProfile()];
 
 vi.mock("@/hooks/useTeamProfiles", () => ({
   useTeamProfiles: () => ({
@@ -171,20 +177,7 @@ describe("TeamMemberCard", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockTeamProfiles = [
-      {
-        recipient: "0x1234567890123456789012345678901234567890",
-        data: {
-          name: "John Doe",
-          email: "john@example.com",
-          aboutMe: "A test user",
-          twitter: "johndoe",
-          github: "johndoe",
-          linkedin: "johndoe",
-          farcaster: "johndoe",
-        },
-      } as TeamProfile,
-    ];
+    mockTeamProfiles = [createMockTeamProfile()];
   });
 
   describe("Rendering", () => {
@@ -236,13 +229,13 @@ describe("TeamMemberCard", () => {
 
     it("should not display member email when unavailable", () => {
       mockTeamProfiles = [
-        {
-          recipient: defaultMember,
-          data: {
-            name: "John Doe",
-            aboutMe: "A test user",
-          },
-        } as TeamProfile,
+        createMockTeamProfile({
+          email: undefined,
+          twitter: undefined,
+          github: undefined,
+          linkedin: undefined,
+          farcaster: undefined,
+        }),
       ];
 
       render(<TeamMemberCard member={defaultMember} />);
