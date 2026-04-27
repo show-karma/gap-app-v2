@@ -4,7 +4,6 @@ import { AlertTriangle, ArrowLeft, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { PortfolioReportDocumentView } from "@/components/Pages/Community/PortfolioReports/PortfolioReportDocumentView";
 import { Spinner } from "@/components/Utilities/Spinner";
-import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { usePortfolioReport } from "@/hooks/portfolio-reports/usePortfolioReports";
 import type { Community } from "@/types/v2/community";
 import { PAGES } from "@/utilities/pages";
@@ -16,29 +15,13 @@ interface Props {
 
 export function PortfolioReportPreviewPage({ community, reportId }: Props) {
   const slug = community.details.slug;
-  const { hasAccess, isLoading: accessLoading } = useCommunityAdminAccess(community.uid);
-  const {
-    data: report,
-    isLoading,
-    isError,
-    refetch,
-  } = usePortfolioReport(slug, reportId, {
-    enabled: hasAccess && !accessLoading,
-  });
+  const { data: report, isLoading, isError, refetch } = usePortfolioReport(slug, reportId);
   const backHref = PAGES.ADMIN.PORTFOLIO_REPORTS(slug);
 
-  if (accessLoading || isLoading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center p-12">
         <Spinner />
-      </div>
-    );
-  }
-
-  if (!hasAccess) {
-    return (
-      <div className="flex items-center justify-center p-12 text-zinc-500">
-        You don&apos;t have permission to view this preview.
       </div>
     );
   }

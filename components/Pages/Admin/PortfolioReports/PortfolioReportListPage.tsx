@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, EyeOff, FileText, Plus, RefreshCw, Settings } from "lucide-react";
+import { Eye, EyeOff, FileSearch, FileText, Plus, RefreshCw, Settings } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -85,7 +85,7 @@ function ReportTableRow({
           </Button>
           {report.status === "draft" ? (
             <Button variant="ghost" size="sm" onClick={onPreview}>
-              <Eye className="mr-1 h-3 w-3" />
+              <FileSearch className="mr-1 h-3 w-3" />
               Preview
             </Button>
           ) : null}
