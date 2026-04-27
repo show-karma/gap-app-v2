@@ -1,0 +1,363 @@
+name: PR Demo Video
+
+# Records short walkthroughs of the features added by a PR and posts them
+# as a final comment, once every other required check has gone green.
+#
+# Sources of truth:
+#   .github/workflows/pr-demo-video.yml  — this file
+#   e2e/demos/                           — specs + descriptions
+
+on:
+  workflow_run:
+    workflows: ["E2E Tests"]
+    types:
+      - completed
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  # All runs publish to the same `pr-demo-assets` branch and would race on
+  # `git push`; serialize regardless of which PR triggered them.
+  group: pr-demo-assets
+  cancel-in-progress: false
+
+jobs:
+  record:
+    if: >-
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_repository.fork == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Resolve PR number
+        id: pr
+        run: |
+          set -euo pipefail
+          SHA="${{ github.event.workflow_run.head_sha }}"
+          # `gh`'s `--jq` accepts only a single filter expression — it doesn't
+          # forward `--arg` to jq. Pipe through standalone jq so the SHA can
+          # be safely bound as a parameter.
+          PR=$(gh pr list \
+            --repo "${{ github.repository }}" \
+            --state open \
+            --search "$SHA" \
+            --json number,headRefOid \
+            | jq -r --arg sha "$SHA" '.[] | select(.headRefOid==$sha) | .number' \
+            | head -1)
+          if [ -z "$PR" ]; then
+            echo "No open PR found for $SHA — skipping"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "number=$PR" >> "$GITHUB_OUTPUT"
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Wait for required checks to settle
+        id: checks
+        if: steps.pr.outputs.skip != 'true'
+        run: |
+          set -euo pipefail
+          PR="${{ steps.pr.outputs.number }}"
+          settled=0
+          # Poll up to 30 minutes; bail early if something failed.
+          for _ in $(seq 1 60); do
+            if ! json=$(gh pr checks "$PR" \
+                --repo "${{ github.repository }}" \
+                --json name,bucket 2>/dev/null); then
+              echo "gh pr checks request failed — retrying"
+              sleep 30
+              continue
+            fi
+            total=$(echo "$json" | jq 'length')
+            if [ "$total" -eq 0 ]; then
+              echo "No checks reported yet — retrying"
+              sleep 30
+              continue
+            fi
+            failures=$(echo "$json" \
+              | jq '[.[] | select(.bucket=="fail" and .name != "pr-demo-video")] | length')
+            pending=$(echo "$json" \
+              | jq '[.[] | select(.bucket=="pending" and .name != "pr-demo-video")] | length')
+            if [ "$failures" -gt 0 ]; then
+              echo "Other checks failed — skipping demo"
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            if [ "$pending" -eq 0 ]; then
+              echo "All required checks green"
+              settled=1
+              break
+            fi
+            echo "Pending checks: $pending — waiting"
+            sleep 30
+          done
+          if [ "$settled" -ne 1 ]; then
+            echo "Checks did not settle within the polling window — skipping demo"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+      - name: Resolve Vercel preview URL
+        if: steps.pr.outputs.skip != 'true' && steps.checks.outputs.skip != 'true'
+        id: preview
+        run: |
+          set -euo pipefail
+          PR="${{ steps.pr.outputs.number }}"
+          # Vercel's GitHub App posts comments under both `vercel` and
+          # `vercel[bot]` depending on context — match both.
+          URL=$(gh pr view "$PR" \
+            --repo "${{ github.repository }}" \
+            --json comments \
+            --jq '[.comments[] | select(.author.login=="vercel" or .author.login=="vercel[bot]")] | last | .body' \
+            | grep -oE 'https://[a-z0-9-]+\.vercel\.app' \
+            | head -1 || true)
+          if [ -z "${URL:-}" ]; then
+            echo "No Vercel preview URL found — skipping"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "Preview URL: $URL"
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout PR head
+        if: steps.preview.outputs.skip != 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.pr.outputs.sha }}
+          fetch-depth: 1
+
+      - name: Detect demo specs
+        if: steps.preview.outputs.skip != 'true'
+        id: detect
+        run: |
+          if compgen -G "e2e/demos/*.demo.ts" > /dev/null; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            ls e2e/demos/*.demo.ts
+          else
+            echo "No demo specs in this PR — skipping"
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup pnpm
+        if: steps.detect.outputs.exists == 'true'
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        if: steps.detect.outputs.exists == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        if: steps.detect.outputs.exists == 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright (Chromium)
+        if: steps.detect.outputs.exists == 'true'
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Install ffmpeg
+        if: steps.detect.outputs.exists == 'true'
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Record demos against the Vercel preview
+        if: steps.detect.outputs.exists == 'true'
+        env:
+          DEMO_BASE_URL: ${{ steps.preview.outputs.url }}
+        run: pnpm exec playwright test --config=e2e/demos/playwright.config.ts
+
+      - name: Convert recordings to MP4
+        if: steps.detect.outputs.exists == 'true'
+        id: convert
+        run: |
+          set -euo pipefail
+          mkdir -p demo-output
+          REPORT="e2e-demos-results/report.json"
+          if [ ! -f "$REPORT" ]; then
+            echo "No Playwright JSON report — nothing to publish"
+            echo "count=0" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Resolve (demo-name, video-path) pairs from the JSON report so we
+          # don't have to guess the spec name from Playwright's output dir.
+          node -e '
+            const fs = require("fs");
+            const path = require("path");
+            const r = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+            const out = [];
+            const walk = (suites) => {
+              for (const s of suites || []) {
+                for (const spec of s.specs || []) {
+                  const file = spec.file || s.file || "";
+                  const name = path.basename(file).replace(/\.demo\.ts$/, "");
+                  for (const t of spec.tests || []) {
+                    for (const res of t.results || []) {
+                      for (const a of res.attachments || []) {
+                        if (a.name === "video" && a.path) {
+                          out.push(name + "\t" + a.path);
+                        }
+                      }
+                    }
+                  }
+                }
+                if (s.suites) walk(s.suites);
+              }
+            };
+            walk(r.suites || []);
+            process.stdout.write(out.join("\n"));
+          ' "$REPORT" > /tmp/demo-manifest.tsv
+
+          count=0
+          while IFS=$'\t' read -r name webm; do
+            [ -n "$name" ] || continue
+            if [ ! -f "$webm" ]; then
+              echo "Video not found for $name: $webm — skipping"
+              continue
+            fi
+            ffmpeg -nostdin -y -i "$webm" \
+              -c:v libx264 -pix_fmt yuv420p -crf 23 \
+              -movflags +faststart \
+              "demo-output/${name}.mp4"
+            count=$((count + 1))
+          done < /tmp/demo-manifest.tsv
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+          ls -la demo-output
+
+      - name: Push videos to pr-demo-assets branch
+        if: steps.detect.outputs.exists == 'true' && steps.convert.outputs.count != '0'
+        id: push
+        run: |
+          set -euo pipefail
+          PR="${{ steps.pr.outputs.number }}"
+          SHA="${{ steps.pr.outputs.sha }}"
+          SHORT="${SHA:0:7}"
+          DEST_REL="demos/pr-${PR}/${SHORT}"
+
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Check out (or create) the orphan branch in a separate worktree.
+          if git ls-remote --exit-code --heads origin pr-demo-assets >/dev/null 2>&1; then
+            git fetch origin pr-demo-assets
+            git worktree add /tmp/assets pr-demo-assets
+          else
+            git worktree add --detach /tmp/assets HEAD
+            (
+              cd /tmp/assets
+              git checkout --orphan pr-demo-assets
+              git rm -rf . >/dev/null 2>&1 || true
+              cat > README.md <<'EOF'
+          # PR demo assets
+
+          Auto-generated MP4 walkthroughs posted by `.github/workflows/pr-demo-video.yml`.
+          Layout: `demos/pr-<number>/<short-sha>/<feature>.mp4`.
+          EOF
+              git add README.md
+              git commit -m "init: pr-demo-assets branch"
+            )
+          fi
+
+          mkdir -p "/tmp/assets/${DEST_REL}"
+          cp demo-output/*.mp4 "/tmp/assets/${DEST_REL}/"
+
+          (
+            cd /tmp/assets
+            git add "${DEST_REL}"
+            if git diff --cached --quiet; then
+              echo "No new videos to commit"
+            else
+              git commit -m "demo: PR #${PR} @ ${SHORT}"
+              git push origin pr-demo-assets
+            fi
+          )
+
+          echo "rel=${DEST_REL}" >> "$GITHUB_OUTPUT"
+
+      - name: Build PR comment body
+        if: steps.detect.outputs.exists == 'true' && steps.convert.outputs.count != '0'
+        id: body
+        run: |
+          set -euo pipefail
+          REPO="${{ github.repository }}"
+          REL="${{ steps.push.outputs.rel }}"
+          BASE_RAW="https://raw.githubusercontent.com/${REPO}/pr-demo-assets/${REL}"
+          BASE_BLOB="https://github.com/${REPO}/blob/pr-demo-assets/${REL}"
+
+          # Extract the `demoDescription` template literal from a spec file
+          # and undo TypeScript's escaping of `, $ and \ inside template literals.
+          extract_description() {
+            local spec="$1"
+            [ -f "$spec" ] || return 0
+            node -e '
+              const fs = require("fs");
+              const src = fs.readFileSync(process.argv[1], "utf8");
+              const m = src.match(/export\s+const\s+demoDescription\s*=\s*`([\s\S]*?)`;/);
+              if (!m) return;
+              const unescaped = m[1]
+                .replace(/\\`/g, "`")
+                .replace(/\\\$/g, "$")
+                .replace(/\\\\/g, "\\");
+              process.stdout.write(unescaped.trim());
+            ' "$spec"
+          }
+
+          {
+            echo "## Feature demo"
+            echo
+            for mp4 in demo-output/*.mp4; do
+              name=$(basename "$mp4" .mp4)
+              spec="e2e/demos/${name}.demo.ts"
+              desc=$(extract_description "$spec")
+              if [ -n "$desc" ]; then
+                printf '%s\n' "$desc"
+              else
+                echo "**${name}**"
+              fi
+              echo
+              echo "<video src=\"${BASE_RAW}/${name}.mp4\" controls width=\"720\"></video>"
+              echo
+              echo "[Open video](${BASE_BLOB}/${name}.mp4?raw=true)"
+              echo
+              echo "---"
+              echo
+            done
+            echo "_Recorded against the Vercel preview at \`${{ steps.pr.outputs.sha }}\`._"
+          } > comment.md
+
+          cat comment.md
+
+      - name: Post or update PR comment
+        if: steps.detect.outputs.exists == 'true' && steps.convert.outputs.count != '0'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const body = fs.readFileSync('comment.md', 'utf8');
+            const issue_number = parseInt('${{ steps.pr.outputs.number }}', 10);
+            const { owner, repo } = context.repo;
+            const marker = '## Feature demo';
+            const { data: comments } = await github.rest.issues.listComments({
+              owner, repo, issue_number, per_page: 100,
+            });
+            const existing = comments.find(
+              (c) => c.user?.type === 'Bot' && c.body?.startsWith(marker)
+            );
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner, repo, comment_id: existing.id, body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner, repo, issue_number, body,
+              });
+            }
