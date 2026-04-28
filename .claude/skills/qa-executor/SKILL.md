@@ -164,6 +164,16 @@ If 3 or more Critical issues are found, stop execution. Document what was tested
 | Medium | Feature works with noticeable problems, workaround exists |
 | Low | Cosmetic, minor polish |
 
+## Result Values
+
+| Result | When to use |
+|--------|-------------|
+| PASS | Actual matched expected exactly. |
+| FAIL | Actual did not match expected, AND the failure is plausibly caused by changes in this PR (or by code in the repo even if not changed by this PR). |
+| BLOCKED | Scenario could not be executed due to a cause unrelated to the PR's code: third-party service outage (Privy / Sentry / RPC down), missing test fixture data, infra/network failure, or missing environment capability (e.g. `agent-browser` unavailable). The PR did not modify the relevant code path. Use evidence to justify why this is environmental, not regression. |
+
+`BLOCKED` does NOT contribute to the blocking verdict — but you must justify the classification in `evidence`. When in doubt between FAIL and BLOCKED, choose FAIL. A genuine regression mislabeled as BLOCKED would let a real bug ship.
+
 ## Output
 
 Save results to `qa-results.json`:
@@ -173,14 +183,18 @@ Save results to `qa-results.json`:
   "total": 15,
   "passed": 12,
   "failed": 3,
+  "blocked": 0,
   "skipped": 0,
   "blocking": true,
   "scenarios": [
     { "id": "P1", "name": "...", "result": "PASS", "severity": null, "evidence": null },
-    { "id": "A1", "name": "...", "result": "FAIL", "severity": "High", "evidence": "qa-output/screenshots/A1-fail.png" }
+    { "id": "A1", "name": "...", "result": "FAIL", "severity": "High", "evidence": "qa-output/screenshots/A1-fail.png" },
+    { "id": "A2", "name": "...", "result": "BLOCKED", "severity": null, "evidence": "Privy returned a 5xx service error; PR did not modify auth code." }
   ]
 }
 ```
+
+`result === "BLOCKED"` rows have `severity: null` (severity describes regression impact; blocked scenarios were never tested). Always include an `evidence` string explaining why the failure is environmental, not regression.
 
 Post a PR comment. **Comment format — follow exactly:**
 
@@ -212,9 +226,10 @@ Post a PR comment. **Comment format — follow exactly:**
 **Rules:**
 - PASS rows: no severity, no evidence.
 - FAIL rows: severity required. For evidence, describe what you observed inline (1-2 sentences) — do NOT link to local file paths like `qa-output/screenshots/...` because those are not accessible from GitHub. Screenshots are saved as workflow artifacts and can be downloaded from the workflow run link.
-- Sort: FAILs first (by severity), then PASSes.
+- BLOCKED rows: no severity. Evidence must justify why the failure is environmental (third-party outage, missing fixture, infra issue) and NOT a regression in this PR's code.
+- Sort: FAILs first (by severity), then BLOCKED, then PASSes.
 - No prose. Just the tables.
-- `Blocking: Yes` if any Critical or High severity failure.
+- `Blocking: Yes` if any Critical or High severity FAIL. BLOCKED never makes a PR blocking.
 
 ## Strictness Rules
 
