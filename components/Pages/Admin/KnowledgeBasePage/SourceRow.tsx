@@ -93,9 +93,13 @@ interface StatusMeta {
 
 function getStatusMeta(source: KnowledgeSource): StatusMeta {
   if (!source.isActive) {
+    // "Sync paused" rather than just "Paused" because pausing only stops
+    // future syncs — the source's existing chunks remain in the index
+    // and continue answering chatbot questions until the source is
+    // deleted. The Pause button's tooltip carries the same caveat.
     return {
       tone: "paused",
-      label: "Paused",
+      label: "Sync paused",
       dot: "bg-stone-400 dark:bg-zinc-500",
     };
   }
@@ -432,7 +436,11 @@ function SourceRowImpl({ source, communityIdOrSlug, isFirst }: Props) {
           Icon={RefreshCw}
         />
         <RowAction
-          label={source.isActive ? "Pause syncing" : "Resume syncing"}
+          label={
+            source.isActive
+              ? "Pause syncing — existing chunks stay searchable"
+              : "Resume syncing on the regular schedule"
+          }
           onClick={handleToggleActive}
           disabled={update.isPending}
           Icon={source.isActive ? Pause : Play}

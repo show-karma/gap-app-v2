@@ -121,9 +121,12 @@ describe("SourceRow", () => {
       expect(screen.getByText("1 doc failed")).toBeInTheDocument();
     });
 
-    it("renders 'Paused' when the source is inactive (regardless of sync status)", () => {
+    it("renders 'Sync paused' when the source is inactive (regardless of sync status)", () => {
+      // Specifically "Sync paused" rather than "Paused" — the source's
+      // existing chunks remain searchable while paused; only future
+      // syncs stop. The label communicates that distinction.
       renderRow(createSource({ isActive: false, lastSyncStatus: "failed" }));
-      expect(screen.getByText("Paused")).toBeInTheDocument();
+      expect(screen.getByText("Sync paused")).toBeInTheDocument();
     });
   });
 
