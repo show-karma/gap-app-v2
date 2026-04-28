@@ -1,48 +1,49 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { knowledgeSourcesQueryKey } from "@/hooks/knowledge-base/useKnowledgeSources";
+import {
+  createKnowledgeSource,
+  deleteKnowledgeSource,
+  triggerKnowledgeSourceResync,
+  updateKnowledgeSource,
+} from "@/services/knowledge-base.service";
 import type {
   CreateKnowledgeSourceInput,
-  KnowledgeSource,
   UpdateKnowledgeSourceInput,
 } from "@/types/v2/knowledge-base";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
+import { QUERY_KEYS } from "@/utilities/queryKeys";
 
-interface SingleResponse {
-  data: KnowledgeSource;
+/**
+ * Network calls live in `services/knowledge-base.service.ts`. These hooks
+ * own only the React Query plumbing — caching, optimistic updates,
+ * invalidation. Query keys come from `utilities/queryKeys.ts`. This
+ * matches the convention used by other admin sections (communities,
+ * project, project-grants, etc.).
+ */
+
+function useInvalidateSources(communityIdOrSlug: string | undefined) {
+  const qc = useQueryClient();
+  return () => {
+    if (!communityIdOrSlug) return;
+    qc.invalidateQueries({
+      queryKey: QUERY_KEYS.KNOWLEDGE_BASE.SOURCES(communityIdOrSlug),
+    });
+  };
 }
 
 export function useCreateKnowledgeSource(communityIdOrSlug: string | undefined) {
-  const qc = useQueryClient();
+  const invalidate = useInvalidateSources(communityIdOrSlug);
   return useMutation({
-    mutationFn: async (input: CreateKnowledgeSourceInput) => {
+    mutationFn: (input: CreateKnowledgeSourceInput) => {
       if (!communityIdOrSlug) throw new Error("Community required");
-      const [data, error] = await fetchData<SingleResponse>(
-        INDEXER.KNOWLEDGE_BASE.CREATE_SOURCE(communityIdOrSlug),
-        "POST",
-        input,
-        {},
-        {},
-        true
-      );
-      if (error) throw new Error(error);
-      if (!data?.data) throw new Error("Empty response from server");
-      return data.data;
+      return createKnowledgeSource(communityIdOrSlug, input);
     },
-    onSuccess: () => {
-      if (communityIdOrSlug) {
-        qc.invalidateQueries({
-          queryKey: knowledgeSourcesQueryKey(communityIdOrSlug),
-        });
-      }
-    },
+    onSuccess: invalidate,
   });
 }
 
 export function useUpdateKnowledgeSource(communityIdOrSlug: string | undefined) {
-  const qc = useQueryClient();
+  const invalidate = useInvalidateSources(communityIdOrSlug);
   return useMutation({
-    mutationFn: async ({
+    mutationFn: ({
       sourceId,
       patch,
     }: {
@@ -50,76 +51,32 @@ export function useUpdateKnowledgeSource(communityIdOrSlug: string | undefined) 
       patch: UpdateKnowledgeSourceInput;
     }) => {
       if (!communityIdOrSlug) throw new Error("Community required");
-      const [data, error] = await fetchData<SingleResponse>(
-        INDEXER.KNOWLEDGE_BASE.UPDATE_SOURCE(communityIdOrSlug, sourceId),
-        "PATCH",
-        patch,
-        {},
-        {},
-        true
-      );
-      if (error) throw new Error(error);
-      if (!data?.data) throw new Error("Empty response from server");
-      return data.data;
+      return updateKnowledgeSource(communityIdOrSlug, sourceId, patch);
     },
-    onSuccess: () => {
-      if (communityIdOrSlug) {
-        qc.invalidateQueries({
-          queryKey: knowledgeSourcesQueryKey(communityIdOrSlug),
-        });
-      }
-    },
+    onSuccess: invalidate,
   });
 }
 
 export function useDeleteKnowledgeSource(communityIdOrSlug: string | undefined) {
-  const qc = useQueryClient();
+  const invalidate = useInvalidateSources(communityIdOrSlug);
   return useMutation({
     mutationFn: async (sourceId: string) => {
       if (!communityIdOrSlug) throw new Error("Community required");
-      const [, error] = await fetchData(
-        INDEXER.KNOWLEDGE_BASE.DELETE_SOURCE(communityIdOrSlug, sourceId),
-        "DELETE",
-        undefined,
-        {},
-        {},
-        true
-      );
-      if (error) throw new Error(error);
+      await deleteKnowledgeSource(communityIdOrSlug, sourceId);
       return sourceId;
     },
-    onSuccess: () => {
-      if (communityIdOrSlug) {
-        qc.invalidateQueries({
-          queryKey: knowledgeSourcesQueryKey(communityIdOrSlug),
-        });
-      }
-    },
+    onSuccess: invalidate,
   });
 }
 
 export function useResyncKnowledgeSource(communityIdOrSlug: string | undefined) {
-  const qc = useQueryClient();
+  const invalidate = useInvalidateSources(communityIdOrSlug);
   return useMutation({
     mutationFn: async (sourceId: string) => {
       if (!communityIdOrSlug) throw new Error("Community required");
-      const [, error] = await fetchData(
-        INDEXER.KNOWLEDGE_BASE.RESYNC_SOURCE(communityIdOrSlug, sourceId),
-        "POST",
-        {},
-        {},
-        {},
-        true
-      );
-      if (error) throw new Error(error);
+      await triggerKnowledgeSourceResync(communityIdOrSlug, sourceId);
       return sourceId;
     },
-    onSuccess: () => {
-      if (communityIdOrSlug) {
-        qc.invalidateQueries({
-          queryKey: knowledgeSourcesQueryKey(communityIdOrSlug),
-        });
-      }
-    },
+    onSuccess: invalidate,
   });
 }
