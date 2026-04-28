@@ -163,11 +163,7 @@ function Masthead({
 }) {
   return (
     <header className="mb-6">
-      <p className="font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-stone-500 dark:text-zinc-500">
-        Karma <span className="mx-1 text-stone-300 dark:text-zinc-700">/</span> Knowledge
-      </p>
-
-      <div className="mt-1.5 grid grid-cols-1 items-end gap-x-6 gap-y-4 sm:grid-cols-[1fr_auto]">
+      <div className="grid grid-cols-1 items-end gap-x-6 gap-y-4 sm:grid-cols-[1fr_auto]">
         <div className="min-w-0">
           <h1 className="text-[26px] font-semibold leading-[1.2] tracking-[-0.02em] text-stone-900 dark:text-zinc-50">
             Knowledge base

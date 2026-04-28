@@ -189,13 +189,12 @@ function diffParts(source: KnowledgeSource): DiffPart[] {
       className: "text-rose-600 dark:text-rose-400",
     });
   }
-  if (stats.unchanged) {
-    out.push({
-      symbol: "=",
-      value: stats.unchanged,
-      className: "text-stone-500 dark:text-zinc-500",
-    });
-  }
+  // `=N` (unchanged docs) is intentionally omitted. It's the boring case
+  // that fires on every successful sync where nothing has changed since
+  // last run — surfacing it on every row turns the meta strip into
+  // visual noise without adding signal. Real changes (+, ~, −) still
+  // show. The state badge ("Synced") + timestamp already convey
+  // "everything is fine" when nothing has changed.
   return out;
 }
 
@@ -332,8 +331,11 @@ function SourceRowImpl({ source, communityIdOrSlug, isFirst }: Props) {
             <span className="font-medium">{status.label}</span>
           </span>
           {source.lastSyncedAt && (
+            // The state badge to the left already says "Synced"/"Failed"/etc.,
+            // so the timestamp doesn't need to repeat the label — just show
+            // the relative time.
             <span className="inline-flex items-center border-r border-stone-200 px-2.5 tabular-nums dark:border-zinc-800">
-              {status.tone === "success" ? "Synced" : "Last"} {timeAgo(source.lastSyncedAt)}
+              {timeAgo(source.lastSyncedAt)}
             </span>
           )}
           {parts.length > 0 && (
