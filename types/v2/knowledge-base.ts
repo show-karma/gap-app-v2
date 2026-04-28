@@ -68,6 +68,17 @@ export const KNOWLEDGE_SOURCE_KIND_LABELS: Record<KnowledgeSourceKind, string> =
   pdf_url: "PDF (URL)",
 };
 
+// Three-letter shorthand for the row's mono meta strip — matches the
+// design's compact resource-style line (e.g. `● SYNCED · WEB · 10m AGO`).
+// Distinct from the title-row label which is human-readable.
+export const KNOWLEDGE_SOURCE_KIND_SHORT: Record<KnowledgeSourceKind, string> = {
+  gdrive_folder: "Drive",
+  gdrive_file: "Doc",
+  url: "Web",
+  sitemap: "Map",
+  pdf_url: "PDF",
+};
+
 export const KNOWLEDGE_SOURCE_KIND_HINTS: Record<KnowledgeSourceKind, string> = {
   gdrive_folder: "Folder ID — currently disabled in the UI; tracked in docs/features.",
   gdrive_file:

@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  ExternalLink,
   FileBadge,
   FileText,
   FolderOpen,
@@ -22,6 +23,7 @@ import {
 } from "@/hooks/knowledge-base/useKnowledgeSourceMutations";
 import {
   KNOWLEDGE_SOURCE_KIND_LABELS,
+  KNOWLEDGE_SOURCE_KIND_SHORT,
   type KnowledgeSource,
   type KnowledgeSourceKind,
 } from "@/types/v2/knowledge-base";
@@ -299,10 +301,14 @@ function SourceRowImpl({ source, communityIdOrSlug, isFirst }: Props) {
         </div>
 
         <p
-          className="mt-0.5 truncate font-mono text-xs leading-snug text-stone-500 dark:text-zinc-500"
+          className="mt-0.5 font-mono text-xs leading-snug text-stone-500 dark:text-zinc-500"
           title={source.externalId}
         >
-          {source.externalId}
+          {/* Middle-truncation preserves both the domain prefix AND the
+              meaningful slug suffix (e.g. ".../introducing-fil-propgf-...")
+              instead of just chopping the tail off. The full URL stays
+              available on hover via the `title` attribute. */}
+          {truncateMiddle(source.externalId, 80)}
         </p>
 
         {/* Mono uppercase resource-style metadata strip — items separated
@@ -330,12 +336,24 @@ function SourceRowImpl({ source, communityIdOrSlug, isFirst }: Props) {
             />
             <span className="font-medium">{status.label}</span>
           </span>
-          {source.lastSyncedAt && (
+          {/* Kind shorthand (`WEB`/`DOC`/`PDF`/...) — design's compact
+              resource-line marker. Redundant with the title-row label
+              but reads well as a left-anchored monospace tag. */}
+          <span className="inline-flex items-center border-r border-stone-200 px-2.5 dark:border-zinc-800">
+            {KNOWLEDGE_SOURCE_KIND_SHORT[source.kind]}
+          </span>
+          {source.lastSyncedAt ? (
             // The state badge to the left already says "Synced"/"Failed"/etc.,
             // so the timestamp doesn't need to repeat the label — just show
             // the relative time.
             <span className="inline-flex items-center border-r border-stone-200 px-2.5 tabular-nums dark:border-zinc-800">
               {timeAgo(source.lastSyncedAt)}
+            </span>
+          ) : (
+            // Never-successfully-synced row: show creation time so admins
+            // can tell stale-failed apart from just-added.
+            <span className="inline-flex items-center border-r border-stone-200 px-2.5 tabular-nums dark:border-zinc-800">
+              Added {timeAgo(source.createdAt)}
             </span>
           )}
           {parts.length > 0 && (
@@ -388,6 +406,22 @@ function SourceRowImpl({ source, communityIdOrSlug, isFirst }: Props) {
           double-click can't enqueue a redundant claim while the worker
           tick is mid-fetch. */}
       <div className="flex shrink-0 items-center gap-0.5">
+        {/* Open original — `externalId` is the URL for url/pdf_url and a
+            Drive doc id for gdrive_file. The mapping below produces a
+            usable href in either case. Hidden for kinds where it's not
+            meaningful (sitemap, gdrive_folder). */}
+        {externalHref(source) && (
+          <a
+            href={externalHref(source) ?? "#"}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Open original"
+            aria-label="Open original"
+            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-stone-500 transition hover:bg-stone-100 hover:text-stone-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/40 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 dark:focus-visible:ring-sky-400/40"
+          >
+            <ExternalLink aria-hidden="true" className="h-4 w-4" />
+          </a>
+        )}
         <RowAction
           label={
             isSyncingNow
@@ -515,6 +549,42 @@ function SyncSparkline({
       ))}
     </span>
   );
+}
+
+// Build the user-facing URL for the source's "Open original" action.
+// - `url` and `pdf_url` store the URL directly in `externalId`.
+// - `gdrive_file` stores a Drive doc ID; reconstruct the docs.google.com
+//    edit URL.
+// - `gdrive_folder` and `sitemap` don't have a single useful URL, so
+//   we return null and the action button doesn't render.
+function externalHref(source: KnowledgeSource): string | null {
+  const id = source.externalId.trim();
+  if (!id) return null;
+  switch (source.kind) {
+    case "url":
+    case "pdf_url":
+      return id.startsWith("http://") || id.startsWith("https://") ? id : null;
+    case "gdrive_file":
+      // Admins paste either the share URL or a bare doc ID. If it's
+      // already a URL, use it; otherwise reconstruct the canonical
+      // edit URL from the doc id.
+      if (id.startsWith("https://")) return id;
+      return `https://docs.google.com/document/d/${id}/edit`;
+    case "gdrive_folder":
+    case "sitemap":
+    default:
+      return null;
+  }
+}
+
+// Middle-truncate long strings (URLs primarily) so both the domain
+// prefix and the slug suffix stay visible. The full string remains
+// available on hover via the title attribute on the rendering element.
+function truncateMiddle(s: string, max = 80): string {
+  if (!s || s.length <= max) return s;
+  const head = Math.ceil((max - 1) / 2);
+  const tail = Math.floor((max - 1) / 2);
+  return `${s.slice(0, head)}…${s.slice(-tail)}`;
 }
 
 // Trim noisy backend errors to a glanceable phrase. Keep the full message

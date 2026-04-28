@@ -169,9 +169,11 @@ function Masthead({
             Knowledge base
           </h1>
           <p className="mt-1.5 max-w-[68ch] text-sm leading-relaxed text-stone-600 dark:text-zinc-400">
-            Curate the documents your chatbot reads from for{" "}
-            <span className="font-medium text-stone-900 dark:text-zinc-100">{communityName}</span>.
-            Each source is fetched, chunked, and embedded automatically on the nightly sync.
+            Documents the{" "}
+            <span className="font-medium text-stone-900 dark:text-zinc-100">{communityName}</span>{" "}
+            assistant reads from. Each source is fetched, chunked, and embedded on the nightly sync
+            at <code className="font-mono text-[12px] text-stone-700 dark:text-zinc-300">02:00</code>{" "}
+            UTC.
           </p>
         </div>
 
