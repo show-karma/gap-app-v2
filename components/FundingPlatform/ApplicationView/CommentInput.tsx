@@ -129,6 +129,7 @@ const CommentInput: FC<CommentInputProps> = ({
     try {
       await onSubmit(content.trim());
       setContent("");
+      setIsExpanded(false);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       console.error(`[CommentInput] Failed to submit comment: ${message}`);
