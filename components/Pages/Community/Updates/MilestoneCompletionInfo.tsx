@@ -1,9 +1,9 @@
 "use client";
 
 import { type FC, memo } from "react";
-import { containerClassName } from "@/components/Shared/ActivityCard";
 import { ActivityAttribution } from "@/components/Shared/ActivityCard/ActivityAttribution";
 import { ActivityStatusHeader } from "@/components/Shared/ActivityCard/ActivityStatusHeader";
+import { containerClassName } from "@/components/Shared/ActivityCard/styles";
 import { ReadMore } from "@/utilities/ReadMore";
 import { cn } from "@/utilities/tailwind";
 
