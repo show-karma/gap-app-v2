@@ -159,8 +159,28 @@ jobs:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
+      - name: Get ISO week for cache key
+        id: weeknum
+        run: echo "weeknum=$(date -u +'%G-W%V')" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Claude Code install
+        id: claude-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm-global
+          key: claude-code-${{ runner.os }}-${{ steps.weeknum.outputs.weeknum }}
+          restore-keys: |
+            claude-code-${{ runner.os }}-
+
       - name: Install Claude Code
-        run: npm install -g @anthropic-ai/claude-code
+        if: steps.claude-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/.npm-global
+          npm config set prefix ~/.npm-global
+          npm install -g @anthropic-ai/claude-code
+
+      - name: Add Claude Code to PATH
+        run: echo "$HOME/.npm-global/bin" >> "$GITHUB_PATH"
 
       - name: Generate QA Plan
         env:
@@ -324,8 +344,28 @@ jobs:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
+      - name: Get ISO week for cache key
+        id: weeknum
+        run: echo "weeknum=$(date -u +'%G-W%V')" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Claude Code install
+        id: claude-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm-global
+          key: claude-code-${{ runner.os }}-${{ steps.weeknum.outputs.weeknum }}
+          restore-keys: |
+            claude-code-${{ runner.os }}-
+
       - name: Install Claude Code
-        run: npm install -g @anthropic-ai/claude-code
+        if: steps.claude-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/.npm-global
+          npm config set prefix ~/.npm-global
+          npm install -g @anthropic-ai/claude-code
+
+      - name: Add Claude Code to PATH
+        run: echo "$HOME/.npm-global/bin" >> "$GITHUB_PATH"
 
       - name: Execute QA Plan
         env:
@@ -337,12 +377,10 @@ jobs:
         run: |
           claude --print --dangerously-skip-permissions \
             "You are a strict senior QA executor. Read and follow the skill at .claude/skills/qa-executor/SKILL.md exactly.
-            PR number: $PR_NUMBER. Target URL: http://localhost:3000.
+            PR #$PR_NUMBER. Target: http://localhost:3000 (always — never a preview/vercel URL).
             QA Plan is at qa-plan.md. Execute ALL scenarios — both Public (P1, P2...) and Authenticated (A1, A2...).
-            For authenticated scenarios, login using the Privy test account (email from QA_TEST_EMAIL env var, OTP from QA_TEST_OTP env var).
-            IMPORTANT: Always use http://localhost:3000 as the target URL. Never use a preview/vercel URL.
-            Post the results as a comment on PR #$PR_NUMBER using gh pr comment.
-            Save results to qa-results.json."
+            For authenticated scenarios, login with QA_TEST_EMAIL + QA_TEST_OTP env vars.
+            Post results as a comment on PR #$PR_NUMBER via gh pr comment. Save results to qa-results.json."
         timeout-minutes: 20
 
       - name: Upload QA execution artifacts
@@ -417,8 +455,28 @@ jobs:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
+      - name: Get ISO week for cache key
+        id: weeknum
+        run: echo "weeknum=$(date -u +'%G-W%V')" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Claude Code install
+        id: claude-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm-global
+          key: claude-code-${{ runner.os }}-${{ steps.weeknum.outputs.weeknum }}
+          restore-keys: |
+            claude-code-${{ runner.os }}-
+
       - name: Install Claude Code
-        run: npm install -g @anthropic-ai/claude-code
+        if: steps.claude-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/.npm-global
+          npm config set prefix ~/.npm-global
+          npm install -g @anthropic-ai/claude-code
+
+      - name: Add Claude Code to PATH
+        run: echo "$HOME/.npm-global/bin" >> "$GITHUB_PATH"
 
       - name: Run Dogfood Exploration
         env:
@@ -430,10 +488,9 @@ jobs:
         run: |
           claude --print --dangerously-skip-permissions \
             "You are a strict senior QA engineer doing focused exploratory dogfood testing.
-            PR number: $PR_NUMBER. Target URL: http://localhost:3000.
-            IMPORTANT: Always use http://localhost:3000. Never use a preview/vercel URL.
+            PR #$PR_NUMBER. Target: http://localhost:3000 (always — never a preview/vercel URL).
 
-            TIME BUDGET: You have 15 minutes of active exploration. Be fast and focused. Do not wander.
+            TIME BUDGET: 15 minutes of active exploration. Be fast and focused. Do not wander.
 
             1. Run git diff origin/main...HEAD --name-only to identify changed files.
             2. Open http://localhost:3000 in agent-browser. Navigate ONLY to pages affected by the changed files.

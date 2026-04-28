@@ -28,14 +28,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          # Shallow checkout — we only need PR HEAD plus enough base history
+          # to diff against. Two-dot diff below avoids needing the merge-base.
+          fetch-depth: 1
+
+      - name: Fetch base ref
+        env:
+          GITHUB_BASE_REF: ${{ github.base_ref }}
+        run: git fetch --no-tags --depth=1 origin "$GITHUB_BASE_REF"
 
       - name: Run anti-pattern checks
         id: antipatterns
         run: |
           chmod +x scripts/check-anti-patterns.sh
-          # Check only changed TSX/TS files
-          CHANGED_FILES=$(git diff --name-only --diff-filter=ACMR "origin/$GITHUB_BASE_REF"...HEAD -- '*.tsx' '*.ts' | head -200)
+          # Two-dot diff (origin/BASE..HEAD) — files different between base
+          # tip and PR HEAD. Doesn't require fetching the merge-base.
+          CHANGED_FILES=$(git diff --name-only --diff-filter=ACMR "origin/$GITHUB_BASE_REF..HEAD" -- '*.tsx' '*.ts' | head -200)
 
           ISSUES=""
           ISSUE_COUNT=0
@@ -70,7 +78,7 @@ jobs:
           MISSING=""
           MISSING_COUNT=0
 
-          NEW_PAGES=$(git diff --name-only --diff-filter=A "origin/$GITHUB_BASE_REF"...HEAD -- '**/page.tsx' || true)
+          NEW_PAGES=$(git diff --name-only --diff-filter=A "origin/$GITHUB_BASE_REF..HEAD" -- '**/page.tsx' || true)
 
           while IFS= read -r PAGE; do
             [ -z "$PAGE" ] && continue
