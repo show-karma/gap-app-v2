@@ -698,6 +698,8 @@ export const INDEXER = {
     CONFIG: {
       GET: (slug: string) => `/v2/community-configs/${slug}`,
       UPDATE: (slug: string) => `/v2/community-configs/${slug}`,
+      TELEGRAM_PAIR_START: (slug: string) => `/v2/community-configs/${slug}/telegram-pair/start`,
+      TELEGRAM_PAIR_VERIFY: (slug: string) => `/v2/community-configs/${slug}/telegram-pair/verify`,
     },
   },
   GRANTS: {
@@ -737,8 +739,26 @@ export const INDEXER = {
     GET_FORM_URL: (communityIdOrSlug: string) =>
       `/v2/communities/${communityIdOrSlug}/kyc-form-url`,
   },
+  NOTIFICATION_CONFIG: {
+    TEST_CONFIG: (communityIdOrSlug: string) =>
+      `/v2/communities/${communityIdOrSlug}/notification-config/test`,
+  },
+  KNOWLEDGE_BASE: {
+    LIST_SOURCES: (communityIdOrSlug: string) =>
+      `/v2/communities/${communityIdOrSlug}/knowledge-base/sources`,
+    CREATE_SOURCE: (communityIdOrSlug: string) =>
+      `/v2/communities/${communityIdOrSlug}/knowledge-base/sources`,
+    UPDATE_SOURCE: (communityIdOrSlug: string, sourceId: string) =>
+      `/v2/communities/${communityIdOrSlug}/knowledge-base/sources/${sourceId}`,
+    DELETE_SOURCE: (communityIdOrSlug: string, sourceId: string) =>
+      `/v2/communities/${communityIdOrSlug}/knowledge-base/sources/${sourceId}`,
+    RESYNC_SOURCE: (communityIdOrSlug: string, sourceId: string) =>
+      `/v2/communities/${communityIdOrSlug}/knowledge-base/sources/${sourceId}/resync`,
+  },
   USERS: {
     RESOLVE_EMAIL: `/v2/user/resolve-email`,
     PROFILES: (addresses: string) => `/v2/user/profiles?addresses=${addresses}`,
+    PUBLIC_PROFILES: (addresses: string[]) =>
+      `/v2/user/profiles/public?addresses=${addresses.join(",")}`,
   },
 };

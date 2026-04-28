@@ -1,5 +1,13 @@
 "use client";
-import { ChartLine, DollarSign, FileSearch, LandPlot, SquareUser, Wallet } from "lucide-react";
+import {
+  ChartLine,
+  DollarSign,
+  FileSearch,
+  FileText,
+  LandPlot,
+  SquareUser,
+  Wallet,
+} from "lucide-react";
 import { useParams, usePathname, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
@@ -20,7 +28,7 @@ const baseLinkStyle =
 
 const NewTag = () => {
   return (
-    <div className="rounded-2xl py-1 px-3 bg-brand-blue dark:bg-brand-blue/80 text-white dark:text-zinc-100 text-xs font-bold">
+    <div className="rounded-2xl py-0.5 px-2 bg-brand-blue dark:bg-brand-blue/80 text-white dark:text-zinc-100 text-[11px] font-bold leading-none">
       New!
     </div>
   );
@@ -62,7 +70,8 @@ const NAVIGATION_ITEMS: readonly NavigationItem[] = [
       !pathname.includes("/donate") &&
       !pathname.includes("/funding-opportunities") &&
       !pathname.includes("/browse-applications") &&
-      !pathname.includes("/financials"),
+      !pathname.includes("/financials") &&
+      !pathname.includes("/reports"),
   },
   {
     id: "milestone-updates",
@@ -77,6 +86,13 @@ const NAVIGATION_ITEMS: readonly NavigationItem[] = [
     title: () => "Impact",
     Icon: ChartLine,
     isActive: (pathname: string) => pathname.includes("/impact"),
+  },
+  {
+    id: "reports",
+    path: (communityId: string) => PAGES.COMMUNITY.REPORTS(communityId),
+    title: () => "Reports",
+    Icon: FileText,
+    isActive: (pathname: string) => pathname.includes("/reports"),
   },
   {
     id: "financials",
@@ -130,6 +146,10 @@ export const CommunityPageNavigator = () => {
       }
       // Show browse applications if the community has at least one program (live or ended)
       if (item.id === "browse-applications" && programsCount === 0) {
+        return false;
+      }
+      // Show reports only if the community has programs
+      if (item.id === "reports" && programsCount === 0) {
         return false;
       }
       // Show financials only for enabled communities with programs

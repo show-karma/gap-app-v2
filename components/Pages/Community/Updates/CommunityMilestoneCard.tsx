@@ -1,8 +1,8 @@
 import { CheckCircleIcon, ClockIcon } from "@heroicons/react/24/outline";
 import dynamic from "next/dynamic";
 import { type FC, memo } from "react";
-import { containerClassName } from "@/components/Shared/ActivityCard";
 import { ActivityAttribution } from "@/components/Shared/ActivityCard/ActivityAttribution";
+import { containerClassName } from "@/components/Shared/ActivityCard/styles";
 import { Link } from "@/src/components/navigation/Link";
 import type { CommunityMilestoneUpdate } from "@/types/community-updates";
 import { formatDate } from "@/utilities/formatDate";

@@ -2,8 +2,7 @@
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useState } from "react";
-import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
-import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
+import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { useMilestoneImpactAnswers } from "@/hooks/useMilestoneImpactAnswers";
 import { useGrantInvoiceRequired } from "@/src/features/payout-disbursement/hooks/use-payout-disbursement";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
@@ -239,12 +238,12 @@ export const MilestoneCard = ({ milestone, isAuthorized }: MilestoneCardProps) =
               Created on {formatDate(createdAt)} by
             </p>
             <div className="flex flex-row gap-1 items-center">
-              <EthereumAddressToENSAvatar
-                address={attester}
-                className="h-5 w-5 min-h-5 min-w-5 rounded-full border-1 border-gray-100 dark:border-zinc-900"
-              />
               <p className="text-sm text-center font-bold text-black dark:text-zinc-200 max-2xl:text-[13px]">
-                <EthereumAddressToENSName address={attester} />
+                <EthereumAddressToProfileName
+                  address={attester}
+                  showProfilePicture
+                  pictureClassName="h-5 w-5 min-h-5 min-w-5 rounded-full border-1 border-gray-100 dark:border-zinc-900"
+                />
               </p>
             </div>
           </div>

@@ -14,6 +14,7 @@ import { EndorsementCard } from "./ActivityCard/EndorsementCard";
 import { FundingReceivedCard } from "./ActivityCard/FundingReceivedCard";
 import { MilestoneCard } from "./ActivityCard/MilestoneCard";
 import { ProjectUpdateCard } from "./ActivityCard/ProjectUpdateCard";
+import { containerClassName } from "./ActivityCard/styles";
 import { UpdateCard } from "./ActivityCard/UpdateCard";
 
 type SdkUpdateType =
@@ -48,9 +49,6 @@ interface ActivityCardProps {
   activity: ActivityType;
   isAuthorized?: boolean;
 }
-
-export const containerClassName =
-  "border bg-background rounded-xl gap-0 flex flex-col items-start justify-start";
 
 export const ActivityCard: FC<ActivityCardProps> = ({ activity, isAuthorized = false }) => {
   const isOwner = useOwnerStore((state) => state.isOwner);

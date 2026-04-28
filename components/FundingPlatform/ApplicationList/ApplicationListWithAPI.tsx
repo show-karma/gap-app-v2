@@ -115,11 +115,15 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
     data: programReviewers = [],
     isLoading: isLoadingProgramReviewers,
     isError: isProgramReviewersError,
+    addReviewer: addProgramReviewer,
+    isAdding: isAddingProgramReviewer,
   } = useProgramReviewers(programId);
   const {
     data: milestoneReviewers = [],
     isLoading: isLoadingMilestoneReviewers,
     isError: isMilestoneReviewersError,
+    addReviewer: addMilestoneReviewer,
+    isAdding: isAddingMilestoneReviewer,
   } = useMilestoneReviewers(programId);
 
   // Determine column visibility based on config, prompts, or application data
@@ -479,6 +483,10 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
           showInternalAIScoreColumn={showInternalAIScoreColumn}
           programReviewers={programReviewers}
           milestoneReviewers={milestoneReviewers}
+          addProgramReviewer={addProgramReviewer}
+          isAddingProgramReviewer={isAddingProgramReviewer}
+          addMilestoneReviewer={addMilestoneReviewer}
+          isAddingMilestoneReviewer={isAddingMilestoneReviewer}
           isLoadingProgramReviewers={isLoadingProgramReviewers}
           isProgramReviewersError={isProgramReviewersError}
           isLoadingMilestoneReviewers={isLoadingMilestoneReviewers}

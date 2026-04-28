@@ -11,8 +11,7 @@ import { useParams } from "next/navigation";
 import { type FC, useCallback, useState } from "react";
 import toast from "react-hot-toast";
 import { DeleteDialog } from "@/components/DeleteDialog";
-import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
-import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
+import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { MilestoneVerificationSection } from "@/components/Shared/MilestoneVerification";
 import { Button } from "@/components/Utilities/Button";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
@@ -32,11 +31,11 @@ import { ReadMore } from "@/utilities/ReadMore";
 import { shareOnX } from "@/utilities/share/shareOnX";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 import { cn } from "@/utilities/tailwind";
-import { containerClassName } from "../ActivityCard";
 import { ActivityActionsWrapper } from "./ActivityActionsWrapper";
 import { ActivityAttribution } from "./ActivityAttribution";
 import { ActivityStatusHeader } from "./ActivityStatusHeader";
 import { GrantAssociation } from "./GrantAssociation";
+import { containerClassName } from "./styles";
 
 const ProjectObjectiveCompletion = dynamic(
   () =>
@@ -603,12 +602,12 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
                   <span>Posted {formatDate(completionDate)} by</span>
                   {completionAttester && (
                     <div className="flex flex-row items-center gap-3">
-                      <EthereumAddressToENSAvatar
-                        address={completionAttester}
-                        className="h-5 w-5 lg:h-6 lg:w-6 min-h-5 min-w-5 lg:min-h-6 lg:min-w-6 rounded-full"
-                      />
                       <span className="text-sm font-semibold leading-5 text-foreground">
-                        <EthereumAddressToENSName address={completionAttester} />
+                        <EthereumAddressToProfileName
+                          address={completionAttester}
+                          showProfilePicture
+                          pictureClassName="h-5 w-5 lg:h-6 lg:w-6 min-h-5 min-w-5 lg:min-h-6 lg:min-w-6 rounded-full"
+                        />
                       </span>
                     </div>
                   )}

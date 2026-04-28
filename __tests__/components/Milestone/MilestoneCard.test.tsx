@@ -26,18 +26,13 @@ vi.mock("next/image", () => ({
 }));
 
 // Mock ENS components
-vi.mock("@/components/EthereumAddressToENSAvatar", () => ({
+vi.mock("@/components/EthereumAddressToProfileName", () => ({
   __esModule: true,
   default: ({ address, className }: any) => (
-    <div data-testid="ens-avatar" className={className}>
+    <span data-testid="ens-name" className={className}>
       {address}
-    </div>
+    </span>
   ),
-}));
-
-vi.mock("@/components/EthereumAddressToENSName", () => ({
-  __esModule: true,
-  default: ({ address }: any) => <span data-testid="ens-name">{address}</span>,
 }));
 
 // Mock ReadMore utility

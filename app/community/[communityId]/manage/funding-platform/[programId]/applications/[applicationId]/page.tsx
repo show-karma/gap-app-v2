@@ -73,6 +73,9 @@ export default function ApplicationDetailPage() {
   const searchParams = useSearchParams();
   const shouldOpenEdit = searchParams.get("edit") === "true";
 
+  // ?tab=comments from TG notification deep-link
+  const tabParam = searchParams.get("tab");
+
   // Get current user address
   const { address: currentUserAddress } = useAuth();
 
@@ -452,67 +455,77 @@ export default function ApplicationDetailPage() {
           )}
 
           {/* Tab-based Layout */}
-          <ApplicationTabs
-            connectedToHeader={!milestoneReviewUrl && !selectedStatus}
-            tabs={
-              [
-                {
-                  id: "application",
-                  label: "Application",
-                  icon: TabIcons.Application,
-                  content: (
-                    <TabPanel>
-                      <ApplicationTab
-                        application={application}
-                        program={program}
-                        viewMode={applicationViewMode}
-                        onViewModeChange={setApplicationViewMode}
-                      />
-                    </TabPanel>
-                  ),
-                },
-                {
-                  id: "ai-analysis",
-                  label: "AI Analysis",
-                  icon: TabIcons.AIAnalysis,
-                  content: (
-                    <TabPanel>
-                      <AIAnalysisTab
-                        application={application}
-                        program={program}
-                        onEvaluationComplete={refetchApplication}
-                      />
-                    </TabPanel>
-                  ),
-                },
-                {
-                  id: "comments",
-                  label: "Comments",
-                  icon: TabIcons.Discussion,
-                  content: (
-                    <TabPanel>
-                      <DiscussionTab
-                        applicationId={application.referenceNumber}
-                        comments={comments}
-                        statusHistory={application.statusHistory}
-                        versionHistory={versions}
-                        currentStatus={application.status}
-                        isAdmin={isAdmin}
-                        currentUserAddress={currentUserAddress}
-                        onCommentAdd={handleCommentAdd}
-                        onCommentEdit={handleCommentEdit}
-                        onCommentDelete={handleCommentDelete}
-                        onVersionClick={handleVersionClick}
-                        isLoading={isLoadingComments}
-                        programId={programId}
-                        enableMentions
-                      />
-                    </TabPanel>
-                  ),
-                },
-              ] satisfies TabConfig[]
-            }
-          />
+          {(() => {
+            const tabs = [
+              {
+                id: "application",
+                label: "Application",
+                icon: TabIcons.Application,
+                content: (
+                  <TabPanel>
+                    <ApplicationTab
+                      application={application}
+                      program={program}
+                      viewMode={applicationViewMode}
+                      onViewModeChange={setApplicationViewMode}
+                    />
+                  </TabPanel>
+                ),
+              },
+              {
+                id: "ai-analysis",
+                label: "AI Analysis",
+                icon: TabIcons.AIAnalysis,
+                content: (
+                  <TabPanel>
+                    <AIAnalysisTab
+                      application={application}
+                      program={program}
+                      onEvaluationComplete={refetchApplication}
+                    />
+                  </TabPanel>
+                ),
+              },
+              {
+                id: "comments",
+                label: "Comments",
+                icon: TabIcons.Discussion,
+                content: (
+                  <TabPanel>
+                    <DiscussionTab
+                      applicationId={application.referenceNumber}
+                      comments={comments}
+                      statusHistory={application.statusHistory}
+                      versionHistory={versions}
+                      currentStatus={application.status}
+                      isAdmin={isAdmin}
+                      currentUserAddress={currentUserAddress}
+                      onCommentAdd={handleCommentAdd}
+                      onCommentEdit={handleCommentEdit}
+                      onCommentDelete={handleCommentDelete}
+                      onVersionClick={handleVersionClick}
+                      isLoading={isLoadingComments}
+                      programId={programId}
+                      enableMentions
+                    />
+                  </TabPanel>
+                ),
+              },
+            ] satisfies TabConfig[];
+
+            // Derive tab index from the tab id rather than hardcoding "2" —
+            // prevents silent breakage if tabs are reordered.
+            const tabParamIndex = tabParam ? tabs.findIndex((t) => t.id === tabParam) : -1;
+            const defaultIndex = tabParamIndex >= 0 ? tabParamIndex : 0;
+
+            return (
+              <ApplicationTabs
+                connectedToHeader={!milestoneReviewUrl && !selectedStatus}
+                defaultIndex={defaultIndex}
+                tabs={tabs}
+              />
+            );
+          })()}
         </div>
 
         {/* Delete Confirmation Modal - Admin only */}

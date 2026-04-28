@@ -22,6 +22,8 @@ import {
 } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
+import { useCan } from "@/src/core/rbac/context/permission-context";
+import { Permission } from "@/src/core/rbac/types";
 import {
   type CommunityPayoutAgreementInfo,
   type CommunityPayoutInvoiceInfo,
@@ -109,6 +111,11 @@ export function ProjectDetailsSidebar({
   onConfigSuccess,
   dataVersion = 0,
 }: ProjectDetailsSidebarProps) {
+  // Mirrors backend `program:edit` gate on milestone-invoice write endpoints.
+  // Hides attach/remove/date-picker controls for reviewers, registry admins,
+  // and project owners who land on Control Center but lack write permission.
+  const canEditInvoices = useCan(Permission.PROGRAM_EDIT);
+
   const [activeSection, setActiveSection] = useState<SidebarSection>("details");
   const [milestoneEdits, setMilestoneEdits] = useState<
     Record<string, { invoiceReceivedAt?: string | null; milestoneUID?: string | null }>
@@ -659,6 +666,7 @@ export function ProjectDetailsSidebar({
                       communityUID={communityUID}
                       milestoneInvoices={milestoneInvoices}
                       invoiceRequired={invoiceRequired}
+                      canEditInvoices={canEditInvoices}
                       milestoneEdits={milestoneEdits}
                       pendingFiles={pendingFiles}
                       allocationByUID={allocationByUID}

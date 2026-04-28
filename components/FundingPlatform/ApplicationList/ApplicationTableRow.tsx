@@ -13,7 +13,6 @@ import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 import { formatAIScore } from "../helper/getAIScore";
 import { formatInternalAIScore } from "../helper/getInternalAIScore";
-import { getProjectTitle } from "../helper/getProjectTitle";
 import { AIEvaluationModal, type EvaluationType } from "./AIEvaluationModal";
 import { ReviewerAssignmentDropdown } from "./ReviewerAssignmentDropdown";
 import { TableStatusActionButtons } from "./TableStatusActionButtons";
@@ -35,6 +34,7 @@ const formatStatus = (status: string): string => {
 };
 
 interface ApplicationTableRowProps {
+  programId: string;
   application: IFundingApplication;
   showAIScoreColumn: boolean;
   showInternalAIScoreColumn: boolean;
@@ -43,6 +43,18 @@ interface ApplicationTableRowProps {
   showStatusActions: boolean;
   programReviewers: ProgramReviewer[];
   milestoneReviewers: MilestoneReviewer[];
+  onAddProgramReviewer: (data: { name: string; email: string; telegram?: string }) => Promise<{
+    name: string;
+    email: string;
+    publicAddress?: string;
+  }>;
+  isAddingProgramReviewer?: boolean;
+  onAddMilestoneReviewer: (data: {
+    name: string;
+    email: string;
+    telegram?: string;
+  }) => Promise<{ name: string; email: string; publicAddress?: string }>;
+  isAddingMilestoneReviewer?: boolean;
   onApplicationSelect?: (application: IFundingApplication) => void;
   onApplicationHover?: (applicationId: string) => void;
   onStatusChange?: (applicationId: string, status: string, e: React.MouseEvent) => void;
@@ -65,6 +77,7 @@ const getStatusBadge = (status: string) => (
 );
 
 const ApplicationTableRowComponent: FC<ApplicationTableRowProps> = ({
+  programId,
   application,
   showAIScoreColumn,
   showInternalAIScoreColumn,
@@ -73,6 +86,10 @@ const ApplicationTableRowComponent: FC<ApplicationTableRowProps> = ({
   showStatusActions,
   programReviewers,
   milestoneReviewers,
+  onAddProgramReviewer,
+  isAddingProgramReviewer = false,
+  onAddMilestoneReviewer,
+  isAddingMilestoneReviewer = false,
   onApplicationSelect,
   onApplicationHover,
   onStatusChange,
@@ -84,6 +101,8 @@ const ApplicationTableRowComponent: FC<ApplicationTableRowProps> = ({
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [evaluationType, setEvaluationType] = useState<EvaluationType>("external");
+
+  const projectDisplayName = application.resolvedProjectName || application.referenceNumber;
 
   const handleAIScoreClick = (e: React.MouseEvent, type: EvaluationType) => {
     e.stopPropagation();
@@ -119,8 +138,8 @@ const ApplicationTableRowComponent: FC<ApplicationTableRowProps> = ({
           {application.referenceNumber}
         </td>
         <td className="px-4 py-4 text-sm text-gray-900 dark:text-white">
-          <div className="max-w-xs truncate" title={getProjectTitle(application)}>
-            {getProjectTitle(application)}
+          <div className="max-w-xs truncate" title={projectDisplayName}>
+            {projectDisplayName}
           </div>
         </td>
         <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
@@ -189,11 +208,14 @@ const ApplicationTableRowComponent: FC<ApplicationTableRowProps> = ({
             {/* biome-ignore lint/a11y/noStaticElementInteractions: This div only stops event propagation, interactivity is handled by the dropdown */}
             <div onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
               <ReviewerAssignmentDropdown
+                programId={programId}
                 applicationId={application.referenceNumber}
                 availableReviewers={programReviewers}
                 assignedReviewerAddresses={application.appReviewers || []}
                 reviewerType={ReviewerType.APP}
                 onAssignmentChange={onReviewerAssignmentChange}
+                onAddReviewer={onAddProgramReviewer}
+                isAddingReviewer={isAddingProgramReviewer}
               />
             </div>
           </td>
@@ -203,11 +225,14 @@ const ApplicationTableRowComponent: FC<ApplicationTableRowProps> = ({
             {/* biome-ignore lint/a11y/noStaticElementInteractions: This div only stops event propagation, interactivity is handled by the dropdown */}
             <div onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
               <ReviewerAssignmentDropdown
+                programId={programId}
                 applicationId={application.referenceNumber}
                 availableReviewers={milestoneReviewers}
                 assignedReviewerAddresses={application.milestoneReviewers || []}
                 reviewerType={ReviewerType.MILESTONE}
                 onAssignmentChange={onReviewerAssignmentChange}
+                onAddReviewer={onAddMilestoneReviewer}
+                isAddingReviewer={isAddingMilestoneReviewer}
               />
             </div>
           </td>
@@ -228,7 +253,7 @@ const ApplicationTableRowComponent: FC<ApplicationTableRowProps> = ({
         onClose={() => setIsModalOpen(false)}
         evaluationType={evaluationType}
         evaluation={getEvaluationData()}
-        projectTitle={getProjectTitle(application)}
+        projectTitle={projectDisplayName}
       />
     </>
   );

@@ -25,7 +25,7 @@ export function WhereBuildersGrow() {
               <CreateProjectButton styleClass="w-max px-6 py-[9.5px]" />
             </div>
             <Button variant="outline" size="lg" className="relative z-0" asChild>
-              <Link href={PAGES.FUNDERS}>Grow your ecosystem</Link>
+              <Link href={PAGES.HOME}>Grow your ecosystem</Link>
             </Button>
           </div>
         </div>

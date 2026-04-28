@@ -2,49 +2,65 @@ import { render, screen } from "@testing-library/react";
 import Index from "@/app/page";
 import "@testing-library/jest-dom";
 
-vi.mock("@/src/features/homepage/components/hero", () => ({
+vi.mock("@/src/features/home/components/hero", () => ({
   Hero: () => <div data-testid="hero" />,
 }));
 
-vi.mock("@/src/features/homepage/components/live-funding-opportunities", () => ({
-  LiveFundingOpportunities: () => <div data-testid="live-funding-opportunities" />,
+vi.mock("@/src/features/home/components/pain-points", () => ({
+  PainPoints: () => <div data-testid="pain-points" />,
 }));
 
-vi.mock("@/src/features/homepage/components/live-funding-opportunities-skeleton", () => ({
-  LiveFundingOpportunitiesSkeleton: () => <div data-testid="live-funding-opportunities-skeleton" />,
+vi.mock("@/src/features/home/components/numbers-section", () => ({
+  NumbersSection: () => <div data-testid="numbers-section" />,
 }));
 
-vi.mock("@/src/features/homepage/components/platform-features", () => ({
-  PlatformFeatures: () => <div data-testid="platform-features" />,
+vi.mock("@/src/features/home/components/platform-section", () => ({
+  PlatformSection: () => <div data-testid="platform-section" />,
 }));
 
-vi.mock("@/src/features/homepage/components/how-it-works", () => ({
-  HowItWorks: () => <div data-testid="how-it-works" />,
+vi.mock("@/src/features/home/components/case-studies-section", () => ({
+  CaseStudiesSection: () => <div data-testid="case-studies-section" />,
 }));
 
-vi.mock("@/src/features/homepage/components/where-builders-grow", () => ({
-  WhereBuildersGrow: () => <div data-testid="where-builders-grow" />,
+vi.mock("@/src/features/home/components/how-it-works-section", () => ({
+  HowItWorksSection: () => <div data-testid="how-it-works-section" />,
 }));
 
-vi.mock("@/src/features/homepage/components/join-community", () => ({
-  JoinCommunity: () => <div data-testid="join-community" />,
+vi.mock("@/src/features/home/components/objections-section", () => ({
+  ObjectionsSection: () => <div data-testid="objections-section" />,
 }));
 
-vi.mock("@/src/features/homepage/components/faq", () => ({
-  FAQ: () => <div data-testid="faq" />,
+vi.mock("@/src/features/home/components/offering-section", () => ({
+  OfferingSection: () => <div data-testid="offering-section" />,
 }));
 
-describe("Homepage", () => {
-  it("renders all main components correctly", () => {
+vi.mock("@/src/features/home/components/faq-section", () => ({
+  FAQSection: () => <div data-testid="faq-section" />,
+}));
+
+vi.mock("@/src/features/home/components/cta-section", () => ({
+  CTASection: () => <div data-testid="cta-section" />,
+}));
+
+describe("Homepage (funder landing)", () => {
+  const sections = [
+    "hero",
+    "pain-points",
+    "numbers-section",
+    "platform-section",
+    "case-studies-section",
+    "how-it-works-section",
+    "objections-section",
+    "offering-section",
+    "faq-section",
+    "cta-section",
+  ];
+
+  it("renders all main sections", () => {
     render(<Index />);
-
-    expect(screen.getByTestId("hero")).toBeInTheDocument();
-    expect(screen.getByTestId("live-funding-opportunities")).toBeInTheDocument();
-    expect(screen.getByTestId("platform-features")).toBeInTheDocument();
-    expect(screen.getByTestId("how-it-works")).toBeInTheDocument();
-    expect(screen.getByTestId("join-community")).toBeInTheDocument();
-    expect(screen.getByTestId("faq")).toBeInTheDocument();
-    expect(screen.getByTestId("where-builders-grow")).toBeInTheDocument();
+    sections.forEach((testId) => {
+      expect(screen.getByTestId(testId)).toBeInTheDocument();
+    });
   });
 
   it("has the correct structure with main element", () => {
@@ -62,45 +78,33 @@ describe("Homepage", () => {
     );
   });
 
-  it("renders sections in the correct order", () => {
+  it("renders sections inside the main element in order", () => {
     render(<Index />);
 
     const main = screen.getByRole("main");
-    const sections = [
-      "hero",
-      "live-funding-opportunities",
-      "platform-features",
-      "how-it-works",
-      "join-community",
-      "faq",
-      "where-builders-grow",
-    ];
-
     sections.forEach((testId) => {
-      const element = screen.getByTestId(testId);
-      expect(main).toContainElement(element);
+      expect(main).toContainElement(screen.getByTestId(testId));
     });
   });
 
   it("contains horizontal dividers between sections", () => {
     const { container } = render(<Index />);
 
-    // Check for hr elements (horizontal lines between sections)
     const horizontalLines = container.querySelectorAll("hr");
     expect(horizontalLines.length).toBeGreaterThan(0);
 
-    // Verify they have the correct styling
     horizontalLines.forEach((hr) => {
       expect(hr).toHaveClass("w-full", "h-[1px]", "bg-border");
     });
   });
 
-  it("has responsive container with max-width", () => {
-    render(<Index />);
+  it("has responsive inner container with max-width", () => {
+    const { container } = render(<Index />);
 
-    const mainContainer = screen.getByRole("main");
-    const innerContainer = mainContainer.firstChild as HTMLElement;
-
+    const innerContainer = container.querySelector(
+      "main > div.max-w-\\[1920px\\]"
+    ) as HTMLElement | null;
+    expect(innerContainer).not.toBeNull();
     expect(innerContainer).toHaveClass("flex", "w-full", "max-w-[1920px]");
   });
 });

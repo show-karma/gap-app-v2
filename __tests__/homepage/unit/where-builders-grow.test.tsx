@@ -22,6 +22,7 @@ vi.mock("@/src/features/homepage/components/create-project-button", () => ({
 vi.mock("@/utilities/pages", () => ({
   PAGES: {
     FUNDERS: "/funders",
+    HOME: "/",
   },
 }));
 
@@ -54,11 +55,11 @@ describe("WhereBuildersGrow Component", () => {
     expect(growButton).toBeInTheDocument();
   });
 
-  it("should link 'Grow your ecosystem' to funders page", () => {
+  it("should link 'Grow your ecosystem' to the home page", () => {
     renderWithProviders(<WhereBuildersGrow />);
 
     const growButton = screen.getByRole("link", { name: /Grow your ecosystem/i });
-    expect(growButton).toHaveAttribute("href", "/funders");
+    expect(growButton).toHaveAttribute("href", "/");
   });
 
   it("should center content", () => {

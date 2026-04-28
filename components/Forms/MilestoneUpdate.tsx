@@ -31,6 +31,7 @@ import { useOwnerStore, useProjectStore } from "@/store";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import type { GrantMilestone } from "@/types/v2/grant";
 import fetchData from "@/utilities/fetchData";
+import { hasAnyDirtyField } from "@/utilities/hasAnyDirtyField";
 import {
   deleteMilestoneImpactAnswers,
   sendMilestoneImpactAnswers,
@@ -166,7 +167,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
     handleSubmit,
     watch,
     control,
-    formState: { errors, isValid },
+    formState: { errors, isValid, dirtyFields },
   } = useForm<SchemaType>({
     resolver: zodResolver(schema),
     reValidateMode: "onChange",
@@ -528,6 +529,53 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
   };
 
   const onSubmit = async (data: SchemaType) => {
+    const hasFieldChanges = hasAnyDirtyField(dirtyFields);
+
+    // Nothing-to-save guard: editing with no field changes and no new invoice would
+    // otherwise trigger a no-op on-chain re-attestation (wastes gas + orphans verifications).
+    if (isEditing && !hasFieldChanges && !invoiceFile) {
+      toast.error("No changes to save");
+      return;
+    }
+
+    // Invoice-only fast path: when editing an already-completed milestone, if the user
+    // only added an invoice (no tracked form fields changed), skip the on-chain
+    // re-attestation. Re-attesting creates a new MilestoneCompleted UID and orphans any
+    // verifications referencing the original completion attestation.
+    const isInvoiceOnlyEdit = isEditing && !!invoiceFile && !!grantUID && !hasFieldChanges;
+
+    if (isInvoiceOnlyEdit) {
+      setIsSubmitLoading(true);
+      const loadingToastId = toast.loading("Saving invoice...");
+      try {
+        await submitGranteeInvoice(grantUID, {
+          milestoneLabel: milestone.title,
+          milestoneUID: milestone.uid,
+          invoiceFileKey: invoiceFile.fileKey,
+          invoiceFileUrl: invoiceFile.fileUrl,
+        });
+        toast.success("Invoice submitted successfully", { id: loadingToastId });
+
+        await queryClient.invalidateQueries({
+          predicate: createProjectQueryPredicate(project?.uid || ""),
+        });
+
+        cancelEditing(false);
+        parentSetIsUpdating?.(false);
+      } catch (invoiceError) {
+        errorManager("Invoice-only submission failed", invoiceError, {
+          grantUID,
+          projectUID: project?.uid,
+          address,
+          milestoneUID: milestone.uid,
+        });
+        toast.error("Invoice submission failed. Please try again.", { id: loadingToastId });
+      } finally {
+        setIsSubmitLoading(false);
+      }
+      return;
+    }
+
     const sanitizedData = sanitizeObject(data);
     try {
       if (isEditing) {
@@ -581,6 +629,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
               onChange={(newValue: string) => {
                 setValue("description", newValue || "", {
                   shouldValidate: true,
+                  shouldDirty: true,
                 });
               }}
             />

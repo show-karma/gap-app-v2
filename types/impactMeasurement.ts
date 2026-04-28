@@ -17,6 +17,13 @@ export interface ImpactIndicatorWithData {
   unitOfMeasure: string;
   createdAt?: string;
   updatedAt?: string;
+  /**
+   * ISO timestamp of the most recent sync/upsert across this indicator's
+   * datapoints for the current project. Comes from the v2 project-indicators
+   * endpoint and reflects when the job last touched this indicator (not the
+   * measurement date).
+   */
+  lastUpdatedAt?: string | null;
   programs: {
     programId: string;
     chainID: number;

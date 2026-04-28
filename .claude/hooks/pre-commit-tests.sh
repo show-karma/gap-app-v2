@@ -34,7 +34,7 @@ cd "$GAP_APP_DIR"
 
 # Run tests with bail (stop on first failure) - only changed files
 echo "Running tests before commit..." >&2
-TEST_OUTPUT=$(pnpm test --bail --changedSince=HEAD 2>&1) || TEST_EXIT=$?
+TEST_OUTPUT=$(pnpm test --bail=1 --changed=HEAD 2>&1) || TEST_EXIT=$?
 
 if [ "${TEST_EXIT:-0}" -ne 0 ]; then
   # Extract failure summary

@@ -180,14 +180,14 @@ afterEach(() => {
 // =====================================================================
 describe("useAuth — Effect 1 (Auth State Change)", () => {
   describe("Login transition (false -> true)", () => {
-    it("redirects to DASHBOARD when on root path and no postLoginRedirect", () => {
+    it("does not redirect when on root path and no postLoginRedirect", () => {
       const { rerender } = renderHook(() => useAuth(), { wrapper });
 
-      // Simulate login
+      // Simulate login — homepage is now a marketing page, no auto-redirect
       setBridgeState({ authenticated: true, user: mockPrivyUser });
       rerender();
 
-      expect(mockRouterPush).toHaveBeenCalledWith("/dashboard");
+      expect(mockRouterPush).not.toHaveBeenCalled();
     });
 
     it("uses postLoginRedirect when set, then clears it", () => {

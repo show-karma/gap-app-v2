@@ -7,7 +7,7 @@
  */
 
 import { axe, toHaveNoViolations } from "jest-axe";
-import HomePage from "@/app/page";
+import HomePage from "@/app/for-projects/page";
 import { renderWithProviders, screen, waitFor } from "../utils/test-helpers";
 import "@testing-library/jest-dom";
 
@@ -41,7 +41,7 @@ describe("Homepage Accessibility", () => {
       const { container } = renderWithProviders(await HomePage());
 
       // Find Hero section
-      const heroSection = screen.getByText(/Where builders get funded/i).closest("section");
+      const heroSection = screen.getByText(/Get funded/i).closest("section");
       expect(heroSection).toBeInTheDocument();
 
       const results = await axe(heroSection as HTMLElement);

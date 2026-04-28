@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useTheme } from "next-themes";
 import { useState } from "react";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
-import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
+import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { DiscordIcon, TelegramIcon, TwitterIcon } from "@/components/Icons";
 import { ParagraphIcon } from "@/components/Icons/Paragraph";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
@@ -28,8 +28,8 @@ import { SOCIALS } from "@/utilities/socials";
 import { Logo } from "../shared/logo";
 import {
   ExploreContent,
-  ForBuildersContent,
   ForFundersContent,
+  ForProjectsContent,
   MenuSection,
   ResourcesContent,
 } from "./menu-components";
@@ -158,7 +158,7 @@ export function NavbarMobileMenu() {
             ) : getUserEmail(user) ? (
               <span className="text-sm text-muted-foreground px-2">{getUserEmail(user)}</span>
             ) : (
-              <EthereumAddressToENSName
+              <EthereumAddressToProfileName
                 address={address}
                 className="text-sm text-muted-foreground px-2"
               />
@@ -216,10 +216,10 @@ export function NavbarMobileMenu() {
 
               {!isLoggedIn && (
                 <>
-                  {/* For Builders Section */}
+                  {/* For Projects Section */}
                   <div className="border-b border-border py-3">
-                    <MenuSection title="For Builders" variant="mobile" />
-                    <ForBuildersContent variant="mobile" onClose={() => setMobileMenuOpen(false)} />
+                    <MenuSection title="For Projects" variant="mobile" />
+                    <ForProjectsContent variant="mobile" onClose={() => setMobileMenuOpen(false)} />
                   </div>
 
                   {/* For Funders Section */}

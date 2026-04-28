@@ -1,4 +1,4 @@
-import { getProjectTitle } from "../getProjectTitle";
+import { findProjectTitleInData, getProjectTitle } from "../getProjectTitle";
 
 const makeApplication = (
   applicationData: Record<string, unknown>,
@@ -75,5 +75,54 @@ describe("getProjectTitle", () => {
       "Pod Name": "Fallback Pod",
     });
     expect(getProjectTitle(app)).toBe("Fallback Pod");
+  });
+});
+
+describe("findProjectTitleInData", () => {
+  it("returns undefined (not the reference number) when no title-like field is present", () => {
+    expect(findProjectTitleInData({ "Some Field": "value" })).toBeUndefined();
+  });
+
+  it("returns undefined for empty or null applicationData", () => {
+    expect(findProjectTitleInData({})).toBeUndefined();
+    expect(findProjectTitleInData(null)).toBeUndefined();
+    expect(findProjectTitleInData(undefined)).toBeUndefined();
+  });
+
+  it("returns the schema title when one exists", () => {
+    expect(findProjectTitleInData({ "Project Title": "Alpha" })).toBe("Alpha");
+  });
+
+  it("prefers keys with both project + title/name keywords over name-only keys", () => {
+    const data = {
+      "Team Name": "Internal Name",
+      "Project Name": "Actual Project",
+    };
+    expect(findProjectTitleInData(data)).toBe("Actual Project");
+  });
+
+  it("ignores non-string values even when the key matches the pattern", () => {
+    const data: Record<string, unknown> = {
+      "Project Title": { en: "Nested" },
+      "Project Name": "Flat Name",
+    };
+    // Must not stringify an object into '[object Object]' — fall through to
+    // the next candidate instead.
+    expect(findProjectTitleInData(data)).toBe("Flat Name");
+  });
+
+  it("ignores non-string values and returns undefined when no string candidate exists", () => {
+    const data: Record<string, unknown> = {
+      "Project Title": { en: "Nested" },
+      "Project Count": 7,
+      "Project Active": true,
+    };
+    expect(findProjectTitleInData(data)).toBeUndefined();
+  });
+
+  it("ignores whitespace-only strings", () => {
+    expect(findProjectTitleInData({ "Project Title": "   ", "Pod Name": "Real Name" })).toBe(
+      "Real Name"
+    );
   });
 });

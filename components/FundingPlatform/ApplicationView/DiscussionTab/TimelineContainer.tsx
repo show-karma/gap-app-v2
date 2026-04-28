@@ -13,6 +13,7 @@ import {
 import { isValid, parseISO } from "date-fns";
 import pluralize from "pluralize";
 import { type FC, useMemo } from "react";
+import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { Spinner } from "@/components/Utilities/Spinner";
 import type {
@@ -261,7 +262,7 @@ export const TimelineContainer: FC<TimelineContainerProps> = ({
                 {isInitialVersion ? "Initial application submitted" : "Application edited"}
                 {version.submittedBy && (
                   <span className="ml-1 text-gray-600 dark:text-gray-400">
-                    by {version.submittedBy.slice(0, 6)}...{version.submittedBy.slice(-4)}
+                    by <EthereumAddressToProfileName address={version.submittedBy} />
                   </span>
                 )}
               </p>

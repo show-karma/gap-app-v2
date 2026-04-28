@@ -68,6 +68,40 @@ vi.mock("@/components/ui/slider", () => ({
   },
 }));
 
+describe("ActivityFilters - Filter pill disabled state", () => {
+  const baseProps = {
+    activeFilters: [] as ActivityFilterType[],
+    onFilterToggle: vi.fn(),
+    milestoneStatusFilter: "all" as MilestoneStatusFilter,
+    onMilestoneStatusChange: vi.fn(),
+  };
+
+  it("disables a filter pill when the count is zero and the pill is not active", () => {
+    render(
+      <ActivityFilters {...baseProps} activeFilters={[]} counts={{ milestones: 0, funding: 1 }} />
+    );
+
+    expect(screen.getByTestId("filter-milestones")).toBeDisabled();
+  });
+
+  it("keeps the milestones pill clickable when active even if the filtered count is zero", () => {
+    render(
+      <ActivityFilters
+        {...baseProps}
+        activeFilters={["milestones"]}
+        counts={{ milestones: 0, funding: 1 }}
+        milestoneStatusFilter="completed"
+      />
+    );
+
+    const pill = screen.getByTestId("filter-milestones");
+    expect(pill).not.toBeDisabled();
+
+    fireEvent.click(pill);
+    expect(baseProps.onFilterToggle).toHaveBeenCalledWith("milestones");
+  });
+});
+
 describe("ActivityFilters - Milestone Status Dropdown Visibility", () => {
   const defaultProps = {
     activeFilters: [] as ActivityFilterType[],
@@ -79,10 +113,10 @@ describe("ActivityFilters - Milestone Status Dropdown Visibility", () => {
     onMilestoneStatusChange: vi.fn(),
   };
 
-  it("shows milestone status dropdown when no filters are active (All)", () => {
+  it("hides milestone status dropdown when no filters are active (All)", () => {
     render(<ActivityFilters {...defaultProps} activeFilters={[]} />);
 
-    expect(screen.getByTestId("milestone-status-filter")).toBeInTheDocument();
+    expect(screen.queryByTestId("milestone-status-filter")).not.toBeInTheDocument();
   });
 
   it("shows milestone status dropdown when milestones filter is active", () => {
@@ -144,7 +178,7 @@ describe("ActivityFilters - Milestone Status Dropdown Options", () => {
   it("renders the milestone status trigger with correct value", () => {
     render(
       <ActivityFilters
-        activeFilters={[]}
+        activeFilters={["milestones"]}
         onFilterToggle={vi.fn()}
         counts={{ milestones: 3 }}
         milestoneStatusFilter="all"

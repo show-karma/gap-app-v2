@@ -10,12 +10,14 @@ import {
 } from "@heroicons/react/24/outline";
 import React, { type FC, useCallback, useMemo, useRef, useState } from "react";
 import { DeleteDialog } from "@/components/DeleteDialog";
+import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useAuth } from "@/hooks/useAuth";
 import { useMentionEditor } from "@/hooks/useMentionEditor";
 import { useMilestoneReviewers } from "@/hooks/useMilestoneReviewers";
+import { ReviewerType } from "@/hooks/useReviewerAssignment";
 import type { ApplicationComment } from "@/types/funding-platform";
 import { compareAllWallets } from "@/utilities/auth/compare-all-wallets";
 import { renderRelativeTime } from "@/utilities/formatRelativeTime";
@@ -58,7 +60,11 @@ const CommentItem: FC<CommentItemProps> = ({
     editorRef: editContainerRef,
   });
 
-  const { data: reviewers } = useMilestoneReviewers(mentionsEnabled ? (programId ?? "") : "");
+  const {
+    data: reviewers,
+    addReviewer,
+    isAdding,
+  } = useMilestoneReviewers(mentionsEnabled ? (programId ?? "") : "");
 
   const filteredReviewers = useMemo(() => {
     if (!reviewers) return [];
@@ -196,8 +202,9 @@ const CommentItem: FC<CommentItemProps> = ({
           <div className="flex items-start justify-between">
             <div>
               <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                {comment.authorName ||
-                  `${comment.authorAddress?.slice(0, 6)}...${comment.authorAddress?.slice(-4)}`}
+                {comment.authorName || (
+                  <EthereumAddressToProfileName address={comment.authorAddress} />
+                )}
                 <span
                   className={cn(
                     "ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium",
@@ -348,6 +355,9 @@ const CommentItem: FC<CommentItemProps> = ({
                     programId={programId}
                     isOpen={mentionEditor.isInviteModalOpen}
                     onClose={mentionEditor.handleCloseInviteModal}
+                    reviewerType={ReviewerType.MILESTONE}
+                    onInviteReviewer={addReviewer}
+                    isInviting={isAdding}
                     onInvited={handleEditInvited}
                   />
                 )}

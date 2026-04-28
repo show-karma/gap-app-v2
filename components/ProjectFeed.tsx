@@ -9,8 +9,7 @@ import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
 import { cn } from "@/utilities/tailwind";
-import EthereumAddressToENSAvatar from "./EthereumAddressToENSAvatar";
-import EthereumAddressToENSName from "./EthereumAddressToENSName";
+import EthereumAddressToProfileName from "./EthereumAddressToProfileName";
 import { ExternalLink } from "./Utilities/ExternalLink";
 import { errorManager } from "./Utilities/errorManager";
 import { MarkdownPreview } from "./Utilities/MarkdownPreview";
@@ -112,12 +111,12 @@ export const ProjectFeed = ({ initialFeed = [] }: ProjectFeedProps) => {
                         />
                       </div>
                       <div className="flex flex-row items-center gap-1 flex-wrap">
-                        <EthereumAddressToENSAvatar
-                          address={item.attester}
-                          className="h-5 w-5 rounded-full border-1 border-gray-100 dark:border-zinc-900"
-                        />
                         <p className="text-sm text-center font-bold text-black dark:text-zinc-200 max-2xl:text-[13px]">
-                          <EthereumAddressToENSName address={item.attester} />
+                          <EthereumAddressToProfileName
+                            address={item.attester}
+                            showProfilePicture
+                            pictureClassName="h-5 w-5 rounded-full border-1 border-gray-100 dark:border-zinc-900"
+                          />
                         </p>
                         <span className="ml-1 text-sm font-normal text-slate-700 dark:text-zinc-400 max-2xl:text-xs">
                           posted on {formatDate(item.timestamp)}

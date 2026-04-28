@@ -156,6 +156,14 @@ export const QUERY_KEYS = {
         projectId ?? "",
       ] as const,
   },
+  KNOWLEDGE_BASE: {
+    /** All knowledge-base queries — used as a predicate root for bulk
+     *  invalidation when a community's KB changes after a mutation. */
+    ALL: ["knowledge-base"] as const,
+    SOURCES: (communityIdOrSlug: string) =>
+      ["knowledge-base", "sources", communityIdOrSlug] as const,
+    SOURCES_BASE: ["knowledge-base", "sources"] as const,
+  },
   GRANTS: {
     COMMENTS: (projectUID: string, programId: string) =>
       ["grant-comments", projectUID, programId] as const,

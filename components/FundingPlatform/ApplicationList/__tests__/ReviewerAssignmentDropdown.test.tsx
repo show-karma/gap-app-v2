@@ -24,11 +24,15 @@ vi.mock("@/components/Utilities/MultiSelectDropdown", () => {
       selectedIds: initialSelectedIds,
       onChange,
       placeholder,
+      emptyActionLabel,
+      onEmptyAction,
     }: {
       items: Array<{ id: string; label: string }>;
       selectedIds: string[];
       onChange: (ids: string[]) => void;
       placeholder: string;
+      emptyActionLabel?: string;
+      onEmptyAction?: () => void;
     }) => {
       // Maintain local state to handle rapid clicks
       const [localSelectedIds, setLocalSelectedIds] = React.useState<string[]>(initialSelectedIds);
@@ -56,11 +60,49 @@ vi.mock("@/components/Utilities/MultiSelectDropdown", () => {
               {item.label}
             </button>
           ))}
+          {items.length === 0 && onEmptyAction && emptyActionLabel && (
+            <button data-testid="empty-action" onClick={onEmptyAction}>
+              {emptyActionLabel}
+            </button>
+          )}
         </div>
       );
     },
   };
 });
+
+vi.mock("@/components/FundingPlatform/ApplicationView/InviteReviewerModal", () => ({
+  __esModule: true,
+  default: ({
+    isOpen,
+    reviewerType,
+    onClose,
+    onInvited,
+  }: {
+    isOpen: boolean;
+    reviewerType?: ReviewerType;
+    onClose: () => void;
+    onInvited?: (reviewer: { name: string; email: string; publicAddress?: string }) => void;
+  }) =>
+    isOpen ? (
+      <div data-testid="invite-reviewer-modal">
+        <div data-testid="invite-reviewer-type">{reviewerType}</div>
+        <button
+          data-testid="confirm-invite"
+          onClick={() => {
+            onInvited?.({
+              name: "New Reviewer",
+              email: "new-reviewer@example.com",
+              publicAddress: "0x4444444444444444444444444444444444444444",
+            });
+            onClose();
+          }}
+        >
+          Confirm invite
+        </button>
+      </div>
+    ) : null,
+}));
 
 const mockAssignReviewers = applicationReviewersService.assignReviewers as vi.MockedFunction<
   typeof applicationReviewersService.assignReviewers
@@ -107,28 +149,41 @@ describe("ReviewerAssignmentDropdown", () => {
   const renderComponent = (
     props: {
       applicationId?: string;
+      programId?: string;
       availableReviewers?: ProgramReviewer[] | MilestoneReviewer[];
       assignedReviewerAddresses?: string[];
       reviewerType?: ReviewerType;
       onAssignmentChange?: () => void;
+      onAddReviewer?: ReturnType<typeof vi.fn>;
+      isAddingReviewer?: boolean;
     } = {}
   ) => {
     const {
       applicationId = "APP-12345-ABCDE",
+      programId = "program-123",
       availableReviewers = mockProgramReviewers,
       assignedReviewerAddresses = [],
       reviewerType = ReviewerType.APP,
       onAssignmentChange,
+      onAddReviewer = vi.fn().mockResolvedValue({
+        name: "New Reviewer",
+        email: "new-reviewer@example.com",
+        publicAddress: "0x4444444444444444444444444444444444444444",
+      }),
+      isAddingReviewer = false,
     } = props;
 
     return render(
       <QueryClientProvider client={queryClient}>
         <ReviewerAssignmentDropdown
+          programId={programId}
           applicationId={applicationId}
           availableReviewers={availableReviewers}
           assignedReviewerAddresses={assignedReviewerAddresses}
           reviewerType={reviewerType}
           onAssignmentChange={onAssignmentChange}
+          onAddReviewer={onAddReviewer}
+          isAddingReviewer={isAddingReviewer}
         />
       </QueryClientProvider>
     );
@@ -498,6 +553,7 @@ describe("ReviewerAssignmentDropdown", () => {
 
       expect(screen.getByTestId("multi-select-dropdown")).toBeInTheDocument();
       expect(screen.queryByTestId(/option-/)).not.toBeInTheDocument();
+      expect(screen.getByTestId("empty-action")).toHaveTextContent("Add application reviewer");
     });
 
     it("should handle empty assigned reviewers", () => {
@@ -533,6 +589,34 @@ describe("ReviewerAssignmentDropdown", () => {
       await waitFor(() => {
         expect(mockAssignReviewers).toHaveBeenCalledWith("APP-12345-ABCDE", {
           appReviewerAddresses: [],
+        });
+      });
+    });
+
+    it("should open the invite modal from the empty state action", () => {
+      renderComponent({ availableReviewers: [], reviewerType: ReviewerType.MILESTONE });
+
+      fireEvent.click(screen.getByTestId("empty-action"));
+
+      expect(screen.getByTestId("invite-reviewer-modal")).toBeInTheDocument();
+      expect(screen.getByTestId("invite-reviewer-type")).toHaveTextContent("milestone");
+    });
+
+    it("should assign an invited reviewer when the invite returns a wallet address", async () => {
+      renderComponent({
+        availableReviewers: [],
+        assignedReviewerAddresses: ["0x1111111111111111111111111111111111111111"],
+      });
+
+      fireEvent.click(screen.getByTestId("empty-action"));
+      fireEvent.click(screen.getByTestId("confirm-invite"));
+
+      await waitFor(() => {
+        expect(mockAssignReviewers).toHaveBeenCalledWith("APP-12345-ABCDE", {
+          appReviewerAddresses: [
+            "0x1111111111111111111111111111111111111111",
+            "0x4444444444444444444444444444444444444444",
+          ],
         });
       });
     });

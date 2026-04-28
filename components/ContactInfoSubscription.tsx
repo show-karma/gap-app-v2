@@ -13,6 +13,7 @@ import { useOwnerStore, useProjectStore } from "@/store";
 import type { Contact } from "@/types/project";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
+import { telegramUsernameSchema } from "@/utilities/validation/telegram-username";
 import { Button } from "./Utilities/Button";
 import { errorManager } from "./Utilities/errorManager";
 
@@ -26,7 +27,7 @@ const subscriptionSchema = z.object({
     .string()
     .min(3, "Name must be at least 3 characters long")
     .max(50, "Name must be less than 50 characters"),
-  telegram: z.string(),
+  telegram: telegramUsernameSchema,
   email: z
     .string()
     .email({
@@ -331,8 +332,15 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({ cont
               type="text"
               className={inputStyle}
               placeholder="johnsmith"
+              aria-describedby="contact-subscription-telegram-helper"
               {...register("telegram")}
             />
+            <p
+              id="contact-subscription-telegram-helper"
+              className="text-xs text-gray-500 dark:text-zinc-400"
+            >
+              Your Telegram @username (without @). Used to tag you in group notifications.
+            </p>
             <p className="text-red-500">{errors.telegram?.message}</p>
           </div>
           <Button

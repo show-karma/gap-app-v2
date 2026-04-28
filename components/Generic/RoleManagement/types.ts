@@ -9,6 +9,11 @@ export interface RoleFieldConfig {
   required: boolean;
   helperText?: string;
   validation?: (value: string) => boolean | string;
+  /**
+   * When true, the field is included in the inline edit form for existing
+   * members. Email/name are typically not editable; telegram/slack are.
+   */
+  editable?: boolean;
 }
 
 /**
@@ -37,6 +42,7 @@ export interface RoleMember {
   name: string;
   email: string;
   telegram?: string;
+  slack?: string;
   assignedAt?: string;
   role?: ReviewerRole; // Optional single role field for backward compatibility
   roles?: ReviewerRole[]; // Multiple roles for combined view

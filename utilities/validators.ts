@@ -57,6 +57,29 @@ export function sanitizeTelegram(telegram: string): string {
 }
 
 /**
+ * Validates a Slack handle format
+ * Accepts 2-80 characters of letters, digits, dot, underscore, or dash.
+ * Optional leading @.
+ */
+export function validateSlack(slack: string): boolean {
+  if (!slack || typeof slack !== "string") {
+    return false;
+  }
+  const slackRegex = /^@?[a-zA-Z0-9._-]{2,80}$/;
+  return slackRegex.test(slack.trim());
+}
+
+/**
+ * Strips leading @ from a Slack handle and trims whitespace
+ */
+export function sanitizeSlack(slack: string): string {
+  if (!slack || typeof slack !== "string") {
+    return "";
+  }
+  return slack.trim().replace(/^@/, "");
+}
+
+/**
  * Validates a program ID format (alphanumeric with optional dashes/underscores)
  * @param programId - The program ID to validate
  * @returns true if valid, false otherwise
@@ -267,16 +290,23 @@ export function sanitizeString(input: string): string {
  * @param data - Reviewer data to validate
  * @returns Object with validation result and errors
  */
-export function validateReviewerData(data: { name: string; email: string; telegram?: string }): {
+export function validateReviewerData(data: {
+  name: string;
+  email: string;
+  telegram?: string;
+  slack?: string;
+}): {
   valid: boolean;
   errors: string[];
-  sanitized: { name: string; email: string; telegram?: string };
+  sanitized: { name: string; email: string; telegram?: string; slack?: string };
 } {
   const errors: string[] = [];
   const sanitizedName = sanitizeString(data.name);
   const sanitizedEmail = data.email?.trim().toLowerCase() || "";
   const sanitizedTelegram = data.telegram ? sanitizeTelegram(data.telegram) : undefined;
   const hasTelegramInput = Boolean(data.telegram?.trim());
+  const sanitizedSlack = data.slack ? sanitizeSlack(data.slack) : undefined;
+  const hasSlackInput = Boolean(data.slack?.trim());
 
   if (!sanitizedName) {
     errors.push("Name is required");
@@ -296,10 +326,22 @@ export function validateReviewerData(data: { name: string; email: string; telegr
     errors.push("Invalid Telegram handle format (5-32 alphanumeric characters, optional @ prefix)");
   }
 
-  const sanitized: { name: string; email: string; telegram?: string } = {
+  if (hasSlackInput && (!sanitizedSlack || !validateSlack(sanitizedSlack))) {
+    errors.push(
+      "Invalid Slack handle format (2-80 characters of letters, digits, '.', '_' or '-', optional @ prefix)"
+    );
+  }
+
+  const sanitized: {
+    name: string;
+    email: string;
+    telegram?: string;
+    slack?: string;
+  } = {
     name: sanitizedName,
     email: sanitizedEmail,
     telegram: sanitizedTelegram || undefined,
+    slack: sanitizedSlack || undefined,
   };
 
   return {

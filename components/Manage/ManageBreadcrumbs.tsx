@@ -32,6 +32,8 @@ const SEGMENT_LABELS: Record<string, string> = {
   "control-center": "Control Center",
   "program-scores": "Program Scores",
   "kyc-settings": "KYC/KYB Settings",
+  "notification-settings": "Notification Settings",
+  "knowledge-base": "Knowledge Base",
   impact: "Impact",
 };
 
