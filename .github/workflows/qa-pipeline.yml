@@ -271,19 +271,20 @@ jobs:
         env:
           NODE_ENV: production
 
+      - name: Pack .next into tarball
+        # actions/upload-artifact@v4 rejects filenames containing `:` (NTFS
+        # incompatibility). Next.js + Turbopack emits chunks like
+        # `[externals]_node:inspector_*.js`, so uploading raw `.next/` fails.
+        # Packaging into a single tarball sidesteps the per-file validator.
+        run: tar --exclude='.next/cache' -czf next-build.tar.gz .next
+
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: qa-build
-          # Glob form (`**`) is required for `actions/upload-artifact@v4`
-          # to honor the negation pattern; the directory shorthand `.next/`
-          # silently misses files and the negation never applies.
-          path: |
-            .next/**
-            !.next/cache/**
+          path: next-build.tar.gz
           retention-days: 1
           if-no-files-found: error
-          include-hidden-files: true
 
   # qa-execution and dogfood run IN PARALLEL after the shared build,
   # each downloading the prebuilt .next/ artifact instead of rebuilding.
@@ -322,7 +323,9 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: qa-build
-          path: .next/
+
+      - name: Unpack .next tarball
+        run: tar -xzf next-build.tar.gz
 
       - name: Start local server
         run: pnpm start &
@@ -434,7 +437,9 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: qa-build
-          path: .next/
+
+      - name: Unpack .next tarball
+        run: tar -xzf next-build.tar.gz
 
       - name: Start local server
         run: pnpm start &
