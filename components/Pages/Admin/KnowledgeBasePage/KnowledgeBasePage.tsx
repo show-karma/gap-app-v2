@@ -2,13 +2,13 @@
 
 import { FileBadge, FileText, Globe, Plus, Search, Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
+import { AddSourceDialog } from "@/components/Pages/Admin/KnowledgeBasePage/AddSourceDialog";
+import { SourceRow } from "@/components/Pages/Admin/KnowledgeBasePage/SourceRow";
 import { Button } from "@/components/Utilities/Button";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useKnowledgeSources } from "@/hooks/knowledge-base/useKnowledgeSources";
 import type { Community } from "@/types/v2/community";
 import type { KnowledgeSource, KnowledgeSourceKind } from "@/types/v2/knowledge-base";
-import { AddSourceDialog } from "./AddSourceDialog";
-import { SourceRow } from "./SourceRow";
 
 interface Props {
   community: Community;
@@ -48,7 +48,19 @@ export function KnowledgeBasePage({ community }: Props) {
   const { hasAccess, isLoading: isCheckingAdmin } = useCommunityAdminAccess(community.uid);
   const sources = useKnowledgeSources(hasAccess ? slug : undefined);
   const [addOpen, setAddOpen] = useState(false);
+  const [addKind, setAddKind] = useState<KnowledgeSourceKind | undefined>();
   const [filter, setFilter] = useState("");
+
+  // Open the dialog without a pre-selected kind (clears any prior quick-pick).
+  const openAdd = () => {
+    setAddKind(undefined);
+    setAddOpen(true);
+  };
+  // Open the dialog with a specific kind pre-selected (from a quick-pick tile).
+  const openAddWithKind = (k: KnowledgeSourceKind) => {
+    setAddKind(k);
+    setAddOpen(true);
+  };
 
   const list = sources.data ?? [];
   const filtered = useMemo(() => {
@@ -82,7 +94,7 @@ export function KnowledgeBasePage({ community }: Props) {
       <Masthead
         communityName={community.details?.name ?? "this community"}
         showHeaderCta={list.length > 0}
-        onAdd={() => setAddOpen(true)}
+        onAdd={openAdd}
         lastSyncedAt={lastSync}
         failing={failing}
       />
@@ -95,7 +107,7 @@ export function KnowledgeBasePage({ community }: Props) {
           onRetry={() => sources.refetch()}
         />
       ) : list.length === 0 ? (
-        <EmptyState onAdd={() => setAddOpen(true)} />
+        <EmptyState onAdd={openAdd} onAddWithKind={openAddWithKind} />
       ) : (
         <>
           <FilterBar
@@ -116,7 +128,12 @@ export function KnowledgeBasePage({ community }: Props) {
         </>
       )}
 
-      <AddSourceDialog communityIdOrSlug={slug} open={addOpen} onOpenChange={setAddOpen} />
+      <AddSourceDialog
+        communityIdOrSlug={slug}
+        open={addOpen}
+        onOpenChange={setAddOpen}
+        initialKind={addKind}
+      />
     </PageFrame>
   );
 }
@@ -282,7 +299,13 @@ const QUICK_PICKS: Array<{
   },
 ];
 
-function EmptyState({ onAdd }: { onAdd: () => void }) {
+function EmptyState({
+  onAdd,
+  onAddWithKind,
+}: {
+  onAdd: () => void;
+  onAddWithKind: (kind: KnowledgeSourceKind) => void;
+}) {
   return (
     <div className="mt-2 flex flex-col items-center rounded-xl border border-dashed border-stone-300 bg-white px-6 py-14 text-center dark:border-zinc-700 dark:bg-zinc-900/40">
       {/* Gradient illo with two concentric dashed orbits */}
@@ -326,8 +349,9 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
           <li key={p.kind}>
             <button
               type="button"
-              onClick={onAdd}
+              onClick={() => onAddWithKind(p.kind)}
               className="group flex w-full flex-col items-center gap-2 rounded-md border border-stone-200 bg-stone-50 px-3 py-3.5 transition hover:border-sky-400 hover:bg-white active:translate-y-[0.5px] dark:border-zinc-800 dark:bg-zinc-900/40 dark:hover:border-sky-400 dark:hover:bg-zinc-900"
+              aria-label={`Add a ${p.label} source`}
             >
               <span className="flex h-7 w-7 items-center justify-center rounded-md border border-stone-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
                 <p.Icon aria-hidden="true" className={`h-4 w-4 ${p.fg}`} strokeWidth={1.75} />

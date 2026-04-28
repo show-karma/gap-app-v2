@@ -16,6 +16,12 @@ interface Props {
   communityIdOrSlug: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /**
+   * Pre-selects the source kind when the dialog opens. When undefined, the
+   * dialog falls back to {@link DEFAULT_KIND}. Useful for the empty-state
+   * quick-pick tiles that should land the admin on the matching form.
+   */
+  initialKind?: KnowledgeSourceKind;
 }
 
 interface KindOption {
@@ -64,22 +70,25 @@ const DEFAULT_KIND: KnowledgeSourceKind = "gdrive_file";
 
 const GOAL_MAX = 500;
 
-export function AddSourceDialog({ communityIdOrSlug, open, onOpenChange }: Props) {
-  const [kind, setKind] = useState<KnowledgeSourceKind>(DEFAULT_KIND);
+export function AddSourceDialog({ communityIdOrSlug, open, onOpenChange, initialKind }: Props) {
+  const [kind, setKind] = useState<KnowledgeSourceKind>(initialKind ?? DEFAULT_KIND);
   const [externalId, setExternalId] = useState("");
   const [title, setTitle] = useState("");
   const [goal, setGoal] = useState("");
   const create = useCreateKnowledgeSource(communityIdOrSlug);
 
-  // Reset form when the dialog closes so a re-open starts fresh.
+  // On open, seed the kind from `initialKind` (quick-pick) or fall back to the
+  // default. On close, reset all fields so the next open starts fresh.
   useEffect(() => {
-    if (!open) {
+    if (open) {
+      setKind(initialKind ?? DEFAULT_KIND);
+    } else {
       setKind(DEFAULT_KIND);
       setExternalId("");
       setTitle("");
       setGoal("");
     }
-  }, [open]);
+  }, [open, initialKind]);
 
   const canSubmit = externalId.trim().length > 0 && title.trim().length > 0 && !create.isPending;
 
@@ -107,10 +116,7 @@ export function AddSourceDialog({ communityIdOrSlug, open, onOpenChange }: Props
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-stone-950/40 backdrop-blur-[2px] data-[state=open]:animate-in data-[state=open]:fade-in-0 dark:bg-black/60" />
-        <Dialog.Content
-          aria-describedby={undefined}
-          className="fixed left-1/2 top-1/2 z-50 flex max-h-[92vh] w-[min(560px,calc(100vw-32px))] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-2xl outline-none dark:border-zinc-800 dark:bg-zinc-950 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95"
-        >
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 flex max-h-[92vh] w-[min(560px,calc(100vw-32px))] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-2xl outline-none dark:border-zinc-800 dark:bg-zinc-950 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95">
           {/* Header — single-line title, matches design density */}
           <div className="flex items-center gap-3 border-b border-stone-200 px-5 py-4 dark:border-zinc-800">
             <Dialog.Title className="text-[15px] font-semibold tracking-[-0.01em] text-stone-900 dark:text-zinc-100">
@@ -126,109 +132,128 @@ export function AddSourceDialog({ communityIdOrSlug, open, onOpenChange }: Props
               </button>
             </Dialog.Close>
           </div>
+          {/* Visually-hidden description so screen readers describe the dialog
+           * intent. Uses sr-only utility instead of `aria-describedby={undefined}`. */}
+          <Dialog.Description className="sr-only">
+            Register a publicly-accessible source. Karma fetches and indexes it on the next sync.
+          </Dialog.Description>
 
-          {/* Body — scrolls when content overflows */}
-          <div className="flex-1 overflow-y-auto px-5 py-[18px]">
-            {/* Kind picker */}
-            <fieldset>
-              <legend className="mb-1.5 block text-xs font-medium text-stone-600 dark:text-zinc-400">
-                Source type
-              </legend>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                {KIND_OPTIONS.map((opt) => (
-                  <KindCard
-                    key={opt.kind}
-                    option={opt}
-                    selected={kind === opt.kind}
-                    onSelect={() => setKind(opt.kind)}
-                  />
-                ))}
-              </div>
-            </fieldset>
-
-            {/* Form fields */}
-            <div className="mt-4 space-y-3.5">
-              <FormField
-                label="Title"
-                hint="Shown in the admin list and as the citation label in chat replies."
-                htmlFor="kb-title"
-              >
-                <input
-                  id="kb-title"
-                  type="text"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Filecoin community docs"
-                  maxLength={200}
-                  className="h-9 w-full rounded-md border border-stone-300 bg-white px-3 text-[13px] text-stone-900 placeholder-stone-400 transition focus:border-sky-500 focus:outline-none focus:ring-[3px] focus:ring-sky-500/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder-zinc-500 dark:focus:border-sky-400 dark:focus:ring-sky-400/20"
-                />
-              </FormField>
-
-              <FormField
-                label={
-                  kind === "gdrive_file"
-                    ? "Google Doc URL or ID"
-                    : kind === "pdf_url"
-                      ? "PDF URL"
-                      : "Web page URL"
-                }
-                hint={KNOWLEDGE_SOURCE_KIND_HINTS[kind] ?? "Provide a publicly-accessible URL."}
-                htmlFor="kb-external"
-              >
-                <input
-                  id="kb-external"
-                  type="text"
-                  value={externalId}
-                  onChange={(e) => setExternalId(e.target.value)}
-                  placeholder={PLACEHOLDER_BY_KIND[kind] ?? ""}
-                  maxLength={2048}
-                  spellCheck={false}
-                  className="h-9 w-full rounded-md border border-stone-300 bg-white px-3 font-mono text-[12.5px] text-stone-900 placeholder-stone-400 transition focus:border-sky-500 focus:outline-none focus:ring-[3px] focus:ring-sky-500/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder-zinc-600 dark:focus:border-sky-400 dark:focus:ring-sky-400/20"
-                />
-              </FormField>
-
-              <FormField
-                label="Purpose (optional)"
-                hint="One sentence on what this source is for. Prepended to each chunk at embed time so the chatbot ranks it higher when a question matches the intent. Not shown in citations."
-                htmlFor="kb-goal"
-              >
-                <div className="relative">
-                  <textarea
-                    id="kb-goal"
-                    value={goal}
-                    onChange={(e) => setGoal(e.target.value.slice(0, GOAL_MAX))}
-                    placeholder="Reference for grant applicants reviewing milestone formats."
-                    maxLength={GOAL_MAX}
-                    rows={3}
-                    className="block w-full resize-y rounded-md border border-stone-300 bg-white px-3 py-2 pb-5 text-[13px] leading-relaxed text-stone-900 placeholder-stone-400 transition focus:border-sky-500 focus:outline-none focus:ring-[3px] focus:ring-sky-500/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder-zinc-500 dark:focus:border-sky-400 dark:focus:ring-sky-400/20"
-                  />
-                  <span
-                    aria-live="polite"
-                    className="pointer-events-none absolute bottom-1.5 right-2 font-mono text-[10.5px] tabular-nums text-stone-400 dark:text-zinc-600"
-                  >
-                    {goal.length}/{GOAL_MAX}
-                  </span>
+          {/* Form wrapper — `contents` keeps the existing flex layout intact
+           * while letting Enter submit the form from any input. */}
+          <form
+            className="contents"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (canSubmit) handleSubmit();
+            }}
+          >
+            {/* Body — scrolls when content overflows */}
+            <div className="flex-1 overflow-y-auto px-5 py-[18px]">
+              {/* Kind picker */}
+              <fieldset>
+                <legend className="mb-1.5 block text-xs font-medium text-stone-600 dark:text-zinc-400">
+                  Source type
+                </legend>
+                <div
+                  role="radiogroup"
+                  aria-label="Source type"
+                  className="grid grid-cols-1 gap-2 sm:grid-cols-2"
+                >
+                  {KIND_OPTIONS.map((opt) => (
+                    <KindCard
+                      key={opt.kind}
+                      option={opt}
+                      selected={kind === opt.kind}
+                      onSelect={() => setKind(opt.kind)}
+                    />
+                  ))}
                 </div>
-              </FormField>
+              </fieldset>
+
+              {/* Form fields */}
+              <div className="mt-4 space-y-3.5">
+                <FormField
+                  label="Title"
+                  hint="Shown in the admin list and as the citation label in chat replies."
+                  htmlFor="kb-title"
+                >
+                  <input
+                    id="kb-title"
+                    type="text"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="Filecoin community docs"
+                    maxLength={200}
+                    className="h-9 w-full rounded-md border border-stone-300 bg-white px-3 text-[13px] text-stone-900 placeholder-stone-400 transition focus:border-sky-500 focus:outline-none focus:ring-[3px] focus:ring-sky-500/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder-zinc-500 dark:focus:border-sky-400 dark:focus:ring-sky-400/20"
+                  />
+                </FormField>
+
+                <FormField
+                  label={
+                    kind === "gdrive_file"
+                      ? "Google Doc URL or ID"
+                      : kind === "pdf_url"
+                        ? "PDF URL"
+                        : "Web page URL"
+                  }
+                  hint={KNOWLEDGE_SOURCE_KIND_HINTS[kind] ?? "Provide a publicly-accessible URL."}
+                  htmlFor="kb-external"
+                >
+                  <input
+                    id="kb-external"
+                    type="text"
+                    value={externalId}
+                    onChange={(e) => setExternalId(e.target.value)}
+                    placeholder={PLACEHOLDER_BY_KIND[kind] ?? ""}
+                    maxLength={2048}
+                    spellCheck={false}
+                    className="h-9 w-full rounded-md border border-stone-300 bg-white px-3 font-mono text-[12.5px] text-stone-900 placeholder-stone-400 transition focus:border-sky-500 focus:outline-none focus:ring-[3px] focus:ring-sky-500/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder-zinc-600 dark:focus:border-sky-400 dark:focus:ring-sky-400/20"
+                  />
+                </FormField>
+
+                <FormField
+                  label="Purpose (optional)"
+                  hint="One sentence on what this source is for. Prepended to each chunk at embed time so the chatbot ranks it higher when a question matches the intent. Not shown in citations."
+                  htmlFor="kb-goal"
+                >
+                  <div className="relative">
+                    <textarea
+                      id="kb-goal"
+                      value={goal}
+                      onChange={(e) => setGoal(e.target.value.slice(0, GOAL_MAX))}
+                      placeholder="Reference for grant applicants reviewing milestone formats."
+                      maxLength={GOAL_MAX}
+                      rows={3}
+                      className="block w-full resize-y rounded-md border border-stone-300 bg-white px-3 py-2 pb-5 text-[13px] leading-relaxed text-stone-900 placeholder-stone-400 transition focus:border-sky-500 focus:outline-none focus:ring-[3px] focus:ring-sky-500/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder-zinc-500 dark:focus:border-sky-400 dark:focus:ring-sky-400/20"
+                    />
+                    <span
+                      aria-live="polite"
+                      className="pointer-events-none absolute bottom-1.5 right-2 font-mono text-[10.5px] tabular-nums text-stone-400 dark:text-zinc-600"
+                    >
+                      {goal.length}/{GOAL_MAX}
+                    </span>
+                  </div>
+                </FormField>
+              </div>
+
+              <PublicAccessReminder kind={kind} />
+              <OneSourceAtATimeNote />
             </div>
 
-            <PublicAccessReminder kind={kind} />
-            <OneSourceAtATimeNote />
-          </div>
-
-          {/* Footer — right-aligned button cluster, matches `.modal-foot` */}
-          <div className="flex items-center justify-end gap-2 border-t border-stone-200 px-5 py-3 dark:border-zinc-800">
-            <Button
-              type="button"
-              onClick={() => onOpenChange(false)}
-              className="bg-transparent text-stone-700 hover:bg-stone-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
-            >
-              Cancel
-            </Button>
-            <Button type="button" onClick={handleSubmit} disabled={!canSubmit}>
-              {create.isPending ? "Adding…" : "Add source"}
-            </Button>
-          </div>
+            {/* Footer — right-aligned button cluster, matches `.modal-foot` */}
+            <div className="flex items-center justify-end gap-2 border-t border-stone-200 px-5 py-3 dark:border-zinc-800">
+              <Button
+                type="button"
+                onClick={() => onOpenChange(false)}
+                className="bg-transparent text-stone-700 hover:bg-stone-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={!canSubmit}>
+                {create.isPending ? "Adding…" : "Add source"}
+              </Button>
+            </div>
+          </form>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
