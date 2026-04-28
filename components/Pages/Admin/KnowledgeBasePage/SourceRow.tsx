@@ -97,7 +97,15 @@ function getStatusMeta(source: KnowledgeSource): StatusMeta {
       dot: "bg-stone-400 dark:bg-zinc-500",
     };
   }
-  if (!source.lastSyncedAt) {
+  // First-sync-failed case: lastSyncedAt is null but a sync was attempted and
+  // failed (or partially failed). Don't paint this as "Queued" — fall through
+  // to the status switch below so the failure surfaces and the lastSyncError
+  // banner renders.
+  if (
+    !source.lastSyncedAt &&
+    source.lastSyncStatus !== "failed" &&
+    source.lastSyncStatus !== "partial"
+  ) {
     return {
       tone: "idle",
       label: "Queued for first sync",
@@ -348,6 +356,7 @@ function SourceRowImpl({ source, communityIdOrSlug, isFirst }: Props) {
         <RowAction
           label="Delete source"
           onClick={() => setConfirmDelete(true)}
+          disabled={del.isPending}
           tone="danger"
           Icon={Trash2}
         />
