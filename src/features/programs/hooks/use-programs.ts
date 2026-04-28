@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import type { FundingProgram, ProgramFilters, ProgramStatus } from "@/types/whitelabel-entities";
 import fetchData from "@/utilities/fetchData";
 import { useProgramsStore } from "../lib/store";
@@ -34,7 +34,12 @@ export function usePrograms(
   communityId: string,
   initialFilters?: ProgramFilters
 ): UseProgramsReturn {
-  const { filters: storeFilters, setFilters } = useProgramsStore();
+  const {
+    filters: storeFilters,
+    setFilters,
+    applyAutoFilters,
+    hasUserChangedFilters,
+  } = useProgramsStore();
   const filters = { ...initialFilters, ...storeFilters };
 
   const { data, isLoading, error, refetch } = useQuery<{
@@ -78,6 +83,21 @@ export function usePrograms(
     }
     return result;
   }, [allPrograms, filters.status, filters.search]);
+
+  // If the default Active filter is in effect but the community has no active
+  // programs, fall back to showing all so the page isn't empty by default.
+  // Only triggers on the default state — once the user changes the filter,
+  // their choice is respected even on subsequent visits.
+  const fetchedPrograms = data?.programs;
+  useEffect(() => {
+    if (!fetchedPrograms || fetchedPrograms.length === 0) return;
+    if (hasUserChangedFilters) return;
+    if (storeFilters.status !== "active") return;
+    if (fetchedPrograms.some((p) => matchesStatus(p, "active"))) return;
+
+    const { status: _status, ...rest } = storeFilters;
+    applyAutoFilters(rest);
+  }, [fetchedPrograms, hasUserChangedFilters, storeFilters, applyAutoFilters]);
 
   return {
     programs,
