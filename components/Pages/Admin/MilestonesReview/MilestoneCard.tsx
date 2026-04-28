@@ -407,7 +407,7 @@ export function MilestoneCard({
                   onClick={handleToggleCompletion}
                   aria-expanded={isCompletionExpanded}
                   aria-controls={completionId}
-                  className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 flex items-center gap-0.5"
+                  className="flex items-center gap-0.5 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
                 >
                   {isCompletionExpanded ? (
                     <>

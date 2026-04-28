@@ -42,6 +42,11 @@ const CommentInput: FC<CommentInputProps> = ({
     setIsExpanded(true);
   }, [disabled, isSubmitting]);
 
+  const handleCancel = useCallback(() => {
+    setContent("");
+    setIsExpanded(false);
+  }, []);
+
   // Move focus into the markdown editor on expand so users can start typing
   // immediately. The MarkdownEditor's contenteditable / textarea is the focus
   // target — we use requestAnimationFrame to let the editor mount first.
@@ -211,10 +216,7 @@ const CommentInput: FC<CommentInputProps> = ({
         <div className="flex items-center justify-between">
           <button
             type="button"
-            onClick={() => {
-              setContent("");
-              setIsExpanded(false);
-            }}
+            onClick={handleCancel}
             disabled={isSubmitting}
             className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
           >
