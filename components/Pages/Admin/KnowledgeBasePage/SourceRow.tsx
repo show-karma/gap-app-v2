@@ -342,18 +342,19 @@ function SourceRowImpl({ source, communityIdOrSlug, isFirst }: Props) {
           <span className="inline-flex items-center border-r border-stone-200 px-2.5 dark:border-zinc-800">
             {KNOWLEDGE_SOURCE_KIND_SHORT[source.kind]}
           </span>
-          {source.lastSyncedAt ? (
-            // The state badge to the left already says "Synced"/"Failed"/etc.,
-            // so the timestamp doesn't need to repeat the label — just show
-            // the relative time.
+          {/* "Added" — always shown so admins can tell when a source
+              was registered, independent of whether it ever synced.
+              Drives recency sorting in the user's head. */}
+          <span className="inline-flex items-center border-r border-stone-200 px-2.5 tabular-nums dark:border-zinc-800">
+            Added {timeAgo(source.createdAt)}
+          </span>
+          {/* "Synced" — only when there's been a successful or terminal
+              sync. Distinct from "Added" so the row makes the gap
+              visible: a source added a week ago and last synced 10m ago
+              reads correctly as "Added 7d ago · Synced 10m ago". */}
+          {source.lastSyncedAt && (
             <span className="inline-flex items-center border-r border-stone-200 px-2.5 tabular-nums dark:border-zinc-800">
-              {timeAgo(source.lastSyncedAt)}
-            </span>
-          ) : (
-            // Never-successfully-synced row: show creation time so admins
-            // can tell stale-failed apart from just-added.
-            <span className="inline-flex items-center border-r border-stone-200 px-2.5 tabular-nums dark:border-zinc-800">
-              Added {timeAgo(source.createdAt)}
+              Synced {timeAgo(source.lastSyncedAt)}
             </span>
           )}
           {parts.length > 0 && (
@@ -379,11 +380,6 @@ function SourceRowImpl({ source, communityIdOrSlug, isFirst }: Props) {
               <span className="truncate">{shortenError(source.lastSyncError)}</span>
             </span>
           )}
-          {/* Sparkline pushed to far right with a hairline separator */}
-          <SyncSparkline
-            tone={status.tone}
-            className="ml-auto pl-3 border-l border-stone-200 dark:border-zinc-800"
-          />
         </div>
 
         {source.goal && (
@@ -496,58 +492,6 @@ function RowAction({
     >
       <Icon aria-hidden={true} className={`h-4 w-4 ${spinning ? "animate-spin" : ""}`} />
     </button>
-  );
-}
-
-// 7-bar histogram of sync activity. We don't yet have real history data on
-// the backend, so the bar heights are a deterministic function of the
-// row's tone — enough to give the row visual character and a sense of
-// "things are happening" without faking a metric we can't compute. When
-// the backend grows a sync-history column we'll feed real values through.
-function SyncSparkline({
-  tone,
-  className = "",
-}: {
-  tone: StatusTone;
-  className?: string;
-}) {
-  const heights = [4, 6, 5, 7, 5, 8, 9];
-  const baseColor =
-    tone === "failed"
-      ? "bg-rose-300 dark:bg-rose-800/60"
-      : tone === "syncing"
-        ? "bg-sky-300 dark:bg-sky-800/60"
-        : tone === "partial"
-          ? "bg-amber-300 dark:bg-amber-800/60"
-          : tone === "paused"
-            ? "bg-stone-300 dark:bg-zinc-700"
-            : "bg-stone-300 dark:bg-zinc-700";
-  const headColor =
-    tone === "failed"
-      ? "bg-rose-500"
-      : tone === "syncing"
-        ? "bg-sky-500"
-        : tone === "partial"
-          ? "bg-amber-500"
-          : tone === "paused"
-            ? "bg-stone-400 dark:bg-zinc-500"
-            : "bg-emerald-500";
-  return (
-    <span
-      aria-label="Recent sync activity"
-      className={`inline-flex items-end gap-[3px] ${className}`}
-      style={{ height: 16 }}
-    >
-      {heights.map((h, i) => (
-        <span
-          key={i}
-          className={`w-[3px] rounded-[1px] ${
-            i === heights.length - 1 ? `${headColor} ${tone === "syncing" ? "animate-pulse" : ""}` : baseColor
-          }`}
-          style={{ height: `${h}px` }}
-        />
-      ))}
-    </span>
   );
 }
 
