@@ -46,20 +46,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Cache Next.js build
-        uses: actions/cache@v4
-        with:
-          path: .next/cache
-          key: ${{ runner.os }}-nextjs-smoke-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-nextjs-smoke-
-            ${{ runner.os }}-nextjs-
-
-      - name: Build application
-        run: pnpm run build
-        env:
-          NODE_ENV: production
-
       - name: Install Playwright browsers
         run: pnpm exec playwright install chromium --with-deps
 

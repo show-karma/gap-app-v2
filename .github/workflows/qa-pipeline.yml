@@ -205,24 +205,18 @@ jobs:
                 ].join('\n') });
             }
 
-  # qa-execution and dogfood run IN PARALLEL after qa-plan
-  # Each builds the app independently (Next.js cache makes this fast)
-
-  qa-execution:
+  # Build the app ONCE and share with both qa-execution and dogfood via artifact.
+  # Saves ~2m 30s of duplicated build work compared to building in each job.
+  build:
     needs: [gate-check, qa-plan]
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 20
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           ref: ${{ needs.gate-check.outputs.head_sha }}
-
-      - name: Download QA plan
-        uses: actions/download-artifact@v4
-        with:
-          name: qa-plan
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -251,6 +245,55 @@ jobs:
         run: pnpm run build
         env:
           NODE_ENV: production
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-build
+          path: |
+            .next/
+            !.next/cache
+          retention-days: 1
+          if-no-files-found: error
+
+  # qa-execution and dogfood run IN PARALLEL after the shared build,
+  # each downloading the prebuilt .next/ artifact instead of rebuilding.
+
+  qa-execution:
+    needs: [gate-check, qa-plan, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ needs.gate-check.outputs.head_sha }}
+
+      - name: Download QA plan
+        uses: actions/download-artifact@v4
+        with:
+          name: qa-plan
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Download prebuilt .next
+        uses: actions/download-artifact@v4
+        with:
+          name: qa-build
+          path: .next/
 
       - name: Start local server
         run: pnpm start &
@@ -300,7 +343,7 @@ jobs:
           if-no-files-found: ignore
 
   dogfood:
-    needs: [gate-check, qa-plan]
+    needs: [gate-check, qa-plan, build]
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -330,19 +373,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Cache Next.js build
-        uses: actions/cache@v4
+      - name: Download prebuilt .next
+        uses: actions/download-artifact@v4
         with:
-          path: .next/cache
-          key: ${{ runner.os }}-nextjs-qa-${{ needs.gate-check.outputs.head_sha }}
-          restore-keys: |
-            ${{ runner.os }}-nextjs-qa-
-            ${{ runner.os }}-nextjs-
-
-      - name: Build application
-        run: pnpm run build
-        env:
-          NODE_ENV: production
+          name: qa-build
+          path: .next/
 
       - name: Start local server
         run: pnpm start &
