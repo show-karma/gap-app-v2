@@ -171,9 +171,7 @@ function Masthead({
           <p className="mt-1.5 max-w-[68ch] text-sm leading-relaxed text-stone-600 dark:text-zinc-400">
             Documents the{" "}
             <span className="font-medium text-stone-900 dark:text-zinc-100">{communityName}</span>{" "}
-            assistant reads from. Each source is fetched, chunked, and embedded on the nightly sync
-            at <code className="font-mono text-[12px] text-stone-700 dark:text-zinc-300">02:00</code>{" "}
-            UTC.
+            assistant reads from. Each source is fetched, chunked, and embedded hourly.
           </p>
         </div>
 
@@ -327,7 +325,7 @@ function EmptyState({
       </h2>
       <p className="mx-auto mt-1.5 max-w-[44ch] text-sm leading-relaxed text-stone-600 dark:text-zinc-400">
         Add a publicly-shared Google Doc, a web page, or a PDF URL and your chatbot will start
-        answering questions from it on the next nightly sync.
+        answering questions from it within the hour.
       </p>
 
       <Button
