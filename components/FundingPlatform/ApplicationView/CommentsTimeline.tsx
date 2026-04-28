@@ -9,7 +9,7 @@ import {
   PencilSquareIcon,
   XCircleIcon,
 } from "@heroicons/react/24/outline";
-import { format, formatDistanceToNow, isValid, parseISO } from "date-fns";
+import { isValid, parseISO } from "date-fns";
 import pluralize from "pluralize";
 import { type FC, useMemo, useState } from "react";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
@@ -25,6 +25,7 @@ import type {
   IStatusHistoryEntry,
 } from "@/types/funding-platform";
 import { createFieldLabelMap, getFieldLabel } from "@/utilities/fieldLabelMapping";
+import { renderRelativeTime } from "@/utilities/formatRelativeTime";
 import { cn } from "@/utilities/tailwind";
 import CommentInput from "./CommentInput";
 import CommentItem from "./CommentItem";
@@ -224,23 +225,6 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
     if (!onCommentDelete) return;
 
     await onCommentDelete(commentId);
-  };
-
-  /** Renders relative time with absolute date on hover */
-  const renderRelativeTime = (dateString: string | Date) => {
-    try {
-      const date = typeof dateString === "string" ? parseISO(dateString) : dateString;
-      if (!isValid(date)) return <span>Invalid date</span>;
-      const relative = formatDistanceToNow(date, { addSuffix: true });
-      const absolute = format(date, "MMM dd, yyyy HH:mm");
-      return (
-        <span title={absolute} className="cursor-default">
-          {relative}
-        </span>
-      );
-    } catch {
-      return <span>Invalid date</span>;
-    }
   };
 
   const renderStatusItem = (status: IStatusHistoryEntry, isLatest: boolean) => {

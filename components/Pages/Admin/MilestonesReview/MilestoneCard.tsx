@@ -10,7 +10,7 @@ import {
 } from "@heroicons/react/20/solid";
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
@@ -20,6 +20,11 @@ import { toEditableUnifiedMilestone } from "@/utilities/milestoneTransforms";
 import { shortAddress } from "@/utilities/shortAddress";
 import { cn } from "@/utilities/tailwind";
 import { getMilestoneStatus, MILESTONE_STATUS_CONFIG } from "./utils/milestone-review-status";
+
+// useLayoutEffect mirrors useEffect on the server to avoid Next.js SSR warnings.
+// On the client we use the synchronous variant so collapse measurement happens
+// before paint (no flash of unclamped content).
+const useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 const AIEvaluationModal = dynamic(
   () => import("./AIEvaluationModal").then((m) => ({ default: m.AIEvaluationModal })),
@@ -146,17 +151,27 @@ export function MilestoneCard({
   const [isOverflowOpen, setIsOverflowOpen] = useState(false);
   const [hasLongDescription, setHasLongDescription] = useState(false);
   const [hasLongCompletion, setHasLongCompletion] = useState(false);
+  const [isCompletionExpanded, setIsCompletionExpanded] = useState(false);
   const overflowRef = useRef<HTMLDivElement>(null);
   const descriptionRef = useRef<HTMLDivElement>(null);
   const completionRef = useRef<HTMLDivElement>(null);
 
-  function handleOpenEvaluation() {
+  const handleOpenEvaluation = useCallback(() => {
     setIsEvaluationModalOpen(true);
-  }
+  }, []);
 
-  const [isCompletionExpanded, setIsCompletionExpanded] = useState(false);
+  const handleToggleOverflow = useCallback(() => {
+    setIsOverflowOpen((v) => !v);
+  }, []);
 
-  // Close overflow menu when clicking outside or on Escape
+  const handleToggleDescription = useCallback(() => {
+    setIsDescriptionExpanded((v) => !v);
+  }, []);
+
+  const handleToggleCompletion = useCallback(() => {
+    setIsCompletionExpanded((v) => !v);
+  }, []);
+
   const handleOverflowBlur = useCallback((e: React.FocusEvent) => {
     if (overflowRef.current && !overflowRef.current.contains(e.relatedTarget as Node)) {
       setIsOverflowOpen(false);
@@ -169,32 +184,61 @@ export function MilestoneCard({
     }
   }, []);
 
-  const completionText = useMemo(() => {
-    if (!completionData) return "";
-    return useOnChainData
-      ? milestone.completionDetails!.description
-      : milestone.fundingApplicationCompletion!.completionText;
-  }, [
-    completionData,
-    useOnChainData,
-    milestone.completionDetails,
-    milestone.fundingApplicationCompletion,
-  ]);
-
-  // Measure rendered content height to decide whether a Show more toggle is needed.
-  // The collapsed container's max-h-24 is 6rem (96px at default font size).
-  const COLLAPSED_HEIGHT_PX = 96;
-
+  // Close overflow menu when the user clicks outside it (focus/blur alone
+  // doesn't fire if the next click target isn't focusable, e.g. empty page).
   useEffect(() => {
+    if (!isOverflowOpen) return;
+    const handlePointerDown = (event: PointerEvent) => {
+      if (overflowRef.current && !overflowRef.current.contains(event.target as Node)) {
+        setIsOverflowOpen(false);
+      }
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [isOverflowOpen]);
+
+  const completionText = useMemo(() => {
+    if (useOnChainData && milestone.completionDetails) {
+      return milestone.completionDetails.description;
+    }
+    if (milestone.fundingApplicationCompletion) {
+      return milestone.fundingApplicationCompletion.completionText;
+    }
+    return "";
+  }, [useOnChainData, milestone.completionDetails, milestone.fundingApplicationCompletion]);
+
+  // Re-measure rendered content height on mount, content change, or resize so
+  // the "Show more" toggle stays in sync with the clamp height. The clamp
+  // (max-h-24 = 6rem) is derived from the root font size so we don't depend
+  // on a hard-coded 96px threshold that breaks at non-default zoom/font.
+  useIsomorphicLayoutEffect(() => {
     const node = descriptionRef.current;
     if (!node) return;
-    setHasLongDescription(node.scrollHeight > COLLAPSED_HEIGHT_PX);
+    const measure = () => {
+      const remPx = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+      const collapsedHeight = remPx * 6;
+      setHasLongDescription(node.scrollHeight > collapsedHeight);
+    };
+    measure();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(node);
+    return () => observer.disconnect();
   }, [milestone.description]);
 
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     const node = completionRef.current;
     if (!node) return;
-    setHasLongCompletion(node.scrollHeight > COLLAPSED_HEIGHT_PX);
+    const measure = () => {
+      const remPx = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+      const collapsedHeight = remPx * 6;
+      setHasLongCompletion(node.scrollHeight > collapsedHeight);
+    };
+    measure();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(node);
+    return () => observer.disconnect();
   }, [completionText]);
 
   return (
@@ -238,7 +282,7 @@ export function MilestoneCard({
             <div className="relative" ref={overflowRef} onBlur={handleOverflowBlur}>
               <button
                 type="button"
-                onClick={() => setIsOverflowOpen((v) => !v)}
+                onClick={handleToggleOverflow}
                 onKeyDown={handleOverflowKeyDown}
                 className="p-1 rounded hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors"
                 aria-label="More actions"
@@ -309,7 +353,7 @@ export function MilestoneCard({
         {hasLongDescription && (
           <button
             type="button"
-            onClick={() => setIsDescriptionExpanded((v) => !v)}
+            onClick={handleToggleDescription}
             className="flex items-center gap-1 mt-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
           >
             {isDescriptionExpanded ? (
@@ -350,7 +394,7 @@ export function MilestoneCard({
               {hasLongCompletion && (
                 <button
                   type="button"
-                  onClick={() => setIsCompletionExpanded((v) => !v)}
+                  onClick={handleToggleCompletion}
                   className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 flex items-center gap-0.5"
                 >
                   {isCompletionExpanded ? (
@@ -383,8 +427,8 @@ export function MilestoneCard({
               Submitted:{" "}
               {formatDate(
                 useOnChainData
-                  ? milestone.completionDetails!.completedAt
-                  : milestone.fundingApplicationCompletion!.createdAt
+                  ? milestone.completionDetails?.completedAt
+                  : milestone.fundingApplicationCompletion?.createdAt
               )}
             </p>
           </div>

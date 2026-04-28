@@ -1,7 +1,7 @@
 "use client";
 
 import { PaperAirplaneIcon } from "@heroicons/react/24/outline";
-import { type FC, useCallback, useMemo, useRef, useState } from "react";
+import { type FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useMentionEditor } from "@/hooks/useMentionEditor";
@@ -33,7 +33,28 @@ const CommentInput: FC<CommentInputProps> = ({
 }) => {
   const [content, setContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const editorContainerRef = useRef<HTMLDivElement>(null);
+
+  const handleExpand = useCallback(() => {
+    setIsExpanded(true);
+  }, []);
+
+  // Move focus into the markdown editor on expand so users can start typing
+  // immediately. The MarkdownEditor's contenteditable / textarea is the focus
+  // target — we use requestAnimationFrame to let the editor mount first.
+  useEffect(() => {
+    if (!isExpanded) return;
+    const id = requestAnimationFrame(() => {
+      const root = editorContainerRef.current;
+      if (!root) return;
+      const focusable = root.querySelector<HTMLElement>(
+        "[contenteditable='true'], textarea, input"
+      );
+      focusable?.focus();
+    });
+    return () => cancelAnimationFrame(id);
+  }, [isExpanded]);
 
   const mentionEditor = useMentionEditor({
     enabled: enableMentions && !!programId,
@@ -114,8 +135,6 @@ const CommentInput: FC<CommentInputProps> = ({
     }
   };
 
-  const [isExpanded, setIsExpanded] = useState(false);
-
   // Collapse back if content is empty and user clicks away
   const handleBlur = useCallback(
     (e: React.FocusEvent<HTMLFormElement>) => {
@@ -133,7 +152,7 @@ const CommentInput: FC<CommentInputProps> = ({
     return (
       <button
         type="button"
-        onClick={() => setIsExpanded(true)}
+        onClick={handleExpand}
         className={cn(
           "w-full text-left px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-700",
           "text-sm text-gray-500 dark:text-gray-400",

@@ -146,6 +146,8 @@ describe("MILESTONE_STATUS_CONFIG", () => {
       expect(MILESTONE_STATUS_CONFIG[status].label).toBeTruthy();
       expect(MILESTONE_STATUS_CONFIG[status].badgeColor).toBeTruthy();
       expect(MILESTONE_STATUS_CONFIG[status].filterLabel).toBeTruthy();
+      expect(MILESTONE_STATUS_CONFIG[status].icon).toBeTruthy();
+      expect(MILESTONE_STATUS_CONFIG[status].stepperColor).toBeTruthy();
     }
   });
 
@@ -177,6 +179,7 @@ describe("FILTER_TABS", () => {
     for (const tab of statusTabs) {
       const config = MILESTONE_STATUS_CONFIG[tab.key as MilestoneReviewStatus];
       expect(tab.label).toBe(config.filterLabel);
+      expect(tab.icon).toBe(config.icon);
     }
   });
 

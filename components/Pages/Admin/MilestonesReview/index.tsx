@@ -44,6 +44,15 @@ import {
 
 const EMPTY_MILESTONES: GrantMilestoneWithCompletion[] = [];
 
+// Strip the optional chainId suffix from program IDs (e.g. "959_42161" -> "959").
+function parseProgramId(programId: string): string {
+  if (programId.includes("_")) {
+    const [id] = programId.split("_");
+    return id ?? programId;
+  }
+  return programId;
+}
+
 /** Small icon component for filter pills */
 function StatusIcon({ icon, className }: { icon: StatusIconName | null; className?: string }) {
   if (!icon) return null;
@@ -66,23 +75,32 @@ function StatusIcon({ icon, className }: { icon: StatusIconName | null; classNam
   }
 }
 
+// Order in which legend chips render — keeps Verified first for at-a-glance scanning.
+const LEGEND_STATUS_ORDER: MilestoneReviewStatus[] = [
+  MilestoneReviewStatus.Verified,
+  MilestoneReviewStatus.PendingVerification,
+  MilestoneReviewStatus.PendingCompletion,
+  MilestoneReviewStatus.NotStarted,
+];
+
 /** Visual progress stepper showing milestone states at a glance */
 function MilestoneProgressStepper({ milestones }: { milestones: GrantMilestoneWithCompletion[] }) {
-  const { entries, counts } = useMemo(() => {
+  const { entries, countsByStatus, verifiedCount } = useMemo(() => {
     const entries = milestones.map((m) => ({ uid: m.uid, status: getMilestoneStatus(m) }));
-    const counts = {
-      verified: 0,
-      pendingVerification: 0,
-      pendingCompletion: 0,
-      notStarted: 0,
-    };
+    const countsByStatus = {
+      [MilestoneReviewStatus.Verified]: 0,
+      [MilestoneReviewStatus.PendingVerification]: 0,
+      [MilestoneReviewStatus.PendingCompletion]: 0,
+      [MilestoneReviewStatus.NotStarted]: 0,
+    } as Record<MilestoneReviewStatus, number>;
     for (const { status } of entries) {
-      if (status === MilestoneReviewStatus.Verified) counts.verified++;
-      else if (status === MilestoneReviewStatus.PendingVerification) counts.pendingVerification++;
-      else if (status === MilestoneReviewStatus.PendingCompletion) counts.pendingCompletion++;
-      else if (status === MilestoneReviewStatus.NotStarted) counts.notStarted++;
+      countsByStatus[status]++;
     }
-    return { entries, counts };
+    return {
+      entries,
+      countsByStatus,
+      verifiedCount: countsByStatus[MilestoneReviewStatus.Verified],
+    };
   }, [milestones]);
 
   if (entries.length === 0) return null;
@@ -90,43 +108,35 @@ function MilestoneProgressStepper({ milestones }: { milestones: GrantMilestoneWi
   return (
     <div className="mb-4">
       <div className="flex items-center gap-3 mb-1.5 flex-wrap text-xs text-gray-600 dark:text-gray-400">
-        {counts.verified > 0 && (
-          <span className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-green-500" />
-            {counts.verified} Verified
-          </span>
-        )}
-        {counts.pendingVerification > 0 && (
-          <span className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-yellow-500" />
-            {counts.pendingVerification} Pending Verification
-          </span>
-        )}
-        {counts.pendingCompletion > 0 && (
-          <span className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-orange-400" />
-            {counts.pendingCompletion} Pending (Off-chain)
-          </span>
-        )}
-        {counts.notStarted > 0 && (
-          <span className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-600" />
-            {counts.notStarted} Not Started
-          </span>
-        )}
-      </div>
-      <div className="flex items-center gap-0.5">
-        {entries.map(({ uid, status }, i) => {
+        {LEGEND_STATUS_ORDER.map((status) => {
+          const count = countsByStatus[status];
+          if (count === 0) return null;
           const config = MILESTONE_STATUS_CONFIG[status];
           return (
-            <div
-              key={uid || `milestone-${i}`}
-              className={cn("h-2 rounded-full flex-1 transition-colors", config.stepperColor)}
-              title={`Milestone ${i + 1}: ${config.label}`}
-            />
+            <span key={status} className="flex items-center gap-1">
+              <span className={cn("w-2 h-2 rounded-full", config.stepperColor)} />
+              {count} {config.filterLabel}
+            </span>
           );
         })}
       </div>
+      <ul
+        aria-label={`Milestone progress: ${verifiedCount} of ${entries.length} verified`}
+        className="flex items-center gap-0.5 list-none p-0 m-0"
+      >
+        {entries.map(({ uid, status }, i) => {
+          const config = MILESTONE_STATUS_CONFIG[status];
+          const label = `Milestone ${i + 1}: ${config.label}`;
+          return (
+            <li
+              key={uid || `milestone-${i}`}
+              aria-label={label}
+              className={cn("h-2 rounded-full flex-1 transition-colors", config.stepperColor)}
+              title={label}
+            />
+          );
+        })}
+      </ul>
     </div>
   );
 }
@@ -144,14 +154,8 @@ export function MilestonesReviewPage({
   programId,
   referrer,
 }: MilestonesReviewPageProps) {
-  // Extract programId from URL param (supports both "959" and legacy "959_42161" formats)
-  const { parsedProgramId } = useMemo(() => {
-    if (programId.includes("_")) {
-      const [id] = programId.split("_");
-      return { parsedProgramId: id };
-    }
-    return { parsedProgramId: programId };
-  }, [programId]);
+  // Supports both "959" and legacy "959_42161" formats
+  const parsedProgramId = useMemo(() => parseProgramId(programId), [programId]);
 
   // Wrap with PermissionProvider that includes programId for proper reviewer role detection
   return (
@@ -165,6 +169,7 @@ export function MilestonesReviewPage({
         communityId={communityId}
         projectId={projectId}
         programId={programId}
+        parsedProgramId={parsedProgramId}
         referrer={referrer}
       />
     </PermissionProvider>
@@ -175,8 +180,9 @@ function MilestonesReviewPageContent({
   communityId,
   projectId,
   programId,
+  parsedProgramId,
   referrer,
-}: MilestonesReviewPageProps) {
+}: MilestonesReviewPageProps & { parsedProgramId: string }) {
   const { data, isLoading, error, refetch } = useProjectGrantMilestones(projectId, programId);
   const [verifyingMilestoneId, setVerifyingMilestoneId] = useState<string | null>(null);
   const [verificationComment, setVerificationComment] = useState("");
@@ -186,15 +192,6 @@ function MilestonesReviewPageContent({
   const { address } = useAccount();
   const { hasAccess: hasAdminAccess, isLoading: isLoadingAdminAccess } =
     useCommunityAdminAccess(communityId);
-
-  // Extract programId from URL param (supports both "959" and legacy "959_42161" formats)
-  const parsedProgramId = useMemo(() => {
-    if (programId.includes("_")) {
-      const [id] = programId.split("_");
-      return id;
-    }
-    return programId;
-  }, [programId]);
 
   // Check if user is a reviewer for this program using RBAC
   const isReviewer = useIsReviewer();
@@ -254,11 +251,7 @@ function MilestonesReviewPageContent({
   const grantName = useMemo(() => {
     const milestoneProgramId = data?.grantMilestones[0]?.programId;
     if (milestoneProgramId) {
-      // Normalize programId (strip chainId if present)
-      const normalizedId = milestoneProgramId.includes("_")
-        ? milestoneProgramId.split("_")[0]
-        : milestoneProgramId;
-      return `Program ${normalizedId}`;
+      return `Program ${parseProgramId(milestoneProgramId)}`;
     }
     return `Program ${parsedProgramId}`;
   }, [data?.grantMilestones, parsedProgramId]);
@@ -511,9 +504,9 @@ function MilestonesReviewPageContent({
 
       {/* Content Area */}
       <div className="px-4 sm:px-6 lg:px-8 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Main Content - Milestones */}
-          <div className="lg:col-span-2 flex flex-col gap-6 min-w-0">
+          <div className="flex flex-col gap-6 min-w-0">
             <section className="bg-white dark:bg-zinc-900 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
               <h2 className="text-xl font-semibold mb-4 text-black dark:text-white">
                 Project Milestones
@@ -609,7 +602,7 @@ function MilestonesReviewPageContent({
           </div>
 
           {/* Sidebar - Comments & Activity */}
-          <div className="lg:col-span-2 min-w-0">
+          <div className="min-w-0">
             {isLoadingFundingApp && !referenceNumber ? (
               <div className="space-y-4 p-4 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
                 <div className="h-5 w-40 bg-gray-200 dark:bg-zinc-700 rounded animate-pulse" />
