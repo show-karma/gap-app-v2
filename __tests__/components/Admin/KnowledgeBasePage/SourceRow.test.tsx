@@ -141,4 +141,31 @@ describe("SourceRow", () => {
       expect(deleteBtn).toBeEnabled();
     });
   });
+
+  describe("sync action gating", () => {
+    // The backend's triggerSync flips status to 'syncing' immediately to
+    // surface that the user's click was received. The button must then
+    // refuse re-clicks until the worker writes a terminal status — a
+    // double-click during in-flight ingestion would just enqueue redundant
+    // claims for the same row.
+    it("disables the sync trigger when status is already 'syncing'", () => {
+      renderRow(createSource({ lastSyncStatus: "syncing" }));
+      const syncBtn = screen.getByRole("button", { name: /sync already in progress/i });
+      expect(syncBtn).toBeDisabled();
+    });
+
+    it("enables the sync trigger when status is success", () => {
+      renderRow(createSource({ lastSyncStatus: "success" }));
+      const syncBtn = screen.getByRole("button", { name: /^sync now$/i });
+      expect(syncBtn).toBeEnabled();
+    });
+
+    it("enables the sync trigger when status is failed (so admins can retry)", () => {
+      renderRow(
+        createSource({ lastSyncStatus: "failed", lastSyncError: "fetch failed" })
+      );
+      const syncBtn = screen.getByRole("button", { name: /^sync now$/i });
+      expect(syncBtn).toBeEnabled();
+    });
+  });
 });

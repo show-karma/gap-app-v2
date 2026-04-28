@@ -1,6 +1,6 @@
 "use client";
 
-import { FileBadge, FileText, Globe, Plus, Search, Sparkles } from "lucide-react";
+import { AlertCircle, FileBadge, FileText, Globe, Plus, Search, Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 import { AddSourceDialog } from "@/components/Pages/Admin/KnowledgeBasePage/AddSourceDialog";
 import { SourceRow } from "@/components/Pages/Admin/KnowledgeBasePage/SourceRow";
@@ -110,6 +110,7 @@ export function KnowledgeBasePage({ community }: Props) {
         <EmptyState onAdd={openAdd} onAddWithKind={openAddWithKind} />
       ) : (
         <>
+          {failing > 0 && <FailureBanner sources={list} />}
           <FilterBar
             value={filter}
             onChange={setFilter}
@@ -363,6 +364,49 @@ function EmptyState({
           </li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+// Page-level grouped failure banner. Replaces the previous per-row red
+// excerpt with a single rolled-up signal up top — the row tint plus the
+// "Failed" entry in each row's mono meta strip carry the per-row context.
+// When all failed sources share the same error message we show that
+// message verbatim; otherwise we show a count and prompt the admin to
+// expand the rows.
+function FailureBanner({ sources }: { sources: KnowledgeSource[] }) {
+  const failed = sources.filter(
+    (s) => s.lastSyncStatus === "failed" || s.lastSyncStatus === "partial"
+  );
+  if (failed.length === 0) return null;
+
+  const errors = Array.from(
+    new Set(failed.map((s) => s.lastSyncError ?? "Unknown error"))
+  );
+  const sharedReason = errors.length === 1 ? errors[0] : null;
+  const noun = failed.length === 1 ? "source is" : "sources are";
+
+  return (
+    <div
+      role="status"
+      className="mb-4 flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50/70 px-4 py-3 dark:border-rose-900/50 dark:bg-rose-950/25"
+    >
+      <AlertCircle
+        aria-hidden="true"
+        className="mt-0.5 h-5 w-5 shrink-0 text-rose-600 dark:text-rose-400"
+        strokeWidth={1.75}
+      />
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-semibold text-rose-900 dark:text-rose-200">
+          {failed.length} {noun} failing
+          {sharedReason ? ` — ${sharedReason}` : ""}
+        </p>
+        <p className="mt-0.5 text-xs leading-relaxed text-rose-800/85 dark:text-rose-300/90">
+          {sharedReason
+            ? "All affected rows share the same error. The next sync will retry."
+            : "Hover the row's error tag to read the full message. The next sync will retry."}
+        </p>
+      </div>
     </div>
   );
 }
