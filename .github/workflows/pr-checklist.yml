@@ -12,6 +12,8 @@ on:
       - '**/*.jpeg'
       - '**/*.svg'
       - '**/*.gif'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/PULL_REQUEST_TEMPLATE.md'
       - 'LICENSE'
       - '.gitignore'
 
@@ -28,22 +30,25 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          # Shallow checkout — we only need PR HEAD plus enough base history
-          # to diff against. Two-dot diff below avoids needing the merge-base.
+          # Shallow checkout — we only need PR HEAD plus the immutable PR
+          # base SHA below.
           fetch-depth: 1
 
-      - name: Fetch base ref
+      - name: Fetch immutable PR base SHA
         env:
-          GITHUB_BASE_REF: ${{ github.base_ref }}
-        run: git fetch --no-tags --depth=1 origin "$GITHUB_BASE_REF"
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: git fetch --no-tags --depth=1 origin "$PR_BASE_SHA"
 
       - name: Run anti-pattern checks
         id: antipatterns
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           chmod +x scripts/check-anti-patterns.sh
-          # Two-dot diff (origin/BASE..HEAD) — files different between base
-          # tip and PR HEAD. Doesn't require fetching the merge-base.
-          CHANGED_FILES=$(git diff --name-only --diff-filter=ACMR "origin/$GITHUB_BASE_REF..HEAD" -- '*.tsx' '*.ts' | head -200)
+          # Diff against the immutable PR base SHA (frozen at PR creation/sync).
+          # Avoids drift if the base branch advances mid-CI, which would
+          # otherwise pull in unrelated files via two-dot vs origin/BASE.
+          CHANGED_FILES=$(git diff --name-only --diff-filter=ACMR "$PR_BASE_SHA..HEAD" -- '*.tsx' '*.ts' | head -200)
 
           ISSUES=""
           ISSUE_COUNT=0
@@ -69,16 +74,16 @@ jobs:
               echo "EOF"
             } >> "$GITHUB_OUTPUT"
           fi
-        env:
-          GITHUB_BASE_REF: ${{ github.base_ref }}
 
       - name: Check for missing route files
         id: missing_routes
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           MISSING=""
           MISSING_COUNT=0
 
-          NEW_PAGES=$(git diff --name-only --diff-filter=A "origin/$GITHUB_BASE_REF..HEAD" -- '**/page.tsx' || true)
+          NEW_PAGES=$(git diff --name-only --diff-filter=A "$PR_BASE_SHA..HEAD" -- '**/page.tsx' || true)
 
           while IFS= read -r PAGE; do
             [ -z "$PAGE" ] && continue
@@ -103,8 +108,6 @@ jobs:
               echo "EOF"
             } >> "$GITHUB_OUTPUT"
           fi
-        env:
-          GITHUB_BASE_REF: ${{ github.base_ref }}
 
       - name: Comment PR with results
         if: always() && github.event_name == 'pull_request'

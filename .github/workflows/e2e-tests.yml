@@ -2,6 +2,11 @@ name: E2E Tests
 
 on:
   workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'Optional PR number to comment results back to'
+        required: false
+        type: string
   schedule:
     - cron: '0 4 * * *'  # Nightly at 4 AM UTC
 
@@ -77,7 +82,10 @@ jobs:
           if-no-files-found: ignore
 
   report:
-    if: always() && github.event_name == 'workflow_dispatch'
+    # Only comment when triggered manually with an explicit PR number.
+    # workflow_dispatch has no `context.issue.number`, so commenting without
+    # a PR number would fail.
+    if: always() && github.event_name == 'workflow_dispatch' && github.event.inputs.pr_number != ''
     needs: [playwright]
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -85,27 +93,30 @@ jobs:
     steps:
       - name: Comment PR with E2E test results
         uses: actions/github-script@v7
+        env:
+          PR_NUMBER: ${{ github.event.inputs.pr_number }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const playwrightStatus = '${{ needs.playwright.result }}';
             const allPassed = playwrightStatus === 'success';
+            const prNumber = parseInt(process.env.PR_NUMBER, 10);
+            const marker = '<!-- e2e-tests-report -->';
 
             const icon = (status) => status === 'success' ? '✅' : status === 'skipped' ? '⏭️' : '❌';
 
             const body = allPassed
-              ? `## ✅ E2E Tests Passed!\n\nAll Playwright end-to-end tests completed successfully.\n\n| Suite | Status |\n|-------|--------|\n| Playwright | ${icon(playwrightStatus)} ${playwrightStatus} |`
-              : `## ❌ E2E Tests Failed\n\nSome E2E tests failed. Check the workflow logs and artifacts for details.\n\n| Suite | Status |\n|-------|--------|\n| Playwright | ${icon(playwrightStatus)} ${playwrightStatus} |\n\n**Artifacts available on failure:** report + traces (Playwright)`;
+              ? `${marker}\n## ✅ E2E Tests Passed!\n\nAll Playwright end-to-end tests completed successfully.\n\n| Suite | Status |\n|-------|--------|\n| Playwright | ${icon(playwrightStatus)} ${playwrightStatus} |`
+              : `${marker}\n## ❌ E2E Tests Failed\n\nSome E2E tests failed. Check the workflow logs and artifacts for details.\n\n| Suite | Status |\n|-------|--------|\n| Playwright | ${icon(playwrightStatus)} ${playwrightStatus} |\n\n**Artifacts available on failure:** report + traces (Playwright)`;
 
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.issue.number,
+              issue_number: prNumber,
             });
 
             const e2eComment = comments.find(comment =>
-              comment.user.type === 'Bot' &&
-              comment.body.includes('E2E Tests')
+              comment.user.type === 'Bot' && comment.body.includes(marker)
             );
 
             if (e2eComment) {
@@ -119,7 +130,7 @@ jobs:
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                issue_number: context.issue.number,
+                issue_number: prNumber,
                 body,
               });
             }
