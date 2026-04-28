@@ -149,9 +149,12 @@ export function MilestoneCard({
   const [isEvaluationModalOpen, setIsEvaluationModalOpen] = useState(false);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [isOverflowOpen, setIsOverflowOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [hasLongDescription, setHasLongDescription] = useState(false);
   const [hasLongCompletion, setHasLongCompletion] = useState(false);
   const [isCompletionExpanded, setIsCompletionExpanded] = useState(false);
+  const descriptionId = `milestone-${milestone.uid}-description`;
+  const completionId = `milestone-${milestone.uid}-completion`;
   const overflowRef = useRef<HTMLDivElement>(null);
   const descriptionRef = useRef<HTMLDivElement>(null);
   const completionRef = useRef<HTMLDivElement>(null);
@@ -170,6 +173,11 @@ export function MilestoneCard({
 
   const handleToggleCompletion = useCallback(() => {
     setIsCompletionExpanded((v) => !v);
+  }, []);
+
+  const handleDeleteDialogOpenChange = useCallback((open: boolean) => {
+    if (open) setIsOverflowOpen(false);
+    setIsDeleteDialogOpen(open);
   }, []);
 
   const handleOverflowBlur = useCallback((e: React.FocusEvent) => {
@@ -298,10 +306,7 @@ export function MilestoneCard({
                   className="absolute right-0 top-full mt-1 z-10 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-md shadow-lg py-1 min-w-[140px]"
                 >
                   <DeleteDialog
-                    deleteFunction={() => {
-                      setIsOverflowOpen(false);
-                      return onDeleteMilestone(milestone);
-                    }}
+                    deleteFunction={() => onDeleteMilestone(milestone)}
                     isLoading={isDeleting}
                     title={
                       <p className="font-normal">
@@ -314,6 +319,8 @@ export function MilestoneCard({
                       styleClass:
                         "flex items-center gap-2 w-full px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 text-left",
                     }}
+                    externalIsOpen={isDeleteDialogOpen}
+                    externalSetIsOpen={handleDeleteDialogOpenChange}
                   />
                 </div>
               )}
@@ -338,6 +345,7 @@ export function MilestoneCard({
       <div className="mb-3">
         <div className="relative">
           <div
+            id={descriptionId}
             ref={descriptionRef}
             className={cn(
               "text-gray-600 dark:text-gray-400 text-sm overflow-hidden transition-all",
@@ -354,6 +362,8 @@ export function MilestoneCard({
           <button
             type="button"
             onClick={handleToggleDescription}
+            aria-expanded={isDescriptionExpanded}
+            aria-controls={descriptionId}
             className="flex items-center gap-1 mt-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
           >
             {isDescriptionExpanded ? (
@@ -395,6 +405,8 @@ export function MilestoneCard({
                 <button
                   type="button"
                   onClick={handleToggleCompletion}
+                  aria-expanded={isCompletionExpanded}
+                  aria-controls={completionId}
                   className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 flex items-center gap-0.5"
                 >
                   {isCompletionExpanded ? (
@@ -411,6 +423,7 @@ export function MilestoneCard({
             </div>
             <div className="relative">
               <div
+                id={completionId}
                 ref={completionRef}
                 className={cn(
                   "text-sm text-gray-700 dark:text-gray-300 overflow-hidden transition-all",

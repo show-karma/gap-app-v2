@@ -37,8 +37,9 @@ const CommentInput: FC<CommentInputProps> = ({
   const editorContainerRef = useRef<HTMLDivElement>(null);
 
   const handleExpand = useCallback(() => {
+    if (disabled || isSubmitting) return;
     setIsExpanded(true);
-  }, []);
+  }, [disabled, isSubmitting]);
 
   // Move focus into the markdown editor on expand so users can start typing
   // immediately. The MarkdownEditor's contenteditable / textarea is the focus
@@ -153,11 +154,12 @@ const CommentInput: FC<CommentInputProps> = ({
       <button
         type="button"
         onClick={handleExpand}
+        disabled={disabled || isSubmitting}
         className={cn(
           "w-full text-left px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-700",
           "text-sm text-gray-500 dark:text-gray-400",
           "hover:border-blue-300 dark:hover:border-blue-600 hover:bg-gray-50 dark:hover:bg-zinc-800/50",
-          "transition-colors cursor-text",
+          "transition-colors cursor-text disabled:opacity-60 disabled:cursor-not-allowed",
           className
         )}
       >
