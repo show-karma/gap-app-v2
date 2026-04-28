@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Suspense } from "react";
 import { KnowledgeBasePage } from "@/components/Pages/Admin/KnowledgeBasePage/KnowledgeBasePage";
-import { Spinner } from "@/components/Utilities/Spinner";
 import { customMetadata } from "@/utilities/meta";
 import { getCommunityDetails } from "@/utilities/queries/v2/community";
 
@@ -22,15 +20,8 @@ export default async function Page(props: Props) {
     notFound();
   }
 
-  return (
-    <Suspense
-      fallback={
-        <div className="flex w-full items-center justify-center">
-          <Spinner />
-        </div>
-      }
-    >
-      <KnowledgeBasePage community={community} />
-    </Suspense>
-  );
+  // No <Suspense> wrapper — KnowledgeBasePage is a client component using
+  // React Query and never suspends. Sibling `loading.tsx` already provides the
+  // App Router loading boundary while this server component awaits data.
+  return <KnowledgeBasePage community={community} />;
 }

@@ -748,16 +748,12 @@ export const INDEXER = {
       `/v2/communities/${communityIdOrSlug}/knowledge-base/sources`,
     CREATE_SOURCE: (communityIdOrSlug: string) =>
       `/v2/communities/${communityIdOrSlug}/knowledge-base/sources`,
-    GET_SOURCE: (communityIdOrSlug: string, sourceId: string) =>
-      `/v2/communities/${communityIdOrSlug}/knowledge-base/sources/${sourceId}`,
     UPDATE_SOURCE: (communityIdOrSlug: string, sourceId: string) =>
       `/v2/communities/${communityIdOrSlug}/knowledge-base/sources/${sourceId}`,
     DELETE_SOURCE: (communityIdOrSlug: string, sourceId: string) =>
       `/v2/communities/${communityIdOrSlug}/knowledge-base/sources/${sourceId}`,
     RESYNC_SOURCE: (communityIdOrSlug: string, sourceId: string) =>
       `/v2/communities/${communityIdOrSlug}/knowledge-base/sources/${sourceId}/resync`,
-    LIST_DOCUMENTS: (communityIdOrSlug: string, sourceId: string) =>
-      `/v2/communities/${communityIdOrSlug}/knowledge-base/sources/${sourceId}/documents`,
   },
   USERS: {
     RESOLVE_EMAIL: `/v2/user/resolve-email`,

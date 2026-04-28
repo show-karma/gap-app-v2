@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { knowledgeSourcesQueryKey } from "@/hooks/knowledge-base/useKnowledgeSources";
 import type {
   CreateKnowledgeSourceInput,
   KnowledgeSource,
@@ -6,7 +7,6 @@ import type {
 } from "@/types/v2/knowledge-base";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import { knowledgeSourcesQueryKey } from "./useKnowledgeSources";
 
 interface SingleResponse {
   data: KnowledgeSource;
