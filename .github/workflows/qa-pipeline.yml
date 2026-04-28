@@ -275,11 +275,15 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: qa-build
+          # Glob form (`**`) is required for `actions/upload-artifact@v4`
+          # to honor the negation pattern; the directory shorthand `.next/`
+          # silently misses files and the negation never applies.
           path: |
-            .next/
-            !.next/cache
+            .next/**
+            !.next/cache/**
           retention-days: 1
           if-no-files-found: error
+          include-hidden-files: true
 
   # qa-execution and dogfood run IN PARALLEL after the shared build,
   # each downloading the prebuilt .next/ artifact instead of rebuilding.
