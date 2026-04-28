@@ -108,7 +108,7 @@ function getStatusMeta(source: KnowledgeSource): StatusMeta {
   ) {
     return {
       tone: "idle",
-      label: "Queued for first sync",
+      label: "Queued for sync",
       dot: "bg-amber-500",
       pulse: true,
     };
@@ -251,6 +251,14 @@ function SourceRowImpl({ source, communityIdOrSlug, isFirst }: Props) {
   const isFailed = status.tone === "failed";
   const isSyncingNow = status.tone === "syncing";
   const isPartial = status.tone === "partial";
+  // Queued = the worker hasn't claimed this row yet. Either brand-new
+  // (never synced) or just-clicked-Sync (backend's markPendingSync
+  // cleared status + lastSyncedAt). The Sync button is gated for both
+  // states so a double-click can't enqueue redundant work — there's
+  // nothing for "force reprocess" to do until the worker finishes.
+  const isQueued =
+    source.isActive && !source.lastSyncedAt && status.tone === "idle";
+  const syncBlocked = isSyncingNow || isQueued;
 
   return (
     <li
@@ -379,9 +387,15 @@ function SourceRowImpl({ source, communityIdOrSlug, isFirst }: Props) {
           tick is mid-fetch. */}
       <div className="flex shrink-0 items-center gap-0.5">
         <RowAction
-          label={isSyncingNow ? "Sync already in progress" : "Sync now"}
+          label={
+            isSyncingNow
+              ? "Sync in progress"
+              : isQueued
+                ? "Already queued for sync"
+                : "Sync now"
+          }
           onClick={handleResync}
-          disabled={resync.isPending || isSyncingNow}
+          disabled={resync.isPending || syncBlocked}
           spinning={resync.isPending || isSyncingNow}
           Icon={RefreshCw}
         />

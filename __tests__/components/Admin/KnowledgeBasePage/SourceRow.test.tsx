@@ -81,7 +81,7 @@ describe("SourceRow", () => {
       expect(screen.getByText("Synced")).toBeInTheDocument();
     });
 
-    it("renders 'Queued for first sync' when no sync has happened yet", () => {
+    it("renders 'Queued for sync' when no sync has happened yet", () => {
       renderRow(
         createSource({
           lastSyncedAt: null,
@@ -89,7 +89,7 @@ describe("SourceRow", () => {
           lastSyncError: null,
         })
       );
-      expect(screen.getByText("Queued for first sync")).toBeInTheDocument();
+      expect(screen.getByText("Queued for sync")).toBeInTheDocument();
     });
 
     it("renders 'Failed' (and the error banner) when the very first sync fails", () => {
@@ -150,7 +150,22 @@ describe("SourceRow", () => {
     // claims for the same row.
     it("disables the sync trigger when status is already 'syncing'", () => {
       renderRow(createSource({ lastSyncStatus: "syncing" }));
-      const syncBtn = screen.getByRole("button", { name: /sync already in progress/i });
+      const syncBtn = screen.getByRole("button", { name: /sync in progress/i });
+      expect(syncBtn).toBeDisabled();
+    });
+
+    it("disables the sync trigger when row is queued (null status, no lastSyncedAt)", () => {
+      // After triggerSync the backend clears status + lastSyncedAt. The
+      // worker hasn't claimed the row yet, so re-clicking Sync would just
+      // enqueue redundant work — gate the button until a terminal state.
+      renderRow(
+        createSource({
+          lastSyncedAt: null,
+          lastSyncStatus: null,
+          lastSyncError: null,
+        })
+      );
+      const syncBtn = screen.getByRole("button", { name: /already queued for sync/i });
       expect(syncBtn).toBeDisabled();
     });
 
