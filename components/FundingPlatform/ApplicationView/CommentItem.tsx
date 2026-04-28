@@ -8,7 +8,6 @@ import {
   UserCircleIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
-import { format, isValid, parseISO } from "date-fns";
 import React, { type FC, useCallback, useMemo, useRef, useState } from "react";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
@@ -21,6 +20,7 @@ import { useMilestoneReviewers } from "@/hooks/useMilestoneReviewers";
 import { ReviewerType } from "@/hooks/useReviewerAssignment";
 import type { ApplicationComment } from "@/types/funding-platform";
 import { compareAllWallets } from "@/utilities/auth/compare-all-wallets";
+import { renderRelativeTime } from "@/utilities/formatRelativeTime";
 import { renderMentionsAsMarkdown } from "@/utilities/mentions";
 import { cn } from "@/utilities/tailwind";
 import InviteReviewerModal from "./InviteReviewerModal";
@@ -131,16 +131,6 @@ const CommentItem: FC<CommentItemProps> = ({
   // Users can delete their own comments, admins can delete any comment
   const canDelete = !comment.isDeleted && (isAuthor || isAdmin);
 
-  const formatDate = (dateString: string | Date) => {
-    try {
-      const date = typeof dateString === "string" ? parseISO(dateString) : dateString;
-      if (!isValid(date)) return "Invalid date";
-      return format(date, "MMM dd, yyyy HH:mm");
-    } catch {
-      return "Invalid date";
-    }
-  };
-
   const handleSaveEdit = async () => {
     if (!onEdit || editContent.trim() === comment.content) {
       setIsEditing(false);
@@ -228,10 +218,10 @@ const CommentItem: FC<CommentItemProps> = ({
                 )}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                {formatDate(comment.createdAt)}
+                {renderRelativeTime(comment.createdAt)}
                 {comment.editHistory && comment.editHistory.length > 0 && (
                   <span className="ml-1 italic text-gray-400 dark:text-gray-500">
-                    (Edited at {formatDate(comment.updatedAt)})
+                    (Edited {renderRelativeTime(comment.updatedAt)})
                   </span>
                 )}
               </p>
@@ -384,7 +374,7 @@ const CommentItem: FC<CommentItemProps> = ({
 
           {comment.deletedAt && (
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 italic">
-              Deleted by {comment.deletedBy || "unknown"} on {formatDate(comment.deletedAt)}
+              Deleted by {comment.deletedBy || "unknown"} {renderRelativeTime(comment.deletedAt)}
             </p>
           )}
         </div>

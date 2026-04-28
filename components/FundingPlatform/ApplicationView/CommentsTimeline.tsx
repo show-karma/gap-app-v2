@@ -9,7 +9,7 @@ import {
   PencilSquareIcon,
   XCircleIcon,
 } from "@heroicons/react/24/outline";
-import { format, isValid, parseISO } from "date-fns";
+import { isValid, parseISO } from "date-fns";
 import pluralize from "pluralize";
 import { type FC, useMemo, useState } from "react";
 import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
@@ -26,6 +26,7 @@ import type {
   IStatusHistoryEntry,
 } from "@/types/funding-platform";
 import { createFieldLabelMap, getFieldLabel } from "@/utilities/fieldLabelMapping";
+import { renderRelativeTime } from "@/utilities/formatRelativeTime";
 import { cn } from "@/utilities/tailwind";
 import CommentInput from "./CommentInput";
 import CommentItem from "./CommentItem";
@@ -227,16 +228,6 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
     await onCommentDelete(commentId);
   };
 
-  const formatDate = (dateString: string | Date) => {
-    try {
-      const date = typeof dateString === "string" ? parseISO(dateString) : dateString;
-      if (!isValid(date)) return "Invalid date";
-      return format(date, "MMM dd, yyyy HH:mm");
-    } catch {
-      return "Invalid date";
-    }
-  };
-
   const renderStatusItem = (status: IStatusHistoryEntry, isLatest: boolean) => {
     const config = statusConfig[status.status as keyof typeof statusConfig] || statusConfig.pending;
     const StatusIcon = config.icon;
@@ -272,7 +263,7 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
                 )}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                {formatDate(status.timestamp)}
+                {renderRelativeTime(status.timestamp)}
               </p>
             </div>
           </div>
@@ -333,7 +324,7 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
               </div>
               {version.submittedBy && (
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  {formatDate(version.createdAt)} • Version {version.versionNumber}
+                  {renderRelativeTime(version.createdAt)} • Version {version.versionNumber}
                   <span className="ml-2 text-gray-400 dark:text-gray-500">
                     by <EthereumAddressToProfileName address={version.submittedBy} />
                   </span>
@@ -341,7 +332,7 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
               )}
               {!version.submittedBy && (
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  {formatDate(version.createdAt)} • Version {version.versionNumber}
+                  {renderRelativeTime(version.createdAt)} • Version {version.versionNumber}
                 </p>
               )}
             </div>

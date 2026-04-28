@@ -43,13 +43,7 @@ export function useCreateKnowledgeSource(communityIdOrSlug: string | undefined) 
 export function useUpdateKnowledgeSource(communityIdOrSlug: string | undefined) {
   const invalidate = useInvalidateSources(communityIdOrSlug);
   return useMutation({
-    mutationFn: ({
-      sourceId,
-      patch,
-    }: {
-      sourceId: string;
-      patch: UpdateKnowledgeSourceInput;
-    }) => {
+    mutationFn: ({ sourceId, patch }: { sourceId: string; patch: UpdateKnowledgeSourceInput }) => {
       if (!communityIdOrSlug) throw new Error("Community required");
       return updateKnowledgeSource(communityIdOrSlug, sourceId, patch);
     },

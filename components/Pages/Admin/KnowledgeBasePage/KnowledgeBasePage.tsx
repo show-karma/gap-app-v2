@@ -172,7 +172,8 @@ function Masthead({
             Documents the{" "}
             <span className="font-medium text-stone-900 dark:text-zinc-100">{communityName}</span>{" "}
             assistant reads from. Each source is fetched, chunked, and embedded on the nightly sync
-            at <code className="font-mono text-[12px] text-stone-700 dark:text-zinc-300">02:00</code>{" "}
+            at{" "}
+            <code className="font-mono text-[12px] text-stone-700 dark:text-zinc-300">02:00</code>{" "}
             UTC.
           </p>
         </div>
@@ -396,16 +397,11 @@ function FailureBanner({ sources }: { sources: KnowledgeSource[] }) {
   // Surface a shared reason only when one is universal across the failing
   // rows — partial successes don't always carry a single root cause, so
   // we limit this to the failed bucket.
-  const errors = Array.from(
-    new Set(failed.map((s) => s.lastSyncError ?? "Unknown error"))
-  );
+  const errors = Array.from(new Set(failed.map((s) => s.lastSyncError ?? "Unknown error")));
   const sharedReason = errors.length === 1 ? errors[0] : null;
 
   return (
-    <div
-      role="status"
-      className="mb-4 flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50/70 px-4 py-3 dark:border-rose-900/50 dark:bg-rose-950/25"
-    >
+    <output className="mb-4 flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50/70 px-4 py-3 dark:border-rose-900/50 dark:bg-rose-950/25">
       <AlertCircle
         aria-hidden="true"
         className="mt-0.5 h-5 w-5 shrink-0 text-rose-600 dark:text-rose-400"
@@ -422,7 +418,7 @@ function FailureBanner({ sources }: { sources: KnowledgeSource[] }) {
             : "Hover the row's error tag to read the full message. The next sync will retry."}
         </p>
       </div>
-    </div>
+    </output>
   );
 }
 

@@ -265,8 +265,7 @@ function SourceRowImpl({ source, communityIdOrSlug, isFirst }: Props) {
   // cleared status + lastSyncedAt). The Sync button is gated for both
   // states so a double-click can't enqueue redundant work — there's
   // nothing for "force reprocess" to do until the worker finishes.
-  const isQueued =
-    source.isActive && !source.lastSyncedAt && status.tone === "idle";
+  const isQueued = source.isActive && !source.lastSyncedAt && status.tone === "idle";
   const syncBlocked = isSyncingNow || isQueued;
 
   return (
@@ -290,9 +289,7 @@ function SourceRowImpl({ source, communityIdOrSlug, isFirst }: Props) {
         aria-hidden="true"
       >
         <KindIcon
-          className={`h-4 w-4 ${
-            isFailed ? "text-rose-600 dark:text-rose-400" : kind.fg
-          }`}
+          className={`h-4 w-4 ${isFailed ? "text-rose-600 dark:text-rose-400" : kind.fg}`}
           strokeWidth={1.75}
         />
       </div>
@@ -378,9 +375,7 @@ function SourceRowImpl({ source, communityIdOrSlug, isFirst }: Props) {
           {(isFailed || isPartial) && source.lastSyncError && (
             <span
               className={`inline-flex items-center truncate px-2.5 ${
-                isFailed
-                  ? "text-rose-600 dark:text-rose-400"
-                  : "text-amber-600 dark:text-amber-400"
+                isFailed ? "text-rose-600 dark:text-rose-400" : "text-amber-600 dark:text-amber-400"
               }`}
               title={source.lastSyncError}
               style={{ maxWidth: 280 }}
@@ -428,11 +423,7 @@ function SourceRowImpl({ source, communityIdOrSlug, isFirst }: Props) {
         )}
         <RowAction
           label={
-            isSyncingNow
-              ? "Sync in progress"
-              : isQueued
-                ? "Already queued for sync"
-                : "Sync now"
+            isSyncingNow ? "Sync in progress" : isQueued ? "Already queued for sync" : "Sync now"
           }
           onClick={handleResync}
           disabled={resync.isPending || syncBlocked}
@@ -547,7 +538,10 @@ function truncateMiddle(s: string, max = 80): string {
 // in the title attribute so admins can still read it on hover.
 function shortenError(msg: string): string {
   // Strip URLs (they show up in the row above anyway) and trailing periods.
-  const stripped = msg.replace(/https?:\/\/\S+/g, "").trim().replace(/\.$/, "");
+  const stripped = msg
+    .replace(/https?:\/\/\S+/g, "")
+    .trim()
+    .replace(/\.$/, "");
   if (stripped.length <= 60) return stripped;
   return `${stripped.slice(0, 57)}…`;
 }

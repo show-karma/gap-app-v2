@@ -1,7 +1,7 @@
 "use client";
 
 import { PaperAirplaneIcon } from "@heroicons/react/24/outline";
-import { type FC, useCallback, useMemo, useRef, useState } from "react";
+import { type FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useMentionEditor } from "@/hooks/useMentionEditor";
@@ -34,7 +34,34 @@ const CommentInput: FC<CommentInputProps> = ({
 }) => {
   const [content, setContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const editorContainerRef = useRef<HTMLDivElement>(null);
+
+  const handleExpand = useCallback(() => {
+    if (disabled || isSubmitting) return;
+    setIsExpanded(true);
+  }, [disabled, isSubmitting]);
+
+  const handleCancel = useCallback(() => {
+    setContent("");
+    setIsExpanded(false);
+  }, []);
+
+  // Move focus into the markdown editor on expand so users can start typing
+  // immediately. The MarkdownEditor's contenteditable / textarea is the focus
+  // target — we use requestAnimationFrame to let the editor mount first.
+  useEffect(() => {
+    if (!isExpanded) return;
+    const id = requestAnimationFrame(() => {
+      const root = editorContainerRef.current;
+      if (!root) return;
+      const focusable = root.querySelector<HTMLElement>(
+        "[contenteditable='true'], textarea, input"
+      );
+      focusable?.focus();
+    });
+    return () => cancelAnimationFrame(id);
+  }, [isExpanded]);
 
   const mentionEditor = useMentionEditor({
     enabled: enableMentions && !!programId,
@@ -107,6 +134,7 @@ const CommentInput: FC<CommentInputProps> = ({
     try {
       await onSubmit(content.trim());
       setContent("");
+      setIsExpanded(false);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       console.error(`[CommentInput] Failed to submit comment: ${message}`);
@@ -115,8 +143,43 @@ const CommentInput: FC<CommentInputProps> = ({
     }
   };
 
+  // Collapse back if content is empty and user clicks away
+  const handleBlur = useCallback(
+    (e: React.FocusEvent<HTMLFormElement>) => {
+      // Don't collapse if focus stays within the form
+      if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+      if (!content.trim()) {
+        setIsExpanded(false);
+      }
+    },
+    [content]
+  );
+
+  // Collapsed state: show a simple clickable input placeholder
+  if (!isExpanded) {
+    return (
+      <button
+        type="button"
+        onClick={handleExpand}
+        disabled={disabled || isSubmitting}
+        className={cn(
+          "w-full text-left px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-700",
+          "text-sm text-gray-500 dark:text-gray-400",
+          "hover:border-blue-300 dark:hover:border-blue-600 hover:bg-gray-50 dark:hover:bg-zinc-800/50",
+          "transition-colors cursor-text disabled:opacity-60 disabled:cursor-not-allowed",
+          className
+        )}
+      >
+        {placeholder}
+        {enableMentions && (
+          <span className="ml-1 text-gray-400 dark:text-gray-500">Use @ to mention.</span>
+        )}
+      </button>
+    );
+  }
+
   return (
-    <form onSubmit={handleSubmit} className={cn("relative", className)}>
+    <form onSubmit={handleSubmit} onBlur={handleBlur} className={cn("relative", className)}>
       <div className="flex flex-col space-y-3">
         <div
           ref={editorContainerRef}
@@ -150,7 +213,15 @@ const CommentInput: FC<CommentInputProps> = ({
             />
           )}
         </div>
-        <div className="flex items-center justify-end">
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            onClick={handleCancel}
+            disabled={isSubmitting}
+            className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Cancel
+          </button>
           <button
             type="submit"
             disabled={!content.trim() || disabled || isSubmitting}

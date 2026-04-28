@@ -197,9 +197,7 @@ describe("SourceRow", () => {
     });
 
     it("enables the sync trigger when status is failed (so admins can retry)", () => {
-      renderRow(
-        createSource({ lastSyncStatus: "failed", lastSyncError: "fetch failed" })
-      );
+      renderRow(createSource({ lastSyncStatus: "failed", lastSyncError: "fetch failed" }));
       const syncBtn = screen.getByRole("button", { name: /^sync now$/i });
       expect(syncBtn).toBeEnabled();
     });
