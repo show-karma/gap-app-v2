@@ -31,11 +31,11 @@ import { ReadMore } from "@/utilities/ReadMore";
 import { shareOnX } from "@/utilities/share/shareOnX";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 import { cn } from "@/utilities/tailwind";
-import { containerClassName } from "../ActivityCard";
 import { ActivityActionsWrapper } from "./ActivityActionsWrapper";
 import { ActivityAttribution } from "./ActivityAttribution";
 import { ActivityStatusHeader } from "./ActivityStatusHeader";
 import { GrantAssociation } from "./GrantAssociation";
+import { containerClassName } from "./styles";
 
 const ProjectObjectiveCompletion = dynamic(
   () =>
