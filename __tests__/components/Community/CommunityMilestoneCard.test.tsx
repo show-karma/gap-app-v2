@@ -1,11 +1,10 @@
 import { render, screen } from "@testing-library/react";
 import type { CommunityMilestoneUpdate } from "@/types/community-updates";
 
-// Mock the entire component module path to avoid deep dependency chain
-vi.mock("@/components/Shared/ActivityCard", () => ({
+// Mock the styles module to avoid deep dependency chain
+vi.mock("@/components/Shared/ActivityCard/styles", () => ({
   containerClassName:
     "border border-gray-300 dark:border-zinc-400 rounded-xl bg-white dark:bg-zinc-800",
-  ActivityCard: vi.fn(),
 }));
 
 // Mock ActivityAttribution component

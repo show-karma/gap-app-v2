@@ -28,7 +28,7 @@ const baseLinkStyle =
 
 const NewTag = () => {
   return (
-    <div className="rounded-2xl py-1 px-3 bg-brand-blue dark:bg-brand-blue/80 text-white dark:text-zinc-100 text-xs font-bold">
+    <div className="rounded-2xl py-0.5 px-2 bg-brand-blue dark:bg-brand-blue/80 text-white dark:text-zinc-100 text-[11px] font-bold leading-none">
       New!
     </div>
   );

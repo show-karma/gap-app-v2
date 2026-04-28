@@ -1,8 +1,6 @@
 import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import { ActivityFilters } from "@/components/Pages/Project/v2/MainContent/ActivityFilters";
-import type { MilestoneStatusFilter } from "@/services/milestone-status-filter.service";
 import type { ActivityFilterType } from "@/types/v2/project-profile.types";
 
 // Mock next/navigation
@@ -30,7 +28,7 @@ describe("MilestoneStatusFilter visibility in ActivityFilters", () => {
     vi.clearAllMocks();
   });
 
-  it("shows milestone status dropdown when no filter is active (All selected)", () => {
+  it("hides milestone status dropdown when no filter is active (All selected)", () => {
     render(
       <ActivityFilters
         {...defaultProps}
@@ -40,7 +38,7 @@ describe("MilestoneStatusFilter visibility in ActivityFilters", () => {
       />
     );
 
-    expect(screen.getByTestId("milestone-status-filter")).toBeInTheDocument();
+    expect(screen.queryByTestId("milestone-status-filter")).not.toBeInTheDocument();
   });
 
   it("shows milestone status dropdown when milestones filter is active", () => {
@@ -101,11 +99,11 @@ describe("MilestoneStatusFilter visibility in ActivityFilters", () => {
     expect(screen.queryByTestId("milestone-status-filter")).not.toBeInTheDocument();
   });
 
-  it("shows 'All statuses' as default placeholder", () => {
+  it("shows 'All statuses' as default placeholder when milestones filter is active", () => {
     render(
       <ActivityFilters
         {...defaultProps}
-        activeFilters={[]}
+        activeFilters={["milestones"]}
         milestoneStatusFilter="all"
         onMilestoneStatusChange={vi.fn()}
       />

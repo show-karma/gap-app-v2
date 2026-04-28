@@ -31,6 +31,18 @@ interface IApplicationListComponentProps extends IApplicationListProps {
   showInternalAIScoreColumn?: boolean;
   programReviewers?: ProgramReviewer[];
   milestoneReviewers?: MilestoneReviewer[];
+  addProgramReviewer: (data: { name: string; email: string; telegram?: string }) => Promise<{
+    name: string;
+    email: string;
+    publicAddress?: string;
+  }>;
+  isAddingProgramReviewer?: boolean;
+  addMilestoneReviewer: (data: {
+    name: string;
+    email: string;
+    telegram?: string;
+  }) => Promise<{ name: string; email: string; publicAddress?: string }>;
+  isAddingMilestoneReviewer?: boolean;
   isLoadingProgramReviewers?: boolean;
   isProgramReviewersError?: boolean;
   isLoadingMilestoneReviewers?: boolean;
@@ -42,6 +54,7 @@ interface IApplicationListComponentProps extends IApplicationListProps {
 }
 
 const ApplicationListComponent: FC<IApplicationListComponentProps> = ({
+  programId,
   applications,
   isLoading = false,
   onApplicationSelect,
@@ -55,6 +68,10 @@ const ApplicationListComponent: FC<IApplicationListComponentProps> = ({
   showInternalAIScoreColumn = false,
   programReviewers = [],
   milestoneReviewers = [],
+  addProgramReviewer,
+  isAddingProgramReviewer = false,
+  addMilestoneReviewer,
+  isAddingMilestoneReviewer = false,
   isLoadingProgramReviewers = false,
   isProgramReviewersError = false,
   isLoadingMilestoneReviewers = false,
@@ -76,14 +93,8 @@ const ApplicationListComponent: FC<IApplicationListComponentProps> = ({
   const paginatedApplications = useMemo(() => applications, [applications]);
 
   // Determine if reviewer columns should be shown
-  const showAppReviewersColumn = useMemo(
-    () => programReviewers.length > 0,
-    [programReviewers.length]
-  );
-  const showMilestoneReviewersColumn = useMemo(
-    () => milestoneReviewers.length > 0,
-    [milestoneReviewers.length]
-  );
+  const showAppReviewersColumn = useMemo(() => !!programId, [programId]);
+  const showMilestoneReviewersColumn = useMemo(() => !!programId, [programId]);
 
   const handleStatusChangeClick = useCallback(
     (applicationId: string, newStatus: string, e: React.MouseEvent) => {
@@ -155,6 +166,7 @@ const ApplicationListComponent: FC<IApplicationListComponentProps> = ({
           </div>
         ) : (
           <ApplicationTable
+            programId={programId}
             applications={paginatedApplications}
             sortBy={sortBy}
             sortOrder={sortOrder}
@@ -166,6 +178,10 @@ const ApplicationListComponent: FC<IApplicationListComponentProps> = ({
             showStatusActions={showStatusActions}
             programReviewers={programReviewers}
             milestoneReviewers={milestoneReviewers}
+            onAddProgramReviewer={addProgramReviewer}
+            isAddingProgramReviewer={isAddingProgramReviewer}
+            onAddMilestoneReviewer={addMilestoneReviewer}
+            isAddingMilestoneReviewer={isAddingMilestoneReviewer}
             isLoadingProgramReviewers={isLoadingProgramReviewers}
             isProgramReviewersError={isProgramReviewersError}
             isLoadingMilestoneReviewers={isLoadingMilestoneReviewers}

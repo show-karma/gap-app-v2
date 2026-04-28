@@ -12,7 +12,7 @@ import {
 import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DeleteDialog } from "@/components/DeleteDialog";
-import { TelegramIcon } from "@/components/Icons";
+import { SlackIcon, TelegramIcon } from "@/components/Icons";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
@@ -787,12 +787,11 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
                                 )}
                                 {member.slack && (
                                   <span className="flex items-center space-x-1">
-                                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                                      Slack:
-                                    </span>
+                                    <SlackIcon className="h-4 w-4" />
                                     <span>
-                                      {member.slack?.[0] === "@" ? "" : "@"}
-                                      {member.slack}
+                                      {member.slack?.[0] === "@"
+                                        ? member.slack.slice(1)
+                                        : member.slack}
                                     </span>
                                   </span>
                                 )}

@@ -27,9 +27,7 @@ interface SingleSourceResponse {
  * 403 as an Error with the server's message.
  */
 
-export async function listKnowledgeSources(
-  communityIdOrSlug: string
-): Promise<KnowledgeSource[]> {
+export async function listKnowledgeSources(communityIdOrSlug: string): Promise<KnowledgeSource[]> {
   const [data, error] = await fetchData<ListSourcesResponse>(
     INDEXER.KNOWLEDGE_BASE.LIST_SOURCES(communityIdOrSlug),
     "GET",

@@ -1,7 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
-import type { MilestoneStatusFilter } from "@/services/milestone-status-filter.service";
 
 // Track URL operations
 const mockReplace = vi.fn();
@@ -45,6 +44,16 @@ vi.mock("@/components/Pages/Project/v2/MainContent/ActivityFilters", () => ({
       <span data-testid="milestone-status-value">{props.milestoneStatusFilter ?? "none"}</span>
       <button
         type="button"
+        data-testid="trigger-milestones-filter"
+        onClick={() => props.onFilterToggle?.("milestones")}
+      />
+      <button
+        type="button"
+        data-testid="trigger-funding-filter"
+        onClick={() => props.onFilterToggle?.("funding")}
+      />
+      <button
+        type="button"
         data-testid="trigger-status-change"
         onClick={() => props.onMilestoneStatusChange?.("completed")}
       />
@@ -80,13 +89,61 @@ describe("UpdatesContent - milestone status filter URL sync", () => {
     expect(screen.getByTestId("milestone-status-value")).toHaveTextContent("completed");
   });
 
-  it("defaults to 'all' when milestoneStatus param is not in URL", async () => {
+  it("defaults to 'all' when milestone filters are not active", async () => {
     mockSearchParams = new URLSearchParams();
 
     const { UpdatesContent } = await import("@/components/Pages/Project/v2/Content/UpdatesContent");
     render(<UpdatesContent />);
 
     expect(screen.getByTestId("milestone-status-value")).toHaveTextContent("all");
+  });
+
+  it("keeps 'all' when milestones are active without an explicit status in the URL", async () => {
+    mockSearchParams = new URLSearchParams("filter=milestones");
+
+    const { UpdatesContent } = await import("@/components/Pages/Project/v2/Content/UpdatesContent");
+    render(<UpdatesContent />);
+
+    expect(screen.getByTestId("milestone-status-value")).toHaveTextContent("all");
+  });
+
+  it("adds completed milestoneStatus when milestones filter is enabled from the default view", async () => {
+    mockSearchParams = new URLSearchParams();
+
+    const { UpdatesContent } = await import("@/components/Pages/Project/v2/Content/UpdatesContent");
+    render(<UpdatesContent />);
+
+    await userEvent.click(screen.getByTestId("trigger-milestones-filter"));
+
+    expect(mockReplace).toHaveBeenCalledWith("?filter=milestones&milestoneStatus=completed", {
+      scroll: false,
+    });
+  });
+
+  it("writes an explicit all-status choice when users switch milestones back to all statuses", async () => {
+    mockSearchParams = new URLSearchParams("filter=milestones&milestoneStatus=completed");
+
+    const { UpdatesContent } = await import("@/components/Pages/Project/v2/Content/UpdatesContent");
+    render(<UpdatesContent />);
+
+    await userEvent.click(screen.getByTestId("trigger-status-all"));
+
+    expect(mockReplace).toHaveBeenCalledWith("?filter=milestones&milestoneStatus=all", {
+      scroll: false,
+    });
+  });
+
+  it("preserves an explicit all-status choice when other filters change", async () => {
+    mockSearchParams = new URLSearchParams("filter=milestones&milestoneStatus=all");
+
+    const { UpdatesContent } = await import("@/components/Pages/Project/v2/Content/UpdatesContent");
+    render(<UpdatesContent />);
+
+    await userEvent.click(screen.getByTestId("trigger-funding-filter"));
+
+    expect(mockReplace).toHaveBeenCalledWith("?filter=milestones%2Cfunding&milestoneStatus=all", {
+      scroll: false,
+    });
   });
 
   it("passes milestoneStatusFilter to ActivityFilters dropdown", async () => {
@@ -99,7 +156,7 @@ describe("UpdatesContent - milestone status filter URL sync", () => {
     expect(screen.getByTestId("milestone-status-value")).toHaveTextContent("verified");
   });
 
-  it("uses pathname from usePathname when clearing all params", async () => {
+  it("writes an explicit all-status param when selecting all statuses from the default view", async () => {
     mockSearchParams = new URLSearchParams();
 
     const { UpdatesContent } = await import("@/components/Pages/Project/v2/Content/UpdatesContent");
@@ -108,8 +165,6 @@ describe("UpdatesContent - milestone status filter URL sync", () => {
     const button = screen.getByTestId("trigger-status-all");
     await userEvent.click(button);
 
-    // The router.replace call should use the pathname from usePathname ("/project/test-project"),
-    // not window.location.pathname which returns "/" in jsdom
-    expect(mockReplace).toHaveBeenCalledWith("/project/test-project", { scroll: false });
+    expect(mockReplace).toHaveBeenCalledWith("?milestoneStatus=all", { scroll: false });
   });
 });
