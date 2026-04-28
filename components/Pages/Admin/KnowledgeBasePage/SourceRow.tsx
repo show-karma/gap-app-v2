@@ -103,14 +103,18 @@ function getStatusMeta(source: KnowledgeSource): StatusMeta {
       dot: "bg-stone-400 dark:bg-zinc-500",
     };
   }
-  // First-sync-failed case: lastSyncedAt is null but a sync was attempted and
-  // failed (or partially failed). Don't paint this as "Queued" — fall through
-  // to the status switch below so the failure surfaces and the lastSyncError
-  // banner renders.
+  // The "Queued for sync" early-return must only fire when the row is
+  // actually idle — i.e. the worker hasn't claimed it yet AND no terminal
+  // status has been written. Concretely: lastSyncedAt is null AND status
+  // is neither "syncing" (worker mid-fetch on a first run), "failed", nor
+  // "partial". Skipping any of those checks paints over real state — a
+  // first-sync-syncing row would mis-render as amber "Queued" instead of
+  // sky "Syncing", which the QA dogfood pass caught.
   if (
     !source.lastSyncedAt &&
     source.lastSyncStatus !== "failed" &&
-    source.lastSyncStatus !== "partial"
+    source.lastSyncStatus !== "partial" &&
+    source.lastSyncStatus !== "syncing"
   ) {
     return {
       tone: "idle",

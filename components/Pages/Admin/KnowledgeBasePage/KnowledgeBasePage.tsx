@@ -373,16 +373,33 @@ function EmptyState({
 // message verbatim; otherwise we show a count and prompt the admin to
 // expand the rows.
 function FailureBanner({ sources }: { sources: KnowledgeSource[] }) {
-  const failed = sources.filter(
-    (s) => s.lastSyncStatus === "failed" || s.lastSyncStatus === "partial"
-  );
-  if (failed.length === 0) return null;
+  // "Failed" sources couldn't fetch at all; "partial" means the sync ran
+  // but some documents inside a folder/sitemap failed (other documents
+  // ingested fine). Both deserve admin attention but the headline shouldn't
+  // call partial syncs "failing" — they did partially succeed.
+  const failed = sources.filter((s) => s.lastSyncStatus === "failed");
+  const partial = sources.filter((s) => s.lastSyncStatus === "partial");
+  const total = failed.length + partial.length;
+  if (total === 0) return null;
 
+  // Build a headline that's accurate to the mix:
+  //   - 3 failed → "3 sources are failing"
+  //   - 3 partial → "3 sources partially synced"
+  //   - 2 failed + 1 partial → "3 sources need attention (2 failing, 1 partial)"
+  const headline =
+    failed.length > 0 && partial.length > 0
+      ? `${total} sources need attention (${failed.length} failing, ${partial.length} partial)`
+      : failed.length > 0
+        ? `${failed.length} ${failed.length === 1 ? "source is" : "sources are"} failing`
+        : `${partial.length} ${partial.length === 1 ? "source" : "sources"} partially synced`;
+
+  // Surface a shared reason only when one is universal across the failing
+  // rows — partial successes don't always carry a single root cause, so
+  // we limit this to the failed bucket.
   const errors = Array.from(
     new Set(failed.map((s) => s.lastSyncError ?? "Unknown error"))
   );
   const sharedReason = errors.length === 1 ? errors[0] : null;
-  const noun = failed.length === 1 ? "source is" : "sources are";
 
   return (
     <div
@@ -396,12 +413,12 @@ function FailureBanner({ sources }: { sources: KnowledgeSource[] }) {
       />
       <div className="min-w-0 flex-1">
         <p className="text-sm font-semibold text-rose-900 dark:text-rose-200">
-          {failed.length} {noun} failing
+          {headline}
           {sharedReason ? ` — ${sharedReason}` : ""}
         </p>
         <p className="mt-0.5 text-xs leading-relaxed text-rose-800/85 dark:text-rose-300/90">
           {sharedReason
-            ? "All affected rows share the same error. The next sync will retry."
+            ? "All failing rows share the same error. The next sync will retry."
             : "Hover the row's error tag to read the full message. The next sync will retry."}
         </p>
       </div>

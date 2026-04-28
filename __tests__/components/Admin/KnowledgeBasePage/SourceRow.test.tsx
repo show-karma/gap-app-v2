@@ -109,6 +109,24 @@ describe("SourceRow", () => {
       expect(screen.getByText("boom")).toBeInTheDocument();
     });
 
+    it("renders 'Syncing' when the very first sync is in flight (lastSyncedAt null, status syncing)", () => {
+      // Regression for the QA dogfood finding: the "Queued for sync"
+      // early-return guard skipped over rows where lastSyncStatus had
+      // already advanced to "syncing" but lastSyncedAt was still null
+      // (the worker has claimed it but hasn't written a terminal result
+      // yet). Those rows used to render amber "Queued for sync" instead
+      // of sky "Syncing".
+      renderRow(
+        createSource({
+          lastSyncedAt: null,
+          lastSyncStatus: "syncing",
+          lastSyncError: null,
+        })
+      );
+      expect(screen.getByText("Syncing")).toBeInTheDocument();
+      expect(screen.queryByText("Queued for sync")).not.toBeInTheDocument();
+    });
+
     it("renders 'Partial sync' when the very first sync succeeded only in part", () => {
       renderRow(
         createSource({
