@@ -75,7 +75,10 @@ jobs:
             // Poll for verdict comment
             if (!isManual) {
               let reviewComment = null;
-              const maxAttempts = 12;
+              // Claude Code workflow_run completes only after posting the
+              // verdict comment, so the comment is essentially always there
+              // by the time we poll. Keep a short retry for race conditions.
+              const maxAttempts = 5;
 
               for (let attempt = 1; attempt <= maxAttempts; attempt++) {
                 const { data: comments } = await github.rest.issues.listComments({
@@ -89,7 +92,7 @@ jobs:
 
                 if (reviewComment) break;
                 console.log('Waiting for review verdict... (' + attempt + '/' + maxAttempts + ')');
-                await new Promise(r => setTimeout(r, 15000));
+                await new Promise(r => setTimeout(r, 10000));
               }
 
               if (!reviewComment) {
@@ -141,7 +144,7 @@ jobs:
     needs: gate-check
     if: needs.gate-check.outputs.should_run == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -171,7 +174,7 @@ jobs:
             Generate a QA plan for this PR. Save to qa-plan.md.
             Then post the QA plan as a comment on PR #$PR_NUMBER using the GitHub CLI (gh pr comment $PR_NUMBER --body-file qa-plan-comment.md). Write the comment content to qa-plan-comment.md first, then use gh to post it.
             Be strict. Be concise. No fluff."
-        timeout-minutes: 25
+        timeout-minutes: 15
 
       - name: Upload QA plan artifact
         if: always()
@@ -206,11 +209,13 @@ jobs:
             }
 
   # Build the app ONCE and share with both qa-execution and dogfood via artifact.
-  # Saves ~2m 30s of duplicated build work compared to building in each job.
+  # Runs IN PARALLEL with qa-plan (qa-plan only reads source, doesn't need .next/)
+  # so the build doesn't sit idle waiting for Claude to draft the plan.
   build:
-    needs: [gate-check, qa-plan]
+    needs: [gate-check]
+    if: needs.gate-check.outputs.should_run == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -262,7 +267,7 @@ jobs:
   qa-execution:
     needs: [gate-check, qa-plan, build]
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 30
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -301,7 +306,16 @@ jobs:
           PORT: 3000
 
       - name: Wait for server
-        run: npx wait-on http://localhost:3000 --timeout 120000
+        run: |
+          for i in $(seq 1 60); do
+            if curl --silent --fail --max-time 2 http://localhost:3000/ >/dev/null 2>&1; then
+              echo "Server is up after ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Server failed to start within 60s"
+          exit 1
 
       - name: Generate GitHub App token
         id: app-token
@@ -329,7 +343,7 @@ jobs:
             IMPORTANT: Always use http://localhost:3000 as the target URL. Never use a preview/vercel URL.
             Post the results as a comment on PR #$PR_NUMBER using gh pr comment.
             Save results to qa-results.json."
-        timeout-minutes: 40
+        timeout-minutes: 20
 
       - name: Upload QA execution artifacts
         if: always()
@@ -345,7 +359,7 @@ jobs:
   dogfood:
     needs: [gate-check, qa-plan, build]
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 25
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -385,7 +399,16 @@ jobs:
           PORT: 3000
 
       - name: Wait for server
-        run: npx wait-on http://localhost:3000 --timeout 120000
+        run: |
+          for i in $(seq 1 60); do
+            if curl --silent --fail --max-time 2 http://localhost:3000/ >/dev/null 2>&1; then
+              echo "Server is up after ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Server failed to start within 60s"
+          exit 1
 
       - name: Generate GitHub App token
         id: app-token
@@ -442,7 +465,7 @@ jobs:
 
             Save to dogfood-results.json: {\"total\":N,\"critical\":N,\"high\":N,\"medium\":N,\"low\":N,\"preexisting\":N,\"blocking\":bool}
             critical/high counts = PR-caused only."
-        timeout-minutes: 40
+        timeout-minutes: 20
 
       - name: Upload dogfood artifacts
         if: always()

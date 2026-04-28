@@ -4,6 +4,22 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
     branches: ['**'] # Run on PRs targeting any branch
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - '**/*.png'
+      - '**/*.jpg'
+      - '**/*.jpeg'
+      - '**/*.svg'
+      - '**/*.gif'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/PULL_REQUEST_TEMPLATE.md'
+      - 'LICENSE'
+      - '.gitignore'
+
+concurrency:
+  group: pr-tests-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
   test:
