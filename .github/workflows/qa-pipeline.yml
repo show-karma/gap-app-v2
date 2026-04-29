@@ -510,15 +510,18 @@ jobs:
           retention-days: 7
           if-no-files-found: ignore
 
-  dogfood:
-    needs: [gate-check, qa-plan, build]
+  # dogfood-plan: compute changed UI pages and bucket them into shards.
+  # Runs after qa-plan (to reuse the checkout + diff already done for QA plan)
+  # and in parallel with build (it only inspects file paths, not the build).
+  # Emits dogfood-plan.json: { should_run, shard_count, groups: [["/a"], ["/b"]] }
+  dogfood-plan:
+    needs: [gate-check, qa-plan]
+    if: needs.gate-check.outputs.should_run == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 25
-    # Note: dogfood is intentionally NOT matrix-split. The exploratory nature
-    # of dogfood (navigating changed pages, classifying PR-caused vs pre-existing
-    # issues, filing GitHub issues for pre-existing bugs) does not decompose
-    # cleanly by P/A shard — the skill prompt is holistic and stateful. Splitting
-    # it would risk double-filing issues and producing incoherent results.
+    timeout-minutes: 5
+    outputs:
+      should_run: ${{ steps.plan.outputs.should_run }}
+      shards: ${{ steps.plan.outputs.shards }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
@@ -526,11 +529,135 @@ jobs:
           fetch-depth: 0
           ref: ${{ needs.gate-check.outputs.head_sha }}
 
-      - name: Download QA plan for scope context
+      - name: Compute dogfood page scope
+        id: plan
+        run: |
+          # Find changed UI files that map to navigable pages.
+          # We include page.tsx / layout.tsx (direct route files) and
+          # feature/component TSX files (they may affect multiple pages,
+          # so we emit the changed-file list and let the agent figure out
+          # the precise URLs during exploration).
+          CHANGED=$(git diff --name-only origin/main...HEAD -- \
+            'app/**/page.tsx' \
+            'app/**/layout.tsx' \
+            'src/features/**/*.tsx' \
+            'components/**/*.tsx' 2>/dev/null || true)
+
+          # Derive URL paths from app/*/page.tsx paths.
+          # For feature/component changes we can't deterministically map to
+          # a single URL, so we emit the file paths and let the dogfood agent
+          # resolve them. The agent is instructed to derive the affected pages
+          # from the file context.
+          declare -a PATHS=()
+          while IFS= read -r f; do
+            [ -z "$f" ] && continue
+            if [[ "$f" == app/**/page.tsx ]] || [[ "$f" =~ ^app/.*page\.tsx$ ]]; then
+              # Convert app/some/route/page.tsx -> /some/route
+              route=$(echo "$f" | sed 's|^app/||; s|/page\.tsx$||; s|^$|/|')
+              # Strip route-group parens e.g. (with-header) -> drop segment
+              route=$(echo "$route" | sed 's|([^)]*)/||g; s|(.*)||g')
+              [ -z "$route" ] && route="/"
+              PATHS+=("/$route")
+            else
+              # For components/features, emit the file path prefixed with "file:"
+              # so the agent knows to resolve URLs from context.
+              PATHS+=("file:$f")
+            fi
+          done <<< "$CHANGED"
+
+          TOTAL=${#PATHS[@]}
+          echo "Total changed UI items: $TOTAL"
+
+          if [ "$TOTAL" -eq 0 ]; then
+            echo "No changed UI pages — skipping dogfood"
+            echo "should_run=false" >> "$GITHUB_OUTPUT"
+            echo "shards=[]" >> "$GITHUB_OUTPUT"
+            # Write minimal plan artifact
+            echo '{"should_run":false,"shard_count":0,"groups":[]}' > dogfood-plan.json
+          elif [ "$TOTAL" -le 2 ]; then
+            # Tiny diff — single shard, no splitting overhead
+            GROUP_A=$(printf '%s,' "${PATHS[@]}" | sed 's/,$//')
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+            echo 'shards=["1"]' >> "$GITHUB_OUTPUT"
+            python3 -c "
+          import json
+          paths = '${GROUP_A}'.split(',')
+          print(json.dumps({'should_run': True, 'shard_count': 1, 'groups': [paths]}))
+          " > dogfood-plan.json
+          else
+            # Split into 2 roughly-equal groups (round-robin by index)
+            GROUP_A=()
+            GROUP_B=()
+            for i in "${!PATHS[@]}"; do
+              if (( i % 2 == 0 )); then
+                GROUP_A+=("${PATHS[$i]}")
+              else
+                GROUP_B+=("${PATHS[$i]}")
+              fi
+            done
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+            echo 'shards=["1","2"]' >> "$GITHUB_OUTPUT"
+            python3 -c "
+          import json, sys
+          ga = [x for x in '$(IFS=','; echo "${GROUP_A[*]}")'.split(',') if x]
+          gb = [x for x in '$(IFS=','; echo "${GROUP_B[*]}")'.split(',') if x]
+          print(json.dumps({'should_run': True, 'shard_count': 2, 'groups': [ga, gb]}))
+          " > dogfood-plan.json
+          fi
+
+          echo "dogfood-plan.json contents:"
+          cat dogfood-plan.json
+
+      - name: Upload dogfood plan artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: dogfood-plan
+          path: dogfood-plan.json
+          retention-days: 1
+          if-no-files-found: error
+
+  # Sharded dogfood exploration: each shard explores its assigned pages,
+  # writes findings to dogfood-findings-{shard}.json (NO issue filing),
+  # and uploads the artifact. The dogfood-aggregate job dedupes and files.
+  dogfood:
+    needs: [gate-check, build, dogfood-plan]
+    if: needs.gate-check.outputs.should_run == 'true' && needs.dogfood-plan.outputs.should_run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJSON(needs.dogfood-plan.outputs.shards) }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          ref: ${{ needs.gate-check.outputs.head_sha }}
+
+      - name: Download dogfood plan
         uses: actions/download-artifact@v7
         with:
-          name: qa-plan
-        continue-on-error: true
+          name: dogfood-plan
+
+      - name: Extract page scope for this shard
+        id: scope
+        run: |
+          SHARD_INDEX=$(( ${{ matrix.shard }} - 1 ))
+          # Extract the pages assigned to this shard from dogfood-plan.json
+          PAGES=$(python3 -c "
+          import json, sys
+          with open('dogfood-plan.json') as f:
+              plan = json.load(f)
+          groups = plan.get('groups', [])
+          idx = $SHARD_INDEX
+          if idx < len(groups):
+              print(','.join(groups[idx]))
+          else:
+              print('')
+          ")
+          echo "scope_pages=$PAGES" >> "$GITHUB_OUTPUT"
+          echo "Shard ${{ matrix.shard }} scope: $PAGES"
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v5
@@ -602,50 +729,203 @@ jobs:
       - name: Add Claude Code to PATH
         run: echo "$HOME/.npm-global/bin" >> "$GITHUB_PATH"
 
-      - name: Run Dogfood Exploration
+      - name: Run Dogfood Exploration (shard ${{ matrix.shard }})
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           PR_NUMBER: ${{ needs.gate-check.outputs.pr_number }}
           QA_TEST_EMAIL: ${{ secrets.QA_TEST_EMAIL }}
           QA_TEST_OTP: ${{ secrets.QA_TEST_OTP }}
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          SHARD_ID: ${{ matrix.shard }}
+          SCOPE_PAGES: ${{ steps.scope.outputs.scope_pages }}
         run: |
           claude --print --dangerously-skip-permissions \
             "You are a strict senior QA engineer doing focused exploratory dogfood testing.
             PR #$PR_NUMBER. Target: http://localhost:3000 (always — never a preview/vercel URL).
+            SHARD_ID=$SHARD_ID. SCOPE_PAGES=$SCOPE_PAGES.
 
-            TIME BUDGET: 15 minutes of active exploration. Be fast and focused. Do not wander.
+            TIME BUDGET: 7 minutes of active exploration per shard. Be fast and focused.
 
-            1. Run git diff origin/main...HEAD --name-only to identify changed files.
-            2. Open http://localhost:3000 in agent-browser. Navigate ONLY to pages affected by the changed files.
-            3. On each page: take a screenshot, check console errors, interact with changed components.
-            4. For authenticated pages: login with Privy test account (email from QA_TEST_EMAIL, OTP from QA_TEST_OTP). Save auth state.
-            5. Find 3-5 issues max. Quality over quantity. Do NOT explore unrelated pages.
-            6. Do NOT repeat scenarios already covered by qa-plan.md (QA Execution already tested those).
+            Read and follow the skill at .claude/skills/dogfood/SKILL.md. You are running in CI SHARD MODE
+            because SCOPE_PAGES is set. Key rules for shard mode:
+            1. Explore ONLY the pages listed in SCOPE_PAGES (comma-separated paths). For 'file:' prefixed
+               entries, infer which URL(s) the component affects and visit those.
+            2. On each page: take a screenshot, check console errors, interact with changed components.
+            3. For authenticated pages: login with Privy test account (email from QA_TEST_EMAIL, OTP from QA_TEST_OTP).
+            4. Find up to 5 issues per shard. Quality over quantity.
+            5. Do NOT repeat scenarios already covered by qa-plan.md (if present).
+            6. CLASSIFY EVERY ISSUE: 'pr-caused' (file in git diff) or 'pre-existing' (not in diff).
+            7. Do NOT call 'gh issue create'. Write findings to dogfood-findings-\$SHARD_ID.json per the
+               skill's CI Pipeline Mode schema (includes fingerprint field).
+            8. Also write dogfood-results.json: {\"total\":N,\"critical\":N,\"high\":N,\"medium\":N,\"low\":N,\"preexisting\":N,\"blocking\":bool}
+               where critical/high counts = PR-caused only.
+            9. Do NOT post a separate PR comment."
+        timeout-minutes: 15
 
-            CLASSIFY EVERY ISSUE:
-            - **PR-caused**: Affected file appears in the git diff.
-            - **Pre-existing**: Does NOT appear in the git diff. Create a GitHub issue using gh issue create --title '[QA] <title>' --body '<description>' --label bug.
-
-            Save to dogfood-results.json: {\"total\":N,\"critical\":N,\"high\":N,\"medium\":N,\"low\":N,\"preexisting\":N,\"blocking\":bool}
-            critical/high counts = PR-caused only.
-
-            Do NOT post a separate PR comment — results will be aggregated in the pipeline verdict comment."
-        timeout-minutes: 20
-
-      - name: Upload dogfood artifacts
+      - name: Upload dogfood shard artifacts
         if: always()
         uses: actions/upload-artifact@v5
         with:
-          name: dogfood-results
+          name: dogfood-findings-${{ matrix.shard }}
           path: |
             dogfood-output/
+            dogfood-findings-${{ matrix.shard }}.json
             dogfood-results.json
           retention-days: 7
           if-no-files-found: ignore
 
+  # dogfood-aggregate: single job that runs after all dogfood shards complete.
+  # Downloads all dogfood-findings-*.json artifacts, dedupes by fingerprint,
+  # and files GitHub issues for unique pre-existing findings not yet tracked.
+  dogfood-aggregate:
+    needs: [gate-check, dogfood-plan, dogfood]
+    if: always() && needs.gate-check.outputs.should_run == 'true' && needs.dogfood-plan.outputs.should_run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Download all dogfood findings artifacts
+        uses: actions/download-artifact@v7
+        with:
+          pattern: dogfood-findings-*
+          merge-multiple: true
+        continue-on-error: true
+
+      - name: Deduplicate findings and file GitHub issues
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR_NUMBER: ${{ needs.gate-check.outputs.pr_number }}
+          REPO: ${{ github.repository }}
+        run: |
+          python3 << 'PYEOF'
+          import json, os, glob, subprocess, sys
+
+          repo = os.environ['REPO']
+          pr_number = os.environ['PR_NUMBER']
+
+          # Load all findings files
+          findings_files = glob.glob('dogfood-findings-*.json')
+          print(f"Found findings files: {findings_files}")
+
+          all_findings = []
+          seen_fps = set()
+
+          for fpath in sorted(findings_files):
+              try:
+                  with open(fpath) as f:
+                      data = json.load(f)
+                  for finding in data.get('findings', []):
+                      fp = finding.get('fingerprint', '')
+                      if not fp:
+                          continue
+                      if fp in seen_fps:
+                          print(f"  [dedup] Skipping duplicate fingerprint {fp}: {finding.get('title')}")
+                          continue
+                      seen_fps.add(fp)
+                      all_findings.append(finding)
+              except Exception as e:
+                  print(f"  [warn] Could not parse {fpath}: {e}")
+
+          print(f"Total unique findings after dedup: {len(all_findings)}")
+
+          # Separate PR-caused vs pre-existing
+          preexisting = [f for f in all_findings if f.get('classification') == 'pre-existing']
+          pr_caused = [f for f in all_findings if f.get('classification') == 'pr-caused']
+
+          print(f"  PR-caused: {len(pr_caused)}, Pre-existing: {len(preexisting)}")
+
+          # For each pre-existing finding: check if a GitHub issue already exists
+          # with the fingerprint marker in its body, then file if absent.
+          filed = 0
+          skipped = 0
+          for finding in preexisting:
+              fp = finding['fingerprint']
+              marker = f"<!-- dogfood-fp:{fp} -->"
+
+              # Search for existing open issues with this fingerprint marker
+              result = subprocess.run(
+                  ['gh', 'issue', 'list', '--repo', repo, '--state', 'open',
+                   '--search', f'dogfood-fp:{fp}', '--json', 'number,title', '--limit', '5'],
+                  capture_output=True, text=True
+              )
+              existing_issues = []
+              if result.returncode == 0 and result.stdout.strip():
+                  try:
+                      existing_issues = json.loads(result.stdout)
+                  except Exception:
+                      pass
+
+              if existing_issues:
+                  print(f"  [skip] Issue already exists for fp={fp}: #{existing_issues[0]['number']} {existing_issues[0]['title']}")
+                  skipped += 1
+                  continue
+
+              # File a new GitHub issue
+              severity = finding.get('severity', 'medium')
+              title = f"[QA Dogfood] {finding.get('title', 'Untitled issue')}"
+              body = f"""{marker}
+
+          **Severity**: {severity}
+          **Page**: {finding.get('page_url', 'unknown')}
+          **Classification**: Pre-existing (not caused by the triggering PR)
+
+          ## Description
+
+          {finding.get('description', 'No description provided.')}
+
+          ---
+          *Filed automatically by the QA dogfood pipeline (PR #{pr_number}).*
+          *Fingerprint: `{fp}`*
+          """
+
+              cmd = ['gh', 'issue', 'create',
+                     '--repo', repo,
+                     '--title', title,
+                     '--body', body,
+                     '--label', 'bug']
+              try:
+                  result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+                  print(f"  [filed] {title} -> {result.stdout.strip()}")
+                  filed += 1
+              except subprocess.CalledProcessError as e:
+                  print(f"  [error] Failed to file issue: {e.stderr}")
+
+          # Write aggregated summary for verdict job
+          critical_count = sum(1 for f in pr_caused if f.get('severity') == 'critical')
+          high_count = sum(1 for f in pr_caused if f.get('severity') == 'high')
+          summary = {
+              'total': len(all_findings),
+              'critical': critical_count,
+              'high': high_count,
+              'medium': sum(1 for f in pr_caused if f.get('severity') == 'medium'),
+              'low': sum(1 for f in pr_caused if f.get('severity') == 'low'),
+              'preexisting': len(preexisting),
+              'preexisting_filed': filed,
+              'preexisting_skipped': skipped,
+              'blocking': critical_count > 0 or high_count > 0,
+          }
+          with open('dogfood-results.json', 'w') as f:
+              json.dump(summary, f, indent=2)
+          print(f"\nSummary: {json.dumps(summary)}")
+          PYEOF
+
+      - name: Upload aggregated dogfood results
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: dogfood-results
+          path: dogfood-results.json
+          retention-days: 7
+          if-no-files-found: ignore
+
   verdict:
-    needs: [gate-check, qa-execution, dogfood]
+    needs: [gate-check, qa-execution, dogfood-plan, dogfood-aggregate]
     if: always() && needs.gate-check.outputs.should_run == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -660,7 +940,7 @@ jobs:
           merge-multiple: true
         continue-on-error: true
 
-      - name: Download dogfood results
+      - name: Download dogfood aggregated results
         uses: actions/download-artifact@v7
         with:
           name: dogfood-results
@@ -673,7 +953,8 @@ jobs:
           PR_NUMBER: ${{ needs.gate-check.outputs.pr_number }}
           RUN_ID: ${{ github.run_id }}
           QA_EXEC_RESULT: ${{ needs.qa-execution.result }}
-          DOGFOOD_RESULT: ${{ needs.dogfood.result }}
+          DOGFOOD_RESULT: ${{ needs.dogfood-aggregate.result }}
+          DOGFOOD_SKIPPED: ${{ needs.dogfood-plan.outputs.should_run != 'true' }}
         with:
           script: |
             const fs = require('fs');
@@ -682,8 +963,12 @@ jobs:
             const sha = process.env.HEAD_SHA;
             const execResult = process.env.QA_EXEC_RESULT;
             const dogfoodResult = process.env.DOGFOOD_RESULT;
+            const dogfoodSkipped = process.env.DOGFOOD_SKIPPED === 'true';
 
-            const jobsFailed = execResult === 'failure' || dogfoodResult === 'failure';
+            // dogfood-aggregate is 'skipped' when dogfood-plan emitted should_run=false
+            // (CI-only PR with no changed UI pages). That is not a failure.
+            const dogfoodFailed = !dogfoodSkipped && dogfoodResult === 'failure';
+            const jobsFailed = execResult === 'failure' || dogfoodFailed;
 
             let criticalCount = 0;
             let highCount = 0;
@@ -716,6 +1001,7 @@ jobs:
               console.log('Could not enumerate qa-results-*.json: ' + e.message);
             }
 
+            // Read aggregated dogfood results (produced by dogfood-aggregate job)
             try {
               const dogfoodResults = JSON.parse(fs.readFileSync('dogfood-results.json', 'utf8'));
               criticalCount += (dogfoodResults.critical || 0);
@@ -730,7 +1016,7 @@ jobs:
             if (jobsFailed) {
               const failed = [
                 execResult === 'failure' ? 'QA Execution' : null,
-                dogfoodResult === 'failure' ? 'Dogfood' : null
+                dogfoodFailed ? 'Dogfood' : null
               ].filter(Boolean).join(', ');
               description = `${failed} failed — check workflow logs`;
             } else if (criticalCount > 0 || highCount > 0) {
@@ -751,7 +1037,10 @@ jobs:
 
             // Update the single consolidated pipeline comment with final verdict
             const prNumber = parseInt(process.env.PR_NUMBER, 10);
-            const icon = (r) => r === 'success' ? '✅ Done' : r === 'skipped' ? '⏭️ Skipped' : '❌ Failed';
+            const icon = (r, skipped) => {
+              if (skipped) return '⏭️ Skipped (no UI changes)';
+              return r === 'success' ? '✅ Done' : r === 'skipped' ? '⏭️ Skipped' : '❌ Failed';
+            };
             const verdictIcon = hasBlockingIssues ? '❌' : '✅';
             const verdictText = hasBlockingIssues ? `FAIL — ${description}` : 'PASS — no blocking issues';
             const marker = '<!-- qa-pipeline-status -->';
@@ -771,8 +1060,8 @@ jobs:
                   '|-------|--------|',
                   '| QA Plan | ✅ Done |',
                   '| Build | ✅ Done |',
-                  `| QA Execution | ${icon(execResult)} |`,
-                  `| Dogfood | ${icon(dogfoodResult)} |`,
+                  `| QA Execution | ${icon(execResult, false)} |`,
+                  `| Dogfood | ${icon(dogfoodResult, dogfoodSkipped)} |`,
                   `| **Verdict** | **${verdictIcon} ${verdictText}** |`,
                   '',
                   `[View workflow run](https://github.com/${owner}/${repo}/actions/runs/${process.env.RUN_ID})`
