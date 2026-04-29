@@ -7,6 +7,7 @@ import { TeamMemberCard } from "../TeamContent/TeamMemberCard";
 vi.mock("next/navigation", () => ({
   useParams: () => ({ projectId: "test-project-123" }),
   useRouter: () => ({ push: vi.fn() }),
+  usePathname: vi.fn(() => "/"),
 }));
 
 // Mock wagmi

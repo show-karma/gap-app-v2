@@ -4,6 +4,7 @@ import type { UnifiedMilestone } from "@/types/v2/roadmap";
 // Mock next/navigation
 vi.mock("next/navigation", () => ({
   useParams: () => ({ projectId: "test-project" }),
+  usePathname: vi.fn(() => "/"),
 }));
 
 // Mock ActivityCard to avoid complex import chain - renders title and allocation for test assertions

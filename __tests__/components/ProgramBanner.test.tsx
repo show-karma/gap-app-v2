@@ -19,6 +19,7 @@ vi.mock("next/navigation", () => ({
       return null;
     }),
   })),
+  usePathname: vi.fn(() => "/"),
 }));
 
 // Mock useCommunityPrograms to return a program matching the programId
