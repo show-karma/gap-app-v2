@@ -57,16 +57,33 @@ export function sanitizeTelegram(telegram: string): string {
 }
 
 /**
- * Validates a Slack handle format
- * Accepts 2-80 characters of letters, digits, dot, underscore, or dash.
- * Optional leading @.
+ * Validates a Slack identifier. The backend resolver accepts (in order):
+ *   1. Slack member ID — `^[UWBS][A-Z0-9]{8,}$` (e.g. `U01ABCDEF`)
+ *      Stable, unique forever. Preferred. Find via Slack: Profile →
+ *      kebab menu → Copy member ID.
+ *   2. Email — `users.lookupByEmail` resolves it to a unique member
+ *      in the workspace.
+ *   3. Legacy display-name handle — kept for back-compat with values
+ *      typed before the resolver shifted to member-ID + email. The
+ *      resolver matches case-insensitively against `display_name` /
+ *      `real_name` but those aren't unique, so this path is best-effort.
+ *
+ * Empty / blank input is rejected here; callers short-circuit empty
+ * before reaching the validator.
  */
 export function validateSlack(slack: string): boolean {
   if (!slack || typeof slack !== "string") {
     return false;
   }
-  const slackRegex = /^@?[a-zA-Z0-9._-]{2,80}$/;
-  return slackRegex.test(slack.trim());
+  const trimmed = slack.trim();
+  // Slack member ID — preferred path
+  if (/^[UWBS][A-Z0-9]{8,}$/.test(trimmed)) return true;
+  // Email — used for users.lookupByEmail on the backend
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) return true;
+  // Legacy handle / display name — kept for back-compat with existing
+  // entries; resolver may or may not match them depending on uniqueness.
+  if (/^@?[a-zA-Z0-9._-]{2,80}$/.test(trimmed)) return true;
+  return false;
 }
 
 /**

@@ -14,6 +14,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { SlackIcon, TelegramIcon } from "@/components/Icons";
 import { Button } from "@/components/Utilities/Button";
+import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { formatDate } from "@/utilities/formatDate";
@@ -536,10 +537,19 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
               <div key={field.name}>
                 <label
                   htmlFor={field.name}
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  className="flex items-center gap-1 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
                 >
-                  {field.label}
-                  {field.required && <span className="text-red-500 ml-1">*</span>}
+                  <span>
+                    {field.label}
+                    {field.required && <span className="text-red-500 ml-1">*</span>}
+                  </span>
+                  {field.tooltip && (
+                    <InfoTooltip
+                      content={field.tooltip}
+                      side="top"
+                      contentClassName="max-w-xs whitespace-normal"
+                    />
+                  )}
                 </label>
                 <input
                   id={field.name}
@@ -723,9 +733,16 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
                                   <div key={field.name}>
                                     <label
                                       htmlFor={`edit-${member.id}-${field.name}`}
-                                      className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1"
+                                      className="flex items-center gap-1 text-xs font-medium text-gray-700 dark:text-gray-300 mb-1"
                                     >
-                                      {field.label}
+                                      <span>{field.label}</span>
+                                      {field.tooltip && (
+                                        <InfoTooltip
+                                          content={field.tooltip}
+                                          side="top"
+                                          contentClassName="max-w-xs whitespace-normal"
+                                        />
+                                      )}
                                     </label>
                                     <input
                                       id={`edit-${member.id}-${field.name}`}
