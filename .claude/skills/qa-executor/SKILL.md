@@ -201,7 +201,7 @@ Post a PR comment. **Comment format — follow exactly:**
 ```markdown
 ## QA Execution (2/3)
 
-**Result**: X/Y passed | Z failed
+**Result**: X/Y passed | Z failed | B blocked
 **Blocking**: Yes/No
 
 ### Public Scenarios

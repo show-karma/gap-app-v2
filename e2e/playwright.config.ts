@@ -12,7 +12,17 @@ const STORAGE_STATE_PATH = path.join(__dirname, ".auth", "user.json");
 // boot a local webServer — there's nothing to serve, and `pnpm start` would
 // fail without a `.next/` build anyway.
 const baseURL = process.env.BASE_URL || "http://localhost:3000";
-const isRemoteTarget = !baseURL.startsWith("http://localhost");
+const LOCAL_HOSTNAMES = new Set(["localhost", "127.0.0.1", "::1"]);
+const isRemoteTarget = (() => {
+  try {
+    const { hostname } = new URL(baseURL);
+    if (LOCAL_HOSTNAMES.has(hostname)) return false;
+    if (/^127\.\d+\.\d+\.\d+$/.test(hostname)) return false;
+    return true;
+  } catch {
+    return true;
+  }
+})();
 
 export default defineConfig({
   testDir: "./tests",
