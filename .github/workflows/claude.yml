@@ -16,7 +16,7 @@ concurrency:
   # Cancel an in-progress Claude run when a new commit is pushed to the same PR.
   # Falls back to run_id for non-PR triggers (issue comments, reviews) so each
   # of those still runs independently.
-  group: claude-${{ github.event.pull_request.number || github.run_id }}
+  group: claude-${{ github.event.pull_request.number || github.event.issue.number || github.run_id }}
   cancel-in-progress: true
 
 jobs:

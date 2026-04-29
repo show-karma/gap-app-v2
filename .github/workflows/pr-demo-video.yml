@@ -50,14 +50,11 @@ jobs:
             fi
           else
             SHA="${{ github.sha }}"
-            # Look up the PR associated with this merge commit.
-            PR=$(gh pr list \
-              --repo "${{ github.repository }}" \
-              --state merged \
-              --search "$SHA" \
-              --json number,mergeCommit \
-              | jq -r --arg sha "$SHA" '.[] | select(.mergeCommit.oid==$sha) | .number' \
-              | head -1)
+            # Look up the PR associated with this commit via the commits API
+            # (more reliable than gh pr list --search which depends on search indexing).
+            PR=$(gh api "repos/${{ github.repository }}/commits/${SHA}/pulls" \
+              --jq '.[0].number // ""' \
+              2>/dev/null || echo "")
           fi
           if [ -z "$PR" ]; then
             echo "No PR found for $SHA — skipping"
