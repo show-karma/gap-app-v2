@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, screen } from "@testing-library/react";
+import { renderWithQueryClient as render } from "@/__tests__/helpers/renderWithQueryClient";
 import "@testing-library/jest-dom";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { ActivityFeed } from "../MainContent/ActivityFeed";
@@ -9,6 +10,7 @@ import { ProjectMainContent } from "../MainContent/ProjectMainContent";
 // Mock next/navigation
 vi.mock("next/navigation", () => ({
   useParams: () => ({ projectId: "test-project" }),
+  usePathname: vi.fn(() => "/"),
 }));
 
 // Mock next/link
