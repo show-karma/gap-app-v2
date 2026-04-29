@@ -173,10 +173,8 @@ describe("Whitelabel application detail page", () => {
   });
 
   it("/applications/[applicationId] renders not-available when fetch fails", async () => {
-    const fetchData = (await import("@/utilities/fetchData")).default as unknown as ReturnType<
-      typeof vi.fn
-    >;
-    fetchData.mockResolvedValueOnce([null, null]);
+    const fetchData = (await import("@/utilities/fetchData")).default;
+    vi.mocked(fetchData).mockResolvedValueOnce([null, null]);
     const { default: Page } = await import(
       "@/app/community/[communityId]/(whitelabel)/applications/[applicationId]/page"
     );
@@ -201,10 +199,8 @@ describe("Whitelabel application edit page", () => {
   });
 
   it("/applications/[applicationId]/edit renders not-available when fetch fails", async () => {
-    const fetchData = (await import("@/utilities/fetchData")).default as unknown as ReturnType<
-      typeof vi.fn
-    >;
-    fetchData.mockResolvedValueOnce([null, null]);
+    const fetchData = (await import("@/utilities/fetchData")).default;
+    vi.mocked(fetchData).mockResolvedValueOnce([null, null]);
     const { default: Page } = await import(
       "@/app/community/[communityId]/(whitelabel)/applications/[applicationId]/edit/page"
     );
@@ -244,10 +240,8 @@ describe("Whitelabel programs/[programId]/apply page", () => {
   });
 
   it("renders 'form not available' empty state when schema has no fields", async () => {
-    const fetchData = (await import("@/utilities/fetchData")).default as unknown as ReturnType<
-      typeof vi.fn
-    >;
-    fetchData.mockResolvedValueOnce([
+    const fetchData = (await import("@/utilities/fetchData")).default;
+    vi.mocked(fetchData).mockResolvedValueOnce([
       {
         ...mockProgram,
         applicationConfig: { ...mockProgram.applicationConfig, formSchema: { fields: [] } },

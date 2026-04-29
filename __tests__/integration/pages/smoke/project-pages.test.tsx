@@ -197,9 +197,7 @@ describe("Project /updates async page", () => {
 
   it("returns null when project data missing", async () => {
     const cached = await import("@/utilities/queries/getProjectCachedData");
-    (cached.getProjectCachedData as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
-      null
-    );
+    vi.mocked(cached.getProjectCachedData).mockResolvedValueOnce(null);
     const result = await renderAsyncPage(() => import("@/app/project/[projectId]/updates/page"), {
       params: Promise.resolve({ projectId: "p1" }),
     });

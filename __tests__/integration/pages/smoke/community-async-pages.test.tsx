@@ -239,7 +239,7 @@ describe("Community async server pages — happy path", () => {
 describe("Community async server pages — month route validation", () => {
   it("/(with-header)/reports/[month] calls notFound for invalid month", async () => {
     const navigation = await import("next/navigation");
-    (navigation.notFound as unknown as ReturnType<typeof vi.fn>).mockImplementationOnce(() => {
+    vi.mocked(navigation.notFound).mockImplementationOnce(() => {
       const err = new Error("NEXT_NOT_FOUND") as Error & { digest: string };
       err.digest = "NEXT_NOT_FOUND";
       throw err;
