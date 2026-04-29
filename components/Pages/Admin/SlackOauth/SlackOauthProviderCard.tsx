@@ -5,7 +5,6 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import { useSlackOauthWorkspace } from "@/hooks/useSlackOauth";
 import type { SlackOAuthWorkspace } from "@/types/slack-oauth";
 import { SlackOauthRegisterForm } from "./SlackOauthRegisterForm";
-import { SlackOauthUserLinksSection } from "./SlackOauthUserLinksSection";
 import { SlackOauthWorkspaceSummary } from "./SlackOauthWorkspaceSummary";
 
 /**
@@ -89,7 +88,11 @@ function PopulatedBody({
   return (
     <div className="space-y-4 px-5 py-4">
       <SlackOauthWorkspaceSummary workspace={workspace} communitySlug={communitySlug} />
-      <SlackOauthUserLinksSection workspace={workspace} communitySlug={communitySlug} />
+      <p className="text-xs text-stone-500 dark:text-zinc-400">
+        Per-user Slack mapping is managed on each user's profile (the
+        <span className="font-medium"> Slack handle</span> field). DMs route by that
+        handle automatically — no separate linking step here.
+      </p>
     </div>
   );
 }

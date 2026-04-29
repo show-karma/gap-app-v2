@@ -6,11 +6,13 @@
  * Critically, the workspace response has no `botTokenEncrypted` /
  * `botToken` field — the server-side mapper omits it and a snapshot
  * test asserts no `xoxb-` substring ever appears in serialized output.
+ *
+ * Per-user Slack handle mapping is NOT modeled here — it lives on
+ * `user_profiles.slack` (Mongo) and is managed via the user-profile
+ * UI elsewhere in the app.
  */
 
 export type SlackOAuthWorkspaceStatus = "ACTIVE" | "REVOKED" | "ERROR";
-
-export type SlackOAuthUserLinkSource = "MANUAL" | "HANDLE_LOOKUP" | "EMAIL_LOOKUP" | "OAUTH_LINK";
 
 export interface SlackOAuthWorkspace {
   uid: string;
@@ -28,18 +30,6 @@ export interface SlackOAuthWorkspace {
   revokedAt: string | null;
 }
 
-export interface SlackOAuthUserLink {
-  uid: string;
-  karmaUserId: string;
-  slackWorkspaceUid: string;
-  slackUserId: string;
-  slackHandleSnapshot: string | null;
-  linkedAt: string;
-  linkSource: SlackOAuthUserLinkSource;
-  lastDeliveryAt: string | null;
-  lastDeliveryError: string | null;
-}
-
 export interface SlackOAuthMember {
   slackUserId: string;
   displayName: string;
@@ -49,36 +39,10 @@ export interface SlackOAuthMember {
   deleted: boolean;
 }
 
-/** Ambiguous-handle 409 payload from POST /user-links. */
-export interface SlackOAuthHandleCandidate {
-  slackUserId: string;
-  displayName: string;
-  realName: string;
-}
-
-export interface SlackOAuthHandleAmbiguousResponse {
-  error: string;
-  message: string;
-  handle: string;
-  candidates: SlackOAuthHandleCandidate[];
-}
-
 export interface SlackOAuthRegisterWorkspaceInput {
   teamId: string;
   teamName: string;
   botUserId: string;
   botToken: string;
   scopes?: string[];
-}
-
-export type SlackOAuthLinkInput =
-  | { karmaUserId: string; handle: string }
-  | { karmaUserId: string; slackUserId: string }
-  | { karmaUserId: string; email: string };
-
-export interface SlackOAuthUserLinksListResponse {
-  items: SlackOAuthUserLink[];
-  total: number;
-  page: number;
-  limit: number;
 }
