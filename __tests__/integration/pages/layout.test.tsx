@@ -86,9 +86,7 @@ vi.mock("@/components/Seo/OrganizationJsonLd", () => ({
 }));
 
 vi.mock("@/components/DeferredLayoutComponents", () => ({
-  DeferredLayoutComponents: (props: { isWhitelabel: boolean }) => (
-    <div data-testid="deferred-layout-components" data-whitelabel={props.isWhitelabel} />
-  ),
+  DeferredLayoutComponents: () => <div data-testid="deferred-layout-components" />,
 }));
 
 vi.mock("@/utilities/whitelabel-server", () => ({
@@ -113,13 +111,11 @@ describe("RootLayout", () => {
     expect(screen.getByTestId("organization-json-ld")).toBeInTheDocument();
   });
 
-  it("renders DeferredLayoutComponents with correct props", async () => {
+  it("renders DeferredLayoutComponents", async () => {
     const jsx = await RootLayout({ children: <>Test Content</> });
     render(jsx);
 
-    const deferred = screen.getByTestId("deferred-layout-components");
-    expect(deferred).toBeInTheDocument();
-    expect(deferred).toHaveAttribute("data-whitelabel", "false");
+    expect(screen.getByTestId("deferred-layout-components")).toBeInTheDocument();
   });
 
   it("renders children content", async () => {

@@ -49,7 +49,6 @@ const HotjarAnalytics = dynamic(() => import("@/components/Utilities/HotjarAnaly
 });
 
 interface DeferredLayoutComponentsProps {
-  isWhitelabel: boolean;
   toasterConfig: {
     position: "top-right";
     toastOptions: Record<string, unknown>;
@@ -57,10 +56,13 @@ interface DeferredLayoutComponentsProps {
   };
 }
 
-export function DeferredLayoutComponents({
-  isWhitelabel,
-  toasterConfig,
-}: DeferredLayoutComponentsProps) {
+export function DeferredLayoutComponents({ toasterConfig }: DeferredLayoutComponentsProps) {
+  // Every dialog below subscribes to a Zustand store and is opened by
+  // navbar UI that renders on every domain (whitelabel and non-whitelabel).
+  // They MUST be mounted unconditionally — gating the mount on isWhitelabel
+  // is what caused the profile-modal bug at app.filpgf.io (see issue
+  // "fix-profile-on-app-filpgf"). The dialogs are loaded via next/dynamic
+  // with ssr:false, so the chunk cost is paid only when first rendered.
   return (
     <>
       <Toaster {...toasterConfig} />
@@ -68,13 +70,9 @@ export function DeferredLayoutComponents({
       <Analytics />
       <SpeedInsights />
       <HotjarAnalytics />
-      {!isWhitelabel && (
-        <>
-          <ContributorProfileDialog />
-          <ApiKeyManagementModal />
-          <OnboardingDialog />
-        </>
-      )}
+      <ContributorProfileDialog />
+      <ApiKeyManagementModal />
+      <OnboardingDialog />
       <AgentChatBubble />
     </>
   );

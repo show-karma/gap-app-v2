@@ -23,6 +23,7 @@ export interface UserProfile {
   name: string;
   email: string;
   telegram?: string;
+  slack?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -47,6 +48,7 @@ export interface ProgramReviewer {
   name: string;
   email: string;
   telegram?: string;
+  slack?: string;
   assignedAt: string;
   assignedBy?: string;
 }
@@ -58,6 +60,16 @@ export interface AddReviewerRequest {
   name: string;
   email: string;
   telegram?: string;
+  slack?: string;
+}
+
+/**
+ * Update reviewer contact request (PATCH by email)
+ */
+export interface UpdateReviewerContactRequest {
+  email: string;
+  telegram?: string;
+  slack?: string;
 }
 
 /**
@@ -91,6 +103,7 @@ export const programReviewersService = {
       name: reviewer.userProfile?.name || "",
       email: reviewer.userProfile?.email || "",
       telegram: reviewer.userProfile?.telegram || "",
+      slack: reviewer.userProfile?.slack || "",
       assignedAt: reviewer.assignedAt,
       assignedBy: reviewer.assignedBy,
     }));
@@ -115,6 +128,7 @@ export const programReviewersService = {
         name: reviewerData.name,
         email: reviewerData.email,
         telegram: reviewerData.telegram,
+        slack: reviewerData.slack,
         assignedAt: new Date().toISOString(),
         assignedBy: undefined,
       };
@@ -125,6 +139,7 @@ export const programReviewersService = {
       name: reviewer.userProfile?.name || reviewerData.name,
       email: reviewer.userProfile?.email || reviewerData.email,
       telegram: reviewer.userProfile?.telegram || reviewerData.telegram,
+      slack: reviewer.userProfile?.slack || reviewerData.slack,
       assignedAt: reviewer.assignedAt,
       assignedBy: reviewer.assignedBy,
     };
@@ -137,6 +152,16 @@ export const programReviewersService = {
     await apiClient.delete(`/v2/funding-program-configs/${programId}/reviewers/by-email`, {
       data: { email },
     });
+  },
+
+  /**
+   * Update reviewer contact fields (telegram/slack) by email
+   */
+  async updateReviewerContact(
+    programId: string,
+    patch: UpdateReviewerContactRequest
+  ): Promise<void> {
+    await apiClient.patch(`/v2/funding-program-configs/${programId}/reviewers/by-email`, patch);
   },
 
   /**

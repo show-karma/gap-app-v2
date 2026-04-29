@@ -14,8 +14,9 @@ export function ProgramFilters({ filters, onChange, totalCount }: ProgramFilters
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
 
     timeoutRef.current = setTimeout(() => {
-      if (searchValue !== filters.search) {
-        onChange({ ...filters, search: searchValue || undefined });
+      const next = searchValue || undefined;
+      if (next !== filters.search) {
+        onChange({ ...filters, search: next });
       }
     }, 300);
 

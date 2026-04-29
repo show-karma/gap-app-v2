@@ -231,11 +231,23 @@ vi.mock("hooks/useZeroDevSigner", () => ({
 }));
 
 vi.mock("@/hooks/useSetupChainAndWallet", () => ({
-  useSetupChainAndWallet: vi.fn(),
+  useSetupChainAndWallet: () => ({
+    setupChainAndWallet: (...args: any[]) => mockSetupChainAndWallet(...args),
+    isSmartWalletReady: false,
+    smartWalletAddress: null,
+    hasEmbeddedWallet: false,
+    hasExternalWallet: true,
+  }),
 }));
 
 vi.mock("hooks/useSetupChainAndWallet", () => ({
-  useSetupChainAndWallet: vi.fn(),
+  useSetupChainAndWallet: () => ({
+    setupChainAndWallet: (...args: any[]) => mockSetupChainAndWallet(...args),
+    isSmartWalletReady: false,
+    smartWalletAddress: null,
+    hasEmbeddedWallet: false,
+    hasExternalWallet: true,
+  }),
 }));
 
 vi.mock("@/utilities/ensureCorrectChain", () => ({
@@ -466,15 +478,17 @@ vi.mock("@/components/Dialogs/ProjectDialog/NetworkDropdown", () => ({
   ),
 }));
 
+class mockProjectClass {
+  attest = (...args: any[]) => mockProjectAttest(...args);
+  uid = "0xproject-uid";
+  chainID = 10;
+  recipient = "0x1234567890abcdef1234567890abcdef12345678";
+}
+
 vi.mock("@show-karma/karma-gap-sdk", () => ({
-  Project: vi.fn().mockImplementation(() => ({
-    attest: (...args: any[]) => mockProjectAttest(...args),
-    uid: "0xproject-uid",
-    chainID: 10,
-    recipient: "0x1234567890abcdef1234567890abcdef12345678",
-  })),
-  ProjectDetails: vi.fn().mockImplementation((args: any) => args),
-  MemberOf: vi.fn().mockImplementation((args: any) => args),
+  Project: mockProjectClass,
+  ProjectDetails: class mockProjectDetailsClass {},
+  MemberOf: class mockMemberOfClass {},
   nullRef: "0x0000000000000000000000000000000000000000000000000000000000000000",
 }));
 
@@ -507,21 +521,6 @@ describe("ProjectDialog", () => {
       walletSigner: { signMessage: vi.fn() },
       chainId: 10,
     });
-
-    const setupHookMockByAlias = (await import("@/hooks/useSetupChainAndWallet")) as unknown as {
-      useSetupChainAndWallet: vi.Mock;
-    };
-    setupHookMockByAlias.useSetupChainAndWallet.mockReturnValue({
-      setupChainAndWallet: (...args: unknown[]) => mockSetupChainAndWallet(...args),
-      isSmartWalletReady: false,
-      smartWalletAddress: null,
-      hasEmbeddedWallet: false,
-      hasExternalWallet: true,
-    });
-
-    // The "hooks/useSetupChainAndWallet" mock (without @/ prefix) is already
-    // configured by vi.mock() above and shares the same vi.fn() reference,
-    // so configuring via the @/ alias is sufficient.
   });
 
   it("keeps the modal open after submit while create attestation is in progress", async () => {
@@ -557,6 +556,9 @@ describe("ProjectDialog", () => {
 
     await user.click(screen.getByRole("button", { name: /add contact/i }));
     await user.click(screen.getByRole("button", { name: /select optimism/i }));
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /create project/i })).not.toBeDisabled();
+    });
     await user.click(screen.getByRole("button", { name: /create project/i }));
 
     await waitFor(() => {

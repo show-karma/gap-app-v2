@@ -146,6 +146,8 @@ describe("MILESTONE_STATUS_CONFIG", () => {
       expect(MILESTONE_STATUS_CONFIG[status].label).toBeTruthy();
       expect(MILESTONE_STATUS_CONFIG[status].badgeColor).toBeTruthy();
       expect(MILESTONE_STATUS_CONFIG[status].filterLabel).toBeTruthy();
+      expect(MILESTONE_STATUS_CONFIG[status].icon).toBeTruthy();
+      expect(MILESTONE_STATUS_CONFIG[status].stepperColor).toBeTruthy();
     }
   });
 
@@ -157,14 +159,14 @@ describe("MILESTONE_STATUS_CONFIG", () => {
 
   it("returns correct label for PendingCompletion (differs from filterLabel)", () => {
     const config = MILESTONE_STATUS_CONFIG[MilestoneReviewStatus.PendingCompletion];
-    expect(config.label).toBe("Pending Completion and Verification");
-    expect(config.filterLabel).toBe("Pending Completion");
+    expect(config.label).toBe("Pending Completion");
+    expect(config.filterLabel).toBe("Pending (Off-chain)");
   });
 });
 
 describe("FILTER_TABS", () => {
   it("starts with 'all' tab", () => {
-    expect(FILTER_TABS[0]).toEqual({ key: "all", label: "All" });
+    expect(FILTER_TABS[0]).toEqual({ key: "all", label: "All", icon: null });
   });
 
   it("has one tab per enum member plus 'all'", () => {
@@ -177,6 +179,7 @@ describe("FILTER_TABS", () => {
     for (const tab of statusTabs) {
       const config = MILESTONE_STATUS_CONFIG[tab.key as MilestoneReviewStatus];
       expect(tab.label).toBe(config.filterLabel);
+      expect(tab.icon).toBe(config.icon);
     }
   });
 

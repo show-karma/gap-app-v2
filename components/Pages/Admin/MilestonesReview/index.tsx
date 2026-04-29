@@ -1,6 +1,13 @@
 "use client";
 
-import { ArrowLeftIcon, ChevronLeftIcon, ExclamationTriangleIcon } from "@heroicons/react/20/solid";
+import {
+  ArrowLeftIcon,
+  ArrowPathIcon,
+  CheckCircleIcon,
+  ChevronLeftIcon,
+  ClockIcon,
+  ExclamationTriangleIcon,
+} from "@heroicons/react/20/solid";
 import { useCallback, useMemo, useState } from "react";
 import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
@@ -20,22 +27,119 @@ import {
   usePermissionContext,
 } from "@/src/core/rbac/context/permission-context";
 import { ReviewerType } from "@/src/core/rbac/types";
-import { useOwnerStore } from "@/store";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { CommentsAndActivity } from "./CommentsAndActivity";
 import { GrantCommentsAndActivity } from "./GrantCommentsAndActivity";
-import { GrantCompleteButtonForReviewer } from "./GrantCompleteButtonForReviewer";
 import { MilestoneCard } from "./MilestoneCard";
 import {
   FILTER_TABS,
   getMilestoneStatus,
+  MILESTONE_STATUS_CONFIG,
   type MilestoneFilterKey,
   MilestoneReviewStatus,
+  type StatusIconName,
   sortMilestones,
 } from "./utils/milestone-review-status";
 
 const EMPTY_MILESTONES: GrantMilestoneWithCompletion[] = [];
+
+// Strip the optional chainId suffix from program IDs (e.g. "959_42161" -> "959").
+function parseProgramId(programId: string): string {
+  if (programId.includes("_")) {
+    const [id] = programId.split("_");
+    return id ?? programId;
+  }
+  return programId;
+}
+
+/** Small icon component for filter pills */
+function StatusIcon({ icon, className }: { icon: StatusIconName | null; className?: string }) {
+  if (!icon) return null;
+  const cls = cn("w-3.5 h-3.5", className);
+  switch (icon) {
+    case "check":
+      return <CheckCircleIcon className={cls} />;
+    case "clock":
+      return <ClockIcon className={cls} />;
+    case "arrow-path":
+      return <ArrowPathIcon className={cls} />;
+    case "circle":
+      return (
+        <span className="inline-flex items-center justify-center w-3.5 h-3.5">
+          <span className="w-2.5 h-2.5 rounded-full border-[1.5px] border-current" />
+        </span>
+      );
+    default:
+      return null;
+  }
+}
+
+// Order in which legend chips render — keeps Verified first for at-a-glance scanning.
+const LEGEND_STATUS_ORDER: MilestoneReviewStatus[] = [
+  MilestoneReviewStatus.Verified,
+  MilestoneReviewStatus.PendingVerification,
+  MilestoneReviewStatus.PendingCompletion,
+  MilestoneReviewStatus.NotStarted,
+];
+
+/** Visual progress stepper showing milestone states at a glance */
+function MilestoneProgressStepper({ milestones }: { milestones: GrantMilestoneWithCompletion[] }) {
+  const { entries, countsByStatus, verifiedCount } = useMemo(() => {
+    const entries = milestones.map((m) => ({ uid: m.uid, status: getMilestoneStatus(m) }));
+    const countsByStatus = {
+      [MilestoneReviewStatus.Verified]: 0,
+      [MilestoneReviewStatus.PendingVerification]: 0,
+      [MilestoneReviewStatus.PendingCompletion]: 0,
+      [MilestoneReviewStatus.NotStarted]: 0,
+    } as Record<MilestoneReviewStatus, number>;
+    for (const { status } of entries) {
+      countsByStatus[status]++;
+    }
+    return {
+      entries,
+      countsByStatus,
+      verifiedCount: countsByStatus[MilestoneReviewStatus.Verified],
+    };
+  }, [milestones]);
+
+  if (entries.length === 0) return null;
+
+  return (
+    <div className="mb-4">
+      <div className="flex items-center gap-3 mb-1.5 flex-wrap text-xs text-gray-600 dark:text-gray-400">
+        {LEGEND_STATUS_ORDER.map((status) => {
+          const count = countsByStatus[status];
+          if (count === 0) return null;
+          const config = MILESTONE_STATUS_CONFIG[status];
+          return (
+            <span key={status} className="flex items-center gap-1">
+              <span className={cn("w-2 h-2 rounded-full", config.stepperColor)} />
+              {count} {config.filterLabel}
+            </span>
+          );
+        })}
+      </div>
+      <ul
+        aria-label={`Milestone progress: ${verifiedCount} of ${entries.length} verified`}
+        className="flex items-center gap-0.5 list-none p-0 m-0"
+      >
+        {entries.map(({ uid, status }, i) => {
+          const config = MILESTONE_STATUS_CONFIG[status];
+          const label = `Milestone ${i + 1}: ${config.label}`;
+          return (
+            <li
+              key={uid || `milestone-${i}`}
+              aria-label={label}
+              className={cn("h-2 rounded-full flex-1 transition-colors", config.stepperColor)}
+              title={label}
+            />
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
 
 interface MilestonesReviewPageProps {
   communityId: string;
@@ -50,14 +154,8 @@ export function MilestonesReviewPage({
   programId,
   referrer,
 }: MilestonesReviewPageProps) {
-  // Extract programId from URL param (supports both "959" and legacy "959_42161" formats)
-  const { parsedProgramId } = useMemo(() => {
-    if (programId.includes("_")) {
-      const [id] = programId.split("_");
-      return { parsedProgramId: id };
-    }
-    return { parsedProgramId: programId };
-  }, [programId]);
+  // Supports both "959" and legacy "959_42161" formats
+  const parsedProgramId = useMemo(() => parseProgramId(programId), [programId]);
 
   // Wrap with PermissionProvider that includes programId for proper reviewer role detection
   return (
@@ -71,6 +169,7 @@ export function MilestonesReviewPage({
         communityId={communityId}
         projectId={projectId}
         programId={programId}
+        parsedProgramId={parsedProgramId}
         referrer={referrer}
       />
     </PermissionProvider>
@@ -81,8 +180,9 @@ function MilestonesReviewPageContent({
   communityId,
   projectId,
   programId,
+  parsedProgramId,
   referrer,
-}: MilestonesReviewPageProps) {
+}: MilestonesReviewPageProps & { parsedProgramId: string }) {
   const { data, isLoading, error, refetch } = useProjectGrantMilestones(projectId, programId);
   const [verifyingMilestoneId, setVerifyingMilestoneId] = useState<string | null>(null);
   const [verificationComment, setVerificationComment] = useState("");
@@ -90,28 +190,8 @@ function MilestonesReviewPageContent({
   const [statusFilter, setStatusFilter] = useState<MilestoneFilterKey | null>(null);
 
   const { address } = useAccount();
-  const {
-    hasAccess: hasAdminAccess,
-    isLoading: isLoadingAdminAccess,
-    checks,
-  } = useCommunityAdminAccess(communityId);
-
-  // Extract programId from URL param (supports both "959" and legacy "959_42161" formats)
-  const { parsedProgramId, parsedChainId } = useMemo(() => {
-    // Check if the programId contains chainId suffix (legacy format)
-    if (programId.includes("_")) {
-      const [id, chain] = programId.split("_");
-      return {
-        parsedProgramId: id,
-        parsedChainId: chain ? parseInt(chain, 10) : undefined,
-      };
-    }
-    // New format: programId only
-    return {
-      parsedProgramId: programId,
-      parsedChainId: undefined,
-    };
-  }, [programId]);
+  const { hasAccess: hasAdminAccess, isLoading: isLoadingAdminAccess } =
+    useCommunityAdminAccess(communityId);
 
   // Check if user is a reviewer for this program using RBAC
   const isReviewer = useIsReviewer();
@@ -171,11 +251,7 @@ function MilestonesReviewPageContent({
   const grantName = useMemo(() => {
     const milestoneProgramId = data?.grantMilestones[0]?.programId;
     if (milestoneProgramId) {
-      // Normalize programId (strip chainId if present)
-      const normalizedId = milestoneProgramId.includes("_")
-        ? milestoneProgramId.split("_")[0]
-        : milestoneProgramId;
-      return `Program ${normalizedId}`;
+      return `Program ${parseProgramId(milestoneProgramId)}`;
     }
     return `Program ${parsedProgramId}`;
   }, [data?.grantMilestones, parsedProgramId]);
@@ -390,78 +466,54 @@ function MilestonesReviewPageContent({
 
   const { project, grant } = data;
 
-  // Project data for GrantCompleteButtonForReviewer (only needs uid)
-  const projectForButton = {
-    uid: project.uid,
-  };
-
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen overflow-x-hidden">
       {/* Header Section */}
       <div className="bg-white dark:bg-zinc-800 border-b border-gray-200 dark:border-gray-700">
         <div className="px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center gap-4 max-sm:gap-1 max-sm:flex-col max-sm:items-start">
+          {/* Back button row */}
+          <div className="flex items-center justify-between gap-3 mb-2">
             <Link href={backButtonConfig.url}>
-              <Button variant="secondary" className="flex items-center">
-                <ArrowLeftIcon className="w-4 h-4 mr-2" />
+              <Button variant="secondary" className="flex items-center text-sm">
+                <ArrowLeftIcon className="w-4 h-4 mr-1.5" />
                 {backButtonConfig.label}
               </Button>
             </Link>
-            <div className="flex flex-col gap-1 flex-1">
-              <h1 className="text-2xl font-bold text-black dark:text-white">
-                {project.details.title}
-              </h1>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                {grantName} - Review project milestones
-              </p>
-            </div>
-            {/* Grant Complete Button for Milestone Reviewers */}
-            {grant && canVerifyMilestones && (
-              <div className="max-sm:w-full">
-                <GrantCompleteButtonForReviewer
-                  project={projectForButton}
-                  grant={grant}
-                  onComplete={() => {
-                    // Refetch data to update the grant completion status
-                    refetch();
-                  }}
-                />
-              </div>
+            {milestoneReviewUrl && (
+              <Link href={milestoneReviewUrl}>
+                <Button
+                  variant="secondary"
+                  className="flex items-center gap-2 px-3 py-1.5 text-sm border border-gray-300 dark:border-zinc-600 bg-transparent hover:bg-gray-50 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300"
+                >
+                  View Application
+                </Button>
+              </Link>
             )}
+          </div>
+          {/* Title */}
+          <div className="flex flex-col gap-0.5">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              {grantName} • Milestone Review
+            </p>
+            <h1 className="text-xl font-bold text-black dark:text-white">
+              {project.details.title}
+            </h1>
           </div>
         </div>
       </div>
 
       {/* Content Area */}
       <div className="px-4 sm:px-6 lg:px-8 py-6">
-        {/* Application Link - Only shown if application is approved */}
-        {milestoneReviewUrl && (
-          <div className="mb-6 bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex flex-col gap-1">
-                <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-100">
-                  Application Details
-                </h3>
-                <p className="text-xs text-blue-700 dark:text-blue-300">
-                  View the full application and review details
-                </p>
-              </div>
-              <Link href={milestoneReviewUrl}>
-                <Button className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white">
-                  View Application
-                </Button>
-              </Link>
-            </div>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 ">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Main Content - Milestones */}
-          <div className="lg:col-span-2 flex flex-col gap-6 ">
+          <div className="flex flex-col gap-6 min-w-0">
             <section className="bg-white dark:bg-zinc-900 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
               <h2 className="text-xl font-semibold mb-4 text-black dark:text-white">
                 Project Milestones
               </h2>
+
+              {/* Progress stepper */}
+              {milestones.length > 0 && <MilestoneProgressStepper milestones={milestones} />}
 
               {/* Status filter tabs */}
               {milestones.length > 0 && (
@@ -488,6 +540,7 @@ function MilestonesReviewPageContent({
                             "bg-brand-blue text-white border-brand-blue hover:bg-brand-blue/90"
                         )}
                       >
+                        <StatusIcon icon={tab.icon} />
                         {tab.label}
                         <span
                           className={cn(
@@ -549,7 +602,7 @@ function MilestonesReviewPageContent({
           </div>
 
           {/* Sidebar - Comments & Activity */}
-          <div className="lg:col-span-2">
+          <div className="min-w-0">
             {isLoadingFundingApp && !referenceNumber ? (
               <div className="space-y-4 p-4 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
                 <div className="h-5 w-40 bg-gray-200 dark:bg-zinc-700 rounded animate-pulse" />

@@ -27,6 +27,8 @@ interface MultiSelectDropdownProps {
   required?: boolean;
   error?: string;
   isLoading?: boolean; // Optional loading state prop
+  emptyActionLabel?: string;
+  onEmptyAction?: () => void;
 }
 
 export const MultiSelectDropdown = ({
@@ -41,6 +43,8 @@ export const MultiSelectDropdown = ({
   required = false,
   error,
   isLoading = false,
+  emptyActionLabel,
+  onEmptyAction,
 }: MultiSelectDropdownProps) => {
   const isDisabled = disabled || isLoading;
   const [isOpen, setIsOpen] = useState(false);
@@ -80,6 +84,14 @@ export const MultiSelectDropdown = ({
       setIsOpen(false);
     }
   }, [isLoading]);
+
+  // Reset the search term whenever the dropdown closes so it doesn't carry
+  // over to the next time the user opens it.
+  useEffect(() => {
+    if (!isOpen) {
+      setSearchTerm("");
+    }
+  }, [isOpen]);
 
   // Toggle an item selection
   const toggleItem = (id: string) => {
@@ -129,7 +141,6 @@ export const MultiSelectDropdown = ({
         </div>
       )}
 
-      {/* biome-ignore lint/a11y/useKeyWithClickEvents: keyboard navigation handled via onKeyDown */}
       <div
         role="combobox"
         aria-expanded={isOpen}
@@ -259,8 +270,20 @@ export const MultiSelectDropdown = ({
                 </button>
               ))
             ) : (
-              <div className="px-2 py-1 text-sm text-gray-500 dark:text-zinc-400">
-                No items found
+              <div className="px-2 py-1">
+                <div className="text-sm text-gray-500 dark:text-zinc-400">No items found</div>
+                {items.length === 0 && onEmptyAction && emptyActionLabel && (
+                  <button
+                    type="button"
+                    className="mt-2 text-sm font-medium text-brand-blue hover:underline"
+                    onClick={() => {
+                      setIsOpen(false);
+                      onEmptyAction();
+                    }}
+                  >
+                    {emptyActionLabel}
+                  </button>
+                )}
               </div>
             )}
           </div>

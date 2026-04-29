@@ -10,7 +10,7 @@ import {
   PencilSquareIcon,
   XCircleIcon,
 } from "@heroicons/react/24/outline";
-import { format, isValid, parseISO } from "date-fns";
+import { isValid, parseISO } from "date-fns";
 import pluralize from "pluralize";
 import { type FC, useMemo } from "react";
 import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
@@ -22,6 +22,7 @@ import type {
   IApplicationVersion,
   IStatusHistoryEntry,
 } from "@/types/funding-platform";
+import { renderRelativeTime } from "@/utilities/formatRelativeTime";
 import { cn } from "@/utilities/tailwind";
 import CommentItem from "../CommentItem";
 
@@ -174,16 +175,6 @@ export const TimelineContainer: FC<TimelineContainerProps> = ({
     return items.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
   }, [comments, statusHistory, versionHistory]);
 
-  const formatDate = (dateString: string | Date) => {
-    try {
-      const date = typeof dateString === "string" ? parseISO(dateString) : dateString;
-      if (!isValid(date)) return "Invalid date";
-      return format(date, "MMM dd, yyyy HH:mm");
-    } catch {
-      return "Invalid date";
-    }
-  };
-
   const handleEditComment = async (commentId: string, content: string) => {
     if (!onCommentEdit) return;
     await onCommentEdit(commentId, content);
@@ -229,7 +220,7 @@ export const TimelineContainer: FC<TimelineContainerProps> = ({
                 )}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                {formatDate(status.timestamp)}
+                {renderRelativeTime(status.timestamp)}
               </p>
             </div>
           </div>
@@ -276,7 +267,7 @@ export const TimelineContainer: FC<TimelineContainerProps> = ({
                 )}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                {formatDate(version.createdAt)} • Version {version.versionNumber}
+                {renderRelativeTime(version.createdAt)} • Version {version.versionNumber}
               </p>
             </div>
             {onVersionClick && (

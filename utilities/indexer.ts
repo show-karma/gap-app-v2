@@ -765,6 +765,18 @@ export const INDEXER = {
     AUTHORIZE_URL: (communityIdOrSlug: string) =>
       `/v2/slack-oauth/authorize-url?communityId=${encodeURIComponent(communityIdOrSlug)}`,
   },
+  KNOWLEDGE_BASE: {
+    LIST_SOURCES: (communityIdOrSlug: string) =>
+      `/v2/communities/${communityIdOrSlug}/knowledge-base/sources`,
+    CREATE_SOURCE: (communityIdOrSlug: string) =>
+      `/v2/communities/${communityIdOrSlug}/knowledge-base/sources`,
+    UPDATE_SOURCE: (communityIdOrSlug: string, sourceId: string) =>
+      `/v2/communities/${communityIdOrSlug}/knowledge-base/sources/${sourceId}`,
+    DELETE_SOURCE: (communityIdOrSlug: string, sourceId: string) =>
+      `/v2/communities/${communityIdOrSlug}/knowledge-base/sources/${sourceId}`,
+    RESYNC_SOURCE: (communityIdOrSlug: string, sourceId: string) =>
+      `/v2/communities/${communityIdOrSlug}/knowledge-base/sources/${sourceId}/resync`,
+  },
   USERS: {
     RESOLVE_EMAIL: `/v2/user/resolve-email`,
     PROFILES: (addresses: string) => `/v2/user/profiles?addresses=${addresses}`,

@@ -532,6 +532,7 @@ describe("ReviewerManagementTab", () => {
         name: "Alice",
         email: "alice@example.com",
         telegram: "alice",
+        slack: "",
       });
     });
 

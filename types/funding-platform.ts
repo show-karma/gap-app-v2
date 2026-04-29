@@ -149,6 +149,10 @@ export interface IFundingApplication {
   appReviewers?: string[]; // Array of program reviewer addresses assigned to this application
   milestoneReviewers?: string[]; // Array of milestone reviewer addresses assigned to this application
   postApprovalCompleted?: boolean; // Indicates if post-approval form has been completed
+  // Server-resolved display name for the project/proposal. Prefers a title
+  // from submitted form data; falls back to the linked Karma project's title
+  // when the application has a projectUID. Omitted when neither yields a value.
+  resolvedProjectName?: string;
   createdAt: string | Date;
   updatedAt: string | Date;
 }
