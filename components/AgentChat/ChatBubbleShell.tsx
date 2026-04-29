@@ -13,7 +13,6 @@ import { useEffect, useRef } from "react";
 import { useStickToBottomContext } from "use-stick-to-bottom";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import {
   Conversation,
   ConversationContent,
@@ -79,7 +78,6 @@ export function ChatBubbleShell({
   wrapper,
   renderHeaderActions,
 }: ChatBubbleShellProps) {
-  const [, copyToClipboard] = useCopyToClipboard();
   const content = (
     <>
       {/* Floating toggle button */}
@@ -192,7 +190,10 @@ export function ChatBubbleShell({
                                   variant="ghost"
                                   size="icon-sm"
                                   onClick={() => {
-                                    copyToClipboard(msg.content, "Copied");
+                                    // Raw navigator.clipboard here — this component is reused in
+                                    // the widget bundle, which forbids Next.js-coupled imports
+                                    // (useCopyToClipboard → errorManager → @sentry/nextjs).
+                                    navigator.clipboard.writeText(msg.content).catch(() => {});
                                   }}
                                   title="Copy"
                                 >
