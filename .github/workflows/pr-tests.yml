@@ -25,6 +25,11 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # Expose the actual test step outcome so the report job can see real
+    # pass/fail. needs.test.result alone is always 'success' because the
+    # step uses continue-on-error to mask pre-existing failures (#1306).
+    outputs:
+      tests_outcome: ${{ steps.tests.outcome }}
 
     steps:
       - name: Checkout code
@@ -59,10 +64,12 @@ jobs:
             ${{ runner.os }}-vitest-
 
       - name: Run tests
+        id: tests
         # Pre-existing test debt (issue #1306) — main currently fails dozens
         # of test files but is hidden by this same flag. Removing it is
         # tracked as separate cleanup; do not gate this CI-optimization PR
-        # on a pre-existing red baseline.
+        # on a pre-existing red baseline. The step's `outcome` is still
+        # surfaced via the job output so the report comment shows reality.
         continue-on-error: true
         run: pnpm run test -- --reporter=dot
         env:
@@ -80,13 +87,17 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const testsResult = '${{ needs.test.result }}';
-            const passed = testsResult === 'success';
+            // Use the step outcome (exposed as job output) instead of the
+            // job result. The job always succeeds because `Run tests` is
+            // marked continue-on-error to mask pre-existing failures
+            // (#1306); the step `outcome` reflects real pass/fail.
+            const testsOutcome = '${{ needs.test.outputs.tests_outcome }}';
+            const passed = testsOutcome === 'success';
             const marker = '<!-- pr-tests-report -->';
 
             const body = passed
               ? `${marker}\n## ✅ All Tests Passed!\n\n---\n*Automated test report*`
-              : `${marker}\n## ❌ Tests Failed\n\nCheck the workflow logs for details.\n\n---\n*Automated test report*`;
+              : `${marker}\n## ❌ Tests Failed\n\nCheck the workflow logs for details.\n\n_Note: this PR's test job uses \`continue-on-error\` to allow merging while pre-existing test debt is being cleaned up (issue #1306). Failures here will not block merge until #1306 is resolved._\n\n---\n*Automated test report*`;
 
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
