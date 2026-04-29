@@ -95,7 +95,7 @@ const CommunityMilestoneCardComponent: FC<CommunityMilestoneCardProps> = ({
             </div>
             {milestone.grantMilestoneIndex && milestone.grantMilestoneTotal ? (
               <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-200">
-                {milestone.grantMilestoneIndex} of {milestone.grantMilestoneTotal}
+                Milestone {milestone.grantMilestoneIndex} of {milestone.grantMilestoneTotal}
               </span>
             ) : null}
             {allocationAmount ? (
