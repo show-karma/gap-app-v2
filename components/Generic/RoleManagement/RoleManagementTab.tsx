@@ -537,7 +537,12 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
               <div key={field.name}>
                 <label
                   htmlFor={field.name}
-                  className="flex items-center gap-1 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  // flex+items-center on EVERY label (not just tooltip
+                  // ones) so labels in the same row keep matching
+                  // heights — otherwise the tooltip's icon-button makes
+                  // a tooltip'd label slightly taller than its sibling
+                  // and the inputs visibly misalign.
+                  className="flex items-center gap-1 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 leading-5"
                 >
                   <span>
                     {field.label}
@@ -548,6 +553,11 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
                       content={field.tooltip}
                       side="top"
                       contentClassName="max-w-xs whitespace-normal"
+                      // Shrink the icon-button so it fits within the
+                      // label's text line-height (5 = 20px). p-0 with
+                      // an inline-flex hit area keeps it clickable
+                      // without stretching the row.
+                      className="p-0 inline-flex items-center"
                     />
                   )}
                 </label>
@@ -733,7 +743,12 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
                                   <div key={field.name}>
                                     <label
                                       htmlFor={`edit-${member.id}-${field.name}`}
-                                      className="flex items-center gap-1 text-xs font-medium text-gray-700 dark:text-gray-300 mb-1"
+                                      // Same flex+leading treatment as
+                                      // the add form — keeps Telegram +
+                                      // Slack labels (and their inputs)
+                                      // visually aligned even when only
+                                      // one carries a tooltip.
+                                      className="flex items-center gap-1 text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 leading-4"
                                     >
                                       <span>{field.label}</span>
                                       {field.tooltip && (
@@ -741,6 +756,7 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
                                           content={field.tooltip}
                                           side="top"
                                           contentClassName="max-w-xs whitespace-normal"
+                                          className="p-0 inline-flex items-center"
                                         />
                                       )}
                                     </label>
