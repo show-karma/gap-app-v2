@@ -17,6 +17,21 @@ export interface ChatMessage {
   isStreaming?: boolean;
 }
 
+/**
+ * A pre-seeded reference (milestone, project, etc.) rendered as a chip in the
+ * input. The user still has to press Send — chips are not auto-submitted.
+ *
+ * - `label` is what shows in the pill ("Milestone 1 from Fund#2")
+ * - `refText` is what gets prepended to the message sent to the LLM
+ *   ("milestone \"Milestone 1\" in project \"Fund#2\"")
+ */
+export interface ChatMention {
+  id: string;
+  kind: "milestone" | "project" | "application";
+  label: string;
+  refText: string;
+}
+
 interface AgentChatStore {
   messages: ChatMessage[];
   isOpen: boolean;
@@ -31,6 +46,12 @@ interface AgentChatStore {
     communityId?: string;
   } | null;
 
+  // Reference chips seeded into the chat input (via "@mention" buttons on
+  // milestone cards, etc.). Rendered as pills inside the input; on submit
+  // their `refText` is prepended to the message. Chips persist until removed
+  // or until the message is sent.
+  pendingMentions: ChatMention[];
+
   setOpen: (open: boolean) => void;
   toggleOpen: () => void;
   addMessage: (message: ChatMessage) => void;
@@ -41,6 +62,9 @@ interface AgentChatStore {
   setStreaming: (streaming: boolean) => void;
   setError: (error: string | null) => void;
   setAgentContext: (ctx: AgentChatStore["agentContext"]) => void;
+  addMention: (mention: ChatMention) => void;
+  removeMention: (id: string) => void;
+  clearMentions: () => void;
   clearMessages: () => void;
 }
 
@@ -50,6 +74,7 @@ export const useAgentChatStore = create<AgentChatStore>((set) => ({
   isStreaming: false,
   error: null,
   agentContext: null,
+  pendingMentions: [],
 
   setOpen: (open) => set({ isOpen: open }),
   toggleOpen: () => set((state) => ({ isOpen: !state.isOpen })),
@@ -98,5 +123,14 @@ export const useAgentChatStore = create<AgentChatStore>((set) => ({
   setStreaming: (streaming) => set({ isStreaming: streaming }),
   setError: (error) => set({ error }),
   setAgentContext: (agentContext) => set({ agentContext }),
+  addMention: (mention) =>
+    set((state) =>
+      state.pendingMentions.some((m) => m.id === mention.id)
+        ? state
+        : { pendingMentions: [...state.pendingMentions, mention] }
+    ),
+  removeMention: (id) =>
+    set((state) => ({ pendingMentions: state.pendingMentions.filter((m) => m.id !== id) })),
+  clearMentions: () => set({ pendingMentions: [] }),
   clearMessages: () => set({ messages: [], error: null, isStreaming: false }),
 }));

@@ -3,12 +3,13 @@
 import {
   ArrowLeftIcon,
   ArrowPathIcon,
+  AtSymbolIcon,
   CheckCircleIcon,
   ChevronLeftIcon,
   ClockIcon,
   ExclamationTriangleIcon,
 } from "@heroicons/react/20/solid";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +28,7 @@ import {
   usePermissionContext,
 } from "@/src/core/rbac/context/permission-context";
 import { ReviewerType } from "@/src/core/rbac/types";
+import { useAgentChatStore } from "@/store/agentChat";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { CommentsAndActivity } from "./CommentsAndActivity";
@@ -35,7 +37,6 @@ import { MilestoneCard } from "./MilestoneCard";
 import {
   FILTER_TABS,
   getMilestoneStatus,
-  MILESTONE_STATUS_CONFIG,
   type MilestoneFilterKey,
   MilestoneReviewStatus,
   type StatusIconName,
@@ -75,68 +76,82 @@ function StatusIcon({ icon, className }: { icon: StatusIconName | null; classNam
   }
 }
 
-// Order in which legend chips render — keeps Verified first for at-a-glance scanning.
-const LEGEND_STATUS_ORDER: MilestoneReviewStatus[] = [
-  MilestoneReviewStatus.Verified,
-  MilestoneReviewStatus.PendingVerification,
-  MilestoneReviewStatus.PendingCompletion,
-  MilestoneReviewStatus.NotStarted,
-];
+// Reviewers care about three buckets at a glance: done, in-progress, not yet started.
+// Pending Verification and Pending Completion are collapsed into a single "Pending"
+// segment to keep the bar legible and match the filter chip vocabulary.
+type ProgressBucket = "verified" | "pending" | "not_started";
 
-/** Visual progress stepper showing milestone states at a glance */
+const PROGRESS_BUCKET_CONFIG: Record<
+  ProgressBucket,
+  { label: string; barColor: string; legendColor: string }
+> = {
+  verified: { label: "Verified", barColor: "bg-green-500", legendColor: "bg-green-500" },
+  pending: { label: "Pending", barColor: "bg-yellow-500", legendColor: "bg-yellow-500" },
+  not_started: {
+    label: "Not Started",
+    barColor: "bg-gray-300 dark:bg-gray-600",
+    legendColor: "bg-gray-300 dark:bg-gray-600",
+  },
+};
+
+const PROGRESS_BUCKET_ORDER: ProgressBucket[] = ["verified", "pending", "not_started"];
+
+function statusToBucket(status: MilestoneReviewStatus): ProgressBucket {
+  if (status === MilestoneReviewStatus.Verified) return "verified";
+  if (status === MilestoneReviewStatus.NotStarted) return "not_started";
+  return "pending";
+}
+
+/** Single segmented progress bar: green/yellow/gray fill proportional to bucket counts. */
 function MilestoneProgressStepper({ milestones }: { milestones: GrantMilestoneWithCompletion[] }) {
-  const { entries, countsByStatus, verifiedCount } = useMemo(() => {
-    const entries = milestones.map((m) => ({ uid: m.uid, status: getMilestoneStatus(m) }));
-    const countsByStatus = {
-      [MilestoneReviewStatus.Verified]: 0,
-      [MilestoneReviewStatus.PendingVerification]: 0,
-      [MilestoneReviewStatus.PendingCompletion]: 0,
-      [MilestoneReviewStatus.NotStarted]: 0,
-    } as Record<MilestoneReviewStatus, number>;
-    for (const { status } of entries) {
-      countsByStatus[status]++;
-    }
-    return {
-      entries,
-      countsByStatus,
-      verifiedCount: countsByStatus[MilestoneReviewStatus.Verified],
-    };
+  const { total, counts } = useMemo(() => {
+    const counts: Record<ProgressBucket, number> = { verified: 0, pending: 0, not_started: 0 };
+    for (const m of milestones) counts[statusToBucket(getMilestoneStatus(m))]++;
+    return { total: milestones.length, counts };
   }, [milestones]);
 
-  if (entries.length === 0) return null;
+  if (total === 0) return null;
 
   return (
     <div className="mb-4">
       <div className="flex items-center gap-3 mb-1.5 flex-wrap text-xs text-gray-600 dark:text-gray-400">
-        {LEGEND_STATUS_ORDER.map((status) => {
-          const count = countsByStatus[status];
+        {PROGRESS_BUCKET_ORDER.map((bucket) => {
+          const count = counts[bucket];
           if (count === 0) return null;
-          const config = MILESTONE_STATUS_CONFIG[status];
+          const config = PROGRESS_BUCKET_CONFIG[bucket];
           return (
-            <span key={status} className="flex items-center gap-1">
-              <span className={cn("w-2 h-2 rounded-full", config.stepperColor)} />
-              {count} {config.filterLabel}
+            <span key={bucket} className="flex items-center gap-1.5">
+              <span className={cn("w-2 h-2 rounded-full", config.legendColor)} />
+              <span>
+                {count} {config.label}
+              </span>
             </span>
           );
         })}
       </div>
-      <ul
-        aria-label={`Milestone progress: ${verifiedCount} of ${entries.length} verified`}
-        className="flex items-center gap-0.5 list-none p-0 m-0"
+      <div
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={total}
+        aria-valuenow={counts.verified}
+        aria-label={`Milestone progress: ${counts.verified} of ${total} verified`}
+        className="flex h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-zinc-700"
       >
-        {entries.map(({ uid, status }, i) => {
-          const config = MILESTONE_STATUS_CONFIG[status];
-          const label = `Milestone ${i + 1}: ${config.label}`;
+        {PROGRESS_BUCKET_ORDER.map((bucket) => {
+          const count = counts[bucket];
+          if (count === 0) return null;
+          const config = PROGRESS_BUCKET_CONFIG[bucket];
+          const pct = (count / total) * 100;
           return (
-            <li
-              key={uid || `milestone-${i}`}
-              aria-label={label}
-              className={cn("h-2 rounded-full flex-1 transition-colors", config.stepperColor)}
-              title={label}
+            <div
+              key={bucket}
+              className={cn("h-full transition-all", config.barColor)}
+              style={{ width: `${pct}%` }}
+              title={`${count} ${config.label}`}
             />
           );
         })}
-      </ul>
+      </div>
     </div>
   );
 }
@@ -146,6 +161,44 @@ interface MilestonesReviewPageProps {
   projectId: string;
   programId: string;
   referrer?: string;
+}
+
+function ProjectAskButton({
+  projectUid,
+  projectTitle,
+  projectSlug,
+}: {
+  projectUid: string;
+  projectTitle: string;
+  projectSlug?: string;
+}) {
+  const setOpen = useAgentChatStore((s) => s.setOpen);
+  const addMention = useAgentChatStore((s) => s.addMention);
+
+  const handleClick = useCallback(() => {
+    setOpen(true);
+    // Prefer the slug — `get_project_details` accepts UID or slug, and the slug
+    // is the stable handle the agent can resolve without a search hop.
+    const refText = projectSlug ? `project ${projectSlug}` : `project "${projectTitle}"`;
+    addMention({
+      id: `project-${projectUid}`,
+      kind: "project",
+      label: projectTitle,
+      refText,
+    });
+  }, [setOpen, addMention, projectUid, projectTitle, projectSlug]);
+
+  return (
+    <Button
+      variant="secondary"
+      onClick={handleClick}
+      className="flex items-center gap-2 px-3 py-1.5 text-sm border border-gray-300 dark:border-zinc-600 bg-transparent hover:bg-gray-50 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300"
+      aria-label={`Ask about project ${projectTitle} in the assistant chat`}
+    >
+      <AtSymbolIcon className="w-4 h-4" />
+      Mention to AI
+    </Button>
+  );
 }
 
 export function MilestonesReviewPage({
@@ -358,15 +411,40 @@ function MilestonesReviewPageContent({
 
   const milestones = data?.grantMilestones ?? EMPTY_MILESTONES;
 
+  // When the URL points at a specific milestone (e.g. #milestone-<uid> from
+  // an email/Telegram deep-link), the targeted card must always render —
+  // otherwise the default PendingVerification filter could hide a verified
+  // or in-progress milestone the reviewer was sent to.
+  const targetedMilestoneUid = useMemo(() => {
+    if (typeof window === "undefined") return null;
+    const hash = window.location.hash;
+    return hash.startsWith("#milestone-") ? hash.slice("#milestone-".length) : null;
+  }, []);
+
   // Compute the effective filter: default to PendingVerification if any exist, else "all".
   // Once the user explicitly picks a tab, their choice is locked in.
+  // If the URL targets a specific milestone, force "all" so it's always visible.
   const activeFilter = useMemo<MilestoneFilterKey>(() => {
     if (statusFilter !== null) return statusFilter;
+    if (targetedMilestoneUid) return "all";
     const hasPending = milestones.some(
       (m) => getMilestoneStatus(m) === MilestoneReviewStatus.PendingVerification
     );
     return hasPending ? MilestoneReviewStatus.PendingVerification : "all";
-  }, [statusFilter, milestones]);
+  }, [statusFilter, milestones, targetedMilestoneUid]);
+
+  // Scroll the targeted milestone into view once it has rendered. We can't rely
+  // on the browser's native hash-jump because milestones load asynchronously
+  // and the card doesn't exist on the initial paint. Runs once after the
+  // matching milestone enters the DOM.
+  useEffect(() => {
+    if (!targetedMilestoneUid || milestones.length === 0) return;
+    const exists = milestones.some((m) => m.uid === targetedMilestoneUid);
+    if (!exists) return;
+    const el = document.getElementById(`milestone-${targetedMilestoneUid}`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [targetedMilestoneUid, milestones]);
 
   // Single-pass: group milestones by status, derive counts, filter, and sort.
   // Sort: non-verified by due date asc first, verified by due date asc last.
@@ -479,16 +557,23 @@ function MilestonesReviewPageContent({
                 {backButtonConfig.label}
               </Button>
             </Link>
-            {milestoneReviewUrl && (
-              <Link href={milestoneReviewUrl}>
-                <Button
-                  variant="secondary"
-                  className="flex items-center gap-2 px-3 py-1.5 text-sm border border-gray-300 dark:border-zinc-600 bg-transparent hover:bg-gray-50 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300"
-                >
-                  View Application
-                </Button>
-              </Link>
-            )}
+            <div className="flex items-center gap-2">
+              <ProjectAskButton
+                projectUid={project.uid}
+                projectTitle={project.details.title}
+                projectSlug={project.details?.slug}
+              />
+              {milestoneReviewUrl && (
+                <Link href={milestoneReviewUrl}>
+                  <Button
+                    variant="secondary"
+                    className="flex items-center gap-2 px-3 py-1.5 text-sm border border-gray-300 dark:border-zinc-600 bg-transparent hover:bg-gray-50 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300"
+                  >
+                    View Application
+                  </Button>
+                </Link>
+              )}
+            </div>
           </div>
           {/* Title */}
           <div className="flex flex-col gap-0.5">
@@ -583,6 +668,7 @@ function MilestonesReviewPageContent({
                       grantChainID={grant?.chainID}
                       projectUid={project.uid}
                       projectSlug={project.details?.slug}
+                      projectTitle={project.details.title}
                       programId={parsedProgramId}
                       onVerifyClick={handleVerifyClick}
                       onCancelVerification={handleCancelVerification}

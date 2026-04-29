@@ -1,10 +1,12 @@
 "use client";
 
 import {
+  AtSymbolIcon,
   CheckCircleIcon,
   ChevronDownIcon,
   ChevronUpIcon,
   EllipsisVerticalIcon,
+  LinkIcon,
   SparklesIcon,
   TrashIcon,
 } from "@heroicons/react/20/solid";
@@ -15,7 +17,9 @@ import { DeleteDialog } from "@/components/DeleteDialog";
 import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import type { GrantMilestoneWithCompletion } from "@/services/milestones";
+import { useAgentChatStore } from "@/store/agentChat";
 import { formatDate } from "@/utilities/formatDate";
 import { toEditableUnifiedMilestone } from "@/utilities/milestoneTransforms";
 import { cn } from "@/utilities/tailwind";
@@ -57,6 +61,81 @@ function AIEvaluationButton({ onClick, className = "" }: AIEvaluationButtonProps
   );
 }
 
+function CopyMilestoneLinkButton({
+  milestoneUid,
+  milestoneTitle,
+}: {
+  milestoneUid: string;
+  milestoneTitle: string;
+}) {
+  const [, copyToClipboard] = useCopyToClipboard();
+  const handleClick = useCallback(() => {
+    if (typeof window === "undefined") return;
+    const url = `${window.location.origin}${window.location.pathname}#milestone-${milestoneUid}`;
+    copyToClipboard(url, "Milestone link copied");
+  }, [milestoneUid, copyToClipboard]);
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      className="p-1 rounded hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors"
+      aria-label={`Copy link to milestone ${milestoneTitle}`}
+      title="Copy link to this milestone"
+    >
+      <LinkIcon className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+    </button>
+  );
+}
+
+function MentionInChatButton({
+  milestoneUid,
+  milestoneTitle,
+  projectTitle,
+  projectSlug,
+}: {
+  milestoneUid: string;
+  milestoneTitle: string;
+  projectTitle?: string;
+  projectSlug?: string;
+}) {
+  const setOpen = useAgentChatStore((s) => s.setOpen);
+  const addMention = useAgentChatStore((s) => s.addMention);
+
+  const handleClick = useCallback(() => {
+    setOpen(true);
+    const label = projectTitle ? `${milestoneTitle} from ${projectTitle}` : milestoneTitle;
+    // refText uses the project slug (stable id `get_project_details` accepts directly)
+    // plus the milestone uid; agent doesn't have to disambiguate by free-text title.
+    const projectRef = projectSlug
+      ? `project ${projectSlug}`
+      : projectTitle
+        ? `project "${projectTitle}"`
+        : null;
+    const refText = projectRef
+      ? `milestone "${milestoneTitle}" (uid: ${milestoneUid}) in ${projectRef}`
+      : `milestone "${milestoneTitle}" (uid: ${milestoneUid})`;
+    addMention({
+      id: `milestone-${milestoneUid}`,
+      kind: "milestone",
+      label,
+      refText,
+    });
+  }, [setOpen, addMention, milestoneUid, milestoneTitle, projectTitle, projectSlug]);
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      className="p-1 rounded hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors"
+      aria-label={`Mention milestone ${milestoneTitle} in the assistant chat`}
+      title="Mention this milestone in the assistant chat"
+    >
+      <AtSymbolIcon className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+    </button>
+  );
+}
+
 interface MilestoneCardProps {
   milestone: GrantMilestoneWithCompletion;
   index: number;
@@ -70,6 +149,7 @@ interface MilestoneCardProps {
   grantChainID?: number;
   projectUid?: string;
   projectSlug?: string;
+  projectTitle?: string;
   programId?: string;
   onVerifyClick: (uid: string) => void;
   onCancelVerification: () => void;
@@ -93,6 +173,7 @@ export function MilestoneCard({
   grantChainID,
   projectUid,
   projectSlug,
+  projectTitle,
   programId,
   onVerifyClick,
   onCancelVerification,
@@ -103,6 +184,7 @@ export function MilestoneCard({
   allocationAmount,
 }: MilestoneCardProps) {
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const anchorId = `milestone-${milestone.uid}`;
 
   const unifiedMilestone = useMemo(
     () =>
@@ -252,7 +334,8 @@ export function MilestoneCard({
   return (
     <div
       key={milestone.uid || index}
-      className="border border-gray-200 dark:border-zinc-700 rounded-lg p-4 hover:border-blue-500 dark:hover:border-blue-400 transition-colors"
+      id={anchorId}
+      className="border border-gray-200 dark:border-zinc-700 rounded-lg p-4 hover:border-blue-500 dark:hover:border-blue-400 transition-colors scroll-mt-24 target:ring-2 target:ring-blue-400 target:border-blue-500"
     >
       {/* Header row: title + status badge + actions */}
       <div className="flex items-start justify-between gap-2 mb-2">
@@ -273,8 +356,15 @@ export function MilestoneCard({
           </span>
         </div>
 
-        {/* Actions: edit + overflow menu */}
+        {/* Actions: copy link + edit + overflow menu */}
         <div className="flex items-center gap-1 flex-shrink-0">
+          <CopyMilestoneLinkButton milestoneUid={milestone.uid} milestoneTitle={milestone.title} />
+          <MentionInChatButton
+            milestoneUid={milestone.uid}
+            milestoneTitle={milestone.title}
+            projectTitle={projectTitle}
+            projectSlug={projectSlug}
+          />
           {unifiedMilestone && !isVerified && !hasCompletion && (
             <Button
               onClick={handleEditOpen}
@@ -386,21 +476,9 @@ export function MilestoneCard({
           {/* Completion Details Box - collapsible */}
           <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-md">
             <div className="flex items-center justify-between gap-2 mb-1">
-              <div className="flex items-center gap-2">
-                <p className="text-sm font-semibold text-blue-900 dark:text-blue-200">
-                  Completion Details
-                </p>
-                <span
-                  className={cn(
-                    "text-[0.65rem] font-semibold px-1.5 py-0.5 rounded",
-                    useOnChainData
-                      ? "bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300"
-                      : "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300"
-                  )}
-                >
-                  {useOnChainData ? "On-chain" : "Self-reported"}
-                </span>
-              </div>
+              <p className="text-sm font-semibold text-blue-900 dark:text-blue-200">
+                Completion Details
+              </p>
               {hasLongCompletion && (
                 <button
                   type="button"
