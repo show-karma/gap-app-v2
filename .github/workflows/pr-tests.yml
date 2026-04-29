@@ -25,10 +25,6 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    strategy:
-      fail-fast: false
-      matrix:
-        shard: [1, 2, 3, 4]
 
     steps:
       - name: Checkout code
@@ -48,13 +44,27 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run tests (shard ${{ matrix.shard }}/4)
+      # Vite/vitest transform cache — speeds up cold-start by reusing
+      # transformed module graph across runs. Keyed on lockfile + source
+      # hash so dep or code changes invalidate cleanly.
+      - name: Cache vitest transform
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules/.vite
+            node_modules/.cache/vitest
+          key: ${{ runner.os }}-vitest-${{ hashFiles('**/pnpm-lock.yaml') }}-${{ hashFiles('**/*.ts', '**/*.tsx', '!node_modules/**', '!.next/**') }}
+          restore-keys: |
+            ${{ runner.os }}-vitest-${{ hashFiles('**/pnpm-lock.yaml') }}-
+            ${{ runner.os }}-vitest-
+
+      - name: Run tests
         # Pre-existing test debt (issue #1306) — main currently fails dozens
         # of test files but is hidden by this same flag. Removing it is
         # tracked as separate cleanup; do not gate this CI-optimization PR
         # on a pre-existing red baseline.
         continue-on-error: true
-        run: pnpm run test -- --shard=${{ matrix.shard }}/4 --reporter=dot
+        run: pnpm run test -- --reporter=dot
         env:
           NODE_ENV: test
           NODE_OPTIONS: --max-old-space-size=8192
@@ -75,8 +85,8 @@ jobs:
             const marker = '<!-- pr-tests-report -->';
 
             const body = passed
-              ? `${marker}\n## ✅ All Tests Passed!\n\nAll 4 shards completed successfully.\n\n---\n*Automated test report*`
-              : `${marker}\n## ❌ Tests Failed\n\nOne or more test shards failed. Check the workflow logs for details.\n\n---\n*Automated test report*`;
+              ? `${marker}\n## ✅ All Tests Passed!\n\n---\n*Automated test report*`
+              : `${marker}\n## ❌ Tests Failed\n\nCheck the workflow logs for details.\n\n---\n*Automated test report*`;
 
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
