@@ -111,19 +111,20 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
         name: "slack",
         label: "Slack",
         type: "text" as const,
-        placeholder: "U01ABCDEF or email@example.com",
-        helperText: "Member ID (preferred) or email — see ?",
+        placeholder: "Member ID, email, or display name",
+        helperText: "Member ID (most reliable) or email — see ?",
         tooltip:
-          "For reliable Slack DMs, paste the reviewer's Slack member ID " +
-          '(e.g. U01ABCDEF). Find it in Slack: Profile → click the "..." ' +
-          "menu → Copy member ID. If left blank or set to an email, " +
-          "Karma will look up the user by email instead. Display names / " +
-          "handles aren't unique in Slack and may not resolve correctly.",
+          "Karma resolves this in three steps: (1) if you paste a Slack " +
+          'member ID like U01ABCDEF (Profile → "..." → Copy member ID), ' +
+          "we use it directly — most reliable. (2) Otherwise, if it " +
+          "looks like an email, we look it up via Slack. (3) Otherwise, " +
+          "we treat it as a display name and match it against the " +
+          "workspace member list (less reliable — names aren't unique).",
         required: false,
         editable: true,
         validation: (value: string) => {
           if (value && !validateSlack(value)) {
-            return "Enter a Slack member ID (U…/W…) or a valid email address";
+            return "Enter at least 2 characters";
           }
           return true;
         },

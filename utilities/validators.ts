@@ -57,33 +57,28 @@ export function sanitizeTelegram(telegram: string): string {
 }
 
 /**
- * Validates a Slack identifier. The backend resolver accepts (in order):
- *   1. Slack member ID — `^[UWBS][A-Z0-9]{8,}$` (e.g. `U01ABCDEF`)
- *      Stable, unique forever. Preferred. Find via Slack: Profile →
- *      kebab menu → Copy member ID.
- *   2. Email — `users.lookupByEmail` resolves it to a unique member
- *      in the workspace.
- *   3. Legacy display-name handle — kept for back-compat with values
- *      typed before the resolver shifted to member-ID + email. The
- *      resolver matches case-insensitively against `display_name` /
- *      `real_name` but those aren't unique, so this path is best-effort.
+ * Validates a Slack identifier. The backend resolver accepts three
+ * input shapes (in priority order):
+ *   1. Slack member ID — `^[UWBS][A-Z0-9]{8,}$` (e.g. `U01ABCDEF`).
+ *      Stable, unique, preferred.
+ *   2. Email — passed to `users.lookupByEmail`.
+ *   3. Display name / handle — matched case-insensitively against the
+ *      cached `users.list`. Free text — can include spaces, accents,
+ *      etc. (e.g. "Amaury Magalhães").
  *
- * Empty / blank input is rejected here; callers short-circuit empty
- * before reaching the validator.
+ * Because (3) is intentionally permissive, the validator only checks
+ * that the input isn't empty and fits within sane length bounds. The
+ * resolver decides at dispatch time whether the value resolves to a
+ * Slack member.
  */
 export function validateSlack(slack: string): boolean {
   if (!slack || typeof slack !== "string") {
     return false;
   }
   const trimmed = slack.trim();
-  // Slack member ID — preferred path
-  if (/^[UWBS][A-Z0-9]{8,}$/.test(trimmed)) return true;
-  // Email — used for users.lookupByEmail on the backend
-  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) return true;
-  // Legacy handle / display name — kept for back-compat with existing
-  // entries; resolver may or may not match them depending on uniqueness.
-  if (/^@?[a-zA-Z0-9._-]{2,80}$/.test(trimmed)) return true;
-  return false;
+  // Reasonable bounds: at least 2 chars (single-letter is meaningless),
+  // at most 254 (Slack display name limit + email RFC max).
+  return trimmed.length >= 2 && trimmed.length <= 254;
 }
 
 /**
