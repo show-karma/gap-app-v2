@@ -10,6 +10,7 @@ import { KarmaProfileLinkInput } from "@/components/FundingPlatform/FormFields/K
 import { MilestoneInput } from "@/components/FundingPlatform/FormFields/MilestoneInput";
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import type { IFormField, IFormSchema } from "@/types/funding-platform";
 import { cn } from "@/utilities/tailwind";
 import { PROJECT_UID_REGEX } from "@/utilities/validation";
@@ -120,6 +121,7 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
     const schemaObject: Record<string, any> = {};
 
     schema.fields.forEach((field) => {
+      if (field.type === "section_header") return;
       const fieldName = toFieldName(field.label);
       let fieldSchema: z.ZodTypeAny;
 
@@ -368,6 +370,7 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
   const getDefaultValues = useCallback((): Partial<FormData> => {
     const defaults: Record<string, any> = {};
     formSchema.fields.forEach((field) => {
+      if (field.type === "section_header") return;
       const fieldName = toFieldName(field.label);
       // Use field.id if available, otherwise fall back to fieldName (consistent with validation schema)
       const fieldKey = field.id || fieldName;
@@ -405,6 +408,7 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
   const fieldIdToLabelMapping = useMemo(() => {
     const mapping: Record<string, string> = {};
     formSchema.fields.forEach((field) => {
+      if (field.type === "section_header") return;
       const fieldKey = field.id || toFieldName(field.label);
       mapping[fieldKey] = field.label;
     });
@@ -418,6 +422,7 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
 
     const mapping: Record<string, string> = {};
     formSchema.fields.forEach((field) => {
+      if (field.type === "section_header") return;
       const fieldKey = field.id || toFieldName(field.label);
       const originalKey = findOriginalKey(field, initialData);
 
@@ -441,6 +446,7 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
 
     // Track which fields matched
     formSchema.fields.forEach((field) => {
+      if (field.type === "section_header") return;
       const fieldKey = field.id || toFieldName(field.label);
       const originalKey = findOriginalKey(field, initialData);
 
@@ -464,7 +470,7 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
       }
     });
 
-    const totalFields = formSchema.fields.length;
+    const totalFields = formSchema.fields.filter((f) => f.type !== "section_header").length;
     const matchedCount = diagnostics.matched.length;
     diagnostics.matchRate = totalFields > 0 ? matchedCount / totalFields : 1;
 
@@ -509,6 +515,7 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
         const formData: Record<string, any> = {};
 
         formSchema.fields.forEach((field) => {
+          if (field.type === "section_header") return;
           const fieldName = toFieldName(field.label);
           // Use field.id if available, otherwise fall back to fieldName (consistent with validation schema)
           const fieldKey = field.id || fieldName;
@@ -632,6 +639,22 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
   };
 
   const renderField = (field: any, index: number) => {
+    if (field.type === "section_header") {
+      return (
+        <div
+          key={field.id}
+          className="border-b border-gray-200 dark:border-gray-700 pb-2 pt-4 first:pt-0"
+        >
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{field.label}</h3>
+          {field.description && (
+            <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              <MarkdownPreview source={field.description} />
+            </div>
+          )}
+        </div>
+      );
+    }
+
     const fieldName = toFieldName(field.label);
     // Use field.id if available, otherwise fall back to fieldName (consistent with validation schema)
     const fieldKey = (field.id || fieldName) as keyof FormData;

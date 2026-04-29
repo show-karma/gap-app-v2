@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/Utilities/Button";
+import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import type { FormSchema } from "@/types/question-builder";
 
 interface QuestionFormRendererProps {
@@ -316,24 +317,44 @@ export function QuestionFormRenderer({
       </div>
 
       <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
-        {(schema.fields || []).map((field) => (
-          <div key={field.id}>
-            <div className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              {field.label}
-              {field.required && <span className="text-red-500 ml-1">*</span>}
+        {(schema.fields || []).map((field) => {
+          if (field.type === "section_header") {
+            return (
+              <div
+                key={field.id}
+                className="border-b border-gray-200 dark:border-gray-700 pb-2 pt-4 first:pt-0"
+              >
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  {field.label}
+                </h3>
+                {field.description && (
+                  <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    <MarkdownPreview source={field.description} />
+                  </div>
+                )}
+              </div>
+            );
+          }
+
+          return (
+            <div key={field.id}>
+              <div className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                {field.label}
+                {field.required && <span className="text-red-500 ml-1">*</span>}
+              </div>
+
+              {field.description && (
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">{field.description}</p>
+              )}
+
+              {renderField(field)}
+
+              {errors[field.id] && (
+                <p className="text-red-500 text-sm mt-1">{errors[field.id]?.message as string}</p>
+              )}
             </div>
-
-            {field.description && (
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">{field.description}</p>
-            )}
-
-            {renderField(field)}
-
-            {errors[field.id] && (
-              <p className="text-red-500 text-sm mt-1">{errors[field.id]?.message as string}</p>
-            )}
-          </div>
-        ))}
+          );
+        })}
 
         <Button type="submit" className="w-full" disabled={isSubmitting}>
           {isSubmitting ? "Submitting..." : schema.settings?.submitButtonText || "Submit"}
