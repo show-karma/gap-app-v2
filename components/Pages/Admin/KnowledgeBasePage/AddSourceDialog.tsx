@@ -1,7 +1,7 @@
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
-import { FileBadge, FileText, GitBranch, Globe, Info, ShieldCheck, X } from "lucide-react";
+import { FileBadge, FileText, GitBranch, Globe, Info, Network, ShieldCheck, X } from "lucide-react";
 import { type ComponentType, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/Utilities/Button";
@@ -35,10 +35,9 @@ interface KindOption {
   fg: string;
 }
 
-// Note: `sitemap` and `gdrive_folder` are intentionally hidden — they remain
-// in the type union and on the backend, see
-// docs/features/rag-filecoin-knowledge-base.md for the deferral rationale and
-// the re-enable plan.
+// `gdrive_folder` is still hidden — folder syncing requires service-account
+// credentials and lacks a curator UX path today. See
+// docs/features/rag-filecoin-knowledge-base.md for the re-enable plan.
 const KIND_OPTIONS: KindOption[] = [
   {
     kind: "gdrive_file",
@@ -53,6 +52,12 @@ const KIND_OPTIONS: KindOption[] = [
     fg: "text-sky-600 dark:text-sky-400",
   },
   {
+    kind: "sitemap",
+    Icon: Network,
+    blurb: "A sitemap.xml — ingests every URL it lists",
+    fg: "text-violet-600 dark:text-violet-400",
+  },
+  {
     kind: "pdf_url",
     Icon: FileBadge,
     blurb: "A PDF served from a public URL",
@@ -63,6 +68,7 @@ const KIND_OPTIONS: KindOption[] = [
 const PLACEHOLDER_BY_KIND: Partial<Record<KnowledgeSourceKind, string>> = {
   gdrive_file: "https://docs.google.com/document/d/<doc-id>/edit",
   url: "https://docs.example.com/intro",
+  sitemap: "https://docs.example.com/sitemap.xml",
   pdf_url: "https://example.com/whitepaper.pdf",
 };
 
@@ -208,13 +214,7 @@ export function AddSourceDialog({ communityIdOrSlug, open, onOpenChange, initial
                 </FormField>
 
                 <FormField
-                  label={
-                    kind === "gdrive_file"
-                      ? "Google Doc URL or ID"
-                      : kind === "pdf_url"
-                        ? "PDF URL"
-                        : "Web page URL"
-                  }
+                  label={getExternalIdLabel(kind)}
                   hint={KNOWLEDGE_SOURCE_KIND_HINTS[kind] ?? "Provide a publicly-accessible URL."}
                   htmlFor="kb-external"
                 >
@@ -260,11 +260,7 @@ export function AddSourceDialog({ communityIdOrSlug, open, onOpenChange, initial
               </div>
 
               <PublicAccessReminder kind={kind} />
-              {kind === "gdrive_file" && followLinks ? (
-                <FollowLinksScopeNote />
-              ) : (
-                <OneSourceAtATimeNote />
-              )}
+              <ScopeNote kind={kind} followLinks={followLinks} />
             </div>
 
             {/* Footer — right-aligned button cluster, matches `.modal-foot` */}
@@ -343,38 +339,75 @@ function PublicAccessReminder({ kind }: { kind: KnowledgeSourceKind }) {
         aria-hidden="true"
       />
       <div className="min-w-0 flex-1 text-[12px] leading-relaxed text-stone-600 dark:text-zinc-400">
-        {kind === "gdrive_file" ? (
-          <p>
-            <strong className="font-semibold text-stone-800 dark:text-zinc-200">
-              Source must be publicly accessible.
-            </strong>{" "}
-            In the Google Doc, click <em>Share</em> and set access to{" "}
-            <strong className="font-semibold text-stone-800 dark:text-zinc-200">
-              Anyone with the link — Viewer
-            </strong>
-            . Karma fetches the doc through its public export URL — no Drive credentials needed.
-          </p>
-        ) : kind === "url" ? (
-          <p>
-            <strong className="font-semibold text-stone-800 dark:text-zinc-200">
-              Source must be publicly accessible.
-            </strong>{" "}
-            The page must load without a sign-in wall, paywall, or required cookies. Karma converts
-            the page&apos;s HTML to markdown — pages that render content via JavaScript only may
-            return empty.
-          </p>
-        ) : (
-          <p>
-            <strong className="font-semibold text-stone-800 dark:text-zinc-200">
-              Source must be publicly accessible.
-            </strong>{" "}
-            The PDF URL must be reachable without authentication or session cookies — if it&apos;s
-            behind a sign-in wall the fetch will fail.
-          </p>
-        )}
+        <PublicAccessReminderBody kind={kind} />
       </div>
     </div>
   );
+}
+
+function PublicAccessReminderBody({ kind }: { kind: KnowledgeSourceKind }) {
+  if (kind === "gdrive_file") {
+    return (
+      <p>
+        <strong className="font-semibold text-stone-800 dark:text-zinc-200">
+          Source must be publicly accessible.
+        </strong>{" "}
+        In the Google Doc, click <em>Share</em> and set access to{" "}
+        <strong className="font-semibold text-stone-800 dark:text-zinc-200">
+          Anyone with the link — Viewer
+        </strong>
+        . Karma fetches the doc through its public export URL — no Drive credentials needed.
+      </p>
+    );
+  }
+  if (kind === "url") {
+    return (
+      <p>
+        <strong className="font-semibold text-stone-800 dark:text-zinc-200">
+          Source must be publicly accessible.
+        </strong>{" "}
+        The page must load without a sign-in wall, paywall, or required cookies. Karma converts the
+        page&apos;s HTML to markdown — pages that render content via JavaScript only may return
+        empty.
+      </p>
+    );
+  }
+  if (kind === "sitemap") {
+    return (
+      <p>
+        <strong className="font-semibold text-stone-800 dark:text-zinc-200">
+          Sitemap and every URL it lists must be publicly accessible.
+        </strong>{" "}
+        Karma fetches the sitemap, then crawls each <code className="font-mono">&lt;loc&gt;</code>{" "}
+        as its own document — same fetch rules as a single web page. Sitemap-index files are
+        followed up to three levels deep.
+      </p>
+    );
+  }
+  return (
+    <p>
+      <strong className="font-semibold text-stone-800 dark:text-zinc-200">
+        Source must be publicly accessible.
+      </strong>{" "}
+      The PDF URL must be reachable without authentication or session cookies — if it&apos;s behind
+      a sign-in wall the fetch will fail.
+    </p>
+  );
+}
+
+// Pull the field label out so the JSX stays flat — nested ternaries would
+// otherwise grow past two levels with the new sitemap kind.
+function getExternalIdLabel(kind: KnowledgeSourceKind): string {
+  switch (kind) {
+    case "gdrive_file":
+      return "Google Doc URL or ID";
+    case "pdf_url":
+      return "PDF URL";
+    case "sitemap":
+      return "Sitemap URL";
+    default:
+      return "Web page URL";
+  }
 }
 
 // ── One-source-at-a-time note ───────────────────────────────────────────────
@@ -383,6 +416,16 @@ function PublicAccessReminder({ kind }: { kind: KnowledgeSourceKind }) {
 // expecting Karma to crawl every link inside. Each source is fetched and
 // indexed independently — links inside a doc are preserved verbatim but never
 // followed.
+
+// Single dispatcher for the bottom note. Each kind has a different scope
+// story (single doc vs. sitemap fan-out vs. depth=1 follow), so picking one
+// component per case keeps the copy precise instead of generic.
+
+function ScopeNote({ kind, followLinks }: { kind: KnowledgeSourceKind; followLinks: boolean }) {
+  if (kind === "gdrive_file" && followLinks) return <FollowLinksScopeNote />;
+  if (kind === "sitemap") return <SitemapScopeNote />;
+  return <OneSourceAtATimeNote />;
+}
 
 function OneSourceAtATimeNote() {
   return (
@@ -397,6 +440,27 @@ function OneSourceAtATimeNote() {
           Links inside it are not followed
         </strong>{" "}
         — register them separately if you want them included.
+      </p>
+    </div>
+  );
+}
+
+// Sitemap fan-out is the inverse story: one source maps to many documents.
+// Calling that out so admins don't expect a separate row per URL.
+
+function SitemapScopeNote() {
+  return (
+    <div className="mt-2 flex items-start gap-2 rounded-md border border-stone-200 bg-stone-50 px-2.5 py-2 dark:border-zinc-800 dark:bg-zinc-900/60">
+      <Info
+        className="mt-0.5 h-3.5 w-3.5 shrink-0 text-stone-500 dark:text-zinc-500"
+        aria-hidden="true"
+      />
+      <p className="min-w-0 flex-1 text-[12px] leading-relaxed text-stone-600 dark:text-zinc-400">
+        Each URL in the sitemap becomes its own document under this source.{" "}
+        <strong className="font-semibold text-stone-800 dark:text-zinc-200">
+          Links inside those pages are not crawled
+        </strong>{" "}
+        — only what the sitemap lists.
       </p>
     </div>
   );

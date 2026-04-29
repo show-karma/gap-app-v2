@@ -1,12 +1,16 @@
 "use client";
 
 import {
+  AlertCircle,
+  ChevronDown,
+  ChevronRight,
   ExternalLink,
   FileBadge,
   FileText,
   FolderOpen,
   GitBranch,
   Globe,
+  Inbox,
   Network,
   Pause,
   Play,
@@ -17,6 +21,7 @@ import {
 import { type ComponentType, memo, useState } from "react";
 import toast from "react-hot-toast";
 import { DeleteDialog } from "@/components/DeleteDialog";
+import { useKnowledgeSourceDocuments } from "@/hooks/knowledge-base/useKnowledgeSourceDocuments";
 import {
   useDeleteKnowledgeSource,
   useResyncKnowledgeSource,
@@ -25,6 +30,7 @@ import {
 import {
   KNOWLEDGE_SOURCE_KIND_LABELS,
   KNOWLEDGE_SOURCE_KIND_SHORT,
+  type KnowledgeDocument,
   type KnowledgeSource,
   type KnowledgeSourceKind,
 } from "@/types/v2/knowledge-base";
@@ -213,9 +219,15 @@ function diffParts(source: KnowledgeSource): DiffPart[] {
 
 function SourceRowImpl({ source, communityIdOrSlug, isFirst }: Props) {
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [docsOpen, setDocsOpen] = useState(false);
   const update = useUpdateKnowledgeSource(communityIdOrSlug);
   const resync = useResyncKnowledgeSource(communityIdOrSlug);
   const del = useDeleteKnowledgeSource(communityIdOrSlug);
+  // Folder-style sources fan out into many child documents — the expand
+  // affordance is what gives admins visibility into them. For url, pdf_url,
+  // and a plain gdrive_file the source is one document, so the expanded
+  // panel would just mirror what the row already shows.
+  const isFolderStyle = sourceFansOut(source);
 
   const kind = KIND_STYLES[source.kind];
   const status = getStatusMeta(source);
@@ -270,199 +282,214 @@ function SourceRowImpl({ source, communityIdOrSlug, isFirst }: Props) {
   const syncBlocked = isSyncingNow || isQueued;
 
   return (
-    <li
-      className={`group relative grid grid-cols-[auto_1fr_auto] items-center gap-3.5 px-4 py-3.5 transition-colors ${
-        isFirst ? "" : "border-t border-stone-200 dark:border-zinc-800"
-      } ${
-        isFailed
-          ? "bg-rose-50/40 hover:bg-rose-50/70 dark:bg-rose-950/15 dark:hover:bg-rose-950/25"
-          : "hover:bg-stone-50 dark:hover:bg-zinc-900/60"
-      }`}
-    >
-      {/* Kind glyph — square tile. Tints red on failed rows so the
-          failure is legible at a glance even when scanning the icon column. */}
+    <li className={isFirst ? "" : "border-t border-stone-200 dark:border-zinc-800"}>
       <div
-        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md border ${
+        className={`group relative grid grid-cols-[auto_1fr_auto] items-center gap-3.5 px-4 py-3.5 transition-colors ${
           isFailed
-            ? "border-rose-200 bg-rose-50 dark:border-rose-900/50 dark:bg-rose-950/40"
-            : "border-stone-200 bg-stone-50 dark:border-zinc-800 dark:bg-zinc-900"
-        } ${isPaused ? "opacity-55" : ""}`}
-        aria-hidden="true"
+            ? "bg-rose-50/40 hover:bg-rose-50/70 dark:bg-rose-950/15 dark:hover:bg-rose-950/25"
+            : "hover:bg-stone-50 dark:hover:bg-zinc-900/60"
+        }`}
       >
-        <KindIcon
-          className={`h-4 w-4 ${isFailed ? "text-rose-600 dark:text-rose-400" : kind.fg}`}
-          strokeWidth={1.75}
-        />
-      </div>
-
-      {/* Title / URL / meta */}
-      <div className={`min-w-0 ${isPaused ? "opacity-70" : ""}`}>
-        <div className="flex items-baseline gap-2.5">
-          <p className="truncate text-sm font-semibold leading-tight text-stone-900 dark:text-zinc-100">
-            {source.title}
-          </p>
-          <span className="shrink-0 text-xs font-normal text-stone-500 dark:text-zinc-500">
-            {KNOWLEDGE_SOURCE_KIND_LABELS[source.kind]}
-          </span>
+        {/* Kind glyph — square tile. Tints red on failed rows so the
+          failure is legible at a glance even when scanning the icon column. */}
+        <div
+          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md border ${
+            isFailed
+              ? "border-rose-200 bg-rose-50 dark:border-rose-900/50 dark:bg-rose-950/40"
+              : "border-stone-200 bg-stone-50 dark:border-zinc-800 dark:bg-zinc-900"
+          } ${isPaused ? "opacity-55" : ""}`}
+          aria-hidden="true"
+        >
+          <KindIcon
+            className={`h-4 w-4 ${isFailed ? "text-rose-600 dark:text-rose-400" : kind.fg}`}
+            strokeWidth={1.75}
+          />
         </div>
 
-        <p
-          className="mt-0.5 font-mono text-xs leading-snug text-stone-500 dark:text-zinc-500"
-          title={source.externalId}
-        >
-          {/* Middle-truncation preserves both the domain prefix AND the
+        {/* Title / URL / meta */}
+        <div className={`min-w-0 ${isPaused ? "opacity-70" : ""}`}>
+          <div className="flex items-baseline gap-2.5">
+            <p className="truncate text-sm font-semibold leading-tight text-stone-900 dark:text-zinc-100">
+              {source.title}
+            </p>
+            <span className="shrink-0 text-xs font-normal text-stone-500 dark:text-zinc-500">
+              {KNOWLEDGE_SOURCE_KIND_LABELS[source.kind]}
+            </span>
+          </div>
+
+          <p
+            className="mt-0.5 font-mono text-xs leading-snug text-stone-500 dark:text-zinc-500"
+            title={source.externalId}
+          >
+            {/* Middle-truncation preserves both the domain prefix AND the
               meaningful slug suffix (e.g. ".../introducing-fil-propgf-...")
               instead of just chopping the tail off. The full URL stays
               available on hover via the `title` attribute. */}
-          {truncateMiddle(source.externalId, 80)}
-        </p>
+            {truncateMiddle(source.externalId, 80)}
+          </p>
 
-        {/* Mono uppercase resource-style metadata strip — items separated
+          {/* Mono uppercase resource-style metadata strip — items separated
             by hairline rules. Inline 7-bar sparkline at the far right
             communicates sync history at a glance. */}
-        <div className="mt-1.5 flex flex-wrap items-stretch gap-y-1 font-mono text-[10.5px] uppercase tracking-[0.04em] text-stone-500 dark:text-zinc-500">
-          <span
-            className={`inline-flex items-center gap-1.5 border-r border-stone-200 pr-2.5 dark:border-zinc-800 ${
-              isFailed
-                ? "text-rose-600 dark:text-rose-400"
-                : isSyncingNow
-                  ? "text-sky-600 dark:text-sky-400"
-                  : isPartial
-                    ? "text-amber-600 dark:text-amber-400"
-                    : status.tone === "success"
-                      ? "text-emerald-600 dark:text-emerald-400"
-                      : "text-stone-500 dark:text-zinc-500"
-            }`}
-          >
+          <div className="mt-1.5 flex flex-wrap items-stretch gap-y-1 font-mono text-[10.5px] uppercase tracking-[0.04em] text-stone-500 dark:text-zinc-500">
             <span
-              aria-hidden="true"
-              className={`inline-block h-1.5 w-1.5 shrink-0 rounded-full ${status.dot} ${
-                status.pulse ? "animate-pulse" : ""
+              className={`inline-flex items-center gap-1.5 border-r border-stone-200 pr-2.5 dark:border-zinc-800 ${
+                isFailed
+                  ? "text-rose-600 dark:text-rose-400"
+                  : isSyncingNow
+                    ? "text-sky-600 dark:text-sky-400"
+                    : isPartial
+                      ? "text-amber-600 dark:text-amber-400"
+                      : status.tone === "success"
+                        ? "text-emerald-600 dark:text-emerald-400"
+                        : "text-stone-500 dark:text-zinc-500"
               }`}
-            />
-            <span className="font-medium">{status.label}</span>
-          </span>
-          {/* Kind shorthand (`WEB`/`DOC`/`PDF`/...) — design's compact
+            >
+              <span
+                aria-hidden="true"
+                className={`inline-block h-1.5 w-1.5 shrink-0 rounded-full ${status.dot} ${
+                  status.pulse ? "animate-pulse" : ""
+                }`}
+              />
+              <span className="font-medium">{status.label}</span>
+            </span>
+            {/* Kind shorthand (`WEB`/`DOC`/`PDF`/...) — design's compact
               resource-line marker. Redundant with the title-row label
               but reads well as a left-anchored monospace tag. */}
-          <span className="inline-flex items-center border-r border-stone-200 px-2.5 dark:border-zinc-800">
-            {KNOWLEDGE_SOURCE_KIND_SHORT[source.kind]}
-          </span>
-          {/* "Added" — always shown so admins can tell when a source
+            <span className="inline-flex items-center border-r border-stone-200 px-2.5 dark:border-zinc-800">
+              {KNOWLEDGE_SOURCE_KIND_SHORT[source.kind]}
+            </span>
+            {/* "Added" — always shown so admins can tell when a source
               was registered, independent of whether it ever synced.
               Drives recency sorting in the user's head. */}
-          <span className="inline-flex items-center border-r border-stone-200 px-2.5 tabular-nums dark:border-zinc-800">
-            Added {timeAgo(source.createdAt)}
-          </span>
-          {/* "Synced" — only when there's been a successful or terminal
+            <span className="inline-flex items-center border-r border-stone-200 px-2.5 tabular-nums dark:border-zinc-800">
+              Added {timeAgo(source.createdAt)}
+            </span>
+            {/* "Synced" — only when there's been a successful or terminal
               sync. Distinct from "Added" so the row makes the gap
               visible: a source added a week ago and last synced 10m ago
               reads correctly as "Added 7d ago · Synced 10m ago". */}
-          {source.lastSyncedAt && (
-            <span className="inline-flex items-center border-r border-stone-200 px-2.5 tabular-nums dark:border-zinc-800">
-              Synced {timeAgo(source.lastSyncedAt)}
-            </span>
-          )}
-          {parts.length > 0 && (
-            <span className="inline-flex items-center gap-1.5 border-r border-stone-200 px-2.5 tabular-nums dark:border-zinc-800">
-              {parts.map((p) => (
-                <span key={p.symbol} className={`font-semibold ${p.className}`}>
-                  {p.symbol}
-                  {p.value}
-                </span>
-              ))}
-            </span>
-          )}
-          {/* DEV-192: surface follow-links state in the meta strip. Only
+            {source.lastSyncedAt && (
+              <span className="inline-flex items-center border-r border-stone-200 px-2.5 tabular-nums dark:border-zinc-800">
+                Synced {timeAgo(source.lastSyncedAt)}
+              </span>
+            )}
+            {parts.length > 0 && (
+              <span className="inline-flex items-center gap-1.5 border-r border-stone-200 px-2.5 tabular-nums dark:border-zinc-800">
+                {parts.map((p) => (
+                  <span key={p.symbol} className={`font-semibold ${p.className}`}>
+                    {p.symbol}
+                    {p.value}
+                  </span>
+                ))}
+              </span>
+            )}
+            {/* DEV-192: surface follow-links state in the meta strip. Only
               meaningful for kind=gdrive_file (the backend rejects the
               flag elsewhere), so we gate on both. The label is short by
               design — the dialog explains the depth=1 caveat in detail
               when the toggle is shown. */}
-          {source.followLinks && source.kind === "gdrive_file" && (
-            <span
-              className="inline-flex items-center gap-1.5 border-r border-stone-200 px-2.5 text-stone-500 dark:border-zinc-800 dark:text-zinc-500"
-              title="Follows links to other Google Docs (one level deep)"
+            {source.followLinks && source.kind === "gdrive_file" && (
+              <span
+                className="inline-flex items-center gap-1.5 border-r border-stone-200 px-2.5 text-stone-500 dark:border-zinc-800 dark:text-zinc-500"
+                title="Follows links to other Google Docs (one level deep)"
+              >
+                <GitBranch aria-hidden="true" className="h-3 w-3" strokeWidth={1.75} />
+                Linked
+              </span>
+            )}
+            {(isFailed || isPartial) && source.lastSyncError && (
+              <span
+                className={`inline-flex items-center truncate px-2.5 ${
+                  isFailed
+                    ? "text-rose-600 dark:text-rose-400"
+                    : "text-amber-600 dark:text-amber-400"
+                }`}
+                title={source.lastSyncError}
+                style={{ maxWidth: 280 }}
+              >
+                <span className="truncate">{shortenError(source.lastSyncError)}</span>
+              </span>
+            )}
+          </div>
+
+          {source.goal && (
+            <p
+              className="mt-1.5 flex items-start gap-1.5 text-xs leading-snug text-stone-500 dark:text-zinc-500"
+              title={`Curator purpose: ${source.goal}`}
             >
-              <GitBranch aria-hidden="true" className="h-3 w-3" strokeWidth={1.75} />
-              Linked
-            </span>
-          )}
-          {(isFailed || isPartial) && source.lastSyncError && (
-            <span
-              className={`inline-flex items-center truncate px-2.5 ${
-                isFailed ? "text-rose-600 dark:text-rose-400" : "text-amber-600 dark:text-amber-400"
-              }`}
-              title={source.lastSyncError}
-              style={{ maxWidth: 280 }}
-            >
-              <span className="truncate">{shortenError(source.lastSyncError)}</span>
-            </span>
+              <Target
+                aria-hidden="true"
+                className="mt-[2px] h-3 w-3 shrink-0 text-stone-400 dark:text-zinc-600"
+                strokeWidth={1.75}
+              />
+              <span className="line-clamp-2 italic">{source.goal}</span>
+            </p>
           )}
         </div>
 
-        {source.goal && (
-          <p
-            className="mt-1.5 flex items-start gap-1.5 text-xs leading-snug text-stone-500 dark:text-zinc-500"
-            title={`Curator purpose: ${source.goal}`}
-          >
-            <Target
-              aria-hidden="true"
-              className="mt-[2px] h-3 w-3 shrink-0 text-stone-400 dark:text-zinc-600"
-              strokeWidth={1.75}
-            />
-            <span className="line-clamp-2 italic">{source.goal}</span>
-          </p>
-        )}
-      </div>
-
-      {/* Actions — ghost icon-only buttons. Sync is disabled when an
+        {/* Actions — ghost icon-only buttons. Sync is disabled when an
           existing run is already in flight (status === 'syncing') so a
           double-click can't enqueue a redundant claim while the worker
           tick is mid-fetch. */}
-      <div className="flex shrink-0 items-center gap-0.5">
-        {/* Open original — `externalId` is the URL for url/pdf_url and a
+        <div className="flex shrink-0 items-center gap-0.5">
+          {/* Documents toggle — only meaningful for folder-style sources
+            (sitemap, gdrive_folder, and gdrive_file with followLinks).
+            Single-doc sources already show everything in the row above. */}
+          {isFolderStyle && (
+            <RowAction
+              label={docsOpen ? "Hide documents" : "Show documents"}
+              onClick={() => setDocsOpen((open) => !open)}
+              Icon={docsOpen ? ChevronDown : ChevronRight}
+            />
+          )}
+          {/* Open original — `externalId` is the URL for url/pdf_url and a
             Drive doc id for gdrive_file. The mapping below produces a
             usable href in either case. Hidden for kinds where it's not
             meaningful (sitemap, gdrive_folder). */}
-        {externalHref(source) && (
-          <a
-            href={externalHref(source) ?? "#"}
-            target="_blank"
-            rel="noopener noreferrer"
-            title="Open original"
-            aria-label="Open original"
-            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-stone-500 transition hover:bg-stone-100 hover:text-stone-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/40 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 dark:focus-visible:ring-sky-400/40"
-          >
-            <ExternalLink aria-hidden="true" className="h-4 w-4" />
-          </a>
-        )}
-        <RowAction
-          label={
-            isSyncingNow ? "Sync in progress" : isQueued ? "Already queued for sync" : "Sync now"
-          }
-          onClick={handleResync}
-          disabled={resync.isPending || syncBlocked}
-          spinning={resync.isPending || isSyncingNow}
-          Icon={RefreshCw}
-        />
-        <RowAction
-          label={
-            source.isActive
-              ? "Pause syncing — existing chunks stay searchable"
-              : "Resume syncing on the regular schedule"
-          }
-          onClick={handleToggleActive}
-          disabled={update.isPending}
-          Icon={source.isActive ? Pause : Play}
-        />
-        <RowAction
-          label="Delete source"
-          onClick={() => setConfirmDelete(true)}
-          disabled={del.isPending}
-          tone="danger"
-          Icon={Trash2}
-        />
+          {externalHref(source) && (
+            <a
+              href={externalHref(source) ?? "#"}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Open original"
+              aria-label="Open original"
+              className="inline-flex h-7 w-7 items-center justify-center rounded-md text-stone-500 transition hover:bg-stone-100 hover:text-stone-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/40 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 dark:focus-visible:ring-sky-400/40"
+            >
+              <ExternalLink aria-hidden="true" className="h-4 w-4" />
+            </a>
+          )}
+          <RowAction
+            label={
+              isSyncingNow ? "Sync in progress" : isQueued ? "Already queued for sync" : "Sync now"
+            }
+            onClick={handleResync}
+            disabled={resync.isPending || syncBlocked}
+            spinning={resync.isPending || isSyncingNow}
+            Icon={RefreshCw}
+          />
+          <RowAction
+            label={
+              source.isActive
+                ? "Pause syncing — existing chunks stay searchable"
+                : "Resume syncing on the regular schedule"
+            }
+            onClick={handleToggleActive}
+            disabled={update.isPending}
+            Icon={source.isActive ? Pause : Play}
+          />
+          <RowAction
+            label="Delete source"
+            onClick={() => setConfirmDelete(true)}
+            disabled={del.isPending}
+            tone="danger"
+            Icon={Trash2}
+          />
+        </div>
       </div>
+      {isFolderStyle && docsOpen && (
+        <DocumentsPanel sourceId={source.id} communityIdOrSlug={communityIdOrSlug} />
+      )}
 
       <DeleteDialog
         externalIsOpen={confirmDelete}
@@ -474,6 +501,202 @@ function SourceRowImpl({ source, communityIdOrSlug, isFirst }: Props) {
       />
     </li>
   );
+}
+
+// ── Documents panel ─────────────────────────────────────────────────────────
+//
+// Lists every document under a folder-style source. The query only fires
+// when the panel mounts, so the page doesn't pay for hidden expansions.
+// All four states (loading / empty / error / data) render explicitly so we
+// never return `null` from a data-fetching component.
+
+function DocumentsPanel({
+  sourceId,
+  communityIdOrSlug,
+}: {
+  sourceId: string;
+  communityIdOrSlug: string;
+}) {
+  const { data, isLoading, isError, error, refetch, isRefetching } = useKnowledgeSourceDocuments(
+    communityIdOrSlug,
+    sourceId
+  );
+
+  const documents = data ?? [];
+  const visible = documents.filter((d) => !d.deletedAt);
+  // discoveredFromId → parent doc title lookup. The parent is in the same
+  // payload (it's a sibling under the same source), so a single Map keeps
+  // the resolution O(N) without an extra request.
+  const byId = new Map(visible.map((d) => [d.id, d]));
+
+  return (
+    <div className="border-t border-dashed border-stone-200 bg-stone-50/60 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900/40">
+      <div className="mb-2 flex items-center justify-between">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.05em] text-stone-500 dark:text-zinc-500">
+          Documents{" "}
+          {!isLoading && !isError && (
+            <span className="font-normal normal-case tracking-normal text-stone-400 dark:text-zinc-600">
+              ({visible.length === 1 ? "1 document" : `${visible.length} documents`})
+            </span>
+          )}
+        </p>
+        {!isLoading && !isError && documents.length > 0 && (
+          <button
+            type="button"
+            onClick={() => refetch()}
+            disabled={isRefetching}
+            className="inline-flex items-center gap-1 text-[11px] font-medium text-stone-500 transition hover:text-stone-900 disabled:opacity-50 dark:text-zinc-500 dark:hover:text-zinc-100"
+          >
+            <RefreshCw
+              className={`h-3 w-3 ${isRefetching ? "animate-spin" : ""}`}
+              aria-hidden="true"
+            />
+            Refresh
+          </button>
+        )}
+      </div>
+
+      {isLoading ? (
+        <DocumentsSkeleton />
+      ) : isError ? (
+        <DocumentsError
+          message={error instanceof Error ? error.message : "Failed to load documents."}
+          onRetry={() => refetch()}
+        />
+      ) : visible.length === 0 ? (
+        <DocumentsEmpty />
+      ) : (
+        <ul className="divide-y divide-stone-200 rounded-md border border-stone-200 bg-white dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
+          {visible.map((doc) => (
+            <DocumentRow
+              key={doc.id}
+              doc={doc}
+              parentTitle={
+                doc.discoveredFromId ? (byId.get(doc.discoveredFromId)?.title ?? null) : null
+              }
+            />
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function DocumentsSkeleton() {
+  return (
+    <ul
+      className="divide-y divide-stone-200 rounded-md border border-stone-200 bg-white dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950"
+      aria-label="Loading documents"
+      data-testid="documents-skeleton"
+    >
+      {[0, 1, 2].map((i) => (
+        <li key={i} className="flex items-center gap-3 px-3 py-2">
+          <div className="h-3 w-1/3 rounded bg-stone-200 dark:bg-zinc-800" aria-hidden="true" />
+          <div className="h-3 flex-1 rounded bg-stone-100 dark:bg-zinc-900" aria-hidden="true" />
+          <div className="h-3 w-16 rounded bg-stone-100 dark:bg-zinc-900" aria-hidden="true" />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function DocumentsError({ message, onRetry }: { message: string; onRetry: () => void }) {
+  return (
+    <div
+      className="flex items-start gap-2 rounded-md border border-rose-200 bg-rose-50 px-3 py-2.5 text-[12px] text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-300"
+      role="alert"
+    >
+      <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+      <div className="min-w-0 flex-1">
+        <p className="font-medium">Couldn&apos;t load documents.</p>
+        <p className="mt-0.5 text-rose-600/90 dark:text-rose-400/90">{message}</p>
+      </div>
+      <button
+        type="button"
+        onClick={onRetry}
+        className="shrink-0 rounded-md border border-rose-300 bg-white px-2 py-1 text-[11px] font-medium text-rose-700 transition hover:bg-rose-100 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-950/70"
+      >
+        Retry
+      </button>
+    </div>
+  );
+}
+
+function DocumentsEmpty() {
+  return (
+    <div className="flex items-center gap-2 rounded-md border border-dashed border-stone-200 bg-white px-3 py-3 text-[12px] text-stone-500 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-500">
+      <Inbox className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+      <p>No documents yet — they&apos;ll appear here after the next sync.</p>
+    </div>
+  );
+}
+
+const DocumentRow = memo(function DocumentRowImpl({
+  doc,
+  parentTitle,
+}: {
+  doc: KnowledgeDocument;
+  parentTitle: string | null;
+}) {
+  // When the loader hasn't yet populated a real title, the row falls back
+  // to the URL — better than rendering an opaque doc id. SitemapLoader
+  // sets `title = loc` on first listing; the next sync replaces it with
+  // the page's actual title.
+  const displayTitle = doc.title && doc.title !== doc.sourceUrl ? doc.title : null;
+
+  return (
+    <li className="flex items-center gap-3 px-3 py-2 text-[12px]">
+      <div className="min-w-0 flex-1">
+        {displayTitle ? (
+          <p
+            className="truncate font-medium text-stone-800 dark:text-zinc-200"
+            title={displayTitle}
+          >
+            {displayTitle}
+          </p>
+        ) : null}
+        <p
+          className={`truncate font-mono text-[11px] ${
+            displayTitle
+              ? "text-stone-500 dark:text-zinc-500"
+              : "font-medium text-stone-700 dark:text-zinc-300"
+          }`}
+          title={doc.sourceUrl}
+        >
+          <a
+            href={doc.sourceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:underline"
+          >
+            {doc.sourceUrl}
+          </a>
+        </p>
+        {parentTitle && (
+          <p
+            className="mt-0.5 inline-flex items-center gap-1 text-[10.5px] text-stone-500 dark:text-zinc-500"
+            title={`Discovered via "${parentTitle}"`}
+          >
+            <GitBranch aria-hidden="true" className="h-3 w-3" strokeWidth={1.75} />
+            via {parentTitle}
+          </p>
+        )}
+      </div>
+      <div className="shrink-0 text-right font-mono text-[10.5px] uppercase tracking-[0.04em] text-stone-500 dark:text-zinc-500">
+        <p>{doc.chunkCount === 1 ? "1 chunk" : `${doc.chunkCount} chunks`}</p>
+        <p className="text-[10px] text-stone-400 dark:text-zinc-600">
+          {timeAgo(doc.lastFetchedAt)}
+        </p>
+      </div>
+    </li>
+  );
+});
+
+function sourceFansOut(source: KnowledgeSource): boolean {
+  if (source.kind === "sitemap" || source.kind === "gdrive_folder") return true;
+  // gdrive_file w/ followLinks discovers child docs as it ingests — same
+  // expansion story as a folder loader from the admin's perspective.
+  return source.kind === "gdrive_file" && source.followLinks;
 }
 
 function RowAction({

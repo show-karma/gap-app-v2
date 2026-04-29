@@ -163,6 +163,11 @@ export const QUERY_KEYS = {
     SOURCES: (communityIdOrSlug: string) =>
       ["knowledge-base", "sources", communityIdOrSlug] as const,
     SOURCES_BASE: ["knowledge-base", "sources"] as const,
+    /** Per-source documents list. Scoped under both community and source
+     *  id so a mutation invalidating one source doesn't blow away unrelated
+     *  caches. */
+    SOURCE_DOCUMENTS: (communityIdOrSlug: string, sourceId: string) =>
+      ["knowledge-base", "source-documents", communityIdOrSlug, sourceId] as const,
   },
   GRANTS: {
     COMMENTS: (projectUID: string, programId: string) =>

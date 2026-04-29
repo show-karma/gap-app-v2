@@ -754,6 +754,8 @@ export const INDEXER = {
       `/v2/communities/${communityIdOrSlug}/knowledge-base/sources/${sourceId}`,
     RESYNC_SOURCE: (communityIdOrSlug: string, sourceId: string) =>
       `/v2/communities/${communityIdOrSlug}/knowledge-base/sources/${sourceId}/resync`,
+    LIST_DOCUMENTS: (communityIdOrSlug: string, sourceId: string) =>
+      `/v2/communities/${communityIdOrSlug}/knowledge-base/sources/${sourceId}/documents`,
   },
   USERS: {
     RESOLVE_EMAIL: `/v2/user/resolve-email`,

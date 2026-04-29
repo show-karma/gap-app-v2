@@ -95,6 +95,7 @@ export const KNOWLEDGE_SOURCE_KIND_HINTS: Record<KnowledgeSourceKind, string> = 
   gdrive_file:
     "Paste the share URL or just the doc ID. The Doc must be set to “Anyone with the link — Viewer”.",
   url: "Full URL of the page (e.g. https://docs.example.com/intro). Must load without sign-in.",
-  sitemap: "Currently disabled in the UI; tracked in docs/features.",
+  sitemap:
+    "Public sitemap.xml URL (or sitemap-index). Karma fetches every <loc> as a separate document. Up to 10,000 entries.",
   pdf_url: "Direct URL to a publicly-accessible PDF file (no auth or session cookies required).",
 };

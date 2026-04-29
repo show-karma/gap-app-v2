@@ -1,5 +1,6 @@
 import type {
   CreateKnowledgeSourceInput,
+  KnowledgeDocument,
   KnowledgeSource,
   UpdateKnowledgeSourceInput,
 } from "@/types/v2/knowledge-base";
@@ -12,6 +13,10 @@ interface ListSourcesResponse {
 
 interface SingleSourceResponse {
   data: KnowledgeSource;
+}
+
+interface ListDocumentsResponse {
+  data: KnowledgeDocument[];
 }
 
 /**
@@ -103,4 +108,20 @@ export async function triggerKnowledgeSourceResync(
     true
   );
   if (error) throw new Error(error);
+}
+
+export async function listKnowledgeSourceDocuments(
+  communityIdOrSlug: string,
+  sourceId: string
+): Promise<KnowledgeDocument[]> {
+  const [data, error] = await fetchData<ListDocumentsResponse>(
+    INDEXER.KNOWLEDGE_BASE.LIST_DOCUMENTS(communityIdOrSlug, sourceId),
+    "GET",
+    undefined,
+    {},
+    {},
+    true
+  );
+  if (error) throw new Error(error);
+  return data?.data ?? [];
 }
