@@ -23,6 +23,29 @@ interface CommunityMilestoneCardProps {
   allocationAmount?: string;
 }
 
+type MilestoneStatusVariant = "completed" | "pastDue" | "pending";
+
+const STATUS_BADGE_CLASSES: Record<MilestoneStatusVariant, string> = {
+  completed: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+  pastDue: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+  pending: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
+};
+
+const STATUS_BADGE_LABELS: Record<MilestoneStatusVariant, string> = {
+  completed: "Completed",
+  pastDue: "Past Due",
+  pending: "Pending",
+};
+
+const getStatusVariant = (
+  status: CommunityMilestoneUpdate["status"],
+  dueDate: string | null
+): MilestoneStatusVariant => {
+  if (status === "completed") return "completed";
+  if (dueDate && new Date(dueDate) < new Date()) return "pastDue";
+  return "pending";
+};
+
 const CommunityMilestoneCardComponent: FC<CommunityMilestoneCardProps> = ({
   milestone,
   allocationAmount,
@@ -32,9 +55,7 @@ const CommunityMilestoneCardComponent: FC<CommunityMilestoneCardProps> = ({
   const projectTitle = milestone.project.details?.data?.title;
   const grantTitle = milestone.grant?.details?.data?.title || "Project Milestone";
 
-  // Check if milestone is past due (not completed and due date has passed)
-  const isPastDue =
-    !isCompleted && milestone.details.dueDate && new Date(milestone.details.dueDate) < new Date();
+  const statusVariant = getStatusVariant(milestone.status, milestone.details.dueDate);
 
   return (
     <div className="flex flex-col w-full gap-2.5 md:gap-5">
@@ -62,11 +83,7 @@ const CommunityMilestoneCardComponent: FC<CommunityMilestoneCardProps> = ({
             <div
               className={cn(
                 "flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium",
-                isCompleted
-                  ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                  : isPastDue
-                    ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-                    : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                STATUS_BADGE_CLASSES[statusVariant]
               )}
             >
               {isCompleted ? (
@@ -74,8 +91,13 @@ const CommunityMilestoneCardComponent: FC<CommunityMilestoneCardProps> = ({
               ) : (
                 <ClockIcon className="h-3 w-3" />
               )}
-              {isCompleted ? "Completed" : isPastDue ? "Past Due" : "Pending"}
+              {STATUS_BADGE_LABELS[statusVariant]}
             </div>
+            {milestone.grantMilestoneIndex && milestone.grantMilestoneTotal ? (
+              <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-200">
+                {milestone.grantMilestoneIndex} of {milestone.grantMilestoneTotal}
+              </span>
+            ) : null}
             {allocationAmount ? (
               <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200">
                 {allocationAmount}
