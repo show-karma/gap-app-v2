@@ -148,6 +148,14 @@ describe("WidgetInput helpers", () => {
       editor.textContent = "   hi   ";
       expect(serializeEditor(editor)).toBe("hi");
     });
+
+    it("replaces non-breaking spaces (U+00A0) with regular spaces", () => {
+      // contenteditable browsers insert real NBSP characters for trailing
+      // spaces and multi-space runs; the AI backend should receive plain ASCII.
+      const editor = makeEditor();
+      editor.textContent = "hello\u00A0world\u00A0\u00A0!";
+      expect(serializeEditor(editor)).toBe("hello world  !");
+    });
   });
 });
 
@@ -246,5 +254,47 @@ describe("WidgetInput", () => {
       await userEvent.click(screen.getByRole("button", { name: /send/i }));
       expect(onSubmit).toHaveBeenCalledWith(milestoneToken);
     });
+
+    it("skips chips whose id already exists in the editor on a re-push", () => {
+      // Repro for the "click the @-mention button twice" bug: after the host
+      // clears its queue via onMentionsConsumed and re-pushes the same
+      // mention, we must NOT add a second chip with the same id.
+      const onMentionsConsumed = vi.fn();
+      const { rerender } = render(
+        <WidgetInput
+          onSubmit={vi.fn()}
+          isStreaming={false}
+          mentions={[milestoneMention]}
+          onMentionsConsumed={onMentionsConsumed}
+        />
+      );
+      const firstCount = document.querySelectorAll('[data-mention="milestone-abc"]').length;
+      expect(firstCount).toBeGreaterThanOrEqual(1);
+
+      rerender(
+        <WidgetInput
+          onSubmit={vi.fn()}
+          isStreaming={false}
+          mentions={[milestoneMention]}
+          onMentionsConsumed={onMentionsConsumed}
+        />
+      );
+
+      expect(document.querySelectorAll('[data-mention="milestone-abc"]').length).toBe(firstCount);
+    });
+  });
+
+  it("clears stray <br>s left by contenteditable so the placeholder reappears", () => {
+    render(<WidgetInput onSubmit={vi.fn()} isStreaming={false} />);
+    const editor = getEditor();
+
+    // Mimic what browsers leave after the user types a char and deletes it.
+    editor.appendChild(document.createElement("br"));
+    expect(editor.childNodes.length).toBe(1);
+
+    fireEvent.input(editor);
+
+    expect(editor.childNodes.length).toBe(0);
+    expect(screen.getByRole("button", { name: /send/i })).toBeDisabled();
   });
 });

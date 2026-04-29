@@ -28,7 +28,10 @@ const MENTION_KIND_ATTR = "data-mention-kind";
 const MENTION_PRIMARY_ID_ATTR = "data-mention-primary-id";
 const MENTION_PARENT_SLUG_ATTR = "data-mention-parent-slug";
 const MENTION_LABEL_ATTR = "data-mention-label";
-const NBSP = " ";
+// U+00A0 — the browser inserts real non-breaking spaces in contenteditable
+// (trailing spaces, multi-space runs); strip them so the AI backend receives
+// regular ASCII spaces.
+const NBSP = "\u00A0";
 
 function buildMentionChip(mention: ChatMention): HTMLSpanElement {
   const span = document.createElement("span");
@@ -141,14 +144,34 @@ export const WidgetInput = memo(function WidgetInput({
   // a controlled component. Synced from the live editor on input/insert/submit.
   const [isEmpty, setIsEmpty] = useState(true);
   const syncEmpty = useCallback(() => {
-    setIsEmpty(isEditorEmpty(editorRef.current));
+    const editor = editorRef.current;
+    const empty = isEditorEmpty(editor);
+    // contenteditable leaves stray <br>s after the user deletes all text,
+    // which keeps `:empty` from matching and hides the placeholder. Clearing
+    // the children when we know the editor is logically empty restores it.
+    if (empty && editor && editor.childNodes.length > 0) {
+      editor.replaceChildren();
+    }
+    setIsEmpty(empty);
   }, []);
 
   // Drain queued mentions: insert each one inline, then notify the host.
+  // Skip mentions whose chip is already in the editor — once the host clears
+  // its `pendingMentions` queue, a second click on the same trigger button
+  // would otherwise re-insert a duplicate chip with the same id.
   useEffect(() => {
     const editor = editorRef.current;
     if (!editor || !mentions || mentions.length === 0) return;
-    for (const m of mentions) insertMentionAtCaret(editor, m);
+    const existingIds = new Set(
+      Array.from(editor.querySelectorAll(`[${MENTION_DATA_ATTR}]`))
+        .map((el) => el.getAttribute(MENTION_DATA_ATTR))
+        .filter((id): id is string => !!id)
+    );
+    for (const m of mentions) {
+      if (existingIds.has(m.id)) continue;
+      insertMentionAtCaret(editor, m);
+      existingIds.add(m.id);
+    }
     onMentionsConsumed?.();
     syncEmpty();
   }, [mentions, onMentionsConsumed, syncEmpty]);
