@@ -105,21 +105,12 @@ function MentionInChatButton({
   const handleClick = useCallback(() => {
     setOpen(true);
     const label = projectTitle ? `${milestoneTitle} from ${projectTitle}` : milestoneTitle;
-    // refText uses the project slug (stable id `get_project_details` accepts directly)
-    // plus the milestone uid; agent doesn't have to disambiguate by free-text title.
-    const projectRef = projectSlug
-      ? `project ${projectSlug}`
-      : projectTitle
-        ? `project "${projectTitle}"`
-        : null;
-    const refText = projectRef
-      ? `milestone "${milestoneTitle}" (uid: ${milestoneUid}) in ${projectRef}`
-      : `milestone "${milestoneTitle}" (uid: ${milestoneUid})`;
     addMention({
       id: `milestone-${milestoneUid}`,
       kind: "milestone",
       label,
-      refText,
+      primaryId: milestoneUid,
+      parentSlug: projectSlug,
     });
   }, [setOpen, addMention, milestoneUid, milestoneTitle, projectTitle, projectSlug]);
 

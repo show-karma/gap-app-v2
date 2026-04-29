@@ -11,6 +11,7 @@ import {
 } from "@heroicons/react/20/solid";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAccount } from "wagmi";
+import { OutputsAndOutcomes } from "@/components/Pages/Project/Impact/OutputsAndOutcomes";
 import { Button } from "@/components/Utilities/Button";
 import { Badge } from "@/components/ui/badge";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
@@ -177,14 +178,11 @@ function ProjectAskButton({
 
   const handleClick = useCallback(() => {
     setOpen(true);
-    // Prefer the slug — `get_project_details` accepts UID or slug, and the slug
-    // is the stable handle the agent can resolve without a search hop.
-    const refText = projectSlug ? `project ${projectSlug}` : `project "${projectTitle}"`;
     addMention({
       id: `project-${projectUid}`,
       kind: "project",
       label: projectTitle,
-      refText,
+      primaryId: projectSlug ?? projectUid,
     });
   }, [setOpen, addMention, projectUid, projectTitle, projectSlug]);
 
@@ -589,6 +587,13 @@ function MilestonesReviewPageContent({
 
       {/* Content Area */}
       <div className="px-4 sm:px-6 lg:px-8 py-6">
+        {/* Project Impact Metrics — collapsed by default. Reviewers see a
+            one-line summary (count + last updated) without losing milestones
+            below the fold; expanding shows the same charts/tables as /impact. */}
+        <div className="mb-6">
+          <OutputsAndOutcomes projectUid={project.uid} columns={2} collapsible />
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Main Content - Milestones */}
           <div className="flex flex-col gap-6 min-w-0">

@@ -9,15 +9,21 @@ const milestoneMention: ChatMention = {
   id: "milestone-abc",
   kind: "milestone",
   label: "Milestone 1 from Fund#2",
-  refText: 'milestone "Milestone 1" in project "Fund#2"',
+  primaryId: "0xmilestone-uid",
+  parentSlug: "fund-2",
 };
+
+const milestoneToken =
+  "@[Milestone 1 from Fund#2](mention:milestone:0xmilestone-uid?project=fund-2)";
 
 const secondMention: ChatMention = {
   id: "milestone-def",
   kind: "milestone",
   label: "Milestone 2",
-  refText: 'milestone "Milestone 2"',
+  primaryId: "0xmilestone-uid-2",
 };
+
+const secondToken = "@[Milestone 2](mention:milestone:0xmilestone-uid-2)";
 
 function makeEditor(): HTMLDivElement {
   const editor = document.createElement("div");
@@ -37,12 +43,20 @@ function placeCaretAtEnd(editor: HTMLElement) {
 
 describe("WidgetInput helpers", () => {
   describe("buildMentionChip", () => {
-    it("creates a contenteditable=false span with @-prefixed label", () => {
+    it("creates a contenteditable=false span with @-prefixed label and stamped attrs", () => {
       const chip = buildMentionChip(milestoneMention);
       expect(chip.contentEditable).toBe("false");
       expect(chip.textContent).toBe("@Milestone 1 from Fund#2");
       expect(chip.getAttribute("data-mention")).toBe("milestone-abc");
-      expect(chip.getAttribute("data-mention-ref-text")).toBe(milestoneMention.refText);
+      expect(chip.getAttribute("data-mention-kind")).toBe("milestone");
+      expect(chip.getAttribute("data-mention-primary-id")).toBe("0xmilestone-uid");
+      expect(chip.getAttribute("data-mention-parent-slug")).toBe("fund-2");
+      expect(chip.getAttribute("data-mention-label")).toBe("Milestone 1 from Fund#2");
+    });
+
+    it("omits parent-slug attr when not provided", () => {
+      const chip = buildMentionChip(secondMention);
+      expect(chip.hasAttribute("data-mention-parent-slug")).toBe(false);
     });
   });
 
@@ -99,19 +113,17 @@ describe("WidgetInput helpers", () => {
       expect(serializeEditor(editor)).toBe("Hello agent");
     });
 
-    it("substitutes chip refText for chip nodes", () => {
+    it("substitutes mention token for chip nodes", () => {
       const editor = makeEditor();
       editor.appendChild(buildMentionChip(milestoneMention));
       editor.appendChild(document.createTextNode(" what's the status?"));
-      expect(serializeEditor(editor)).toBe(
-        'milestone "Milestone 1" in project "Fund#2" what\'s the status?'
-      );
+      expect(serializeEditor(editor)).toBe(`${milestoneToken} what's the status?`);
     });
 
-    it("returns refText only when no typed text follows", () => {
+    it("returns token only when no typed text follows", () => {
       const editor = makeEditor();
       editor.appendChild(buildMentionChip(milestoneMention));
-      expect(serializeEditor(editor)).toBe('milestone "Milestone 1" in project "Fund#2"');
+      expect(serializeEditor(editor)).toBe(milestoneToken);
     });
 
     it("preserves multiple chips in order", () => {
@@ -120,9 +132,7 @@ describe("WidgetInput helpers", () => {
       editor.appendChild(document.createTextNode(" and "));
       editor.appendChild(buildMentionChip(secondMention));
       editor.appendChild(document.createTextNode(" — compare"));
-      expect(serializeEditor(editor)).toBe(
-        'milestone "Milestone 1" in project "Fund#2" and milestone "Milestone 2" — compare'
-      );
+      expect(serializeEditor(editor)).toBe(`${milestoneToken} and ${secondToken} — compare`);
     });
 
     it("converts <br> to newline", () => {
@@ -208,7 +218,7 @@ describe("WidgetInput", () => {
       expect(onMentionsConsumed).toHaveBeenCalled();
     });
 
-    it("submits message with chip refText substituted inline", async () => {
+    it("submits message with chip token substituted inline", async () => {
       const onSubmit = vi.fn();
       const onMentionsConsumed = vi.fn();
       render(
@@ -226,7 +236,7 @@ describe("WidgetInput", () => {
       await userEvent.click(screen.getByRole("button", { name: /send/i }));
       expect(onSubmit).toHaveBeenCalledTimes(1);
       const sent = onSubmit.mock.calls[0][0] as string;
-      expect(sent).toContain('milestone "Milestone 1" in project "Fund#2"');
+      expect(sent).toContain(milestoneToken);
       expect(sent).toContain("what's the status?");
     });
 
@@ -234,7 +244,7 @@ describe("WidgetInput", () => {
       const onSubmit = vi.fn();
       render(<WidgetInput onSubmit={onSubmit} isStreaming={false} mentions={[milestoneMention]} />);
       await userEvent.click(screen.getByRole("button", { name: /send/i }));
-      expect(onSubmit).toHaveBeenCalledWith('milestone "Milestone 1" in project "Fund#2"');
+      expect(onSubmit).toHaveBeenCalledWith(milestoneToken);
     });
   });
 });

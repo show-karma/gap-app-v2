@@ -5,6 +5,7 @@ import { type KeyboardEvent, memo, useCallback, useEffect, useRef, useState } fr
 import { Button } from "@/components/ui/button";
 import type { ChatMention } from "@/store/agentChat";
 import { cn } from "@/utilities/tailwind";
+import { mentionToToken } from "./mention-token";
 
 interface WidgetInputProps {
   onSubmit: (text: string) => void;
@@ -23,18 +24,34 @@ interface WidgetInputProps {
 }
 
 const MENTION_DATA_ATTR = "data-mention";
-const MENTION_REF_TEXT_ATTR = "data-mention-ref-text";
-const NBSP = " ";
+const MENTION_KIND_ATTR = "data-mention-kind";
+const MENTION_PRIMARY_ID_ATTR = "data-mention-primary-id";
+const MENTION_PARENT_SLUG_ATTR = "data-mention-parent-slug";
+const MENTION_LABEL_ATTR = "data-mention-label";
+const NBSP = " ";
 
 function buildMentionChip(mention: ChatMention): HTMLSpanElement {
   const span = document.createElement("span");
   span.contentEditable = "false";
   span.setAttribute(MENTION_DATA_ATTR, mention.id);
-  span.setAttribute(MENTION_REF_TEXT_ATTR, mention.refText);
+  span.setAttribute(MENTION_KIND_ATTR, mention.kind);
+  span.setAttribute(MENTION_PRIMARY_ID_ATTR, mention.primaryId);
+  if (mention.parentSlug) span.setAttribute(MENTION_PARENT_SLUG_ATTR, mention.parentSlug);
+  span.setAttribute(MENTION_LABEL_ATTR, mention.label);
   span.className =
     "inline-flex items-center align-baseline rounded-full bg-brand-blue/10 text-brand-blue px-1.5 py-0.5 mx-0.5 text-xs font-medium select-none cursor-default";
   span.textContent = `@${mention.label}`;
   return span;
+}
+
+function chipToMention(el: HTMLElement): ChatMention | null {
+  const id = el.getAttribute(MENTION_DATA_ATTR);
+  const kind = el.getAttribute(MENTION_KIND_ATTR) as ChatMention["kind"] | null;
+  const primaryId = el.getAttribute(MENTION_PRIMARY_ID_ATTR);
+  const label = el.getAttribute(MENTION_LABEL_ATTR);
+  if (!id || !kind || !primaryId || !label) return null;
+  const parentSlug = el.getAttribute(MENTION_PARENT_SLUG_ATTR) ?? undefined;
+  return { id, kind, primaryId, label, parentSlug };
 }
 
 function placeCaretAfter(node: Node) {
@@ -73,8 +90,8 @@ function insertMentionAtCaret(editor: HTMLDivElement, mention: ChatMention) {
 }
 
 /** Recursively walk the editor and produce the message body to send.
- * Mention chips emit their `refText` and their visible @label children are
- * skipped; everything else becomes plain text. <br>/block boundaries become
+ * Mention chips emit their structured token (visible label + agent handle);
+ * their visible @label children are skipped. <br>/block boundaries become
  * newlines. */
 function serializeEditor(editor: HTMLDivElement): string {
   let out = "";
@@ -86,7 +103,8 @@ function serializeEditor(editor: HTMLDivElement): string {
     if (node.nodeType !== Node.ELEMENT_NODE) return;
     const el = node as HTMLElement;
     if (el.hasAttribute(MENTION_DATA_ATTR)) {
-      out += el.getAttribute(MENTION_REF_TEXT_ATTR) ?? "";
+      const mention = chipToMention(el);
+      if (mention) out += mentionToToken(mention);
       return;
     }
     if (el.tagName === "BR") {

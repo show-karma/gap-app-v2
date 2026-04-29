@@ -19,17 +19,26 @@ export interface ChatMessage {
 
 /**
  * A pre-seeded reference (milestone, project, etc.) rendered as a chip in the
- * input. The user still has to press Send — chips are not auto-submitted.
+ * input AND in the sent message bubble. The user still has to press Send —
+ * chips are not auto-submitted.
  *
  * - `label` is what shows in the pill ("Milestone 1 from Fund#2")
- * - `refText` is what gets prepended to the message sent to the LLM
- *   ("milestone \"Milestone 1\" in project \"Fund#2\"")
+ * - `primaryId` is the agent-resolvable handle (slug for project, uid for
+ *   milestone) — `get_project_details` accepts UID or slug directly.
+ * - `parentSlug` is an optional project slug carried alongside a milestone
+ *   so the agent has unambiguous project context.
+ *
+ * On submit, each chip is serialized as a markdown-link-shaped token:
+ *   `@[<label>](mention:<kind>:<primaryId>[?project=<parentSlug>])`
+ * The chat shell detects this token in user messages and renders it as a pill
+ * matching the input chip styling.
  */
 export interface ChatMention {
   id: string;
   kind: "milestone" | "project" | "application";
   label: string;
-  refText: string;
+  primaryId: string;
+  parentSlug?: string;
 }
 
 interface AgentChatStore {
