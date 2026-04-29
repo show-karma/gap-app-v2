@@ -35,21 +35,19 @@ const PILL_CLASSES =
 export function renderWithMentionPills(content: string): ReactNode {
   const parts: ReactNode[] = [];
   let lastIdx = 0;
-  const re = new RegExp(MENTION_TOKEN_PATTERN.source, "g");
-  let match: RegExpExecArray | null = re.exec(content);
   let i = 0;
-  while (match !== null) {
-    if (match.index > lastIdx) {
-      parts.push(<Fragment key={`t-${i}`}>{content.slice(lastIdx, match.index)}</Fragment>);
+  for (const match of content.matchAll(MENTION_TOKEN_PATTERN)) {
+    const idx = match.index ?? 0;
+    if (idx > lastIdx) {
+      parts.push(<Fragment key={`t-${i}`}>{content.slice(lastIdx, idx)}</Fragment>);
     }
     parts.push(
       <span key={`m-${i}-${match[3]}`} className={PILL_CLASSES}>
         @{match[1]}
       </span>
     );
-    lastIdx = match.index + match[0].length;
+    lastIdx = idx + match[0].length;
     i += 1;
-    match = re.exec(content);
   }
   if (lastIdx < content.length) {
     parts.push(<Fragment key={`t-${i}`}>{content.slice(lastIdx)}</Fragment>);

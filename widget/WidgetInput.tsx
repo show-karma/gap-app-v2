@@ -137,10 +137,12 @@ export const WidgetInput = memo(function WidgetInput({
   onMentionsConsumed,
 }: WidgetInputProps) {
   const editorRef = useRef<HTMLDivElement | null>(null);
-  // Re-renders are cheap; a single `version` tick lets the send button reflect
-  // emptiness without making the contenteditable a controlled component.
-  const [, setVersion] = useState(0);
-  const bump = useCallback(() => setVersion((v) => v + 1), []);
+  // Drives the send button's disabled state without making the contenteditable
+  // a controlled component. Synced from the live editor on input/insert/submit.
+  const [isEmpty, setIsEmpty] = useState(true);
+  const syncEmpty = useCallback(() => {
+    setIsEmpty(isEditorEmpty(editorRef.current));
+  }, []);
 
   // Drain queued mentions: insert each one inline, then notify the host.
   useEffect(() => {
@@ -148,8 +150,8 @@ export const WidgetInput = memo(function WidgetInput({
     if (!editor || !mentions || mentions.length === 0) return;
     for (const m of mentions) insertMentionAtCaret(editor, m);
     onMentionsConsumed?.();
-    bump();
-  }, [mentions, onMentionsConsumed, bump]);
+    syncEmpty();
+  }, [mentions, onMentionsConsumed, syncEmpty]);
 
   const submit = useCallback(() => {
     const editor = editorRef.current;
@@ -157,9 +159,9 @@ export const WidgetInput = memo(function WidgetInput({
     const body = serializeEditor(editor);
     if (body.length === 0) return;
     onSubmit(body);
-    editor.innerHTML = "";
-    bump();
-  }, [isStreaming, onSubmit, bump]);
+    editor.replaceChildren();
+    setIsEmpty(true);
+  }, [isStreaming, onSubmit]);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
@@ -185,7 +187,7 @@ export const WidgetInput = memo(function WidgetInput({
     placeCaretAfter(node);
   }, []);
 
-  const canSend = !isStreaming && !isEditorEmpty(editorRef.current);
+  const canSend = !isStreaming && !isEmpty;
 
   return (
     <div className="border-t border-border p-3">
@@ -208,7 +210,7 @@ export const WidgetInput = memo(function WidgetInput({
           suppressContentEditableWarning
           onKeyDown={handleKeyDown}
           onPaste={handlePaste}
-          onInput={bump}
+          onInput={syncEmpty}
           data-placeholder={placeholder}
           className={cn(
             "flex-1 min-h-6 max-h-24 overflow-y-auto py-1.5 text-sm leading-6 outline-none",
