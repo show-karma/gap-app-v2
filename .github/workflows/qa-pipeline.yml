@@ -289,10 +289,20 @@ jobs:
   # qa-execution and dogfood run IN PARALLEL after the shared build,
   # each downloading the prebuilt .next/ artifact instead of rebuilding.
 
+  # Sharded QA execution: split scenarios across parallel jobs to roughly
+  # halve wall time. The `public` shard runs P-prefixed scenarios with no
+  # auth (fastest); the `auth` shard runs A-prefixed scenarios after Privy
+  # login. Each shard reads $SHARD_ID and self-filters via the qa-executor
+  # skill. Each uploads `qa-results-<shard>.json`; the verdict job
+  # aggregates by globbing all shards.
   qa-execution:
     needs: [gate-check, qa-plan, build]
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [public, auth]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -375,30 +385,36 @@ jobs:
       - name: Add Claude Code to PATH
         run: echo "$HOME/.npm-global/bin" >> "$GITHUB_PATH"
 
-      - name: Execute QA Plan
+      - name: Execute QA Plan (shard ${{ matrix.shard }})
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           PR_NUMBER: ${{ needs.gate-check.outputs.pr_number }}
           QA_TEST_EMAIL: ${{ secrets.QA_TEST_EMAIL }}
           QA_TEST_OTP: ${{ secrets.QA_TEST_OTP }}
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          SHARD_ID: ${{ matrix.shard }}
         run: |
           claude --print --dangerously-skip-permissions \
             "You are a strict senior QA executor. Read and follow the skill at .claude/skills/qa-executor/SKILL.md exactly.
             PR #$PR_NUMBER. Target: http://localhost:3000 (always — never a preview/vercel URL).
-            QA Plan is at qa-plan.md. Execute ALL scenarios — both Public (P1, P2...) and Authenticated (A1, A2...).
+            SHARD_ID=$SHARD_ID — execute ONLY scenarios in this shard per the skill's 'Sharded Execution' section.
+              - SHARD_ID=public: run P-prefixed scenarios. Skip Privy login entirely.
+              - SHARD_ID=auth: run A-prefixed scenarios. Login first, then execute.
+            QA Plan is at qa-plan.md.
             For authenticated scenarios, login with QA_TEST_EMAIL + QA_TEST_OTP env vars.
-            Post results as a comment on PR #$PR_NUMBER via gh pr comment. Save results to qa-results.json."
+            Apply the skill's 'Speed Rules' strictly — targeted waits, no networkidle after in-page actions.
+            After execution, rename qa-results.json to qa-results-\$SHARD_ID.json (the skill describes this).
+            Post results as a comment on PR #$PR_NUMBER via gh pr comment, with the shard label in the heading (e.g. 'QA Execution — public shard')."
         timeout-minutes: 20
 
-      - name: Upload QA execution artifacts
+      - name: Upload QA execution artifacts (shard ${{ matrix.shard }})
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: qa-execution-results
+          name: qa-execution-results-${{ matrix.shard }}
           path: |
             qa-output/
-            qa-results.json
+            qa-results-${{ matrix.shard }}.json
           retention-days: 7
           if-no-files-found: ignore
 
@@ -552,10 +568,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Download QA results
+      - name: Download QA results (all shards)
         uses: actions/download-artifact@v4
         with:
-          name: qa-execution-results
+          # Pull every per-shard artifact (qa-execution-results-public,
+          # qa-execution-results-auth, ...) into the same directory so
+          # the aggregator can glob qa-results-*.json.
+          pattern: qa-execution-results-*
+          merge-multiple: true
         continue-on-error: true
 
       - name: Download dogfood results
@@ -586,16 +606,32 @@ jobs:
             let criticalCount = 0;
             let highCount = 0;
 
+            // Aggregate qa-results-*.json from all sharded qa-execution jobs
+            // (qa-results-public.json, qa-results-auth.json, ...). A missing
+            // file means that shard didn't upload — counted as exec failure
+            // already via QA_EXEC_RESULT, so we silently skip here.
             try {
-              const qaResults = JSON.parse(fs.readFileSync('qa-results.json', 'utf8'));
-              for (const s of (qaResults.scenarios || [])) {
-                if (s.result === 'FAIL') {
-                  if (s.severity?.toLowerCase() === 'critical') criticalCount++;
-                  if (s.severity?.toLowerCase() === 'high') highCount++;
+              const shardFiles = fs.readdirSync('.').filter(f =>
+                /^qa-results-.+\.json$/.test(f)
+              );
+              if (shardFiles.length === 0) {
+                console.log('No qa-results-*.json files found from sharded jobs');
+              }
+              for (const file of shardFiles) {
+                try {
+                  const r = JSON.parse(fs.readFileSync(file, 'utf8'));
+                  for (const s of (r.scenarios || [])) {
+                    if (s.result === 'FAIL') {
+                      if (s.severity?.toLowerCase() === 'critical') criticalCount++;
+                      if (s.severity?.toLowerCase() === 'high') highCount++;
+                    }
+                  }
+                } catch (e) {
+                  console.log(`Could not parse ${file}: ${e.message}`);
                 }
               }
             } catch (e) {
-              console.log('Could not parse qa-results.json: ' + e.message);
+              console.log('Could not enumerate qa-results-*.json: ' + e.message);
             }
 
             try {
