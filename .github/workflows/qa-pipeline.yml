@@ -1,9 +1,21 @@
 name: QA Pipeline
 
 on:
-  workflow_run:
-    workflows: ['Claude Code']
-    types: [completed]
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - '**/*.png'
+      - '**/*.jpg'
+      - '**/*.jpeg'
+      - '**/*.svg'
+      - '**/*.gif'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/PULL_REQUEST_TEMPLATE.md'
+      - '.github/CODEOWNERS'
+      - 'LICENSE'
+      - '.gitignore'
   workflow_dispatch:
     inputs:
       pr_number:
@@ -16,11 +28,14 @@ env:
   NEXT_PUBLIC_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_PROJECT_ID }}
   NEXT_PUBLIC_GAP_INDEXER_URL: https://gapstagapi.karmahq.xyz
 
+concurrency:
+  group: qa-pipeline-${{ github.event.pull_request.number || github.event.inputs.pr_number }}
+  cancel-in-progress: true
+
 jobs:
   gate-check:
-    if: >
-      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
-      github.event_name == 'workflow_dispatch'
+    # For pull_request events: always run gate-check (we check Claude Code check-run inside).
+    # For workflow_dispatch: always run.
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
@@ -28,7 +43,7 @@ jobs:
       pr_number: ${{ steps.check.outputs.pr_number }}
       head_sha: ${{ steps.check.outputs.head_sha }}
     steps:
-      - name: Check review verdict
+      - name: Check Claude Code verdict and PR state
         id: check
         uses: actions/github-script@v7
         with:
@@ -49,20 +64,10 @@ jobs:
                 return;
               }
             } else {
-              headSha = context.payload.workflow_run.head_sha;
-              const headBranch = context.payload.workflow_run.head_branch;
-              const { data: prs } = await github.rest.pulls.list({
-                owner, repo, state: 'open',
-                head: `${owner}:${headBranch}`, per_page: 1
-              });
-              if (prs.length === 0) {
-                console.log('No open PR found');
-                core.setOutput('should_run', 'false');
-                return;
-              }
-              const pr = prs[0];
-              prNumber = pr.number;
-              if (pr.draft) {
+              // pull_request event — use event payload directly
+              prNumber = context.payload.pull_request.number;
+              headSha = context.payload.pull_request.head.sha;
+              if (context.payload.pull_request.draft) {
                 console.log('PR is draft, skipping');
                 core.setOutput('should_run', 'false');
                 return;
@@ -72,48 +77,67 @@ jobs:
             core.setOutput('head_sha', headSha);
             core.setOutput('pr_number', prNumber);
 
-            // Poll for verdict comment
+            // For pull_request events: verify the latest "Claude Code" check-run
+            // on this commit has succeeded. If it hasn't run yet or is in progress,
+            // skip gracefully — Claude Code will trigger another push event when
+            // it completes, which will start a fresh QA pipeline run.
             if (!isManual) {
-              let reviewComment = null;
-              // Claude Code workflow_run completes only after posting the
-              // verdict comment, so the comment is essentially always there
-              // by the time we poll. Keep a short retry for race conditions.
-              const maxAttempts = 5;
+              const { data: checkRuns } = await github.rest.checks.listForRef({
+                owner, repo, ref: headSha, per_page: 100
+              });
 
-              for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-                const { data: comments } = await github.rest.issues.listComments({
-                  owner, repo, issue_number: prNumber, per_page: 100
-                });
+              const claudeRuns = checkRuns.check_runs
+                .filter(r => r.name === 'Claude Code')
+                .sort((a, b) => new Date(b.started_at) - new Date(a.started_at));
 
-                reviewComment = [...comments].reverse().find(c =>
-                  (c.user.login === 'github-actions[bot]' || c.user.login.includes('claude') || c.user.login.includes('karma')) &&
-                  (c.body.includes('APPROVE') || c.body.includes('REQUEST CHANGES'))
-                );
-
-                if (reviewComment) break;
-                console.log('Waiting for review verdict... (' + attempt + '/' + maxAttempts + ')');
-                await new Promise(r => setTimeout(r, 10000));
-              }
-
-              if (!reviewComment) {
-                console.log('No Claude Code review verdict found after polling');
+              if (claudeRuns.length === 0) {
+                console.log('No "Claude Code" check-run found on this commit — skipping (Claude Code will trigger QA when it finishes)');
                 core.setOutput('should_run', 'false');
                 return;
               }
 
-              const verdict = reviewComment.body;
-              const isApproved = (verdict.includes('✅') || verdict.includes('⚠️')) && verdict.includes('APPROVE') && !verdict.includes('REQUEST CHANGES');
-              if (!isApproved) {
-                console.log('Review verdict is REQUEST CHANGES — skipping QA');
+              const latest = claudeRuns[0];
+              if (latest.status !== 'completed') {
+                console.log(`"Claude Code" check is ${latest.status} — skipping (will re-run when Claude Code finishes)`);
                 core.setOutput('should_run', 'false');
                 return;
               }
-              console.log('✅ Review approved');
+
+              if (latest.conclusion !== 'success') {
+                console.log(`"Claude Code" check concluded with ${latest.conclusion} — skipping QA`);
+                core.setOutput('should_run', 'false');
+                return;
+              }
+
+              console.log('✅ Claude Code check succeeded');
+
+              // Additionally verify the PR-review verdict comment is APPROVE
+              const { data: comments } = await github.rest.issues.listComments({
+                owner, repo, issue_number: prNumber, per_page: 100
+              });
+
+              const reviewComment = [...comments].reverse().find(c =>
+                (c.user.login === 'github-actions[bot]' || c.user.login.includes('claude') || c.user.login.includes('karma')) &&
+                (c.body.includes('APPROVE') || c.body.includes('REQUEST CHANGES'))
+              );
+
+              if (reviewComment) {
+                const verdict = reviewComment.body;
+                const isApproved = (verdict.includes('✅') || verdict.includes('⚠️')) && verdict.includes('APPROVE') && !verdict.includes('REQUEST CHANGES');
+                if (!isApproved) {
+                  console.log('Review verdict is REQUEST CHANGES — skipping QA');
+                  core.setOutput('should_run', 'false');
+                  return;
+                }
+                console.log('✅ Review approved');
+              } else {
+                console.log('No review verdict comment found — proceeding (Claude Code check was successful)');
+              }
             } else {
-              console.log('Manual trigger — skipping verdict check');
+              console.log('Manual trigger — skipping Claude Code check');
             }
 
-            // Set pending commit status + post progress comment
+            // Set pending commit status + post/update consolidated progress comment
             await github.rest.repos.createCommitStatus({
               owner, repo, sha: headSha,
               state: 'pending',
@@ -122,21 +146,32 @@ jobs:
               target_url: `https://github.com/${owner}/${repo}/actions/runs/${process.env.GITHUB_RUN_ID}`
             });
 
-            await github.rest.issues.createComment({
-              owner, repo, issue_number: prNumber,
-              body: [
-                '## QA Pipeline',
-                '',
-                '| Stage | Status |',
-                '|-------|--------|',
-                '| QA Plan | ⏳ Running... |',
-                '| QA Execution | ⏳ Waiting |',
-                '| Dogfood | ⏳ Waiting |',
-                '| Verdict | ⏳ Waiting |',
-                '',
-                `[View workflow run](https://github.com/${owner}/${repo}/actions/runs/${process.env.GITHUB_RUN_ID})`
-              ].join('\n')
+            const marker = '<!-- qa-pipeline-status -->';
+            const progressBody = [
+              marker,
+              '## QA Pipeline',
+              '',
+              '| Stage | Status |',
+              '|-------|--------|',
+              '| QA Plan | ⏳ Running... |',
+              '| Build | ⏳ Running... |',
+              '| QA Execution | ⏳ Waiting |',
+              '| Dogfood | ⏳ Waiting |',
+              '| Verdict | ⏳ Waiting |',
+              '',
+              `[View workflow run](https://github.com/${owner}/${repo}/actions/runs/${process.env.GITHUB_RUN_ID})`
+            ].join('\n');
+
+            // Find existing pipeline comment by marker; update or create.
+            const { data: allComments } = await github.rest.issues.listComments({
+              owner, repo, issue_number: prNumber, per_page: 100
             });
+            const existing = allComments.find(c => c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body: progressBody });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number: prNumber, body: progressBody });
+            }
 
             core.setOutput('should_run', 'true');
 
@@ -152,7 +187,24 @@ jobs:
           fetch-depth: 0
           ref: ${{ needs.gate-check.outputs.head_sha }}
 
+      - name: Compute changed-file list for cache key
+        id: changed-files
+        # Write inside $GITHUB_WORKSPACE so hashFiles() can read it — hashFiles
+        # only sees workspace-relative paths, not /tmp.
+        run: |
+          git diff --name-only origin/main...HEAD | sort > .qa-plan-changed-files.txt
+          echo "Changed files:"
+          cat .qa-plan-changed-files.txt
+
+      - name: Cache QA plan output
+        id: qa-plan-cache
+        uses: actions/cache@v4
+        with:
+          path: qa-plan.md
+          key: qa-plan-${{ hashFiles('.qa-plan-changed-files.txt') }}
+
       - name: Generate GitHub App token
+        if: steps.qa-plan-cache.outputs.cache-hit != 'true'
         id: app-token
         uses: actions/create-github-app-token@v1
         with:
@@ -160,10 +212,12 @@ jobs:
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
       - name: Get ISO week for cache key
+        if: steps.qa-plan-cache.outputs.cache-hit != 'true'
         id: weeknum
         run: echo "weeknum=$(date -u +'%G-W%V')" >> "$GITHUB_OUTPUT"
 
       - name: Cache Claude Code install
+        if: steps.qa-plan-cache.outputs.cache-hit != 'true'
         id: claude-cache
         uses: actions/cache@v4
         with:
@@ -173,16 +227,18 @@ jobs:
             claude-code-${{ runner.os }}-
 
       - name: Install Claude Code
-        if: steps.claude-cache.outputs.cache-hit != 'true'
+        if: steps.qa-plan-cache.outputs.cache-hit != 'true' && steps.claude-cache.outputs.cache-hit != 'true'
         run: |
           mkdir -p ~/.npm-global
           npm config set prefix ~/.npm-global
           npm install -g @anthropic-ai/claude-code
 
       - name: Add Claude Code to PATH
+        if: steps.qa-plan-cache.outputs.cache-hit != 'true'
         run: echo "$HOME/.npm-global/bin" >> "$GITHUB_PATH"
 
       - name: Generate QA Plan
+        if: steps.qa-plan-cache.outputs.cache-hit != 'true'
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           PR_NUMBER: ${{ needs.gate-check.outputs.pr_number }}
@@ -192,7 +248,6 @@ jobs:
             "You are a strict senior QA engineer. Read and follow the skill at .claude/skills/qa-plan-generator/SKILL.md exactly.
             PR number: $PR_NUMBER.
             Generate a QA plan for this PR. Save to qa-plan.md.
-            Then post the QA plan as a comment on PR #$PR_NUMBER using the GitHub CLI (gh pr comment $PR_NUMBER --body-file qa-plan-comment.md). Write the comment content to qa-plan-comment.md first, then use gh to post it.
             Be strict. Be concise. No fluff."
         timeout-minutes: 15
 
@@ -205,7 +260,7 @@ jobs:
           retention-days: 7
           if-no-files-found: ignore
 
-      - name: Update progress comment
+      - name: Update progress comment (QA Plan done)
         if: always()
         uses: actions/github-script@v7
         env:
@@ -217,13 +272,20 @@ jobs:
             const repo = context.repo.repo;
             const prNumber = parseInt(process.env.PR_NUMBER, 10);
             const planOk = process.env.PLAN_RESULT === 'success';
+            const marker = '<!-- qa-pipeline-status -->';
             const { data: comments } = await github.rest.issues.listComments({ owner, repo, issue_number: prNumber, per_page: 100 });
-            const pc = [...comments].reverse().find(c => c.body.includes('## QA Pipeline') && c.body.includes('QA Plan'));
+            const pc = comments.find(c => c.body.includes(marker));
             if (pc) {
               await github.rest.issues.updateComment({ owner, repo, comment_id: pc.id,
-                body: ['## QA Pipeline','','| Stage | Status |','|-------|--------|',
+                body: [
+                  marker,
+                  '## QA Pipeline', '',
+                  '| Stage | Status |', '|-------|--------|',
                   `| QA Plan | ${planOk ? '✅ Done' : '❌ Failed'} |`,
-                  '| QA Execution | ⏳ Building & running... |','| Dogfood | ⏳ Building & running... |','| Verdict | ⏳ Waiting |','',
+                  '| Build | ⏳ Running... |',
+                  '| QA Execution | ⏳ Building & running... |',
+                  '| Dogfood | ⏳ Building & running... |',
+                  '| Verdict | ⏳ Waiting |', '',
                   `[View workflow run](https://github.com/${owner}/${repo}/actions/runs/${process.env.GITHUB_RUN_ID})`
                 ].join('\n') });
             }
@@ -285,6 +347,36 @@ jobs:
           path: next-build.tar.gz
           retention-days: 1
           if-no-files-found: error
+
+      - name: Update progress comment (Build done)
+        if: always()
+        uses: actions/github-script@v7
+        env:
+          PR_NUMBER: ${{ needs.gate-check.outputs.pr_number }}
+          BUILD_RESULT: ${{ job.status }}
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const prNumber = parseInt(process.env.PR_NUMBER, 10);
+            const buildOk = process.env.BUILD_RESULT === 'success';
+            const marker = '<!-- qa-pipeline-status -->';
+            const { data: comments } = await github.rest.issues.listComments({ owner, repo, issue_number: prNumber, per_page: 100 });
+            const pc = comments.find(c => c.body.includes(marker));
+            if (pc) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: pc.id,
+                body: [
+                  marker,
+                  '## QA Pipeline', '',
+                  '| Stage | Status |', '|-------|--------|',
+                  '| QA Plan | ✅ Done |',
+                  `| Build | ${buildOk ? '✅ Done' : '❌ Failed'} |`,
+                  `| QA Execution | ${buildOk ? '⏳ Running...' : '⏭️ Skipped (build failed)'} |`,
+                  `| Dogfood | ${buildOk ? '⏳ Running...' : '⏭️ Skipped (build failed)'} |`,
+                  '| Verdict | ⏳ Waiting |', '',
+                  `[View workflow run](https://github.com/${owner}/${repo}/actions/runs/${process.env.GITHUB_RUN_ID})`
+                ].join('\n') });
+            }
 
   # qa-execution and dogfood run IN PARALLEL after the shared build,
   # each downloading the prebuilt .next/ artifact instead of rebuilding.
@@ -404,7 +496,7 @@ jobs:
             For authenticated scenarios, login with QA_TEST_EMAIL + QA_TEST_OTP env vars.
             Apply the skill's 'Speed Rules' strictly — targeted waits, no networkidle after in-page actions.
             After execution, rename qa-results.json to qa-results-\$SHARD_ID.json (the skill describes this).
-            Post results as a comment on PR #$PR_NUMBER via gh pr comment, with the shard label in the heading (e.g. 'QA Execution — public shard')."
+            Do NOT post a separate PR comment — results will be aggregated in the pipeline verdict comment."
         timeout-minutes: 20
 
       - name: Upload QA execution artifacts (shard ${{ matrix.shard }})
@@ -422,6 +514,11 @@ jobs:
     needs: [gate-check, qa-plan, build]
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    # Note: dogfood is intentionally NOT matrix-split. The exploratory nature
+    # of dogfood (navigating changed pages, classifying PR-caused vs pre-existing
+    # issues, filing GitHub issues for pre-existing bugs) does not decompose
+    # cleanly by P/A shard — the skill prompt is holistic and stateful. Splitting
+    # it would risk double-filing issues and producing incoherent results.
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -530,25 +627,10 @@ jobs:
             - **PR-caused**: Affected file appears in the git diff.
             - **Pre-existing**: Does NOT appear in the git diff. Create a GitHub issue using gh issue create --title '[QA] <title>' --body '<description>' --label bug.
 
-            Post results as a comment on PR #$PR_NUMBER using gh pr comment. Format:
-
-            ## Dogfood (3/3)
-
-            **PR-caused issues**: X found (Y critical, Z high)
-            **Pre-existing issues**: N found (created as GitHub issues)
-
-            ### PR-Caused
-            | # | Issue | Severity | Category |
-            |---|-------|----------|----------|
-
-            ### Pre-existing (filed as issues)
-            | # | Issue | Severity | GitHub Issue |
-            |---|-------|----------|-------------|
-
-            **Verdict**: PASS or FAIL (based on PR-caused Critical/High only)
-
             Save to dogfood-results.json: {\"total\":N,\"critical\":N,\"high\":N,\"medium\":N,\"low\":N,\"preexisting\":N,\"blocking\":bool}
-            critical/high counts = PR-caused only."
+            critical/high counts = PR-caused only.
+
+            Do NOT post a separate PR comment — results will be aggregated in the pipeline verdict comment."
         timeout-minutes: 20
 
       - name: Upload dogfood artifacts
@@ -667,27 +749,28 @@ jobs:
               target_url: `https://github.com/${owner}/${repo}/actions/runs/${process.env.RUN_ID}`
             });
 
-            // Update progress comment with actual job results
+            // Update the single consolidated pipeline comment with final verdict
             const prNumber = parseInt(process.env.PR_NUMBER, 10);
             const icon = (r) => r === 'success' ? '✅ Done' : r === 'skipped' ? '⏭️ Skipped' : '❌ Failed';
             const verdictIcon = hasBlockingIssues ? '❌' : '✅';
             const verdictText = hasBlockingIssues ? `FAIL — ${description}` : 'PASS — no blocking issues';
+            const marker = '<!-- qa-pipeline-status -->';
 
             const { data: cmts } = await github.rest.issues.listComments({
               owner, repo, issue_number: prNumber, per_page: 100
             });
-            const pc = [...cmts].reverse().find(c =>
-              c.body.includes('## QA Pipeline') && c.body.includes('QA Plan')
-            );
+            const pc = cmts.find(c => c.body.includes(marker));
             if (pc) {
               await github.rest.issues.updateComment({
                 owner, repo, comment_id: pc.id,
                 body: [
+                  marker,
                   '## QA Pipeline',
                   '',
                   '| Stage | Status |',
                   '|-------|--------|',
                   '| QA Plan | ✅ Done |',
+                  '| Build | ✅ Done |',
                   `| QA Execution | ${icon(execResult)} |`,
                   `| Dogfood | ${icon(dogfoodResult)} |`,
                   `| **Verdict** | **${verdictIcon} ${verdictText}** |`,
