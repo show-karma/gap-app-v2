@@ -79,6 +79,7 @@ export function FieldEditor({
 
   const watchedOptions = watch("options") || [];
   const hasOptions = ["select", "radio", "checkbox"].includes(field.type);
+  const isSectionHeader = field.type === "section_header";
 
   useEffect(() => {
     const subscription = watch((data) => {
@@ -144,42 +145,48 @@ export function FieldEditor({
             htmlFor="field-label"
             className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
           >
-            Field Label *
+            {isSectionHeader ? "Section Title *" : "Field Label *"}
           </label>
           <input
             id="field-label"
             {...register("label")}
             disabled={readOnly}
             className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
-            placeholder="Enter field label"
+            placeholder={isSectionHeader ? "Enter section title" : "Enter field label"}
           />
           {errors.label && <p className="text-red-500 text-sm mt-1">{errors.label.message}</p>}
         </div>
 
-        <div>
-          <label
-            htmlFor="field-placeholder"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-          >
-            Placeholder Text
-          </label>
-          <input
-            id="field-placeholder"
-            {...register("placeholder")}
-            disabled={readOnly}
-            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
-            placeholder="Enter placeholder text"
-          />
-        </div>
+        {!isSectionHeader && (
+          <div>
+            <label
+              htmlFor="field-placeholder"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
+              Placeholder Text
+            </label>
+            <input
+              id="field-placeholder"
+              {...register("placeholder")}
+              disabled={readOnly}
+              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
+              placeholder="Enter placeholder text"
+            />
+          </div>
+        )}
 
         <div>
           <div className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Description (Help Text)
+            {isSectionHeader ? "Section Description" : "Description (Help Text)"}
           </div>
           <MarkdownEditor
             value={field.description || ""}
             onChange={(value: string) => !readOnly && setValue("description", value)}
-            placeholderText="Optional description or help text"
+            placeholderText={
+              isSectionHeader
+                ? "Optional description shown beneath the section title"
+                : "Optional description or help text"
+            }
             height={200}
             minHeight={170}
             disabled={readOnly}
@@ -245,48 +252,50 @@ export function FieldEditor({
           </>
         )}
 
-        <div className="space-y-3">
-          <div className="flex items-center">
-            <input
-              id="field-required"
-              {...register("required")}
-              type="checkbox"
-              disabled={readOnly}
-              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
-            />
-            <label
-              htmlFor="field-required"
-              className="ml-2 text-sm text-gray-700 dark:text-gray-300"
-            >
-              Required field
-            </label>
-          </div>
-          {/* Private Field Toggle - Hidden in post-approval mode since all fields are automatically private */}
-          {!isPostApprovalMode && (
+        {!isSectionHeader && (
+          <div className="space-y-3">
             <div className="flex items-center">
               <input
-                id="field-private"
-                {...register("private")}
+                id="field-required"
+                {...register("required")}
                 type="checkbox"
                 disabled={readOnly}
                 className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
               />
               <label
-                htmlFor="field-private"
+                htmlFor="field-required"
                 className="ml-2 text-sm text-gray-700 dark:text-gray-300"
               >
-                Private field
+                Required field
               </label>
-              <QuestionTooltip
-                content="This field will be hidden from public application listings"
-                className="ml-2"
-              />
             </div>
-          )}
-        </div>
+            {/* Private Field Toggle - Hidden in post-approval mode since all fields are automatically private */}
+            {!isPostApprovalMode && (
+              <div className="flex items-center">
+                <input
+                  id="field-private"
+                  {...register("private")}
+                  type="checkbox"
+                  disabled={readOnly}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
+                />
+                <label
+                  htmlFor="field-private"
+                  className="ml-2 text-sm text-gray-700 dark:text-gray-300"
+                >
+                  Private field
+                </label>
+                <QuestionTooltip
+                  content="This field will be hidden from public application listings"
+                  className="ml-2"
+                />
+              </div>
+            )}
+          </div>
+        )}
 
         {/* AI Evaluation Configuration - Hidden in post-approval mode */}
-        {!isPostApprovalMode && (
+        {!isSectionHeader && !isPostApprovalMode && (
           <div className="border-t border-gray-200 dark:border-gray-600 pt-4">
             <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
               AI Evaluation Settings
