@@ -3,6 +3,7 @@ import dynamic from "next/dynamic";
 import { type FC, memo } from "react";
 import { ActivityAttribution } from "@/components/Shared/ActivityCard/ActivityAttribution";
 import { containerClassName } from "@/components/Shared/ActivityCard/styles";
+import { Badge } from "@/components/ui/badge";
 import { Link } from "@/src/components/navigation/Link";
 import type { CommunityMilestoneUpdate } from "@/types/community-updates";
 import { formatDate } from "@/utilities/formatDate";
@@ -93,10 +94,13 @@ const CommunityMilestoneCardComponent: FC<CommunityMilestoneCardProps> = ({
               )}
               {STATUS_BADGE_LABELS[statusVariant]}
             </div>
-            {milestone.grantMilestoneIndex && milestone.grantMilestoneTotal ? (
-              <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-200">
+            {milestone.grantMilestoneIndex != null && milestone.grantMilestoneTotal != null ? (
+              <Badge
+                variant="secondary"
+                className="bg-blue-50 text-blue-700 hover:bg-blue-50 dark:bg-blue-950 dark:text-blue-200 dark:hover:bg-blue-950"
+              >
                 Milestone {milestone.grantMilestoneIndex} of {milestone.grantMilestoneTotal}
-              </span>
+              </Badge>
             ) : null}
             {allocationAmount ? (
               <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200">
