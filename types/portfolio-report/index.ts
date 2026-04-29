@@ -1,3 +1,10 @@
+export type ReportType = "portfolio_monthly" | "portfolio_biweekly";
+
+export const REPORT_TYPES: readonly ReportType[] = [
+  "portfolio_monthly",
+  "portfolio_biweekly",
+] as const;
+
 export interface ReportConfig {
   id: string;
   communityId: string;
@@ -18,6 +25,14 @@ export interface TokenUsage {
   totalTokens: number;
 }
 
+/**
+ * `reportMonth` holds the period identifier whose format depends on the
+ * config's `reportType`:
+ *   - portfolio_monthly  → "YYYY-MM"
+ *   - portfolio_biweekly → "YYYY-MM-H1" (1st–15th) or "YYYY-MM-H2" (16th–EOM)
+ *
+ * The field name predates biweekly support; we keep it for wire compatibility.
+ */
 export interface PortfolioReport {
   id: string;
   reportConfigId: string;
@@ -38,7 +53,7 @@ export interface PortfolioReport {
 
 export interface CreateReportConfigRequest {
   programIds: string[];
-  reportType?: string;
+  reportType?: ReportType;
   modelId: string;
   prompt: string;
   isActive?: boolean;
@@ -54,4 +69,5 @@ export interface UpdateReportConfigRequest {
 export interface GenerateReportRequest {
   month: string;
   configId?: string;
+  reportType?: ReportType;
 }

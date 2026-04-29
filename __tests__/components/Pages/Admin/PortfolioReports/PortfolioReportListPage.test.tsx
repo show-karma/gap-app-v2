@@ -7,6 +7,7 @@ import {
   usePortfolioReports,
   usePublishReport,
   useRegenerateReport,
+  useReportConfigs,
   useUnpublishReport,
 } from "@/hooks/portfolio-reports/usePortfolioReports";
 
@@ -30,6 +31,7 @@ const mockUseGenerateReport = vi.mocked(useGenerateReport);
 const mockUsePublishReport = vi.mocked(usePublishReport);
 const mockUseUnpublishReport = vi.mocked(useUnpublishReport);
 const mockUseRegenerateReport = vi.mocked(useRegenerateReport);
+const mockUseReportConfigs = vi.mocked(useReportConfigs);
 
 describe("PortfolioReportListPage", () => {
   beforeEach(() => {
@@ -44,6 +46,7 @@ describe("PortfolioReportListPage", () => {
     mockUsePublishReport.mockReturnValue({ isPending: false, mutateAsync: vi.fn() } as any);
     mockUseUnpublishReport.mockReturnValue({ isPending: false, mutateAsync: vi.fn() } as any);
     mockUseRegenerateReport.mockReturnValue({ isPending: false, mutateAsync: vi.fn() } as any);
+    mockUseReportConfigs.mockReturnValue({ data: [], isLoading: false } as any);
   });
 
   it("shows a Preview action for draft reports and navigates to the admin preview page", async () => {

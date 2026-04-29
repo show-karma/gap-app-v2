@@ -18,16 +18,11 @@ import {
 } from "@/hooks/portfolio-reports/usePortfolioReports";
 import type { Community } from "@/types/v2/community";
 import { PAGES } from "@/utilities/pages";
+import { formatPeriod } from "@/utilities/portfolio-reports/period";
 
 interface Props {
   community: Community;
   reportId: string;
-}
-
-function formatMonth(month: string): string {
-  const [year, m] = month.split("-").map(Number);
-  const date = new Date(year, m - 1);
-  return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
 }
 
 // Extracts the in-app navigation target from an anchor click, or null if the
@@ -226,7 +221,7 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
           </Button>
           <div>
             <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-              {formatMonth(report.reportMonth)}
+              {formatPeriod(report.reportMonth).label}
               {isDirty && <span className="ml-2 text-sm font-normal text-zinc-400">(unsaved)</span>}
             </h1>
             <div className="flex items-center gap-2 text-xs text-zinc-500">

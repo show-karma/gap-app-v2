@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
@@ -15,6 +15,7 @@ import {
   useReportConfigs,
   useUpdateReportConfig,
 } from "@/hooks/portfolio-reports/usePortfolioReports";
+import type { ReportType } from "@/types/portfolio-report";
 import type { Community } from "@/types/v2/community";
 import { PAGES } from "@/utilities/pages";
 
@@ -30,6 +31,26 @@ const AVAILABLE_MODELS = [
 ];
 
 const MODEL_IDS = AVAILABLE_MODELS.map((m) => m.id) as [string, ...string[]];
+
+const REPORT_TYPE_OPTIONS: ReadonlyArray<{
+  value: ReportType;
+  label: string;
+  helper: string;
+  cron: string;
+}> = [
+  {
+    value: "portfolio_monthly",
+    label: "Monthly",
+    helper: "Aggregates the previous calendar month.",
+    cron: "Auto-generate on the 1st of each month",
+  },
+  {
+    value: "portfolio_biweekly",
+    label: "Biweekly",
+    helper: "Aggregates a half-month window (1st–15th or 16th–EOM).",
+    cron: "Auto-generate on the 1st and 16th",
+  },
+];
 
 const formSchema = z.object({
   programIds: z
@@ -56,9 +77,15 @@ export function ReportConfigPage({ community }: Props) {
   const router = useRouter();
   const { hasAccess, isLoading: accessLoading } = useCommunityAdminAccess(community.uid);
   const { data: configs, isLoading } = useReportConfigs(slug);
-  const createMutation = useCreateReportConfig(slug);
 
-  const existingConfig = configs?.[0];
+  const [selectedType, setSelectedType] = useState<ReportType>("portfolio_monthly");
+
+  const existingConfig = useMemo(
+    () => configs?.find((c) => c.reportType === selectedType),
+    [configs, selectedType]
+  );
+
+  const createMutation = useCreateReportConfig(slug);
   const updateMutation = useUpdateReportConfig(slug, existingConfig?.id ?? "");
 
   const {
@@ -76,15 +103,25 @@ export function ReportConfigPage({ community }: Props) {
     },
   });
 
-  // Sync form with the loaded config (once it lands).
+  // Sync the form whenever the selected period changes or the loaded config
+  // arrives. Without this, switching from Monthly→Biweekly would keep the
+  // monthly prompt visible but route saves to the biweekly config.
   useEffect(() => {
-    if (!existingConfig) return;
-    reset({
-      programIds: existingConfig.programIds.join(", "),
-      modelId: existingConfig.modelId,
-      prompt: existingConfig.prompt,
-      isActive: existingConfig.isActive,
-    });
+    if (existingConfig) {
+      reset({
+        programIds: existingConfig.programIds.join(", "),
+        modelId: existingConfig.modelId,
+        prompt: existingConfig.prompt,
+        isActive: existingConfig.isActive,
+      });
+    } else {
+      reset({
+        programIds: "",
+        modelId: AVAILABLE_MODELS[0].id,
+        prompt: "",
+        isActive: true,
+      });
+    }
   }, [existingConfig, reset]);
 
   if (accessLoading || isLoading) {
@@ -103,7 +140,6 @@ export function ReportConfigPage({ community }: Props) {
     );
   }
 
-  // Show validation toasts for any failing field.
   const onInvalid = (formErrors: typeof errors) => {
     if (formErrors.programIds?.message) toast.error(formErrors.programIds.message);
     if (formErrors.prompt?.message) toast.error(formErrors.prompt.message);
@@ -128,6 +164,7 @@ export function ReportConfigPage({ community }: Props) {
       } else {
         await createMutation.mutateAsync({
           programIds: parsedProgramIds,
+          reportType: selectedType,
           modelId: values.modelId,
           prompt: values.prompt,
           isActive: values.isActive,
@@ -142,6 +179,7 @@ export function ReportConfigPage({ community }: Props) {
   };
 
   const isSaving = createMutation.isPending || updateMutation.isPending || isSubmitting;
+  const selectedOption = REPORT_TYPE_OPTIONS.find((o) => o.value === selectedType);
 
   return (
     <div className="space-y-6">
@@ -159,8 +197,49 @@ export function ReportConfigPage({ community }: Props) {
             Report Configuration
           </h1>
           <p className="text-sm text-zinc-500">
-            Configure which programs, model, and prompt to use for report generation
+            Configure programs, model, and prompt for each report cadence
           </p>
+        </div>
+      </div>
+
+      {/* Cadence picker — shows separate configs per period */}
+      <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-800">
+        <p className="mb-3 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+          Editing config for
+        </p>
+        <div className="flex gap-3">
+          {REPORT_TYPE_OPTIONS.map((opt) => {
+            const exists = configs?.some((c) => c.reportType === opt.value);
+            const active = selectedType === opt.value;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setSelectedType(opt.value)}
+                className={`flex-1 rounded-md border px-4 py-3 text-left transition-colors ${
+                  active
+                    ? "border-blue-500 bg-blue-50 dark:border-blue-400 dark:bg-blue-900/20"
+                    : "border-zinc-200 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-700/50"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                    {opt.label}
+                  </span>
+                  {exists ? (
+                    <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                      Configured
+                    </span>
+                  ) : (
+                    <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400">
+                      Not configured
+                    </span>
+                  )}
+                </div>
+                <p className="mt-1 text-xs text-zinc-500">{opt.helper}</p>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -222,7 +301,7 @@ export function ReportConfigPage({ community }: Props) {
             {...register("isActive")}
           />
           <label htmlFor="isActive" className="text-sm text-zinc-700 dark:text-zinc-300">
-            Active (auto-generate monthly)
+            Active ({selectedOption?.cron})
           </label>
         </div>
 
@@ -242,7 +321,7 @@ export function ReportConfigPage({ community }: Props) {
           <textarea
             id="prompt"
             rows={12}
-            placeholder={`Example: You are generating a monthly portfolio report for a grant program. The data provided contains per-project milestones, OSO metrics (TVL, transaction fees), and financial data.\n\nGenerate a comprehensive markdown report with:\n1. Executive Summary (2-3 paragraphs)\n2. Portfolio Snapshot (table of batch-level stats)\n3. Progress and Milestones (per-batch breakdown)\n4. Spotlight: 1-2 standout grantee stories\n5. Ecosystem Alignment\n\nUse markdown formatting with headers, tables, and bold text.`}
+            placeholder={`Example: You are generating a ${selectedOption?.label.toLowerCase()} portfolio report for a grant program. The data provided contains per-project milestones, OSO metrics (TVL, transaction fees), and financial data.\n\nGenerate a comprehensive markdown report with:\n1. Executive Summary (2-3 paragraphs)\n2. Portfolio Snapshot (table of batch-level stats)\n3. Progress and Milestones (per-batch breakdown)\n4. Spotlight: 1-2 standout grantee stories\n5. Ecosystem Alignment\n\nUse markdown formatting with headers, tables, and bold text.`}
             className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm font-mono dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
             {...register("prompt")}
           />

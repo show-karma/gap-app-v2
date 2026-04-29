@@ -3,6 +3,7 @@ import Link from "next/link";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import type { PortfolioReport } from "@/types/portfolio-report";
 import type { Community } from "@/types/v2/community";
+import { formatPeriod } from "@/utilities/portfolio-reports/period";
 import { BackToTop } from "./BackToTop";
 import { ReadingProgress } from "./ReadingProgress";
 
@@ -13,12 +14,6 @@ interface Props {
   backHref: string;
   backLabel?: string;
   bannerText?: string;
-}
-
-function formatMonth(month: string): string {
-  const [year, m] = month.split("-").map(Number);
-  const date = new Date(year, m - 1);
-  return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
 }
 
 function formatDate(iso: string): string {
@@ -38,7 +33,7 @@ export function PortfolioReportDocumentView({
   bannerText,
 }: Props) {
   const slug = community.details.slug;
-  const monthLabel = formatMonth(month);
+  const monthLabel = formatPeriod(month).label;
 
   return (
     <>

@@ -3,9 +3,12 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 export interface TimelineEntry {
+  /** Period identifier — YYYY-MM or YYYY-MM-Hx. Used as the React key and the jump target. */
+  key: string;
+  /** Year header to group under (e.g., 2026). */
   year: number;
-  month: number;
-  key: string; // YYYY-MM
+  /** Compact label rendered in the spine (e.g., "APR" or "APR H1"). */
+  label: string;
   hasReport: boolean;
 }
 
@@ -14,21 +17,6 @@ interface Props {
   activeKey: string | null;
   onJumpTo: (key: string) => void;
 }
-
-const MONTH_ABBR = [
-  "JAN",
-  "FEB",
-  "MAR",
-  "APR",
-  "MAY",
-  "JUN",
-  "JUL",
-  "AUG",
-  "SEP",
-  "OCT",
-  "NOV",
-  "DEC",
-];
 
 const useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
@@ -142,11 +130,11 @@ export function ReportTimelineScrubber({ entries, activeKey, onJumpTo }: Props) 
                               : "text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
                           }`}
                         >
-                          {MONTH_ABBR[e.month - 1]}
+                          {e.label}
                         </button>
                       ) : (
                         <span className="font-mono text-[11px] uppercase tracking-wider text-zinc-300 dark:text-zinc-700">
-                          {MONTH_ABBR[e.month - 1]}
+                          {e.label}
                         </span>
                       )}
                     </li>
