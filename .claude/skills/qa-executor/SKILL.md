@@ -46,6 +46,52 @@ Each scenario averages 20-50 agent turns. Wasted seconds compound.
   - `wait 2000` (sleep N ms) — only ever use for failure-evidence replays at human pace, never in normal flow
   - `wait --load networkidle` after a click that opens a modal — wait for the modal element instead
 
+## Session Lifecycle
+
+One `agent-browser` session corresponds to one persistent browser context. Sessions are expensive to create (new browser process, cold JS parse). Reuse them across scenarios within a shard rather than opening a fresh session per scenario.
+
+### Correct pattern — reuse session, navigate between scenarios
+
+```bash
+# Start the session ONCE at the top of the shard.
+agent-browser --session qa-pub open "http://localhost:3000"
+agent-browser --session qa-pub wait --load networkidle
+
+# Scenario P1
+agent-browser --session qa-pub screenshot qa-output/screenshots/P1-baseline.png
+# ... execute P1 steps ...
+
+# Between scenarios: clear per-scenario state, then goto the next URL.
+# UNVERIFIED FLAG: agent-browser --session qa-pub storage clear --cookies --local-storage
+# If the flag above is not available, reload the session state instead:
+#   agent-browser --session qa-pub state load qa-output/public-clean-state.json
+agent-browser --session qa-pub goto "http://localhost:3000/{P2-path}"
+agent-browser --session qa-pub wait --load networkidle
+
+# Scenario P2
+agent-browser --session qa-pub screenshot qa-output/screenshots/P2-baseline.png
+# ... execute P2 steps ...
+```
+
+### Session Anti-Patterns
+
+- **Do NOT call `open` for every scenario.** `open` starts a new page/context. Use `goto` to navigate within an existing session.
+- **Do NOT close and re-open a session between scenarios.** Session teardown + startup adds 3-8 s per scenario.
+- **Do NOT leave scenario-local state (filled forms, opened modals, injected cookies) leaking into the next scenario.** Clear or navigate away cleanly.
+
+### State-Load Fallback for Mid-Shard Session Expiry
+
+Privy auth tokens expire. If an authenticated scenario fails with an auth error mid-shard, reload the saved state rather than re-running the full login flow:
+
+```bash
+# Detected auth expiry (e.g. 401 response, redirect to /login, missing user avatar)
+agent-browser --session qa-auth state load qa-output/auth-state.json
+agent-browser --session qa-auth wait --load networkidle
+# Then retry the current scenario from its first step.
+```
+
+If `state load` also fails (token expired on disk), fall back to the full Privy login flow from section 3 and overwrite `qa-output/auth-state.json`.
+
 ### Snapshot Strategy
 
 `snapshot -i` returns the entire accessibility tree (often 5-20KB). Big snapshots = slower agent turns and noisier prompts.
@@ -145,9 +191,15 @@ For each public scenario (P1, P2...), in risk-priority order:
 
 **a. Navigate:**
 ```bash
-# First-load on a new path — networkidle OK.
-agent-browser --session qa-pub open "http://localhost:3000/{path}"
+# Use goto (not open) to navigate within the existing session.
+# open would spin up a new page/context — use it only for the very first URL.
+agent-browser --session qa-pub goto "http://localhost:3000/{path}"
 agent-browser --session qa-pub wait --load networkidle
+
+# Before each scenario, clear per-scenario browser state to prevent leakage.
+# UNVERIFIED FLAG: agent-browser --session qa-pub storage clear --cookies --local-storage
+# If the flag above is unavailable, reload the clean baseline state:
+#   agent-browser --session qa-pub state load qa-output/public-clean-state.json
 ```
 
 **b. Baseline screenshot:**
@@ -186,8 +238,15 @@ Skip this section entirely if `$SHARD_ID == public`.
 For each authenticated scenario (A1, A2...), in risk-priority order:
 
 Same process as public scenarios but:
-- Use the `qa-auth` session (already logged in)
-- If session expires, reload auth state: `agent-browser --session qa-auth state load qa-output/auth-state.json`
+- Use the `qa-auth` session (already logged in).
+- Navigate between scenarios with `goto`, not `open` — the session is already live.
+- Before each scenario, clear per-scenario state the same way as for public scenarios (see "Session Anti-Patterns").
+- If a scenario fails with an auth error (401, redirect to `/login`, missing user avatar): reload auth state and retry before marking it FAIL.
+  ```bash
+  agent-browser --session qa-auth state load qa-output/auth-state.json
+  agent-browser --session qa-auth wait --load networkidle
+  ```
+  If `state load` also fails, re-run the full Privy login flow (section 3) and overwrite `qa-output/auth-state.json`.
 - Scenario IDs are A1, A2...
 - **Apply Speed Rules**: targeted waits, scoped finds, no `wait --load networkidle` after in-page actions.
 
