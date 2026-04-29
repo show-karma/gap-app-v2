@@ -69,7 +69,7 @@ jobs:
 
       - name: Checkout merge commit
         if: steps.pr.outputs.skip != 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ steps.pr.outputs.sha }}
           fetch-depth: 1
@@ -96,13 +96,13 @@ jobs:
 
       - name: Setup pnpm
         if: steps.detect.outputs.exists == 'true'
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v5
         with:
           version: 10
 
       - name: Setup Node.js
         if: steps.detect.outputs.exists == 'true'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: '20'
           cache: 'pnpm'
@@ -287,7 +287,7 @@ jobs:
 
       - name: Post or update PR comment
         if: steps.detect.outputs.exists == 'true' && steps.convert.outputs.count != '0'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |

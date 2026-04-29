@@ -45,7 +45,7 @@ jobs:
     steps:
       - name: Check Claude Code verdict and PR state
         id: check
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const owner = context.repo.owner;
@@ -182,7 +182,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
           ref: ${{ needs.gate-check.outputs.head_sha }}
@@ -198,7 +198,7 @@ jobs:
 
       - name: Cache QA plan output
         id: qa-plan-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: qa-plan.md
           key: qa-plan-${{ hashFiles('.qa-plan-changed-files.txt') }}
@@ -206,7 +206,7 @@ jobs:
       - name: Generate GitHub App token
         if: steps.qa-plan-cache.outputs.cache-hit != 'true'
         id: app-token
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
@@ -219,7 +219,7 @@ jobs:
       - name: Cache Claude Code install
         if: steps.qa-plan-cache.outputs.cache-hit != 'true'
         id: claude-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.npm-global
           key: claude-code-${{ runner.os }}-${{ steps.weeknum.outputs.weeknum }}
@@ -253,7 +253,7 @@ jobs:
 
       - name: Upload QA plan artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: qa-plan
           path: qa-plan.md
@@ -262,7 +262,7 @@ jobs:
 
       - name: Update progress comment (QA Plan done)
         if: always()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           PR_NUMBER: ${{ needs.gate-check.outputs.pr_number }}
           PLAN_RESULT: ${{ job.status }}
@@ -300,18 +300,18 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
           ref: ${{ needs.gate-check.outputs.head_sha }}
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v5
         with:
           version: 10
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: '20'
           cache: 'pnpm'
@@ -320,7 +320,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Cache Next.js build
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: .next/cache
           key: ${{ runner.os }}-nextjs-qa-${{ needs.gate-check.outputs.head_sha }}
@@ -334,14 +334,14 @@ jobs:
           NODE_ENV: production
 
       - name: Pack .next into tarball
-        # actions/upload-artifact@v4 rejects filenames containing `:` (NTFS
+        # actions/upload-artifact@v5 rejects filenames containing `:` (NTFS
         # incompatibility). Next.js + Turbopack emits chunks like
         # `[externals]_node:inspector_*.js`, so uploading raw `.next/` fails.
         # Packaging into a single tarball sidesteps the per-file validator.
         run: tar --exclude='.next/cache' -czf next-build.tar.gz .next
 
       - name: Upload build artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: qa-build
           path: next-build.tar.gz
@@ -350,7 +350,7 @@ jobs:
 
       - name: Update progress comment (Build done)
         if: always()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           PR_NUMBER: ${{ needs.gate-check.outputs.pr_number }}
           BUILD_RESULT: ${{ job.status }}
@@ -397,23 +397,23 @@ jobs:
         shard: [public, auth]
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
           ref: ${{ needs.gate-check.outputs.head_sha }}
 
       - name: Download QA plan
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: qa-plan
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v5
         with:
           version: 10
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: '20'
           cache: 'pnpm'
@@ -422,7 +422,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Download prebuilt .next
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: qa-build
 
@@ -449,7 +449,7 @@ jobs:
 
       - name: Generate GitHub App token
         id: app-token
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
@@ -460,7 +460,7 @@ jobs:
 
       - name: Cache Claude Code install
         id: claude-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.npm-global
           key: claude-code-${{ runner.os }}-${{ steps.weeknum.outputs.weeknum }}
@@ -501,7 +501,7 @@ jobs:
 
       - name: Upload QA execution artifacts (shard ${{ matrix.shard }})
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: qa-execution-results-${{ matrix.shard }}
           path: |
@@ -521,24 +521,24 @@ jobs:
     # it would risk double-filing issues and producing incoherent results.
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
           ref: ${{ needs.gate-check.outputs.head_sha }}
 
       - name: Download QA plan for scope context
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: qa-plan
         continue-on-error: true
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v5
         with:
           version: 10
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: '20'
           cache: 'pnpm'
@@ -547,7 +547,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Download prebuilt .next
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: qa-build
 
@@ -574,7 +574,7 @@ jobs:
 
       - name: Generate GitHub App token
         id: app-token
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
@@ -585,7 +585,7 @@ jobs:
 
       - name: Cache Claude Code install
         id: claude-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.npm-global
           key: claude-code-${{ runner.os }}-${{ steps.weeknum.outputs.weeknum }}
@@ -635,7 +635,7 @@ jobs:
 
       - name: Upload dogfood artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: dogfood-results
           path: |
@@ -651,7 +651,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Download QA results (all shards)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           # Pull every per-shard artifact (qa-execution-results-public,
           # qa-execution-results-auth, ...) into the same directory so
@@ -661,13 +661,13 @@ jobs:
         continue-on-error: true
 
       - name: Download dogfood results
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: dogfood-results
         continue-on-error: true
 
       - name: Evaluate and set commit status
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           HEAD_SHA: ${{ needs.gate-check.outputs.head_sha }}
           PR_NUMBER: ${{ needs.gate-check.outputs.pr_number }}

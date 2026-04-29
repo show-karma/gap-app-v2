@@ -33,15 +33,15 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v5
         with:
           version: 10
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: '20'
           cache: 'pnpm'
@@ -53,7 +53,7 @@ jobs:
       # transformed module graph across runs. Keyed on lockfile + source
       # hash so dep or code changes invalidate cleanly.
       - name: Cache vitest transform
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             node_modules/.vite
@@ -83,7 +83,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Comment PR with test results
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |

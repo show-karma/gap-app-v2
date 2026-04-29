@@ -37,14 +37,14 @@ jobs:
       deployments: read
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
       # Wait for Vercel deployment and extract URL
       - name: Wait for Vercel Deployment
         id: deployment
-        uses: actions/github-script@v6
+        uses: actions/github-script@v8
         with:
           script: |
             const owner = context.repo.owner;
@@ -181,7 +181,7 @@ jobs:
 
       - name: Generate GitHub App token
         id: app-token
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
