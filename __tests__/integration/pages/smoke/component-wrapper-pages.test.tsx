@@ -115,6 +115,10 @@ const renderPage = async (importer: () => Promise<{ default: React.ComponentType
   return render(<Page />);
 };
 
+beforeEach(() => {
+  vi.clearAllMocks();
+});
+
 describe("Admin pages", () => {
   it("/super-admin renders SuperAdminPage", async () => {
     await renderPage(() => import("@/app/super-admin/page"));

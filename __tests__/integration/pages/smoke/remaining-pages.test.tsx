@@ -287,6 +287,10 @@ const renderClientPage = async (importer: () => Promise<{ default: React.Compone
   return render(<Page />, { wrapper: Wrapper });
 };
 
+beforeEach(() => {
+  vi.clearAllMocks();
+});
+
 describe("/donations page", () => {
   it("renders empty-state when no donations", async () => {
     await renderClientPage(() => import("@/app/donations/page"));

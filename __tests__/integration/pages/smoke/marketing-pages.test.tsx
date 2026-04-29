@@ -135,6 +135,10 @@ const renderPage = async (importer: () => Promise<{ default: React.ComponentType
   return render(<Page />);
 };
 
+beforeEach(() => {
+  vi.clearAllMocks();
+});
+
 describe("/foundations marketing page", () => {
   it("renders all foundation sections", async () => {
     await renderPage(() => import("@/app/foundations/page"));

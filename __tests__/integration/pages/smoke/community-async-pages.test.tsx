@@ -118,6 +118,10 @@ const renderAsyncPage = async (
   return render(result);
 };
 
+beforeEach(() => {
+  vi.clearAllMocks();
+});
+
 describe("Community async server pages — happy path", () => {
   it("/manage renders DashboardOverview", async () => {
     await renderAsyncPage(() => import("@/app/community/[communityId]/manage/page"), {

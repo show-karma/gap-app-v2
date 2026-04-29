@@ -269,6 +269,10 @@ const renderClientPage = async (importer: () => Promise<{ default: React.Compone
   return render(<Page />, { wrapper: Wrapper });
 };
 
+beforeEach(() => {
+  vi.clearAllMocks();
+});
+
 describe("Community client pages", () => {
   it("/(with-header)/browse-applications renders client", async () => {
     await renderClientPage(

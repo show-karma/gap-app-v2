@@ -110,6 +110,10 @@ const renderAsyncPage = async (
   return render(result);
 };
 
+beforeEach(() => {
+  vi.clearAllMocks();
+});
+
 describe("Project profile pages", () => {
   it("/project/[projectId]/(profile)/about renders AboutPageClient", async () => {
     await renderPageElement(() => import("@/app/project/[projectId]/(profile)/about/page"));

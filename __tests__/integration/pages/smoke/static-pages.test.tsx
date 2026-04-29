@@ -14,6 +14,10 @@ const renderPage = async (importer: () => Promise<{ default: React.ComponentType
   return render(<Page />);
 };
 
+beforeEach(() => {
+  vi.clearAllMocks();
+});
+
 describe("Static legal pages", () => {
   it("Terms and Conditions renders", async () => {
     await renderPage(() => import("@/app/terms-and-conditions/page"));

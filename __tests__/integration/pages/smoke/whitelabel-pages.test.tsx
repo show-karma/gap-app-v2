@@ -160,6 +160,10 @@ const renderInQueryClient = (element: React.ReactElement) => {
   return render(<QueryClientProvider client={client}>{element}</QueryClientProvider>);
 };
 
+beforeEach(() => {
+  vi.clearAllMocks();
+});
+
 describe("Whitelabel application detail page", () => {
   it("/applications/[applicationId] renders ApplicationPageClient", async () => {
     const { default: Page } = await import(
