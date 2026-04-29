@@ -285,4 +285,10 @@ export type UnifiedMilestone = {
     receivedAt: string | null;
     fileKey: string | null;
   };
+  /**
+   * Ordinal position of this milestone within its parent grant.
+   * Computed client-side by sorting a grant's milestones ascending by due date
+   * (fallback `createdAt`) and assigning 1..N. Only set for grant milestones.
+   */
+  grantMilestoneOrder?: { index: number; total: number };
 };

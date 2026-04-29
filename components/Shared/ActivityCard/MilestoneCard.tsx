@@ -482,8 +482,18 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
         <div className="flex flex-col gap-6 w-full px-6 py-6">
           <div className="flex flex-row justify-between items-start gap-3 w-full flex-wrap">
             <div className="flex flex-col gap-2 flex-1 flex-wrap">
-              {/* Title */}
-              <p className="text-xl font-semibold text-foreground">{title}</p>
+              {/* Title row with per-grant ordinal pill */}
+              <div className="flex flex-row items-center gap-2 flex-wrap">
+                {type === "grant" && milestone.grantMilestoneOrder && (
+                  <Badge
+                    variant="secondary"
+                    className="bg-blue-50 text-blue-700 hover:bg-blue-50 dark:bg-blue-950 dark:text-blue-200 dark:hover:bg-blue-950"
+                  >
+                    {`${milestone.grantMilestoneOrder.index} of ${milestone.grantMilestoneOrder.total}`}
+                  </Badge>
+                )}
+                <p className="text-xl font-semibold text-foreground">{title}</p>
+              </div>
 
               {/* Community/Grant Badge - only shown for grant milestones */}
               {type === "grant" && (

@@ -9,6 +9,7 @@ import type {
   UnifiedMilestone,
   UpdatesApiResponse,
 } from "@/types/v2/roadmap";
+import { assignGrantMilestoneOrder } from "@/utilities/milestones/assignGrantMilestoneOrder";
 import { parseChainId } from "@/utilities/parseChainId";
 import { queryClient } from "@/utilities/query-client";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
@@ -395,7 +396,9 @@ export function useProjectUpdates(
   });
 
   // Convert response to unified format (no longer needs project data)
-  const milestones = data ? sortByDateDescending(convertToUnifiedMilestones(data)) : [];
+  const milestones = data
+    ? sortByDateDescending(assignGrantMilestoneOrder(convertToUnifiedMilestones(data)))
+    : [];
 
   // Filter pending milestones (not completed)
   const pendingMilestones = milestones.filter((m) => !m.completed);

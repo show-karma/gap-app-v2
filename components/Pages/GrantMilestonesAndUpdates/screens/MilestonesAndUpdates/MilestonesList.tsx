@@ -6,6 +6,7 @@ import { usePayoutConfigByGrantPublic } from "@/src/features/payout-disbursement
 import type { Grant } from "@/types/v2/grant";
 import { normalizeTimestamp } from "@/utilities/formatDate";
 import { formatMilestoneAmount } from "@/utilities/formatMilestoneAmount";
+import { buildGrantMilestoneOrderMap } from "@/utilities/milestones/assignGrantMilestoneOrder";
 import { cn } from "@/utilities/tailwind";
 import { GrantUpdate } from "./GrantUpdate";
 import { MilestoneDetails } from "./MilestoneDetails";
@@ -64,6 +65,9 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
     }
     return undefined;
   }, [grant.details?.currency, payoutConfig?.tokenAddress, payoutConfig?.chainID]);
+
+  // Build a per-grant ordinal map (uid → { index, total }) for the "N of M" pill.
+  const orderByUID = useMemo(() => buildGrantMilestoneOrderMap(milestones ?? []), [milestones]);
 
   // Build a map from milestoneUID to formatted allocation amount
   const allocationByUID = useMemo<Map<string, string>>(() => {
@@ -283,6 +287,7 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
                   key={item.object.uid}
                   milestone={item.object}
                   allocationAmount={allocationByUID.get(item.object.uid)}
+                  grantMilestoneOrder={orderByUID.get(item.object.uid)}
                 />
               );
             })}
