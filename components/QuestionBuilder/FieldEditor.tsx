@@ -83,11 +83,16 @@ export function FieldEditor({
 
   useEffect(() => {
     const subscription = watch((data) => {
-      // Only update if data is valid (has required fields)
-      if (data.label && data.label.trim().length > 0) {
+      // For section_header, propagate even an empty label so parent state
+      // mirrors the editor — otherwise the visible Zod error and the saved
+      // value diverge silently. For other field types, keep the legacy guard
+      // that avoids clobbering parent state with intermediate empty values
+      // while the user is mid-edit.
+      const labelValid = data.label !== undefined && data.label.trim().length > 0;
+      if (labelValid || isSectionHeader) {
         const updatedField: FormField = {
           ...field,
-          label: data.label,
+          label: data.label || "",
           placeholder: data.placeholder || "",
           required: data.required || false,
           private: data.private || isPostApprovalMode, // Always true for post-approval fields
