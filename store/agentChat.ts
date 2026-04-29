@@ -17,6 +17,30 @@ export interface ChatMessage {
   isStreaming?: boolean;
 }
 
+/**
+ * A pre-seeded reference (milestone, project, etc.) rendered as a chip in the
+ * input AND in the sent message bubble. The user still has to press Send —
+ * chips are not auto-submitted.
+ *
+ * - `label` is what shows in the pill ("Milestone 1 from Fund#2")
+ * - `primaryId` is the agent-resolvable handle (slug for project, uid for
+ *   milestone) — `get_project_details` accepts UID or slug directly.
+ * - `parentSlug` is an optional project slug carried alongside a milestone
+ *   so the agent has unambiguous project context.
+ *
+ * On submit, each chip is serialized as a markdown-link-shaped token:
+ *   `@[<label>](mention:<kind>:<primaryId>[?project=<parentSlug>])`
+ * The chat shell detects this token in user messages and renders it as a pill
+ * matching the input chip styling.
+ */
+export interface ChatMention {
+  id: string;
+  kind: "milestone" | "project" | "application";
+  label: string;
+  primaryId: string;
+  parentSlug?: string;
+}
+
 interface AgentChatStore {
   messages: ChatMessage[];
   isOpen: boolean;
@@ -31,6 +55,12 @@ interface AgentChatStore {
     communityId?: string;
   } | null;
 
+  // Reference chips seeded into the chat input (via "@mention" buttons on
+  // milestone cards, etc.). Rendered as pills inside the input; on submit
+  // their `refText` is prepended to the message. Chips persist until removed
+  // or until the message is sent.
+  pendingMentions: ChatMention[];
+
   setOpen: (open: boolean) => void;
   toggleOpen: () => void;
   addMessage: (message: ChatMessage) => void;
@@ -41,6 +71,9 @@ interface AgentChatStore {
   setStreaming: (streaming: boolean) => void;
   setError: (error: string | null) => void;
   setAgentContext: (ctx: AgentChatStore["agentContext"]) => void;
+  addMention: (mention: ChatMention) => void;
+  removeMention: (id: string) => void;
+  clearMentions: () => void;
   clearMessages: () => void;
 }
 
@@ -50,6 +83,7 @@ export const useAgentChatStore = create<AgentChatStore>((set) => ({
   isStreaming: false,
   error: null,
   agentContext: null,
+  pendingMentions: [],
 
   setOpen: (open) => set({ isOpen: open }),
   toggleOpen: () => set((state) => ({ isOpen: !state.isOpen })),
@@ -98,5 +132,14 @@ export const useAgentChatStore = create<AgentChatStore>((set) => ({
   setStreaming: (streaming) => set({ isStreaming: streaming }),
   setError: (error) => set({ error }),
   setAgentContext: (agentContext) => set({ agentContext }),
+  addMention: (mention) =>
+    set((state) =>
+      state.pendingMentions.some((m) => m.id === mention.id)
+        ? state
+        : { pendingMentions: [...state.pendingMentions, mention] }
+    ),
+  removeMention: (id) =>
+    set((state) => ({ pendingMentions: state.pendingMentions.filter((m) => m.id !== id) })),
+  clearMentions: () => set({ pendingMentions: [] }),
   clearMessages: () => set({ messages: [], error: null, isStreaming: false }),
 }));
