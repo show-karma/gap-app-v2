@@ -19,10 +19,13 @@ vi.mock("@/utilities/rpcClient", () => ({
   getRPCClient: vi.fn(),
 }));
 
-vi.mock("@/constants/supportedTokens", () => ({
-  ...vi.importActual("@/constants/supportedTokens"),
-  getTokensByChain: vi.fn(),
-}));
+vi.mock("@/constants/supportedTokens", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/constants/supportedTokens")>();
+  return {
+    ...actual,
+    getTokensByChain: vi.fn(),
+  };
+});
 
 describe("useCrossChainBalances", () => {
   const mockAddress = "0x1234567890123456789012345678901234567890";

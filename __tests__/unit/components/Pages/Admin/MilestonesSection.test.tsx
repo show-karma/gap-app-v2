@@ -33,10 +33,8 @@ vi.mock("@/utilities/indexer", () => ({
   },
 }));
 
-vi.mock("@/src/features/payout-disbursement", async () => {
-  const actual = await vi.importActual<typeof import("@/src/features/payout-disbursement")>(
-    "@/src/features/payout-disbursement"
-  );
+vi.mock("@/src/features/payout-disbursement", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/src/features/payout-disbursement")>();
   return {
     ...actual,
     getInvoiceDownloadUrl: vi.fn().mockResolvedValue("https://s3.example.com/invoice.pdf"),

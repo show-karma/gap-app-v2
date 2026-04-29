@@ -1,8 +1,8 @@
 import { arbitrum, mainnet, optimism, sepolia } from "viem/chains";
 
 // Mock viem to avoid real HTTP transports
-vi.mock("viem", async () => {
-  const actual = await vi.importActual<typeof import("viem")>("viem");
+vi.mock("viem", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("viem")>();
   return {
     ...actual,
     createPublicClient: vi.fn(() => ({ mockClient: true })),

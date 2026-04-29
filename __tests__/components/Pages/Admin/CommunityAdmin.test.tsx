@@ -8,8 +8,8 @@ import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
 import { useCommunitiesStore } from "@/store/communities";
 import { useOwnerStore } from "@/store/index";
 
-vi.mock("@tanstack/react-query", () => {
-  const actual = vi.importActual("@tanstack/react-query");
+vi.mock("@tanstack/react-query", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@tanstack/react-query")>();
   return {
     ...actual,
     useQuery: vi.fn(),

@@ -10,8 +10,8 @@ import { useReviewerPrograms } from "@/hooks/usePermissions";
 import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
 import { useStaff } from "@/src/core/rbac/hooks/use-staff-bridge";
 
-vi.mock("@tanstack/react-query", async () => {
-  const actual = await vi.importActual("@tanstack/react-query");
+vi.mock("@tanstack/react-query", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@tanstack/react-query")>();
   return {
     ...actual,
     useQuery: vi.fn(),
@@ -46,6 +46,7 @@ vi.mock("@/src/core/rbac/hooks/use-staff-bridge", () => ({
 vi.mock("next/navigation", () => ({
   useRouter: vi.fn(),
   useParams: vi.fn(() => ({})),
+  usePathname: vi.fn(() => "/"),
 }));
 
 vi.mock("@/components/EthereumAddressToENSAvatar", () => ({
