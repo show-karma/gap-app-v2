@@ -196,19 +196,25 @@ export const WidgetInput = memo(function WidgetInput({
     [submit]
   );
 
-  const handlePaste = useCallback((e: React.ClipboardEvent<HTMLDivElement>) => {
-    // Strip formatting on paste — only plain text reaches the editor.
-    e.preventDefault();
-    const text = e.clipboardData.getData("text/plain");
-    if (!text) return;
-    const sel = window.getSelection();
-    if (!sel || sel.rangeCount === 0) return;
-    const range = sel.getRangeAt(0);
-    range.deleteContents();
-    const node = document.createTextNode(text);
-    range.insertNode(node);
-    placeCaretAfter(node);
-  }, []);
+  const handlePaste = useCallback(
+    (e: React.ClipboardEvent<HTMLDivElement>) => {
+      // Strip formatting on paste — only plain text reaches the editor.
+      e.preventDefault();
+      const text = e.clipboardData.getData("text/plain");
+      if (!text) return;
+      const sel = window.getSelection();
+      if (!sel || sel.rangeCount === 0) return;
+      const range = sel.getRangeAt(0);
+      range.deleteContents();
+      const node = document.createTextNode(text);
+      range.insertNode(node);
+      placeCaretAfter(node);
+      // Paste fires before `input`, so update isEmpty here too — otherwise
+      // the send button stays disabled until the next keystroke.
+      syncEmpty();
+    },
+    [syncEmpty]
+  );
 
   const canSend = !isStreaming && !isEmpty;
 

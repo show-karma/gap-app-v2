@@ -284,6 +284,25 @@ describe("WidgetInput", () => {
     });
   });
 
+  it("enables the send button after a paste into an empty editor", () => {
+    const onSubmit = vi.fn();
+    render(<WidgetInput onSubmit={onSubmit} isStreaming={false} />);
+    const editor = getEditor();
+    expect(screen.getByRole("button", { name: /send/i })).toBeDisabled();
+
+    // Simulate the contenteditable's paste handler effect: range insert +
+    // the paste event (the handler calls syncEmpty after inserting).
+    editor.focus();
+    placeCaretAtEnd(editor);
+    // jsdom lacks DataTransfer — fake a clipboardData with the getData shape
+    // the handler reads.
+    fireEvent.paste(editor, {
+      clipboardData: { getData: (type: string) => (type === "text/plain" ? "pasted text" : "") },
+    });
+
+    expect(screen.getByRole("button", { name: /send/i })).not.toBeDisabled();
+  });
+
   it("clears stray <br>s left by contenteditable so the placeholder reappears", () => {
     render(<WidgetInput onSubmit={vi.fn()} isStreaming={false} />);
     const editor = getEditor();

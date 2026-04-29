@@ -13,6 +13,7 @@ import { useEffect, useRef } from "react";
 import { useStickToBottomContext } from "use-stick-to-bottom";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import {
   Conversation,
   ConversationContent,
@@ -78,6 +79,7 @@ export function ChatBubbleShell({
   wrapper,
   renderHeaderActions,
 }: ChatBubbleShellProps) {
+  const [, copyToClipboard] = useCopyToClipboard();
   const content = (
     <>
       {/* Floating toggle button */}
@@ -190,7 +192,7 @@ export function ChatBubbleShell({
                                   variant="ghost"
                                   size="icon-sm"
                                   onClick={() => {
-                                    navigator.clipboard.writeText(msg.content).catch(() => {});
+                                    copyToClipboard(msg.content, "Copied");
                                   }}
                                   title="Copy"
                                 >
