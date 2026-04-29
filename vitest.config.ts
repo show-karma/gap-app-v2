@@ -1,3 +1,10 @@
+// Set TZ before any imports so that worker threads created by vitest's thread
+// pool inherit UTC from the parent process environment at startup.  Without
+// this, date-fns' format() resolves the local OS timezone (V8 caches the ICU
+// timezone at thread creation time, so process.env.TZ mutations inside setup
+// files are a no-op for threads).
+process.env.TZ = "UTC";
+
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { storybookTest } from "@storybook/addon-vitest/vitest-plugin";
@@ -68,7 +75,11 @@ export default defineConfig({
           name: "unit",
           environment: "jsdom",
           globals: true,
-          pool: "forks",
+          pool: "threads",
+          isolate: true,
+          // Ensure TZ is set at thread startup (threads inherit the parent process
+          // env, so process.env.TZ in setup.ts was a no-op for V8's tz resolution)
+          env: { TZ: "UTC" },
           setupFiles: ["./__tests__/setup.ts", "./__tests__/setup-mocks.ts"],
           include: ["**/*.{test,spec}.{ts,tsx}"],
           exclude: [
