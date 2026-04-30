@@ -19,7 +19,10 @@ import {
 import type { PortfolioReport, ReportConfig } from "@/types/portfolio-report";
 import type { Community } from "@/types/v2/community";
 import { PAGES } from "@/utilities/pages";
-import { formatRunDate } from "@/utilities/portfolio-reports/period";
+import {
+  formatRunDate,
+  formatScheduleLabel,
+} from "@/utilities/portfolio-reports/period";
 
 interface Props {
   community: Community;
@@ -286,7 +289,7 @@ export function PortfolioReportListPage({ community }: Props) {
                     {cfg.name}
                   </p>
                   <p className="truncate text-xs text-zinc-500">
-                    Day {cfg.dayOfMonth} of every month · {cfg.programIds.length} program
+                    {formatScheduleLabel(cfg.daysOfMonth)} · {cfg.programIds.length} program
                     {cfg.programIds.length === 1 ? "" : "s"} · {cfg.modelId}
                   </p>
                 </div>

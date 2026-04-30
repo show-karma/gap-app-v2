@@ -57,12 +57,22 @@ export function formatRunDate(runDate: string): FormattedRunDate {
 }
 
 /**
- * Render a config's `dayOfMonth` (1..28) as a human-readable schedule label,
- * e.g. "Day 1 of every month".
+ * Render a config's `daysOfMonth` (1..28 each) as a human-readable schedule
+ * label, e.g. "1st of every month", "1st and 15th of every month",
+ * "1st, 11th and 21st of every month". Returns "(no schedule)" when the list
+ * is empty so callers don't have to special-case the bad-input branch.
  */
-export function formatScheduleLabel(dayOfMonth: number): string {
-  const ord = ordinalSuffix(dayOfMonth);
-  return `${dayOfMonth}${ord} of every month`;
+export function formatScheduleLabel(daysOfMonth: readonly number[]): string {
+  if (!daysOfMonth || daysOfMonth.length === 0) return "(no schedule)";
+  const sorted = [...daysOfMonth].sort((a, b) => a - b);
+  const formatted = sorted.map((d) => `${d}${ordinalSuffix(d)}`);
+  if (formatted.length === 1) return `${formatted[0]} of every month`;
+  if (formatted.length === 2) {
+    return `${formatted[0]} and ${formatted[1]} of every month`;
+  }
+  const head = formatted.slice(0, -1).join(", ");
+  const tail = formatted[formatted.length - 1];
+  return `${head} and ${tail} of every month`;
 }
 
 function ordinalSuffix(n: number): string {

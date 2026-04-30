@@ -50,19 +50,37 @@ describe("portfolio-reports period utilities", () => {
 
   describe("formatScheduleLabel", () => {
     it.each([
-      [1, "1st of every month"],
-      [2, "2nd of every month"],
-      [3, "3rd of every month"],
-      [4, "4th of every month"],
-      [11, "11th of every month"],
-      [12, "12th of every month"],
-      [13, "13th of every month"],
-      [21, "21st of every month"],
-      [22, "22nd of every month"],
-      [23, "23rd of every month"],
-      [28, "28th of every month"],
-    ])("formats day %i", (day, expected) => {
-      expect(formatScheduleLabel(day)).toBe(expected);
+      [[1], "1st of every month"],
+      [[2], "2nd of every month"],
+      [[3], "3rd of every month"],
+      [[4], "4th of every month"],
+      [[11], "11th of every month"],
+      [[12], "12th of every month"],
+      [[13], "13th of every month"],
+      [[21], "21st of every month"],
+      [[22], "22nd of every month"],
+      [[23], "23rd of every month"],
+      [[28], "28th of every month"],
+    ])("formats single day %p", (days, expected) => {
+      expect(formatScheduleLabel(days)).toBe(expected);
+    });
+
+    it("formats two days with 'and'", () => {
+      expect(formatScheduleLabel([1, 15])).toBe("1st and 15th of every month");
+    });
+
+    it("formats three days with comma + 'and'", () => {
+      expect(formatScheduleLabel([1, 11, 21])).toBe(
+        "1st, 11th and 21st of every month"
+      );
+    });
+
+    it("sorts days before formatting", () => {
+      expect(formatScheduleLabel([15, 1])).toBe("1st and 15th of every month");
+    });
+
+    it("returns a placeholder for empty input", () => {
+      expect(formatScheduleLabel([])).toBe("(no schedule)");
     });
   });
 });

@@ -5,8 +5,8 @@ export interface ReportConfig {
   name: string;
   modelId: string;
   prompt: string;
-  /** 1..28 — day of month the cron fires this report. */
-  dayOfMonth: number;
+  /** 1..28 — fires once per matching day each month (e.g. [1] = monthly, [1,15] = twice). */
+  daysOfMonth: number[];
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -48,7 +48,7 @@ export interface CreateReportConfigRequest {
   programIds: string[];
   modelId: string;
   prompt: string;
-  dayOfMonth: number;
+  daysOfMonth: number[];
   isActive?: boolean;
 }
 
@@ -57,7 +57,7 @@ export interface UpdateReportConfigRequest {
   programIds?: string[];
   modelId?: string;
   prompt?: string;
-  dayOfMonth?: number;
+  daysOfMonth?: number[];
   isActive?: boolean;
 }
 

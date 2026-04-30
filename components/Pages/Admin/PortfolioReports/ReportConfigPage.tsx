@@ -60,7 +60,10 @@ const formSchema = z.object({
     .min(1, "Select at least one program"),
   modelId: z.enum(MODEL_IDS, { message: "Pick a model" }),
   prompt: z.string().trim().min(1, "A prompt is required"),
-  dayOfMonth: z.coerce.number().int().min(1).max(28),
+  daysOfMonth: z
+    .array(z.number().int().min(1).max(28))
+    .min(1, "Pick at least one day of month")
+    .max(28),
   isActive: z.boolean(),
 });
 
@@ -71,7 +74,7 @@ const EMPTY_FORM_VALUES: FormValues = {
   programIds: [],
   modelId: AVAILABLE_MODELS[0].id,
   prompt: "",
-  dayOfMonth: 1,
+  daysOfMonth: [1],
   isActive: true,
 };
 
@@ -150,6 +153,15 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
   const selectedProgramLabels = selectedProgramIds
     .map((id) => labelByProgramId.get(id) ?? id);
 
+  const selectedDays = watch("daysOfMonth");
+  const toggleDay = (day: number) => {
+    const current = selectedDays ?? [];
+    const next = current.includes(day)
+      ? current.filter((d) => d !== day)
+      : [...current, day].sort((a, b) => a - b);
+    setValue("daysOfMonth", next, { shouldValidate: true, shouldDirty: true });
+  };
+
   // Sync the form whenever we switch which config we're editing.
   useEffect(() => {
     if (!editingId) return;
@@ -161,7 +173,7 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
         programIds: editingConfig.programIds,
         modelId: editingConfig.modelId,
         prompt: editingConfig.prompt,
-        dayOfMonth: editingConfig.dayOfMonth,
+        daysOfMonth: [...editingConfig.daysOfMonth].sort((a, b) => a - b),
         isActive: editingConfig.isActive,
       });
     }
@@ -202,7 +214,7 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
     if (formErrors.programIds?.message) toast.error(formErrors.programIds.message);
     if (formErrors.prompt?.message) toast.error(formErrors.prompt.message);
     if (formErrors.modelId?.message) toast.error(formErrors.modelId.message);
-    if (formErrors.dayOfMonth?.message) toast.error(formErrors.dayOfMonth.message);
+    if (formErrors.daysOfMonth?.message) toast.error(formErrors.daysOfMonth.message);
   };
 
   const onSubmit = async (values: FormValues) => {
@@ -333,7 +345,7 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
                     {cfg.name}
                   </td>
                   <td className="px-4 py-3 text-zinc-500">
-                    {formatScheduleLabel(cfg.dayOfMonth)}
+                    {formatScheduleLabel(cfg.daysOfMonth)}
                   </td>
                   <td className="px-4 py-3 text-xs text-zinc-500">
                     {cfg.programIds.length} program{cfg.programIds.length === 1 ? "" : "s"}
@@ -460,28 +472,48 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
             </select>
           </div>
 
-          {/* Day of month */}
+          {/* Days of month */}
           <div>
-            <label
-              htmlFor="dayOfMonth"
-              className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
-            >
-              Day of month to run
-            </label>
-            <select
-              id="dayOfMonth"
-              className="w-32 rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
-              {...register("dayOfMonth", { valueAsNumber: true })}
-            >
-              {DAYS_OF_MONTH.map((day) => (
-                <option key={day} value={day}>
-                  {day}
-                </option>
-              ))}
-            </select>
-            <p className="mt-1 text-xs text-zinc-400">
-              The cron fires on this day every month (capped at 28 so February doesn&apos;t skip).
-            </p>
+            <fieldset>
+              <legend className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                Days of month to run
+              </legend>
+              <p className="mb-2 text-xs text-zinc-400">
+                Pick one or more days. The cron fires on each selected day
+                every month (e.g. <code>1, 15</code> = twice a month). Capped
+                at 28 so February doesn&apos;t skip.
+              </p>
+              <div className="grid grid-cols-7 gap-1.5 sm:grid-cols-14">
+                {DAYS_OF_MONTH.map((day) => {
+                  const checked = selectedDays.includes(day);
+                  return (
+                    <button
+                      key={day}
+                      type="button"
+                      role="checkbox"
+                      aria-checked={checked}
+                      aria-label={`Day ${day}`}
+                      onClick={() => toggleDay(day)}
+                      className={`rounded-md border px-2 py-1.5 text-xs font-medium transition-colors ${
+                        checked
+                          ? "border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-400 dark:bg-blue-900/30 dark:text-blue-200"
+                          : "border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-700/50"
+                      }`}
+                    >
+                      {day}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mt-2 text-xs text-zinc-500">
+                Schedule: <strong>{formatScheduleLabel(selectedDays)}</strong>
+              </p>
+            </fieldset>
+            {errors.daysOfMonth && (
+              <p className="mt-1 text-xs text-red-500">
+                {errors.daysOfMonth.message}
+              </p>
+            )}
           </div>
 
           {/* Active */}
