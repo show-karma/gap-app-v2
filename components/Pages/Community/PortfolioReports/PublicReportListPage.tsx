@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { usePublishedReports } from "@/hooks/portfolio-reports/usePortfolioReports";
 import type { Community } from "@/types/v2/community";
+import { PAGES } from "@/utilities/pages";
 import { formatRunDate } from "@/utilities/portfolio-reports/period";
 import { ReportTimelineScrubber, type TimelineEntry } from "./ReportTimelineScrubber";
 
@@ -220,7 +221,7 @@ export function PublicReportListPage({ community }: Props) {
                 }`}
               >
                 <Link
-                  href={`/community/${slug}/reports/${report.runDate}`}
+                  href={PAGES.COMMUNITY.REPORT_DETAIL(slug, report.runDate)}
                   className="group/link flex items-start justify-between gap-8"
                 >
                   <div className="min-w-0 flex-1">

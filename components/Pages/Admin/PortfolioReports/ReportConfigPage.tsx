@@ -99,7 +99,12 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
   const slug = community.details.slug;
   const router = useRouter();
   const { hasAccess, isLoading: accessLoading } = useCommunityAdminAccess(community.uid);
-  const { data: configs, isLoading } = useReportConfigs(slug);
+  const {
+    data: configs,
+    isLoading,
+    isError: configsError,
+    refetch: refetchConfigs,
+  } = useReportConfigs(slug);
 
   const programOptions = useMemo(
     () => buildProgramOptions(grantPrograms),
@@ -202,10 +207,19 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
 
   const onSubmit = async (values: FormValues) => {
     try {
-      if (editingId === "new" || !editingConfig) {
+      if (editingId === "new") {
         await createMutation.mutateAsync(values);
         toast.success("Config created");
       } else {
+        // Don't fall back to create when the editing config has gone missing
+        // (deleted in another tab, refetched as empty, etc.) — that would
+        // silently spawn a duplicate row.
+        if (!editingConfig) {
+          toast.error(
+            "This config no longer exists. Please refresh and try again."
+          );
+          return;
+        }
         await updateMutation.mutateAsync(values);
         toast.success("Config updated");
       }
@@ -279,7 +293,21 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
       </div>
 
       {/* Configs table */}
-      {!configs || configs.length === 0 ? (
+      {configsError ? (
+        <div className="flex flex-col items-center justify-center rounded-lg border border-red-200 p-12 text-center dark:border-red-900/40">
+          <p className="text-sm text-red-600 dark:text-red-400">
+            Failed to load report configs.
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-3"
+            onClick={() => refetchConfigs()}
+          >
+            Retry
+          </Button>
+        </div>
+      ) : !configs || configs.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-zinc-300 p-12 text-center dark:border-zinc-600">
           <p className="text-sm text-zinc-500">
             No report configs yet. Click &quot;New Report&quot; to create the first one.

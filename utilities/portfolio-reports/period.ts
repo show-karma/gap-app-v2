@@ -27,11 +27,20 @@ export function formatRunDate(runDate: string): FormattedRunDate {
     return { label: runDate, shortLabel: runDate, badge: runDate };
   }
   const [yearStr, monthStr, dayStr] = runDate.split("-");
-  const date = new Date(
-    Number(yearStr),
-    Number(monthStr) - 1,
-    Number(dayStr)
-  );
+  const year = Number(yearStr);
+  const month = Number(monthStr);
+  const day = Number(dayStr);
+  const date = new Date(year, month - 1, day);
+  // Round-trip check: rejects shape-valid but calendar-invalid dates
+  // (e.g., 2026-02-31, 2025-02-29). `new Date(2026, 1, 31)` rolls forward
+  // to March 3, which would otherwise mislabel the badge silently.
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return { label: runDate, shortLabel: runDate, badge: runDate };
+  }
   return {
     label: date.toLocaleDateString("en-US", {
       month: "long",
