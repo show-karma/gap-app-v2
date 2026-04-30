@@ -41,8 +41,10 @@ const createSource = (overrides: Partial<KnowledgeSource> = {}): KnowledgeSource
   externalId: "https://docs.google.com/document/d/abc/edit",
   title: "Onboarding doc",
   isActive: true,
+  paused: false,
   goal: null,
   syncIntervalMin: 1440,
+  followLinks: false,
   lastSyncedAt: "2026-04-26T00:00:00.000Z",
   lastSyncStatus: "success",
   lastSyncError: null,
@@ -139,12 +141,29 @@ describe("SourceRow", () => {
       expect(screen.getByText("1 doc failed")).toBeInTheDocument();
     });
 
-    it("renders 'Sync paused' when the source is inactive (regardless of sync status)", () => {
-      // Specifically "Sync paused" rather than "Paused" — the source's
-      // existing chunks remain searchable while paused; only future
-      // syncs stop. The label communicates that distinction.
-      renderRow(createSource({ isActive: false, lastSyncStatus: "failed" }));
-      expect(screen.getByText("Sync paused")).toBeInTheDocument();
+    it("renders 'Paused' when source.paused=true (regardless of sync status)", () => {
+      // DEV-194: paused is the explicit "off" switch — it stops sync AND
+      // hides chunks from search. The label is just "Paused" (no qualifier)
+      // because both axes stop together.
+      renderRow(createSource({ paused: true, lastSyncStatus: "failed" }));
+      expect(screen.getByText("Paused")).toBeInTheDocument();
+    });
+
+    it("renders 'Inactive' when isActive=false and not paused (legacy disable axis)", () => {
+      // isActive is orthogonal to paused. Today no UI control flips it, but
+      // pre-existing rows might still be in this state — we surface a
+      // distinct "Inactive" label so admins can tell them apart.
+      renderRow(createSource({ isActive: false, paused: false }));
+      expect(screen.getByText("Inactive")).toBeInTheDocument();
+    });
+
+    it("'Paused' wins over 'Inactive' when both flags are off", () => {
+      // Defense: a row with both flags off should read as "Paused" because
+      // paused is the active, intent-driven state — admins clicked it
+      // recently. Inactive is the dormant "we never enabled this" tone.
+      renderRow(createSource({ isActive: false, paused: true }));
+      expect(screen.getByText("Paused")).toBeInTheDocument();
+      expect(screen.queryByText("Inactive")).not.toBeInTheDocument();
     });
   });
 
@@ -200,6 +219,68 @@ describe("SourceRow", () => {
       renderRow(createSource({ lastSyncStatus: "failed", lastSyncError: "fetch failed" }));
       const syncBtn = screen.getByRole("button", { name: /^sync now$/i });
       expect(syncBtn).toBeEnabled();
+    });
+
+    it("disables the sync trigger when source is paused", () => {
+      // DEV-194: claimDueForSync filters paused rows out, so a Sync click
+      // on a paused source would never make progress. Gate the button
+      // and explain why in the tooltip.
+      renderRow(createSource({ paused: true, lastSyncStatus: "success" }));
+      const syncBtn = screen.getByRole("button", {
+        name: /resume to sync — paused sources are skipped/i,
+      });
+      expect(syncBtn).toBeDisabled();
+    });
+  });
+
+  describe("pause toggle", () => {
+    it("renders Pause button label when source is not paused", () => {
+      renderRow(createSource({ paused: false }));
+      expect(
+        screen.getByRole("button", { name: /pause — skip sync and hide from search/i })
+      ).toBeInTheDocument();
+    });
+
+    it("renders Resume button label when source is paused", () => {
+      renderRow(createSource({ paused: true }));
+      expect(
+        screen.getByRole("button", { name: /resume — back in sync and search/i })
+      ).toBeInTheDocument();
+    });
+
+    it("calls update mutation with paused:true when pausing an active source", async () => {
+      // The button must drive the new `paused` field, not `isActive`. A
+      // regression that swapped the field would still render correctly
+      // (both are booleans) but the backend would never honor the pause.
+      const mutateAsync = vi.fn().mockResolvedValue(undefined);
+      mockUpdate.mockReturnValue({ mutateAsync, isPending: false });
+      renderRow(createSource({ paused: false }));
+
+      const btn = screen.getByRole("button", {
+        name: /pause — skip sync and hide from search/i,
+      });
+      btn.click();
+
+      expect(mutateAsync).toHaveBeenCalledWith({
+        sourceId: "src-1",
+        patch: { paused: true },
+      });
+    });
+
+    it("calls update mutation with paused:false when resuming a paused source", async () => {
+      const mutateAsync = vi.fn().mockResolvedValue(undefined);
+      mockUpdate.mockReturnValue({ mutateAsync, isPending: false });
+      renderRow(createSource({ paused: true }));
+
+      const btn = screen.getByRole("button", {
+        name: /resume — back in sync and search/i,
+      });
+      btn.click();
+
+      expect(mutateAsync).toHaveBeenCalledWith({
+        sourceId: "src-1",
+        patch: { paused: false },
+      });
     });
   });
 });

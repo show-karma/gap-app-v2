@@ -93,14 +93,24 @@ interface StatusMeta {
 }
 
 function getStatusMeta(source: KnowledgeSource): StatusMeta {
-  if (!source.isActive) {
-    // "Sync paused" rather than just "Paused" because pausing only stops
-    // future syncs — the source's existing chunks remain in the index
-    // and continue answering chatbot questions until the source is
-    // deleted. The Pause button's tooltip carries the same caveat.
+  // DEV-194: paused is explicit and authoritative — the backend skips
+  // sync AND excludes the source's chunks from retrieval. The label is
+  // just "Paused" (no "sync" qualifier) because both axes stop at once.
+  if (source.paused) {
     return {
       tone: "paused",
-      label: "Sync paused",
+      label: "Paused",
+      dot: "bg-stone-400 dark:bg-zinc-500",
+    };
+  }
+  if (!source.isActive) {
+    // Legacy `isActive=false` — the long-term disable axis. Today no UI
+    // control flips this, but pre-existing rows might already be in
+    // this state. Keep the badge so admins see "this is off" without
+    // conflating it with paused.
+    return {
+      tone: "paused",
+      label: "Inactive",
       dot: "bg-stone-400 dark:bg-zinc-500",
     };
   }
@@ -221,15 +231,17 @@ function SourceRowImpl({ source, communityIdOrSlug, isFirst }: Props) {
   const status = getStatusMeta(source);
   const KindIcon = kind.Icon;
   const parts = diffParts(source);
-  const isPaused = !source.isActive;
+  // DEV-194: paused now drives the row's dimmed treatment. isActive is
+  // an orthogonal long-term-disable axis that no UI control flips today.
+  const isPaused = source.paused;
 
-  const handleToggleActive = async () => {
+  const handleTogglePaused = async () => {
     try {
       await update.mutateAsync({
         sourceId: source.id,
-        patch: { isActive: !source.isActive },
+        patch: { paused: !source.paused },
       });
-      toast.success(source.isActive ? "Source paused." : "Source resumed.");
+      toast.success(source.paused ? "Source resumed." : "Source paused.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Update failed.");
     }
@@ -266,8 +278,11 @@ function SourceRowImpl({ source, communityIdOrSlug, isFirst }: Props) {
   // cleared status + lastSyncedAt). The Sync button is gated for both
   // states so a double-click can't enqueue redundant work — there's
   // nothing for "force reprocess" to do until the worker finishes.
-  const isQueued = source.isActive && !source.lastSyncedAt && status.tone === "idle";
-  const syncBlocked = isSyncingNow || isQueued;
+  // DEV-194: paused rows aren't "queued" — claimDueForSync skips them,
+  // so a Sync click would have no effect; gate the button accordingly.
+  const isQueued =
+    source.isActive && !source.paused && !source.lastSyncedAt && status.tone === "idle";
+  const syncBlocked = isSyncingNow || isQueued || source.paused;
 
   return (
     <li
@@ -438,7 +453,13 @@ function SourceRowImpl({ source, communityIdOrSlug, isFirst }: Props) {
         )}
         <RowAction
           label={
-            isSyncingNow ? "Sync in progress" : isQueued ? "Already queued for sync" : "Sync now"
+            source.paused
+              ? "Resume to sync — paused sources are skipped"
+              : isSyncingNow
+                ? "Sync in progress"
+                : isQueued
+                  ? "Already queued for sync"
+                  : "Sync now"
           }
           onClick={handleResync}
           disabled={resync.isPending || syncBlocked}
@@ -447,13 +468,13 @@ function SourceRowImpl({ source, communityIdOrSlug, isFirst }: Props) {
         />
         <RowAction
           label={
-            source.isActive
-              ? "Pause syncing — existing chunks stay searchable"
-              : "Resume syncing on the regular schedule"
+            source.paused
+              ? "Resume — back in sync and search"
+              : "Pause — skip sync and hide from search"
           }
-          onClick={handleToggleActive}
+          onClick={handleTogglePaused}
           disabled={update.isPending}
-          Icon={source.isActive ? Pause : Play}
+          Icon={source.paused ? Play : Pause}
         />
         <RowAction
           label="Delete source"

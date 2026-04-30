@@ -17,6 +17,12 @@ export interface KnowledgeSource {
   externalId: string;
   title: string;
   isActive: boolean;
+  // DEV-194: explicit pause flag, distinct from isActive. When true the
+  // sync worker skips this source AND retrieval excludes its chunks —
+  // chunks themselves are preserved so a resume is cheap. Use this for
+  // temporary "silence a noisy source" cases; isActive is the long-term
+  // enable/disable axis.
+  paused: boolean;
   // Optional editorial purpose. Prepended to each chunk at embed time so
   // retrieval picks up the curator's intent — never shown in citations or
   // the agent's excerpt path.
@@ -67,6 +73,9 @@ export interface UpdateKnowledgeSourceInput {
   // `null` clears the goal; omitting the key leaves it unchanged.
   goal?: string | null;
   isActive?: boolean;
+  // DEV-194: pause toggle — skips sync AND excludes chunks from
+  // retrieval while true. Distinct from isActive.
+  paused?: boolean;
   syncIntervalMin?: number;
   followLinks?: boolean;
 }
