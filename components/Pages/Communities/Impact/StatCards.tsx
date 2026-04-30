@@ -58,19 +58,19 @@ const MilestonesCard = ({ completed, total, isLoading }: MilestonesCardProps) =>
       <div className="py-3 pl-3">
         <div className="w-1 h-full rounded-full bg-emerald-500" />
       </div>
-      <div className="flex flex-col items-start justify-center py-3 pl-2 pr-4 w-full min-w-[160px]">
+      <div className="flex flex-col items-start justify-center py-2 pl-2 pr-3 w-full min-w-[180px]">
         {isLoading ? (
-          <Skeleton className="w-20 h-8 mb-1" />
+          <Skeleton className="w-20 h-8" />
         ) : (
-          <p className="text-gray-900 dark:text-zinc-100 text-[30px] font-semibold leading-none tracking-tight tabular-nums">
+          <p className="text-gray-900 dark:text-zinc-100 text-[30px] font-semibold leading-none tracking-tight tabular-nums whitespace-nowrap">
             {completed} / {total}
           </p>
         )}
-        <span className="text-gray-900 dark:text-zinc-100 text-sm font-medium leading-normal mt-1">
+        <span className="text-gray-900 dark:text-zinc-100 text-sm font-medium leading-tight whitespace-nowrap">
           Completed / Total Milestones
         </span>
         <div
-          className="w-full mt-2 h-1.5 rounded-full overflow-hidden bg-gray-200 dark:bg-zinc-700"
+          className="w-full mt-1.5 h-1.5 rounded-full overflow-hidden bg-gray-200 dark:bg-zinc-700"
           role="progressbar"
           aria-valuenow={completedPct}
           aria-valuemin={0}
@@ -82,7 +82,7 @@ const MilestonesCard = ({ completed, total, isLoading }: MilestonesCardProps) =>
             style={{ width: `${completedPct}%` }}
           />
         </div>
-        <div className="flex justify-between w-full mt-1 text-xs text-gray-500 dark:text-gray-400 tabular-nums">
+        <div className="flex justify-between w-full mt-0.5 text-xs text-gray-500 dark:text-gray-400 tabular-nums">
           <span>{completedPct.toFixed(1)}%</span>
           <span>{pendingPct.toFixed(1)}%</span>
         </div>
