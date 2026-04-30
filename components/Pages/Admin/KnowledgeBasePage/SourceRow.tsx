@@ -5,6 +5,7 @@ import {
   FileBadge,
   FileText,
   FolderOpen,
+  GitBranch,
   Globe,
   Network,
   Pause,
@@ -370,6 +371,20 @@ function SourceRowImpl({ source, communityIdOrSlug, isFirst }: Props) {
                   {p.value}
                 </span>
               ))}
+            </span>
+          )}
+          {/* DEV-192: surface follow-links state in the meta strip. Only
+              meaningful for kind=gdrive_file (the backend rejects the
+              flag elsewhere), so we gate on both. The label is short by
+              design — the dialog explains the depth=1 caveat in detail
+              when the toggle is shown. */}
+          {source.followLinks && source.kind === "gdrive_file" && (
+            <span
+              className="inline-flex items-center gap-1.5 border-r border-stone-200 px-2.5 text-stone-500 dark:border-zinc-800 dark:text-zinc-500"
+              title="Follows links to other Google Docs (one level deep)"
+            >
+              <GitBranch aria-hidden="true" className="h-3 w-3" strokeWidth={1.75} />
+              Linked
             </span>
           )}
           {(isFailed || isPartial) && source.lastSyncError && (
