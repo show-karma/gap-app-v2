@@ -47,9 +47,9 @@ function formatReasoning(text: string): string {
   );
 }
 
-function isValidEvaluation(
-  evaluation: { rating?: number; reasoning?: string } | null | undefined
-): evaluation is { rating: number; reasoning: string } {
+function isValidEvaluation<T extends { rating?: number; reasoning?: string }>(
+  evaluation: T | null | undefined
+): evaluation is T & { rating: number; reasoning: string } {
   return (
     typeof evaluation?.rating === "number" &&
     Number.isFinite(evaluation.rating) &&
@@ -88,7 +88,10 @@ export function MilestoneAIEvaluationBadge({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const hasCompletionContent = completionReason === undefined || completionReason.trim().length > 0;
   const { data, isLoading, error } = useMilestoneEvaluation(milestoneUID, hasCompletionContent);
-  const evaluations = (data?.evaluations ?? []).filter(isValidEvaluation);
+  const evaluations = useMemo(
+    () => (data?.evaluations ?? []).filter(isValidEvaluation),
+    [data?.evaluations]
+  );
 
   const avgScore = useMemo(() => {
     if (evaluations.length === 0) return null;
@@ -188,7 +191,10 @@ interface AIEvaluationInlineModalProps {
 
 function AIEvaluationInlineModal({ milestoneUID, isOpen, onClose }: AIEvaluationInlineModalProps) {
   const { data, isLoading, error, refetch } = useMilestoneEvaluation(milestoneUID, isOpen);
-  const evaluations = (data?.evaluations ?? []).filter(isValidEvaluation);
+  const evaluations = useMemo(
+    () => (data?.evaluations ?? []).filter(isValidEvaluation),
+    [data?.evaluations]
+  );
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -292,7 +298,10 @@ export function ApplicationMilestoneAIEvaluationBadge({
     milestoneTitle,
     hasCompletionContent
   );
-  const evaluations = (data?.evaluations ?? []).filter(isValidEvaluation);
+  const evaluations = useMemo(
+    () => (data?.evaluations ?? []).filter(isValidEvaluation),
+    [data?.evaluations]
+  );
 
   const avgScore = useMemo(() => {
     if (evaluations.length === 0) return null;
@@ -403,7 +412,10 @@ function AIEvaluationApplicationModal({
     milestoneTitle,
     isOpen
   );
-  const evaluations = (data?.evaluations ?? []).filter(isValidEvaluation);
+  const evaluations = useMemo(
+    () => (data?.evaluations ?? []).filter(isValidEvaluation),
+    [data?.evaluations]
+  );
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>

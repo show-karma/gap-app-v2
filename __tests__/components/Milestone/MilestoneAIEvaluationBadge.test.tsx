@@ -1,9 +1,13 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {
   ApplicationMilestoneAIEvaluationBadge,
   MilestoneAIEvaluationBadge,
 } from "@/components/Milestone/MilestoneAIEvaluationBadge";
+import {
+  useApplicationMilestoneEvaluation,
+  useMilestoneEvaluation,
+} from "@/hooks/useMilestoneEvaluation";
 
 vi.mock("next/dynamic", () => ({
   __esModule: true,
@@ -14,10 +18,6 @@ vi.mock("@/hooks/useMilestoneEvaluation", () => ({
   useMilestoneEvaluation: vi.fn(),
   useApplicationMilestoneEvaluation: vi.fn(),
 }));
-
-const { useApplicationMilestoneEvaluation, useMilestoneEvaluation } = await import(
-  "@/hooks/useMilestoneEvaluation"
-);
 
 describe("MilestoneAIEvaluationBadge", () => {
   beforeEach(() => {
@@ -153,10 +153,11 @@ describe("MilestoneAIEvaluationBadge", () => {
 
     await user.click(screen.getByRole("button"));
 
-    expect(screen.getByRole("dialog")).toBeInTheDocument();
-    expect(screen.getByText("9")).toBeInTheDocument();
-    expect(screen.queryByText("4")).not.toBeInTheDocument();
-    expect(screen.queryByText("No AI evaluation available yet.")).not.toBeInTheDocument();
+    const dialog = screen.getByRole("dialog");
+    expect(dialog).toBeInTheDocument();
+    expect(within(dialog).getByText("9")).toBeInTheDocument();
+    expect(within(dialog).queryByText("4")).not.toBeInTheDocument();
+    expect(within(dialog).queryByText("No AI evaluation available yet.")).not.toBeInTheDocument();
   });
 });
 
@@ -274,9 +275,10 @@ describe("ApplicationMilestoneAIEvaluationBadge", () => {
 
     await user.click(screen.getByRole("button"));
 
-    expect(screen.getByRole("dialog")).toBeInTheDocument();
-    expect(screen.getByText("6")).toBeInTheDocument();
-    expect(screen.queryByText("3")).not.toBeInTheDocument();
-    expect(screen.queryByText("No AI evaluation available yet.")).not.toBeInTheDocument();
+    const dialog = screen.getByRole("dialog");
+    expect(dialog).toBeInTheDocument();
+    expect(within(dialog).getByText("6")).toBeInTheDocument();
+    expect(within(dialog).queryByText("3")).not.toBeInTheDocument();
+    expect(within(dialog).queryByText("No AI evaluation available yet.")).not.toBeInTheDocument();
   });
 });
