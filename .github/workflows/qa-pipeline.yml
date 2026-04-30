@@ -187,21 +187,28 @@ jobs:
           fetch-depth: 0
           ref: ${{ needs.gate-check.outputs.head_sha }}
 
-      - name: Compute changed-file list for cache key
+      - name: Compute diff fingerprint for cache key
         id: changed-files
-        # Write inside $GITHUB_WORKSPACE so hashFiles() can read it — hashFiles
-        # only sees workspace-relative paths, not /tmp.
+        # Hash the actual diff CONTENT (not just file names) so two
+        # commits that touch the same files but with different changes
+        # don't collide. Same diff = same plan, regardless of SHA — wins
+        # on rebases and force-pushes that re-apply identical changes.
+        # Files written into $GITHUB_WORKSPACE so hashFiles() can read them.
         run: |
           git diff --name-only origin/main...HEAD | sort > .qa-plan-changed-files.txt
+          git diff origin/main...HEAD > .qa-plan-diff-content.txt
           echo "Changed files:"
           cat .qa-plan-changed-files.txt
+          echo "Diff size: $(wc -c < .qa-plan-diff-content.txt) bytes"
 
       - name: Cache QA plan output
         id: qa-plan-cache
         uses: actions/cache@v5
         with:
           path: qa-plan.md
-          key: qa-plan-${{ hashFiles('.qa-plan-changed-files.txt') }}
+          # No restore-keys: a stale plan from a different PR is worse
+          # than re-generating. Only exact diff matches reuse the cache.
+          key: qa-plan-${{ hashFiles('.qa-plan-diff-content.txt') }}
 
       - name: Generate GitHub App token
         if: steps.qa-plan-cache.outputs.cache-hit != 'true'
@@ -296,7 +303,10 @@ jobs:
   build:
     needs: [gate-check]
     if: needs.gate-check.outputs.should_run == 'true'
-    runs-on: ubuntu-latest
+    # 4-core runner cuts SWC compile time roughly in half (~5m → ~2.5m).
+    # Cost-neutral vs ubuntu-latest (2× per minute, half the minutes).
+    # Falls back automatically if plan does not allow 4-core.
+    runs-on: ubuntu-latest-4-cores
     timeout-minutes: 15
     steps:
       - name: Checkout repository
@@ -333,12 +343,23 @@ jobs:
         env:
           NODE_ENV: production
 
-      - name: Pack .next into tarball
+      - name: Assemble standalone bundle
+        # Next.js standalone output is self-contained (server.js + traced
+        # node_modules) but doesn't auto-copy public/ or .next/static/ —
+        # we stage them into the standalone tree so consumers boot with a
+        # single `node .next/standalone/server.js` and no extra setup.
+        run: |
+          cp -r public .next/standalone/
+          mkdir -p .next/standalone/.next
+          cp -r .next/static .next/standalone/.next/static
+
+      - name: Pack standalone bundle into tarball
         # actions/upload-artifact@v5 rejects filenames containing `:` (NTFS
         # incompatibility). Next.js + Turbopack emits chunks like
-        # `[externals]_node:inspector_*.js`, so uploading raw `.next/` fails.
-        # Packaging into a single tarball sidesteps the per-file validator.
-        run: tar --exclude='.next/cache' -czf next-build.tar.gz .next
+        # `[externals]_node:inspector_*.js`, so uploading raw paths fails.
+        # Packaging into a tarball sidesteps the per-file validator and
+        # also keeps the artifact ~3-5× smaller than packing all of .next/.
+        run: tar -czf next-build.tar.gz .next/standalone
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v5
@@ -426,13 +447,18 @@ jobs:
         with:
           name: qa-build
 
-      - name: Unpack .next tarball
+      - name: Unpack standalone bundle
         run: tar -xzf next-build.tar.gz
 
       - name: Start local server
-        run: pnpm start &
+        # Standalone server.js boots in ~2s and embeds its own pruned
+        # node_modules — no `pnpm start` / `next start` needed. HOSTNAME
+        # must be 0.0.0.0 so curl on localhost can reach it.
+        run: node .next/standalone/server.js &
         env:
           PORT: 3000
+          HOSTNAME: 0.0.0.0
+          NODE_ENV: production
 
       - name: Wait for server
         run: |
@@ -678,13 +704,18 @@ jobs:
         with:
           name: qa-build
 
-      - name: Unpack .next tarball
+      - name: Unpack standalone bundle
         run: tar -xzf next-build.tar.gz
 
       - name: Start local server
-        run: pnpm start &
+        # Standalone server.js boots in ~2s and embeds its own pruned
+        # node_modules — no `pnpm start` / `next start` needed. HOSTNAME
+        # must be 0.0.0.0 so curl on localhost can reach it.
+        run: node .next/standalone/server.js &
         env:
           PORT: 3000
+          HOSTNAME: 0.0.0.0
+          NODE_ENV: production
 
       - name: Wait for server
         run: |
