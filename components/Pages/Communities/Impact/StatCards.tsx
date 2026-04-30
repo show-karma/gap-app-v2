@@ -20,9 +20,7 @@ interface StatCardProps {
 
 const StatCard = ({ title, value, color, isLoading, tooltip }: StatCardProps) => (
   <div className="flex flex-1 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
-    <div className="py-1.5 pl-3">
-      <div className="w-1 h-full rounded-full" style={{ background: color }} />
-    </div>
+    <div className="w-1 my-1.5 ml-3 rounded-full" style={{ background: color }} />
     <div className="flex flex-col items-start justify-center py-3 pl-2 pr-4">
       {isLoading ? (
         <Skeleton className="w-12 h-8 mb-1" />
@@ -55,9 +53,7 @@ const MilestonesCard = ({ completed, total, isLoading }: MilestonesCardProps) =>
 
   return (
     <div className="flex flex-1 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
-      <div className="py-1.5 pl-3">
-        <div className="w-1 h-full rounded-full bg-emerald-500" />
-      </div>
+      <div className="w-1 my-1.5 ml-3 rounded-full bg-emerald-500" />
       <div className="flex flex-col items-start justify-center py-3 pl-2 pr-3 w-full min-w-[180px]">
         {isLoading ? (
           <Skeleton className="w-20 h-8" />
