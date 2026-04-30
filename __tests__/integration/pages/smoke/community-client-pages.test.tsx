@@ -129,13 +129,21 @@ vi.mock("@/hooks/useFundingPlatform", () => ({
     error: null,
     refetch: vi.fn(),
   }),
-  useApplication: () => ({ data: null, isLoading: false }),
-  useApplicationStatus: () => ({ status: "pending" }),
-  useFundingApplications: () => ({ data: [], isLoading: false }),
-  useProgramConfig: () => ({ data: null, isLoading: false }),
-  useApplicationComments: () => ({ data: [], isLoading: false }),
-  useApplicationVersions: () => ({ data: [], isLoading: false }),
-  useDeleteApplication: () => ({ mutate: vi.fn(), isPending: false }),
+  useApplication: () => ({ application: null, isLoading: false, error: null, refetch: vi.fn() }),
+  useApplicationStatus: () => ({ updateStatus: vi.fn(), isUpdating: false, error: null }),
+  useFundingApplications: () => ({
+    applications: [],
+    total: 0,
+    page: 1,
+    totalPages: 1,
+    isLoading: false,
+    error: null,
+    refetch: vi.fn(),
+  }),
+  useProgramConfig: () => ({ data: null, config: null, isLoading: false, error: null }),
+  useApplicationComments: () => ({ comments: [], isLoading: false, error: null }),
+  useApplicationVersions: () => ({ versions: [], isLoading: false, error: null }),
+  useDeleteApplication: () => ({ deleteApplication: vi.fn(), isDeleting: false, error: null }),
 }));
 
 vi.mock("@/hooks/useProgramSetupProgress", () => ({
