@@ -39,6 +39,8 @@ export interface DiscussionTabProps {
   programId?: string;
   /** Enable @mention functionality */
   enableMentions?: boolean;
+  /** Application reference number used to fetch grantee contacts for @-mention */
+  referenceNumber?: string;
 }
 
 /**
@@ -60,6 +62,7 @@ export const DiscussionTab: FC<DiscussionTabProps> = ({
   isLoading = false,
   programId,
   enableMentions = false,
+  referenceNumber,
 }) => {
   const [isAddingComment, setIsAddingComment] = useState(false);
   const [commentContent, setCommentContent] = useState("");
@@ -97,6 +100,7 @@ export const DiscussionTab: FC<DiscussionTabProps> = ({
           }
           programId={programId}
           isAdmin={isAdmin}
+          referenceNumber={referenceNumber}
         />
       </div>
 

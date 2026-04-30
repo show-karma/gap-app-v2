@@ -173,6 +173,8 @@ export const INDEXER = {
         `/v2/funding-applications/${referenceNumber}/invoice-config`,
       MILESTONE_EVALUATION: (referenceNumber: string, milestoneTitle: string) =>
         `/v2/funding-applications/${referenceNumber}/milestones/${encodeURIComponent(milestoneTitle)}/evaluation`,
+      GRANTEE_CONTACTS: (referenceNumber: string) =>
+        `/v2/funding-applications/${referenceNumber}/grantee-contacts`,
     },
     AUTH: {
       PERMISSIONS: (params?: {

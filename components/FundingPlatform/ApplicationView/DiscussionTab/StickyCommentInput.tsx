@@ -14,6 +14,8 @@ export interface StickyCommentInputProps {
   isAdmin?: boolean;
   /** Program ID for mention autocomplete */
   programId?: string;
+  /** Application reference number used to fetch grantee contacts for @-mention */
+  referenceNumber?: string;
 }
 
 /**
@@ -26,6 +28,7 @@ export const StickyCommentInput: FC<StickyCommentInputProps> = ({
   placeholder,
   isAdmin = false,
   programId,
+  referenceNumber,
 }) => {
   const defaultPlaceholder = isAdmin
     ? "Add an admin comment..."
@@ -62,6 +65,7 @@ export const StickyCommentInput: FC<StickyCommentInputProps> = ({
         placeholder={placeholder || defaultPlaceholder}
         programId={programId}
         isAdmin={isAdmin}
+        referenceNumber={referenceNumber}
       />
     </div>
   );

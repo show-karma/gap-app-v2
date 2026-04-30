@@ -48,6 +48,8 @@ interface CommentsTimelineProps {
   formSchema?: IFormSchema; // Optional: for mapping field IDs to labels
   programId?: string;
   enableMentions?: boolean;
+  /** Application reference number used to fetch grantee contacts for @-mention */
+  referenceNumber?: string;
 }
 
 type TimelineItem = {
@@ -142,6 +144,7 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
   formSchema,
   programId,
   enableMentions = false,
+  referenceNumber,
 }: CommentsTimelineProps) => {
   const [isAddingComment, setIsAddingComment] = useState(false);
   const [commentContent, setCommentContent] = useState("");
@@ -415,6 +418,7 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
             }
             programId={programId}
             isAdmin={isAdmin}
+            referenceNumber={referenceNumber}
           />
         </div>
       )}

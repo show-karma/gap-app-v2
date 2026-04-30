@@ -65,6 +65,8 @@ export interface CommentInputProps {
   isLoading?: boolean;
   programId?: string;
   isAdmin?: boolean;
+  /** Application reference number used to fetch grantee contacts for @-mention */
+  referenceNumber?: string;
 }
 
 export interface UsePublicCommentingReturn {
