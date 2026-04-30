@@ -628,6 +628,34 @@ describe("useAgentStream", () => {
       expect(assistantMsg?.traceId).toBe("trace-xyz");
     });
 
+    it("should_buffer_traceId_when_system_event_arrives_before_assistant_message_exists", async () => {
+      // Direct unit-level coverage: in production the SSE parser may
+      // dispatch the system event before the assistant placeholder is
+      // added to the store (timing varies by transport). The store
+      // must buffer the traceId in pendingTraceId and consume it when
+      // the next assistant message is added via addMessage.
+      const store = useAgentChatStore.getState();
+
+      // No assistant message yet — setLastAssistantTraceId should buffer.
+      store.setLastAssistantTraceId("trace-buffered");
+      expect(useAgentChatStore.getState().pendingTraceId).toBe("trace-buffered");
+      expect(useAgentChatStore.getState().messages).toHaveLength(0);
+
+      // Now add the assistant message — it should pick up the buffered traceId.
+      store.addMessage({
+        id: "assistant-late",
+        role: "assistant",
+        content: "",
+        timestamp: 1,
+        isStreaming: true
+      });
+
+      const after = useAgentChatStore.getState();
+      expect(after.pendingTraceId).toBeNull();
+      const assistantMsg = after.messages.find((m) => m.role === "assistant");
+      expect(assistantMsg?.traceId).toBe("trace-buffered");
+    });
+
     it("should_ignore_system_event_without_traceId", async () => {
       const sseText = formatSSE([{ type: "system" }]);
       mockFetch.mockResolvedValue(createStreamResponse(sseText));

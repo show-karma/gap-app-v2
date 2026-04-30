@@ -51,6 +51,15 @@ interface AgentChatStore {
   isStreaming: boolean;
   error: string | null;
 
+  /**
+   * Buffered Langfuse trace ID. The backend emits `trace_started` over SSE
+   * BEFORE the first assistant token arrives, so by the time the system
+   * event is processed there's no assistant message in the store yet to
+   * attach it to. We park the traceId here and consume it on the next
+   * assistant message added via `addMessage`.
+   */
+  pendingTraceId: string | null;
+
   // Context for role-aware entry points (optional viewing hint)
   agentContext: {
     projectId?: string;
@@ -90,11 +99,31 @@ export const useAgentChatStore = create<AgentChatStore>((set) => ({
   error: null,
   agentContext: null,
   pendingMentions: [],
+  pendingTraceId: null,
 
   setOpen: (open) => set({ isOpen: open }),
   toggleOpen: () => set((state) => ({ isOpen: !state.isOpen })),
 
-  addMessage: (message) => set((state) => ({ messages: [...state.messages, message] })),
+  addMessage: (message) =>
+    set((state) => {
+      // If a trace_started SSE event arrived before this assistant message
+      // existed, consume the buffered traceId and stamp it on the new
+      // message — that's the path the rating UI gates on.
+      if (
+        message.role === "assistant" &&
+        !message.traceId &&
+        state.pendingTraceId
+      ) {
+        return {
+          messages: [
+            ...state.messages,
+            { ...message, traceId: state.pendingTraceId }
+          ],
+          pendingTraceId: null
+        };
+      }
+      return { messages: [...state.messages, message] };
+    }),
 
   updateLastAssistantMessage: (content) =>
     set((state) => {
@@ -144,7 +173,10 @@ export const useAgentChatStore = create<AgentChatStore>((set) => ({
           return { messages };
         }
       }
-      return state;
+      // No assistant message yet — buffer the traceId so the next
+      // addMessage call (when the assistant message is created from the
+      // first stream token) can attach it.
+      return { pendingTraceId: traceId };
     }),
 
   setMessageRating: (messageId, rating) =>
@@ -164,5 +196,6 @@ export const useAgentChatStore = create<AgentChatStore>((set) => ({
   removeMention: (id) =>
     set((state) => ({ pendingMentions: state.pendingMentions.filter((m) => m.id !== id) })),
   clearMentions: () => set({ pendingMentions: [] }),
-  clearMessages: () => set({ messages: [], error: null, isStreaming: false }),
+  clearMessages: () =>
+    set({ messages: [], error: null, isStreaming: false, pendingTraceId: null }),
 }));
