@@ -9,8 +9,9 @@ import {
   Wallet,
 } from "lucide-react";
 import { useParams, usePathname, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useMemo } from "react";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
+import { usePublishedReports } from "@/hooks/portfolio-reports/usePortfolioReports";
 import { useFundingOpportunitiesCount } from "@/hooks/useFundingOpportunitiesCount";
 import { useCommunityPrograms } from "@/hooks/usePrograms";
 import { Link } from "@/src/components/navigation/Link";
@@ -133,7 +134,10 @@ export const CommunityPageNavigator = () => {
   const { data: programs } = useCommunityPrograms(communityId, {
     enabled: !isAdminPage,
   });
+  const reportsCommunitySlug = !isAdminPage ? (community?.details?.slug ?? communityId) : "";
+  const { data: publishedReports } = usePublishedReports(reportsCommunitySlug);
   const programsCount = programs?.length ?? 0;
+  const publishedReportsCount = publishedReports?.length ?? 0;
 
   const isFinancialsEnabled = FINANCIALS_ENABLED_COMMUNITIES.includes(communityId);
 
@@ -148,8 +152,8 @@ export const CommunityPageNavigator = () => {
       if (item.id === "browse-applications" && programsCount === 0) {
         return false;
       }
-      // Show reports only if the community has programs
-      if (item.id === "reports" && programsCount === 0) {
+      // Show reports only when the community has published reports
+      if (item.id === "reports" && publishedReportsCount === 0) {
         return false;
       }
       // Show financials only for enabled communities with programs
@@ -158,7 +162,13 @@ export const CommunityPageNavigator = () => {
       }
       return true;
     });
-  }, [fundingOpportunitiesCount, programsCount, isWhitelabel, isFinancialsEnabled]);
+  }, [
+    fundingOpportunitiesCount,
+    programsCount,
+    publishedReportsCount,
+    isWhitelabel,
+    isFinancialsEnabled,
+  ]);
 
   const activeLinkRef = useCallback((node: HTMLAnchorElement | null) => {
     if (node?.scrollIntoView) {
