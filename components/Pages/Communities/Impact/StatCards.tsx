@@ -52,9 +52,9 @@ const MilestonesCard = ({ completed, total, isLoading }: MilestonesCardProps) =>
   const pendingPct = total > 0 ? 100 - completedPct : 0;
 
   return (
-    <div className="flex flex-1 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+    <div className="flex flex-1 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 max-sm:col-span-2 min-w-0">
       <div className="w-1 my-1.5 ml-3 rounded-full bg-emerald-500" />
-      <div className="flex flex-col items-start justify-center py-3 pl-2 pr-3 w-full min-w-[180px]">
+      <div className="flex flex-col items-start justify-center py-3 pl-2 pr-3 w-full min-w-0">
         {isLoading ? (
           <Skeleton className="w-20 h-8" />
         ) : (
@@ -62,7 +62,7 @@ const MilestonesCard = ({ completed, total, isLoading }: MilestonesCardProps) =>
             {completed} / {total}
           </p>
         )}
-        <span className="text-gray-900 dark:text-zinc-100 text-sm font-medium leading-tight whitespace-nowrap">
+        <span className="text-gray-900 dark:text-zinc-100 text-sm font-medium leading-tight">
           Completed / Total Milestones
         </span>
         <div
