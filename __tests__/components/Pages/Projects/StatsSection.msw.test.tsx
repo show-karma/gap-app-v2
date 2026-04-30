@@ -1,14 +1,16 @@
 /**
  * ProjectsStatsSection component tests using MSW for data fetching.
  *
- * Verifies loading, success, and error states for the global stats
- * displayed on the projects explorer page.
+ * Verifies loading, success, and error states for the stats displayed
+ * on the projects explorer page, including the milestones progress card.
+ * Covers both global mode and whitelabel (community-scoped) mode.
  */
 import { screen, waitFor } from "@testing-library/react";
 import { HttpResponse, http } from "msw";
 import { installMswLifecycle, server } from "@/__tests__/msw/server";
 import { renderWithProviders } from "@/__tests__/utils/render";
 import { ProjectsStatsSection } from "@/components/Pages/Projects/StatsSection";
+import { WhitelabelProvider } from "@/utilities/whitelabel-context";
 
 vi.mock("next/image", () => ({
   __esModule: true,
@@ -20,6 +22,14 @@ vi.mock("next/image", () => ({
 
 const BASE = "http://localhost:4000";
 const GLOBAL_STATS_URL = `${BASE}/v2/communities/stats`;
+const COMMUNITY_STATS_URL = (slug: string) => `${BASE}/v2/communities/${slug}/stats`;
+
+const renderInWhitelabel = (slug: string) =>
+  renderWithProviders(
+    <WhitelabelProvider isWhitelabel={true} communitySlug={slug} config={null} tenantConfig={null}>
+      <ProjectsStatsSection />
+    </WhitelabelProvider>
+  );
 
 installMswLifecycle();
 
@@ -36,18 +46,16 @@ describe("ProjectsStatsSection", () => {
 
       const { container } = renderWithProviders(<ProjectsStatsSection />);
 
-      // While loading, stat values are "..."
       const dots = screen.getAllByText("...");
-      expect(dots.length).toBeGreaterThanOrEqual(4);
+      expect(dots.length).toBeGreaterThanOrEqual(5);
 
-      // Pulsing animation should be present
       const pulsing = container.querySelectorAll(".animate-pulse");
       expect(pulsing.length).toBeGreaterThan(0);
     });
   });
 
-  describe("success state", () => {
-    it("renders all four stat cards with formatted numbers", async () => {
+  describe("success state (global)", () => {
+    it("renders all five stat cards with formatted numbers", async () => {
       server.use(
         http.get(GLOBAL_STATS_URL, () => {
           return HttpResponse.json({
@@ -56,6 +64,8 @@ describe("ProjectsStatsSection", () => {
             activeCommunities: 45,
             activeBuilders: 2100,
             totalProjectUpdates: 5000,
+            totalMilestones: 137,
+            totalCompletedMilestones: 55,
           });
         })
       );
@@ -66,16 +76,40 @@ describe("ProjectsStatsSection", () => {
         expect(screen.getByText("1.5k+")).toBeInTheDocument();
       });
 
-      // Check all stat labels
       expect(screen.getByText("Total Projects")).toBeInTheDocument();
       expect(screen.getByText("Grants Tracked")).toBeInTheDocument();
       expect(screen.getByText("Active Communities")).toBeInTheDocument();
       expect(screen.getByText("Active Builders")).toBeInTheDocument();
+      expect(screen.getByText("Completed / Total Milestones")).toBeInTheDocument();
 
-      // Check formatted values
       expect(screen.getByText("320+")).toBeInTheDocument();
       expect(screen.getByText("45")).toBeInTheDocument();
       expect(screen.getByText("2.1k+")).toBeInTheDocument();
+      expect(screen.getByText("55 / 137")).toBeInTheDocument();
+      expect(screen.getByText("40.1%")).toBeInTheDocument();
+      expect(screen.getByText("59.9%")).toBeInTheDocument();
+    });
+
+    it("renders the progress bar with the correct accessible value", async () => {
+      server.use(
+        http.get(GLOBAL_STATS_URL, () => {
+          return HttpResponse.json({
+            totalProjects: 1,
+            totalGrants: 1,
+            activeCommunities: 1,
+            activeBuilders: 1,
+            totalProjectUpdates: 1,
+            totalMilestones: 200,
+            totalCompletedMilestones: 50,
+          });
+        })
+      );
+
+      renderWithProviders(<ProjectsStatsSection />);
+
+      await screen.findByText("50 / 200");
+      const bar = screen.getByRole("progressbar");
+      expect(bar).toHaveAttribute("aria-valuenow", "25");
     });
 
     it("formats millions correctly", async () => {
@@ -87,6 +121,8 @@ describe("ProjectsStatsSection", () => {
             activeCommunities: 500,
             activeBuilders: 10000,
             totalProjectUpdates: 100,
+            totalMilestones: 0,
+            totalCompletedMilestones: 0,
           });
         })
       );
@@ -100,28 +136,68 @@ describe("ProjectsStatsSection", () => {
       expect(screen.getByText("1.0M+")).toBeInTheDocument();
     });
 
-    it("shows numbers under 1000 as-is", async () => {
+    it("shows zero milestones without dividing by zero", async () => {
       server.use(
         http.get(GLOBAL_STATS_URL, () => {
           return HttpResponse.json({
-            totalProjects: 42,
-            totalGrants: 10,
-            activeCommunities: 3,
-            activeBuilders: 99,
-            totalProjectUpdates: 50,
+            totalProjects: 1,
+            totalGrants: 1,
+            activeCommunities: 1,
+            activeBuilders: 1,
+            totalProjectUpdates: 1,
+            totalMilestones: 0,
+            totalCompletedMilestones: 0,
           });
         })
       );
 
       renderWithProviders(<ProjectsStatsSection />);
 
-      await waitFor(() => {
-        expect(screen.getByText("42+")).toBeInTheDocument();
-      });
+      expect(await screen.findByText("0 / 0")).toBeInTheDocument();
+      const percents = screen.getAllByText("0.0%");
+      expect(percents.length).toBe(2);
+    });
+  });
 
-      expect(screen.getByText("10+")).toBeInTheDocument();
-      expect(screen.getByText("3")).toBeInTheDocument();
-      expect(screen.getByText("99+")).toBeInTheDocument();
+  describe("success state (whitelabel)", () => {
+    it("uses community-scoped stats for milestones when on a whitelabel domain", async () => {
+      server.use(
+        http.get(GLOBAL_STATS_URL, () => {
+          return HttpResponse.json({
+            totalProjects: 1500,
+            totalGrants: 320,
+            activeCommunities: 45,
+            activeBuilders: 2100,
+            totalProjectUpdates: 5000,
+            totalMilestones: 9999,
+            totalCompletedMilestones: 9999,
+          });
+        }),
+        http.get(COMMUNITY_STATS_URL("filecoin"), () => {
+          return HttpResponse.json({
+            totalProjects: 50,
+            totalGrants: 25,
+            totalMilestones: 137,
+            projectUpdates: 200,
+            projectUpdatesBreakdown: {
+              projectMilestones: 80,
+              projectCompletedMilestones: 30,
+              projectUpdates: 40,
+              grantMilestones: 57,
+              grantCompletedMilestones: 25,
+              grantUpdates: 60,
+            },
+            totalTransactions: 0,
+            averageCompletion: 0,
+          });
+        })
+      );
+
+      renderInWhitelabel("filecoin");
+
+      expect(await screen.findByText("55 / 137")).toBeInTheDocument();
+      expect(screen.getByText("40.1%")).toBeInTheDocument();
+      expect(screen.getByText("59.9%")).toBeInTheDocument();
     });
   });
 
@@ -135,15 +211,10 @@ describe("ProjectsStatsSection", () => {
 
       renderWithProviders(<ProjectsStatsSection />);
 
-      // On error, stats stay undefined so we see "..." placeholders
-      // The component does not show an explicit error message;
-      // it just never replaces the "..." placeholders.
-      // We wait briefly and verify no real numbers appear.
       await waitFor(
         () => {
-          // Should still show dots (stats never populated)
           const dots = screen.getAllByText("...");
-          expect(dots.length).toBeGreaterThanOrEqual(4);
+          expect(dots.length).toBeGreaterThanOrEqual(5);
         },
         { timeout: 3000 }
       );
@@ -160,6 +231,8 @@ describe("ProjectsStatsSection", () => {
             activeCommunities: 1,
             activeBuilders: 1,
             totalProjectUpdates: 1,
+            totalMilestones: 1,
+            totalCompletedMilestones: 1,
           });
         })
       );
