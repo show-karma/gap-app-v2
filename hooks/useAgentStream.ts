@@ -251,6 +251,13 @@ export function useAgentStream() {
                 }
                 break;
               }
+              case "system": {
+                const traceId = event.traceId;
+                if (typeof traceId === "string" && traceId) {
+                  store.setLastAssistantTraceId(traceId);
+                }
+                break;
+              }
               case "tool_result": {
                 const toolName = event.tool_name as string;
                 const resultData = extractToolResultData(event.result);

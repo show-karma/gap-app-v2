@@ -612,6 +612,39 @@ describe("useAgentStream", () => {
     });
   });
 
+  describe("system events", () => {
+    it("should_set_traceId_on_last_assistant_message_when_system_event_carries_traceId", async () => {
+      const sseText = formatSSE([{ type: "system", traceId: "trace-xyz" }]);
+      mockFetch.mockResolvedValue(createStreamResponse(sseText));
+
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
+
+      await act(async () => {
+        await result.current.sendMessage("Hello");
+      });
+
+      const messages = useAgentChatStore.getState().messages;
+      const assistantMsg = messages.find((m) => m.role === "assistant");
+      expect(assistantMsg?.traceId).toBe("trace-xyz");
+    });
+
+    it("should_ignore_system_event_without_traceId", async () => {
+      const sseText = formatSSE([{ type: "system" }]);
+      mockFetch.mockResolvedValue(createStreamResponse(sseText));
+
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
+
+      await act(async () => {
+        await result.current.sendMessage("Hello");
+      });
+
+      const assistantMsg = useAgentChatStore
+        .getState()
+        .messages.find((m) => m.role === "assistant");
+      expect(assistantMsg?.traceId).toBeUndefined();
+    });
+  });
+
   describe("tool_result events", () => {
     it("should set toolResult on last assistant message for preview_ tools", async () => {
       const sseText = formatSSE([

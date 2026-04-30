@@ -15,6 +15,10 @@ export interface ChatMessage {
   /** For preview/commit tool results rendered as confirmation cards */
   toolResult?: ToolResultData;
   isStreaming?: boolean;
+  /** Langfuse trace ID — only present on assistant messages once the backend emits it */
+  traceId?: string;
+  /** User feedback rating: 1 = thumbs up, -1 = thumbs down */
+  rating?: 1 | -1;
 }
 
 /**
@@ -68,6 +72,8 @@ interface AgentChatStore {
   finalizeLastAssistantMessage: () => void;
   updateLastAssistantToolResult: (toolResult: ToolResultData) => void;
   updateMessageToolResultStatus: (messageId: string, status: "approved" | "denied") => void;
+  setLastAssistantTraceId: (traceId: string) => void;
+  setMessageRating: (messageId: string, rating: 1 | -1) => void;
   setStreaming: (streaming: boolean) => void;
   setError: (error: string | null) => void;
   setAgentContext: (ctx: AgentChatStore["agentContext"]) => void;
@@ -127,6 +133,23 @@ export const useAgentChatStore = create<AgentChatStore>((set) => ({
           ? { ...msg, toolResult: { ...msg.toolResult, status } }
           : msg
       ),
+    })),
+
+  setLastAssistantTraceId: (traceId) =>
+    set((state) => {
+      const messages = [...state.messages];
+      for (let i = messages.length - 1; i >= 0; i--) {
+        if (messages[i].role === "assistant") {
+          messages[i] = { ...messages[i], traceId };
+          return { messages };
+        }
+      }
+      return state;
+    }),
+
+  setMessageRating: (messageId, rating) =>
+    set((state) => ({
+      messages: state.messages.map((msg) => (msg.id === messageId ? { ...msg, rating } : msg)),
     })),
 
   setStreaming: (streaming) => set({ isStreaming: streaming }),
