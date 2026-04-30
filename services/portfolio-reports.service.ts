@@ -91,7 +91,7 @@ export async function updateReportMarkdown(
 export async function generateReport(
   communitySlug: string,
   body: GenerateReportRequest
-): Promise<PortfolioReport[]> {
+): Promise<PortfolioReport> {
   const { data } = await apiClient.post(`/v2/communities/${communitySlug}/reports/generate`, body);
   return data;
 }
@@ -132,16 +132,16 @@ export async function getPublishedReports(communitySlug: string): Promise<Portfo
   return fetchPublic<PortfolioReport[]>(`/v2/communities/${communitySlug}/reports/published`);
 }
 
-export async function getPublishedReportByMonth(
+/**
+ * Fetch a published report by its run date (`YYYY-MM-DD`). Endpoint segment
+ * is named `published/{runDate}` on the backend.
+ */
+export async function getPublishedReportByRunDate(
   communitySlug: string,
-  month: string
+  runDate: string
 ): Promise<PortfolioReport | null> {
-  // The same endpoint accepts both YYYY-MM and YYYY-MM-Hx identifiers — see
-  // PublishedMonthParamsSchema in gap-indexer (it widened to a period union
-  // when biweekly support landed). The slash placement is unchanged so
-  // existing monthly URLs keep resolving.
   const res = await fetch(
-    `${API_URL}/v2/communities/${communitySlug}/reports/published/${encodeURIComponent(month)}`
+    `${API_URL}/v2/communities/${communitySlug}/reports/published/${encodeURIComponent(runDate)}`
   );
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`API error: ${res.status} ${res.statusText}`);

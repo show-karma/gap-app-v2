@@ -1,17 +1,12 @@
-export type ReportType = "portfolio_monthly" | "portfolio_biweekly";
-
-export const REPORT_TYPES: readonly ReportType[] = [
-  "portfolio_monthly",
-  "portfolio_biweekly",
-] as const;
-
 export interface ReportConfig {
   id: string;
   communityId: string;
   programIds: string[];
-  reportType: string;
+  name: string;
   modelId: string;
   prompt: string;
+  /** 1..28 — day of month the cron fires this report. */
+  dayOfMonth: number;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -26,18 +21,15 @@ export interface TokenUsage {
 }
 
 /**
- * `reportMonth` holds the period identifier whose format depends on the
- * config's `reportType`:
- *   - portfolio_monthly  → "YYYY-MM"
- *   - portfolio_biweekly → "YYYY-MM-H1" (1st–15th) or "YYYY-MM-H2" (16th–EOM)
- *
- * The field name predates biweekly support; we keep it for wire compatibility.
+ * `runDate` is the ISO `YYYY-MM-DD` date the report was generated.
+ * Pair `(reportConfigId, runDate)` is unique — re-running on the same day
+ * overwrites the prior draft.
  */
 export interface PortfolioReport {
   id: string;
   reportConfigId: string;
   communityId: string;
-  reportMonth: string;
+  runDate: string;
   status: "draft" | "published";
   markdown: string;
   dataSnapshot: Record<string, unknown>;
@@ -52,22 +44,23 @@ export interface PortfolioReport {
 }
 
 export interface CreateReportConfigRequest {
+  name: string;
   programIds: string[];
-  reportType?: ReportType;
   modelId: string;
   prompt: string;
+  dayOfMonth: number;
   isActive?: boolean;
 }
 
 export interface UpdateReportConfigRequest {
+  name?: string;
   programIds?: string[];
   modelId?: string;
   prompt?: string;
+  dayOfMonth?: number;
   isActive?: boolean;
 }
 
 export interface GenerateReportRequest {
-  month: string;
-  configId?: string;
-  reportType?: ReportType;
+  configId: string;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, EyeOff, FileSearch, FileText, Plus, RefreshCw, Settings } from "lucide-react";
+import { Eye, EyeOff, FileSearch, FileText, Play, RefreshCw, Settings } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -13,72 +13,21 @@ import {
   usePortfolioReports,
   usePublishReport,
   useRegenerateReport,
-  useUnpublishReport,
   useReportConfigs,
+  useUnpublishReport,
 } from "@/hooks/portfolio-reports/usePortfolioReports";
-import type { PortfolioReport, ReportType } from "@/types/portfolio-report";
+import type { PortfolioReport, ReportConfig } from "@/types/portfolio-report";
 import type { Community } from "@/types/v2/community";
 import { PAGES } from "@/utilities/pages";
-import {
-  formatPeriod,
-  getPreviousPeriodId,
-} from "@/utilities/portfolio-reports/period";
+import { formatRunDate } from "@/utilities/portfolio-reports/period";
 
 interface Props {
   community: Community;
 }
 
-interface BiweeklyPeriodInputProps {
-  value: string;
-  onChange: (next: string) => void;
-}
-
-function BiweeklyPeriodInput({ value, onChange }: BiweeklyPeriodInputProps) {
-  // value is "YYYY-MM-Hx"; split into the YYYY-MM month (for native input)
-  // and the H1/H2 selector. Falling back to the previous period keeps the
-  // input populated when the parent gives us garbage.
-  const isValid = /^(19|20)\d{2}-(0[1-9]|1[0-2])-H[12]$/.test(value);
-  const month = isValid ? value.slice(0, 7) : getPreviousPeriodId("portfolio_biweekly").slice(0, 7);
-  const half = isValid ? (value.slice(8) as "H1" | "H2") : ("H1" as const);
-
-  const emit = (nextMonth: string, nextHalf: "H1" | "H2") => {
-    onChange(`${nextMonth}-${nextHalf}`);
-  };
-
-  return (
-    <>
-      <div>
-        <label htmlFor="generate-month" className="mb-1 block text-xs text-zinc-500">
-          Month
-        </label>
-        <input
-          id="generate-month"
-          type="month"
-          value={month}
-          onChange={(e) => emit(e.target.value, half)}
-          className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-700"
-        />
-      </div>
-      <div>
-        <label htmlFor="generate-half" className="mb-1 block text-xs text-zinc-500">
-          Half
-        </label>
-        <select
-          id="generate-half"
-          value={half}
-          onChange={(e) => emit(month, e.target.value as "H1" | "H2")}
-          className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-700"
-        >
-          <option value="H1">1st – 15th</option>
-          <option value="H2">16th – end</option>
-        </select>
-      </div>
-    </>
-  );
-}
-
 interface ReportTableRowProps {
   report: PortfolioReport;
+  configName: string;
   rowPending: boolean;
   activeMutationType: "publish" | "unpublish" | "regenerate" | null;
   onEdit: () => void;
@@ -90,6 +39,7 @@ interface ReportTableRowProps {
 
 function ReportTableRow({
   report,
+  configName,
   rowPending,
   activeMutationType,
   onEdit,
@@ -98,15 +48,13 @@ function ReportTableRow({
   onUnpublish,
   onRegenerate,
 }: ReportTableRowProps) {
-  const period = formatPeriod(report.reportMonth);
+  const fmt = formatRunDate(report.runDate);
   return (
     <tr className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
       <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">
-        {period.label}
+        {configName}
       </td>
-      <td className="px-4 py-3 text-xs text-zinc-500">
-        {period.reportType === "portfolio_biweekly" ? "Biweekly" : "Monthly"}
-      </td>
+      <td className="px-4 py-3 text-zinc-500">{fmt.shortLabel}</td>
       <td className="px-4 py-3">
         <span
           className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
@@ -170,33 +118,25 @@ export function PortfolioReportListPage({ community }: Props) {
   const unpublishMutation = useUnpublishReport(slug);
   const regenerateMutation = useRegenerateReport(slug);
 
-  // Surface tri-state to the dialog: undefined = still resolving / errored,
-  // [] = resolved with no active configs, [...] = resolved with at least one.
-  // Without this distinction the dialog tells the admin to "create a config"
-  // while the configs query is still pending or has failed (CodeRabbit, MAJOR).
-  const configuredTypes = useMemo<ReportType[] | undefined>(() => {
-    if (configsLoading || configsError || !configs) return undefined;
-    const found = new Set<string>();
-    for (const c of configs) {
-      if (c.isActive) found.add(c.reportType);
+  const configById = useMemo(() => {
+    const map = new Map<string, ReportConfig>();
+    for (const cfg of configs ?? []) {
+      if (cfg.id) map.set(cfg.id, cfg);
     }
-    const order: ReportType[] = ["portfolio_monthly", "portfolio_biweekly"];
-    return order.filter((t) => found.has(t));
-  }, [configs, configsLoading, configsError]);
+    return map;
+  }, [configs]);
 
-  const [generateType, setGenerateType] = useState<ReportType>("portfolio_monthly");
-  const [generatePeriod, setGeneratePeriod] = useState(() =>
-    getPreviousPeriodId("portfolio_monthly")
+  const activeConfigs = useMemo(
+    () => (configs ?? []).filter((c) => c.isActive),
+    [configs]
   );
-  const [showGenerateDialog, setShowGenerateDialog] = useState(false);
 
   // Per-row pending state: track which report is being mutated and what action
   const [activeReportId, setActiveReportId] = useState<string | null>(null);
   const [activeMutationType, setActiveMutationType] = useState<
     "publish" | "unpublish" | "regenerate" | null
   >(null);
-
-  // Regenerate confirmation dialog state
+  const [generatingConfigId, setGeneratingConfigId] = useState<string | null>(null);
   const [regenerateTargetId, setRegenerateTargetId] = useState<string | null>(null);
 
   if (accessLoading || isLoading) {
@@ -215,33 +155,17 @@ export function PortfolioReportListPage({ community }: Props) {
     );
   }
 
-  const openGenerateDialog = () => {
-    // Default to the first configured cadence so the dialog opens with a
-    // valid identifier. Falls back to monthly if configs are still loading
-    // or no cadence is configured yet.
-    const initialType = configuredTypes?.[0] ?? "portfolio_monthly";
-    setGenerateType(initialType);
-    setGeneratePeriod(getPreviousPeriodId(initialType));
-    setShowGenerateDialog(true);
-  };
-
-  const handleTypeChange = (next: ReportType) => {
-    setGenerateType(next);
-    setGeneratePeriod(getPreviousPeriodId(next));
-  };
-
-  const handleGenerate = async () => {
+  const handleGenerate = async (configId: string) => {
+    setGeneratingConfigId(configId);
     try {
-      await generateMutation.mutateAsync({
-        month: generatePeriod,
-        reportType: generateType,
-      });
+      await generateMutation.mutateAsync({ configId });
       toast.success("Report generated successfully");
-      setShowGenerateDialog(false);
     } catch (error) {
       toast.error(
         `Failed to generate report: ${error instanceof Error ? error.message : "Unknown error"}`
       );
+    } finally {
+      setGeneratingConfigId(null);
     }
   };
 
@@ -293,9 +217,12 @@ export function PortfolioReportListPage({ community }: Props) {
     activeReportId === reportId &&
     (publishMutation.isPending || unpublishMutation.isPending || regenerateMutation.isPending);
 
+  const sortedReports = (reports ?? [])
+    .slice()
+    .sort((a, b) => b.runDate.localeCompare(a.runDate));
+
   return (
     <div className="space-y-6">
-      {/* Regenerate confirmation dialog */}
       <DeleteDialog
         title="This will overwrite the current draft. Continue?"
         deleteFunction={handleRegenerate}
@@ -311,124 +238,87 @@ export function PortfolioReportListPage({ community }: Props) {
         <div>
           <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">Portfolio Reports</h1>
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            Monthly and biweekly portfolio reports for your grant programs
+            Reports generated from your configured prompts.
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={() => router.push(PAGES.ADMIN.PORTFOLIO_REPORTS_CONFIG(slug))}
-          >
-            <Settings className="mr-2 h-4 w-4" />
-            Config
-          </Button>
-          <Button onClick={openGenerateDialog}>
-            <Plus className="mr-2 h-4 w-4" />
-            Generate Report
-          </Button>
-        </div>
+        <Button
+          variant="outline"
+          onClick={() => router.push(PAGES.ADMIN.PORTFOLIO_REPORTS_CONFIG(slug))}
+        >
+          <Settings className="mr-2 h-4 w-4" />
+          Manage Configs
+        </Button>
       </div>
 
-      {showGenerateDialog && (
-        <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-800">
-          <h3 className="mb-3 text-sm font-medium">Generate Report</h3>
-          {configuredTypes === undefined ? (
-            configsError ? (
-              <p className="text-sm text-red-500">
-                Failed to load report configs. Please retry.
-              </p>
-            ) : (
-              <div className="flex items-center gap-2 text-sm text-zinc-500">
-                <Spinner className="h-4 w-4" />
-                Loading configs…
-              </div>
-            )
-          ) : configuredTypes.length === 0 ? (
-            <p className="text-sm text-zinc-500">
-              No active configs found. Create one in{" "}
-              <button
-                type="button"
-                className="text-blue-600 underline dark:text-blue-400"
-                onClick={() =>
-                  router.push(PAGES.ADMIN.PORTFOLIO_REPORTS_CONFIG(slug))
-                }
+      {/* Per-config generate row */}
+      <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-800">
+        <h2 className="mb-3 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+          Generate now
+        </h2>
+        {configsLoading ? (
+          <div className="flex items-center gap-2 text-sm text-zinc-500">
+            <Spinner className="h-4 w-4" />
+            Loading configs…
+          </div>
+        ) : configsError ? (
+          <p className="text-sm text-red-500">Failed to load configs.</p>
+        ) : activeConfigs.length === 0 ? (
+          <p className="text-sm text-zinc-500">
+            No active configs. Create one in{" "}
+            <button
+              type="button"
+              className="text-blue-600 underline dark:text-blue-400"
+              onClick={() => router.push(PAGES.ADMIN.PORTFOLIO_REPORTS_CONFIG(slug))}
+            >
+              Manage Configs
+            </button>{" "}
+            first.
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {activeConfigs.map((cfg) => (
+              <li
+                key={cfg.id}
+                className="flex items-center justify-between rounded-md border border-zinc-200 px-3 py-2 dark:border-zinc-700"
               >
-                Config
-              </button>{" "}
-              first.
-            </p>
-          ) : (
-            <div className="flex flex-wrap items-end gap-3">
-              {configuredTypes.length > 1 && (
-                <div>
-                  <label
-                    htmlFor="generate-type"
-                    className="mb-1 block text-xs text-zinc-500"
-                  >
-                    Cadence
-                  </label>
-                  <select
-                    id="generate-type"
-                    value={generateType}
-                    onChange={(e) =>
-                      handleTypeChange(e.target.value as ReportType)
-                    }
-                    className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-700"
-                  >
-                    {configuredTypes.includes("portfolio_monthly") && (
-                      <option value="portfolio_monthly">Monthly</option>
-                    )}
-                    {configuredTypes.includes("portfolio_biweekly") && (
-                      <option value="portfolio_biweekly">Biweekly</option>
-                    )}
-                  </select>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium text-zinc-900 dark:text-zinc-100">
+                    {cfg.name}
+                  </p>
+                  <p className="truncate text-xs text-zinc-500">
+                    Day {cfg.dayOfMonth} of every month · {cfg.programIds.length} program
+                    {cfg.programIds.length === 1 ? "" : "s"} · {cfg.modelId}
+                  </p>
                 </div>
-              )}
-              {generateType === "portfolio_monthly" ? (
-                <div>
-                  <label
-                    htmlFor="generate-month"
-                    className="mb-1 block text-xs text-zinc-500"
-                  >
-                    Month
-                  </label>
-                  <input
-                    id="generate-month"
-                    type="month"
-                    value={generatePeriod}
-                    onChange={(e) => setGeneratePeriod(e.target.value)}
-                    className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-700"
-                  />
-                </div>
-              ) : (
-                <BiweeklyPeriodInput
-                  value={generatePeriod}
-                  onChange={setGeneratePeriod}
-                />
-              )}
-              <Button onClick={handleGenerate} disabled={generateMutation.isPending}>
-                {generateMutation.isPending ? (
-                  <>
-                    <Spinner className="mr-2 h-4 w-4" />
-                    Generating...
-                  </>
-                ) : (
-                  "Generate"
-                )}
-              </Button>
-              <Button variant="outline" onClick={() => setShowGenerateDialog(false)}>
-                Cancel
-              </Button>
-            </div>
-          )}
-        </div>
-      )}
+                <Button
+                  size="sm"
+                  onClick={() => cfg.id && handleGenerate(cfg.id)}
+                  disabled={generatingConfigId !== null}
+                >
+                  {generatingConfigId === cfg.id ? (
+                    <>
+                      <Spinner className="mr-2 h-3 w-3" />
+                      Generating…
+                    </>
+                  ) : (
+                    <>
+                      <Play className="mr-1 h-3 w-3" />
+                      Generate
+                    </>
+                  )}
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
 
-      {!reports || reports.length === 0 ? (
+      {/* Reports table */}
+      {sortedReports.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-zinc-300 p-12 text-center dark:border-zinc-600">
           <FileText className="mb-3 h-8 w-8 text-zinc-400" />
           <p className="text-sm text-zinc-500">
-            No reports generated yet. Configure your report settings and generate your first report.
+            No reports generated yet. Configure your reports and click Generate above.
           </p>
         </div>
       ) : (
@@ -436,8 +326,8 @@ export function PortfolioReportListPage({ community }: Props) {
           <table className="w-full text-sm">
             <thead className="bg-zinc-50 dark:bg-zinc-800">
               <tr>
-                <th className="px-4 py-3 text-left font-medium text-zinc-500">Period</th>
-                <th className="px-4 py-3 text-left font-medium text-zinc-500">Cadence</th>
+                <th className="px-4 py-3 text-left font-medium text-zinc-500">Report</th>
+                <th className="px-4 py-3 text-left font-medium text-zinc-500">Run date</th>
                 <th className="px-4 py-3 text-left font-medium text-zinc-500">Status</th>
                 <th className="px-4 py-3 text-left font-medium text-zinc-500">Model</th>
                 <th className="px-4 py-3 text-left font-medium text-zinc-500">Generated</th>
@@ -445,10 +335,13 @@ export function PortfolioReportListPage({ community }: Props) {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-200 dark:divide-zinc-700">
-              {reports.map((report: PortfolioReport) => (
+              {sortedReports.map((report: PortfolioReport) => (
                 <ReportTableRow
                   key={report.id}
                   report={report}
+                  configName={
+                    configById.get(report.reportConfigId)?.name ?? "(deleted config)"
+                  }
                   rowPending={isRowPending(report.id)}
                   activeMutationType={activeMutationType}
                   onEdit={() => router.push(`${PAGES.ADMIN.PORTFOLIO_REPORTS(slug)}/${report.id}`)}

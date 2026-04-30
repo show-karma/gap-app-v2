@@ -18,7 +18,7 @@ import {
 } from "@/hooks/portfolio-reports/usePortfolioReports";
 import type { Community } from "@/types/v2/community";
 import { PAGES } from "@/utilities/pages";
-import { formatPeriod } from "@/utilities/portfolio-reports/period";
+import { formatRunDate } from "@/utilities/portfolio-reports/period";
 
 interface Props {
   community: Community;
@@ -221,7 +221,7 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
           </Button>
           <div>
             <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-              {formatPeriod(report.reportMonth).label}
+              {formatRunDate(report.runDate).label}
               {isDirty && <span className="ml-2 text-sm font-normal text-zinc-400">(unsaved)</span>}
             </h1>
             <div className="flex items-center gap-2 text-xs text-zinc-500">

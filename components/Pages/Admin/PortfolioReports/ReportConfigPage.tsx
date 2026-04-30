@@ -1,26 +1,32 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft, Plus, Save, Trash2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
+import { DeleteDialog } from "@/components/DeleteDialog";
+import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
+import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/ui/button";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import {
   useCreateReportConfig,
+  useDeleteReportConfig,
   useReportConfigs,
   useUpdateReportConfig,
 } from "@/hooks/portfolio-reports/usePortfolioReports";
-import type { ReportType } from "@/types/portfolio-report";
+import type { ReportConfig } from "@/types/portfolio-report";
 import type { Community } from "@/types/v2/community";
 import { PAGES } from "@/utilities/pages";
+import { formatScheduleLabel } from "@/utilities/portfolio-reports/period";
 
 interface Props {
   community: Community;
+  grantPrograms: GrantProgram[];
 }
 
 const AVAILABLE_MODELS = [
@@ -32,97 +38,129 @@ const AVAILABLE_MODELS = [
 
 const MODEL_IDS = AVAILABLE_MODELS.map((m) => m.id) as [string, ...string[]];
 
-const REPORT_TYPE_OPTIONS: ReadonlyArray<{
-  value: ReportType;
-  label: string;
-  helper: string;
-  cron: string;
-}> = [
-  {
-    value: "portfolio_monthly",
-    label: "Monthly",
-    helper: "Aggregates the previous calendar month.",
-    cron: "Auto-generate on the 1st of each month",
-  },
-  {
-    value: "portfolio_biweekly",
-    label: "Biweekly",
-    helper: "Aggregates a half-month window (1st–15th or 16th–EOM).",
-    cron: "Auto-generate on the 1st and 16th",
-  },
-];
+// Days 1..28 — capped at 28 so the cron always fires (29/30/31 would skip
+// February and 30-day months).
+const DAYS_OF_MONTH: number[] = Array.from({ length: 28 }, (_, i) => i + 1);
+
+const PROMPT_PLACEHOLDER = `Example: Generate a markdown portfolio report covering the last 30 days of activity (please always specify a date range — the agent defaults to the last 30 days when none is given).
+
+Sections:
+1. Executive Summary (2-3 paragraphs)
+2. Portfolio Snapshot (counts, totals)
+3. Progress and Milestones
+4. Spotlight: 1-2 standout grantee stories
+5. Ecosystem Alignment
+
+Use markdown formatting with headers, tables, and bold text.`;
 
 const formSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(128),
   programIds: z
-    .string()
-    .trim()
-    .min(1, "At least one program ID is required")
-    .refine(
-      (s) =>
-        s
-          .split(",")
-          .map((x) => x.trim())
-          .filter(Boolean).length > 0,
-      { message: "At least one program ID is required" }
-    ),
+    .array(z.string().min(1))
+    .min(1, "Select at least one program"),
   modelId: z.enum(MODEL_IDS, { message: "Pick a model" }),
   prompt: z.string().trim().min(1, "A prompt is required"),
+  dayOfMonth: z.coerce.number().int().min(1).max(28),
   isActive: z.boolean(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
-export function ReportConfigPage({ community }: Props) {
+const EMPTY_FORM_VALUES: FormValues = {
+  name: "",
+  programIds: [],
+  modelId: AVAILABLE_MODELS[0].id,
+  prompt: "",
+  dayOfMonth: 1,
+  isActive: true,
+};
+
+interface ProgramOption {
+  programId: string;
+  label: string;
+}
+
+function buildProgramOptions(grantPrograms: GrantProgram[]): ProgramOption[] {
+  const options: ProgramOption[] = [];
+  for (const program of grantPrograms) {
+    const programId = (program as { programId?: string }).programId;
+    if (typeof programId !== "string" || programId.length === 0) continue;
+    const title = program.metadata?.title?.trim();
+    options.push({
+      programId,
+      label: title ? `${title} (${programId})` : programId,
+    });
+  }
+  // Stable sort by label so the dropdown order is deterministic across renders.
+  return options.sort((a, b) => a.label.localeCompare(b.label));
+}
+
+export function ReportConfigPage({ community, grantPrograms }: Props) {
   const slug = community.details.slug;
   const router = useRouter();
   const { hasAccess, isLoading: accessLoading } = useCommunityAdminAccess(community.uid);
   const { data: configs, isLoading } = useReportConfigs(slug);
 
-  const [selectedType, setSelectedType] = useState<ReportType>("portfolio_monthly");
+  const programOptions = useMemo(
+    () => buildProgramOptions(grantPrograms),
+    [grantPrograms]
+  );
+  const labelByProgramId = useMemo(
+    () => new Map(programOptions.map((o) => [o.programId, o.label])),
+    [programOptions]
+  );
+  const programIdByLabel = useMemo(
+    () => new Map(programOptions.map((o) => [o.label, o.programId])),
+    [programOptions]
+  );
 
-  const existingConfig = useMemo(
-    () => configs?.find((c) => c.reportType === selectedType),
-    [configs, selectedType]
+  const [editingId, setEditingId] = useState<string | "new" | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const editingConfig = useMemo(
+    () =>
+      editingId && editingId !== "new"
+        ? configs?.find((c) => c.id === editingId) ?? null
+        : null,
+    [configs, editingId]
   );
 
   const createMutation = useCreateReportConfig(slug);
-  const updateMutation = useUpdateReportConfig(slug, existingConfig?.id ?? "");
+  const updateMutation = useUpdateReportConfig(slug, editingConfig?.id ?? "");
+  const deleteMutation = useDeleteReportConfig(slug);
 
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      programIds: "",
-      modelId: AVAILABLE_MODELS[0].id,
-      prompt: "",
-      isActive: true,
-    },
+    defaultValues: EMPTY_FORM_VALUES,
   });
 
-  // Sync the form whenever the selected period changes or the loaded config
-  // arrives. Without this, switching from Monthly→Biweekly would keep the
-  // monthly prompt visible but route saves to the biweekly config.
+  const selectedProgramIds = watch("programIds");
+  const selectedProgramLabels = selectedProgramIds
+    .map((id) => labelByProgramId.get(id) ?? id);
+
+  // Sync the form whenever we switch which config we're editing.
   useEffect(() => {
-    if (existingConfig) {
+    if (!editingId) return;
+    if (editingId === "new") {
+      reset(EMPTY_FORM_VALUES);
+    } else if (editingConfig) {
       reset({
-        programIds: existingConfig.programIds.join(", "),
-        modelId: existingConfig.modelId,
-        prompt: existingConfig.prompt,
-        isActive: existingConfig.isActive,
-      });
-    } else {
-      reset({
-        programIds: "",
-        modelId: AVAILABLE_MODELS[0].id,
-        prompt: "",
-        isActive: true,
+        name: editingConfig.name,
+        programIds: editingConfig.programIds,
+        modelId: editingConfig.modelId,
+        prompt: editingConfig.prompt,
+        dayOfMonth: editingConfig.dayOfMonth,
+        isActive: editingConfig.isActive,
       });
     }
-  }, [existingConfig, reset]);
+  }, [editingId, editingConfig, reset]);
 
   if (accessLoading || isLoading) {
     return (
@@ -140,37 +178,38 @@ export function ReportConfigPage({ community }: Props) {
     );
   }
 
+  const handleSelectProgram = (label: string) => {
+    const programId = programIdByLabel.get(label);
+    if (!programId) return;
+    const current = selectedProgramIds;
+    const next = current.includes(programId)
+      ? current.filter((id) => id !== programId)
+      : [...current, programId];
+    setValue("programIds", next, { shouldValidate: true, shouldDirty: true });
+  };
+
+  const handleClearPrograms = () => {
+    setValue("programIds", [], { shouldValidate: true, shouldDirty: true });
+  };
+
   const onInvalid = (formErrors: typeof errors) => {
+    if (formErrors.name?.message) toast.error(formErrors.name.message);
     if (formErrors.programIds?.message) toast.error(formErrors.programIds.message);
     if (formErrors.prompt?.message) toast.error(formErrors.prompt.message);
     if (formErrors.modelId?.message) toast.error(formErrors.modelId.message);
+    if (formErrors.dayOfMonth?.message) toast.error(formErrors.dayOfMonth.message);
   };
 
   const onSubmit = async (values: FormValues) => {
-    const parsedProgramIds = values.programIds
-      .split(",")
-      .map((id) => id.trim())
-      .filter(Boolean);
-
     try {
-      if (existingConfig) {
-        await updateMutation.mutateAsync({
-          programIds: parsedProgramIds,
-          modelId: values.modelId,
-          prompt: values.prompt,
-          isActive: values.isActive,
-        });
-        toast.success("Config updated");
-      } else {
-        await createMutation.mutateAsync({
-          programIds: parsedProgramIds,
-          reportType: selectedType,
-          modelId: values.modelId,
-          prompt: values.prompt,
-          isActive: values.isActive,
-        });
+      if (editingId === "new" || !editingConfig) {
+        await createMutation.mutateAsync(values);
         toast.success("Config created");
+      } else {
+        await updateMutation.mutateAsync(values);
+        toast.success("Config updated");
       }
+      setEditingId(null);
     } catch (error) {
       toast.error(
         `Failed to save config: ${error instanceof Error ? error.message : "Unknown error"}`
@@ -178,11 +217,42 @@ export function ReportConfigPage({ community }: Props) {
     }
   };
 
+  const handleDelete = async () => {
+    if (!deletingId) return;
+    try {
+      await deleteMutation.mutateAsync(deletingId);
+      toast.success("Config deactivated");
+      if (editingId === deletingId) setEditingId(null);
+    } catch (error) {
+      toast.error(
+        `Failed to delete config: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   const isSaving = createMutation.isPending || updateMutation.isPending || isSubmitting;
-  const selectedOption = REPORT_TYPE_OPTIONS.find((o) => o.value === selectedType);
+  const isFormOpen = editingId !== null;
+  const formTitle = editingId === "new"
+    ? "New Report"
+    : editingConfig?.name
+      ? `Edit "${editingConfig.name}"`
+      : "Edit Report";
 
   return (
     <div className="space-y-6">
+      <DeleteDialog
+        title="Deactivate this report config?"
+        deleteFunction={handleDelete}
+        isLoading={deleteMutation.isPending}
+        externalIsOpen={deletingId !== null}
+        externalSetIsOpen={(open) => {
+          if (!open) setDeletingId(null);
+        }}
+        buttonElement={null}
+      />
+
       <div className="flex items-center gap-3">
         <Button
           variant="ghost"
@@ -192,159 +262,253 @@ export function ReportConfigPage({ community }: Props) {
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <div>
+        <div className="flex-1">
           <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-            Report Configuration
+            Report Configurations
           </h1>
           <p className="text-sm text-zinc-500">
-            Configure programs, model, and prompt for each report cadence
+            Define one or more reports per community. Each runs once per month on its scheduled day.
           </p>
         </div>
-      </div>
-
-      {/* Cadence picker — shows separate configs per period */}
-      <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-800">
-        <p
-          id="cadence-picker-label"
-          className="mb-3 text-sm font-medium text-zinc-700 dark:text-zinc-300"
-        >
-          Editing config for
-        </p>
-        <div
-          role="radiogroup"
-          aria-labelledby="cadence-picker-label"
-          className="flex gap-3"
-        >
-          {REPORT_TYPE_OPTIONS.map((opt) => {
-            const exists = configs?.some((c) => c.reportType === opt.value);
-            const active = selectedType === opt.value;
-            return (
-              <button
-                key={opt.value}
-                type="button"
-                role="radio"
-                aria-checked={active}
-                onClick={() => setSelectedType(opt.value)}
-                className={`flex-1 rounded-md border px-4 py-3 text-left transition-colors ${
-                  active
-                    ? "border-blue-500 bg-blue-50 dark:border-blue-400 dark:bg-blue-900/20"
-                    : "border-zinc-200 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-700/50"
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-zinc-900 dark:text-zinc-100">
-                    {opt.label}
-                  </span>
-                  {exists ? (
-                    <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                      Configured
-                    </span>
-                  ) : (
-                    <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400">
-                      Not configured
-                    </span>
-                  )}
-                </div>
-                <p className="mt-1 text-xs text-zinc-500">{opt.helper}</p>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      <form
-        onSubmit={handleSubmit(onSubmit, onInvalid)}
-        className="space-y-6 rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800"
-      >
-        {/* Program IDs */}
-        <div>
-          <label
-            htmlFor="programIds"
-            className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
-          >
-            Program IDs
-          </label>
-          <input
-            id="programIds"
-            type="text"
-            placeholder="program-1, program-2"
-            className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
-            {...register("programIds")}
-          />
-          <p className="mt-1 text-xs text-zinc-400">
-            Comma-separated list of program IDs to include in the report
-          </p>
-          {errors.programIds && (
-            <p className="mt-1 text-xs text-red-500">{errors.programIds.message}</p>
-          )}
-        </div>
-
-        {/* Model selector */}
-        <div>
-          <label
-            htmlFor="modelId"
-            className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
-          >
-            LLM Model
-          </label>
-          <select
-            id="modelId"
-            className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
-            {...register("modelId")}
-          >
-            {AVAILABLE_MODELS.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.label}
-              </option>
-            ))}
-          </select>
-          {errors.modelId && <p className="mt-1 text-xs text-red-500">{errors.modelId.message}</p>}
-        </div>
-
-        {/* Active toggle */}
-        <div className="flex items-center gap-2">
-          <input
-            id="isActive"
-            type="checkbox"
-            className="rounded border-zinc-300"
-            {...register("isActive")}
-          />
-          <label htmlFor="isActive" className="text-sm text-zinc-700 dark:text-zinc-300">
-            Active ({selectedOption?.cron})
-          </label>
-        </div>
-
-        {/* Single prompt */}
-        <div>
-          <label
-            htmlFor="prompt"
-            className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
-          >
-            Report Prompt
-          </label>
-          <p className="mb-2 text-xs text-zinc-400">
-            This prompt is sent as the system message to the LLM. The structured portfolio data
-            (projects, milestones, OSO metrics, financials) is sent as the user message in JSON
-            format. The LLM should generate the full report as markdown.
-          </p>
-          <textarea
-            id="prompt"
-            rows={12}
-            placeholder={`Example: You are generating a ${selectedOption?.label.toLowerCase()} portfolio report for a grant program. The data provided contains per-project milestones, OSO metrics (TVL, transaction fees), and financial data.\n\nGenerate a comprehensive markdown report with:\n1. Executive Summary (2-3 paragraphs)\n2. Portfolio Snapshot (table of batch-level stats)\n3. Progress and Milestones (per-batch breakdown)\n4. Spotlight: 1-2 standout grantee stories\n5. Ecosystem Alignment\n\nUse markdown formatting with headers, tables, and bold text.`}
-            className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm font-mono dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
-            {...register("prompt")}
-          />
-          {errors.prompt && <p className="mt-1 text-xs text-red-500">{errors.prompt.message}</p>}
-        </div>
-
-        {/* Save button */}
-        <div className="flex justify-end">
-          <Button type="submit" disabled={isSaving}>
-            <Save className="mr-2 h-4 w-4" />
-            {isSaving ? "Saving..." : existingConfig ? "Update Config" : "Create Config"}
+        {!isFormOpen && (
+          <Button onClick={() => setEditingId("new")}>
+            <Plus className="mr-2 h-4 w-4" />
+            New Report
           </Button>
+        )}
+      </div>
+
+      {/* Configs table */}
+      {!configs || configs.length === 0 ? (
+        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-zinc-300 p-12 text-center dark:border-zinc-600">
+          <p className="text-sm text-zinc-500">
+            No report configs yet. Click &quot;New Report&quot; to create the first one.
+          </p>
         </div>
-      </form>
+      ) : (
+        <div className="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700">
+          <table className="w-full text-sm">
+            <thead className="bg-zinc-50 dark:bg-zinc-800">
+              <tr>
+                <th className="px-4 py-3 text-left font-medium text-zinc-500">Name</th>
+                <th className="px-4 py-3 text-left font-medium text-zinc-500">Schedule</th>
+                <th className="px-4 py-3 text-left font-medium text-zinc-500">Programs</th>
+                <th className="px-4 py-3 text-left font-medium text-zinc-500">Model</th>
+                <th className="px-4 py-3 text-left font-medium text-zinc-500">Active</th>
+                <th className="px-4 py-3 text-right font-medium text-zinc-500">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-200 dark:divide-zinc-700">
+              {configs.map((cfg: ReportConfig) => (
+                <tr key={cfg.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
+                  <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">
+                    {cfg.name}
+                  </td>
+                  <td className="px-4 py-3 text-zinc-500">
+                    {formatScheduleLabel(cfg.dayOfMonth)}
+                  </td>
+                  <td className="px-4 py-3 text-xs text-zinc-500">
+                    {cfg.programIds.length} program{cfg.programIds.length === 1 ? "" : "s"}
+                  </td>
+                  <td className="px-4 py-3 text-xs text-zinc-500">{cfg.modelId}</td>
+                  <td className="px-4 py-3">
+                    {cfg.isActive ? (
+                      <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                        Active
+                      </span>
+                    ) : (
+                      <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400">
+                        Inactive
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center justify-end gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setEditingId(cfg.id)}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setDeletingId(cfg.id)}
+                        aria-label={`Deactivate ${cfg.name}`}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Form */}
+      {isFormOpen && (
+        <form
+          onSubmit={handleSubmit(onSubmit, onInvalid)}
+          className="space-y-6 rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800"
+        >
+          <div className="flex items-start justify-between">
+            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+              {formTitle}
+            </h2>
+            <Button
+              variant="ghost"
+              size="sm"
+              type="button"
+              onClick={() => setEditingId(null)}
+              aria-label="Close form"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+
+          {/* Name */}
+          <div>
+            <label
+              htmlFor="name"
+              className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+            >
+              Report name
+            </label>
+            <input
+              id="name"
+              type="text"
+              placeholder="e.g. Monthly TVL Recap"
+              className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
+              {...register("name")}
+            />
+            {errors.name && (
+              <p className="mt-1 text-xs text-red-500">{errors.name.message}</p>
+            )}
+          </div>
+
+          {/* Programs */}
+          <div>
+            <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              Programs
+            </label>
+            <SearchDropdown
+              list={programOptions.map((o) => o.label)}
+              selected={selectedProgramLabels}
+              onSelectFunction={handleSelectProgram}
+              cleanFunction={handleClearPrograms}
+              prefixUnselected="Select programs"
+              type="Programs"
+              showCount
+            />
+            <p className="mt-1 text-xs text-zinc-400">
+              Pick the grant programs the report should cover. The agent only sees data from these.
+            </p>
+            {errors.programIds && (
+              <p className="mt-1 text-xs text-red-500">{errors.programIds.message}</p>
+            )}
+          </div>
+
+          {/* Model */}
+          <div>
+            <label
+              htmlFor="modelId"
+              className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+            >
+              LLM Model
+            </label>
+            <select
+              id="modelId"
+              className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
+              {...register("modelId")}
+            >
+              {AVAILABLE_MODELS.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Day of month */}
+          <div>
+            <label
+              htmlFor="dayOfMonth"
+              className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+            >
+              Day of month to run
+            </label>
+            <select
+              id="dayOfMonth"
+              className="w-32 rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
+              {...register("dayOfMonth", { valueAsNumber: true })}
+            >
+              {DAYS_OF_MONTH.map((day) => (
+                <option key={day} value={day}>
+                  {day}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-zinc-400">
+              The cron fires on this day every month (capped at 28 so February doesn&apos;t skip).
+            </p>
+          </div>
+
+          {/* Active */}
+          <div className="flex items-center gap-2">
+            <input
+              id="isActive"
+              type="checkbox"
+              className="rounded border-zinc-300"
+              {...register("isActive")}
+            />
+            <label htmlFor="isActive" className="text-sm text-zinc-700 dark:text-zinc-300">
+              Active (auto-generate on the scheduled day)
+            </label>
+          </div>
+
+          {/* Prompt */}
+          <div>
+            <label
+              htmlFor="prompt"
+              className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+            >
+              Report Prompt
+            </label>
+            <p className="mb-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
+              <strong>Tip:</strong> specify the time window in your prompt
+              (e.g. &quot;summarize the last 30 days&quot; or &quot;past quarter&quot;).
+              If you don&apos;t, the agent defaults to the last 30 days.
+            </p>
+            <textarea
+              id="prompt"
+              rows={12}
+              placeholder={PROMPT_PLACEHOLDER}
+              className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm font-mono dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
+              {...register("prompt")}
+            />
+            {errors.prompt && (
+              <p className="mt-1 text-xs text-red-500">{errors.prompt.message}</p>
+            )}
+          </div>
+
+          <div className="flex items-center justify-end gap-2">
+            <Button
+              variant="outline"
+              type="button"
+              onClick={() => setEditingId(null)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isSaving}>
+              <Save className="mr-2 h-4 w-4" />
+              {isSaving ? "Saving..." : editingId === "new" ? "Create Report" : "Save Changes"}
+            </Button>
+          </div>
+        </form>
+      )}
     </div>
   );
 }

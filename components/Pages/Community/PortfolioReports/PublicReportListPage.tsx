@@ -5,13 +5,8 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { usePublishedReports } from "@/hooks/portfolio-reports/usePortfolioReports";
-import type { PortfolioReport } from "@/types/portfolio-report";
 import type { Community } from "@/types/v2/community";
-import {
-  comparePeriodIds,
-  formatPeriod,
-  isBiweeklyId,
-} from "@/utilities/portfolio-reports/period";
+import { formatRunDate } from "@/utilities/portfolio-reports/period";
 import { ReportTimelineScrubber, type TimelineEntry } from "./ReportTimelineScrubber";
 
 interface Props {
@@ -24,32 +19,6 @@ function formatPublished(iso: string): string {
     month: "short",
     day: "2-digit",
   });
-}
-
-const MONTH_ABBR = [
-  "JAN",
-  "FEB",
-  "MAR",
-  "APR",
-  "MAY",
-  "JUN",
-  "JUL",
-  "AUG",
-  "SEP",
-  "OCT",
-  "NOV",
-  "DEC",
-];
-
-function shortLabelForPeriod(periodId: string): string {
-  // Mirrors what the timeline scrubber renders. We don't reuse formatPeriod
-  // because the scrubber wants fixed-width MMM ABBR rather than locale text.
-  const parts = periodId.split("-");
-  const monthIdx = Number(parts[1]) - 1;
-  const base = MONTH_ABBR[monthIdx] ?? parts[1] ?? "?";
-  if (parts[2] === "H1") return `${base} H1`;
-  if (parts[2] === "H2") return `${base} H2`;
-  return base;
 }
 
 function toExcerpt(markdown: string, maxLength = 240): string {
@@ -83,52 +52,41 @@ function toExcerpt(markdown: string, maxLength = 240): string {
   return `${cut}…`;
 }
 
-function deriveTimeline(reports: PortfolioReport[]): TimelineEntry[] {
-  if (reports.length === 0) return [];
+const MONTH_ABBR = [
+  "JAN",
+  "FEB",
+  "MAR",
+  "APR",
+  "MAY",
+  "JUN",
+  "JUL",
+  "AUG",
+  "SEP",
+  "OCT",
+  "NOV",
+  "DEC",
+];
 
-  const hasBiweekly = reports.some((r) => isBiweeklyId(r.reportMonth));
-
-  // For biweekly (or mixed) timelines, gap-filling explodes — every two weeks
-  // gets a dot whether or not there's a report. Skip the gap-fill in that
-  // case and emit one entry per actual report. Pure-monthly cohorts keep the
-  // gap-filled spine for visual continuity.
-  if (hasBiweekly) {
-    return [...reports]
-      .sort((a, b) => comparePeriodIds(b.reportMonth, a.reportMonth))
-      .map((r) => {
-        const [yearStr] = r.reportMonth.split("-");
-        return {
-          key: r.reportMonth,
-          year: Number(yearStr),
-          label: shortLabelForPeriod(r.reportMonth),
-          hasReport: true,
-        };
-      });
-  }
-
-  const sorted = [...reports].sort((a, b) => b.reportMonth.localeCompare(a.reportMonth));
-  const reportSet = new Set(sorted.map((r) => r.reportMonth));
-  const [maxY, maxM] = sorted[0].reportMonth.split("-").map(Number);
-  const [minY, minM] = sorted[sorted.length - 1].reportMonth.split("-").map(Number);
-  const totalMonths = (maxY - minY) * 12 + (maxM - minM) + 1;
-  const entries: TimelineEntry[] = [];
-  let y = maxY;
-  let m = maxM;
-  for (let i = 0; i < totalMonths; i++) {
-    const key = `${y}-${String(m).padStart(2, "0")}`;
-    entries.push({
-      year: y,
-      key,
-      label: MONTH_ABBR[m - 1] ?? String(m),
-      hasReport: reportSet.has(key),
-    });
-    m -= 1;
-    if (m === 0) {
-      m = 12;
-      y -= 1;
-    }
-  }
-  return entries;
+/**
+ * One timeline dot per actual published report. The previous biweekly
+ * implementation gap-filled missing months — the new model has arbitrary
+ * `runDate`s (any day, any cadence) so gap-fill no longer makes sense; we
+ * just render what we have.
+ */
+function deriveTimeline(
+  sortedReports: Array<{ id: string; runDate: string }>
+): TimelineEntry[] {
+  return sortedReports.map((r) => {
+    const [yearStr, monthStr, dayStr] = r.runDate.split("-");
+    const monthIdx = Number(monthStr) - 1;
+    const monthAbbr = MONTH_ABBR[monthIdx] ?? monthStr;
+    return {
+      key: r.runDate,
+      year: Number(yearStr),
+      label: `${monthAbbr} ${Number(dayStr)}`,
+      hasReport: true,
+    };
+  });
 }
 
 export function PublicReportListPage({ community }: Props) {
@@ -141,21 +99,17 @@ export function PublicReportListPage({ community }: Props) {
   const sortedReports = useMemo(
     () =>
       reports
-        ? [...reports].sort((a, b) => comparePeriodIds(b.reportMonth, a.reportMonth))
+        ? [...reports].sort((a, b) => b.runDate.localeCompare(a.runDate))
         : [],
     [reports]
   );
 
   const timeline = useMemo(() => deriveTimeline(sortedReports), [sortedReports]);
 
-  // Reset the "seeded" flag whenever the report set changes so the next active
-  // key gets seeded once on the new set.
   useEffect(() => {
     seededRef.current = false;
   }, [sortedReports]);
 
-  // IntersectionObserver — depends only on the report set so it isn't torn down
-  // on every scroll.
   useEffect(() => {
     if (sortedReports.length === 0) return;
     const root = sectionsRef.current;
@@ -236,16 +190,7 @@ export function PublicReportListPage({ community }: Props) {
   }
 
   const count = sortedReports.length;
-  const slots = timeline.length;
   const latest = sortedReports[0];
-  const hasBiweekly = sortedReports.some((r) => isBiweeklyId(r.reportMonth));
-  const slotLabel = hasBiweekly
-    ? slots === 1
-      ? "period"
-      : "periods"
-    : slots === 1
-      ? "month"
-      : "months";
 
   return (
     <div className="px-6 py-10 lg:px-10">
@@ -254,38 +199,36 @@ export function PublicReportListPage({ community }: Props) {
           Portfolio Reports
         </h1>
         <p className="mt-2 font-mono text-[11px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
-          {count} {count === 1 ? "report" : "reports"} · {slots} {slotLabel} covered · Latest{" "}
-          {formatPeriod(latest.reportMonth).label}
+          {count} {count === 1 ? "report" : "reports"} · Latest{" "}
+          {formatRunDate(latest.runDate).label}
         </p>
       </header>
 
       <div className="grid grid-cols-1 gap-x-10 lg:grid-cols-[160px_1fr]">
-        {/* Sticky scrubber */}
         <ReportTimelineScrubber entries={timeline} activeKey={activeKey} onJumpTo={handleJumpTo} />
 
-        {/* Timeline entries */}
         <div ref={sectionsRef} className="min-w-0">
           {sortedReports.map((report, index) => {
             const excerpt = toExcerpt(report.markdown, 280);
-            const period = formatPeriod(report.reportMonth);
+            const fmt = formatRunDate(report.runDate);
             return (
               <article
                 key={report.id}
-                data-report-key={report.reportMonth}
+                data-report-key={report.runDate}
                 className={`py-8 ${
                   index !== 0 ? "border-t border-zinc-200 dark:border-zinc-800" : ""
                 }`}
               >
                 <Link
-                  href={`/community/${slug}/reports/${report.reportMonth}`}
+                  href={`/community/${slug}/reports/${report.runDate}`}
                   className="group/link flex items-start justify-between gap-8"
                 >
                   <div className="min-w-0 flex-1">
                     <p className="mb-1.5 font-mono text-[11px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
-                      {period.badge}
+                      {fmt.badge}
                     </p>
                     <h2 className="text-xl font-semibold tracking-tight text-zinc-900 transition-colors group-hover/link:text-blue-600 sm:text-2xl dark:text-zinc-100 dark:group-hover/link:text-blue-400">
-                      {period.label}
+                      {fmt.label}
                     </h2>
                     <p className="mt-3 max-w-3xl text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">
                       {excerpt}

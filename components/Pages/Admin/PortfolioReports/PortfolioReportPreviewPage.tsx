@@ -74,7 +74,7 @@ export function PortfolioReportPreviewPage({ community, reportId }: Props) {
   return (
     <PortfolioReportDocumentView
       community={community}
-      month={report.reportMonth}
+      runDate={report.runDate}
       report={report}
       backHref={backHref}
       backLabel="Back to portfolio reports"

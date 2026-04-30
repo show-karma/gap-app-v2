@@ -21,7 +21,7 @@ const draftReport = {
   id: "draft-report",
   reportConfigId: "config-1",
   communityId: "community-1",
-  reportMonth: "2026-03",
+  runDate: "2026-03-15",
   status: "draft",
   markdown: "# Draft report body",
   dataSnapshot: {},

@@ -1,5 +1,9 @@
 import { notFound } from "next/navigation";
 import { ReportConfigPage } from "@/components/Pages/Admin/PortfolioReports/ReportConfigPage";
+import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
+import { errorManager } from "@/components/Utilities/errorManager";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 import { defaultMetadata } from "@/utilities/meta";
 import { getCommunityDetails } from "@/utilities/queries/v2/community";
 
@@ -7,6 +11,19 @@ export const metadata = defaultMetadata;
 
 interface Props {
   params: Promise<{ communityId: string }>;
+}
+
+async function getGrantPrograms(communityId: string): Promise<GrantProgram[]> {
+  try {
+    const [result, error] = await fetchData(INDEXER.COMMUNITY.PROGRAMS(communityId));
+    if (error) {
+      errorManager(`Error with fetching grant programs for community ${communityId}`, error);
+    }
+    return (result as GrantProgram[]) ?? [];
+  } catch (error: unknown) {
+    errorManager(`Error while fetching grant programs of community ${communityId}`, error);
+    return [];
+  }
 }
 
 export default async function Page(props: Props) {
@@ -17,5 +34,7 @@ export default async function Page(props: Props) {
     notFound();
   }
 
-  return <ReportConfigPage community={community} />;
+  const grantPrograms = await getGrantPrograms(communityId);
+
+  return <ReportConfigPage community={community} grantPrograms={grantPrograms} />;
 }
