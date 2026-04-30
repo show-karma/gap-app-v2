@@ -48,7 +48,8 @@ interface MilestonesCardProps {
 }
 
 const MilestonesCard = ({ completed, total, isLoading }: MilestonesCardProps) => {
-  const completedPct = total > 0 ? (completed / total) * 100 : 0;
+  const safeCompleted = Math.max(0, Math.min(completed, total));
+  const completedPct = total > 0 ? (safeCompleted / total) * 100 : 0;
   const pendingPct = total > 0 ? 100 - completedPct : 0;
 
   return (
