@@ -12,6 +12,8 @@ interface GrantCommentsAndActivityProps {
   programId: string;
   communityId: string;
   currentUserAddress?: string;
+  /** Application reference number used to fetch grantee contacts for @-mention */
+  referenceNumber?: string;
 }
 
 export function GrantCommentsAndActivity({
@@ -19,6 +21,7 @@ export function GrantCommentsAndActivity({
   programId,
   communityId,
   currentUserAddress,
+  referenceNumber,
 }: GrantCommentsAndActivityProps) {
   const { comments, isLoading, createCommentAsync, editCommentAsync, deleteCommentAsync } =
     useGrantComments({ projectUID, programId });
@@ -84,7 +87,8 @@ export function GrantCommentsAndActivity({
         onCommentDelete={handleCommentDelete}
         onVersionClick={undefined}
         programId={programId}
-        enableMentions={false}
+        enableMentions={!!programId}
+        referenceNumber={referenceNumber}
       />
     </div>
   );
