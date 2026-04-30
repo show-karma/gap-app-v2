@@ -160,21 +160,29 @@ export function PortfolioReportListPage({ community }: Props) {
   const router = useRouter();
   const { hasAccess, isLoading: accessLoading } = useCommunityAdminAccess(community.uid);
   const { data: reports, isLoading } = usePortfolioReports(slug);
-  const { data: configs } = useReportConfigs(slug);
+  const {
+    data: configs,
+    isLoading: configsLoading,
+    isError: configsError,
+  } = useReportConfigs(slug);
   const generateMutation = useGenerateReport(slug);
   const publishMutation = usePublishReport(slug);
   const unpublishMutation = useUnpublishReport(slug);
   const regenerateMutation = useRegenerateReport(slug);
 
-  const configuredTypes = useMemo<ReportType[]>(() => {
-    if (!configs || configs.length === 0) return [];
+  // Surface tri-state to the dialog: undefined = still resolving / errored,
+  // [] = resolved with no active configs, [...] = resolved with at least one.
+  // Without this distinction the dialog tells the admin to "create a config"
+  // while the configs query is still pending or has failed (CodeRabbit, MAJOR).
+  const configuredTypes = useMemo<ReportType[] | undefined>(() => {
+    if (configsLoading || configsError || !configs) return undefined;
     const found = new Set<string>();
     for (const c of configs) {
       if (c.isActive) found.add(c.reportType);
     }
     const order: ReportType[] = ["portfolio_monthly", "portfolio_biweekly"];
     return order.filter((t) => found.has(t));
-  }, [configs]);
+  }, [configs, configsLoading, configsError]);
 
   const [generateType, setGenerateType] = useState<ReportType>("portfolio_monthly");
   const [generatePeriod, setGeneratePeriod] = useState(() =>
@@ -209,8 +217,9 @@ export function PortfolioReportListPage({ community }: Props) {
 
   const openGenerateDialog = () => {
     // Default to the first configured cadence so the dialog opens with a
-    // valid identifier. Falls back to monthly if nothing is configured yet.
-    const initialType = configuredTypes[0] ?? "portfolio_monthly";
+    // valid identifier. Falls back to monthly if configs are still loading
+    // or no cadence is configured yet.
+    const initialType = configuredTypes?.[0] ?? "portfolio_monthly";
     setGenerateType(initialType);
     setGeneratePeriod(getPreviousPeriodId(initialType));
     setShowGenerateDialog(true);
@@ -323,7 +332,18 @@ export function PortfolioReportListPage({ community }: Props) {
       {showGenerateDialog && (
         <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-800">
           <h3 className="mb-3 text-sm font-medium">Generate Report</h3>
-          {configuredTypes.length === 0 ? (
+          {configuredTypes === undefined ? (
+            configsError ? (
+              <p className="text-sm text-red-500">
+                Failed to load report configs. Please retry.
+              </p>
+            ) : (
+              <div className="flex items-center gap-2 text-sm text-zinc-500">
+                <Spinner className="h-4 w-4" />
+                Loading configs…
+              </div>
+            )
+          ) : configuredTypes.length === 0 ? (
             <p className="text-sm text-zinc-500">
               No active configs found. Create one in{" "}
               <button

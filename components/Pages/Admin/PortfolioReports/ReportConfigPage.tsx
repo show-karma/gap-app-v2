@@ -204,10 +204,17 @@ export function ReportConfigPage({ community }: Props) {
 
       {/* Cadence picker — shows separate configs per period */}
       <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-800">
-        <p className="mb-3 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        <p
+          id="cadence-picker-label"
+          className="mb-3 text-sm font-medium text-zinc-700 dark:text-zinc-300"
+        >
           Editing config for
         </p>
-        <div className="flex gap-3">
+        <div
+          role="radiogroup"
+          aria-labelledby="cadence-picker-label"
+          className="flex gap-3"
+        >
           {REPORT_TYPE_OPTIONS.map((opt) => {
             const exists = configs?.some((c) => c.reportType === opt.value);
             const active = selectedType === opt.value;
@@ -215,6 +222,8 @@ export function ReportConfigPage({ community }: Props) {
               <button
                 key={opt.value}
                 type="button"
+                role="radio"
+                aria-checked={active}
                 onClick={() => setSelectedType(opt.value)}
                 className={`flex-1 rounded-md border px-4 py-3 text-left transition-colors ${
                   active

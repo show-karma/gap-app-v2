@@ -114,6 +114,10 @@ describe("portfolio-reports period utilities", () => {
       expect(getPreviousBiweeklyId(new Date(2026, 3, 10))).toBe("2026-03-H2");
     });
 
+    it("rolls year for January biweekly", () => {
+      expect(getPreviousBiweeklyId(new Date(2026, 0, 10))).toBe("2025-12-H2");
+    });
+
     it("dispatches via getPreviousPeriodId", () => {
       const now = new Date(2026, 3, 5);
       expect(getPreviousPeriodId("portfolio_monthly", now)).toBe("2026-03");
