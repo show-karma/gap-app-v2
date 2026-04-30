@@ -2,7 +2,8 @@
 
 import * as Sentry from "@sentry/nextjs";
 import { useCallback } from "react";
-import { getLangfuseWeb } from "@/lib/langfuse-web";
+import { TokenManager } from "@/utilities/auth/token-manager";
+import { envVars } from "@/utilities/enviromentVars";
 import { useAgentChatStore } from "@/store/agentChat";
 
 export type RatingValue = 1 | -1;
@@ -12,7 +13,10 @@ export interface UseChatRatingResult {
   submit: (value: RatingValue, comment?: string) => Promise<void>;
 }
 
-export function useChatRating(messageId: string, traceId: string | undefined): UseChatRatingResult {
+export function useChatRating(
+  messageId: string,
+  traceId: string | undefined
+): UseChatRatingResult {
   const rating = useAgentChatStore(
     (state) => state.messages.find((m) => m.id === messageId)?.rating ?? null
   );
@@ -21,16 +25,28 @@ export function useChatRating(messageId: string, traceId: string | undefined): U
     async (value: RatingValue, comment?: string) => {
       if (!traceId) return;
 
-      const client = getLangfuseWeb();
-      if (!client) return;
-
       try {
-        await client.score({
-          traceId,
-          name: "user_rating",
-          value,
-          ...(comment ? { comment } : {}),
-        });
+        const token = await TokenManager.getToken();
+        const response = await fetch(
+          `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}/v2/agent/rating`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+            body: JSON.stringify({
+              traceId,
+              value,
+              ...(comment ? { comment } : {}),
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`agent/rating returned ${response.status}`);
+        }
+
         useAgentChatStore.getState().setMessageRating(messageId, value);
       } catch (err: unknown) {
         Sentry.captureException(err, {

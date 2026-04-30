@@ -218,9 +218,6 @@ importers:
       jwt-decode:
         specifier: ^4.0.0
         version: 4.0.0
-      langfuse:
-        specifier: 3.38.20
-        version: 3.38.20
       lodash.debounce:
         specifier: ^4.0.8
         version: 4.0.8
@@ -9138,14 +9135,6 @@ packages:
     resolution: {integrity: sha512-eTIzlVOSUR+JxdDFepEYcBMtZ9Qqdef+rnzWdRZuMbOywu5tO2w2N7rqjoANZ5k9vywhL6Br1VRjUIgTQx4E8w==}
     engines: {node: '>=6'}
 
-  langfuse-core@3.38.20:
-    resolution: {integrity: sha512-zBKVmQN/1oT5VWZUBYlWzvokIlkC/6mnpgr/2atMyTeAm+jR3ia7w2iJMjlrF5/oG8ukO1s8+LDRCzJpF1QeEA==}
-    engines: {node: '>=18'}
-
-  langfuse@3.38.20:
-    resolution: {integrity: sha512-MAmBAASSzJtmK1O9HQegA1mFsQhT8Yf+OJRGvE7FXkyv3g/eiBE0glLD0Ohg3pkxhoPdggM5SejK7ue9ctlaMA==}
-    engines: {node: '>=18'}
-
   langium@4.2.1:
     resolution: {integrity: sha512-zu9QWmjpzJcomzdJQAHgDVhLGq5bLosVak1KVa40NzQHXfqr4eAHupvnPOVXEoLkg6Ocefvf/93d//SB7du4YQ==}
     engines: {node: '>=20.10.0', npm: '>=10.2.3'}
@@ -9880,10 +9869,6 @@ packages:
 
   multiformats@9.9.0:
     resolution: {integrity: sha512-HoMUjhH9T8DDBNT+6xzkrd9ga/XiBI4xLr58LJACwK6G3HTOPeMz4nB4KJs33L2BelrIJa7P0VuNaVF3hMYfjg==}
-
-  mustache@4.2.0:
-    resolution: {integrity: sha512-71ippSywq5Yb7/tVYyGbkBggbU8H3u5Rz56fH60jGFgr8uHwxs+aSKeqmluIVzM0m0kB7xQjKS6qPfd0b2ZoqQ==}
-    hasBin: true
 
   mute-stream@0.0.7:
     resolution: {integrity: sha512-r65nCZhrbXXb6dXOACihYApHw2Q6pV0M3V0PSxd74N0+D8nzAdEAITq2oAjA1jVnKI+tGvEBUpqiMh0+rW6zDQ==}
@@ -26280,14 +26265,6 @@ snapshots:
 
   kleur@3.0.3: {}
 
-  langfuse-core@3.38.20:
-    dependencies:
-      mustache: 4.2.0
-
-  langfuse@3.38.20:
-    dependencies:
-      langfuse-core: 3.38.20
-
   langium@4.2.1:
     dependencies:
       chevrotain: 11.1.1
@@ -27313,8 +27290,6 @@ snapshots:
       - '@types/node'
 
   multiformats@9.9.0: {}
-
-  mustache@4.2.0: {}
 
   mute-stream@0.0.7: {}
 
