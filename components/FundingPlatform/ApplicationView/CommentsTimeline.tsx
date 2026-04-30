@@ -11,12 +11,13 @@ import {
 } from "@heroicons/react/24/outline";
 import { isValid, parseISO } from "date-fns";
 import pluralize from "pluralize";
-import { type FC, useMemo, useState } from "react";
+import { type FC, useMemo, useRef, useState } from "react";
 import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Badge } from "@/components/ui/badge";
 import { type EditType, editTypeConfig } from "@/constants/editTypeConfig";
+import { CommentInput } from "@/src/features/application-comments/components/CommentInput";
 import type {
   ApplicationComment,
   FundingApplicationStatusV2,
@@ -28,7 +29,6 @@ import type {
 import { createFieldLabelMap, getFieldLabel } from "@/utilities/fieldLabelMapping";
 import { renderRelativeTime } from "@/utilities/formatRelativeTime";
 import { cn } from "@/utilities/tailwind";
-import CommentInput from "./CommentInput";
 import CommentItem from "./CommentItem";
 
 interface CommentsTimelineProps {
@@ -144,6 +144,13 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
   enableMentions = false,
 }: CommentsTimelineProps) => {
   const [isAddingComment, setIsAddingComment] = useState(false);
+  const [commentContent, setCommentContent] = useState("");
+  const commentContentRef = useRef(commentContent);
+
+  const handleCommentChange = (value: string) => {
+    commentContentRef.current = value;
+    setCommentContent(value);
+  };
 
   // Create field labels mapping from form schema using shared utility
   const fieldLabels = useMemo(() => createFieldLabelMap(formSchema), [formSchema]);
@@ -204,12 +211,14 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
     return items.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
   }, [comments, statusHistory, versionHistory]);
 
-  const handleAddComment = async (content: string) => {
+  const handleAddComment = async () => {
     if (!onCommentAdd) return;
 
     setIsAddingComment(true);
     try {
-      await onCommentAdd(content);
+      await onCommentAdd(commentContentRef.current.trim());
+      commentContentRef.current = "";
+      setCommentContent("");
     } catch (error) {
       console.error("Failed to add comment:", error);
     } finally {
@@ -397,13 +406,14 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
       {onCommentAdd && (
         <div className="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4">
           <CommentInput
+            value={commentContent}
+            onChange={handleCommentChange}
             onSubmit={handleAddComment}
-            disabled={isAddingComment}
+            isLoading={isAddingComment}
             placeholder={
               isAdmin ? "Add an admin comment..." : "Add a comment for this application..."
             }
             programId={programId}
-            enableMentions={enableMentions}
             isAdmin={isAdmin}
           />
         </div>
