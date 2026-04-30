@@ -47,6 +47,19 @@ function formatReasoning(text: string): string {
   );
 }
 
+function isValidEvaluation(
+  evaluation: { rating?: number; reasoning?: string } | null | undefined
+): evaluation is { rating: number; reasoning: string } {
+  return (
+    typeof evaluation?.rating === "number" &&
+    Number.isFinite(evaluation.rating) &&
+    evaluation.rating >= 0 &&
+    evaluation.rating <= 10 &&
+    typeof evaluation.reasoning === "string" &&
+    evaluation.reasoning.trim().length > 0
+  );
+}
+
 // ─── Inline Badge ────────────────────────────────────────────────────────────
 
 interface MilestoneAIEvaluationBadgeProps {
@@ -66,7 +79,7 @@ export function MilestoneAIEvaluationBadge({
 }: MilestoneAIEvaluationBadgeProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { data, isLoading, error } = useMilestoneEvaluation(milestoneUID, true);
-  const evaluations = data?.evaluations ?? [];
+  const evaluations = (data?.evaluations ?? []).filter(isValidEvaluation);
 
   const avgScore = useMemo(() => {
     if (evaluations.length === 0) return null;
@@ -123,9 +136,9 @@ export function MilestoneAIEvaluationBadge({
               ) : (
                 <>
                   <div className="flex flex-wrap gap-x-3 gap-y-0.5">
-                    {evaluations.map((evaluation, idx) => (
+                    {evaluations.map((evaluation) => (
                       <span
-                        key={idx}
+                        key={`${evaluation.milestoneUID}-${evaluation.model}-${evaluation.createdAt}`}
                         className={`text-xs font-semibold ${getScoreColor(evaluation.rating)}`}
                       >
                         {evaluation.rating}/10
@@ -162,7 +175,7 @@ interface AIEvaluationInlineModalProps {
 
 function AIEvaluationInlineModal({ milestoneUID, isOpen, onClose }: AIEvaluationInlineModalProps) {
   const { data, isLoading, error, refetch } = useMilestoneEvaluation(milestoneUID, isOpen);
-  const evaluations = data?.evaluations ?? [];
+  const evaluations = (data?.evaluations ?? []).filter(isValidEvaluation);
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -259,7 +272,7 @@ export function ApplicationMilestoneAIEvaluationBadge({
     milestoneTitle,
     true
   );
-  const evaluations = data?.evaluations ?? [];
+  const evaluations = (data?.evaluations ?? []).filter(isValidEvaluation);
 
   const avgScore = useMemo(() => {
     if (evaluations.length === 0) return null;
@@ -316,9 +329,9 @@ export function ApplicationMilestoneAIEvaluationBadge({
               ) : (
                 <>
                   <div className="flex flex-wrap gap-x-3 gap-y-0.5">
-                    {evaluations.map((evaluation, idx) => (
+                    {evaluations.map((evaluation) => (
                       <span
-                        key={idx}
+                        key={`${evaluation.milestoneUID}-${evaluation.model}-${evaluation.createdAt}`}
                         className={`text-xs font-semibold ${getScoreColor(evaluation.rating)}`}
                       >
                         {evaluation.rating}/10
@@ -366,7 +379,7 @@ function AIEvaluationApplicationModal({
     milestoneTitle,
     isOpen
   );
-  const evaluations = data?.evaluations ?? [];
+  const evaluations = (data?.evaluations ?? []).filter(isValidEvaluation);
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
