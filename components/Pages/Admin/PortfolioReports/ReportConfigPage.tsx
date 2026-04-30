@@ -851,6 +851,7 @@ function formatChip(d: Date): string {
     weekday: "short",
     month: "short",
     day: "numeric",
+    timeZone: "UTC",
   });
 }
 
