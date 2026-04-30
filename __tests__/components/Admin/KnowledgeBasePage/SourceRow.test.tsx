@@ -295,4 +295,50 @@ describe("SourceRow", () => {
       });
     });
   });
+
+  describe("dimmed visual treatment", () => {
+    // The row dims (opacity-55 on the icon tile, opacity-70 on the title
+    // block) whenever it's "off" — either paused or legacy isActive=false.
+    // Pre-DEV-194 the trigger was just !isActive; the regression tests below
+    // pin the union so legacy inactive rows don't lose their dim treatment.
+    const tileOpacityClass = "opacity-55";
+    const contentOpacityClass = "opacity-70";
+
+    function getTileAndContentOpacityClasses(): string[] {
+      // The icon tile is the first descendant rendered with opacity-55,
+      // the content wrapper carries opacity-70. We collect classNames of
+      // every dimmed element to assert the row visually communicates the
+      // off state.
+      const dimmed = document.querySelectorAll(
+        `.${tileOpacityClass}, .${contentOpacityClass}`
+      );
+      return Array.from(dimmed).flatMap((el) =>
+        Array.from(el.classList)
+      );
+    }
+
+    it("dims the row when source is paused", () => {
+      renderRow(createSource({ paused: true }));
+      const classes = getTileAndContentOpacityClasses();
+      expect(classes).toContain(tileOpacityClass);
+      expect(classes).toContain(contentOpacityClass);
+    });
+
+    it("dims the row when source is inactive (legacy axis)", () => {
+      // Regression for the dogfood-agent finding: pre-DEV-194 the row
+      // dimmed on !isActive. The first cut moved dimming to source.paused
+      // only, so legacy isActive=false rows lost their dim treatment.
+      renderRow(createSource({ isActive: false, paused: false }));
+      const classes = getTileAndContentOpacityClasses();
+      expect(classes).toContain(tileOpacityClass);
+      expect(classes).toContain(contentOpacityClass);
+    });
+
+    it("does not dim a healthy active source", () => {
+      renderRow(createSource({ isActive: true, paused: false }));
+      const classes = getTileAndContentOpacityClasses();
+      expect(classes).not.toContain(tileOpacityClass);
+      expect(classes).not.toContain(contentOpacityClass);
+    });
+  });
 });

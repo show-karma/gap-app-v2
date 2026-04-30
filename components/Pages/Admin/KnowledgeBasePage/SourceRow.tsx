@@ -231,9 +231,11 @@ function SourceRowImpl({ source, communityIdOrSlug, isFirst }: Props) {
   const status = getStatusMeta(source);
   const KindIcon = kind.Icon;
   const parts = diffParts(source);
-  // DEV-194: paused now drives the row's dimmed treatment. isActive is
-  // an orthogonal long-term-disable axis that no UI control flips today.
-  const isPaused = source.paused;
+  // DEV-194: dim the row whenever it's "off" — either paused (the new
+  // explicit switch) or legacy isActive=false. The status badge still
+  // distinguishes the two states; this just keeps the visual treatment
+  // consistent with pre-DEV-194 behavior for inactive rows.
+  const isDimmed = source.paused || !source.isActive;
 
   const handleTogglePaused = async () => {
     try {
@@ -304,7 +306,7 @@ function SourceRowImpl({ source, communityIdOrSlug, isFirst }: Props) {
           isFailed
             ? "border-rose-200 bg-rose-50 dark:border-rose-900/50 dark:bg-rose-950/40"
             : "border-stone-200 bg-stone-50 dark:border-zinc-800 dark:bg-zinc-900"
-        } ${isPaused ? "opacity-55" : ""}`}
+        } ${isDimmed ? "opacity-55" : ""}`}
         aria-hidden="true"
       >
         <KindIcon
@@ -314,7 +316,7 @@ function SourceRowImpl({ source, communityIdOrSlug, isFirst }: Props) {
       </div>
 
       {/* Title / URL / meta */}
-      <div className={`min-w-0 ${isPaused ? "opacity-70" : ""}`}>
+      <div className={`min-w-0 ${isDimmed ? "opacity-70" : ""}`}>
         <div className="flex items-baseline gap-2.5">
           <p className="truncate text-sm font-semibold leading-tight text-stone-900 dark:text-zinc-100">
             {source.title}
