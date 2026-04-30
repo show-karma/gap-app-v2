@@ -200,7 +200,22 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
     setValue("schedule", next, { shouldValidate: true, shouldDirty: true });
   };
 
-  // Sync the form whenever we switch which config we're editing.
+  // Allow already-past dates on existing configs so admins can edit
+  // name/prompt without being forced to bump the schedule.
+  const todayIso = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const minStartDateIso = useMemo(() => {
+    const original = editingConfig?.schedule.startDate;
+    return original && original < todayIso ? original : todayIso;
+  }, [editingConfig, todayIso]);
+  const minEndsDateIso = useMemo(() => {
+    const original =
+      editingConfig?.schedule.ends.kind === "on_date"
+        ? editingConfig.schedule.ends.date
+        : undefined;
+    const earliestKept = original && original < todayIso ? original : todayIso;
+    return schedule.startDate > earliestKept ? schedule.startDate : earliestKept;
+  }, [editingConfig, schedule.startDate, todayIso]);
+
   useEffect(() => {
     if (!editingId) return;
     if (editingId === "new") {
@@ -256,6 +271,31 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
   };
 
   const onSubmit = async (values: FormValues) => {
+    const originalStartDate = editingConfig?.schedule.startDate;
+    const originalEndsDate =
+      editingConfig?.schedule.ends.kind === "on_date"
+        ? editingConfig.schedule.ends.date
+        : undefined;
+
+    if (
+      values.schedule.startDate < todayIso &&
+      values.schedule.startDate !== originalStartDate
+    ) {
+      toast.error("Start date can't be in the past.");
+      return;
+    }
+    if (values.schedule.ends.kind === "on_date") {
+      const endsDate = values.schedule.ends.date;
+      if (endsDate < todayIso && endsDate !== originalEndsDate) {
+        toast.error("End date can't be in the past.");
+        return;
+      }
+      if (endsDate < values.schedule.startDate) {
+        toast.error("End date must be on or after the start date.");
+        return;
+      }
+    }
+
     try {
       if (editingId === "new") {
         await createMutation.mutateAsync(values);
@@ -510,7 +550,12 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
           </div>
 
           {/* Schedule */}
-          <SchedulePicker schedule={schedule} onChange={setSchedule} />
+          <SchedulePicker
+            schedule={schedule}
+            onChange={setSchedule}
+            minStartDate={minStartDateIso}
+            minEndsDate={minEndsDateIso}
+          />
 
           {/* Active */}
           <div className="flex items-center gap-2">
@@ -569,25 +614,23 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
   );
 }
 
-// ── Schedule picker (V1.D) ──────────────────────────────────────────
-
 interface SchedulePickerProps {
   schedule: ReportSchedule;
   onChange: (next: ReportSchedule) => void;
+  minStartDate: string;
+  minEndsDate: string;
 }
 
-function SchedulePicker({ schedule, onChange }: SchedulePickerProps) {
+function SchedulePicker({
+  schedule,
+  onChange,
+  minStartDate,
+  minEndsDate,
+}: SchedulePickerProps) {
   const activePreset = detectPreset(schedule);
 
   const handlePresetClick = (key: SchedulePresetKey) => {
-    if (key === "custom") {
-      // Custom doesn't override the current values — it just lets the user
-      // tweak `intervalCount` away from any preset spec, which causes
-      // detectPreset to return "custom" automatically. Clicking it is a no-op
-      // when nothing else is needed; we still keep the chip clickable so the
-      // user has an explicit way to "intend" custom.
-      return;
-    }
+    if (key === "custom") return;
     onChange(
       defaultScheduleForPreset(key, parseIsoOrToday(schedule.startDate))
     );
@@ -631,7 +674,6 @@ function SchedulePicker({ schedule, onChange }: SchedulePickerProps) {
         Choose how often the report runs. Pick a preset or fine-tune below.
       </p>
 
-      {/* Preset chips */}
       <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-6">
         {PRESET_LIST.map(({ key, label, Icon }) => {
           const active = activePreset === key;
@@ -655,9 +697,7 @@ function SchedulePicker({ schedule, onChange }: SchedulePickerProps) {
         })}
       </div>
 
-      {/* Recurrence panel — always visible. Custom is just "anything that doesn't match a preset". */}
       <div className="mt-3 rounded-md border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-900/40">
-        {/* Repeat */}
         <div className="flex flex-wrap items-center gap-2 text-sm">
           <span className="w-16 shrink-0 text-zinc-500">Repeat</span>
           <span className="text-zinc-700 dark:text-zinc-300">every</span>
@@ -669,18 +709,17 @@ function SchedulePicker({ schedule, onChange }: SchedulePickerProps) {
           />
         </div>
 
-        {/* Starting */}
         <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
           <span className="w-16 shrink-0 text-zinc-500">Starting</span>
           <input
             type="date"
             value={schedule.startDate}
+            min={minStartDate}
             onChange={(e) => setStartDate(e.target.value)}
             className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-700"
           />
         </div>
 
-        {/* Ends */}
         <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
           <span className="w-16 shrink-0 text-zinc-500">Ends</span>
           <Segmented
@@ -695,6 +734,7 @@ function SchedulePicker({ schedule, onChange }: SchedulePickerProps) {
             <input
               type="date"
               value={schedule.ends.date}
+              min={minEndsDate}
               onChange={(e) => setEndsDate(e.target.value)}
               className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-700"
             />
@@ -702,13 +742,11 @@ function SchedulePicker({ schedule, onChange }: SchedulePickerProps) {
         </div>
       </div>
 
-      {/* Plain-language echo */}
       <div className="mt-3 flex items-center gap-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800 dark:border-blue-900/40 dark:bg-blue-950/30 dark:text-blue-200">
         <Clock className="h-3.5 w-3.5 shrink-0" />
         <span>{formatScheduleLabel(schedule)}</span>
       </div>
 
-      {/* Next runs preview */}
       <div className="mt-3 rounded-md border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-900/40">
         <div className="mb-2 flex items-center gap-1.5">
           <Calendar className="h-3 w-3 text-zinc-400" />
@@ -736,8 +774,6 @@ function SchedulePicker({ schedule, onChange }: SchedulePickerProps) {
     </div>
   );
 }
-
-// ── Schedule picker primitives ──────────────────────────────────────
 
 function Stepper({
   value,
@@ -823,10 +859,6 @@ function parseIsoOrToday(iso: string): Date {
   const [y, m, d] = iso.split("-").map(Number);
   return new Date(y, m - 1, d);
 }
-
-// ── Inline icons for the preset chips ───────────────────────────────
-// Lucide doesn't have a great fit for "weekly" vs "bi-weekly" vs the design's
-// little calendar variants — these match the design's silhouettes.
 
 function CalendarSmall({ className }: { className?: string }) {
   return (

@@ -1,12 +1,5 @@
-/**
- * Helpers for displaying portfolio-report run dates + computing client-side
- * recurrence previews.
- */
 import type { ReportSchedule, ScheduleIntervalUnit } from "@/types/portfolio-report";
 
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
-
-/** Accepts an ISO date `YYYY-MM-DD` route segment. */
 export const RUN_DATE_REGEX = /^(19|20)\d{2}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
 
 export function isRunDate(value: string): boolean {
@@ -31,9 +24,6 @@ export function formatRunDate(runDate: string): FormattedRunDate {
   const month = Number(monthStr);
   const day = Number(dayStr);
   const date = new Date(year, month - 1, day);
-  // Round-trip check: rejects shape-valid but calendar-invalid dates
-  // (e.g., 2026-02-31, 2025-02-29). `new Date(2026, 1, 31)` rolls forward
-  // to March 3, which would otherwise mislabel the badge silently.
   if (
     date.getFullYear() !== year ||
     date.getMonth() !== month - 1 ||
@@ -56,20 +46,6 @@ export function formatRunDate(runDate: string): FormattedRunDate {
   };
 }
 
-// ── Schedule-label rendering ──────────────────────────────────────
-
-/**
- * Plain-language echo of a recurrence rule, e.g.:
- *   - "Every day, starting Apr 1, 2026 — runs forever"
- *   - "Every 10 days, starting Mon May 18, 2026 — runs forever"
- *   - "Every 2 weeks, starting Mon May 18, 2026 — until Dec 31, 2026"
- *   - "Every month, starting Apr 15, 2026 — runs forever"
- *   - "Every 3 months (quarterly), starting Apr 1, 2026 — runs forever"
- *
- * Used in the form's accent-banner echo, the configs list table, and the
- * preset-detection logic (when a free-form schedule happens to match a
- * preset, we surface the preset name instead).
- */
 export function formatScheduleLabel(schedule: ReportSchedule): string {
   const everyClause = renderEveryClause(schedule);
   const startClause = `starting ${formatLongRunDate(schedule.startDate)}`;
@@ -105,8 +81,6 @@ function formatLongRunDate(iso: string): string {
   });
 }
 
-// ── Presets ────────────────────────────────────────────────────────
-
 export type SchedulePresetKey =
   | "daily"
   | "weekly"
@@ -122,11 +96,6 @@ interface PresetSpec {
   intervalCount?: number;
 }
 
-/**
- * Stable list used by the preset chip row. `custom` is the escape hatch —
- * it has no fixed `(intervalUnit, intervalCount)`; it's whatever the admin
- * has in the form right now.
- */
 export const SCHEDULE_PRESETS: readonly PresetSpec[] = [
   { key: "daily", label: "Daily", intervalUnit: "days", intervalCount: 1 },
   { key: "weekly", label: "Weekly", intervalUnit: "weeks", intervalCount: 1 },
@@ -136,11 +105,6 @@ export const SCHEDULE_PRESETS: readonly PresetSpec[] = [
   { key: "custom", label: "Custom" },
 ];
 
-/**
- * Reverse-detect which preset a `Schedule` matches (or `custom` if it
- * doesn't match any). Used to auto-highlight the right preset chip when
- * editing an existing config.
- */
 export function detectPreset(schedule: ReportSchedule): SchedulePresetKey {
   for (const p of SCHEDULE_PRESETS) {
     if (
@@ -155,10 +119,6 @@ export function detectPreset(schedule: ReportSchedule): SchedulePresetKey {
   return "custom";
 }
 
-/**
- * Build a default Schedule for a given preset, using `today` as the start
- * date. The admin is free to change startDate/ends afterwards.
- */
 export function defaultScheduleForPreset(
   preset: SchedulePresetKey,
   today: Date = new Date()
@@ -181,13 +141,6 @@ export function defaultScheduleForPreset(
   };
 }
 
-// ── Next-runs preview (client-side) ────────────────────────────────
-
-/**
- * Compute up to `count` upcoming fire dates, given an `anchor` (defaults to
- * today). Mirrors the server-side `computeNextRuns` in gap-indexer/scheduling
- * so the FE preview matches what the cron will actually do.
- */
 export function computeNextRuns(
   schedule: ReportSchedule,
   count: number,
@@ -268,6 +221,3 @@ function toIsoDate(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
-// Avoid unused-var warning where MS_PER_DAY is shadowed; keep export
-// for potential future reuse + harmless compile-time presence.
-export const _MS_PER_DAY = MS_PER_DAY;
