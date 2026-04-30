@@ -15,13 +15,13 @@ import { cn } from "@/utilities/tailwind";
 
 export const metadata: Metadata = {
   ...customMetadata({
-    title: "Karma | Funding Software That Does the Work",
+    title: "Karma | Funding Software That Does the Work for Funders",
     description:
       "AI-powered software for grants, hackathons, and RFPs. Automated evaluation, milestone tracking, and impact reporting. Funding software that does the work.",
     path: "/",
   }),
   title: {
-    absolute: "Karma | Funding Software That Does the Work",
+    absolute: "Karma | AI powered funding Software that does the work for you",
   },
 };
 

@@ -36,7 +36,7 @@ export function Hero() {
               "text-left md:text-center max-w-[820px] w-full md:mx-auto"
             )}
           >
-            Funding software that does the work for you
+            AI powered funding software that does the work for you
           </h1>
         </ScrollReveal>
 

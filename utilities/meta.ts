@@ -3,7 +3,7 @@ import { PROJECT_NAME } from "@/constants/brand";
 
 export const SITE_URL = "https://www.karmahq.xyz";
 
-export const DEFAULT_TITLE = `${PROJECT_NAME} - Funding Software That Does the Work`;
+export const DEFAULT_TITLE = `${PROJECT_NAME} - AI powered funding software that does the work for you`;
 export const DEFAULT_DESCRIPTION =
   "AI-powered software for grants, hackathons, and RFPs. Automated evaluation, milestone tracking, and impact reporting for lean teams.";
 export const DEFAULT_OG_IMAGE = `${SITE_URL}/images/homepage/funder-benefit-01.png`;
