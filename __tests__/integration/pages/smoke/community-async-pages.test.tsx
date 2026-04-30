@@ -243,7 +243,8 @@ describe("Community async server pages — happy path", () => {
 describe("Community async server pages — month route validation", () => {
   it("/(with-header)/reports/[month] calls notFound for invalid month", async () => {
     const navigation = await import("next/navigation");
-    vi.mocked(navigation.notFound).mockImplementationOnce(() => {
+    const notFoundMock = vi.mocked(navigation.notFound);
+    notFoundMock.mockImplementationOnce(() => {
       const err = new Error("NEXT_NOT_FOUND") as Error & { digest: string };
       err.digest = "NEXT_NOT_FOUND";
       throw err;
@@ -254,5 +255,6 @@ describe("Community async server pages — month route validation", () => {
     await expect(
       Page({ params: Promise.resolve({ communityId: "c1", month: "not-a-month" }) })
     ).rejects.toThrow(/NEXT_NOT_FOUND/);
+    expect(notFoundMock).toHaveBeenCalledTimes(1);
   });
 });
