@@ -108,6 +108,7 @@ describe("CommunityPageNavigator", () => {
         uid: "0x1234567890123456789012345678901234567890",
         details: {
           name: "Test Community",
+          slug: "test-community",
         },
       },
       isLoading: false,
@@ -642,6 +643,47 @@ describe("CommunityPageNavigator", () => {
         "href",
         "/community/test-community/reports?programId=program-123"
       );
+    });
+
+    it("should call usePublishedReports with the canonical slug from community details, not the URL param", () => {
+      // URL param differs from canonical slug (e.g., legacy redirect or address-based access)
+      mockUseParams.mockReturnValue({ communityId: "0xabc" });
+      mockUsePathname.mockReturnValue("/community/0xabc");
+      mockUseCommunityDetails.mockReturnValue({
+        data: {
+          uid: "0xabc",
+          details: { name: "Test Community", slug: "test-community" },
+        },
+        isLoading: false,
+      } as any);
+
+      render(<CommunityPageNavigator />, { wrapper });
+
+      // Hook must receive the canonical slug, never the URL param
+      expect(mockUsePublishedReports).toHaveBeenCalledWith("test-community");
+      expect(mockUsePublishedReports).not.toHaveBeenCalledWith("0xabc");
+    });
+
+    it("should call usePublishedReports with empty string while community details are still loading", () => {
+      // Community hasn't loaded yet — slug is unavailable
+      mockUseCommunityDetails.mockReturnValue({
+        data: undefined,
+        isLoading: true,
+      } as any);
+
+      render(<CommunityPageNavigator />, { wrapper });
+
+      // Empty string disables the query via the hook's `enabled: Boolean(slug)` guard,
+      // preventing a wasted request with the URL param before the slug is known
+      expect(mockUsePublishedReports).toHaveBeenCalledWith("");
+    });
+
+    it("should call usePublishedReports with empty string on admin pages to suppress the query", () => {
+      mockUsePathname.mockReturnValue("/community/test-community/manage");
+
+      render(<CommunityPageNavigator />, { wrapper });
+
+      expect(mockUsePublishedReports).toHaveBeenCalledWith("");
     });
   });
 

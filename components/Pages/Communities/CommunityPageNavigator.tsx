@@ -134,7 +134,8 @@ export const CommunityPageNavigator = () => {
   const { data: programs } = useCommunityPrograms(communityId, {
     enabled: !isAdminPage,
   });
-  const reportsCommunitySlug = !isAdminPage ? (community?.details?.slug ?? communityId) : "";
+  // Empty string disables the query via the hook's `enabled` guard until the canonical slug loads.
+  const reportsCommunitySlug = !isAdminPage ? (community?.details?.slug ?? "") : "";
   const { data: publishedReports } = usePublishedReports(reportsCommunitySlug);
   const programsCount = programs?.length ?? 0;
   const publishedReportsCount = publishedReports?.length ?? 0;
