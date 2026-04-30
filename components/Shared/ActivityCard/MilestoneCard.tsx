@@ -536,7 +536,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
                   {completed ? "Completed" : "Pending"}
                 </Badge>
               )}
-              {completed && milestone.uid && (
+              {completed && milestone.uid && completionReason && (
                 <MilestoneAIEvaluationBadge
                   milestoneUID={milestone.uid}
                   completionReason={completionReason}

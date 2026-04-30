@@ -112,7 +112,7 @@ const CommunityMilestoneCardComponent: FC<CommunityMilestoneCardProps> = ({
                 Due {formatDate(milestone.details.dueDate)}
               </span>
             )}
-            {isCompleted && milestone.uid ? (
+            {isCompleted && milestone.uid && milestone.details.completionReason ? (
               <MilestoneAIEvaluationBadge
                 milestoneUID={milestone.uid}
                 completionReason={milestone.details.completionReason}
