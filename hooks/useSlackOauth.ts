@@ -1,9 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { slackOauthService } from "@/services/slackOauth.service";
-import type {
-  SlackOAuthRegisterWorkspaceInput,
-  SlackOAuthWorkspace,
-} from "@/types/slack-oauth";
+import type { SlackOAuthRegisterWorkspaceInput, SlackOAuthWorkspace } from "@/types/slack-oauth";
 import { slackOauthKeys } from "@/utilities/queryKeys/slackOauth";
 
 /**
@@ -64,11 +61,23 @@ export function useStartSlackInstall(slug: string | undefined) {
 
 // ── Mutations ─────────────────────────────────────────────────────────
 
+// `slug` is `string | undefined` because the calling page resolves it
+// from the route params and renders before that resolves. The mutation
+// hooks guard at fire-time rather than rely on the type-cast — a
+// mutation triggered before the slug is ready would otherwise hit the
+// API with `slug=undefined` in the URL path and 404 / persist nothing.
+function requireSlug(slug: string | undefined): string {
+  if (!slug) {
+    throw new Error("Community slug is required");
+  }
+  return slug;
+}
+
 export function useRegisterSlackWorkspace(slug: string | undefined) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: SlackOAuthRegisterWorkspaceInput) =>
-      slackOauthService.registerWorkspace(slug as string, input),
+      slackOauthService.registerWorkspace(requireSlug(slug), input),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: slackOauthKeys.workspace(slug),
@@ -80,7 +89,7 @@ export function useRegisterSlackWorkspace(slug: string | undefined) {
 export function useDeleteSlackWorkspace(slug: string | undefined) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (uid: string) => slackOauthService.deleteWorkspace(slug as string, uid),
+    mutationFn: (uid: string) => slackOauthService.deleteWorkspace(requireSlug(slug), uid),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: slackOauthKeys.workspace(slug),
@@ -91,6 +100,6 @@ export function useDeleteSlackWorkspace(slug: string | undefined) {
 
 export function useTestSlackWorkspace(slug: string | undefined) {
   return useMutation({
-    mutationFn: (uid: string) => slackOauthService.testWorkspace(slug as string, uid),
+    mutationFn: (uid: string) => slackOauthService.testWorkspace(requireSlug(slug), uid),
   });
 }

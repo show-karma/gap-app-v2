@@ -152,7 +152,7 @@ export function SlackOauthWorkspaceSummary({
 
         {deleteOpen ? (
           <DeleteDialog
-            title={`Disconnect workspace "${workspace.teamName}"? This removes all Slack user links.`}
+            title={`Disconnect workspace "${workspace.teamName}"? Slack DMs from this workspace will stop until reinstalled.`}
             deleteFunction={handleConfirmDelete}
             isLoading={false}
             buttonElement={null}

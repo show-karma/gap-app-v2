@@ -339,9 +339,10 @@ export function validateReviewerData(data: {
   }
 
   if (hasSlackInput && (!sanitizedSlack || !validateSlack(sanitizedSlack))) {
-    errors.push(
-      "Invalid Slack handle format (2-80 characters of letters, digits, '.', '_' or '-', optional @ prefix)"
-    );
+    // Message must match the actual rule in `validateSlack` — 2-254
+    // chars after trim, no charset constraint (Slack accepts member
+    // IDs, emails, and free-text display names like "Amaury Magalhães").
+    errors.push("Slack must be between 2 and 254 characters");
   }
 
   const sanitized: {

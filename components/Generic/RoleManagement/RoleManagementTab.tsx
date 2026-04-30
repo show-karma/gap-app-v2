@@ -535,33 +535,29 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {activeConfig.fields.map((field) => (
               <div key={field.name}>
-                <label
-                  htmlFor={field.name}
-                  // Fixed h-5 (20px) on EVERY label so children
-                  // (text-only vs text+icon-button) don't drive the
-                  // row height. Without this, the tooltip's button
-                  // pushes the label slightly taller and the input
-                  // below shifts down by a couple of px relative to
-                  // its tooltipless sibling (Telegram vs Slack).
-                  className="flex items-center gap-1 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 h-5"
-                >
-                  <span>
+                {/*
+                  InfoTooltip lives OUTSIDE the <label> — `InfoTooltip`
+                  renders a `<button>`, and a button inside a label
+                  steals click/focus events from the label's input
+                  association. The wrapper div carries the layout
+                  (h-5 for height stability across tooltipless and
+                  tooltipped fields); the label itself stays semantic
+                  (input-association only).
+                */}
+                <div className="flex items-center gap-1 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 h-5">
+                  <label htmlFor={field.name}>
                     {field.label}
                     {field.required && <span className="text-red-500 ml-1">*</span>}
-                  </span>
+                  </label>
                   {field.tooltip && (
                     <InfoTooltip
                       content={field.tooltip}
                       side="top"
                       contentClassName="max-w-xs whitespace-normal"
-                      // Shrink the icon-button so it fits within the
-                      // label's text line-height (5 = 20px). p-0 with
-                      // an inline-flex hit area keeps it clickable
-                      // without stretching the row.
                       className="p-0 inline-flex items-center"
                     />
                   )}
-                </label>
+                </div>
                 <input
                   id={field.name}
                   type={field.type === "email" ? "email" : "text"}
@@ -742,16 +738,17 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 py-1">
                                 {editableFields.map((field) => (
                                   <div key={field.name}>
-                                    <label
-                                      htmlFor={`edit-${member.id}-${field.name}`}
-                                      // Fixed h-4 (16px) so the inline
-                                      // edit form's labels match height
-                                      // regardless of whether they carry
-                                      // a tooltip — see the add-form
-                                      // comment above for the rationale.
-                                      className="flex items-center gap-1 text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 h-4"
-                                    >
-                                      <span>{field.label}</span>
+                                    {/*
+                                      Tooltip OUTSIDE the <label> for
+                                      the same reason as the add-form
+                                      above — InfoTooltip's button
+                                      breaks the label-input semantic
+                                      association.
+                                    */}
+                                    <div className="flex items-center gap-1 text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 h-4">
+                                      <label htmlFor={`edit-${member.id}-${field.name}`}>
+                                        {field.label}
+                                      </label>
                                       {field.tooltip && (
                                         <InfoTooltip
                                           content={field.tooltip}
@@ -760,7 +757,7 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
                                           className="p-0 inline-flex items-center"
                                         />
                                       )}
-                                    </label>
+                                    </div>
                                     <input
                                       id={`edit-${member.id}-${field.name}`}
                                       type="text"

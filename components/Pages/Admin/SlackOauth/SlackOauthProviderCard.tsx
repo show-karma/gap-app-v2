@@ -90,8 +90,8 @@ function PopulatedBody({
       <SlackOauthWorkspaceSummary workspace={workspace} communitySlug={communitySlug} />
       <p className="text-xs text-stone-500 dark:text-zinc-400">
         Per-user Slack mapping is managed on each user's profile (the
-        <span className="font-medium"> Slack handle</span> field). DMs route by that
-        handle automatically — no separate linking step here.
+        <span className="font-medium"> Slack handle</span> field). DMs route by that handle
+        automatically — no separate linking step here.
       </p>
     </div>
   );
