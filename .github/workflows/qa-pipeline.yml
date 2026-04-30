@@ -439,8 +439,9 @@ jobs:
           node-version: '20'
           cache: 'pnpm'
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      # No `pnpm install` here: the standalone bundle ships its own
+      # pruned node_modules for the server, and Claude Code is provided
+      # by the npm-cached global install below. Saves ~30-60s per shard.
 
       - name: Download prebuilt .next
         uses: actions/download-artifact@v7
@@ -696,8 +697,9 @@ jobs:
           node-version: '20'
           cache: 'pnpm'
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      # No `pnpm install` here: the standalone bundle ships its own
+      # pruned node_modules for the server, and Claude Code is provided
+      # by the npm-cached global install below. Saves ~30-60s per shard.
 
       - name: Download prebuilt .next
         uses: actions/download-artifact@v7
