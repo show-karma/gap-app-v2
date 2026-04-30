@@ -91,25 +91,57 @@ jobs:
                 .sort((a, b) => new Date(b.started_at) - new Date(a.started_at));
 
               if (claudeRuns.length === 0) {
-                console.log('No "Claude Code" check-run found on this commit — skipping (Claude Code will trigger QA when it finishes)');
-                core.setOutput('should_run', 'false');
-                return;
-              }
+                // No check-run yet. Distinguish "still pending" from "was
+                // cancelled before publishing a check-run". The latter
+                // happens when concurrency cancel-in-progress kills an
+                // initial pull_request claude run before it can post its
+                // check; without this fallback, gate-check skips QA
+                // forever waiting for a re-trigger that never comes.
+                const { data: wfRunsList } = await github.rest.actions.listWorkflowRunsForRepo({
+                  owner, repo, head_sha: headSha, per_page: 50
+                });
+                const claudeWfRuns = wfRunsList.workflow_runs.filter(r => r.name === 'Claude Code');
 
-              const latest = claudeRuns[0];
-              if (latest.status !== 'completed') {
-                console.log(`"Claude Code" check is ${latest.status} — skipping (will re-run when Claude Code finishes)`);
-                core.setOutput('should_run', 'false');
-                return;
-              }
+                if (claudeWfRuns.length === 0) {
+                  console.log('No "Claude Code" check-run or workflow run on this commit — skipping (Claude Code will trigger QA when it finishes)');
+                  core.setOutput('should_run', 'false');
+                  return;
+                }
 
-              if (latest.conclusion !== 'success') {
-                console.log(`"Claude Code" check concluded with ${latest.conclusion} — skipping QA`);
-                core.setOutput('should_run', 'false');
-                return;
-              }
+                const inProgress = claudeWfRuns.find(r => r.status !== 'completed');
+                if (inProgress) {
+                  console.log(`"Claude Code" workflow still ${inProgress.status} — skipping (will re-run when it finishes)`);
+                  core.setOutput('should_run', 'false');
+                  return;
+                }
 
-              console.log('✅ Claude Code check succeeded');
+                const conclusions = claudeWfRuns.map(r => r.conclusion);
+                if (conclusions.every(c => c === 'cancelled')) {
+                  console.log(`"Claude Code" workflow runs all cancelled (${claudeWfRuns.length}) — proceeding with QA (cancelled ≠ failed)`);
+                } else {
+                  console.log(`"Claude Code" workflow finished without publishing a check-run (conclusions: ${conclusions.join(', ')}) — proceeding with QA`);
+                }
+              } else {
+                const latest = claudeRuns[0];
+                if (latest.status !== 'completed') {
+                  console.log(`"Claude Code" check is ${latest.status} — skipping (will re-run when Claude Code finishes)`);
+                  core.setOutput('should_run', 'false');
+                  return;
+                }
+
+                if (latest.conclusion === 'cancelled') {
+                  // Cancelled is a terminal state, not a pending one. Treat
+                  // as "Claude Code did not gate this" and proceed rather
+                  // than wait forever for a re-trigger.
+                  console.log('"Claude Code" check was cancelled — proceeding with QA (cancelled ≠ failed)');
+                } else if (latest.conclusion !== 'success') {
+                  console.log(`"Claude Code" check concluded with ${latest.conclusion} — skipping QA`);
+                  core.setOutput('should_run', 'false');
+                  return;
+                } else {
+                  console.log('✅ Claude Code check succeeded');
+                }
+              }
 
               // Additionally verify the PR-review verdict comment is APPROVE
               const { data: comments } = await github.rest.issues.listComments({
