@@ -537,7 +537,10 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
                 </Badge>
               )}
               {completed && milestone.uid && (
-                <MilestoneAIEvaluationBadge milestoneUID={milestone.uid} />
+                <MilestoneAIEvaluationBadge
+                  milestoneUID={milestone.uid}
+                  completionReason={completionReason}
+                />
               )}
             </div>
           </div>

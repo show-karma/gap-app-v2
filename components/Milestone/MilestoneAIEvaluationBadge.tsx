@@ -65,6 +65,13 @@ function isValidEvaluation(
 interface MilestoneAIEvaluationBadgeProps {
   milestoneUID: string;
   className?: string;
+  /**
+   * The milestone completion's reason text. When provided and empty/whitespace,
+   * the badge skips fetching and renders nothing — there's nothing for the AI to
+   * have evaluated. Leaving this undefined preserves the legacy behavior of
+   * always fetching.
+   */
+  completionReason?: string;
 }
 
 /**
@@ -76,9 +83,11 @@ interface MilestoneAIEvaluationBadgeProps {
 export function MilestoneAIEvaluationBadge({
   milestoneUID,
   className = "",
+  completionReason,
 }: MilestoneAIEvaluationBadgeProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { data, isLoading, error } = useMilestoneEvaluation(milestoneUID, true);
+  const hasCompletionContent = completionReason === undefined || completionReason.trim().length > 0;
+  const { data, isLoading, error } = useMilestoneEvaluation(milestoneUID, hasCompletionContent);
   const evaluations = (data?.evaluations ?? []).filter(isValidEvaluation);
 
   const avgScore = useMemo(() => {
@@ -87,6 +96,10 @@ export function MilestoneAIEvaluationBadge({
       Math.round((evaluations.reduce((sum, e) => sum + e.rating, 0) / evaluations.length) * 10) / 10
     );
   }, [evaluations]);
+
+  if (!hasCompletionContent) {
+    return null;
+  }
 
   if (isLoading) {
     return (
@@ -255,6 +268,11 @@ interface ApplicationMilestoneAIEvaluationBadgeProps {
   referenceNumber: string;
   milestoneTitle: string;
   className?: string;
+  /**
+   * The application milestone completion's text. When provided and
+   * empty/whitespace, the badge skips fetching and renders nothing.
+   */
+  completionReason?: string;
 }
 
 /**
@@ -265,12 +283,14 @@ export function ApplicationMilestoneAIEvaluationBadge({
   referenceNumber,
   milestoneTitle,
   className = "",
+  completionReason,
 }: ApplicationMilestoneAIEvaluationBadgeProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const hasCompletionContent = completionReason === undefined || completionReason.trim().length > 0;
   const { data, isLoading, error } = useApplicationMilestoneEvaluation(
     referenceNumber,
     milestoneTitle,
-    true
+    hasCompletionContent
   );
   const evaluations = (data?.evaluations ?? []).filter(isValidEvaluation);
 
@@ -280,6 +300,10 @@ export function ApplicationMilestoneAIEvaluationBadge({
       Math.round((evaluations.reduce((sum, e) => sum + e.rating, 0) / evaluations.length) * 10) / 10
     );
   }, [evaluations]);
+
+  if (!hasCompletionContent) {
+    return null;
+  }
 
   if (isLoading) {
     return (

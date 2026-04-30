@@ -113,7 +113,10 @@ const CommunityMilestoneCardComponent: FC<CommunityMilestoneCardProps> = ({
               </span>
             )}
             {isCompleted && milestone.uid ? (
-              <MilestoneAIEvaluationBadge milestoneUID={milestone.uid} />
+              <MilestoneAIEvaluationBadge
+                milestoneUID={milestone.uid}
+                completionReason={milestone.details.completionReason}
+              />
             ) : null}
           </div>
 

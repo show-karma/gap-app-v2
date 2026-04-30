@@ -424,6 +424,7 @@ export function MilestoneCompletionEditor({
                           <ApplicationMilestoneAIEvaluationBadge
                             referenceNumber={referenceNumber}
                             milestoneTitle={milestone.title}
+                            completionReason={completion.completionText}
                           />
                         </div>
                         {canEdit && (

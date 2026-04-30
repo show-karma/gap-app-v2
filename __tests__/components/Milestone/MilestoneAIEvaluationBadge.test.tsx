@@ -69,6 +69,60 @@ describe("MilestoneAIEvaluationBadge", () => {
     expect(screen.getByRole("button")).toHaveTextContent("8/10");
   });
 
+  it("renders nothing and skips fetching when completionReason is empty", () => {
+    vi.mocked(useMilestoneEvaluation).mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      error: null,
+    } as unknown as ReturnType<typeof useMilestoneEvaluation>);
+
+    render(<MilestoneAIEvaluationBadge milestoneUID="milestone-1" completionReason="" />);
+
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    expect(useMilestoneEvaluation).toHaveBeenCalledWith("milestone-1", false);
+  });
+
+  it("renders nothing and skips fetching when completionReason is whitespace-only", () => {
+    vi.mocked(useMilestoneEvaluation).mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      error: null,
+    } as unknown as ReturnType<typeof useMilestoneEvaluation>);
+
+    render(<MilestoneAIEvaluationBadge milestoneUID="milestone-1" completionReason={"   \n  "} />);
+
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    expect(useMilestoneEvaluation).toHaveBeenCalledWith("milestone-1", false);
+  });
+
+  it("fetches and renders when completionReason has content", () => {
+    vi.mocked(useMilestoneEvaluation).mockReturnValue({
+      data: {
+        evaluations: [
+          {
+            milestoneUID: "milestone-1",
+            rating: 6,
+            reasoning: "Solid evidence of completion.",
+            model: "gpt",
+            createdAt: "2026-04-30T00:00:00.000Z",
+          },
+        ],
+      },
+      isLoading: false,
+      error: null,
+    } as unknown as ReturnType<typeof useMilestoneEvaluation>);
+
+    render(
+      <MilestoneAIEvaluationBadge
+        milestoneUID="milestone-1"
+        completionReason="Built and shipped feature X"
+      />
+    );
+
+    expect(screen.getByRole("button")).toHaveTextContent("6/10");
+    expect(useMilestoneEvaluation).toHaveBeenCalledWith("milestone-1", true);
+  });
+
   it("modal filters out invalid evaluations and renders only valid ones", async () => {
     const user = userEvent.setup();
     vi.mocked(useMilestoneEvaluation).mockReturnValue({
@@ -164,6 +218,25 @@ describe("ApplicationMilestoneAIEvaluationBadge", () => {
     );
 
     expect(screen.getByRole("button")).toHaveTextContent("7/10");
+  });
+
+  it("renders nothing and skips fetching when completionReason is empty", () => {
+    vi.mocked(useApplicationMilestoneEvaluation).mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      error: null,
+    } as unknown as ReturnType<typeof useApplicationMilestoneEvaluation>);
+
+    render(
+      <ApplicationMilestoneAIEvaluationBadge
+        referenceNumber="APP-123"
+        milestoneTitle="Milestone 1"
+        completionReason=""
+      />
+    );
+
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    expect(useApplicationMilestoneEvaluation).toHaveBeenCalledWith("APP-123", "Milestone 1", false);
   });
 
   it("modal filters out invalid evaluations and renders only valid ones", async () => {
