@@ -1,3 +1,18 @@
+export type ScheduleIntervalUnit = "days" | "weeks" | "months";
+
+export type ScheduleEnds =
+  | { kind: "never" }
+  | { kind: "on_date"; date: string }; // ISO YYYY-MM-DD, inclusive
+
+export interface ReportSchedule {
+  intervalUnit: ScheduleIntervalUnit;
+  /** Positive integer; e.g. 1 for "every day", 2 for "every two weeks". */
+  intervalCount: number;
+  /** ISO YYYY-MM-DD — recurrence anchor. First fire is on this date. */
+  startDate: string;
+  ends: ScheduleEnds;
+}
+
 export interface ReportConfig {
   id: string;
   communityId: string;
@@ -5,8 +20,7 @@ export interface ReportConfig {
   name: string;
   modelId: string;
   prompt: string;
-  /** 1..28 — fires once per matching day each month (e.g. [1] = monthly, [1,15] = twice). */
-  daysOfMonth: number[];
+  schedule: ReportSchedule;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -48,7 +62,7 @@ export interface CreateReportConfigRequest {
   programIds: string[];
   modelId: string;
   prompt: string;
-  daysOfMonth: number[];
+  schedule: ReportSchedule;
   isActive?: boolean;
 }
 
@@ -57,7 +71,7 @@ export interface UpdateReportConfigRequest {
   programIds?: string[];
   modelId?: string;
   prompt?: string;
-  daysOfMonth?: number[];
+  schedule?: ReportSchedule;
   isActive?: boolean;
 }
 

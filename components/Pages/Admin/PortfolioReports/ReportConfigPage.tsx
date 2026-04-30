@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, Plus, Save, Trash2, X } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, Plus, Save, Sun, Trash2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -19,10 +19,21 @@ import {
   useReportConfigs,
   useUpdateReportConfig,
 } from "@/hooks/portfolio-reports/usePortfolioReports";
-import type { ReportConfig } from "@/types/portfolio-report";
+import type {
+  ReportConfig,
+  ReportSchedule,
+  ScheduleIntervalUnit,
+} from "@/types/portfolio-report";
 import type { Community } from "@/types/v2/community";
 import { PAGES } from "@/utilities/pages";
-import { formatScheduleLabel } from "@/utilities/portfolio-reports/period";
+import {
+  computeNextRuns,
+  defaultScheduleForPreset,
+  detectPreset,
+  formatScheduleLabel,
+  RUN_DATE_REGEX,
+  type SchedulePresetKey,
+} from "@/utilities/portfolio-reports/period";
 
 interface Props {
   community: Community;
@@ -38,10 +49,6 @@ const AVAILABLE_MODELS = [
 
 const MODEL_IDS = AVAILABLE_MODELS.map((m) => m.id) as [string, ...string[]];
 
-// Days 1..28 — capped at 28 so the cron always fires (29/30/31 would skip
-// February and 30-day months).
-const DAYS_OF_MONTH: number[] = Array.from({ length: 28 }, (_, i) => i + 1);
-
 const PROMPT_PLACEHOLDER = `Example: Generate a markdown portfolio report covering the last 30 days of activity (please always specify a date range — the agent defaults to the last 30 days when none is given).
 
 Sections:
@@ -53,6 +60,44 @@ Sections:
 
 Use markdown formatting with headers, tables, and bold text.`;
 
+const PRESET_LIST: ReadonlyArray<{
+  key: SchedulePresetKey;
+  label: string;
+  Icon: React.ComponentType<{ className?: string }>;
+}> = [
+  { key: "daily", label: "Daily", Icon: Sun },
+  { key: "weekly", label: "Weekly", Icon: CalendarSmall },
+  { key: "biweekly", label: "Bi-weekly", Icon: CalendarBiweekly },
+  { key: "monthly", label: "Monthly", Icon: Calendar },
+  { key: "quarterly", label: "Quarterly", Icon: Clock },
+  { key: "custom", label: "Custom", Icon: SlidersIcon },
+];
+
+const INTERVAL_UNITS: ScheduleIntervalUnit[] = ["days", "weeks", "months"];
+
+const isoDate = z
+  .string()
+  .regex(RUN_DATE_REGEX, "Use YYYY-MM-DD")
+  .refine((v) => {
+    const [y, m, d] = v.split("-").map(Number);
+    const date = new Date(y, m - 1, d);
+    return (
+      date.getFullYear() === y &&
+      date.getMonth() === m - 1 &&
+      date.getDate() === d
+    );
+  }, "Not a valid calendar date");
+
+const scheduleZod = z.object({
+  intervalUnit: z.enum(["days", "weeks", "months"]),
+  intervalCount: z.coerce.number().int().min(1).max(366),
+  startDate: isoDate,
+  ends: z.discriminatedUnion("kind", [
+    z.object({ kind: z.literal("never") }),
+    z.object({ kind: z.literal("on_date"), date: isoDate }),
+  ]),
+});
+
 const formSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(128),
   programIds: z
@@ -60,10 +105,7 @@ const formSchema = z.object({
     .min(1, "Select at least one program"),
   modelId: z.enum(MODEL_IDS, { message: "Pick a model" }),
   prompt: z.string().trim().min(1, "A prompt is required"),
-  daysOfMonth: z
-    .array(z.number().int().min(1).max(28))
-    .min(1, "Pick at least one day of month")
-    .max(28),
+  schedule: scheduleZod,
   isActive: z.boolean(),
 });
 
@@ -74,7 +116,7 @@ const EMPTY_FORM_VALUES: FormValues = {
   programIds: [],
   modelId: AVAILABLE_MODELS[0].id,
   prompt: "",
-  daysOfMonth: [1],
+  schedule: defaultScheduleForPreset("monthly"),
   isActive: true,
 };
 
@@ -94,7 +136,6 @@ function buildProgramOptions(grantPrograms: GrantProgram[]): ProgramOption[] {
       label: title ? `${title} (${programId})` : programId,
     });
   }
-  // Stable sort by label so the dropdown order is deterministic across renders.
   return options.sort((a, b) => a.label.localeCompare(b.label));
 }
 
@@ -150,16 +191,13 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
   });
 
   const selectedProgramIds = watch("programIds");
-  const selectedProgramLabels = selectedProgramIds
-    .map((id) => labelByProgramId.get(id) ?? id);
+  const selectedProgramLabels = selectedProgramIds.map(
+    (id) => labelByProgramId.get(id) ?? id
+  );
 
-  const selectedDays = watch("daysOfMonth");
-  const toggleDay = (day: number) => {
-    const current = selectedDays ?? [];
-    const next = current.includes(day)
-      ? current.filter((d) => d !== day)
-      : [...current, day].sort((a, b) => a - b);
-    setValue("daysOfMonth", next, { shouldValidate: true, shouldDirty: true });
+  const schedule = watch("schedule");
+  const setSchedule = (next: ReportSchedule) => {
+    setValue("schedule", next, { shouldValidate: true, shouldDirty: true });
   };
 
   // Sync the form whenever we switch which config we're editing.
@@ -173,7 +211,7 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
         programIds: editingConfig.programIds,
         modelId: editingConfig.modelId,
         prompt: editingConfig.prompt,
-        daysOfMonth: [...editingConfig.daysOfMonth].sort((a, b) => a - b),
+        schedule: editingConfig.schedule,
         isActive: editingConfig.isActive,
       });
     }
@@ -214,7 +252,7 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
     if (formErrors.programIds?.message) toast.error(formErrors.programIds.message);
     if (formErrors.prompt?.message) toast.error(formErrors.prompt.message);
     if (formErrors.modelId?.message) toast.error(formErrors.modelId.message);
-    if (formErrors.daysOfMonth?.message) toast.error(formErrors.daysOfMonth.message);
+    if (formErrors.schedule) toast.error("Schedule has invalid values");
   };
 
   const onSubmit = async (values: FormValues) => {
@@ -223,9 +261,6 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
         await createMutation.mutateAsync(values);
         toast.success("Config created");
       } else {
-        // Don't fall back to create when the editing config has gone missing
-        // (deleted in another tab, refetched as empty, etc.) — that would
-        // silently spawn a duplicate row.
         if (!editingConfig) {
           toast.error(
             "This config no longer exists. Please refresh and try again."
@@ -260,11 +295,12 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
 
   const isSaving = createMutation.isPending || updateMutation.isPending || isSubmitting;
   const isFormOpen = editingId !== null;
-  const formTitle = editingId === "new"
-    ? "New Report"
-    : editingConfig?.name
-      ? `Edit "${editingConfig.name}"`
-      : "Edit Report";
+  const formTitle =
+    editingId === "new"
+      ? "New Report"
+      : editingConfig?.name
+        ? `Edit "${editingConfig.name}"`
+        : "Edit Report";
 
   return (
     <div className="space-y-6">
@@ -293,7 +329,7 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
             Report Configurations
           </h1>
           <p className="text-sm text-zinc-500">
-            Define one or more reports per community. Each runs once per month on its scheduled day.
+            Define one or more reports per community. Each runs on its own schedule.
           </p>
         </div>
         {!isFormOpen && (
@@ -344,11 +380,12 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
                   <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">
                     {cfg.name}
                   </td>
-                  <td className="px-4 py-3 text-zinc-500">
-                    {formatScheduleLabel(cfg.daysOfMonth)}
+                  <td className="px-4 py-3 text-xs text-zinc-500">
+                    {formatScheduleLabel(cfg.schedule)}
                   </td>
                   <td className="px-4 py-3 text-xs text-zinc-500">
-                    {cfg.programIds.length} program{cfg.programIds.length === 1 ? "" : "s"}
+                    {cfg.programIds.length} program
+                    {cfg.programIds.length === 1 ? "" : "s"}
                   </td>
                   <td className="px-4 py-3 text-xs text-zinc-500">{cfg.modelId}</td>
                   <td className="px-4 py-3">
@@ -472,49 +509,8 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
             </select>
           </div>
 
-          {/* Days of month */}
-          <div>
-            <fieldset>
-              <legend className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                Days of month to run
-              </legend>
-              <p className="mb-2 text-xs text-zinc-400">
-                Pick one or more days. The cron fires on each selected day
-                every month (e.g. <code>1, 15</code> = twice a month). Capped
-                at 28 so February doesn&apos;t skip.
-              </p>
-              <div className="grid grid-cols-7 gap-1.5 sm:grid-cols-14">
-                {DAYS_OF_MONTH.map((day) => {
-                  const checked = selectedDays.includes(day);
-                  return (
-                    <button
-                      key={day}
-                      type="button"
-                      role="checkbox"
-                      aria-checked={checked}
-                      aria-label={`Day ${day}`}
-                      onClick={() => toggleDay(day)}
-                      className={`rounded-md border px-2 py-1.5 text-xs font-medium transition-colors ${
-                        checked
-                          ? "border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-400 dark:bg-blue-900/30 dark:text-blue-200"
-                          : "border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-700/50"
-                      }`}
-                    >
-                      {day}
-                    </button>
-                  );
-                })}
-              </div>
-              <p className="mt-2 text-xs text-zinc-500">
-                Schedule: <strong>{formatScheduleLabel(selectedDays)}</strong>
-              </p>
-            </fieldset>
-            {errors.daysOfMonth && (
-              <p className="mt-1 text-xs text-red-500">
-                {errors.daysOfMonth.message}
-              </p>
-            )}
-          </div>
+          {/* Schedule */}
+          <SchedulePicker schedule={schedule} onChange={setSchedule} />
 
           {/* Active */}
           <div className="flex items-center gap-2">
@@ -570,5 +566,298 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
         </form>
       )}
     </div>
+  );
+}
+
+// ── Schedule picker (V1.D) ──────────────────────────────────────────
+
+interface SchedulePickerProps {
+  schedule: ReportSchedule;
+  onChange: (next: ReportSchedule) => void;
+}
+
+function SchedulePicker({ schedule, onChange }: SchedulePickerProps) {
+  const activePreset = detectPreset(schedule);
+
+  const handlePresetClick = (key: SchedulePresetKey) => {
+    if (key === "custom") {
+      // Custom doesn't override the current values — it just lets the user
+      // tweak `intervalCount` away from any preset spec, which causes
+      // detectPreset to return "custom" automatically. Clicking it is a no-op
+      // when nothing else is needed; we still keep the chip clickable so the
+      // user has an explicit way to "intend" custom.
+      return;
+    }
+    onChange(
+      defaultScheduleForPreset(key, parseIsoOrToday(schedule.startDate))
+    );
+  };
+
+  const setIntervalCount = (next: number) => {
+    if (next < 1 || next > 366) return;
+    onChange({ ...schedule, intervalCount: next });
+  };
+  const setIntervalUnit = (unit: ScheduleIntervalUnit) => {
+    onChange({ ...schedule, intervalUnit: unit });
+  };
+  const setStartDate = (date: string) => {
+    onChange({ ...schedule, startDate: date });
+  };
+  const setEndsKind = (kind: "never" | "on_date") => {
+    if (kind === "never") {
+      onChange({ ...schedule, ends: { kind: "never" } });
+    } else {
+      const fallback =
+        schedule.ends.kind === "on_date" ? schedule.ends.date : schedule.startDate;
+      onChange({ ...schedule, ends: { kind: "on_date", date: fallback } });
+    }
+  };
+  const setEndsDate = (date: string) => {
+    if (schedule.ends.kind !== "on_date") return;
+    onChange({ ...schedule, ends: { kind: "on_date", date } });
+  };
+
+  const previewDates = useMemo(
+    () => computeNextRuns(schedule, 4),
+    [schedule]
+  );
+
+  return (
+    <div>
+      <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        Schedule
+      </label>
+      <p className="mb-2 text-xs text-zinc-400">
+        Choose how often the report runs. Pick a preset or fine-tune below.
+      </p>
+
+      {/* Preset chips */}
+      <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-6">
+        {PRESET_LIST.map(({ key, label, Icon }) => {
+          const active = activePreset === key;
+          return (
+            <button
+              key={key}
+              type="button"
+              role="radio"
+              aria-checked={active}
+              onClick={() => handlePresetClick(key)}
+              className={`flex flex-col items-center gap-1 rounded-md border px-2 py-2 text-xs font-medium transition-colors ${
+                active
+                  ? "border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-400 dark:bg-blue-900/30 dark:text-blue-200"
+                  : "border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-700/50"
+              }`}
+            >
+              <Icon className={`h-4 w-4 ${active ? "text-blue-500 dark:text-blue-400" : "text-zinc-400"}`} />
+              {label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Recurrence panel — always visible. Custom is just "anything that doesn't match a preset". */}
+      <div className="mt-3 rounded-md border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-900/40">
+        {/* Repeat */}
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          <span className="w-16 shrink-0 text-zinc-500">Repeat</span>
+          <span className="text-zinc-700 dark:text-zinc-300">every</span>
+          <Stepper value={schedule.intervalCount} onChange={setIntervalCount} />
+          <Segmented
+            options={INTERVAL_UNITS.map((u) => ({ value: u, label: u }))}
+            value={schedule.intervalUnit}
+            onChange={(v) => setIntervalUnit(v as ScheduleIntervalUnit)}
+          />
+        </div>
+
+        {/* Starting */}
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+          <span className="w-16 shrink-0 text-zinc-500">Starting</span>
+          <input
+            type="date"
+            value={schedule.startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-700"
+          />
+        </div>
+
+        {/* Ends */}
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+          <span className="w-16 shrink-0 text-zinc-500">Ends</span>
+          <Segmented
+            options={[
+              { value: "never", label: "Never" },
+              { value: "on_date", label: "On date" },
+            ]}
+            value={schedule.ends.kind}
+            onChange={(v) => setEndsKind(v as "never" | "on_date")}
+          />
+          {schedule.ends.kind === "on_date" && (
+            <input
+              type="date"
+              value={schedule.ends.date}
+              onChange={(e) => setEndsDate(e.target.value)}
+              className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-700"
+            />
+          )}
+        </div>
+      </div>
+
+      {/* Plain-language echo */}
+      <div className="mt-3 flex items-center gap-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800 dark:border-blue-900/40 dark:bg-blue-950/30 dark:text-blue-200">
+        <Clock className="h-3.5 w-3.5 shrink-0" />
+        <span>{formatScheduleLabel(schedule)}</span>
+      </div>
+
+      {/* Next runs preview */}
+      <div className="mt-3 rounded-md border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-900/40">
+        <div className="mb-2 flex items-center gap-1.5">
+          <Calendar className="h-3 w-3 text-zinc-400" />
+          <span className="font-mono text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+            Next runs
+          </span>
+        </div>
+        {previewDates.length === 0 ? (
+          <p className="text-xs text-zinc-500">
+            Pick a valid start date to see upcoming runs
+          </p>
+        ) : (
+          <div className="flex flex-wrap gap-1.5">
+            {previewDates.map((d) => (
+              <span
+                key={d.toISOString()}
+                className="rounded-full border border-zinc-200 bg-white px-2 py-0.5 font-mono text-[11px] text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+              >
+                {formatChip(d)}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Schedule picker primitives ──────────────────────────────────────
+
+function Stepper({
+  value,
+  onChange,
+}: {
+  value: number;
+  onChange: (next: number) => void;
+}) {
+  return (
+    <div className="inline-flex h-7 items-center overflow-hidden rounded-md border border-zinc-300 bg-white dark:border-zinc-600 dark:bg-zinc-700">
+      <button
+        type="button"
+        onClick={() => onChange(value - 1)}
+        className="flex h-full w-7 items-center justify-center text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-600"
+        aria-label="Decrease interval"
+      >
+        −
+      </button>
+      <div className="w-8 text-center font-mono text-sm font-medium text-zinc-900 dark:text-zinc-100">
+        {value}
+      </div>
+      <button
+        type="button"
+        onClick={() => onChange(value + 1)}
+        className="flex h-full w-7 items-center justify-center text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-600"
+        aria-label="Increase interval"
+      >
+        +
+      </button>
+    </div>
+  );
+}
+
+function Segmented<T extends string>({
+  options,
+  value,
+  onChange,
+}: {
+  options: ReadonlyArray<{ value: T; label: string }>;
+  value: T;
+  onChange: (next: T) => void;
+}) {
+  return (
+    <div
+      role="radiogroup"
+      className="inline-flex h-7 overflow-hidden rounded-md border border-zinc-300 bg-white dark:border-zinc-600 dark:bg-zinc-700"
+    >
+      {options.map((opt, i) => {
+        const active = opt.value === value;
+        return (
+          <button
+            key={opt.value}
+            type="button"
+            role="radio"
+            aria-checked={active}
+            onClick={() => onChange(opt.value)}
+            className={`px-3 text-xs font-medium ${
+              i > 0 ? "border-l border-zinc-300 dark:border-zinc-600" : ""
+            } ${
+              active
+                ? "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-200"
+                : "text-zinc-600 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-600"
+            }`}
+          >
+            {opt.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function formatChip(d: Date): string {
+  return d.toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function parseIsoOrToday(iso: string): Date {
+  if (!RUN_DATE_REGEX.test(iso)) return new Date();
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
+// ── Inline icons for the preset chips ───────────────────────────────
+// Lucide doesn't have a great fit for "weekly" vs "bi-weekly" vs the design's
+// little calendar variants — these match the design's silhouettes.
+
+function CalendarSmall({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 18 18" fill="none">
+      <rect x="2" y="4" width="14" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M2 8H16" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="6" cy="11" r="1.2" fill="currentColor" />
+    </svg>
+  );
+}
+
+function CalendarBiweekly({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 18 18" fill="none">
+      <rect x="2" y="4" width="14" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M2 8H16" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="5.5" cy="11" r="1.1" fill="currentColor" />
+      <circle cx="12.5" cy="11" r="1.1" fill="currentColor" />
+    </svg>
+  );
+}
+
+function SlidersIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 18 18" fill="none">
+      <path d="M3 5H10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M14 5L15 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <circle cx="12" cy="5" r="2" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M3 13L5 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M9 13H15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <circle cx="7" cy="13" r="2" stroke="currentColor" strokeWidth="1.5" />
+    </svg>
   );
 }

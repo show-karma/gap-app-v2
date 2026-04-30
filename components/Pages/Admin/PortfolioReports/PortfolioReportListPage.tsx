@@ -289,7 +289,7 @@ export function PortfolioReportListPage({ community }: Props) {
                     {cfg.name}
                   </p>
                   <p className="truncate text-xs text-zinc-500">
-                    {formatScheduleLabel(cfg.daysOfMonth)} · {cfg.programIds.length} program
+                    {formatScheduleLabel(cfg.schedule)} · {cfg.programIds.length} program
                     {cfg.programIds.length === 1 ? "" : "s"} · {cfg.modelId}
                   </p>
                 </div>
