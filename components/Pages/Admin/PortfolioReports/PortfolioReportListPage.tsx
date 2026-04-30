@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, EyeOff, FileSearch, FileText, Play, RefreshCw, Settings } from "lucide-react";
+import { Eye, EyeOff, FileSearch, FileText, Play, Plus, RefreshCw, Settings } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -245,11 +245,12 @@ export function PortfolioReportListPage({ community }: Props) {
           </p>
         </div>
         <Button
-          variant="outline"
-          onClick={() => router.push(PAGES.ADMIN.PORTFOLIO_REPORTS_CONFIG(slug))}
+          onClick={() =>
+            router.push(`${PAGES.ADMIN.PORTFOLIO_REPORTS_CONFIG(slug)}?new=1`)
+          }
         >
-          <Settings className="mr-2 h-4 w-4" />
-          Manage Configs
+          <Plus className="mr-2 h-4 w-4" />
+          Configure New Report
         </Button>
       </div>
 
@@ -267,15 +268,17 @@ export function PortfolioReportListPage({ community }: Props) {
           <p className="text-sm text-red-500">Failed to load configs.</p>
         ) : activeConfigs.length === 0 ? (
           <p className="text-sm text-zinc-500">
-            No active configs. Create one in{" "}
+            No active configs.{" "}
             <button
               type="button"
               className="text-blue-600 underline dark:text-blue-400"
-              onClick={() => router.push(PAGES.ADMIN.PORTFOLIO_REPORTS_CONFIG(slug))}
+              onClick={() =>
+                router.push(`${PAGES.ADMIN.PORTFOLIO_REPORTS_CONFIG(slug)}?new=1`)
+              }
             >
-              Manage Configs
+              Configure your first report
             </button>{" "}
-            first.
+            to get started.
           </p>
         ) : (
           <ul className="space-y-2">
@@ -293,23 +296,38 @@ export function PortfolioReportListPage({ community }: Props) {
                     {cfg.programIds.length === 1 ? "" : "s"} · {cfg.modelId}
                   </p>
                 </div>
-                <Button
-                  size="sm"
-                  onClick={() => cfg.id && handleGenerate(cfg.id)}
-                  disabled={generatingConfigId !== null}
-                >
-                  {generatingConfigId === cfg.id ? (
-                    <>
-                      <Spinner className="mr-2 h-3 w-3" />
-                      Generating…
-                    </>
-                  ) : (
-                    <>
-                      <Play className="mr-1 h-3 w-3" />
-                      Generate
-                    </>
-                  )}
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      cfg.id &&
+                      router.push(
+                        `${PAGES.ADMIN.PORTFOLIO_REPORTS_CONFIG(slug)}?editId=${cfg.id}`
+                      )
+                    }
+                  >
+                    <Settings className="mr-1 h-3 w-3" />
+                    Configure
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => cfg.id && handleGenerate(cfg.id)}
+                    disabled={generatingConfigId !== null}
+                  >
+                    {generatingConfigId === cfg.id ? (
+                      <>
+                        <Spinner className="mr-2 h-3 w-3" />
+                        Generating…
+                      </>
+                    ) : (
+                      <>
+                        <Play className="mr-1 h-3 w-3" />
+                        Generate
+                      </>
+                    )}
+                  </Button>
+                </div>
               </li>
             ))}
           </ul>

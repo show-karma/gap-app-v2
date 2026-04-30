@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Calendar, Clock, Plus, Save, Sun, Trash2, X } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -142,6 +142,7 @@ function buildProgramOptions(grantPrograms: GrantProgram[]): ProgramOption[] {
 export function ReportConfigPage({ community, grantPrograms }: Props) {
   const slug = community.details.slug;
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { hasAccess, isLoading: accessLoading } = useCommunityAdminAccess(community.uid);
   const {
     data: configs,
@@ -165,6 +166,27 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
 
   const [editingId, setEditingId] = useState<string | "new" | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Honor `?new=1` or `?editId=<id>` when arriving from the list page so the
+  // form opens immediately. Only consume each query value once — if the user
+  // closes the form, we don't want to reopen it on the next render.
+  const [didConsumeQuery, setDidConsumeQuery] = useState(false);
+  useEffect(() => {
+    if (didConsumeQuery) return;
+    if (isLoading) return;
+    const newParam = searchParams.get("new");
+    const editParam = searchParams.get("editId");
+    if (newParam === "1") {
+      setEditingId("new");
+      setDidConsumeQuery(true);
+    } else if (editParam && configs?.some((c) => c.id === editParam)) {
+      setEditingId(editParam);
+      setDidConsumeQuery(true);
+    } else if (newParam || editParam) {
+      // Param present but no match — still mark consumed so we don't loop.
+      setDidConsumeQuery(true);
+    }
+  }, [searchParams, configs, isLoading, didConsumeQuery]);
 
   const editingConfig = useMemo(
     () =>
