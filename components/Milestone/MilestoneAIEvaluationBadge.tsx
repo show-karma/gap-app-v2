@@ -417,7 +417,7 @@ function AIEvaluationApplicationModal({
           <div className="space-y-4 max-h-96 overflow-y-auto">
             {evaluations.map((evaluation) => (
               <div
-                key={`${evaluation.milestoneUID}-${evaluation.createdAt}`}
+                key={`${evaluation.milestoneUID}-${evaluation.model}-${evaluation.createdAt}`}
                 className="border border-gray-200 dark:border-zinc-700 rounded-lg p-4"
               >
                 <div className="flex items-center mb-3">
