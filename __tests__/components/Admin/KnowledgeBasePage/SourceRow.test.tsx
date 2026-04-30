@@ -231,6 +231,18 @@ describe("SourceRow", () => {
       });
       expect(syncBtn).toBeDisabled();
     });
+
+    it("disables the sync trigger when source is inactive (matches backend filter)", () => {
+      // Defense against UI/backend drift: claimDueForSync also filters
+      // is_active = FALSE, so the button must be disabled for the same
+      // reason as paused — otherwise the click looks like progress but
+      // the worker silently skips the row.
+      renderRow(createSource({ isActive: false, paused: false, lastSyncStatus: "success" }));
+      const syncBtn = screen.getByRole("button", {
+        name: /source is inactive — sync is disabled/i,
+      });
+      expect(syncBtn).toBeDisabled();
+    });
   });
 
   describe("pause toggle", () => {

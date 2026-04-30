@@ -280,9 +280,12 @@ function SourceRowImpl({ source, communityIdOrSlug, isFirst }: Props) {
   // nothing for "force reprocess" to do until the worker finishes.
   // DEV-194: paused rows aren't "queued" — claimDueForSync skips them,
   // so a Sync click would have no effect; gate the button accordingly.
+  // Same reasoning applies to is_active=false: claimDueForSync filters
+  // those out too, so the button has to be disabled for the click to
+  // honestly reflect what the backend will do.
   const isQueued =
     source.isActive && !source.paused && !source.lastSyncedAt && status.tone === "idle";
-  const syncBlocked = isSyncingNow || isQueued || source.paused;
+  const syncBlocked = isSyncingNow || isQueued || source.paused || !source.isActive;
 
   return (
     <li
@@ -455,11 +458,13 @@ function SourceRowImpl({ source, communityIdOrSlug, isFirst }: Props) {
           label={
             source.paused
               ? "Resume to sync — paused sources are skipped"
-              : isSyncingNow
-                ? "Sync in progress"
-                : isQueued
-                  ? "Already queued for sync"
-                  : "Sync now"
+              : !source.isActive
+                ? "Source is inactive — sync is disabled"
+                : isSyncingNow
+                  ? "Sync in progress"
+                  : isQueued
+                    ? "Already queued for sync"
+                    : "Sync now"
           }
           onClick={handleResync}
           disabled={resync.isPending || syncBlocked}
