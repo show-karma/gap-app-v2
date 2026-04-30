@@ -12,6 +12,13 @@ on:
   pull_request:
     types: [opened, synchronize]
 
+concurrency:
+  # Cancel an in-progress Claude run when a new commit is pushed to the same PR.
+  # Falls back to run_id for non-PR triggers (issue comments, reviews) so each
+  # of those still runs independently.
+  group: claude-${{ github.event.pull_request.number || github.event.issue.number || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   claude:
     if: |
@@ -30,14 +37,14 @@ jobs:
       deployments: read
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
       # Wait for Vercel deployment and extract URL
       - name: Wait for Vercel Deployment
         id: deployment
-        uses: actions/github-script@v6
+        uses: actions/github-script@v8
         with:
           script: |
             const owner = context.repo.owner;
@@ -75,10 +82,12 @@ jobs:
             console.log(`Checking Vercel deployment for PR #${pr_number}, SHA: ${head_sha}`);
             core.setOutput('pr_number', pr_number);
 
-            // Wait for Vercel deployment (max 10 minutes)
+            // Wait for Vercel deployment (max 3 minutes — Vercel preview is
+            // typically ready in 90-120s; if not, we fall back to a degraded
+            // run without PREVIEW_URL rather than blocking for 10 minutes).
             let deploymentUrl = '';
             let attempts = 0;
-            const maxAttempts = 60; // 60 * 10 seconds = 10 minutes
+            const maxAttempts = 18; // 18 * 10 seconds = 3 minutes
 
             while (attempts < maxAttempts && !deploymentUrl) {
               attempts++;
@@ -172,7 +181,7 @@ jobs:
 
       - name: Generate GitHub App token
         id: app-token
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
@@ -370,5 +379,5 @@ jobs:
             ${{ github.event_name == 'pull_request' && 'Review this PR against the rules in custom_instructions. IMPORTANT: First run `git diff origin/main...HEAD` and ONLY review lines that were added or modified in the diff. Never flag pre-existing code. Triage: security/bugs first, then performance, then architecture. Only report MEDIUM+ issues with emoji severity indicators. For each: file:line, rule, severity, problem, root cause, fix. Flag any AI slop. DEDUPLICATION: Before reporting an issue, check previous review comments on this PR (from karma-coding-ai or github-actions[bot]). If an issue was flagged before AND the current diff shows it has been fixed (the problematic code no longer exists in the diff), do NOT re-flag it. Only flag issues that are still present in the current diff. End with the verdict section: Score X/100, then Status (APPROVE / APPROVE WITH SUGGESTIONS / REQUEST CHANGES). No strengths, no praise.' || '' }}
 
           max_turns: '30'
-          timeout_minutes: '45'
+          timeout_minutes: '15'
 

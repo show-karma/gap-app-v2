@@ -1,9 +1,21 @@
 name: QA Pipeline
 
 on:
-  workflow_run:
-    workflows: ['Claude Code']
-    types: [completed]
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - '**/*.png'
+      - '**/*.jpg'
+      - '**/*.jpeg'
+      - '**/*.svg'
+      - '**/*.gif'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/PULL_REQUEST_TEMPLATE.md'
+      - '.github/CODEOWNERS'
+      - 'LICENSE'
+      - '.gitignore'
   workflow_dispatch:
     inputs:
       pr_number:
@@ -16,11 +28,14 @@ env:
   NEXT_PUBLIC_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_PROJECT_ID }}
   NEXT_PUBLIC_GAP_INDEXER_URL: https://gapstagapi.karmahq.xyz
 
+concurrency:
+  group: qa-pipeline-${{ github.event.pull_request.number || github.event.inputs.pr_number }}
+  cancel-in-progress: true
+
 jobs:
   gate-check:
-    if: >
-      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
-      github.event_name == 'workflow_dispatch'
+    # For pull_request events: always run gate-check (we check Claude Code check-run inside).
+    # For workflow_dispatch: always run.
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
@@ -28,9 +43,9 @@ jobs:
       pr_number: ${{ steps.check.outputs.pr_number }}
       head_sha: ${{ steps.check.outputs.head_sha }}
     steps:
-      - name: Check review verdict
+      - name: Check Claude Code verdict and PR state
         id: check
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const owner = context.repo.owner;
@@ -49,20 +64,10 @@ jobs:
                 return;
               }
             } else {
-              headSha = context.payload.workflow_run.head_sha;
-              const headBranch = context.payload.workflow_run.head_branch;
-              const { data: prs } = await github.rest.pulls.list({
-                owner, repo, state: 'open',
-                head: `${owner}:${headBranch}`, per_page: 1
-              });
-              if (prs.length === 0) {
-                console.log('No open PR found');
-                core.setOutput('should_run', 'false');
-                return;
-              }
-              const pr = prs[0];
-              prNumber = pr.number;
-              if (pr.draft) {
+              // pull_request event — use event payload directly
+              prNumber = context.payload.pull_request.number;
+              headSha = context.payload.pull_request.head.sha;
+              if (context.payload.pull_request.draft) {
                 console.log('PR is draft, skipping');
                 core.setOutput('should_run', 'false');
                 return;
@@ -72,45 +77,67 @@ jobs:
             core.setOutput('head_sha', headSha);
             core.setOutput('pr_number', prNumber);
 
-            // Poll for verdict comment
+            // For pull_request events: verify the latest "Claude Code" check-run
+            // on this commit has succeeded. If it hasn't run yet or is in progress,
+            // skip gracefully — Claude Code will trigger another push event when
+            // it completes, which will start a fresh QA pipeline run.
             if (!isManual) {
-              let reviewComment = null;
-              const maxAttempts = 12;
+              const { data: checkRuns } = await github.rest.checks.listForRef({
+                owner, repo, ref: headSha, per_page: 100
+              });
 
-              for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-                const { data: comments } = await github.rest.issues.listComments({
-                  owner, repo, issue_number: prNumber, per_page: 100
-                });
+              const claudeRuns = checkRuns.check_runs
+                .filter(r => r.name === 'Claude Code')
+                .sort((a, b) => new Date(b.started_at) - new Date(a.started_at));
 
-                reviewComment = [...comments].reverse().find(c =>
-                  (c.user.login === 'github-actions[bot]' || c.user.login.includes('claude') || c.user.login.includes('karma')) &&
-                  (c.body.includes('APPROVE') || c.body.includes('REQUEST CHANGES'))
-                );
-
-                if (reviewComment) break;
-                console.log('Waiting for review verdict... (' + attempt + '/' + maxAttempts + ')');
-                await new Promise(r => setTimeout(r, 15000));
-              }
-
-              if (!reviewComment) {
-                console.log('No Claude Code review verdict found after polling');
+              if (claudeRuns.length === 0) {
+                console.log('No "Claude Code" check-run found on this commit — skipping (Claude Code will trigger QA when it finishes)');
                 core.setOutput('should_run', 'false');
                 return;
               }
 
-              const verdict = reviewComment.body;
-              const isApproved = (verdict.includes('✅') || verdict.includes('⚠️')) && verdict.includes('APPROVE') && !verdict.includes('REQUEST CHANGES');
-              if (!isApproved) {
-                console.log('Review verdict is REQUEST CHANGES — skipping QA');
+              const latest = claudeRuns[0];
+              if (latest.status !== 'completed') {
+                console.log(`"Claude Code" check is ${latest.status} — skipping (will re-run when Claude Code finishes)`);
                 core.setOutput('should_run', 'false');
                 return;
               }
-              console.log('✅ Review approved');
+
+              if (latest.conclusion !== 'success') {
+                console.log(`"Claude Code" check concluded with ${latest.conclusion} — skipping QA`);
+                core.setOutput('should_run', 'false');
+                return;
+              }
+
+              console.log('✅ Claude Code check succeeded');
+
+              // Additionally verify the PR-review verdict comment is APPROVE
+              const { data: comments } = await github.rest.issues.listComments({
+                owner, repo, issue_number: prNumber, per_page: 100
+              });
+
+              const reviewComment = [...comments].reverse().find(c =>
+                (c.user.login === 'github-actions[bot]' || c.user.login.includes('claude') || c.user.login.includes('karma')) &&
+                (c.body.includes('APPROVE') || c.body.includes('REQUEST CHANGES'))
+              );
+
+              if (reviewComment) {
+                const verdict = reviewComment.body;
+                const isApproved = (verdict.includes('✅') || verdict.includes('⚠️')) && verdict.includes('APPROVE') && !verdict.includes('REQUEST CHANGES');
+                if (!isApproved) {
+                  console.log('Review verdict is REQUEST CHANGES — skipping QA');
+                  core.setOutput('should_run', 'false');
+                  return;
+                }
+                console.log('✅ Review approved');
+              } else {
+                console.log('No review verdict comment found — proceeding (Claude Code check was successful)');
+              }
             } else {
-              console.log('Manual trigger — skipping verdict check');
+              console.log('Manual trigger — skipping Claude Code check');
             }
 
-            // Set pending commit status + post progress comment
+            // Set pending commit status + post/update consolidated progress comment
             await github.rest.repos.createCommitStatus({
               owner, repo, sha: headSha,
               state: 'pending',
@@ -119,21 +146,32 @@ jobs:
               target_url: `https://github.com/${owner}/${repo}/actions/runs/${process.env.GITHUB_RUN_ID}`
             });
 
-            await github.rest.issues.createComment({
-              owner, repo, issue_number: prNumber,
-              body: [
-                '## QA Pipeline',
-                '',
-                '| Stage | Status |',
-                '|-------|--------|',
-                '| QA Plan | ⏳ Running... |',
-                '| QA Execution | ⏳ Waiting |',
-                '| Dogfood | ⏳ Waiting |',
-                '| Verdict | ⏳ Waiting |',
-                '',
-                `[View workflow run](https://github.com/${owner}/${repo}/actions/runs/${process.env.GITHUB_RUN_ID})`
-              ].join('\n')
+            const marker = '<!-- qa-pipeline-status -->';
+            const progressBody = [
+              marker,
+              '## QA Pipeline',
+              '',
+              '| Stage | Status |',
+              '|-------|--------|',
+              '| QA Plan | ⏳ Running... |',
+              '| Build | ⏳ Running... |',
+              '| QA Execution | ⏳ Waiting |',
+              '| Dogfood | ⏳ Waiting |',
+              '| Verdict | ⏳ Waiting |',
+              '',
+              `[View workflow run](https://github.com/${owner}/${repo}/actions/runs/${process.env.GITHUB_RUN_ID})`
+            ].join('\n');
+
+            // Find existing pipeline comment by marker; update or create.
+            const { data: allComments } = await github.rest.issues.listComments({
+              owner, repo, issue_number: prNumber, per_page: 100
             });
+            const existing = allComments.find(c => c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body: progressBody });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number: prNumber, body: progressBody });
+            }
 
             core.setOutput('should_run', 'true');
 
@@ -141,25 +179,73 @@ jobs:
     needs: gate-check
     if: needs.gate-check.outputs.should_run == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
           ref: ${{ needs.gate-check.outputs.head_sha }}
 
+      - name: Compute diff fingerprint for cache key
+        id: changed-files
+        # Hash the actual diff CONTENT (not just file names) so two
+        # commits that touch the same files but with different changes
+        # don't collide. Same diff = same plan, regardless of SHA — wins
+        # on rebases and force-pushes that re-apply identical changes.
+        # Files written into $GITHUB_WORKSPACE so hashFiles() can read them.
+        run: |
+          git diff --name-only origin/main...HEAD | sort > .qa-plan-changed-files.txt
+          git diff origin/main...HEAD > .qa-plan-diff-content.txt
+          echo "Changed files:"
+          cat .qa-plan-changed-files.txt
+          echo "Diff size: $(wc -c < .qa-plan-diff-content.txt) bytes"
+
+      - name: Cache QA plan output
+        id: qa-plan-cache
+        uses: actions/cache@v5
+        with:
+          path: qa-plan.md
+          # No restore-keys: a stale plan from a different PR is worse
+          # than re-generating. Only exact diff matches reuse the cache.
+          key: qa-plan-${{ hashFiles('.qa-plan-diff-content.txt') }}
+
       - name: Generate GitHub App token
+        if: steps.qa-plan-cache.outputs.cache-hit != 'true'
         id: app-token
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
+      - name: Get ISO week for cache key
+        if: steps.qa-plan-cache.outputs.cache-hit != 'true'
+        id: weeknum
+        run: echo "weeknum=$(date -u +'%G-W%V')" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Claude Code install
+        if: steps.qa-plan-cache.outputs.cache-hit != 'true'
+        id: claude-cache
+        uses: actions/cache@v5
+        with:
+          path: ~/.npm-global
+          key: claude-code-${{ runner.os }}-${{ steps.weeknum.outputs.weeknum }}
+          restore-keys: |
+            claude-code-${{ runner.os }}-
+
       - name: Install Claude Code
-        run: npm install -g @anthropic-ai/claude-code
+        if: steps.qa-plan-cache.outputs.cache-hit != 'true' && steps.claude-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/.npm-global
+          npm config set prefix ~/.npm-global
+          npm install -g @anthropic-ai/claude-code
+
+      - name: Add Claude Code to PATH
+        if: steps.qa-plan-cache.outputs.cache-hit != 'true'
+        run: echo "$HOME/.npm-global/bin" >> "$GITHUB_PATH"
 
       - name: Generate QA Plan
+        if: steps.qa-plan-cache.outputs.cache-hit != 'true'
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           PR_NUMBER: ${{ needs.gate-check.outputs.pr_number }}
@@ -169,22 +255,21 @@ jobs:
             "You are a strict senior QA engineer. Read and follow the skill at .claude/skills/qa-plan-generator/SKILL.md exactly.
             PR number: $PR_NUMBER.
             Generate a QA plan for this PR. Save to qa-plan.md.
-            Then post the QA plan as a comment on PR #$PR_NUMBER using the GitHub CLI (gh pr comment $PR_NUMBER --body-file qa-plan-comment.md). Write the comment content to qa-plan-comment.md first, then use gh to post it.
             Be strict. Be concise. No fluff."
-        timeout-minutes: 25
+        timeout-minutes: 15
 
       - name: Upload QA plan artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: qa-plan
           path: qa-plan.md
           retention-days: 7
           if-no-files-found: ignore
 
-      - name: Update progress comment
+      - name: Update progress comment (QA Plan done)
         if: always()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           PR_NUMBER: ${{ needs.gate-check.outputs.pr_number }}
           PLAN_RESULT: ${{ job.status }}
@@ -194,43 +279,162 @@ jobs:
             const repo = context.repo.repo;
             const prNumber = parseInt(process.env.PR_NUMBER, 10);
             const planOk = process.env.PLAN_RESULT === 'success';
+            const marker = '<!-- qa-pipeline-status -->';
             const { data: comments } = await github.rest.issues.listComments({ owner, repo, issue_number: prNumber, per_page: 100 });
-            const pc = [...comments].reverse().find(c => c.body.includes('## QA Pipeline') && c.body.includes('QA Plan'));
+            const pc = comments.find(c => c.body.includes(marker));
             if (pc) {
               await github.rest.issues.updateComment({ owner, repo, comment_id: pc.id,
-                body: ['## QA Pipeline','','| Stage | Status |','|-------|--------|',
+                body: [
+                  marker,
+                  '## QA Pipeline', '',
+                  '| Stage | Status |', '|-------|--------|',
                   `| QA Plan | ${planOk ? '✅ Done' : '❌ Failed'} |`,
-                  '| QA Execution | ⏳ Building & running... |','| Dogfood | ⏳ Building & running... |','| Verdict | ⏳ Waiting |','',
+                  '| Build | ⏳ Running... |',
+                  '| QA Execution | ⏳ Building & running... |',
+                  '| Dogfood | ⏳ Building & running... |',
+                  '| Verdict | ⏳ Waiting |', '',
                   `[View workflow run](https://github.com/${owner}/${repo}/actions/runs/${process.env.GITHUB_RUN_ID})`
                 ].join('\n') });
             }
 
-  # qa-execution and dogfood run IN PARALLEL after qa-plan
-  # Each builds the app independently (Next.js cache makes this fast)
-
-  qa-execution:
-    needs: [gate-check, qa-plan]
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
+  # Build the app ONCE and share with both qa-execution and dogfood via artifact.
+  # Runs IN PARALLEL with qa-plan (qa-plan only reads source, doesn't need .next/)
+  # so the build doesn't sit idle waiting for Claude to draft the plan.
+  build:
+    needs: [gate-check]
+    if: needs.gate-check.outputs.should_run == 'true'
+    # 4-core runner cuts SWC compile time roughly in half (~5m → ~2.5m).
+    # Cost-neutral vs ubuntu-latest (2× per minute, half the minutes).
+    # Falls back automatically if plan does not allow 4-core.
+    runs-on: ubuntu-latest-4-cores
+    timeout-minutes: 15
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          ref: ${{ needs.gate-check.outputs.head_sha }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v5
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Cache Next.js build
+        uses: actions/cache@v5
+        with:
+          path: .next/cache
+          key: ${{ runner.os }}-nextjs-qa-${{ needs.gate-check.outputs.head_sha }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-qa-
+            ${{ runner.os }}-nextjs-
+
+      - name: Build application
+        run: pnpm run build
+        env:
+          NODE_ENV: production
+
+      - name: Assemble standalone bundle
+        # Next.js standalone output is self-contained (server.js + traced
+        # node_modules) but doesn't auto-copy public/ or .next/static/ —
+        # we stage them into the standalone tree so consumers boot with a
+        # single `node .next/standalone/server.js` and no extra setup.
+        run: |
+          cp -r public .next/standalone/
+          mkdir -p .next/standalone/.next
+          cp -r .next/static .next/standalone/.next/static
+
+      - name: Pack standalone bundle into tarball
+        # actions/upload-artifact@v5 rejects filenames containing `:` (NTFS
+        # incompatibility). Next.js + Turbopack emits chunks like
+        # `[externals]_node:inspector_*.js`, so uploading raw paths fails.
+        # Packaging into a tarball sidesteps the per-file validator and
+        # also keeps the artifact ~3-5× smaller than packing all of .next/.
+        run: tar -czf next-build.tar.gz .next/standalone
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: qa-build
+          path: next-build.tar.gz
+          retention-days: 1
+          if-no-files-found: error
+
+      - name: Update progress comment (Build done)
+        if: always()
+        uses: actions/github-script@v8
+        env:
+          PR_NUMBER: ${{ needs.gate-check.outputs.pr_number }}
+          BUILD_RESULT: ${{ job.status }}
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const prNumber = parseInt(process.env.PR_NUMBER, 10);
+            const buildOk = process.env.BUILD_RESULT === 'success';
+            const marker = '<!-- qa-pipeline-status -->';
+            const { data: comments } = await github.rest.issues.listComments({ owner, repo, issue_number: prNumber, per_page: 100 });
+            const pc = comments.find(c => c.body.includes(marker));
+            if (pc) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: pc.id,
+                body: [
+                  marker,
+                  '## QA Pipeline', '',
+                  '| Stage | Status |', '|-------|--------|',
+                  '| QA Plan | ✅ Done |',
+                  `| Build | ${buildOk ? '✅ Done' : '❌ Failed'} |`,
+                  `| QA Execution | ${buildOk ? '⏳ Running...' : '⏭️ Skipped (build failed)'} |`,
+                  `| Dogfood | ${buildOk ? '⏳ Running...' : '⏭️ Skipped (build failed)'} |`,
+                  '| Verdict | ⏳ Waiting |', '',
+                  `[View workflow run](https://github.com/${owner}/${repo}/actions/runs/${process.env.GITHUB_RUN_ID})`
+                ].join('\n') });
+            }
+
+  # qa-execution and dogfood run IN PARALLEL after the shared build,
+  # each downloading the prebuilt .next/ artifact instead of rebuilding.
+
+  # Sharded QA execution: split scenarios across parallel jobs to roughly
+  # halve wall time. The `public` shard runs P-prefixed scenarios with no
+  # auth (fastest); the `auth` shard runs A-prefixed scenarios after Privy
+  # login. Each shard reads $SHARD_ID and self-filters via the qa-executor
+  # skill. Each uploads `qa-results-<shard>.json`; the verdict job
+  # aggregates by globbing all shards.
+  qa-execution:
+    needs: [gate-check, qa-plan, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [public, auth]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
           ref: ${{ needs.gate-check.outputs.head_sha }}
 
       - name: Download QA plan
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: qa-plan
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v5
         with:
           version: 10
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: '20'
           cache: 'pnpm'
@@ -238,91 +442,256 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Cache Next.js build
-        uses: actions/cache@v4
+      - name: Download prebuilt .next
+        uses: actions/download-artifact@v7
         with:
-          path: .next/cache
-          key: ${{ runner.os }}-nextjs-qa-${{ needs.gate-check.outputs.head_sha }}
-          restore-keys: |
-            ${{ runner.os }}-nextjs-qa-
-            ${{ runner.os }}-nextjs-
+          name: qa-build
 
-      - name: Build application
-        run: pnpm run build
-        env:
-          NODE_ENV: production
+      - name: Unpack standalone bundle
+        run: tar -xzf next-build.tar.gz
 
       - name: Start local server
-        run: pnpm start &
+        # Standalone server.js boots in ~2s and embeds its own pruned
+        # node_modules — no `pnpm start` / `next start` needed. HOSTNAME
+        # must be 0.0.0.0 so curl on localhost can reach it.
+        run: node .next/standalone/server.js &
         env:
           PORT: 3000
+          HOSTNAME: 0.0.0.0
+          NODE_ENV: production
 
       - name: Wait for server
-        run: npx wait-on http://localhost:3000 --timeout 120000
+        run: |
+          start=$SECONDS
+          for i in $(seq 1 60); do
+            if curl --silent --fail --max-time 2 http://localhost:3000/ >/dev/null 2>&1; then
+              echo "Server is up after $((SECONDS - start))s (attempt ${i})"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Server failed to start within $((SECONDS - start))s (60 attempts)"
+          exit 1
 
       - name: Generate GitHub App token
         id: app-token
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
-      - name: Install Claude Code
-        run: npm install -g @anthropic-ai/claude-code
+      - name: Get ISO week for cache key
+        id: weeknum
+        run: echo "weeknum=$(date -u +'%G-W%V')" >> "$GITHUB_OUTPUT"
 
-      - name: Execute QA Plan
+      - name: Cache Claude Code install
+        id: claude-cache
+        uses: actions/cache@v5
+        with:
+          path: ~/.npm-global
+          key: claude-code-${{ runner.os }}-${{ steps.weeknum.outputs.weeknum }}
+          restore-keys: |
+            claude-code-${{ runner.os }}-
+
+      - name: Install Claude Code
+        if: steps.claude-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/.npm-global
+          npm config set prefix ~/.npm-global
+          npm install -g @anthropic-ai/claude-code
+
+      - name: Add Claude Code to PATH
+        run: echo "$HOME/.npm-global/bin" >> "$GITHUB_PATH"
+
+      - name: Execute QA Plan (shard ${{ matrix.shard }})
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           PR_NUMBER: ${{ needs.gate-check.outputs.pr_number }}
           QA_TEST_EMAIL: ${{ secrets.QA_TEST_EMAIL }}
           QA_TEST_OTP: ${{ secrets.QA_TEST_OTP }}
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          SHARD_ID: ${{ matrix.shard }}
         run: |
           claude --print --dangerously-skip-permissions \
             "You are a strict senior QA executor. Read and follow the skill at .claude/skills/qa-executor/SKILL.md exactly.
-            PR number: $PR_NUMBER. Target URL: http://localhost:3000.
-            QA Plan is at qa-plan.md. Execute ALL scenarios — both Public (P1, P2...) and Authenticated (A1, A2...).
-            For authenticated scenarios, login using the Privy test account (email from QA_TEST_EMAIL env var, OTP from QA_TEST_OTP env var).
-            IMPORTANT: Always use http://localhost:3000 as the target URL. Never use a preview/vercel URL.
-            Post the results as a comment on PR #$PR_NUMBER using gh pr comment.
-            Save results to qa-results.json."
-        timeout-minutes: 40
+            PR #$PR_NUMBER. Target: http://localhost:3000 (always — never a preview/vercel URL).
+            SHARD_ID=$SHARD_ID — execute ONLY scenarios in this shard per the skill's 'Sharded Execution' section.
+              - SHARD_ID=public: run P-prefixed scenarios. Skip Privy login entirely.
+              - SHARD_ID=auth: run A-prefixed scenarios. Login first, then execute.
+            QA Plan is at qa-plan.md.
+            For authenticated scenarios, login with QA_TEST_EMAIL + QA_TEST_OTP env vars.
+            Apply the skill's 'Speed Rules' strictly — targeted waits, no networkidle after in-page actions.
+            After execution, rename qa-results.json to qa-results-\$SHARD_ID.json (the skill describes this).
+            Do NOT post a separate PR comment — results will be aggregated in the pipeline verdict comment."
+        timeout-minutes: 20
 
-      - name: Upload QA execution artifacts
+      - name: Upload QA execution artifacts (shard ${{ matrix.shard }})
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
-          name: qa-execution-results
+          name: qa-execution-results-${{ matrix.shard }}
           path: |
             qa-output/
-            qa-results.json
+            qa-results-${{ matrix.shard }}.json
           retention-days: 7
           if-no-files-found: ignore
 
-  dogfood:
+  # dogfood-plan: compute changed UI pages and bucket them into shards.
+  # Runs after qa-plan (to reuse the checkout + diff already done for QA plan)
+  # and in parallel with build (it only inspects file paths, not the build).
+  # Emits dogfood-plan.json: { should_run, shard_count, groups: [["/a"], ["/b"]] }
+  dogfood-plan:
     needs: [gate-check, qa-plan]
+    if: needs.gate-check.outputs.should_run == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 5
+    outputs:
+      should_run: ${{ steps.plan.outputs.should_run }}
+      shards: ${{ steps.plan.outputs.shards }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
           ref: ${{ needs.gate-check.outputs.head_sha }}
 
-      - name: Download QA plan for scope context
-        uses: actions/download-artifact@v4
+      - name: Compute dogfood page scope
+        id: plan
+        run: |
+          # Find changed UI files that map to navigable pages.
+          # We include page.tsx / layout.tsx (direct route files) and
+          # feature/component TSX files (they may affect multiple pages,
+          # so we emit the changed-file list and let the agent figure out
+          # the precise URLs during exploration).
+          CHANGED=$(git diff --name-only origin/main...HEAD -- \
+            'app/**/page.tsx' \
+            'app/**/layout.tsx' \
+            'src/features/**/*.tsx' \
+            'components/**/*.tsx' 2>/dev/null || true)
+
+          # Derive URL paths from app/*/page.tsx paths.
+          # For feature/component changes we can't deterministically map to
+          # a single URL, so we emit the file paths and let the dogfood agent
+          # resolve them. The agent is instructed to derive the affected pages
+          # from the file context.
+          declare -a PATHS=()
+          while IFS= read -r f; do
+            [ -z "$f" ] && continue
+            if [[ "$f" == app/**/page.tsx ]] || [[ "$f" =~ ^app/.*page\.tsx$ ]]; then
+              # Convert app/some/route/page.tsx -> /some/route
+              route=$(echo "$f" | sed 's|^app/||; s|/page\.tsx$||; s|^$|/|')
+              # Strip route-group parens e.g. (with-header) -> drop segment
+              route=$(echo "$route" | sed 's|([^)]*)/||g; s|(.*)||g')
+              [ -z "$route" ] && route="/"
+              PATHS+=("/$route")
+            else
+              # For components/features, emit the file path prefixed with "file:"
+              # so the agent knows to resolve URLs from context.
+              PATHS+=("file:$f")
+            fi
+          done <<< "$CHANGED"
+
+          TOTAL=${#PATHS[@]}
+          echo "Total changed UI items: $TOTAL"
+
+          if [ "$TOTAL" -eq 0 ]; then
+            echo "No changed UI pages — skipping dogfood"
+            echo "should_run=false" >> "$GITHUB_OUTPUT"
+            echo "shards=[]" >> "$GITHUB_OUTPUT"
+            # Write minimal plan artifact
+            echo '{"should_run":false,"shard_count":0,"groups":[]}' > dogfood-plan.json
+          elif [ "$TOTAL" -le 2 ]; then
+            # Tiny diff — single shard, no splitting overhead
+            GROUP_A=$(printf '%s,' "${PATHS[@]}" | sed 's/,$//')
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+            echo 'shards=["1"]' >> "$GITHUB_OUTPUT"
+            python3 -c "
+          import json
+          paths = '${GROUP_A}'.split(',')
+          print(json.dumps({'should_run': True, 'shard_count': 1, 'groups': [paths]}))
+          " > dogfood-plan.json
+          else
+            # Split into 2 roughly-equal groups (round-robin by index)
+            GROUP_A=()
+            GROUP_B=()
+            for i in "${!PATHS[@]}"; do
+              if (( i % 2 == 0 )); then
+                GROUP_A+=("${PATHS[$i]}")
+              else
+                GROUP_B+=("${PATHS[$i]}")
+              fi
+            done
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+            echo 'shards=["1","2"]' >> "$GITHUB_OUTPUT"
+            python3 -c "
+          import json, sys
+          ga = [x for x in '$(IFS=','; echo "${GROUP_A[*]}")'.split(',') if x]
+          gb = [x for x in '$(IFS=','; echo "${GROUP_B[*]}")'.split(',') if x]
+          print(json.dumps({'should_run': True, 'shard_count': 2, 'groups': [ga, gb]}))
+          " > dogfood-plan.json
+          fi
+
+          echo "dogfood-plan.json contents:"
+          cat dogfood-plan.json
+
+      - name: Upload dogfood plan artifact
+        uses: actions/upload-artifact@v5
         with:
-          name: qa-plan
-        continue-on-error: true
+          name: dogfood-plan
+          path: dogfood-plan.json
+          retention-days: 1
+          if-no-files-found: error
+
+  # Sharded dogfood exploration: each shard explores its assigned pages,
+  # writes findings to dogfood-findings-{shard}.json (NO issue filing),
+  # and uploads the artifact. The dogfood-aggregate job dedupes and files.
+  dogfood:
+    needs: [gate-check, build, dogfood-plan]
+    if: needs.gate-check.outputs.should_run == 'true' && needs.dogfood-plan.outputs.should_run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJSON(needs.dogfood-plan.outputs.shards) }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          ref: ${{ needs.gate-check.outputs.head_sha }}
+
+      - name: Download dogfood plan
+        uses: actions/download-artifact@v7
+        with:
+          name: dogfood-plan
+
+      - name: Extract page scope for this shard
+        id: scope
+        run: |
+          SHARD_INDEX=$(( ${{ matrix.shard }} - 1 ))
+          # Extract the pages assigned to this shard from dogfood-plan.json
+          PAGES=$(python3 -c "
+          import json, sys
+          with open('dogfood-plan.json') as f:
+              plan = json.load(f)
+          groups = plan.get('groups', [])
+          idx = $SHARD_INDEX
+          if idx < len(groups):
+              print(','.join(groups[idx]))
+          else:
+              print('')
+          ")
+          echo "scope_pages=$PAGES" >> "$GITHUB_OUTPUT"
+          echo "Shard ${{ matrix.shard }} scope: $PAGES"
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v5
         with:
           version: 10
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: '20'
           cache: 'pnpm'
@@ -330,122 +699,293 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Cache Next.js build
-        uses: actions/cache@v4
+      - name: Download prebuilt .next
+        uses: actions/download-artifact@v7
         with:
-          path: .next/cache
-          key: ${{ runner.os }}-nextjs-qa-${{ needs.gate-check.outputs.head_sha }}
-          restore-keys: |
-            ${{ runner.os }}-nextjs-qa-
-            ${{ runner.os }}-nextjs-
+          name: qa-build
 
-      - name: Build application
-        run: pnpm run build
-        env:
-          NODE_ENV: production
+      - name: Unpack standalone bundle
+        run: tar -xzf next-build.tar.gz
 
       - name: Start local server
-        run: pnpm start &
+        # Standalone server.js boots in ~2s and embeds its own pruned
+        # node_modules — no `pnpm start` / `next start` needed. HOSTNAME
+        # must be 0.0.0.0 so curl on localhost can reach it.
+        run: node .next/standalone/server.js &
         env:
           PORT: 3000
+          HOSTNAME: 0.0.0.0
+          NODE_ENV: production
 
       - name: Wait for server
-        run: npx wait-on http://localhost:3000 --timeout 120000
+        run: |
+          start=$SECONDS
+          for i in $(seq 1 60); do
+            if curl --silent --fail --max-time 2 http://localhost:3000/ >/dev/null 2>&1; then
+              echo "Server is up after $((SECONDS - start))s (attempt ${i})"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Server failed to start within $((SECONDS - start))s (60 attempts)"
+          exit 1
 
       - name: Generate GitHub App token
         id: app-token
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
-      - name: Install Claude Code
-        run: npm install -g @anthropic-ai/claude-code
+      - name: Get ISO week for cache key
+        id: weeknum
+        run: echo "weeknum=$(date -u +'%G-W%V')" >> "$GITHUB_OUTPUT"
 
-      - name: Run Dogfood Exploration
+      - name: Cache Claude Code install
+        id: claude-cache
+        uses: actions/cache@v5
+        with:
+          path: ~/.npm-global
+          key: claude-code-${{ runner.os }}-${{ steps.weeknum.outputs.weeknum }}
+          restore-keys: |
+            claude-code-${{ runner.os }}-
+
+      - name: Install Claude Code
+        if: steps.claude-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/.npm-global
+          npm config set prefix ~/.npm-global
+          npm install -g @anthropic-ai/claude-code
+
+      - name: Add Claude Code to PATH
+        run: echo "$HOME/.npm-global/bin" >> "$GITHUB_PATH"
+
+      - name: Run Dogfood Exploration (shard ${{ matrix.shard }})
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           PR_NUMBER: ${{ needs.gate-check.outputs.pr_number }}
           QA_TEST_EMAIL: ${{ secrets.QA_TEST_EMAIL }}
           QA_TEST_OTP: ${{ secrets.QA_TEST_OTP }}
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          SHARD_ID: ${{ matrix.shard }}
+          SCOPE_PAGES: ${{ steps.scope.outputs.scope_pages }}
         run: |
           claude --print --dangerously-skip-permissions \
             "You are a strict senior QA engineer doing focused exploratory dogfood testing.
-            PR number: $PR_NUMBER. Target URL: http://localhost:3000.
-            IMPORTANT: Always use http://localhost:3000. Never use a preview/vercel URL.
+            PR #$PR_NUMBER. Target: http://localhost:3000 (always — never a preview/vercel URL).
+            SHARD_ID=$SHARD_ID. SCOPE_PAGES=$SCOPE_PAGES.
 
-            TIME BUDGET: You have 15 minutes of active exploration. Be fast and focused. Do not wander.
+            TIME BUDGET: 7 minutes of active exploration per shard. Be fast and focused.
 
-            1. Run git diff origin/main...HEAD --name-only to identify changed files.
-            2. Open http://localhost:3000 in agent-browser. Navigate ONLY to pages affected by the changed files.
-            3. On each page: take a screenshot, check console errors, interact with changed components.
-            4. For authenticated pages: login with Privy test account (email from QA_TEST_EMAIL, OTP from QA_TEST_OTP). Save auth state.
-            5. Find 3-5 issues max. Quality over quantity. Do NOT explore unrelated pages.
-            6. Do NOT repeat scenarios already covered by qa-plan.md (QA Execution already tested those).
+            Read and follow the skill at .claude/skills/dogfood/SKILL.md. You are running in CI SHARD MODE
+            because SCOPE_PAGES is set. Key rules for shard mode:
+            1. Explore ONLY the pages listed in SCOPE_PAGES (comma-separated paths). For 'file:' prefixed
+               entries, infer which URL(s) the component affects and visit those.
+            2. On each page: take a screenshot, check console errors, interact with changed components.
+            3. For authenticated pages: login with Privy test account (email from QA_TEST_EMAIL, OTP from QA_TEST_OTP).
+            4. Find up to 5 issues per shard. Quality over quantity.
+            5. Do NOT repeat scenarios already covered by qa-plan.md (if present).
+            6. CLASSIFY EVERY ISSUE: 'pr-caused' (file in git diff) or 'pre-existing' (not in diff).
+            7. Do NOT call 'gh issue create'. Write findings to dogfood-findings-\$SHARD_ID.json per the
+               skill's CI Pipeline Mode schema (includes fingerprint field).
+            8. Also write dogfood-results.json: {\"total\":N,\"critical\":N,\"high\":N,\"medium\":N,\"low\":N,\"preexisting\":N,\"blocking\":bool}
+               where critical/high counts = PR-caused only.
+            9. Do NOT post a separate PR comment."
+        timeout-minutes: 15
 
-            CLASSIFY EVERY ISSUE:
-            - **PR-caused**: Affected file appears in the git diff.
-            - **Pre-existing**: Does NOT appear in the git diff. Create a GitHub issue using gh issue create --title '[QA] <title>' --body '<description>' --label bug.
-
-            Post results as a comment on PR #$PR_NUMBER using gh pr comment. Format:
-
-            ## Dogfood (3/3)
-
-            **PR-caused issues**: X found (Y critical, Z high)
-            **Pre-existing issues**: N found (created as GitHub issues)
-
-            ### PR-Caused
-            | # | Issue | Severity | Category |
-            |---|-------|----------|----------|
-
-            ### Pre-existing (filed as issues)
-            | # | Issue | Severity | GitHub Issue |
-            |---|-------|----------|-------------|
-
-            **Verdict**: PASS or FAIL (based on PR-caused Critical/High only)
-
-            Save to dogfood-results.json: {\"total\":N,\"critical\":N,\"high\":N,\"medium\":N,\"low\":N,\"preexisting\":N,\"blocking\":bool}
-            critical/high counts = PR-caused only."
-        timeout-minutes: 40
-
-      - name: Upload dogfood artifacts
+      - name: Upload dogfood shard artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
-          name: dogfood-results
+          name: dogfood-findings-${{ matrix.shard }}
           path: |
             dogfood-output/
+            dogfood-findings-${{ matrix.shard }}.json
             dogfood-results.json
           retention-days: 7
           if-no-files-found: ignore
 
+  # dogfood-aggregate: single job that runs after all dogfood shards complete.
+  # Downloads all dogfood-findings-*.json artifacts, dedupes by fingerprint,
+  # and files GitHub issues for unique pre-existing findings not yet tracked.
+  dogfood-aggregate:
+    needs: [gate-check, dogfood-plan, dogfood]
+    if: always() && needs.gate-check.outputs.should_run == 'true' && needs.dogfood-plan.outputs.should_run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Download all dogfood findings artifacts
+        uses: actions/download-artifact@v7
+        with:
+          pattern: dogfood-findings-*
+          merge-multiple: true
+        continue-on-error: true
+
+      - name: Deduplicate findings and file GitHub issues
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR_NUMBER: ${{ needs.gate-check.outputs.pr_number }}
+          REPO: ${{ github.repository }}
+        run: |
+          python3 << 'PYEOF'
+          import json, os, glob, subprocess, sys
+
+          repo = os.environ['REPO']
+          pr_number = os.environ['PR_NUMBER']
+
+          # Load all findings files
+          findings_files = glob.glob('dogfood-findings-*.json')
+          print(f"Found findings files: {findings_files}")
+
+          all_findings = []
+          seen_fps = set()
+
+          for fpath in sorted(findings_files):
+              try:
+                  with open(fpath) as f:
+                      data = json.load(f)
+                  for finding in data.get('findings', []):
+                      fp = finding.get('fingerprint', '')
+                      if not fp:
+                          continue
+                      if fp in seen_fps:
+                          print(f"  [dedup] Skipping duplicate fingerprint {fp}: {finding.get('title')}")
+                          continue
+                      seen_fps.add(fp)
+                      all_findings.append(finding)
+              except Exception as e:
+                  print(f"  [warn] Could not parse {fpath}: {e}")
+
+          print(f"Total unique findings after dedup: {len(all_findings)}")
+
+          # Separate PR-caused vs pre-existing
+          preexisting = [f for f in all_findings if f.get('classification') == 'pre-existing']
+          pr_caused = [f for f in all_findings if f.get('classification') == 'pr-caused']
+
+          print(f"  PR-caused: {len(pr_caused)}, Pre-existing: {len(preexisting)}")
+
+          # For each pre-existing finding: check if a GitHub issue already exists
+          # with the fingerprint marker in its body, then file if absent.
+          filed = 0
+          skipped = 0
+          for finding in preexisting:
+              fp = finding['fingerprint']
+              marker = f"<!-- dogfood-fp:{fp} -->"
+
+              # Search for existing open issues with this fingerprint marker
+              result = subprocess.run(
+                  ['gh', 'issue', 'list', '--repo', repo, '--state', 'open',
+                   '--search', f'dogfood-fp:{fp}', '--json', 'number,title', '--limit', '5'],
+                  capture_output=True, text=True
+              )
+              existing_issues = []
+              if result.returncode == 0 and result.stdout.strip():
+                  try:
+                      existing_issues = json.loads(result.stdout)
+                  except Exception:
+                      pass
+
+              if existing_issues:
+                  print(f"  [skip] Issue already exists for fp={fp}: #{existing_issues[0]['number']} {existing_issues[0]['title']}")
+                  skipped += 1
+                  continue
+
+              # File a new GitHub issue
+              severity = finding.get('severity', 'medium')
+              title = f"[QA Dogfood] {finding.get('title', 'Untitled issue')}"
+              body = f"""{marker}
+
+          **Severity**: {severity}
+          **Page**: {finding.get('page_url', 'unknown')}
+          **Classification**: Pre-existing (not caused by the triggering PR)
+
+          ## Description
+
+          {finding.get('description', 'No description provided.')}
+
+          ---
+          *Filed automatically by the QA dogfood pipeline (PR #{pr_number}).*
+          *Fingerprint: `{fp}`*
+          """
+
+              cmd = ['gh', 'issue', 'create',
+                     '--repo', repo,
+                     '--title', title,
+                     '--body', body,
+                     '--label', 'bug']
+              try:
+                  result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+                  print(f"  [filed] {title} -> {result.stdout.strip()}")
+                  filed += 1
+              except subprocess.CalledProcessError as e:
+                  print(f"  [error] Failed to file issue: {e.stderr}")
+
+          # Write aggregated summary for verdict job
+          critical_count = sum(1 for f in pr_caused if f.get('severity') == 'critical')
+          high_count = sum(1 for f in pr_caused if f.get('severity') == 'high')
+          summary = {
+              'total': len(all_findings),
+              'critical': critical_count,
+              'high': high_count,
+              'medium': sum(1 for f in pr_caused if f.get('severity') == 'medium'),
+              'low': sum(1 for f in pr_caused if f.get('severity') == 'low'),
+              'preexisting': len(preexisting),
+              'preexisting_filed': filed,
+              'preexisting_skipped': skipped,
+              'blocking': critical_count > 0 or high_count > 0,
+          }
+          with open('dogfood-results.json', 'w') as f:
+              json.dump(summary, f, indent=2)
+          print(f"\nSummary: {json.dumps(summary)}")
+          PYEOF
+
+      - name: Upload aggregated dogfood results
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: dogfood-results
+          path: dogfood-results.json
+          retention-days: 7
+          if-no-files-found: ignore
+
   verdict:
-    needs: [gate-check, qa-execution, dogfood]
+    needs: [gate-check, qa-execution, dogfood-plan, dogfood-aggregate]
     if: always() && needs.gate-check.outputs.should_run == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Download QA results
-        uses: actions/download-artifact@v4
+      - name: Download QA results (all shards)
+        uses: actions/download-artifact@v7
         with:
-          name: qa-execution-results
+          # Pull every per-shard artifact (qa-execution-results-public,
+          # qa-execution-results-auth, ...) into the same directory so
+          # the aggregator can glob qa-results-*.json.
+          pattern: qa-execution-results-*
+          merge-multiple: true
         continue-on-error: true
 
-      - name: Download dogfood results
-        uses: actions/download-artifact@v4
+      - name: Download dogfood aggregated results
+        uses: actions/download-artifact@v7
         with:
           name: dogfood-results
         continue-on-error: true
 
       - name: Evaluate and set commit status
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           HEAD_SHA: ${{ needs.gate-check.outputs.head_sha }}
           PR_NUMBER: ${{ needs.gate-check.outputs.pr_number }}
           RUN_ID: ${{ github.run_id }}
           QA_EXEC_RESULT: ${{ needs.qa-execution.result }}
-          DOGFOOD_RESULT: ${{ needs.dogfood.result }}
+          DOGFOOD_RESULT: ${{ needs.dogfood-aggregate.result }}
+          DOGFOOD_SKIPPED: ${{ needs.dogfood-plan.outputs.should_run != 'true' }}
         with:
           script: |
             const fs = require('fs');
@@ -454,24 +994,45 @@ jobs:
             const sha = process.env.HEAD_SHA;
             const execResult = process.env.QA_EXEC_RESULT;
             const dogfoodResult = process.env.DOGFOOD_RESULT;
+            const dogfoodSkipped = process.env.DOGFOOD_SKIPPED === 'true';
 
-            const jobsFailed = execResult === 'failure' || dogfoodResult === 'failure';
+            // dogfood-aggregate is 'skipped' when dogfood-plan emitted should_run=false
+            // (CI-only PR with no changed UI pages). That is not a failure.
+            const dogfoodFailed = !dogfoodSkipped && dogfoodResult === 'failure';
+            const jobsFailed = execResult === 'failure' || dogfoodFailed;
 
             let criticalCount = 0;
             let highCount = 0;
 
+            // Aggregate qa-results-*.json from all sharded qa-execution jobs
+            // (qa-results-public.json, qa-results-auth.json, ...). A missing
+            // file means that shard didn't upload — counted as exec failure
+            // already via QA_EXEC_RESULT, so we silently skip here.
             try {
-              const qaResults = JSON.parse(fs.readFileSync('qa-results.json', 'utf8'));
-              for (const s of (qaResults.scenarios || [])) {
-                if (s.result === 'FAIL') {
-                  if (s.severity?.toLowerCase() === 'critical') criticalCount++;
-                  if (s.severity?.toLowerCase() === 'high') highCount++;
+              const shardFiles = fs.readdirSync('.').filter(f =>
+                /^qa-results-.+\.json$/.test(f)
+              );
+              if (shardFiles.length === 0) {
+                console.log('No qa-results-*.json files found from sharded jobs');
+              }
+              for (const file of shardFiles) {
+                try {
+                  const r = JSON.parse(fs.readFileSync(file, 'utf8'));
+                  for (const s of (r.scenarios || [])) {
+                    if (s.result === 'FAIL') {
+                      if (s.severity?.toLowerCase() === 'critical') criticalCount++;
+                      if (s.severity?.toLowerCase() === 'high') highCount++;
+                    }
+                  }
+                } catch (e) {
+                  console.log(`Could not parse ${file}: ${e.message}`);
                 }
               }
             } catch (e) {
-              console.log('Could not parse qa-results.json: ' + e.message);
+              console.log('Could not enumerate qa-results-*.json: ' + e.message);
             }
 
+            // Read aggregated dogfood results (produced by dogfood-aggregate job)
             try {
               const dogfoodResults = JSON.parse(fs.readFileSync('dogfood-results.json', 'utf8'));
               criticalCount += (dogfoodResults.critical || 0);
@@ -486,7 +1047,7 @@ jobs:
             if (jobsFailed) {
               const failed = [
                 execResult === 'failure' ? 'QA Execution' : null,
-                dogfoodResult === 'failure' ? 'Dogfood' : null
+                dogfoodFailed ? 'Dogfood' : null
               ].filter(Boolean).join(', ');
               description = `${failed} failed — check workflow logs`;
             } else if (criticalCount > 0 || highCount > 0) {
@@ -505,29 +1066,33 @@ jobs:
               target_url: `https://github.com/${owner}/${repo}/actions/runs/${process.env.RUN_ID}`
             });
 
-            // Update progress comment with actual job results
+            // Update the single consolidated pipeline comment with final verdict
             const prNumber = parseInt(process.env.PR_NUMBER, 10);
-            const icon = (r) => r === 'success' ? '✅ Done' : r === 'skipped' ? '⏭️ Skipped' : '❌ Failed';
+            const icon = (r, skipped) => {
+              if (skipped) return '⏭️ Skipped (no UI changes)';
+              return r === 'success' ? '✅ Done' : r === 'skipped' ? '⏭️ Skipped' : '❌ Failed';
+            };
             const verdictIcon = hasBlockingIssues ? '❌' : '✅';
             const verdictText = hasBlockingIssues ? `FAIL — ${description}` : 'PASS — no blocking issues';
+            const marker = '<!-- qa-pipeline-status -->';
 
             const { data: cmts } = await github.rest.issues.listComments({
               owner, repo, issue_number: prNumber, per_page: 100
             });
-            const pc = [...cmts].reverse().find(c =>
-              c.body.includes('## QA Pipeline') && c.body.includes('QA Plan')
-            );
+            const pc = cmts.find(c => c.body.includes(marker));
             if (pc) {
               await github.rest.issues.updateComment({
                 owner, repo, comment_id: pc.id,
                 body: [
+                  marker,
                   '## QA Pipeline',
                   '',
                   '| Stage | Status |',
                   '|-------|--------|',
                   '| QA Plan | ✅ Done |',
-                  `| QA Execution | ${icon(execResult)} |`,
-                  `| Dogfood | ${icon(dogfoodResult)} |`,
+                  '| Build | ✅ Done |',
+                  `| QA Execution | ${icon(execResult, false)} |`,
+                  `| Dogfood | ${icon(dogfoodResult, dogfoodSkipped)} |`,
                   `| **Verdict** | **${verdictIcon} ${verdictText}** |`,
                   '',
                   `[View workflow run](https://github.com/${owner}/${repo}/actions/runs/${process.env.RUN_ID})`
