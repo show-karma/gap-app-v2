@@ -3,22 +3,17 @@ import Link from "next/link";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import type { PortfolioReport } from "@/types/portfolio-report";
 import type { Community } from "@/types/v2/community";
+import { formatRunDate } from "@/utilities/portfolio-reports/period";
 import { BackToTop } from "./BackToTop";
 import { ReadingProgress } from "./ReadingProgress";
 
 interface Props {
   community: Community;
-  month: string;
+  runDate: string;
   report: PortfolioReport;
   backHref: string;
   backLabel?: string;
   bannerText?: string;
-}
-
-function formatMonth(month: string): string {
-  const [year, m] = month.split("-").map(Number);
-  const date = new Date(year, m - 1);
-  return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
 }
 
 function formatDate(iso: string): string {
@@ -31,14 +26,14 @@ function formatDate(iso: string): string {
 
 export function PortfolioReportDocumentView({
   community,
-  month,
+  runDate,
   report,
   backHref,
   backLabel = "Reports",
   bannerText,
 }: Props) {
   const slug = community.details.slug;
-  const monthLabel = formatMonth(month);
+  const runDateLabel = formatRunDate(runDate).label;
 
   return (
     <>
@@ -64,7 +59,7 @@ export function PortfolioReportDocumentView({
               <ChevronRight className="h-3.5 w-3.5" />
             </li>
             <li aria-current="page" className="font-medium text-zinc-900 dark:text-zinc-100">
-              {monthLabel}
+              {runDateLabel}
             </li>
           </ol>
         </nav>
@@ -74,7 +69,7 @@ export function PortfolioReportDocumentView({
             {community.details.name ?? slug} · Portfolio report
           </p>
           <h1 className="text-4xl font-bold tracking-tight text-zinc-900 sm:text-5xl dark:text-zinc-100">
-            {monthLabel}
+            {runDateLabel}
           </h1>
           <p className="mt-4 font-mono text-[11px] uppercase tracking-wider text-zinc-400">
             {report.publishedAt ? `Published ${formatDate(report.publishedAt)}` : "Draft"}

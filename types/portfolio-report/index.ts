@@ -1,10 +1,24 @@
+export type ScheduleIntervalUnit = "days" | "weeks" | "months";
+
+export type ScheduleEnds =
+  | { kind: "never" }
+  | { kind: "on_date"; date: string };
+
+export interface ReportSchedule {
+  intervalUnit: ScheduleIntervalUnit;
+  intervalCount: number;
+  startDate: string;
+  ends: ScheduleEnds;
+}
+
 export interface ReportConfig {
   id: string;
   communityId: string;
   programIds: string[];
-  reportType: string;
+  name: string;
   modelId: string;
   prompt: string;
+  schedule: ReportSchedule;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -22,7 +36,7 @@ export interface PortfolioReport {
   id: string;
   reportConfigId: string;
   communityId: string;
-  reportMonth: string;
+  runDate: string;
   status: "draft" | "published";
   markdown: string;
   dataSnapshot: Record<string, unknown>;
@@ -37,21 +51,23 @@ export interface PortfolioReport {
 }
 
 export interface CreateReportConfigRequest {
+  name: string;
   programIds: string[];
-  reportType?: string;
   modelId: string;
   prompt: string;
+  schedule: ReportSchedule;
   isActive?: boolean;
 }
 
 export interface UpdateReportConfigRequest {
+  name?: string;
   programIds?: string[];
   modelId?: string;
   prompt?: string;
+  schedule?: ReportSchedule;
   isActive?: boolean;
 }
 
 export interface GenerateReportRequest {
-  month: string;
-  configId?: string;
+  configId: string;
 }

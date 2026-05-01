@@ -37,6 +37,8 @@ export const PAGES = {
     BROWSE_APPLICATIONS: (community: string) => `/community/${community}/browse-applications`,
     CLAIM_FUNDS: (community: string) => `/community/${community}/claim-funds`,
     REPORTS: (community: string) => `/community/${community}/reports`,
+    REPORT_DETAIL: (community: string, runDate: string) =>
+      `/community/${community}/reports/${encodeURIComponent(runDate)}`,
   },
   MY_PROJECTS: `/my-projects`,
   MY_REVIEWS: `/my-reviews`,
