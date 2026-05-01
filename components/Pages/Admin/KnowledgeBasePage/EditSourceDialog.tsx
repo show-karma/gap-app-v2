@@ -41,9 +41,14 @@ export function EditSourceDialog({ communityIdOrSlug, source, open, onOpenChange
 
   const edit = useEditKnowledgeSource(communityIdOrSlug);
 
-  // Hydrate from `source` whenever it changes or the dialog re-opens.
-  // We don't gate on `open` alone — a row that swaps `source` underneath
-  // a still-open dialog would otherwise display stale values.
+  // Hydrate from `source` only when the dialog opens or the row identity
+  // changes (different sourceId). Depending on the source object reference
+  // would re-fire on every cache update — including the optimistic patch
+  // from `useEditKnowledgeSource.onMutate` — and on a 409 rollback the
+  // effect would run twice and overwrite anything the curator typed
+  // during the round-trip. Keying on `source?.id` keeps hydration tied
+  // to "this is a different row" without coupling to identity churn.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: hydration is intentionally driven by row identity, not source-object reference; see comment above
   useEffect(() => {
     if (open && source) {
       setTitle(source.title);
@@ -57,7 +62,7 @@ export function EditSourceDialog({ communityIdOrSlug, source, open, onOpenChange
       // confirm step that was waiting on the previous edit.
       setConfirmOpen(false);
     }
-  }, [open, source]);
+  }, [open, source?.id]);
 
   const trimmedTitle = title.trim();
   const trimmedExternalId = externalId.trim();
@@ -109,7 +114,10 @@ export function EditSourceDialog({ communityIdOrSlug, source, open, onOpenChange
     const patch: UpdateKnowledgeSourceInput = {};
     if (changes.titleChanged) patch.title = trimmedTitle;
     if (changes.goalChanged) {
-      patch.goal = goalForPatch === "unchanged" ? source.goal : goalForPatch;
+      // `changes.goalChanged` is defined as `goalForPatch !== "unchanged"`,
+      // so by the time we're inside this branch goalForPatch is always
+      // `string | null` — narrow it for the assignment.
+      patch.goal = goalForPatch as string | null;
     }
     if (changes.externalIdChanged) patch.externalId = trimmedExternalId;
     if (changes.followLinksTurnedOn || changes.followLinksTurnedOff) {

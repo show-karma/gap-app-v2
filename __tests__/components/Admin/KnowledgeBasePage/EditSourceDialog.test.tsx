@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import toast from "react-hot-toast";
@@ -186,12 +186,15 @@ describe("EditSourceDialog", () => {
       await user.type(goalInput, "different");
       await user.click(screen.getByRole("button", { name: /save changes/i }));
 
-      // Confirmation modal renders both a Cancel and an Apply button.
-      // Click Cancel within the confirmation context — match the one
-      // sitting alongside "Apply changes" using getAllByRole and the
-      // last index (the confirmation modal is layered on top).
-      const cancelButtons = screen.getAllByRole("button", { name: /cancel/i });
-      await cancelButtons[cancelButtons.length - 1].click();
+      // Scope the Cancel click to the confirmation modal. The edit
+      // dialog also has a Cancel button, so an unscoped `getByRole`
+      // would be ambiguous — `within` walks down from the confirmation
+      // modal's root via its title, and we route through `userEvent` so
+      // act-wrapping and pointer simulation match the rest of the suite.
+      const confirmModal = screen
+        .getByText(/apply re-sync changes/i)
+        .closest('[role="dialog"]') as HTMLElement;
+      await user.click(within(confirmModal).getByRole("button", { name: /cancel/i }));
 
       expect(mutateAsync).not.toHaveBeenCalled();
     });
