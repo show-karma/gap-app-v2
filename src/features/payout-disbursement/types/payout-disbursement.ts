@@ -175,6 +175,12 @@ export interface CommunityPayoutProjectInfo {
   chainPayoutAddress: Record<string, string> | null;
   /** Admin-set payout address for this community (from attestation.payoutAddress[communityUID]) */
   adminPayoutAddress: string | null;
+  /**
+   * Team/project name resolved from approved funding-application data for the
+   * matching (projectUID, programId) pair. Falls back to `title` (the on-chain
+   * Karma project title) when no application data is available.
+   */
+  resolvedProjectName?: string;
 }
 
 /**
