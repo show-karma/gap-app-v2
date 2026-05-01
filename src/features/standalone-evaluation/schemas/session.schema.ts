@@ -18,6 +18,7 @@ export const SAMPLE_APPLICATION_MAX = 50_000;
 export const sessionCreateSchema = z.object({
   programDescription: z
     .string()
+    .trim()
     .min(20, "Describe your program in at least 20 characters")
     .max(
       PROGRAM_DESCRIPTION_MAX,
@@ -25,6 +26,7 @@ export const sessionCreateSchema = z.object({
     ),
   evaluationCriteria: z
     .string()
+    .trim()
     .min(20, "Describe your evaluation criteria in at least 20 characters")
     .max(
       EVALUATION_CRITERIA_MAX,
@@ -37,6 +39,7 @@ export type SessionCreateInput = z.infer<typeof sessionCreateSchema>;
 export const sessionEvaluateSchema = z.object({
   applicationText: z
     .string()
+    .trim()
     .min(20, "Provide a sample application of at least 20 characters")
     .max(
       APPLICATION_TEXT_MAX,
@@ -48,6 +51,7 @@ export type SessionEvaluateInput = z.infer<typeof sessionEvaluateSchema>;
 export const sessionFeedbackSchema = z.object({
   feedback: z
     .string()
+    .trim()
     .min(5, "Feedback must be at least 5 characters")
     .max(FEEDBACK_MAX, `Feedback must be at most ${FEEDBACK_MAX} characters`),
 });
@@ -56,6 +60,7 @@ export type SessionFeedbackInput = z.infer<typeof sessionFeedbackSchema>;
 export const sessionSampleSchema = z.object({
   sampleApplication: z
     .string()
+    .trim()
     .min(20, "Sample application must be at least 20 characters")
     .max(
       SAMPLE_APPLICATION_MAX,

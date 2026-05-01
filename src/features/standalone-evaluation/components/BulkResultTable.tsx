@@ -15,6 +15,10 @@ const PAGE_INCREMENT = 25;
 // Eval columns the orchestrator appends to every row; pinned to the right of
 // the table so they're always at the same position regardless of CSV shape.
 const PINNED_EVAL_COLUMNS = ["eval_score", "eval_summary", "eval_decision", "eval_error"] as const;
+// Fixed cell width for pinned columns so the sticky-right offsets stay
+// consistent across rows. Wider than narrow headers but tighter than the
+// 420px cell cap used for unpinned text content.
+const PINNED_CELL_WIDTH_PX = 180;
 
 function cellToString(value: unknown): string {
   if (value === null || value === undefined) return "";
@@ -31,12 +35,27 @@ export function BulkResultTable({ sessionId, jobId, enabled }: BulkResultTablePr
   const query = useBulkJobResult(sessionId, jobId, enabled);
   const [visible, setVisible] = useState(INITIAL_VISIBLE);
 
-  const orderedColumns = useMemo(() => {
-    if (!query.data) return [];
+  const { orderedColumns, pinnedRightOffsets } = useMemo(() => {
+    if (!query.data) {
+      return {
+        orderedColumns: [] as string[],
+        pinnedRightOffsets: {} as Record<string, number>,
+      };
+    }
     const evalSet = new Set<string>(PINNED_EVAL_COLUMNS);
     const original = query.data.columns.filter((c) => !evalSet.has(c));
     const evalCols = PINNED_EVAL_COLUMNS.filter((c) => query.data!.columns.includes(c));
-    return [...original, ...evalCols];
+    // Right offset for each pinned column = count of pinned columns AFTER it.
+    // Rightmost pinned column gets offset 0 (right: 0px); the next gets 1 *
+    // PINNED_CELL_WIDTH_PX, and so on.
+    const offsets: Record<string, number> = {};
+    evalCols.forEach((col, idx) => {
+      offsets[col] = (evalCols.length - 1 - idx) * PINNED_CELL_WIDTH_PX;
+    });
+    return {
+      orderedColumns: [...original, ...evalCols],
+      pinnedRightOffsets: offsets,
+    };
   }, [query.data]);
 
   if (!enabled) return null;
@@ -83,18 +102,41 @@ export function BulkResultTable({ sessionId, jobId, enabled }: BulkResultTablePr
       </div>
       <div className="max-h-[480px] overflow-auto rounded-md border border-border">
         <table className="min-w-full text-left text-xs">
-          <thead className="sticky top-0 bg-muted/60 text-muted-foreground">
+          <thead className="sticky top-0 z-20 bg-muted/60 text-muted-foreground">
             <tr>
-              {orderedColumns.map((col) => (
-                <th key={col} className="border-b border-border px-3 py-2 font-semibold">
-                  {col}
-                </th>
-              ))}
+              {orderedColumns.map((col) => {
+                const isPinned = col in pinnedRightOffsets;
+                return (
+                  <th
+                    key={col}
+                    className={
+                      "border-b border-border px-3 py-2 font-semibold " +
+                      (isPinned ? "sticky right-0 z-30 bg-muted/95 backdrop-blur" : "")
+                    }
+                    style={
+                      isPinned
+                        ? {
+                            right: `${pinnedRightOffsets[col]}px`,
+                            minWidth: `${PINNED_CELL_WIDTH_PX}px`,
+                          }
+                        : undefined
+                    }
+                  >
+                    {col}
+                  </th>
+                );
+              })}
             </tr>
           </thead>
           <tbody>
             {visibleRows.map((row, rowIdx) => (
-              <BulkResultRow key={rowIdx} row={row} columns={orderedColumns} rowIndex={rowIdx} />
+              <BulkResultRow
+                key={rowIdx}
+                row={row}
+                columns={orderedColumns}
+                rowIndex={rowIdx}
+                pinnedRightOffsets={pinnedRightOffsets}
+              />
             ))}
           </tbody>
         </table>
@@ -118,20 +160,41 @@ interface RowProps {
   row: Record<string, unknown>;
   columns: string[];
   rowIndex: number;
+  pinnedRightOffsets: Record<string, number>;
 }
 
-const BulkResultRow = React.memo(function BulkResultRow({ row, columns, rowIndex }: RowProps) {
+const BulkResultRow = React.memo(function BulkResultRow({
+  row,
+  columns,
+  rowIndex,
+  pinnedRightOffsets,
+}: RowProps) {
+  // Striping applied as the cell background so sticky cells don't visually
+  // bleed through the rest of the row when the body scrolls horizontally.
+  const stripeBg = rowIndex % 2 === 0 ? "bg-background" : "bg-muted/20";
   return (
-    <tr className={rowIndex % 2 === 0 ? "bg-background" : "bg-muted/20"}>
+    <tr>
       {columns.map((col) => {
         const value = cellToString(row[col]);
         const isEval = col.startsWith("eval_");
+        const isPinned = col in pinnedRightOffsets;
         return (
           <td
             key={col}
             className={
               "border-b border-border px-3 py-2 align-top " +
-              (isEval ? "font-medium text-foreground" : "text-muted-foreground")
+              stripeBg +
+              " " +
+              (isEval ? "font-medium text-foreground" : "text-muted-foreground") +
+              (isPinned ? " sticky right-0 z-10" : "")
+            }
+            style={
+              isPinned
+                ? {
+                    right: `${pinnedRightOffsets[col]}px`,
+                    minWidth: `${PINNED_CELL_WIDTH_PX}px`,
+                  }
+                : undefined
             }
             title={value.length > 200 ? value : undefined}
           >

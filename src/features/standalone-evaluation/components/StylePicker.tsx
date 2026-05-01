@@ -1,7 +1,7 @@
 "use client";
 
 import { ListChecks, ScrollText, Zap } from "lucide-react";
-import React from "react";
+import React, { useId } from "react";
 import { cn } from "@/utilities/tailwind";
 import type { EvaluationStyle } from "../schemas/session.schema";
 
@@ -46,11 +46,12 @@ export const StylePicker = React.memo(function StylePicker({
   disabled,
   errorMessage,
 }: StylePickerProps) {
+  const errorId = useId();
   return (
     <div className="space-y-2">
       <fieldset
         className="grid grid-cols-1 gap-3 sm:grid-cols-3"
-        aria-describedby="style-picker-error"
+        aria-describedby={errorMessage ? errorId : undefined}
       >
         <legend className="sr-only">Evaluation style</legend>
         {STYLE_OPTIONS.map((opt) => {
@@ -85,7 +86,7 @@ export const StylePicker = React.memo(function StylePicker({
         })}
       </fieldset>
       {errorMessage ? (
-        <p id="style-picker-error" className="text-xs text-red-600 dark:text-red-400">
+        <p id={errorId} className="text-xs text-red-600 dark:text-red-400">
           {errorMessage}
         </p>
       ) : null}

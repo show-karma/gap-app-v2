@@ -1,7 +1,7 @@
 "use client";
 
+import { useMutation } from "@tanstack/react-query";
 import { CheckCircle2, Download, Loader2, X, XCircle } from "lucide-react";
-import { useState } from "react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/utilities/tailwind";
@@ -56,14 +56,12 @@ interface DownloadButtonProps {
 }
 
 function DownloadButton({ sessionId, jobId }: DownloadButtonProps) {
-  const [downloading, setDownloading] = useState(false);
-
-  const handle = async () => {
-    setDownloading(true);
-    try {
-      // BE serializes the stored {columns, rows} to CSV on demand and
-      // streams it back. We read as a Blob, build an object URL, and
-      // trigger a download via a synthetic anchor click.
+  // BE serializes the stored {columns, rows} to CSV on demand and streams
+  // it back. We read as a Blob, build an object URL, and trigger a download
+  // via a synthetic anchor click. Using `useMutation` so loading/error
+  // state goes through React Query rather than ad-hoc useState.
+  const downloadMutation = useMutation<void, Error, void>({
+    mutationFn: async () => {
       const blob = await standaloneEvaluationService.downloadBulkResultCsv(sessionId, jobId);
       const objectUrl = URL.createObjectURL(blob);
       try {
@@ -77,13 +75,14 @@ function DownloadButton({ sessionId, jobId }: DownloadButtonProps) {
         // Revoke after a tick so the browser has a chance to start the download.
         setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
       }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Couldn't download results";
-      toast.error(message);
-    } finally {
-      setDownloading(false);
-    }
-  };
+    },
+    onError: (err) => {
+      toast.error(err.message || "Couldn't download results");
+    },
+  });
+
+  const downloading = downloadMutation.isPending;
+  const handle = () => downloadMutation.mutate();
 
   return (
     <Button type="button" onClick={handle} disabled={downloading}>

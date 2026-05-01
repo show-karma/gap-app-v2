@@ -112,7 +112,9 @@ export function EvaluateWorkspace({ sessionId }: EvaluateWorkspaceProps) {
       <FeedbackComposer
         hasSample={Boolean(session.sampleApplication) || Boolean(latestResult)}
         isPending={submitFeedback.isPending}
-        onSubmit={(feedback) => submitFeedback.mutate({ sessionId: session.id, feedback })}
+        onSubmit={async (feedback) => {
+          await submitFeedback.mutateAsync({ sessionId: session.id, feedback });
+        }}
       />
 
       {submitFeedback.isError ? (
@@ -167,7 +169,7 @@ function SessionSummaryCard({ session }: { session: SessionResponse }) {
           </h2>
         </div>
         <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          {session.status.replace("_", " ").toLowerCase()}
+          {session.status.replace(/_/g, " ").toLowerCase()}
         </span>
       </div>
     </section>

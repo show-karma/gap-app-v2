@@ -262,7 +262,14 @@ export const EvaluationResultCard = React.memo(function EvaluationResultCard({
         <span className="text-xs text-muted-foreground">{result.model}</span>
       </header>
 
-      {result.summary ? <p className="text-sm text-foreground">{result.summary}</p> : null}
+      {/*
+        Skip the top-level summary for NARRATIVE — the NarrativeBlock falls
+        back to result.summary when its data lacks `sections`/`narrative`,
+        so rendering both here would duplicate the same paragraph.
+      */}
+      {style !== "NARRATIVE" && result.summary ? (
+        <p className="text-sm text-foreground">{result.summary}</p>
+      ) : null}
 
       {style === "RUBRIC" ? (
         <RubricBlock data={fullEvaluation as RubricEvaluation} />

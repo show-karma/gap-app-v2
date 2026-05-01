@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { PAGES } from "@/utilities/pages";
 import type {
   CreditPack,
   CreditsResponse,
@@ -33,8 +34,8 @@ export const usePurchaseCredits = () => {
       // Both URLs return to /evaluate; Stripe will redirect the browser here
       // after the user completes (or cancels) checkout.
       const base = typeof window !== "undefined" ? window.location.origin : "";
-      const successUrl = `${base}/evaluate?stripe=success`;
-      const cancelUrl = `${base}/evaluate?stripe=cancel`;
+      const successUrl = `${base}${PAGES.EVALUATE}?stripe=success`;
+      const cancelUrl = `${base}${PAGES.EVALUATE}?stripe=cancel`;
       return standaloneEvaluationService.createPurchaseSession(pack, successUrl, cancelUrl);
     },
     onSuccess: (response) => {

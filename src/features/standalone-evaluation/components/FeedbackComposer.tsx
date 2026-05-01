@@ -8,7 +8,12 @@ import { FEEDBACK_MAX, sessionFeedbackSchema } from "../schemas/session.schema";
 interface FeedbackComposerProps {
   hasSample: boolean;
   isPending: boolean;
-  onSubmit: (feedback: string) => void;
+  /**
+   * Submit handler. May return a promise — the composer awaits it and only
+   * clears the textarea after the promise resolves, so a failed mutation
+   * preserves the user's input for retry.
+   */
+  onSubmit: (feedback: string) => void | Promise<void>;
 }
 
 const textareaClass =
@@ -18,15 +23,21 @@ export function FeedbackComposer({ hasSample, isPending, onSubmit }: FeedbackCom
   const [feedback, setFeedback] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const parsed = sessionFeedbackSchema.safeParse({ feedback });
     if (!parsed.success) {
       setError(parsed.error.errors[0]?.message ?? "Invalid feedback");
       return;
     }
     setError(null);
-    onSubmit(parsed.data.feedback);
-    setFeedback("");
+    try {
+      await onSubmit(parsed.data.feedback);
+      // Only clear after a successful submit so a failed mutation preserves
+      // what the user just typed.
+      setFeedback("");
+    } catch {
+      // Parent reports the error via the mutation; keep the textarea intact.
+    }
   };
 
   if (!hasSample) {

@@ -1,10 +1,51 @@
 "use client";
 
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { createJSONStorage, persist } from "zustand/middleware";
 import type { EvaluationResultResponse, EvaluationStyle } from "../schemas/session.schema";
 
+/**
+ * Bucket persisted state by Privy wallet so a shared browser / account switch
+ * doesn't rehydrate one user's drafts and results into another's session.
+ * Reads the wallet address synchronously from Privy's own localStorage entry
+ * (the same one `getWalletFromWagmiStore` uses); falls back to `anon` before
+ * login. The base key matches the historical name so existing keys collide
+ * only with the legacy unscoped bucket — the cleanup is left to the user.
+ */
 const STORAGE_KEY = "karma-evaluator-draft";
+
+function readPrivyWalletAddress(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem("privy:user");
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as {
+      wallet?: { address?: string };
+      linkedAccounts?: Array<{ type?: string; address?: string }>;
+    };
+    if (parsed.wallet?.address) return parsed.wallet.address;
+    const linked = parsed.linkedAccounts?.find((a) => a?.type === "wallet");
+    return linked?.address ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function scopedKey(baseKey: string): string {
+  const wallet = readPrivyWalletAddress();
+  return wallet ? `${baseKey}::${wallet.toLowerCase()}` : `${baseKey}::anon`;
+}
+
+const userScopedLocalStorage = {
+  getItem: (name: string): string | null =>
+    typeof window === "undefined" ? null : window.localStorage.getItem(scopedKey(name)),
+  setItem: (name: string, value: string): void => {
+    if (typeof window !== "undefined") window.localStorage.setItem(scopedKey(name), value);
+  },
+  removeItem: (name: string): void => {
+    if (typeof window !== "undefined") window.localStorage.removeItem(scopedKey(name));
+  },
+};
 
 export interface EvaluationDraft {
   programDescription: string;
@@ -105,12 +146,16 @@ export const useEvaluationDraftStore = create<EvaluationDraftState>()(
     }),
     {
       name: STORAGE_KEY,
-      // Persist everything except activeBulkJobIdBySession (job state is server-authoritative).
+      storage: createJSONStorage(() => userScopedLocalStorage),
+      // Include activeBulkJobIdBySession so a refresh / new tab can rebind
+      // BulkProgressView to the still-running job. The id is just a pointer
+      // to a server-authoritative resource — safe to round-trip via storage.
       partialize: (state) => ({
         draft: state.draft,
         applicationText: state.applicationText,
         activeSessionId: state.activeSessionId,
         resultsBySession: state.resultsBySession,
+        activeBulkJobIdBySession: state.activeBulkJobIdBySession,
       }),
     }
   )

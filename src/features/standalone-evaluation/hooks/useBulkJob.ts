@@ -133,12 +133,27 @@ function parseSSE(chunk: string): SSEEvent[] {
  * and `done` { hasResult }, plus `:keepalive` heartbeats.
  *
  * Aborts cleanly on unmount or jobId change.
+ *
+ * Resilience: on transient failures (network drop, premature end of stream)
+ * the hook reconnects with exponential backoff (1s, 2s, 4s, 8s, 16s, capped
+ * at 30s) up to 5 retries. The retry counter resets on every successfully
+ * consumed event, so long-running jobs don't accumulate retry budget over
+ * hours. Surfaces ERROR only after retries are exhausted; never reconnects
+ * after the `done` event or after user-initiated unmount.
  */
+const MAX_RETRIES = 5;
+const BASE_BACKOFF_MS = 1000;
+const MAX_BACKOFF_MS = 30_000;
+
 export const useBulkJobProgress = (sessionId: string, jobId: string | null) => {
   const [progress, setProgress] = useState<BulkProgressState>(idleProgress);
   const queryClient = useQueryClient();
   const setActiveBulkJobId = useEvaluationDraftStore((s) => s.setActiveBulkJobId);
   const controllerRef = useRef<AbortController | null>(null);
+  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const retryAttemptRef = useRef(0);
+  const doneReceivedRef = useRef(false);
+  const unmountedRef = useRef(false);
 
   useEffect(() => {
     if (!sessionId || !jobId) {
@@ -146,12 +161,32 @@ export const useBulkJobProgress = (sessionId: string, jobId: string | null) => {
       return;
     }
 
-    const controller = new AbortController();
-    controllerRef.current = controller;
+    unmountedRef.current = false;
+    retryAttemptRef.current = 0;
+    doneReceivedRef.current = false;
 
     setProgress({ ...idleProgress, status: "PENDING" });
 
+    const clearReconnectTimer = () => {
+      if (reconnectTimerRef.current !== null) {
+        clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = null;
+      }
+    };
+
     const consume = async () => {
+      if (unmountedRef.current) return;
+
+      const controller = new AbortController();
+      controllerRef.current = controller;
+
+      // Tracks whether the stream produced any usable signal. A successful
+      // open with at least one parsed event clears the retry budget; a
+      // stream that closes before yielding anything is treated as a
+      // transient failure and counts against retries.
+      let receivedAnyEvent = false;
+      let streamEndedCleanly = false;
+
       try {
         const token = await TokenManager.getToken();
         const url = standaloneEvaluationService.bulkProgressUrl(sessionId, jobId);
@@ -175,7 +210,10 @@ export const useBulkJobProgress = (sessionId: string, jobId: string | null) => {
 
         while (true) {
           const { done, value } = await reader.read();
-          if (done) break;
+          if (done) {
+            streamEndedCleanly = true;
+            break;
+          }
           buffer += decoder.decode(value, { stream: true });
 
           const lastBoundary = buffer.lastIndexOf("\n\n");
@@ -186,6 +224,12 @@ export const useBulkJobProgress = (sessionId: string, jobId: string | null) => {
           const events = parseSSE(consumable);
 
           for (const event of events) {
+            // Any successfully parsed event proves the connection is healthy.
+            // Reset the retry budget so long-running jobs don't accumulate
+            // retry count from earlier transient blips.
+            receivedAnyEvent = true;
+            retryAttemptRef.current = 0;
+
             if (event.type === "progress") {
               const p = event.payload as Partial<BulkProgressState>;
               setProgress((prev) => ({
@@ -196,6 +240,7 @@ export const useBulkJobProgress = (sessionId: string, jobId: string | null) => {
                 failedApplications: p.failedApplications ?? prev.failedApplications,
               }));
             } else if (event.type === "done") {
+              doneReceivedRef.current = true;
               const hasResult = Boolean((event.payload as { hasResult?: boolean }).hasResult);
               setProgress((prev) => ({
                 ...prev,
@@ -219,16 +264,53 @@ export const useBulkJobProgress = (sessionId: string, jobId: string | null) => {
           }
         }
       } catch (err) {
+        // User-initiated abort (unmount, jobId/sessionId change): never retry.
         if (err instanceof DOMException && err.name === "AbortError") return;
+        if (controller.signal.aborted) return;
+
         const message = err instanceof Error ? err.message : "Connection lost";
-        setProgress((prev) => ({ ...prev, status: "ERROR", error: message }));
+        scheduleReconnectOrFail(message);
+        return;
       }
+
+      // Stream closed without throwing. Two cases:
+      //   1) `done` event received → terminal success, do nothing.
+      //   2) Premature end of stream → treat as transient and reconnect.
+      if (doneReceivedRef.current) return;
+      if (streamEndedCleanly && !unmountedRef.current && !controller.signal.aborted) {
+        scheduleReconnectOrFail(
+          receivedAnyEvent ? "Connection lost" : "Stream ended without completion"
+        );
+      }
+    };
+
+    const scheduleReconnectOrFail = (message: string) => {
+      if (unmountedRef.current) return;
+      if (doneReceivedRef.current) return;
+
+      if (retryAttemptRef.current >= MAX_RETRIES) {
+        setProgress((prev) => ({ ...prev, status: "ERROR", error: message }));
+        return;
+      }
+
+      // Exponential backoff: 1s, 2s, 4s, 8s, 16s — capped at 30s.
+      const delay = Math.min(BASE_BACKOFF_MS * 2 ** retryAttemptRef.current, MAX_BACKOFF_MS);
+      retryAttemptRef.current += 1;
+
+      clearReconnectTimer();
+      reconnectTimerRef.current = setTimeout(() => {
+        reconnectTimerRef.current = null;
+        if (unmountedRef.current || doneReceivedRef.current) return;
+        consume();
+      }, delay);
     };
 
     consume();
 
     return () => {
-      controller.abort();
+      unmountedRef.current = true;
+      clearReconnectTimer();
+      controllerRef.current?.abort();
       controllerRef.current = null;
     };
   }, [sessionId, jobId, queryClient]);

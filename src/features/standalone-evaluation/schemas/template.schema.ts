@@ -13,19 +13,22 @@ export const FEEDBACK_INSTRUCTIONS_MAX_ITEMS = 50;
 export const templateCreateSchema = z.object({
   name: z
     .string()
+    .trim()
     .min(2, "Template name must be at least 2 characters")
     .max(TEMPLATE_NAME_MAX, `Template name must be at most ${TEMPLATE_NAME_MAX} characters`),
   programDescription: z
     .string()
+    .trim()
     .min(20, "Describe your program in at least 20 characters")
     .max(PROGRAM_DESCRIPTION_MAX),
   evaluationCriteria: z
     .string()
+    .trim()
     .min(20, "Describe your evaluation criteria in at least 20 characters")
     .max(EVALUATION_CRITERIA_MAX),
   evaluationStyle: evaluationStyleSchema,
   feedbackInstructions: z
-    .array(z.string().max(FEEDBACK_INSTRUCTION_MAX))
+    .array(z.string().trim().min(1).max(FEEDBACK_INSTRUCTION_MAX))
     .max(FEEDBACK_INSTRUCTIONS_MAX_ITEMS)
     .default([]),
 });

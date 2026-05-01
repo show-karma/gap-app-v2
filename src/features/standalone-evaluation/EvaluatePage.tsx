@@ -1,5 +1,6 @@
 "use client";
 
+import { useMutation } from "@tanstack/react-query";
 import { Sparkles } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -51,37 +52,51 @@ export function EvaluatePage() {
   // Auto-download when arriving from a completion-email link:
   //   /evaluate?session=<sessionId>&bulk-download=<jobId>
   // The user is already authenticated here, so we fetch via the authed
-  // service and trigger a Blob download. Runs at most once per mount.
+  // service and trigger a Blob download. Each `session/job` pair is
+  // attempted at most once per mount, but distinct links land in distinct
+  // attempts — and on failure the key clears so the user can retry by
+  // refreshing the page.
   const searchParams = useSearchParams();
   const downloadSession = searchParams?.get("session");
   const downloadJobId = searchParams?.get("bulk-download");
-  const didAutoDownloadRef = useRef(false);
+  const autoDownloadKey =
+    downloadSession && downloadJobId ? `${downloadSession}:${downloadJobId}` : null;
+  const lastAutoDownloadKeyRef = useRef<string | null>(null);
+
+  const autoDownloadMutation = useMutation<void, Error, { sessionId: string; jobId: string }>({
+    mutationFn: async ({ sessionId, jobId }) => {
+      const blob = await standaloneEvaluationService.downloadBulkResultCsv(sessionId, jobId);
+      const objectUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = objectUrl;
+      a.download = `bulk-evaluation-${jobId}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
+    },
+    onSuccess: () => {
+      toast.success("Results downloaded");
+    },
+    onError: (err, _variables) => {
+      // Reset the key so a refresh can retry.
+      lastAutoDownloadKeyRef.current = null;
+      toast.error(err.message || "Couldn't download results");
+    },
+  });
+
   useEffect(() => {
     if (!authenticated) return;
-    if (!downloadSession || !downloadJobId) return;
-    if (didAutoDownloadRef.current) return;
-    didAutoDownloadRef.current = true;
-    (async () => {
-      try {
-        const blob = await standaloneEvaluationService.downloadBulkResultCsv(
-          downloadSession,
-          downloadJobId
-        );
-        const objectUrl = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = objectUrl;
-        a.download = `bulk-evaluation-${downloadJobId}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
-        toast.success("Results downloaded");
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : "Couldn't download results";
-        toast.error(msg);
-      }
-    })();
-  }, [authenticated, downloadSession, downloadJobId]);
+    if (!downloadSession || !downloadJobId || !autoDownloadKey) return;
+    if (lastAutoDownloadKeyRef.current === autoDownloadKey) return;
+    lastAutoDownloadKeyRef.current = autoDownloadKey;
+    autoDownloadMutation.mutate({
+      sessionId: downloadSession,
+      jobId: downloadJobId,
+    });
+    // autoDownloadMutation is stable from useMutation; not depending on it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authenticated, downloadSession, downloadJobId, autoDownloadKey]);
 
   if (!ready) {
     return (

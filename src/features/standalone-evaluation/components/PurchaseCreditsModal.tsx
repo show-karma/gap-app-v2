@@ -62,7 +62,11 @@ export function PurchaseCreditsModal({ open, onOpenChange }: PurchaseCreditsModa
           })}
         </div>
         {purchase.isError ? (
-          <div className="mt-3 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
+          <div
+            role="alert"
+            aria-live="assertive"
+            className="mt-3 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300"
+          >
             {purchase.error.message}
           </div>
         ) : null}
