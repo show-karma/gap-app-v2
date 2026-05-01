@@ -37,7 +37,7 @@ jobs:
     # For pull_request events: always run gate-check (we check Claude Code check-run inside).
     # For workflow_dispatch: always run.
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 20
     outputs:
       should_run: ${{ steps.check.outputs.should_run }}
       pr_number: ${{ steps.check.outputs.pr_number }}
@@ -77,39 +77,95 @@ jobs:
             core.setOutput('head_sha', headSha);
             core.setOutput('pr_number', prNumber);
 
-            // For pull_request events: verify the latest "Claude Code" check-run
-            // on this commit has succeeded. If it hasn't run yet or is in progress,
-            // skip gracefully — Claude Code will trigger another push event when
-            // it completes, which will start a fresh QA pipeline run.
+            // For pull_request events: wait for the "Claude Code" check-run
+            // on this commit to finish, then evaluate. We can't rely on
+            // claude-completion to re-trigger QA — pull_request workflows
+            // only fire on push events, not on workflow_run, and a cancelled
+            // claude (e.g. via cancel-in-progress) re-triggers nothing.
+            // So poll here instead with a generous timeout.
             if (!isManual) {
-              const { data: checkRuns } = await github.rest.checks.listForRef({
-                owner, repo, ref: headSha, per_page: 100
-              });
+              const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+              const POLL_INTERVAL_MS = 30_000;
+              const MAX_WAIT_MS = 15 * 60 * 1000; // 15 min; gate-check job timeout is 20 min
+              const startedAt = Date.now();
 
-              const claudeRuns = checkRuns.check_runs
-                .filter(r => r.name === 'Claude Code')
-                .sort((a, b) => new Date(b.started_at) - new Date(a.started_at));
+              let proceed = false;
+              while (true) {
+                const { data: checkRuns } = await github.rest.checks.listForRef({
+                  owner, repo, ref: headSha, per_page: 100
+                });
+                const claudeRuns = checkRuns.check_runs
+                  .filter(r => r.name === 'Claude Code')
+                  .sort((a, b) => new Date(b.started_at) - new Date(a.started_at));
 
-              if (claudeRuns.length === 0) {
-                console.log('No "Claude Code" check-run found on this commit — skipping (Claude Code will trigger QA when it finishes)');
+                // Also fetch workflow runs as a fallback signal — claude
+                // may be cancelled before publishing its check-run.
+                const { data: wfRunsList } = await github.rest.actions.listWorkflowRunsForRepo({
+                  owner, repo, head_sha: headSha, per_page: 50
+                });
+                const claudeWfRuns = wfRunsList.workflow_runs.filter(r => r.name === 'Claude Code');
+
+                const elapsedSec = Math.round((Date.now() - startedAt) / 1000);
+
+                if (claudeRuns.length === 0 && claudeWfRuns.length === 0) {
+                  // Nothing yet — give it a moment to register
+                  if (Date.now() - startedAt > 2 * 60 * 1000) {
+                    console.log(`No "Claude Code" check-run or workflow run after ${elapsedSec}s — proceeding without gating`);
+                    proceed = true;
+                    break;
+                  }
+                  console.log(`No "Claude Code" run yet (${elapsedSec}s elapsed) — waiting...`);
+                  await sleep(POLL_INTERVAL_MS);
+                  continue;
+                }
+
+                if (claudeRuns.length > 0) {
+                  const latest = claudeRuns[0];
+                  if (latest.status === 'completed') {
+                    if (latest.conclusion === 'success') {
+                      console.log(`✅ Claude Code check succeeded (after ${elapsedSec}s)`);
+                      proceed = true;
+                      break;
+                    }
+                    if (latest.conclusion === 'cancelled') {
+                      console.log(`"Claude Code" check was cancelled (after ${elapsedSec}s) — proceeding (cancelled ≠ failed)`);
+                      proceed = true;
+                      break;
+                    }
+                    console.log(`"Claude Code" check concluded with ${latest.conclusion} — skipping QA`);
+                    core.setOutput('should_run', 'false');
+                    return;
+                  }
+                  console.log(`"Claude Code" check is ${latest.status} (${elapsedSec}s elapsed) — waiting...`);
+                } else {
+                  // No check-run, but a workflow exists — inspect it
+                  const inProgress = claudeWfRuns.find(r => r.status !== 'completed');
+                  if (!inProgress) {
+                    const conclusions = claudeWfRuns.map(r => r.conclusion);
+                    if (conclusions.every(c => c === 'cancelled')) {
+                      console.log(`"Claude Code" workflow runs all cancelled (${claudeWfRuns.length}, after ${elapsedSec}s) — proceeding (cancelled ≠ failed)`);
+                    } else {
+                      console.log(`"Claude Code" workflow finished without publishing a check-run (conclusions: ${conclusions.join(', ')}) — proceeding`);
+                    }
+                    proceed = true;
+                    break;
+                  }
+                  console.log(`"Claude Code" workflow is ${inProgress.status} (${elapsedSec}s elapsed) — waiting...`);
+                }
+
+                if (Date.now() - startedAt > MAX_WAIT_MS) {
+                  console.log(`Timed out waiting for "Claude Code" after ${elapsedSec}s — proceeding without gating`);
+                  proceed = true;
+                  break;
+                }
+
+                await sleep(POLL_INTERVAL_MS);
+              }
+
+              if (!proceed) {
                 core.setOutput('should_run', 'false');
                 return;
               }
-
-              const latest = claudeRuns[0];
-              if (latest.status !== 'completed') {
-                console.log(`"Claude Code" check is ${latest.status} — skipping (will re-run when Claude Code finishes)`);
-                core.setOutput('should_run', 'false');
-                return;
-              }
-
-              if (latest.conclusion !== 'success') {
-                console.log(`"Claude Code" check concluded with ${latest.conclusion} — skipping QA`);
-                core.setOutput('should_run', 'false');
-                return;
-              }
-
-              console.log('✅ Claude Code check succeeded');
 
               // Additionally verify the PR-review verdict comment is APPROVE
               const { data: comments } = await github.rest.issues.listComments({
@@ -439,8 +495,9 @@ jobs:
           node-version: '20'
           cache: 'pnpm'
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      # No `pnpm install` here: the standalone bundle ships its own
+      # pruned node_modules for the server, and Claude Code is provided
+      # by the npm-cached global install below. Saves ~30-60s per shard.
 
       - name: Download prebuilt .next
         uses: actions/download-artifact@v7
@@ -696,8 +753,9 @@ jobs:
           node-version: '20'
           cache: 'pnpm'
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      # No `pnpm install` here: the standalone bundle ships its own
+      # pruned node_modules for the server, and Claude Code is provided
+      # by the npm-cached global install below. Saves ~30-60s per shard.
 
       - name: Download prebuilt .next
         uses: actions/download-artifact@v7
