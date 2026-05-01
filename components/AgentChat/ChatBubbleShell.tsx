@@ -56,6 +56,16 @@ export interface ChatBubbleShellProps {
   renderInput: () => ReactNode;
   /** Optional slot rendered after each message (e.g. ConfirmationCard). */
   renderAfterMessage?: (msg: ChatMessage) => ReactNode;
+  /**
+   * Optional slot rendered inside each message's action row (alongside
+   * the copy button). Use this for always-visible per-message controls
+   * like a thumbs-up/down rating that should sit next to copy.
+   *
+   * The shell intentionally does not import these — the consumer passes
+   * them in so the shell stays free of Next.js-coupled deps (the widget
+   * bundle reuses this shell and forbids those imports).
+   */
+  renderMessageActions?: (msg: ChatMessage) => ReactNode;
   /** Optional wrapper around the entire shell (e.g. TooltipProvider). */
   wrapper?: (children: ReactNode) => ReactNode;
   /** Optional header action buttons (e.g. wrapped in Tooltip). Override defaults. */
@@ -75,6 +85,7 @@ export function ChatBubbleShell({
   renderMarkdown,
   renderInput,
   renderAfterMessage,
+  renderMessageActions,
   wrapper,
   renderHeaderActions,
 }: ChatBubbleShellProps) {
@@ -185,21 +196,29 @@ export function ChatBubbleShell({
                                 : renderMarkdown(msg.content)}
                             </MessageContent>
                             {msg.role === "assistant" && msg.content && !msg.isStreaming && (
-                              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
-                                <Button
-                                  variant="ghost"
-                                  size="icon-sm"
-                                  onClick={() => {
-                                    // Raw navigator.clipboard here — this component is reused in
-                                    // the widget bundle, which forbids Next.js-coupled imports
-                                    // (useCopyToClipboard → errorManager → @sentry/nextjs).
-                                    navigator.clipboard.writeText(msg.content).catch(() => {});
-                                  }}
-                                  title="Copy"
-                                >
-                                  <CopyIcon className="size-3" />
-                                  <span className="sr-only">Copy</span>
-                                </Button>
+                              <div className="flex items-center gap-1">
+                                {/* Always-visible per-message actions (e.g. thumbs rating).
+                                    Sits FIRST in the row so it's the primary CTA. */}
+                                {renderMessageActions?.(msg)}
+                                {/* Copy button — fades in on hover only.
+                                    Wrapper preserves the existing UX where copy is
+                                    discoverable but doesn't visually compete at rest. */}
+                                <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    onClick={() => {
+                                      // Raw navigator.clipboard here — this component is reused in
+                                      // the widget bundle, which forbids Next.js-coupled imports
+                                      // (useCopyToClipboard → errorManager → @sentry/nextjs).
+                                      navigator.clipboard.writeText(msg.content).catch(() => {});
+                                    }}
+                                    title="Copy"
+                                  >
+                                    <CopyIcon className="size-3" />
+                                    <span className="sr-only">Copy</span>
+                                  </Button>
+                                </div>
                               </div>
                             )}
                           </Message>
