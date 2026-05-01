@@ -65,6 +65,7 @@ export const communityProjectSchema = z.object({
   contractAddresses: z.array(z.string()),
   chainPayoutAddress: z.record(z.string(), z.string()).optional(),
   numMilestones: z.number(),
+  numCompletedMilestones: z.number(),
   numUpdates: z.number(),
   percentCompleted: z.number(),
   numTransactions: z.number(),
