@@ -47,9 +47,7 @@ export const StylePicker = React.memo(function StylePicker({
   errorMessage,
 }: StylePickerProps) {
   const errorId = useId();
-  // Per-instance group name. Hardcoding `evaluation-style` would let two
-  // mounted StylePickers (e.g., a form + a preview modal) bleed into each
-  // other's selection because the browser treats them as one radio group.
+  // Per-instance so two mounted pickers don't share a radio group.
   const groupName = useId();
   return (
     <div className="space-y-2">

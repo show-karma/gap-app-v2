@@ -4,14 +4,8 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import type { EvaluationResultResponse, EvaluationStyle } from "../schemas/session.schema";
 
-/**
- * Bucket persisted state by Privy wallet so a shared browser / account switch
- * doesn't rehydrate one user's drafts and results into another's session.
- * Reads the wallet address synchronously from Privy's own localStorage entry
- * (the same one `getWalletFromWagmiStore` uses); falls back to `anon` before
- * login. The base key matches the historical name so existing keys collide
- * only with the legacy unscoped bucket — the cleanup is left to the user.
- */
+// Bucket persisted state by Privy wallet — shared browser / account switch
+// would otherwise leak one user's drafts and results into another's session.
 const STORAGE_KEY = "karma-evaluator-draft";
 
 function readPrivyWalletAddress(): string | null {
@@ -54,15 +48,10 @@ export interface EvaluationDraft {
 }
 
 interface EvaluationDraftState {
-  // Form draft for an unsubmitted session config
   draft: EvaluationDraft;
-  // Application text the user is composing for the active session
   applicationText: string;
-  // Active session ID the user is iterating on (null when starting fresh)
   activeSessionId: string | null;
-  // Iteration result history keyed by sessionId
   resultsBySession: Record<string, EvaluationResultResponse[]>;
-  // Active bulk job id by sessionId
   activeBulkJobIdBySession: Record<string, string | null>;
 
   setDraft: (patch: Partial<EvaluationDraft>) => void;
@@ -95,17 +84,9 @@ const initialState = {
   activeBulkJobIdBySession: {} as Record<string, string | null>,
 };
 
-/**
- * Watch for Privy wallet changes — when the active wallet flips (login,
- * logout, account switch) we reset in-memory state to defaults and
- * re-rehydrate from the new bucket. Without this, the store's in-memory
- * state would persist across account switches and leak the previous
- * user's drafts/results into the new wallet's storage on next write.
- *
- * Implementation notes: `storage` events fire only for OTHER tabs, so we
- * also poll `privy:user` lazily on focus + a 1s interval. Both are
- * lightweight (string compare + read of one localStorage key).
- */
+// On wallet change, reset in-memory state and re-read from the new bucket.
+// `storage` events fire only for OTHER tabs, so a 1s tick + focus listener
+// covers same-tab account switches that emit no storage event.
 function installWalletChangeWatcher(): void {
   if (typeof window === "undefined") return;
   let lastSeenWallet = readPrivyWalletAddress();
@@ -114,27 +95,19 @@ function installWalletChangeWatcher(): void {
     const current = readPrivyWalletAddress();
     if (current === lastSeenWallet) return;
     lastSeenWallet = current;
-    // Reset in-memory state to defaults; persist middleware then re-reads
-    // from the new (current-wallet-scoped) bucket via rehydrate().
     useEvaluationDraftStore.setState({ ...initialState });
-    // The persist API exposes rehydrate() on the store's `persist` extension.
-    // Cast through unknown because the typing depends on middleware order.
     const persistApi = (
       useEvaluationDraftStore as unknown as {
         persist?: { rehydrate: () => Promise<void> };
       }
     ).persist;
-    persistApi?.rehydrate().catch(() => {
-      // Rehydrate failures are non-fatal — fall back to defaults already set.
-    });
+    persistApi?.rehydrate().catch(() => {});
   };
 
   window.addEventListener("storage", (event) => {
     if (event.key === "privy:user") checkAndReact();
   });
   window.addEventListener("focus", checkAndReact);
-  // Same-tab account switches (logout → login as different user without a
-  // reload) emit no storage event, so a low-frequency tick covers them.
   window.setInterval(checkAndReact, 1000);
 }
 
@@ -190,9 +163,6 @@ export const useEvaluationDraftStore = create<EvaluationDraftState>()(
     {
       name: STORAGE_KEY,
       storage: createJSONStorage(() => userScopedLocalStorage),
-      // Include activeBulkJobIdBySession so a refresh / new tab can rebind
-      // BulkProgressView to the still-running job. The id is just a pointer
-      // to a server-authoritative resource — safe to round-trip via storage.
       partialize: (state) => ({
         draft: state.draft,
         applicationText: state.applicationText,

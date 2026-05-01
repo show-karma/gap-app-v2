@@ -262,11 +262,7 @@ export const EvaluationResultCard = React.memo(function EvaluationResultCard({
         <span className="text-xs text-muted-foreground">{result.model}</span>
       </header>
 
-      {/*
-        Skip the top-level summary for NARRATIVE — the NarrativeBlock falls
-        back to result.summary when its data lacks `sections`/`narrative`,
-        so rendering both here would duplicate the same paragraph.
-      */}
+      {/* NarrativeBlock falls back to result.summary; skip here to avoid duplication. */}
       {style !== "NARRATIVE" && result.summary ? (
         <p className="text-sm text-foreground">{result.summary}</p>
       ) : null}

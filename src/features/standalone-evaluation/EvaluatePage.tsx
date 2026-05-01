@@ -25,10 +25,8 @@ export function EvaluatePage() {
   // Initial view: workspace if we have an active session id, otherwise the form.
   const [view, setView] = useState<View>(activeSessionId ? "workspace" : "form");
 
-  // Apply the "default to most recent session" only ONCE per mount. Without
-  // this guard, clicking "New session" (which sets activeSessionId to null)
-  // would immediately re-trigger the auto-select effect and clobber the
-  // user's intent to start fresh.
+  // Auto-select runs once per mount; "New session" flips this to keep the
+  // form open after an explicit reset.
   const didAutoSelectRef = useRef(false);
   useEffect(() => {
     if (!authenticated) return;
@@ -42,20 +40,13 @@ export function EvaluatePage() {
     }
   }, [authenticated, activeSessionId, sessionsQuery.data, setActiveSessionId]);
 
-  // Whenever activeSessionId changes meaningfully, sync the view.
   useEffect(() => {
     if (activeSessionId) {
       setView("workspace");
     }
   }, [activeSessionId]);
 
-  // Auto-download when arriving from a completion-email link:
-  //   /evaluate?session=<sessionId>&bulk-download=<jobId>
-  // The user is already authenticated here, so we fetch via the authed
-  // service and trigger a Blob download. Each `session/job` pair is
-  // attempted at most once per mount, but distinct links land in distinct
-  // attempts — and on failure the key clears so the user can retry by
-  // refreshing the page.
+  // Auto-download from completion-email links: /evaluate?session=&bulk-download=
   const searchParams = useSearchParams();
   const downloadSession = searchParams?.get("session");
   const downloadJobId = searchParams?.get("bulk-download");
@@ -78,8 +69,7 @@ export function EvaluatePage() {
     onSuccess: () => {
       toast.success("Results downloaded");
     },
-    onError: (err, _variables) => {
-      // Reset the key so a refresh can retry.
+    onError: (err) => {
       lastAutoDownloadKeyRef.current = null;
       toast.error(err.message || "Couldn't download results");
     },
@@ -94,7 +84,6 @@ export function EvaluatePage() {
       sessionId: downloadSession,
       jobId: downloadJobId,
     });
-    // autoDownloadMutation is stable from useMutation; not depending on it.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authenticated, downloadSession, downloadJobId, autoDownloadKey]);
 
@@ -154,10 +143,6 @@ export function EvaluatePage() {
             setView("workspace");
           }}
           onCreateNew={() => {
-            // Block any pending auto-select once the user has explicitly
-            // asked for a fresh form. Without this, if the click happens
-            // while sessionsQuery is still loading, the auto-select effect
-            // above will later open items[0] and clobber the form.
             didAutoSelectRef.current = true;
             setActiveSessionId(null);
             setView("form");

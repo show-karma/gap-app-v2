@@ -258,11 +258,7 @@ export const useBulkJobProgress = (sessionId: string, jobId: string | null) => {
                 queryKey: BULK_JOB_KEYS.list(sessionId),
               });
             } else if (event.type === "error") {
-              // Mark the stream terminal so the post-stream reconnect loop
-              // doesn't retry past a server-reported failure. Without this,
-              // the connection close that typically follows an error event
-              // would re-arm the backoff and overwrite FAILED with ERROR
-              // after retries exhaust.
+              // Suppress reconnect — server-reported failure is terminal.
               doneReceivedRef.current = true;
               const msg = (event.payload as { message?: string }).message ?? "Bulk job failed";
               setProgress((prev) => ({ ...prev, status: "FAILED", error: msg }));

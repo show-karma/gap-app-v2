@@ -38,9 +38,6 @@ export function BulkUploadPanel({ sessionId }: BulkUploadPanelProps) {
     setValidationError(null);
     setPreview(null);
 
-    // Parse the FULL file (no preview cap) so the row count we surface to the
-    // user matches what the BE will actually process. The whole file is sent
-    // anyway and the BE caps at 10 MB / 500 rows, so this is bounded.
     Papa.parse<string[]>(selected, {
       header: false,
       skipEmptyLines: true,
@@ -58,8 +55,6 @@ export function BulkUploadPanel({ sessionId }: BulkUploadPanelProps) {
             setValidationError("CSV has no application rows.");
             return;
           }
-          // Cap the in-memory preview to the first 5 rows; the rowCount we
-          // display below is the *true* count, not the preview length.
           setPreview({
             rowCount: rows.length,
             columns: headers,

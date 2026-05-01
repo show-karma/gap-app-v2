@@ -12,12 +12,7 @@ interface BulkResultTableProps {
 
 const INITIAL_VISIBLE = 25;
 const PAGE_INCREMENT = 25;
-// Eval columns the orchestrator appends to every row; pinned to the right of
-// the table so they're always at the same position regardless of CSV shape.
 const PINNED_EVAL_COLUMNS = ["eval_score", "eval_summary", "eval_decision", "eval_error"] as const;
-// Fixed cell width for pinned columns so the sticky-right offsets stay
-// consistent across rows. Wider than narrow headers but tighter than the
-// 420px cell cap used for unpinned text content.
 const PINNED_CELL_WIDTH_PX = 180;
 
 function cellToString(value: unknown): string {
@@ -45,9 +40,6 @@ export function BulkResultTable({ sessionId, jobId, enabled }: BulkResultTablePr
     const evalSet = new Set<string>(PINNED_EVAL_COLUMNS);
     const original = query.data.columns.filter((c) => !evalSet.has(c));
     const evalCols = PINNED_EVAL_COLUMNS.filter((c) => query.data!.columns.includes(c));
-    // Right offset for each pinned column = count of pinned columns AFTER it.
-    // Rightmost pinned column gets offset 0 (right: 0px); the next gets 1 *
-    // PINNED_CELL_WIDTH_PX, and so on.
     const offsets: Record<string, number> = {};
     evalCols.forEach((col, idx) => {
       offsets[col] = (evalCols.length - 1 - idx) * PINNED_CELL_WIDTH_PX;
@@ -117,10 +109,6 @@ export function BulkResultTable({ sessionId, jobId, enabled }: BulkResultTablePr
                       isPinned
                         ? {
                             right: `${pinnedRightOffsets[col]}px`,
-                            // All three set so the column is truly fixed —
-                            // sticky-right offsets only line up across cells
-                            // when the rendered width matches the offset
-                            // arithmetic in `pinnedRightOffsets`.
                             width: `${PINNED_CELL_WIDTH_PX}px`,
                             minWidth: `${PINNED_CELL_WIDTH_PX}px`,
                             maxWidth: `${PINNED_CELL_WIDTH_PX}px`,
@@ -175,8 +163,8 @@ const BulkResultRow = React.memo(function BulkResultRow({
   rowIndex,
   pinnedRightOffsets,
 }: RowProps) {
-  // Striping applied as the cell background so sticky cells don't visually
-  // bleed through the rest of the row when the body scrolls horizontally.
+  // Stripe each cell rather than the row — sticky cells render transparent
+  // over scrolled rows otherwise.
   const stripeBg = rowIndex % 2 === 0 ? "bg-background" : "bg-muted/20";
   return (
     <tr>

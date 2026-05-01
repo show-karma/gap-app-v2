@@ -56,10 +56,6 @@ interface DownloadButtonProps {
 }
 
 function DownloadButton({ sessionId, jobId }: DownloadButtonProps) {
-  // BE serializes the stored {columns, rows} to CSV on demand and streams
-  // it back. We read as a Blob, build an object URL, and trigger a download
-  // via a synthetic anchor click. Using `useMutation` so loading/error
-  // state goes through React Query rather than ad-hoc useState.
   const downloadMutation = useMutation<void, Error, void>({
     mutationFn: async () => {
       const blob = await standaloneEvaluationService.downloadBulkResultCsv(sessionId, jobId);
@@ -72,7 +68,7 @@ function DownloadButton({ sessionId, jobId }: DownloadButtonProps) {
         a.click();
         a.remove();
       } finally {
-        // Revoke after a tick so the browser has a chance to start the download.
+        // Revoke after a tick so the browser can start the download.
         setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
       }
     },
