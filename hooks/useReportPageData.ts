@@ -13,28 +13,31 @@ import { validateProgramIdentifiers } from "@/utilities/validators";
 type TabId = "pending-verification" | "stats";
 
 interface Report {
-  _id: {
-    $oid: string;
-  };
   grantUid: string;
   grantTitle: string;
+  /** ChainID of the grant (V2 only — used for cross-chain links). */
+  grantChainID?: number;
   projectUid: string;
+  /**
+   * On-chain Karma project title. The V2 endpoint pre-substitutes this with
+   * the resolved team name (Team Name / Project Name / Organization Name)
+   * from approved funding-application data when available, so the column
+   * already shows the team name without further work on the consumer side.
+   */
   projectTitle: string;
-  programId?: string;
+  /**
+   * Team name resolved from approved application data, exposed separately so
+   * sort/search can target the same value the column displays.
+   */
+  resolvedProjectName?: string;
+  programId?: string | null;
   totalMilestones: number;
   pendingMilestones: number;
   pastDueMilestones?: number;
   completedMilestones: number;
   isGrantCompleted?: boolean;
-  proofOfWorkLinks: string[];
-  evaluations: Evaluation[] | null | undefined;
+  proofOfWorkLinks?: string[];
   projectSlug: string;
-}
-
-interface Evaluation {
-  _id: string;
-  rating: number;
-  reasons: string[];
 }
 
 export type MilestoneCompletion = Pick<
@@ -56,10 +59,11 @@ interface ReportAPIResponse {
     totalMilestones: number;
     totalCompletedMilestones: number;
     totalPendingMilestones: number;
+    /** Total project count across the community (V2 stats addition). */
+    totalProjects?: number;
     percentageProjectsWithMilestones: number;
     percentageCompletedMilestones: number;
     percentagePendingMilestones: number;
-    proofOfWorkLinks: string[];
   };
 }
 

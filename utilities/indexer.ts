@@ -648,7 +648,8 @@ export const INDEXER = {
       BULK: `/bulk-subscription/subscribe`,
     },
     REPORT: {
-      GET: (communityIdOrSlug: string) => `/communities/${communityIdOrSlug}/report`,
+      GET: (communityIdOrSlug: string) =>
+        `/v2/communities/${communityIdOrSlug}/milestones/report`,
       PENDING_VERIFICATION: (communityIdOrSlug: string) =>
         `/v2/communities/${communityIdOrSlug}/milestones/pending-verification`,
     },
