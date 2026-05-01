@@ -34,11 +34,16 @@ export function buildGrantMilestoneOrderMap<T extends OrderableMilestone>(
 }
 
 /**
- * Assigns a stable per-grant ordinal (1..N) to every grant milestone.
+ * Assigns a stable per-grant ordinal (1..N) to every grant milestone that does
+ * not already carry one.
  *
  * Milestones are grouped by their parent grant UID, sorted ascending by due date
  * (`endsAt`) with `createdAt` as fallback, then stamped with `grantMilestoneOrder`.
  * Non-grant items (project milestones, updates, impacts, etc.) pass through unchanged.
+ *
+ * Milestones that already have `grantMilestoneOrder` set (e.g. stamped by the
+ * server before status/date/AI filtering) are preserved as-is — recomputing
+ * locally on a filtered subset would yield an incorrect total.
  *
  * The original array is not mutated; a new array of new objects is returned.
  */
@@ -47,6 +52,7 @@ export function assignGrantMilestoneOrder(milestones: UnifiedMilestone[]): Unifi
 
   milestones.forEach((milestone) => {
     if (milestone.type !== "grant") return;
+    if (milestone.grantMilestoneOrder) return;
     const grantUID = milestone.source.grantMilestone?.grant.uid;
     if (!grantUID) return;
     const list = grouped.get(grantUID);
@@ -67,6 +73,7 @@ export function assignGrantMilestoneOrder(milestones: UnifiedMilestone[]): Unifi
   });
 
   return milestones.map((milestone) => {
+    if (milestone.grantMilestoneOrder) return milestone;
     const order = orderByMilestoneUID.get(milestone.uid);
     if (!order) return milestone;
     return { ...milestone, grantMilestoneOrder: order };
