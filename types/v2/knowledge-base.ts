@@ -72,6 +72,10 @@ export interface UpdateKnowledgeSourceInput {
   title?: string;
   // `null` clears the goal; omitting the key leaves it unchanged.
   goal?: string | null;
+  // DEV-202: edit the link / Drive ID this source points at. Backend
+  // canonicalizes per-kind (matching create) and returns 409 if the
+  // target collides with another source in the same (community, kind).
+  externalId?: string;
   isActive?: boolean;
   // DEV-194: pause toggle — skips sync AND excludes chunks from
   // retrieval while true. Distinct from isActive.

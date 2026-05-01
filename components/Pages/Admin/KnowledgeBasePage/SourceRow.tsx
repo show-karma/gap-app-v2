@@ -9,6 +9,7 @@ import {
   Globe,
   Network,
   Pause,
+  Pencil,
   Play,
   RefreshCw,
   Target,
@@ -28,6 +29,7 @@ import {
   type KnowledgeSource,
   type KnowledgeSourceKind,
 } from "@/types/v2/knowledge-base";
+import { EditSourceDialog } from "./EditSourceDialog";
 
 interface Props {
   source: KnowledgeSource;
@@ -223,6 +225,10 @@ function diffParts(source: KnowledgeSource): DiffPart[] {
 
 function SourceRowImpl({ source, communityIdOrSlug, isFirst }: Props) {
   const [confirmDelete, setConfirmDelete] = useState(false);
+  // DEV-202: edit dialog open state. The dialog hydrates from the
+  // `source` prop on each open, so toggling here is enough — we don't
+  // need to copy the source into local state.
+  const [editOpen, setEditOpen] = useState(false);
   const update = useUpdateKnowledgeSource(communityIdOrSlug);
   const resync = useResyncKnowledgeSource(communityIdOrSlug);
   const del = useDeleteKnowledgeSource(communityIdOrSlug);
@@ -483,6 +489,10 @@ function SourceRowImpl({ source, communityIdOrSlug, isFirst }: Props) {
           disabled={update.isPending}
           Icon={source.paused ? Play : Pause}
         />
+        {/* DEV-202: Edit slots between Pause and Delete. Edits that
+            change content-affecting fields (goal, link, follow-links
+            on) prompt a confirmation modal before saving. */}
+        <RowAction label="Edit source" onClick={() => setEditOpen(true)} Icon={Pencil} />
         <RowAction
           label="Delete source"
           onClick={() => setConfirmDelete(true)}
@@ -499,6 +509,13 @@ function SourceRowImpl({ source, communityIdOrSlug, isFirst }: Props) {
         title="Delete this source? This will remove its documents and chunks."
         deleteFunction={handleDelete}
         buttonElement={null}
+      />
+
+      <EditSourceDialog
+        communityIdOrSlug={communityIdOrSlug}
+        source={editOpen ? source : null}
+        open={editOpen}
+        onOpenChange={setEditOpen}
       />
     </li>
   );

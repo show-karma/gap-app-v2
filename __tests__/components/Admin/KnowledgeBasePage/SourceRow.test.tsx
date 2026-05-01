@@ -1,9 +1,11 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { SourceRow } from "@/components/Pages/Admin/KnowledgeBasePage/SourceRow";
 import {
   useDeleteKnowledgeSource,
+  useEditKnowledgeSource,
   useResyncKnowledgeSource,
   useUpdateKnowledgeSource,
 } from "@/hooks/knowledge-base/useKnowledgeSourceMutations";
@@ -20,6 +22,7 @@ vi.mock("@/hooks/knowledge-base/useKnowledgeSourceMutations", () => ({
   useUpdateKnowledgeSource: vi.fn(),
   useResyncKnowledgeSource: vi.fn(),
   useDeleteKnowledgeSource: vi.fn(),
+  useEditKnowledgeSource: vi.fn(),
 }));
 
 vi.mock("@/components/DeleteDialog", () => ({
@@ -30,6 +33,7 @@ vi.mock("@/components/DeleteDialog", () => ({
 const mockUpdate = useUpdateKnowledgeSource as ReturnType<typeof vi.fn>;
 const mockResync = useResyncKnowledgeSource as ReturnType<typeof vi.fn>;
 const mockDelete = useDeleteKnowledgeSource as ReturnType<typeof vi.fn>;
+const mockEdit = useEditKnowledgeSource as ReturnType<typeof vi.fn>;
 
 // ── Helpers ──
 
@@ -75,6 +79,7 @@ describe("SourceRow", () => {
     mockUpdate.mockReturnValue({ mutateAsync: vi.fn(), isPending: false });
     mockResync.mockReturnValue({ mutateAsync: vi.fn(), isPending: false });
     mockDelete.mockReturnValue({ mutateAsync: vi.fn(), isPending: false });
+    mockEdit.mockReturnValue({ mutateAsync: vi.fn(), isPending: false });
   });
 
   describe("status pill", () => {
@@ -339,6 +344,64 @@ describe("SourceRow", () => {
       const classes = getTileAndContentOpacityClasses();
       expect(classes).not.toContain(tileOpacityClass);
       expect(classes).not.toContain(contentOpacityClass);
+    });
+  });
+
+  // DEV-202: edit action — verify the button renders, click opens the
+  // dialog, and the dialog hydrates from the source. The dialog's own
+  // change-detection logic (confirmation gating, dup-error toast) lives
+  // in EditSourceDialog.test.tsx.
+  describe("edit action", () => {
+    it("renders an Edit button between Pause and Delete", () => {
+      renderRow(createSource());
+      expect(
+        screen.getByRole("button", { name: /edit source/i })
+      ).toBeInTheDocument();
+    });
+
+    it("opens the Edit dialog populated with the current source values when clicked", async () => {
+      renderRow(
+        createSource({
+          title: "Existing title",
+          externalId: "https://docs.google.com/document/d/abc/edit",
+          goal: "old purpose",
+        })
+      );
+
+      // Pre-condition: the dialog is closed; its hydrated form fields
+      // shouldn't be in the DOM yet.
+      expect(screen.queryByDisplayValue("Existing title")).not.toBeInTheDocument();
+
+      const user = userEvent.setup();
+      await user.click(screen.getByRole("button", { name: /edit source/i }));
+
+      // After click, the Radix dialog renders into a portal but is still
+      // queryable from screen. The form fields hydrate from the source.
+      await waitFor(() => {
+        expect(screen.getByDisplayValue("Existing title")).toBeInTheDocument();
+      });
+      expect(
+        screen.getByDisplayValue("https://docs.google.com/document/d/abc/edit")
+      ).toBeInTheDocument();
+      expect(screen.getByDisplayValue("old purpose")).toBeInTheDocument();
+    });
+
+    it("shows the kind as read-only in the edit dialog (kind change is not editable in v1)", async () => {
+      // Per ticket §"Not editable in v1": switching kind is conceptually
+      // a different source. The dialog must not expose a kind picker.
+      renderRow(createSource({ kind: "gdrive_file" }));
+      const user = userEvent.setup();
+      await user.click(screen.getByRole("button", { name: /edit source/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText(/Source type:/i)).toBeInTheDocument();
+      });
+      expect(screen.getByText(/read-only/i)).toBeInTheDocument();
+      // The "Source type" radiogroup from AddSourceDialog must not appear
+      // in the edit flow.
+      expect(
+        screen.queryByRole("radiogroup", { name: /source type/i })
+      ).not.toBeInTheDocument();
     });
   });
 });
