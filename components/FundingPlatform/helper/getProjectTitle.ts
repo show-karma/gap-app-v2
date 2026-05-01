@@ -1,6 +1,7 @@
 interface ApplicationWithData {
   applicationData: Record<string, unknown>;
   referenceNumber: string;
+  resolvedProjectName?: string;
 }
 
 // Title/name fields are short labels (e.g. "Project Title", "Pod Name"),
@@ -57,5 +58,7 @@ export const findProjectTitleInData = (
 };
 
 export const getProjectTitle = (application: ApplicationWithData): string => {
+  const resolved = application.resolvedProjectName?.trim();
+  if (resolved) return resolved;
   return findProjectTitleInData(application.applicationData) ?? application.referenceNumber;
 };
