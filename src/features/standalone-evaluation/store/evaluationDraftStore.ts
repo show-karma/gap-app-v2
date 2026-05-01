@@ -95,6 +95,49 @@ const initialState = {
   activeBulkJobIdBySession: {} as Record<string, string | null>,
 };
 
+/**
+ * Watch for Privy wallet changes — when the active wallet flips (login,
+ * logout, account switch) we reset in-memory state to defaults and
+ * re-rehydrate from the new bucket. Without this, the store's in-memory
+ * state would persist across account switches and leak the previous
+ * user's drafts/results into the new wallet's storage on next write.
+ *
+ * Implementation notes: `storage` events fire only for OTHER tabs, so we
+ * also poll `privy:user` lazily on focus + a 1s interval. Both are
+ * lightweight (string compare + read of one localStorage key).
+ */
+function installWalletChangeWatcher(): void {
+  if (typeof window === "undefined") return;
+  let lastSeenWallet = readPrivyWalletAddress();
+
+  const checkAndReact = (): void => {
+    const current = readPrivyWalletAddress();
+    if (current === lastSeenWallet) return;
+    lastSeenWallet = current;
+    // Reset in-memory state to defaults; persist middleware then re-reads
+    // from the new (current-wallet-scoped) bucket via rehydrate().
+    useEvaluationDraftStore.setState({ ...initialState });
+    // The persist API exposes rehydrate() on the store's `persist` extension.
+    // Cast through unknown because the typing depends on middleware order.
+    const persistApi = (
+      useEvaluationDraftStore as unknown as {
+        persist?: { rehydrate: () => Promise<void> };
+      }
+    ).persist;
+    persistApi?.rehydrate().catch(() => {
+      // Rehydrate failures are non-fatal — fall back to defaults already set.
+    });
+  };
+
+  window.addEventListener("storage", (event) => {
+    if (event.key === "privy:user") checkAndReact();
+  });
+  window.addEventListener("focus", checkAndReact);
+  // Same-tab account switches (logout → login as different user without a
+  // reload) emit no storage event, so a low-frequency tick covers them.
+  window.setInterval(checkAndReact, 1000);
+}
+
 export const useEvaluationDraftStore = create<EvaluationDraftState>()(
   persist(
     (set) => ({
@@ -160,3 +203,5 @@ export const useEvaluationDraftStore = create<EvaluationDraftState>()(
     }
   )
 );
+
+installWalletChangeWatcher();

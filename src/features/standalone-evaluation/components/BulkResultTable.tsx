@@ -117,7 +117,13 @@ export function BulkResultTable({ sessionId, jobId, enabled }: BulkResultTablePr
                       isPinned
                         ? {
                             right: `${pinnedRightOffsets[col]}px`,
+                            // All three set so the column is truly fixed —
+                            // sticky-right offsets only line up across cells
+                            // when the rendered width matches the offset
+                            // arithmetic in `pinnedRightOffsets`.
+                            width: `${PINNED_CELL_WIDTH_PX}px`,
                             minWidth: `${PINNED_CELL_WIDTH_PX}px`,
+                            maxWidth: `${PINNED_CELL_WIDTH_PX}px`,
                           }
                         : undefined
                     }
@@ -192,7 +198,9 @@ const BulkResultRow = React.memo(function BulkResultRow({
               isPinned
                 ? {
                     right: `${pinnedRightOffsets[col]}px`,
+                    width: `${PINNED_CELL_WIDTH_PX}px`,
                     minWidth: `${PINNED_CELL_WIDTH_PX}px`,
+                    maxWidth: `${PINNED_CELL_WIDTH_PX}px`,
                   }
                 : undefined
             }

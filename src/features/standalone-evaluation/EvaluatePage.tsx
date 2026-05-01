@@ -154,6 +154,11 @@ export function EvaluatePage() {
             setView("workspace");
           }}
           onCreateNew={() => {
+            // Block any pending auto-select once the user has explicitly
+            // asked for a fresh form. Without this, if the click happens
+            // while sessionsQuery is still loading, the auto-select effect
+            // above will later open items[0] and clobber the form.
+            didAutoSelectRef.current = true;
             setActiveSessionId(null);
             setView("form");
           }}

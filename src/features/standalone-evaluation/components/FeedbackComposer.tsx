@@ -1,7 +1,7 @@
 "use client";
 
 import { Loader2, RefreshCw } from "lucide-react";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FEEDBACK_MAX, sessionFeedbackSchema } from "../schemas/session.schema";
 
@@ -22,6 +22,7 @@ const textareaClass =
 export function FeedbackComposer({ hasSample, isPending, onSubmit }: FeedbackComposerProps) {
   const [feedback, setFeedback] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const errorId = useId();
 
   const handleSubmit = async () => {
     const parsed = sessionFeedbackSchema.safeParse({ feedback });
@@ -59,6 +60,8 @@ export function FeedbackComposer({ hasSample, isPending, onSubmit }: FeedbackCom
       </p>
       <textarea
         aria-label="Feedback"
+        aria-invalid={Boolean(error)}
+        aria-describedby={error ? errorId : undefined}
         className={textareaClass}
         value={feedback}
         onChange={(e) => setFeedback(e.target.value.slice(0, FEEDBACK_MAX))}
@@ -66,7 +69,9 @@ export function FeedbackComposer({ hasSample, isPending, onSubmit }: FeedbackCom
         disabled={isPending}
       />
       <div className="mt-1 flex flex-wrap items-center justify-between gap-2 text-xs">
-        <span className="text-red-500">{error}</span>
+        <span id={errorId} role="alert" className="text-red-500">
+          {error}
+        </span>
         <span className="text-muted-foreground">
           {feedback.length}/{FEEDBACK_MAX}
         </span>
