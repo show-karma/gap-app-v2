@@ -613,8 +613,11 @@ describe("useAgentStream", () => {
   });
 
   describe("system events", () => {
-    it("should_set_traceId_on_last_assistant_message_when_system_event_carries_traceId", async () => {
-      const sseText = formatSSE([{ type: "system", traceId: "trace-xyz" }]);
+    it("should_set_traceId_on_last_assistant_message_when_trace_started_event_arrives", async () => {
+      // Wire-accurate payload: the backend ships `event: system / data:
+      // {"type":"trace_started","traceId":"..."}`. parseSSEChunk reads
+      // only the JSON, so the dispatcher sees `type: "trace_started"`.
+      const sseText = formatSSE([{ type: "trace_started", traceId: "trace-xyz" }]);
       mockFetch.mockResolvedValue(createStreamResponse(sseText));
 
       const { result } = renderHook(() => useAgentStream(), { wrapper });
@@ -626,6 +629,25 @@ describe("useAgentStream", () => {
       const messages = useAgentChatStore.getState().messages;
       const assistantMsg = messages.find((m) => m.role === "assistant");
       expect(assistantMsg?.traceId).toBe("trace-xyz");
+    });
+
+    it("should_ignore_anthropic_sdk_system_init_event_without_traceId", async () => {
+      // The Anthropic SDK also uses `event: system` for its own init
+      // event, with `data: {"type":"system","subtype":"init",...}` and
+      // no traceId. The handler must no-op for this shape.
+      const sseText = formatSSE([{ type: "system", subtype: "init" }]);
+      mockFetch.mockResolvedValue(createStreamResponse(sseText));
+
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
+
+      await act(async () => {
+        await result.current.sendMessage("Hello");
+      });
+
+      const assistantMsg = useAgentChatStore
+        .getState()
+        .messages.find((m) => m.role === "assistant");
+      expect(assistantMsg?.traceId).toBeUndefined();
     });
 
     it("should_buffer_traceId_when_system_event_arrives_before_assistant_message_exists", async () => {
