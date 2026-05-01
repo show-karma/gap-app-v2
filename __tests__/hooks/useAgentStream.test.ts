@@ -164,13 +164,20 @@ describe("useAgentStream", () => {
     mockGetToken.mockResolvedValue("mock-token-123");
     wrapper = createWrapper();
 
-    // Reset store state — queryClient cleanup is in afterEach
+    // Reset store state — queryClient cleanup is in afterEach.
+    // Explicitly resets every field that any test in this suite
+    // mutates so Zustand's partial-merge semantics can't leak state
+    // between tests (e.g. the trace-buffering test writes
+    // pendingTraceId, which would carry over without this).
     useAgentChatStore.setState({
       messages: [],
       isOpen: false,
       isStreaming: false,
       error: null,
       agentContext: null,
+      pendingMentions: [],
+      pendingTraceId: null,
+      ratingCommentBoxOpenForMessageId: null,
     });
   });
 

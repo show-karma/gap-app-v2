@@ -161,6 +161,21 @@ describe("useChatRating", () => {
     // — store rating must NOT be set on failure.
     const stored = useAgentChatStore.getState().messages.find((m) => m.id === "assistant-1");
     expect(stored?.rating).toBeUndefined();
+    // Observability contract: the captured event must carry the
+    // feature tag plus messageId/traceId/value extras so Sentry
+    // dashboards can slice rating failures without correlating with
+    // server logs. Pin the contract with explicit assertions.
+    expect(Sentry.captureException).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({
+        tags: expect.objectContaining({ feature: "agent-chat-rating" }),
+        extra: expect.objectContaining({
+          messageId: "assistant-1",
+          traceId: "trace-abc",
+          value: 1,
+        }),
+      })
+    );
     // Response body should be threaded into the captured error message
     // so 4xx triage in Sentry doesn't require correlation with server logs.
     const capturedError = vi.mocked(Sentry.captureException).mock.calls[0][0] as Error;

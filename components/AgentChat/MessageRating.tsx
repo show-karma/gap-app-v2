@@ -1,7 +1,7 @@
 "use client";
 
 import { ThumbsDownIcon, ThumbsUpIcon } from "lucide-react";
-import { useCallback, useState } from "react";
+import { type ChangeEvent, useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useChatRating } from "@/hooks/useChatRating";
 import { useAgentChatStore } from "@/store/agentChat";
@@ -105,7 +105,7 @@ export function MessageRatingCommentBox({ messageId, traceId }: MessageRatingPro
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const handleCommentChange = useCallback(
-    (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    (event: ChangeEvent<HTMLTextAreaElement>) => {
       setComment(event.target.value);
       if (submitError) setSubmitError(null);
     },

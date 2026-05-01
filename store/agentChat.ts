@@ -193,7 +193,10 @@ export const useAgentChatStore = create<AgentChatStore>((set) => ({
             return { pendingTraceId: traceId };
           }
           messages[i] = { ...messages[i], traceId };
-          return { messages };
+          // Clear any stale pendingTraceId — if we successfully attached
+          // to a real message, the buffer is no longer load-bearing and
+          // would otherwise leak into the next addMessage.
+          return { messages, pendingTraceId: null };
         }
       }
       // No assistant message yet — buffer the traceId so the next
