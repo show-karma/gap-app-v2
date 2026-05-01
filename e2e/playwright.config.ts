@@ -8,6 +8,22 @@ import path from "node:path";
 
 const STORAGE_STATE_PATH = path.join(__dirname, ".auth", "user.json");
 
+// Tests targeting a remote URL (e.g. smoke tests against staging) shouldn't
+// boot a local webServer — there's nothing to serve, and `pnpm start` would
+// fail without a `.next/` build anyway.
+const baseURL = process.env.BASE_URL || "http://localhost:3000";
+const LOCAL_HOSTNAMES = new Set(["localhost", "127.0.0.1", "::1"]);
+const isRemoteTarget = (() => {
+  try {
+    const { hostname } = new URL(baseURL);
+    if (LOCAL_HOSTNAMES.has(hostname)) return false;
+    if (/^127\.\d+\.\d+\.\d+$/.test(hostname)) return false;
+    return true;
+  } catch {
+    return true;
+  }
+})();
+
 export default defineConfig({
   testDir: "./tests",
   testIgnore: isAnvil ? undefined : ["**/*.anvil.spec.ts", "**/_experimental/**"],
@@ -19,7 +35,7 @@ export default defineConfig({
   outputDir: "./test-results",
 
   use: {
-    baseURL: "http://localhost:3000",
+    baseURL,
     trace: "on-first-retry",
     screenshot: "only-on-failure",
     // Use domcontentloaded instead of load to avoid timeouts caused by
@@ -51,10 +67,12 @@ export default defineConfig({
     },
   ],
 
-  webServer: {
-    command: isCI ? "pnpm start" : "cross-env NEXT_PUBLIC_E2E_AUTH_BYPASS=true pnpm run dev",
-    url: "http://localhost:3000",
-    reuseExistingServer: !isCI,
-    timeout: 120_000,
-  },
+  webServer: isRemoteTarget
+    ? undefined
+    : {
+        command: isCI ? "pnpm start" : "cross-env NEXT_PUBLIC_E2E_AUTH_BYPASS=true pnpm run dev",
+        url: "http://localhost:3000",
+        reuseExistingServer: !isCI,
+        timeout: 120_000,
+      },
 });

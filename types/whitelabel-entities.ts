@@ -31,7 +31,8 @@ export interface ApplicationQuestion {
     | "radio"
     | "url"
     | "email"
-    | "karma_profile_link";
+    | "karma_profile_link"
+    | "section_header";
   label: string;
   description?: string;
   required: boolean;
@@ -92,7 +93,8 @@ export interface IFormField {
     | "radio"
     | "date"
     | "milestone"
-    | "karma_profile_link";
+    | "karma_profile_link"
+    | "section_header";
   label: string;
   placeholder?: string;
   required?: boolean;
@@ -248,6 +250,7 @@ export interface Application {
   communitySlug?: string;
   communityName?: string;
   communityImage?: string;
+  resolvedProjectName?: string;
 }
 
 export interface User {

@@ -11,7 +11,8 @@ export interface FormField {
     | "url"
     | "date"
     | "milestone"
-    | "karma_profile_link";
+    | "karma_profile_link"
+    | "section_header";
   label: string;
   placeholder?: string;
   required?: boolean;

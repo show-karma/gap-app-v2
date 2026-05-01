@@ -354,9 +354,9 @@ describe("AgentChatBubble", () => {
     useAgentChatStore.setState({ isOpen: true });
     render(<AgentChatBubble />);
 
-    const textarea = screen.getByTestId("prompt-textarea");
-    await user.clear(textarea);
-    await user.type(textarea, "Test message{Enter}");
+    const editor = screen.getByRole("textbox", { name: /chat message/i });
+    editor.focus();
+    await user.type(editor, "Test message{Enter}");
 
     expect(mockSendMessage).toHaveBeenCalledWith("Test message");
   });

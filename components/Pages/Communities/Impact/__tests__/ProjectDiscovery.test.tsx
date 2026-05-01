@@ -46,7 +46,10 @@ vi.mock("@/utilities/indexer", () => ({
   },
 }));
 
+import fetchData from "@/utilities/fetchData";
 import { ProjectDiscovery } from "../ProjectDiscovery";
+
+const mockedFetchData = vi.mocked(fetchData);
 
 /**
  * Helper: collects all className strings from the rendered container.
@@ -156,8 +159,8 @@ describe("ProjectDiscovery dark mode support", () => {
 
   it("should have dark: class on the loading spinner text", async () => {
     // Force loading state by making fetchData never resolve
-    const fetchData = require("@/utilities/fetchData").default;
-    fetchData.mockReturnValue(new Promise(() => {}));
+
+    mockedFetchData.mockReturnValue(new Promise(() => {}));
 
     const { container } = render(<ProjectDiscovery />);
 
@@ -167,8 +170,8 @@ describe("ProjectDiscovery dark mode support", () => {
 
   it("should not have any bg-white without a corresponding dark:bg- class", async () => {
     // Reset mock to resolve
-    const fetchData = require("@/utilities/fetchData").default;
-    fetchData.mockResolvedValue([[], null]);
+
+    mockedFetchData.mockResolvedValue([[], null]);
 
     const { container } = render(<ProjectDiscovery />);
 
@@ -184,8 +187,7 @@ describe("ProjectDiscovery dark mode support", () => {
   });
 
   it("should not have any text-gray-900 without a corresponding dark:text- class", async () => {
-    const fetchData = require("@/utilities/fetchData").default;
-    fetchData.mockResolvedValue([[], null]);
+    mockedFetchData.mockResolvedValue([[], null]);
 
     const { container } = render(<ProjectDiscovery />);
 
@@ -201,8 +203,7 @@ describe("ProjectDiscovery dark mode support", () => {
   });
 
   it("should not have any text-gray-700 without a corresponding dark:text- class", async () => {
-    const fetchData = require("@/utilities/fetchData").default;
-    fetchData.mockResolvedValue([[], null]);
+    mockedFetchData.mockResolvedValue([[], null]);
 
     const { container } = render(<ProjectDiscovery />);
 
@@ -218,8 +219,7 @@ describe("ProjectDiscovery dark mode support", () => {
   });
 
   it("should not have any border-gray-200 without a corresponding dark:border- class", async () => {
-    const fetchData = require("@/utilities/fetchData").default;
-    fetchData.mockResolvedValue([[], null]);
+    mockedFetchData.mockResolvedValue([[], null]);
 
     const { container } = render(<ProjectDiscovery />);
 

@@ -4,23 +4,100 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
     branches: ['**'] # Run on PRs targeting any branch
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - '**/*.png'
+      - '**/*.jpg'
+      - '**/*.jpeg'
+      - '**/*.svg'
+      - '**/*.gif'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/PULL_REQUEST_TEMPLATE.md'
+      - 'LICENSE'
+      - '.gitignore'
+
+concurrency:
+  group: pr-tests-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
-  test:
+  # ── Step 1: determine test scope ────────────────────────────────────────────
+  # Fast pre-job (<30s): counts changed source files and decides whether to run
+  # only affected tests ("changed" mode, 1 shard) or the full suite ("full"
+  # mode, 2 shards). Config-file changes always force full mode.
+  scope:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 2
+    outputs:
+      mode: ${{ steps.detect.outputs.mode }}
+      shard_count: ${{ steps.detect.outputs.shard_count }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Detect test scope
+        id: detect
+        run: |
+          BASE="${{ github.event.pull_request.base.sha }}"
+
+          # All changed TS/TSX source files (including test files — they affect scope)
+          CHANGED_FILES=$(git diff --name-only "${BASE}...HEAD" -- '*.ts' '*.tsx' 2>/dev/null || echo "")
+          CHANGED_COUNT=$(echo "${CHANGED_FILES}" | grep -c '.' || true)
+          # grep -c returns 1 for empty input, so normalise:
+          [ -z "${CHANGED_FILES}" ] && CHANGED_COUNT=0
+
+          echo "Changed TS/TSX files: ${CHANGED_COUNT}"
+          echo "${CHANGED_FILES}"
+
+          # Config files that invalidate the incremental "changed" mode
+          CONFIG_CHANGED=$(git diff --name-only "${BASE}...HEAD" -- \
+            'vitest.config.*' \
+            'tsconfig.json' \
+            'package.json' \
+            'pnpm-lock.yaml' \
+            '.github/workflows/pr-tests.yml' \
+          2>/dev/null || echo "")
+
+          if [ -n "${CONFIG_CHANGED}" ]; then
+            echo "Config files changed — forcing full mode:"
+            echo "${CONFIG_CHANGED}"
+            echo "mode=full" >> "$GITHUB_OUTPUT"
+            echo "shard_count=2" >> "$GITHUB_OUTPUT"
+          elif [ "${CHANGED_COUNT}" -le 30 ]; then
+            echo "mode=changed" >> "$GITHUB_OUTPUT"
+            echo "shard_count=1" >> "$GITHUB_OUTPUT"
+          else
+            echo "mode=full" >> "$GITHUB_OUTPUT"
+            echo "shard_count=2" >> "$GITHUB_OUTPUT"
+          fi
+
+  # ── Step 2: run tests (matrix of 1 or 2 shards) ─────────────────────────────
+  test:
+    needs: [scope]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJSON(needs.scope.outputs.shard_count == '2' && '[1,2]' || '[1]') }}
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+        with:
+          # changed mode needs history to resolve the base SHA
+          fetch-depth: 0
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v5
         with:
           version: 10
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: '20'
           cache: 'pnpm'
@@ -28,102 +105,136 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run tests
-        run: pnpm run test -- --pool-options.forks.maxForks=2 --reporter=verbose
+      # Vite/vitest transform cache — speeds up cold-start by reusing
+      # transformed module graph across runs. Keyed on lockfile + source
+      # hash so dep or code changes invalidate cleanly.
+      - name: Cache vitest transform
+        uses: actions/cache@v5
+        with:
+          path: |
+            node_modules/.vite
+            node_modules/.cache/vitest
+          key: ${{ runner.os }}-vitest-${{ hashFiles('**/pnpm-lock.yaml') }}-${{ hashFiles('**/*.ts', '**/*.tsx', '!node_modules/**', '!.next/**') }}
+          restore-keys: |
+            ${{ runner.os }}-vitest-${{ hashFiles('**/pnpm-lock.yaml') }}-
+            ${{ runner.os }}-vitest-
+
+      # changed mode: only test files affected by this PR's diff.
+      # --passWithNoTests guards against "no tests found" exit 1 (e.g. docs-only PRs
+      # that slip past paths-ignore because they also touch a .ts file).
+      - name: Run tests (changed mode)
+        id: tests
+        if: needs.scope.outputs.mode == 'changed'
+        # Pre-existing test debt (issue #1306) — main currently fails dozens
+        # of test files but is hidden by this same flag. Removing it is
+        # tracked as separate cleanup; do not gate this CI-optimization PR
+        # on a pre-existing red baseline. The step's `outcome` is still
+        # surfaced via the job output so the report comment shows reality.
         continue-on-error: true
+        run: |
+          pnpm run test -- \
+            --reporter=dot \
+            --changed=${{ github.event.pull_request.base.sha }} \
+            --passWithNoTests
         env:
           NODE_ENV: test
           NODE_OPTIONS: --max-old-space-size=8192
 
-      - name: Generate test summary
-        id: test-summary
+      # full mode: run the entire suite split across N shards.
+      - name: Run tests (full mode, shard ${{ matrix.shard }}/2)
+        id: tests_full
+        if: needs.scope.outputs.mode == 'full'
+        continue-on-error: true
+        run: |
+          pnpm run test -- \
+            --reporter=dot \
+            --shard=${{ matrix.shard }}/2
+        env:
+          NODE_ENV: test
+          NODE_OPTIONS: --max-old-space-size=8192
+
+      # Upload a tiny outcome artifact so the report job can aggregate across
+      # shards. Matrix job outputs only return the LAST shard's value, so
+      # artifacts are the reliable cross-shard signal.
+      - name: Upload shard outcome
         if: always()
         run: |
-          if [ -f coverage/coverage-summary.json ]; then
-            LINES=$(node -p "JSON.parse(require('fs').readFileSync('coverage/coverage-summary.json', 'utf-8')).total.lines.pct.toFixed(2)")
-            STATEMENTS=$(node -p "JSON.parse(require('fs').readFileSync('coverage/coverage-summary.json', 'utf-8')).total.statements.pct.toFixed(2)")
-            FUNCTIONS=$(node -p "JSON.parse(require('fs').readFileSync('coverage/coverage-summary.json', 'utf-8')).total.functions.pct.toFixed(2)")
-            BRANCHES=$(node -p "JSON.parse(require('fs').readFileSync('coverage/coverage-summary.json', 'utf-8')).total.branches.pct.toFixed(2)")
-            
-            echo "lines=${LINES}" >> $GITHUB_OUTPUT
-            echo "statements=${STATEMENTS}" >> $GITHUB_OUTPUT
-            echo "functions=${FUNCTIONS}" >> $GITHUB_OUTPUT
-            echo "branches=${BRANCHES}" >> $GITHUB_OUTPUT
-            echo "has_coverage=true" >> $GITHUB_OUTPUT
-          else
-            echo "has_coverage=false" >> $GITHUB_OUTPUT
-          fi
+          # Prefer the changed-mode step; fall back to the full-mode step.
+          OUTCOME="${{ steps.tests.outcome }}"
+          [ -z "${OUTCOME}" ] || [ "${OUTCOME}" = "skipped" ] && OUTCOME="${{ steps.tests_full.outcome }}"
+          echo "${OUTCOME}" > /tmp/shard-${{ matrix.shard }}-outcome.txt
+
+      - name: Upload shard outcome artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: shard-${{ matrix.shard }}-outcome
+          path: /tmp/shard-${{ matrix.shard }}-outcome.txt
+          retention-days: 1
+
+  # ── Step 3 & 4: aggregate results and post PR comment ───────────────────────
+  report:
+    if: always() && github.event_name == 'pull_request'
+    needs: [scope, test]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Download all shard outcome artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: shard-*-outcome
+          path: /tmp/outcomes
+          merge-multiple: true
 
       - name: Comment PR with test results
-        if: always() && github.event_name == 'pull_request'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
-            const hasCoverage = '${{ steps.test-summary.outputs.has_coverage }}' === 'true';
-            
-            let body = '';
-            
-            if (context.payload.workflow_run && context.payload.workflow_run.conclusion === 'failure') {
-              body = `## ❌ Tests Failed\n\nSome tests failed. Please check the workflow logs for details.`;
-            } else if ('${{ job.status }}' === 'success') {
-              body = `## ✅ All Tests Passed!\n\n`;
-              
-              if (hasCoverage) {
-                const lines = '${{ steps.test-summary.outputs.lines }}';
-                const statements = '${{ steps.test-summary.outputs.statements }}';
-                const functions = '${{ steps.test-summary.outputs.functions }}';
-                const branches = '${{ steps.test-summary.outputs.branches }}';
-                
-                const coverageColor = (pct) => {
-                  const num = parseFloat(pct);
-                  if (num >= 80) return '🟢';
-                  if (num >= 70) return '🟡';
-                  if (num >= 50) return '🟠';
-                  return '🔴';
-                };
-                
-                body += `### 📊 Test Coverage\n\n`;
-                body += `| Metric | Coverage | Status |\n`;
-                body += `|--------|----------|--------|\n`;
-                body += `| Lines | ${lines}% | ${coverageColor(lines)} |\n`;
-                body += `| Statements | ${statements}% | ${coverageColor(statements)} |\n`;
-                body += `| Functions | ${functions}% | ${coverageColor(functions)} |\n`;
-                body += `| Branches | ${branches}% | ${coverageColor(branches)} |\n\n`;
-                
-                const minCoverage = 50;
-                if (parseFloat(lines) >= minCoverage) {
-                  body += `✅ Coverage meets the minimum threshold of ${minCoverage}%\n\n`;
-                } else {
-                  body += `⚠️ **Warning:** Coverage is below the ${minCoverage}% threshold\n\n`;
+            const path = require('path');
+
+            const outcomesDir = '/tmp/outcomes';
+            const mode = '${{ needs.scope.outputs.mode }}';
+            const shardCount = parseInt('${{ needs.scope.outputs.shard_count }}', 10);
+
+            // Read all shard outcome files; if any is not 'success' → failed.
+            let passed = true;
+            try {
+              const files = fs.readdirSync(outcomesDir);
+              for (const file of files) {
+                const content = fs.readFileSync(path.join(outcomesDir, file), 'utf8').trim();
+                if (content !== 'success') {
+                  passed = false;
+                  break;
                 }
-              } else {
-                body += `Coverage report not available.\n\n`;
               }
-              
-              body += `**Linting:** ✅ Passed\n`;
-              body += `**Tests:** ✅ All tests passed\n\n`;
-            } else {
-              body = `## ⚠️ Tests Completed with Issues\n\nPlease check the workflow logs for details.`;
+            } catch (e) {
+              // Artifact download failed (e.g. test job never ran) — treat as failure.
+              passed = false;
             }
-            
-            body += `\n---\n*Automated test report*`;
-            
-            // Find existing comment
+
+            const modeLabel = mode === 'changed'
+              ? '`changed` (affected files only)'
+              : `\`full\` (${shardCount} shards)`;
+
+            const marker = '<!-- pr-tests-report -->';
+
+            const body = passed
+              ? `${marker}\n## ✅ All Tests Passed!\n\nRan in **${modeLabel}** mode.\n\n---\n*Automated test report*`
+              : `${marker}\n## ❌ Tests Failed\n\nRan in **${modeLabel}** mode. Check the workflow logs for details.\n\n_Note: this PR's test job uses \`continue-on-error\` to allow merging while pre-existing test debt is being cleaned up (issue #1306). Failures here will not block merge until #1306 is resolved._\n\n---\n*Automated test report*`;
+
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
             });
-            
+
+            // Match by hidden marker so we don't clobber unrelated bot comments.
             const botComment = comments.find(comment =>
-              comment.user.type === 'Bot' && 
-              (comment.body.includes('All Tests Passed') || 
-               comment.body.includes('Tests Failed') ||
-               comment.body.includes('Tests Completed with Issues'))
+              comment.user.type === 'Bot' && comment.body.includes(marker)
             );
-            
+
             if (botComment) {
               await github.rest.issues.updateComment({
                 owner: context.repo.owner,
@@ -139,15 +250,3 @@ jobs:
                 body,
               });
             }
-
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results
-          path: |
-            coverage/
-            test-results.json
-          retention-days: 7
-          if-no-files-found: ignore
-

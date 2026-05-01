@@ -22,6 +22,10 @@ export interface KnowledgeSource {
   // the agent's excerpt path.
   goal: string | null;
   syncIntervalMin: number;
+  // DEV-192: when true on a kind=gdrive_file source, the sync worker
+  // ingests Google Docs linked from the parent doc as additional
+  // documents under the same source (depth=1, no recursion).
+  followLinks: boolean;
   lastSyncedAt: string | null;
   lastSyncStatus: KnowledgeSyncStatus | null;
   lastSyncError: string | null;
@@ -40,6 +44,9 @@ export interface KnowledgeDocument {
   lastFetchedAt: string;
   byteSize: number;
   chunkCount: number;
+  // DEV-192: id of the parent KnowledgeDocument that linked to this one
+  // during a depth=1 link-following sync. Null for top-level docs.
+  discoveredFromId: string | null;
   deletedAt: string | null;
 }
 
@@ -50,6 +57,9 @@ export interface CreateKnowledgeSourceInput {
   title: string;
   goal?: string | null;
   syncIntervalMin?: number;
+  // DEV-192: opt-in only when kind === "gdrive_file". Backend rejects
+  // with 422 if set true on any other kind.
+  followLinks?: boolean;
 }
 
 export interface UpdateKnowledgeSourceInput {
@@ -58,6 +68,7 @@ export interface UpdateKnowledgeSourceInput {
   goal?: string | null;
   isActive?: boolean;
   syncIntervalMin?: number;
+  followLinks?: boolean;
 }
 
 export const KNOWLEDGE_SOURCE_KIND_LABELS: Record<KnowledgeSourceKind, string> = {

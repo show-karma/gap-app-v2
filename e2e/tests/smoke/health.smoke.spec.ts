@@ -133,8 +133,10 @@ test.describe("Smoke Tests — Health", () => {
   test("T35-06: API health endpoint responds", async ({ page, withApiMocks }) => {
     await withApiMocks();
 
-    // The health endpoint is mocked by default in setupApiMocks
-    const response = await page.request.get("http://localhost:3000/api/health", {
+    // The health endpoint is mocked by default in setupApiMocks.
+    // Use a relative path so the test works against any BASE_URL (local dev,
+    // staging, etc.) rather than a hardcoded localhost.
+    const response = await page.request.get("/api/health", {
       failOnStatusCode: false,
     });
 

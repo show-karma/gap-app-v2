@@ -35,6 +35,10 @@ export interface CommunityMilestoneUpdate {
   details: MilestoneDetails;
   project: ProjectInfo;
   grant?: GrantInfo;
+  /** 1-based position of this milestone within its parent grant. */
+  grantMilestoneIndex?: number;
+  /** Total number of milestones in the parent grant. */
+  grantMilestoneTotal?: number;
   createdAt: string;
   updatedAt: string;
 }

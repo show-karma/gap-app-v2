@@ -1,7 +1,7 @@
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
-import { FileBadge, FileText, Globe, Info, ShieldCheck, X } from "lucide-react";
+import { FileBadge, FileText, GitBranch, Globe, Info, ShieldCheck, X } from "lucide-react";
 import { type ComponentType, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/Utilities/Button";
@@ -75,6 +75,10 @@ export function AddSourceDialog({ communityIdOrSlug, open, onOpenChange, initial
   const [externalId, setExternalId] = useState("");
   const [title, setTitle] = useState("");
   const [goal, setGoal] = useState("");
+  // DEV-192: opt-in depth=1 link-following. Only meaningful when
+  // kind === "gdrive_file"; we hide the toggle for other kinds and clear
+  // the value on kind changes so a stale `true` can't sneak in.
+  const [followLinks, setFollowLinks] = useState(false);
   const create = useCreateKnowledgeSource(communityIdOrSlug);
 
   // On open, seed the kind from `initialKind` (quick-pick) or fall back to the
@@ -87,8 +91,18 @@ export function AddSourceDialog({ communityIdOrSlug, open, onOpenChange, initial
       setExternalId("");
       setTitle("");
       setGoal("");
+      setFollowLinks(false);
     }
   }, [open, initialKind]);
+
+  // Switching kind drops any prior "follow links" choice — the option
+  // is only valid for gdrive_file, and the backend rejects it on other
+  // kinds with a 422. Clearing here keeps the local state consistent
+  // with what we'd send.
+  const handleKindChange = (nextKind: KnowledgeSourceKind) => {
+    setKind(nextKind);
+    if (nextKind !== "gdrive_file") setFollowLinks(false);
+  };
 
   const canSubmit = externalId.trim().length > 0 && title.trim().length > 0 && !create.isPending;
 
@@ -104,6 +118,11 @@ export function AddSourceDialog({ communityIdOrSlug, open, onOpenChange, initial
         externalId: externalId.trim(),
         title: title.trim(),
         goal: trimmedGoal.length > 0 ? trimmedGoal : null,
+        // Only send the flag when it's meaningful for this kind. Sending
+        // `false` on a non-Google-Docs kind would be harmless (backend
+        // accepts false universally), but omitting keeps the request
+        // payload tight and aligned with the visible UI state.
+        followLinks: kind === "gdrive_file" ? followLinks : undefined,
       });
       toast.success("Knowledge source added.");
       onOpenChange(false);
@@ -164,7 +183,7 @@ export function AddSourceDialog({ communityIdOrSlug, open, onOpenChange, initial
                       key={opt.kind}
                       option={opt}
                       selected={kind === opt.kind}
-                      onSelect={() => setKind(opt.kind)}
+                      onSelect={() => handleKindChange(opt.kind)}
                     />
                   ))}
                 </div>
@@ -234,10 +253,18 @@ export function AddSourceDialog({ communityIdOrSlug, open, onOpenChange, initial
                     </span>
                   </div>
                 </FormField>
+
+                {kind === "gdrive_file" && (
+                  <FollowLinksToggle checked={followLinks} onChange={setFollowLinks} />
+                )}
               </div>
 
               <PublicAccessReminder kind={kind} />
-              <OneSourceAtATimeNote />
+              {kind === "gdrive_file" && followLinks ? (
+                <FollowLinksScopeNote />
+              ) : (
+                <OneSourceAtATimeNote />
+              )}
             </div>
 
             {/* Footer — right-aligned button cluster, matches `.modal-foot` */}
@@ -370,6 +397,69 @@ function OneSourceAtATimeNote() {
           Links inside it are not followed
         </strong>{" "}
         — register them separately if you want them included.
+      </p>
+    </div>
+  );
+}
+
+// ── Follow-links toggle ─────────────────────────────────────────────────────
+//
+// DEV-192. Surfaced only when kind === "gdrive_file". A native checkbox is
+// the right primitive here — it's a single-axis on/off, and pairing it with
+// a short hint keeps the visual weight low so it doesn't compete with the
+// Title/URL/Purpose fields above. We do not ship a Switch primitive in the
+// admin UI today; introducing one for one toggle would be premature.
+
+function FollowLinksToggle({
+  checked,
+  onChange,
+}: {
+  checked: boolean;
+  onChange: (next: boolean) => void;
+}) {
+  return (
+    <div className="rounded-md border border-stone-200 bg-stone-50 px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/60">
+      <label className="flex cursor-pointer items-start gap-2.5">
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={(e) => onChange(e.target.checked)}
+          className="mt-[2px] h-3.5 w-3.5 shrink-0 cursor-pointer rounded border-stone-300 text-sky-600 focus:ring-2 focus:ring-sky-500/40 dark:border-zinc-700 dark:bg-zinc-800 dark:focus:ring-sky-400/40"
+        />
+        <div className="min-w-0">
+          <p className="flex items-center gap-1.5 text-[12.5px] font-medium text-stone-800 dark:text-zinc-200">
+            <GitBranch
+              aria-hidden="true"
+              className="h-3.5 w-3.5 text-stone-500 dark:text-zinc-500"
+              strokeWidth={1.75}
+            />
+            Follow links to other Google Docs
+          </p>
+          <p className="mt-1 text-[11.5px] leading-relaxed text-stone-500 dark:text-zinc-500">
+            Karma also ingests Google Docs linked from this one (one level deep). Linked docs must
+            be shared the same way as this one.
+          </p>
+        </div>
+      </label>
+    </div>
+  );
+}
+
+// Variant of OneSourceAtATimeNote shown when followLinks is on. Sets the
+// expectation that depth is fixed at 1 — children's children are not
+// crawled — so admins don't expect a recursive crawler.
+
+function FollowLinksScopeNote() {
+  return (
+    <div className="mt-2 flex items-start gap-2 rounded-md border border-stone-200 bg-stone-50 px-2.5 py-2 dark:border-zinc-800 dark:bg-zinc-900/60">
+      <Info
+        className="mt-0.5 h-3.5 w-3.5 shrink-0 text-stone-500 dark:text-zinc-500"
+        aria-hidden="true"
+      />
+      <p className="min-w-0 flex-1 text-[12px] leading-relaxed text-stone-600 dark:text-zinc-400">
+        Karma will follow links from this doc to other Google Docs{" "}
+        <strong className="font-semibold text-stone-800 dark:text-zinc-200">one level deep</strong>{" "}
+        — links inside those discovered docs are not followed.
       </p>
     </div>
   );

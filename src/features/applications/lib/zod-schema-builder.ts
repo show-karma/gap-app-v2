@@ -30,6 +30,7 @@ export function buildDynamicSchema(questions: ApplicationQuestion[]) {
   const shape: Record<string, ZodTypeAny> = {};
 
   for (const q of questions) {
+    if (q.type === "section_header") continue;
     const builder = schemaBuilders[q.type] ?? buildDefaultSchema;
     shape[q.id] = builder(q);
   }

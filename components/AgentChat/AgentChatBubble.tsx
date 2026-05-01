@@ -25,8 +25,17 @@ function contextLabel(ctx: Record<string, string | undefined> | null): string | 
 
 export function AgentChatBubble() {
   const { authenticated } = useAuth();
-  const { isOpen, toggleOpen, messages, isStreaming, error, clearMessages, agentContext } =
-    useAgentChatStore();
+  const {
+    isOpen,
+    toggleOpen,
+    messages,
+    isStreaming,
+    error,
+    clearMessages,
+    agentContext,
+    pendingMentions,
+    clearMentions,
+  } = useAgentChatStore();
   const { sendMessage, sendConfirmation, abort } = useAgentStream();
 
   // Sync page context (project/program/application) to agent store
@@ -49,6 +58,7 @@ export function AgentChatBubble() {
       onClear={() => {
         abort();
         clearMessages();
+        clearMentions();
       }}
       title="Karma Assistant"
       badge={badge ? <Badge variant="secondary">{badge}</Badge> : undefined}
@@ -67,6 +77,8 @@ export function AgentChatBubble() {
           isStreaming={isStreaming}
           onStop={abort}
           placeholder={authenticated ? "Ask about your project..." : "Ask about a project..."}
+          mentions={pendingMentions}
+          onMentionsConsumed={clearMentions}
         />
       )}
       renderAfterMessage={(msg) =>

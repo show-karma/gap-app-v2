@@ -21,6 +21,7 @@ import {
 } from "@/src/components/ai-elements/conversation";
 import { Message, MessageContent } from "@/src/components/ai-elements/message";
 import type { ChatMessage } from "@/store/agentChat";
+import { renderWithMentionPills } from "@/widget/mention-token";
 
 function ScrollOnNewMessage({ lastMessageContent }: { lastMessageContent: string | undefined }) {
   const { scrollToBottom } = useStickToBottomContext();
@@ -178,13 +179,20 @@ export function ChatBubbleShell({
                         </Avatar>
                         <div className="max-w-[calc(100%-2.5rem)] group">
                           <Message from={msg.role}>
-                            <MessageContent>{renderMarkdown(msg.content)}</MessageContent>
+                            <MessageContent>
+                              {msg.role === "user"
+                                ? renderWithMentionPills(msg.content)
+                                : renderMarkdown(msg.content)}
+                            </MessageContent>
                             {msg.role === "assistant" && msg.content && !msg.isStreaming && (
                               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
                                 <Button
                                   variant="ghost"
                                   size="icon-sm"
                                   onClick={() => {
+                                    // Raw navigator.clipboard here — this component is reused in
+                                    // the widget bundle, which forbids Next.js-coupled imports
+                                    // (useCopyToClipboard → errorManager → @sentry/nextjs).
                                     navigator.clipboard.writeText(msg.content).catch(() => {});
                                   }}
                                   title="Copy"
