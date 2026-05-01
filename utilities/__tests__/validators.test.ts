@@ -105,27 +105,30 @@ describe("validators", () => {
   });
 
   describe("validateSlack", () => {
-    it("should validate correct Slack handles", () => {
+    it("should accept member IDs, emails, handles, and display names", () => {
       expect(validateSlack("alice")).toBe(true);
       expect(validateSlack("@alice")).toBe(true);
+      expect(validateSlack("U01ABCDEF")).toBe(true);
+      expect(validateSlack("alice@example.com")).toBe(true);
+      expect(validateSlack("Amaury Magalhães")).toBe(true);
       expect(validateSlack("alice.cooper")).toBe(true);
-      expect(validateSlack("alice_cooper")).toBe(true);
-      expect(validateSlack("alice-cooper")).toBe(true);
-      expect(validateSlack("a1")).toBe(true); // minimum length
-      expect(validateSlack("a".repeat(80))).toBe(true); // maximum length
+      expect(validateSlack("a1")).toBe(true);
+      expect(validateSlack("a".repeat(254))).toBe(true);
     });
 
-    it("should reject invalid Slack handles", () => {
-      expect(validateSlack("a")).toBe(false); // too short
-      expect(validateSlack("a".repeat(81))).toBe(false); // too long
-      expect(validateSlack("alice cooper")).toBe(false); // space
-      expect(validateSlack("alice/cooper")).toBe(false); // invalid char
-    });
-
-    it("should handle edge cases", () => {
+    it("should reject empty, too-short, too-long, and nullish input", () => {
+      expect(validateSlack("a")).toBe(false);
+      expect(validateSlack("a".repeat(255))).toBe(false);
       expect(validateSlack("")).toBe(false);
       expect(validateSlack(null as any)).toBe(false);
       expect(validateSlack(undefined as any)).toBe(false);
+    });
+
+    it("should reject control characters", () => {
+      expect(validateSlack("alice\nbob")).toBe(false);
+      expect(validateSlack("alice\tbob")).toBe(false);
+      expect(validateSlack(`alice${String.fromCharCode(0)}bob`)).toBe(false);
+      expect(validateSlack(`alice${String.fromCharCode(127)}bob`)).toBe(false);
     });
 
     it("should trim whitespace before validation", () => {

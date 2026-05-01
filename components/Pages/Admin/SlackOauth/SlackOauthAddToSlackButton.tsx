@@ -27,13 +27,15 @@ import { useStartSlackInstall } from "@/hooks/useSlackOauth";
 export function SlackOauthAddToSlackButton({
   communitySlug,
   variant = "primary",
+  label = "Add to Slack",
+  pendingLabel = "Connecting…",
+  ariaLabel = "Add Karma to Slack",
 }: {
   communitySlug: string;
-  /**
-   * Visual variant. `primary` for the empty-state install (large, full
-   * width); `compact` for the reinstall button on a populated card.
-   */
-  variant?: "primary" | "compact";
+  variant?: "primary" | "compact" | "subtle";
+  label?: string;
+  pendingLabel?: string;
+  ariaLabel?: string;
 }) {
   const { mutate, isPending } = useStartSlackInstall(communitySlug);
 
@@ -45,17 +47,22 @@ export function SlackOauthAddToSlackButton({
 
   const baseClasses =
     "inline-flex items-center justify-center gap-2 rounded-md font-semibold transition-colors disabled:opacity-60 disabled:cursor-not-allowed";
-  const variantClasses =
-    variant === "primary"
-      ? "h-11 w-full px-5 text-sm bg-[#4A154B] text-white hover:bg-[#3b1140]"
-      : "h-9 px-3 text-xs bg-[#4A154B] text-white hover:bg-[#3b1140]";
+  const variantClasses = (() => {
+    if (variant === "primary") {
+      return "h-11 w-full px-5 text-sm bg-slack-aubergine text-white hover:bg-slack-aubergine-hover";
+    }
+    if (variant === "compact") {
+      return "h-9 px-3 text-xs bg-slack-aubergine text-white hover:bg-slack-aubergine-hover";
+    }
+    return "h-9 px-3 text-xs border border-stone-200 bg-white text-stone-700 hover:bg-stone-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800";
+  })();
 
   return (
     <button
       type="button"
       onClick={handleClick}
       disabled={isPending}
-      aria-label="Add Karma to Slack"
+      aria-label={ariaLabel}
       className={`${baseClasses} ${variantClasses}`}
     >
       {isPending ? (
@@ -63,7 +70,7 @@ export function SlackOauthAddToSlackButton({
       ) : (
         <SlackLogo className={variant === "primary" ? "h-5 w-5" : "h-4 w-4"} />
       )}
-      <span>{isPending ? "Connecting…" : "Add to Slack"}</span>
+      <span>{isPending ? pendingLabel : label}</span>
     </button>
   );
 }

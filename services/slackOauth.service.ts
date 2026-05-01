@@ -1,5 +1,4 @@
 import type {
-  SlackOAuthMember,
   SlackOAuthRegisterWorkspaceInput,
   SlackOAuthWorkspace,
 } from "@/types/slack-oauth";
@@ -107,19 +106,5 @@ export const slackOauthService = {
       throw new Error("Authorize URL response was empty");
     }
     return data.authorizeUrl;
-  },
-
-  async searchMembers(
-    slug: string,
-    uid: string,
-    q: string,
-    limit = 20
-  ): Promise<{ items: SlackOAuthMember[]; total: number }> {
-    const [data, error] = await fetchData<{
-      items: SlackOAuthMember[];
-      total: number;
-    }>(INDEXER.SLACK_OAUTH.WORKSPACE_MEMBERS(slug, uid), "GET", {}, { q, limit }, {}, true);
-    if (error) throw new Error(error);
-    return data ?? { items: [], total: 0 };
   },
 };

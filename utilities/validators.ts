@@ -76,9 +76,16 @@ export function validateSlack(slack: string): boolean {
     return false;
   }
   const trimmed = slack.trim();
-  // Reasonable bounds: at least 2 chars (single-letter is meaningless),
-  // at most 254 (Slack display name limit + email RFC max).
-  return trimmed.length >= 2 && trimmed.length <= 254;
+  if (trimmed.length < 2 || trimmed.length > 254) {
+    return false;
+  }
+  for (let i = 0; i < trimmed.length; i++) {
+    const code = trimmed.charCodeAt(i);
+    if (code <= 0x1f || code === 0x7f) {
+      return false;
+    }
+  }
+  return true;
 }
 
 /**

@@ -124,7 +124,7 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
         editable: true,
         validation: (value: string) => {
           if (value && !validateSlack(value)) {
-            return "Enter at least 2 characters";
+            return "Slack must be between 2 and 254 characters";
           }
           return true;
         },

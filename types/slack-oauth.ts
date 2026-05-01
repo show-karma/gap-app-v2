@@ -30,15 +30,6 @@ export interface SlackOAuthWorkspace {
   revokedAt: string | null;
 }
 
-export interface SlackOAuthMember {
-  slackUserId: string;
-  displayName: string;
-  realName: string;
-  email?: string;
-  isBot: boolean;
-  deleted: boolean;
-}
-
 export interface SlackOAuthRegisterWorkspaceInput {
   teamId: string;
   teamName: string;

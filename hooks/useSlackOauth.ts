@@ -16,25 +16,21 @@ const DEFAULT_STALE_TIME_MS = 60_000;
 
 // ── Queries ───────────────────────────────────────────────────────────
 
+// Guard slug at fire-time so a request triggered before route params
+// resolve doesn't hit the API with `slug=undefined` in the URL path.
+function requireSlug(slug: string | undefined): string {
+  if (!slug) {
+    throw new Error("Community slug is required");
+  }
+  return slug;
+}
+
 export function useSlackOauthWorkspace(slug: string | undefined) {
   return useQuery<SlackOAuthWorkspace | null>({
     queryKey: slackOauthKeys.workspace(slug),
     enabled: !!slug,
     staleTime: DEFAULT_STALE_TIME_MS,
-    queryFn: () => slackOauthService.getWorkspace(slug as string),
-  });
-}
-
-export function useSlackOauthWorkspaceMembers(
-  slug: string | undefined,
-  uid: string | undefined,
-  q: string
-) {
-  return useQuery({
-    queryKey: slackOauthKeys.members(slug, uid, q),
-    enabled: !!slug && !!uid && q.length > 0,
-    staleTime: DEFAULT_STALE_TIME_MS,
-    queryFn: () => slackOauthService.searchMembers(slug as string, uid as string, q),
+    queryFn: () => slackOauthService.getWorkspace(requireSlug(slug)),
   });
 }
 
@@ -47,8 +43,7 @@ export function useSlackOauthWorkspaceMembers(
 export function useStartSlackInstall(slug: string | undefined) {
   return useMutation<void, Error, void>({
     mutationFn: async () => {
-      if (!slug) throw new Error("Community slug is required");
-      const authorizeUrl = await slackOauthService.getSlackAuthorizeUrl(slug);
+      const authorizeUrl = await slackOauthService.getSlackAuthorizeUrl(requireSlug(slug));
       // Hard navigation to slack.com — the server set a Redis nonce on
       // the way out, the callback will redeem it. No SPA-side state to
       // preserve; the callback bounces back to /settings with a flag.
@@ -60,18 +55,6 @@ export function useStartSlackInstall(slug: string | undefined) {
 }
 
 // ── Mutations ─────────────────────────────────────────────────────────
-
-// `slug` is `string | undefined` because the calling page resolves it
-// from the route params and renders before that resolves. The mutation
-// hooks guard at fire-time rather than rely on the type-cast — a
-// mutation triggered before the slug is ready would otherwise hit the
-// API with `slug=undefined` in the URL path and 404 / persist nothing.
-function requireSlug(slug: string | undefined): string {
-  if (!slug) {
-    throw new Error("Community slug is required");
-  }
-  return slug;
-}
 
 export function useRegisterSlackWorkspace(slug: string | undefined) {
   const queryClient = useQueryClient();

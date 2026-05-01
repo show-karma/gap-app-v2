@@ -56,31 +56,29 @@ export function SlackOauthWorkspaceSummary({
     });
   };
 
+  // Always resolve so DeleteDialog's catch-and-generic-toast path
+  // doesn't double up on our specific message; close only on success.
   const handleConfirmDelete = async () => {
-    await new Promise<void>((resolve, reject) => {
+    await new Promise<void>((resolve) => {
       deleteWorkspace(workspace.uid, {
         onSuccess: () => {
           toast.success("Workspace disconnected");
+          setDeleteOpen(false);
           resolve();
         },
         onError: (e) => {
           toast.error(e.message || "Disconnect failed");
-          reject(e);
+          resolve();
         },
       });
     });
-    setDeleteOpen(false);
   };
 
-  // Reinstall is the recovery action for REVOKED + ERROR workspaces.
-  // The /authorize-url flow rotates the bot token and reactivates the
-  // workspace status (status flips to ACTIVE on the server's
-  // registerFromOAuth path) WITHOUT touching slack_user_links.
-  const showReinstall = workspace.status !== "ACTIVE";
+  const showRecoveryBanner = workspace.status !== "ACTIVE";
 
   return (
     <>
-      {showReinstall ? (
+      {showRecoveryBanner ? (
         <div className="mb-4 flex items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 dark:border-amber-900/40 dark:bg-amber-950/30">
           <AlertCircle
             className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400"
@@ -149,6 +147,16 @@ export function SlackOauthWorkspaceSummary({
           <Trash2 className="mr-1.5 h-3.5 w-3.5" />
           Disconnect
         </Button>
+
+        {workspace.status === "ACTIVE" ? (
+          <SlackOauthAddToSlackButton
+            communitySlug={communitySlug}
+            variant="subtle"
+            label="Reinstall"
+            pendingLabel="Reinstalling…"
+            ariaLabel="Reinstall Slack workspace to refresh scopes"
+          />
+        ) : null}
 
         {deleteOpen ? (
           <DeleteDialog

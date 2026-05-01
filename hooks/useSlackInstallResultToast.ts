@@ -33,19 +33,27 @@ export function useSlackInstallResultToast(communitySlug: string | undefined) {
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
 
+  // Destructure to PRIMITIVES before the effect dep array. Per project
+  // pre-PR checklist: `useSearchParams()` and `useRouter()` return
+  // objects whose identity can flip on every render in some Next.js
+  // versions; depending on them directly re-fires the effect needlessly
+  // and can cause double-toasts. Reading the values into stable strings
+  // here means the dep array tracks what actually matters: the URL
+  // params themselves.
+  const flag = searchParams?.get("slack_install") ?? null;
+  const teamParam = searchParams?.get("team") ?? null;
+  const queryString = searchParams?.toString() ?? "";
+
   // Guard against React StrictMode double-invoking effects in dev —
   // the toast must only fire once per actual page load.
   const handledRef = useRef(false);
 
   useEffect(() => {
     if (handledRef.current) return;
-    if (!searchParams) return;
-    const flag = searchParams.get("slack_install");
     if (!flag) return;
 
     handledRef.current = true;
 
-    const teamParam = searchParams.get("team");
     switch (flag) {
       case "success":
         toast.success(teamParam ? `Connected to ${teamParam}` : "Slack workspace connected");
@@ -73,11 +81,16 @@ export function useSlackInstallResultToast(communitySlug: string | undefined) {
     }
 
     // Strip the install-related params; preserve everything else.
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(queryString);
     params.delete("slack_install");
     params.delete("team");
     const remaining = params.toString();
     const url = remaining ? `${window.location.pathname}?${remaining}` : window.location.pathname;
     router.replace(url, { scroll: false });
-  }, [searchParams, router, communitySlug, queryClient]);
+    // `router` deliberately omitted from the dep array — the Next
+    // router is stable across renders. `queryClient` is also stable
+    // (singleton from QueryClientProvider). Including either in deps
+    // would mean re-running on a no-op identity flip.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [flag, teamParam, queryString, communitySlug]);
 }

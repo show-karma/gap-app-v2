@@ -754,12 +754,8 @@ export const INDEXER = {
       `/v2/communities/${communityIdOrSlug}/slack-oauth/workspace/${uid}`,
     WORKSPACE_TEST: (communityIdOrSlug: string, uid: string) =>
       `/v2/communities/${communityIdOrSlug}/slack-oauth/workspace/${uid}/test`,
-    WORKSPACE_MEMBERS: (communityIdOrSlug: string, uid: string) =>
-      `/v2/communities/${communityIdOrSlug}/slack-oauth/workspace/${uid}/members`,
-    // Distributed install (Segment 2). The /authorize-url endpoint is
-    // the SPA-friendly twin of /install — returns { authorizeUrl }
-    // JSON the FE can pass to window.location.href after an authed
-    // fetch (fetch can't follow a cross-origin 302 to slack.com).
+    // Backend query param is named `communityId` but accepts a slug
+    // OR a UID — kept for wire compatibility.
     AUTHORIZE_URL: (communityIdOrSlug: string) =>
       `/v2/slack-oauth/authorize-url?communityId=${encodeURIComponent(communityIdOrSlug)}`,
   },
