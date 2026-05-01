@@ -60,6 +60,16 @@ interface AgentChatStore {
    */
   pendingTraceId: string | null;
 
+  /**
+   * ID of the assistant message whose thumbs-down feedback comment box is
+   * currently open. The thumbs UI lives inline next to the copy button
+   * (in the message bubble's action row), but the textarea expands below
+   * the message via `renderAfterMessage`. They live in different parts of
+   * the tree, so we coordinate the open/closed state through the store
+   * rather than React-context-lifting.
+   */
+  ratingCommentBoxOpenForMessageId: string | null;
+
   // Context for role-aware entry points (optional viewing hint)
   agentContext: {
     projectId?: string;
@@ -83,6 +93,7 @@ interface AgentChatStore {
   updateMessageToolResultStatus: (messageId: string, status: "approved" | "denied") => void;
   setLastAssistantTraceId: (traceId: string) => void;
   setMessageRating: (messageId: string, rating: 1 | -1) => void;
+  setRatingCommentBoxOpenForMessageId: (messageId: string | null) => void;
   setStreaming: (streaming: boolean) => void;
   setError: (error: string | null) => void;
   setAgentContext: (ctx: AgentChatStore["agentContext"]) => void;
@@ -100,6 +111,7 @@ export const useAgentChatStore = create<AgentChatStore>((set) => ({
   agentContext: null,
   pendingMentions: [],
   pendingTraceId: null,
+  ratingCommentBoxOpenForMessageId: null,
 
   setOpen: (open) => set({ isOpen: open }),
   toggleOpen: () => set((state) => ({ isOpen: !state.isOpen })),
@@ -184,6 +196,9 @@ export const useAgentChatStore = create<AgentChatStore>((set) => ({
       messages: state.messages.map((msg) => (msg.id === messageId ? { ...msg, rating } : msg)),
     })),
 
+  setRatingCommentBoxOpenForMessageId: (messageId) =>
+    set({ ratingCommentBoxOpenForMessageId: messageId }),
+
   setStreaming: (streaming) => set({ isStreaming: streaming }),
   setError: (error) => set({ error }),
   setAgentContext: (agentContext) => set({ agentContext }),
@@ -197,5 +212,11 @@ export const useAgentChatStore = create<AgentChatStore>((set) => ({
     set((state) => ({ pendingMentions: state.pendingMentions.filter((m) => m.id !== id) })),
   clearMentions: () => set({ pendingMentions: [] }),
   clearMessages: () =>
-    set({ messages: [], error: null, isStreaming: false, pendingTraceId: null }),
+    set({
+      messages: [],
+      error: null,
+      isStreaming: false,
+      pendingTraceId: null,
+      ratingCommentBoxOpenForMessageId: null
+    }),
 }));

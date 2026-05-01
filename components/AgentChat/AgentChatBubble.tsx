@@ -3,7 +3,10 @@
 import { Trash2Icon, XIcon } from "lucide-react";
 import { useCallback } from "react";
 import { ConfirmationCard } from "@/components/AgentChat/ConfirmationCard";
-import { MessageRating } from "@/components/AgentChat/MessageRating";
+import {
+  MessageRatingButtons,
+  MessageRatingCommentBox,
+} from "@/components/AgentChat/MessageRating";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -82,6 +85,11 @@ export function AgentChatBubble() {
           onMentionsConsumed={clearMentions}
         />
       )}
+      renderMessageActions={(msg) =>
+        msg.role === "assistant" && msg.content && !msg.isStreaming && msg.traceId ? (
+          <MessageRatingButtons messageId={msg.id} traceId={msg.traceId} />
+        ) : null
+      }
       renderAfterMessage={(msg) => (
         <>
           {msg.toolResult?.type === "preview" && authenticated ? (
@@ -95,7 +103,7 @@ export function AgentChatBubble() {
             </div>
           ) : null}
           {msg.role === "assistant" && msg.content && !msg.isStreaming && msg.traceId ? (
-            <MessageRating messageId={msg.id} traceId={msg.traceId} />
+            <MessageRatingCommentBox messageId={msg.id} traceId={msg.traceId} />
           ) : null}
         </>
       )}
