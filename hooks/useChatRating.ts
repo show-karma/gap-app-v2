@@ -10,7 +10,13 @@ export type RatingValue = 1 | -1;
 
 export interface UseChatRatingResult {
   rating: RatingValue | null;
-  submit: (value: RatingValue, comment?: string) => Promise<void>;
+  /**
+   * Submit a thumbs rating. Returns true on success, false on any failure
+   * (network, non-2xx, missing traceId). The caller is expected to use
+   * the boolean to decide whether to clear UI state — silently dropping
+   * a failure would lose user-typed comments without any feedback.
+   */
+  submit: (value: RatingValue, comment?: string) => Promise<boolean>;
 }
 
 export function useChatRating(
@@ -22,8 +28,8 @@ export function useChatRating(
   );
 
   const submit = useCallback(
-    async (value: RatingValue, comment?: string) => {
-      if (!traceId) return;
+    async (value: RatingValue, comment?: string): Promise<boolean> => {
+      if (!traceId) return false;
 
       try {
         const token = await TokenManager.getToken();
@@ -44,15 +50,23 @@ export function useChatRating(
         );
 
         if (!response.ok) {
-          throw new Error(`agent/rating returned ${response.status}`);
+          // Capture the response body for triage — Langfuse 4xx errors
+          // (invalid traceId, malformed payload) carry diagnostic detail
+          // that's lost if we only stash the status code.
+          const responseBody = await response.text().catch(() => "");
+          throw new Error(
+            `agent/rating returned ${response.status}: ${responseBody.slice(0, 500)}`
+          );
         }
 
         useAgentChatStore.getState().setMessageRating(messageId, value);
+        return true;
       } catch (err: unknown) {
         Sentry.captureException(err, {
           tags: { feature: "agent-chat-rating" },
           extra: { messageId, traceId, value },
         });
+        return false;
       }
     },
     [messageId, traceId]

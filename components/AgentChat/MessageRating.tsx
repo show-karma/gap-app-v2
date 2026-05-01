@@ -11,13 +11,20 @@ interface MessageRatingProps {
   traceId: string;
 }
 
+const COMMENT_MAX_LENGTH = 1000;
+
 /**
  * Inline thumbs up / thumbs down buttons. Rendered inside the message
  * bubble's action row, side-by-side with the copy button.
  *
- * On thumbs-up: scores immediately.
- * On thumbs-down: opens the comment box (rendered separately by
- * MessageRatingCommentBox below the message).
+ * On thumbs-up: scores immediately. Short-circuits if the user already
+ * voted up — prevents duplicate scores from impatient double-clicks.
+ *
+ * On thumbs-down: opens (or re-opens) the comment box. We deliberately
+ * do NOT short-circuit here even when the user already voted down —
+ * re-opening lets them revise the comment before deciding to resubmit.
+ * The actual score is only re-sent when the user clicks Submit, so
+ * re-opening is idempotent.
  */
 export function MessageRatingButtons({ messageId, traceId }: MessageRatingProps) {
   const { rating, submit } = useChatRating(messageId, traceId);
@@ -30,8 +37,10 @@ export function MessageRatingButtons({ messageId, traceId }: MessageRatingProps)
     if (rating === 1) return;
     setIsSubmitting(true);
     try {
-      await submit(1);
-      setCommentBoxOpen(null);
+      const ok = await submit(1);
+      if (ok) {
+        setCommentBoxOpen(null);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -93,21 +102,32 @@ export function MessageRatingCommentBox({ messageId, traceId }: MessageRatingPro
   );
   const [comment, setComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const handleCommentChange = useCallback(
     (event: React.ChangeEvent<HTMLTextAreaElement>) => {
       setComment(event.target.value);
+      if (submitError) setSubmitError(null);
     },
-    []
+    [submitError]
   );
 
   const handleSubmitComment = useCallback(async () => {
     setIsSubmitting(true);
+    setSubmitError(null);
     try {
       const trimmed = comment.trim();
-      await submit(-1, trimmed.length > 0 ? trimmed : undefined);
-      setCommentBoxOpen(null);
-      setComment("");
+      const ok = await submit(-1, trimmed.length > 0 ? trimmed : undefined);
+      // Only clear on success — otherwise a network blip would silently
+      // wipe the user's typed feedback without any acknowledgement.
+      if (ok) {
+        setCommentBoxOpen(null);
+        setComment("");
+      } else {
+        setSubmitError(
+          "Couldn't send your feedback. Check your connection and try again."
+        );
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -116,6 +136,7 @@ export function MessageRatingCommentBox({ messageId, traceId }: MessageRatingPro
   const handleCancel = useCallback(() => {
     setCommentBoxOpen(null);
     setComment("");
+    setSubmitError(null);
   }, [setCommentBoxOpen]);
 
   if (!isOpenForThisMessage) return null;
@@ -129,8 +150,13 @@ export function MessageRatingCommentBox({ messageId, traceId }: MessageRatingPro
         aria-label="Feedback comment"
         className="w-full rounded-md border border-border bg-background p-2 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
         rows={2}
-        maxLength={1000}
+        maxLength={COMMENT_MAX_LENGTH}
       />
+      <div className="flex items-center justify-between gap-2 text-[10px] text-muted-foreground">
+        <span aria-live="polite" className={submitError ? "text-destructive" : ""}>
+          {submitError ?? `${comment.length}/${COMMENT_MAX_LENGTH}`}
+        </span>
+      </div>
       <div className="flex items-center gap-2">
         <Button
           variant="default"
@@ -138,26 +164,12 @@ export function MessageRatingCommentBox({ messageId, traceId }: MessageRatingPro
           onClick={handleSubmitComment}
           disabled={isSubmitting}
         >
-          Submit feedback
+          {isSubmitting ? "Sending…" : "Submit feedback"}
         </Button>
         <Button variant="ghost" size="sm" onClick={handleCancel} disabled={isSubmitting}>
           Cancel
         </Button>
       </div>
-    </div>
-  );
-}
-
-/**
- * @deprecated Use MessageRatingButtons + MessageRatingCommentBox separately.
- * Kept for any out-of-tree consumers; re-renders both in the legacy
- * stacked layout.
- */
-export function MessageRating(props: MessageRatingProps) {
-  return (
-    <div className="pl-9 mt-1">
-      <MessageRatingButtons {...props} />
-      <MessageRatingCommentBox {...props} />
     </div>
   );
 }

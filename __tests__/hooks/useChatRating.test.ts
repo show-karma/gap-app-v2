@@ -37,33 +37,46 @@ beforeEach(async () => {
 
 describe("useChatRating", () => {
   beforeEach(() => {
-    useAgentChatStore.setState({
-      messages: [
-        {
-          id: "assistant-1",
-          role: "assistant",
-          content: "answer",
-          timestamp: 1,
-          traceId: "trace-abc",
-        },
-      ],
-      isOpen: false,
-      isStreaming: false,
-      error: null,
-      agentContext: null,
-      pendingMentions: [],
-    });
+    // Replace state (second `true` arg) so newly added store fields like
+    // `pendingTraceId` and `ratingCommentBoxOpenForMessageId` start at
+    // their initial values and don't leak across tests.
+    useAgentChatStore.setState(
+      {
+        messages: [
+          {
+            id: "assistant-1",
+            role: "assistant",
+            content: "answer",
+            timestamp: 1,
+            traceId: "trace-abc",
+          },
+        ],
+        isOpen: false,
+        isStreaming: false,
+        error: null,
+        agentContext: null,
+        pendingMentions: [],
+        pendingTraceId: null,
+        ratingCommentBoxOpenForMessageId: null,
+      } as Partial<ReturnType<typeof useAgentChatStore.getState>>,
+      false
+    );
   });
 
   afterEach(() => {
-    useAgentChatStore.setState({
-      messages: [],
-      isOpen: false,
-      isStreaming: false,
-      error: null,
-      agentContext: null,
-      pendingMentions: [],
-    });
+    useAgentChatStore.setState(
+      {
+        messages: [],
+        isOpen: false,
+        isStreaming: false,
+        error: null,
+        agentContext: null,
+        pendingMentions: [],
+        pendingTraceId: null,
+        ratingCommentBoxOpenForMessageId: null,
+      } as Partial<ReturnType<typeof useAgentChatStore.getState>>,
+      false
+    );
     vi.unstubAllGlobals();
   });
 
@@ -76,10 +89,12 @@ describe("useChatRating", () => {
   it("should_post_to_indexer_rating_endpoint_and_persist_rating_on_submit", async () => {
     const { result } = renderHook(() => useChatRating("assistant-1", "trace-abc"));
 
+    let returned: boolean | undefined;
     await act(async () => {
-      await result.current.submit(1);
+      returned = await result.current.submit(1);
     });
 
+    expect(returned).toBe(true);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe("https://indexer.test/v2/agent/rating");
@@ -91,6 +106,7 @@ describe("useChatRating", () => {
     const stored = useAgentChatStore.getState().messages.find((m) => m.id === "assistant-1");
     expect(stored?.rating).toBe(1);
   });
+
 
   it("should_forward_optional_comment_in_request_body", async () => {
     const { result } = renderHook(() => useChatRating("assistant-1", "trace-abc"));
@@ -111,30 +127,44 @@ describe("useChatRating", () => {
     expect(stored?.rating).toBe(-1);
   });
 
-  it("should_no_op_when_traceId_is_missing", async () => {
+  it("should_return_false_and_skip_request_when_traceId_is_missing", async () => {
     const { result } = renderHook(() => useChatRating("assistant-1", undefined));
 
+    let returned: boolean | undefined;
     await act(async () => {
-      await result.current.submit(1);
+      returned = await result.current.submit(1);
     });
 
+    expect(returned).toBe(false);
     expect(fetchMock).not.toHaveBeenCalled();
     const stored = useAgentChatStore.getState().messages.find((m) => m.id === "assistant-1");
     expect(stored?.rating).toBeUndefined();
   });
 
-  it("should_capture_exception_and_keep_state_unchanged_when_request_fails", async () => {
-    fetchMock.mockResolvedValueOnce({ ok: false, status: 502 });
+  it("should_return_false_and_capture_exception_when_request_fails", async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      status: 502,
+      text: () => Promise.resolve("upstream blew up"),
+    });
     const Sentry = await import("@sentry/nextjs");
     const { result } = renderHook(() => useChatRating("assistant-1", "trace-abc"));
 
+    let returned: boolean | undefined;
     await act(async () => {
-      await result.current.submit(1);
+      returned = await result.current.submit(1);
     });
 
+    expect(returned).toBe(false);
     expect(Sentry.captureException).toHaveBeenCalledTimes(1);
+    // Caller relies on the boolean to decide whether to clear UI state
+    // — store rating must NOT be set on failure.
     const stored = useAgentChatStore.getState().messages.find((m) => m.id === "assistant-1");
     expect(stored?.rating).toBeUndefined();
+    // Response body should be threaded into the captured error message
+    // so 4xx triage in Sentry doesn't require correlation with server logs.
+    const capturedError = vi.mocked(Sentry.captureException).mock.calls[0][0] as Error;
+    expect(capturedError.message).toContain("upstream blew up");
   });
 
   it("should_capture_exception_and_keep_state_unchanged_when_fetch_throws", async () => {

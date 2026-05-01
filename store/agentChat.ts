@@ -181,6 +181,17 @@ export const useAgentChatStore = create<AgentChatStore>((set) => ({
       const messages = [...state.messages];
       for (let i = messages.length - 1; i >= 0; i--) {
         if (messages[i].role === "assistant") {
+          // Defensive: don't clobber an existing traceId. Today the
+          // assistant placeholder is added synchronously before the
+          // stream opens (see useAgentStream) so the latest assistant
+          // message will always be the right target. But future flows
+          // (regenerate, tool re-runs, replay) could leave a finalized
+          // assistant message with a traceId in place when a new
+          // trace_started event fires; we should buffer the new one
+          // for the next addMessage instead of silently overwriting.
+          if (messages[i].traceId) {
+            return { pendingTraceId: traceId };
+          }
           messages[i] = { ...messages[i], traceId };
           return { messages };
         }
