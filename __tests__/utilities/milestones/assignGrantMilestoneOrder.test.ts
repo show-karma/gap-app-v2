@@ -120,6 +120,31 @@ describe("assignGrantMilestoneOrder", () => {
     expect(result).not.toBe(input);
   });
 
+  it("preserves existing grantMilestoneOrder when already stamped (e.g. server-provided)", () => {
+    // Server stamps order before filtering; recomputing locally on a filtered
+    // subset would produce a wrong total (e.g. "1 of 1" instead of "2 of 4").
+    const filtered = createGrantMilestone("a", "grant-1", { endsAt: 2000 });
+    filtered.grantMilestoneOrder = { index: 2, total: 4 };
+
+    const result = assignGrantMilestoneOrder([filtered]);
+
+    expect(result[0].grantMilestoneOrder).toEqual({ index: 2, total: 4 });
+  });
+
+  it("only computes order for milestones missing it, leaving stamped ones alone", () => {
+    const stamped = createGrantMilestone("a", "grant-1", { endsAt: 1000 });
+    stamped.grantMilestoneOrder = { index: 3, total: 5 };
+    const unstamped1 = createGrantMilestone("b", "grant-2", { endsAt: 1000 });
+    const unstamped2 = createGrantMilestone("c", "grant-2", { endsAt: 2000 });
+
+    const result = assignGrantMilestoneOrder([stamped, unstamped1, unstamped2]);
+    const byUid = Object.fromEntries(result.map((m) => [m.uid, m.grantMilestoneOrder]));
+
+    expect(byUid.a).toEqual({ index: 3, total: 5 });
+    expect(byUid.b).toEqual({ index: 1, total: 2 });
+    expect(byUid.c).toEqual({ index: 2, total: 2 });
+  });
+
   it("breaks ties deterministically by uid", () => {
     const a = createGrantMilestone("zzz", "grant-1", { endsAt: 1000 });
     const b = createGrantMilestone("aaa", "grant-1", { endsAt: 1000 });

@@ -15,6 +15,25 @@ interface SingleSourceResponse {
 }
 
 /**
+ * DEV-202: structured error thrown by the knowledge-base service so
+ * callers can branch on HTTP status (e.g., 409 → duplicate externalId)
+ * rather than text-matching the server message. fetchData returns the
+ * status code as the 4th tuple element; we preserve it on this class so
+ * dialogs can handle the conflict path without parsing English copy.
+ */
+export class KnowledgeBaseApiError extends Error {
+  readonly status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "KnowledgeBaseApiError";
+    this.status = status;
+    // Restore the prototype chain in case this is constructed in a
+    // bundled / down-leveled context where `super(...)` strips it.
+    Object.setPrototypeOf(this, KnowledgeBaseApiError.prototype);
+  }
+}
+
+/**
  * Knowledge-base API client. All hooks consume this module — the React
  * Query hooks supply caching/invalidation/optimistic-update plumbing,
  * the service supplies the network calls. Mirrors the convention used
@@ -62,7 +81,10 @@ export async function updateKnowledgeSource(
   sourceId: string,
   patch: UpdateKnowledgeSourceInput
 ): Promise<KnowledgeSource> {
-  const [data, error] = await fetchData<SingleSourceResponse>(
+  // The 4th tuple element is the HTTP status — preserve it on the
+  // thrown error so callers (e.g., EditSourceDialog) can branch on
+  // 409 → duplicate externalId without parsing the server's message.
+  const [data, error, , status] = await fetchData<SingleSourceResponse>(
     INDEXER.KNOWLEDGE_BASE.UPDATE_SOURCE(communityIdOrSlug, sourceId),
     "PATCH",
     patch,
@@ -70,7 +92,7 @@ export async function updateKnowledgeSource(
     {},
     true
   );
-  if (error) throw new Error(error);
+  if (error) throw new KnowledgeBaseApiError(error, status);
   if (!data?.data) throw new Error("Empty response from server");
   return data.data;
 }

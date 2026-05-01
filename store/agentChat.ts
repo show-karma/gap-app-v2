@@ -15,6 +15,10 @@ export interface ChatMessage {
   /** For preview/commit tool results rendered as confirmation cards */
   toolResult?: ToolResultData;
   isStreaming?: boolean;
+  /** Langfuse trace ID — only present on assistant messages once the backend emits it */
+  traceId?: string;
+  /** User feedback rating: 1 = thumbs up, -1 = thumbs down */
+  rating?: 1 | -1;
 }
 
 /**
@@ -47,6 +51,25 @@ interface AgentChatStore {
   isStreaming: boolean;
   error: string | null;
 
+  /**
+   * Buffered Langfuse trace ID. The backend emits `trace_started` over SSE
+   * BEFORE the first assistant token arrives, so by the time the system
+   * event is processed there's no assistant message in the store yet to
+   * attach it to. We park the traceId here and consume it on the next
+   * assistant message added via `addMessage`.
+   */
+  pendingTraceId: string | null;
+
+  /**
+   * ID of the assistant message whose thumbs-down feedback comment box is
+   * currently open. The thumbs UI lives inline next to the copy button
+   * (in the message bubble's action row), but the textarea expands below
+   * the message via `renderAfterMessage`. They live in different parts of
+   * the tree, so we coordinate the open/closed state through the store
+   * rather than React-context-lifting.
+   */
+  ratingCommentBoxOpenForMessageId: string | null;
+
   // Context for role-aware entry points (optional viewing hint)
   agentContext: {
     projectId?: string;
@@ -68,6 +91,9 @@ interface AgentChatStore {
   finalizeLastAssistantMessage: () => void;
   updateLastAssistantToolResult: (toolResult: ToolResultData) => void;
   updateMessageToolResultStatus: (messageId: string, status: "approved" | "denied") => void;
+  setLastAssistantTraceId: (traceId: string) => void;
+  setMessageRating: (messageId: string, rating: 1 | -1) => void;
+  setRatingCommentBoxOpenForMessageId: (messageId: string | null) => void;
   setStreaming: (streaming: boolean) => void;
   setError: (error: string | null) => void;
   setAgentContext: (ctx: AgentChatStore["agentContext"]) => void;
@@ -84,11 +110,32 @@ export const useAgentChatStore = create<AgentChatStore>((set) => ({
   error: null,
   agentContext: null,
   pendingMentions: [],
+  pendingTraceId: null,
+  ratingCommentBoxOpenForMessageId: null,
 
   setOpen: (open) => set({ isOpen: open }),
   toggleOpen: () => set((state) => ({ isOpen: !state.isOpen })),
 
-  addMessage: (message) => set((state) => ({ messages: [...state.messages, message] })),
+  addMessage: (message) =>
+    set((state) => {
+      // If a trace_started SSE event arrived before this assistant message
+      // existed, consume the buffered traceId and stamp it on the new
+      // message — that's the path the rating UI gates on.
+      if (
+        message.role === "assistant" &&
+        !message.traceId &&
+        state.pendingTraceId
+      ) {
+        return {
+          messages: [
+            ...state.messages,
+            { ...message, traceId: state.pendingTraceId }
+          ],
+          pendingTraceId: null
+        };
+      }
+      return { messages: [...state.messages, message] };
+    }),
 
   updateLastAssistantMessage: (content) =>
     set((state) => {
@@ -129,6 +176,43 @@ export const useAgentChatStore = create<AgentChatStore>((set) => ({
       ),
     })),
 
+  setLastAssistantTraceId: (traceId) =>
+    set((state) => {
+      const messages = [...state.messages];
+      for (let i = messages.length - 1; i >= 0; i--) {
+        if (messages[i].role === "assistant") {
+          // Defensive: don't clobber an existing traceId. Today the
+          // assistant placeholder is added synchronously before the
+          // stream opens (see useAgentStream) so the latest assistant
+          // message will always be the right target. But future flows
+          // (regenerate, tool re-runs, replay) could leave a finalized
+          // assistant message with a traceId in place when a new
+          // trace_started event fires; we should buffer the new one
+          // for the next addMessage instead of silently overwriting.
+          if (messages[i].traceId) {
+            return { pendingTraceId: traceId };
+          }
+          messages[i] = { ...messages[i], traceId };
+          // Clear any stale pendingTraceId — if we successfully attached
+          // to a real message, the buffer is no longer load-bearing and
+          // would otherwise leak into the next addMessage.
+          return { messages, pendingTraceId: null };
+        }
+      }
+      // No assistant message yet — buffer the traceId so the next
+      // addMessage call (when the assistant message is created from the
+      // first stream token) can attach it.
+      return { pendingTraceId: traceId };
+    }),
+
+  setMessageRating: (messageId, rating) =>
+    set((state) => ({
+      messages: state.messages.map((msg) => (msg.id === messageId ? { ...msg, rating } : msg)),
+    })),
+
+  setRatingCommentBoxOpenForMessageId: (messageId) =>
+    set({ ratingCommentBoxOpenForMessageId: messageId }),
+
   setStreaming: (streaming) => set({ isStreaming: streaming }),
   setError: (error) => set({ error }),
   setAgentContext: (agentContext) => set({ agentContext }),
@@ -141,5 +225,12 @@ export const useAgentChatStore = create<AgentChatStore>((set) => ({
   removeMention: (id) =>
     set((state) => ({ pendingMentions: state.pendingMentions.filter((m) => m.id !== id) })),
   clearMentions: () => set({ pendingMentions: [] }),
-  clearMessages: () => set({ messages: [], error: null, isStreaming: false }),
+  clearMessages: () =>
+    set({
+      messages: [],
+      error: null,
+      isStreaming: false,
+      pendingTraceId: null,
+      ratingCommentBoxOpenForMessageId: null
+    }),
 }));

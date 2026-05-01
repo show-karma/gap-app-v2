@@ -346,6 +346,7 @@ describe("community schemas", () => {
       endorsements: [],
       contractAddresses: [],
       numMilestones: 5,
+      numCompletedMilestones: 3,
       numUpdates: 10,
       percentCompleted: 60,
       numTransactions: 25,

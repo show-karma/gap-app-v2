@@ -89,6 +89,8 @@ export const QUERY_KEYS = {
     COMMENTS: (referenceNumber: string) => ["application-comments", referenceNumber] as const,
     INVOICE_CONFIG: (referenceNumber: string) =>
       ["applicationInvoiceConfig", referenceNumber] as const,
+    GRANTEE_CONTACTS: (referenceNumber: string) =>
+      ["application-grantee-contacts", referenceNumber] as const,
   },
   REVIEWERS: {
     PROGRAM: (programId: string) => ["program-reviewers", programId] as const,

@@ -9,6 +9,7 @@ import {
   Globe,
   Network,
   Pause,
+  Pencil,
   Play,
   RefreshCw,
   Target,
@@ -28,6 +29,7 @@ import {
   type KnowledgeSource,
   type KnowledgeSourceKind,
 } from "@/types/v2/knowledge-base";
+import { EditSourceDialog } from "./EditSourceDialog";
 
 interface Props {
   source: KnowledgeSource;
@@ -93,14 +95,24 @@ interface StatusMeta {
 }
 
 function getStatusMeta(source: KnowledgeSource): StatusMeta {
-  if (!source.isActive) {
-    // "Sync paused" rather than just "Paused" because pausing only stops
-    // future syncs — the source's existing chunks remain in the index
-    // and continue answering chatbot questions until the source is
-    // deleted. The Pause button's tooltip carries the same caveat.
+  // DEV-194: paused is explicit and authoritative — the backend skips
+  // sync AND excludes the source's chunks from retrieval. The label is
+  // just "Paused" (no "sync" qualifier) because both axes stop at once.
+  if (source.paused) {
     return {
       tone: "paused",
-      label: "Sync paused",
+      label: "Paused",
+      dot: "bg-stone-400 dark:bg-zinc-500",
+    };
+  }
+  if (!source.isActive) {
+    // Legacy `isActive=false` — the long-term disable axis. Today no UI
+    // control flips this, but pre-existing rows might already be in
+    // this state. Keep the badge so admins see "this is off" without
+    // conflating it with paused.
+    return {
+      tone: "paused",
+      label: "Inactive",
       dot: "bg-stone-400 dark:bg-zinc-500",
     };
   }
@@ -213,6 +225,10 @@ function diffParts(source: KnowledgeSource): DiffPart[] {
 
 function SourceRowImpl({ source, communityIdOrSlug, isFirst }: Props) {
   const [confirmDelete, setConfirmDelete] = useState(false);
+  // DEV-202: edit dialog open state. The dialog hydrates from the
+  // `source` prop on each open, so toggling here is enough — we don't
+  // need to copy the source into local state.
+  const [editOpen, setEditOpen] = useState(false);
   const update = useUpdateKnowledgeSource(communityIdOrSlug);
   const resync = useResyncKnowledgeSource(communityIdOrSlug);
   const del = useDeleteKnowledgeSource(communityIdOrSlug);
@@ -221,15 +237,19 @@ function SourceRowImpl({ source, communityIdOrSlug, isFirst }: Props) {
   const status = getStatusMeta(source);
   const KindIcon = kind.Icon;
   const parts = diffParts(source);
-  const isPaused = !source.isActive;
+  // DEV-194: dim the row whenever it's "off" — either paused (the new
+  // explicit switch) or legacy isActive=false. The status badge still
+  // distinguishes the two states; this just keeps the visual treatment
+  // consistent with pre-DEV-194 behavior for inactive rows.
+  const isDimmed = source.paused || !source.isActive;
 
-  const handleToggleActive = async () => {
+  const handleTogglePaused = async () => {
     try {
       await update.mutateAsync({
         sourceId: source.id,
-        patch: { isActive: !source.isActive },
+        patch: { paused: !source.paused },
       });
-      toast.success(source.isActive ? "Source paused." : "Source resumed.");
+      toast.success(source.paused ? "Source resumed." : "Source paused.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Update failed.");
     }
@@ -266,8 +286,14 @@ function SourceRowImpl({ source, communityIdOrSlug, isFirst }: Props) {
   // cleared status + lastSyncedAt). The Sync button is gated for both
   // states so a double-click can't enqueue redundant work — there's
   // nothing for "force reprocess" to do until the worker finishes.
-  const isQueued = source.isActive && !source.lastSyncedAt && status.tone === "idle";
-  const syncBlocked = isSyncingNow || isQueued;
+  // DEV-194: paused rows aren't "queued" — claimDueForSync skips them,
+  // so a Sync click would have no effect; gate the button accordingly.
+  // Same reasoning applies to is_active=false: claimDueForSync filters
+  // those out too, so the button has to be disabled for the click to
+  // honestly reflect what the backend will do.
+  const isQueued =
+    source.isActive && !source.paused && !source.lastSyncedAt && status.tone === "idle";
+  const syncBlocked = isSyncingNow || isQueued || source.paused || !source.isActive;
 
   return (
     <li
@@ -286,7 +312,7 @@ function SourceRowImpl({ source, communityIdOrSlug, isFirst }: Props) {
           isFailed
             ? "border-rose-200 bg-rose-50 dark:border-rose-900/50 dark:bg-rose-950/40"
             : "border-stone-200 bg-stone-50 dark:border-zinc-800 dark:bg-zinc-900"
-        } ${isPaused ? "opacity-55" : ""}`}
+        } ${isDimmed ? "opacity-55" : ""}`}
         aria-hidden="true"
       >
         <KindIcon
@@ -296,7 +322,7 @@ function SourceRowImpl({ source, communityIdOrSlug, isFirst }: Props) {
       </div>
 
       {/* Title / URL / meta */}
-      <div className={`min-w-0 ${isPaused ? "opacity-70" : ""}`}>
+      <div className={`min-w-0 ${isDimmed ? "opacity-70" : ""}`}>
         <div className="flex items-baseline gap-2.5">
           <p className="truncate text-sm font-semibold leading-tight text-stone-900 dark:text-zinc-100">
             {source.title}
@@ -438,7 +464,15 @@ function SourceRowImpl({ source, communityIdOrSlug, isFirst }: Props) {
         )}
         <RowAction
           label={
-            isSyncingNow ? "Sync in progress" : isQueued ? "Already queued for sync" : "Sync now"
+            source.paused
+              ? "Resume to sync — paused sources are skipped"
+              : !source.isActive
+                ? "Source is inactive — sync is disabled"
+                : isSyncingNow
+                  ? "Sync in progress"
+                  : isQueued
+                    ? "Already queued for sync"
+                    : "Sync now"
           }
           onClick={handleResync}
           disabled={resync.isPending || syncBlocked}
@@ -447,14 +481,18 @@ function SourceRowImpl({ source, communityIdOrSlug, isFirst }: Props) {
         />
         <RowAction
           label={
-            source.isActive
-              ? "Pause syncing — existing chunks stay searchable"
-              : "Resume syncing on the regular schedule"
+            source.paused
+              ? "Resume — back in sync and search"
+              : "Pause — skip sync and hide from search"
           }
-          onClick={handleToggleActive}
+          onClick={handleTogglePaused}
           disabled={update.isPending}
-          Icon={source.isActive ? Pause : Play}
+          Icon={source.paused ? Play : Pause}
         />
+        {/* DEV-202: Edit slots between Pause and Delete. Edits that
+            change content-affecting fields (goal, link, follow-links
+            on) prompt a confirmation modal before saving. */}
+        <RowAction label="Edit source" onClick={() => setEditOpen(true)} Icon={Pencil} />
         <RowAction
           label="Delete source"
           onClick={() => setConfirmDelete(true)}
@@ -471,6 +509,13 @@ function SourceRowImpl({ source, communityIdOrSlug, isFirst }: Props) {
         title="Delete this source? This will remove its documents and chunks."
         deleteFunction={handleDelete}
         buttonElement={null}
+      />
+
+      <EditSourceDialog
+        communityIdOrSlug={communityIdOrSlug}
+        source={editOpen ? source : null}
+        open={editOpen}
+        onOpenChange={setEditOpen}
       />
     </li>
   );

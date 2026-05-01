@@ -150,6 +150,16 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
     // Use grant info directly from API response
     const grantInfo = milestone.grant;
 
+    // Use the per-grant ordinal computed server-side. The backend stamps these
+    // BEFORE applying any status/date/AI filter, so the badge reflects the
+    // milestone's position within the FULL grant — not within the filtered
+    // subset, which would otherwise produce misleading totals (e.g. "1 of 1"
+    // when filtering by verified instead of the true "2 of 4").
+    const serverOrder =
+      milestone.grantMilestoneIndex != null && milestone.grantMilestoneTotal != null
+        ? { index: milestone.grantMilestoneIndex, total: milestone.grantMilestoneTotal }
+        : undefined;
+
     unified.push({
       uid: milestone.uid,
       chainID,
@@ -157,6 +167,7 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
       type: "grant",
       title: milestone.title,
       description: milestone.description,
+      grantMilestoneOrder: serverOrder,
       completed: isCompleted
         ? {
             createdAt:

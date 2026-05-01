@@ -87,6 +87,7 @@ export function CommentsAndActivity({
         onVersionClick={undefined}
         programId={programId}
         enableMentions={!!programId}
+        referenceNumber={referenceNumber}
       />
     </div>
   );
