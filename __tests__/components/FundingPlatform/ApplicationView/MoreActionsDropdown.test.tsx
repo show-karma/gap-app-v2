@@ -5,6 +5,11 @@ import MoreActionsDropdown from "@/components/FundingPlatform/ApplicationView/Mo
 
 // Mock react-hot-toast
 vi.mock("react-hot-toast", () => ({
+  __esModule: true,
+  default: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
   success: vi.fn(),
   error: vi.fn(),
 }));

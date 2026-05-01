@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
+import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import {
   CommunityImpactStatCards,
@@ -16,10 +17,13 @@ vi.mock("@/utilities/queries/v2/getCommunityData");
 vi.mock("@/store/community");
 
 // Mock useQuery for CommunityStatCards
-vi.mock("@tanstack/react-query", () => ({
-  ...vi.importActual("@tanstack/react-query"),
-  useQuery: vi.fn(),
-}));
+vi.mock("@tanstack/react-query", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@tanstack/react-query")>();
+  return {
+    ...actual,
+    useQuery: vi.fn(),
+  };
+});
 
 const mockUseQuery = useQuery as vi.MockedFunction<typeof useQuery>;
 
@@ -272,10 +276,10 @@ describe("StatCards", () => {
   });
 
   describe("CommunityImpactStatCards", () => {
-    const { usePathname } = require("next/navigation");
+    const mockUsePathname = usePathname as unknown as ReturnType<typeof vi.fn>;
 
     it("should render ImpactStatCards when on impact page", () => {
-      usePathname.mockReturnValue("/community/test-community/impact");
+      mockUsePathname.mockReturnValue("/community/test-community/impact");
       mockUseImpactMeasurement.mockReturnValue({
         data: {
           stats: {
@@ -293,7 +297,7 @@ describe("StatCards", () => {
     });
 
     it("should render CommunityStatCards when not on impact page", () => {
-      usePathname.mockReturnValue("/community/test-community");
+      mockUsePathname.mockReturnValue("/community/test-community");
       mockUseCommunityStore.mockReturnValue({
         totalProjects: 10,
         totalGrants: 5,
@@ -307,7 +311,7 @@ describe("StatCards", () => {
     });
 
     it("should have correct container styling", () => {
-      usePathname.mockReturnValue("/community/test-community");
+      mockUsePathname.mockReturnValue("/community/test-community");
       mockUseCommunityStore.mockReturnValue({
         totalProjects: 10,
         totalGrants: 5,
@@ -324,7 +328,7 @@ describe("StatCards", () => {
     });
 
     it("should use 2-column grid layout on small screens", () => {
-      usePathname.mockReturnValue("/community/test-community");
+      mockUsePathname.mockReturnValue("/community/test-community");
       mockUseCommunityStore.mockReturnValue({
         totalProjects: 10,
         totalGrants: 5,
@@ -412,8 +416,9 @@ describe("StatCards", () => {
         },
       });
 
-      const { usePathname } = require("next/navigation");
-      usePathname.mockReturnValue("/community/test-community");
+      (usePathname as unknown as ReturnType<typeof vi.fn>).mockReturnValue(
+        "/community/test-community"
+      );
 
       render(<CommunityStatCards />, { wrapper });
 

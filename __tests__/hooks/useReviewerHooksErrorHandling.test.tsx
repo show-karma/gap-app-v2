@@ -13,6 +13,11 @@ vi.mock("@/hooks/useAuth", () => ({
 }));
 
 vi.mock("react-hot-toast", () => ({
+  __esModule: true,
+  default: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
   toast: {
     success: vi.fn(),
     error: vi.fn(),

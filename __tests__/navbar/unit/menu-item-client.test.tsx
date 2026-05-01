@@ -17,6 +17,7 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: mockPush,
   }),
+  usePathname: vi.fn(() => "/"),
 }));
 
 describe("MenuItemClient Component", () => {
