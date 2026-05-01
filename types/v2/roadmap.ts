@@ -125,6 +125,13 @@ export type GrantMilestoneWithDetails = {
     receivedAt: string | null;
     fileKey: string | null;
   } | null;
+  /**
+   * 1-based position of this milestone within its parent grant, computed by
+   * the backend across ALL of the grant's milestones (independent of any
+   * active status / date / AI filter). Paired with `grantMilestoneTotal`.
+   */
+  grantMilestoneIndex?: number;
+  grantMilestoneTotal?: number;
 };
 
 export type GrantUpdateWithDetails = {
