@@ -69,6 +69,7 @@ function createMockInvoice(
     invoiceReceivedAt: null,
     invoiceReceivedBy: null,
     invoiceFileKey: null,
+    completionReason: null,
     ...overrides,
   };
 }

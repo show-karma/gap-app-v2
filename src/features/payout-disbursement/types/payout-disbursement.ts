@@ -261,6 +261,10 @@ export interface CommunityPayoutInvoiceInfo {
   allocatedAmount: string | null;
   paymentStatus: MilestonePaymentStatus;
   paymentStatusDate: string | null;
+  /** Project-owner-supplied completion text. Null when the milestone has no
+   * on-chain completion or its completion carries no reason — in which case
+   * the AI evaluation badge is suppressed even if a stale evaluation exists. */
+  completionReason: string | null;
 }
 
 /**
