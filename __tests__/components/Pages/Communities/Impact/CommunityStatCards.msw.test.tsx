@@ -65,9 +65,16 @@ describe("CommunityStatCards", () => {
           return HttpResponse.json({
             totalProjects: 25,
             totalGrants: 50,
-            totalMilestones: 100,
+            totalMilestones: 137,
             projectUpdates: 75,
-            projectUpdatesBreakdown: null,
+            projectUpdatesBreakdown: {
+              projectMilestones: 80,
+              projectCompletedMilestones: 30,
+              projectUpdates: 40,
+              grantMilestones: 57,
+              grantCompletedMilestones: 25,
+              grantUpdates: 60,
+            },
           });
         })
       );
@@ -83,6 +90,42 @@ describe("CommunityStatCards", () => {
       expect(screen.getByText("Total Projects")).toBeInTheDocument();
       expect(screen.getByText("Project Updates")).toBeInTheDocument();
       expect(screen.getByText("75")).toBeInTheDocument();
+
+      // Milestones card: completed = 30 + 25 = 55, total = 137
+      expect(screen.getByText("55 / 137")).toBeInTheDocument();
+      expect(screen.getByText("Completed / Total Milestones")).toBeInTheDocument();
+      expect(screen.getByText("40.1%")).toBeInTheDocument();
+      expect(screen.getByText("59.9%")).toBeInTheDocument();
+
+      const bar = screen.getByRole("progressbar");
+      expect(bar).toHaveAttribute("aria-valuenow", String((55 / 137) * 100));
+    });
+
+    it("renders 0 / 0 milestones without dividing by zero", async () => {
+      server.use(
+        http.get(`${BASE}/v2/communities/:slug/stats`, () => {
+          return HttpResponse.json({
+            totalProjects: 1,
+            totalGrants: 1,
+            totalMilestones: 0,
+            projectUpdates: 1,
+            projectUpdatesBreakdown: {
+              projectMilestones: 0,
+              projectCompletedMilestones: 0,
+              projectUpdates: 0,
+              grantMilestones: 0,
+              grantCompletedMilestones: 0,
+              grantUpdates: 0,
+            },
+          });
+        })
+      );
+
+      renderWithProviders(<CommunityStatCards />);
+
+      expect(await screen.findByText("0 / 0")).toBeInTheDocument();
+      const percents = screen.getAllByText("0.0%");
+      expect(percents.length).toBe(2);
     });
 
     it("renders dash when values are zero or falsy", async () => {
