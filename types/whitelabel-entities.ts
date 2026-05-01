@@ -250,6 +250,7 @@ export interface Application {
   communitySlug?: string;
   communityName?: string;
   communityImage?: string;
+  resolvedProjectName?: string;
 }
 
 export interface User {
