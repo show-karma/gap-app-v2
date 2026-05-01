@@ -320,7 +320,11 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
             <div className="flex flex-col gap-1">
               <ReadMore side="left">{completionReason}</ReadMore>
             </div>
-          ) : null}
+          ) : (
+            <p className="text-sm text-muted-foreground" data-testid="empty-completion-text">
+              —
+            </p>
+          )}
           {isAuthorized && milestone.invoiceInfo?.fileKey && grantUID && (
             <button
               type="button"
@@ -587,52 +591,70 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
             </div>
           )}
       </div>
-      {isCompleting ||
-      isEditing ||
-      completionReason ||
-      completionProof ||
-      completionDeliverables ? (
-        <div className="flex flex-col gap-2.5 mt-2 pl-10">
-          {/* Timeline header: Only show when viewing existing completion data, not during form input */}
-          {!isCompleting && (completionReason || completionProof || completionDeliverables) && (
-            <div className="relative flex flex-row items-center justify-between gap-2 flex-wrap">
-              {!hideTimelineMarker && (
-                /* Timeline badge - vertically centered relative to header row, aligned with main timeline */
-                <div className="absolute -left-[73px] max-lg:-left-[69px] top-1/2 -translate-y-1/2 w-6 h-6 max-lg:w-5 max-lg:h-5 flex items-center justify-center z-10 bg-blue-50 dark:bg-blue-950 rounded-full ring-2 ring-white dark:ring-zinc-900">
-                  <div className="w-[3px] h-[3px] rounded-full bg-blue-400" />
+      {(() => {
+        // A milestone-type entry that's been marked complete should always
+        // render the "Milestone Update" section, even if the project owner
+        // submitted no narrative — empty completion is shown as "—" inside
+        // renderMilestoneCompletion.
+        const isCompletedMilestone =
+          (type === "milestone" || type === "grant" || type === "project") && Boolean(completed);
+        const showSection =
+          isCompleting ||
+          isEditing ||
+          isCompletedMilestone ||
+          Boolean(completionReason) ||
+          Boolean(completionProof) ||
+          Boolean(completionDeliverables);
+        if (!showSection) return null;
+        const showTimelineHeader =
+          !isCompleting &&
+          (isCompletedMilestone ||
+            Boolean(completionReason) ||
+            Boolean(completionProof) ||
+            Boolean(completionDeliverables));
+        return (
+          <div className="flex flex-col gap-2.5 mt-2 pl-10">
+            {/* Timeline header: Only show when viewing existing completion data, not during form input */}
+            {showTimelineHeader && (
+              <div className="relative flex flex-row items-center justify-between gap-2 flex-wrap">
+                {!hideTimelineMarker && (
+                  /* Timeline badge - vertically centered relative to header row, aligned with main timeline */
+                  <div className="absolute -left-[73px] max-lg:-left-[69px] top-1/2 -translate-y-1/2 w-6 h-6 max-lg:w-5 max-lg:h-5 flex items-center justify-center z-10 bg-blue-50 dark:bg-blue-950 rounded-full ring-2 ring-white dark:ring-zinc-900">
+                    <div className="w-[3px] h-[3px] rounded-full bg-blue-400" />
+                  </div>
+                )}
+                {/* Left side: Activity type label */}
+                <div className="flex flex-row items-center gap-2.5 flex-wrap">
+                  <span className="text-sm font-semibold text-foreground">
+                    {getActivityTypeLabel(type)}
+                  </span>
                 </div>
-              )}
-              {/* Left side: Activity type label */}
-              <div className="flex flex-row items-center gap-2.5 flex-wrap">
-                <span className="text-sm font-semibold text-foreground">
-                  {getActivityTypeLabel(type)}
-                </span>
+
+                {/* Right side: Posted by */}
+                {completionDate && (
+                  <div className="flex flex-row items-center gap-3 text-sm font-medium leading-5 text-muted-foreground">
+                    <span>Posted {formatDate(completionDate)} by</span>
+                    {completionAttester && (
+                      <div className="flex flex-row items-center gap-3">
+                        <span className="text-sm font-semibold leading-5 text-foreground">
+                          <EthereumAddressToProfileName
+                            address={completionAttester}
+                            showProfilePicture
+                            pictureClassName="h-5 w-5 lg:h-6 lg:w-6 min-h-5 min-w-5 lg:min-h-6 lg:min-w-6 rounded-full"
+                          />
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
+            )}
 
-              {/* Right side: Posted by */}
-              {completionDate && (
-                <div className="flex flex-row items-center gap-3 text-sm font-medium leading-5 text-muted-foreground">
-                  <span>Posted {formatDate(completionDate)} by</span>
-                  {completionAttester && (
-                    <div className="flex flex-row items-center gap-3">
-                      <span className="text-sm font-semibold leading-5 text-foreground">
-                        <EthereumAddressToProfileName
-                          address={completionAttester}
-                          showProfilePicture
-                          pictureClassName="h-5 w-5 lg:h-6 lg:w-6 min-h-5 min-w-5 lg:min-h-6 lg:min-w-6 rounded-full"
-                        />
-                      </span>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Completion card - aligned with header */}
-          <div>{renderMilestoneCompletion()}</div>
-        </div>
-      ) : null}
+            {/* Completion card - aligned with header */}
+            <div>{renderMilestoneCompletion()}</div>
+          </div>
+        );
+      })()}
     </div>
   );
 };
