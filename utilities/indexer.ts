@@ -746,6 +746,19 @@ export const INDEXER = {
     TEST_CONFIG: (communityIdOrSlug: string) =>
       `/v2/communities/${communityIdOrSlug}/notification-config/test`,
   },
+  SLACK_OAUTH: {
+    // Workspace
+    WORKSPACE: (communityIdOrSlug: string) =>
+      `/v2/communities/${communityIdOrSlug}/slack-oauth/workspace`,
+    WORKSPACE_BY_UID: (communityIdOrSlug: string, uid: string) =>
+      `/v2/communities/${communityIdOrSlug}/slack-oauth/workspace/${uid}`,
+    WORKSPACE_TEST: (communityIdOrSlug: string, uid: string) =>
+      `/v2/communities/${communityIdOrSlug}/slack-oauth/workspace/${uid}/test`,
+    // Backend query param is named `communityId` but accepts a slug
+    // OR a UID — kept for wire compatibility.
+    AUTHORIZE_URL: (communityIdOrSlug: string) =>
+      `/v2/slack-oauth/authorize-url?communityId=${encodeURIComponent(communityIdOrSlug)}`,
+  },
   KNOWLEDGE_BASE: {
     LIST_SOURCES: (communityIdOrSlug: string) =>
       `/v2/communities/${communityIdOrSlug}/knowledge-base/sources`,

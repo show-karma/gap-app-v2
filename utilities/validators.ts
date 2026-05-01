@@ -57,16 +57,35 @@ export function sanitizeTelegram(telegram: string): string {
 }
 
 /**
- * Validates a Slack handle format
- * Accepts 2-80 characters of letters, digits, dot, underscore, or dash.
- * Optional leading @.
+ * Validates a Slack identifier. The backend resolver accepts three
+ * input shapes (in priority order):
+ *   1. Slack member ID — `^[UWBS][A-Z0-9]{8,}$` (e.g. `U01ABCDEF`).
+ *      Stable, unique, preferred.
+ *   2. Email — passed to `users.lookupByEmail`.
+ *   3. Display name / handle — matched case-insensitively against the
+ *      cached `users.list`. Free text — can include spaces, accents,
+ *      etc. (e.g. "Amaury Magalhães").
+ *
+ * Because (3) is intentionally permissive, the validator only checks
+ * that the input isn't empty and fits within sane length bounds. The
+ * resolver decides at dispatch time whether the value resolves to a
+ * Slack member.
  */
 export function validateSlack(slack: string): boolean {
   if (!slack || typeof slack !== "string") {
     return false;
   }
-  const slackRegex = /^@?[a-zA-Z0-9._-]{2,80}$/;
-  return slackRegex.test(slack.trim());
+  const trimmed = slack.trim();
+  if (trimmed.length < 2 || trimmed.length > 254) {
+    return false;
+  }
+  for (let i = 0; i < trimmed.length; i++) {
+    const code = trimmed.charCodeAt(i);
+    if (code <= 0x1f || code === 0x7f) {
+      return false;
+    }
+  }
+  return true;
 }
 
 /**
@@ -327,9 +346,10 @@ export function validateReviewerData(data: {
   }
 
   if (hasSlackInput && (!sanitizedSlack || !validateSlack(sanitizedSlack))) {
-    errors.push(
-      "Invalid Slack handle format (2-80 characters of letters, digits, '.', '_' or '-', optional @ prefix)"
-    );
+    // Message must match the actual rule in `validateSlack` — 2-254
+    // chars after trim, no charset constraint (Slack accepts member
+    // IDs, emails, and free-text display names like "Amaury Magalhães").
+    errors.push("Slack must be between 2 and 254 characters");
   }
 
   const sanitized: {

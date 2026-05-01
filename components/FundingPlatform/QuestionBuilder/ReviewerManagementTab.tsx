@@ -111,13 +111,20 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
         name: "slack",
         label: "Slack",
         type: "text" as const,
-        placeholder: "username",
-        helperText: "Slack handle (without @). Used to tag in team channels.",
+        placeholder: "Member ID, email, or display name",
+        helperText: "Member ID (most reliable) or email — see ?",
+        tooltip:
+          "Karma resolves this in three steps: (1) if you paste a Slack " +
+          'member ID like U01ABCDEF (Profile → "..." → Copy member ID), ' +
+          "we use it directly — most reliable. (2) Otherwise, if it " +
+          "looks like an email, we look it up via Slack. (3) Otherwise, " +
+          "we treat it as a display name and match it against the " +
+          "workspace member list (less reliable — names aren't unique).",
         required: false,
         editable: true,
         validation: (value: string) => {
           if (value && !validateSlack(value)) {
-            return "Please enter a valid Slack handle (2-80 characters)";
+            return "Slack must be between 2 and 254 characters";
           }
           return true;
         },
