@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/Utilities/Button";
 import { useEditKnowledgeSource } from "@/hooks/knowledge-base/useKnowledgeSourceMutations";
+import { KnowledgeBaseApiError } from "@/services/knowledge-base.service";
 import {
   KNOWLEDGE_SOURCE_KIND_HINTS,
   KNOWLEDGE_SOURCE_KIND_LABELS,
@@ -135,7 +136,7 @@ export function EditSourceDialog({ communityIdOrSlug, source, open, onOpenChange
       onOpenChange(false);
     } catch (err) {
       const message = err instanceof Error ? err.message : "";
-      if (isDuplicateExternalIdError(message)) {
+      if (isDuplicateExternalIdError(err)) {
         // Backend's `KnowledgeSourceAlreadyExistsException` (409) — show
         // a specific message so the curator immediately understands it's
         // a collision, not a transport failure. Leave the dialog open
@@ -487,19 +488,21 @@ function FormField({
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 /**
- * Detect the backend's KnowledgeSourceAlreadyExistsException by message.
- * fetchData surfaces the API's `response.data.message` as the error
- * string; for this exception that's "Knowledge source already
- * registered for community=…". The substring "already" is unique to
- * this path in the knowledge-base API so the match is robust enough
- * without coupling to the full English phrasing.
+ * Detect the backend's KnowledgeSourceAlreadyExistsException. Primary
+ * signal is the HTTP status (409) carried on `KnowledgeBaseApiError`;
+ * the message-substring fallback is defensive — if some intermediary
+ * (e.g., a future `Error` re-throw) strips the structured class but
+ * preserves the server's wording, we still detect the conflict and
+ * show specific copy. Without the fallback a stripped status would
+ * fall through to the generic "Failed to update" toast.
  */
-function isDuplicateExternalIdError(message: string): boolean {
-  if (!message) return false;
-  // Sentinel needs to identify the Already-Exists path while excluding
-  // unrelated matches. The backend exception always includes the word
-  // "registered" alongside "already", which the schema-validation
-  // messages (400) and the not-found message (404) don't share.
-  const lower = message.toLowerCase();
-  return lower.includes("already") && lower.includes("registered");
+function isDuplicateExternalIdError(err: unknown): boolean {
+  if (err instanceof KnowledgeBaseApiError && err.status === 409) {
+    return true;
+  }
+  if (err instanceof Error && err.message) {
+    const lower = err.message.toLowerCase();
+    return lower.includes("already") && lower.includes("registered");
+  }
+  return false;
 }
