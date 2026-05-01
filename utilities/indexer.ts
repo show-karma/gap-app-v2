@@ -173,6 +173,8 @@ export const INDEXER = {
         `/v2/funding-applications/${referenceNumber}/invoice-config`,
       MILESTONE_EVALUATION: (referenceNumber: string, milestoneTitle: string) =>
         `/v2/funding-applications/${referenceNumber}/milestones/${encodeURIComponent(milestoneTitle)}/evaluation`,
+      GRANTEE_CONTACTS: (referenceNumber: string) =>
+        `/v2/funding-applications/${referenceNumber}/grantee-contacts`,
     },
     AUTH: {
       PERMISSIONS: (params?: {
@@ -646,7 +648,8 @@ export const INDEXER = {
       BULK: `/bulk-subscription/subscribe`,
     },
     REPORT: {
-      GET: (communityIdOrSlug: string) => `/communities/${communityIdOrSlug}/report`,
+      GET: (communityIdOrSlug: string) =>
+        `/v2/communities/${communityIdOrSlug}/milestones/report`,
       PENDING_VERIFICATION: (communityIdOrSlug: string) =>
         `/v2/communities/${communityIdOrSlug}/milestones/pending-verification`,
     },
@@ -754,6 +757,8 @@ export const INDEXER = {
       `/v2/communities/${communityIdOrSlug}/knowledge-base/sources/${sourceId}`,
     RESYNC_SOURCE: (communityIdOrSlug: string, sourceId: string) =>
       `/v2/communities/${communityIdOrSlug}/knowledge-base/sources/${sourceId}/resync`,
+    LIST_DOCUMENTS: (communityIdOrSlug: string, sourceId: string) =>
+      `/v2/communities/${communityIdOrSlug}/knowledge-base/sources/${sourceId}/documents`,
   },
   USERS: {
     RESOLVE_EMAIL: `/v2/user/resolve-email`,

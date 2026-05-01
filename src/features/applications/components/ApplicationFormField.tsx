@@ -35,6 +35,15 @@ export function ApplicationFormField({
   disabled = false,
   trigger,
 }: ApplicationFormFieldProps) {
+  if (question.type === "section_header") {
+    return (
+      <div className="border-b border-border pb-2 pt-4 first:pt-0" data-field-id={question.id}>
+        <h3 className="text-lg font-semibold">{question.label}</h3>
+        {question.description && <FieldDescription source={question.description as string} />}
+      </div>
+    );
+  }
+
   return (
     <Controller
       name={question.id as FieldPath<ApplicationFormData>}

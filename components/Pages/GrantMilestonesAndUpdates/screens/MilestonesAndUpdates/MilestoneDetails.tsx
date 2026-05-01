@@ -106,9 +106,14 @@ function toUnifiedMilestone(milestone: GrantMilestone, grant: GrantContext): Uni
 interface MilestoneDetailsProps {
   milestone: GrantMilestone;
   allocationAmount?: string;
+  grantMilestoneOrder?: { index: number; total: number };
 }
 
-export const MilestoneDetails: FC<MilestoneDetailsProps> = ({ milestone, allocationAmount }) => {
+export const MilestoneDetails: FC<MilestoneDetailsProps> = ({
+  milestone,
+  allocationAmount,
+  grantMilestoneOrder,
+}) => {
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
@@ -117,7 +122,10 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({ milestone, allocat
 
   const grant = useGrantStore((state) => state.grant);
 
-  const unifiedMilestone = useMemo(() => toUnifiedMilestone(milestone, grant), [milestone, grant]);
+  const unifiedMilestone = useMemo(() => {
+    const base = toUnifiedMilestone(milestone, grant);
+    return grantMilestoneOrder ? { ...base, grantMilestoneOrder } : base;
+  }, [milestone, grant, grantMilestoneOrder]);
 
   return (
     <ActivityCard

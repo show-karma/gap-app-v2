@@ -17,6 +17,7 @@ Execute the QA plan from Stage 1. You are a strict, rigid QA engineer. If expect
 | PR number | `$PR_NUMBER` env var |
 | Test email | `$QA_TEST_EMAIL` env var (Privy test account) |
 | Test OTP | `$QA_TEST_OTP` env var (fixed OTP from Privy dashboard) |
+| Shard | `$SHARD_ID` env var (optional: `public`, `auth`, or unset = all). When set, execute ONLY scenarios matching that shard (see "Sharded Execution"). |
 
 ## Setup
 
@@ -25,6 +26,102 @@ mkdir -p qa-output/screenshots qa-output/videos
 ```
 
 Always use `agent-browser` directly — never `npx agent-browser`. The direct binary uses the fast Rust client.
+
+## Speed Rules (CRITICAL — these dominate runtime)
+
+Each scenario averages 20-50 agent turns. Wasted seconds compound.
+
+### Wait Strategy
+
+- **NEVER `wait --load networkidle` after a click, fill, or in-page action.** networkidle blocks for 1-3s waiting for ALL network to settle, even unrelated tracking pixels. Across 200+ turns this costs 5-15 minutes per run.
+- **DO wait for the specific thing you need next.** Use one of:
+  - `agent-browser --session $S wait @{ref}` — wait for a known element ref
+  - `agent-browser --session $S find role <r> "<label>" first` — locate next element (also waits)
+  - `agent-browser --session $S get url` followed by a check — for navigations
+- **Acceptable `wait --load networkidle` uses:**
+  - First `open` of a brand-new page
+  - After `state load` of an auth-restored session
+  - Inside the Privy auth flow (iframe makes many requests — needed)
+- **Anti-patterns to avoid:**
+  - `wait 2000` (sleep N ms) — only ever use for failure-evidence replays at human pace, never in normal flow
+  - `wait --load networkidle` after a click that opens a modal — wait for the modal element instead
+
+## Session Lifecycle
+
+One `agent-browser` session corresponds to one persistent browser context. Sessions are expensive to create (new browser process, cold JS parse). Reuse them across scenarios within a shard rather than opening a fresh session per scenario.
+
+### Correct pattern — reuse session, navigate between scenarios
+
+```bash
+# Start the session ONCE at the top of the shard.
+agent-browser --session qa-pub open "http://localhost:3000"
+agent-browser --session qa-pub wait --load networkidle
+
+# Scenario P1
+agent-browser --session qa-pub screenshot qa-output/screenshots/P1-baseline.png
+# ... execute P1 steps ...
+
+# Between scenarios: clear per-scenario state, then goto the next URL.
+# UNVERIFIED FLAG: agent-browser --session qa-pub storage clear --cookies --local-storage
+# If the flag above is not available, reload the session state instead:
+#   agent-browser --session qa-pub state load qa-output/public-clean-state.json
+agent-browser --session qa-pub goto "http://localhost:3000/{P2-path}"
+agent-browser --session qa-pub wait --load networkidle
+
+# Scenario P2
+agent-browser --session qa-pub screenshot qa-output/screenshots/P2-baseline.png
+# ... execute P2 steps ...
+```
+
+### Session Anti-Patterns
+
+- **Do NOT call `open` for every scenario.** `open` starts a new page/context. Use `goto` to navigate within an existing session.
+- **Do NOT close and re-open a session between scenarios.** Session teardown + startup adds 3-8 s per scenario.
+- **Do NOT leave scenario-local state (filled forms, opened modals, injected cookies) leaking into the next scenario.** Clear or navigate away cleanly.
+
+### State-Load Fallback for Mid-Shard Session Expiry
+
+Privy auth tokens expire. If an authenticated scenario fails with an auth error mid-shard, reload the saved state rather than re-running the full login flow:
+
+```bash
+# Detected auth expiry (e.g. 401 response, redirect to /login, missing user avatar)
+agent-browser --session qa-auth state load qa-output/auth-state.json
+agent-browser --session qa-auth wait --load networkidle
+# Then retry the current scenario from its first step.
+```
+
+If `state load` also fails (token expired on disk), fall back to the full Privy login flow from section 3 and overwrite `qa-output/auth-state.json`.
+
+### Snapshot Strategy
+
+`snapshot -i` returns the entire accessibility tree (often 5-20KB). Big snapshots = slower agent turns and noisier prompts.
+
+- Prefer **scoped snapshots** when you know roughly where you're working: `agent-browser --session $S find role dialog first` then operate on that subtree.
+- Use **direct find commands** for stable elements instead of snapshot+ref: `agent-browser --session $S find role button "Submit" first click`.
+- Only call `snapshot -i` when you genuinely need the full tree (e.g. first time on a new page).
+
+### Per-Turn Discipline
+
+- Batch related actions in one turn instead of one-action-then-snapshot loops. Example: navigate + screenshot + assert in three sequential commands without an intermediate snapshot.
+- After a successful action, assume success and move on — only re-snapshot if the next action depends on dynamic content.
+
+## Sharded Execution
+
+When `$SHARD_ID` is set, execute only the matching subset:
+
+| `$SHARD_ID` | Run scenarios |
+|-------------|---------------|
+| `public` | P1, P2, P3, ... (all P-prefixed). **Skip Privy login entirely.** |
+| `auth` | A1, A2, A3, ... (all A-prefixed). Login first, then execute. |
+| (unset) | All scenarios — public first, then auth. |
+
+After execution, **rename the result file** to include the shard:
+
+```bash
+mv qa-results.json qa-results-${SHARD_ID:-all}.json
+```
+
+This lets parallel shards upload distinct artifacts that the verdict job aggregates.
 
 ## Authentication via Privy Test Account
 
@@ -76,11 +173,16 @@ Read `qa-plan.md`. Parse both tables:
 - **Public Scenarios** (P1, P2...) — execute without login
 - **Authenticated Scenarios** (A1, A2...) — execute after Privy test account login
 
+If `$SHARD_ID` is set, filter to only the matching subset (see "Sharded Execution" above) and skip the rest entirely — including auth login when `$SHARD_ID == public`.
+
 ### 2. Execute Public Scenarios First
+
+Skip this section entirely if `$SHARD_ID == auth`.
 
 Initialize a session without auth:
 
 ```bash
+# First open of a fresh page — networkidle is OK here.
 agent-browser --session qa-pub open "http://localhost:3000"
 agent-browser --session qa-pub wait --load networkidle
 ```
@@ -89,8 +191,15 @@ For each public scenario (P1, P2...), in risk-priority order:
 
 **a. Navigate:**
 ```bash
-agent-browser --session qa-pub open "http://localhost:3000/{path}"
+# Use goto (not open) to navigate within the existing session.
+# open would spin up a new page/context — use it only for the very first URL.
+agent-browser --session qa-pub goto "http://localhost:3000/{path}"
 agent-browser --session qa-pub wait --load networkidle
+
+# Before each scenario, clear per-scenario browser state to prevent leakage.
+# UNVERIFIED FLAG: agent-browser --session qa-pub storage clear --cookies --local-storage
+# If the flag above is unavailable, reload the clean baseline state:
+#   agent-browser --session qa-pub state load qa-output/public-clean-state.json
 ```
 
 **b. Baseline screenshot:**
@@ -98,7 +207,9 @@ agent-browser --session qa-pub wait --load networkidle
 agent-browser --session qa-pub screenshot qa-output/screenshots/P{N}-baseline.png
 ```
 
-**c. Execute steps** as written in the plan. Use `snapshot -i` before interacting.
+**c. Execute steps** as written in the plan. Follow the **Speed Rules** above:
+- Use scoped finds (`find role <r> "<label>" first`) instead of full `snapshot -i` whenever possible.
+- After clicks/fills, wait for the **next expected element** (`wait @{ref}`), NOT `wait --load networkidle`.
 
 **d. Evaluate:** PASS if actual matches expected exactly. FAIL otherwise.
 
@@ -116,16 +227,28 @@ agent-browser --session qa-pub errors > qa-output/P{N}-errors.txt
 
 ### 3. Login with Privy Test Account
 
-After all public scenarios, authenticate using the flow above.
+Skip this section entirely if `$SHARD_ID == public`.
+
+After all public scenarios (or first if running an `auth` shard), authenticate using the flow above. Note: the auth flow is the **one place** where `wait --load networkidle` is acceptable — Privy's iframe has many concurrent requests.
 
 ### 4. Execute Authenticated Scenarios
+
+Skip this section entirely if `$SHARD_ID == public`.
 
 For each authenticated scenario (A1, A2...), in risk-priority order:
 
 Same process as public scenarios but:
-- Use the `qa-auth` session (already logged in)
-- If session expires, reload auth state: `agent-browser --session qa-auth state load qa-output/auth-state.json`
+- Use the `qa-auth` session (already logged in).
+- Navigate between scenarios with `goto`, not `open` — the session is already live.
+- Before each scenario, clear per-scenario state the same way as for public scenarios (see "Session Anti-Patterns").
+- If a scenario fails with an auth error (401, redirect to `/login`, missing user avatar): reload auth state and retry before marking it FAIL.
+  ```bash
+  agent-browser --session qa-auth state load qa-output/auth-state.json
+  agent-browser --session qa-auth wait --load networkidle
+  ```
+  If `state load` also fails, re-run the full Privy login flow (section 3) and overwrite `qa-output/auth-state.json`.
 - Scenario IDs are A1, A2...
+- **Apply Speed Rules**: targeted waits, scoped finds, no `wait --load networkidle` after in-page actions.
 
 ### 5. Console Error Sweep
 
@@ -164,30 +287,53 @@ If 3 or more Critical issues are found, stop execution. Document what was tested
 | Medium | Feature works with noticeable problems, workaround exists |
 | Low | Cosmetic, minor polish |
 
+## Result Values
+
+| Result | When to use |
+|--------|-------------|
+| PASS | Actual matched expected exactly. |
+| FAIL | Actual did not match expected, AND the failure is plausibly caused by changes in this PR (or by code in the repo even if not changed by this PR). |
+| BLOCKED | Scenario could not be executed due to a cause unrelated to the PR's code: third-party service outage (Privy / Sentry / RPC down), missing test fixture data, infra/network failure, or missing environment capability (e.g. `agent-browser` unavailable). The PR did not modify the relevant code path. Use evidence to justify why this is environmental, not regression. |
+
+`BLOCKED` does NOT contribute to the blocking verdict — but you must justify the classification in `evidence`. When in doubt between FAIL and BLOCKED, choose FAIL. A genuine regression mislabeled as BLOCKED would let a real bug ship.
+
 ## Output
 
-Save results to `qa-results.json`:
+Save results to `qa-results.json`, then rename to include the shard suffix so parallel shards do not overwrite each other's artifacts:
+
+```bash
+# After Claude writes qa-results.json:
+mv qa-results.json "qa-results-${SHARD_ID:-all}.json"
+```
+
+The verdict job downloads all `qa-results-*.json` files and aggregates them.
+
+JSON shape:
 
 ```json
 {
   "total": 15,
   "passed": 12,
   "failed": 3,
+  "blocked": 0,
   "skipped": 0,
   "blocking": true,
   "scenarios": [
     { "id": "P1", "name": "...", "result": "PASS", "severity": null, "evidence": null },
-    { "id": "A1", "name": "...", "result": "FAIL", "severity": "High", "evidence": "qa-output/screenshots/A1-fail.png" }
+    { "id": "A1", "name": "...", "result": "FAIL", "severity": "High", "evidence": "qa-output/screenshots/A1-fail.png" },
+    { "id": "A2", "name": "...", "result": "BLOCKED", "severity": null, "evidence": "Privy returned a 5xx service error; PR did not modify auth code." }
   ]
 }
 ```
+
+`result === "BLOCKED"` rows have `severity: null` (severity describes regression impact; blocked scenarios were never tested). Always include an `evidence` string explaining why the failure is environmental, not regression.
 
 Post a PR comment. **Comment format — follow exactly:**
 
 ```markdown
 ## QA Execution (2/3)
 
-**Result**: X/Y passed | Z failed
+**Result**: X/Y passed | Z failed | B blocked
 **Blocking**: Yes/No
 
 ### Public Scenarios
@@ -212,9 +358,10 @@ Post a PR comment. **Comment format — follow exactly:**
 **Rules:**
 - PASS rows: no severity, no evidence.
 - FAIL rows: severity required. For evidence, describe what you observed inline (1-2 sentences) — do NOT link to local file paths like `qa-output/screenshots/...` because those are not accessible from GitHub. Screenshots are saved as workflow artifacts and can be downloaded from the workflow run link.
-- Sort: FAILs first (by severity), then PASSes.
+- BLOCKED rows: no severity. Evidence must justify why the failure is environmental (third-party outage, missing fixture, infra issue) and NOT a regression in this PR's code.
+- Sort: FAILs first (by severity), then BLOCKED, then PASSes.
 - No prose. Just the tables.
-- `Blocking: Yes` if any Critical or High severity failure.
+- `Blocking: Yes` if any Critical or High severity FAIL. BLOCKED never makes a PR blocking.
 
 ## Strictness Rules
 

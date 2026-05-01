@@ -9,6 +9,12 @@ interface FieldTypeSelectorProps {
 
 export const fieldTypes = [
   {
+    type: "section_header" as const,
+    label: "Section Header",
+    icon: "🔖",
+    description: "Visual heading to group related fields",
+  },
+  {
     type: "email" as const,
     label: "Email",
     icon: "📧",

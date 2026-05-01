@@ -1,13 +1,13 @@
 "use client";
 
-import { type FC, useState } from "react";
+import { type FC, useRef, useState } from "react";
+import { CommentInput } from "@/src/features/application-comments/components/CommentInput";
 import type {
   ApplicationComment,
   FundingApplicationStatusV2,
   IApplicationVersion,
   IStatusHistoryEntry,
 } from "@/types/funding-platform";
-import CommentInput from "../CommentInput";
 import { TimelineContainer } from "./TimelineContainer";
 
 export interface DiscussionTabProps {
@@ -39,6 +39,8 @@ export interface DiscussionTabProps {
   programId?: string;
   /** Enable @mention functionality */
   enableMentions?: boolean;
+  /** Application reference number used to fetch grantee contacts for @-mention */
+  referenceNumber?: string;
 }
 
 /**
@@ -60,13 +62,23 @@ export const DiscussionTab: FC<DiscussionTabProps> = ({
   isLoading = false,
   programId,
   enableMentions = false,
+  referenceNumber,
 }) => {
   const [isAddingComment, setIsAddingComment] = useState(false);
+  const [commentContent, setCommentContent] = useState("");
+  const commentContentRef = useRef(commentContent);
 
-  const handleAddComment = async (content: string) => {
+  const handleCommentChange = (value: string) => {
+    commentContentRef.current = value;
+    setCommentContent(value);
+  };
+
+  const handleAddComment = async () => {
     setIsAddingComment(true);
     try {
-      await onCommentAdd(content);
+      await onCommentAdd(commentContentRef.current.trim());
+      commentContentRef.current = "";
+      setCommentContent("");
     } catch (error) {
       console.error("Failed to add comment:", error);
     } finally {
@@ -79,14 +91,16 @@ export const DiscussionTab: FC<DiscussionTabProps> = ({
       {/* Comment Input at Top */}
       <div className="mb-6 bg-zinc-50 dark:bg-zinc-700/50 rounded-lg p-4">
         <CommentInput
+          value={commentContent}
+          onChange={handleCommentChange}
           onSubmit={handleAddComment}
-          disabled={isAddingComment}
+          isLoading={isAddingComment}
           placeholder={
             isAdmin ? "Add an admin comment..." : "Add a comment for this application..."
           }
           programId={programId}
-          enableMentions={enableMentions}
           isAdmin={isAdmin}
+          referenceNumber={referenceNumber}
         />
       </div>
 

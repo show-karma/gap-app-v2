@@ -60,6 +60,7 @@ export interface CommunityProject {
   /** Chain-specific payout addresses keyed by chain ID (e.g., { "10": "0x...", "42161": "0x..." }) */
   chainPayoutAddress?: Record<string, string>;
   numMilestones: number;
+  numCompletedMilestones: number;
   numUpdates: number;
   percentCompleted: number;
   numTransactions: number;

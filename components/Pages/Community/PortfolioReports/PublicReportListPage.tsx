@@ -5,18 +5,13 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { usePublishedReports } from "@/hooks/portfolio-reports/usePortfolioReports";
-import type { PortfolioReport } from "@/types/portfolio-report";
 import type { Community } from "@/types/v2/community";
+import { PAGES } from "@/utilities/pages";
+import { formatRunDate } from "@/utilities/portfolio-reports/period";
 import { ReportTimelineScrubber, type TimelineEntry } from "./ReportTimelineScrubber";
 
 interface Props {
   community: Community;
-}
-
-function formatMonth(month: string): string {
-  const [year, m] = month.split("-").map(Number);
-  const date = new Date(year, m - 1);
-  return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
 }
 
 function formatPublished(iso: string): string {
@@ -58,27 +53,41 @@ function toExcerpt(markdown: string, maxLength = 240): string {
   return `${cut}…`;
 }
 
-function deriveTimeline(reports: PortfolioReport[]): TimelineEntry[] {
-  if (reports.length === 0) return [];
-  const sorted = [...reports].sort((a, b) => b.reportMonth.localeCompare(a.reportMonth));
-  const reportSet = new Set(sorted.map((r) => r.reportMonth));
-  const [maxY, maxM] = sorted[0].reportMonth.split("-").map(Number);
-  const [minY, minM] = sorted[sorted.length - 1].reportMonth.split("-").map(Number);
-  // Total months covered between the oldest and newest report (inclusive).
-  const totalMonths = (maxY - minY) * 12 + (maxM - minM) + 1;
-  const entries: TimelineEntry[] = [];
-  let y = maxY;
-  let m = maxM;
-  for (let i = 0; i < totalMonths; i++) {
-    const key = `${y}-${String(m).padStart(2, "0")}`;
-    entries.push({ year: y, month: m, key, hasReport: reportSet.has(key) });
-    m -= 1;
-    if (m === 0) {
-      m = 12;
-      y -= 1;
-    }
-  }
-  return entries;
+const MONTH_ABBR = [
+  "JAN",
+  "FEB",
+  "MAR",
+  "APR",
+  "MAY",
+  "JUN",
+  "JUL",
+  "AUG",
+  "SEP",
+  "OCT",
+  "NOV",
+  "DEC",
+];
+
+/**
+ * One timeline dot per actual published report. The previous biweekly
+ * implementation gap-filled missing months — the new model has arbitrary
+ * `runDate`s (any day, any cadence) so gap-fill no longer makes sense; we
+ * just render what we have.
+ */
+function deriveTimeline(
+  sortedReports: Array<{ id: string; runDate: string }>
+): TimelineEntry[] {
+  return sortedReports.map((r) => {
+    const [yearStr, monthStr, dayStr] = r.runDate.split("-");
+    const monthIdx = Number(monthStr) - 1;
+    const monthAbbr = MONTH_ABBR[monthIdx] ?? monthStr;
+    return {
+      key: r.runDate,
+      year: Number(yearStr),
+      label: `${monthAbbr} ${Number(dayStr)}`,
+      hasReport: true,
+    };
+  });
 }
 
 export function PublicReportListPage({ community }: Props) {
@@ -89,20 +98,19 @@ export function PublicReportListPage({ community }: Props) {
   const seededRef = useRef(false);
 
   const sortedReports = useMemo(
-    () => (reports ? [...reports].sort((a, b) => b.reportMonth.localeCompare(a.reportMonth)) : []),
+    () =>
+      reports
+        ? [...reports].sort((a, b) => b.runDate.localeCompare(a.runDate))
+        : [],
     [reports]
   );
 
   const timeline = useMemo(() => deriveTimeline(sortedReports), [sortedReports]);
 
-  // Reset the "seeded" flag whenever the report set changes so the next active
-  // key gets seeded once on the new set.
   useEffect(() => {
     seededRef.current = false;
   }, [sortedReports]);
 
-  // IntersectionObserver — depends only on the report set so it isn't torn down
-  // on every scroll.
   useEffect(() => {
     if (sortedReports.length === 0) return;
     const root = sectionsRef.current;
@@ -183,7 +191,6 @@ export function PublicReportListPage({ community }: Props) {
   }
 
   const count = sortedReports.length;
-  const months = timeline.length;
   const latest = sortedReports[0];
 
   return (
@@ -193,39 +200,36 @@ export function PublicReportListPage({ community }: Props) {
           Portfolio Reports
         </h1>
         <p className="mt-2 font-mono text-[11px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
-          {count} {count === 1 ? "report" : "reports"} · {months}
-          {months === 1 ? " month" : " months"} covered · Latest {formatMonth(latest.reportMonth)}
+          {count} {count === 1 ? "report" : "reports"} · Latest{" "}
+          {formatRunDate(latest.runDate).label}
         </p>
       </header>
 
       <div className="grid grid-cols-1 gap-x-10 lg:grid-cols-[160px_1fr]">
-        {/* Sticky scrubber */}
         <ReportTimelineScrubber entries={timeline} activeKey={activeKey} onJumpTo={handleJumpTo} />
 
-        {/* Timeline entries */}
         <div ref={sectionsRef} className="min-w-0">
           {sortedReports.map((report, index) => {
             const excerpt = toExcerpt(report.markdown, 280);
-            const [yearStr, monthStr] = report.reportMonth.split("-");
-            const indexBadge = `${monthStr} / ${yearStr.slice(2)}`;
+            const fmt = formatRunDate(report.runDate);
             return (
               <article
                 key={report.id}
-                data-report-key={report.reportMonth}
+                data-report-key={report.runDate}
                 className={`py-8 ${
                   index !== 0 ? "border-t border-zinc-200 dark:border-zinc-800" : ""
                 }`}
               >
                 <Link
-                  href={`/community/${slug}/reports/${report.reportMonth}`}
+                  href={PAGES.COMMUNITY.REPORT_DETAIL(slug, report.runDate)}
                   className="group/link flex items-start justify-between gap-8"
                 >
                   <div className="min-w-0 flex-1">
                     <p className="mb-1.5 font-mono text-[11px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
-                      {indexBadge}
+                      {fmt.badge}
                     </p>
                     <h2 className="text-xl font-semibold tracking-tight text-zinc-900 transition-colors group-hover/link:text-blue-600 sm:text-2xl dark:text-zinc-100 dark:group-hover/link:text-blue-400">
-                      {formatMonth(report.reportMonth)}
+                      {fmt.label}
                     </h2>
                     <p className="mt-3 max-w-3xl text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">
                       {excerpt}

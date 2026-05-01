@@ -15,8 +15,8 @@ const QUERY_KEYS = {
   reports: (slug: string) => ["portfolio-reports", slug] as const,
   report: (slug: string, id: string) => ["portfolio-report", slug, id] as const,
   published: (slug: string) => ["portfolio-reports-published", slug] as const,
-  publishedMonth: (slug: string, month: string) =>
-    ["portfolio-report-published", slug, month] as const,
+  publishedRunDate: (slug: string, runDate: string) =>
+    ["portfolio-report-published", slug, runDate] as const,
 };
 
 // ── Config queries ───────────────────────────────────────────
@@ -26,6 +26,14 @@ export function useReportConfigs(communitySlug: string) {
     queryKey: QUERY_KEYS.configs(communitySlug),
     queryFn: () => portfolioService.getReportConfigs(communitySlug),
     enabled: Boolean(communitySlug),
+  });
+}
+
+export function useReportConfig(communitySlug: string, configId: string) {
+  return useQuery({
+    queryKey: [...QUERY_KEYS.configs(communitySlug), configId],
+    queryFn: () => portfolioService.getReportConfig(communitySlug, configId),
+    enabled: Boolean(communitySlug && configId),
   });
 }
 
@@ -117,7 +125,7 @@ export function usePublishReport(communitySlug: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (reportId: string) => portfolioService.publishReport(communitySlug, reportId),
-    onSuccess: (data) => {
+    onSuccess: (data: PortfolioReport) => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.reports(communitySlug),
       });
@@ -125,7 +133,7 @@ export function usePublishReport(communitySlug: string) {
         queryKey: QUERY_KEYS.published(communitySlug),
       });
       queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.publishedMonth(communitySlug, data.reportMonth),
+        queryKey: QUERY_KEYS.publishedRunDate(communitySlug, data.runDate),
       });
       queryClient.setQueryData(QUERY_KEYS.report(communitySlug, data.id), data);
     },
@@ -136,7 +144,7 @@ export function useUnpublishReport(communitySlug: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (reportId: string) => portfolioService.unpublishReport(communitySlug, reportId),
-    onSuccess: (data) => {
+    onSuccess: (data: PortfolioReport) => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.reports(communitySlug),
       });
@@ -144,7 +152,7 @@ export function useUnpublishReport(communitySlug: string) {
         queryKey: QUERY_KEYS.published(communitySlug),
       });
       queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.publishedMonth(communitySlug, data.reportMonth),
+        queryKey: QUERY_KEYS.publishedRunDate(communitySlug, data.runDate),
       });
       queryClient.setQueryData(QUERY_KEYS.report(communitySlug, data.id), data);
     },
@@ -156,14 +164,14 @@ export function useUpdateReportMarkdown(communitySlug: string) {
   return useMutation({
     mutationFn: ({ reportId, markdown }: { reportId: string; markdown: string }) =>
       portfolioService.updateReportMarkdown(communitySlug, reportId, markdown),
-    onSuccess: (data) => {
+    onSuccess: (data: PortfolioReport) => {
       queryClient.setQueryData(QUERY_KEYS.report(communitySlug, data.id), data);
       if (data.status === "published") {
         queryClient.invalidateQueries({
           queryKey: QUERY_KEYS.published(communitySlug),
         });
         queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.publishedMonth(communitySlug, data.reportMonth),
+          queryKey: QUERY_KEYS.publishedRunDate(communitySlug, data.runDate),
         });
       }
     },
@@ -180,10 +188,19 @@ export function usePublishedReports(communitySlug: string) {
   });
 }
 
-export function usePublishedReport(communitySlug: string, month: string) {
+export function usePublishedReport(communitySlug: string, runDate: string) {
   return useQuery({
-    queryKey: QUERY_KEYS.publishedMonth(communitySlug, month),
-    queryFn: () => portfolioService.getPublishedReportByMonth(communitySlug, month),
-    enabled: Boolean(communitySlug && month),
+    queryKey: QUERY_KEYS.publishedRunDate(communitySlug, runDate),
+    queryFn: () => portfolioService.getPublishedReportByRunDate(communitySlug, runDate),
+    enabled: Boolean(communitySlug && runDate),
   });
+}
+
+export function useReportConfigsExist(communitySlug: string) {
+  const { data, isLoading, isError } = useReportConfigs(communitySlug);
+  return {
+    hasConfigs: !isLoading && !isError && (data?.length ?? 0) > 0,
+    isLoading,
+    isError,
+  };
 }

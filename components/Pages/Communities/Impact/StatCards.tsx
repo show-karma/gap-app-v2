@@ -20,9 +20,7 @@ interface StatCardProps {
 
 const StatCard = ({ title, value, color, isLoading, tooltip }: StatCardProps) => (
   <div className="flex flex-1 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
-    <div className="py-3 pl-3">
-      <div className="w-1 h-full rounded-full" style={{ background: color }} />
-    </div>
+    <div className="w-1 my-1.5 ml-3 rounded-full" style={{ background: color }} />
     <div className="flex flex-col items-start justify-center py-3 pl-2 pr-4">
       {isLoading ? (
         <Skeleton className="w-12 h-8 mb-1" />
@@ -42,6 +40,53 @@ const StatCard = ({ title, value, color, isLoading, tooltip }: StatCardProps) =>
     </div>
   </div>
 );
+
+interface MilestonesCardProps {
+  completed: number;
+  total: number;
+  isLoading?: boolean;
+}
+
+const MilestonesCard = ({ completed, total, isLoading }: MilestonesCardProps) => {
+  const safeCompleted = Math.max(0, Math.min(completed, total));
+  const completedPct = total > 0 ? (safeCompleted / total) * 100 : 0;
+  const pendingPct = total > 0 ? 100 - completedPct : 0;
+
+  return (
+    <div className="flex flex-1 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 max-sm:col-span-2 min-w-0">
+      <div className="w-1 my-1.5 ml-3 rounded-full bg-emerald-500" />
+      <div className="flex flex-col items-start justify-center py-3 pl-2 pr-3 w-full min-w-0">
+        {isLoading ? (
+          <Skeleton className="w-20 h-8" />
+        ) : (
+          <p className="text-gray-900 dark:text-zinc-100 text-[30px] font-semibold leading-none tracking-tight tabular-nums whitespace-nowrap">
+            {completed} / {total}
+          </p>
+        )}
+        <span className="text-gray-900 dark:text-zinc-100 text-sm font-medium leading-tight">
+          Completed / Total Milestones
+        </span>
+        <div
+          className="w-full mt-1.5 h-1.5 rounded-full overflow-hidden bg-gray-200 dark:bg-zinc-700"
+          role="progressbar"
+          aria-valuenow={completedPct}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label={`${completedPct.toFixed(1)}% of milestones completed`}
+        >
+          <div
+            className="h-full bg-emerald-500 dark:bg-emerald-400 transition-all"
+            style={{ width: `${completedPct}%` }}
+          />
+        </div>
+        <div className="flex justify-between w-full mt-0.5 text-xs text-gray-500 dark:text-gray-400 tabular-nums">
+          <span>{completedPct.toFixed(1)}%</span>
+          <span>{pendingPct.toFixed(1)}%</span>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export const ImpactStatCards = () => {
   const { data, isLoading } = useImpactMeasurement();
@@ -176,16 +221,31 @@ export const CommunityStatCards = () => {
     [programId, stats]
   );
 
-  return filteredStats.map((item) => (
-    <StatCard
-      key={item.title}
-      title={item.title}
-      value={item.displayValue}
-      color={item.color}
-      isLoading={isLoading || item.showLoading}
-      tooltip={item.tooltip}
-    />
-  ));
+  const breakdown = data?.projectUpdatesBreakdown;
+  const completedMilestones = breakdown
+    ? breakdown.projectCompletedMilestones + breakdown.grantCompletedMilestones
+    : 0;
+  const totalMilestones = data?.totalMilestones ?? 0;
+
+  return (
+    <>
+      {filteredStats.map((item) => (
+        <StatCard
+          key={item.title}
+          title={item.title}
+          value={item.displayValue}
+          color={item.color}
+          isLoading={isLoading || item.showLoading}
+          tooltip={item.tooltip}
+        />
+      ))}
+      <MilestonesCard
+        completed={completedMilestones}
+        total={totalMilestones}
+        isLoading={isLoading || isLoadingFilters}
+      />
+    </>
+  );
 };
 
 export const CommunityImpactStatCards = () => {

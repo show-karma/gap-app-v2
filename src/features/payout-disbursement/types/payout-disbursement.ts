@@ -175,6 +175,12 @@ export interface CommunityPayoutProjectInfo {
   chainPayoutAddress: Record<string, string> | null;
   /** Admin-set payout address for this community (from attestation.payoutAddress[communityUID]) */
   adminPayoutAddress: string | null;
+  /**
+   * Team/project name resolved from approved funding-application data for the
+   * matching (projectUID, programId) pair. Falls back to `title` (the on-chain
+   * Karma project title) when no application data is available.
+   */
+  resolvedProjectName?: string;
 }
 
 /**
@@ -255,6 +261,10 @@ export interface CommunityPayoutInvoiceInfo {
   allocatedAmount: string | null;
   paymentStatus: MilestonePaymentStatus;
   paymentStatusDate: string | null;
+  /** Project-owner-supplied completion text. Null when the milestone has no
+   * on-chain completion or its completion carries no reason — in which case
+   * the AI evaluation badge is suppressed even if a stale evaluation exists. */
+  completionReason: string | null;
 }
 
 /**

@@ -47,11 +47,31 @@ function formatReasoning(text: string): string {
   );
 }
 
+function isValidEvaluation<T extends { rating?: number; reasoning?: string }>(
+  evaluation: T | null | undefined
+): evaluation is T & { rating: number; reasoning: string } {
+  return (
+    typeof evaluation?.rating === "number" &&
+    Number.isFinite(evaluation.rating) &&
+    evaluation.rating >= 0 &&
+    evaluation.rating <= 10 &&
+    typeof evaluation.reasoning === "string" &&
+    evaluation.reasoning.trim().length > 0
+  );
+}
+
 // ─── Inline Badge ────────────────────────────────────────────────────────────
 
 interface MilestoneAIEvaluationBadgeProps {
   milestoneUID: string;
   className?: string;
+  /**
+   * The milestone completion's reason text. When provided and empty/whitespace,
+   * the badge skips fetching and renders nothing — there's nothing for the AI to
+   * have evaluated. Leaving this undefined preserves the legacy behavior of
+   * always fetching.
+   */
+  completionReason?: string;
 }
 
 /**
@@ -63,10 +83,15 @@ interface MilestoneAIEvaluationBadgeProps {
 export function MilestoneAIEvaluationBadge({
   milestoneUID,
   className = "",
+  completionReason,
 }: MilestoneAIEvaluationBadgeProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { data, isLoading, error } = useMilestoneEvaluation(milestoneUID, true);
-  const evaluations = data?.evaluations ?? [];
+  const hasCompletionContent = completionReason === undefined || completionReason.trim().length > 0;
+  const { data, isLoading, error } = useMilestoneEvaluation(milestoneUID, hasCompletionContent);
+  const evaluations = useMemo(
+    () => (data?.evaluations ?? []).filter(isValidEvaluation),
+    [data?.evaluations]
+  );
 
   const avgScore = useMemo(() => {
     if (evaluations.length === 0) return null;
@@ -74,6 +99,10 @@ export function MilestoneAIEvaluationBadge({
       Math.round((evaluations.reduce((sum, e) => sum + e.rating, 0) / evaluations.length) * 10) / 10
     );
   }, [evaluations]);
+
+  if (!hasCompletionContent) {
+    return null;
+  }
 
   if (isLoading) {
     return (
@@ -123,9 +152,9 @@ export function MilestoneAIEvaluationBadge({
               ) : (
                 <>
                   <div className="flex flex-wrap gap-x-3 gap-y-0.5">
-                    {evaluations.map((evaluation, idx) => (
+                    {evaluations.map((evaluation) => (
                       <span
-                        key={idx}
+                        key={`${evaluation.milestoneUID}-${evaluation.model}-${evaluation.createdAt}`}
                         className={`text-xs font-semibold ${getScoreColor(evaluation.rating)}`}
                       >
                         {evaluation.rating}/10
@@ -162,7 +191,10 @@ interface AIEvaluationInlineModalProps {
 
 function AIEvaluationInlineModal({ milestoneUID, isOpen, onClose }: AIEvaluationInlineModalProps) {
   const { data, isLoading, error, refetch } = useMilestoneEvaluation(milestoneUID, isOpen);
-  const evaluations = data?.evaluations ?? [];
+  const evaluations = useMemo(
+    () => (data?.evaluations ?? []).filter(isValidEvaluation),
+    [data?.evaluations]
+  );
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -242,6 +274,11 @@ interface ApplicationMilestoneAIEvaluationBadgeProps {
   referenceNumber: string;
   milestoneTitle: string;
   className?: string;
+  /**
+   * The application milestone completion's text. When provided and
+   * empty/whitespace, the badge skips fetching and renders nothing.
+   */
+  completionReason?: string;
 }
 
 /**
@@ -252,14 +289,19 @@ export function ApplicationMilestoneAIEvaluationBadge({
   referenceNumber,
   milestoneTitle,
   className = "",
+  completionReason,
 }: ApplicationMilestoneAIEvaluationBadgeProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const hasCompletionContent = completionReason === undefined || completionReason.trim().length > 0;
   const { data, isLoading, error } = useApplicationMilestoneEvaluation(
     referenceNumber,
     milestoneTitle,
-    true
+    hasCompletionContent
   );
-  const evaluations = data?.evaluations ?? [];
+  const evaluations = useMemo(
+    () => (data?.evaluations ?? []).filter(isValidEvaluation),
+    [data?.evaluations]
+  );
 
   const avgScore = useMemo(() => {
     if (evaluations.length === 0) return null;
@@ -267,6 +309,10 @@ export function ApplicationMilestoneAIEvaluationBadge({
       Math.round((evaluations.reduce((sum, e) => sum + e.rating, 0) / evaluations.length) * 10) / 10
     );
   }, [evaluations]);
+
+  if (!hasCompletionContent) {
+    return null;
+  }
 
   if (isLoading) {
     return (
@@ -316,9 +362,9 @@ export function ApplicationMilestoneAIEvaluationBadge({
               ) : (
                 <>
                   <div className="flex flex-wrap gap-x-3 gap-y-0.5">
-                    {evaluations.map((evaluation, idx) => (
+                    {evaluations.map((evaluation) => (
                       <span
-                        key={idx}
+                        key={`${evaluation.milestoneUID}-${evaluation.model}-${evaluation.createdAt}`}
                         className={`text-xs font-semibold ${getScoreColor(evaluation.rating)}`}
                       >
                         {evaluation.rating}/10
@@ -366,7 +412,10 @@ function AIEvaluationApplicationModal({
     milestoneTitle,
     isOpen
   );
-  const evaluations = data?.evaluations ?? [];
+  const evaluations = useMemo(
+    () => (data?.evaluations ?? []).filter(isValidEvaluation),
+    [data?.evaluations]
+  );
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -404,7 +453,7 @@ function AIEvaluationApplicationModal({
           <div className="space-y-4 max-h-96 overflow-y-auto">
             {evaluations.map((evaluation) => (
               <div
-                key={`${evaluation.milestoneUID}-${evaluation.createdAt}`}
+                key={`${evaluation.milestoneUID}-${evaluation.model}-${evaluation.createdAt}`}
                 className="border border-gray-200 dark:border-zinc-700 rounded-lg p-4"
               >
                 <div className="flex items-center mb-3">

@@ -25,16 +25,23 @@ vi.mock("@/components/FundingPlatform/ApplicationView/DiscussionTab/TimelineCont
   ),
 }));
 
-vi.mock("@/components/FundingPlatform/ApplicationView/CommentInput", () => ({
-  __esModule: true,
-  default: ({ onSubmit, disabled, placeholder }: any) => (
+vi.mock("@/src/features/application-comments/components/CommentInput", () => ({
+  CommentInput: ({ onSubmit, onChange, disabled, isLoading, placeholder }: any) => (
     <div data-testid="comment-input">
-      <textarea data-testid="comment-textarea" placeholder={placeholder} disabled={disabled} />
+      <textarea
+        data-testid="comment-textarea"
+        placeholder={placeholder}
+        disabled={disabled || isLoading}
+        onChange={(e) => onChange(e.target.value)}
+      />
       <button
         type="button"
         data-testid="add-comment-btn"
-        onClick={() => onSubmit("New comment")}
-        disabled={disabled}
+        onClick={() => {
+          onChange("New comment");
+          onSubmit();
+        }}
+        disabled={disabled || isLoading}
       >
         Add Comment
       </button>

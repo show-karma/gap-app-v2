@@ -3,12 +3,14 @@ import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { CommunityPageNavigator } from "@/components/Pages/Communities/CommunityPageNavigator";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
+import { usePublishedReports } from "@/hooks/portfolio-reports/usePortfolioReports";
 import { useFundingOpportunitiesCount } from "@/hooks/useFundingOpportunitiesCount";
 import { useCommunityPrograms } from "@/hooks/usePrograms";
 import { useWhitelabel } from "@/utilities/whitelabel-context";
 
 // Mock hooks
 vi.mock("@/hooks/communities/useCommunityDetails");
+vi.mock("@/hooks/portfolio-reports/usePortfolioReports");
 vi.mock("@/hooks/useFundingOpportunitiesCount");
 vi.mock("@/hooks/usePrograms");
 vi.mock("@/utilities/whitelabel-context");
@@ -33,6 +35,7 @@ vi.mock("@/utilities/pages", () => ({
       PROJECTS: (id: string) => `/community/${id}/projects`,
       UPDATES: (id: string) => `/community/${id}/updates`,
       IMPACT: (id: string) => `/community/${id}/impact`,
+      REPORTS: (id: string) => `/community/${id}/reports`,
       FINANCIALS: (id: string) => `/community/${id}/financials`,
       BROWSE_APPLICATIONS: (id: string) => `/community/${id}/browse-applications`,
     },
@@ -49,6 +52,7 @@ vi.mock("lucide-react", () => ({
   ChartLine: (props: any) => <svg data-testid="chart-line-icon" {...props} />,
   DollarSign: (props: any) => <svg data-testid="dollar-sign-icon" {...props} />,
   FileSearch: (props: any) => <svg data-testid="file-search-icon" {...props} />,
+  FileText: (props: any) => <svg data-testid="file-text-icon" {...props} />,
   LandPlot: (props: any) => <svg data-testid="land-plot-icon" {...props} />,
   SquareUser: (props: any) => <svg data-testid="square-user-icon" {...props} />,
   Wallet: (props: any) => <svg data-testid="wallet-icon" {...props} />,
@@ -56,6 +60,9 @@ vi.mock("lucide-react", () => ({
 
 const mockUseCommunityDetails = useCommunityDetails as vi.MockedFunction<
   typeof useCommunityDetails
+>;
+const mockUsePublishedReports = usePublishedReports as vi.MockedFunction<
+  typeof usePublishedReports
 >;
 const mockUseFundingOpportunitiesCount = useFundingOpportunitiesCount as vi.MockedFunction<
   typeof useFundingOpportunitiesCount
@@ -101,12 +108,17 @@ describe("CommunityPageNavigator", () => {
         uid: "0x1234567890123456789012345678901234567890",
         details: {
           name: "Test Community",
+          slug: "test-community",
         },
       },
       isLoading: false,
     } as any);
     mockUseFundingOpportunitiesCount.mockReturnValue({
       data: 5, // Default to having some funding opportunities
+      isLoading: false,
+    } as any);
+    mockUsePublishedReports.mockReturnValue({
+      data: [{ id: "report-1", reportMonth: "2026-03", markdown: "", status: "published" }],
       isLoading: false,
     } as any);
     mockUseCommunityPrograms.mockReturnValue({
@@ -132,6 +144,7 @@ describe("CommunityPageNavigator", () => {
       expect(screen.getByText("View funded projects")).toBeInTheDocument();
       expect(screen.getByText("Milestone updates")).toBeInTheDocument();
       expect(screen.getByText("Impact")).toBeInTheDocument();
+      expect(screen.getByText("Reports")).toBeInTheDocument();
       expect(screen.getByText("Financials")).toBeInTheDocument();
     });
 
@@ -147,6 +160,7 @@ describe("CommunityPageNavigator", () => {
       expect(screen.getByTestId("square-user-icon")).toBeInTheDocument();
       expect(screen.getByTestId("land-plot-icon")).toBeInTheDocument();
       expect(screen.getByTestId("chart-line-icon")).toBeInTheDocument();
+      expect(screen.getByTestId("file-text-icon")).toBeInTheDocument();
       expect(screen.getByTestId("wallet-icon")).toBeInTheDocument();
     });
 
@@ -157,6 +171,7 @@ describe("CommunityPageNavigator", () => {
       const grantsLink = screen.getByText("View funded projects").closest("a");
       const updatesLink = screen.getByText("Milestone updates").closest("a");
       const impactLink = screen.getByText("Impact").closest("a");
+      const reportsLink = screen.getByText("Reports").closest("a");
 
       expect(fundingLink).toHaveAttribute(
         "href",
@@ -165,6 +180,7 @@ describe("CommunityPageNavigator", () => {
       expect(grantsLink).toHaveAttribute("href", "/community/test-community/projects");
       expect(updatesLink).toHaveAttribute("href", "/community/test-community/updates");
       expect(impactLink).toHaveAttribute("href", "/community/test-community/impact");
+      expect(reportsLink).toHaveAttribute("href", "/community/test-community/reports");
     });
   });
 
@@ -581,6 +597,93 @@ describe("CommunityPageNavigator", () => {
 
       const link = screen.getByText("View funded projects").closest("a");
       expect(link?.className).toContain("text-gray-500");
+    });
+  });
+
+  describe("Reports Tab Visibility", () => {
+    it("should hide reports tab when there are no published reports", () => {
+      mockUsePublishedReports.mockReturnValue({
+        data: [],
+        isLoading: false,
+      } as any);
+
+      render(<CommunityPageNavigator />, { wrapper });
+
+      expect(screen.queryByText("Reports")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("file-text-icon")).not.toBeInTheDocument();
+    });
+
+    it("should show reports tab when published reports exist", () => {
+      render(<CommunityPageNavigator />, { wrapper });
+
+      expect(screen.getByText("Reports")).toBeInTheDocument();
+      expect(screen.getByTestId("file-text-icon")).toBeInTheDocument();
+    });
+
+    it("should hide reports tab while reports are loading", () => {
+      mockUsePublishedReports.mockReturnValue({
+        data: undefined,
+        isLoading: true,
+      } as any);
+
+      render(<CommunityPageNavigator />, { wrapper });
+
+      expect(screen.queryByText("Reports")).not.toBeInTheDocument();
+    });
+
+    it("should append programId to reports link when present", () => {
+      mockUseSearchParams.mockReturnValue({
+        get: (key: string) => (key === "programId" ? "program-123" : null),
+      });
+
+      render(<CommunityPageNavigator />, { wrapper });
+
+      const reportsLink = screen.getByText("Reports").closest("a");
+      expect(reportsLink).toHaveAttribute(
+        "href",
+        "/community/test-community/reports?programId=program-123"
+      );
+    });
+
+    it("should call usePublishedReports with the canonical slug from community details, not the URL param", () => {
+      // URL param differs from canonical slug (e.g., legacy redirect or address-based access)
+      mockUseParams.mockReturnValue({ communityId: "0xabc" });
+      mockUsePathname.mockReturnValue("/community/0xabc");
+      mockUseCommunityDetails.mockReturnValue({
+        data: {
+          uid: "0xabc",
+          details: { name: "Test Community", slug: "test-community" },
+        },
+        isLoading: false,
+      } as any);
+
+      render(<CommunityPageNavigator />, { wrapper });
+
+      // Hook must receive the canonical slug, never the URL param
+      expect(mockUsePublishedReports).toHaveBeenCalledWith("test-community");
+      expect(mockUsePublishedReports).not.toHaveBeenCalledWith("0xabc");
+    });
+
+    it("should call usePublishedReports with empty string while community details are still loading", () => {
+      // Community hasn't loaded yet — slug is unavailable
+      mockUseCommunityDetails.mockReturnValue({
+        data: undefined,
+        isLoading: true,
+      } as any);
+
+      render(<CommunityPageNavigator />, { wrapper });
+
+      // Empty string disables the query via the hook's `enabled: Boolean(slug)` guard,
+      // preventing a wasted request with the URL param before the slug is known
+      expect(mockUsePublishedReports).toHaveBeenCalledWith("");
+    });
+
+    it("should call usePublishedReports with empty string on admin pages to suppress the query", () => {
+      mockUsePathname.mockReturnValue("/community/test-community/manage");
+
+      render(<CommunityPageNavigator />, { wrapper });
+
+      expect(mockUsePublishedReports).toHaveBeenCalledWith("");
     });
   });
 

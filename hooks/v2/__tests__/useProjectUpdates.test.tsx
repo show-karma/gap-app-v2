@@ -252,6 +252,106 @@ describe("useProjectUpdates", () => {
     });
   });
 
+  it("uses server-provided grantMilestoneIndex/Total for the per-grant ordinal", async () => {
+    // Server stamps the per-grant ordinal BEFORE applying status/date/AI filters,
+    // so a single milestone returned under `?milestoneStatus=verified` still
+    // reports its true position within the FULL grant (e.g. "2 of 4"), not
+    // "1 of 1" as a client-side recompute on the filtered subset would yield.
+    const response: UpdatesApiResponse = {
+      projectUpdates: [],
+      projectMilestones: [],
+      grantMilestones: [
+        {
+          uid: "verified-only-milestone",
+          programId: "program-1",
+          chainId: "0xa",
+          title: "Virtual appliance",
+          description: "Verified milestone",
+          dueDate: null,
+          createdAt: "2025-01-01T00:00:00.000Z",
+          recipient: "0x123",
+          status: "verified",
+          grant: {
+            uid: "grant-1",
+            title: "Grant 1",
+            communityName: "Community",
+          },
+          completionDetails: {
+            description: "Done",
+            completedAt: "2025-01-02T00:00:00.000Z",
+            completedBy: "0x123",
+          },
+          verificationDetails: null,
+          fundingApplicationCompletion: null,
+          grantMilestoneIndex: 2,
+          grantMilestoneTotal: 4,
+        },
+      ],
+      grantUpdates: [],
+    };
+
+    mockGetProjectUpdates.mockResolvedValueOnce(response);
+
+    const { result } = renderHook(() => useProjectUpdates("test-project", "verified"), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    const milestone = result.current.milestones.find(
+      (item) => item.uid === "verified-only-milestone"
+    );
+
+    expect(milestone?.grantMilestoneOrder).toEqual({ index: 2, total: 4 });
+  });
+
+  it("falls back to client-computed ordinal when server omits grantMilestoneIndex/Total", async () => {
+    // Backwards compatibility: if the indexer hasn't shipped the new fields yet,
+    // the frontend still computes a per-grant ordinal locally.
+    const response: UpdatesApiResponse = {
+      projectUpdates: [],
+      projectMilestones: [],
+      grantMilestones: [
+        {
+          uid: "legacy-milestone",
+          programId: "program-1",
+          chainId: "0xa",
+          title: "Legacy milestone",
+          description: "No server ordinal",
+          dueDate: "2025-06-01T00:00:00.000Z",
+          createdAt: "2025-01-01T00:00:00.000Z",
+          recipient: "0x123",
+          status: "completed",
+          grant: {
+            uid: "grant-legacy",
+            title: "Legacy Grant",
+            communityName: "Community",
+          },
+          completionDetails: null,
+          verificationDetails: null,
+          fundingApplicationCompletion: null,
+        },
+      ],
+      grantUpdates: [],
+    };
+
+    mockGetProjectUpdates.mockResolvedValueOnce(response);
+
+    const { result } = renderHook(() => useProjectUpdates("test-project"), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    const milestone = result.current.milestones.find((item) => item.uid === "legacy-milestone");
+
+    expect(milestone?.grantMilestoneOrder).toEqual({ index: 1, total: 1 });
+  });
+
   it("exposes isFetching as true during a filter transition and retains previous milestones", async () => {
     const firstResponse: UpdatesApiResponse = {
       projectUpdates: [],

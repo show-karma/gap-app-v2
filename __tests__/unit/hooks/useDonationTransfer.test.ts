@@ -125,11 +125,17 @@ describe("useDonationTransfer", () => {
     readContract: vi.fn(),
   };
 
-  const mockWalletClient = {
+  const mockWalletClient: any = {
     account: { address: mockAddress },
     chain: { id: 10 },
     signTypedData: vi.fn(),
+    writeContract: vi.fn().mockResolvedValue("0xtxhash"),
   };
+  mockWalletClient.getChainId = vi.fn(() => Promise.resolve(mockWalletClient.chain.id));
+  mockWalletClient.switchChain = vi.fn(({ id }: { id: number }) => {
+    mockWalletClient.chain = { id };
+    return Promise.resolve();
+  });
 
   const mockWriteContractAsync = vi.fn();
 
@@ -164,7 +170,9 @@ describe("useDonationTransfer", () => {
     vi.mocked(isWalletClientGoodEnough).mockReturnValue(true);
     vi.mocked(validateChainSync).mockResolvedValue(undefined);
 
+    mockWalletClient.chain = { id: 10 };
     mockWalletClient.signTypedData.mockResolvedValue("0xsignature");
+    mockWalletClient.writeContract.mockResolvedValue("0xtxhash");
     mockWriteContractAsync.mockResolvedValue("0xtxhash");
     mockPublicClient.waitForTransactionReceipt.mockResolvedValue({
       status: "success",
@@ -180,7 +188,9 @@ describe("useDonationTransfer", () => {
     vi.clearAllMocks();
 
     // Reset mock implementations to defaults
+    mockWalletClient.chain = { id: 10 };
     mockWalletClient.signTypedData.mockResolvedValue("0xsignature");
+    mockWalletClient.writeContract.mockResolvedValue("0xtxhash");
     mockWriteContractAsync.mockResolvedValue("0xtxhash");
     mockPublicClient.waitForTransactionReceipt.mockResolvedValue({
       status: "success",
@@ -292,7 +302,7 @@ describe("useDonationTransfer", () => {
         await result.current.executeDonations([mockNativePayment], getRecipientAddress);
       });
 
-      expect(mockWriteContractAsync).toHaveBeenCalled();
+      expect(mockWalletClient.writeContract).toHaveBeenCalled();
       expect(result.current.transfers).toHaveLength(1);
       // Transaction completes immediately in test due to mocks
       expect(result.current.transfers[0].status).toBe("success");
@@ -313,7 +323,7 @@ describe("useDonationTransfer", () => {
         await result.current.executeDonations([mockPayment], getRecipientAddress);
       });
 
-      expect(mockWriteContractAsync).toHaveBeenCalled();
+      expect(mockWalletClient.writeContract).toHaveBeenCalled();
       expect(mockWalletClient.signTypedData).toHaveBeenCalled(); // Permit signature
     });
 
@@ -343,7 +353,7 @@ describe("useDonationTransfer", () => {
       });
 
       expect(executeApprovals).toHaveBeenCalled();
-      expect(mockWriteContractAsync).toHaveBeenCalled();
+      expect(mockWalletClient.writeContract).toHaveBeenCalled();
     });
 
     it("should validate recipient addresses before execution", async () => {
@@ -406,7 +416,7 @@ describe("useDonationTransfer", () => {
     it("should handle user rejection error", async () => {
       const { result } = renderHook(() => useDonationTransfer());
 
-      mockWriteContractAsync.mockRejectedValue(new Error("User rejected the request"));
+      mockWalletClient.writeContract.mockRejectedValue(new Error("User rejected the request"));
 
       // User rejection should throw an error
       await expect(
@@ -441,7 +451,7 @@ describe("useDonationTransfer", () => {
         );
       });
 
-      expect(mockWriteContractAsync).toHaveBeenCalled();
+      expect(mockWalletClient.writeContract).toHaveBeenCalled();
       expect(result.current.transfers).toHaveLength(2);
     });
 
@@ -458,7 +468,7 @@ describe("useDonationTransfer", () => {
       });
 
       // Should be called twice (once per chain)
-      expect(mockWriteContractAsync).toHaveBeenCalledTimes(2);
+      expect(mockWalletClient.writeContract).toHaveBeenCalledTimes(2);
     });
 
     it("should validate chain ID is supported", async () => {
@@ -768,8 +778,11 @@ describe("useDonationTransfer", () => {
       vi.mocked(validateChainSync).mockResolvedValue(undefined);
 
       // Reset mock implementations on shared objects
+      mockWalletClient.chain = { id: 10 };
       mockWalletClient.signTypedData.mockReset();
       mockWalletClient.signTypedData.mockResolvedValue("0xsignature");
+      mockWalletClient.writeContract.mockReset();
+      mockWalletClient.writeContract.mockResolvedValue("0xtxhash");
       mockWriteContractAsync.mockReset();
       mockWriteContractAsync.mockResolvedValue("0xtxhash");
       mockPublicClient.waitForTransactionReceipt.mockReset();
@@ -798,7 +811,7 @@ describe("useDonationTransfer", () => {
     it("should reset isExecuting to false on error", async () => {
       const { result } = renderHook(() => useDonationTransfer());
 
-      mockWriteContractAsync.mockRejectedValue(new Error("Test error"));
+      mockWalletClient.writeContract.mockRejectedValue(new Error("Test error"));
 
       try {
         await act(async () => {
@@ -846,17 +859,8 @@ describe("useDonationTransfer", () => {
       expect(result.current.isExecuting).toBe(false);
     });
 
-    it("should retry chain sync validation with fresh wallet client", async () => {
+    it("should verify chain via getChainId before executing", async () => {
       const { result } = renderHook(() => useDonationTransfer());
-      const freshWalletClient = { ...mockWalletClient, chain: { id: 10 } };
-
-      // First validation fails, triggering retry
-      vi.mocked(validateChainSync).mockRejectedValueOnce(new Error("Chain mismatch"));
-      // Second validation succeeds
-      vi.mocked(validateChainSync).mockResolvedValueOnce(undefined);
-
-      // getWalletClientWithFallback returns fresh wallet client
-      vi.mocked(getWalletClientWithFallback).mockResolvedValue(freshWalletClient);
 
       await act(async () => {
         await result.current.executeDonations(
@@ -865,8 +869,11 @@ describe("useDonationTransfer", () => {
         );
       });
 
-      // Should have retried validation
-      expect(validateChainSync).toHaveBeenCalledTimes(2);
+      // Hook now calls walletClient.getChainId() to verify the provider's
+      // chain matches the target before executing — replaces the older
+      // validateChainSync utility path.
+      expect(mockWalletClient.getChainId).toHaveBeenCalled();
+      expect(mockWalletClient.writeContract).toHaveBeenCalled();
     });
 
     it("should handle chain mismatch detection", async () => {
@@ -920,7 +927,7 @@ describe("useDonationTransfer", () => {
       const { result } = renderHook(() => useDonationTransfer());
 
       // Set up the writeContractAsync to fail
-      mockWriteContractAsync.mockRejectedValueOnce(
+      mockWalletClient.writeContract.mockRejectedValueOnce(
         new Error("Transaction failed: gas estimation error")
       );
 

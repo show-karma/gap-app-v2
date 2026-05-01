@@ -35,10 +35,11 @@ case "$FILE_PATH" in
     fi
 
     # 2. useState + direct service call without useMutation
+    # Match HTTP-client-like receivers only (axios/api/http/fetchData/etc.) to
+    # avoid false positives from URLSearchParams.delete, Set/Map.delete, etc.
     if grep -q "useState" "$FILE_PATH" 2>/dev/null; then
-      HAS_SERVICE_CALL=$(grep -n "await.*Service\.\|await.*service\.\|\.post(\|\.put(\|\.patch(\|\.delete(" "$FILE_PATH" 2>/dev/null || true)
-      HAS_MUTATION=$(grep -c "useMutation" "$FILE_PATH" 2>/dev/null || echo "0")
-      if [ -n "$HAS_SERVICE_CALL" ] && [ "$HAS_MUTATION" -eq 0 ]; then
+      HAS_SERVICE_CALL=$(grep -nE "await.*Service\.|await.*service\.|\b(axios|api|http|client|fetchData)\.(post|put|patch|delete)\(" "$FILE_PATH" 2>/dev/null || true)
+      if [ -n "$HAS_SERVICE_CALL" ] && ! grep -q "useMutation" "$FILE_PATH" 2>/dev/null; then
         ISSUES="${ISSUES}\n- MISSING_MUTATION: useState + direct service/API call without useMutation."
       fi
     fi

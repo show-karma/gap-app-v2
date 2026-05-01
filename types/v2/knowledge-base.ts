@@ -17,6 +17,12 @@ export interface KnowledgeSource {
   externalId: string;
   title: string;
   isActive: boolean;
+  // DEV-194: explicit pause flag, distinct from isActive. When true the
+  // sync worker skips this source AND retrieval excludes its chunks —
+  // chunks themselves are preserved so a resume is cheap. Use this for
+  // temporary "silence a noisy source" cases; isActive is the long-term
+  // enable/disable axis.
+  paused: boolean;
   // Optional editorial purpose. Prepended to each chunk at embed time so
   // retrieval picks up the curator's intent — never shown in citations or
   // the agent's excerpt path.
@@ -66,7 +72,14 @@ export interface UpdateKnowledgeSourceInput {
   title?: string;
   // `null` clears the goal; omitting the key leaves it unchanged.
   goal?: string | null;
+  // DEV-202: edit the link / Drive ID this source points at. Backend
+  // canonicalizes per-kind (matching create) and returns 409 if the
+  // target collides with another source in the same (community, kind).
+  externalId?: string;
   isActive?: boolean;
+  // DEV-194: pause toggle — skips sync AND excludes chunks from
+  // retrieval while true. Distinct from isActive.
+  paused?: boolean;
   syncIntervalMin?: number;
   followLinks?: boolean;
 }
@@ -95,6 +108,7 @@ export const KNOWLEDGE_SOURCE_KIND_HINTS: Record<KnowledgeSourceKind, string> = 
   gdrive_file:
     "Paste the share URL or just the doc ID. The Doc must be set to “Anyone with the link — Viewer”.",
   url: "Full URL of the page (e.g. https://docs.example.com/intro). Must load without sign-in.",
-  sitemap: "Currently disabled in the UI; tracked in docs/features.",
+  sitemap:
+    "Public sitemap.xml URL (or sitemap-index). Karma fetches every <loc> as a separate document. Up to 10,000 entries.",
   pdf_url: "Direct URL to a publicly-accessible PDF file (no auth or session cookies required).",
 };

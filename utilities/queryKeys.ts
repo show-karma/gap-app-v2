@@ -89,6 +89,8 @@ export const QUERY_KEYS = {
     COMMENTS: (referenceNumber: string) => ["application-comments", referenceNumber] as const,
     INVOICE_CONFIG: (referenceNumber: string) =>
       ["applicationInvoiceConfig", referenceNumber] as const,
+    GRANTEE_CONTACTS: (referenceNumber: string) =>
+      ["application-grantee-contacts", referenceNumber] as const,
   },
   REVIEWERS: {
     PROGRAM: (programId: string) => ["program-reviewers", programId] as const,
@@ -163,6 +165,11 @@ export const QUERY_KEYS = {
     SOURCES: (communityIdOrSlug: string) =>
       ["knowledge-base", "sources", communityIdOrSlug] as const,
     SOURCES_BASE: ["knowledge-base", "sources"] as const,
+    /** Per-source documents list. Scoped under both community and source
+     *  id so a mutation invalidating one source doesn't blow away unrelated
+     *  caches. */
+    SOURCE_DOCUMENTS: (communityIdOrSlug: string, sourceId: string) =>
+      ["knowledge-base", "source-documents", communityIdOrSlug, sourceId] as const,
   },
   GRANTS: {
     COMMENTS: (projectUID: string, programId: string) =>
