@@ -25,6 +25,8 @@ interface CommentsSectionProps {
   formSchema?: IFormSchema; // Optional: for mapping field IDs to labels
   programId?: string;
   enableMentions?: boolean;
+  /** Application reference number used to fetch grantee contacts for @-mention */
+  referenceNumber?: string;
 }
 
 const CommentsSection: FC<CommentsSectionProps> = ({
@@ -44,6 +46,7 @@ const CommentsSection: FC<CommentsSectionProps> = ({
   formSchema,
   programId,
   enableMentions = false,
+  referenceNumber,
 }) => {
   return (
     <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
@@ -64,6 +67,7 @@ const CommentsSection: FC<CommentsSectionProps> = ({
         formSchema={formSchema}
         programId={programId}
         enableMentions={enableMentions}
+        referenceNumber={referenceNumber}
       />
     </div>
   );

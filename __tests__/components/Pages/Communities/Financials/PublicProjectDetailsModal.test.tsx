@@ -127,6 +127,7 @@ function makeInvoice(
     allocatedAmount: null,
     paymentStatus: "unpaid",
     paymentStatusDate: null,
+    completionReason: null,
     ...overrides,
   };
 }

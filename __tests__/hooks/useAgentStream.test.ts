@@ -164,13 +164,20 @@ describe("useAgentStream", () => {
     mockGetToken.mockResolvedValue("mock-token-123");
     wrapper = createWrapper();
 
-    // Reset store state — queryClient cleanup is in afterEach
+    // Reset store state — queryClient cleanup is in afterEach.
+    // Explicitly resets every field that any test in this suite
+    // mutates so Zustand's partial-merge semantics can't leak state
+    // between tests (e.g. the trace-buffering test writes
+    // pendingTraceId, which would carry over without this).
     useAgentChatStore.setState({
       messages: [],
       isOpen: false,
       isStreaming: false,
       error: null,
       agentContext: null,
+      pendingMentions: [],
+      pendingTraceId: null,
+      ratingCommentBoxOpenForMessageId: null,
     });
   });
 
@@ -609,6 +616,89 @@ describe("useAgentStream", () => {
           result.current.abort();
         });
       }).not.toThrow();
+    });
+  });
+
+  describe("system events", () => {
+    it("should_set_traceId_on_last_assistant_message_when_trace_started_event_arrives", async () => {
+      // Wire-accurate payload: the backend ships `event: system / data:
+      // {"type":"trace_started","traceId":"..."}`. parseSSEChunk reads
+      // only the JSON, so the dispatcher sees `type: "trace_started"`.
+      const sseText = formatSSE([{ type: "trace_started", traceId: "trace-xyz" }]);
+      mockFetch.mockResolvedValue(createStreamResponse(sseText));
+
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
+
+      await act(async () => {
+        await result.current.sendMessage("Hello");
+      });
+
+      const messages = useAgentChatStore.getState().messages;
+      const assistantMsg = messages.find((m) => m.role === "assistant");
+      expect(assistantMsg?.traceId).toBe("trace-xyz");
+    });
+
+    it("should_ignore_anthropic_sdk_system_init_event_without_traceId", async () => {
+      // The Anthropic SDK also uses `event: system` for its own init
+      // event, with `data: {"type":"system","subtype":"init",...}` and
+      // no traceId. The handler must no-op for this shape.
+      const sseText = formatSSE([{ type: "system", subtype: "init" }]);
+      mockFetch.mockResolvedValue(createStreamResponse(sseText));
+
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
+
+      await act(async () => {
+        await result.current.sendMessage("Hello");
+      });
+
+      const assistantMsg = useAgentChatStore
+        .getState()
+        .messages.find((m) => m.role === "assistant");
+      expect(assistantMsg?.traceId).toBeUndefined();
+    });
+
+    it("should_buffer_traceId_when_system_event_arrives_before_assistant_message_exists", async () => {
+      // Direct unit-level coverage: in production the SSE parser may
+      // dispatch the system event before the assistant placeholder is
+      // added to the store (timing varies by transport). The store
+      // must buffer the traceId in pendingTraceId and consume it when
+      // the next assistant message is added via addMessage.
+      const store = useAgentChatStore.getState();
+
+      // No assistant message yet — setLastAssistantTraceId should buffer.
+      store.setLastAssistantTraceId("trace-buffered");
+      expect(useAgentChatStore.getState().pendingTraceId).toBe("trace-buffered");
+      expect(useAgentChatStore.getState().messages).toHaveLength(0);
+
+      // Now add the assistant message — it should pick up the buffered traceId.
+      store.addMessage({
+        id: "assistant-late",
+        role: "assistant",
+        content: "",
+        timestamp: 1,
+        isStreaming: true
+      });
+
+      const after = useAgentChatStore.getState();
+      expect(after.pendingTraceId).toBeNull();
+      const assistantMsg = after.messages.find((m) => m.role === "assistant");
+      expect(assistantMsg?.traceId).toBe("trace-buffered");
+    });
+
+    it("should_ignore_system_event_without_traceId", async () => {
+      const sseText = formatSSE([{ type: "system" }]);
+      mockFetch.mockResolvedValue(createStreamResponse(sseText));
+
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
+
+      await act(async () => {
+        await result.current.sendMessage("Hello");
+      });
+
+      const assistantMsg = useAgentChatStore
+        .getState()
+        .messages.find((m) => m.role === "assistant");
+      expect(assistantMsg?.traceId).toBeUndefined();
     });
   });
 

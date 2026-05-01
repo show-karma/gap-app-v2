@@ -125,6 +125,13 @@ export type GrantMilestoneWithDetails = {
     receivedAt: string | null;
     fileKey: string | null;
   } | null;
+  /**
+   * 1-based position of this milestone within its parent grant, computed by
+   * the backend across ALL of the grant's milestones (independent of any
+   * active status / date / AI filter). Paired with `grantMilestoneTotal`.
+   */
+  grantMilestoneIndex?: number;
+  grantMilestoneTotal?: number;
 };
 
 export type GrantUpdateWithDetails = {
@@ -285,4 +292,10 @@ export type UnifiedMilestone = {
     receivedAt: string | null;
     fileKey: string | null;
   };
+  /**
+   * Ordinal position of this milestone within its parent grant.
+   * Computed client-side by sorting a grant's milestones ascending by due date
+   * (fallback `createdAt`) and assigning 1..N. Only set for grant milestones.
+   */
+  grantMilestoneOrder?: { index: number; total: number };
 };

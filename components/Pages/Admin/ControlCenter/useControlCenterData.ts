@@ -144,7 +144,10 @@ export function useControlCenterData(
     return dedupedPayouts.map((payout) => ({
       grantUid: payout.grant.uid,
       projectUid: payout.project.uid,
-      projectName: payout.project.title,
+      // Prefer the team name resolved from the approved application data
+      // (Team Name / Project Name / Organization Name in the form) and fall
+      // back to the on-chain Karma project title when no application is found.
+      projectName: payout.project.resolvedProjectName || payout.project.title,
       projectSlug: payout.project.slug,
       grantName: payout.grant.title,
       grantProgramId: payout.grant.programId || "",

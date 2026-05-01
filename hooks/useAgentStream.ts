@@ -251,6 +251,21 @@ export function useAgentStream() {
                 }
                 break;
               }
+              case "system":
+              case "trace_started": {
+                // The backend emits `event: system / data:
+                // {"type":"trace_started","traceId":"..."}`. parseSSEChunk
+                // only reads the `data:` line, so what reaches us as
+                // `event.type` is the JSON-data type — "trace_started"
+                // for our payload and "system" for the Anthropic SDK's
+                // own init event (which has no traceId). Both share the
+                // SSE `event: system` line, but we dispatch on data.type.
+                const traceId = event.traceId;
+                if (typeof traceId === "string" && traceId) {
+                  store.setLastAssistantTraceId(traceId);
+                }
+                break;
+              }
               case "tool_result": {
                 const toolName = event.tool_name as string;
                 const resultData = extractToolResultData(event.result);

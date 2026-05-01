@@ -76,6 +76,22 @@ describe("getProjectTitle", () => {
     });
     expect(getProjectTitle(app)).toBe("Fallback Pod");
   });
+
+  it("prefers server-resolved project name over form-data and referenceNumber", () => {
+    const app = {
+      ...makeApplication({ "Some Field": "value" }),
+      resolvedProjectName: "Titan Network",
+    };
+    expect(getProjectTitle(app)).toBe("Titan Network");
+  });
+
+  it("falls back to form-data when resolvedProjectName is whitespace-only", () => {
+    const app = {
+      ...makeApplication({ "Project Title": "Form Title" }),
+      resolvedProjectName: "   ",
+    };
+    expect(getProjectTitle(app)).toBe("Form Title");
+  });
 });
 
 describe("findProjectTitleInData", () => {

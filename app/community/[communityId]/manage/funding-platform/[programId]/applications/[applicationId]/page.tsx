@@ -507,6 +507,7 @@ export default function ApplicationDetailPage() {
                       isLoading={isLoadingComments}
                       programId={programId}
                       enableMentions
+                      referenceNumber={application.referenceNumber}
                     />
                   </TabPanel>
                 ),

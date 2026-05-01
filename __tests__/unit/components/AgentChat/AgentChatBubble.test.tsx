@@ -126,9 +126,19 @@ vi.mock("lucide-react", () => ({
   MessageSquareIcon: () => <span data-testid="icon-message-square" />,
   SparklesIcon: () => <span data-testid="icon-sparkles" />,
   SquareIcon: () => <span data-testid="icon-square" />,
+  ThumbsUpIcon: () => <span data-testid="icon-thumbs-up" />,
+  ThumbsDownIcon: () => <span data-testid="icon-thumbs-down" />,
   Trash2Icon: () => <span data-testid="icon-trash" />,
   UserIcon: () => <span data-testid="icon-user" />,
   XIcon: () => <span data-testid="icon-x" />,
+}));
+
+// Mock useChatRating — collects calls so tests can assert on them
+const mockRatingSubmit = vi.fn().mockResolvedValue(undefined);
+const mockUseChatRating = vi.fn(() => ({ rating: null, submit: mockRatingSubmit }));
+vi.mock("@/hooks/useChatRating", () => ({
+  useChatRating: (messageId: string, traceId: string | undefined) =>
+    mockUseChatRating(messageId, traceId),
 }));
 
 // Mock UI components
@@ -327,6 +337,118 @@ describe("AgentChatBubble", () => {
     expect(screen.getByText("Connection failed")).toBeInTheDocument();
   });
 
+  it("should_render_thumbs_rating_for_finalized_assistant_message_with_traceId", () => {
+    useAgentChatStore.setState({
+      isOpen: true,
+      messages: [
+        {
+          id: "a1",
+          role: "assistant",
+          content: "Answer body",
+          timestamp: Date.now(),
+          isStreaming: false,
+          traceId: "trace-1",
+        },
+      ],
+    });
+    render(<AgentChatBubble />);
+
+    expect(screen.getByTestId("message-rating")).toBeInTheDocument();
+    expect(screen.getByLabelText("Rate this response helpful")).toBeInTheDocument();
+    expect(screen.getByLabelText("Rate this response unhelpful")).toBeInTheDocument();
+  });
+
+  it("should_not_render_rating_when_message_lacks_traceId", () => {
+    useAgentChatStore.setState({
+      isOpen: true,
+      messages: [
+        {
+          id: "a1",
+          role: "assistant",
+          content: "Answer body",
+          timestamp: Date.now(),
+          isStreaming: false,
+        },
+      ],
+    });
+    render(<AgentChatBubble />);
+
+    expect(screen.queryByTestId("message-rating")).not.toBeInTheDocument();
+  });
+
+  it("should_not_render_rating_while_message_is_streaming", () => {
+    useAgentChatStore.setState({
+      isOpen: true,
+      messages: [
+        {
+          id: "a1",
+          role: "assistant",
+          content: "partial",
+          timestamp: Date.now(),
+          isStreaming: true,
+          traceId: "trace-1",
+        },
+      ],
+    });
+    render(<AgentChatBubble />);
+
+    expect(screen.queryByTestId("message-rating")).not.toBeInTheDocument();
+  });
+
+  it("should_call_submit_with_thumbs_up_when_helpful_clicked", async () => {
+    const user = userEvent.setup();
+    mockRatingSubmit.mockClear();
+    useAgentChatStore.setState({
+      isOpen: true,
+      messages: [
+        {
+          id: "a1",
+          role: "assistant",
+          content: "Answer body",
+          timestamp: Date.now(),
+          isStreaming: false,
+          traceId: "trace-1",
+        },
+      ],
+    });
+    render(<AgentChatBubble />);
+
+    await user.click(screen.getByLabelText("Rate this response helpful"));
+
+    expect(mockRatingSubmit).toHaveBeenCalledWith(1);
+  });
+
+  it("should_reveal_comment_box_when_unhelpful_clicked_then_submit_with_comment", async () => {
+    const user = userEvent.setup();
+    mockRatingSubmit.mockClear();
+    useAgentChatStore.setState({
+      isOpen: true,
+      messages: [
+        {
+          id: "a1",
+          role: "assistant",
+          content: "Answer body",
+          timestamp: Date.now(),
+          isStreaming: false,
+          traceId: "trace-1",
+        },
+      ],
+    });
+    render(<AgentChatBubble />);
+
+    await user.click(screen.getByLabelText("Rate this response unhelpful"));
+
+    const commentBox = screen.getByTestId("rating-comment-box");
+    expect(commentBox).toBeInTheDocument();
+
+    const textarea = screen.getByLabelText("Feedback comment");
+    await user.type(textarea, "did not address my question");
+
+    await user.click(screen.getByRole("button", { name: "Submit feedback" }));
+
+    expect(mockRatingSubmit).toHaveBeenCalledWith(-1, "did not address my question");
+  });
+
   it("should render confirmation card for preview tool results", () => {
     useAgentChatStore.setState({
       isOpen: true,
@@ -354,9 +476,9 @@ describe("AgentChatBubble", () => {
     useAgentChatStore.setState({ isOpen: true });
     render(<AgentChatBubble />);
 
-    const textarea = screen.getByTestId("prompt-textarea");
-    await user.clear(textarea);
-    await user.type(textarea, "Test message{Enter}");
+    const editor = screen.getByRole("textbox", { name: /chat message/i });
+    editor.focus();
+    await user.type(editor, "Test message{Enter}");
 
     expect(mockSendMessage).toHaveBeenCalledWith("Test message");
   });

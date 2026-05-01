@@ -6,21 +6,16 @@ import { PortfolioReportDocumentView } from "@/components/Pages/Community/Portfo
 import { Spinner } from "@/components/Utilities/Spinner";
 import { usePublishedReport } from "@/hooks/portfolio-reports/usePortfolioReports";
 import type { Community } from "@/types/v2/community";
+import { formatRunDate } from "@/utilities/portfolio-reports/period";
 
 interface Props {
   community: Community;
-  month: string;
+  runDate: string;
 }
 
-function formatMonth(month: string): string {
-  const [year, m] = month.split("-").map(Number);
-  const date = new Date(year, m - 1);
-  return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
-}
-
-export function PublicReportViewPage({ community, month }: Props) {
+export function PublicReportViewPage({ community, runDate }: Props) {
   const slug = community.details.slug;
-  const { data: report, isLoading, isError, refetch } = usePublishedReport(slug, month);
+  const { data: report, isLoading, isError, refetch } = usePublishedReport(slug, runDate);
 
   if (isLoading) {
     return (
@@ -59,7 +54,9 @@ export function PublicReportViewPage({ community, month }: Props) {
   if (!report) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-12 text-center">
-        <p className="text-zinc-500">No published report found for {formatMonth(month)}.</p>
+        <p className="text-zinc-500">
+          No published report found for {formatRunDate(runDate).label}.
+        </p>
         <Link
           href={`/community/${slug}/reports`}
           className="mt-4 inline-flex items-center text-sm text-blue-600 hover:underline"
@@ -74,7 +71,7 @@ export function PublicReportViewPage({ community, month }: Props) {
   return (
     <PortfolioReportDocumentView
       community={community}
-      month={month}
+      runDate={runDate}
       report={report}
       backHref={`/community/${slug}/reports`}
       backLabel="Reports"

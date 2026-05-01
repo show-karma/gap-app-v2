@@ -312,12 +312,13 @@ export function QuestionBuilder({
     (fieldType: FormField["type"]) => {
       if (readOnly) return; // Prevent adding fields in read-only mode
 
+      const isSectionHeader = fieldType === "section_header";
       const newField: FormField = {
         id: `field_${Date.now()}`,
         type: fieldType,
-        label: `New ${fieldType} field`,
+        label: isSectionHeader ? "Section Title" : `New ${fieldType} field`,
         required: !!(fieldType === "email" && !isPostApprovalMode), // Email fields are required by default only in main form
-        private: isPostApprovalMode, // All fields in post-approval mode are private by default
+        private: !isSectionHeader && isPostApprovalMode, // All fields in post-approval mode are private by default
         options: ["select", "radio", "checkbox"].includes(fieldType)
           ? ["Option 1", "Option 2"]
           : undefined,

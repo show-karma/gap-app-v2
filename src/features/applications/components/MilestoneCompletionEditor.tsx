@@ -421,10 +421,13 @@ export function MilestoneCompletionEditor({
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <p className="text-xs font-semibold">Completion Update</p>
-                          <ApplicationMilestoneAIEvaluationBadge
-                            referenceNumber={referenceNumber}
-                            milestoneTitle={milestone.title}
-                          />
+                          {completion.completionText ? (
+                            <ApplicationMilestoneAIEvaluationBadge
+                              referenceNumber={referenceNumber}
+                              milestoneTitle={milestone.title}
+                              completionReason={completion.completionText}
+                            />
+                          ) : null}
                         </div>
                         {canEdit && (
                           <Button size="icon-sm" onClick={() => handleStartEdit(milestone.title)}>

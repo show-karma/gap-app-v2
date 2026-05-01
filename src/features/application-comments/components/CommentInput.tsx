@@ -6,6 +6,7 @@ import InviteReviewerModal from "@/components/FundingPlatform/ApplicationView/In
 import MentionAutocomplete from "@/components/FundingPlatform/ApplicationView/MentionAutocomplete";
 import { Button } from "@/components/ui/button";
 import { useAllReviewers } from "@/hooks/useAllReviewers";
+import { useGranteeContacts } from "@/hooks/useGranteeContacts";
 import { useMentionEditor } from "@/hooks/useMentionEditor";
 import { useMilestoneReviewers } from "@/hooks/useMilestoneReviewers";
 import { ReviewerType } from "@/hooks/useReviewerAssignment";
@@ -23,6 +24,7 @@ export function CommentInput({
   isLoading = false,
   programId,
   isAdmin = false,
+  referenceNumber,
 }: CommentInputProps) {
   const enableMentions = !!programId;
   const editorContainerRef = useRef<HTMLDivElement>(null);
@@ -34,6 +36,7 @@ export function CommentInput({
 
   const { data: reviewers } = useAllReviewers(programId ?? "");
   const { addReviewer, isAdding } = useMilestoneReviewers(programId ?? "");
+  const { data: granteeContacts } = useGranteeContacts(referenceNumber);
 
   const filteredReviewers = useMemo(() => {
     if (!reviewers) return [];
@@ -44,9 +47,25 @@ export function CommentInput({
     );
   }, [reviewers, mentionEditor.filterText]);
 
+  const filteredGrantees = useMemo(() => {
+    if (!granteeContacts) return [];
+    if (!mentionEditor.filterText) return granteeContacts;
+    const lower = mentionEditor.filterText.toLowerCase();
+    return granteeContacts.filter(
+      (g) =>
+        g.name.toLowerCase().includes(lower) ||
+        g.role.toLowerCase().includes(lower) ||
+        g.email.toLowerCase().includes(lower)
+    );
+  }, [granteeContacts, mentionEditor.filterText]);
+
+  // Combined selectable items for keyboard navigation (reviewers first, then grantees with emails)
   const mentionItems = useMemo(
-    () => filteredReviewers.map((r) => ({ name: r.name, email: r.email })),
-    [filteredReviewers]
+    () => [
+      ...filteredReviewers.map((r) => ({ name: r.name, email: r.email })),
+      ...filteredGrantees.filter((g) => !!g.email).map((g) => ({ name: g.name, email: g.email })),
+    ],
+    [filteredReviewers, filteredGrantees]
   );
 
   const handleContentChange = useCallback(
@@ -122,6 +141,7 @@ export function CommentInput({
             onSelect={handleMentionSelect}
             onInviteNew={mentionEditor.handleOpenInviteModal}
             onClose={mentionEditor.handleCloseAutocomplete}
+            granteeContacts={granteeContacts}
           />
         )}
       </div>

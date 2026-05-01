@@ -3,6 +3,10 @@
 import { Trash2Icon, XIcon } from "lucide-react";
 import { useCallback } from "react";
 import { ConfirmationCard } from "@/components/AgentChat/ConfirmationCard";
+import {
+  MessageRatingButtons,
+  MessageRatingCommentBox,
+} from "@/components/AgentChat/MessageRating";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -25,8 +29,17 @@ function contextLabel(ctx: Record<string, string | undefined> | null): string | 
 
 export function AgentChatBubble() {
   const { authenticated } = useAuth();
-  const { isOpen, toggleOpen, messages, isStreaming, error, clearMessages, agentContext } =
-    useAgentChatStore();
+  const {
+    isOpen,
+    toggleOpen,
+    messages,
+    isStreaming,
+    error,
+    clearMessages,
+    agentContext,
+    pendingMentions,
+    clearMentions,
+  } = useAgentChatStore();
   const { sendMessage, sendConfirmation, abort } = useAgentStream();
 
   // Sync page context (project/program/application) to agent store
@@ -49,6 +62,7 @@ export function AgentChatBubble() {
       onClear={() => {
         abort();
         clearMessages();
+        clearMentions();
       }}
       title="Karma Assistant"
       badge={badge ? <Badge variant="secondary">{badge}</Badge> : undefined}
@@ -67,20 +81,32 @@ export function AgentChatBubble() {
           isStreaming={isStreaming}
           onStop={abort}
           placeholder={authenticated ? "Ask about your project..." : "Ask about a project..."}
+          mentions={pendingMentions}
+          onMentionsConsumed={clearMentions}
         />
       )}
-      renderAfterMessage={(msg) =>
-        msg.toolResult?.type === "preview" && authenticated ? (
-          <div className="pl-9">
-            <ConfirmationCard
-              toolResult={msg.toolResult}
-              onApprove={() => sendConfirmation(msg.id, msg.toolResult!.toolName, true)}
-              onDeny={() => sendConfirmation(msg.id, msg.toolResult!.toolName, false)}
-              disabled={isStreaming}
-            />
-          </div>
+      renderMessageActions={(msg) =>
+        msg.role === "assistant" && msg.content && !msg.isStreaming && msg.traceId ? (
+          <MessageRatingButtons messageId={msg.id} traceId={msg.traceId} />
         ) : null
       }
+      renderAfterMessage={(msg) => (
+        <>
+          {msg.toolResult?.type === "preview" && authenticated ? (
+            <div className="pl-9">
+              <ConfirmationCard
+                toolResult={msg.toolResult}
+                onApprove={() => sendConfirmation(msg.id, msg.toolResult!.toolName, true)}
+                onDeny={() => sendConfirmation(msg.id, msg.toolResult!.toolName, false)}
+                disabled={isStreaming}
+              />
+            </div>
+          ) : null}
+          {msg.role === "assistant" && msg.content && !msg.isStreaming && msg.traceId ? (
+            <MessageRatingCommentBox messageId={msg.id} traceId={msg.traceId} />
+          ) : null}
+        </>
+      )}
       renderHeaderActions={({ onClear, onClose }) => (
         <>
           <Tooltip>

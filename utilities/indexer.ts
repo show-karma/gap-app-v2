@@ -173,6 +173,8 @@ export const INDEXER = {
         `/v2/funding-applications/${referenceNumber}/invoice-config`,
       MILESTONE_EVALUATION: (referenceNumber: string, milestoneTitle: string) =>
         `/v2/funding-applications/${referenceNumber}/milestones/${encodeURIComponent(milestoneTitle)}/evaluation`,
+      GRANTEE_CONTACTS: (referenceNumber: string) =>
+        `/v2/funding-applications/${referenceNumber}/grantee-contacts`,
     },
     AUTH: {
       PERMISSIONS: (params?: {
@@ -646,7 +648,8 @@ export const INDEXER = {
       BULK: `/bulk-subscription/subscribe`,
     },
     REPORT: {
-      GET: (communityIdOrSlug: string) => `/communities/${communityIdOrSlug}/report`,
+      GET: (communityIdOrSlug: string) =>
+        `/v2/communities/${communityIdOrSlug}/milestones/report`,
       PENDING_VERIFICATION: (communityIdOrSlug: string) =>
         `/v2/communities/${communityIdOrSlug}/milestones/pending-verification`,
     },

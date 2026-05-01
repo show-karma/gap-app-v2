@@ -89,7 +89,7 @@ function validateMarkdownContent(content: string): { isValid: boolean; warnings:
 }
 
 export const MarkdownEditor: FC<MarkdownEditorProps> = ({
-  value = "",
+  value,
   onChange,
   onBlur,
   label,
@@ -111,6 +111,12 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
   showCharacterCount = false,
   enablePreviewToggle = true,
 }) => {
+  // md-editor-rt accesses `modelValue.length` synchronously inside its
+  // CodeMirror input/paste/setValue handlers — if a caller (or RHF default)
+  // passes `null`/`undefined` we hit `Cannot read properties of null` and a
+  // setValue→onChange→re-render cycle that trips React's max-update-depth.
+  const safeValue = value ?? "";
+
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
@@ -141,15 +147,15 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
 
   // Calculate character count info
   const characterInfo = useMemo(() => {
-    const length = value?.length || 0;
+    const length = safeValue.length;
     const percentage = length / maxLength;
     const isNearLimit = percentage >= WARNING_THRESHOLD;
     const isAtLimit = length >= maxLength;
     return { length, percentage, isNearLimit, isAtLimit };
-  }, [value, maxLength]);
+  }, [safeValue, maxLength]);
 
   // Validate content
-  const contentValidation = useMemo(() => validateMarkdownContent(value || ""), [value]);
+  const contentValidation = useMemo(() => validateMarkdownContent(safeValue), [safeValue]);
 
   // Handle onChange with length limit
   const handleChange = useCallback(
@@ -238,7 +244,7 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
       >
         {showPreview ? (
           <div className="px-4 py-2" style={{ minHeight }}>
-            <MarkdownPreview source={value} />
+            <MarkdownPreview source={safeValue} />
           </div>
         ) : (
           <MdEditor
@@ -249,7 +255,7 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
               isEditorDisabled && "opacity-50 cursor-not-allowed",
               className
             )}
-            value={value}
+            value={safeValue}
             onChange={handleChange}
             onBlur={onBlur}
             theme={resolvedTheme === "dark" ? "dark" : "light"}

@@ -17,7 +17,6 @@ const EMPTY_REPORT_RESPONSE: ReportAPIResponse = {
     percentageProjectsWithMilestones: 0,
     percentageCompletedMilestones: 0,
     percentagePendingMilestones: 0,
-    proofOfWorkLinks: [],
   },
 };
 
@@ -34,7 +33,12 @@ export const milestoneReportService = {
     const normalizedProgramIds = selectedProgramIds.map(normalizeProgramId);
     const queryProgramIds = normalizedProgramIds.join(",");
     const encodedProgramIds = encodeURIComponent(queryProgramIds);
-    let url = `${INDEXER.COMMUNITY.REPORT.GET(communityId)}?limit=${pageLimit}&page=${page}&sort=${sortBy}&sortOrder=${sortOrder}${
+    // The V2 endpoint uses `pageLimit` and `sortField` (instead of V1's
+    // `limit`/`sort`). Keep the same input contract for callers but adapt
+    // the wire format here.
+    let url = `${INDEXER.COMMUNITY.REPORT.GET(
+      communityId
+    )}?pageLimit=${pageLimit}&page=${page}&sortField=${sortBy}&sortOrder=${sortOrder}${
       queryProgramIds ? `&programIds=${encodedProgramIds}` : ""
     }`;
     if (reviewerAddress) {

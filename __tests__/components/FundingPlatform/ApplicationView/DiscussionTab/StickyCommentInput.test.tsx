@@ -2,17 +2,11 @@ import { render, screen } from "@testing-library/react";
 import { StickyCommentInput } from "@/components/FundingPlatform/ApplicationView/DiscussionTab/StickyCommentInput";
 
 // Mock CommentInput
-vi.mock("@/components/FundingPlatform/ApplicationView/CommentInput", () => ({
-  __esModule: true,
-  default: ({ onSubmit, disabled, placeholder }: any) => (
+vi.mock("@/src/features/application-comments/components/CommentInput", () => ({
+  CommentInput: ({ onSubmit, disabled, placeholder }: any) => (
     <div data-testid="comment-input">
       <textarea data-testid="comment-textarea" placeholder={placeholder} disabled={disabled} />
-      <button
-        type="button"
-        data-testid="submit-btn"
-        onClick={() => onSubmit("test content")}
-        disabled={disabled}
-      >
+      <button type="button" data-testid="submit-btn" onClick={() => onSubmit()} disabled={disabled}>
         Submit
       </button>
     </div>

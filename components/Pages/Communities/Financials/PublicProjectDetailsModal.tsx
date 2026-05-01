@@ -600,7 +600,10 @@ export function PublicProjectDetailsModal({
                                 {invoice.milestoneUID &&
                                 (effectiveMsStatus === MilestoneLifecycleStatus.COMPLETED ||
                                   effectiveMsStatus === MilestoneLifecycleStatus.VERIFIED) ? (
-                                  <MilestoneAIEvaluationBadge milestoneUID={invoice.milestoneUID} />
+                                  <MilestoneAIEvaluationBadge
+                                    milestoneUID={invoice.milestoneUID}
+                                    completionReason={invoice.completionReason ?? ""}
+                                  />
                                 ) : (
                                   <span className="text-xs text-gray-300 dark:text-zinc-600">
                                     &mdash;

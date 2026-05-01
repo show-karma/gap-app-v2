@@ -35,6 +35,7 @@ import { ActivityActionsWrapper } from "./ActivityActionsWrapper";
 import { ActivityAttribution } from "./ActivityAttribution";
 import { ActivityStatusHeader } from "./ActivityStatusHeader";
 import { GrantAssociation } from "./GrantAssociation";
+import { computeMilestoneCardCompletionGate } from "./milestone-card-gating";
 import { containerClassName } from "./styles";
 
 const ProjectObjectiveCompletion = dynamic(
@@ -215,6 +216,21 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
     (projectMilestone?.completed?.data as any)?.deliverables ||
     (grantMilestone?.milestone.completed?.data as any)?.deliverables;
 
+  // See computeMilestoneCardCompletionGate for the full rule. Briefly: a
+  // completed milestone-shaped entry always renders the "Milestone Update"
+  // section, even with no narrative, so the timeline keeps surfacing the
+  // completion event and renderMilestoneCompletion can show "—".
+  const { showSection: showCompletionSection, showTimelineHeader: showCompletionTimelineHeader } =
+    computeMilestoneCardCompletionGate({
+      type,
+      completed,
+      completionReason,
+      completionProof,
+      completionDeliverables,
+      isCompleting,
+      isEditing,
+    });
+
   // Function to render project milestone completion form or details
   const renderMilestoneCompletion = () => {
     if (isCompleting) {
@@ -320,7 +336,11 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
             <div className="flex flex-col gap-1">
               <ReadMore side="left">{completionReason}</ReadMore>
             </div>
-          ) : null}
+          ) : (
+            <p className="text-sm text-muted-foreground" data-testid="empty-completion-text">
+              —
+            </p>
+          )}
           {isAuthorized && milestone.invoiceInfo?.fileKey && grantUID && (
             <button
               type="button"
@@ -482,8 +502,18 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
         <div className="flex flex-col gap-6 w-full px-6 py-6">
           <div className="flex flex-row justify-between items-start gap-3 w-full flex-wrap">
             <div className="flex flex-col gap-2 flex-1 flex-wrap">
-              {/* Title */}
-              <p className="text-xl font-semibold text-foreground">{title}</p>
+              {/* Title row with per-grant ordinal pill */}
+              <div className="flex flex-row items-center gap-2 flex-wrap">
+                {type === "grant" && milestone.grantMilestoneOrder && (
+                  <Badge
+                    variant="secondary"
+                    className="bg-blue-50 text-blue-700 hover:bg-blue-50 dark:bg-blue-950 dark:text-blue-200 dark:hover:bg-blue-950"
+                  >
+                    {`${milestone.grantMilestoneOrder.index} of ${milestone.grantMilestoneOrder.total}`}
+                  </Badge>
+                )}
+                <p className="text-xl font-semibold text-foreground">{title}</p>
+              </div>
 
               {/* Community/Grant Badge - only shown for grant milestones */}
               {type === "grant" && (
@@ -526,8 +556,11 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
                   {completed ? "Completed" : "Pending"}
                 </Badge>
               )}
-              {completed && milestone.uid && (
-                <MilestoneAIEvaluationBadge milestoneUID={milestone.uid} />
+              {completed && milestone.uid && completionReason && (
+                <MilestoneAIEvaluationBadge
+                  milestoneUID={milestone.uid}
+                  completionReason={completionReason}
+                />
               )}
             </div>
           </div>
@@ -574,14 +607,10 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
             </div>
           )}
       </div>
-      {isCompleting ||
-      isEditing ||
-      completionReason ||
-      completionProof ||
-      completionDeliverables ? (
+      {showCompletionSection && (
         <div className="flex flex-col gap-2.5 mt-2 pl-10">
           {/* Timeline header: Only show when viewing existing completion data, not during form input */}
-          {!isCompleting && (completionReason || completionProof || completionDeliverables) && (
+          {showCompletionTimelineHeader && (
             <div className="relative flex flex-row items-center justify-between gap-2 flex-wrap">
               {!hideTimelineMarker && (
                 /* Timeline badge - vertically centered relative to header row, aligned with main timeline */
@@ -619,7 +648,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
           {/* Completion card - aligned with header */}
           <div>{renderMilestoneCompletion()}</div>
         </div>
-      ) : null}
+      )}
     </div>
   );
 };

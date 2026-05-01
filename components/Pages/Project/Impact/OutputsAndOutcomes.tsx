@@ -1,10 +1,10 @@
 "use client";
 
 import { Dialog, Transition } from "@headlessui/react";
-import { TrashIcon } from "@heroicons/react/24/outline";
+import { ChevronRightIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { Card, Title } from "@tremor/react";
 import dynamic from "next/dynamic";
-import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, type ReactNode, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
@@ -33,7 +33,86 @@ const AreaChart = dynamic(() => import("@tremor/react").then((mod) => mod.AreaCh
   loading: () => <ChartSkeleton height="h-52" />,
 });
 
-export const OutputsAndOutcomes = () => {
+interface OutputsAndOutcomesProps {
+  /**
+   * Optional project UID. When provided, overrides the store-resolved project
+   * (e.g. on pages like the admin milestone review where the project is not
+   * loaded into useProjectStore). Authorization (edit controls) still uses
+   * the store-derived ownership flags — passing a UID does not grant edits.
+   */
+  projectUid?: string;
+  /**
+   * Number of indicator cards per row at xl+ widths. Defaults to 1 (the
+   * project /impact page layout). Set to 2 for embedded views like the
+   * milestone review page where the section shares the page with other
+   * content. Below xl the layout always stacks to 1 column.
+   */
+  columns?: 1 | 2;
+  /**
+   * Render inside a closed-by-default <details> disclosure with a header
+   * showing indicator count + most recent update. When the project has
+   * no metrics, the component renders nothing — collapsible mode is meant
+   * for secondary context (e.g. milestone review) where empty state would
+   * be noise.
+   */
+  collapsible?: boolean;
+}
+
+// Animated disclosure used by the collapsible variant. Native <details> can't
+// transition height; the grid-template-rows 0fr → 1fr trick gives a smooth
+// open/close without measuring content.
+function CollapsibleMetricsPanel({
+  summary,
+  children,
+}: {
+  summary: ReactNode;
+  children: ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-zinc-900 shadow-sm">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="w-full cursor-pointer flex items-center justify-between gap-4 p-6 text-left rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <ChevronRightIcon
+            className={cn(
+              "w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform shrink-0",
+              open && "rotate-90"
+            )}
+            aria-hidden="true"
+          />
+          <h2 className="text-xl font-semibold text-black dark:text-white">
+            Project Impact Metrics
+          </h2>
+        </div>
+        {summary}
+      </button>
+      <div
+        className={cn(
+          "grid transition-[grid-template-rows] duration-300 ease-out",
+          open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+        )}
+        // inert keeps tab/screen-reader focus out of the closed panel
+        // without the display:none flicker that would break the animation.
+        inert={!open}
+      >
+        <div className="overflow-hidden">
+          <div className="px-6 pb-6">{children}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export const OutputsAndOutcomes = ({
+  projectUid,
+  columns = 1,
+  collapsible = false,
+}: OutputsAndOutcomesProps = {}) => {
   const { project, isProjectOwner } = useProjectStore();
 
   const isContractOwner = useOwnerStore((state) => state.isOwner);
@@ -49,6 +128,8 @@ export const OutputsAndOutcomes = () => {
     data: SelectedPointData;
   } | null>(null);
 
+  const effectiveProjectUid = projectUid ?? (project?.uid as string | undefined);
+
   // Use our custom hook for fetching impact answers
   const {
     data: impactAnswers = [],
@@ -56,8 +137,8 @@ export const OutputsAndOutcomes = () => {
     submitImpactAnswer,
     refetch,
   } = useImpactAnswers({
-    projectIdentifier: project?.uid as string,
-    enabled: !!project?.uid,
+    projectIdentifier: effectiveProjectUid as string,
+    enabled: !!effectiveProjectUid,
   });
 
   // Fetch auto-synced indicators from API
@@ -237,7 +318,40 @@ export const OutputsAndOutcomes = () => {
     );
   };
 
-  if (!project || isLoading) return <GrantsOutputsLoading />;
+  if (!effectiveProjectUid || isLoading) {
+    if (collapsible) {
+      return (
+        <div
+          className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-zinc-900 p-4 animate-pulse"
+          aria-busy="true"
+        >
+          <div className="h-5 w-1/3 bg-gray-200 dark:bg-zinc-700 rounded" />
+        </div>
+      );
+    }
+    return <GrantsOutputsLoading />;
+  }
+
+  // Hide the section entirely in collapsible mode when there's nothing to show —
+  // an empty disclosure at the top of the milestone review page is just noise.
+  if (collapsible && filteredOutputs.length === 0) return null;
+
+  const summaryMeta = (() => {
+    if (filteredOutputs.length === 0) return null;
+    let latest: number | null = null;
+    for (const item of filteredOutputs) {
+      const candidate =
+        item.lastUpdatedAt ??
+        item.datapoints
+          ?.map((dp) => dp.endDate)
+          .filter(Boolean)
+          .sort((a, b) => new Date(b as string).getTime() - new Date(a as string).getTime())[0];
+      if (!candidate) continue;
+      const t = new Date(candidate).getTime();
+      if (Number.isFinite(t) && (latest === null || t > latest)) latest = t;
+    }
+    return { count: filteredOutputs.length, lastUpdated: latest };
+  })();
 
   const isInvalidValue = (value: number, unitOfMeasure: "int" | "float") => {
     if (value === undefined || value === null) return true;
@@ -302,10 +416,22 @@ export const OutputsAndOutcomes = () => {
       return false;
     });
 
-  return (
-    <div className="w-full max-w-[100rem]">
+  const collapsibleSummary =
+    collapsible && summaryMeta?.lastUpdated ? (
+      <span className="text-sm text-gray-500 dark:text-gray-400">
+        Last updated {formatDate(new Date(summaryMeta.lastUpdated), "UTC")}
+      </span>
+    ) : null;
+
+  const innerContent = (
+    <>
       {filteredOutputs.length > 0 ? (
-        <div className="flex flex-col gap-8">
+        <div
+          className={cn(
+            "gap-8",
+            columns === 2 ? "grid grid-cols-1 xl:grid-cols-2" : "flex flex-col"
+          )}
+        >
           {sortedOutputs.map((item) => {
             const form = forms.find((f) => f.id === item.id);
             // Prefer the server-computed lastUpdatedAt (when the sync job last
@@ -403,7 +529,15 @@ export const OutputsAndOutcomes = () => {
                     />
                   )}
 
-                <div className="flex flex-row gap-4 max-md:flex-col-reverse">
+                <div
+                  className={cn(
+                    "flex gap-4 max-md:flex-col-reverse",
+                    // When two cards share a row, the inner chart + breakdown
+                    // need to stack — at half-width there isn't enough room
+                    // for both a 4-column table and a chart side-by-side.
+                    columns === 2 ? "flex-col" : "flex-row"
+                  )}
+                >
                   <div className="flex flex-1 flex-col gap-5">
                     {/* Raw Historical Values Chart */}
                     {(item.datapoints?.length ?? 0) >= 1 ? (
@@ -960,6 +1094,14 @@ export const OutputsAndOutcomes = () => {
           </div>
         </Dialog>
       </Transition>
-    </div>
+    </>
   );
+
+  if (collapsible) {
+    return (
+      <CollapsibleMetricsPanel summary={collapsibleSummary}>{innerContent}</CollapsibleMetricsPanel>
+    );
+  }
+
+  return <div className="w-full max-w-[100rem]">{innerContent}</div>;
 };

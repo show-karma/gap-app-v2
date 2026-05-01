@@ -42,7 +42,7 @@ export const projectToGrant = (project: CommunityProject): Grant => {
     })),
     milestones: Array.from({ length: project.numMilestones }, (_, index) => ({
       uid: `milestone-${index}`,
-      completed: index < Math.floor((project.percentCompleted / 100) * project.numMilestones),
+      completed: index < project.numCompletedMilestones,
       createdAt: project.createdAt,
       title: `Milestone ${index + 1}`,
       description: "",
