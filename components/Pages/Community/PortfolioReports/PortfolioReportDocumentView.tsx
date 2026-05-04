@@ -1,11 +1,22 @@
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
+import type { ComponentPropsWithoutRef } from "react";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import type { PortfolioReport } from "@/types/portfolio-report";
 import type { Community } from "@/types/v2/community";
 import { formatRunDate } from "@/utilities/portfolio-reports/period";
 import { BackToTop } from "./BackToTop";
 import { ReadingProgress } from "./ReadingProgress";
+
+const REPORT_MARKDOWN_COMPONENTS = {
+  // Wide tables should scroll horizontally rather than squeezing column widths
+  // (e.g. forcing the BATCH column to wrap one character per line).
+  table: ({ children, ...rest }: ComponentPropsWithoutRef<"table">) => (
+    <div className="overflow-x-auto">
+      <table {...rest}>{children}</table>
+    </div>
+  ),
+};
 
 interface Props {
   community: Community;
@@ -38,7 +49,7 @@ export function PortfolioReportDocumentView({
   return (
     <>
       <ReadingProgress />
-      <div className="mx-auto w-full max-w-6xl px-6 pt-6 pb-10 lg:px-8">
+      <div className="px-6 pt-6 pb-10 lg:px-10">
         {bannerText ? (
           <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800 dark:border-blue-900/40 dark:bg-blue-950/30 dark:text-blue-200">
             {bannerText}
@@ -77,7 +88,7 @@ export function PortfolioReportDocumentView({
         </header>
 
         <article className="report-article prose prose-zinc max-w-none dark:prose-invert">
-          <MarkdownPreview source={report.markdown} />
+          <MarkdownPreview source={report.markdown} components={REPORT_MARKDOWN_COMPONENTS} />
         </article>
 
         <footer className="mt-12 border-t border-zinc-200 pt-4 font-mono text-[11px] uppercase tracking-wider text-zinc-400 dark:border-zinc-800 dark:text-zinc-500">
