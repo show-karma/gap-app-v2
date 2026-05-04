@@ -2,12 +2,14 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as portfolioService from "@/services/portfolio-reports.service";
-import type {
-  CreateReportConfigRequest,
-  GenerateReportRequest,
-  PortfolioReport,
-  ReportConfig,
-  UpdateReportConfigRequest,
+import {
+  type CreateReportConfigRequest,
+  type GenerateReportRequest,
+  type PortfolioReport,
+  type ReportConfig,
+  reportListPollIntervalMs,
+  reportPollIntervalMs,
+  type UpdateReportConfigRequest,
 } from "@/types/portfolio-report";
 
 const QUERY_KEYS = {
@@ -82,6 +84,8 @@ export function usePortfolioReports(communitySlug: string, status?: string) {
     queryKey: [...QUERY_KEYS.reports(communitySlug), status],
     queryFn: () => portfolioService.listReports(communitySlug, status),
     enabled: Boolean(communitySlug),
+    refetchInterval: (query) =>
+      reportListPollIntervalMs(query.state.data as PortfolioReport[] | undefined),
   });
 }
 
@@ -90,6 +94,8 @@ export function usePortfolioReport(communitySlug: string, reportId: string) {
     queryKey: QUERY_KEYS.report(communitySlug, reportId),
     queryFn: () => portfolioService.getReport(communitySlug, reportId),
     enabled: Boolean(communitySlug && reportId),
+    refetchInterval: (query) =>
+      reportPollIntervalMs(query.state.data as PortfolioReport | undefined),
   });
 }
 
@@ -100,7 +106,8 @@ export function useGenerateReport(communitySlug: string) {
   return useMutation({
     mutationFn: (body: GenerateReportRequest) =>
       portfolioService.generateReport(communitySlug, body),
-    onSuccess: () => {
+    onSuccess: (data) => {
+      queryClient.setQueryData(QUERY_KEYS.report(communitySlug, data.id), data);
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.reports(communitySlug),
       });
@@ -113,10 +120,10 @@ export function useRegenerateReport(communitySlug: string) {
   return useMutation({
     mutationFn: (reportId: string) => portfolioService.regenerateReport(communitySlug, reportId),
     onSuccess: (data) => {
+      queryClient.setQueryData(QUERY_KEYS.report(communitySlug, data.id), data);
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.reports(communitySlug),
       });
-      queryClient.setQueryData(QUERY_KEYS.report(communitySlug, data.id), data);
     },
   });
 }

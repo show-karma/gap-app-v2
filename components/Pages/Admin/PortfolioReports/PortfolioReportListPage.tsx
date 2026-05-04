@@ -16,13 +16,15 @@ import {
   useReportConfigs,
   useUnpublishReport,
 } from "@/hooks/portfolio-reports/usePortfolioReports";
-import type { PortfolioReport, ReportConfig } from "@/types/portfolio-report";
+import {
+  isReportGenerating,
+  type PortfolioReport,
+  type ReportConfig,
+} from "@/types/portfolio-report";
 import type { Community } from "@/types/v2/community";
 import { PAGES } from "@/utilities/pages";
-import {
-  formatRunDate,
-  formatScheduleLabel,
-} from "@/utilities/portfolio-reports/period";
+import { formatRunDate, formatScheduleLabel } from "@/utilities/portfolio-reports/period";
+import { GenerationStatusBadge } from "./GenerationStatusBadge";
 
 interface Props {
   community: Community;
@@ -52,23 +54,20 @@ function ReportTableRow({
   onRegenerate,
 }: ReportTableRowProps) {
   const fmt = formatRunDate(report.runDate);
+  const generating = isReportGenerating(report);
+  const failed = report.status === "failed";
+  const actionsDisabled = rowPending || generating;
   return (
     <tr className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
-      <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">
-        {configName}
-      </td>
+      <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">{configName}</td>
       <td className="px-4 py-3 text-zinc-500">{fmt.shortLabel}</td>
       <td className="px-4 py-3">
-        <span
-          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-            report.status === "published"
-              ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-              : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
-          }`}
-        >
-          {report.status}
-        </span>
-        {report.generationError && <span className="ml-2 text-xs text-red-500">Error</span>}
+        <GenerationStatusBadge status={report.status} />
+        {failed && report.generationError ? (
+          <p className="mt-1 max-w-md truncate text-xs text-red-500" title={report.generationError}>
+            {report.generationError}
+          </p>
+        ) : null}
       </td>
       <td className="px-4 py-3 text-zinc-500">{report.modelId}</td>
       <td className="px-4 py-3 text-zinc-500">
@@ -76,7 +75,7 @@ function ReportTableRow({
       </td>
       <td className="px-4 py-3">
         <div className="flex items-center justify-end gap-1">
-          <Button variant="ghost" size="sm" onClick={onEdit}>
+          <Button variant="ghost" size="sm" onClick={onEdit} disabled={generating}>
             Edit
           </Button>
           {report.status === "draft" ? (
@@ -86,19 +85,25 @@ function ReportTableRow({
             </Button>
           ) : null}
           {report.status === "draft" ? (
-            <Button variant="ghost" size="sm" onClick={onPublish} disabled={rowPending}>
+            <Button variant="ghost" size="sm" onClick={onPublish} disabled={actionsDisabled}>
               <Eye className="mr-1 h-3 w-3" />
               {rowPending && activeMutationType === "publish" ? "Publishing..." : "Publish"}
             </Button>
-          ) : (
-            <Button variant="ghost" size="sm" onClick={onUnpublish} disabled={rowPending}>
+          ) : report.status === "published" ? (
+            <Button variant="ghost" size="sm" onClick={onUnpublish} disabled={actionsDisabled}>
               <EyeOff className="mr-1 h-3 w-3" />
               {rowPending && activeMutationType === "unpublish" ? "Unpublishing..." : "Unpublish"}
             </Button>
-          )}
-          <Button variant="ghost" size="sm" onClick={onRegenerate} disabled={rowPending}>
+          ) : null}
+          <Button variant="ghost" size="sm" onClick={onRegenerate} disabled={actionsDisabled}>
             <RefreshCw className="mr-1 h-3 w-3" />
-            {rowPending && activeMutationType === "regenerate" ? "Regenerating..." : "Regen"}
+            {rowPending && activeMutationType === "regenerate"
+              ? "Regenerating..."
+              : generating
+                ? "Generating…"
+                : failed
+                  ? "Retry"
+                  : "Regen"}
           </Button>
         </div>
       </td>
@@ -129,10 +134,15 @@ export function PortfolioReportListPage({ community }: Props) {
     return map;
   }, [configs]);
 
-  const activeConfigs = useMemo(
-    () => (configs ?? []).filter((c) => c.isActive),
-    [configs]
-  );
+  const activeConfigs = useMemo(() => (configs ?? []).filter((c) => c.isActive), [configs]);
+
+  const generatingConfigIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const r of reports ?? []) {
+      if (isReportGenerating(r)) ids.add(r.reportConfigId);
+    }
+    return ids;
+  }, [reports]);
 
   // Per-row pending state: track which report is being mutated and what action
   const [activeReportId, setActiveReportId] = useState<string | null>(null);
@@ -162,10 +172,10 @@ export function PortfolioReportListPage({ community }: Props) {
     setGeneratingConfigId(configId);
     try {
       await generateMutation.mutateAsync({ configId });
-      toast.success("Report generated successfully");
+      toast.success("Generation started — this can take a few minutes.");
     } catch (error) {
       toast.error(
-        `Failed to generate report: ${error instanceof Error ? error.message : "Unknown error"}`
+        `Failed to start generation: ${error instanceof Error ? error.message : "Unknown error"}`
       );
     } finally {
       setGeneratingConfigId(null);
@@ -207,12 +217,15 @@ export function PortfolioReportListPage({ community }: Props) {
     setActiveMutationType("regenerate");
     try {
       await regenerateMutation.mutateAsync(reportId);
-      toast.success("Report regenerated");
-    } catch {
-      toast.error("Failed to regenerate report");
+      toast.success("Regeneration started — this can take a few minutes.");
+    } catch (error) {
+      toast.error(
+        `Failed to start regeneration: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
     } finally {
       setActiveReportId(null);
       setActiveMutationType(null);
+      setRegenerateTargetId(null);
     }
   };
 
@@ -220,9 +233,7 @@ export function PortfolioReportListPage({ community }: Props) {
     activeReportId === reportId &&
     (publishMutation.isPending || unpublishMutation.isPending || regenerateMutation.isPending);
 
-  const sortedReports = (reports ?? [])
-    .slice()
-    .sort((a, b) => b.runDate.localeCompare(a.runDate));
+  const sortedReports = (reports ?? []).slice().sort((a, b) => b.runDate.localeCompare(a.runDate));
 
   return (
     <div className="space-y-6">
@@ -244,11 +255,7 @@ export function PortfolioReportListPage({ community }: Props) {
             Reports generated from your configured prompts.
           </p>
         </div>
-        <Button
-          onClick={() =>
-            router.push(`${PAGES.ADMIN.PORTFOLIO_REPORTS_CONFIG(slug)}?new=1`)
-          }
-        >
+        <Button onClick={() => router.push(`${PAGES.ADMIN.PORTFOLIO_REPORTS_CONFIG(slug)}?new=1`)}>
           <Plus className="mr-2 h-4 w-4" />
           Configure New Report
         </Button>
@@ -256,9 +263,7 @@ export function PortfolioReportListPage({ community }: Props) {
 
       {/* Per-config generate row */}
       <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-800">
-        <h2 className="mb-3 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-          Generate now
-        </h2>
+        <h2 className="mb-3 text-sm font-medium text-zinc-700 dark:text-zinc-300">Generate now</h2>
         {configsLoading ? (
           <div className="flex items-center gap-2 text-sm text-zinc-500">
             <Spinner className="h-4 w-4" />
@@ -272,9 +277,7 @@ export function PortfolioReportListPage({ community }: Props) {
             <button
               type="button"
               className="text-blue-600 underline dark:text-blue-400"
-              onClick={() =>
-                router.push(`${PAGES.ADMIN.PORTFOLIO_REPORTS_CONFIG(slug)}?new=1`)
-              }
+              onClick={() => router.push(`${PAGES.ADMIN.PORTFOLIO_REPORTS_CONFIG(slug)}?new=1`)}
             >
               Configure your first report
             </button>{" "}
@@ -302,9 +305,7 @@ export function PortfolioReportListPage({ community }: Props) {
                     size="sm"
                     onClick={() =>
                       cfg.id &&
-                      router.push(
-                        `${PAGES.ADMIN.PORTFOLIO_REPORTS_CONFIG(slug)}?editId=${cfg.id}`
-                      )
+                      router.push(`${PAGES.ADMIN.PORTFOLIO_REPORTS_CONFIG(slug)}?editId=${cfg.id}`)
                     }
                   >
                     <Settings className="mr-1 h-3 w-3" />
@@ -313,9 +314,13 @@ export function PortfolioReportListPage({ community }: Props) {
                   <Button
                     size="sm"
                     onClick={() => cfg.id && handleGenerate(cfg.id)}
-                    disabled={generatingConfigId !== null}
+                    disabled={
+                      generatingConfigId !== null ||
+                      (cfg.id ? generatingConfigIds.has(cfg.id) : false)
+                    }
                   >
-                    {generatingConfigId === cfg.id ? (
+                    {generatingConfigId === cfg.id ||
+                    (cfg.id && generatingConfigIds.has(cfg.id)) ? (
                       <>
                         <Spinner className="mr-2 h-3 w-3" />
                         Generating…
@@ -360,9 +365,7 @@ export function PortfolioReportListPage({ community }: Props) {
                 <ReportTableRow
                   key={report.id}
                   report={report}
-                  configName={
-                    configById.get(report.reportConfigId)?.name ?? "(deleted config)"
-                  }
+                  configName={configById.get(report.reportConfigId)?.name ?? "(deleted config)"}
                   rowPending={isRowPending(report.id)}
                   activeMutationType={activeMutationType}
                   onEdit={() => router.push(`${PAGES.ADMIN.PORTFOLIO_REPORTS(slug)}/${report.id}`)}

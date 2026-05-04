@@ -1,8 +1,6 @@
 export type ScheduleIntervalUnit = "days" | "weeks" | "months";
 
-export type ScheduleEnds =
-  | { kind: "never" }
-  | { kind: "on_date"; date: string };
+export type ScheduleEnds = { kind: "never" } | { kind: "on_date"; date: string };
 
 export interface ReportSchedule {
   intervalUnit: ScheduleIntervalUnit;
@@ -32,12 +30,14 @@ export interface TokenUsage {
   totalTokens: number;
 }
 
+export type PortfolioReportStatus = "generating" | "draft" | "failed" | "published";
+
 export interface PortfolioReport {
   id: string;
   reportConfigId: string;
   communityId: string;
   runDate: string;
-  status: "draft" | "published";
+  status: PortfolioReportStatus;
   markdown: string;
   dataSnapshot: Record<string, unknown>;
   modelId: string;
@@ -48,6 +48,20 @@ export interface PortfolioReport {
   publishedBy: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export function isReportGenerating(report: PortfolioReport): boolean {
+  return report.status === "generating";
+}
+
+export const GENERATING_POLL_INTERVAL_MS = 3000;
+
+export function reportPollIntervalMs(report: PortfolioReport | undefined): number | false {
+  return report && isReportGenerating(report) ? GENERATING_POLL_INTERVAL_MS : false;
+}
+
+export function reportListPollIntervalMs(reports: PortfolioReport[] | undefined): number | false {
+  return reports?.some(isReportGenerating) ? GENERATING_POLL_INTERVAL_MS : false;
 }
 
 export interface CreateReportConfigRequest {
