@@ -60,10 +60,6 @@ export function reportPollIntervalMs(report: PortfolioReport | undefined): numbe
   return report && isReportGenerating(report) ? GENERATING_POLL_INTERVAL_MS : false;
 }
 
-export function reportListPollIntervalMs(reports: PortfolioReport[] | undefined): number | false {
-  return reports?.some(isReportGenerating) ? GENERATING_POLL_INTERVAL_MS : false;
-}
-
 export interface CreateReportConfigRequest {
   name: string;
   programIds: string[];

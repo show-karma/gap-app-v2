@@ -2,7 +2,6 @@ import {
   GENERATING_POLL_INTERVAL_MS,
   isReportGenerating,
   type PortfolioReport,
-  reportListPollIntervalMs,
   reportPollIntervalMs,
 } from "@/types/portfolio-report";
 
@@ -51,29 +50,5 @@ describe("reportPollIntervalMs", () => {
 
   it("returns false when report is undefined", () => {
     expect(reportPollIntervalMs(undefined)).toBe(false);
-  });
-});
-
-describe("reportListPollIntervalMs", () => {
-  it("returns the poll interval when any row is generating", () => {
-    const reports = [
-      makeReport({ id: "r-1", status: "draft" }),
-      makeReport({ id: "r-2", status: "generating" }),
-    ];
-    expect(reportListPollIntervalMs(reports)).toBe(GENERATING_POLL_INTERVAL_MS);
-  });
-
-  it("returns false when all rows are terminal", () => {
-    const reports = [
-      makeReport({ id: "r-1", status: "draft" }),
-      makeReport({ id: "r-2", status: "published" }),
-      makeReport({ id: "r-3", status: "failed" }),
-    ];
-    expect(reportListPollIntervalMs(reports)).toBe(false);
-  });
-
-  it("returns false for empty or undefined input", () => {
-    expect(reportListPollIntervalMs([])).toBe(false);
-    expect(reportListPollIntervalMs(undefined)).toBe(false);
   });
 });

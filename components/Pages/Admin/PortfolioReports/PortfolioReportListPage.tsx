@@ -14,6 +14,7 @@ import {
   usePublishReport,
   useRegenerateReport,
   useReportConfigs,
+  useReportRowSync,
   useUnpublishReport,
 } from "@/hooks/portfolio-reports/usePortfolioReports";
 import {
@@ -31,6 +32,7 @@ interface Props {
 }
 
 interface ReportTableRowProps {
+  slug: string;
   report: PortfolioReport;
   configName: string;
   rowPending: boolean;
@@ -43,7 +45,8 @@ interface ReportTableRowProps {
 }
 
 function ReportTableRow({
-  report,
+  slug,
+  report: initialReport,
   configName,
   rowPending,
   activeMutationType,
@@ -53,6 +56,7 @@ function ReportTableRow({
   onUnpublish,
   onRegenerate,
 }: ReportTableRowProps) {
+  const report = useReportRowSync(slug, initialReport);
   const fmt = formatRunDate(report.runDate);
   const generating = isReportGenerating(report);
   const failed = report.status === "failed";
@@ -364,6 +368,7 @@ export function PortfolioReportListPage({ community }: Props) {
               {sortedReports.map((report: PortfolioReport) => (
                 <ReportTableRow
                   key={report.id}
+                  slug={slug}
                   report={report}
                   configName={configById.get(report.reportConfigId)?.name ?? "(deleted config)"}
                   rowPending={isRowPending(report.id)}
