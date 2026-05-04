@@ -38,7 +38,7 @@ export function PortfolioReportDocumentView({
   return (
     <>
       <ReadingProgress />
-      <div className="px-6 pt-6 pb-10 lg:px-10">
+      <div className="mx-auto w-full max-w-6xl px-6 pt-6 pb-10 lg:px-8">
         {bannerText ? (
           <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800 dark:border-blue-900/40 dark:bg-blue-950/30 dark:text-blue-200">
             {bannerText}
