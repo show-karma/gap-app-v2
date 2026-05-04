@@ -1,6 +1,16 @@
-import { render, screen } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { render as rtlRender, screen } from "@testing-library/react";
+import type { ReactElement } from "react";
 import { MilestoneCard } from "@/components/Milestone/MilestoneCard";
+import { useMilestoneImpactAnswers } from "@/hooks/useMilestoneImpactAnswers";
 import type { UnifiedMilestone } from "@/types/roadmap";
+
+function render(ui: ReactElement) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
+  return rtlRender(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
+}
 
 // Mock Next.js dynamic imports
 vi.mock("next/dynamic", () => ({
@@ -594,7 +604,6 @@ describe("MilestoneCard", () => {
 
     describe("Metric Proof Links", () => {
       it("should prepend https:// to metric proof URLs without protocol", () => {
-        const { useMilestoneImpactAnswers } = require("@/hooks/useMilestoneImpactAnswers");
         useMilestoneImpactAnswers.mockReturnValue({
           data: [
             {
@@ -651,7 +660,6 @@ describe("MilestoneCard", () => {
       });
 
       it("should not modify metric proof URLs that already have https://", () => {
-        const { useMilestoneImpactAnswers } = require("@/hooks/useMilestoneImpactAnswers");
         useMilestoneImpactAnswers.mockReturnValue({
           data: [
             {
@@ -708,7 +716,6 @@ describe("MilestoneCard", () => {
       });
 
       it("should not modify metric proof URLs that already have http://", () => {
-        const { useMilestoneImpactAnswers } = require("@/hooks/useMilestoneImpactAnswers");
         useMilestoneImpactAnswers.mockReturnValue({
           data: [
             {

@@ -5,6 +5,16 @@ import "@testing-library/jest-dom";
 
 // Mock the hook
 vi.mock("@/hooks/useContractVerification");
+
+// ContractVerificationDialog reads useAccount() from wagmi at render time
+vi.mock("wagmi", () => ({
+  useAccount: vi.fn(() => ({
+    address: undefined,
+    isConnected: false,
+    chain: undefined,
+    chainId: undefined,
+  })),
+}));
 const mockUseContractVerification = useContractVerification as vi.MockedFunction<
   typeof useContractVerification
 >;

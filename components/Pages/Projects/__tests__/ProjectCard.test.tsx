@@ -4,11 +4,11 @@ import { ProjectCard } from "../ProjectCard";
 import "@testing-library/jest-dom";
 
 // Mock next/link
-vi.mock("next/link", () => {
-  return ({ children, href }: { children: React.ReactNode; href: string }) => (
+vi.mock("next/link", () => ({
+  default: ({ children, href }: { children: React.ReactNode; href: string }) => (
     <a href={href}>{children}</a>
-  );
-});
+  ),
+}));
 
 // Mock ProfilePicture component
 vi.mock("@/components/Utilities/ProfilePicture", () => ({

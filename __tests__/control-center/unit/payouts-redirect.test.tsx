@@ -9,6 +9,7 @@
 // Mock next/navigation with redirect function
 vi.mock("next/navigation", () => ({
   redirect: vi.fn(),
+  permanentRedirect: vi.fn(),
   useRouter: vi.fn(() => ({
     push: vi.fn(),
     replace: vi.fn(),
@@ -21,11 +22,11 @@ vi.mock("next/navigation", () => ({
   notFound: vi.fn(),
 }));
 
-import { redirect } from "next/navigation";
+import { permanentRedirect } from "next/navigation";
 import CommunityPayoutsPage from "@/app/community/[communityId]/manage/payouts/page";
 import { PAGES } from "@/utilities/pages";
 
-const mockedRedirect = vi.mocked(redirect);
+const mockedRedirect = vi.mocked(permanentRedirect);
 
 describe("CommunityPayoutsPage (payouts redirect)", () => {
   beforeEach(() => {

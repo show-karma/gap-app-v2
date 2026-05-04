@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { useSearchParams } from "next/navigation";
 import { vi } from "vitest";
 import PayoutsAdminPage from "@/components/Pages/Admin/PayoutsAdminPage";
 
@@ -17,7 +18,7 @@ vi.mock("next/navigation", () => ({
     back: vi.fn(),
   }),
   usePathname: () => mockPathname,
-  useSearchParams: () => mockSearchParams,
+  useSearchParams: vi.fn(() => mockSearchParams),
   useParams: () => ({ communityId: "test-community-uid" }),
 }));
 
@@ -709,9 +710,9 @@ describe("PayoutsAdminPage", () => {
       // Simulate a selected program via URL search params
       const searchParamsWithProgram = new URLSearchParams("programId=program-1_10");
 
-      jest
-        .spyOn(require("next/navigation"), "useSearchParams")
-        .mockReturnValue(searchParamsWithProgram);
+      vi.mocked(useSearchParams).mockReturnValueOnce(
+        searchParamsWithProgram as unknown as ReturnType<typeof useSearchParams>
+      );
     });
 
     afterEach(() => {

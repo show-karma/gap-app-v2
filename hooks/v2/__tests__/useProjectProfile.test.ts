@@ -1,5 +1,9 @@
 import { renderHook, waitFor } from "@testing-library/react";
+import { useProject } from "@/hooks/useProject";
+import { useProjectGrants } from "../useProjectGrants";
+import { useProjectImpacts } from "../useProjectImpacts";
 import { useProjectProfile } from "../useProjectProfile";
+import { useProjectUpdates } from "../useProjectUpdates";
 
 // =============================================================================
 // Mock Dependencies
@@ -138,7 +142,6 @@ describe("useProjectProfile", () => {
 
   describe("Loading State", () => {
     it("should aggregate loading states", () => {
-      const useProject = require("@/hooks/useProject").useProject;
       useProject.mockReturnValue({ project: null, isLoading: true });
 
       const { result } = renderHook(() => useProjectProfile("test-project"));
@@ -147,7 +150,6 @@ describe("useProjectProfile", () => {
     });
 
     it("should be not loading when all hooks are loaded", () => {
-      const useProject = require("@/hooks/useProject").useProject;
       useProject.mockReturnValue({ project: mockProject, isLoading: false });
 
       const { result } = renderHook(() => useProjectProfile("test-project"));
@@ -156,7 +158,6 @@ describe("useProjectProfile", () => {
     });
 
     it("should expose isProjectLoading true only when core project data is loading", () => {
-      const useProject = require("@/hooks/useProject").useProject;
       useProject.mockReturnValue({ project: null, isLoading: true });
 
       const { result } = renderHook(() => useProjectProfile("test-project"));
@@ -166,10 +167,8 @@ describe("useProjectProfile", () => {
     });
 
     it("should expose isSecondaryLoading true when grants/updates/impacts are loading", () => {
-      const useProject = require("@/hooks/useProject").useProject;
       useProject.mockReturnValue({ project: mockProject, isLoading: false });
 
-      const useProjectGrants = require("../useProjectGrants").useProjectGrants;
       useProjectGrants.mockReturnValue({ grants: [], isLoading: true, refetch: vi.fn() });
 
       const { result } = renderHook(() => useProjectProfile("test-project"));
@@ -179,10 +178,8 @@ describe("useProjectProfile", () => {
     });
 
     it("should keep isLoading as backward-compatible OR of both loading states", () => {
-      const useProject = require("@/hooks/useProject").useProject;
       useProject.mockReturnValue({ project: mockProject, isLoading: false });
 
-      const useProjectUpdates = require("../useProjectUpdates").useProjectUpdates;
       useProjectUpdates.mockReturnValue({ milestones: [], isLoading: true, refetch: vi.fn() });
 
       const { result } = renderHook(() => useProjectProfile("test-project"));
@@ -199,21 +196,18 @@ describe("useProjectProfile", () => {
       const mockRefetchUpdates = vi.fn().mockResolvedValue({});
       const mockRefetchImpacts = vi.fn().mockResolvedValue({});
 
-      const useProjectGrants = require("../useProjectGrants").useProjectGrants;
       useProjectGrants.mockReturnValue({
         grants: mockGrants,
         isLoading: false,
         refetch: mockRefetchGrants,
       });
 
-      const useProjectUpdates = require("../useProjectUpdates").useProjectUpdates;
       useProjectUpdates.mockReturnValue({
         milestones: mockMilestones,
         isLoading: false,
         refetch: mockRefetchUpdates,
       });
 
-      const useProjectImpacts = require("../useProjectImpacts").useProjectImpacts;
       useProjectImpacts.mockReturnValue({
         impacts: mockImpacts,
         isLoading: false,
@@ -232,7 +226,6 @@ describe("useProjectProfile", () => {
 
   describe("Edge Cases", () => {
     it("should handle null project", () => {
-      const useProject = require("@/hooks/useProject").useProject;
       useProject.mockReturnValue({ project: null, isLoading: false });
 
       const { result } = renderHook(() => useProjectProfile("test-project"));
@@ -242,7 +235,6 @@ describe("useProjectProfile", () => {
     });
 
     it("should handle empty grants", () => {
-      const useProjectGrants = require("../useProjectGrants").useProjectGrants;
       useProjectGrants.mockReturnValue({
         grants: [],
         isLoading: false,
@@ -256,21 +248,18 @@ describe("useProjectProfile", () => {
     });
 
     it("should handle empty milestones and impacts", () => {
-      const useProjectGrants = require("../useProjectGrants").useProjectGrants;
       useProjectGrants.mockReturnValue({
         grants: [],
         isLoading: false,
         refetch: vi.fn(),
       });
 
-      const useProjectUpdates = require("../useProjectUpdates").useProjectUpdates;
       useProjectUpdates.mockReturnValue({
         milestones: [],
         isLoading: false,
         refetch: vi.fn(),
       });
 
-      const useProjectImpacts = require("../useProjectImpacts").useProjectImpacts;
       useProjectImpacts.mockReturnValue({
         impacts: [],
         isLoading: false,
