@@ -76,6 +76,8 @@ export interface SessionResponse {
   evaluationCriteria: string;
   evaluationStyle: EvaluationStyle;
   status: SessionStatus;
+  basePrompt: string;
+  currentPrompt: string;
   feedbackHistory: string[];
   sampleApplication: string | null;
   createdAt: string;

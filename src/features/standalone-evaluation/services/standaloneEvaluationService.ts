@@ -29,6 +29,7 @@ const ENDPOINTS = {
   feedback: (id: string) => `${BASE}/sessions/${id}/feedback`,
   sample: (id: string) => `${BASE}/sessions/${id}/sample`,
   readyForBulk: (id: string) => `${BASE}/sessions/${id}/ready-for-bulk`,
+  prompt: (id: string) => `${BASE}/sessions/${id}/prompt`,
   bulk: (id: string) => `${BASE}/sessions/${id}/bulk`,
   bulkJob: (sessionId: string, jobId: string) => `${BASE}/sessions/${sessionId}/bulk/${jobId}`,
   bulkProgress: (sessionId: string, jobId: string) =>
@@ -119,6 +120,13 @@ export const standaloneEvaluationService = {
   markReadyForBulk: async (sessionId: string): Promise<SessionResponse> => {
     const result = await fetchData<SessionResponse>(ENDPOINTS.readyForBulk(sessionId), "POST");
     return unwrap(result, "Failed to mark session ready for bulk");
+  },
+
+  updatePrompt: async (sessionId: string, prompt: string): Promise<SessionResponse> => {
+    const result = await fetchData<SessionResponse>(ENDPOINTS.prompt(sessionId), "PATCH", {
+      prompt,
+    });
+    return unwrap(result, "Failed to update prompt");
   },
 
   // ─── Bulk ─────────────────────────────────────────────────────────────────

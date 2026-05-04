@@ -7,7 +7,7 @@ import { cn } from "@/utilities/tailwind";
 import { useBulkJobsList } from "../hooks/useBulkJob";
 import type { BulkJobResponse } from "../schemas/session.schema";
 import { useEvaluationDraftStore } from "../store/evaluationDraftStore";
-import { BulkResultTable } from "./BulkResultTable";
+import { BulkResultsDashboard } from "./BulkResultsDashboard";
 
 interface BulkHistoryListProps {
   sessionId: string;
@@ -140,7 +140,7 @@ const BulkHistoryRow = React.memo(function BulkHistoryRow({
       </div>
       {expanded && canExpand ? (
         <div className="border-t border-border bg-muted/20 p-3">
-          <BulkResultTable sessionId={sessionId} jobId={job.id} enabled={true} />
+          <BulkResultsDashboard sessionId={sessionId} jobId={job.id} enabled={true} />
         </div>
       ) : null}
     </li>

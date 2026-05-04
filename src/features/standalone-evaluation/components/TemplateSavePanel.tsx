@@ -16,13 +16,27 @@ import { TEMPLATE_NAME_MAX, templateCreateSchema } from "../schemas/template.sch
 
 interface TemplateSavePanelProps {
   session: SessionResponse;
+  /**
+   * Controlled open state — when provided, the trigger button renders nothing
+   * and the parent owns the open/close lifecycle (e.g. opening from a
+   * dropdown menu item). When omitted, the panel renders its own button.
+   */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 const inputClass =
   "mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-brand-500";
 
-export function TemplateSavePanel({ session }: TemplateSavePanelProps) {
-  const [open, setOpen] = useState(false);
+export function TemplateSavePanel({
+  session,
+  open: openProp,
+  onOpenChange: onOpenChangeProp,
+}: TemplateSavePanelProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = openProp ?? internalOpen;
+  const setOpen = onOpenChangeProp ?? setInternalOpen;
+  const isControlled = openProp !== undefined;
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -52,14 +66,16 @@ export function TemplateSavePanel({ session }: TemplateSavePanelProps) {
 
   return (
     <>
-      <Button
-        type="button"
-        variant="outline"
-        onClick={() => setOpen(true)}
-        disabled={createTemplate.isPending}
-      >
-        <Save className="h-4 w-4" /> Save as template
-      </Button>
+      {isControlled ? null : (
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setOpen(true)}
+          disabled={createTemplate.isPending}
+        >
+          <Save className="h-4 w-4" /> Save as template
+        </Button>
+      )}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="bg-background">
           <DialogHeader>

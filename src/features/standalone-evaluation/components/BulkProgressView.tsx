@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/utilities/tailwind";
 import { useBulkJobProgress } from "../hooks/useBulkJob";
 import { standaloneEvaluationService } from "../services/standaloneEvaluationService";
-import { BulkResultTable } from "./BulkResultTable";
+import { BulkResultsDashboard } from "./BulkResultsDashboard";
 
 interface BulkProgressViewProps {
   sessionId: string;
@@ -171,7 +171,7 @@ export function BulkProgressView({ sessionId, jobId }: BulkProgressViewProps) {
             <DownloadButton sessionId={sessionId} jobId={jobId} />
           </div>
           <div className="mt-4">
-            <BulkResultTable
+            <BulkResultsDashboard
               sessionId={sessionId}
               jobId={jobId}
               enabled={isDone && progress.hasResult}

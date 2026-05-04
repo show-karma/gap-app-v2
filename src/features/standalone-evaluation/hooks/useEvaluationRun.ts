@@ -81,6 +81,28 @@ export const useSetSample = () => {
   });
 };
 
+interface UpdatePromptInput {
+  sessionId: string;
+  prompt: string;
+}
+
+export const useUpdatePrompt = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<SessionResponse, Error, UpdatePromptInput>({
+    mutationFn: ({ sessionId, prompt }) =>
+      standaloneEvaluationService.updatePrompt(sessionId, prompt),
+    onSuccess: (session) => {
+      toast.success("Prompt updated · feedback history reset");
+      queryClient.setQueryData(EVALUATION_SESSION_KEYS.detail(session.id), session);
+      queryClient.invalidateQueries({ queryKey: EVALUATION_SESSION_KEYS.all });
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to update prompt");
+    },
+  });
+};
+
 export const useMarkReadyForBulk = () => {
   const queryClient = useQueryClient();
 
