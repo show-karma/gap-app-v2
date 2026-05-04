@@ -71,12 +71,22 @@ async function postInteractionDecision(
   endpoint: "confirm" | "abort",
   privyJwt: string | null
 ): Promise<{ redirect_to: string }> {
-  const body = privyJwt ? JSON.stringify({ privyJwt }) : JSON.stringify({});
+  // Send the Privy session JWT in `Authorization: Bearer` rather than
+  // the request body. Standard log-redaction in pino, proxies, and
+  // APM tools targets the Authorization header by default; bodies
+  // typically aren't redacted, so a debug-level log line of req.body
+  // would leak the JWT.
+  const headers: Record<string, string> = {
+    "content-type": "application/json",
+  };
+  if (privyJwt) {
+    headers.authorization = `Bearer ${privyJwt}`;
+  }
   const res = await fetch(`${OAUTH_BASE}/interaction/${encodeURIComponent(uid)}/${endpoint}`, {
     method: "POST",
     credentials: "include",
-    headers: { "content-type": "application/json" },
-    body,
+    headers,
+    body: JSON.stringify({}),
   });
   if (!res.ok) {
     const text = await res.text();

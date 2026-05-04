@@ -1,0 +1,8 @@
+{"ts":"2026-05-02T05:05:09.197Z","cmd":"goto","args":"http://localhost:3000/mcp/connect","origin":"http://localhost:3000/mcp/connect","durationMs":214,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-02T05:05:09.449Z","cmd":"text","args":"","origin":"http://localhost:3000/mcp/connect","durationMs":40,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-02T05:05:16.778Z","cmd":"screenshot","args":"/tmp/mcp-connect.png","origin":"http://localhost:3000/mcp/connect","durationMs":56,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-02T05:05:16.827Z","cmd":"viewport","args":"1280x900","origin":"http://localhost:3000/mcp/connect","durationMs":5,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-02T05:05:17.083Z","cmd":"goto","args":"http://localhost:3000/mcp/connect","origin":"http://localhost:3000/mcp/connect","durationMs":210,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-02T05:05:19.198Z","cmd":"screenshot","args":"/tmp/mcp-connect.png","origin":"http://localhost:3000/mcp/connect","durationMs":49,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-02T05:05:43.620Z","cmd":"js","args":"document.querySelectorAll('nextjs-portal, [data-nextjs-toast]').forEach(el => el.remove()); 'dismissed'","origin":"http://localhost:3000/mcp/connect","durationMs":1,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-02T05:05:44.719Z","cmd":"screenshot","args":"/tmp/mcp-connect.png","origin":"http://localhost:3000/mcp/connect","durationMs":21,"status":"ok","hasCookies":false,"mode":"launched"}
