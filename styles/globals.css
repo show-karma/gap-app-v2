@@ -689,6 +689,11 @@ article.report-article table {
 .dark article.report-article table {
   border-color: rgb(39 39 42);
 }
+article.report-article th,
+article.report-article td {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
 article.report-article th {
   background: rgb(250 250 250);
   font-weight: 600;
