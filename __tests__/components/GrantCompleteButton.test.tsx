@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { GrantCompleteButton } from "@/components/Pages/GrantMilestonesAndUpdates/GrantCompleteButton";
+import { useGrantCompletionRevoke } from "@/hooks/useGrantCompletionRevoke";
 import "@testing-library/jest-dom";
 
 // Mock child components
@@ -122,7 +123,7 @@ describe("GrantCompleteButton", () => {
       expect(button).toBeInTheDocument();
 
       // Verify hook was called with correct params
-      const { useGrantCompletionRevoke } = require("@/hooks/useGrantCompletionRevoke");
+
       expect(useGrantCompletionRevoke).toHaveBeenCalledWith({
         grant: completedGrant,
         project: mockProject,
@@ -463,7 +464,6 @@ describe("GrantCompleteButton", () => {
 
       render(<GrantCompleteButton grant={completedGrant} project={mockProject} />);
 
-      const { useGrantCompletionRevoke } = require("@/hooks/useGrantCompletionRevoke");
       expect(useGrantCompletionRevoke).toHaveBeenCalledWith({
         grant: completedGrant,
         project: mockProject,

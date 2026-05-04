@@ -51,6 +51,7 @@ vi.mock("@/utilities/auth/api-client", () => {
   };
 });
 
+import * as apiClientModule from "@/utilities/auth/api-client";
 // Import fetchData mock to access it in tests
 import fetchData from "@/utilities/fetchData";
 
@@ -63,12 +64,10 @@ import {
 
 const mockFetchData = fetchData as vi.MockedFunction<typeof fetchData>;
 
-const {
-  __mockGet: mockGet,
-  __mockPost: mockPost,
-  __mockPut: mockPut,
-  __mockDelete: mockDelete,
-} = require("@/utilities/auth/api-client");
+const mockGet = (apiClientModule as any).__mockGet as vi.Mock;
+const mockPost = (apiClientModule as any).__mockPost as vi.Mock;
+const mockPut = (apiClientModule as any).__mockPut as vi.Mock;
+const mockDelete = (apiClientModule as any).__mockDelete as vi.Mock;
 
 describe("fundingPlatformService", () => {
   beforeEach(() => {

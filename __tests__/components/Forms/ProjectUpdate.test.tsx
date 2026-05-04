@@ -3,6 +3,8 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { vi } from "vitest";
 import { ProjectUpdateForm } from "@/components/Forms/ProjectUpdate";
+import { useImpactAnswers } from "@/hooks/useImpactAnswers";
+import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
 
 // --- Mocks ---
 
@@ -426,7 +428,7 @@ describe("ProjectUpdateForm", () => {
   describe("duplicate title warning", () => {
     it("shows error when title matches existing update", async () => {
       // Mock existing updates
-      const { useProjectUpdates } = require("@/hooks/v2/useProjectUpdates");
+
       (useProjectUpdates as vi.Mock).mockReturnValue({
         rawData: {
           projectUpdates: [{ uid: "update-1", title: "Existing Activity" }],
@@ -450,7 +452,6 @@ describe("ProjectUpdateForm", () => {
 
   describe("indicator data and OutputsSection", () => {
     it("passes indicator data to OutputsSection when indicators exist", () => {
-      const { useImpactAnswers } = require("@/hooks/useImpactAnswers");
       (useImpactAnswers as vi.Mock).mockReturnValue({
         data: [
           {
@@ -546,7 +547,6 @@ describe("ProjectUpdateForm", () => {
 
   describe("edit mode", () => {
     it("shows Update activity button when editId is provided", () => {
-      const { useProjectUpdates } = require("@/hooks/v2/useProjectUpdates");
       (useProjectUpdates as vi.Mock).mockReturnValue({
         rawData: {
           projectUpdates: [
@@ -567,7 +567,6 @@ describe("ProjectUpdateForm", () => {
     });
 
     it("hides title field in edit mode", () => {
-      const { useProjectUpdates } = require("@/hooks/v2/useProjectUpdates");
       (useProjectUpdates as vi.Mock).mockReturnValue({
         rawData: {
           projectUpdates: [

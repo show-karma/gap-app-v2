@@ -177,10 +177,10 @@ vi.mock("@/components/Pages/ProgramRegistry/programUtils", () => ({
 // Import component under test and get mock references
 // ---------------------------------------------------------------------------
 import { ManagePrograms } from "@/components/Pages/ProgramRegistry/ManagePrograms";
+import * as fetchDataModule from "@/utilities/fetchData";
 
 // Get the mock function reference after vi.mock hoisting
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const mockFetchData = require("@/utilities/fetchData")._mockFn as vi.Mock;
+const mockFetchData = (fetchDataModule as any)._mockFn as vi.Mock;
 
 // ---------------------------------------------------------------------------
 // Helpers

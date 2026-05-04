@@ -1,8 +1,12 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { useSearchParams } from "next/navigation";
 import type { ReactNode } from "react";
 import { BrowseApplicationsClient } from "@/app/community/[communityId]/(with-header)/browse-applications/BrowseApplicationsClient";
+import fetchData from "@/utilities/fetchData";
+
+const mockFetchData = vi.mocked(fetchData);
 
 // --- Mocks ---
 
@@ -18,7 +22,7 @@ vi.mock("next/navigation", () => ({
     pathname: "/community/test-community/browse-applications",
   }),
   usePathname: () => "/community/test-community/browse-applications",
-  useSearchParams: () => new URLSearchParams(),
+  useSearchParams: vi.fn(() => new URLSearchParams()),
   useParams: () => ({ communityId: "test-community" }),
   notFound: vi.fn(),
   redirect: vi.fn(),
@@ -206,9 +210,9 @@ describe("BrowseApplicationsClient - URL sync on filter change", () => {
   });
 
   it('displays requested amount when applicationData has "Funding Request" key', async () => {
-    jest
-      .spyOn(require("next/navigation"), "useSearchParams")
-      .mockReturnValue(new URLSearchParams("programId=program-abc"));
+    vi.mocked(useSearchParams).mockReturnValueOnce(
+      new URLSearchParams("programId=program-abc") as unknown as ReturnType<typeof useSearchParams>
+    );
 
     mockFetchData.mockResolvedValueOnce([
       {
@@ -239,9 +243,9 @@ describe("BrowseApplicationsClient - URL sync on filter change", () => {
   });
 
   it("prefers Funding Request over long question keys that happen to contain amount and funding", async () => {
-    jest
-      .spyOn(require("next/navigation"), "useSearchParams")
-      .mockReturnValue(new URLSearchParams("programId=program-abc"));
+    vi.mocked(useSearchParams).mockReturnValueOnce(
+      new URLSearchParams("programId=program-abc") as unknown as ReturnType<typeof useSearchParams>
+    );
 
     mockFetchData.mockResolvedValueOnce([
       {
@@ -277,9 +281,9 @@ describe("BrowseApplicationsClient - URL sync on filter change", () => {
   });
 
   it("extracts the first dollar amount when Funding Request contains a sentence with multiple numbers", async () => {
-    jest
-      .spyOn(require("next/navigation"), "useSearchParams")
-      .mockReturnValue(new URLSearchParams("programId=program-abc"));
+    vi.mocked(useSearchParams).mockReturnValueOnce(
+      new URLSearchParams("programId=program-abc") as unknown as ReturnType<typeof useSearchParams>
+    );
 
     mockFetchData.mockResolvedValueOnce([
       {

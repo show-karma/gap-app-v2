@@ -11,12 +11,23 @@ const PROJECT_UID = "0x9cdc5607d3da24a3b52f5d215d12cea0ffec0db98aa496963a595264e
 
 // --- Mocks ---
 
+vi.mock("wagmi", () => ({
+  useAccount: vi.fn(() => ({
+    address: undefined,
+    isConnected: false,
+    chain: undefined,
+    chainId: undefined,
+  })),
+}));
+
 // Mock next/dynamic to render nothing (DeleteDialog is lazy-loaded but unused in our tests)
-vi.mock("next/dynamic", () => () => {
-  const DynamicComponent = () => null;
-  DynamicComponent.displayName = "DynamicComponent";
-  return DynamicComponent;
-});
+vi.mock("next/dynamic", () => ({
+  default: () => {
+    const DynamicComponent = () => null;
+    DynamicComponent.displayName = "DynamicComponent";
+    return DynamicComponent;
+  },
+}));
 
 // Mock headlessui for simpler dialog handling in tests
 vi.mock("@headlessui/react", () => ({
