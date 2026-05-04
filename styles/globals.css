@@ -689,12 +689,22 @@ article.report-article {
 article.report-article table {
   border-collapse: separate;
   border-spacing: 0;
-  border: 1px solid rgb(228 228 231);
-  border-radius: 8px;
-  overflow: hidden;
+  border: none;
 }
-.dark article.report-article table {
-  border-color: rgb(39 39 42);
+/* streamdown wraps tables in an outer card (with copy/download icons) AND an
+   inner div with its own border + bg — flatten the inner one so the table
+   sits directly inside the card instead of looking like a box-in-a-box. */
+article.report-article [data-streamdown="table-wrapper"] > div:has(> table),
+article.report-article [data-streamdown="table-wrapper"] > div:has(> [data-streamdown="table"]) {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+}
+article.report-article th,
+article.report-article td {
+  padding-left: 1rem;
+  padding-right: 1rem;
 }
 article.report-article th {
   background: rgb(250 250 250);
