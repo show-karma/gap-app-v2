@@ -682,12 +682,7 @@ article.report-article {
 article.report-article table {
   border-collapse: separate;
   border-spacing: 0;
-  border: 1px solid rgb(228 228 231);
-  border-radius: 8px;
-  overflow: hidden;
-}
-.dark article.report-article table {
-  border-color: rgb(39 39 42);
+  border: none;
 }
 article.report-article th,
 article.report-article td {
