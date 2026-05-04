@@ -220,14 +220,13 @@ export function ActivityFeed({
   };
 
   // Pure utility function for sorting - uses seconds for consistency
-  // Matches production sorting logic: endsAt (dueDate) -> completed.createdAt -> createdAt
+  // Priority: completed.createdAt -> endsAt (dueDate) -> createdAt
   const getSortTimestamp = (item: UnifiedMilestone): number => {
-    // endsAt is already in seconds (Unix timestamp)
-    if (item.endsAt) return item.endsAt;
-    // Convert other dates to seconds for consistent comparison
     if (item.completed && typeof item.completed === "object" && "createdAt" in item.completed) {
       return Math.floor(new Date(item.completed.createdAt).getTime() / 1000);
     }
+    // endsAt is already in seconds (Unix timestamp)
+    if (item.endsAt) return item.endsAt;
     return Math.floor(new Date(item.createdAt).getTime() / 1000);
   };
 
