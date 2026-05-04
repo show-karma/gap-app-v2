@@ -2,12 +2,13 @@
 
 import { Loader2 } from "lucide-react";
 import type { PortfolioReportStatus } from "@/types/portfolio-report";
+import { cn } from "@/utilities/tailwind";
 
 const STATUS_LABEL: Record<PortfolioReportStatus, string> = {
   generating: "Generating",
-  draft: "draft",
+  draft: "Draft",
   failed: "Failed",
-  published: "published",
+  published: "Published",
 };
 
 const STATUS_CLASSES: Record<PortfolioReportStatus, string> = {
@@ -25,7 +26,10 @@ export function GenerationStatusBadge({ status }: Props) {
   const label = STATUS_LABEL[status];
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_CLASSES[status]}`}
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium",
+        STATUS_CLASSES[status]
+      )}
     >
       {status === "generating" ? (
         <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />
