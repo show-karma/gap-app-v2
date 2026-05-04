@@ -126,7 +126,7 @@ export function EvaluateWorkspace({ sessionId }: EvaluateWorkspaceProps) {
         <PromptViewer session={session} />
       </div>
 
-      <div className="flex gap-1 border-b border-border px-4">
+      <div role="tablist" className="flex gap-1 border-b border-border px-4">
         {TABS.map((t) => {
           const Icon = t.icon;
           const isActive = tab === t.id;
@@ -134,6 +134,10 @@ export function EvaluateWorkspace({ sessionId }: EvaluateWorkspaceProps) {
             <button
               key={t.id}
               type="button"
+              role="tab"
+              id={`evaluate-tab-${t.id}`}
+              aria-selected={isActive}
+              aria-controls={`evaluate-panel-${t.id}`}
               onClick={() => setTab(t.id)}
               className={cn(
                 "inline-flex items-center gap-1.5 border-b-2 px-3 py-2 text-sm font-medium transition-colors",
@@ -150,33 +154,42 @@ export function EvaluateWorkspace({ sessionId }: EvaluateWorkspaceProps) {
       </div>
 
       {tab === "iterate" ? (
-        <IterateLayout
-          session={session}
-          hasSample={hasSample}
-          isEvaluating={evaluate.isPending}
-          isSubmittingFeedback={submitFeedback.isPending}
-          results={sortedResults}
-          activeIterationNumber={activeIteration}
-          onSelectIteration={setActiveIterationNumber}
-          evaluateError={evaluate.isError ? evaluate.error.message : null}
-          feedbackError={submitFeedback.isError ? submitFeedback.error.message : null}
-          onRunInitial={(applicationText) =>
-            evaluate.mutate({ sessionId: session.id, applicationText })
-          }
-          onSubmitFeedback={async (feedback) => {
-            await submitFeedback.mutateAsync({ sessionId: session.id, feedback });
-          }}
-          onSwitchToBulk={() => setTab("bulk")}
-        />
+        <div role="tabpanel" id="evaluate-panel-iterate" aria-labelledby="evaluate-tab-iterate">
+          <IterateLayout
+            session={session}
+            hasSample={hasSample}
+            isEvaluating={evaluate.isPending}
+            isSubmittingFeedback={submitFeedback.isPending}
+            results={sortedResults}
+            activeIterationNumber={activeIteration}
+            onSelectIteration={setActiveIterationNumber}
+            evaluateError={evaluate.isError ? evaluate.error.message : null}
+            feedbackError={submitFeedback.isError ? submitFeedback.error.message : null}
+            onRunInitial={(applicationText) =>
+              evaluate.mutate({ sessionId: session.id, applicationText })
+            }
+            onSubmitFeedback={async (feedback) => {
+              await submitFeedback.mutateAsync({ sessionId: session.id, feedback });
+            }}
+            onSwitchToBulk={() => setTab("bulk")}
+          />
+        </div>
       ) : tab === "bulk" ? (
-        <BulkLayout
-          session={session}
-          activeBulkJobId={activeBulkJobId}
-          canRunBulk={canRunBulk}
-          onSwitchToIterate={() => setTab("iterate")}
-        />
+        <div role="tabpanel" id="evaluate-panel-bulk" aria-labelledby="evaluate-tab-bulk">
+          <BulkLayout
+            session={session}
+            activeBulkJobId={activeBulkJobId}
+            canRunBulk={canRunBulk}
+            onSwitchToIterate={() => setTab("iterate")}
+          />
+        </div>
       ) : (
-        <div className="p-5">
+        <div
+          role="tabpanel"
+          id="evaluate-panel-history"
+          aria-labelledby="evaluate-tab-history"
+          className="p-5"
+        >
           <BulkHistoryList sessionId={session.id} />
         </div>
       )}

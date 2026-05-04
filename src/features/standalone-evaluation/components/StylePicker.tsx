@@ -54,6 +54,7 @@ export const StylePicker = React.memo(function StylePicker({
       <fieldset
         className="grid grid-cols-1 gap-3 sm:grid-cols-3"
         aria-describedby={errorMessage ? errorId : undefined}
+        aria-invalid={errorMessage ? true : undefined}
       >
         <legend className="sr-only">Evaluation style</legend>
         {STYLE_OPTIONS.map((opt) => {
@@ -88,7 +89,7 @@ export const StylePicker = React.memo(function StylePicker({
         })}
       </fieldset>
       {errorMessage ? (
-        <p id={errorId} className="text-xs text-red-600 dark:text-red-400">
+        <p id={errorId} role="alert" className="text-xs text-red-600 dark:text-red-400">
           {errorMessage}
         </p>
       ) : null}

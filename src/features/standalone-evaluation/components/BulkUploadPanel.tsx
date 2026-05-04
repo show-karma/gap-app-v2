@@ -200,13 +200,14 @@ export function BulkUploadPanel({ sessionId }: BulkUploadPanelProps) {
           disabled={startBulk.isPending}
           className="block w-full max-w-sm rounded-md border border-border bg-background px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 disabled:cursor-not-allowed disabled:opacity-60"
           aria-invalid={!emailLooksValid}
+          aria-describedby={!emailLooksValid ? "bulk-notification-email-error" : undefined}
         />
         <p className="text-xs text-muted-foreground">
           Wallet-only sign-ins have no email on file. Provide one here if you want a completion
           notification.
         </p>
         {!emailLooksValid ? (
-          <p className="text-xs text-red-600 dark:text-red-400">
+          <p id="bulk-notification-email-error" className="text-xs text-red-600 dark:text-red-400">
             Enter a valid email address (or leave blank to skip).
           </p>
         ) : null}

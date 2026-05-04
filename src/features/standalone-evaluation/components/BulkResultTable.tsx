@@ -8,6 +8,7 @@ interface BulkResultTableProps {
   sessionId: string;
   jobId: string;
   enabled: boolean;
+  search?: string;
 }
 
 const INITIAL_VISIBLE = 25;
@@ -26,9 +27,18 @@ function cellToString(value: unknown): string {
   }
 }
 
-export function BulkResultTable({ sessionId, jobId, enabled }: BulkResultTableProps) {
+export function BulkResultTable({ sessionId, jobId, enabled, search = "" }: BulkResultTableProps) {
   const query = useBulkJobResult(sessionId, jobId, enabled);
   const [visible, setVisible] = useState(INITIAL_VISIBLE);
+
+  const filteredRows = useMemo(() => {
+    if (!query.data) return [];
+    const term = search.trim().toLowerCase();
+    if (!term) return query.data.rows;
+    return query.data.rows.filter((row) =>
+      query.data!.columns.some((col) => cellToString(row[col]).toLowerCase().includes(term))
+    );
+  }, [query.data, search]);
 
   const { orderedColumns, pinnedRightOffsets } = useMemo(() => {
     if (!query.data) {
@@ -80,15 +90,19 @@ export function BulkResultTable({ sessionId, jobId, enabled }: BulkResultTablePr
     return <p className="text-sm text-muted-foreground">No rows in this result.</p>;
   }
 
-  const visibleRows = data.rows.slice(0, visible);
-  const remaining = data.rows.length - visible;
+  const visibleRows = filteredRows.slice(0, visible);
+  const remaining = filteredRows.length - visible;
+
+  if (filteredRows.length === 0) {
+    return <p className="text-sm text-muted-foreground">No rows match your search.</p>;
+  }
 
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between text-xs text-muted-foreground">
         <span>
-          Showing {visibleRows.length} of {data.rows.length}{" "}
-          {data.rows.length === 1 ? "row" : "rows"}
+          Showing {visibleRows.length} of {filteredRows.length}{" "}
+          {filteredRows.length === 1 ? "row" : "rows"}
         </span>
         <span>{orderedColumns.length} columns</span>
       </div>

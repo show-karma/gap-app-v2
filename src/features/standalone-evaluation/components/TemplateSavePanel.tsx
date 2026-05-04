@@ -97,8 +97,14 @@ export function TemplateSavePanel({
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Optimism public goods rubric v1"
               disabled={createTemplate.isPending}
+              aria-invalid={Boolean(error)}
+              aria-describedby={error ? "template-name-error" : undefined}
             />
-            <p className="mt-1 text-xs text-red-500">{error}</p>
+            {error ? (
+              <p id="template-name-error" className="mt-1 text-xs text-red-500">
+                {error}
+              </p>
+            ) : null}
           </div>
           <div className="mt-4 flex justify-end gap-2">
             <Button

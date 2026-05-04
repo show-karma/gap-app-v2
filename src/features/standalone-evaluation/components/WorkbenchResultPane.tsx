@@ -204,8 +204,8 @@ function RubricBlocks({ data }: { data: RubricEvaluation }) {
                 Strengths
               </div>
               <ul className="mt-1.5 list-disc space-y-1 pl-5 text-xs leading-relaxed text-foreground">
-                {strengths.map((s) => (
-                  <li key={s}>{s}</li>
+                {strengths.map((s, i) => (
+                  <li key={`${i}-${s}`}>{s}</li>
                 ))}
               </ul>
             </div>
@@ -216,8 +216,8 @@ function RubricBlocks({ data }: { data: RubricEvaluation }) {
                 Weaknesses
               </div>
               <ul className="mt-1.5 list-disc space-y-1 pl-5 text-xs leading-relaxed text-foreground">
-                {weaknesses.map((w) => (
-                  <li key={w}>{w}</li>
+                {weaknesses.map((w, i) => (
+                  <li key={`${i}-${w}`}>{w}</li>
                 ))}
               </ul>
             </div>
@@ -305,8 +305,8 @@ function QuickScoreBlocks({ data }: { data: QuickScoreEvaluation }) {
             Key factors
           </div>
           <ul className="mt-1.5 list-disc space-y-1 pl-5 text-xs leading-relaxed text-foreground">
-            {data.keyFactors.map((k) => (
-              <li key={k}>{k}</li>
+            {data.keyFactors.map((k, i) => (
+              <li key={`${i}-${k}`}>{k}</li>
             ))}
           </ul>
         </div>
@@ -317,8 +317,8 @@ function QuickScoreBlocks({ data }: { data: QuickScoreEvaluation }) {
             Red flags
           </div>
           <ul className="mt-1.5 list-disc space-y-1 pl-5 text-xs leading-relaxed text-foreground">
-            {data.redFlags.map((k) => (
-              <li key={k}>{k}</li>
+            {data.redFlags.map((k, i) => (
+              <li key={`${i}-${k}`}>{k}</li>
             ))}
           </ul>
         </div>

@@ -23,11 +23,9 @@ function StatusIcon({ status }: { status: BulkJobResponse["status"] }) {
 }
 
 function formatDate(value: string): string {
-  try {
-    return new Date(value).toLocaleString();
-  } catch {
-    return value;
-  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString();
 }
 
 export function BulkHistoryList({ sessionId }: BulkHistoryListProps) {

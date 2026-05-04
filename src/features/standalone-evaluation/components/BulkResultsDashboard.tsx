@@ -273,7 +273,7 @@ export function BulkResultsDashboard({ sessionId, jobId, enabled }: BulkResultsD
       </div>
 
       {view === "table" ? (
-        <BulkResultTable sessionId={sessionId} jobId={jobId} enabled={enabled} />
+        <BulkResultTable sessionId={sessionId} jobId={jobId} enabled={enabled} search={search} />
       ) : (
         <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
           <div className="grid min-w-0 grid-cols-1 gap-3 md:grid-cols-3">
