@@ -181,7 +181,8 @@ export function PendingVerificationTable({
                         href={PAGES.REVIEWER.FUNDING_PLATFORM.MILESTONES(
                           communityId,
                           normalizeProgramId(milestone.programId),
-                          milestone.projectUid
+                          milestone.projectUid,
+                          milestone.milestoneUid
                         )}
                         target="_blank"
                         rel="noopener noreferrer"

@@ -71,8 +71,11 @@ function CopyMilestoneLinkButton({
   const [, copyToClipboard] = useCopyToClipboard();
   const handleClick = useCallback(() => {
     if (typeof window === "undefined") return;
-    const url = `${window.location.origin}${window.location.pathname}#milestone-${milestoneUid}`;
-    copyToClipboard(url, "Milestone link copied");
+    const url = new URL(window.location.href);
+    url.searchParams.delete("milestone");
+    url.searchParams.delete("milestoneUid");
+    url.hash = `milestone-${encodeURIComponent(milestoneUid)}`;
+    copyToClipboard(url.toString(), "Milestone link copied");
   }, [milestoneUid, copyToClipboard]);
 
   return (
@@ -146,9 +149,12 @@ interface MilestoneCardProps {
   onCancelVerification: () => void;
   onVerificationCommentChange: (comment: string) => void;
   onSubmitVerification: (milestone: GrantMilestoneWithCompletion) => void;
+  onRequestChanges?: () => void;
   onDeleteMilestone: (milestone: GrantMilestoneWithCompletion) => Promise<void>;
   isDeleting?: boolean;
   allocationAmount?: string;
+  showAIEvaluationButton?: boolean;
+  quietSurface?: boolean;
 }
 
 export function MilestoneCard({
@@ -170,9 +176,12 @@ export function MilestoneCard({
   onCancelVerification,
   onVerificationCommentChange,
   onSubmitVerification,
+  onRequestChanges,
   onDeleteMilestone,
   isDeleting = false,
   allocationAmount,
+  showAIEvaluationButton = true,
+  quietSurface = false,
 }: MilestoneCardProps) {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const anchorId = `milestone-${milestone.uid}`;
@@ -326,7 +335,12 @@ export function MilestoneCard({
     <div
       key={milestone.uid || index}
       id={anchorId}
-      className="border border-gray-200 dark:border-zinc-700 rounded-lg p-4 hover:border-blue-500 dark:hover:border-blue-400 transition-colors scroll-mt-24 target:ring-2 target:ring-blue-400 target:border-blue-500"
+      className={cn(
+        "rounded-lg p-4 transition-colors scroll-mt-24 target:ring-2 target:ring-blue-400",
+        quietSurface
+          ? "bg-white dark:bg-zinc-900"
+          : "border border-gray-200 hover:border-blue-500 target:border-blue-500 dark:border-zinc-700 dark:hover:border-blue-400"
+      )}
     >
       {/* Header row: title + status badge + actions */}
       <div className="flex items-start justify-between gap-2 mb-2">
@@ -535,7 +549,9 @@ export function MilestoneCard({
                   Verified: {formatDate(milestone.verificationDetails.verifiedAt)}
                 </p>
               </div>
-              <AIEvaluationButton onClick={handleOpenEvaluation} className="mt-2" />
+              {showAIEvaluationButton && (
+                <AIEvaluationButton onClick={handleOpenEvaluation} className="mt-2" />
+              )}
             </div>
           ) : (
             canVerifyMilestones &&
@@ -581,7 +597,18 @@ export function MilestoneCard({
                       <CheckCircleIcon className="w-4 h-4" />
                       Verify Milestone
                     </Button>
-                    <AIEvaluationButton onClick={handleOpenEvaluation} className="py-2" />
+                    {onRequestChanges && (
+                      <Button
+                        variant="secondary"
+                        onClick={onRequestChanges}
+                        className="px-4 py-2 text-sm border border-gray-300 bg-transparent text-gray-700 hover:bg-gray-50 dark:border-zinc-600 dark:text-gray-300 dark:hover:bg-zinc-700"
+                      >
+                        Request changes
+                      </Button>
+                    )}
+                    {showAIEvaluationButton && (
+                      <AIEvaluationButton onClick={handleOpenEvaluation} className="py-2" />
+                    )}
                   </div>
                 )}
               </div>
