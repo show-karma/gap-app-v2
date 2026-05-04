@@ -9,7 +9,7 @@ import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { envVars } from "@/utilities/enviromentVars";
 
 const API_URL = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
-const apiClient = createAuthenticatedApiClient(API_URL, 60000);
+const apiClient = createAuthenticatedApiClient(API_URL, 300000);
 
 // unauthenticated fetcher for public endpoints
 async function fetchPublic<T>(url: string): Promise<T> {
