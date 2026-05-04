@@ -170,7 +170,7 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
     try {
       await regenerateMutation.mutateAsync(reportId);
       setMarkdown(null);
-      toast.success("Regeneration started — this can take a few minutes.");
+      toast.success("Regeneration started, this can take a few minutes.");
     } catch (error) {
       toast.error(
         `Failed to start regeneration: ${error instanceof Error ? error.message : "Unknown error"}`

@@ -176,7 +176,7 @@ export function PortfolioReportListPage({ community }: Props) {
     setGeneratingConfigId(configId);
     try {
       await generateMutation.mutateAsync({ configId });
-      toast.success("Generation started — this can take a few minutes.");
+      toast.success("Generation started, this can take a few minutes.");
     } catch (error) {
       toast.error(
         `Failed to start generation: ${error instanceof Error ? error.message : "Unknown error"}`
@@ -221,7 +221,7 @@ export function PortfolioReportListPage({ community }: Props) {
     setActiveMutationType("regenerate");
     try {
       await regenerateMutation.mutateAsync(reportId);
-      toast.success("Regeneration started — this can take a few minutes.");
+      toast.success("Regeneration started, this can take a few minutes.");
     } catch (error) {
       toast.error(
         `Failed to start regeneration: ${error instanceof Error ? error.message : "Unknown error"}`
