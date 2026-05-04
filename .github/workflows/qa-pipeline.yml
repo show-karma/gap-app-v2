@@ -359,10 +359,7 @@ jobs:
   build:
     needs: [gate-check]
     if: needs.gate-check.outputs.should_run == 'true'
-    # 4-core runner cuts SWC compile time roughly in half (~5m → ~2.5m).
-    # Cost-neutral vs ubuntu-latest (2× per minute, half the minutes).
-    # Falls back automatically if plan does not allow 4-core.
-    runs-on: ubuntu-latest-4-cores
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - name: Checkout repository
