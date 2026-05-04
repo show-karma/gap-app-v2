@@ -25,7 +25,7 @@ describe("safeGetWalletClient", () => {
   });
 
   it("returns wallet client on success", async () => {
-    const mockClient = { account: { address: "0x123" } } as any;
+    const mockClient = { account: { address: "0x123" }, chain: { id: 137 } } as any;
     mockGetWalletClient.mockResolvedValueOnce(mockClient);
 
     const result = await safeGetWalletClient(137);
@@ -63,7 +63,7 @@ describe("safeGetWalletClient", () => {
 
   it("does not call setLoadingState on success", async () => {
     const setLoadingState = vi.fn();
-    const mockClient = { account: { address: "0x123" } } as any;
+    const mockClient = { account: { address: "0x123" }, chain: { id: 137 } } as any;
     mockGetWalletClient.mockResolvedValueOnce(mockClient);
 
     await safeGetWalletClient(137, false, setLoadingState);

@@ -96,6 +96,7 @@ describe("milestoneReviewersService", () => {
           name: "John Doe",
           email: "john@example.com",
           telegram: "@johndoe",
+          slack: "",
           assignedAt: "2024-01-01T00:00:00Z",
           assignedBy: "0x9876543210987654321098765432109876543210",
         },
@@ -138,6 +139,7 @@ describe("milestoneReviewersService", () => {
         name: "",
         email: "",
         telegram: "",
+        slack: "",
         assignedAt: "2024-01-01T00:00:00Z",
         assignedBy: undefined,
       });

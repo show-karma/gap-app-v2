@@ -3,8 +3,8 @@
  */
 import { render, screen } from "@testing-library/react";
 
-vi.mock("@tanstack/react-query", () => {
-  const actual = vi.importActual("@tanstack/react-query");
+vi.mock("@tanstack/react-query", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@tanstack/react-query")>();
   return {
     ...actual,
     dehydrate: vi.fn(() => ({ queries: [] })),

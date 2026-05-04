@@ -1,5 +1,7 @@
 import { renderHook } from "@testing-library/react";
-import { useZeroDevSigner } from "@/hooks/useZeroDevSigner";
+// Import the real implementation directly (bypassing the unit-test alias that
+// redirects @/hooks/useZeroDevSigner to the __mocks__ stub)
+import { useZeroDevSigner } from "../../hooks/useZeroDevSigner";
 
 // Mock bridge
 const mockUser: any = { linkedAccounts: [] };
