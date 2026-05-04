@@ -665,6 +665,13 @@ body .react-hot-toast * {
   box-shadow: none;
 }
 
+/* Allow md-editor-rt toolbar to wrap instead of forcing horizontal overflow on parent containers (e.g. dialogs). */
+.markdown-editor-wrapper .md-editor-toolbar-wrapper,
+.markdown-editor-wrapper .md-editor-toolbar {
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
 /* Content-visibility optimization for below-fold content */
 .content-visibility-auto {
   content-visibility: auto;

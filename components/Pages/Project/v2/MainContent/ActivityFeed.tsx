@@ -19,28 +19,6 @@ interface ActivityFeedProps {
 }
 
 /**
- * Get the attester/creator address from a milestone.
- * Checks multiple sources in order of preference.
- */
-function getMilestoneAttester(milestone: UnifiedMilestone): string | undefined {
-  // Try to get attester from various sources in order of preference
-  return (
-    // Project milestone sources
-    milestone.source.projectMilestone?.attester ||
-    milestone.source.projectMilestone?.completed?.attester ||
-    // Grant milestone sources
-    milestone.source.grantMilestone?.milestone?.attester ||
-    milestone.source.grantMilestone?.milestone?.completed?.attester ||
-    milestone.source.grantMilestone?.completionDetails?.completedBy ||
-    // Project update sources
-    milestone.projectUpdate?.recipient ||
-    // Grant update sources
-    milestone.grantUpdate?.attester ||
-    milestone.grantUpdate?.recipient
-  );
-}
-
-/**
  * Get the text label for an activity type.
  * Note: "impact" type should display as "Milestone" to match staging behavior,
  * where project impacts are shown as milestones with the title "Project Impact".
@@ -61,11 +39,8 @@ function getActivityTypeLabel(type: string, milestone?: UnifiedMilestone): strin
     case "impact":
     case "grant":
     case "milestone":
-    default: {
-      const editHistory = milestone?.source.grantMilestone?.milestone.editHistory;
-      if (editHistory && editHistory.length > 0) return "Milestone edited";
-      return "Milestone created";
-    }
+    default:
+      return "Milestone";
   }
 }
 
@@ -74,7 +49,6 @@ interface TimelineItemProps {
   projectId: string | undefined;
   isAuthorized: boolean;
   formatDisplayDate: (dateStr: string) => string;
-  isValidTimestamp: (timestamp: number | undefined) => boolean;
   allocationAmount?: string;
 }
 
@@ -83,7 +57,6 @@ const TimelineItem = React.memo(function TimelineItem({
   projectId,
   isAuthorized,
   formatDisplayDate,
-  isValidTimestamp,
   allocationAmount,
 }: TimelineItemProps) {
   return (
@@ -166,47 +139,13 @@ const TimelineItem = React.memo(function TimelineItem({
                 </span>
               ) : null;
             })()}
-
-            <div className="flex flex-row items-center gap-1.5 lg:gap-2 text-xs lg:text-sm font-medium leading-5 text-muted-foreground">
-              <span>Posted {formatDisplayDate(milestone.createdAt)}</span>
-            </div>
           </>
         ) : (
-          <>
-            {/* Left side: Status and Due Date */}
-            <div className="flex flex-row items-center gap-1.5 lg:gap-2 flex-wrap">
-              <span className="text-xs lg:text-sm font-semibold text-foreground">
-                {getActivityTypeLabel(milestone.type, milestone)}
-              </span>
-              {isValidTimestamp(milestone.endsAt) && (
-                <span className="text-xs lg:text-sm font-semibold text-muted-foreground">
-                  Due by {formatDisplayDate(new Date(milestone.endsAt! * 1000).toISOString())}
-                </span>
-              )}
-            </div>
-
-            {/* Posted by - stacks on mobile */}
-            {(() => {
-              const attester = getMilestoneAttester(milestone);
-              return (
-                <div className="flex flex-row items-center gap-1.5 lg:gap-2 text-xs lg:text-sm font-medium leading-5 text-muted-foreground">
-                  <span>Posted {formatDisplayDate(milestone.createdAt)}</span>
-                  {attester && (
-                    <>
-                      <span>by</span>
-                      <span className="text-xs lg:text-sm font-semibold leading-5 text-foreground">
-                        <EthereumAddressToProfileName
-                          address={attester}
-                          showProfilePicture
-                          pictureClassName="h-5 w-5 lg:h-6 lg:w-6 min-h-5 min-w-5 lg:min-h-6 lg:min-w-6 rounded-full"
-                        />
-                      </span>
-                    </>
-                  )}
-                </div>
-              );
-            })()}
-          </>
+          <div className="flex flex-row items-center gap-1.5 lg:gap-2 flex-wrap">
+            <span className="text-xs lg:text-sm font-semibold text-foreground">
+              {getActivityTypeLabel(milestone.type, milestone)}
+            </span>
+          </div>
         )}
       </div>
 
@@ -321,14 +260,6 @@ export function ActivityFeed({
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   };
 
-  // Check if a timestamp is valid (not 0 or epoch)
-  const isValidTimestamp = (timestamp: number | undefined): boolean => {
-    if (!timestamp || timestamp === 0) return false;
-    // Check if date is before year 2000 (likely invalid)
-    const date = new Date(timestamp * 1000);
-    return date.getFullYear() >= 2000;
-  };
-
   if (sortedMilestones.length === 0) {
     return (
       <div
@@ -357,7 +288,6 @@ export function ActivityFeed({
               projectId={projectId}
               isAuthorized={isAuthorized}
               formatDisplayDate={formatDisplayDate}
-              isValidTimestamp={isValidTimestamp}
               allocationAmount={
                 allocationMap.get(milestone.uid) ?? allocationMap.get(milestone.uid.toLowerCase())
               }

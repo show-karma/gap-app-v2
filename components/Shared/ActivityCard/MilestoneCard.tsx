@@ -11,7 +11,6 @@ import { useParams } from "next/navigation";
 import { type FC, useCallback, useState } from "react";
 import toast from "react-hot-toast";
 import { DeleteDialog } from "@/components/DeleteDialog";
-import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { MilestoneVerificationSection } from "@/components/Shared/MilestoneVerification";
 import { Button } from "@/components/Utilities/Button";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
@@ -20,6 +19,7 @@ import { useMilestone } from "@/hooks/useMilestone";
 import { useMilestoneActions } from "@/hooks/useMilestoneActions";
 import { useMilestoneImpactAnswers } from "@/hooks/useMilestoneImpactAnswers";
 import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
+import { Link } from "@/src/components/navigation/Link";
 import { useGrantInvoiceRequired } from "@/src/features/payout-disbursement/hooks/use-payout-disbursement";
 import { getGrantInvoiceDownloadUrl } from "@/src/features/payout-disbursement/services/payout-disbursement.service";
 import { useProjectStore } from "@/store";
@@ -33,9 +33,9 @@ import { SHARE_TEXTS } from "@/utilities/share/text";
 import { cn } from "@/utilities/tailwind";
 import { ActivityActionsWrapper } from "./ActivityActionsWrapper";
 import { ActivityAttribution } from "./ActivityAttribution";
-import { ActivityStatusHeader } from "./ActivityStatusHeader";
-import { GrantAssociation } from "./GrantAssociation";
+import { MilestoneCardLayout } from "./MilestoneCardLayout";
 import { computeMilestoneCardCompletionGate } from "./milestone-card-gating";
+import { PostedInfoTooltip } from "./PostedInfoTooltip";
 import { containerClassName } from "./styles";
 
 const ProjectObjectiveCompletion = dynamic(
@@ -317,14 +317,17 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
       <div className={cn(containerClassName, "flex flex-col gap-1 w-full")}>
         <div className={"w-full flex-col flex gap-2 px-6 py-6"}>
           {/* UPDATE label - matches Figma design for nested milestone updates */}
-          <div className="flex flex-row items-center gap-2">
-            <p className="text-xs font-medium text-muted-foreground tracking-wide">UPDATE</p>
-            <MilestoneVerificationSection
-              milestone={milestone}
-              title={`${title} - Reviews`}
-              isVerified={isVerified}
-              verifications={verifications}
-            />
+          <div className="flex flex-row items-start justify-between gap-2">
+            <div className="flex flex-row items-center gap-2 min-w-0 flex-1">
+              <p className="text-xs font-medium text-muted-foreground tracking-wide">UPDATE</p>
+              <MilestoneVerificationSection
+                milestone={milestone}
+                title={`${title} - Reviews`}
+                isVerified={isVerified}
+                verifications={verifications}
+              />
+            </div>
+            <PostedInfoTooltip date={completionDate} attester={completionAttester} />
           </div>
           {/* Title - shown prominently after UPDATE label per Figma */}
           {title && (
@@ -494,119 +497,131 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
     );
   };
 
+  const projectSlug = (project?.details?.slug || project?.uid) as string | undefined;
+
+  const postedAttester =
+    projectMilestone?.attester ||
+    projectMilestone?.completed?.attester ||
+    grantMilestone?.milestone?.attester ||
+    grantMilestone?.milestone?.completed?.attester ||
+    grantMilestone?.completionDetails?.completedBy ||
+    milestone.projectUpdate?.recipient ||
+    milestone.grantUpdate?.attester ||
+    milestone.grantUpdate?.recipient;
+
+  const postedInfo =
+    milestone.createdAt || postedAttester ? (
+      <PostedInfoTooltip date={milestone.createdAt} attester={postedAttester} />
+    ) : undefined;
+
+  const header =
+    type === "grant" && grantTitle && grantUID && projectSlug ? (
+      <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+        <Link
+          href={`/project/${projectSlug}/funding/${grantUID}`}
+          className="hover:text-brand-blue hover:underline"
+        >
+          {grantTitle}
+        </Link>
+      </div>
+    ) : undefined;
+
+  const showStatusBadge = type === "milestone" || type === "grant";
+  const showOrderBadge = type === "grant" && Boolean(milestone.grantMilestoneOrder);
+  const showAllocationBadge = Boolean(allocationAmount);
+  const showDueBadge = Boolean(endsAt && endsAt > 0);
+  const showAiEvaluationBadge = Boolean(completed && milestone.uid && completionReason);
+  const hasAnyPill =
+    showStatusBadge ||
+    showOrderBadge ||
+    showAllocationBadge ||
+    showDueBadge ||
+    showAiEvaluationBadge;
+
+  const pills = hasAnyPill ? (
+    <>
+      {showStatusBadge && (
+        <Badge
+          variant="secondary"
+          className={cn(
+            completed
+              ? "text-emerald-700 bg-emerald-50 hover:bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-950 dark:hover:bg-emerald-950"
+              : "bg-orange-50 hover:bg-orange-50 text-orange-700 dark:bg-orange-950 dark:hover:bg-orange-950 dark:text-orange-300"
+          )}
+        >
+          {completed ? "Completed" : "Pending"}
+        </Badge>
+      )}
+      {showOrderBadge && milestone.grantMilestoneOrder && (
+        <Badge
+          variant="secondary"
+          className="bg-blue-50 text-blue-700 hover:bg-blue-50 dark:bg-blue-950 dark:text-blue-200 dark:hover:bg-blue-950"
+        >
+          {`Milestone ${milestone.grantMilestoneOrder.index} of ${milestone.grantMilestoneOrder.total}`}
+        </Badge>
+      )}
+      {showAllocationBadge ? (
+        <Badge
+          variant="secondary"
+          className="bg-blue-50 text-blue-700 hover:bg-blue-50 dark:bg-blue-900 dark:text-blue-200 dark:hover:bg-blue-900"
+        >
+          {allocationAmount}
+        </Badge>
+      ) : null}
+      {showDueBadge ? (
+        <Badge variant="secondary" className="flex flex-row items-center gap-1.5">
+          <Calendar className="w-3.5 h-3.5" />
+          <span>Due by {formatDate((endsAt ?? 0) * 1000)}</span>
+        </Badge>
+      ) : null}
+      {showAiEvaluationBadge ? (
+        <MilestoneAIEvaluationBadge
+          milestoneUID={milestone.uid}
+          completionReason={completionReason}
+        />
+      ) : null}
+    </>
+  ) : undefined;
+
+  const milestoneActions =
+    isAuthorized && (type === "milestone" || type === "grant") ? (
+      <>
+        {!completed && (
+          <Button
+            className="flex flex-row gap-1 border border-brand-blue text-brand-blue text-sm font-semibold bg-white hover:bg-white dark:bg-transparent dark:hover:bg-transparent p-3 rounded-md max-sm:px-2 max-sm:py-1"
+            onClick={() => handleCompleting(true)}
+          >
+            Mark Milestone Complete
+            <CheckCircleIcon className="h-5 w-5" />
+          </Button>
+        )}
+        {type === "milestone" && projectMilestone ? (
+          <ObjectiveSimpleOptionsMenu objectiveId={projectMilestone.uid} />
+        ) : type === "grant" && grantMilestone ? (
+          <GrantMilestoneSimpleOptionsMenu milestone={milestone} />
+        ) : null}
+      </>
+    ) : null;
+
+  const activityActions =
+    isAuthorized &&
+    (type === "activity" || type === "update" || type === "grant_update" || type === "impact") ? (
+      <ActivityActionsWrapper milestone={milestone} />
+    ) : null;
+
+  const attributionActions = milestoneActions || activityActions || undefined;
+
   return (
     <div className="flex flex-col w-full gap-4">
-      {/* Main Milestone Card */}
-      <div className={cn(containerClassName, "flex flex-col w-full")}>
-        {/* Grants Related Section */}
-        <div className="flex flex-col gap-6 w-full px-6 py-6">
-          <div className="flex flex-row justify-between items-start gap-3 w-full flex-wrap">
-            <div className="flex flex-col gap-2 flex-1 flex-wrap">
-              {/* Title row with per-grant ordinal pill */}
-              <div className="flex flex-row items-center gap-2 flex-wrap">
-                {type === "grant" && milestone.grantMilestoneOrder && (
-                  <Badge
-                    variant="secondary"
-                    className="bg-blue-50 text-blue-700 hover:bg-blue-50 dark:bg-blue-950 dark:text-blue-200 dark:hover:bg-blue-950"
-                  >
-                    {`${milestone.grantMilestoneOrder.index} of ${milestone.grantMilestoneOrder.total}`}
-                  </Badge>
-                )}
-                <p className="text-xl font-semibold text-foreground">{title}</p>
-              </div>
-
-              {/* Community/Grant Badge - only shown for grant milestones */}
-              {type === "grant" && (
-                <div className="flex flex-row items-center gap-2">
-                  <span className="text-sm text-muted-foreground">For</span>
-                  <GrantAssociation milestone={milestone} />
-                </div>
-              )}
-            </div>
-
-            {/* Right side: Due date and status badges */}
-            <div className="flex flex-row items-center gap-4 flex-wrap">
-              {/* Due date badge */}
-              {endsAt && endsAt > 0 && (
-                <Badge variant="secondary" className="flex flex-row items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5" />
-                  <span>Due by {formatDate(endsAt * 1000)}</span>
-                </Badge>
-              )}
-
-              {/* Allocation amount pill */}
-              {allocationAmount ? (
-                <Badge
-                  variant="secondary"
-                  className="bg-blue-50 text-blue-700 hover:bg-blue-50 dark:bg-blue-900 dark:text-blue-200 dark:hover:bg-blue-900"
-                >
-                  {allocationAmount}
-                </Badge>
-              ) : null}
-
-              {(type === "milestone" || type === "grant") && (
-                <Badge
-                  variant="secondary"
-                  className={cn(
-                    completed
-                      ? "text-emerald-700 bg-emerald-50 hover:bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-950 dark:hover:bg-emerald-950"
-                      : "bg-orange-50 hover:bg-orange-50 text-orange-700 dark:bg-orange-950 dark:hover:bg-orange-950 dark:text-orange-300"
-                  )}
-                >
-                  {completed ? "Completed" : "Pending"}
-                </Badge>
-              )}
-              {completed && milestone.uid && completionReason && (
-                <MilestoneAIEvaluationBadge
-                  milestoneUID={milestone.uid}
-                  completionReason={completionReason}
-                />
-              )}
-            </div>
-          </div>
-
-          {/* Description */}
-          {description ? (
-            <div className="flex flex-col">
-              <ReadMore side="left">{description}</ReadMore>
-            </div>
-          ) : null}
-        </div>
-        {/* Bottom Actions (removed attribution since it's shown in timeline header) */}
-        {isAuthorized && (type === "milestone" || type === "grant") && (
-          <div className="flex w-full flex-1 flex-row gap-6 items-center justify-between px-5 py-3 border-t">
-            {/* Only show completion button for milestone types that support completion */}
-            {!completed ? (
-              <Button
-                className="flex flex-row gap-1 border border-brand-blue text-brand-blue  text-sm font-semibold bg-white hover:bg-white dark:bg-transparent dark:hover:bg-transparent p-3  rounded-md max-sm:px-2 max-sm:py-1"
-                onClick={() => handleCompleting(true)}
-              >
-                Mark Milestone Complete
-                <CheckCircleIcon className="h-5 w-5" />
-              </Button>
-            ) : (
-              <div />
-            )}
-
-            {/* Options Menu with only Delete - right aligned */}
-            {type === "milestone" && projectMilestone ? (
-              <ObjectiveSimpleOptionsMenu objectiveId={projectMilestone.uid} />
-            ) : type === "grant" && grantMilestone ? (
-              <GrantMilestoneSimpleOptionsMenu milestone={milestone} />
-            ) : null}
-          </div>
-        )}
-        {/* Bottom Actions for activity/update types - Share, Edit, Delete */}
-        {isAuthorized &&
-          (type === "activity" ||
-            type === "update" ||
-            type === "grant_update" ||
-            type === "impact") && (
-            <div className="flex w-full flex-1 flex-row gap-6 items-center justify-end px-5 py-3 border-t">
-              <ActivityActionsWrapper milestone={milestone} />
-            </div>
-          )}
-      </div>
+      <MilestoneCardLayout
+        header={header}
+        topRightSlot={postedInfo}
+        pills={pills}
+        title={title}
+        description={description}
+        attributionDate={milestone.createdAt || undefined}
+        attributionActions={attributionActions}
+      />
       {showCompletionSection && (
         <div className="flex flex-col gap-2.5 mt-2 pl-10">
           {/* Timeline header: Only show when viewing existing completion data, not during form input */}
@@ -618,30 +633,12 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
                   <div className="w-[3px] h-[3px] rounded-full bg-blue-400" />
                 </div>
               )}
-              {/* Left side: Activity type label */}
+              {/* Activity type label */}
               <div className="flex flex-row items-center gap-2.5 flex-wrap">
                 <span className="text-sm font-semibold text-foreground">
                   {getActivityTypeLabel(type)}
                 </span>
               </div>
-
-              {/* Right side: Posted by */}
-              {completionDate && (
-                <div className="flex flex-row items-center gap-3 text-sm font-medium leading-5 text-muted-foreground">
-                  <span>Posted {formatDate(completionDate)} by</span>
-                  {completionAttester && (
-                    <div className="flex flex-row items-center gap-3">
-                      <span className="text-sm font-semibold leading-5 text-foreground">
-                        <EthereumAddressToProfileName
-                          address={completionAttester}
-                          showProfilePicture
-                          pictureClassName="h-5 w-5 lg:h-6 lg:w-6 min-h-5 min-w-5 lg:min-h-6 lg:min-w-6 rounded-full"
-                        />
-                      </span>
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
           )}
 

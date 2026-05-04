@@ -8,6 +8,7 @@ import { EditUpdateDialog } from "../../Pages/Project/Updates/EditUpdateDialog";
 import { ActivityAttribution } from "./ActivityAttribution";
 import { ActivityMenu } from "./ActivityMenu";
 import { ActivityStatusHeader } from "./ActivityStatusHeader";
+import { PostedInfoTooltip } from "./PostedInfoTooltip";
 
 interface ProjectUpdateCardProps {
   update: ProjectUpdate;
@@ -55,15 +56,18 @@ export const ProjectUpdateCard: FC<ProjectUpdateCardProps> = ({ update, index, i
     <div className="flex flex-col gap-0 w-full">
       <div className="flex flex-col gap-3 w-full px-6 py-6">
         <div className="flex flex-col gap-3 w-full">
-          <ActivityStatusHeader
-            activityType="ProjectUpdate"
-            dueDate={null}
-            showCompletionStatus={false}
-            completed={false}
-            completionStatusClassName="text-xs px-2 py-1"
-            update={null}
-            index={index}
-          />
+          <div className="flex flex-row items-start justify-between gap-3">
+            <ActivityStatusHeader
+              activityType="ProjectUpdate"
+              dueDate={null}
+              showCompletionStatus={false}
+              completed={false}
+              completionStatusClassName="text-xs px-2 py-1"
+              update={null}
+              index={index}
+            />
+            <PostedInfoTooltip date={update.createdAt} attester={update.recipient} />
+          </div>
           {title && <p className="text-xl font-semibold text-foreground">{title}</p>}
         </div>
 

@@ -139,15 +139,10 @@ export function MilestoneAIEvaluationBadge({
           </TooltipTrigger>
           <TooltipContent side="top" className="max-w-xs">
             <div className="space-y-1.5">
-              <p className="text-xs font-semibold text-gray-700 dark:text-gray-200">
-                AI Evaluation
-              </p>
+              <p className="text-xs font-semibold">AI Evaluation</p>
               {evaluations.length === 1 ? (
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Score:{" "}
-                  <span className={`font-semibold ${getScoreColor(evaluations[0].rating)}`}>
-                    {evaluations[0].rating}/10
-                  </span>
+                <p className="text-xs opacity-80">
+                  Score: <span className="font-semibold">{evaluations[0].rating}/10</span>
                 </p>
               ) : (
                 <>
@@ -155,16 +150,16 @@ export function MilestoneAIEvaluationBadge({
                     {evaluations.map((evaluation) => (
                       <span
                         key={`${evaluation.milestoneUID}-${evaluation.model}-${evaluation.createdAt}`}
-                        className={`text-xs font-semibold ${getScoreColor(evaluation.rating)}`}
+                        className="text-xs font-semibold"
                       >
                         {evaluation.rating}/10
                       </span>
                     ))}
                   </div>
-                  <p className="text-[10px] text-gray-400 dark:text-gray-500">Avg: {avgScore}/10</p>
+                  <p className="text-[10px] opacity-70">Avg: {avgScore}/10</p>
                 </>
               )}
-              <p className="text-[10px] text-gray-400 dark:text-gray-500">Click to view details</p>
+              <p className="text-[10px] opacity-70">Click to view details</p>
             </div>
           </TooltipContent>
         </Tooltip>
@@ -349,15 +344,10 @@ export function ApplicationMilestoneAIEvaluationBadge({
           </TooltipTrigger>
           <TooltipContent side="top" className="max-w-xs">
             <div className="space-y-1.5">
-              <p className="text-xs font-semibold text-gray-700 dark:text-gray-200">
-                AI Evaluation
-              </p>
+              <p className="text-xs font-semibold">AI Evaluation</p>
               {evaluations.length === 1 ? (
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Score:{" "}
-                  <span className={`font-semibold ${getScoreColor(evaluations[0].rating)}`}>
-                    {evaluations[0].rating}/10
-                  </span>
+                <p className="text-xs opacity-80">
+                  Score: <span className="font-semibold">{evaluations[0].rating}/10</span>
                 </p>
               ) : (
                 <>
@@ -365,16 +355,16 @@ export function ApplicationMilestoneAIEvaluationBadge({
                     {evaluations.map((evaluation) => (
                       <span
                         key={`${evaluation.milestoneUID}-${evaluation.model}-${evaluation.createdAt}`}
-                        className={`text-xs font-semibold ${getScoreColor(evaluation.rating)}`}
+                        className="text-xs font-semibold"
                       >
                         {evaluation.rating}/10
                       </span>
                     ))}
                   </div>
-                  <p className="text-[10px] text-gray-400 dark:text-gray-500">Avg: {avgScore}/10</p>
+                  <p className="text-[10px] opacity-70">Avg: {avgScore}/10</p>
                 </>
               )}
-              <p className="text-[10px] text-gray-400 dark:text-gray-500">Click to view details</p>
+              <p className="text-[10px] opacity-70">Click to view details</p>
             </div>
           </TooltipContent>
         </Tooltip>
