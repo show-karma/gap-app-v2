@@ -163,8 +163,8 @@ function ConnectionMeta({ connection }: { connection: OAuthConnection }) {
           {connection.clientName}
         </h3>
         <p className="text-xs text-muted-foreground">
-          Connected {formatDate(connection.grantedAt)}
-          {" · "}Last used {formatDate(connection.lastUsedAt)}
+          Connected {formatDate(connection.issuedAt)}
+          {connection.expiresAt ? ` · Expires ${formatDate(connection.expiresAt)}` : null}
         </p>
         {connection.clientUri ? (
           <a

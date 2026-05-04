@@ -6,6 +6,11 @@ export const envVars = {
   NEXT_PUBLIC_ENV: process.env.NEXT_PUBLIC_ENV,
   NEXT_PUBLIC_KARMA_API: "https://api.karmahq.xyz/api",
   NEXT_PUBLIC_GAP_INDEXER_URL: process.env.NEXT_PUBLIC_GAP_INDEXER_URL as string,
+  // gap-oauth (the OAuth 2.1 / oidc-provider service) lives next to
+  // gap-indexer. The consent UI and connections page call it directly;
+  // gap-indexer's MCP middleware verifies tokens against its JWKS.
+  NEXT_PUBLIC_GAP_OAUTH_URL: (process.env.NEXT_PUBLIC_GAP_OAUTH_URL ||
+    "http://localhost:3003") as string,
   RPC: {
     MAINNET: process.env.NEXT_PUBLIC_RPC_MAINNET as string,
     OPTIMISM: process.env.NEXT_PUBLIC_RPC_OPTIMISM as string,
