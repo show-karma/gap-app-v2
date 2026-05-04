@@ -56,6 +56,7 @@ export interface MilestoneData {
   dueDate: string;
   fundingRequested?: string;
   completionCriteria?: string;
+  milestoneUID?: string; // set after on-chain creation; immutable
 }
 
 export interface ApplicationConfig {
