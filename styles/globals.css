@@ -684,6 +684,16 @@ article.report-article table {
   border-spacing: 0;
   border: none;
 }
+/* streamdown wraps tables in an outer card (with copy/download icons) AND an
+   inner div with its own border + bg — flatten the inner one so the table
+   sits directly inside the card instead of looking like a box-in-a-box. */
+article.report-article [data-streamdown="table-wrapper"] > div:has(> table),
+article.report-article [data-streamdown="table-wrapper"] > div:has(> [data-streamdown="table"]) {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+}
 article.report-article th,
 article.report-article td {
   padding-left: 1rem;
