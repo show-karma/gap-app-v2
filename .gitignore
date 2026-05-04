@@ -68,4 +68,5 @@ public/index.html.md
 public/funders.md
 public/projects.md
 public/communities.md
-public/knowledge/*.md.gstack/
+public/knowledge/*.md
+.gstack/
