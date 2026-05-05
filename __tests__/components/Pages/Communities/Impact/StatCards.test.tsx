@@ -26,6 +26,7 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
 });
 
 const mockUseQuery = useQuery as vi.MockedFunction<typeof useQuery>;
+const mockUsePathname = vi.mocked(usePathname);
 
 // Mock next/navigation
 vi.mock("next/navigation", () => ({
@@ -416,9 +417,7 @@ describe("StatCards", () => {
         },
       });
 
-      (usePathname as unknown as ReturnType<typeof vi.fn>).mockReturnValue(
-        "/community/test-community"
-      );
+      mockUsePathname.mockReturnValue("/community/test-community");
 
       render(<CommunityStatCards />, { wrapper });
 
@@ -451,7 +450,7 @@ describe("StatCards", () => {
       colorIndicators.forEach((indicator) => {
         expect(indicator).toHaveClass("rounded-full");
         expect(indicator).toHaveClass("w-1");
-        expect(indicator).toHaveClass("h-full");
+        expect(indicator).toHaveClass("my-1.5");
       });
     });
   });

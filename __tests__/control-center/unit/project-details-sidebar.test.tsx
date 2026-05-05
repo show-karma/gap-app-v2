@@ -51,6 +51,7 @@ vi.mock("@/src/features/payout-disbursement", async () => {
     })),
     useSaveMilestoneInvoices: vi.fn(() => ({
       mutate: mockSaveMutate,
+      mutateAsync: mockSaveMutate,
       isPending: mockSavePending,
     })),
     // Stub out the content components to avoid their data-fetching hooks
@@ -63,10 +64,29 @@ vi.mock("@/hooks/useCopyToClipboard", () => ({
   useCopyToClipboard: () => ["", vi.fn()],
 }));
 
+// Mock RBAC — grant full permissions by default so invoice/edit controls are visible
+vi.mock("@/src/core/rbac/context/permission-context", () => ({
+  useCan: vi.fn(() => true),
+  useCanAny: vi.fn(() => true),
+  useCanAll: vi.fn(() => true),
+  useHasRole: vi.fn(() => false),
+  useHasRoleOrHigher: vi.fn(() => false),
+  useIsReviewerType: vi.fn(() => false),
+  usePermissionContext: vi.fn(() => ({
+    roles: {},
+    permissions: [],
+    isLoading: false,
+    can: () => true,
+    canAny: () => true,
+    canAll: () => true,
+  })),
+  PermissionProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
+
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import React from "react";
+import type React from "react";
 import "@testing-library/jest-dom";
 
 import {
@@ -110,6 +130,7 @@ beforeEach(() => {
   }));
   vi.mocked(useSaveMilestoneInvoices).mockImplementation(() => ({
     mutate: mockSaveMutate,
+    mutateAsync: mockSaveMutate,
     isPending: mockSavePending,
   }));
 });
@@ -331,8 +352,8 @@ describe("ProjectDetailsSidebar", () => {
         ],
       });
 
-      expect(screen.getByText("Deliverable A")).toBeInTheDocument();
-      expect(screen.getByText("Deliverable B")).toBeInTheDocument();
+      expect(screen.getByText("Milestone 1: Deliverable A")).toBeInTheDocument();
+      expect(screen.getByText("Milestone 2: Deliverable B")).toBeInTheDocument();
     });
 
     it("uses milestoneUID as key when available, avoiding duplicate key issues", () => {
@@ -568,7 +589,7 @@ describe("ProjectDetailsSidebar", () => {
   });
 
   describe("Invoice status column", () => {
-    it("shows 'Invoice received' badge when invoice status is 'received'", () => {
+    it("shows Invoice column header and received date input when invoice status is 'received'", () => {
       renderSidebar({
         invoiceRequired: true,
         milestoneInvoices: [
@@ -576,16 +597,20 @@ describe("ProjectDetailsSidebar", () => {
             milestoneLabel: "MS Recv",
             milestoneUID: "ms-recv",
             invoiceStatus: "received",
+            invoiceReceivedAt: "2024-06-10T00:00:00Z",
           }),
         ],
       });
 
-      expect(screen.getByText("Invoice received")).toBeInTheDocument();
-      // "Received" column header is still present
-      expect(screen.getByText("Received")).toBeInTheDocument();
+      // Invoice column header is present when invoiceRequired is true
+      expect(screen.getByText("Invoice")).toBeInTheDocument();
+      // Date input for received date should be present with value
+      const dateInput = screen.getByLabelText(/invoice received date for.*MS Recv/i);
+      expect(dateInput).toBeInTheDocument();
+      expect(dateInput).toHaveValue("2024-06-10");
     });
 
-    it("shows 'Invoice received' badge when invoice status is 'paid'", () => {
+    it("shows Invoice column header and date input when invoice status is 'paid'", () => {
       renderSidebar({
         invoiceRequired: true,
         milestoneInvoices: [
@@ -593,14 +618,18 @@ describe("ProjectDetailsSidebar", () => {
             milestoneLabel: "MS Paid",
             milestoneUID: "ms-paid",
             invoiceStatus: "paid",
+            invoiceReceivedAt: "2024-06-10T00:00:00Z",
           }),
         ],
       });
 
-      expect(screen.getByText("Invoice received")).toBeInTheDocument();
+      expect(screen.getByText("Invoice")).toBeInTheDocument();
+      const dateInput = screen.getByLabelText(/invoice received date for.*MS Paid/i);
+      expect(dateInput).toBeInTheDocument();
+      expect(dateInput).toHaveValue("2024-06-10");
     });
 
-    it("shows 'Not submitted' badge when invoice status is 'not_submitted'", () => {
+    it("shows empty date input when invoice status is 'not_submitted' and no received date", () => {
       renderSidebar({
         invoiceRequired: true,
         milestoneInvoices: [
@@ -613,7 +642,12 @@ describe("ProjectDetailsSidebar", () => {
         ],
       });
 
-      expect(screen.getByText("Not submitted")).toBeInTheDocument();
+      // Invoice column header is present
+      expect(screen.getByText("Invoice")).toBeInTheDocument();
+      // Date input should be empty (no received date)
+      const dateInput = screen.getByLabelText(/invoice received date for.*MS NotSub/i);
+      expect(dateInput).toBeInTheDocument();
+      expect(dateInput).toHaveValue("");
     });
 
     it("does not show invoice status column when invoiceRequired is false", () => {
@@ -628,8 +662,8 @@ describe("ProjectDetailsSidebar", () => {
         ],
       });
 
-      // The "Invoice Status" header should not be present
-      expect(screen.queryByText("Invoice Status")).not.toBeInTheDocument();
+      // The "Invoice" column header should not be present when invoice is not required
+      expect(screen.queryByText("Invoice")).not.toBeInTheDocument();
     });
   });
 
@@ -651,7 +685,7 @@ describe("ProjectDetailsSidebar", () => {
       });
 
       // Make a change to a milestone invoice date
-      const dateInput = screen.getByLabelText(/invoice received date for M1/i);
+      const dateInput = screen.getByLabelText(/invoice received date for.*M1/i);
       await user.type(dateInput, "2024-06-15");
 
       // Try to close via the explicit Close button in the footer
@@ -694,7 +728,7 @@ describe("ProjectDetailsSidebar", () => {
         ],
       });
 
-      const dateInput = screen.getByLabelText(/invoice received date for Milestone A/i);
+      const dateInput = screen.getByLabelText(/invoice received date for.*Milestone A/i);
       await user.type(dateInput, "2024-06-15");
 
       expect(screen.getByText(/save changes \(1\)/i)).toBeInTheDocument();
@@ -713,7 +747,7 @@ describe("ProjectDetailsSidebar", () => {
         ],
       });
 
-      const dateInput = screen.getByLabelText(/invoice received date for Milestone A/i);
+      const dateInput = screen.getByLabelText(/invoice received date for.*Milestone A/i);
       await user.type(dateInput, "2024-06-15");
 
       const saveButton = screen.getByRole("button", { name: /save changes/i });
@@ -729,8 +763,7 @@ describe("ProjectDetailsSidebar", () => {
               invoiceReceivedAt: "2024-06-15T00:00:00.000Z",
             }),
           ]),
-        }),
-        expect.any(Object)
+        })
       );
     });
   });
