@@ -435,45 +435,6 @@ describe("ProjectsExplorer - Project browsing & search", () => {
   // across the test suite. The MSW handlers are validated in a standalone test
   // below to confirm they are functional.
 
-  describe("MSW handler validation (infrastructure proof)", () => {
-    // This test validates that the MSW integration handlers from
-    // __tests__/integration/handlers/index.ts are correctly configured
-    // and can serve requests. It uses the global MSW server from
-    // __tests__/utils/msw/setup.ts (started in setupFilesAfterSetup)
-    // and adds integration handlers via server.use().
-    //
-    // NOTE: The global MSW server is set up in __tests__/utils/msw/setup.ts
-    // but that file is NOT in setupFilesAfterEnv for these tests
-    // (vitest config only includes tests/setup.js and __tests__/navbar/setup.ts).
-    // So we create a standalone server for this validation.
-
-    // Skip: jsdom does not provide a global fetch, so MSW cannot intercept
-    // requests in this environment. This test validated that the handlers are
-    // structurally correct; to run it, switch to a Node test environment or
-    // polyfill fetch (e.g., with undici or whatwg-fetch).
-    it.skip("MSW integration handlers respond correctly", async () => {
-      const { setupServer } = require("msw/node");
-      const { integrationHandlers } = require("../handlers/index");
-
-      const mswServer = setupServer(...integrationHandlers);
-      mswServer.listen({ onUnhandledRequest: "bypass" });
-
-      try {
-        const INDEXER_URL = process.env.NEXT_PUBLIC_GAP_INDEXER_URL || "http://localhost:4000";
-        const response = await fetch(`${INDEXER_URL}/v2/projects?page=1&limit=12`);
-        const data = await response.json();
-
-        expect(response.ok).toBe(true);
-        expect(data.data).toBeDefined();
-        expect(data.pagination).toBeDefined();
-        expect(data.data.length).toBeGreaterThan(0);
-        expect(data.data[0].details.title).toContain("Integration Project");
-      } finally {
-        mswServer.close();
-      }
-    });
-  });
-
   // -------------------------------------------------------------------------
   // Load More
   // -------------------------------------------------------------------------
