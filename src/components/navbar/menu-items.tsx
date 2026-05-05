@@ -2,6 +2,7 @@ import {
   BanknoteArrowDown,
   BellDot,
   GalleryThumbnails,
+  Github,
   GoalIcon,
   LayoutGrid,
   LayoutList,
@@ -12,6 +13,7 @@ import {
   ScrollText,
   UserPlus,
 } from "lucide-react";
+import { karmaLinks } from "@/utilities/karma/karma";
 import { PAGES } from "@/utilities/pages";
 import { SOCIALS } from "@/utilities/socials";
 
@@ -124,6 +126,13 @@ export const resourcesItems: MenuItem[] = [
     href: SOCIALS.PARAGRAPH,
     icon: ScrollText,
     title: "Blog",
+    external: true,
+    showArrow: true,
+  },
+  {
+    href: karmaLinks.skills,
+    icon: Github,
+    title: "Skills",
     external: true,
     showArrow: true,
   },
