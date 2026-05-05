@@ -25,6 +25,7 @@ export function useMentionEditor(options: UseMentionEditorOptions = {}) {
   const [isAutocompleteOpen, setIsAutocompleteOpen] = useState(false);
   const [filterText, setFilterText] = useState("");
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [isInviteGranteeModalOpen, setIsInviteGranteeModalOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [caretPosition, setCaretPosition] = useState<CaretPosition | null>(null);
   const cursorPositionRef = useRef(0);
@@ -130,6 +131,16 @@ export function useMentionEditor(options: UseMentionEditorOptions = {}) {
     setIsInviteModalOpen(false);
   }, []);
 
+  const handleOpenInviteGranteeModal = useCallback(() => {
+    savedFilterTextRef.current = filterText;
+    setIsAutocompleteOpen(false);
+    setIsInviteGranteeModalOpen(true);
+  }, [filterText]);
+
+  const handleCloseInviteGranteeModal = useCallback(() => {
+    setIsInviteGranteeModalOpen(false);
+  }, []);
+
   const handleInvitedReviewer = useCallback(
     (reviewer: MentionReviewer, currentContent: string, onChange: (value: string) => void) => {
       const savedFilter = savedFilterTextRef.current;
@@ -151,12 +162,22 @@ export function useMentionEditor(options: UseMentionEditorOptions = {}) {
     (
       key: string,
       items: MentionReviewer[],
-      isAdmin: boolean,
+      reviewerCount: number,
+      hasGranteeSection: boolean,
       content: string,
-      onChange: (value: string) => void
+      onChange: (value: string) => void,
+      canInviteGrantee = true
     ) => {
-      const totalItems = items.length + (isAdmin ? 1 : 0);
-      if (totalItems === 0) return;
+      // Layout:
+      //   0..reviewerCount-1                          → reviewer items
+      //   reviewerCount                               → "Invite reviewer" button
+      //   reviewerCount+1..reviewerCount+granteeCount → grantee items
+      //   reviewerCount+granteeCount+1                → "Invite grantee" button (if canInviteGrantee)
+      const inviteReviewerIndex = reviewerCount;
+      const granteeStartIndex = reviewerCount + 1;
+      const inviteGranteeIndex = items.length + 1;
+      const showInviteGrantee = hasGranteeSection && canInviteGrantee;
+      const totalItems = items.length + 1 + (showInviteGrantee ? 1 : 0);
 
       switch (key) {
         case "ArrowDown":
@@ -166,10 +187,18 @@ export function useMentionEditor(options: UseMentionEditorOptions = {}) {
           setSelectedIndex((prev) => (prev <= 0 ? totalItems - 1 : prev - 1));
           break;
         case "Enter": {
-          if (selectedIndex < items.length) {
+          if (selectedIndex < reviewerCount) {
             handleSelectReviewer(items[selectedIndex], content, onChange);
-          } else if (isAdmin && selectedIndex === items.length) {
+          } else if (selectedIndex === inviteReviewerIndex) {
             handleOpenInviteModal();
+          } else if (
+            hasGranteeSection &&
+            selectedIndex >= granteeStartIndex &&
+            selectedIndex < inviteGranteeIndex
+          ) {
+            handleSelectReviewer(items[selectedIndex - 1], content, onChange);
+          } else if (showInviteGrantee && selectedIndex === inviteGranteeIndex) {
+            handleOpenInviteGranteeModal();
           }
           break;
         }
@@ -178,13 +207,20 @@ export function useMentionEditor(options: UseMentionEditorOptions = {}) {
           break;
       }
     },
-    [selectedIndex, handleSelectReviewer, handleOpenInviteModal, handleCloseAutocomplete]
+    [
+      selectedIndex,
+      handleSelectReviewer,
+      handleOpenInviteModal,
+      handleOpenInviteGranteeModal,
+      handleCloseAutocomplete,
+    ]
   );
 
   return {
     isAutocompleteOpen,
     filterText,
     isInviteModalOpen,
+    isInviteGranteeModalOpen,
     selectedIndex,
     caretPosition,
     handleContentChange,
@@ -192,6 +228,8 @@ export function useMentionEditor(options: UseMentionEditorOptions = {}) {
     handleCloseAutocomplete,
     handleOpenInviteModal,
     handleCloseInviteModal,
+    handleOpenInviteGranteeModal,
+    handleCloseInviteGranteeModal,
     handleInvitedReviewer,
     handleKeyDown,
   };

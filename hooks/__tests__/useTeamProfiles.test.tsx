@@ -1,16 +1,11 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { useAuth } from "@/hooks/useAuth";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";
 import { communityAdminsService } from "@/services/community-admins.service";
 import { getContributorProfiles } from "@/utilities/indexer/getContributorProfiles";
 
 const mockSetTeamProfiles = vi.fn();
-
-vi.mock("@/hooks/useAuth", () => ({
-  useAuth: vi.fn(),
-}));
 
 vi.mock("@/utilities/indexer/getContributorProfiles", () => ({
   getContributorProfiles: vi.fn(),
@@ -18,7 +13,7 @@ vi.mock("@/utilities/indexer/getContributorProfiles", () => ({
 
 vi.mock("@/services/community-admins.service", () => ({
   communityAdminsService: {
-    getUserProfiles: vi.fn(),
+    getPublicUserProfiles: vi.fn(),
   },
 }));
 
@@ -40,9 +35,8 @@ vi.mock("@/store", () => ({
   }),
 }));
 
-const mockUseAuth = vi.mocked(useAuth);
 const mockGetContributorProfiles = vi.mocked(getContributorProfiles);
-const mockGetUserProfiles = vi.mocked(communityAdminsService.getUserProfiles);
+const mockGetPublicUserProfiles = vi.mocked(communityAdminsService.getPublicUserProfiles);
 
 describe("useTeamProfiles", () => {
   let queryClient: QueryClient;
@@ -75,168 +69,101 @@ describe("useTeamProfiles", () => {
     queryClient.clear();
   });
 
-  describe("authenticated", () => {
-    beforeEach(() => {
-      mockUseAuth.mockReturnValue({
-        authenticated: true,
-        address: "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-      } as any);
-    });
-
-    it("merges backend-authorized email onto team profiles", async () => {
-      mockGetContributorProfiles.mockResolvedValue([
-        {
-          recipient: "0x1111111111111111111111111111111111111111",
-          data: { name: "Owner Name" },
-        },
-        {
-          recipient: "0x2222222222222222222222222222222222222222",
-          data: { aboutMe: "Contributor" },
-        },
-      ] as any);
-      mockGetUserProfiles.mockResolvedValue(
-        new Map([
-          [
-            "0x1111111111111111111111111111111111111111",
-            {
-              publicAddress: "0x1111111111111111111111111111111111111111",
-              name: "Owner Name",
-              email: "owner@example.com",
-            },
-          ],
-        ])
-      );
-
-      const { result } = renderHook(() => useTeamProfiles(project), { wrapper });
-
-      await waitFor(() => {
-        expect(result.current.isSuccess).toBe(true);
-      });
-
-      expect(mockGetContributorProfiles).toHaveBeenCalledWith([
-        "0x1111111111111111111111111111111111111111",
-        "0x2222222222222222222222222222222222222222",
-      ]);
-      expect(mockGetUserProfiles).toHaveBeenCalledWith([
-        "0x1111111111111111111111111111111111111111",
-        "0x2222222222222222222222222222222222222222",
-      ]);
-      expect(result.current.teamProfiles?.[0].data.email).toBe("owner@example.com");
-      expect(result.current.teamProfiles?.[1].data.email).toBeUndefined();
-      expect(mockSetTeamProfiles).toHaveBeenCalledWith(result.current.teamProfiles);
-    });
-
-    it("creates a minimal team profile when email is only available from the authorized backend", async () => {
-      mockGetContributorProfiles.mockResolvedValue([] as any);
-      mockGetUserProfiles.mockResolvedValue(
-        new Map([
-          [
-            "0x1111111111111111111111111111111111111111",
-            {
-              publicAddress: "0x1111111111111111111111111111111111111111",
-              name: "Owner Name",
-              email: "owner@example.com",
-            },
-          ],
-        ])
-      );
-
-      const { result } = renderHook(() => useTeamProfiles(project), { wrapper });
-
-      await waitFor(() => {
-        expect(result.current.isSuccess).toBe(true);
-      });
-
-      expect(result.current.teamProfiles).toEqual([
-        {
-          recipient: "0x1111111111111111111111111111111111111111",
-          data: {
+  it("merges public-profile email onto team profiles", async () => {
+    mockGetContributorProfiles.mockResolvedValue([
+      {
+        recipient: "0x1111111111111111111111111111111111111111",
+        data: { name: "Owner Name" },
+      },
+      {
+        recipient: "0x2222222222222222222222222222222222222222",
+        data: { aboutMe: "Contributor" },
+      },
+    ] as any);
+    mockGetPublicUserProfiles.mockResolvedValue(
+      new Map([
+        [
+          "0x1111111111111111111111111111111111111111",
+          {
+            publicAddress: "0x1111111111111111111111111111111111111111",
             name: "Owner Name",
             email: "owner@example.com",
           },
-        },
-      ]);
+        ],
+      ])
+    );
+
+    const { result } = renderHook(() => useTeamProfiles(project), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.isSuccess).toBe(true);
     });
+
+    expect(mockGetContributorProfiles).toHaveBeenCalledWith([
+      "0x1111111111111111111111111111111111111111",
+      "0x2222222222222222222222222222222222222222",
+    ]);
+    expect(mockGetPublicUserProfiles).toHaveBeenCalledWith([
+      "0x1111111111111111111111111111111111111111",
+      "0x2222222222222222222222222222222222222222",
+    ]);
+    expect(result.current.teamProfiles?.[0].data.email).toBe("owner@example.com");
+    expect(result.current.teamProfiles?.[1].data.email).toBeUndefined();
+    expect(mockSetTeamProfiles).toHaveBeenCalledWith(result.current.teamProfiles);
   });
 
-  describe("unauthenticated", () => {
-    beforeEach(() => {
-      mockUseAuth.mockReturnValue({ authenticated: false } as any);
+  it("creates a minimal team profile when only the public-profile lookup has data", async () => {
+    mockGetContributorProfiles.mockResolvedValue([] as any);
+    mockGetPublicUserProfiles.mockResolvedValue(
+      new Map([
+        [
+          "0x1111111111111111111111111111111111111111",
+          {
+            publicAddress: "0x1111111111111111111111111111111111111111",
+            name: "Owner Name",
+            email: "owner@example.com",
+          },
+        ],
+      ])
+    );
+
+    const { result } = renderHook(() => useTeamProfiles(project), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.isSuccess).toBe(true);
     });
 
-    it("does not request backend-authorized profiles", async () => {
-      mockGetContributorProfiles.mockResolvedValue([
-        {
-          recipient: "0x2222222222222222222222222222222222222222",
-          data: { name: "Member Name" },
+    expect(result.current.teamProfiles).toEqual([
+      {
+        recipient: "0x1111111111111111111111111111111111111111",
+        data: {
+          name: "Owner Name",
+          email: "owner@example.com",
         },
-      ] as any);
-
-      const { result } = renderHook(() => useTeamProfiles(project), { wrapper });
-
-      await waitFor(() => {
-        expect(result.current.isSuccess).toBe(true);
-      });
-
-      expect(mockGetUserProfiles).not.toHaveBeenCalled();
-      expect(result.current.teamProfiles?.[0].data.email).toBeUndefined();
-    });
+      },
+    ]);
   });
 
-  describe("authenticated without a wallet", () => {
-    beforeEach(() => {
-      // Email-only Privy session — no embedded wallet linked yet.
-      mockUseAuth.mockReturnValue({ authenticated: true, address: undefined } as any);
+  it("falls back to contributor profiles when the public-profile lookup throws", async () => {
+    mockGetContributorProfiles.mockResolvedValue([
+      {
+        recipient: "0x2222222222222222222222222222222222222222",
+        data: { name: "Member Name" },
+      },
+    ] as any);
+    mockGetPublicUserProfiles.mockRejectedValue(new Error("Forbidden"));
+
+    const { result } = renderHook(() => useTeamProfiles(project), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.isSuccess).toBe(true);
     });
 
-    it("does not request backend-authorized profiles", async () => {
-      mockGetContributorProfiles.mockResolvedValue([
-        {
-          recipient: "0x2222222222222222222222222222222222222222",
-          data: { name: "Member Name" },
-        },
-      ] as any);
-
-      const { result } = renderHook(() => useTeamProfiles(project), { wrapper });
-
-      await waitFor(() => {
-        expect(result.current.isSuccess).toBe(true);
-      });
-
-      expect(mockGetUserProfiles).not.toHaveBeenCalled();
-      expect(result.current.teamProfiles?.[0].data.email).toBeUndefined();
-    });
-  });
-
-  describe("error", () => {
-    beforeEach(() => {
-      mockUseAuth.mockReturnValue({
-        authenticated: true,
-        address: "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-      } as any);
-    });
-
-    it("falls back to public profiles when the authorized backend lookup is unavailable", async () => {
-      mockGetContributorProfiles.mockResolvedValue([
-        {
-          recipient: "0x2222222222222222222222222222222222222222",
-          data: { name: "Member Name" },
-        },
-      ] as any);
-      mockGetUserProfiles.mockRejectedValue(new Error("Forbidden"));
-
-      const { result } = renderHook(() => useTeamProfiles(project), { wrapper });
-
-      await waitFor(() => {
-        expect(result.current.isSuccess).toBe(true);
-      });
-
-      expect(result.current.teamProfiles).toEqual([
-        {
-          recipient: "0x2222222222222222222222222222222222222222",
-          data: { name: "Member Name" },
-        },
-      ]);
-    });
+    expect(result.current.teamProfiles).toEqual([
+      {
+        recipient: "0x2222222222222222222222222222222222222222",
+        data: { name: "Member Name" },
+      },
+    ]);
   });
 });

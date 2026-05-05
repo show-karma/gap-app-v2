@@ -249,7 +249,14 @@ describe("useMentionEditor", () => {
 
       // Press Enter on first item (selectedIndex defaults to 0)
       act(() => {
-        result.current.handleKeyDown("Enter", reviewers, false, "Hello @Al", onChange);
+        result.current.handleKeyDown(
+          "Enter",
+          reviewers,
+          reviewers.length,
+          false,
+          "Hello @Al",
+          onChange
+        );
       });
 
       expect(result.current.isAutocompleteOpen).toBe(false);
@@ -267,7 +274,14 @@ describe("useMentionEditor", () => {
 
       // Initial selectedIndex is 0, ArrowDown should move to 1
       act(() => {
-        result.current.handleKeyDown("ArrowDown", reviewers, false, "@", onChange);
+        result.current.handleKeyDown(
+          "ArrowDown",
+          reviewers,
+          reviewers.length,
+          false,
+          "@",
+          onChange
+        );
       });
       expect(result.current.selectedIndex).toBe(1);
     });
@@ -282,12 +296,19 @@ describe("useMentionEditor", () => {
 
       // Move down first, then up
       act(() => {
-        result.current.handleKeyDown("ArrowDown", reviewers, false, "@", onChange);
+        result.current.handleKeyDown(
+          "ArrowDown",
+          reviewers,
+          reviewers.length,
+          false,
+          "@",
+          onChange
+        );
       });
       expect(result.current.selectedIndex).toBe(1);
 
       act(() => {
-        result.current.handleKeyDown("ArrowUp", reviewers, false, "@", onChange);
+        result.current.handleKeyDown("ArrowUp", reviewers, reviewers.length, false, "@", onChange);
       });
       expect(result.current.selectedIndex).toBe(0);
     });
@@ -302,7 +323,14 @@ describe("useMentionEditor", () => {
       expect(result.current.isAutocompleteOpen).toBe(true);
 
       act(() => {
-        result.current.handleKeyDown("Escape", reviewers, false, "Hello @", onChange);
+        result.current.handleKeyDown(
+          "Escape",
+          reviewers,
+          reviewers.length,
+          false,
+          "Hello @",
+          onChange
+        );
       });
 
       expect(result.current.isAutocompleteOpen).toBe(false);

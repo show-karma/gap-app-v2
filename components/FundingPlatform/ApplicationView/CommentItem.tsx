@@ -112,9 +112,16 @@ const CommentItem: FC<CommentItemProps> = ({
       }
       e.preventDefault();
       e.stopPropagation();
-      mentionEditor.handleKeyDown(e.key, mentionItems, isAdmin, editContent, setEditContent);
+      mentionEditor.handleKeyDown(
+        e.key,
+        mentionItems,
+        mentionItems.length,
+        false,
+        editContent,
+        setEditContent
+      );
     },
-    [mentionEditor, mentionItems, isAdmin, editContent]
+    [mentionEditor, mentionItems, editContent]
   );
 
   // Update editContent when comment changes to handle optimistic updates
