@@ -155,6 +155,7 @@ interface MilestoneCardProps {
   allocationAmount?: string;
   showAIEvaluationButton?: boolean;
   quietSurface?: boolean;
+  completionCriteria?: string;
 }
 
 export function MilestoneCard({
@@ -182,6 +183,7 @@ export function MilestoneCard({
   allocationAmount,
   showAIEvaluationButton = true,
   quietSurface = false,
+  completionCriteria,
 }: MilestoneCardProps) {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const anchorId = `milestone-${milestone.uid}`;
@@ -314,7 +316,7 @@ export function MilestoneCard({
     const observer = new ResizeObserver(measure);
     observer.observe(node);
     return () => observer.disconnect();
-  }, [milestone.description]);
+  }, [milestone.description, completionCriteria]);
 
   useIsomorphicLayoutEffect(() => {
     const node = completionRef.current;
@@ -448,6 +450,11 @@ export function MilestoneCard({
             )}
           >
             <MarkdownPreview source={milestone.description} />
+            {completionCriteria && (
+              <div className="mt-2">
+                <MarkdownPreview source={completionCriteria} />
+              </div>
+            )}
           </div>
           {hasLongDescription && !isDescriptionExpanded && (
             <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-white dark:from-zinc-900 to-transparent pointer-events-none" />
