@@ -9,15 +9,15 @@ import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {
   ExploreContent,
-  ForBuildersContent,
   ForFundersContent,
+  ForProjectsContent,
   MenuSection,
   ResourcesContent,
 } from "@/src/components/navbar/menu-components";
 import {
   exploreItems,
-  forBuildersItems,
   forFundersItems,
+  forProjectsItems,
   resourcesItems,
 } from "@/src/components/navbar/menu-items";
 import { renderWithProviders } from "../utils/test-helpers";
@@ -100,45 +100,45 @@ describe("MenuSection Component", () => {
   });
 });
 
-describe("ForBuildersContent Component", () => {
+describe("ForProjectsContent Component (formerly ForBuildersContent)", () => {
   describe("Desktop Variant", () => {
     it("should render all menu items", () => {
-      renderWithProviders(<ForBuildersContent variant="desktop" />);
+      renderWithProviders(<ForProjectsContent variant="desktop" />);
 
-      forBuildersItems.forEach((item) => {
+      forProjectsItems.forEach((item) => {
         expect(screen.getByText(item.title)).toBeInTheDocument();
       });
     });
 
     it("should display image", () => {
-      renderWithProviders(<ForBuildersContent variant="desktop" />);
-      const image = screen.getByAltText("For Builders");
+      renderWithProviders(<ForProjectsContent variant="desktop" />);
+      const image = screen.getByAltText("For Projects");
       expect(image).toBeInTheDocument();
     });
 
     it("should have correct image dimensions", () => {
-      renderWithProviders(<ForBuildersContent variant="desktop" />);
-      const image = screen.getByAltText("For Builders");
+      renderWithProviders(<ForProjectsContent variant="desktop" />);
+      const image = screen.getByAltText("For Projects");
       expect(image).toHaveAttribute("width", "170");
       expect(image).toHaveAttribute("height", "132");
     });
 
     it("should display image source correctly", () => {
-      renderWithProviders(<ForBuildersContent variant="desktop" />);
-      const image = screen.getByAltText("For Builders");
+      renderWithProviders(<ForProjectsContent variant="desktop" />);
+      const image = screen.getByAltText("For Projects");
       expect(image).toHaveAttribute("src");
     });
 
     it("should use flex layout with correct classes", () => {
-      const { container } = renderWithProviders(<ForBuildersContent variant="desktop" />);
+      const { container } = renderWithProviders(<ForProjectsContent variant="desktop" />);
       const flexContainer = container.querySelector(".flex.flex-row");
       expect(flexContainer).toBeInTheDocument();
     });
 
     it("should render descriptions for items", () => {
-      renderWithProviders(<ForBuildersContent variant="desktop" />);
+      renderWithProviders(<ForProjectsContent variant="desktop" />);
 
-      forBuildersItems.forEach((item) => {
+      forProjectsItems.forEach((item) => {
         if (item.description) {
           expect(screen.getByText(item.description)).toBeInTheDocument();
         }
@@ -148,34 +148,34 @@ describe("ForBuildersContent Component", () => {
 
   describe("Mobile Variant", () => {
     it("should render all menu items", () => {
-      renderWithProviders(<ForBuildersContent variant="mobile" />);
+      renderWithProviders(<ForProjectsContent variant="mobile" />);
 
-      forBuildersItems.forEach((item) => {
+      forProjectsItems.forEach((item) => {
         expect(screen.getByText(item.title)).toBeInTheDocument();
       });
     });
 
     it("should not display image in mobile variant", () => {
-      renderWithProviders(<ForBuildersContent variant="mobile" />);
-      const image = screen.queryByAltText("For Builders");
+      renderWithProviders(<ForProjectsContent variant="mobile" />);
+      const image = screen.queryByAltText("For Projects");
       expect(image).not.toBeInTheDocument();
     });
 
     it("should call onClose when item is clicked", async () => {
       const user = userEvent.setup();
       const onCloseMock = vi.fn();
-      renderWithProviders(<ForBuildersContent variant="mobile" onClose={onCloseMock} />);
+      renderWithProviders(<ForProjectsContent variant="mobile" onClose={onCloseMock} />);
 
-      const firstItem = screen.getByText(forBuildersItems[0].title);
+      const firstItem = screen.getByText(forProjectsItems[0].title);
       await user.click(firstItem);
 
       expect(onCloseMock).toHaveBeenCalled();
     });
 
     it("should render items with mobile styling", () => {
-      renderWithProviders(<ForBuildersContent variant="mobile" />);
+      renderWithProviders(<ForProjectsContent variant="mobile" />);
 
-      forBuildersItems.forEach((item) => {
+      forProjectsItems.forEach((item) => {
         expect(screen.getByText(item.title)).toBeInTheDocument();
       });
     });
@@ -449,8 +449,8 @@ describe("Component Integration", () => {
   it("should work together in a menu structure", () => {
     renderWithProviders(
       <>
-        <MenuSection title="For Builders" variant="desktop" />
-        <ForBuildersContent variant="desktop" />
+        <MenuSection title="For Projects" variant="desktop" />
+        <ForProjectsContent variant="desktop" />
         <MenuSection title="For Funders" variant="desktop" />
         <ForFundersContent variant="desktop" />
         <MenuSection title="Explore" variant="desktop" />
@@ -460,7 +460,7 @@ describe("Component Integration", () => {
       </>
     );
 
-    expect(screen.getByText("For Builders")).toBeInTheDocument();
+    expect(screen.getByText("For Projects")).toBeInTheDocument();
     expect(screen.getByText("For Funders")).toBeInTheDocument();
     expect(screen.getByText("Explore")).toBeInTheDocument();
     expect(screen.getByText("Resources")).toBeInTheDocument();
@@ -472,15 +472,15 @@ describe("Component Integration", () => {
 
     renderWithProviders(
       <>
-        <ForBuildersContent variant="mobile" onClose={onCloseMock} />
+        <ForProjectsContent variant="mobile" onClose={onCloseMock} />
         <ForFundersContent variant="mobile" onClose={onCloseMock} />
         <ExploreContent variant="mobile" onClose={onCloseMock} />
         <ResourcesContent variant="mobile" onClose={onCloseMock} />
       </>
     );
 
-    // Click on first available item from ForBuilders
-    const firstItem = screen.getByText(forBuildersItems[0].title);
+    // Click on first available item from ForProjects
+    const firstItem = screen.getByText(forProjectsItems[0].title);
     await user.click(firstItem);
 
     expect(onCloseMock).toHaveBeenCalled();

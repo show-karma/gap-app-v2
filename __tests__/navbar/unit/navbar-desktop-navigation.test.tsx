@@ -3,10 +3,88 @@
  * Tests desktop navigation layout, dropdowns, auth states, and component integration
  */
 
+// These vi.mock calls are hoisted above imports by Vitest's compiler.
+// They ensure the mocks are in place before any module in the test loads.
+// The hoisted mock state (_h) is shared with test-helpers via the setup module.
+
+// Hoist local refs so the vi.mock factories can read the live state.
+// These are initialized with default (logged-out) values and are updated
+// in beforeEach to mirror the shared mockNavbarPermissionsState / mockAuthState
+// that renderWithProviders updates.
+const _localRefs = vi.hoisted(() => {
+  const _vi = (globalThis as any).vi ?? { fn: () => (() => {}) as any };
+  return {
+    navPermsState: {
+      current: {
+        isLoggedIn: false,
+        address: undefined as string | undefined,
+        ready: true,
+        isStaff: false,
+        isStaffLoading: false,
+        isOwner: false,
+        isCommunityAdmin: false,
+        isReviewer: false,
+        hasReviewerRole: false,
+        reviewerPrograms: [] as unknown[],
+        isProgramCreator: false,
+        isRegistryAdmin: false,
+        hasAdminAccess: false,
+        isRegistryAllowed: false,
+      },
+    },
+    authState: {
+      current: {
+        ready: true,
+        authenticated: false,
+        isConnected: false,
+        address: undefined as string | undefined,
+        user: null as unknown,
+        login: _vi.fn(),
+        logout: _vi.fn(),
+        authenticate: _vi.fn(),
+        disconnect: _vi.fn(),
+        getAccessToken: _vi.fn().mockResolvedValue("mock-token"),
+      },
+    },
+  };
+});
+
+// Mock navbar-permissions-context so useNavbarPermissions() reads from
+// _localRefs.navPermsState.current, which is synced in beforeEach.
+vi.mock("@/src/components/navbar/navbar-permissions-context", async () => {
+  const React = await import("react");
+  return {
+    useNavbarPermissions: vi.fn(() => _localRefs.navPermsState.current),
+    NavbarPermissionsProvider: ({ children }: { children: React.ReactNode }) =>
+      React.createElement(React.Fragment, null, children),
+    NavbarPermissionsContext: {
+      Provider: ({ children }: { children: React.ReactNode }) =>
+        React.createElement(React.Fragment, null, children),
+      Consumer: ({ children }: { children: (v: unknown) => React.ReactNode }) =>
+        React.createElement(React.Fragment, null, children(_localRefs.navPermsState.current)),
+    },
+  };
+});
+
+// Mock useAuth so NavbarAuthButtons (and other components) read the correct
+// ready/authenticated state from _localRefs.authState.current, synced in beforeEach.
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: vi.fn(() => _localRefs.authState.current),
+}));
+
+// Mock useWhitelabel so NavbarAuthButtons renders without a WhitelabelProvider
+vi.mock("@/utilities/whitelabel-context", () => ({
+  useWhitelabel: vi.fn(() => ({ isWhitelabel: false })),
+  WhitelabelProvider: ({ children }: { children: unknown }) => children,
+}));
+
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { useAuth } from "@/hooks/useAuth";
 import { NavbarDesktopNavigation } from "@/src/components/navbar/navbar-desktop-navigation";
+import { useNavbarPermissions } from "@/src/components/navbar/navbar-permissions-context";
 import { getAuthFixture } from "../fixtures/auth-fixtures";
+import { mockAuthState, mockNavbarPermissionsState } from "../setup";
 import {
   createMockPermissions,
   createMockUseAuth,
@@ -21,10 +99,81 @@ import {
   resetMockAuthState,
 } from "../utils/test-helpers";
 
+// Helper: set the local refs to logged-in state so the vi.mock factories
+// return the correct value to the component under test.
+const setLocalRefsLoggedIn = (address = "0x1234567890123456789012345678901234567890") => {
+  _localRefs.navPermsState.current = {
+    isLoggedIn: true,
+    address,
+    ready: true,
+    isStaff: false,
+    isStaffLoading: false,
+    isOwner: false,
+    isCommunityAdmin: false,
+    isReviewer: false,
+    hasReviewerRole: false,
+    reviewerPrograms: [],
+    isProgramCreator: false,
+    isRegistryAdmin: false,
+    hasAdminAccess: false,
+    isRegistryAllowed: false,
+  };
+  _localRefs.authState.current = {
+    ready: true,
+    authenticated: true,
+    isConnected: true,
+    address,
+    user: { id: "user-1", wallet: { address } } as unknown,
+    login: vi.fn(),
+    logout: vi.fn(),
+    authenticate: vi.fn(),
+    disconnect: vi.fn(),
+    getAccessToken: vi.fn().mockResolvedValue("mock-token"),
+  };
+};
+
+// Helper: reset local refs to logged-out state
+const resetLocalRefs = () => {
+  _localRefs.navPermsState.current = {
+    isLoggedIn: false,
+    address: undefined,
+    ready: true,
+    isStaff: false,
+    isStaffLoading: false,
+    isOwner: false,
+    isCommunityAdmin: false,
+    isReviewer: false,
+    hasReviewerRole: false,
+    reviewerPrograms: [],
+    isProgramCreator: false,
+    isRegistryAdmin: false,
+    hasAdminAccess: false,
+    isRegistryAllowed: false,
+  };
+  _localRefs.authState.current = {
+    ready: true,
+    authenticated: false,
+    isConnected: false,
+    address: undefined,
+    user: null,
+    login: vi.fn(),
+    logout: vi.fn(),
+    authenticate: vi.fn(),
+    disconnect: vi.fn(),
+    getAccessToken: vi.fn().mockResolvedValue("mock-token"),
+  };
+};
+
 describe("NavbarDesktopNavigation", () => {
+  beforeEach(() => {
+    // Reset local refs to logged-out defaults before each test
+    resetLocalRefs();
+  });
+
   afterEach(() => {
     // Reset mock auth state to default after each test
     resetMockAuthState();
+    resetLocalRefs();
   });
 
   describe("Layout & Structure", () => {
@@ -76,14 +225,14 @@ describe("NavbarDesktopNavigation", () => {
   });
 
   describe("Navigation Dropdown Triggers", () => {
-    it('should render "For Builders" dropdown trigger', () => {
+    it('should render "For Projects" dropdown trigger', () => {
       const authFixture = getAuthFixture("unauthenticated");
       renderWithProviders(<NavbarDesktopNavigation />, {
         mockUseAuth: createMockUseAuth(authFixture.authState),
       });
 
       const forBuildersButton = screen.getByRole("button", {
-        name: /for builders/i,
+        name: /for projects/i,
       });
       expect(forBuildersButton).toBeInTheDocument();
     });
@@ -124,6 +273,7 @@ describe("NavbarDesktopNavigation", () => {
 
     it('should NOT render "Resources" dropdown when logged in', () => {
       const authFixture = getAuthFixture("authenticated-basic");
+      setLocalRefsLoggedIn(authFixture.authState.address);
 
       renderWithProviders(<NavbarDesktopNavigation />, {
         mockUseAuth: createMockUseAuth(authFixture.authState),
@@ -144,12 +294,12 @@ describe("NavbarDesktopNavigation", () => {
 
       // Check for chevron-down icons (using lucide-chevron-down class)
       const chevrons = container.querySelectorAll(".lucide-chevron-down");
-      expect(chevrons.length).toBeGreaterThanOrEqual(4); // For Builders, For Funders, Explore, Resources
+      expect(chevrons.length).toBeGreaterThanOrEqual(4); // For Projects, For Funders, Explore, Resources
     });
   });
 
   describe("Dropdown Content", () => {
-    it("should render ForBuildersContent in For Builders dropdown", async () => {
+    it("should render ForProjectsContent in For Projects dropdown", async () => {
       const user = userEvent.setup();
       const authFixture = getAuthFixture("unauthenticated");
       renderWithProviders(<NavbarDesktopNavigation />, {
@@ -157,7 +307,7 @@ describe("NavbarDesktopNavigation", () => {
       });
 
       const forBuildersButton = screen.getByRole("button", {
-        name: /for builders/i,
+        name: /for projects/i,
       });
       await user.click(forBuildersButton);
 
@@ -228,7 +378,7 @@ describe("NavbarDesktopNavigation", () => {
       });
 
       const forBuildersButton = screen.getByRole("button", {
-        name: /for builders/i,
+        name: /for projects/i,
       });
       await user.click(forBuildersButton);
 
@@ -282,7 +432,7 @@ describe("NavbarDesktopNavigation", () => {
         mockUseAuth: createMockUseAuth(authFixture.authState),
       });
 
-      expect(screen.getByRole("button", { name: /for builders/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /for projects/i })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /for funders/i })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /explore/i })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /resources/i })).toBeInTheDocument();
@@ -290,6 +440,12 @@ describe("NavbarDesktopNavigation", () => {
   });
 
   describe("Auth State - Logged In", () => {
+    // Before each logged-in test, set the _localRefs to authenticated state so
+    // the vi.mock factory closures return the correct isLoggedIn=true value.
+    beforeEach(() => {
+      setLocalRefsLoggedIn();
+    });
+
     it("should NOT render NavbarAuthButtons when logged in", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
@@ -306,13 +462,10 @@ describe("NavbarDesktopNavigation", () => {
     it("should render NavbarUserMenu when logged in", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
-      const { debug } = renderWithProviders(<NavbarDesktopNavigation />, {
+      renderWithProviders(<NavbarDesktopNavigation />, {
         mockUseAuth: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
       });
-
-      // Debug to see what's actually rendered
-      // debug();
 
       // NavbarUserMenu should NOT render auth buttons
       expect(screen.queryByText("Sign in")).not.toBeInTheDocument();
@@ -340,21 +493,12 @@ describe("NavbarDesktopNavigation", () => {
       const authFixture = getAuthFixture("authenticated-basic");
       renderWithProviders(<NavbarDesktopNavigation />, {
         mockUseAuth: createMockUseAuth(authFixture.authState),
-        mockUseCommunitiesStore: createMockUseCommunitiesStore(authFixture.permissions.communities),
-        mockUseReviewerPrograms: createMockUseReviewerPrograms(
-          authFixture.permissions.reviewerPrograms
-        ),
-        mockUsePermissionsQuery: createMockUsePermissionsQuery(authFixture.permissions.isStaff),
-        mockUseOwnerStore: createMockUseOwnerStore(authFixture.permissions.isOwner),
-        mockUseRegistryStore: createMockUseRegistryStore(
-          authFixture.permissions.isProgramCreator,
-          authFixture.permissions.isRegistryAdmin
-        ),
+        mockPermissions: createMockPermissions(authFixture.permissions),
         mockUseTheme: createMockUseTheme(),
         mockUseContributorProfileModalStore: createMockUseContributorProfileModalStore(),
       });
 
-      // When logged in, For Builders/Funders dropdowns are replaced with direct action buttons
+      // When logged in, For Projects/Funders dropdowns are replaced with direct action buttons
       // and only Explore dropdown remains
       expect(screen.getByRole("link", { name: /dashboard/i })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /explore/i })).toBeInTheDocument();
@@ -392,7 +536,7 @@ describe("NavbarDesktopNavigation", () => {
 
       // Open a dropdown and verify desktop styling is applied
       const forBuildersButton = screen.getByRole("button", {
-        name: /for builders/i,
+        name: /for projects/i,
       });
       await user.click(forBuildersButton);
 
