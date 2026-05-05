@@ -292,7 +292,8 @@ describe("FAQ Component", () => {
 
       // External links should open in new tab
       expect(discordLink).toHaveAttribute("target", "_blank");
-      expect(discordLink).toHaveAttribute("rel", "noopener noreferrer");
+      // ExternalLink component uses rel="noreferrer" (noreferrer implies noopener)
+      expect(discordLink).toHaveAttribute("rel", "noreferrer");
     });
   });
 });

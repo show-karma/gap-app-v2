@@ -35,7 +35,15 @@ vi.mock("nuqs", () => ({
 }));
 
 // Mock useAuth - the mock factory returns from a global holder
-const _authHolder = { current: { authenticated: true, login: vi.fn() } };
+const _authHolder = {
+  current: {
+    authenticated: true,
+    ready: true,
+    isConnected: true,
+    address: "0x1234567890123456789012345678901234567890",
+    login: vi.fn(),
+  },
+};
 (global as any).__programMgmtAuthState = _authHolder;
 
 vi.mock("@/hooks/useAuth", () => ({
@@ -228,7 +236,13 @@ describe("ManagePrograms - Program management journey", () => {
     for (const key of Object.keys(mockQueryStates)) {
       delete mockQueryStates[key];
     }
-    _authHolder.current = { authenticated: true, login: vi.fn() };
+    _authHolder.current = {
+      authenticated: true,
+      ready: true,
+      isConnected: true,
+      address: "0x1234567890123456789012345678901234567890",
+      login: vi.fn(),
+    };
     _walletHolder.address = "0x1234567890123456789012345678901234567890";
     _permissionsHolder.data = {
       roles: { primaryRole: "SUPER_ADMIN", roles: ["SUPER_ADMIN"], reviewerTypes: [] },
@@ -256,7 +270,9 @@ describe("ManagePrograms - Program management journey", () => {
       renderManagePrograms();
 
       await waitFor(() => {
-        expect(screen.getByText(/Back to Programs Explorer/)).toBeInTheDocument();
+        // Multiple elements may contain "Back to Programs Explorer" (e.g. loading skeleton + live)
+        const backLinks = screen.getAllByText(/Back to Programs Explorer/);
+        expect(backLinks.length).toBeGreaterThanOrEqual(1);
       });
     });
 
@@ -280,7 +296,13 @@ describe("ManagePrograms - Program management journey", () => {
   describe("unauthenticated state", () => {
     it("prompts login when wallet is not connected", async () => {
       _walletHolder.address = undefined;
-      _authHolder.current = { authenticated: false, login: vi.fn() };
+      _authHolder.current = {
+        authenticated: false,
+        ready: true,
+        isConnected: false,
+        address: undefined,
+        login: vi.fn(),
+      };
 
       renderManagePrograms();
 
@@ -301,7 +323,13 @@ describe("ManagePrograms - Program management journey", () => {
     it("calls login when Login button is clicked", async () => {
       _walletHolder.address = undefined;
       const mockLogin = vi.fn();
-      _authHolder.current = { authenticated: false, login: mockLogin };
+      _authHolder.current = {
+        authenticated: false,
+        ready: true,
+        isConnected: false,
+        address: undefined,
+        login: mockLogin,
+      };
 
       renderManagePrograms();
 

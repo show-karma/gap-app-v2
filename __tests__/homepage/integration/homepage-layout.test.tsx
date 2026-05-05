@@ -18,7 +18,7 @@ describe("Homepage Layout Integration", () => {
       renderWithProviders(await HomePage());
 
       // Check sections exist
-      expect(screen.getByText(/Get funded/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/Get funded/i)[0]).toBeInTheDocument();
       expect(screen.getByText(/Live funding opportunities/i)).toBeInTheDocument();
       expect(screen.getByText(/Karma connects builders/i)).toBeInTheDocument();
       expect(screen.getAllByText(/One profile./i)[0]).toBeInTheDocument();
@@ -79,7 +79,7 @@ describe("Homepage Layout Integration", () => {
       renderWithProviders(await HomePage());
 
       // Hero should be immediately visible
-      const hero = screen.getByText(/Get funded/i);
+      const hero = screen.getAllByText(/Get funded/i)[0];
       expect(hero).toBeVisible();
     });
 
@@ -111,7 +111,7 @@ describe("Homepage Layout Integration", () => {
       renderWithProviders(await HomePage());
       const endTime = Date.now();
 
-      const hero = screen.getByText(/Get funded/i);
+      const hero = screen.getAllByText(/Get funded/i)[0];
       expect(hero).toBeInTheDocument();
 
       // Hero should render quickly (allow 15000ms for test environment, especially CI/CD)

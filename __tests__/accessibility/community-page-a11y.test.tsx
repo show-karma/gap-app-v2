@@ -256,7 +256,7 @@ describe("Community Page Accessibility", () => {
     const { container } = renderWithProviders(<CommunitiesPage />);
 
     await waitFor(() => {
-      expect(screen.getByText("Communities on Karma")).toBeInTheDocument();
+      expect(screen.getByText("Organizations on Karma")).toBeInTheDocument();
     });
 
     const results = await axe(container);
@@ -306,13 +306,13 @@ describe("Community Page Accessibility", () => {
     const { container } = renderWithProviders(<CommunitiesPage />);
 
     await waitFor(() => {
-      expect(screen.getByText("Communities on Karma")).toBeInTheDocument();
+      expect(screen.getByText("Organizations on Karma")).toBeInTheDocument();
     });
 
     // h1 should be the page title
     const h1 = container.querySelector("h1");
     expect(h1).toBeInTheDocument();
-    expect(h1?.textContent).toContain("Communities on Karma");
+    expect(h1?.textContent).toContain("Organizations on Karma");
 
     // h2 should exist for "Add Your Community" section
     const h2s = container.querySelectorAll("h2");
@@ -323,7 +323,7 @@ describe("Community Page Accessibility", () => {
     const { container } = renderWithProviders(<CommunitiesPage />);
 
     await waitFor(() => {
-      expect(screen.getByText("Communities on Karma")).toBeInTheDocument();
+      expect(screen.getByText("Organizations on Karma")).toBeInTheDocument();
     });
 
     // External links should have rel="noreferrer" or "noopener"
@@ -341,7 +341,7 @@ describe("Community Page Accessibility", () => {
     const { container } = renderWithProviders(<CommunitiesPage />);
 
     await waitFor(() => {
-      expect(screen.getByText("Communities on Karma")).toBeInTheDocument();
+      expect(screen.getByText("Organizations on Karma")).toBeInTheDocument();
     });
 
     const images = container.querySelectorAll("img");

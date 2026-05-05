@@ -41,7 +41,7 @@ describe("Homepage Accessibility", () => {
       const { container } = renderWithProviders(await HomePage());
 
       // Find Hero section
-      const heroSection = screen.getByText(/Get funded/i).closest("section");
+      const heroSection = screen.getAllByText(/Get funded/i)[0].closest("section");
       expect(heroSection).toBeInTheDocument();
 
       const results = await axe(heroSection as HTMLElement);

@@ -244,9 +244,9 @@ describe("ProjectsExplorer - Project browsing & search", () => {
     });
 
     it("shows filter-specific empty message when raising funds filter has no results", async () => {
-      // Preset the hasPayoutAddress filter to active
+      // Preset the raisingFunds filter to active (nuqs key used by ProjectsExplorer)
       const setter = vi.fn();
-      mockQueryStates["hasPayoutAddress"] = ["true", setter];
+      mockQueryStates["raisingFunds"] = ["true", setter];
 
       mockGetExplorerProjectsPaginated.mockResolvedValue(
         createPaginatedProjectsResponse([], { totalCount: 0 })
@@ -408,8 +408,8 @@ describe("ProjectsExplorer - Project browsing & search", () => {
       const toggle = screen.getByRole("checkbox", { name: /Raising Funds/i });
       await user.click(toggle);
 
-      // The nuqs setter for hasPayoutAddress should have been called
-      const payoutState = mockQueryStates["hasPayoutAddress"];
+      // The nuqs setter for raisingFunds should have been called
+      const payoutState = mockQueryStates["raisingFunds"];
       expect(payoutState).toBeDefined();
       expect(payoutState[1]).toHaveBeenCalled();
     });
