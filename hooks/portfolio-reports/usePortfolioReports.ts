@@ -1,13 +1,15 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import * as portfolioService from "@/services/portfolio-reports.service";
-import type {
-  CreateReportConfigRequest,
-  GenerateReportRequest,
-  PortfolioReport,
-  ReportConfig,
-  UpdateReportConfigRequest,
+import {
+  type CreateReportConfigRequest,
+  type GenerateReportRequest,
+  type PortfolioReport,
+  type ReportConfig,
+  reportPollIntervalMs,
+  type UpdateReportConfigRequest,
 } from "@/types/portfolio-report";
 
 const QUERY_KEYS = {
@@ -90,7 +92,56 @@ export function usePortfolioReport(communitySlug: string, reportId: string) {
     queryKey: QUERY_KEYS.report(communitySlug, reportId),
     queryFn: () => portfolioService.getReport(communitySlug, reportId),
     enabled: Boolean(communitySlug && reportId),
+    refetchInterval: (query) =>
+      reportPollIntervalMs(query.state.data as PortfolioReport | undefined),
   });
+}
+
+/**
+ * Per-row polling for the list page: while the row is `generating`, polls
+ * `GET /reports/:id` and mirrors the result back into the list cache so
+ * the badge updates without a separate list refetch.
+ */
+export function useReportRowSync(
+  communitySlug: string,
+  initialReport: PortfolioReport
+): PortfolioReport {
+  const queryClient = useQueryClient();
+  const { data } = useQuery({
+    queryKey: QUERY_KEYS.report(communitySlug, initialReport.id),
+    queryFn: () => portfolioService.getReport(communitySlug, initialReport.id),
+    enabled: Boolean(communitySlug && initialReport.id),
+    initialData: initialReport,
+    refetchInterval: (query) =>
+      reportPollIntervalMs(query.state.data as PortfolioReport | undefined),
+  });
+
+  useEffect(() => {
+    if (!data) return;
+    queryClient.setQueriesData<PortfolioReport[] | undefined>(
+      { queryKey: QUERY_KEYS.reports(communitySlug) },
+      (old) => {
+        if (!old) return old;
+        let changed = false;
+        const next = old.map((r) => {
+          if (r.id !== data.id || r === data) return r;
+          if (
+            r.status === data.status &&
+            r.markdown === data.markdown &&
+            r.generationError === data.generationError &&
+            r.updatedAt === data.updatedAt
+          ) {
+            return r;
+          }
+          changed = true;
+          return data;
+        });
+        return changed ? next : old;
+      }
+    );
+  }, [data, communitySlug, queryClient]);
+
+  return data ?? initialReport;
 }
 
 // ── Mutations ────────────────────────────────────────────────
@@ -100,7 +151,8 @@ export function useGenerateReport(communitySlug: string) {
   return useMutation({
     mutationFn: (body: GenerateReportRequest) =>
       portfolioService.generateReport(communitySlug, body),
-    onSuccess: () => {
+    onSuccess: (data) => {
+      queryClient.setQueryData(QUERY_KEYS.report(communitySlug, data.id), data);
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.reports(communitySlug),
       });
@@ -113,10 +165,10 @@ export function useRegenerateReport(communitySlug: string) {
   return useMutation({
     mutationFn: (reportId: string) => portfolioService.regenerateReport(communitySlug, reportId),
     onSuccess: (data) => {
+      queryClient.setQueryData(QUERY_KEYS.report(communitySlug, data.id), data);
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.reports(communitySlug),
       });
-      queryClient.setQueryData(QUERY_KEYS.report(communitySlug, data.id), data);
     },
   });
 }

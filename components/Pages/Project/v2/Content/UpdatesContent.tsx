@@ -109,12 +109,9 @@ export function UpdatesContent({ className }: UpdatesContentProps) {
       }
       params.delete("sort");
 
-      // Default milestones to completed when no explicit status is present.
-      if (newFilters.includes("milestones")) {
-        if (!isMilestoneStatusFilter(params.get("milestoneStatus"))) {
-          params.set("milestoneStatus", "completed");
-        }
-      } else {
+      // Clear milestone status when milestones pill is toggled off; otherwise leave
+      // whatever the user has already chosen (defaults to "all" when absent).
+      if (!newFilters.includes("milestones")) {
         params.delete("milestoneStatus");
       }
 

@@ -1,8 +1,12 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { useSearchParams } from "next/navigation";
 import type { ReactNode } from "react";
 import { BrowseApplicationsClient } from "@/app/community/[communityId]/(with-header)/browse-applications/BrowseApplicationsClient";
+import fetchData from "@/utilities/fetchData";
+
+const mockFetchData = vi.mocked(fetchData);
 
 // --- Mocks ---
 
@@ -18,7 +22,7 @@ vi.mock("next/navigation", () => ({
     pathname: "/community/test-community/browse-applications",
   }),
   usePathname: () => "/community/test-community/browse-applications",
-  useSearchParams: () => new URLSearchParams(),
+  useSearchParams: vi.fn(() => new URLSearchParams()),
   useParams: () => ({ communityId: "test-community" }),
   notFound: vi.fn(),
   redirect: vi.fn(),

@@ -8,6 +8,14 @@ export interface RoleFieldConfig {
   placeholder?: string;
   required: boolean;
   helperText?: string;
+  /**
+   * Optional rich content shown in a question-mark tooltip beside the
+   * field label. Use for guidance that's too long for `helperText`
+   * (which only renders a one-liner under the input). String content
+   * is rendered as plain text; JSX content lets you include links or
+   * formatting.
+   */
+  tooltip?: string;
   validation?: (value: string) => boolean | string;
   /**
    * When true, the field is included in the inline edit form for existing

@@ -135,6 +135,10 @@ module.exports = {
           50: "#fffbeb",
           700: "#b45309",
         },
+        slack: {
+          aubergine: "#4A154B",
+          "aubergine-hover": "#3b1140",
+        },
         neutral: {
           100: "#F7F9FB",
           600: "#404968",

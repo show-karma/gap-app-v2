@@ -6,6 +6,7 @@ import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
 import { useApplicationComments, useApplicationVersions } from "@/hooks/useFundingPlatform";
 import { useOwnerStore } from "@/store";
 import type { FundingApplicationStatusV2, IStatusHistoryEntry } from "@/types/funding-platform";
+import { cn } from "@/utilities/tailwind";
 
 interface CommentsAndActivityProps {
   referenceNumber: string;
@@ -17,6 +18,7 @@ interface CommentsAndActivityProps {
   communityId: string;
   currentUserAddress?: string;
   programId?: string;
+  embedded?: boolean;
 }
 
 export function CommentsAndActivity({
@@ -25,6 +27,7 @@ export function CommentsAndActivity({
   communityId,
   currentUserAddress,
   programId,
+  embedded = false,
 }: CommentsAndActivityProps) {
   const { comments, isLoading, createCommentAsync, editCommentAsync, deleteCommentAsync } =
     useApplicationComments(referenceNumber);
@@ -71,7 +74,13 @@ export function CommentsAndActivity({
   );
 
   return (
-    <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm px-4 py-4 border border-gray-200 dark:border-gray-700">
+    <div
+      className={cn(
+        embedded
+          ? "px-0 py-0"
+          : "rounded-lg border border-gray-200 bg-white px-4 py-4 shadow-sm dark:border-gray-700 dark:bg-zinc-900"
+      )}
+    >
       <CommentsTimeline
         applicationId={referenceNumber}
         comments={comments}

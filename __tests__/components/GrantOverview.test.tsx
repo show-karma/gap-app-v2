@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
+import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 
 // Mock Zustand stores
 const mockGrantStore = {
@@ -119,7 +120,6 @@ describe("GrantOverview", () => {
 
       // chainNameDictionary returns "Optimism" in our mock - it should not appear
       // (We check that the network row is not rendered, not just the label)
-      const { chainNameDictionary } = require("@/utilities/chainNameDictionary");
       expect(chainNameDictionary).not.toHaveBeenCalled();
     });
   });

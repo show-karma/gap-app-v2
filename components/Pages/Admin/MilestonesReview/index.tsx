@@ -4,14 +4,18 @@ import {
   ArrowLeftIcon,
   ArrowPathIcon,
   AtSymbolIcon,
+  ChatBubbleLeftRightIcon,
   CheckCircleIcon,
   ChevronLeftIcon,
   ClockIcon,
+  DocumentTextIcon,
   ExclamationTriangleIcon,
+  SparklesIcon,
 } from "@heroicons/react/20/solid";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
+import { usePathname, useSearchParams } from "next/navigation";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { useAccount } from "wagmi";
-import { OutputsAndOutcomes } from "@/components/Pages/Project/Impact/OutputsAndOutcomes";
 import { Button } from "@/components/Utilities/Button";
 import { Badge } from "@/components/ui/badge";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
@@ -19,8 +23,9 @@ import { useMilestoneAllocationsByGrants } from "@/hooks/useCommunityMilestoneAl
 import { useDeleteMilestone } from "@/hooks/useDeleteMilestone";
 import { useFundingApplicationByProjectUID } from "@/hooks/useFundingApplicationByProjectUID";
 import { useMilestoneCompletionVerification } from "@/hooks/useMilestoneCompletionVerification";
+import { useMilestoneEvaluation } from "@/hooks/useMilestoneEvaluation";
 import { useProjectGrantMilestones } from "@/hooks/useProjectGrantMilestones";
-import type { GrantMilestoneWithCompletion } from "@/services/milestones";
+import type { GrantMilestoneWithCompletion, MilestoneEvaluationItem } from "@/services/milestones";
 import { Link } from "@/src/components/navigation/Link";
 import {
   PermissionProvider,
@@ -30,6 +35,7 @@ import {
 } from "@/src/core/rbac/context/permission-context";
 import { ReviewerType } from "@/src/core/rbac/types";
 import { useAgentChatStore } from "@/store/agentChat";
+import { formatDate } from "@/utilities/formatDate";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { CommentsAndActivity } from "./CommentsAndActivity";
@@ -38,6 +44,7 @@ import { MilestoneCard } from "./MilestoneCard";
 import {
   FILTER_TABS,
   getMilestoneStatus,
+  MILESTONE_STATUS_CONFIG,
   type MilestoneFilterKey,
   MilestoneReviewStatus,
   type StatusIconName,
@@ -45,6 +52,41 @@ import {
 } from "./utils/milestone-review-status";
 
 const EMPTY_MILESTONES: GrantMilestoneWithCompletion[] = [];
+
+const MarkdownPreview = dynamic(
+  () =>
+    import("@/components/Utilities/MarkdownPreview").then((m) => ({ default: m.MarkdownPreview })),
+  { ssr: false }
+);
+
+function normalizeMilestoneTitleKey(title: string): string {
+  return title.trim().toLowerCase();
+}
+
+function extractCompletionCriteriaByTitle(
+  applicationData: Record<string, unknown> | undefined
+): Map<string, string> {
+  const map = new Map<string, string>();
+  if (!applicationData) return map;
+
+  for (const value of Object.values(applicationData)) {
+    if (!Array.isArray(value)) continue;
+    for (const item of value) {
+      if (!item || typeof item !== "object") continue;
+      const { title, completionCriteria } = item as {
+        title?: unknown;
+        completionCriteria?: unknown;
+      };
+      if (typeof title !== "string" || typeof completionCriteria !== "string") continue;
+      const trimmedCriteria = completionCriteria.trim();
+      if (!trimmedCriteria) continue;
+      const key = normalizeMilestoneTitleKey(title);
+      if (!key || map.has(key)) continue;
+      map.set(key, trimmedCriteria);
+    }
+  }
+  return map;
+}
 
 // Strip the optional chainId suffix from program IDs (e.g. "959_42161" -> "959").
 function parseProgramId(programId: string): string {
@@ -199,6 +241,193 @@ function ProjectAskButton({
   );
 }
 
+type ReviewPanelTab = "details" | "comments";
+
+function getPlainTextPreview(value: string): string {
+  return value
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/[*_>#-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function getMilestoneUidFromHash(): string | null {
+  if (typeof window === "undefined") return null;
+
+  const hash = window.location.hash;
+  if (!hash.startsWith("#milestone-")) return null;
+
+  const rawMilestoneUid = hash.slice("#milestone-".length);
+  if (!rawMilestoneUid) return null;
+
+  try {
+    return decodeURIComponent(rawMilestoneUid);
+  } catch {
+    return rawMilestoneUid;
+  }
+}
+
+interface MilestoneListItemProps {
+  milestone: GrantMilestoneWithCompletion;
+  index: number;
+  isSelected: boolean;
+  onSelect: (milestoneUid: string) => void;
+}
+
+const MilestoneListItem = memo(function MilestoneListItem({
+  milestone,
+  index,
+  isSelected,
+  onSelect,
+}: MilestoneListItemProps) {
+  const status = getMilestoneStatus(milestone);
+  const statusConfig = MILESTONE_STATUS_CONFIG[status];
+  const preview = getPlainTextPreview(milestone.description);
+
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(milestone.uid)}
+      className={cn(
+        "group w-full rounded-lg border p-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue",
+        isSelected
+          ? "border-brand-blue bg-blue-50/70 dark:bg-blue-950/20"
+          : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-zinc-600 dark:hover:bg-zinc-800/70"
+      )}
+      aria-pressed={isSelected}
+      aria-label={`View milestone ${milestone.title}`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="mb-1 text-xs font-medium text-gray-500 dark:text-gray-400">
+            Milestone {index + 1}
+          </p>
+          <h3 className="line-clamp-2 text-sm font-semibold leading-5 text-gray-950 dark:text-white">
+            {milestone.title}
+          </h3>
+        </div>
+        <span
+          className={cn(
+            "shrink-0 rounded-full px-2 py-0.5 text-[0.68rem] font-semibold",
+            statusConfig.badgeColor
+          )}
+        >
+          {statusConfig.label}
+        </span>
+      </div>
+      <p className="mt-2 line-clamp-2 text-sm leading-5 text-gray-600 dark:text-gray-400">
+        {preview || "No description provided."}
+      </p>
+      <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+        Due {formatDate(milestone.dueDate, "UTC")}
+      </p>
+    </button>
+  );
+});
+
+function getRatingColor(rating: number): string {
+  if (rating >= 8) return "text-green-700 dark:text-green-300";
+  if (rating >= 5) return "text-yellow-700 dark:text-yellow-300";
+  return "text-red-700 dark:text-red-300";
+}
+
+function getRatingBgColor(rating: number): string {
+  if (rating >= 8) return "bg-green-100 dark:bg-green-900/30";
+  if (rating >= 5) return "bg-yellow-100 dark:bg-yellow-900/30";
+  return "bg-red-100 dark:bg-red-900/30";
+}
+
+function formatReasoning(text: string): string {
+  if (text.includes("\n") || text.includes("**") || text.includes("# ")) {
+    return text;
+  }
+
+  return text.replace(
+    /\.\s+(Relevance:|Evidence\b|Completeness:|Overall:|Strength:|Weakness:|However,|In summary|In conclusion|The (?:milestone|project|grant|evidence|completion|submitted))/g,
+    ".\n\n$1"
+  );
+}
+
+interface InlineEvaluationCardProps {
+  evaluation: MilestoneEvaluationItem;
+}
+
+const InlineEvaluationCard = memo(function InlineEvaluationCard({
+  evaluation,
+}: InlineEvaluationCardProps) {
+  return (
+    <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
+      <div className="mb-3 flex items-center gap-3">
+        <div
+          className={cn(
+            "flex items-baseline gap-1 rounded-full px-3 py-1",
+            getRatingBgColor(evaluation.rating)
+          )}
+        >
+          <span className={cn("text-lg font-bold", getRatingColor(evaluation.rating))}>
+            {evaluation.rating}
+          </span>
+          <span className="text-xs text-gray-600 dark:text-gray-400">/ 10</span>
+        </div>
+      </div>
+      <div className="text-sm leading-6 text-gray-700 dark:text-gray-300">
+        <MarkdownPreview source={formatReasoning(evaluation.reasoning)} />
+      </div>
+      <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+        Evaluated {formatDate(evaluation.createdAt)}
+      </p>
+    </div>
+  );
+});
+
+function InlineAIEvaluation({ milestone }: { milestone: GrantMilestoneWithCompletion }) {
+  const hasCompletion =
+    milestone.completionDetails !== null || milestone.fundingApplicationCompletion !== null;
+  const { data, isLoading, error, refetch } = useMilestoneEvaluation(milestone.uid, hasCompletion);
+  const evaluations = data?.evaluations ?? [];
+
+  return (
+    <section className="rounded-lg bg-gray-50 p-4 dark:bg-zinc-800/60">
+      <div className="mb-3 flex items-center gap-2">
+        <SparklesIcon className="h-4 w-4 text-purple-600 dark:text-purple-300" />
+        <h3 className="text-sm font-semibold text-gray-950 dark:text-white">
+          Karma AI Review of Milestone
+        </h3>
+      </div>
+      {!hasCompletion ? (
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          AI review is available after a milestone completion is submitted.
+        </p>
+      ) : isLoading ? (
+        <div className="space-y-3">
+          <div className="h-16 animate-pulse rounded-lg bg-gray-200 dark:bg-zinc-800" />
+          <div className="h-16 animate-pulse rounded-lg bg-gray-200 dark:bg-zinc-800" />
+        </div>
+      ) : error ? (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/10">
+          <p className="mb-3 text-sm text-red-700 dark:text-red-300">Failed to load AI review.</p>
+          <Button variant="secondary" onClick={() => refetch()}>
+            Retry
+          </Button>
+        </div>
+      ) : evaluations.length === 0 ? (
+        <p className="text-sm text-gray-600 dark:text-gray-400">No AI review available yet.</p>
+      ) : (
+        <div className="space-y-3">
+          {evaluations.map((evaluation) => (
+            <InlineEvaluationCard
+              key={`${evaluation.milestoneUID}-${evaluation.model}-${evaluation.createdAt}`}
+              evaluation={evaluation}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 export function MilestonesReviewPage({
   communityId,
   projectId,
@@ -239,6 +468,11 @@ function MilestonesReviewPageContent({
   const [verificationComment, setVerificationComment] = useState("");
   const [deletingMilestoneId, setDeletingMilestoneId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<MilestoneFilterKey | null>(null);
+  const [selectedMilestoneUid, setSelectedMilestoneUid] = useState<string | null>(null);
+  const [activePanelTab, setActivePanelTab] = useState<ReviewPanelTab>("details");
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const searchParamsString = searchParams.toString();
 
   const { address } = useAccount();
   const { hasAccess: hasAdminAccess, isLoading: isLoadingAdminAccess } =
@@ -282,6 +516,13 @@ function MilestonesReviewPageContent({
     error: fundingApplicationError,
     refetch: refetchFundingApplication,
   } = useFundingApplicationByProjectUID(projectUID || "");
+
+  // On-chain milestone attestations don't carry completion criteria, so we look
+  // it up from the application data (where the grantee originally entered it).
+  const completionCriteriaByTitle = useMemo(
+    () => extractCompletionCriteriaByTitle(fundingApplication?.applicationData),
+    [fundingApplication?.applicationData]
+  );
 
   // Memoize reference number: prefer funding application, fallback to milestone completion data
   const referenceNumber = useMemo(() => {
@@ -402,47 +643,57 @@ function MilestonesReviewPageContent({
     [deleteMilestoneAsync]
   );
 
+  const handleRequestChanges = useCallback(() => {
+    setActivePanelTab("comments");
+  }, []);
+
   // Fetch milestone allocations for the grant
   const grantUid = data?.grant?.uid;
   const grantUIDsForAllocations = useMemo(() => (grantUid ? [grantUid] : []), [grantUid]);
   const { allocationMap } = useMilestoneAllocationsByGrants(grantUIDsForAllocations);
 
   const milestones = data?.grantMilestones ?? EMPTY_MILESTONES;
+  const selectedMilestone = useMemo(
+    () => milestones.find((milestone) => milestone.uid === selectedMilestoneUid) ?? null,
+    [milestones, selectedMilestoneUid]
+  );
 
-  // When the URL points at a specific milestone (e.g. #milestone-<uid> from
-  // an email/Telegram deep-link), the targeted card must always render —
-  // otherwise the default PendingVerification filter could hide a verified
-  // or in-progress milestone the reviewer was sent to.
-  const targetedMilestoneUid = useMemo(() => {
-    if (typeof window === "undefined") return null;
-    const hash = window.location.hash;
-    return hash.startsWith("#milestone-") ? hash.slice("#milestone-".length) : null;
+  useEffect(() => {
+    const syncSelectedMilestoneFromHash = () => {
+      setSelectedMilestoneUid(getMilestoneUidFromHash());
+    };
+
+    syncSelectedMilestoneFromHash();
+    window.addEventListener("hashchange", syncSelectedMilestoneFromHash);
+
+    return () => {
+      window.removeEventListener("hashchange", syncSelectedMilestoneFromHash);
+    };
   }, []);
 
-  // Compute the effective filter: default to PendingVerification if any exist, else "all".
-  // Once the user explicitly picks a tab, their choice is locked in.
-  // If the URL targets a specific milestone, force "all" so it's always visible.
+  const handleMilestoneSelect = useCallback(
+    (milestoneUid: string) => {
+      setSelectedMilestoneUid(milestoneUid);
+      setActivePanelTab("details");
+
+      const nextParams = new URLSearchParams(searchParamsString);
+      nextParams.delete("milestone");
+      nextParams.delete("milestoneUid");
+      const query = nextParams.toString() ? `?${nextParams.toString()}` : "";
+      window.history.replaceState(
+        null,
+        "",
+        `${pathname}${query}#milestone-${encodeURIComponent(milestoneUid)}`
+      );
+    },
+    [pathname, searchParamsString]
+  );
+
+  // Default to the full milestone list. Reviewers can narrow the index with status chips.
   const activeFilter = useMemo<MilestoneFilterKey>(() => {
     if (statusFilter !== null) return statusFilter;
-    if (targetedMilestoneUid) return "all";
-    const hasPending = milestones.some(
-      (m) => getMilestoneStatus(m) === MilestoneReviewStatus.PendingVerification
-    );
-    return hasPending ? MilestoneReviewStatus.PendingVerification : "all";
-  }, [statusFilter, milestones, targetedMilestoneUid]);
-
-  // Scroll the targeted milestone into view once it has rendered. We can't rely
-  // on the browser's native hash-jump because milestones load asynchronously
-  // and the card doesn't exist on the initial paint. Runs once after the
-  // matching milestone enters the DOM.
-  useEffect(() => {
-    if (!targetedMilestoneUid || milestones.length === 0) return;
-    const exists = milestones.some((m) => m.uid === targetedMilestoneUid);
-    if (!exists) return;
-    const el = document.getElementById(`milestone-${targetedMilestoneUid}`);
-    if (!el) return;
-    el.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, [targetedMilestoneUid, milestones]);
+    return "all";
+  }, [statusFilter]);
 
   // Single-pass: group milestones by status, derive counts, filter, and sort.
   // Sort: non-verified by due date asc first, verified by due date asc last.
@@ -586,28 +837,26 @@ function MilestonesReviewPageContent({
       </div>
 
       {/* Content Area */}
-      <div className="px-4 sm:px-6 lg:px-8 py-6">
-        {/* Project Impact Metrics — collapsed by default. Reviewers see a
-            one-line summary (count + last updated) without losing milestones
-            below the fold; expanding shows the same charts/tables as /impact. */}
-        <div className="mb-6">
-          <OutputsAndOutcomes projectUid={project.uid} columns={2} collapsible />
-        </div>
+      <div className="px-4 py-6 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(320px,420px)_minmax(0,1fr)]">
+          <aside className="min-w-0 xl:sticky xl:top-4 xl:self-start">
+            <section className="rounded-lg bg-gray-50/80 p-5 dark:bg-zinc-900">
+              <div className="mb-4 flex items-start justify-between gap-4">
+                <div>
+                  <h2 className="text-base font-semibold text-gray-950 dark:text-white">
+                    Milestones
+                  </h2>
+                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    {milestones.length} {milestones.length === 1 ? "milestone" : "milestones"} in
+                    this grant
+                  </p>
+                </div>
+              </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Main Content - Milestones */}
-          <div className="flex flex-col gap-6 min-w-0">
-            <section className="bg-white dark:bg-zinc-900 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-              <h2 className="text-xl font-semibold mb-4 text-black dark:text-white">
-                Project Milestones
-              </h2>
-
-              {/* Progress stepper */}
               {milestones.length > 0 && <MilestoneProgressStepper milestones={milestones} />}
 
-              {/* Status filter tabs */}
               {milestones.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-4">
+                <div className="mb-4 flex flex-wrap gap-2">
                   {FILTER_TABS.map((tab) => {
                     const isActive = activeFilter === tab.key;
                     return (
@@ -625,16 +874,16 @@ function MilestonesReviewPageContent({
                           }
                         }}
                         className={cn(
-                          "cursor-pointer rounded-full border-border px-2.5 py-1 text-xs font-medium text-foreground hover:bg-muted transition-colors select-none gap-1.5",
+                          "cursor-pointer select-none gap-1.5 rounded-full border-border px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted",
                           isActive &&
-                            "bg-brand-blue text-white border-brand-blue hover:bg-brand-blue/90"
+                            "border-brand-blue bg-brand-blue text-white hover:bg-brand-blue/90"
                         )}
                       >
                         <StatusIcon icon={tab.icon} />
                         {tab.label}
                         <span
                           className={cn(
-                            "inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 rounded-full text-[0.65rem] font-semibold",
+                            "inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full px-1 text-[0.65rem] font-semibold",
                             isActive ? "bg-white/20 text-white" : "bg-muted text-muted-foreground"
                           )}
                         >
@@ -646,28 +895,87 @@ function MilestonesReviewPageContent({
                 </div>
               )}
 
-              <div className="space-y-4">
+              <div className="max-h-[calc(100vh-18rem)] space-y-3 overflow-y-auto pr-1">
                 {filteredMilestones.length === 0 ? (
-                  <div className="text-center py-8 text-gray-400 dark:text-gray-500">
-                    <p className="text-lg font-medium">No milestones found</p>
-                    <p className="text-sm">
+                  <div className="rounded-lg border border-dashed border-gray-200 p-8 text-center dark:border-zinc-700">
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      No milestones found
+                    </p>
+                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                       {milestones.length === 0
-                        ? "This project does not have any milestones yet"
-                        : "No milestones match the selected filter"}
+                        ? "This project does not have any milestones yet."
+                        : "No milestones match the selected filter."}
                     </p>
                   </div>
                 ) : (
-                  filteredMilestones.map((milestone, index) => (
-                    <MilestoneCard
-                      key={milestone.uid || index}
+                  filteredMilestones.map((milestone) => (
+                    <MilestoneListItem
+                      key={milestone.uid}
                       milestone={milestone}
-                      index={index}
+                      index={milestones.findIndex((item) => item.uid === milestone.uid)}
+                      isSelected={selectedMilestoneUid === milestone.uid}
+                      onSelect={handleMilestoneSelect}
+                    />
+                  ))
+                )}
+              </div>
+            </section>
+          </aside>
+
+          <section className="min-w-0">
+            <div className="px-1 pb-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    Review Workspace
+                  </p>
+                  {!selectedMilestone && (
+                    <h2 className="mt-1 text-lg font-semibold text-gray-950 dark:text-white">
+                      Select a milestone
+                    </h2>
+                  )}
+                </div>
+                <div className="inline-flex w-max rounded-lg border border-gray-200 bg-gray-50 p-1 dark:border-zinc-700 dark:bg-zinc-800">
+                  {[
+                    { key: "details" as const, label: "Details", icon: DocumentTextIcon },
+                    { key: "comments" as const, label: "Comments", icon: ChatBubbleLeftRightIcon },
+                  ].map((tab) => {
+                    const Icon = tab.icon;
+                    const isActive = activePanelTab === tab.key;
+                    return (
+                      <button
+                        key={tab.key}
+                        type="button"
+                        onClick={() => setActivePanelTab(tab.key)}
+                        className={cn(
+                          "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue",
+                          isActive
+                            ? "bg-white text-gray-950 shadow-sm dark:bg-zinc-950 dark:text-white"
+                            : "text-gray-600 hover:text-gray-950 dark:text-gray-400 dark:hover:text-white"
+                        )}
+                      >
+                        <Icon className="h-4 w-4" />
+                        {tab.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            <div>
+              {activePanelTab === "details" ? (
+                selectedMilestone ? (
+                  <div className="space-y-4">
+                    <MilestoneCard
+                      key={selectedMilestone.uid}
+                      milestone={selectedMilestone}
+                      index={milestones.findIndex((m) => m.uid === selectedMilestone.uid)}
                       verifyingMilestoneId={verifyingMilestoneId}
                       verificationComment={verificationComment}
                       isVerifying={isVerifying}
                       canVerifyMilestones={canVerifyMilestones}
                       canDeleteMilestones={canDeleteMilestones}
-                      // Intentionally reuses canVerifyMilestones — edit and verify share the same permission gate
                       canEditMilestones={canVerifyMilestones}
                       grantUID={grant?.uid}
                       grantChainID={grant?.chainID}
@@ -679,64 +987,85 @@ function MilestonesReviewPageContent({
                       onCancelVerification={handleCancelVerification}
                       onVerificationCommentChange={setVerificationComment}
                       onSubmitVerification={handleSubmitVerification}
+                      onRequestChanges={handleRequestChanges}
                       onDeleteMilestone={handleDeleteMilestone}
-                      isDeleting={isDeleting && deletingMilestoneId === milestone.uid}
+                      isDeleting={isDeleting && deletingMilestoneId === selectedMilestone.uid}
                       allocationAmount={
-                        allocationMap.get(milestone.uid) ??
-                        allocationMap.get(milestone.uid.toLowerCase())
+                        allocationMap.get(selectedMilestone.uid) ??
+                        allocationMap.get(selectedMilestone.uid.toLowerCase())
                       }
+                      showAIEvaluationButton={false}
+                      quietSurface
+                      completionCriteria={completionCriteriaByTitle.get(
+                        normalizeMilestoneTitleKey(selectedMilestone.title)
+                      )}
                     />
-                  ))
-                )}
-              </div>
-            </section>
-          </div>
-
-          {/* Sidebar - Comments & Activity */}
-          <div className="min-w-0">
-            {isLoadingFundingApp && !referenceNumber ? (
-              <div className="space-y-4 p-4 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
-                <div className="h-5 w-40 bg-gray-200 dark:bg-zinc-700 rounded animate-pulse" />
-                <div className="space-y-2">
-                  <div className="h-4 w-full bg-gray-100 dark:bg-zinc-800 rounded animate-pulse" />
-                  <div className="h-4 w-3/4 bg-gray-100 dark:bg-zinc-800 rounded animate-pulse" />
-                  <div className="h-4 w-1/2 bg-gray-100 dark:bg-zinc-800 rounded animate-pulse" />
+                    <InlineAIEvaluation milestone={selectedMilestone} />
+                  </div>
+                ) : (
+                  <div className="flex min-h-[420px] flex-col items-center justify-center rounded-lg border border-dashed border-gray-200 bg-gray-50 p-8 text-center dark:border-zinc-700 dark:bg-zinc-900/60">
+                    <DocumentTextIcon className="h-10 w-10 text-gray-400 dark:text-gray-500" />
+                    <h3 className="mt-3 text-base font-semibold text-gray-900 dark:text-white">
+                      Choose a milestone to review
+                    </h3>
+                    <p className="mt-1 max-w-sm text-sm text-gray-500 dark:text-gray-400">
+                      Pick one from the list to see the full story, review the completion, and leave
+                      a note for the team.
+                    </p>
+                  </div>
+                )
+              ) : isLoadingFundingApp && !referenceNumber ? (
+                <div className="space-y-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
+                  <div className="h-5 w-40 animate-pulse rounded bg-gray-200 dark:bg-zinc-700" />
+                  <div className="space-y-2">
+                    <div className="h-4 w-full animate-pulse rounded bg-gray-100 dark:bg-zinc-800" />
+                    <div className="h-4 w-3/4 animate-pulse rounded bg-gray-100 dark:bg-zinc-800" />
+                    <div className="h-4 w-1/2 animate-pulse rounded bg-gray-100 dark:bg-zinc-800" />
+                  </div>
                 </div>
-              </div>
-            ) : fundingApplicationError && !referenceNumber ? (
-              <div className="p-4 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10">
-                <p className="text-sm text-red-700 dark:text-red-300 mb-3">
-                  Failed to load linked application data.
-                </p>
-                <Button variant="secondary" onClick={() => refetchFundingApplication()}>
-                  Retry
-                </Button>
-              </div>
-            ) : referenceNumber ? (
-              <CommentsAndActivity
-                referenceNumber={referenceNumber}
-                statusHistory={(fundingApplication?.statusHistory || []).map((item) => ({
-                  status: item.status,
-                  timestamp:
-                    typeof item.timestamp === "string"
-                      ? item.timestamp
-                      : item.timestamp.toISOString(),
-                  reason: item.reason,
-                }))}
-                communityId={communityId}
-                currentUserAddress={address}
-                programId={parsedProgramId}
-              />
-            ) : projectUID ? (
-              <GrantCommentsAndActivity
-                projectUID={projectUID}
-                programId={parsedProgramId}
-                communityId={communityId}
-                currentUserAddress={address}
-                referenceNumber={referenceNumber}
-              />
-            ) : null}
-          </div>
+              ) : fundingApplicationError && !referenceNumber ? (
+                <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/10">
+                  <p className="mb-3 text-sm text-red-700 dark:text-red-300">
+                    Failed to load linked application data.
+                  </p>
+                  <Button variant="secondary" onClick={() => refetchFundingApplication()}>
+                    Retry
+                  </Button>
+                </div>
+              ) : referenceNumber ? (
+                <CommentsAndActivity
+                  referenceNumber={referenceNumber}
+                  statusHistory={(fundingApplication?.statusHistory || []).map((item) => ({
+                    status: item.status,
+                    timestamp:
+                      typeof item.timestamp === "string"
+                        ? item.timestamp
+                        : item.timestamp.toISOString(),
+                    reason: item.reason,
+                  }))}
+                  communityId={communityId}
+                  currentUserAddress={address}
+                  programId={parsedProgramId}
+                  embedded
+                />
+              ) : projectUID ? (
+                <GrantCommentsAndActivity
+                  projectUID={projectUID}
+                  programId={parsedProgramId}
+                  communityId={communityId}
+                  currentUserAddress={address}
+                  referenceNumber={referenceNumber}
+                  embedded
+                />
+              ) : (
+                <div className="rounded-lg border border-dashed border-gray-200 p-8 text-center dark:border-zinc-700">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Comments are not available until the project data finishes loading.
+                  </p>
+                </div>
+              )}
+            </div>
+          </section>
         </div>
       </div>
     </div>

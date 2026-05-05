@@ -44,6 +44,7 @@ export const PAGES = {
   MY_REVIEWS: `/my-reviews`,
   DASHBOARD: `/dashboard`,
   DONATIONS: `/donations`,
+  EVALUATE: `/evaluate`,
   // REVIEWER routes now point to MANAGE (unified RBAC-based routes)
   REVIEWER: {
     DASHBOARD: (community: string) => `/community/${community}/manage/funding-platform`,
@@ -54,8 +55,15 @@ export const PAGES = {
     QUESTION_BUILDER: (community: string, programId: string) =>
       `/community/${community}/manage/funding-platform/${programId}/question-builder`,
     FUNDING_PLATFORM: {
-      MILESTONES: (community: string, programId: string, projectId: string) =>
-        `/community/${community}/manage/funding-platform/${programId}/milestones/${projectId}`,
+      MILESTONES: (
+        community: string,
+        programId: string,
+        projectId: string,
+        milestoneUid?: string
+      ) =>
+        `/community/${community}/manage/funding-platform/${programId}/milestones/${projectId}${
+          milestoneUid ? `#milestone-${encodeURIComponent(milestoneUid)}` : ""
+        }`,
     },
   },
   MANAGE: {
@@ -70,8 +78,15 @@ export const PAGES = {
         `/community/${community}/manage/funding-platform/${programId}/question-builder`,
       SETUP: (community: string, programId: string) =>
         `/community/${community}/manage/funding-platform/${programId}/setup`,
-      MILESTONES: (community: string, programId: string, projectId: string) =>
-        `/community/${community}/manage/funding-platform/${programId}/milestones/${projectId}`,
+      MILESTONES: (
+        community: string,
+        programId: string,
+        projectId: string,
+        milestoneUid?: string
+      ) =>
+        `/community/${community}/manage/funding-platform/${programId}/milestones/${projectId}${
+          milestoneUid ? `#milestone-${encodeURIComponent(milestoneUid)}` : ""
+        }`,
     },
   },
   ADMIN: {

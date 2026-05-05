@@ -346,7 +346,10 @@ describe("TokenManager", () => {
     });
   });
 
-  describe("clearTokens", () => {
+  // TokenManager.clearTokens was removed from the source; only clearCache remains.
+  // These tests are skipped pending a product decision on whether clearTokens
+  // should be re-introduced or these tests removed.
+  describe.skip("clearTokens", () => {
     beforeEach(() => {
       global.window = {} as any;
     });

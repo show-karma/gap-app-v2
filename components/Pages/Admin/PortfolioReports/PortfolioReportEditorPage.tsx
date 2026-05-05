@@ -16,9 +16,11 @@ import {
   useUnpublishReport,
   useUpdateReportMarkdown,
 } from "@/hooks/portfolio-reports/usePortfolioReports";
+import { isReportGenerating } from "@/types/portfolio-report";
 import type { Community } from "@/types/v2/community";
 import { PAGES } from "@/utilities/pages";
 import { formatRunDate } from "@/utilities/portfolio-reports/period";
+import { GenerationStatusBadge } from "./GenerationStatusBadge";
 
 interface Props {
   community: Community;
@@ -117,6 +119,9 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
     );
   }
 
+  const generating = isReportGenerating(report);
+  const failed = report.status === "failed";
+
   const navigateBack = () => {
     router.push(PAGES.ADMIN.PORTFOLIO_REPORTS(slug));
   };
@@ -163,11 +168,13 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
 
   const handleRegenerate = async () => {
     try {
-      const result = await regenerateMutation.mutateAsync(reportId);
-      setMarkdown(result.markdown);
-      toast.success("Report regenerated");
-    } catch {
-      toast.error("Failed to regenerate report");
+      await regenerateMutation.mutateAsync(reportId);
+      setMarkdown(null);
+      toast.success("Regeneration started, this can take a few minutes.");
+    } catch (error) {
+      toast.error(
+        `Failed to start regeneration: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
     }
   };
 
@@ -225,15 +232,7 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
               {isDirty && <span className="ml-2 text-sm font-normal text-zinc-400">(unsaved)</span>}
             </h1>
             <div className="flex items-center gap-2 text-xs text-zinc-500">
-              <span
-                className={`inline-flex items-center rounded-full px-2 py-0.5 font-medium ${
-                  report.status === "published"
-                    ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                    : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
-                }`}
-              >
-                {report.status}
-              </span>
+              <GenerationStatusBadge status={report.status} />
               <span>Model: {report.modelId}</span>
               {report.tokenUsage && (
                 <span>{report.tokenUsage.totalTokens.toLocaleString()} tokens</span>
@@ -246,16 +245,22 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
             variant="outline"
             size="sm"
             onClick={() => setShowRegenerateDialog(true)}
-            disabled={regenerateMutation.isPending}
+            disabled={regenerateMutation.isPending || generating}
           >
             <RefreshCw className="mr-1 h-3 w-3" />
-            {regenerateMutation.isPending ? "Regenerating..." : "Regenerate"}
+            {regenerateMutation.isPending
+              ? "Starting…"
+              : generating
+                ? "Generating…"
+                : failed
+                  ? "Retry"
+                  : "Regenerate"}
           </Button>
           <Button
             variant="outline"
             size="sm"
             onClick={handleSave}
-            disabled={updateMarkdownMutation.isPending}
+            disabled={updateMarkdownMutation.isPending || generating}
           >
             <Save className="mr-1 h-3 w-3" />
             {updateMarkdownMutation.isPending ? "Saving..." : "Save"}
@@ -265,7 +270,7 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
               <Eye className="mr-1 h-3 w-3" />
               Publish
             </Button>
-          ) : (
+          ) : report.status === "published" ? (
             <Button
               variant="outline"
               size="sm"
@@ -275,9 +280,28 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
               <EyeOff className="mr-1 h-3 w-3" />
               Unpublish
             </Button>
-          )}
+          ) : null}
         </div>
       </div>
+
+      {generating ? (
+        <output className="flex items-center gap-2 border-b border-blue-200 bg-blue-50 px-4 py-2 text-sm text-blue-700 dark:border-blue-900/40 dark:bg-blue-950/40 dark:text-blue-300">
+          <Spinner className="h-4 w-4" />
+          <span>
+            Generation in progress. This page will refresh automatically when the report is ready.
+          </span>
+        </output>
+      ) : null}
+
+      {failed && report.generationError ? (
+        <div
+          role="alert"
+          className="border-b border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-950/40 dark:text-red-300"
+        >
+          <p className="font-medium">Generation failed</p>
+          <p className="text-xs opacity-90">{report.generationError}</p>
+        </div>
+      ) : null}
 
       {/* Editor */}
       <div className="flex-1 p-4">

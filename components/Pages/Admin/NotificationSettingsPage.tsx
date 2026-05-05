@@ -16,9 +16,11 @@ import {
 } from "@/hooks/useCommunityConfig";
 import { useTestNotificationConfig } from "@/hooks/useNotificationConfig";
 import { useSaveNotificationSettings } from "@/hooks/useSaveNotificationSettings";
+import { useSlackInstallResultToast } from "@/hooks/useSlackInstallResultToast";
 import type { Community } from "@/types/v2/community";
 import { KARMA_TELEGRAM_BOT_HANDLE } from "@/utilities/enviromentVars";
 import { MESSAGES } from "@/utilities/messages";
+import { SlackOauthProviderCard } from "./SlackOauth/SlackOauthProviderCard";
 
 // Modal-only — defer the bundle until the user opens it.
 const TelegramPairChatModal = dynamic(
@@ -1163,6 +1165,12 @@ function NotificationSettingsPageContent({
     return () => window.removeEventListener("beforeunload", handler);
   }, [dirtyCount]);
 
+  // Slack OAuth callback redirects here on success/denial/failure with
+  // ?slack_install=...&team=... — show the matching toast, invalidate
+  // the workspace cache so the card immediately reflects the install,
+  // and strip the params from the URL so refresh doesn't re-fire.
+  useSlackInstallResultToast(communitySlug);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -1217,6 +1225,8 @@ function NotificationSettingsPageContent({
             onWebhookUrlsChange={setSlackUrls}
           />
         </div>
+
+        <SlackOauthProviderCard communitySlug={communitySlug} />
       </section>
 
       {/* Reference section */}

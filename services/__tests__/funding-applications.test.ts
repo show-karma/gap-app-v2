@@ -21,13 +21,14 @@ vi.mock("@/utilities/enviromentVars", () => ({
   },
 }));
 
+import * as apiClientModule from "@/utilities/auth/api-client";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 // Import service and mock utilities
 import { deleteApplication, fetchApplicationByProjectUID } from "../funding-applications";
 
 const mockFetchData = fetchData as vi.MockedFunction<typeof fetchData>;
-const { __mockDelete: mockDelete } = require("@/utilities/auth/api-client");
+const mockDelete = (apiClientModule as any).__mockDelete as vi.Mock;
 
 describe("funding-applications service", () => {
   beforeEach(() => {
@@ -350,9 +351,8 @@ describe("funding-applications service", () => {
 
   describe("API client initialization", () => {
     it("should have createAuthenticatedApiClient mocked", () => {
-      const { createAuthenticatedApiClient } = require("@/utilities/auth/api-client");
-      expect(createAuthenticatedApiClient).toBeDefined();
-      expect(typeof createAuthenticatedApiClient).toBe("function");
+      expect(apiClientModule.createAuthenticatedApiClient).toBeDefined();
+      expect(typeof apiClientModule.createAuthenticatedApiClient).toBe("function");
     });
   });
 });
