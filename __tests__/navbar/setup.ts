@@ -59,6 +59,13 @@ const _h = vi.hoisted(() => {
         isRegistryAllowed: false,
       },
     },
+    modalState: {
+      current: {
+        isOpen: false,
+        openModal: _vi.fn() as (...args: unknown[]) => void,
+        closeModal: _vi.fn() as () => void,
+      },
+    },
     searchFn: _vi.fn(),
   };
 });
@@ -67,6 +74,7 @@ const _h = vi.hoisted(() => {
 export const mockThemeState = _h.themeState;
 export const mockAuthState = _h.authState;
 export const mockNavbarPermissionsState = _h.navPermsState;
+export const mockModalState = _h.modalState;
 export const mockSearchFunction = _h.searchFn;
 
 /**
@@ -127,6 +135,35 @@ declare global {
 /**
  * Mock Next.js modules
  */
+
+// Mock next/dynamic so that components loaded with ssr:false are rendered
+// synchronously in tests instead of showing the loading skeleton.
+// Without this, NavbarMobileMenu (which uses dynamic() with ssr:false) renders
+// the loading skeleton in jsdom and "Open menu" / "Sign in" buttons are absent.
+//
+// Strategy: use React.lazy() with the import factory. Wrap the component tree
+// in a React.Suspense boundary so that when the lazy component suspends, it
+// resolves its promise (which is immediate in Vitest since vi.mock makes all
+// imports synchronous), and the actual component renders on the next tick.
+// Tests that need the component to appear synchronously should use waitFor().
+vi.mock("next/dynamic", () => ({
+  default: (fn: () => Promise<any>, _opts?: any) => {
+    // React.lazy wraps the factory; in Vitest the import resolves immediately.
+    const LazyComponent = React.lazy(() =>
+      fn().then((mod: any) => ({
+        default: mod.default || Object.values(mod)[0],
+      }))
+    );
+    const DynamicWrapper = (props: any) =>
+      React.createElement(
+        React.Suspense,
+        { fallback: null },
+        React.createElement(LazyComponent, props)
+      );
+    DynamicWrapper.displayName = "DynamicMock";
+    return DynamicWrapper;
+  },
+}));
 
 // Mock next/image
 vi.mock("next/image", () => ({
@@ -305,11 +342,7 @@ vi.mock("@/store/registry", () => ({
 }));
 
 vi.mock("@/store/modals/contributorProfile", () => ({
-  useContributorProfileModalStore: vi.fn(() => ({
-    isOpen: false,
-    openModal: vi.fn(),
-    closeModal: vi.fn(),
-  })),
+  useContributorProfileModalStore: vi.fn(() => _h.modalState.current),
 }));
 
 vi.mock("@/store/modals/apiKeyManagement", () => ({

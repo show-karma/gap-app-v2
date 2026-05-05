@@ -4,6 +4,22 @@
  * matching the behavior of the main Navbar.
  */
 
+// Hoist local theme refs so the vi.mock factory can read/write them directly.
+const _themeRefs = vi.hoisted(() => ({
+  state: {
+    theme: "light" as string | undefined,
+    setTheme: (() => {}) as (theme: string) => void,
+    themes: ["light", "dark"] as string[],
+    systemTheme: "light" as string | undefined,
+    resolvedTheme: "light" as string | undefined,
+  },
+}));
+
+vi.mock("next-themes", () => ({
+  useTheme: vi.fn(() => _themeRefs.state),
+  ThemeProvider: ({ children }: { children: unknown }) => children,
+}));
+
 import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { WhitelabelNavbar } from "@/src/components/navbar/whitelabel-navbar";
@@ -69,13 +85,18 @@ describe("WhitelabelNavbar Theme Toggle", () => {
       const mockSetTheme = vi.fn();
       const authFixture = getAuthFixture("authenticated-basic");
 
+      // Set _themeRefs directly so the vi.mock factory returns the correct setTheme
+      _themeRefs.state = {
+        theme: "light",
+        setTheme: mockSetTheme,
+        themes: ["light", "dark"],
+        systemTheme: "light",
+        resolvedTheme: "light",
+      };
+
       renderWithProviders(<WhitelabelNavbar />, {
         mockUsePrivy: createMockUsePrivy(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
-        mockUseTheme: createMockUseTheme({
-          theme: "light",
-          setTheme: mockSetTheme,
-        }),
       });
 
       const themeToggles = screen.getAllByLabelText(/toggle theme/i);
