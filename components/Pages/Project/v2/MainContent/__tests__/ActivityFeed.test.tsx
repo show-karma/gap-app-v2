@@ -331,3 +331,73 @@ describe("ActivityFeed - renders pre-filtered items from server", () => {
     expect(screen.getByTestId("activity-feed-empty")).toBeInTheDocument();
   });
 });
+
+describe("ActivityFeed - completed-first ordering", () => {
+  const createMilestone = (
+    type: UnifiedMilestone["type"],
+    overrides: Partial<UnifiedMilestone> = {}
+  ): UnifiedMilestone => ({
+    uid: `test-${type}-${Math.random()}`,
+    type,
+    title: `Test ${type}`,
+    description: "Test description",
+    completed: false,
+    createdAt: new Date().toISOString(),
+    chainID: 1,
+    refUID: "0xref1",
+    source: {},
+    ...overrides,
+  });
+
+  // Repro for the bug seen on /project/filecoin-infrastructure-services: a completed
+  // milestone whose completed.createdAt is in the past was sinking below pending
+  // milestones whose endsAt is in the future, because the previous single-key sort
+  // compared those two values directly.
+  it("places a completed milestone above pending ones with future endsAt (newest sort)", () => {
+    const completed = createMilestone("grant", {
+      uid: "completed-ms",
+      title: "Completed Milestone",
+      completed: { createdAt: "2026-04-28T00:00:00.000Z", data: { reason: "Done" } },
+      endsAt: 1777334400, // 2026-04-28
+    });
+    const pendingFutureA = createMilestone("grant", {
+      uid: "pending-future-a",
+      title: "Pending A",
+      completed: false,
+      endsAt: 1788220800, // 2026-06-27
+    });
+    const pendingFutureB = createMilestone("grant", {
+      uid: "pending-future-b",
+      title: "Pending B",
+      completed: false,
+      endsAt: 1803859200, // 2026-12-25
+    });
+
+    render(
+      <ActivityFeed milestones={[pendingFutureA, completed, pendingFutureB]} sortBy="newest" />
+    );
+
+    const cards = screen.getAllByTestId("activity-card");
+    expect(cards[0]).toHaveTextContent("Completed Milestone");
+  });
+
+  it("places a completed milestone below pending ones when sortBy is oldest", () => {
+    const completed = createMilestone("grant", {
+      uid: "completed-ms",
+      title: "Completed Milestone",
+      completed: { createdAt: "2026-04-28T00:00:00.000Z", data: { reason: "Done" } },
+    });
+    const pending = createMilestone("grant", {
+      uid: "pending-ms",
+      title: "Pending Milestone",
+      completed: false,
+      endsAt: 1803859200,
+    });
+
+    render(<ActivityFeed milestones={[completed, pending]} sortBy="oldest" />);
+
+    const cards = screen.getAllByTestId("activity-card");
+    expect(cards[0]).toHaveTextContent("Pending Milestone");
+    expect(cards[1]).toHaveTextContent("Completed Milestone");
+  });
+});
