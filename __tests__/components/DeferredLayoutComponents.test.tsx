@@ -49,9 +49,7 @@ vi.mock("next/dynamic", async () => {
 // dialog's wagmi/react-hook-form/headlessui dependencies, while still proving
 // the store -> mounted-component wire is intact.
 vi.mock("@/components/Dialogs/ContributorProfileDialog", async () => {
-  const { useContributorProfileModalStore } = await vi.importActual<
-    typeof import("@/store/modals/contributorProfile")
-  >("@/store/modals/contributorProfile");
+  const { useContributorProfileModalStore } = await import("@/store/modals/contributorProfile");
   return {
     ContributorProfileDialog: () => {
       const isOpen = useContributorProfileModalStore((s) => s.isModalOpen);

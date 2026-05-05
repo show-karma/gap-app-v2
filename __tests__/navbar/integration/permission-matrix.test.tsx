@@ -3,6 +3,8 @@
  * Systematically tests all 15+ permission combinations in both desktop and mobile contexts
  */
 
+import "../setup";
+import "./setup-dynamic-mock";
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Navbar } from "@/src/components/navbar/navbar";
@@ -97,11 +99,18 @@ describe("Permission Matrix Integration Tests", () => {
   describe("Desktop Navbar Permission Tests", () => {
     scenarios.forEach(({ name, fixture, expected }) => {
       describe(`Scenario: ${name}`, () => {
-        it("should show correct elements in desktop view", () => {
+        it("should show correct elements in desktop view", async () => {
           renderWithProviders(<Navbar />, {
             mockUsePrivy: createMockUsePrivy(fixture.authState),
             mockPermissions: createMockPermissions(fixture.permissions),
           });
+
+          // For authenticated users, check profile button (lazy-loaded mobile
+          // avatar). Wait for it before making the synchronous assertions on
+          // sign-in / contact-sales so all elements have settled.
+          if (expected.userMenu) {
+            await screen.findByLabelText("Open profile");
+          }
 
           // Check Sign In button (may have multiple - mobile and desktop)
           const signInButtons = screen.queryAllByText("Sign in");
@@ -126,13 +135,6 @@ describe("Permission Matrix Integration Tests", () => {
           } else {
             expect(skeleton).not.toBeInTheDocument();
           }
-
-          // For authenticated users, check profile button
-          if (expected.userMenu) {
-            // Mobile profile button should be present
-            const profileButton = screen.queryByLabelText("Open profile");
-            expect(profileButton).toBeInTheDocument();
-          }
         });
 
         it("should show correct menu items when user menu is opened", async () => {
@@ -146,11 +148,10 @@ describe("Permission Matrix Integration Tests", () => {
 
           if (!expected.userMenu) return;
 
-          // Try to find user avatar in desktop menu (may have multiple)
-          const userAvatars = screen.queryAllByRole("img", { name: /Recipient profile/i });
-          if (userAvatars.length === 0) return;
+          // Wait for desktop user menu trigger to mount (role=menuitem in Radix Menubar)
+          const desktopTrigger = await screen.findByRole("menuitem");
 
-          await user.click(userAvatars[0]);
+          await user.click(desktopTrigger);
 
           await waitFor(() => {
             expect(screen.getByText("Edit profile")).toBeInTheDocument();
@@ -175,7 +176,7 @@ describe("Permission Matrix Integration Tests", () => {
           });
 
           // Open mobile drawer
-          const mobileMenuButton = screen.getByLabelText("Open menu");
+          const mobileMenuButton = await screen.findByLabelText("Open menu");
           await user.click(mobileMenuButton);
 
           // Wait for drawer to open
@@ -218,7 +219,7 @@ describe("Permission Matrix Integration Tests", () => {
       });
 
       // Open mobile drawer to check permissions
-      const mobileMenuButton = screen.getByLabelText("Open menu");
+      const mobileMenuButton = await screen.findByLabelText("Open menu");
       await user.click(mobileMenuButton);
 
       await waitFor(() => {
@@ -246,7 +247,7 @@ describe("Permission Matrix Integration Tests", () => {
       });
 
       // Open mobile drawer
-      const mobileMenuButton = screen.getByLabelText("Open menu");
+      const mobileMenuButton = await screen.findByLabelText("Open menu");
       await user.click(mobileMenuButton);
 
       await waitFor(() => {
@@ -271,7 +272,7 @@ describe("Permission Matrix Integration Tests", () => {
       });
 
       // Open mobile drawer
-      const mobileMenuButton = screen.getByLabelText("Open menu");
+      const mobileMenuButton = await screen.findByLabelText("Open menu");
       await user.click(mobileMenuButton);
 
       await waitFor(() => {
@@ -296,7 +297,7 @@ describe("Permission Matrix Integration Tests", () => {
       });
 
       // Open mobile drawer
-      const mobileMenuButton = screen.getByLabelText("Open menu");
+      const mobileMenuButton = await screen.findByLabelText("Open menu");
       await user.click(mobileMenuButton);
 
       await waitFor(() => {
@@ -319,7 +320,7 @@ describe("Permission Matrix Integration Tests", () => {
       });
 
       // Open mobile drawer
-      const mobileMenuButton = screen.getByLabelText("Open menu");
+      const mobileMenuButton = await screen.findByLabelText("Open menu");
       await user.click(mobileMenuButton);
 
       await waitFor(() => {
@@ -342,7 +343,7 @@ describe("Permission Matrix Integration Tests", () => {
       });
 
       // Open mobile drawer
-      const mobileMenuButton = screen.getByLabelText("Open menu");
+      const mobileMenuButton = await screen.findByLabelText("Open menu");
       await user.click(mobileMenuButton);
 
       await waitFor(() => {
@@ -369,7 +370,7 @@ describe("Permission Matrix Integration Tests", () => {
       });
 
       // Open mobile drawer
-      const mobileMenuButton = screen.getByLabelText("Open menu");
+      const mobileMenuButton = await screen.findByLabelText("Open menu");
       await user.click(mobileMenuButton);
 
       await waitFor(() => {
@@ -392,7 +393,7 @@ describe("Permission Matrix Integration Tests", () => {
       });
 
       // Open mobile drawer
-      const mobileMenuButton = screen.getByLabelText("Open menu");
+      const mobileMenuButton = await screen.findByLabelText("Open menu");
       await user.click(mobileMenuButton);
 
       await waitFor(() => {
@@ -416,7 +417,7 @@ describe("Permission Matrix Integration Tests", () => {
       });
 
       // Open mobile drawer
-      const mobileMenuButton = screen.getByLabelText("Open menu");
+      const mobileMenuButton = await screen.findByLabelText("Open menu");
       await user.click(mobileMenuButton);
 
       await waitFor(() => {
@@ -440,7 +441,7 @@ describe("Permission Matrix Integration Tests", () => {
       });
 
       // Open mobile drawer
-      const mobileMenuButton = screen.getByLabelText("Open menu");
+      const mobileMenuButton = await screen.findByLabelText("Open menu");
       await user.click(mobileMenuButton);
 
       await waitFor(() => {
@@ -464,7 +465,7 @@ describe("Permission Matrix Integration Tests", () => {
       });
 
       // Open mobile drawer
-      const mobileMenuButton = screen.getByLabelText("Open menu");
+      const mobileMenuButton = await screen.findByLabelText("Open menu");
       await user.click(mobileMenuButton);
 
       await waitFor(() => {

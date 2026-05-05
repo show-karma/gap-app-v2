@@ -25,6 +25,7 @@ vi.mock("@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone", () => 
 vi.mock("next/navigation", () => ({
   useParams: vi.fn(() => ({ projectId: "project-slug" })),
   useRouter: vi.fn(() => ({ push: vi.fn() })),
+  usePathname: vi.fn(() => "/"),
 }));
 
 vi.mock("wagmi", () => ({

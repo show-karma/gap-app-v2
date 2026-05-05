@@ -3,8 +3,21 @@ import userEvent from "@testing-library/user-event";
 import toast from "react-hot-toast";
 import MoreActionsDropdown from "@/components/FundingPlatform/ApplicationView/MoreActionsDropdown";
 
-// Mock react-hot-toast
+// Mock react-hot-toast - must include default export for Vitest 4
 vi.mock("react-hot-toast", () => ({
+  __esModule: true,
+  default: {
+    success: vi.fn(),
+    error: vi.fn(),
+    loading: vi.fn(),
+    dismiss: vi.fn(),
+  },
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+    loading: vi.fn(),
+    dismiss: vi.fn(),
+  },
   success: vi.fn(),
   error: vi.fn(),
 }));

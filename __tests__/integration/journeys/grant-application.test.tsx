@@ -65,18 +65,14 @@ vi.mock("@/components/Utilities/Button", () => ({
   ),
 }));
 
-// Mock toast - use require-time reference to avoid TDZ
-vi.mock("react-hot-toast", () => {
-  const toast = {
+// Mock toast
+vi.mock("react-hot-toast", () => ({
+  __esModule: true,
+  default: {
     success: vi.fn(),
     error: vi.fn(),
-  };
-  return { __esModule: true, default: toast };
-});
-
-// Get reference to mock toast for assertions
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const mockToast = require("react-hot-toast").default;
+  },
+}));
 
 // Control wagmi useAccount
 let mockAddress: string | undefined = "0x1234567890123456789012345678901234567890";
@@ -107,9 +103,12 @@ vi.mock("@/utilities/tailwind", () => ({
 }));
 
 // ---------------------------------------------------------------------------
-// Import component under test
+// Import component under test and mock references
 // ---------------------------------------------------------------------------
+import toast from "react-hot-toast";
 import ApplicationSubmission from "@/components/FundingPlatform/ApplicationView/ApplicationSubmission";
+
+const mockToast = vi.mocked(toast);
 
 // ---------------------------------------------------------------------------
 // Test data

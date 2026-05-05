@@ -1,6 +1,26 @@
 import { render, screen } from "@testing-library/react";
+import React from "react";
 import { Navbar } from "@/src/components/navbar/navbar";
 import "@testing-library/jest-dom";
+
+// next/dynamic with ssr:false renders the loading fallback instead of the component
+// in test environments. Replace it with React.lazy + Suspense so the mocked
+// NavbarMobileMenu actually renders.
+vi.mock("next/dynamic", () => ({
+  default: (fn: () => Promise<any>) => {
+    const LazyComponent = React.lazy(() =>
+      fn().then((mod: any) => ({ default: mod.default || Object.values(mod)[0] }))
+    );
+    const DynamicWrapper = (props: any) =>
+      React.createElement(
+        React.Suspense,
+        { fallback: null },
+        React.createElement(LazyComponent, props)
+      );
+    DynamicWrapper.displayName = "DynamicMock";
+    return DynamicWrapper;
+  },
+}));
 
 // Mock useAuth hook
 vi.mock("@/hooks/useAuth", () => ({
@@ -83,10 +103,11 @@ describe("Navbar", () => {
       expect(screen.getByTestId("desktop-navigation")).toBeInTheDocument();
     });
 
-    it("should render mobile menu component", () => {
+    it("should render mobile menu component", async () => {
       render(<Navbar />);
 
-      expect(screen.getByTestId("mobile-menu")).toBeInTheDocument();
+      // NavbarMobileMenu is dynamically imported (lazy via React.Suspense)
+      expect(await screen.findByTestId("mobile-menu")).toBeInTheDocument();
     });
 
     it("should have correct fixed positioning", () => {
@@ -149,12 +170,12 @@ describe("Navbar", () => {
   });
 
   describe("Responsive Design", () => {
-    it("should render both desktop and mobile components for responsive switching", () => {
+    it("should render both desktop and mobile components for responsive switching", async () => {
       render(<Navbar />);
 
       // Both should exist in DOM, CSS handles visibility
       expect(screen.getByTestId("desktop-navigation")).toBeInTheDocument();
-      expect(screen.getByTestId("mobile-menu")).toBeInTheDocument();
+      expect(await screen.findByTestId("mobile-menu")).toBeInTheDocument();
     });
 
     it("should have responsive flex direction", () => {
@@ -217,26 +238,27 @@ describe("Navbar", () => {
   });
 
   describe("Component Integration", () => {
-    it("should integrate desktop and mobile components within same nav", () => {
+    it("should integrate desktop and mobile components within same nav", async () => {
       render(<Navbar />);
 
       const nav = screen.getByRole("navigation");
       const desktop = screen.getByTestId("desktop-navigation");
-      const mobile = screen.getByTestId("mobile-menu");
+      const mobile = await screen.findByTestId("mobile-menu");
 
       expect(nav).toContainElement(desktop);
       expect(nav).toContainElement(mobile);
     });
 
-    it("should maintain component hierarchy", () => {
+    it("should maintain component hierarchy", async () => {
       const { container } = render(<Navbar />);
 
       const nav = container.querySelector("nav");
       const innerContainer = nav?.querySelector("div");
+      const mobile = await screen.findByTestId("mobile-menu");
 
       expect(nav).toContainElement(innerContainer!);
       expect(innerContainer).toContainElement(screen.getByTestId("desktop-navigation"));
-      expect(innerContainer).toContainElement(screen.getByTestId("mobile-menu"));
+      expect(innerContainer).toContainElement(mobile);
     });
   });
 

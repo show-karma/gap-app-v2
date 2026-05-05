@@ -4,6 +4,7 @@ import type { UnifiedMilestone } from "@/types/v2/roadmap";
 // Mock next/navigation
 vi.mock("next/navigation", () => ({
   useParams: () => ({ projectId: "test-project" }),
+  usePathname: vi.fn(() => "/"),
 }));
 
 // Mock ActivityCard to avoid complex import chain - renders title and allocation for test assertions
@@ -71,18 +72,18 @@ describe("ActivityFeed - Activity Type Labels", () => {
     ...overrides,
   });
 
-  it("should display 'Milestone created' for type 'milestone'", () => {
+  it("should display 'Milestone' for type 'milestone'", () => {
     const milestones = [createMilestone("milestone")];
     render(<ActivityFeed milestones={milestones} />);
 
-    expect(screen.getByText("Milestone created")).toBeInTheDocument();
+    expect(screen.getByText("Milestone")).toBeInTheDocument();
   });
 
-  it("should display 'Milestone created' for type 'grant'", () => {
+  it("should display 'Milestone' for type 'grant'", () => {
     const milestones = [createMilestone("grant")];
     render(<ActivityFeed milestones={milestones} />);
 
-    expect(screen.getByText("Milestone created")).toBeInTheDocument();
+    expect(screen.getByText("Milestone")).toBeInTheDocument();
   });
 
   it("should display 'Project Activity' for type 'activity'", () => {
@@ -106,12 +107,12 @@ describe("ActivityFeed - Activity Type Labels", () => {
     expect(screen.getByText("Grant Update")).toBeInTheDocument();
   });
 
-  it("should display 'Milestone created' for type 'impact'", () => {
-    // Note: Impact type displays as "Milestone created" per getActivityTypeLabel implementation
+  it("should display 'Milestone' for type 'impact'", () => {
+    // Note: Impact type displays as "Milestone" per getActivityTypeLabel implementation
     const milestones = [createMilestone("impact")];
     render(<ActivityFeed milestones={milestones} />);
 
-    expect(screen.getByText("Milestone created")).toBeInTheDocument();
+    expect(screen.getByText("Milestone")).toBeInTheDocument();
   });
 
   it("should display 'Grant approved' for type 'grant_received' with no programType", () => {

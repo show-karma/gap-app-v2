@@ -15,6 +15,7 @@ vi.mock("@/utilities/registry/getProgramsImpact", () => ({
 
 vi.mock("next/navigation", () => ({
   useParams: vi.fn(() => ({ communityId: "test-community" })),
+  usePathname: vi.fn(() => "/"),
 }));
 
 import { useParams } from "next/navigation";

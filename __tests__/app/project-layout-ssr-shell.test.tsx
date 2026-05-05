@@ -3,8 +3,8 @@
  */
 import { render, screen } from "@testing-library/react";
 
-vi.mock("@tanstack/react-query", () => {
-  const actual = vi.importActual("@tanstack/react-query");
+vi.mock("@tanstack/react-query", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@tanstack/react-query")>();
   return {
     ...actual,
     dehydrate: vi.fn(() => ({ queries: [] })),
@@ -37,6 +37,10 @@ vi.mock("@/utilities/metadata/projectMetadata", () => ({
 vi.mock("next/navigation", () => ({
   notFound: vi.fn(),
   redirect: vi.fn(),
+  usePathname: vi.fn(() => "/"),
+  useRouter: vi.fn(() => ({ push: vi.fn(), replace: vi.fn() })),
+  useSearchParams: vi.fn(() => ({ get: vi.fn() })),
+  useParams: vi.fn(() => ({})),
 }));
 
 import type { Project } from "@/types/v2/project";

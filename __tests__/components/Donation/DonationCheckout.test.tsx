@@ -8,7 +8,15 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { DonationCheckout } from "@/components/Donation/DonationCheckout";
 import "@testing-library/jest-dom";
+import { useAccount } from "wagmi";
 import type { SupportedToken } from "@/constants/supportedTokens";
+import { getTokensByChain } from "@/constants/supportedTokens";
+import { useCartChainPayoutAddresses } from "@/hooks/donation/useCartChainPayoutAddresses";
+import { useCrossChainBalances } from "@/hooks/donation/useCrossChainBalances";
+import { useDonationCheckout } from "@/hooks/donation/useDonationCheckout";
+import { useAuth } from "@/hooks/useAuth";
+import { useNetworkSwitching } from "@/hooks/useNetworkSwitching";
+import { useDonationCart } from "@/store";
 import type { DonationPayment } from "@/store/donationCart";
 
 // Mock Next.js router
@@ -143,6 +151,16 @@ vi.mock("@/components/Donation/CompletedDonations", () => ({
   ),
 }));
 
+// Typed mock references (vi.mocked avoids runtime require() calls)
+const mockUseDonationCart = vi.mocked(useDonationCart);
+const mockUseNetworkSwitching = vi.mocked(useNetworkSwitching);
+const mockUseAuth = vi.mocked(useAuth);
+const mockUseAccount = vi.mocked(useAccount);
+const mockUseDonationCheckout = vi.mocked(useDonationCheckout);
+const mockUseCartChainPayoutAddresses = vi.mocked(useCartChainPayoutAddresses);
+const mockUseCrossChainBalances = vi.mocked(useCrossChainBalances);
+const mockGetTokensByChain = vi.mocked(getTokensByChain);
+
 describe("DonationCheckout", () => {
   const mockToken: SupportedToken = {
     address: "0xUSDC000000000000000000000000000000000000",
@@ -220,29 +238,14 @@ describe("DonationCheckout", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    const { useDonationCart } = require("@/store");
-    useDonationCart.mockReturnValue(defaultCartState);
-
-    const { useNetworkSwitching } = require("@/hooks/useNetworkSwitching");
-    useNetworkSwitching.mockReturnValue(defaultNetworkSwitching);
-
-    const { useAuth } = require("@/hooks/useAuth");
-    useAuth.mockReturnValue({ isConnected: true });
-
-    const { useAccount } = require("wagmi");
-    useAccount.mockReturnValue({ address: "0x1234567890123456789012345678901234567890" });
-
-    const { useDonationCheckout } = require("@/hooks/donation/useDonationCheckout");
-    useDonationCheckout.mockReturnValue(defaultDonationCheckout);
-
-    const { useCartChainPayoutAddresses } = require("@/hooks/donation/useCartChainPayoutAddresses");
-    useCartChainPayoutAddresses.mockReturnValue(defaultChainPayoutAddresses);
-
-    const { useCrossChainBalances } = require("@/hooks/donation/useCrossChainBalances");
-    useCrossChainBalances.mockReturnValue(defaultBalances);
-
-    const { getTokensByChain } = require("@/constants/supportedTokens");
-    getTokensByChain.mockReturnValue([mockToken]);
+    mockUseDonationCart.mockReturnValue(defaultCartState);
+    mockUseNetworkSwitching.mockReturnValue(defaultNetworkSwitching);
+    mockUseAuth.mockReturnValue({ isConnected: true });
+    mockUseAccount.mockReturnValue({ address: "0x1234567890123456789012345678901234567890" });
+    mockUseDonationCheckout.mockReturnValue(defaultDonationCheckout);
+    mockUseCartChainPayoutAddresses.mockReturnValue(defaultChainPayoutAddresses);
+    mockUseCrossChainBalances.mockReturnValue(defaultBalances);
+    mockGetTokensByChain.mockReturnValue([mockToken]);
   });
 
   describe("Rendering", () => {
@@ -256,8 +259,8 @@ describe("DonationCheckout", () => {
     });
 
     it("should render empty cart when no items", () => {
-      const { useDonationCart } = require("@/store");
-      useDonationCart.mockReturnValue({
+      // using mockUseDonationCart
+      mockUseDonationCart.mockReturnValue({
         ...defaultCartState,
         items: [],
       });
@@ -269,8 +272,8 @@ describe("DonationCheckout", () => {
     });
 
     it("should render completed donations when session exists", () => {
-      const { useDonationCart } = require("@/store");
-      useDonationCart.mockReturnValue({
+      // using mockUseDonationCart
+      mockUseDonationCart.mockReturnValue({
         ...defaultCartState,
         items: [],
         lastCompletedSession: { id: "session-1", transfers: [] },
@@ -297,8 +300,8 @@ describe("DonationCheckout", () => {
 
   describe("Button Labels", () => {
     it("should show 'Switching Network...' when switching", () => {
-      const { useNetworkSwitching } = require("@/hooks/useNetworkSwitching");
-      useNetworkSwitching.mockReturnValue({
+      // using mockUseNetworkSwitching
+      mockUseNetworkSwitching.mockReturnValue({
         ...defaultNetworkSwitching,
         isSwitching: true,
       });
@@ -309,12 +312,10 @@ describe("DonationCheckout", () => {
     });
 
     it("should show 'Loading payout addresses...' when fetching payouts", () => {
-      const {
-        useCartChainPayoutAddresses,
-      } = require("@/hooks/donation/useCartChainPayoutAddresses");
+      // using mockUseCartChainPayoutAddresses
       // Note: When isFetching is true, canProceed becomes false, so executor won't render
       // This test verifies the label logic, but executor won't be visible
-      useCartChainPayoutAddresses.mockReturnValue({
+      mockUseCartChainPayoutAddresses.mockReturnValue({
         ...defaultChainPayoutAddresses,
         isFetching: true,
       });
@@ -327,8 +328,8 @@ describe("DonationCheckout", () => {
     });
 
     it("should show 'Loading cross-chain balances...' when fetching balances", () => {
-      const { useCrossChainBalances } = require("@/hooks/donation/useCrossChainBalances");
-      useCrossChainBalances.mockReturnValue({
+      // using mockUseCrossChainBalances
+      mockUseCrossChainBalances.mockReturnValue({
         ...defaultBalances,
         isFetchingCrossChainBalances: true,
       });
@@ -341,8 +342,8 @@ describe("DonationCheckout", () => {
     });
 
     it("should show execution phase labels", () => {
-      const { useDonationCheckout } = require("@/hooks/donation/useDonationCheckout");
-      useDonationCheckout.mockReturnValue({
+      // using mockUseDonationCheckout
+      mockUseDonationCheckout.mockReturnValue({
         ...defaultDonationCheckout,
         isExecuting: true,
         executionState: { phase: "checking" as const },
@@ -356,8 +357,8 @@ describe("DonationCheckout", () => {
     });
 
     it("should show approval progress", () => {
-      const { useDonationCheckout } = require("@/hooks/donation/useDonationCheckout");
-      useDonationCheckout.mockReturnValue({
+      // using mockUseDonationCheckout
+      mockUseDonationCheckout.mockReturnValue({
         ...defaultDonationCheckout,
         isExecuting: true,
         executionState: { phase: "approving" as const, approvalProgress: 50 },
@@ -371,8 +372,8 @@ describe("DonationCheckout", () => {
     });
 
     it("should show 'Select tokens and amounts' when cannot proceed", () => {
-      const { useDonationCart } = require("@/store");
-      useDonationCart.mockReturnValue({
+      // using mockUseDonationCart
+      mockUseDonationCart.mockReturnValue({
         ...defaultCartState,
         amounts: {},
         selectedTokens: {},
@@ -386,8 +387,8 @@ describe("DonationCheckout", () => {
     });
 
     it("should show 'Switch Chain' when on unsupported network", () => {
-      const { useNetworkSwitching } = require("@/hooks/useNetworkSwitching");
-      useNetworkSwitching.mockReturnValue({
+      // using mockUseNetworkSwitching
+      mockUseNetworkSwitching.mockReturnValue({
         ...defaultNetworkSwitching,
         isCurrentNetworkSupported: false,
       });
@@ -408,8 +409,8 @@ describe("DonationCheckout", () => {
     it("should call handleExecuteDonations when execute button clicked", async () => {
       const user = userEvent.setup();
       const mockHandleExecute = vi.fn();
-      const { useDonationCheckout } = require("@/hooks/donation/useDonationCheckout");
-      useDonationCheckout.mockReturnValue({
+      // using mockUseDonationCheckout
+      mockUseDonationCheckout.mockReturnValue({
         ...defaultDonationCheckout,
         handleExecuteDonations: mockHandleExecute,
       });
@@ -427,8 +428,8 @@ describe("DonationCheckout", () => {
     it("should call clear when clear button clicked", async () => {
       const user = userEvent.setup();
       const mockClear = vi.fn();
-      const { useDonationCart } = require("@/store");
-      useDonationCart.mockReturnValue({
+      // using mockUseDonationCart
+      mockUseDonationCart.mockReturnValue({
         ...defaultCartState,
         clear: mockClear,
       });
@@ -444,8 +445,8 @@ describe("DonationCheckout", () => {
     it("should call handleProceedWithDonations when proceed clicked", async () => {
       const user = userEvent.setup();
       const mockHandleProceed = vi.fn();
-      const { useDonationCheckout } = require("@/hooks/donation/useDonationCheckout");
-      useDonationCheckout.mockReturnValue({
+      // using mockUseDonationCheckout
+      mockUseDonationCheckout.mockReturnValue({
         ...defaultDonationCheckout,
         showStepsPreview: true,
         handleProceedWithDonations: mockHandleProceed,
@@ -464,8 +465,8 @@ describe("DonationCheckout", () => {
     it("should close steps preview when cancel clicked", async () => {
       const user = userEvent.setup();
       const mockSetShowStepsPreview = vi.fn();
-      const { useDonationCheckout } = require("@/hooks/donation/useDonationCheckout");
-      useDonationCheckout.mockReturnValue({
+      // using mockUseDonationCheckout
+      mockUseDonationCheckout.mockReturnValue({
         ...defaultDonationCheckout,
         showStepsPreview: true,
         setShowStepsPreview: mockSetShowStepsPreview,
@@ -481,8 +482,8 @@ describe("DonationCheckout", () => {
 
     it("should navigate back when browse projects clicked", async () => {
       const user = userEvent.setup();
-      const { useDonationCart } = require("@/store");
-      useDonationCart.mockReturnValue({
+      // using mockUseDonationCart
+      mockUseDonationCart.mockReturnValue({
         ...defaultCartState,
         items: [],
       });
@@ -498,8 +499,8 @@ describe("DonationCheckout", () => {
     it("should clear session and navigate back when start new donation clicked", async () => {
       const user = userEvent.setup();
       const mockClearSession = vi.fn();
-      const { useDonationCart } = require("@/store");
-      useDonationCart.mockReturnValue({
+      // using mockUseDonationCart
+      mockUseDonationCart.mockReturnValue({
         ...defaultCartState,
         items: [],
         lastCompletedSession: { id: "session-1", transfers: [] },
@@ -518,10 +519,8 @@ describe("DonationCheckout", () => {
 
   describe("Validation and Security", () => {
     it("should block donations when payout addresses are missing", () => {
-      const {
-        useCartChainPayoutAddresses,
-      } = require("@/hooks/donation/useCartChainPayoutAddresses");
-      useCartChainPayoutAddresses.mockReturnValue({
+      // using mockUseCartChainPayoutAddresses
+      mockUseCartChainPayoutAddresses.mockReturnValue({
         ...defaultChainPayoutAddresses,
         missingPayouts: ["project-1"],
       });
@@ -533,8 +532,8 @@ describe("DonationCheckout", () => {
     });
 
     it("should show info message when cannot proceed", () => {
-      const { useDonationCart } = require("@/store");
-      useDonationCart.mockReturnValue({
+      // using mockUseDonationCart
+      mockUseDonationCart.mockReturnValue({
         ...defaultCartState,
         amounts: {},
         selectedTokens: {},
@@ -546,10 +545,8 @@ describe("DonationCheckout", () => {
     });
 
     it("should validate payout addresses before showing confirmation", () => {
-      const {
-        useCartChainPayoutAddresses,
-      } = require("@/hooks/donation/useCartChainPayoutAddresses");
-      useCartChainPayoutAddresses.mockReturnValue({
+      // using mockUseCartChainPayoutAddresses
+      mockUseCartChainPayoutAddresses.mockReturnValue({
         ...defaultChainPayoutAddresses,
         missingPayouts: ["project-1"],
         isFetching: false,
@@ -564,8 +561,8 @@ describe("DonationCheckout", () => {
 
   describe("Token Selection", () => {
     it("should filter tokens with positive balances", () => {
-      const { useCrossChainBalances } = require("@/hooks/donation/useCrossChainBalances");
-      useCrossChainBalances.mockReturnValue({
+      // using mockUseCrossChainBalances
+      mockUseCrossChainBalances.mockReturnValue({
         balanceByTokenKey: {
           "USDC-10": "1000",
           "ETH-10": "0", // Zero balance
@@ -580,8 +577,8 @@ describe("DonationCheckout", () => {
     });
 
     it("should return empty tokens when not connected", () => {
-      const { useAuth } = require("@/hooks/useAuth");
-      useAuth.mockReturnValue({ isConnected: false });
+      // using mockUseAuth
+      mockUseAuth.mockReturnValue({ isConnected: false });
 
       render(<DonationCheckout />);
 
@@ -593,8 +590,8 @@ describe("DonationCheckout", () => {
   describe("Network Switching", () => {
     it("should switch network when token selected from different chain", () => {
       const mockSwitchToNetwork = vi.fn();
-      const { useNetworkSwitching } = require("@/hooks/useNetworkSwitching");
-      useNetworkSwitching.mockReturnValue({
+      // using mockUseNetworkSwitching
+      mockUseNetworkSwitching.mockReturnValue({
         ...defaultNetworkSwitching,
         currentChainId: 10,
         switchToNetwork: mockSwitchToNetwork,
@@ -610,8 +607,8 @@ describe("DonationCheckout", () => {
 
   describe("Steps Preview Modal", () => {
     it("should show steps preview modal when showStepsPreview is true", () => {
-      const { useDonationCheckout } = require("@/hooks/donation/useDonationCheckout");
-      useDonationCheckout.mockReturnValue({
+      // using mockUseDonationCheckout
+      mockUseDonationCheckout.mockReturnValue({
         ...defaultDonationCheckout,
         showStepsPreview: true,
       });
@@ -628,8 +625,8 @@ describe("DonationCheckout", () => {
     });
 
     it("should disable proceed button when executing", () => {
-      const { useDonationCheckout } = require("@/hooks/donation/useDonationCheckout");
-      useDonationCheckout.mockReturnValue({
+      // using mockUseDonationCheckout
+      mockUseDonationCheckout.mockReturnValue({
         ...defaultDonationCheckout,
         showStepsPreview: true,
         isExecuting: true,
@@ -644,8 +641,8 @@ describe("DonationCheckout", () => {
 
   describe("Edge Cases", () => {
     it("should handle empty amounts object", () => {
-      const { useDonationCart } = require("@/store");
-      useDonationCart.mockReturnValue({
+      // using mockUseDonationCart
+      mockUseDonationCart.mockReturnValue({
         ...defaultCartState,
         amounts: {},
       });
@@ -668,8 +665,8 @@ describe("DonationCheckout", () => {
       const phases = ["checking", "approving", "donating", "completed", "error"] as const;
 
       phases.forEach((phase) => {
-        const { useDonationCheckout } = require("@/hooks/donation/useDonationCheckout");
-        useDonationCheckout.mockReturnValue({
+        // using mockUseDonationCheckout
+        mockUseDonationCheckout.mockReturnValue({
           ...defaultDonationCheckout,
           isExecuting: phase !== "completed" && phase !== "error",
           executionState: { phase },
@@ -682,8 +679,8 @@ describe("DonationCheckout", () => {
     });
 
     it("should handle zero balance tokens", () => {
-      const { useCrossChainBalances } = require("@/hooks/donation/useCrossChainBalances");
-      useCrossChainBalances.mockReturnValue({
+      // using mockUseCrossChainBalances
+      mockUseCrossChainBalances.mockReturnValue({
         balanceByTokenKey: {
           "USDC-10": "0",
         },

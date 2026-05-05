@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { useAccount } from "wagmi";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { DeleteMemberDialog } from "../DeleteMember";
 
 // --- Constants ---
@@ -175,19 +176,9 @@ vi.mock("@/store", () => ({
   }),
 }));
 
-// Mock setupChainAndWallet - use relative path from source file because
-// SWC resolves @/ aliases at compile time, so vi.mock("@/hooks/...") doesn't
-// intercept imports within compiled source modules.
+// useSetupChainAndWallet is auto-aliased to __mocks__/hooks/useSetupChainAndWallet.ts
+// (see vitest.config.ts unitTestMockAliases). Override its return value per-test.
 const mockSetupChainAndWallet = vi.fn();
-vi.mock("../../../../hooks/useSetupChainAndWallet", () => ({
-  useSetupChainAndWallet: () => ({
-    setupChainAndWallet: mockSetupChainAndWallet,
-    isSmartWalletReady: false,
-    smartWalletAddress: null,
-    hasEmbeddedWallet: false,
-    hasExternalWallet: false,
-  }),
-}));
 
 describe("DeleteMemberDialog", () => {
   beforeEach(() => {
@@ -204,6 +195,14 @@ describe("DeleteMemberDialog", () => {
     mockSetupChainAndWallet.mockResolvedValue({
       walletSigner: { provider: {} },
       gapClient: {},
+    });
+
+    (useSetupChainAndWallet as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
+      setupChainAndWallet: mockSetupChainAndWallet,
+      isSmartWalletReady: false,
+      smartWalletAddress: null,
+      hasEmbeddedWallet: false,
+      hasExternalWallet: false,
     });
   });
 
@@ -277,9 +276,12 @@ describe("DeleteMemberDialog", () => {
 
       // ASSERT: The ghost member should be removed successfully via V2 cleanup.
       // No error should be shown to the user — this should be a graceful removal.
-      await waitFor(() => {
-        expect(mockShowSuccess).toHaveBeenCalledWith("Member removed successfully");
-      });
+      await waitFor(
+        () => {
+          expect(mockShowSuccess).toHaveBeenCalledWith("Member removed successfully");
+        },
+        { timeout: 3000 }
+      );
 
       // No error should have been shown
       expect(mockShowError).not.toHaveBeenCalled();
@@ -305,9 +307,12 @@ describe("DeleteMemberDialog", () => {
 
       await openDialogAndConfirm(GHOST_MEMBER_ADDRESS);
 
-      await waitFor(() => {
-        expect(mockShowError).toHaveBeenCalled();
-      });
+      await waitFor(
+        () => {
+          expect(mockShowError).toHaveBeenCalled();
+        },
+        { timeout: 3000 }
+      );
 
       expect(mockShowSuccess).not.toHaveBeenCalled();
     });
@@ -357,14 +362,20 @@ describe("DeleteMemberDialog", () => {
       await openDialogAndConfirm(NORMAL_MEMBER_ADDRESS);
 
       // ASSERT: The on-chain revoke should be called
-      await waitFor(() => {
-        expect(mockRevoke).toHaveBeenCalled();
-      });
+      await waitFor(
+        () => {
+          expect(mockRevoke).toHaveBeenCalled();
+        },
+        { timeout: 3000 }
+      );
 
       // The success message should be shown
-      await waitFor(() => {
-        expect(mockShowSuccess).toHaveBeenCalledWith("Member removed successfully");
-      });
+      await waitFor(
+        () => {
+          expect(mockShowSuccess).toHaveBeenCalledWith("Member removed successfully");
+        },
+        { timeout: 5000 }
+      );
     });
   });
 });

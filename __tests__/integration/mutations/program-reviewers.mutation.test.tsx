@@ -61,6 +61,7 @@ describe("programReviewersService (MSW integration)", () => {
         name: "Alice",
         email: "alice@example.com",
         telegram: "@alice_tg",
+        slack: "",
         assignedAt: "2024-06-01T10:00:00Z",
         assignedBy: "0xAdmin",
       });

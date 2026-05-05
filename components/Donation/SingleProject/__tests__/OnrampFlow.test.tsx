@@ -33,10 +33,12 @@ vi.mock("../OnrampSuccessModal", () => ({
 import { useOnramp } from "@/hooks/donation/useOnramp";
 import { useCountryDetection } from "@/hooks/useCountryDetection";
 import { OnrampSuccessModal } from "../OnrampSuccessModal";
+import { StripeOnrampEmbed } from "../StripeOnrampEmbed";
 
 const mockUseOnramp = useOnramp as vi.Mock;
 const mockUseCountryDetection = useCountryDetection as vi.Mock;
 const mockOnrampSuccessModal = OnrampSuccessModal as vi.Mock;
+const mockStripeOnrampEmbed = StripeOnrampEmbed as vi.Mock;
 
 const createWrapper = () => {
   const queryClient = new QueryClient({
@@ -320,9 +322,8 @@ describe("OnrampFlow", () => {
       });
 
       // Capture StripeOnrampEmbed onSuccess callback
-      const { StripeOnrampEmbed } = vi.importActual("../StripeOnrampEmbed") as any;
       let capturedStripeOnSuccess: ((data: any) => void) | undefined;
-      (StripeOnrampEmbed as vi.Mock).mockImplementation((props: any) => {
+      mockStripeOnrampEmbed.mockImplementation((props: any) => {
         capturedStripeOnSuccess = props.onSuccess;
         return <div data-testid="stripe-embed">Stripe Embed</div>;
       });
@@ -366,9 +367,8 @@ describe("OnrampFlow", () => {
       });
 
       // Capture StripeOnrampEmbed onSuccess callback
-      const { StripeOnrampEmbed } = vi.importActual("../StripeOnrampEmbed") as any;
       let capturedStripeOnSuccess: ((data: any) => void) | undefined;
-      (StripeOnrampEmbed as vi.Mock).mockImplementation((props: any) => {
+      mockStripeOnrampEmbed.mockImplementation((props: any) => {
         capturedStripeOnSuccess = props.onSuccess;
         return <div data-testid="stripe-embed">Stripe Embed</div>;
       });

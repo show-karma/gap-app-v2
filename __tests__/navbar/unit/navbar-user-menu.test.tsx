@@ -3,9 +3,81 @@
  * Tests user menu rendering states, permission-based items, theme toggle, and social links
  */
 
+// Hoist local refs so vi.mock factories can read the live state directly.
+// This avoids ESM module isolation issues where updateAuthMock/updateNavbarPermissionsState
+// in test-helpers modifies a different module instance than what the component uses.
+const _localRefs = vi.hoisted(() => {
+  const _vi = (globalThis as any).vi ?? { fn: () => (() => {}) as any };
+  return {
+    navPermsState: {
+      current: {
+        isLoggedIn: false,
+        address: undefined as string | undefined,
+        ready: true,
+        isStaff: false,
+        isStaffLoading: false,
+        isOwner: false,
+        isCommunityAdmin: false,
+        isReviewer: false,
+        hasReviewerRole: false,
+        reviewerPrograms: [] as unknown[],
+        isProgramCreator: false,
+        isRegistryAdmin: false,
+        hasAdminAccess: false,
+        isRegistryAllowed: false,
+      },
+    },
+    authState: {
+      current: {
+        ready: true,
+        authenticated: false,
+        isConnected: false,
+        address: undefined as string | undefined,
+        user: null as unknown,
+        login: _vi.fn(),
+        logout: _vi.fn(),
+        authenticate: _vi.fn(),
+        disconnect: _vi.fn(),
+        getAccessToken: _vi.fn().mockResolvedValue("mock-token"),
+      },
+    },
+    modalState: {
+      current: {
+        isOpen: false,
+        openModal: _vi.fn() as (...args: unknown[]) => void,
+        closeModal: _vi.fn() as () => void,
+      },
+    },
+  };
+});
+
+vi.mock("@/src/components/navbar/navbar-permissions-context", async () => {
+  const React = await import("react");
+  return {
+    useNavbarPermissions: vi.fn(() => _localRefs.navPermsState.current),
+    NavbarPermissionsProvider: ({ children }: { children: React.ReactNode }) =>
+      React.createElement(React.Fragment, null, children),
+    NavbarPermissionsContext: {
+      Provider: ({ children }: { children: React.ReactNode }) =>
+        React.createElement(React.Fragment, null, children),
+      Consumer: ({ children }: { children: (v: unknown) => React.ReactNode }) =>
+        React.createElement(React.Fragment, null, children(_localRefs.navPermsState.current)),
+    },
+  };
+});
+
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: vi.fn(() => _localRefs.authState.current),
+}));
+
+vi.mock("@/store/modals/contributorProfile", () => ({
+  useContributorProfileModalStore: vi.fn(() => _localRefs.modalState.current),
+}));
+
 import { cleanup, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { NavbarUserMenu } from "@/src/components/navbar/navbar-user-menu";
+import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
 import { getAuthFixture } from "../fixtures/auth-fixtures";
 import {
   createMockPermissions,
@@ -23,11 +95,93 @@ import {
   resetPermissionMocks,
 } from "../utils/test-helpers";
 
+// Helper: set _localRefs to an authenticated state from a fixture
+const setLocalRefsFromFixture = (fixtureName: string) => {
+  const fixture = getAuthFixture(fixtureName);
+  const { authState, permissions } = fixture;
+
+  _localRefs.authState.current = {
+    ready: authState.ready ?? true,
+    authenticated: authState.authenticated ?? false,
+    isConnected: authState.isConnected ?? false,
+    address: authState.address,
+    user: (authState.user ?? null) as unknown,
+    login: vi.fn(),
+    logout: vi.fn(),
+    authenticate: vi.fn(),
+    disconnect: vi.fn(),
+    getAccessToken: vi.fn().mockResolvedValue("mock-token"),
+  };
+
+  const isLoggedIn = authState.authenticated ?? false;
+  const isCommunityAdmin = permissions.communities.length > 0;
+  const isReviewer = permissions.reviewerPrograms.length > 0;
+  const hasAdminAccess = permissions.isStaff || permissions.isOwner || isCommunityAdmin;
+  const isRegistryAllowed =
+    (permissions.isRegistryAdmin || permissions.isProgramCreator || permissions.isStaff) &&
+    isLoggedIn;
+
+  _localRefs.navPermsState.current = {
+    isLoggedIn,
+    address: authState.address,
+    ready: authState.ready ?? true,
+    isStaff: permissions.isStaff,
+    isStaffLoading: false,
+    isOwner: permissions.isOwner,
+    isCommunityAdmin,
+    isReviewer,
+    hasReviewerRole: isReviewer,
+    reviewerPrograms: permissions.reviewerPrograms,
+    isProgramCreator: permissions.isProgramCreator,
+    isRegistryAdmin: permissions.isRegistryAdmin,
+    hasAdminAccess,
+    isRegistryAllowed,
+  };
+};
+
+// Helper: reset local refs to logged-out defaults
+const resetLocalRefs = () => {
+  _localRefs.navPermsState.current = {
+    isLoggedIn: false,
+    address: undefined,
+    ready: true,
+    isStaff: false,
+    isStaffLoading: false,
+    isOwner: false,
+    isCommunityAdmin: false,
+    isReviewer: false,
+    hasReviewerRole: false,
+    reviewerPrograms: [],
+    isProgramCreator: false,
+    isRegistryAdmin: false,
+    hasAdminAccess: false,
+    isRegistryAllowed: false,
+  };
+  _localRefs.authState.current = {
+    ready: true,
+    authenticated: false,
+    isConnected: false,
+    address: undefined,
+    user: null,
+    login: vi.fn(),
+    logout: vi.fn(),
+    authenticate: vi.fn(),
+    disconnect: vi.fn(),
+    getAccessToken: vi.fn().mockResolvedValue("mock-token"),
+  };
+  _localRefs.modalState.current = {
+    isOpen: false,
+    openModal: vi.fn(),
+    closeModal: vi.fn(),
+  };
+};
+
 describe("NavbarUserMenu", () => {
   // Helper to setup auth and open menu
   const setupAuthAndOpenMenu = async (fixtureName: string) => {
     const authFixture = getAuthFixture(fixtureName);
     const user = userEvent.setup();
+    setLocalRefsFromFixture(fixtureName);
 
     const result = renderWithProviders(<NavbarUserMenu />, {
       mockUseAuth: createMockUseAuth(authFixture.authState),
@@ -41,16 +195,29 @@ describe("NavbarUserMenu", () => {
     return { user, authFixture, ...result };
   };
 
+  beforeEach(() => {
+    resetLocalRefs();
+  });
+
   afterEach(() => {
     cleanup();
     resetMockAuthState();
     resetMockThemeState();
     resetPermissionMocks();
+    resetLocalRefs();
+    // Re-apply the factory implementation so any test that called .mockReturnValue()
+    // via renderWithProviders options does not bleed into subsequent tests.
+    vi.mocked(useContributorProfileModalStore).mockImplementation(
+      () => _localRefs.modalState.current
+    );
   });
 
   describe("Rendering State Tests", () => {
     it("should show NavbarUserSkeleton when ready is false", () => {
       const loadingFixture = getAuthFixture("loading");
+      setLocalRefsFromFixture("loading");
+      // Override ready to false to trigger skeleton
+      _localRefs.navPermsState.current.ready = false;
       const { container } = renderWithProviders(<NavbarUserMenu />, {
         mockUseAuth: createMockUseAuth(loadingFixture.authState),
       });
@@ -82,6 +249,7 @@ describe("NavbarUserMenu", () => {
 
     it("should render as a menubar component", () => {
       const authFixture = getAuthFixture("authenticated-basic");
+      setLocalRefsFromFixture("authenticated-basic");
       renderWithProviders(<NavbarUserMenu />, {
         mockUseAuth: createMockUseAuth(authFixture.authState),
         mockUseCommunitiesStore: createMockUseCommunitiesStore(authFixture.permissions.communities),
@@ -156,15 +324,17 @@ describe("NavbarUserMenu", () => {
       const mockOpenModal = vi.fn();
       const authFixture = getAuthFixture("authenticated-basic");
       const user = userEvent.setup();
+      setLocalRefsFromFixture("authenticated-basic");
+      // Set the modal state directly in _localRefs so the vi.mock factory returns it
+      _localRefs.modalState.current = {
+        isOpen: false,
+        openModal: mockOpenModal,
+        closeModal: vi.fn(),
+      };
 
       renderWithProviders(<NavbarUserMenu />, {
         mockUseAuth: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
-        mockUseContributorProfileModalStore: () => ({
-          isOpen: false,
-          openModal: mockOpenModal,
-          closeModal: vi.fn(),
-        }),
       });
 
       // Click avatar to open menu
@@ -253,11 +423,14 @@ describe("NavbarUserMenu", () => {
     it('should call logout() when "Log out" button is clicked', async () => {
       const mockLogout = vi.fn();
       const authFixture = getAuthFixture("authenticated-basic");
+      setLocalRefsFromFixture("authenticated-basic");
 
       // Use the helper but with a custom logout mock
       const user = userEvent.setup();
       const authMock = createMockUseAuth(authFixture.authState);
       authMock.logout = mockLogout;
+      // Also set the logout in _localRefs so useAuth() returns it
+      _localRefs.authState.current.logout = mockLogout;
 
       renderWithProviders(<NavbarUserMenu />, {
         mockUseAuth: authMock,
@@ -280,6 +453,7 @@ describe("NavbarUserMenu", () => {
     it("should show Farcaster display name instead of undefined address", async () => {
       const authFixture = getAuthFixture("farcaster-authenticated");
       const user = userEvent.setup();
+      setLocalRefsFromFixture("farcaster-authenticated");
 
       renderWithProviders(<NavbarUserMenu />, {
         mockUseAuth: createMockUseAuth(authFixture.authState),
@@ -298,6 +472,7 @@ describe("NavbarUserMenu", () => {
     it("should display Farcaster username when no wallet address is available", async () => {
       const authFixture = getAuthFixture("farcaster-authenticated");
       const user = userEvent.setup();
+      setLocalRefsFromFixture("farcaster-authenticated");
 
       renderWithProviders(<NavbarUserMenu />, {
         mockUseAuth: createMockUseAuth(authFixture.authState),
@@ -318,6 +493,7 @@ describe("NavbarUserMenu", () => {
     it("should show Farcaster display name instead of wallet address", async () => {
       const authFixture = getAuthFixture("farcaster-with-embedded-wallet");
       const user = userEvent.setup();
+      setLocalRefsFromFixture("farcaster-with-embedded-wallet");
 
       renderWithProviders(<NavbarUserMenu />, {
         mockUseAuth: createMockUseAuth(authFixture.authState),
@@ -331,6 +507,7 @@ describe("NavbarUserMenu", () => {
 
     it("should show Farcaster avatar instead of blockie/ENS avatar", async () => {
       const authFixture = getAuthFixture("farcaster-with-embedded-wallet");
+      setLocalRefsFromFixture("farcaster-with-embedded-wallet");
 
       const { container } = renderWithProviders(<NavbarUserMenu />, {
         mockUseAuth: createMockUseAuth(authFixture.authState),
@@ -347,6 +524,7 @@ describe("NavbarUserMenu", () => {
     it("should show Farcaster username in dropdown menu", async () => {
       const authFixture = getAuthFixture("farcaster-with-embedded-wallet");
       const user = userEvent.setup();
+      setLocalRefsFromFixture("farcaster-with-embedded-wallet");
 
       renderWithProviders(<NavbarUserMenu />, {
         mockUseAuth: createMockUseAuth(authFixture.authState),
@@ -366,6 +544,7 @@ describe("NavbarUserMenu", () => {
   describe("Email Authenticated User", () => {
     it("should show email address instead of wallet address in trigger", () => {
       const authFixture = getAuthFixture("email-authenticated");
+      setLocalRefsFromFixture("email-authenticated");
 
       renderWithProviders(<NavbarUserMenu />, {
         mockUseAuth: createMockUseAuth(authFixture.authState),
@@ -379,6 +558,7 @@ describe("NavbarUserMenu", () => {
     it("should show email address in dropdown menu instead of wallet address", async () => {
       const authFixture = getAuthFixture("email-authenticated");
       const user = userEvent.setup();
+      setLocalRefsFromFixture("email-authenticated");
 
       renderWithProviders(<NavbarUserMenu />, {
         mockUseAuth: createMockUseAuth(authFixture.authState),
@@ -396,6 +576,7 @@ describe("NavbarUserMenu", () => {
 
     it("should NOT show wallet address when email is available", () => {
       const authFixture = getAuthFixture("email-authenticated");
+      setLocalRefsFromFixture("email-authenticated");
 
       renderWithProviders(<NavbarUserMenu />, {
         mockUseAuth: createMockUseAuth(authFixture.authState),
@@ -408,6 +589,7 @@ describe("NavbarUserMenu", () => {
 
     it("should show email when no wallet address is available", () => {
       const authFixture = getAuthFixture("email-authenticated-no-wallet");
+      setLocalRefsFromFixture("email-authenticated-no-wallet");
 
       renderWithProviders(<NavbarUserMenu />, {
         mockUseAuth: createMockUseAuth(authFixture.authState),
@@ -421,6 +603,7 @@ describe("NavbarUserMenu", () => {
   describe("Google Authenticated User", () => {
     it("should show Google email instead of wallet address in trigger", () => {
       const authFixture = getAuthFixture("google-authenticated");
+      setLocalRefsFromFixture("google-authenticated");
 
       renderWithProviders(<NavbarUserMenu />, {
         mockUseAuth: createMockUseAuth(authFixture.authState),

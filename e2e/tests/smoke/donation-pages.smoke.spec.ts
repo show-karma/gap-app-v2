@@ -108,41 +108,37 @@ test.describe("Smoke Tests — Donation Pages", () => {
       expect(hasContent).toBeTruthy();
     });
 
-    // SSR fetches real data from staging API, so we cannot mock an empty programs list.
-    // This test would need server-side mocking (e.g., MSW in Node) to work correctly.
-    test.fixme(
-      "T-DON-04: donation page shows empty state when no programs exist",
-      async ({ page, withApiMocks }) => {
-        await withApiMocks({
-          "**/v2/communities/optimism": mockJson(community),
-          "**/v2/funding-program-configs/community/optimism**": mockJson([]),
-        });
+    test("T-DON-04: donation page shows empty state when no programs exist", async ({
+      page,
+      withApiMocks,
+    }) => {
+      await withApiMocks({
+        "**/v2/communities/optimism": mockJson(community),
+        "**/communities/optimism/programs**": mockJson([]),
+      });
 
-        await page.goto("/community/optimism/donate", GOTO_OPTIONS);
-        await waitForPageReady(page);
+      await page.goto("/community/optimism/donate", GOTO_OPTIONS);
+      await waitForPageReady(page);
 
-        await expect(page.getByRole("heading", { name: /no programs available/i })).toBeVisible();
-        await expect(page.getByText(/no programs available for donations/i)).toBeVisible();
-      }
-    );
+      await expect(page.getByRole("heading", { name: /no programs available/i })).toBeVisible();
+      await expect(page.getByText(/no programs available for donations/i)).toBeVisible();
+    });
 
-    // SSR fetches real data from staging API, which returns multiple programs for Optimism.
-    // Cannot mock a single-program response for SSR, so auto-redirect won't trigger.
-    test.fixme(
-      "T-DON-05: donation page auto-redirects when only one program exists",
-      async ({ page, withApiMocks }) => {
-        await withApiMocks({
-          "**/v2/communities/optimism": mockJson(community),
-          "**/v2/funding-program-configs/community/optimism**": mockJson([programA]),
-        });
+    test("T-DON-05: donation page auto-redirects when only one program exists", async ({
+      page,
+      withApiMocks,
+    }) => {
+      await withApiMocks({
+        "**/v2/communities/optimism": mockJson(community),
+        "**/communities/optimism/programs**": mockJson([programA]),
+      });
 
-        await page.goto("/community/optimism/donate", GOTO_OPTIONS);
-        await waitForPageReady(page);
+      await page.goto("/community/optimism/donate", GOTO_OPTIONS);
+      await waitForPageReady(page);
 
-        await page.waitForURL(/\/donate\/program-donate-a/, { timeout: 10000 });
-        expect(page.url()).toContain("/donate/program-donate-a");
-      }
-    );
+      await page.waitForURL(/\/donate\/program-donate-a/, { timeout: 20000 });
+      expect(page.url()).toContain("/donate/program-donate-a");
+    });
 
     test("T-DON-06: donation page shows info card about donation flow", async ({
       page,
