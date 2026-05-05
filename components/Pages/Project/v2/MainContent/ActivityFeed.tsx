@@ -219,8 +219,14 @@ export function ActivityFeed({
     return filters.flatMap((filter) => typeMap[filter]);
   };
 
-  // Pure utility function for sorting - uses seconds for consistency
-  // Priority: completed.createdAt -> endsAt (dueDate) -> createdAt
+  // Completed items go in their own bucket so a completed milestone never sinks below
+  // a pending one whose endsAt is in the future. Within a bucket we order by date.
+  const isItemCompleted = (item: UnifiedMilestone): boolean =>
+    item.completed === true ||
+    (typeof item.completed === "object" &&
+      item.completed !== null &&
+      "createdAt" in item.completed);
+
   const getSortTimestamp = (item: UnifiedMilestone): number => {
     if (item.completed && typeof item.completed === "object" && "createdAt" in item.completed) {
       return Math.floor(new Date(item.completed.createdAt).getTime() / 1000);
@@ -242,8 +248,14 @@ export function ActivityFeed({
 
     // Milestone status filtering is now done server-side via API query param
 
-    // Sort by date using same logic as production (ProjectRoadmap)
+    // Bucket: completed first (newest), last (oldest). Then by timestamp within bucket.
     filtered.sort((a, b) => {
+      const aCompleted = isItemCompleted(a);
+      const bCompleted = isItemCompleted(b);
+      if (aCompleted !== bCompleted) {
+        if (sortBy === "newest") return aCompleted ? -1 : 1;
+        return aCompleted ? 1 : -1;
+      }
       const timestampA = getSortTimestamp(a);
       const timestampB = getSortTimestamp(b);
       return sortBy === "newest" ? timestampB - timestampA : timestampA - timestampB;
