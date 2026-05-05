@@ -6,6 +6,23 @@ import { TeamContent } from "../TeamContent/TeamContent";
 vi.mock("next/navigation", () => ({
   useParams: () => ({ projectId: "test-project-123" }),
   useRouter: () => ({ push: vi.fn() }),
+  usePathname: () => "/project/test-project-123",
+}));
+
+// Mock useAuth
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: () => ({
+    authenticated: false,
+    isLoading: false,
+  }),
+}));
+
+// Mock usePermissionsQuery
+vi.mock("@/src/core/rbac/hooks/use-permissions", () => ({
+  usePermissionsQuery: () => ({
+    data: null,
+    isLoading: false,
+  }),
 }));
 
 // Mock wagmi
@@ -93,17 +110,21 @@ vi.mock("@/hooks/useCopyToClipboard", () => ({
 }));
 
 // Mock react-query
-vi.mock("@tanstack/react-query", () => ({
-  useQuery: () => ({
-    data: {
-      "0x1111111111111111111111111111111111111111": "Owner",
-      "0x2222222222222222222222222222222222222222": "Admin",
-      "0x3333333333333333333333333333333333333333": "Member",
-    },
-    isLoading: false,
-    isFetching: false,
-  }),
-}));
+vi.mock("@tanstack/react-query", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@tanstack/react-query")>();
+  return {
+    ...actual,
+    useQuery: () => ({
+      data: {
+        "0x1111111111111111111111111111111111111111": "Owner",
+        "0x2222222222222222222222222222222222222222": "Admin",
+        "0x3333333333333333333333333333333333333333": "Member",
+      },
+      isLoading: false,
+      isFetching: false,
+    }),
+  };
+});
 
 // Mock dialog components
 vi.mock("@/components/Dialogs/Member/InviteMember", () => ({
@@ -210,9 +231,9 @@ describe("TeamContent", () => {
 });
 
 describe("TeamContent - Empty State", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     // Override mock for empty project
-    const { useProjectStore, useOwnerStore } = vi.importActual("@/store");
+    const { useProjectStore, useOwnerStore } = vi.mocked(await import("@/store"));
     useProjectStore.mockImplementation((selector?: (state: unknown) => unknown) => {
       const state = {
         project: null,

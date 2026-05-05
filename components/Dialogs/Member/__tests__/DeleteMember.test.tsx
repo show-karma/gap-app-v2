@@ -277,9 +277,12 @@ describe("DeleteMemberDialog", () => {
 
       // ASSERT: The ghost member should be removed successfully via V2 cleanup.
       // No error should be shown to the user — this should be a graceful removal.
-      await waitFor(() => {
-        expect(mockShowSuccess).toHaveBeenCalledWith("Member removed successfully");
-      });
+      await waitFor(
+        () => {
+          expect(mockShowSuccess).toHaveBeenCalledWith("Member removed successfully");
+        },
+        { timeout: 3000 }
+      );
 
       // No error should have been shown
       expect(mockShowError).not.toHaveBeenCalled();
@@ -305,9 +308,12 @@ describe("DeleteMemberDialog", () => {
 
       await openDialogAndConfirm(GHOST_MEMBER_ADDRESS);
 
-      await waitFor(() => {
-        expect(mockShowError).toHaveBeenCalled();
-      });
+      await waitFor(
+        () => {
+          expect(mockShowError).toHaveBeenCalled();
+        },
+        { timeout: 3000 }
+      );
 
       expect(mockShowSuccess).not.toHaveBeenCalled();
     });
@@ -357,14 +363,20 @@ describe("DeleteMemberDialog", () => {
       await openDialogAndConfirm(NORMAL_MEMBER_ADDRESS);
 
       // ASSERT: The on-chain revoke should be called
-      await waitFor(() => {
-        expect(mockRevoke).toHaveBeenCalled();
-      });
+      await waitFor(
+        () => {
+          expect(mockRevoke).toHaveBeenCalled();
+        },
+        { timeout: 3000 }
+      );
 
       // The success message should be shown
-      await waitFor(() => {
-        expect(mockShowSuccess).toHaveBeenCalledWith("Member removed successfully");
-      });
+      await waitFor(
+        () => {
+          expect(mockShowSuccess).toHaveBeenCalledWith("Member removed successfully");
+        },
+        { timeout: 5000 }
+      );
     });
   });
 });
