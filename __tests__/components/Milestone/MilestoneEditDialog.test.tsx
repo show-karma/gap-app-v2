@@ -41,6 +41,19 @@ vi.mock("@/components/ui/textarea", () => ({
   Textarea: ({ id, ...props }: any) => <textarea id={id} data-testid={id} {...props} />,
 }));
 
+vi.mock("@/components/Utilities/MarkdownEditor", () => ({
+  MarkdownEditor: ({ id, value, onChange, onBlur, isDisabled }: any) => (
+    <textarea
+      id={id}
+      data-testid={id}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      onBlur={onBlur}
+      disabled={isDisabled}
+    />
+  ),
+}));
+
 vi.mock("@/components/Utilities/Button", () => ({
   Button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
 }));

@@ -63,6 +63,15 @@ vi.mock("@/components/Shared/ActivityCard", () => ({
   ),
 }));
 
+// Mock useMilestoneAllocationsByGrants to avoid QueryClient requirement
+vi.mock("@/hooks/useCommunityMilestoneAllocations", () => ({
+  useMilestoneAllocationsByGrants: () => ({
+    allocationMap: new Map(),
+    grantTotalMap: new Map(),
+    isLoading: false,
+  }),
+}));
+
 // Mock the ImpactContent component to avoid loading external dependencies
 vi.mock("../MainContent/ImpactContent", () => ({
   ImpactContent: () => <div data-testid="impact-content">Impact Content Mock</div>,

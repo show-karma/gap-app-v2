@@ -7,7 +7,23 @@ import { TeamContent } from "../TeamContent/TeamContent";
 vi.mock("next/navigation", () => ({
   useParams: () => ({ projectId: "test-project-123" }),
   useRouter: () => ({ push: vi.fn() }),
-  usePathname: vi.fn(() => "/"),
+  usePathname: () => "/project/test-project-123",
+}));
+
+// Mock useAuth
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: () => ({
+    authenticated: false,
+    isLoading: false,
+  }),
+}));
+
+// Mock usePermissionsQuery
+vi.mock("@/src/core/rbac/hooks/use-permissions", () => ({
+  usePermissionsQuery: () => ({
+    data: null,
+    isLoading: false,
+  }),
 }));
 
 // Mock wagmi
@@ -216,7 +232,7 @@ describe("TeamContent", () => {
 });
 
 describe("TeamContent - Empty State", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     // Override mock for empty project
     (useProjectStore as unknown as ReturnType<typeof vi.fn>).mockImplementation(
       (selector?: (state: unknown) => unknown) => {

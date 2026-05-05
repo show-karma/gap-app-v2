@@ -108,8 +108,8 @@ describe("MilestoneInput Component", () => {
       fireEvent.click(addButton);
 
       expect(screen.getByLabelText(/title \*/i)).toBeInTheDocument();
-      // Description is a MarkdownEditor, check for label text instead
-      expect(screen.getByText(/description \*/i)).toBeInTheDocument();
+      // Description is a MarkdownEditor with isRequired=false, check for label text
+      expect(screen.getByText(/^description$/i)).toBeInTheDocument();
       // Due Date uses DatePicker with aria-label, check for label text instead
       expect(screen.getByText(/due date \*/i)).toBeInTheDocument();
     });

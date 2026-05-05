@@ -124,10 +124,11 @@ describe("ApplicationSubmission - Field Matching Logic", () => {
   });
 
   describe("normalizeForMatching - Strategy 1: Exact match with transformed fieldName", () => {
-    it("should match initialData key using transformed fieldName (e.g., '1._project_name')", async () => {
+    it("should match initialData key using transformed fieldName (e.g., '1_project_name')", async () => {
+      // toFieldName("1. Project Name") strips non-alphanumeric chars → "1_project_name"
       const initialData = {
-        "1._project_name": "My Test Project",
-        "2._email_address": "test@example.com",
+        "1_project_name": "My Test Project",
+        "2_email_address": "test@example.com",
       };
 
       render(
@@ -142,8 +143,8 @@ describe("ApplicationSubmission - Field Matching Logic", () => {
 
     it("should match when initialData uses lowercase transformed format", async () => {
       const initialData = {
-        "1._project_name": "Project A",
-        "2._email_address": "email@test.com",
+        "1_project_name": "Project A",
+        "2_email_address": "email@test.com",
       };
 
       render(
@@ -230,9 +231,10 @@ describe("ApplicationSubmission - Field Matching Logic", () => {
   describe("Matching Priority", () => {
     it("should prioritize Strategy 1 (exact fieldName) over Strategy 2 (case-insensitive fieldName)", async () => {
       // If both formats exist, should use the exact fieldName match
+      // toFieldName("1. Project Name") → "1_project_name"
       const initialData = {
-        "1._project_name": "Exact FieldName Match",
-        "1._PROJECT_NAME": "Case-Insensitive FieldName Match",
+        "1_project_name": "Exact FieldName Match",
+        "1_PROJECT_NAME": "Case-Insensitive FieldName Match",
       };
 
       render(
@@ -247,7 +249,7 @@ describe("ApplicationSubmission - Field Matching Logic", () => {
 
     it("should prioritize Strategy 2 (case-insensitive fieldName) over Strategy 3 (label match)", async () => {
       const initialData = {
-        "1._PROJECT_NAME": "Case-Insensitive FieldName Match",
+        "1_PROJECT_NAME": "Case-Insensitive FieldName Match",
         "1. Project Name": "Label Match",
       };
 
@@ -375,7 +377,7 @@ describe("ApplicationSubmission - Field Matching Logic", () => {
   describe("Real-world Scenarios", () => {
     it("should handle mixed key formats in initialData", async () => {
       const initialData = {
-        "1._project_name": "Transformed Format",
+        "1_project_name": "Transformed Format",
         "2. Email Address": "Label Format",
         "3. Project Description": "Label Format Description",
       };
@@ -1230,9 +1232,10 @@ describe("ApplicationSubmission - Field Matching Logic", () => {
         ],
       };
 
-      // Field name will be: "field_(with)_[special]_{chars}" (spaces become underscores)
+      // toFieldName strips non-alphanumeric except _ and -:
+      // "Field (with) [special] {chars}" → "field_with_special_chars"
       const initialData = {
-        "field_(with)_[special]_{chars}": "Special Value",
+        field_with_special_chars: "Special Value",
       };
 
       render(
@@ -1271,8 +1274,9 @@ describe("ApplicationSubmission - Field Matching Logic", () => {
     });
 
     it("should prioritize exact fieldName match over label match", async () => {
+      // toFieldName("1. Project Name") → "1_project_name"
       const initialData = {
-        "1._project_name": "FieldName Match",
+        "1_project_name": "FieldName Match",
         "1. Project Name": "Label Match",
       };
 
@@ -2095,11 +2099,14 @@ describe("ApplicationSubmission - Field Matching Logic", () => {
       });
 
       it("should handle field labels with only special characters", async () => {
+        // When a field label contains only special characters,
+        // toFieldName("!!!") produces an empty string.
+        // The label still renders, and the input is pre-filled via Strategy 4 (label match).
         const schema: IFormSchema = {
           title: "Test Form",
           fields: [
             {
-              id: "field-1",
+              id: "field-special",
               type: "text",
               label: "!!!",
               required: false,
@@ -2121,9 +2128,17 @@ describe("ApplicationSubmission - Field Matching Logic", () => {
           />
         );
 
+        // The label text "!!!" is rendered in the DOM
         await waitFor(() => {
-          const input = screen.getByLabelText(/^!!!$/i) as HTMLInputElement;
-          expect(input.value).toBe("Special Label");
+          expect(screen.getByText("!!!")).toBeInTheDocument();
+        });
+
+        // The input should have been pre-filled via Strategy 4 (label match)
+        // Since fieldName becomes "" for "!!!", find by placeholder text
+        await waitFor(() => {
+          const inputs = screen.getAllByPlaceholderText(/enter/i);
+          expect(inputs.length).toBeGreaterThan(0);
+          expect((inputs[0] as HTMLInputElement).value).toBe("Special Label");
         });
       });
 

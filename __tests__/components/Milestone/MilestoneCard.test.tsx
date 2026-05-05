@@ -38,10 +38,13 @@ vi.mock("next/image", () => ({
 // Mock ENS components
 vi.mock("@/components/EthereumAddressToProfileName", () => ({
   __esModule: true,
-  default: ({ address, className }: any) => (
-    <span data-testid="ens-name" className={className}>
-      {address}
-    </span>
+  default: ({ address, className, showProfilePicture }: any) => (
+    <>
+      {showProfilePicture && <img data-testid="ens-avatar" src="" alt={address} />}
+      <span data-testid="ens-name" className={className}>
+        {address}
+      </span>
+    </>
   ),
 }));
 
