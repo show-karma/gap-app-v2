@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { useAccount } from "wagmi";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { DeleteMemberDialog } from "../DeleteMember";
 
 // --- Constants ---
@@ -175,19 +176,9 @@ vi.mock("@/store", () => ({
   }),
 }));
 
-// Mock setupChainAndWallet - use relative path from source file because
-// SWC resolves @/ aliases at compile time, so vi.mock("@/hooks/...") doesn't
-// intercept imports within compiled source modules.
+// useSetupChainAndWallet is auto-aliased to __mocks__/hooks/useSetupChainAndWallet.ts
+// (see vitest.config.ts unitTestMockAliases). Override its return value per-test.
 const mockSetupChainAndWallet = vi.fn();
-vi.mock("../../../../hooks/useSetupChainAndWallet", () => ({
-  useSetupChainAndWallet: () => ({
-    setupChainAndWallet: mockSetupChainAndWallet,
-    isSmartWalletReady: false,
-    smartWalletAddress: null,
-    hasEmbeddedWallet: false,
-    hasExternalWallet: false,
-  }),
-}));
 
 describe("DeleteMemberDialog", () => {
   beforeEach(() => {
@@ -204,6 +195,14 @@ describe("DeleteMemberDialog", () => {
     mockSetupChainAndWallet.mockResolvedValue({
       walletSigner: { provider: {} },
       gapClient: {},
+    });
+
+    (useSetupChainAndWallet as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
+      setupChainAndWallet: mockSetupChainAndWallet,
+      isSmartWalletReady: false,
+      smartWalletAddress: null,
+      hasEmbeddedWallet: false,
+      hasExternalWallet: false,
     });
   });
 
