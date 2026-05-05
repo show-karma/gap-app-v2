@@ -5,7 +5,6 @@ import { Lock, RefreshCw, Search, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { getProjectTitle } from "@/components/FundingPlatform/helper/getProjectTitle";
-import type { ProgramWithConfig } from "@/features/programs/hooks/use-programs-with-config";
 import { useProgramsWithConfig } from "@/features/programs/hooks/use-programs-with-config";
 import { Link } from "@/src/components/navigation/Link";
 import type { Application, ApplicationStatus } from "@/types/whitelabel-entities";
@@ -51,96 +50,6 @@ function formatStatusLabel(status: ApplicationStatus): string {
   return status.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
 }
 
-function normalizeFieldKey(key: string): string {
-  return key.toLowerCase().replace(/[\s_-]/g, "");
-}
-
-function formatAmountValue(value: unknown): string | null {
-  if (typeof value === "number") {
-    return `$${value.toLocaleString()}`;
-  }
-  if (typeof value === "string" && value.trim().length > 0) {
-    // Extract the first dollar amount (e.g. "$239,000" from "$239,000 over next three months...")
-    const dollarMatch = value.match(/\$[\d,]+(?:\.\d+)?/);
-    if (dollarMatch) {
-      const num = Number(dollarMatch[0].replace(/[$,]/g, ""));
-      if (!Number.isNaN(num) && num > 0) {
-        return `$${num.toLocaleString()}`;
-      }
-    }
-    // Fall back to parsing a plain number string (e.g. "50000")
-    const plainNum = Number(value.replace(/[^0-9.]/g, ""));
-    if (value.length <= 20 && !Number.isNaN(plainNum) && plainNum > 0) {
-      return `$${plainNum.toLocaleString()}`;
-    }
-    if (value.trim().length <= 50) {
-      return value;
-    }
-  }
-  return null;
-}
-
-function getRequestedAmount(applicationData: Record<string, unknown>): string | null {
-  const preferredKeys = new Set([
-    "requestedamount",
-    "amountrequested",
-    "fundingamount",
-    "fundingrequest",
-    "grantamount",
-    "budget",
-  ]);
-
-  // First pass: check preferred (short, unambiguous) keys
-  for (const [key, value] of Object.entries(applicationData ?? {})) {
-    if (preferredKeys.has(normalizeFieldKey(key))) {
-      const formatted = formatAmountValue(value);
-      if (formatted) return formatted;
-    }
-  }
-
-  // Second pass: fall back to pattern matching on longer keys, but only
-  // when the normalized key is short enough to be a field label (not a question)
-  for (const [key, value] of Object.entries(applicationData ?? {})) {
-    const normalizedKey = normalizeFieldKey(key);
-    if (normalizedKey.length > 40) continue;
-    const matchesPattern =
-      normalizedKey.includes("amount") &&
-      (normalizedKey.includes("requested") ||
-        normalizedKey.includes("funding") ||
-        normalizedKey.includes("grant"));
-    if (matchesPattern) {
-      const formatted = formatAmountValue(value);
-      if (formatted) return formatted;
-    }
-  }
-
-  return null;
-}
-
-function getCategoryTag(applicationData: Record<string, unknown>): string | null {
-  const MAX_TAG_LENGTH = 60;
-  for (const [key, value] of Object.entries(applicationData ?? {})) {
-    const nk = normalizeFieldKey(key);
-    if (nk.includes("category") || nk.includes("track") || nk.includes("projecttype")) {
-      if (
-        typeof value === "string" &&
-        value.trim().length > 0 &&
-        value.trim().length <= MAX_TAG_LENGTH
-      ) {
-        return value.trim();
-      }
-      if (
-        Array.isArray(value) &&
-        typeof value[0] === "string" &&
-        value[0].trim().length <= MAX_TAG_LENGTH
-      ) {
-        return value[0].trim();
-      }
-    }
-  }
-  return null;
-}
-
 interface ApplicationsPageData {
   applications: Application[];
   pagination: {
@@ -151,7 +60,7 @@ interface ApplicationsPageData {
   };
 }
 
-const ApplicationCardMemo = memo(function ApplicationCardInner({
+const ApplicationRowMemo = memo(function ApplicationRowInner({
   application,
   communityId,
 }: {
@@ -159,76 +68,82 @@ const ApplicationCardMemo = memo(function ApplicationCardInner({
   communityId: string;
 }) {
   const projectName = getProjectTitle(application);
-  const requestedAmount = getRequestedAmount(application.applicationData ?? {});
-  const categoryTag = getCategoryTag(application.applicationData ?? {});
-  const hasUpdates =
-    Boolean(application.updatedAt) && application.updatedAt !== application.createdAt;
-  const dateLabel = hasUpdates ? "Updated" : "Submitted";
-  const dateValue = formatDate(hasUpdates ? application.updatedAt : application.createdAt);
+  const dateValue = formatDate(application.updatedAt || application.createdAt);
+  const href = `/community/${communityId}/browse-applications/${application.referenceNumber}`;
 
   return (
-    <Link
-      href={`/community/${communityId}/browse-applications/${application.referenceNumber}`}
-      className="block h-full"
-    >
-      <div className="flex h-full min-h-[220px] flex-col rounded-xl border border-border bg-card transition-shadow hover:shadow-lg">
-        <div className="flex items-start justify-between gap-3 p-4 pb-2">
-          <h3 className="line-clamp-3 flex-1 text-lg font-semibold text-foreground">
-            {projectName}
-          </h3>
-          <span
-            className={cn(
-              "inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-xs font-medium",
-              getStatusColor(application.status)
-            )}
-          >
-            {formatStatusLabel(application.status)}
-          </span>
-        </div>
-        <div className="flex flex-1 flex-col justify-between gap-4 px-4 pb-4 pt-0">
-          <div className="flex flex-wrap gap-2">
-            {categoryTag && (
-              <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                {categoryTag}
-              </span>
-            )}
-            <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-              {application.referenceNumber}
-            </span>
-          </div>
-          <div className="space-y-1 text-sm text-muted-foreground">
-            {requestedAmount && (
-              <p>
-                Requested: <span className="font-medium text-foreground">{requestedAmount}</span>
-              </p>
-            )}
-            <p>
-              {dateLabel}: <span className="font-medium text-foreground">{dateValue}</span>
-            </p>
-          </div>
-        </div>
-      </div>
-    </Link>
+    <tr className="border-b border-border transition-colors hover:bg-muted/50">
+      <td className="px-4 py-3 align-middle">
+        <Link
+          href={href}
+          className="font-medium text-foreground hover:text-primary hover:underline"
+        >
+          {projectName}
+        </Link>
+      </td>
+      <td className="px-4 py-3 align-middle">
+        <Link
+          href={href}
+          className="font-mono text-sm text-muted-foreground hover:text-foreground hover:underline"
+        >
+          {application.referenceNumber}
+        </Link>
+      </td>
+      <td className="px-4 py-3 align-middle">
+        <span
+          className={cn(
+            "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
+            getStatusColor(application.status)
+          )}
+        >
+          {formatStatusLabel(application.status)}
+        </span>
+      </td>
+      <td className="px-4 py-3 align-middle text-sm text-muted-foreground">
+        <span className="font-medium text-foreground">{dateValue}</span>
+      </td>
+    </tr>
   );
 });
 
 function LoadingSkeleton() {
   const skeletonKeys = ["bsk-1", "bsk-2", "bsk-3", "bsk-4", "bsk-5", "bsk-6"];
   return (
-    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-      {skeletonKeys.map((key) => (
-        <div
-          key={key}
-          className="min-h-[220px] animate-pulse rounded-xl border border-border bg-card p-5"
-        >
-          <div className="space-y-3">
-            <div className="h-5 w-4/5 rounded bg-muted" />
-            <div className="h-4 w-2/3 rounded bg-muted" />
-            <div className="h-4 w-1/2 rounded bg-muted" />
-          </div>
-          <div className="mt-4 h-6 w-24 rounded bg-muted" />
-        </div>
-      ))}
+    <div className="overflow-hidden rounded-xl border border-border">
+      <table className="w-full">
+        <thead className="bg-muted/40">
+          <tr className="border-b border-border">
+            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Project Name
+            </th>
+            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Application Id
+            </th>
+            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Status
+            </th>
+            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {skeletonKeys.map((key) => (
+            <tr key={key} className="border-b border-border">
+              <td className="px-4 py-3">
+                <div className="h-4 w-4/5 animate-pulse rounded bg-muted" />
+              </td>
+              <td className="px-4 py-3">
+                <div className="h-4 w-24 animate-pulse rounded bg-muted" />
+              </td>
+              <td className="px-4 py-3">
+                <div className="h-5 w-20 animate-pulse rounded-full bg-muted" />
+              </td>
+              <td className="px-4 py-3">
+                <div className="h-4 w-32 animate-pulse rounded bg-muted" />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
@@ -510,14 +425,32 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
               </div>
             ) : (
               <div>
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 items-stretch">
-                  {applications.map((application) => (
-                    <ApplicationCardMemo
-                      key={application.referenceNumber}
-                      application={application}
-                      communityId={communityId}
-                    />
-                  ))}
+                <div className="overflow-x-auto rounded-xl border border-border">
+                  <table className="w-full">
+                    <thead className="bg-muted/40">
+                      <tr className="border-b border-border">
+                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          Project Name
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          Application Id
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          Status
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {applications.map((application) => (
+                        <ApplicationRowMemo
+                          key={application.referenceNumber}
+                          application={application}
+                          communityId={communityId}
+                        />
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
 
                 {hasNextPage && (

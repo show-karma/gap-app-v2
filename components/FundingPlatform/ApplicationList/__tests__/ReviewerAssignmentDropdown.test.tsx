@@ -60,7 +60,7 @@ vi.mock("@/components/Utilities/MultiSelectDropdown", () => {
               {item.label}
             </button>
           ))}
-          {items.length === 0 && onEmptyAction && emptyActionLabel && (
+          {onEmptyAction && emptyActionLabel && (
             <button data-testid="empty-action" onClick={onEmptyAction}>
               {emptyActionLabel}
             </button>
@@ -595,6 +595,27 @@ describe("ReviewerAssignmentDropdown", () => {
 
     it("should open the invite modal from the empty state action", () => {
       renderComponent({ availableReviewers: [], reviewerType: ReviewerType.MILESTONE });
+
+      fireEvent.click(screen.getByTestId("empty-action"));
+
+      expect(screen.getByTestId("invite-reviewer-modal")).toBeInTheDocument();
+      expect(screen.getByTestId("invite-reviewer-type")).toHaveTextContent("milestone");
+    });
+
+    it("should expose the invite action even when reviewers are available", () => {
+      renderComponent({
+        availableReviewers: mockProgramReviewers,
+        reviewerType: ReviewerType.APP,
+      });
+
+      expect(screen.getByTestId("empty-action")).toHaveTextContent("Add application reviewer");
+    });
+
+    it("should open the invite modal from the action when reviewers are available", () => {
+      renderComponent({
+        availableReviewers: mockMilestoneReviewers,
+        reviewerType: ReviewerType.MILESTONE,
+      });
 
       fireEvent.click(screen.getByTestId("empty-action"));
 

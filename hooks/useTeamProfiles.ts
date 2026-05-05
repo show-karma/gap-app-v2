@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo } from "react";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { useAuth } from "@/hooks/useAuth";
 import { communityAdminsService } from "@/services/community-admins.service";
 import { useProjectStore } from "@/store";
 import type { TeamProfile } from "@/types/team-profile";
@@ -10,11 +9,6 @@ import { getContributorProfiles } from "@/utilities/indexer/getContributorProfil
 
 export const useTeamProfiles = (project: ProjectResponse | undefined) => {
   const setTeamProfiles = useProjectStore((state) => state.setTeamProfiles);
-  const { authenticated, address: viewerAddress } = useAuth();
-  // The authorized profiles endpoint requires a wallet-linked viewer; calling
-  // it as an email-only Privy user yields a 401 on every render. Gate the
-  // request on having a wallet to avoid noisy Sentry captures.
-  const canFetchAuthorizedProfiles = authenticated && Boolean(viewerAddress);
 
   const uniqueLowercasedAddresses = useMemo(() => {
     const rawAddresses = [
@@ -25,17 +19,15 @@ export const useTeamProfiles = (project: ProjectResponse | undefined) => {
   }, [project?.owner, project?.members]);
 
   const query = useQuery<TeamProfile[] | undefined>({
-    queryKey: ["contributor-profiles", uniqueLowercasedAddresses, canFetchAuthorizedProfiles],
+    queryKey: ["contributor-profiles", uniqueLowercasedAddresses],
     queryFn: async () => {
       if (!project || uniqueLowercasedAddresses.length === 0) return [];
       const profiles = ((await getContributorProfiles(uniqueLowercasedAddresses)) ||
         []) as TeamProfile[];
 
-      if (!canFetchAuthorizedProfiles) return profiles;
-
       try {
-        const authorizedProfiles =
-          await communityAdminsService.getUserProfiles(uniqueLowercasedAddresses);
+        const publicUserProfiles =
+          await communityAdminsService.getPublicUserProfiles(uniqueLowercasedAddresses);
         const publicProfilesByAddress = new Map(
           profiles.map((profile) => [profile.recipient.toLowerCase(), profile] as const)
         );
@@ -43,34 +35,34 @@ export const useTeamProfiles = (project: ProjectResponse | undefined) => {
         return uniqueLowercasedAddresses
           .map((address) => {
             const publicProfile = publicProfilesByAddress.get(address);
-            const authorizedProfile = authorizedProfiles.get(address);
+            const userProfile = publicUserProfiles.get(address);
 
             if (publicProfile) {
-              if (!authorizedProfile?.email) return publicProfile;
+              if (!userProfile?.email) return publicProfile;
 
               return {
                 ...publicProfile,
                 data: {
                   ...publicProfile.data,
-                  email: authorizedProfile.email,
+                  email: userProfile.email,
                 },
               };
             }
 
-            if (!authorizedProfile) return undefined;
+            if (!userProfile) return undefined;
 
             return {
               recipient: address,
               data: {
-                name: authorizedProfile.name,
-                email: authorizedProfile.email,
+                name: userProfile.name,
+                email: userProfile.email,
               },
             } as TeamProfile;
           })
           .filter((profile): profile is TeamProfile => Boolean(profile));
       } catch (error) {
         errorManager(
-          "Failed to fetch authorized user profiles; falling back to public profiles",
+          "Failed to fetch public user profiles; falling back to contributor profiles",
           error,
           { addresses: uniqueLowercasedAddresses }
         );

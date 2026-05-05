@@ -85,6 +85,7 @@ function renderAutocomplete(
     caretPosition: null,
     onSelect: vi.fn(),
     onInviteNew: vi.fn(),
+    onInviteGrantee: vi.fn(),
     onClose: vi.fn(),
     ...overrides,
   };
@@ -140,10 +141,12 @@ describe("MentionAutocomplete", () => {
       });
     });
 
-    it("does not show Reviewers heading when no reviewers exist", () => {
+    it("renders the Invite new reviewer button at the end of the Reviewers section", () => {
       renderAutocomplete();
-      // mockReviewerData is empty here (cleared in beforeEach) but we added in this describe's beforeEach
-      // Force empty data
+      const items = screen.getAllByRole("option");
+      // Layout: Alice (0), Bob (1), Invite (2)
+      expect(items).toHaveLength(3);
+      expect(items[2].textContent).toMatch(/Invite new reviewer/);
     });
   });
 
@@ -263,37 +266,76 @@ describe("MentionAutocomplete", () => {
       expect(screen.queryByText("Dana Grantee")).not.toBeInTheDocument();
     });
 
-    it("shows no results message when filter matches nothing", () => {
+    it("still shows section headings + invite buttons when filter matches nothing", () => {
       renderAutocomplete({ filterText: "zzz-nomatch", granteeContacts: GRANTEES });
-      expect(screen.getByText("No results found.")).toBeInTheDocument();
+      // Sections always render so the invite buttons remain reachable
+      expect(screen.getByText("Reviewers")).toBeInTheDocument();
+      expect(screen.getByText("Grantees")).toBeInTheDocument();
+      expect(screen.getByText("Invite new reviewer")).toBeInTheDocument();
+      expect(screen.getByText("Invite new grantee")).toBeInTheDocument();
     });
 
-    it("hides section heading when section has no matching results", () => {
-      // Filter matches only a grantee — reviewer section should not appear
+    it("keeps both section headings even when filter only matches grantees", () => {
       renderAutocomplete({ filterText: "charlie", granteeContacts: GRANTEES });
-      expect(screen.queryByText("Reviewers")).not.toBeInTheDocument();
+      expect(screen.getByText("Reviewers")).toBeInTheDocument();
       expect(screen.getByText("Grantees")).toBeInTheDocument();
     });
   });
 
-  describe("admin invite button", () => {
-    it("shows invite button when isAdmin is true", () => {
-      renderAutocomplete({ isAdmin: true });
+  describe("invite buttons", () => {
+    it("shows the reviewer invite button regardless of isAdmin", () => {
+      renderAutocomplete({ isAdmin: false });
       expect(screen.getByText("Invite new reviewer")).toBeInTheDocument();
     });
 
-    it("hides invite button when isAdmin is false", () => {
-      renderAutocomplete({ isAdmin: false });
-      expect(screen.queryByText("Invite new reviewer")).not.toBeInTheDocument();
-    });
-
-    it("calls onInviteNew when invite button is clicked", async () => {
+    it("calls onInviteNew when the reviewer invite button is clicked", async () => {
       const onInviteNew = vi.fn();
-      renderAutocomplete({ isAdmin: true, onInviteNew });
+      renderAutocomplete({ onInviteNew });
 
       await userEvent.click(screen.getByText("Invite new reviewer"));
 
       expect(onInviteNew).toHaveBeenCalled();
+    });
+
+    it("renders the grantee invite button only when granteeContacts + onInviteGrantee are provided", () => {
+      const { rerender } = renderAutocomplete({
+        granteeContacts: undefined,
+        onInviteGrantee: undefined,
+      });
+      expect(screen.queryByText("Invite new grantee")).not.toBeInTheDocument();
+
+      rerender(
+        <MentionAutocomplete
+          programId={PROGRAM_ID}
+          isOpen
+          filterText=""
+          isAdmin={false}
+          selectedIndex={0}
+          caretPosition={null}
+          onSelect={vi.fn()}
+          onInviteNew={vi.fn()}
+          onInviteGrantee={vi.fn()}
+          onClose={vi.fn()}
+          granteeContacts={GRANTEES}
+        />
+      );
+      expect(screen.getByText("Invite new grantee")).toBeInTheDocument();
+    });
+
+    it("calls onInviteGrantee when the grantee invite button is clicked", async () => {
+      const onInviteGrantee = vi.fn();
+      renderAutocomplete({ granteeContacts: GRANTEES, onInviteGrantee });
+
+      await userEvent.click(screen.getByText("Invite new grantee"));
+
+      expect(onInviteGrantee).toHaveBeenCalled();
+    });
+
+    it("renders Grantees section without invite button when onInviteGrantee is missing", () => {
+      renderAutocomplete({ granteeContacts: GRANTEES, onInviteGrantee: undefined });
+
+      expect(screen.getByText("Charlie Grantee")).toBeInTheDocument();
+      expect(screen.queryByText("Invite new grantee")).not.toBeInTheDocument();
     });
   });
 
@@ -309,13 +351,12 @@ describe("MentionAutocomplete", () => {
       expect(items[0]).toHaveClass("bg-blue-50");
     });
 
-    it("highlights grantee item when selectedIndex points past reviewers", () => {
-      renderAutocomplete({ selectedIndex: 2, granteeContacts: GRANTEES });
-      // Index 2 = third item = first grantee (Charlie)
-      // We can check that no reviewer has the highlight class at that index
+    it("highlights grantee item when selectedIndex points past reviewers + reviewer-invite", () => {
+      // Layout with REVIEWERS (2) + GRANTEES (3):
+      //   0..1 reviewers, 2 invite-reviewer, 3..5 grantees, 6 invite-grantee
+      renderAutocomplete({ selectedIndex: 3, granteeContacts: GRANTEES });
       const allItems = screen.getAllByRole("option");
-      // Index 0 = Alice, Index 1 = Bob, Index 2 = Charlie
-      expect(allItems[2]).toHaveClass("bg-blue-50");
+      expect(allItems[3]).toHaveClass("bg-blue-50");
     });
   });
 
