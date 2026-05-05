@@ -3,6 +3,7 @@
  * Tests all navigation patterns including dropdowns, external links, anchors, and modals
  */
 
+import "../setup";
 import "./setup-dynamic-mock";
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -147,7 +148,7 @@ describe("Navigation Flow Integration Tests", () => {
     // doesn't propagate `isLoggedIn=true` from the test's `authFixture.authState`
     // through to <NavbarDesktopNavigation /> when rendered directly. Needs the
     // file-level _refs hoisted-mock pattern used by auth-flow.test.tsx.
-    it.skip("should hide Resources dropdown when logged in", () => {
+    it("should hide Resources dropdown when logged in", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<NavbarDesktopNavigation />, {
@@ -269,7 +270,7 @@ describe("Navigation Flow Integration Tests", () => {
     // FIXME(navbar-tests-batch-A): production ExternalLink uses rel="noreferrer"
     // (missing `noopener`). Batch D applied the security fix on its branch; once
     // that lands on main, restore the `rel="noopener noreferrer"` expectation.
-    it.skip("should render external links with correct attributes", async () => {
+    it("should render external links with correct attributes", async () => {
       const user = userEvent.setup();
       const authFixture = getAuthFixture("unauthenticated");
 
@@ -342,22 +343,10 @@ describe("Navigation Flow Integration Tests", () => {
   });
 
   describe("4. Anchor Scrolling - Same Page", () => {
-    // FIXME(navbar-tests-batch-A): "Find funding" no longer scrolls — production
-    // changed it to a regular Next.js link to /registry. Test needs to assert
-    // navigation (mockRouter.push) instead of scrollIntoView.
-    it.skip("should handle anchor navigation on same page", async () => {
+    it("should render Find funding as a registry route link", async () => {
       const user = userEvent.setup();
       const mockRouter = createMockRouter({ pathname: "/" });
       const authFixture = getAuthFixture("unauthenticated");
-
-      // Mock scrollIntoView
-      const mockScrollIntoView = vi.fn();
-      Element.prototype.scrollIntoView = mockScrollIntoView;
-
-      // Create anchor element in document
-      const anchorElement = document.createElement("div");
-      anchorElement.id = "live-funding-opportunities";
-      document.body.appendChild(anchorElement);
 
       renderWithProviders(<NavbarDesktopNavigation />, {
         mockUsePrivy: createMockUsePrivy(authFixture.authState),
@@ -374,17 +363,12 @@ describe("Navigation Flow Integration Tests", () => {
         expect(screen.getByText("Find funding")).toBeInTheDocument();
       });
 
-      // Click Find funding (has anchor)
-      const findFundingLink = screen.getByText("Find funding");
-      await user.click(findFundingLink);
-
-      // Should scroll to anchor
-      await waitFor(() => {
-        expect(mockScrollIntoView).toHaveBeenCalled();
-      });
-
-      // Cleanup
-      document.body.removeChild(anchorElement);
+      const findFundingLink = screen.getByText("Find funding").closest("a");
+      expect(findFundingLink).not.toBeNull();
+      expect(findFundingLink).toHaveAttribute(
+        "href",
+        expect.stringMatching(/funding-map|registry/i)
+      );
     });
 
     it("should navigate then scroll when on different page", async () => {

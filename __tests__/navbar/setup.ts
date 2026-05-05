@@ -7,10 +7,15 @@
  * server lifecycle live here.
  */
 
+import { configure } from "@testing-library/react";
 import { toHaveNoViolations } from "jest-axe";
 import { setupServer } from "msw/node";
 import React from "react";
 import { handlers } from "./mocks/handlers";
+
+// Increase async util timeout — lazy components (`next/dynamic`) need more time
+// to mount when test files run in parallel under jsdom.
+configure({ asyncUtilTimeout: 5000 });
 
 // ---- Hoisted mock state (available in vi.mock factories) ----
 // vi.hoisted runs before vi.mock factories, making these variables

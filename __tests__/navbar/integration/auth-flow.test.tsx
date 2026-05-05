@@ -214,49 +214,18 @@ describe("Authentication Flow Integration Tests", () => {
         mockPermissions: createMockPermissions(authFixture.permissions),
       });
 
-      // Find the desktop MenubarTrigger (the button wrapping the user avatar).
-      // EthereumAddressToENSAvatar renders <div><img alt="Recipient profile"/></div>
-      // inside a <MenubarTrigger> which renders as <button aria-haspopup="menu">.
-      // We find the img first, then walk up to the button trigger.
-      const recipientImgs = screen.getAllByRole("img", { name: /Recipient profile/i });
-      // The desktop trigger is hidden on small screens (lg:flex parent).
-      // The first match whose button ancestor has aria-haspopup="menu" is the desktop one.
-      let menubarTrigger: HTMLElement | null = null;
-      for (const img of recipientImgs) {
-        const btn = img.closest('button[aria-haspopup="menu"]');
-        if (btn) {
-          menubarTrigger = btn as HTMLElement;
-          break;
-        }
-      }
+      // Wait for lazy desktop user menu to mount, then open it
+      const menubarTrigger = await screen.findByRole("menuitem");
+      await user.click(menubarTrigger);
 
-      if (menubarTrigger) {
-        // Use fireEvent.pointerDown + click — Radix Menubar requires pointer events to open.
-        fireEvent.pointerDown(menubarTrigger);
-        fireEvent.click(menubarTrigger);
+      await waitFor(() => {
+        expect(screen.getByText("Edit profile")).toBeInTheDocument();
+      });
 
-        // Wait for menu to open and find profile button
-        await waitFor(() => {
-          expect(screen.getByText("Edit profile")).toBeInTheDocument();
-        });
+      const profileButton = screen.getByText("Edit profile");
+      await user.click(profileButton);
 
-        // Click "Edit profile"
-        const profileButton = screen.getByText("Edit profile");
-        fireEvent.click(profileButton);
-
-        // Verify modal opened
-        expect(mockOpenModal).toHaveBeenCalledTimes(1);
-      } else {
-        // Desktop section is not rendered (e.g., window width too narrow in jsdom).
-        // Fall back: verify the modal store was wired correctly by checking the
-        // mobile "Open profile" button instead.
-        await waitFor(() => {
-          expect(screen.getByLabelText("Open profile")).toBeInTheDocument();
-        });
-        const profileButton = screen.getByLabelText("Open profile");
-        fireEvent.click(profileButton);
-        expect(mockOpenModal).toHaveBeenCalledTimes(1);
-      }
+      expect(mockOpenModal).toHaveBeenCalledTimes(1);
     });
 
     it("should open profile modal from mobile avatar button", async () => {
