@@ -59,6 +59,28 @@ const MarkdownPreview = dynamic(
   { ssr: false }
 );
 
+function extractCompletionCriteriaByTitle(
+  applicationData: Record<string, unknown> | undefined
+): Map<string, string> {
+  const map = new Map<string, string>();
+  if (!applicationData) return map;
+
+  for (const value of Object.values(applicationData)) {
+    if (!Array.isArray(value)) continue;
+    for (const item of value) {
+      if (!item || typeof item !== "object") continue;
+      const { title, completionCriteria } = item as {
+        title?: unknown;
+        completionCriteria?: unknown;
+      };
+      if (typeof title !== "string" || typeof completionCriteria !== "string") continue;
+      const trimmed = completionCriteria.trim();
+      if (trimmed && !map.has(title)) map.set(title, trimmed);
+    }
+  }
+  return map;
+}
+
 // Strip the optional chainId suffix from program IDs (e.g. "959_42161" -> "959").
 function parseProgramId(programId: string): string {
   if (programId.includes("_")) {
@@ -487,6 +509,13 @@ function MilestonesReviewPageContent({
     error: fundingApplicationError,
     refetch: refetchFundingApplication,
   } = useFundingApplicationByProjectUID(projectUID || "");
+
+  // On-chain milestone attestations don't carry completion criteria, so we look
+  // it up from the application data (where the grantee originally entered it).
+  const completionCriteriaByTitle = useMemo(
+    () => extractCompletionCriteriaByTitle(fundingApplication?.applicationData),
+    [fundingApplication?.applicationData]
+  );
 
   // Memoize reference number: prefer funding application, fallback to milestone completion data
   const referenceNumber = useMemo(() => {
@@ -960,6 +989,7 @@ function MilestonesReviewPageContent({
                       }
                       showAIEvaluationButton={false}
                       quietSurface
+                      completionCriteria={completionCriteriaByTitle.get(selectedMilestone.title)}
                     />
                     <InlineAIEvaluation milestone={selectedMilestone} />
                   </div>
