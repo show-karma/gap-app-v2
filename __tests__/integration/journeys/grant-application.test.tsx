@@ -373,7 +373,7 @@ describe("ApplicationSubmission - Grant application flow", () => {
       const submittedData = onSubmit.mock.calls[0][0];
       expect(submittedData["Project Name"]).toBe("My Project");
       expect(submittedData["Project Description"]).toBe("Description here");
-      expect(submittedData["Email"]).toBe("user@example.com");
+      expect(submittedData.Email).toBe("user@example.com");
     });
 
     it("shows success toast after submission", async () => {
@@ -454,7 +454,7 @@ describe("ApplicationSubmission - Grant application flow", () => {
       const submittedData = onSubmit.mock.calls[0][0];
       expect(submittedData["Project Name"]).toBe("My Project");
       expect(submittedData["Project Description"]).toBe("Description");
-      expect(submittedData["Email"]).toBe("user@example.com");
+      expect(submittedData.Email).toBe("user@example.com");
 
       // On success path, toast.success is called (not toast.error)
       await waitFor(() => {

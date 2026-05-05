@@ -38,6 +38,6 @@ export function buildDynamicSchema(questions: ApplicationQuestion[]) {
   return z.object(shape);
 }
 
-export type InferSchemaType<T extends ApplicationQuestion[]> = z.infer<
+export type InferSchemaType<_T extends ApplicationQuestion[]> = z.infer<
   ReturnType<typeof buildDynamicSchema>
 >;

@@ -1,5 +1,5 @@
-import { test as base, expect } from "@playwright/test";
-import { type AnvilConfig, anvilFixture } from "../../fixtures";
+import { expect } from "@playwright/test";
+import { anvilFixture } from "../../fixtures";
 
 /**
  * Anvil fork tests for Hedgey claim interactions on Optimism.

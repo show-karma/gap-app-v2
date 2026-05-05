@@ -94,7 +94,6 @@ vi.mock("viem", () => ({
 vi.mock("ethers", () => ({
   BrowserProvider: class MockBrowserProvider {
     getSigner = mockGetSigner;
-    constructor(..._args: unknown[]) {}
   },
 }));
 

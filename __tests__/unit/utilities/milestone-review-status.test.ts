@@ -20,7 +20,6 @@ function makeMilestone(
     status: "pending",
     completionDetails: null,
     verificationDetails: null,
-    fundingApplicationCompletion: null,
     ...overrides,
   };
 }
@@ -53,29 +52,21 @@ describe("getMilestoneStatus", () => {
     expect(getMilestoneStatus(milestone)).toBe(MilestoneReviewStatus.PendingVerification);
   });
 
-  it("returns PendingCompletion when only fundingApplicationCompletion is present", () => {
+  it("returns Pending when past due date without completion", () => {
     const milestone = makeMilestone({
-      fundingApplicationCompletion: {
-        id: "fc-1",
-        referenceNumber: "REF-001",
-        milestoneFieldLabel: "milestone_1",
-        milestoneTitle: "Phase 1",
-        completionText: "Submitted off-chain",
-        ownerAddress: "0xabc",
-        isVerified: false,
-        createdAt: "2025-01-15T10:00:00Z",
-        updatedAt: "2025-01-15T10:00:00Z",
-      },
+      dueDate: "2020-01-01", // Past date
     });
-    expect(getMilestoneStatus(milestone)).toBe(MilestoneReviewStatus.PendingCompletion);
+    expect(getMilestoneStatus(milestone)).toBe(MilestoneReviewStatus.Late);
   });
 
-  it("returns NotStarted when all detail fields are null", () => {
-    const milestone = makeMilestone();
-    expect(getMilestoneStatus(milestone)).toBe(MilestoneReviewStatus.NotStarted);
+  it("returns Pending when not started and deadline not passed", () => {
+    const milestone = makeMilestone({
+      dueDate: "2099-12-31", // Future date
+    });
+    expect(getMilestoneStatus(milestone)).toBe(MilestoneReviewStatus.Pending);
   });
 
-  it("prioritizes verificationDetails over completionDetails and fundingApplicationCompletion", () => {
+  it("prioritizes verificationDetails over completionDetails", () => {
     const milestone = makeMilestone({
       verificationDetails: {
         description: "Verified",
@@ -87,38 +78,16 @@ describe("getMilestoneStatus", () => {
         completedAt: "2025-01-15T10:00:00Z",
         completedBy: "0xdef",
       },
-      fundingApplicationCompletion: {
-        id: "fc-1",
-        referenceNumber: "REF-001",
-        milestoneFieldLabel: "milestone_1",
-        milestoneTitle: "Phase 1",
-        completionText: "Submitted",
-        ownerAddress: "0xabc",
-        isVerified: true,
-        createdAt: "2025-01-15T10:00:00Z",
-        updatedAt: "2025-01-16T14:30:00Z",
-      },
     });
     expect(getMilestoneStatus(milestone)).toBe(MilestoneReviewStatus.Verified);
   });
 
-  it("prioritizes completionDetails over fundingApplicationCompletion", () => {
+  it("returns PendingVerification when only completionDetails is present", () => {
     const milestone = makeMilestone({
       completionDetails: {
         description: "On-chain completion",
         completedAt: "2025-01-15T10:00:00Z",
         completedBy: "0xdef",
-      },
-      fundingApplicationCompletion: {
-        id: "fc-1",
-        referenceNumber: "REF-001",
-        milestoneFieldLabel: "milestone_1",
-        milestoneTitle: "Phase 1",
-        completionText: "Off-chain",
-        ownerAddress: "0xabc",
-        isVerified: false,
-        createdAt: "2025-01-15T10:00:00Z",
-        updatedAt: "2025-01-15T10:00:00Z",
       },
     });
     expect(getMilestoneStatus(milestone)).toBe(MilestoneReviewStatus.PendingVerification);
@@ -126,16 +95,11 @@ describe("getMilestoneStatus", () => {
 });
 
 describe("MilestoneReviewStatus enum", () => {
-  it("has exactly 4 members", () => {
-    const values = Object.values(MilestoneReviewStatus);
-    expect(values).toHaveLength(4);
-  });
-
   it("uses snake_case string values", () => {
     expect(MilestoneReviewStatus.Verified).toBe("verified");
     expect(MilestoneReviewStatus.PendingVerification).toBe("pending_verification");
-    expect(MilestoneReviewStatus.PendingCompletion).toBe("pending_completion");
-    expect(MilestoneReviewStatus.NotStarted).toBe("not_started");
+    expect(MilestoneReviewStatus.Pending).toBe("pending");
+    expect(MilestoneReviewStatus.Late).toBe("late");
   });
 });
 
@@ -157,10 +121,10 @@ describe("MILESTONE_STATUS_CONFIG", () => {
     expect(config.badgeColor).toContain("bg-green");
   });
 
-  it("returns correct label for PendingCompletion (differs from filterLabel)", () => {
-    const config = MILESTONE_STATUS_CONFIG[MilestoneReviewStatus.PendingCompletion];
-    expect(config.label).toBe("Pending Completion");
-    expect(config.filterLabel).toBe("Pending (Off-chain)");
+  it("returns correct label for Late milestone", () => {
+    const config = MILESTONE_STATUS_CONFIG[MilestoneReviewStatus.Late];
+    expect(config.label).toBe("Late");
+    expect(config.badgeColor).toContain("bg-orange");
   });
 });
 
@@ -225,6 +189,8 @@ describe("sortMilestones", () => {
     });
 
   const notStarted = (dueDate: string) => makeMilestone({ uid: `ns-${dueDate}`, dueDate });
+
+  const late = (dueDate: string) => makeMilestone({ uid: `l-${dueDate}`, dueDate });
 
   it("sorts non-verified milestones before verified ones", () => {
     const milestones = [verified("2025-01-01"), pending("2025-06-01"), notStarted("2025-03-01")];

@@ -130,7 +130,7 @@ export const MilestonesList = ({
     setSelectedContentTypeQuery(newContentType);
   };
 
-  const isUpdateType = (item: UnifiedMilestone): boolean => {
+  const _isUpdateType = (item: UnifiedMilestone): boolean => {
     return (
       item.type === "update" ||
       item.type === "impact" ||

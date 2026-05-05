@@ -23,8 +23,6 @@ describe("Program API Contract", () => {
       const mock = createMockProgramConfig();
       const result = fundingProgramConfigSchema.safeParse(mock);
       if (!result.success) {
-        // eslint-disable-next-line no-console -- diagnostic output for test failures
-        console.log("Validation issues:", result.error.issues);
       }
       expect(result.success).toBe(true);
     });

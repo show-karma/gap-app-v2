@@ -586,7 +586,7 @@ describe("useAgentStream", () => {
       expect(mockFetch).toHaveBeenCalledTimes(1);
       const [, fetchInit] = mockFetch.mock.calls[0];
       const headers = fetchInit?.headers as Record<string, string>;
-      expect(headers["Authorization"]).toBe("Bearer mock-token-123");
+      expect(headers.Authorization).toBe("Bearer mock-token-123");
       expect(headers["Content-Type"]).toBe("application/json");
     });
 
@@ -603,7 +603,7 @@ describe("useAgentStream", () => {
       expect(mockFetch).toHaveBeenCalledTimes(1);
       const [, fetchInit] = mockFetch.mock.calls[0];
       const headers = fetchInit?.headers as Record<string, string>;
-      expect(headers["Authorization"]).toBeUndefined();
+      expect(headers.Authorization).toBeUndefined();
     });
   });
 
@@ -676,7 +676,7 @@ describe("useAgentStream", () => {
         role: "assistant",
         content: "",
         timestamp: 1,
-        isStreaming: true
+        isStreaming: true,
       });
 
       const after = useAgentChatStore.getState();

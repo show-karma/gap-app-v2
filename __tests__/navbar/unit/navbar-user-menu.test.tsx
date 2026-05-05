@@ -3,7 +3,7 @@
  * Tests user menu rendering states, permission-based items, theme toggle, and social links
  */
 
-import { cleanup, screen, waitFor } from "@testing-library/react";
+import { cleanup, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { NavbarUserMenu } from "@/src/components/navbar/navbar-user-menu";
 import { getAuthFixture } from "../fixtures/auth-fixtures";

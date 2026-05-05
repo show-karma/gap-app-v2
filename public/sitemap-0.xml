@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:news="http://www.google.com/schemas/sitemap-news/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:mobile="http://www.google.com/schemas/sitemap-mobile/1.0" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1" xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
-<url><loc>https://karmahq.xyz/sitemap.xml</loc><lastmod>2026-02-28T07:26:18.816Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://karmahq.xyz/robots.txt</loc><lastmod>2026-02-28T07:26:18.817Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://karmahq.xyz/sitemaps/communities/sitemap.xml</loc><lastmod>2026-02-28T07:26:18.817Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://karmahq.xyz/sitemaps/projects/sitemap/1.xml</loc><lastmod>2026-02-28T07:26:18.817Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://karmahq.xyz/sitemaps/projects/sitemap/2.xml</loc><lastmod>2026-02-28T07:26:18.817Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://karmahq.xyz/sitemaps/projects/sitemap/3.xml</loc><lastmod>2026-02-28T07:26:18.817Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://karmahq.xyz/sitemaps/projects/sitemap/4.xml</loc><lastmod>2026-02-28T07:26:18.817Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://karmahq.xyz/robots.txt</loc><lastmod>2026-05-04T22:34:47.296Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://karmahq.xyz/sitemaps/communities/sitemap.xml</loc><lastmod>2026-05-04T22:34:47.297Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://karmahq.xyz/sitemap.xml</loc><lastmod>2026-05-04T22:34:47.297Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://karmahq.xyz/sitemaps/projects/sitemap/1.xml</loc><lastmod>2026-05-04T22:34:47.297Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://karmahq.xyz/sitemaps/projects/sitemap/2.xml</loc><lastmod>2026-05-04T22:34:47.297Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://karmahq.xyz/sitemaps/projects/sitemap/3.xml</loc><lastmod>2026-05-04T22:34:47.297Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://karmahq.xyz/sitemaps/projects/sitemap/4.xml</loc><lastmod>2026-05-04T22:34:47.297Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
 </urlset>

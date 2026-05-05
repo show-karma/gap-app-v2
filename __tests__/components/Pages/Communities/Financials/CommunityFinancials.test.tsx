@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { CommunityFinancials } from "@/components/Pages/Communities/Financials";
 import { useProgramFinancials, useSelectedProgram } from "@/hooks/financials/useProgramFinancials";

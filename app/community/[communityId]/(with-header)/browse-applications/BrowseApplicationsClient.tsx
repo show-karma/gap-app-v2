@@ -5,7 +5,6 @@ import { Lock, RefreshCw, Search, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { getProjectTitle } from "@/components/FundingPlatform/helper/getProjectTitle";
-import type { ProgramWithConfig } from "@/features/programs/hooks/use-programs-with-config";
 import { useProgramsWithConfig } from "@/features/programs/hooks/use-programs-with-config";
 import { Link } from "@/src/components/navigation/Link";
 import type { Application, ApplicationStatus } from "@/types/whitelabel-entities";

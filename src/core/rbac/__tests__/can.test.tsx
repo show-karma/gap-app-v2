@@ -1,9 +1,8 @@
 import { render, screen } from "@testing-library/react";
-import type { ReactNode } from "react";
 import { AdminOnly, Can, Cannot, RequirePermission, RequireRole } from "../components/can";
 import { hasAllPermissions, hasAnyPermission, hasPermission } from "../policies/permission-matrix";
 import { Permission } from "../types/permission";
-import type { PermissionContextValue, ResourceContext } from "../types/resource";
+import type { PermissionContextValue } from "../types/resource";
 import type { UserRoles } from "../types/role";
 import { isRoleAtLeast, isValidRole, ReviewerType, Role } from "../types/role";
 

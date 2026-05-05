@@ -26,11 +26,11 @@ import { toHslToken } from "@/utilities/whitelabel-config";
 import { WhitelabelProvider } from "@/utilities/whitelabel-context";
 import { getWhitelabelContext } from "@/utilities/whitelabel-server";
 
-const Footer = dynamic(() =>
+const _Footer = dynamic(() =>
   import("@/src/components/footer/footer").then((m) => ({ default: m.Footer }))
 );
 
-const WhitelabelFooter = dynamic(() =>
+const _WhitelabelFooter = dynamic(() =>
   import("@/src/components/footer/whitelabel-footer").then((m) => ({
     default: m.WhitelabelFooter,
   }))

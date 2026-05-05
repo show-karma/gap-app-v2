@@ -288,15 +288,10 @@ function MilestonesReviewPageContent({
     if (fundingApplication?.referenceNumber) {
       return fundingApplication.referenceNumber;
     }
-    // Fallback: extract from any milestone that has funding application completion data
-    const milestones = data?.grantMilestones ?? [];
-    for (const m of milestones) {
-      if (m.fundingApplicationCompletion?.referenceNumber) {
-        return m.fundingApplicationCompletion.referenceNumber;
-      }
-    }
+    // Note: referenceNumber now comes from fundingApplication only
+    // (milestones are identified via on-chain UID, not off-chain reference)
     return undefined;
-  }, [fundingApplication?.referenceNumber, data?.grantMilestones]);
+  }, [fundingApplication?.referenceNumber]);
 
   // Get grant name from first milestone's programId (must be before any returns)
   const grantName = useMemo(() => {
@@ -465,8 +460,11 @@ function MilestonesReviewPageContent({
       [MilestoneReviewStatus.Verified]: grouped.get(MilestoneReviewStatus.Verified)?.length ?? 0,
       [MilestoneReviewStatus.PendingVerification]:
         grouped.get(MilestoneReviewStatus.PendingVerification)?.length ?? 0,
-      [MilestoneReviewStatus.PendingCompletion]:
-        grouped.get(MilestoneReviewStatus.PendingCompletion)?.length ?? 0,
+      [MilestoneReviewStatus.Submitted]: grouped.get(MilestoneReviewStatus.Submitted)?.length ?? 0,
+      [MilestoneReviewStatus.Approved]: grouped.get(MilestoneReviewStatus.Approved)?.length ?? 0,
+      [MilestoneReviewStatus.Rejected]: grouped.get(MilestoneReviewStatus.Rejected)?.length ?? 0,
+      [MilestoneReviewStatus.Pending]: grouped.get(MilestoneReviewStatus.Pending)?.length ?? 0,
+      [MilestoneReviewStatus.Late]: grouped.get(MilestoneReviewStatus.Late)?.length ?? 0,
       [MilestoneReviewStatus.NotStarted]:
         grouped.get(MilestoneReviewStatus.NotStarted)?.length ?? 0,
     };

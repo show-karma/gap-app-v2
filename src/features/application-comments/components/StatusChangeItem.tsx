@@ -1,7 +1,6 @@
 "use client";
 
 import { Calendar, CheckCircle, Clock, Eye, FileQuestion, XCircle } from "lucide-react";
-import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatDate } from "@/utilities/formatDate";

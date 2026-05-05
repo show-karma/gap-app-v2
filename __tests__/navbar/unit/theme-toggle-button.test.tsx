@@ -4,15 +4,10 @@
  * between the login/user area and the help button.
  */
 
-import { cleanup, screen, waitFor } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ThemeToggleButton } from "@/src/components/navbar/theme-toggle-button";
-import {
-  cleanupAfterEach,
-  createMockUseTheme,
-  renderWithProviders,
-  resetMockThemeState,
-} from "../utils/test-helpers";
+import { cleanupAfterEach, createMockUseTheme, renderWithProviders } from "../utils/test-helpers";
 
 describe("ThemeToggleButton", () => {
   afterEach(() => {

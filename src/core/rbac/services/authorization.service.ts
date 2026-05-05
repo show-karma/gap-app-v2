@@ -32,7 +32,7 @@ export interface GetPermissionsParams {
   chainId?: number;
 }
 
-const DEFAULT_GUEST_PERMISSIONS: PermissionsResponse = {
+const _DEFAULT_GUEST_PERMISSIONS: PermissionsResponse = {
   roles: {
     primaryRole: Role.GUEST,
     roles: [Role.GUEST],

@@ -58,9 +58,6 @@ function getActivityTypeLabel(type: string, milestone?: UnifiedMilestone): strin
     case "activity":
     case "update":
       return "Project Activity";
-    case "impact":
-    case "grant":
-    case "milestone":
     default: {
       const editHistory = milestone?.source.grantMilestone?.milestone.editHistory;
       if (editHistory && editHistory.length > 0) return "Milestone edited";

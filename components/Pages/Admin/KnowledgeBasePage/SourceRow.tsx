@@ -577,8 +577,6 @@ function externalHref(source: KnowledgeSource): string | null {
       // edit URL from the doc id.
       if (id.startsWith("https://")) return id;
       return `https://docs.google.com/document/d/${id}/edit`;
-    case "gdrive_folder":
-    case "sitemap":
     default:
       return null;
   }

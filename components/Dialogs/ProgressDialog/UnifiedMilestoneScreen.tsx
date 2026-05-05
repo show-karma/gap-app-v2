@@ -271,7 +271,7 @@ export const UnifiedMilestoneScreen = () => {
       for (const chainIdStr of sortedChainIds) {
         const chainId = Number(chainIdStr);
         const chainGrants = grantsByChain[chainId];
-        const chainName = chainNameDictionary(chainId);
+        const _chainName = chainNameDictionary(chainId);
 
         // Notify user we're processing grants on this chain
         toast.loading(`Creating milestone`, {

@@ -80,7 +80,7 @@ export const ProjectOptionsDialogs = () => {
   const params = useParams();
   const projectId = params.projectId as string;
   const { address, chain } = useAccount();
-  const router = useRouter();
+  const _router = useRouter();
   const { switchChainAsync } = useWallet();
   const { startAttestation, showSuccess, showError, changeStepperStep, setIsStepper } =
     useAttestationToast();

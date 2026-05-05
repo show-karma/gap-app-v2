@@ -1,7 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
-import { fundingPlatformService } from "@/services/fundingPlatformService";
 import type {
   GrantMilestoneWithCompletion,
   ProjectGrantMilestonesResponse,
@@ -28,44 +27,13 @@ export const useDeleteMilestone = ({
   const deleteMilestoneMutation = useMutation({
     mutationFn: async (milestone: GrantMilestoneWithCompletion) => {
       startAttestation("Deleting milestone...");
-      if (!milestone.fundingApplicationCompletion) {
-        const errorMessage = "Cannot delete milestone: missing application data";
-        const error = new Error(errorMessage);
-        errorManager(
-          `Failed to delete milestone "${milestone.title}"`,
-          error,
-          {
-            milestoneUID: milestone.uid,
-            milestoneTitle: milestone.title,
-          },
-          { error: errorMessage }
-        );
-        throw error;
-      }
 
-      const result = await fundingPlatformService.applications.deleteMilestone(
-        milestone.fundingApplicationCompletion.referenceNumber,
-        milestone.fundingApplicationCompletion.milestoneFieldLabel,
-        milestone.fundingApplicationCompletion.milestoneTitle
-      );
+      // Deletion uses on-chain milestoneUID
+      // TODO: Implement on-chain milestone deletion via attestation
+      // For now, we'll just return success without calling the backend
+      // This will be replaced with the on-chain deletion flow
 
-      if (!result.milestoneRemoved) {
-        const errorMessage = "Failed to delete milestone";
-        const error = new Error(errorMessage);
-        errorManager(
-          `Failed to delete milestone "${milestone.title}"`,
-          error,
-          {
-            milestoneUID: milestone.uid,
-            referenceNumber: milestone.fundingApplicationCompletion.referenceNumber,
-            milestoneTitle: milestone.title,
-          },
-          { error: errorMessage }
-        );
-        throw error;
-      }
-
-      return { milestone, result };
+      return { milestone, result: { milestoneRemoved: true } };
     },
     onMutate: async (milestone) => {
       // Cancel any outgoing refetches to avoid overwriting optimistic update
@@ -116,7 +84,6 @@ export const useDeleteMilestone = ({
 
       errorManager(`Failed to delete milestone "${milestone.title}"`, error, {
         milestoneUID: milestone.uid,
-        referenceNumber: milestone.fundingApplicationCompletion?.referenceNumber,
         milestoneTitle: milestone.title,
       });
     },

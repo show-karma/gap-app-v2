@@ -5,7 +5,6 @@
  * instead of vi.mock("useQuery").
  */
 import { screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { HttpResponse, http } from "msw";
 import { installMswLifecycle, server } from "@/__tests__/msw/server";
 import { renderWithProviders } from "@/__tests__/utils/render";

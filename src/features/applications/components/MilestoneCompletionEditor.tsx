@@ -10,19 +10,15 @@ import { FileUpload } from "@/components/Utilities/FileUpload";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { useMilestoneAttestation } from "@/src/features/milestones/hooks/useMilestoneAttestation";
 import { submitGranteeInvoice } from "@/src/features/payout-disbursement/services/payout-disbursement.service";
+import type { GrantMilestoneWithDetails } from "@/types/v2/roadmap";
 import type { MilestoneData } from "@/types/whitelabel-entities";
 import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { useApplicationInvoiceConfig } from "../hooks/use-application-invoice-config";
-import { useMilestoneCompletions } from "../hooks/use-milestone-completions";
-import {
-  buildPositionalCompletionMap,
-  formatFieldLabel,
-  isMarkdownContent,
-  MILESTONE_CORE_FIELDS,
-} from "../lib/milestone-utils";
+import { formatFieldLabel, isMarkdownContent, MILESTONE_CORE_FIELDS } from "../lib/milestone-utils";
 
 const ApplicationMilestoneAIEvaluationBadge = dynamic(
   () =>
@@ -44,6 +40,9 @@ interface MilestoneCompletionEditorProps {
   referenceNumber: string;
   isEditable: boolean;
   invoiceRequired?: boolean;
+  grantMilestones?: GrantMilestoneWithDetails[]; // For on-chain attestations
+  grantUID?: string; // For query invalidation (overrides invoice config)
+  chainID?: number; // For on-chain attestations
 }
 
 export function MilestoneCompletionEditor({
@@ -52,21 +51,13 @@ export function MilestoneCompletionEditor({
   referenceNumber,
   isEditable,
   invoiceRequired,
+  grantMilestones = [],
+  grantUID: grantUIDProp,
+  chainID = 8453,
 }: MilestoneCompletionEditorProps) {
   const queryClient = useQueryClient();
-  const {
-    isLoading,
-    completions,
-    createCompletion,
-    updateCompletion,
-    isCreating,
-    isUpdating,
-    getCompletion,
-    hasCompletion,
-  } = useMilestoneCompletions({
-    referenceNumber,
-    enabled: true,
-  });
+  const { completeMutation } = useMilestoneAttestation();
+  const [isIndexerPending, setIsIndexerPending] = useState<Set<string>>(new Set());
 
   const { data: invoiceConfig, isLoading: isInvoiceConfigLoading } = useApplicationInvoiceConfig(
     referenceNumber,
@@ -75,7 +66,7 @@ export function MilestoneCompletionEditor({
     }
   );
 
-  const grantUID = invoiceConfig?.grantUID;
+  const grantUID = grantUIDProp || invoiceConfig?.grantUID;
   const showInvoice = invoiceRequired && invoiceConfig?.invoiceRequired && !!grantUID;
   const milestoneInvoices = invoiceConfig?.milestoneInvoices ?? [];
 
@@ -86,12 +77,15 @@ export function MilestoneCompletionEditor({
   );
 
   // Build positional completion map to handle duplicate milestone titles.
-  // When N milestones share the same title and M completions exist (M ≤ N),
-  // the k-th completion maps to the k-th milestone with that title.
-  const completionByIndex = useMemo(
-    () => buildPositionalCompletionMap(milestones, completions, fieldLabel),
-    [completions, fieldLabel, milestones]
-  );
+  // Match milestones to grant milestone entities for on-chain status.
+  const completionByIndex = useMemo(() => {
+    const map = new Map<number, GrantMilestoneWithDetails | null>();
+    milestones.forEach((milestone, index) => {
+      const grantMilestone = grantMilestones.find((gm) => gm.title === milestone.title);
+      map.set(index, grantMilestone || null);
+    });
+    return map;
+  }, [milestones, grantMilestones]);
 
   const [editingMilestone, setEditingMilestone] = useState<string | null>(null);
   const [editedText, setEditedText] = useState<Record<string, string>>({});
@@ -100,11 +94,12 @@ export function MilestoneCompletionEditor({
   const pendingFileNameRef = useRef<Record<string, string>>({});
 
   const handleStartEdit = (milestoneTitle: string) => {
-    const completion = getCompletion(fieldLabel, milestoneTitle);
+    const milestone = grantMilestones.find((m) => m.title === milestoneTitle);
+    const completionText = milestone?.completionDetails?.description || "";
     setEditingMilestone(milestoneTitle);
     setEditedText({
       ...editedText,
-      [milestoneTitle]: completion?.completionText || "",
+      [milestoneTitle]: completionText,
     });
   };
 
@@ -160,13 +155,32 @@ export function MilestoneCompletionEditor({
     });
   }, []);
 
-  const handleSubmit = (milestoneTitle: string) => {
-    const text = editedText[milestoneTitle] || "";
-    const existingCompletion = hasCompletion(fieldLabel, milestoneTitle);
+  const handleSubmit = async (milestoneTitle: string) => {
+    const proofOfWork = editedText[milestoneTitle] || "";
+    const milestone = grantMilestones.find((m) => m.title === milestoneTitle);
     const invoiceFile = invoiceFiles[milestoneTitle];
 
-    const submitInvoice = async () => {
-      if (invoiceFile && grantUID) {
+    if (!milestone || !grantUID) {
+      toast.error("Milestone or grant information missing");
+      return;
+    }
+
+    try {
+      // Submit on-chain attestation
+      setIsIndexerPending((prev) => new Set(prev).add(milestoneTitle));
+
+      await completeMutation.mutateAsync({
+        milestone,
+        chainID,
+        proofOfWork,
+        grantUID,
+      });
+
+      // Show success toast with tx hash
+      toast.success("Milestone completion submitted. Processing on-chain...");
+
+      // Submit invoice if present
+      if (invoiceFile) {
         try {
           await submitGranteeInvoice(grantUID, {
             milestoneLabel: milestoneTitle,
@@ -181,63 +195,43 @@ export function MilestoneCompletionEditor({
           toast.error("Failed to submit invoice");
         }
       }
-    };
 
-    const onSuccess = async () => {
-      await submitInvoice();
       setEditingMilestone(null);
+      setEditedText({});
       setInvoiceFiles((prev) => {
         const next = { ...prev };
         delete next[milestoneTitle];
         return next;
       });
-    };
-
-    if (existingCompletion) {
-      updateCompletion(
-        {
-          milestoneFieldLabel: fieldLabel,
-          milestoneTitle,
-          completionText: text,
-        },
-        { onSuccess }
-      );
-    } else {
-      createCompletion(
-        {
-          milestoneFieldLabel: fieldLabel,
-          milestoneTitle,
-          completionText: text,
-        },
-        { onSuccess }
-      );
+    } catch (_error) {
+      // Error already shown by completeMutation toast
+      setIsIndexerPending((prev) => {
+        const next = new Set(prev);
+        next.delete(milestoneTitle);
+        return next;
+      });
     }
   };
 
-  const isSubmitEnabled = (milestoneTitle: string, milestoneIndex: number) => {
+  const isSubmitEnabled = (milestoneTitle: string) => {
     if (uploadingMilestones.has(milestoneTitle)) return false;
     const currentText = editedText[milestoneTitle] || "";
-    const savedCompletion = completionByIndex.get(milestoneIndex);
-    const savedText = savedCompletion?.completionText || "";
-    const hasTextChange = currentText !== savedText;
+    const hasTextChange = currentText.trim().length > 0;
     const hasInvoice = !!invoiceFiles[milestoneTitle];
     return hasTextChange || hasInvoice;
   };
 
-  if (isLoading) {
-    return <div className="text-zinc-500">Loading milestones...</div>;
-  }
-
   return (
     <div className="space-y-3">
       {milestones.map((milestone, index) => {
-        const completion = completionByIndex.get(index) ?? null;
+        const grantMilestone = completionByIndex.get(index);
         const isEditing = editingMilestone === milestone.title;
         const currentText = editedText[milestone.title] || "";
-        const isCompletionVerified = completion?.isVerified || false;
+        const isCompletionVerified = grantMilestone?.verificationDetails !== null;
         const canEdit = isEditable && !isCompletionVerified;
-        const invoiceFile = invoiceFiles[milestone.title];
+        const _invoiceFile = invoiceFiles[milestone.title];
         const isUploading = uploadingMilestones.has(milestone.title);
+        const isWaitingForIndexer = isIndexerPending.has(milestone.title);
 
         const additionalFields = Object.keys(milestone).filter(
           (key) => !MILESTONE_CORE_FIELDS.includes(key) && milestone[key as keyof MilestoneData]
@@ -249,12 +243,24 @@ export function MilestoneCompletionEditor({
             className="rounded-lg border bg-zinc-50 dark:bg-zinc-800/50 p-4"
           >
             <div className="space-y-2">
+              {isWaitingForIndexer && (
+                <div className="px-3 py-2 rounded-md bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                  <p className="text-xs text-blue-700 dark:text-blue-300">
+                    Indexer is processing your submission...
+                  </p>
+                </div>
+              )}
               <div className="flex justify-between items-start">
                 <h4 className="font-medium">{milestone.title}</h4>
                 <div className="flex items-center gap-2">
                   {isCompletionVerified && (
                     <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">
                       Verified
+                    </span>
+                  )}
+                  {grantMilestone?.completionDetails && !isCompletionVerified && (
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700">
+                      Submitted
                     </span>
                   )}
                   {milestone.dueDate && (
@@ -300,11 +306,14 @@ export function MilestoneCompletionEditor({
                 <div className="mt-3 space-y-2 pt-3 border-t border-zinc-200 dark:border-zinc-700">
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-medium">
-                      {completion ? "Edit Completion Update" : "Add Completion Update"}
+                      {grantMilestone?.completionDetails
+                        ? "Edit Completion Update"
+                        : "Add Completion Update"}
                     </p>
-                    {completion && (
+                    {grantMilestone?.completionDetails && (
                       <p className="text-xs text-zinc-400">
-                        Previously updated: {formatDate(completion.updatedAt)}
+                        Previously updated:{" "}
+                        {formatDate(grantMilestone.completionDetails.completedAt)}
                       </p>
                     )}
                   </div>
@@ -394,21 +403,25 @@ export function MilestoneCompletionEditor({
                     <Button
                       size="sm"
                       onClick={() => handleSubmit(milestone.title)}
-                      isLoading={isCreating || isUpdating}
+                      isLoading={completeMutation.isPending || isWaitingForIndexer}
                       disabled={
-                        !isSubmitEnabled(milestone.title, index) ||
-                        isCreating ||
-                        isUpdating ||
-                        isUploading
+                        !isSubmitEnabled(milestone.title) ||
+                        completeMutation.isPending ||
+                        isUploading ||
+                        isWaitingForIndexer
                       }
                     >
-                      {isCreating || isUpdating ? "Saving..." : completion ? "Update" : "Save"}
+                      {completeMutation.isPending || isWaitingForIndexer
+                        ? "Submitting..."
+                        : grantMilestone?.completionDetails
+                          ? "Update"
+                          : "Save"}
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleCancelEdit(milestone.title)}
-                      disabled={isCreating || isUpdating}
+                      disabled={completeMutation.isPending || isWaitingForIndexer}
                     >
                       Cancel
                     </Button>
@@ -416,16 +429,16 @@ export function MilestoneCompletionEditor({
                 </div>
               ) : (
                 <>
-                  {completion && (
+                  {grantMilestone?.completionDetails && (
                     <div className="mt-3 space-y-1 pt-3 border-t border-zinc-200 dark:border-zinc-700">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <p className="text-xs font-semibold">Completion Update</p>
-                          {completion.completionText ? (
+                          {grantMilestone.completionDetails.proofOfWork ? (
                             <ApplicationMilestoneAIEvaluationBadge
                               referenceNumber={referenceNumber}
                               milestoneTitle={milestone.title}
-                              completionReason={completion.completionText}
+                              completionReason={grantMilestone.completionDetails.proofOfWork}
                             />
                           ) : null}
                         </div>
@@ -436,24 +449,24 @@ export function MilestoneCompletionEditor({
                         )}
                       </div>
                       <div className="text-sm text-zinc-600 dark:text-zinc-400 prose prose-sm dark:prose-invert max-w-none">
-                        <MarkdownPreview source={completion.completionText} />
+                        <MarkdownPreview
+                          source={grantMilestone.completionDetails.proofOfWork || ""}
+                        />
                       </div>
                       <p className="text-xs text-zinc-400">
-                        Last updated: {formatDate(completion.updatedAt)}
+                        Last updated: {formatDate(grantMilestone.completionDetails.completedAt)}
                       </p>
-                      {isCompletionVerified && completion.verificationComment && (
+                      {isCompletionVerified && grantMilestone.verificationDetails && (
                         <div className="mt-2 p-2 bg-green-50 dark:bg-green-900/10 rounded-md">
                           <p className="text-xs font-semibold text-green-700 dark:text-green-400 mb-1">
-                            Verification Comment
+                            Verification
                           </p>
                           <p className="text-xs text-zinc-600 dark:text-zinc-400">
-                            {completion.verificationComment}
+                            {grantMilestone.verificationDetails.description}
                           </p>
-                          {completion.verifiedBy && (
-                            <p className="text-xs text-zinc-400 mt-1">
-                              Verified by: {completion.verifiedBy}
-                            </p>
-                          )}
+                          <p className="text-xs text-zinc-400 mt-1">
+                            Verified by: {grantMilestone.verificationDetails.verifiedBy}
+                          </p>
                         </div>
                       )}
                     </div>
@@ -469,7 +482,7 @@ export function MilestoneCompletionEditor({
                     </div>
                   )}
 
-                  {!completion && canEdit && (
+                  {!grantMilestone?.completionDetails && canEdit && (
                     <div className="mt-3 pt-3 border-t border-zinc-200 dark:border-zinc-700">
                       <Button size="sm" onClick={() => handleStartEdit(milestone.title)}>
                         Add Completion Update

@@ -14,7 +14,7 @@ interface PaginationProps {
   className?: string;
 }
 
-function getRange(start: number, end: number): number[] {
+function _getRange(start: number, end: number): number[] {
   return Array.from({ length: end - start + 1 }, (_, i) => start + i);
 }
 

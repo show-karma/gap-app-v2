@@ -1,7 +1,4 @@
-import type {
-  SlackOAuthRegisterWorkspaceInput,
-  SlackOAuthWorkspace,
-} from "@/types/slack-oauth";
+import type { SlackOAuthRegisterWorkspaceInput, SlackOAuthWorkspace } from "@/types/slack-oauth";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 

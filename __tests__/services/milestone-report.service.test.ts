@@ -34,13 +34,7 @@ describe("milestoneReportService.getReport", () => {
   });
 
   it("should_call_v2_endpoint_with_pageLimit_and_sortField_query_params", async () => {
-    await milestoneReportService.getReport(
-      "filecoin",
-      2,
-      50,
-      "totalMilestones",
-      "desc"
-    );
+    await milestoneReportService.getReport("filecoin", 2, 50, "totalMilestones", "desc");
 
     const url = mockedFetch.mock.calls[0][0] as string;
 
@@ -54,14 +48,10 @@ describe("milestoneReportService.getReport", () => {
   });
 
   it("should_normalize_and_pass_program_ids_when_provided", async () => {
-    await milestoneReportService.getReport(
-      "filecoin",
-      1,
-      50,
-      "totalMilestones",
-      "desc",
-      ["100_42161", "200"]
-    );
+    await milestoneReportService.getReport("filecoin", 1, 50, "totalMilestones", "desc", [
+      "100_42161",
+      "200",
+    ]);
 
     const url = mockedFetch.mock.calls[0][0] as string;
 
@@ -81,17 +71,13 @@ describe("milestoneReportService.getReport", () => {
 
     const url = mockedFetch.mock.calls[0][0] as string;
 
-    expect(url).toContain(
-      "reviewerAddress=0x1234567890abcdef1234567890abcdef12345678"
-    );
+    expect(url).toContain("reviewerAddress=0x1234567890abcdef1234567890abcdef12345678");
   });
 
   it("should_throw_when_fetchData_returns_an_error", async () => {
     mockedFetch.mockResolvedValueOnce([null, new Error("network down")]);
 
-    await expect(
-      milestoneReportService.getReport("filecoin", 1, 50)
-    ).rejects.toThrow();
+    await expect(milestoneReportService.getReport("filecoin", 1, 50)).rejects.toThrow();
   });
 
   it("should_return_empty_response_when_fetchData_returns_null_data", async () => {

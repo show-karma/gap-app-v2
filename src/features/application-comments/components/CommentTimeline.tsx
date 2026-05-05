@@ -2,7 +2,7 @@
 
 import { AlertCircle, MessageSquare, RefreshCw } from "lucide-react";
 import pluralize from "pluralize";
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Accordion,
   AccordionContent,

@@ -18,8 +18,6 @@ describe("Community API Contract", () => {
       const mock = createMockCommunity();
       const result = communitySchema.safeParse(mock);
       if (!result.success) {
-        // eslint-disable-next-line no-console -- diagnostic output for test failures
-        console.log("Validation issues:", result.error.issues);
       }
       expect(result.success).toBe(true);
     });

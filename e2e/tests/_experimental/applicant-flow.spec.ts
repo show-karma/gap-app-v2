@@ -1,4 +1,4 @@
-import { createApprovedApplication, createMockApplication } from "../../data/applications";
+import { createMockApplication } from "../../data/applications";
 import { createMockCommunity } from "../../data/communities";
 import { createMockProgram } from "../../data/programs";
 import { expect, mockJson, test } from "../../fixtures";

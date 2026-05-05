@@ -79,7 +79,6 @@ vi.mock("@/utilities/rpcClient", () => ({
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
 
-import SafeApiKit from "@safe-global/api-kit";
 import Safe from "@safe-global/protocol-kit";
 import { getRPCClient } from "@/utilities/rpcClient";
 import {

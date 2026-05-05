@@ -12,7 +12,6 @@ import {
   type CommunityPayoutInvoiceInfo,
   type CommunityPayoutsOptions,
   type CommunityPayoutsSorting,
-  getPaidAllocationIds,
   type PayoutGrantConfig,
   type TokenTotal,
   useCommunityPayouts,

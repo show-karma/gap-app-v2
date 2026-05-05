@@ -7,7 +7,6 @@ import { useParams } from "next/navigation";
 import { useState } from "react";
 import { useAccount } from "wagmi";
 import { DeleteDialog } from "@/components/DeleteDialog";
-import { Button } from "@/components/Utilities/Button";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAttestationToast } from "@/hooks/useAttestationToast";

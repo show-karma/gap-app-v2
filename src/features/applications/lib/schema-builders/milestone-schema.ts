@@ -30,7 +30,7 @@ function getStartOfToday(): Date {
 
 const futureDateSchema = dateStringSchema.refine(
   (val) => {
-    const parsed = new Date(val + "T00:00:00");
+    const parsed = new Date(`${val}T00:00:00`);
     return parsed >= getStartOfToday();
   },
   { message: "Due date must be today or in the future" }

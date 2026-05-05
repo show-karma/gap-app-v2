@@ -2,7 +2,6 @@ import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import { getTenantConfig } from "@/src/infrastructure/config/tenant-config";
 import type { TenantConfig } from "@/src/infrastructure/types/tenant";
-import { isKnownTenant } from "@/src/infrastructure/types/tenant";
 
 interface TenantState {
   tenant: TenantConfig | null;

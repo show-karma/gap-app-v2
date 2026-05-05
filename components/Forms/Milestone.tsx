@@ -98,7 +98,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
   const { setupChainAndWallet, smartWalletAddress } = useSetupChainAndWallet();
-  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const _refreshProject = useProjectStore((state) => state.refreshProject);
   const isCommunityAdmin = useIsCommunityAdmin();
   const project = useProjectStore((state) => state.project);
   const projectUID = project?.uid;

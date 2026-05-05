@@ -1,8 +1,6 @@
 export type ScheduleIntervalUnit = "days" | "weeks" | "months";
 
-export type ScheduleEnds =
-  | { kind: "never" }
-  | { kind: "on_date"; date: string };
+export type ScheduleEnds = { kind: "never" } | { kind: "on_date"; date: string };
 
 export interface ReportSchedule {
   intervalUnit: ScheduleIntervalUnit;

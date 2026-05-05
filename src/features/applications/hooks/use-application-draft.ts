@@ -7,7 +7,7 @@ import type { Application } from "@/types/whitelabel-entities";
 import fetchData from "@/utilities/fetchData";
 import type { ApplicationFormData, UseApplicationDraftReturn } from "../types";
 
-export function useApplicationDraft(communityId: string): UseApplicationDraftReturn {
+export function useApplicationDraft(_communityId: string): UseApplicationDraftReturn {
   const queryClient = useQueryClient();
 
   const saveDraftMutation = useMutation({

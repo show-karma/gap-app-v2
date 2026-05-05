@@ -74,9 +74,7 @@ const MONTH_ABBR = [
  * `runDate`s (any day, any cadence) so gap-fill no longer makes sense; we
  * just render what we have.
  */
-function deriveTimeline(
-  sortedReports: Array<{ id: string; runDate: string }>
-): TimelineEntry[] {
+function deriveTimeline(sortedReports: Array<{ id: string; runDate: string }>): TimelineEntry[] {
   return sortedReports.map((r) => {
     const [yearStr, monthStr, dayStr] = r.runDate.split("-");
     const monthIdx = Number(monthStr) - 1;
@@ -98,10 +96,7 @@ export function PublicReportListPage({ community }: Props) {
   const seededRef = useRef(false);
 
   const sortedReports = useMemo(
-    () =>
-      reports
-        ? [...reports].sort((a, b) => b.runDate.localeCompare(a.runDate))
-        : [],
+    () => (reports ? [...reports].sort((a, b) => b.runDate.localeCompare(a.runDate)) : []),
     [reports]
   );
 

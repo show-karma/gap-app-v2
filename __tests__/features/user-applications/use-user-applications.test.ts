@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { renderHook } from "@testing-library/react";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserApplications } from "@/src/features/user-applications/hooks/use-user-applications";

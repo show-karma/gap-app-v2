@@ -3,7 +3,6 @@ import {
   getMilestoneStatus,
   isMilestoneStatusFilter,
   MILESTONE_STATUS_OPTIONS,
-  type MilestoneStatusFilter,
 } from "@/services/milestone-status-filter.service";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 

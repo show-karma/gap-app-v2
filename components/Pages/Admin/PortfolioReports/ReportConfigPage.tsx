@@ -19,11 +19,7 @@ import {
   useReportConfigs,
   useUpdateReportConfig,
 } from "@/hooks/portfolio-reports/usePortfolioReports";
-import type {
-  ReportConfig,
-  ReportSchedule,
-  ScheduleIntervalUnit,
-} from "@/types/portfolio-report";
+import type { ReportConfig, ReportSchedule, ScheduleIntervalUnit } from "@/types/portfolio-report";
 import type { Community } from "@/types/v2/community";
 import { PAGES } from "@/utilities/pages";
 import {
@@ -81,11 +77,7 @@ const isoDate = z
   .refine((v) => {
     const [y, m, d] = v.split("-").map(Number);
     const date = new Date(y, m - 1, d);
-    return (
-      date.getFullYear() === y &&
-      date.getMonth() === m - 1 &&
-      date.getDate() === d
-    );
+    return date.getFullYear() === y && date.getMonth() === m - 1 && date.getDate() === d;
   }, "Not a valid calendar date");
 
 const scheduleZod = z.object({
@@ -100,9 +92,7 @@ const scheduleZod = z.object({
 
 const formSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(128),
-  programIds: z
-    .array(z.string().min(1))
-    .min(1, "Select at least one program"),
+  programIds: z.array(z.string().min(1)).min(1, "Select at least one program"),
   modelId: z.enum(MODEL_IDS, { message: "Pick a model" }),
   prompt: z.string().trim().min(1, "A prompt is required"),
   schedule: scheduleZod,
@@ -151,10 +141,7 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
     refetch: refetchConfigs,
   } = useReportConfigs(slug);
 
-  const programOptions = useMemo(
-    () => buildProgramOptions(grantPrograms),
-    [grantPrograms]
-  );
+  const programOptions = useMemo(() => buildProgramOptions(grantPrograms), [grantPrograms]);
   const labelByProgramId = useMemo(
     () => new Map(programOptions.map((o) => [o.programId, o.label])),
     [programOptions]
@@ -190,9 +177,7 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
 
   const editingConfig = useMemo(
     () =>
-      editingId && editingId !== "new"
-        ? configs?.find((c) => c.id === editingId) ?? null
-        : null,
+      editingId && editingId !== "new" ? (configs?.find((c) => c.id === editingId) ?? null) : null,
     [configs, editingId]
   );
 
@@ -213,9 +198,7 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
   });
 
   const selectedProgramIds = watch("programIds");
-  const selectedProgramLabels = selectedProgramIds.map(
-    (id) => labelByProgramId.get(id) ?? id
-  );
+  const selectedProgramLabels = selectedProgramIds.map((id) => labelByProgramId.get(id) ?? id);
 
   const schedule = watch("schedule");
   const setSchedule = (next: ReportSchedule) => {
@@ -299,10 +282,7 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
         ? editingConfig.schedule.ends.date
         : undefined;
 
-    if (
-      values.schedule.startDate < todayIso &&
-      values.schedule.startDate !== originalStartDate
-    ) {
+    if (values.schedule.startDate < todayIso && values.schedule.startDate !== originalStartDate) {
       toast.error("Start date can't be in the past.");
       return;
     }
@@ -324,9 +304,7 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
         toast.success("Config created");
       } else {
         if (!editingConfig) {
-          toast.error(
-            "This config no longer exists. Please refresh and try again."
-          );
+          toast.error("This config no longer exists. Please refresh and try again.");
           return;
         }
         await updateMutation.mutateAsync(values);
@@ -405,15 +383,8 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
       {/* Configs table */}
       {configsError ? (
         <div className="flex flex-col items-center justify-center rounded-lg border border-red-200 p-12 text-center dark:border-red-900/40">
-          <p className="text-sm text-red-600 dark:text-red-400">
-            Failed to load report configs.
-          </p>
-          <Button
-            variant="outline"
-            size="sm"
-            className="mt-3"
-            onClick={() => refetchConfigs()}
-          >
+          <p className="text-sm text-red-600 dark:text-red-400">Failed to load report configs.</p>
+          <Button variant="outline" size="sm" className="mt-3" onClick={() => refetchConfigs()}>
             Retry
           </Button>
         </div>
@@ -463,11 +434,7 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setEditingId(cfg.id)}
-                      >
+                      <Button variant="ghost" size="sm" onClick={() => setEditingId(cfg.id)}>
                         Edit
                       </Button>
                       <Button
@@ -494,9 +461,7 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
           className="space-y-6 rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800"
         >
           <div className="flex items-start justify-between">
-            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-              {formTitle}
-            </h2>
+            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">{formTitle}</h2>
             <Button
               variant="ghost"
               size="sm"
@@ -523,9 +488,7 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
               className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
               {...register("name")}
             />
-            {errors.name && (
-              <p className="mt-1 text-xs text-red-500">{errors.name.message}</p>
-            )}
+            {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name.message}</p>}
           </div>
 
           {/* Programs */}
@@ -601,9 +564,9 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
               Report Prompt
             </label>
             <p className="mb-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
-              <strong>Tip:</strong> specify the time window in your prompt
-              (e.g. &quot;summarize the last 30 days&quot; or &quot;past quarter&quot;).
-              If you don&apos;t, the agent defaults to the last 30 days.
+              <strong>Tip:</strong> specify the time window in your prompt (e.g. &quot;summarize the
+              last 30 days&quot; or &quot;past quarter&quot;). If you don&apos;t, the agent defaults
+              to the last 30 days.
             </p>
             <textarea
               id="prompt"
@@ -612,17 +575,11 @@ export function ReportConfigPage({ community, grantPrograms }: Props) {
               className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm font-mono dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
               {...register("prompt")}
             />
-            {errors.prompt && (
-              <p className="mt-1 text-xs text-red-500">{errors.prompt.message}</p>
-            )}
+            {errors.prompt && <p className="mt-1 text-xs text-red-500">{errors.prompt.message}</p>}
           </div>
 
           <div className="flex items-center justify-end gap-2">
-            <Button
-              variant="outline"
-              type="button"
-              onClick={() => setEditingId(null)}
-            >
+            <Button variant="outline" type="button" onClick={() => setEditingId(null)}>
               Cancel
             </Button>
             <Button type="submit" disabled={isSaving}>
@@ -643,19 +600,12 @@ interface SchedulePickerProps {
   minEndsDate: string;
 }
 
-function SchedulePicker({
-  schedule,
-  onChange,
-  minStartDate,
-  minEndsDate,
-}: SchedulePickerProps) {
+function SchedulePicker({ schedule, onChange, minStartDate, minEndsDate }: SchedulePickerProps) {
   const activePreset = detectPreset(schedule);
 
   const handlePresetClick = (key: SchedulePresetKey) => {
     if (key === "custom") return;
-    onChange(
-      defaultScheduleForPreset(key, parseIsoOrToday(schedule.startDate))
-    );
+    onChange(defaultScheduleForPreset(key, parseIsoOrToday(schedule.startDate)));
   };
 
   const setIntervalCount = (next: number) => {
@@ -672,8 +622,7 @@ function SchedulePicker({
     if (kind === "never") {
       onChange({ ...schedule, ends: { kind: "never" } });
     } else {
-      const fallback =
-        schedule.ends.kind === "on_date" ? schedule.ends.date : schedule.startDate;
+      const fallback = schedule.ends.kind === "on_date" ? schedule.ends.date : schedule.startDate;
       onChange({ ...schedule, ends: { kind: "on_date", date: fallback } });
     }
   };
@@ -682,10 +631,7 @@ function SchedulePicker({
     onChange({ ...schedule, ends: { kind: "on_date", date } });
   };
 
-  const previewDates = useMemo(
-    () => computeNextRuns(schedule, 4),
-    [schedule]
-  );
+  const previewDates = useMemo(() => computeNextRuns(schedule, 4), [schedule]);
 
   return (
     <div>
@@ -712,7 +658,9 @@ function SchedulePicker({
                   : "border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-700/50"
               }`}
             >
-              <Icon className={`h-4 w-4 ${active ? "text-blue-500 dark:text-blue-400" : "text-zinc-400"}`} />
+              <Icon
+                className={`h-4 w-4 ${active ? "text-blue-500 dark:text-blue-400" : "text-zinc-400"}`}
+              />
               {label}
             </button>
           );
@@ -777,9 +725,7 @@ function SchedulePicker({
           </span>
         </div>
         {previewDates.length === 0 ? (
-          <p className="text-xs text-zinc-500">
-            Pick a valid start date to see upcoming runs
-          </p>
+          <p className="text-xs text-zinc-500">Pick a valid start date to see upcoming runs</p>
         ) : (
           <div className="flex flex-wrap gap-1.5">
             {previewDates.map((d) => (
@@ -797,13 +743,7 @@ function SchedulePicker({
   );
 }
 
-function Stepper({
-  value,
-  onChange,
-}: {
-  value: number;
-  onChange: (next: number) => void;
-}) {
+function Stepper({ value, onChange }: { value: number; onChange: (next: number) => void }) {
   return (
     <div className="inline-flex h-7 items-center overflow-hidden rounded-md border border-zinc-300 bg-white dark:border-zinc-600 dark:bg-zinc-700">
       <button

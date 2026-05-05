@@ -114,12 +114,9 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
       milestone.recipient ||
       milestoneAny.attester ||
       milestone.completionDetails?.completedBy ||
-      milestone.fundingApplicationCompletion?.ownerAddress ||
       milestoneAny.data?.attester ||
       milestoneAny.data?.recipient ||
       "";
-    // Off-chain completions use fundingApplicationCompletion instead of completionDetails
-    const appCompletion = milestone.fundingApplicationCompletion;
     const chainID =
       parseChainId(milestone.chainId) ||
       parseChainId(milestoneAny?.grant?.chainID) ||
@@ -133,7 +130,7 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
     } else if (milestoneAny.data?.endsAt) {
       // Raw attestation data may have endsAt as Unix timestamp
       const endsAt = Number(milestoneAny.data.endsAt);
-      if (!isNaN(endsAt) && endsAt > 0) {
+      if (!Number.isNaN(endsAt) && endsAt > 0) {
         // Check if seconds (10 digits) or milliseconds (13+ digits)
         const digitCount = Math.floor(Math.log10(Math.abs(endsAt))) + 1;
         milestoneEndsAt = digitCount <= 10 ? endsAt : Math.floor(endsAt / 1000);
@@ -141,7 +138,7 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
     } else if (milestoneAny.endsAt) {
       // Direct endsAt field
       const endsAt = Number(milestoneAny.endsAt);
-      if (!isNaN(endsAt) && endsAt > 0) {
+      if (!Number.isNaN(endsAt) && endsAt > 0) {
         const digitCount = Math.floor(Math.log10(Math.abs(endsAt))) + 1;
         milestoneEndsAt = digitCount <= 10 ? endsAt : Math.floor(endsAt / 1000);
       }
@@ -170,14 +167,10 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
       grantMilestoneOrder: serverOrder,
       completed: isCompleted
         ? {
-            createdAt:
-              milestone.completionDetails?.completedAt ||
-              appCompletion?.createdAt ||
-              milestone.createdAt ||
-              "",
+            createdAt: milestone.completionDetails?.completedAt || milestone.createdAt || "",
             data: {
               proofOfWork: milestone.completionDetails?.proofOfWork,
-              reason: milestone.completionDetails?.description || appCompletion?.completionText,
+              reason: milestone.completionDetails?.description,
               completionPercentage: milestone.completionDetails?.completionPercentage,
               deliverables: milestone.completionDetails?.deliverables,
             },
@@ -200,16 +193,11 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
             endsAt: milestoneEndsAt,
             completed: isCompleted
               ? {
-                  createdAt:
-                    milestone.completionDetails?.completedAt ||
-                    appCompletion?.createdAt ||
-                    milestone.createdAt ||
-                    "",
-                  attester: milestone.completionDetails?.completedBy || appCompletion?.ownerAddress,
+                  createdAt: milestone.completionDetails?.completedAt || milestone.createdAt || "",
+                  attester: milestone.completionDetails?.completedBy || "",
                   data: {
                     proofOfWork: milestone.completionDetails?.proofOfWork,
-                    reason:
-                      milestone.completionDetails?.description || appCompletion?.completionText,
+                    reason: milestone.completionDetails?.description,
                     completionPercentage: milestone.completionDetails?.completionPercentage,
                     deliverables: milestone.completionDetails?.deliverables,
                   },
@@ -273,13 +261,13 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
       updateEndsAt = Math.floor(new Date(updateAny.dueDate).getTime() / 1000);
     } else if (updateAny.data?.endsAt) {
       const endsAt = Number(updateAny.data.endsAt);
-      if (!isNaN(endsAt) && endsAt > 0) {
+      if (!Number.isNaN(endsAt) && endsAt > 0) {
         const digitCount = Math.floor(Math.log10(Math.abs(endsAt))) + 1;
         updateEndsAt = digitCount <= 10 ? endsAt : Math.floor(endsAt / 1000);
       }
     } else if (updateAny.endsAt) {
       const endsAt = Number(updateAny.endsAt);
-      if (!isNaN(endsAt) && endsAt > 0) {
+      if (!Number.isNaN(endsAt) && endsAt > 0) {
         const digitCount = Math.floor(Math.log10(Math.abs(endsAt))) + 1;
         updateEndsAt = digitCount <= 10 ? endsAt : Math.floor(endsAt / 1000);
       }

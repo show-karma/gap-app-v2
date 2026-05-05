@@ -9,8 +9,8 @@
  * - No backend POST calls (pure FE → smart account → indexer)
  */
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { renderHook, waitFor } from "@testing-library/react";
+import { QueryClient, type QueryClientProvider } from "@tanstack/react-query";
+import { renderHook, } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { useMilestoneAttestation } from "../useMilestoneAttestation";
 

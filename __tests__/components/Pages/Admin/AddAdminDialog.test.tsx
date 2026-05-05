@@ -8,8 +8,8 @@
  * supplemented by isolated Zod schema unit tests for validation logic.
  */
 
-import * as fs from "fs";
-import * as path from "path";
+import * as fs from "node:fs";
+import * as path from "node:path";
 import { z } from "zod";
 
 const componentPath = path.join(process.cwd(), "components/Pages/Admin/AddAdminDialog.tsx");

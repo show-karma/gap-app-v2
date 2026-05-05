@@ -366,7 +366,7 @@ import toast from "react-hot-toast";
 // Import the page component after mocks (now uses unified manage route)
 import ReviewerApplicationDetailPage from "@/app/community/[communityId]/manage/funding-platform/[programId]/applications/[applicationId]/page";
 // Import mocked modules for vi.mocked() usage
-import { useApplication, useApplicationStatus } from "@/hooks/useFundingPlatform";
+import { useApplication } from "@/hooks/useFundingPlatform";
 import { usePermissions } from "@/hooks/usePermissions";
 import {
   useCan,

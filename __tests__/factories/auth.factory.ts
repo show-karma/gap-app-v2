@@ -1,6 +1,5 @@
 import { Permission } from "@/src/core/rbac/types/permission";
 import type { PermissionsResponse } from "@/src/core/rbac/types/resource";
-import type { UserRoles } from "@/src/core/rbac/types/role";
 import { Role } from "@/src/core/rbac/types/role";
 import { applyOverrides, type DeepPartial, randomAddress, seq } from "./utils";
 

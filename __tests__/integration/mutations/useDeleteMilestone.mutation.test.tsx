@@ -60,17 +60,6 @@ function createMilestoneWithCompletion(
     status: "pending",
     completionDetails: null,
     verificationDetails: null,
-    fundingApplicationCompletion: {
-      id: "completion-1",
-      referenceNumber: "APP-00001-10001",
-      milestoneFieldLabel: "milestone_1",
-      milestoneTitle: "Audit Completion",
-      completionText: "Completed audit",
-      ownerAddress: "0x1234",
-      isVerified: false,
-      createdAt: "2024-06-01T00:00:00Z",
-      updatedAt: "2024-06-01T00:00:00Z",
-    },
     ...overrides,
   };
 }
@@ -233,10 +222,8 @@ describe("useDeleteMilestone (mutation integration)", () => {
     expect(toast.error).toHaveBeenCalled();
   });
 
-  it("throws error when fundingApplicationCompletion is missing", async () => {
-    const milestone = createMilestoneWithCompletion({
-      fundingApplicationCompletion: null,
-    });
+  it("works even without fundingApplicationCompletion (on-chain deletion)", async () => {
+    const milestone = createMilestoneWithCompletion();
 
     const { result } = renderHookWithProviders(() =>
       useDeleteMilestone({ projectId: PROJECT_ID, programId: PROGRAM_ID })
@@ -250,7 +237,7 @@ describe("useDeleteMilestone (mutation integration)", () => {
       expect(result.current.isDeleting).toBe(false);
     });
 
-    // Should show error because fundingApplicationCompletion is null
-    expect(toast.error).toHaveBeenCalled();
+    // Should show success toast (on-chain deletion doesn't require backend call)
+    expect(toast.success).toHaveBeenCalled();
   });
 });

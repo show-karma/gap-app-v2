@@ -6,7 +6,7 @@ import { QUERY_KEYS } from "@/utilities/queryKeys";
 import {
   type ApplicationInvoiceConfig,
   getApplicationInvoiceConfig,
-} from "../services/milestone-completion.service";
+} from "../services/invoice.service";
 
 export function useApplicationInvoiceConfig(
   referenceNumber: string | undefined,

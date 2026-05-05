@@ -1,4 +1,4 @@
-import { FileX, Lock } from "lucide-react";
+import { Lock } from "lucide-react";
 import { cache } from "react";
 import { Link } from "@/src/components/navigation/Link";
 import { PermissionProvider } from "@/src/core/rbac/context/permission-context";

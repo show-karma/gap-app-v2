@@ -12,7 +12,6 @@ import {
   type CommunityPayoutItem,
   type CommunityPayoutProjectInfo,
   type CommunityPayoutsResponse,
-  MilestoneLifecycleStatus,
   type PaginationInfo,
   type PayoutDisbursement,
   PayoutDisbursementStatus,

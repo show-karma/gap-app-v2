@@ -7,7 +7,7 @@ import { connect as wagmiCoreConnect, disconnect as wagmiCoreDisconnect } from "
 import { useEffect, useRef } from "react";
 import { useAccount } from "wagmi";
 import { PROJECT_NAME } from "@/constants/brand";
-import { type PrivyBridgeValue, usePrivyBridgeSetter } from "@/contexts/privy-bridge-context";
+import { usePrivyBridgeSetter } from "@/contexts/privy-bridge-context";
 import type { TenantConfig } from "@/src/infrastructure/types/tenant";
 import { envVars } from "@/utilities/enviromentVars";
 import { appNetwork } from "@/utilities/network";

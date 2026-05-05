@@ -27,8 +27,8 @@
  *   - Contract not deployed
  */
 
-import { describe, expect, it, vi } from "vitest";
-import { createFailingTransport, type FailureMode } from "../../utils/rpc-failure";
+import { describe, expect, it } from "vitest";
+import { createFailingTransport } from "../../utils/rpc-failure";
 
 // ---------------------------------------------------------------------------
 // Helper: invokes a transport's request method

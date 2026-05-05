@@ -33,7 +33,6 @@ import { SHARE_TEXTS } from "@/utilities/share/text";
 import { cn } from "@/utilities/tailwind";
 import { ActivityActionsWrapper } from "./ActivityActionsWrapper";
 import { ActivityAttribution } from "./ActivityAttribution";
-import { ActivityStatusHeader } from "./ActivityStatusHeader";
 import { GrantAssociation } from "./GrantAssociation";
 import { computeMilestoneCardCompletionGate } from "./milestone-card-gating";
 import { containerClassName } from "./styles";
@@ -117,8 +116,6 @@ const getActivityTypeLabel = (type: string): string => {
       return "Project Activity";
     case "impact":
       return "Project Impact";
-    case "grant":
-    case "milestone":
     default:
       return "Milestone Update";
   }

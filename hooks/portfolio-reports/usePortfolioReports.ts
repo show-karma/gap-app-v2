@@ -6,7 +6,6 @@ import type {
   CreateReportConfigRequest,
   GenerateReportRequest,
   PortfolioReport,
-  ReportConfig,
   UpdateReportConfigRequest,
 } from "@/types/portfolio-report";
 

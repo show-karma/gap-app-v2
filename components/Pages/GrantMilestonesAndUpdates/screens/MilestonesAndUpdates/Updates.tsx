@@ -14,7 +14,6 @@ import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
-import { getProjectGrants } from "@/services/project-grants.service";
 import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useGrantStore } from "@/store/grant";

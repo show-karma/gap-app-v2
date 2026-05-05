@@ -1,5 +1,4 @@
 import { act, render } from "@testing-library/react";
-import React from "react";
 
 // Mock heavy dependencies
 vi.mock("@tanstack/react-query", () => ({

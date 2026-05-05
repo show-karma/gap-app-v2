@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { FinancialsSummary } from "@/components/Pages/Communities/Financials/FinancialsSummary";
-import type { CurrencyBreakdown, ProgramFinancialSummary } from "@/types/financials";
+import type { ProgramFinancialSummary } from "@/types/financials";
 
 // Mock Skeleton
 vi.mock("@/components/Utilities/Skeleton", () => ({

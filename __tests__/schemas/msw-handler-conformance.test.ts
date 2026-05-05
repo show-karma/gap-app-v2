@@ -45,8 +45,6 @@ describe("MSW Handler Conformance: Application Statistics", () => {
     const data = await response.json();
     const result = applicationStatisticsSchema.safeParse(data);
     if (!result.success) {
-      // eslint-disable-next-line no-console -- diagnostic output
-      console.log("Statistics schema mismatch:", result.error.issues);
     }
     expect(result.success).toBe(true);
   });
@@ -118,8 +116,6 @@ describe("MSW Handler Conformance: Community Endpoints", () => {
 
     const result = communitySchema.safeParse(adapted);
     if (!result.success) {
-      // eslint-disable-next-line no-console -- diagnostic output
-      console.log("Adapted community schema mismatch:", result.error.issues);
     }
     expect(result.success).toBe(true);
   });

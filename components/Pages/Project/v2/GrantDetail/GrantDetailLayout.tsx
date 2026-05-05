@@ -38,7 +38,7 @@ function getActiveTab(pathname: string): GrantTab {
 export function GrantDetailLayout({ children }: GrantDetailLayoutProps) {
   const params = useParams();
   const pathname = usePathname();
-  const router = useRouter();
+  const _router = useRouter();
   const { address } = useAccount();
 
   const projectIdFromUrl = params.projectId as string;

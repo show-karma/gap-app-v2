@@ -8,10 +8,8 @@
  * Target: 6 tests
  */
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import { axe, toHaveNoViolations } from "jest-axe";
-import React from "react";
 import "@testing-library/jest-dom";
 
 expect.extend(toHaveNoViolations);

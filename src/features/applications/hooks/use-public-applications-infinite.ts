@@ -54,7 +54,7 @@ export function usePublicApplicationsInfinite({
 
         const url = `/v2/funding-applications/program/${programId}?${queryParams.toString()}`;
 
-        const [response, fetchError, pageInfo] = await fetchData<
+        const [response, fetchError, _pageInfo] = await fetchData<
           | Application[]
           | {
               applications: Application[];

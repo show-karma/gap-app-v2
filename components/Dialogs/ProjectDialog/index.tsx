@@ -966,7 +966,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   };
 
   const [isValidatingGithub, setIsValidatingGithub] = useState(false);
-  const [githubValidatedAs, setGithubValidatedAs] = useState<"org" | null>(null);
+  const [_githubValidatedAs, setGithubValidatedAs] = useState<"org" | null>(null);
 
   const validateGithubUrl = debounce(async (value: string) => {
     setGithubValidatedAs(null);

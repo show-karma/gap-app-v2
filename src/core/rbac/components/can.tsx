@@ -32,7 +32,7 @@ export function Can({
     usePermissionContext();
 
   if (isLoading) {
-    return showWhileLoading ? <>{children}</> : <>{fallback}</>;
+    return showWhileLoading ? children : fallback;
   }
 
   let hasAccess = false;
@@ -49,7 +49,7 @@ export function Can({
     hasAccess = isReviewerType(reviewerType);
   }
 
-  return hasAccess ? <>{children}</> : <>{fallback}</>;
+  return hasAccess ? children : fallback;
 }
 
 interface CannotProps {
@@ -83,7 +83,7 @@ export function Cannot({
     hasAccess = hasRole(role);
   }
 
-  return hasAccess ? null : <>{children}</>;
+  return hasAccess ? null : children;
 }
 
 interface RequirePermissionProps {

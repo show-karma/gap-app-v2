@@ -2,7 +2,6 @@ import { render, screen } from "@testing-library/react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useProjectProfile } from "@/hooks/v2/useProjectProfile";
 import { useOwnerStore, useProjectStore } from "@/store";
-import type { ActivityFilterType } from "@/types/v2/project-profile.types";
 import { UpdatesContent } from "../UpdatesContent";
 
 // Mock dependencies
