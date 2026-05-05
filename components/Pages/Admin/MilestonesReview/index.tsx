@@ -59,6 +59,10 @@ const MarkdownPreview = dynamic(
   { ssr: false }
 );
 
+function normalizeMilestoneTitleKey(title: string): string {
+  return title.trim().toLowerCase();
+}
+
 function extractCompletionCriteriaByTitle(
   applicationData: Record<string, unknown> | undefined
 ): Map<string, string> {
@@ -74,8 +78,11 @@ function extractCompletionCriteriaByTitle(
         completionCriteria?: unknown;
       };
       if (typeof title !== "string" || typeof completionCriteria !== "string") continue;
-      const trimmed = completionCriteria.trim();
-      if (trimmed && !map.has(title)) map.set(title, trimmed);
+      const trimmedCriteria = completionCriteria.trim();
+      if (!trimmedCriteria) continue;
+      const key = normalizeMilestoneTitleKey(title);
+      if (!key || map.has(key)) continue;
+      map.set(key, trimmedCriteria);
     }
   }
   return map;
@@ -989,7 +996,9 @@ function MilestonesReviewPageContent({
                       }
                       showAIEvaluationButton={false}
                       quietSurface
-                      completionCriteria={completionCriteriaByTitle.get(selectedMilestone.title)}
+                      completionCriteria={completionCriteriaByTitle.get(
+                        normalizeMilestoneTitleKey(selectedMilestone.title)
+                      )}
                     />
                     <InlineAIEvaluation milestone={selectedMilestone} />
                   </div>
