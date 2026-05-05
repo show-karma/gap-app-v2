@@ -431,18 +431,14 @@ describe("Footer", () => {
 
   describe("Edge Cases", () => {
     it("should handle year transition correctly", () => {
-      const RealDate = Date;
-      const mockDate = new RealDate("2025-01-01");
-      vi.spyOn(global, "Date").mockImplementation(((...args: any[]) => {
-        if (args.length === 0) return mockDate;
-        return new RealDate(...(args as [any]));
-      }) as any);
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2025-01-01"));
 
       render(<Footer />);
 
       expect(screen.getByText("© 2025 Karma. All rights reserved.")).toBeInTheDocument();
 
-      vi.restoreAllMocks();
+      vi.useRealTimers();
     });
 
     it("should render all components without errors", () => {

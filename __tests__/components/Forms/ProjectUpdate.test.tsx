@@ -201,11 +201,11 @@ vi.mock("@/utilities/tailwind", () => ({
 
 const mockAttest = vi.fn().mockResolvedValue({ tx: [{ hash: "0xabc" }] });
 vi.mock("@show-karma/karma-gap-sdk", () => ({
-  ProjectUpdate: vi.fn().mockImplementation(() => ({
-    attest: mockAttest,
-    chainID: 10,
-    uid: "new-update-uid",
-  })),
+  ProjectUpdate: vi.fn(function (this: any) {
+    this.attest = mockAttest;
+    this.chainID = 10;
+    this.uid = "new-update-uid";
+  }),
   IProjectUpdate: {},
 }));
 
@@ -318,10 +318,12 @@ describe("ProjectUpdateForm", () => {
         findSchema: vi.fn(() => ({ uid: "schema-1" })),
       },
     });
-    // Restore ProjectUpdate constructor mock implementation
-    vi.mocked(MockedProjectUpdate).mockImplementation(
-      () => ({ attest: mockAttest, chainID: 10, uid: "new-update-uid" }) as any
-    );
+    // Restore ProjectUpdate constructor mock implementation (must be constructable)
+    vi.mocked(MockedProjectUpdate).mockImplementation(function (this: any) {
+      this.attest = mockAttest;
+      this.chainID = 10;
+      this.uid = "new-update-uid";
+    } as any);
   });
 
   afterEach(() => {
