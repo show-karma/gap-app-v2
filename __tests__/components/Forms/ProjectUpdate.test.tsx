@@ -1,3 +1,4 @@
+import { ProjectUpdate as MockedProjectUpdate } from "@show-karma/karma-gap-sdk";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -307,6 +308,20 @@ describe("ProjectUpdateForm", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     queryClient = createTestQueryClient();
+    // Restore mocks that vi.clearAllMocks() wipes; the module-level declarations
+    // only set the resolved value once — clearAllMocks removes implementations too.
+    mockAttest.mockResolvedValue({ tx: [{ hash: "0xabc" }] });
+    mockRefetchUpdates.mockResolvedValue({ data: { projectUpdates: [] } });
+    mockSetupChainAndWalletFn.mockResolvedValue({
+      walletSigner: {},
+      gapClient: {
+        findSchema: vi.fn(() => ({ uid: "schema-1" })),
+      },
+    });
+    // Restore ProjectUpdate constructor mock implementation
+    vi.mocked(MockedProjectUpdate).mockImplementation(
+      () => ({ attest: mockAttest, chainID: 10, uid: "new-update-uid" }) as any
+    );
   });
 
   afterEach(() => {

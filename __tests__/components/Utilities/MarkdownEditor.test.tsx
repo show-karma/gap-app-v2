@@ -147,14 +147,13 @@ describe("MarkdownEditor", () => {
     });
 
     it("should enforce maxLength on change", async () => {
-      const user = userEvent.setup();
       const handleChange = vi.fn();
       render(<MarkdownEditor value="" onChange={handleChange} maxLength={10} id="test-editor" />);
 
       const textarea = screen.getByTestId("md-editor-textarea");
-      await user.clear(textarea);
 
-      await user.type(textarea, "12345678901234567890");
+      // Use fireEvent.change to simulate a single change event with a value exceeding maxLength
+      fireEvent.change(textarea, { target: { value: "12345678901234567890" } });
 
       // Should truncate to maxLength
       expect(handleChange).toHaveBeenCalledWith("1234567890");
@@ -257,14 +256,13 @@ describe("MarkdownEditor", () => {
 
   describe("User Interactions", () => {
     it("should call onChange when typing", async () => {
-      const user = userEvent.setup();
       const handleChange = vi.fn();
       render(<MarkdownEditor value="" onChange={handleChange} id="test-editor" />);
 
       const textarea = screen.getByTestId("md-editor-textarea");
-      await user.clear(textarea);
 
-      await user.type(textarea, "Hello");
+      // Use fireEvent.change to simulate typing the full value at once
+      fireEvent.change(textarea, { target: { value: "Hello" } });
 
       expect(handleChange).toHaveBeenCalledWith("Hello");
     });
