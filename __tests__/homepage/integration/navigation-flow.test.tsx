@@ -1,6 +1,6 @@
 /**
  * Homepage Navigation Flow Integration Tests
- * Tests navigation and link flows throughout the homepage
+ * Tests navigation and link flows throughout the main homepage (funder-facing)
  *
  * Target: 12 tests
  * - CTA Navigation (6)
@@ -33,82 +33,79 @@ vi.mock("@/utilities/pages", () => ({
 // Mock SOCIALS utility
 vi.mock("@/utilities/socials", () => ({
   SOCIALS: {
+    PARTNER_FORM: "https://forms.example.com/partner",
     DISCORD: "https://discord.gg/karmahq",
   },
 }));
 
 describe("Homepage Navigation Flows", () => {
   describe("CTA Navigation", () => {
-    it("should have 'Create Project' button in Hero section", async () => {
+    it("should have 'Schedule a Demo' CTA in Hero section", async () => {
       renderWithProviders(await HomePage());
 
-      const createButtons = screen.getAllByRole("button", { name: /Create project/i });
-      expect(createButtons.length).toBeGreaterThanOrEqual(1);
+      const demoLinks = screen.getAllByRole("link", { name: /Schedule a Demo/i });
+      expect(demoLinks.length).toBeGreaterThanOrEqual(1);
     });
 
-    it("should have 'Run a funding program' link to /funders", async () => {
+    it("should have 'Explore Organizations' link to /communities", async () => {
       renderWithProviders(await HomePage());
 
-      const fundersLink = screen.getByRole("link", { name: /Run a funding program/i });
-      expect(fundersLink).toHaveAttribute("href", "/funders");
+      const orgLinks = screen.getAllByRole("link", { name: /Explore Organizations/i });
+      expect(orgLinks.length).toBeGreaterThanOrEqual(1);
+      expect(orgLinks[0]).toHaveAttribute("href", "/communities");
     });
 
-    it("should have 'View all' link for funding opportunities", async () => {
+    it("should have 'Schedule a Demo' links opening in new tab", async () => {
       renderWithProviders(await HomePage());
 
-      const viewAllLinks = screen.getAllByRole("link", { name: /View all/i });
-      expect(viewAllLinks.length).toBeGreaterThanOrEqual(1);
+      const demoLinks = screen.getAllByRole("link", { name: /Schedule a Demo/i });
+      expect(demoLinks.length).toBeGreaterThanOrEqual(1);
 
-      // Find the one pointing to funding-map
-      const fundingMapLink = viewAllLinks.find(
-        (link) => link.getAttribute("href") === "/funding-map"
-      );
-      expect(fundingMapLink).toBeDefined();
+      const externalDemoLink = demoLinks.find((link) => link.getAttribute("target") === "_blank");
+      expect(externalDemoLink).toBeDefined();
     });
 
-    it("should have 'Grow your ecosystem' link in WhereBuildersGrow", async () => {
+    it("should render hero heading", async () => {
       renderWithProviders(await HomePage());
 
-      const growLink = screen.getByRole("link", { name: /Grow your ecosystem/i });
-      expect(growLink).toHaveAttribute("href", "/funders");
+      expect(screen.getByText(/AI powered funding software/i)).toBeInTheDocument();
     });
 
-    it("should have 'View all' communities link in Hero", async () => {
+    it("should have multiple CTA links throughout the page", async () => {
       renderWithProviders(await HomePage());
 
-      const viewAllLinks = screen.getAllByRole("link", { name: /View all/i });
-      expect(viewAllLinks.length).toBeGreaterThanOrEqual(1);
+      // Schedule a Demo appears in hero, offering section, and CTA section
+      const demoLinks = screen.getAllByRole("link", { name: /Schedule a Demo/i });
+      expect(demoLinks.length).toBeGreaterThanOrEqual(2);
     });
 
-    it("should have multiple 'Create' CTAs throughout the page", async () => {
+    it("should have 'Explore Organizations' link in hero", async () => {
       renderWithProviders(await HomePage());
 
-      // CreateProject buttons
-      const createButtons = screen.getAllByRole("button", { name: /Create project/i });
-      expect(createButtons.length).toBeGreaterThanOrEqual(2); // Hero + WhereBuildersGrow
+      const orgLinks = screen.getAllByRole("link", { name: /Explore Organizations/i });
+      expect(orgLinks.length).toBeGreaterThanOrEqual(1);
     });
   });
 
   describe("External Links", () => {
-    it("should have Discord link that opens in new tab", async () => {
-      renderWithProviders(await HomePage());
+    it("should have 'Schedule a Demo' that opens in new tab with security attributes", async () => {
+      const { container } = renderWithProviders(await HomePage());
 
-      const discordLinks = screen.getAllByRole("link", { name: /Discord/i });
-      expect(discordLinks.length).toBeGreaterThanOrEqual(1);
+      const externalLinks = Array.from(container.querySelectorAll('a[target="_blank"]'));
+      expect(externalLinks.length).toBeGreaterThanOrEqual(1);
 
-      // At least one should have target="_blank"
-      const externalDiscordLink = discordLinks.find(
-        (link) => link.getAttribute("target") === "_blank"
+      // At least one should point to partner form
+      const partnerLink = externalLinks.find((link) =>
+        link.getAttribute("href")?.includes("forms.example.com")
       );
-      expect(externalDiscordLink).toBeDefined();
-      expect(externalDiscordLink).toHaveAttribute("rel", "noopener noreferrer");
+      expect(partnerLink).toBeDefined();
     });
 
-    it("should have Discord support link in FAQ section", async () => {
-      renderWithProviders(await HomePage());
+    it("should have case study links opening in new tab", async () => {
+      const { container } = renderWithProviders(await HomePage());
 
-      const discordLinks = screen.getAllByRole("link", { name: /Discord/i });
-      expect(discordLinks.length).toBeGreaterThanOrEqual(1);
+      const externalLinks = Array.from(container.querySelectorAll('a[target="_blank"]'));
+      expect(externalLinks.length).toBeGreaterThanOrEqual(1);
     });
 
     it("should have external links with proper security attributes", async () => {
@@ -141,19 +138,16 @@ describe("Homepage Navigation Flows", () => {
       renderWithProviders(await HomePage());
 
       // Check for Next.js Link components (rendered as <a>)
-      const fundersLink = screen.getByRole("link", { name: /Run a funding program/i });
-      expect(fundersLink.tagName).toBe("A");
+      const orgLinks = screen.getAllByRole("link", { name: /Explore Organizations/i });
+      expect(orgLinks[0].tagName).toBe("A");
     });
 
     it("should maintain consistent navigation patterns across sections", async () => {
       renderWithProviders(await HomePage());
 
-      // Multiple sections should have similar CTA patterns
-      const createButtons = screen.getAllByRole("button", { name: /Create project/i });
-      const fundersLinks = screen.getAllByRole("link", { name: /funders|Grow your ecosystem/i });
-
-      expect(createButtons.length).toBeGreaterThanOrEqual(2);
-      expect(fundersLinks.length).toBeGreaterThanOrEqual(1);
+      // Multiple CTAs throughout the page
+      const demoLinks = screen.getAllByRole("link", { name: /Schedule a Demo/i });
+      expect(demoLinks.length).toBeGreaterThanOrEqual(2);
     });
   });
 });

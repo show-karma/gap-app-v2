@@ -128,7 +128,8 @@ describe("CaseStudiesSection Component", () => {
       caseStudyLinks.forEach((link) => {
         expect(link).toHaveAttribute("href");
         expect(link).toHaveAttribute("target", "_blank");
-        expect(link).toHaveAttribute("rel", "noopener noreferrer");
+        // ExternalLink component uses rel="noreferrer" (noreferrer implies noopener)
+        expect(link).toHaveAttribute("rel", "noreferrer");
       });
     });
 

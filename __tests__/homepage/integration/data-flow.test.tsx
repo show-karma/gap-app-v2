@@ -1,26 +1,17 @@
 /**
  * Homepage Data Flow Integration Tests
- * Tests API integration and data display throughout homepage
+ * Tests content and data display throughout the main homepage (funder-facing)
  *
  * Target: 10 tests
- * - API Integration (5)
+ * - Page Structure (5)
  * - Data Display (5)
  */
 
 import HomePage from "@/app/page";
 import { renderWithProviders, screen, waitFor } from "../utils/test-helpers";
 import "@testing-library/jest-dom";
-import { mockCommunities } from "../fixtures/communities";
-import { mockFundingOpportunities } from "../fixtures/funding-opportunities";
 
-// Mock the service functions
-const mockGetLiveFundingOpportunities = vi.fn();
-
-vi.mock("@/src/services/funding/getLiveFundingOpportunities", () => ({
-  getLiveFundingOpportunities: vi.fn(() => mockGetLiveFundingOpportunities()),
-}));
-
-// Mock chosenCommunities - mockCommunities will be populated from import
+// Mock chosenCommunities for the hero carousel
 vi.mock("@/utilities/chosenCommunities", async () => {
   const { mockCommunities: communities } = await import("../fixtures/communities");
   return {
@@ -31,128 +22,89 @@ vi.mock("@/utilities/chosenCommunities", async () => {
 describe("Homepage Data Flow", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-
-    // Set up default mock implementations
-    mockGetLiveFundingOpportunities.mockResolvedValue(mockFundingOpportunities);
   });
 
-  describe("API Integration", () => {
-    it("should fetch live funding opportunities successfully", async () => {
-      renderWithProviders(await HomePage());
-
-      await waitFor(() => {
-        expect(mockGetLiveFundingOpportunities).toHaveBeenCalled();
-      });
+  describe("Page Structure", () => {
+    it("should render main element", async () => {
+      const { container } = renderWithProviders(await HomePage());
+      expect(container.querySelector("main")).toBeInTheDocument();
     });
 
-    it("should handle empty funding opportunities gracefully", async () => {
-      mockGetLiveFundingOpportunities.mockResolvedValue([]);
-
+    it("should render hero heading", async () => {
       renderWithProviders(await HomePage());
-
-      await waitFor(() => {
-        const fundingSection = screen.getByText(/Live funding opportunities/i);
-        expect(fundingSection).toBeInTheDocument();
-      });
+      expect(screen.getByText(/AI powered funding software/i)).toBeInTheDocument();
     });
 
     it("should load community data for Hero carousel", async () => {
       renderWithProviders(await HomePage());
 
       // Hero section should render (communities are mocked)
-      const heroSection = screen.getByText(/Get funded/i);
+      const heroSection = screen.getByText(/AI powered funding software/i);
       expect(heroSection).toBeInTheDocument();
     });
 
-    it("should render page even if API calls fail", async () => {
-      // Simulate API failure by returning empty data
-      mockGetLiveFundingOpportunities.mockResolvedValue([]);
-
+    it("should render page without errors", async () => {
       const { container } = renderWithProviders(await HomePage());
 
-      // Page should still render
+      // Page should render with main element
       expect(container.querySelector("main")).toBeInTheDocument();
-      expect(screen.getByText(/Get funded/i)).toBeInTheDocument();
+      expect(screen.getByText(/AI powered funding software/i)).toBeInTheDocument();
     });
 
-    it("should handle async data loading with Suspense", async () => {
-      renderWithProviders(await HomePage());
+    it("should render multiple sections", async () => {
+      const { container } = renderWithProviders(await HomePage());
 
-      // Wait for LiveFundingOpportunities to load
-      await waitFor(
-        () => {
-          const fundingSection = screen.getByText(/Live funding opportunities/i);
-          expect(fundingSection).toBeInTheDocument();
-        },
-        { timeout: 3000 }
-      );
+      // Multiple sections should be rendered
+      const sections = container.querySelectorAll("section");
+      expect(sections.length).toBeGreaterThanOrEqual(3);
     });
   });
 
   describe("Data Display", () => {
-    it("should display fetched funding programs correctly", async () => {
-      const testPrograms = mockFundingOpportunities.slice(0, 3);
-      mockGetLiveFundingOpportunities.mockResolvedValue(testPrograms);
-
+    it("should display hero content", async () => {
       renderWithProviders(await HomePage());
 
-      // Verify funding section renders (programs are fetched server-side)
-      await waitFor(
-        () => {
-          expect(screen.getByText(/Live funding opportunities/i)).toBeInTheDocument();
-        },
-        { timeout: 3000 }
-      );
+      expect(screen.getByText(/AI powered funding software/i)).toBeInTheDocument();
     });
 
-    it("should display community logos in Hero carousel", async () => {
+    it("should display community logos in carousel", async () => {
       renderWithProviders(await HomePage());
 
-      // Community carousel should render
-      const heroSection = screen.getByText(/Get funded/i);
+      // Hero section should render
+      const heroSection = screen.getByText(/AI powered funding software/i);
       expect(heroSection).toBeInTheDocument();
     });
 
-    it("should render all static content alongside dynamic data", async () => {
+    it("should render all static content", async () => {
       renderWithProviders(await HomePage());
 
-      // Static sections should always be present
-      expect(screen.getByText(/Karma connects builders/i)).toBeInTheDocument();
-      expect(screen.getAllByText(/One profile./i)[0]).toBeInTheDocument();
-      expect(screen.getByText(/Join our community/i)).toBeInTheDocument();
+      // Hero is always present
+      expect(screen.getByText(/AI powered funding software/i)).toBeInTheDocument();
 
-      // Dynamic section should also load
+      // FAQ section with questions relevant to funders
       await waitFor(() => {
-        expect(screen.getByText(/Live funding opportunities/i)).toBeInTheDocument();
+        expect(screen.getByText(/What is Karma\?/i)).toBeInTheDocument();
       });
     });
 
-    it("should handle multiple data sources simultaneously", async () => {
-      const testPrograms = mockFundingOpportunities.slice(0, 3);
-
-      mockGetLiveFundingOpportunities.mockResolvedValue(testPrograms);
-
+    it("should render CTA sections", async () => {
       renderWithProviders(await HomePage());
 
-      // Both data sources should be utilized
-      expect(mockGetLiveFundingOpportunities).toHaveBeenCalled();
-
-      await waitFor(() => {
-        expect(screen.getByText(/Live funding opportunities/i)).toBeInTheDocument();
-      });
+      // Schedule a Demo appears in hero and other CTAs
+      const demoLinks = screen.getAllByText(/Schedule a Demo/i);
+      expect(demoLinks.length).toBeGreaterThanOrEqual(1);
     });
 
-    it("should maintain UI stability when data loads", async () => {
+    it("should maintain UI stability", async () => {
       renderWithProviders(await HomePage());
 
       // Hero should be immediately visible
-      const hero = screen.getByText(/Get funded/i);
+      const hero = screen.getByText(/AI powered funding software/i);
       expect(hero).toBeInTheDocument();
 
-      // Other sections should remain stable
+      // FAQ section should also load
       await waitFor(() => {
-        expect(screen.getByText(/Karma connects builders/i)).toBeInTheDocument();
-        expect(screen.getAllByText(/One profile./i)[0]).toBeInTheDocument();
+        expect(screen.getByText(/What is Karma\?/i)).toBeInTheDocument();
       });
     });
   });

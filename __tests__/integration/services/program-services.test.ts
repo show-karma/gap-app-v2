@@ -251,6 +251,7 @@ describe("programReviewersService trust tests", () => {
           name: "Alice",
           email: "alice@example.com",
           telegram: "@alice",
+          slack: "",
           assignedAt: "2024-01-01",
           assignedBy: "0xadmin",
         },
