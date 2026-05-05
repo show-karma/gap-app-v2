@@ -148,6 +148,15 @@ export const MilestoneItem: React.FC<MilestoneItemProps> = ({
         isRequired={false}
         error={errors?.completionCriteria?.message}
       />
+
+      {milestone.milestoneUID && (
+        <div className="space-y-2 pt-2 border-t border-zinc-200 dark:border-zinc-700">
+          <Label className="text-xs text-zinc-500 dark:text-zinc-400">On-Chain Milestone UID</Label>
+          <div className="font-mono text-sm break-all bg-zinc-50 dark:bg-zinc-900 px-3 py-2 rounded border border-zinc-200 dark:border-zinc-700">
+            {milestone.milestoneUID}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
