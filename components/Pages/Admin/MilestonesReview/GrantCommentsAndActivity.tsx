@@ -6,6 +6,7 @@ import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
 import { useGrantComments } from "@/src/features/grant-comments/hooks/use-grant-comments";
 import { useOwnerStore } from "@/store";
 import type { ApplicationComment } from "@/types/funding-platform";
+import { cn } from "@/utilities/tailwind";
 
 interface GrantCommentsAndActivityProps {
   projectUID: string;
@@ -14,6 +15,7 @@ interface GrantCommentsAndActivityProps {
   currentUserAddress?: string;
   /** Application reference number used to fetch grantee contacts for @-mention */
   referenceNumber?: string;
+  embedded?: boolean;
 }
 
 export function GrantCommentsAndActivity({
@@ -22,6 +24,7 @@ export function GrantCommentsAndActivity({
   communityId,
   currentUserAddress,
   referenceNumber,
+  embedded = false,
 }: GrantCommentsAndActivityProps) {
   const { comments, isLoading, createCommentAsync, editCommentAsync, deleteCommentAsync } =
     useGrantComments({ projectUID, programId });
@@ -73,7 +76,13 @@ export function GrantCommentsAndActivity({
   );
 
   return (
-    <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm px-4 py-4 border border-gray-200 dark:border-gray-700">
+    <div
+      className={cn(
+        embedded
+          ? "px-0 py-0"
+          : "rounded-lg border border-gray-200 bg-white px-4 py-4 shadow-sm dark:border-gray-700 dark:bg-zinc-900"
+      )}
+    >
       <CommentsTimeline
         applicationId={`${projectUID}/${programId}`}
         comments={mappedComments}

@@ -55,6 +55,42 @@ describe("PAGES constants", () => {
     });
   });
 
+  describe("MANAGE.FUNDING_PLATFORM.MILESTONES", () => {
+    it("returns the project milestone review path without a selected milestone", () => {
+      const result = PAGES.MANAGE.FUNDING_PLATFORM.MILESTONES("filecoin", "992", "project-uid");
+
+      expect(result).toBe("/community/filecoin/manage/funding-platform/992/milestones/project-uid");
+    });
+
+    it("adds an encoded milestone hash when a milestone is selected", () => {
+      const result = PAGES.MANAGE.FUNDING_PLATFORM.MILESTONES(
+        "filecoin",
+        "992",
+        "project-uid",
+        "milestone uid/1"
+      );
+
+      expect(result).toBe(
+        "/community/filecoin/manage/funding-platform/992/milestones/project-uid#milestone-milestone%20uid%2F1"
+      );
+    });
+  });
+
+  describe("REVIEWER.FUNDING_PLATFORM.MILESTONES", () => {
+    it("adds an encoded milestone hash for reviewer milestone review links", () => {
+      const result = PAGES.REVIEWER.FUNDING_PLATFORM.MILESTONES(
+        "filecoin",
+        "992",
+        "project-uid",
+        "0xmilestone/1"
+      );
+
+      expect(result).toBe(
+        "/community/filecoin/manage/funding-platform/992/milestones/project-uid#milestone-0xmilestone%2F1"
+      );
+    });
+  });
+
   describe("PAGES static routes", () => {
     it("HOME is /", () => {
       expect(PAGES.HOME).toBe("/");
