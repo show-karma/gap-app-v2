@@ -46,10 +46,19 @@ function getRpcUrl(chainId: SupportedChainId): string {
  * Gets the Safe Transaction Service URL for a chain
  * Uses the format: https://safe-transaction-{network}.safe.global
  */
-function getSafeServiceUrl(chainId: SupportedChainId): string | null {
+export function getSafeServiceUrl(chainId: SupportedChainId): string | null {
   const networkId = SAFE_NETWORK_IDS[chainId];
   if (!networkId) return null;
   return `https://safe-transaction-${networkId}.safe.global`;
+}
+
+/**
+ * Returns the Safe-compatible network identifier for a chain (e.g. "optimism" for chain 10).
+ * Used in app.safe.global URLs and Safe API endpoints — distinct from EIP-3770 short names
+ * like "oeth" that live in NETWORKS[chainId].shortName.
+ */
+export function getSafeNetworkId(chainId: SupportedChainId): string | null {
+  return SAFE_NETWORK_IDS[chainId] ?? null;
 }
 
 /**
@@ -393,7 +402,7 @@ export async function prepareDisbursementTransaction(
 /**
  * Creates an Ethereum provider compatible with Safe SDK from wagmi wallet client
  */
-function createEthereumProvider(walletClient: any, chainId: SupportedChainId) {
+export function createEthereumProvider(walletClient: any, chainId: SupportedChainId) {
   const rpcUrl = getRpcUrl(chainId);
 
   // Create a provider object that Safe SDK can understand

@@ -29,6 +29,12 @@ interface CampaignCardProps {
   delegatedActiveCampaignId?: string | null;
   isAnyClaiming?: boolean;
   overrideDisplayName?: string;
+  isSafeYouOwn?: boolean;
+  isCheckingOwnership?: boolean;
+  onRequestClaimViaSafe?: () => void;
+  onSubmitClaimViaSafe?: () => void;
+  safeClaimStep?: "idle" | "preparing" | "awaiting_signature" | "submitting";
+  safeActiveCampaignId?: string | null;
 }
 
 const truncateAddress = (address: string) => formatAddressForDisplay(address, 6, 4);
@@ -76,6 +82,12 @@ function CampaignCardComponent({
   delegatedActiveCampaignId,
   isAnyClaiming = false,
   overrideDisplayName,
+  isSafeYouOwn = false,
+  isCheckingOwnership = false,
+  onRequestClaimViaSafe,
+  onSubmitClaimViaSafe,
+  safeClaimStep = "idle",
+  safeActiveCampaignId,
 }: CampaignCardProps) {
   const displayName = useMemo(
     () => overrideDisplayName || eligibility?.title || campaign.token.name,
@@ -108,9 +120,52 @@ function CampaignCardComponent({
   const isThisCampaignRequesting =
     delegatedActiveCampaignId === campaign.id && delegatedClaimStep === "awaiting_signature";
   const isThisCampaignSubmitting = hasPendingSignature && delegatedClaimStep === "submitting";
+  const isThisCampaignSafePreparing =
+    safeActiveCampaignId === campaign.id && safeClaimStep === "preparing";
+  const isThisCampaignSafeAwaitingSignature =
+    safeActiveCampaignId === campaign.id && safeClaimStep === "awaiting_signature";
+  const isThisCampaignSafeSubmitting =
+    safeActiveCampaignId === campaign.id && safeClaimStep === "submitting";
+
+  const getSafeClaimButton = () => {
+    if (!canClaim || !isViewingAlternateAddress || !isSafeYouOwn) return null;
+
+    // After prepare succeeds, show the explicit "Sign & Propose" button so the user
+    // can trigger the wallet signature + Safe API submission.
+    if (isThisCampaignSafeAwaitingSignature || isThisCampaignSafeSubmitting) {
+      return (
+        <Button
+          className="w-full font-semibold"
+          onClick={onSubmitClaimViaSafe}
+          disabled={isAnyClaiming && !isThisCampaignSafeAwaitingSignature}
+          aria-label={`Sign and propose Safe transaction for ${displayName}`}
+          aria-busy={isThisCampaignSafeSubmitting}
+        >
+          {isThisCampaignSafeSubmitting ? "Submitting to Safe..." : "Sign & Propose"}
+        </Button>
+      );
+    }
+
+    return (
+      <Button
+        className="w-full font-semibold"
+        onClick={onRequestClaimViaSafe}
+        disabled={isAnyClaiming || isCheckingOwnership}
+        aria-label={`Propose claim to Safe for ${displayName}`}
+        aria-busy={isThisCampaignSafePreparing}
+      >
+        {isCheckingOwnership
+          ? "Checking ownership..."
+          : isThisCampaignSafePreparing
+            ? "Preparing Safe transaction..."
+            : "Propose Claim"}
+      </Button>
+    );
+  };
 
   const getDelegatedClaimButton = () => {
     if (!canClaim || !isViewingAlternateAddress) return null;
+    if (isSafeYouOwn) return null;
 
     if (hasPendingSignature && delegatedClaimStep !== "awaiting_signature") {
       return (
@@ -210,26 +265,56 @@ function CampaignCardComponent({
               {isLockupActive && formattedCliffDate && (
                 <LockupWarning cliffDate={formattedCliffDate} />
               )}
-              <div
-                role="alert"
-                className="mb-2 p-3 rounded-lg border bg-primary/5 border-primary/20"
-              >
-                <p className="text-sm text-primary">
-                  {hasPendingSignature ? (
-                    <>
-                      Signature obtained. Submit claim to send tokens to{" "}
-                      <span title={alternateAddress}>{truncateAddress(alternateAddress)}</span>.
-                    </>
-                  ) : (
-                    <>
-                      Funds belong to{" "}
-                      <span title={alternateAddress}>{truncateAddress(alternateAddress)}</span>.
-                      Authorize to claim on their behalf.
-                    </>
-                  )}
-                </p>
-              </div>
-              {getDelegatedClaimButton()}
+              {isSafeYouOwn ? (
+                <>
+                  <div
+                    role="alert"
+                    className="mb-2 p-3 rounded-lg border bg-blue-50 border-blue-200 dark:bg-blue-950/20 dark:border-blue-800"
+                  >
+                    <p className="text-sm text-blue-700 dark:text-blue-400">
+                      {isThisCampaignSafeAwaitingSignature ? (
+                        <>
+                          Ready to sign. Click <strong>Sign & Propose</strong> to submit this
+                          transaction to the Safe queue at{" "}
+                          <span title={alternateAddress}>{truncateAddress(alternateAddress)}</span>.
+                        </>
+                      ) : (
+                        <>
+                          Safe wallet{" "}
+                          <span title={alternateAddress}>
+                            {truncateAddress(alternateAddress)}
+                          </span>
+                          . Propose claim to Safe. Any signer can execute it.
+                        </>
+                      )}
+                    </p>
+                  </div>
+                  {getSafeClaimButton()}
+                </>
+              ) : (
+                <>
+                  <div
+                    role="alert"
+                    className="mb-2 p-3 rounded-lg border bg-primary/5 border-primary/20"
+                  >
+                    <p className="text-sm text-primary">
+                      {hasPendingSignature ? (
+                        <>
+                          Signature obtained. Submit claim to send tokens to{" "}
+                          <span title={alternateAddress}>{truncateAddress(alternateAddress)}</span>.
+                        </>
+                      ) : (
+                        <>
+                          Funds belong to{" "}
+                          <span title={alternateAddress}>{truncateAddress(alternateAddress)}</span>.
+                          Authorize to claim on their behalf.
+                        </>
+                      )}
+                    </p>
+                  </div>
+                  {getDelegatedClaimButton()}
+                </>
+              )}
             </>
           )}
           {isCampaignCompleted && !isClaimed && (
