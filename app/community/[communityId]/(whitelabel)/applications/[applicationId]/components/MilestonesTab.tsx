@@ -1,7 +1,9 @@
 "use client";
 
+import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
 import { MilestoneCompletionEditor } from "@/src/features/applications/components/MilestoneCompletionEditor";
 import { formatFieldLabel } from "@/src/features/applications/lib/milestone-utils";
+import type { GrantMilestoneWithDetails } from "@/types/v2/roadmap";
 import type { Application, MilestoneData } from "@/types/whitelabel-entities";
 
 interface MilestonesTabProps {
@@ -24,6 +26,26 @@ export function MilestonesTab({ application, isOwner, invoiceRequired }: Milesto
   const milestoneFields = Object.entries(application.applicationData).filter(([_, value]) =>
     isMilestoneArray(value)
   ) as [string, MilestoneData[]][];
+
+  // Fetch the rich GrantMilestoneWithDetails (carries `canAttest`, `grant.uid`,
+  // `chainId`, completion + verification details) for the linked project.
+  // Required by the on-chain attestation flow — milestoneStatuses alone gives
+  // status badges but not the SDK-shaped milestone needed to sign.
+  const { rawData } = useProjectUpdates(application.projectUID ?? "");
+
+  // Filter to the grant milestones that match this application's linked
+  // milestoneUIDs. Done by UID — title matching is unreliable and the project
+  // can have grants from other programs in the same response.
+  const linkedMilestoneUIDs = new Set(
+    milestoneFields.flatMap(([_, items]) =>
+      items
+        .map((m) => m.milestoneUID)
+        .filter((uid): uid is string => typeof uid === "string" && uid.length > 0)
+    )
+  );
+  const grantMilestones: GrantMilestoneWithDetails[] = (rawData?.grantMilestones ?? []).filter(
+    (m) => linkedMilestoneUIDs.has(m.uid)
+  );
 
   if (milestoneFields.length === 0) {
     return (
@@ -50,6 +72,7 @@ export function MilestonesTab({ application, isOwner, invoiceRequired }: Milesto
               isEditable={isOwner}
               invoiceRequired={invoiceRequired}
               milestoneStatuses={application.milestoneStatuses}
+              grantMilestones={grantMilestones}
             />
           </div>
         </div>

@@ -6,9 +6,8 @@ import toast from "react-hot-toast";
 import { useMilestoneAttestation } from "@/src/features/milestones/hooks/useMilestoneAttestation";
 import { submitGranteeInvoice } from "@/src/features/payout-disbursement/services/payout-disbursement.service";
 import type { GrantMilestoneWithDetails } from "@/types/v2/roadmap";
-import type { MilestoneData, MilestoneStatusEntry } from "@/types/whitelabel-entities";
+import type { MilestoneStatusEntry } from "@/types/whitelabel-entities";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
-import { fetchGrantMilestoneByUID } from "../services/milestone-completion.service";
 
 export interface InvoiceFile {
   fileKey: string;
@@ -20,11 +19,22 @@ export interface SubmitMilestoneCompletionParams {
   proofOfWork: string;
   referenceNumber: string;
   invoiceFile?: InvoiceFile | null;
-  /** Application-page wiring: the loose form data + on-chain status entry. */
-  milestoneData?: MilestoneData;
-  statusEntry?: MilestoneStatusEntry;
-  /** Project-page wiring: the rich milestone + grantUID are already known. */
+  /**
+   * The rich on-chain milestone (carries `canAttest`, `grant.uid`,
+   * `chainId`). Both the project page and the application detail page
+   * fetch and pass this — the project page via `useProjectMilestones`,
+   * the application detail page via `useProjectUpdates(projectUID)` and
+   * filtering down to milestones whose UID is linked on the application.
+   */
   grantMilestone?: GrantMilestoneWithDetails;
+  /**
+   * Optional fallback for grantUID when the rich milestone doesn't carry
+   * one (e.g. the indexer omitted `.grant.uid` for older grants). The
+   * application detail page passes the same value as
+   * `statusEntry.grantUID`.
+   */
+  statusEntry?: MilestoneStatusEntry;
+  /** Project-page wiring — overrides any UID/chain on the rich milestone. */
   grantUID?: string;
   chainID?: number;
 }
@@ -36,41 +46,40 @@ interface ResolvedTarget {
 }
 
 /**
- * Resolve the rich milestone + grantUID + chainID needed by the
- * attestation mutation. Two wiring paths:
+ * Pull together the rich milestone + grantUID + chainID needed by the
+ * attestation mutation. The caller is expected to supply
+ * `grantMilestone` already loaded; we just pick the best-available
+ * grantUID and chainID across the explicit prop, the milestone's own
+ * `grant.uid`/`chainId`, and the `statusEntry` fallback.
  *
- *   1. Project page: caller passes `grantMilestone` + `grantUID` directly.
- *   2. Application detail page: caller passes `milestoneData` (with
- *      `milestoneUID`) + `statusEntry` (with `grantUID` + `chainID`),
- *      and we fetch the rich payload on demand from the indexer.
- *
- * Throws a domain-specific Error when neither path is satisfied so the
- * caller's `onError` can render a single, clear toast.
+ * Throws a domain-specific Error when no `grantMilestone` is wired so
+ * the caller's `onError` can render a single, clear toast.
  */
-async function resolveAttestationTarget(
+function resolveAttestationTarget(
   params: SubmitMilestoneCompletionParams
-): Promise<ResolvedTarget> {
-  if (params.grantMilestone && params.grantUID) {
-    return {
-      milestone: params.grantMilestone,
-      grantUID: params.grantUID,
-      chainID: params.chainID ?? 8453,
-    };
+): ResolvedTarget {
+  if (!params.grantMilestone) {
+    throw new Error("Milestone or grant information missing");
   }
 
-  if (params.milestoneData?.milestoneUID && params.statusEntry) {
-    const milestone = await fetchGrantMilestoneByUID(
-      params.milestoneData.milestoneUID,
-      params.statusEntry.chainID
-    );
-    return {
-      milestone,
-      grantUID: params.grantUID ?? params.statusEntry.grantUID,
-      chainID: params.statusEntry.chainID,
-    };
+  const grantUID =
+    params.grantUID ??
+    params.grantMilestone.grant?.uid ??
+    params.statusEntry?.grantUID;
+  if (!grantUID) {
+    throw new Error("Milestone or grant information missing");
   }
 
-  throw new Error("Milestone or grant information missing");
+  const chainIDFromMilestone = params.grantMilestone.chainId
+    ? Number(params.grantMilestone.chainId)
+    : undefined;
+  const chainID =
+    params.chainID ??
+    (Number.isFinite(chainIDFromMilestone) ? (chainIDFromMilestone as number) : undefined) ??
+    params.statusEntry?.chainID ??
+    8453;
+
+  return { milestone: params.grantMilestone, grantUID, chainID };
 }
 
 /**
@@ -99,7 +108,7 @@ export function useSubmitMilestoneCompletion() {
 
   const mutation = useMutation({
     mutationFn: async (params: SubmitMilestoneCompletionParams) => {
-      const target = await resolveAttestationTarget(params);
+      const target = resolveAttestationTarget(params);
 
       setPendingTitles((prev) => new Set(prev).add(params.milestoneTitle));
 

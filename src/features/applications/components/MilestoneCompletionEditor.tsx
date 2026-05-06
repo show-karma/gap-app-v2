@@ -213,7 +213,6 @@ export function MilestoneCompletionEditor({
         invoiceFile: invoiceFile
           ? { fileKey: invoiceFile.fileKey, fileUrl: invoiceFile.fileUrl }
           : null,
-        milestoneData,
         statusEntry,
         grantMilestone,
         grantUID,
