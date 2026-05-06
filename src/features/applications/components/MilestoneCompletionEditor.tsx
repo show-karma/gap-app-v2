@@ -71,15 +71,19 @@ export function MilestoneCompletionEditor({
     isPendingFor: isSubmittingTitle,
   } = useSubmitMilestoneCompletion();
 
+  // Always fire the invoice config query — `invoiceConfig.invoiceRequired`
+  // is the authoritative per-grant flag (program.metadata can lag/be
+  // unset). The optional `invoiceRequired` prop only acts as a hint to
+  // skip the query for callers that *know* it's never required (e.g.
+  // public read-only views).
   const { data: invoiceConfig, isLoading: isInvoiceConfigLoading } = useApplicationInvoiceConfig(
     referenceNumber,
     {
-      enabled: !!invoiceRequired,
+      enabled: invoiceRequired !== false,
     }
   );
 
-  const showInvoice =
-    !!invoiceRequired && !!invoiceConfig?.invoiceRequired && !!invoiceConfig?.grantUID;
+  const showInvoice = !!invoiceConfig?.invoiceRequired && !!invoiceConfig?.grantUID;
   const milestoneInvoices = invoiceConfig?.milestoneInvoices ?? [];
 
   // Invoice tracking is keyed by the user-facing label — the indexer
@@ -324,7 +328,7 @@ export function MilestoneCompletionEditor({
                     className="resize-y"
                   />
 
-                  {isInvoiceConfigLoading && invoiceRequired && (
+                  {isInvoiceConfigLoading && invoiceRequired !== false && (
                     <div className="flex w-full flex-col items-start gap-2 mt-2">
                       <div className="h-5 w-28 rounded bg-gray-200 dark:bg-zinc-700 animate-pulse" />
                       <div className="h-10 w-full rounded bg-gray-200 dark:bg-zinc-700 animate-pulse" />
