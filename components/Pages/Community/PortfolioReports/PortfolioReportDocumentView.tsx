@@ -2,7 +2,7 @@
 
 import { ChevronRight, Download } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { downloadReportPdf } from "@/services/portfolio-reports.service";
@@ -49,9 +49,14 @@ export function PortfolioReportDocumentView({
 }: Props) {
   const runDateLabel = formatRunDate(runDate).label;
   const [exportingPdf, setExportingPdf] = useState(false);
+  const exportInFlight = useRef(false);
 
   const handleExportPdf = async () => {
     if (!exportContext) return;
+    // Synchronous guard against double-clicks; setState is async and the
+    // disabled prop won't update before a second click in the same tick.
+    if (exportInFlight.current) return;
+    exportInFlight.current = true;
     setExportingPdf(true);
     try {
       const blob = await downloadReportPdf(exportContext.communitySlug, exportContext.reportId);
@@ -66,6 +71,7 @@ export function PortfolioReportDocumentView({
     } catch (err) {
       toast.error(`Failed to export PDF: ${err instanceof Error ? err.message : "Unknown error"}`);
     } finally {
+      exportInFlight.current = false;
       setExportingPdf(false);
     }
   };

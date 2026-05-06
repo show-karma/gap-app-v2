@@ -2,7 +2,7 @@
 
 import { ArrowLeft, Download, Eye, EyeOff, Pencil, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { HtmlReportFrame } from "@/components/Pages/Community/PortfolioReports/HtmlReportFrame";
@@ -60,12 +60,27 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editDraft, setEditDraft] = useState("");
   const [exportingPdf, setExportingPdf] = useState(false);
+  const exportInFlight = useRef(false);
 
   useEffect(() => {
     if (showEditDialog && report?.content) {
       setEditDraft(report.content);
     }
   }, [showEditDialog, report?.content]);
+
+  // Close the Edit dialog if a regenerate kicks off while it's open —
+  // the draft is now stale (it was seeded from pre-regen content) and
+  // saving would clobber the freshly generated report. The user gets a
+  // toast so they know why their dialog disappeared.
+  const isReportRegenerating = report ? isReportGenerating(report) : false;
+  useEffect(() => {
+    if (showEditDialog && isReportRegenerating) {
+      setShowEditDialog(false);
+      toast("Closed Edit — report is regenerating. Reopen when it finishes.", {
+        icon: "ℹ️",
+      });
+    }
+  }, [showEditDialog, isReportRegenerating]);
 
   if (accessLoading || isLoading) {
     return (
@@ -129,6 +144,11 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
   };
 
   const handleExportPdf = async () => {
+    // Synchronous guard against double-clicks — `setExportingPdf(true)`
+    // is queued by React and won't disable the button before a second
+    // click can fire on the same event loop tick.
+    if (exportInFlight.current) return;
+    exportInFlight.current = true;
     setExportingPdf(true);
     try {
       const blob = await downloadReportPdf(slug, reportId);
@@ -143,6 +163,7 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
     } catch (err) {
       toast.error(`Failed to export PDF: ${err instanceof Error ? err.message : "Unknown error"}`);
     } finally {
+      exportInFlight.current = false;
       setExportingPdf(false);
     }
   };
