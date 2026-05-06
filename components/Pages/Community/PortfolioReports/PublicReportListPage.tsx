@@ -7,6 +7,7 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import { usePublishedReports } from "@/hooks/portfolio-reports/usePortfolioReports";
 import type { Community } from "@/types/v2/community";
 import { PAGES } from "@/utilities/pages";
+import { reportExcerpt } from "@/utilities/portfolio-reports/excerpt";
 import { formatRunDate } from "@/utilities/portfolio-reports/period";
 import { ReportTimelineScrubber, type TimelineEntry } from "./ReportTimelineScrubber";
 
@@ -20,37 +21,6 @@ function formatPublished(iso: string): string {
     month: "short",
     day: "2-digit",
   });
-}
-
-function toExcerpt(markdown: string, maxLength = 240): string {
-  let text = markdown;
-  text = text.replace(/```[\s\S]*?```/g, " ");
-  text = text.replace(/`([^`]+)`/g, "$1");
-  text = text.replace(/!\[[^\]]*\]\([^)]+\)/g, "");
-  text = text.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
-  text = text
-    .split("\n")
-    .filter((line) => {
-      const trimmed = line.trim();
-      if (/^\|.*\|$/.test(trimmed)) return false;
-      if (/^[\s|:-]+$/.test(trimmed) && trimmed.includes("-")) return false;
-      return true;
-    })
-    .join("\n");
-  text = text.replace(/^#{1,6}\s+/gm, "");
-  text = text.replace(/^>\s?/gm, "");
-  text = text.replace(/^[\s]*[-*+]\s+/gm, "");
-  text = text.replace(/^[\s]*\d+\.\s+/gm, "");
-  text = text.replace(/(\*\*|__)(.+?)\1/g, "$2");
-  text = text.replace(/(\*|_)(.+?)\1/g, "$2");
-  text = text.replace(/~~(.+?)~~/g, "$1");
-  text = text.replace(/^[-*_]{3,}$/gm, "");
-  text = text.replace(/\s+/g, " ").trim();
-  if (text.length <= maxLength) return text;
-  const truncated = text.slice(0, maxLength);
-  const lastSpace = truncated.lastIndexOf(" ");
-  const cut = lastSpace > maxLength * 0.6 ? truncated.slice(0, lastSpace) : truncated;
-  return `${cut}…`;
 }
 
 const MONTH_ABBR = [
@@ -74,9 +44,7 @@ const MONTH_ABBR = [
  * `runDate`s (any day, any cadence) so gap-fill no longer makes sense; we
  * just render what we have.
  */
-function deriveTimeline(
-  sortedReports: Array<{ id: string; runDate: string }>
-): TimelineEntry[] {
+function deriveTimeline(sortedReports: Array<{ id: string; runDate: string }>): TimelineEntry[] {
   return sortedReports.map((r) => {
     const [yearStr, monthStr, dayStr] = r.runDate.split("-");
     const monthIdx = Number(monthStr) - 1;
@@ -98,10 +66,7 @@ export function PublicReportListPage({ community }: Props) {
   const seededRef = useRef(false);
 
   const sortedReports = useMemo(
-    () =>
-      reports
-        ? [...reports].sort((a, b) => b.runDate.localeCompare(a.runDate))
-        : [],
+    () => (reports ? [...reports].sort((a, b) => b.runDate.localeCompare(a.runDate)) : []),
     [reports]
   );
 
@@ -210,7 +175,7 @@ export function PublicReportListPage({ community }: Props) {
 
         <div ref={sectionsRef} className="min-w-0">
           {sortedReports.map((report, index) => {
-            const excerpt = toExcerpt(report.markdown, 280);
+            const excerpt = reportExcerpt(report, 280);
             const fmt = formatRunDate(report.runDate);
             return (
               <article

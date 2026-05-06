@@ -77,13 +77,13 @@ export async function getReport(communitySlug: string, reportId: string): Promis
   return data;
 }
 
-export async function updateReportMarkdown(
+export async function updateReportContent(
   communitySlug: string,
   reportId: string,
-  markdown: string
+  content: string
 ): Promise<PortfolioReport> {
   const { data } = await apiClient.put(`/v2/communities/${communitySlug}/reports/${reportId}`, {
-    markdown,
+    content,
   });
   return data;
 }

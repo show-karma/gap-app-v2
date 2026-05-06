@@ -38,7 +38,14 @@ export interface PortfolioReport {
   communityId: string;
   runDate: string;
   status: PortfolioReportStatus;
-  markdown: string;
+  /**
+   * Rendered report body. New reports are full `<!DOCTYPE html>`
+   * documents emitted by the agentic generator's structured-document
+   * pipeline. Pre-migration rows carry markdown text (one-time
+   * backfill converts them to HTML). The FE always renders this
+   * inside a sandboxed frame, format-agnostic by design.
+   */
+  content: string;
   dataSnapshot: Record<string, unknown>;
   modelId: string;
   tokenUsage: TokenUsage | null;
