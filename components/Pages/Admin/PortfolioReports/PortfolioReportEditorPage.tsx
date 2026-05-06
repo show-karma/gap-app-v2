@@ -1,20 +1,30 @@
 "use client";
 
-import { ArrowLeft, Eye, EyeOff, RefreshCw } from "lucide-react";
+import { ArrowLeft, Download, Eye, EyeOff, Pencil, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { HtmlReportFrame } from "@/components/Pages/Community/PortfolioReports/HtmlReportFrame";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import {
   usePortfolioReport,
   usePublishReport,
   useRegenerateReport,
   useUnpublishReport,
+  useUpdateReportContent,
 } from "@/hooks/portfolio-reports/usePortfolioReports";
+import { downloadReportPdf } from "@/services/portfolio-reports.service";
 import { isReportGenerating } from "@/types/portfolio-report";
 import type { Community } from "@/types/v2/community";
 import { PAGES } from "@/utilities/pages";
@@ -27,11 +37,14 @@ interface Props {
 }
 
 /**
- * Admin preview + actions page. Inline editing was retired with the
- * structured-document pipeline — admins regenerate (cheap, deterministic)
- * rather than hand-editing the rendered HTML. The MCP tool
- * `commit_edit_report_content` is the API-level escape hatch for
- * bespoke content edits.
+ * Admin preview + actions page.
+ *
+ * Edit affordance is intentionally a raw HTML textarea. The rendered
+ * output is structured HTML (produced by the BE renderer from the
+ * agentic structured document); a WYSIWYG would either lose round-trip
+ * fidelity or require rebuilding the renderer in the browser. The
+ * textarea is enough for typo-fix-shaped edits, and Regenerate is the
+ * right move for anything larger.
  */
 export function PortfolioReportEditorPage({ community, reportId }: Props) {
   const slug = community.details.slug;
@@ -41,8 +54,18 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
   const publishMutation = usePublishReport(slug);
   const unpublishMutation = useUnpublishReport(slug);
   const regenerateMutation = useRegenerateReport(slug);
+  const updateContentMutation = useUpdateReportContent(slug);
 
   const [showRegenerateDialog, setShowRegenerateDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editDraft, setEditDraft] = useState("");
+  const [exportingPdf, setExportingPdf] = useState(false);
+
+  useEffect(() => {
+    if (showEditDialog && report?.content) {
+      setEditDraft(report.content);
+    }
+  }, [showEditDialog, report?.content]);
 
   if (accessLoading || isLoading) {
     return (
@@ -95,6 +118,35 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
     }
   };
 
+  const handleSaveEdit = async () => {
+    try {
+      await updateContentMutation.mutateAsync({ reportId, content: editDraft });
+      setShowEditDialog(false);
+      toast.success("Report content saved");
+    } catch (err) {
+      toast.error(`Failed to save: ${err instanceof Error ? err.message : "Unknown error"}`);
+    }
+  };
+
+  const handleExportPdf = async () => {
+    setExportingPdf(true);
+    try {
+      const blob = await downloadReportPdf(slug, reportId);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `portfolio-report-${report.runDate}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      toast.error(`Failed to export PDF: ${err instanceof Error ? err.message : "Unknown error"}`);
+    } finally {
+      setExportingPdf(false);
+    }
+  };
+
   const runDateLabel = formatRunDate(report.runDate).label;
 
   return (
@@ -107,6 +159,40 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
         externalSetIsOpen={setShowRegenerateDialog}
         buttonElement={null}
       />
+
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Edit report content</DialogTitle>
+            <DialogDescription>
+              Edits the rendered HTML directly. Regenerating the report will overwrite these
+              changes.
+            </DialogDescription>
+          </DialogHeader>
+          <textarea
+            className="h-[60vh] w-full resize-none rounded border border-zinc-300 bg-white p-3 font-mono text-xs text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+            value={editDraft}
+            onChange={(event) => setEditDraft(event.target.value)}
+            spellCheck={false}
+            aria-label="Report HTML content"
+          />
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowEditDialog(false)}
+              disabled={updateContentMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveEdit}
+              disabled={updateContentMutation.isPending || editDraft === (report.content ?? "")}
+            >
+              {updateContentMutation.isPending ? "Saving…" : "Save"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Top bar */}
       <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3 dark:border-zinc-700">
@@ -133,6 +219,24 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowEditDialog(true)}
+            disabled={generating || !report.content}
+          >
+            <Pencil className="mr-1 h-3 w-3" />
+            Edit
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportPdf}
+            disabled={exportingPdf || generating || !report.content}
+          >
+            <Download className="mr-1 h-3 w-3" />
+            {exportingPdf ? "Exporting…" : "Export PDF"}
+          </Button>
           <Button
             variant="outline"
             size="sm"

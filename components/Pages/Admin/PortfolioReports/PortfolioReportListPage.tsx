@@ -37,6 +37,7 @@ interface ReportTableRowProps {
   configName: string;
   rowPending: boolean;
   activeMutationType: "publish" | "unpublish" | "regenerate" | null;
+  onEdit: () => void;
   onPreview: () => void;
   onPublish: () => void;
   onUnpublish: () => void;
@@ -49,6 +50,7 @@ function ReportTableRow({
   configName,
   rowPending,
   activeMutationType,
+  onEdit,
   onPreview,
   onPublish,
   onUnpublish,
@@ -77,6 +79,9 @@ function ReportTableRow({
       </td>
       <td className="px-4 py-3">
         <div className="flex items-center justify-end gap-1">
+          <Button variant="ghost" size="sm" onClick={onEdit} disabled={generating}>
+            Edit
+          </Button>
           {report.status === "draft" ? (
             <Button variant="ghost" size="sm" onClick={onPreview}>
               <FileSearch className="mr-1 h-3 w-3" />
@@ -368,6 +373,7 @@ export function PortfolioReportListPage({ community }: Props) {
                   configName={configById.get(report.reportConfigId)?.name ?? "(deleted config)"}
                   rowPending={isRowPending(report.id)}
                   activeMutationType={activeMutationType}
+                  onEdit={() => router.push(`${PAGES.ADMIN.PORTFOLIO_REPORTS(slug)}/${report.id}`)}
                   onPreview={() =>
                     router.push(PAGES.ADMIN.PORTFOLIO_REPORTS_PREVIEW(slug, report.id))
                   }
