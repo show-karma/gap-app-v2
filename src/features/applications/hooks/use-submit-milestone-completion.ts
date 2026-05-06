@@ -66,21 +66,28 @@ function resolveAttestationTarget(
     throw new Error("Milestone or grant information missing");
   }
 
+  // Prefer the milestone's own grantUID — it's the source of truth.
+  // Caller-supplied props are a last resort for cases the indexer didn't
+  // attach `grant.uid` (older payloads).
   const grantUID =
-    params.grantUID ??
     params.grantMilestone.grant?.uid ??
-    params.statusEntry?.grantUID;
+    params.statusEntry?.grantUID ??
+    params.grantUID;
   if (!grantUID) {
     throw new Error("Milestone or grant information missing");
   }
 
+  // Same priority order for chainID. A wrong chainID here ships the
+  // attestation against the wrong network's schema UID and the EAS
+  // resolver reverts on estimateGas — we MUST trust the milestone over
+  // any caller-supplied default.
   const chainIDFromMilestone = params.grantMilestone.chainId
     ? Number(params.grantMilestone.chainId)
     : undefined;
   const chainID =
-    params.chainID ??
     (Number.isFinite(chainIDFromMilestone) ? (chainIDFromMilestone as number) : undefined) ??
-    params.statusEntry?.chainID;
+    params.statusEntry?.chainID ??
+    params.chainID;
   if (chainID === undefined) {
     throw new Error("Milestone or grant information missing");
   }

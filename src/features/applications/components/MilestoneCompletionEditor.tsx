@@ -67,7 +67,7 @@ export function MilestoneCompletionEditor({
   invoiceRequired,
   grantMilestones = [],
   grantUID: grantUIDProp,
-  chainID = 8453,
+  chainID,
   milestoneStatuses,
 }: MilestoneCompletionEditorProps) {
   const {
