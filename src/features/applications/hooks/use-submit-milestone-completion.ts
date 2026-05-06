@@ -2,6 +2,7 @@
 
 import { MilestoneCompleted } from "@show-karma/karma-gap-sdk/core/class/types/attestations";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import type { Hex } from "viem";
@@ -10,7 +11,6 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { submitGranteeInvoice } from "@/src/features/payout-disbursement/services/payout-disbursement.service";
-import { applicationKeys } from "@/src/lib/query-keys";
 import type { Application, MilestoneStatusEntry } from "@/types/whitelabel-entities";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
@@ -62,6 +62,7 @@ export interface SubmitMilestoneCompletionParams {
  */
 export function useSubmitMilestoneCompletion() {
   const queryClient = useQueryClient();
+  const router = useRouter();
   const { address, chain } = useAccount();
   const { switchChainAsync } = useWallet();
   const { setupChainAndWallet } = useSetupChainAndWallet();
@@ -159,12 +160,12 @@ export function useSubmitMilestoneCompletion() {
             : "Submitted on-chain. Indexer is still processing — refresh in a moment to see the update."
         );
 
-        // Force the application response to refetch — the application
-        // detail page reads completion text and badge state from
-        // milestoneStatuses on that response. applicationKeys.all is
-        // prefix-broad on purpose so every cached variant (auth-on/off,
-        // communityId combinations) flips together.
-        await queryClient.invalidateQueries({ queryKey: applicationKeys.all });
+        // The application detail page is a Server Component — application
+        // data is fetched server-side at request time and passed as a
+        // static prop, NOT through React Query. Trigger Next.js to re-run
+        // the server fetch + re-render the page so the new
+        // milestoneStatuses payload propagates to the editor.
+        router.refresh();
 
         if (params.invoiceFile) {
           try {
