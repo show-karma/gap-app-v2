@@ -1,110 +1,51 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
 interface Props {
   html: string;
-  /** Accessible title for the iframe. */
+  /** Accessible label, mirrors the prior iframe `title` prop. */
   title: string;
 }
 
 /**
  * Renders a self-contained HTML report (full `<!DOCTYPE html>` document
- * produced by the agentic generator's HTML pipeline) inside a sandboxed
- * iframe. The iframe isolates the report's embedded CSS from the host
- * app's styles and vice-versa.
+ * produced by the agentic generator's HTML pipeline) inside a Shadow
+ * DOM. Shadow DOM gives us the same style isolation an iframe did,
+ * without the iframe drawbacks: no ResizeObserver / scrollHeight
+ * measurement (the host `<div>` flows to its natural content height),
+ * no inner scrollbar, no sandboxed-modal weirdness around print.
  *
- * Height auto-grows to match the report's content using a
- * `ResizeObserver` on the iframe's body. We poll for content readiness
- * via the `onLoad` event and re-measure when the inner content reflows.
+ * The BE-produced HTML is a complete document. Shadow roots only
+ * accept fragment content, so we parse the doc with DOMParser, inject
+ * its `<style>` tags + body innerHTML into the shadow root, and drop
+ * the on-screen Export button (its old iframe-print path is being
+ * replaced; tracked separately).
  */
 export function HtmlReportFrame({ html, title }: Props) {
-  const iframeRef = useRef<HTMLIFrameElement | null>(null);
-  const [height, setHeight] = useState<number>(800);
+  const hostRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
-    const iframe = iframeRef.current;
-    if (!iframe) return undefined;
+    const host = hostRef.current;
+    if (!host) return;
 
-    let observer: ResizeObserver | null = null;
-    let detached = false;
-    let printButton: Element | null = null;
-    let printHandler: ((event: Event) => void) | null = null;
+    const root = host.shadowRoot ?? host.attachShadow({ mode: "open" });
 
-    function attach() {
-      if (detached) return;
-      const doc = iframe?.contentDocument;
-      const body = doc?.body;
-      if (!body) return;
+    const doc = new DOMParser().parseFromString(html, "text/html");
 
-      // `attach` runs both synchronously (on initial mount and on every
-      // `html` change before navigation completes) and again when the
-      // iframe fires `load`. Without disconnecting/cleaning up first,
-      // a fast sequence of `html` changes leaks observers + listeners
-      // and briefly observes the previous document's body.
-      observer?.disconnect();
-      if (printButton && printHandler) {
-        printButton.removeEventListener("click", printHandler);
-        printButton = null;
-        printHandler = null;
-      }
-
-      const measure = () => {
-        const next = Math.max(body.scrollHeight, 400);
-        setHeight((prev) => (Math.abs(prev - next) > 1 ? next : prev));
-      };
-      measure();
-      observer = new ResizeObserver(measure);
-      observer.observe(body);
-
-      // The renderer emits a visual `<button class="btn-export">` but
-      // the iframe sandbox forbids scripts, so the button does nothing
-      // on its own. Wire it from the host: clicking it opens the
-      // browser's print dialog scoped to the iframe content, which the
-      // user then "Save as PDF"s. Native, no extra deps.
-      printButton = doc?.querySelector(".btn-export") ?? null;
-      if (printButton) {
-        printHandler = (event: Event) => {
-          event.preventDefault();
-          iframe?.contentWindow?.print();
-        };
-        printButton.addEventListener("click", printHandler);
-      }
+    // Drop the on-screen Export PDF button — its old click handler
+    // (iframe.contentWindow.print()) was unreliable across browsers,
+    // and the new export path will live outside the rendered HTML.
+    for (const node of doc.querySelectorAll(".btn-export")) {
+      node.remove();
     }
 
-    iframe.addEventListener("load", attach);
-    // Re-attach on the first paint in case the load event already fired.
-    attach();
+    const styles = Array.from(doc.head.querySelectorAll("style, link[rel='stylesheet']"))
+      .map((node) => node.outerHTML)
+      .join("");
 
-    return () => {
-      detached = true;
-      iframe.removeEventListener("load", attach);
-      observer?.disconnect();
-      if (printButton && printHandler) {
-        printButton.removeEventListener("click", printHandler);
-      }
-    };
+    root.innerHTML = styles + doc.body.innerHTML;
   }, [html]);
 
-  return (
-    <iframe
-      ref={iframeRef}
-      srcDoc={html}
-      title={title}
-      // `allow-same-origin` lets the host read the iframe's body
-      // (resize observer, button click wire-up). `allow-modals`
-      // permits the print dialog when the host calls
-      // `contentWindow.print()` — without it browsers silently block
-      // print as a sandboxed-modal violation. We still omit
-      // `allow-scripts` since the renderer never emits any.
-      sandbox="allow-same-origin allow-modals"
-      style={{
-        width: "100%",
-        border: "none",
-        display: "block",
-        height: `${height}px`,
-        background: "#f5f6f8",
-      }}
-    />
-  );
+  return <section ref={hostRef} aria-label={title} />;
 }
