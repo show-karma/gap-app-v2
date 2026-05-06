@@ -79,10 +79,13 @@ export function HtmlReportFrame({ html, title }: Props) {
       ref={iframeRef}
       srcDoc={html}
       title={title}
-      // `allow-same-origin` is required for the resize observer to read
-      // the iframe's body. We deliberately omit `allow-scripts` since
-      // the renderer never emits any.
-      sandbox="allow-same-origin"
+      // `allow-same-origin` lets the host read the iframe's body
+      // (resize observer, button click wire-up). `allow-modals`
+      // permits the print dialog when the host calls
+      // `contentWindow.print()` — without it browsers silently block
+      // print as a sandboxed-modal violation. We still omit
+      // `allow-scripts` since the renderer never emits any.
+      sandbox="allow-same-origin allow-modals"
       style={{
         width: "100%",
         border: "none",
