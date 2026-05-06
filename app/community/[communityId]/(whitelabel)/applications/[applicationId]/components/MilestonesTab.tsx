@@ -49,6 +49,7 @@ export function MilestonesTab({ application, isOwner, invoiceRequired }: Milesto
               referenceNumber={application.referenceNumber}
               isEditable={isOwner}
               invoiceRequired={invoiceRequired}
+              milestoneStatuses={application.milestoneStatuses}
             />
           </div>
         </div>

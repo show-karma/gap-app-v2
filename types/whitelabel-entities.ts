@@ -225,6 +225,24 @@ export interface FundingProgram {
 export type Program = FundingProgram;
 
 // Core application entity
+export interface MilestoneStatusEntry {
+  milestoneUID: string;
+  currentStatus: string; // "pending" | "approved" | "rejected" | "completed" | "verified"
+  completed?: {
+    uid: string;
+    createdAt: string;
+    reason?: string;
+    proofOfWork?: string;
+    attester?: string;
+  } | null;
+  verified?: {
+    uid: string;
+    attester: string;
+    reason?: string;
+    createdAt: string;
+  } | null;
+}
+
 export interface Application {
   id: string;
   programId: string;
@@ -252,6 +270,8 @@ export interface Application {
   communityName?: string;
   communityImage?: string;
   resolvedProjectName?: string;
+  projectUID?: string;
+  milestoneStatuses?: MilestoneStatusEntry[];
 }
 
 export interface User {

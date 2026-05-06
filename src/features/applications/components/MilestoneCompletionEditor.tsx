@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useMilestoneAttestation } from "@/src/features/milestones/hooks/useMilestoneAttestation";
 import { submitGranteeInvoice } from "@/src/features/payout-disbursement/services/payout-disbursement.service";
 import type { GrantMilestoneWithDetails } from "@/types/v2/roadmap";
-import type { MilestoneData } from "@/types/whitelabel-entities";
+import type { MilestoneData, MilestoneStatusEntry } from "@/types/whitelabel-entities";
 import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
@@ -43,6 +43,11 @@ interface MilestoneCompletionEditorProps {
   grantMilestones?: GrantMilestoneWithDetails[]; // For on-chain attestations
   grantUID?: string; // For query invalidation (overrides invoice config)
   chainID?: number; // For on-chain attestations
+  // Top-level milestoneStatuses array from the application response —
+  // authoritative source for on-chain status (currentStatus, completed,
+  // verified) keyed by milestoneUID. Used to render the correct badge
+  // when the richer `grantMilestones` prop isn't supplied.
+  milestoneStatuses?: MilestoneStatusEntry[];
 }
 
 export function MilestoneCompletionEditor({
@@ -54,6 +59,7 @@ export function MilestoneCompletionEditor({
   grantMilestones = [],
   grantUID: grantUIDProp,
   chainID = 8453,
+  milestoneStatuses,
 }: MilestoneCompletionEditorProps) {
   const queryClient = useQueryClient();
   const { completeMutation } = useMilestoneAttestation();
@@ -86,6 +92,18 @@ export function MilestoneCompletionEditor({
     });
     return map;
   }, [milestones, grantMilestones]);
+
+  // Authoritative status lookup keyed by milestoneUID. Used as a fallback
+  // when the richer GrantMilestoneWithDetails isn't wired (e.g. the
+  // applications detail page passes milestoneStatuses from the indexer
+  // response instead of fetching the full grant).
+  const statusByUID = useMemo(() => {
+    const map = new Map<string, MilestoneStatusEntry>();
+    for (const entry of milestoneStatuses ?? []) {
+      map.set(entry.milestoneUID, entry);
+    }
+    return map;
+  }, [milestoneStatuses]);
 
   const [editingMilestone, setEditingMilestone] = useState<string | null>(null);
   const [editedText, setEditedText] = useState<Record<string, string>>({});
@@ -227,7 +245,19 @@ export function MilestoneCompletionEditor({
         const grantMilestone = completionByIndex.get(index);
         const isEditing = editingMilestone === milestone.title;
         const currentText = editedText[milestone.title] || "";
-        const isCompletionVerified = grantMilestone?.verificationDetails !== null;
+        // Look up the authoritative on-chain status by milestoneUID.
+        // Falls back to the legacy verificationDetails check only when
+        // the status map carries no entry for this milestone (e.g. older
+        // applications without a linked on-chain milestone).
+        const statusEntry = milestone.milestoneUID
+          ? statusByUID.get(milestone.milestoneUID)
+          : undefined;
+        const isCompletionVerified = statusEntry
+          ? statusEntry.currentStatus === "verified" || !!statusEntry.verified
+          : !!grantMilestone?.verificationDetails;
+        const isCompletionSubmitted = statusEntry
+          ? statusEntry.currentStatus === "completed" || !!statusEntry.completed
+          : !!grantMilestone?.completionDetails && !isCompletionVerified;
         const canEdit = isEditable && !isCompletionVerified;
         const _invoiceFile = invoiceFiles[milestone.title];
         const isUploading = uploadingMilestones.has(milestone.title);
@@ -253,14 +283,17 @@ export function MilestoneCompletionEditor({
               <div className="flex justify-between items-start">
                 <h4 className="font-medium">{milestone.title}</h4>
                 <div className="flex items-center gap-2">
-                  {isCompletionVerified && (
+                  {isCompletionVerified ? (
                     <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">
                       Verified
                     </span>
-                  )}
-                  {grantMilestone?.completionDetails && !isCompletionVerified && (
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700">
-                      Submitted
+                  ) : isCompletionSubmitted ? (
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                      Completed
+                    </span>
+                  ) : (
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-700">
+                      Pending
                     </span>
                   )}
                   {milestone.dueDate && (
