@@ -1,15 +1,15 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { memo, useState } from "react";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { Button } from "@/components/ui/button";
 import { useOAuthConnections, useRevokeOAuthConnection } from "@/hooks/oauth/useOAuthConnections";
 import { useAuth } from "@/hooks/useAuth";
 import type { OAuthConnection } from "@/services/oauth/connections.service";
 
-function formatDate(value: string | null): string {
-  if (!value) return "Never";
+function formatDate(value: string | null, fallback = "Unknown"): string {
+  if (!value) return fallback;
   try {
     return new Date(value).toLocaleString(undefined, {
       year: "numeric",
@@ -104,42 +104,57 @@ export function SettingsConnectionsPage() {
         its refresh token; any in-flight access tokens expire within 15 minutes.
       </p>
       <ul className="mt-6 space-y-3">
-        {connections.map((connection) => {
-          const isPending = pendingClientId === connection.clientId && revokeMutation.isPending;
-          return (
-            <li
-              key={connection.clientId}
-              className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-5 sm:flex-row sm:items-center sm:justify-between"
-            >
-              <ConnectionMeta connection={connection} />
-              <DeleteDialog
-                title={
-                  <span>
-                    Revoke <span className="font-semibold">{connection.clientName}</span>?
-                  </span>
-                }
-                buttonElement={{
-                  icon: null,
-                  text: "Revoke",
-                  styleClass: "border border-border text-foreground hover:bg-secondary",
-                }}
-                isLoading={isPending}
-                deleteFunction={async () => {
-                  setPendingClientId(connection.clientId);
-                  try {
-                    await revokeMutation.mutateAsync(connection.clientId);
-                  } finally {
-                    setPendingClientId(null);
-                  }
-                }}
-              />
-            </li>
-          );
-        })}
+        {connections.map((connection) => (
+          <ConnectionRow
+            key={connection.clientId}
+            connection={connection}
+            isPending={pendingClientId === connection.clientId && revokeMutation.isPending}
+            onRevoke={async () => {
+              setPendingClientId(connection.clientId);
+              try {
+                await revokeMutation.mutateAsync(connection.clientId);
+              } finally {
+                setPendingClientId(null);
+              }
+            }}
+          />
+        ))}
       </ul>
     </Layout>
   );
 }
+
+interface ConnectionRowProps {
+  connection: OAuthConnection;
+  isPending: boolean;
+  onRevoke: () => Promise<void>;
+}
+
+const ConnectionRow = memo(function ConnectionRow({
+  connection,
+  isPending,
+  onRevoke,
+}: ConnectionRowProps) {
+  return (
+    <li className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-5 sm:flex-row sm:items-center sm:justify-between">
+      <ConnectionMeta connection={connection} />
+      <DeleteDialog
+        title={
+          <span>
+            Revoke <span className="font-semibold">{connection.clientName}</span>?
+          </span>
+        }
+        buttonElement={{
+          icon: null,
+          text: "Revoke",
+          styleClass: "border border-border text-foreground hover:bg-secondary",
+        }}
+        isLoading={isPending}
+        deleteFunction={onRevoke}
+      />
+    </li>
+  );
+});
 
 function ConnectionMeta({ connection }: { connection: OAuthConnection }) {
   return (
@@ -163,8 +178,8 @@ function ConnectionMeta({ connection }: { connection: OAuthConnection }) {
           {connection.clientName}
         </h3>
         <p className="text-xs text-muted-foreground">
-          Connected {formatDate(connection.issuedAt)}
-          {connection.expiresAt ? ` · Expires ${formatDate(connection.expiresAt)}` : null}
+          Connected {formatDate(connection.issuedAt, "Unknown")}
+          {connection.expiresAt ? ` · Expires ${formatDate(connection.expiresAt, "Never")}` : null}
         </p>
         {connection.clientUri ? (
           <a

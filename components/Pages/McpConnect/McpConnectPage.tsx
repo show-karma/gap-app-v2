@@ -40,8 +40,6 @@ const SUPPORTED_CLIENTS: SupportedClient[] = [
   },
 ];
 
-const HEADLESS_API_KEY_PATH = "/settings/api-keys";
-
 export function McpConnectPage() {
   const [, copy] = useCopyToClipboard();
   const mcpUrl = `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}/v2/mcp`;
@@ -99,20 +97,6 @@ export function McpConnectPage() {
             </li>
           ))}
         </ul>
-      </section>
-
-      <section className="rounded-xl border border-dashed border-border bg-muted/40 p-5">
-        <h2 className="text-base font-semibold text-foreground">
-          Need an API key for headless use?
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          For CI, scripts, or non-OAuth clients you can still issue a long-lived API key.
-        </p>
-        <div className="mt-4">
-          <Button asChild variant="outline" size="sm">
-            <a href={HEADLESS_API_KEY_PATH}>Generate API key</a>
-          </Button>
-        </div>
       </section>
     </main>
   );

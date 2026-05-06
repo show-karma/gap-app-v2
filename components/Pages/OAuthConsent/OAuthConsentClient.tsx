@@ -3,7 +3,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-import { useCallback, useState } from "react";
+import { type ReactElement, useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { envVars } from "@/utilities/enviromentVars";
@@ -66,10 +66,30 @@ async function loadInteraction(uid: string): Promise<InteractionDetails> {
   return (await res.json()) as InteractionDetails;
 }
 
+// Fetch the per-interaction CSRF token. gap-oauth binds the token to the
+// interaction cookie via HMAC over the uid; the consent UI echoes it back
+// in `X-Karma-CSRF` on confirm/abort so a third-party origin holding only
+// a Privy bearer token can't forge a consent decision. The endpoint
+// returns 401 if the interaction cookie is missing or doesn't bind to
+// the requested uid (validated server-side via provider.interactionDetails).
+async function loadCsrfToken(uid: string): Promise<string> {
+  const res = await fetch(`${OAUTH_BASE}/interaction/${encodeURIComponent(uid)}/csrf`, {
+    credentials: "include",
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Could not initialize secure consent (${res.status}: ${body.slice(0, 200)})`);
+  }
+  const data = (await res.json()) as { csrf?: string };
+  if (!data.csrf) throw new Error("Server did not return a CSRF token");
+  return data.csrf;
+}
+
 async function postInteractionDecision(
   uid: string,
   endpoint: "confirm" | "abort",
-  privyJwt: string | null
+  privyJwt: string | null,
+  csrfToken: string
 ): Promise<{ redirect_to: string }> {
   // Send the Privy session JWT in `Authorization: Bearer` rather than
   // the request body. Standard log-redaction in pino, proxies, and
@@ -78,6 +98,7 @@ async function postInteractionDecision(
   // would leak the JWT.
   const headers: Record<string, string> = {
     "content-type": "application/json",
+    "x-karma-csrf": csrfToken,
   };
   if (privyJwt) {
     headers.authorization = `Bearer ${privyJwt}`;
@@ -99,49 +120,32 @@ async function postInteractionDecision(
   return (await res.json()) as { redirect_to: string };
 }
 
-export function OAuthConsentClient() {
-  const searchParams = useSearchParams();
-  const interactionUid = searchParams.get("interaction");
-  const { ready, authenticated, login, address, getAccessToken } = useAuth();
+interface ConsentGuardArgs {
+  interactionUid: string | null;
+  ready: boolean;
+  authenticated: boolean;
+  login: () => void;
+  interactionQuery: { isLoading: boolean; isSuccess: boolean; isError: boolean; data: unknown };
+  csrfQuery: {
+    isLoading: boolean;
+    isError: boolean;
+    data: string | undefined;
+    error: unknown;
+    refetch: () => void;
+  };
+  redirectingTo: string | null;
+}
 
-  const interactionQuery = useQuery({
-    queryKey: ["oauth", "interaction", interactionUid],
-    enabled: Boolean(interactionUid) && ready && authenticated,
-    retry: false,
-    queryFn: () => loadInteraction(interactionUid as string),
-  });
-
-  const [redirectingTo, setRedirectingTo] = useState<string | null>(null);
-
-  const confirm = useMutation({
-    mutationFn: async () => {
-      if (!interactionUid) throw new Error("Missing interaction uid");
-      const token = await getAccessToken();
-      return postInteractionDecision(interactionUid, "confirm", token ?? null);
-    },
-    onSuccess: ({ redirect_to }) => {
-      setRedirectingTo(redirect_to);
-      window.location.assign(redirect_to);
-    },
-  });
-
-  const abort = useMutation({
-    mutationFn: async () => {
-      if (!interactionUid) throw new Error("Missing interaction uid");
-      return postInteractionDecision(interactionUid, "abort", null);
-    },
-    onSuccess: ({ redirect_to }) => {
-      setRedirectingTo(redirect_to);
-      window.location.assign(redirect_to);
-    },
-  });
-
-  const onAllow = useCallback(() => {
-    confirm.mutate();
-  }, [confirm]);
-  const onCancel = useCallback(() => {
-    abort.mutate();
-  }, [abort]);
+function renderConsentGuard(args: ConsentGuardArgs): ReactElement | null {
+  const {
+    interactionUid,
+    ready,
+    authenticated,
+    login,
+    interactionQuery,
+    csrfQuery,
+    redirectingTo,
+  } = args;
 
   if (!interactionUid) {
     return (
@@ -153,7 +157,6 @@ export function OAuthConsentClient() {
       </Layout>
     );
   }
-
   if (!ready) {
     return (
       <Layout>
@@ -161,7 +164,6 @@ export function OAuthConsentClient() {
       </Layout>
     );
   }
-
   if (!authenticated) {
     return (
       <Layout>
@@ -175,15 +177,13 @@ export function OAuthConsentClient() {
       </Layout>
     );
   }
-
-  if (interactionQuery.isLoading) {
+  if (interactionQuery.isLoading || (interactionQuery.isSuccess && csrfQuery.isLoading)) {
     return (
       <Layout>
         <Skeleton />
       </Layout>
     );
   }
-
   if (interactionQuery.isError || !interactionQuery.data) {
     return (
       <Layout>
@@ -197,7 +197,24 @@ export function OAuthConsentClient() {
       </Layout>
     );
   }
-
+  if (csrfQuery.isError || !csrfQuery.data) {
+    return (
+      <Layout>
+        <h1 className="text-xl font-semibold text-foreground">
+          Couldn't initialize secure consent
+        </h1>
+        <p className="mt-3 text-sm text-muted-foreground">
+          {(csrfQuery.error as Error | null)?.message ??
+            "We couldn't reach the authorization server. Refresh to try again."}
+        </p>
+        <div className="mt-6">
+          <Button variant="outline" onClick={() => csrfQuery.refetch()}>
+            Try again
+          </Button>
+        </div>
+      </Layout>
+    );
+  }
   if (redirectingTo) {
     return (
       <Layout>
@@ -215,7 +232,79 @@ export function OAuthConsentClient() {
       </Layout>
     );
   }
+  return null;
+}
 
+export function OAuthConsentClient() {
+  const searchParams = useSearchParams();
+  const interactionUid = searchParams.get("interaction");
+  const { ready, authenticated, login, address, getAccessToken } = useAuth();
+
+  const interactionQuery = useQuery({
+    queryKey: ["oauth", "interaction", interactionUid],
+    enabled: Boolean(interactionUid) && ready && authenticated,
+    retry: false,
+    queryFn: () => loadInteraction(interactionUid as string),
+  });
+
+  // Fetch the CSRF token only after the interaction itself has loaded —
+  // the CSRF endpoint requires the interaction cookie that loadInteraction
+  // implicitly forwards via `credentials: include`. Decoupling lets us
+  // surface a clearer error if the cookie is missing without conflating
+  // it with an expired interaction.
+  const csrfQuery = useQuery({
+    queryKey: ["oauth", "interaction", interactionUid, "csrf"],
+    enabled: Boolean(interactionUid) && interactionQuery.isSuccess,
+    retry: false,
+    queryFn: () => loadCsrfToken(interactionUid as string),
+  });
+
+  const [redirectingTo, setRedirectingTo] = useState<string | null>(null);
+
+  const confirm = useMutation({
+    mutationFn: async () => {
+      if (!interactionUid) throw new Error("Missing interaction uid");
+      if (!csrfQuery.data) throw new Error("CSRF token not ready");
+      const token = await getAccessToken();
+      return postInteractionDecision(interactionUid, "confirm", token ?? null, csrfQuery.data);
+    },
+    onSuccess: ({ redirect_to }) => {
+      setRedirectingTo(redirect_to);
+      window.location.assign(redirect_to);
+    },
+  });
+
+  const abort = useMutation({
+    mutationFn: async () => {
+      if (!interactionUid) throw new Error("Missing interaction uid");
+      if (!csrfQuery.data) throw new Error("CSRF token not ready");
+      return postInteractionDecision(interactionUid, "abort", null, csrfQuery.data);
+    },
+    onSuccess: ({ redirect_to }) => {
+      setRedirectingTo(redirect_to);
+      window.location.assign(redirect_to);
+    },
+  });
+
+  const onAllow = useCallback(() => {
+    confirm.mutate();
+  }, [confirm]);
+  const onCancel = useCallback(() => {
+    abort.mutate();
+  }, [abort]);
+
+  const guard = renderConsentGuard({
+    interactionUid,
+    ready,
+    authenticated,
+    login,
+    interactionQuery,
+    csrfQuery,
+    redirectingTo,
+  });
+  if (guard) return guard;
+
+  if (!interactionQuery.data) return null;
   const client = interactionQuery.data.client;
   const clientName = client?.clientName ?? client?.clientId ?? "Unknown app";
   const logoUri = client?.logoUri ?? null;
