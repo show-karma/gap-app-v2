@@ -37,6 +37,18 @@ export function HtmlReportFrame({ html, title }: Props) {
       const body = doc?.body;
       if (!body) return;
 
+      // `attach` runs both synchronously (on initial mount and on every
+      // `html` change before navigation completes) and again when the
+      // iframe fires `load`. Without disconnecting/cleaning up first,
+      // a fast sequence of `html` changes leaks observers + listeners
+      // and briefly observes the previous document's body.
+      observer?.disconnect();
+      if (printButton && printHandler) {
+        printButton.removeEventListener("click", printHandler);
+        printButton = null;
+        printHandler = null;
+      }
+
       const measure = () => {
         const next = Math.max(body.scrollHeight, 400);
         setHeight((prev) => (Math.abs(prev - next) > 1 ? next : prev));
