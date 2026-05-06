@@ -11,7 +11,6 @@ import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { submitGranteeInvoice } from "@/src/features/payout-disbursement/services/payout-disbursement.service";
 import { applicationKeys } from "@/src/lib/query-keys";
-import type { GrantMilestoneWithDetails } from "@/types/v2/roadmap";
 import type { Application, MilestoneStatusEntry } from "@/types/whitelabel-entities";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
@@ -27,100 +26,39 @@ export interface InvoiceFile {
 
 export interface SubmitMilestoneCompletionParams {
   milestoneTitle: string;
+  /** On-chain milestone UID — refUID for the completion attestation. */
+  milestoneUID: string;
+  /**
+   * On-chain status entry from `application.milestoneStatuses[]` —
+   * carries the authoritative `grantUID` + `chainID` for the attestation.
+   */
+  statusEntry: MilestoneStatusEntry;
   proofOfWork: string;
   referenceNumber: string;
   invoiceFile?: InvoiceFile | null;
-  /**
-   * The rich on-chain milestone (carries `recipient`, `grant.uid`, `chainId`).
-   * Both the project page and the application detail page fetch and pass
-   * this — the application detail page via `useProjectUpdates(projectUID)`
-   * filtered to milestones whose UID is linked on the application.
-   */
-  grantMilestone?: GrantMilestoneWithDetails;
-  /**
-   * Optional fallback for grantUID/chainID when the rich milestone doesn't
-   * carry one (older indexer payloads). Sourced from `application.milestoneStatuses`.
-   */
-  statusEntry?: MilestoneStatusEntry;
-  /** Project-page wiring — overrides any UID/chain on the rich milestone. */
-  grantUID?: string;
-  chainID?: number;
-}
-
-interface ResolvedTarget {
-  milestone: GrantMilestoneWithDetails;
-  grantUID: string;
-  chainID: number;
-  recipient: `0x${string}`;
-}
-
-/**
- * Resolve the rich milestone + grantUID + chainID + recipient needed by
- * the on-chain attestation. Caller is expected to wire `grantMilestone`
- * (loaded from /v2/projects/:idOrSlug/updates); we just pick the best
- * available source for each downstream field.
- */
-function resolveAttestationTarget(
-  params: SubmitMilestoneCompletionParams
-): ResolvedTarget {
-  if (!params.grantMilestone) {
-    throw new Error("Milestone or grant information missing");
-  }
-
-  // Prefer the milestone's own grantUID — it's the source of truth.
-  // Caller-supplied props are a last resort for cases the indexer didn't
-  // attach `grant.uid` (older payloads).
-  const grantUID =
-    params.grantMilestone.grant?.uid ??
-    params.statusEntry?.grantUID ??
-    params.grantUID;
-  if (!grantUID) {
-    throw new Error("Milestone or grant information missing");
-  }
-
-  // Same priority order for chainID. A wrong chainID here ships the
-  // attestation against the wrong network's schema UID and the EAS
-  // resolver reverts on estimateGas — we MUST trust the milestone over
-  // any caller-supplied default.
-  const chainIDFromMilestone = params.grantMilestone.chainId
-    ? Number(params.grantMilestone.chainId)
-    : undefined;
-  const chainID =
-    (Number.isFinite(chainIDFromMilestone) ? (chainIDFromMilestone as number) : undefined) ??
-    params.statusEntry?.chainID ??
-    params.chainID;
-  if (chainID === undefined) {
-    throw new Error("Milestone or grant information missing");
-  }
-
-  const recipient = params.grantMilestone.recipient as `0x${string}` | undefined;
-  if (!recipient) {
-    throw new Error("Milestone is missing a recipient address");
-  }
-
-  return { milestone: params.grantMilestone, grantUID, chainID, recipient };
 }
 
 /**
  * React Query mutation that submits a milestone completion on-chain via the
- * connected EOA wallet. Mirrors the proven pattern in
- * `useMilestoneCompletionVerification` — no smart-wallet / Privy / zerodev
- * dependency, just `setupChainAndWallet` → `MilestoneCompleted.attest(signer)`.
+ * connected EOA wallet. No Privy / zerodev — wagmi's wallet popup, user
+ * signs and pays gas.
  *
- * Flow (per call):
- *   1. Resolve the rich milestone + grantUID + chainID + recipient.
- *   2. `setupChainAndWallet` — switches network if needed and yields a
- *      `gapClient` + `walletSigner` (EOA, via wagmi).
- *   3. Build a `MilestoneCompleted` attestation (`type: "completed"`).
- *   4. `attestation.attest(walletSigner)` — wallet popup, user signs and
- *      pays gas.
- *   5. Notify the indexer with the tx hash and invalidate the relevant
- *      caches so the badge flips from Pending → Completed.
- *   6. Optionally persist a grantee invoice attached to the same milestone.
- *
- * Tracks per-row pending state via `pendingTitles` so the UI can render a
- * row-scoped "Processing on-chain..." hint while the global mutation is
- * `isPending`.
+ * Flow:
+ *   1. `setupChainAndWallet` — switch network if needed; yields a
+ *      `gapClient` + EOA `walletSigner`.
+ *   2. Build a `MilestoneCompleted` attestation (`type: "completed"`,
+ *      user's text in `reason`).
+ *   3. `attestation.attest(walletSigner)` — wallet popup, signature, gas.
+ *   4. Best-effort `index-by-transaction` kick (silent on failure —
+ *      propagation lag is expected; the indexer's chain scan picks the
+ *      tx up regardless).
+ *   5. Poll `GET /v2/funding-applications/:referenceNumber` until
+ *      `milestoneStatuses[milestoneUID]` reflects the new completion.
+ *      ~60s budget; falls through to a softer toast if the indexer is
+ *      slow.
+ *   6. Invalidate every cached query that feeds the editor so the badge
+ *      flips and the completion text appears.
+ *   7. Optionally persist a grantee invoice attached to the milestone.
  */
 export function useSubmitMilestoneCompletion() {
   const queryClient = useQueryClient();
@@ -135,13 +73,14 @@ export function useSubmitMilestoneCompletion() {
         throw new Error("Please connect your wallet to submit a completion");
       }
 
-      const target = resolveAttestationTarget(params);
+      const chainID = params.statusEntry.chainID;
+      const grantUID = params.statusEntry.grantUID;
 
       setPendingTitles((prev) => new Set(prev).add(params.milestoneTitle));
 
       try {
         const setup = await setupChainAndWallet({
-          targetChainId: target.chainID,
+          targetChainId: chainID,
           currentChainId: chain?.id,
           switchChainAsync,
         });
@@ -153,42 +92,38 @@ export function useSubmitMilestoneCompletion() {
         const schema = gapClient.findSchema("MilestoneCompleted");
         const attestation = new MilestoneCompleted({
           data: sanitizeObject({
+            // Free-text completion goes in `reason` per the SDK convention
+            // — `proofOfWork` is reserved for an optional URL/proof.
             reason: params.proofOfWork,
             proofOfWork: "",
             type: "completed",
           }),
-          refUID: target.milestone.uid as Hex,
+          refUID: params.milestoneUID as Hex,
           schema,
-          recipient: target.recipient,
+          // Grantee attests to their own completion → recipient is the
+          // signer. The on-chain resolver enforces auth; we don't need
+          // a separate canAttest check.
+          recipient: address as `0x${string}`,
         });
 
         const result = await attestation.attest(walletSigner);
         const txHash: string | undefined = result?.tx?.[0]?.hash ?? undefined;
 
-        // Best-effort indexer kick. The endpoint races the indexer's RPC
-        // propagation (the wallet's RPC is ahead of the indexer's), so a
-        // 500 here on the first call is normal. The indexer's chain-scan
-        // job will pick the tx up regardless — and the polling below
-        // waits until it's actually visible end-to-end before we declare
-        // success.
+        // Best-effort indexer kick. The endpoint races the indexer's
+        // RPC propagation (the wallet's RPC is ahead), so a 500 here on
+        // the first call is normal. The indexer's chain-scan job
+        // ingests the tx regardless — the polling below waits until the
+        // completion is visible end-to-end before we declare success.
         if (txHash) {
-          fetchData(
-            INDEXER.ATTESTATION_LISTENER(txHash, target.chainID),
-            "POST",
-            {}
-          ).catch(() => {
+          fetchData(INDEXER.ATTESTATION_LISTENER(txHash, chainID), "POST", {}).catch(() => {
             // intentional — propagation lag is expected, not an error
           });
         }
 
         // Poll the application response until milestoneStatuses reflects
-        // the new completion. Mirrors the pattern in
-        // useMilestoneCompletionVerification.pollForMilestoneStatus —
-        // works whether the indexer ingested via the listener kick above
-        // or via its own chain scan. ~60s budget (30 × 2s); a slow
-        // indexer falls through to the "still processing" branch instead
-        // of failing the mutation.
-        const milestoneUID = target.milestone.uid;
+        // the new completion. ~60s budget (30 × 2s); a slow indexer
+        // falls through to the "still processing" branch instead of
+        // failing the mutation.
         let indexerCaughtUp = false;
         try {
           await retryUntilConditionMet(
@@ -198,7 +133,7 @@ export function useSubmitMilestoneCompletion() {
               );
               if (!data) return false;
               const entry = data.milestoneStatuses?.find(
-                (m) => m.milestoneUID === milestoneUID
+                (m) => m.milestoneUID === params.milestoneUID
               );
               return (
                 !!entry &&
@@ -224,30 +159,16 @@ export function useSubmitMilestoneCompletion() {
             : "Submitted on-chain. Indexer is still processing — refresh in a moment to see the update."
         );
 
-        // Refresh every cached query that feeds the editor:
-        //   - applicationKeys.all → application response (carries
-        //     milestoneStatuses, the primary source for completion text
-        //     + status badges)
-        //   - PROJECT.UPDATES → useProjectUpdates(projectUID), which
-        //     supplies the rich GrantMilestoneWithDetails (recipient,
-        //     verificationDetails, …) used during the next attestation
-        //   - MILESTONES.PROJECT_GRANT_MILESTONES → project page cache
-        // The application + project-updates keys are prefix-broad so any
-        // cached variant (auth-on/off, filter combination) flips together.
-        await Promise.all([
-          queryClient.invalidateQueries({ queryKey: applicationKeys.all }),
-          queryClient.invalidateQueries({ queryKey: ["project-updates"] }),
-          queryClient.invalidateQueries({
-            queryKey: QUERY_KEYS.MILESTONES.PROJECT_GRANT_MILESTONES(
-              target.milestone.grant?.uid ?? "",
-              target.grantUID
-            ),
-          }),
-        ]);
+        // Force the application response to refetch — the application
+        // detail page reads completion text and badge state from
+        // milestoneStatuses on that response. applicationKeys.all is
+        // prefix-broad on purpose so every cached variant (auth-on/off,
+        // communityId combinations) flips together.
+        await queryClient.invalidateQueries({ queryKey: applicationKeys.all });
 
         if (params.invoiceFile) {
           try {
-            await submitGranteeInvoice(target.grantUID, {
+            await submitGranteeInvoice(grantUID, {
               milestoneLabel: params.milestoneTitle,
               invoiceFileKey: params.invoiceFile.fileKey,
               invoiceFileUrl: params.invoiceFile.fileUrl,

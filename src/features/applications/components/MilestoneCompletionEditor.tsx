@@ -8,7 +8,6 @@ import { FileUpload } from "@/components/Utilities/FileUpload";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import type { GrantMilestoneWithDetails } from "@/types/v2/roadmap";
 import type { MilestoneData, MilestoneStatusEntry } from "@/types/whitelabel-entities";
 import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
@@ -49,13 +48,12 @@ interface MilestoneCompletionEditorProps {
   referenceNumber: string;
   isEditable: boolean;
   invoiceRequired?: boolean;
-  grantMilestones?: GrantMilestoneWithDetails[]; // For on-chain attestations
-  grantUID?: string; // For query invalidation (overrides invoice config)
-  chainID?: number; // For on-chain attestations
-  // Top-level milestoneStatuses array from the application response —
-  // authoritative source for on-chain status (currentStatus, completed,
-  // verified) keyed by milestoneUID. Used to render the correct badge
-  // when the richer `grantMilestones` prop isn't supplied.
+  /**
+   * On-chain status array from the application response — keyed by
+   * `milestoneUID`. The single source of truth for completion state on
+   * the application detail page (carries `currentStatus`, the
+   * latest `completed` payload, and the latest `verified` payload).
+   */
   milestoneStatuses?: MilestoneStatusEntry[];
 }
 
@@ -65,9 +63,6 @@ export function MilestoneCompletionEditor({
   referenceNumber,
   isEditable,
   invoiceRequired,
-  grantMilestones = [],
-  grantUID: grantUIDProp,
-  chainID,
   milestoneStatuses,
 }: MilestoneCompletionEditorProps) {
   const {
@@ -83,8 +78,8 @@ export function MilestoneCompletionEditor({
     }
   );
 
-  const grantUID = grantUIDProp || invoiceConfig?.grantUID;
-  const showInvoice = invoiceRequired && invoiceConfig?.invoiceRequired && !!grantUID;
+  const showInvoice =
+    !!invoiceRequired && !!invoiceConfig?.invoiceRequired && !!invoiceConfig?.grantUID;
   const milestoneInvoices = invoiceConfig?.milestoneInvoices ?? [];
 
   // Invoice tracking is keyed by the user-facing label — the indexer
@@ -96,24 +91,6 @@ export function MilestoneCompletionEditor({
     [milestoneInvoices]
   );
 
-  // Match the rich GrantMilestoneWithDetails by UID instead of title — UID
-  // is unique, immutable, and side-steps duplicate-title collisions. Falls
-  // back to null when no UID exists (draft / pre-approval row).
-  const grantMilestoneByKey = useMemo(() => {
-    const map = new Map<string, GrantMilestoneWithDetails | null>();
-    milestones.forEach((milestone, index) => {
-      const key = getMilestoneKey(milestone, index);
-      const match = milestone.milestoneUID
-        ? grantMilestones.find((gm) => gm.uid === milestone.milestoneUID)
-        : undefined;
-      map.set(key, match ?? null);
-    });
-    return map;
-  }, [milestones, grantMilestones]);
-
-  // Authoritative status lookup keyed by milestoneUID — populated by the
-  // application detail page via the new `milestoneStatuses` array. The
-  // richer `grantMilestones` prop wins when both are wired (project page).
   const statusByUID = useMemo(() => {
     const map = new Map<string, MilestoneStatusEntry>();
     for (const entry of milestoneStatuses ?? []) {
@@ -131,11 +108,8 @@ export function MilestoneCompletionEditor({
   const [uploadingKeys, setUploadingKeys] = useState<Set<string>>(new Set());
   const pendingFileNameRef = useRef<Record<string, string>>({});
 
-  const handleStartEdit = (key: string, milestoneUID?: string) => {
-    const grantMilestone = milestoneUID
-      ? grantMilestones.find((m) => m.uid === milestoneUID)
-      : undefined;
-    const completionText = grantMilestone?.completionDetails?.description || "";
+  const handleStartEdit = (key: string, statusEntry?: MilestoneStatusEntry) => {
+    const completionText = statusEntry?.completed?.reason || "";
     setEditingKey(key);
     setEditedText((prev) => ({ ...prev, [key]: completionText }));
   };
@@ -194,13 +168,12 @@ export function MilestoneCompletionEditor({
     });
   }, []);
 
-  const handleSubmit = async (milestoneData: MilestoneData, key: string) => {
-    const grantMilestone = milestoneData.milestoneUID
-      ? grantMilestones.find((m) => m.uid === milestoneData.milestoneUID)
-      : undefined;
-    const statusEntry = milestoneData.milestoneUID
-      ? statusByUID.get(milestoneData.milestoneUID)
-      : undefined;
+  const handleSubmit = async (
+    milestoneData: MilestoneData,
+    key: string,
+    statusEntry: MilestoneStatusEntry
+  ) => {
+    if (!milestoneData.milestoneUID) return;
     const invoiceFile = invoiceFiles[key] ?? null;
 
     try {
@@ -208,15 +181,13 @@ export function MilestoneCompletionEditor({
         // Title is still the backend's invoice label and the AI-eval key;
         // the on-chain attestation itself uses the UID under the hood.
         milestoneTitle: milestoneData.title,
+        milestoneUID: milestoneData.milestoneUID,
+        statusEntry,
         proofOfWork: editedText[key] || "",
         referenceNumber,
         invoiceFile: invoiceFile
           ? { fileKey: invoiceFile.fileKey, fileUrl: invoiceFile.fileUrl }
           : null,
-        statusEntry,
-        grantMilestone,
-        grantUID,
-        chainID,
       });
 
       // Reset edit state on success only — failures keep the form open
@@ -250,22 +221,27 @@ export function MilestoneCompletionEditor({
     <div className="space-y-3">
       {milestones.map((milestone, index) => {
         const key = getMilestoneKey(milestone, index);
-        const grantMilestone = grantMilestoneByKey.get(key);
         const isEditing = editingKey === key;
         const currentText = editedText[key] || "";
         const statusEntry = milestone.milestoneUID
           ? statusByUID.get(milestone.milestoneUID)
           : undefined;
-        const isCompletionVerified = isMilestoneVerified(statusEntry, grantMilestone);
-        const isCompletionSubmitted =
-          isMilestoneCompleted(statusEntry, grantMilestone) && !isCompletionVerified;
-        const canEdit = isEditable && !isCompletionVerified;
+        const isCompletionVerified = isMilestoneVerified(statusEntry);
+        const isCompletionSubmitted = isMilestoneCompleted(statusEntry) && !isCompletionVerified;
+        const canEdit = isEditable && !isCompletionVerified && !!milestone.milestoneUID;
         const isUploading = uploadingKeys.has(key);
         const isWaitingForIndexer = isSubmittingTitle(milestone.title);
 
         const additionalFields = Object.keys(milestone).filter(
           (k) => !MILESTONE_CORE_FIELDS.includes(k) && milestone[k as keyof MilestoneData]
         );
+
+        const completionEntry = statusEntry?.completed ?? null;
+        const verifiedEntry = statusEntry?.verified ?? null;
+        const completionText = completionEntry?.reason ?? "";
+        const completionDate = completionEntry?.createdAt;
+        const invoiceFile = invoiceFiles[key];
+        const existingInvoice = getExistingInvoice(milestone.title);
 
         return (
           <div
@@ -332,14 +308,11 @@ export function MilestoneCompletionEditor({
                 <div className="mt-3 space-y-2 pt-3 border-t border-zinc-200 dark:border-zinc-700">
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-medium">
-                      {grantMilestone?.completionDetails
-                        ? "Edit Completion Update"
-                        : "Add Completion Update"}
+                      {completionEntry ? "Edit Completion Update" : "Add Completion Update"}
                     </p>
-                    {grantMilestone?.completionDetails && (
+                    {completionDate && (
                       <p className="text-xs text-zinc-400">
-                        Previously updated:{" "}
-                        {formatDate(grantMilestone.completionDetails.completedAt)}
+                        Previously updated: {formatDate(completionDate)}
                       </p>
                     )}
                   </div>
@@ -351,90 +324,81 @@ export function MilestoneCompletionEditor({
                     className="resize-y"
                   />
 
-                  {/* Invoice upload section */}
                   {isInvoiceConfigLoading && invoiceRequired && (
                     <div className="flex w-full flex-col items-start gap-2 mt-2">
                       <div className="h-5 w-28 rounded bg-gray-200 dark:bg-zinc-700 animate-pulse" />
                       <div className="h-10 w-full rounded bg-gray-200 dark:bg-zinc-700 animate-pulse" />
                     </div>
                   )}
-                  {showInvoice &&
-                    !isInvoiceConfigLoading &&
-                    (() => {
-                      const invoiceFile = invoiceFiles[key];
-                      const existingInvoice = getExistingInvoice(milestone.title);
-                      return (
-                        <div className="flex w-full flex-col items-start gap-2 mt-2">
-                          <p className="text-sm font-medium">Invoice (optional)</p>
-                          {invoiceFile ? (
+
+                  {showInvoice && !isInvoiceConfigLoading && (
+                    <div className="flex w-full flex-col items-start gap-2 mt-2">
+                      <p className="text-sm font-medium">Invoice (optional)</p>
+                      {invoiceFile ? (
+                        <div className="flex items-center gap-2 rounded-md border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-2">
+                          <PaperClipIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                          <span className="text-sm text-emerald-700 dark:text-emerald-300 flex-1 truncate">
+                            {invoiceFile.fileName}
+                          </span>
+                          <button
+                            type="button"
+                            aria-label="Remove invoice"
+                            className="p-0.5 rounded text-red-400 hover:text-red-600 transition-colors"
+                            onClick={() => handleRemoveInvoice(key)}
+                          >
+                            <XMarkIcon className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex w-full flex-col gap-2">
+                          {existingInvoice?.invoiceFileKey && (
                             <div className="flex items-center gap-2 rounded-md border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-2">
                               <PaperClipIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                              <span className="text-sm text-emerald-700 dark:text-emerald-300 flex-1 truncate">
-                                {invoiceFile.fileName}
+                              <span className="text-sm text-emerald-700 dark:text-emerald-300 flex-1">
+                                Invoice attached
                               </span>
-                              <button
-                                type="button"
-                                aria-label="Remove invoice"
-                                className="p-0.5 rounded text-red-400 hover:text-red-600 transition-colors"
-                                onClick={() => handleRemoveInvoice(key)}
-                              >
-                                <XMarkIcon className="h-4 w-4" />
-                              </button>
-                            </div>
-                          ) : (
-                            <div className="flex w-full flex-col gap-2">
-                              {existingInvoice?.invoiceFileKey && (
-                                <div className="flex items-center gap-2 rounded-md border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-2">
-                                  <PaperClipIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                                  <span className="text-sm text-emerald-700 dark:text-emerald-300 flex-1">
-                                    Invoice attached
-                                  </span>
-                                </div>
-                              )}
-                              <FileUpload
-                                onFileSelect={(file) => handleInvoiceFileSelected(file, key)}
-                                acceptedFormats=".pdf,.docx"
-                                description={
-                                  existingInvoice?.invoiceFileKey
-                                    ? "Upload to replace existing invoice"
-                                    : "PDF or DOCX (max 10MB)"
-                                }
-                                useS3Upload
-                                skipDimensionValidation
-                                presignedUrlEndpoint={INDEXER.V2.MILESTONE_INVOICES.GRANTEE_PRESIGNED()}
-                                maxFileSize={10 * 1024 * 1024}
-                                allowedFileTypes={[
-                                  "application/pdf",
-                                  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                                ]}
-                                onS3UploadComplete={(finalUrl, tempKey) =>
-                                  handleInvoiceFileUploaded(finalUrl, tempKey, key)
-                                }
-                                onS3UploadError={() => handleInvoiceUploadError(key)}
-                              />
                             </div>
                           )}
+                          <FileUpload
+                            onFileSelect={(file) => handleInvoiceFileSelected(file, key)}
+                            acceptedFormats=".pdf,.docx"
+                            description={
+                              existingInvoice?.invoiceFileKey
+                                ? "Upload to replace existing invoice"
+                                : "PDF or DOCX (max 10MB)"
+                            }
+                            useS3Upload
+                            skipDimensionValidation
+                            presignedUrlEndpoint={INDEXER.V2.MILESTONE_INVOICES.GRANTEE_PRESIGNED()}
+                            maxFileSize={10 * 1024 * 1024}
+                            allowedFileTypes={[
+                              "application/pdf",
+                              "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                            ]}
+                            onS3UploadComplete={(finalUrl, tempKey) =>
+                              handleInvoiceFileUploaded(finalUrl, tempKey, key)
+                            }
+                            onS3UploadError={() => handleInvoiceUploadError(key)}
+                          />
                         </div>
-                      );
-                    })()}
+                      )}
+                    </div>
+                  )}
 
                   <div className="flex gap-2">
                     <Button
                       size="sm"
-                      onClick={() => handleSubmit(milestone, key)}
+                      onClick={() => statusEntry && handleSubmit(milestone, key, statusEntry)}
                       isLoading={isWaitingForIndexer}
                       disabled={
+                        !statusEntry ||
                         !isSubmitEnabled(key) ||
                         isSubmittingCompletion ||
                         isUploading ||
                         isWaitingForIndexer
                       }
                     >
-                      {isWaitingForIndexer
-                        ? "Submitting..."
-                        : grantMilestone?.completionDetails
-                          ? "Update"
-                          : "Save"}
+                      {isWaitingForIndexer ? "Submitting..." : completionEntry ? "Update" : "Save"}
                     </Button>
                     <Button
                       variant="outline"
@@ -448,75 +412,52 @@ export function MilestoneCompletionEditor({
                 </div>
               ) : (
                 <>
-                  {(() => {
-                    // Prefer the on-chain completion data carried by
-                    // `milestoneStatuses` (sourced from the indexer's
-                    // GRANTS table) — that's where the user's free-text
-                    // completion lives, in the `reason` field. The
-                    // grantMilestone.completionDetails fallback exists
-                    // for project-page wiring where milestoneStatuses
-                    // isn't supplied.
-                    const completionText =
-                      statusEntry?.completed?.reason ||
-                      grantMilestone?.completionDetails?.description ||
-                      grantMilestone?.completionDetails?.proofOfWork ||
-                      "";
-                    const completionDate =
-                      statusEntry?.completed?.createdAt ||
-                      grantMilestone?.completionDetails?.completedAt;
-                    const hasCompletion =
-                      !!statusEntry?.completed || !!grantMilestone?.completionDetails;
-                    if (!hasCompletion) return null;
-
-                    return (
-                      <div className="mt-3 space-y-1 pt-3 border-t border-zinc-200 dark:border-zinc-700">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <p className="text-xs font-semibold">Completion Update</p>
-                            {completionText ? (
-                              <ApplicationMilestoneAIEvaluationBadge
-                                referenceNumber={referenceNumber}
-                                milestoneTitle={milestone.title}
-                                completionReason={completionText}
-                              />
-                            ) : null}
-                          </div>
-                          {canEdit && (
-                            <Button
-                              size="icon-sm"
-                              onClick={() => handleStartEdit(key, milestone.milestoneUID)}
-                            >
-                              <Pencil className="w-4 h-4" />
-                            </Button>
-                          )}
+                  {completionEntry && (
+                    <div className="mt-3 space-y-1 pt-3 border-t border-zinc-200 dark:border-zinc-700">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <p className="text-xs font-semibold">Completion Update</p>
+                          {completionText ? (
+                            <ApplicationMilestoneAIEvaluationBadge
+                              referenceNumber={referenceNumber}
+                              milestoneTitle={milestone.title}
+                              completionReason={completionText}
+                            />
+                          ) : null}
                         </div>
-                        <div className="text-sm text-zinc-600 dark:text-zinc-400 prose prose-sm dark:prose-invert max-w-none">
-                          <MarkdownPreview source={completionText} />
-                        </div>
-                        {completionDate && (
-                          <p className="text-xs text-zinc-400">
-                            Last updated: {formatDate(completionDate)}
-                          </p>
-                        )}
-                        {isCompletionVerified && grantMilestone?.verificationDetails && (
-                          <div className="mt-2 p-2 bg-green-50 dark:bg-green-900/10 rounded-md">
-                            <p className="text-xs font-semibold text-green-700 dark:text-green-400 mb-1">
-                              Verification
-                            </p>
-                            <p className="text-xs text-zinc-600 dark:text-zinc-400">
-                              {grantMilestone.verificationDetails.description}
-                            </p>
-                            <p className="text-xs text-zinc-400 mt-1">
-                              Verified by: {grantMilestone.verificationDetails.verifiedBy}
-                            </p>
-                          </div>
+                        {canEdit && (
+                          <Button size="icon-sm" onClick={() => handleStartEdit(key, statusEntry)}>
+                            <Pencil className="w-4 h-4" />
+                          </Button>
                         )}
                       </div>
-                    );
-                  })()}
+                      <div className="text-sm text-zinc-600 dark:text-zinc-400 prose prose-sm dark:prose-invert max-w-none">
+                        <MarkdownPreview source={completionText} />
+                      </div>
+                      {completionDate && (
+                        <p className="text-xs text-zinc-400">
+                          Last updated: {formatDate(completionDate)}
+                        </p>
+                      )}
+                      {isCompletionVerified && verifiedEntry && (
+                        <div className="mt-2 p-2 bg-green-50 dark:bg-green-900/10 rounded-md">
+                          <p className="text-xs font-semibold text-green-700 dark:text-green-400 mb-1">
+                            Verification
+                          </p>
+                          {verifiedEntry.reason && (
+                            <p className="text-xs text-zinc-600 dark:text-zinc-400">
+                              {verifiedEntry.reason}
+                            </p>
+                          )}
+                          <p className="text-xs text-zinc-400 mt-1">
+                            Verified by: {verifiedEntry.attester}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
-                  {/* Show existing invoice badge in read-only view */}
-                  {showInvoice && getExistingInvoice(milestone.title)?.invoiceFileKey && (
+                  {showInvoice && existingInvoice?.invoiceFileKey && (
                     <div className="flex items-center gap-1.5 mt-2">
                       <PaperClipIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                       <span className="text-sm text-emerald-700 dark:text-emerald-300">
@@ -525,12 +466,9 @@ export function MilestoneCompletionEditor({
                     </div>
                   )}
 
-                  {!statusEntry?.completed && !grantMilestone?.completionDetails && canEdit && (
+                  {!completionEntry && canEdit && (
                     <div className="mt-3 pt-3 border-t border-zinc-200 dark:border-zinc-700">
-                      <Button
-                        size="sm"
-                        onClick={() => handleStartEdit(key, milestone.milestoneUID)}
-                      >
+                      <Button size="sm" onClick={() => handleStartEdit(key, statusEntry)}>
                         Add Completion Update
                       </Button>
                     </div>

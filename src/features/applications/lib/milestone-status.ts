@@ -1,34 +1,21 @@
-import type { GrantMilestoneWithDetails } from "@/types/v2/roadmap";
 import type { MilestoneStatusEntry } from "@/types/whitelabel-entities";
 
 /**
  * Display-time status helpers for application milestones.
  *
- * The application detail page reads on-chain status from the new
- * `milestoneStatuses[]` array (authoritative — sourced from the indexer's
- * GRANTS table). Older callers and the project page still pass a richer
- * `GrantMilestoneWithDetails` via `grantMilestones`. These helpers prefer
- * the new entry when present and fall through to the legacy field
- * otherwise — so a single component can render correctly under either
- * wiring.
+ * The application detail page reads on-chain status from
+ * `milestoneStatuses[]` (authoritative — sourced from the indexer's
+ * GRANTS table, the same store the on-chain attestation processor
+ * writes to). A missing entry means the milestone hasn't been linked
+ * on-chain yet — treat as Pending.
  */
 
-export function isMilestoneVerified(
-  statusEntry?: MilestoneStatusEntry,
-  grantMilestone?: GrantMilestoneWithDetails | null
-): boolean {
-  if (statusEntry) {
-    return statusEntry.currentStatus === "verified" || !!statusEntry.verified;
-  }
-  return !!grantMilestone?.verificationDetails;
+export function isMilestoneVerified(statusEntry?: MilestoneStatusEntry): boolean {
+  if (!statusEntry) return false;
+  return statusEntry.currentStatus === "verified" || !!statusEntry.verified;
 }
 
-export function isMilestoneCompleted(
-  statusEntry?: MilestoneStatusEntry,
-  grantMilestone?: GrantMilestoneWithDetails | null
-): boolean {
-  if (statusEntry) {
-    return statusEntry.currentStatus === "completed" || !!statusEntry.completed;
-  }
-  return !!grantMilestone?.completionDetails;
+export function isMilestoneCompleted(statusEntry?: MilestoneStatusEntry): boolean {
+  if (!statusEntry) return false;
+  return statusEntry.currentStatus === "completed" || !!statusEntry.completed;
 }
