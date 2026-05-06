@@ -9,7 +9,7 @@ interface SupportedClient {
   name: string;
   description: string;
   docsUrl?: string;
-  setupHint: string;
+  setupHint: (mcpUrl: string, copy: (value: string, msg: string) => void) => React.ReactNode;
 }
 
 const SUPPORTED_CLIENTS: SupportedClient[] = [
@@ -17,25 +17,45 @@ const SUPPORTED_CLIENTS: SupportedClient[] = [
     name: "Cursor",
     description: "Cursor's MCP integration discovers OAuth-protected servers automatically.",
     docsUrl: "https://docs.cursor.com/context/mcp",
-    setupHint:
+    setupHint: () =>
       "Settings → MCP → Add Server. Paste the URL above. Cursor will open Karma in your browser to sign in.",
   },
   {
     name: "Claude Desktop",
     description: "Claude Desktop supports remote MCP servers via the OAuth handshake.",
     docsUrl: "https://modelcontextprotocol.io/quickstart/user",
-    setupHint: "Settings → Developer → Add Server. Choose 'Remote URL' and paste the URL above.",
+    setupHint: () =>
+      "Settings → Developer → Add Server. Choose 'Remote URL' and paste the URL above.",
   },
   {
     name: "Codex CLI",
     description: "OpenAI's Codex CLI supports remote MCP servers via OAuth.",
     docsUrl: "https://github.com/openai/codex",
-    setupHint: "Run `codex mcp add karma --url <url>` and follow the browser prompt.",
+    setupHint: (mcpUrl, copy) => {
+      const command = `codex mcp add karma --url ${mcpUrl}`;
+      return (
+        <span className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-1">
+          Run
+          <code className="break-all rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
+            {command}
+          </code>
+          <button
+            type="button"
+            onClick={() => copy(command, "Codex command copied")}
+            aria-label="Copy Codex command"
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <Copy className="h-3.5 w-3.5" aria-hidden />
+          </button>
+          and follow the browser prompt.
+        </span>
+      );
+    },
   },
   {
     name: "Other MCP clients",
     description: "Any MCP-spec-compliant client (2025-11-25+) auto-discovers the OAuth flow.",
-    setupHint:
+    setupHint: () =>
       "Add the URL as a remote server. The client will follow the WWW-Authenticate hint and walk you through Karma's sign-in flow.",
   },
 ];
@@ -93,7 +113,7 @@ export function McpConnectPage() {
                 ) : null}
               </div>
               <p className="mt-1 text-sm text-muted-foreground">{client.description}</p>
-              <p className="mt-3 text-sm text-foreground">{client.setupHint}</p>
+              <div className="mt-3 text-sm text-foreground">{client.setupHint(mcpUrl, copy)}</div>
             </li>
           ))}
         </ul>
