@@ -28,12 +28,15 @@ export function HtmlReportFrame({ html, title }: Props) {
 
     let observer: ResizeObserver | null = null;
     let detached = false;
+    let printButton: Element | null = null;
+    let printHandler: ((event: Event) => void) | null = null;
 
-    function attachObserver() {
+    function attach() {
       if (detached) return;
       const doc = iframe?.contentDocument;
       const body = doc?.body;
       if (!body) return;
+
       const measure = () => {
         const next = Math.max(body.scrollHeight, 400);
         setHeight((prev) => (Math.abs(prev - next) > 1 ? next : prev));
@@ -41,16 +44,33 @@ export function HtmlReportFrame({ html, title }: Props) {
       measure();
       observer = new ResizeObserver(measure);
       observer.observe(body);
+
+      // The renderer emits a visual `<button class="btn-export">` but
+      // the iframe sandbox forbids scripts, so the button does nothing
+      // on its own. Wire it from the host: clicking it opens the
+      // browser's print dialog scoped to the iframe content, which the
+      // user then "Save as PDF"s. Native, no extra deps.
+      printButton = doc?.querySelector(".btn-export") ?? null;
+      if (printButton) {
+        printHandler = (event: Event) => {
+          event.preventDefault();
+          iframe?.contentWindow?.print();
+        };
+        printButton.addEventListener("click", printHandler);
+      }
     }
 
-    iframe.addEventListener("load", attachObserver);
+    iframe.addEventListener("load", attach);
     // Re-attach on the first paint in case the load event already fired.
-    attachObserver();
+    attach();
 
     return () => {
       detached = true;
-      iframe.removeEventListener("load", attachObserver);
+      iframe.removeEventListener("load", attach);
       observer?.disconnect();
+      if (printButton && printHandler) {
+        printButton.removeEventListener("click", printHandler);
+      }
     };
   }, [html]);
 
