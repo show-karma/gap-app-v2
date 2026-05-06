@@ -4,6 +4,10 @@ export const MILESTONE_CORE_FIELDS = [
   "dueDate",
   "completed",
   "fundingRequested",
+  // Internal — surfaced in the API response so the frontend can match
+  // application milestones to their on-chain counterparts, but never
+  // user-facing.
+  "milestoneUID",
 ];
 
 export const formatFieldLabel = (key: string): string => {

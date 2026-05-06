@@ -224,18 +224,26 @@ export function useSubmitMilestoneCompletion() {
             : "Submitted on-chain. Indexer is still processing — refresh in a moment to see the update."
         );
 
-        // Refresh: project updates feed (where MilestonesTab reads grant
-        // milestones from) + the application response itself (carries
-        // `milestoneStatuses` — the source for status badges). The
-        // application key tree is broad on purpose so any cached variant
-        // (auth-on / auth-off) flips together.
-        await queryClient.invalidateQueries({ queryKey: applicationKeys.all });
-        await queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.MILESTONES.PROJECT_GRANT_MILESTONES(
-            target.milestone.grant?.uid ?? "",
-            target.grantUID
-          ),
-        });
+        // Refresh every cached query that feeds the editor:
+        //   - applicationKeys.all → application response (carries
+        //     milestoneStatuses, the primary source for completion text
+        //     + status badges)
+        //   - PROJECT.UPDATES → useProjectUpdates(projectUID), which
+        //     supplies the rich GrantMilestoneWithDetails (recipient,
+        //     verificationDetails, …) used during the next attestation
+        //   - MILESTONES.PROJECT_GRANT_MILESTONES → project page cache
+        // The application + project-updates keys are prefix-broad so any
+        // cached variant (auth-on/off, filter combination) flips together.
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: applicationKeys.all }),
+          queryClient.invalidateQueries({ queryKey: ["project-updates"] }),
+          queryClient.invalidateQueries({
+            queryKey: QUERY_KEYS.MILESTONES.PROJECT_GRANT_MILESTONES(
+              target.milestone.grant?.uid ?? "",
+              target.grantUID
+            ),
+          }),
+        ]);
 
         if (params.invoiceFile) {
           try {

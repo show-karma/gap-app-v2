@@ -448,51 +448,72 @@ export function MilestoneCompletionEditor({
                 </div>
               ) : (
                 <>
-                  {grantMilestone?.completionDetails && (
-                    <div className="mt-3 space-y-1 pt-3 border-t border-zinc-200 dark:border-zinc-700">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <p className="text-xs font-semibold">Completion Update</p>
-                          {grantMilestone.completionDetails.proofOfWork ? (
-                            <ApplicationMilestoneAIEvaluationBadge
-                              referenceNumber={referenceNumber}
-                              milestoneTitle={milestone.title}
-                              completionReason={grantMilestone.completionDetails.proofOfWork}
-                            />
-                          ) : null}
+                  {(() => {
+                    // Prefer the on-chain completion data carried by
+                    // `milestoneStatuses` (sourced from the indexer's
+                    // GRANTS table) — that's where the user's free-text
+                    // completion lives, in the `reason` field. The
+                    // grantMilestone.completionDetails fallback exists
+                    // for project-page wiring where milestoneStatuses
+                    // isn't supplied.
+                    const completionText =
+                      statusEntry?.completed?.reason ||
+                      grantMilestone?.completionDetails?.description ||
+                      grantMilestone?.completionDetails?.proofOfWork ||
+                      "";
+                    const completionDate =
+                      statusEntry?.completed?.createdAt ||
+                      grantMilestone?.completionDetails?.completedAt;
+                    const hasCompletion =
+                      !!statusEntry?.completed || !!grantMilestone?.completionDetails;
+                    if (!hasCompletion) return null;
+
+                    return (
+                      <div className="mt-3 space-y-1 pt-3 border-t border-zinc-200 dark:border-zinc-700">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <p className="text-xs font-semibold">Completion Update</p>
+                            {completionText ? (
+                              <ApplicationMilestoneAIEvaluationBadge
+                                referenceNumber={referenceNumber}
+                                milestoneTitle={milestone.title}
+                                completionReason={completionText}
+                              />
+                            ) : null}
+                          </div>
+                          {canEdit && (
+                            <Button
+                              size="icon-sm"
+                              onClick={() => handleStartEdit(key, milestone.milestoneUID)}
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                          )}
                         </div>
-                        {canEdit && (
-                          <Button
-                            size="icon-sm"
-                            onClick={() => handleStartEdit(key, milestone.milestoneUID)}
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </Button>
+                        <div className="text-sm text-zinc-600 dark:text-zinc-400 prose prose-sm dark:prose-invert max-w-none">
+                          <MarkdownPreview source={completionText} />
+                        </div>
+                        {completionDate && (
+                          <p className="text-xs text-zinc-400">
+                            Last updated: {formatDate(completionDate)}
+                          </p>
+                        )}
+                        {isCompletionVerified && grantMilestone?.verificationDetails && (
+                          <div className="mt-2 p-2 bg-green-50 dark:bg-green-900/10 rounded-md">
+                            <p className="text-xs font-semibold text-green-700 dark:text-green-400 mb-1">
+                              Verification
+                            </p>
+                            <p className="text-xs text-zinc-600 dark:text-zinc-400">
+                              {grantMilestone.verificationDetails.description}
+                            </p>
+                            <p className="text-xs text-zinc-400 mt-1">
+                              Verified by: {grantMilestone.verificationDetails.verifiedBy}
+                            </p>
+                          </div>
                         )}
                       </div>
-                      <div className="text-sm text-zinc-600 dark:text-zinc-400 prose prose-sm dark:prose-invert max-w-none">
-                        <MarkdownPreview
-                          source={grantMilestone.completionDetails.proofOfWork || ""}
-                        />
-                      </div>
-                      <p className="text-xs text-zinc-400">
-                        Last updated: {formatDate(grantMilestone.completionDetails.completedAt)}
-                      </p>
-                      {isCompletionVerified && grantMilestone.verificationDetails && (
-                        <div className="mt-2 p-2 bg-green-50 dark:bg-green-900/10 rounded-md">
-                          <p className="text-xs font-semibold text-green-700 dark:text-green-400 mb-1">
-                            Verification
-                          </p>
-                          <p className="text-xs text-zinc-600 dark:text-zinc-400">
-                            {grantMilestone.verificationDetails.description}
-                          </p>
-                          <p className="text-xs text-zinc-400 mt-1">
-                            Verified by: {grantMilestone.verificationDetails.verifiedBy}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                    );
+                  })()}
 
                   {/* Show existing invoice badge in read-only view */}
                   {showInvoice && getExistingInvoice(milestone.title)?.invoiceFileKey && (
@@ -504,7 +525,7 @@ export function MilestoneCompletionEditor({
                     </div>
                   )}
 
-                  {!grantMilestone?.completionDetails && canEdit && (
+                  {!statusEntry?.completed && !grantMilestone?.completionDetails && canEdit && (
                     <div className="mt-3 pt-3 border-t border-zinc-200 dark:border-zinc-700">
                       <Button
                         size="sm"
