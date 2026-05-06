@@ -228,6 +228,8 @@ export type Program = FundingProgram;
 export interface MilestoneStatusEntry {
   milestoneUID: string;
   currentStatus: string; // "pending" | "approved" | "rejected" | "completed" | "verified"
+  grantUID: string;
+  chainID: number;
   completed?: {
     uid: string;
     createdAt: string;

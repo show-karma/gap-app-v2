@@ -14,6 +14,7 @@ import { useMilestoneAttestation } from "@/src/features/milestones/hooks/useMile
 import { submitGranteeInvoice } from "@/src/features/payout-disbursement/services/payout-disbursement.service";
 import type { GrantMilestoneWithDetails } from "@/types/v2/roadmap";
 import type { MilestoneData, MilestoneStatusEntry } from "@/types/whitelabel-entities";
+import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
@@ -175,10 +176,37 @@ export function MilestoneCompletionEditor({
 
   const handleSubmit = async (milestoneTitle: string) => {
     const proofOfWork = editedText[milestoneTitle] || "";
-    const milestone = grantMilestones.find((m) => m.title === milestoneTitle);
     const invoiceFile = invoiceFiles[milestoneTitle];
 
-    if (!milestone || !grantUID) {
+    // Resolve the rich milestone (with canAttest flags + grant) and the
+    // grantUID. Two paths:
+    //   1. Caller wired `grantMilestones` + `grantUID` (e.g. project page).
+    //   2. Caller wired `milestoneStatuses` (application detail page) — we
+    //      fetch the rich milestone on demand from the indexer using the
+    //      per-entry chainID, and pull grantUID off the entry directly.
+    const milestoneData = milestones.find((m) => m.title === milestoneTitle);
+    let resolvedMilestone = grantMilestones.find((m) => m.title === milestoneTitle);
+    let resolvedGrantUID = grantUID;
+    let resolvedChainID = chainID;
+
+    if (!resolvedMilestone && milestoneData?.milestoneUID) {
+      const statusEntry = statusByUID.get(milestoneData.milestoneUID);
+      if (statusEntry) {
+        const [data, error] = await fetchData<GrantMilestoneWithDetails>(
+          `/v2/milestones/${milestoneData.milestoneUID}?chainId=${statusEntry.chainID}`,
+          "GET"
+        );
+        if (error || !data) {
+          toast.error("Could not load milestone — please refresh and try again");
+          return;
+        }
+        resolvedMilestone = data;
+        resolvedGrantUID ||= statusEntry.grantUID;
+        resolvedChainID = statusEntry.chainID;
+      }
+    }
+
+    if (!resolvedMilestone || !resolvedGrantUID) {
       toast.error("Milestone or grant information missing");
       return;
     }
@@ -188,10 +216,10 @@ export function MilestoneCompletionEditor({
       setIsIndexerPending((prev) => new Set(prev).add(milestoneTitle));
 
       await completeMutation.mutateAsync({
-        milestone,
-        chainID,
+        milestone: resolvedMilestone,
+        chainID: resolvedChainID,
         proofOfWork,
-        grantUID,
+        grantUID: resolvedGrantUID,
       });
 
       // Show success toast with tx hash
@@ -200,7 +228,7 @@ export function MilestoneCompletionEditor({
       // Submit invoice if present
       if (invoiceFile) {
         try {
-          await submitGranteeInvoice(grantUID, {
+          await submitGranteeInvoice(resolvedGrantUID, {
             milestoneLabel: milestoneTitle,
             invoiceFileKey: invoiceFile.fileKey,
             invoiceFileUrl: invoiceFile.fileUrl,
