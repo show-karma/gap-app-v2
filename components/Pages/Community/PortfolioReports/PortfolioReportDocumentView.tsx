@@ -1,5 +1,11 @@
-import { ChevronRight } from "lucide-react";
+"use client";
+
+import { ChevronRight, Download } from "lucide-react";
 import Link from "next/link";
+import { useRef, useState } from "react";
+import toast from "react-hot-toast";
+import { Button } from "@/components/ui/button";
+import { downloadReportPdf } from "@/services/portfolio-reports.service";
 import type { PortfolioReport } from "@/types/portfolio-report";
 import type { Community } from "@/types/v2/community";
 import { formatRunDate } from "@/utilities/portfolio-reports/period";
@@ -14,6 +20,14 @@ interface Props {
   backHref: string;
   backLabel?: string;
   bannerText?: string;
+  /**
+   * When provided, surfaces an "Export PDF" button next to the
+   * breadcrumb. Pass `{ communitySlug, reportId }` from contexts where
+   * the viewer is authorized to call the admin-scoped PDF endpoint
+   * (e.g. the admin /preview tab). Public report views should leave
+   * this undefined.
+   */
+  exportContext?: { communitySlug: string; reportId: string };
 }
 
 function formatDate(iso: string): string {
@@ -31,11 +45,37 @@ export function PortfolioReportDocumentView({
   backHref,
   backLabel = "Reports",
   bannerText,
+  exportContext,
 }: Props) {
   const runDateLabel = formatRunDate(runDate).label;
+  const [exportingPdf, setExportingPdf] = useState(false);
+  const exportInFlight = useRef(false);
 
-  // The generated HTML document carries its own header/title/Export
-  // button. The FE wraps it with breadcrumb + banner navigation only.
+  const handleExportPdf = async () => {
+    if (!exportContext) return;
+    // Synchronous guard against double-clicks; setState is async and the
+    // disabled prop won't update before a second click in the same tick.
+    if (exportInFlight.current) return;
+    exportInFlight.current = true;
+    setExportingPdf(true);
+    try {
+      const blob = await downloadReportPdf(exportContext.communitySlug, exportContext.reportId);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `portfolio-report-${runDate}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      toast.error(`Failed to export PDF: ${err instanceof Error ? err.message : "Unknown error"}`);
+    } finally {
+      exportInFlight.current = false;
+      setExportingPdf(false);
+    }
+  };
+
   return (
     <>
       <ReadingProgress />
@@ -46,24 +86,37 @@ export function PortfolioReportDocumentView({
           </div>
         ) : null}
 
-        <nav aria-label="Breadcrumb" className="mb-8">
-          <ol className="flex flex-wrap items-center gap-1.5 text-sm text-zinc-500 dark:text-zinc-400">
-            <li>
-              <Link
-                href={backHref}
-                className="transition-colors hover:text-zinc-900 dark:hover:text-zinc-100"
-              >
-                {backLabel}
-              </Link>
-            </li>
-            <li aria-hidden="true" className="text-zinc-300 dark:text-zinc-700">
-              <ChevronRight className="h-3.5 w-3.5" />
-            </li>
-            <li aria-current="page" className="font-medium text-zinc-900 dark:text-zinc-100">
-              {runDateLabel}
-            </li>
-          </ol>
-        </nav>
+        <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
+          <nav aria-label="Breadcrumb">
+            <ol className="flex flex-wrap items-center gap-1.5 text-sm text-zinc-500 dark:text-zinc-400">
+              <li>
+                <Link
+                  href={backHref}
+                  className="transition-colors hover:text-zinc-900 dark:hover:text-zinc-100"
+                >
+                  {backLabel}
+                </Link>
+              </li>
+              <li aria-hidden="true" className="text-zinc-300 dark:text-zinc-700">
+                <ChevronRight className="h-3.5 w-3.5" />
+              </li>
+              <li aria-current="page" className="font-medium text-zinc-900 dark:text-zinc-100">
+                {runDateLabel}
+              </li>
+            </ol>
+          </nav>
+          {exportContext ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportPdf}
+              disabled={exportingPdf || !report.content}
+            >
+              <Download className="mr-1 h-3 w-3" />
+              {exportingPdf ? "Exporting…" : "Export PDF"}
+            </Button>
+          ) : null}
+        </div>
 
         <HtmlReportFrame html={report.content} title={`Portfolio report — ${runDateLabel}`} />
 

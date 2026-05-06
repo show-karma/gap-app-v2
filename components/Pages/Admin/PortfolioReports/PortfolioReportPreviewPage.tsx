@@ -79,6 +79,7 @@ export function PortfolioReportPreviewPage({ community, reportId }: Props) {
       backHref={backHref}
       backLabel="Back to portfolio reports"
       bannerText={bannerText}
+      exportContext={{ communitySlug: slug, reportId }}
     />
   );
 }
