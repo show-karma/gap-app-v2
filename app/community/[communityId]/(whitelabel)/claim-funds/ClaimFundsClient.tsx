@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { isAddress } from "viem";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import type { SupportedChainId } from "@/config/tokens";
 import { useAuth } from "@/hooks/useAuth";
 import { Link } from "@/src/components/navigation/Link";
 import { CampaignCard } from "@/src/features/claim-funds/components/CampaignCard";
@@ -25,7 +26,6 @@ import { getChainByName } from "@/src/features/claim-funds/lib/viem-clients";
 import type { ClaimCampaign } from "@/src/features/claim-funds/providers/types";
 import { getTenantConfig } from "@/src/infrastructure/config/tenant-config";
 import { isKnownTenant, type TenantId } from "@/src/infrastructure/types/tenant";
-import type { SupportedChainId } from "@/config/tokens";
 import { formatAddressForDisplay } from "@/utilities/donations/helpers";
 
 const truncateAddress = (address: string) => formatAddressForDisplay(address, 6, 4);
@@ -102,7 +102,7 @@ function ClaimFundsContent() {
   const campaignChainId = getChainByName(campaignNetworkName).id as SupportedChainId;
 
   // Check if alternate address is a Safe the user owns (on the campaign's chain)
-  const { isSafeYouOwn, isCheckingOwnership } = useCheckSafeOwnership(
+  const { canProposeViaSafe, isCheckingOwnership } = useCheckSafeOwnership(
     alternateAddress as `0x${string}` | null,
     campaignChainId,
     isUsingAlternateAddress
@@ -193,9 +193,16 @@ function ClaimFundsContent() {
     void submitClaimViaSafe();
   }, [submitClaimViaSafe]);
 
-  const handleCheckAlternateAddress = useCallback((address: `0x${string}`) => {
-    setAlternateAddress(address);
-  }, []);
+  const handleCheckAlternateAddress = useCallback(
+    (address: `0x${string}`) => {
+      // Clear any in-flight prepare/sign state from the previous wallet so that
+      // pending claims don't leak across address changes.
+      resetDelegatedClaim();
+      resetSafeClaim();
+      setAlternateAddress(address);
+    },
+    [resetDelegatedClaim, resetSafeClaim]
+  );
 
   const handleResetToConnectedWallet = useCallback(() => {
     setAlternateAddress(null);
@@ -343,7 +350,7 @@ function ClaimFundsContent() {
                   delegatedActiveCampaignId={delegatedActiveCampaignId}
                   isAnyClaiming={isAnyClaiming}
                   overrideDisplayName={campaignNameMappings?.get(campaign.id)}
-                  isSafeYouOwn={isSafeYouOwn}
+                  canProposeViaSafe={canProposeViaSafe}
                   isCheckingOwnership={isCheckingOwnership}
                   onRequestClaimViaSafe={() => handleRequestClaimViaSafe(campaign)}
                   onSubmitClaimViaSafe={handleSubmitClaimViaSafe}

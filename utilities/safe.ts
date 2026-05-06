@@ -1,6 +1,6 @@
 import SafeApiKit from "@safe-global/api-kit";
 import Safe from "@safe-global/protocol-kit";
-import { encodeFunctionData, erc20Abi, formatUnits, parseUnits } from "viem";
+import { encodeFunctionData, erc20Abi, formatUnits, parseUnits, type WalletClient } from "viem";
 import { NATIVE_TOKENS, NETWORKS, type SupportedChainId } from "../config/tokens";
 import type { DisbursementRecipient } from "../types/disbursement";
 import { getRPCClient, getRPCUrlByChainId } from "./rpcClient";
@@ -402,7 +402,7 @@ export async function prepareDisbursementTransaction(
 /**
  * Creates an Ethereum provider compatible with Safe SDK from wagmi wallet client
  */
-export function createEthereumProvider(walletClient: any, chainId: SupportedChainId) {
+export function createEthereumProvider(walletClient: WalletClient, chainId: SupportedChainId) {
   const rpcUrl = getRpcUrl(chainId);
 
   // Create a provider object that Safe SDK can understand
@@ -427,12 +427,13 @@ export function createEthereumProvider(walletClient: any, chainId: SupportedChai
           // Parse the typed data if it's a string
           const parsedTypedData = typeof typedData === "string" ? JSON.parse(typedData) : typedData;
 
-          // Verify the address matches the wallet client account
-          if (address?.toLowerCase() !== walletClient.account?.address?.toLowerCase()) {
-            throw new Error(`Address mismatch: ${address} vs ${walletClient.account?.address}`);
+          const account = walletClient.account;
+          if (!account || address?.toLowerCase() !== account.address.toLowerCase()) {
+            throw new Error(`Address mismatch: ${address} vs ${account?.address}`);
           }
 
           return await walletClient.signTypedData({
+            account,
             domain: parsedTypedData.domain,
             types: parsedTypedData.types,
             primaryType: parsedTypedData.primaryType,
@@ -444,12 +445,13 @@ export function createEthereumProvider(walletClient: any, chainId: SupportedChai
           // params[0] is the message, params[1] is the address
           const [message, address] = params;
 
-          // Verify the address matches the wallet client account
-          if (address?.toLowerCase() !== walletClient.account?.address?.toLowerCase()) {
-            throw new Error(`Address mismatch: ${address} vs ${walletClient.account?.address}`);
+          const account = walletClient.account;
+          if (!account || address?.toLowerCase() !== account.address.toLowerCase()) {
+            throw new Error(`Address mismatch: ${address} vs ${account?.address}`);
           }
 
           return await walletClient.signMessage({
+            account,
             message:
               typeof message === "string" && message.startsWith("0x") ? { raw: message } : message,
           });

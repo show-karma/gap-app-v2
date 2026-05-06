@@ -29,7 +29,7 @@ interface CampaignCardProps {
   delegatedActiveCampaignId?: string | null;
   isAnyClaiming?: boolean;
   overrideDisplayName?: string;
-  isSafeYouOwn?: boolean;
+  canProposeViaSafe?: boolean;
   isCheckingOwnership?: boolean;
   onRequestClaimViaSafe?: () => void;
   onSubmitClaimViaSafe?: () => void;
@@ -82,7 +82,7 @@ function CampaignCardComponent({
   delegatedActiveCampaignId,
   isAnyClaiming = false,
   overrideDisplayName,
-  isSafeYouOwn = false,
+  canProposeViaSafe = false,
   isCheckingOwnership = false,
   onRequestClaimViaSafe,
   onSubmitClaimViaSafe,
@@ -128,7 +128,7 @@ function CampaignCardComponent({
     safeActiveCampaignId === campaign.id && safeClaimStep === "submitting";
 
   const getSafeClaimButton = () => {
-    if (!canClaim || !isViewingAlternateAddress || !isSafeYouOwn) return null;
+    if (!canClaim || !isViewingAlternateAddress || !canProposeViaSafe) return null;
 
     // After prepare succeeds, show the explicit "Sign & Propose" button so the user
     // can trigger the wallet signature + Safe API submission.
@@ -165,7 +165,24 @@ function CampaignCardComponent({
 
   const getDelegatedClaimButton = () => {
     if (!canClaim || !isViewingAlternateAddress) return null;
-    if (isSafeYouOwn) return null;
+    if (canProposeViaSafe) return null;
+
+    // While we don't yet know whether the alternate address is a Safe the user
+    // can propose for, render a disabled placeholder. Otherwise an owner could
+    // start the unsupported delegated-signature flow before the ownership check
+    // resolves and the Safe path appears.
+    if (isCheckingOwnership) {
+      return (
+        <Button
+          className="w-full font-semibold"
+          disabled
+          aria-label={`Checking wallet type for ${alternateAddress ? truncateAddress(alternateAddress) : "alternate wallet"}`}
+          aria-busy={true}
+        >
+          Checking wallet type...
+        </Button>
+      );
+    }
 
     if (hasPendingSignature && delegatedClaimStep !== "awaiting_signature") {
       return (
@@ -265,7 +282,15 @@ function CampaignCardComponent({
               {isLockupActive && formattedCliffDate && (
                 <LockupWarning cliffDate={formattedCliffDate} />
               )}
-              {isSafeYouOwn ? (
+              {isCheckingOwnership ? (
+                <div role="alert" className="mb-2 p-3 rounded-lg border bg-muted/50 border-muted">
+                  <p className="text-sm text-muted-foreground">
+                    Checking whether{" "}
+                    <span title={alternateAddress}>{truncateAddress(alternateAddress)}</span> is a
+                    Safe you can propose to...
+                  </p>
+                </div>
+              ) : canProposeViaSafe ? (
                 <>
                   <div
                     role="alert"
@@ -281,10 +306,8 @@ function CampaignCardComponent({
                       ) : (
                         <>
                           Safe wallet{" "}
-                          <span title={alternateAddress}>
-                            {truncateAddress(alternateAddress)}
-                          </span>
-                          . Propose claim to Safe. Any signer can execute it.
+                          <span title={alternateAddress}>{truncateAddress(alternateAddress)}</span>.
+                          Propose claim to Safe. Any signer can execute it.
                         </>
                       )}
                     </p>
