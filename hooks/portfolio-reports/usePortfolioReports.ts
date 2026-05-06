@@ -127,7 +127,7 @@ export function useReportRowSync(
           if (r.id !== data.id || r === data) return r;
           if (
             r.status === data.status &&
-            r.markdown === data.markdown &&
+            r.content === data.content &&
             r.generationError === data.generationError &&
             r.updatedAt === data.updatedAt
           ) {
@@ -211,11 +211,11 @@ export function useUnpublishReport(communitySlug: string) {
   });
 }
 
-export function useUpdateReportMarkdown(communitySlug: string) {
+export function useUpdateReportContent(communitySlug: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ reportId, markdown }: { reportId: string; markdown: string }) =>
-      portfolioService.updateReportMarkdown(communitySlug, reportId, markdown),
+    mutationFn: ({ reportId, content }: { reportId: string; content: string }) =>
+      portfolioService.updateReportContent(communitySlug, reportId, content),
     onSuccess: (data: PortfolioReport) => {
       queryClient.setQueryData(QUERY_KEYS.report(communitySlug, data.id), data);
       if (data.status === "published") {
