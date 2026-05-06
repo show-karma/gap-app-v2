@@ -1,24 +1,20 @@
 "use client";
 
 import { PaperClipIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { useQueryClient } from "@tanstack/react-query";
 import { Pencil } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useCallback, useMemo, useRef, useState } from "react";
-import toast from "react-hot-toast";
 import { FileUpload } from "@/components/Utilities/FileUpload";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { useMilestoneAttestation } from "@/src/features/milestones/hooks/useMilestoneAttestation";
-import { submitGranteeInvoice } from "@/src/features/payout-disbursement/services/payout-disbursement.service";
 import type { GrantMilestoneWithDetails } from "@/types/v2/roadmap";
 import type { MilestoneData, MilestoneStatusEntry } from "@/types/whitelabel-entities";
-import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
-import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { useApplicationInvoiceConfig } from "../hooks/use-application-invoice-config";
+import { useSubmitMilestoneCompletion } from "../hooks/use-submit-milestone-completion";
+import { isMilestoneCompleted, isMilestoneVerified } from "../lib/milestone-status";
 import { formatFieldLabel, isMarkdownContent, MILESTONE_CORE_FIELDS } from "../lib/milestone-utils";
 
 const ApplicationMilestoneAIEvaluationBadge = dynamic(
@@ -33,6 +29,18 @@ interface InvoiceFileState {
   fileUrl: string;
   fileKey: string;
   fileName: string;
+}
+
+/**
+ * Stable per-row key for component state. Prefers `milestoneUID` (the
+ * authoritative on-chain identifier — unique, never collides on duplicate
+ * titles, immutable across renames). Falls back to a positional sentinel
+ * for rows that haven't been linked on-chain yet (e.g. drafts or
+ * pre-approval previews) so the editor stays functional even though
+ * submission requires a UID.
+ */
+function getMilestoneKey(milestone: MilestoneData, index: number): string {
+  return milestone.milestoneUID || `__noUID-${index}`;
 }
 
 interface MilestoneCompletionEditorProps {
@@ -62,9 +70,11 @@ export function MilestoneCompletionEditor({
   chainID = 8453,
   milestoneStatuses,
 }: MilestoneCompletionEditorProps) {
-  const queryClient = useQueryClient();
-  const { completeMutation } = useMilestoneAttestation();
-  const [isIndexerPending, setIsIndexerPending] = useState<Set<string>>(new Set());
+  const {
+    submit: submitCompletion,
+    isPending: isSubmittingCompletion,
+    isPendingFor: isSubmittingTitle,
+  } = useSubmitMilestoneCompletion();
 
   const { data: invoiceConfig, isLoading: isInvoiceConfigLoading } = useApplicationInvoiceConfig(
     referenceNumber,
@@ -77,27 +87,33 @@ export function MilestoneCompletionEditor({
   const showInvoice = invoiceRequired && invoiceConfig?.invoiceRequired && !!grantUID;
   const milestoneInvoices = invoiceConfig?.milestoneInvoices ?? [];
 
+  // Invoice tracking is keyed by the user-facing label — the indexer
+  // persists invoices against milestoneLabel (== milestone title) since
+  // the schema predates milestoneUIDs being mandatory.
   const getExistingInvoice = useCallback(
     (milestoneTitle: string) =>
       milestoneInvoices.find((inv) => inv.milestoneLabel === milestoneTitle),
     [milestoneInvoices]
   );
 
-  // Build positional completion map to handle duplicate milestone titles.
-  // Match milestones to grant milestone entities for on-chain status.
-  const completionByIndex = useMemo(() => {
-    const map = new Map<number, GrantMilestoneWithDetails | null>();
+  // Match the rich GrantMilestoneWithDetails by UID instead of title — UID
+  // is unique, immutable, and side-steps duplicate-title collisions. Falls
+  // back to null when no UID exists (draft / pre-approval row).
+  const grantMilestoneByKey = useMemo(() => {
+    const map = new Map<string, GrantMilestoneWithDetails | null>();
     milestones.forEach((milestone, index) => {
-      const grantMilestone = grantMilestones.find((gm) => gm.title === milestone.title);
-      map.set(index, grantMilestone || null);
+      const key = getMilestoneKey(milestone, index);
+      const match = milestone.milestoneUID
+        ? grantMilestones.find((gm) => gm.uid === milestone.milestoneUID)
+        : undefined;
+      map.set(key, match ?? null);
     });
     return map;
   }, [milestones, grantMilestones]);
 
-  // Authoritative status lookup keyed by milestoneUID. Used as a fallback
-  // when the richer GrantMilestoneWithDetails isn't wired (e.g. the
-  // applications detail page passes milestoneStatuses from the indexer
-  // response instead of fetching the full grant).
+  // Authoritative status lookup keyed by milestoneUID — populated by the
+  // application detail page via the new `milestoneStatuses` array. The
+  // richer `grantMilestones` prop wins when both are wired (project page).
   const statusByUID = useMemo(() => {
     const map = new Map<string, MilestoneStatusEntry>();
     for (const entry of milestoneStatuses ?? []) {
@@ -106,198 +122,155 @@ export function MilestoneCompletionEditor({
     return map;
   }, [milestoneStatuses]);
 
-  const [editingMilestone, setEditingMilestone] = useState<string | null>(null);
+  // Per-row state is keyed by the stable milestone key (see
+  // `getMilestoneKey`) so duplicate titles never share state and a rename
+  // can't orphan in-flight work.
+  const [editingKey, setEditingKey] = useState<string | null>(null);
   const [editedText, setEditedText] = useState<Record<string, string>>({});
   const [invoiceFiles, setInvoiceFiles] = useState<Record<string, InvoiceFileState | null>>({});
-  const [uploadingMilestones, setUploadingMilestones] = useState<Set<string>>(new Set());
+  const [uploadingKeys, setUploadingKeys] = useState<Set<string>>(new Set());
   const pendingFileNameRef = useRef<Record<string, string>>({});
 
-  const handleStartEdit = (milestoneTitle: string) => {
-    const milestone = grantMilestones.find((m) => m.title === milestoneTitle);
-    const completionText = milestone?.completionDetails?.description || "";
-    setEditingMilestone(milestoneTitle);
-    setEditedText({
-      ...editedText,
-      [milestoneTitle]: completionText,
-    });
+  const handleStartEdit = (key: string, milestoneUID?: string) => {
+    const grantMilestone = milestoneUID
+      ? grantMilestones.find((m) => m.uid === milestoneUID)
+      : undefined;
+    const completionText = grantMilestone?.completionDetails?.description || "";
+    setEditingKey(key);
+    setEditedText((prev) => ({ ...prev, [key]: completionText }));
   };
 
-  const handleCancelEdit = (milestoneTitle: string) => {
-    setEditingMilestone(null);
-    const newEditedText = { ...editedText };
-    delete newEditedText[milestoneTitle];
-    setEditedText(newEditedText);
+  const handleCancelEdit = (key: string) => {
+    setEditingKey(null);
+    setEditedText((prev) => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
     setInvoiceFiles((prev) => {
       const next = { ...prev };
-      delete next[milestoneTitle];
+      delete next[key];
       return next;
     });
   };
 
-  const handleInvoiceFileSelected = useCallback((file: File, milestoneTitle: string) => {
-    pendingFileNameRef.current[milestoneTitle] = file.name;
-    setUploadingMilestones((prev) => new Set(prev).add(milestoneTitle));
+  const handleInvoiceFileSelected = useCallback((file: File, key: string) => {
+    pendingFileNameRef.current[key] = file.name;
+    setUploadingKeys((prev) => new Set(prev).add(key));
   }, []);
 
   const handleInvoiceFileUploaded = useCallback(
-    (finalUrl: string, tempKey: string, milestoneTitle: string) => {
+    (finalUrl: string, tempKey: string, key: string) => {
       setInvoiceFiles((prev) => ({
         ...prev,
-        [milestoneTitle]: {
+        [key]: {
           fileUrl: finalUrl,
           fileKey: tempKey,
-          fileName: pendingFileNameRef.current[milestoneTitle] || "invoice",
+          fileName: pendingFileNameRef.current[key] || "invoice",
         },
       }));
-      setUploadingMilestones((prev) => {
+      setUploadingKeys((prev) => {
         const next = new Set(prev);
-        next.delete(milestoneTitle);
+        next.delete(key);
         return next;
       });
     },
     []
   );
 
-  const handleInvoiceUploadError = useCallback((milestoneTitle: string) => {
-    setUploadingMilestones((prev) => {
+  const handleInvoiceUploadError = useCallback((key: string) => {
+    setUploadingKeys((prev) => {
       const next = new Set(prev);
-      next.delete(milestoneTitle);
+      next.delete(key);
       return next;
     });
   }, []);
 
-  const handleRemoveInvoice = useCallback((milestoneTitle: string) => {
+  const handleRemoveInvoice = useCallback((key: string) => {
     setInvoiceFiles((prev) => {
       const next = { ...prev };
-      delete next[milestoneTitle];
+      delete next[key];
       return next;
     });
   }, []);
 
-  const handleSubmit = async (milestoneTitle: string) => {
-    const proofOfWork = editedText[milestoneTitle] || "";
-    const invoiceFile = invoiceFiles[milestoneTitle];
-
-    // Resolve the rich milestone (with canAttest flags + grant) and the
-    // grantUID. Two paths:
-    //   1. Caller wired `grantMilestones` + `grantUID` (e.g. project page).
-    //   2. Caller wired `milestoneStatuses` (application detail page) — we
-    //      fetch the rich milestone on demand from the indexer using the
-    //      per-entry chainID, and pull grantUID off the entry directly.
-    const milestoneData = milestones.find((m) => m.title === milestoneTitle);
-    let resolvedMilestone = grantMilestones.find((m) => m.title === milestoneTitle);
-    let resolvedGrantUID = grantUID;
-    let resolvedChainID = chainID;
-
-    if (!resolvedMilestone && milestoneData?.milestoneUID) {
-      const statusEntry = statusByUID.get(milestoneData.milestoneUID);
-      if (statusEntry) {
-        const [data, error] = await fetchData<GrantMilestoneWithDetails>(
-          `/v2/milestones/${milestoneData.milestoneUID}?chainId=${statusEntry.chainID}`,
-          "GET"
-        );
-        if (error || !data) {
-          toast.error("Could not load milestone — please refresh and try again");
-          return;
-        }
-        resolvedMilestone = data;
-        resolvedGrantUID ||= statusEntry.grantUID;
-        resolvedChainID = statusEntry.chainID;
-      }
-    }
-
-    if (!resolvedMilestone || !resolvedGrantUID) {
-      toast.error("Milestone or grant information missing");
-      return;
-    }
+  const handleSubmit = async (milestoneData: MilestoneData, key: string) => {
+    const grantMilestone = milestoneData.milestoneUID
+      ? grantMilestones.find((m) => m.uid === milestoneData.milestoneUID)
+      : undefined;
+    const statusEntry = milestoneData.milestoneUID
+      ? statusByUID.get(milestoneData.milestoneUID)
+      : undefined;
+    const invoiceFile = invoiceFiles[key] ?? null;
 
     try {
-      // Submit on-chain attestation
-      setIsIndexerPending((prev) => new Set(prev).add(milestoneTitle));
-
-      await completeMutation.mutateAsync({
-        milestone: resolvedMilestone,
-        chainID: resolvedChainID,
-        proofOfWork,
-        grantUID: resolvedGrantUID,
+      await submitCompletion({
+        // Title is still the backend's invoice label and the AI-eval key;
+        // the on-chain attestation itself uses the UID under the hood.
+        milestoneTitle: milestoneData.title,
+        proofOfWork: editedText[key] || "",
+        referenceNumber,
+        invoiceFile: invoiceFile
+          ? { fileKey: invoiceFile.fileKey, fileUrl: invoiceFile.fileUrl }
+          : null,
+        milestoneData,
+        statusEntry,
+        grantMilestone,
+        grantUID,
+        chainID,
       });
 
-      // Show success toast with tx hash
-      toast.success("Milestone completion submitted. Processing on-chain...");
-
-      // Submit invoice if present
-      if (invoiceFile) {
-        try {
-          await submitGranteeInvoice(resolvedGrantUID, {
-            milestoneLabel: milestoneTitle,
-            invoiceFileKey: invoiceFile.fileKey,
-            invoiceFileUrl: invoiceFile.fileUrl,
-          });
-          toast.success("Invoice submitted successfully");
-          await queryClient.invalidateQueries({
-            queryKey: QUERY_KEYS.APPLICATIONS.INVOICE_CONFIG(referenceNumber),
-          });
-        } catch {
-          toast.error("Failed to submit invoice");
-        }
-      }
-
-      setEditingMilestone(null);
-      setEditedText({});
+      // Reset edit state on success only — failures keep the form open
+      // so the grantee can retry without re-entering proofOfWork.
+      setEditingKey(null);
+      setEditedText((prev) => {
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
       setInvoiceFiles((prev) => {
         const next = { ...prev };
-        delete next[milestoneTitle];
+        delete next[key];
         return next;
       });
-    } catch (_error) {
-      // Error already shown by completeMutation toast
-      setIsIndexerPending((prev) => {
-        const next = new Set(prev);
-        next.delete(milestoneTitle);
-        return next;
-      });
+    } catch {
+      // Error toasts are handled by the hook / underlying attestation
+      // mutation. Swallow here so the inline form stays open for retry.
     }
   };
 
-  const isSubmitEnabled = (milestoneTitle: string) => {
-    if (uploadingMilestones.has(milestoneTitle)) return false;
-    const currentText = editedText[milestoneTitle] || "";
+  const isSubmitEnabled = (key: string) => {
+    if (uploadingKeys.has(key)) return false;
+    const currentText = editedText[key] || "";
     const hasTextChange = currentText.trim().length > 0;
-    const hasInvoice = !!invoiceFiles[milestoneTitle];
+    const hasInvoice = !!invoiceFiles[key];
     return hasTextChange || hasInvoice;
   };
 
   return (
     <div className="space-y-3">
       {milestones.map((milestone, index) => {
-        const grantMilestone = completionByIndex.get(index);
-        const isEditing = editingMilestone === milestone.title;
-        const currentText = editedText[milestone.title] || "";
-        // Look up the authoritative on-chain status by milestoneUID.
-        // Falls back to the legacy verificationDetails check only when
-        // the status map carries no entry for this milestone (e.g. older
-        // applications without a linked on-chain milestone).
+        const key = getMilestoneKey(milestone, index);
+        const grantMilestone = grantMilestoneByKey.get(key);
+        const isEditing = editingKey === key;
+        const currentText = editedText[key] || "";
         const statusEntry = milestone.milestoneUID
           ? statusByUID.get(milestone.milestoneUID)
           : undefined;
-        const isCompletionVerified = statusEntry
-          ? statusEntry.currentStatus === "verified" || !!statusEntry.verified
-          : !!grantMilestone?.verificationDetails;
-        const isCompletionSubmitted = statusEntry
-          ? statusEntry.currentStatus === "completed" || !!statusEntry.completed
-          : !!grantMilestone?.completionDetails && !isCompletionVerified;
+        const isCompletionVerified = isMilestoneVerified(statusEntry, grantMilestone);
+        const isCompletionSubmitted =
+          isMilestoneCompleted(statusEntry, grantMilestone) && !isCompletionVerified;
         const canEdit = isEditable && !isCompletionVerified;
-        const _invoiceFile = invoiceFiles[milestone.title];
-        const isUploading = uploadingMilestones.has(milestone.title);
-        const isWaitingForIndexer = isIndexerPending.has(milestone.title);
+        const isUploading = uploadingKeys.has(key);
+        const isWaitingForIndexer = isSubmittingTitle(milestone.title);
 
         const additionalFields = Object.keys(milestone).filter(
-          (key) => !MILESTONE_CORE_FIELDS.includes(key) && milestone[key as keyof MilestoneData]
+          (k) => !MILESTONE_CORE_FIELDS.includes(k) && milestone[k as keyof MilestoneData]
         );
 
         return (
           <div
-            key={`${fieldLabel}-${milestone.title}-${index}`}
+            key={`${fieldLabel}-${key}`}
             className="rounded-lg border bg-zinc-50 dark:bg-zinc-800/50 p-4"
           >
             <div className="space-y-2">
@@ -381,12 +354,7 @@ export function MilestoneCompletionEditor({
                   <Textarea
                     placeholder="Enter your completion update for this milestone..."
                     value={currentText}
-                    onChange={(e) =>
-                      setEditedText({
-                        ...editedText,
-                        [milestone.title]: e.target.value,
-                      })
-                    }
+                    onChange={(e) => setEditedText((prev) => ({ ...prev, [key]: e.target.value }))}
                     rows={3}
                     className="resize-y"
                   />
@@ -401,7 +369,7 @@ export function MilestoneCompletionEditor({
                   {showInvoice &&
                     !isInvoiceConfigLoading &&
                     (() => {
-                      const invoiceFile = invoiceFiles[milestone.title];
+                      const invoiceFile = invoiceFiles[key];
                       const existingInvoice = getExistingInvoice(milestone.title);
                       return (
                         <div className="flex w-full flex-col items-start gap-2 mt-2">
@@ -416,7 +384,7 @@ export function MilestoneCompletionEditor({
                                 type="button"
                                 aria-label="Remove invoice"
                                 className="p-0.5 rounded text-red-400 hover:text-red-600 transition-colors"
-                                onClick={() => handleRemoveInvoice(milestone.title)}
+                                onClick={() => handleRemoveInvoice(key)}
                               >
                                 <XMarkIcon className="h-4 w-4" />
                               </button>
@@ -432,9 +400,7 @@ export function MilestoneCompletionEditor({
                                 </div>
                               )}
                               <FileUpload
-                                onFileSelect={(file) =>
-                                  handleInvoiceFileSelected(file, milestone.title)
-                                }
+                                onFileSelect={(file) => handleInvoiceFileSelected(file, key)}
                                 acceptedFormats=".pdf,.docx"
                                 description={
                                   existingInvoice?.invoiceFileKey
@@ -450,9 +416,9 @@ export function MilestoneCompletionEditor({
                                   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                                 ]}
                                 onS3UploadComplete={(finalUrl, tempKey) =>
-                                  handleInvoiceFileUploaded(finalUrl, tempKey, milestone.title)
+                                  handleInvoiceFileUploaded(finalUrl, tempKey, key)
                                 }
-                                onS3UploadError={() => handleInvoiceUploadError(milestone.title)}
+                                onS3UploadError={() => handleInvoiceUploadError(key)}
                               />
                             </div>
                           )}
@@ -463,16 +429,16 @@ export function MilestoneCompletionEditor({
                   <div className="flex gap-2">
                     <Button
                       size="sm"
-                      onClick={() => handleSubmit(milestone.title)}
-                      isLoading={completeMutation.isPending || isWaitingForIndexer}
+                      onClick={() => handleSubmit(milestone, key)}
+                      isLoading={isWaitingForIndexer}
                       disabled={
-                        !isSubmitEnabled(milestone.title) ||
-                        completeMutation.isPending ||
+                        !isSubmitEnabled(key) ||
+                        isSubmittingCompletion ||
                         isUploading ||
                         isWaitingForIndexer
                       }
                     >
-                      {completeMutation.isPending || isWaitingForIndexer
+                      {isWaitingForIndexer
                         ? "Submitting..."
                         : grantMilestone?.completionDetails
                           ? "Update"
@@ -481,8 +447,8 @@ export function MilestoneCompletionEditor({
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleCancelEdit(milestone.title)}
-                      disabled={completeMutation.isPending || isWaitingForIndexer}
+                      onClick={() => handleCancelEdit(key)}
+                      disabled={isWaitingForIndexer}
                     >
                       Cancel
                     </Button>
@@ -504,7 +470,10 @@ export function MilestoneCompletionEditor({
                           ) : null}
                         </div>
                         {canEdit && (
-                          <Button size="icon-sm" onClick={() => handleStartEdit(milestone.title)}>
+                          <Button
+                            size="icon-sm"
+                            onClick={() => handleStartEdit(key, milestone.milestoneUID)}
+                          >
                             <Pencil className="w-4 h-4" />
                           </Button>
                         )}
@@ -545,7 +514,10 @@ export function MilestoneCompletionEditor({
 
                   {!grantMilestone?.completionDetails && canEdit && (
                     <div className="mt-3 pt-3 border-t border-zinc-200 dark:border-zinc-700">
-                      <Button size="sm" onClick={() => handleStartEdit(milestone.title)}>
+                      <Button
+                        size="sm"
+                        onClick={() => handleStartEdit(key, milestone.milestoneUID)}
+                      >
                         Add Completion Update
                       </Button>
                     </div>
