@@ -12,10 +12,11 @@ import { useWallet } from "@/hooks/useWallet";
 import { submitGranteeInvoice } from "@/src/features/payout-disbursement/services/payout-disbursement.service";
 import { applicationKeys } from "@/src/lib/query-keys";
 import type { GrantMilestoneWithDetails } from "@/types/v2/roadmap";
-import type { MilestoneStatusEntry } from "@/types/whitelabel-entities";
+import type { Application, MilestoneStatusEntry } from "@/types/whitelabel-entities";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
+import { retryUntilConditionMet } from "@/utilities/retries";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { isUserCancellationError } from "@/utilities/wallet-errors";
 
@@ -164,17 +165,64 @@ export function useSubmitMilestoneCompletion() {
         const result = await attestation.attest(walletSigner);
         const txHash: string | undefined = result?.tx?.[0]?.hash ?? undefined;
 
-        // Best-effort indexer kick — the indexer also picks up attestations
-        // from the chain itself, so a failure here is not fatal.
+        // Best-effort indexer kick. The endpoint races the indexer's RPC
+        // propagation (the wallet's RPC is ahead of the indexer's), so a
+        // 500 here on the first call is normal. The indexer's chain-scan
+        // job will pick the tx up regardless — and the polling below
+        // waits until it's actually visible end-to-end before we declare
+        // success.
         if (txHash) {
-          try {
-            await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, target.chainID), "POST", {});
-          } catch {
-            // swallow — chain-side ingestion will catch up
-          }
+          fetchData(
+            INDEXER.ATTESTATION_LISTENER(txHash, target.chainID),
+            "POST",
+            {}
+          ).catch(() => {
+            // intentional — propagation lag is expected, not an error
+          });
         }
 
-        toast.success("Milestone completion submitted. Processing on-chain...");
+        // Poll the application response until milestoneStatuses reflects
+        // the new completion. Mirrors the pattern in
+        // useMilestoneCompletionVerification.pollForMilestoneStatus —
+        // works whether the indexer ingested via the listener kick above
+        // or via its own chain scan. ~60s budget (30 × 2s); a slow
+        // indexer falls through to the "still processing" branch instead
+        // of failing the mutation.
+        const milestoneUID = target.milestone.uid;
+        let indexerCaughtUp = false;
+        try {
+          await retryUntilConditionMet(
+            async () => {
+              const [data] = await fetchData<Application>(
+                INDEXER.V2.FUNDING_APPLICATIONS.GET(params.referenceNumber)
+              );
+              if (!data) return false;
+              const entry = data.milestoneStatuses?.find(
+                (m) => m.milestoneUID === milestoneUID
+              );
+              return (
+                !!entry &&
+                (entry.currentStatus === "completed" ||
+                  entry.currentStatus === "verified" ||
+                  !!entry.completed)
+              );
+            },
+            undefined,
+            30,
+            2000
+          );
+          indexerCaughtUp = true;
+        } catch {
+          // Polling timed out — the on-chain attestation is still valid,
+          // the indexer is just slow. Surface a softer message; the
+          // badge will flip on the next page load.
+        }
+
+        toast.success(
+          indexerCaughtUp
+            ? "Milestone marked as completed"
+            : "Submitted on-chain. Indexer is still processing — refresh in a moment to see the update."
+        );
 
         // Refresh: project updates feed (where MilestonesTab reads grant
         // milestones from) + the application response itself (carries

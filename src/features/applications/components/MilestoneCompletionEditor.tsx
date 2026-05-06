@@ -273,13 +273,6 @@ export function MilestoneCompletionEditor({
             className="rounded-lg border bg-zinc-50 dark:bg-zinc-800/50 p-4"
           >
             <div className="space-y-2">
-              {isWaitingForIndexer && (
-                <div className="px-3 py-2 rounded-md bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
-                  <p className="text-xs text-blue-700 dark:text-blue-300">
-                    Indexer is processing your submission...
-                  </p>
-                </div>
-              )}
               <div className="flex justify-between items-start">
                 <h4 className="font-medium">{milestone.title}</h4>
                 <div className="flex items-center gap-2">
