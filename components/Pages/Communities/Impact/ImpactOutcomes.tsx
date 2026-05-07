@@ -2,10 +2,13 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
+import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useCommunityAccent } from "@/hooks/useCommunityAccent";
 import { useCommunityDetails } from "@/hooks/v2/useCommunityDetails";
 import formatCurrency from "@/utilities/formatCurrency";
 import { getCommunityStats } from "@/utilities/queries/v2/getCommunityData";
+
+const SKELETON_KEYS = ["a", "b", "c", "d"];
 
 export function ImpactOutcomes() {
   const params = useParams<{ communityId: string }>();
@@ -14,12 +17,34 @@ export function ImpactOutcomes() {
   const { community } = useCommunityDetails(communityId);
   const slug = community?.details?.slug ?? communityId;
 
-  const { data: stats } = useQuery({
+  const { data: stats, isLoading } = useQuery({
     queryKey: ["community-stats", communityId],
     queryFn: () => getCommunityStats(slug || communityId),
     enabled: !!communityId,
     staleTime: 5 * 60 * 1000,
   });
+
+  if (isLoading) {
+    return (
+      <section
+        aria-labelledby="impact-outcomes-title"
+        className="rounded-[20px] bg-secondary p-6 md:p-8"
+      >
+        <Skeleton className="mb-5 h-7 w-48" />
+        <div className="grid gap-3 sm:grid-cols-2">
+          {SKELETON_KEYS.map((key) => (
+            <div
+              key={key}
+              className="flex items-baseline gap-3.5 rounded-xl border border-border bg-background p-4"
+            >
+              <Skeleton className="h-7 w-16" />
+              <Skeleton className="h-4 w-40" />
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  }
 
   if (!stats) return null;
 
