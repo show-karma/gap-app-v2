@@ -617,7 +617,13 @@ jobs:
           # feature/component TSX files (they may affect multiple pages,
           # so we emit the changed-file list and let the agent figure out
           # the precise URLs during exploration).
+          # Note: the leading app/ entries cover the root page.tsx / layout.tsx
+          # (e.g. app/page.tsx — the landing page). The recursive 'app/**/page.tsx'
+          # pathspec does NOT match those because '**' requires at least one
+          # intermediate path segment.
           CHANGED=$(git diff --name-only origin/main...HEAD -- \
+            'app/page.tsx' \
+            'app/layout.tsx' \
             'app/**/page.tsx' \
             'app/**/layout.tsx' \
             'src/features/**/*.tsx' \
