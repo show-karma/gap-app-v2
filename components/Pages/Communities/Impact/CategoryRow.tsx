@@ -140,117 +140,138 @@ const AggregatedSegmentCard = ({ segment }: { segment: ProgramImpactSegment }) =
     );
   }
 
+  const isOutcome = segment.impactSegmentType === "outcome";
+
   return (
-    <div ref={ref} className="flex flex-col w-full bg-[#F9FAFB] dark:bg-zinc-800 rounded mb-4">
-      <div className="px-6 pb-6 flex flex-col gap-y-4">
-        <div className="pt-3 flex flex-col gap-3">
-          <div
+    <div
+      ref={ref}
+      className="mb-4 flex w-full flex-col overflow-hidden rounded-2xl border border-border bg-background"
+    >
+      {/* Segment header — soft accent bar */}
+      <div
+        className={cn(
+          "flex flex-row items-center justify-between gap-3 border-b border-border px-5 py-4",
+          isOutcome
+            ? "bg-emerald-50/60 dark:bg-emerald-950/20"
+            : "bg-violet-50/60 dark:bg-violet-950/20"
+        )}
+      >
+        <div className="flex flex-row items-center gap-3">
+          <span
             className={cn(
-              "p-3 flex flex-row gap-3 justify-between items-start rounded",
-              segment.impactSegmentType === "outcome"
-                ? "bg-green-100 dark:bg-green-900"
-                : "bg-indigo-100 dark:bg-indigo-900"
+              "flex h-9 w-9 items-center justify-center rounded-lg",
+              isOutcome
+                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
+                : "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300"
             )}
+            aria-hidden
           >
-            <div className="flex flex-row gap-3 items-center">
-              <Image
-                src={
-                  segment.impactSegmentType === "outcome"
-                    ? "/icons/outcome.svg"
-                    : "/icons/activity.svg"
-                }
-                alt={segment.impactSegmentType}
-                width={32}
-                height={32}
-              />
-              <div className="flex flex-col gap-0">
-                <p className="text-black dark:text-white text-lg font-semibold">
-                  {segment.impactSegmentName}
-                </p>
-                <p className="text-black dark:text-white text-base font-normal">
-                  {segment.impactSegmentDescription}
-                </p>
-              </div>
-            </div>
-            <p className="text-center text-slate-600 dark:text-gray-200 text-sm font-semibold px-3 py-1 bg-white dark:bg-zinc-700 rounded justify-start items-center">
-              {segment.impactIndicatorIds.length}{" "}
-              {pluralize("metric", segment.impactIndicatorIds.length)}
+            <Image
+              src={isOutcome ? "/icons/outcome.svg" : "/icons/activity.svg"}
+              alt=""
+              width={18}
+              height={18}
+            />
+          </span>
+          <div className="flex flex-col">
+            <p className="text-base font-semibold tracking-[-0.01em] text-foreground">
+              {segment.impactSegmentName}
+            </p>
+            {segment.impactSegmentDescription ? (
+              <p className="text-[13px] text-muted-foreground">
+                {segment.impactSegmentDescription}
+              </p>
+            ) : null}
+          </div>
+        </div>
+        <span className="shrink-0 rounded-full border border-border bg-background px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
+          {segment.impactIndicatorIds.length}{" "}
+          {pluralize("metric", segment.impactIndicatorIds.length)}
+        </span>
+      </div>
+
+      {/* Chart body */}
+      <div className="px-5 py-5">
+        {isLoading ? (
+          <div className="flex h-40 items-center justify-center">
+            <Spinner />
+          </div>
+        ) : error ? (
+          <div className="rounded-xl border border-dashed border-red-300 px-6 py-10 text-center dark:border-red-800/60">
+            <p className="text-base font-medium text-red-600 dark:text-red-400">
+              Error loading metrics
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">Unable to fetch indicator data</p>
+          </div>
+        ) : segment.impactIndicatorIds.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-border px-6 py-10 text-center">
+            <p className="text-base font-medium text-foreground">No metrics available yet</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Impact indicators will appear here once projects start reporting data.
             </p>
           </div>
-
-          {/* Aggregated Chart Display */}
-          {isLoading ? (
-            <div className="flex justify-center items-center h-32 bg-white dark:bg-zinc-700 rounded-lg">
-              <Spinner />
-            </div>
-          ) : error ? (
-            <div className="p-8 text-center text-red-500 dark:text-red-400 bg-white dark:bg-zinc-700 rounded-lg border-2 border-dashed border-red-300 dark:border-red-600">
-              <p className="text-lg font-medium">Error loading metrics</p>
-              <p className="text-sm mt-1">Unable to fetch indicator data</p>
-            </div>
-          ) : segment.impactIndicatorIds.length === 0 ? (
-            <div className="p-8 text-center text-gray-500 dark:text-gray-400 bg-white dark:bg-zinc-700 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600">
-              <p className="text-lg font-medium">No metrics available yet</p>
-              <p className="text-sm mt-1">
-                Impact indicators will appear here once projects start reporting data
-              </p>
-            </div>
-          ) : aggregatedIndicators && aggregatedIndicators.length > 0 && chartData.length > 0 ? (
-            <Card className="bg-white dark:bg-zinc-700">
-              <div className="mb-4">
-                <div className="flex justify-between items-start mb-2">
-                  <h4 className="text-lg font-semibold text-black dark:text-white">
-                    Aggregated Impact Metrics
-                  </h4>
-                  <TimeframeSelector
-                    selectedTimeframe={selectedTimeframe}
-                    onTimeframeChange={setSelectedTimeframe}
-                  />
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {aggregatedIndicators.map((indicator, _index) => (
-                    <span
-                      key={indicator.id}
-                      className="px-2 py-1 text-xs rounded-full bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-gray-200"
-                    >
-                      {indicator.name} ({indicator.totalProjects}{" "}
-                      {pluralize("project", indicator.totalProjects)})
-                    </span>
-                  ))}
-                </div>
+        ) : aggregatedIndicators && aggregatedIndicators.length > 0 && chartData.length > 0 ? (
+          <div className="flex flex-col gap-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex flex-col gap-0.5">
+                <h4 className="text-[15px] font-semibold tracking-[-0.01em] text-foreground">
+                  Aggregated impact metrics
+                </h4>
+                <p className="text-xs text-muted-foreground">
+                  Combined indicator values across all participating projects.
+                </p>
               </div>
+              <TimeframeSelector
+                selectedTimeframe={selectedTimeframe}
+                onTimeframeChange={setSelectedTimeframe}
+              />
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {aggregatedIndicators.map((indicator) => (
+                <span
+                  key={indicator.id}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary/50 px-2.5 py-1 text-[12px] font-medium text-foreground"
+                >
+                  {indicator.name}
+                  <span className="text-[11px] tabular-nums text-muted-foreground">
+                    {indicator.totalProjects} {pluralize("project", indicator.totalProjects)}
+                  </span>
+                </span>
+              ))}
+            </div>
+            <div className="rounded-xl border border-border bg-background p-3">
               <AreaChart
                 data={chartData}
                 index="date"
                 categories={indicatorNames}
                 colors={colors.slice(0, indicatorNames.length)}
                 valueFormatter={valueFormatter}
-                yAxisWidth={80}
+                yAxisWidth={64}
                 enableLegendSlider
                 noDataText="No data available for the selected period"
                 className="h-72"
               />
-            </Card>
-          ) : (
-            <div className="bg-white dark:bg-zinc-700 rounded-lg border border-gray-200 dark:border-gray-600">
-              <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-600">
-                <h4 className="text-lg font-semibold text-black dark:text-white">
-                  Aggregated Impact Metrics
-                </h4>
-                <TimeframeSelector
-                  selectedTimeframe={selectedTimeframe}
-                  onTimeframeChange={setSelectedTimeframe}
-                />
-              </div>
-              <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-                <p className="text-lg font-medium">No data available</p>
-                <p className="text-sm mt-1">
-                  No data available for the selected period. Try selecting a different timeframe.
-                </p>
-              </div>
             </div>
-          )}
-        </div>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-4">
+            <div className="flex items-start justify-between gap-3">
+              <h4 className="text-[15px] font-semibold tracking-[-0.01em] text-foreground">
+                Aggregated impact metrics
+              </h4>
+              <TimeframeSelector
+                selectedTimeframe={selectedTimeframe}
+                onTimeframeChange={setSelectedTimeframe}
+              />
+            </div>
+            <div className="rounded-xl border border-dashed border-border px-6 py-10 text-center">
+              <p className="text-base font-medium text-foreground">No data available</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                No data available for the selected period. Try a different timeframe.
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -336,15 +357,16 @@ export const CategoryRow = ({ category }: { category: ProgramImpactDataResponse 
   const uniqueIndicatorCount = new Set(allIndicatorIds).size;
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-row gap-3 items-center">
-        <h2 className="text-2xl leading-6 font-bold text-black dark:text-white">
+    <div className="flex flex-col gap-5">
+      <div className="flex flex-row items-center gap-3 border-b border-border pb-3">
+        <span aria-hidden className="inline-block h-5 w-1 rounded-full bg-foreground/80" />
+        <h3 className="text-lg md:text-xl font-semibold tracking-[-0.01em] text-foreground">
           {category.categoryName}
-        </h2>
-        {!projectSelected ? (
-          <p className="text-lg leading-6 text-gray-500 dark:text-zinc-200 font-medium">
+        </h3>
+        {!projectSelected && uniqueIndicatorCount > 0 ? (
+          <span className="ml-1 inline-flex items-center rounded-full border border-border bg-secondary/60 px-2.5 py-0.5 text-[11px] font-semibold tabular-nums text-muted-foreground">
             {uniqueIndicatorCount} {pluralize("indicator", uniqueIndicatorCount)}
-          </p>
+          </span>
         ) : null}
       </div>
       <CategoryBlocks category={category} />
