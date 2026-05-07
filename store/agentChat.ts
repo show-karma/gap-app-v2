@@ -121,17 +121,10 @@ export const useAgentChatStore = create<AgentChatStore>((set) => ({
       // If a trace_started SSE event arrived before this assistant message
       // existed, consume the buffered traceId and stamp it on the new
       // message — that's the path the rating UI gates on.
-      if (
-        message.role === "assistant" &&
-        !message.traceId &&
-        state.pendingTraceId
-      ) {
+      if (message.role === "assistant" && !message.traceId && state.pendingTraceId) {
         return {
-          messages: [
-            ...state.messages,
-            { ...message, traceId: state.pendingTraceId }
-          ],
-          pendingTraceId: null
+          messages: [...state.messages, { ...message, traceId: state.pendingTraceId }],
+          pendingTraceId: null,
         };
       }
       return { messages: [...state.messages, message] };
@@ -231,6 +224,6 @@ export const useAgentChatStore = create<AgentChatStore>((set) => ({
       error: null,
       isStreaming: false,
       pendingTraceId: null,
-      ratingCommentBoxOpenForMessageId: null
+      ratingCommentBoxOpenForMessageId: null,
     }),
 }));
