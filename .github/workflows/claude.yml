@@ -12,20 +12,6 @@ on:
   pull_request:
     types: [opened, synchronize]
 
-concurrency:
-  # Serialize Claude runs per PR/issue. With cancel-in-progress: true,
-  # any second trigger (a synchronize landing during an @claude comment,
-  # a re-review fired while a review is in flight) silently kills the
-  # earlier run with "Canceling since a higher priority waiting request
-  # exists" — the review is then dropped because GHA does not retrigger
-  # the cancelled workflow. Setting cancel-in-progress: false makes
-  # newer triggers queue up and run after the in-flight one finishes,
-  # so every requested review actually lands.
-  # Falls back to run_id for non-PR triggers so each of those still
-  # runs independently.
-  group: claude-${{ github.event.pull_request.number || github.event.issue.number || github.run_id }}
-  cancel-in-progress: false
-
 jobs:
   claude:
     if: |
@@ -34,6 +20,16 @@ jobs:
       (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
       (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude'))) ||
       (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
+    # Job-level (not workflow-level) concurrency so issue_comment runs
+    # whose `if:` evaluates to false (every comment without `@claude`)
+    # never enter this group. With workflow-level concurrency, those
+    # skipped runs still acquired the slot briefly and were observed
+    # cancelling the in-flight pull_request review even with
+    # cancel-in-progress: false. Job-level scoping fixes that because
+    # a skipped job never participates in concurrency at all.
+    concurrency:
+      group: claude-${{ github.event.pull_request.number || github.event.issue.number || github.run_id }}
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     permissions:
       contents: write
