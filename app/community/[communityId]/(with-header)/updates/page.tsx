@@ -200,18 +200,20 @@ export default function CommunityUpdatesPage() {
 
   return (
     <div className="flex flex-col items-center justify-start">
-      <div className="flex flex-col gap-6 max-w-full w-full">
+      <div className="flex flex-col gap-6 max-w-full w-full [&>*]:animate-fade-in-up [&>*:nth-child(1)]:[animation-delay:0ms] [&>*:nth-child(2)]:[animation-delay:80ms] [&>*:nth-child(3)]:[animation-delay:160ms]">
         {/* Filter row */}
-        <div className="px-3 py-4 bg-gray-100 dark:bg-zinc-900 rounded-lg flex flex-row  flex-wrap items-center w-full gap-4 max-lg:flex-col max-lg:gap-4 max-lg:justify-start max-lg:items-start">
-          {/* Left side - Filters */}
-          <div className="flex flex-row items-center gap-4 max-lg:w-full max-lg:flex-col max-lg:items-start">
-            {/* Status filter dropdown */}
+        <div className="flex flex-row flex-wrap items-end gap-5 w-full max-lg:flex-col max-lg:items-stretch">
+          {/* Status */}
+          <div className="flex flex-col gap-1.5 w-[180px] max-lg:w-full">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+              Status
+            </span>
             <Select
               value={selectedFilter}
               onValueChange={(value) => handleFilterChange(value as FilterOption)}
             >
               <SelectTrigger
-                className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-blue dark:bg-zinc-800 dark:text-zinc-200 dark:border-zinc-600 w-[130px]"
+                className="min-w-40 w-full justify-between flex flex-row cursor-default rounded-md border-0 bg-white dark:bg-zinc-800 dark:text-zinc-100 py-3 px-4 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6 h-auto"
                 aria-label="Filter by status"
               >
                 <SelectValue />
@@ -224,67 +226,61 @@ export default function CommunityUpdatesPage() {
                 ))}
               </SelectContent>
             </Select>
+          </div>
 
-            {/* Program filter */}
-            <div className="flex flex-row gap-2 items-center max-lg:w-full">
-              <Image
-                src="/icons/program.svg"
-                alt="program"
-                width={24}
-                height={24}
-                className="w-6 h-6 min-w-6 max-w-6 min-h-6 max-h-6"
-              />
-              <p className="text-gray-800 dark:text-zinc-100 text-sm font-semibold leading-normal whitespace-nowrap">
-                Program
-              </p>
-              <SearchWithValueDropdown
-                id="filter-by-programs"
-                list={programs}
-                onSelectFunction={(value: string) => changeSelectedProgramIdQuery(value)}
-                type="Programs"
-                selected={selectedProgram ? [selectedProgram.title] : []}
-                prefixUnselected="All"
-                buttonClassname="w-[200px] max-lg:w-full"
-                isMultiple={false}
-                cleanFunction={() => changeSelectedProgramIdQuery(null)}
-                isLoading={programsLoading}
-              />
-            </div>
+          {/* Program filter */}
+          <div className="flex flex-col gap-1.5 w-[260px] max-lg:w-full">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+              Program
+            </span>
+            <SearchWithValueDropdown
+              id="filter-by-programs"
+              list={programs}
+              onSelectFunction={(value: string) => changeSelectedProgramIdQuery(value)}
+              type="Programs"
+              selected={selectedProgram ? [selectedProgram.title] : []}
+              prefixUnselected="All"
+              buttonClassname="w-full"
+              isMultiple={false}
+              cleanFunction={() => changeSelectedProgramIdQuery(null)}
+              isLoading={programsLoading}
+            />
+          </div>
 
-            {/* Project filter */}
-            <div className="flex flex-row gap-2 items-center max-lg:w-full">
-              <Image
-                src="/icons/project.png"
-                alt="Project"
-                width={24}
-                height={24}
-                className="w-6 h-6 min-w-6 max-w-6 min-h-6 max-h-6"
-              />
-              <p className="text-gray-800 dark:text-zinc-100 text-sm font-semibold leading-normal whitespace-nowrap">
-                Project
-              </p>
-              <SearchWithValueDropdown
-                id="filter-by-projects"
-                list={projectOptions}
-                onSelectFunction={(value: string) => changeSelectedProjectIdQuery(value)}
-                type="Projects"
-                selected={selectedProject ? [selectedProject.title] : []}
-                prefixUnselected="All"
-                buttonClassname="w-[200px] max-lg:w-full"
-                isMultiple={false}
-                cleanFunction={() => changeSelectedProjectIdQuery(null)}
-                isLoading={projectsLoading}
-              />
-            </div>
+          {/* Project filter */}
+          <div className="flex flex-col gap-1.5 w-[260px] max-lg:w-full">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+              Project
+            </span>
+            <SearchWithValueDropdown
+              id="filter-by-projects"
+              list={projectOptions}
+              onSelectFunction={(value: string) => changeSelectedProjectIdQuery(value)}
+              type="Projects"
+              selected={selectedProject ? [selectedProject.title] : []}
+              prefixUnselected="All"
+              buttonClassname="w-full"
+              isMultiple={false}
+              cleanFunction={() => changeSelectedProjectIdQuery(null)}
+              isLoading={projectsLoading}
+            />
           </div>
 
           {/* Right side - Milestone count */}
-          <div className="flex items-center gap-2 ml-auto max-lg:ml-0">
-            <span className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
-              {isLoading
-                ? "Loading..."
-                : `${data?.pagination?.totalCount || 0} ${pluralize("milestone", data?.pagination?.totalCount || 0)} to update`}
-            </span>
+          <div className="ml-auto flex items-center gap-2 pb-1.5 max-lg:ml-0">
+            {isLoading ? (
+              <span className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+                <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50 animate-pulse" />
+                Loading…
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-2 rounded-full border border-border bg-secondary/50 px-3 py-1 text-[12.5px] font-medium text-muted-foreground">
+                <span className="text-foreground tabular-nums font-semibold">
+                  {data?.pagination?.totalCount || 0}
+                </span>
+                {pluralize("milestone", data?.pagination?.totalCount || 0)} to update
+              </span>
+            )}
           </div>
         </div>
 

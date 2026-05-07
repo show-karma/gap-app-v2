@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { TableRow } from "@/components/Pages/Admin/ControlCenter/ControlCenterTable";
 import { ControlCenterTable } from "@/components/Pages/Admin/ControlCenter/ControlCenterTable";
 import { FilterToolbar } from "@/components/Pages/Admin/ControlCenter/FilterToolbar";
+import { PageHero } from "@/components/Pages/Communities/PageHero";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { Button } from "@/components/ui/button";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
@@ -335,13 +336,38 @@ export function PublicControlCenter() {
   return (
     <div className="my-4 flex flex-col gap-6 w-full">
       {/* Page Header — renders immediately */}
-      <div className="flex flex-col gap-1 px-4">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-zinc-100 tracking-tight">
-          Financials
-        </h1>
-        <p className="text-sm text-gray-500 dark:text-zinc-400 mt-0.5">
-          Overview of project agreements, milestones, and payments
-        </p>
+      <div className="px-4">
+        <PageHero
+          compact
+          eyebrow="Treasury"
+          title="Financials"
+          description="Overview of grants, agreements, milestones, and disbursements made through programs in this community."
+          kpis={[
+            {
+              label: "Tracked grants",
+              value: totalItems,
+              sub: totalItems === 1 ? "grant" : "grants",
+            },
+            {
+              label: "Signed agreements",
+              value: Object.values(agreementMap).filter((a) => a?.signed).length,
+              sub: "in good standing",
+              accent: "success",
+            },
+            {
+              label: "Disbursements",
+              value: Object.values(disbursementMap).filter((d) => d.history && d.history.length > 0)
+                .length,
+              sub: "with payouts on-chain",
+            },
+            {
+              label: "Awaiting action",
+              value: Object.values(disbursementMap).filter((d) => d.status === "pending").length,
+              sub: "pending review",
+              accent: "warning",
+            },
+          ]}
+        />
       </div>
 
       {/* Toolbar — renders immediately */}

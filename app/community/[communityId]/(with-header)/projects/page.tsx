@@ -35,7 +35,7 @@ export default async function CommunityProjectsPage(props: Props) {
   const defaultSelectedMaturityStage = "all" as MaturityStageOptions;
 
   return (
-    <div className="-my-4 flex flex-col w-full max-w-full py-2">
+    <div className="-my-4 flex flex-col w-full max-w-full py-2 animate-fade-in-up">
       <CommunityGrants
         categoriesOptions={categoriesOptions}
         defaultSelectedCategories={defaultSelectedCategories}
