@@ -216,8 +216,8 @@ const NormalCommunityHeader = ({ community }: { community: Community }) => {
         <ChevronRightIcon size={12} className="text-gray-400 dark:text-zinc-600" />
         <span className="font-medium text-gray-900 dark:text-white">{name}</span>
       </nav>
-      <div className="relative flex flex-row gap-6 flex-wrap max-lg:flex-col justify-between items-end w-full">
-        <div className="flex h-max flex-1 flex-row items-center justify-start gap-[18px] min-w-0">
+      <div className="relative flex flex-row gap-5 flex-wrap max-lg:flex-col items-center max-lg:items-stretch w-full">
+        <div className="flex h-max shrink-0 flex-row items-center justify-start gap-[18px] min-w-0 max-lg:w-full">
           <div
             className="flex items-center justify-center rounded-[18px] shrink-0 shadow-[0_10px_30px_-10px_rgba(0,144,255,0.5),inset_0_1px_0_rgba(255,255,255,0.2)] max-lg:w-14 max-lg:h-14 animate-scale-in"
             style={{ backgroundColor: logoBg, width: 72, height: 72, animationDelay: "60ms" }}
@@ -249,8 +249,22 @@ const NormalCommunityHeader = ({ community }: { community: Community }) => {
           </div>
         </div>
         <div
-          className="flex items-center gap-2 max-lg:w-full max-lg:justify-center animate-fade-in-up"
-          style={{ animationDelay: "200ms" }}
+          className="flex-1 min-w-0 animate-fade-in-up max-lg:w-full max-lg:flex-none"
+          style={{ animationDelay: "180ms" }}
+        >
+          <HeaderStatsCards
+            projectsCount={projectsCount}
+            totalGrants={communityStats?.totalGrants}
+            projectUpdates={communityStats?.projectUpdates}
+            completedMilestones={completedMilestones}
+            totalMilestones={communityStats?.totalMilestones}
+            updatesBreakdown={updatesBreakdownNode}
+            isLoading={isStatsLoading}
+          />
+        </div>
+        <div
+          className="flex shrink-0 items-center gap-2 max-lg:w-full max-lg:justify-center animate-fade-in-up"
+          style={{ animationDelay: "240ms" }}
         >
           <button
             type="button"
@@ -274,17 +288,6 @@ const NormalCommunityHeader = ({ community }: { community: Community }) => {
             <BorderBeam size={60} duration={5} colorFrom="#2ed1a8" colorTo="#0090FF" />
           </button>
         </div>
-      </div>
-      <div className="w-full animate-fade-in-up" style={{ animationDelay: "240ms" }}>
-        <HeaderStatsCards
-          projectsCount={projectsCount}
-          totalGrants={communityStats?.totalGrants}
-          projectUpdates={communityStats?.projectUpdates}
-          completedMilestones={completedMilestones}
-          totalMilestones={communityStats?.totalMilestones}
-          updatesBreakdown={updatesBreakdownNode}
-          isLoading={isStatsLoading}
-        />
       </div>
       <div className="relative w-full animate-fade-in-up" style={{ animationDelay: "320ms" }}>
         <CommunityPageNavigator />
