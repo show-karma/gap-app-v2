@@ -696,14 +696,126 @@ jobs:
           retention-days: 1
           if-no-files-found: error
 
+  # dogfood-auth-prep: log into Privy ONCE and dump the storage state so
+  # every dogfood shard starts authenticated. Without this each shard
+  # was spending 60-120s on the OTP flow, which made the 7-minute budget
+  # unreachable on shards that touch /oauth/consent or other auth pages.
+  # Reuses the existing e2e/tests/auth.setup.ts so the login flow is
+  # the same one verified by the smoke + qa-execution suites.
+  dogfood-auth-prep:
+    needs: [gate-check, build, dogfood-plan]
+    if: needs.gate-check.outputs.should_run == 'true' && needs.dogfood-plan.outputs.should_run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          ref: ${{ needs.gate-check.outputs.head_sha }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v5
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+
+      - name: Install Playwright Chromium
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Install Playwright system deps (cache hit)
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: pnpm exec playwright install-deps chromium
+
+      - name: Download prebuilt .next
+        uses: actions/download-artifact@v7
+        with:
+          name: qa-build
+
+      - name: Unpack standalone bundle
+        run: tar -xzf next-build.tar.gz
+
+      - name: Start local server
+        run: node .next/standalone/server.js &
+        env:
+          PORT: 3000
+          HOSTNAME: 0.0.0.0
+          NODE_ENV: production
+
+      - name: Wait for server
+        run: |
+          start=$SECONDS
+          for i in $(seq 1 60); do
+            if curl --silent --fail --max-time 2 http://localhost:3000/ >/dev/null 2>&1; then
+              echo "Server is up after $((SECONDS - start))s (attempt ${i})"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Server failed to start within $((SECONDS - start))s"
+          exit 1
+
+      - name: Run Privy auth setup
+        env:
+          QA_TEST_EMAIL: ${{ secrets.QA_TEST_EMAIL }}
+          QA_TEST_OTP: ${{ secrets.QA_TEST_OTP }}
+          CI: 'true'
+        run: pnpm exec playwright test --config=e2e/playwright.config.ts --project=setup
+
+      - name: Verify storage state was saved
+        run: |
+          if [ ! -s e2e/.auth/user.json ]; then
+            echo "::error::Privy auth setup did not produce e2e/.auth/user.json"
+            exit 1
+          fi
+          python3 -c "
+          import json, sys
+          with open('e2e/.auth/user.json') as f: s = json.load(f)
+          has_cookies = bool(s.get('cookies'))
+          has_origins = bool(s.get('origins'))
+          if not (has_cookies or has_origins):
+              print('storage state has neither cookies nor origins', file=sys.stderr)
+              sys.exit(1)
+          print(f'storage state OK: cookies={len(s.get(\"cookies\", []))} origins={len(s.get(\"origins\", []))}')
+          "
+
+      - name: Upload auth state artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: dogfood-auth-state
+          path: e2e/.auth/user.json
+          retention-days: 1
+          if-no-files-found: error
+
   # Sharded dogfood exploration: each shard explores its assigned pages,
   # writes findings to dogfood-findings-{shard}.json (NO issue filing),
   # and uploads the artifact. The dogfood-aggregate job dedupes and files.
   dogfood:
-    needs: [gate-check, build, dogfood-plan]
+    needs: [gate-check, build, dogfood-plan, dogfood-auth-prep]
     if: needs.gate-check.outputs.should_run == 'true' && needs.dogfood-plan.outputs.should_run == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # Hard cap is 12 min — the agent is told to wrap up at 6 min and
+    # hard-stop at 7 min (BUDGET_S=420). Slack covers download/server
+    # start before the agent runs.
+    timeout-minutes: 12
     strategy:
       fail-fast: false
       matrix:
@@ -785,6 +897,26 @@ jobs:
           echo "Server failed to start within $((SECONDS - start))s (60 attempts)"
           exit 1
 
+      - name: Download Privy auth state
+        uses: actions/download-artifact@v7
+        with:
+          name: dogfood-auth-state
+          path: dogfood-auth/
+        continue-on-error: true
+
+      - name: Verify auth state present
+        id: auth
+        run: |
+          if [ -s dogfood-auth/user.json ]; then
+            echo "auth_state_path=$(pwd)/dogfood-auth/user.json" >> "$GITHUB_OUTPUT"
+            echo "Auth state available at $(pwd)/dogfood-auth/user.json"
+          else
+            # Don't fail the shard — the agent has a fallback path that
+            # logs in inline if the state file is missing. Slower but safe.
+            echo "auth_state_path=" >> "$GITHUB_OUTPUT"
+            echo "::warning::No pre-cached auth state — shard will log in inline (slower)"
+          fi
+
       - name: Generate GitHub App token
         id: app-token
         uses: actions/create-github-app-token@v3
@@ -824,29 +956,56 @@ jobs:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           SHARD_ID: ${{ matrix.shard }}
           SCOPE_PAGES: ${{ steps.scope.outputs.scope_pages }}
+          AUTH_STATE_PATH: ${{ steps.auth.outputs.auth_state_path }}
+          BUDGET_S: '420'
         run: |
+          # Record start time so the agent can enforce its own wall-clock
+          # budget. The agent re-reads this and computes elapsed before
+          # every tool call.
+          START_TS=$(date +%s)
+          export START_TS
           claude --print --dangerously-skip-permissions \
             "You are a strict senior QA engineer doing focused exploratory dogfood testing.
             PR #$PR_NUMBER. Target: http://localhost:3000 (always — never a preview/vercel URL).
             SHARD_ID=$SHARD_ID. SCOPE_PAGES=$SCOPE_PAGES.
+            AUTH_STATE_PATH=$AUTH_STATE_PATH (may be empty).
+            START_TS=$START_TS  BUDGET_S=$BUDGET_S.
 
-            TIME BUDGET: 7 minutes of active exploration per shard. Be fast and focused.
+            === HARD TIME ENFORCEMENT (non-negotiable) ===
+            Before EVERY tool call, compute elapsed = \$(date +%s) - $START_TS.
+            - If elapsed >= 360s (6 min), stop exploration immediately and write findings/results JSON.
+            - If elapsed >= 420s (7 min), abort even mid-step. Write whatever findings you have, including 0.
+            - The wrapper kills the step at 12 min. Do NOT rely on that — write your JSON before 7 min.
+            Producing fewer findings on time is correct. Producing more findings late is a failure.
+
+            === AUTH (DO NOT LOG IN UNLESS NECESSARY) ===
+            If AUTH_STATE_PATH is non-empty, the test account is ALREADY authenticated.
+            FIRST agent-browser command (before any navigation):
+              agent-browser --session dogfood-\$SHARD_ID state load \"\$AUTH_STATE_PATH\"
+            Then open the target URL. Do NOT visit the Privy login modal. Do NOT submit email/OTP.
+            ONLY if 'state load' fails AND a scoped page requires auth, fall back to email+OTP login
+            (email=\$QA_TEST_EMAIL, OTP=\$QA_TEST_OTP). Public pages never need login.
+
+            === SCOPE CAPS (per shard) ===
+            - Max 2 URLs visited (pick the highest-risk ones from SCOPE_PAGES).
+            - Max 1 screenshot per URL (no per-step screenshots in shard mode).
+            - Max 2 interactions per URL (click/fill/submit).
+            - Max 3 findings reported. Stop when you reach 3.
 
             Read and follow the skill at .claude/skills/dogfood/SKILL.md. You are running in CI SHARD MODE
-            because SCOPE_PAGES is set. Key rules for shard mode:
+            because SCOPE_PAGES is set. Key rules:
             1. Explore ONLY the pages listed in SCOPE_PAGES (comma-separated paths). For 'file:' prefixed
-               entries, infer which URL(s) the component affects and visit those.
-            2. On each page: take a screenshot, check console errors, interact with changed components.
-            3. For authenticated pages: login with Privy test account (email from QA_TEST_EMAIL, OTP from QA_TEST_OTP).
-            4. Find up to 5 issues per shard. Quality over quantity.
-            5. Do NOT repeat scenarios already covered by qa-plan.md (if present).
-            6. CLASSIFY EVERY ISSUE: 'pr-caused' (file in git diff) or 'pre-existing' (not in diff).
-            7. Do NOT call 'gh issue create'. Write findings to dogfood-findings-\$SHARD_ID.json per the
+               entries, infer the SINGLE most likely URL the component affects and visit that.
+            2. On each page: load via state, take ONE screenshot, scan console errors, interact briefly.
+            3. Do NOT repeat scenarios already covered by qa-plan.md (if present).
+            4. CLASSIFY EVERY ISSUE: 'pr-caused' (file in git diff) or 'pre-existing' (not in diff).
+            5. Do NOT call 'gh issue create'. Write findings to dogfood-findings-\$SHARD_ID.json per the
                skill's CI Pipeline Mode schema (includes fingerprint field).
-            8. Also write dogfood-results.json: {\"total\":N,\"critical\":N,\"high\":N,\"medium\":N,\"low\":N,\"preexisting\":N,\"blocking\":bool}
+            6. Also write dogfood-results.json: {\"total\":N,\"critical\":N,\"high\":N,\"medium\":N,\"low\":N,\"preexisting\":N,\"blocking\":bool}
                where critical/high counts = PR-caused only.
-            9. Do NOT post a separate PR comment."
-        timeout-minutes: 15
+            7. Do NOT post a separate PR comment.
+            8. If you hit the 6-min mark with 0 findings, write empty results JSON and exit cleanly — that is success."
+        timeout-minutes: 10
 
       - name: Upload dogfood shard artifacts
         if: always()
