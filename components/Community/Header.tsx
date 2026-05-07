@@ -1,27 +1,18 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
-import {
-  AwardIcon,
-  CalendarIcon,
-  CheckCircle2Icon,
-  ChevronRightIcon,
-  RadioIcon,
-  SparklesIcon,
-  UsersIcon,
-} from "lucide-react";
+import { ChevronRightIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { HeaderStatsCards } from "@/components/Community/HeaderStatsCards";
 import { CommunityPageNavigator } from "@/components/Pages/Communities/CommunityPageNavigator";
-import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
 import { BorderBeam } from "@/components/ui/border-beam";
 import { useDominantColor } from "@/hooks/useDominantColor";
 import { layoutTheme } from "@/src/helper/theme";
 import { useAgentChatStore } from "@/store/agentChat";
 import type { Community } from "@/types/v2/community";
 import { communityColors } from "@/utilities/communityColors";
-import formatCurrency from "@/utilities/formatCurrency";
 import { PAGES } from "@/utilities/pages";
 import { getCommunityStats } from "@/utilities/queries/v2/getCommunityData";
 import { cn } from "@/utilities/tailwind";
@@ -94,96 +85,6 @@ function hexToRgba(hex: string, alpha: number): string | null {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-type MetaRowStats = {
-  totalGrants?: number;
-  projectUpdates?: number;
-  completedMilestones?: number;
-  totalMilestones?: number;
-  updatesBreakdown?: React.ReactNode;
-};
-
-const MetaRow = ({
-  sinceYear,
-  projectsCount,
-  stats,
-}: {
-  sinceYear: number | null;
-  projectsCount: number | undefined;
-  stats?: MetaRowStats;
-}) => {
-  const hasStats = !!stats && (stats.totalGrants || stats.projectUpdates || stats.totalMilestones);
-  if (!sinceYear && !projectsCount && !hasStats) return null;
-  return (
-    <div className="flex gap-x-4 gap-y-1 mt-2.5 text-[12.5px] text-gray-500 dark:text-zinc-400 flex-wrap items-center">
-      {sinceYear ? (
-        <span className="inline-flex items-center gap-1.5">
-          <CalendarIcon size={13} /> Since {sinceYear}
-        </span>
-      ) : null}
-      {projectsCount ? (
-        <span className="inline-flex items-center gap-1.5">
-          <UsersIcon size={13} /> {formatCurrency(projectsCount)} projects
-        </span>
-      ) : null}
-      {stats?.totalGrants ? (
-        <span className="inline-flex items-center gap-1.5">
-          <AwardIcon size={13} /> {formatCurrency(stats.totalGrants)} grants
-        </span>
-      ) : null}
-      {stats?.projectUpdates ? (
-        stats.updatesBreakdown ? (
-          <InfoTooltip
-            content={stats.updatesBreakdown}
-            side="top"
-            align="start"
-            contentClassName="max-w-sm"
-            triggerAsChild
-          >
-            <span className="inline-flex items-center gap-1.5 cursor-help underline decoration-dotted decoration-gray-300 dark:decoration-zinc-600 underline-offset-2">
-              <RadioIcon size={13} /> {formatCurrency(stats.projectUpdates)} updates
-            </span>
-          </InfoTooltip>
-        ) : (
-          <span className="inline-flex items-center gap-1.5">
-            <RadioIcon size={13} /> {formatCurrency(stats.projectUpdates)} updates
-          </span>
-        )
-      ) : null}
-      {stats?.totalMilestones
-        ? (() => {
-            const completed = stats.completedMilestones ?? 0;
-            const pct = Math.min(100, (completed / stats.totalMilestones) * 100);
-            return (
-              <span className="inline-flex items-center gap-1.5 max-sm:flex max-sm:flex-col max-sm:items-start max-sm:gap-1 max-sm:w-full">
-                <span className="inline-flex items-center gap-1.5">
-                  <CheckCircle2Icon size={13} /> {completed}/{stats.totalMilestones} milestones
-                </span>
-                <span className="inline-flex items-center gap-1.5 max-sm:w-full">
-                  <span
-                    className="inline-block w-16 h-1 rounded-full overflow-hidden bg-gray-200 dark:bg-zinc-800 align-middle max-sm:flex-1"
-                    role="progressbar"
-                    aria-valuenow={pct}
-                    aria-valuemin={0}
-                    aria-valuemax={100}
-                    aria-label={`${pct.toFixed(0)}% of milestones completed`}
-                  >
-                    <span
-                      className="block h-full bg-emerald-500 dark:bg-emerald-400 transition-all"
-                      style={{ width: `${pct}%` }}
-                    />
-                  </span>
-                  <span className="text-[11px] tabular-nums text-gray-400 dark:text-zinc-500">
-                    {pct.toFixed(0)}%
-                  </span>
-                </span>
-              </span>
-            );
-          })()
-        : null}
-    </div>
-  );
-};
-
 const NormalCommunityHeader = ({ community }: { community: Community }) => {
   const params = useParams();
   const communityId = (params?.communityId as string) || community?.details?.slug || "";
@@ -240,14 +141,13 @@ const NormalCommunityHeader = ({ community }: { community: Community }) => {
   const name = community?.details?.name ?? "";
   const description = community?.details?.description ?? "";
 
-  const { data: communityStats } = useQuery({
+  const { data: communityStats, isLoading: isStatsLoading } = useQuery({
     queryKey: ["community-stats", communityId],
     queryFn: () => getCommunityStats(communityId),
     enabled: !!communityId,
     staleTime: 5 * 60 * 1000,
   });
 
-  const sinceYear = community?.createdAt ? new Date(community.createdAt).getFullYear() : null;
   const projectsCount = communityStats?.totalProjects;
   const breakdown = communityStats?.projectUpdatesBreakdown;
   const completedMilestones = breakdown
@@ -346,17 +246,6 @@ const NormalCommunityHeader = ({ community }: { community: Community }) => {
                 {description}
               </p>
             ) : null}
-            <MetaRow
-              sinceYear={sinceYear}
-              projectsCount={projectsCount}
-              stats={{
-                totalGrants: communityStats?.totalGrants,
-                projectUpdates: communityStats?.projectUpdates,
-                completedMilestones,
-                totalMilestones: communityStats?.totalMilestones,
-                updatesBreakdown: updatesBreakdownNode,
-              }}
-            />
           </div>
         </div>
         <div
@@ -366,13 +255,19 @@ const NormalCommunityHeader = ({ community }: { community: Community }) => {
           <button
             type="button"
             onClick={openKarmaAssistant}
-            aria-label={`Ask Assistant about ${communityName || "this community"}`}
-            className="group relative overflow-hidden inline-flex items-center gap-2 pl-3 pr-3.5 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-full text-[13px] font-medium text-gray-900 dark:text-white shadow-[0_1px_2px_rgba(0,0,0,0.04)] hover:border-brand-500 hover:shadow-[0_0_0_3px_rgba(46,209,168,0.12)] transition-all"
+            aria-label={`Ask Karma about ${communityName || "this community"}`}
+            className="group relative overflow-hidden inline-flex items-center gap-2 pl-2.5 pr-3.5 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-full text-[13px] font-medium text-gray-900 dark:text-white shadow-[0_1px_2px_rgba(0,0,0,0.04)] hover:border-brand-500 hover:shadow-[0_0_0_3px_rgba(46,209,168,0.12)] transition-all"
           >
-            <span className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-full bg-gradient-to-br from-brand-500 to-[#22c9a0] text-white">
-              <SparklesIcon size={12} />
-            </span>
-            Ask Assistant
+            <Image
+              src="/logo/logo-dark.png"
+              width={20}
+              height={20}
+              alt=""
+              aria-hidden
+              quality={75}
+              className="rounded-full"
+            />
+            Ask Karma
             <kbd className="ml-0.5 px-1.5 py-px font-mono text-[10.5px] bg-gray-100 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded text-gray-500 dark:text-zinc-400">
               {isMac ? "⌘" : "Ctrl"} K
             </kbd>
@@ -380,7 +275,18 @@ const NormalCommunityHeader = ({ community }: { community: Community }) => {
           </button>
         </div>
       </div>
-      <div className="relative w-full animate-fade-in-up" style={{ animationDelay: "280ms" }}>
+      <div className="w-full animate-fade-in-up" style={{ animationDelay: "240ms" }}>
+        <HeaderStatsCards
+          projectsCount={projectsCount}
+          totalGrants={communityStats?.totalGrants}
+          projectUpdates={communityStats?.projectUpdates}
+          completedMilestones={completedMilestones}
+          totalMilestones={communityStats?.totalMilestones}
+          updatesBreakdown={updatesBreakdownNode}
+          isLoading={isStatsLoading}
+        />
+      </div>
+      <div className="relative w-full animate-fade-in-up" style={{ animationDelay: "320ms" }}>
         <CommunityPageNavigator />
       </div>
     </div>
