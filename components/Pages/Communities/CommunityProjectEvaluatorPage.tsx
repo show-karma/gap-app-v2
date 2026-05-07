@@ -842,7 +842,7 @@ function ChatScreen({
               />
               <div className="flex flex-col gap-0">
                 <p className="text-zinc-800 dark:text-zinc-200 text-lg font-semibold">
-                  Ask Karma AI
+                  Ask Karma Assistant
                 </p>
                 <p className="text-gray-600 dark:text-zinc-400 text-sm font-normal">
                   {messages.length > 0 && messages[0].timestamp
