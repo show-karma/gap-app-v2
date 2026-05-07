@@ -190,7 +190,14 @@ jobs:
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
       - name: Run Claude Code
-        uses: anthropics/claude-code-action@beta
+        # Pinned to v1.0.110 (2026-04-29). The floating @beta tag was
+        # rolled forward to v1.0.111+ on 2026-05-01, after which every
+        # claude run in this repo was cancelled ~16s in with "##[error]
+        # The operation was canceled." right after Claude CLI install
+        # finishes. Last known-good run on @beta was 2026-04-30, before
+        # v1.0.111 shipped. Re-evaluate the pin once the upstream issue
+        # is fixed (track at https://github.com/anthropics/claude-code-action/issues).
+        uses: anthropics/claude-code-action@v1.0.110
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ steps.app-token.outputs.token }}
