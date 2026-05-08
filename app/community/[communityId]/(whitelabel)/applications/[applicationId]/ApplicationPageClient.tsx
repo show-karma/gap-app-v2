@@ -110,11 +110,15 @@ export function ApplicationPageClient({
   const programName =
     program?.name || program?.metadata?.title || `Program ${application.programId}`;
 
-  // Check if application has milestone fields
-  const hasMilestones = useMemo(
+  // Check if application has milestone fields (off-chain) OR a project linked
+  // to an on-chain grant under the same program. Either side warrants a
+  // Milestones tab — the tab itself merges them.
+  const hasOffChainMilestones = useMemo(
     () => Object.values(application.applicationData).some(isMilestoneArray),
     [application.applicationData]
   );
+  const hasOnChainMilestones = !!application.projectUID && !!application.programId;
+  const hasMilestones = hasOffChainMilestones || hasOnChainMilestones;
 
   // Check if post-approval form is configured
   const hasPostApprovalSchema =

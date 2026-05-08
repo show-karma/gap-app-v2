@@ -1,8 +1,21 @@
 "use client";
 
-import { MilestoneCompletionEditor } from "@/src/features/applications/components/MilestoneCompletionEditor";
-import { formatFieldLabel } from "@/src/features/applications/lib/milestone-utils";
-import type { Application, MilestoneData } from "@/types/whitelabel-entities";
+import { useMemo } from "react";
+import { Button } from "@/components/ui/button";
+import { useProjectGrantMilestones } from "@/hooks/useProjectGrantMilestones";
+import type { GrantMilestoneWithCompletion } from "@/services/milestones";
+import { useApplicationInvoiceConfig } from "@/src/features/applications/hooks/use-application-invoice-config";
+import { OffChainMilestoneRow } from "@/src/features/applications/components/OffChainMilestoneRow";
+import { OnChainMilestoneRow } from "@/src/features/applications/components/OnChainMilestoneRow";
+import {
+  isMilestoneCompleted,
+  isMilestoneVerified,
+} from "@/src/features/applications/lib/milestone-status";
+import type {
+  Application,
+  MilestoneData,
+  MilestoneStatusEntry,
+} from "@/types/whitelabel-entities";
 
 interface MilestonesTabProps {
   application: Application;
@@ -20,12 +33,172 @@ function isMilestoneArray(value: unknown): value is MilestoneData[] {
   );
 }
 
-export function MilestonesTab({ application, isOwner, invoiceRequired }: MilestonesTabProps) {
-  const milestoneFields = Object.entries(application.applicationData).filter(([_, value]) =>
-    isMilestoneArray(value)
-  ) as [string, MilestoneData[]][];
+function normalizeTitle(title: string): string {
+  return title.trim().toLowerCase();
+}
 
-  if (milestoneFields.length === 0) {
+function parseDueMs(dueDate: string | undefined): number {
+  if (!dueDate) return Number.POSITIVE_INFINITY;
+  const ms = new Date(dueDate).getTime();
+  return Number.isFinite(ms) ? ms : Number.POSITIVE_INFINITY;
+}
+
+function isOnChainMilestoneDone(m: GrantMilestoneWithCompletion): boolean {
+  return (
+    !!m.completionDetails ||
+    !!m.verificationDetails ||
+    m.status === "completed" ||
+    m.status === "verified"
+  );
+}
+
+type UnifiedItem =
+  | {
+      source: "offchain";
+      key: string;
+      fieldLabel: string;
+      milestone: MilestoneData;
+      statusEntry?: MilestoneStatusEntry;
+      dueMs: number;
+      isDone: boolean;
+    }
+  | {
+      source: "onchain";
+      key: string;
+      milestone: GrantMilestoneWithCompletion;
+      dueMs: number;
+      isDone: boolean;
+    };
+
+export function MilestonesTab({ application, isOwner, invoiceRequired }: MilestonesTabProps) {
+  const { projectUID, programId } = application;
+
+  const {
+    data: onChainData,
+    isLoading: isOnChainLoading,
+    error: onChainError,
+    refetch: refetchOnChain,
+  } = useProjectGrantMilestones(projectUID ?? "", programId ?? "");
+
+  // Always fire the invoice config query — `invoiceConfig.invoiceRequired`
+  // is the authoritative per-grant flag (program.metadata can lag/be unset).
+  // The optional `invoiceRequired` prop only acts as a hint to skip the
+  // query for callers that *know* it's never required.
+  const { data: invoiceConfig, isLoading: isInvoiceConfigLoading } = useApplicationInvoiceConfig(
+    application.referenceNumber,
+    { enabled: invoiceRequired !== false }
+  );
+
+  const showInvoice = !!invoiceConfig?.invoiceRequired && !!invoiceConfig?.grantUID;
+  const milestoneInvoices = invoiceConfig?.milestoneInvoices ?? [];
+
+  const statusByUID = useMemo(() => {
+    const map = new Map<string, MilestoneStatusEntry>();
+    for (const entry of application.milestoneStatuses ?? []) {
+      map.set(entry.milestoneUID, entry);
+    }
+    return map;
+  }, [application.milestoneStatuses]);
+
+  const milestoneFields = useMemo(
+    () =>
+      Object.entries(application.applicationData).filter(([_, value]) =>
+        isMilestoneArray(value)
+      ) as [string, MilestoneData[]][],
+    [application.applicationData]
+  );
+
+  const unified = useMemo<UnifiedItem[]>(() => {
+    const items: UnifiedItem[] = [];
+
+    // Off-chain rows from applicationData
+    const offChainUIDs = new Set<string>();
+    const offChainTitles = new Set<string>();
+    for (const [fieldLabel, list] of milestoneFields) {
+      list.forEach((milestone, index) => {
+        const statusEntry = milestone.milestoneUID
+          ? statusByUID.get(milestone.milestoneUID)
+          : undefined;
+        const isDone =
+          isMilestoneVerified(statusEntry) || isMilestoneCompleted(statusEntry);
+        items.push({
+          source: "offchain",
+          // Stable across renders: prefer the on-chain UID, fall back to a
+          // positional sentinel within the field so duplicate titles don't
+          // collide.
+          key: milestone.milestoneUID
+            ? `off:${milestone.milestoneUID}`
+            : `off:${fieldLabel}:${index}`,
+          fieldLabel,
+          milestone,
+          statusEntry,
+          dueMs: parseDueMs(milestone.dueDate),
+          isDone,
+        });
+        if (milestone.milestoneUID) offChainUIDs.add(milestone.milestoneUID);
+        offChainTitles.add(normalizeTitle(milestone.title));
+      });
+    }
+
+    // On-chain rows: skip when the same milestone is already represented
+    // off-chain (UID match first; fall back to normalized-title match for
+    // entries whose milestoneUID hasn't been written back to applicationData
+    // yet — e.g., pre-on-chain submissions or in-flight backfills).
+    const grantMilestones = onChainData?.grantMilestones ?? [];
+    const grantUID = onChainData?.grant?.uid;
+    if (grantUID) {
+      for (const m of grantMilestones) {
+        if (offChainUIDs.has(m.uid)) continue;
+        if (offChainTitles.has(normalizeTitle(m.title))) continue;
+        items.push({
+          source: "onchain",
+          key: `on:${m.uid}`,
+          milestone: m,
+          dueMs: parseDueMs(m.dueDate),
+          isDone: isOnChainMilestoneDone(m),
+        });
+      }
+    }
+
+    items.sort((a, b) => {
+      if (a.isDone !== b.isDone) return a.isDone ? 1 : -1;
+      return a.dueMs - b.dueMs;
+    });
+
+    return items;
+  }, [milestoneFields, statusByUID, onChainData]);
+
+  const grantUID = onChainData?.grant?.uid;
+  const hasNothing = unified.length === 0;
+
+  if (hasNothing && isOnChainLoading) {
+    return (
+      <div className="rounded-xl border border-border" aria-busy="true" aria-live="polite">
+        <div className="border-b border-border p-4">
+          <div className="h-6 w-32 rounded bg-zinc-200 dark:bg-zinc-700 animate-pulse" />
+        </div>
+        <div className="p-6 space-y-3">
+          <div className="h-24 rounded-lg bg-zinc-100 dark:bg-zinc-800/50 animate-pulse" />
+          <div className="h-24 rounded-lg bg-zinc-100 dark:bg-zinc-800/50 animate-pulse" />
+        </div>
+      </div>
+    );
+  }
+
+  if (hasNothing && onChainError) {
+    return (
+      <div className="rounded-xl border border-border p-6 space-y-3">
+        <p className="text-muted-foreground">
+          Couldn&apos;t load on-chain milestones for this application.
+        </p>
+        <Button size="sm" onClick={() => refetchOnChain()}>
+          Retry
+        </Button>
+      </div>
+    );
+  }
+
+  if (hasNothing) {
     return (
       <div className="rounded-xl border border-border p-6">
         <p className="text-muted-foreground">No milestones defined for this application.</p>
@@ -34,26 +207,49 @@ export function MilestonesTab({ application, isOwner, invoiceRequired }: Milesto
   }
 
   return (
-    <div className="space-y-6">
-      {milestoneFields.map(([fieldLabel, milestones]) => (
-        <div key={fieldLabel} className="rounded-xl border border-border">
-          <div className="border-b border-border p-4">
-            <h2 className="text-xl font-semibold text-foreground">
-              {formatFieldLabel(fieldLabel)}
-            </h2>
-          </div>
-          <div className="p-6">
-            <MilestoneCompletionEditor
-              milestones={milestones}
-              fieldLabel={fieldLabel}
+    <div className="rounded-xl border border-border">
+      <div className="border-b border-border p-4">
+        <h2 className="text-xl font-semibold text-foreground">Milestones</h2>
+      </div>
+      <div className="p-6 space-y-3">
+        {unified.map((item) => {
+          if (item.source === "offchain") {
+            const existingInvoice = milestoneInvoices.find(
+              (inv) => inv.milestoneLabel === item.milestone.title
+            );
+            return (
+              <OffChainMilestoneRow
+                key={item.key}
+                milestone={item.milestone}
+                fieldLabel={item.fieldLabel}
+                referenceNumber={application.referenceNumber}
+                isEditable={isOwner}
+                statusEntry={item.statusEntry}
+                showInvoice={showInvoice}
+                existingInvoice={existingInvoice}
+                isInvoiceConfigLoading={isInvoiceConfigLoading}
+                projectUid={projectUID}
+                programId={programId}
+              />
+            );
+          }
+          // Pure on-chain row — only renders when we resolved a grant for
+          // this program. Skipping silently if `grantUID` is missing keeps
+          // the UI honest (we'd have nothing to attest against).
+          if (!grantUID || !projectUID || !programId) return null;
+          return (
+            <OnChainMilestoneRow
+              key={item.key}
+              milestone={item.milestone}
               referenceNumber={application.referenceNumber}
               isEditable={isOwner}
-              invoiceRequired={invoiceRequired}
-              milestoneStatuses={application.milestoneStatuses}
+              projectUid={projectUID}
+              programId={programId}
+              grantUID={grantUID}
             />
-          </div>
-        </div>
-      ))}
+          );
+        })}
+      </div>
     </div>
   );
 }
