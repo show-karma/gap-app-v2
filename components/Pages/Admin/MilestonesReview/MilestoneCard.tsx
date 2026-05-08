@@ -31,6 +31,12 @@ import { getMilestoneStatus, MILESTONE_STATUS_CONFIG } from "./utils/milestone-r
 // before paint (no flash of unclamped content).
 const useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
+const PROOF_URL_PROTOCOL_RE = /^https?:\/\//i;
+
+function ensureProofUrl(proof: string): string {
+  return PROOF_URL_PROTOCOL_RE.test(proof) ? proof : `https://${proof}`;
+}
+
 const AIEvaluationModal = dynamic(
   () => import("./AIEvaluationModal").then((m) => ({ default: m.AIEvaluationModal })),
   { ssr: false }
@@ -229,9 +235,11 @@ export function MilestoneCard({
   // Metrics (impact indicators) attached to this on-chain completion. The hook
   // skips the fetch when no UID is passed, so funding-application-only
   // completions don't trigger a request.
-  const { data: milestoneMetrics } = useMilestoneImpactAnswers({
-    milestoneUID: useOnChainData && hasCompletion ? milestone.uid : undefined,
+  const shouldShowMetricsSection = useOnChainData && hasCompletion;
+  const milestoneMetricsQuery = useMilestoneImpactAnswers({
+    milestoneUID: shouldShowMetricsSection ? milestone.uid : undefined,
   });
+  const milestoneMetrics = milestoneMetricsQuery.data;
 
   const statusInfo = useMemo(() => {
     const status = getMilestoneStatus(milestone);
@@ -557,11 +565,7 @@ export function MilestoneCard({
                           )}
                           {deliverable.proof && (
                             <a
-                              href={
-                                deliverable.proof.startsWith("http")
-                                  ? deliverable.proof
-                                  : `https://${deliverable.proof}`
-                              }
+                              href={ensureProofUrl(deliverable.proof)}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-brand-blue hover:underline text-sm break-all"
@@ -574,49 +578,72 @@ export function MilestoneCard({
                     ))}
                   </div>
                 )}
-                {milestoneMetrics && milestoneMetrics.length > 0 && (
+                {shouldShowMetricsSection && (
                   <div className="mt-3 flex flex-col gap-2">
                     <p className="text-sm font-semibold text-blue-900 dark:text-blue-200">
                       Metrics
                     </p>
-                    {milestoneMetrics.map((metric, idx) => {
-                      const datapoint = metric.datapoints?.[0];
-                      return (
-                        <div
-                          key={metric.id || `${metric.name}-${idx}`}
-                          className="border border-gray-200 dark:border-zinc-600 rounded-lg p-3 bg-white dark:bg-zinc-800"
+                    {milestoneMetricsQuery.isLoading ? (
+                      <output
+                        aria-label="Loading metrics"
+                        className="block border border-gray-200 dark:border-zinc-600 rounded-lg p-3 bg-white dark:bg-zinc-800 animate-pulse"
+                      >
+                        <span className="block h-4 w-1/3 bg-gray-200 dark:bg-zinc-700 rounded" />
+                        <span className="mt-2 block h-3 w-1/4 bg-gray-100 dark:bg-zinc-700/70 rounded" />
+                      </output>
+                    ) : milestoneMetricsQuery.isError ? (
+                      <div className="border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10 rounded-lg p-3 flex flex-col gap-2">
+                        <p className="text-sm text-red-700 dark:text-red-300">
+                          Failed to load metrics.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => milestoneMetricsQuery.refetch()}
+                          className="self-start text-xs font-medium text-red-700 dark:text-red-300 hover:underline"
                         >
-                          <div className="flex flex-col gap-1">
-                            <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                              {metric.name || "Untitled Indicator"}
-                            </p>
-                            {datapoint && (
-                              <p className="text-sm text-gray-600 dark:text-gray-400">
-                                Value:{" "}
-                                <span className="font-medium text-zinc-900 dark:text-zinc-100">
-                                  {datapoint.value}
-                                </span>
-                                {metric.unitOfMeasure ? ` ${metric.unitOfMeasure}` : ""}
+                          Retry
+                        </button>
+                      </div>
+                    ) : milestoneMetrics && milestoneMetrics.length > 0 ? (
+                      milestoneMetrics.map((metric, idx) => {
+                        const datapoint = metric.datapoints?.[0];
+                        return (
+                          <div
+                            key={metric.id || `${metric.name}-${idx}`}
+                            className="border border-gray-200 dark:border-zinc-600 rounded-lg p-3 bg-white dark:bg-zinc-800"
+                          >
+                            <div className="flex flex-col gap-1">
+                              <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                                {metric.name || "Untitled Indicator"}
                               </p>
-                            )}
-                            {datapoint?.proof && (
-                              <a
-                                href={
-                                  datapoint.proof.startsWith("http")
-                                    ? datapoint.proof
-                                    : `https://${datapoint.proof}`
-                                }
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-brand-blue hover:underline text-sm break-all"
-                              >
-                                {datapoint.proof}
-                              </a>
-                            )}
+                              {datapoint && (
+                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                                  Value:{" "}
+                                  <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                                    {datapoint.value}
+                                  </span>
+                                  {metric.unitOfMeasure ? ` ${metric.unitOfMeasure}` : ""}
+                                </p>
+                              )}
+                              {datapoint?.proof && (
+                                <a
+                                  href={ensureProofUrl(datapoint.proof)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-brand-blue hover:underline text-sm break-all"
+                                >
+                                  {datapoint.proof}
+                                </a>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })
+                    ) : (
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        No metrics submitted.
+                      </p>
+                    )}
                   </div>
                 )}
               </div>
