@@ -1,3 +1,5 @@
+"use client";
+
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useSearchParams } from "next/navigation";
 import { useQueryState } from "nuqs";
@@ -9,17 +11,22 @@ import { useCommunityDetails } from "@/hooks/v2/useCommunityDetails";
 import formatCurrency from "@/utilities/formatCurrency";
 import { getAllProgramsOfCommunity } from "@/utilities/registry/getAllProgramsOfCommunity";
 
+const normalizeProgramId = (raw: string | null): string | undefined => {
+  if (!raw) return undefined;
+  return raw.includes("_") ? raw.split("_")[0] : raw;
+};
+
 export const ProgramBanner = () => {
   const { communityId } = useParams<{ communityId: string }>();
   const searchParams = useSearchParams();
-  const programSelected = searchParams.get("programId");
+  const programSelected = normalizeProgramId(searchParams.get("programId"));
   const projectSelected = searchParams.get("projectId");
   const accent = useCommunityAccent(communityId);
   const { community } = useCommunityDetails(communityId);
   const communityName = community?.details?.name ?? "this community";
 
   const { data: impactData, isLoading: isImpactLoading } = useImpactMeasurement({
-    programId: programSelected ?? undefined,
+    programId: programSelected,
     projectId: projectSelected ?? undefined,
   });
 
@@ -34,16 +41,8 @@ export const ProgramBanner = () => {
 
   const [selectedProgramId] = useQueryState<string | null>("programId", {
     defaultValue: null,
-    serialize: (value) => {
-      if (!value) return "";
-      const normalized = value.includes("_") ? value.split("_")[0] : value;
-      return normalized;
-    },
-    parse: (value) => {
-      if (!value) return null;
-      const normalized = value.includes("_") ? value.split("_")[0] : value;
-      return normalized;
-    },
+    serialize: (value) => normalizeProgramId(value) ?? "",
+    parse: (value) => normalizeProgramId(value) ?? null,
   });
   const selectedProgram = programs?.find((program) => program.value === selectedProgramId);
 

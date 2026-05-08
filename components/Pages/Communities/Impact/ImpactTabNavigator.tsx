@@ -16,8 +16,8 @@ export const ImpactTabNavigator = () => {
   const isProjectDiscovery = pathname.includes("/project-discovery");
 
   return (
-    <div
-      role="tablist"
+    <nav
+      aria-label="Community impact sections"
       className="flex flex-row items-center gap-7 border-b border-border max-lg:flex-col max-lg:items-start max-lg:gap-3"
     >
       <Link
@@ -50,6 +50,6 @@ export const ImpactTabNavigator = () => {
           />
         ) : null}
       </Link>
-    </div>
+    </nav>
   );
 };

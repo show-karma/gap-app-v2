@@ -332,10 +332,10 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
     const params = new URLSearchParams();
     if (selectedProgramId) params.set("programId", selectedProgramId);
     if (statusFilter !== "all") params.set("status", statusFilter);
-    if (searchInput) params.set("search", searchInput);
+    if (debouncedSearch) params.set("search", debouncedSearch);
     const query = params.toString();
     router.replace(`${pathname}${query ? `?${query}` : ""}`, { scroll: false });
-  }, [selectedProgramId, statusFilter, searchInput, pathname, router]);
+  }, [selectedProgramId, statusFilter, debouncedSearch, pathname, router]);
 
   const selectedProgram = programs.find((p) => p.programId === selectedProgramId);
   const hasPrivateApplicationsSetting =
@@ -505,7 +505,8 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
               </button>
             ) : null}
           </div>
-          <div role="tablist" aria-label="Filter by status" className="flex flex-wrap gap-1.5">
+          <fieldset className="flex flex-wrap gap-1.5 border-0 p-0 m-0">
+            <legend className="sr-only">Filter by status</legend>
             {statusOptions.map((option) => {
               const isActive = statusFilter === option.value;
               const count = chipCounts[option.value];
@@ -513,8 +514,7 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
                 <button
                   key={option.value}
                   type="button"
-                  role="tab"
-                  aria-selected={isActive}
+                  aria-pressed={isActive}
                   onClick={() => setStatusFilter(option.value)}
                   className={cn(
                     "inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[13px] font-medium transition",
@@ -535,7 +535,7 @@ export function BrowseApplicationsClient({ communityId }: BrowseApplicationsClie
                 </button>
               );
             })}
-          </div>
+          </fieldset>
           {hasActiveFilters ? (
             <button
               type="button"

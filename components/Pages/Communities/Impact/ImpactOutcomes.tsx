@@ -46,7 +46,24 @@ export function ImpactOutcomes() {
     );
   }
 
-  if (!stats) return null;
+  if (!stats) {
+    return (
+      <section
+        aria-labelledby="impact-outcomes-title"
+        className="rounded-[20px] bg-secondary p-6 md:p-8"
+      >
+        <h3
+          id="impact-outcomes-title"
+          className="mb-2 text-xl md:text-[22px] font-semibold tracking-[-0.02em] text-foreground"
+        >
+          Outcomes delivered
+        </h3>
+        <p className="text-sm text-muted-foreground">
+          We couldn&apos;t load community outcomes right now.
+        </p>
+      </section>
+    );
+  }
 
   const projects = stats.totalProjects ?? 0;
   const grants = stats.totalGrants ?? 0;
@@ -75,7 +92,24 @@ export function ImpactOutcomes() {
   if (grantUpdates > 0)
     items.push([formatCurrency(grantUpdates), "grant updates from funded programs"]);
 
-  if (items.length === 0) return null;
+  if (items.length === 0) {
+    return (
+      <section
+        aria-labelledby="impact-outcomes-title"
+        className="rounded-[20px] bg-secondary p-6 md:p-8"
+      >
+        <h3
+          id="impact-outcomes-title"
+          className="mb-2 text-xl md:text-[22px] font-semibold tracking-[-0.02em] text-foreground"
+        >
+          Outcomes delivered
+        </h3>
+        <p className="text-sm text-muted-foreground">
+          No outcomes have been recorded for this community yet.
+        </p>
+      </section>
+    );
+  }
 
   return (
     <section

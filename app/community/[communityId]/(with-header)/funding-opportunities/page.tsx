@@ -86,7 +86,7 @@ export default function FundingOpportunitiesPage() {
   }, [programs]);
 
   const featured = programs[0];
-  const others = programs;
+  const others = programs.slice(1);
   const activeStatus: ProgramStatus | "all" = filters.status ?? "all";
 
   return (
@@ -211,9 +211,9 @@ function ProgramsContent({
         onSearchChange={onSearchChange}
         onStatusChange={onStatusChange}
       />
-      {programs.length === 0 || others.length === 0 ? (
+      {programs.length === 0 && hasActiveFilters ? (
         <ProgramsFilteredEmpty onClearFilters={onClearFilters} />
-      ) : (
+      ) : others.length > 0 ? (
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
           {others.map((program, idx) => (
             <div
@@ -225,7 +225,7 @@ function ProgramsContent({
             </div>
           ))}
         </div>
-      )}
+      ) : null}
     </>
   );
 }

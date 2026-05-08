@@ -38,10 +38,10 @@ export function FeaturedProgram({
   const endsAt = program.metadata?.endsAt ? new Date(program.metadata.endsAt) : null;
   const startsAt = program.metadata?.startsAt ? new Date(program.metadata.startsAt) : null;
   const deadlineLabel = endsAt
-    ? endsAt.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })
+    ? endsAt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
     : null;
   const startLabel = startsAt
-    ? startsAt.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })
+    ? startsAt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
     : null;
   const dateRowLabel =
     view.urgency === "upcoming" ? "Opens" : view.urgency === "closed" ? "Closed" : "Deadline";
@@ -108,12 +108,14 @@ export function FeaturedProgram({
               {view.urgency === "closed" ? "View details" : "Apply before deadline"}
               <ArrowRight className="h-4 w-4" aria-hidden />
             </Link>
-            <Link
-              href={href}
-              className="inline-flex h-11 items-center rounded-lg border border-border bg-background px-5 text-sm font-semibold text-foreground transition hover:bg-secondary"
-            >
-              View details
-            </Link>
+            {view.urgency !== "closed" ? (
+              <Link
+                href={href}
+                className="inline-flex h-11 items-center rounded-lg border border-border bg-background px-5 text-sm font-semibold text-foreground transition hover:bg-secondary"
+              >
+                View details
+              </Link>
+            ) : null}
           </div>
         </div>
 

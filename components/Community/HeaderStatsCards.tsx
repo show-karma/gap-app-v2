@@ -119,7 +119,13 @@ export const HeaderStatsCards = ({
 }: HeaderStatsCardsProps) => {
   const hasData =
     !!projectsCount || !!totalGrants || !!projectUpdates || !!totalMilestones || isLoading;
-  if (!hasData) return null;
+  if (!hasData) {
+    return (
+      <output className="flex w-full items-center justify-end text-[12px] text-muted-foreground">
+        No stats yet — check back once projects start posting updates.
+      </output>
+    );
+  }
 
   return (
     <div className="flex w-full flex-wrap justify-end gap-2.5 lg:flex-nowrap [&>*]:flex-1 [&>*]:basis-[140px] lg:[&>*]:max-w-[180px]">

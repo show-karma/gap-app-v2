@@ -5,6 +5,7 @@ import { type ChangeEvent, useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useChatRating } from "@/hooks/useChatRating";
 import { useAgentChatStore } from "@/store/agentChat";
+import { cn } from "@/utilities/tailwind";
 
 interface MessageRatingProps {
   messageId: string;
@@ -61,7 +62,10 @@ export function MessageRatingButtons({ messageId, traceId }: MessageRatingProps)
         disabled={isSubmitting}
         aria-label="Rate this response helpful"
         aria-pressed={rating === 1}
-        className={rating === 1 ? "text-brand-blue" : "text-muted-foreground hover:text-foreground"}
+        className={cn(
+          "text-muted-foreground hover:text-foreground",
+          rating === 1 && "text-brand-blue"
+        )}
       >
         <ThumbsUpIcon className="size-3" />
       </Button>
@@ -72,9 +76,10 @@ export function MessageRatingButtons({ messageId, traceId }: MessageRatingProps)
         disabled={isSubmitting}
         aria-label="Rate this response unhelpful"
         aria-pressed={rating === -1}
-        className={
-          rating === -1 ? "text-destructive" : "text-muted-foreground hover:text-foreground"
-        }
+        className={cn(
+          "text-muted-foreground hover:text-foreground",
+          rating === -1 && "text-destructive"
+        )}
       >
         <ThumbsDownIcon className="size-3" />
       </Button>

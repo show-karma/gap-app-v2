@@ -104,10 +104,10 @@ export function EditorialProgramCard({ program, communityId }: EditorialProgramC
   const startsAt = program.metadata?.startsAt ? new Date(program.metadata.startsAt) : null;
   const dateLabel = (() => {
     if (view.urgency === "upcoming" && startsAt) {
-      return `Opens ${startsAt.toLocaleDateString(undefined, { month: "short", day: "numeric" })}`;
+      return `Opens ${startsAt.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
     }
     if (endsAt) {
-      const formatted = endsAt.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+      const formatted = endsAt.toLocaleDateString("en-US", { month: "short", day: "numeric" });
       return view.urgency === "closed" ? `Closed ${formatted}` : `Closes ${formatted}`;
     }
     return null;

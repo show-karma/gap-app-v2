@@ -351,19 +351,19 @@ export function PublicControlCenter() {
             {
               label: "Signed agreements",
               value: Object.values(agreementMap).filter((a) => a?.signed).length,
-              sub: "in good standing",
+              sub: "in good standing (this page)",
               accent: "success",
             },
             {
               label: "Disbursements",
               value: Object.values(disbursementMap).filter((d) => d.history && d.history.length > 0)
                 .length,
-              sub: "with payouts on-chain",
+              sub: "with payouts on-chain (this page)",
             },
             {
               label: "Awaiting action",
               value: Object.values(disbursementMap).filter((d) => d.status === "pending").length,
-              sub: "pending review",
+              sub: "pending review (this page)",
               accent: "warning",
             },
           ]}

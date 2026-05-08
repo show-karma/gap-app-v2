@@ -230,9 +230,12 @@ export default function CommunityUpdatesPage() {
 
           {/* Program filter */}
           <div className="flex flex-col gap-1.5 w-[260px] max-lg:w-full">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+            <label
+              htmlFor="filter-by-programs"
+              className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+            >
               Program
-            </span>
+            </label>
             <SearchWithValueDropdown
               id="filter-by-programs"
               list={programs}
@@ -249,9 +252,12 @@ export default function CommunityUpdatesPage() {
 
           {/* Project filter */}
           <div className="flex flex-col gap-1.5 w-[260px] max-lg:w-full">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+            <label
+              htmlFor="filter-by-projects"
+              className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+            >
               Project
-            </span>
+            </label>
             <SearchWithValueDropdown
               id="filter-by-projects"
               list={projectOptions}
