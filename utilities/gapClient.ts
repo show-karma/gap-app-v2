@@ -40,7 +40,7 @@ const createGapInstance = (network: TNetwork): GAP => {
 export const getGapClient = (chainID: number): GAP => {
   const network = getSupportedNetworkForChain(chainID);
   if (!network) {
-    throw new Error(`GAP::Unsupported chain ${chainID}`);
+    throw new Error(`This network (chain ID ${chainID}) is not supported yet.`);
   }
   const networkChainId = getChainIdByName(network);
   return (
