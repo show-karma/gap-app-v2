@@ -10,7 +10,6 @@ import {
 } from "@/components/Pages/Communities/Funding/EditorialProgramCard";
 import { FeaturedProgram } from "@/components/Pages/Communities/Funding/FeaturedProgram";
 import { PageHero } from "@/components/Pages/Communities/PageHero";
-import { useCommunityAccent } from "@/hooks/useCommunityAccent";
 import { ProgramCardSkeleton } from "@/src/features/programs/components/ProgramCardSkeleton";
 import { usePrograms } from "@/src/features/programs/hooks/use-programs";
 import type { ProgramStatus } from "@/types/whitelabel-entities";
@@ -34,7 +33,6 @@ export default function FundingOpportunitiesPage() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { programs, loading, error, filters, setFilters, refetch } = usePrograms(communityId);
-  const accentColor = useCommunityAccent(communityId);
 
   const urlStatusRaw = searchParams.get("status");
   const urlStatus: ProgramStatus | "all" | null =
@@ -107,7 +105,7 @@ export default function FundingOpportunitiesPage() {
               <>
                 ${formatCurrency(stats.totalPool)} available
                 <br />
-                <span style={{ color: accentColor }}>
+                <span className="text-brand-500 dark:text-brand-400">
                   across {programs.length} program{programs.length === 1 ? "" : "s"}.
                 </span>
               </>
