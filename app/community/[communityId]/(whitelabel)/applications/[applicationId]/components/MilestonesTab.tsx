@@ -33,10 +33,6 @@ function isMilestoneArray(value: unknown): value is MilestoneData[] {
   );
 }
 
-function normalizeTitle(title: string): string {
-  return title.trim().toLowerCase();
-}
-
 function parseDueMs(dueDate: string | undefined): number {
   if (!dueDate) return Number.POSITIVE_INFINITY;
   const ms = new Date(dueDate).getTime();
@@ -113,7 +109,6 @@ export function MilestonesTab({ application, isOwner, invoiceRequired }: Milesto
 
     // Off-chain rows from applicationData
     const offChainUIDs = new Set<string>();
-    const offChainTitles = new Set<string>();
     for (const [fieldLabel, list] of milestoneFields) {
       list.forEach((milestone, index) => {
         const statusEntry = milestone.milestoneUID
@@ -136,20 +131,20 @@ export function MilestonesTab({ application, isOwner, invoiceRequired }: Milesto
           isDone,
         });
         if (milestone.milestoneUID) offChainUIDs.add(milestone.milestoneUID);
-        offChainTitles.add(normalizeTitle(milestone.title));
       });
     }
 
-    // On-chain rows: skip when the same milestone is already represented
-    // off-chain (UID match first; fall back to normalized-title match for
-    // entries whose milestoneUID hasn't been written back to applicationData
-    // yet — e.g., pre-on-chain submissions or in-flight backfills).
+    // On-chain rows: skip only when the same milestone is already represented
+    // off-chain BY UID. We deliberately don't fall back to a title match
+    // because real projects use repeated titles ("Milestone 2", "Milestone 2")
+    // and a title-based filter would silently drop the second one. Submitted
+    // milestones always get their milestoneUID written back to applicationData,
+    // so UID-only dedup is sufficient.
     const grantMilestones = onChainData?.grantMilestones ?? [];
     const grantUID = onChainData?.grant?.uid;
     if (grantUID) {
       for (const m of grantMilestones) {
         if (offChainUIDs.has(m.uid)) continue;
-        if (offChainTitles.has(normalizeTitle(m.title))) continue;
         items.push({
           source: "onchain",
           key: `on:${m.uid}`,

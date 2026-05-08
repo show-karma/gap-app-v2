@@ -235,7 +235,13 @@ describe("MilestonesTab — merge orchestrator", () => {
     expect(screen.queryByTestId("on-chain-row")).not.toBeInTheDocument();
   });
 
-  it("should_drop_onchain_duplicate_when_offchain_lacks_uid_but_normalized_titles_match", () => {
+  it("should_show_both_rows_when_titles_match_but_offchain_has_no_milestoneUID", () => {
+    // Dedup is UID-only. Submitted milestones always have their milestoneUID
+    // written back to applicationData, so a row without a UID means the slot
+    // hasn't been on-chain yet — and the on-chain row is a different
+    // milestone we should still show. (The earlier title-fallback dedup
+    // would have wrongly hidden the on-chain row here, AND would break the
+    // common case of two milestones intentionally sharing a title.)
     mockUseProjectGrantMilestones.mockReturnValue({
       data: {
         project: { uid: PROJECT_UID, chainID: 10, owner: "0x", details: { title: "T" } },
@@ -256,7 +262,8 @@ describe("MilestonesTab — merge orchestrator", () => {
             title: "  phase 1: MVP  ",
             description: "",
             dueDate: "2025-08-01",
-            // No milestoneUID yet — the dedup falls back to normalized title.
+            // No milestoneUID — the slot hasn't been anchored on-chain yet,
+            // so it's not the same milestone as the on-chain entry above.
           },
         ],
       },
@@ -265,7 +272,66 @@ describe("MilestonesTab — merge orchestrator", () => {
     render(<MilestonesTab application={application} isOwner={true} />);
 
     expect(screen.getAllByTestId("off-chain-row")).toHaveLength(1);
-    expect(screen.queryByTestId("on-chain-row")).not.toBeInTheDocument();
+    expect(screen.getAllByTestId("on-chain-row")).toHaveLength(1);
+  });
+
+  it("should_render_two_onchain_rows_when_grant_has_two_milestones_with_the_same_title", () => {
+    // Real APP-2L75H7UQ-RITZ0N case: project has Milestone 1, Milestone 2,
+    // Milestone 2 (yes, again), Milestone 3 — and the application only owns
+    // Milestone 1 + Milestone 2 (one of them). Expected: the application's
+    // Milestone 2 dedups by UID; the OTHER on-chain Milestone 2 must still
+    // render as an inherited row.
+    const APP_M1 = "0xapp-m1";
+    const APP_M2 = "0xapp-m2";
+    const PROJECT_M2_OTHER = "0xproj-m2-other";
+    const PROJECT_M3 = "0xproj-m3";
+
+    mockUseProjectGrantMilestones.mockReturnValue({
+      data: {
+        project: { uid: PROJECT_UID, chainID: 10, owner: "0x", details: { title: "T" } },
+        grant: { uid: GRANT_UID } as never,
+        grantMilestones: [
+          makeOnChain({ uid: APP_M1, title: "Milestone 1", dueDate: "2025-06-01" }),
+          makeOnChain({ uid: APP_M2, title: "Milestone 2", dueDate: "2025-07-01" }),
+          makeOnChain({ uid: PROJECT_M2_OTHER, title: "Milestone 2", dueDate: "2025-08-01" }),
+          makeOnChain({ uid: PROJECT_M3, title: "Milestone 3", dueDate: "2025-09-01" }),
+        ],
+      },
+      isLoading: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+
+    const application = makeApplication({
+      applicationData: {
+        projectMilestones: [
+          {
+            title: "Milestone 1",
+            description: "",
+            dueDate: "2025-06-01",
+            milestoneUID: APP_M1,
+          },
+          {
+            title: "Milestone 2",
+            description: "",
+            dueDate: "2025-07-01",
+            milestoneUID: APP_M2,
+          },
+        ],
+      },
+    });
+
+    render(<MilestonesTab application={application} isOwner={true} />);
+
+    // Two off-chain (the application's own M1, M2) + two on-chain
+    // (the OTHER M2 and M3). Crucially the second "Milestone 2" survives —
+    // a title-only dedup would have hidden it.
+    expect(screen.getAllByTestId("off-chain-row")).toHaveLength(2);
+    const onChainRows = screen.getAllByTestId("on-chain-row");
+    expect(onChainRows).toHaveLength(2);
+    const onChainUIDs = onChainRows.map((el) => el.getAttribute("data-uid"));
+    expect(onChainUIDs).toContain(PROJECT_M2_OTHER);
+    expect(onChainUIDs).toContain(PROJECT_M3);
   });
 
   it("should_sort_completed_or_verified_rows_below_pending_then_due_date_ascending", () => {
