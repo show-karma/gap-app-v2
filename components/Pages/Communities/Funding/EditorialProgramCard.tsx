@@ -84,22 +84,19 @@ export function computeProgramView(program: FundingProgram): ProgramComputed {
 }
 
 const URGENCY_BADGE: Record<Urgency, string> = {
-  urgent: "bg-red-600 text-white ring-1 ring-inset ring-red-700/40 dark:bg-red-500 dark:text-white",
-  closing:
-    "bg-amber-500 text-white ring-1 ring-inset ring-amber-600/40 dark:bg-amber-500 dark:text-white",
-  open: "bg-emerald-600 text-white ring-1 ring-inset ring-emerald-700/40 dark:bg-emerald-500 dark:text-white",
-  closed:
-    "bg-zinc-200 text-zinc-700 ring-1 ring-inset ring-zinc-300 dark:bg-zinc-800 dark:text-zinc-300 dark:ring-zinc-700",
-  upcoming:
-    "bg-sky-600 text-white ring-1 ring-inset ring-sky-700/40 dark:bg-sky-500 dark:text-white",
+  urgent: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+  closing: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+  open: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+  closed: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300",
+  upcoming: "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400",
 };
 
 const DOT_COLOR: Record<Urgency, string> = {
-  urgent: "bg-white",
-  closing: "bg-white",
-  open: "bg-white",
-  closed: "bg-zinc-500 dark:bg-zinc-400",
-  upcoming: "bg-white",
+  urgent: "bg-red-500",
+  closing: "bg-amber-500",
+  open: "bg-green-500",
+  closed: "bg-zinc-400 dark:bg-zinc-500",
+  upcoming: "bg-sky-500",
 };
 
 function urgencyLabel(u: Urgency, daysLeft: number | null): string {

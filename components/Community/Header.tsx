@@ -1,6 +1,6 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronRightIcon } from "lucide-react";
+import { ChevronLeftIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
@@ -205,16 +205,15 @@ const NormalCommunityHeader = ({ community }: { community: Community }) => {
       ) : null}
       <nav
         aria-label="Breadcrumb"
-        className="relative flex items-center gap-1.5 text-[13px] text-gray-500 dark:text-zinc-400 animate-fade-in-up"
+        className="relative flex items-center text-[13px] animate-fade-in-up"
       >
         <Link
           href={PAGES.COMMUNITIES}
-          className="hover:text-gray-900 dark:hover:text-white transition-colors"
+          className="inline-flex items-center gap-1 font-medium text-gray-500 hover:text-gray-900 dark:text-zinc-400 dark:hover:text-white transition-colors"
         >
-          Communities
+          <ChevronLeftIcon size={14} aria-hidden />
+          View all communities
         </Link>
-        <ChevronRightIcon size={12} className="text-gray-400 dark:text-zinc-600" />
-        <span className="font-medium text-gray-900 dark:text-white">{name}</span>
       </nav>
       <div className="relative flex flex-row gap-5 flex-wrap max-lg:flex-col items-center max-lg:items-stretch w-full">
         <div className="flex h-max shrink-0 flex-row items-center justify-start gap-[18px] min-w-0 max-lg:w-full">
@@ -263,7 +262,7 @@ const NormalCommunityHeader = ({ community }: { community: Community }) => {
           />
         </div>
         <div
-          className="flex shrink-0 items-center gap-2 max-lg:w-full max-lg:justify-center animate-fade-in-up"
+          className="flex items-center gap-2 max-lg:w-full max-lg:justify-center lg:basis-full lg:justify-end xl:basis-auto xl:shrink-0 animate-fade-in-up"
           style={{ animationDelay: "240ms" }}
         >
           <button

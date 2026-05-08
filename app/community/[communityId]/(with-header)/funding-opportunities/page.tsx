@@ -1,8 +1,9 @@
 "use client";
 
-import { AlertCircle, FileText, RefreshCw, Search } from "lucide-react";
-import { useParams } from "next/navigation";
-import { useMemo } from "react";
+import { AlertCircle, RefreshCw, Search } from "lucide-react";
+import Image from "next/image";
+import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo } from "react";
 import {
   computeProgramView,
   EditorialProgramCard,
@@ -23,12 +24,53 @@ const STATUS_TABS: Array<{ key: ProgramStatus | "all"; label: string }> = [
   { key: "ended", label: "Closed" },
 ];
 
+const VALID_STATUSES: ReadonlyArray<ProgramStatus | "all"> = ["all", "active", "upcoming", "ended"];
+
 const SKELETON_KEYS = ["sk-1", "sk-2", "sk-3", "sk-4", "sk-5", "sk-6"];
 
 export default function FundingOpportunitiesPage() {
   const { communityId } = useParams<{ communityId: string }>();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { programs, loading, error, filters, setFilters, refetch } = usePrograms(communityId);
   const accentColor = useCommunityAccent(communityId);
+
+  const urlStatusRaw = searchParams.get("status");
+  const urlStatus: ProgramStatus | "all" | null =
+    urlStatusRaw && (VALID_STATUSES as readonly string[]).includes(urlStatusRaw)
+      ? (urlStatusRaw as ProgramStatus | "all")
+      : null;
+  const urlSearch = searchParams.get("q") ?? "";
+
+  // Seed filter store from URL on mount / when URL changes externally.
+  useEffect(() => {
+    const desiredStatus = urlStatus === "all" || urlStatus === null ? undefined : urlStatus;
+    const desiredSearch = urlSearch || undefined;
+    if (filters.status !== desiredStatus || filters.search !== desiredSearch) {
+      setFilters({ ...filters, status: desiredStatus, search: desiredSearch });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlStatus, urlSearch]);
+
+  const writeUrl = useCallback(
+    (next: { status?: ProgramStatus | "all"; search?: string }) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (next.status && next.status !== "all") {
+        params.set("status", next.status);
+      } else {
+        params.delete("status");
+      }
+      if (next.search?.trim()) {
+        params.set("q", next.search.trim());
+      } else {
+        params.delete("q");
+      }
+      const qs = params.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    },
+    [pathname, router, searchParams]
+  );
 
   const stats = useMemo(() => {
     let totalPool = 0;
@@ -109,10 +151,18 @@ export default function FundingOpportunitiesPage() {
         others={others}
         activeStatus={activeStatus}
         searchValue={filters.search ?? ""}
-        onSearchChange={(v) => setFilters({ ...filters, search: v || undefined })}
-        onStatusChange={(key) =>
-          setFilters({ ...filters, status: key === "all" ? undefined : key })
-        }
+        onSearchChange={(v) => {
+          setFilters({ ...filters, search: v || undefined });
+          writeUrl({ status: activeStatus, search: v });
+        }}
+        onStatusChange={(key) => {
+          setFilters({ ...filters, status: key === "all" ? undefined : key });
+          writeUrl({ status: key, search: filters.search });
+        }}
+        onClearFilters={() => {
+          setFilters({ ...filters, status: undefined, search: undefined });
+          writeUrl({ status: "all", search: "" });
+        }}
         onRetry={refetch}
       />
     </div>
@@ -130,6 +180,7 @@ interface ProgramsContentProps {
   searchValue: string;
   onSearchChange: (v: string) => void;
   onStatusChange: (key: ProgramStatus | "all") => void;
+  onClearFilters: () => void;
   onRetry: () => void;
 }
 
@@ -144,6 +195,7 @@ function ProgramsContent({
   searchValue,
   onSearchChange,
   onStatusChange,
+  onClearFilters,
   onRetry,
 }: ProgramsContentProps) {
   if (loading) return <ProgramsSkeleton />;
@@ -161,14 +213,8 @@ function ProgramsContent({
         onSearchChange={onSearchChange}
         onStatusChange={onStatusChange}
       />
-      {programs.length === 0 ? (
-        <div className="rounded-xl border border-border py-12 text-center text-muted-foreground">
-          No programs match the current filters — try adjusting your search or status.
-        </div>
-      ) : others.length === 0 ? (
-        <div className="rounded-xl border border-border py-12 text-center text-muted-foreground">
-          No additional programs match — try adjusting filters.
-        </div>
+      {programs.length === 0 || others.length === 0 ? (
+        <ProgramsFilteredEmpty onClearFilters={onClearFilters} />
       ) : (
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
           {others.map((program, idx) => (
@@ -379,13 +425,58 @@ function ProgramsError({ onRetry }: { onRetry: () => void }) {
 
 function ProgramsEmpty() {
   return (
-    <div className="rounded-xl border border-border py-16 text-center">
-      <FileText className="mx-auto mb-2 h-12 w-12 text-muted-foreground" />
-      <h3 className="mb-1 text-lg font-semibold">No programs available</h3>
-      <p className="text-muted-foreground">
-        There are currently no programs in this community. Check back later for new funding
-        opportunities.
-      </p>
+    <div className="flex h-max flex-1 items-center justify-center rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-6 py-16">
+      <div className="flex max-w-[438px] flex-col items-center justify-center gap-6">
+        <Image
+          src="/images/comments.png"
+          alt="No funding opportunities yet"
+          width={438}
+          height={185}
+          className="object-cover"
+          loading="lazy"
+        />
+        <div className="flex w-full flex-col items-center justify-center gap-3">
+          <p className="text-center text-lg font-semibold text-black dark:text-zinc-100">
+            No programs available
+          </p>
+          <p className="text-center text-base font-normal text-gray-600 dark:text-zinc-400">
+            There are currently no funding programs in this community. Check back later for new
+            opportunities.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProgramsFilteredEmpty({ onClearFilters }: { onClearFilters: () => void }) {
+  return (
+    <div className="flex h-max flex-1 items-center justify-center rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-6 py-16">
+      <div className="flex max-w-[438px] flex-col items-center justify-center gap-6">
+        <Image
+          src="/images/comments.png"
+          alt="No matching programs"
+          width={438}
+          height={185}
+          className="object-cover"
+          loading="lazy"
+        />
+        <div className="flex w-full flex-col items-center justify-center gap-3">
+          <p className="text-center text-lg font-semibold text-black dark:text-zinc-100">
+            No programs match your filters
+          </p>
+          <p className="text-center text-base font-normal text-gray-600 dark:text-zinc-400">
+            Try a different status or search term to find more funding opportunities.
+          </p>
+          <button
+            type="button"
+            onClick={onClearFilters}
+            className="mt-2 inline-flex items-center justify-center rounded-md border border-gray-300 dark:border-zinc-700 px-4 py-2 text-sm font-semibold text-gray-700 dark:text-zinc-200 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
+          >
+            Clear filters
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

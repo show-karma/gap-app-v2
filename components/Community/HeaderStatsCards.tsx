@@ -1,61 +1,106 @@
 "use client";
 
-import { CheckIcon } from "lucide-react";
+import { AwardIcon, CheckIcon, FileTextIcon, FolderIcon, TargetIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import formatCurrency from "@/utilities/formatCurrency";
 import { cn } from "@/utilities/tailwind";
 
+type Tone = "sky" | "teal" | "amber" | "emerald";
+
+const TONE_STYLES: Record<
+  Tone,
+  { iconWrap: string; iconColor: string; ring: string; bg: string; bar: string; barTrack: string }
+> = {
+  sky: {
+    iconWrap: "bg-sky-50 dark:bg-sky-500/10",
+    iconColor: "text-sky-600 dark:text-sky-300",
+    ring: "ring-sky-100/80 dark:ring-sky-500/15",
+    bg: "from-sky-50/60 dark:from-sky-500/5",
+    bar: "bg-sky-500",
+    barTrack: "bg-sky-100 dark:bg-sky-500/15",
+  },
+  teal: {
+    iconWrap: "bg-teal-50 dark:bg-teal-500/10",
+    iconColor: "text-teal-600 dark:text-teal-300",
+    ring: "ring-teal-100/80 dark:ring-teal-500/15",
+    bg: "from-teal-50/60 dark:from-teal-500/5",
+    bar: "bg-teal-500",
+    barTrack: "bg-teal-100 dark:bg-teal-500/15",
+  },
+  amber: {
+    iconWrap: "bg-amber-50 dark:bg-amber-500/10",
+    iconColor: "text-amber-600 dark:text-amber-300",
+    ring: "ring-amber-100/80 dark:ring-amber-500/15",
+    bg: "from-amber-50/60 dark:from-amber-500/5",
+    bar: "bg-amber-500",
+    barTrack: "bg-amber-100 dark:bg-amber-500/15",
+  },
+  emerald: {
+    iconWrap: "bg-emerald-50 dark:bg-emerald-500/10",
+    iconColor: "text-emerald-600 dark:text-emerald-300",
+    ring: "ring-emerald-100/80 dark:ring-emerald-500/15",
+    bg: "from-emerald-50/60 dark:from-emerald-500/5",
+    bar: "bg-emerald-500",
+    barTrack: "bg-emerald-100 dark:bg-emerald-500/15",
+  },
+};
+
 interface StatCardProps {
   label: string;
   value: ReactNode;
-  accentClass: string;
+  tone: Tone;
+  icon: ReactNode;
   isLoading?: boolean;
   tooltip?: ReactNode;
-  trailing?: ReactNode;
-  className?: string;
 }
 
-const StatCard = ({
-  label,
-  value,
-  accentClass,
-  isLoading,
-  tooltip,
-  trailing,
-  className,
-}: StatCardProps) => (
-  <div
-    className={cn(
-      "group relative flex min-w-0 flex-col gap-1 rounded-xl border border-gray-200/80 bg-white px-3 py-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-shadow hover:shadow-[0_8px_24px_-12px_rgba(15,23,42,0.12)] dark:border-zinc-800 dark:bg-zinc-900/80",
-      className
-    )}
-  >
-    <span
-      aria-hidden
-      className={cn("absolute left-0 top-2.5 bottom-2.5 w-[3px] rounded-r-full", accentClass)}
-    />
-    <div className="flex items-baseline justify-between gap-2 pl-1.5">
-      {isLoading ? (
-        <Skeleton className="h-6 w-12" />
-      ) : (
-        <span className="text-[20px] font-semibold leading-none tracking-[-0.02em] tabular-nums text-gray-900 dark:text-white truncate">
-          {value}
-        </span>
+const StatCard = ({ label, value, tone, icon, isLoading, tooltip }: StatCardProps) => {
+  const styles = TONE_STYLES[tone];
+  return (
+    <div
+      className={cn(
+        "group relative flex min-w-0 flex-col gap-2 overflow-hidden rounded-2xl bg-white px-3.5 py-3 ring-1 transition-all hover:-translate-y-px hover:shadow-[0_10px_30px_-15px_rgba(15,23,42,0.18)] dark:bg-zinc-900/80",
+        styles.ring
       )}
-      {trailing}
+    >
+      <span
+        aria-hidden
+        className={cn(
+          "pointer-events-none absolute inset-0 bg-gradient-to-br to-transparent opacity-70",
+          styles.bg
+        )}
+      />
+      <div className="relative flex items-start justify-between gap-2">
+        <span
+          className={cn(
+            "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg",
+            styles.iconWrap,
+            styles.iconColor
+          )}
+        >
+          {icon}
+        </span>
+        {tooltip ? (
+          <InfoTooltip content={tooltip} side="top" align="end" contentClassName="max-w-sm" />
+        ) : null}
+      </div>
+      <div className="relative flex flex-col gap-0.5">
+        {isLoading ? (
+          <Skeleton className="h-7 w-16" />
+        ) : (
+          <span className="text-[22px] font-semibold leading-none tracking-[-0.025em] tabular-nums text-gray-900 dark:text-white truncate">
+            {value}
+          </span>
+        )}
+        <span className="truncate text-[12px] font-medium leading-tight text-gray-500 dark:text-zinc-400">
+          {label}
+        </span>
+      </div>
     </div>
-    <div className="flex items-center gap-1 pl-1.5 min-w-0">
-      <span className="truncate text-[11.5px] font-medium leading-tight text-gray-500 dark:text-zinc-400">
-        {label}
-      </span>
-      {tooltip ? (
-        <InfoTooltip content={tooltip} side="top" align="start" contentClassName="max-w-sm" />
-      ) : null}
-    </div>
-  </div>
-);
+  );
+};
 
 interface MilestoneStatCardProps {
   completed: number;
@@ -67,30 +112,52 @@ const MilestoneStatCard = ({ completed, total, isLoading }: MilestoneStatCardPro
   const safeCompleted = Math.max(0, Math.min(completed, total));
   const pct = total > 0 ? (safeCompleted / total) * 100 : 0;
   const isComplete = total > 0 && safeCompleted === total;
+  const styles = TONE_STYLES.emerald;
 
   return (
-    <div className="group relative flex min-w-0 flex-col gap-1 rounded-xl border border-gray-200/80 bg-white px-3 py-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-shadow hover:shadow-[0_8px_24px_-12px_rgba(15,23,42,0.12)] dark:border-zinc-800 dark:bg-zinc-900/80 sm:col-span-2 lg:col-span-1">
+    <div
+      className={cn(
+        "group relative flex min-w-0 flex-col gap-2 overflow-hidden rounded-2xl bg-white px-3.5 py-3 ring-1 transition-all hover:-translate-y-px hover:shadow-[0_10px_30px_-15px_rgba(15,23,42,0.18)] dark:bg-zinc-900/80",
+        styles.ring
+      )}
+    >
       <span
         aria-hidden
-        className="absolute left-0 top-2.5 bottom-2.5 w-[3px] rounded-r-full bg-emerald-500"
+        className={cn(
+          "pointer-events-none absolute inset-0 bg-gradient-to-br to-transparent opacity-70",
+          styles.bg
+        )}
       />
-      <div className="flex items-baseline justify-between gap-2 pl-1.5">
-        {isLoading ? (
-          <Skeleton className="h-6 w-20" />
+      <div className="relative flex items-start justify-between gap-2">
+        <span
+          className={cn(
+            "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg",
+            styles.iconWrap,
+            styles.iconColor
+          )}
+        >
+          <TargetIcon size={14} aria-hidden />
+        </span>
+        {isComplete && !isLoading ? (
+          <span className="inline-flex h-5 items-center gap-1 rounded-full bg-emerald-500/10 px-1.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
+            <CheckIcon size={10} aria-hidden /> Done
+          </span>
         ) : (
-          <span className="text-[20px] font-semibold leading-none tracking-[-0.02em] tabular-nums text-gray-900 dark:text-white whitespace-nowrap truncate">
+          <span className="text-[11px] font-semibold tabular-nums text-emerald-700 dark:text-emerald-300">
+            {pct.toFixed(0)}%
+          </span>
+        )}
+      </div>
+      <div className="relative flex flex-col gap-1.5">
+        {isLoading ? (
+          <Skeleton className="h-7 w-24" />
+        ) : (
+          <span className="text-[22px] font-semibold leading-none tracking-[-0.025em] tabular-nums text-gray-900 dark:text-white whitespace-nowrap truncate">
             {completed} <span className="text-gray-400 dark:text-zinc-500">/</span> {total}
           </span>
         )}
-        {isComplete && !isLoading ? (
-          <span className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white">
-            <CheckIcon size={10} aria-hidden />
-          </span>
-        ) : null}
-      </div>
-      <div className="flex items-center gap-2 pl-1.5">
         <div
-          className="relative h-1 flex-1 min-w-0 overflow-hidden rounded-full bg-gray-200 dark:bg-zinc-800"
+          className={cn("relative h-1 w-full overflow-hidden rounded-full", styles.barTrack)}
           role="progressbar"
           aria-valuenow={pct}
           aria-valuemin={0}
@@ -98,17 +165,14 @@ const MilestoneStatCard = ({ completed, total, isLoading }: MilestoneStatCardPro
           aria-label={`${pct.toFixed(0)}% of milestones completed`}
         >
           <span
-            className="block h-full bg-emerald-500 transition-all dark:bg-emerald-400"
+            className={cn("block h-full transition-all", styles.bar)}
             style={{ width: `${pct}%` }}
           />
         </div>
-        <span className="text-[11px] font-semibold tabular-nums text-gray-500 dark:text-zinc-400 shrink-0">
-          {pct.toFixed(0)}%
+        <span className="truncate text-[12px] font-medium leading-tight text-gray-500 dark:text-zinc-400">
+          Milestones
         </span>
       </div>
-      <span className="pl-1.5 text-[11.5px] font-medium leading-tight text-gray-500 dark:text-zinc-400 truncate">
-        Milestones
-      </span>
     </div>
   );
 };
@@ -137,23 +201,26 @@ export const HeaderStatsCards = ({
   if (!hasData) return null;
 
   return (
-    <div className="grid w-full grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="flex w-full flex-wrap justify-end gap-2.5 lg:flex-nowrap [&>*]:flex-1 [&>*]:basis-[140px] lg:[&>*]:max-w-[180px]">
       <StatCard
         label="Total projects"
         value={projectsCount ? formatCurrency(projectsCount) : "—"}
-        accentClass="bg-sky-500"
+        tone="sky"
+        icon={<FolderIcon size={14} aria-hidden />}
         isLoading={isLoading}
       />
       <StatCard
         label="Total grants"
         value={totalGrants ? formatCurrency(totalGrants) : "—"}
-        accentClass="bg-teal-500"
+        tone="teal"
+        icon={<AwardIcon size={14} aria-hidden />}
         isLoading={isLoading}
       />
       <StatCard
         label="Project updates"
         value={projectUpdates ? formatCurrency(projectUpdates) : "—"}
-        accentClass="bg-amber-500"
+        tone="amber"
+        icon={<FileTextIcon size={14} aria-hidden />}
         isLoading={isLoading}
         tooltip={updatesBreakdown}
       />

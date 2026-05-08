@@ -291,7 +291,7 @@ export default function CommunityUpdatesPage() {
           </div>
         ) : sortedRawData && sortedRawData.length > 0 ? (
           <>
-            <div className="flex flex-col gap-4 px-2">
+            <div className="flex flex-col gap-4">
               {sortedRawData.map((milestone) => (
                 <CommunityMilestoneCard
                   key={milestone.uid}

@@ -45,7 +45,7 @@ export const ProgramFilter = ({ defaultProgramSelected, onChange }: ProgramFilte
         htmlFor="filter-by-programs"
         className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
       >
-        Program
+        Choose Program
       </label>
 
       <SearchWithValueDropdown
