@@ -18,6 +18,7 @@ import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileN
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
+import { useMilestoneImpactAnswers } from "@/hooks/useMilestoneImpactAnswers";
 import type { GrantMilestoneWithCompletion } from "@/services/milestones";
 import { useAgentChatStore } from "@/store/agentChat";
 import { formatDate } from "@/utilities/formatDate";
@@ -219,6 +220,18 @@ export function MilestoneCard({
     () => milestone.verificationDetails !== null,
     [milestone.verificationDetails]
   );
+
+  const completionDeliverables = useMemo(
+    () => (useOnChainData ? (milestone.completionDetails?.deliverables ?? []) : []),
+    [useOnChainData, milestone.completionDetails?.deliverables]
+  );
+
+  // Metrics (impact indicators) attached to this on-chain completion. The hook
+  // skips the fetch when no UID is passed, so funding-application-only
+  // completions don't trigger a request.
+  const { data: milestoneMetrics } = useMilestoneImpactAnswers({
+    milestoneUID: useOnChainData && hasCompletion ? milestone.uid : undefined,
+  });
 
   const statusInfo = useMemo(() => {
     const status = getMilestoneStatus(milestone);
@@ -526,6 +539,89 @@ export function MilestoneCard({
                 <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-blue-50 dark:from-blue-900/10 to-transparent pointer-events-none" />
               )}
             </div>
+            {completionDeliverables.length > 0 && (
+              <div className="mt-3 flex flex-col gap-2">
+                <p className="text-sm font-semibold text-blue-900 dark:text-blue-200">
+                  Deliverables
+                </p>
+                {completionDeliverables.map((deliverable, idx) => (
+                  <div
+                    key={`${deliverable.name ?? "deliverable"}-${idx}`}
+                    className="border border-gray-200 dark:border-zinc-600 rounded-lg p-3 bg-white dark:bg-zinc-800"
+                  >
+                    <div className="flex flex-col gap-1">
+                      {deliverable.name && (
+                        <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                          {deliverable.name}
+                        </p>
+                      )}
+                      {deliverable.description && (
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          {deliverable.description}
+                        </p>
+                      )}
+                      {deliverable.proof && (
+                        <a
+                          href={
+                            deliverable.proof.startsWith("http")
+                              ? deliverable.proof
+                              : `https://${deliverable.proof}`
+                          }
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-brand-blue hover:underline text-sm break-all"
+                        >
+                          {deliverable.proof}
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {milestoneMetrics && milestoneMetrics.length > 0 && (
+              <div className="mt-3 flex flex-col gap-2">
+                <p className="text-sm font-semibold text-blue-900 dark:text-blue-200">Metrics</p>
+                {milestoneMetrics.map((metric, idx) => {
+                  const datapoint = metric.datapoints?.[0];
+                  return (
+                    <div
+                      key={metric.id || `${metric.name}-${idx}`}
+                      className="border border-gray-200 dark:border-zinc-600 rounded-lg p-3 bg-white dark:bg-zinc-800"
+                    >
+                      <div className="flex flex-col gap-1">
+                        <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                          {metric.name || "Untitled Indicator"}
+                        </p>
+                        {datapoint && (
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            Value:{" "}
+                            <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                              {datapoint.value}
+                            </span>
+                            {metric.unitOfMeasure ? ` ${metric.unitOfMeasure}` : ""}
+                          </p>
+                        )}
+                        {datapoint?.proof && (
+                          <a
+                            href={
+                              datapoint.proof.startsWith("http")
+                                ? datapoint.proof
+                                : `https://${datapoint.proof}`
+                            }
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-brand-blue hover:underline text-sm break-all"
+                          >
+                            {datapoint.proof}
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
               Submitted:{" "}
               {formatDate(
