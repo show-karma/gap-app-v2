@@ -18,6 +18,7 @@ import { renderWithProviders } from "../../utils/render";
 // Mock dependencies
 vi.mock("next/navigation", () => ({
   useParams: () => ({ communityId: "test-community" }),
+  usePathname: vi.fn(() => "/"),
 }));
 
 vi.mock("next/image", () => ({

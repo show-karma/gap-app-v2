@@ -10,6 +10,25 @@ import { useOnramp } from "../useOnramp";
 vi.mock("react-hot-toast");
 vi.mock("@/services/donations.service");
 
+vi.mock("wagmi", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("wagmi")>();
+  return {
+    ...actual,
+    useConfig: vi.fn(() => ({
+      chains: [],
+      connectors: [],
+      state: { connections: new Map(), chainId: 1, status: "disconnected" as const },
+    })),
+    useAccount: vi.fn(() => ({
+      address: undefined,
+      isConnected: false,
+      chain: undefined,
+      chainId: undefined,
+    })),
+    useChainId: vi.fn(() => 1),
+  };
+});
+
 const mockDonationsService = donationsService as vi.Mocked<typeof donationsService>;
 const mockToast = toast as vi.Mocked<typeof toast>;
 

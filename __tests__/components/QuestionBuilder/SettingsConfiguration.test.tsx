@@ -461,8 +461,6 @@ describe("SettingsConfiguration - Access Code", () => {
       // Clear the input
       await user.clear(input);
 
-      await user.type(input, "");
-
       await waitFor(() => {
         expect(mockOnUpdate).toHaveBeenCalled();
       });

@@ -29,18 +29,21 @@ interface MentionAutocompleteProps {
   onClose: () => void;
   /** Optional grantee contacts fetched from the application endpoint */
   granteeContacts?: GranteeContact[];
+  /** Required to enable the Grantees section + its invite button */
+  onInviteGrantee?: () => void;
 }
 
 const MentionAutocomplete: FC<MentionAutocompleteProps> = ({
   programId,
   isOpen,
   filterText,
-  isAdmin,
+  isAdmin: _isAdmin,
   selectedIndex,
   caretPosition,
   onSelect,
   onInviteNew,
   granteeContacts,
+  onInviteGrantee,
 }) => {
   const { data: reviewers, isLoading, isError, error, refetch } = useAllReviewers(programId);
   const { authenticated } = useAuth();
@@ -68,17 +71,14 @@ const MentionAutocomplete: FC<MentionAutocompleteProps> = ({
     );
   }, [granteeContacts, filterText]);
 
-  // Flat ordered list of selectable items for keyboard navigation:
-  // reviewers first, then grantees, then invite button (if admin)
-  const selectableItems = useMemo(() => {
-    const reviewerItems = filteredReviewers.map((r) => ({ name: r.name, email: r.email }));
-    const granteeItems = filteredGrantees.map((g) => ({ name: g.name, email: g.email }));
-    return [...reviewerItems, ...granteeItems];
-  }, [filteredReviewers, filteredGrantees]);
-
   if (!isOpen) return null;
 
-  const hasAnyResults = filteredReviewers.length > 0 || filteredGrantees.length > 0;
+  const hasGranteeSection = granteeContacts !== undefined;
+  const showGranteeInviteButton = hasGranteeSection && !!onInviteGrantee;
+  const reviewerCount = filteredReviewers.length;
+  const inviteReviewerIndex = reviewerCount;
+  const granteeStartIndex = reviewerCount + 1;
+  const inviteGranteeIndex = granteeStartIndex + filteredGrantees.length;
 
   return (
     <div
@@ -116,46 +116,48 @@ const MentionAutocomplete: FC<MentionAutocompleteProps> = ({
             </div>
           ) : (
             <>
-              {!hasAnyResults && (
-                <div className="px-3 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
-                  No results found.
-                </div>
-              )}
+              <CommandGroup heading="Reviewers">
+                {filteredReviewers.map((reviewer, index) => (
+                  <CommandItem
+                    key={reviewer.email}
+                    value={reviewer.name}
+                    onSelect={() => {
+                      onSelect({
+                        name: reviewer.name,
+                        email: reviewer.email,
+                      });
+                    }}
+                    className={cn(
+                      "flex items-center gap-2 cursor-pointer",
+                      index === selectedIndex && "bg-blue-50 dark:bg-blue-900/30"
+                    )}
+                  >
+                    <UserIcon className="h-4 w-4 text-gray-400" />
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium">{reviewer.name}</span>
+                      <span className="text-xs text-gray-500">{reviewer.email}</span>
+                    </div>
+                  </CommandItem>
+                ))}
+                <CommandItem
+                  onSelect={onInviteNew}
+                  className={cn(
+                    "flex items-center gap-2 cursor-pointer text-blue-600 dark:text-blue-400",
+                    selectedIndex === inviteReviewerIndex && "bg-blue-50 dark:bg-blue-900/30"
+                  )}
+                >
+                  <PlusIcon className="h-4 w-4" />
+                  <span className="text-sm font-medium">Invite new reviewer</span>
+                </CommandItem>
+              </CommandGroup>
 
-              {filteredReviewers.length > 0 && (
-                <CommandGroup heading="Reviewers">
-                  {filteredReviewers.map((reviewer, index) => (
-                    <CommandItem
-                      key={reviewer.email}
-                      value={reviewer.name}
-                      onSelect={() => {
-                        onSelect({
-                          name: reviewer.name,
-                          email: reviewer.email,
-                        });
-                      }}
-                      className={cn(
-                        "flex items-center gap-2 cursor-pointer",
-                        index === selectedIndex && "bg-blue-50 dark:bg-blue-900/30"
-                      )}
-                    >
-                      <UserIcon className="h-4 w-4 text-gray-400" />
-                      <div className="flex flex-col">
-                        <span className="text-sm font-medium">{reviewer.name}</span>
-                        <span className="text-xs text-gray-500">{reviewer.email}</span>
-                      </div>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              )}
-
-              {filteredGrantees.length > 0 && (
+              {hasGranteeSection && (
                 <>
-                  {filteredReviewers.length > 0 && <CommandSeparator />}
+                  <CommandSeparator />
                   <CommandGroup heading="Grantees">
                     <TooltipProvider>
                       {filteredGrantees.map((grantee, granteeIndex) => {
-                        const listIndex = filteredReviewers.length + granteeIndex;
+                        const listIndex = granteeStartIndex + granteeIndex;
                         const hasEmail = !!grantee.email;
                         const isDisabled = !hasEmail;
 
@@ -226,24 +228,18 @@ const MentionAutocomplete: FC<MentionAutocompleteProps> = ({
                         );
                       })}
                     </TooltipProvider>
-                  </CommandGroup>
-                </>
-              )}
-
-              {isAdmin && (
-                <>
-                  <CommandSeparator />
-                  <CommandGroup>
-                    <CommandItem
-                      onSelect={onInviteNew}
-                      className={cn(
-                        "flex items-center gap-2 cursor-pointer text-blue-600 dark:text-blue-400",
-                        selectedIndex === selectableItems.length && "bg-blue-50 dark:bg-blue-900/30"
-                      )}
-                    >
-                      <PlusIcon className="h-4 w-4" />
-                      <span className="text-sm font-medium">Invite new reviewer</span>
-                    </CommandItem>
+                    {showGranteeInviteButton && (
+                      <CommandItem
+                        onSelect={onInviteGrantee}
+                        className={cn(
+                          "flex items-center gap-2 cursor-pointer text-blue-600 dark:text-blue-400",
+                          selectedIndex === inviteGranteeIndex && "bg-blue-50 dark:bg-blue-900/30"
+                        )}
+                      >
+                        <PlusIcon className="h-4 w-4" />
+                        <span className="text-sm font-medium">Invite new grantee</span>
+                      </CommandItem>
+                    )}
                   </CommandGroup>
                 </>
               )}

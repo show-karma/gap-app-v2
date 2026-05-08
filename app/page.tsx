@@ -26,7 +26,7 @@ export const metadata: Metadata = {
 };
 
 const HorizontalLine = ({ className }: { className?: string }) => {
-  return <hr className={cn("w-full h-[1px] bg-border max-w-[75%]", className)} />;
+  return <hr className={cn("w-full h-[1px] bg-border max-w-[75%] border-0", className)} />;
 };
 
 export default function Index() {

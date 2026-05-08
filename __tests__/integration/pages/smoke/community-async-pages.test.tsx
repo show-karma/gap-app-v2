@@ -224,10 +224,10 @@ describe("Community async server pages — happy path", () => {
     expect(screen.getByTestId("public-report-list-page")).toBeInTheDocument();
   });
 
-  it("/(with-header)/reports/[month] renders PublicReportViewPage", async () => {
+  it("/(with-header)/reports/[runDate] renders PublicReportViewPage", async () => {
     await renderAsyncPage(
-      () => import("@/app/community/[communityId]/(with-header)/reports/[month]/page"),
-      { params: Promise.resolve({ communityId: "c1", month: "2025-04" }) }
+      () => import("@/app/community/[communityId]/(with-header)/reports/[runDate]/page"),
+      { params: Promise.resolve({ communityId: "c1", runDate: "2025-04-01" }) }
     );
     expect(screen.getByTestId("public-report-view-page")).toBeInTheDocument();
   });
@@ -240,8 +240,8 @@ describe("Community async server pages — happy path", () => {
   });
 });
 
-describe("Community async server pages — month route validation", () => {
-  it("/(with-header)/reports/[month] calls notFound for invalid month", async () => {
+describe("Community async server pages — runDate route validation", () => {
+  it("/(with-header)/reports/[runDate] calls notFound for invalid runDate", async () => {
     const navigation = await import("next/navigation");
     const notFoundMock = vi.mocked(navigation.notFound);
     notFoundMock.mockImplementationOnce(() => {
@@ -250,10 +250,10 @@ describe("Community async server pages — month route validation", () => {
       throw err;
     });
     const { default: Page } = await import(
-      "@/app/community/[communityId]/(with-header)/reports/[month]/page"
+      "@/app/community/[communityId]/(with-header)/reports/[runDate]/page"
     );
     await expect(
-      Page({ params: Promise.resolve({ communityId: "c1", month: "not-a-month" }) })
+      Page({ params: Promise.resolve({ communityId: "c1", runDate: "not-a-date" }) })
     ).rejects.toThrow(/NEXT_NOT_FOUND/);
     expect(notFoundMock).toHaveBeenCalledTimes(1);
   });

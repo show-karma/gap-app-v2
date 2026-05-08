@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import React from "react";
+import { GrantCommentsService } from "@/src/features/grant-comments/api/grant-comments-service";
 import { useGrantComments } from "@/src/features/grant-comments/hooks/use-grant-comments";
 import type { GrantComment } from "@/src/features/grant-comments/types";
 
@@ -17,9 +18,7 @@ vi.mock("@/src/features/grant-comments/api/grant-comments-service", () => ({
   },
 }));
 
-const mockService = jest.requireMock(
-  "@/src/features/grant-comments/api/grant-comments-service"
-).GrantCommentsService;
+const mockService = vi.mocked(GrantCommentsService);
 
 function createMockComment(overrides: Partial<GrantComment> = {}): GrantComment {
   return {

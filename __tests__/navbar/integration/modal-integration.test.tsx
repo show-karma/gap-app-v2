@@ -3,8 +3,9 @@
  * Tests modal interactions triggered from navbar (profile modal, create project modal)
  */
 
+import "../setup";
 import "./setup-dynamic-mock";
-import { screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Navbar } from "@/src/components/navbar/navbar";
 import { NavbarDesktopNavigation } from "@/src/components/navbar/navbar-desktop-navigation";
@@ -41,10 +42,19 @@ describe("Modal Integration Tests", () => {
         },
       });
 
-      // Open desktop user menu - find avatar images (there might be multiple)
-      const userAvatars = screen.getAllByRole("img", { name: /Recipient profile/i });
-      // Click the first one (desktop)
-      await user.click(userAvatars[0]);
+      // Open desktop user menu. Both desktop (Menubar) and mobile (button)
+      // avatars carry alt="Recipient profile"; we need the one inside the
+      // Menubar trigger so the click toggles the dropdown rather than firing
+      // the mobile profile button directly.
+      await waitFor(async () => {
+        const all = await screen.findAllByRole("img", { name: /Recipient profile/i });
+        // Both desktop and mobile must be mounted for the menubar lookup to
+        // be deterministic.
+        expect(all.length).toBeGreaterThanOrEqual(2);
+      });
+      const allAvatars = screen.getAllByRole("img", { name: /Recipient profile/i });
+      const desktopAvatar = allAvatars.find((img) => img.closest('[role="menuitem"]'))!;
+      await user.click(desktopAvatar);
 
       await waitFor(() => {
         expect(screen.getByText("Edit profile")).toBeInTheDocument();
@@ -73,7 +83,7 @@ describe("Modal Integration Tests", () => {
         },
       });
 
-      const userAvatars = screen.getAllByRole("img", { name: /Recipient profile/i });
+      const userAvatars = await screen.findAllByRole("img", { name: /Recipient profile/i });
       await user.click(userAvatars[0]);
 
       await waitFor(() => {
@@ -102,7 +112,7 @@ describe("Modal Integration Tests", () => {
         },
       });
 
-      const userAvatars = screen.getAllByRole("img", { name: /Recipient profile/i });
+      const userAvatars = await screen.findAllByRole("img", { name: /Recipient profile/i });
       await user.click(userAvatars[0]);
 
       await waitFor(() => {
@@ -135,7 +145,7 @@ describe("Modal Integration Tests", () => {
       });
 
       // Mobile menu has an avatar button (with "Open profile" aria-label) that directly opens profile modal
-      const profileButton = screen.getByLabelText("Open profile");
+      const profileButton = await screen.findByLabelText("Open profile");
       await user.click(profileButton);
 
       // Verify openModal was called
@@ -160,7 +170,7 @@ describe("Modal Integration Tests", () => {
       });
 
       // Click mobile profile button
-      const profileButton = screen.getByLabelText("Open profile");
+      const profileButton = await screen.findByLabelText("Open profile");
       await user.click(profileButton);
 
       // Verify openModal was called with correct params
@@ -190,7 +200,7 @@ describe("Modal Integration Tests", () => {
         });
 
         // Click mobile profile avatar button
-        const profileButton = screen.getByLabelText("Open profile");
+        const profileButton = await screen.findByLabelText("Open profile");
         await user.click(profileButton);
 
         // Should work for all roles
@@ -221,7 +231,7 @@ describe("Modal Integration Tests", () => {
 
       // Open For Builders dropdown
       const forBuildersTrigger = screen.getByRole("button", {
-        name: /for builders/i,
+        name: /for projects/i,
       });
       await user.click(forBuildersTrigger);
 
@@ -256,7 +266,7 @@ describe("Modal Integration Tests", () => {
 
       // Open For Builders dropdown
       const forBuildersTrigger = screen.getByRole("button", {
-        name: /for builders/i,
+        name: /for projects/i,
       });
       await user.click(forBuildersTrigger);
 
@@ -290,7 +300,7 @@ describe("Modal Integration Tests", () => {
 
       // Open dropdown and click Create project
       const forBuildersTrigger = screen.getByRole("button", {
-        name: /for builders/i,
+        name: /for projects/i,
       });
       await user.click(forBuildersTrigger);
 
@@ -324,7 +334,7 @@ describe("Modal Integration Tests", () => {
 
       // Open dropdown
       const forBuildersTrigger = screen.getByRole("button", {
-        name: /for builders/i,
+        name: /for projects/i,
       });
       await user.click(forBuildersTrigger);
 
@@ -352,7 +362,7 @@ describe("Modal Integration Tests", () => {
 
       // Open dropdown
       const forBuildersTrigger = screen.getByRole("button", {
-        name: /for builders/i,
+        name: /for projects/i,
       });
       await user.click(forBuildersTrigger);
 
@@ -379,7 +389,7 @@ describe("Modal Integration Tests", () => {
 
       // Open dropdown
       const forBuildersTrigger = screen.getByRole("button", {
-        name: /for builders/i,
+        name: /for projects/i,
       });
       await user.click(forBuildersTrigger);
 
@@ -415,7 +425,7 @@ describe("Modal Integration Tests", () => {
       });
 
       // Open user menu - may have multiple avatars
-      const userAvatars = screen.getAllByRole("img", { name: /Recipient profile/i });
+      const userAvatars = await screen.findAllByRole("img", { name: /Recipient profile/i });
       await user.click(userAvatars[0]);
 
       await waitFor(() => {
@@ -448,7 +458,7 @@ describe("Modal Integration Tests", () => {
       });
 
       // Use mobile avatar button directly (not drawer)
-      const profileButton = screen.getByLabelText("Open profile");
+      const profileButton = await screen.findByLabelText("Open profile");
       await user.click(profileButton);
 
       await waitFor(() => {
@@ -481,7 +491,7 @@ describe("Modal Integration Tests", () => {
       });
 
       // Open profile modal via mobile button
-      const profileButton = screen.getByLabelText("Open profile");
+      const profileButton = await screen.findByLabelText("Open profile");
       await user.click(profileButton);
 
       expect(mockOpenModal).toHaveBeenCalled();
@@ -517,7 +527,7 @@ describe("Modal Integration Tests", () => {
       });
 
       // Mobile profile button should have aria-label for accessibility
-      const profileButton = screen.getByLabelText("Open profile");
+      const profileButton = await screen.findByLabelText("Open profile");
       expect(profileButton).toBeInTheDocument();
     });
 
@@ -537,7 +547,7 @@ describe("Modal Integration Tests", () => {
       });
 
       // Mobile profile button should be keyboard accessible
-      const profileButton = screen.getByLabelText("Open profile");
+      const profileButton = await screen.findByLabelText("Open profile");
 
       // Test keyboard accessibility - button should be focusable
       profileButton.focus();

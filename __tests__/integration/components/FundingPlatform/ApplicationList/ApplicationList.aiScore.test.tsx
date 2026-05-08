@@ -569,7 +569,10 @@ describe("ApplicationList - AI Score Column", () => {
       expect(milestoneReviewersHeader?.querySelector("svg")).not.toBeInTheDocument();
     });
 
-    it("should hide reviewer columns when programReviewers and milestoneReviewers are empty arrays", () => {
+    it("should show reviewer columns when programId is set, even with empty reviewer arrays", () => {
+      // Reviewer columns are shown based on programId presence, not reviewer list length.
+      // This allows the UI to display the column headers for assignment even when no reviewers
+      // have been assigned yet.
       const applications = [createMockApplication()];
 
       const { container } = renderWithQueryClient(
@@ -592,8 +595,9 @@ describe("ApplicationList - AI Score Column", () => {
         header.textContent?.includes("Milestone Reviewers")
       );
 
-      expect(appReviewersHeader).toBeUndefined();
-      expect(milestoneReviewersHeader).toBeUndefined();
+      // Columns are shown because programId is provided
+      expect(appReviewersHeader).toBeDefined();
+      expect(milestoneReviewersHeader).toBeDefined();
     });
 
     it("should have aria-label on reviewer column headers when visible", () => {

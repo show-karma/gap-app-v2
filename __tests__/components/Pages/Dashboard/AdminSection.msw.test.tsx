@@ -204,19 +204,24 @@ describe("AdminSection (MSW integration)", () => {
   });
 
   describe("empty state", () => {
-    it("renders nothing when user has no admin communities", async () => {
+    it("renders empty state when user has no admin communities", async () => {
       server.use(
         http.get(`${BASE}/v2/user/communities/admin`, () => {
           return HttpResponse.json({ communities: [] });
         })
       );
 
-      const { container } = renderWithProviders(<AdminSection />);
+      renderWithProviders(<AdminSection />);
 
       await waitFor(() => {
-        // Component returns null when no communities — nothing rendered
-        expect(container.innerHTML).toBe("");
+        expect(screen.getByText("No communities yet")).toBeInTheDocument();
       });
+
+      expect(
+        screen.getByText(
+          "Create your first community to get started managing programs and applications."
+        )
+      ).toBeInTheDocument();
     });
   });
 

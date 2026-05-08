@@ -101,7 +101,11 @@ test.describe("Smoke Tests — Application Flow", () => {
         "**/v2/funding-applications/APP-2024-001**": mockJson(application),
       });
       await loginAs("reviewer");
-      await page.goto("/community/optimism/browse-applications/APP-2024-001", GOTO_OPTIONS);
+      // Navigate to the canonical detail URL directly. The legacy
+      // /browse-applications/:ref path 308-redirects to /applications/:ref —
+      // skipping the redirect avoids parallel-load timeouts where the chained
+      // navigation + data fetch exceeds the per-test budget.
+      await page.goto("/community/optimism/applications/APP-2024-001", GOTO_OPTIONS);
       await waitForPageReady(page);
 
       // Should show the application detail or a heading

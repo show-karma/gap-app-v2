@@ -22,6 +22,7 @@ const navigationLinks = [
   { label: "Blog", href: SOCIALS.PARAGRAPH },
   { label: "Guide", href: SOCIALS.DOCS },
   { label: "API Docs", href: karmaLinks.apiDocs },
+  { label: "Skills", href: karmaLinks.skills },
   { label: "Governance", href: karmaLinks.website },
   { label: "llms.txt", href: karmaLinks.llmsTxt },
 ];

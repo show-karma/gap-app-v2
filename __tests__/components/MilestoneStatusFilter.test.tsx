@@ -8,6 +8,7 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace: vi.fn() }),
   useSearchParams: () => new URLSearchParams(),
   useParams: () => ({ projectId: "test-project" }),
+  usePathname: vi.fn(() => "/"),
 }));
 
 describe("MilestoneStatusFilter visibility in ActivityFilters", () => {

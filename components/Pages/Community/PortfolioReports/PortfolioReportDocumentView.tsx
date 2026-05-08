@@ -1,10 +1,16 @@
-import { ChevronRight } from "lucide-react";
+"use client";
+
+import { ChevronRight, Download } from "lucide-react";
 import Link from "next/link";
-import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
+import { useRef, useState } from "react";
+import toast from "react-hot-toast";
+import { Button } from "@/components/ui/button";
+import { downloadReportPdf } from "@/services/portfolio-reports.service";
 import type { PortfolioReport } from "@/types/portfolio-report";
 import type { Community } from "@/types/v2/community";
 import { formatRunDate } from "@/utilities/portfolio-reports/period";
 import { BackToTop } from "./BackToTop";
+import { HtmlReportFrame } from "./HtmlReportFrame";
 import { ReadingProgress } from "./ReadingProgress";
 
 interface Props {
@@ -14,6 +20,14 @@ interface Props {
   backHref: string;
   backLabel?: string;
   bannerText?: string;
+  /**
+   * When provided, surfaces an "Export PDF" button next to the
+   * breadcrumb. Pass `{ communitySlug, reportId }` from contexts where
+   * the viewer is authorized to call the admin-scoped PDF endpoint
+   * (e.g. the admin /preview tab). Public report views should leave
+   * this undefined.
+   */
+  exportContext?: { communitySlug: string; reportId: string };
 }
 
 function formatDate(iso: string): string {
@@ -25,15 +39,42 @@ function formatDate(iso: string): string {
 }
 
 export function PortfolioReportDocumentView({
-  community,
+  community: _community,
   runDate,
   report,
   backHref,
   backLabel = "Reports",
   bannerText,
+  exportContext,
 }: Props) {
-  const slug = community.details.slug;
   const runDateLabel = formatRunDate(runDate).label;
+  const [exportingPdf, setExportingPdf] = useState(false);
+  const exportInFlight = useRef(false);
+
+  const handleExportPdf = async () => {
+    if (!exportContext) return;
+    // Synchronous guard against double-clicks; setState is async and the
+    // disabled prop won't update before a second click in the same tick.
+    if (exportInFlight.current) return;
+    exportInFlight.current = true;
+    setExportingPdf(true);
+    try {
+      const blob = await downloadReportPdf(exportContext.communitySlug, exportContext.reportId);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `portfolio-report-${runDate}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      toast.error(`Failed to export PDF: ${err instanceof Error ? err.message : "Unknown error"}`);
+    } finally {
+      exportInFlight.current = false;
+      setExportingPdf(false);
+    }
+  };
 
   return (
     <>
@@ -45,40 +86,39 @@ export function PortfolioReportDocumentView({
           </div>
         ) : null}
 
-        <nav aria-label="Breadcrumb" className="mb-8">
-          <ol className="flex flex-wrap items-center gap-1.5 text-sm text-zinc-500 dark:text-zinc-400">
-            <li>
-              <Link
-                href={backHref}
-                className="transition-colors hover:text-zinc-900 dark:hover:text-zinc-100"
-              >
-                {backLabel}
-              </Link>
-            </li>
-            <li aria-hidden="true" className="text-zinc-300 dark:text-zinc-700">
-              <ChevronRight className="h-3.5 w-3.5" />
-            </li>
-            <li aria-current="page" className="font-medium text-zinc-900 dark:text-zinc-100">
-              {runDateLabel}
-            </li>
-          </ol>
-        </nav>
+        <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
+          <nav aria-label="Breadcrumb">
+            <ol className="flex flex-wrap items-center gap-1.5 text-sm text-zinc-500 dark:text-zinc-400">
+              <li>
+                <Link
+                  href={backHref}
+                  className="transition-colors hover:text-zinc-900 dark:hover:text-zinc-100"
+                >
+                  {backLabel}
+                </Link>
+              </li>
+              <li aria-hidden="true" className="text-zinc-300 dark:text-zinc-700">
+                <ChevronRight className="h-3.5 w-3.5" />
+              </li>
+              <li aria-current="page" className="font-medium text-zinc-900 dark:text-zinc-100">
+                {runDateLabel}
+              </li>
+            </ol>
+          </nav>
+          {exportContext ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportPdf}
+              disabled={exportingPdf || !report.content}
+            >
+              <Download className="mr-1 h-3 w-3" />
+              {exportingPdf ? "Exporting…" : "Export PDF"}
+            </Button>
+          ) : null}
+        </div>
 
-        <header className="mb-8 border-b border-zinc-200 pb-8 dark:border-zinc-800">
-          <p className="mb-2 font-mono text-[11px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
-            {community.details.name ?? slug} · Portfolio report
-          </p>
-          <h1 className="text-4xl font-bold tracking-tight text-zinc-900 sm:text-5xl dark:text-zinc-100">
-            {runDateLabel}
-          </h1>
-          <p className="mt-4 font-mono text-[11px] uppercase tracking-wider text-zinc-400">
-            {report.publishedAt ? `Published ${formatDate(report.publishedAt)}` : "Draft"}
-          </p>
-        </header>
-
-        <article className="report-article prose prose-zinc max-w-none dark:prose-invert">
-          <MarkdownPreview source={report.markdown} />
-        </article>
+        <HtmlReportFrame html={report.content} title={`Portfolio report — ${runDateLabel}`} />
 
         <footer className="mt-12 border-t border-zinc-200 pt-4 font-mono text-[11px] uppercase tracking-wider text-zinc-400 dark:border-zinc-800 dark:text-zinc-500">
           <span>Generated {formatDate(report.generatedAt)}</span>

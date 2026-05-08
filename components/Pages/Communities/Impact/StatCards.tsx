@@ -1,4 +1,5 @@
 "use client";
+import { CheckIcon } from "@heroicons/react/24/solid";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, usePathname, useSearchParams } from "next/navigation";
 import type { ReactNode } from "react";
@@ -52,36 +53,48 @@ const MilestonesCard = ({ completed, total, isLoading }: MilestonesCardProps) =>
   const completedPct = total > 0 ? (safeCompleted / total) * 100 : 0;
   const pendingPct = total > 0 ? 100 - completedPct : 0;
 
+  const isComplete = total > 0 && safeCompleted === total;
+
   return (
-    <div className="flex flex-1 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 max-sm:col-span-2 min-w-0">
+    <div className="flex flex-[1.4] rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 max-sm:col-span-2 min-w-0">
       <div className="w-1 my-1.5 ml-3 rounded-full bg-emerald-500" />
-      <div className="flex flex-col items-start justify-center py-3 pl-2 pr-3 w-full min-w-0">
-        {isLoading ? (
-          <Skeleton className="w-20 h-8" />
-        ) : (
-          <p className="text-gray-900 dark:text-zinc-100 text-[30px] font-semibold leading-none tracking-tight tabular-nums whitespace-nowrap">
-            {completed} / {total}
-          </p>
-        )}
-        <span className="text-gray-900 dark:text-zinc-100 text-sm font-medium leading-tight">
-          Completed / Total Milestones
-        </span>
-        <div
-          className="w-full mt-1.5 h-1.5 rounded-full overflow-hidden bg-gray-200 dark:bg-zinc-700"
-          role="progressbar"
-          aria-valuenow={completedPct}
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-label={`${completedPct.toFixed(1)}% of milestones completed`}
-        >
-          <div
-            className="h-full bg-emerald-500 dark:bg-emerald-400 transition-all"
-            style={{ width: `${completedPct}%` }}
-          />
+      <div className="flex flex-col justify-center py-3 pl-2 pr-3 w-full min-w-0">
+        <div className="flex items-start justify-between gap-2 w-full">
+          <div className="flex flex-col items-start min-w-0">
+            {isLoading ? (
+              <Skeleton className="w-20 h-8" />
+            ) : (
+              <p className="text-gray-900 dark:text-zinc-100 text-[30px] font-semibold leading-none tracking-tight tabular-nums whitespace-nowrap">
+                {completed} / {total}
+              </p>
+            )}
+            <span className="mt-1 text-gray-500 dark:text-gray-400 text-sm font-medium leading-tight whitespace-nowrap">
+              Completed / Total Milestones
+            </span>
+          </div>
+          {isComplete && !isLoading && (
+            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500">
+              <CheckIcon className="h-4 w-4 text-white" aria-hidden="true" />
+            </div>
+          )}
         </div>
-        <div className="flex justify-between w-full mt-0.5 text-xs text-gray-500 dark:text-gray-400 tabular-nums">
-          <span>{completedPct.toFixed(1)}%</span>
-          <span>{pendingPct.toFixed(1)}%</span>
+        <div className="flex items-center gap-2 w-full mt-2">
+          <div
+            className="flex-1 h-1.5 rounded-full overflow-hidden bg-gray-200 dark:bg-zinc-700"
+            role="progressbar"
+            aria-valuenow={completedPct}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label={`${completedPct.toFixed(1)}% of milestones completed`}
+          >
+            <div
+              className="h-full bg-emerald-500 dark:bg-emerald-400 transition-all"
+              style={{ width: `${completedPct}%` }}
+            />
+          </div>
+          <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums shrink-0">
+            {completedPct.toFixed(0)}%
+          </span>
         </div>
       </div>
     </div>

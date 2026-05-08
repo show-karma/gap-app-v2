@@ -26,6 +26,12 @@ vi.mock("@/src/features/program-registry/services/program-registry.service", () 
   ProgramRegistryService: {
     extractProgramId: vi.fn(),
     updateProgram: vi.fn(),
+    buildUpdateMetadata: vi.fn((formData: any, existingMetadata: any) => ({
+      ...existingMetadata,
+      title: formData.name,
+      description: formData.description,
+      shortDescription: formData.shortDescription,
+    })),
   },
 }));
 

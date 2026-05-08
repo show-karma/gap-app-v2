@@ -16,6 +16,7 @@ vi.mock("next/navigation", () => ({
     push: mockPush,
   }),
   useParams: () => ({}),
+  usePathname: vi.fn(() => "/"),
 }));
 
 // Mock next/link

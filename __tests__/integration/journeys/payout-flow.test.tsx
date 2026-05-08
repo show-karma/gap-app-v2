@@ -57,6 +57,7 @@ Object.defineProperty(global, "crypto", {
 // Import mocks and component
 // ---------------------------------------------------------------------------
 
+import toast from "react-hot-toast";
 import { PayoutConfigurationModal } from "@/src/features/payout-disbursement/components/PayoutConfigurationModal";
 import {
   useGrantMilestones,
@@ -65,7 +66,7 @@ import {
 
 const mockedUsePayoutConfigByGrant = usePayoutConfigByGrant as vi.Mock;
 const mockedUseGrantMilestones = useGrantMilestones as vi.Mock;
-const mockToast = require("react-hot-toast").default;
+const mockToast = vi.mocked(toast);
 
 // ---------------------------------------------------------------------------
 // Helpers

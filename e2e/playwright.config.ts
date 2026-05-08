@@ -72,7 +72,10 @@ export default defineConfig({
     : {
         command: isCI ? "pnpm start" : "cross-env NEXT_PUBLIC_E2E_AUTH_BYPASS=true pnpm run dev",
         url: "http://localhost:3000",
-        reuseExistingServer: !isCI,
+        // Reuse an already-running server when one is up (e.g. the dogfood
+        // auth-prep job in CI starts `node .next/standalone/server.js`
+        // before invoking Playwright). With `!isCI` this collided on port 3000.
+        reuseExistingServer: true,
         timeout: 120_000,
       },
 });

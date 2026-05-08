@@ -31,6 +31,8 @@ Classify every changed file into exactly one category:
 
 | Category | Pattern | Risk Weight |
 |----------|---------|-------------|
+| Tests | `**/__tests__/**`, `**/*.test.*`, `**/*.spec.*`, `vitest.config.*`, `jest.config.*` | Skip |
+| CI/Workflow | `.github/workflows/**`, `.github/actions/**` | Skip |
 | Pages/Routes | `app/**/*.tsx` | High |
 | Data mutations | `hooks/use*Mutation*`, `services/*`, `store/*` | Critical |
 | Forms | `*Form*`, `*form*`, React Hook Form usage | High |
@@ -41,6 +43,22 @@ Classify every changed file into exactly one category:
 | Hooks (state) | Zustand stores, `useState` wrappers | Medium |
 | Utilities | Pure functions, helpers | Low |
 | Config/types | Type definitions, constants, config | Low |
+
+**Test-only / CI-only PR short-circuit:**
+
+If 100% of changed files fall into the **Tests** or **CI/Workflow** categories (or a mix of both), the PR does not change runtime behavior. Emit a minimal plan with **zero** Public and **zero** Authenticated scenarios, and stop. Example body:
+
+```markdown
+## Public Scenarios (no login)
+
+None — test/CI-only change, no production behavior modified.
+
+## Authenticated Scenarios (Privy test account login)
+
+None — test/CI-only change, no production behavior modified.
+```
+
+A test file changing the way a form/hook/component is *tested* is not the same as the form/hook/component changing. Do not cascade the form/page/hook rules below from a test file's contents. Apply this rule strictly — when in doubt about whether a path is "really" test-only, classify by file path, not by what the file imports or describes.
 
 ### 3. Classify Public vs Authenticated
 

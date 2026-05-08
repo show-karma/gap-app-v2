@@ -47,8 +47,18 @@ vi.mock("@/utilities/wagmi/privy-config", () => ({
 
 const { useAuth } = await vi.importActual<typeof import("@/hooks/useAuth")>("@/hooks/useAuth");
 
-vi.mock("@/utilities/auth/cypress-auth", () => ({
-  getCypressMockAuthState: () => null,
+vi.mock("@/utilities/auth/e2e-auth", () => ({
+  getE2EMockAuthState: () => null,
+}));
+
+vi.mock("@/utilities/whitelabel-context", () => ({
+  useWhitelabel: () => ({ isWhitelabel: false }),
+}));
+
+vi.mock("@/store/modals/projectCreate", () => ({
+  useProjectCreateModalStore: {
+    getState: () => ({ isProjectCreateModalOpen: false }),
+  },
 }));
 
 vi.mock("@/utilities/auth/token-manager", () => ({
@@ -80,6 +90,10 @@ describe("useAuth post-login redirect", () => {
   });
 
   it("redirects to /dashboard after login when on home page", async () => {
+    // The hook redirects to the URL stored in sessionStorage (set by adaptedLogin before login).
+    // Simulate a post-login redirect being set before authentication completes.
+    sessionStorage.setItem("postLoginRedirect", "/dashboard");
+
     const { rerender } = renderHook(() => useAuth());
 
     bridgeState.authenticated = true;

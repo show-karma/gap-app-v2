@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { ActivityCard } from "@/components/Shared/ActivityCard";
+import { useOwnerStore, useProjectStore } from "@/store";
 import "@testing-library/jest-dom";
 import type { IProjectUpdate } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import type { UnifiedMilestone } from "@/types/roadmap";
@@ -210,7 +211,6 @@ describe("ActivityCard", () => {
 
   describe("Store Integration", () => {
     it("should use owner store to check authorization", () => {
-      const { useOwnerStore } = require("@/store");
       useOwnerStore.mockImplementation((selector: any) => {
         const state = { isOwner: true };
         return selector ? selector(state) : state;
@@ -228,7 +228,6 @@ describe("ActivityCard", () => {
     });
 
     it("should use project store to check admin status", () => {
-      const { useProjectStore } = require("@/store");
       useProjectStore.mockImplementation((selector: any) => {
         const state = { isProjectAdmin: true };
         return selector ? selector(state) : state;
@@ -246,8 +245,6 @@ describe("ActivityCard", () => {
     });
 
     it("should combine owner and admin checks correctly", () => {
-      const { useOwnerStore, useProjectStore } = require("@/store");
-
       useOwnerStore.mockImplementation((selector: any) => {
         const state = { isOwner: true };
         return selector ? selector(state) : state;

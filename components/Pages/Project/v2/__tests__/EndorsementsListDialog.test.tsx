@@ -90,11 +90,13 @@ describe("EndorsementsListDialog", () => {
   it("displays endorsement rows with user info", () => {
     render(<EndorsementsListDialog {...defaultProps} />);
 
-    // Check for shortened addresses (mock doesn't have ENS names)
-    // shortAddress returns first 6 chars + "..." + last 6 chars
-    expect(screen.getByText("0x1234...567890")).toBeInTheDocument();
-    expect(screen.getByText("0xabcd...efabcd")).toBeInTheDocument();
-    expect(screen.getByText("0x9876...543210")).toBeInTheDocument();
+    // Check for avatar elements rendered by the mocked EthereumAddressToProfileName
+    // The mock renders the first 6 chars of each address
+    const avatars = screen.getAllByTestId("avatar");
+    expect(avatars).toHaveLength(3);
+    expect(avatars[0]).toHaveTextContent("0x1234");
+    expect(avatars[1]).toHaveTextContent("0xabcd");
+    expect(avatars[2]).toHaveTextContent("0x9876");
   });
 
   it("displays endorsement comments", () => {

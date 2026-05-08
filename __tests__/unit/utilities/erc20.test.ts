@@ -9,8 +9,8 @@ import {
 } from "@/utilities/erc20";
 
 // Mock viem
-vi.mock("viem", () => {
-  const actual = vi.importActual("viem");
+vi.mock("viem", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("viem")>();
   return {
     ...actual,
   };

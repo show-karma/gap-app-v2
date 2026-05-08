@@ -252,9 +252,15 @@ describe("PaymentStatusDropdown", () => {
     );
   });
 
-  it("should show confirmation dialog for disbursed status", async () => {
+  it("should call onRequestRecordPayment callback for disbursed status (not mutate directly)", async () => {
     const user = userEvent.setup();
-    renderWithProviders(<PaymentStatusDropdown {...defaultProps} />);
+    const mockOnRequestRecordPayment = vi.fn();
+    renderWithProviders(
+      <PaymentStatusDropdown
+        {...defaultProps}
+        onRequestRecordPayment={mockOnRequestRecordPayment}
+      />
+    );
 
     await user.click(screen.getByTestId("dropdown-trigger"));
 
@@ -263,46 +269,31 @@ describe("PaymentStatusDropdown", () => {
     });
 
     await user.click(screen.getByRole("menuitem", { name: /Disbursed/i }));
+
+    // Should NOT call mutate directly — delegates to onRequestRecordPayment
+    expect(mockMutate).not.toHaveBeenCalled();
+    expect(mockOnRequestRecordPayment).toHaveBeenCalledWith("Milestone 1", "disbursed");
+  });
+
+  it("should show confirmation dialog for unpaid status when disbursement exists", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<PaymentStatusDropdown {...defaultProps} currentStatus="disbursed" />);
+
+    await user.click(screen.getByTestId("dropdown-trigger"));
+
+    await waitFor(() => {
+      expect(screen.getByRole("menu")).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole("menuitem", { name: /Unpaid/i }));
 
     // Should NOT call mutate directly - should show confirmation first
     expect(mockMutate).not.toHaveBeenCalled();
 
     // Confirmation dialog should be shown
     await waitFor(() => {
-      expect(screen.getByText(/Mark as disbursed/i)).toBeInTheDocument();
+      expect(screen.getByText(/Mark as unpaid/i)).toBeInTheDocument();
     });
-  });
-
-  it("should call mutation when confirming disbursed status change", async () => {
-    const user = userEvent.setup();
-    renderWithProviders(<PaymentStatusDropdown {...defaultProps} />);
-
-    await user.click(screen.getByTestId("dropdown-trigger"));
-    await waitFor(() => {
-      expect(screen.getByRole("menu")).toBeInTheDocument();
-    });
-
-    await user.click(screen.getByRole("menuitem", { name: /Disbursed/i }));
-
-    // Confirm the change
-    await waitFor(() => {
-      expect(screen.getByText(/Mark as disbursed/i)).toBeInTheDocument();
-    });
-
-    const confirmButton = screen.getByRole("button", { name: /Confirm/i });
-    await user.click(confirmButton);
-
-    expect(mockMutate).toHaveBeenCalledWith(
-      {
-        grantUID: "grant-123",
-        milestoneLabel: "Milestone 1",
-        paymentStatus: "disbursed",
-      },
-      expect.objectContaining({
-        onSuccess: expect.any(Function),
-        onError: expect.any(Function),
-      })
-    );
   });
 
   it("should render with disbursed status showing green indicator", () => {

@@ -28,6 +28,7 @@ vi.mock("@/store", () => ({
 // Mock next/navigation
 vi.mock("next/navigation", () => ({
   useSearchParams: vi.fn(),
+  usePathname: vi.fn(() => "/"),
 }));
 
 import { useSearchParams } from "next/navigation";

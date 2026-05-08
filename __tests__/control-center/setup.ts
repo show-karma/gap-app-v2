@@ -97,8 +97,8 @@ vi.mock("@/hooks/useKycStatus", () => ({
 }));
 
 // Mock the payout-disbursement hooks but keep types
-vi.mock("@/src/features/payout-disbursement", () => {
-  const actual = vi.importActual("@/src/features/payout-disbursement/types/payout-disbursement");
+vi.mock("@/src/features/payout-disbursement", async () => {
+  const actual = await import("@/src/features/payout-disbursement/types/payout-disbursement");
   return {
     ...actual,
     useCommunityPayouts: vi.fn(() => ({

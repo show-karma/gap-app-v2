@@ -4,6 +4,7 @@ import type { UnifiedMilestone } from "@/types/v2/roadmap";
 // Mock next/navigation
 vi.mock("next/navigation", () => ({
   useParams: () => ({ projectId: "test-project" }),
+  usePathname: vi.fn(() => "/"),
 }));
 
 // Mock ActivityCard to avoid complex import chain - renders title and allocation for test assertions
@@ -71,18 +72,18 @@ describe("ActivityFeed - Activity Type Labels", () => {
     ...overrides,
   });
 
-  it("should display 'Milestone created' for type 'milestone'", () => {
+  it("should display 'Milestone' for type 'milestone'", () => {
     const milestones = [createMilestone("milestone")];
     render(<ActivityFeed milestones={milestones} />);
 
-    expect(screen.getByText("Milestone created")).toBeInTheDocument();
+    expect(screen.getByText("Milestone")).toBeInTheDocument();
   });
 
-  it("should display 'Milestone created' for type 'grant'", () => {
+  it("should display 'Milestone' for type 'grant'", () => {
     const milestones = [createMilestone("grant")];
     render(<ActivityFeed milestones={milestones} />);
 
-    expect(screen.getByText("Milestone created")).toBeInTheDocument();
+    expect(screen.getByText("Milestone")).toBeInTheDocument();
   });
 
   it("should display 'Project Activity' for type 'activity'", () => {
@@ -106,12 +107,12 @@ describe("ActivityFeed - Activity Type Labels", () => {
     expect(screen.getByText("Grant Update")).toBeInTheDocument();
   });
 
-  it("should display 'Milestone created' for type 'impact'", () => {
-    // Note: Impact type displays as "Milestone created" per getActivityTypeLabel implementation
+  it("should display 'Milestone' for type 'impact'", () => {
+    // Note: Impact type displays as "Milestone" per getActivityTypeLabel implementation
     const milestones = [createMilestone("impact")];
     render(<ActivityFeed milestones={milestones} />);
 
-    expect(screen.getByText("Milestone created")).toBeInTheDocument();
+    expect(screen.getByText("Milestone")).toBeInTheDocument();
   });
 
   it("should display 'Grant approved' for type 'grant_received' with no programType", () => {
@@ -329,5 +330,75 @@ describe("ActivityFeed - renders pre-filtered items from server", () => {
     render(<ActivityFeed milestones={[]} />);
 
     expect(screen.getByTestId("activity-feed-empty")).toBeInTheDocument();
+  });
+});
+
+describe("ActivityFeed - completed-first ordering", () => {
+  const createMilestone = (
+    type: UnifiedMilestone["type"],
+    overrides: Partial<UnifiedMilestone> = {}
+  ): UnifiedMilestone => ({
+    uid: `test-${type}-${Math.random()}`,
+    type,
+    title: `Test ${type}`,
+    description: "Test description",
+    completed: false,
+    createdAt: new Date().toISOString(),
+    chainID: 1,
+    refUID: "0xref1",
+    source: {},
+    ...overrides,
+  });
+
+  // Repro for the bug seen on /project/filecoin-infrastructure-services: a completed
+  // milestone whose completed.createdAt is in the past was sinking below pending
+  // milestones whose endsAt is in the future, because the previous single-key sort
+  // compared those two values directly.
+  it("places a completed milestone above pending ones with future endsAt (newest sort)", () => {
+    const completed = createMilestone("grant", {
+      uid: "completed-ms",
+      title: "Completed Milestone",
+      completed: { createdAt: "2026-04-28T00:00:00.000Z", data: { reason: "Done" } },
+      endsAt: 1777334400, // 2026-04-28
+    });
+    const pendingFutureA = createMilestone("grant", {
+      uid: "pending-future-a",
+      title: "Pending A",
+      completed: false,
+      endsAt: 1788220800, // 2026-06-27
+    });
+    const pendingFutureB = createMilestone("grant", {
+      uid: "pending-future-b",
+      title: "Pending B",
+      completed: false,
+      endsAt: 1803859200, // 2026-12-25
+    });
+
+    render(
+      <ActivityFeed milestones={[pendingFutureA, completed, pendingFutureB]} sortBy="newest" />
+    );
+
+    const cards = screen.getAllByTestId("activity-card");
+    expect(cards[0]).toHaveTextContent("Completed Milestone");
+  });
+
+  it("places a completed milestone below pending ones when sortBy is oldest", () => {
+    const completed = createMilestone("grant", {
+      uid: "completed-ms",
+      title: "Completed Milestone",
+      completed: { createdAt: "2026-04-28T00:00:00.000Z", data: { reason: "Done" } },
+    });
+    const pending = createMilestone("grant", {
+      uid: "pending-ms",
+      title: "Pending Milestone",
+      completed: false,
+      endsAt: 1803859200,
+    });
+
+    render(<ActivityFeed milestones={[completed, pending]} sortBy="oldest" />);
+
+    const cards = screen.getAllByTestId("activity-card");
+    expect(cards[0]).toHaveTextContent("Pending Milestone");
+    expect(cards[1]).toHaveTextContent("Completed Milestone");
   });
 });

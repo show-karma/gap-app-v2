@@ -61,9 +61,27 @@ describe("sitemap", () => {
       expect(homepage?.changeFrequency).toBe("daily");
     });
 
-    it("should set non-homepage pages to weekly", () => {
-      const nonHomepageEntries = entries.filter((e) => e.url !== SITE_URL);
-      for (const entry of nonHomepageEntries) {
+    it("should set low-priority pages (privacy, terms, dashboard) to yearly", () => {
+      const lowPriorityUrls = [
+        `${SITE_URL}/privacy-policy`,
+        `${SITE_URL}/terms-and-conditions`,
+        `${SITE_URL}/dashboard`,
+      ];
+      for (const url of lowPriorityUrls) {
+        const entry = entries.find((e) => e.url === url);
+        expect(entry?.changeFrequency).toBe("yearly");
+      }
+    });
+
+    it("should set regular content pages to weekly", () => {
+      const regularEntries = entries.filter(
+        (e) =>
+          e.url !== SITE_URL &&
+          !e.url.endsWith("/privacy-policy") &&
+          !e.url.endsWith("/terms-and-conditions") &&
+          !e.url.endsWith("/dashboard")
+      );
+      for (const entry of regularEntries) {
         expect(entry.changeFrequency).toBe("weekly");
       }
     });
@@ -82,9 +100,26 @@ describe("sitemap", () => {
       }
     });
 
-    it("should give other pages priority 0.8", () => {
+    it("should give low-priority pages (privacy, terms, dashboard) priority 0.3", () => {
+      const lowPriorityUrls = [
+        `${SITE_URL}/privacy-policy`,
+        `${SITE_URL}/terms-and-conditions`,
+        `${SITE_URL}/dashboard`,
+      ];
+      for (const url of lowPriorityUrls) {
+        const entry = entries.find((e) => e.url === url);
+        expect(entry?.priority).toBe(0.3);
+      }
+    });
+
+    it("should give other regular pages priority 0.8", () => {
       const otherEntries = entries.filter(
-        (e) => e.url !== SITE_URL && !e.url.includes("/knowledge")
+        (e) =>
+          e.url !== SITE_URL &&
+          !e.url.includes("/knowledge") &&
+          !e.url.endsWith("/privacy-policy") &&
+          !e.url.endsWith("/terms-and-conditions") &&
+          !e.url.endsWith("/dashboard")
       );
       for (const entry of otherEntries) {
         expect(entry.priority).toBe(0.8);

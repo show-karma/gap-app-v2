@@ -2,11 +2,28 @@ import { render, screen } from "@testing-library/react";
 import { MilestoneDetails } from "@/components/Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/MilestoneDetails";
 import type { GrantMilestone } from "@/types/v2/grant";
 
+// Mock the SDK to avoid class initialization errors
+vi.mock("@show-karma/karma-gap-sdk", () => ({
+  GAP: vi.fn(),
+  GapSchema: vi.fn(),
+}));
+
+// Mock the ActivityCard component to avoid SDK dependency chain
+vi.mock("@/components/Shared/ActivityCard", () => ({
+  ActivityCard: ({ activity }: any) => (
+    <div data-testid="activity-card">{activity?.data?.title || "Activity"}</div>
+  ),
+}));
+
 vi.mock("@/store", () => ({
   useProjectStore: vi.fn((selector: (s: any) => any) =>
     selector({ isProjectOwner: false, isProjectAdmin: false })
   ),
   useOwnerStore: vi.fn((selector: (s: any) => any) => selector({ isOwner: false })),
+}));
+
+vi.mock("@/store/grant", () => ({
+  useGrantStore: vi.fn((selector: (s: any) => any) => selector({ grant: null })),
 }));
 
 vi.mock("@/src/core/rbac/context/permission-context", () => ({

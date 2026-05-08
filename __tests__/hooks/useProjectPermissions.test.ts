@@ -33,8 +33,24 @@ vi.mock("@/utilities/auth/compare-all-wallets", () => ({
   compareAllWallets: vi.fn(),
 }));
 
+// Override defaultQueryOptions to disable retries in tests (prevents flaky
+// 1000ms waitFor timeouts caused by shouldRetry's single-retry delay)
+vi.mock("@/utilities/queries/defaultOptions", () => ({
+  defaultQueryOptions: {
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnWindowFocus: false,
+    refetchOnMount: true,
+    refetchOnReconnect: false,
+    retry: false,
+  },
+}));
+
 vi.mock("ethers", () => {
-  const MockJsonRpcProvider = vi.fn().mockReturnValue({});
+  // Must use function() (not arrow) so vi.fn() constructor semantics work correctly
+  const MockJsonRpcProvider = vi.fn(function (this: Record<string, unknown>) {
+    return this;
+  });
   return {
     __esModule: true,
     ethers: { JsonRpcProvider: MockJsonRpcProvider },

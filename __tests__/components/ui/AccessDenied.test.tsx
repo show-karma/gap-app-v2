@@ -7,6 +7,7 @@ const mockLogin = vi.fn();
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: mockPush }),
+  usePathname: vi.fn(() => "/"),
 }));
 
 vi.mock("@/hooks/useAuth", () => ({

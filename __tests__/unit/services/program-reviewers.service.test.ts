@@ -97,6 +97,7 @@ describe("programReviewersService", () => {
           name: "Alice Admin",
           email: "alice@example.com",
           telegram: "@aliceadmin",
+          slack: "",
           assignedAt: "2024-01-01T00:00:00Z",
           assignedBy: "0x9876543210987654321098765432109876543210",
         },

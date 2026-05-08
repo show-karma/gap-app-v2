@@ -226,13 +226,15 @@ describe("DonateSection", () => {
       expect(input).toHaveValue(10);
     });
 
-    it("should open donation modal when button is clicked", () => {
+    it("should open donation modal when button is clicked", async () => {
       render(<DonateSection project={mockProject} />);
 
       const button = screen.getByTestId("donate-button");
       fireEvent.click(button);
 
-      expect(screen.getByTestId("donate-modal")).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByTestId("donate-modal")).toBeInTheDocument();
+      });
     });
 
     it("should enable button when payout addresses are configured", () => {
@@ -473,10 +475,10 @@ describe("ProjectSidePanel", () => {
       expect(screen.getByTestId("project-side-panel")).toBeInTheDocument();
     });
 
-    it("should render donate section", () => {
+    it("should render donate section", async () => {
       render(<ProjectSidePanel project={mockProject} />);
 
-      expect(screen.getByTestId("donate-section")).toBeInTheDocument();
+      expect(await screen.findByTestId("donate-section")).toBeInTheDocument();
     });
 
     it("should render endorse section", () => {
@@ -516,13 +518,15 @@ describe("ProjectSidePanel", () => {
   });
 
   describe("Integration", () => {
-    it("should open donation modal when donate button is clicked", () => {
+    it("should open donation modal when donate button is clicked", async () => {
       render(<ProjectSidePanel project={mockProject} />);
 
-      const button = screen.getByTestId("donate-button");
+      const button = await screen.findByTestId("donate-button");
       fireEvent.click(button);
 
-      expect(screen.getByTestId("donate-modal")).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByTestId("donate-modal")).toBeInTheDocument();
+      });
     });
   });
 

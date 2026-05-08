@@ -3,6 +3,7 @@ import {
   CheckIcon,
   ChevronDownIcon,
   MagnifyingGlassIcon,
+  PlusIcon,
   XMarkIcon,
 } from "@heroicons/react/24/solid";
 import { useEffect, useRef, useState } from "react";
@@ -244,43 +245,59 @@ export const MultiSelectDropdown = ({
 
           <div className="max-h-60 overflow-y-auto p-2">
             {filteredItems.length > 0 ? (
-              filteredItems.map((item) => (
-                <button
-                  type="button"
-                  key={item.id}
-                  className={cn(
-                    "w-full flex items-center justify-between rounded-md px-3 py-2 text-sm bg-transparent border-none text-left mb-1 last:mb-0",
-                    "cursor-pointer hover:bg-gray-100 dark:hover:bg-zinc-700",
-                    localSelectedIds.includes(item.id) && "bg-gray-100 dark:bg-zinc-700"
-                  )}
-                  onClick={() => toggleItem(item.id)}
-                >
-                  <span className="flex items-center gap-2">
-                    {item.color && (
-                      <span
-                        className="h-2.5 w-2.5 rounded-full flex-shrink-0"
-                        style={{ backgroundColor: item.color }}
-                      />
-                    )}
-                    {item.label}
-                  </span>
-                  {localSelectedIds.includes(item.id) && (
-                    <CheckIcon className="h-4 w-4 text-brand-blue" />
-                  )}
-                </button>
-              ))
-            ) : (
-              <div className="px-2 py-1">
-                <div className="text-sm text-gray-500 dark:text-zinc-400">No items found</div>
-                {items.length === 0 && onEmptyAction && emptyActionLabel && (
+              <>
+                {filteredItems.map((item) => (
                   <button
                     type="button"
-                    className="mt-2 text-sm font-medium text-brand-blue hover:underline"
+                    key={item.id}
+                    className={cn(
+                      "w-full flex items-center justify-between rounded-md px-3 py-2 text-sm bg-transparent border-none text-left mb-1 last:mb-0",
+                      "cursor-pointer hover:bg-gray-100 dark:hover:bg-zinc-700",
+                      localSelectedIds.includes(item.id) && "bg-gray-100 dark:bg-zinc-700"
+                    )}
+                    onClick={() => toggleItem(item.id)}
+                  >
+                    <span className="flex items-center gap-2">
+                      {item.color && (
+                        <span
+                          className="h-2.5 w-2.5 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: item.color }}
+                        />
+                      )}
+                      {item.label}
+                    </span>
+                    {localSelectedIds.includes(item.id) && (
+                      <CheckIcon className="h-4 w-4 text-brand-blue" />
+                    )}
+                  </button>
+                ))}
+                {onEmptyAction && emptyActionLabel && (
+                  <button
+                    type="button"
+                    className="w-full flex items-center gap-2 rounded-md px-3 py-2 text-sm bg-transparent text-left mt-1 cursor-pointer text-brand-blue font-medium border-0 border-t border-solid border-gray-200 dark:border-zinc-700 hover:bg-gray-100 dark:hover:bg-zinc-700"
                     onClick={() => {
                       setIsOpen(false);
                       onEmptyAction();
                     }}
                   >
+                    <PlusIcon className="h-4 w-4 flex-shrink-0" />
+                    {emptyActionLabel}
+                  </button>
+                )}
+              </>
+            ) : (
+              <div className="px-2 py-1">
+                <div className="text-sm text-gray-500 dark:text-zinc-400">No items found</div>
+                {onEmptyAction && emptyActionLabel && (
+                  <button
+                    type="button"
+                    className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-brand-blue hover:underline bg-transparent border-none p-0 cursor-pointer"
+                    onClick={() => {
+                      setIsOpen(false);
+                      onEmptyAction();
+                    }}
+                  >
+                    <PlusIcon className="h-4 w-4 flex-shrink-0" />
                     {emptyActionLabel}
                   </button>
                 )}

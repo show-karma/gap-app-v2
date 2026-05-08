@@ -193,19 +193,22 @@ describe("Bundle constants -- module-level extraction", () => {
     expect(emptyMapIndex).toBeLessThan(componentIndex);
   });
 
-  it("MarkdownPreview defines customSchema and HAS_CODE_FENCE at module level", () => {
+  it("MarkdownPreview uses lazy dynamic imports to avoid eager bundle loading", () => {
     const file = path.join(ROOT, "components/Utilities/MarkdownPreview.tsx");
     const content = fs.readFileSync(file, "utf-8");
 
-    const schemaIndex = content.indexOf("const customSchema");
-    const fenceIndex = content.indexOf("const HAS_CODE_FENCE");
     const componentIndex = content.indexOf("export const MarkdownPreview");
-
-    expect(schemaIndex).toBeGreaterThan(-1);
-    expect(fenceIndex).toBeGreaterThan(-1);
+    // Verify the component exists
     expect(componentIndex).toBeGreaterThan(-1);
-    expect(schemaIndex).toBeLessThan(componentIndex);
-    expect(fenceIndex).toBeLessThan(componentIndex);
+
+    // Heavy dependencies (streamdown, remark plugins) must be lazy-loaded via
+    // dynamic import() to avoid bloating the initial bundle, not eagerly imported.
+    // Static top-level imports of these packages would be a regression.
+    expect(content.indexOf('import "streamdown"')).toBe(-1);
+    expect(content.indexOf('import "@streamdown/code"')).toBe(-1);
+    expect(content.indexOf('import "remark-gfm"')).toBe(-1);
+    // Dynamic imports must be present
+    expect(content.indexOf('import("streamdown")')).toBeGreaterThan(-1);
   });
 
   it("MarkdownEditor defines constants at module level", () => {

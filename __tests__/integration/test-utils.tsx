@@ -7,8 +7,13 @@
 
 import { waitFor } from "@testing-library/react";
 import type { Address } from "viem";
+import * as wagmiModule from "wagmi";
 import type { SupportedToken } from "@/constants/supportedTokens";
 import type { DonationPayment } from "@/store/donationCart";
+import * as chainSyncValidationModule from "@/utilities/chainSyncValidation";
+import * as erc20Module from "@/utilities/erc20";
+import * as rpcClientModule from "@/utilities/rpcClient";
+import * as walletClientFallbackModule from "@/utilities/walletClientFallback";
 
 /**
  * Mock wallet connection with default or custom address
@@ -18,14 +23,12 @@ export function mockWalletConnection(
   isConnected: boolean = true,
   chainId: number = 10
 ) {
-  const wagmi = require("wagmi");
-
-  (wagmi.useAccount as vi.Mock).mockReturnValue({
-    address: isConnected ? address : null,
+  vi.mocked(wagmiModule.useAccount).mockReturnValue({
+    address: isConnected ? (address as Address) : null,
     isConnected,
-  });
+  } as any);
 
-  (wagmi.useChainId as vi.Mock).mockReturnValue(chainId);
+  vi.mocked(wagmiModule.useChainId).mockReturnValue(chainId as any);
 }
 
 /**
@@ -49,13 +52,15 @@ export function setupMockWalletClient(chainId: number = 10) {
     account: { address: "0x1234567890123456789012345678901234567890" as Address },
     chain: { id: chainId },
     signTypedData: vi.fn().mockResolvedValue("0xsignature"),
+    getChainId: vi.fn().mockResolvedValue(chainId),
+    switchChain: vi.fn().mockResolvedValue(undefined),
+    writeContract: vi.fn().mockResolvedValue("0xtxhash"),
   };
 
-  const wagmi = require("wagmi");
-  (wagmi.useWalletClient as vi.Mock).mockReturnValue({
+  vi.mocked(wagmiModule.useWalletClient).mockReturnValue({
     data: mockWalletClient,
     refetch: vi.fn().mockResolvedValue({ data: mockWalletClient }),
-  });
+  } as any);
 
   return mockWalletClient;
 }
@@ -73,8 +78,7 @@ export function setupMockPublicClient(chainId: number = 10) {
     readContract: vi.fn(),
   };
 
-  const wagmi = require("wagmi");
-  (wagmi.usePublicClient as vi.Mock).mockReturnValue(mockPublicClient);
+  vi.mocked(wagmiModule.usePublicClient).mockReturnValue(mockPublicClient as any);
 
   return mockPublicClient;
 }
@@ -87,10 +91,8 @@ export async function simulateApproval(
   tokenSymbol: string,
   shouldSucceed: boolean = true
 ) {
-  const { executeApprovals } = require("@/utilities/erc20");
-
   if (shouldSucceed) {
-    executeApprovals.mockResolvedValue([
+    vi.mocked(erc20Module.executeApprovals).mockResolvedValue([
       {
         status: "confirmed",
         hash: "0xapprovalhash",
@@ -99,7 +101,9 @@ export async function simulateApproval(
       },
     ]);
   } else {
-    executeApprovals.mockRejectedValue(new Error("User rejected the request"));
+    vi.mocked(erc20Module.executeApprovals).mockRejectedValue(
+      new Error("User rejected the request")
+    );
   }
 }
 
@@ -189,46 +193,35 @@ export function createMockPayment(overrides?: Partial<DonationPayment>): Donatio
  * Setup default mocks for all wagmi hooks and utilities
  */
 export function setupDefaultMocks() {
-  const wagmi = require("wagmi");
-
   // Mock wagmi hooks
-  (wagmi.useAccount as vi.Mock).mockReturnValue({
-    address: "0x1234567890123456789012345678901234567890",
+  vi.mocked(wagmiModule.useAccount).mockReturnValue({
+    address: "0x1234567890123456789012345678901234567890" as Address,
     isConnected: true,
-  });
+  } as any);
 
-  (wagmi.useChainId as vi.Mock).mockReturnValue(10);
+  vi.mocked(wagmiModule.useChainId).mockReturnValue(10 as any);
 
   const mockPublicClient = setupMockPublicClient(10);
   const mockWalletClient = setupMockWalletClient(10);
 
   const mockWriteContractAsync = vi.fn().mockResolvedValue("0xtxhash");
-  (wagmi.useWriteContract as vi.Mock).mockReturnValue({
+  vi.mocked(wagmiModule.useWriteContract).mockReturnValue({
     writeContractAsync: mockWriteContractAsync,
-  });
+  } as any);
 
   // Mock utilities
-  const {
-    checkTokenAllowances,
-    executeApprovals,
-    getApprovalAmount,
-  } = require("@/utilities/erc20");
-  checkTokenAllowances.mockResolvedValue([]);
-  executeApprovals.mockResolvedValue([]);
-  getApprovalAmount.mockImplementation((amount: bigint) => amount);
+  vi.mocked(erc20Module.checkTokenAllowances).mockResolvedValue([]);
+  vi.mocked(erc20Module.executeApprovals).mockResolvedValue([]);
+  vi.mocked(erc20Module.getApprovalAmount).mockImplementation((amount: bigint) => amount);
 
-  const { getRPCClient } = require("@/utilities/rpcClient");
-  getRPCClient.mockResolvedValue(mockPublicClient);
+  vi.mocked(rpcClientModule.getRPCClient).mockResolvedValue(mockPublicClient as any);
 
-  const {
-    getWalletClientWithFallback,
-    isWalletClientGoodEnough,
-  } = require("@/utilities/walletClientFallback");
-  getWalletClientWithFallback.mockResolvedValue(mockWalletClient);
-  isWalletClientGoodEnough.mockReturnValue(true);
+  vi.mocked(walletClientFallbackModule.getWalletClientWithFallback).mockResolvedValue(
+    mockWalletClient as any
+  );
+  vi.mocked(walletClientFallbackModule.isWalletClientGoodEnough).mockReturnValue(true);
 
-  const { validateChainSync } = require("@/utilities/chainSyncValidation");
-  validateChainSync.mockResolvedValue(true);
+  vi.mocked(chainSyncValidationModule.validateChainSync).mockResolvedValue(true);
 
   return {
     mockPublicClient,
@@ -245,9 +238,7 @@ export function setupApprovalNeededMocks(
   tokenSymbol: string,
   requiredAmount: bigint
 ) {
-  const { checkTokenAllowances } = require("@/utilities/erc20");
-
-  checkTokenAllowances.mockResolvedValue([
+  vi.mocked(erc20Module.checkTokenAllowances).mockResolvedValue([
     {
       tokenAddress: tokenAddress as Address,
       tokenSymbol,

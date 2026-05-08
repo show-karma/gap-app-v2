@@ -19,6 +19,7 @@ import { ActivityAttribution } from "./ActivityAttribution";
 import { ActivityMenu } from "./ActivityMenu";
 import { ActivityStatusHeader } from "./ActivityStatusHeader";
 import type { ActivityType } from "./ActivityTypes";
+import { PostedInfoTooltip } from "./PostedInfoTooltip";
 
 type UpdateType =
   | IProjectUpdate
@@ -159,16 +160,21 @@ export const UpdateCard: FC<UpdateCardProps> = ({ update, index, isAuthorized })
       {/* Show grants related if they exist */}
       <div className="flex flex-col gap-3 w-full px-6 py-6">
         <div className="flex flex-col gap-3 w-full">
-          {/* Activity Pill with Due Date and Status */}{" "}
-          <ActivityStatusHeader
-            activityType={update.type as ActivityType}
-            dueDate={getDueDate()}
-            showCompletionStatus={update.type === "Milestone" || update.type === "ProjectMilestone"}
-            completed={getCompletionStatus()}
-            completionStatusClassName="text-xs px-2 py-1"
-            update={update}
-            index={index}
-          />
+          {/* Activity Pill with Due Date and Status */}
+          <div className="flex flex-row items-start justify-between gap-3">
+            <ActivityStatusHeader
+              activityType={update.type as ActivityType}
+              dueDate={getDueDate()}
+              showCompletionStatus={
+                update.type === "Milestone" || update.type === "ProjectMilestone"
+              }
+              completed={getCompletionStatus()}
+              completionStatusClassName="text-xs px-2 py-1"
+              update={update}
+              index={index}
+            />
+            <PostedInfoTooltip date={update.createdAt} attester={update.attester} />
+          </div>
           {/* Title */}
           {hasTitle(update) && update.data.title && (
             <p className="text-xl font-semibold text-foreground">{update.data.title}</p>

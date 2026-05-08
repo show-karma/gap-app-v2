@@ -1,7 +1,7 @@
 "use client";
 
 import { Dialog, Transition } from "@headlessui/react";
-import { ChevronRightIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { ChartBarIcon, ChevronRightIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { Card, Title } from "@tremor/react";
 import dynamic from "next/dynamic";
 import { Fragment, type ReactNode, useEffect, useMemo, useState } from "react";
@@ -83,6 +83,10 @@ function CollapsibleMetricsPanel({
               "w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform shrink-0",
               open && "rotate-90"
             )}
+            aria-hidden="true"
+          />
+          <ChartBarIcon
+            className="w-5 h-5 text-gray-500 dark:text-gray-400 shrink-0"
             aria-hidden="true"
           />
           <h2 className="text-xl font-semibold text-black dark:text-white">

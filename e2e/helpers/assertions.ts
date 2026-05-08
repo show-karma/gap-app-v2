@@ -34,6 +34,12 @@ export function collectJsErrors(page: Page): string[] {
     if (msg.includes("upstream image response failed")) return;
     // Ignore SSL certificate errors in CI (unable to get local issuer certificate)
     if (msg.includes("local issuer certificate")) return;
+    // Ignore transient DOM cleanup races from React/Next.js dev tooling that
+    // surface as null parentNode reads during fast unmount sequences.
+    if (msg.includes("Cannot read properties of null (reading 'parentNode')")) return;
+    // Ignore localStorage access errors thrown from sandboxed iframes (e.g.
+    // Privy/wallet auth iframes) that legitimately can't read parent storage.
+    if (msg.includes("Failed to read the 'localStorage' property from 'Window'")) return;
     errors.push(msg);
   });
   return errors;

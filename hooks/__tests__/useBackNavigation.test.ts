@@ -4,6 +4,7 @@ import { useBackNavigation } from "../useBackNavigation";
 
 vi.mock("next/navigation", () => ({
   useRouter: vi.fn(),
+  usePathname: vi.fn(() => "/"),
 }));
 
 const mockPush = vi.fn();

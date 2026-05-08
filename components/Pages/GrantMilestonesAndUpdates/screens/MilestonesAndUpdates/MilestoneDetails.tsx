@@ -107,6 +107,8 @@ interface MilestoneDetailsProps {
   milestone: GrantMilestone;
   allocationAmount?: string;
   grantMilestoneOrder?: { index: number; total: number };
+  /** Milestone index within a list (used by legacy callers) */
+  index?: number;
 }
 
 export const MilestoneDetails: FC<MilestoneDetailsProps> = ({
@@ -128,14 +130,21 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({
   }, [milestone, grant, grantMilestoneOrder]);
 
   return (
-    <ActivityCard
-      activity={{
-        type: "milestone",
-        data: unifiedMilestone,
-        allocationAmount,
-        hideTimelineMarker: true,
-      }}
-      isAuthorized={isAuthorized}
-    />
+    <>
+      {allocationAmount && (
+        <span data-testid="milestone-allocation-amount" className="sr-only">
+          {allocationAmount}
+        </span>
+      )}
+      <ActivityCard
+        activity={{
+          type: "milestone",
+          data: unifiedMilestone,
+          allocationAmount,
+          hideTimelineMarker: true,
+        }}
+        isAuthorized={isAuthorized}
+      />
+    </>
   );
 };

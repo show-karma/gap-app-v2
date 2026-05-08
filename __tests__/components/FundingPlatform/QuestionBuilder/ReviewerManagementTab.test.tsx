@@ -11,6 +11,11 @@ const mockUseProgramReviewers = vi.fn();
 const mockUseMilestoneReviewers = vi.fn();
 
 vi.mock("react-hot-toast", () => ({
+  __esModule: true,
+  default: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
   toast: {
     success: vi.fn(),
     error: vi.fn(),

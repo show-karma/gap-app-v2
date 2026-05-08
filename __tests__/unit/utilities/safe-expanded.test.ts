@@ -73,7 +73,9 @@ vi.mock("@safe-global/protocol-kit", () => ({
 
 vi.mock("@safe-global/api-kit", () => {
   return {
-    default: vi.fn().mockImplementation(() => mockApiKitInstance),
+    default: vi.fn(function (this: any) {
+      Object.assign(this, mockApiKitInstance);
+    }),
   };
 });
 
@@ -90,10 +92,7 @@ vi.stubGlobal("fetch", mockFetch);
 // Imports
 // ---------------------------------------------------------------------------
 
-// Tests that depend on SafeApiKit constructor are skipped because
-// Vitest ESM does not correctly handle `new SafeApiKit(...)` mocking.
-// Same known issue as in safe.test.ts.
-const itSdk = it.skip;
+const itSdk = it;
 
 import type { SupportedChainId } from "@/config/tokens";
 import type { DisbursementRecipient } from "@/types/disbursement";

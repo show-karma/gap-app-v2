@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { formatGrantAmount } from "@/utilities/formatGrantAmount";
 import { PAGES } from "@/utilities/pages";
+import { PostedInfoTooltip } from "./PostedInfoTooltip";
 
 interface FundingReceivedCardProps {
   milestone: UnifiedMilestone;
@@ -35,10 +36,15 @@ export const FundingReceivedCard: FC<FundingReceivedCardProps> = ({ milestone, p
 
   return (
     <div className="flex flex-col gap-4 w-full px-6 py-6">
-      {/* Amount */}
-      {formattedAmount && (
-        <p className="text-xl font-semibold text-foreground tabular-nums">{formattedAmount}</p>
-      )}
+      <div className="flex flex-row items-start justify-between gap-3">
+        {/* Amount */}
+        {formattedAmount ? (
+          <p className="text-xl font-semibold text-foreground tabular-nums">{formattedAmount}</p>
+        ) : (
+          <span />
+        )}
+        <PostedInfoTooltip date={milestone.createdAt} />
+      </div>
 
       {/* Heading */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-2 flex-wrap">

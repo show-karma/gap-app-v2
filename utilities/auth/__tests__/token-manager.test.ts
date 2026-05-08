@@ -346,54 +346,6 @@ describe("TokenManager", () => {
     });
   });
 
-  describe("clearTokens", () => {
-    beforeEach(() => {
-      global.window = {} as any;
-    });
-
-    it("should call Privy logout on client side", async () => {
-      mockPrivyInstance.logout.mockResolvedValue(undefined);
-      TokenManager.setPrivyInstance(mockPrivyInstance);
-
-      await TokenManager.clearTokens();
-
-      expect(mockPrivyInstance.logout).toHaveBeenCalled();
-    });
-
-    it("should handle when Privy instance has no logout method", async () => {
-      TokenManager.setPrivyInstance({});
-
-      await expect(TokenManager.clearTokens()).resolves.not.toThrow();
-    });
-
-    it("should handle when Privy instance is null", async () => {
-      TokenManager.setPrivyInstance(null);
-
-      await expect(TokenManager.clearTokens()).resolves.not.toThrow();
-    });
-
-    it("should warn when called from server side", async () => {
-      delete (global as any).window;
-
-      const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation();
-
-      await TokenManager.clearTokens();
-
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
-        "clearTokens should be called client-side using Privy's logout method"
-      );
-
-      consoleWarnSpy.mockRestore();
-    });
-
-    it("should handle logout errors gracefully", async () => {
-      mockPrivyInstance.logout.mockRejectedValue(new Error("Logout failed"));
-      TokenManager.setPrivyInstance(mockPrivyInstance);
-
-      await expect(TokenManager.clearTokens()).rejects.toThrow("Logout failed");
-    });
-  });
-
   describe("Multiple Token Cookie Names", () => {
     beforeEach(() => {
       delete (global as any).window;

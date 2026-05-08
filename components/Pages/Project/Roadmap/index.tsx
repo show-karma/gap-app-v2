@@ -18,15 +18,26 @@ interface ProjectRoadmapProps {
   project?: ProjectResponse;
 }
 
-// Pure utility function for sorting - uses seconds for consistency
+// Completed items go in their own bucket so a completed milestone never sinks below
+// a pending one whose endsAt is in the future. Within a bucket we order by date.
+const isItemCompleted = (item: UnifiedMilestone): boolean =>
+  item.completed === true ||
+  (typeof item.completed === "object" && item.completed !== null && "createdAt" in item.completed);
+
 const getSortTimestamp = (item: UnifiedMilestone): number => {
-  // endsAt is already in seconds (Unix timestamp)
-  if (item.endsAt) return item.endsAt;
-  // Convert other dates to seconds for consistent comparison
   if (item.completed && typeof item.completed === "object" && "createdAt" in item.completed) {
     return Math.floor(new Date(item.completed.createdAt).getTime() / 1000);
   }
+  // endsAt is already in seconds (Unix timestamp)
+  if (item.endsAt) return item.endsAt;
   return Math.floor(new Date(item.createdAt).getTime() / 1000);
+};
+
+const compareMilestonesNewestFirst = (a: UnifiedMilestone, b: UnifiedMilestone): number => {
+  const aCompleted = isItemCompleted(a);
+  const bCompleted = isItemCompleted(b);
+  if (aCompleted !== bCompleted) return aCompleted ? -1 : 1;
+  return getSortTimestamp(b) - getSortTimestamp(a);
 };
 
 export const ProjectRoadmap = ({ project: propProject }: ProjectRoadmapProps) => {
@@ -63,14 +74,7 @@ export const ProjectRoadmap = ({ project: propProject }: ProjectRoadmapProps) =>
 
     const allItems = [...apiMilestones, ...impactItems];
 
-    const allSortedItems = [...allItems].sort((a, b) => {
-      const timestampA = getSortTimestamp(a);
-      const timestampB = getSortTimestamp(b);
-
-      return timestampB - timestampA;
-    });
-
-    return allSortedItems;
+    return [...allItems].sort(compareMilestonesNewestFirst);
   }, [impacts, apiMilestones]);
 
   // Filter items based on active filters

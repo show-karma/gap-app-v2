@@ -3,6 +3,7 @@
  * Tests all navigation patterns including dropdowns, external links, anchors, and modals
  */
 
+import "../setup";
 import "./setup-dynamic-mock";
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -23,7 +24,7 @@ describe("Navigation Flow Integration Tests", () => {
   });
 
   describe("1. Desktop Dropdown Navigation", () => {
-    it("should open For Builders dropdown and navigate", async () => {
+    it("should open For Projects dropdown and navigate", async () => {
       const user = userEvent.setup();
       const authFixture = getAuthFixture("unauthenticated");
 
@@ -31,9 +32,9 @@ describe("Navigation Flow Integration Tests", () => {
         mockUsePrivy: createMockUsePrivy(authFixture.authState),
       });
 
-      // Find For Builders trigger
+      // Find For Projects trigger
       const forBuildersTrigger = screen.getByRole("button", {
-        name: /for builders/i,
+        name: /for projects/i,
       });
 
       // Hover over trigger (or click to open dropdown)
@@ -143,6 +144,10 @@ describe("Navigation Flow Integration Tests", () => {
       }
     });
 
+    // FIXME(navbar-tests-batch-A): The setup.ts vi.mock for `useNavbarPermissions`
+    // doesn't propagate `isLoggedIn=true` from the test's `authFixture.authState`
+    // through to <NavbarDesktopNavigation /> when rendered directly. Needs the
+    // file-level _refs hoisted-mock pattern used by auth-flow.test.tsx.
     it("should hide Resources dropdown when logged in", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
@@ -151,7 +156,6 @@ describe("Navigation Flow Integration Tests", () => {
         mockPermissions: createMockPermissions(authFixture.permissions),
       });
 
-      // Resources dropdown should not be present
       const resourcesTrigger = screen.queryByRole("button", {
         name: /resources/i,
       });
@@ -170,7 +174,7 @@ describe("Navigation Flow Integration Tests", () => {
       });
 
       // Open mobile drawer
-      const mobileMenuButton = screen.getByLabelText("Open menu");
+      const mobileMenuButton = await screen.findByLabelText("Open menu");
       await user.click(mobileMenuButton);
 
       await waitFor(() => {
@@ -179,7 +183,7 @@ describe("Navigation Flow Integration Tests", () => {
 
       // Verify navigation sections in drawer
       const drawer = screen.getByRole("dialog");
-      expect(within(drawer).getByText("For Builders")).toBeInTheDocument();
+      expect(within(drawer).getByText("For Projects")).toBeInTheDocument();
       expect(within(drawer).getByText("For Funders")).toBeInTheDocument();
       // Explore section renders as subsections
       expect(within(drawer).getByText("Explore Projects")).toBeInTheDocument();
@@ -194,7 +198,7 @@ describe("Navigation Flow Integration Tests", () => {
       });
 
       // Open drawer
-      const mobileMenuButton = screen.getByLabelText("Open menu");
+      const mobileMenuButton = await screen.findByLabelText("Open menu");
       await user.click(mobileMenuButton);
 
       await waitFor(() => {
@@ -220,7 +224,7 @@ describe("Navigation Flow Integration Tests", () => {
         mockUsePrivy: createMockUsePrivy(authFixture.authState),
       });
 
-      const mobileMenuButton = screen.getByLabelText("Open menu");
+      const mobileMenuButton = await screen.findByLabelText("Open menu");
       await user.click(mobileMenuButton);
 
       await waitFor(() => {
@@ -230,7 +234,7 @@ describe("Navigation Flow Integration Tests", () => {
       const drawer = screen.getByRole("dialog");
 
       // Verify all sections including Resources (only visible when logged out)
-      expect(within(drawer).getByText("For Builders")).toBeInTheDocument();
+      expect(within(drawer).getByText("For Projects")).toBeInTheDocument();
       expect(within(drawer).getByText("For Funders")).toBeInTheDocument();
       // Explore renders as subsections
       expect(within(drawer).getByText("Explore Projects")).toBeInTheDocument();
@@ -246,7 +250,7 @@ describe("Navigation Flow Integration Tests", () => {
         mockPermissions: createMockPermissions(authFixture.permissions),
       });
 
-      const mobileMenuButton = screen.getByLabelText("Open menu");
+      const mobileMenuButton = await screen.findByLabelText("Open menu");
       await user.click(mobileMenuButton);
 
       await waitFor(() => {
@@ -263,6 +267,9 @@ describe("Navigation Flow Integration Tests", () => {
   });
 
   describe("3. External Link Navigation", () => {
+    // FIXME(navbar-tests-batch-A): production ExternalLink uses rel="noreferrer"
+    // (missing `noopener`). Batch D applied the security fix on its branch; once
+    // that lands on main, restore the `rel="noopener noreferrer"` expectation.
     it("should render external links with correct attributes", async () => {
       const user = userEvent.setup();
       const authFixture = getAuthFixture("unauthenticated");
@@ -271,7 +278,6 @@ describe("Navigation Flow Integration Tests", () => {
         mockUsePrivy: createMockUsePrivy(authFixture.authState),
       });
 
-      // Open Resources dropdown
       const resourcesTrigger = screen.queryByRole("button", {
         name: /resources/i,
       });
@@ -283,24 +289,23 @@ describe("Navigation Flow Integration Tests", () => {
           expect(screen.getByText("Docs")).toBeInTheDocument();
         });
 
-        // Find Docs link
         const docsLink = screen.getByRole("link", { name: /docs/i });
 
-        // Verify external link attributes
         expect(docsLink).toHaveAttribute("target", "_blank");
         expect(docsLink).toHaveAttribute("rel", "noopener noreferrer");
       }
     });
 
-    it("should render Contact sales as external link", () => {
+    it("should render Contact sales as external link", async () => {
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<Navbar />, {
         mockUsePrivy: createMockUsePrivy(authFixture.authState),
       });
 
-      // Contact sales buttons - find all of them (mobile and desktop)
-      const contactSalesLinks = screen.getAllByText("Contact sales");
+      // Contact sales is only in the mobile menu (NavbarMobileMenu), which is
+      // lazy-loaded. Use findAllByText to wait for it.
+      const contactSalesLinks = await screen.findAllByText("Contact sales");
       expect(contactSalesLinks.length).toBeGreaterThan(0);
 
       // Check the first link element
@@ -338,28 +343,19 @@ describe("Navigation Flow Integration Tests", () => {
   });
 
   describe("4. Anchor Scrolling - Same Page", () => {
-    it("should handle anchor navigation on same page", async () => {
+    it("should render Find funding as a registry route link", async () => {
       const user = userEvent.setup();
       const mockRouter = createMockRouter({ pathname: "/" });
       const authFixture = getAuthFixture("unauthenticated");
-
-      // Mock scrollIntoView
-      const mockScrollIntoView = vi.fn();
-      Element.prototype.scrollIntoView = mockScrollIntoView;
-
-      // Create anchor element in document
-      const anchorElement = document.createElement("div");
-      anchorElement.id = "live-funding-opportunities";
-      document.body.appendChild(anchorElement);
 
       renderWithProviders(<NavbarDesktopNavigation />, {
         mockUsePrivy: createMockUsePrivy(authFixture.authState),
         mockRouter,
       });
 
-      // Open For Builders dropdown
+      // Open For Projects dropdown
       const forBuildersTrigger = screen.getByRole("button", {
-        name: /for builders/i,
+        name: /for projects/i,
       });
       await user.click(forBuildersTrigger);
 
@@ -367,17 +363,12 @@ describe("Navigation Flow Integration Tests", () => {
         expect(screen.getByText("Find funding")).toBeInTheDocument();
       });
 
-      // Click Find funding (has anchor)
-      const findFundingLink = screen.getByText("Find funding");
-      await user.click(findFundingLink);
-
-      // Should scroll to anchor
-      await waitFor(() => {
-        expect(mockScrollIntoView).toHaveBeenCalled();
-      });
-
-      // Cleanup
-      document.body.removeChild(anchorElement);
+      const findFundingLink = screen.getByText("Find funding").closest("a");
+      expect(findFundingLink).not.toBeNull();
+      expect(findFundingLink).toHaveAttribute(
+        "href",
+        expect.stringMatching(/funding-map|registry/i)
+      );
     });
 
     it("should navigate then scroll when on different page", async () => {
@@ -394,9 +385,9 @@ describe("Navigation Flow Integration Tests", () => {
         mockRouter,
       });
 
-      // Open For Builders dropdown
+      // Open For Projects dropdown
       const forBuildersTrigger = screen.getByRole("button", {
-        name: /for builders/i,
+        name: /for projects/i,
       });
       await user.click(forBuildersTrigger);
 
@@ -428,9 +419,9 @@ describe("Navigation Flow Integration Tests", () => {
         mockUsePrivy: createMockUsePrivy(authFixture.authState),
       });
 
-      // Open For Builders dropdown
+      // Open For Projects dropdown
       const forBuildersTrigger = screen.getByRole("button", {
-        name: /for builders/i,
+        name: /for projects/i,
       });
       await user.click(forBuildersTrigger);
 
@@ -462,9 +453,9 @@ describe("Navigation Flow Integration Tests", () => {
         mockRouter,
       });
 
-      // Open For Builders dropdown
+      // Open For Projects dropdown
       const forBuildersTrigger = screen.getByRole("button", {
-        name: /for builders/i,
+        name: /for projects/i,
       });
       await user.click(forBuildersTrigger);
 
@@ -566,7 +557,7 @@ describe("Navigation Flow Integration Tests", () => {
       });
 
       // Open mobile drawer
-      const mobileMenuButton = screen.getByLabelText("Open menu");
+      const mobileMenuButton = await screen.findByLabelText("Open menu");
       await user.click(mobileMenuButton);
 
       await waitFor(() => {
@@ -592,7 +583,7 @@ describe("Navigation Flow Integration Tests", () => {
       });
 
       // Open mobile drawer
-      const mobileMenuButton = screen.getByLabelText("Open menu");
+      const mobileMenuButton = await screen.findByLabelText("Open menu");
       await user.click(mobileMenuButton);
 
       await waitFor(() => {
@@ -645,7 +636,7 @@ describe("Navigation Flow Integration Tests", () => {
 
       // Open first dropdown
       const forBuildersTrigger = screen.getByRole("button", {
-        name: /for builders/i,
+        name: /for projects/i,
       });
       await user.click(forBuildersTrigger);
 
@@ -681,7 +672,7 @@ describe("Navigation Flow Integration Tests", () => {
       });
 
       // Open drawer
-      const mobileMenuButton = screen.getByLabelText("Open menu");
+      const mobileMenuButton = await screen.findByLabelText("Open menu");
       await user.click(mobileMenuButton);
 
       await waitFor(() => {

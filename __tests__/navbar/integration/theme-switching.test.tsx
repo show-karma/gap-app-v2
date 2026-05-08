@@ -225,7 +225,7 @@ describe("Theme Switching Integration Tests", () => {
       });
 
       // Open mobile drawer
-      const mobileMenuButton = screen.getByLabelText("Open menu");
+      const mobileMenuButton = await screen.findByLabelText("Open menu");
       await user.click(mobileMenuButton);
 
       await waitFor(() => {
@@ -253,7 +253,7 @@ describe("Theme Switching Integration Tests", () => {
       });
 
       // Open mobile drawer
-      const mobileMenuButton = screen.getByLabelText("Open menu");
+      const mobileMenuButton = await screen.findByLabelText("Open menu");
       await user.click(mobileMenuButton);
 
       await waitFor(() => {
@@ -281,7 +281,7 @@ describe("Theme Switching Integration Tests", () => {
       });
 
       // Open mobile drawer
-      const mobileMenuButton = screen.getByLabelText("Open menu");
+      const mobileMenuButton = await screen.findByLabelText("Open menu");
       await user.click(mobileMenuButton);
 
       await waitFor(() => {
@@ -313,7 +313,7 @@ describe("Theme Switching Integration Tests", () => {
       });
 
       // Open mobile drawer
-      const mobileMenuButton = screen.getByLabelText("Open menu");
+      const mobileMenuButton = await screen.findByLabelText("Open menu");
       await user.click(mobileMenuButton);
 
       await waitFor(() => {
@@ -347,7 +347,7 @@ describe("Theme Switching Integration Tests", () => {
       });
 
       // Open drawer and toggle
-      const mobileMenuButton = screen.getByLabelText("Open menu");
+      const mobileMenuButton = await screen.findByLabelText("Open menu");
       await user.click(mobileMenuButton);
 
       await waitFor(() => {
@@ -370,10 +370,10 @@ describe("Theme Switching Integration Tests", () => {
       });
 
       // fireEvent required: vaul drawer incompatible with userEvent in jsdom
-      const closeButton = screen.getByLabelText(/close/i);
+      const closeButton = await screen.findByLabelText(/close/i);
       fireEvent.click(closeButton);
 
-      const reopenButton = screen.getByLabelText("Open menu");
+      const reopenButton = await screen.findByLabelText("Open menu");
       await user.click(reopenButton);
 
       await waitFor(() => {
@@ -431,7 +431,7 @@ describe("Theme Switching Integration Tests", () => {
       });
 
       // Toggle theme
-      const mobileMenuButton = screen.getByLabelText("Open menu");
+      const mobileMenuButton = await screen.findByLabelText("Open menu");
       await user.click(mobileMenuButton);
 
       await waitFor(() => {
@@ -488,7 +488,7 @@ describe("Theme Switching Integration Tests", () => {
         });
 
         // Open mobile drawer
-        const mobileMenuButton = screen.getByLabelText("Open menu");
+        const mobileMenuButton = await screen.findByLabelText("Open menu");
         await user.click(mobileMenuButton);
 
         await waitFor(() => {
@@ -525,7 +525,7 @@ describe("Theme Switching Integration Tests", () => {
       });
 
       // Open mobile drawer
-      const mobileMenuButton = screen.getByLabelText("Open menu");
+      const mobileMenuButton = await screen.findByLabelText("Open menu");
       await user.click(mobileMenuButton);
 
       await waitFor(() => {
@@ -553,7 +553,7 @@ describe("Theme Switching Integration Tests", () => {
       });
 
       // Open mobile drawer
-      const mobileMenuButton = screen.getByLabelText("Open menu");
+      const mobileMenuButton = await screen.findByLabelText("Open menu");
       await user.click(mobileMenuButton);
 
       await waitFor(() => {
@@ -584,7 +584,7 @@ describe("Theme Switching Integration Tests", () => {
 
       // Component should handle system theme
       // Theme toggle should allow switching from system to explicit theme
-      const mobileMenuButton = screen.getByLabelText("Open menu");
+      const mobileMenuButton = await screen.findByLabelText("Open menu");
       await user.click(mobileMenuButton);
 
       await waitFor(() => {

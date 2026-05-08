@@ -14,6 +14,7 @@ import type { CommunityMetricsResponse } from "@/types/community-metrics";
 vi.mock("@/hooks/useCommunityMetrics");
 vi.mock("next/navigation", () => ({
   useParams: vi.fn(),
+  usePathname: vi.fn(() => "/"),
 }));
 
 vi.mock("@tremor/react", () => ({

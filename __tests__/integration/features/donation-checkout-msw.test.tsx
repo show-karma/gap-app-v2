@@ -19,6 +19,7 @@ import type { Address } from "viem";
 import { useDonationCheckout } from "@/hooks/donation/useDonationCheckout";
 import { useDonationCart } from "@/store/donationCart";
 import type { DonationPayment } from "@/utilities/donations/donationExecution";
+import * as walletClientFallbackModule from "@/utilities/walletClientFallback";
 import { BASE } from "../../msw/handlers";
 import { installMswLifecycle, server } from "../../msw/server";
 import { renderHookWithProviders } from "../../utils/render";
@@ -55,6 +56,8 @@ vi.mock("wagmi", () => {
     account: { address: _addr },
     chain: { id: 10 },
     signTypedData: vi.fn().mockResolvedValue("0xsignature"),
+    getChainId: vi.fn().mockResolvedValue(10),
+    switchChain: vi.fn().mockResolvedValue(undefined),
   };
   return {
     useAccount: vi.fn(() => ({ address: _addr, isConnected: true })),
@@ -130,6 +133,11 @@ vi.mock("@/utilities/walletClientFallback", () => ({
     account: { address: "0x1234567890123456789012345678901234567890" },
     chain: { id: 10 },
     signTypedData: vi.fn().mockResolvedValue("0xsignature"),
+    getChainId: vi.fn().mockResolvedValue(10),
+    switchChain: vi.fn().mockResolvedValue(undefined),
+    writeContract: vi
+      .fn()
+      .mockResolvedValue("0xabc123def456abc123def456abc123def456abc123def456abc123def456abc1"),
   }),
   isWalletClientGoodEnough: vi.fn().mockReturnValue(true),
 }));
@@ -569,7 +577,16 @@ describe("Integration: Donation Checkout with MSW", () => {
 
   describe("error handling during donation execution", () => {
     it("catches user rejection and shows toast error", async () => {
-      mockWriteContractAsync.mockRejectedValueOnce(new Error("User rejected the request"));
+      // Production code calls currentWalletClient.writeContract directly
+      // (not wagmi's writeContractAsync), so we mock the fallback client.
+      vi.mocked(walletClientFallbackModule.getWalletClientWithFallback).mockResolvedValueOnce({
+        account: { address: MOCK_ADDRESS },
+        chain: { id: 10 },
+        signTypedData: vi.fn().mockResolvedValue("0xsignature"),
+        getChainId: vi.fn().mockResolvedValue(10),
+        switchChain: vi.fn().mockResolvedValue(undefined),
+        writeContract: vi.fn().mockRejectedValueOnce(new Error("User rejected the request")),
+      } as any);
 
       const { result } = renderHookWithProviders(() => useDonationCheckout());
       const toast = (await import("react-hot-toast")).default;
@@ -599,7 +616,15 @@ describe("Integration: Donation Checkout with MSW", () => {
     });
 
     it("catches transaction revert and shows toast error", async () => {
-      mockWriteContractAsync.mockRejectedValueOnce(new Error("Transaction reverted"));
+      // Production code calls currentWalletClient.writeContract directly.
+      vi.mocked(walletClientFallbackModule.getWalletClientWithFallback).mockResolvedValueOnce({
+        account: { address: MOCK_ADDRESS },
+        chain: { id: 10 },
+        signTypedData: vi.fn().mockResolvedValue("0xsignature"),
+        getChainId: vi.fn().mockResolvedValue(10),
+        switchChain: vi.fn().mockResolvedValue(undefined),
+        writeContract: vi.fn().mockRejectedValueOnce(new Error("Transaction reverted")),
+      } as any);
 
       const { result } = renderHookWithProviders(() => useDonationCheckout());
       const toast = (await import("react-hot-toast")).default;

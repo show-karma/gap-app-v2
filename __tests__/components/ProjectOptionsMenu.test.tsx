@@ -42,6 +42,7 @@ vi.mock("next/dynamic", () => ({
 vi.mock("next/navigation", () => ({
   useParams: () => ({ projectId: "karma" }),
   useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
+  usePathname: vi.fn(() => "/"),
 }));
 
 vi.mock("wagmi", () => ({

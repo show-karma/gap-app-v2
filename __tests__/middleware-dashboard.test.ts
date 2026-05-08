@@ -2,8 +2,8 @@ import type { NextRequest } from "next/server";
 import { middleware } from "@/middleware";
 import { WHITELABEL_DOMAINS } from "@/utilities/whitelabel-config";
 
-vi.mock("next/server", () => {
-  const actual = vi.importActual("next/server");
+vi.mock("next/server", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("next/server")>();
   return {
     ...actual,
     NextResponse: {

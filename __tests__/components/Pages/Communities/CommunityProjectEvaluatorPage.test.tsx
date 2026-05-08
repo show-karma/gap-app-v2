@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { vi } from "vitest";
 import { CommunityProjectEvaluatorPage } from "@/components/Pages/Communities/CommunityProjectEvaluatorPage";
+import { useChat } from "@/components/Pages/Communities/useChat";
 
 // --- Mocks ---
 
@@ -461,7 +462,6 @@ describe("CommunityProjectEvaluatorPage", () => {
     });
 
     it("renders chat messages when useChat returns non-empty messages", async () => {
-      const { useChat } = require("@/components/Pages/Communities/useChat");
       (useChat as vi.Mock).mockReturnValue({
         messages: [
           {
@@ -501,7 +501,6 @@ describe("CommunityProjectEvaluatorPage", () => {
     });
 
     it("disables chat input when chat is loading", async () => {
-      const { useChat } = require("@/components/Pages/Communities/useChat");
       (useChat as vi.Mock).mockReturnValue({
         messages: [],
         input: "",
@@ -532,7 +531,7 @@ describe("CommunityProjectEvaluatorPage", () => {
     it("calls handleSubmit when send button is clicked with input", async () => {
       const mockHandleSubmit = vi.fn();
       const mockHandleInputChange = vi.fn();
-      const { useChat } = require("@/components/Pages/Communities/useChat");
+
       (useChat as vi.Mock).mockReturnValue({
         messages: [],
         input: "How are projects doing?",
@@ -557,7 +556,6 @@ describe("CommunityProjectEvaluatorPage", () => {
     });
 
     it("enables send button when input has text", async () => {
-      const { useChat } = require("@/components/Pages/Communities/useChat");
       (useChat as vi.Mock).mockReturnValue({
         messages: [],
         input: "Some query",

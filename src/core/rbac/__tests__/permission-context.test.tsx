@@ -1,26 +1,43 @@
-import { usePrivy } from "@privy-io/react-auth";
 import { renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { useAccount } from "wagmi";
 import { PermissionProvider, usePermissionContext } from "../context/permission-context";
 import { usePermissionsQuery } from "../hooks/use-permissions";
 import { Permission } from "../types/permission";
 import { Role } from "../types/role";
 
-vi.mock("@privy-io/react-auth", () => ({
-  usePrivy: vi.fn(),
-}));
+// PermissionProvider uses usePrivyBridge (not usePrivy + useAccount directly)
+const mockPrivyBridgeState = {
+  ready: false,
+  authenticated: false,
+  user: null as any,
+  login: vi.fn(),
+  logout: vi.fn(),
+  getAccessToken: vi.fn(),
+  connectWallet: vi.fn(),
+  wallets: [] as any[],
+  isConnected: false,
+  smartWalletClient: null,
+};
 
-vi.mock("wagmi", () => ({
-  useAccount: vi.fn(),
+vi.mock("@/contexts/privy-bridge-context", () => ({
+  usePrivyBridge: () => mockPrivyBridgeState,
+  PRIVY_BRIDGE_DEFAULTS: {
+    ready: false,
+    authenticated: false,
+    user: null,
+    login: vi.fn(),
+    logout: vi.fn(),
+    getAccessToken: async () => null,
+    connectWallet: vi.fn(),
+    wallets: [],
+    isConnected: false,
+  },
 }));
 
 vi.mock("../hooks/use-permissions", () => ({
   usePermissionsQuery: vi.fn(),
 }));
 
-const mockUsePrivy = usePrivy as vi.Mock;
-const mockUseAccount = useAccount as vi.Mock;
 const mockUsePermissionsQuery = usePermissionsQuery as unknown as vi.Mock;
 
 describe("PermissionProvider", () => {
@@ -32,19 +49,13 @@ describe("PermissionProvider", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS = "true";
-    delete (window as Window & { Cypress?: unknown }).Cypress;
+    delete (window as Window & { __e2e?: unknown }).__e2e;
+    delete (window as Window & { __playwright?: unknown }).__playwright;
     localStorage.removeItem("privy:auth_state");
 
-    mockUsePrivy.mockReturnValue({
-      ready: false,
-      authenticated: false,
-    });
-
-    mockUseAccount.mockReturnValue({
-      isConnected: false,
-      isConnecting: false,
-      isReconnecting: false,
-    });
+    // Reset privy bridge state defaults
+    mockPrivyBridgeState.ready = false;
+    mockPrivyBridgeState.authenticated = false;
 
     mockUsePermissionsQuery.mockReturnValue({
       data: undefined,
@@ -59,12 +70,13 @@ describe("PermissionProvider", () => {
     } else {
       process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS = previousE2EBypassFlag;
     }
-    delete (window as Window & { Cypress?: unknown }).Cypress;
+    delete (window as Window & { __e2e?: unknown }).__e2e;
+    delete (window as Window & { __playwright?: unknown }).__playwright;
     localStorage.removeItem("privy:auth_state");
   });
 
-  it("enables permissions query for Cypress mock-authenticated sessions", () => {
-    (window as Window & { Cypress?: unknown }).Cypress = {};
+  it("enables permissions query for E2E mock-authenticated sessions", () => {
+    (window as Window & { __e2e?: unknown }).__e2e = true;
     localStorage.setItem("privy:auth_state", JSON.stringify({ authenticated: true }));
 
     mockUsePermissionsQuery.mockReturnValue({
@@ -94,8 +106,8 @@ describe("PermissionProvider", () => {
     expect(result.current.can(Permission.PROGRAM_VIEW)).toBe(true);
   });
 
-  it("does not enable permissions query for malformed cypress auth payloads", () => {
-    (window as Window & { Cypress?: unknown }).Cypress = {};
+  it("does not enable permissions query for malformed E2E auth payloads", () => {
+    (window as Window & { __e2e?: unknown }).__e2e = true;
     localStorage.setItem("privy:auth_state", "{bad-json");
 
     const { result } = renderHook(() => usePermissionContext(), { wrapper });
@@ -107,7 +119,7 @@ describe("PermissionProvider", () => {
 
   it("does not enable query when bypass flag is disabled", () => {
     process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS = "false";
-    (window as Window & { Cypress?: unknown }).Cypress = {};
+    (window as Window & { __e2e?: unknown }).__e2e = true;
     localStorage.setItem("privy:auth_state", JSON.stringify({ authenticated: true }));
 
     const { result } = renderHook(() => usePermissionContext(), { wrapper });
@@ -118,34 +130,14 @@ describe("PermissionProvider", () => {
   });
 
   describe("Wagmi initialization race condition", () => {
-    it("reports isLoading=true when Privy is ready+authenticated but Wagmi is still connecting", () => {
-      mockUsePrivy.mockReturnValue({
-        ready: true,
-        authenticated: true,
-      });
+    it("reports isLoading=true when Privy is ready+authenticated but permissions query not yet complete", () => {
+      mockPrivyBridgeState.ready = true;
+      mockPrivyBridgeState.authenticated = true;
 
-      mockUseAccount.mockReturnValue({
-        isConnected: false,
-        isConnecting: true,
-        isReconnecting: false,
-      });
-
-      const { result } = renderHook(() => usePermissionContext(), { wrapper });
-
-      expect(result.current.isLoading).toBe(true);
-      expect(result.current.isGuestDueToError).toBe(false);
-    });
-
-    it("reports isLoading=true when Privy is ready+authenticated but Wagmi is reconnecting", () => {
-      mockUsePrivy.mockReturnValue({
-        ready: true,
-        authenticated: true,
-      });
-
-      mockUseAccount.mockReturnValue({
-        isConnected: false,
-        isConnecting: false,
-        isReconnecting: true,
+      mockUsePermissionsQuery.mockReturnValue({
+        data: undefined,
+        isLoading: true,
+        isError: false,
       });
 
       const { result } = renderHook(() => usePermissionContext(), { wrapper });
@@ -154,17 +146,26 @@ describe("PermissionProvider", () => {
       expect(result.current.isGuestDueToError).toBe(false);
     });
 
-    it("reports isLoading=false once Wagmi connects and permissions load", () => {
-      mockUsePrivy.mockReturnValue({
-        ready: true,
-        authenticated: true,
+    it("reports isLoading=true when Privy is ready+authenticated and no data yet", () => {
+      mockPrivyBridgeState.ready = true;
+      mockPrivyBridgeState.authenticated = true;
+
+      mockUsePermissionsQuery.mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        isError: false,
       });
 
-      mockUseAccount.mockReturnValue({
-        isConnected: true,
-        isConnecting: false,
-        isReconnecting: false,
-      });
+      const { result } = renderHook(() => usePermissionContext(), { wrapper });
+
+      // authenticated + no data + no error => awaitingPermissions => isLoading=true
+      expect(result.current.isLoading).toBe(true);
+      expect(result.current.isGuestDueToError).toBe(false);
+    });
+
+    it("reports isLoading=false once Privy is ready+authenticated and permissions load", () => {
+      mockPrivyBridgeState.ready = true;
+      mockPrivyBridgeState.authenticated = true;
 
       mockUsePermissionsQuery.mockReturnValue({
         data: {
@@ -191,16 +192,14 @@ describe("PermissionProvider", () => {
       expect(result.current.isCommunityAdmin).toBe(true);
     });
 
-    it("reports isLoading=true when Privy is authenticated but Wagmi hasn't started yet", () => {
-      mockUsePrivy.mockReturnValue({
-        ready: true,
-        authenticated: true,
-      });
+    it("reports isLoading=true when Privy is authenticated but permissions query pending", () => {
+      mockPrivyBridgeState.ready = true;
+      mockPrivyBridgeState.authenticated = true;
 
-      mockUseAccount.mockReturnValue({
-        isConnected: false,
-        isConnecting: false,
-        isReconnecting: false,
+      mockUsePermissionsQuery.mockReturnValue({
+        data: undefined,
+        isLoading: true,
+        isError: false,
       });
 
       const { result } = renderHook(() => usePermissionContext(), { wrapper });
@@ -210,15 +209,13 @@ describe("PermissionProvider", () => {
     });
 
     it("does not report loading for genuinely unauthenticated users", () => {
-      mockUsePrivy.mockReturnValue({
-        ready: true,
-        authenticated: false,
-      });
+      mockPrivyBridgeState.ready = true;
+      mockPrivyBridgeState.authenticated = false;
 
-      mockUseAccount.mockReturnValue({
-        isConnected: false,
-        isConnecting: false,
-        isReconnecting: false,
+      mockUsePermissionsQuery.mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        isError: false,
       });
 
       const { result } = renderHook(() => usePermissionContext(), { wrapper });

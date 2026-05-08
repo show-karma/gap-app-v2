@@ -10,6 +10,7 @@ vi.mock("next/navigation", () => ({
     push: vi.fn(),
     replace: vi.fn(),
   }),
+  usePathname: vi.fn(() => "/"),
 }));
 
 const mockProject: Project = {

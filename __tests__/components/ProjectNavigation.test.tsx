@@ -25,6 +25,14 @@ vi.mock("next/link", () => {
 const mockPathname = "/project/test-project";
 vi.mock("next/navigation", () => ({
   usePathname: () => mockPathname,
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    prefetch: vi.fn(),
+    back: vi.fn(),
+  }),
+  useSearchParams: () => new URLSearchParams(),
+  useParams: () => ({}),
 }));
 
 // Mock stores

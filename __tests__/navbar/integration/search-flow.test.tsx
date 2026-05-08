@@ -3,6 +3,7 @@
  * Tests complete search journeys including debouncing, API integration, and navigation
  */
 
+import "../setup";
 import "./setup-dynamic-mock";
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -147,7 +148,7 @@ describe("Search Flow Integration Tests", () => {
       });
 
       // Open mobile drawer
-      const mobileMenuButton = screen.getByLabelText("Open menu");
+      const mobileMenuButton = await screen.findByLabelText("Open menu");
       await user.click(mobileMenuButton);
 
       // Wait for drawer to open
@@ -185,7 +186,7 @@ describe("Search Flow Integration Tests", () => {
       });
 
       // Open mobile drawer
-      const mobileMenuButton = screen.getByLabelText("Open menu");
+      const mobileMenuButton = await screen.findByLabelText("Open menu");
       await user.click(mobileMenuButton);
 
       // Wait for drawer to open and verify it's visible

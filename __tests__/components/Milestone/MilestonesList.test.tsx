@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MilestonesList } from "@/components/Milestone/MilestonesList";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
@@ -40,6 +40,15 @@ vi.mock("@/components/Shared/ActivityCard", () => ({
       {activity.data?.title || activity.data?.uid || "Activity"}
     </div>
   ),
+}));
+
+// Mock useMilestoneAllocationsByGrants to avoid QueryClient requirement
+vi.mock("@/hooks/useCommunityMilestoneAllocations", () => ({
+  useMilestoneAllocationsByGrants: () => ({
+    allocationMap: new Map(),
+    grantTotalMap: new Map(),
+    isLoading: false,
+  }),
 }));
 
 // Mock ObjectivesSub component
@@ -157,15 +166,15 @@ describe("MilestonesList", () => {
   });
 
   describe("Pagination - Load More Functionality", () => {
-    it("should load more milestones when clicking Load More", async () => {
-      const user = userEvent.setup();
+    it("should load more milestones when clicking Load More", () => {
       const milestones = createMockMilestones(25);
       render(<MilestonesList milestones={milestones} />);
 
       expect(screen.getAllByTestId("activity-card-milestone")).toHaveLength(15);
 
-      const loadMoreButton = getLoadMoreButton();
-      await user.click(loadMoreButton);
+      act(() => {
+        fireEvent.click(getLoadMoreButton());
+      });
 
       // Show loading skeleton
       expect(screen.getByTestId("milestones-loading-skeleton")).toBeInTheDocument();
@@ -175,13 +184,10 @@ describe("MilestonesList", () => {
         vi.advanceTimersByTime(300);
       });
 
-      await waitFor(() => {
-        expect(screen.getAllByTestId("activity-card-milestone")).toHaveLength(25);
-      });
+      expect(screen.getAllByTestId("activity-card-milestone")).toHaveLength(25);
     });
 
-    it("should show correct remaining count after loading more", async () => {
-      const user = userEvent.setup();
+    it("should show correct remaining count after loading more", () => {
       const milestones = createMockMilestones(50);
       render(<MilestonesList milestones={milestones} />);
 
@@ -189,55 +195,55 @@ describe("MilestonesList", () => {
       expect(screen.getByText("35 remaining", { exact: false })).toBeInTheDocument();
 
       // Click load more
-      await user.click(getLoadMoreButton());
+      act(() => {
+        fireEvent.click(getLoadMoreButton());
+      });
       act(() => {
         vi.advanceTimersByTime(300);
       });
 
-      await waitFor(() => {
-        // After first load: 30 shown, 20 remaining
-        expect(screen.getByText("20 remaining", { exact: false })).toBeInTheDocument();
-      });
+      // After first load: 30 shown, 20 remaining
+      expect(screen.getByText("20 remaining", { exact: false })).toBeInTheDocument();
     });
 
-    it("should hide Load More button when all items are loaded", async () => {
-      const user = userEvent.setup();
+    it("should hide Load More button when all items are loaded", () => {
       const milestones = createMockMilestones(20);
       render(<MilestonesList milestones={milestones} />);
 
       expect(screen.getAllByTestId("activity-card-milestone")).toHaveLength(15);
       expect(getLoadMoreButton()).toBeInTheDocument();
 
-      await user.click(getLoadMoreButton());
+      act(() => {
+        fireEvent.click(getLoadMoreButton());
+      });
       act(() => {
         vi.advanceTimersByTime(300);
       });
 
-      await waitFor(() => {
-        expect(screen.getAllByTestId("activity-card-milestone")).toHaveLength(20);
-        expect(queryLoadMoreButton()).not.toBeInTheDocument();
-      });
+      expect(screen.getAllByTestId("activity-card-milestone")).toHaveLength(20);
+      expect(queryLoadMoreButton()).not.toBeInTheDocument();
     });
 
-    it("should show loading skeleton while loading more", async () => {
-      const user = userEvent.setup();
+    it("should show loading skeleton while loading more", () => {
       const milestones = createMockMilestones(30);
       render(<MilestonesList milestones={milestones} />);
 
-      await user.click(getLoadMoreButton());
+      act(() => {
+        fireEvent.click(getLoadMoreButton());
+      });
 
       // Loading skeleton should be visible
       expect(screen.getByTestId("milestones-loading-skeleton")).toBeInTheDocument();
       expect(screen.getAllByTestId("milestone-item-skeleton")).toHaveLength(3);
     });
 
-    it("should hide Load More button while loading", async () => {
-      const user = userEvent.setup();
+    it("should hide Load More button while loading", () => {
       const milestones = createMockMilestones(30);
       render(<MilestonesList milestones={milestones} />);
 
-      const loadMoreButton = getLoadMoreButton();
-      await user.click(loadMoreButton);
+      act(() => {
+        fireEvent.click(getLoadMoreButton());
+      });
 
       // Button should not be visible during loading
       expect(queryLoadMoreButton()).not.toBeInTheDocument();
@@ -245,8 +251,7 @@ describe("MilestonesList", () => {
   });
 
   describe("Pagination - Multiple Load More Clicks", () => {
-    it("should correctly load items across multiple clicks", async () => {
-      const user = userEvent.setup();
+    it("should correctly load items across multiple clicks", () => {
       const milestones = createMockMilestones(50);
       render(<MilestonesList milestones={milestones} />);
 
@@ -254,45 +259,46 @@ describe("MilestonesList", () => {
       expect(screen.getAllByTestId("activity-card-milestone")).toHaveLength(15);
 
       // First click: 30 items
-      await user.click(getLoadMoreButton());
+      act(() => {
+        fireEvent.click(getLoadMoreButton());
+      });
       act(() => {
         vi.advanceTimersByTime(300);
       });
 
-      await waitFor(() => {
-        expect(screen.getAllByTestId("activity-card-milestone")).toHaveLength(30);
-      });
+      expect(screen.getAllByTestId("activity-card-milestone")).toHaveLength(30);
 
       // Second click: 45 items
-      await user.click(getLoadMoreButton());
+      act(() => {
+        fireEvent.click(getLoadMoreButton());
+      });
       act(() => {
         vi.advanceTimersByTime(300);
       });
 
-      await waitFor(() => {
-        expect(screen.getAllByTestId("activity-card-milestone")).toHaveLength(45);
-      });
+      expect(screen.getAllByTestId("activity-card-milestone")).toHaveLength(45);
 
       // Third click: 50 items (all loaded)
-      await user.click(getLoadMoreButton());
+      act(() => {
+        fireEvent.click(getLoadMoreButton());
+      });
       act(() => {
         vi.advanceTimersByTime(300);
       });
 
-      await waitFor(() => {
-        expect(screen.getAllByTestId("activity-card-milestone")).toHaveLength(50);
-        expect(queryLoadMoreButton()).not.toBeInTheDocument();
-      });
+      expect(screen.getAllByTestId("activity-card-milestone")).toHaveLength(50);
+      expect(queryLoadMoreButton()).not.toBeInTheDocument();
     });
   });
 
   describe("Skeleton Loaders", () => {
-    it("should render MilestoneItemSkeleton with correct structure", async () => {
-      const user = userEvent.setup();
+    it("should render MilestoneItemSkeleton with correct structure", () => {
       const milestones = createMockMilestones(20);
       render(<MilestonesList milestones={milestones} />);
 
-      await user.click(getLoadMoreButton());
+      act(() => {
+        fireEvent.click(getLoadMoreButton());
+      });
 
       const skeletons = screen.getAllByTestId("milestone-item-skeleton");
       expect(skeletons).toHaveLength(3);
@@ -302,12 +308,13 @@ describe("MilestonesList", () => {
       expect(skeleton).toHaveClass("border", "bg-white", "rounded-xl");
     });
 
-    it("should hide skeleton after loading completes", async () => {
-      const user = userEvent.setup();
+    it("should hide skeleton after loading completes", () => {
       const milestones = createMockMilestones(20);
       render(<MilestonesList milestones={milestones} />);
 
-      await user.click(getLoadMoreButton());
+      act(() => {
+        fireEvent.click(getLoadMoreButton());
+      });
 
       expect(screen.getByTestId("milestones-loading-skeleton")).toBeInTheDocument();
 
@@ -315,9 +322,7 @@ describe("MilestonesList", () => {
         vi.advanceTimersByTime(300);
       });
 
-      await waitFor(() => {
-        expect(screen.queryByTestId("milestones-loading-skeleton")).not.toBeInTheDocument();
-      });
+      expect(screen.queryByTestId("milestones-loading-skeleton")).not.toBeInTheDocument();
     });
   });
 

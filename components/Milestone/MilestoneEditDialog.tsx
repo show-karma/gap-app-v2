@@ -3,9 +3,10 @@
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/Utilities/Button";
+import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import {
   Dialog,
   DialogContent,
@@ -14,7 +15,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import type { MilestoneEditData } from "@/hooks/useMilestoneEdit";
 import { useMilestoneEdit } from "@/hooks/useMilestoneEdit";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
@@ -90,6 +90,7 @@ export const MilestoneEditDialog = ({
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   } = useForm<EditMilestoneFormData>({
     resolver: zodResolver(editMilestoneSchema),
@@ -122,7 +123,7 @@ export const MilestoneEditDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto min-w-0">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <PencilSquareIcon className="w-5 h-5" />
@@ -130,7 +131,7 @@ export const MilestoneEditDialog = ({
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 min-w-0">
           <div className="flex flex-col gap-1.5">
             <label
               htmlFor="milestone-title"
@@ -154,16 +155,25 @@ export const MilestoneEditDialog = ({
             >
               Description
             </label>
-            <Textarea
-              id="milestone-description"
-              {...register("description")}
-              placeholder="Milestone description"
-              rows={4}
-              disabled={isEditing}
+            <Controller
+              name="description"
+              control={control}
+              render={({ field }) => (
+                <MarkdownEditor
+                  id="milestone-description"
+                  value={field.value ?? ""}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  placeholder="Milestone description"
+                  isDisabled={isEditing}
+                  maxLength={5000}
+                  showCharacterCount
+                  height={220}
+                  minHeight={200}
+                  error={errors.description?.message}
+                />
+              )}
             />
-            {errors.description ? (
-              <p className="text-sm text-red-500">{errors.description.message}</p>
-            ) : null}
           </div>
 
           <div className={excludeStartDate ? "" : "grid grid-cols-2 gap-4"}>

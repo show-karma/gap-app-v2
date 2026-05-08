@@ -3,10 +3,96 @@
  * Tests complete authentication journeys including login, logout, profile modal, and state transitions
  */
 
+// Hoist shared mock state refs so vi.mock factories can read them before imports.
+// renderWithProviders (via updateAuthMock/updateNavbarPermissionsState in test-helpers)
+// updates mockAuthState.current and mockNavbarPermissionsState.current from setup.ts.
+// We point _refs at those same exported objects in beforeAll so mutations propagate.
+const _refs = vi.hoisted(() => {
+  const _vi = (globalThis as any).vi ?? { fn: () => (() => {}) as any };
+  return {
+    authState: {
+      current: {
+        ready: true,
+        authenticated: false,
+        isConnected: false,
+        address: undefined as string | undefined,
+        user: null as unknown,
+        login: _vi.fn(),
+        logout: _vi.fn(),
+        authenticate: _vi.fn(),
+        disconnect: _vi.fn(),
+        getAccessToken: _vi.fn().mockResolvedValue("mock-token"),
+      },
+    },
+    navPermsState: {
+      current: {
+        isLoggedIn: false,
+        address: undefined as string | undefined,
+        ready: true,
+        isStaff: false,
+        isStaffLoading: false,
+        isOwner: false,
+        isCommunityAdmin: false,
+        isReviewer: false,
+        hasReviewerRole: false,
+        reviewerPrograms: [] as unknown[],
+        isProgramCreator: false,
+        isRegistryAdmin: false,
+        hasAdminAccess: false,
+        isRegistryAllowed: false,
+      },
+    },
+    themeState: {
+      current: {
+        theme: "light" as string,
+        setTheme: _vi.fn() as (t: string) => void,
+        themes: ["light", "dark"] as string[],
+        systemTheme: "light" as string,
+        resolvedTheme: "light" as string,
+      },
+    },
+  };
+});
+
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: vi.fn(() => _refs.authState.current),
+}));
+
+vi.mock("@/src/components/navbar/navbar-permissions-context", async () => {
+  const React = await import("react");
+  return {
+    useNavbarPermissions: vi.fn(() => _refs.navPermsState.current),
+    NavbarPermissionsProvider: ({ children }: { children: React.ReactNode }) =>
+      React.createElement(React.Fragment, null, children),
+    NavbarPermissionsContext: {
+      Provider: ({ children }: { children: React.ReactNode }) =>
+        React.createElement(React.Fragment, null, children),
+      Consumer: ({ children }: { children: (v: unknown) => React.ReactNode }) =>
+        React.createElement(React.Fragment, null, children(_refs.navPermsState.current)),
+    },
+  };
+});
+
+vi.mock("next-themes", () => ({
+  useTheme: vi.fn(() => _refs.themeState.current),
+  ThemeProvider: ({ children }: { children: unknown }) => children,
+}));
+
+vi.mock("@/utilities/whitelabel-context", () => ({
+  useWhitelabel: vi.fn(() => ({ isWhitelabel: false })),
+  WhitelabelProvider: ({ children }: { children: unknown }) => children,
+}));
+
 import { fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Navbar } from "@/src/components/navbar/navbar";
 import { getAuthFixture } from "../fixtures/auth-fixtures";
+import {
+  mockAuthState,
+  mockModalState,
+  mockNavbarPermissionsState,
+  mockThemeState,
+} from "../setup";
 import {
   cleanupAfterEach,
   createMockPermissions,
@@ -16,8 +102,25 @@ import {
 } from "../utils/test-helpers";
 
 describe("Authentication Flow Integration Tests", () => {
+  beforeAll(() => {
+    // Wire _refs to the same object references exported by setup.ts.
+    // This ensures that when renderWithProviders calls updateAuthMock
+    // (which sets mockAuthState.current), the vi.mock factory above
+    // reads the same updated value.
+    _refs.authState = mockAuthState;
+    _refs.navPermsState = mockNavbarPermissionsState;
+    _refs.themeState = mockThemeState;
+  });
+
   afterEach(() => {
     cleanupAfterEach();
+    // Reset mockModalState.current to default so any test that set it directly
+    // does not bleed its mockOpenModal into subsequent tests.
+    mockModalState.current = {
+      isOpen: false,
+      openModal: vi.fn(),
+      closeModal: vi.fn(),
+    };
   });
 
   describe("1. Login Flow", () => {
@@ -67,8 +170,10 @@ describe("Authentication Flow Integration Tests", () => {
         expect(remainingSignIn.length).toBe(0);
       });
 
-      // Verify profile button appears (mobile)
-      expect(screen.getByLabelText("Open profile")).toBeInTheDocument();
+      // Verify profile button appears (mobile) — lazy-loaded, needs waitFor
+      await waitFor(() => {
+        expect(screen.getByLabelText("Open profile")).toBeInTheDocument();
+      });
     });
 
     it("should show user menu after successful authentication", async () => {
@@ -80,9 +185,12 @@ describe("Authentication Flow Integration Tests", () => {
       });
 
       // User menu should be available (desktop)
-      // Note: On mobile, the user menu is in the drawer, so we check for mobile menu button
-      const mobileMenuButton = screen.queryByLabelText("Open menu");
-      expect(mobileMenuButton).toBeInTheDocument();
+      // Note: On mobile, the user menu is in the drawer, so we check for mobile menu button.
+      // NavbarMobileMenu is lazy-loaded via next/dynamic, so we use waitFor.
+      await waitFor(() => {
+        const mobileMenuButton = screen.queryByLabelText("Open menu");
+        expect(mobileMenuButton).toBeInTheDocument();
+      });
     });
   });
 
@@ -92,58 +200,62 @@ describe("Authentication Flow Integration Tests", () => {
       const mockOpenModal = vi.fn();
       const authFixture = getAuthFixture("authenticated-basic");
 
+      // Set mockModalState.current directly so setup.ts's vi.mock factory
+      // returns mockOpenModal. This avoids mockReturnValue and correctly
+      // wires the mock through the shared _h.modalState reference.
+      mockModalState.current = {
+        isOpen: false,
+        openModal: mockOpenModal,
+        closeModal: vi.fn(),
+      };
+
       renderWithProviders(<Navbar />, {
         mockUsePrivy: createMockUsePrivy(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
-        mockUseContributorProfileModalStore: {
-          isOpen: false,
-          openModal: mockOpenModal,
-          closeModal: vi.fn(),
-        },
       });
 
-      // Try to find user avatar (desktop) - may have multiple
-      const userAvatars = screen.getAllByRole("img", { name: /Recipient profile/i });
+      // Wait for lazy desktop user menu to mount, then open it
+      const menubarTrigger = await screen.findByRole("menuitem");
+      await user.click(menubarTrigger);
 
-      // Click first user avatar
-      await user.click(userAvatars[0]);
-
-      // Wait for menu to open and find profile button
       await waitFor(() => {
         expect(screen.getByText("Edit profile")).toBeInTheDocument();
       });
 
-      // Click "Edit profile"
       const profileButton = screen.getByText("Edit profile");
       await user.click(profileButton);
 
-      // Verify modal opened
       expect(mockOpenModal).toHaveBeenCalledTimes(1);
     });
 
     it("should open profile modal from mobile avatar button", async () => {
-      const user = userEvent.setup();
       const mockOpenModal = vi.fn();
       const authFixture = getAuthFixture("authenticated-basic");
+
+      // Set mockModalState.current directly so setup.ts's vi.mock factory
+      // returns mockOpenModal. This avoids the mockReturnValue-bleed issue where
+      // a previous test's mockReturnValue overrides the _h-based factory.
+      mockModalState.current = {
+        isOpen: false,
+        openModal: mockOpenModal,
+        closeModal: vi.fn(),
+      };
 
       renderWithProviders(<Navbar />, {
         mockUsePrivy: createMockUsePrivy(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
-        mockUseContributorProfileModalStore: {
-          isOpen: false,
-          openModal: mockOpenModal,
-          closeModal: vi.fn(),
-        },
       });
 
-      // Mobile has an avatar button that directly opens profile modal
+      // Mobile has an avatar button that directly opens profile modal.
+      // NavbarMobileMenu is lazy-loaded, so use waitFor then find.
+      await waitFor(() => {
+        expect(screen.getByLabelText("Open profile")).toBeInTheDocument();
+      });
       const profileButton = screen.getByLabelText("Open profile");
-      await user.click(profileButton);
+      fireEvent.click(profileButton);
 
       // Verify modal opened
-      await waitFor(() => {
-        expect(mockOpenModal).toHaveBeenCalledTimes(1);
-      });
+      expect(mockOpenModal).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -175,7 +287,10 @@ describe("Authentication Flow Integration Tests", () => {
         const logoutButton = screen.getByText("Log out");
         await user.click(logoutButton);
       } else {
-        // Mobile flow
+        // Mobile flow — lazy-loaded, wait for it
+        await waitFor(() => {
+          expect(screen.getByLabelText("Open menu")).toBeInTheDocument();
+        });
         const mobileMenuButton = screen.getByLabelText("Open menu");
         await user.click(mobileMenuButton);
 
@@ -226,7 +341,10 @@ describe("Authentication Flow Integration Tests", () => {
         mockPermissions: createMockPermissions(authFixture.permissions),
       });
 
-      // Open mobile menu
+      // Open mobile menu — NavbarMobileMenu is lazy-loaded, wait for it
+      await waitFor(() => {
+        expect(screen.getByLabelText("Open menu")).toBeInTheDocument();
+      });
       const mobileMenuButton = screen.getByLabelText("Open menu");
       await user.click(mobileMenuButton);
 
@@ -245,7 +363,7 @@ describe("Authentication Flow Integration Tests", () => {
   });
 
   describe("4. Ready State Handling", () => {
-    it("should show skeletons when ready is false", () => {
+    it("should show skeletons when ready is false", async () => {
       const loadingFixture = getAuthFixture("loading");
 
       renderWithProviders(<Navbar />, {
@@ -253,9 +371,10 @@ describe("Authentication Flow Integration Tests", () => {
       });
 
       // When ready is false, the NavbarUserMenu shows skeleton, but other parts may still render
-      // Mobile menu button should still be present
-      const mobileMenuButton = screen.queryByLabelText("Open menu");
-      expect(mobileMenuButton).toBeInTheDocument();
+      // Mobile menu button should still be present (lazy-loaded, use waitFor).
+      await waitFor(() => {
+        expect(screen.getByLabelText("Open menu")).toBeInTheDocument();
+      });
     });
 
     it("should transition from loading to authenticated state", async () => {
@@ -368,7 +487,10 @@ describe("Authentication Flow Integration Tests", () => {
         }),
       });
 
-      // Open mobile drawer
+      // Open mobile drawer — NavbarMobileMenu is lazy-loaded, wait for it
+      await waitFor(() => {
+        expect(screen.getByLabelText("Open menu")).toBeInTheDocument();
+      });
       const mobileMenuButton = screen.getByLabelText("Open menu");
       await user.click(mobileMenuButton);
 
@@ -401,7 +523,10 @@ describe("Authentication Flow Integration Tests", () => {
         mockPermissions: createMockPermissions(authFixture.permissions),
       });
 
-      // Open mobile drawer
+      // Open mobile drawer — NavbarMobileMenu is lazy-loaded, wait for it
+      await waitFor(() => {
+        expect(screen.getByLabelText("Open menu")).toBeInTheDocument();
+      });
       const mobileMenuButton = screen.getByLabelText("Open menu");
       await user.click(mobileMenuButton);
 

@@ -2,6 +2,17 @@ import { render, screen } from "@testing-library/react";
 import { Footer } from "@/src/components/footer/footer";
 import "@testing-library/jest-dom";
 
+// Mock next/dynamic so that dynamic imports resolve synchronously in tests
+vi.mock("next/dynamic", () => ({
+  default: (fn: () => Promise<any>) => {
+    const Component = (props: any) => {
+      // Render the mock Newsletter directly
+      return <div data-testid="newsletter">Newsletter Signup</div>;
+    };
+    return Component;
+  },
+}));
+
 // Mock child components
 vi.mock("@/src/components/shared/logo", () => ({
   Logo: () => <div data-testid="logo">Karma</div>,
@@ -72,10 +83,10 @@ describe("Footer", () => {
   });
 
   describe("Navigation Links", () => {
-    it("should render For Builders link", () => {
+    it("should render For Projects link", () => {
       render(<Footer />);
 
-      expect(screen.getByText("For Builders")).toBeInTheDocument();
+      expect(screen.getByText("For Projects")).toBeInTheDocument();
     });
 
     it("should render For Funders link", () => {
@@ -118,7 +129,7 @@ describe("Footer", () => {
     it("should have proper link styling", () => {
       render(<Footer />);
 
-      const link = screen.getByText("For Builders");
+      const link = screen.getByText("For Projects");
       expect(link.className).toContain("text-muted-foreground");
       expect(link.className).toContain("hover:text-foreground");
     });
@@ -334,7 +345,7 @@ describe("Footer", () => {
     it("should use muted foreground for secondary text", () => {
       render(<Footer />);
 
-      const link = screen.getByText("For Builders");
+      const link = screen.getByText("For Projects");
       expect(link.className).toContain("text-muted-foreground");
     });
 
@@ -350,13 +361,13 @@ describe("Footer", () => {
     it("should distinguish between internal and external links", () => {
       render(<Footer />);
 
-      const buildersLink = screen.getByText("For Builders");
+      const buildersLink = screen.getByText("For Projects");
       const blogLink = screen.getByText("Blog");
 
       // Blog is external, should have target="_blank"
       expect(blogLink.closest("a")).toHaveAttribute("target", "_blank");
 
-      // For Builders is internal (should not have target="_blank" in actual implementation)
+      // For Projects is internal (should not have target="_blank" in actual implementation)
       const buildersAnchor = buildersLink.closest("a");
       expect(buildersAnchor).toBeInTheDocument();
     });
@@ -364,7 +375,7 @@ describe("Footer", () => {
     it("should render all navigation links as clickable", () => {
       render(<Footer />);
 
-      const navLinks = ["For Builders", "For Funders", "Blog", "Guide", "API Docs", "Governance"];
+      const navLinks = ["For Projects", "For Funders", "Blog", "Guide", "API Docs", "Governance"];
 
       navLinks.forEach((linkText) => {
         const link = screen.getByText(linkText);
@@ -388,7 +399,7 @@ describe("Footer", () => {
     it("should have consistent font sizes", () => {
       render(<Footer />);
 
-      const buildersLink = screen.getByText("For Builders");
+      const buildersLink = screen.getByText("For Projects");
       const termsLink = screen.getByText("Terms");
 
       expect(buildersLink).toHaveClass("text-sm");
@@ -399,7 +410,7 @@ describe("Footer", () => {
       render(<Footer />);
 
       const links = [
-        screen.getByText("For Builders"),
+        screen.getByText("For Projects"),
         screen.getByText("Blog"),
         screen.getByText("Terms"),
       ];
@@ -420,14 +431,14 @@ describe("Footer", () => {
 
   describe("Edge Cases", () => {
     it("should handle year transition correctly", () => {
-      const mockDate = new Date("2025-01-01");
-      vi.spyOn(global, "Date").mockImplementation(() => mockDate as any);
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2025-01-01"));
 
       render(<Footer />);
 
       expect(screen.getByText("© 2025 Karma. All rights reserved.")).toBeInTheDocument();
 
-      vi.restoreAllMocks();
+      vi.useRealTimers();
     });
 
     it("should render all components without errors", () => {

@@ -18,11 +18,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-// Note: Some tests that depend on Safe SDK constructors are skipped in CI
-// because Vitest ESM doesn't correctly handle default-export class constructors
-// from @safe-global/api-kit and @safe-global/protocol-kit.
-// The 59 non-SDK tests still run and provide good coverage.
-const itSdk = process.env.CI ? it.skip : it;
+const itSdk = it;
 
 // ---------------------------------------------------------------------------
 // Hoisted mock state

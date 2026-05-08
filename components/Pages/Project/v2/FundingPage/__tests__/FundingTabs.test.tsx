@@ -5,6 +5,7 @@ import { FundingTabs } from "../FundingTabs";
 // Mock next/navigation
 vi.mock("next/navigation", () => ({
   useParams: () => ({ projectId: "test-project-123" }),
+  usePathname: vi.fn(() => "/"),
 }));
 
 describe("FundingTabs", () => {

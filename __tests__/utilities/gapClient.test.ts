@@ -6,7 +6,10 @@ const { mockGAP, mockGapIndexerClient } = vi.hoisted(() => {
   const gapFn = vi.fn(function (this: Record<string, unknown>) {
     this.fetch = { projectById: vi.fn(), projectBySlug: vi.fn() };
   });
-  const indexerFn = vi.fn(() => ({}));
+  // Must use function() (not arrow) so it can be called with `new`
+  const indexerFn = vi.fn(function (this: Record<string, unknown>) {
+    Object.assign(this, {});
+  });
   return { mockGAP: gapFn, mockGapIndexerClient: indexerFn };
 });
 

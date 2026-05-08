@@ -2,14 +2,17 @@
 
 import { Send } from "lucide-react";
 import { useCallback, useMemo, useRef } from "react";
+import InviteGranteeModal from "@/components/FundingPlatform/ApplicationView/InviteGranteeModal";
 import InviteReviewerModal from "@/components/FundingPlatform/ApplicationView/InviteReviewerModal";
 import MentionAutocomplete from "@/components/FundingPlatform/ApplicationView/MentionAutocomplete";
 import { Button } from "@/components/ui/button";
 import { useAllReviewers } from "@/hooks/useAllReviewers";
 import { useGranteeContacts } from "@/hooks/useGranteeContacts";
+import { useInviteApplicationGrantee } from "@/hooks/useInviteApplicationGrantee";
 import { useMentionEditor } from "@/hooks/useMentionEditor";
 import { useMilestoneReviewers } from "@/hooks/useMilestoneReviewers";
 import { ReviewerType } from "@/hooks/useReviewerAssignment";
+import { useApplicationAccess } from "@/src/features/applications/hooks/use-application-access";
 import type { CommentInputProps } from "../types";
 import { CommentMarkdownInput } from "./CommentMarkdownInput";
 
@@ -37,6 +40,10 @@ export function CommentInput({
   const { data: reviewers } = useAllReviewers(programId ?? "");
   const { addReviewer, isAdding } = useMilestoneReviewers(programId ?? "");
   const { data: granteeContacts } = useGranteeContacts(referenceNumber);
+  const { isOwner, canReview } = useApplicationAccess(programId ?? "", referenceNumber);
+  const { inviteGrantee, isInviting: isInvitingGrantee } =
+    useInviteApplicationGrantee(referenceNumber);
+  const canInviteGrantee = isOwner || canReview;
 
   const filteredReviewers = useMemo(() => {
     if (!reviewers) return [];
@@ -100,9 +107,25 @@ export function CommentInput({
       }
       e.preventDefault();
       e.stopPropagation();
-      mentionEditor.handleKeyDown(e.key, mentionItems, isAdmin, value, onChange);
+      mentionEditor.handleKeyDown(
+        e.key,
+        mentionItems,
+        filteredReviewers.length,
+        granteeContacts !== undefined,
+        value,
+        onChange,
+        canInviteGrantee
+      );
     },
-    [mentionEditor, mentionItems, isAdmin, value, onChange]
+    [
+      mentionEditor,
+      mentionItems,
+      filteredReviewers.length,
+      granteeContacts,
+      value,
+      onChange,
+      canInviteGrantee,
+    ]
   );
 
   const handleSubmit = useCallback(async () => {
@@ -140,6 +163,9 @@ export function CommentInput({
             caretPosition={mentionEditor.caretPosition}
             onSelect={handleMentionSelect}
             onInviteNew={mentionEditor.handleOpenInviteModal}
+            onInviteGrantee={
+              canInviteGrantee ? mentionEditor.handleOpenInviteGranteeModal : undefined
+            }
             onClose={mentionEditor.handleCloseAutocomplete}
             granteeContacts={granteeContacts}
           />
@@ -165,6 +191,15 @@ export function CommentInput({
           reviewerType={ReviewerType.MILESTONE}
           onInviteReviewer={addReviewer}
           isInviting={isAdding}
+          onInvited={handleInvited}
+        />
+      )}
+      {enableMentions && canInviteGrantee && (
+        <InviteGranteeModal
+          isOpen={mentionEditor.isInviteGranteeModalOpen}
+          onClose={mentionEditor.handleCloseInviteGranteeModal}
+          onInviteGrantee={inviteGrantee}
+          isInviting={isInvitingGrantee}
           onInvited={handleInvited}
         />
       )}

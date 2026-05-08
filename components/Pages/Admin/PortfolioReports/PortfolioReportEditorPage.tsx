@@ -1,105 +1,86 @@
 "use client";
 
-import { ArrowLeft, Eye, EyeOff, RefreshCw, Save } from "lucide-react";
+import { ArrowLeft, Download, Eye, EyeOff, Pencil, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { DeleteDialog } from "@/components/DeleteDialog";
-import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { HtmlReportFrame } from "@/components/Pages/Community/PortfolioReports/HtmlReportFrame";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import {
   usePortfolioReport,
   usePublishReport,
   useRegenerateReport,
   useUnpublishReport,
-  useUpdateReportMarkdown,
+  useUpdateReportContent,
 } from "@/hooks/portfolio-reports/usePortfolioReports";
+import { downloadReportPdf } from "@/services/portfolio-reports.service";
+import { isReportGenerating } from "@/types/portfolio-report";
 import type { Community } from "@/types/v2/community";
 import { PAGES } from "@/utilities/pages";
 import { formatRunDate } from "@/utilities/portfolio-reports/period";
+import { GenerationStatusBadge } from "./GenerationStatusBadge";
 
 interface Props {
   community: Community;
   reportId: string;
 }
 
-// Extracts the in-app navigation target from an anchor click, or null if the
-// click should be ignored (external link, new tab, same-page anchor, etc.).
-function getInAppNavTarget(e: MouseEvent): string | null {
-  if (e.defaultPrevented) return null;
-  if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return null;
-  const anchor = (e.target as Element | null)?.closest?.("a[href]") as HTMLAnchorElement | null;
-  if (!anchor) return null;
-  const href = anchor.getAttribute("href");
-  if (!href) return null;
-  if (href.startsWith("#") || href.startsWith("mailto:") || href.startsWith("tel:")) return null;
-  let url: URL;
-  try {
-    url = new URL(href, window.location.href);
-  } catch {
-    return null;
-  }
-  if (url.origin !== window.location.origin) return null;
-  if (url.pathname === window.location.pathname && url.search === window.location.search) {
-    return null;
-  }
-  return url.pathname + url.search + url.hash;
-}
-
+/**
+ * Admin preview + actions page.
+ *
+ * Edit affordance is intentionally a raw HTML textarea. The rendered
+ * output is structured HTML (produced by the BE renderer from the
+ * agentic structured document); a WYSIWYG would either lose round-trip
+ * fidelity or require rebuilding the renderer in the browser. The
+ * textarea is enough for typo-fix-shaped edits, and Regenerate is the
+ * right move for anything larger.
+ */
 export function PortfolioReportEditorPage({ community, reportId }: Props) {
   const slug = community.details.slug;
   const router = useRouter();
   const { hasAccess, isLoading: accessLoading } = useCommunityAdminAccess(community.uid);
   const { data: report, isLoading } = usePortfolioReport(slug, reportId);
-  const updateMarkdownMutation = useUpdateReportMarkdown(slug);
   const publishMutation = usePublishReport(slug);
   const unpublishMutation = useUnpublishReport(slug);
   const regenerateMutation = useRegenerateReport(slug);
+  const updateContentMutation = useUpdateReportContent(slug);
 
-  const [markdown, setMarkdown] = useState<string | null>(null);
-  const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
   const [showRegenerateDialog, setShowRegenerateDialog] = useState(false);
-  const [pendingHref, setPendingHref] = useState<string | null>(null);
-  const isDirtyRef = useRef(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editDraft, setEditDraft] = useState("");
+  const [exportingPdf, setExportingPdf] = useState(false);
+  const exportInFlight = useRef(false);
 
-  // Initialize local markdown from fetched report
-  const currentMarkdown = markdown ?? report?.markdown ?? "";
-
-  // Dirty flag: local edits differ from the saved value
-  const isDirty = markdown !== null && markdown !== (report?.markdown ?? "");
-
-  // Keep a ref so event handlers always see the latest value without re-binding.
   useEffect(() => {
-    isDirtyRef.current = isDirty;
-  }, [isDirty]);
+    if (showEditDialog && report?.content) {
+      setEditDraft(report.content);
+    }
+  }, [showEditDialog, report?.content]);
 
-  // Browser refresh/close/external nav — show the native confirm.
+  // Close the Edit dialog if a regenerate kicks off while it's open —
+  // the draft is now stale (it was seeded from pre-regen content) and
+  // saving would clobber the freshly generated report. The user gets a
+  // toast so they know why their dialog disappeared.
+  const isReportRegenerating = report ? isReportGenerating(report) : false;
   useEffect(() => {
-    if (!isDirty) return;
-    const handler = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      e.returnValue = "";
-    };
-    window.addEventListener("beforeunload", handler);
-    return () => window.removeEventListener("beforeunload", handler);
-  }, [isDirty]);
-
-  // In-app nav — intercept anchor clicks on capture phase so they can't slip past.
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (!isDirtyRef.current) return;
-      const target = getInAppNavTarget(e);
-      if (!target) return;
-      e.preventDefault();
-      e.stopPropagation();
-      setPendingHref(target);
-      setShowUnsavedDialog(true);
-    };
-    document.addEventListener("click", handler, true);
-    return () => document.removeEventListener("click", handler, true);
-  }, []);
+    if (showEditDialog && isReportRegenerating) {
+      setShowEditDialog(false);
+      toast("Closed Edit — report is regenerating. Reopen when it finishes.", {
+        icon: "ℹ️",
+      });
+    }
+  }, [showEditDialog, isReportRegenerating]);
 
   if (accessLoading || isLoading) {
     return (
@@ -117,30 +98,11 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
     );
   }
 
+  const generating = isReportGenerating(report);
+  const failed = report.status === "failed";
+
   const navigateBack = () => {
     router.push(PAGES.ADMIN.PORTFOLIO_REPORTS(slug));
-  };
-
-  const handleBackClick = () => {
-    if (isDirty) {
-      setShowUnsavedDialog(true);
-    } else {
-      navigateBack();
-    }
-  };
-
-  const handleSave = async () => {
-    try {
-      await updateMarkdownMutation.mutateAsync({
-        reportId,
-        markdown: currentMarkdown,
-      });
-      // Sync dirty state away after successful save
-      setMarkdown(null);
-      toast.success("Report saved");
-    } catch {
-      toast.error("Failed to save report");
-    }
   };
 
   const handlePublish = async () => {
@@ -163,44 +125,55 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
 
   const handleRegenerate = async () => {
     try {
-      const result = await regenerateMutation.mutateAsync(reportId);
-      setMarkdown(result.markdown);
-      toast.success("Report regenerated");
+      await regenerateMutation.mutateAsync(reportId);
+      setShowRegenerateDialog(false);
+      toast.success("Regeneration started");
     } catch {
-      toast.error("Failed to regenerate report");
+      toast.error("Failed to start regeneration");
     }
   };
 
+  const handleSaveEdit = async () => {
+    try {
+      await updateContentMutation.mutateAsync({ reportId, content: editDraft });
+      setShowEditDialog(false);
+      toast.success("Report content saved");
+    } catch (err) {
+      toast.error(`Failed to save: ${err instanceof Error ? err.message : "Unknown error"}`);
+    }
+  };
+
+  const handleExportPdf = async () => {
+    // Synchronous guard against double-clicks — `setExportingPdf(true)`
+    // is queued by React and won't disable the button before a second
+    // click can fire on the same event loop tick.
+    if (exportInFlight.current) return;
+    exportInFlight.current = true;
+    setExportingPdf(true);
+    try {
+      const blob = await downloadReportPdf(slug, reportId);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `portfolio-report-${report.runDate}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      toast.error(`Failed to export PDF: ${err instanceof Error ? err.message : "Unknown error"}`);
+    } finally {
+      exportInFlight.current = false;
+      setExportingPdf(false);
+    }
+  };
+
+  const runDateLabel = formatRunDate(report.runDate).label;
+
   return (
     <div className="flex h-full flex-col">
-      {/* Unsaved changes confirmation dialog */}
       <DeleteDialog
-        title="You have unsaved changes. Leave without saving?"
-        deleteFunction={async () => {
-          const href = pendingHref;
-          // Discard local edits so the beforeunload + click guards don't re-fire
-          setMarkdown(null);
-          setPendingHref(null);
-          // Let state flush before navigating
-          await Promise.resolve();
-          if (href) {
-            router.push(href);
-          } else {
-            navigateBack();
-          }
-        }}
-        isLoading={false}
-        externalIsOpen={showUnsavedDialog}
-        externalSetIsOpen={(open) => {
-          setShowUnsavedDialog(open);
-          if (!open) setPendingHref(null);
-        }}
-        buttonElement={null}
-      />
-
-      {/* Regenerate confirmation dialog */}
-      <DeleteDialog
-        title="This will overwrite the current draft. Any edits will be lost. Continue?"
+        title="This re-runs the agentic generator with the current config and overwrites the existing content. Spends LLM tokens. Continue?"
         deleteFunction={handleRegenerate}
         isLoading={regenerateMutation.isPending}
         externalIsOpen={showRegenerateDialog}
@@ -208,32 +181,57 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
         buttonElement={null}
       />
 
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Edit report content</DialogTitle>
+            <DialogDescription>
+              Edits the rendered HTML directly. Regenerating the report will overwrite these
+              changes.
+            </DialogDescription>
+          </DialogHeader>
+          <textarea
+            className="h-[60vh] w-full resize-none rounded border border-zinc-300 bg-white p-3 font-mono text-xs text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+            value={editDraft}
+            onChange={(event) => setEditDraft(event.target.value)}
+            spellCheck={false}
+            aria-label="Report HTML content"
+          />
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowEditDialog(false)}
+              disabled={updateContentMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveEdit}
+              disabled={updateContentMutation.isPending || editDraft === (report.content ?? "")}
+            >
+              {updateContentMutation.isPending ? "Saving…" : "Save"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Top bar */}
       <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3 dark:border-zinc-700">
         <div className="flex items-center gap-3">
           <Button
             variant="ghost"
             size="sm"
-            onClick={handleBackClick}
+            onClick={navigateBack}
             aria-label="Back to portfolio reports"
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
             <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-              {formatRunDate(report.runDate).label}
-              {isDirty && <span className="ml-2 text-sm font-normal text-zinc-400">(unsaved)</span>}
+              {runDateLabel}
             </h1>
             <div className="flex items-center gap-2 text-xs text-zinc-500">
-              <span
-                className={`inline-flex items-center rounded-full px-2 py-0.5 font-medium ${
-                  report.status === "published"
-                    ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                    : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
-                }`}
-              >
-                {report.status}
-              </span>
+              <GenerationStatusBadge status={report.status} />
               <span>Model: {report.modelId}</span>
               {report.tokenUsage && (
                 <span>{report.tokenUsage.totalTokens.toLocaleString()} tokens</span>
@@ -245,27 +243,42 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setShowRegenerateDialog(true)}
-            disabled={regenerateMutation.isPending}
+            onClick={() => setShowEditDialog(true)}
+            disabled={generating || !report.content}
           >
-            <RefreshCw className="mr-1 h-3 w-3" />
-            {regenerateMutation.isPending ? "Regenerating..." : "Regenerate"}
+            <Pencil className="mr-1 h-3 w-3" />
+            Edit
           </Button>
           <Button
             variant="outline"
             size="sm"
-            onClick={handleSave}
-            disabled={updateMarkdownMutation.isPending}
+            onClick={handleExportPdf}
+            disabled={exportingPdf || generating || !report.content}
           >
-            <Save className="mr-1 h-3 w-3" />
-            {updateMarkdownMutation.isPending ? "Saving..." : "Save"}
+            <Download className="mr-1 h-3 w-3" />
+            {exportingPdf ? "Exporting…" : "Export PDF"}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowRegenerateDialog(true)}
+            disabled={regenerateMutation.isPending || generating}
+          >
+            <RefreshCw className="mr-1 h-3 w-3" />
+            {regenerateMutation.isPending
+              ? "Starting…"
+              : generating
+                ? "Generating…"
+                : failed
+                  ? "Retry"
+                  : "Regenerate"}
           </Button>
           {report.status === "draft" ? (
             <Button size="sm" onClick={handlePublish} disabled={publishMutation.isPending}>
               <Eye className="mr-1 h-3 w-3" />
               Publish
             </Button>
-          ) : (
+          ) : report.status === "published" ? (
             <Button
               variant="outline"
               size="sm"
@@ -275,18 +288,38 @@ export function PortfolioReportEditorPage({ community, reportId }: Props) {
               <EyeOff className="mr-1 h-3 w-3" />
               Unpublish
             </Button>
-          )}
+          ) : null}
         </div>
       </div>
 
-      {/* Editor */}
+      {generating ? (
+        <output className="flex items-center gap-2 border-b border-blue-200 bg-blue-50 px-4 py-2 text-sm text-blue-700 dark:border-blue-900/40 dark:bg-blue-950/40 dark:text-blue-300">
+          <Spinner className="h-4 w-4" />
+          <span>
+            Generation in progress. This page will refresh automatically when the report is ready.
+          </span>
+        </output>
+      ) : null}
+
+      {failed && report.generationError ? (
+        <div
+          role="alert"
+          className="border-b border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-950/40 dark:text-red-300"
+        >
+          <p className="font-medium">Generation failed</p>
+          <p className="text-xs opacity-90">{report.generationError}</p>
+        </div>
+      ) : null}
+
+      {/* Preview */}
       <div className="flex-1 p-4">
-        <MarkdownEditor
-          value={currentMarkdown}
-          onChange={(val) => setMarkdown(val)}
-          maxLength={500000}
-          height={700}
-        />
+        {report.content ? (
+          <HtmlReportFrame html={report.content} title={`Portfolio report — ${runDateLabel}`} />
+        ) : (
+          <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-6 text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-zinc-400">
+            No content yet. Regenerate to produce the report body.
+          </div>
+        )}
       </div>
     </div>
   );

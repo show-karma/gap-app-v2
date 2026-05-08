@@ -18,6 +18,7 @@ vi.mock("@/components/Utilities/errorManager", () => ({
 // Mock next/navigation
 vi.mock("next/navigation", () => ({
   useParams: vi.fn(() => ({ communityId: "test-community" })),
+  usePathname: vi.fn(() => "/"),
 }));
 
 // Mock child components to simplify testing

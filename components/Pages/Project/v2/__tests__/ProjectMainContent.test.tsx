@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, screen } from "@testing-library/react";
+import { renderWithQueryClient as render } from "@/__tests__/helpers/renderWithQueryClient";
 import "@testing-library/jest-dom";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { ActivityFeed } from "../MainContent/ActivityFeed";
@@ -9,6 +10,7 @@ import { ProjectMainContent } from "../MainContent/ProjectMainContent";
 // Mock next/navigation
 vi.mock("next/navigation", () => ({
   useParams: () => ({ projectId: "test-project" }),
+  usePathname: vi.fn(() => "/"),
 }));
 
 // Mock next/link
@@ -59,6 +61,15 @@ vi.mock("@/components/Shared/ActivityCard", () => ({
   ActivityCard: ({ activity }: { activity: { type: string; data: { title: string } } }) => (
     <div data-testid="activity-card">{activity.data.title || "Activity"}</div>
   ),
+}));
+
+// Mock useMilestoneAllocationsByGrants to avoid QueryClient requirement
+vi.mock("@/hooks/useCommunityMilestoneAllocations", () => ({
+  useMilestoneAllocationsByGrants: () => ({
+    allocationMap: new Map(),
+    grantTotalMap: new Map(),
+    isLoading: false,
+  }),
 }));
 
 // Mock the ImpactContent component to avoid loading external dependencies

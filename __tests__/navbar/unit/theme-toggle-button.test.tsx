@@ -4,12 +4,40 @@
  * between the login/user area and the help button.
  */
 
-import { screen } from "@testing-library/react";
+// Hoist local theme state so the vi.mock factory can read/write it directly.
+// Tests mutate _themeRefs.state before rendering to control what useTheme() returns.
+const _themeRefs = vi.hoisted(() => ({
+  state: {
+    theme: "light" as string | undefined,
+    setTheme: (() => {}) as (theme: string) => void,
+    themes: ["light", "dark"] as string[],
+    systemTheme: "light" as string | undefined,
+    resolvedTheme: "light" as string | undefined,
+  },
+}));
+
+vi.mock("next-themes", () => ({
+  useTheme: vi.fn(() => _themeRefs.state),
+  ThemeProvider: ({ children }: { children: unknown }) => children,
+}));
+
+import { cleanup, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ThemeToggleButton } from "@/src/components/navbar/theme-toggle-button";
 import { cleanupAfterEach, createMockUseTheme, renderWithProviders } from "../utils/test-helpers";
 
 describe("ThemeToggleButton", () => {
+  beforeEach(() => {
+    // Reset to light-mode defaults before each test
+    _themeRefs.state = {
+      theme: "light",
+      setTheme: vi.fn(),
+      themes: ["light", "dark"],
+      systemTheme: "light",
+      resolvedTheme: "light",
+    };
+  });
+
   afterEach(() => {
     cleanupAfterEach();
   });
@@ -19,15 +47,14 @@ describe("ThemeToggleButton", () => {
       // When theme is "system", resolvedTheme determines the actual appearance.
       // Using resolvedTheme prevents hydration mismatch because it reflects the
       // actual resolved value rather than the raw "system" string.
-      renderWithProviders(<ThemeToggleButton />, {
-        mockUseTheme: {
-          theme: "system",
-          setTheme: vi.fn(),
-          themes: ["light", "dark", "system"],
-          systemTheme: "dark",
-          resolvedTheme: "dark",
-        },
-      });
+      _themeRefs.state = {
+        theme: "system",
+        setTheme: vi.fn(),
+        themes: ["light", "dark", "system"],
+        systemTheme: "dark",
+        resolvedTheme: "dark",
+      };
+      renderWithProviders(<ThemeToggleButton />);
 
       const button = screen.getByRole("button", { name: /toggle theme/i });
       // resolvedTheme is "dark", so it should show "Toggle theme to light mode"
@@ -98,15 +125,14 @@ describe("ThemeToggleButton", () => {
       const user = userEvent.setup();
       const mockSetTheme = vi.fn();
 
-      renderWithProviders(<ThemeToggleButton />, {
-        mockUseTheme: {
-          theme: "light",
-          setTheme: mockSetTheme,
-          themes: ["light", "dark"],
-          systemTheme: "light",
-          resolvedTheme: "light",
-        },
-      });
+      _themeRefs.state = {
+        theme: "light",
+        setTheme: mockSetTheme,
+        themes: ["light", "dark"],
+        systemTheme: "light",
+        resolvedTheme: "light",
+      };
+      renderWithProviders(<ThemeToggleButton />);
 
       const button = screen.getByRole("button", { name: /toggle theme/i });
       await user.click(button);
@@ -118,9 +144,14 @@ describe("ThemeToggleButton", () => {
 
   describe("Dark mode", () => {
     it("should show sun icon when theme is dark (to switch to light)", () => {
-      renderWithProviders(<ThemeToggleButton />, {
-        mockUseTheme: createMockUseTheme("dark"),
-      });
+      _themeRefs.state = {
+        theme: "dark",
+        setTheme: vi.fn(),
+        themes: ["light", "dark"],
+        systemTheme: "light",
+        resolvedTheme: "dark",
+      };
+      renderWithProviders(<ThemeToggleButton />);
 
       const button = screen.getByRole("button", { name: /toggle theme/i });
       expect(button).toBeInTheDocument();
@@ -132,15 +163,14 @@ describe("ThemeToggleButton", () => {
       const user = userEvent.setup();
       const mockSetTheme = vi.fn();
 
-      renderWithProviders(<ThemeToggleButton />, {
-        mockUseTheme: {
-          theme: "dark",
-          setTheme: mockSetTheme,
-          themes: ["light", "dark"],
-          systemTheme: "light",
-          resolvedTheme: "dark",
-        },
-      });
+      _themeRefs.state = {
+        theme: "dark",
+        setTheme: mockSetTheme,
+        themes: ["light", "dark"],
+        systemTheme: "light",
+        resolvedTheme: "dark",
+      };
+      renderWithProviders(<ThemeToggleButton />);
 
       const button = screen.getByRole("button", { name: /toggle theme/i });
       await user.click(button);
@@ -155,15 +185,14 @@ describe("ThemeToggleButton", () => {
       const user = userEvent.setup();
       const mockSetTheme = vi.fn();
 
-      renderWithProviders(<ThemeToggleButton />, {
-        mockUseTheme: {
-          theme: "system",
-          setTheme: mockSetTheme,
-          themes: ["light", "dark", "system"],
-          systemTheme: "light",
-          resolvedTheme: "light",
-        },
-      });
+      _themeRefs.state = {
+        theme: "system",
+        setTheme: mockSetTheme,
+        themes: ["light", "dark", "system"],
+        systemTheme: "light",
+        resolvedTheme: "light",
+      };
+      renderWithProviders(<ThemeToggleButton />);
 
       const button = screen.getByRole("button", { name: /toggle theme/i });
       await user.click(button);

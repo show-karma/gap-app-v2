@@ -107,7 +107,7 @@ describe("UpdatesContent - milestone status filter URL sync", () => {
     expect(screen.getByTestId("milestone-status-value")).toHaveTextContent("all");
   });
 
-  it("adds completed milestoneStatus when milestones filter is enabled from the default view", async () => {
+  it("does not auto-apply a milestoneStatus when milestones filter is enabled from the default view", async () => {
     mockSearchParams = new URLSearchParams();
 
     const { UpdatesContent } = await import("@/components/Pages/Project/v2/Content/UpdatesContent");
@@ -115,7 +115,7 @@ describe("UpdatesContent - milestone status filter URL sync", () => {
 
     await userEvent.click(screen.getByTestId("trigger-milestones-filter"));
 
-    expect(mockReplace).toHaveBeenCalledWith("?filter=milestones&milestoneStatus=completed", {
+    expect(mockReplace).toHaveBeenCalledWith("?filter=milestones", {
       scroll: false,
     });
   });

@@ -196,7 +196,7 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full min-w-0">
       {/* Header with label and preview toggle */}
       <div className="flex items-center justify-between mb-2">
         {label && (

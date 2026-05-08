@@ -15,6 +15,7 @@ vi.mock("@/utilities/registry/getCommunityMetrics", () => ({
 
 vi.mock("next/navigation", () => ({
   useParams: vi.fn(() => ({ communityId: "filecoin" })),
+  usePathname: vi.fn(() => "/"),
 }));
 
 import { useParams } from "next/navigation";
