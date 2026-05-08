@@ -64,7 +64,7 @@ export const KarmaProfileLinkInput: React.FC<KarmaProfileLinkInputProps> = ({
   const inputId = `${baseId}-input`;
   const listboxId = `${baseId}-listbox`;
 
-  const _formValue = useWatch({
+  const formValue = useWatch({
     control,
     name: name as FieldPath<ApplicationFormData>,
   });

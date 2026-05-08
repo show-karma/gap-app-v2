@@ -10,6 +10,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import type React from "react";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/utilities/tailwind";
 
