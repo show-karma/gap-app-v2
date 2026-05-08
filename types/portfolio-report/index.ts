@@ -35,6 +35,14 @@ export type PortfolioReportStatus = "generating" | "draft" | "failed" | "publish
 export interface PortfolioReport {
   id: string;
   reportConfigId: string;
+  /**
+   * Human-readable name from the originating ReportConfig (e.g.,
+   * "Weekly Operations Recap"). Only populated by the public list
+   * endpoint (`GET /communities/:slug/reports/published`); admin
+   * endpoints leave it `undefined`. `null` when the originating config
+   * has been deleted.
+   */
+  reportConfigName?: string | null;
   communityId: string;
   runDate: string;
   status: PortfolioReportStatus;

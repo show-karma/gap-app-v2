@@ -461,10 +461,10 @@ function ProgramsFilteredEmpty({ onClearFilters }: { onClearFilters: () => void 
         />
         <div className="flex w-full flex-col items-center justify-center gap-3">
           <p className="text-center text-lg font-semibold text-black dark:text-zinc-100">
-            No programs match your filters
+            More opportunities are on the way
           </p>
           <p className="text-center text-base font-normal text-gray-600 dark:text-zinc-400">
-            Try a different status or search term to find more funding opportunities.
+            Try other filters or check back later for new opportunities.
           </p>
           <button
             type="button"
