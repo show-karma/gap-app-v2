@@ -345,13 +345,17 @@ jobs:
           AUTH=$(grep -cE '^\| *A[0-9]+ *\|' qa-plan.md || true)
           echo "public_count=$PUBLIC" >> "$GITHUB_OUTPUT"
           echo "auth_count=$AUTH" >> "$GITHUB_OUTPUT"
-          SHARDS="[]"
+          # Always include at least one shard so qa-execution runs (and shows
+          # green) instead of being skipped. The executor handles "no
+          # scenarios in this shard" as a fast 0-scenario PASS (writes an
+          # empty qa-results file and exits in <30s — see PR #1378's
+          # public shard for a real example).
           if [ "$PUBLIC" -gt 0 ] && [ "$AUTH" -gt 0 ]; then
             SHARDS='["public","auth"]'
-          elif [ "$PUBLIC" -gt 0 ]; then
-            SHARDS='["public"]'
           elif [ "$AUTH" -gt 0 ]; then
             SHARDS='["auth"]'
+          else
+            SHARDS='["public"]'
           fi
           echo "shards=$SHARDS" >> "$GITHUB_OUTPUT"
           echo "Public scenarios: $PUBLIC | Auth scenarios: $AUTH | Shards: $SHARDS"
@@ -496,8 +500,6 @@ jobs:
   # aggregates by globbing all shards.
   qa-execution:
     needs: [gate-check, qa-plan, build]
-    # Skip entirely if the plan declares no scenarios at all (CI/docs PRs).
-    if: needs.qa-plan.outputs.shards != '[]' && needs.qa-plan.outputs.shards != ''
     runs-on: ubuntu-latest
     # 18 min covers: setup (~3m) + single 14m claude attempt + cleanup (~1m).
     # Single attempt only — retrying a hung claude on the same prompt almost
@@ -522,12 +524,40 @@ jobs:
         with:
           name: qa-plan
 
+      - name: Detect scenario count for this shard
+        id: shard-count
+        # Count rows for THIS shard's prefix in the markdown plan. If zero,
+        # subsequent steps short-circuit — we still want a green job, but
+        # there's nothing to spin up a browser for.
+        run: |
+          PREFIX=$([ "${{ matrix.shard }}" = "auth" ] && echo A || echo P)
+          if [ -f qa-plan.md ]; then
+            COUNT=$(grep -cE "^\| *${PREFIX}[0-9]+ *\|" qa-plan.md || true)
+          else
+            COUNT=0
+          fi
+          echo "shard_count=$COUNT" >> "$GITHUB_OUTPUT"
+          echo "Shard ${{ matrix.shard }} has $COUNT scenarios"
+
+      - name: Write no-op results when shard has zero scenarios
+        if: steps.shard-count.outputs.shard_count == '0'
+        run: |
+          mkdir -p qa-output
+          cat > "qa-results-${{ matrix.shard }}.json" <<'JSON'
+          { "total": 0, "passed": 0, "failed": 0, "blocked": 0, "skipped": 0, "blocking": false, "scenarios": [], "note": "No scenarios in this shard" }
+          JSON
+          echo "Wrote no-op qa-results-${{ matrix.shard }}.json"
+
+      # All heavy steps below are gated on a non-zero scenario count.
+
       - name: Setup pnpm
+        if: steps.shard-count.outputs.shard_count != '0'
         uses: pnpm/action-setup@v5
         with:
           version: 10
 
       - name: Setup Node.js
+        if: steps.shard-count.outputs.shard_count != '0'
         uses: actions/setup-node@v5
         with:
           node-version: '20'
@@ -538,14 +568,17 @@ jobs:
       # by the npm-cached global install below. Saves ~30-60s per shard.
 
       - name: Download prebuilt .next
+        if: steps.shard-count.outputs.shard_count != '0'
         uses: actions/download-artifact@v7
         with:
           name: qa-build
 
       - name: Unpack standalone bundle
+        if: steps.shard-count.outputs.shard_count != '0'
         run: tar -xzf next-build.tar.gz
 
       - name: Start local server
+        if: steps.shard-count.outputs.shard_count != '0'
         # Standalone server.js boots in ~2s and embeds its own pruned
         # node_modules — no `pnpm start` / `next start` needed. HOSTNAME
         # must be 0.0.0.0 so curl on localhost can reach it.
@@ -556,6 +589,7 @@ jobs:
           NODE_ENV: production
 
       - name: Wait for server
+        if: steps.shard-count.outputs.shard_count != '0'
         run: |
           start=$SECONDS
           for i in $(seq 1 60); do
@@ -569,6 +603,7 @@ jobs:
           exit 1
 
       - name: Generate GitHub App token
+        if: steps.shard-count.outputs.shard_count != '0'
         id: app-token
         uses: actions/create-github-app-token@v3
         with:
@@ -576,10 +611,12 @@ jobs:
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
       - name: Get ISO week for cache key
+        if: steps.shard-count.outputs.shard_count != '0'
         id: weeknum
         run: echo "weeknum=$(date -u +'%G-W%V')" >> "$GITHUB_OUTPUT"
 
       - name: Cache Claude Code install
+        if: steps.shard-count.outputs.shard_count != '0'
         id: claude-cache
         uses: actions/cache@v5
         with:
@@ -589,16 +626,18 @@ jobs:
             claude-code-${{ runner.os }}-
 
       - name: Install Claude Code
-        if: steps.claude-cache.outputs.cache-hit != 'true'
+        if: steps.shard-count.outputs.shard_count != '0' && steps.claude-cache.outputs.cache-hit != 'true'
         run: |
           mkdir -p ~/.npm-global
           npm config set prefix ~/.npm-global
           npm install -g @anthropic-ai/claude-code
 
       - name: Add Claude Code to PATH
+        if: steps.shard-count.outputs.shard_count != '0'
         run: echo "$HOME/.npm-global/bin" >> "$GITHUB_PATH"
 
       - name: Execute QA Plan (shard ${{ matrix.shard }})
+        if: steps.shard-count.outputs.shard_count != '0'
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           PR_NUMBER: ${{ needs.gate-check.outputs.pr_number }}
@@ -751,11 +790,14 @@ jobs:
           echo "Total changed UI items: $TOTAL"
 
           if [ "$TOTAL" -eq 0 ]; then
-            echo "No changed UI pages — skipping dogfood"
-            echo "should_run=false" >> "$GITHUB_OUTPUT"
-            echo "shards=[]" >> "$GITHUB_OUTPUT"
-            # Write minimal plan artifact
-            echo '{"should_run":false,"shard_count":0,"groups":[]}' > dogfood-plan.json
+            # No UI changes — emit an empty no-op shard so dogfood runs and
+            # shows green instead of skipped. The dogfood agent treats an
+            # empty SCOPE_PAGES as "nothing to explore", writes a 0-finding
+            # results file, and exits in <30s.
+            echo "No changed UI pages — emitting no-op shard so the job stays green"
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+            echo 'shards=["1"]' >> "$GITHUB_OUTPUT"
+            echo '{"should_run":true,"shard_count":1,"groups":[[]]}' > dogfood-plan.json
           elif [ "$TOTAL" -le 2 ]; then
             # Tiny diff — single shard, no splitting overhead
             GROUP_A=$(printf '%s,' "${PATHS[@]}" | sed 's/,$//')
@@ -953,12 +995,35 @@ jobs:
           echo "scope_pages=$PAGES" >> "$GITHUB_OUTPUT"
           echo "Shard ${{ matrix.shard }} scope: $PAGES"
 
+      - name: Write no-op artifacts when scope is empty
+        # CI/docs PRs have no changed UI files. We still want this job to be
+        # green, so emit a 0-finding results file here and skip all the
+        # heavy setup (build download, server boot, claude run) below.
+        if: steps.scope.outputs.scope_pages == ''
+        run: |
+          mkdir -p dogfood-output
+          echo "Empty scope — writing no-op dogfood-findings-${{ matrix.shard }}.json"
+          cat > dogfood-findings-${{ matrix.shard }}.json <<'JSON'
+          { "findings": [], "scope_pages": "", "note": "No changed UI pages — no-op shard" }
+          JSON
+          cat > dogfood-results.json <<'JSON'
+          { "total": 0, "critical": 0, "high": 0, "medium": 0, "low": 0, "preexisting": 0, "blocking": false }
+          JSON
+
+      # All steps below are gated on a non-empty scope. Empty-scope shards
+      # (CI/docs PRs) short-circuit at the no-op step above with their
+      # results files already written, and skip the heavy build/server/
+      # claude setup. Each step's `if:` keeps the JOB green by leaving
+      # the step status as "skipped" rather than "failure".
+
       - name: Setup pnpm
+        if: steps.scope.outputs.scope_pages != ''
         uses: pnpm/action-setup@v5
         with:
           version: 10
 
       - name: Setup Node.js
+        if: steps.scope.outputs.scope_pages != ''
         uses: actions/setup-node@v5
         with:
           node-version: '20'
@@ -969,14 +1034,17 @@ jobs:
       # by the npm-cached global install below. Saves ~30-60s per shard.
 
       - name: Download prebuilt .next
+        if: steps.scope.outputs.scope_pages != ''
         uses: actions/download-artifact@v7
         with:
           name: qa-build
 
       - name: Unpack standalone bundle
+        if: steps.scope.outputs.scope_pages != ''
         run: tar -xzf next-build.tar.gz
 
       - name: Start local server
+        if: steps.scope.outputs.scope_pages != ''
         # Standalone server.js boots in ~2s and embeds its own pruned
         # node_modules — no `pnpm start` / `next start` needed. HOSTNAME
         # must be 0.0.0.0 so curl on localhost can reach it.
@@ -987,6 +1055,7 @@ jobs:
           NODE_ENV: production
 
       - name: Wait for server
+        if: steps.scope.outputs.scope_pages != ''
         run: |
           start=$SECONDS
           for i in $(seq 1 60); do
@@ -1000,6 +1069,7 @@ jobs:
           exit 1
 
       - name: Download Privy auth state
+        if: steps.scope.outputs.scope_pages != ''
         uses: actions/download-artifact@v7
         with:
           name: dogfood-auth-state
@@ -1007,6 +1077,7 @@ jobs:
         continue-on-error: true
 
       - name: Verify auth state present
+        if: steps.scope.outputs.scope_pages != ''
         id: auth
         run: |
           if [ -s dogfood-auth/user.json ]; then
@@ -1020,6 +1091,7 @@ jobs:
           fi
 
       - name: Generate GitHub App token
+        if: steps.scope.outputs.scope_pages != ''
         id: app-token
         uses: actions/create-github-app-token@v3
         with:
@@ -1027,10 +1099,12 @@ jobs:
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
       - name: Get ISO week for cache key
+        if: steps.scope.outputs.scope_pages != ''
         id: weeknum
         run: echo "weeknum=$(date -u +'%G-W%V')" >> "$GITHUB_OUTPUT"
 
       - name: Cache Claude Code install
+        if: steps.scope.outputs.scope_pages != ''
         id: claude-cache
         uses: actions/cache@v5
         with:
@@ -1040,16 +1114,18 @@ jobs:
             claude-code-${{ runner.os }}-
 
       - name: Install Claude Code
-        if: steps.claude-cache.outputs.cache-hit != 'true'
+        if: steps.scope.outputs.scope_pages != '' && steps.claude-cache.outputs.cache-hit != 'true'
         run: |
           mkdir -p ~/.npm-global
           npm config set prefix ~/.npm-global
           npm install -g @anthropic-ai/claude-code
 
       - name: Add Claude Code to PATH
+        if: steps.scope.outputs.scope_pages != ''
         run: echo "$HOME/.npm-global/bin" >> "$GITHUB_PATH"
 
       - name: Run Dogfood Exploration (shard ${{ matrix.shard }})
+        if: steps.scope.outputs.scope_pages != ''
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           PR_NUMBER: ${{ needs.gate-check.outputs.pr_number }}

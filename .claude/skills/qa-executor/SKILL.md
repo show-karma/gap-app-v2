@@ -119,6 +119,17 @@ If `state load` also fails (token expired on disk), fall back to the full Privy 
 
 ## Sharded Execution
 
+**Empty-shard fast path:** If the filtered subset for this shard contains zero scenarios (e.g. `qa-plan.md` has no P-rows and `$SHARD_ID == public`, or the plan is a CI/docs-only "zero scenarios" plan), do NOT start a browser session. Immediately write an empty success results file and exit:
+
+```bash
+cat > "qa-results-${SHARD_ID:-all}.json" <<'JSON'
+{ "total": 0, "passed": 0, "failed": 0, "blocked": 0, "skipped": 0, "blocking": false, "scenarios": [] }
+JSON
+exit 0
+```
+
+This keeps CI green on PRs that don't touch UI without spinning up agent-browser.
+
 When `$SHARD_ID` is set, execute only the matching subset:
 
 | `$SHARD_ID` | Run scenarios |
