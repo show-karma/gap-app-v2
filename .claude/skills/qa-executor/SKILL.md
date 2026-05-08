@@ -27,6 +27,18 @@ mkdir -p qa-output/screenshots qa-output/videos
 
 Always use `agent-browser` directly — never `npx agent-browser`. The direct binary uses the fast Rust client.
 
+## Time Budget & Incremental Writes (CRITICAL — read first)
+
+You have a **hard wall-clock budget of 12 minutes** for the whole shard (the wrapper kills the process at 14m). Plan accordingly.
+
+**Per-scenario soft cap: 90 seconds.** If a scenario exceeds 90s of active work (excluding login flow), record it as the result you have so far (PASS if all observed steps matched, otherwise FAIL with `evidence: "exceeded per-scenario budget — partial execution"` at Medium severity) and move on. Do NOT keep retrying the same step.
+
+**Write `qa-results-${SHARD_ID:-all}.json` after EVERY scenario, not at the end.** Use a Bash heredoc (`cat > qa-results-...json <<JSON ... JSON`) to upsert the full file with the running totals each time. This is non-negotiable — the CI wrapper considers a non-empty results file a successful shard, so even if the process is killed mid-run, completed scenarios survive. Write the file the FIRST time after the very first scenario completes (so even a 1-scenario session produces a valid artifact). The earlier `mv qa-results.json …` pattern is OBSOLETE — write directly to the suffixed filename from the start.
+
+**Two-minute exit guard.** Track elapsed time. When less than 2 minutes remain in your budget, stop starting new scenarios — flush the current results file with all completed scenarios marked accurately and a final `"truncated_at": "<scenario-id>"` field, then exit cleanly. Do NOT attempt a new scenario you cannot finish.
+
+**Login is part of the auth-shard budget.** Privy login routinely takes 1–3 minutes. If login fails twice, write a results file with `total: 0, blocking: false` and an explanatory note, then exit — do not loop on login indefinitely.
+
 ## Speed Rules (CRITICAL — these dominate runtime)
 
 Each scenario averages 20-50 agent turns. Wasted seconds compound.
@@ -107,6 +119,17 @@ If `state load` also fails (token expired on disk), fall back to the full Privy 
 
 ## Sharded Execution
 
+**Empty-shard fast path:** If the filtered subset for this shard contains zero scenarios (e.g. `qa-plan.md` has no P-rows and `$SHARD_ID == public`, or the plan is a CI/docs-only "zero scenarios" plan), do NOT start a browser session. Immediately write an empty success results file and exit:
+
+```bash
+cat > "qa-results-${SHARD_ID:-all}.json" <<'JSON'
+{ "total": 0, "passed": 0, "failed": 0, "blocked": 0, "skipped": 0, "blocking": false, "scenarios": [] }
+JSON
+exit 0
+```
+
+This keeps CI green on PRs that don't touch UI without spinning up agent-browser.
+
 When `$SHARD_ID` is set, execute only the matching subset:
 
 | `$SHARD_ID` | Run scenarios |
@@ -115,13 +138,11 @@ When `$SHARD_ID` is set, execute only the matching subset:
 | `auth` | A1, A2, A3, ... (all A-prefixed). Login first, then execute. |
 | (unset) | All scenarios — public first, then auth. |
 
-After execution, **rename the result file** to include the shard:
+Write the result file directly to its shard-suffixed name — see "Time Budget & Incremental Writes" and "Output" — so parallel shards never collide and partial results survive a kill signal:
 
-```bash
-mv qa-results.json qa-results-${SHARD_ID:-all}.json
 ```
-
-This lets parallel shards upload distinct artifacts that the verdict job aggregates.
+qa-results-${SHARD_ID:-all}.json
+```
 
 ## Authentication via Privy Test Account
 
@@ -299,14 +320,25 @@ If 3 or more Critical issues are found, stop execution. Document what was tested
 
 ## Output
 
-Save results to `qa-results.json`, then rename to include the shard suffix so parallel shards do not overwrite each other's artifacts:
+Write directly to the shard-suffixed filename — no intermediate `qa-results.json` + rename. The CI wrapper polls `qa-results-${SHARD_ID:-all}.json` and treats its presence (non-empty) as "shard completed enough to score," so the file MUST exist on disk before any kill signal can land.
+
+**Incremental upsert pattern (after each scenario):**
 
 ```bash
-# After Claude writes qa-results.json:
-mv qa-results.json "qa-results-${SHARD_ID:-all}.json"
+cat > "qa-results-${SHARD_ID:-all}.json" <<JSON
+{
+  "total": <count-so-far>,
+  "passed": <count>,
+  "failed": <count>,
+  "blocked": <count>,
+  "skipped": 0,
+  "blocking": <bool>,
+  "scenarios": [ ...all scenarios processed so far... ]
+}
+JSON
 ```
 
-The verdict job downloads all `qa-results-*.json` files and aggregates them.
+Do this after every scenario (or after writing partial results when exiting early via the time-budget guard). The verdict job downloads all `qa-results-*.json` files and aggregates them.
 
 JSON shape:
 
