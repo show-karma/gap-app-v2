@@ -1,110 +1,110 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
 interface Props {
   html: string;
-  /** Accessible title for the iframe. */
+  /** Accessible label, mirrors the prior iframe `title` prop. */
   title: string;
 }
 
 /**
  * Renders a self-contained HTML report (full `<!DOCTYPE html>` document
- * produced by the agentic generator's HTML pipeline) inside a sandboxed
- * iframe. The iframe isolates the report's embedded CSS from the host
- * app's styles and vice-versa.
+ * produced by the agentic generator's HTML pipeline) inside a Shadow
+ * DOM. Shadow DOM gives us the same style isolation an iframe did,
+ * without the iframe drawbacks: no ResizeObserver / scrollHeight
+ * measurement (the host `<section>` flows to its natural content
+ * height), no inner scrollbar, no sandboxed-modal weirdness around
+ * print.
  *
- * Height auto-grows to match the report's content using a
- * `ResizeObserver` on the iframe's body. We poll for content readiness
- * via the `onLoad` event and re-measure when the inner content reflows.
+ * The BE-produced HTML is a complete document. Shadow roots only
+ * accept fragment content, so we parse the doc with DOMParser, inject
+ * its `<style>` tags + body content into the shadow root, drop the
+ * legacy in-content Export PDF button, and harden against unsafe
+ * markup that could land in `report.content` via the admin Edit
+ * textarea (see sanitizeFragment).
  */
 export function HtmlReportFrame({ html, title }: Props) {
-  const iframeRef = useRef<HTMLIFrameElement | null>(null);
-  const [height, setHeight] = useState<number>(800);
+  const hostRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
-    const iframe = iframeRef.current;
-    if (!iframe) return undefined;
+    const host = hostRef.current;
+    if (!host) return;
 
-    let observer: ResizeObserver | null = null;
-    let detached = false;
-    let printButton: Element | null = null;
-    let printHandler: ((event: Event) => void) | null = null;
+    const root = host.shadowRoot ?? host.attachShadow({ mode: "open" });
 
-    function attach() {
-      if (detached) return;
-      const doc = iframe?.contentDocument;
-      const body = doc?.body;
-      if (!body) return;
+    const doc = new DOMParser().parseFromString(html, "text/html");
 
-      // `attach` runs both synchronously (on initial mount and on every
-      // `html` change before navigation completes) and again when the
-      // iframe fires `load`. Without disconnecting/cleaning up first,
-      // a fast sequence of `html` changes leaks observers + listeners
-      // and briefly observes the previous document's body.
-      observer?.disconnect();
-      if (printButton && printHandler) {
-        printButton.removeEventListener("click", printHandler);
-        printButton = null;
-        printHandler = null;
-      }
+    sanitizeFragment(doc);
 
-      const measure = () => {
-        const next = Math.max(body.scrollHeight, 400);
-        setHeight((prev) => (Math.abs(prev - next) > 1 ? next : prev));
-      };
-      measure();
-      observer = new ResizeObserver(measure);
-      observer.observe(body);
-
-      // The renderer emits a visual `<button class="btn-export">` but
-      // the iframe sandbox forbids scripts, so the button does nothing
-      // on its own. Wire it from the host: clicking it opens the
-      // browser's print dialog scoped to the iframe content, which the
-      // user then "Save as PDF"s. Native, no extra deps.
-      printButton = doc?.querySelector(".btn-export") ?? null;
-      if (printButton) {
-        printHandler = (event: Event) => {
-          event.preventDefault();
-          iframe?.contentWindow?.print();
-        };
-        printButton.addEventListener("click", printHandler);
-      }
+    // Drop the legacy on-screen Export PDF button. New reports don't
+    // emit it; reports already in storage from before that BE change
+    // still do.
+    for (const node of doc.querySelectorAll(".btn-export")) {
+      node.remove();
     }
 
-    iframe.addEventListener("load", attach);
-    // Re-attach on the first paint in case the load event already fired.
-    attach();
+    // The renderer's stylesheet targets `body { ... }` for page-level
+    // styles (margin, background, default text color, font). Inside a
+    // shadow root there is no <body> element, so those rules would
+    // silently miss. Rewriting `body` → `:host` makes them apply to
+    // the shadow host (our <section>), which is the visual equivalent.
+    // The negative-lookbehind avoids matching things like `nobody` or
+    // class fragments containing "body".
+    const styles = Array.from(doc.head.querySelectorAll("style, link[rel='stylesheet']"))
+      .map((node) => node.outerHTML)
+      .join("")
+      .replace(/(?<![\w-])body(?=[\s,{])/g, ":host");
 
-    return () => {
-      detached = true;
-      iframe.removeEventListener("load", attach);
-      observer?.disconnect();
-      if (printButton && printHandler) {
-        printButton.removeEventListener("click", printHandler);
-      }
-    };
+    root.innerHTML = styles + doc.body.innerHTML;
   }, [html]);
 
-  return (
-    <iframe
-      ref={iframeRef}
-      srcDoc={html}
-      title={title}
-      // `allow-same-origin` lets the host read the iframe's body
-      // (resize observer, button click wire-up). `allow-modals`
-      // permits the print dialog when the host calls
-      // `contentWindow.print()` — without it browsers silently block
-      // print as a sandboxed-modal violation. We still omit
-      // `allow-scripts` since the renderer never emits any.
-      sandbox="allow-same-origin allow-modals"
-      style={{
-        width: "100%",
-        border: "none",
-        display: "block",
-        height: `${height}px`,
-        background: "#f5f6f8",
-      }}
-    />
-  );
+  return <section ref={hostRef} aria-label={title} />;
+}
+
+/**
+ * Strip XSS surface from the parsed HTML before it's injected into the
+ * shadow root. Shadow DOM `innerHTML` does not auto-execute `<script>`
+ * tags, but it DOES fire `onerror` / `onload` / other inline event
+ * handlers — and a same-origin shadow root can read the host page's
+ * cookies. The Edit textarea on the editor page lets a community
+ * admin paste arbitrary HTML; if their account is ever compromised,
+ * stored content shouldn't become an XSS sink.
+ *
+ * - Removes `<script>` and `<iframe>` and similar active elements.
+ * - Drops `on*` event-handler attributes from every remaining node.
+ * - Rewrites `javascript:` / `data:` / `vbscript:` URLs in href/src.
+ */
+function sanitizeFragment(doc: Document): void {
+  const ACTIVE_TAGS = new Set([
+    "script",
+    "iframe",
+    "object",
+    "embed",
+    "frame",
+    "frameset",
+    "applet",
+    "meta",
+    "base",
+  ]);
+  const UNSAFE_URL = /^\s*(javascript|vbscript|data):/i;
+
+  for (const node of Array.from(doc.querySelectorAll("*"))) {
+    if (ACTIVE_TAGS.has(node.tagName.toLowerCase())) {
+      node.remove();
+      continue;
+    }
+    for (const attr of Array.from(node.attributes)) {
+      if (attr.name.toLowerCase().startsWith("on")) {
+        node.removeAttribute(attr.name);
+        continue;
+      }
+      if (
+        (attr.name === "href" || attr.name === "src" || attr.name === "xlink:href") &&
+        UNSAFE_URL.test(attr.value)
+      ) {
+        node.removeAttribute(attr.name);
+      }
+    }
+  }
 }

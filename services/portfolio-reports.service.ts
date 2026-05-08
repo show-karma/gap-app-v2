@@ -88,6 +88,19 @@ export async function updateReportContent(
   return data;
 }
 
+/**
+ * Server-side PDF render. Returns the binary PDF as a Blob so the
+ * caller can drive a browser download. Uses the auth-aware api client
+ * because the underlying endpoint shares the same authorization as
+ * the JSON GET (community admin or staff).
+ */
+export async function downloadReportPdf(communitySlug: string, reportId: string): Promise<Blob> {
+  const { data } = await apiClient.get(`/v2/communities/${communitySlug}/reports/${reportId}/pdf`, {
+    responseType: "blob",
+  });
+  return data as Blob;
+}
+
 export async function generateReport(
   communitySlug: string,
   body: GenerateReportRequest

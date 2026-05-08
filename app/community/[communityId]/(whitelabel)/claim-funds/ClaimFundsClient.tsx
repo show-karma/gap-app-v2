@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { isAddress } from "viem";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import type { SupportedChainId } from "@/config/tokens";
 import { useAuth } from "@/hooks/useAuth";
 import { Link } from "@/src/components/navigation/Link";
 import { CampaignCard } from "@/src/features/claim-funds/components/CampaignCard";
@@ -14,11 +15,14 @@ import { EmptyState } from "@/src/features/claim-funds/components/EmptyState";
 import { LoadingState } from "@/src/features/claim-funds/components/LoadingState";
 import { useCampaignNameMappings } from "@/src/features/claim-funds/hooks/use-campaign-name-mappings";
 import { useCampaigns } from "@/src/features/claim-funds/hooks/use-campaigns";
+import { useCheckSafeOwnership } from "@/src/features/claim-funds/hooks/use-check-safe-ownership";
 import { useClaimGrantsEnabled } from "@/src/features/claim-funds/hooks/use-claim-provider";
 import { useClaimTransaction } from "@/src/features/claim-funds/hooks/use-claim-transaction";
+import { useClaimViaASafe } from "@/src/features/claim-funds/hooks/use-claim-via-safe";
 import { useClaimedStatuses } from "@/src/features/claim-funds/hooks/use-claimed-status";
 import { useDelegatedClaim } from "@/src/features/claim-funds/hooks/use-delegated-claim";
 import { useEligibility } from "@/src/features/claim-funds/hooks/use-eligibility";
+import { getChainByName } from "@/src/features/claim-funds/lib/viem-clients";
 import type { ClaimCampaign } from "@/src/features/claim-funds/providers/types";
 import { getTenantConfig } from "@/src/infrastructure/config/tenant-config";
 import { isKnownTenant, type TenantId } from "@/src/infrastructure/types/tenant";
@@ -90,13 +94,40 @@ function ClaimFundsContent() {
     activeCampaignId: delegatedActiveCampaignId,
   } = useDelegatedClaim(tenantId, claimGrants);
 
+  // Resolve the campaign network's chainId from the tenant config
+  const campaignNetworkName =
+    claimGrants?.providerConfig?.type === "hedgey"
+      ? claimGrants.providerConfig.networkName
+      : "optimism";
+  const campaignChainId = getChainByName(campaignNetworkName).id as SupportedChainId;
+
+  // Check if alternate address is a Safe the user owns (on the campaign's chain)
+  const { canProposeViaSafe, isCheckingOwnership } = useCheckSafeOwnership(
+    alternateAddress as `0x${string}` | null,
+    campaignChainId,
+    isUsingAlternateAddress
+  );
+
+  // Claim via Safe (for Safe ownership claims)
+  const {
+    requestClaim: requestClaimViaSafe,
+    submitClaim: submitClaimViaSafe,
+    step: safeClaimStep,
+    activeCampaignId: safeActiveCampaignId,
+    reset: resetSafeClaim,
+  } = useClaimViaASafe(tenantId, campaignNetworkName);
+
   // Fetch campaign name mappings from database
   const { data: campaignNameMappings } = useCampaignNameMappings(communityId, claimFundsEnabled);
 
   const isClaiming = isClaimPending || isClaimConfirming;
   const isDelegatedClaimInProgress =
     delegatedClaimStep === "awaiting_signature" || delegatedClaimStep === "submitting";
-  const isAnyClaiming = isClaiming || isDelegatedClaimInProgress;
+  const isSafeClaimInProgress =
+    safeClaimStep === "preparing" ||
+    safeClaimStep === "awaiting_signature" ||
+    safeClaimStep === "submitting";
+  const isAnyClaiming = isClaiming || isDelegatedClaimInProgress || isSafeClaimInProgress;
 
   // Filter to only show eligible or claimed campaigns
   const displayCampaigns = useMemo(
@@ -146,14 +177,38 @@ function ClaimFundsContent() {
     void submitDelegatedClaim();
   }, [submitDelegatedClaim]);
 
-  const handleCheckAlternateAddress = useCallback((address: `0x${string}`) => {
-    setAlternateAddress(address);
-  }, []);
+  const handleRequestClaimViaSafe = useCallback(
+    (campaign: ClaimCampaign) => {
+      if (!alternateAddress) return;
+      const eligibility = eligibilities.get(campaign.id);
+      if (!eligibility) return;
+      if (!isAddress(campaign.contractAddress)) return;
+      const contractAddress = campaign.contractAddress as `0x${string}`;
+      void requestClaimViaSafe(campaign.id, eligibility, contractAddress, alternateAddress);
+    },
+    [alternateAddress, eligibilities, requestClaimViaSafe]
+  );
+
+  const handleSubmitClaimViaSafe = useCallback(() => {
+    void submitClaimViaSafe();
+  }, [submitClaimViaSafe]);
+
+  const handleCheckAlternateAddress = useCallback(
+    (address: `0x${string}`) => {
+      // Clear any in-flight prepare/sign state from the previous wallet so that
+      // pending claims don't leak across address changes.
+      resetDelegatedClaim();
+      resetSafeClaim();
+      setAlternateAddress(address);
+    },
+    [resetDelegatedClaim, resetSafeClaim]
+  );
 
   const handleResetToConnectedWallet = useCallback(() => {
     setAlternateAddress(null);
     resetDelegatedClaim();
-  }, [resetDelegatedClaim]);
+    resetSafeClaim();
+  }, [resetDelegatedClaim, resetSafeClaim]);
 
   useEffect(() => {
     if (
@@ -163,8 +218,9 @@ function ClaimFundsContent() {
     ) {
       setAlternateAddress(null);
       resetDelegatedClaim();
+      resetSafeClaim();
     }
-  }, [alternateAddress, connectedAddress, resetDelegatedClaim]);
+  }, [alternateAddress, connectedAddress, resetDelegatedClaim, resetSafeClaim]);
 
   if (!claimFundsEnabled) {
     return (
@@ -294,6 +350,12 @@ function ClaimFundsContent() {
                   delegatedActiveCampaignId={delegatedActiveCampaignId}
                   isAnyClaiming={isAnyClaiming}
                   overrideDisplayName={campaignNameMappings?.get(campaign.id)}
+                  canProposeViaSafe={canProposeViaSafe}
+                  isCheckingOwnership={isCheckingOwnership}
+                  onRequestClaimViaSafe={() => handleRequestClaimViaSafe(campaign)}
+                  onSubmitClaimViaSafe={handleSubmitClaimViaSafe}
+                  safeClaimStep={safeClaimStep}
+                  safeActiveCampaignId={safeActiveCampaignId}
                 />
               );
             })}
