@@ -590,10 +590,21 @@ jobs:
             After execution, rename qa-results.json to qa-results-\$SHARD_ID.json (the skill describes this).
             Do NOT post a separate PR comment — results will be aggregated in the pipeline verdict comment."
           MAX_ATTEMPTS=2
+          # Print version once for diagnostics — silent hangs in CI are
+          # otherwise impossible to attribute to a specific CLI build.
+          echo "claude version:"
+          claude --version || echo "(claude --version failed)"
           for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
             echo "::group::claude attempt $attempt/$MAX_ATTEMPTS (shard=$SHARD_ID, hard timeout 15m)"
             rc=0
-            timeout --signal=KILL 15m claude --print --dangerously-skip-permissions "$PROMPT" || rc=$?
+            # `--debug` writes diagnostics to stderr so we can see WHERE the
+            # CLI hangs on silent failures (auth, MCP init, network, etc.).
+            # `stdbuf -oL -eL` line-buffers stdout/stderr so output streams
+            # in real time instead of being held in glibc's 4KB block buffer
+            # (which makes it look like the process is hung for minutes).
+            timeout --signal=KILL 15m \
+              stdbuf -oL -eL \
+              claude --print --debug --dangerously-skip-permissions "$PROMPT" || rc=$?
             echo "::endgroup::"
             echo "claude exit: $rc"
             if [ -s "qa-results-${SHARD_ID}.json" ]; then
