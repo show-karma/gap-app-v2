@@ -1,6 +1,7 @@
 import type { IProjectDetails } from "@show-karma/karma-gap-sdk";
 import { errorManager } from "@/components/Utilities/errorManager";
 import type { Grant } from "@/types/v2/grant";
+import type { ProjectUpdateDeliverable } from "@/types/v2/roadmap";
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { envVars } from "@/utilities/enviromentVars";
 import fetchData from "@/utilities/fetchData";
@@ -33,6 +34,8 @@ export interface GrantMilestoneCompletionDetails {
   completedBy: string;
   attestationUID?: string;
   proofOfWork?: string;
+  completionPercentage?: number;
+  deliverables?: ProjectUpdateDeliverable[];
 }
 
 // Grant milestone verification details (on-chain data)
