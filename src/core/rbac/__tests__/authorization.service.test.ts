@@ -1,5 +1,6 @@
 import fetchData from "@/utilities/fetchData";
 import { authorizationService } from "../services/authorization.service";
+import { ReviewerType, Role } from "../types/role";
 
 vi.mock("@/utilities/fetchData");
 

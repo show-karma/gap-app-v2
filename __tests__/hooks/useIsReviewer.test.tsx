@@ -8,6 +8,8 @@
  * mocks useIsReviewer at the boundary.
  */
 
+import type { FundingProgram } from "@/services/fundingPlatformService";
+
 /**
  * Extracted from usePermissions hook - the logic that determines if a user
  * is a reviewer for a specific program given the list of their reviewer programs.

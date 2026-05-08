@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/20/solid";
-import { BanknotesIcon, Cog6ToothIcon } from "@heroicons/react/24/outline";
+import { BanknotesIcon, CheckIcon, Cog6ToothIcon } from "@heroicons/react/24/outline";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -46,6 +46,7 @@ import {
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
+import { sanitizeNumericInput } from "@/utilities/validation";
 import { type CsvParseResult, PayoutsCsvUpload } from "./PayoutsCsvUpload";
 
 // Component-specific types
@@ -80,7 +81,7 @@ export default function PayoutsAdminPage() {
   const [editedFields, setEditedFields] = useState<Record<string, EditableFields>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   // State for tracking individual field saves (key format: "grantUID-fieldName")
-  const [_savingFields, setSavingFields] = useState<Set<string>>(new Set());
+  const [savingFields, setSavingFields] = useState<Set<string>>(new Set());
 
   // State for row selection (for disbursement)
   const [selectedGrants, setSelectedGrants] = useState<Set<string>>(new Set());
@@ -371,7 +372,7 @@ export default function PayoutsAdminPage() {
   };
 
   // Handle field changes
-  const _handleFieldChange = (uid: string, field: keyof EditableFields, value: string) => {
+  const handleFieldChange = (uid: string, field: keyof EditableFields, value: string) => {
     setEditedFields((prev) => ({
       ...prev,
       [uid]: {
@@ -414,7 +415,7 @@ export default function PayoutsAdminPage() {
   };
 
   // Handle saving a single field inline
-  const _handleSaveField = (
+  const handleSaveField = (
     grantUID: string,
     projectUID: string,
     field: "payoutAddress" | "amount"

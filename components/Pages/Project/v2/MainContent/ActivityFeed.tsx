@@ -39,12 +39,8 @@ function getActivityTypeLabel(type: string, milestone?: UnifiedMilestone): strin
     case "impact":
     case "grant":
     case "milestone":
-    default: {
-      const editHistory =
-        milestone?.source.grantMilestone?.milestone.editHistory;
-      if (editHistory && editHistory.length > 0) return "Milestone edited";
-      return "Milestone created";
-    }
+    default:
+      return "Milestone";
   }
 }
 

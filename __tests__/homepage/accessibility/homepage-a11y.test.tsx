@@ -21,6 +21,8 @@ vi.mock("@/src/services/funding/getLiveFundingOpportunities", () => ({
   getLiveFundingOpportunities: vi.fn(() => mockGetLiveFundingOpportunities()),
 }));
 
+// Import fixtures
+import { mockCommunities } from "../fixtures/communities";
 import { mockFundingOpportunities } from "../fixtures/funding-opportunities";
 
 // Mock chosenCommunities

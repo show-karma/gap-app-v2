@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { CreateProjectButton } from "@/src/features/homepage/components/create-project-button";
+import { PAGES } from "@/utilities/pages";
 
 const HERO_ICONS = [
   { emoji: "💖", id: "support", bgColor: "bg-[#FDE3FF]" },

@@ -1,3 +1,4 @@
+import { createApplicationList } from "../../data/applications";
 import { MOCK_COMMUNITIES } from "../../data/communities";
 import {
   createClosedProgram,

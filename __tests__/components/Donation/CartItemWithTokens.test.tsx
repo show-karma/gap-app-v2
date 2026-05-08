@@ -8,6 +8,7 @@
  * - Selected token kept in options even if not in configured chains
  */
 
+import { screen } from "@testing-library/react";
 import { CartItemWithTokens } from "@/components/Donation/CartItemWithTokens";
 import type { SupportedToken } from "@/constants/supportedTokens";
 import { renderWithProviders } from "../../utils/render";

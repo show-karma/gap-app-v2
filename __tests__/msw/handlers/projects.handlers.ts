@@ -1,5 +1,5 @@
 import { HttpResponse, http } from "msw";
-import { paginatedProjectsResponseSchema } from "../../contracts/contracts/schemas";
+import { paginatedProjectsResponseSchema, projectSchema } from "../../contracts/contracts/schemas";
 import { BASE } from "./base-url";
 import { validateResponse } from "./validate";
 

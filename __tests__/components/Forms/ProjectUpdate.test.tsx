@@ -1,6 +1,6 @@
 import { ProjectUpdate as MockedProjectUpdate } from "@show-karma/karma-gap-sdk";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { vi } from "vitest";
 import { ProjectUpdateForm } from "@/components/Forms/ProjectUpdate";

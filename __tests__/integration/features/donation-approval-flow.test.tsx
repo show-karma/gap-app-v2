@@ -19,6 +19,7 @@ import {
   executeApprovals,
   getApprovalAmount,
   MAX_UINT256,
+  type TokenApprovalInfo,
 } from "@/utilities/erc20";
 
 // ---------------------------------------------------------------------------
