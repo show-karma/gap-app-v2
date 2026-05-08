@@ -106,6 +106,8 @@ export interface HeaderStatsCardsProps {
   totalMilestones?: number;
   updatesBreakdown?: ReactNode;
   isLoading?: boolean;
+  isError?: boolean;
+  onRetry?: () => void;
 }
 
 export const HeaderStatsCards = ({
@@ -116,7 +118,26 @@ export const HeaderStatsCards = ({
   totalMilestones,
   updatesBreakdown,
   isLoading,
+  isError,
+  onRetry,
 }: HeaderStatsCardsProps) => {
+  if (isError) {
+    return (
+      <output className="flex w-full flex-wrap items-center justify-end gap-2 text-[12px] text-muted-foreground">
+        <span>Couldn&apos;t load community stats.</span>
+        {onRetry ? (
+          <button
+            type="button"
+            onClick={onRetry}
+            className="inline-flex h-7 items-center rounded-md border border-border bg-background px-2.5 text-[12px] font-semibold text-foreground transition hover:bg-secondary"
+          >
+            Retry
+          </button>
+        ) : null}
+      </output>
+    );
+  }
+
   const hasData =
     !!projectsCount || !!totalGrants || !!projectUpdates || !!totalMilestones || isLoading;
   if (!hasData) {

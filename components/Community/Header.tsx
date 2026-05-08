@@ -116,15 +116,24 @@ const NormalCommunityHeader = ({ community }: { community: Community }) => {
   }, []);
 
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const isEditable =
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLSelectElement ||
+        target?.isContentEditable === true ||
+        Boolean(target?.closest('[role="textbox"]'));
+      if (isEditable) return;
+
       const mod = isMac ? e.metaKey : e.ctrlKey;
       if (mod && (e.key === "k" || e.key === "K")) {
         e.preventDefault();
         openKarmaAssistant();
       }
     };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isMac, openKarmaAssistant]);
   const { isWhitelabel, config } = useWhitelabel();
   const uid = (community as Community)?.uid?.toLowerCase() || "";
@@ -141,7 +150,12 @@ const NormalCommunityHeader = ({ community }: { community: Community }) => {
   const name = community?.details?.name ?? "";
   const description = community?.details?.description ?? "";
 
-  const { data: communityStats, isLoading: isStatsLoading } = useQuery({
+  const {
+    data: communityStats,
+    isLoading: isStatsLoading,
+    isError: isStatsError,
+    refetch: refetchStats,
+  } = useQuery({
     queryKey: ["community-stats", communityId],
     queryFn: () => getCommunityStats(communityId),
     enabled: !!communityId,
@@ -259,6 +273,10 @@ const NormalCommunityHeader = ({ community }: { community: Community }) => {
             totalMilestones={communityStats?.totalMilestones}
             updatesBreakdown={updatesBreakdownNode}
             isLoading={isStatsLoading}
+            isError={isStatsError}
+            onRetry={() => {
+              void refetchStats();
+            }}
           />
         </div>
         <div
