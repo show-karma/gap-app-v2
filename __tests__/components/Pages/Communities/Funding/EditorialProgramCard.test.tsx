@@ -127,14 +127,10 @@ describe("computeProgramView", () => {
     });
   });
 
-  it("derives a deterministic accent class from programId", () => {
+  it("uses the platform brand accent for all programs", () => {
     const a = computeProgramView({ ...createProgram(), programId: "alpha" });
-    const b = computeProgramView({ ...createProgram(), programId: "alpha" });
-    const c = computeProgramView({ ...createProgram(), programId: "beta-different" });
-    expect(a.accentClass).toBe(b.accentClass);
-    expect(a.accentClass).toMatch(/^bg-/);
-    // Different ids should commonly differ; the accent palette has 7 entries so there's
-    // a collision chance, but "alpha" vs "beta-different" hash to distinct buckets.
-    expect(a.accentClass).not.toBe(c.accentClass);
+    const b = computeProgramView({ ...createProgram(), programId: "beta-different" });
+    expect(a.accentClass).toBe("bg-brand-500");
+    expect(b.accentClass).toBe("bg-brand-500");
   });
 });

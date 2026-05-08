@@ -20,23 +20,7 @@ interface ProgramComputed {
   accentClass: string;
 }
 
-const ACCENT_CYCLE = [
-  "bg-brand-500",
-  "bg-sky-500",
-  "bg-violet-500",
-  "bg-amber-500",
-  "bg-pink-500",
-  "bg-emerald-500",
-  "bg-orange-500",
-];
-
-function pickAccent(programId: string): string {
-  let hash = 0;
-  for (let i = 0; i < programId.length; i++) {
-    hash = (hash * 31 + programId.charCodeAt(i)) | 0;
-  }
-  return ACCENT_CYCLE[Math.abs(hash) % ACCENT_CYCLE.length];
-}
+const ACCENT_CLASS = "bg-brand-500";
 
 function parseAmount(raw?: string | number): number {
   if (raw == null) return 0;
@@ -79,7 +63,7 @@ export function computeProgramView(program: FundingProgram): ProgramComputed {
     maxGrant,
     applicants,
     category,
-    accentClass: pickAccent(program.programId),
+    accentClass: ACCENT_CLASS,
   };
 }
 

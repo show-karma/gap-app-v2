@@ -151,9 +151,7 @@ const AggregatedSegmentCard = ({ segment }: { segment: ProgramImpactSegment }) =
       <div
         className={cn(
           "flex flex-row items-center justify-between gap-3 border-b border-border px-5 py-4",
-          isOutcome
-            ? "bg-emerald-50/60 dark:bg-emerald-950/20"
-            : "bg-violet-50/60 dark:bg-violet-950/20"
+          isOutcome ? "bg-brand-50/60 dark:bg-brand-500/10" : "bg-secondary/60 dark:bg-secondary/40"
         )}
       >
         <div className="flex flex-row items-center gap-3">
@@ -161,8 +159,8 @@ const AggregatedSegmentCard = ({ segment }: { segment: ProgramImpactSegment }) =
             className={cn(
               "flex h-9 w-9 items-center justify-center rounded-lg",
               isOutcome
-                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
-                : "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300"
+                ? "bg-brand-100 text-brand-700 dark:bg-brand-500/20 dark:text-brand-400"
+                : "bg-muted text-muted-foreground"
             )}
             aria-hidden
           >
