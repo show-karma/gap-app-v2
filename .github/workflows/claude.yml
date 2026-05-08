@@ -12,13 +12,6 @@ on:
   pull_request:
     types: [opened, synchronize]
 
-concurrency:
-  # Cancel an in-progress Claude run when a new commit is pushed to the same PR.
-  # Falls back to run_id for non-PR triggers (issue comments, reviews) so each
-  # of those still runs independently.
-  group: claude-${{ github.event.pull_request.number || github.event.issue.number || github.run_id }}
-  cancel-in-progress: true
-
 jobs:
   claude:
     if: |
@@ -27,6 +20,16 @@ jobs:
       (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
       (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude'))) ||
       (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
+    # Job-level (not workflow-level) concurrency so issue_comment runs
+    # whose `if:` evaluates to false (every comment without `@claude`)
+    # never enter this group. With workflow-level concurrency, those
+    # skipped runs still acquired the slot briefly and were observed
+    # cancelling the in-flight pull_request review even with
+    # cancel-in-progress: false. Job-level scoping fixes that because
+    # a skipped job never participates in concurrency at all.
+    concurrency:
+      group: claude-${{ github.event.pull_request.number || github.event.issue.number || github.run_id }}
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -187,7 +190,14 @@ jobs:
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
       - name: Run Claude Code
-        uses: anthropics/claude-code-action@beta
+        # Pinned to v1.0.110 (2026-04-29). The floating @beta tag was
+        # rolled forward to v1.0.111+ on 2026-05-01, after which every
+        # claude run in this repo was cancelled ~16s in with "##[error]
+        # The operation was canceled." right after Claude CLI install
+        # finishes. Last known-good run on @beta was 2026-04-30, before
+        # v1.0.111 shipped. Re-evaluate the pin once the upstream issue
+        # is fixed (track at https://github.com/anthropics/claude-code-action/issues).
+        uses: anthropics/claude-code-action@v1.0.110
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ steps.app-token.outputs.token }}
