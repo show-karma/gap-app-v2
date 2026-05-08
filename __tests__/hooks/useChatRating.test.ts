@@ -107,7 +107,6 @@ describe("useChatRating", () => {
     expect(stored?.rating).toBe(1);
   });
 
-
   it("should_forward_optional_comment_in_request_body", async () => {
     const { result } = renderHook(() => useChatRating("assistant-1", "trace-abc"));
 

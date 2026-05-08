@@ -1,18 +1,32 @@
+"use client";
+
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useSearchParams } from "next/navigation";
 import { useQueryState } from "nuqs";
 import pluralize from "pluralize";
 import { Skeleton } from "@/components/Utilities/Skeleton";
+import { useCommunityAccent } from "@/hooks/useCommunityAccent";
 import { useImpactMeasurement } from "@/hooks/useImpactMeasurement";
+import { useCommunityDetails } from "@/hooks/v2/useCommunityDetails";
+import formatCurrency from "@/utilities/formatCurrency";
 import { getAllProgramsOfCommunity } from "@/utilities/registry/getAllProgramsOfCommunity";
 
+const normalizeProgramId = (raw: string | null): string | undefined => {
+  if (!raw) return undefined;
+  return raw.includes("_") ? raw.split("_")[0] : raw;
+};
+
 export const ProgramBanner = () => {
-  const { communityId } = useParams();
+  const { communityId } = useParams<{ communityId: string }>();
   const searchParams = useSearchParams();
-  const programSelected = searchParams.get("programId");
+  const programSelected = normalizeProgramId(searchParams.get("programId"));
   const projectSelected = searchParams.get("projectId");
+  const accent = useCommunityAccent(communityId);
+  const { community } = useCommunityDetails(communityId);
+  const communityName = community?.details?.name ?? "this community";
+
   const { data: impactData, isLoading: isImpactLoading } = useImpactMeasurement({
-    programId: programSelected ?? undefined,
+    programId: programSelected,
     projectId: projectSelected ?? undefined,
   });
 
@@ -27,44 +41,64 @@ export const ProgramBanner = () => {
 
   const [selectedProgramId] = useQueryState<string | null>("programId", {
     defaultValue: null,
-    serialize: (value) => {
-      if (!value) return "";
-      const normalized = value.includes("_") ? value.split("_")[0] : value;
-      return normalized;
-    },
-    parse: (value) => {
-      if (!value) return null;
-      const normalized = value.includes("_") ? value.split("_")[0] : value;
-      return normalized;
-    },
+    serialize: (value) => normalizeProgramId(value) ?? "",
+    parse: (value) => normalizeProgramId(value) ?? null,
   });
   const selectedProgram = programs?.find((program) => program.value === selectedProgramId);
 
-  // Use stats from impact endpoint - consistent data source
   const totalProjects = impactData?.stats.totalProjects ?? 0;
   const totalCategories = impactData?.stats.totalCategories ?? 0;
 
+  const eyebrow = projectSelected
+    ? selectedProgram
+      ? `${selectedProgram.title} · Project filtered`
+      : "All programs · Project filtered"
+    : selectedProgram
+      ? selectedProgram.title
+      : "All programs";
+
   return (
-    <div className="px-4 py-3 border border-gray-300 rounded">
-      <div className="border-l-[#7839EE] border-l-2 pl-4">
-        <p className="text-black dark:text-zinc-300 text-2xl font-semibold">
-          {projectSelected
-            ? selectedProgram
-              ? `${selectedProgram?.title} (Project Filtered)`
-              : "All Programs (Project Filtered)"
-            : selectedProgram
-              ? `${selectedProgram?.title}`
-              : "All Programs"}
+    <section
+      aria-label="Program impact summary"
+      className="relative overflow-hidden rounded-[20px] border border-border bg-background px-7 py-3.5 md:px-9 md:py-4"
+      style={{
+        backgroundImage: `linear-gradient(135deg, ${accent}14, transparent 70%)`,
+      }}
+    >
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -right-20 -top-20 h-[380px] w-[380px] rounded-full blur-3xl"
+        style={{ background: `radial-gradient(circle, ${accent}33, transparent 70%)` }}
+      />
+
+      <div className="relative grid gap-6 md:grid-cols-[auto_1fr] md:items-center md:gap-12">
+        <div>
+          <div
+            className="mb-2.5 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em]"
+            style={{ color: accent }}
+          >
+            <span className="h-1.5 w-1.5 rounded-full" style={{ background: accent }} aria-hidden />
+            {eyebrow}
+          </div>
+          {isImpactLoading ? (
+            <Skeleton className="h-10 w-72" />
+          ) : (
+            <h2 className="text-3xl md:text-4xl lg:text-[42px] font-semibold leading-[1.05] tracking-[-0.03em] text-foreground">
+              <span style={{ color: accent }}>
+                {formatCurrency(totalProjects)} {pluralize("project", totalProjects)}
+              </span>{" "}
+              <span className="text-muted-foreground">·</span>{" "}
+              <span className="text-muted-foreground">
+                {formatCurrency(totalCategories)} {pluralize("category", totalCategories)}
+              </span>
+            </h2>
+          )}
+        </div>
+        <p className="max-w-[520px] text-[15px] leading-relaxed text-muted-foreground md:justify-self-end">
+          Track the funded teams, milestones shipped, and the measurable outcomes attributed to
+          programs in {communityName}.
         </p>
-        {isImpactLoading ? (
-          <Skeleton className="w-40 h-8" />
-        ) : (
-          <span className="text-gray-500 dark:text-zinc-500 text-lg font-medium">
-            {totalProjects} {pluralize("Project", totalProjects)}, {totalCategories}{" "}
-            {pluralize("category", totalCategories)}
-          </span>
-        )}
       </div>
-    </div>
+    </section>
   );
 };

@@ -20,12 +20,7 @@ const sched = (overrides: Partial<ReportSchedule> = {}): ReportSchedule => ({
 
 describe("portfolio-reports period utilities", () => {
   describe("RUN_DATE_REGEX / isRunDate", () => {
-    it.each([
-      "2026-04-01",
-      "2026-12-31",
-      "2024-02-29",
-      "1999-01-15",
-    ])("accepts %s", (value) => {
+    it.each(["2026-04-01", "2026-12-31", "2024-02-29", "1999-01-15"])("accepts %s", (value) => {
       expect(RUN_DATE_REGEX.test(value)).toBe(true);
       expect(isRunDate(value)).toBe(true);
     });
@@ -66,33 +61,33 @@ describe("portfolio-reports period utilities", () => {
     });
 
     it("renders weekly as 'Every week'", () => {
-      expect(
-        formatScheduleLabel(sched({ intervalUnit: "weeks", intervalCount: 1 }))
-      ).toMatch(/^Every week,/);
+      expect(formatScheduleLabel(sched({ intervalUnit: "weeks", intervalCount: 1 }))).toMatch(
+        /^Every week,/
+      );
     });
 
     it("calls out bi-weekly explicitly", () => {
-      expect(
-        formatScheduleLabel(sched({ intervalUnit: "weeks", intervalCount: 2 }))
-      ).toMatch(/^Every 2 weeks \(bi-weekly\),/);
+      expect(formatScheduleLabel(sched({ intervalUnit: "weeks", intervalCount: 2 }))).toMatch(
+        /^Every 2 weeks \(bi-weekly\),/
+      );
     });
 
     it("calls out quarterly explicitly", () => {
-      expect(
-        formatScheduleLabel(sched({ intervalUnit: "months", intervalCount: 3 }))
-      ).toMatch(/^Every 3 months \(quarterly\),/);
+      expect(formatScheduleLabel(sched({ intervalUnit: "months", intervalCount: 3 }))).toMatch(
+        /^Every 3 months \(quarterly\),/
+      );
     });
 
     it("renders monthly as 'Every month'", () => {
-      expect(
-        formatScheduleLabel(sched({ intervalUnit: "months", intervalCount: 1 }))
-      ).toMatch(/^Every month,/);
+      expect(formatScheduleLabel(sched({ intervalUnit: "months", intervalCount: 1 }))).toMatch(
+        /^Every month,/
+      );
     });
 
     it("renders custom 'every N units' for non-preset values", () => {
-      expect(
-        formatScheduleLabel(sched({ intervalUnit: "days", intervalCount: 10 }))
-      ).toMatch(/^Every 10 days,/);
+      expect(formatScheduleLabel(sched({ intervalUnit: "days", intervalCount: 10 }))).toMatch(
+        /^Every 10 days,/
+      );
     });
 
     it("appends 'runs forever' for ends.never", () => {
@@ -100,9 +95,7 @@ describe("portfolio-reports period utilities", () => {
     });
 
     it("appends 'until DATE' for ends.on_date", () => {
-      const out = formatScheduleLabel(
-        sched({ ends: { kind: "on_date", date: "2026-12-31" } })
-      );
+      const out = formatScheduleLabel(sched({ ends: { kind: "on_date", date: "2026-12-31" } }));
       expect(out).toContain("until");
       expect(out).toContain("Dec 31, 2026");
     });

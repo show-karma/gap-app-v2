@@ -1,4 +1,4 @@
-import type { FundingProgramConfig } from "@/types/whitelabel-entities";
+import type { FundingProgram, FundingProgramConfig } from "@/types/whitelabel-entities";
 import { useProgramsList } from "./use-programs-list";
 
 export interface ProgramWithConfig {
@@ -7,6 +7,7 @@ export interface ProgramWithConfig {
   name: string;
   description?: string;
   applicationConfig?: FundingProgramConfig | null;
+  metrics?: FundingProgram["metrics"];
 }
 
 interface UseProgramsWithConfigReturn {
@@ -27,6 +28,7 @@ export function useProgramsWithConfig(communityId: string): UseProgramsWithConfi
       name: program.name || program.metadata?.title || `Program ${program.programId}`,
       description: program.metadata?.description,
       applicationConfig: program.applicationConfig,
+      metrics: program.metrics,
     }));
 
   return {

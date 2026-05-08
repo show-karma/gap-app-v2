@@ -676,7 +676,7 @@ describe("useAgentStream", () => {
         role: "assistant",
         content: "",
         timestamp: 1,
-        isStreaming: true
+        isStreaming: true,
       });
 
       const after = useAgentChatStore.getState();

@@ -23,6 +23,30 @@ function formatPublished(iso: string): string {
   });
 }
 
+function decodeBasicEntities(s: string): string {
+  return s
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+}
+
+function extractTitle(content: string): string | null {
+  if (!content) return null;
+  const titleTag = content.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+  if (titleTag?.[1]?.trim()) return decodeBasicEntities(titleTag[1]).trim();
+  const h1 = content.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
+  if (h1?.[1]) {
+    const stripped = h1[1].replace(/<[^>]+>/g, "").trim();
+    if (stripped) return decodeBasicEntities(stripped);
+  }
+  const mdHeading = content.match(/^#{1,2}\s+(.+)$/m);
+  if (mdHeading?.[1]) return mdHeading[1].trim();
+  return null;
+}
+
 const MONTH_ABBR = [
   "JAN",
   "FEB",
@@ -121,7 +145,7 @@ export function PublicReportListPage({ community }: Props) {
 
   if (isError) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-12">
+      <div className="w-full max-w-full py-2 animate-fade-in-up">
         <h1 className="mb-4 text-2xl font-bold text-zinc-900 dark:text-zinc-100">
           Portfolio Reports
         </h1>
@@ -143,7 +167,7 @@ export function PublicReportListPage({ community }: Props) {
 
   if (sortedReports.length === 0) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-12">
+      <div className="w-full max-w-full py-2 animate-fade-in-up">
         <h1 className="mb-4 text-2xl font-bold text-zinc-900 dark:text-zinc-100">
           Portfolio Reports
         </h1>
@@ -159,7 +183,7 @@ export function PublicReportListPage({ community }: Props) {
   const latest = sortedReports[0];
 
   return (
-    <div className="px-6 py-10 lg:px-10">
+    <div className="w-full max-w-full -my-4 py-2 animate-fade-in-up">
       <header className="mb-10">
         <h1 className="text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl dark:text-zinc-100">
           Portfolio Reports
@@ -187,16 +211,16 @@ export function PublicReportListPage({ community }: Props) {
               >
                 <Link
                   href={PAGES.COMMUNITY.REPORT_DETAIL(slug, report.runDate)}
-                  className="group/link flex items-start justify-between gap-8"
+                  className="group/link flex items-start gap-8"
                 >
                   <div className="min-w-0 flex-1">
                     <p className="mb-1.5 font-mono text-[11px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
                       {fmt.badge}
                     </p>
                     <h2 className="text-xl font-semibold tracking-tight text-zinc-900 transition-colors group-hover/link:text-blue-600 sm:text-2xl dark:text-zinc-100 dark:group-hover/link:text-blue-400">
-                      {fmt.label}
+                      {report.reportConfigName ?? extractTitle(report.content) ?? fmt.label}
                     </h2>
-                    <p className="mt-3 max-w-3xl text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">
+                    <p className="mt-3 text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">
                       {excerpt}
                     </p>
                     <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 font-mono text-[11px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
