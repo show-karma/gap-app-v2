@@ -24,11 +24,7 @@ export function formatRunDate(runDate: string): FormattedRunDate {
   const month = Number(monthStr);
   const day = Number(dayStr);
   const date = new Date(year, month - 1, day);
-  if (
-    date.getFullYear() !== year ||
-    date.getMonth() !== month - 1 ||
-    date.getDate() !== day
-  ) {
+  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
     return { label: runDate, shortLabel: runDate, badge: runDate };
   }
   return {
@@ -64,8 +60,7 @@ function renderEveryClause(schedule: ReportSchedule): string {
     return "Every month";
   }
   if (intervalUnit === "weeks" && intervalCount === 2) return "Every 2 weeks (bi-weekly)";
-  if (intervalUnit === "months" && intervalCount === 3)
-    return "Every 3 months (quarterly)";
+  if (intervalUnit === "months" && intervalCount === 3) return "Every 3 months (quarterly)";
   return `Every ${intervalCount} ${intervalUnit}`;
 }
 
@@ -151,8 +146,7 @@ export function computeNextRuns(
   if (!startUtc) return [];
 
   const anchorUtc = toUtcDay(anchor);
-  const endUtc =
-    schedule.ends.kind === "on_date" ? parseIsoToUtc(schedule.ends.date) : null;
+  const endUtc = schedule.ends.kind === "on_date" ? parseIsoToUtc(schedule.ends.date) : null;
 
   const out: Date[] = [];
   let cursor = startUtc;
@@ -190,28 +184,20 @@ function addUtcMonths(d: Date, months: number): Date {
   const day = d.getUTCDate();
   const targetYear = year + Math.floor(month / 12);
   const targetMonth = ((month % 12) + 12) % 12;
-  const lastDay = new Date(
-    Date.UTC(targetYear, targetMonth + 1, 0)
-  ).getUTCDate();
+  const lastDay = new Date(Date.UTC(targetYear, targetMonth + 1, 0)).getUTCDate();
   const safeDay = Math.min(day, lastDay);
   return new Date(Date.UTC(targetYear, targetMonth, safeDay));
 }
 
 function toUtcDay(d: Date): Date {
-  return new Date(
-    Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())
-  );
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
 }
 
 function parseIsoToUtc(iso: string): Date | null {
   if (!RUN_DATE_REGEX.test(iso)) return null;
   const [y, m, d] = iso.split("-").map(Number);
   const date = new Date(Date.UTC(y, m - 1, d));
-  if (
-    date.getUTCFullYear() !== y ||
-    date.getUTCMonth() !== m - 1 ||
-    date.getUTCDate() !== d
-  ) {
+  if (date.getUTCFullYear() !== y || date.getUTCMonth() !== m - 1 || date.getUTCDate() !== d) {
     return null;
   }
   return date;
@@ -220,4 +206,3 @@ function parseIsoToUtc(iso: string): Date | null {
 function toIsoDate(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
-

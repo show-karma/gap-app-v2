@@ -5,6 +5,7 @@ import { type ChangeEvent, useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useChatRating } from "@/hooks/useChatRating";
 import { useAgentChatStore } from "@/store/agentChat";
+import { cn } from "@/utilities/tailwind";
 
 interface MessageRatingProps {
   messageId: string;
@@ -28,9 +29,7 @@ const COMMENT_MAX_LENGTH = 1000;
  */
 export function MessageRatingButtons({ messageId, traceId }: MessageRatingProps) {
   const { rating, submit } = useChatRating(messageId, traceId);
-  const setCommentBoxOpen = useAgentChatStore(
-    (s) => s.setRatingCommentBoxOpenForMessageId
-  );
+  const setCommentBoxOpen = useAgentChatStore((s) => s.setRatingCommentBoxOpenForMessageId);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleThumbsUp = useCallback(async () => {
@@ -63,9 +62,10 @@ export function MessageRatingButtons({ messageId, traceId }: MessageRatingProps)
         disabled={isSubmitting}
         aria-label="Rate this response helpful"
         aria-pressed={rating === 1}
-        className={
-          rating === 1 ? "text-brand-blue" : "text-muted-foreground hover:text-foreground"
-        }
+        className={cn(
+          "text-muted-foreground hover:text-foreground",
+          rating === 1 && "text-brand-blue"
+        )}
       >
         <ThumbsUpIcon className="size-3" />
       </Button>
@@ -76,9 +76,10 @@ export function MessageRatingButtons({ messageId, traceId }: MessageRatingProps)
         disabled={isSubmitting}
         aria-label="Rate this response unhelpful"
         aria-pressed={rating === -1}
-        className={
-          rating === -1 ? "text-destructive" : "text-muted-foreground hover:text-foreground"
-        }
+        className={cn(
+          "text-muted-foreground hover:text-foreground",
+          rating === -1 && "text-destructive"
+        )}
       >
         <ThumbsDownIcon className="size-3" />
       </Button>
@@ -97,9 +98,7 @@ export function MessageRatingCommentBox({ messageId, traceId }: MessageRatingPro
   const isOpenForThisMessage = useAgentChatStore(
     (s) => s.ratingCommentBoxOpenForMessageId === messageId
   );
-  const setCommentBoxOpen = useAgentChatStore(
-    (s) => s.setRatingCommentBoxOpenForMessageId
-  );
+  const setCommentBoxOpen = useAgentChatStore((s) => s.setRatingCommentBoxOpenForMessageId);
   const [comment, setComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -124,9 +123,7 @@ export function MessageRatingCommentBox({ messageId, traceId }: MessageRatingPro
         setCommentBoxOpen(null);
         setComment("");
       } else {
-        setSubmitError(
-          "Couldn't send your feedback. Check your connection and try again."
-        );
+        setSubmitError("Couldn't send your feedback. Check your connection and try again.");
       }
     } finally {
       setIsSubmitting(false);
@@ -158,12 +155,7 @@ export function MessageRatingCommentBox({ messageId, traceId }: MessageRatingPro
         </span>
       </div>
       <div className="flex items-center gap-2">
-        <Button
-          variant="default"
-          size="sm"
-          onClick={handleSubmitComment}
-          disabled={isSubmitting}
-        >
+        <Button variant="default" size="sm" onClick={handleSubmitComment} disabled={isSubmitting}>
           {isSubmitting ? "Sending…" : "Submit feedback"}
         </Button>
         <Button variant="ghost" size="sm" onClick={handleCancel} disabled={isSubmitting}>

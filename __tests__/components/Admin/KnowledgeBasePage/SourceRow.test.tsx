@@ -314,12 +314,8 @@ describe("SourceRow", () => {
       // the content wrapper carries opacity-70. We collect classNames of
       // every dimmed element to assert the row visually communicates the
       // off state.
-      const dimmed = document.querySelectorAll(
-        `.${tileOpacityClass}, .${contentOpacityClass}`
-      );
-      return Array.from(dimmed).flatMap((el) =>
-        Array.from(el.classList)
-      );
+      const dimmed = document.querySelectorAll(`.${tileOpacityClass}, .${contentOpacityClass}`);
+      return Array.from(dimmed).flatMap((el) => Array.from(el.classList));
     }
 
     it("dims the row when source is paused", () => {
@@ -354,9 +350,7 @@ describe("SourceRow", () => {
   describe("edit action", () => {
     it("renders an Edit button between Pause and Delete", () => {
       renderRow(createSource());
-      expect(
-        screen.getByRole("button", { name: /edit source/i })
-      ).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /edit source/i })).toBeInTheDocument();
     });
 
     it("opens the Edit dialog populated with the current source values when clicked", async () => {
@@ -399,9 +393,7 @@ describe("SourceRow", () => {
       expect(screen.getByText(/read-only/i)).toBeInTheDocument();
       // The "Source type" radiogroup from AddSourceDialog must not appear
       // in the edit flow.
-      expect(
-        screen.queryByRole("radiogroup", { name: /source type/i })
-      ).not.toBeInTheDocument();
+      expect(screen.queryByRole("radiogroup", { name: /source type/i })).not.toBeInTheDocument();
     });
   });
 });

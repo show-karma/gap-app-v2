@@ -180,7 +180,7 @@ export const CommunityPageNavigator = () => {
   if (isAdminPage) return null;
 
   return (
-    <div className="flex flex-row max-md:overflow-x-auto max-md:scrollbar-none max-md:flex-nowrap flex-wrap pt-8 border-b border-gray-200 dark:border-zinc-700 justify-start items-center gap-6 h-max w-full">
+    <div className="flex flex-row flex-nowrap overflow-x-auto scrollbar-none pt-8 border-b border-gray-200 dark:border-zinc-700 justify-start items-center gap-6 h-max w-full">
       {visibleNavigationItems.map(({ id, path, title, Icon, isActive, showNewTag }) => {
         const href = path(communityId);
         const active = isActive(pathname);

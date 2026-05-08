@@ -89,7 +89,7 @@ export default async function FinancialsPage({ params }: { params: Params }) {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <div className="flex flex-col gap-5 py-6">
+      <div className="flex flex-col gap-5 py-6 animate-fade-in-up">
         <PublicControlCenter />
       </div>
     </HydrationBoundary>

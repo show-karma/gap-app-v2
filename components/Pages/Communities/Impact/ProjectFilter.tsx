@@ -1,5 +1,4 @@
 "use client";
-import Image from "next/image";
 import { useParams, useSearchParams } from "next/navigation";
 import { useQueryState } from "nuqs";
 import { useEffect, useRef } from "react";
@@ -58,17 +57,10 @@ export const ProjectFilter = ({
   const selectedProject = projectOptions.find((project) => project.value === selectedProjectId);
 
   return (
-    <div className="flex flex-row gap-4 items-center flex-1 max-w-[450px]">
-      <Image
-        src={"/icons/project.png"}
-        alt="Project"
-        width={24}
-        height={24}
-        className="w-6 h-6 min-w-6 max-w-6 min-h-6 max-h-6"
-      />
-      <p className="text-gray-800 dark:text-zinc-100 text-base font-semibold leading-normal">
+    <div className="flex flex-col gap-1.5 flex-1 min-w-[220px] max-w-[450px]">
+      <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
         Project
-      </p>
+      </span>
 
       <SearchWithValueDropdown
         list={projectOptions}
