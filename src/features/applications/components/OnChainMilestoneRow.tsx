@@ -1,12 +1,16 @@
 "use client";
 
+import { InformationCircleIcon } from "@heroicons/react/24/outline";
 import { Pencil } from "lucide-react";
 import { useState } from "react";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
+import { Link } from "@/src/components/navigation/Link";
 import type { GrantMilestoneWithCompletion } from "@/services/milestones";
 import { formatDate } from "@/utilities/formatDate";
+import { PAGES } from "@/utilities/pages";
 import { useSubmitMilestoneCompletion } from "../hooks/use-submit-milestone-completion";
 
 interface OnChainMilestoneRowProps {
@@ -105,14 +109,32 @@ export function OnChainMilestoneRow({
     <div className="rounded-lg border bg-zinc-50 dark:bg-zinc-800/50 p-4">
       <div className="space-y-2">
         <div className="flex justify-between items-start">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <h4 className="font-medium">{milestone.title}</h4>
-            <span
-              className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
-              title="Sourced directly from the on-chain grant aggregate"
-            >
-              On-chain
-            </span>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  aria-label="Why am I seeing this milestone?"
+                  className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
+                >
+                  <InformationCircleIcon className="h-4 w-4" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="text-sm">
+                <p className="font-semibold mb-1">Why am I seeing this?</p>
+                <p className="text-zinc-600 dark:text-zinc-400">
+                  This milestone wasn&apos;t part of the original application but is tracked
+                  on the project. You can review and complete it from here.
+                </p>
+                <Link
+                  href={PAGES.PROJECT.MILESTONES_AND_UPDATES(projectUid, grantUID)}
+                  className="mt-2 inline-block text-primary hover:underline"
+                >
+                  View on project page →
+                </Link>
+              </PopoverContent>
+            </Popover>
           </div>
           <div className="flex items-center gap-2">
             {isVerified ? (
