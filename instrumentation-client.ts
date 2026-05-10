@@ -28,10 +28,21 @@ Sentry.init({
 
 // Lazy-load Replay after init — keeps ~400KB out of the shared bundle.
 // The Replay SDK is fetched on-demand and added to the existing Sentry client.
+// If the lazy load fails, keep the app running without Replay instead of
+// surfacing an uncaught client error from the instrumentation bootstrap path.
 if (typeof window !== "undefined") {
-  Sentry.lazyLoadIntegration("replayIntegration").then((replayIntegration) => {
-    Sentry.addIntegration(replayIntegration());
-  });
+  void Sentry.lazyLoadIntegration("replayIntegration")
+    .then((replayIntegration) => {
+      if (typeof replayIntegration !== "function") {
+        return;
+      }
+
+      Sentry.addIntegration(replayIntegration());
+    })
+    .catch(() => {
+      // Ignore replay bootstrap failures. Replay is optional telemetry and
+      // should not create user-facing errors or noisy Sentry issues.
+    });
 }
 
 export const onRequestError = Sentry.captureRequestError;
