@@ -9,6 +9,7 @@ import { INDEXER } from "@/utilities/indexer";
  */
 export interface GetProjectUpdatesOptions extends UpdatesFeedFilters {
   milestoneStatus?: "pending" | "completed" | "verified";
+  isAuthorized?: boolean;
 }
 
 /**
@@ -80,7 +81,7 @@ function buildUpdatesQueryString(opts: GetProjectUpdatesOptions): string {
 export const getProjectUpdates = async (
   projectIdOrSlug: string,
   milestoneStatus?: "pending" | "completed" | "verified",
-  filters?: UpdatesFeedFilters
+  filters?: GetProjectUpdatesOptions
 ): Promise<UpdatesApiResponse> => {
   const emptyResponse: UpdatesApiResponse = {
     projectUpdates: [],
@@ -89,11 +90,19 @@ export const getProjectUpdates = async (
     grantUpdates: [],
   };
 
+  const { isAuthorized = true, ...queryFilters } = filters ?? {};
   const baseUrl = INDEXER.V2.PROJECTS.UPDATES(projectIdOrSlug);
-  const qs = buildUpdatesQueryString({ milestoneStatus, ...filters });
+  const qs = buildUpdatesQueryString({ milestoneStatus, ...queryFilters });
   const url = `${baseUrl}${qs}`;
 
-  const [data, error, , status] = await fetchData<UpdatesApiResponse>(url);
+  const [data, error, , status] = await fetchData<UpdatesApiResponse>(
+    url,
+    "GET",
+    {},
+    {},
+    {},
+    isAuthorized
+  );
 
   if (error || !data) {
     // Missing project routes are expected for unknown slugs and should not be sent to Sentry.

@@ -34,17 +34,17 @@ export const prefetchProjectProfileData = cache(
     const results = await Promise.allSettled([
       queryClient.prefetchQuery({
         queryKey: QUERY_KEYS.PROJECT.GRANTS(projectId),
-        queryFn: () => getProjectGrants(projectId),
+        queryFn: () => getProjectGrants(projectId, { isAuthorized: false }),
         staleTime: 5 * 60 * 1000,
       }),
       queryClient.prefetchQuery({
         queryKey: QUERY_KEYS.PROJECT.UPDATES(projectId),
-        queryFn: () => getProjectUpdates(projectId),
+        queryFn: () => getProjectUpdates(projectId, undefined, { isAuthorized: false }),
         staleTime: 5 * 60 * 1000,
       }),
       queryClient.prefetchQuery({
         queryKey: QUERY_KEYS.PROJECT.IMPACTS(projectId),
-        queryFn: () => getProjectImpacts(projectId),
+        queryFn: () => getProjectImpacts(projectId, { isAuthorized: false }),
         staleTime: 5 * 60 * 1000,
       }),
     ]);
@@ -75,7 +75,7 @@ export const prefetchProjectProfileData = cache(
  * Uses React.cache() for request deduplication.
  */
 export const getProjectGrantsCached = cache(async (projectId: string) => {
-  return getProjectGrants(projectId);
+  return getProjectGrants(projectId, { isAuthorized: false });
 });
 
 /**
@@ -83,7 +83,7 @@ export const getProjectGrantsCached = cache(async (projectId: string) => {
  * Uses React.cache() for request deduplication.
  */
 export const getProjectUpdatesCached = cache(async (projectId: string) => {
-  return getProjectUpdates(projectId);
+  return getProjectUpdates(projectId, undefined, { isAuthorized: false });
 });
 
 /**
@@ -91,5 +91,5 @@ export const getProjectUpdatesCached = cache(async (projectId: string) => {
  * Uses React.cache() for request deduplication.
  */
 export const getProjectImpactsCached = cache(async (projectId: string) => {
-  return getProjectImpacts(projectId);
+  return getProjectImpacts(projectId, { isAuthorized: false });
 });

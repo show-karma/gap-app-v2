@@ -41,16 +41,41 @@ beforeEach(() => {
   mockFetchData.mockResolvedValue([emptyResponse, null, null, 200]);
 });
 
+it("passes isAuthorized=false when public project profile fetches request it", async () => {
+  await getProjectUpdates("my-project", undefined, { isAuthorized: false });
+
+  expect(mockFetchData).toHaveBeenCalledWith(
+    "/v2/projects/my-project/updates",
+    "GET",
+    {},
+    {},
+    {},
+    false
+  );
+});
+
 describe("getProjectUpdates — URL construction", () => {
   it("calls the base URL when no options are given", async () => {
     await getProjectUpdates("my-project");
-    expect(mockFetchData).toHaveBeenCalledWith("/v2/projects/my-project/updates");
+    expect(mockFetchData).toHaveBeenCalledWith(
+      "/v2/projects/my-project/updates",
+      "GET",
+      {},
+      {},
+      {},
+      true
+    );
   });
 
   it("appends milestoneStatus to the query string", async () => {
     await getProjectUpdates("my-project", "completed");
     expect(mockFetchData).toHaveBeenCalledWith(
-      "/v2/projects/my-project/updates?milestoneStatus=completed"
+      "/v2/projects/my-project/updates?milestoneStatus=completed",
+      "GET",
+      {},
+      {},
+      {},
+      true
     );
   });
 

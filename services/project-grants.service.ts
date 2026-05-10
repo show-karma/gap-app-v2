@@ -3,6 +3,10 @@ import type { Grant } from "@/types/v2/grant";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
+export interface GetProjectGrantsOptions {
+  isAuthorized?: boolean;
+}
+
 /**
  * Fetches grants for a project using V2 endpoint
  *
@@ -15,9 +19,18 @@ import { INDEXER } from "@/utilities/indexer";
  * - Dates are returned as ISO strings (not MongoDB objects)
  * - Supports both UID and slug identifiers
  */
-export const getProjectGrants = async (projectIdOrSlug: string): Promise<Grant[]> => {
+export const getProjectGrants = async (
+  projectIdOrSlug: string,
+  options: GetProjectGrantsOptions = {}
+): Promise<Grant[]> => {
+  const { isAuthorized = true } = options;
   const [data, error, , status] = await fetchData<Grant | Grant[]>(
-    INDEXER.V2.PROJECTS.GRANTS(projectIdOrSlug)
+    INDEXER.V2.PROJECTS.GRANTS(projectIdOrSlug),
+    "GET",
+    {},
+    {},
+    {},
+    isAuthorized
   );
 
   if (error || !data) {
