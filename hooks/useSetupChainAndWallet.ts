@@ -3,6 +3,7 @@
 import type { GAP } from "@show-karma/karma-gap-sdk";
 import type { Signer } from "ethers";
 import { useCallback, useMemo } from "react";
+import toast from "react-hot-toast";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import { useZeroDevSigner } from "./useZeroDevSigner";
 
@@ -36,6 +37,18 @@ interface UseSetupChainAndWalletResult {
 
   /** Whether user has an external wallet (MetaMask, etc.) */
   hasExternalWallet: boolean;
+}
+
+function isNetworkChangedError(error: unknown): boolean {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const errorWithCode = error as Error & { code?: string };
+
+  return (
+    errorWithCode.code === "NETWORK_ERROR" || error.message.toLowerCase().includes("network changed")
+  );
 }
 
 /**
@@ -81,14 +94,26 @@ export function useSetupChainAndWallet(): UseSetupChainAndWalletResult {
         return null;
       }
 
-      const walletSigner = await getAttestationSigner(chainId);
+      try {
+        const walletSigner = await getAttestationSigner(chainId);
 
-      return {
-        gapClient,
-        walletSigner,
-        chainId,
-        isGasless: isGaslessAvailable,
-      };
+        return {
+          gapClient,
+          walletSigner,
+          chainId,
+          isGasless: isGaslessAvailable,
+        };
+      } catch (error) {
+        console.warn("Failed to prepare wallet signer:", error);
+
+        toast.error(
+          isNetworkChangedError(error)
+            ? "Wallet network changed while preparing the transaction. Please try again."
+            : "Failed to prepare wallet for this transaction. Please try again."
+        );
+
+        return null;
+      }
     },
     [getAttestationSigner, isGaslessAvailable]
   );
