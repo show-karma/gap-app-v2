@@ -31,6 +31,9 @@ const notFoundErrors = ["Project not found", "Community not found"];
 export const sentryIgnoreErrors = [
   // user rejected a confirmation in the wallet
   "rejected the request",
+  // MetaMask can throw this from the injected provider when the extension aborts
+  // or rejects the connection handshake before our app receives a first-party frame.
+  "Failed to connect to MetaMask",
   // React internal error thrown when something outside react modifies the DOM
   // This is usually because of a browser extension or Chrome's built-in translate. There's no action to do.
   // See https://blog.sentry.io/making-your-javascript-projects-less-noisy/#ignore-un-actionable-errors
