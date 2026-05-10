@@ -31,11 +31,15 @@ export interface ProjectImpact {
  * @returns Promise<ProjectImpact[]> - Array of project impacts
  */
 export const getProjectImpacts = async (projectIdOrSlug: string): Promise<ProjectImpact[]> => {
-  const [data, error] = await fetchData<ProjectImpact[]>(
+  const [data, error, , status] = await fetchData<ProjectImpact[]>(
     INDEXER.V2.PROJECTS.IMPACTS(projectIdOrSlug)
   );
 
   if (error || !data) {
+    if (status === 404) {
+      return [];
+    }
+
     errorManager(`Project Impacts API Error: ${error}`, error, {
       context: "project-impacts.service",
     });
