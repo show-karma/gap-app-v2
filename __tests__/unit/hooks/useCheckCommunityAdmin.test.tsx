@@ -272,6 +272,17 @@ describe("useCheckCommunityAdmin", () => {
       expect(mockIsCommunityAdminOf).not.toHaveBeenCalled();
     });
 
+    it("should not fetch when signer is not ready", () => {
+      mockUseSigner.mockReturnValue(undefined as ReturnType<typeof useSigner>);
+
+      const { result } = renderHook(() => useCheckCommunityAdmin(mockCommunity), {
+        wrapper: createWrapper(queryClient),
+      });
+
+      expect(result.current.isLoading).toBe(false);
+      expect(mockIsCommunityAdminOf).not.toHaveBeenCalled();
+    });
+
     it("should fetch when all conditions are met", async () => {
       mockIsCommunityAdminOf.mockResolvedValueOnce(true);
 

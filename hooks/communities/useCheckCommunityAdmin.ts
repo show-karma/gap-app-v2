@@ -44,13 +44,13 @@ export const useCheckCommunityAdmin = (
       signer
     ),
     queryFn: async () => {
-      if (!community || !checkAddress || !isAuth) {
+      if (!community || !checkAddress || !isAuth || !signer) {
         return false;
       }
 
       return await isCommunityAdminOf(community, checkAddress, signer);
     },
-    enabled: !!community && !!checkAddress && !!isAuth && options?.enabled !== false,
+    enabled: !!community && !!checkAddress && !!isAuth && !!signer && options?.enabled !== false,
     staleTime: ADMIN_CACHE_CONFIG.staleTime,
     gcTime: ADMIN_CACHE_CONFIG.gcTime,
     refetchOnWindowFocus: false,
