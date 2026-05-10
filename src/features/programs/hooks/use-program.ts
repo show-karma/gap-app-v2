@@ -13,7 +13,7 @@ export function useProgram(programId: string): UseProgramReturn {
         {},
         {},
         {},
-        true
+        false
       );
       if (err) throw new Error(err);
       return res;
