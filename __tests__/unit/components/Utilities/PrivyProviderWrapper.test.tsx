@@ -1,5 +1,10 @@
 import { act, render } from "@testing-library/react";
-import React from "react";
+
+const mockUsePathname = vi.fn(() => "/");
+
+vi.mock("next/navigation", () => ({
+  usePathname: () => mockUsePathname(),
+}));
 
 // Mock heavy dependencies
 vi.mock("@tanstack/react-query", () => ({
@@ -93,5 +98,27 @@ describe("PrivyProviderWrapper", () => {
     expect(mockRIC).toHaveBeenCalledWith(expect.any(Function), {
       timeout: 5000,
     });
+  });
+
+  it("should skip anonymous idle Privy loading on public apply routes", async () => {
+    mockGetItem.mockReturnValue(null);
+    mockUsePathname.mockReturnValue("/programs/1045/apply");
+
+    const mockRIC = vi.fn();
+    window.requestIdleCallback = mockRIC;
+
+    const PrivyProviderWrapper = (await import("@/components/Utilities/PrivyProviderWrapper"))
+      .default;
+
+    await act(async () => {
+      render(
+        <PrivyProviderWrapper>
+          <div>child</div>
+        </PrivyProviderWrapper>
+      );
+    });
+
+    expect(mockRIC).not.toHaveBeenCalled();
+    expect(mockPrivyComponent).not.toHaveBeenCalled();
   });
 });

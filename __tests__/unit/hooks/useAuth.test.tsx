@@ -58,6 +58,7 @@ const mockLogin = vi.fn();
 const mockLogout = vi.fn();
 const mockGetAccessToken = vi.fn();
 const mockGetToken = vi.fn();
+const mockLoadPrivy = vi.fn();
 
 // Mock the bridge context that useAuth reads from
 const mockBridgeState = {
@@ -74,6 +75,7 @@ const mockBridgeState = {
 
 vi.mock("@/contexts/privy-bridge-context", () => ({
   usePrivyBridge: () => mockBridgeState,
+  useLoadPrivy: () => mockLoadPrivy,
   PrivyBridgeContext: {
     Provider: ({ children }: { children: any }) => children,
   },
@@ -143,6 +145,7 @@ function resetBridgeState() {
     wallets: [],
     isConnected: false,
   });
+  mockLoadPrivy.mockReset();
 }
 
 describe("useAuth - Query Key Consistency", () => {

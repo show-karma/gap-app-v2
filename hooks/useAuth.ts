@@ -3,12 +3,11 @@
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Hex } from "viem";
-import { usePrivyBridge } from "@/contexts/privy-bridge-context";
+import { useLoadPrivy, usePrivyBridge } from "@/contexts/privy-bridge-context";
 import { useProjectCreateModalStore } from "@/store/modals/projectCreate";
 import { compareAllWallets } from "@/utilities/auth/compare-all-wallets";
 import { getE2EMockAuthState } from "@/utilities/auth/e2e-auth";
 import { TokenManager } from "@/utilities/auth/token-manager";
-import { PAGES } from "@/utilities/pages";
 import { queryClient } from "@/utilities/query-client";
 import { useWhitelabel } from "@/utilities/whitelabel-context";
 
@@ -118,6 +117,7 @@ export const useAuth = () => {
     wallets,
     isConnected,
   } = usePrivyBridge();
+  const loadPrivy = useLoadPrivy();
 
   const router = useRouter();
   const pathname = usePathname();
@@ -135,6 +135,7 @@ export const useAuth = () => {
   const address = (primaryWallet?.address as Hex | undefined) || e2eMockAddress;
 
   const shouldLoginAfterLogout = useRef(false);
+  const shouldLoginAfterPrivyLoad = useRef(false);
   const prevAuthRef = useRef(authenticated);
   const prevUserIdRef = useRef<string | undefined>(user?.id);
   const authFailureCount = useRef(0);
@@ -233,6 +234,16 @@ export const useAuth = () => {
       login();
     }
   }, [authenticated, ready, login]);
+
+  // If login was requested before the Privy SDK finished loading, retry once the
+  // bridge reports ready. This lets public pages defer Privy boot until the user
+  // actually asks to sign in.
+  useEffect(() => {
+    if (shouldLoginAfterPrivyLoad.current && ready && !authenticated) {
+      shouldLoginAfterPrivyLoad.current = false;
+      login();
+    }
+  }, [ready, authenticated, login]);
 
   // Cross-tab logout synchronization
   // Compatible with both localStorage (default) and HttpOnly cookies
@@ -358,6 +369,12 @@ export const useAuth = () => {
       }
     }
 
+    if (!ready) {
+      shouldLoginAfterPrivyLoad.current = true;
+      loadPrivy();
+      return;
+    }
+
     // If authenticated but wallet not connected via wagmi, force re-login only when
     // the user has external wallets (not embedded). Embedded wallets (from Privy)
     // may not register with wagmi, so treat wallets.length > 0 as effectively connected.
@@ -377,7 +394,7 @@ export const useAuth = () => {
     if (!authenticated) {
       login();
     }
-  }, [isConnected, authenticated, wallets.length, logout, login]);
+  }, [ready, authenticated, isConnected, wallets, logout, login, loadPrivy]);
 
   const connectedAndAuth = useMemo(() => {
     if (isE2EMockAuthenticated) {

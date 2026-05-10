@@ -1,6 +1,7 @@
 "use client";
 
 import { QueryClientProvider } from "@tanstack/react-query";
+import { usePathname } from "next/navigation";
 import { type ReactNode, useEffect, useState } from "react";
 import { WagmiProvider } from "wagmi";
 import {
@@ -23,6 +24,14 @@ type PrivyModule = {
   default: React.ComponentType<{ tenantConfig?: TenantConfig | null }>;
 };
 
+function isPublicApplyRoute(pathname: string | null): boolean {
+  if (!pathname) return false;
+  return (
+    /^\/community\/[^/]+\/programs\/[^/]+\/apply$/.test(pathname) ||
+    /^\/programs\/[^/]+\/apply$/.test(pathname)
+  );
+}
+
 interface PrivyProviderWrapperProps {
   children: ReactNode;
   tenantConfig?: TenantConfig | null;
@@ -43,6 +52,8 @@ function PrivyLoader({
   const [Privy, setPrivy] = useState<PrivyModule | null>(null);
   const setBridge = usePrivyBridgeSetter();
   const loadRequested = usePrivyLoadRequested();
+  const pathname = usePathname();
+  const skipAnonymousIdleLoad = isPublicApplyRoute(pathname);
 
   useEffect(() => {
     const doLoad = () => {
@@ -59,6 +70,13 @@ function PrivyLoader({
       return;
     }
 
+    // Public apply pages should not boot Privy for anonymous visitors until they
+    // explicitly ask to sign in. This avoids background auth.privy.io fetches on
+    // a route that users should be able to read and fill anonymously.
+    if (skipAnonymousIdleLoad) {
+      return;
+    }
+
     // Anonymous user — defer to idle callback with 5s timeout
     if (typeof window !== "undefined" && "requestIdleCallback" in window) {
       const id = requestIdleCallback(doLoad, { timeout: 5000 });
@@ -68,7 +86,7 @@ function PrivyLoader({
     // Fallback: setTimeout for browsers without requestIdleCallback
     const timer = setTimeout(doLoad, 5000);
     return () => clearTimeout(timer);
-  }, [setBridge, loadRequested]);
+  }, [setBridge, loadRequested, skipAnonymousIdleLoad]);
 
   return (
     <>
