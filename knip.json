@@ -1,0 +1,33 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": [
+    "next.config.{js,mjs,ts}",
+    "app/**/{page,layout,template,loading,error,not-found,route}.{ts,tsx}",
+    "app/**/{default,sitemap,robots,manifest,opengraph-image,twitter-image,icon,apple-icon}.{ts,tsx}",
+    "pages/**/*.{ts,tsx,js,jsx}",
+    "middleware.{ts,js}",
+    "instrumentation.{ts,js}",
+    "sentry.*.config.{ts,js}",
+    "scripts/**/*.{ts,js}",
+    "widget/**/*.{ts,tsx}",
+    "e2e/**/*.{ts,tsx}",
+    "__tests__/**/*.{ts,tsx}",
+    "**/*.stories.{ts,tsx}"
+  ],
+  "project": [
+    "**/*.{ts,tsx,js,jsx}",
+    "!**/node_modules/**",
+    "!.next/**",
+    "!coverage/**",
+    "!.quality/**"
+  ],
+  "ignore": ["next-env.d.ts", "**/*.d.ts"],
+  "ignoreDependencies": [
+    "@biomejs/biome",
+    "postcss",
+    "tailwindcss",
+    "@tailwindcss/forms",
+    "@tailwindcss/typography",
+    "tailwindcss-animate"
+  ]
+}

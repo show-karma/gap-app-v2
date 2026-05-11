@@ -1,0 +1,192 @@
+name: Quality Gate
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+    branches: ['**']
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - '**/*.png'
+      - '**/*.jpg'
+      - '**/*.jpeg'
+      - '**/*.svg'
+      - '**/*.gif'
+      - 'LICENSE'
+      - '.gitignore'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: quality-gate-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Guard: baseline file may only change on PRs labelled `quality-baseline`.
+  baseline-guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Check baseline changes are authorized
+        run: |
+          BASE="${{ github.event.pull_request.base.sha }}"
+          if git diff --name-only "${BASE}...HEAD" | grep -E '^quality-baseline\.json$' >/dev/null; then
+            echo "quality-baseline.json was modified in this PR."
+            HAS_LABEL=$(echo '${{ toJson(github.event.pull_request.labels.*.name) }}' | grep -c '"quality-baseline"' || true)
+            if [ "$HAS_LABEL" -eq 0 ]; then
+              echo "::error::quality-baseline.json was modified but PR is missing the 'quality-baseline' label."
+              exit 1
+            fi
+            echo "PR carries the 'quality-baseline' label — baseline change authorized."
+          else
+            echo "quality-baseline.json unchanged."
+          fi
+
+  static-checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v5
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint (Biome)
+        run: pnpm lint
+        continue-on-error: true
+
+      - name: Typecheck
+        run: pnpm typecheck
+        continue-on-error: true
+
+      - name: Build
+        run: pnpm build
+        continue-on-error: true
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+
+  quality-gate:
+    needs: [static-checks]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v5
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Test with coverage
+        run: pnpm test:coverage
+        continue-on-error: true
+        env:
+          NODE_ENV: test
+          NODE_OPTIONS: --max-old-space-size=8192
+
+      - name: Run quality gate
+        id: gate
+        run: pnpm quality --ci
+        continue-on-error: true
+
+      - name: Upload quality artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-report
+          path: |
+            .quality/report.md
+            .quality/current.json
+            .quality/jscpd/jscpd-report.json
+            .quality/react-doctor.json
+            coverage/coverage-summary.json
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Post PR comment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const marker = '<!-- quality-gate-report -->';
+            let body;
+            try {
+              body = `${marker}\n${fs.readFileSync('.quality/report.md', 'utf8')}`;
+            } catch (e) {
+              body = `${marker}\n## Quality Gate\n\nReport was not generated. See workflow logs.`;
+            }
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find(c => c.user.type === 'Bot' && c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
+      - name: Fail on regression
+        if: steps.gate.outcome == 'failure'
+        run: |
+          echo "::error::Quality gate failed — see PR comment / .quality/report.md for details."
+          exit 1
+
+  react-doctor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      # Pinned to a specific commit (refresh as needed). `fail-on: none` keeps this
+      # informational for the soft-launch; flip to `warning` once the score is trusted.
+      - uses: millionco/react-doctor@052cd20aa4a4a6a8caa47ea3348aedbca95f2222 # v0 main as of 2026-05-11
+        with:
+          diff: ${{ github.event.pull_request.base.ref || 'main' }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          fail-on: none
