@@ -17,7 +17,7 @@ vi.mock("@/components/Utilities/errorManager", () => ({
   errorManager: vi.fn(),
 }));
 
-const mockGetCommunityResolver = GAP.getCommunityResolver as unknown as vi.Mock;
+const mockGetCommunityResolver = vi.mocked(GAP.getCommunityResolver);
 
 const community = {
   uid: "0xcb67cd16cbdf4e9c3b6ed4c8f9424411a48be796d690750afc84f9288e7c7996",
