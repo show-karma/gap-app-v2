@@ -126,7 +126,7 @@ export default function FundingOpportunitiesPage() {
                   {
                     label: "Closing this week",
                     value: stats.closingNow,
-                    sub: `${pluralize("application", stats.closingNow, false)} before deadline`,
+                    sub: "apply before deadline",
                     accent: "danger" as const,
                   },
                 ]
