@@ -1,14 +1,16 @@
 import Image from "next/image";
+import { MilestoneLifecycleStatus } from "@/src/features/payout-disbursement";
+import { MILESTONE_STATUS_LABEL } from "@/utilities/milestones/getEffectiveMilestoneStatus";
 import { cn } from "@/utilities/tailwind";
 import type { ActivityType } from "./ActivityTypes";
 
 interface ActivityStatusProps {
   type: ActivityType;
-  completed?: boolean;
+  milestoneStatus?: MilestoneLifecycleStatus;
   className?: string;
 }
 
-export const ActivityStatus = ({ type, completed, className }: ActivityStatusProps) => {
+export const ActivityStatus = ({ type, milestoneStatus, className }: ActivityStatusProps) => {
   const getStatusColor = (label: string) => {
     switch (label) {
       case "ProjectUpdate":
@@ -57,26 +59,29 @@ export const ActivityStatus = ({ type, completed, className }: ActivityStatusPro
     return labelDictionary[type as keyof typeof labelDictionary] || "UPDATE";
   };
 
-  // For milestones, handle completion status differently
-  if (type === "Milestone" && completed !== undefined) {
-    const getCompletionStatusColor = () => {
-      if (completed) return "text-[#067647] bg-[#ECFDF3] dark:text-green-400 dark:bg-zinc-900";
-      return "bg-[#FFFAEB] text-[#B54708] dark:bg-zinc-900 dark:text-orange-300";
-    };
-
-    const getCompletionStatusText = () => {
-      return completed ? "Completed" : "Pending";
+  // For milestones, handle lifecycle status (pending / past_due / completed / verified)
+  if (type === "Milestone" && milestoneStatus !== undefined) {
+    const getMilestoneStatusColor = () => {
+      switch (milestoneStatus) {
+        case MilestoneLifecycleStatus.COMPLETED:
+        case MilestoneLifecycleStatus.VERIFIED:
+          return "text-[#067647] bg-[#ECFDF3] dark:text-green-400 dark:bg-zinc-900";
+        case MilestoneLifecycleStatus.PAST_DUE:
+          return "bg-red-50 text-red-700 dark:bg-zinc-900 dark:text-red-300";
+        default:
+          return "bg-[#FFFAEB] text-[#B54708] dark:bg-zinc-900 dark:text-orange-300";
+      }
     };
 
     return (
       <p
         className={cn(
           "px-3 py-1 rounded-[4px] text-xs font-semibold",
-          getCompletionStatusColor(),
+          getMilestoneStatusColor(),
           className
         )}
       >
-        {getCompletionStatusText()}
+        {MILESTONE_STATUS_LABEL[milestoneStatus]}
       </p>
     );
   }

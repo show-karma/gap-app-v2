@@ -123,18 +123,20 @@ export const UpdateCard: FC<UpdateCardProps> = ({ update, index, isAuthorized })
     update.type === "Milestone" ||
     update.type === "ProjectMilestone";
 
-  // Get due date for milestones
-  const getDueDate = () => {
+  // Get raw due date (epoch ms or ISO string) for milestones
+  const getRawDueDate = (): number | string | null => {
     if (update.type === "Milestone" || update.type === "ProjectMilestone") {
       const milestoneData = update.data as any;
-      if (milestoneData.endsAt) {
-        return formatDate(milestoneData.endsAt);
-      }
-      if (milestoneData.endDate) {
-        return formatDate(milestoneData.endDate);
-      }
+      if (milestoneData.endsAt) return milestoneData.endsAt;
+      if (milestoneData.endDate) return milestoneData.endDate;
     }
     return null;
+  };
+
+  // Get formatted due date for milestones
+  const getDueDate = () => {
+    const raw = getRawDueDate();
+    return raw == null ? null : formatDate(raw);
   };
 
   // Get completion status for milestones
@@ -165,6 +167,7 @@ export const UpdateCard: FC<UpdateCardProps> = ({ update, index, isAuthorized })
             <ActivityStatusHeader
               activityType={update.type as ActivityType}
               dueDate={getDueDate()}
+              rawDueDate={getRawDueDate()}
               showCompletionStatus={
                 update.type === "Milestone" || update.type === "ProjectMilestone"
               }

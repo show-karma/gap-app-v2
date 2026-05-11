@@ -3,7 +3,9 @@ import type {
   IProjectUpdate,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import type { FC } from "react";
+import { MilestoneLifecycleStatus } from "@/src/features/payout-disbursement";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
+import { getEffectiveMilestoneStatus } from "@/utilities/milestones/getEffectiveMilestoneStatus";
 import { ActivityStatus } from "./ActivityStatus";
 import type { ActivityType } from "./ActivityTypes";
 import { GrantAssociation } from "./GrantAssociation";
@@ -11,8 +13,10 @@ import { GrantAssociation } from "./GrantAssociation";
 interface ActivityStatusHeaderProps {
   /** The activity type to display in the left status pill */
   activityType: ActivityType;
-  /** Optional due date to display on the right */
+  /** Pre-formatted due date string for display (right side) */
   dueDate?: string | null;
+  /** Raw due date for computing past-due status. Accepts ISO string, epoch ms, or Date. */
+  rawDueDate?: string | number | Date | null;
   /** Whether to show completion status for milestones */
   showCompletionStatus?: boolean;
   /** Whether the milestone/activity is completed */
@@ -25,12 +29,12 @@ interface ActivityStatusHeaderProps {
   index?: number;
   /** Milestone data for grant association */
   milestone?: UnifiedMilestone;
-  /** Whether to show grant association */
 }
 
 export const ActivityStatusHeader: FC<ActivityStatusHeaderProps> = ({
   activityType,
   dueDate,
+  rawDueDate,
   showCompletionStatus = false,
   completed = false,
   completionStatusClassName = "text-xs px-2 py-1",
@@ -38,6 +42,11 @@ export const ActivityStatusHeader: FC<ActivityStatusHeaderProps> = ({
   index,
   milestone,
 }) => {
+  const effectiveStatus = getEffectiveMilestoneStatus(
+    completed ? MilestoneLifecycleStatus.COMPLETED : MilestoneLifecycleStatus.PENDING,
+    rawDueDate ?? null
+  );
+
   return (
     <div className="w-full flex flex-row gap-2">
       <div className="flex flex-row items-center justify-between w-full flex-wrap gap-2">
@@ -52,7 +61,7 @@ export const ActivityStatusHeader: FC<ActivityStatusHeaderProps> = ({
         {showCompletionStatus && (
           <ActivityStatus
             type="Milestone"
-            completed={completed}
+            milestoneStatus={effectiveStatus}
             className={completionStatusClassName}
           />
         )}
