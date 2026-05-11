@@ -29,9 +29,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { Link } from "@/src/components/navigation/Link";
 import type { NavDropdown, NavItem } from "@/src/infrastructure/types/tenant";
 import { useTenantSafe } from "@/store/tenant";
+import { karmaLinks } from "@/utilities/karma/karma";
 import { cn } from "@/utilities/tailwind";
 import { NavbarAuthButtons } from "./navbar-auth-buttons";
 import { NavbarPermissionsProvider } from "./navbar-permissions-context";
+import { NavbarSearch } from "./navbar-search";
 import { NavbarUserMenu } from "./navbar-user-menu";
 import { ThemeToggleButton } from "./theme-toggle-button";
 
@@ -93,6 +95,11 @@ export function WhitelabelNavbar() {
           key: "docs",
           label: "Docs",
           href: tenantSocialLinks.docs,
+        },
+        {
+          key: "skills",
+          label: "Skills",
+          href: karmaLinks.skills,
         },
       ].filter((link): link is SocialLinkItem => Boolean(link)),
     [tenantSocialLinks]
@@ -198,6 +205,10 @@ export function WhitelabelNavbar() {
 
           {/* Desktop Nav */}
           <div className="hidden items-center gap-1 lg:flex">
+            {/* Search */}
+            <div className="mr-2">
+              <NavbarSearch />
+            </div>
             {/* My Applications - first when authenticated (matching reference) */}
             {authenticated && (
               <Link href={"/dashboard"} className={navStyles.desktopLink}>
@@ -352,6 +363,10 @@ export function WhitelabelNavbar() {
         {/* Mobile menu */}
         {isMenuOpen && (
           <div className="border-t border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900 lg:hidden">
+            {/* Mobile Search */}
+            <div className="mb-3">
+              <NavbarSearch onSelectItem={() => setIsMenuOpen(false)} />
+            </div>
             <div className="space-y-1">
               {authenticated && (
                 <Link
