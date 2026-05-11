@@ -19,7 +19,7 @@ export const isCommunityAdminOf = async (
 ): Promise<boolean> => {
   const { uid, chainID } = community;
   try {
-    const resolver = await GAP.getCommunityResolver(signer, getGapRpcConfig());
+    const resolver = await GAP.getCommunityResolver(signer, getGapRpcConfig(), chainID);
     if (!resolver) {
       errorManager(`Community resolver not available for chain ${chainID}`, null, {
         uid,
