@@ -37,6 +37,8 @@ pnpm lint:fix           # Biome lint + format
 - **No barrel exports**: Import directly from source files, not `index.ts` re-exports. Existing barrel exports in `types/`, `store/`, `utilities/sdk/` are legacy — don't add new ones.
 - **Heavy libs**: Must use `dynamic()` or lazy `import()` — never top-level import of chart/editor/markdown libs.
 - **Zustand resets**: When adding state properties, update `initialState` too — `reset()` spreads it and will miss new fields.
+- **Pluralization**: Any dynamic count rendered next to a noun MUST use the `pluralize` library (`pluralize("team", count)`). No manual ternaries, no hardcoded plural-only nouns. Strings like `"1 teams"`, `"0 apply"`, `"1 days left"` are bugs.
+- **Empty-state conditional rendering**: UI blocks tied to a count or array (e.g. "Closing this week — N apply before deadline") must be hidden entirely when the count is 0. Don't render "0 …" copy.
 
 ## Auth Gotchas
 

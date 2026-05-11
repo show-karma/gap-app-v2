@@ -2,6 +2,7 @@
 
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
+import pluralize from "pluralize";
 import type { FundingProgram } from "@/types/whitelabel-entities";
 import formatCurrency from "@/utilities/formatCurrency";
 import { PAGES } from "@/utilities/pages";
@@ -80,7 +81,7 @@ export function FeaturedProgram({
                 aria-hidden
               />
               {view.daysLeft !== null && view.urgency !== "closed"
-                ? `${view.daysLeft} days left`
+                ? `${view.daysLeft} ${pluralize("day", view.daysLeft)} left`
                 : view.urgency === "closed"
                   ? "Closed"
                   : "Open"}
@@ -128,7 +129,10 @@ export function FeaturedProgram({
           ) : null}
           {dateRowValue ? <KpiRow label={dateRowLabel} value={dateRowValue} /> : null}
           {view.applicants > 0 ? (
-            <KpiRow label="Applicants" value={`${view.applicants} teams`} />
+            <KpiRow
+              label="Applicants"
+              value={`${view.applicants} ${pluralize("team", view.applicants)}`}
+            />
           ) : null}
         </div>
       </div>
