@@ -3,6 +3,7 @@
 import { AlertCircle, RefreshCw, Search } from "lucide-react";
 import Image from "next/image";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
+import pluralize from "pluralize";
 import { useCallback, useEffect, useMemo } from "react";
 import {
   computeProgramView,
@@ -97,7 +98,7 @@ export default function FundingOpportunitiesPage() {
         <PageHero
           eyebrow={
             stats.openCount > 0
-              ? `Open for funding · ${stats.openCount} live program${stats.openCount === 1 ? "" : "s"}`
+              ? `Open for funding · ${stats.openCount} live ${pluralize("program", stats.openCount)}`
               : "Funding opportunities"
           }
           title={
@@ -106,7 +107,7 @@ export default function FundingOpportunitiesPage() {
                 ${formatCurrency(stats.totalPool)} available
                 <br />
                 <span className="text-brand-500 dark:text-brand-400">
-                  across {programs.length} program{programs.length === 1 ? "" : "s"}.
+                  across {programs.length} {pluralize("program", programs.length)}.
                 </span>
               </>
             ) : (
@@ -120,12 +121,16 @@ export default function FundingOpportunitiesPage() {
               value: stats.openCount,
               sub: "accepting now",
             },
-            {
-              label: "Closing this week",
-              value: stats.closingNow,
-              sub: "apply before deadline",
-              accent: stats.closingNow > 0 ? "danger" : "default",
-            },
+            ...(stats.closingNow > 0
+              ? [
+                  {
+                    label: "Closing this week",
+                    value: stats.closingNow,
+                    sub: "apply before deadline",
+                    accent: "danger" as const,
+                  },
+                ]
+              : []),
             {
               label: "Total pool",
               value: stats.totalPool > 0 ? `$${formatCurrency(stats.totalPool)}` : "—",

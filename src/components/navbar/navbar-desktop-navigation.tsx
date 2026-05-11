@@ -55,6 +55,41 @@ function NavDropdownTrigger({ children }: { children: React.ReactNode }) {
   );
 }
 
+function ResourcesDropdown() {
+  return (
+    <DropdownMenu>
+      <NavDropdownTrigger>Resources</NavDropdownTrigger>
+      <DropdownMenuContent align="end" className="p-0">
+        <div className="flex flex-col gap-4 px-4 py-4 w-max">
+          <ResourcesContent variant="desktop" />
+          <hr className="h-[1px] w-full border-border" />
+          <div className="flex flex-col items-start justify-start w-full">
+            <MenuSection title="Follow" variant="desktop" />
+            <div className="flex flex-row items-center w-full justify-between gap-4 py-2">
+              {socialMediaLinks.map((social) => {
+                const IconComponent = social.icon;
+                return (
+                  <ExternalLink
+                    key={social.name}
+                    href={social.href}
+                    className={cn(
+                      menuStyles.itemText,
+                      "flex items-center justify-center rounded-full transition-colors"
+                    )}
+                    aria-label={social.name}
+                  >
+                    <IconComponent className="w-5 h-5" />
+                  </ExternalLink>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 const socialMediaLinks = [
   {
     name: "Twitter",
@@ -135,37 +170,7 @@ export function NavbarDesktopNavigation() {
 
       {!isLoggedIn ? (
         <div className="flex flex-row items-center gap-4">
-          {/* Resources Dropdown */}
-          <DropdownMenu>
-            <NavDropdownTrigger>Resources</NavDropdownTrigger>
-            <DropdownMenuContent align="end" className="p-0">
-              <div className="flex flex-col gap-4 px-4 py-4 w-max">
-                <ResourcesContent variant="desktop" />
-                <hr className="h-[1px] w-full border-border" />
-                <div className="flex flex-col items-start justify-start w-full">
-                  <MenuSection title="Follow" variant="desktop" />
-                  <div className="flex flex-row items-center w-full justify-between gap-4 py-2">
-                    {socialMediaLinks.map((social) => {
-                      const IconComponent = social.icon;
-                      return (
-                        <ExternalLink
-                          key={social.name}
-                          href={social.href}
-                          className={cn(
-                            menuStyles.itemText,
-                            "flex items-center justify-center rounded-full transition-colors"
-                          )}
-                          aria-label={social.name}
-                        >
-                          <IconComponent className="w-5 h-5" />
-                        </ExternalLink>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <ResourcesDropdown />
 
           {/* Auth Buttons */}
           <NavbarAuthButtons />
@@ -184,6 +189,7 @@ export function NavbarDesktopNavigation() {
       {isLoggedIn && (
         <div className="hidden lg:flex items-center gap-3">
           <div className="flex flex-row items-center gap-2">
+            <ResourcesDropdown />
             <ExternalLink
               href={SOCIALS.DOCS}
               className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-full"
