@@ -8,15 +8,7 @@ export default function BrowseApplicationsPage() {
   const communityId = params.communityId;
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="mb-8 text-center">
-        <h1 className="mb-4 text-4xl font-bold text-foreground">Browse Applications</h1>
-        <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
-          View all applications submitted to this community. Track funding requests and review
-          project proposals.
-        </p>
-      </div>
-
+    <div className="flex flex-col pb-20">
       <BrowseApplicationsClient communityId={communityId} />
     </div>
   );

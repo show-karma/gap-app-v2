@@ -72,9 +72,12 @@ export default defineConfig({
     : {
         command: isCI ? "pnpm start" : "cross-env NEXT_PUBLIC_E2E_AUTH_BYPASS=true pnpm run dev",
         url: "http://localhost:3000",
-        // Reuse an already-running server when one is up (e.g. the dogfood
-        // auth-prep job in CI starts `node .next/standalone/server.js`
-        // before invoking Playwright). With `!isCI` this collided on port 3000.
+        // Always reuse a server already listening on :3000. Some CI jobs
+        // (e.g. dogfood-auth-prep) start the standalone Next bundle out of
+        // band before invoking Playwright; without this, Playwright would
+        // try to spawn its own server and crash with "port already used".
+        // When no server is running, Playwright still falls back to running
+        // `command` above, so this is safe for jobs that don't pre-start.
         reuseExistingServer: true,
         timeout: 120_000,
       },

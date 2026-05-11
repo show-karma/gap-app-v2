@@ -12,7 +12,6 @@ import { useParams, usePathname, useSearchParams } from "next/navigation";
 import { useCallback, useMemo } from "react";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import { usePublishedReports } from "@/hooks/portfolio-reports/usePortfolioReports";
-import { useFundingOpportunitiesCount } from "@/hooks/useFundingOpportunitiesCount";
 import { useCommunityPrograms } from "@/hooks/usePrograms";
 import { Link } from "@/src/components/navigation/Link";
 import { FINANCIALS_ENABLED_COMMUNITIES } from "@/utilities/community-flags";
@@ -125,11 +124,6 @@ export const CommunityPageNavigator = () => {
   const isAdminPage = pathname.includes("/manage");
 
   const { data: community } = useCommunityDetails(communityId);
-  // Skip fetching funding opportunities count on admin pages
-  const { data: fundingOpportunitiesCount } = useFundingOpportunitiesCount({
-    communityUid: community?.uid,
-    enabled: !isAdminPage,
-  });
   // Skip fetching programs on admin pages - the component returns null anyway
   const { data: programs } = useCommunityPrograms(communityId, {
     enabled: !isAdminPage,
@@ -144,9 +138,9 @@ export const CommunityPageNavigator = () => {
 
   const visibleNavigationItems = useMemo(() => {
     return NAVIGATION_ITEMS.filter((item) => {
-      // In whitelabel mode, always show funding opportunities (it's the landing page)
-      // In normal mode, hide it if there are no opportunities
-      if (item.id === "funding-opportunities" && fundingOpportunitiesCount === 0 && !isWhitelabel) {
+      // In whitelabel mode, always show funding opportunities (it's the landing page).
+      // In normal mode, hide it if the community has no programs at all (live or not).
+      if (item.id === "funding-opportunities" && programsCount === 0 && !isWhitelabel) {
         return false;
       }
       // Show browse applications if the community has at least one program (live or ended)
@@ -163,13 +157,7 @@ export const CommunityPageNavigator = () => {
       }
       return true;
     });
-  }, [
-    fundingOpportunitiesCount,
-    programsCount,
-    publishedReportsCount,
-    isWhitelabel,
-    isFinancialsEnabled,
-  ]);
+  }, [programsCount, publishedReportsCount, isWhitelabel, isFinancialsEnabled]);
 
   const activeLinkRef = useCallback((node: HTMLAnchorElement | null) => {
     if (node?.scrollIntoView) {
@@ -180,7 +168,7 @@ export const CommunityPageNavigator = () => {
   if (isAdminPage) return null;
 
   return (
-    <div className="flex flex-row max-md:overflow-x-auto max-md:scrollbar-none max-md:flex-nowrap flex-wrap pt-8 border-b border-gray-200 dark:border-zinc-700 justify-start items-center gap-6 h-max w-full">
+    <div className="flex flex-row flex-nowrap overflow-x-auto scrollbar-none pt-8 border-b border-gray-200 dark:border-zinc-700 justify-start items-center gap-6 h-max w-full">
       {visibleNavigationItems.map(({ id, path, title, Icon, isActive, showNewTag }) => {
         const href = path(communityId);
         const active = isActive(pathname);

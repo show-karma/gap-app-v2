@@ -20,9 +20,9 @@ vi.mock("@/hooks/useKycStatus", () => ({
 
 const mockUseCommunityPayouts = vi.fn();
 vi.mock("@/src/features/payout-disbursement", async () => {
-  const actual = await vi.importActual<
-    typeof import("@/src/features/payout-disbursement")
-  >("@/src/features/payout-disbursement");
+  const actual = await vi.importActual<typeof import("@/src/features/payout-disbursement")>(
+    "@/src/features/payout-disbursement"
+  );
   return {
     ...actual,
     useCommunityPayouts: (...args: unknown[]) => mockUseCommunityPayouts(...args),
@@ -30,10 +30,7 @@ vi.mock("@/src/features/payout-disbursement", async () => {
   };
 });
 
-function makePayoutPayload(
-  resolvedProjectName: string | undefined,
-  title: string
-) {
+function makePayoutPayload(resolvedProjectName: string | undefined, title: string) {
   return {
     payload: [
       {
@@ -58,7 +55,12 @@ function makePayoutPayload(
           adminPayoutAmount: "1000",
           invoiceRequired: false,
         },
-        disbursements: { totalDisbursed: "0", totalsByToken: [], status: "NOT_STARTED", history: [] },
+        disbursements: {
+          totalDisbursed: "0",
+          totalsByToken: [],
+          status: "NOT_STARTED",
+          history: [],
+        },
         agreement: null,
         milestoneInvoices: [],
         paidMilestoneCount: 0,

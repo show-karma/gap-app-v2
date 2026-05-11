@@ -1,5 +1,7 @@
 export const communityColors: Record<string, string> = {
   black: "#000000",
+  filecoin: "#0090FF",
+  celo: "#FCFF52",
   "0x8da4cb832907bf41a770cbadd460763ff1a55113c1c2ee99533ce8a80e138d87": "#000000",
   "0x6193e5151e8fde7f4ca2e16f31a42effe56cbafa126423941cbe7ff51a5143bd": "#448BF2",
   "0xa33a7c83cca23dca0537615282a89000e4d4c6d07b47d057c37d7b9f34b05d97": "#000000",

@@ -6,6 +6,7 @@ import type { ProgramImpactDataResponse } from "@/types/programs";
 import { formatDate } from "@/utilities/formatDate";
 import { CategoryRow } from "./CategoryRow";
 import { CommunityMetricsSection } from "./CommunityMetricsSection";
+import { ImpactOutcomes } from "./ImpactOutcomes";
 import { ProgramBanner } from "./ProgramBanner";
 
 export const prepareChartData = (
@@ -67,43 +68,50 @@ export const CommunityImpactCharts = () => {
   const showCommunityMetrics = !programSelected && !projectSelected;
 
   return (
-    <div className="flex flex-col gap-4 flex-1 mb-10">
+    <div className="flex flex-col gap-8 flex-1 mb-10">
       <ProgramBanner />
       {showCommunityMetrics && <CommunityMetricsSection />}
-      {isLoading ? (
-        <div className="flex justify-center items-center h-full">
-          <Spinner />
-        </div>
-      ) : orderedData?.length ? (
-        orderedData.map((category, index) => (
-          <div
-            key={`category-container-${category.categoryName}-${
-              projectSelected || "all"
-            }-${programSelected || "all"}-${index}`}
-          >
-            <CategoryRow
-              key={`category-row-${category.categoryName}-${
-                projectSelected || "all"
-              }-${programSelected || "all"}-${index}`}
-              category={category}
-            />
-            {index !== orderedData.length - 1 && (
+
+      <section className="flex flex-col gap-6">
+        {isLoading ? (
+          <div className="flex justify-center items-center py-10">
+            <Spinner />
+          </div>
+        ) : orderedData?.length ? (
+          <div className="flex flex-col">
+            {orderedData.map((category, index) => (
               <div
-                key={`category-divider-${category.categoryName}-${
+                key={`category-container-${category.categoryName}-${
                   projectSelected || "all"
                 }-${programSelected || "all"}-${index}`}
-                className="w-full my-8 h-px bg-gradient-to-r from-transparent via-gray-300 dark:via-gray-700 to-transparent"
-              />
-            )}
+              >
+                <CategoryRow
+                  key={`category-row-${category.categoryName}-${
+                    projectSelected || "all"
+                  }-${programSelected || "all"}-${index}`}
+                  category={category}
+                />
+                {index !== orderedData.length - 1 && (
+                  <div
+                    key={`category-divider-${category.categoryName}-${
+                      projectSelected || "all"
+                    }-${programSelected || "all"}-${index}`}
+                    className="w-full my-12 h-px bg-gradient-to-r from-transparent via-border to-transparent"
+                  />
+                )}
+              </div>
+            ))}
           </div>
-        ))
-      ) : (
-        <div className="flex flex-col items-center justify-center py-10 text-center">
-          <p className="text-lg text-gray-600 dark:text-gray-400">
-            This community has not reported any impact segments yet.
-          </p>
-        </div>
-      )}
+        ) : (
+          <div className="rounded-2xl border border-dashed border-border py-10 text-center">
+            <p className="text-lg text-muted-foreground">
+              This community has not reported any impact segments yet.
+            </p>
+          </div>
+        )}
+      </section>
+
+      {showCommunityMetrics ? <ImpactOutcomes /> : null}
     </div>
   );
 };

@@ -171,7 +171,7 @@ Post a PR comment. **Comment format — follow exactly:**
 - No prose. No explanations. No "this tests..." preamble.
 - Table rows only. One scenario per row.
 - Sort by risk: Critical first, then High, Med, Low.
-- Maximum 15 public + 10 private scenarios. Prioritize by risk, drop Low.
+- **Maximum 8 public + 6 private scenarios.** The executor runs each shard in a 12-minute wall-clock budget; auth scenarios cost 90–180s each (login + multi-step UI), so 6 is the realistic ceiling. Prioritize ruthlessly by risk; drop Low and merge similar Medium scenarios. Coverage breadth per scenario beats one-assertion-per-row.
 - Edge cases as a flat bullet list. Maximum 10.
 - If the PR only touches public pages, the Authenticated section should say "None — all changes are public."
 - If the PR only touches authenticated pages, the Public section should say "None — all changes require auth."

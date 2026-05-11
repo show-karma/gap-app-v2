@@ -4,10 +4,10 @@ import { Link } from "@/src/components/navigation/Link";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 
-const activeLinkStyle = "text-slate-700 dark:text-zinc-200 bg-white rounded-md dark:bg-zinc-600";
-const inactiveLinkStyle = "text-slate-500 dark:text-zinc-400 bg-transparent";
 const baseLinkStyle =
-  "px-3 py-2 max-lg:w-full rounded-md text-base font-semibold font-['Inter'] leading-normal w-max";
+  "relative px-1 pb-3 text-sm font-semibold tracking-[-0.005em] transition-colors max-lg:w-full max-lg:pb-2";
+const activeLinkStyle = "text-foreground";
+const inactiveLinkStyle = "text-muted-foreground hover:text-foreground";
 
 export const ImpactTabNavigator = () => {
   const params = useParams();
@@ -16,23 +16,40 @@ export const ImpactTabNavigator = () => {
   const isProjectDiscovery = pathname.includes("/project-discovery");
 
   return (
-    <div className="flex-row max-lg:flex-col px-1.5 py-2 rounded-lg bg-gray-100 dark:bg-zinc-900 justify-start items-center gap-4 flex h-max w-max max-w-full">
+    <nav
+      aria-label="Community impact sections"
+      className="flex flex-row items-center gap-7 border-b border-border max-lg:flex-col max-lg:items-start max-lg:gap-3"
+    >
       <Link
         href={PAGES.COMMUNITY.IMPACT(communityId)}
         className={cn(baseLinkStyle, !isProjectDiscovery ? activeLinkStyle : inactiveLinkStyle)}
         aria-label="View impact"
+        aria-current={!isProjectDiscovery ? "page" : undefined}
         tabIndex={0}
       >
         Program Impact
+        {!isProjectDiscovery ? (
+          <span
+            aria-hidden
+            className="absolute -bottom-px left-0 right-0 h-0.5 rounded-full bg-foreground"
+          />
+        ) : null}
       </Link>
       <Link
         href={PAGES.COMMUNITY.PROJECT_DISCOVERY(communityId)}
         className={cn(baseLinkStyle, isProjectDiscovery ? activeLinkStyle : inactiveLinkStyle)}
         aria-label="Project Discovery"
+        aria-current={isProjectDiscovery ? "page" : undefined}
         tabIndex={0}
       >
         Project Discovery
+        {isProjectDiscovery ? (
+          <span
+            aria-hidden
+            className="absolute -bottom-px left-0 right-0 h-0.5 rounded-full bg-foreground"
+          />
+        ) : null}
       </Link>
-    </div>
+    </nav>
   );
 };

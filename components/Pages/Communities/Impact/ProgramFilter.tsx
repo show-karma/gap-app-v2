@@ -1,5 +1,4 @@
 "use client";
-import Image from "next/image";
 import { useParams } from "next/navigation";
 import { useQueryState } from "nuqs";
 import { useCommunityPrograms } from "@/hooks/usePrograms";
@@ -41,17 +40,13 @@ export const ProgramFilter = ({ defaultProgramSelected, onChange }: ProgramFilte
   const selectedProgram = programs?.find((program) => program.value === selectedProgramId);
 
   return (
-    <div className="flex flex-row gap-4 items-center flex-1 max-w-[400px]">
-      <Image
-        src={"/icons/program.svg"}
-        alt="program"
-        width={24}
-        height={24}
-        className="w-6 h-6 min-w-6 max-w-6 min-h-6 max-h-6"
-      />
-      <p className="text-gray-800 dark:text-zinc-100 text-base font-semibold leading-normal">
-        Program
-      </p>
+    <div className="flex flex-col gap-1.5 flex-1 min-w-[220px] max-w-[400px]">
+      <label
+        htmlFor="filter-by-programs"
+        className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+      >
+        Choose Program
+      </label>
 
       <SearchWithValueDropdown
         id="filter-by-programs"

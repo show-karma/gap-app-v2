@@ -174,10 +174,10 @@ export const CommunityGrants = ({
   return (
     <div className="flex flex-col gap-4 w-full">
       <div className="flex items-center justify-between flex-row flex-wrap-reverse max-lg:flex-wrap max-lg:flex-col-reverse max-lg:justify-start max-lg:items-start gap-3 max-lg:gap-4">
-        <div className="flex items-center gap-x-3 flex-wrap gap-y-2 w-full">
+        <div className="flex items-stretch sm:items-end gap-x-3 flex-wrap gap-y-3 w-full">
           <ProgramFilter onChange={handleProgramChange} />
 
-          <div className="flex flex-1 flex-row gap-8 justify-end flex-wrap">
+          <div className="flex flex-1 flex-col sm:flex-row sm:items-center gap-y-3 gap-x-8 justify-start flex-wrap sm:pb-3">
             {selectedProgramId && (
               <TrackFilter
                 onChange={handleTrackChange}
