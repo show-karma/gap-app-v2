@@ -29,6 +29,10 @@ import { formatAddressForDisplay } from "@/utilities/donations/helpers";
 import { formatDate } from "@/utilities/formatDate";
 import { formatMilestoneTitle } from "@/utilities/formatMilestoneTitle";
 import { INDEXER } from "@/utilities/indexer";
+import {
+  getEffectiveMilestoneStatus,
+  MILESTONE_STATUS_LABEL,
+} from "@/utilities/milestones/getEffectiveMilestoneStatus";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { PaymentStatusDropdown } from "./PaymentStatusDropdown";
@@ -47,40 +51,26 @@ const milestoneStatusConfig: Record<
   { label: string; dotColor: string; textColor: string }
 > = {
   [MilestoneLifecycleStatus.PENDING]: {
-    label: "Pending",
+    label: MILESTONE_STATUS_LABEL[MilestoneLifecycleStatus.PENDING],
     dotColor: "bg-gray-300 dark:bg-zinc-600",
     textColor: "text-gray-500 dark:text-zinc-500",
   },
   [MilestoneLifecycleStatus.COMPLETED]: {
-    label: "Completed",
+    label: MILESTONE_STATUS_LABEL[MilestoneLifecycleStatus.COMPLETED],
     dotColor: "bg-blue-400",
     textColor: "text-blue-600 dark:text-blue-400",
   },
   [MilestoneLifecycleStatus.VERIFIED]: {
-    label: "Verified",
+    label: MILESTONE_STATUS_LABEL[MilestoneLifecycleStatus.VERIFIED],
     dotColor: "bg-green-500",
     textColor: "text-green-600 dark:text-green-400",
   },
   [MilestoneLifecycleStatus.PAST_DUE]: {
-    label: "Past due",
+    label: MILESTONE_STATUS_LABEL[MilestoneLifecycleStatus.PAST_DUE],
     dotColor: "bg-amber-500",
     textColor: "text-amber-600 dark:text-amber-400",
   },
 };
-
-function getEffectiveMilestoneStatus(
-  milestoneStatus: MilestoneLifecycleStatus | null,
-  milestoneDueDate: string | null
-): MilestoneLifecycleStatus {
-  const status = milestoneStatus || MilestoneLifecycleStatus.PENDING;
-  if (status === MilestoneLifecycleStatus.PENDING && milestoneDueDate) {
-    const due = new Date(milestoneDueDate);
-    if (due.getTime() < Date.now()) {
-      return MilestoneLifecycleStatus.PAST_DUE;
-    }
-  }
-  return status;
-}
 
 function getMilestoneStatusTooltip(
   effectiveStatus: MilestoneLifecycleStatus,
