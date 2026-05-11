@@ -10,7 +10,7 @@ export async function isOwnershipTransfered(
   try {
     const { uid, chainID } = project;
 
-    const resolver = await GAP.getProjectResolver(signer, getGapRpcConfig());
+    const resolver = await GAP.getProjectResolver(signer, getGapRpcConfig(), chainID);
 
     const response = await resolver.isOwner(uid, newOwner);
     const isowner = response;
