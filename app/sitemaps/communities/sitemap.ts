@@ -1,7 +1,15 @@
 import type { MetadataRoute } from "next";
 import { chosenCommunities } from "@/utilities/chosenCommunities";
 
-const communitySubPages = ["funding-opportunities", "impact", "projects", "updates"] as const;
+const communitySubPages = [
+  "funding-opportunities",
+  "browse-applications",
+  "projects",
+  "updates",
+  "impact",
+  "financials",
+  "reports",
+] as const;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date().toISOString();
