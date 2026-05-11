@@ -14,13 +14,14 @@ interface Props {
 }
 
 async function getGrantPrograms(communityId: string): Promise<GrantProgram[]> {
-  // We deliberately let errors bubble up to Next.js — silently returning []
-  // makes a fetch outage indistinguishable from "this community has no
-  // programs", which lets admins save configs with no programIds. The
-  // route's error.tsx surfaces a retry CTA.
-  const [result, error] = await fetchData(INDEXER.COMMUNITY.PROGRAMS(communityId));
+  const [result, error, _pageInfo, status] = await fetchData(
+    INDEXER.COMMUNITY.PROGRAMS(communityId)
+  );
   if (error) {
     errorManager(`Error fetching grant programs for community ${communityId}`, error);
+    if (status === 504) {
+      return [];
+    }
     throw new Error(
       typeof error === "string" && error.length > 0
         ? error

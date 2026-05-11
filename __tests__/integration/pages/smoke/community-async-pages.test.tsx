@@ -1,5 +1,6 @@
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
+import fetchData from "@/utilities/fetchData";
 
 /**
  * Smoke tests for async server-rendered community pages. Pattern:
@@ -90,7 +91,11 @@ vi.mock("@/components/Pages/Admin/PortfolioReports/PortfolioReportPreviewPage", 
 }));
 
 vi.mock("@/components/Pages/Admin/PortfolioReports/ReportConfigPage", () => ({
-  ReportConfigPage: () => <div data-testid="report-config-page">ReportConfig</div>,
+  ReportConfigPage: ({ grantPrograms }: { grantPrograms: unknown[] }) => (
+    <div data-testid="report-config-page" data-program-count={grantPrograms.length}>
+      ReportConfig
+    </div>
+  ),
 }));
 
 vi.mock("@/components/Pages/Admin/ReportMilestonePage", () => ({
@@ -174,6 +179,22 @@ describe("Community async server pages — happy path", () => {
       { params: Promise.resolve({ communityId: "c1" }) }
     );
     expect(screen.getByTestId("report-config-page")).toBeInTheDocument();
+  });
+
+  it("/manage/portfolio-reports/config renders when programs fetch returns 504", async () => {
+    vi.mocked(fetchData).mockResolvedValueOnce([
+      null,
+      "Request failed with status code 504",
+      null,
+      504,
+    ]);
+
+    await renderAsyncPage(
+      () => import("@/app/community/[communityId]/manage/portfolio-reports/config/page"),
+      { params: Promise.resolve({ communityId: "c1" }) }
+    );
+
+    expect(screen.getByTestId("report-config-page")).toHaveAttribute("data-program-count", "0");
   });
 
   it("/manage/portfolio-reports/[reportId] renders editor", async () => {
