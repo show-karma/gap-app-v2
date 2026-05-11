@@ -776,4 +776,12 @@ export const INDEXER = {
     PUBLIC_PROFILES: (addresses: string[]) =>
       `/v2/user/profiles/public?addresses=${addresses.join(",")}`,
   },
+  SITEMAP: {
+    COUNTS: "/v2/sitemap/counts",
+    URLS: (
+      kind: "projects" | "impacts" | "grants" | "milestones" | "funding-programs",
+      page: number,
+      pageSize: number
+    ) => `/v2/sitemap?kind=${kind}&page=${page}&pageSize=${pageSize}`,
+  },
 };

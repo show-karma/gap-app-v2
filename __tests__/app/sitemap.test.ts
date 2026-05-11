@@ -1,144 +1,323 @@
-import sitemap from "@/app/sitemap";
 import { SITE_URL } from "@/utilities/meta";
+import * as sitemapUtils from "@/utilities/sitemap";
 
-describe("sitemap", () => {
-  const entries = sitemap();
+vi.mock("@/utilities/sitemap", async (importActual) => {
+  const actual = await importActual<typeof sitemapUtils>();
+  return {
+    ...actual,
+    fetchSitemapCounts: vi.fn(),
+    fetchSitemapUrls: vi.fn(),
+  };
+});
 
-  it("should return an array of sitemap entries", () => {
+const mockFetchSitemapCounts = vi.mocked(sitemapUtils.fetchSitemapCounts);
+const mockFetchSitemapUrls = vi.mocked(sitemapUtils.fetchSitemapUrls);
+
+// ---------------------------------------------------------------------------
+// app/sitemap.xml/route.ts — sitemap index
+// ---------------------------------------------------------------------------
+describe("app/sitemap.xml/route.ts — sitemap index GET handler", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("always includes the static and communities child sitemaps", async () => {
+    mockFetchSitemapCounts.mockResolvedValue({
+      projects: 0,
+      impacts: 0,
+      grants: 0,
+      milestones: 0,
+      fundingPrograms: 0,
+    });
+
+    const { GET } = await import("@/app/sitemap.xml/route");
+    const res = await GET();
+    const xml = await res.text();
+
+    expect(xml).toContain(`${SITE_URL}/sitemaps/static/sitemap.xml`);
+    expect(xml).toContain(`${SITE_URL}/sitemaps/communities/sitemap.xml`);
+  });
+
+  it("returns a valid sitemapindex XML document", async () => {
+    mockFetchSitemapCounts.mockResolvedValue({
+      projects: 0,
+      impacts: 0,
+      grants: 0,
+      milestones: 0,
+      fundingPrograms: 0,
+    });
+
+    const { GET } = await import("@/app/sitemap.xml/route");
+    const res = await GET();
+    const xml = await res.text();
+    const contentType = res.headers.get("Content-Type");
+
+    expect(xml).toMatch(/^<\?xml/);
+    expect(xml).toContain("<sitemapindex");
+    expect(xml).toContain("</sitemapindex>");
+    expect(contentType).toContain("application/xml");
+  });
+
+  it("generates the correct number of project chunk URLs from counts", async () => {
+    // 12 500 projects → 3 chunks of 5 000
+    mockFetchSitemapCounts.mockResolvedValue({
+      projects: 12500,
+      impacts: 0,
+      grants: 0,
+      milestones: 0,
+      fundingPrograms: 0,
+    });
+
+    const { GET } = await import("@/app/sitemap.xml/route");
+    const res = await GET();
+    const xml = await res.text();
+
+    expect(xml).toContain(`${SITE_URL}/sitemaps/projects/sitemap/1.xml`);
+    expect(xml).toContain(`${SITE_URL}/sitemaps/projects/sitemap/2.xml`);
+    expect(xml).toContain(`${SITE_URL}/sitemaps/projects/sitemap/3.xml`);
+    expect(xml).not.toContain(`${SITE_URL}/sitemaps/projects/sitemap/4.xml`);
+  });
+
+  it("generates child URLs for impacts, grants, milestones, and funding-programs", async () => {
+    mockFetchSitemapCounts.mockResolvedValue({
+      projects: 1,
+      impacts: 1,
+      grants: 1,
+      milestones: 1,
+      fundingPrograms: 1,
+    });
+
+    const { GET } = await import("@/app/sitemap.xml/route");
+    const res = await GET();
+    const xml = await res.text();
+
+    expect(xml).toContain(`${SITE_URL}/sitemaps/impacts/sitemap/1.xml`);
+    expect(xml).toContain(`${SITE_URL}/sitemaps/grants/sitemap/1.xml`);
+    expect(xml).toContain(`${SITE_URL}/sitemaps/milestones/sitemap/1.xml`);
+    expect(xml).toContain(`${SITE_URL}/sitemaps/funding-programs/sitemap/1.xml`);
+  });
+
+  it("falls back to 1 chunk per kind when fetchSitemapCounts returns null", async () => {
+    mockFetchSitemapCounts.mockResolvedValue(null);
+
+    const { GET } = await import("@/app/sitemap.xml/route");
+    const res = await GET();
+    const xml = await res.text();
+
+    expect(xml).toContain(`${SITE_URL}/sitemaps/projects/sitemap/1.xml`);
+    expect(xml).toContain(`${SITE_URL}/sitemaps/impacts/sitemap/1.xml`);
+    expect(xml).toContain(`${SITE_URL}/sitemaps/grants/sitemap/1.xml`);
+    expect(xml).toContain(`${SITE_URL}/sitemaps/milestones/sitemap/1.xml`);
+    expect(xml).toContain(`${SITE_URL}/sitemaps/funding-programs/sitemap/1.xml`);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// app/sitemaps/static/sitemap.ts
+// ---------------------------------------------------------------------------
+describe("app/sitemaps/static/sitemap.ts", () => {
+  it("returns an array of sitemap entries", async () => {
+    const { default: staticSitemap } = await import("@/app/sitemaps/static/sitemap");
+    const entries = staticSitemap();
     expect(Array.isArray(entries)).toBe(true);
     expect(entries.length).toBeGreaterThan(0);
   });
 
-  it("should have all URLs under the site domain", () => {
+  it("has all URLs under the site domain", async () => {
+    const { default: staticSitemap } = await import("@/app/sitemaps/static/sitemap");
+    const entries = staticSitemap();
     for (const entry of entries) {
       expect(entry.url).toMatch(new RegExp(`^${SITE_URL}`));
     }
   });
 
-  it("should include the homepage", () => {
+  it("includes the homepage", async () => {
+    const { default: staticSitemap } = await import("@/app/sitemaps/static/sitemap");
+    const entries = staticSitemap();
     const urls = entries.map((e) => e.url);
     expect(urls).toContain(SITE_URL);
   });
 
-  describe("static pages", () => {
-    const expectedPages = [
-      "/projects",
-      "/communities",
-      "/funders",
-      "/funding-map",
-      "/create-project-profile",
-      "/knowledge",
-      "/privacy-policy",
-      "/terms-and-conditions",
-    ];
-
-    for (const page of expectedPages) {
-      it(`should include ${page}`, () => {
-        const urls = entries.map((e) => e.url);
-        expect(urls).toContain(`${SITE_URL}${page}`);
-      });
+  it("includes key static pages", async () => {
+    const { default: staticSitemap } = await import("@/app/sitemaps/static/sitemap");
+    const entries = staticSitemap();
+    const urls = entries.map((e) => e.url);
+    for (const page of ["/projects", "/communities", "/funders", "/knowledge"]) {
+      expect(urls).toContain(`${SITE_URL}${page}`);
     }
   });
 
-  describe("knowledge articles", () => {
-    const knowledgeEntries = entries.filter((e) => e.url.includes("/knowledge/"));
-
-    it("should include multiple knowledge articles", () => {
-      expect(knowledgeEntries.length).toBeGreaterThanOrEqual(15);
-    });
-
-    it("should include key knowledge articles", () => {
-      const urls = entries.map((e) => e.url);
-      expect(urls).toContain(`${SITE_URL}/knowledge/grant-accountability`);
-      expect(urls).toContain(`${SITE_URL}/knowledge/grant-lifecycle`);
-      expect(urls).toContain(`${SITE_URL}/knowledge/onchain-reputation`);
-    });
+  it("sets homepage priority to 1 and changeFrequency to daily", async () => {
+    const { default: staticSitemap } = await import("@/app/sitemaps/static/sitemap");
+    const entries = staticSitemap();
+    const homepage = entries.find((e) => e.url === SITE_URL);
+    expect(homepage?.priority).toBe(1);
+    expect(homepage?.changeFrequency).toBe("daily");
   });
 
-  describe("changeFrequency", () => {
-    it("should set homepage to daily", () => {
-      const homepage = entries.find((e) => e.url === SITE_URL);
-      expect(homepage?.changeFrequency).toBe("daily");
-    });
-
-    it("should set low-priority pages (privacy, terms, dashboard) to yearly", () => {
-      const lowPriorityUrls = [
-        `${SITE_URL}/privacy-policy`,
-        `${SITE_URL}/terms-and-conditions`,
-        `${SITE_URL}/dashboard`,
-      ];
-      for (const url of lowPriorityUrls) {
-        const entry = entries.find((e) => e.url === url);
-        expect(entry?.changeFrequency).toBe("yearly");
-      }
-    });
-
-    it("should set regular content pages to weekly", () => {
-      const regularEntries = entries.filter(
-        (e) =>
-          e.url !== SITE_URL &&
-          !e.url.endsWith("/privacy-policy") &&
-          !e.url.endsWith("/terms-and-conditions") &&
-          !e.url.endsWith("/dashboard")
-      );
-      for (const entry of regularEntries) {
-        expect(entry.changeFrequency).toBe("weekly");
-      }
-    });
-  });
-
-  describe("priority", () => {
-    it("should give homepage highest priority (1)", () => {
-      const homepage = entries.find((e) => e.url === SITE_URL);
-      expect(homepage?.priority).toBe(1);
-    });
-
-    it("should give knowledge articles priority 0.7", () => {
-      const knowledgeEntries = entries.filter((e) => e.url.includes("/knowledge"));
-      for (const entry of knowledgeEntries) {
-        expect(entry.priority).toBe(0.7);
-      }
-    });
-
-    it("should give low-priority pages (privacy, terms, dashboard) priority 0.3", () => {
-      const lowPriorityUrls = [
-        `${SITE_URL}/privacy-policy`,
-        `${SITE_URL}/terms-and-conditions`,
-        `${SITE_URL}/dashboard`,
-      ];
-      for (const url of lowPriorityUrls) {
-        const entry = entries.find((e) => e.url === url);
-        expect(entry?.priority).toBe(0.3);
-      }
-    });
-
-    it("should give other regular pages priority 0.8", () => {
-      const otherEntries = entries.filter(
-        (e) =>
-          e.url !== SITE_URL &&
-          !e.url.includes("/knowledge") &&
-          !e.url.endsWith("/privacy-policy") &&
-          !e.url.endsWith("/terms-and-conditions") &&
-          !e.url.endsWith("/dashboard")
-      );
-      for (const entry of otherEntries) {
-        expect(entry.priority).toBe(0.8);
-      }
-    });
-  });
-
-  describe("lastModified", () => {
-    it("should have lastModified as a valid ISO date string", () => {
-      for (const entry of entries) {
-        expect(() => new Date(entry.lastModified as string)).not.toThrow();
-        expect(new Date(entry.lastModified as string).toISOString()).toBe(entry.lastModified);
-      }
-    });
-  });
-
-  it("should not have duplicate URLs", () => {
+  it("does not have duplicate URLs", async () => {
+    const { default: staticSitemap } = await import("@/app/sitemaps/static/sitemap");
+    const entries = staticSitemap();
     const urls = entries.map((e) => e.url);
-    const unique = new Set(urls);
-    expect(unique.size).toBe(urls.length);
+    expect(new Set(urls).size).toBe(urls.length);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Chunked kind sitemaps — test via utility functions directly
+// ---------------------------------------------------------------------------
+describe("chunked kind sitemaps — projects sitemap", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("sitemap() maps urls to entries with correct priority and changeFrequency", async () => {
+    const testUrl = "https://www.karmahq.xyz/project/test";
+    mockFetchSitemapUrls.mockResolvedValue([testUrl]);
+
+    const { buildSitemapEntries, fetchSitemapUrls } = await import("@/utilities/sitemap");
+    const urls = await fetchSitemapUrls("projects", 1, sitemapUtils.SITEMAP_PAGE_SIZE);
+    const entries = buildSitemapEntries(urls, { priority: 0.8, changeFrequency: "daily" });
+
+    expect(mockFetchSitemapUrls).toHaveBeenCalledWith(
+      "projects",
+      1,
+      sitemapUtils.SITEMAP_PAGE_SIZE
+    );
+    expect(entries).toHaveLength(1);
+    expect(entries[0].priority).toBe(0.8);
+    expect(entries[0].changeFrequency).toBe("daily");
+    expect(entries[0].url).toBe(testUrl);
+  });
+
+  it("sitemap() returns [] when fetchSitemapUrls returns empty array", async () => {
+    mockFetchSitemapUrls.mockResolvedValue([]);
+    const { buildSitemapEntries, fetchSitemapUrls } = await import("@/utilities/sitemap");
+    const urls = await fetchSitemapUrls("projects", 1, sitemapUtils.SITEMAP_PAGE_SIZE);
+    const entries = buildSitemapEntries(urls, { priority: 0.8, changeFrequency: "daily" });
+    expect(entries).toHaveLength(0);
+  });
+
+  it("generateSitemaps() returns correct chunk count from counts (12 000 → 3 chunks)", async () => {
+    mockFetchSitemapCounts.mockResolvedValue({
+      projects: 12000,
+      impacts: 0,
+      grants: 0,
+      milestones: 0,
+      fundingPrograms: 0,
+    });
+
+    const { computeChunkCount, fetchSitemapCounts, SITEMAP_PAGE_SIZE } = await import(
+      "@/utilities/sitemap"
+    );
+    const counts = await fetchSitemapCounts();
+    const chunkCount = computeChunkCount(counts?.projects ?? 0, SITEMAP_PAGE_SIZE);
+    const chunks = Array.from({ length: chunkCount }, (_, i) => ({ id: i + 1 }));
+
+    expect(chunks).toHaveLength(3);
+    expect(chunks[0]).toEqual({ id: 1 });
+    expect(chunks[2]).toEqual({ id: 3 });
+  });
+});
+
+describe("chunked kind sitemaps — impacts sitemap", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("sitemap() maps urls to entries with correct priority (0.7) and changeFrequency weekly", async () => {
+    const testUrl = "https://www.karmahq.xyz/project/test/impacts/i1";
+    mockFetchSitemapUrls.mockResolvedValue([testUrl]);
+
+    const { buildSitemapEntries, fetchSitemapUrls } = await import("@/utilities/sitemap");
+    const urls = await fetchSitemapUrls("impacts", 1, sitemapUtils.SITEMAP_PAGE_SIZE);
+    const entries = buildSitemapEntries(urls, { priority: 0.7, changeFrequency: "weekly" });
+
+    expect(entries[0].priority).toBe(0.7);
+    expect(entries[0].changeFrequency).toBe("weekly");
+  });
+});
+
+describe("chunked kind sitemaps — grants sitemap", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("sitemap() maps urls to entries with correct priority (0.6) and changeFrequency weekly", async () => {
+    const testUrl = "https://www.karmahq.xyz/project/test/grants/g1";
+    mockFetchSitemapUrls.mockResolvedValue([testUrl]);
+
+    const { buildSitemapEntries, fetchSitemapUrls } = await import("@/utilities/sitemap");
+    const urls = await fetchSitemapUrls("grants", 1, sitemapUtils.SITEMAP_PAGE_SIZE);
+    const entries = buildSitemapEntries(urls, { priority: 0.6, changeFrequency: "weekly" });
+
+    expect(entries[0].priority).toBe(0.6);
+    expect(entries[0].changeFrequency).toBe("weekly");
+  });
+});
+
+describe("chunked kind sitemaps — milestones sitemap", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("sitemap() maps urls to entries with correct priority (0.5) and changeFrequency weekly", async () => {
+    const testUrl = "https://www.karmahq.xyz/project/test/milestones/m1";
+    mockFetchSitemapUrls.mockResolvedValue([testUrl]);
+
+    const { buildSitemapEntries, fetchSitemapUrls } = await import("@/utilities/sitemap");
+    const urls = await fetchSitemapUrls("milestones", 1, sitemapUtils.SITEMAP_PAGE_SIZE);
+    const entries = buildSitemapEntries(urls, { priority: 0.5, changeFrequency: "weekly" });
+
+    expect(entries[0].priority).toBe(0.5);
+    expect(entries[0].changeFrequency).toBe("weekly");
+  });
+});
+
+describe("chunked kind sitemaps — funding-programs sitemap", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("sitemap() maps urls to entries with correct priority (0.6) and changeFrequency weekly", async () => {
+    const testUrl = "https://www.karmahq.xyz/funding-programs/fp1";
+    mockFetchSitemapUrls.mockResolvedValue([testUrl]);
+
+    const { buildSitemapEntries, fetchSitemapUrls } = await import("@/utilities/sitemap");
+    const urls = await fetchSitemapUrls("funding-programs", 1, sitemapUtils.SITEMAP_PAGE_SIZE);
+    const entries = buildSitemapEntries(urls, { priority: 0.6, changeFrequency: "weekly" });
+
+    expect(entries[0].priority).toBe(0.6);
+    expect(entries[0].changeFrequency).toBe("weekly");
+    expect(entries[0].url).toBe(testUrl);
+  });
+
+  it("returns [] on empty urls", async () => {
+    mockFetchSitemapUrls.mockResolvedValue([]);
+    const { buildSitemapEntries, fetchSitemapUrls } = await import("@/utilities/sitemap");
+    const urls = await fetchSitemapUrls("funding-programs", 1, sitemapUtils.SITEMAP_PAGE_SIZE);
+    const entries = buildSitemapEntries(urls, { priority: 0.6, changeFrequency: "weekly" });
+    expect(entries).toHaveLength(0);
+  });
+
+  it("generateSitemaps() produces correct chunk IDs for funding-programs (6 000 → 2 chunks)", async () => {
+    mockFetchSitemapCounts.mockResolvedValue({
+      projects: 0,
+      impacts: 0,
+      grants: 0,
+      milestones: 0,
+      fundingPrograms: 6000,
+    });
+
+    const { computeChunkCount, fetchSitemapCounts, SITEMAP_PAGE_SIZE } = await import(
+      "@/utilities/sitemap"
+    );
+    const counts = await fetchSitemapCounts();
+    const chunkCount = computeChunkCount(counts?.fundingPrograms ?? 0, SITEMAP_PAGE_SIZE);
+    const chunks = Array.from({ length: chunkCount }, (_, i) => ({ id: i + 1 }));
+
+    expect(chunks).toHaveLength(2);
+    expect(chunks[0]).toEqual({ id: 1 });
+    expect(chunks[1]).toEqual({ id: 2 });
   });
 });

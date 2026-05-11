@@ -9,12 +9,12 @@ import {
 
 export async function generateSitemaps() {
   const counts = await fetchSitemapCounts();
-  const total = counts?.projects ?? 0;
+  const total = counts?.milestones ?? 0;
   const chunkCount = computeChunkCount(total, SITEMAP_PAGE_SIZE);
   return Array.from({ length: chunkCount }, (_, i) => ({ id: i + 1 }));
 }
 
 export default async function sitemap({ id }: { id: number }): Promise<MetadataRoute.Sitemap> {
-  const urls = await fetchSitemapUrls("projects", id, SITEMAP_PAGE_SIZE);
-  return buildSitemapEntries(urls, { priority: 0.8, changeFrequency: "daily" });
+  const urls = await fetchSitemapUrls("milestones", id, SITEMAP_PAGE_SIZE);
+  return buildSitemapEntries(urls, { priority: 0.5, changeFrequency: "weekly" });
 }
