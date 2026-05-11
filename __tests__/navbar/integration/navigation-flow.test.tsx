@@ -148,7 +148,7 @@ describe("Navigation Flow Integration Tests", () => {
     // doesn't propagate `isLoggedIn=true` from the test's `authFixture.authState`
     // through to <NavbarDesktopNavigation /> when rendered directly. Needs the
     // file-level _refs hoisted-mock pattern used by auth-flow.test.tsx.
-    it("should hide Resources dropdown when logged in", () => {
+    it("should show Resources dropdown when logged in", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<NavbarDesktopNavigation />, {
@@ -160,7 +160,7 @@ describe("Navigation Flow Integration Tests", () => {
         name: /resources/i,
       });
 
-      expect(resourcesTrigger).not.toBeInTheDocument();
+      expect(resourcesTrigger).toBeInTheDocument();
     });
   });
 
@@ -233,7 +233,7 @@ describe("Navigation Flow Integration Tests", () => {
 
       const drawer = screen.getByRole("dialog");
 
-      // Verify all sections including Resources (only visible when logged out)
+      // Verify all sections including Resources
       expect(within(drawer).getByText("For Projects")).toBeInTheDocument();
       expect(within(drawer).getByText("For Funders")).toBeInTheDocument();
       // Explore renders as subsections
@@ -241,7 +241,7 @@ describe("Navigation Flow Integration Tests", () => {
       expect(within(drawer).getByText("Resources")).toBeInTheDocument();
     });
 
-    it("should hide Resources in mobile drawer when logged in", async () => {
+    it("should show Resources in mobile drawer when logged in", async () => {
       const user = userEvent.setup();
       const authFixture = getAuthFixture("authenticated-basic");
 
@@ -259,10 +259,8 @@ describe("Navigation Flow Integration Tests", () => {
 
       const drawer = screen.getByRole("dialog");
 
-      // Resources section should not be in mobile drawer
-      const resourcesSections = within(drawer).queryAllByText("Resources");
-      // Should be 0 or if present, not in a section header context
-      expect(resourcesSections.length).toBeLessThan(2);
+      // Resources section is now shown in both auth states
+      expect(within(drawer).getByText("Resources")).toBeInTheDocument();
     });
   });
 
