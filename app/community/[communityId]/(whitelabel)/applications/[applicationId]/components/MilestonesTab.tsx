@@ -166,34 +166,11 @@ export function MilestonesTab({ application, isOwner, invoiceRequired }: Milesto
   const grantUID = onChainData?.grant?.uid;
   const hasNothing = unified.length === 0;
 
-  if (hasNothing && isOnChainLoading) {
-    return (
-      <div className="rounded-xl border border-border" aria-busy="true" aria-live="polite">
-        <div className="border-b border-border p-4">
-          <div className="h-6 w-32 rounded bg-zinc-200 dark:bg-zinc-700 animate-pulse" />
-        </div>
-        <div className="p-6 space-y-3">
-          <div className="h-24 rounded-lg bg-zinc-100 dark:bg-zinc-800/50 animate-pulse" />
-          <div className="h-24 rounded-lg bg-zinc-100 dark:bg-zinc-800/50 animate-pulse" />
-        </div>
-      </div>
-    );
-  }
-
-  if (hasNothing && onChainError) {
-    return (
-      <div className="rounded-xl border border-border p-6 space-y-3">
-        <p className="text-muted-foreground">
-          Couldn&apos;t load on-chain milestones for this application.
-        </p>
-        <Button size="sm" onClick={() => refetchOnChain()}>
-          Retry
-        </Button>
-      </div>
-    );
-  }
-
-  if (hasNothing) {
+  // Full-card empty state — only when there's truly nothing to show AND
+  // we're not still fetching / haven't errored. Loading and error states
+  // are surfaced as non-blocking banners below so off-chain rows stay
+  // visible while the on-chain side is in flight or has failed.
+  if (hasNothing && !isOnChainLoading && !onChainError) {
     return (
       <div className="rounded-xl border border-border p-6">
         <p className="text-muted-foreground">No milestones defined for this application.</p>
@@ -207,6 +184,40 @@ export function MilestonesTab({ application, isOwner, invoiceRequired }: Milesto
         <h2 className="text-xl font-semibold text-foreground">Milestones</h2>
       </div>
       <div className="p-6 space-y-3">
+        {isOnChainLoading && (
+          <div
+            className="rounded-lg border border-dashed border-zinc-200 dark:border-zinc-700 p-3"
+            aria-busy="true"
+            aria-live="polite"
+          >
+            <div className="flex items-center gap-3">
+              <div className="h-2 w-2 rounded-full bg-zinc-300 dark:bg-zinc-600 animate-pulse" />
+              <p className="text-sm text-muted-foreground">
+                Loading on-chain milestones from the project…
+              </p>
+            </div>
+          </div>
+        )}
+        {onChainError && (
+          <div
+            className="rounded-lg border border-dashed border-amber-300 dark:border-amber-800 bg-amber-50/40 dark:bg-amber-950/20 p-3"
+            role="status"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-sm text-amber-800 dark:text-amber-300">
+                Couldn&apos;t load on-chain milestones for this application.
+              </p>
+              <Button size="sm" variant="outline" onClick={() => refetchOnChain()}>
+                Retry
+              </Button>
+            </div>
+          </div>
+        )}
+        {hasNothing && (
+          <p className="text-muted-foreground text-sm">
+            No milestones defined for this application yet.
+          </p>
+        )}
         {unified.map((item) => {
           if (item.source === "offchain") {
             const existingInvoice = milestoneInvoices.find(

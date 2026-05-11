@@ -430,6 +430,66 @@ describe("MilestonesTab — merge orchestrator", () => {
     expect(refetch).toHaveBeenCalledTimes(1);
   });
 
+  it("should_render_loading_banner_alongside_offchain_rows_while_onchain_query_is_in_flight", () => {
+    // Reviewer-flagged behavior: the on-chain loading state must NOT
+    // hide the off-chain rows the user can already act on. With the
+    // earlier `if (hasNothing && isOnChainLoading) return skeleton`
+    // gate, the off-chain list disappeared until the on-chain query
+    // settled — bad UX for slow indexer responses.
+    mockUseProjectGrantMilestones.mockReturnValue({
+      data: null,
+      isLoading: true,
+      error: null,
+      refetch: vi.fn(),
+    });
+
+    const application = makeApplication({
+      applicationData: {
+        projectMilestones: [
+          { title: "Off-chain ready", description: "", dueDate: "2025-08-01" },
+        ],
+      },
+    });
+
+    const { container } = render(
+      <MilestonesTab application={application} isOwner={true} />
+    );
+
+    // Off-chain row is rendered and interactive.
+    expect(screen.getAllByTestId("off-chain-row")).toHaveLength(1);
+    // Loading banner shows simultaneously, marked aria-busy for assistive tech.
+    expect(container.querySelector('[aria-busy="true"]')).toBeInTheDocument();
+  });
+
+  it("should_render_error_banner_with_retry_alongside_offchain_rows_when_onchain_query_fails", () => {
+    // Same idea for the failure path: the user can still see and act on
+    // their off-chain milestones while the on-chain side is broken; the
+    // retry control is presented as a non-blocking banner.
+    const refetch = vi.fn();
+    mockUseProjectGrantMilestones.mockReturnValue({
+      data: null,
+      isLoading: false,
+      error: new Error("indexer down"),
+      refetch,
+    });
+
+    const application = makeApplication({
+      applicationData: {
+        projectMilestones: [
+          { title: "Off-chain ready", description: "", dueDate: "2025-08-01" },
+        ],
+      },
+    });
+
+    render(<MilestonesTab application={application} isOwner={true} />);
+
+    expect(screen.getAllByTestId("off-chain-row")).toHaveLength(1);
+    const retry = screen.getByRole("button", { name: /retry/i });
+    expect(retry).toBeInTheDocument();
+    fireEvent.click(retry);
+    expect(refetch).toHaveBeenCalledTimes(1);
+  });
+
   it("should_skip_onchain_rows_when_grant_uid_is_unresolved", () => {
     // Edge case: hook returned milestones but no `grant` entry. We can't
     // build an attestation without a grantUID, so the orchestrator must
