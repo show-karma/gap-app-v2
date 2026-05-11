@@ -15,10 +15,10 @@ import {
 import dynamic from "next/dynamic";
 import { usePathname, useSearchParams } from "next/navigation";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
-import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
 import { Badge } from "@/components/ui/badge";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
+import { useAuth } from "@/hooks/useAuth";
 import { useMilestoneAllocationsByGrants } from "@/hooks/useCommunityMilestoneAllocations";
 import { useDeleteMilestone } from "@/hooks/useDeleteMilestone";
 import { useFundingApplicationByProjectUID } from "@/hooks/useFundingApplicationByProjectUID";
@@ -474,7 +474,7 @@ function MilestonesReviewPageContent({
   const searchParams = useSearchParams();
   const searchParamsString = searchParams.toString();
 
-  const { address } = useAccount();
+  const { address, ready } = useAuth();
   const { hasAccess: hasAdminAccess, isLoading: isLoadingAdminAccess } =
     useCommunityAdminAccess(communityId);
 
@@ -729,7 +729,7 @@ function MilestonesReviewPageContent({
   }, [milestones, activeFilter]);
 
   // Show loading while checking authorization
-  if (isLoading || isLoadingReviewer || isLoadingAdminAccess) {
+  if (!ready || isLoading || isLoadingReviewer || isLoadingAdminAccess) {
     return (
       <div className="min-h-screen">
         <div className="px-4 sm:px-6 lg:px-8 py-6">

@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import type { Hex } from "viem";
-import { useAccount } from "wagmi";
 import { useAuth } from "@/hooks/useAuth";
 import type { Community } from "@/types/v2/community";
 import { ADMIN_CACHE_CONFIG } from "@/utilities/cache-config";
@@ -30,9 +29,8 @@ export const useCheckCommunityAdmin = (
   address?: string | Hex,
   options?: UseCheckCommunityAdminOptions
 ) => {
-  const { address: accountAddress } = useAccount();
   const signer = useSigner();
-  const { authenticated: isAuth } = useAuth();
+  const { authenticated: isAuth, address: accountAddress } = useAuth();
 
   const checkAddress = address || accountAddress;
 

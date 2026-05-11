@@ -3,7 +3,6 @@ import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo } from "react";
 import { toast } from "react-hot-toast";
-import { useAccount } from "wagmi";
 import { PendingVerificationTable } from "@/components/Pages/Admin/PendingVerificationTable";
 import { ReviewerFilterDropdown } from "@/components/Pages/Admin/ReviewerFilterDropdown";
 import { StatsGrid } from "@/components/Pages/Admin/StatsGrid";
@@ -95,8 +94,7 @@ interface ReportMilestonePageProps {
 export const ReportMilestonePage = ({ community, grantPrograms }: ReportMilestonePageProps) => {
   const params = useParams();
   const communityId = params.communityId as string;
-  const { isConnected, address } = useAccount();
-  const { authenticated: isAuth } = useAuth();
+  const { authenticated: isAuth, isConnected, address, ready } = useAuth();
   const { hasAccess, isLoading: isLoadingAdminAccess } = useCommunityAdminAccess(community?.uid);
   const isMilestoneReviewer = useIsReviewerType(ReviewerType.MILESTONE);
   const { isLoading: isLoadingRbac, isReviewer } = usePermissionContext();
@@ -109,17 +107,8 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
     return isMilestoneReviewer || isReviewer;
   }, [isConnected, isAuth, hasAccess, isMilestoneReviewer, isReviewer]);
 
-  const isCheckingPermissions = isLoadingRbac || isLoadingAdminAccess || isLoadingReviewerPrograms;
-
-  const reportData = useReportPageData({
-    communityId,
-    grantPrograms,
-    hasAccess,
-    isAuthorized,
-    reviewerPrograms: reviewerPrograms ?? [],
-    currentUserAddress: address,
-    isMilestoneReviewer,
-  });
+  const isCheckingPermissions =
+    !ready || isLoadingRbac || isLoadingAdminAccess || isLoadingReviewerPrograms;
 
   const allProgramIds = useMemo(
     () =>
@@ -132,11 +121,29 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
     [grantPrograms]
   );
 
-  const reviewerProgramIds = useMemo(() => {
-    if (!isAuthorized) return [];
-    const ids = reportData.effectiveProgramIds;
-    return ids.length > 0 ? ids : allProgramIds;
-  }, [isAuthorized, reportData.effectiveProgramIds, allProgramIds]);
+  // Fetch reviewers across all programs in the community so the dropdown's
+  // default selection (and "(You)" label) can resolve even before the user
+  // applies a program filter.
+  const reviewerProgramIds = useMemo(
+    () => (isAuthorized ? allProgramIds : []),
+    [isAuthorized, allProgramIds]
+  );
+
+  const {
+    reviewers,
+    isLoading: isLoadingReviewers,
+    isError: isReviewersError,
+  } = useCommunityMilestoneReviewers(reviewerProgramIds);
+
+  const reportData = useReportPageData({
+    communityId,
+    grantPrograms,
+    hasAccess,
+    isAuthorized,
+    reviewerPrograms: reviewerPrograms ?? [],
+    currentUserAddress: address,
+    reviewers,
+  });
 
   // Extract unique grant UIDs from both pending milestones and stats reports
   const allGrantUIDs = useMemo(() => {
@@ -151,12 +158,6 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
   }, [reportData.pendingMilestones, reportData.reports]);
 
   const { allocationMap, grantTotalMap } = useMilestoneAllocationsByGrants(allGrantUIDs);
-
-  const {
-    reviewers,
-    isLoading: isLoadingReviewers,
-    isError: isReviewersError,
-  } = useCommunityMilestoneReviewers(reviewerProgramIds);
 
   useEffect(() => {
     if (isReviewersError) {

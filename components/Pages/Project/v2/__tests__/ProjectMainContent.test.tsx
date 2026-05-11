@@ -378,19 +378,20 @@ describe("ActivityFeed", () => {
       render(<ActivityFeed milestones={mockMilestones} />);
 
       const icons = screen.getAllByTestId("timeline-icon");
-      // First milestone is type "milestone" - should have indigo background
-      expect(icons[0]).toHaveClass("bg-indigo-50");
+      // Sort order: completed items first. Of the mock data, only milestone-2 (grant)
+      // is completed; milestone-1 (milestone) is the first uncompleted item → icons[1].
+      expect(icons[1]).toHaveClass("bg-indigo-50");
     });
 
     it("should show blue icon for grant type", () => {
       render(<ActivityFeed milestones={mockMilestones} activeFilters={["milestones"]} />);
 
       const icons = screen.getAllByTestId("timeline-icon");
-      // "milestone" type has indigo, "grant" type has blue
-      // With milestones filter, both milestone and grant types are shown
+      // With milestones filter, both milestone and grant types are shown.
+      // Completed items sort first, so grant (completed) → icons[0], milestone → icons[1].
       expect(icons).toHaveLength(2);
-      expect(icons[0]).toHaveClass("bg-indigo-50");
-      expect(icons[1]).toHaveClass("bg-blue-50");
+      expect(icons[0]).toHaveClass("bg-blue-50");
+      expect(icons[1]).toHaveClass("bg-indigo-50");
     });
   });
 

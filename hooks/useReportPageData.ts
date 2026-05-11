@@ -3,6 +3,7 @@ import { useQueryState } from "nuqs";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
+import type { CommunityReviewer } from "@/hooks/useCommunityMilestoneReviewers";
 import { usePendingVerificationMilestones } from "@/hooks/usePendingVerificationMilestones";
 import { milestoneReportService } from "@/services/milestone-report.service";
 import { downloadCommunityReport } from "@/utilities/downloadReports";
@@ -90,15 +91,22 @@ interface UseReportPageDataOptions {
   isAuthorized: boolean;
   reviewerPrograms: Array<{ programId: string }>;
   currentUserAddress?: string;
-  isMilestoneReviewer?: boolean;
+  reviewers?: CommunityReviewer[];
 }
 
+/**
+ * Default the reviewer filter to the current user iff their address matches
+ * one of the community's known reviewers. Independent of admin/role state —
+ * if you appear in the reviewer list, the page should open scoped to you.
+ */
 export function computeDefaultReviewerAddress(
-  isMilestoneReviewer: boolean,
-  hasAccess: boolean,
+  reviewers: CommunityReviewer[] | undefined,
   currentUserAddress?: string
 ): string | undefined {
-  return isMilestoneReviewer && !hasAccess ? currentUserAddress : undefined;
+  if (!currentUserAddress || !reviewers?.length) return undefined;
+  const lower = currentUserAddress.toLowerCase();
+  const match = reviewers.find((r) => r.publicAddress.toLowerCase() === lower);
+  return match?.publicAddress;
 }
 
 export function useReportPageData({
@@ -108,7 +116,7 @@ export function useReportPageData({
   isAuthorized,
   reviewerPrograms,
   currentUserAddress,
-  isMilestoneReviewer = false,
+  reviewers,
 }: UseReportPageDataOptions) {
   const [activeTab, setActiveTab] = useQueryState<TabId>("tab", {
     defaultValue: "pending-verification",
@@ -124,22 +132,19 @@ export function useReportPageData({
     programIdsQueryOptions
   );
 
-  // Reviewer filter: address-based. Reviewers default to own address, admins to "all" (undefined).
+  // Reviewer filter: defaults to the current user when they appear in the
+  // community reviewer list, regardless of admin role. Otherwise "All Reviewers".
   const [selectedReviewerAddress, setSelectedReviewerAddress] = useState<string | undefined>(() =>
-    computeDefaultReviewerAddress(isMilestoneReviewer, hasAccess, currentUserAddress)
+    computeDefaultReviewerAddress(reviewers, currentUserAddress)
   );
   const hasUserSelectedFilter = useRef(false);
 
-  // Sync selectedReviewerAddress when isMilestoneReviewer/hasAccess resolve after mount
+  // Sync selectedReviewerAddress when reviewers / currentUserAddress resolve after mount
   useEffect(() => {
     if (hasUserSelectedFilter.current) return;
-    const computed = computeDefaultReviewerAddress(
-      isMilestoneReviewer,
-      hasAccess,
-      currentUserAddress
-    );
+    const computed = computeDefaultReviewerAddress(reviewers, currentUserAddress);
     setSelectedReviewerAddress(computed);
-  }, [isMilestoneReviewer, hasAccess, currentUserAddress]);
+  }, [reviewers, currentUserAddress]);
 
   // Reset user's manual filter selection when context changes
   useEffect(() => {

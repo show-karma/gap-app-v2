@@ -273,7 +273,7 @@ describe("GrantCard", () => {
       expect(screen.getByText(/0\/0.*Milestones/i)).toBeInTheDocument();
     });
 
-    it("should show activity badge even when 0 updates", () => {
+    it("should hide updates badge when there are 0 updates", () => {
       const grantWithoutUpdates = {
         ...mockGrant,
         updates: [],
@@ -282,8 +282,7 @@ describe("GrantCard", () => {
 
       render(<GrantCard grant={grantWithoutUpdates} index={0} />);
 
-      // Updates badge should still be visible when 0
-      expect(screen.getByText(/0.*Update/i)).toBeInTheDocument();
+      expect(screen.queryByText(/Update/i)).not.toBeInTheDocument();
     });
 
     it("should handle grant without categories", () => {

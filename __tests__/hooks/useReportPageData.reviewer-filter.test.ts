@@ -4,37 +4,52 @@
  * The hook uses address-based filtering where:
  *   - undefined = "All Reviewers"
  *   - string = specific reviewer's address
+ *
+ * Default selection: the current user's address is preselected iff it appears
+ * in the community reviewer list, regardless of admin/role state.
  */
 
+import type { CommunityReviewer } from "@/hooks/useCommunityMilestoneReviewers";
 import { computeDefaultReviewerAddress } from "@/hooks/useReportPageData";
 
 describe("useReportPageData reviewer filter logic (address-based)", () => {
-  const testAddress = "0x1234567890abcdef1234567890abcdef12345678";
+  const userAddress = "0x1234567890abcdef1234567890abcdef12345678";
+  const otherAddress = "0xabcdef1234567890abcdef1234567890abcdef12";
+
+  const makeReviewer = (publicAddress: string, name?: string): CommunityReviewer => ({
+    publicAddress,
+    name,
+  });
 
   describe("computeDefaultReviewerAddress", () => {
-    it("defaults to user address when isMilestoneReviewer is true and hasAccess is false", () => {
-      const result = computeDefaultReviewerAddress(true, false, testAddress);
-      expect(result).toBe(testAddress);
+    it("returns the matching reviewer's address when the user is in the reviewer list", () => {
+      const reviewers = [makeReviewer(otherAddress, "Alice"), makeReviewer(userAddress, "Bob")];
+      expect(computeDefaultReviewerAddress(reviewers, userAddress)).toBe(userAddress);
     });
 
-    it("defaults to undefined when hasAccess is true (admin), even if isMilestoneReviewer", () => {
-      const result = computeDefaultReviewerAddress(true, true, testAddress);
-      expect(result).toBeUndefined();
+    it("matches case-insensitively (checksummed vs lowercase address)", () => {
+      const reviewers = [makeReviewer(userAddress.toLowerCase())];
+      expect(computeDefaultReviewerAddress(reviewers, userAddress.toUpperCase())).toBe(
+        userAddress.toLowerCase()
+      );
     });
 
-    it("defaults to undefined when isMilestoneReviewer is false", () => {
-      const result = computeDefaultReviewerAddress(false, false, testAddress);
-      expect(result).toBeUndefined();
+    it("returns undefined when the user is not in the reviewer list", () => {
+      const reviewers = [makeReviewer(otherAddress, "Alice")];
+      expect(computeDefaultReviewerAddress(reviewers, userAddress)).toBeUndefined();
     });
 
-    it("defaults to undefined when hasAccess is true and isMilestoneReviewer is false", () => {
-      const result = computeDefaultReviewerAddress(false, true, testAddress);
-      expect(result).toBeUndefined();
+    it("returns undefined when currentUserAddress is undefined", () => {
+      const reviewers = [makeReviewer(userAddress)];
+      expect(computeDefaultReviewerAddress(reviewers, undefined)).toBeUndefined();
     });
 
-    it("returns undefined when reviewer has no address", () => {
-      const result = computeDefaultReviewerAddress(true, false, undefined);
-      expect(result).toBeUndefined();
+    it("returns undefined when reviewers list is empty", () => {
+      expect(computeDefaultReviewerAddress([], userAddress)).toBeUndefined();
+    });
+
+    it("returns undefined when reviewers list is undefined (not loaded yet)", () => {
+      expect(computeDefaultReviewerAddress(undefined, userAddress)).toBeUndefined();
     });
   });
 
@@ -48,13 +63,13 @@ describe("useReportPageData reviewer filter logic (address-based)", () => {
         pendingPage = 1;
       };
 
-      handleReviewerAddressChange(testAddress);
-      expect(selectedReviewerAddress).toBe(testAddress);
+      handleReviewerAddressChange(userAddress);
+      expect(selectedReviewerAddress).toBe(userAddress);
       expect(pendingPage).toBe(1);
     });
 
     it("can switch to undefined (all reviewers)", () => {
-      let selectedReviewerAddress: string | undefined = testAddress;
+      let selectedReviewerAddress: string | undefined = userAddress;
       let pendingPage = 5;
 
       const handleReviewerAddressChange = (address: string | undefined) => {
@@ -68,8 +83,7 @@ describe("useReportPageData reviewer filter logic (address-based)", () => {
     });
 
     it("can switch between different reviewer addresses", () => {
-      let selectedReviewerAddress: string | undefined = testAddress;
-      const otherAddress = "0xabcdef1234567890abcdef1234567890abcdef12";
+      let selectedReviewerAddress: string | undefined = userAddress;
 
       const handleReviewerAddressChange = (address: string | undefined) => {
         selectedReviewerAddress = address;
@@ -81,19 +95,19 @@ describe("useReportPageData reviewer filter logic (address-based)", () => {
   });
 
   describe("integration: default address drives effective address", () => {
-    it("reviewer-only user defaults to seeing their own milestones", () => {
-      const defaultAddress = computeDefaultReviewerAddress(true, false, testAddress);
-      expect(defaultAddress).toBe(testAddress);
+    it("user who is a registered reviewer defaults to seeing their own milestones", () => {
+      const reviewers = [makeReviewer(userAddress)];
+      expect(computeDefaultReviewerAddress(reviewers, userAddress)).toBe(userAddress);
     });
 
-    it("admin user defaults to seeing all milestones", () => {
-      const defaultAddress = computeDefaultReviewerAddress(true, true, testAddress);
-      expect(defaultAddress).toBeUndefined();
+    it("admin who is also a reviewer defaults to themselves (not 'All Reviewers')", () => {
+      const reviewers = [makeReviewer(otherAddress), makeReviewer(userAddress)];
+      expect(computeDefaultReviewerAddress(reviewers, userAddress)).toBe(userAddress);
     });
 
-    it("non-reviewer, non-admin user defaults to seeing all milestones", () => {
-      const defaultAddress = computeDefaultReviewerAddress(false, false, testAddress);
-      expect(defaultAddress).toBeUndefined();
+    it("user not in reviewer list defaults to seeing all milestones", () => {
+      const reviewers = [makeReviewer(otherAddress)];
+      expect(computeDefaultReviewerAddress(reviewers, userAddress)).toBeUndefined();
     });
   });
 });

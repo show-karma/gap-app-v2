@@ -16,6 +16,14 @@ vi.mock("wagmi", () => ({
   })),
 }));
 
+// Mock useAuth hook
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: vi.fn(() => ({
+    authenticated: true,
+    address: "0xMockWalletAddress",
+  })),
+}));
+
 // Mock useCommunityDetails
 vi.mock("@/hooks/communities/useCommunityDetails", () => ({
   useCommunityDetails: vi.fn(),
@@ -29,8 +37,10 @@ vi.mock("@/hooks/communities/useCheckCommunityAdmin", () => ({
 import { useAccount } from "wagmi";
 import { useCheckCommunityAdmin } from "@/hooks/communities/useCheckCommunityAdmin";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
+import { useAuth } from "@/hooks/useAuth";
 
 const mockUseAccount = useAccount as vi.MockedFunction<typeof useAccount>;
+const mockUseAuth = useAuth as vi.MockedFunction<typeof useAuth>;
 const mockUseCommunityDetails = useCommunityDetails as vi.MockedFunction<
   typeof useCommunityDetails
 >;
@@ -100,6 +110,10 @@ describe("useIsCommunityAdmin", () => {
     mockUseAccount.mockReturnValue({
       address: mockAddress,
     } as ReturnType<typeof useAccount>);
+    mockUseAuth.mockReturnValue({
+      authenticated: true,
+      address: mockAddress,
+    } as ReturnType<typeof useAuth>);
     mockUseCommunityDetails.mockReturnValue(
       defaultCommunityQueryResult as ReturnType<typeof useCommunityDetails>
     );
@@ -487,9 +501,10 @@ describe("useIsCommunityAdmin", () => {
     });
 
     it("should handle no connected wallet", () => {
-      mockUseAccount.mockReturnValue({
+      mockUseAuth.mockReturnValue({
+        authenticated: true,
         address: undefined,
-      } as ReturnType<typeof useAccount>);
+      } as ReturnType<typeof useAuth>);
       // When no wallet is connected, admin check should return false
       mockUseCheckCommunityAdmin.mockReturnValue({
         ...defaultAdminQueryResult,
