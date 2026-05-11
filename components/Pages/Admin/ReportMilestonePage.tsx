@@ -110,16 +110,6 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
   const isCheckingPermissions =
     !ready || isLoadingRbac || isLoadingAdminAccess || isLoadingReviewerPrograms;
 
-  const reportData = useReportPageData({
-    communityId,
-    grantPrograms,
-    hasAccess,
-    isAuthorized,
-    reviewerPrograms: reviewerPrograms ?? [],
-    currentUserAddress: address,
-    isMilestoneReviewer,
-  });
-
   const allProgramIds = useMemo(
     () =>
       grantPrograms
@@ -131,11 +121,29 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
     [grantPrograms]
   );
 
-  const reviewerProgramIds = useMemo(() => {
-    if (!isAuthorized) return [];
-    const ids = reportData.effectiveProgramIds;
-    return ids.length > 0 ? ids : allProgramIds;
-  }, [isAuthorized, reportData.effectiveProgramIds, allProgramIds]);
+  // Fetch reviewers across all programs in the community so the dropdown's
+  // default selection (and "(You)" label) can resolve even before the user
+  // applies a program filter.
+  const reviewerProgramIds = useMemo(
+    () => (isAuthorized ? allProgramIds : []),
+    [isAuthorized, allProgramIds]
+  );
+
+  const {
+    reviewers,
+    isLoading: isLoadingReviewers,
+    isError: isReviewersError,
+  } = useCommunityMilestoneReviewers(reviewerProgramIds);
+
+  const reportData = useReportPageData({
+    communityId,
+    grantPrograms,
+    hasAccess,
+    isAuthorized,
+    reviewerPrograms: reviewerPrograms ?? [],
+    currentUserAddress: address,
+    reviewers,
+  });
 
   // Extract unique grant UIDs from both pending milestones and stats reports
   const allGrantUIDs = useMemo(() => {
@@ -150,12 +158,6 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
   }, [reportData.pendingMilestones, reportData.reports]);
 
   const { allocationMap, grantTotalMap } = useMilestoneAllocationsByGrants(allGrantUIDs);
-
-  const {
-    reviewers,
-    isLoading: isLoadingReviewers,
-    isError: isReviewersError,
-  } = useCommunityMilestoneReviewers(reviewerProgramIds);
 
   useEffect(() => {
     if (isReviewersError) {
