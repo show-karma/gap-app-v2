@@ -474,7 +474,7 @@ function MilestonesReviewPageContent({
   const searchParams = useSearchParams();
   const searchParamsString = searchParams.toString();
 
-  const { address } = useAuth();
+  const { address, ready } = useAuth();
   const { hasAccess: hasAdminAccess, isLoading: isLoadingAdminAccess } =
     useCommunityAdminAccess(communityId);
 
@@ -729,7 +729,7 @@ function MilestonesReviewPageContent({
   }, [milestones, activeFilter]);
 
   // Show loading while checking authorization
-  if (isLoading || isLoadingReviewer || isLoadingAdminAccess) {
+  if (!ready || isLoading || isLoadingReviewer || isLoadingAdminAccess) {
     return (
       <div className="min-h-screen">
         <div className="px-4 sm:px-6 lg:px-8 py-6">

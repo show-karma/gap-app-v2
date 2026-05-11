@@ -9,10 +9,11 @@ import { PAGES } from "@/utilities/pages";
 
 export default function FaucetAdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { isConnected } = useAuth();
+  const { isConnected, ready } = useAuth();
   const { isAdmin, isLoading } = useFaucetAdmin();
   useEffect(() => {
-    // Redirect if not connected or not admin
+    if (!ready) return;
+
     if (!isConnected) {
       router.push(PAGES.HOME);
       return;
@@ -21,9 +22,9 @@ export default function FaucetAdminLayout({ children }: { children: React.ReactN
     if (!isLoading && !isAdmin) {
       router.push(PAGES.HOME);
     }
-  }, [isConnected, isAdmin, isLoading, router]);
+  }, [ready, isConnected, isAdmin, isLoading, router]);
 
-  if (isLoading) {
+  if (!ready || isLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <Spinner />

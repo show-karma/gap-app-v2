@@ -94,7 +94,7 @@ interface ReportMilestonePageProps {
 export const ReportMilestonePage = ({ community, grantPrograms }: ReportMilestonePageProps) => {
   const params = useParams();
   const communityId = params.communityId as string;
-  const { authenticated: isAuth, isConnected, address } = useAuth();
+  const { authenticated: isAuth, isConnected, address, ready } = useAuth();
   const { hasAccess, isLoading: isLoadingAdminAccess } = useCommunityAdminAccess(community?.uid);
   const isMilestoneReviewer = useIsReviewerType(ReviewerType.MILESTONE);
   const { isLoading: isLoadingRbac, isReviewer } = usePermissionContext();
@@ -107,7 +107,8 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
     return isMilestoneReviewer || isReviewer;
   }, [isConnected, isAuth, hasAccess, isMilestoneReviewer, isReviewer]);
 
-  const isCheckingPermissions = isLoadingRbac || isLoadingAdminAccess || isLoadingReviewerPrograms;
+  const isCheckingPermissions =
+    !ready || isLoadingRbac || isLoadingAdminAccess || isLoadingReviewerPrograms;
 
   const reportData = useReportPageData({
     communityId,

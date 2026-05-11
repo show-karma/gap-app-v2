@@ -50,6 +50,7 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
   isAllowed,
 }) => {
   const { address } = useAuth();
+  const normalizedAddress = address?.toLowerCase();
   const searchParams = useSearchParams();
   const [sorting, setSorting] = useState<SortingState>([]);
 
@@ -489,7 +490,7 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
                 <span
                   key={index}
                   className={`mr-1 inline-flex items-center rounded-md  px-2 py-1 text-xs font-medium text-black ring-1 ring-inset ring-zinc-600/20 ${
-                    admin.toLowerCase() === address?.toLowerCase() ? "bg-blue-100" : "bg-zinc-50"
+                    admin.toLowerCase() === normalizedAddress ? "bg-blue-100" : "bg-zinc-50"
                   }`}
                 >
                   <EthereumAddressToProfileName address={admin.toLowerCase()} />
@@ -598,7 +599,7 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
     ],
     [
       isAllowed,
-      address?.toLowerCase,
+      normalizedAddress,
       approveOrReject,
       editFn,
       selectProgram,
