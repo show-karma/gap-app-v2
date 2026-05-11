@@ -3,7 +3,6 @@ import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo } from "react";
 import { toast } from "react-hot-toast";
-import { useAccount } from "wagmi";
 import { PendingVerificationTable } from "@/components/Pages/Admin/PendingVerificationTable";
 import { ReviewerFilterDropdown } from "@/components/Pages/Admin/ReviewerFilterDropdown";
 import { StatsGrid } from "@/components/Pages/Admin/StatsGrid";
@@ -95,8 +94,7 @@ interface ReportMilestonePageProps {
 export const ReportMilestonePage = ({ community, grantPrograms }: ReportMilestonePageProps) => {
   const params = useParams();
   const communityId = params.communityId as string;
-  const { isConnected, address } = useAccount();
-  const { authenticated: isAuth } = useAuth();
+  const { authenticated: isAuth, isConnected, address } = useAuth();
   const { hasAccess, isLoading: isLoadingAdminAccess } = useCommunityAdminAccess(community?.uid);
   const isMilestoneReviewer = useIsReviewerType(ReviewerType.MILESTONE);
   const { isLoading: isLoadingRbac, isReviewer } = usePermissionContext();

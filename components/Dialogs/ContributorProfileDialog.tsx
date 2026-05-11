@@ -68,7 +68,8 @@ type SchemaType = z.infer<typeof profileSchema>;
 
 export const ContributorProfileDialog: FC = () => {
   const project = useProjectStore((state) => state.project);
-  const { address, chain, isConnected } = useAccount();
+  const { chain } = useAccount();
+  const { address, isConnected, authenticated: isAuth, login } = useAuth();
   const { closeModal, isModalOpen: isOpen, isGlobal } = useContributorProfileModalStore();
 
   // Fetch contributor profile using React Query
@@ -99,11 +100,9 @@ export const ContributorProfileDialog: FC = () => {
     reValidateMode: "onChange",
     mode: "onChange",
   });
-  const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const { startAttestation, showLoading, showSuccess, showError, dismiss, changeStepperStep } =
     useAttestationToast();
-  const { authenticated: isAuth } = useAuth();
   const refreshProject = useProjectStore((state) => state.refreshProject);
 
   const isAllowed = isConnected && isAuth;

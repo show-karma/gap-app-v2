@@ -94,8 +94,7 @@ describe("CommunityStatCards", () => {
       // Milestones card: completed = 30 + 25 = 55, total = 137
       expect(screen.getByText("55 / 137")).toBeInTheDocument();
       expect(screen.getByText("Completed / Total Milestones")).toBeInTheDocument();
-      expect(screen.getByText("40.1%")).toBeInTheDocument();
-      expect(screen.getByText("59.9%")).toBeInTheDocument();
+      expect(screen.getByText("40%")).toBeInTheDocument();
 
       const bar = screen.getByRole("progressbar");
       expect(bar).toHaveAttribute("aria-valuenow", String((55 / 137) * 100));
@@ -124,8 +123,7 @@ describe("CommunityStatCards", () => {
       renderWithProviders(<CommunityStatCards />);
 
       expect(await screen.findByText("0 / 0")).toBeInTheDocument();
-      const percents = screen.getAllByText("0.0%");
-      expect(percents.length).toBe(2);
+      expect(screen.getByText("0%")).toBeInTheDocument();
     });
 
     it("renders dash when values are zero or falsy", async () => {

@@ -4,7 +4,6 @@ import { PencilIcon } from "@heroicons/react/24/outline";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import type { Hex } from "viem";
-import { useAccount } from "wagmi";
 import { DeleteMemberDialog } from "@/components/Dialogs/Member/DeleteMember";
 import { DemoteMemberDialog } from "@/components/Dialogs/Member/DemoteMember";
 import { PromoteMemberDialog } from "@/components/Dialogs/Member/PromoteMember";
@@ -12,6 +11,7 @@ import { GithubIcon, LinkedInIcon, Twitter2Icon } from "@/components/Icons";
 import { FarcasterIcon } from "@/components/Icons/Farcaster";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { Skeleton } from "@/components/Utilities/Skeleton";
+import { useAuth } from "@/hooks/useAuth";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { useProjectInstance } from "@/hooks/useProjectInstance";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";
@@ -35,7 +35,7 @@ export const MemberCard = ({ member }: { member: string }) => {
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const { address } = useAccount();
+  const { address } = useAuth();
   const isAuthorized = isProjectOwner || isContractOwner;
   const _isAdminOrAbove = isProjectOwner || isContractOwner || isProjectAdmin;
   const { project: projectInstance } = useProjectInstance(

@@ -15,7 +15,6 @@ import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { useQueryState } from "nuqs";
 import { type FC, useMemo, useRef, useState } from "react";
-import { useAccount } from "wagmi";
 import EthereumAddressToProfileName from "@/components/EthereumAddressToProfileName";
 import { Discord2Icon, Telegram2Icon, Twitter2Icon } from "@/components/Icons";
 import { BlogIcon } from "@/components/Icons/Blog";
@@ -23,6 +22,7 @@ import { DiscussionIcon } from "@/components/Icons/Discussion";
 import { OrganizationIcon } from "@/components/Icons/Organization";
 import { Button } from "@/components/Utilities/Button";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { useAuth } from "@/hooks/useAuth";
 import { formatDate } from "@/utilities/formatDate";
 import { ReadMore } from "@/utilities/ReadMore";
 import { registryHelper } from "./helper";
@@ -47,7 +47,7 @@ export const MyProgramList: FC<MyProgramListProps> = ({
   isAllowed,
 }) => {
   const searchParams = useSearchParams();
-  const { address } = useAccount();
+  const { address } = useAuth();
 
   const [sorting, setSorting] = useState<SortingState>([]);
 

@@ -20,6 +20,7 @@ vi.mock("wagmi", () => ({
 vi.mock("@/hooks/useAuth", () => ({
   useAuth: vi.fn(() => ({
     authenticated: true,
+    address: "0xMockWalletAddress",
   })),
 }));
 
@@ -91,6 +92,7 @@ describe("useCheckCommunityAdmin", () => {
     } as ReturnType<typeof useAccount>);
     mockUseAuth.mockReturnValue({
       authenticated: true,
+      address: mockAddress,
     } as ReturnType<typeof useAuth>);
     mockUseSigner.mockReturnValue("mockSigner" as ReturnType<typeof useSigner>);
   });
@@ -248,9 +250,10 @@ describe("useCheckCommunityAdmin", () => {
     });
 
     it("should not fetch when no address is available", () => {
-      mockUseAccount.mockReturnValue({
+      mockUseAuth.mockReturnValue({
+        authenticated: true,
         address: undefined,
-      } as ReturnType<typeof useAccount>);
+      } as ReturnType<typeof useAuth>);
 
       const { result } = renderHook(() => useCheckCommunityAdmin(mockCommunity), {
         wrapper: createWrapper(queryClient),

@@ -2,14 +2,14 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { useAccount } from "wagmi";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { useAuth } from "@/hooks/useAuth";
 import { useFaucetAdmin } from "@/hooks/useFaucetAdmin";
 import { PAGES } from "@/utilities/pages";
 
 export default function FaucetAdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { isConnected } = useAccount();
+  const { isConnected } = useAuth();
   const { isAdmin, isLoading } = useFaucetAdmin();
   useEffect(() => {
     // Redirect if not connected or not admin

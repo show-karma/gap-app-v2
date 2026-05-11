@@ -13,6 +13,7 @@ import { z } from "zod";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
+import { useAuth } from "@/hooks/useAuth";
 import { useCanVerifyMilestone } from "@/hooks/useCanVerifyMilestone";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
@@ -64,7 +65,7 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({
   function openModal() {
     setIsOpen(true);
   }
-  const { address, isConnected } = useAccount();
+  const { address } = useAuth();
 
   const hasVerifiedThis = address
     ? impact?.verified?.find((v) => v.attester?.toLowerCase() === address?.toLowerCase())

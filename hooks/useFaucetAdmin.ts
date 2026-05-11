@@ -2,19 +2,19 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
+import { useAuth } from "@/hooks/useAuth";
 import { faucetService } from "@/utilities/faucet/faucetService";
 
 /**
  * Check if current wallet is the faucet owner
  */
 export const useFaucetAdmin = () => {
-  const { address, isConnecting } = useAccount();
+  const { address, ready } = useAuth();
   const { config, isLoading } = useFaucetConfig();
 
   return {
     isAdmin: address?.toLowerCase() === config?.faucetAddress.toLowerCase(),
-    isLoading: isConnecting || isLoading,
+    isLoading: !ready || isLoading,
   };
 };
 

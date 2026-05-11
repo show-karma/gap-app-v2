@@ -15,10 +15,10 @@ import {
 import dynamic from "next/dynamic";
 import { usePathname, useSearchParams } from "next/navigation";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
-import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
 import { Badge } from "@/components/ui/badge";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
+import { useAuth } from "@/hooks/useAuth";
 import { useMilestoneAllocationsByGrants } from "@/hooks/useCommunityMilestoneAllocations";
 import { useDeleteMilestone } from "@/hooks/useDeleteMilestone";
 import { useFundingApplicationByProjectUID } from "@/hooks/useFundingApplicationByProjectUID";
@@ -474,7 +474,7 @@ function MilestonesReviewPageContent({
   const searchParams = useSearchParams();
   const searchParamsString = searchParams.toString();
 
-  const { address } = useAccount();
+  const { address } = useAuth();
   const { hasAccess: hasAdminAccess, isLoading: isLoadingAdminAccess } =
     useCommunityAdminAccess(communityId);
 
