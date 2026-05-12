@@ -15,14 +15,14 @@ const DEFAULT_WHITELABEL_DOMAINS: WhitelabelDomain[] = [
     communitySlug: "optimism",
     tenantId: "optimism",
     name: "Optimism",
-    theme: { primaryColor: "#FF0420" },
+    theme: { primaryColor: "#FF0420", logoBackground: "#FF0420" },
   },
   {
     domain: "testapp.opgrants.io",
     communitySlug: "optimism",
     tenantId: "optimism",
     name: "Optimism (Test)",
-    theme: { primaryColor: "#FF0420" },
+    theme: { primaryColor: "#FF0420", logoBackground: "#FF0420" },
   },
   {
     domain: "founders.polygon.technology",

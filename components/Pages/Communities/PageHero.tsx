@@ -88,7 +88,14 @@ export function PageHero({
 }
 
 export function KpiStrip({ items }: { items: KpiItem[] }) {
-  const cols = items.length >= 4 ? "sm:grid-cols-2 lg:grid-cols-2" : "sm:grid-cols-2";
+  const cols =
+    items.length >= 4
+      ? "sm:grid-cols-2 lg:grid-cols-2"
+      : items.length === 3
+        ? "sm:grid-cols-3"
+        : items.length === 2
+          ? "sm:grid-cols-2"
+          : "";
   return (
     <div
       className={cn(
