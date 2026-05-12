@@ -16,6 +16,38 @@ const REPORT_PATH = path.join(REPORT_DIR, "report.md");
 const ARTIFACT_PATH = path.join(REPORT_DIR, "current.json");
 
 const argv = new Set(process.argv.slice(2));
+
+if (argv.has("--help") || argv.has("-h")) {
+  process.stdout.write(
+    `Quality Gate — runs lint/coverage/duplication/dead-code/size/react-doctor checks
+and compares each metric against quality-baseline.json.
+
+Usage: node scripts/quality-gate.js [options]
+
+Options:
+  --update-baseline   write current metrics to quality-baseline.json and exit 0
+  --report-only       generate the markdown report but never exit non-zero
+  --ci                also append the report to GITHUB_STEP_SUMMARY (auto on CI)
+  --skip-biome        skip Biome lint diagnostics collection
+  --skip-coverage     skip vitest coverage collection
+  --skip-jscpd        skip jscpd duplication scan
+  --skip-knip         skip knip dead-code / unused-deps scan
+  --skip-react-doctor skip react-doctor health-score scan
+  --skip-sizes        skip per-glob file size scan
+  --help, -h          show this help
+
+Outputs:
+  .quality/report.md      — markdown report (also posted as PR comment in CI)
+  .quality/current.json   — raw metrics snapshot
+
+Exit codes:
+  0  no regression vs baseline (or --update-baseline / --report-only)
+  1  at least one metric regressed
+`
+  );
+  process.exit(0);
+}
+
 const FLAGS = {
   updateBaseline: argv.has("--update-baseline"),
   reportOnly: argv.has("--report-only"),
@@ -54,10 +86,16 @@ function runCapture(cmd, args, opts = {}) {
     maxBuffer: 1024 * 1024 * 64,
     ...opts,
   });
+  // spawnSync sets `error` (e.g. ENOENT) when the binary is missing. Surface
+  // that explicitly so collectors don't silently report zero metrics.
+  if (res.error) {
+    warn(`failed to launch \`${cmd} ${args.join(" ")}\`: ${res.error.message}`);
+  }
   return {
     stdout: res.stdout || "",
     stderr: res.stderr || "",
     status: res.status ?? 1,
+    error: res.error ?? null,
   };
 }
 
@@ -266,9 +304,11 @@ function collectFileSizes(limits) {
 function countLines(abs) {
   try {
     const buf = fs.readFileSync(abs);
+    if (buf.length === 0) return 0;
     let count = 0;
     for (let i = 0; i < buf.length; i++) if (buf[i] === 10) count++;
-    return count + 1;
+    // Files without a trailing newline still have one logical last line.
+    return buf[buf.length - 1] === 10 ? count : count + 1;
   } catch {
     return 0;
   }
@@ -333,6 +373,8 @@ function compare(current, baseline) {
   }
 
   // Oversized files — file already over limit must not grow.
+  // Only line growth is enforced: byte counts flap with whitespace/formatting
+  // changes (e.g. an unrelated reformat commit) and would generate noise.
   if (current.oversizedFiles) {
     const baseFiles = baseline.oversizedFiles ?? {};
     for (const [file, info] of Object.entries(current.oversizedFiles)) {
@@ -341,11 +383,6 @@ function compare(current, baseline) {
         if (info.lines > prev.lines) {
           regressions.push(
             `${file} grew from ${prev.lines} to ${info.lines} lines while already over the limit`
-          );
-        }
-        if (info.bytes > prev.bytes) {
-          regressions.push(
-            `${file} grew from ${prev.bytes} to ${info.bytes} bytes while already over the limit`
           );
         }
       } else {
@@ -599,4 +636,8 @@ function main() {
   }
 }
 
-main();
+if (require.main === module) {
+  main();
+}
+
+module.exports = { compare, matchGlob, countLines };

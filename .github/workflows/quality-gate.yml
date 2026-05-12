@@ -34,12 +34,16 @@ jobs:
           fetch-depth: 0
 
       - name: Check baseline changes are authorized
+        env:
+          PR_LABELS: ${{ toJson(github.event.pull_request.labels.*.name) }}
         run: |
           BASE="${{ github.event.pull_request.base.sha }}"
           if git diff --name-only "${BASE}...HEAD" | grep -E '^quality-baseline\.json$' >/dev/null; then
             echo "quality-baseline.json was modified in this PR."
-            HAS_LABEL=$(echo '${{ toJson(github.event.pull_request.labels.*.name) }}' | grep -c '"quality-baseline"' || true)
-            if [ "$HAS_LABEL" -eq 0 ]; then
+            # Exact-match label check via jq — avoids false positives like
+            # "quality-baseline-experimental" that a substring grep would accept.
+            HAS_LABEL=$(printf '%s' "$PR_LABELS" | jq -r 'any(. == "quality-baseline")')
+            if [ "$HAS_LABEL" != "true" ]; then
               echo "::error::quality-baseline.json was modified but PR is missing the 'quality-baseline' label."
               exit 1
             fi
