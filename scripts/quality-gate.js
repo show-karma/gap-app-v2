@@ -301,6 +301,16 @@ function collectFileSizes(limits) {
   return offenders;
 }
 
+function writeFileSafe(abs, contents) {
+  try {
+    fs.writeFileSync(abs, contents);
+    return true;
+  } catch (err) {
+    warn(`failed to write ${path.relative(ROOT, abs)}: ${err.message}`);
+    return false;
+  }
+}
+
 function countLines(abs) {
   try {
     const buf = fs.readFileSync(abs);
@@ -596,7 +606,7 @@ function main() {
     current.violations.knipDuplicates = knip.duplicates;
   }
 
-  fs.writeFileSync(ARTIFACT_PATH, JSON.stringify(current, null, 2));
+  writeFileSafe(ARTIFACT_PATH, JSON.stringify(current, null, 2));
 
   if (FLAGS.updateBaseline) {
     const next = {
@@ -611,7 +621,7 @@ function main() {
       reactDoctor: current.reactDoctor ??
         baseline.reactDoctor ?? { score: 0, errors: 0, warnings: 0, byCategory: {} },
     };
-    fs.writeFileSync(BASELINE_PATH, JSON.stringify(next, null, 2) + "\n");
+    writeFileSafe(BASELINE_PATH, JSON.stringify(next, null, 2) + "\n");
     log(`baseline updated → ${path.relative(ROOT, BASELINE_PATH)}`);
     process.exit(0);
   }
@@ -620,7 +630,7 @@ function main() {
   const status = regressions.length ? "fail" : "pass";
   const report = render({ status, current, baseline, regressions, improvements });
 
-  fs.writeFileSync(REPORT_PATH, report);
+  writeFileSafe(REPORT_PATH, report);
   process.stdout.write(report + "\n");
 
   if (FLAGS.ci && process.env.GITHUB_STEP_SUMMARY) {
