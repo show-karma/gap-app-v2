@@ -639,7 +639,7 @@ describe("utilities/safe.ts", () => {
       const body = JSON.parse(postCall![1].body);
       expect(body.signature).toBe("0xsignaturedata");
       expect(body.sender).toBe("0xOwner1");
-      expect(body.origin).toBe("GAP Disbursement");
+      expect(body.origin).toBe("Karma Disbursement");
     });
 
     itSdk("throws when signHash is rejected", async () => {

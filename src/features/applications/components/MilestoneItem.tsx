@@ -1,6 +1,6 @@
 "use client";
 
-import { Trash2 } from "lucide-react";
+import { Check, Copy, Trash2 } from "lucide-react";
 import type React from "react";
 import { useMemo } from "react";
 import { DatePicker } from "@/components/Utilities/DatePicker";
@@ -8,6 +8,7 @@ import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import type { MilestoneData } from "@/types/whitelabel-entities";
 
 interface MilestoneItemProps {
@@ -53,6 +54,8 @@ export const MilestoneItem: React.FC<MilestoneItemProps> = ({
       [field]: value,
     });
   };
+
+  const [copiedUID, copyUID] = useCopyToClipboard();
 
   const handleDueDateSelect = (date: Date) => {
     const year = date.getFullYear();
@@ -148,6 +151,29 @@ export const MilestoneItem: React.FC<MilestoneItemProps> = ({
         isRequired={false}
         error={errors?.completionCriteria?.message}
       />
+
+      {milestone.milestoneUID && (
+        <div className="space-y-2 pt-2 border-t border-zinc-200 dark:border-zinc-700">
+          <span className="text-xs text-zinc-500 dark:text-zinc-400 block">
+            On-Chain Milestone UID
+          </span>
+          <div className="flex items-center gap-2 font-mono text-sm break-all bg-zinc-50 dark:bg-zinc-900 px-3 py-2 rounded border border-zinc-200 dark:border-zinc-700">
+            <span className="flex-1">{milestone.milestoneUID}</span>
+            <button
+              type="button"
+              aria-label="Copy milestone UID"
+              className="text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors flex-shrink-0"
+              onClick={() => copyUID(milestone.milestoneUID as string, "Milestone UID copied")}
+            >
+              {copiedUID === milestone.milestoneUID ? (
+                <Check className="w-4 h-4 text-emerald-500" />
+              ) : (
+                <Copy className="w-4 h-4" />
+              )}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

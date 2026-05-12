@@ -640,7 +640,7 @@ export async function signAndProposeDisbursement(
       contractTransactionHash: txHash,
       sender: signerAddress,
       signature: signature.data,
-      origin: "GAP Disbursement",
+      origin: "Karma Disbursement",
     };
 
     try {

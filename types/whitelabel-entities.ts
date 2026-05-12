@@ -56,6 +56,7 @@ export interface MilestoneData {
   dueDate: string;
   fundingRequested?: string;
   completionCriteria?: string;
+  readonly milestoneUID?: string; // set after on-chain creation; immutable
 }
 
 export interface ApplicationConfig {
@@ -224,6 +225,45 @@ export interface FundingProgram {
 export type Program = FundingProgram;
 
 // Core application entity
+export interface MilestoneStatusEntry {
+  // "application" = milestone authored on the application form (in
+  // applicationData). "project" = inherited from the linked project's
+  // grant.milestones[]; surfaced here so the application page renders a
+  // single unified list. The indexer dedups by milestoneUID, keeping the
+  // application-source row when both sides reference the same UID.
+  source: "application" | "project";
+  milestoneUID?: string;
+  currentStatus: string; // "pending" | "completed" | "verified"
+  grantUID: string;
+  chainID: number;
+  title: string;
+  description?: string;
+  dueDate?: string;
+  startsAt?: number;
+  priority?: number;
+  // Application-source only: the applicationData field this slot came
+  // from (e.g. "projectMilestones"). Used as a stable key fallback when
+  // milestoneUID is absent (slot not yet anchored on-chain).
+  fieldLabel?: string;
+  // Application-source only: form-specific extra fields (deliverables,
+  // fundingRequested, custom fields) — the row renders them under
+  // "additional fields".
+  formData?: Record<string, unknown>;
+  completed?: {
+    uid: string;
+    createdAt: string;
+    reason?: string;
+    proofOfWork?: string;
+    attester?: string;
+  } | null;
+  verified?: {
+    uid: string;
+    attester: string;
+    reason?: string;
+    createdAt: string;
+  } | null;
+}
+
 export interface Application {
   id: string;
   programId: string;
@@ -251,6 +291,8 @@ export interface Application {
   communityName?: string;
   communityImage?: string;
   resolvedProjectName?: string;
+  projectUID?: string;
+  milestoneStatuses?: MilestoneStatusEntry[];
 }
 
 export interface User {

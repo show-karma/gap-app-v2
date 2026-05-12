@@ -212,7 +212,7 @@ export function useClaimViaASafe(
           contractTransactionHash: txHash,
           sender: getAddress(userAddress),
           signature: signature.data,
-          origin: "GAP Claim Funds",
+          origin: "Karma Claim Funds",
         };
 
         const response = await fetch(proposalUrl, {

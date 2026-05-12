@@ -1,15 +1,6 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import { MilestoneDisplay } from "@/src/features/applications/components/MilestoneDisplay";
 import type { MilestoneData } from "@/types/whitelabel-entities";
-
-// Mock the milestone completions hook
-vi.mock("@/src/features/applications/hooks/use-milestone-completions", () => ({
-  useMilestoneCompletions: () => ({
-    isLoading: false,
-    getCompletion: () => undefined,
-  }),
-}));
 
 // Mock MarkdownPreview to render plain text
 vi.mock("@/components/Utilities/MarkdownPreview", () => ({
@@ -20,13 +11,6 @@ vi.mock("@/components/Utilities/MarkdownPreview", () => ({
 vi.mock("@/utilities/formatMilestoneTitle", () => ({
   formatMilestoneTitle: (_index: number, title: string) => title,
 }));
-
-function renderWithQueryClient(ui: React.ReactElement) {
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
-  });
-  return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
-}
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -40,7 +24,7 @@ describe("MilestoneDisplay", () => {
   ];
 
   it("renders each milestone title as-is without any prefix", () => {
-    renderWithQueryClient(
+    render(
       <MilestoneDisplay milestones={milestones} fieldLabel="milestones" referenceNumber="REF-001" />
     );
 
@@ -50,7 +34,7 @@ describe("MilestoneDisplay", () => {
   });
 
   it("renders empty list without errors", () => {
-    const { container } = renderWithQueryClient(
+    const { container } = render(
       <MilestoneDisplay milestones={[]} fieldLabel="milestones" referenceNumber="REF-001" />
     );
 
@@ -73,7 +57,7 @@ describe("MilestoneDisplay", () => {
       },
     ];
 
-    renderWithQueryClient(
+    render(
       <MilestoneDisplay
         milestones={milestonesWithAmount}
         fieldLabel="milestones"
@@ -106,7 +90,7 @@ describe("MilestoneDisplay", () => {
       },
     ];
 
-    renderWithQueryClient(
+    render(
       <MilestoneDisplay
         milestones={milestonesNoAmount}
         fieldLabel="milestones"
@@ -133,7 +117,7 @@ describe("MilestoneDisplay", () => {
       },
     ];
 
-    renderWithQueryClient(
+    render(
       <MilestoneDisplay
         milestones={milestonesWithAmount}
         fieldLabel="milestones"
