@@ -1,6 +1,8 @@
 "use client";
 
+import { ChevronDownIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { UserGroupIcon } from "@heroicons/react/24/solid";
+import dynamic from "next/dynamic";
 import type React from "react";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
@@ -11,23 +13,32 @@ import type {
   RoleMember,
   RoleOption,
 } from "@/components/Generic/RoleManagement/types";
+import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useMilestoneReviewers } from "@/hooks/useMilestoneReviewers";
 import { useProgramReviewers } from "@/hooks/useProgramReviewers";
 import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
 import { Permission } from "@/src/core/rbac/types/permission";
-import {
-  sanitizeSlack,
-  sanitizeTelegram,
-  validateEmail,
-  validateSlack,
-  validateTelegram,
-} from "@/utilities/validators";
+import { sanitizeSlack, sanitizeTelegram, validateEmail } from "@/utilities/validators";
 import { PAGE_HEADER_CONTENT, PageHeader } from "../PageHeader";
+
+// Task 17: Lazy-load the heavy modal — keeps it out of the program-setup main chunk.
+const ReviewerPickerModal = dynamic(
+  () => import("@/components/FundingPlatform/ReviewerPicker/ReviewerPickerModal"),
+  { ssr: false }
+);
 
 interface ReviewerManagementTabProps {
   programId: string;
   readOnly?: boolean;
+  /** Community UID — passed from QuestionBuilder (NOT from useParams). */
+  communityUID?: string;
 }
 
 /**
@@ -37,10 +48,21 @@ interface ReviewerManagementTabProps {
 export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
   programId,
   readOnly = false,
+  communityUID,
 }) => {
   const { can, isLoading: isLoadingPermissions, isGuestDueToError } = usePermissionContext();
   const canManageReviewers = can(Permission.PROGRAM_MANAGE_REVIEWERS);
   const [selectedRoles, setSelectedRoles] = useState<ReviewerRole[]>(["program"]);
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
+  const [pickerInitialMode, setPickerInitialMode] = useState<"pool" | "addNew">("pool");
+
+  // Derive reviewer type for the picker from currently-selected roles.
+  // If only "milestone" is selected, use 'milestone'; otherwise default to 'program'.
+  const pickerReviewerType = useMemo<"program" | "milestone">(
+    () =>
+      selectedRoles.length === 1 && selectedRoles[0] === "milestone" ? "milestone" : "program",
+    [selectedRoles]
+  );
 
   const {
     data: programReviewers = [],
@@ -95,22 +117,16 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
       {
         name: "telegram",
         label: "Telegram",
-        type: "text" as const,
+        type: "telegram" as const,
         placeholder: "username",
         helperText: "Telegram handle (without @). Used for group notifications.",
         required: false,
         editable: true,
-        validation: (value: string) => {
-          if (value && !validateTelegram(value)) {
-            return "Please enter a valid Telegram username (5-32 characters)";
-          }
-          return true;
-        },
       },
       {
         name: "slack",
         label: "Slack",
-        type: "text" as const,
+        type: "slack" as const,
         placeholder: "Member ID, email, or display name",
         helperText: "Member ID (most reliable) or email — see ?",
         tooltip:
@@ -122,12 +138,6 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
           "workspace member list (less reliable — names aren't unique).",
         required: false,
         editable: true,
-        validation: (value: string) => {
-          if (value && !validateSlack(value)) {
-            return "Slack must be between 2 and 254 characters";
-          }
-          return true;
-        },
       },
     ],
     []
@@ -369,6 +379,17 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
 
   const isLoadingReviewers = isLoadingProgramReviewers || isLoadingMilestoneReviewers;
 
+  // Only hide reviewers already assigned to the SAME role we're adding.
+  // A milestone reviewer can still be added as a program reviewer (and vice versa).
+  const assignedAddresses = useMemo(() => {
+    const source = pickerReviewerType === "milestone" ? milestoneReviewers : programReviewers;
+    return source.map((r) => r.publicAddress).filter((a): a is string => Boolean(a));
+  }, [pickerReviewerType, programReviewers, milestoneReviewers]);
+
+  const handlePickerCompleted = useCallback(async () => {
+    await handleRefresh();
+  }, [handleRefresh]);
+
   if (isLoadingPermissions) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -410,6 +431,42 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
           members={members}
           isLoading={isLoadingReviewers}
           canManage={!readOnly && canManageReviewers}
+          addButtonSlot={
+            communityUID ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    className="flex items-center space-x-2"
+                    data-testid="open-reviewer-picker-btn"
+                  >
+                    <PlusIcon className="h-5 w-5" aria-hidden="true" />
+                    <span>Add Reviewer</span>
+                    <ChevronDownIcon className="h-4 w-4" aria-hidden="true" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem
+                    onSelect={() => {
+                      setPickerInitialMode("pool");
+                      setIsPickerOpen(true);
+                    }}
+                    data-testid="picker-menu-from-pool"
+                  >
+                    From community pool
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() => {
+                      setPickerInitialMode("addNew");
+                      setIsPickerOpen(true);
+                    }}
+                    data-testid="picker-menu-new-reviewer"
+                  >
+                    New reviewer
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : undefined
+          }
           onAdd={!readOnly ? handleAdd : undefined}
           onRemove={!readOnly ? handleRemove : undefined}
           onRefresh={handleRefresh}
@@ -420,6 +477,20 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
           onEditContact={!readOnly ? handleEditContact : undefined}
         />
       </div>
+
+      {/* Reviewer picker modal — lazy-loaded, only rendered when communityUID is available */}
+      {communityUID && (
+        <ReviewerPickerModal
+          open={isPickerOpen}
+          onOpenChange={setIsPickerOpen}
+          communityUID={communityUID}
+          programId={programId}
+          reviewerType={pickerReviewerType}
+          assignedAddresses={assignedAddresses}
+          initialMode={pickerInitialMode}
+          onCompleted={handlePickerCompleted}
+        />
+      )}
     </div>
   );
 };

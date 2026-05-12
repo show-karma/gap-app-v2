@@ -211,6 +211,11 @@ export const INDEXER = {
     MILESTONE_REVIEWERS: {
       LIST: (programId: string) => `/v2/programs/${programId}/milestone-reviewers`,
     },
+    COMMUNITIES: {
+      REVIEWERS: (communityUID: string) => `/v2/communities/${communityUID}/reviewers`,
+      REVIEWER_PROGRAMS: (communityUID: string) =>
+        `/v2/communities/${communityUID}/reviewer-programs`,
+    },
     REGISTRY: {
       GET_ALL: "/v2/program-registry/search",
       GET_BY_ID: (programId: string) => `/v2/program-registry/${programId}`,
