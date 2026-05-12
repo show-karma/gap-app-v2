@@ -196,9 +196,15 @@ export function OnChainMilestoneRow({
                     </Button>
                   )}
                 </div>
-                <div className="text-sm text-zinc-600 dark:text-zinc-400 prose prose-sm dark:prose-invert max-w-none">
-                  <MarkdownPreview source={completionEntry.reason ?? ""} />
-                </div>
+                {completionEntry.reason?.trim() ? (
+                  <div className="text-sm text-zinc-600 dark:text-zinc-400 prose prose-sm dark:prose-invert max-w-none">
+                    <MarkdownPreview source={completionEntry.reason} />
+                  </div>
+                ) : (
+                  <p className="text-sm italic text-zinc-400 dark:text-zinc-500">
+                    No completion text
+                  </p>
+                )}
                 {completionEntry.createdAt && (
                   <p className="text-xs text-zinc-400">
                     Last updated: {formatDate(completionEntry.createdAt)}
