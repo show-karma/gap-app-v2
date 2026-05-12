@@ -2,7 +2,7 @@ import type { GAP } from "@show-karma/karma-gap-sdk";
 import { GapContract } from "@show-karma/karma-gap-sdk/core/class/contract/GapContract";
 import { MilestoneCompleted } from "@show-karma/karma-gap-sdk/core/class/types/attestations";
 import type { Signer } from "ethers";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Hex } from "viem";
 import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
@@ -49,6 +49,15 @@ interface MilestoneInstance {
 /**
  * Hook for handling milestone completion and verification workflow
  */
+function isAbortError(error: unknown): boolean {
+  return (
+    !!error &&
+    typeof error === "object" &&
+    "name" in error &&
+    (error as { name?: unknown }).name === "AbortError"
+  );
+}
+
 export const useMilestoneCompletionVerification = ({
   projectId,
   programId,
@@ -60,6 +69,18 @@ export const useMilestoneCompletionVerification = ({
   const { startAttestation, showLoading, showSuccess, showError, changeStepperStep, dismiss } =
     useAttestationToast();
   const { setupChainAndWallet } = useSetupChainAndWallet();
+
+  // AbortController owns the in-flight verification's polling loop.
+  // React state updates and `onSuccess` callbacks that fire after the
+  // component unmounts trigger React's "state update on unmounted
+  // component" warning and waste network calls. The controller is
+  // refreshed at every `verifyMilestone` call and aborted on cleanup.
+  const controllerRef = useRef<AbortController | null>(null);
+  useEffect(() => {
+    return () => {
+      controllerRef.current?.abort();
+    };
+  }, []);
 
   const setupChainAndWalletForMilestone = async (
     milestone: GrantMilestoneWithCompletion,
@@ -200,41 +221,48 @@ export const useMilestoneCompletionVerification = ({
     milestone: GrantMilestoneWithCompletion,
     checkCompletion: boolean,
     userAddress: string,
-    inputProgramId: string
+    inputProgramId: string,
+    signal?: AbortSignal
   ) => {
     // Normalize for comparison (supports both programId formats)
     const normalizedInputId = normalizeProgramId(inputProgramId);
 
-    await retryUntilConditionMet(async () => {
-      const updatedProject = await gapClient.fetch.projectById(data.project.uid);
+    await retryUntilConditionMet(
+      async () => {
+        const updatedProject = await gapClient.fetch.projectById(data.project.uid);
 
-      if (!updatedProject) return false;
+        if (!updatedProject) return false;
 
-      const updatedGrant = updatedProject.grants.find((g) => {
-        const storedId = g.details?.programId;
-        if (!storedId) return false;
-        return normalizeProgramId(storedId) === normalizedInputId;
-      });
+        const updatedGrant = updatedProject.grants.find((g) => {
+          const storedId = g.details?.programId;
+          if (!storedId) return false;
+          return normalizeProgramId(storedId) === normalizedInputId;
+        });
 
-      if (!updatedGrant) return false;
+        if (!updatedGrant) return false;
 
-      const updatedMilestone = updatedGrant.milestones?.find((m) => m.uid === milestone.uid);
+        const updatedMilestone = updatedGrant.milestones?.find((m) => m.uid === milestone.uid);
 
-      if (!updatedMilestone) return false;
+        if (!updatedMilestone) return false;
 
-      const isVerified = updatedMilestone.verified?.find(
-        (v) => v.attester?.toLowerCase() === userAddress.toLowerCase()
-      );
+        const isVerified = updatedMilestone.verified?.find(
+          (v) => v.attester?.toLowerCase() === userAddress.toLowerCase()
+        );
 
-      // If checking completion, ensure both are indexed
-      if (checkCompletion) {
-        const isCompleted = updatedMilestone.completed;
-        return !!(isCompleted && isVerified);
-      }
+        // If checking completion, ensure both are indexed
+        if (checkCompletion) {
+          const isCompleted = updatedMilestone.completed;
+          return !!(isCompleted && isVerified);
+        }
 
-      // Otherwise just check verification
-      return !!isVerified;
-    });
+        // Otherwise just check verification
+        return !!isVerified;
+      },
+      undefined,
+      undefined,
+      undefined,
+      signal
+    );
   };
 
   const completeViaBackend = async (
@@ -279,7 +307,8 @@ export const useMilestoneCompletionVerification = ({
       completionReason?: string;
       verificationComment: string;
     },
-    communityUID: string
+    communityUID: string,
+    signal?: AbortSignal
   ): Promise<boolean> => {
     const isVerificationOnly = !options.includeCompletion;
 
@@ -322,8 +351,15 @@ export const useMilestoneCompletionVerification = ({
         milestone,
         options.includeCompletion,
         address,
-        programId
+        programId,
+        signal
       );
+
+      if (signal?.aborted) {
+        // Component unmounted mid-poll. Skip the success toast and the
+        // "indexed" stepper update — neither is observable any more.
+        return false;
+      }
 
       changeStepperStep("indexed");
       showSuccess(
@@ -334,6 +370,10 @@ export const useMilestoneCompletionVerification = ({
 
       return true;
     } catch (error: any) {
+      if (isAbortError(error)) {
+        // Silent — caller's finally already dismisses the toast.
+        return false;
+      }
       dismiss();
       throw error;
     }
@@ -358,6 +398,12 @@ export const useMilestoneCompletionVerification = ({
 
     // Use chainId from milestone (where attestation will occur)
     const attestationChainId = milestone.chainId;
+
+    // Abort any prior in-flight verification and start a fresh controller.
+    controllerRef.current?.abort();
+    const controller = new AbortController();
+    controllerRef.current = controller;
+    const { signal } = controller;
 
     setIsVerifying(true);
     startAttestation("Verifying milestone...");
@@ -417,8 +463,15 @@ export const useMilestoneCompletionVerification = ({
           completionReason,
           verificationComment,
         },
-        communityUID
+        communityUID,
+        signal
       );
+
+      // Component unmounted mid-flight. Skip onSuccess + further work;
+      // the consumer is gone and the success toast is meaningless.
+      if (signal.aborted) {
+        return;
+      }
 
       if (!onChainConfirmed) {
         throw new Error("On-chain attestation was not confirmed");
@@ -427,6 +480,10 @@ export const useMilestoneCompletionVerification = ({
       // Success callback - backend will sync to off-chain database automatically
       onSuccess?.();
     } catch (error: any) {
+      if (isAbortError(error)) {
+        // Silent — component unmounted during the flow.
+        return;
+      }
       console.error("Error verifying milestone:", error);
 
       // Check if user cancelled
@@ -440,7 +497,9 @@ export const useMilestoneCompletionVerification = ({
         });
       }
     } finally {
-      setIsVerifying(false);
+      if (!signal.aborted) {
+        setIsVerifying(false);
+      }
       dismiss();
     }
   };
