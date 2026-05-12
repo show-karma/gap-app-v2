@@ -200,7 +200,11 @@ export function OnChainMilestoneRow({
                 <div className="flex items-center justify-between">
                   <p className="text-xs font-semibold">Completion Update</p>
                   {canEdit && (
-                    <Button size="icon-sm" onClick={handleStartEdit}>
+                    <Button
+                      size="icon-sm"
+                      onClick={handleStartEdit}
+                      aria-label="Edit completion update"
+                    >
                       <Pencil className="w-4 h-4" />
                     </Button>
                   )}

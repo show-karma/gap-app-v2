@@ -55,9 +55,16 @@ export function MilestonesTab({ application, isOwner, invoiceRequired }: Milesto
             entry.milestoneUID ?? `${entry.source}:${entry.fieldLabel ?? ""}:${entry.title}`;
 
           if (entry.source === "application") {
-            const existingInvoice = milestoneInvoices.find(
-              (inv) => inv.milestoneLabel === entry.title
-            );
+            // Prefer milestoneUID matching when both sides have one; same-title
+            // milestones are common (e.g. "Milestone 2", "Milestone 2") and a
+            // title-only match would attach the wrong invoice. Fall back to
+            // title for legacy invoice rows that predate UID anchoring.
+            const existingInvoice = milestoneInvoices.find((inv) => {
+              if (entry.milestoneUID && inv.milestoneUID) {
+                return inv.milestoneUID === entry.milestoneUID;
+              }
+              return inv.milestoneLabel === entry.title;
+            });
             return (
               <OffChainMilestoneRow
                 key={key}

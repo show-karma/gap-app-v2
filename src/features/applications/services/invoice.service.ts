@@ -2,6 +2,10 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
 export type MilestoneInvoice = {
+  // Present once the invoice was anchored to an on-chain milestone;
+  // null/undefined for legacy off-chain rows that only carried a label.
+  // MilestonesTab prefers UID matching to avoid same-title collisions.
+  milestoneUID?: string | null;
   milestoneLabel: string;
   invoiceFileKey: string | null;
   invoiceRequired: boolean;

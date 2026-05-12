@@ -125,19 +125,35 @@ export function OffChainMilestoneRow({
     setInvoiceFile(null);
   }, []);
 
+  // For a brand-new completion the on-chain attestation must carry some
+  // proof-of-work text — submitting `reason: ""` writes an attestation
+  // that the next viewer can't make sense of. For an existing completion
+  // we accept the "invoice-only update" path: the user is replacing the
+  // attached invoice without changing the rationale, so we fall back to
+  // the existing reason on submit.
+  const existingReason = completionEntry?.reason?.trim() ?? "";
+  const hasExistingReason = existingReason.length > 0;
+  const hasEditedText = editedText.trim().length > 0;
+
   const isSubmitEnabled = (() => {
     if (isUploading) return false;
-    return editedText.trim().length > 0 || !!invoiceFile;
+    if (hasEditedText) return true;
+    // No new text typed — only valid when the user is updating the
+    // invoice on an existing completion (we reuse the prior reason).
+    return !!invoiceFile && hasExistingReason;
   })();
 
   const handleSubmit = async () => {
     if (!entry.milestoneUID) return;
+    const trimmed = editedText.trim();
+    const proofOfWork = trimmed.length > 0 ? trimmed : existingReason;
+    if (!proofOfWork) return;
     try {
       await submitCompletion({
         milestoneTitle: entry.title,
         milestoneUID: entry.milestoneUID,
         statusEntry: entry,
-        proofOfWork: editedText,
+        proofOfWork,
         referenceNumber,
         invoiceFile: invoiceFile
           ? { fileKey: invoiceFile.fileKey, fileUrl: invoiceFile.fileUrl }
@@ -331,7 +347,11 @@ export function OffChainMilestoneRow({
                     ) : null}
                   </div>
                   {canEdit && (
-                    <Button size="icon-sm" onClick={handleStartEdit}>
+                    <Button
+                      size="icon-sm"
+                      onClick={handleStartEdit}
+                      aria-label="Edit completion update"
+                    >
                       <Pencil className="w-4 h-4" />
                     </Button>
                   )}
