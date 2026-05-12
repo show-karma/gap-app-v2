@@ -36,15 +36,6 @@ export interface SubmitMilestoneCompletionParams {
   proofOfWork: string;
   referenceNumber: string;
   invoiceFile?: InvoiceFile | null;
-  /**
-   * When the call site renders a project-grant-milestones list (e.g. the
-   * funding application Milestones tab merging on-chain rows), pass the
-   * project + program to invalidate that query on success — without
-   * this, an OnChainMilestoneRow's status badge stays stale until the
-   * next manual refresh.
-   */
-  projectUid?: string;
-  programId?: string;
 }
 
 /**
@@ -133,7 +124,9 @@ export function useSubmitMilestoneCompletion() {
         // Poll the application response until milestoneStatuses reflects
         // the new completion. ~60s budget (30 × 2s); a slow indexer
         // falls through to the "still processing" branch instead of
-        // failing the mutation.
+        // failing the mutation. The indexer publishes BOTH application
+        // and project-source milestones into milestoneStatuses[], so
+        // this single poll covers every row in the Milestones tab.
         let indexerCaughtUp = false;
         try {
           await retryUntilConditionMet(
@@ -175,18 +168,6 @@ export function useSubmitMilestoneCompletion() {
         // the server fetch + re-render the page so the new
         // milestoneStatuses payload propagates to the editor.
         router.refresh();
-
-        // Refresh the project-grant-milestones list when the call site is
-        // rendering merged on-chain rows. Best-effort: an undefined arg
-        // pair (off-chain only flows) skips the invalidation.
-        if (params.projectUid && params.programId) {
-          await queryClient.invalidateQueries({
-            queryKey: QUERY_KEYS.MILESTONES.PROJECT_GRANT_MILESTONES(
-              params.projectUid,
-              params.programId
-            ),
-          });
-        }
 
         if (params.invoiceFile) {
           try {

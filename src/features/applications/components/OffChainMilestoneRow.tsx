@@ -8,7 +8,7 @@ import { FileUpload } from "@/components/Utilities/FileUpload";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import type { MilestoneData, MilestoneStatusEntry } from "@/types/whitelabel-entities";
+import type { MilestoneStatusEntry } from "@/types/whitelabel-entities";
 import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
 import { useSubmitMilestoneCompletion } from "../hooks/use-submit-milestone-completion";
@@ -34,42 +34,30 @@ export interface ExistingInvoice {
 }
 
 interface OffChainMilestoneRowProps {
-  milestone: MilestoneData;
-  fieldLabel: string;
+  /**
+   * Pre-merged `application.milestoneStatuses[]` entry (source: "application").
+   * Carries `title`/`description`/`dueDate` + form `formData` + on-chain
+   * status payloads (`completed`/`verified`) + the `grantUID`/`chainID` the
+   * submit hook needs.
+   */
+  entry: MilestoneStatusEntry;
   referenceNumber: string;
   isEditable: boolean;
-  /**
-   * On-chain status entry (from application.milestoneStatuses[]) keyed by
-   * `milestone.milestoneUID`. Carries `currentStatus` + `completed` +
-   * `verified` payloads + the `grantUID`/`chainID` the submit hook needs.
-   */
-  statusEntry?: MilestoneStatusEntry;
   /** Whether the per-grant invoice config has invoiceRequired + grantUID. */
   showInvoice: boolean;
   /** Existing on-disk invoice for this milestone title, if any. */
   existingInvoice?: ExistingInvoice;
   /** True while the parent is still loading the invoice config — render a skeleton. */
   isInvoiceConfigLoading: boolean;
-  /**
-   * When provided, the submission's onSuccess invalidates the
-   * project-grant-milestones query so the on-chain row sibling refreshes
-   * after we complete an off-chain row that's also tracked on-chain.
-   */
-  projectUid?: string;
-  programId?: string;
 }
 
 export function OffChainMilestoneRow({
-  milestone,
-  fieldLabel,
+  entry,
   referenceNumber,
   isEditable,
-  statusEntry,
   showInvoice,
   existingInvoice,
   isInvoiceConfigLoading,
-  projectUid,
-  programId,
 }: OffChainMilestoneRowProps) {
   const {
     submit: submitCompletion,
@@ -83,18 +71,20 @@ export function OffChainMilestoneRow({
   const [isUploading, setIsUploading] = useState(false);
   const pendingFileNameRef = useRef<string | undefined>(undefined);
 
-  const isCompletionVerified = isMilestoneVerified(statusEntry);
-  const isCompletionSubmitted = isMilestoneCompleted(statusEntry) && !isCompletionVerified;
-  const canEdit = isEditable && !isCompletionVerified && !!milestone.milestoneUID;
-  const isWaitingForIndexer = isSubmittingTitle(milestone.title);
+  const isCompletionVerified = isMilestoneVerified(entry);
+  const isCompletionSubmitted = isMilestoneCompleted(entry) && !isCompletionVerified;
+  // Submission requires a milestoneUID (refUID for the on-chain attestation).
+  // Slots that haven't been anchored on-chain yet stay read-only.
+  const canEdit = isEditable && !isCompletionVerified && !!entry.milestoneUID;
+  const isWaitingForIndexer = isSubmittingTitle(entry.title);
 
-  const completionEntry = statusEntry?.completed ?? null;
-  const verifiedEntry = statusEntry?.verified ?? null;
+  const completionEntry = entry.completed ?? null;
+  const verifiedEntry = entry.verified ?? null;
   const completionText = completionEntry?.reason ?? "";
   const completionDate = completionEntry?.createdAt;
 
-  const additionalFields = Object.keys(milestone).filter(
-    (k) => !MILESTONE_CORE_FIELDS.includes(k) && milestone[k as keyof MilestoneData]
+  const additionalFields = Object.entries(entry.formData ?? {}).filter(
+    ([key, value]) => !MILESTONE_CORE_FIELDS.includes(key) && value
   );
 
   const handleStartEdit = () => {
@@ -136,19 +126,17 @@ export function OffChainMilestoneRow({
   })();
 
   const handleSubmit = async () => {
-    if (!milestone.milestoneUID || !statusEntry) return;
+    if (!entry.milestoneUID) return;
     try {
       await submitCompletion({
-        milestoneTitle: milestone.title,
-        milestoneUID: milestone.milestoneUID,
-        statusEntry,
+        milestoneTitle: entry.title,
+        milestoneUID: entry.milestoneUID,
+        statusEntry: entry,
         proofOfWork: editedText,
         referenceNumber,
         invoiceFile: invoiceFile
           ? { fileKey: invoiceFile.fileKey, fileUrl: invoiceFile.fileUrl }
           : null,
-        projectUid,
-        programId,
       });
       setIsEditing(false);
       setEditedText("");
@@ -159,13 +147,10 @@ export function OffChainMilestoneRow({
   };
 
   return (
-    <div
-      key={`${fieldLabel}-${milestone.milestoneUID || milestone.title}`}
-      className="rounded-lg border bg-zinc-50 dark:bg-zinc-800/50 p-4"
-    >
+    <div className="rounded-lg border bg-zinc-50 dark:bg-zinc-800/50 p-4">
       <div className="space-y-2">
         <div className="flex justify-between items-start">
-          <h4 className="font-medium">{milestone.title}</h4>
+          <h4 className="font-medium">{entry.title}</h4>
           <div className="flex items-center gap-2">
             {isCompletionVerified ? (
               <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">
@@ -180,23 +165,21 @@ export function OffChainMilestoneRow({
                 Pending
               </span>
             )}
-            {milestone.dueDate && (
+            {entry.dueDate && (
               <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700">
-                Due: {formatDate(milestone.dueDate)}
+                Due: {formatDate(entry.dueDate)}
               </span>
             )}
           </div>
         </div>
 
-        {milestone.description && (
+        {entry.description && (
           <div className="text-sm text-zinc-600 dark:text-zinc-400 prose prose-sm dark:prose-invert max-w-none">
-            <MarkdownPreview source={milestone.description} />
+            <MarkdownPreview source={entry.description} />
           </div>
         )}
 
-        {additionalFields.map((fieldKey) => {
-          const fieldValue = milestone[fieldKey as keyof MilestoneData];
-          if (!fieldValue) return null;
+        {additionalFields.map(([fieldKey, fieldValue]) => {
           const label = formatFieldLabel(fieldKey);
           const shouldRenderAsMarkdown =
             typeof fieldValue === "string" && isMarkdownContent(fieldValue);
@@ -304,7 +287,7 @@ export function OffChainMilestoneRow({
                 onClick={handleSubmit}
                 isLoading={isWaitingForIndexer}
                 disabled={
-                  !statusEntry ||
+                  !entry.milestoneUID ||
                   !isSubmitEnabled ||
                   isSubmittingCompletion ||
                   isUploading ||
@@ -333,7 +316,7 @@ export function OffChainMilestoneRow({
                     {completionText ? (
                       <ApplicationMilestoneAIEvaluationBadge
                         referenceNumber={referenceNumber}
-                        milestoneTitle={milestone.title}
+                        milestoneTitle={entry.title}
                         completionReason={completionText}
                       />
                     ) : null}
